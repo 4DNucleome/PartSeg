@@ -196,7 +196,7 @@ class MyCanvas(FigureCanvas):
     def update_image_view(self):
         pyplot.figure(self.my_figure_num)
         if self.base_image.size < 10:
-            returngst
+            return
         pyplot.clf()
         if self.colormap_checkbox.isChecked():
             print("dada1", self.my_figure_num)
