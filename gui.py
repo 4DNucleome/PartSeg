@@ -17,10 +17,10 @@ from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as Navigatio
 from PySide.QtCore import Qt, QSize
 from PySide.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget,\
     QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QPixmap, QSpinBox,\
-    QAbstractSpinBox
+    QAbstractSpinBox, QApplication
 from math import copysign
 
-from backend import Settings
+from backend import Settings, Segment
 
 
 __author__ = "Grzegorz Bokota"
@@ -91,15 +91,24 @@ def set_button(button, previous_element, dist=10, super_space=0):
         set_position(button, previous_element, dist)
 
 
+def label_to_rgb(image):
+    sitk_im = sitk.GetImageFromArray(image)
+    lab_im = sitk.LabelToRGB(sitk_im)
+    return sitk.GetArrayFromImage(lab_im)
+
+
 class ColormapCanvas(FigureCanvas):
-    def __init__(self, figsize, parent):
+    def __init__(self, figsize, settings, parent):
+        """:type settings: Settings"""
         fig = pyplot.figure(figsize=figsize, dpi=100, frameon=True, facecolor='1.0', edgecolor='w')
         super(ColormapCanvas, self).__init__(fig)
         self.my_figure_num = fig.number
         self.setParent(parent)
         self.val_min = 0
         self.val_max = 0
-        self.color_map = "cubehelix"
+        self.settings = settings
+        settings.add_image_callback(self.set_range)
+        settings.add_colormap_callback(self.update_colormap)
 
     def set_range(self, begin, end=None):
         if end is None and isinstance(begin, np.ndarray):
@@ -108,12 +117,14 @@ class ColormapCanvas(FigureCanvas):
         else:
             self.val_min = begin
             self.val_max = end
-        color_map = matplotlib.cm.get_cmap(self.color_map)
-        norm = matplotlib.colors.Normalize(vmin=self.vmin, vmax=self.vmax)
+        self.update_colormap()
+
+    def update_colormap(self):
+        norm = matplotlib.colors.Normalize(vmin=self.val_min, vmax=self.val_max)
         fig = pyplot.figure(self.my_figure_num)
         pyplot.clf()
-        ax = fig.add_axes([0.05, 0.05, 0.3, 0.9])
-        matplotlib.colorbar.ColorbarBase(ax, cmap=color_map, norm=norm, orientation='vertical')
+        ax = fig.add_axes([0.05, 0.08, 0.3, 0.85])
+        matplotlib.colorbar.ColorbarBase(ax, cmap=self.settings.color_map, norm=norm, orientation='vertical')
         fig.canvas.draw()
 
 
@@ -126,7 +137,10 @@ class MyCanvas(FigureCanvas):
         """
         fig = pyplot.figure(figsize=figsize, dpi=100, frameon=True, facecolor='1.0', edgecolor='w')
         super(MyCanvas, self).__init__(fig)
-        self.base_image = np.zeros((0, 0))
+        self.base_image = None
+        self.ax_im = None
+        self.rgb_image = None
+        self.layer_num = 0
         self.setParent(parent)
         self.my_figure_num = fig.number
         self.toolbar = NavigationToolbar(self, self)
@@ -151,8 +165,9 @@ class MyCanvas(FigureCanvas):
         self.layer_num_label = QLabel(self)
         self.layer_num_label.setText("1 of 1")
         self.settings = settings
-        settings.add_colormap_callback(self.update_image_view)
-        self.colormap_checkbox.stateChanged.connect(self.update_image_view)
+        settings.add_image_callback(self.set_image)
+        settings.add_colormap_callback(self.update_colormap)
+        self.colormap_checkbox.stateChanged.connect(self.update_colormap)
         MyCanvas.update_elements_positions(self)
 
     def update_elements_positions(self):
@@ -185,31 +200,54 @@ class MyCanvas(FigureCanvas):
             self.move_button.setChecked(False)
         self.toolbar.zoom()
 
-    def set_base_image(self, image):
+    def set_image(self, image):
         """
         :type image: np.ndarray
         :return:
         """
         self.base_image = image
+        self.ax_im = None
+        self.update_rgb_image()
         self.update_image_view()
+
+    def update_colormap(self):
+        if self.base_image is None:
+            return
+        self.update_rgb_image()
+        self.update_image_view()
+
+    def update_rgb_image(self):
+        float_image = self.base_image / float(self.base_image.max())
+        if self.colormap_checkbox.isChecked():
+            cmap = self.settings.color_map
+        else:
+            cmap = matplotlib.cm.get_cmap("gray")
+        colored_image = cmap(float_image)
+        self.rgb_image = np.array(colored_image * 255).astype(np.uint8)
 
     def update_image_view(self):
         pyplot.figure(self.my_figure_num)
         if self.base_image.size < 10:
             return
-        pyplot.clf()
-        if self.colormap_checkbox.isChecked():
-            print("dada1", self.my_figure_num)
-            pyplot.imshow(self.base_image, cmap=self.settings.color_map, interpolation='nearest')
+        if len(self.base_image.shape) <= 2:
+            image_to_show = self.rgb_image
         else:
-            print("dada2", self.my_figure_num)
-            pyplot.imshow(self.base_image, cmap="gray", interpolation='nearest')
+            image_to_show = self.rgb_image[self.layer_num]
+        if self.ax_im is None:
+            pyplot.clf()
+            self.ax_im = pyplot.imshow(image_to_show, interpolation='nearest')
+        else:
+            self.ax_im.set_data(image_to_show)
         self.draw()
 
 
 class MyDrawCanvas(MyCanvas):
-    def __init__(self, figsize, *args):
-        super(MyDrawCanvas, self).__init__(figsize, *args)
+    """
+    :type segmentation: np.ndarray
+    """
+    def __init__(self, figsize, settings,  *args):
+        super(MyDrawCanvas, self).__init__(figsize, settings, *args)
+        self.draw_canvas = None
         self.history_list = list()
         self.redo_list = list()
         self.zoom_button.clicked.connect(self.up_drawing_button)
@@ -221,8 +259,17 @@ class MyDrawCanvas(MyCanvas):
         self.draw_button.setCheckable(True)
         self.erase_button.clicked.connect(self.up_move_zoom_button)
         self.clean_button = QPushButton("Clean", self)
-        self.colormap_checkbox.setChecked(False)
         self.update_elements_positions()
+        self.segment = Segment(settings)
+        self.segmentation = None
+        self.rgb_segmentation = None
+        self.original_rgb_image = None
+        self.labeled_rgb_image = None
+        self.colormap_checkbox.setChecked(False)
+        self.segment.add_segmentation_callback(self.segmentation_changed)
+        im = [np.arange(3)]
+        rgb_im = sitk.GetArrayFromImage(sitk.LabelToRGB(sitk.GetImageFromArray(im)))
+        self.draw_colors = rgb_im[0]
 
     def up_move_zoom_button(self):
         if self.zoom_button.isChecked():
@@ -243,11 +290,50 @@ class MyDrawCanvas(MyCanvas):
         set_button(self.erase_button, self.draw_button, button_small_dist)
         set_button(self.clean_button, self.erase_button, button_small_dist)
 
+    def segmentation_changed(self):
+        self.update_segmentation_rgb()
+        self.update_image_view()
+
+    def update_segmentation_rgb(self):
+        if self.original_rgb_image is None:
+            self.update_rgb_image()
+        self.update_segmentation_image()
+        mask = self.rgb_segmentation > 0
+        overlay = self.settings.overlay
+        self.rgb_image = np.copy(self.original_rgb_image)
+        self.rgb_image[mask] = self.original_rgb_image[mask] * (1 - overlay) + self.rgb_segmentation[mask] * overlay
+        self.labeled_rgb_image = np.copy(self.rgb_image)
+        draw_lab = label_to_rgb(self.draw_canvas)
+        mask = draw_lab > 0
+        self.rgb_image[mask] = self.original_rgb_image[mask] * (1 - overlay) + draw_lab[mask] * overlay
+
+    def update_rgb_image(self):
+        super(MyDrawCanvas, self).update_rgb_image()
+        self.rgb_image = self.rgb_image[..., :3]
+        self.original_rgb_image = np.copy(self.rgb_image)
+        self.update_segmentation_rgb()
+
+    def set_image(self, image):
+        self.base_image = image
+        self.ax_im = None
+        self.draw_canvas = np.zeros(image.shape, dtype=np.uint8)
+        self.segment.set_image(image)
+        self.update_rgb_image()
+        self.update_image_view()
+
+    def update_segmentation_image(self):
+        if not self.segment.segmentation_changed:
+            return
+        self.segmentation = np.copy(self.segment.get_segmentation())
+        self.segmentation[self.segmentation > 0] += 2
+        self.rgb_segmentation = label_to_rgb(self.segmentation)
+
 
 class MainMenu(QLabel):
     def __init__(self, settings, *args, **kwargs):
         super(MainMenu, self).__init__(*args, **kwargs)
         self.settings = settings
+        self.settings.add_image_callback(self.set_threshold_range)
         self.load_button = QPushButton("Load", self)
         self.save_button = QPushButton("Save", self)
         self.save_button.setDisabled(True)
@@ -255,20 +341,24 @@ class MainMenu(QLabel):
         self.threshold_type.addItem("Upper threshold:")
         self.threshold_type.addItem("Lower threshold:")
         self.threshold_value = QSpinBox(self)
+        self.threshold_value.setMinimumWidth(80)
         self.threshold_value.setRange(0, 100000)
-        self.threshold_value.setValue(33000)
+        self.threshold_value.setValue(self.settings.threshold)
         self.threshold_value.setSingleStep(500)
         self.threshold_value.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.threshold_value.valueChanged[int].connect(settings.change_threshold)
         self.layer_thr_check = QCheckBox("Layer\nthreshold", self)
         self.minimum_size_lab = QLabel(self)
         self.minimum_size_lab.setText("Minimum\nobject size:")
         self.minimum_size_value = QSpinBox(self)
         self.minimum_size_value.setMinimumWidth(80)
         self.minimum_size_value.setRange(0, 10 ** 6)
-        self.minimum_size_value.setValue(100)
+        self.minimum_size_value.setValue(self.settings.minimum_size)
+        self.minimum_size_value.valueChanged[int].connect(settings.change_min_size)
         self.minimum_size_value.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.minimum_size_value.setSingleStep(10)
         self.gauss_check = QCheckBox("Use gauss", self)
+        self.gauss_check.stateChanged[int].connect(settings.change_gauss)
         self.draw_check = QCheckBox("Use draw result", self)
 
         self.colormap_choose = QComboBox(self)
@@ -294,14 +384,16 @@ class MainMenu(QLabel):
         set_button(self.draw_check, self.gauss_check, -10)
         set_button(self.colormap_choose, self.draw_check, 15)
 
-    def set_threshold_range(self, min_val, max_val):
-        self.threshold_value.setRange(min_val, max_val)
-
     def colormap_changed(self):
         self.settings.change_colormap(self.colormap_choose.currentText())
 
     def settings_changed(self):
         self.threshold_value.setValue(self.settings.threshold)
+
+    def set_threshold_range(self, image):
+        vmin = image.min()
+        vmax = image.max()
+        self.threshold_value.setRange(vmin, vmax)
 
 
 class MainWindow(QMainWindow):
@@ -312,13 +404,26 @@ class MainWindow(QMainWindow):
         self.main_menu = MainMenu(self.settings, self)
 
         self.normal_image_canvas = MyCanvas((6, 6), self.settings, self)
-        self.colormap_image_canvas = ColormapCanvas((1, 6), self)
+        self.colormap_image_canvas = ColormapCanvas((1, 6),  self.settings, self)
         self.segmented_image_canvas = MyDrawCanvas((6, 6), self.settings, self)
-        self.normal_image_canvas.set_base_image(tifffile.imread("clean_segment.tiff"))
-        self.segmented_image_canvas.set_base_image(tifffile.imread("clean_segment.tiff"))
+        self.segmented_image_canvas.segment.add_segmentation_callback((self.update_object_information,))
+        self.slider_swap = QCheckBox("Synchronize\nsliders", self)
+
+        big_font = QFont(QApplication.font())
+        big_font.setPointSize(big_font_size)
+
+        self.object_count = QLabel(self)
+        self.object_count.setFont(big_font)
+        self.object_count.setMinimumWidth(150)
+        self.object_size_list = QLabel(self)
+        self.object_size_list.setFont(big_font)
+        self.object_size_list.setMinimumWidth(1000)
+        self.object_size_list.setTextInteractionFlags(Qt.TextSelectableByMouse)
+
+        self.setGeometry(50, 50,  1400, 720)
 
         self.update_objects_positions()
-        self.setGeometry(50, 50,  1400, 720)
+        self.settings.add_image(tifffile.imread("clean_segment.tiff"))
 
     def update_objects_positions(self):
         self.normal_image_canvas.move(10, 40)
@@ -326,3 +431,16 @@ class MainWindow(QMainWindow):
         set_position(self.colormap_image_canvas, self.normal_image_canvas, 0)
         # noinspection PyTypeChecker
         set_position(self.segmented_image_canvas, self.colormap_image_canvas, 0)
+        col_pos = self.colormap_image_canvas.pos()
+        self.slider_swap.move(col_pos.x()+5,
+                              col_pos.y()+self.colormap_image_canvas.height()-35)
+        norm_pos = self.normal_image_canvas.pos()
+        self.object_count.move(norm_pos.x(),
+                               norm_pos.y()+self.normal_image_canvas.height()+20)
+        self.object_size_list.move(self.object_count.pos().x()+150, self.object_count.pos().y())
+
+    def update_object_information(self, info_aray):
+        """:type info_aray: np.ndarray"""
+        self.object_count.setText("Object num: {0}".format(str(info_aray.size)))
+        self.object_size_list.setText("Objects size: {0}".format(str(info_aray)))
+
