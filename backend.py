@@ -18,6 +18,7 @@ def gaussian(image, radius):
         layer[...] = sitk.GetArrayFromImage(sitk.DiscreteGaussian(sitk.GetImageFromArray(layer), radius))
     return res
 
+
 def bisect(arr, val, comp):
     l = -1
     r = len(arr)
@@ -72,6 +73,9 @@ class Settings(object):
         self.threshold_change_callback = []
         self.minimum_size_change_callback = []
         self.layer_num = 0
+        self.open_directory = None
+        self.save_directory = None
+        self.spacing = (1, 1, 6)
 
     def change_colormap(self, new_color_map):
         """
@@ -122,6 +126,15 @@ class Settings(object):
         for fun in self.threshold_change_callback:
             fun()
 
+    def change_threshold_type(self, new_type):
+        print(new_type)
+        if new_type == "Upper threshold:":
+            self.threshold_type = "Upper"
+        else:
+            self.threshold_type = "Lower"
+        for fun in self.threshold_change_callback:
+            fun()
+
     def change_gauss(self, use_gauss):
         self.use_gauss = bool(use_gauss)
         for fun in self.threshold_change_callback:
@@ -150,7 +163,7 @@ class Segment(object):
         self._gauss_image = None
         self._threshold_image = None
         self._segmented_image = None
-        self._finaly_segment = None
+        self._finally_segment = None
         self._sizes_array = []
         self.segmentation_change_callback = []
         self._segmentation_changed = True
@@ -187,10 +200,10 @@ class Segment(object):
         self.min_size_updated()
 
     def min_size_updated(self):
-        ind = bisect(self._sizes_array, self._settings.minimum_size, lambda x, y: x > y)
-        print(ind, self._sizes_array[ind], self._sizes_array[ind-1], self._settings.minimum_size)
-        self._finaly_segment = np.copy(self._segmented_image)
-        self._finaly_segment[self._finaly_segment >= ind] = 0
+        ind = bisect(self._sizes_array[1:], self._settings.minimum_size, lambda x, y: x > y)
+        # print(ind, self._sizes_array, self._settings.minimum_size)
+        self._finally_segment = np.copy(self._segmented_image)
+        self._finally_segment[self._finally_segment > ind] = 0
         self._segmentation_changed = True
         for fun in self.segmentation_change_callback:
             if isinstance(fun, tuple):
@@ -205,7 +218,7 @@ class Segment(object):
 
     def get_segmentation(self):
         self._segmentation_changed = False
-        return self._finaly_segment
+        return self._finally_segment
 
     def add_segmentation_callback(self, callback):
         self.segmentation_change_callback.append(callback)

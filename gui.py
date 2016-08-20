@@ -159,6 +159,7 @@ class MyCanvas(FigureCanvas):
         self.next_button.clicked.connect(self.toolbar.forward)
         self.slider = QSlider(Qt.Horizontal, self)
         self.slider.setRange(0, 0)
+        self.slider.valueChanged[int].connect(self.change_layer)
         self.colormap_checkbox = QCheckBox(self)
         self.colormap_checkbox.setText("With colormap")
         self.colormap_checkbox.setChecked(True)
@@ -208,7 +209,11 @@ class MyCanvas(FigureCanvas):
         self.base_image = image
         self.ax_im = None
         self.update_rgb_image()
-        self.update_image_view()
+        if len(image.shape) > 2:
+            self.slider.setRange(0, image.shape[0]-1)
+            self.slider.setValue(int(image.shape[0]/2))
+        else:
+            self.update_image_view()
 
     def update_colormap(self):
         if self.base_image is None:
@@ -224,6 +229,10 @@ class MyCanvas(FigureCanvas):
             cmap = matplotlib.cm.get_cmap("gray")
         colored_image = cmap(float_image)
         self.rgb_image = np.array(colored_image * 255).astype(np.uint8)
+
+    def change_layer(self, layer_num):
+        self.layer_num = layer_num
+        self.update_image_view()
 
     def update_image_view(self):
         pyplot.figure(self.my_figure_num)
@@ -316,10 +325,15 @@ class MyDrawCanvas(MyCanvas):
     def set_image(self, image):
         self.base_image = image
         self.ax_im = None
+        self.original_rgb_image = None
         self.draw_canvas = np.zeros(image.shape, dtype=np.uint8)
         self.segment.set_image(image)
         self.update_rgb_image()
-        self.update_image_view()
+        if len(image.shape) > 2:
+            self.slider.setRange(0, image.shape[0]-1)
+            self.slider.setValue(int(image.shape[0]/2))
+        else:
+            self.update_image_view()
 
     def update_segmentation_image(self):
         if not self.segment.segmentation_changed:
@@ -335,11 +349,13 @@ class MainMenu(QLabel):
         self.settings = settings
         self.settings.add_image_callback(self.set_threshold_range)
         self.load_button = QPushButton("Load", self)
+        self.load_button.clicked.connect(self.open_file)
         self.save_button = QPushButton("Save", self)
         self.save_button.setDisabled(True)
         self.threshold_type = QComboBox(self)
         self.threshold_type.addItem("Upper threshold:")
         self.threshold_type.addItem("Lower threshold:")
+        self.threshold_type.currentIndexChanged[unicode].connect(settings.change_threshold_type)
         self.threshold_value = QSpinBox(self)
         self.threshold_value.setMinimumWidth(80)
         self.threshold_value.setRange(0, 100000)
@@ -394,6 +410,34 @@ class MainMenu(QLabel):
         vmin = image.min()
         vmax = image.max()
         self.threshold_value.setRange(vmin, vmax)
+        diff = vmax - vmin
+        if diff > 10000:
+            self.threshold_value.setSingleStep(500)
+        elif diff > 1000:
+            self.threshold_value.setSingleStep(100)
+        elif diff > 100:
+            self.threshold_value.setSingleStep(20)
+        else:
+            self.threshold_value.setSingleStep(1)
+
+    def open_file(self):
+        dial = QFileDialog(self, "Load data")
+        if self.settings.open_directory is not None:
+            dial.setDirectory(self.settings.open_directory)
+        dial.setFileMode(QFileDialog.ExistingFile)
+        filters = ["raw image (*.tiff *.tif *.lsm)", "image with mask (*.tiff *.tif *.lsm *,json)",
+                   "saved project (*.gz)"]
+        dial.setFilters(filters)
+        a = dial.options()
+        if dial.exec_():
+            file_path = dial.selectedFiles()[0]
+            selected_filter = dial.selectedFilter()
+            print(file_path, selected_filter)
+            if selected_filter == "raw image (*.tiff *.tif *.lsm)":
+                im = tifffile.imread(file_path)
+                self.settings.add_image(im)
+            else:
+                pass
 
 
 class MainWindow(QMainWindow):
