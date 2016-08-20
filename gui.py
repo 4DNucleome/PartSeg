@@ -376,6 +376,10 @@ class MainMenu(QLabel):
         self.gauss_check = QCheckBox("Use gauss", self)
         self.gauss_check.stateChanged[int].connect(settings.change_gauss)
         self.draw_check = QCheckBox("Use draw result", self)
+        self.profile_choose = QComboBox(self)
+        self.profile_choose.addItem("<no profile>")
+        self.profile_choose.addItems(self.settings.get_profile_list())
+        self.advanced_button = QPushButton("Advanced", self)
 
         self.colormap_choose = QComboBox(self)
         self.colormap_choose.addItems(settings.colormap_list)
@@ -384,7 +388,7 @@ class MainMenu(QLabel):
         self.colormap_choose.currentIndexChanged.connect(self.colormap_changed)
 
         self.update_elements_positions()
-        self.setMinimumWidth(1000)
+        self.setMinimumWidth(1200)
         self.setMinimumHeight(button_height+5)
 
     def update_elements_positions(self):
@@ -398,7 +402,9 @@ class MainMenu(QLabel):
         set_position(self.minimum_size_value, self.minimum_size_lab, 5)
         set_button(self.gauss_check, self.minimum_size_value, -10)
         set_button(self.draw_check, self.gauss_check, -10)
-        set_button(self.colormap_choose, self.draw_check, 15)
+        set_button(self.profile_choose, self.draw_check, 20)
+        set_button(self.advanced_button, self.profile_choose)
+        set_button(self.colormap_choose, self.advanced_button, 10)
 
     def colormap_changed(self):
         self.settings.change_colormap(self.colormap_choose.currentText())
@@ -428,11 +434,12 @@ class MainMenu(QLabel):
         filters = ["raw image (*.tiff *.tif *.lsm)", "image with mask (*.tiff *.tif *.lsm *,json)",
                    "saved project (*.gz)"]
         dial.setFilters(filters)
-        a = dial.options()
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
             selected_filter = dial.selectedFilter()
             print(file_path, selected_filter)
+            self.parent().statusBar.showMessage(file_path)
+            # TODO maybe something better. Now main window have to be parent
             if selected_filter == "raw image (*.tiff *.tif *.lsm)":
                 im = tifffile.imread(file_path)
                 self.settings.add_image(im)
@@ -463,7 +470,8 @@ class MainWindow(QMainWindow):
         self.object_size_list.setFont(big_font)
         self.object_size_list.setMinimumWidth(1000)
         self.object_size_list.setTextInteractionFlags(Qt.TextSelectableByMouse)
-
+        self.statusBar = QStatusBar()
+        self.setStatusBar(self.statusBar)
         self.setGeometry(50, 50,  1400, 720)
 
         self.update_objects_positions()

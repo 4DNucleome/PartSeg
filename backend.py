@@ -151,6 +151,9 @@ class Settings(object):
     def add_min_size_callback(self, callback):
         self.minimum_size_change_callback.append(callback)
 
+    def get_profile_list(self):
+        return self.profiles.keys()
+
 
 class Segment(object):
     """:type _segmented_image: np.ndarray"""
