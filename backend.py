@@ -60,6 +60,7 @@ class Settings(object):
         self.color_map_name = "cubehelix"
         self.color_map = matplotlib.cm.get_cmap(self.color_map_name)
         self.callback_color_map = []
+        self.chosen_colormap = pyplot.colormaps()
         self.profiles = {}
         self.use_gauss = False
         self.threshold = 33000
@@ -108,6 +109,10 @@ class Settings(object):
 
     @property
     def colormap_list(self):
+        return self.chosen_colormap
+
+    @property
+    def avaliable_colormaps_list(self):
         return pyplot.colormaps()
 
     def add_image(self, image):

@@ -17,7 +17,7 @@ from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as Navigatio
 from PySide.QtCore import Qt, QSize
 from PySide.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget,\
     QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QPixmap, QSpinBox,\
-    QAbstractSpinBox, QApplication
+    QAbstractSpinBox, QApplication, QTabWidget, QScrollArea
 from math import copysign
 
 from backend import Settings, Segment
@@ -38,8 +38,8 @@ if platform.system() == "Linux":
 if platform.system() == "Darwin":
     big_font_size = 20
     button_margin = 30
-    button_height = 40
-    button_small_dist = -12
+    button_height = 34
+    button_small_dist = -10
 
 if platform.system() == "Windows":
     big_font_size = 12
@@ -164,7 +164,7 @@ class MyCanvas(FigureCanvas):
         self.colormap_checkbox.setText("With colormap")
         self.colormap_checkbox.setChecked(True)
         self.layer_num_label = QLabel(self)
-        self.layer_num_label.setText("1 of 1")
+        self.layer_num_label.setText("1 of 1      ")
         self.settings = settings
         settings.add_image_callback(self.set_image)
         settings.add_colormap_callback(self.update_colormap)
@@ -180,7 +180,7 @@ class MyCanvas(FigureCanvas):
         set_button(self.next_button, self.back_button, button_small_dist)
         self.slider.move(20, self.size().toTuple()[1]-20)
         self.colormap_checkbox.move(self.slider.pos().x(), self.slider.pos().y()-15)
-        self.slider.setMinimumWidth(self.width()-90)
+        self.slider.setMinimumWidth(self.width()-85)
         set_button(self.layer_num_label, self.slider)
 
     def move_action(self):
@@ -232,6 +232,7 @@ class MyCanvas(FigureCanvas):
 
     def change_layer(self, layer_num):
         self.layer_num = layer_num
+        self.layer_num_label.setText("{0} of {1}".format(str(layer_num + 1), str(self.base_image.shape[0])))
         self.update_image_view()
 
     def update_image_view(self):
@@ -343,6 +344,88 @@ class MyDrawCanvas(MyCanvas):
         self.rgb_segmentation = label_to_rgb(self.segmentation)
 
 
+class ColormapSettings(QLabel):
+    def __init__(self, settings, parent=None):
+        super(ColormapSettings, self).__init__(parent)
+        self.accept = QPushButton("Accept", self)
+        set_button(self.accept, None)
+        self.mark_all = QPushButton("Mark all", self)
+        set_button(self.mark_all, self.accept, button_small_dist)
+        self.unselect_all = QPushButton("Unmark all", self)
+        set_button(self.unselect_all, self.mark_all, button_small_dist)
+        self.settings = settings
+        scroll_area = QScrollArea(self)
+        scroll_area.move(0, button_height)
+        self.scroll_area = scroll_area
+        self.scroll_widget = QLabel()
+        self.scroll_area.setWidget(self.scroll_widget)
+        choosen = set(settings.colormap_list)
+        all_cmap = settings.avaliable_colormaps_list
+        self.cmap_list = []
+        font_met = QFontMetrics(QApplication.font())
+        max_len = 0
+        for name in all_cmap:
+            max_len = max(max_len, font_met.boundingRect(name).width())
+            check = QCheckBox(self.scroll_widget)
+            check.setText(name)
+            if name in choosen:
+                check.setChecked(True)
+            self.cmap_list.append(check)
+        self.columns = 0
+        self.label_len = max_len
+        self.update_positions()
+
+    def update_positions(self):
+        space = self.size().width()
+        space -= 20  # scrollbar
+        columns = int(space / float(self.label_len + 10))
+        if columns == 0:
+            columns = 1
+        if columns == self.columns:
+            return
+        self.columns = columns
+        elem = self.cmap_list[0]
+        elem.move(0, 0)
+        prev = elem
+        for count, elem in enumerate(self.cmap_list[1:]):
+            if ((count+1) % columns) == 0:
+                elem.move(0, prev.pos().y()+20)
+            else:
+                elem.move(prev.pos().x()+self.label_len+10, prev.pos().y())
+            prev = elem
+        height = prev.pos().y() + 20
+        self.scroll_widget.resize(columns * (self.label_len + 10), height)
+
+    def resizeEvent(self, resize_event):
+        w, h = resize_event.size().toTuple()
+        w -= 4
+        h -= button_height + 4
+        self.scroll_area.resize(w, h)
+        self.update_positions()
+
+
+class AdvancedWindow(QTabWidget):
+    def __init__(self, settings, parent=None):
+        super(AdvancedWindow, self).__init__(parent)
+        self.settings = settings
+        self.advanced_settings = QLabel()
+        self.colormap_settings = ColormapSettings(settings)
+        self.statistics = QLabel()
+        self.addTab(self.advanced_settings, "Settings")
+        self.addTab(self.colormap_settings, "Color maps")
+        self.addTab(self.statistics, "Statistics")
+
+    def resizeEvent(self, resize_event):
+        super(AdvancedWindow, self).resizeEvent(resize_event)
+        """:type new_size: QSize"""
+        w, h = resize_event.size().toTuple()
+        wt, ht = self.tabBar().size().toTuple()
+        h -= ht
+        self.colormap_settings.resize(w, h)
+        self.statistics.resize(w, h)
+        self.advanced_settings.resize(w, h)
+
+
 class MainMenu(QLabel):
     def __init__(self, settings, *args, **kwargs):
         super(MainMenu, self).__init__(*args, **kwargs)
@@ -380,6 +463,8 @@ class MainMenu(QLabel):
         self.profile_choose.addItem("<no profile>")
         self.profile_choose.addItems(self.settings.get_profile_list())
         self.advanced_button = QPushButton("Advanced", self)
+        self.advanced_button.clicked.connect(self.open_advanced)
+        self.advanced_window = None
 
         self.colormap_choose = QComboBox(self)
         self.colormap_choose.addItems(settings.colormap_list)
@@ -445,6 +530,10 @@ class MainMenu(QLabel):
                 self.settings.add_image(im)
             else:
                 pass
+
+    def open_advanced(self):
+        self.advanced_window = AdvancedWindow(self.settings)
+        self.advanced_window.show()
 
 
 class MainWindow(QMainWindow):
