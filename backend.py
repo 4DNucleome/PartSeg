@@ -70,6 +70,7 @@ class Settings(object):
         self.minimum_size = 100
         self.overlay = 0.7
         self.image = None
+        self.mask = None
         self.image_change_callback = []
         self.threshold_change_callback = []
         self.minimum_size_change_callback = []
@@ -115,8 +116,9 @@ class Settings(object):
     def avaliable_colormaps_list(self):
         return pyplot.colormaps()
 
-    def add_image(self, image):
+    def add_image(self, image, mask=None):
         self.image = image
+        self.mask = mask
         for fun in self.image_change_callback:
             fun(image)
 
@@ -190,6 +192,7 @@ class Segment(object):
             image_to_threshold = self._gauss_image
         else:
             image_to_threshold = self._image
+        # Define wich threshold use
         if self._settings.threshold_type == "Upper":
             def get_mask(image, threshold):
                 return image <= threshold
@@ -202,6 +205,8 @@ class Segment(object):
                 self._threshold_image[i][get_mask(image_to_threshold[i], self._settings.threshold_list[i])] = 1
         else:
             self._threshold_image[get_mask(image_to_threshold, self._settings.threshold)] = 1
+        if self._settings.mask is not None:
+            self._threshold_image *= (self._settings.mask > 0)
         connect = sitk.ConnectedComponent(sitk.GetImageFromArray(self._threshold_image))
         self._segmented_image = sitk.GetArrayFromImage(sitk.RelabelComponent(connect))
         self._sizes_array = np.bincount(self._segmented_image.flat)
