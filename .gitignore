@@ -50,9 +50,11 @@ fabric.properties
 ### PyCharm Patch ###
 # Comment Reason: https://github.com/joeblau/gitignore.io/issues/186#issuecomment-215987721
 
-# *.iml
-# modules.xml
-# .idea/misc.xml 
+.idea
+.idea/*.iml
+.idea/modules.xml
+.idea/misc.xml
+.idea/workspace.xml
 # *.ipr
 
 
