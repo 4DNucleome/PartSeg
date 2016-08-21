@@ -257,7 +257,7 @@ class MyDrawCanvas(MyCanvas):
     """
     def __init__(self, figsize, settings,  *args):
         super(MyDrawCanvas, self).__init__(figsize, settings, *args)
-        self.draw_canvas = None
+        self.draw_canvas = DrawObject(settings, self.update_image_view)
         self.history_list = list()
         self.redo_list = list()
         self.zoom_button.clicked.connect(self.up_drawing_button)
@@ -265,34 +265,57 @@ class MyDrawCanvas(MyCanvas):
         self.draw_button = QPushButton("Draw", self)
         self.draw_button.setCheckable(True)
         self.draw_button.clicked.connect(self.up_move_zoom_button)
+        self.draw_button.clicked[bool].connect(self.draw_click)
         self.erase_button = QPushButton("Erase", self)
-        self.draw_button.setCheckable(True)
+        self.erase_button.setCheckable(True)
         self.erase_button.clicked.connect(self.up_move_zoom_button)
+        self.erase_button.clicked[bool].connect(self.erase_click)
         self.clean_button = QPushButton("Clean", self)
         self.update_elements_positions()
         self.segment = Segment(settings)
+        self.protect_button = False
         self.segmentation = None
         self.rgb_segmentation = None
         self.original_rgb_image = None
         self.labeled_rgb_image = None
         self.colormap_checkbox.setChecked(False)
         self.segment.add_segmentation_callback(self.segmentation_changed)
-        im = [np.arange(3)]
-        rgb_im = sitk.GetArrayFromImage(sitk.LabelToRGB(sitk.GetImageFromArray(im)))
-        self.draw_colors = rgb_im[0]
+        self.slider.valueChanged[int].connect(self.draw_canvas.set_layer_num)
+        self.mpl_connect('button_press_event', self.draw_canvas.on_mouse_down)
+        self.mpl_connect('motion_notify_event', self.draw_canvas.on_mouse_move)
+        self.mpl_connect('button_release_event', self.draw_canvas.on_mouse_up)
 
     def up_move_zoom_button(self):
+        self.protect_button = True
         if self.zoom_button.isChecked():
             self.zoom_button.click()
         if self.move_button.isChecked():
             self.move_button.click()
+        self.protect_button = False
 
     def up_drawing_button(self):
         # TODO Update after create draw object
+        if self.protect_button:
+            return
+        self.draw_canvas.draw_on = False
         if self.draw_button.isChecked():
-            self.draw_button.click()
+            self.draw_button.setChecked(False)
         if self.erase_button.isChecked():
-            self.erase_button.click()
+            self.erase_button.setChecked(False)
+
+    def draw_click(self, checked):
+        if checked:
+            self.erase_button.setChecked(False)
+            self.draw_canvas.set_draw_mode()
+        else:
+            self.draw_canvas.draw_on = False
+
+    def erase_click(self, checked):
+        if checked:
+            self.draw_button.setChecked(False)
+            self.draw_canvas.set_erase_mode()
+        else:
+            self.draw_canvas.draw_on = False
 
     def update_elements_positions(self):
         super(MyDrawCanvas, self).update_elements_positions()
@@ -313,9 +336,12 @@ class MyDrawCanvas(MyCanvas):
         self.rgb_image = np.copy(self.original_rgb_image)
         self.rgb_image[mask] = self.original_rgb_image[mask] * (1 - overlay) + self.rgb_segmentation[mask] * overlay
         self.labeled_rgb_image = np.copy(self.rgb_image)
-        draw_lab = label_to_rgb(self.draw_canvas)
+        draw_lab = label_to_rgb(self.draw_canvas.draw_canvas)
         mask = draw_lab > 0
         self.rgb_image[mask] = self.original_rgb_image[mask] * (1 - overlay) + draw_lab[mask] * overlay
+        self.draw_canvas.rgb_image = self.rgb_image
+        self.draw_canvas.original_rgb_image = self.original_rgb_image
+        self.draw_canvas.labeled_rgb_image = self.labeled_rgb_image
 
     def update_rgb_image(self):
         super(MyDrawCanvas, self).update_rgb_image()
@@ -327,7 +353,7 @@ class MyDrawCanvas(MyCanvas):
         self.base_image = image
         self.ax_im = None
         self.original_rgb_image = None
-        self.draw_canvas = np.zeros(image.shape, dtype=np.uint8)
+        self.draw_canvas.set_image(image)
         self.segment.set_image(image)
         self.update_rgb_image()
         if len(image.shape) > 2:
@@ -342,6 +368,98 @@ class MyDrawCanvas(MyCanvas):
         self.segmentation = np.copy(self.segment.get_segmentation())
         self.segmentation[self.segmentation > 0] += 2
         self.rgb_segmentation = label_to_rgb(self.segmentation)
+
+
+class DrawObject(object):
+    def __init__(self, settings, update_fun):
+        self.settings = settings
+        self.mouse_down = False
+        self.draw_on = True
+        self.draw_canvas = None
+        self.prev_x = None
+        self.prev_y = None
+        self.original_rgb_image = None
+        self.rgb_image = None
+        self.labeled_rgb_image = None
+        self.layer_num = 0
+        im = [np.arange(3)]
+        rgb_im = sitk.GetArrayFromImage(sitk.LabelToRGB(sitk.GetImageFromArray(im)))
+        self.draw_colors = rgb_im[0]
+        self.update_fun = update_fun
+        self.draw_value = 0
+        self.draw_fun = None
+        self.value = 1
+        self.click_history = []
+        self.history = []
+        self.f_x = 0
+        self.f_y = 0
+
+    def set_layer_num(self, layer_num):
+        self.layer_num = layer_num
+
+    def set_draw_mode(self):
+        self.draw_on = True
+        self.value = 1
+
+    def set_erase_mode(self):
+        self.draw_on = True
+        self.value = 2
+
+    def set_image(self, image):
+        self.draw_canvas = np.zeros(image.shape, dtype=np.uint8)
+
+    def draw(self, pos):
+        if len(self.original_rgb_image.shape) == 3:
+            pos = pos[1:]
+        self.click_history.append((pos, self.draw_canvas[pos]))
+        self.draw_canvas[pos] = self.value
+        self.rgb_image[pos] = self.original_rgb_image[pos] * (1-self.settings.overlay) + \
+            self.draw_colors[self.value] * self.settings.overlay
+
+    def erase(self, pos):
+        if len(self.original_rgb_image.shape) == 3:
+            pos = pos[1:]
+        self.click_history.append((pos, self.draw_canvas[pos]))
+        self.draw_canvas[pos] = 0
+        self.rgb_image[pos] = self.labeled_rgb_image[pos]
+
+    def on_mouse_down(self, event):
+        self.mouse_down = True
+        self.click_history = []
+        if self.draw_on and event.xdata is not None and event.ydata is not None:
+            ix, iy = int(event.xdata + 0.5), int(event.ydata + 0.5)
+            if len(self.original_rgb_image.shape) > 3:
+                val = self.draw_canvas[self.layer_num, iy, ix]
+            else:
+                val = self.draw_canvas[iy, ix]
+            if val in [0, self.value]:
+                self.draw_fun = self.draw
+            else:
+                self.draw_fun = self.erase
+            self.draw_fun((self.layer_num, iy, ix))
+            self.f_x = event.xdata + 0.5
+            self.f_y = event.ydata + 0.5
+            self.update_fun()
+
+    def on_mouse_move(self, event):
+        if self.mouse_down and self.draw_on and event.xdata is not None and event.ydata is not None:
+            f_x, f_y = event.xdata + 0.5, event.ydata + 0.5
+            # ix, iy = int(f_x), int(f_y)
+            max_dist = max(abs(f_x - self.f_x), abs(f_y - self.f_y))
+            rep_num = int(max_dist * 2)+2
+            points = set()
+            for fx, fy in zip(np.linspace(f_x, self.f_x, num=rep_num),np.linspace(f_y, self.f_y, num=rep_num)):
+                points.add((int(fx), int(fy)))
+            points.remove((int(self.f_x), int(self.f_y)))
+            for fx, fy in points:
+                self.draw_fun((self.layer_num, fy, fx))
+            self.f_x = f_x
+            self.f_y = f_y
+            self.update_fun()
+
+    def on_mouse_up(self, event):
+        self.history.append(self.click_history)
+        self.mouse_down = False
 
 
 class ColormapSettings(QLabel):
