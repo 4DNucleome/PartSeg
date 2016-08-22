@@ -463,13 +463,19 @@ class DrawObject(object):
 
 
 class ColormapSettings(QLabel):
+    """
+    :type cmap_list: list[QCheckBox]
+    """
     def __init__(self, settings, parent=None):
         super(ColormapSettings, self).__init__(parent)
         self.accept = QPushButton("Accept", self)
+        self.accept.clicked.connect(self.accept_click)
         set_button(self.accept, None)
         self.mark_all = QPushButton("Mark all", self)
+        self.mark_all.clicked.connect(self.mark_all_click)
         set_button(self.mark_all, self.accept, button_small_dist)
         self.unselect_all = QPushButton("Unmark all", self)
+        self.unselect_all.clicked.connect(self.un_mark_all_click)
         set_button(self.unselect_all, self.mark_all, button_small_dist)
         self.settings = settings
         scroll_area = QScrollArea(self)
@@ -478,7 +484,7 @@ class ColormapSettings(QLabel):
         self.scroll_widget = QLabel()
         self.scroll_area.setWidget(self.scroll_widget)
         choosen = set(settings.colormap_list)
-        all_cmap = settings.avaliable_colormaps_list
+        all_cmap = settings.available_colormap_list
         self.cmap_list = []
         font_met = QFontMetrics(QApplication.font())
         max_len = 0
@@ -488,10 +494,31 @@ class ColormapSettings(QLabel):
             check.setText(name)
             if name in choosen:
                 check.setChecked(True)
+            if name == self.settings.color_map_name:
+                check.setDisabled(True)
             self.cmap_list.append(check)
         self.columns = 0
         self.label_len = max_len
         self.update_positions()
+        self.settings.add_colormap_callback(self.change_main_colormap)
+        self.setMinimumSize(400, 400)
+
+    def mark_all_click(self):
+        for elem in self.cmap_list:
+            if elem.isEnabled():
+                elem.setChecked(True)
+
+    def un_mark_all_click(self):
+        for elem in self.cmap_list:
+            if elem.isEnabled():
+                elem.setChecked(False)
+
+    def accept_click(self):
+        choosen = []
+        for elem in self.cmap_list:
+            if elem.isChecked():
+                choosen.append(elem.text())
+        self.settings.set_available_colormap(choosen)
 
     def update_positions(self):
         space = self.size().width()
@@ -514,12 +541,22 @@ class ColormapSettings(QLabel):
         height = prev.pos().y() + 20
         self.scroll_widget.resize(columns * (self.label_len + 10), height)
 
+    def change_main_colormap(self):
+        for elem in self.cmap_list:
+            elem.setDisabled(False)
+            if elem.text() == self.settings.color_map_name:
+                elem.setChecked(True)
+                elem.setDisabled(True)
+
     def resizeEvent(self, resize_event):
         w, h = resize_event.size().toTuple()
         w -= 4
         h -= button_height + 4
         self.scroll_area.resize(w, h)
         self.update_positions()
+
+    def clean(self):
+        self.settings.remove_colormap_callback(self.change_main_colormap)
 
 
 class AdvancedWindow(QTabWidget):
@@ -542,6 +579,10 @@ class AdvancedWindow(QTabWidget):
         self.colormap_settings.resize(w, h)
         self.statistics.resize(w, h)
         self.advanced_settings.resize(w, h)
+
+    def closeEvent(self, *args, **kwargs):
+        self.colormap_settings.clean()
+        super(AdvancedWindow, self).closeEvent(*args, **kwargs)
 
 
 class MainMenu(QLabel):
@@ -589,6 +630,8 @@ class MainMenu(QLabel):
         index = list(settings.colormap_list).index(settings.color_map_name)
         self.colormap_choose.setCurrentIndex(index)
         self.colormap_choose.currentIndexChanged.connect(self.colormap_changed)
+        self.settings.add_colormap_list_callback(self.colormap_list_changed)
+        self.colormap_protect = False
 
         self.update_elements_positions()
         self.setMinimumWidth(1200)
@@ -610,10 +653,21 @@ class MainMenu(QLabel):
         set_button(self.colormap_choose, self.advanced_button, 10)
 
     def colormap_changed(self):
+        if self.colormap_protect:
+            return
         self.settings.change_colormap(self.colormap_choose.currentText())
 
     def settings_changed(self):
         self.threshold_value.setValue(self.settings.threshold)
+
+    def colormap_list_changed(self):
+        self.colormap_protect = True
+        text = self.colormap_choose.currentText()
+        self.colormap_choose.clear()
+        self.colormap_choose.addItems(self.settings.colormap_list)
+        index = list(self.settings.colormap_list).index(text)
+        self.colormap_choose.setCurrentIndex(index)
+        self.colormap_protect = False
 
     def set_threshold_range(self, image):
         vmin = image.min()

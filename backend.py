@@ -59,7 +59,8 @@ class Settings(object):
         # TODO Reading setings from file
         self.color_map_name = "cubehelix"
         self.color_map = matplotlib.cm.get_cmap(self.color_map_name)
-        self.callback_color_map = []
+        self.callback_colormap = []
+        self.callback_colormap_list = []
         self.chosen_colormap = pyplot.colormaps()
         self.profiles = {}
         self.use_gauss = False
@@ -87,14 +88,17 @@ class Settings(object):
         """
         self.color_map_name = new_color_map
         self.color_map = matplotlib.cm.get_cmap(new_color_map)
-        for fun in self.callback_color_map:
+        for fun in self.callback_colormap:
             fun()
 
+    def add_colormap_list_callback(self, callback):
+        self.callback_colormap_list.append(callback)
+
     def add_colormap_callback(self, callback):
-        self.callback_color_map.append(callback)
+        self.callback_colormap.append(callback)
 
     def remove_colormap_callback(self, callback):
-        self.callback_color_map.remove(callback)
+        self.callback_colormap.remove(callback)
 
     def create_new_profile(self, name, overwrite=False):
         """
@@ -113,7 +117,7 @@ class Settings(object):
         return self.chosen_colormap
 
     @property
-    def avaliable_colormaps_list(self):
+    def available_colormap_list(self):
         return pyplot.colormaps()
 
     def add_image(self, image, mask=None):
@@ -160,6 +164,11 @@ class Settings(object):
 
     def get_profile_list(self):
         return self.profiles.keys()
+
+    def set_available_colormap(self, cmap_list):
+        self.chosen_colormap = cmap_list
+        for fun in self.callback_colormap_list:
+            fun()
 
 
 class Segment(object):
