@@ -17,7 +17,7 @@ from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as Navigatio
 from PySide.QtCore import Qt, QSize
 from PySide.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget,\
     QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QPixmap, QSpinBox,\
-    QAbstractSpinBox, QApplication, QTabWidget, QScrollArea
+    QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog
 from math import copysign
 
 from backend import Settings, Segment
@@ -46,7 +46,7 @@ if platform.system() == "Windows":
 
 
 def set_position(elem, previous, dist=10):
-    pos_y = previous.y()
+    pos_y = previous.pos().y()
     if platform.system() == "Darwin" and isinstance(elem, QLineEdit):
         pos_y += 3
     if platform.system() == "Darwin" and isinstance(previous, QLineEdit):
@@ -95,6 +95,41 @@ def label_to_rgb(image):
     sitk_im = sitk.GetImageFromArray(image)
     lab_im = sitk.LabelToRGB(sitk_im)
     return sitk.GetArrayFromImage(lab_im)
+
+
+class SynchronizeSliders(object):
+    def __init__(self, slider1, slider2, switch):
+        """
+        :type slider1: QSlider
+        :type slider2: QSlider
+        :type switch: QCheckBox
+        """
+        self.slider1 = slider1
+        self.slider2 = slider2
+        self.switch = switch
+        self.slider1.valueChanged[int].connect(self.slider1_changed)
+        self.slider2.valueChanged[int].connect(self.slider2_changed)
+        self.switch.stateChanged[int].connect(self.state_changed)
+        self.sync = self.switch.isChecked()
+
+    def state_changed(self, state):
+        if state:
+            self.slider2.setValue(self.slider1.value())
+        self.sync = bool(state)
+
+    def slider1_changed(self, val):
+        if not self.sync:
+            return
+        self.sync = False
+        self.slider2.setValue(val)
+        self.sync = True
+
+    def slider2_changed(self, val):
+        if not self.sync:
+            return
+        self.sync = False
+        self.slider1.setValue(val)
+        self.sync = True
 
 
 class ColormapCanvas(FigureCanvas):
@@ -337,7 +372,7 @@ class MyDrawCanvas(MyCanvas):
         self.rgb_image[mask] = self.original_rgb_image[mask] * (1 - overlay) + self.rgb_segmentation[mask] * overlay
         self.labeled_rgb_image = np.copy(self.rgb_image)
         draw_lab = label_to_rgb(self.draw_canvas.draw_canvas)
-        mask = draw_lab > 0
+        mask = self.draw_canvas.draw_canvas > 0
         self.rgb_image[mask] = self.original_rgb_image[mask] * (1 - overlay) + draw_lab[mask] * overlay
         self.draw_canvas.rgb_image = self.rgb_image
         self.draw_canvas.original_rgb_image = self.original_rgb_image
@@ -647,8 +682,8 @@ class MainMenu(QLabel):
         set_button(self.minimum_size_lab, self.layer_thr_check, 0)
         set_position(self.minimum_size_value, self.minimum_size_lab, 5)
         set_button(self.gauss_check, self.minimum_size_value, -10)
-        set_button(self.draw_check, self.gauss_check, -10)
-        set_button(self.profile_choose, self.draw_check, 20)
+        set_button(self.draw_check, self.gauss_check, -5)
+        set_button(self.profile_choose, self.draw_check, 30)
         set_button(self.advanced_button, self.profile_choose)
         set_button(self.colormap_choose, self.advanced_button, 10)
 
@@ -670,10 +705,10 @@ class MainMenu(QLabel):
         self.colormap_protect = False
 
     def set_threshold_range(self, image):
-        vmin = image.min()
-        vmax = image.max()
-        self.threshold_value.setRange(vmin, vmax)
-        diff = vmax - vmin
+        val_min = image.min()
+        val_max = image.max()
+        self.threshold_value.setRange(val_min, val_max)
+        diff = val_max - val_min
         if diff > 10000:
             self.threshold_value.setSingleStep(500)
         elif diff > 1000:
@@ -688,7 +723,7 @@ class MainMenu(QLabel):
         if self.settings.open_directory is not None:
             dial.setDirectory(self.settings.open_directory)
         dial.setFileMode(QFileDialog.ExistingFile)
-        filters = ["raw image (*.tiff *.tif *.lsm)", "image with mask (*.tiff *.tif *.lsm *,json)",
+        filters = ["raw image (*.tiff *.tif *.lsm)", "image with mask (*.tiff *.tif *.lsm *json)",
                    "saved project (*.gz)"]
         dial.setFilters(filters)
         if dial.exec_():
@@ -699,8 +734,27 @@ class MainMenu(QLabel):
             # TODO maybe something better. Now main window have to be parent
             if selected_filter == "raw image (*.tiff *.tif *.lsm)":
                 im = tifffile.imread(file_path)
+                if len(im.shape) == 4:
+                    # TODO do something better. now not all possibilities are covered
+                    num, state = QInputDialog.getInt(self, "Get channel number", "Witch channel:", 0, 0, im.shape[-1])
+                    if state:
+                        im = im[..., num]
+                    else:
+                        return
                 self.settings.add_image(im)
+            elif selected_filter == "image with mask (*.tiff *.tif *.lsm *json)":
+                extension = os.path.splitext(file_path)
+                if extension == ".json":
+                    with open(file_path) as ff:
+                        info_dict = json.load(ff)
+                    image = tifffile.imread(info_dict["image"])
+                    mask = tifffile.imread(info_dict["mask"])
+                    self.settings.add_image(image,mask)
+                    return
+                image = tifffile.imread(file_path)
             else:
+                r = QMessageBox.warning(self, "Load error", "Function do not implemented yet")
+
                 pass
 
     def open_advanced(self):
@@ -720,6 +774,8 @@ class MainWindow(QMainWindow):
         self.segmented_image_canvas = MyDrawCanvas((6, 6), self.settings, self)
         self.segmented_image_canvas.segment.add_segmentation_callback((self.update_object_information,))
         self.slider_swap = QCheckBox("Synchronize\nsliders", self)
+        self.sync = SynchronizeSliders(self.normal_image_canvas.slider, self.segmented_image_canvas.slider,
+                                       self.slider_swap)
 
         big_font = QFont(QApplication.font())
         big_font.setPointSize(big_font_size)
@@ -729,7 +785,7 @@ class MainWindow(QMainWindow):
         self.object_count.setMinimumWidth(150)
         self.object_size_list = QLabel(self)
         self.object_size_list.setFont(big_font)
-        self.object_size_list.setMinimumWidth(1000)
+        self.object_size_list.setMinimumWidth(1200)
         self.object_size_list.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.statusBar = QStatusBar()
         self.setStatusBar(self.statusBar)
