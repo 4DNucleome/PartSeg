@@ -158,7 +158,7 @@ class ColormapCanvas(FigureCanvas):
         norm = matplotlib.colors.Normalize(vmin=self.val_min, vmax=self.val_max)
         fig = pyplot.figure(self.my_figure_num)
         pyplot.clf()
-        ax = fig.add_axes([0.05, 0.08, 0.3, 0.85])
+        ax = fig.add_axes([0.05, 0.1, 0.3, 0.8])
         matplotlib.colorbar.ColorbarBase(ax, cmap=self.settings.color_map, norm=norm, orientation='vertical')
         fig.canvas.draw()
 
@@ -290,9 +290,9 @@ class MyDrawCanvas(MyCanvas):
     """
     :type segmentation: np.ndarray
     """
-    def __init__(self, figsize, settings,  *args):
+    def __init__(self, figsize, settings, segment, *args):
         super(MyDrawCanvas, self).__init__(figsize, settings, *args)
-        self.draw_canvas = DrawObject(settings, self.update_image_view)
+        self.draw_canvas = DrawObject(settings, segment, self.update_image_view)
         self.history_list = list()
         self.redo_list = list()
         self.zoom_button.clicked.connect(self.up_drawing_button)
@@ -306,8 +306,9 @@ class MyDrawCanvas(MyCanvas):
         self.erase_button.clicked.connect(self.up_move_zoom_button)
         self.erase_button.clicked[bool].connect(self.erase_click)
         self.clean_button = QPushButton("Clean", self)
+        self.clean_button.clicked.connect(self.draw_canvas.clean)
         self.update_elements_positions()
-        self.segment = Segment(settings)
+        self.segment = segment
         self.protect_button = False
         self.segmentation = None
         self.rgb_segmentation = None
@@ -366,13 +367,17 @@ class MyDrawCanvas(MyCanvas):
         if self.original_rgb_image is None:
             self.update_rgb_image()
         self.update_segmentation_image()
-        mask = self.rgb_segmentation > 0
+        mask = self.segmentation > 0
         overlay = self.settings.overlay
         self.rgb_image = np.copy(self.original_rgb_image)
         self.rgb_image[mask] = self.original_rgb_image[mask] * (1 - overlay) + self.rgb_segmentation[mask] * overlay
         self.labeled_rgb_image = np.copy(self.rgb_image)
         draw_lab = label_to_rgb(self.draw_canvas.draw_canvas)
-        mask = self.draw_canvas.draw_canvas > 0
+        if self.settings.use_draw_result:
+            mask = (self.draw_canvas.draw_canvas == 1)
+            mask *= (self.segmentation == 0)
+        else:
+            mask = self.draw_canvas.draw_canvas > 0
         self.rgb_image[mask] = self.original_rgb_image[mask] * (1 - overlay) + draw_lab[mask] * overlay
         self.draw_canvas.rgb_image = self.rgb_image
         self.draw_canvas.original_rgb_image = self.original_rgb_image
@@ -406,8 +411,14 @@ class MyDrawCanvas(MyCanvas):
 
 
 class DrawObject(object):
-    def __init__(self, settings, update_fun):
+    def __init__(self, settings, segment, update_fun):
+        """
+        :type settings: Settings
+        :type segment: Segment
+        :param update_fun:
+        """
         self.settings = settings
+        self.segment = segment
         self.mouse_down = False
         self.draw_on = True
         self.draw_canvas = None
@@ -442,6 +453,7 @@ class DrawObject(object):
 
     def set_image(self, image):
         self.draw_canvas = np.zeros(image.shape, dtype=np.uint8)
+        self.segment.draw_canvas = self.draw_canvas
 
     def draw(self, pos):
         if len(self.original_rgb_image.shape) == 3:
@@ -457,6 +469,11 @@ class DrawObject(object):
         self.click_history.append((pos, self.draw_canvas[pos]))
         self.draw_canvas[pos] = 0
         self.rgb_image[pos] = self.labeled_rgb_image[pos]
+
+    def clean(self):
+        self.draw_canvas[...] = 0
+        self.rgb_image[...] = self.labeled_rgb_image[...]
+        self.update_fun()
 
     def on_mouse_down(self, event):
         self.mouse_down = True
@@ -604,6 +621,8 @@ class AdvancedWindow(QTabWidget):
         self.addTab(self.advanced_settings, "Settings")
         self.addTab(self.colormap_settings, "Color maps")
         self.addTab(self.statistics, "Statistics")
+        if settings.advanced_menu_geometry is not None:
+            self.restoreGeometry(settings.advanced_menu_geometry)
 
     def resizeEvent(self, resize_event):
         super(AdvancedWindow, self).resizeEvent(resize_event)
@@ -617,18 +636,21 @@ class AdvancedWindow(QTabWidget):
 
     def closeEvent(self, *args, **kwargs):
         self.colormap_settings.clean()
+        self.settings.advanced_menu_geometry = self.saveGeometry()
         super(AdvancedWindow, self).closeEvent(*args, **kwargs)
 
 
 class MainMenu(QLabel):
-    def __init__(self, settings, *args, **kwargs):
+    def __init__(self, settings, segment, *args, **kwargs):
         super(MainMenu, self).__init__(*args, **kwargs)
         self.settings = settings
+        self.segment = segment
         self.settings.add_image_callback(self.set_threshold_range)
         self.load_button = QPushButton("Load", self)
         self.load_button.clicked.connect(self.open_file)
         self.save_button = QPushButton("Save", self)
         self.save_button.setDisabled(True)
+        self.save_button.clicked.connect(self.save_results)
         self.threshold_type = QComboBox(self)
         self.threshold_type.addItem("Upper threshold:")
         self.threshold_type.addItem("Lower threshold:")
@@ -653,6 +675,7 @@ class MainMenu(QLabel):
         self.gauss_check = QCheckBox("Use gauss", self)
         self.gauss_check.stateChanged[int].connect(settings.change_gauss)
         self.draw_check = QCheckBox("Use draw result", self)
+        self.draw_check.stateChanged[int].connect(settings.change_draw_use)
         self.profile_choose = QComboBox(self)
         self.profile_choose.addItem("<no profile>")
         self.profile_choose.addItems(self.settings.get_profile_list())
@@ -728,9 +751,9 @@ class MainMenu(QLabel):
         dial.setFilters(filters)
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
+            self.settings.open_directory = os.path.dirname(file_path)
             selected_filter = dial.selectedFilter()
             print(file_path, selected_filter)
-            self.parent().statusBar.showMessage(file_path)
             # TODO maybe something better. Now main window have to be parent
             if selected_filter == "raw image (*.tiff *.tif *.lsm)":
                 im = tifffile.imread(file_path)
@@ -741,7 +764,7 @@ class MainMenu(QLabel):
                         im = im[..., num]
                     else:
                         return
-                self.settings.add_image(im)
+                self.settings.add_image(im, file_path)
             elif selected_filter == "image with mask (*.tiff *.tif *.lsm *json)":
                 extension = os.path.splitext(file_path)
                 if extension == ".json":
@@ -749,13 +772,71 @@ class MainMenu(QLabel):
                         info_dict = json.load(ff)
                     image = tifffile.imread(info_dict["image"])
                     mask = tifffile.imread(info_dict["mask"])
-                    self.settings.add_image(image,mask)
-                    return
-                image = tifffile.imread(file_path)
+                    self.settings.add_image(image, file_path, mask)
+                else:
+                    image = tifffile.imread(file_path)
             else:
                 r = QMessageBox.warning(self, "Load error", "Function do not implemented yet")
+                return
+            self.save_button.setEnabled(True)
 
-                pass
+    def save_results(self):
+        dial = QFileDialog(self, "Save data")
+        if self.settings.save_directory is not None:
+            dial.setDirectory(self.settings.save_directory)
+        dial.setFileMode(QFileDialog.AnyFile)
+        filters = ["Project (*.gz)", "Labeled image (*.tif)", "Mask in tiff (*.tif)",
+                   "Mask for itk-snap (*.img)", "Data for chimera (*.hd5)"]
+        dial.setFilters(filters)
+        if dial.exec_():
+            file_path = dial.selectedFiles()[0]
+            selected_filter = dial.selectedFilter()
+            if selected_filter == "Project (*.gz)":
+                folder_path = tempfile.mkdtemp()
+                np.save(os.path.join(folder_path, "image.npy"), self.settings.image)
+                np.save(os.path.join(folder_path, "draw.npy"), self.segment.draw_canvas)
+                if self.settings.mask is not None:
+                    np.save(os.path.join(folder_path, "mask.npy"), self.settings.mask)
+                important_data = dict()
+                important_data['threshold_type'] = self.settings.threshold_type
+                important_data['threshold_layer'] = self.settings.threshold_layer_separate
+                important_data["threshold"] = self.settings.threshold
+                important_data["threshold_list"] = self.settings.threshold_list
+                important_data['use_gauss'] = self.settings.use_gauss
+                important_data['spacing'] = self.settings.spacing
+                important_data['minimum_size'] = self.settings.minimum_size
+                with open(os.path.join(folder_path, "data.json"), 'w') as ff:
+                    json.dump(important_data, ff)
+                tar = tarfile.open(file_path, 'w:bz2')
+                for name in os.listdir(folder_path):
+                    tar.add(os.path.join(folder_path, name), name)
+                tar.close()
+
+            elif selected_filter == "Labeled image (*.tif)":
+                segmentation = self.segment.get_segmentation()
+                image = np.copy(self.settings.image)
+                cmap = matplotlib.cm.get_cmap("gray")
+                float_image = image / float(image.max())
+                rgb_image = cmap(float_image)
+                label_image = sitk.GetArrayFromImage(sitk.LabelToRGB(sitk.GetImageFromArray(segmentation)))
+                rgb_image = (rgb_image[...,:3] * 256).astype(np.uint8)
+                mask = segmentation >0
+                overlay = self.settings.overlay
+                rgb_image[mask] = rgb_image[mask] * (1 - overlay) + label_image[mask] * overlay
+                tifffile.imsave(file_path, rgb_image)
+
+            elif selected_filter == "Mask in tiff (*.tif)":
+                segmentation = self.segment.get_segmentation()
+                tifffile.imsave(file_path, segmentation)
+            elif selected_filter == "Mask for itk-snap (*.img)":
+                segmentation = sitk.GetImageFromArray(self.segment.get_segmentation())
+                sitk.WriteImage(segmentation, file_path)
+            elif selected_filter == "Data for chimera (*.hd5)":
+                r = QMessageBox.warning(self, "save error", "Function do not implemented yet")
+            else:
+                r = QMessageBox.critical(self, "Save error", "Option unknow")
+
+
 
     def open_advanced(self):
         self.advanced_window = AdvancedWindow(self.settings)
@@ -767,15 +848,18 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         self.setWindowTitle(title)
         self.settings = Settings("settings.json")
-        self.main_menu = MainMenu(self.settings, self)
+        self.segment = Segment(self.settings)
+        self.main_menu = MainMenu(self.settings, self.segment, self)
 
         self.normal_image_canvas = MyCanvas((6, 6), self.settings, self)
         self.colormap_image_canvas = ColormapCanvas((1, 6),  self.settings, self)
-        self.segmented_image_canvas = MyDrawCanvas((6, 6), self.settings, self)
+        self.segmented_image_canvas = MyDrawCanvas((6, 6), self.settings, self.segment, self)
         self.segmented_image_canvas.segment.add_segmentation_callback((self.update_object_information,))
         self.slider_swap = QCheckBox("Synchronize\nsliders", self)
         self.sync = SynchronizeSliders(self.normal_image_canvas.slider, self.segmented_image_canvas.slider,
                                        self.slider_swap)
+
+        #self.infoText = QLabel("Bright: 0\nComp:", self)
 
         big_font = QFont(QApplication.font())
         big_font.setPointSize(big_font_size)
@@ -789,10 +873,11 @@ class MainWindow(QMainWindow):
         self.object_size_list.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.statusBar = QStatusBar()
         self.setStatusBar(self.statusBar)
+        self.settings.add_image_callback((self.statusBar.showMessage, str))
         self.setGeometry(50, 50,  1400, 720)
 
         self.update_objects_positions()
-        self.settings.add_image(tifffile.imread("clean_segment.tiff"))
+        self.settings.add_image(tifffile.imread("clean_segment.tiff"), "")
 
     def update_objects_positions(self):
         self.normal_image_canvas.move(10, 40)
@@ -803,6 +888,8 @@ class MainWindow(QMainWindow):
         col_pos = self.colormap_image_canvas.pos()
         self.slider_swap.move(col_pos.x()+5,
                               col_pos.y()+self.colormap_image_canvas.height()-35)
+        # self.infoText.move()
+
         norm_pos = self.normal_image_canvas.pos()
         self.object_count.move(norm_pos.x(),
                                norm_pos.y()+self.normal_image_canvas.height()+20)

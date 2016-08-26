@@ -64,6 +64,8 @@ class Settings(object):
         self.chosen_colormap = pyplot.colormaps()
         self.profiles = {}
         self.use_gauss = False
+        self.use_draw_result = False
+        self.draw_callback = []
         self.threshold = 33000
         self.threshold_list = []
         self.threshold_type = "Upper"
@@ -79,6 +81,8 @@ class Settings(object):
         self.open_directory = None
         self.save_directory = None
         self.spacing = (1, 1, 6)
+        self.advanced_menu_geometry = None
+        self.file_path = ""
 
     def change_colormap(self, new_color_map):
         """
@@ -120,10 +124,14 @@ class Settings(object):
     def available_colormap_list(self):
         return pyplot.colormaps()
 
-    def add_image(self, image, mask=None):
+    def add_image(self, image, file_path, mask=None):
         self.image = image
         self.mask = mask
+        self.file_path = file_path
         for fun in self.image_change_callback:
+            if isinstance(fun, tuple) and fun[1] == str:
+                fun[0](file_path)
+                continue
             fun(image)
 
     def add_image_callback(self, callback):
@@ -170,6 +178,14 @@ class Settings(object):
         for fun in self.callback_colormap_list:
             fun()
 
+    def change_draw_use(self, use_draw):
+        self.use_draw_result = use_draw
+        for fun in self.draw_callback:
+            fun()
+
+    def add_draw_callback(self, callback):
+        self.draw_callback.append(callback)
+
 
 class Segment(object):
     """:type _segmented_image: np.ndarray"""
@@ -179,6 +195,7 @@ class Segment(object):
         """
         self._settings = settings
         self._image = None
+        self.draw_canvas = None
         self._gauss_image = None
         self._threshold_image = None
         self._segmented_image = None
@@ -188,6 +205,7 @@ class Segment(object):
         self._segmentation_changed = True
         self._settings.add_threshold_callback(self.threshold_updated)
         self._settings.add_min_size_callback(self.min_size_updated)
+        self._settings.add_draw_callback(self.draw_update)
 
     def set_image(self, image):
         self._image = image
@@ -216,7 +234,19 @@ class Segment(object):
             self._threshold_image[get_mask(image_to_threshold, self._settings.threshold)] = 1
         if self._settings.mask is not None:
             self._threshold_image *= (self._settings.mask > 0)
-        connect = sitk.ConnectedComponent(sitk.GetImageFromArray(self._threshold_image))
+        self.draw_update()
+
+    def draw_update(self, canvas=None):
+        if canvas is not None:
+            self.draw_canvas[...] = canvas
+            return
+        if self._settings.use_draw_result:
+            threshold_image = np.copy(self._threshold_image)
+            threshold_image[self.draw_canvas == 1] = 1
+            threshold_image[self.draw_canvas == 2] = 0
+        else:
+            threshold_image = self._threshold_image
+        connect = sitk.ConnectedComponent(sitk.GetImageFromArray(threshold_image))
         self._segmented_image = sitk.GetArrayFromImage(sitk.RelabelComponent(connect))
         self._sizes_array = np.bincount(self._segmented_image.flat)
         self.min_size_updated()
