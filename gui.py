@@ -159,6 +159,7 @@ class ColormapCanvas(FigureCanvas):
         self.val_min = 0
         self.val_max = 0
         self.settings = settings
+        self.widget = None
         settings.add_image_callback(self.set_range)
         settings.add_colormap_callback(self.update_colormap)
 
@@ -178,6 +179,14 @@ class ColormapCanvas(FigureCanvas):
         ax = fig.add_axes([0.05, 0.1, 0.3, 0.8])
         matplotlib.colorbar.ColorbarBase(ax, cmap=self.settings.color_map, norm=norm, orientation='vertical')
         fig.canvas.draw()
+
+    def set_widget(self, widget):
+        self.widget = widget
+        widget.setParent(self)
+
+    def resizeEvent(self, *args, **kwargs):
+        super(ColormapCanvas, self).resizeEvent(*args, **kwargs)
+        self.widget.move(5, self.height() - 35)
 
 
 class MyCanvas(FigureCanvas):
@@ -222,6 +231,7 @@ class MyCanvas(FigureCanvas):
         settings.add_colormap_callback(self.update_colormap)
         self.colormap_checkbox.stateChanged.connect(self.update_colormap)
         MyCanvas.update_elements_positions(self)
+        self.setMinimumHeight(300)
 
     def update_elements_positions(self):
         self.reset_button.move(0, 0)
@@ -1019,6 +1029,7 @@ class MainWindow(QMainWindow):
         self.slider_swap = QCheckBox("Synchronize\nsliders", self)
         self.sync = SynchronizeSliders(self.normal_image_canvas.slider, self.segmented_image_canvas.slider,
                                        self.slider_swap)
+        self.colormap_image_canvas.set_widget(self.slider_swap)
 
         #self.infoText = QLabel("Bright: 0\nComp:", self)
 
@@ -1032,6 +1043,7 @@ class MainWindow(QMainWindow):
         self.object_size_list.setFont(big_font)
         self.object_size_list.setMinimumWidth(800)
         self.object_size_list.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.object_size_list.setMaximumHeight(150)
         self.statusBar = QStatusBar()
         self.setStatusBar(self.statusBar)
         self.settings.add_image_callback((self.statusBar.showMessage, str))
@@ -1060,11 +1072,11 @@ class MainWindow(QMainWindow):
         info_layout.addWidget(self.object_size_list)
         main_layout.addLayout(info_layout)
         main_layout.addStretch()
-        col_pos = self.colormap_image_canvas.pos()
-        self.slider_swap.move(col_pos.x() + 5,
-                              col_pos.y() + self.colormap_image_canvas.height() - 35)
         widget.setLayout(main_layout)
         self.setCentralWidget(widget)
+
+    def resizeEvent(self, *args, **kwargs):
+        super(MainWindow, self).resizeEvent(*args, **kwargs)
 
     def update_objects_positions2(self):
         self.normal_image_canvas.move(10, 40)
