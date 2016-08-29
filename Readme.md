@@ -9,3 +9,6 @@ based on threshold and connected components
 * SimpleITK
 * Matplotlib
 * Numpy
+
+## Save Format
+Saved project are gziped pack  

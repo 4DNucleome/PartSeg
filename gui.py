@@ -1,3 +1,4 @@
+# coding=utf-8
 from __future__ import print_function, division
 import sys
 import os.path
@@ -7,6 +8,7 @@ import SimpleITK as sitk
 import numpy as np
 import platform
 import tempfile
+import tarfile
 import json
 import matplotlib
 os.environ['QT_API'] = 'pyside'
@@ -16,8 +18,8 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from PySide.QtCore import Qt, QSize
 from PySide.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget,\
-    QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QPixmap, QSpinBox,\
-    QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog
+    QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QPixmap, QSpinBox, \
+    QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout
 from math import copysign
 
 from backend import Settings, Segment
@@ -67,6 +69,7 @@ def set_button(button, previous_element, dist=10, super_space=0):
     :param button:
     :param previous_element:
     :param dist:
+    :param super_space:
     :return:
     """
     font_met = QFontMetrics(button.font())
@@ -77,6 +80,10 @@ def set_button(button, previous_element, dist=10, super_space=0):
         if text[0] == '&':
             text = text[1:]
         text_list = text.split("\n")
+    if isinstance(button, QSpinBox):
+        button.setAlignment(Qt.AlignRight)
+        text_list = [str(button.maximum())+'aa']
+        print(text_list)
     width = 0
     for txt in text_list:
         width = max(width, font_met.boundingRect(txt).width())
@@ -86,7 +93,10 @@ def set_button(button, previous_element, dist=10, super_space=0):
         button.setFixedWidth(width + super_space)
     if isinstance(button, QComboBox):
         button.setFixedWidth(width + button_margin+10)
-    button.setFixedHeight(button_height)
+    if isinstance(button, QSpinBox):
+        print(width)
+        button.setFixedWidth(width)
+    #button.setFixedHeight(button_height)
     if previous_element is not None:
         set_position(button, previous_element, dist)
 
@@ -96,6 +106,13 @@ def label_to_rgb(image):
     lab_im = sitk.LabelToRGB(sitk_im)
     return sitk.GetArrayFromImage(lab_im)
 
+
+def pack_layout(*args):
+    layout = QHBoxLayout()
+    layout.setSpacing(0)
+    for el in args:
+        layout.addWidget(el)
+    return layout
 
 class SynchronizeSliders(object):
     def __init__(self, slider1, slider2, switch):
@@ -284,6 +301,10 @@ class MyCanvas(FigureCanvas):
         else:
             self.ax_im.set_data(image_to_show)
         self.draw()
+
+    def resizeEvent(self, resize_event):
+        super(MyCanvas, self).resizeEvent(resize_event)
+        self.update_elements_positions()
 
 
 class MyDrawCanvas(MyCanvas):
@@ -611,11 +632,77 @@ class ColormapSettings(QLabel):
         self.settings.remove_colormap_callback(self.change_main_colormap)
 
 
+class AdvancedSettings(QLabel):
+    def __init__(self, settings, parent=None):
+        super(AdvancedSettings, self).__init__(parent)
+
+        def add_label(text, up_layout, widget):
+            lab = QLabel(text)
+            layout = QHBoxLayout()
+            layout.setSpacing(0)
+            layout.addWidget(lab)
+            layout.addWidget(widget)
+            up_layout.addLayout(layout)
+            return widget
+
+        def create_spacing(text, layout, num):
+            spacing = QSpinBox()
+            spacing.setRange(0, 20)
+            spacing.setValue(settings.spacing[num])
+            spacing.setSingleStep(1)
+            spacing.setButtonSymbols(QAbstractSpinBox.NoButtons)
+            spacing.setAlignment(Qt.AlignRight)
+            return add_label(text, layout, spacing)
+
+        def create_voxel_size(text, layout, num):
+            spinbox = QDoubleSpinBox()
+            spinbox.setRange(0, 1000)
+            spinbox.setValue(settings.voxel_size[num])
+            spinbox.setSingleStep(0.1)
+            spinbox.setDecimals(2)
+            spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
+            spinbox.setAlignment(Qt.AlignRight)
+            return add_label(text, layout, spinbox)
+
+
+        self.settings = settings
+        vlayout = QVBoxLayout()
+        spacing_layout = QHBoxLayout()
+        spacing_layout.addWidget(QLabel("Spacing"))
+        spacing_layout.addSpacing(11)
+        self.x_spacing = create_spacing("x:", spacing_layout, 0)
+        self.y_spacing = create_spacing("y:", spacing_layout, 1)
+        self.z_spacing = create_spacing("z:", spacing_layout, 2)
+        spacing_layout.addStretch()
+        vlayout.addLayout(spacing_layout)
+
+        size_layout = QHBoxLayout()
+        size_layout.addWidget(QLabel("Voxel size"))
+        self.x_size = create_voxel_size("x:", size_layout, 0)
+        self.y_size = create_voxel_size("y:", size_layout, 1)
+        self.z_size = create_voxel_size("z:", size_layout, 2)
+        self.units_size = QComboBox()
+        self.units_size.addItems(["mm", u"µm", "nm", "pm"])
+        self.units_size.setCurrentIndex(2)
+        size_layout.addWidget(self.units_size)
+        vlayout.addLayout(size_layout)
+
+        vlayout.addStretch()
+        accept_button = QPushButton("Accept")
+        reset_button = QPushButton("Reset")
+        butt_lay = QHBoxLayout()
+        butt_lay.addStretch()
+        butt_lay.addWidget(accept_button)
+        butt_lay.addWidget(reset_button)
+        vlayout.addLayout(butt_lay)
+        self.setLayout(vlayout)
+
+
 class AdvancedWindow(QTabWidget):
     def __init__(self, settings, parent=None):
         super(AdvancedWindow, self).__init__(parent)
         self.settings = settings
-        self.advanced_settings = QLabel()
+        self.advanced_settings = AdvancedSettings(settings)
         self.colormap_settings = ColormapSettings(settings)
         self.statistics = QLabel()
         self.addTab(self.advanced_settings, "Settings")
@@ -650,6 +737,8 @@ class MainMenu(QLabel):
         self.load_button.clicked.connect(self.open_file)
         self.save_button = QPushButton("Save", self)
         self.save_button.setDisabled(True)
+        self.export_button = QPushButton("Export", self)
+        self.export_button.setDisabled(True)
         self.save_button.clicked.connect(self.save_results)
         self.threshold_type = QComboBox(self)
         self.threshold_type.addItem("Upper threshold:")
@@ -658,15 +747,17 @@ class MainMenu(QLabel):
         self.threshold_value = QSpinBox(self)
         self.threshold_value.setMinimumWidth(80)
         self.threshold_value.setRange(0, 100000)
+        self.threshold_value.setAlignment(Qt.AlignRight)
         self.threshold_value.setValue(self.settings.threshold)
         self.threshold_value.setSingleStep(500)
         self.threshold_value.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.threshold_value.valueChanged[int].connect(settings.change_threshold)
         self.layer_thr_check = QCheckBox("Layer\nthreshold", self)
         self.minimum_size_lab = QLabel(self)
-        self.minimum_size_lab.setText("Minimum\nobject size:")
+        self.minimum_size_lab.setText("Minimum object size:")
         self.minimum_size_value = QSpinBox(self)
-        self.minimum_size_value.setMinimumWidth(80)
+        self.minimum_size_value.setMinimumWidth(60)
+        self.minimum_size_value.setAlignment(Qt.AlignRight)
         self.minimum_size_value.setRange(0, 10 ** 6)
         self.minimum_size_value.setValue(self.settings.minimum_size)
         self.minimum_size_value.valueChanged[int].connect(settings.change_min_size)
@@ -674,7 +765,7 @@ class MainMenu(QLabel):
         self.minimum_size_value.setSingleStep(10)
         self.gauss_check = QCheckBox("Use gauss", self)
         self.gauss_check.stateChanged[int].connect(settings.change_gauss)
-        self.draw_check = QCheckBox("Use draw result", self)
+        self.draw_check = QCheckBox("Use draw\n result", self)
         self.draw_check.stateChanged[int].connect(settings.change_draw_use)
         self.profile_choose = QComboBox(self)
         self.profile_choose.addItem("<no profile>")
@@ -684,31 +775,70 @@ class MainMenu(QLabel):
         self.advanced_window = None
 
         self.colormap_choose = QComboBox(self)
-        self.colormap_choose.addItems(settings.colormap_list)
-        index = list(settings.colormap_list).index(settings.color_map_name)
+        self.colormap_choose.addItems(sorted(settings.colormap_list, key=lambda x: x.lower()))
+        index = sorted(settings.colormap_list, key=lambda x: x.lower()).index(settings.color_map_name)
         self.colormap_choose.setCurrentIndex(index)
         self.colormap_choose.currentIndexChanged.connect(self.colormap_changed)
         self.settings.add_colormap_list_callback(self.colormap_list_changed)
         self.colormap_protect = False
-
+        #self.setMinimumWidth(1200)
+        self.setMinimumHeight(50)
         self.update_elements_positions()
-        self.setMinimumWidth(1200)
-        self.setMinimumHeight(button_height+5)
+        self.one_line = True
 
     def update_elements_positions(self):
-        set_button(self.load_button, None)
-        self.load_button.move(0, 0)
-        set_button(self.save_button, self.load_button, button_small_dist)
-        set_button(self.threshold_type, self.save_button)
-        set_position(self.threshold_value, self.threshold_type, 0)
-        set_button(self.layer_thr_check, self.threshold_value, -20)
-        set_button(self.minimum_size_lab, self.layer_thr_check, 0)
-        set_position(self.minimum_size_value, self.minimum_size_lab, 5)
-        set_button(self.gauss_check, self.minimum_size_value, -10)
-        set_button(self.draw_check, self.gauss_check, -5)
-        set_button(self.profile_choose, self.draw_check, 30)
-        set_button(self.advanced_button, self.profile_choose)
-        set_button(self.colormap_choose, self.advanced_button, 10)
+        layout = QHBoxLayout()
+        second_list = [self.gauss_check, self.draw_check, self.profile_choose,
+                       self.advanced_button, self.colormap_choose]
+        layout.addLayout(pack_layout(self.load_button, self.save_button, self.export_button))
+        # layout.addWidget(self.load_button)
+        # layout.addWidget(self.save_button)
+        # layout.addWidget(self.export_button)
+        layout.addLayout(pack_layout(self.threshold_type, self.threshold_value))
+        # layout.addWidget(self.threshold_type)
+        # layout.addWidget(self.threshold_value)
+        layout.addWidget(self.layer_thr_check)
+        layout.addLayout(pack_layout(self.minimum_size_lab, self.minimum_size_value))
+        # layout.addWidget(self.minimum_size_lab)
+        # layout.addWidget(self.minimum_size_value)
+        if False and self.size().width() < 1200:
+            print("two")
+            layout.addStretch()
+            vertical = QVBoxLayout()
+            layout2 = QHBoxLayout()
+            for el in second_list:
+                layout2.addWidget(el)
+            layout2.addStretch()
+            vertical.addLayout(layout)
+            vertical.addLayout(layout2)
+            self.setLayout(vertical)
+        else:
+            print("one")
+            for el in second_list:
+                layout.addWidget(el)
+            layout.addStretch()
+            self.setLayout(layout)
+
+    def clearLayout(self, layout):
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
+                else:
+                    self.clearLayout(item.layout())
+
+    def resizeEvent(self, resize):
+        super(MainMenu, self).resizeEvent(resize)
+        print(self.size())
+        if self.size().width() < 1200 and self.one_line:
+            self.one_line = False
+            print("buak")
+        if self.size().width() >= 1200 and not self.one_line:
+            self.one_line = True
+            print("buka")
+
 
     def colormap_changed(self):
         if self.colormap_protect:
@@ -716,7 +846,13 @@ class MainMenu(QLabel):
         self.settings.change_colormap(self.colormap_choose.currentText())
 
     def settings_changed(self):
-        self.threshold_value.setValue(self.settings.threshold)
+        self.minimum_size_value.setValue(self.settings.minimum_size)
+        if self.settings.threshold_layer_separate:
+            self.threshold_value.setValue(
+                self.settings.threshold_list[self.settings.layer_num])
+        else:
+            self.threshold_value.setValue(self.settings.threshold)
+        self.gauss_check.setChecked(self.settings.use_gauss)
 
     def colormap_list_changed(self):
         self.colormap_protect = True
@@ -775,6 +911,32 @@ class MainMenu(QLabel):
                     self.settings.add_image(image, file_path, mask)
                 else:
                     image = tifffile.imread(file_path)
+            elif selected_filter == "saved project (*.gz)":
+                tar = tarfile.open(file_path, 'r:bz2')
+                members = tar.getnames()
+                important_data = json.load(tar.extractfile("data.json"))
+                image = np.load(tar.extractfile("image.npy"))
+                draw = np.load(tar.extractfile("draw.npy"))
+                if "mask.npy" in members:
+                    mask = np.load(tar.extractfile("mask.npy"))
+                else:
+                    mask = None
+                self.settings.add_image(image, file_path, mask)
+                self.segment.draw_update(draw)
+                self.settings.threshold = int(important_data["threshold"])
+                if important_data["threshold_list"] is not None:
+                    self.settings.threshold_list = map(int, important_data["threshold_list"])
+                else:
+                    self.settings.threshold_list = None
+                self.settings.threshold_type = important_data["threshold_type"]
+                self.settings.threshold_layer_separate = \
+                    bool(important_data["threshold_layer"])
+                self.settings.use_gauss = bool(important_data["use_gauss"])
+                self.settings.spacing = \
+                    tuple(map(int,important_data["spacing"]))
+                self.settings.minimum_size = int(important_data["minimum_size"])
+                self.segment.threshold_updated()
+                self.settings_changed()
             else:
                 r = QMessageBox.warning(self, "Load error", "Function do not implemented yet")
                 return
@@ -787,6 +949,7 @@ class MainMenu(QLabel):
         dial.setFileMode(QFileDialog.AnyFile)
         filters = ["Project (*.gz)", "Labeled image (*.tif)", "Mask in tiff (*.tif)",
                    "Mask for itk-snap (*.img)", "Data for chimera (*.hd5)"]
+        dial.setAcceptMode(QFileDialog.AcceptSave)
         dial.setFilters(filters)
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
@@ -836,8 +999,6 @@ class MainMenu(QLabel):
             else:
                 r = QMessageBox.critical(self, "Save error", "Option unknow")
 
-
-
     def open_advanced(self):
         self.advanced_window = AdvancedWindow(self.settings)
         self.advanced_window.show()
@@ -866,20 +1027,46 @@ class MainWindow(QMainWindow):
 
         self.object_count = QLabel(self)
         self.object_count.setFont(big_font)
-        self.object_count.setMinimumWidth(150)
+        self.object_count.setFixedWidth(150)
         self.object_size_list = QLabel(self)
         self.object_size_list.setFont(big_font)
-        self.object_size_list.setMinimumWidth(1200)
+        self.object_size_list.setMinimumWidth(800)
         self.object_size_list.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.statusBar = QStatusBar()
         self.setStatusBar(self.statusBar)
         self.settings.add_image_callback((self.statusBar.showMessage, str))
+
         self.setGeometry(50, 50,  1400, 720)
 
         self.update_objects_positions()
         self.settings.add_image(tifffile.imread("clean_segment.tiff"), "")
 
     def update_objects_positions(self):
+        widget = QWidget()
+        main_layout = QVBoxLayout()
+        menu_layout = QHBoxLayout()
+        menu_layout.addWidget(self.main_menu)
+        # menu_layout.addStretch()
+        main_layout.addLayout(menu_layout)
+        image_layout = QHBoxLayout()
+        image_layout.setSpacing(0)
+        image_layout.addWidget(self.normal_image_canvas)
+        image_layout.addWidget(self.colormap_image_canvas)
+        image_layout.addWidget(self.segmented_image_canvas)
+        image_layout.addStretch()
+        main_layout.addLayout(image_layout)
+        info_layout = QHBoxLayout()
+        info_layout.addWidget(self.object_count)
+        info_layout.addWidget(self.object_size_list)
+        main_layout.addLayout(info_layout)
+        main_layout.addStretch()
+        col_pos = self.colormap_image_canvas.pos()
+        self.slider_swap.move(col_pos.x() + 5,
+                              col_pos.y() + self.colormap_image_canvas.height() - 35)
+        widget.setLayout(main_layout)
+        self.setCentralWidget(widget)
+
+    def update_objects_positions2(self):
         self.normal_image_canvas.move(10, 40)
         # noinspection PyTypeChecker
         set_position(self.colormap_image_canvas, self.normal_image_canvas, 0)

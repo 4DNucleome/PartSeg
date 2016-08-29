@@ -80,7 +80,9 @@ class Settings(object):
         self.layer_num = 0
         self.open_directory = None
         self.save_directory = None
-        self.spacing = (1, 1, 6)
+        self.spacing = [1, 1, 3]
+        self.voxel_size = [70, 70, 210]
+        self.size_unit = "nm"
         self.advanced_menu_geometry = None
         self.file_path = ""
 
@@ -139,8 +141,12 @@ class Settings(object):
 
     def change_threshold(self, new_threshold):
         if self.threshold_layer_separate:
+            if self.threshold_list[self.layer_num] == new_threshold:
+                return
             self.threshold_list[self.layer_num] = new_threshold
         else:
+            if self.threshold == new_threshold:
+                return
             self.threshold = new_threshold
         for fun in self.threshold_change_callback:
             fun()
@@ -238,7 +244,7 @@ class Segment(object):
 
     def draw_update(self, canvas=None):
         if canvas is not None:
-            self.draw_canvas[...] = canvas
+            self.draw_canvas[...] = canvas[...]
             return
         if self._settings.use_draw_result:
             threshold_image = np.copy(self._threshold_image)
@@ -259,7 +265,7 @@ class Segment(object):
         self._segmentation_changed = True
         for fun in self.segmentation_change_callback:
             if isinstance(fun, tuple):
-                fun[0](self._sizes_array[1:ind])
+                fun[0](self._sizes_array[1:ind+1])
                 continue
             fun()
 
