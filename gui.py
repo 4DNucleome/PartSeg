@@ -19,7 +19,8 @@ from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as Navigatio
 from PySide.QtCore import Qt, QSize
 from PySide.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget,\
     QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QPixmap, QSpinBox, \
-    QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout
+    QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout,\
+    QListWidget
 from math import copysign
 
 from backend import Settings, Segment
@@ -45,6 +46,20 @@ if platform.system() == "Darwin":
 
 if platform.system() == "Windows":
     big_font_size = 12
+
+
+def h_line():
+    toto = QFrame()
+    toto.setFrameShape(QFrame.HLine)
+    toto.setFrameShadow(QFrame.Sunken)
+    return toto
+
+
+def v_line():
+    toto = QFrame()
+    toto.setFrameShape(QFrame.VLine)
+    toto.setFrameShadow(QFrame.Sunken)
+    return toto
 
 
 def set_position(elem, previous, dist=10):
@@ -674,7 +689,6 @@ class AdvancedSettings(QLabel):
             spinbox.setAlignment(Qt.AlignRight)
             return add_label(text, layout, spinbox)
 
-
         self.settings = settings
         vlayout = QVBoxLayout()
         spacing_layout = QHBoxLayout()
@@ -694,10 +708,14 @@ class AdvancedSettings(QLabel):
         self.units_size = QComboBox()
         self.units_size.addItems(["mm", u"µm", "nm", "pm"])
         self.units_size.setCurrentIndex(2)
+        for el in [self.x_size, self.y_size, self.z_size]:
+            el.valueChanged.connect(self.update_volume)
+        self.units_size.currentIndexChanged.connect(self.update_volume)
         size_layout.addWidget(self.units_size)
         vlayout.addLayout(size_layout)
+        self.volume_info = QLabel()
+        vlayout.addWidget(self.volume_info)
 
-        vlayout.addStretch()
         accept_button = QPushButton("Accept")
         reset_button = QPushButton("Reset")
         butt_lay = QHBoxLayout()
@@ -705,7 +723,36 @@ class AdvancedSettings(QLabel):
         butt_lay.addWidget(accept_button)
         butt_lay.addWidget(reset_button)
         vlayout.addLayout(butt_lay)
+        vlayout.addWidget(h_line())
+
+        profile_lay = QHBoxLayout()
+        self.profile_list = QListWidget()
+        profile_lay.addWidget(self.profile_list)
+        self.profile_list.addItem("<current profile>")
+        self.profile_list.addItems(self.settings.profiles.keys())
+        self.profile_list.setMaximumWidth(200)
+        self.current_profile = QLabel()
+        self.current_profile.setWordWrap(True)
+        profile_lay.addWidget(self.current_profile)
+        text = settings.threshold_type + " threshold: "
+        if settings.threshold_layer_separate:
+            text += str(settings.threshold_list)
+        else:
+            text += str(settings.threshold)
+        text += "\n"
+        text += "Minimum object size: {}\n".format(settings.minimum_size)
+        text += "Use gauss [{}]\n".format("x" if settings.use_gauss else " ")
+        self.current_profile.setText(text)
+
+        vlayout.addLayout(profile_lay)
+        vlayout.addStretch()
         self.setLayout(vlayout)
+        self.update_volume()
+
+    def update_volume(self):
+        volume = self.x_size.value() * self.y_size.value() * self.z_size.value()
+        text = u"Voxel size: {}{}³".format(volume, self.units_size.currentText())
+        self.volume_info.setText(text)
 
 
 class AdvancedWindow(QTabWidget):
@@ -943,8 +990,12 @@ class MainMenu(QLabel):
                     bool(important_data["threshold_layer"])
                 self.settings.use_gauss = bool(important_data["use_gauss"])
                 self.settings.spacing = \
-                    tuple(map(int,important_data["spacing"]))
+                    tuple(map(int, important_data["spacing"]))
                 self.settings.minimum_size = int(important_data["minimum_size"])
+                try:
+                    self.settings.use_draw_result = bool(important_data["use_draw"])
+                except KeyError:
+                    self.settings.use_draw_result = False
                 self.segment.threshold_updated()
                 self.settings_changed()
             else:
@@ -978,8 +1029,11 @@ class MainMenu(QLabel):
                 important_data['use_gauss'] = self.settings.use_gauss
                 important_data['spacing'] = self.settings.spacing
                 important_data['minimum_size'] = self.settings.minimum_size
+                important_data['use_draw'] = self.settings.use_draw_result
                 with open(os.path.join(folder_path, "data.json"), 'w') as ff:
                     json.dump(important_data, ff)
+                if file_path[-3:] != ".gz":
+                    file_path += ".gz"
                 tar = tarfile.open(file_path, 'w:bz2')
                 for name in os.listdir(folder_path):
                     tar.add(os.path.join(folder_path, name), name)
@@ -1005,7 +1059,7 @@ class MainMenu(QLabel):
                 segmentation = sitk.GetImageFromArray(self.segment.get_segmentation())
                 sitk.WriteImage(segmentation, file_path)
             elif selected_filter == "Data for chimera (*.hd5)":
-                r = QMessageBox.warning(self, "save error", "Function do not implemented yet")
+                r = QMessageBox.warning(self, "save error", "Function is not implemented yet")
             else:
                 r = QMessageBox.critical(self, "Save error", "Option unknow")
 

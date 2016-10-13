@@ -30,19 +30,26 @@ def bisect(arr, val, comp):
 
 
 class Profile:
-    def __init__(self, name, threshold, threshold_list, threshold_type, minimum_size):
+    def __init__(self, name, threshold, threshold_list, threshold_type, minimum_size, use_gauss):
         """
         :param name: str,
         :param threshold: int
         :param threshold_list: list[int]
         :param threshold_type: str
         :param minimum_size: int
+        :param use_gauss: bool
         """
         self.name = name
         self.threshold = threshold
         self.threshold_list = threshold_list
         self.threshold_type = threshold_type
         self.minimum_size = minimum_size
+        self.use_gauss = use_gauss
+
+    def __str__(self):
+        text = self.name + "\n"
+
+        return text
 
 
 class Settings(object):
@@ -53,7 +60,7 @@ class Settings(object):
     :type threshold_type: str
     :type minimum_size: int
     :type image: np.ndarray
-    :type image_change_callback_: list[() -> None]
+    :type image_change_callback: list[() -> None]
     """
     def __init__(self, setings_path):
         # TODO Reading setings from file
@@ -62,7 +69,7 @@ class Settings(object):
         self.callback_colormap = []
         self.callback_colormap_list = []
         self.chosen_colormap = pyplot.colormaps()
-        self.profiles = {}
+        self.profiles = dict()
         self.use_gauss = False
         self.use_draw_result = False
         self.draw_callback = []
