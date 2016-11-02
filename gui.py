@@ -21,7 +21,7 @@ from PySide.QtCore import Qt, QSize
 from PySide.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget,\
     QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QPixmap, QSpinBox, \
     QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout,\
-    QListWidget, QSizePolicy, QTextEdit
+    QListWidget, QTextEdit
 
 from backend import Settings, Segment, UPPER
 
@@ -363,6 +363,7 @@ class MyDrawCanvas(MyCanvas):
         self.colormap_checkbox.setChecked(False)
         self.segment.add_segmentation_callback(self.segmentation_changed)
         self.slider.valueChanged[int].connect(self.draw_canvas.set_layer_num)
+        self.slider.valueChanged[int].connect(self.settings.change_layer)
         self.mpl_connect('button_press_event', self.draw_canvas.on_mouse_down)
         self.mpl_connect('motion_notify_event', self.draw_canvas.on_mouse_move)
         self.mpl_connect('button_release_event', self.draw_canvas.on_mouse_up)
@@ -790,6 +791,8 @@ class MainMenu(QLabel):
         self.settings = settings
         self.segment = segment
         self.settings.add_image_callback(self.set_threshold_range)
+        self.settings.add_image_callback(self.set_layer_threshold)
+        self.settings.add_change_layer_callback(self.changed_layer)
         self.load_button = QPushButton("Load", self)
         self.load_button.clicked.connect(self.open_file)
         self.save_button = QPushButton("Save", self)
@@ -810,6 +813,7 @@ class MainMenu(QLabel):
         self.threshold_value.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.threshold_value.valueChanged[int].connect(settings.change_threshold)
         self.layer_thr_check = QCheckBox("Layer\nthreshold", self)
+        self.layer_thr_check.clicked[bool].connect(self.settings.change_layer_threshold)
         self.minimum_size_lab = QLabel(self)
         self.minimum_size_lab.setText("Minimum object size:")
         self.minimum_size_value = QSpinBox(self)
@@ -896,7 +900,6 @@ class MainMenu(QLabel):
             self.one_line = True
             print("buka")
 
-
     def colormap_changed(self):
         if self.colormap_protect:
             return
@@ -933,6 +936,12 @@ class MainMenu(QLabel):
             self.threshold_value.setSingleStep(20)
         else:
             self.threshold_value.setSingleStep(1)
+
+    def set_layer_threshold(self, *args):
+        self.layer_thr_check.setChecked(False)
+
+    def changed_layer(self, lay_num):
+        self.threshold_value.setValue(lay_num)
 
     def open_file(self):
         dial = QFileDialog(self, "Load data")
@@ -1002,7 +1011,7 @@ class MainMenu(QLabel):
                     self.settings.use_draw_result = bool(important_data["use_draw"])
                 except KeyError:
                     self.settings.use_draw_result = False
-                self.segment.threshold_updated()
+                # self.segment.threshold_updated()
                 self.settings_changed()
             else:
                 r = QMessageBox.warning(self, "Load error", "Function do not implemented yet")
@@ -1199,5 +1208,4 @@ class MainWindow(QMainWindow):
         """:type info_aray: np.ndarray"""
         self.object_count.setText("Object num: {0}".format(str(info_aray.size)))
         self.object_size_list.setText("Objects size: {0}".format(str(info_aray)))
-        print(self.object_size_list.height())
 

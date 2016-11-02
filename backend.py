@@ -69,6 +69,7 @@ class Settings(object):
         self.color_map = matplotlib.cm.get_cmap(self.color_map_name)
         self.callback_colormap = []
         self.callback_colormap_list = []
+        self.callback_change_layer = []
         self.chosen_colormap = pyplot.colormaps()
         self.profiles = dict()
         self.use_gauss = False
@@ -93,6 +94,7 @@ class Settings(object):
         self.size_unit = "nm"
         self.advanced_menu_geometry = None
         self.file_path = ""
+        self.protect = False
 
     def change_colormap(self, new_color_map):
         """
@@ -138,6 +140,8 @@ class Settings(object):
         self.image = image
         self.mask = mask
         self.file_path = file_path
+        self.threshold_list = []
+        self.threshold_layer_separate = False
         for fun in self.image_change_callback:
             if isinstance(fun, tuple) and fun[1] == str:
                 fun[0](file_path)
@@ -148,6 +152,8 @@ class Settings(object):
         self.image_change_callback.append(callback)
 
     def change_threshold(self, new_threshold):
+        if self.protect:
+            return
         if self.threshold_layer_separate:
             if self.threshold_list[self.layer_num] == new_threshold:
                 return
@@ -159,12 +165,35 @@ class Settings(object):
         for fun in self.threshold_change_callback:
             fun()
 
+    def add_change_layer_callback(self, callback):
+        self.callback_change_layer.append(callback)
+
+    def change_layer(self, val):
+        self.layer_num = val
+        self.protect = True
+        if self.threshold_layer_separate:
+            for fun in self.callback_change_layer:
+                fun(self.threshold_list[val])
+        else:
+            for fun in self.callback_change_layer:
+                fun(self.threshold)
+        # for fun in self.threshold_change_callback:
+        #     fun()
+        self.protect = False
+
     def change_threshold_type(self, new_type):
         print(new_type)
         if new_type == "Upper threshold:":
             self.threshold_type = "Upper"
         else:
             self.threshold_type = "Lower"
+        for fun in self.threshold_change_callback:
+            fun()
+
+    def change_layer_threshold(self, layer_threshold):
+        self.threshold_layer_separate = layer_threshold
+        if layer_threshold and self.threshold_list == []:
+            self.threshold_list = [self.threshold] * self.image.shape[0]
         for fun in self.threshold_change_callback:
             fun()
 
@@ -242,9 +271,11 @@ class Segment(object):
                 return image >= threshold
 
         if self._settings.threshold_layer_separate:
+            print("Layer separate")
             for i in range(self._image.shape[0]):
                 self._threshold_image[i][get_mask(image_to_threshold[i], self._settings.threshold_list[i])] = 1
         else:
+            print("normal")
             self._threshold_image[get_mask(image_to_threshold, self._settings.threshold)] = 1
         if self._settings.mask is not None:
             self._threshold_image *= (self._settings.mask > 0)
