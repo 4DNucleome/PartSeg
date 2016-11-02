@@ -1,6 +1,5 @@
 # coding=utf-8
 from __future__ import print_function, division
-import sys
 import os.path
 import os
 import tifffile
@@ -11,6 +10,8 @@ import tempfile
 import tarfile
 import json
 import matplotlib
+import h5py
+import re
 os.environ['QT_API'] = 'pyside'
 matplotlib.use('Qt4Agg')
 from matplotlib import pyplot
@@ -21,9 +22,8 @@ from PySide.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusB
     QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QPixmap, QSpinBox, \
     QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout,\
     QListWidget
-from math import copysign
 
-from backend import Settings, Segment
+from backend import Settings, Segment, UPPER
 
 
 __author__ = "Grzegorz Bokota"
@@ -1009,16 +1009,20 @@ class MainMenu(QLabel):
             dial.setDirectory(self.settings.save_directory)
         dial.setFileMode(QFileDialog.AnyFile)
         filters = ["Project (*.gz)", "Labeled image (*.tif)", "Mask in tiff (*.tif)",
-                   "Mask for itk-snap (*.img)", "Data for chimera (*.hd5)"]
+                   "Mask for itk-snap (*.img)", "Data for chimera (*.cmap)"]
         dial.setAcceptMode(QFileDialog.AcceptSave)
         dial.setFilters(filters)
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
             selected_filter = dial.selectedFilter()
+            if os.path.splitext(file_path)[1] == '':
+                ext = re.search(r'\(\*(\.\w+)\)', selected_filter).group(1)
+                file_path += ext
             if selected_filter == "Project (*.gz)":
                 folder_path = tempfile.mkdtemp()
                 np.save(os.path.join(folder_path, "image.npy"), self.settings.image)
                 np.save(os.path.join(folder_path, "draw.npy"), self.segment.draw_canvas)
+                np.save(os.path.join(folder_path, "res_mask.npy"), self.segment.get_segmentation())
                 if self.settings.mask is not None:
                     np.save(os.path.join(folder_path, "mask.npy"), self.settings.mask)
                 important_data = dict()
@@ -1032,8 +1036,8 @@ class MainMenu(QLabel):
                 important_data['use_draw'] = self.settings.use_draw_result
                 with open(os.path.join(folder_path, "data.json"), 'w') as ff:
                     json.dump(important_data, ff)
-                if file_path[-3:] != ".gz":
-                    file_path += ".gz"
+                """if file_path[-3:] != ".gz":
+                    file_path += ".gz" """
                 tar = tarfile.open(file_path, 'w:bz2')
                 for name in os.listdir(folder_path):
                     tar.add(os.path.join(folder_path, name), name)
@@ -1058,8 +1062,37 @@ class MainMenu(QLabel):
             elif selected_filter == "Mask for itk-snap (*.img)":
                 segmentation = sitk.GetImageFromArray(self.segment.get_segmentation())
                 sitk.WriteImage(segmentation, file_path)
-            elif selected_filter == "Data for chimera (*.hd5)":
-                r = QMessageBox.warning(self, "save error", "Function is not implemented yet")
+            elif selected_filter == "Data for chimera (*.cmap)":
+                segmentation = self.segment.get_segmentation()
+                image = np.copy(self.settings.image)
+                if self.settings.threshold_type == UPPER:
+                    full_segmentation = self.segment.get_full_segmentation()
+                    noise_mean = np.mean(image[full_segmentation == 0])
+                    image = noise_mean - image
+                image[segmentation == 0] = 0
+                z, y, x = image.shape
+                f = h5py.File(file_path, "w")
+                grp = f.create_group('Chimera/image1')
+                dset = grp.create_dataset("data_zyx", (z, y, x), dtype='f')
+                dset[...] = image
+
+                # Just to satisfy file format
+                grp = f['Chimera']
+                grp.attrs['CLASS'] = np.string_('GROUP')
+                grp.attrs['TITLE'] = np.string_('')
+                grp.attrs['VERSION'] = np.string_('1.0')
+
+                grp = f['Chimera/image1']
+                grp.attrs['CLASS'] = np.string_('GROUP')
+                grp.attrs['TITLE'] = np.string_('')
+                grp.attrs['VERSION'] = np.string_('1.0')
+                grp.attrs['step'] = np.array([40, 5, 5], dtype=np.float32)
+                print("WARNING - fixed steps")
+
+                dset.attrs['CLASS'] = np.string_('CARRY')
+                dset.attrs['TITLE'] = np.string_('')
+                dset.attrs['VERSION'] = np.string_('1.0')
+                f.close()
             else:
                 r = QMessageBox.critical(self, "Save error", "Option unknow")
 

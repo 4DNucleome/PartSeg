@@ -4,6 +4,7 @@ from matplotlib import pyplot
 import numpy as np
 import SimpleITK as sitk
 
+UPPER = "Upper"
 
 def gaussian(image, radius):
     """
@@ -74,8 +75,7 @@ class Settings(object):
         self.use_draw_result = False
         self.draw_callback = []
         self.threshold = 33000
-        self.threshold_list = []
-        self.threshold_type = "Upper"
+        self.threshold_list = UPPER
         self.threshold_layer_separate = False
         self.minimum_size = 100
         self.overlay = 0.7
@@ -284,6 +284,9 @@ class Segment(object):
     def get_segmentation(self):
         self._segmentation_changed = False
         return self._finally_segment
+
+    def get_full_segmentation(self):
+        return self._segmented_image
 
     def add_segmentation_callback(self, callback):
         self.segmentation_change_callback.append(callback)
