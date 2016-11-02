@@ -1084,7 +1084,7 @@ class MainMenu(QLabel):
                     full_segmentation = self.segment.get_full_segmentation()
                     noise_mean = np.mean(image[full_segmentation == 0])
                     image = noise_mean - image
-                image[segmentation == 0] = 0
+                image[segmentation == 0] = min(image[segmentation > 0].min(), 0)
                 z, y, x = image.shape
                 f = h5py.File(file_path, "w")
                 grp = f.create_group('Chimera/image1')
@@ -1101,7 +1101,7 @@ class MainMenu(QLabel):
                 grp.attrs['CLASS'] = np.string_('GROUP')
                 grp.attrs['TITLE'] = np.string_('')
                 grp.attrs['VERSION'] = np.string_('1.0')
-                grp.attrs['step'] = np.array([40, 5, 5], dtype=np.float32)
+                grp.attrs['step'] = np.array([7, 7, 40], dtype=np.float32)
                 print("WARNING - fixed steps")
 
                 dset.attrs['CLASS'] = np.string_('CARRY')
