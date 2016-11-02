@@ -21,7 +21,7 @@ from PySide.QtCore import Qt, QSize
 from PySide.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget,\
     QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QPixmap, QSpinBox, \
     QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout,\
-    QListWidget
+    QListWidget, QSizePolicy, QTextEdit
 
 from backend import Settings, Segment, UPPER
 
@@ -968,6 +968,12 @@ class MainMenu(QLabel):
                     self.settings.add_image(image, file_path, mask)
                 else:
                     image = tifffile.imread(file_path)
+                    mask_dial = QFileDialog(self, "Load mask")
+                    filters = ["mask (*.tiff *.tif *.lsm)"]
+                    mask_dial.setFilters(filters)
+                    if mask_dial.exec_():
+                        mask = tifffile.imread(mask_dial.selectedFiles()[0])
+                        self.settings.add_image(image, file_path, mask)
             elif selected_filter == "saved project (*.gz)":
                 tar = tarfile.open(file_path, 'r:bz2')
                 members = tar.getnames()
@@ -1009,7 +1015,7 @@ class MainMenu(QLabel):
             dial.setDirectory(self.settings.save_directory)
         dial.setFileMode(QFileDialog.AnyFile)
         filters = ["Project (*.gz)", "Labeled image (*.tif)", "Mask in tiff (*.tif)",
-                   "Mask for itk-snap (*.img)", "Data for chimera (*.cmap)"]
+                   "Mask for itk-snap (*.img)", "Data for chimera (*.cmap)", "Image (*.tiff)"]
         dial.setAcceptMode(QFileDialog.AcceptSave)
         dial.setFilters(filters)
         if dial.exec_():
@@ -1093,6 +1099,9 @@ class MainMenu(QLabel):
                 dset.attrs['TITLE'] = np.string_('')
                 dset.attrs['VERSION'] = np.string_('1.0')
                 f.close()
+            elif selected_filter == "Image (*.tiff)":
+                image = self.settings.image
+                tifffile.imsave(file_path, image)
             else:
                 r = QMessageBox.critical(self, "Save error", "Option unknow")
 
@@ -1126,11 +1135,16 @@ class MainWindow(QMainWindow):
         self.object_count = QLabel(self)
         self.object_count.setFont(big_font)
         self.object_count.setFixedWidth(150)
-        self.object_size_list = QLabel(self)
+        self.object_size_list = QTextEdit(self)
+        self.object_size_list.setReadOnly(True)
         self.object_size_list.setFont(big_font)
         self.object_size_list.setMinimumWidth(800)
-        self.object_size_list.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        self.object_size_list.setMaximumHeight(150)
+        self.object_size_list.setMaximumHeight(30)
+        # self.object_size_list.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        # self.object_size_list_area.setWidget(self.object_size_list)
+        # self.object_size_list.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # self.object_size_list.setMinimumHeight(200)
+        # self.object_size_list.setWordWrap(True)
         self.statusBar = QStatusBar()
         self.setStatusBar(self.statusBar)
         self.settings.add_image_callback((self.statusBar.showMessage, str))
@@ -1185,4 +1199,5 @@ class MainWindow(QMainWindow):
         """:type info_aray: np.ndarray"""
         self.object_count.setText("Object num: {0}".format(str(info_aray.size)))
         self.object_size_list.setText("Objects size: {0}".format(str(info_aray)))
+        print(self.object_size_list.height())
 

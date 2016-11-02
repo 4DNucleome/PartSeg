@@ -75,7 +75,8 @@ class Settings(object):
         self.use_draw_result = False
         self.draw_callback = []
         self.threshold = 33000
-        self.threshold_list = UPPER
+        self.threshold_list = []
+        self.threshold_type = UPPER
         self.threshold_layer_separate = False
         self.minimum_size = 100
         self.overlay = 0.7
@@ -233,7 +234,7 @@ class Segment(object):
         else:
             image_to_threshold = self._image
         # Define wich threshold use
-        if self._settings.threshold_type == "Upper":
+        if self._settings.threshold_type == UPPER:
             def get_mask(image, threshold):
                 return image <= threshold
         else:
