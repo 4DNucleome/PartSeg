@@ -136,7 +136,7 @@ class Settings(object):
     def available_colormap_list(self):
         return pyplot.colormaps()
 
-    def add_image(self, image, file_path, mask=None):
+    def add_image(self, image, file_path, mask=None,):
         self.image = image
         self.mask = mask
         self.file_path = file_path
@@ -246,6 +246,7 @@ class Segment(object):
         self._sizes_array = []
         self.segmentation_change_callback = []
         self._segmentation_changed = True
+        self.protect = False
         self._settings.add_threshold_callback(self.threshold_updated)
         self._settings.add_min_size_callback(self.min_size_updated)
         self._settings.add_draw_callback(self.draw_update)
@@ -257,6 +258,8 @@ class Segment(object):
         self.threshold_updated()
 
     def threshold_updated(self):
+        if self.protect:
+            return
         self._threshold_image = np.zeros(self._image.shape, dtype=np.uint8)
         if self._settings.use_gauss:
             image_to_threshold = self._gauss_image
@@ -282,6 +285,8 @@ class Segment(object):
         self.draw_update()
 
     def draw_update(self, canvas=None):
+        if self.protect:
+            return
         if canvas is not None:
             self.draw_canvas[...] = canvas[...]
             return
@@ -297,6 +302,8 @@ class Segment(object):
         self.min_size_updated()
 
     def min_size_updated(self):
+        if self.protect:
+            return
         ind = bisect(self._sizes_array[1:], self._settings.minimum_size, lambda x, y: x > y)
         # print(ind, self._sizes_array, self._settings.minimum_size)
         self._finally_segment = np.copy(self._segmented_image)

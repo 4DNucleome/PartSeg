@@ -906,6 +906,7 @@ class MainMenu(QLabel):
         self.settings.change_colormap(self.colormap_choose.currentText())
 
     def settings_changed(self):
+        self.segment.protect = True
         self.minimum_size_value.setValue(self.settings.minimum_size)
         if self.settings.threshold_layer_separate:
             self.threshold_value.setValue(
@@ -913,6 +914,7 @@ class MainMenu(QLabel):
         else:
             self.threshold_value.setValue(self.settings.threshold)
         self.gauss_check.setChecked(self.settings.use_gauss)
+        self.segment.protect = False
 
     def colormap_list_changed(self):
         self.colormap_protect = True
@@ -993,8 +995,6 @@ class MainMenu(QLabel):
                     mask = np.load(tar.extractfile("mask.npy"))
                 else:
                     mask = None
-                self.settings.add_image(image, file_path, mask)
-                self.segment.draw_update(draw)
                 self.settings.threshold = int(important_data["threshold"])
                 if important_data["threshold_list"] is not None:
                     self.settings.threshold_list = map(int, important_data["threshold_list"])
@@ -1011,8 +1011,10 @@ class MainMenu(QLabel):
                     self.settings.use_draw_result = bool(important_data["use_draw"])
                 except KeyError:
                     self.settings.use_draw_result = False
-                # self.segment.threshold_updated()
+                self.settings.add_image(image, file_path, mask)
                 self.settings_changed()
+                self.segment.draw_update(draw)
+                # self.segment.threshold_updated()
             else:
                 r = QMessageBox.warning(self, "Load error", "Function do not implemented yet")
                 return
@@ -1027,9 +1029,12 @@ class MainMenu(QLabel):
                    "Mask for itk-snap (*.img)", "Data for chimera (*.cmap)", "Image (*.tiff)"]
         dial.setAcceptMode(QFileDialog.AcceptSave)
         dial.setFilters(filters)
+        deafult_name = os.path.splitext(os.path.basename(self.settings.file_path))[0]
+        dial.selectFile(deafult_name)
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
             selected_filter = dial.selectedFilter()
+            self.settings.save_directory = os.path.dirname(file_path)
             if os.path.splitext(file_path)[1] == '':
                 ext = re.search(r'\(\*(\.\w+)\)', selected_filter).group(1)
                 file_path += ext
@@ -1082,9 +1087,9 @@ class MainMenu(QLabel):
                 image = np.copy(self.settings.image)
                 if self.settings.threshold_type == UPPER:
                     full_segmentation = self.segment.get_full_segmentation()
-                    noise_mean = np.mean(image[full_segmentation == 0])
+                    noise_mean = np.max(image)  #  np.mean(image[full_segmentation == 0])
                     image = noise_mean - image
-                image[segmentation == 0] = min(image[segmentation > 0].min(), 0)
+                image[segmentation == 0] = 0 # min(image[segmentation > 0].min(), 0)
                 z, y, x = image.shape
                 f = h5py.File(file_path, "w")
                 grp = f.create_group('Chimera/image1')
