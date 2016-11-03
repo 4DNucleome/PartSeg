@@ -1093,7 +1093,7 @@ class MainMenu(QLabel):
                 image = np.copy(self.settings.image)
                 if self.settings.threshold_type == UPPER:
                     full_segmentation = self.segment.get_full_segmentation()
-                    noise_mean = np.max(image)  #  np.mean(image[full_segmentation == 0])
+                    noise_mean = np.mean(image[full_segmentation == 0]) #np.max(image[full_segmentation>0])  #  np.mean(image[full_segmentation == 0])
                     image = noise_mean - image
                 image[segmentation == 0] = 0 # min(image[segmentation > 0].min(), 0)
                 z, y, x = image.shape
@@ -1112,7 +1112,7 @@ class MainMenu(QLabel):
                 grp.attrs['CLASS'] = np.string_('GROUP')
                 grp.attrs['TITLE'] = np.string_('')
                 grp.attrs['VERSION'] = np.string_('1.0')
-                grp.attrs['step'] = np.array([7, 7, 40], dtype=np.float32)
+                grp.attrs['step'] = np.array([5, 5, 30], dtype=np.float32)
                 print("WARNING - fixed steps")
 
                 dset.attrs['CLASS'] = np.string_('CARRY')
