@@ -953,10 +953,13 @@ class MainMenu(QLabel):
         filters = ["raw image (*.tiff *.tif *.lsm)", "image with mask (*.tiff *.tif *.lsm *json)",
                    "saved project (*.gz)"]
         dial.setFilters(filters)
+        if self.settings.open_filter is not None:
+            dial.selectNameFilter(self.settings.open_filter)
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
             self.settings.open_directory = os.path.dirname(file_path)
             selected_filter = dial.selectedFilter()
+            self.settings.open_filter = selected_filter
             print(file_path, selected_filter)
             # TODO maybe something better. Now main window have to be parent
             if selected_filter == "raw image (*.tiff *.tif *.lsm)":
@@ -1031,9 +1034,12 @@ class MainMenu(QLabel):
         dial.setFilters(filters)
         deafult_name = os.path.splitext(os.path.basename(self.settings.file_path))[0]
         dial.selectFile(deafult_name)
+        if self.settings.save_filter is not None:
+            dial.selectNameFilter(self.settings.save_filter)
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
             selected_filter = dial.selectedFilter()
+            self.settings.save_filter = selected_filter
             self.settings.save_directory = os.path.dirname(file_path)
             if os.path.splitext(file_path)[1] == '':
                 ext = re.search(r'\(\*(\.\w+)\)', selected_filter).group(1)

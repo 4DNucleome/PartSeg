@@ -88,7 +88,9 @@ class Settings(object):
         self.minimum_size_change_callback = []
         self.layer_num = 0
         self.open_directory = None
+        self.open_filter = None
         self.save_directory = None
+        self.save_filter = None
         self.spacing = [1, 1, 3]
         self.voxel_size = [70, 70, 210]
         self.size_unit = "nm"
