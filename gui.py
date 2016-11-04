@@ -797,9 +797,10 @@ class MainMenu(QLabel):
         self.load_button.clicked.connect(self.open_file)
         self.save_button = QPushButton("Save", self)
         self.save_button.setDisabled(True)
-        self.export_button = QPushButton("Export", self)
-        self.export_button.setDisabled(True)
         self.save_button.clicked.connect(self.save_results)
+        self.mask_button = QPushButton("To Mask", self)
+        self.mask_button.setDisabled(True)
+        self.mask_button.clicked.connect(self.segmentation_to_mask)
         self.threshold_type = QComboBox(self)
         self.threshold_type.addItem("Upper threshold:")
         self.threshold_type.addItem("Lower threshold:")
@@ -851,7 +852,7 @@ class MainMenu(QLabel):
         layout = QHBoxLayout()
         second_list = [self.gauss_check, self.draw_check, self.profile_choose,
                        self.advanced_button, self.colormap_choose]
-        layout.addLayout(pack_layout(self.load_button, self.save_button, self.export_button))
+        layout.addLayout(pack_layout(self.load_button, self.save_button, self.mask_button))
         # layout.addWidget(self.load_button)
         # layout.addWidget(self.save_button)
         # layout.addWidget(self.export_button)
@@ -914,6 +915,7 @@ class MainMenu(QLabel):
         else:
             self.threshold_value.setValue(self.settings.threshold)
         self.gauss_check.setChecked(self.settings.use_gauss)
+        self.draw_check.setChecked(self.settings.use_draw_result)
         self.segment.protect = False
 
     def colormap_list_changed(self):
@@ -944,6 +946,16 @@ class MainMenu(QLabel):
 
     def changed_layer(self, lay_num):
         self.threshold_value.setValue(lay_num)
+
+    def segmentation_to_mask(self):
+        msgbox = QMessageBox(self)
+        msgbox.setText("Change segmentation on mask")
+        msgbox.setInformativeText("This change can not be undone")
+        msgbox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        msgbox.setDefaultButton(QMessageBox.Ok)
+        ret = msgbox.exec_()
+        if ret == QMessageBox.Ok:
+            self.settings.mask = self.segment.get_segmentation()
 
     def open_file(self):
         dial = QFileDialog(self, "Load data")
@@ -1002,7 +1014,7 @@ class MainMenu(QLabel):
                 if important_data["threshold_list"] is not None:
                     self.settings.threshold_list = map(int, important_data["threshold_list"])
                 else:
-                    self.settings.threshold_list = None
+                    self.settings.threshold_list = []
                 self.settings.threshold_type = important_data["threshold_type"]
                 self.settings.threshold_layer_separate = \
                     bool(important_data["threshold_layer"])
@@ -1011,7 +1023,7 @@ class MainMenu(QLabel):
                     tuple(map(int, important_data["spacing"]))
                 self.settings.minimum_size = int(important_data["minimum_size"])
                 try:
-                    self.settings.use_draw_result = bool(important_data["use_draw"])
+                    self.settings.use_draw_result = int(important_data["use_draw"])
                 except KeyError:
                     self.settings.use_draw_result = False
                 self.settings.add_image(image, file_path, mask)
@@ -1022,6 +1034,7 @@ class MainMenu(QLabel):
                 r = QMessageBox.warning(self, "Load error", "Function do not implemented yet")
                 return
             self.save_button.setEnabled(True)
+            self.mask_button.setEnabled(True)
 
     def save_results(self):
         dial = QFileDialog(self, "Save data")
@@ -1093,9 +1106,10 @@ class MainMenu(QLabel):
                 image = np.copy(self.settings.image)
                 if self.settings.threshold_type == UPPER:
                     full_segmentation = self.segment.get_full_segmentation()
-                    noise_mean = np.mean(image[full_segmentation == 0]) #np.max(image[full_segmentation>0])  #  np.mean(image[full_segmentation == 0])
+                    noise_mean = np.mean(image[full_segmentation == 0])
                     image = noise_mean - image
-                image[segmentation == 0] = 0 # min(image[segmentation > 0].min(), 0)
+                image[segmentation == 0] = 0  # min(image[segmentation > 0].min(), 0)
+                image[image < 0] = 0
                 z, y, x = image.shape
                 f = h5py.File(file_path, "w")
                 grp = f.create_group('Chimera/image1')
