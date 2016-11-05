@@ -3,6 +3,11 @@ import matplotlib
 from matplotlib import pyplot
 import numpy as np
 import SimpleITK as sitk
+import h5py
+import json
+import tempfile
+import os
+import tarfile
 
 UPPER = "Upper"
 
@@ -91,7 +96,7 @@ class Settings(object):
         self.open_filter = None
         self.save_directory = None
         self.save_filter = None
-        self.spacing = [1, 1, 3]
+        self.spacing = [5, 5, 30]
         self.voxel_size = [70, 70, 210]
         self.size_unit = "nm"
         self.advanced_menu_geometry = None
@@ -331,3 +336,110 @@ class Segment(object):
 
     def add_segmentation_callback(self, callback):
         self.segmentation_change_callback.append(callback)
+
+
+def save_to_cmap(file_path, settings, segment):
+    """
+    :type file_path: str
+    :type settings: Settings
+    :type segment: Segment
+    :return:
+    """
+    segmentation = segment.get_segmentation()
+    image = np.copy(settings.image)
+    if settings.threshold_type == UPPER:
+        full_segmentation = segment.get_full_segmentation()
+        noise_mean = np.mean(image[full_segmentation == 0])
+        image = noise_mean - image
+    image[segmentation == 0] = 0  # min(image[segmentation > 0].min(), 0)
+    image[image < 0] = 0
+    z, y, x = image.shape
+    f = h5py.File(file_path, "w")
+    grp = f.create_group('Chimera/image1')
+    dset = grp.create_dataset("data_zyx", (z, y, x), dtype='f')
+    dset[...] = image
+
+    # Just to satisfy file format
+    grp = f['Chimera']
+    grp.attrs['CLASS'] = np.string_('GROUP')
+    grp.attrs['TITLE'] = np.string_('')
+    grp.attrs['VERSION'] = np.string_('1.0')
+
+    grp = f['Chimera/image1']
+    grp.attrs['CLASS'] = np.string_('GROUP')
+    grp.attrs['TITLE'] = np.string_('')
+    grp.attrs['VERSION'] = np.string_('1.0')
+    grp.attrs['step'] = np.array(settings.spacing, dtype=np.float32)
+
+    dset.attrs['CLASS'] = np.string_('CARRY')
+    dset.attrs['TITLE'] = np.string_('')
+    dset.attrs['VERSION'] = np.string_('1.0')
+    f.close()
+
+
+def save_to_project(file_path, settings, segment):
+    """
+    :type file_path: str
+    :type settings: Settings
+    :type segment: Segment
+    :return:
+    """
+    folder_path = tempfile.mkdtemp()
+    np.save(os.path.join(folder_path, "image.npy"), settings.image)
+    np.save(os.path.join(folder_path, "draw.npy"), segment.draw_canvas)
+    np.save(os.path.join(folder_path, "res_mask.npy"), segment.get_segmentation())
+    if settings.mask is not None:
+        np.save(os.path.join(folder_path, "mask.npy"), settings.mask)
+    important_data = dict()
+    important_data['threshold_type'] = settings.threshold_type
+    important_data['threshold_layer'] = settings.threshold_layer_separate
+    important_data["threshold"] = settings.threshold
+    important_data["threshold_list"] = settings.threshold_list
+    important_data['use_gauss'] = settings.use_gauss
+    important_data['spacing'] = settings.spacing
+    important_data['minimum_size'] = settings.minimum_size
+    important_data['use_draw'] = settings.use_draw_result
+    with open(os.path.join(folder_path, "data.json"), 'w') as ff:
+        json.dump(important_data, ff)
+    """if file_path[-3:] != ".gz":
+        file_path += ".gz" """
+    tar = tarfile.open(file_path, 'w:bz2')
+    for name in os.listdir(folder_path):
+        tar.add(os.path.join(folder_path, name), name)
+    tar.close()
+
+
+def load_project(file_path, settings, segment):
+    """
+    :type file_path: str
+    :type settings: Settings
+    :type segment: Segment
+    :return:
+    """
+    tar = tarfile.open(file_path, 'r:bz2')
+    members = tar.getnames()
+    important_data = json.load(tar.extractfile("data.json"))
+    image = np.load(tar.extractfile("image.npy"))
+    draw = np.load(tar.extractfile("draw.npy"))
+    if "mask.npy" in members:
+        mask = np.load(tar.extractfile("mask.npy"))
+    else:
+        mask = None
+    settings.threshold = int(important_data["threshold"])
+    if important_data["threshold_list"] is not None:
+        settings.threshold_list = map(int, important_data["threshold_list"])
+    else:
+        settings.threshold_list = []
+    settings.threshold_type = important_data["threshold_type"]
+    settings.threshold_layer_separate = \
+        bool(important_data["threshold_layer"])
+    settings.use_gauss = bool(important_data["use_gauss"])
+    settings.spacing = \
+        tuple(map(int, important_data["spacing"]))
+    settings.minimum_size = int(important_data["minimum_size"])
+    try:
+        settings.use_draw_result = int(important_data["use_draw"])
+    except KeyError:
+        settings.use_draw_result = False
+    settings.add_image(image, file_path, mask)
+    segment.draw_update(draw)

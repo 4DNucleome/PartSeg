@@ -6,11 +6,9 @@ import tifffile
 import SimpleITK as sitk
 import numpy as np
 import platform
-import tempfile
 import tarfile
 import json
 import matplotlib
-import h5py
 import re
 os.environ['QT_API'] = 'pyside'
 matplotlib.use('Qt4Agg')
@@ -23,7 +21,7 @@ from PySide.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusB
     QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout,\
     QListWidget, QTextEdit
 
-from backend import Settings, Segment, UPPER
+from backend import Settings, Segment, save_to_cmap, save_to_project, load_project
 
 
 __author__ = "Grzegorz Bokota"
@@ -1001,34 +999,8 @@ class MainMenu(QLabel):
                         mask = tifffile.imread(mask_dial.selectedFiles()[0])
                         self.settings.add_image(image, file_path, mask)
             elif selected_filter == "saved project (*.gz)":
-                tar = tarfile.open(file_path, 'r:bz2')
-                members = tar.getnames()
-                important_data = json.load(tar.extractfile("data.json"))
-                image = np.load(tar.extractfile("image.npy"))
-                draw = np.load(tar.extractfile("draw.npy"))
-                if "mask.npy" in members:
-                    mask = np.load(tar.extractfile("mask.npy"))
-                else:
-                    mask = None
-                self.settings.threshold = int(important_data["threshold"])
-                if important_data["threshold_list"] is not None:
-                    self.settings.threshold_list = map(int, important_data["threshold_list"])
-                else:
-                    self.settings.threshold_list = []
-                self.settings.threshold_type = important_data["threshold_type"]
-                self.settings.threshold_layer_separate = \
-                    bool(important_data["threshold_layer"])
-                self.settings.use_gauss = bool(important_data["use_gauss"])
-                self.settings.spacing = \
-                    tuple(map(int, important_data["spacing"]))
-                self.settings.minimum_size = int(important_data["minimum_size"])
-                try:
-                    self.settings.use_draw_result = int(important_data["use_draw"])
-                except KeyError:
-                    self.settings.use_draw_result = False
-                self.settings.add_image(image, file_path, mask)
+                load_project(file_path,self.settings, self.segment)
                 self.settings_changed()
-                self.segment.draw_update(draw)
                 # self.segment.threshold_updated()
             else:
                 r = QMessageBox.warning(self, "Load error", "Function do not implemented yet")
@@ -1058,29 +1030,7 @@ class MainMenu(QLabel):
                 ext = re.search(r'\(\*(\.\w+)\)', selected_filter).group(1)
                 file_path += ext
             if selected_filter == "Project (*.gz)":
-                folder_path = tempfile.mkdtemp()
-                np.save(os.path.join(folder_path, "image.npy"), self.settings.image)
-                np.save(os.path.join(folder_path, "draw.npy"), self.segment.draw_canvas)
-                np.save(os.path.join(folder_path, "res_mask.npy"), self.segment.get_segmentation())
-                if self.settings.mask is not None:
-                    np.save(os.path.join(folder_path, "mask.npy"), self.settings.mask)
-                important_data = dict()
-                important_data['threshold_type'] = self.settings.threshold_type
-                important_data['threshold_layer'] = self.settings.threshold_layer_separate
-                important_data["threshold"] = self.settings.threshold
-                important_data["threshold_list"] = self.settings.threshold_list
-                important_data['use_gauss'] = self.settings.use_gauss
-                important_data['spacing'] = self.settings.spacing
-                important_data['minimum_size'] = self.settings.minimum_size
-                important_data['use_draw'] = self.settings.use_draw_result
-                with open(os.path.join(folder_path, "data.json"), 'w') as ff:
-                    json.dump(important_data, ff)
-                """if file_path[-3:] != ".gz":
-                    file_path += ".gz" """
-                tar = tarfile.open(file_path, 'w:bz2')
-                for name in os.listdir(folder_path):
-                    tar.add(os.path.join(folder_path, name), name)
-                tar.close()
+                save_to_project(file_path,self.settings, self.segment)
 
             elif selected_filter == "Labeled image (*.tif)":
                 segmentation = self.segment.get_segmentation()
@@ -1102,37 +1052,7 @@ class MainMenu(QLabel):
                 segmentation = sitk.GetImageFromArray(self.segment.get_segmentation())
                 sitk.WriteImage(segmentation, file_path)
             elif selected_filter == "Data for chimera (*.cmap)":
-                segmentation = self.segment.get_segmentation()
-                image = np.copy(self.settings.image)
-                if self.settings.threshold_type == UPPER:
-                    full_segmentation = self.segment.get_full_segmentation()
-                    noise_mean = np.mean(image[full_segmentation == 0])
-                    image = noise_mean - image
-                image[segmentation == 0] = 0  # min(image[segmentation > 0].min(), 0)
-                image[image < 0] = 0
-                z, y, x = image.shape
-                f = h5py.File(file_path, "w")
-                grp = f.create_group('Chimera/image1')
-                dset = grp.create_dataset("data_zyx", (z, y, x), dtype='f')
-                dset[...] = image
-
-                # Just to satisfy file format
-                grp = f['Chimera']
-                grp.attrs['CLASS'] = np.string_('GROUP')
-                grp.attrs['TITLE'] = np.string_('')
-                grp.attrs['VERSION'] = np.string_('1.0')
-
-                grp = f['Chimera/image1']
-                grp.attrs['CLASS'] = np.string_('GROUP')
-                grp.attrs['TITLE'] = np.string_('')
-                grp.attrs['VERSION'] = np.string_('1.0')
-                grp.attrs['step'] = np.array([5, 5, 30], dtype=np.float32)
-                print("WARNING - fixed steps")
-
-                dset.attrs['CLASS'] = np.string_('CARRY')
-                dset.attrs['TITLE'] = np.string_('')
-                dset.attrs['VERSION'] = np.string_('1.0')
-                f.close()
+                save_to_cmap(file_path,self.settings, self.segment)
             elif selected_filter == "Image (*.tiff)":
                 image = self.settings.image
                 tifffile.imsave(file_path, image)
