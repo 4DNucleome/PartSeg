@@ -17,8 +17,10 @@ if __name__ == '__main__':
         files_to_proceed = args.source_folder
     settings = backend.Settings("settings.json")
     segment = backend.Segment(settings)
-    for file_path in files_to_proceed:
+    num = len(files_to_proceed)
+    for i, file_path in enumerate(files_to_proceed):
         file_name = os.path.basename(file_path)
+        print("file: {}; {} from {}".format(file_name, i, num))
         file_name = os.path.splitext(file_name)[0]
         file_name += ".tiff"
         tar = tarfile.open(file_path, 'r:bz2')

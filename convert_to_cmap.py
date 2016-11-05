@@ -32,10 +32,12 @@ if __name__ == '__main__':
         segment.set_image(image)
 
     settings.add_image_callback(canvas_update)
-    for file_path in files_to_proceed:
+    num = len(files_to_proceed)
+    for i, file_path in enumerate(files_to_proceed):
+        file_name = os.path.basename(file_path)
+        print("file: {}; {} from {}".format(file_name, i, num))
         backend.load_project(file_path, settings, segment)
         segment.threshold_updated()
-        file_name = os.path.basename(file_path)
         file_name = os.path.splitext(file_name)[0]
         file_name += ".cmap"
         if args.spacing is not None:
