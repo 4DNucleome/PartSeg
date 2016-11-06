@@ -14,6 +14,7 @@ if __name__ == '__main__':
     import os
     import json
     import tempfile
+    import glob
 
     parser = argparse.ArgumentParser("Convert project to chimera cmap")
     parser.add_argument("source_folder", type=str, nargs=1, help="Folder with project files to proceed or one file")
@@ -36,7 +37,7 @@ if __name__ == '__main__':
         for name in members:
             if name == "data.json":
                 continue
-            tar.extract(name, os.path.join(folder_path, name))
+            tar.extract(name, folder_path)
         tar.close()
         if args.spacing is not None:
             important_data["spacing"] = args.spacing
