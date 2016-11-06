@@ -11,6 +11,39 @@ import tarfile
 
 UPPER = "Upper"
 
+
+def class_to_dict(obj, *args):
+    """
+    Create dict which contains values of given fields
+    :type obj: object
+    :type args: list[str]
+    :return:
+    """
+    res = dict()
+    for name in args:
+        res[name] = getattr(obj, name)
+    return res
+
+
+def dict_set_class(obj, dic, *args):
+    """
+    Set fields of given object based on values from dict.
+    If *args contains no names all values from dict are used
+    :type obj: object
+    :type dic: dict[str,object]
+    :param args: list[str]
+    :return:
+    """
+    if len(args) == 0:
+        li = dic.keys()
+    else:
+        li = args
+    for name in li:
+        tt = getattr(obj, name)
+
+        setattr(obj, name, dic[name])
+
+
 def gaussian(image, radius):
     """
     :param image: image to apply gausian filter
@@ -102,6 +135,27 @@ class Settings(object):
         self.advanced_menu_geometry = None
         self.file_path = ""
         self.protect = False
+        self.load(setings_path)
+
+    def dump(self, file_path):
+        important_data = \
+            class_to_dict(self, "open_directory", "open_filter", "save_directory", "save_filter", "spacing",
+                          "voxel_size", "size_unit", "threshold", "color_map_name", "overlay", "minimum_size")
+        with open(file_path, "w") as ff:
+            json.dump(important_data, ff)
+
+    def load(self, file_path):
+        try:
+            with open(file_path, "r") as ff:
+                important_data = json.load(ff)
+            dict_set_class(self, important_data, "open_directory", "open_filter", "save_directory", "save_filter",
+                           "spacing", "voxel_size", "size_unit", "threshold", "color_map_name", "overlay",
+                           "minimum_size")
+        except IOError:
+            print("No configuration file")
+            pass
+        except KeyError:
+            print("Bad configuration")
 
     def change_colormap(self, new_color_map):
         """

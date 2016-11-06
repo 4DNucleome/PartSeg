@@ -3,7 +3,6 @@ if __name__ == '__main__':
     import argparse
     import glob
     import os
-    import backend
     import tarfile
     import numpy as np
     import tifffile
@@ -15,8 +14,6 @@ if __name__ == '__main__':
         files_to_proceed = glob.glob(os.path.join(args.source_folder[0], "*.gz"))
     else:
         files_to_proceed = args.source_folder
-    settings = backend.Settings("settings.json")
-    segment = backend.Segment(settings)
     num = len(files_to_proceed)
     for i, file_path in enumerate(files_to_proceed):
         file_name = os.path.basename(file_path)

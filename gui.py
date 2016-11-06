@@ -1154,3 +1154,5 @@ class MainWindow(QMainWindow):
         self.object_count.setText("Object num: {0}".format(str(info_aray.size)))
         self.object_size_list.setText("Objects size: {0}".format(str(info_aray)))
 
+    def closeEvent(self, event):
+        self.settings.dump("settings.json")
