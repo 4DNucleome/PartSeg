@@ -7,7 +7,7 @@ if __name__ == '__main__':
     import numpy as np
     import tifffile
     parser = argparse.ArgumentParser("Extract images from project")
-    parser.add_argument("source_folder", type=str, nargs=1, help="Folder with project files to proceed")
+    parser.add_argument("source_folder", type=str, nargs=1, help="Folder with project files to proceed or one file")
     parser.add_argument("dest_folder", type=str, nargs=1, help="Destination folder")
     args = parser.parse_args()
     if os.path.isdir(args.source_folder[0]):
@@ -17,7 +17,7 @@ if __name__ == '__main__':
     num = len(files_to_proceed)
     for i, file_path in enumerate(files_to_proceed):
         file_name = os.path.basename(file_path)
-        print("file: {}; {} from {}".format(file_name, i, num))
+        print("file: {}; {} from {}".format(file_name, i+1, num))
         file_name = os.path.splitext(file_name)[0]
         file_name += ".tiff"
         tar = tarfile.open(file_path, 'r:bz2')

@@ -671,7 +671,8 @@ class AdvancedSettings(QLabel):
 
         def create_spacing(text, layout, num):
             spacing = QSpinBox()
-            spacing.setRange(0, 20)
+            spacing.setRange(0, 100)
+            print(settings.spacing)
             spacing.setValue(settings.spacing[num])
             spacing.setSingleStep(1)
             spacing.setButtonSymbols(QAbstractSpinBox.NoButtons)
@@ -716,7 +717,9 @@ class AdvancedSettings(QLabel):
         vlayout.addWidget(self.volume_info)
 
         accept_button = QPushButton("Accept")
+        accept_button.clicked.connect(self.accept)
         reset_button = QPushButton("Reset")
+        reset_button.clicked.connect(self.reset)
         butt_lay = QHBoxLayout()
         butt_lay.addStretch()
         butt_lay.addWidget(accept_button)
@@ -752,6 +755,19 @@ class AdvancedSettings(QLabel):
         volume = self.x_size.value() * self.y_size.value() * self.z_size.value()
         text = u"Voxel size: {}{}³".format(volume, self.units_size.currentText())
         self.volume_info.setText(text)
+
+    def reset(self):
+        self.x_spacing.setValue(self.settings.spacing[0])
+        self.y_spacing.setValue(self.settings.spacing[1])
+        self.z_spacing.setValue(self.settings.spacing[2])
+        self.x_size.setValue(self.settings.voxel_size[0])
+        self.y_size.setValue(self.settings.voxel_size[1])
+        self.z_size.setValue(self.settings.voxel_size[2])
+
+    def accept(self):
+        self.settings.spacing = self.x_spacing.value(), self.y_spacing.value(), self.z_spacing.value()
+        self.settings.voxel_size = self.x_size.value(), self.y_size.value(), self.z_size.value()
+
 
 
 class AdvancedWindow(QTabWidget):
@@ -1061,6 +1077,7 @@ class MainMenu(QLabel):
 
     def open_advanced(self):
         self.advanced_window = AdvancedWindow(self.settings)
+        print(self.settings.spacing)
         self.advanced_window.show()
 
 
