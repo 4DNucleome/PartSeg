@@ -316,6 +316,7 @@ class Segment(object):
         self._image = image
         self._gauss_image = gaussian(self._image, 1)  # TODO radius in settings
         self._segmentation_changed = True
+        self._finally_segment = np.zeros(image.shape, dtype=np.uint8)
         self.threshold_updated()
 
     def threshold_updated(self):
@@ -480,13 +481,8 @@ def load_project(file_path, settings, segment):
     else:
         mask = None
     settings.threshold = int(important_data["threshold"])
-    if important_data["threshold_list"] is not None:
-        settings.threshold_list = map(int, important_data["threshold_list"])
-    else:
-        settings.threshold_list = []
+
     settings.threshold_type = important_data["threshold_type"]
-    settings.threshold_layer_separate = \
-        bool(important_data["threshold_layer"])
     settings.use_gauss = bool(important_data["use_gauss"])
     settings.spacing = \
         tuple(map(int, important_data["spacing"]))
@@ -495,5 +491,15 @@ def load_project(file_path, settings, segment):
         settings.use_draw_result = int(important_data["use_draw"])
     except KeyError:
         settings.use_draw_result = False
+    segment.protect = True
     settings.add_image(image, file_path, mask)
+    segment.protect = False
+    if important_data["threshold_list"] is not None:
+        settings.threshold_list = map(int, important_data["threshold_list"])
+    else:
+        settings.threshold_list = []
+    settings.threshold_layer_separate = \
+        bool(important_data["threshold_layer"])
+    print(settings.threshold_list)
     segment.draw_update(draw)
+    segment.threshold_updated()

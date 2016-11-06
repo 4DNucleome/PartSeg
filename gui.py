@@ -21,7 +21,7 @@ from PySide.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusB
     QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout,\
     QListWidget, QTextEdit
 
-from backend import Settings, Segment, save_to_cmap, save_to_project, load_project
+from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER
 
 
 __author__ = "Grzegorz Bokota"
@@ -930,7 +930,13 @@ class MainMenu(QLabel):
             self.threshold_value.setValue(self.settings.threshold)
         self.gauss_check.setChecked(self.settings.use_gauss)
         self.draw_check.setChecked(self.settings.use_draw_result)
+        self.layer_thr_check.setChecked(self.settings.threshold_layer_separate)
         self.segment.protect = False
+        if self.settings.threshold_type != UPPER:
+            self.threshold_type.setCurrentIndex(
+                self.threshold_type.findText("Lower threshold:")
+            )
+
 
     def colormap_list_changed(self):
         self.colormap_protect = True
