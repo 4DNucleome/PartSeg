@@ -119,11 +119,14 @@ class Settings(object):
         self.threshold_layer_separate = False
         self.minimum_size = 100
         self.overlay = 0.7
+        self.mask_overlay = 0.7
         self.image = None
         self.mask = None
         self.image_change_callback = []
         self.threshold_change_callback = []
+        self.threshold_type_change_callback = []
         self.minimum_size_change_callback = []
+        self.metadata_changed_callback = []
         self.layer_num = 0
         self.open_directory = None
         self.open_filter = None
@@ -136,6 +139,8 @@ class Settings(object):
         self.file_path = ""
         self.protect = False
         self.load(setings_path)
+        self.prev_segmentation_settings = []
+        self.next_segmentation_settings = []
 
     def dump(self, file_path):
         important_data = \
@@ -245,10 +250,12 @@ class Settings(object):
     def change_threshold_type(self, new_type):
         print(new_type)
         if new_type == "Upper threshold:":
-            self.threshold_type = "Upper"
+            self.threshold_type = UPPER
         else:
             self.threshold_type = "Lower"
         for fun in self.threshold_change_callback:
+            fun()
+        for fun in self.threshold_type_change_callback:
             fun()
 
     def change_layer_threshold(self, layer_threshold):
@@ -265,6 +272,9 @@ class Settings(object):
 
     def add_threshold_callback(self, callback):
         self.threshold_change_callback.append(callback)
+
+    def add_threshold_type_callback(self, callback):
+        self.threshold_type_change_callback.append(callback)
 
     def change_min_size(self, new_min_size):
         self.minimum_size = new_min_size
@@ -289,6 +299,15 @@ class Settings(object):
 
     def add_draw_callback(self, callback):
         self.draw_callback.append(callback)
+
+    def add_metadata_changed_callback(self, callback):
+        self.metadata_changed_callback.append(callback)
+
+    def advanced_settings_changed(self):
+        for fun in self.threshold_type_change_callback:
+            fun()
+        for fun in self.threshold_type_change_callback:
+            fun()
 
 
 class Segment(object):

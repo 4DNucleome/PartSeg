@@ -27,7 +27,6 @@ from backend import Settings, Segment, save_to_cmap, save_to_project, load_proje
 __author__ = "Grzegorz Bokota"
 
 
-
 big_font_size = 15
 button_margin = 10
 button_height = 30
@@ -109,7 +108,9 @@ def set_button(button, previous_element, dist=10, super_space=0):
     if isinstance(button, QSpinBox):
         print(width)
         button.setFixedWidth(width)
-    #button.setFixedHeight(button_height)
+    # button.setFixedHeight(button_height)
+    if isinstance(previous_element, QCheckBox):
+        dist += 20
     if previous_element is not None:
         set_position(button, previous_element, dist)
 
@@ -126,6 +127,7 @@ def pack_layout(*args):
     for el in args:
         layout.addWidget(el)
     return layout
+
 
 class SynchronizeSliders(object):
     def __init__(self, slider1, slider2, switch):
@@ -172,7 +174,8 @@ class ColormapCanvas(FigureCanvas):
         self.val_min = 0
         self.val_max = 0
         self.settings = settings
-        self.widget = None
+        self.bottom_widget = None
+        self.top_widget = None
         settings.add_image_callback(self.set_range)
         settings.add_colormap_callback(self.update_colormap)
 
@@ -193,13 +196,20 @@ class ColormapCanvas(FigureCanvas):
         matplotlib.colorbar.ColorbarBase(ax, cmap=self.settings.color_map, norm=norm, orientation='vertical')
         fig.canvas.draw()
 
-    def set_widget(self, widget):
-        self.widget = widget
+    def set_bottom_widget(self, widget):
+        self.bottom_widget = widget
+        widget.setParent(self)
+
+    def set_top_widget(self, widget):
+        self.top_widget = widget
         widget.setParent(self)
 
     def resizeEvent(self, *args, **kwargs):
         super(ColormapCanvas, self).resizeEvent(*args, **kwargs)
-        self.widget.move(5, self.height() - 35)
+        if self.bottom_widget is not None:
+            self.bottom_widget.move(5, self.height() - 35)
+        if self.top_widget is not None:
+            self.top_widget.move(5, 5)
 
 
 class MyCanvas(FigureCanvas):
@@ -237,12 +247,18 @@ class MyCanvas(FigureCanvas):
         self.colormap_checkbox = QCheckBox(self)
         self.colormap_checkbox.setText("With colormap")
         self.colormap_checkbox.setChecked(True)
+        self.mark_mask = QCheckBox(self)
+        self.mark_mask.setText("Mark mask")
+        self.mark_mask.setChecked(False)
+        # self.mark_mask.setDisabled(True)
         self.layer_num_label = QLabel(self)
         self.layer_num_label.setText("1 of 1      ")
         self.settings = settings
         settings.add_image_callback(self.set_image)
         settings.add_colormap_callback(self.update_colormap)
         self.colormap_checkbox.stateChanged.connect(self.update_colormap)
+        self.mark_mask.stateChanged.connect(self.update_colormap)
+        self.settings.add_threshold_type_callback(self.update_colormap)
         MyCanvas.update_elements_positions(self)
         self.setMinimumHeight(300)
 
@@ -255,6 +271,8 @@ class MyCanvas(FigureCanvas):
         set_button(self.next_button, self.back_button, button_small_dist)
         self.slider.move(20, self.size().toTuple()[1]-20)
         self.colormap_checkbox.move(self.slider.pos().x(), self.slider.pos().y()-15)
+        # self.mark_mask.move(self.slider.pos().x()+50, self.slider.pos().y() - 15)
+        set_button(self.mark_mask, self.colormap_checkbox, button_small_dist)
         self.slider.setMinimumWidth(self.width()-85)
         set_button(self.layer_num_label, self.slider)
 
@@ -298,6 +316,15 @@ class MyCanvas(FigureCanvas):
 
     def update_rgb_image(self):
         float_image = self.base_image / float(self.base_image.max())
+        if self.mark_mask.isChecked() and self.settings.mask is not None:
+            zero_mask = self.settings.mask == 0
+            if self.settings.threshold_type == UPPER:
+                float_image[zero_mask] =\
+                    (1 - self.settings.mask_overlay) * float_image[zero_mask] + self.settings.mask_overlay
+            else:
+                float_image[zero_mask] = \
+                    (1 - self.settings.mask_overlay) * float_image[zero_mask] + \
+                    self.settings.mask_overlay * float_image.min()
         if self.colormap_checkbox.isChecked():
             cmap = self.settings.color_map
         else:
@@ -689,6 +716,15 @@ class AdvancedSettings(QLabel):
             spinbox.setAlignment(Qt.AlignRight)
             return add_label(text, layout, spinbox)
 
+        def create_overlay(txt, layout, val):
+            overlay = QDoubleSpinBox()
+            overlay.setRange(0, 1)
+            overlay.setSingleStep(0.1)
+            overlay.setDecimals(2)
+            overlay.setButtonSymbols(QAbstractSpinBox.NoButtons)
+            overlay.setValue(val)
+            return add_label(txt, layout, overlay)
+
         self.settings = settings
         vlayout = QVBoxLayout()
         spacing_layout = QHBoxLayout()
@@ -715,6 +751,11 @@ class AdvancedSettings(QLabel):
         vlayout.addLayout(size_layout)
         self.volume_info = QLabel()
         vlayout.addWidget(self.volume_info)
+        overlay_layout = QHBoxLayout()
+        self.mask_overlay = create_overlay("mask opacity:", overlay_layout, self.settings.mask_overlay)
+        self.component_overlay = create_overlay("segmentation opacity:", overlay_layout, self.settings.overlay)
+        overlay_layout.addStretch()
+        vlayout.addLayout(overlay_layout)
 
         accept_button = QPushButton("Accept")
         accept_button.clicked.connect(self.accept)
@@ -763,11 +804,15 @@ class AdvancedSettings(QLabel):
         self.x_size.setValue(self.settings.voxel_size[0])
         self.y_size.setValue(self.settings.voxel_size[1])
         self.z_size.setValue(self.settings.voxel_size[2])
+        self.mask_overlay.setValue(self.settings.mask_overlay)
+        self.component_overlay.setValue(self.settings.overlay)
 
     def accept(self):
         self.settings.spacing = self.x_spacing.value(), self.y_spacing.value(), self.z_spacing.value()
         self.settings.voxel_size = self.x_size.value(), self.y_size.value(), self.z_size.value()
-
+        self.settings.mask_overlay = self.mask_overlay.value()
+        self.settings.overlay = self.component_overlay.value()
+        self.settings.advanced_settings_changed()
 
 
 class AdvancedWindow(QTabWidget):
@@ -867,33 +912,13 @@ class MainMenu(QLabel):
         second_list = [self.gauss_check, self.draw_check, self.profile_choose,
                        self.advanced_button, self.colormap_choose]
         layout.addLayout(pack_layout(self.load_button, self.save_button, self.mask_button))
-        # layout.addWidget(self.load_button)
-        # layout.addWidget(self.save_button)
-        # layout.addWidget(self.export_button)
         layout.addLayout(pack_layout(self.threshold_type, self.threshold_value))
-        # layout.addWidget(self.threshold_type)
-        # layout.addWidget(self.threshold_value)
         layout.addWidget(self.layer_thr_check)
         layout.addLayout(pack_layout(self.minimum_size_lab, self.minimum_size_value))
-        # layout.addWidget(self.minimum_size_lab)
-        # layout.addWidget(self.minimum_size_value)
-        if False and self.size().width() < 1200:
-            print("two")
-            layout.addStretch()
-            vertical = QVBoxLayout()
-            layout2 = QHBoxLayout()
-            for el in second_list:
-                layout2.addWidget(el)
-            layout2.addStretch()
-            vertical.addLayout(layout)
-            vertical.addLayout(layout2)
-            self.setLayout(vertical)
-        else:
-            print("one")
-            for el in second_list:
-                layout.addWidget(el)
-            layout.addStretch()
-            self.setLayout(layout)
+        for el in second_list:
+            layout.addWidget(el)
+        layout.addStretch()
+        self.setLayout(layout)
 
     def clearLayout(self, layout):
         if layout is not None:
@@ -936,7 +961,6 @@ class MainMenu(QLabel):
             self.threshold_type.setCurrentIndex(
                 self.threshold_type.findText("Lower threshold:")
             )
-
 
     def colormap_list_changed(self):
         self.colormap_protect = True
@@ -1087,6 +1111,28 @@ class MainMenu(QLabel):
         self.advanced_window.show()
 
 
+class InfoMenu(QLabel):
+    def __init__(self, settings, segment, parent):
+        """
+        :type settings: Settings
+        :type segment: Segment
+        :type parent: QWidget
+        """
+        super(InfoMenu, self).__init__(parent)
+        self.settings = settings
+        self.segment = segment
+        layout = QHBoxLayout()
+        self.text_filed = QLabel(self)
+        layout.addWidget(self.text_filed)
+        self.setLayout(layout)
+
+    def update_text(self):
+        voxel_size = self.settings.voxel_size
+        draw_size = np.count_nonzero(self.segment.draw_canvas)
+        self.text_filed.setText("Voxel size: {},  Number of changed pixels: {}".format(voxel_size, draw_size))
+
+
+
 class MainWindow(QMainWindow):
     def __init__(self, title):
         super(MainWindow, self).__init__()
@@ -1102,7 +1148,10 @@ class MainWindow(QMainWindow):
         self.slider_swap = QCheckBox("Synchronize\nsliders", self)
         self.sync = SynchronizeSliders(self.normal_image_canvas.slider, self.segmented_image_canvas.slider,
                                        self.slider_swap)
-        self.colormap_image_canvas.set_widget(self.slider_swap)
+        self.colormap_image_canvas.set_bottom_widget(self.slider_swap)
+        self.zoom_sync = QCheckBox("Synchronize\nzoom", self)
+        self.zoom_sync.setDisabled(True)
+        self.colormap_image_canvas.set_top_widget(self.zoom_sync)
 
         #self.infoText = QLabel("Bright: 0\nComp:", self)
 
