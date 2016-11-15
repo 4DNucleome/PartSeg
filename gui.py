@@ -6,13 +6,13 @@ import tifffile
 import SimpleITK as sitk
 import numpy as np
 import platform
-import tarfile
 import json
 import matplotlib
 import re
 os.environ['QT_API'] = 'pyside'
 matplotlib.use('Qt4Agg')
 from matplotlib import pyplot
+import matplotlib.colors as colors
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from PySide.QtCore import Qt, QSize
@@ -21,7 +21,7 @@ from PySide.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusB
     QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout,\
     QListWidget, QTextEdit
 
-from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER
+from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS
 
 
 __author__ = "Grzegorz Bokota"
@@ -124,6 +124,7 @@ def label_to_rgb(image):
 def pack_layout(*args):
     layout = QHBoxLayout()
     layout.setSpacing(0)
+    layout.setContentsMargins(0, 0, 0, 0)
     for el in args:
         layout.addWidget(el)
     return layout
@@ -178,6 +179,7 @@ class ColormapCanvas(FigureCanvas):
         self.top_widget = None
         settings.add_image_callback(self.set_range)
         settings.add_colormap_callback(self.update_colormap)
+        settings.add_metadata_changed_callback(self.update_colormap)
 
     def set_range(self, begin, end=None):
         if end is None and isinstance(begin, np.ndarray):
@@ -189,7 +191,7 @@ class ColormapCanvas(FigureCanvas):
         self.update_colormap()
 
     def update_colormap(self):
-        norm = matplotlib.colors.Normalize(vmin=self.val_min, vmax=self.val_max)
+        norm = colors.PowerNorm(gamma=self.settings.power_norm, vmin=self.val_min, vmax=self.val_max)
         fig = pyplot.figure(self.my_figure_num)
         pyplot.clf()
         ax = fig.add_axes([0.05, 0.1, 0.3, 0.8])
@@ -222,6 +224,9 @@ class MyCanvas(FigureCanvas):
         fig = pyplot.figure(figsize=figsize, dpi=100, frameon=True, facecolor='1.0', edgecolor='w')
         super(MyCanvas, self).__init__(fig)
         self.base_image = None
+        self.gauss_image = None
+        self.max_value = 1
+        self.min_value = 0
         self.ax_im = None
         self.rgb_image = None
         self.layer_num = 0
@@ -250,14 +255,18 @@ class MyCanvas(FigureCanvas):
         self.mark_mask = QCheckBox(self)
         self.mark_mask.setText("Mark mask")
         self.mark_mask.setChecked(False)
+        self.gauss_view = QCheckBox(self)
+        self.gauss_view.setText("Gauss image")
+        self.gauss_view.setChecked(False)
         # self.mark_mask.setDisabled(True)
         self.layer_num_label = QLabel(self)
         self.layer_num_label.setText("1 of 1      ")
         self.settings = settings
-        settings.add_image_callback(self.set_image)
+        settings.add_image_callback((self.set_image, GAUSS))
         settings.add_colormap_callback(self.update_colormap)
         self.colormap_checkbox.stateChanged.connect(self.update_colormap)
         self.mark_mask.stateChanged.connect(self.update_colormap)
+        self.gauss_view.stateChanged.connect(self.update_colormap)
         self.settings.add_threshold_type_callback(self.update_colormap)
         MyCanvas.update_elements_positions(self)
         self.setMinimumHeight(300)
@@ -273,6 +282,7 @@ class MyCanvas(FigureCanvas):
         self.colormap_checkbox.move(self.slider.pos().x(), self.slider.pos().y()-15)
         # self.mark_mask.move(self.slider.pos().x()+50, self.slider.pos().y() - 15)
         set_button(self.mark_mask, self.colormap_checkbox, button_small_dist)
+        set_button(self.gauss_view, self.mark_mask)
         self.slider.setMinimumWidth(self.width()-85)
         set_button(self.layer_num_label, self.slider)
 
@@ -294,12 +304,15 @@ class MyCanvas(FigureCanvas):
             self.move_button.setChecked(False)
         self.toolbar.zoom()
 
-    def set_image(self, image):
+    def set_image(self, image, gauss):
         """
         :type image: np.ndarray
         :return:
         """
         self.base_image = image
+        self.max_value = image.max()
+        self.min_value = image.min()
+        self.gauss_image = gauss
         self.ax_im = None
         self.update_rgb_image()
         if len(image.shape) > 2:
@@ -315,7 +328,12 @@ class MyCanvas(FigureCanvas):
         self.update_image_view()
 
     def update_rgb_image(self):
-        float_image = self.base_image / float(self.base_image.max())
+        norm = colors.PowerNorm(gamma=self.settings.power_norm,
+                                vmin=self.min_value, vmax=self.max_value)
+        if self.gauss_view.isChecked():
+            float_image = norm(self.gauss_image)
+        else:
+            float_image = norm(self.base_image)
         if self.mark_mask.isChecked() and self.settings.mask is not None:
             zero_mask = self.settings.mask == 0
             if self.settings.threshold_type == UPPER:
@@ -361,11 +379,12 @@ class MyDrawCanvas(MyCanvas):
     """
     :type segmentation: np.ndarray
     """
-    def __init__(self, figsize, settings, segment, *args):
+    def __init__(self, figsize, settings, segment, info_fun, *args):
         super(MyDrawCanvas, self).__init__(figsize, settings, *args)
-        self.draw_canvas = DrawObject(settings, segment, self.update_image_view)
+        self.draw_canvas = DrawObject(settings, segment, self.draw_update)
         self.history_list = list()
         self.redo_list = list()
+        self.info_fun = info_fun
         self.zoom_button.clicked.connect(self.up_drawing_button)
         self.move_button.clicked.connect(self.up_drawing_button)
         self.draw_button = QPushButton("Draw", self)
@@ -385,6 +404,7 @@ class MyDrawCanvas(MyCanvas):
         self.rgb_segmentation = None
         self.original_rgb_image = None
         self.labeled_rgb_image = None
+        self.cursor_val = 0
         self.colormap_checkbox.setChecked(False)
         self.segment.add_segmentation_callback(self.segmentation_changed)
         self.slider.valueChanged[int].connect(self.draw_canvas.set_layer_num)
@@ -392,6 +412,26 @@ class MyDrawCanvas(MyCanvas):
         self.mpl_connect('button_press_event', self.draw_canvas.on_mouse_down)
         self.mpl_connect('motion_notify_event', self.draw_canvas.on_mouse_move)
         self.mpl_connect('button_release_event', self.draw_canvas.on_mouse_up)
+
+    def draw_update(self, view=True):
+        if view:
+            self.update_image_view()
+        x = int(self.draw_canvas.f_x)
+        y = int(self.draw_canvas.f_y)
+        segm = self.segment.get_segmentation()
+        if len(segm.shape) == 3:
+            val = segm[self.layer_num, y, x]
+        else:
+            val = segm[y, x]
+        if val == self.cursor_val:
+            return
+        else:
+            self.cursor_val = val
+        if val == 0:
+            self.info_fun("No component")
+        else:
+            size = self.segment.get_size_array()[val]
+            self.info_fun("Component: {}, size: {}".format(val, size))
 
     def up_move_zoom_button(self):
         self.protect_button = True
@@ -461,8 +501,11 @@ class MyDrawCanvas(MyCanvas):
         self.original_rgb_image = np.copy(self.rgb_image)
         self.update_segmentation_rgb()
 
-    def set_image(self, image):
+    def set_image(self, image, gauss):
         self.base_image = image
+        self.max_value = image.max()
+        self.min_value = image.min() / float(self.max_value)
+        self.gauss_image = gauss
         self.ax_im = None
         self.original_rgb_image = None
         self.draw_canvas.set_image(image)
@@ -492,7 +535,7 @@ class DrawObject(object):
         self.settings = settings
         self.segment = segment
         self.mouse_down = False
-        self.draw_on = True
+        self.draw_on = False
         self.draw_canvas = None
         self.prev_x = None
         self.prev_y = None
@@ -545,7 +588,9 @@ class DrawObject(object):
     def clean(self):
         self.draw_canvas[...] = 0
         self.rgb_image[...] = self.labeled_rgb_image[...]
+        self.segment.draw_counter = 0
         self.update_fun()
+        self.settings.metadata_changed()
 
     def on_mouse_down(self, event):
         self.mouse_down = True
@@ -580,10 +625,15 @@ class DrawObject(object):
             self.f_x = f_x
             self.f_y = f_y
             self.update_fun()
+        elif event.xdata is not None and event.ydata is not None:
+            self.f_x, self.f_y = int(event.xdata) + 0.5, (event.ydata + 0.5)
+            self.update_fun(False)
 
     def on_mouse_up(self, event):
         self.history.append(self.click_history)
+        self.segment.draw_counter = np.count_nonzero(self.draw_canvas)
         self.mouse_down = False
+        self.settings.metadata_changed()
 
 
 class ColormapSettings(QLabel):
@@ -725,6 +775,15 @@ class AdvancedSettings(QLabel):
             overlay.setValue(val)
             return add_label(txt, layout, overlay)
 
+        def create_power_norm(txt, layout, val):
+            overlay = QDoubleSpinBox()
+            overlay.setRange(0.01, 10)
+            overlay.setSingleStep(0.1)
+            overlay.setDecimals(2)
+            overlay.setButtonSymbols(QAbstractSpinBox.NoButtons)
+            overlay.setValue(val)
+            return add_label(txt, layout, overlay)
+
         self.settings = settings
         vlayout = QVBoxLayout()
         spacing_layout = QHBoxLayout()
@@ -754,6 +813,7 @@ class AdvancedSettings(QLabel):
         overlay_layout = QHBoxLayout()
         self.mask_overlay = create_overlay("mask opacity:", overlay_layout, self.settings.mask_overlay)
         self.component_overlay = create_overlay("segmentation opacity:", overlay_layout, self.settings.overlay)
+        self.power_norm = create_power_norm("norm parameter:", overlay_layout, self.settings.power_norm)
         overlay_layout.addStretch()
         vlayout.addLayout(overlay_layout)
 
@@ -806,12 +866,14 @@ class AdvancedSettings(QLabel):
         self.z_size.setValue(self.settings.voxel_size[2])
         self.mask_overlay.setValue(self.settings.mask_overlay)
         self.component_overlay.setValue(self.settings.overlay)
+        self.power_norm.setValue(self.settings.power_norm)
 
     def accept(self):
         self.settings.spacing = self.x_spacing.value(), self.y_spacing.value(), self.z_spacing.value()
         self.settings.voxel_size = self.x_size.value(), self.y_size.value(), self.z_size.value()
         self.settings.mask_overlay = self.mask_overlay.value()
         self.settings.overlay = self.component_overlay.value()
+        self.settings.power_norm = self.power_norm.value()
         self.settings.advanced_settings_changed()
 
 
@@ -902,12 +964,14 @@ class MainMenu(QLabel):
         self.colormap_choose.currentIndexChanged.connect(self.colormap_changed)
         self.settings.add_colormap_list_callback(self.colormap_list_changed)
         self.colormap_protect = False
-        #self.setMinimumWidth(1200)
+        # self.setMinimumWidth(1200)
         self.setMinimumHeight(50)
         self.update_elements_positions()
         self.one_line = True
+        # self.setStyleSheet(self.styleSheet()+";border: 1px solid black")
 
     def update_elements_positions(self):
+        # m_layout = QVBoxLayout()
         layout = QHBoxLayout()
         second_list = [self.gauss_check, self.draw_check, self.profile_choose,
                        self.advanced_button, self.colormap_choose]
@@ -918,6 +982,11 @@ class MainMenu(QLabel):
         for el in second_list:
             layout.addWidget(el)
         layout.addStretch()
+        self.setMinimumHeight(40)
+        layout.setContentsMargins(0, 0, 0, 0)
+        # m_layout.addLayout(layout)
+        # info_layout = QHBoxLayout()
+        # info_layout.addWidget(QLabel("Test"))
         self.setLayout(layout)
 
     def clearLayout(self, layout):
@@ -1053,6 +1122,7 @@ class MainMenu(QLabel):
                 return
             self.save_button.setEnabled(True)
             self.mask_button.setEnabled(True)
+            self.settings.advanced_settings_changed()
 
     def save_results(self):
         dial = QFileDialog(self, "Save data")
@@ -1122,15 +1192,33 @@ class InfoMenu(QLabel):
         self.settings = settings
         self.segment = segment
         layout = QHBoxLayout()
+        # self.tester = QLabel("TEST", self)
+        # layout.addWidget(self.tester)
         self.text_filed = QLabel(self)
         layout.addWidget(self.text_filed)
+        layout.addStretch()
+        self.info_filed = QLabel(self)
+        layout.addWidget(self.info_filed)
+        self.info_filed.setText("Buka")
         self.setLayout(layout)
+        settings.add_metadata_changed_callback(self.update_text)
+        self.update_text()
+        self.setMinimumHeight(30)
+        # print(layout.spacing(), layout.contentsMargins())
+        layout.setContentsMargins(0, 0, 0, 0)
+        #self.setStyleSheet("border: 1px solid black")
 
     def update_text(self):
+        spacing = self.settings.spacing
         voxel_size = self.settings.voxel_size
-        draw_size = np.count_nonzero(self.segment.draw_canvas)
-        self.text_filed.setText("Voxel size: {},  Number of changed pixels: {}".format(voxel_size, draw_size))
+        draw_size = self.segment.draw_counter
+        print("Spacing: {}, Voxel size: {},  Number of changed pixels: {},  ".format(
+            spacing, voxel_size, draw_size))
+        self.text_filed.setText("Spacing: {}, Voxel size: {},  Number of changed pixels: {},  ".format(
+            spacing, voxel_size, draw_size))
 
+    def update_info_text(self, s):
+        self.info_filed.setText(s)
 
 
 class MainWindow(QMainWindow):
@@ -1140,10 +1228,11 @@ class MainWindow(QMainWindow):
         self.settings = Settings("settings.json")
         self.segment = Segment(self.settings)
         self.main_menu = MainMenu(self.settings, self.segment, self)
+        self.info_menu = InfoMenu(self.settings, self.segment, self)
 
         self.normal_image_canvas = MyCanvas((6, 6), self.settings, self)
         self.colormap_image_canvas = ColormapCanvas((1, 6),  self.settings, self)
-        self.segmented_image_canvas = MyDrawCanvas((6, 6), self.settings, self.segment, self)
+        self.segmented_image_canvas = MyDrawCanvas((6, 6), self.settings, self.segment, self.info_menu.update_info_text, self)
         self.segmented_image_canvas.segment.add_segmentation_callback((self.update_object_information,))
         self.slider_swap = QCheckBox("Synchronize\nsliders", self)
         self.sync = SynchronizeSliders(self.normal_image_canvas.slider, self.segmented_image_canvas.slider,
@@ -1152,8 +1241,6 @@ class MainWindow(QMainWindow):
         self.zoom_sync = QCheckBox("Synchronize\nzoom", self)
         self.zoom_sync.setDisabled(True)
         self.colormap_image_canvas.set_top_widget(self.zoom_sync)
-
-        #self.infoText = QLabel("Bright: 0\nComp:", self)
 
         big_font = QFont(QApplication.font())
         big_font.setPointSize(big_font_size)
@@ -1179,14 +1266,21 @@ class MainWindow(QMainWindow):
 
         self.update_objects_positions()
         self.settings.add_image(tifffile.imread("clean_segment.tiff"), "")
+        #self.setStyleSheet(self.styleSheet() + "border: 1px solid black")
 
     def update_objects_positions(self):
         widget = QWidget()
         main_layout = QVBoxLayout()
         menu_layout = QHBoxLayout()
         menu_layout.addWidget(self.main_menu)
+        menu_layout.setContentsMargins(0, 0, 0, 0)
         # menu_layout.addStretch()
         main_layout.addLayout(menu_layout)
+        info_layout = QHBoxLayout()
+        #info_layout.addWidget(QLabel("tester", self))
+        info_layout.addWidget(self.info_menu)
+        info_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addLayout(info_layout)
         image_layout = QHBoxLayout()
         image_layout.setSpacing(0)
         image_layout.addWidget(self.normal_image_canvas)
@@ -1194,11 +1288,13 @@ class MainWindow(QMainWindow):
         image_layout.addWidget(self.segmented_image_canvas)
         image_layout.addStretch()
         main_layout.addLayout(image_layout)
+        main_layout.addSpacing(5)
         info_layout = QHBoxLayout()
         info_layout.addWidget(self.object_count)
         info_layout.addWidget(self.object_size_list)
         main_layout.addLayout(info_layout)
         main_layout.addStretch()
+        main_layout.setSpacing(0)
         widget.setLayout(main_layout)
         self.setCentralWidget(widget)
 

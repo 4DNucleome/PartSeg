@@ -10,6 +10,7 @@ import os
 import tarfile
 
 UPPER = "Upper"
+GAUSS = "Gauss"
 
 
 def class_to_dict(obj, *args):
@@ -120,7 +121,9 @@ class Settings(object):
         self.minimum_size = 100
         self.overlay = 0.7
         self.mask_overlay = 0.7
+        self.power_norm = 1
         self.image = None
+        self.gauss_image = None
         self.mask = None
         self.image_change_callback = []
         self.threshold_change_callback = []
@@ -204,6 +207,7 @@ class Settings(object):
 
     def add_image(self, image, file_path, mask=None,):
         self.image = image
+        self.gauss_image = gaussian(self.image, 1)
         self.mask = mask
         self.file_path = file_path
         self.threshold_list = []
@@ -211,6 +215,9 @@ class Settings(object):
         for fun in self.image_change_callback:
             if isinstance(fun, tuple) and fun[1] == str:
                 fun[0](file_path)
+                continue
+            if isinstance(fun, tuple) and fun[1] == GAUSS:
+                fun[0](image, self.gauss_image)
                 continue
             fun(image)
 
@@ -306,7 +313,11 @@ class Settings(object):
     def advanced_settings_changed(self):
         for fun in self.threshold_type_change_callback:
             fun()
-        for fun in self.threshold_type_change_callback:
+        for fun in self.metadata_changed_callback:
+            fun()
+
+    def metadata_changed(self):
+        for fun in self.metadata_changed_callback:
             fun()
 
 
@@ -319,6 +330,7 @@ class Segment(object):
         self._settings = settings
         self._image = None
         self.draw_canvas = None
+        self.draw_counter = 0
         self._gauss_image = None
         self._threshold_image = None
         self._segmented_image = None
@@ -404,6 +416,9 @@ class Segment(object):
     def get_segmentation(self):
         self._segmentation_changed = False
         return self._finally_segment
+
+    def get_size_array(self):
+        return self._sizes_array
 
     def get_full_segmentation(self):
         return self._segmented_image
