@@ -234,12 +234,15 @@ class MyCanvas(QLabel):
         self.rgb_image = None
         self.layer_num = 0
         self.main_layout = None
+        self.zoom_synch = False
+        self.synch_fig_num = 0
+
         #self.setParent(parent)
         self.my_figure_num = fig.number
         self.toolbar = NavigationToolbar(self.figure_canvas, self)
         self.toolbar.hide()
         self.reset_button = QPushButton("Reset zoom", self)
-        self.reset_button.clicked.connect(self.toolbar.home)
+        self.reset_button.clicked.connect(self.reset)
         self.zoom_button = QPushButton("Zoom", self)
         self.zoom_button.clicked.connect(self.zoom)
         self.zoom_button.setCheckable(True)
@@ -251,6 +254,7 @@ class MyCanvas(QLabel):
         self.next_button = QPushButton("Redo", self)
         self.next_button.clicked.connect(self.toolbar.forward)
         self.button_list = [self.reset_button, self.zoom_button, self.move_button, self.back_button, self.next_button]
+        self.mouse_pressed = False
 
         self.slider = QSlider(Qt.Horizontal, self)
         self.slider.setRange(0, 0)
@@ -274,8 +278,39 @@ class MyCanvas(QLabel):
         self.mark_mask.stateChanged.connect(self.update_colormap)
         self.gauss_view.stateChanged.connect(self.update_colormap)
         self.settings.add_threshold_type_callback(self.update_colormap)
-        #MyCanvas.update_elements_positions(self)
-        #self.setFixedWidth(500)
+        print(self.__class__.__name__, "Fig", self.my_figure_num)
+        # MyCanvas.update_elements_positions(self)
+        # self.setFixedWidth(500)
+        self.figure_canvas.mpl_connect('button_release_event', self.zoom_synch_fun)
+        self.figure_canvas.mpl_connect('button_release_event', self.move_synch_fun)
+        self.figure_canvas.mpl_connect('button_release_event', self.mouse_up)
+        self.figure_canvas.mpl_connect('button_press_event', self.mouse_down)
+
+    def mouse_up(self, *args):
+        self.mouse_pressed = False
+
+    def mouse_down(self, *args):
+        self.mouse_pressed = True
+
+    def zoom_synch_fun(self, *args):
+        if self.zoom_synch and self.mouse_pressed and self.zoom_button.isChecked():
+            pyplot.figure(self.my_figure_num)
+            ax_size = pyplot.xlim()
+            ay_size = pyplot.ylim()
+            fig = pyplot.figure(self.synch_fig_num)
+            pyplot.xlim(ax_size)
+            pyplot.ylim(ay_size)
+            fig.canvas.draw()
+
+    def move_synch_fun(self, *args):
+        if self.zoom_synch and  self.mouse_pressed and self.move_button.isChecked():
+            pyplot.figure(self.my_figure_num)
+            ax_size = pyplot.xlim()
+            ay_size = pyplot.ylim()
+            fig = pyplot.figure(self.synch_fig_num)
+            pyplot.xlim(ax_size)
+            pyplot.ylim(ay_size)
+            fig.canvas.draw()
 
     def update_elements_positions(self):
         main_layout = QVBoxLayout()
@@ -306,22 +341,8 @@ class MyCanvas(QLabel):
         self.main_layout = main_layout
         # print(self.__class__.__name__, "Spacing", main_layout.spacing(), button_layout.spacing())
 
-
-        """main_layout.addLayout()
-        self.reset_button.move(0, 0)
-        set_button(self.reset_button, None)
-        set_button(self.zoom_button, self.reset_button, button_small_dist)
-        set_button(self.move_button, self.zoom_button, button_small_dist)
-        set_button(self.back_button, self.move_button, button_small_dist)
-        set_button(self.next_button, self.back_button, button_small_dist)
-        self.slider.move(20, self.size().toTuple()[1]-20)
-        self.colormap_checkbox.move(self.slider.pos().x(), self.slider.pos().y()-15)
-        # self.mark_mask.move(self.slider.pos().x()+50, self.slider.pos().y() - 15)
-        set_button(self.mark_mask, self.colormap_checkbox, button_small_dist)
-        set_button(self.gauss_view, self.mark_mask)
-        self.slider.setMinimumWidth(self.width()-85)
-        print("MyCanvas", self.width())
-        set_button(self.layer_num_label, self.slider)"""
+    def sych_zoom(self, state):
+        self.zoom_synch = state
 
     def move_action(self):
         """
@@ -340,6 +361,17 @@ class MyCanvas(QLabel):
         if self.move_button.isChecked():
             self.move_button.setChecked(False)
         self.toolbar.zoom()
+
+    def reset(self):
+        self.toolbar.home()
+        if self.zoom_synch:
+            pyplot.figure(self.my_figure_num)
+            ax_size = pyplot.xlim()
+            ay_size = pyplot.ylim()
+            fig = pyplot.figure(self.synch_fig_num)
+            pyplot.xlim(ax_size)
+            pyplot.ylim(ay_size)
+            fig.canvas.draw()
 
     def set_image(self, image, gauss):
         """
@@ -1259,6 +1291,19 @@ class InfoMenu(QLabel):
         self.info_filed.setText(s)
 
 
+def synchronize_zoom(fig1, fig2, synch_checkbox):
+    """
+    :type fig1: MyCanvas
+    :type fig2: MyCanvas
+    :type synch_checkbox: QCheckBox
+    :return:
+    """
+    synch_checkbox.stateChanged[int].connect(fig1.sych_zoom)
+    synch_checkbox.stateChanged[int].connect(fig2.sych_zoom)
+    fig1.synch_fig_num = fig2.my_figure_num
+    fig2.synch_fig_num = fig1.my_figure_num
+
+
 class MainWindow(QMainWindow):
     def __init__(self, title):
         super(MainWindow, self).__init__()
@@ -1279,7 +1324,8 @@ class MainWindow(QMainWindow):
                                        self.slider_swap)
         self.colormap_image_canvas.set_bottom_widget(self.slider_swap)
         self.zoom_sync = QCheckBox("Synchronize\nzoom", self)
-        self.zoom_sync.setDisabled(True)
+        # self.zoom_sync.setDisabled(True)
+        synchronize_zoom(self.normal_image_canvas, self.segmented_image_canvas, self.zoom_sync)
         self.colormap_image_canvas.set_top_widget(self.zoom_sync)
 
         big_font = QFont(QApplication.font())

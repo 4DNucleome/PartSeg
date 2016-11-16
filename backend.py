@@ -41,7 +41,6 @@ def dict_set_class(obj, dic, *args):
         li = args
     for name in li:
         tt = getattr(obj, name)
-
         setattr(obj, name, dic[name])
 
 
@@ -103,7 +102,6 @@ class Settings(object):
     :type image_change_callback: list[() -> None]
     """
     def __init__(self, setings_path):
-        # TODO Reading setings from file
         self.color_map_name = "cubehelix"
         self.color_map = matplotlib.cm.get_cmap(self.color_map_name)
         self.callback_colormap = []
