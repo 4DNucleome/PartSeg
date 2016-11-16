@@ -168,7 +168,7 @@ class SynchronizeSliders(object):
 class ColormapCanvas(FigureCanvas):
     def __init__(self, figsize, settings, parent):
         """:type settings: Settings"""
-        fig = pyplot.figure(figsize=figsize, dpi=100, frameon=True, facecolor='1.0', edgecolor='w')
+        fig = pyplot.figure(figsize=figsize, dpi=100, frameon=False, facecolor='1.0', edgecolor='w')
         super(ColormapCanvas, self).__init__(fig)
         self.my_figure_num = fig.number
         self.setParent(parent)
@@ -214,15 +214,18 @@ class ColormapCanvas(FigureCanvas):
             self.top_widget.move(5, 5)
 
 
-class MyCanvas(FigureCanvas):
+class MyCanvas(QLabel):
     def __init__(self, figsize, settings, parent):
         """
         Create basic canvas to view image
         :param num: Num of figure to use
         :param figsize: Size of figure in inches
         """
-        fig = pyplot.figure(figsize=figsize, dpi=100, frameon=True, facecolor='1.0', edgecolor='w')
-        super(MyCanvas, self).__init__(fig)
+
+        fig = pyplot.figure(figsize=figsize, dpi=100, frameon=False, facecolor='1.0', edgecolor='w', tight_layout=True)
+        # , tight_layout=tight_dict)
+        super(MyCanvas, self).__init__(parent)
+        self.figure_canvas = FigureCanvas(fig)
         self.base_image = None
         self.gauss_image = None
         self.max_value = 1
@@ -230,9 +233,10 @@ class MyCanvas(FigureCanvas):
         self.ax_im = None
         self.rgb_image = None
         self.layer_num = 0
-        self.setParent(parent)
+        self.main_layout = None
+        #self.setParent(parent)
         self.my_figure_num = fig.number
-        self.toolbar = NavigationToolbar(self, self)
+        self.toolbar = NavigationToolbar(self.figure_canvas, self)
         self.toolbar.hide()
         self.reset_button = QPushButton("Reset zoom", self)
         self.reset_button.clicked.connect(self.toolbar.home)
@@ -246,6 +250,8 @@ class MyCanvas(FigureCanvas):
         self.back_button.clicked.connect(self.toolbar.back)
         self.next_button = QPushButton("Redo", self)
         self.next_button.clicked.connect(self.toolbar.forward)
+        self.button_list = [self.reset_button, self.zoom_button, self.move_button, self.back_button, self.next_button]
+
         self.slider = QSlider(Qt.Horizontal, self)
         self.slider.setRange(0, 0)
         self.slider.valueChanged[int].connect(self.change_layer)
@@ -268,10 +274,40 @@ class MyCanvas(FigureCanvas):
         self.mark_mask.stateChanged.connect(self.update_colormap)
         self.gauss_view.stateChanged.connect(self.update_colormap)
         self.settings.add_threshold_type_callback(self.update_colormap)
-        MyCanvas.update_elements_positions(self)
-        self.setMinimumHeight(300)
+        #MyCanvas.update_elements_positions(self)
+        #self.setFixedWidth(500)
 
     def update_elements_positions(self):
+        main_layout = QVBoxLayout()
+        main_layout.setSpacing(0)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        button_layout = QHBoxLayout()
+        button_layout.setSpacing(0)
+        button_layout.setContentsMargins(0, 0, 0, 0)
+        for butt in self.button_list:
+            button_layout.addWidget(butt)
+        button_layout.addStretch()
+        main_layout.addLayout(button_layout)
+        main_layout.addWidget(self.figure_canvas)
+        checkbox_layout = QHBoxLayout()
+        checkbox_layout.setContentsMargins(0, 0, 0, 0)
+        checkbox_layout.addWidget(self.colormap_checkbox)
+        checkbox_layout.addWidget(self.mark_mask)
+        checkbox_layout.addWidget(self.gauss_view)
+        checkbox_layout.setSpacing(10)
+        checkbox_layout.addStretch()
+        main_layout.addLayout(checkbox_layout)
+        slider_layout = QHBoxLayout()
+        slider_layout.addWidget(self.slider)
+        slider_layout.addSpacing(15)
+        slider_layout.addWidget(self.layer_num_label)
+        main_layout.addLayout(slider_layout)
+        self.setLayout(main_layout)
+        self.main_layout = main_layout
+        # print(self.__class__.__name__, "Spacing", main_layout.spacing(), button_layout.spacing())
+
+
+        """main_layout.addLayout()
         self.reset_button.move(0, 0)
         set_button(self.reset_button, None)
         set_button(self.zoom_button, self.reset_button, button_small_dist)
@@ -284,7 +320,8 @@ class MyCanvas(FigureCanvas):
         set_button(self.mark_mask, self.colormap_checkbox, button_small_dist)
         set_button(self.gauss_view, self.mark_mask)
         self.slider.setMinimumWidth(self.width()-85)
-        set_button(self.layer_num_label, self.slider)
+        print("MyCanvas", self.width())
+        set_button(self.layer_num_label, self.slider)"""
 
     def move_action(self):
         """
@@ -368,11 +405,13 @@ class MyCanvas(FigureCanvas):
             self.ax_im = pyplot.imshow(image_to_show, interpolation='nearest')
         else:
             self.ax_im.set_data(image_to_show)
-        self.draw()
+        self.figure_canvas.draw()
 
     def resizeEvent(self, resize_event):
         super(MyCanvas, self).resizeEvent(resize_event)
-        self.update_elements_positions()
+        # print(self.__class__.__name__, self.size(), resize_event.size(), resize_event.oldSize())
+        # self.update_elements_positions()
+        self.updateGeometry()
 
 
 class MyDrawCanvas(MyCanvas):
@@ -397,7 +436,8 @@ class MyDrawCanvas(MyCanvas):
         self.erase_button.clicked[bool].connect(self.erase_click)
         self.clean_button = QPushButton("Clean", self)
         self.clean_button.clicked.connect(self.draw_canvas.clean)
-        self.update_elements_positions()
+        self.button_list.extend([self.draw_button, self.erase_button, self.clean_button])
+        #self.update_elements_positions()
         self.segment = segment
         self.protect_button = False
         self.segmentation = None
@@ -406,12 +446,13 @@ class MyDrawCanvas(MyCanvas):
         self.labeled_rgb_image = None
         self.cursor_val = 0
         self.colormap_checkbox.setChecked(False)
+        #self.setMidLineWidth(100)
         self.segment.add_segmentation_callback(self.segmentation_changed)
         self.slider.valueChanged[int].connect(self.draw_canvas.set_layer_num)
         self.slider.valueChanged[int].connect(self.settings.change_layer)
-        self.mpl_connect('button_press_event', self.draw_canvas.on_mouse_down)
-        self.mpl_connect('motion_notify_event', self.draw_canvas.on_mouse_move)
-        self.mpl_connect('button_release_event', self.draw_canvas.on_mouse_up)
+        self.figure_canvas.mpl_connect('button_press_event', self.draw_canvas.on_mouse_down)
+        self.figure_canvas.mpl_connect('motion_notify_event', self.draw_canvas.on_mouse_move)
+        self.figure_canvas.mpl_connect('button_release_event', self.draw_canvas.on_mouse_up)
 
     def draw_update(self, view=True):
         if view:
@@ -467,9 +508,6 @@ class MyDrawCanvas(MyCanvas):
 
     def update_elements_positions(self):
         super(MyDrawCanvas, self).update_elements_positions()
-        set_button(self.draw_button, self.next_button, button_small_dist)
-        set_button(self.erase_button, self.draw_button, button_small_dist)
-        set_button(self.clean_button, self.erase_button, button_small_dist)
 
     def segmentation_changed(self):
         self.update_segmentation_rgb()
@@ -1199,7 +1237,7 @@ class InfoMenu(QLabel):
         layout.addStretch()
         self.info_filed = QLabel(self)
         layout.addWidget(self.info_filed)
-        self.info_filed.setText("Buka")
+        self.info_filed.setText("No component")
         self.setLayout(layout)
         settings.add_metadata_changed_callback(self.update_text)
         self.update_text()
@@ -1234,6 +1272,8 @@ class MainWindow(QMainWindow):
         self.colormap_image_canvas = ColormapCanvas((1, 6),  self.settings, self)
         self.segmented_image_canvas = MyDrawCanvas((6, 6), self.settings, self.segment, self.info_menu.update_info_text, self)
         self.segmented_image_canvas.segment.add_segmentation_callback((self.update_object_information,))
+        self.normal_image_canvas.update_elements_positions()
+        self.segmented_image_canvas.update_elements_positions()
         self.slider_swap = QCheckBox("Synchronize\nsliders", self)
         self.sync = SynchronizeSliders(self.normal_image_canvas.slider, self.segmented_image_canvas.slider,
                                        self.slider_swap)
@@ -1286,7 +1326,7 @@ class MainWindow(QMainWindow):
         image_layout.addWidget(self.normal_image_canvas)
         image_layout.addWidget(self.colormap_image_canvas)
         image_layout.addWidget(self.segmented_image_canvas)
-        image_layout.addStretch()
+        #image_layout.addStretch()
         main_layout.addLayout(image_layout)
         main_layout.addSpacing(5)
         info_layout = QHBoxLayout()
