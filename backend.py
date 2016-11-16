@@ -440,11 +440,22 @@ def save_to_cmap(file_path, settings, segment):
         image = noise_mean - image
     image[segmentation == 0] = 0  # min(image[segmentation > 0].min(), 0)
     image[image < 0] = 0
-    z, y, x = image.shape
+
+    points = np.nonzero(image)
+    lower_bound = np.min(points, axis=1)
+    upper_bound = np.max(points, axis=1)
+    print (image.shape, lower_bound, upper_bound, upper_bound-lower_bound)
+    cut_img = np.zeros(upper_bound-lower_bound+[3, 11, 11], dtype=image.dtype)
+    coord = []
+    for l, u in zip(lower_bound, upper_bound):
+        coord.append(slice(l, u))
+    pos = tuple(coord)
+    cut_img[1:-2, 5:-6, 5:-6] = image[pos]
+    z, y, x = cut_img.shape
     f = h5py.File(file_path, "w")
     grp = f.create_group('Chimera/image1')
     dset = grp.create_dataset("data_zyx", (z, y, x), dtype='f')
-    dset[...] = image
+    dset[...] = cut_img
 
     # Just to satisfy file format
     grp = f['Chimera']
