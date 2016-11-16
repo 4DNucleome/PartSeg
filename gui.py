@@ -19,7 +19,7 @@ from PySide.QtCore import Qt, QSize
 from PySide.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget,\
     QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QPixmap, QSpinBox, \
     QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout,\
-    QListWidget, QTextEdit
+    QListWidget, QTextEdit, QIcon
 
 from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS
 
@@ -1315,7 +1315,8 @@ class MainWindow(QMainWindow):
 
         self.normal_image_canvas = MyCanvas((8, 8), self.settings, self)
         self.colormap_image_canvas = ColormapCanvas((1, 8),  self.settings, self)
-        self.segmented_image_canvas = MyDrawCanvas((8, 8), self.settings, self.segment, self.info_menu.update_info_text, self)
+        self.segmented_image_canvas = MyDrawCanvas((8, 8), self.settings, self.segment,
+                                                   self.info_menu.update_info_text, self)
         self.segmented_image_canvas.segment.add_segmentation_callback((self.update_object_information,))
         self.normal_image_canvas.update_elements_positions()
         self.segmented_image_canvas.update_elements_positions()
@@ -1349,6 +1350,8 @@ class MainWindow(QMainWindow):
         self.settings.add_image_callback((self.statusBar.showMessage, str))
 
         self.setGeometry(50, 50,  1400, 720)
+        icon = QIcon("icon.png")
+        self.setWindowIcon(icon)
 
         self.update_objects_positions()
         self.settings.add_image(tifffile.imread("clean_segment.tiff"), "")
