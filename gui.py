@@ -1313,9 +1313,9 @@ class MainWindow(QMainWindow):
         self.main_menu = MainMenu(self.settings, self.segment, self)
         self.info_menu = InfoMenu(self.settings, self.segment, self)
 
-        self.normal_image_canvas = MyCanvas((6, 6), self.settings, self)
-        self.colormap_image_canvas = ColormapCanvas((1, 6),  self.settings, self)
-        self.segmented_image_canvas = MyDrawCanvas((6, 6), self.settings, self.segment, self.info_menu.update_info_text, self)
+        self.normal_image_canvas = MyCanvas((8, 8), self.settings, self)
+        self.colormap_image_canvas = ColormapCanvas((1, 8),  self.settings, self)
+        self.segmented_image_canvas = MyDrawCanvas((8, 8), self.settings, self.segment, self.info_menu.update_info_text, self)
         self.segmented_image_canvas.segment.add_segmentation_callback((self.update_object_information,))
         self.normal_image_canvas.update_elements_positions()
         self.segmented_image_canvas.update_elements_positions()
