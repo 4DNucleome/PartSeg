@@ -165,11 +165,12 @@ class SynchronizeSliders(object):
         self.sync = True
 
 
-class ColormapCanvas(FigureCanvas):
+class ColormapCanvas(QWidget):
     def __init__(self, figsize, settings, parent):
         """:type settings: Settings"""
+        super(ColormapCanvas, self).__init__(parent)
         fig = pyplot.figure(figsize=figsize, dpi=100, frameon=False, facecolor='1.0', edgecolor='w')
-        super(ColormapCanvas, self).__init__(fig)
+        self.figure_canvas = FigureCanvas(fig)
         self.my_figure_num = fig.number
         self.setParent(parent)
         self.val_min = 0
@@ -194,7 +195,7 @@ class ColormapCanvas(FigureCanvas):
         norm = colors.PowerNorm(gamma=self.settings.power_norm, vmin=self.val_min, vmax=self.val_max)
         fig = pyplot.figure(self.my_figure_num)
         pyplot.clf()
-        ax = fig.add_axes([0.05, 0.1, 0.3, 0.8])
+        ax = fig.add_axes([0.01, 0.01, 0.3, 0.98])
         matplotlib.colorbar.ColorbarBase(ax, cmap=self.settings.color_map, norm=norm, orientation='vertical')
         fig.canvas.draw()
 
@@ -206,15 +207,28 @@ class ColormapCanvas(FigureCanvas):
         self.top_widget = widget
         widget.setParent(self)
 
+    def set_layout(self):
+        layout = QVBoxLayout()
+        layout.setSpacing(0)
+        if self.top_widget is not None:
+            h_layout = QHBoxLayout()
+            h_layout.addWidget(self.top_widget)
+            layout.addLayout(h_layout)
+        layout.addWidget(self.figure_canvas)
+        layout.setStretchFactor(self.figure_canvas, 1)
+        if self.bottom_widget is not None:
+            layout.addWidget(self.bottom_widget)
+        self.setLayout(layout)
+
     def resizeEvent(self, *args, **kwargs):
         super(ColormapCanvas, self).resizeEvent(*args, **kwargs)
-        if self.bottom_widget is not None:
+        """if self.bottom_widget is not None:
             self.bottom_widget.move(5, self.height() - 35)
         if self.top_widget is not None:
-            self.top_widget.move(5, 5)
+            self.top_widget.move(5, 5)"""
 
 
-class MyCanvas(QLabel):
+class MyCanvas(QWidget):
     def __init__(self, figsize, settings, parent):
         """
         Create basic canvas to view image
@@ -976,7 +990,7 @@ class AdvancedWindow(QTabWidget):
         super(AdvancedWindow, self).closeEvent(*args, **kwargs)
 
 
-class MainMenu(QLabel):
+class MainMenu(QWidget):
     def __init__(self, settings, segment, *args, **kwargs):
         super(MainMenu, self).__init__(*args, **kwargs)
         self.settings = settings
@@ -1071,13 +1085,13 @@ class MainMenu(QLabel):
 
     def resizeEvent(self, resize):
         super(MainMenu, self).resizeEvent(resize)
-        print(self.size())
+        """print(self.size())
         if self.size().width() < 1200 and self.one_line:
             self.one_line = False
             print("buak")
         if self.size().width() >= 1200 and not self.one_line:
             self.one_line = True
-            print("buka")
+            print("buka")"""
 
     def colormap_changed(self):
         if self.colormap_protect:
@@ -1328,6 +1342,8 @@ class MainWindow(QMainWindow):
         # self.zoom_sync.setDisabled(True)
         synchronize_zoom(self.normal_image_canvas, self.segmented_image_canvas, self.zoom_sync)
         self.colormap_image_canvas.set_top_widget(self.zoom_sync)
+        #self.colormap_image_canvas.setMinimumWidth(80)
+        self.colormap_image_canvas.set_layout()
 
         big_font = QFont(QApplication.font())
         big_font.setPointSize(big_font_size)
