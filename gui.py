@@ -9,6 +9,7 @@ import platform
 import json
 import matplotlib
 import re
+import sys
 os.environ['QT_API'] = 'pyside'
 matplotlib.use('Qt4Agg')
 from matplotlib import pyplot
@@ -21,11 +22,15 @@ from PySide.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusB
     QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout,\
     QListWidget, QTextEdit, QIcon
 
-from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS
+from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, calculate_statistic_from_image
 
 
 __author__ = "Grzegorz Bokota"
 
+if sys.version_info.major == 2:
+    str_type = unicode
+else:
+    str_type = str
 
 big_font_size = 15
 button_margin = 10
@@ -720,7 +725,7 @@ class DrawObject(object):
         self.settings.metadata_changed()
 
 
-class ColormapSettings(QLabel):
+class ColormapSettings(QWidget):
     """
     :type cmap_list: list[QCheckBox]
     """
@@ -817,7 +822,7 @@ class ColormapSettings(QLabel):
         self.settings.remove_colormap_callback(self.change_main_colormap)
 
 
-class AdvancedSettings(QLabel):
+class AdvancedSettings(QWidget):
     def __init__(self, settings, parent=None):
         super(AdvancedSettings, self).__init__(parent)
 
@@ -961,13 +966,36 @@ class AdvancedSettings(QLabel):
         self.settings.advanced_settings_changed()
 
 
+class StatisticsWindow(QWidget):
+    def __init__(self, settings, segment):
+        super(StatisticsWindow, self).__init__()
+        self.settings = settings
+        self.segment = segment
+        self.recalculate_button = QPushButton("Recalculate statistics", self)
+        self.recalculate_button.clicked.connect(self.update_statistics)
+        self.info_field = QLabel(self)
+        layout = QVBoxLayout()
+        layout.addWidget(self.recalculate_button)
+        layout.addWidget(self.info_field)
+        self.setLayout(layout)
+        self.update_statistics()
+
+    def update_statistics(self):
+        image = get_segmented_data(self.settings, self.segment)
+        stat = calculate_statistic_from_image(image, self.settings)
+        res_str = ""
+        for key, val in stat.items():
+            res_str += "{}: {}\n".format(key, val)
+        self.info_field.setText(res_str)
+
+
 class AdvancedWindow(QTabWidget):
-    def __init__(self, settings, parent=None):
+    def __init__(self, settings, segment, parent=None):
         super(AdvancedWindow, self).__init__(parent)
         self.settings = settings
         self.advanced_settings = AdvancedSettings(settings)
         self.colormap_settings = ColormapSettings(settings)
-        self.statistics = QLabel()
+        self.statistics = StatisticsWindow(settings, segment)
         self.addTab(self.advanced_settings, "Settings")
         self.addTab(self.colormap_settings, "Color maps")
         self.addTab(self.statistics, "Statistics")
@@ -1009,7 +1037,7 @@ class MainMenu(QWidget):
         self.threshold_type = QComboBox(self)
         self.threshold_type.addItem("Upper threshold:")
         self.threshold_type.addItem("Lower threshold:")
-        self.threshold_type.currentIndexChanged[unicode].connect(settings.change_threshold_type)
+        self.threshold_type.currentIndexChanged[str_type].connect(settings.change_threshold_type)
         self.threshold_value = QSpinBox(self)
         self.threshold_value.setMinimumWidth(80)
         self.threshold_value.setRange(0, 100000)
@@ -1036,7 +1064,7 @@ class MainMenu(QWidget):
         self.draw_check.stateChanged[int].connect(settings.change_draw_use)
         self.profile_choose = QComboBox(self)
         self.profile_choose.addItem("<no profile>")
-        self.profile_choose.addItems(self.settings.get_profile_list())
+        self.profile_choose.addItems(list(self.settings.get_profile_list()))
         self.advanced_button = QPushButton("Advanced", self)
         self.advanced_button.clicked.connect(self.open_advanced)
         self.advanced_window = None
@@ -1229,6 +1257,14 @@ class MainMenu(QWidget):
             if os.path.splitext(file_path)[1] == '':
                 ext = re.search(r'\(\*(\.\w+)\)', selected_filter).group(1)
                 file_path += ext
+                if os.path.exists(file_path):
+                    ret = QMessageBox.warning(self, "File exist",
+                                              os.path.basename(file_path)+" already exists.\nDo you want to replace it?",
+                                              QMessageBox.No, QMessageBox.Yes)
+                    if ret == QMessageBox.No:
+                        self.save_results()
+                        return
+
             if selected_filter == "Project (*.gz)":
                 save_to_project(file_path,self.settings, self.segment)
 
@@ -1260,7 +1296,7 @@ class MainMenu(QWidget):
                 r = QMessageBox.critical(self, "Save error", "Option unknow")
 
     def open_advanced(self):
-        self.advanced_window = AdvancedWindow(self.settings)
+        self.advanced_window = AdvancedWindow(self.settings, self.segment)
         print(self.settings.spacing)
         self.advanced_window.show()
 
@@ -1425,7 +1461,7 @@ class MainWindow(QMainWindow):
     def update_object_information(self, info_aray):
         """:type info_aray: np.ndarray"""
         self.object_count.setText("Object num: {0}".format(str(info_aray.size)))
-        self.object_size_list.setText("Objects size: {0}".format(str(info_aray)))
+        self.object_size_list.setText("Objects size: {}".format(list(info_aray)))
 
     def closeEvent(self, event):
         self.settings.dump("settings.json")

@@ -8,6 +8,7 @@ import json
 import tempfile
 import os
 import tarfile
+from auto_fit import calculate_density_momentum
 
 UPPER = "Upper"
 GAUSS = "Gauss"
@@ -425,13 +426,41 @@ class Segment(object):
         self.segmentation_change_callback.append(callback)
 
 
-def save_to_cmap(file_path, settings, segment):
+def calculate_statistic_from_image(img, settings):
     """
-    :type file_path: str
+    :type img: np.ndarray
     :type settings: Settings
-    :type segment: Segment
-    :return:
+    :return: dict[str,object]
     """
+    def pixel_volume(x):
+        return x[0] * x[1] * x[2]
+    res = dict()
+    voxel_size = settings.voxel_size
+    res["Volume"] = np.count_nonzero(img) * pixel_volume(settings.voxel_size)
+    res["Mass"] = np.sum(img)
+    border_im = sitk.GetArrayFromImage(sitk.LabelContour(sitk.GetImageFromArray((img > 0).astype(np.uint8))))
+    res["Border Volume"] = np.count_nonzero(border_im)
+    border_surface = 0
+    surf_im = np.array((img > 0)).astype(np.uint8)
+    border_surface += np.count_nonzero(np.logical_xor(surf_im[1:], surf_im[:-1])) * voxel_size[1] * voxel_size[2]
+    border_surface += np.count_nonzero(np.logical_xor(surf_im[:, 1:], surf_im[:, :-1])) * voxel_size[0] * \
+                      voxel_size[2]
+    if len(surf_im.shape) == 3:
+        border_surface += np.count_nonzero(np.logical_xor(surf_im[:, :, 1:], surf_im[:, :, :-1])) * voxel_size[0] * \
+                      voxel_size[1]
+    res["Border Surface"] = border_surface
+    res["Pixel min"] = np.min(img[img > 0])
+    res["Pixel max"] = np.max(img)
+    res["Pixel mean"] = np.mean(img[img > 0])
+    res["Pixel median"] = np.median(img[img > 0])
+    res["Pixel std"] = np.std(img[img > 0])
+    if len(surf_im.shape) == 3:
+        res["Moment of immersion"] = calculate_density_momentum(img / np.sum(img), voxel_size)
+
+    return res
+
+
+def get_segmented_data(settings, segment):
     segmentation = segment.get_segmentation()
     image = np.copy(settings.image)
     if settings.threshold_type == UPPER:
@@ -440,6 +469,27 @@ def save_to_cmap(file_path, settings, segment):
         image = noise_mean - image
     image[segmentation == 0] = 0  # min(image[segmentation > 0].min(), 0)
     image[image < 0] = 0
+    return  image
+
+
+def save_to_cmap(file_path, settings, segment, use_gauss_filter=True, with_statistics=True):
+    """
+    :type file_path: str
+    :type settings: Settings
+    :type segment: Segment
+    :type use_gauss_filter: bool
+    :type with_statistics: bool
+    :return:
+    """
+
+    image = get_segmented_data(settings, segment)
+    if use_gauss_filter:
+        segment_mask = segment.get_segmentation()
+        voxel = settings.spacing
+        sitk_image = sitk.GetImageFromArray(image)
+        sitk_image.SetSpacing(settings.spacing)
+        image = sitk.GetArrayFromImage(sitk.DiscreteGaussian(sitk_image, voxel[-1]))
+        image[segment_mask == 0] = 0
 
     points = np.nonzero(image)
     lower_bound = np.min(points, axis=1)
@@ -472,6 +522,11 @@ def save_to_cmap(file_path, settings, segment):
     dset.attrs['CLASS'] = np.string_('CARRY')
     dset.attrs['TITLE'] = np.string_('')
     dset.attrs['VERSION'] = np.string_('1.0')
+    if with_statistics:
+        grp = f.create_group('Statistics')
+        stat = calculate_statistic_from_image(cut_img, settings)
+        for key, val in stat.items():
+            grp.attrs[key] = val
     f.close()
 
 
@@ -497,6 +552,8 @@ def save_to_project(file_path, settings, segment):
     important_data['spacing'] = settings.spacing
     important_data['minimum_size'] = settings.minimum_size
     important_data['use_draw'] = settings.use_draw_result
+    image = get_segmented_data(settings, segment)
+    important_data["statistics"] = calculate_statistic_from_image(image, settings)
     with open(os.path.join(folder_path, "data.json"), 'w') as ff:
         json.dump(important_data, ff)
     """if file_path[-3:] != ".gz":
@@ -529,6 +586,7 @@ def load_project(file_path, settings, segment):
     settings.use_gauss = bool(important_data["use_gauss"])
     settings.spacing = \
         tuple(map(int, important_data["spacing"]))
+    settings.voxel_size = settings.spacing
     settings.minimum_size = int(important_data["minimum_size"])
     try:
         settings.use_draw_result = int(important_data["use_draw"])
