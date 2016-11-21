@@ -523,7 +523,7 @@ def save_to_cmap(file_path, settings, segment, use_gauss_filter=True, with_stati
     dset.attrs['TITLE'] = np.string_('')
     dset.attrs['VERSION'] = np.string_('1.0')
     if with_statistics:
-        grp = f.create_group('Statistics')
+        grp = f.create_group('Chimera/image1/Statistics')
         stat = calculate_statistic_from_image(cut_img, settings)
         for key, val in stat.items():
             grp.attrs[key] = val
