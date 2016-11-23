@@ -8,8 +8,7 @@ import json
 import tempfile
 import os
 import tarfile
-from auto_fit import calculate_density_momentum
-
+import auto_fit as af
 UPPER = "Upper"
 GAUSS = "Gauss"
 
@@ -426,9 +425,10 @@ class Segment(object):
         self.segmentation_change_callback.append(callback)
 
 
-def calculate_statistic_from_image(img, settings):
+def calculate_statistic_from_image(img, mask, settings):
     """
     :type img: np.ndarray
+    :type mask: np.ndarray
     :type settings: Settings
     :return: dict[str,object]
     """
@@ -438,10 +438,10 @@ def calculate_statistic_from_image(img, settings):
     voxel_size = settings.voxel_size
     res["Volume"] = np.count_nonzero(img) * pixel_volume(settings.voxel_size)
     res["Mass"] = np.sum(img)
-    border_im = sitk.GetArrayFromImage(sitk.LabelContour(sitk.GetImageFromArray((img > 0).astype(np.uint8))))
+    border_im = sitk.GetArrayFromImage(sitk.LabelContour(sitk.GetImageFromArray((mask > 0).astype(np.uint8))))
     res["Border Volume"] = np.count_nonzero(border_im)
     border_surface = 0
-    surf_im = np.array((img > 0)).astype(np.uint8)
+    surf_im = np.array((mask > 0)).astype(np.uint8)
     border_surface += np.count_nonzero(np.logical_xor(surf_im[1:], surf_im[:-1])) * voxel_size[1] * voxel_size[2]
     border_surface += np.count_nonzero(np.logical_xor(surf_im[:, 1:], surf_im[:, :-1])) * voxel_size[0] * \
                       voxel_size[2]
@@ -455,7 +455,7 @@ def calculate_statistic_from_image(img, settings):
     res["Pixel median"] = np.median(img[img > 0])
     res["Pixel std"] = np.std(img[img > 0])
     if len(surf_im.shape) == 3:
-        res["Moment of immersion"] = calculate_density_momentum(img / np.sum(img), voxel_size)
+        res["Moment of immersion"] = af.calculate_density_momentum(img / np.sum(img), voxel_size)
 
     return res
 
@@ -472,13 +472,14 @@ def get_segmented_data(settings, segment):
     return  image
 
 
-def save_to_cmap(file_path, settings, segment, use_gauss_filter=True, with_statistics=True):
+def save_to_cmap(file_path, settings, segment, use_gauss_filter=True, with_statistics=True, centered_data=True):
     """
     :type file_path: str
     :type settings: Settings
     :type segment: Segment
     :type use_gauss_filter: bool
     :type with_statistics: bool
+    :type centered_data: bool
     :return:
     """
 
@@ -519,12 +520,20 @@ def save_to_cmap(file_path, settings, segment, use_gauss_filter=True, with_stati
     grp.attrs['VERSION'] = np.string_('1.0')
     grp.attrs['step'] = np.array(settings.spacing, dtype=np.float32)
 
+    if centered_data:
+        center_of_mass = af.density_mass_center(cut_img, settings.spacing)
+        model_orientation, eigen_values = af.find_density_orientation(cut_img, settings.spacing, cutoff=2000)
+        rotation_matrix, rotation_axis, angel = af.get_rotation_parameters(model_orientation.T)
+        grp.attrs['rotation_axis'] = rotation_axis
+        grp.attrs['rotation_angle'] = angel
+        grp.attrs['origin'] = - np.dot(rotation_matrix, center_of_mass)
+
     dset.attrs['CLASS'] = np.string_('CARRY')
     dset.attrs['TITLE'] = np.string_('')
     dset.attrs['VERSION'] = np.string_('1.0')
     if with_statistics:
         grp = f.create_group('Chimera/image1/Statistics')
-        stat = calculate_statistic_from_image(cut_img, settings)
+        stat = calculate_statistic_from_image(cut_img, segment.get_segmentation(), settings)
         for key, val in stat.items():
             grp.attrs[key] = val
     f.close()

@@ -1,4 +1,5 @@
 from __future__ import print_function
+import logging
 
 
 def spacing(s):
@@ -12,17 +13,39 @@ if __name__ == '__main__':
     import argparse
     import glob
     import os
+    import sys
     import backend
     import numpy as np
     parser = argparse.ArgumentParser("Convert project to chimera cmap")
     parser.add_argument("source_folder", type=str, nargs=1, help="Folder with project files to proceed or one file")
     parser.add_argument("dest_folder", type=str, nargs=1, help="Destination folder")
-    parser.add_argument("-s", "--spacing", dest="spacing", default=None, type=spacing)
+    parser.add_argument("--base_folder", dest="base_folder", type=str, nargs=1, default=None,
+                        help="TBD")
+    parser.add_argument("-s", "--spacing", dest="spacing", default=None, type=spacing,
+                        help="Spacing between pixels saved to cmap")
+    parser.add_argument("-ng", "--not_use_gauss", dest="not_use_gauss", default=False, const=True,
+                        action="store_const",
+                        help="Apply gauss blur data to image before put in cmap")
+    parser.add_argument("-ns", "--no_statistics", dest="no_statistics", default=False, const=True,
+                        action="store_const",
+                        help="Off saving statistics in 'Chimera/image1/Statistics' group")
+    parser.add_argument("-nc", "--no_center_data", dest="no_center_data", default=False, const=True,
+                        action="store_const",
+                        help="Off centering and rotating volumetric data")
     args = parser.parse_args()
     if os.path.isdir(args.source_folder[0]):
         files_to_proceed = glob.glob(os.path.join(args.source_folder[0], "*.gz"))
     else:
         files_to_proceed = args.source_folder
+
+    if args.base_folder is not None:
+        if not os.path.isdir(args.base_folder[0]):
+            logging.error("Folder {} does not exists".format(args.base_folder[0]))
+            sys.exit(-1)
+        else:
+            base_folder = args.base_folder[0]
+    else:
+        base_folder = None
 
     settings = backend.Settings("settings.json")
     segment = backend.Segment(settings)
@@ -34,6 +57,10 @@ if __name__ == '__main__':
     settings.add_image_callback(canvas_update)
     num = len(files_to_proceed)
     for i, file_path in enumerate(files_to_proceed):
+        if base_folder is not None:
+            rel_path = os.path.dirname(os.path.relpath(file_path, base_folder))
+        else:
+            rel_path = ""
         file_name = os.path.basename(file_path)
         print("file: {}; {} from {}".format(file_name, i+1, num))
         backend.load_project(file_path, settings, segment)
@@ -42,4 +69,7 @@ if __name__ == '__main__':
         file_name += ".cmap"
         if args.spacing is not None:
             settings.spacing = args.spacing
-        backend.save_to_cmap(os.path.join(args.dest_folder[0], file_name), settings, segment)
+        backend.save_to_cmap(os.path.join(args.dest_folder[0], rel_path, file_name), settings, segment,
+                             use_gauss_filter=not args.not_use_gauss, with_statistics=not args.no_statistics,
+                             centered_data=not args.no_center_data)
+

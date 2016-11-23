@@ -87,14 +87,15 @@ def get_rotation_angel(rotation_matrix, eigen_val=None, eigen_vec=None):
 def get_rotation_parameters(isometric_matrix):
     rotation_axis, reflection = get_rotation_axis(isometric_matrix)
     if reflection:
+        print(linalg.det(isometric_matrix))
         isometric_matrix = np.dot(np.diag([-1, 1, 1]), isometric_matrix)
-        rotation_axis, reflection = get_rotation_axis(isometric_matrix)
+    print(linalg.det(isometric_matrix))
     angel = acos((np.sum(np.diag(isometric_matrix)) - 1) / 2) * 180 / pi
     square_diff = (isometric_matrix - isometric_matrix.T) ** 2
-    denomi = sqrt(np.sum(square_diff) / 2)
-    x = (isometric_matrix[2, 1] - isometric_matrix[1, 2]) / denomi
-    y = (isometric_matrix[0, 2] - isometric_matrix[2, 0]) / denomi
-    z = (isometric_matrix[1, 0] - isometric_matrix[0, 1]) / denomi
+    denominator = sqrt(np.sum(square_diff) / 2)
+    x = (isometric_matrix[2, 1] - isometric_matrix[1, 2]) / denominator
+    y = (isometric_matrix[0, 2] - isometric_matrix[2, 0]) / denominator
+    z = (isometric_matrix[1, 0] - isometric_matrix[0, 1]) / denominator
     return isometric_matrix, np.array((x, y, z)), angel
 
 
