@@ -7,7 +7,7 @@ import logging
 import sys
 import h5py
 import os
-from math import asin, acos, pi
+from math import asin, acos, pi, sqrt
 
 
 def vector_cos(vec1, vec2):
@@ -89,8 +89,13 @@ def get_rotation_parameters(isometric_matrix):
     if reflection:
         isometric_matrix = np.dot(np.diag([-1, 1, 1]), isometric_matrix)
         rotation_axis, reflection = get_rotation_axis(isometric_matrix)
-    angel = get_rotation_angel(isometric_matrix)
-    return isometric_matrix, rotation_axis, angel
+    angel = acos((np.sum(np.diag(isometric_matrix)) - 1) / 2) * 180 / pi
+    square_diff = (isometric_matrix - isometric_matrix.T) ** 2
+    denomi = sqrt(np.sum(square_diff) / 2)
+    x = (isometric_matrix[2, 1] - isometric_matrix[1, 2]) / denomi
+    y = (isometric_matrix[0, 2] - isometric_matrix[2, 0]) / denomi
+    z = (isometric_matrix[1, 0] - isometric_matrix[0, 1]) / denomi
+    return isometric_matrix, np.array((x, y, z)), angel
 
 
 def rotation_test(cmap_path, out_path):
@@ -107,9 +112,8 @@ def rotation_test(cmap_path, out_path):
     model_orientation, eigen_values = af.find_density_orientation(img, voxel_size, cutoff=2000)
     rotation_matrix, rotation_axis, angel = get_rotation_parameters(model_orientation.T)
     grp.attrs['rotation_axis'] = rotation_axis
-    grp.attrs['rotation_angle'] = 180 - angel[0]
+    grp.attrs['rotation_angle'] = angel
     grp.attrs['origin'] = - np.dot(rotation_matrix, center_of_mass)
-    print(angel)
     # , reflection = get_rotation_axis(rotation_matrix)
 
     ort = calculate_orthogonal(center_of_mass, rotation_axis)
@@ -118,8 +122,6 @@ def rotation_test(cmap_path, out_path):
     logging.info("Rotation axis: {}".format(rotation_axis))
     logging.info("Center of mass ort: {}".format(ort))
     logging.info("Center of mass projection: {}".format(calculate_projection(center_of_mass, rotation_axis)))
-    logging.info("Cos: {}".format(vector_cos(center_of_mass, ort)))
-    logging.info("Cos: {}".format(vector_cos(rotation_axis, ort)))
     pc.savePointsAsPdb([[0, 0, 0], center_of_mass], os.path.join(out_path,"mc.pdb"))
     pc.savePointsAsPdb([[0, 0, 0], rotation_axis*1000], os.path.join(out_path, "rot_ax.pdb"))
     pc.savePointsAsPdb([[0, 0, 0], ort], os.path.join(out_path, "ort.pdb"))
@@ -130,16 +132,14 @@ def rotation_test(cmap_path, out_path):
     af.save_vectors_as_pdb(model_orientation, eigen_values, os.path.join(out_path, "model_orientation.pdb"),
                            center=center_of_mass)
     af.save_vectors_as_pdb(np.dot(rotation_matrix, model_orientation), eigen_values,
-                           os.path.join(out_path, "rot_model_orientation.pdb"), full=True)#, center=np.dot(rotation_matrix, center_of_mass))
-    print(get_rotation_angel(rotation_matrix))
-
+                           os.path.join(out_path, "rot_model_orientation.pdb"), full=True)
     h5_file.close()
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.WARNING)
     logging.info("Epsilon: {}".format(sys.float_info.epsilon))
     coordinate_test1()
     af.save_vectors_as_pdb(np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]), np.array([900, 600, 400]),
                            os.path.join("res", "coord_orientation.pdb"), full=False)
-    rotation_test("./res/nuc6syg1_rot.cmap", "res")
+    rotation_test("./res/nuc4syg1_rot.cmap", "res")
