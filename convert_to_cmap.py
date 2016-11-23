@@ -23,9 +23,12 @@ if __name__ == '__main__':
                         help="TBD")
     parser.add_argument("-s", "--spacing", dest="spacing", default=None, type=spacing,
                         help="Spacing between pixels saved to cmap")
+    parser.add_argument("-g", "--use_2d_gauss", dest="use_2d_gauss", default=False, const=True,
+                        action="store_const",
+                        help="Apply 2d (x,y) gauss blur data to image before put in cmap")
     parser.add_argument("-ng", "--not_use_gauss", dest="not_use_gauss", default=False, const=True,
                         action="store_const",
-                        help="Apply gauss blur data to image before put in cmap")
+                        help="Not apply 3d gauss blur data to image before put in cmap")
     parser.add_argument("-ns", "--no_statistics", dest="no_statistics", default=False, const=True,
                         action="store_const",
                         help="Off saving statistics in 'Chimera/image1/Statistics' group")
@@ -70,6 +73,6 @@ if __name__ == '__main__':
         if args.spacing is not None:
             settings.spacing = args.spacing
         backend.save_to_cmap(os.path.join(args.dest_folder[0], rel_path, file_name), settings, segment,
-                             use_gauss_filter=not args.not_use_gauss, with_statistics=not args.no_statistics,
-                             centered_data=not args.no_center_data)
+                             use_3d_gauss_filter=not args.not_use_gauss, with_statistics=not args.no_statistics,
+                             centered_data=not args.no_center_data, use_2d_gauss_filter=args.use_2d_gauss)
 

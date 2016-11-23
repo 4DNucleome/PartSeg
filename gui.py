@@ -20,9 +20,10 @@ from PySide.QtCore import Qt, QSize
 from PySide.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget,\
     QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QPixmap, QSpinBox, \
     QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout,\
-    QListWidget, QTextEdit, QIcon
+    QListWidget, QTextEdit, QIcon, QDialog
 
-from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, calculate_statistic_from_image
+from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, \
+    calculate_statistic_from_image, MaskChange
 
 
 __author__ = "Grzegorz Bokota"
@@ -982,11 +983,51 @@ class StatisticsWindow(QWidget):
 
     def update_statistics(self):
         image = get_segmented_data(self.settings, self.segment)
-        stat = calculate_statistic_from_image(image, self.settings)
+        stat = calculate_statistic_from_image(image, self.segment.get_segmentation(), self.settings)
         res_str = ""
         for key, val in stat.items():
             res_str += "{}: {}\n".format(key, val)
         self.info_field.setText(res_str)
+
+
+class MaskWindow(QDialog):
+    def __init__(self, settings, segment):
+        super(MaskWindow, self).__init__()
+        self.settings = settings
+        self.segment = segment
+        main_layout = QVBoxLayout()
+        dilate_label = QLabel("Dilate (x,y) radius", self)
+        self.dilate_radius = QSpinBox(self)
+        self.dilate_radius.setRange(0, 100)
+        self.dilate_radius.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.dilate_radius.setValue(settings.mask_dilate_radius)
+        self.dilate_radius.setSingleStep(1)
+        dilate_layout = QHBoxLayout()
+        dilate_layout.addWidget(dilate_label)
+        dilate_layout.addWidget(self.dilate_radius)
+        main_layout.addLayout(dilate_layout)
+        self.prev_button = QPushButton("Previous mask", self)
+        if len(settings.prev_segmentation_settings) == 0:
+            self.prev_button.setDisabled(True)
+        self.next_button = QPushButton("Next mask", self)
+        if len(settings.next_segmentation_settings) == 0:
+            self.next_button.setText("Next mask (new)")
+        self.next_button.clicked.connect(self.next_mask)
+        self.prev_button.clicked.connect(self.prev_mask)
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.prev_button)
+        button_layout.addWidget(self.next_button)
+        main_layout.addLayout(button_layout)
+        self.setLayout(main_layout)
+
+    def next_mask(self):
+        self.settings.mask_dilate_radius = self.dilate_radius.value()
+        self.settings.change_segmentation_mask(self.segment, MaskChange.next_seg)
+        self.close()
+
+    def prev_mask(self):
+        self.settings.change_segmentation_mask(self.segment, MaskChange.prev_seg)
+        self.close()
 
 
 class AdvancedWindow(QTabWidget):
@@ -1080,6 +1121,7 @@ class MainMenu(QWidget):
         self.setMinimumHeight(50)
         self.update_elements_positions()
         self.one_line = True
+        self.mask_window = None
         # self.setStyleSheet(self.styleSheet()+";border: 1px solid black")
 
     def update_elements_positions(self):
@@ -1173,7 +1215,9 @@ class MainMenu(QWidget):
         self.threshold_value.setValue(lay_num)
 
     def segmentation_to_mask(self):
-        msgbox = QMessageBox(self)
+        self.mask_window = MaskWindow(self.settings, self.segment)
+        self.mask_window.exec_()
+        """msgbox = QMessageBox(self)
         msgbox.setText("Change segmentation on mask")
         msgbox.setInformativeText("This change can not be undone")
         msgbox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
@@ -1181,6 +1225,7 @@ class MainMenu(QWidget):
         ret = msgbox.exec_()
         if ret == QMessageBox.Ok:
             self.settings.mask = self.segment.get_segmentation()
+        self.settings.change_colormap()"""
 
     def open_file(self):
         dial = QFileDialog(self, "Load data")

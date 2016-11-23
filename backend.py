@@ -9,8 +9,16 @@ import tempfile
 import os
 import tarfile
 import auto_fit as af
+import logging
+from enum import Enum
+from copy import deepcopy
 UPPER = "Upper"
 GAUSS = "Gauss"
+
+
+class MaskChange(Enum):
+    prev_seg = 1
+    next_seg = 2
 
 
 def class_to_dict(obj, *args):
@@ -56,6 +64,24 @@ def gaussian(image, radius):
     for layer in res:
         layer[...] = sitk.GetArrayFromImage(sitk.DiscreteGaussian(sitk.GetImageFromArray(layer), radius))
     return res
+
+
+def dilate(image, radius):
+    """
+    :param image: image to apply gausian filter
+    :param radius: radius for gaussian kernel
+    :return:
+    """
+    if len(image.shape) == 2:
+        return sitk.GetArrayFromImage(sitk.GrayscaleDilate(sitk.GetImageFromArray(image), radius))
+    res = np.copy(image)
+    for layer in res:
+        layer[...] = sitk.GetArrayFromImage(sitk.GrayscaleDilate(sitk.GetImageFromArray(layer), radius))
+    return res
+
+
+def to_binary_image(image):
+    return np.array(image > 0).astype(np.uint8)
 
 
 def bisect(arr, val, comp):
@@ -134,7 +160,7 @@ class Settings(object):
         self.save_directory = None
         self.save_filter = None
         self.spacing = [5, 5, 30]
-        self.voxel_size = [70, 70, 210]
+        self.voxel_size = [5, 5, 30]
         self.size_unit = "nm"
         self.advanced_menu_geometry = None
         self.file_path = ""
@@ -142,6 +168,7 @@ class Settings(object):
         self.load(setings_path)
         self.prev_segmentation_settings = []
         self.next_segmentation_settings = []
+        self.mask_dilate_radius = 0
 
     def dump(self, file_path):
         important_data = \
@@ -158,19 +185,61 @@ class Settings(object):
                            "spacing", "voxel_size", "size_unit", "threshold", "color_map_name", "overlay",
                            "minimum_size")
         except IOError:
-            print("No configuration file")
+            logging.warning("No configuration file")
             pass
         except KeyError:
-            print("Bad configuration")
+            logging.warning("Bad configuration")
 
-    def change_colormap(self, new_color_map):
+    def change_segmentation_mask(self, segment, order):
         """
-        :type new_color_map: str
+        :type segment: Segment
+        :type order: MaskChange
+        :return:
+        """
+        save_fields = ["threshold", "threshold_list", "threshold_type", "threshold_layer_separate",
+                       "minimum_size", "use_gauss", "use_draw_result", "mask_dilate_radius", "mask"]
+        if order == MaskChange.prev_seg and len(self.prev_segmentation_settings) == 0:
+            return
+
+        current_mask = segment.get_segmentation()
+        seg_settings = class_to_dict(self, *save_fields)
+        seg_settings["draw_points"] = tuple(map(list, np.nonzero(np.array(segment.draw_canvas == 1))))
+        seg_settings["erase_points"] = tuple(map(list, np.nonzero(np.array(segment.draw_canvas == 2))))
+        if order == MaskChange.next_seg:
+            self.prev_segmentation_settings.append(seg_settings)
+            if self.mask_dilate_radius > 0:
+                self.mask = dilate(current_mask, self.mask_dilate_radius)
+            else:
+                self.mask = current_mask
+            if len(self.next_segmentation_settings) > 0:
+                new_seg = self.next_segmentation_settings.pop()
+            else:
+                new_seg = None
+            save_fields = save_fields[:-1]
+        else:
+            self.next_segmentation_settings.append(seg_settings)
+            new_seg = self.prev_segmentation_settings.pop()
+        if new_seg is not None:
+            dict_set_class(self, new_seg, *save_fields)
+            segment.draw_canvas[...] = 0
+            segment.draw_canvas[tuple(map(lambda x: np.array(x, dtype=np.uint32), new_seg["draw_points"]))] = 1
+            segment.draw_canvas[tuple(map(lambda x: np.array(x, dtype=np.uint32), new_seg["erase_points"]))] = 2
+        else:
+            segment.draw_canvas[...] = 0
+        for fun in self.threshold_change_callback:
+            fun()
+        for fun in self.callback_colormap:
+            fun()
+
+    def change_colormap(self, new_color_map=None):
+        """
+        :type new_color_map: str | none
         :param new_color_map: name of new colormap
         :return:
         """
-        self.color_map_name = new_color_map
-        self.color_map = matplotlib.cm.get_cmap(new_color_map)
+        if new_color_map is not None:
+            self.color_map_name = new_color_map
+            self.color_map = matplotlib.cm.get_cmap(new_color_map)
         for fun in self.callback_colormap:
             fun()
 
@@ -469,28 +538,33 @@ def get_segmented_data(settings, segment):
         image = noise_mean - image
     image[segmentation == 0] = 0  # min(image[segmentation > 0].min(), 0)
     image[image < 0] = 0
-    return  image
+    return image, segmentation
 
 
-def save_to_cmap(file_path, settings, segment, use_gauss_filter=True, with_statistics=True, centered_data=True):
+def save_to_cmap(file_path, settings, segment, use_3d_gauss_filter=True, use_2d_gauss_filter=True, with_statistics=True,
+                 centered_data=True):
     """
     :type file_path: str
     :type settings: Settings
     :type segment: Segment
-    :type use_gauss_filter: bool
+    :type use_3d_gauss_filter: bool
+    :type use_2d_gauss_filter: bool
     :type with_statistics: bool
     :type centered_data: bool
     :return:
     """
 
-    image = get_segmented_data(settings, segment)
-    if use_gauss_filter:
-        segment_mask = segment.get_segmentation()
+    image, mask = get_segmented_data(settings, segment)
+    if use_2d_gauss_filter:
+        image = gaussian(image, 1)
+        image[mask == 0] = 0
+
+    if use_3d_gauss_filter:
         voxel = settings.spacing
         sitk_image = sitk.GetImageFromArray(image)
         sitk_image.SetSpacing(settings.spacing)
-        image = sitk.GetArrayFromImage(sitk.DiscreteGaussian(sitk_image, voxel[-1]))
-        image[segment_mask == 0] = 0
+        image = sitk.GetArrayFromImage(sitk.DiscreteGaussian(sitk_image, max(voxel)))
+        image[mask == 0] = 0
 
     points = np.nonzero(image)
     lower_bound = np.min(points, axis=1)
@@ -552,17 +626,15 @@ def save_to_project(file_path, settings, segment):
     np.save(os.path.join(folder_path, "res_mask.npy"), segment.get_segmentation())
     if settings.mask is not None:
         np.save(os.path.join(folder_path, "mask.npy"), settings.mask)
-    important_data = dict()
-    important_data['threshold_type'] = settings.threshold_type
-    important_data['threshold_layer'] = settings.threshold_layer_separate
-    important_data["threshold"] = settings.threshold
-    important_data["threshold_list"] = settings.threshold_list
-    important_data['use_gauss'] = settings.use_gauss
-    important_data['spacing'] = settings.spacing
-    important_data['minimum_size'] = settings.minimum_size
-    important_data['use_draw'] = settings.use_draw_result
-    image = get_segmented_data(settings, segment)
-    important_data["statistics"] = calculate_statistic_from_image(image, settings)
+    important_data = class_to_dict(settings, 'threshold_type', 'threshold_layer_separate', "threshold", "threshold_list",
+                                   'use_gauss', 'spacing', 'minimum_size', 'use_draw_result', "prev_segmentation_settings")
+    important_data["prev_segmentation_settings"] = deepcopy(important_data["prev_segmentation_settings"])
+    for c, mem in enumerate(important_data["prev_segmentation_settings"]):
+        np.save(os.path.join(folder_path, "mask_{}.npy".format(c)), mem["mask"])
+        del mem["mask"]
+    image, segment_mask = get_segmented_data(settings, segment)
+    important_data["statistics"] = calculate_statistic_from_image(image, segment_mask, settings)
+    print(important_data)
     with open(os.path.join(folder_path, "data.json"), 'w') as ff:
         json.dump(important_data, ff)
     """if file_path[-3:] != ".gz":
@@ -598,7 +670,10 @@ def load_project(file_path, settings, segment):
     settings.voxel_size = settings.spacing
     settings.minimum_size = int(important_data["minimum_size"])
     try:
-        settings.use_draw_result = int(important_data["use_draw"])
+        if "use_draw_result" in important_data:
+            settings.use_draw_result = int(important_data["use_draw_result"])
+        else:
+            settings.use_draw_result = int(important_data["use_draw"])
     except KeyError:
         settings.use_draw_result = False
     segment.protect = True
@@ -608,8 +683,16 @@ def load_project(file_path, settings, segment):
         settings.threshold_list = map(int, important_data["threshold_list"])
     else:
         settings.threshold_list = []
-    settings.threshold_layer_separate = \
-        bool(important_data["threshold_layer"])
+    if "threshold_layer_separate" in important_data:
+        settings.threshold_layer_separate = \
+            bool(important_data["threshold_layer_separate"])
+    else:
+        settings.threshold_layer_separate = \
+            bool(important_data["threshold_layer"])
+
+    if "prev_segmentation_settings" in important_data:
+        for c, mem in enumerate(important_data["prev_segmentation_settings"]):
+            mem["mask"] = np.load(tar.extractfile("mask_{}.npy".format(c)))
     print(settings.threshold_list)
     segment.draw_update(draw)
     segment.threshold_updated()
