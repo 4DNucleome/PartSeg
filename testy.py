@@ -143,4 +143,4 @@ if __name__ == "__main__":
     coordinate_test1()
     af.save_vectors_as_pdb(np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]), np.array([900, 600, 400]),
                            os.path.join("res", "coord_orientation.pdb"), full=False)
-    rotation_test("./res/nuc4syg1_rot.cmap", "res")
+    rotation_test("./res/nuc12syg1_rot.cmap", "res")

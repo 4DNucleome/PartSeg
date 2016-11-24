@@ -657,9 +657,11 @@ def save_to_cmap(file_path, settings, segment, use_3d_gauss_filter=True, use_2d_
     grp.attrs['step'] = np.array(settings.spacing, dtype=np.float32)
 
     if centered_data:
-        center_of_mass = af.density_mass_center(cut_img, settings.spacing)
-        model_orientation, eigen_values = af.find_density_orientation(cut_img, settings.spacing, cutoff=2000)
+        swap_cut_img = np.swapaxes(cut_img, 0, 2)
+        center_of_mass = af.density_mass_center(swap_cut_img, settings.spacing)
+        model_orientation, eigen_values = af.find_density_orientation(swap_cut_img, settings.spacing, cutoff=2000)
         rotation_matrix, rotation_axis, angel = af.get_rotation_parameters(model_orientation.T)
+        print(rotation_axis, angel)
         grp.attrs['rotation_axis'] = rotation_axis
         grp.attrs['rotation_angle'] = angel
         grp.attrs['origin'] = - np.dot(rotation_matrix, center_of_mass)
