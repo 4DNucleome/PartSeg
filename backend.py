@@ -586,15 +586,17 @@ def calculate_statistic_from_image(img, mask, settings):
     return res
 
 
-def get_segmented_data(image, settings, segment):
+def get_segmented_data(image, settings, segment, with_std=False):
     segmentation = segment.get_segmentation()
+    full_segmentation = segment.get_full_segmentation()
+    noise_std = np.std(image[full_segmentation == 0])
     if settings.threshold_type == UPPER:
-        full_segmentation = segment.get_full_segmentation()
         noise_mean = np.mean(image[full_segmentation == 0])
-        noise_std = np.std(image[full_segmentation == 0])
         image = noise_mean - image
     image[segmentation == 0] = 0  # min(image[segmentation > 0].min(), 0)
     image[image < 0] = 0
+    if with_std:
+        return image, segmentation, noise_std
     return image, segmentation
 
 
@@ -611,19 +613,20 @@ def save_to_cmap(file_path, settings, segment, use_3d_gauss_filter=True, use_2d_
     :return:
     """
     image = np.copy(settings.image)
+    mask = segment.get_segmentation()
 
     if use_2d_gauss_filter:
         image = gaussian(image, settings.gauss_radius)
-        image[mask == 0] = 0
+        #image[mask == 0] = 0
 
     if use_3d_gauss_filter:
         voxel = settings.spacing
         sitk_image = sitk.GetImageFromArray(image)
         sitk_image.SetSpacing(settings.spacing)
         image = sitk.GetArrayFromImage(sitk.DiscreteGaussian(sitk_image, max(voxel)))
-        image[mask == 0] = 0
+        #image[mask == 0] = 0
 
-    image, mask = get_segmented_data(image, settings, segment)
+    image, mask, noise_std = get_segmented_data(image, settings, segment, True)
 
     points = np.nonzero(image)
     lower_bound = np.min(points, axis=1)
@@ -669,6 +672,7 @@ def save_to_cmap(file_path, settings, segment, use_3d_gauss_filter=True, use_2d_
         stat = calculate_statistic_from_image(cut_img, segment.get_segmentation(), settings)
         for key, val in stat.items():
             grp.attrs[key] = val
+        grp.attrs["Noise_std"] = noise_std
     f.close()
 
 
