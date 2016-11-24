@@ -95,7 +95,8 @@ def bisect(arr, val, comp):
 
 
 class Profile:
-    def __init__(self, name, threshold, threshold_list, threshold_type, minimum_size, use_gauss):
+    def __init__(self, name, threshold, threshold_list, threshold_type, minimum_size, use_gauss, gauss_radius,
+                 threshold_layer_separate):
         """
         :param name: str,
         :param threshold: int
@@ -110,10 +111,23 @@ class Profile:
         self.threshold_type = threshold_type
         self.minimum_size = minimum_size
         self.use_gauss = use_gauss
+        self.gauss_radius = gauss_radius
+        self.threshold_layer_separate = threshold_layer_separate
 
     def __str__(self):
-        text = self.name + "\n"
-
+        if self.name != "":
+            text = "Name: {}\n".format(self.name)
+        else:
+            text = ""
+        text += "{} threshold: ".format(self.threshold_type)
+        if self.threshold_layer_separate:
+            text += str(self.threshold_list)
+        else:
+            text += str(self.threshold)
+            text += "\n"
+        text += "Minimum object size: {}\n".format(self.minimum_size)
+        text += "Use gauss [{}]\n".format("x" if self.use_gauss else " ")
+        text += "Gauss radius: {}".format(self.gauss_radius)
         return text
 
 
@@ -135,6 +149,7 @@ class Settings(object):
         self.callback_change_layer = []
         self.chosen_colormap = pyplot.colormaps()
         self.profiles = dict()
+        self.profiles_list_changed_callback = []
         self.use_gauss = False
         self.use_draw_result = False
         self.draw_callback = []
@@ -149,6 +164,7 @@ class Settings(object):
         self.image = None
         self.gauss_image = None
         self.mask = None
+        self.gauss_radius = 1
         self.image_change_callback = []
         self.threshold_change_callback = []
         self.threshold_type_change_callback = []
@@ -170,10 +186,18 @@ class Settings(object):
         self.next_segmentation_settings = []
         self.mask_dilate_radius = 0
 
+    def add_profiles_list_callback(self, callback):
+        self.profiles_list_changed_callback.append(callback)
+
+    def get_profile_dict(self):
+        return class_to_dict(self, "threshold", "threshold_list", "threshold_type", "minimum_size", "use_gauss",
+                             "gauss_radius", "threshold_layer_separate")
+
     def dump(self, file_path):
         important_data = \
             class_to_dict(self, "open_directory", "open_filter", "save_directory", "save_filter", "spacing",
-                          "voxel_size", "size_unit", "threshold", "color_map_name", "overlay", "minimum_size")
+                          "voxel_size", "size_unit", "threshold", "color_map_name", "overlay", "minimum_size",
+                          "gauss_radius")
         with open(file_path, "w") as ff:
             json.dump(important_data, ff)
 
@@ -183,7 +207,7 @@ class Settings(object):
                 important_data = json.load(ff)
             dict_set_class(self, important_data, "open_directory", "open_filter", "save_directory", "save_filter",
                            "spacing", "voxel_size", "size_unit", "threshold", "color_map_name", "overlay",
-                           "minimum_size")
+                           "minimum_size", "gauss_radius")
         except IOError:
             logging.warning("No configuration file")
             pass
@@ -198,7 +222,7 @@ class Settings(object):
         :return:
         """
         save_fields = ["threshold", "threshold_list", "threshold_type", "threshold_layer_separate",
-                       "minimum_size", "use_gauss", "use_draw_result", "mask_dilate_radius", "mask"]
+                       "minimum_size", "use_gauss", "use_draw_result", "mask_dilate_radius", "mask", "gauss_radius"]
         if order == MaskChange.prev_seg and len(self.prev_segmentation_settings) == 0:
             return
 
@@ -255,7 +279,7 @@ class Settings(object):
     def remove_colormap_callback(self, callback):
         self.callback_colormap.remove(callback)
 
-    def create_new_profile(self, name, overwrite=False):
+    def add_profile(self, profile):
         """
         :type name: str
         :type overwrite: bool
@@ -263,9 +287,14 @@ class Settings(object):
         :param overwrite: Overwrite existing profile
         :return:
         """
-        if not overwrite and name in self.profiles:
-            raise ValueError("Profile with this name already exists")
-        self.profiles[name] = Profile(name, self.threshold, self.threshold_list, self.threshold_type, self.minimum_size)
+        # if not overwrite and name in self.profiles:
+        #    raise ValueError("Profile with this name already exists")
+        self.profiles[profile.name] = profile
+        for fun in self.profiles_list_changed_callback:
+            fun()
+
+    def get_profile(self, name):
+        return self.profiles[name]
 
     @property
     def colormap_list(self):
@@ -275,9 +304,9 @@ class Settings(object):
     def available_colormap_list(self):
         return pyplot.colormaps()
 
-    def add_image(self, image, file_path, mask=None,):
+    def add_image(self, image, file_path, mask=None):
         self.image = image
-        self.gauss_image = gaussian(self.image, 1)
+        self.gauss_image = gaussian(self.image, self.gauss_radius)
         self.mask = mask
         self.file_path = file_path
         self.threshold_list = []
@@ -290,6 +319,17 @@ class Settings(object):
                 fun[0](image, self.gauss_image)
                 continue
             fun(image)
+
+    def changed_gauss_radius(self):
+        self.gauss_image = gaussian(self.image, self.gauss_radius)
+        for fun in self.image_change_callback:
+            if isinstance(fun, tuple) and fun[1] == GAUSS:
+                print("bbuka")
+                fun[0](self.image, self.gauss_image)
+                continue
+            if isinstance(fun, tuple) and fun[1] == str:
+                continue
+            fun(self.image)
 
     def add_image_callback(self, callback):
         self.image_change_callback.append(callback)
@@ -415,7 +455,7 @@ class Segment(object):
 
     def set_image(self, image):
         self._image = image
-        self._gauss_image = gaussian(self._image, 1)  # TODO radius in settings
+        self._gauss_image = gaussian(self._image, self._settings.gauss_radius)
         self._segmentation_changed = True
         self._finally_segment = np.zeros(image.shape, dtype=np.uint8)
         self.threshold_updated()
@@ -521,26 +561,37 @@ def calculate_statistic_from_image(img, mask, settings):
         border_surface += np.count_nonzero(np.logical_xor(surf_im[:, :, 1:], surf_im[:, :, :-1])) * voxel_size[0] * \
                       voxel_size[1]
     res["Border Surface"] = border_surface
-    res["Pixel min"] = np.min(img[img > 0])
+    try:
+        res["Pixel min"] = np.min(img[img > 0])
+    except ValueError:
+        res["Pixel min"] = 0
     res["Pixel max"] = np.max(img)
-    res["Pixel mean"] = np.mean(img[img > 0])
-    res["Pixel median"] = np.median(img[img > 0])
-    res["Pixel std"] = np.std(img[img > 0])
+    try:
+        res["Pixel mean"] = np.mean(img[img > 0])
+    except ValueError:
+        res["Pixel mean"] = 0
+    try:
+        res["Pixel median"] = np.median(img[img > 0])
+    except ValueError:
+        res["Pixel median"] = 0
+    try:
+        res["Pixel std"] = np.std(img[img > 0])
+    except ValueError:
+        res["Pixel std"] = 0
     res["Mass to Volume"] = res["Mass"] / res["Volume"]
-    res["Border Surface to Volume"] = res["Border Surface"] / res["Volume"]
+    res["Volume to Border Surface"] = res["Volume"] / res["Border Surface"]
     if len(surf_im.shape) == 3:
-        print(surf_im.shape)
         res["Moment of immersion"] = af.calculate_density_momentum(img / np.sum(img), voxel_size)
 
     return res
 
 
-def get_segmented_data(settings, segment):
+def get_segmented_data(image, settings, segment):
     segmentation = segment.get_segmentation()
-    image = np.copy(settings.image)
     if settings.threshold_type == UPPER:
         full_segmentation = segment.get_full_segmentation()
         noise_mean = np.mean(image[full_segmentation == 0])
+        noise_std = np.std(image[full_segmentation == 0])
         image = noise_mean - image
     image[segmentation == 0] = 0  # min(image[segmentation > 0].min(), 0)
     image[image < 0] = 0
@@ -559,10 +610,10 @@ def save_to_cmap(file_path, settings, segment, use_3d_gauss_filter=True, use_2d_
     :type centered_data: bool
     :return:
     """
+    image = np.copy(settings.image)
 
-    image, mask = get_segmented_data(settings, segment)
     if use_2d_gauss_filter:
-        image = gaussian(image, 1)
+        image = gaussian(image, settings.gauss_radius)
         image[mask == 0] = 0
 
     if use_3d_gauss_filter:
@@ -571,6 +622,8 @@ def save_to_cmap(file_path, settings, segment, use_3d_gauss_filter=True, use_2d_
         sitk_image.SetSpacing(settings.spacing)
         image = sitk.GetArrayFromImage(sitk.DiscreteGaussian(sitk_image, max(voxel)))
         image[mask == 0] = 0
+
+    image, mask = get_segmented_data(image, settings, segment)
 
     points = np.nonzero(image)
     lower_bound = np.min(points, axis=1)
@@ -633,12 +686,13 @@ def save_to_project(file_path, settings, segment):
     if settings.mask is not None:
         np.save(os.path.join(folder_path, "mask.npy"), settings.mask)
     important_data = class_to_dict(settings, 'threshold_type', 'threshold_layer_separate', "threshold", "threshold_list",
-                                   'use_gauss', 'spacing', 'minimum_size', 'use_draw_result', "prev_segmentation_settings")
+                                   'use_gauss', 'spacing', 'minimum_size', 'use_draw_result', "gauss_radius",
+                                   "prev_segmentation_settings")
     important_data["prev_segmentation_settings"] = deepcopy(important_data["prev_segmentation_settings"])
     for c, mem in enumerate(important_data["prev_segmentation_settings"]):
         np.save(os.path.join(folder_path, "mask_{}.npy".format(c)), mem["mask"])
         del mem["mask"]
-    image, segment_mask = get_segmented_data(settings, segment)
+    image, segment_mask = get_segmented_data(settings.image, settings, segment)
     important_data["statistics"] = calculate_statistic_from_image(image, segment_mask, settings)
     print(important_data)
     with open(os.path.join(folder_path, "data.json"), 'w') as ff:
@@ -695,6 +749,10 @@ def load_project(file_path, settings, segment):
     else:
         settings.threshold_layer_separate = \
             bool(important_data["threshold_layer"])
+    if "gauss_radius" in important_data:
+        settings.gauss_radius = important_data["gauss_radius"]
+    else:
+        settings.gauss_radius = 1
 
     if "prev_segmentation_settings" in important_data:
         for c, mem in enumerate(important_data["prev_segmentation_settings"]):

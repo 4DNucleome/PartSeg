@@ -23,7 +23,7 @@ from PySide.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusB
     QListWidget, QTextEdit, QIcon, QDialog
 
 from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, \
-    calculate_statistic_from_image, MaskChange
+    calculate_statistic_from_image, MaskChange, Profile
 
 
 __author__ = "Grzegorz Bokota"
@@ -839,7 +839,6 @@ class AdvancedSettings(QWidget):
         def create_spacing(text, layout, num):
             spacing = QSpinBox()
             spacing.setRange(0, 100)
-            print(settings.spacing)
             spacing.setValue(settings.spacing[num])
             spacing.setSingleStep(1)
             spacing.setButtonSymbols(QAbstractSpinBox.NoButtons)
@@ -905,7 +904,18 @@ class AdvancedSettings(QWidget):
         self.component_overlay = create_overlay("segmentation opacity:", overlay_layout, self.settings.overlay)
         self.power_norm = create_power_norm("norm parameter:", overlay_layout, self.settings.power_norm)
         overlay_layout.addStretch()
+        gauss_layout = QHBoxLayout()
+        self.gauss_radius = QSpinBox(self)
+        self.gauss_radius.setRange(1, 10)
+        self.gauss_radius.setValue(settings.gauss_radius)
+        self.gauss_radius.setSingleStep(1)
+        self.gauss_radius.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        gauss_layout.addWidget(QLabel("Gauss radius"))
+        gauss_layout.addWidget(self.gauss_radius)
+        gauss_layout.addStretch()
+
         vlayout.addLayout(overlay_layout)
+        vlayout.addLayout(gauss_layout)
 
         accept_button = QPushButton("Accept")
         accept_button.clicked.connect(self.accept)
@@ -924,23 +934,41 @@ class AdvancedSettings(QWidget):
         self.profile_list.addItem("<current profile>")
         self.profile_list.addItems(self.settings.profiles.keys())
         self.profile_list.setMaximumWidth(200)
+        self.profile_list.currentTextChanged.connect(self.changed_profile)
+        self.create_profile = QPushButton("Create profile", self)
+        self.create_profile.clicked.connect(self.save_profile)
         self.current_profile = QLabel()
         self.current_profile.setWordWrap(True)
-        profile_lay.addWidget(self.current_profile)
-        text = settings.threshold_type + " threshold: "
-        if settings.threshold_layer_separate:
-            text += str(settings.threshold_list)
-        else:
-            text += str(settings.threshold)
-        text += "\n"
-        text += "Minimum object size: {}\n".format(settings.minimum_size)
-        text += "Use gauss [{}]\n".format("x" if settings.use_gauss else " ")
+        profile_layout2 = QVBoxLayout()
+        profile_layout2.addWidget(self.create_profile)
+        profile_layout2.addWidget(self.current_profile)
+        profile_lay.addLayout(profile_layout2)
+        text = str(Profile("", **self.settings.get_profile_dict()))
         self.current_profile.setText(text)
 
         vlayout.addLayout(profile_lay)
         vlayout.addStretch()
         self.setLayout(vlayout)
         self.update_volume()
+
+    def changed_profile(self, name):
+        if name == "<current profile>":
+            text = str(Profile("", **self.settings.get_profile_dict()))
+            self.current_profile.setText(text)
+        else:
+            text = str(self.settings.get_profile(name))
+            self.current_profile.setText(text)
+        print("buka", name)
+
+    def save_profile(self):
+        text,ok = QInputDialog.getText(self, "Profile name", "Profile name", QLineEdit.Normal)
+        if ok and text != "":
+            profile = Profile(text, **self.settings.get_profile_dict())
+            self.settings.add_profile(profile)
+            print("New profile", profile)
+            self.profile_list.clear()
+            self.profile_list.addItem("<current profile>")
+            self.profile_list.addItems(self.settings.profiles.keys())
 
     def update_volume(self):
         volume = self.x_size.value() * self.y_size.value() * self.z_size.value()
@@ -957,6 +985,7 @@ class AdvancedSettings(QWidget):
         self.mask_overlay.setValue(self.settings.mask_overlay)
         self.component_overlay.setValue(self.settings.overlay)
         self.power_norm.setValue(self.settings.power_norm)
+        self.gauss_radius.setValue(self.settings.gauss_radius)
 
     def accept(self):
         self.settings.spacing = self.x_spacing.value(), self.y_spacing.value(), self.z_spacing.value()
@@ -964,6 +993,9 @@ class AdvancedSettings(QWidget):
         self.settings.mask_overlay = self.mask_overlay.value()
         self.settings.overlay = self.component_overlay.value()
         self.settings.power_norm = self.power_norm.value()
+        if self.gauss_radius.value() != self.settings.gauss_radius:
+            self.settings.gauss_radius = self.gauss_radius.value()
+            self.settings.changed_gauss_radius()
         self.settings.advanced_settings_changed()
 
 
@@ -982,7 +1014,7 @@ class StatisticsWindow(QWidget):
         # self.update_statistics()
 
     def update_statistics(self):
-        image, mask = get_segmented_data(self.settings, self.segment)
+        image, mask = get_segmented_data(np.copy(self.settings.image), self.settings, self.segment)
         stat = calculate_statistic_from_image(image, mask, self.settings)
         res_str = ""
         for key, val in stat.items():
@@ -1133,7 +1165,15 @@ class MainMenu(QWidget):
         self.update_elements_positions()
         self.one_line = True
         self.mask_window = None
+        self.settings.add_profiles_list_callback(self.profile_list_update)
         # self.setStyleSheet(self.styleSheet()+";border: 1px solid black")
+
+    def profile_list_update(self):
+        l = self.settings.get_profile_list()
+        self.profile_choose.clear()
+        self.profile_choose.addItem("<no profile>")
+        self.profile_choose.addItems(list(self.settings.get_profile_list()))
+
 
     def update_elements_positions(self):
         # m_layout = QVBoxLayout()
@@ -1390,8 +1430,8 @@ class InfoMenu(QLabel):
         draw_size = self.segment.draw_counter
         print("Spacing: {}, Voxel size: {},  Number of changed pixels: {},  ".format(
             spacing, voxel_size, draw_size))
-        self.text_filed.setText("Spacing: {}, Voxel size: {},  Number of changed pixels: {},  ".format(
-            spacing, voxel_size, draw_size))
+        self.text_filed.setText("Spacing: {}, Voxel size: {},  Number of changed pixels: {}, Gauss radius: {} ".format(
+            spacing, voxel_size, draw_size, self.settings.gauss_radius))
 
     def update_info_text(self, s):
         self.info_filed.setText(s)
