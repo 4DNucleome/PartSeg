@@ -190,10 +190,11 @@ class Settings(object):
         except KeyError:
             logging.warning("Bad configuration")
 
-    def change_segmentation_mask(self, segment, order):
+    def change_segmentation_mask(self, segment, order, save_draw):
         """
         :type segment: Segment
         :type order: MaskChange
+        :type save_draw: bool
         :return:
         """
         save_fields = ["threshold", "threshold_list", "threshold_type", "threshold_layer_separate",
@@ -205,6 +206,7 @@ class Settings(object):
         seg_settings = class_to_dict(self, *save_fields)
         seg_settings["draw_points"] = tuple(map(list, np.nonzero(np.array(segment.draw_canvas == 1))))
         seg_settings["erase_points"] = tuple(map(list, np.nonzero(np.array(segment.draw_canvas == 2))))
+        save_draw_bck = np.copy(segment.draw_canvas)
         if order == MaskChange.next_seg:
             self.prev_segmentation_settings.append(seg_settings)
             if self.mask_dilate_radius > 0:
@@ -219,17 +221,18 @@ class Settings(object):
         else:
             self.next_segmentation_settings.append(seg_settings)
             new_seg = self.prev_segmentation_settings.pop()
+        segment.draw_canvas[...] = 0
         if new_seg is not None:
             dict_set_class(self, new_seg, *save_fields)
-            segment.draw_canvas[...] = 0
             segment.draw_canvas[tuple(map(lambda x: np.array(x, dtype=np.uint32), new_seg["draw_points"]))] = 1
             segment.draw_canvas[tuple(map(lambda x: np.array(x, dtype=np.uint32), new_seg["erase_points"]))] = 2
-        else:
-            segment.draw_canvas[...] = 0
+        if save_draw:
+            segment.draw_canvas[save_draw_bck > 0] = save_draw_bck[save_draw_bck > 0]
         for fun in self.threshold_change_callback:
             fun()
         for fun in self.callback_colormap:
             fun()
+        self.advanced_settings_changed()
 
     def change_colormap(self, new_color_map=None):
         """

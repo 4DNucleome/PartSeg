@@ -991,10 +991,11 @@ class StatisticsWindow(QWidget):
 
 
 class MaskWindow(QDialog):
-    def __init__(self, settings, segment):
+    def __init__(self, settings, segment, settings_updated_function):
         super(MaskWindow, self).__init__()
         self.settings = settings
         self.segment = segment
+        self.settings_updated_function = settings_updated_function
         main_layout = QVBoxLayout()
         dilate_label = QLabel("Dilate (x,y) radius", self)
         self.dilate_radius = QSpinBox(self)
@@ -1006,27 +1007,37 @@ class MaskWindow(QDialog):
         dilate_layout.addWidget(dilate_label)
         dilate_layout.addWidget(self.dilate_radius)
         main_layout.addLayout(dilate_layout)
-        self.prev_button = QPushButton("Previous mask", self)
+        if len(settings.next_segmentation_settings) == 0:
+            self.save_draw = QCheckBox("Save draw", self)
+        else:
+            self.save_draw = QCheckBox("Add draw", self)
+        main_layout.addWidget(self.save_draw)
+        self.prev_button = QPushButton("Previous mask ({})".format(len(settings.prev_segmentation_settings)), self)
         if len(settings.prev_segmentation_settings) == 0:
             self.prev_button.setDisabled(True)
-        self.next_button = QPushButton("Next mask", self)
+        self.cancel = QPushButton("Cancel", self)
+        self.cancel.clicked.connect(self.close)
+        self.next_button = QPushButton("Next mask ({})".format(len(settings.next_segmentation_settings)), self)
         if len(settings.next_segmentation_settings) == 0:
             self.next_button.setText("Next mask (new)")
         self.next_button.clicked.connect(self.next_mask)
         self.prev_button.clicked.connect(self.prev_mask)
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.prev_button)
+        button_layout.addWidget(self.cancel)
         button_layout.addWidget(self.next_button)
         main_layout.addLayout(button_layout)
         self.setLayout(main_layout)
 
     def next_mask(self):
         self.settings.mask_dilate_radius = self.dilate_radius.value()
-        self.settings.change_segmentation_mask(self.segment, MaskChange.next_seg)
+        self.settings.change_segmentation_mask(self.segment, MaskChange.next_seg, self.save_draw.isChecked())
+        self.settings_updated_function()
         self.close()
 
     def prev_mask(self):
-        self.settings.change_segmentation_mask(self.segment, MaskChange.prev_seg)
+        self.settings.change_segmentation_mask(self.segment, MaskChange.prev_seg, False)
+        self.settings_updated_function()
         self.close()
 
 
@@ -1072,7 +1083,7 @@ class MainMenu(QWidget):
         self.save_button = QPushButton("Save", self)
         self.save_button.setDisabled(True)
         self.save_button.clicked.connect(self.save_results)
-        self.mask_button = QPushButton("To Mask", self)
+        self.mask_button = QPushButton("Mask manager", self)
         self.mask_button.setDisabled(True)
         self.mask_button.clicked.connect(self.segmentation_to_mask)
         self.threshold_type = QComboBox(self)
@@ -1215,7 +1226,7 @@ class MainMenu(QWidget):
         self.threshold_value.setValue(lay_num)
 
     def segmentation_to_mask(self):
-        self.mask_window = MaskWindow(self.settings, self.segment)
+        self.mask_window = MaskWindow(self.settings, self.segment, self.settings_changed)
         self.mask_window.exec_()
         """msgbox = QMessageBox(self)
         msgbox.setText("Change segmentation on mask")
