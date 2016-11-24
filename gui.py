@@ -979,11 +979,11 @@ class StatisticsWindow(QWidget):
         layout.addWidget(self.recalculate_button)
         layout.addWidget(self.info_field)
         self.setLayout(layout)
-        self.update_statistics()
+        # self.update_statistics()
 
     def update_statistics(self):
-        image = get_segmented_data(self.settings, self.segment)
-        stat = calculate_statistic_from_image(image, self.segment.get_segmentation(), self.settings)
+        image, mask = get_segmented_data(self.settings, self.segment)
+        stat = calculate_statistic_from_image(image, mask, self.settings)
         res_str = ""
         for key, val in stat.items():
             res_str += "{}: {}\n".format(key, val)

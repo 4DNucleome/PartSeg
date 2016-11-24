@@ -36,9 +36,8 @@ if __name__ == '__main__':
                         action="store_const",
                         help="Off centering and rotating volumetric data")
     args = parser.parse_args()
-    if os.path.isdir(args.source_folder[0]):
-        files_to_proceed = glob.glob(os.path.join(args.source_folder[0], "*.gz"))
-    else:
+    files_to_proceed = glob.glob(os.path.join(args.source_folder[0], "*.gz"))
+    if len(files_to_proceed) == 0:
         files_to_proceed = args.source_folder
 
     if args.base_folder is not None:
@@ -72,6 +71,8 @@ if __name__ == '__main__':
         file_name += ".cmap"
         if args.spacing is not None:
             settings.spacing = args.spacing
+        if not os.path.isdir(os.path.join(args.dest_folder[0], rel_path)):
+            os.makedirs(os.path.join(args.dest_folder[0], rel_path))
         backend.save_to_cmap(os.path.join(args.dest_folder[0], rel_path, file_name), settings, segment,
                              use_3d_gauss_filter=not args.not_use_gauss, with_statistics=not args.no_statistics,
                              centered_data=not args.no_center_data, use_2d_gauss_filter=args.use_2d_gauss)

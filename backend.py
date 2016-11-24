@@ -508,7 +508,7 @@ def calculate_statistic_from_image(img, mask, settings):
         return x[0] * x[1] * x[2]
     res = dict()
     voxel_size = settings.voxel_size
-    res["Volume"] = np.count_nonzero(img) * pixel_volume(settings.voxel_size)
+    res["Volume"] = np.count_nonzero(mask) * pixel_volume(settings.voxel_size)
     res["Mass"] = np.sum(img)
     border_im = sitk.GetArrayFromImage(sitk.LabelContour(sitk.GetImageFromArray((mask > 0).astype(np.uint8))))
     res["Border Volume"] = np.count_nonzero(border_im)
@@ -526,7 +526,10 @@ def calculate_statistic_from_image(img, mask, settings):
     res["Pixel mean"] = np.mean(img[img > 0])
     res["Pixel median"] = np.median(img[img > 0])
     res["Pixel std"] = np.std(img[img > 0])
+    res["Mass to Volume"] = res["Mass"] / res["Volume"]
+    res["Border Surface to Volume"] = res["Border Surface"] / res["Volume"]
     if len(surf_im.shape) == 3:
+        print(surf_im.shape)
         res["Moment of immersion"] = af.calculate_density_momentum(img / np.sum(img), voxel_size)
 
     return res
