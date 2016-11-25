@@ -95,6 +95,9 @@ def bisect(arr, val, comp):
 
 
 class Profile:
+    PARAMETERS = ("threshold", "threshold_list", "threshold_type", "minimum_size", "use_gauss", "gauss_radius",
+                  "threshold_layer_separate")
+
     def __init__(self, name, threshold, threshold_list, threshold_type, minimum_size, use_gauss, gauss_radius,
                  threshold_layer_separate):
         """
@@ -106,8 +109,12 @@ class Profile:
         :param use_gauss: bool
         """
         self.name = name
-        self.threshold = threshold
-        self.threshold_list = threshold_list
+        if threshold_layer_separate:
+            self.threshold = np.median(threshold_list)
+            self.threshold_list = threshold_list
+        else:
+            self.threshold = threshold
+            self.threshold_list = []
         self.threshold_type = threshold_type
         self.minimum_size = minimum_size
         self.use_gauss = use_gauss
@@ -129,6 +136,9 @@ class Profile:
         text += "Use gauss [{}]\n".format("x" if self.use_gauss else " ")
         text += "Gauss radius: {}".format(self.gauss_radius)
         return text
+
+    def get_parameters(self):
+        return class_to_dict(self, *self.PARAMETERS)
 
 
 class Settings(object):
@@ -186,12 +196,31 @@ class Settings(object):
         self.next_segmentation_settings = []
         self.mask_dilate_radius = 0
 
+    def change_profile(self, name):
+        prof = self.profiles[name]
+        dict_set_class(self, prof.get_parameters(), *Profile.PARAMETERS)
+        for fun in self.threshold_change_callback:
+            fun()
+
     def add_profiles_list_callback(self, callback):
         self.profiles_list_changed_callback.append(callback)
 
     def get_profile_dict(self):
         return class_to_dict(self, "threshold", "threshold_list", "threshold_type", "minimum_size", "use_gauss",
                              "gauss_radius", "threshold_layer_separate")
+
+    def dump_profiles(self, file_path):
+        profiles_list = [x.__dict__ for k, x in self.profiles.items()]
+        with open(file_path, "w") as ff:
+            json.dump(profiles_list, ff)
+
+    def load_profiles(self, file_path):
+        with open(file_path, "r") as ff:
+            profiles_list = json.load(ff)
+            for prof in profiles_list:
+                self.profiles[prof["name"]] = Profile(**prof)
+        for fun in self.threshold_change_callback:
+            fun()
 
     def dump(self, file_path):
         important_data = \
@@ -216,7 +245,6 @@ class Settings(object):
             pass
         except KeyError:
             logging.warning("Bad configuration")
-
 
     def change_segmentation_mask(self, segment, order, save_draw):
         """
@@ -296,6 +324,9 @@ class Settings(object):
         self.profiles[profile.name] = profile
         for fun in self.profiles_list_changed_callback:
             fun()
+
+    def delete_profile(self, name):
+        del self.profiles[name]
 
     def get_profile(self, name):
         return self.profiles[name]
@@ -608,7 +639,7 @@ def calculate_statistic_from_image(img, mask, settings):
     res["Volume to Border Surface Opening"] = res["Volume"] / res["Border Surface Opening"]
     res["Volume to Border Surface Closing"] = res["Volume"] / res["Border Surface Closing"]
     if len(img.shape) == 3:
-        res["Moment of inertia"] = af.calculate_density_momentum(img / np.sum(img), voxel_size)
+        res["Moment of inertia"] = af.calculate_density_momentum(img, voxel_size)
     return res
 
 
@@ -687,7 +718,6 @@ def save_to_cmap(file_path, settings, segment, use_3d_gauss_filter=True, use_2d_
         center_of_mass = af.density_mass_center(swap_cut_img, settings.spacing)
         model_orientation, eigen_values = af.find_density_orientation(swap_cut_img, settings.spacing, cutoff=2000)
         rotation_matrix, rotation_axis, angel = af.get_rotation_parameters(model_orientation.T)
-        print(rotation_axis, angel)
         grp.attrs['rotation_axis'] = rotation_axis
         grp.attrs['rotation_angle'] = angel
         grp.attrs['origin'] = - np.dot(rotation_matrix, center_of_mass)

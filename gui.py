@@ -942,6 +942,9 @@ class AdvancedSettings(QWidget):
         profile_layout2 = QVBoxLayout()
         profile_layout2.addWidget(self.create_profile)
         profile_layout2.addWidget(self.current_profile)
+        self.delete_profile = QPushButton("Delete profile", self)
+        self.delete_profile.setDisabled(True)
+        profile_layout2.addWidget(self.delete_profile)
         profile_lay.addLayout(profile_layout2)
         text = str(Profile("", **self.settings.get_profile_dict()))
         self.current_profile.setText(text)
@@ -955,10 +958,11 @@ class AdvancedSettings(QWidget):
         if name == "<current profile>":
             text = str(Profile("", **self.settings.get_profile_dict()))
             self.current_profile.setText(text)
+            self.delete_profile.setDisabled(True)
         else:
             text = str(self.settings.get_profile(name))
             self.current_profile.setText(text)
-        print("buka", name)
+            self.delete_profile.setEnabled(True)
 
     def save_profile(self):
         text,ok = QInputDialog.getText(self, "Profile name", "Profile name", QLineEdit.Normal)
@@ -966,6 +970,16 @@ class AdvancedSettings(QWidget):
             profile = Profile(text, **self.settings.get_profile_dict())
             self.settings.add_profile(profile)
             print("New profile", profile)
+            self.profile_list.clear()
+            self.profile_list.addItem("<current profile>")
+            self.profile_list.addItems(self.settings.profiles.keys())
+
+    def delete_profile(self):
+        chosen_profile = self.profile_list.currentItem()
+        label = chosen_profile.text()
+        if label != "<current profile>":
+            self.delete_profile.setDisabled(True)
+            self.settings.delete_profile(label)
             self.profile_list.clear()
             self.profile_list.addItem("<current profile>")
             self.profile_list.addItems(self.settings.profiles.keys())
@@ -1029,7 +1043,7 @@ class MaskWindow(QDialog):
         self.segment = segment
         self.settings_updated_function = settings_updated_function
         main_layout = QVBoxLayout()
-        dilate_label = QLabel("Dilate (x,y) radius", self)
+        dilate_label = QLabel("Dilate (x,y) radius (in pixels)", self)
         self.dilate_radius = QSpinBox(self)
         self.dilate_radius.setRange(0, 100)
         self.dilate_radius.setButtonSymbols(QAbstractSpinBox.NoButtons)
@@ -1149,6 +1163,7 @@ class MainMenu(QWidget):
         self.profile_choose = QComboBox(self)
         self.profile_choose.addItem("<no profile>")
         self.profile_choose.addItems(list(self.settings.get_profile_list()))
+        self.profile_choose.currentIndexChanged[unicode].connect(self.profile_changed)
         self.advanced_button = QPushButton("Advanced", self)
         self.advanced_button.clicked.connect(self.open_advanced)
         self.advanced_window = None
@@ -1166,7 +1181,14 @@ class MainMenu(QWidget):
         self.one_line = True
         self.mask_window = None
         self.settings.add_profiles_list_callback(self.profile_list_update)
+        self.minimum_size_value.valueChanged.connect(self.no_profile)
+        self.threshold_value.valueChanged.connect(self.no_profile)
+        self.threshold_type.currentIndexChanged.connect(self.no_profile)
+        self.layer_thr_check.stateChanged.connect(self.no_profile)
         # self.setStyleSheet(self.styleSheet()+";border: 1px solid black")
+
+    def no_profile(self):
+        self.profile_choose.setCurrentIndex(0)
 
     def profile_list_update(self):
         l = self.settings.get_profile_list()
@@ -1174,6 +1196,11 @@ class MainMenu(QWidget):
         self.profile_choose.addItem("<no profile>")
         self.profile_choose.addItems(list(self.settings.get_profile_list()))
 
+    def profile_changed(self, name):
+        if name == "<no profile>":
+            return
+        self.settings.change_profile(name)
+        self.settings_changed()
 
     def update_elements_positions(self):
         # m_layout = QVBoxLayout()
@@ -1284,7 +1311,7 @@ class MainMenu(QWidget):
             dial.setDirectory(self.settings.open_directory)
         dial.setFileMode(QFileDialog.ExistingFile)
         filters = ["raw image (*.tiff *.tif *.lsm)", "image with mask (*.tiff *.tif *.lsm *json)",
-                   "saved project (*.gz)"]
+                   "saved project (*.gz)",  "Profiles (*.json)"]
         dial.setFilters(filters)
         if self.settings.open_filter is not None:
             dial.selectNameFilter(self.settings.open_filter)
@@ -1322,9 +1349,11 @@ class MainMenu(QWidget):
                         mask = tifffile.imread(mask_dial.selectedFiles()[0])
                         self.settings.add_image(image, file_path, mask)
             elif selected_filter == "saved project (*.gz)":
-                load_project(file_path,self.settings, self.segment)
+                load_project(file_path, self.settings, self.segment)
                 self.settings_changed()
                 # self.segment.threshold_updated()
+            elif selected_filter ==  "Profiles (*.json)":
+                self.settings.load_profiles()
             else:
                 r = QMessageBox.warning(self, "Load error", "Function do not implemented yet")
                 return
@@ -1338,7 +1367,8 @@ class MainMenu(QWidget):
             dial.setDirectory(self.settings.save_directory)
         dial.setFileMode(QFileDialog.AnyFile)
         filters = ["Project (*.gz)", "Labeled image (*.tif)", "Mask in tiff (*.tif)",
-                   "Mask for itk-snap (*.img)", "Data for chimera (*.cmap)", "Image (*.tiff)"]
+                   "Mask for itk-snap (*.img)", "Data for chimera (*.cmap)", "Image (*.tiff)",
+                   "Profiles (*.json)"]
         dial.setAcceptMode(QFileDialog.AcceptSave)
         dial.setFilters(filters)
         deafult_name = os.path.splitext(os.path.basename(self.settings.file_path))[0]
@@ -1388,6 +1418,8 @@ class MainMenu(QWidget):
             elif selected_filter == "Image (*.tiff)":
                 image = self.settings.image
                 tifffile.imsave(file_path, image)
+            elif selected_filter == "Profiles (*.json)":
+                self.settings.dump_profiles(file_path)
             else:
                 r = QMessageBox.critical(self, "Save error", "Option unknow")
 
