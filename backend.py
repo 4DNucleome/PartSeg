@@ -198,6 +198,7 @@ class Settings(object):
             class_to_dict(self, "open_directory", "open_filter", "save_directory", "save_filter", "spacing",
                           "voxel_size", "size_unit", "threshold", "color_map_name", "overlay", "minimum_size",
                           "gauss_radius")
+        important_data["profiles"] = [x.__dict__ for k, x in self.profiles.items()]
         with open(file_path, "w") as ff:
             json.dump(important_data, ff)
 
@@ -208,11 +209,14 @@ class Settings(object):
             dict_set_class(self, important_data, "open_directory", "open_filter", "save_directory", "save_filter",
                            "spacing", "voxel_size", "size_unit", "threshold", "color_map_name", "overlay",
                            "minimum_size", "gauss_radius")
+            for prof in important_data["profiles"]:
+                self.profiles[prof["name"]] = Profile(**prof)
         except IOError:
             logging.warning("No configuration file")
             pass
         except KeyError:
             logging.warning("Bad configuration")
+
 
     def change_segmentation_mask(self, segment, order, save_draw):
         """
@@ -537,6 +541,32 @@ class Segment(object):
         self.segmentation_change_callback.append(callback)
 
 
+def calculate_volume_surface(volume_mask, voxel_size):
+    border_surface = 0
+    surf_im = np.array(volume_mask).astype(np.uint8)
+    border_surface += np.count_nonzero(np.logical_xor(surf_im[1:], surf_im[:-1])) * voxel_size[1] * voxel_size[2]
+    border_surface += np.count_nonzero(np.logical_xor(surf_im[:, 1:], surf_im[:, :-1])) * voxel_size[0] * \
+                      voxel_size[2]
+    if len(surf_im.shape) == 3:
+        border_surface += np.count_nonzero(np.logical_xor(surf_im[:, :, 1:], surf_im[:, :, :-1])) * voxel_size[0] * \
+                          voxel_size[1]
+    return border_surface
+
+
+def opening_smooth(volume_mask):
+    volume_mask = volume_mask.astype(np.uint8)
+    sitk_image = sitk.GetImageFromArray(volume_mask)
+    opening_image = sitk.BinaryMorphologicalOpening(sitk_image)
+    return sitk.GetArrayFromImage(opening_image)
+
+
+def closing_smooth(volume_mask):
+    volume_mask = volume_mask.astype(np.uint8)
+    sitk_image = sitk.GetImageFromArray(volume_mask)
+    closing_image = sitk.BinaryMorphologicalClosing(sitk_image)
+    return sitk.GetArrayFromImage(closing_image)
+
+
 def calculate_statistic_from_image(img, mask, settings):
     """
     :type img: np.ndarray
@@ -552,15 +582,10 @@ def calculate_statistic_from_image(img, mask, settings):
     res["Mass"] = np.sum(img)
     border_im = sitk.GetArrayFromImage(sitk.LabelContour(sitk.GetImageFromArray((mask > 0).astype(np.uint8))))
     res["Border Volume"] = np.count_nonzero(border_im)
-    border_surface = 0
-    surf_im = np.array((mask > 0)).astype(np.uint8)
-    border_surface += np.count_nonzero(np.logical_xor(surf_im[1:], surf_im[:-1])) * voxel_size[1] * voxel_size[2]
-    border_surface += np.count_nonzero(np.logical_xor(surf_im[:, 1:], surf_im[:, :-1])) * voxel_size[0] * \
-                      voxel_size[2]
-    if len(surf_im.shape) == 3:
-        border_surface += np.count_nonzero(np.logical_xor(surf_im[:, :, 1:], surf_im[:, :, :-1])) * voxel_size[0] * \
-                      voxel_size[1]
-    res["Border Surface"] = border_surface
+
+    res["Border Surface"] = calculate_volume_surface(mask, voxel_size)
+    res["Border Surface Opening"] = calculate_volume_surface(opening_smooth(mask), voxel_size)
+    res["Border Surface Closing"] = calculate_volume_surface(closing_smooth(mask), voxel_size)
     try:
         res["Pixel min"] = np.min(img[img > 0])
     except ValueError:
@@ -580,9 +605,10 @@ def calculate_statistic_from_image(img, mask, settings):
         res["Pixel std"] = 0
     res["Mass to Volume"] = res["Mass"] / res["Volume"]
     res["Volume to Border Surface"] = res["Volume"] / res["Border Surface"]
-    if len(surf_im.shape) == 3:
+    res["Volume to Border Surface Opening"] = res["Volume"] / res["Border Surface Opening"]
+    res["Volume to Border Surface Closing"] = res["Volume"] / res["Border Surface Closing"]
+    if len(img.shape) == 3:
         res["Moment of immersion"] = af.calculate_density_momentum(img / np.sum(img), voxel_size)
-
     return res
 
 
@@ -617,16 +643,16 @@ def save_to_cmap(file_path, settings, segment, use_3d_gauss_filter=True, use_2d_
 
     if use_2d_gauss_filter:
         image = gaussian(image, settings.gauss_radius)
-        #image[mask == 0] = 0
+        # image[mask == 0] = 0
+
+    image, mask, noise_std = get_segmented_data(image, settings, segment, True)
 
     if use_3d_gauss_filter:
         voxel = settings.spacing
         sitk_image = sitk.GetImageFromArray(image)
         sitk_image.SetSpacing(settings.spacing)
         image = sitk.GetArrayFromImage(sitk.DiscreteGaussian(sitk_image, max(voxel)))
-        #image[mask == 0] = 0
-
-    image, mask, noise_std = get_segmented_data(image, settings, segment, True)
+        # image[mask == 0] = 0
 
     points = np.nonzero(image)
     lower_bound = np.min(points, axis=1)
