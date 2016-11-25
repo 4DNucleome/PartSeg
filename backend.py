@@ -608,7 +608,7 @@ def calculate_statistic_from_image(img, mask, settings):
     res["Volume to Border Surface Opening"] = res["Volume"] / res["Border Surface Opening"]
     res["Volume to Border Surface Closing"] = res["Volume"] / res["Border Surface Closing"]
     if len(img.shape) == 3:
-        res["Moment of immersion"] = af.calculate_density_momentum(img / np.sum(img), voxel_size)
+        res["Moment of inertia"] = af.calculate_density_momentum(img / np.sum(img), voxel_size)
     return res
 
 
