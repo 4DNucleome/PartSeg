@@ -20,7 +20,7 @@ from PySide.QtCore import Qt, QSize
 from PySide.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget,\
     QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QPixmap, QSpinBox, \
     QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout,\
-    QListWidget, QTextEdit, QIcon, QDialog
+    QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem
 
 from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, \
     calculate_statistic_from_image, MaskChange, Profile
@@ -942,9 +942,10 @@ class AdvancedSettings(QWidget):
         profile_layout2 = QVBoxLayout()
         profile_layout2.addWidget(self.create_profile)
         profile_layout2.addWidget(self.current_profile)
-        self.delete_profile = QPushButton("Delete profile", self)
-        self.delete_profile.setDisabled(True)
-        profile_layout2.addWidget(self.delete_profile)
+        self.delete_profile_butt = QPushButton("Delete profile", self)
+        self.delete_profile_butt.setDisabled(True)
+        self.delete_profile_butt.clicked.connect(self.delete_profile)
+        profile_layout2.addWidget(self.delete_profile_butt)
         profile_lay.addLayout(profile_layout2)
         text = str(Profile("", **self.settings.get_profile_dict()))
         self.current_profile.setText(text)
@@ -955,17 +956,17 @@ class AdvancedSettings(QWidget):
         self.update_volume()
 
     def changed_profile(self, name):
-        if name == "<current profile>":
+        if name == "<current profile>" or name == u"":
             text = str(Profile("", **self.settings.get_profile_dict()))
             self.current_profile.setText(text)
-            self.delete_profile.setDisabled(True)
+            self.delete_profile_butt.setDisabled(True)
         else:
             text = str(self.settings.get_profile(name))
             self.current_profile.setText(text)
-            self.delete_profile.setEnabled(True)
+            self.delete_profile_butt.setEnabled(True)
 
     def save_profile(self):
-        text,ok = QInputDialog.getText(self, "Profile name", "Profile name", QLineEdit.Normal)
+        text, ok = QInputDialog.getText(self, "Profile name", "Profile name", QLineEdit.Normal)
         if ok and text != "":
             profile = Profile(text, **self.settings.get_profile_dict())
             self.settings.add_profile(profile)
@@ -978,7 +979,7 @@ class AdvancedSettings(QWidget):
         chosen_profile = self.profile_list.currentItem()
         label = chosen_profile.text()
         if label != "<current profile>":
-            self.delete_profile.setDisabled(True)
+            self.delete_profile_butt.setDisabled(True)
             self.settings.delete_profile(label)
             self.profile_list.clear()
             self.profile_list.addItem("<current profile>")
@@ -1020,7 +1021,8 @@ class StatisticsWindow(QWidget):
         self.segment = segment
         self.recalculate_button = QPushButton("Recalculate statistics", self)
         self.recalculate_button.clicked.connect(self.update_statistics)
-        self.info_field = QLabel(self)
+        self.info_field = QTableWidget(self)
+        self.info_field.setColumnCount(2)
         layout = QVBoxLayout()
         layout.addWidget(self.recalculate_button)
         layout.addWidget(self.info_field)
@@ -1031,9 +1033,12 @@ class StatisticsWindow(QWidget):
         image, mask = get_segmented_data(np.copy(self.settings.image), self.settings, self.segment)
         stat = calculate_statistic_from_image(image, mask, self.settings)
         res_str = ""
-        for key, val in stat.items():
-            res_str += "{}: {}\n".format(key, val)
-        self.info_field.setText(res_str)
+        self.info_field.setRowCount(len(stat))
+        for i, (key, val) in enumerate(stat.items()):
+            self.info_field.setItem(i, 0, QTableWidgetItem(key))
+            self.info_field.setItem(i, 1, QTableWidgetItem(str(val)))
+            #res_str += "{}: {}\n".format(key, val)
+        #self.info_field.setText(res_str)
 
 
 class MaskWindow(QDialog):
