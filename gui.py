@@ -24,7 +24,7 @@ from PySide.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusB
     QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem
 
 from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, \
-    calculate_statistic_from_image, MaskChange, Profile, UNITS_DICT
+    calculate_statistic_from_image, MaskChange, Profile, UNITS_DICT, GaussUse
 
 
 __author__ = "Grzegorz Bokota"
@@ -1394,7 +1394,8 @@ class MainMenu(QWidget):
             dial.setDirectory(self.settings.save_directory)
         dial.setFileMode(QFileDialog.AnyFile)
         filters = ["Project (*.gz)", "Labeled image (*.tif)", "Mask in tiff (*.tif)",
-                   "Mask for itk-snap (*.img)", "Data for chimera (*.cmap)", "Image (*.tiff)",
+                   "Mask for itk-snap (*.img)", "Data for chimera (*.cmap)", "Data for chimera with 2d gauss (*.cmap)",
+                   "Data for chimera with 3d gauss (*.cmap)", "Image (*.tiff)",
                    "Profiles (*.json)"]
         dial.setAcceptMode(QFileDialog.AcceptSave)
         dial.setFilters(filters)
@@ -1441,7 +1442,11 @@ class MainMenu(QWidget):
                 segmentation = sitk.GetImageFromArray(self.segment.get_segmentation())
                 sitk.WriteImage(segmentation, file_path)
             elif selected_filter == "Data for chimera (*.cmap)":
-                save_to_cmap(file_path,self.settings, self.segment)
+                save_to_cmap(file_path, self.settings, self.segment, gaus_type=GaussUse.no_gauss)
+            elif selected_filter == "Data for chimera with 2d gauss (*.cmap)":
+                save_to_cmap(file_path, self.settings, self.segment, gaus_type=GaussUse.gauss_2d)
+            elif selected_filter == "Data for chimera with 3d gauss (*.cmap)":
+                save_to_cmap(file_path, self.settings, self.segment, gaus_type=GaussUse.gauss_3d)
             elif selected_filter == "Image (*.tiff)":
                 image = self.settings.image
                 tifffile.imsave(file_path, image)

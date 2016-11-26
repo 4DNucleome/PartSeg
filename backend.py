@@ -41,6 +41,12 @@ class MaskChange(Enum):
     next_seg = 2
 
 
+class GaussUse(Enum):
+    no_gauss = 1
+    gauss_2d = 2
+    gauss_3d = 3
+
+
 def class_to_dict(obj, *args):
     """
     Create dict which contains values of given fields
@@ -680,33 +686,29 @@ def get_segmented_data(image, settings, segment, with_std=False):
     return image, segmentation
 
 
-def save_to_cmap(file_path, settings, segment, use_3d_gauss_filter=True, use_2d_gauss_filter=True, with_statistics=True,
+def save_to_cmap(file_path, settings, segment, gaus_type, with_statistics=True,
                  centered_data=True):
     """
     :type file_path: str
     :type settings: Settings
     :type segment: Segment
-    :type use_3d_gauss_filter: bool
-    :type use_2d_gauss_filter: bool
+    :type gaus_type: GaussUse
     :type with_statistics: bool
     :type centered_data: bool
     :return:
     """
     image = np.copy(settings.image)
-    mask = segment.get_segmentation()
 
-    if use_2d_gauss_filter:
+    if gaus_type == GaussUse.gauss_2d or gaus_type == GaussUse.gauss_3d:
         image = gaussian(image, settings.gauss_radius)
-        # image[mask == 0] = 0
 
     image, mask, noise_std = get_segmented_data(image, settings, segment, True)
 
-    if use_3d_gauss_filter:
+    if gaus_type == GaussUse.gauss_3d:
         voxel = settings.spacing
         sitk_image = sitk.GetImageFromArray(image)
         sitk_image.SetSpacing(settings.spacing)
         image = sitk.GetArrayFromImage(sitk.DiscreteGaussian(sitk_image, max(voxel)))
-        # image[mask == 0] = 0
 
     points = np.nonzero(image)
     lower_bound = np.min(points, axis=1)
@@ -778,7 +780,7 @@ def save_to_project(file_path, settings, segment):
         np.save(os.path.join(folder_path, "mask_{}.npy".format(c)), mem["mask"])
         del mem["mask"]
     image, segment_mask = get_segmented_data(settings.image, settings, segment)
-    important_data["statistics"] = calculate_statistic_from_image(image, segment_mask, settings)
+    # important_data["statistics"] = calculate_statistic_from_image(image, segment_mask, settings)
     print(important_data)
     with open(os.path.join(folder_path, "data.json"), 'w') as ff:
         json.dump(important_data, ff)
