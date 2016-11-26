@@ -8,6 +8,7 @@ import numpy as np
 import platform
 import json
 import matplotlib
+import logging
 import re
 import sys
 os.environ['QT_API'] = 'pyside'
@@ -23,7 +24,7 @@ from PySide.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusB
     QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem
 
 from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, \
-    calculate_statistic_from_image, MaskChange, Profile
+    calculate_statistic_from_image, MaskChange, Profile, UNITS_DICT
 
 
 __author__ = "Grzegorz Bokota"
@@ -1022,11 +1023,13 @@ class StatisticsWindow(QWidget):
         self.recalculate_button = QPushButton("Recalculate statistics", self)
         self.recalculate_button.clicked.connect(self.update_statistics)
         self.info_field = QTableWidget(self)
-        self.info_field.setColumnCount(2)
+        self.info_field.setColumnCount(3)
+        self.info_field.setHorizontalHeaderLabels(["Name", "Value", "Units"])
         layout = QVBoxLayout()
         layout.addWidget(self.recalculate_button)
         layout.addWidget(self.info_field)
         self.setLayout(layout)
+        self.clip = QApplication.clipboard()
         # self.update_statistics()
 
     def update_statistics(self):
@@ -1037,8 +1040,27 @@ class StatisticsWindow(QWidget):
         for i, (key, val) in enumerate(stat.items()):
             self.info_field.setItem(i, 0, QTableWidgetItem(key))
             self.info_field.setItem(i, 1, QTableWidgetItem(str(val)))
-            #res_str += "{}: {}\n".format(key, val)
-        #self.info_field.setText(res_str)
+            try:
+                self.info_field.setItem(i, 2, QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
+            except KeyError as k:
+                logging.warning(k.message)
+
+    def keyPressEvent(self, e):
+        if e.modifiers() & Qt.ControlModifier:
+            selected = self.info_field.selectedRanges()
+
+            if e.key() == Qt.Key_C:  # copy
+                s = ""
+
+                for r in range(selected[0].topRow(), selected[0].bottomRow() + 1):
+                    for c in range(selected[0].leftColumn(), selected[0].rightColumn() + 1):
+                        try:
+                            s += str(self.info_field.item(r, c).text()) + "\t"
+                        except AttributeError:
+                            s += "\t"
+                            print("Buka")
+                    s = s[:-1] + "\n"  # eliminate last '\t'
+                self.clip.setText(s)
 
 
 class MaskWindow(QDialog):

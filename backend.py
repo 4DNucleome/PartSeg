@@ -15,6 +15,26 @@ from copy import deepcopy
 UPPER = "Upper"
 GAUSS = "Gauss"
 
+UNITS_DICT = {
+    "Volume": "{}^3",
+    "Mass": "pixel sum",
+    "Border Volume": "{}^3",
+    "Border Surface": "{}^2",
+    "Border Surface Opening": "{}^2",
+    "Border Surface Closing": "{}^2",
+    "Pixel min": "pixel brightness",
+    "Pixel max": "pixel brightness",
+    "Pixel mean": "pixel brightness",
+    "Pixel median": "pixel brightness",
+    "Pixel std": "pixel brightness",
+    "Mass to Volume": "pixel sum/{}^3",
+    "Volume to Border Surface": "{}",
+    "Volume to Border Surface Opening": "{}",
+    "Volume to Border Surface Closing": "{}",
+    "Moment of inertia": "",
+    "Noise_std": "pixel brightness"
+}
+
 
 class MaskChange(Enum):
     prev_seg = 1
@@ -339,13 +359,16 @@ class Settings(object):
     def available_colormap_list(self):
         return pyplot.colormaps()
 
-    def add_image(self, image, file_path, mask=None):
+    def add_image(self, image, file_path, mask=None, new_image=True):
         self.image = image
         self.gauss_image = gaussian(self.image, self.gauss_radius)
         self.mask = mask
         self.file_path = file_path
-        self.threshold_list = []
-        self.threshold_layer_separate = False
+        if new_image:
+            self.threshold_list = []
+            self.threshold_layer_separate = False
+            self.prev_segmentation_settings = []
+            self.next_segmentation_settings = []
         for fun in self.image_change_callback:
             if isinstance(fun, tuple) and fun[1] == str:
                 fun[0](file_path)
@@ -799,7 +822,7 @@ def load_project(file_path, settings, segment):
     except KeyError:
         settings.use_draw_result = False
     segment.protect = True
-    settings.add_image(image, file_path, mask)
+    settings.add_image(image, file_path, mask, new_image=False)
     segment.protect = False
     if important_data["threshold_list"] is not None:
         settings.threshold_list = map(int, important_data["threshold_list"])
@@ -819,6 +842,9 @@ def load_project(file_path, settings, segment):
     if "prev_segmentation_settings" in important_data:
         for c, mem in enumerate(important_data["prev_segmentation_settings"]):
             mem["mask"] = np.load(tar.extractfile("mask_{}.npy".format(c)))
-    print(settings.threshold_list)
+        settings.prev_segmentation_settings = important_data["prev_segmentation_settings"]
+    else:
+        settings.prev_segmentation_settings = []
+    settings.next_segmentation_settings = []
     segment.draw_update(draw)
     segment.threshold_updated()
