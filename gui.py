@@ -1620,3 +1620,5 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         self.settings.dump("settings.json")
+        if self.main_menu.advanced_window is not None and self.main_menu.advanced_window.isVisible():
+            self.main_menu.advanced_window.close()
