@@ -74,13 +74,16 @@ def dict_set_class(obj, dic, *args):
     else:
         li = args
     for name in li:
-        tt = getattr(obj, name)
-        setattr(obj, name, dic[name])
+        try:
+            getattr(obj, name)
+            setattr(obj, name, dic[name])
+        except AttributeError as ae:
+            logging.warning(ae)
 
 
 def gaussian(image, radius):
     """
-    :param image: image to apply gausian filter
+    :param image: image to apply gaussian filter
     :param radius: radius for gaussian kernel
     :return:
     """
@@ -94,7 +97,7 @@ def gaussian(image, radius):
 
 def dilate(image, radius):
     """
-    :param image: image to apply gausian filter
+    :param image: image to apply gaussian filter
     :param radius: radius for gaussian kernel
     :return:
     """
@@ -115,8 +118,10 @@ def bisect(arr, val, comp):
     r = len(arr)
     while r - l > 1:
         e = (l + r) >> 1
-        if comp(arr[e], val): l = e
-        else: r = e
+        if comp(arr[e], val):
+            l = e
+        else:
+            r = e
     return r
 
 
@@ -175,9 +180,9 @@ class Settings(object):
     :type threshold_type: str
     :type minimum_size: int
     :type image: np.ndarray
-    :type image_change_callback: list[() -> None]
+    :type image_change_callback: list[(() -> None) | (() -> None, object)]
     """
-    def __init__(self, setings_path):
+    def __init__(self, settings_path):
         self.color_map_name = "cubehelix"
         self.color_map = matplotlib.cm.get_cmap(self.color_map_name)
         self.callback_colormap = []
@@ -217,7 +222,7 @@ class Settings(object):
         self.advanced_menu_geometry = None
         self.file_path = ""
         self.protect = False
-        self.load(setings_path)
+        self.load(settings_path)
         self.prev_segmentation_settings = []
         self.next_segmentation_settings = []
         self.mask_dilate_radius = 0
@@ -339,10 +344,7 @@ class Settings(object):
 
     def add_profile(self, profile):
         """
-        :type name: str
-        :type overwrite: bool
-        :param name: Profile name
-        :param overwrite: Overwrite existing profile
+        :type profile: Profile
         :return:
         """
         # if not overwrite and name in self.profiles:
@@ -379,7 +381,7 @@ class Settings(object):
             if isinstance(fun, tuple) and fun[1] == str:
                 fun[0](file_path)
                 continue
-            if isinstance(fun, tuple) and fun[1] == GAUSS:
+            elif isinstance(fun, tuple) and fun[1] == GAUSS:
                 fun[0](image, self.gauss_image)
                 continue
             fun(image)
@@ -388,10 +390,9 @@ class Settings(object):
         self.gauss_image = gaussian(self.image, self.gauss_radius)
         for fun in self.image_change_callback:
             if isinstance(fun, tuple) and fun[1] == GAUSS:
-                print("bbuka")
                 fun[0](self.image, self.gauss_image)
                 continue
-            if isinstance(fun, tuple) and fun[1] == str:
+            elif isinstance(fun, tuple) and fun[1] == str:
                 continue
             fun(self.image)
 
@@ -496,7 +497,11 @@ class Settings(object):
 
 
 class Segment(object):
-    """:type _segmented_image: np.ndarray"""
+    """
+    :type _segmented_image: np.ndarray
+    :type segmentation_change_callback: list[() -> None | (list[int] -> None]
+    """
+
     def __init__(self, settings):
         """
         :type settings: Settings
@@ -532,7 +537,7 @@ class Segment(object):
             image_to_threshold = self._gauss_image
         else:
             image_to_threshold = self._image
-        # Define wich threshold use
+        # Define which threshold use
         if self._settings.threshold_type == UPPER:
             def get_mask(image, threshold):
                 return image <= threshold
@@ -580,7 +585,8 @@ class Segment(object):
             if isinstance(fun, tuple):
                 fun[0](self._sizes_array[1:ind+1])
                 continue
-            fun()
+            if callable(fun):
+                fun()
 
     @property
     def segmentation_changed(self):
@@ -605,8 +611,7 @@ def calculate_volume_surface(volume_mask, voxel_size):
     border_surface = 0
     surf_im = np.array(volume_mask).astype(np.uint8)
     border_surface += np.count_nonzero(np.logical_xor(surf_im[1:], surf_im[:-1])) * voxel_size[1] * voxel_size[2]
-    border_surface += np.count_nonzero(np.logical_xor(surf_im[:, 1:], surf_im[:, :-1])) * voxel_size[0] * \
-                      voxel_size[2]
+    border_surface += np.count_nonzero(np.logical_xor(surf_im[:, 1:], surf_im[:, :-1])) * voxel_size[0] * voxel_size[2]
     if len(surf_im.shape) == 3:
         border_surface += np.count_nonzero(np.logical_xor(surf_im[:, :, 1:], surf_im[:, :, :-1])) * voxel_size[0] * \
                           voxel_size[1]
@@ -663,10 +668,13 @@ def calculate_statistic_from_image(img, mask, settings):
         res["Pixel std"] = np.std(img[img > 0])
     except ValueError:
         res["Pixel std"] = 0
-    res["Mass to Volume"] = res["Mass"] / res["Volume"]
-    res["Volume to Border Surface"] = res["Volume"] / res["Border Surface"]
-    res["Volume to Border Surface Opening"] = res["Volume"] / res["Border Surface Opening"]
-    res["Volume to Border Surface Closing"] = res["Volume"] / res["Border Surface Closing"]
+    try:
+        res["Mass to Volume"] = res["Mass"] / res["Volume"]
+        res["Volume to Border Surface"] = res["Volume"] / res["Border Surface"]
+        res["Volume to Border Surface Opening"] = res["Volume"] / res["Border Surface Opening"]
+        res["Volume to Border Surface Closing"] = res["Volume"] / res["Border Surface Closing"]
+    except ZeroDivisionError:
+        pass
     if len(img.shape) == 3:
         res["Moment of inertia"] = af.calculate_density_momentum(img, voxel_size)
     return res
@@ -686,25 +694,25 @@ def get_segmented_data(image, settings, segment, with_std=False):
     return image, segmentation
 
 
-def save_to_cmap(file_path, settings, segment, gaus_type, with_statistics=True,
+def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
                  centered_data=True):
     """
     :type file_path: str
     :type settings: Settings
     :type segment: Segment
-    :type gaus_type: GaussUse
+    :type gauss_type: GaussUse
     :type with_statistics: bool
     :type centered_data: bool
     :return:
     """
     image = np.copy(settings.image)
 
-    if gaus_type == GaussUse.gauss_2d or gaus_type == GaussUse.gauss_3d:
+    if gauss_type == GaussUse.gauss_2d or gauss_type == GaussUse.gauss_3d:
         image = gaussian(image, settings.gauss_radius)
 
     image, mask, noise_std = get_segmented_data(image, settings, segment, True)
 
-    if gaus_type == GaussUse.gauss_3d:
+    if gauss_type == GaussUse.gauss_3d:
         voxel = settings.spacing
         sitk_image = sitk.GetImageFromArray(image)
         sitk_image.SetSpacing(settings.spacing)
@@ -723,8 +731,8 @@ def save_to_cmap(file_path, settings, segment, gaus_type, with_statistics=True,
     z, y, x = cut_img.shape
     f = h5py.File(file_path, "w")
     grp = f.create_group('Chimera/image1')
-    dset = grp.create_dataset("data_zyx", (z, y, x), dtype='f')
-    dset[...] = cut_img
+    data_set = grp.create_dataset("data_zyx", (z, y, x), dtype='f')
+    data_set[...] = cut_img
 
     # Just to satisfy file format
     grp = f['Chimera']
@@ -747,9 +755,9 @@ def save_to_cmap(file_path, settings, segment, gaus_type, with_statistics=True,
         grp.attrs['rotation_angle'] = angel
         grp.attrs['origin'] = - np.dot(rotation_matrix, center_of_mass)
 
-    dset.attrs['CLASS'] = np.string_('CARRY')
-    dset.attrs['TITLE'] = np.string_('')
-    dset.attrs['VERSION'] = np.string_('1.0')
+    data_set.attrs['CLASS'] = np.string_('CARRY')
+    data_set.attrs['TITLE'] = np.string_('')
+    data_set.attrs['VERSION'] = np.string_('1.0')
     if with_statistics:
         grp = f.create_group('Chimera/image1/Statistics')
         stat = calculate_statistic_from_image(cut_img, segment.get_segmentation(), settings)
@@ -772,14 +780,14 @@ def save_to_project(file_path, settings, segment):
     np.save(os.path.join(folder_path, "res_mask.npy"), segment.get_segmentation())
     if settings.mask is not None:
         np.save(os.path.join(folder_path, "mask.npy"), settings.mask)
-    important_data = class_to_dict(settings, 'threshold_type', 'threshold_layer_separate', "threshold", "threshold_list",
-                                   'use_gauss', 'spacing', 'minimum_size', 'use_draw_result', "gauss_radius",
-                                   "prev_segmentation_settings")
+    important_data = class_to_dict(settings, 'threshold_type', 'threshold_layer_separate', "threshold",
+                                   "threshold_list", 'use_gauss', 'spacing', 'minimum_size', 'use_draw_result',
+                                   "gauss_radius", "prev_segmentation_settings")
     important_data["prev_segmentation_settings"] = deepcopy(important_data["prev_segmentation_settings"])
     for c, mem in enumerate(important_data["prev_segmentation_settings"]):
         np.save(os.path.join(folder_path, "mask_{}.npy".format(c)), mem["mask"])
         del mem["mask"]
-    image, segment_mask = get_segmented_data(settings.image, settings, segment)
+    # image, segment_mask = get_segmented_data(settings.image, settings, segment)
     # important_data["statistics"] = calculate_statistic_from_image(image, segment_mask, settings)
     print(important_data)
     with open(os.path.join(folder_path, "data.json"), 'w') as ff:

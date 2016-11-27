@@ -75,5 +75,5 @@ if __name__ == '__main__':
             os.makedirs(os.path.join(args.dest_folder[0], rel_path))
         gauss_type = max(args.use_2d_gauss, args.use_3d_gaus)
         backend.save_to_cmap(os.path.join(args.dest_folder[0], rel_path, file_name), settings, segment,
-                             gaus_type=gauss_type, with_statistics=not args.no_statistics,
+                             gauss_type=gauss_type, with_statistics=not args.no_statistics,
                              centered_data=not args.no_center_data)

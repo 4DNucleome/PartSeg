@@ -271,6 +271,7 @@ class MyCanvas(QWidget):
         self.move_button.clicked.connect(self.move_action)
         self.move_button.setCheckable(True)
         self.back_button = QPushButton("Undo", self)
+        # noinspection PyUnresolvedReferences
         self.back_button.clicked.connect(self.toolbar.back)
         self.next_button = QPushButton("Redo", self)
         self.next_button.clicked.connect(self.toolbar.forward)
@@ -1442,11 +1443,11 @@ class MainMenu(QWidget):
                 segmentation = sitk.GetImageFromArray(self.segment.get_segmentation())
                 sitk.WriteImage(segmentation, file_path)
             elif selected_filter == "Data for chimera (*.cmap)":
-                save_to_cmap(file_path, self.settings, self.segment, gaus_type=GaussUse.no_gauss)
+                save_to_cmap(file_path, self.settings, self.segment, gauss_type=GaussUse.no_gauss)
             elif selected_filter == "Data for chimera with 2d gauss (*.cmap)":
-                save_to_cmap(file_path, self.settings, self.segment, gaus_type=GaussUse.gauss_2d)
+                save_to_cmap(file_path, self.settings, self.segment, gauss_type=GaussUse.gauss_2d)
             elif selected_filter == "Data for chimera with 3d gauss (*.cmap)":
-                save_to_cmap(file_path, self.settings, self.segment, gaus_type=GaussUse.gauss_3d)
+                save_to_cmap(file_path, self.settings, self.segment, gauss_type=GaussUse.gauss_3d)
             elif selected_filter == "Image (*.tiff)":
                 image = self.settings.image
                 tifffile.imsave(file_path, image)
