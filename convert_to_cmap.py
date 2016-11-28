@@ -18,7 +18,7 @@ if __name__ == '__main__':
     import numpy as np
     parser = argparse.ArgumentParser("Convert project to chimera cmap")
     parser.add_argument("source_folder", type=str, nargs=1, help="Folder with project files to proceed or one file")
-    parser.add_argument("dest_folder", type=str, nargs=1, help="Destination folder")
+    parser.add_argument("destination_folder", type=str, nargs=1, help="Destination folder")
     parser.add_argument("--base_folder", dest="base_folder", type=str, nargs=1, default=None,
                         help="TBD")
     parser.add_argument("-s", "--spacing", dest="spacing", default=None, type=spacing,
@@ -71,9 +71,9 @@ if __name__ == '__main__':
         file_name += ".cmap"
         if args.spacing is not None:
             settings.spacing = args.spacing
-        if not os.path.isdir(os.path.join(args.dest_folder[0], rel_path)):
-            os.makedirs(os.path.join(args.dest_folder[0], rel_path))
+        if not os.path.isdir(os.path.join(args.destination_folder[0], rel_path)):
+            os.makedirs(os.path.join(args.destination_folder[0], rel_path))
         gauss_type = max(args.use_2d_gauss, args.use_3d_gaus)
-        backend.save_to_cmap(os.path.join(args.dest_folder[0], rel_path, file_name), settings, segment,
+        backend.save_to_cmap(os.path.join(args.destination_folder[0], rel_path, file_name), settings, segment,
                              gauss_type=gauss_type, with_statistics=not args.no_statistics,
                              centered_data=not args.no_center_data)
