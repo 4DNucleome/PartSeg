@@ -1156,7 +1156,7 @@ class MainMenu(QWidget):
         self.load_button.clicked.connect(self.open_file)
         self.save_button = QPushButton("Save", self)
         self.save_button.setDisabled(True)
-        self.save_button.clicked.connect(self.save_results)
+        self.save_button.clicked.connect(self.save_file)
         self.mask_button = QPushButton("Mask manager", self)
         self.mask_button.setDisabled(True)
         self.mask_button.clicked.connect(self.segmentation_to_mask)
@@ -1339,7 +1339,7 @@ class MainMenu(QWidget):
             dial.setDirectory(self.settings.open_directory)
         dial.setFileMode(QFileDialog.ExistingFile)
         filters = ["raw image (*.tiff *.tif *.lsm)", "image with mask (*.tiff *.tif *.lsm *json)",
-                   "saved project (*.gz)",  "Profiles (*.json)"]
+                   "saved project (*.gz *.bz2)",  "Profiles (*.json)"]
         dial.setFilters(filters)
         if self.settings.open_filter is not None:
             dial.selectNameFilter(self.settings.open_filter)
@@ -1376,7 +1376,7 @@ class MainMenu(QWidget):
                     if mask_dial.exec_():
                         mask = tifffile.imread(mask_dial.selectedFiles()[0])
                         self.settings.add_image(image, file_path, mask)
-            elif selected_filter == "saved project (*.gz)":
+            elif selected_filter == "saved project (*.gz *.bz2)":
                 load_project(file_path, self.settings, self.segment)
                 self.settings_changed()
                 # self.segment.threshold_updated()
@@ -1389,12 +1389,12 @@ class MainMenu(QWidget):
             self.mask_button.setEnabled(True)
             self.settings.advanced_settings_changed()
 
-    def save_results(self):
+    def save_file(self):
         dial = QFileDialog(self, "Save data")
         if self.settings.save_directory is not None:
             dial.setDirectory(self.settings.save_directory)
         dial.setFileMode(QFileDialog.AnyFile)
-        filters = ["Project (*.gz)", "Labeled image (*.tif)", "Mask in tiff (*.tif)",
+        filters = ["Project (*.gz *.bz2)", "Labeled image (*.tif)", "Mask in tiff (*.tif)",
                    "Mask for itk-snap (*.img)", "Data for chimera (*.cmap)", "Data for chimera with 2d gauss (*.cmap)",
                    "Data for chimera with 3d gauss (*.cmap)", "Image (*.tiff)",
                    "Profiles (*.json)"]
@@ -1410,17 +1410,17 @@ class MainMenu(QWidget):
             self.settings.save_filter = selected_filter
             self.settings.save_directory = os.path.dirname(file_path)
             if os.path.splitext(file_path)[1] == '':
-                ext = re.search(r'\(\*(\.\w+)\)', selected_filter).group(1)
+                ext = re.search(r'\(\*(\.\w+)', selected_filter).group(1)
                 file_path += ext
                 if os.path.exists(file_path):
                     ret = QMessageBox.warning(self, "File exist",
                                               os.path.basename(file_path)+" already exists.\nDo you want to replace it?",
                                               QMessageBox.No, QMessageBox.Yes)
                     if ret == QMessageBox.No:
-                        self.save_results()
+                        self.save_file()
                         return
 
-            if selected_filter == "Project (*.gz)":
+            if selected_filter == "Project (*.gz *.bz2)":
                 save_to_project(file_path,self.settings, self.segment)
 
             elif selected_filter == "Labeled image (*.tif)":

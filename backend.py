@@ -516,7 +516,7 @@ class Segment(object):
         self._image = None
         self.draw_canvas = None
         self.draw_counter = 0
-        self._gauss_image = None
+        self.gauss_image = None
         self._threshold_image = None
         self._segmented_image = None
         self._finally_segment = None
@@ -530,7 +530,7 @@ class Segment(object):
 
     def set_image(self, image):
         self._image = image
-        self._gauss_image = gaussian(self._image, self._settings.gauss_radius)
+        self.gauss_image = gaussian(self._image, self._settings.gauss_radius)
         self._segmentation_changed = True
         self._finally_segment = np.zeros(image.shape, dtype=np.uint8)
         self.threshold_updated()
@@ -540,7 +540,7 @@ class Segment(object):
             return
         self._threshold_image = np.zeros(self._image.shape, dtype=np.uint8)
         if self._settings.use_gauss:
-            image_to_threshold = self._gauss_image
+            image_to_threshold = self.gauss_image
         else:
             image_to_threshold = self._image
         # Define which threshold use
@@ -657,22 +657,17 @@ def calculate_statistic_from_image(img, mask, settings):
     res["Border Surface"] = calculate_volume_surface(mask, voxel_size)
     # res["Border Surface Opening"] = calculate_volume_surface(opening_smooth(mask), voxel_size)
     # res["Border Surface Closing"] = calculate_volume_surface(closing_smooth(mask), voxel_size)
-    try:
-        res["Pixel min"] = np.min(img[img > 0])
-    except ValueError:
-        res["Pixel min"] = 0
+    img_mask = img > 0
     res["Pixel max"] = np.max(img)
-    try:
-        res["Pixel mean"] = np.mean(img[img > 0])
-    except ValueError:
+    if np.any(img_mask):
+        res["Pixel min"] = np.min(img[img_mask])
+        res["Pixel mean"] = np.mean(img[img_mask])
+        res["Pixel median"] = np.median(img[img_mask])
+        res["Pixel std"] = np.std(img[img_mask])
+    else:
+        res["Pixel min"] = 0
         res["Pixel mean"] = 0
-    try:
-        res["Pixel median"] = np.median(img[img > 0])
-    except ValueError:
         res["Pixel median"] = 0
-    try:
-        res["Pixel std"] = np.std(img[img > 0])
-    except ValueError:
         res["Pixel std"] = 0
     try:
         res["Mass to Volume"] = res["Mass"] / res["Volume"]
@@ -733,7 +728,7 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
     image = np.copy(settings.image)
 
     if gauss_type == GaussUse.gauss_2d or gauss_type == GaussUse.gauss_3d:
-        image = gaussian(image, settings.gauss_radius)
+        image = segment.gauss_image
         logging.info("Gauss 2d")
 
     radius = 1
@@ -777,9 +772,6 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
             grp.attrs[key] = val
         grp.attrs["Noise_std"] = noise_std
 
-
-
-    print (image.shape, lower_bound, upper_bound, upper_bound-lower_bound)
     cut_img = np.zeros(upper_bound-lower_bound+[3, 11, 11], dtype=image.dtype)
     coord = []
     for l, u in zip(lower_bound, upper_bound):
@@ -845,7 +837,11 @@ def save_to_project(file_path, settings, segment):
         json.dump(important_data, ff)
     """if file_path[-3:] != ".gz":
         file_path += ".gz" """
-    tar = tarfile.open(file_path, 'w:bz2')
+    ext = os.path.splitext(file_path)[1]
+    if ext.lower() in ['.bz2', ".tbz2"]:
+        tar = tarfile.open(file_path, 'w:bz2')
+    else:
+        tar = tarfile.open(file_path, 'w:gz')
     for name in os.listdir(folder_path):
         tar.add(os.path.join(folder_path, name), name)
     tar.close()
@@ -858,7 +854,12 @@ def load_project(file_path, settings, segment):
     :type segment: Segment
     :return:
     """
-    tar = tarfile.open(file_path, 'r:bz2')
+    ext = os.path.splitext(file_path)[1]
+    logging.debug("load_project extension: {}".format(ext))
+    if ext.lower() in ['.bz2', ".tbz2"]:
+        tar = tarfile.open(file_path, 'r:bz2')
+    else:
+        tar = tarfile.open(file_path, 'r:gz')
     members = tar.getnames()
     important_data = json.load(tar.extractfile("data.json"))
     image = np.load(tar.extractfile("image.npy"))

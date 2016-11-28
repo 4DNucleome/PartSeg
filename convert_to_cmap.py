@@ -23,7 +23,6 @@ class MorphParser(object):
         else:
             argparse.ArgumentTypeError("morphological argument has one or two arguments")
 
-
     @staticmethod
     def radius(radius):
         try:
