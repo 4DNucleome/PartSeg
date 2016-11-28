@@ -47,6 +47,12 @@ class GaussUse(Enum):
     gauss_3d = 3
 
 
+class MorphChange(Enum):
+    no_morph = 1
+    opening_morph = 2
+    closing_morph = 3
+
+
 def class_to_dict(obj, *args):
     """
     Create dict which contains values of given fields
@@ -546,11 +552,11 @@ class Segment(object):
                 return image >= threshold
 
         if self._settings.threshold_layer_separate:
-            print("Layer separate")
+            # print("Layer separate")
             for i in range(self._image.shape[0]):
                 self._threshold_image[i][get_mask(image_to_threshold[i], self._settings.threshold_list[i])] = 1
         else:
-            print("normal")
+            # print("normal")
             self._threshold_image[get_mask(image_to_threshold, self._settings.threshold)] = 1
         if self._settings.mask is not None:
             self._threshold_image *= (self._settings.mask > 0)
@@ -618,17 +624,17 @@ def calculate_volume_surface(volume_mask, voxel_size):
     return border_surface
 
 
-def opening_smooth(volume_mask):
+def opening_smooth(volume_mask, radius=1):
     volume_mask = volume_mask.astype(np.uint8)
     sitk_image = sitk.GetImageFromArray(volume_mask)
-    opening_image = sitk.BinaryMorphologicalOpening(sitk_image)
+    opening_image = sitk.BinaryMorphologicalOpening(sitk_image, radius)
     return sitk.GetArrayFromImage(opening_image)
 
 
-def closing_smooth(volume_mask):
+def closing_smooth(volume_mask, radius=1):
     volume_mask = volume_mask.astype(np.uint8)
     sitk_image = sitk.GetImageFromArray(volume_mask)
-    closing_image = sitk.BinaryMorphologicalClosing(sitk_image)
+    closing_image = sitk.BinaryMorphologicalClosing(sitk_image, radius)
     return sitk.GetArrayFromImage(closing_image)
 
 
@@ -649,8 +655,8 @@ def calculate_statistic_from_image(img, mask, settings):
     res["Border Volume"] = np.count_nonzero(border_im)
 
     res["Border Surface"] = calculate_volume_surface(mask, voxel_size)
-    res["Border Surface Opening"] = calculate_volume_surface(opening_smooth(mask), voxel_size)
-    res["Border Surface Closing"] = calculate_volume_surface(closing_smooth(mask), voxel_size)
+    # res["Border Surface Opening"] = calculate_volume_surface(opening_smooth(mask), voxel_size)
+    # res["Border Surface Closing"] = calculate_volume_surface(closing_smooth(mask), voxel_size)
     try:
         res["Pixel min"] = np.min(img[img > 0])
     except ValueError:
@@ -671,8 +677,8 @@ def calculate_statistic_from_image(img, mask, settings):
     try:
         res["Mass to Volume"] = res["Mass"] / res["Volume"]
         res["Volume to Border Surface"] = res["Volume"] / res["Border Surface"]
-        res["Volume to Border Surface Opening"] = res["Volume"] / res["Border Surface Opening"]
-        res["Volume to Border Surface Closing"] = res["Volume"] / res["Border Surface Closing"]
+        # res["Volume to Border Surface Opening"] = res["Volume"] / res["Border Surface Opening"]
+        # res["Volume to Border Surface Closing"] = res["Volume"] / res["Border Surface Closing"]
     except ZeroDivisionError:
         pass
     if len(img.shape) == 3:
@@ -680,8 +686,26 @@ def calculate_statistic_from_image(img, mask, settings):
     return res
 
 
-def get_segmented_data(image, settings, segment, with_std=False):
+def get_segmented_data(image, settings, segment, with_std=False, mask_morph=None):
+    """
+    :param image: image from witch data should be catted
+    :param settings: program settings
+    :param segment: segment backend for program
+    :param with_std: bool switch that enable returning information about noise outside segmented data
+    :param mask_morph: function that do morphological operation on mask
+    :type image: np.ndarray
+    :type settings: Settings
+    :type segment: Segment
+    :type with_std: bool
+    :type mask_morph: None | (np.ndarray) -> np.ndarray
+    :return:
+    """
     segmentation = segment.get_segmentation()
+    if mask_morph is not None:
+        logging.debug("No None morph_fun")
+        segmentation = mask_morph(segmentation)
+    else:
+        logging.debug("None morph_fun")
     full_segmentation = segment.get_full_segmentation()
     noise_std = np.std(image[full_segmentation == 0])
     if settings.threshold_type == UPPER:
@@ -695,7 +719,7 @@ def get_segmented_data(image, settings, segment, with_std=False):
 
 
 def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
-                 centered_data=True):
+                 centered_data=True, morph_op=MorphChange.no_morph):
     """
     :type file_path: str
     :type settings: Settings
@@ -703,24 +727,58 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
     :type gauss_type: GaussUse
     :type with_statistics: bool
     :type centered_data: bool
+    :type morph_op: MorphChange
     :return:
     """
     image = np.copy(settings.image)
 
     if gauss_type == GaussUse.gauss_2d or gauss_type == GaussUse.gauss_3d:
         image = gaussian(image, settings.gauss_radius)
+        logging.info("Gauss 2d")
 
-    image, mask, noise_std = get_segmented_data(image, settings, segment, True)
+    radius = 1
+    if isinstance(morph_op, tuple) or isinstance(morph_op, list):
+        radius = morph_op[1]
+        morph_op = morph_op[0]
+    if morph_op == MorphChange.no_morph:
+        morph_fun = None
+    elif morph_op == MorphChange.opening_morph:
+        def morph_fun(img):
+            logging.debug("Opening op radius {}".format(radius))
+            return opening_smooth(img, radius)
+    elif morph_op == MorphChange.closing_morph:
+        def morph_fun(img):
+            logging.debug("Closing op radius {}".format(radius))
+            return closing_smooth(img, radius)
+    else:
+        logging.warning("Unknown morphological operation")
+        morph_fun = None
+    image, mask, noise_std = get_segmented_data(image, settings, segment, True, morph_fun)
 
     if gauss_type == GaussUse.gauss_3d:
         voxel = settings.spacing
         sitk_image = sitk.GetImageFromArray(image)
         sitk_image.SetSpacing(settings.spacing)
         image = sitk.GetArrayFromImage(sitk.DiscreteGaussian(sitk_image, max(voxel)))
-
+        logging.info("Gauss 3d")
     points = np.nonzero(image)
-    lower_bound = np.min(points, axis=1)
-    upper_bound = np.max(points, axis=1)
+    try:
+        lower_bound = np.min(points, axis=1)
+        upper_bound = np.max(points, axis=1)
+    except ValueError:
+        logging.error("No output")
+        return
+    f = h5py.File(file_path, "w")
+    grp = f.create_group('Chimera/image1')
+    if with_statistics:
+        grp = f.create_group('Chimera/image1/Statistics')
+        stat = calculate_statistic_from_image(image, mask, settings)
+        for key, val in stat.items():
+            grp.attrs[key] = val
+        grp.attrs["Noise_std"] = noise_std
+
+
+
     print (image.shape, lower_bound, upper_bound, upper_bound-lower_bound)
     cut_img = np.zeros(upper_bound-lower_bound+[3, 11, 11], dtype=image.dtype)
     coord = []
@@ -729,8 +787,6 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
     pos = tuple(coord)
     cut_img[1:-2, 5:-6, 5:-6] = image[pos]
     z, y, x = cut_img.shape
-    f = h5py.File(file_path, "w")
-    grp = f.create_group('Chimera/image1')
     data_set = grp.create_dataset("data_zyx", (z, y, x), dtype='f')
     data_set[...] = cut_img
 
@@ -758,12 +814,7 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
     data_set.attrs['CLASS'] = np.string_('CARRY')
     data_set.attrs['TITLE'] = np.string_('')
     data_set.attrs['VERSION'] = np.string_('1.0')
-    if with_statistics:
-        grp = f.create_group('Chimera/image1/Statistics')
-        stat = calculate_statistic_from_image(cut_img, segment.get_segmentation(), settings)
-        for key, val in stat.items():
-            grp.attrs[key] = val
-        grp.attrs["Noise_std"] = noise_std
+
     f.close()
 
 
