@@ -31,7 +31,18 @@ if __name__ == '__main__':
     parser.add_argument("destination_folder", type=str, nargs=1, help="Destination folder")
     parser.add_argument("-s", "--spacing", dest="spacing", default=None, type=spacing)
     parser.add_argument("-e", "--extension", dest="extension", default=None, type=extension, nargs=1)
+    parser.add_argument("--base_folder", dest="base_folder", type=str, nargs=1, default=None,
+                        help="TBD")
     args = parser.parse_args()
+
+    if args.base_folder is not None:
+        if not os.path.isdir(args.base_folder[0]):
+            logging.error("Folder {} does not exists".format(args.base_folder[0]))
+            sys.exit(-1)
+        else:
+            base_folder = args.base_folder[0]
+    else:
+        base_folder = None
 
     if os.path.isdir(args.source_folder[0]):
         files_to_proceed = glob.glob(os.path.join(args.source_folder[0], "*.gz"))
@@ -39,6 +50,10 @@ if __name__ == '__main__':
         files_to_proceed = args.source_folder
     num = len(files_to_proceed)
     for i, file_path in enumerate(files_to_proceed):
+        if base_folder is not None:
+            rel_path = os.path.dirname(os.path.relpath(file_path, base_folder))
+        else:
+            rel_path = ""
         file_name = os.path.basename(file_path)
         if args.extension is not None:
             file_name = os.path.splitext(file_name)[0] + args.extension
@@ -60,9 +75,9 @@ if __name__ == '__main__':
         with open(os.path.join(folder_path, "data.json"), 'w') as ff:
             json.dump(important_data, ff)
         if os.path.splitext(file_name)[1] in [".bz2", ".tbz2", ".tar.bz2"]:
-            tar = tarfile.open(os.path.join(args.destination_folder[0], file_name), 'w:bz2')
+            tar = tarfile.open(os.path.join(args.destination_folder[0], rel_path, file_name), 'w:bz2')
         else:
-            tar = tarfile.open(os.path.join(args.destination_folder[0], file_name), 'w:gz')
+            tar = tarfile.open(os.path.join(args.destination_folder[0], rel_path, file_name), 'w:gz')
         for name in os.listdir(folder_path):
             tar.add(os.path.join(folder_path, name), name)
         tar.close()

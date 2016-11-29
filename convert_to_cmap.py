@@ -48,7 +48,7 @@ class MorphParser(object):
         elif name.lower() in ["close", "closing"]:
             return backend.MorphChange.closing_morph
         else:
-            raise argparse.ArgumentTypeError("morphological operation should be open[ing] or clos[e|ing] ")
+            raise argparse.ArgumentTypeError("morphological operation should be open[ing] or close|closing")
 
 if __name__ == '__main__':
     import argparse
