@@ -34,7 +34,11 @@ if __name__ == '__main__':
     parser.add_argument("--base_folder", dest="base_folder", type=str, nargs=1, default=None,
                         help="TBD")
     args = parser.parse_args()
-
+    files_to_proceed = glob.glob(os.path.join(args.source_folder[0], "*.gz"))
+    if len(files_to_proceed) == 0:
+        files_to_proceed = glob.glob(os.path.join(args.source_folder[0], "*.bz2"))
+        if len(files_to_proceed) == 0:
+            files_to_proceed = args.source_folder
     if args.base_folder is not None:
         if not os.path.isdir(args.base_folder[0]):
             logging.error("Folder {} does not exists".format(args.base_folder[0]))
@@ -44,10 +48,6 @@ if __name__ == '__main__':
     else:
         base_folder = None
 
-    if os.path.isdir(args.source_folder[0]):
-        files_to_proceed = glob.glob(os.path.join(args.source_folder[0], "*.gz"))
-    else:
-        files_to_proceed = args.source_folder
     num = len(files_to_proceed)
     for i, file_path in enumerate(files_to_proceed):
         if base_folder is not None:
@@ -56,7 +56,7 @@ if __name__ == '__main__':
             rel_path = ""
         file_name = os.path.basename(file_path)
         if args.extension is not None:
-            file_name = os.path.splitext(file_name)[0] + args.extension
+            file_name = os.path.splitext(file_name)[0] + args.extension[0]
         print("file: {}; {} from {}".format(file_name, i+1, num))
         folder_path = tempfile.mkdtemp()
         if os.path.splitext(file_path)[1] in [".bz2", ".tbz2", ".tar.bz2"]:
@@ -74,6 +74,9 @@ if __name__ == '__main__':
             important_data["spacing"] = args.spacing
         with open(os.path.join(folder_path, "data.json"), 'w') as ff:
             json.dump(important_data, ff)
+        if not os.path.isdir(os.path.join(args.destination_folder[0], rel_path)):
+            os.makedirs(os.path.join(args.destination_folder[0], rel_path))
+
         if os.path.splitext(file_name)[1] in [".bz2", ".tbz2", ".tar.bz2"]:
             tar = tarfile.open(os.path.join(args.destination_folder[0], rel_path, file_name), 'w:bz2')
         else:

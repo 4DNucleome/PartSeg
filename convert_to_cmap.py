@@ -80,10 +80,12 @@ if __name__ == '__main__':
     parser.add_argument("-morph", "--morphological_operation", dest="morph", default=backend.MorphChange.no_morph,
                         nargs='+', type=mpr.parse_op)
     args = parser.parse_args()
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.WARNING)
     files_to_proceed = glob.glob(os.path.join(args.source_folder[0], "*.gz"))
     if len(files_to_proceed) == 0:
-        files_to_proceed = args.source_folder
+        files_to_proceed = glob.glob(os.path.join(args.source_folder[0], "*.bz2"))
+        if len(files_to_proceed) == 0:
+            files_to_proceed = args.source_folder
 
     if args.base_folder is not None:
         if not os.path.isdir(args.base_folder[0]):
