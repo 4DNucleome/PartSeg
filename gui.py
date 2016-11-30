@@ -1352,11 +1352,16 @@ class MainMenu(QWidget):
             # TODO maybe something better. Now main window have to be parent
             if selected_filter == "raw image (*.tiff *.tif *.lsm)":
                 im = tifffile.imread(file_path)
-                if len(im.shape) == 4:
+                if im.ndim == 4:
+                    print(im.shape)
+                    index = list(im.shape).index(min(im.shape))
                     # TODO do something better. now not all possibilities are covered
-                    num, state = QInputDialog.getInt(self, "Get channel number", "Witch channel:", 0, 0, im.shape[-1])
+                    num, state = QInputDialog.getInt(self, "Get channel number",
+                                                     "Image shape: {}\nchannel position: {}\nWitch channel:".format(
+                                                         im.shape, index
+                                                     ), 0, 0, im.shape[index]-1)
                     if state:
-                        im = im[..., num]
+                        im = im.take(num, axis=index)
                     else:
                         return
                 self.settings.add_image(im, file_path)
