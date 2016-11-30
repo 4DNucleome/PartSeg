@@ -898,6 +898,7 @@ class AdvancedSettings(QWidget):
             el.valueChanged.connect(self.update_volume)
         self.units_size.currentIndexChanged.connect(self.update_volume)
         size_layout.addWidget(self.units_size)
+        size_layout.addStretch()
         vlayout.addLayout(size_layout)
         self.volume_info = QLabel()
         vlayout.addWidget(self.volume_info)
