@@ -92,9 +92,9 @@
 \end{frame}
 \begin{frame}[c]{Summarize}
   \begin{itemize}
-    \item To maximize speed algorithm remember intermediate steps
+    \item To maximize speed algorithm remembers intermediate steps
     \item<2-> \textbf{But this is memory consuming}
-    \item<2-> This allow to not rerun algorithm from scratch 
+    \item<2-> This allows to not rerun algorithm from scratch 
     \item<3-> Can use segmentation result as mask in next iteration 
     \item <3-> Mask can be dilated by given radius
   \end{itemize}
@@ -118,7 +118,7 @@
     \node (orimg) [decision] at ($(image)!.5!(gaussimage)$) {or};
     \node (maskedimg) [below=of image, xshift=1cm ] {Masked image}; 
     \node (trtype) [decision, aspect=3, below of=maskedimg] {Threshold type}; 
-    \node (noisemean) [process, below of=trtype] {Calculate noise mean};
+    \node (noisemean) [process, below of=trtype] {Calculate average noise};
     \node (reverse) [process, below of=noisemean] {Reverse Image}; 
     \node (cutimg) [process, below of=reverse] {cut with mask};
     \node (gaus3d) [process, below left=of cutimg] {3d gauss}; 
@@ -139,7 +139,7 @@
     \draw [arrow] (noisemean) -- (reverse);
     \draw [arrow, gray] (trtype.west) to [bend right] node[left]{Lower} (cutimg.west);
     \draw [arrow] (reverse) -- (cutimg);
-    \draw [arrow, dashed] (cutimg) -- (gaus3d);
+    \draw [arrow, dashed, blue] (cutimg) -- (gaus3d);
     \draw [arrow, dashed] (cutimg) -- (finalimg);
     \draw [arrow] (gaus3d) -- (finalimg);
     \draw [arrow] (finalimg) -- (center);
@@ -149,6 +149,7 @@
     \draw [arrow] (statistics) -- (save);
     \draw [arrow] (mask.east) to [bend left] (statistics);
     \draw [arrow] (morph) -- (statistics);
+    \draw [arrow, blue] (gaussimage) to [bend right] (orimg);
   \end{tikzpicture}
 \end{frame}
 
@@ -163,30 +164,29 @@
 \end{frame}
 \begin{frame}[c]{Summarize}
   \begin{enumerate}
-    \item \textbf{This is beta version} – still need tests.
+    \item \textbf{This is beta version} – still needs tests.
     \item In project files there are saved information about every step needed to get segmentation. 
-    \item Program allow to save set of profiles.
-    \item Program allow to change segmentation to mask. 
-    \item I think tat every useful, in segmentation, information are showed on main window.
+    \item Program allows to save set of profiles.
+    \item Program allows to change segmentation to mask. 
+    \item Probably every useful in segmentation information are showed on main window.
     \item Project specific settings are in Advanced Window.
     \item Statistics are in Advanced Windows.
-    \item files from previous version demand change extension form \texttt{.gz} to \texttt{.bz2}.
+    \item Files from previous version demand change extension form \texttt{.gz} to \texttt{.bz2}.
   \end{enumerate}  
 \end{frame}
 \begin{frame}[standout]{}
   This is tool for \emph{small} files  
 \end{frame}
 \begin{frame}[c]{Plans}
-  If they are useful and I have time.  
   \begin{enumerate}
+    \item Pack PartSeg to executable. 
     \item Add more statistics and allow user to choose which should be calculated.
     \item Add automatic and multi files processing based on profiles (need discussion).
-    \item Pack PartSeg to executable. 
   \end{enumerate}  
 \end{frame}
 \begin{frame}
   \begin{center}
-    \Huge Thank for Your attention
+    \Huge Thanks for Your attention
   \end{center}
 \end{frame}
 \end{document}
