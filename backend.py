@@ -10,6 +10,7 @@ import os
 import tarfile
 import auto_fit as af
 import logging
+import sys
 from enum import Enum
 from copy import deepcopy
 UPPER = "Upper"
@@ -854,6 +855,15 @@ def load_project(file_path, settings, segment):
     :type segment: Segment
     :return:
     """
+    if sys.version_info.major == 2:
+        def extract_numpy_file(name):
+            return np.load(tar.extractfile(name))
+    else:
+        folder_path = tempfile.mkdtemp()
+        def extract_numpy_file(name):
+            tar.extract(name, folder_path)
+            return np.load(os.path.join(folder_path, name))
+
     ext = os.path.splitext(file_path)[1]
     logging.debug("load_project extension: {}".format(ext))
     if ext.lower() in ['.bz2', ".tbz2"]:
@@ -861,11 +871,12 @@ def load_project(file_path, settings, segment):
     else:
         tar = tarfile.open(file_path, 'r:gz')
     members = tar.getnames()
-    important_data = json.load(tar.extractfile("data.json"))
-    image = np.load(tar.extractfile("image.npy"))
-    draw = np.load(tar.extractfile("draw.npy"))
+    json_val = tar.extractfile("data.json").read().decode("utf8")
+    important_data = json.loads(json_val)
+    image = extract_numpy_file("image.npy")
+    draw = extract_numpy_file("draw.npy")
     if "mask.npy" in members:
-        mask = np.load(tar.extractfile("mask.npy"))
+        mask = extract_numpy_file("mask.npy")
     else:
         mask = None
     settings.threshold = int(important_data["threshold"])
@@ -903,7 +914,7 @@ def load_project(file_path, settings, segment):
 
     if "prev_segmentation_settings" in important_data:
         for c, mem in enumerate(important_data["prev_segmentation_settings"]):
-            mem["mask"] = np.load(tar.extractfile("mask_{}.npy".format(c)))
+            mem["mask"] = extract_numpy_file("mask_{}.npy".format(c))
         settings.prev_segmentation_settings = important_data["prev_segmentation_settings"]
     else:
         settings.prev_segmentation_settings = []

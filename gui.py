@@ -935,7 +935,7 @@ class AdvancedSettings(QWidget):
         self.profile_list = QListWidget()
         profile_lay.addWidget(self.profile_list)
         self.profile_list.addItem("<current profile>")
-        self.profile_list.addItems(self.settings.profiles.keys())
+        self.profile_list.addItems(list(self.settings.profiles.keys()))
         self.profile_list.setMaximumWidth(200)
         self.profile_list.currentTextChanged.connect(self.changed_profile)
         self.create_profile = QPushButton("Create profile", self)
@@ -1192,7 +1192,7 @@ class MainMenu(QWidget):
         self.profile_choose = QComboBox(self)
         self.profile_choose.addItem("<no profile>")
         self.profile_choose.addItems(list(self.settings.get_profile_list()))
-        self.profile_choose.currentIndexChanged[unicode].connect(self.profile_changed)
+        self.profile_choose.currentIndexChanged[str_type].connect(self.profile_changed)
         self.advanced_button = QPushButton("Advanced", self)
         self.advanced_button.clicked.connect(self.open_advanced)
         self.advanced_window = None
