@@ -1,6 +1,6 @@
 if __name__ == '__main__':
     from gui import MainWindow
-    from PySide.QtGui import QApplication
+    from PyQt4.QtGui import QApplication
     import sys
     import logging
     logging.basicConfig(level=logging.DEBUG)

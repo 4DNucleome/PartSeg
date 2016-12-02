@@ -11,14 +11,14 @@ import matplotlib
 import logging
 import re
 import sys
-os.environ['QT_API'] = 'pyside'
+# os.environ['QT_API'] = 'pyside'
 matplotlib.use('Qt4Agg')
 from matplotlib import pyplot
 import matplotlib.colors as colors
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
-from PySide.QtCore import Qt, QSize
-from PySide.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget,\
+from PyQt4.QtCore import Qt, QSize
+from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget,\
     QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QPixmap, QSpinBox, \
     QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout,\
     QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem
@@ -815,7 +815,8 @@ class ColormapSettings(QWidget):
                 elem.setDisabled(True)
 
     def resizeEvent(self, resize_event):
-        w, h = resize_event.size().toTuple()
+        w = resize_event.size().width()
+        h = resize_event.size().height()
         w -= 4
         h -= button_height + 4
         self.scroll_area.resize(w, h)
@@ -1132,8 +1133,9 @@ class AdvancedWindow(QTabWidget):
     def resizeEvent(self, resize_event):
         super(AdvancedWindow, self).resizeEvent(resize_event)
         """:type new_size: QSize"""
-        w, h = resize_event.size().toTuple()
-        wt, ht = self.tabBar().size().toTuple()
+        w = resize_event.size().width()
+        h = resize_event.size().height()
+        ht = self.tabBar().size().height()
         h -= ht
         self.colormap_settings.resize(w, h)
         self.statistics.resize(w, h)
@@ -1345,9 +1347,9 @@ class MainMenu(QWidget):
         if self.settings.open_filter is not None:
             dial.selectNameFilter(self.settings.open_filter)
         if dial.exec_():
-            file_path = dial.selectedFiles()[0]
-            self.settings.open_directory = os.path.dirname(file_path)
-            selected_filter = dial.selectedFilter()
+            file_path = str(dial.selectedFiles()[0])
+            self.settings.open_directory = os.path.dirname(str(file_path))
+            selected_filter = str(dial.selectedFilter())
             self.settings.open_filter = selected_filter
             print(file_path, selected_filter)
             # TODO maybe something better. Now main window have to be parent
@@ -1411,8 +1413,8 @@ class MainMenu(QWidget):
         if self.settings.save_filter is not None:
             dial.selectNameFilter(self.settings.save_filter)
         if dial.exec_():
-            file_path = dial.selectedFiles()[0]
-            selected_filter = dial.selectedFilter()
+            file_path = str(dial.selectedFiles()[0])
+            selected_filter = str(dial.selectedFilter())
             self.settings.save_filter = selected_filter
             self.settings.save_directory = os.path.dirname(file_path)
             if os.path.splitext(file_path)[1] == '':
@@ -1631,6 +1633,7 @@ class MainWindow(QMainWindow):
         self.object_size_list.setText("Objects size: {}".format(list(info_aray)))
 
     def closeEvent(self, event):
+        print("Close")
         self.settings.dump("settings.json")
         if self.main_menu.advanced_window is not None and self.main_menu.advanced_window.isVisible():
             self.main_menu.advanced_window.close()

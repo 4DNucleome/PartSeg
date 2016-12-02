@@ -13,3 +13,4 @@ scipy==0.18.1
 SimpleITK==0.10.0
 six==1.10.0
 tifffile==0.10.0
+PyQt4
