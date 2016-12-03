@@ -860,6 +860,7 @@ def load_project(file_path, settings, segment):
             return np.load(tar.extractfile(name))
     else:
         folder_path = tempfile.mkdtemp()
+
         def extract_numpy_file(name):
             tar.extract(name, folder_path)
             return np.load(os.path.join(folder_path, name))
@@ -867,9 +868,15 @@ def load_project(file_path, settings, segment):
     ext = os.path.splitext(file_path)[1]
     logging.debug("load_project extension: {}".format(ext))
     if ext.lower() in ['.bz2', ".tbz2"]:
-        tar = tarfile.open(file_path, 'r:bz2')
+        try:
+            tar = tarfile.open(file_path, 'r:bz2')
+        except tarfile.ReadError:
+            tar = tarfile.open(file_path, 'r:gz')
     else:
-        tar = tarfile.open(file_path, 'r:gz')
+        try:
+            tar = tarfile.open(file_path, 'r:gz')
+        except tarfile.ReadError:
+            tar = tarfile.open(file_path, 'r:bz2')
     members = tar.getnames()
     json_val = tar.extractfile("data.json").read().decode("utf8")
     important_data = json.loads(json_val)

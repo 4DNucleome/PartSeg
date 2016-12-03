@@ -11,6 +11,7 @@ import matplotlib
 import logging
 import re
 import sys
+import appdirs
 # os.environ['QT_API'] = 'pyside'
 matplotlib.use('Qt4Agg')
 from matplotlib import pyplot
@@ -21,13 +22,23 @@ from PyQt4.QtCore import Qt, QSize
 from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget,\
     QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QPixmap, QSpinBox, \
     QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout,\
-    QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem
+    QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout
 
 from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, \
     calculate_statistic_from_image, MaskChange, Profile, UNITS_DICT, GaussUse
 
 
 __author__ = "Grzegorz Bokota"
+
+app_name = "PartSeg"
+app_author = "LFSG"
+
+config_folder = appdirs.user_data_dir(app_name, app_author)
+
+if not os.path.isdir(config_folder):
+    os.makedirs(config_folder)
+
+file_folder = os.path.dirname(os.path.realpath(__file__))
 
 if sys.version_info.major == 2:
     str_type = unicode
@@ -236,7 +247,7 @@ class ColormapCanvas(QWidget):
 
 
 class MyCanvas(QWidget):
-    def __init__(self, figsize, settings, parent):
+    def __init__(self, figsize, settings, info_object, parent):
         """
         Create basic canvas to view image
         :param num: Num of figure to use
@@ -246,6 +257,9 @@ class MyCanvas(QWidget):
         fig = pyplot.figure(figsize=figsize, dpi=100, frameon=False, facecolor='1.0', edgecolor='w', tight_layout=True)
         # , tight_layout=tight_dict)
         super(MyCanvas, self).__init__(parent)
+        self.settings = settings
+        self.info_object = info_object
+
         self.figure_canvas = FigureCanvas(fig)
         self.base_image = None
         self.gauss_image = None
@@ -293,7 +307,6 @@ class MyCanvas(QWidget):
         # self.mark_mask.setDisabled(True)
         self.layer_num_label = QLabel(self)
         self.layer_num_label.setText("1 of 1      ")
-        self.settings = settings
         settings.add_image_callback((self.set_image, GAUSS))
         settings.add_colormap_callback(self.update_colormap)
         self.colormap_checkbox.stateChanged.connect(self.update_colormap)
@@ -307,6 +320,22 @@ class MyCanvas(QWidget):
         self.figure_canvas.mpl_connect('button_release_event', self.move_synch_fun)
         self.figure_canvas.mpl_connect('button_release_event', self.mouse_up)
         self.figure_canvas.mpl_connect('button_press_event', self.mouse_down)
+        self.figure_canvas.mpl_connect('motion_notify_event', self.brightness_up)
+
+    def brightness_up(self, event):
+        if event.xdata is not None and event.ydata is not None:
+            x, y = int(event.xdata + 0.5), int(event.ydata + 0.5)
+            if self.gauss_view.isChecked():
+                img = self.gauss_image
+            else:
+                img = self.base_image
+            """:type img: np.ndarray"""
+            if img.ndim == 2:
+                self.info_object.update_brightness(img[y, x])
+            else:
+                self.info_object.update_brightness(img[self.layer_num, y, x])
+        else:
+            self.info_object.update_brightness(None)
 
     def mouse_up(self, *args):
         self.mouse_pressed = False
@@ -472,12 +501,11 @@ class MyDrawCanvas(MyCanvas):
     """
     :type segmentation: np.ndarray
     """
-    def __init__(self, figsize, settings, segment, info_fun, *args):
-        super(MyDrawCanvas, self).__init__(figsize, settings, *args)
+    def __init__(self, figsize, settings, info_object, segment, *args):
+        super(MyDrawCanvas, self).__init__(figsize, settings, info_object, *args)
         self.draw_canvas = DrawObject(settings, segment, self.draw_update)
         self.history_list = list()
         self.redo_list = list()
-        self.info_fun = info_fun
         self.zoom_button.clicked.connect(self.up_drawing_button)
         self.move_button.clicked.connect(self.up_drawing_button)
         self.draw_button = QPushButton("Draw", self)
@@ -523,10 +551,10 @@ class MyDrawCanvas(MyCanvas):
         else:
             self.cursor_val = val
         if val == 0:
-            self.info_fun("No component")
+            self.info_object.update_info_text("No component")
         else:
             size = self.segment.get_size_array()[val]
-            self.info_fun("Component: {}, size: {}".format(val, size))
+            self.info_object.update_info_text("Component: {}, size: {}".format(val, size))
 
     def up_move_zoom_button(self):
         self.protect_button = True
@@ -1481,14 +1509,26 @@ class InfoMenu(QLabel):
         self.settings = settings
         self.segment = segment
         layout = QHBoxLayout()
+        grid_layout = QGridLayout()
         # self.tester = QLabel("TEST", self)
         # layout.addWidget(self.tester)
         self.text_filed = QLabel(self)
-        layout.addWidget(self.text_filed)
-        layout.addStretch()
+        grid_layout.addWidget(self.text_filed, 0, 0)
+        #layout.addWidget(self.text_filed)
+        #layout.addStretch()
+        self.brightness_field = QLabel(self)
+        self.brightness_field.setText("buka")
+        self.brightness_field.setAlignment(Qt.AlignCenter)
+        grid_layout.addWidget(self.brightness_field, 0, 1)
+        #layout.addWidget(self.brightness_field)
+        #layout.addStretch()
         self.info_filed = QLabel(self)
-        layout.addWidget(self.info_filed)
+        self.info_filed.setMinimumWidth(100)
+        self.info_filed.setAlignment(Qt.AlignRight)
+        #layout.addWidget(self.info_filed)
         self.info_filed.setText("No component")
+        grid_layout.addWidget(self.info_filed, 0, 2)
+        layout.addLayout(grid_layout)
         self.setLayout(layout)
         settings.add_metadata_changed_callback(self.update_text)
         self.update_text()
@@ -1509,6 +1549,12 @@ class InfoMenu(QLabel):
     def update_info_text(self, s):
         self.info_filed.setText(s)
 
+    def update_brightness(self, val):
+        if val is None:
+            self.brightness_field.setText("")
+        else:
+            self.brightness_field.setText("Pixel brightness: {}".format(val))
+
 
 def synchronize_zoom(fig1, fig2, synch_checkbox):
     """
@@ -1527,15 +1573,14 @@ class MainWindow(QMainWindow):
     def __init__(self, title):
         super(MainWindow, self).__init__()
         self.setWindowTitle(title)
-        self.settings = Settings("settings.json")
+        self.settings = Settings(os.path.join(config_folder, "settings.json"))
         self.segment = Segment(self.settings)
         self.main_menu = MainMenu(self.settings, self.segment, self)
         self.info_menu = InfoMenu(self.settings, self.segment, self)
 
-        self.normal_image_canvas = MyCanvas((8, 8), self.settings, self)
+        self.normal_image_canvas = MyCanvas((8, 8), self.settings, self.info_menu, self)
         self.colormap_image_canvas = ColormapCanvas((1, 8),  self.settings, self)
-        self.segmented_image_canvas = MyDrawCanvas((8, 8), self.settings, self.segment,
-                                                   self.info_menu.update_info_text, self)
+        self.segmented_image_canvas = MyDrawCanvas((8, 8), self.settings, self.info_menu, self.segment, self)
         self.segmented_image_canvas.segment.add_segmentation_callback((self.update_object_information,))
         self.normal_image_canvas.update_elements_positions()
         self.segmented_image_canvas.update_elements_positions()
@@ -1559,7 +1604,7 @@ class MainWindow(QMainWindow):
         self.object_size_list = QTextEdit(self)
         self.object_size_list.setReadOnly(True)
         self.object_size_list.setFont(big_font)
-        self.object_size_list.setMinimumWidth(800)
+        self.object_size_list.setMinimumWidth(500)
         self.object_size_list.setMaximumHeight(30)
         # self.object_size_list.setTextInteractionFlags(Qt.TextSelectableByMouse)
         # self.object_size_list_area.setWidget(self.object_size_list)
@@ -1570,12 +1615,12 @@ class MainWindow(QMainWindow):
         self.setStatusBar(self.statusBar)
         self.settings.add_image_callback((self.statusBar.showMessage, str))
 
-        self.setGeometry(50, 50,  1400, 720)
+        self.setGeometry(0, 0,  1400, 720)
         icon = QIcon("icon.png")
         self.setWindowIcon(icon)
 
         self.update_objects_positions()
-        self.settings.add_image(tifffile.imread("clean_segment.tiff"), "")
+        self.settings.add_image(tifffile.imread(os.path.join(file_folder, "clean_segment.tiff")), "")
         #self.setStyleSheet(self.styleSheet() + "border: 1px solid black")
 
     def update_objects_positions(self):
@@ -1634,6 +1679,6 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         print("Close")
-        self.settings.dump("settings.json")
+        self.settings.dump(os.path.join(config_folder, "settings.json"))
         if self.main_menu.advanced_window is not None and self.main_menu.advanced_window.isVisible():
             self.main_menu.advanced_window.close()
