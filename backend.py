@@ -309,6 +309,7 @@ class Settings(object):
                 self.mask = current_mask
             if len(self.next_segmentation_settings) > 0:
                 new_seg = self.next_segmentation_settings.pop()
+                new_seg["mask"] = self.mask
             else:
                 new_seg = None
             save_fields = save_fields[:-1]

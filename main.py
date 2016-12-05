@@ -3,7 +3,7 @@ if __name__ == '__main__':
     from PyQt4.QtGui import QApplication
     import sys
     import logging
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     myApp = QApplication(sys.argv)
     wind = MainWindow("PartSeg")
     wind.show()
