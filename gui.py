@@ -162,8 +162,6 @@ class SynchronizeSliders(object):
         self.sync = self.switch.isChecked()
 
     def state_changed(self, state):
-        if state:
-            self.slider2.setValue(self.slider1.value())
         self.sync = bool(state)
 
     def slider1_changed(self, val):
@@ -1606,8 +1604,9 @@ def synchronize_zoom(fig1, fig2, sync_checkbox):
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, title):
+    def __init__(self, title, arguments):
         super(MainWindow, self).__init__()
+        self.runtime_arguments = arguments
         self.setWindowTitle(title)
         self.settings = Settings(os.path.join(config_folder, "settings.json"))
         self.segment = Segment(self.settings)
@@ -1657,6 +1656,18 @@ class MainWindow(QMainWindow):
 
         self.update_objects_positions()
         self.settings.add_image(tifffile.imread(os.path.join(file_folder, "clean_segment.tiff")), "")
+
+    def showEvent(self, _):
+        try:
+            if len(self.runtime_arguments) > 1:
+                if os.path.splitext(self.runtime_arguments[1])[1] in ['.bz2', ".tbz2", ".gz", "tgz"]:
+                    load_project(self.runtime_arguments[1], self.settings, self.segment)
+                elif os.path.splitext(self.runtime_arguments[1])[1] in ['.tif', '.tiff', '*.lsm']:
+                    im = tifffile.imread(self.runtime_arguments[1])
+                    if im.ndim < 4:
+                        self.settings.add_image(im , self.runtime_arguments[1])
+        except Exception as e:
+            logging.warning(e.message)
 
     def update_objects_positions(self):
         widget = QWidget()
