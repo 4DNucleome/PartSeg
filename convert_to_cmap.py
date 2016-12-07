@@ -79,8 +79,8 @@ if __name__ == '__main__':
                         help="Off centering and rotating volumetric data")
     parser.add_argument("-morph", "--morphological_operation", dest="morph", default=backend.MorphChange.no_morph,
                         nargs='+', type=mpr.parse_op)
-    parser.add_argument("-sp", "--scaled_mass", dest="scaled_mass", default=[1], nargs=1,
-                        help="Scale mass", type=int)
+    parser.add_argument("-sp", "--scaled_mass", dest="scaled_mass", default=[1.0], nargs=1,
+                        help="Scale mass", type=float)
     args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING)
     files_to_proceed = glob.glob(os.path.join(args.source_folder[0], "*.gz"))
