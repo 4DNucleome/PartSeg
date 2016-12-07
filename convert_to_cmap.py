@@ -79,6 +79,8 @@ if __name__ == '__main__':
                         help="Off centering and rotating volumetric data")
     parser.add_argument("-morph", "--morphological_operation", dest="morph", default=backend.MorphChange.no_morph,
                         nargs='+', type=mpr.parse_op)
+    parser.add_argument("-sp", "--scaled_mass", dest="scaled_mass", default=[1], nargs=1,
+                        help="Scale mass", type=int)
     args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING)
     files_to_proceed = glob.glob(os.path.join(args.source_folder[0], "*.gz"))
@@ -129,4 +131,4 @@ if __name__ == '__main__':
 
         backend.save_to_cmap(os.path.join(args.destination_folder[0], rel_path, file_name), settings, segment,
                              gauss_type=gauss_type, with_statistics=not args.no_statistics,
-                             centered_data=not args.no_center_data, morph_op=args.morph)
+                             centered_data=not args.no_center_data, morph_op=args.morph, scale_mass=args.scaled_mass)
