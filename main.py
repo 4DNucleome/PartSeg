@@ -1,3 +1,8 @@
+import packaging
+import packaging.version
+import packaging.specifiers
+import packaging.requirements
+
 if __name__ == '__main__':
     from gui import MainWindow
     from PyQt4.QtGui import QApplication
