@@ -223,6 +223,8 @@ class Settings(object):
         self.open_filter = None
         self.save_directory = None
         self.save_filter = None
+        self.export_directory = None
+        self.export_filter = None
         self.spacing = [5, 5, 30]
         self.voxel_size = [5, 5, 30]
         self.size_unit = "nm"
@@ -264,7 +266,7 @@ class Settings(object):
         important_data = \
             class_to_dict(self, "open_directory", "open_filter", "save_directory", "save_filter", "spacing",
                           "voxel_size", "size_unit", "threshold", "color_map_name", "overlay", "minimum_size",
-                          "gauss_radius")
+                          "gauss_radius", "export_filter", "export_directory")
         important_data["profiles"] = [x.__dict__ for k, x in self.profiles.items()]
         with open(file_path, "w") as ff:
             json.dump(important_data, ff)
@@ -275,7 +277,7 @@ class Settings(object):
                 important_data = json.load(ff)
             dict_set_class(self, important_data, "open_directory", "open_filter", "save_directory", "save_filter",
                            "spacing", "voxel_size", "size_unit", "threshold", "color_map_name", "overlay",
-                           "minimum_size", "gauss_radius")
+                           "minimum_size", "gauss_radius", "export_filter", "export_directory")
             for prof in important_data["profiles"]:
                 self.profiles[prof["name"]] = Profile(**prof)
         except IOError:
@@ -309,6 +311,7 @@ class Settings(object):
                 self.mask = current_mask
             if len(self.next_segmentation_settings) > 0:
                 new_seg = self.next_segmentation_settings.pop()
+                new_seg["mask"] = self.mask
             else:
                 new_seg = None
             save_fields = save_fields[:-1]
@@ -715,7 +718,7 @@ def get_segmented_data(image, settings, segment, with_std=False, mask_morph=None
 
 
 def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
-                 centered_data=True, morph_op=MorphChange.no_morph):
+                 centered_data=True, morph_op=MorphChange.no_morph, scale_mass=(1,)):
     """
     :type file_path: str
     :type settings: Settings
@@ -724,6 +727,7 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
     :type with_statistics: bool
     :type centered_data: bool
     :type morph_op: MorphChange
+    :type scale_mass: (int)|list[int]
     :return:
     """
     image = np.copy(settings.image)
@@ -750,6 +754,7 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
         logging.warning("Unknown morphological operation")
         morph_fun = None
     image, mask, noise_std = get_segmented_data(image, settings, segment, True, morph_fun)
+    image = image/scale_mass[0]
 
     if gauss_type == GaussUse.gauss_3d:
         voxel = settings.spacing
@@ -757,6 +762,7 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
         sitk_image.SetSpacing(settings.spacing)
         image = sitk.GetArrayFromImage(sitk.DiscreteGaussian(sitk_image, max(voxel)))
         logging.info("Gauss 3d")
+
     points = np.nonzero(image)
     try:
         lower_bound = np.min(points, axis=1)
@@ -779,9 +785,6 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
         coord.append(slice(l, u))
     pos = tuple(coord)
     cut_img[1:-2, 5:-6, 5:-6] = image[pos]
-    z, y, x = cut_img.shape
-    data_set = grp.create_dataset("data_zyx", (z, y, x), dtype='f')
-    data_set[...] = cut_img
 
     # Just to satisfy file format
     grp = f['Chimera']
@@ -794,6 +797,10 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
     grp.attrs['TITLE'] = np.string_('')
     grp.attrs['VERSION'] = np.string_('1.0')
     grp.attrs['step'] = np.array(settings.spacing, dtype=np.float32)
+
+    z, y, x = cut_img.shape
+    data_set = grp.create_dataset("data_zyx", (z, y, x), dtype='f')
+    data_set[...] = cut_img
 
     if centered_data:
         swap_cut_img = np.swapaxes(cut_img, 0, 2)
