@@ -4,10 +4,10 @@ block_cipher = None
 
 
 a = Analysis(['main.py'],
-             pathex=['/Users/grzegorzbokota/Documents/projekty/segmentacja-gui'],
+             pathex=['C:\\Users\\Grzegorz\\Documents\\segmentation-gui'],
              binaries=None,
-             datas=[("clean_segment.tiff", "."), ("icon.png", ".')],
-             hiddenimports=[],
+             datas=[("clean_segment.tiff", "."), ("icon.png", ".")],
+             hiddenimports=["packaging", "packaging.version", "packaging.specifiers", "packaging.requirements"],
              hookspath=[],
              runtime_hooks=[],
              excludes=[],
@@ -26,7 +26,3 @@ exe = EXE(pyz,
           strip=False,
           upx=True,
           console=False , icon='icon.ico')
-app = BUNDLE(exe,
-             name='PartSeg.app',
-             icon='icon.icns',
-             bundle_identifier=None)

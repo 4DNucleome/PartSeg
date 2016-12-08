@@ -1674,7 +1674,7 @@ class MainWindow(QMainWindow):
         export.triggered.connect(self.export)
         self.main_menu.enable_list.extend([save, export])
         menu.addAction("Batch processing")
-        menu.addAction("Exit")
+        menu.addAction("Exit").triggered.connect(self.close)
         help_menu = menubar.addMenu("Help")
         help_menu.addAction("Help")
         help_menu.addAction("Credits")
@@ -1783,8 +1783,8 @@ class MainWindow(QMainWindow):
 
 
 class ImageExporter(QDialog):
-    interpolation_dict = {"None": Image.NEAREST, "Box": Image.BOX, "Bilinear": Image.BILINEAR, "Hamming": Image.HAMMING,
-                          "Bicubic": Image.BICUBIC, "Lanczos": Image.LANCZOS}
+    interpolation_dict = {"None": Image.NEAREST, "Bilinear": Image.BILINEAR, 
+                          "Bicubic": Image.BICUBIC, "Lanczos": Image.LANCZOS} #  "Box": Image.BOX, "Hamming": Image.HAMMING,
 
     def __init__(self, canvas, file_path, filter_name, parent):
         print (filter_name)
