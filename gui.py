@@ -21,7 +21,7 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget,\
     QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, \
     QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout,\
-    QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction
+    QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout
 
 from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, \
     calculate_statistic_from_image, MaskChange, Profile, UNITS_DICT, GaussUse
@@ -1249,9 +1249,11 @@ class MainMenu(QWidget):
         self.settings.add_image_callback(self.set_threshold_range)
         self.settings.add_image_callback(self.set_layer_threshold)
         self.settings.add_change_layer_callback(self.changed_layer)
-        self.load_button = QPushButton("Load", self)
+        self.load_button = QPushButton(self)
+        self.load_button.setIcon(QIcon.fromTheme("document-open"))
         self.load_button.clicked.connect(self.open_file)
-        self.save_button = QPushButton("Save", self)
+        self.save_button = QPushButton(self)
+        self.save_button.setIcon(QIcon.fromTheme("document-save"))
         self.save_button.setDisabled(True)
         self.save_button.clicked.connect(self.save_file)
         self.mask_button = QPushButton("Mask manager", self)
@@ -1622,9 +1624,9 @@ class MainWindow(QMainWindow):
         self.main_menu = MainMenu(self.settings, self.segment, self)
         self.info_menu = InfoMenu(self.settings, self.segment, self)
 
-        self.normal_image_canvas = MyCanvas((10, 10), self.settings, self.info_menu, self)
-        self.colormap_image_canvas = ColormapCanvas((1, 10),  self.settings, self)
-        self.segmented_image_canvas = MyDrawCanvas((10, 10), self.settings, self.info_menu, self.segment, self)
+        self.normal_image_canvas = MyCanvas((12, 12), self.settings, self.info_menu, self)
+        self.colormap_image_canvas = ColormapCanvas((1, 12),  self.settings, self)
+        self.segmented_image_canvas = MyDrawCanvas((12, 12), self.settings, self.info_menu, self.segment, self)
         self.segmented_image_canvas.segment.add_segmentation_callback((self.update_object_information,))
         self.normal_image_canvas.update_elements_positions()
         self.segmented_image_canvas.update_elements_positions()
@@ -1659,7 +1661,7 @@ class MainWindow(QMainWindow):
         self.setStatusBar(self.statusBar)
         self.settings.add_image_callback((self.statusBar.showMessage, str))
 
-        self.setGeometry(0, 0,  1400, 720)
+        #self.setGeometry(0, 0,  1400, 720)
         icon = QIcon("icon.png")
         self.setWindowIcon(icon)
         menubar = self.menuBar()

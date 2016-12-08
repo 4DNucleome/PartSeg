@@ -5,7 +5,6 @@ if __name__ == '__main__':
     import logging
     logging.basicConfig(level=logging.INFO)
     myApp = QApplication(sys.argv)
-    print sys.argv
     wind = MainWindow("PartSeg", sys.argv)
     wind.show()
     myApp.exec_()
