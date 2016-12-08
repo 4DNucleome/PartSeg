@@ -1250,16 +1250,22 @@ class MainMenu(QWidget):
         self.settings.add_image_callback(self.set_layer_threshold)
         self.settings.add_change_layer_callback(self.changed_layer)
         self.load_button = QPushButton(self)
-        if QIcon.hasThemeIcon("document-open"):
+        if QIcon.hasThemeIcon("document-open") and False:
             self.load_button.setIcon(QIcon.fromTheme("document-open"))
         else:
-            self.load_button.setText("Open")
+            # self.load_button.setText("Open")
+            self.load_button.setIcon(QIcon("icons/document-open.png"))
+            self.load_button.setStyleSheet("padding: 3px;")
+            self.load_button.setToolTip("Open")
         self.load_button.clicked.connect(self.open_file)
         self.save_button = QPushButton(self)
-        if QIcon.hasThemeIcon("document-save"):
+        if QIcon.hasThemeIcon("document-save") and False:
             self.save_button.setIcon(QIcon.fromTheme("document-save"))
         else:
-            self.save_button.setText("Save")
+            self.save_button.setIcon(QIcon("icons/document-save-as.png"))
+            self.save_button.setStyleSheet("padding: 3px;")
+            self.save_button.setToolTip("Save")
+            # self.save_button.setText("Save")
         self.save_button.setDisabled(True)
         self.save_button.clicked.connect(self.save_file)
         self.mask_button = QPushButton("Mask manager", self)
@@ -1297,7 +1303,10 @@ class MainMenu(QWidget):
         self.profile_choose.addItem("<no profile>")
         self.profile_choose.addItems(list(self.settings.get_profile_list()))
         self.profile_choose.currentIndexChanged[str_type].connect(self.profile_changed)
-        self.advanced_button = QPushButton("Advanced", self)
+        self.advanced_button = QPushButton(self)  # "Advanced"
+        self.advanced_button.setIcon(QIcon("icons/configure.png"))
+        self.advanced_button.setStyleSheet("padding: 3px;")
+        self.advanced_button.setToolTip("Advanced settings and statistics")
         self.advanced_button.clicked.connect(self.open_advanced)
         self.advanced_window = None
 
@@ -1308,7 +1317,7 @@ class MainMenu(QWidget):
         self.colormap_choose.currentIndexChanged.connect(self.colormap_changed)
         self.settings.add_colormap_list_callback(self.colormap_list_changed)
         self.colormap_protect = False
-        self.setMinimumHeight(50)
+        # self.setMinimumHeight(50)
         self.update_elements_positions()
         self.one_line = True
         self.mask_window = None
@@ -1338,15 +1347,19 @@ class MainMenu(QWidget):
         # m_layout = QVBoxLayout()
         layout = QHBoxLayout()
         second_list = [self.gauss_check, self.draw_check, self.profile_choose,
-                       self.advanced_button, self.colormap_choose]
-        layout.addLayout(pack_layout(self.load_button, self.save_button, self.mask_button))
+                       self.colormap_choose]
+        #layout.addLayout(pack_layout(self.load_button, self.save_button, self.mask_button))
+        layout.addWidget(self.load_button)
+        layout.addWidget(self.save_button)
+        layout.addWidget(self.advanced_button)
+        layout.addWidget(self.mask_button)
         layout.addLayout(pack_layout(self.threshold_type, self.threshold_value))
         layout.addWidget(self.layer_thr_check)
         layout.addLayout(pack_layout(self.minimum_size_lab, self.minimum_size_value))
         for el in second_list:
             layout.addWidget(el)
         layout.addStretch()
-        self.setMinimumHeight(40)
+        #self.setMinimumHeight(50)
         layout.setContentsMargins(0, 0, 0, 0)
         # m_layout.addLayout(layout)
         # info_layout = QHBoxLayout()
