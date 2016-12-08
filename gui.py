@@ -1250,10 +1250,16 @@ class MainMenu(QWidget):
         self.settings.add_image_callback(self.set_layer_threshold)
         self.settings.add_change_layer_callback(self.changed_layer)
         self.load_button = QPushButton(self)
-        self.load_button.setIcon(QIcon.fromTheme("document-open"))
+        if QIcon.hasThemeIcon("document-open"):
+            self.load_button.setIcon(QIcon.fromTheme("document-open"))
+        else:
+            self.load_button.setText("Open")
         self.load_button.clicked.connect(self.open_file)
         self.save_button = QPushButton(self)
-        self.save_button.setIcon(QIcon.fromTheme("document-save"))
+        if QIcon.hasThemeIcon("document-save"):
+            self.save_button.setIcon(QIcon.fromTheme("document-save"))
+        else:
+            self.save_button.setText("Save")
         self.save_button.setDisabled(True)
         self.save_button.clicked.connect(self.save_file)
         self.mask_button = QPushButton("Mask manager", self)
