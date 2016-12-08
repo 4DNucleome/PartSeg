@@ -223,6 +223,8 @@ class Settings(object):
         self.open_filter = None
         self.save_directory = None
         self.save_filter = None
+        self.export_directory = None
+        self.export_filter = None
         self.spacing = [5, 5, 30]
         self.voxel_size = [5, 5, 30]
         self.size_unit = "nm"
@@ -264,7 +266,7 @@ class Settings(object):
         important_data = \
             class_to_dict(self, "open_directory", "open_filter", "save_directory", "save_filter", "spacing",
                           "voxel_size", "size_unit", "threshold", "color_map_name", "overlay", "minimum_size",
-                          "gauss_radius")
+                          "gauss_radius", "export_filter", "export_directory")
         important_data["profiles"] = [x.__dict__ for k, x in self.profiles.items()]
         with open(file_path, "w") as ff:
             json.dump(important_data, ff)
@@ -275,7 +277,7 @@ class Settings(object):
                 important_data = json.load(ff)
             dict_set_class(self, important_data, "open_directory", "open_filter", "save_directory", "save_filter",
                            "spacing", "voxel_size", "size_unit", "threshold", "color_map_name", "overlay",
-                           "minimum_size", "gauss_radius")
+                           "minimum_size", "gauss_radius", "export_filter", "export_directory")
             for prof in important_data["profiles"]:
                 self.profiles[prof["name"]] = Profile(**prof)
         except IOError:

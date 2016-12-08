@@ -12,6 +12,7 @@ import logging
 import re
 import sys
 import appdirs
+from PIL import Image
 from matplotlib import pyplot
 import matplotlib.colors as colors
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
@@ -20,7 +21,7 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget,\
     QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, \
     QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout,\
-    QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout
+    QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction
 
 from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, \
     calculate_statistic_from_image, MaskChange, Profile, UNITS_DICT, GaussUse
@@ -511,6 +512,13 @@ class MyCanvas(QWidget):
         # print(self.__class__.__name__, self.size(), resize_event.size(), resize_event.oldSize())
         # self.update_elements_positions()
         self.updateGeometry()
+
+    def get_image(self):
+        if len(self.base_image.shape) <= 2:
+            image_to_show = self.rgb_image
+        else:
+            image_to_show = self.rgb_image[self.layer_num]
+        return image_to_show
 
 
 class MyDrawCanvas(MyCanvas):
@@ -1301,6 +1309,7 @@ class MainMenu(QWidget):
         self.threshold_value.valueChanged.connect(self.no_profile)
         self.threshold_type.currentIndexChanged.connect(self.no_profile)
         self.layer_thr_check.stateChanged.connect(self.no_profile)
+        self.enable_list = [self.save_button, self.mask_button]
         # self.setStyleSheet(self.styleSheet()+";border: 1px solid black")
 
     def no_profile(self):
@@ -1460,8 +1469,8 @@ class MainMenu(QWidget):
                 # noinspection PyCallByClass
                 _ = QMessageBox.warning(self, "Load error", "Function do not implemented yet")
                 return
-            self.save_button.setEnabled(True)
-            self.mask_button.setEnabled(True)
+            for el in self.enable_list:
+                el.setEnabled(True)
             self.settings.advanced_settings_changed()
 
     def save_file(self):
@@ -1613,9 +1622,9 @@ class MainWindow(QMainWindow):
         self.main_menu = MainMenu(self.settings, self.segment, self)
         self.info_menu = InfoMenu(self.settings, self.segment, self)
 
-        self.normal_image_canvas = MyCanvas((8, 8), self.settings, self.info_menu, self)
-        self.colormap_image_canvas = ColormapCanvas((1, 8),  self.settings, self)
-        self.segmented_image_canvas = MyDrawCanvas((8, 8), self.settings, self.info_menu, self.segment, self)
+        self.normal_image_canvas = MyCanvas((10, 10), self.settings, self.info_menu, self)
+        self.colormap_image_canvas = ColormapCanvas((1, 10),  self.settings, self)
+        self.segmented_image_canvas = MyDrawCanvas((10, 10), self.settings, self.info_menu, self.segment, self)
         self.segmented_image_canvas.segment.add_segmentation_callback((self.update_object_information,))
         self.normal_image_canvas.update_elements_positions()
         self.segmented_image_canvas.update_elements_positions()
@@ -1653,9 +1662,51 @@ class MainWindow(QMainWindow):
         self.setGeometry(0, 0,  1400, 720)
         icon = QIcon("icon.png")
         self.setWindowIcon(icon)
+        menubar = self.menuBar()
+        menu = menubar.addMenu("File")
+
+        menu.addAction("Load").triggered.connect(self.main_menu.open_file)
+        save = menu.addAction("Save")
+        save.setDisabled(True)
+        save.triggered.connect(self.main_menu.save_file)
+        export = menu.addAction("Export")
+        export.setDisabled(True)
+        export.triggered.connect(self.export)
+        self.main_menu.enable_list.extend([save, export])
+        menu.addAction("Batch processing")
+        menu.addAction("Exit")
+        help_menu = menubar.addMenu("Help")
+        help_menu.addAction("Help")
+        help_menu.addAction("Credits")
 
         self.update_objects_positions()
         self.settings.add_image(tifffile.imread(os.path.join(file_folder, "clean_segment.tiff")), "")
+
+    def export(self):
+        dial = QFileDialog(self, "Save data")
+        if self.settings.export_directory is not None:
+            dial.setDirectory(self.settings.export_directory)
+        dial.setFileMode(QFileDialog.AnyFile)
+        filters = ["Labeled layer (*.png)", "Clean layer (*.png)"]
+        dial.setAcceptMode(QFileDialog.AcceptSave)
+        dial.setFilters(filters)
+        default_name = os.path.splitext(os.path.basename(self.settings.file_path))[0]
+        dial.selectFile(default_name)
+        if self.settings.export_filter is not None:
+            dial.selectNameFilter(self.settings.export_filter)
+        if dial.exec_():
+            file_path = str(dial.selectedFiles()[0])
+            selected_filter = str(dial.selectedFilter())
+            self.settings.export_filter = selected_filter
+            self.settings.export_directory = os.path.dirname(file_path)
+            if selected_filter == "Labeled layer (*.png)":
+                ie = ImageExporter(self.segmented_image_canvas, file_path, selected_filter, self)
+                ie.exec_()
+            elif selected_filter == "Clean layer (*.png)":
+                ie = ImageExporter(self.normal_image_canvas, file_path, selected_filter, self)
+                ie.exec_()
+            else:
+                _ = QMessageBox.critical(self, "Save error", "Option unknown")
 
     def showEvent(self, _):
         try:
@@ -1666,6 +1717,10 @@ class MainWindow(QMainWindow):
                     im = tifffile.imread(self.runtime_arguments[1])
                     if im.ndim < 4:
                         self.settings.add_image(im , self.runtime_arguments[1])
+                    else:
+                        return
+                for el in self.main_menu.enable_list:
+                    el.setEnabled(True)
         except Exception as e:
             logging.warning(e.message)
 
@@ -1725,3 +1780,69 @@ class MainWindow(QMainWindow):
         self.settings.dump(os.path.join(config_folder, "settings.json"))
         if self.main_menu.advanced_window is not None and self.main_menu.advanced_window.isVisible():
             self.main_menu.advanced_window.close()
+
+
+class ImageExporter(QDialog):
+    interpolation_dict = {"None": Image.NEAREST, "Box": Image.BOX, "Bilinear": Image.BILINEAR, "Hamming": Image.HAMMING,
+                          "Bicubic": Image.BICUBIC, "Lanczos": Image.LANCZOS}
+
+    def __init__(self, canvas, file_path, filter_name, parent):
+        print (filter_name)
+        super(ImageExporter, self).__init__(parent)
+        self.scale = QDoubleSpinBox(self)
+        self.scale.setSingleStep(1)
+        self.scale.setRange(0, 10)
+        self.scale.setValue(1)
+        self.scale.valueChanged[float].connect(self.scale_changed)
+        self.canvas = canvas
+        im = canvas.get_image()
+        self.im_shape = np.array([im.shape[1], im.shape[0]], dtype=np.uint32)
+        self.size_info = QLabel(self)
+        self.path = file_path
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel("Chosen filter: {}".format(filter_name)))
+        path_label = QLabel(file_path)
+        path_label.setWordWrap(True)
+        layout.addWidget(path_label)
+        image_scale_layout = QHBoxLayout()
+        image_scale_layout.addWidget(QLabel("Image scale"))
+        image_scale_layout.addWidget(self.scale)
+        layout.addLayout(image_scale_layout)
+        layout.addWidget(self.size_info)
+        image_interpolation_layout = QHBoxLayout()
+        image_interpolation_layout.addWidget(QLabel("Interpolation type"))
+        self.interp_type = QComboBox(self)
+        self.interp_type.addItems(list(self.interpolation_dict.keys()))
+        find = list(self.interpolation_dict.keys()).index("None")
+        print("Find", find)
+        if find != -1:
+            self.interp_type.setCurrentIndex(find)
+        image_interpolation_layout.addWidget(self.interp_type)
+        layout.addLayout(image_interpolation_layout)
+
+        self.save_button = QPushButton("Save", self)
+        self.save_button.clicked.connect(self.save_image)
+        self.cancel_button = QPushButton("Cancel", self)
+        self.cancel_button.clicked.connect(self.close)
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.cancel_button)
+        button_layout.addWidget(self.save_button)
+        layout.addLayout(button_layout)
+        self.setLayout(layout)
+
+    def scale_changed(self, val):
+        self.size_info.setText("image size: {}".format(np.array(self.im_shape*self.scale.value()).astype(np.uint32)))
+        if val == 0:
+            self.save_button.setDisabled(True)
+        else:
+            self.save_button.setEnabled(True)
+
+    def showEvent(self, _):
+        self.size_info.setText("image size: {}".format(self.im_shape))
+
+    def save_image(self):
+        im = Image.fromarray(self.canvas.get_image())
+        inter_type = self.interpolation_dict[self.interp_type.currentText()]
+        im2 = im.resize(np.array(self.im_shape*self.scale.value()).astype(np.uint32), inter_type)
+        im2.save(self.path)
+        self.close()
