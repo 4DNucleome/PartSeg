@@ -1789,26 +1789,58 @@ class ImageExporter(QDialog):
     def __init__(self, canvas, file_path, filter_name, parent):
         print (filter_name)
         super(ImageExporter, self).__init__(parent)
-        self.scale = QDoubleSpinBox(self)
-        self.scale.setSingleStep(1)
-        self.scale.setRange(0, 10)
-        self.scale.setValue(1)
-        self.scale.valueChanged[float].connect(self.scale_changed)
+        self.keep_ratio = QCheckBox("Keep oryginal ratio", self)
+        self.keep_ratio.setChecked(True)
+        self.scale_x = QDoubleSpinBox(self)
+        self.scale_x.setSingleStep(1)
+        self.scale_x.setRange(0, 10)
+        self.scale_x.setValue(1)
+        self.scale_x.valueChanged[float].connect(self.scale_x_changed)
+        self.scale_x.setDecimals(3)
+        self.scale_y = QDoubleSpinBox(self)
+        self.scale_y.setSingleStep(1)
+        self.scale_y.setRange(0, 10)
+        self.scale_y.setValue(1)
+        self.scale_y.valueChanged[float].connect(self.scale_y_changed)
+        self.scale_y.setDecimals(3)
+
+        self.size_x = QSpinBox(self)
+        self.size_x.setSingleStep(1)
+        self.size_x.setRange(0, 10000)
+        self.size_x.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.size_x.valueChanged[int].connect(self.size_x_changed)
+        self.size_y = QSpinBox(self)
+        self.size_y.setSingleStep(1)
+        self.size_y.setRange(0, 10000)
+        self.size_y.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.size_y.valueChanged[int].connect(self.size_y_changed)
+        self.x_change = False
+        self.y_change = False
+
+
         self.canvas = canvas
         im = canvas.get_image()
         self.im_shape = np.array([im.shape[1], im.shape[0]], dtype=np.uint32)
-        self.size_info = QLabel(self)
         self.path = file_path
         layout = QVBoxLayout()
         layout.addWidget(QLabel("Chosen filter: {}".format(filter_name)))
         path_label = QLabel(file_path)
         path_label.setWordWrap(True)
         layout.addWidget(path_label)
+        settings_layout = QGridLayout()
+        settings_layout.addWidget(self.keep_ratio, 0, 1)
+        settings_layout.addWidget(QLabel("Image scale"), 1, 0)
         image_scale_layout = QHBoxLayout()
-        image_scale_layout.addWidget(QLabel("Image scale"))
-        image_scale_layout.addWidget(self.scale)
-        layout.addLayout(image_scale_layout)
-        layout.addWidget(self.size_info)
+        image_scale_layout.addWidget(self.scale_x)
+        image_scale_layout.addWidget(self.scale_y)
+        settings_layout.addLayout(image_scale_layout, 1, 1)
+        settings_layout.addWidget(QLabel("Image size"), 2, 0)
+        image_size_layout = QHBoxLayout()
+        image_size_layout.addWidget(self.size_x)
+        image_size_layout.addWidget(self.size_y)
+        settings_layout.addLayout(image_size_layout, 2, 1)
+
+        layout.addLayout(settings_layout)
         image_interpolation_layout = QHBoxLayout()
         image_interpolation_layout.addWidget(QLabel("Interpolation type"))
         self.interp_type = QComboBox(self)
@@ -1830,19 +1862,53 @@ class ImageExporter(QDialog):
         layout.addLayout(button_layout)
         self.setLayout(layout)
 
-    def scale_changed(self, val):
-        self.size_info.setText("image size: {}".format(np.array(self.im_shape*self.scale.value()).astype(np.uint32)))
+    def scale_x_changed(self, val):
+        if self.keep_ratio.isChecked():
+            self.scale_y.setValue(val)
+        if self.x_change:
+            return
+        self.x_change = True
+        self.size_x.setValue(self.im_shape[0] * val)
         if val == 0:
             self.save_button.setDisabled(True)
         else:
             self.save_button.setEnabled(True)
+        self.x_change = False
+
+    def scale_y_changed(self, val):
+        if self.keep_ratio.isChecked():
+            self.scale_x.setValue(val)
+        if self.y_change:
+            return
+        self.y_change = True
+        self.size_y.setValue(self.im_shape[1] * val)
+        if val == 0:
+            self.save_button.setDisabled(True)
+        else:
+            self.save_button.setEnabled(True)
+        self.y_change = False
+
+    def size_x_changed(self, val):
+        if self.x_change:
+            return
+        self.x_change = True
+        self.scale_x.setValue(val/self.im_shape[0])
+        self.x_change = False
+
+    def size_y_changed(self, val):
+        if self.y_change:
+            return
+        self.y_change = True
+        self.scale_y.setValue(val / self.im_shape[1])
+        self.y_change = False
 
     def showEvent(self, _):
-        self.size_info.setText("image size: {}".format(self.im_shape))
+        self.size_x.setValue(self.im_shape[0])
+        self.size_y.setValue(self.im_shape[1])
 
     def save_image(self):
         im = Image.fromarray(self.canvas.get_image())
         inter_type = self.interpolation_dict[self.interp_type.currentText()]
-        im2 = im.resize(np.array(self.im_shape*self.scale.value()).astype(np.uint32), inter_type)
+        im2 = im.resize((self.size_x.value(), self.size_y.value()), inter_type)
         im2.save(self.path)
         self.close()
