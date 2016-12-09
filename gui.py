@@ -551,7 +551,8 @@ class MyCanvas(QWidget):
             image_to_show = self.rgb_image
         else:
             image_to_show = self.rgb_image[self.layer_num]
-        return image_to_show
+        pyplot.figure(self.my_figure_num)
+        return image_to_show, pyplot.xlim(), pyplot.ylim()
 
 
 class MyDrawCanvas(MyCanvas):
@@ -1884,10 +1885,13 @@ class ImageExporter(QDialog):
         self.x_change = False
         self.y_change = False
 
-
         self.canvas = canvas
-        im = canvas.get_image()
-        self.im_shape = np.array([im.shape[1], im.shape[0]], dtype=np.uint32)
+        im, ax_size, ay_size = canvas.get_image()
+        print(ax_size, ay_size)
+        # self.im_shape = np.array([im.shape[1], im.shape[0]], dtype=np.uint32)
+        self.ax_size = (ax_size[0] + 0.5, ax_size[1] + 0.5)
+        self.ay_size = (ay_size[1] + 0.5, ay_size[0] + 0.5)
+        self.im_shape = int(ax_size[1] - ax_size[0]), int(ay_size[0] - ay_size[1])
         self.path = file_path
         layout = QVBoxLayout()
         layout.addWidget(QLabel("Chosen filter: {}".format(filter_name)))
@@ -1974,8 +1978,12 @@ class ImageExporter(QDialog):
         self.size_y.setValue(self.im_shape[1])
 
     def save_image(self):
-        im = Image.fromarray(self.canvas.get_image())
-        inter_type = self.interpolation_dict[self.interp_type.currentText()]
-        im2 = im.resize((self.size_x.value(), self.size_y.value()), inter_type)
-        im2.save(self.path)
+        np_im, _, _ = self.canvas.get_image()
+        im = Image.fromarray(np_im)
+        x_scale = self.scale_x.value()
+        y_scale = self.scale_y.value()
+        inter_type = self.interpolation_dict[str(self.interp_type.currentText())]
+        im2 = im.resize((int(np_im.shape[1] * x_scale), int(np_im.shape[0] * y_scale)), inter_type)
+        im2.crop((int(self.ax_size[0] * x_scale), int(self.ay_size[0] * y_scale),
+                 int(self.ax_size[1] * x_scale), int(self.ay_size[1] * y_scale))).save(self.path)
         self.close()
