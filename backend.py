@@ -231,10 +231,12 @@ class Settings(object):
         self.advanced_menu_geometry = None
         self.file_path = ""
         self.protect = False
-        self.load(settings_path)
         self.prev_segmentation_settings = []
         self.next_segmentation_settings = []
         self.mask_dilate_radius = 0
+        self.scale_factor = 0.97
+        self.load(settings_path)
+
 
     def change_profile(self, name):
         prof = self.profiles[name]
@@ -266,7 +268,7 @@ class Settings(object):
         important_data = \
             class_to_dict(self, "open_directory", "open_filter", "save_directory", "save_filter", "spacing",
                           "voxel_size", "size_unit", "threshold", "color_map_name", "overlay", "minimum_size",
-                          "gauss_radius", "export_filter", "export_directory")
+                          "gauss_radius", "export_filter", "export_directory", "scale_factor")
         important_data["profiles"] = [x.__dict__ for k, x in self.profiles.items()]
         with open(file_path, "w") as ff:
             json.dump(important_data, ff)
@@ -277,7 +279,7 @@ class Settings(object):
                 important_data = json.load(ff)
             dict_set_class(self, important_data, "open_directory", "open_filter", "save_directory", "save_filter",
                            "spacing", "voxel_size", "size_unit", "threshold", "color_map_name", "overlay",
-                           "minimum_size", "gauss_radius", "export_filter", "export_directory")
+                           "minimum_size", "gauss_radius", "export_filter", "export_directory", "scale_factor")
             for prof in important_data["profiles"]:
                 self.profiles[prof["name"]] = Profile(**prof)
         except IOError:

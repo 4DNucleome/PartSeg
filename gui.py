@@ -325,7 +325,7 @@ class MyCanvas(QWidget):
 
     def zoom_scale(self, event):
         if self.zoom_button.isChecked() or self.move_button.isChecked():
-            scale_factor = 0.97
+            scale_factor = self.settings.scale_factor
             if event.button == "down":
                 scale_factor = 1/scale_factor
 
@@ -1001,6 +1001,13 @@ class AdvancedSettings(QWidget):
         gauss_layout.addWidget(QLabel("Gauss radius"))
         gauss_layout.addWidget(self.gauss_radius)
         gauss_layout.addStretch()
+        self.zoom_scale = QDoubleSpinBox(self)
+        self.zoom_scale.setRange(0.9, 1.1)
+        self.zoom_scale.setSingleStep(0.01)
+        self.zoom_scale.setDecimals(3)
+        self.zoom_scale.setValue(self.settings.scale_factor)
+        gauss_layout.addWidget(QLabel("Zoom scale"))
+        gauss_layout.addWidget(self.zoom_scale)
 
         vertical_layout.addLayout(overlay_layout)
         vertical_layout.addLayout(gauss_layout)
@@ -1090,8 +1097,14 @@ class AdvancedSettings(QWidget):
         self.component_overlay.setValue(self.settings.overlay)
         self.power_norm.setValue(self.settings.power_norm)
         self.gauss_radius.setValue(self.settings.gauss_radius)
+        self.zoom_scale.setValue(self.settings.scale_factor)
 
     def accept(self):
+        if self.zoom_scale.value() == 1:
+            r = QMessageBox.warning(self, "", "Scroll zoom is inactive\nwould you like to save settings?", QMessageBox.Ok | QMessageBox.Cancel)
+            if r == QMessageBox.Cancel:
+                return
+        self.settings.scale_factor = self.zoom_scale.value()
         self.settings.spacing = self.x_spacing.value(), self.y_spacing.value(), self.z_spacing.value()
         self.settings.voxel_size = self.x_size.value(), self.y_size.value(), self.z_size.value()
         self.settings.mask_overlay = self.mask_overlay.value()
