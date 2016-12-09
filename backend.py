@@ -237,7 +237,6 @@ class Settings(object):
         self.scale_factor = 0.97
         self.load(settings_path)
 
-
     def change_profile(self, name):
         prof = self.profiles[name]
         dict_set_class(self, prof.get_parameters(), *Profile.PARAMETERS)
@@ -732,6 +731,7 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
     :type centered_data: bool
     :type morph_op: MorphChange
     :type scale_mass: (int)|list[int]
+    :type rotate: str | None
     :return:
     """
     image = np.copy(settings.image)
