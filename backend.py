@@ -716,9 +716,11 @@ def get_segmented_data(image, settings, segment, with_std=False, mask_morph=None
         return image, segmentation, noise_std
     return image, segmentation
 
+ROTATION_MATRIX_DICT = {"x": np.diag([1, -1, -1]), "y": np.diag([-1, 1, -1]), "z": np.diag([-1, -1, 1])}
+
 
 def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
-                 centered_data=True, morph_op=MorphChange.no_morph, scale_mass=(1,)):
+                 centered_data=True, morph_op=MorphChange.no_morph, scale_mass=(1,), rotate=None):
     """
     :type file_path: str
     :type settings: Settings
@@ -806,7 +808,11 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
         swap_cut_img = np.swapaxes(cut_img, 0, 2)
         center_of_mass = af.density_mass_center(swap_cut_img, settings.spacing)
         model_orientation, eigen_values = af.find_density_orientation(swap_cut_img, settings.spacing, cutoff=2000)
-        rotation_matrix, rotation_axis, angel = af.get_rotation_parameters(model_orientation.T)
+        if rotate is not None:
+            rotation_matrix, rotation_axis, angel = \
+                af.get_rotation_parameters(np.dot(ROTATION_MATRIX_DICT[rotate], model_orientation.T))
+        else:
+            rotation_matrix, rotation_axis, angel = af.get_rotation_parameters(model_orientation.T)
         grp.attrs['rotation_axis'] = rotation_axis
         grp.attrs['rotation_angle'] = angel
         grp.attrs['origin'] = - np.dot(rotation_matrix, center_of_mass)

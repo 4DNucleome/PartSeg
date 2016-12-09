@@ -81,6 +81,7 @@ if __name__ == '__main__':
                         nargs='+', type=mpr.parse_op)
     parser.add_argument("-sp", "--scaled_mass", dest="scaled_mass", default=[1.0], nargs=1,
                         help="Scale mass", type=float)
+    parser.add_argument("-r", "--with_rotation", dest="with_rotation", const=True, default=False, action="store_const")
     args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING)
     files_to_proceed = glob.glob(os.path.join(args.source_folder[0], "*.gz"))
@@ -128,7 +129,23 @@ if __name__ == '__main__':
             settings.spacing = args.spacing
         if not os.path.isdir(os.path.join(args.destination_folder[0], rel_path)):
             os.makedirs(os.path.join(args.destination_folder[0], rel_path))
-
-        backend.save_to_cmap(os.path.join(args.destination_folder[0], rel_path, file_name), settings, segment,
-                             gauss_type=gauss_type, with_statistics=not args.no_statistics,
-                             centered_data=not args.no_center_data, morph_op=args.morph, scale_mass=args.scaled_mass)
+        if args.with_rotation:
+            image_dir = os.path.splitext(file_name)[0]
+            if not os.path.isdir(os.path.join(args.destination_folder[0], rel_path, image_dir)):
+                os.makedirs(os.path.join(args.destination_folder[0], rel_path, image_dir))
+            backend.save_to_cmap(os.path.join(args.destination_folder[0], rel_path, image_dir, file_name), settings, segment,
+                                 gauss_type=gauss_type, with_statistics=not args.no_statistics,
+                                 centered_data=not args.no_center_data, morph_op=args.morph,
+                                 scale_mass=args.scaled_mass)
+            for rot in ["x", "y", "z"]:
+                file_name2 = os.path.splitext(file_name)[0]
+                file_name2 += "_{}.cmap".format(rot)
+                backend.save_to_cmap(os.path.join(args.destination_folder[0], rel_path, image_dir, file_name2), settings,
+                                     segment,
+                                     gauss_type=gauss_type, with_statistics=not args.no_statistics,
+                                     centered_data=not args.no_center_data, morph_op=args.morph,
+                                     scale_mass=args.scaled_mass, rotate=rot)
+        else:
+            backend.save_to_cmap(os.path.join(args.destination_folder[0], rel_path, file_name), settings, segment,
+                                 gauss_type=gauss_type, with_statistics=not args.no_statistics,
+                                 centered_data=not args.no_center_data, morph_op=args.morph, scale_mass=args.scaled_mass)
