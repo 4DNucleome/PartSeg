@@ -12,6 +12,7 @@ import logging
 import re
 import sys
 import appdirs
+from math import copysign
 from PIL import Image
 from matplotlib import pyplot
 import matplotlib.colors as colors
@@ -320,6 +321,32 @@ class MyCanvas(QWidget):
         self.figure_canvas.mpl_connect('button_press_event', self.mouse_down)
         self.figure_canvas.mpl_connect('motion_notify_event', self.brightness_up)
         self.figure_canvas.mpl_connect('motion_notify_event', self.mouse_move)
+        self.figure_canvas.mpl_connect('scroll_event', self.zoom_scale)
+
+    def zoom_scale(self, event):
+        if self.zoom_button.isChecked() or self.move_button.isChecked():
+            scale_factor = 0.97
+            if event.button == "down":
+                scale_factor = 1/scale_factor
+
+            def new_pos(mid, pos):
+                return mid - (mid - pos) * scale_factor
+            fig = pyplot.figure(self.my_figure_num)
+            ax_size = pyplot.xlim()
+            ax_mid = np.mean(ax_size)
+            ay_size = pyplot.ylim()
+            ay_mid = np.mean(ay_size)
+            ax_size_n = (new_pos(event.xdata, ax_size[0]), new_pos(event.xdata, ax_size[1]))
+            ay_size_n = (new_pos(event.ydata, ay_size[0]), new_pos(event.ydata, ay_size[1]))
+
+            pyplot.xlim(ax_size_n)
+            pyplot.ylim(ay_size_n)
+            fig.canvas.draw()
+            if self.zoom_sync:
+                fig = pyplot.figure(self.sync_fig_num)
+                pyplot.xlim(ax_size_n)
+                pyplot.ylim(ay_size_n)
+                fig.canvas.draw()
 
     def brightness_up(self, event):
         if event.xdata is not None and event.ydata is not None:
@@ -329,10 +356,13 @@ class MyCanvas(QWidget):
             else:
                 img = self.base_image
             """:type img: np.ndarray"""
-            if img.ndim == 2:
-                self.info_object.update_brightness(img[y, x])
-            else:
-                self.info_object.update_brightness(img[self.layer_num, y, x])
+            try:
+                if img.ndim == 2:
+                    self.info_object.update_brightness(img[y, x])
+                else:
+                    self.info_object.update_brightness(img[self.layer_num, y, x])
+            except IndexError:
+                pass
         else:
             self.info_object.update_brightness(None)
 
@@ -430,11 +460,14 @@ class MyCanvas(QWidget):
         self.toolbar.zoom()
 
     def reset(self):
-        self.toolbar.home()
+        # self.toolbar.home()
+        fig = pyplot.figure(self.my_figure_num)
+        ax_size = (-0.5, self.base_image.shape[2]-0.5)
+        ay_size = (self.base_image.shape[1]-0.5, -0.5)
+        pyplot.xlim(ax_size)
+        pyplot.ylim(ay_size)
+        fig.canvas.draw()
         if self.zoom_sync:
-            pyplot.figure(self.my_figure_num)
-            ax_size = pyplot.xlim()
-            ay_size = pyplot.ylim()
             fig = pyplot.figure(self.sync_fig_num)
             pyplot.xlim(ax_size)
             pyplot.ylim(ay_size)
