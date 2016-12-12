@@ -12,21 +12,19 @@ import logging
 import re
 import sys
 import appdirs
-from math import copysign
 from PIL import Image
 from matplotlib import pyplot
 import matplotlib.colors as colors
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget,\
+from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget, \
     QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, \
-    QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout,\
-    QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QMenu, QAction
+    QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
+    QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QMenu, QAction, QListWidgetItem
 
 from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, \
-    calculate_statistic_from_image, MaskChange, Profile, UNITS_DICT, GaussUse, SettingsProfile
-
+    calculate_statistic_from_image, MaskChange, Profile, UNITS_DICT, GaussUse, StatisticProfile
 
 __author__ = "Grzegorz Bokota"
 
@@ -34,6 +32,7 @@ app_name = "PartSeg"
 app_author = "LFSG"
 
 config_folder = appdirs.user_data_dir(app_name, app_author)
+logging.info(config_folder)
 
 if not os.path.isdir(config_folder):
     os.makedirs(config_folder)
@@ -49,6 +48,7 @@ big_font_size = 15
 button_margin = 10
 button_height = 30
 button_small_dist = -2
+
 
 # from http://stackoverflow.com/questions/5671354/how-to-programmatically-make-a-horizontal-line-in-qt
 
@@ -66,6 +66,7 @@ def v_line():
     toto.setFrameShadow(QFrame.Sunken)
     return toto
 
+
 if platform.system() == "Linux":
     big_font_size = 14
 
@@ -79,20 +80,6 @@ if platform.system() == "Windows":
     big_font_size = 12
 
 
-def h_line():
-    toto = QFrame()
-    toto.setFrameShape(QFrame.HLine)
-    toto.setFrameShadow(QFrame.Sunken)
-    return toto
-
-
-def v_line():
-    toto = QFrame()
-    toto.setFrameShape(QFrame.VLine)
-    toto.setFrameShadow(QFrame.Sunken)
-    return toto
-
-
 def set_position(elem, previous, dist=10):
     pos_y = previous.pos().y()
     if platform.system() == "Darwin" and isinstance(elem, QLineEdit):
@@ -102,7 +89,7 @@ def set_position(elem, previous, dist=10):
     if platform.system() == "Darwin" and isinstance(previous, QSlider):
         pos_y -= 10
     if platform.system() == "Darwin" and isinstance(elem, QSpinBox):
-            pos_y += 7
+        pos_y += 7
     if platform.system() == "Darwin" and isinstance(previous, QSpinBox):
         pos_y -= 7
     elem.move(previous.pos().x() + previous.size().width() + dist, pos_y)
@@ -128,17 +115,17 @@ def set_button(button, previous_element, dist=10, super_space=0):
         text_list = text.split("\n")
     if isinstance(button, QSpinBox):
         button.setAlignment(Qt.AlignRight)
-        text_list = [str(button.maximum())+'aa']
+        text_list = [str(button.maximum()) + 'aa']
         print(text_list)
     width = 0
     for txt in text_list:
         width = max(width, font_met.boundingRect(txt).width())
     if isinstance(button, QPushButton):
-        button.setFixedWidth(width + button_margin+super_space)
+        button.setFixedWidth(width + button_margin + super_space)
     if isinstance(button, QLabel):
         button.setFixedWidth(width + super_space)
     if isinstance(button, QComboBox):
-        button.setFixedWidth(width + button_margin+10)
+        button.setFixedWidth(width + button_margin + 10)
     if isinstance(button, QSpinBox):
         print(width)
         button.setFixedWidth(width)
@@ -416,27 +403,26 @@ class MyCanvas(QWidget):
         fig = pyplot.figure(self.my_figure_num)
         xlim = pyplot.xlim()
         ylim = pyplot.ylim()
-        cr = CropSet(shape, ((xlim[0]+0.5, xlim[1]+0.5), (ylim[1]+0.5, ylim[0]+0.5)))
+        cr = CropSet(shape, ((xlim[0] + 0.5, xlim[1] + 0.5), (ylim[1] + 0.5, ylim[0] + 0.5)))
         if cr.exec_():
             res = cr.get_range()
             logging.debug("crop {}".format(res))
-            pyplot.xlim(res[0][0]-0.5, res[0][1]-0.5)
-            pyplot.ylim(res[1][1]-0.5, res[1][0]-0.5)
+            pyplot.xlim(res[0][0] - 0.5, res[0][1] - 0.5)
+            pyplot.ylim(res[1][1] - 0.5, res[1][0] - 0.5)
             fig.canvas.draw()
 
     def zoom_scale(self, event):
         if self.zoom_button.isChecked() or self.move_button.isChecked():
             scale_factor = self.settings.scale_factor
             if event.button == "down":
-                scale_factor = 1/scale_factor
+                scale_factor = 1 / scale_factor
 
             def new_pos(mid, pos):
                 return mid - (mid - pos) * scale_factor
+
             fig = pyplot.figure(self.my_figure_num)
             ax_size = pyplot.xlim()
-            ax_mid = np.mean(ax_size)
             ay_size = pyplot.ylim()
-            ay_mid = np.mean(ay_size)
             ax_size_n = (new_pos(event.xdata, ax_size[0]), new_pos(event.xdata, ax_size[1]))
             ay_size_n = (new_pos(event.ydata, ay_size[0]), new_pos(event.ydata, ay_size[1]))
 
@@ -563,8 +549,8 @@ class MyCanvas(QWidget):
     def reset(self):
         # self.toolbar.home()
         fig = pyplot.figure(self.my_figure_num)
-        ax_size = (-0.5, self.base_image.shape[2]-0.5)
-        ay_size = (self.base_image.shape[1]-0.5, -0.5)
+        ax_size = (-0.5, self.base_image.shape[2] - 0.5)
+        ay_size = (self.base_image.shape[1] - 0.5, -0.5)
         pyplot.xlim(ax_size)
         pyplot.ylim(ay_size)
         fig.canvas.draw()
@@ -587,8 +573,8 @@ class MyCanvas(QWidget):
         self.ax_im = None
         self.update_rgb_image()
         if len(image.shape) > 2:
-            self.slider.setRange(0, image.shape[0]-1)
-            self.slider.setValue(int(image.shape[0]/2))
+            self.slider.setRange(0, image.shape[0] - 1)
+            self.slider.setValue(int(image.shape[0] / 2))
         else:
             self.update_image_view()
 
@@ -608,7 +594,7 @@ class MyCanvas(QWidget):
         if self.mark_mask.isChecked() and self.settings.mask is not None:
             zero_mask = self.settings.mask == 0
             if self.settings.threshold_type == UPPER:
-                float_image[zero_mask] =\
+                float_image[zero_mask] = \
                     (1 - self.settings.mask_overlay) * float_image[zero_mask] + self.settings.mask_overlay
             else:
                 float_image[zero_mask] = \
@@ -656,10 +642,11 @@ class MyCanvas(QWidget):
         return image_to_show, pyplot.xlim(), pyplot.ylim()
 
 
-class MyDrawCanvas(MyCanvas):
+class MyDrawCanvas(object, object, MyCanvas):
     """
     :type segmentation: np.ndarray
     """
+
     def __init__(self, figure_size, settings, info_object, segment, *args):
         super(MyDrawCanvas, self).__init__(figure_size, settings, info_object, *args)
         self.draw_canvas = DrawObject(settings, segment, self.draw_update)
@@ -789,8 +776,8 @@ class MyDrawCanvas(MyCanvas):
         self.segment.set_image(image)
         self.update_rgb_image()
         if len(image.shape) > 2:
-            self.slider.setRange(0, image.shape[0]-1)
-            self.slider.setValue(int(image.shape[0]/2))
+            self.slider.setRange(0, image.shape[0] - 1)
+            self.slider.setValue(int(image.shape[0] / 2))
         else:
             self.update_image_view()
 
@@ -852,8 +839,8 @@ class DrawObject(object):
             pos = pos[1:]
         self.click_history.append((pos, self.draw_canvas[pos]))
         self.draw_canvas[pos] = self.value
-        self.rgb_image[pos] = self.original_rgb_image[pos] * (1-self.settings.overlay) + \
-            self.draw_colors[self.value] * self.settings.overlay
+        self.rgb_image[pos] = self.original_rgb_image[pos] * (1 - self.settings.overlay) + \
+                              self.draw_colors[self.value] * self.settings.overlay
 
     def erase(self, pos):
         if len(self.original_rgb_image.shape) == 3:
@@ -892,7 +879,7 @@ class DrawObject(object):
             f_x, f_y = event.xdata + 0.5, event.ydata + 0.5
             # ix, iy = int(f_x), int(f_y)
             max_dist = max(abs(f_x - self.f_x), abs(f_y - self.f_y))
-            rep_num = int(max_dist * 2)+2
+            rep_num = int(max_dist * 2) + 2
             points = set()
             for fx, fy in zip(np.linspace(f_x, self.f_x, num=rep_num), np.linspace(f_y, self.f_y, num=rep_num)):
                 points.add((int(fx), int(fy)))
@@ -917,6 +904,7 @@ class ColormapSettings(QWidget):
     """
     :type cmap_list: list[QCheckBox]
     """
+
     def __init__(self, settings, parent=None):
         super(ColormapSettings, self).__init__(parent)
         self.accept = QPushButton("Accept", self)
@@ -985,10 +973,10 @@ class ColormapSettings(QWidget):
         elem.move(0, 0)
         prev = elem
         for count, elem in enumerate(self.cmap_list[1:]):
-            if ((count+1) % columns) == 0:
-                elem.move(0, prev.pos().y()+20)
+            if ((count + 1) % columns) == 0:
+                elem.move(0, prev.pos().y() + 20)
             else:
-                elem.move(prev.pos().x()+self.label_len+10, prev.pos().y())
+                elem.move(prev.pos().x() + self.label_len + 10, prev.pos().y())
             prev = elem
         height = prev.pos().y() + 20
         self.scroll_widget.resize(columns * (self.label_len + 10), height)
@@ -1203,7 +1191,8 @@ class AdvancedSettings(QWidget):
 
     def accept(self):
         if self.zoom_scale.value() == 1:
-            r = QMessageBox.warning(self, "", "Scroll zoom is inactive\nwould you like to save settings?", QMessageBox.Ok | QMessageBox.Cancel)
+            r = QMessageBox.warning(self, "", "Scroll zoom is inactive\nwould you like to save settings?",
+                                    QMessageBox.Ok | QMessageBox.Cancel)
             if r == QMessageBox.Cancel:
                 return
         self.settings.scale_factor = self.zoom_scale.value()
@@ -1358,9 +1347,85 @@ class MaskWindow(QDialog):
         self.close()
 
 
+class MultipleInput(QDialog):
+    def __init__(self, text, help_text, objects_list=None):
+        if objects_list is None:
+            objects_list = help_text
+            help_text = ""
+
+        def create_input_float(obj):
+            res = QDoubleSpinBox(obj)
+            res.setRange(-1000000, 1000000)
+            res.setValue(0)
+            return res
+
+        def create_input_int(obj):
+            res = QSpinBox(obj)
+            res.setRange(-1000000, 1000000)
+            res.setValue(0)
+            return res
+
+        field_dict = {str: QLineEdit, float: create_input_float, int: create_input_int}
+        QDialog.__init__(self)
+        ok_butt = QPushButton("Ok", self)
+        cancel_butt = QPushButton("Cancel", self)
+        self.object_dict = dict()
+        self.result = None
+        ok_butt.clicked.connect(self.accept_response)
+        cancel_butt.clicked.connect(self.close)
+        layout = QGridLayout()
+        layout.setAlignment(Qt.AlignVCenter)
+        for i, (name, type_of) in enumerate(objects_list):
+            name_label = QLabel(name)
+            name_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            layout.addWidget(name_label, i, 0)
+            item = field_dict[type_of](self)
+            self.object_dict[name] = (type_of, item)
+            layout.addWidget(item, i, 1)
+        main_layout = QVBoxLayout()
+        main_text = QLabel(text)
+        main_text.setWordWrap(True)
+        font = QApplication.font()
+        font.setBold(True)
+        main_text.setFont(font)
+        main_layout.addWidget(main_text)
+        if help_text != "":
+            help_label = QLabel(help_text)
+            help_label.setWordWrap(True)
+            main_layout.addWidget(help_label)
+        main_layout.addLayout(layout)
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(cancel_butt)
+        button_layout.addStretch()
+        button_layout.addWidget(ok_butt)
+        main_layout.addLayout(button_layout)
+        self.setLayout(main_layout)
+
+    def accept_response(self):
+        res = dict()
+        for name, (type_of, item) in self.object_dict.items():
+            if type_of == str:
+                val = str(item.text())
+                if val.strip() != "":
+                    res[name] = val
+                else:
+                    QMessageBox.warning("Not all fields filled")
+                    return
+            else:
+                val = type_of(item.value())
+                res[name] = val
+        self.result = res
+        self.accept()
+
+    @property
+    def get_response(self):
+        return self.result
+
+
 class StatisticsSettings(QWidget):
     def __init__(self, settings):
         super(StatisticsSettings, self).__init__()
+        self.chosen_element = None
         self.settings = settings
         self.profile_list = QListWidget(self)
         self.profile_description = QLabel(self)
@@ -1368,26 +1433,40 @@ class StatisticsSettings(QWidget):
         self.profile_options_chosen = QListWidget()
         self.choose_butt = QPushButton(u"→", self)
         self.discard_butt = QPushButton(u"←", self)
+        self.proportion_butt = QPushButton(u"∺", self)
+        self.proportion_butt.setToolTip("Create proportion from two statistics")
         self.move_up = QPushButton(u"↑", self)
         self.move_down = QPushButton(u"↓", self)
         self.save_butt = QPushButton("Save statistic profile")
         self.save_butt_with_name = QPushButton("Save statistic profile with name")
         self.reset_butt = QPushButton("Reset")
+        self.soft_reset_butt = QPushButton("Remove user statistics")
         self.profile_name = QLineEdit(self)
+        self.reversed_brightness = QCheckBox("Reversed image", self)
+        self.delete_profile_butt = QPushButton("Delete profile")
+        self.restore_builtin_profiles = QPushButton("Restore builtin profiles")
 
         self.choose_butt.setDisabled(True)
         self.choose_butt.clicked.connect(self.choose_option)
         self.discard_butt.setDisabled(True)
         self.discard_butt.clicked.connect(self.discard_option)
+        self.proportion_butt.setDisabled(True)
+        self.proportion_butt.clicked.connect(self.choose_element)
         self.save_butt.setDisabled(True)
+        self.save_butt.clicked.connect(self.save_action)
         self.save_butt_with_name.setDisabled(True)
+        self.save_butt_with_name.clicked.connect(self.named_save_action)
         self.profile_name.textChanged.connect(self.name_changed)
         self.move_down.setDisabled(True)
         self.move_down.clicked.connect(self.move_down_fun)
         self.move_up.setDisabled(True)
         self.move_up.clicked.connect(self.move_up_fun)
         self.reset_butt.clicked.connect(self.reset_action)
+        self.soft_reset_butt.clicked.connect(self.soft_reset)
+        self.delete_profile_butt.setDisabled(True)
+        self.delete_profile_butt.clicked.connect(self.delete_profile)
 
+        self.profile_list.itemSelectionChanged.connect(self.profile_chosen)
         self.profile_options.itemSelectionChanged.connect(self.create_selection_changed)
         self.profile_options_chosen.itemSelectionChanged.connect(self.create_selection_chosen_changed)
 
@@ -1396,15 +1475,21 @@ class StatisticsSettings(QWidget):
         profile_layout = QHBoxLayout()
         profile_layout.addWidget(self.profile_list)
         profile_layout.addWidget(self.profile_description)
+        profile_buttons_layout = QHBoxLayout()
+        profile_buttons_layout.addWidget(self.delete_profile_butt)
+        profile_buttons_layout.addWidget(self.restore_builtin_profiles)
+        profile_buttons_layout.addStretch()
         layout.addLayout(profile_layout)
+        layout.addLayout(profile_buttons_layout)
         heading_layout = QHBoxLayout()
-        heading_layout.addWidget(QLabel("Create profile"))
-        heading_layout.addWidget(h_line())
+        heading_layout.addWidget(QLabel("Create profile"), 1)
+        heading_layout.addWidget(h_line(), 6)
         layout.addLayout(heading_layout)
         name_layout = QHBoxLayout()
         name_layout.addWidget(QLabel("Profile name:"))
         name_layout.addWidget(self.profile_name)
         name_layout.addStretch()
+        name_layout.addWidget(self.reversed_brightness)
         layout.addLayout(name_layout)
         create_layout = QHBoxLayout()
         create_layout.addWidget(self.profile_options)
@@ -1412,6 +1497,7 @@ class StatisticsSettings(QWidget):
         butt_op_layout.addStretch()
         butt_op_layout.addWidget(self.choose_butt)
         butt_op_layout.addWidget(self.discard_butt)
+        butt_op_layout.addWidget(self.proportion_butt)
         butt_op_layout.addStretch()
         create_layout.addLayout(butt_op_layout)
         create_layout.addWidget(self.profile_options_chosen)
@@ -1424,26 +1510,61 @@ class StatisticsSettings(QWidget):
         layout.addLayout(create_layout)
         save_butt_layout = QHBoxLayout()
         save_butt_layout.addWidget(self.reset_butt)
+        save_butt_layout.addWidget(self.soft_reset_butt)
         save_butt_layout.addStretch()
         save_butt_layout.addWidget(self.save_butt)
         save_butt_layout.addWidget(self.save_butt_with_name)
         layout.addLayout(save_butt_layout)
         self.setLayout(layout)
 
+        for name, (_, help_text, _) in sorted(StatisticProfile.STATISTIC_DICT.items()):
+            lw = QListWidgetItem(name)
+            lw.setToolTip(help_text)
+            self.profile_options.addItem(lw)
+        self.profile_list.addItems(list(sorted([x[0] for x in self.settings.statistics_profile_dict.items()])))
+
+    def delete_profile(self):
+        row = self.profile_list.currentRow()
+        item = self.profile_list.currentItem()
+        del self.settings.statistics_profile_dict[str(item.text())]
+        self.profile_list.takeItem(row)
+        if self.profile_list.count() == 0:
+            self.delete_profile_butt.setDisabled(True)
+
+    def profile_chosen(self):
+        self.delete_profile_butt.setEnabled(True)
+
     def create_selection_changed(self):
         self.choose_butt.setEnabled(True)
+        self.proportion_butt.setEnabled(True)
+
+    def choose_element(self):
+        if self.chosen_element is None:
+            item = self.profile_options.currentItem()
+            item.setIcon(QIcon("icons/task-accepted.png"))
+            self.chosen_element = item
+        elif self.profile_options.currentItem() == self.chosen_element:
+            self.chosen_element.setIcon(QIcon())
+            self.chosen_element = None
+        else:
+            lw = QListWidgetItem("{}/{}".format(self.chosen_element.text(), self.profile_options.currentItem().text()))
+            lw.setToolTip("User defined")
+            self.profile_options_chosen.addItem(lw)
+            self.chosen_element.setIcon(QIcon())
+            self.chosen_element = None
 
     def create_selection_chosen_changed(self):
+        print(self.profile_options_chosen.count())
         if self.profile_options_chosen.count() == 0:
             self.move_down.setDisabled(True)
-            self.move_up.setEnabled(True)
+            self.move_up.setDisabled(True)
             return
         self.discard_butt.setEnabled(True)
         if self.profile_options_chosen.currentRow() != 0:
             self.move_up.setEnabled(True)
         else:
             self.move_up.setDisabled(True)
-        if self.profile_options_chosen.currentRow() != self.profile_options_chosen.count()-1:
+        if self.profile_options_chosen.currentRow() != self.profile_options_chosen.count() - 1:
             self.move_down.setEnabled(True)
         else:
             self.move_down.setDisabled(True)
@@ -1456,42 +1577,82 @@ class StatisticsSettings(QWidget):
     def move_down_fun(self):
         row = self.profile_options_chosen.currentRow()
         item = self.profile_options_chosen.takeItem(row)
-        self.profile_options_chosen.insertItem(row+1, item)
-        self.profile_options_chosen.setCurrentRow(row+1)
+        self.profile_options_chosen.insertItem(row + 1, item)
+        self.profile_options_chosen.setCurrentRow(row + 1)
         self.create_selection_chosen_changed()
 
     def move_up_fun(self):
         row = self.profile_options_chosen.currentRow()
         item = self.profile_options_chosen.takeItem(row)
-        self.profile_options_chosen.insertItem(row-1, item)
-        self.profile_options_chosen.setCurrentRow(row-1)
+        self.profile_options_chosen.insertItem(row - 1, item)
+        self.profile_options_chosen.setCurrentRow(row - 1)
         self.create_selection_chosen_changed()
 
     def name_changed(self):
         if self.good_name() and self.profile_options_chosen.count() > 0:
             self.save_butt.setEnabled(True)
+            self.save_butt_with_name.setEnabled(True)
         else:
             self.save_butt.setDisabled(True)
+            self.save_butt_with_name.setDisabled(True)
 
     def choose_option(self):
         selected_item = self.profile_options.currentItem()
         selected_row = self.profile_options.currentRow()
-        self.profile_options_chosen.addItem(selected_item.text())
-        self.profile_options.takeItem(selected_row)
+        arguments = StatisticProfile.STATISTIC_DICT[str(selected_item.text())].arguments
+        if arguments is not None:
+            val_dialog = MultipleInput("Set parameters:",
+                                       StatisticProfile.STATISTIC_DICT[str(selected_item.text())].help_message,
+                                       list(arguments.items()))
+            if val_dialog.exec_():
+                res = ""
+                for name, val in val_dialog.get_response.items():
+                    res += "{}={},".format(name, val)
+                lw = QListWidgetItem(selected_item.text() + "[{}]".format(res[:-1]))
+            else:
+                return
+        else:
+            lw = QListWidgetItem(selected_item.text())
+            self.profile_options.takeItem(selected_row)
+        lw.setToolTip(selected_item.toolTip())
+        self.profile_options_chosen.addItem(lw)
         if self.good_name():
             self.save_butt.setEnabled(True)
+            self.save_butt_with_name.setEnabled(True)
         if self.profile_options.count() == 0:
             self.choose_butt.setDisabled(True)
 
     def discard_option(self):
         selected_item = self.profile_options_chosen.currentItem()
         selected_row = self.profile_options_chosen.currentRow()
-        self.profile_options.addItem(selected_item.text())
+        lw = QListWidgetItem(selected_item.text())
+        lw.setToolTip(selected_item.toolTip())
+        self.profile_options.addItem(lw)
         self.profile_options_chosen.takeItem(selected_row)
         if self.profile_options_chosen.count() == 0:
             self.save_butt.setDisabled(True)
+            self.save_butt_with_name.setDisabled(True)
+
             self.discard_butt.setDisabled(True)
         self.create_selection_chosen_changed()
+
+    def save_action(self):
+        selected_values = []
+        for i in range(self.profile_options_chosen.count()):
+            txt = str(self.profile_options_chosen.item(i).text())
+            selected_values.append((txt, txt))
+        stat_prof = StatisticProfile(str(self.profile_name.text()), selected_values, False, self.settings)
+        self.settings.statistics_profile_dict[stat_prof.name] = stat_prof
+        self.profile_list.addItem(stat_prof.name)
+
+    def named_save_action(self):
+        selected_values = []
+        for i in range(self.profile_options_chosen.count()):
+            txt = str(self.profile_options_chosen.item(i).text())
+            selected_values.append((txt, str))
+        val_dialog = MultipleInput("Set fields name", list(selected_values))
+        if val_dialog.exec_():
+            pass
 
     def reset_action(self):
         self.profile_options.clear()
@@ -1501,13 +1662,19 @@ class StatisticsSettings(QWidget):
         self.save_butt_with_name.setDisabled(True)
         self.move_down.setDisabled(True)
         self.move_up.setDisabled(True)
+        self.proportion_butt.setDisabled(True)
         self.choose_butt.setDisabled(True)
         self.discard_butt.setDisabled(True)
-        self.profile_options.addItems(list(sorted(SettingsProfile.SETTINGS_DICT.keys())))
+        self.profile_options.addItems(list(sorted(StatisticProfile.STATISTIC_DICT.keys())))
 
-    def showEvent(self, _):
-        self.profile_options.addItems(list(sorted(SettingsProfile.SETTINGS_DICT.keys())))
-        self.profile_list.addItems(list(sorted([x.name for x in self.settings.statistics_profile_list])))
+    def soft_reset(self):
+        shift = 0
+        for i in range(self.profile_options.count()):
+            item = self.profile_options.item(i - shift)
+            if str(item.text()) not in StatisticProfile.STATISTIC_DICT:
+                self.profile_options.takeItem(i - shift)
+                shift += 1
+        self.create_selection_changed()
 
 
 class AdvancedWindow(QTabWidget):
@@ -1650,7 +1817,7 @@ class MainMenu(QWidget):
         layout = QHBoxLayout()
         second_list = [self.gauss_check, self.draw_check, self.profile_choose,
                        self.colormap_choose]
-        #layout.addLayout(pack_layout(self.load_button, self.save_button, self.mask_button))
+        # layout.addLayout(pack_layout(self.load_button, self.save_button, self.mask_button))
         layout.addWidget(self.load_button)
         layout.addWidget(self.save_button)
         layout.addWidget(self.advanced_button)
@@ -1661,7 +1828,7 @@ class MainMenu(QWidget):
         for el in second_list:
             layout.addWidget(el)
         layout.addStretch()
-        #self.setMinimumHeight(50)
+        # self.setMinimumHeight(50)
         layout.setContentsMargins(0, 0, 0, 0)
         # m_layout.addLayout(layout)
         # info_layout = QHBoxLayout()
@@ -1739,7 +1906,7 @@ class MainMenu(QWidget):
             dial.setDirectory(self.settings.open_directory)
         dial.setFileMode(QFileDialog.ExistingFile)
         filters = ["raw image (*.tiff *.tif *.lsm)", "image with mask (*.tiff *.tif *.lsm *json)",
-                   "saved project (*.gz *.bz2)",  "Profiles (*.json)"]
+                   "saved project (*.gz *.bz2)", "Profiles (*.json)"]
         dial.setFilters(filters)
         if self.settings.open_filter is not None:
             dial.selectNameFilter(self.settings.open_filter)
@@ -1760,7 +1927,7 @@ class MainMenu(QWidget):
                     num, state = QInputDialog.getInt(self, "Get channel number",
                                                      "Image shape: {}\nchannel position: {}\nWitch channel:".format(
                                                          im.shape, index
-                                                     ), 0, 0, im.shape[index]-1)
+                                                     ), 0, 0, im.shape[index] - 1)
                     if state:
                         im = im.take(num, axis=index)
                     else:
@@ -1946,7 +2113,7 @@ class MainWindow(QMainWindow):
         self.info_menu = InfoMenu(self.settings, self.segment, self)
 
         self.normal_image_canvas = MyCanvas((12, 12), self.settings, self.info_menu, self)
-        self.colormap_image_canvas = ColormapCanvas((1, 12),  self.settings, self)
+        self.colormap_image_canvas = ColormapCanvas((1, 12), self.settings, self)
         self.segmented_image_canvas = MyDrawCanvas((12, 12), self.settings, self.info_menu, self.segment, self)
         self.segmented_image_canvas.segment.add_segmentation_callback((self.update_object_information,))
         self.normal_image_canvas.update_elements_positions()
@@ -1982,7 +2149,7 @@ class MainWindow(QMainWindow):
         self.setStatusBar(self.statusBar)
         self.settings.add_image_callback((self.statusBar.showMessage, str))
 
-        #self.setGeometry(0, 0,  1400, 720)
+        # self.setGeometry(0, 0,  1400, 720)
         icon = QIcon("icon.png")
         self.setWindowIcon(icon)
         menubar = self.menuBar()
@@ -2039,7 +2206,7 @@ class MainWindow(QMainWindow):
                 elif os.path.splitext(self.runtime_arguments[1])[1] in ['.tif', '.tiff', '*.lsm']:
                     im = tifffile.imread(self.runtime_arguments[1])
                     if im.ndim < 4:
-                        self.settings.add_image(im , self.runtime_arguments[1])
+                        self.settings.add_image(im, self.runtime_arguments[1])
                     else:
                         return
                 for el in self.main_menu.enable_list:
@@ -2084,14 +2251,14 @@ class MainWindow(QMainWindow):
         # noinspection PyTypeChecker
         set_position(self.segmented_image_canvas, self.colormap_image_canvas, 0)
         col_pos = self.colormap_image_canvas.pos()
-        self.slider_swap.move(col_pos.x()+5,
-                              col_pos.y()+self.colormap_image_canvas.height()-35)
+        self.slider_swap.move(col_pos.x() + 5,
+                              col_pos.y() + self.colormap_image_canvas.height() - 35)
         # self.infoText.move()
 
         norm_pos = self.normal_image_canvas.pos()
         self.object_count.move(norm_pos.x(),
-                               norm_pos.y()+self.normal_image_canvas.height()+20)
-        self.object_size_list.move(self.object_count.pos().x()+150, self.object_count.pos().y())
+                               norm_pos.y() + self.normal_image_canvas.height() + 20)
+        self.object_size_list.move(self.object_count.pos().x() + 150, self.object_count.pos().y())
 
     def update_object_information(self, info_array):
         """:type info_array: np.ndarray"""
@@ -2106,11 +2273,12 @@ class MainWindow(QMainWindow):
 
 
 class ImageExporter(QDialog):
-    interpolation_dict = {"None": Image.NEAREST, "Bilinear": Image.BILINEAR, 
-                          "Bicubic": Image.BICUBIC, "Lanczos": Image.LANCZOS} #  "Box": Image.BOX, "Hamming": Image.HAMMING,
+    interpolation_dict = {"None": Image.NEAREST, "Bilinear": Image.BILINEAR,
+                          "Bicubic": Image.BICUBIC,
+                          "Lanczos": Image.LANCZOS}  # "Box": Image.BOX, "Hamming": Image.HAMMING,
 
     def __init__(self, canvas, file_path, filter_name, parent):
-        print (filter_name)
+        print(filter_name)
         super(ImageExporter, self).__init__(parent)
         self.keep_ratio = QCheckBox("Keep oryginal ratio", self)
         self.keep_ratio.setChecked(True)
@@ -2218,7 +2386,7 @@ class ImageExporter(QDialog):
         if self.x_change:
             return
         self.x_change = True
-        self.scale_x.setValue(val/self.im_shape[0])
+        self.scale_x.setValue(val / self.im_shape[0])
         self.x_change = False
 
     def size_y_changed(self, val):
@@ -2240,5 +2408,5 @@ class ImageExporter(QDialog):
         inter_type = self.interpolation_dict[str(self.interp_type.currentText())]
         im2 = im.resize((int(np_im.shape[1] * x_scale), int(np_im.shape[0] * y_scale)), inter_type)
         im2.crop((int(self.ax_size[0] * x_scale), int(self.ay_size[0] * y_scale),
-                 int(self.ax_size[1] * x_scale), int(self.ay_size[1] * y_scale))).save(self.path)
+                  int(self.ax_size[1] * x_scale), int(self.ay_size[1] * y_scale))).save(self.path)
         self.close()

@@ -13,7 +13,7 @@ import logging
 import sys
 from enum import Enum
 from copy import deepcopy
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 UPPER = "Upper"
 GAUSS = "Gauss"
 
@@ -132,45 +132,161 @@ def bisect(arr, val, comp):
             r = e
     return r
 
+SettingsValue = namedtuple("SettingsValue", ["function_name", "help_message", "arguments"])
 
-class SettingsProfile(object):
-    class InputType(Enum):
-        image = 1
-        segmetation_mask = 2
-        basic_mask = 3
 
-    SETTINGS_DICT = {
-        "Volume": ("calculate_volume", (InputType.segmetation_mask,)),
-        "Volume per component": ("calculate_component_volume", (InputType.segmetation_mask,)),
-        "Mass": ("calculate_mass", (InputType.segmetation_mask, InputType.basic_mask)),
-        "Mass per component": ("calculate_component_mass", (InputType.segmetation_mask, InputType.basic_mask))
+class StatisticProfile(object):
+
+    STATISTIC_DICT = {
+        "Volume": SettingsValue("calculate_volume", "Calculate volume of current segmentation", None),
+        "Volume per component": SettingsValue("calculate_component_volume", "Calculate volume of each component "
+                                              "of cohesion of current segmentation", None),
+        "Mass": SettingsValue("calculate_mass", "Sum of pixel brightness for current segmentation", None),
+        "Mass per component": SettingsValue("calculate_component_mass", "Sum of pixel brightness of each component of"
+                                            " cohesion for current segmentation", None),
+        "Border surface": SettingsValue("calculate_border_surface",
+                                        "Calculating surface of current segmentation", None),
+        "Maximum pixel brightness": SettingsValue(
+            "maximum_brightness", "Calculate maximum brightness of pixel for current segmentation", None),
+        "Minimum pixel brightness": SettingsValue(
+            "minimum_brightness", "Calculate minimum brightness of pixel for current segmentation", None),
+        "Median pixel brightness": SettingsValue(
+            "median_brightness", "Calculate median brightness of pixel for current segmentation", None),
+        "Standard deviation of pixel brightness": SettingsValue(
+            "std_brightness", "Calculate  standard deviation of pixel brightness for current segmentation", None),
+        "Standard deviation of Noise": SettingsValue(
+            "std_noise", "Calculate standard deviation of pixel brightness outside current segmentation", None),
+        "Moment of inertia": SettingsValue("moment_of_inertia", "Calculate moment of inertia for segmented structure."
+                                           "Has one parameter thr (threshold). Only values above it are used "
+                                           "in calculation", {"thr": float})
     }
 
-    def __init__(self, name, chosen_fields, settings):
+    def __init__(self, name, chosen_fields, reversed_brightness, settings):
         self.name = name
-        self.chosen_fields = chosen_fields
+        self.chosen_fields = []
+        for name, user_name in chosen_fields:
+            sp = name.split("[")
+            if len(sp) == 1 and self.STATISTIC_DICT[sp[0]].arguments is None:
+                self.chosen_fields.append((name, user_name, None))
+            elif len(sp) == 2 and self.STATISTIC_DICT[sp[0]].arguments is not None:
+                arguments = sp[1][:-1].split(",")
+                params = dict()
+                for arg in arguments:
+                    name, val = arg.split("=")
+                    val = self.STATISTIC_DICT[sp[0]].arguments[name](val)
+                    params[name] = val
+                self.chosen_fields.append((name, user_name, params))
         self.settings = settings
+        self.reversed_brightness = reversed_brightness
+
+    def calculate(self, image, mask, full_mask, base_mask):
+        result = OrderedDict()
+        support_dict = dict()
+        for name, user_name, params in self.chosen_fields:
+            if name in self.STATISTIC_DICT[name]:
+                fun_name, _ = self.STATISTIC_DICT[name]
+                fun = getattr(self, fun_name)
+                kw = {"image": image, "mask": mask, "base_mask": base_mask, "full_mask": full_mask}
+                if params is not None:
+                    kw.update(params)
+                result[user_name] = fun(**kw)
+            else:
+                result[user_name] = 1
+        for name, user_name in self.chosen_fields:
+            if name not in self.STATISTIC_DICT[name]:
+                names = name.split("/")
+
+                def get_val(sub_name):
+                    if sub_name in result:
+                        val = result[names[0]]
+                    elif sub_name in support_dict:
+                        val = support_dict[names[0]]
+                    else:
+                        gv_fun_name, _ = self.STATISTIC_DICT[sub_name]
+                        gv_fun = getattr(self, gv_fun_name)
+                        gv_kw = {"image": image, "mask": mask, "base_mask": base_mask, "full_mask": full_mask}
+                        val = gv_fun(**gv_kw)
+                        support_dict[user_name] = val
+                    return val
+                stat = get_val(names[0])
+                try:
+                    for n in names[1:]:
+                        stat /= get_val(n)
+                except ZeroDivisionError:
+                    stat = None
+                except TypeError:
+                    stat = None
+                result[user_name] = stat
+        return result
 
     @staticmethod
     def pixel_volume(x):
         return x[0] * x[1] * x[2]
 
-    def calculate_volume(self, mask):
+    def calculate_volume(self, mask, **_):
         return np.count_nonzero(mask) * self.pixel_volume(self.settings.voxel_size)
 
-    def calculate_component_volume(self, mask):
+    def calculate_component_volume(self, mask, **_):
         return np.bincount(mask)[1:] * self.pixel_volume(self.settings.voxel_size)
 
     @staticmethod
-    def calculate_mass(mask, image):
+    def calculate_mass(mask, image, **_):
         return np.sum(image[mask > 0])
 
     @staticmethod
-    def calculate_component_mass(mask, image):
+    def calculate_component_mass(mask, image, **_):
         res = []
         for i in range(1, mask.max()+1):
             res.append(np.sum(image[mask == i]))
         return res
+
+    def calculate_border_surface(self, mask, **_):
+        return calculate_volume_surface(mask, self.settings.voxel_size)
+
+    @staticmethod
+    def maximum_brightness(mask, image, **_):
+        if np.any(mask):
+            return np.max(image[mask > 0])
+        else:
+            return None
+
+    @staticmethod
+    def minimum_brightness(mask, image, **_):
+        if np.any(mask):
+            return np.min(image[mask > 0])
+        else:
+            return None
+
+    @staticmethod
+    def median_brightness(mask, image, **_):
+        if np.any(mask):
+            return np.median(image[mask > 0])
+        else:
+            return None
+
+    @staticmethod
+    def std_brightness(mask, image, **_):
+        if np.any(mask):
+            return np.std(image[mask > 0])
+        else:
+            return None
+
+    @staticmethod
+    def std_noise(mask, base_mask, image, **_):
+        if np.any(mask):
+            if base_mask is not None:
+                return np.std(image[(mask == 0) * (base_mask > 0)])
+            else:
+                return np.std(image[mask == 0])
+        else:
+            return None
+
+    def moment_of_inertia(self, image, mask, **_):
+        if image.ndims != 3:
+            return None
+        img = np.copy(image)
+        img[mask == 0] = 0
+        return af.calculate_density_momentum(img, self.settings.voxel_size)
 
 
 class Profile(object):
@@ -276,8 +392,11 @@ class Settings(object):
         self.next_segmentation_settings = []
         self.mask_dilate_radius = 0
         self.scale_factor = 0.97
-        self.statistics_profile_list = []
-        self.load(settings_path)
+        self.statistics_profile_dict = dict()
+        try:
+            self.load(settings_path)
+        except ValueError:
+            logging.error("Saved profile problem")
 
     def change_profile(self, name):
         prof = self.profiles[name]
@@ -311,6 +430,8 @@ class Settings(object):
                           "voxel_size", "size_unit", "threshold", "color_map_name", "overlay", "minimum_size",
                           "gauss_radius", "export_filter", "export_directory", "scale_factor")
         important_data["profiles"] = [x.__dict__ for k, x in self.profiles.items()]
+        important_data["statistics"] = [class_to_dict(x, "name", "chosen_fields", "reversed_brightness")
+                                        for x in self.statistics_profile_dict.values()]
         with open(file_path, "w") as ff:
             json.dump(important_data, ff)
 
@@ -323,6 +444,8 @@ class Settings(object):
                            "minimum_size", "gauss_radius", "export_filter", "export_directory", "scale_factor")
             for prof in important_data["profiles"]:
                 self.profiles[prof["name"]] = Profile(**prof)
+            for stat in important_data["statistics"]:
+                self.statistics_profile_dict[stat["name"]] = StatisticProfile(settings=self, **stat)
         except IOError:
             logging.warning("No configuration file")
             pass
