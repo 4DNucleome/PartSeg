@@ -22,10 +22,10 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget,\
     QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, \
     QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout,\
-    QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout
+    QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QMenu, QAction
 
 from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, \
-    calculate_statistic_from_image, MaskChange, Profile, UNITS_DICT, GaussUse
+    calculate_statistic_from_image, MaskChange, Profile, UNITS_DICT, GaussUse, SettingsProfile
 
 
 __author__ = "Grzegorz Bokota"
@@ -49,6 +49,22 @@ big_font_size = 15
 button_margin = 10
 button_height = 30
 button_small_dist = -2
+
+# from http://stackoverflow.com/questions/5671354/how-to-programmatically-make-a-horizontal-line-in-qt
+
+
+def h_line():
+    toto = QFrame()
+    toto.setFrameShape(QFrame.HLine)
+    toto.setFrameShadow(QFrame.Sunken)
+    return toto
+
+
+def v_line():
+    toto = QFrame()
+    toto.setFrameShape(QFrame.VLine)
+    toto.setFrameShadow(QFrame.Sunken)
+    return toto
 
 if platform.system() == "Linux":
     big_font_size = 14
@@ -244,6 +260,73 @@ class ColormapCanvas(QWidget):
             self.top_widget.move(5, 5)"""
 
 
+class CropSet(QDialog):
+    def __init__(self, max_size, current_size):
+        super(CropSet, self).__init__()
+        self.max_size = max_size
+        self.min_x = QDoubleSpinBox(self)
+        self.max_x = QDoubleSpinBox(self)
+        self.min_y = QDoubleSpinBox(self)
+        self.max_y = QDoubleSpinBox(self)
+        self.min_x.setDecimals(3)
+        self.max_x.setDecimals(3)
+        self.min_y.setDecimals(3)
+        self.max_y.setDecimals(3)
+        self.min_x.setRange(0, max_size[0])
+        self.min_x.setValue(current_size[0][0])
+        self.max_x.setRange(0, max_size[0])
+        self.max_x.setValue(current_size[0][1])
+        self.min_y.setRange(0, max_size[1])
+        self.min_y.setValue(current_size[1][0])
+        self.max_y.setRange(0, max_size[1])
+        self.max_y.setValue(current_size[1][1])
+        self.min_x.valueChanged[float].connect(self.min_x_changed)
+        self.max_x.valueChanged[float].connect(self.max_x_changed)
+        self.min_y.valueChanged[float].connect(self.min_y_changed)
+        self.max_y.valueChanged[float].connect(self.max_y_changed)
+
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel("Image size: {}".format(max_size)))
+        range_layout = QGridLayout()
+        range_layout.addWidget(QLabel("Width:"), 0, 0)
+        x_layout = QHBoxLayout()
+        x_layout.addWidget(self.min_x)
+        x_layout.addWidget(self.max_x)
+        range_layout.addLayout(x_layout, 0, 1)
+        range_layout.addWidget(QLabel("Height"), 1, 0)
+        y_layout = QHBoxLayout()
+        y_layout.addWidget(self.min_y)
+        y_layout.addWidget(self.max_y)
+        range_layout.addLayout(y_layout, 1, 1)
+        layout.addLayout(range_layout)
+        button_layout = QHBoxLayout()
+        close_button = QPushButton("Cancel")
+        close_button.clicked.connect(self.close)
+        button_layout.addWidget(close_button)
+        button_layout.addStretch()
+        save_button = QPushButton("Crop image")
+        save_button.clicked.connect(self.accept)
+        button_layout.addWidget(save_button)
+        layout.addLayout(button_layout)
+
+        self.setLayout(layout)
+
+    def min_x_changed(self, val):
+        self.max_x.setMinimum(val + 1)
+
+    def max_x_changed(self, val):
+        self.min_x.setMaximum(val - 1)
+
+    def min_y_changed(self, val):
+        self.max_y.setMinimum(val + 1)
+
+    def max_y_changed(self, val):
+        self.min_y.setMaximum(val - 1)
+
+    def get_range(self):
+        return (self.min_x.value(), self.max_x.value()), (self.min_y.value(), self.max_y.value())
+
+
 class MyCanvas(QWidget):
     def __init__(self, figure_size, settings, info_object, parent):
         """
@@ -279,6 +362,10 @@ class MyCanvas(QWidget):
         self.zoom_button = QPushButton("Zoom", self)
         self.zoom_button.clicked.connect(self.zoom)
         self.zoom_button.setCheckable(True)
+        self.zoom_button.setContextMenuPolicy(Qt.ActionsContextMenu)
+        crop = QAction("Crop", self.zoom_button)
+        crop.triggered.connect(self.crop_view)
+        self.zoom_button.addAction(crop)
         self.move_button = QPushButton("Move", self)
         self.move_button.clicked.connect(self.move_action)
         self.move_button.setCheckable(True)
@@ -322,6 +409,20 @@ class MyCanvas(QWidget):
         self.figure_canvas.mpl_connect('motion_notify_event', self.brightness_up)
         self.figure_canvas.mpl_connect('motion_notify_event', self.mouse_move)
         self.figure_canvas.mpl_connect('scroll_event', self.zoom_scale)
+
+    def crop_view(self):
+        shape = self.base_image.shape
+        shape = shape[-1], shape[-2]
+        fig = pyplot.figure(self.my_figure_num)
+        xlim = pyplot.xlim()
+        ylim = pyplot.ylim()
+        cr = CropSet(shape, ((xlim[0]+0.5, xlim[1]+0.5), (ylim[1]+0.5, ylim[0]+0.5)))
+        if cr.exec_():
+            res = cr.get_range()
+            logging.debug("crop {}".format(res))
+            pyplot.xlim(res[0][0]-0.5, res[0][1]-0.5)
+            pyplot.ylim(res[1][1]-0.5, res[1][0]-0.5)
+            fig.canvas.draw()
 
     def zoom_scale(self, event):
         if self.zoom_button.isChecked() or self.move_button.isChecked():
@@ -1257,6 +1358,158 @@ class MaskWindow(QDialog):
         self.close()
 
 
+class StatisticsSettings(QWidget):
+    def __init__(self, settings):
+        super(StatisticsSettings, self).__init__()
+        self.settings = settings
+        self.profile_list = QListWidget(self)
+        self.profile_description = QLabel(self)
+        self.profile_options = QListWidget()
+        self.profile_options_chosen = QListWidget()
+        self.choose_butt = QPushButton(u"→", self)
+        self.discard_butt = QPushButton(u"←", self)
+        self.move_up = QPushButton(u"↑", self)
+        self.move_down = QPushButton(u"↓", self)
+        self.save_butt = QPushButton("Save statistic profile")
+        self.save_butt_with_name = QPushButton("Save statistic profile with name")
+        self.reset_butt = QPushButton("Reset")
+        self.profile_name = QLineEdit(self)
+
+        self.choose_butt.setDisabled(True)
+        self.choose_butt.clicked.connect(self.choose_option)
+        self.discard_butt.setDisabled(True)
+        self.discard_butt.clicked.connect(self.discard_option)
+        self.save_butt.setDisabled(True)
+        self.save_butt_with_name.setDisabled(True)
+        self.profile_name.textChanged.connect(self.name_changed)
+        self.move_down.setDisabled(True)
+        self.move_down.clicked.connect(self.move_down_fun)
+        self.move_up.setDisabled(True)
+        self.move_up.clicked.connect(self.move_up_fun)
+        self.reset_butt.clicked.connect(self.reset_action)
+
+        self.profile_options.itemSelectionChanged.connect(self.create_selection_changed)
+        self.profile_options_chosen.itemSelectionChanged.connect(self.create_selection_chosen_changed)
+
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel("Defined statistics list:"))
+        profile_layout = QHBoxLayout()
+        profile_layout.addWidget(self.profile_list)
+        profile_layout.addWidget(self.profile_description)
+        layout.addLayout(profile_layout)
+        heading_layout = QHBoxLayout()
+        heading_layout.addWidget(QLabel("Create profile"))
+        heading_layout.addWidget(h_line())
+        layout.addLayout(heading_layout)
+        name_layout = QHBoxLayout()
+        name_layout.addWidget(QLabel("Profile name:"))
+        name_layout.addWidget(self.profile_name)
+        name_layout.addStretch()
+        layout.addLayout(name_layout)
+        create_layout = QHBoxLayout()
+        create_layout.addWidget(self.profile_options)
+        butt_op_layout = QVBoxLayout()
+        butt_op_layout.addStretch()
+        butt_op_layout.addWidget(self.choose_butt)
+        butt_op_layout.addWidget(self.discard_butt)
+        butt_op_layout.addStretch()
+        create_layout.addLayout(butt_op_layout)
+        create_layout.addWidget(self.profile_options_chosen)
+        butt_move_layout = QVBoxLayout()
+        butt_move_layout.addStretch()
+        butt_move_layout.addWidget(self.move_up)
+        butt_move_layout.addWidget(self.move_down)
+        butt_move_layout.addStretch()
+        create_layout.addLayout(butt_move_layout)
+        layout.addLayout(create_layout)
+        save_butt_layout = QHBoxLayout()
+        save_butt_layout.addWidget(self.reset_butt)
+        save_butt_layout.addStretch()
+        save_butt_layout.addWidget(self.save_butt)
+        save_butt_layout.addWidget(self.save_butt_with_name)
+        layout.addLayout(save_butt_layout)
+        self.setLayout(layout)
+
+    def create_selection_changed(self):
+        self.choose_butt.setEnabled(True)
+
+    def create_selection_chosen_changed(self):
+        if self.profile_options_chosen.count() == 0:
+            self.move_down.setDisabled(True)
+            self.move_up.setEnabled(True)
+            return
+        self.discard_butt.setEnabled(True)
+        if self.profile_options_chosen.currentRow() != 0:
+            self.move_up.setEnabled(True)
+        else:
+            self.move_up.setDisabled(True)
+        if self.profile_options_chosen.currentRow() != self.profile_options_chosen.count()-1:
+            self.move_down.setEnabled(True)
+        else:
+            self.move_down.setDisabled(True)
+
+    def good_name(self):
+        if str(self.profile_name.text()).strip() == "":
+            return False
+        return True
+
+    def move_down_fun(self):
+        row = self.profile_options_chosen.currentRow()
+        item = self.profile_options_chosen.takeItem(row)
+        self.profile_options_chosen.insertItem(row+1, item)
+        self.profile_options_chosen.setCurrentRow(row+1)
+        self.create_selection_chosen_changed()
+
+    def move_up_fun(self):
+        row = self.profile_options_chosen.currentRow()
+        item = self.profile_options_chosen.takeItem(row)
+        self.profile_options_chosen.insertItem(row-1, item)
+        self.profile_options_chosen.setCurrentRow(row-1)
+        self.create_selection_chosen_changed()
+
+    def name_changed(self):
+        if self.good_name() and self.profile_options_chosen.count() > 0:
+            self.save_butt.setEnabled(True)
+        else:
+            self.save_butt.setDisabled(True)
+
+    def choose_option(self):
+        selected_item = self.profile_options.currentItem()
+        selected_row = self.profile_options.currentRow()
+        self.profile_options_chosen.addItem(selected_item.text())
+        self.profile_options.takeItem(selected_row)
+        if self.good_name():
+            self.save_butt.setEnabled(True)
+        if self.profile_options.count() == 0:
+            self.choose_butt.setDisabled(True)
+
+    def discard_option(self):
+        selected_item = self.profile_options_chosen.currentItem()
+        selected_row = self.profile_options_chosen.currentRow()
+        self.profile_options.addItem(selected_item.text())
+        self.profile_options_chosen.takeItem(selected_row)
+        if self.profile_options_chosen.count() == 0:
+            self.save_butt.setDisabled(True)
+            self.discard_butt.setDisabled(True)
+        self.create_selection_chosen_changed()
+
+    def reset_action(self):
+        self.profile_options.clear()
+        self.profile_options_chosen.clear()
+        self.profile_name.setText("")
+        self.save_butt.setDisabled(True)
+        self.save_butt_with_name.setDisabled(True)
+        self.move_down.setDisabled(True)
+        self.move_up.setDisabled(True)
+        self.choose_butt.setDisabled(True)
+        self.discard_butt.setDisabled(True)
+        self.profile_options.addItems(list(sorted(SettingsProfile.SETTINGS_DICT.keys())))
+
+    def showEvent(self, _):
+        self.profile_options.addItems(list(sorted(SettingsProfile.SETTINGS_DICT.keys())))
+        self.profile_list.addItems(list(sorted([x.name for x in self.settings.statistics_profile_list])))
+
+
 class AdvancedWindow(QTabWidget):
     def __init__(self, settings, segment, parent=None):
         super(AdvancedWindow, self).__init__(parent)
@@ -1264,9 +1517,11 @@ class AdvancedWindow(QTabWidget):
         self.advanced_settings = AdvancedSettings(settings)
         self.colormap_settings = ColormapSettings(settings)
         self.statistics = StatisticsWindow(settings, segment)
+        self.statistics_settings = StatisticsSettings(settings)
         self.addTab(self.advanced_settings, "Settings")
         self.addTab(self.colormap_settings, "Color maps")
         self.addTab(self.statistics, "Statistics")
+        self.addTab(self.statistics_settings, "Statistic settings")
         if settings.advanced_menu_geometry is not None:
             self.restoreGeometry(settings.advanced_menu_geometry)
 

@@ -13,6 +13,7 @@ import logging
 import sys
 from enum import Enum
 from copy import deepcopy
+from collections import OrderedDict
 UPPER = "Upper"
 GAUSS = "Gauss"
 
@@ -132,7 +133,47 @@ def bisect(arr, val, comp):
     return r
 
 
-class Profile:
+class SettingsProfile(object):
+    class InputType(Enum):
+        image = 1
+        segmetation_mask = 2
+        basic_mask = 3
+
+    SETTINGS_DICT = {
+        "Volume": ("calculate_volume", (InputType.segmetation_mask,)),
+        "Volume per component": ("calculate_component_volume", (InputType.segmetation_mask,)),
+        "Mass": ("calculate_mass", (InputType.segmetation_mask, InputType.basic_mask)),
+        "Mass per component": ("calculate_component_mass", (InputType.segmetation_mask, InputType.basic_mask))
+    }
+
+    def __init__(self, name, chosen_fields, settings):
+        self.name = name
+        self.chosen_fields = chosen_fields
+        self.settings = settings
+
+    @staticmethod
+    def pixel_volume(x):
+        return x[0] * x[1] * x[2]
+
+    def calculate_volume(self, mask):
+        return np.count_nonzero(mask) * self.pixel_volume(self.settings.voxel_size)
+
+    def calculate_component_volume(self, mask):
+        return np.bincount(mask)[1:] * self.pixel_volume(self.settings.voxel_size)
+
+    @staticmethod
+    def calculate_mass(mask, image):
+        return np.sum(image[mask > 0])
+
+    @staticmethod
+    def calculate_component_mass(mask, image):
+        res = []
+        for i in range(1, mask.max()+1):
+            res.append(np.sum(image[mask == i]))
+        return res
+
+
+class Profile(object):
     PARAMETERS = ("threshold", "threshold_list", "threshold_type", "minimum_size", "use_gauss", "gauss_radius",
                   "threshold_layer_separate")
 
@@ -235,6 +276,7 @@ class Settings(object):
         self.next_segmentation_settings = []
         self.mask_dilate_radius = 0
         self.scale_factor = 0.97
+        self.statistics_profile_list = []
         self.load(settings_path)
 
     def change_profile(self, name):
@@ -776,19 +818,23 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
         return
     f = h5py.File(file_path, "w")
     grp = f.create_group('Chimera/image1')
+
+    cut_img = np.zeros(upper_bound - lower_bound + [3, 11, 11], dtype=image.dtype)
+    coord = []
+    for l, u in zip(lower_bound, upper_bound):
+        coord.append(slice(l, u))
+    pos = tuple(coord)
+    cut_img[1:-2, 5:-6, 5:-6] = image[pos]
+    z, y, x = cut_img.shape
+    data_set = grp.create_dataset("data_zyx", (z, y, x), dtype='f')
+    data_set[...] = cut_img
+
     if with_statistics:
         grp = f.create_group('Chimera/image1/Statistics')
         stat = calculate_statistic_from_image(image, mask, settings)
         for key, val in stat.items():
             grp.attrs[key] = val
         grp.attrs["Noise_std"] = noise_std
-
-    cut_img = np.zeros(upper_bound-lower_bound+[3, 11, 11], dtype=image.dtype)
-    coord = []
-    for l, u in zip(lower_bound, upper_bound):
-        coord.append(slice(l, u))
-    pos = tuple(coord)
-    cut_img[1:-2, 5:-6, 5:-6] = image[pos]
 
     # Just to satisfy file format
     grp = f['Chimera']
@@ -801,10 +847,6 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
     grp.attrs['TITLE'] = np.string_('')
     grp.attrs['VERSION'] = np.string_('1.0')
     grp.attrs['step'] = np.array(settings.spacing, dtype=np.float32)
-
-    z, y, x = cut_img.shape
-    data_set = grp.create_dataset("data_zyx", (z, y, x), dtype='f')
-    data_set[...] = cut_img
 
     if centered_data:
         swap_cut_img = np.swapaxes(cut_img, 0, 2)
