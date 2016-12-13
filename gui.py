@@ -1353,16 +1353,25 @@ class MultipleInput(QDialog):
             objects_list = help_text
             help_text = ""
 
-        def create_input_float(obj):
+        def create_input_float(obj, ob2=None):
+            if ob2 is not None:
+                val = obj
+                obj = ob2
+            else:
+                val = 0
             res = QDoubleSpinBox(obj)
             res.setRange(-1000000, 1000000)
-            res.setValue(0)
-            return res
+            res.setValue(val)
 
-        def create_input_int(obj):
+        def create_input_int(obj, ob2=None):
+            if ob2 is not None:
+                val = obj
+                obj = ob2
+            else:
+                val = 0
             res = QSpinBox(obj)
             res.setRange(-1000000, 1000000)
-            res.setValue(0)
+            res.setValue(val)
             return res
 
         field_dict = {str: QLineEdit, float: create_input_float, int: create_input_int}
@@ -1375,11 +1384,16 @@ class MultipleInput(QDialog):
         cancel_butt.clicked.connect(self.close)
         layout = QGridLayout()
         layout.setAlignment(Qt.AlignVCenter)
-        for i, (name, type_of) in enumerate(objects_list):
+        for i, info in enumerate(objects_list):
+            name = info[0]
+            type_of = info[1]
             name_label = QLabel(name)
             name_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             layout.addWidget(name_label, i, 0)
-            item = field_dict[type_of](self)
+            if len(info) == 3:
+                item = field_dict[type_of](type_of(info[2]), self)
+            else:
+                item = field_dict[type_of](self)
             self.object_dict[name] = (type_of, item)
             layout.addWidget(item, i, 1)
         main_layout = QVBoxLayout()
@@ -1468,6 +1482,8 @@ class StatisticsSettings(QWidget):
         self.soft_reset_butt.clicked.connect(self.soft_reset)
         self.delete_profile_butt.setDisabled(True)
         self.delete_profile_butt.clicked.connect(self.delete_profile)
+        self.export_profiles_butt.clicked.connect(self.export_statistic_profiles)
+        self.import_profiles_butt.clicked.connect(self.import_statistic_profiles)
 
         self.profile_list.itemSelectionChanged.connect(self.profile_chosen)
         self.profile_options.itemSelectionChanged.connect(self.create_selection_changed)
@@ -1527,6 +1543,8 @@ class StatisticsSettings(QWidget):
             lw.setToolTip(help_text)
             self.profile_options.addItem(lw)
         self.profile_list.addItems(list(sorted([x[0] for x in self.settings.statistics_profile_dict.items()])))
+        if self.profile_list.count() == 0:
+            self.export_profiles_butt.setDisabled(True)
 
     def delete_profile(self):
         row = self.profile_list.currentRow()
@@ -1655,18 +1673,28 @@ class StatisticsSettings(QWidget):
         for i in range(self.profile_options_chosen.count()):
             txt = str(self.profile_options_chosen.item(i).text())
             selected_values.append((txt, txt))
-        stat_prof = StatisticProfile(str(self.profile_name.text()), selected_values, False, self.settings)
+        stat_prof = StatisticProfile(str(self.profile_name.text()), selected_values,
+                                     self.reversed_brightness.isChecked(), self.settings)
         self.settings.statistics_profile_dict[stat_prof.name] = stat_prof
         self.profile_list.addItem(stat_prof.name)
+        self.export_profiles_butt.setEnabled(True)
 
     def named_save_action(self):
         selected_values = []
         for i in range(self.profile_options_chosen.count()):
             txt = str(self.profile_options_chosen.item(i).text())
-            selected_values.append((txt, str))
+            selected_values.append((txt, str, txt))
         val_dialog = MultipleInput("Set fields name", list(selected_values))
         if val_dialog.exec_():
-            pass
+            selected_values = []
+            for i in range(self.profile_options_chosen.count()):
+                txt = str(self.profile_options_chosen.item(i).text())
+                selected_values.append((txt, val_dialog.result[txt]))
+            stat_prof = StatisticProfile(str(self.profile_name.text()), selected_values,
+                                         self.reversed_brightness.isChecked(), self.settings)
+            self.settings.statistics_profile_dict[stat_prof.name] = stat_prof
+            self.profile_list.addItem(stat_prof.name)
+            self.export_profiles_butt.setEnabled(True)
 
     def reset_action(self):
         self.profile_options.clear()
@@ -1690,8 +1718,27 @@ class StatisticsSettings(QWidget):
                 shift += 1
         self.create_selection_changed()
 
+    def export_statistic_profiles(self):
+        dial = QFileDialog(self, "Export settings profiles")
+        if self.settings.statistic_dirs is not None:
+            dial.setDirectory(self.settings.statistic_dirs)
+        dial.setFileMode(QFileDialog.AnyFile)
+        dial.setFilter("statistic profile (*.json)")
+        if dial.exec_():
+            file_path = str(dial.selectedFiles()[0])
+            self.settings.statistic_dirs = file_path
+            self.settings.dump_statistics(file_path)
 
-
+    def import_statistic_profiles(self):
+        dial = QFileDialog(self, "Import settings profiles")
+        if self.settings.statistic_dirs is not None:
+            dial.setDirectory(self.settings.statistic_dirs)
+        dial.setFileMode(QFileDialog.ExistingFile)
+        dial.setFilter("statistic profile (*.json)")
+        if dial.exec_():
+            file_path = str(dial.selectedFiles()[0])
+            self.settings.statistic_dirs = file_path
+            self.settings.load_statistics(file_path)
 
 
 class AdvancedWindow(QTabWidget):

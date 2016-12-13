@@ -396,6 +396,7 @@ class Settings(object):
         self.mask_dilate_radius = 0
         self.scale_factor = 0.97
         self.statistics_profile_dict = dict()
+        self.statistic_dirs = None
         try:
             self.load(settings_path)
         except ValueError as e:
@@ -427,11 +428,23 @@ class Settings(object):
         for fun in self.threshold_change_callback:
             fun()
 
+    def dump_statistics(self, file_path):
+        res = [class_to_dict(x, "name", "chosen_fields", "reversed_brightness")
+               for x in self.statistics_profile_dict.values()]
+        with open(file_path, 'w') as ff:
+            json.dump(ff, res)
+
+    def load_statistics(self, file_path):
+        with open(file_path, 'r') as ff:
+            statistics_list = json.load(ff)
+            for stat in statistics_list:
+                self.statistics_profile_dict[stat["name"]] = StatisticProfile(settings=self, **stat)
+
     def dump(self, file_path):
         important_data = \
             class_to_dict(self, "open_directory", "open_filter", "save_directory", "save_filter", "spacing",
                           "voxel_size", "size_unit", "threshold", "color_map_name", "overlay", "minimum_size",
-                          "gauss_radius", "export_filter", "export_directory", "scale_factor")
+                          "gauss_radius", "export_filter", "export_directory", "scale_factor", "statistic_dirs")
         important_data["profiles"] = [x.__dict__ for k, x in self.profiles.items()]
         important_data["statistics"] = [class_to_dict(x, "name", "chosen_fields", "reversed_brightness")
                                         for x in self.statistics_profile_dict.values()]
@@ -444,7 +457,8 @@ class Settings(object):
                 important_data = json.load(ff)
             dict_set_class(self, important_data, "open_directory", "open_filter", "save_directory", "save_filter",
                            "spacing", "voxel_size", "size_unit", "threshold", "color_map_name", "overlay",
-                           "minimum_size", "gauss_radius", "export_filter", "export_directory", "scale_factor")
+                           "minimum_size", "gauss_radius", "export_filter", "export_directory", "scale_factor",
+                           "statistic_dirs")
             for prof in important_data["profiles"]:
                 self.profiles[prof["name"]] = Profile(**prof)
             for stat in important_data["statistics"]:
