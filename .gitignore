@@ -93,6 +93,7 @@ var/
 # I modified this file
 !main.spec 
 !PartSeg.spec
+!PartSeg-non-pack.spec
 
 # Installer logs
 pip-log.txt
