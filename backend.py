@@ -164,7 +164,10 @@ class StatisticProfile(object):
     def __init__(self, name, chosen_fields, reversed_brightness, settings):
         self.name = name
         self.chosen_fields = []
-        for name, user_name in chosen_fields:
+        print(chosen_fields[0])
+        for cf_val in chosen_fields:
+            name = cf_val[0]
+            user_name = cf_val[1]
             sp = name.split("[")
             if len(sp) == 1 and self.STATISTIC_DICT[sp[0]].arguments is None:
                 self.chosen_fields.append((name, user_name, None))
@@ -172,9 +175,9 @@ class StatisticProfile(object):
                 arguments = sp[1][:-1].split(",")
                 params = dict()
                 for arg in arguments:
-                    name, val = arg.split("=")
-                    val = self.STATISTIC_DICT[sp[0]].arguments[name](val)
-                    params[name] = val
+                    val_name, val = arg.split("=")
+                    val = self.STATISTIC_DICT[sp[0]].arguments[val_name](val)
+                    params[val_name] = val
                 self.chosen_fields.append((name, user_name, params))
         self.settings = settings
         self.reversed_brightness = reversed_brightness
@@ -395,8 +398,8 @@ class Settings(object):
         self.statistics_profile_dict = dict()
         try:
             self.load(settings_path)
-        except ValueError:
-            logging.error("Saved profile problem")
+        except ValueError as e:
+            logging.error("Saved profile problem: {}".format(e))
 
     def change_profile(self, name):
         prof = self.profiles[name]
@@ -449,8 +452,8 @@ class Settings(object):
         except IOError:
             logging.warning("No configuration file")
             pass
-        except KeyError:
-            logging.warning("Bad configuration")
+        except KeyError as e:
+            logging.warning("Bad configuration: {}".format(e))
 
     def change_segmentation_mask(self, segment, order, save_draw):
         """

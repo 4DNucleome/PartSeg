@@ -642,7 +642,7 @@ class MyCanvas(QWidget):
         return image_to_show, pyplot.xlim(), pyplot.ylim()
 
 
-class MyDrawCanvas(object, object, MyCanvas):
+class MyDrawCanvas(MyCanvas):
     """
     :type segmentation: np.ndarray
     """
@@ -1428,7 +1428,8 @@ class StatisticsSettings(QWidget):
         self.chosen_element = None
         self.settings = settings
         self.profile_list = QListWidget(self)
-        self.profile_description = QLabel(self)
+        self.profile_description = QTextEdit(self)
+        self.profile_description.setReadOnly(True)
         self.profile_options = QListWidget()
         self.profile_options_chosen = QListWidget()
         self.choose_butt = QPushButton(u"→", self)
@@ -1445,6 +1446,8 @@ class StatisticsSettings(QWidget):
         self.reversed_brightness = QCheckBox("Reversed image", self)
         self.delete_profile_butt = QPushButton("Delete profile")
         self.restore_builtin_profiles = QPushButton("Restore builtin profiles")
+        self.export_profiles_butt = QPushButton("Export profiles")
+        self.import_profiles_butt = QPushButton("Import profiles")
 
         self.choose_butt.setDisabled(True)
         self.choose_butt.clicked.connect(self.choose_option)
@@ -1478,6 +1481,8 @@ class StatisticsSettings(QWidget):
         profile_buttons_layout = QHBoxLayout()
         profile_buttons_layout.addWidget(self.delete_profile_butt)
         profile_buttons_layout.addWidget(self.restore_builtin_profiles)
+        profile_buttons_layout.addWidget(self.export_profiles_butt)
+        profile_buttons_layout.addWidget(self.import_profiles_butt)
         profile_buttons_layout.addStretch()
         layout.addLayout(profile_layout)
         layout.addLayout(profile_buttons_layout)
@@ -1533,6 +1538,15 @@ class StatisticsSettings(QWidget):
 
     def profile_chosen(self):
         self.delete_profile_butt.setEnabled(True)
+        item = self.profile_list.currentItem()
+        text = "Profile name: {}\nstatistics:\n".format(item.text())
+        profile = self.settings.statistics_profile_dict[str(item.text())]
+        for el in profile.chosen_fields:
+            if el[2] is not None:
+                text += "{}: {}\n".format(el[1], el[2])
+            else:
+                text += "{}\n".format(el[1])
+        self.profile_description.setText(text)
 
     def create_selection_changed(self):
         self.choose_butt.setEnabled(True)
@@ -1675,6 +1689,9 @@ class StatisticsSettings(QWidget):
                 self.profile_options.takeItem(i - shift)
                 shift += 1
         self.create_selection_changed()
+
+
+
 
 
 class AdvancedWindow(QTabWidget):
