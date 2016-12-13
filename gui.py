@@ -32,7 +32,7 @@ app_name = "PartSeg"
 app_author = "LFSG"
 
 config_folder = appdirs.user_data_dir(app_name, app_author)
-logging.info(config_folder)
+print (config_folder)
 
 if not os.path.isdir(config_folder):
     os.makedirs(config_folder)
@@ -1217,7 +1217,8 @@ class StatisticsWindow(QWidget):
         self.copy_button = QPushButton("Copy to clipboard", self)
         self.copy_button.clicked.connect(self.copy_to_clipboard)
         self.statistic_type = QComboBox(self)
-        self.statistic_type.addItem("Emish statistics")
+        self.statistic_type.addItem("Emish statistics (oryginal)")
+        self.statistic_type.addItems(list(self.settings.statistics_profile_dict.keys()))
         self.info_field = QTableWidget(self)
         self.info_field.setColumnCount(3)
         self.info_field.setHorizontalHeaderLabels(["Name", "Value", "Units"])
@@ -1254,16 +1255,37 @@ class StatisticsWindow(QWidget):
         self.clip.setText(s)
 
     def update_statistics(self):
-        image, mask = get_segmented_data(np.copy(self.settings.image), self.settings, self.segment)
-        stat = calculate_statistic_from_image(image, mask, self.settings)
-        self.info_field.setRowCount(len(stat))
-        for i, (key, val) in enumerate(stat.items()):
-            self.info_field.setItem(i, 0, QTableWidgetItem(key))
-            self.info_field.setItem(i, 1, QTableWidgetItem(str(val)))
-            try:
-                self.info_field.setItem(i, 2, QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
-            except KeyError as k:
-                logging.warning(k.message)
+        if self.statistic_type.currentText() == "Emish statistics (oryginal)":
+            image, mask = get_segmented_data(np.copy(self.settings.image), self.settings, self.segment)
+            stat = calculate_statistic_from_image(image, mask, self.settings)
+            self.info_field.setRowCount(len(stat))
+            for i, (key, val) in enumerate(stat.items()):
+                self.info_field.setItem(i, 0, QTableWidgetItem(key))
+                self.info_field.setItem(i, 1, QTableWidgetItem(str(val)))
+                try:
+                    self.info_field.setItem(i, 2, QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
+                except KeyError as k:
+                    logging.warning(k.message)
+        else:
+            compute_class = self.settings.statistics_profile_dict[str(self.statistic_type.currentText())]
+            if self.settings.use_gauss:
+                image = self.segment.gauss_image
+            else:
+                image = self.settings.image
+            mask = self.segment.get_segmentation()
+            full_mask = self.segment.get_full_segmentation()
+            base_mask = self.settings.mask
+            stat = compute_class.calculate(image, mask, full_mask, base_mask)
+            self.info_field.setRowCount(len(stat))
+            for i, (key, val) in enumerate(stat.items()):
+                print(i, key, val)
+                self.info_field.setItem(i, 0, QTableWidgetItem(key))
+                self.info_field.setItem(i, 1, QTableWidgetItem(str(val)))
+                self.info_field.setItem(i, 2, QTableWidgetItem(""))
+                #try:
+                #    self.info_field.setItem(i, 2, QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
+                #except KeyError as k:
+                #    logging.warning(k.message)
 
     def keyPressEvent(self, e):
         if e.modifiers() & Qt.ControlModifier:
@@ -1281,6 +1303,18 @@ class StatisticsWindow(QWidget):
                             logging.info("Copy problem")
                     s = s[:-1] + "\n"  # eliminate last '\t'
                 self.clip.setText(s)
+
+    def showEvent(self, _):
+        avali = list(self.settings.statistics_profile_dict.keys())
+        avali.insert(0, "Emish statistics (oryginal)")
+        text = self.statistic_type.currentText()
+        try:
+            index = avali.index(text)
+        except ValueError:
+            index = 0
+        self.statistic_type.clear()
+        self.statistic_type.addItems(avali)
+        self.statistic_type.setCurrentIndex(index)
 
 
 class MaskWindow(QDialog):
@@ -1362,6 +1396,7 @@ class MultipleInput(QDialog):
             res = QDoubleSpinBox(obj)
             res.setRange(-1000000, 1000000)
             res.setValue(val)
+            return res
 
         def create_input_int(obj, ob2=None):
             if ob2 is not None:
@@ -1664,7 +1699,6 @@ class StatisticsSettings(QWidget):
         if self.profile_options_chosen.count() == 0:
             self.save_butt.setDisabled(True)
             self.save_butt_with_name.setDisabled(True)
-
             self.discard_butt.setDisabled(True)
         self.create_selection_chosen_changed()
 
@@ -1925,11 +1959,11 @@ class MainMenu(QWidget):
         self.gauss_check.setChecked(self.settings.use_gauss)
         self.draw_check.setChecked(self.settings.use_draw_result)
         self.layer_thr_check.setChecked(self.settings.threshold_layer_separate)
-        self.segment.protect = False
         if self.settings.threshold_type != UPPER:
             self.threshold_type.setCurrentIndex(
                 self.threshold_type.findText("Lower threshold:")
             )
+        self.segment.protect = False
 
     def colormap_list_changed(self):
         self.colormap_protect = True
@@ -2275,6 +2309,7 @@ class MainWindow(QMainWindow):
                         return
                 for el in self.main_menu.enable_list:
                     el.setEnabled(True)
+                self.main_menu.settings_changed()
         except Exception as e:
             logging.warning(e.message)
 

@@ -164,7 +164,6 @@ class StatisticProfile(object):
     def __init__(self, name, chosen_fields, reversed_brightness, settings):
         self.name = name
         self.chosen_fields = []
-        print(chosen_fields[0])
         for cf_val in chosen_fields:
             name = cf_val[0]
             user_name = cf_val[1]
@@ -178,16 +177,23 @@ class StatisticProfile(object):
                     val_name, val = arg.split("=")
                     val = self.STATISTIC_DICT[sp[0]].arguments[val_name](val)
                     params[val_name] = val
-                self.chosen_fields.append((name, user_name, params))
+                self.chosen_fields.append((sp[0], user_name, params))
+            elif len(sp) == 1 and len(cf_val) == 3 and self.STATISTIC_DICT[sp[0]].arguments is not None:
+                self.chosen_fields.append((sp[0], user_name, cf_val[2]))
         self.settings = settings
         self.reversed_brightness = reversed_brightness
 
     def calculate(self, image, mask, full_mask, base_mask):
         result = OrderedDict()
         support_dict = dict()
+        if self.reversed_brightness:
+            noise_mean = np.mean(image[full_mask == 0])
+            image = noise_mean - image
         for name, user_name, params in self.chosen_fields:
-            if name in self.STATISTIC_DICT[name]:
-                fun_name, _ = self.STATISTIC_DICT[name]
+            print(name, )
+            if name in self.STATISTIC_DICT:
+                fun_name, _, params = self.STATISTIC_DICT[name]
+                print(fun_name)
                 fun = getattr(self, fun_name)
                 kw = {"image": image, "mask": mask, "base_mask": base_mask, "full_mask": full_mask}
                 if params is not None:
@@ -195,8 +201,8 @@ class StatisticProfile(object):
                 result[user_name] = fun(**kw)
             else:
                 result[user_name] = 1
-        for name, user_name in self.chosen_fields:
-            if name not in self.STATISTIC_DICT[name]:
+        for name, user_name, params in self.chosen_fields:
+            if name not in self.STATISTIC_DICT:
                 names = name.split("/")
 
                 def get_val(sub_name):
@@ -205,7 +211,7 @@ class StatisticProfile(object):
                     elif sub_name in support_dict:
                         val = support_dict[names[0]]
                     else:
-                        gv_fun_name, _ = self.STATISTIC_DICT[sub_name]
+                        gv_fun_name, _, _ = self.STATISTIC_DICT[sub_name]
                         gv_fun = getattr(self, gv_fun_name)
                         gv_kw = {"image": image, "mask": mask, "base_mask": base_mask, "full_mask": full_mask}
                         val = gv_fun(**gv_kw)
@@ -227,6 +233,7 @@ class StatisticProfile(object):
         return x[0] * x[1] * x[2]
 
     def calculate_volume(self, mask, **_):
+        print("Volume {}".format(np.max(mask)))
         return np.count_nonzero(mask) * self.pixel_volume(self.settings.voxel_size)
 
     def calculate_component_volume(self, mask, **_):
@@ -285,7 +292,7 @@ class StatisticProfile(object):
             return None
 
     def moment_of_inertia(self, image, mask, **_):
-        if image.ndims != 3:
+        if image.ndim != 3:
             return None
         img = np.copy(image)
         img[mask == 0] = 0
