@@ -136,6 +136,7 @@ SettingsValue = namedtuple("SettingsValue", ["function_name", "help_message", "a
 Leaf = namedtuple("Leaf", ["name", "dict"])
 Node = namedtuple("Node", ["left", 'op', 'right'])
 
+
 class StatisticProfile(object):
 
     STATISTIC_DICT = {
@@ -226,7 +227,7 @@ class StatisticProfile(object):
         return final_res, pos
 
     def tree_to_dict_tree(self, tree):
-        if isinstance(tree[0],list):
+        if isinstance(tree[0], list):
             left_tree = self.tree_to_dict_tree(tree[0])
             right_tree = self.tree_to_dict_tree(tree[2])
             return Node(left_tree, tree[1], right_tree)
@@ -241,16 +242,14 @@ class StatisticProfile(object):
 
     def parse_statistic(self, text):
         tokens = self.tokenize(text)
-        if tokens[0] == "(":
-            pos = 1
-        else:
-            pos = 0
+
         tree, l = self.build_tree(tokens)
         return self.tree_to_dict_tree(tree)
 
     def calculate_tree(self, node, help_dict, kwargs):
         """
         :type node: Leaf | Node
+        :type help_dict: dict
         :type kwargs: dict
         :return: float
         """
@@ -275,7 +274,6 @@ class StatisticProfile(object):
 
     def calculate(self, image, mask, full_mask, base_mask):
         result = OrderedDict()
-        support_dict = dict()
         if self.reversed_brightness:
             noise_mean = np.mean(image[full_mask == 0])
             image = noise_mean - image

@@ -1619,7 +1619,7 @@ class StatisticsSettings(QWidget):
     def choose_element(self):
         if self.chosen_element is None:
             item = self.profile_options.currentItem()
-            item.setIcon(QIcon(os.path.join("icons", "task-accepted.png")))
+            item.setIcon(QIcon(os.path.join(file_folder, "icons", "task-accepted.png")))
             self.chosen_element = item
         elif self.profile_options.currentItem() == self.chosen_element:
             self.chosen_element.setIcon(QIcon())
@@ -1837,12 +1837,12 @@ class MainMenu(QWidget):
         self.settings.add_image_callback(self.set_layer_threshold)
         self.settings.add_change_layer_callback(self.changed_layer)
         self.load_button = QPushButton(self)
-        self.load_button.setIcon(QIcon(os.path.join("icons", "document-open.png")))
+        self.load_button.setIcon(QIcon(os.path.join(file_folder, "icons", "document-open.png")))
         self.load_button.setStyleSheet("padding: 3px;")
         self.load_button.setToolTip("Open")
         self.load_button.clicked.connect(self.open_file)
         self.save_button = QPushButton(self)
-        self.save_button.setIcon(QIcon(os.path.join("icons", "document-save-as.png")))
+        self.save_button.setIcon(QIcon(os.path.join(file_folder, "icons", "document-save-as.png")))
         self.save_button.setStyleSheet("padding: 3px;")
         self.save_button.setToolTip("Save")
         self.save_button.setDisabled(True)
@@ -1883,7 +1883,7 @@ class MainMenu(QWidget):
         self.profile_choose.addItems(list(self.settings.get_profile_list()))
         self.profile_choose.currentIndexChanged[str_type].connect(self.profile_changed)
         self.advanced_button = QPushButton(self)  # "Advanced"
-        self.advanced_button.setIcon(QIcon(os.path.join("icons", "configure.png")))
+        self.advanced_button.setIcon(QIcon(os.path.join(file_folder, "icons", "configure.png")))
         self.advanced_button.setStyleSheet("padding: 3px;")
         self.advanced_button.setToolTip("Advanced settings and statistics")
         self.advanced_button.clicked.connect(self.open_advanced)
@@ -2260,7 +2260,7 @@ class MainWindow(QMainWindow):
         self.settings.add_image_callback((self.statusBar.showMessage, str))
 
         # self.setGeometry(0, 0,  1400, 720)
-        icon = QIcon("icon.png")
+        icon = QIcon(os.path.join(file_folder, "icon.png"))
         self.setWindowIcon(icon)
         menubar = self.menuBar()
         menu = menubar.addMenu("File")
