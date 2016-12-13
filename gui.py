@@ -1215,6 +1215,7 @@ class StatisticsWindow(QWidget):
         self.recalculate_button = QPushButton("Recalculate statistics", self)
         self.recalculate_button.clicked.connect(self.update_statistics)
         self.copy_button = QPushButton("Copy to clipboard", self)
+        self.horizontal_statistics = QCheckBox("Horizontal", self)
         self.copy_button.clicked.connect(self.copy_to_clipboard)
         self.statistic_type = QComboBox(self)
         self.statistic_type.addItem("Emish statistics (oryginal)")
@@ -1230,8 +1231,9 @@ class StatisticsWindow(QWidget):
         butt_layout.setMargin(0)
         print(butt_layout.spacing())
         butt_layout.setSpacing(10)
-        butt_layout.addWidget(self.copy_button)
-        butt_layout.addWidget(self.statistic_type)
+        butt_layout.addWidget(self.horizontal_statistics, 1)
+        butt_layout.addWidget(self.copy_button, 2)
+        butt_layout.addWidget(self.statistic_type, 2)
         v_butt_layout.addWidget(self.recalculate_button)
         v_butt_layout.addLayout(butt_layout)
         layout.addLayout(v_butt_layout)
@@ -1258,14 +1260,7 @@ class StatisticsWindow(QWidget):
         if self.statistic_type.currentText() == "Emish statistics (oryginal)":
             image, mask = get_segmented_data(np.copy(self.settings.image), self.settings, self.segment)
             stat = calculate_statistic_from_image(image, mask, self.settings)
-            self.info_field.setRowCount(len(stat))
-            for i, (key, val) in enumerate(stat.items()):
-                self.info_field.setItem(i, 0, QTableWidgetItem(key))
-                self.info_field.setItem(i, 1, QTableWidgetItem(str(val)))
-                try:
-                    self.info_field.setItem(i, 2, QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
-                except KeyError as k:
-                    logging.warning(k.message)
+
         else:
             compute_class = self.settings.statistics_profile_dict[str(self.statistic_type.currentText())]
             if self.settings.use_gauss:
@@ -1276,16 +1271,32 @@ class StatisticsWindow(QWidget):
             full_mask = self.segment.get_full_segmentation()
             base_mask = self.settings.mask
             stat = compute_class.calculate(image, mask, full_mask, base_mask)
+        if self.horizontal_statistics.isChecked():
+            self.info_field.setRowCount(3)
+            self.info_field.setColumnCount(len(stat))
+            self.info_field.setVerticalHeaderLabels(["Name", "Value", "Units"])
+            self.info_field.setHorizontalHeaderLabels([str(x) for x in range(len(stat))])
+            for i, (key, val) in enumerate(stat.items()):
+                print(i, key, val)
+                self.info_field.setItem(0, i, QTableWidgetItem(key))
+                self.info_field.setItem(1, i, QTableWidgetItem(str(val)))
+                try:
+                    self.info_field.setItem(2, i, QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
+                except KeyError as k:
+                    logging.warning(k.message)
+        else:
             self.info_field.setRowCount(len(stat))
+            self.info_field.setColumnCount(3)
+            self.info_field.setVerticalHeaderLabels([str(x) for x in range(len(stat))])
+            self.info_field.setHorizontalHeaderLabels(["Name", "Value", "Units"])
             for i, (key, val) in enumerate(stat.items()):
                 print(i, key, val)
                 self.info_field.setItem(i, 0, QTableWidgetItem(key))
                 self.info_field.setItem(i, 1, QTableWidgetItem(str(val)))
-                self.info_field.setItem(i, 2, QTableWidgetItem(""))
-                #try:
-                #    self.info_field.setItem(i, 2, QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
-                #except KeyError as k:
-                #    logging.warning(k.message)
+                try:
+                    self.info_field.setItem(i, 2, QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
+                except KeyError as k:
+                    logging.warning(k.message)
 
     def keyPressEvent(self, e):
         if e.modifiers() & Qt.ControlModifier:
@@ -1608,13 +1619,19 @@ class StatisticsSettings(QWidget):
     def choose_element(self):
         if self.chosen_element is None:
             item = self.profile_options.currentItem()
-            item.setIcon(QIcon("icons/task-accepted.png"))
+            item.setIcon(QIcon(os.path.join("icons", "task-accepted.png")))
             self.chosen_element = item
         elif self.profile_options.currentItem() == self.chosen_element:
             self.chosen_element.setIcon(QIcon())
             self.chosen_element = None
         else:
-            lw = QListWidgetItem("{}/{}".format(self.chosen_element.text(), self.profile_options.currentItem().text()))
+            text1 = self.chosen_element.text()
+            if "/" in text1:
+                text1 = "({})".format(text1)
+            text2 = self.profile_options.currentItem().text()
+            if "/" in text2:
+                text2 = "({})".format(text2)
+            lw = QListWidgetItem("{}/{}".format(text1, text2))
             lw.setToolTip("User defined")
             self.profile_options_chosen.addItem(lw)
             self.chosen_element.setIcon(QIcon())
@@ -1666,7 +1683,10 @@ class StatisticsSettings(QWidget):
     def choose_option(self):
         selected_item = self.profile_options.currentItem()
         selected_row = self.profile_options.currentRow()
-        arguments = StatisticProfile.STATISTIC_DICT[str(selected_item.text())].arguments
+        if str(selected_item.text()) in StatisticProfile.STATISTIC_DICT:
+            arguments = StatisticProfile.STATISTIC_DICT[str(selected_item.text())].arguments
+        else:
+            arguments = None
         if arguments is not None:
             val_dialog = MultipleInput("Set parameters:",
                                        StatisticProfile.STATISTIC_DICT[str(selected_item.text())].help_message,
@@ -1817,22 +1837,14 @@ class MainMenu(QWidget):
         self.settings.add_image_callback(self.set_layer_threshold)
         self.settings.add_change_layer_callback(self.changed_layer)
         self.load_button = QPushButton(self)
-        if QIcon.hasThemeIcon("document-open") and False:
-            self.load_button.setIcon(QIcon.fromTheme("document-open"))
-        else:
-            # self.load_button.setText("Open")
-            self.load_button.setIcon(QIcon("icons/document-open.png"))
-            self.load_button.setStyleSheet("padding: 3px;")
-            self.load_button.setToolTip("Open")
+        self.load_button.setIcon(QIcon(os.path.join("icons", "document-open.png")))
+        self.load_button.setStyleSheet("padding: 3px;")
+        self.load_button.setToolTip("Open")
         self.load_button.clicked.connect(self.open_file)
         self.save_button = QPushButton(self)
-        if QIcon.hasThemeIcon("document-save") and False:
-            self.save_button.setIcon(QIcon.fromTheme("document-save"))
-        else:
-            self.save_button.setIcon(QIcon("icons/document-save-as.png"))
-            self.save_button.setStyleSheet("padding: 3px;")
-            self.save_button.setToolTip("Save")
-            # self.save_button.setText("Save")
+        self.save_button.setIcon(QIcon(os.path.join("icons", "document-save-as.png")))
+        self.save_button.setStyleSheet("padding: 3px;")
+        self.save_button.setToolTip("Save")
         self.save_button.setDisabled(True)
         self.save_button.clicked.connect(self.save_file)
         self.mask_button = QPushButton("Mask manager", self)
@@ -1871,7 +1883,7 @@ class MainMenu(QWidget):
         self.profile_choose.addItems(list(self.settings.get_profile_list()))
         self.profile_choose.currentIndexChanged[str_type].connect(self.profile_changed)
         self.advanced_button = QPushButton(self)  # "Advanced"
-        self.advanced_button.setIcon(QIcon("icons/configure.png"))
+        self.advanced_button.setIcon(QIcon(os.path.join("icons", "configure.png")))
         self.advanced_button.setStyleSheet("padding: 3px;")
         self.advanced_button.setToolTip("Advanced settings and statistics")
         self.advanced_button.clicked.connect(self.open_advanced)

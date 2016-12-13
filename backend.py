@@ -133,7 +133,8 @@ def bisect(arr, val, comp):
     return r
 
 SettingsValue = namedtuple("SettingsValue", ["function_name", "help_message", "arguments"])
-
+Leaf = namedtuple("Leaf", ["name", "dict"])
+Node = namedtuple("Node", ["left", 'op', 'right'])
 
 class StatisticProfile(object):
 
@@ -165,23 +166,112 @@ class StatisticProfile(object):
         self.name = name
         self.chosen_fields = []
         for cf_val in chosen_fields:
-            name = cf_val[0]
             user_name = cf_val[1]
-            sp = name.split("[")
-            if len(sp) == 1 and self.STATISTIC_DICT[sp[0]].arguments is None:
-                self.chosen_fields.append((name, user_name, None))
-            elif len(sp) == 2 and self.STATISTIC_DICT[sp[0]].arguments is not None:
-                arguments = sp[1][:-1].split(",")
-                params = dict()
-                for arg in arguments:
-                    val_name, val = arg.split("=")
-                    val = self.STATISTIC_DICT[sp[0]].arguments[val_name](val)
-                    params[val_name] = val
-                self.chosen_fields.append((sp[0], user_name, params))
-            elif len(sp) == 1 and len(cf_val) == 3 and self.STATISTIC_DICT[sp[0]].arguments is not None:
-                self.chosen_fields.append((sp[0], user_name, cf_val[2]))
+            if isinstance(cf_val[0], str):
+                tree = self.parse_statistic(cf_val[0])
+            else:
+                tree = self.rebuild_tree(cf_val[0])
+            self.chosen_fields.append((tree, user_name, None))
         self.settings = settings
         self.reversed_brightness = reversed_brightness
+
+    def rebuild_tree(self, l):
+        if len(l) == 2:
+            return Leaf(*l)
+        else:
+            return Node(self.rebuild_tree(l[0]), l[1], self.rebuild_tree(l[2]))
+
+    @staticmethod
+    def tokenize(text):
+        special = ["(", ")", "[", "]", "/", "+", ","]
+        res = []
+        temp_str = ""
+        for l in text:
+            if l in special:
+                if temp_str != "":
+                    res.append(temp_str)
+                    temp_str = ""
+                res.append(l)
+            else:
+                temp_str += l
+        if temp_str != "":
+            res.append(temp_str)
+        return res
+
+    def build_tree(self, tokens):
+        res = []
+        final_res = res
+        pos = 0
+        while True:
+            if pos == len(tokens):
+                break
+            if tokens[pos] == ")":
+                pos += 1
+                break
+            if tokens[pos] == "/":
+                final_res = [res[:], "/"]
+                res = []
+                final_res.append(res)
+                pos += 1
+            if tokens[pos] in "[],":
+                pos += 1
+                continue
+            if tokens[pos] == "(":
+                sub_tree, pos_shift = self.build_tree(tokens[pos+1:])
+                pos += pos_shift+1
+                res.extend(sub_tree)
+                continue
+            res.append(tokens[pos])
+            pos += 1
+        return final_res, pos
+
+    def tree_to_dict_tree(self, tree):
+        if isinstance(tree[0],list):
+            left_tree = self.tree_to_dict_tree(tree[0])
+            right_tree = self.tree_to_dict_tree(tree[2])
+            return Node(left_tree, tree[1], right_tree)
+        else:
+            name = tree[0]
+            base_stat = self.STATISTIC_DICT[name]
+            d = dict()
+            for el in tree[1:]:
+                sp = el.split("=")
+                d[sp[0]] = base_stat.arguments[sp[0]](sp[1])
+            return Leaf(name, d)
+
+    def parse_statistic(self, text):
+        tokens = self.tokenize(text)
+        if tokens[0] == "(":
+            pos = 1
+        else:
+            pos = 0
+        tree, l = self.build_tree(tokens)
+        return self.tree_to_dict_tree(tree)
+
+    def calculate_tree(self, node, help_dict, kwargs):
+        """
+        :type node: Leaf | Node
+        :type kwargs: dict
+        :return: float
+        """
+        if isinstance(node, Leaf):
+            fun_name = self.STATISTIC_DICT[node.name][0]
+            kw = dict(kwargs)
+            kw.update(node.dict)
+            hash_str = "{}: {}".format(fun_name, kw)
+            if hash_str in help_dict:
+                return help_dict[hash_str]
+            fun = getattr(self, fun_name)
+            val = fun(**kw)
+            help_dict[hash_str] = val
+            return val
+        elif isinstance(node, Node):
+            left_res = self.calculate_tree(node.left, help_dict, kwargs)
+            right_res = self.calculate_tree(node.right, help_dict, kwargs)
+            if node.op == "/":
+                return left_res/right_res
+        logging.error("Wrong statistics: {}".format(node))
+        return 1
 
     def calculate(self, image, mask, full_mask, base_mask):
         result = OrderedDict()
@@ -189,43 +279,10 @@ class StatisticProfile(object):
         if self.reversed_brightness:
             noise_mean = np.mean(image[full_mask == 0])
             image = noise_mean - image
-        for name, user_name, params in self.chosen_fields:
-            print(name, )
-            if name in self.STATISTIC_DICT:
-                fun_name, _, params = self.STATISTIC_DICT[name]
-                print(fun_name)
-                fun = getattr(self, fun_name)
-                kw = {"image": image, "mask": mask, "base_mask": base_mask, "full_mask": full_mask}
-                if params is not None:
-                    kw.update(params)
-                result[user_name] = fun(**kw)
-            else:
-                result[user_name] = 1
-        for name, user_name, params in self.chosen_fields:
-            if name not in self.STATISTIC_DICT:
-                names = name.split("/")
-
-                def get_val(sub_name):
-                    if sub_name in result:
-                        val = result[names[0]]
-                    elif sub_name in support_dict:
-                        val = support_dict[names[0]]
-                    else:
-                        gv_fun_name, _, _ = self.STATISTIC_DICT[sub_name]
-                        gv_fun = getattr(self, gv_fun_name)
-                        gv_kw = {"image": image, "mask": mask, "base_mask": base_mask, "full_mask": full_mask}
-                        val = gv_fun(**gv_kw)
-                        support_dict[user_name] = val
-                    return val
-                stat = get_val(names[0])
-                try:
-                    for n in names[1:]:
-                        stat /= get_val(n)
-                except ZeroDivisionError:
-                    stat = None
-                except TypeError:
-                    stat = None
-                result[user_name] = stat
+        help_dict = dict()
+        kw = {"image": image, "mask": mask, "base_mask": base_mask, "full_mask": full_mask}
+        for tree, user_name, params in self.chosen_fields:
+            result[user_name] = self.calculate_tree(tree, help_dict, kw)
         return result
 
     @staticmethod
@@ -296,7 +353,7 @@ class StatisticProfile(object):
             return None
         img = np.copy(image)
         img[mask == 0] = 0
-        return af.calculate_density_momentum(img, self.settings.voxel_size)
+        return af.calculate_density_momentum(img, self.settings.voxel_size,)
 
 
 class Profile(object):
