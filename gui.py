@@ -1212,10 +1212,14 @@ class StatisticsWindow(QWidget):
         super(StatisticsWindow, self).__init__()
         self.settings = settings
         self.segment = segment
-        self.recalculate_button = QPushButton("Recalculate statistics", self)
-        self.recalculate_button.clicked.connect(self.update_statistics)
+        self.recalculate_button = QPushButton("Recalculate and replace statistics", self)
+        self.recalculate_button.clicked.connect(self.replace_statistics)
+        self.recalculate_append_button = QPushButton("Recalculate and append statistics", self)
+        self.recalculate_append_button.clicked.connect(self.append_statistics)
         self.copy_button = QPushButton("Copy to clipboard", self)
         self.horizontal_statistics = QCheckBox("Horizontal", self)
+        self.no_header = QCheckBox("No header", self)
+        self.horizontal_statistics.stateChanged.connect(self.horizontal_changed)
         self.copy_button.clicked.connect(self.copy_to_clipboard)
         self.statistic_type = QComboBox(self)
         self.statistic_type.addItem("Emish statistics (oryginal)")
@@ -1223,18 +1227,22 @@ class StatisticsWindow(QWidget):
         self.info_field = QTableWidget(self)
         self.info_field.setColumnCount(3)
         self.info_field.setHorizontalHeaderLabels(["Name", "Value", "Units"])
+        self.statistic_shift = 0
         layout = QVBoxLayout()
         # layout.addWidget(self.recalculate_button)
         v_butt_layout = QVBoxLayout()
         v_butt_layout.setSpacing(1)
+        up_butt_layout = QHBoxLayout()
+        up_butt_layout.addWidget(self.recalculate_button)
+        up_butt_layout.addWidget(self.recalculate_append_button)
         butt_layout = QHBoxLayout()
         butt_layout.setMargin(0)
-        print(butt_layout.spacing())
         butt_layout.setSpacing(10)
         butt_layout.addWidget(self.horizontal_statistics, 1)
+        butt_layout.addWidget(self.no_header,1)
         butt_layout.addWidget(self.copy_button, 2)
         butt_layout.addWidget(self.statistic_type, 2)
-        v_butt_layout.addWidget(self.recalculate_button)
+        v_butt_layout.addLayout(up_butt_layout)
         v_butt_layout.addLayout(butt_layout)
         layout.addLayout(v_butt_layout)
         # layout.addLayout(butt_layout)
@@ -1256,7 +1264,28 @@ class StatisticsWindow(QWidget):
             s = s[:-1] + "\n"  # eliminate last '\t'
         self.clip.setText(s)
 
-    def update_statistics(self):
+    def replace_statistics(self):
+        self.statistic_shift = 0
+        self.append_statistics()
+
+    def horizontal_changed(self):
+        rows = self.info_field.rowCount()
+        columns = self.info_field.columnCount()
+        ob_array = np.zeros((rows, columns), dtype=object)
+        for x in range(rows):
+            for y in range(columns):
+                ob_array[x, y] = self.info_field.item(x, y).text()
+        hor_headers = [self.info_field.horizontalHeaderItem(x).text() for x in range(columns)]
+        ver_headers = [self.info_field.verticalHeaderItem(x).text() for x in range(rows)]
+        self.info_field.setColumnCount(rows)
+        self.info_field.setRowCount(columns)
+        self.info_field.setHorizontalHeaderLabels(ver_headers)
+        self.info_field.setVerticalHeaderLabels(hor_headers)
+        for x in range(rows):
+            for y in range(columns):
+                self.info_field.setItem(y, x,  QTableWidgetItem(ob_array[x, y]))
+
+    def append_statistics(self):
         if self.statistic_type.currentText() == "Emish statistics (oryginal)":
             image, mask = get_segmented_data(np.copy(self.settings.image), self.settings, self.segment)
             stat = calculate_statistic_from_image(image, mask, self.settings)
@@ -1271,32 +1300,48 @@ class StatisticsWindow(QWidget):
             full_mask = self.segment.get_full_segmentation()
             base_mask = self.settings.mask
             stat = compute_class.calculate(image, mask, full_mask, base_mask)
+        if self.no_header.isChecked():
+            self.statistic_shift -= 1
         if self.horizontal_statistics.isChecked():
-            self.info_field.setRowCount(3)
-            self.info_field.setColumnCount(len(stat))
-            self.info_field.setVerticalHeaderLabels(["Name", "Value", "Units"])
+            ver_headers = [self.info_field.verticalHeaderItem(x).text() for x in range(self.info_field.rowCount())]
+            self.info_field.setRowCount(3 + self.statistic_shift)
+            self.info_field.setColumnCount(max(len(stat), self.info_field.columnCount()))
+            if not self.no_header.isChecked():
+                ver_headers.append("Name")
+            ver_headers.extend(["Value", "Units"])
+            self.info_field.setVerticalHeaderLabels(ver_headers)
             self.info_field.setHorizontalHeaderLabels([str(x) for x in range(len(stat))])
             for i, (key, val) in enumerate(stat.items()):
                 print(i, key, val)
-                self.info_field.setItem(0, i, QTableWidgetItem(key))
-                self.info_field.setItem(1, i, QTableWidgetItem(str(val)))
+                if not self.no_header.isChecked():
+                    self.info_field.setItem(self.statistic_shift + 0, i, QTableWidgetItem(key))
+                self.info_field.setItem(self.statistic_shift + 1, i, QTableWidgetItem(str(val)))
                 try:
-                    self.info_field.setItem(2, i, QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
+                    self.info_field.setItem(self.statistic_shift + 2, i,
+                                            QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
                 except KeyError as k:
                     logging.warning(k.message)
         else:
-            self.info_field.setRowCount(len(stat))
-            self.info_field.setColumnCount(3)
+            hor_headers = [self.info_field.horizontalHeaderItem(x).text() for x in range(self.info_field.columnCount())]
+            self.info_field.setRowCount(max(len(stat), self.info_field.rowCount()))
+            self.info_field.setColumnCount(3 + self.statistic_shift)
             self.info_field.setVerticalHeaderLabels([str(x) for x in range(len(stat))])
-            self.info_field.setHorizontalHeaderLabels(["Name", "Value", "Units"])
+            if not self.no_header.isChecked():
+                hor_headers.append("Name")
+            hor_headers.extend(["Value", "Units"])
+            self.info_field.setHorizontalHeaderLabels(hor_headers)
             for i, (key, val) in enumerate(stat.items()):
-                print(i, key, val)
-                self.info_field.setItem(i, 0, QTableWidgetItem(key))
-                self.info_field.setItem(i, 1, QTableWidgetItem(str(val)))
+                # print(i, key, val)
+                if not self.no_header.isChecked():
+                    self.info_field.setItem(i, self.statistic_shift + 0, QTableWidgetItem(key))
+                self.info_field.setItem(i, self.statistic_shift + 1, QTableWidgetItem(str(val)))
                 try:
-                    self.info_field.setItem(i, 2, QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
+                    self.info_field.setItem(i, self.statistic_shift + 2,
+                                            QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
                 except KeyError as k:
                     logging.warning(k.message)
+
+        self.statistic_shift += 3
 
     def keyPressEvent(self, e):
         if e.modifiers() & Qt.ControlModifier:
@@ -1602,6 +1647,9 @@ class StatisticsSettings(QWidget):
 
     def profile_chosen(self):
         self.delete_profile_butt.setEnabled(True)
+        if self.profile_list.count() == 0:
+            self.profile_description.setText("")
+            return
         item = self.profile_list.currentItem()
         text = "Profile name: {}\nstatistics:\n".format(item.text())
         profile = self.settings.statistics_profile_dict[str(item.text())]
@@ -1638,7 +1686,7 @@ class StatisticsSettings(QWidget):
             self.chosen_element = None
 
     def create_selection_chosen_changed(self):
-        print(self.profile_options_chosen.count())
+        # print(self.profile_options_chosen.count())
         if self.profile_options_chosen.count() == 0:
             self.move_down.setDisabled(True)
             self.move_up.setDisabled(True)
@@ -2030,7 +2078,7 @@ class MainMenu(QWidget):
             if selected_filter == "raw image (*.tiff *.tif *.lsm)":
                 im = tifffile.imread(file_path)
                 if im.ndim == 4:
-                    print(im.shape)
+                    # print(im.shape)
                     index = list(im.shape).index(min(im.shape))
                     # TODO do something better. now not all possibilities are covered
                     # noinspection PyCallByClass

@@ -154,13 +154,19 @@ class StatisticProfile(object):
             "minimum_brightness", "Calculate minimum brightness of pixel for current segmentation", None),
         "Median pixel brightness": SettingsValue(
             "median_brightness", "Calculate median brightness of pixel for current segmentation", None),
+        "Mean pixel brightness": SettingsValue(
+            "mean_brightness", "Calculate median brightness of pixel for current segmentation", None),
         "Standard deviation of pixel brightness": SettingsValue(
             "std_brightness", "Calculate  standard deviation of pixel brightness for current segmentation", None),
         "Standard deviation of Noise": SettingsValue(
             "std_noise", "Calculate standard deviation of pixel brightness outside current segmentation", None),
         "Moment of inertia": SettingsValue("moment_of_inertia", "Calculate moment of inertia for segmented structure."
                                            "Has one parameter thr (threshold). Only values above it are used "
-                                           "in calculation", {"thr": float})
+                                           "in calculation", {"thr": float}),
+        "Border Mass": SettingsValue("border_mass", "Calculate mass for elements in radius (in physical units)"
+                                                    " from mask", {"radius": int}),
+        "Border Volume": SettingsValue("border_volume", "Calculate volumes for elements in radius (in physical units)"
+                                                        " from mask", {"radius": int})
     }
 
     def __init__(self, name, chosen_fields, reversed_brightness, settings):
@@ -280,7 +286,12 @@ class StatisticProfile(object):
         help_dict = dict()
         kw = {"image": image, "mask": mask, "base_mask": base_mask, "full_mask": full_mask}
         for tree, user_name, params in self.chosen_fields:
-            result[user_name] = self.calculate_tree(tree, help_dict, kw)
+            try:
+                result[user_name] = self.calculate_tree(tree, help_dict, kw)
+            except ZeroDivisionError:
+                result[user_name] = "Div by zero"
+            except TypeError:
+                result[user_name] = "None div"
         return result
 
     @staticmethod
@@ -296,7 +307,9 @@ class StatisticProfile(object):
 
     @staticmethod
     def calculate_mass(mask, image, **_):
-        return np.sum(image[mask > 0])
+        if np.any(mask):
+            return np.sum(image[mask > 0])
+        return 0
 
     @staticmethod
     def calculate_component_mass(mask, image, **_):
@@ -337,6 +350,13 @@ class StatisticProfile(object):
             return None
 
     @staticmethod
+    def mean_brightness(mask, image, **_):
+        if np.any(mask):
+            return np.mean(image[mask>0])
+        else:
+            return None
+
+    @staticmethod
     def std_noise(mask, base_mask, image, **_):
         if np.any(mask):
             if base_mask is not None:
@@ -352,6 +372,33 @@ class StatisticProfile(object):
         img = np.copy(image)
         img[mask == 0] = 0
         return af.calculate_density_momentum(img, self.settings.voxel_size,)
+
+    def border_mask(self, base_mask, radius, **_):
+        if base_mask is None:
+            return None
+        base_mask = np.array(base_mask > 0)
+        base_mask = base_mask.astype(np.uint8)
+        border = sitk.LabelContour(sitk.GetImageFromArray(base_mask))
+        border.SetSpacing(self.settings.voxel_size)
+        dilated_border = sitk.GetArrayFromImage(sitk.BinaryDilate(border, radius))
+        dilated_border[base_mask == 0] = 0
+        return dilated_border
+
+    def border_mass(self, image, mask, **kwargs):
+        border_mask = self.border_mask(**kwargs)
+        if border_mask is None:
+            return None
+        final_mask = np.array((border_mask > 0) * (mask > 0))
+        if np.any(final_mask):
+            return np.sum(image[final_mask])
+        return 0
+
+    def border_volume(self, mask, **kwargs):
+        border_mask = self.border_mask(**kwargs)
+        if border_mask is None:
+            return None
+        final_mask = np.array((border_mask > 0) * (mask > 0))
+        return np.count_nonzero(final_mask) * self.pixel_volume(self.settings.voxel_size)
 
 
 class Profile(object):
