@@ -32,6 +32,20 @@
     \alt<#1>{\pgfkeysalso{#2}}{\pgfkeysalso{#3}} % \pgfkeysalso doesn't change the path
   },
 }
+\lstset{%                                                    
+  language=Python,
+  basicstyle=\scriptsize\ttfamily,
+  tabsize=2,
+  morekeywords={},
+  moredelim=*[s][\ttfamily]{:}{:},
+  keywordstyle={\bfseries\color{Blue}},
+  morekeywords={join, glob, None},
+  morecomment=[s][\color{red}]{"}{"},
+  inputencoding=utf8x,
+  extendedchars=\true,
+    breaklines=true,
+    postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\color{red}\hookrightarrow\space}}
+}
 \pgfplotsset{compat=1.10}
 \title{PartSeg}
 \subtitle{Image analysis tool}
@@ -103,6 +117,14 @@
   This is tool for \emph{small} files  
 \end{frame}
 \subsection{*.cmap files create algorithm}
+\begin{frame}[c]{What is *.cmap}
+  \begin{itemize}
+    \item Chimera map
+    \item Can store volumetric data
+    \item Used in our fitting algorithm
+    \item Chimera can be used to do 3d visualization  
+  \end{itemize}
+\end{frame}
 \begin{frame}[c]{cmap create – flowchart}
   \begin{tikzpicture}[scale=0.6, node distance=1.5cm, transform shape]
     \tikzstyle{startstop} = [rectangle, rounded corners, minimum width=3cm, minimum height=.8cm,text centered, draw=black, fill=red!30]
@@ -153,7 +175,15 @@
   \end{tikzpicture}
 \end{frame}
 
-\section{User interface}
+\section{Program}
+\begin{frame}[c]{Current state}
+\begin{itemize}
+  \item From previous version dependencies of program changes. 
+    It can not run with previous environment
+  \item Two days ago first standalone windows build was finished. Now application can be run from one file.
+  \item There are ready build for Mac and Windows. 
+\end{itemize}
+\end{frame}
 \begin{frame}[c]{Overview}
   \begin{figure}[htpb]
     \centering
@@ -177,11 +207,72 @@
 \begin{frame}[standout]{}
   This is tool for \emph{small} files  
 \end{frame}
-\begin{frame}[c]{Plans}
+\section{Batch processing - example}
+\begin{frame}[c]{Problem}
+  Ada has data. 
+  \begin{itemize}
+    \item There are from confokal microscope. 
+    \item On this images are \textasciitilde 1500 nucleus which should be analyzed.
+    \item<2-> It cannot be done by hand.
+    \item<3-> Good option is program which:
+      \begin{itemize}
+        \item allows to put in queue all files
+        \item allow to easy change parameters
+        \item allow to set parameters depend on experiment
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+\begin{frame}[fragile,c]{Code}
+  File list:
+  \begin{lstlisting}
+  cut_dir = "/media/czaki/Grzesiek -/Ada_chromatyna/cuted_nuc"
+  cuted_nuc_mask_pat = join(cut_dir, "*", "*mask*.tif" )
+    
+  cuted_masks_list = glob(cuted_nuc_mask_pat)
+  \end{lstlisting}
+  Parameters:
+  \begin{lstlisting}
+  result_path = "result.xlsx"
+  min_size = 30  
+  raw_experiment_threshold = {
+    "1" : {
+        "threshold_total" : 25 * 256,
+        "threshold_bright": 75 * 256,
+        "threshold_dark" : 25 * 256,
+        "threshold_big" : 150 * 256
+    },
+    "2" : {
+        "threshold_total": 25 * 256,
+        "threshold_bright": 70 * 256,
+        "threshold_dark" : 25 * 256,
+        "threshold_big" : 140 * 256
+    }
+  }
+  \end{lstlisting}
+\end{frame}
+\begin{frame}[fragile,c]{Code}
+    Execution:
+    \begin{lstlisting}
+    calculate_statistic(cuted_masks_list,raw_experiment_threshold,None, min_size, result_path)
+    \end{lstlisting}
+\end{frame}
+\begin{frame}[c]{Summarize}
   \begin{enumerate}
-    \item Pack PartSeg to executable. 
-    \item Add more statistics and allow user to choose which should be calculated.
+    \item It solve problem with statistics calculate
+    \item it calculate long, but do not need human interaction
+    \item It was one task tool – to change something more sophisticated,
+      like naming convention, the programmer is needed
+    \item in backend there are 370 lines of code. 
+  \end{enumerate}
+  
+\end{frame}
+\begin{frame}[c]{Plans for GUI}
+  \begin{enumerate}
+    %\item Pack PartSeg to executable. 
+    %\item Add more statistics and allow user to choose which should be calculated.
+    \item More statistics.
     \item Add automatic and multi files processing based on profiles (need discussion).
+    \item Other?
   \end{enumerate}  
 \end{frame}
 \begin{frame}
