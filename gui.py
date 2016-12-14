@@ -2158,6 +2158,7 @@ class MainMenu(QWidget):
 
             elif selected_filter == "Labeled image (*.tif)":
                 segmentation = self.segment.get_segmentation()
+                segmentation[segmentation>0] +=2
                 image = np.copy(self.settings.image)
                 cmap = matplotlib.cm.get_cmap("gray")
                 float_image = image / float(image.max())
