@@ -106,7 +106,7 @@
 \end{frame}
 \begin{frame}[c]{Summarize}
   \begin{itemize}
-    \item To maximize speed algorithm remembers intermediate steps
+    \item To get better performance of algorithm remembers intermediate steps
     \item<2-> \textbf{But this is memory consuming}
     \item<2-> This allows to not rerun algorithm from scratch 
     \item<3-> Can use segmentation result as mask in next iteration 
@@ -178,10 +178,10 @@
 \section{Program}
 \begin{frame}[c]{Current state}
 \begin{itemize}
-  \item From previous version dependencies of program changes. 
+  \item The dependencies of the program changes from previous version. 
     It can not run with previous environment
-  \item Two days ago first standalone windows build was finished. Now application can be run from one file.
-  \item There are ready build for Mac and Windows. 
+  \item Two days ago first standalone Windows build was finished. Now application can be run from one file.
+  \item There are ready builds for Mac and Windows. 
 \end{itemize}
 \end{frame}
 \begin{frame}[c]{Overview}
@@ -195,12 +195,12 @@
 \begin{frame}[c]{Summarize}
   \begin{enumerate}
     \item \textbf{This is beta version} – still needs tests.
-    \item In project files there are saved information about every step needed to get segmentation. 
+    \item In project files there is saved information about every step needed to get segmentation. 
     \item Program allows to save set of profiles.
     \item Program allows to change segmentation to mask. 
-    \item Probably every useful in segmentation information are showed on main window.
+    \item Probably every information useful in segmentation are showed on main window.
     \item Project specific settings are in Advanced Window.
-    \item Statistics are in Advanced Windows.
+    \item Statistics are in Advanced Window.
     \item Files from previous version demand change extension form \texttt{.gz} to \texttt{.bz2}.
   \end{enumerate}  
 \end{frame}
@@ -212,13 +212,13 @@
   Ada has data. 
   \begin{itemize}
     \item There are from confokal microscope. 
-    \item On this images are \textasciitilde 1500 nucleus which should be analyzed.
+    \item On those images are \textasciitilde 1500 nucleus which should be analyzed.
     \item<2-> It cannot be done by hand.
-    \item<3-> Good option is program which:
+    \item<3-> Good solution would be program which:
       \begin{itemize}
         \item allows to put in queue all files
-        \item allow to easy change parameters
-        \item allow to set parameters depend on experiment
+        \item allows to easy change parameters
+        \item allows to set parameters depend on experiment
       \end{itemize}
   \end{itemize}
 \end{frame}
@@ -258,10 +258,11 @@
 \end{frame}
 \begin{frame}[c]{Summarize}
   \begin{enumerate}
-    \item It solve problem with statistics calculate
-    \item it calculate long, but do not need human interaction
-    \item It was one task tool – to change something more sophisticated,
-      like naming convention, the programmer is needed
+    \item It solves problem with statistics calculate
+    \item it works long, but do not need human interaction
+    \item It was one-task tool - the programmer is needed to change something more sophisticated, 
+      like naming convention,
+      the programmer is needed
     \item in backend there are 370 lines of code. 
   \end{enumerate}
   
@@ -270,6 +271,7 @@
   \begin{enumerate}
     %\item Pack PartSeg to executable. 
     %\item Add more statistics and allow user to choose which should be calculated.
+    \item Bug fixing.
     \item More statistics.
     \item Add automatic and multi files processing based on profiles (need discussion).
     \item Other?
