@@ -2101,11 +2101,25 @@ class MainMenu(QWidget):
                     self.settings.add_image(image, file_path, mask)
                 else:
                     image = tifffile.imread(file_path)
+                    if image.ndim == 4:
+                        # print(im.shape)
+                        index = list(image.shape).index(min(image.shape))
+                        # TODO do something better. now not all possibilities are covered
+                        # noinspection PyCallByClass
+                        num, state = QInputDialog.getInt(self, "Get channel number",
+                                                         "Image shape: {}\nchannel position: {}\nWitch channel:".format(
+                                                             image.shape, index
+                                                         ), 0, 0, image.shape[index] - 1)
+                        if state:
+                            image = image.take(num, axis=index)
+                        else:
+                            return
                     mask_dial = QFileDialog(self, "Load mask")
                     filters = ["mask (*.tiff *.tif *.lsm)"]
                     mask_dial.setFilters(filters)
                     if mask_dial.exec_():
-                        mask = tifffile.imread(mask_dial.selectedFiles()[0])
+                        print(mask_dial.selectedFiles()[0])
+                        mask = tifffile.imread(str(mask_dial.selectedFiles()[0]))
                         self.settings.add_image(image, file_path, mask)
             elif selected_filter == "saved project (*.gz *.bz2)":
                 load_project(file_path, self.settings, self.segment)

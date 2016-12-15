@@ -130,10 +130,13 @@ if __name__ == '__main__':
         if not os.path.isdir(os.path.join(args.destination_folder[0], rel_path)):
             os.makedirs(os.path.join(args.destination_folder[0], rel_path))
         if args.with_rotation:
+            file_name2 = os.path.splitext(file_name)[0]
+            file_name2 += "_o.cmap".format(rot)
             image_dir = os.path.splitext(file_name)[0]
             if not os.path.isdir(os.path.join(args.destination_folder[0], rel_path, image_dir)):
                 os.makedirs(os.path.join(args.destination_folder[0], rel_path, image_dir))
-            backend.save_to_cmap(os.path.join(args.destination_folder[0], rel_path, image_dir, file_name), settings, segment,
+            backend.save_to_cmap(os.path.join(args.destination_folder[0], rel_path, image_dir, file_name), settings,
+                                 segment,
                                  gauss_type=gauss_type, with_statistics=not args.no_statistics,
                                  centered_data=not args.no_center_data, morph_op=args.morph,
                                  scale_mass=args.scaled_mass)

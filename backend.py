@@ -977,7 +977,7 @@ def calculate_statistic_from_image(img, mask, settings):
     return res
 
 
-def get_segmented_data(image, settings, segment, with_std=False, mask_morph=None):
+def get_segmented_data(image, settings, segment, with_std=False, mask_morph=None, div_scale=1):
     """
     :param image: image from witch data should be catted
     :param settings: program settings
@@ -998,10 +998,12 @@ def get_segmented_data(image, settings, segment, with_std=False, mask_morph=None
     else:
         logging.debug("None morph_fun")
     full_segmentation = segment.get_full_segmentation()
-    noise_std = np.std(image[full_segmentation == 0])
+    image = image.astype(np.float)
     if settings.threshold_type == UPPER:
         noise_mean = np.mean(image[full_segmentation == 0])
         image = noise_mean - image
+    image /= div_scale
+    noise_std = np.std(image[full_segmentation == 0])
     image[segmentation == 0] = 0  # min(image[segmentation > 0].min(), 0)
     image[image < 0] = 0
     if with_std:
@@ -1048,9 +1050,7 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
     else:
         logging.warning("Unknown morphological operation")
         morph_fun = None
-    image, mask, noise_std = get_segmented_data(image, settings, segment, True, morph_fun)
-    image = image/scale_mass[0]
-
+    image, mask, noise_std = get_segmented_data(image, settings, segment, True, morph_fun, scale_mass[0])
     if gauss_type == GaussUse.gauss_3d:
         voxel = settings.spacing
         sitk_image = sitk.GetImageFromArray(image)
