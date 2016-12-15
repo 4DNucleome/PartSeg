@@ -627,11 +627,11 @@ class MyCanvas(QWidget):
             self.ax_im.set_data(image_to_show)
         self.figure_canvas.draw()
 
-    def resizeEvent(self, resize_event):
+    """def resizeEvent(self, resize_event):
         super(MyCanvas, self).resizeEvent(resize_event)
         # print(self.__class__.__name__, self.size(), resize_event.size(), resize_event.oldSize())
         # self.update_elements_positions()
-        self.updateGeometry()
+        self.updateGeometry()"""
 
     def get_image(self):
         if len(self.base_image.shape) <= 2:
