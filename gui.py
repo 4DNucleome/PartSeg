@@ -2006,7 +2006,7 @@ class MainMenu(QWidget):
     def colormap_changed(self):
         if self.colormap_protect:
             return
-        self.settings.change_colormap(self.colormap_choose.currentText())
+        self.settings.change_colormap(str(self.colormap_choose.currentText()))
 
     def settings_changed(self):
         self.segment.protect = True
