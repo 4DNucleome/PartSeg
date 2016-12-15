@@ -26,7 +26,7 @@ from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBa
 from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, \
     calculate_statistic_from_image, MaskChange, Profile, UNITS_DICT, GaussUse, StatisticProfile
 
-from scipy.stats import norm
+# from scipy.stats import norm
 
 __author__ = "Grzegorz Bokota"
 
@@ -669,7 +669,8 @@ class MyDrawCanvas(MyCanvas):
         self.clean_data_button = QPushButton("Clean data", self)
         self.clean_data_button.clicked.connect(self.remove_noise)
         self.restore_image_butt = QPushButton("Restore image")
-        self.restore_image_butt.clicked.connect(self.restore_oryginal_image)
+        self.restore_image_butt.clicked.connect(self.restore_original_image)
+        self.restore_image_butt.setDisabled(True)
         self.button_list.extend([self.draw_button, self.erase_button, self.clean_button, self.clean_data_button,
                                  self.restore_image_butt])
         self.segment = segment
@@ -687,9 +688,12 @@ class MyDrawCanvas(MyCanvas):
         self.figure_canvas.mpl_connect('motion_notify_event', self.draw_canvas.on_mouse_move)
         self.figure_canvas.mpl_connect('button_release_event', self.draw_canvas.on_mouse_up)
 
-    def restore_oryginal_image(self):
+    def restore_original_image(self):
         self.settings.image = self.settings.original_image
         self.settings.image_changed_fun()
+        self.settings.image_clean_profile = None
+        self.clean_data_button.setEnabled(True)
+        self.restore_image_butt.setDisabled(True)
 
     def remove_noise(self):
         image = np.copy(self.settings.image)
@@ -702,14 +706,14 @@ class MyDrawCanvas(MyCanvas):
         # noise_std = np.std(image[full_mask == 0])
         # noise_generator = norm(noise_mean, noise_std)
         noise_mask[mask > 0] = 0
-        self.settings.image_changed = True
+        profile = Profile("Clean_profile", **self.settings.get_profile_dict())
+        self.settings.image_clean_profile = profile
         image[noise_mask > 0] = noise_mean
         # image[noise_mask > 0] = noise_generator.rvs(np.count_nonzero(noise_mask))
         self.settings.image = image
         self.settings.image_changed_fun()
-
-
-
+        self.clean_data_button.setDisabled(True)
+        self.restore_image_butt.setEnabled(True)
 
     def draw_update(self, view=True):
         if view:

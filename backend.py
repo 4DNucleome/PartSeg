@@ -480,7 +480,7 @@ class Settings(object):
         self.power_norm = 1
         self.image = None
         self.original_image = None
-        self.image_changed = False
+        self.image_clean_profile = None
         self.gauss_image = None
         self.mask = None
         self.gauss_radius = 1
@@ -685,6 +685,7 @@ class Settings(object):
             self.threshold_layer_separate = False
             self.prev_segmentation_settings = []
             self.next_segmentation_settings = []
+            self.image_clean_profile = None
         self.image_changed_fun()
 
     def image_changed_fun(self):
@@ -1138,13 +1139,17 @@ def save_to_project(file_path, settings, segment):
     np.save(os.path.join(folder_path, "image.npy"), settings.image)
     np.save(os.path.join(folder_path, "draw.npy"), segment.draw_canvas)
     np.save(os.path.join(folder_path, "res_mask.npy"), segment.get_segmentation())
-    if settings.image_changed:
+    if settings.image_clean_profile is not None:
         np.save(os.path.join(folder_path, "original_image.npy"), settings.original_image)
     if settings.mask is not None:
         np.save(os.path.join(folder_path, "mask.npy"), settings.mask)
     important_data = class_to_dict(settings, 'threshold_type', 'threshold_layer_separate', "threshold",
                                    "threshold_list", 'use_gauss', 'spacing', 'minimum_size', 'use_draw_result',
                                    "gauss_radius", "prev_segmentation_settings")
+    if settings.image_clean_profile is not None:
+        important_data["image_clean_profile"] = settings.image_clean_profile.__dict__
+    else:
+        important_data["image_clean_profile"] = None
     important_data["prev_segmentation_settings"] = deepcopy(important_data["prev_segmentation_settings"])
     for c, mem in enumerate(important_data["prev_segmentation_settings"]):
         np.save(os.path.join(folder_path, "mask_{}.npy".format(c)), mem["mask"])
@@ -1206,8 +1211,10 @@ def load_project(file_path, settings, segment):
         mask = None
     if "original_image.npy" in members:
         original_image = extract_numpy_file("original_image.npy")
+        settings.image_clean_profile = Profile(**important_data["image_clean_profile"])
     else:
         original_image = None
+        settings.image_clean_profile = None
     settings.threshold = int(important_data["threshold"])
 
     settings.threshold_type = important_data["threshold_type"]
