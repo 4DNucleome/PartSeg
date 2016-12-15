@@ -1301,6 +1301,8 @@ class StatisticsWindow(QWidget):
 
     def replace_statistics(self):
         self.statistic_shift = 0
+        self.info_field.setRowCount(0)
+        self.info_field.setColumnCount(0)
         self.append_statistics()
 
     def horizontal_changed(self):
