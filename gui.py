@@ -26,6 +26,8 @@ from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBa
 from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, \
     calculate_statistic_from_image, MaskChange, Profile, UNITS_DICT, GaussUse, StatisticProfile
 
+from scipy.stats import norm
+
 __author__ = "Grzegorz Bokota"
 
 app_name = "PartSeg"
@@ -356,12 +358,12 @@ class MyCanvas(QWidget):
         self.move_button = QPushButton("Move", self)
         self.move_button.clicked.connect(self.move_action)
         self.move_button.setCheckable(True)
-        self.back_button = QPushButton("Undo", self)
+        # self.back_button = QPushButton("Undo", self)
         # noinspection PyUnresolvedReferences
-        self.back_button.clicked.connect(self.toolbar.back)
-        self.next_button = QPushButton("Redo", self)
-        self.next_button.clicked.connect(self.toolbar.forward)
-        self.button_list = [self.reset_button, self.zoom_button, self.move_button, self.back_button, self.next_button]
+        # self.back_button.clicked.connect(self.toolbar.back)
+        # self.next_button = QPushButton("Redo", self)
+        # self.next_button.clicked.connect(self.toolbar.forward)
+        self.button_list = [self.reset_button, self.zoom_button, self.move_button] #, self.back_button, self.next_button]
         self.mouse_pressed = False
         self.begin_pos = None
         self.last_pos = None
@@ -664,7 +666,12 @@ class MyDrawCanvas(MyCanvas):
         self.erase_button.clicked[bool].connect(self.erase_click)
         self.clean_button = QPushButton("Clean", self)
         self.clean_button.clicked.connect(self.draw_canvas.clean)
-        self.button_list.extend([self.draw_button, self.erase_button, self.clean_button])
+        self.clean_data_button = QPushButton("Clean data", self)
+        self.clean_data_button.clicked.connect(self.remove_noise)
+        self.restore_image_butt = QPushButton("Restore image")
+        self.restore_image_butt.clicked.connect(self.restore_oryginal_image)
+        self.button_list.extend([self.draw_button, self.erase_button, self.clean_button, self.clean_data_button,
+                                 self.restore_image_butt])
         self.segment = segment
         self.protect_button = False
         self.segmentation = None
@@ -679,6 +686,30 @@ class MyDrawCanvas(MyCanvas):
         self.figure_canvas.mpl_connect('button_press_event', self.draw_canvas.on_mouse_down)
         self.figure_canvas.mpl_connect('motion_notify_event', self.draw_canvas.on_mouse_move)
         self.figure_canvas.mpl_connect('button_release_event', self.draw_canvas.on_mouse_up)
+
+    def restore_oryginal_image(self):
+        self.settings.image = self.settings.original_image
+        self.settings.image_changed_fun()
+
+    def remove_noise(self):
+        image = np.copy(self.settings.image)
+        mask = self.segment.get_segmentation()
+        full_mask = self.segment.get_full_segmentation()
+        if not np.any(np.array(full_mask == 0)):
+            return
+        noise_mean = np.mean(image[full_mask == 0])
+        noise_mask = np.copy(full_mask)
+        # noise_std = np.std(image[full_mask == 0])
+        # noise_generator = norm(noise_mean, noise_std)
+        noise_mask[mask > 0] = 0
+        self.settings.image_changed = True
+        image[noise_mask > 0] = noise_mean
+        # image[noise_mask > 0] = noise_generator.rvs(np.count_nonzero(noise_mask))
+        self.settings.image = image
+        self.settings.image_changed_fun()
+
+
+
 
     def draw_update(self, view=True):
         if view:

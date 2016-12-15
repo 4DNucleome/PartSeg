@@ -352,7 +352,7 @@ class StatisticProfile(object):
     @staticmethod
     def mean_brightness(mask, image, **_):
         if np.any(mask):
-            return np.mean(image[mask>0])
+            return np.mean(image[mask > 0])
         else:
             return None
 
@@ -479,6 +479,8 @@ class Settings(object):
         self.mask_overlay = 0.7
         self.power_norm = 1
         self.image = None
+        self.original_image = None
+        self.image_changed = False
         self.gauss_image = None
         self.mask = None
         self.gauss_radius = 1
@@ -669,8 +671,12 @@ class Settings(object):
     def available_colormap_list(self):
         return pyplot.colormaps()
 
-    def add_image(self, image, file_path, mask=None, new_image=True):
+    def add_image(self, image, file_path, mask=None, new_image=True, original_image=None):
         self.image = image
+        if original_image is None:
+            self.original_image = image
+        else:
+            self.original_image = original_image
         self.gauss_image = gaussian(self.image, self.gauss_radius)
         self.mask = mask
         self.file_path = file_path
@@ -679,14 +685,17 @@ class Settings(object):
             self.threshold_layer_separate = False
             self.prev_segmentation_settings = []
             self.next_segmentation_settings = []
+        self.image_changed_fun()
+
+    def image_changed_fun(self):
         for fun in self.image_change_callback:
             if isinstance(fun, tuple) and fun[1] == str:
-                fun[0](file_path)
+                fun[0](self.file_path)
                 continue
             elif isinstance(fun, tuple) and fun[1] == GAUSS:
-                fun[0](image, self.gauss_image)
+                fun[0](self.image, self.gauss_image)
                 continue
-            fun(image)
+            fun(self.image)
 
     def changed_gauss_radius(self):
         self.gauss_image = gaussian(self.image, self.gauss_radius)
@@ -989,6 +998,7 @@ def get_segmented_data(image, settings, segment, with_std=False, mask_morph=None
     :type segment: Segment
     :type with_std: bool
     :type mask_morph: None | (np.ndarray) -> np.ndarray
+    :type div_scale: float
     :return:
     """
     segmentation = segment.get_segmentation()
@@ -1128,6 +1138,8 @@ def save_to_project(file_path, settings, segment):
     np.save(os.path.join(folder_path, "image.npy"), settings.image)
     np.save(os.path.join(folder_path, "draw.npy"), segment.draw_canvas)
     np.save(os.path.join(folder_path, "res_mask.npy"), segment.get_segmentation())
+    if settings.image_changed:
+        np.save(os.path.join(folder_path, "original_image.npy"), settings.original_image)
     if settings.mask is not None:
         np.save(os.path.join(folder_path, "mask.npy"), settings.mask)
     important_data = class_to_dict(settings, 'threshold_type', 'threshold_layer_separate', "threshold",
@@ -1192,6 +1204,10 @@ def load_project(file_path, settings, segment):
         mask = extract_numpy_file("mask.npy")
     else:
         mask = None
+    if "original_image.npy" in members:
+        original_image = extract_numpy_file("original_image.npy")
+    else:
+        original_image = None
     settings.threshold = int(important_data["threshold"])
 
     settings.threshold_type = important_data["threshold_type"]
@@ -1208,7 +1224,7 @@ def load_project(file_path, settings, segment):
     except KeyError:
         settings.use_draw_result = False
     segment.protect = True
-    settings.add_image(image, file_path, mask, new_image=False)
+    settings.add_image(image, file_path, mask, new_image=False, original_image=original_image)
     segment.protect = False
     if important_data["threshold_list"] is not None:
         settings.threshold_list = map(int, important_data["threshold_list"])
