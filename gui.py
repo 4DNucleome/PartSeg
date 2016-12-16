@@ -11,12 +11,14 @@ import matplotlib
 import logging
 import re
 import sys
+matplotlib.use("Qt4Agg")
 import appdirs
 from PIL import Image
 from matplotlib import pyplot
 import matplotlib.colors as colors
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget, \
     QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, \
