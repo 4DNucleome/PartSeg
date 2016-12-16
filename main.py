@@ -1,6 +1,9 @@
 if __name__ == '__main__':
-    from gui import MainWindow
-    from PyQt4.QtGui import QApplication
+    from gui import MainWindow, use_qt5
+    if use_qt5:
+        from PyQt5.QtWidgets import QApplication
+    else:
+        from PyQt4.QtGui import QApplication
     import sys
     import logging
     logging.basicConfig(level=logging.INFO)

@@ -11,19 +11,49 @@ import matplotlib
 import logging
 import re
 import sys
-matplotlib.use("Qt4Agg")
+
+if sys.version_info.major == 2:
+    import pkgutil
+    loader = pkgutil.find_loader("PyQt5")
+    if loader is not None:
+        use_qt5 = True
+    else:
+        use_qt5 = False
+else:
+    import importlib
+    spam_spec = importlib.util.find_spec("PyQt5")
+    if spam_spec is not None:
+        use_qt5 = True
+    else:
+        use_qt5 = False
+
+if use_qt5:
+    matplotlib.use("Qt5Agg")
+else:
+    matplotlib.use("Qt4Agg")
 import appdirs
 from PIL import Image
 from matplotlib import pyplot
 import matplotlib.colors as colors
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+if use_qt5:
+    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+    from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget, \
-    QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, \
-    QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
-    QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QMenu, QAction, QListWidgetItem
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtWidgets import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget, \
+        QLineEdit, QFrame,  QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, \
+        QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
+        QListWidget, QTextEdit, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem
+    from PyQt5.QtGui import QFont, QFontMetrics, QIcon
+else:
+    from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+    from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+
+    from PyQt4.QtCore import Qt
+    from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget, \
+        QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, \
+        QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
+        QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem
 
 from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, \
     calculate_statistic_from_image, MaskChange, Profile, UNITS_DICT, GaussUse, StatisticProfile
@@ -2129,13 +2159,14 @@ class MainMenu(QWidget):
         dial.setFileMode(QFileDialog.ExistingFile)
         filters = ["raw image (*.tiff *.tif *.lsm)", "image with mask (*.tiff *.tif *.lsm *json)",
                    "saved project (*.gz *.bz2)", "Profiles (*.json)"]
-        dial.setFilters(filters)
+        # dial.setFilters(filters)
+        dial.setNameFilters(filters)
         if self.settings.open_filter is not None:
             dial.selectNameFilter(self.settings.open_filter)
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
             self.settings.open_directory = os.path.dirname(str(file_path))
-            selected_filter = str(dial.selectedFilter())
+            selected_filter = str(dial.selectedNameFilter())
             self.settings.open_filter = selected_filter
             logging.debug("open file: {}, filter {}".format(file_path, selected_filter))
             # TODO maybe something better. Now main window have to be parent
@@ -2168,7 +2199,7 @@ class MainMenu(QWidget):
                             return
                     mask_dial = QFileDialog(self, "Load mask")
                     filters = ["mask (*.tiff *.tif *.lsm)"]
-                    mask_dial.setFilters(filters)
+                    mask_dial.setNameFilters(filters)
                     if mask_dial.exec_():
                         # print(mask_dial.selectedFiles()[0])
                         mask = tifffile.imread(str(mask_dial.selectedFiles()[0]))
@@ -2204,14 +2235,14 @@ class MainMenu(QWidget):
                    "Data for chimera with 3d gauss (*.cmap)", "Image (*.tiff)",
                    "Profiles (*.json)"]
         dial.setAcceptMode(QFileDialog.AcceptSave)
-        dial.setFilters(filters)
+        dial.setNameFilters(filters)
         default_name = os.path.splitext(os.path.basename(self.settings.file_path))[0]
         dial.selectFile(default_name)
         if self.settings.save_filter is not None:
             dial.selectNameFilter(self.settings.save_filter)
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
-            selected_filter = str(dial.selectedFilter())
+            selected_filter = str(dial.selectedNameFilter())
             self.settings.save_filter = selected_filter
             self.settings.save_directory = os.path.dirname(file_path)
             if os.path.splitext(file_path)[1] == '':
@@ -2411,14 +2442,14 @@ class MainWindow(QMainWindow):
         dial.setFileMode(QFileDialog.AnyFile)
         filters = ["Labeled layer (*.png)", "Clean layer (*.png)"]
         dial.setAcceptMode(QFileDialog.AcceptSave)
-        dial.setFilters(filters)
+        dial.setNameFilters(filters)
         default_name = os.path.splitext(os.path.basename(self.settings.file_path))[0]
         dial.selectFile(default_name)
         if self.settings.export_filter is not None:
             dial.selectNameFilter(self.settings.export_filter)
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
-            selected_filter = str(dial.selectedFilter())
+            selected_filter = str(dial.selectedNameFilter())
             self.settings.export_filter = selected_filter
             self.settings.export_directory = os.path.dirname(file_path)
             if selected_filter == "Labeled layer (*.png)":
