@@ -555,7 +555,8 @@ class Settings(object):
         important_data = \
             class_to_dict(self, "open_directory", "open_filter", "save_directory", "save_filter", "spacing",
                           "voxel_size", "size_unit", "threshold", "color_map_name", "overlay", "minimum_size",
-                          "gauss_radius", "export_filter", "export_directory", "scale_factor", "statistic_dirs")
+                          "gauss_radius", "export_filter", "export_directory", "scale_factor", "statistic_dirs",
+                          "chosen_colormap")
         important_data["profiles"] = [x.__dict__ for k, x in self.profiles.items()]
         important_data["statistics"] = [class_to_dict(x, "name", "chosen_fields", "reversed_brightness")
                                         for x in self.statistics_profile_dict.values()]
@@ -569,7 +570,11 @@ class Settings(object):
             dict_set_class(self, important_data, "open_directory", "open_filter", "save_directory", "save_filter",
                            "spacing", "voxel_size", "size_unit", "threshold", "color_map_name", "overlay",
                            "minimum_size", "gauss_radius", "export_filter", "export_directory", "scale_factor",
-                           "statistic_dirs")
+                           "statistic_dirs", "chosen_colormap")
+            chosen_colormap = set(self.chosen_colormap)
+            avail_colormap = set(pyplot.colormaps())
+            self.chosen_colormap = list(sorted(chosen_colormap & avail_colormap))
+            self.color_map = matplotlib.cm.get_cmap(self.color_map_name)
             for prof in important_data["profiles"]:
                 self.profiles[prof["name"]] = Profile(**prof)
             for stat in important_data["statistics"]:
@@ -702,7 +707,7 @@ class Settings(object):
         self.gauss_image = gaussian(self.image, self.gauss_radius)
         for fun in self.image_change_callback:
             if isinstance(fun, tuple) and fun[1] == GAUSS:
-                fun[0](self.image, self.gauss_image)
+                fun[0](self.image, self.gauss_image, True)
                 continue
             elif isinstance(fun, tuple) and fun[1] == str:
                 continue

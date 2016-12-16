@@ -564,13 +564,17 @@ class MyCanvas(QWidget):
             pyplot.ylim(ay_size)
             fig.canvas.draw()
 
-    def set_image(self, image, gauss):
+    def set_image(self, image, gauss, image_update=False):
         """
         :type image: np.ndarray
         :type gauss: np.ndarray
+        :type image_update: bool
         :return:
         """
         self.base_image = image
+        pyplot.figure(self.my_figure_num)
+        ax_lim = pyplot.xlim()
+        ay_lim = pyplot.ylim()
         self.max_value = image.max()
         self.min_value = image.min()
         self.gauss_image = gauss
@@ -580,6 +584,7 @@ class MyCanvas(QWidget):
             self.gauss_view.setEnabled(True)
         self.ax_im = None
         self.update_rgb_image()
+
         if len(image.shape) > 2:
             val = self.slider.value()
             self.slider.setRange(0, image.shape[0] - 1)
@@ -589,6 +594,9 @@ class MyCanvas(QWidget):
                 self.update_image_view()
         else:
             self.update_image_view()
+        if image_update:
+            pyplot.xlim(ax_lim)
+            pyplot.ylim(ay_lim)
 
     def update_colormap(self):
         if self.base_image is None:
@@ -810,8 +818,11 @@ class MyDrawCanvas(MyCanvas):
         self.original_rgb_image = np.copy(self.rgb_image)
         self.update_segmentation_rgb()
 
-    def set_image(self, image, gauss):
+    def set_image(self, image, gauss, image_update=False):
         self.base_image = image
+        pyplot.figure(self.my_figure_num)
+        ax_lim = pyplot.xlim()
+        ay_lim = pyplot.ylim()
         self.max_value = image.max()
         self.min_value = image.min() / float(self.max_value)
         self.gauss_image = gauss
@@ -825,6 +836,10 @@ class MyDrawCanvas(MyCanvas):
             self.slider.setValue(int(image.shape[0] / 2))
         else:
             self.update_image_view()
+        if image_update:
+            pyplot.xlim(ax_lim)
+            pyplot.ylim(ay_lim)
+
 
     def update_segmentation_image(self):
         if not self.segment.segmentation_changed:
@@ -1002,7 +1017,7 @@ class ColormapSettings(QWidget):
         chosen = []
         for elem in self.cmap_list:
             if elem.isChecked():
-                chosen.append(elem.text())
+                chosen.append(str(elem.text()))
         self.settings.set_available_colormap(chosen)
 
     def update_positions(self):
@@ -1128,8 +1143,8 @@ class AdvancedSettings(QWidget):
         self.power_norm = create_power_norm("norm parameter:", overlay_layout, self.settings.power_norm)
         overlay_layout.addStretch()
         gauss_layout = QHBoxLayout()
-        self.gauss_radius = QSpinBox(self)
-        self.gauss_radius.setRange(1, 10)
+        self.gauss_radius = QDoubleSpinBox(self)
+        self.gauss_radius.setRange(0.01, 10)
         self.gauss_radius.setValue(settings.gauss_radius)
         self.gauss_radius.setSingleStep(1)
         self.gauss_radius.setButtonSymbols(QAbstractSpinBox.NoButtons)
@@ -2074,7 +2089,7 @@ class MainMenu(QWidget):
 
     def colormap_list_changed(self):
         self.colormap_protect = True
-        text = self.colormap_choose.currentText()
+        text = str(self.colormap_choose.currentText())
         self.colormap_choose.clear()
         self.colormap_choose.addItems(self.settings.colormap_list)
         index = list(self.settings.colormap_list).index(text)
