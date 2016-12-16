@@ -438,6 +438,8 @@ class MyCanvas(QWidget):
                 fig.canvas.draw()
 
     def brightness_up(self, event):
+        if self.info_object is None:
+            return
         if event.xdata is not None and event.ydata is not None:
             x, y = int(event.xdata + 0.5), int(event.ydata + 0.5)
             if self.gauss_view.isChecked():
@@ -572,11 +574,19 @@ class MyCanvas(QWidget):
         self.max_value = image.max()
         self.min_value = image.min()
         self.gauss_image = gauss
+        if gauss is None:
+            self.gauss_view.setDisabled(True)
+        else:
+            self.gauss_view.setEnabled(True)
         self.ax_im = None
         self.update_rgb_image()
         if len(image.shape) > 2:
+            val = self.slider.value()
             self.slider.setRange(0, image.shape[0] - 1)
-            self.slider.setValue(int(image.shape[0] / 2))
+            new_val = int(image.shape[0] / 2)
+            self.slider.setValue(new_val)
+            if val == new_val:
+                self.update_image_view()
         else:
             self.update_image_view()
 
@@ -2115,15 +2125,9 @@ class MainMenu(QWidget):
             if selected_filter == "raw image (*.tiff *.tif *.lsm)":
                 im = tifffile.imread(file_path)
                 if im.ndim == 4:
-                    # print(im.shape)
-                    index = list(im.shape).index(min(im.shape))
-                    # TODO do something better. now not all possibilities are covered
-                    # noinspection PyCallByClass
-                    num, state = QInputDialog.getInt(self, "Get channel number",
-                                                     "Image shape: {}\nchannel position: {}\nWitch channel:".format(
-                                                         im.shape, index
-                                                     ), 0, 0, im.shape[index] - 1)
-                    if state:
+                    choose = MultiChannelFilePreview(im, self.settings)
+                    if choose.exec_():
+                        index, num = choose.get_result()
                         im = im.take(num, axis=index)
                     else:
                         return
@@ -2139,15 +2143,9 @@ class MainMenu(QWidget):
                 else:
                     image = tifffile.imread(file_path)
                     if image.ndim == 4:
-                        # print(im.shape)
-                        index = list(image.shape).index(min(image.shape))
-                        # TODO do something better. now not all possibilities are covered
-                        # noinspection PyCallByClass
-                        num, state = QInputDialog.getInt(self, "Get channel number",
-                                                         "Image shape: {}\nchannel position: {}\nWitch channel:".format(
-                                                             image.shape, index
-                                                         ), 0, 0, image.shape[index] - 1)
-                        if state:
+                        choose = MultiChannelFilePreview(image, self.settings)
+                        if choose.exec_():
+                            index, num = choose.get_result()
                             image = image.take(num, axis=index)
                         else:
                             return
@@ -2157,6 +2155,13 @@ class MainMenu(QWidget):
                     if mask_dial.exec_():
                         print(mask_dial.selectedFiles()[0])
                         mask = tifffile.imread(str(mask_dial.selectedFiles()[0]))
+                        if mask.ndim == 4:
+                            choose = MultiChannelFilePreview(mask, self.settings)
+                            if choose.exec_():
+                                index, num = choose.get_result()
+                                mask = mask.take(num, axis=index)
+                            else:
+                                return
                         self.settings.add_image(image, file_path, mask)
             elif selected_filter == "saved project (*.gz *.bz2)":
                 load_project(file_path, self.settings, self.segment)
@@ -2621,3 +2626,57 @@ class ImageExporter(QDialog):
         im2.crop((int(self.ax_size[0] * x_scale), int(self.ay_size[0] * y_scale),
                   int(self.ax_size[1] * x_scale), int(self.ay_size[1] * y_scale))).save(self.path)
         self.close()
+
+
+class MultiChannelFilePreview(QDialog):
+    def __init__(self, image, settings):
+        """
+        :type image: np.ndarray
+        :type settings: Settings
+        """
+        QDialog.__init__(self)
+        self.image = image
+        index = list(image.shape).index(min(image.shape))
+        self.preview = MyCanvas((5, 5), settings, None, self)
+        self.preview.update_elements_positions()
+        self.preview.mark_mask.setDisabled(True)
+        self.channel_num = QSpinBox(self)
+        self.channel_num.setRange(0, image.shape[index] - 1)
+        self.channel_pos = QSpinBox(self)
+        self.channel_pos.setRange(0, image.ndim-1)
+        self.channel_num.valueChanged.connect(self.set_image)
+        self.channel_pos.valueChanged.connect(self.change_channel_pos)
+        accept_butt = QPushButton("Open", self)
+        discard_butt = QPushButton("Cancel", self)
+        discard_butt.clicked.connect(self.close)
+        accept_butt.clicked.connect(self.accept)
+        layout = QVBoxLayout()
+        layout.addWidget(self.preview)
+        channel_layout = QHBoxLayout()
+        channel_layout.addWidget(QLabel("Channel position"))
+        channel_layout.addWidget(self.channel_pos)
+        channel_layout.addStretch()
+        channel_layout.addWidget(QLabel("Channel num"))
+        channel_layout.addWidget(self.channel_num)
+        layout.addLayout(channel_layout)
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(discard_butt)
+        button_layout.addStretch()
+        button_layout.addWidget(accept_butt)
+        layout.addLayout(button_layout)
+        self.setLayout(layout)
+        self.set_image()
+
+    def set_image(self):
+        im = self.image.take(self.channel_num.value(), axis=self.channel_pos.value())
+        print(im.shape)
+        self.preview.set_image(im, None)
+
+    def change_channel_pos(self, val):
+        self.channel_num.setRange(0, self.image.shape[val]-1)
+        self.set_image()
+
+    def get_result(self):
+        return self.channel_pos.value(),  self.channel_num.value()
+
+
