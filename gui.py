@@ -118,7 +118,7 @@ def set_button(button, previous_element, dist=10, super_space=0):
     if isinstance(button, QSpinBox):
         button.setAlignment(Qt.AlignRight)
         text_list = [str(button.maximum()) + 'aa']
-        print(text_list)
+        # print(text_list)
     width = 0
     for txt in text_list:
         width = max(width, font_met.boundingRect(txt).width())
@@ -129,7 +129,7 @@ def set_button(button, previous_element, dist=10, super_space=0):
     if isinstance(button, QComboBox):
         button.setFixedWidth(width + button_margin + 10)
     if isinstance(button, QSpinBox):
-        print(width)
+        # print(width)
         button.setFixedWidth(width)
     # button.setFixedHeight(button_height)
     if isinstance(previous_element, QCheckBox):
@@ -2168,7 +2168,7 @@ class MainMenu(QWidget):
                     filters = ["mask (*.tiff *.tif *.lsm)"]
                     mask_dial.setFilters(filters)
                     if mask_dial.exec_():
-                        print(mask_dial.selectedFiles()[0])
+                        # print(mask_dial.selectedFiles()[0])
                         mask = tifffile.imread(str(mask_dial.selectedFiles()[0]))
                         if mask.ndim == 4:
                             choose = MultiChannelFilePreview(mask, self.settings)
@@ -2515,13 +2515,13 @@ class ImageExporter(QDialog):
         self.keep_ratio.setChecked(True)
         self.scale_x = QDoubleSpinBox(self)
         self.scale_x.setSingleStep(1)
-        self.scale_x.setRange(0, 10)
+        self.scale_x.setRange(0, 100)
         self.scale_x.setValue(1)
         self.scale_x.valueChanged[float].connect(self.scale_x_changed)
         self.scale_x.setDecimals(3)
         self.scale_y = QDoubleSpinBox(self)
         self.scale_y.setSingleStep(1)
-        self.scale_y.setRange(0, 10)
+        self.scale_y.setRange(0, 100)
         self.scale_y.setValue(1)
         self.scale_y.valueChanged[float].connect(self.scale_y_changed)
         self.scale_y.setDecimals(3)
@@ -2541,7 +2541,7 @@ class ImageExporter(QDialog):
 
         self.canvas = canvas
         im, ax_size, ay_size = canvas.get_image()
-        print(ax_size, ay_size)
+        # print(ax_size, ay_size)
         # self.im_shape = np.array([im.shape[1], im.shape[0]], dtype=np.uint32)
         self.ax_size = (ax_size[0] + 0.5, ax_size[1] + 0.5)
         self.ay_size = (ay_size[1] + 0.5, ay_size[0] + 0.5)
@@ -2571,7 +2571,6 @@ class ImageExporter(QDialog):
         self.interp_type = QComboBox(self)
         self.interp_type.addItems(list(self.interpolation_dict.keys()))
         find = list(self.interpolation_dict.keys()).index("None")
-        print("Find", find)
         if find != -1:
             self.interp_type.setCurrentIndex(find)
         image_interpolation_layout.addWidget(self.interp_type)
@@ -2684,7 +2683,7 @@ class MultiChannelFilePreview(QDialog):
 
     def set_image(self):
         im = self.image.take(self.channel_num.value(), axis=self.channel_pos.value())
-        print(im.shape)
+        # print(im.shape)
         self.preview.set_image(im, None)
 
     def change_channel_pos(self, val):
