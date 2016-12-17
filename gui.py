@@ -1332,7 +1332,7 @@ class StatisticsWindow(QWidget):
         butt_layout.setMargin(0)
         butt_layout.setSpacing(10)
         butt_layout.addWidget(self.horizontal_statistics, 1)
-        butt_layout.addWidget(self.no_header,1)
+        butt_layout.addWidget(self.no_header, 1)
         butt_layout.addWidget(self.copy_button, 2)
         butt_layout.addWidget(self.statistic_type, 2)
         v_butt_layout.addLayout(up_butt_layout)
@@ -1746,6 +1746,9 @@ class StatisticsSettings(QWidget):
             self.profile_description.setText("")
             return
         item = self.profile_list.currentItem()
+        if item is None:
+            self.profile_description.setText("")
+            return
         text = "Profile name: {}\nstatistics:\n".format(item.text())
         profile = self.settings.statistics_profile_dict[str(item.text())]
         for el in profile.chosen_fields:

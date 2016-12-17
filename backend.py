@@ -303,7 +303,7 @@ class StatisticProfile(object):
         return np.count_nonzero(mask) * self.pixel_volume(self.settings.voxel_size)
 
     def calculate_component_volume(self, mask, **_):
-        return np.bincount(mask)[1:] * self.pixel_volume(self.settings.voxel_size)
+        return np.bincount(mask.flat)[1:] * self.pixel_volume(self.settings.voxel_size)
 
     @staticmethod
     def calculate_mass(mask, image, **_):
