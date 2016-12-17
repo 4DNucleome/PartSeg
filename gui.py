@@ -29,8 +29,11 @@ else:
 
 if use_qt5:
     matplotlib.use("Qt5Agg")
+    logging.info("Qt5 backed")
 else:
     matplotlib.use("Qt4Agg")
+    logging.info("Qt4 backend")
+
 import appdirs
 from PIL import Image
 from matplotlib import pyplot
@@ -718,12 +721,8 @@ class MyDrawCanvas(MyCanvas):
         self.clean_button = QPushButton("Clean", self)
         self.clean_button.clicked.connect(self.draw_canvas.clean)
         self.clean_data_button = QPushButton("Clean data", self)
-        self.clean_data_button.clicked.connect(self.remove_noise)
-        self.restore_image_butt = QPushButton("Restore image")
-        self.restore_image_butt.clicked.connect(self.restore_original_image)
-        self.restore_image_butt.setDisabled(True)
-        self.button_list.extend([self.draw_button, self.erase_button, self.clean_button, self.clean_data_button,
-                                 self.restore_image_butt])
+        self.clean_data_button.clicked.connect(self.action_choose)
+        self.button_list.extend([self.draw_button, self.erase_button, self.clean_button, self.clean_data_button])
         self.segment = segment
         self.protect_button = False
         self.segmentation = None
@@ -739,12 +738,18 @@ class MyDrawCanvas(MyCanvas):
         self.figure_canvas.mpl_connect('motion_notify_event', self.draw_canvas.on_mouse_move)
         self.figure_canvas.mpl_connect('button_release_event', self.draw_canvas.on_mouse_up)
 
+    def action_choose(self):
+        if str(self.clean_data_button.text()) == "Clean data":
+            self.remove_noise()
+            self.clean_data_button.setText("Restore image")
+        else:
+            self.restore_original_image()
+            self.clean_data_button.setText("Clean data")
+
     def restore_original_image(self):
         self.settings.image = self.settings.original_image
         self.settings.image_changed_fun()
         self.settings.image_clean_profile = None
-        self.clean_data_button.setEnabled(True)
-        self.restore_image_butt.setDisabled(True)
 
     def remove_noise(self):
         image = np.copy(self.settings.image)
@@ -763,8 +768,7 @@ class MyDrawCanvas(MyCanvas):
         # image[noise_mask > 0] = noise_generator.rvs(np.count_nonzero(noise_mask))
         self.settings.image = image
         self.settings.image_changed_fun()
-        self.clean_data_button.setDisabled(True)
-        self.restore_image_butt.setEnabled(True)
+
 
     def draw_update(self, view=True):
         if view:
