@@ -849,6 +849,8 @@ class Segment(object):
     def threshold_updated(self):
         if self.protect:
             return
+        if self._image is None:
+            return
         self._threshold_image = np.zeros(self._image.shape, dtype=np.uint8)
         if self._settings.use_gauss:
             image_to_threshold = self.gauss_image

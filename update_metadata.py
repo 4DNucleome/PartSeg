@@ -25,6 +25,8 @@ if __name__ == '__main__':
     import json
     import tempfile
     import glob
+    import logging
+    import sys
 
     parser = argparse.ArgumentParser("Convert project to chimera cmap")
     parser.add_argument("source_folder", type=str, nargs=1, help="Folder with project files to proceed or one file")

@@ -349,7 +349,7 @@ class CropSet(QDialog):
 
 
 class MyCanvas(QWidget):
-    def __init__(self, figure_size, settings, info_object, parent):
+    def __init__(self, figure_size, settings, info_object, parent, settings_callback=True):
         """
         Create basic canvas to view image
         :param figure_size: Size of figure in inches
@@ -420,7 +420,8 @@ class MyCanvas(QWidget):
         self.colormap_checkbox.stateChanged.connect(self.update_colormap)
         self.mark_mask.stateChanged.connect(self.update_colormap)
         self.gauss_view.stateChanged.connect(self.update_colormap)
-        self.settings.add_threshold_type_callback(self.update_colormap)
+        if settings_callback:
+            self.settings.add_threshold_type_callback(self.update_colormap)
         # MyCanvas.update_elements_positions(self)
         # self.setFixedWidth(500)
         self.figure_canvas.mpl_connect('button_release_event', self.zoom_sync_fun)
@@ -2684,13 +2685,14 @@ class MultiChannelFilePreview(QDialog):
         QDialog.__init__(self)
         self.image = image
         index = list(image.shape).index(min(image.shape))
-        self.preview = MyCanvas((5, 5), settings, None, self)
+        self.preview = MyCanvas((5, 5), settings, None, self, False)
         self.preview.update_elements_positions()
         self.preview.mark_mask.setDisabled(True)
         self.channel_num = QSpinBox(self)
         self.channel_num.setRange(0, image.shape[index] - 1)
         self.channel_pos = QSpinBox(self)
         self.channel_pos.setRange(0, image.ndim-1)
+        self.channel_pos.setValue(index)
         self.channel_num.valueChanged.connect(self.set_image)
         self.channel_pos.valueChanged.connect(self.change_channel_pos)
         accept_butt = QPushButton("Open", self)
