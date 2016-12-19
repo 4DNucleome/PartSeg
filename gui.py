@@ -419,12 +419,12 @@ class MyCanvas(QWidget):
         # self.mark_mask.setDisabled(True)
         self.layer_num_label = QLabel(self)
         self.layer_num_label.setText("1 of 1      ")
-        settings.add_image_callback((self.set_image, GAUSS))
-        settings.add_colormap_callback(self.update_colormap)
         self.colormap_checkbox.stateChanged.connect(self.update_colormap)
         self.mark_mask.stateChanged.connect(self.update_colormap)
         self.gauss_view.stateChanged.connect(self.update_colormap)
         if settings_callback:
+            settings.add_image_callback((self.set_image, GAUSS))
+            settings.add_colormap_callback(self.update_colormap)
             self.settings.add_threshold_type_callback(self.update_colormap)
         # MyCanvas.update_elements_positions(self)
         # self.setFixedWidth(500)
@@ -615,6 +615,7 @@ class MyCanvas(QWidget):
         self.max_value = image.max()
         self.min_value = image.min()
         self.gauss_image = gauss
+        print(self.__class__, self.__weakref__)
         if gauss is None:
             self.gauss_view.setDisabled(True)
         else:
@@ -2206,7 +2207,8 @@ class MainMenu(QWidget):
                             image = image.take(num, axis=index)
                         else:
                             return
-                    mask_dial = QFileDialog(self, "Load mask")
+                    org_name = os.path.basename(file_path)
+                    mask_dial = QFileDialog(self, "Load mask for {}".format(org_name))
                     filters = ["mask (*.tiff *.tif *.lsm)"]
                     mask_dial.setNameFilters(filters)
                     if mask_dial.exec_():
@@ -2219,6 +2221,9 @@ class MainMenu(QWidget):
                                 mask = mask.take(num, axis=index)
                             else:
                                 return
+                        if image.shape != mask.shape:
+                            QMessageBox.critical(self, "Wrong shape", "Image and mask has different shapes")
+                            return
                         self.settings.add_image(image, file_path, mask)
             elif selected_filter == "saved project (*.gz *.bz2)":
                 load_project(file_path, self.settings, self.segment)
