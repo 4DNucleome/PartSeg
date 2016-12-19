@@ -11,6 +11,11 @@ import matplotlib
 import logging
 import re
 import sys
+import appdirs
+from PIL import Image
+from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, \
+    calculate_statistic_from_image, MaskChange, Profile, UNITS_DICT, GaussUse, StatisticProfile
+
 
 if sys.version_info.major == 2:
     import pkgutil
@@ -34,8 +39,6 @@ else:
     matplotlib.use("Qt4Agg")
     logging.info("Qt4 backend")
 
-import appdirs
-from PIL import Image
 from matplotlib import pyplot
 import matplotlib.colors as colors
 if use_qt5:
@@ -58,8 +61,6 @@ else:
         QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
         QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem
 
-from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, \
-    calculate_statistic_from_image, MaskChange, Profile, UNITS_DICT, GaussUse, StatisticProfile
 
 # from scipy.stats import norm
 
