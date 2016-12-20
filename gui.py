@@ -53,7 +53,7 @@ else:
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 
-    from PyQt4.QtCore import Qt
+    from PyQt4.QtCore import Qt, QSize
     from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget, \
         QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, \
         QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
@@ -385,14 +385,21 @@ class MyCanvas(QWidget):
         self.toolbar.hide()
         self.reset_button = QPushButton("Reset zoom", self)
         self.reset_button.clicked.connect(self.reset)
-        self.zoom_button = QPushButton("Zoom", self)
+        self.zoom_button = QPushButton(self)
+        self.zoom_button.setIcon(QIcon(os.path.join(file_folder, "icons", "zoom-select.png")))
+        self.zoom_button.setIconSize(QSize(16, 16))
+        self.zoom_button.setToolTip("Zoom")
+        self.zoom_button.setContentsMargins(0, 0, 0, 0)
         self.zoom_button.clicked.connect(self.zoom)
         self.zoom_button.setCheckable(True)
         self.zoom_button.setContextMenuPolicy(Qt.ActionsContextMenu)
         crop = QAction("Crop", self.zoom_button)
         crop.triggered.connect(self.crop_view)
         self.zoom_button.addAction(crop)
-        self.move_button = QPushButton("Move", self)
+        self.move_button = QPushButton(self)
+        self.move_button.setToolTip("Move")
+        self.move_button.setIcon(QIcon(os.path.join(file_folder, "icons", "transform-move.png")))
+        self.move_button.setIconSize(QSize(16, 16))
         self.move_button.clicked.connect(self.move_action)
         self.move_button.setCheckable(True)
         # self.back_button = QPushButton("Undo", self)
@@ -591,8 +598,8 @@ class MyCanvas(QWidget):
     def reset(self):
         # self.toolbar.home()
         fig = pyplot.figure(self.my_figure_num)
-        ax_size = (-0.5, self.base_image.shape[2] - 0.5)
-        ay_size = (self.base_image.shape[1] - 0.5, -0.5)
+        ax_size = (-0.5, self.base_image.shape[-1] - 0.5)
+        ay_size = (self.base_image.shape[-2] - 0.5, -0.5)
         pyplot.xlim(ax_size)
         pyplot.ylim(ay_size)
         fig.canvas.draw()
