@@ -2314,10 +2314,19 @@ class MainMenu(QWidget):
                 segmentation = sitk.GetImageFromArray(self.segment.get_segmentation())
                 sitk.WriteImage(segmentation, file_path)
             elif selected_filter == "Data for chimera (*.cmap)":
+                if not np.any(self.segment.get_segmentation()):
+                    QMessageBox.warning(self, "No object", "There is no component to export to cmap")
+                    return
                 save_to_cmap(file_path, self.settings, self.segment, gauss_type=GaussUse.no_gauss)
             elif selected_filter == "Data for chimera with 2d gauss (*.cmap)":
+                if not np.any(self.segment.get_segmentation()):
+                    QMessageBox.warning(self, "No object", "There is no component to export to cmap")
+                    return
                 save_to_cmap(file_path, self.settings, self.segment, gauss_type=GaussUse.gauss_2d)
             elif selected_filter == "Data for chimera with 3d gauss (*.cmap)":
+                if not np.any(self.segment.get_segmentation()):
+                    QMessageBox.warning(self, "No object", "There is no component to export to cmap")
+                    return
                 save_to_cmap(file_path, self.settings, self.segment, gauss_type=GaussUse.gauss_3d)
             elif selected_filter == "Image (*.tiff)":
                 image = self.settings.image
@@ -2509,9 +2518,7 @@ class MainWindow(QMainWindow):
             elif selected_filter == "Only label (*.png)":
                 seg, mask = self.segmented_image_canvas.get_rgb_segmentation_and_mask()
                 seg = np.dstack((seg, np.zeros(seg.shape[:-1], dtype=np.uint8)))
-                print(np.max(seg[..., 0]), np.max(seg[..., 1]), np.max(seg[..., 2]), np.max(seg[..., 3]))
                 seg[..., 3][mask > 0] = 255
-                print(seg.shape)
                 ie = ImageExporter(self.segmented_image_canvas, file_path, selected_filter, self,
                                    image=seg)
                 ie.exec_()
