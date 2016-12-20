@@ -13,8 +13,6 @@ import re
 import sys
 import appdirs
 from PIL import Image
-from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, \
-    calculate_statistic_from_image, MaskChange, Profile, UNITS_DICT, GaussUse, StatisticProfile
 
 
 if sys.version_info.major == 2:
@@ -60,6 +58,9 @@ else:
         QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, \
         QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
         QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem
+
+from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, \
+    calculate_statistic_from_image, MaskChange, Profile, UNITS_DICT, GaussUse, StatisticProfile
 
 
 # from scipy.stats import norm
@@ -615,7 +616,6 @@ class MyCanvas(QWidget):
         self.max_value = image.max()
         self.min_value = image.min()
         self.gauss_image = gauss
-        print(self.__class__, self.__weakref__)
         if gauss is None:
             self.gauss_view.setDisabled(True)
         else:
@@ -2311,7 +2311,6 @@ class MainMenu(QWidget):
 
     def open_advanced(self):
         self.advanced_window = AdvancedWindow(self.settings, self.segment)
-        print(self.settings.spacing)
         self.advanced_window.show()
 
 
