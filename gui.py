@@ -885,11 +885,11 @@ class MyDrawCanvas(MyCanvas):
         self.segmentation[self.segmentation > 0] += 2
         self.rgb_segmentation = label_to_rgb(self.segmentation)
 
-    def get_segmentation(self):
+    def get_rgb_segmentation_and_mask(self):
         if self.rgb_segmentation.ndim == 2:
-            return self.rgb_segmentation
+            return self.rgb_segmentation, self.segment.get_segmentation()
         else:
-            return self.rgb_segmentation[self.layer_num]
+            return self.rgb_segmentation[self.layer_num], self.segment.get_segmentation()[self.layer_num]
 
 
 class DrawObject(object):
@@ -2507,11 +2507,10 @@ class MainWindow(QMainWindow):
                 ie = ImageExporter(self.normal_image_canvas, file_path, selected_filter, self)
                 ie.exec_()
             elif selected_filter == "Only label (*.png)":
-                seg = self.segmented_image_canvas.get_segmentation()
+                seg, mask = self.segmented_image_canvas.get_rgb_segmentation_and_mask()
                 seg = np.dstack((seg, np.zeros(seg.shape[:-1], dtype=np.uint8)))
-                mask = self.segment.get_segmentation()
                 print(np.max(seg[..., 0]), np.max(seg[..., 1]), np.max(seg[..., 2]), np.max(seg[..., 3]))
-                seg[..., 0][mask] = 255
+                seg[..., 3][mask > 0] = 255
                 print(seg.shape)
                 ie = ImageExporter(self.segmented_image_canvas, file_path, selected_filter, self,
                                    image=seg)
