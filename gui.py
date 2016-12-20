@@ -2264,7 +2264,8 @@ class MainMenu(QWidget):
             dial.setDirectory(self.settings.save_directory)
         dial.setFileMode(QFileDialog.AnyFile)
         filters = ["Project (*.gz *.bz2)", "Labeled image (*.tif)", "Mask in tiff (*.tif)",
-                   "Mask for itk-snap (*.img)", "Data for chimera (*.cmap)", "Data for chimera with 2d gauss (*.cmap)",
+                   "Mask for itk-snap (*.img)", "Raw Data for chimera (*.cmap)", "Data for chimera (*.cmap)",
+                   "Data for chimera with 2d gauss (*.cmap)",
                    "Data for chimera with 3d gauss (*.cmap)", "Image (*.tiff)",
                    "Profiles (*.json)"]
         dial.setAcceptMode(QFileDialog.AcceptSave)
@@ -2313,6 +2314,12 @@ class MainMenu(QWidget):
             elif selected_filter == "Mask for itk-snap (*.img)":
                 segmentation = sitk.GetImageFromArray(self.segment.get_segmentation())
                 sitk.WriteImage(segmentation, file_path)
+            elif selected_filter == "Raw Data for chimera (*.cmap)":
+                if not np.any(self.segment.get_segmentation()):
+                    QMessageBox.warning(self, "No object", "There is no component to export to cmap")
+                    return
+                save_to_cmap(file_path, self.settings, self.segment, gauss_type=GaussUse.no_gauss,
+                             centered_data=False, with_cuting=False)
             elif selected_filter == "Data for chimera (*.cmap)":
                 if not np.any(self.segment.get_segmentation()):
                     QMessageBox.warning(self, "No object", "There is no component to export to cmap")

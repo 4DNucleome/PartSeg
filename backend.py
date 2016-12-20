@@ -1032,7 +1032,7 @@ ROTATION_MATRIX_DICT = {"x": np.diag([1, -1, -1]), "y": np.diag([-1, 1, -1]), "z
 
 
 def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
-                 centered_data=True, morph_op=MorphChange.no_morph, scale_mass=(1,), rotate=None):
+                 centered_data=True, morph_op=MorphChange.no_morph, scale_mass=(1,), rotate=None, with_cuting=True):
     """
     :type file_path: str
     :type settings: Settings
@@ -1043,6 +1043,7 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
     :type morph_op: MorphChange
     :type scale_mass: (int)|list[int]
     :type rotate: str | None
+    :type with_cuting: bool
     :return:
     """
     image = np.copy(settings.image)
@@ -1086,15 +1087,20 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
     f = h5py.File(file_path, "w")
     grp = f.create_group('Chimera/image1')
 
-    cut_img = np.zeros(upper_bound - lower_bound + [3, 11, 11], dtype=image.dtype)
-    coord = []
-    for l, u in zip(lower_bound, upper_bound):
-        coord.append(slice(l, u))
-    pos = tuple(coord)
-    cut_img[1:-2, 5:-6, 5:-6] = image[pos]
-    z, y, x = cut_img.shape
-    data_set = grp.create_dataset("data_zyx", (z, y, x), dtype='f')
-    data_set[...] = cut_img
+    if with_cuting:
+        cut_img = np.zeros(upper_bound - lower_bound + [3, 11, 11], dtype=image.dtype)
+        coord = []
+        for l, u in zip(lower_bound, upper_bound):
+            coord.append(slice(l, u))
+        pos = tuple(coord)
+        cut_img[1:-2, 5:-6, 5:-6] = image[pos]
+        z, y, x = cut_img.shape
+        data_set = grp.create_dataset("data_zyx", (z, y, x), dtype='f')
+        data_set[...] = cut_img
+    else:
+        z, y, x = image.shape
+        data_set = grp.create_dataset("data_zyx", (z, y, x), dtype='f')
+        data_set[...] = image
 
     if with_statistics:
         grp = f.create_group('Chimera/image1/Statistics')
