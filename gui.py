@@ -771,7 +771,6 @@ class MyDrawCanvas(MyCanvas):
         self.settings.image = image
         self.settings.image_changed_fun()
 
-
     def draw_update(self, view=True):
         if view:
             self.update_image_view()
@@ -879,13 +878,18 @@ class MyDrawCanvas(MyCanvas):
             pyplot.xlim(ax_lim)
             pyplot.ylim(ay_lim)
 
-
     def update_segmentation_image(self):
         if not self.segment.segmentation_changed:
             return
         self.segmentation = np.copy(self.segment.get_segmentation())
         self.segmentation[self.segmentation > 0] += 2
         self.rgb_segmentation = label_to_rgb(self.segmentation)
+
+    def get_rgb_segmentation_and_mask(self):
+        if self.rgb_segmentation.ndim == 2:
+            return self.rgb_segmentation, self.segment.get_segmentation()
+        else:
+            return self.rgb_segmentation[self.layer_num], self.segment.get_segmentation()[self.layer_num]
 
 
 class DrawObject(object):
@@ -2474,7 +2478,7 @@ class MainWindow(QMainWindow):
         if self.settings.export_directory is not None:
             dial.setDirectory(self.settings.export_directory)
         dial.setFileMode(QFileDialog.AnyFile)
-        filters = ["Labeled layer (*.png)", "Clean layer (*.png)"]
+        filters = ["Labeled layer (*.png)", "Clean layer (*.png)", "Only label (*.png)"]
         dial.setAcceptMode(QFileDialog.AcceptSave)
         dial.setNameFilters(filters)
         default_name = os.path.splitext(os.path.basename(self.settings.file_path))[0]
@@ -2501,6 +2505,15 @@ class MainWindow(QMainWindow):
                 ie.exec_()
             elif selected_filter == "Clean layer (*.png)":
                 ie = ImageExporter(self.normal_image_canvas, file_path, selected_filter, self)
+                ie.exec_()
+            elif selected_filter == "Only label (*.png)":
+                seg, mask = self.segmented_image_canvas.get_rgb_segmentation_and_mask()
+                seg = np.dstack((seg, np.zeros(seg.shape[:-1], dtype=np.uint8)))
+                print(np.max(seg[..., 0]), np.max(seg[..., 1]), np.max(seg[..., 2]), np.max(seg[..., 3]))
+                seg[..., 3][mask > 0] = 255
+                print(seg.shape)
+                ie = ImageExporter(self.segmented_image_canvas, file_path, selected_filter, self,
+                                   image=seg)
                 ie.exec_()
             else:
                 _ = QMessageBox.critical(self, "Save error", "Option unknown")
@@ -2585,9 +2598,10 @@ class ImageExporter(QDialog):
                           "Bicubic": Image.BICUBIC,
                           "Lanczos": Image.LANCZOS}  # "Box": Image.BOX, "Hamming": Image.HAMMING,
 
-    def __init__(self, canvas, file_path, filter_name, parent):
+    def __init__(self, canvas, file_path, filter_name, parent, image=None):
         print(filter_name)
         super(ImageExporter, self).__init__(parent)
+        self.image = image
         self.keep_ratio = QCheckBox("Keep oryginal ratio", self)
         self.keep_ratio.setChecked(True)
         self.scale_x = QDoubleSpinBox(self)
@@ -2708,7 +2722,10 @@ class ImageExporter(QDialog):
         self.size_y.setValue(self.im_shape[1])
 
     def save_image(self):
-        np_im, _, _ = self.canvas.get_image()
+        if self.image is None:
+            np_im, _, _ = self.canvas.get_image()
+        else:
+            np_im = self.image
         im = Image.fromarray(np_im)
         x_scale = self.scale_x.value()
         y_scale = self.scale_y.value()
@@ -2716,7 +2733,7 @@ class ImageExporter(QDialog):
         im2 = im.resize((int(np_im.shape[1] * x_scale), int(np_im.shape[0] * y_scale)), inter_type)
         im2.crop((int(self.ax_size[0] * x_scale), int(self.ay_size[0] * y_scale),
                   int(self.ax_size[1] * x_scale), int(self.ay_size[1] * y_scale))).save(self.path)
-        self.close()
+        self.accept()
 
 
 class MultiChannelFilePreview(QDialog):
