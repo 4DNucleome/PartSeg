@@ -1335,7 +1335,7 @@ class StatisticsWindow(QWidget):
         up_butt_layout.addWidget(self.recalculate_button)
         up_butt_layout.addWidget(self.recalculate_append_button)
         butt_layout = QHBoxLayout()
-        butt_layout.setMargin(0)
+        # butt_layout.setMargin(0)
         butt_layout.setSpacing(10)
         butt_layout.addWidget(self.horizontal_statistics, 1)
         butt_layout.addWidget(self.no_header, 1)
@@ -1982,6 +1982,12 @@ class AdvancedWindow(QTabWidget):
 # noinspection PyArgumentList
 class MainMenu(QWidget):
     def __init__(self, settings, segment, *args, **kwargs):
+        """
+        :type settings: Settings
+        :type segment: Segment
+        :type args: list
+        :type kwargs: dict
+        """
         super(MainMenu, self).__init__(*args, **kwargs)
         self.settings = settings
         self.segment = segment
@@ -2116,10 +2122,14 @@ class MainMenu(QWidget):
         self.segment.protect = True
         self.minimum_size_value.setValue(self.settings.minimum_size)
         if self.settings.threshold_layer_separate:
-            self.threshold_value.setValue(
-                self.settings.threshold_list[self.settings.layer_num])
+            new_threshold = self.settings.threshold_list[self.settings.layer_num]
         else:
-            self.threshold_value.setValue(self.settings.threshold)
+            new_threshold = self.settings.threshold
+        if new_threshold < self.threshold_value.minimum():
+            self.threshold_value.setMinimum(new_threshold - 1)
+        if new_threshold > self.threshold_value.maximum():
+            self.threshold_value.setMaximum(new_threshold + 1)
+        self.threshold_value.setValue(new_threshold)
         self.gauss_check.setChecked(self.settings.use_gauss)
         self.draw_check.setChecked(self.settings.use_draw_result)
         self.layer_thr_check.setChecked(self.settings.threshold_layer_separate)
@@ -2141,7 +2151,12 @@ class MainMenu(QWidget):
     def set_threshold_range(self, image):
         val_min = image.min()
         val_max = image.max()
+        if self.settings.threshold_layer_separate:
+            new_threshold = self.settings.threshold_list[self.settings.layer_num]
+        else:
+            new_threshold = self.settings.threshold
         self.threshold_value.setRange(val_min, val_max)
+        self.threshold_value.setValue(new_threshold)
         diff = val_max - val_min
         if diff > 10000:
             self.threshold_value.setSingleStep(500)
@@ -2383,6 +2398,7 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         self.runtime_arguments = arguments
         self.setWindowTitle(title)
+        self.title = title
         self.settings = Settings(os.path.join(config_folder, "settings.json"))
         self.segment = Segment(self.settings)
         self.main_menu = MainMenu(self.settings, self.segment, self)
@@ -2395,6 +2411,7 @@ class MainWindow(QMainWindow):
         self.normal_image_canvas.update_elements_positions()
         self.segmented_image_canvas.update_elements_positions()
         self.slider_swap = QCheckBox("Synchronize\nsliders", self)
+        self.slider_swap.setChecked(True)
         self.sync = SynchronizeSliders(self.normal_image_canvas.slider, self.segmented_image_canvas.slider,
                                        self.slider_swap)
         self.colormap_image_canvas.set_bottom_widget(self.slider_swap)
@@ -2423,7 +2440,7 @@ class MainWindow(QMainWindow):
         # self.object_size_list.setWordWrap(True)
         self.statusBar = QStatusBar()
         self.setStatusBar(self.statusBar)
-        self.settings.add_image_callback((self.statusBar.showMessage, str))
+        self.settings.add_image_callback((self.set_info, str))
 
         # self.setGeometry(0, 0,  1400, 720)
         icon = QIcon(os.path.join(file_folder, "icon.png"))
@@ -2448,6 +2465,10 @@ class MainWindow(QMainWindow):
         self.update_objects_positions()
         self.settings.add_image(tifffile.imread(os.path.join(file_folder, "clean_segment.tiff")), "")
 
+    def set_info(self, image, txt):
+        self.statusBar.showMessage("{} {}".format(txt, image.shape))
+        self.setWindowTitle("{}: {} {}".format(self.title, os.path.basename(txt), image.shape))
+
     def export(self):
         dial = QFileDialog(self, "Save data")
         if self.settings.export_directory is not None:
@@ -2462,6 +2483,16 @@ class MainWindow(QMainWindow):
             dial.selectNameFilter(self.settings.export_filter)
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
+            if os.path.splitext(file_path)[1] != ".png":
+                file_path += ".png"
+                if os.path.exists(file_path):
+                    # noinspection PyCallByClass
+                    ret = QMessageBox.warning(self, "File exist", os.path.basename(file_path) +
+                                              " already exists.\nDo you want to replace it?",
+                                              QMessageBox.No, QMessageBox.Yes)
+                    if ret == QMessageBox.No:
+                        self.export()
+                        return
             selected_filter = str(dial.selectedNameFilter())
             self.settings.export_filter = selected_filter
             self.settings.export_directory = os.path.dirname(file_path)

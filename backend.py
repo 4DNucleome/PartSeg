@@ -696,7 +696,7 @@ class Settings(object):
     def image_changed_fun(self):
         for fun in self.image_change_callback:
             if isinstance(fun, tuple) and fun[1] == str:
-                fun[0](self.file_path)
+                fun[0](self.image, self.file_path)
                 continue
             elif isinstance(fun, tuple) and fun[1] == GAUSS:
                 fun[0](self.image, self.gauss_image)
@@ -1118,7 +1118,7 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
     if centered_data:
         swap_cut_img = np.swapaxes(cut_img, 0, 2)
         center_of_mass = af.density_mass_center(swap_cut_img, settings.spacing)
-        model_orientation, eigen_values = af.find_density_orientation(swap_cut_img, settings.spacing, cutoff=2000)
+        model_orientation, eigen_values = af.find_density_orientation(swap_cut_img, settings.spacing, cutoff=1)
         if rotate is not None:
             rotation_matrix, rotation_axis, angel = \
                 af.get_rotation_parameters(np.dot(ROTATION_MATRIX_DICT[rotate], model_orientation.T))
@@ -1223,7 +1223,6 @@ def load_project(file_path, settings, segment):
         original_image = None
         settings.image_clean_profile = None
     settings.threshold = int(important_data["threshold"])
-
     settings.threshold_type = important_data["threshold_type"]
     settings.use_gauss = bool(important_data["use_gauss"])
     settings.spacing = \
