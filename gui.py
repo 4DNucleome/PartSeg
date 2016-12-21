@@ -2840,15 +2840,19 @@ class Credits(QDialog):
         button_layout.addWidget(close)
         layout.addLayout(button_layout)
         self.setLayout(layout)
-        author = "<big>Grzegorz Bokota</big> " \
+        author = "<big>Grzegorz Bokota</big><sup>1,2</sup> " \
                  "(<a href=\"g.bokota@cent.uw.edu.pl\">g.bokota@cent.uw.edu.pl</a>)<br>" \
-                 "<big>Dariusz Plewczynski</big> (<a href=\"d.plewczynski@cent.uw.edu.pl\">" \
+                 "<big>Michał Kadlof</big><sup>1,3</sup> " \
+                 "(<a href=\"m.kadlof@cent.uw.edu.pl\">m.kadlof@cent.uw.edu.pl</a>)<br>" \
+                 "<big>Dariusz Plewczynski</big><sup>1</sup> (<a href=\"d.plewczynski@cent.uw.edu.pl\">" \
                  "d.plewczynski@cent.uw.edu.pl </a>)<br><br>" \
-                 "Laboratory of functional and structural genomics, <i>Center of New Technologies</i>, " \
+                 "<sup>1</sup> Laboratory of functional and structural genomics, <i>Center of New Technologies</i>, " \
                  "University of Warsaw " \
                  "(<a href=\"http://nucleus3d.cent.uw.edu.pl/\">nucleus3d.cent.uw.edu.pl</a>) <br>" \
-                 "<i>Faculty of Mathematics, Informatics and Mechanics</i>, " \
-                 "University of Warsaw (<a href=\"http://mimuw.edu.pl/\">mimuw.edu.pl</a>) <br> <br>"\
+                 "<sup>2</sup> <i>Faculty of Mathematics, Informatics and Mechanics</i>, " \
+                 "University of Warsaw (<a href=\"http://www.mimuw.edu.pl/\">mimuw.edu.pl</a>) <br>" \
+                 "<sup>3</sup> <i>Faculty of Physics</i>, " \
+                 "University of Warsaw (<a href=\"http://www.fuw.edu.pl/\">fuw.edu.pl</a>)" \
 
         program = "<big><strong>PartSeg</strong></big> <br> program for segmentation connect component of threshold" \
                   " selected regions <br>" \
