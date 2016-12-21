@@ -43,9 +43,9 @@ if use_qt5:
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
-    from PyQt5.QtCore import Qt
+    from PyQt5.QtCore import Qt, QSize
     from PyQt5.QtWidgets import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget, \
-        QLineEdit, QFrame,  QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, \
+        QLineEdit, QFrame,  QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, QToolButton, \
         QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
         QListWidget, QTextEdit, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem
     from PyQt5.QtGui import QFont, QFontMetrics, QIcon
@@ -55,7 +55,7 @@ else:
 
     from PyQt4.QtCore import Qt, QSize
     from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget, \
-        QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, \
+        QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, QToolButton, \
         QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
         QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem
 
@@ -385,11 +385,12 @@ class MyCanvas(QWidget):
         self.toolbar.hide()
         self.reset_button = QPushButton("Reset zoom", self)
         self.reset_button.clicked.connect(self.reset)
-        self.zoom_button = QPushButton(self)
+        self.zoom_button = QToolButton(self)
         self.zoom_button.setIcon(QIcon(os.path.join(file_folder, "icons", "zoom-select.png")))
-        self.zoom_button.setIconSize(QSize(16, 16))
+        self.zoom_button.setIconSize(QSize(22, 22))
         self.zoom_button.setToolTip("Zoom")
-        self.zoom_button.setContentsMargins(0, 0, 0, 0)
+        self.zoom_button.setStyleSheet( self.zoom_button.styleSheet() +
+                                        "QToolButton {padding-left: 8px; padding-right: 8px; padding-top: 3px; padding-bottom: 3px}")
         self.zoom_button.clicked.connect(self.zoom)
         self.zoom_button.setCheckable(True)
         self.zoom_button.setContextMenuPolicy(Qt.ActionsContextMenu)
@@ -2005,14 +2006,14 @@ class MainMenu(QWidget):
         self.settings.add_image_callback(self.set_threshold_range)
         self.settings.add_image_callback(self.set_layer_threshold)
         self.settings.add_change_layer_callback(self.changed_layer)
-        self.load_button = QPushButton(self)
+        self.load_button = QToolButton(self)
         self.load_button.setIcon(QIcon(os.path.join(file_folder, "icons", "document-open.png")))
-        self.load_button.setStyleSheet("padding: 3px;")
+        # self.load_button.setStyleSheet("padding: 3px;")
         self.load_button.setToolTip("Open")
         self.load_button.clicked.connect(self.open_file)
-        self.save_button = QPushButton(self)
+        self.save_button = QToolButton(self)
         self.save_button.setIcon(QIcon(os.path.join(file_folder, "icons", "document-save-as.png")))
-        self.save_button.setStyleSheet("padding: 3px;")
+        # self.save_button.setStyleSheet("padding: 3px;")
         self.save_button.setToolTip("Save")
         self.save_button.setDisabled(True)
         self.save_button.clicked.connect(self.save_file)
@@ -2051,7 +2052,7 @@ class MainMenu(QWidget):
         self.profile_choose.addItem("<no profile>")
         self.profile_choose.addItems(list(self.settings.get_profile_list()))
         self.profile_choose.currentIndexChanged[str_type].connect(self.profile_changed)
-        self.advanced_button = QPushButton(self)  # "Advanced"
+        self.advanced_button = QToolButton(self)  # "Advanced"
         self.advanced_button.setIcon(QIcon(os.path.join(file_folder, "icons", "configure.png")))
         self.advanced_button.setStyleSheet("padding: 3px;")
         self.advanced_button.setToolTip("Advanced settings and statistics")
@@ -2487,10 +2488,15 @@ class MainWindow(QMainWindow):
         menu.addAction("Exit").triggered.connect(self.close)
         help_menu = menubar.addMenu("Help")
         help_menu.addAction("Help")
-        help_menu.addAction("Credits")
+        help_menu.addAction("Credits").triggered.connect(self.credits)
+        self.credits_widget = None
 
         self.update_objects_positions()
         self.settings.add_image(tifffile.imread(os.path.join(file_folder, "clean_segment.tiff")), "")
+
+    def credits(self):
+        self.credits_widget = Credits(self)
+        self.credits_widget.exec_()
 
     def set_info(self, image, txt):
         self.statusBar.showMessage("{} {}".format(txt, image.shape))
@@ -2810,3 +2816,43 @@ class MultiChannelFilePreview(QDialog):
         return self.channel_pos.value(),  self.channel_num.value()
 
 
+class Credits(QDialog):
+    def __init__(self, parent):
+        super(Credits, self).__init__(parent)
+        layout = QVBoxLayout()
+        label = QLabel(self)
+        close = QPushButton("Close", self)
+        close.clicked.connect(self.close)
+        layout.addWidget(label)
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        button_layout.addWidget(close)
+        layout.addLayout(button_layout)
+        self.setLayout(layout)
+        author = "<big>Grzegorz Bokota</big> " \
+                 "(<a href=\"g.bokota@cent.uw.edu.pl\">g.bokota@cent.uw.edu.pl</a>)<br>" \
+                 "<big>Dariusz Plewczynski</big> (<a href=\"d.plewczynski@cent.uw.edu.pl\">" \
+                 "d.plewczynski@cent.uw.edu.pl </a>)<br><br>" \
+                 "Laboratory of functional and structural genomics, <i>Center of New Technologies</i>, " \
+                 "University of Warsaw " \
+                 "(<a href=\"http://nucleus3d.cent.uw.edu.pl/\">nucleus3d.cent.uw.edu.pl</a>) <br>" \
+                 "<i>Faculty of Mathematics, Informatics and Mechanics</i>, " \
+                 "University of Warsaw (<a href=\"http://mimuw.edu.pl/\">mimuw.edu.pl</a>) <br> <br>"\
+
+        program = "<big><strong>PartSeg</strong></big> <br> program for segmentation connect component of threshold" \
+                  " selected regions <br>" \
+                  "<u>Version 0.9 beta (under development)</u>"
+        separator = "<br><hr><br>"
+
+        licenses = "LGPLv3 for Oxygen icons <a href=\"http://www.kde.org/\">http://www.kde.org/</a><br>" \
+                   "GPL for PyQt project"
+        text = program + separator + author + separator + licenses
+        label.setText(text)
+        label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        label.setWordWrap(True)
+
+    def showEvent(self, _):
+        print("Credits show")
+
+    def closeEvent(self, _):
+        print("Credits close")
