@@ -55,6 +55,13 @@ class MorphChange(Enum):
     closing_morph = 3
 
 
+class DrawType(Enum):
+    draw = 1
+    erase = 2
+    force_show = 3
+    force_hide = 4
+
+
 def class_to_dict(obj, *args):
     """
     Create dict which contains values of given fields
@@ -897,11 +904,24 @@ class Segment(object):
             return
         ind = bisect(self._sizes_array[1:], self._settings.minimum_size, lambda x, y: x > y)
         # print(ind, self._sizes_array, self._settings.minimum_size)
-        #hide_set = np.unique(self._segmented_image[self.draw_canvas == 3])
-        #show_set = np.unique(self._segmented_image[self.draw_canvas == 4])
-        #print(hide_set, show_set, np.bincount(self.draw_canvas.flat))
-        self._finally_segment = np.copy(self._segmented_image)
-        self._finally_segment[self._finally_segment > ind] = 0
+        hide_set = set(np.unique(self._segmented_image[self.draw_canvas == DrawType.force_hide.value]))
+        show_set = set(np.unique(self._segmented_image[self.draw_canvas == DrawType.force_show.value]))
+        hide_set -= show_set
+        show_set.discard(0)
+        hide_set.discard(0)
+        finally_segment = np.copy(self._segmented_image)
+        finally_segment[finally_segment > ind] = 0
+        for val in show_set:
+            finally_segment[self._segmented_image == val] = val
+        for val in hide_set:
+            finally_segment[self._segmented_image == val] = 0
+        if len(show_set) > 0 or len(hide_set) > 0:
+            self._finally_segment = np.zeros(finally_segment.shape, dtype=finally_segment.dtype)
+            for i, val in enumerate(np.unique(finally_segment)[1:], 1):
+                self._finally_segment[finally_segment == val] = i
+        else:
+            self._finally_segment = finally_segment
+
         self._segmentation_changed = True
         for fun in self.segmentation_change_callback:
             if isinstance(fun, tuple):
