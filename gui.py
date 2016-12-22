@@ -2283,10 +2283,7 @@ class MainMenu(QWidget):
             dial.setDirectory(self.settings.save_directory)
         dial.setFileMode(QFileDialog.AnyFile)
         filters = ["Project (*.gz *.bz2)", "Labeled image (*.tif)", "Mask in tiff (*.tif)",
-                   "Mask for itk-snap (*.img)", "Raw Data for chimera (*.cmap)", "Data for chimera (*.cmap)",
-                   "Data for chimera with 2d gauss (*.cmap)",
-                   "Data for chimera with 3d gauss (*.cmap)", "Image (*.tiff)",
-                   "Profiles (*.json)"]
+                   "Mask for itk-snap (*.img)", "Data for chimera (*.cmap)", "Image (*.tiff)", "Profiles (*.json)"]
         dial.setAcceptMode(QFileDialog.AcceptSave)
         dial.setNameFilters(filters)
         default_name = os.path.splitext(os.path.basename(self.settings.file_path))[0]
@@ -2343,6 +2340,9 @@ class MainMenu(QWidget):
                 if not np.any(self.segment.get_segmentation()):
                     QMessageBox.warning(self, "No object", "There is no component to export to cmap")
                     return
+                ob = CmapSave(file_path, self.settings, self.segment)
+                ob.exec_()
+                return
                 save_to_cmap(file_path, self.settings, self.segment, gauss_type=GaussUse.no_gauss)
             elif selected_filter == "Data for chimera with 2d gauss (*.cmap)":
                 if not np.any(self.segment.get_segmentation()):
@@ -2871,3 +2871,58 @@ class Credits(QDialog):
 
     def closeEvent(self, _):
         print("Credits close")
+
+
+class CmapSave(QDialog):
+    def __init__(self, file_path, settings, segment):
+        super(CmapSave, self).__init__()
+        self.settings = settings
+        self.segment = segment
+        self.file_path = file_path
+        path_label = QLabel("Save path: <i>{}</i>".format(file_path))
+        path_label.setWordWrap(True)
+        self.gauss_type = QComboBox(self)
+        self.gauss_type.addItems(["No gauss", "2d gauss", "2d + 3d gauss"])
+        self.center_data = QCheckBox(self)
+        self.center_data.setChecked(True)
+        self.with_statistics = QCheckBox(self)
+        self.with_statistics.setChecked(True)
+        self.rotation_axis = QComboBox(self)
+        self.rotation_axis.addItems(["None", "x", "y", "z"])
+        self.cut_data = QCheckBox(self)
+        self.cut_data.setChecked(True)
+        grid = QGridLayout()
+        grid.addWidget(QLabel("Gauss type"), 0, 0)
+        grid.addWidget(self.gauss_type, 0, 1)
+        grid.addWidget(QLabel("Center data"), 1, 0)
+        grid.addWidget(self.center_data, 1, 1)
+        grid.addWidget(QLabel("With statistics"), 2, 0)
+        grid.addWidget(self.with_statistics, 2, 1)
+        grid.addWidget(QLabel("Rotation axis"), 3, 0)
+        grid.addWidget(self.rotation_axis, 3, 1)
+        grid.addWidget(QLabel("Cut obsolete area"), 4, 0)
+        grid.addWidget(self.cut_data, 4, 1)
+
+        close = QPushButton("Cancel")
+        close.clicked.connect(self.close)
+        save = QPushButton("Save")
+        save.clicked.connect(self.save)
+
+        button_layout  = QHBoxLayout()
+        button_layout.addWidget(close)
+        button_layout.addStretch()
+        button_layout.addWidget(save)
+
+        layout = QVBoxLayout()
+        layout.addWidget(path_label)
+        layout.addLayout(grid)
+        layout.addLayout(button_layout)
+
+        self.setLayout(layout)
+
+    def save(self):
+        options = {"No gauss": GaussUse.no_gauss, "2d gauss": GaussUse.gauss_2d, "2d + 3d gauss": GaussUse.gauss_3d}
+        save_to_cmap(self.file_path, self.settings, self.segment, options[str(self.gauss_type.currentText())],
+                     self.with_statistics.isChecked(), self.center_data.isChecked(),
+                     rotate=str(self.rotation_axis.currentText()), with_cuting=self.cut_data.isChecked())
+        self.accept()

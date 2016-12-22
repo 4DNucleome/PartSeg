@@ -1101,6 +1101,7 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
         z, y, x = image.shape
         data_set = grp.create_dataset("data_zyx", (z, y, x), dtype='f')
         data_set[...] = image
+        cut_img = image
 
     if with_statistics:
         grp = f.create_group('Chimera/image1/Statistics')
@@ -1125,7 +1126,7 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
         swap_cut_img = np.swapaxes(cut_img, 0, 2)
         center_of_mass = af.density_mass_center(swap_cut_img, settings.spacing)
         model_orientation, eigen_values = af.find_density_orientation(swap_cut_img, settings.spacing, cutoff=1)
-        if rotate is not None:
+        if rotate is not None and rotate != "None":
             rotation_matrix, rotation_axis, angel = \
                 af.get_rotation_parameters(np.dot(ROTATION_MATRIX_DICT[rotate], model_orientation.T))
         else:
