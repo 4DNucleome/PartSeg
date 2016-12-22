@@ -12,8 +12,7 @@ import logging
 import re
 import sys
 import appdirs
-from PIL import Image
-
+from enum import Enum
 
 if sys.version_info.major == 2:
     import pkgutil
@@ -58,6 +57,8 @@ else:
         QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, QToolButton, \
         QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
         QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem
+
+from PIL import Image
 
 from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, \
     calculate_statistic_from_image, MaskChange, Profile, UNITS_DICT, GaussUse, StatisticProfile
@@ -721,27 +722,39 @@ class MyDrawCanvas(MyCanvas):
         self.draw_canvas = DrawObject(settings, segment, self.draw_update)
         self.history_list = list()
         self.redo_list = list()
-        self.zoom_button.clicked.connect(self.up_drawing_button)
-        self.move_button.clicked.connect(self.up_drawing_button)
+
         self.draw_button = QToolButton(self)
         self.draw_button.setToolTip("Draw")
         self.draw_button.setIcon(QIcon(os.path.join(file_folder, "icons", "draw-path.png")))
         self.draw_button.setIconSize(canvas_icon_size)
         self.draw_button.setCheckable(True)
-        self.draw_button.clicked.connect(self.up_move_zoom_button)
-        self.draw_button.clicked[bool].connect(self.draw_click)
+        # self.draw_button.clicked[bool].connect(self.draw_click)
         self.erase_button = QToolButton(self)
         self.erase_button.setToolTip("Erase")
         self.erase_button.setIcon(QIcon(os.path.join(file_folder, "icons", "draw-eraser.png")))
         self.erase_button.setIconSize(canvas_icon_size)
         self.erase_button.setCheckable(True)
-        self.erase_button.clicked.connect(self.up_move_zoom_button)
-        self.erase_button.clicked[bool].connect(self.erase_click)
+        # self.erase_button.clicked[bool].connect(self.erase_click)
+        self.show_button = QPushButton("Show", self)
+        self.hide_button = QPushButton("Hide", self)
+        self.show_button.setCheckable(True)
+        self.hide_button.setCheckable(True)
+        self.zoom_button.clicked.connect(self.generate_up_button_fun(self.zoom_button))
+        self.move_button.clicked.connect(self.generate_up_button_fun(self.move_button))
+        self.draw_button.clicked.connect(self.generate_up_button_fun(self.draw_button))
+        self.erase_button.clicked.connect(self.generate_up_button_fun(self.erase_button))
+        self.show_button.clicked.connect(self.generate_up_button_fun(self.show_button))
+        self.hide_button.clicked.connect(self.generate_up_button_fun(self.hide_button))
+        self.draw_button.clicked[bool].connect(self.generate_draw_modify(DrawType.draw))
+        self.erase_button.clicked[bool].connect(self.generate_draw_modify(DrawType.erase))
+        self.show_button.clicked[bool].connect(self.generate_draw_modify(DrawType.force_show))
+        self.hide_button.clicked[bool].connect(self.generate_draw_modify(DrawType.force_hide))
         self.clean_button = QPushButton("Clean drawing", self)
         self.clean_button.clicked.connect(self.draw_canvas.clean)
         self.clean_data_button = QPushButton("Clean data", self)
         self.clean_data_button.clicked.connect(self.action_choose)
-        self.button_list.extend([self.draw_button, self.erase_button, self.clean_button, self.clean_data_button])
+        self.button_list.extend([self.draw_button, self.erase_button, self.show_button, self.hide_button,
+                                 self.clean_button, self.clean_data_button])
         self.segment = segment
         self.protect_button = False
         self.segmentation = None
@@ -808,6 +821,17 @@ class MyDrawCanvas(MyCanvas):
             size = self.segment.get_size_array()[val]
             self.info_object.update_info_text("Component: {}, size: {}".format(val, size))
 
+    def generate_up_button_fun(self, button):
+        butt_list = [self.zoom_button, self.move_button, self.draw_button, self.erase_button, self.show_button,
+                     self.hide_button]
+        butt_list.remove(button)
+
+        def fin_fun():
+            for butt in butt_list:
+                butt.setChecked(False)
+
+        return fin_fun
+
     def up_move_zoom_button(self):
         self.protect_button = True
         if self.zoom_button.isChecked():
@@ -825,6 +849,15 @@ class MyDrawCanvas(MyCanvas):
             self.draw_button.setChecked(False)
         if self.erase_button.isChecked():
             self.erase_button.setChecked(False)
+
+    def generate_draw_modify(self, t):
+        def draw_modify(checked):
+            if checked:
+                self.draw_canvas.draw_on = True
+                self.draw_canvas.value = t.value
+            else:
+                self.draw_canvas.draw_on = False
+        return draw_modify
 
     def draw_click(self, checked):
         if checked:
@@ -909,6 +942,13 @@ class MyDrawCanvas(MyCanvas):
             return self.rgb_segmentation[self.layer_num], self.segment.get_segmentation()[self.layer_num]
 
 
+class DrawType(Enum):
+    draw = 1
+    erase = 2
+    force_show = 3
+    force_hide = 4
+
+
 class DrawObject(object):
     def __init__(self, settings, segment, update_fun):
         """
@@ -927,7 +967,7 @@ class DrawObject(object):
         self.rgb_image = None
         self.labeled_rgb_image = None
         self.layer_num = 0
-        im = [np.arange(3)]
+        im = [np.arange(5)]
         rgb_im = sitk.GetArrayFromImage(sitk.LabelToRGB(sitk.GetImageFromArray(im)))
         self.draw_colors = rgb_im[0]
         self.update_fun = update_fun
@@ -941,6 +981,12 @@ class DrawObject(object):
 
     def set_layer_num(self, layer_num):
         self.layer_num = layer_num
+
+    def generate_set_mode(self, t):
+        def set_mode():
+            self.draw_on = True
+            self.value = t.value
+        return set_mode
 
     def set_draw_mode(self):
         self.draw_on = True

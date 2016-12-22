@@ -897,6 +897,9 @@ class Segment(object):
             return
         ind = bisect(self._sizes_array[1:], self._settings.minimum_size, lambda x, y: x > y)
         # print(ind, self._sizes_array, self._settings.minimum_size)
+        #hide_set = np.unique(self._segmented_image[self.draw_canvas == 3])
+        #show_set = np.unique(self._segmented_image[self.draw_canvas == 4])
+        #print(hide_set, show_set, np.bincount(self.draw_canvas.flat))
         self._finally_segment = np.copy(self._segmented_image)
         self._finally_segment[self._finally_segment > ind] = 0
         self._segmentation_changed = True
