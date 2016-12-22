@@ -827,8 +827,13 @@ class MyDrawCanvas(MyCanvas):
         butt_list.remove(button)
 
         def fin_fun():
+            if self.protect_button:
+                return
+            self.protect_button = True
             for butt in butt_list:
-                butt.setChecked(False)
+                if butt.isChecked():
+                    butt.click()
+            self.protect_button = False
 
         return fin_fun
 
