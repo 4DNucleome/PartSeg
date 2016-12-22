@@ -12,7 +12,6 @@ import logging
 import re
 import sys
 import appdirs
-from math import log, exp, e
 
 if sys.version_info.major == 2:
     import pkgutil
@@ -29,7 +28,7 @@ else:
     else:
         use_qt5 = False
 
-use_qt5 = False
+#use_qt5 = False
 
 if use_qt5:
     matplotlib.use("Qt5Agg")
@@ -44,7 +43,7 @@ if use_qt5:
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
-    from PyQt5.QtCore import Qt, QSize
+    from PyQt5.QtCore import Qt, QSize, QTimer
     from PyQt5.QtWidgets import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget, \
         QLineEdit, QFrame,  QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, QToolButton, QDoubleSpinBox, \
         QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, QListWidget, \
@@ -57,7 +56,7 @@ else:
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 
-    from PyQt4.QtCore import Qt, QSize
+    from PyQt4.QtCore import Qt, QSize, QTimer
     from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget, QLineEdit, QFont, \
         QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, QToolButton, QDoubleSpinBox, \
         QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
@@ -78,6 +77,8 @@ app_name = "PartSeg"
 app_author = "LFSG"
 
 canvas_icon_size = QSize(27, 27)
+
+reaction_time = 500
 
 config_folder = appdirs.user_data_dir(app_name, app_author)
 print (config_folder)
@@ -246,35 +247,59 @@ class ColormapCanvas(QWidget):
         self.bottom_widget = None
         self.top_widget = None
         self.slider = QSlider(self)
-        self.slider.setRange(-log(1000)*100, 0)
+        self.slider.setRange(-10000, -50)
         # self.slider.setValue(-int(100/e))
         self.slider.setSingleStep(1)
         self.slider.valueChanged[int].connect(self.slider_changed)
         self.slider.setOrientation(Qt.Vertical)
         self.norm = QDoubleSpinBox(self)
         self.norm.setRange(0.01, 10)
+        self.norm.setSingleStep(0.1)
         self.norm.valueChanged[float].connect(self.value_changed)
         self.protect = False
+        self.starting_value = -5000
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.run_update)
+        self.timer.setSingleShot(True)
         settings.add_image_callback(self.set_range)
         settings.add_colormap_callback(self.update_colormap)
         settings.add_metadata_changed_callback(self.update_colormap)
+        self.timer.timeout.connect(self.settings.change_colormap)
 
     def value_changed(self, val):
         if self.protect:
             return
         self.settings.power_norm = val
-        self.protect = True
-        self.settings.advanced_settings_changed()
-        self.protect = False
+        self.timer.stop()
+        self.timer.start(reaction_time)
 
     def slider_changed(self, val):
         if self.protect:
             return
-        real_val = exp(-val/100) / 100.
-        print(real_val)
+        val = -val
+
+        if val < 5000:
+            real_val = val / 5000.0
+        else:
+            real_val = 1 + (val - 5000)/5000 * 9
+        # print(val, real_val)
         self.settings.power_norm = real_val
         self.protect = True
-        self.settings.advanced_settings_changed()
+        self.norm.setValue(self.settings.power_norm)
+        self.protect = False
+        # self.update_colormap()
+        if abs(self.starting_value - val) > 500:
+            self.run_update(True)
+            self.starting_value = val
+            self.timer.stop()
+        else:
+            if not self.timer.isActive():
+                self.timer.start(2*reaction_time)
+
+    def run_update(self, manual=False):
+        # print("Update manual {}".format(manual))
+        self.protect = True
+        self.settings.change_colormap()
         self.protect = False
 
     def set_range(self, begin, end=None):
@@ -288,11 +313,16 @@ class ColormapCanvas(QWidget):
 
     def update_colormap(self):
         self.norm.setValue(self.settings.power_norm)
-        self.slider.setValue(- int(log(self.settings.power_norm * 100)*100))
+        if self.settings.power_norm <= 1:
+            new_val = int(self.settings.power_norm * 5000)
+        else:
+            new_val = (5000 + int(5000/9 * (self.settings.power_norm - 1)))
+        self.slider.setValue(-new_val)
+        self.starting_value = new_val
         norm = colors.PowerNorm(gamma=self.settings.power_norm, vmin=self.val_min, vmax=self.val_max)
         fig = pyplot.figure(self.my_figure_num)
         pyplot.clf()
-        ax = fig.add_axes([0.01, 0.01, 0.3, 0.98])
+        ax = fig.add_axes([0.01, 0.01, 0.25, 0.98])
         matplotlib.colorbar.ColorbarBase(ax, cmap=self.settings.color_map, norm=norm, orientation='vertical')
         fig.canvas.draw()
 
@@ -2132,7 +2162,10 @@ class MainMenu(QWidget):
         self.threshold_value.setValue(self.settings.threshold)
         self.threshold_value.setSingleStep(500)
         self.threshold_value.setButtonSymbols(QAbstractSpinBox.NoButtons)
-        self.threshold_value.valueChanged[int].connect(settings.change_threshold)
+        self.threshold_value.valueChanged.connect(self.threshold_change)
+        self.threshold_timer = QTimer()
+        self.threshold_timer.setSingleShot(True)
+        self.threshold_timer.timeout.connect(self.threshold_changed)
         self.layer_thr_check = QCheckBox("Layer\nthreshold", self)
         self.layer_thr_check.clicked[bool].connect(self.settings.change_layer_threshold)
         self.minimum_size_lab = QLabel(self)
@@ -2142,9 +2175,12 @@ class MainMenu(QWidget):
         self.minimum_size_value.setAlignment(Qt.AlignRight)
         self.minimum_size_value.setRange(0, 10 ** 6)
         self.minimum_size_value.setValue(self.settings.minimum_size)
-        self.minimum_size_value.valueChanged[int].connect(settings.change_min_size)
+        self.minimum_size_value.valueChanged[int].connect(self.minimum_size_change)
         self.minimum_size_value.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.minimum_size_value.setSingleStep(10)
+        self.minimum_size_timer = QTimer()
+        self.minimum_size_timer.timeout.connect(self.minimum_size_changed)
+        self.minimum_size_timer.setSingleShot(True)
         self.gauss_check = QCheckBox("Use gauss", self)
         self.gauss_check.stateChanged[int].connect(settings.change_gauss)
         self.draw_check = QCheckBox("Use draw\n result", self)
@@ -2178,6 +2214,20 @@ class MainMenu(QWidget):
         self.layer_thr_check.stateChanged.connect(self.no_profile)
         self.enable_list = [self.save_button, self.mask_button]
         # self.setStyleSheet(self.styleSheet()+";border: 1px solid black")
+
+    def minimum_size_change(self):
+        self.minimum_size_timer.stop()
+        self.minimum_size_timer.start(reaction_time)
+
+    def minimum_size_changed(self):
+        self.settings.change_min_size(self.minimum_size_value.value())
+
+    def threshold_change(self):
+        self.threshold_timer.stop()
+        self.threshold_timer.start(reaction_time)
+
+    def threshold_changed(self):
+        self.settings.change_threshold(self.threshold_value.value())
 
     def no_profile(self):
         self.profile_choose.setCurrentIndex(0)
