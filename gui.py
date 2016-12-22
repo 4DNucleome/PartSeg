@@ -12,7 +12,7 @@ import logging
 import re
 import sys
 import appdirs
-from enum import Enum
+from math import log, exp, e
 
 if sys.version_info.major == 2:
     import pkgutil
@@ -46,10 +46,13 @@ if use_qt5:
 
     from PyQt5.QtCore import Qt, QSize
     from PyQt5.QtWidgets import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget, \
-        QLineEdit, QFrame,  QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, QToolButton, \
-        QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
-        QListWidget, QTextEdit, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem
+        QLineEdit, QFrame,  QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, QToolButton, QDoubleSpinBox, \
+        QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, QListWidget, \
+        QTextEdit, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem, QDockWidget, \
+        QTextBrowser
+
     from PyQt5.QtGui import QFont, QFontMetrics, QIcon
+    from PyQt5.QtHelp import QHelpEngine
 else:
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
@@ -58,7 +61,9 @@ else:
     from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget, QLineEdit, QFont, \
         QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, QToolButton, QDoubleSpinBox, \
         QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
-        QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem
+        QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem, \
+        QDockWidget, QTextBrowser, QSplitter
+    from PyQt4.QtHelp import QHelpEngine
 
 from PIL import Image
 
@@ -240,9 +245,37 @@ class ColormapCanvas(QWidget):
         self.settings = settings
         self.bottom_widget = None
         self.top_widget = None
+        self.slider = QSlider(self)
+        self.slider.setRange(-log(1000)*100, 0)
+        # self.slider.setValue(-int(100/e))
+        self.slider.setSingleStep(1)
+        self.slider.valueChanged[int].connect(self.slider_changed)
+        self.slider.setOrientation(Qt.Vertical)
+        self.norm = QDoubleSpinBox(self)
+        self.norm.setRange(0.01, 10)
+        self.norm.valueChanged[float].connect(self.value_changed)
+        self.protect = False
         settings.add_image_callback(self.set_range)
         settings.add_colormap_callback(self.update_colormap)
         settings.add_metadata_changed_callback(self.update_colormap)
+
+    def value_changed(self, val):
+        if self.protect:
+            return
+        self.settings.power_norm = val
+        self.protect = True
+        self.settings.advanced_settings_changed()
+        self.protect = False
+
+    def slider_changed(self, val):
+        if self.protect:
+            return
+        real_val = exp(-val/100) / 100.
+        print(real_val)
+        self.settings.power_norm = real_val
+        self.protect = True
+        self.settings.advanced_settings_changed()
+        self.protect = False
 
     def set_range(self, begin, end=None):
         if end is None and isinstance(begin, np.ndarray):
@@ -254,6 +287,8 @@ class ColormapCanvas(QWidget):
         self.update_colormap()
 
     def update_colormap(self):
+        self.norm.setValue(self.settings.power_norm)
+        self.slider.setValue(- int(log(self.settings.power_norm * 100)*100))
         norm = colors.PowerNorm(gamma=self.settings.power_norm, vmin=self.val_min, vmax=self.val_max)
         fig = pyplot.figure(self.my_figure_num)
         pyplot.clf()
@@ -276,7 +311,12 @@ class ColormapCanvas(QWidget):
             h_layout = QHBoxLayout()
             h_layout.addWidget(self.top_widget)
             layout.addLayout(h_layout)
-        layout.addWidget(self.figure_canvas)
+        mid = QHBoxLayout()
+        mid.addWidget(self.slider)
+        mid.addWidget(self.figure_canvas)
+        layout.addWidget(self.norm)
+        layout.addLayout(mid)
+        #layout.addWidget(self.figure_canvas)
         layout.setStretchFactor(self.figure_canvas, 1)
         if self.bottom_widget is not None:
             layout.addWidget(self.bottom_widget)
@@ -2548,12 +2588,17 @@ class MainWindow(QMainWindow):
         menu.addAction("Batch processing")
         menu.addAction("Exit").triggered.connect(self.close)
         help_menu = menubar.addMenu("Help")
-        help_menu.addAction("Help")
+        help_menu.addAction("Help").triggered.connect(self.help)
         help_menu.addAction("Credits").triggered.connect(self.credits)
         self.credits_widget = None
+        self.help_widget = None
 
         self.update_objects_positions()
         self.settings.add_image(tifffile.imread(os.path.join(file_folder, "clean_segment.tiff")), "")
+
+    def help(self):
+        self.help_widget = HelpWindow()
+        self.help_widget.show()
 
     def credits(self):
         self.credits_widget = Credits(self)
@@ -2976,3 +3021,20 @@ class CmapSave(QDialog):
                      self.with_statistics.isChecked(), self.center_data.isChecked(),
                      rotate=str(self.rotation_axis.currentText()), with_cuting=self.cut_data.isChecked())
         self.accept()
+
+
+class HelpWindow(QDockWidget):
+    def __init__(self, parent=None):
+        super(HelpWindow, self).__init__(parent)
+        self.help_engine = QHelpEngine(os.path.join(file_folder, "help", "PartSeg.qhc"))
+        self.help_engine.setupData()
+        self.menu_widget = QTabWidget(self)
+        self.menu_widget.addTab(self.help_engine.contentWidget(), "Contents")
+        self.menu_widget.addTab(self.help_engine.indexWidget(), "Index")
+        self.browser = QTextBrowser(self)
+        self.splitter = QSplitter(Qt.Horizontal)
+        self.splitter.insertWidget(0, self.menu_widget)
+        self.splitter.insertWidget(1, self.browser)
+        self.setWidget(self.splitter)
+
+

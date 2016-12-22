@@ -3,27 +3,26 @@
     <namespace>LGFS.PartSeg.1.0</namespace>
     <virtualFolder>doc</virtualFolder>
     <customFilter name="PartSeg 1.0">
-        <filterAttribute>myapp</filterAttribute>
+        <filterAttribute>PartSeg</filterAttribute>
         <filterAttribute>1.0</filterAttribute>
     </customFilter>
     <filterSection>
-        <filterAttribute>myapp</filterAttribute>
+        <filterAttribute>PartSeg</filterAttribute>
         <filterAttribute>1.0</filterAttribute>
         <toc>
-            <section title="My Application Manual" ref="index.html">
-                <section title="Chapter 1" ref="doc.html#chapter1"/>
-                <section title="Chapter 2" ref="doc.html#chapter2"/>
-                <section title="Chapter 3" ref="doc.html#chapter3"/>
+            <section title="PartSeg Manual" ref="index.html">
+                <section title="Advanced settings" ref="advanced.html"/>
+                <section title="Image View" ref="view.html"/>
+                <section title="Export" ref="export.html"/>
             </section>
         </toc>
         <keywords>
-            <keyword name="foo" id="MyApplication::foo" ref="doc.html#foo"/>
-            <keyword name="bar" ref="doc.html#bar"/>
-            <keyword id="MyApplication::foobar" ref="doc.html#foobar"/>
+            <keyword name="Zoom" id="PartSeg:zoom" ref="view.html#zoom"/>
         </keywords>
         <files>
             <file>classic.css</file>
             <file>*.html</file>
+            <file>icons/*.png</file>
         </files>
     </filterSection>
 </QtHelpProject>
