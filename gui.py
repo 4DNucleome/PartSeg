@@ -29,6 +29,8 @@ else:
     else:
         use_qt5 = False
 
+use_qt5 = False
+
 if use_qt5:
     matplotlib.use("Qt5Agg")
     logging.info("Qt5 backed")
@@ -53,16 +55,15 @@ else:
     from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 
     from PyQt4.QtCore import Qt, QSize
-    from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget, \
-        QLineEdit, QFont, QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, QToolButton, \
-        QDoubleSpinBox, QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
+    from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget, QLineEdit, QFont, \
+        QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, QToolButton, QDoubleSpinBox, \
+        QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
         QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem
 
 from PIL import Image
 
 from backend import Settings, Segment, save_to_cmap, save_to_project, load_project, UPPER, GAUSS, get_segmented_data, \
-    calculate_statistic_from_image, MaskChange, Profile, UNITS_DICT, GaussUse, StatisticProfile
-
+    calculate_statistic_from_image, MaskChange, Profile, UNITS_DICT, GaussUse, StatisticProfile, DrawType
 
 # from scipy.stats import norm
 
@@ -942,11 +943,7 @@ class MyDrawCanvas(MyCanvas):
             return self.rgb_segmentation[self.layer_num], self.segment.get_segmentation()[self.layer_num]
 
 
-class DrawType(Enum):
-    draw = 1
-    erase = 2
-    force_show = 3
-    force_hide = 4
+
 
 
 class DrawObject(object):
@@ -1041,6 +1038,8 @@ class DrawObject(object):
             self.update_fun()
 
     def on_mouse_move(self, event):
+        if self.value > 2:
+            return
         if self.mouse_down and self.draw_on and event.xdata is not None and event.ydata is not None:
             f_x, f_y = event.xdata + 0.5, event.ydata + 0.5
             # ix, iy = int(f_x), int(f_y)
