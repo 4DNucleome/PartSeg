@@ -169,14 +169,14 @@ class StatisticProfile(object):
             "std_noise", "Calculate standard deviation of pixel brightness outside current segmentation", None),
         "Moment of inertia": SettingsValue("moment_of_inertia", "Calculate moment of inertia for segmented structure."
                                            "Has one parameter thr (threshold). Only values above it are used "
-                                           "in calculation", {"thr": float}),
+                                           "in calculation", None),
         "Border Mass": SettingsValue("border_mass", "Calculate mass for elements in radius (in physical units)"
                                                     " from mask", {"radius": int}),
         "Border Volume": SettingsValue("border_volume", "Calculate volumes for elements in radius (in physical units)"
                                                         " from mask", {"radius": int})
     }
 
-    def __init__(self, name, chosen_fields, reversed_brightness, settings):
+    def __init__(self, name, chosen_fields, reversed_brightness, settings, use_gauss_image=False):
         self.name = name
         self.chosen_fields = []
         for cf_val in chosen_fields:
@@ -188,12 +188,32 @@ class StatisticProfile(object):
             self.chosen_fields.append((tree, user_name, None))
         self.settings = settings
         self.reversed_brightness = reversed_brightness
+        self.use_gauss_image = use_gauss_image
 
     def rebuild_tree(self, l):
         if len(l) == 2:
             return Leaf(*l)
         else:
             return Node(self.rebuild_tree(l[0]), l[1], self.rebuild_tree(l[2]))
+
+    def flat_tree(self, t):
+        if isinstance(t, Leaf):
+            res = ""
+            if t.dict is not None and len(t.dict) > 0:
+                for name, val in t.dict.items():
+                    res += "{}={},".format(name, val)
+                return "{}[{}]".format(t.name, res[:-1])
+            return t.name
+        elif isinstance(t, Node):
+            if isinstance(t.left, Node):
+                beg = "({})"
+            else:
+                beg = "{}"
+            if isinstance(t.right, Node):
+                end = "({})"
+            else:
+                end = "{}"
+            return (beg+"{}"+end).format(self.flat_tree(t.left), t.op, self.flat_tree(t.right))
 
     @staticmethod
     def tokenize(text):
@@ -285,8 +305,12 @@ class StatisticProfile(object):
         logging.error("Wrong statistics: {}".format(node))
         return 1
 
-    def calculate(self, image, mask, full_mask, base_mask):
+    def calculate(self, image, gauss_image, mask, full_mask, base_mask):
         result = OrderedDict()
+        if self.use_gauss_image:
+            image = gauss_image.astype(np.float)
+        else:
+            image = image.astype(np.float)
         if self.reversed_brightness:
             noise_mean = np.mean(image[full_mask == 0])
             image = noise_mean - image
@@ -547,7 +571,7 @@ class Settings(object):
             fun()
 
     def dump_statistics(self, file_path):
-        res = [class_to_dict(x, "name", "chosen_fields", "reversed_brightness")
+        res = [class_to_dict(x, "name", "chosen_fields", "reversed_brightness", "use_gauss_image")
                for x in self.statistics_profile_dict.values()]
         with open(file_path, 'w') as ff:
             json.dump(ff, res)
@@ -565,8 +589,9 @@ class Settings(object):
                           "gauss_radius", "export_filter", "export_directory", "scale_factor", "statistic_dirs",
                           "chosen_colormap")
         important_data["profiles"] = [x.__dict__ for k, x in self.profiles.items()]
-        important_data["statistics"] = [class_to_dict(x, "name", "chosen_fields", "reversed_brightness")
-                                        for x in self.statistics_profile_dict.values()]
+        important_data["statistics"] = \
+            [class_to_dict(x, "name", "chosen_fields", "reversed_brightness", "use_gauss_image")
+             for x in self.statistics_profile_dict.values()]
         with open(file_path, "w") as ff:
             json.dump(important_data, ff)
 
@@ -988,12 +1013,12 @@ def calculate_statistic_from_image(img, mask, settings):
     res["Volume"] = np.count_nonzero(mask) * pixel_volume(settings.voxel_size)
     res["Mass"] = np.sum(img)
     border_im = sitk.GetArrayFromImage(sitk.LabelContour(sitk.GetImageFromArray((mask > 0).astype(np.uint8))))
-    res["Border Volume"] = np.count_nonzero(border_im)
+    # res["Border Volume"] = np.count_nonzero(border_im)
 
     res["Border Surface"] = calculate_volume_surface(mask, voxel_size)
     # res["Border Surface Opening"] = calculate_volume_surface(opening_smooth(mask), voxel_size)
     # res["Border Surface Closing"] = calculate_volume_surface(closing_smooth(mask), voxel_size)
-    img_mask = img > 0
+    img_mask = mask > 0  # img > 0
     res["Pixel max"] = np.max(img)
     if np.any(img_mask):
         res["Pixel min"] = np.min(img[img_mask])
