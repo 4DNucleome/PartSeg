@@ -43,7 +43,7 @@ if use_qt5:
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
-    from PyQt5.QtCore import Qt, QSize, QTimer
+    from PyQt5.QtCore import Qt, QSize, QTimer, QVariant
     from PyQt5.QtWidgets import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget, \
         QLineEdit, QFrame,  QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, QToolButton, QDoubleSpinBox, \
         QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, QListWidget, \
@@ -56,7 +56,7 @@ else:
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 
-    from PyQt4.QtCore import Qt, QSize, QTimer
+    from PyQt4.QtCore import Qt, QSize, QTimer, QVariant
     from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget, QLineEdit, QFont, \
         QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, QToolButton, QDoubleSpinBox, \
         QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
@@ -3122,10 +3122,22 @@ class HelpWindow(QDockWidget):
         self.menu_widget = QTabWidget(self)
         self.menu_widget.addTab(self.help_engine.contentWidget(), "Contents")
         self.menu_widget.addTab(self.help_engine.indexWidget(), "Index")
-        self.browser = QTextBrowser(self)
+        self.browser = HelpBrowser(self, self.help_engine)
+        self.help_engine.contentWidget().linkActivated.connect(self.browser.setSource)
+        self.help_engine.indexWidget().linkActivated.connect(self.browser.setSource)
         self.splitter = QSplitter(Qt.Horizontal)
         self.splitter.insertWidget(0, self.menu_widget)
         self.splitter.insertWidget(1, self.browser)
         self.setWidget(self.splitter)
 
 
+class HelpBrowser(QTextBrowser):
+    def __init__(self, parent, engine):
+        super(HelpBrowser, self).__init__(parent)
+        self.help_engine = engine
+
+    def loadResource(self, p_int, name):
+        if name.scheme() == "qthelp":
+            return QVariant(self.help_engine.fileData(name))
+        else:
+            return QTextBrowser.loadResource(self, p_int, name)
