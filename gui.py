@@ -12,23 +12,9 @@ import logging
 import re
 import sys
 import appdirs
+from global_settings import use_qt5
 
-if sys.version_info.major == 2:
-    import pkgutil
-    loader = pkgutil.find_loader("PyQt5")
-    if loader is not None:
-        use_qt5 = True
-    else:
-        use_qt5 = False
-else:
-    import importlib
-    spam_spec = importlib.util.find_spec("PyQt5")
-    if spam_spec is not None:
-        use_qt5 = True
-    else:
-        use_qt5 = False
-
-#use_qt5 = False
+# use_qt5 = False
 
 if use_qt5:
     matplotlib.use("Qt5Agg")
@@ -2614,9 +2600,10 @@ def synchronize_zoom(fig1, fig2, sync_checkbox):
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, title, arguments):
+    def __init__(self, title, path_to_open, dev):
         super(MainWindow, self).__init__()
-        self.runtime_arguments = arguments
+        self.open_path = path_to_open
+        print (path_to_open)
         self.setWindowTitle(title)
         self.title = title
         self.settings = Settings(os.path.join(config_folder, "settings.json"))
@@ -2665,8 +2652,8 @@ class MainWindow(QMainWindow):
         # self.setGeometry(0, 0,  1400, 720)
         icon = QIcon(os.path.join(file_folder, "icon.png"))
         self.setWindowIcon(icon)
-        menubar = self.menuBar()
-        menu = menubar.addMenu("File")
+        menu_bar = self.menuBar()
+        menu = menu_bar.addMenu("File")
 
         menu.addAction("Load").triggered.connect(self.main_menu.open_file)
         save = menu.addAction("Save")
@@ -2676,9 +2663,12 @@ class MainWindow(QMainWindow):
         export.setDisabled(True)
         export.triggered.connect(self.export)
         self.main_menu.enable_list.extend([save, export])
+        #if dev:
         menu.addAction("Batch processing")
-        menu.addAction("Exit").triggered.connect(self.close)
-        help_menu = menubar.addMenu("Help")
+        exit_menu = menu.addAction("Exit")
+        exit_menu.triggered.connect(self.close)
+
+        help_menu = menu_bar.addMenu("Help")
         help_menu.addAction("Help").triggered.connect(self.help)
         help_menu.addAction("Credits").triggered.connect(self.credits)
         self.credits_widget = None
@@ -2744,13 +2734,13 @@ class MainWindow(QMainWindow):
 
     def showEvent(self, _):
         try:
-            if len(self.runtime_arguments) > 1:
-                if os.path.splitext(self.runtime_arguments[1])[1] in ['.bz2', ".tbz2", ".gz", "tgz"]:
-                    load_project(self.runtime_arguments[1], self.settings, self.segment)
-                elif os.path.splitext(self.runtime_arguments[1])[1] in ['.tif', '.tiff', '*.lsm']:
-                    im = tifffile.imread(self.runtime_arguments[1])
+            if self.open_path is not None:
+                if os.path.splitext(self.open_path)[1] in ['.bz2', ".tbz2", ".gz", "tgz"]:
+                    load_project(self.open_path, self.settings, self.segment)
+                elif os.path.splitext(self.open_path)[1] in ['.tif', '.tiff', '*.lsm']:
+                    im = tifffile.imread(self.open_path)
                     if im.ndim < 4:
-                        self.settings.add_image(im, self.runtime_arguments[1])
+                        self.settings.add_image(im, self.open_path)
                     else:
                         return
                 for el in self.main_menu.enable_list:
@@ -3141,3 +3131,5 @@ class HelpBrowser(QTextBrowser):
             return QVariant(self.help_engine.fileData(name))
         else:
             return QTextBrowser.loadResource(self, p_int, name)
+
+
