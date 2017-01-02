@@ -9,6 +9,10 @@ based on threshold and connected components
 * SimpleITK
 * Matplotlib
 * Numpy
+* PyQt in version 4 or 5
+* appdirs
+* h5py
+
 
 ## Save Format
-Saved project are gziped pack  
+Saved project are tar files compressed with gzip  

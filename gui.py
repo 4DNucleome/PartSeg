@@ -18,6 +18,7 @@ import matplotlib.colors as colors
 from PIL import Image
 
 from backend import Settings, Segment, UPPER, GAUSS, Profile, DrawType, MaskChange
+from batch import BatchWindow
 
 from io_functions import save_to_cmap, save_to_project, load_project, GaussUse
 
@@ -37,13 +38,6 @@ print (config_folder)
 
 if not os.path.isdir(config_folder):
     os.makedirs(config_folder)
-
-file_folder = os.path.dirname(os.path.realpath(__file__))
-
-if sys.version_info.major == 2:
-    str_type = unicode
-else:
-    str_type = str
 
 
 def label_to_rgb(image):
@@ -1284,7 +1278,7 @@ class MainMenu(QWidget):
             dial.setDirectory(self.settings.open_directory)
         dial.setFileMode(QFileDialog.ExistingFile)
         filters = ["raw image (*.tiff *.tif *.lsm)", "image with mask (*.tiff *.tif *.lsm *json)",
-                   "saved project (*.gz *.bz2)", "Profiles (*.json)"]
+                   "saved project (*.tgz *.tbz2 *.gz *.bz2)", "Profiles (*.json)"]
         # dial.setFilters(filters)
         dial.setNameFilters(filters)
         if self.settings.open_filter is not None:
@@ -1341,7 +1335,7 @@ class MainMenu(QWidget):
                             QMessageBox.critical(self, "Wrong shape", "Image and mask has different shapes")
                             return
                         self.settings.add_image(image, file_path, mask)
-            elif selected_filter == "saved project (*.gz *.bz2)":
+            elif selected_filter == "saved project (*.tgz *.tbz2 *.gz *.bz2)":
                 load_project(file_path, self.settings, self.segment)
                 self.settings_changed()
                 # self.segment.threshold_updated()
@@ -1360,7 +1354,7 @@ class MainMenu(QWidget):
         if self.settings.save_directory is not None:
             dial.setDirectory(self.settings.save_directory)
         dial.setFileMode(QFileDialog.AnyFile)
-        filters = ["Project (*.gz *.bz2)", "Labeled image (*.tif)", "Mask in tiff (*.tif)",
+        filters = ["Project (*.tgz *.tbz2 *.gz *.bz2)", "Labeled image (*.tif)", "Mask in tiff (*.tif)",
                    "Mask for itk-snap (*.img)", "Data for chimera (*.cmap)", "Image (*.tiff)", "Profiles (*.json)"]
         dial.setAcceptMode(QFileDialog.AcceptSave)
         dial.setNameFilters(filters)
@@ -1575,7 +1569,8 @@ class MainWindow(QMainWindow):
         export.triggered.connect(self.export)
         self.main_menu.enable_list.extend([save, export])
         if dev:
-            menu.addAction("Batch processing")
+            batch = menu.addAction("Batch processing")
+            batch.triggered.connect(self.batch_view)
         exit_menu = menu.addAction("Exit")
         exit_menu.triggered.connect(self.close)
 
@@ -1584,9 +1579,14 @@ class MainWindow(QMainWindow):
         help_menu.addAction("Credits").triggered.connect(self.credits)
         self.credits_widget = None
         self.help_widget = None
+        self.batch_widget = None
 
         self.update_objects_positions()
         self.settings.add_image(tifffile.imread(os.path.join(file_folder, "clean_segment.tiff")), "")
+
+    def batch_view(self):
+        self.batch_widget = BatchWindow(self.settings)
+        self.batch_widget.show()
 
     def help(self):
         self.help_widget = HelpWindow()

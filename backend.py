@@ -504,6 +504,7 @@ class Settings(object):
         self.metadata_changed_callback = []
         self.layer_num = 0
         self.open_directory = None
+        self.batch_directory = None
         self.open_filter = None
         self.save_directory = None
         self.save_filter = None
@@ -521,6 +522,7 @@ class Settings(object):
         self.scale_factor = 0.97
         self.statistics_profile_dict = dict()
         self.statistic_dirs = None
+        self.batch_plans = []
         try:
             self.load(settings_path)
         except ValueError as e:
@@ -569,7 +571,7 @@ class Settings(object):
             class_to_dict(self, "open_directory", "open_filter", "save_directory", "save_filter", "spacing",
                           "voxel_size", "size_unit", "threshold", "color_map_name", "overlay", "minimum_size",
                           "gauss_radius", "export_filter", "export_directory", "scale_factor", "statistic_dirs",
-                          "chosen_colormap")
+                          "chosen_colormap", "batch_directory", "batch_plans")
         important_data["profiles"] = [x.__dict__ for k, x in self.profiles.items()]
         important_data["statistics"] = \
             [class_to_dict(x, "name", "chosen_fields", "reversed_brightness", "use_gauss_image")
@@ -584,7 +586,7 @@ class Settings(object):
             dict_set_class(self, important_data, "open_directory", "open_filter", "save_directory", "save_filter",
                            "spacing", "voxel_size", "size_unit", "threshold", "color_map_name", "overlay",
                            "minimum_size", "gauss_radius", "export_filter", "export_directory", "scale_factor",
-                           "statistic_dirs", "chosen_colormap")
+                           "statistic_dirs", "chosen_colormap", "batch_directory")
             chosen_colormap = set(self.chosen_colormap)
             avail_colormap = set(pyplot.colormaps())
             self.chosen_colormap = list(sorted(chosen_colormap & avail_colormap))

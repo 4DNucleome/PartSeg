@@ -3,6 +3,7 @@ from global_settings import use_qt5
 import matplotlib
 import logging
 import platform
+import sys
 
 __author__ = "Grzegorz Bokota"
 
@@ -24,7 +25,7 @@ if use_qt5:
         QLineEdit, QFrame,  QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, QToolButton, QDoubleSpinBox, \
         QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, QListWidget, \
         QTextEdit, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem, QDockWidget, \
-        QTextBrowser
+        QTextBrowser, QSplitter, QProgressBar, QAbstractItemView
 
     from PyQt5.QtGui import QFont, QFontMetrics, QIcon
     from PyQt5.QtHelp import QHelpEngine
@@ -37,11 +38,16 @@ else:
         QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, QToolButton, QDoubleSpinBox, \
         QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
         QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem, \
-        QDockWidget, QTextBrowser, QSplitter
+        QDockWidget, QTextBrowser, QSplitter, QProgressBar, QAbstractItemView
     from PyQt4.QtHelp import QHelpEngine
 
 
 # from http://stackoverflow.com/questions/5671354/how-to-programmatically-make-a-horizontal-line-in-qt
+
+if sys.version_info.major == 2:
+    str_type = unicode
+else:
+    str_type = str
 
 
 def h_line():
