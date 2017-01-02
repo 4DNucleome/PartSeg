@@ -1436,6 +1436,9 @@ class MainMenu(QWidget):
                 _ = QMessageBox.critical(self, "Save error", "Option unknown")
 
     def open_advanced(self):
+        if self.advanced_window is not None and self.advanced_window.isVisible():
+            self.advanced_window.activateWindow()
+            return
         self.advanced_window = AdvancedWindow(self.settings, self.segment)
         self.advanced_window.show()
 
@@ -1585,6 +1588,9 @@ class MainWindow(QMainWindow):
         self.settings.add_image(tifffile.imread(os.path.join(file_folder, "clean_segment.tiff")), "")
 
     def batch_view(self):
+        if self.batch_widget is not None and self.batch_widget.isVisible():
+            self.batch_widget.activateWindow()
+            return
         self.batch_widget = BatchWindow(self.settings)
         self.batch_widget.show()
 
@@ -1713,6 +1719,17 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         logging.debug("Close: {}".format(os.path.join(config_folder, "settings.json")))
+        if self.batch_widget is not None and self.batch_widget.isVisible():
+            if self.batch_widget.is_working():
+                ret = QMessageBox.warning(self, "Batch work", "Batch work is not finished. "
+                                                              "Would you like to terminate it?",
+                                          QMessageBox.No | QMessageBox.Yes)
+                if ret == QMessageBox.Yes:
+                    self.batch_widget.terminate()
+                    self.batch_widget.close()
+                else:
+                    event.ignore()
+                    return
         self.settings.dump(os.path.join(config_folder, "settings.json"))
         if self.main_menu.advanced_window is not None and self.main_menu.advanced_window.isVisible():
             self.main_menu.advanced_window.close()

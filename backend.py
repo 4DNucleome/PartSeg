@@ -665,7 +665,10 @@ class Settings(object):
         self.callback_colormap.append(callback)
 
     def remove_colormap_callback(self, callback):
-        self.callback_colormap.remove(callback)
+        try:
+            self.callback_colormap.remove(callback)
+        except ValueError:
+            pass
 
     def add_profile(self, profile):
         """

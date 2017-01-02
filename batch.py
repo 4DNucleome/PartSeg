@@ -1,5 +1,7 @@
 import os
 from glob import glob
+import multiprocessing
+from backend import Settings
 
 from qt_import import *
 
@@ -81,7 +83,11 @@ class AddFiles(QWidget):
             dialog = AcceptFiles(paths)
             if dialog.exec_():
                 new_paths = dialog.get_files()
-                self.selected_files.addItems(new_paths)
+                for path in new_paths:
+                    lwi = QListWidgetItem(path)
+                    lwi.setTextAlignment(Qt.AlignRight)
+                    self.selected_files.addItem(lwi)
+                self.files_to_proceed.update(new_paths)
         else:
             QMessageBox.warning(self, "No new files", "No new files found", QMessageBox.Ok)
 
@@ -91,8 +97,12 @@ class AddFiles(QWidget):
             dial.setDirectory(self.settings.batch_directory)
         dial.setFileMode(QFileDialog.ExistingFiles)
         if dial.exec_():
-            self.selected_files.addItems(dial.selectedFiles())
-            self.files_to_proceed.update(map(str, dial.selectedFiles()))
+            new_paths = sorted(set(map(str, dial.selectedFiles())) - self.files_to_proceed)
+            for path in new_paths:
+                lwi = QListWidgetItem(path)
+                lwi.setTextAlignment(Qt.AlignRight)
+                self.selected_files.addItem(lwi)
+            self.files_to_proceed.update(new_paths)
 
     def select_directory(self):
         dial = QFileDialog(self, "Select directory")
@@ -126,20 +136,25 @@ class ProgressView(QWidget):
         self.whole_label = QLabel("Whole progress:", self)
         self.part_label = QLabel("Part progress:", self)
         self.logs = QTextEdit(self)
-        self.logs.setMaximumHeight(50)
+        #self.logs.setMaximumHeight(50)
         self.logs.setReadOnly(True)
         self.logs.setToolTip("Logs")
         self.task_que = QTextEdit()
         self.task_que.setReadOnly(True)
+        self.number_of_process = QSpinBox(self)
+        self.number_of_process.setRange(1, multiprocessing.cpu_count())
+        self.number_of_process.setValue(1)
         layout = QGridLayout()
         layout.addWidget(self.whole_label, 0, 0, Qt.AlignRight)
-        layout.addWidget(self.whole_progress, 0, 1)
+        layout.addWidget(self.whole_progress, 0, 1, 1, 2)
         layout.addWidget(self.part_label, 1, 0, Qt.AlignRight)
-        layout.addWidget(self.part_progress, 1, 1)
-        layout.addWidget(self.logs, 2, 0, 1, 2)
-        layout.addWidget(self.task_que, 0, 3, 0, 2)
+        layout.addWidget(self.part_progress, 1, 1, 1, 2)
+        layout.addWidget(QLabel("Process number:"), 2, 0)
+        layout.addWidget(self.number_of_process, 2, 1)
+        layout.addWidget(self.logs, 3, 0, 1, 3)
+        layout.addWidget(self.task_que, 0, 4, 0, 1)
         layout.setColumnMinimumWidth(2, 10)
-        layout.setColumnStretch(1, 1)
+        layout.setColumnStretch(2, 1)
         self.setLayout(layout)
 
     def update_progress(self, total_progress, part_progress):
@@ -169,6 +184,7 @@ class FileChoose(QWidget):
         self.result_file.setAlignment(Qt.AlignRight)
         self.chose_result = QPushButton("Choose save place", self)
         self.chose_result.clicked.connect(self.chose_result_file)
+
         layout = QVBoxLayout()
         layout.addWidget(self.files_widget)
         calc_layout = QHBoxLayout()
@@ -212,13 +228,106 @@ class FileChoose(QWidget):
             self.result_file.setText(file_path)
 
 
-class CalculatePlaner(QWidget):
+class CreatePlan(QWidget):
+    def __init__(self, settings):
+        super(CreatePlan, self).__init__()
+        self.settings = settings
+        self.statistics = StatisticWidget(settings)
+        self.plan = QListWidget()
+        self.segment_profile = QListWidget()
+        self.generate_mask = QPushButton("Generate mask")
+        self.generate_mask.setToolTip("Mask need to have unique name")
+        self.mask_name = QLineEdit()
+        self.chose_profile = QPushButton("Segment Profile")
+        self.statistics_widget = StatisticWidget(settings)
+
+        layout = QGridLayout()
+        layout.addWidget(QLabel("Calculate plan:"))
+        layout.addWidget(self.plan, 1, 0, 5, 1)
+        layout.addWidget(self.mask_name, 1, 1)
+        layout.addWidget(self.generate_mask, 2, 1)
+        layout.addWidget(self.segment_profile, 3, 1, 2, 1)
+        layout.addWidget(self.chose_profile, 5, 1)
+        layout.addWidget(self.statistics_widget, 6, 0)
+        self.setLayout(layout)
+
+
+class StatisticWidget(QWidget):
+    """
+    :type settings: Settings
+    """
+    def __init__(self, settings):
+        super(StatisticWidget, self).__init__()
+        self.settings = settings
+        self.statistic_list = QListWidget(self)
+        self.name_prefix = QLineEdit(self)
+        self.add_calculation = QPushButton("Add statistic calculation")
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.statistic_list)
+        layout.addWidget(QLabel("Name prefix:"))
+        layout.addWidget(self.name_prefix)
+        layout.addWidget(self.add_calculation)
+        self.setLayout(layout)
+
+    def showEvent(self, _):
+        new_items = list(self.settings.statistics_profile_dict.keys())
+        if self.statistic_list.currentItem() is not None:
+            text = str(self.statistic_list.currentItem().text())
+            try:
+                index = new_items.index(text)
+            except ValueError:
+                index = -1
+        else:
+            index = -1
+
+        self.statistic_list.clear()
+        self.statistic_list.addItems(new_items)
+        if index != -1:
+            self.statistic_list.setCurrentRow(index)
+
+
+class CalculateInfo(QWidget):
+    """
+    :type settings: Settings
+    """
+    def __init__(self, settings):
+        super(CalculateInfo, self).__init__()
+        self.settings = settings
+        self.calculate_plans = QListWidget(self)
+        self.plan_view = QTextEdit(self)
+        self.plan_view.setReadOnly(True)
+        self.delete_plan = QPushButton("Delete plan")
+        self.edit_plan = QPushButton("Edit plan")
+        info_layout = QVBoxLayout()
+        info_butt_layout = QHBoxLayout()
+        info_butt_layout.addWidget(self.delete_plan)
+        info_butt_layout.addWidget(self.edit_plan)
+        info_layout.addLayout(info_butt_layout)
+        info_chose_layout = QHBoxLayout()
+        info_chose_layout.addWidget(self.calculate_plans)
+        info_chose_layout.addWidget(self.plan_view)
+        info_layout.addLayout(info_chose_layout)
+        self.setLayout(info_layout)
+
+
+class CalculatePlaner(QSplitter):
+    """
+    :type settings: Settings
+    """
     def __init__(self, settings, parent):
         QWidget.__init__(self, parent)
         self.settings = settings
+        info_widget = CalculateInfo(settings)
+        self.addWidget(info_widget)
+        self.create_plan = CreatePlan(settings)
+        self.addWidget(self.create_plan)
 
 
 class BatchWindow(QTabWidget):
+    """
+    :type settings: Settings
+    """
     def __init__(self, settings):
         QTabWidget.__init__(self)
         self.setWindowTitle("Batch processing")
@@ -227,6 +336,23 @@ class BatchWindow(QTabWidget):
         self.calculate_planer = CalculatePlaner(self.settings, self)
         self.addTab(self.file_choose, "Choose files")
         self.addTab(self.calculate_planer, "Calculate settings")
+        self.working = False
+
+    def is_working(self):
+        return self.working
+
+    def terminate(self):
+        self.working = False
+
+    def closeEvent(self, event):
+        if self.is_working():
+            ret = QMessageBox.warning(self, "Batch work", "Batch work is not finished. "
+                                                          "Would you like to terminate it?",
+                                      QMessageBox.No | QMessageBox.Yes)
+            if ret == QMessageBox.Yes:
+                self.terminate()
+            else:
+                event.ignore()
 
 
 
