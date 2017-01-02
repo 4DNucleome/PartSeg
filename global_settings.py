@@ -14,7 +14,6 @@ else:
     else:
         use_qt5 = False
 
-
 def set_qt4():
     global use_qt5
     use_qt5 = False
@@ -23,3 +22,8 @@ def set_qt4():
 def set_qt5():
     global use_qt5
     use_qt5 = True
+
+import os
+
+file_folder = os.path.dirname(os.path.realpath(__file__))
+

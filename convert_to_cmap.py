@@ -40,13 +40,13 @@ class MorphParser(object):
         :return:
         """
         print("Morph op parse \"{}\"".format(name))
-        import backend
-        if name == backend.MorphChange.no_morph:
+        import io_functions
+        if name == io_functions.MorphChange.no_morph:
             return name
         if name.lower() in ["open", "opening"]:
-            return backend.MorphChange.opening_morph
+            return io_functions.MorphChange.opening_morph
         elif name.lower() in ["close", "closing"]:
-            return backend.MorphChange.closing_morph
+            return io_functions.MorphChange.closing_morph
         else:
             raise argparse.ArgumentTypeError("morphological operation should be open[ing] or close|closing")
 
@@ -56,6 +56,7 @@ if __name__ == '__main__':
     import os
     import sys
     import backend
+    import io_functions
     import numpy as np
     mpr = MorphParser()
     parser = argparse.ArgumentParser("Convert project to chimera cmap")
@@ -65,11 +66,11 @@ if __name__ == '__main__':
                         help="TBD")
     parser.add_argument("-s", "--spacing", dest="spacing", default=None, type=spacing,
                         help="Spacing between pixels saved to cmap")
-    parser.add_argument("-g", "--use_2d_gauss", dest="use_2d_gauss", default=backend.GaussUse.no_gauss,
-                        const=backend.GaussUse.gauss_2d, action="store_const",
+    parser.add_argument("-g", "--use_2d_gauss", dest="use_2d_gauss", default=io_functions.GaussUse.no_gauss,
+                        const=io_functions.GaussUse.gauss_2d, action="store_const",
                         help="Apply 2d (x,y) gauss blur data to image before put in cmap")
-    parser.add_argument("-g3", "--use_gauss_3d", dest="use_3d_gauss", default=backend.GaussUse.no_gauss,
-                        const=backend.GaussUse.gauss_3d, action="store_const",
+    parser.add_argument("-g3", "--use_gauss_3d", dest="use_3d_gauss", default=io_functions.GaussUse.no_gauss,
+                        const=io_functions.GaussUse.gauss_3d, action="store_const",
                         help="Apply 3d gauss blur data to image before put in cmap")
     parser.add_argument("-ns", "--no_statistics", dest="no_statistics", default=False, const=True,
                         action="store_const",
@@ -77,7 +78,7 @@ if __name__ == '__main__':
     parser.add_argument("-nc", "--no_center_data", dest="no_center_data", default=False, const=True,
                         action="store_const",
                         help="Off centering and rotating volumetric data")
-    parser.add_argument("-morph", "--morphological_operation", dest="morph", default=backend.MorphChange.no_morph,
+    parser.add_argument("-morph", "--morphological_operation", dest="morph", default=io_functions.MorphChange.no_morph,
                         nargs='+', type=mpr.parse_op)
     parser.add_argument("-sp", "--scaled_mass", dest="scaled_mass", default=[1.0], nargs=1,
                         help="Scale mass", type=float)
@@ -109,8 +110,8 @@ if __name__ == '__main__':
     settings.add_image_callback(canvas_update)
     num = len(files_to_proceed)
     gauss_type = args.use_2d_gauss
-    if args.use_3d_gauss == backend.GaussUse.gauss_3d:
-        gauss_type = backend.GaussUse.gauss_3d
+    if args.use_3d_gauss == io_functions.GaussUse.gauss_3d:
+        gauss_type = io_functions.GaussUse.gauss_3d
     logging.info("Gauss type {}".format(gauss_type))
     logging.info("Morph op type {}".format(args.morph))
 
@@ -121,7 +122,7 @@ if __name__ == '__main__':
             rel_path = ""
         file_name = os.path.basename(file_path)
         print("file: {}; {} from {}".format(file_name, i+1, num))
-        backend.load_project(file_path, settings, segment)
+        io_functions.load_project(file_path, settings, segment)
         segment.threshold_updated()
         file_name = os.path.splitext(file_name)[0]
         file_name += ".cmap"
@@ -131,24 +132,25 @@ if __name__ == '__main__':
             os.makedirs(os.path.join(args.destination_folder[0], rel_path))
         if args.with_rotation:
             file_name2 = os.path.splitext(file_name)[0]
-            file_name2 += "_o.cmap".format(rot)
+            file_name2 += "_o.cmap"
             image_dir = os.path.splitext(file_name)[0]
             if not os.path.isdir(os.path.join(args.destination_folder[0], rel_path, image_dir)):
                 os.makedirs(os.path.join(args.destination_folder[0], rel_path, image_dir))
-            backend.save_to_cmap(os.path.join(args.destination_folder[0], rel_path, image_dir, file_name), settings,
-                                 segment,
-                                 gauss_type=gauss_type, with_statistics=not args.no_statistics,
-                                 centered_data=not args.no_center_data, morph_op=args.morph,
-                                 scale_mass=args.scaled_mass)
+                io_functions.save_to_cmap(os.path.join(args.destination_folder[0], rel_path, image_dir, file_name),
+                                          settings, segment,
+                                          gauss_type=gauss_type, with_statistics=not args.no_statistics,
+                                          centered_data=not args.no_center_data, morph_op=args.morph,
+                                          scale_mass=args.scaled_mass)
             for rot in ["x", "y", "z"]:
                 file_name2 = os.path.splitext(file_name)[0]
                 file_name2 += "_{}.cmap".format(rot)
-                backend.save_to_cmap(os.path.join(args.destination_folder[0], rel_path, image_dir, file_name2), settings,
-                                     segment,
-                                     gauss_type=gauss_type, with_statistics=not args.no_statistics,
-                                     centered_data=not args.no_center_data, morph_op=args.morph,
-                                     scale_mass=args.scaled_mass, rotate=rot)
+                io_functions.save_to_cmap(os.path.join(args.destination_folder[0], rel_path, image_dir, file_name2),
+                                          settings, segment,
+                                          gauss_type=gauss_type, with_statistics=not args.no_statistics,
+                                          centered_data=not args.no_center_data, morph_op=args.morph,
+                                          scale_mass=args.scaled_mass, rotate=rot)
         else:
-            backend.save_to_cmap(os.path.join(args.destination_folder[0], rel_path, file_name), settings, segment,
-                                 gauss_type=gauss_type, with_statistics=not args.no_statistics,
-                                 centered_data=not args.no_center_data, morph_op=args.morph, scale_mass=args.scaled_mass)
+            io_functions.save_to_cmap(os.path.join(args.destination_folder[0], rel_path, file_name), settings, segment,
+                                      gauss_type=gauss_type, with_statistics=not args.no_statistics,
+                                      centered_data=not args.no_center_data, morph_op=args.morph,
+                                      scale_mass=args.scaled_mass)
