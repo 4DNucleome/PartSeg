@@ -1340,7 +1340,7 @@ class MainMenu(QWidget):
                 self.settings_changed()
                 # self.segment.threshold_updated()
             elif selected_filter == "Profiles (*.json)":
-                self.settings.load_profiles()
+                self.settings.load_profiles(file_path)
             else:
                 # noinspection PyCallByClass
                 _ = QMessageBox.warning(self, "Load error", "Function do not implemented yet")

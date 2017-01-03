@@ -384,7 +384,9 @@ class StatisticsSettings(QWidget):
         if self.settings.statistic_dirs is not None:
             dial.setDirectory(self.settings.statistic_dirs)
         dial.setFileMode(QFileDialog.AnyFile)
+        dial.setAcceptMode(QFileDialog.AcceptSave)
         dial.setFilter("statistic profile (*.json)")
+        dial.setDefaultSuffix("json")
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
             self.settings.statistic_dirs = file_path
@@ -658,7 +660,6 @@ class AdvancedSettings(QWidget):
         self.gauss_radius.setButtonSymbols(QAbstractSpinBox.NoButtons)
         gauss_layout.addWidget(QLabel("Gauss radius"))
         gauss_layout.addWidget(self.gauss_radius)
-        gauss_layout.addStretch()
         self.zoom_scale = QDoubleSpinBox(self)
         self.zoom_scale.setRange(0.9, 1.1)
         self.zoom_scale.setSingleStep(0.01)
@@ -666,6 +667,7 @@ class AdvancedSettings(QWidget):
         self.zoom_scale.setValue(self.settings.scale_factor)
         gauss_layout.addWidget(QLabel("Zoom scale"))
         gauss_layout.addWidget(self.zoom_scale)
+        gauss_layout.addStretch()
 
         vertical_layout.addLayout(overlay_layout)
         vertical_layout.addLayout(gauss_layout)
@@ -675,9 +677,10 @@ class AdvancedSettings(QWidget):
         reset_button = QPushButton("Reset")
         reset_button.clicked.connect(self.reset)
         butt_lay = QHBoxLayout()
-        butt_lay.addStretch()
         butt_lay.addWidget(accept_button)
         butt_lay.addWidget(reset_button)
+        butt_lay.addStretch()
+
         vertical_layout.addLayout(butt_lay)
         vertical_layout.addWidget(h_line())
 
@@ -690,15 +693,27 @@ class AdvancedSettings(QWidget):
         self.profile_list.currentTextChanged.connect(self.changed_profile)
         self.create_profile = QPushButton("Create profile", self)
         self.create_profile.clicked.connect(self.save_profile)
-        self.current_profile = QLabel()
-        self.current_profile.setWordWrap(True)
-        profile_layout2 = QVBoxLayout()
-        profile_layout2.addWidget(self.create_profile)
-        profile_layout2.addWidget(self.current_profile)
         self.delete_profile_butt = QPushButton("Delete profile", self)
         self.delete_profile_butt.setDisabled(True)
         self.delete_profile_butt.clicked.connect(self.delete_profile)
-        profile_layout2.addWidget(self.delete_profile_butt)
+        self.current_profile = QLabel()
+        self.current_profile.setWordWrap(True)
+        self.export_profile_butt = QPushButton("Export profile")
+        self.export_profile_butt.clicked.connect(self.export_profile)
+        self.import_profile_butt = QPushButton("Import Profile")
+        self.import_profile_butt.clicked.connect(self.import_profiles)
+        profile_layout2 = QVBoxLayout()
+        profile_lay_butt1 = QHBoxLayout()
+        profile_lay_butt1.addWidget(self.create_profile)
+        profile_lay_butt1.addWidget(self.delete_profile_butt)
+        profile_lay_butt1.addStretch()
+        profile_layout2.addLayout(profile_lay_butt1)
+        profile_layout2.addWidget(self.current_profile)
+        profile_lay_butt2 = QHBoxLayout()
+        profile_lay_butt2.addWidget(self.export_profile_butt)
+        profile_lay_butt2.addWidget(self.import_profile_butt)
+        profile_lay_butt2.addStretch()
+        profile_layout2.addLayout(profile_lay_butt2)
         profile_lay.addLayout(profile_layout2)
         text = str(Profile("", **self.settings.get_profile_dict()))
         self.current_profile.setText(text)
@@ -707,6 +722,30 @@ class AdvancedSettings(QWidget):
         vertical_layout.addStretch()
         self.setLayout(vertical_layout)
         self.update_volume()
+
+    def export_profile(self):
+        dial = QFileDialog(self, "Export profile segment")
+        dial.setFileMode(QFileDialog.AnyFile)
+        dial.setAcceptMode(QFileDialog.AcceptSave)
+        if self.settings.save_directory is not None:
+            dial.setDirectory(self.settings.save_directory)
+        dial.setFilter("Segment profile (*.json)")
+        dial.setDefaultSuffix("json")
+        dial.selectFile("segment_profile.json")
+        if dial.exec_():
+            file_path = dial.selectedFiles()[0]
+            self.settings.dump_profiles(file_path)
+
+    def import_profiles(self):
+        dial = QFileDialog(self, "Import profile segment")
+        dial.setFileMode(QFileDialog.ExistingFile)
+        dial.setAcceptMode(QFileDialog.AcceptOpen)
+        if self.settings.open_directory is not None:
+            dial.setDirectory(self.settings.open_directory)
+        dial.setFilter("Segment profile (*.json)")
+        if dial.exec_():
+            file_path = dial.selectedFiles()[0]
+            self.settings.load_profiles(file_path)
 
     def changed_profile(self, name):
         if name == "<current profile>" or name == u"":
