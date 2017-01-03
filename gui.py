@@ -18,7 +18,7 @@ import matplotlib.colors as colors
 from PIL import Image
 
 from backend import Settings, Segment, UPPER, GAUSS, Profile, DrawType, MaskChange
-from batch import BatchWindow
+from batch_window import BatchWindow
 
 from io_functions import save_to_cmap, save_to_project, load_project, GaussUse
 
@@ -1119,7 +1119,7 @@ class MainMenu(QWidget):
         self.draw_check.stateChanged[int].connect(settings.change_draw_use)
         self.profile_choose = QComboBox(self)
         self.profile_choose.addItem("<no profile>")
-        self.profile_choose.addItems(list(self.settings.get_profile_list()))
+        self.profile_choose.addItems(list(sorted(self.settings.get_profile_list())))
         self.profile_choose.currentIndexChanged[str_type].connect(self.profile_changed)
         self.advanced_button = QToolButton(self)  # "Advanced"
         self.advanced_button.setIcon(QIcon(os.path.join(file_folder, "icons", "configure.png")))
@@ -1167,10 +1167,10 @@ class MainMenu(QWidget):
     def profile_list_update(self):
         self.profile_choose.clear()
         self.profile_choose.addItem("<no profile>")
-        self.profile_choose.addItems(list(self.settings.get_profile_list()))
+        self.profile_choose.addItems(list(sorted(self.settings.get_profile_list())))
 
     def profile_changed(self, name):
-        if name == "<no profile>":
+        if name == "<no profile>" or name == "":
             return
         self.settings.change_profile(name)
         self.settings_changed()
@@ -1730,6 +1730,8 @@ class MainWindow(QMainWindow):
                 else:
                     event.ignore()
                     return
+            else:
+                self.batch_widget.close()
         self.settings.dump(os.path.join(config_folder, "settings.json"))
         if self.main_menu.advanced_window is not None and self.main_menu.advanced_window.isVisible():
             self.main_menu.advanced_window.close()

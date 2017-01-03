@@ -685,7 +685,7 @@ class AdvancedSettings(QWidget):
         self.profile_list = QListWidget()
         profile_lay.addWidget(self.profile_list)
         self.profile_list.addItem("<current profile>")
-        self.profile_list.addItems(list(self.settings.profiles.keys()))
+        self.profile_list.addItems(list(sorted(self.settings.profiles.keys())))
         self.profile_list.setMaximumWidth(200)
         self.profile_list.currentTextChanged.connect(self.changed_profile)
         self.create_profile = QPushButton("Create profile", self)
@@ -721,6 +721,7 @@ class AdvancedSettings(QWidget):
     def save_profile(self):
         # noinspection PyCallByClass
         text, ok = QInputDialog.getText(self, "Profile name", "Profile name", QLineEdit.Normal)
+        text = str(text)
         if ok and text != "":
             profile = Profile(text, **self.settings.get_profile_dict())
             self.settings.add_profile(profile)

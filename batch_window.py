@@ -228,28 +228,140 @@ class FileChoose(QWidget):
             self.result_file.setText(file_path)
 
 
+group_sheet = """
+QGroupBox {
+    border: 1px solid gray;
+    border-radius: 9px;
+    margin-top: 0.5em;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 10px;
+    padding: 0 3px 0 3px;
+}
+"""
+
+
 class CreatePlan(QWidget):
     def __init__(self, settings):
         super(CreatePlan, self).__init__()
         self.settings = settings
-        self.statistics = StatisticWidget(settings)
+        # self.statistics = StatisticWidget(settings)
         self.plan = QListWidget()
+        self.save_plan = QPushButton("Save plan")
+        self.clean_plan = QPushButton("Clean plan")
         self.segment_profile = QListWidget()
         self.generate_mask = QPushButton("Generate mask")
         self.generate_mask.setToolTip("Mask need to have unique name")
+        self.reuse_mask = QPushButton("Reuse mask")
         self.mask_name = QLineEdit()
         self.chose_profile = QPushButton("Segment Profile")
-        self.statistics_widget = StatisticWidget(settings)
+        self.statistic_list = QListWidget(self)
+        self.statistic_name_prefix = QLineEdit(self)
+        self.add_calculation = QPushButton("Add statistic calculation")
+        self.information = QTextEdit()
+        self.information.setReadOnly(True)
+        self.protect = False
+
+        self.statistic_list.currentTextChanged[str_type].connect(self.show_statistics)
+        self.segment_profile.currentTextChanged[str_type].connect(self.show_segment)
+
+        plan_box = QGroupBox("Calculate plan:")
+        lay = QVBoxLayout()
+        lay.addWidget(self.plan)
+        bt_lay = QHBoxLayout()
+        bt_lay.addWidget(self.save_plan)
+        bt_lay.addWidget(self.clean_plan)
+        lay.addLayout(bt_lay)
+        plan_box.setLayout(lay)
+        plan_box.setStyleSheet(group_sheet)
+
+        mask_box = QGroupBox("Mask")
+        mask_box.setStyleSheet(group_sheet)
+        lay = QVBoxLayout()
+        lay.addWidget(self.mask_name)
+        bt_lay = QHBoxLayout()
+        bt_lay.addWidget(self.generate_mask)
+        bt_lay.addWidget(self.reuse_mask)
+        lay.addLayout(bt_lay)
+        mask_box.setLayout(lay)
+
+        segment_box = QGroupBox("Segmentation")
+        segment_box.setStyleSheet(group_sheet)
+        lay = QVBoxLayout()
+        lay.addWidget(self.segment_profile)
+        lay.addWidget(self.chose_profile)
+        segment_box.setLayout(lay)
+
+        statistic_box = QGroupBox("Statistics")
+        statistic_box.setStyleSheet(group_sheet)
+        lay = QVBoxLayout()
+        lay.addWidget(self.statistic_list)
+        lab = QLabel("Name prefix:")
+        lab.setToolTip("Prefix added before each column name")
+        lay.addWidget(lab)
+        lay.addWidget(self.statistic_name_prefix)
+        lay.addWidget(self.add_calculation)
+        statistic_box.setLayout(lay)
+
+        info_box = QGroupBox("Information")
+        info_box.setStyleSheet(group_sheet)
+        lay = QVBoxLayout()
+        lay.addWidget(self.information)
+        info_box.setLayout(lay)
 
         layout = QGridLayout()
-        layout.addWidget(QLabel("Calculate plan:"))
-        layout.addWidget(self.plan, 1, 0, 5, 1)
-        layout.addWidget(self.mask_name, 1, 1)
-        layout.addWidget(self.generate_mask, 2, 1)
-        layout.addWidget(self.segment_profile, 3, 1, 2, 1)
-        layout.addWidget(self.chose_profile, 5, 1)
-        layout.addWidget(self.statistics_widget, 6, 0)
+        layout.addWidget(plan_box, 0, 0, 2, 1)
+        layout.addWidget(mask_box, 0, 1)
+        layout.addWidget(segment_box, 1, 1)
+        layout.addWidget(statistic_box, 2, 0)
+        layout.addWidget(info_box, 2, 1)
         self.setLayout(layout)
+
+    def showEvent(self, _):
+        print("buka")
+        new_statistics = list(sorted(self.settings.statistics_profile_dict.keys()))
+        new_segment = list(sorted(self.settings.profiles.keys()))
+        if self.statistic_list.currentItem() is not None:
+            text = str(self.statistic_list.currentItem().text())
+            try:
+                statistic_index = new_statistics.index(text)
+            except ValueError:
+                statistic_index = -1
+        else:
+            statistic_index = -1
+        if self.segment_profile.currentItem() is not None:
+            text = str(self.segment_profile.currentItem().text())
+            try:
+                segment_index = new_segment.index(text)
+            except ValueError:
+                segment_index = -1
+        else:
+            segment_index = -1
+        self.protect = True
+        self.statistic_list.clear()
+        self.statistic_list.addItems(new_statistics)
+        if statistic_index != -1:
+            self.statistic_list.setCurrentRow(statistic_index)
+
+        self.segment_profile.clear()
+        self.segment_profile.addItems(new_segment)
+        if segment_index != -1:
+            self.segment_profile.setCurrentRow(segment_index)
+        self.protect = False
+
+    def show_statistics(self, text):
+        if self.protect:
+            return
+        if str(text) != "":
+            self.information.setText(str(self.settings.statistics_profile_dict[str(text)]))
+
+    def show_segment(self, text):
+        if self.protect:
+            return
+        if str(text) != "":
+            self.information.setText(str(self.settings.profiles[str(text)]))
 
 
 class StatisticWidget(QWidget):
@@ -259,11 +371,10 @@ class StatisticWidget(QWidget):
     def __init__(self, settings):
         super(StatisticWidget, self).__init__()
         self.settings = settings
-        self.statistic_list = QListWidget(self)
-        self.name_prefix = QLineEdit(self)
-        self.add_calculation = QPushButton("Add statistic calculation")
+
 
         layout = QVBoxLayout()
+        layout.addWidget(QLabel("Statistics list:"))
         layout.addWidget(self.statistic_list)
         layout.addWidget(QLabel("Name prefix:"))
         layout.addWidget(self.name_prefix)
@@ -337,6 +448,9 @@ class BatchWindow(QTabWidget):
         self.addTab(self.file_choose, "Choose files")
         self.addTab(self.calculate_planer, "Calculate settings")
         self.working = False
+
+    def focusInEvent(self, event):
+        self.calculate_planer.showEvent(event)
 
     def is_working(self):
         return self.working

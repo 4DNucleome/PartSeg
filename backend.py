@@ -172,6 +172,18 @@ class StatisticProfile(object):
         self.reversed_brightness = reversed_brightness
         self.use_gauss_image = use_gauss_image
 
+    def __str__(self):
+        text = "Profile name: {}\n".format(self.name)
+        text += "Reversed image [{}]\n".format(self.reversed_brightness)
+        text += "Gaussed image [{}]\n".format(self.use_gauss_image)
+        text += "statistics list:\n"
+        for el in self.chosen_fields:
+            if el[2] is not None:
+                text += "{}: {}\n".format(el[1], el[2])
+            else:
+                text += "{}\n".format(el[1])
+        return text
+
     def rebuild_tree(self, l):
         if len(l) == 2:
             return Leaf(*l)
@@ -529,7 +541,8 @@ class Settings(object):
             logging.error("Saved profile problem: {}".format(e))
 
     def change_profile(self, name):
-        prof = self.profiles[name]
+        print("%%%%%%%% {}".format(name))
+        prof = self.profiles[str(name)]
         dict_set_class(self, prof.get_parameters(), *Profile.PARAMETERS)
         for fun in self.threshold_change_callback:
             fun()
@@ -557,8 +570,10 @@ class Settings(object):
     def dump_statistics(self, file_path):
         res = [class_to_dict(x, "name", "chosen_fields", "reversed_brightness", "use_gauss_image")
                for x in self.statistics_profile_dict.values()]
+
+        json_str = json.dumps(res)
         with open(file_path, 'w') as ff:
-            json.dump(ff, res)
+            ff.write(json_str)
 
     def load_statistics(self, file_path):
         with open(file_path, 'r') as ff:
@@ -576,8 +591,9 @@ class Settings(object):
         important_data["statistics"] = \
             [class_to_dict(x, "name", "chosen_fields", "reversed_brightness", "use_gauss_image")
              for x in self.statistics_profile_dict.values()]
+        json_str = json.dumps(important_data)
         with open(file_path, "w") as ff:
-            json.dump(important_data, ff)
+            ff.write(json_str)
 
     def load(self, file_path):
         try:

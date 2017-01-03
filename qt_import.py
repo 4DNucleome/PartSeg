@@ -25,7 +25,7 @@ if use_qt5:
         QLineEdit, QFrame,  QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, QToolButton, QDoubleSpinBox, \
         QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, QListWidget, \
         QTextEdit, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem, QDockWidget, \
-        QTextBrowser, QSplitter, QProgressBar, QAbstractItemView
+        QTextBrowser, QSplitter, QProgressBar, QAbstractItemView, QGroupBox
 
     from PyQt5.QtGui import QFont, QFontMetrics, QIcon
     from PyQt5.QtHelp import QHelpEngine
@@ -38,7 +38,7 @@ else:
         QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, QToolButton, QDoubleSpinBox, \
         QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
         QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem, \
-        QDockWidget, QTextBrowser, QSplitter, QProgressBar, QAbstractItemView
+        QDockWidget, QTextBrowser, QSplitter, QProgressBar, QAbstractItemView, QGroupBox
     from PyQt4.QtHelp import QHelpEngine
 
 
