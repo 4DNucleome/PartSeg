@@ -2,6 +2,8 @@ import os
 from glob import glob
 import multiprocessing
 from backend import Settings
+from batch_backed import CalculationPlan, MaskCreate, MaskUse
+from copy import copy
 
 from qt_import import *
 
@@ -200,7 +202,7 @@ class FileChoose(QWidget):
 
     def showEvent(self, _):
         current_calc = str(self.calculation_choose.currentText())
-        new_list = ["<no calculation>", "aa"] + self.settings.batch_plans
+        new_list = ["<no calculation>", "aa"] + list(self.settings.batch_plans.keys())
         try:
             index = new_list.index(current_calc)
         except ValueError:
@@ -244,13 +246,24 @@ QGroupBox::title {
 
 
 class CreatePlan(QWidget):
+    """
+    :type settings: Settings
+    """
+
+    plan_created = pyqtSignal()
+
     def __init__(self, settings):
         super(CreatePlan, self).__init__()
         self.settings = settings
         # self.statistics = StatisticWidget(settings)
         self.plan = QListWidget()
-        self.save_plan = QPushButton("Save plan")
-        self.clean_plan = QPushButton("Clean plan")
+        self.save_plan_btn = QPushButton("Save plan")
+        self.clean_plan_btn = QPushButton("Clean plan")
+        self.remove_last_btn = QPushButton("Remove last")
+        self.forgot_mask_btn = QPushButton("Forgot mask")
+        self.cmap_save_btn = QPushButton("Save to cmap")
+        self.project_save_btn = QPushButton("Save to project")
+        self.forgot_mask_btn.setToolTip("Return to state on begin")
         self.segment_profile = QListWidget()
         self.generate_mask = QPushButton("Generate mask")
         self.generate_mask.setToolTip("Mask need to have unique name")
@@ -262,22 +275,53 @@ class CreatePlan(QWidget):
         self.add_calculation = QPushButton("Add statistic calculation")
         self.information = QTextEdit()
         self.information.setReadOnly(True)
+        self.mapping_file_button = QPushButton("Mask mapping file")
+        self.swap_mask_name_button = QPushButton("Name Substitution")
+        self.suffix_mask_name_button = QPushButton("Name suffix")
+        self.base_mask_name = QLineEdit()
+        self.swap_mask_name = QLineEdit()
         self.protect = False
+        self.mask_set = set()
+        self.calculation_plan = CalculationPlan()
 
         self.statistic_list.currentTextChanged[str_type].connect(self.show_statistics)
         self.segment_profile.currentTextChanged[str_type].connect(self.show_segment)
+        self.mask_name.textChanged[str_type].connect(self.mask_name_changed)
+        self.generate_mask.clicked.connect(self.create_mask)
+        self.reuse_mask.clicked.connect(self.use_mask)
+        self.clean_plan_btn.clicked.connect(self.clean_plan)
+        self.remove_last_btn.clicked.connect(self.remove_last)
+        self.base_mask_name.textChanged.connect(self.file_mask_text_changed)
+        self.swap_mask_name.textChanged.connect(self.file_mask_text_changed)
+        self.chose_profile.clicked.connect(self.add_segmentation)
+        self.add_calculation.clicked.connect(self.add_statistics)
+        self.save_plan_btn.clicked.connect(self.add_calculation_plan)
 
         plan_box = QGroupBox("Calculate plan:")
         lay = QVBoxLayout()
         lay.addWidget(self.plan)
-        bt_lay = QHBoxLayout()
-        bt_lay.addWidget(self.save_plan)
-        bt_lay.addWidget(self.clean_plan)
+        bt_lay = QGridLayout()
+        bt_lay.addWidget(self.save_plan_btn, 0, 0)
+        bt_lay.addWidget(self.clean_plan_btn, 0, 1)
+        bt_lay.addWidget(self.remove_last_btn, 1, 0)
+        bt_lay.addWidget(self.forgot_mask_btn, 1, 1)
+        bt_lay.addWidget(self.cmap_save_btn, 2, 0)
+        bt_lay.addWidget(self.project_save_btn, 2, 1)
         lay.addLayout(bt_lay)
         plan_box.setLayout(lay)
         plan_box.setStyleSheet(group_sheet)
 
-        mask_box = QGroupBox("Mask")
+        file_mask_box = QGroupBox("Mask from file")
+        file_mask_box.setStyleSheet(group_sheet)
+        lay = QGridLayout()
+        lay.addWidget(self.mapping_file_button, 0, 0, 1, 2)
+        lay.addWidget(self.base_mask_name, 1, 0)
+        lay.addWidget(self.swap_mask_name, 1, 1)
+        lay.addWidget(self.suffix_mask_name_button, 2, 0)
+        lay.addWidget(self.swap_mask_name_button, 2, 1)
+        file_mask_box.setLayout(lay)
+
+        mask_box = QGroupBox("Mask from segmentation")
         mask_box.setStyleSheet(group_sheet)
         lay = QVBoxLayout()
         lay.addWidget(self.mask_name)
@@ -312,17 +356,109 @@ class CreatePlan(QWidget):
         info_box.setLayout(lay)
 
         layout = QGridLayout()
-        layout.addWidget(plan_box, 0, 0, 2, 1)
-        layout.addWidget(mask_box, 0, 1)
-        layout.addWidget(segment_box, 1, 1)
-        layout.addWidget(statistic_box, 2, 0)
-        layout.addWidget(info_box, 2, 1)
+        layout.addWidget(plan_box, 0, 0, 3, 1)
+        layout.addWidget(file_mask_box, 0, 1)
+        layout.addWidget(mask_box, 1, 1)
+        layout.addWidget(segment_box, 2, 1)
+        layout.addWidget(statistic_box, 3, 0)
+        layout.addWidget(info_box, 3, 1)
         self.setLayout(layout)
 
+        self.reuse_mask.setDisabled(True)
+        self.generate_mask.setDisabled(True)
+        self.chose_profile.setDisabled(True)
+        self.add_calculation.setDisabled(True)
+        self.swap_mask_name_button.setDisabled(True)
+        self.suffix_mask_name_button.setDisabled(True)
+
+    def create_mask(self):
+        text = str(self.mask_name.text())
+        if text in self.mask_set:
+            QMessageBox.warning(self, "Already exists", "Mask with this name already exists", QMessageBox.Ok)
+            return
+        self.plan.addItem("Create mask: {}".format(text))
+        self.mask_set.add(text)
+        self.calculation_plan.add_step(MaskCreate(text))
+        self.generate_mask.setDisabled(True)
+        self.reuse_mask.setDisabled(False)
+
+    def use_mask(self):
+        text = str(self.mask_name.text())
+        if text not in self.mask_set:
+            QMessageBox.warning(self, "Don`t exists", "Mask with this name do not exists", QMessageBox.Ok)
+            return
+        self.plan.addItem("Use mask: {}".format(text))
+        self.calculation_plan.add_step(MaskUse(text))
+
+    def mask_name_changed(self, text):
+        if str(text) in self.mask_set:
+            self.generate_mask.setDisabled(True)
+            self.reuse_mask.setDisabled(False)
+        else:
+            self.generate_mask.setDisabled(False)
+            self.reuse_mask.setDisabled(True)
+
+    def add_segmentation(self):
+        text = str(self.segment_profile.currentItem().text())
+        profile = self.settings.segmentation_profiles_dict[text]
+        self.plan.addItem("Segmentation: {}".format(profile.name))
+        self.calculation_plan.add_step(profile)
+
+    def add_statistics(self):
+        text = str(self.statistic_list.currentItem().text())
+        statistics = self.settings.statistics_profile_dict[text]
+        prefix = str(self.statistic_name_prefix.text()).strip()
+        if prefix == "":
+            self.plan.addItem("Statistics: {}".format(statistics.name))
+            self.calculation_plan.add_step(statistics)
+        else:
+            statistics = copy(statistics)
+            statistics.name_prefix = prefix
+            self.plan.addItem("Statistics: {} with prefix: {}".format(statistics.name, prefix))
+            self.calculation_plan.add_step(statistics)
+
+    def remove_last(self):
+        if len(self.calculation_plan) > 0:
+            self.calculation_plan.pop()
+            # TODO Something better if need more information
+            self.plan.takeItem(len(self.calculation_plan))
+
+    def clean_plan(self):
+        self.calculation_plan = CalculationPlan()
+        self.plan.clear()
+        self.mask_set = set()
+
+    def file_mask_text_changed(self):
+        if str(self.base_mask_name.text()).strip() != "":
+            self.suffix_mask_name_button.setEnabled(True)
+            if str(self.swap_mask_name.text()).strip() != "":
+                self.swap_mask_name_button.setEnabled(True)
+            else:
+                self.swap_mask_name_button.setDisabled(True)
+        else:
+            self.suffix_mask_name_button.setDisabled(True)
+            self.swap_mask_name_button.setDisabled(True)
+
+    def add_calculation_plan(self, used_text=None):
+        print(used_text)
+        if used_text is None or isinstance(used_text, bool):
+            text, ok = QInputDialog.getText(self, "Plan title", "Set plan title")
+        else:
+            text, ok = QInputDialog.getText(self, "Plan title", "Set plan title. Previous ({}) "
+                                                                "is already in use".format(used_text))
+        if ok:
+            text = str(text)
+            if text in self.settings.batch_plans:
+                self.add_calculation_plan(text)
+                return
+            plan = copy(self.calculation_plan)
+            plan.set_name(text)
+            self.settings.batch_plans[text] = plan
+            self.plan_created.emit()
+
     def showEvent(self, _):
-        print("buka")
         new_statistics = list(sorted(self.settings.statistics_profile_dict.keys()))
-        new_segment = list(sorted(self.settings.profiles.keys()))
+        new_segment = list(sorted(self.settings.segmentation_profiles_dict.keys()))
         if self.statistic_list.currentItem() is not None:
             text = str(self.statistic_list.currentItem().text())
             try:
@@ -356,46 +492,21 @@ class CreatePlan(QWidget):
             return
         if str(text) != "":
             self.information.setText(str(self.settings.statistics_profile_dict[str(text)]))
+            if self.calculation_plan.is_segmentation():
+                self.add_calculation.setEnabled(True)
+            else:
+                self.add_calculation.setDisabled(True)
+        else:
+            self.add_calculation.setDisabled(True)
 
     def show_segment(self, text):
         if self.protect:
             return
         if str(text) != "":
-            self.information.setText(str(self.settings.profiles[str(text)]))
-
-
-class StatisticWidget(QWidget):
-    """
-    :type settings: Settings
-    """
-    def __init__(self, settings):
-        super(StatisticWidget, self).__init__()
-        self.settings = settings
-
-
-        layout = QVBoxLayout()
-        layout.addWidget(QLabel("Statistics list:"))
-        layout.addWidget(self.statistic_list)
-        layout.addWidget(QLabel("Name prefix:"))
-        layout.addWidget(self.name_prefix)
-        layout.addWidget(self.add_calculation)
-        self.setLayout(layout)
-
-    def showEvent(self, _):
-        new_items = list(self.settings.statistics_profile_dict.keys())
-        if self.statistic_list.currentItem() is not None:
-            text = str(self.statistic_list.currentItem().text())
-            try:
-                index = new_items.index(text)
-            except ValueError:
-                index = -1
+            self.information.setText(str(self.settings.segmentation_profiles_dict[str(text)]))
+            self.chose_profile.setEnabled(True)
         else:
-            index = -1
-
-        self.statistic_list.clear()
-        self.statistic_list.addItems(new_items)
-        if index != -1:
-            self.statistic_list.setCurrentRow(index)
+            self.chose_profile.setDisabled(True)
 
 
 class CalculateInfo(QWidget):
@@ -420,6 +531,26 @@ class CalculateInfo(QWidget):
         info_chose_layout.addWidget(self.plan_view)
         info_layout.addLayout(info_chose_layout)
         self.setLayout(info_layout)
+        self.protect = False
+
+    def update_plan_list(self):
+        new_plan_list = list(sorted(self.settings.batch_plans.keys()))
+        if self.calculate_plans.currentItem() is not None:
+            text = str(self.calculate_plans.currentItem().text())
+            try:
+                index = new_plan_list.index(text)
+            except ValueError:
+                index = -1
+        else:
+            index = -1
+        self.protect = True
+        self.calculate_plans.clear()
+        self.calculate_plans.addItems(new_plan_list)
+        if index != -1:
+            self.calculate_plans.setCurrentRow(index)
+        else:
+            self.plan_view.setText("")
+        self.protect = False
 
 
 class CalculatePlaner(QSplitter):
@@ -429,9 +560,10 @@ class CalculatePlaner(QSplitter):
     def __init__(self, settings, parent):
         QWidget.__init__(self, parent)
         self.settings = settings
-        info_widget = CalculateInfo(settings)
-        self.addWidget(info_widget)
+        self.info_widget = CalculateInfo(settings)
+        self.addWidget(self.info_widget)
         self.create_plan = CreatePlan(settings)
+        self.create_plan.plan_created.connect(self.info_widget.update_plan_list)
         self.addWidget(self.create_plan)
 
 

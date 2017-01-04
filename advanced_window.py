@@ -1,14 +1,17 @@
 # coding=utf-8
 import os
 import numpy as np
-from backend import StatisticProfile, get_segmented_data, calculate_statistic_from_image, UNITS_DICT, Profile
+from backend import StatisticProfile, get_segmented_data, calculate_statistic_from_image, UNITS_DICT, Profile, Settings
 from qt_import import *
-from  global_settings import file_folder
+from global_settings import file_folder
 
 __author__ = "Grzegorz Bokota"
 
 
 class AdvancedWindow(QTabWidget):
+    """
+    :type settings: Settings
+    """
     def __init__(self, settings, segment, parent=None):
         super(AdvancedWindow, self).__init__(parent)
         self.settings = settings
@@ -41,6 +44,9 @@ class AdvancedWindow(QTabWidget):
 
 
 class StatisticsSettings(QWidget):
+    """
+    :type settings: Settings
+    """
     def __init__(self, settings):
         super(StatisticsSettings, self).__init__()
         self.chosen_element = None
@@ -405,6 +411,9 @@ class StatisticsSettings(QWidget):
 
 
 class StatisticsWindow(QWidget):
+    """
+    :type settings: Settings
+    """
     def __init__(self, settings, segment):
         super(StatisticsWindow, self).__init__()
         self.settings = settings
@@ -571,6 +580,9 @@ class StatisticsWindow(QWidget):
 
 
 class AdvancedSettings(QWidget):
+    """
+    :type settings: Settings
+    """
     def __init__(self, settings, parent=None):
         super(AdvancedSettings, self).__init__(parent)
 
@@ -688,7 +700,7 @@ class AdvancedSettings(QWidget):
         self.profile_list = QListWidget()
         profile_lay.addWidget(self.profile_list)
         self.profile_list.addItem("<current profile>")
-        self.profile_list.addItems(list(sorted(self.settings.profiles.keys())))
+        self.profile_list.addItems(list(sorted(self.settings.segmentation_profiles_dict.keys())))
         self.profile_list.setMaximumWidth(200)
         self.profile_list.currentTextChanged.connect(self.changed_profile)
         self.create_profile = QPushButton("Create profile", self)
@@ -767,7 +779,7 @@ class AdvancedSettings(QWidget):
             print("New profile", profile)
             self.profile_list.clear()
             self.profile_list.addItem("<current profile>")
-            self.profile_list.addItems(self.settings.profiles.keys())
+            self.profile_list.addItems(self.settings.segmentation_profiles_dict.keys())
 
     def delete_profile(self):
         chosen_profile = self.profile_list.currentItem()
@@ -777,7 +789,7 @@ class AdvancedSettings(QWidget):
             self.settings.delete_profile(label)
             self.profile_list.clear()
             self.profile_list.addItem("<current profile>")
-            self.profile_list.addItems(self.settings.profiles.keys())
+            self.profile_list.addItems(self.settings.segmentation_profiles_dict.keys())
 
     def update_volume(self):
         volume = self.x_size.value() * self.y_size.value() * self.z_size.value()
@@ -818,6 +830,7 @@ class AdvancedSettings(QWidget):
 class ColormapSettings(QWidget):
     """
     :type cmap_list: list[QCheckBox]
+    :type settings: Settings
     """
 
     def __init__(self, settings, parent=None):

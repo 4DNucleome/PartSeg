@@ -80,6 +80,9 @@ class SynchronizeSliders(object):
 
 
 class ColormapCanvas(QWidget):
+    """
+    :type settings: Settings
+    """
     def __init__(self, figure_size, settings, parent):
         """:type settings: Settings"""
         super(ColormapCanvas, self).__init__(parent)
@@ -274,6 +277,9 @@ class CropSet(QDialog):
 
 
 class MyCanvas(QWidget):
+    """
+    :type settings: Settings
+    """
     def __init__(self, figure_size, settings, info_object, parent, settings_callback=True):
         """
         Create basic canvas to view image
@@ -864,10 +870,10 @@ class MyDrawCanvas(MyCanvas):
             return self.rgb_segmentation[self.layer_num], self.segment.get_segmentation()[self.layer_num]
 
 
-
-
-
 class DrawObject(object):
+    """
+    :type settings: Settings
+    """
     def __init__(self, settings, segment, update_fun):
         """
         :type settings: Settings
@@ -987,6 +993,9 @@ class DrawObject(object):
 
 
 class MaskWindow(QDialog):
+    """
+    :type settings: Settings
+    """
     def __init__(self, settings, segment, settings_updated_function):
         super(MaskWindow, self).__init__()
         self.settings = settings
@@ -1050,10 +1059,11 @@ class MaskWindow(QDialog):
         self.close()
 
 
-
-
 # noinspection PyArgumentList
 class MainMenu(QWidget):
+    """
+    :type settings: Settings
+    """
     def __init__(self, settings, segment, *args, **kwargs):
         """
         :type settings: Settings
@@ -1980,6 +1990,9 @@ class Credits(QDialog):
 
 
 class CmapSave(QDialog):
+    """
+    :type settings: Settings
+    """
     def __init__(self, file_path, settings, segment):
         super(CmapSave, self).__init__()
         self.settings = settings

@@ -171,11 +171,14 @@ class StatisticProfile(object):
         self.settings = settings
         self.reversed_brightness = reversed_brightness
         self.use_gauss_image = use_gauss_image
+        self.name_prefix = ""
 
     def __str__(self):
         text = "Profile name: {}\n".format(self.name)
         text += "Reversed image [{}]\n".format(self.reversed_brightness)
         text += "Gaussed image [{}]\n".format(self.use_gauss_image)
+        if self.name_prefix != "":
+            text += "Name prefix: {}".format(self.name_prefix)
         text += "statistics list:\n"
         for el in self.chosen_fields:
             if el[2] is not None:
@@ -466,7 +469,8 @@ class Profile(object):
             text += "\n"
         text += "Minimum object size: {}\n".format(self.minimum_size)
         text += "Use gauss [{}]\n".format("x" if self.use_gauss else " ")
-        text += "Gauss radius: {}".format(self.gauss_radius)
+        if self.use_gauss:
+            text += "Gauss radius: {}".format(self.gauss_radius)
         return text
 
     def get_parameters(self):
@@ -475,7 +479,8 @@ class Profile(object):
 
 class Settings(object):
     """
-    :type profiles: dict[str, Profile]
+    :type segmentation_profiles_dict: dict[str, Profile]
+    :type statistics_profile_dict: dict[str, StatisticProfile]
     :type threshold: int
     :type threshold_list: list[int]
     :type threshold_type: str
@@ -490,7 +495,7 @@ class Settings(object):
         self.callback_colormap_list = []
         self.callback_change_layer = []
         self.chosen_colormap = pyplot.colormaps()
-        self.profiles = dict()
+        self.segmentation_profiles_dict = dict()
         self.profiles_list_changed_callback = []
         self.use_gauss = False
         self.use_draw_result = False
@@ -534,7 +539,7 @@ class Settings(object):
         self.scale_factor = 0.97
         self.statistics_profile_dict = dict()
         self.statistic_dirs = None
-        self.batch_plans = []
+        self.batch_plans = {}
         try:
             self.load(settings_path)
         except ValueError as e:
@@ -542,7 +547,7 @@ class Settings(object):
 
     def change_profile(self, name):
         print("%%%%%%%% {}".format(name))
-        prof = self.profiles[str(name)]
+        prof = self.segmentation_profiles_dict[str(name)]
         dict_set_class(self, prof.get_parameters(), *Profile.PARAMETERS)
         for fun in self.threshold_change_callback:
             fun()
@@ -555,7 +560,7 @@ class Settings(object):
                              "gauss_radius", "threshold_layer_separate")
 
     def dump_profiles(self, file_path):
-        profiles_list = [x.__dict__ for k, x in self.profiles.items()]
+        profiles_list = [x.__dict__ for k, x in self.segmentation_profiles_dict.items()]
         with open(file_path, "w") as ff:
             json.dump(profiles_list, ff)
 
@@ -563,7 +568,7 @@ class Settings(object):
         with open(file_path, "r") as ff:
             profiles_list = json.load(ff)
             for prof in profiles_list:
-                self.profiles[prof["name"]] = Profile(**prof)
+                self.segmentation_profiles_dict[prof["name"]] = Profile(**prof)
         for fun in self.threshold_change_callback:
             fun()
 
@@ -586,8 +591,9 @@ class Settings(object):
             class_to_dict(self, "open_directory", "open_filter", "save_directory", "save_filter", "spacing",
                           "voxel_size", "size_unit", "threshold", "color_map_name", "overlay", "minimum_size",
                           "gauss_radius", "export_filter", "export_directory", "scale_factor", "statistic_dirs",
-                          "chosen_colormap", "batch_directory", "batch_plans")
-        important_data["profiles"] = [x.__dict__ for k, x in self.profiles.items()]
+                          "chosen_colormap", "batch_directory")
+        #TODO Batch plans dump
+        important_data["profiles"] = [x.__dict__ for k, x in self.segmentation_profiles_dict.items()]
         important_data["statistics"] = \
             [class_to_dict(x, "name", "chosen_fields", "reversed_brightness", "use_gauss_image")
              for x in self.statistics_profile_dict.values()]
@@ -603,12 +609,13 @@ class Settings(object):
                            "spacing", "voxel_size", "size_unit", "threshold", "color_map_name", "overlay",
                            "minimum_size", "gauss_radius", "export_filter", "export_directory", "scale_factor",
                            "statistic_dirs", "chosen_colormap", "batch_directory")
+            # TODO Batch plans load
             chosen_colormap = set(self.chosen_colormap)
             avail_colormap = set(pyplot.colormaps())
             self.chosen_colormap = list(sorted(chosen_colormap & avail_colormap))
             self.color_map = matplotlib.cm.get_cmap(self.color_map_name)
             for prof in important_data["profiles"]:
-                self.profiles[prof["name"]] = Profile(**prof)
+                self.segmentation_profiles_dict[prof["name"]] = Profile(**prof)
             for stat in important_data["statistics"]:
                 self.statistics_profile_dict[stat["name"]] = StatisticProfile(settings=self, **stat)
         except IOError:
@@ -693,15 +700,15 @@ class Settings(object):
         """
         # if not overwrite and name in self.profiles:
         #    raise ValueError("Profile with this name already exists")
-        self.profiles[profile.name] = profile
+        self.segmentation_profiles_dict[profile.name] = profile
         for fun in self.profiles_list_changed_callback:
             fun()
 
     def delete_profile(self, name):
-        del self.profiles[name]
+        del self.segmentation_profiles_dict[name]
 
     def get_profile(self, name):
-        return self.profiles[name]
+        return self.segmentation_profiles_dict[name]
 
     @property
     def colormap_list(self):
@@ -819,7 +826,7 @@ class Settings(object):
         self.minimum_size_change_callback.append(callback)
 
     def get_profile_list(self):
-        return self.profiles.keys()
+        return self.segmentation_profiles_dict.keys()
 
     def set_available_colormap(self, cmap_list):
         self.chosen_colormap = cmap_list
