@@ -2,7 +2,7 @@ import multiprocessing
 from qt_import import QTimer
 from backend import Profile, StatisticProfile
 from collections import namedtuple
-
+from enum import Enum
 __author__ = "Grzegorz Bokota"
 
 
@@ -17,11 +17,15 @@ class BatchWorker(object):
 
 MaskCreate = namedtuple("MaskCreate", ['name'])
 MaskUse = namedtuple("MaskUse", ['name'])
+CmapProfile = namedtuple("CmapProfile", ["suffix", "gauss_type", "center_data", "rotation_axis", "cut_obsolete_are"])
 
-# TODO Batch plans dump and load
+
+class Operations(Enum):
+    clean_mask = 1
 
 
 class CalculationPlan(object):
+    # TODO Batch plans dump and load
     def __init__(self):
         self.execution_list = []
         self.execution_tree = None

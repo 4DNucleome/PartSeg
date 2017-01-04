@@ -2,8 +2,9 @@ import os
 from glob import glob
 import multiprocessing
 from backend import Settings
-from batch_backed import CalculationPlan, MaskCreate, MaskUse
+from batch_backed import CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile
 from copy import copy
+from io_functions import GaussUse
 
 from qt_import import *
 
@@ -230,19 +231,68 @@ class FileChoose(QWidget):
             self.result_file.setText(file_path)
 
 
-group_sheet = """
-QGroupBox {
-    border: 1px solid gray;
-    border-radius: 9px;
-    margin-top: 0.5em;
-}
+class CmapSavePrepare(QDialog):
+    """
+    :type settings: Settings
+    """
+    def __init__(self, text, title="Cmap settings"):
+        super(CmapSavePrepare, self).__init__()
+        text_label = QLabel(text)
+        text_label.setWordWrap(True)
+        self.setWindowTitle(title)
+        self.gauss_type = QComboBox(self)
+        self.gauss_type.addItems(["No gauss", "2d gauss", "2d + 3d gauss"])
+        self.center_data = QCheckBox(self)
+        self.center_data.setChecked(True)
+        self.with_statistics = QCheckBox(self)
+        self.with_statistics.setChecked(True)
+        self.rotation_axis = QComboBox(self)
+        self.rotation_axis.addItems(["None", "x", "y", "z"])
+        self.cut_data = QCheckBox(self)
+        self.cut_data.setChecked(True)
+        self.suffix_text = QLineEdit()
+        grid = QGridLayout()
+        grid.addWidget(QLabel("Gauss type"), 0, 0)
+        grid.addWidget(self.gauss_type, 0, 1)
+        grid.addWidget(QLabel("Center data"), 1, 0)
+        grid.addWidget(self.center_data, 1, 1)
+        # grid.addWidget(QLabel("With statistics"), 2, 0)
+        # grid.addWidget(self.with_statistics, 2, 1)
+        grid.addWidget(QLabel("Rotation axis"), 3, 0)
+        grid.addWidget(self.rotation_axis, 3, 1)
+        grid.addWidget(QLabel("Cut obsolete area"), 4, 0)
+        grid.addWidget(self.cut_data, 4, 1)
+        grid.addWidget(QLabel("Suffix_text"), 5, 0)
+        grid.addWidget(self.suffix_text, 5, 1)
 
-QGroupBox::title {
-    subcontrol-origin: margin;
-    left: 10px;
-    padding: 0 3px 0 3px;
-}
-"""
+        close = QPushButton("Cancel")
+        close.clicked.connect(self.close)
+        save = QPushButton("Accept")
+        save.clicked.connect(self.save)
+
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(close)
+        button_layout.addStretch()
+        button_layout.addWidget(save)
+
+        layout = QVBoxLayout()
+        layout.addWidget(text_label)
+        layout.addLayout(grid)
+        layout.addLayout(button_layout)
+
+        self.setLayout(layout)
+
+    def save(self):
+        self.accept()
+
+    def get_result(self):
+        options = {"No gauss": GaussUse.no_gauss, "2d gauss": GaussUse.gauss_2d, "2d + 3d gauss": GaussUse.gauss_3d}
+        return CmapProfile(suffix=str(self.suffix_text.text()), gauss_type=options[str(self.gauss_type.currentText())],
+                           center_data=self.center_data.isChecked(), rotation_axis=str(self.rotation_axis.currentText())
+                           , cut_obsolete_are=self.cut_data.isChecked())
+
+group_sheet = "QGroupBox {border: 1px solid gray; border-radius: 9px; margin-top: 0.5em;} " \
+              "QGroupBox::title {subcontrol-origin: margin; left: 10px; padding: 0 3px 0 3px;}"
 
 
 class CreatePlan(QWidget):
@@ -296,6 +346,8 @@ class CreatePlan(QWidget):
         self.chose_profile.clicked.connect(self.add_segmentation)
         self.add_calculation.clicked.connect(self.add_statistics)
         self.save_plan_btn.clicked.connect(self.add_calculation_plan)
+        self.forgot_mask_btn.clicked.connect(self.forgot_mask)
+        self.cmap_save_btn.clicked.connect(self.save_to_cmap)
 
         plan_box = QGroupBox("Calculate plan:")
         lay = QVBoxLayout()
@@ -370,6 +422,20 @@ class CreatePlan(QWidget):
         self.add_calculation.setDisabled(True)
         self.swap_mask_name_button.setDisabled(True)
         self.suffix_mask_name_button.setDisabled(True)
+
+    def save_to_cmap(self):
+        dial = CmapSavePrepare("Settings for cmap create")
+        if dial.exec_():
+            cmap_plan = dial.get_result()
+            if cmap_plan.suffix == "":
+                self.plan.addItem("Camp save")
+            else:
+                self.plan.addItem("Cmap save with suffix: {}".format(cmap_plan.suffix))
+            self.calculation_plan.add_step(cmap_plan)
+
+    def forgot_mask(self):
+        self.calculation_plan.add_step(Operations.clean_mask)
+        self.plan.addItem("Clean mask")
 
     def create_mask(self):
         text = str(self.mask_name.text())
