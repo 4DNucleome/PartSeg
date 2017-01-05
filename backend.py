@@ -1104,6 +1104,7 @@ CmapProfile = namedtuple("CmapProfile", ["suffix", "gauss_type", "center_data", 
 MaskSuffix = namedtuple("MaskSuffix", ["name", "suffix"])
 MaskSub = namedtuple("MaskSub", ["name", "sub", "rep"])
 MaskFile = namedtuple("MaskFile", ["name", "path"])
+ProjectSave = namedtuple("ProjectSave", ["suffix"])
 
 
 class Operations(Enum):
@@ -1113,7 +1114,8 @@ class Operations(Enum):
 class CalculationPlan(object):
     correct_name = {MaskCreate.__name__: MaskCreate, MaskUse.__name__: MaskUse, CmapProfile.__name__: CmapProfile,
                     StatisticProfile.__name__: StatisticProfile, SegmentationProfile.__name__: SegmentationProfile,
-                    MaskSuffix.__name__: MaskSuffix, MaskSub.__name__: MaskSub, MaskFile.__name__: MaskFile}
+                    MaskSuffix.__name__: MaskSuffix, MaskSub.__name__: MaskSub, MaskFile.__name__: MaskFile,
+                    ProjectSave.__name__: ProjectSave}
 
     # TODO Batch plans dump and load
     def __init__(self):
@@ -1216,5 +1218,10 @@ class CalculationPlan(object):
             return "File mask: {} substitution {} on {}".format(el.name, el.sub, el.rep)
         if isinstance(el, MaskFile):
             return "File mapping mask: {}".format(el.name)
+        if isinstance(el, ProjectSave):
+            if el.suffix != "":
+                return "Save to project with suffix {}".format(el.suffix)
+            else:
+                return "Save to project"
 
         raise ValueError("Unknown type {}".format(type(el)))

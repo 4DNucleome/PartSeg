@@ -1,7 +1,7 @@
 import os
 from glob import glob
 import multiprocessing
-from backend import Settings, CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, MaskSuffix, MaskSub
+from backend import Settings, CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, MaskSuffix, MaskSub, MaskFile, ProjectSave
 from batch_backed import BatchManager
 from copy import copy
 from io_functions import GaussUse
@@ -319,7 +319,7 @@ class CreatePlan(QWidget):
         self.segment_profile = QListWidget()
         self.generate_mask = QPushButton("Generate mask")
         self.generate_mask.setToolTip("Mask need to have unique name")
-        self.reuse_mask = QPushButton("Reuse mask")
+        self.reuse_mask = QPushButton("Use mask")
         self.mask_name = QLineEdit()
         self.chose_profile = QPushButton("Segment Profile")
         self.statistic_list = QListWidget(self)
@@ -356,6 +356,7 @@ class CreatePlan(QWidget):
         self.swap_mask_name_button.clicked.connect(self.mask_by_substitution)
         self.suffix_mask_name_button.clicked.connect(self.mask_by_suffix)
         self.mapping_file_button.clicked.connect(self.mask_by_mapping)
+        self.project_save_btn.clicked.connect(self.save_to_project)
 
         plan_box = QGroupBox("Calculate plan:")
         lay = QVBoxLayout()
@@ -374,17 +375,21 @@ class CreatePlan(QWidget):
         file_mask_box = QGroupBox("Mask from file")
         file_mask_box.setStyleSheet(group_sheet)
         lay = QGridLayout()
-        lay.addWidget(self.file_mask_name, 0, 0, 1, 2)
-        lay.addWidget(self.mapping_file_button, 1, 0, 1, 2)
-        lay.addWidget(self.base_mask_name, 2, 0)
-        lay.addWidget(self.swap_mask_name, 2, 1)
-        lay.addWidget(self.suffix_mask_name_button, 3, 0)
-        lay.addWidget(self.swap_mask_name_button, 3, 1)
+        lay.addWidget(QLabel("Mask name:"), 0, 0)
+        lay.addWidget(self.file_mask_name, 1, 0, 1, 2)
+        lay.addWidget(self.mapping_file_button, 2, 0, 1, 2)
+        lay.addWidget(QLabel("Suffix/Sub string:"), 3, 0)
+        lay.addWidget(QLabel("Replace:"), 3, 1)
+        lay.addWidget(self.base_mask_name, 4, 0)
+        lay.addWidget(self.swap_mask_name, 4, 1)
+        lay.addWidget(self.suffix_mask_name_button, 5, 0)
+        lay.addWidget(self.swap_mask_name_button, 5, 1)
         file_mask_box.setLayout(lay)
 
         mask_box = QGroupBox("Mask from segmentation")
         mask_box.setStyleSheet(group_sheet)
         lay = QVBoxLayout()
+        lay.addWidget(QLabel("Mask name:"))
         lay.addWidget(self.mask_name)
         bt_lay = QHBoxLayout()
         bt_lay.addWidget(self.generate_mask)
@@ -433,16 +438,29 @@ class CreatePlan(QWidget):
         self.suffix_mask_name_button.setDisabled(True)
         self.mapping_file_button.setDisabled(True)
 
+    def save_to_project(self):
+        suffix, ok = QInputDialog.getText(self, "Project file suffix", "Set project name suffix")
+        if ok:
+            suffix = str(suffix)
+            text = self.calculation_plan.add_step(ProjectSave(suffix))
+            self.plan.addItem(text)
+
     def mask_by_mapping(self):
         name = str(self.file_mask_name.text()).strip()
-        text = self.calculation_plan.add_step(MaskSuffix(name, ""))
+        text = self.calculation_plan.add_step(MaskFile(name, ""))
         self.plan.addItem(text)
+        self.mask_set.add(name)
+        self.file_mask_text_changed()
+        self.mask_name_changed(self.mask_name.text)
 
     def mask_by_suffix(self):
         name = str(self.file_mask_name.text()).strip()
         suffix = str(self.base_mask_name.text()).strip()
         text = self.calculation_plan.add_step(MaskSuffix(name, suffix))
         self.plan.addItem(text)
+        self.mask_set.add(name)
+        self.file_mask_text_changed()
+        self.mask_name_changed(self.mask_name.text)
 
     def mask_by_substitution(self):
         name = str(self.file_mask_name.text()).strip()
@@ -450,6 +468,9 @@ class CreatePlan(QWidget):
         repl = str(self.swap_mask_name.text()).strip()
         text = self.calculation_plan.add_step(MaskSub(name, base, repl))
         self.plan.addItem(text)
+        self.mask_set.add(name)
+        self.file_mask_text_changed()
+        self.mask_name_changed(self.mask_name.text)
 
     def save_to_cmap(self):
         dial = CmapSavePrepare("Settings for cmap create")
@@ -632,12 +653,16 @@ class CalculateInfo(QWidget):
         info_butt_layout = QHBoxLayout()
         info_butt_layout.addWidget(self.delete_plan_btn)
         info_butt_layout.addWidget(self.import_plans_btn)
+        # info_layout.addLayout(info_butt_layout)
+        # info_butt_layout = QHBoxLayout()
         info_butt_layout.addWidget(self.export_plans_btn)
         info_butt_layout.addWidget(self.edit_plan_btn)
         info_layout.addLayout(info_butt_layout)
-        info_chose_layout = QHBoxLayout()
-        info_chose_layout.addWidget(self.calculate_plans)
-        info_chose_layout.addWidget(self.plan_view)
+        info_chose_layout = QGridLayout()
+        info_chose_layout.addWidget(QLabel("List o plans:"), 0, 0)
+        info_chose_layout.addWidget(QLabel("Plan preview:"), 0, 1)
+        info_chose_layout.addWidget(self.calculate_plans, 1, 0)
+        info_chose_layout.addWidget(self.plan_view, 1, 1)
         info_layout.addLayout(info_chose_layout)
         self.setLayout(info_layout)
         self.calculate_plans.addItems(list(sorted(self.settings.batch_plans.keys())))
@@ -764,7 +789,7 @@ class BatchWindow(QTabWidget):
         self.file_choose = FileChoose(self.settings, self)
         self.calculate_planer = CalculatePlaner(self.settings, self)
         self.addTab(self.file_choose, "Choose files")
-        self.addTab(self.calculate_planer, "Calculate settings")
+        self.addTab(self.calculate_planer, "Prepare plan")
         self.working = False
 
     def focusInEvent(self, event):
