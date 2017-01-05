@@ -157,9 +157,9 @@ class StatisticProfile(object):
         "Border Volume": SettingsValue("border_volume", "Calculate volumes for elements in radius (in physical units)"
                                                         " from mask", {"radius": int})
     }
-    PARAMETERS = ["name", "chosen_fields", "reversed_brightness", "use_gauss_image"]
+    PARAMETERS = ["name", "chosen_fields", "reversed_brightness", "use_gauss_image", "name_prefix"]
 
-    def __init__(self, name, chosen_fields, reversed_brightness, settings=None, use_gauss_image=False):
+    def __init__(self, name, chosen_fields, reversed_brightness, settings=None, use_gauss_image=False, name_prefix=""):
         self.name = name
         self.chosen_fields = []
         for cf_val in chosen_fields:
@@ -172,14 +172,14 @@ class StatisticProfile(object):
         self.settings = settings
         self.reversed_brightness = reversed_brightness
         self.use_gauss_image = use_gauss_image
-        self.name_prefix = ""
+        self.name_prefix = name_prefix
 
     def __str__(self):
         text = "Profile name: {}\n".format(self.name)
         text += "Reversed image [{}]\n".format(self.reversed_brightness)
         text += "Gaussed image [{}]\n".format(self.use_gauss_image)
         if self.name_prefix != "":
-            text += "Name prefix: {}".format(self.name_prefix)
+            text += "Name prefix: {}\n".format(self.name_prefix)
         text += "statistics list:\n"
         for el in self.chosen_fields:
             if el[2] is not None:
@@ -592,6 +592,18 @@ class Settings(object):
             statistics_list = json.load(ff)
             for stat in statistics_list:
                 self.statistics_profile_dict[stat["name"]] = StatisticProfile(settings=self, **stat)
+
+    def dump_calculation_plans(self, file_path):
+        json_str = json.dumps([x.get_parameters() for x in self.batch_plans.values()])
+        with open(file_path, "w") as ff:
+            ff.write(json_str)
+
+    def load_calculation_plans(self, file_path):
+        with open(file_path, "r") as ff:
+            calculation_plans = json.load(ff)
+        for plan in calculation_plans:
+            calc_plan = CalculationPlan.dict_load(plan)
+            self.batch_plans[calc_plan.name] = calc_plan
 
     def dump(self, file_path):
         important_data = \
@@ -1089,6 +1101,9 @@ def get_segmented_data(image, settings, segment, with_std=False, mask_morph=None
 MaskCreate = namedtuple("MaskCreate", ['name'])
 MaskUse = namedtuple("MaskUse", ['name'])
 CmapProfile = namedtuple("CmapProfile", ["suffix", "gauss_type", "center_data", "rotation_axis", "cut_obsolete_are"])
+MaskSuffix = namedtuple("MaskSuffix", ["name", "suffix"])
+MaskSub = namedtuple("MaskSub", ["name", "sub", "rep"])
+MaskFile = namedtuple("MaskFile", ["name", "path"])
 
 
 class Operations(Enum):
@@ -1096,8 +1111,9 @@ class Operations(Enum):
 
 
 class CalculationPlan(object):
-    correct_name = {MaskCreate.__name__ : MaskCreate, MaskUse.__name__: MaskUse, CmapProfile.__name__: CmapProfile,
-                    StatisticProfile.__name__: StatisticProfile, SegmentationProfile.__name__: SegmentationProfile}
+    correct_name = {MaskCreate.__name__: MaskCreate, MaskUse.__name__: MaskUse, CmapProfile.__name__: CmapProfile,
+                    StatisticProfile.__name__: StatisticProfile, SegmentationProfile.__name__: SegmentationProfile,
+                    MaskSuffix.__name__: MaskSuffix, MaskSub.__name__: MaskSub, MaskFile.__name__: MaskFile}
 
     # TODO Batch plans dump and load
     def __init__(self):
@@ -1114,7 +1130,6 @@ class CalculationPlan(object):
         self.execution_list.append(step)
         if isinstance(step, SegmentationProfile):
             self.segmentation_count += 1
-        print(self.dict_dump())
         return text
 
     def __len__(self):
@@ -1124,6 +1139,7 @@ class CalculationPlan(object):
         el = self.execution_list.pop()
         if isinstance(el, SegmentationProfile):
             self.segmentation_count -= 1
+        return el
 
     def is_segmentation(self):
         return self.segmentation_count > 0
@@ -1174,7 +1190,7 @@ class CalculationPlan(object):
         :return: str
         """
         if el.__class__.__name__ not in CalculationPlan.correct_name.keys():
-            raise ValueError("Unknown type")
+            raise ValueError("Unknown type {}".format(el.__class__.__name__))
         if isinstance(el, Operations):
             if el == Operations.clean_mask:
                 return "Clean mask"
@@ -1184,7 +1200,7 @@ class CalculationPlan(object):
             if el.name_prefix == "":
                 return "Statistics: {}".format(el.name)
             else:
-                "Statistics: {} with prefix: {}".format(el.name, el.name_prefix)
+                return "Statistics: {} with prefix: {}".format(el.name, el.name_prefix)
         if isinstance(el, MaskCreate):
             return "Create mask: {}".format(el.name)
         if isinstance(el, MaskUse):
@@ -1194,5 +1210,11 @@ class CalculationPlan(object):
                 return "Camp save"
             else:
                 return "Cmap save with suffix: {}".format(el.suffix)
+        if isinstance(el, MaskSuffix):
+            return "File mask: {} with suffix {}".format(el.name, el.suffix)
+        if isinstance(el, MaskSub):
+            return "File mask: {} substitution {} on {}".format(el.name, el.sub, el.rep)
+        if isinstance(el, MaskFile):
+            return "File mapping mask: {}".format(el.name)
 
-        raise ValueError("Unknown type")
+        raise ValueError("Unknown type {}".format(type(el)))

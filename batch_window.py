@@ -1,10 +1,12 @@
 import os
 from glob import glob
 import multiprocessing
-from backend import Settings, CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile
+from backend import Settings, CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, MaskSuffix, MaskSub
 from batch_backed import BatchManager
 from copy import copy
 from io_functions import GaussUse
+from backend import StatisticProfile, SegmentationProfile
+
 
 from qt_import import *
 
@@ -203,7 +205,7 @@ class FileChoose(QWidget):
 
     def showEvent(self, _):
         current_calc = str(self.calculation_choose.currentText())
-        new_list = ["<no calculation>", "aa"] + list(self.settings.batch_plans.keys())
+        new_list = ["<no calculation>"] + list(self.settings.batch_plans.keys())
         try:
             index = new_list.index(current_calc)
         except ValueError:
@@ -330,6 +332,8 @@ class CreatePlan(QWidget):
         self.suffix_mask_name_button = QPushButton("Name suffix")
         self.base_mask_name = QLineEdit()
         self.swap_mask_name = QLineEdit()
+        self.file_mask_name = QLineEdit()
+        self.file_mask_name.setToolTip("Name of mask")
         self.protect = False
         self.mask_set = set()
         self.calculation_plan = CalculationPlan()
@@ -343,11 +347,15 @@ class CreatePlan(QWidget):
         self.remove_last_btn.clicked.connect(self.remove_last)
         self.base_mask_name.textChanged.connect(self.file_mask_text_changed)
         self.swap_mask_name.textChanged.connect(self.file_mask_text_changed)
+        self.file_mask_name.textChanged.connect(self.file_mask_text_changed)
         self.chose_profile.clicked.connect(self.add_segmentation)
         self.add_calculation.clicked.connect(self.add_statistics)
         self.save_plan_btn.clicked.connect(self.add_calculation_plan)
         self.forgot_mask_btn.clicked.connect(self.forgot_mask)
         self.cmap_save_btn.clicked.connect(self.save_to_cmap)
+        self.swap_mask_name_button.clicked.connect(self.mask_by_substitution)
+        self.suffix_mask_name_button.clicked.connect(self.mask_by_suffix)
+        self.mapping_file_button.clicked.connect(self.mask_by_mapping)
 
         plan_box = QGroupBox("Calculate plan:")
         lay = QVBoxLayout()
@@ -366,11 +374,12 @@ class CreatePlan(QWidget):
         file_mask_box = QGroupBox("Mask from file")
         file_mask_box.setStyleSheet(group_sheet)
         lay = QGridLayout()
-        lay.addWidget(self.mapping_file_button, 0, 0, 1, 2)
-        lay.addWidget(self.base_mask_name, 1, 0)
-        lay.addWidget(self.swap_mask_name, 1, 1)
-        lay.addWidget(self.suffix_mask_name_button, 2, 0)
-        lay.addWidget(self.swap_mask_name_button, 2, 1)
+        lay.addWidget(self.file_mask_name, 0, 0, 1, 2)
+        lay.addWidget(self.mapping_file_button, 1, 0, 1, 2)
+        lay.addWidget(self.base_mask_name, 2, 0)
+        lay.addWidget(self.swap_mask_name, 2, 1)
+        lay.addWidget(self.suffix_mask_name_button, 3, 0)
+        lay.addWidget(self.swap_mask_name_button, 3, 1)
         file_mask_box.setLayout(lay)
 
         mask_box = QGroupBox("Mask from segmentation")
@@ -422,6 +431,25 @@ class CreatePlan(QWidget):
         self.add_calculation.setDisabled(True)
         self.swap_mask_name_button.setDisabled(True)
         self.suffix_mask_name_button.setDisabled(True)
+        self.mapping_file_button.setDisabled(True)
+
+    def mask_by_mapping(self):
+        name = str(self.file_mask_name.text()).strip()
+        text = self.calculation_plan.add_step(MaskSuffix(name, ""))
+        self.plan.addItem(text)
+
+    def mask_by_suffix(self):
+        name = str(self.file_mask_name.text()).strip()
+        suffix = str(self.base_mask_name.text()).strip()
+        text = self.calculation_plan.add_step(MaskSuffix(name, suffix))
+        self.plan.addItem(text)
+
+    def mask_by_substitution(self):
+        name = str(self.file_mask_name.text()).strip()
+        base = str(self.base_mask_name.text()).strip()
+        repl = str(self.swap_mask_name.text()).strip()
+        text = self.calculation_plan.add_step(MaskSub(name, base, repl))
+        self.plan.addItem(text)
 
     def save_to_cmap(self):
         dial = CmapSavePrepare("Settings for cmap create")
@@ -469,15 +497,19 @@ class CreatePlan(QWidget):
     def add_statistics(self):
         text = str(self.statistic_list.currentItem().text())
         statistics = self.settings.statistics_profile_dict[text]
+        statistics_copy = copy(statistics)
         prefix = str(self.statistic_name_prefix.text()).strip()
-        text = self.calculation_plan.add_step(statistics)
+        statistics_copy.name_prefix = prefix
+        text = self.calculation_plan.add_step(statistics_copy)
         self.plan.addItem(text)
 
     def remove_last(self):
         if len(self.calculation_plan) > 0:
             self.calculation_plan.pop()
             # TODO Something better if need more information
-            self.plan.takeItem(len(self.calculation_plan))
+            el = self.plan.takeItem(len(self.calculation_plan))
+            if isinstance(el, MaskCreate):
+                self.mask_set.remove(el.name)
 
     def clean_plan(self):
         self.calculation_plan = CalculationPlan()
@@ -485,6 +517,13 @@ class CreatePlan(QWidget):
         self.mask_set = set()
 
     def file_mask_text_changed(self):
+        name = str(self.file_mask_name.text()).strip()
+        if name == "" or name in self.mask_set:
+            self.suffix_mask_name_button.setDisabled(True)
+            self.swap_mask_name_button.setDisabled(True)
+            self.mapping_file_button.setDisabled(True)
+        else:
+            self.mapping_file_button.setEnabled(True)
         if str(self.base_mask_name.text()).strip() != "":
             self.suffix_mask_name_button.setEnabled(True)
             if str(self.swap_mask_name.text()).strip() != "":
@@ -563,22 +602,38 @@ class CreatePlan(QWidget):
         else:
             self.chose_profile.setDisabled(True)
 
+    def edit_plan(self):
+        plan = self.sender().plan_to_edit  # type: CalculationPlan
+        self.calculation_plan = plan
+        self.plan.clear()
+        self.mask_set.clear()
+        for el in plan.execution_list:
+            self.plan.addItem(CalculationPlan.get_el_name(el))
+            if isinstance(el, MaskCreate):
+                self.mask_set.add(el.name)
+
 
 class CalculateInfo(QWidget):
     """
     :type settings: Settings
     """
+    plan_to_edit_signal = pyqtSignal()
+
     def __init__(self, settings):
         super(CalculateInfo, self).__init__()
         self.settings = settings
         self.calculate_plans = QListWidget(self)
         self.plan_view = QTreeWidget(self)
-        self.delete_plan = QPushButton("Delete plan")
-        self.edit_plan = QPushButton("Edit plan")
+        self.delete_plan_btn = QPushButton("Delete plan")
+        self.edit_plan_btn = QPushButton("Edit plan")
+        self.export_plans_btn = QPushButton("Export plans")
+        self.import_plans_btn = QPushButton("Import plans")
         info_layout = QVBoxLayout()
         info_butt_layout = QHBoxLayout()
-        info_butt_layout.addWidget(self.delete_plan)
-        info_butt_layout.addWidget(self.edit_plan)
+        info_butt_layout.addWidget(self.delete_plan_btn)
+        info_butt_layout.addWidget(self.import_plans_btn)
+        info_butt_layout.addWidget(self.export_plans_btn)
+        info_butt_layout.addWidget(self.edit_plan_btn)
         info_layout.addLayout(info_butt_layout)
         info_chose_layout = QHBoxLayout()
         info_chose_layout.addWidget(self.calculate_plans)
@@ -587,6 +642,14 @@ class CalculateInfo(QWidget):
         self.setLayout(info_layout)
         self.calculate_plans.addItems(list(sorted(self.settings.batch_plans.keys())))
         self.protect = False
+        self.plan_to_edit = None
+
+        self.plan_view.header().close()
+        self.calculate_plans.currentTextChanged.connect(self.plan_preview)
+        self.delete_plan_btn.clicked.connect(self.delete_plan)
+        self.edit_plan_btn.clicked.connect(self.edit_plan)
+        self.export_plans_btn.clicked.connect(self.export_plans)
+        self.import_plans_btn.clicked.connect(self.import_plans)
 
     def update_plan_list(self):
         new_plan_list = list(sorted(self.settings.batch_plans.keys()))
@@ -608,12 +671,71 @@ class CalculateInfo(QWidget):
             # self.plan_view.setText("")
         self.protect = False
 
-    def plan_preview(self, text):
-        plan = self.settings.batch_plans[str(text)] # type: CalculationPlan
-        items =[]
-        for el in plan.execution_list:
+    def export_plans(self):
+        dial = QFileDialog(self, "Export calculation plans")
+        dial.setFileMode(QFileDialog.AnyFile)
+        dial.setAcceptMode(QFileDialog.AcceptSave)
+        if self.settings.save_directory is not None:
+            dial.setDirectory(self.settings.save_directory)
+        dial.setFilter("Calculation plans (*.json)")
+        dial.setDefaultSuffix("json")
+        dial.selectFile("calculation_plans.json")
+        if dial.exec_():
+            file_path = dial.selectedFiles()[0]
+            self.settings.dump_calculation_plans(file_path)
 
-            widget = QTreeWidgetItem()
+    def import_plans(self):
+        dial = QFileDialog(self, "Export calculation plans")
+        dial.setFileMode(QFileDialog.ExistingFile)
+        dial.setAcceptMode(QFileDialog.AcceptOpen)
+        if self.settings.open_directory is not None:
+            dial.setDirectory(self.settings.save_directory)
+        dial.setFilter("Calculation plans (*.json)")
+        dial.setDefaultSuffix("json")
+        if dial.exec_():
+            file_path = dial.selectedFiles()[0]
+            self.settings.load_calculation_plans(file_path)
+            self.update_plan_list()
+
+    def delete_plan(self):
+        if self.calculate_plans.currentItem() is None:
+            return
+        text = str(self.calculate_plans.currentItem().text())
+        if text == "":
+            return
+        if text in self.settings.batch_plans:
+            del self.settings.batch_plans[text]
+        self.update_plan_list()
+        self.plan_view.clear()
+
+    def edit_plan(self):
+        if self.calculate_plans.currentItem() is None:
+            return
+        text = str(self.calculate_plans.currentItem().text())
+        if text == "":
+            return
+        if text in self.settings.batch_plans:
+            self.plan_to_edit = self.settings.batch_plans[text]
+            self.plan_to_edit_signal.emit()
+
+    def plan_preview(self, text):
+        if self.protect:
+            return
+        text = str(text)
+        if text.strip() == "":
+            return
+        plan = self.settings.batch_plans[str(text)]  # type: CalculationPlan
+        self.plan_view.clear()
+        for el in plan.execution_list:
+            widget = QTreeWidgetItem(self.plan_view)
+            widget.setText(0, CalculationPlan.get_el_name(el))
+            if isinstance(el, StatisticProfile) or isinstance(el, SegmentationProfile):
+                description = str(el).split("\n")
+                for line in description[1:]:
+                    if line.strip() == "":
+                        continue
+                    w = QTreeWidgetItem(widget)
+                    w.setText(0, line)
 
 
 class CalculatePlaner(QSplitter):
@@ -627,6 +749,7 @@ class CalculatePlaner(QSplitter):
         self.addWidget(self.info_widget)
         self.create_plan = CreatePlan(settings)
         self.create_plan.plan_created.connect(self.info_widget.update_plan_list)
+        self.info_widget.plan_to_edit_signal.connect(self.create_plan.edit_plan)
         self.addWidget(self.create_plan)
 
 
