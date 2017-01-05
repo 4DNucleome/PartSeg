@@ -57,3 +57,27 @@ class CalculationPlan(object):
     def set_name(self, text):
         self.name = text
 
+    @staticmethod
+    def get_el_name(el):
+        """
+        :param el: Plan element
+        :return: str
+        """
+        if isinstance(el, Operations):
+            if el == Operations.clean_mask:
+                return "Clean mask"
+        if isinstance(el, Profile):
+            return "Segmentation: {}".format(el.name)
+        if isinstance(el, StatisticProfile):
+            if el.name_prefix == "":
+                return "Statistics: {}".format(el.name)
+            else:
+                "Statistics: {} with prefix: {}".format(el.name, el.name_prefix)
+        if isinstance(el, MaskCreate):
+            return "Create mask: {}".format(el.name)
+        if isinstance(el, MaskUse):
+            return "Use mask: {}".format(text)
+        raise ValueError("Unknown type")
+
+
+

@@ -583,8 +583,7 @@ class CalculateInfo(QWidget):
         super(CalculateInfo, self).__init__()
         self.settings = settings
         self.calculate_plans = QListWidget(self)
-        self.plan_view = QTextEdit(self)
-        self.plan_view.setReadOnly(True)
+        self.plan_view = QTreeWidget(self)
         self.delete_plan = QPushButton("Delete plan")
         self.edit_plan = QPushButton("Edit plan")
         info_layout = QVBoxLayout()
@@ -617,6 +616,13 @@ class CalculateInfo(QWidget):
         else:
             self.plan_view.setText("")
         self.protect = False
+
+    def plan_preview(self, text):
+        plan = self.settings.batch_plans[str(text)] # type: CalculationPlan
+        items =[]
+        for el in plan.execution_list:
+
+            widget = QTreeWidgetItem()
 
 
 class CalculatePlaner(QSplitter):
