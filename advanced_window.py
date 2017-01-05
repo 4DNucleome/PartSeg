@@ -1,7 +1,8 @@
 # coding=utf-8
 import os
 import numpy as np
-from backend import StatisticProfile, get_segmented_data, calculate_statistic_from_image, UNITS_DICT, Profile, Settings
+from backend import StatisticProfile, get_segmented_data, calculate_statistic_from_image, UNITS_DICT, \
+    SegmentationProfile, Settings
 from qt_import import *
 from global_settings import file_folder
 
@@ -408,6 +409,8 @@ class StatisticsSettings(QWidget):
             file_path = str(dial.selectedFiles()[0])
             self.settings.statistic_dirs = file_path
             self.settings.load_statistics(file_path)
+            self.profile_list.clear()
+            self.profile_list.addItems(list(sorted(self.settings.statistics_profile_dict.keys())))
 
 
 class StatisticsWindow(QWidget):
@@ -727,7 +730,7 @@ class AdvancedSettings(QWidget):
         profile_lay_butt2.addStretch()
         profile_layout2.addLayout(profile_lay_butt2)
         profile_lay.addLayout(profile_layout2)
-        text = str(Profile("", **self.settings.get_profile_dict()))
+        text = str(SegmentationProfile("", **self.settings.get_profile_dict()))
         self.current_profile.setText(text)
 
         vertical_layout.addLayout(profile_lay)
@@ -758,10 +761,14 @@ class AdvancedSettings(QWidget):
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
             self.settings.load_profiles(file_path)
+            self.profile_list.clear()
+            self.profile_list.addItems(["<current profile>"] +
+                                       list(sorted(self.settings.segmentation_profiles_dict.keys())))
 
     def changed_profile(self, name):
+        name = str(name)
         if name == "<current profile>" or name == u"":
-            text = str(Profile("", **self.settings.get_profile_dict()))
+            text = str(SegmentationProfile("", **self.settings.get_profile_dict()))
             self.current_profile.setText(text)
             self.delete_profile_butt.setDisabled(True)
         else:
@@ -774,7 +781,7 @@ class AdvancedSettings(QWidget):
         text, ok = QInputDialog.getText(self, "Profile name", "Profile name", QLineEdit.Normal)
         text = str(text)
         if ok and text != "":
-            profile = Profile(text, **self.settings.get_profile_dict())
+            profile = SegmentationProfile(text, **self.settings.get_profile_dict())
             self.settings.add_profile(profile)
             print("New profile", profile)
             self.profile_list.clear()

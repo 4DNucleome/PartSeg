@@ -157,8 +157,9 @@ class StatisticProfile(object):
         "Border Volume": SettingsValue("border_volume", "Calculate volumes for elements in radius (in physical units)"
                                                         " from mask", {"radius": int})
     }
+    PARAMETERS = ["name", "chosen_fields", "reversed_brightness", "use_gauss_image"]
 
-    def __init__(self, name, chosen_fields, reversed_brightness, settings, use_gauss_image=False):
+    def __init__(self, name, chosen_fields, reversed_brightness, settings=None, use_gauss_image=False):
         self.name = name
         self.chosen_fields = []
         for cf_val in chosen_fields:
@@ -186,6 +187,9 @@ class StatisticProfile(object):
             else:
                 text += "{}\n".format(el[1])
         return text
+
+    def get_parameters(self):
+        return class_to_dict(self, *self.PARAMETERS)
 
     def rebuild_tree(self, l):
         if len(l) == 2:
@@ -429,9 +433,11 @@ class StatisticProfile(object):
         return np.count_nonzero(final_mask) * self.pixel_volume(self.settings.voxel_size)
 
 
-class Profile(object):
-    PARAMETERS = ("threshold", "threshold_list", "threshold_type", "minimum_size", "use_gauss", "gauss_radius",
+class SegmentationProfile(object):
+    PARAMETERS = ("name", "threshold", "threshold_list", "threshold_type", "minimum_size", "use_gauss", "gauss_radius",
                   "threshold_layer_separate")
+    SEGMENTATION_PARAMETERS = ("threshold", "threshold_list", "threshold_type", "minimum_size", "use_gauss",
+                               "gauss_radius", "threshold_layer_separate")
 
     def __init__(self, name, threshold, threshold_list, threshold_type, minimum_size, use_gauss, gauss_radius,
                  threshold_layer_separate):
@@ -479,7 +485,7 @@ class Profile(object):
 
 class Settings(object):
     """
-    :type segmentation_profiles_dict: dict[str, Profile]
+    :type segmentation_profiles_dict: dict[str, SegmentationProfile]
     :type statistics_profile_dict: dict[str, StatisticProfile]
     :type threshold: int
     :type threshold_list: list[int]
@@ -487,6 +493,7 @@ class Settings(object):
     :type minimum_size: int
     :type image: np.ndarray
     :type image_change_callback: list[(() -> None) | (() -> None, object)]
+    :type batch_plans: dict[str, CalculationPlan]
     """
     def __init__(self, settings_path):
         self.color_map_name = "cubehelix"
@@ -548,7 +555,7 @@ class Settings(object):
     def change_profile(self, name):
         print("%%%%%%%% {}".format(name))
         prof = self.segmentation_profiles_dict[str(name)]
-        dict_set_class(self, prof.get_parameters(), *Profile.PARAMETERS)
+        dict_set_class(self, prof.get_parameters(), *SegmentationProfile.SEGMENTATION_PARAMETERS)
         for fun in self.threshold_change_callback:
             fun()
 
@@ -560,7 +567,7 @@ class Settings(object):
                              "gauss_radius", "threshold_layer_separate")
 
     def dump_profiles(self, file_path):
-        profiles_list = [x.__dict__ for k, x in self.segmentation_profiles_dict.items()]
+        profiles_list = [x.get_parameters() for x in self.segmentation_profiles_dict.values()]
         with open(file_path, "w") as ff:
             json.dump(profiles_list, ff)
 
@@ -568,12 +575,12 @@ class Settings(object):
         with open(file_path, "r") as ff:
             profiles_list = json.load(ff)
             for prof in profiles_list:
-                self.segmentation_profiles_dict[prof["name"]] = Profile(**prof)
+                self.segmentation_profiles_dict[prof["name"]] = SegmentationProfile(**prof)
         for fun in self.threshold_change_callback:
             fun()
 
     def dump_statistics(self, file_path):
-        res = [class_to_dict(x, "name", "chosen_fields", "reversed_brightness", "use_gauss_image")
+        res = [x.get_parameters()
                for x in self.statistics_profile_dict.values()]
 
         json_str = json.dumps(res)
@@ -592,11 +599,12 @@ class Settings(object):
                           "voxel_size", "size_unit", "threshold", "color_map_name", "overlay", "minimum_size",
                           "gauss_radius", "export_filter", "export_directory", "scale_factor", "statistic_dirs",
                           "chosen_colormap", "batch_directory")
-        #TODO Batch plans dump
-        important_data["profiles"] = [x.__dict__ for k, x in self.segmentation_profiles_dict.items()]
+        # TODO Batch plans dump
+        important_data["profiles"] = [x.get_parameters() for x in self.segmentation_profiles_dict.values()]
         important_data["statistics"] = \
             [class_to_dict(x, "name", "chosen_fields", "reversed_brightness", "use_gauss_image")
              for x in self.statistics_profile_dict.values()]
+        important_data["batch_plans"] = [x.get_parameters() for x in self.batch_plans.values()]
         json_str = json.dumps(important_data)
         with open(file_path, "w") as ff:
             ff.write(json_str)
@@ -615,9 +623,12 @@ class Settings(object):
             self.chosen_colormap = list(sorted(chosen_colormap & avail_colormap))
             self.color_map = matplotlib.cm.get_cmap(self.color_map_name)
             for prof in important_data["profiles"]:
-                self.segmentation_profiles_dict[prof["name"]] = Profile(**prof)
+                self.segmentation_profiles_dict[prof["name"]] = SegmentationProfile(**prof)
             for stat in important_data["statistics"]:
                 self.statistics_profile_dict[stat["name"]] = StatisticProfile(settings=self, **stat)
+            for plan in important_data["batch_plans"]:
+                calc_plan = CalculationPlan.dict_load(plan)
+                self.batch_plans[calc_plan.name] = calc_plan
         except IOError:
             logging.warning("No configuration file")
             pass
@@ -695,7 +706,7 @@ class Settings(object):
 
     def add_profile(self, profile):
         """
-        :type profile: Profile
+        :type profile: SegmentationProfile
         :return:
         """
         # if not overwrite and name in self.profiles:
@@ -705,9 +716,11 @@ class Settings(object):
             fun()
 
     def delete_profile(self, name):
+        name = str(name)
         del self.segmentation_profiles_dict[name]
 
     def get_profile(self, name):
+        name = str(name)
         return self.segmentation_profiles_dict[name]
 
     @property
@@ -1071,3 +1084,115 @@ def get_segmented_data(image, settings, segment, with_std=False, mask_morph=None
     if with_std:
         return image, segmentation, noise_std
     return image, segmentation
+
+
+MaskCreate = namedtuple("MaskCreate", ['name'])
+MaskUse = namedtuple("MaskUse", ['name'])
+CmapProfile = namedtuple("CmapProfile", ["suffix", "gauss_type", "center_data", "rotation_axis", "cut_obsolete_are"])
+
+
+class Operations(Enum):
+    clean_mask = 1
+
+
+class CalculationPlan(object):
+    correct_name = {MaskCreate.__name__ : MaskCreate, MaskUse.__name__: MaskUse, CmapProfile.__name__: CmapProfile,
+                    StatisticProfile.__name__: StatisticProfile, SegmentationProfile.__name__: SegmentationProfile}
+
+    # TODO Batch plans dump and load
+    def __init__(self):
+        self.execution_list = []
+        self.execution_tree = None
+        self.segmentation_count = 0
+        self.name = ""
+
+    def clean(self):
+        self.execution_list = []
+
+    def add_step(self, step):
+        text = self.get_el_name(step)
+        self.execution_list.append(step)
+        if isinstance(step, SegmentationProfile):
+            self.segmentation_count += 1
+        print(self.dict_dump())
+        return text
+
+    def __len__(self):
+        return len(self.execution_list)
+
+    def pop(self):
+        el = self.execution_list.pop()
+        if isinstance(el, SegmentationProfile):
+            self.segmentation_count -= 1
+
+    def is_segmentation(self):
+        return self.segmentation_count > 0
+
+    def build_execution_tree(self):
+        pass
+
+    def set_name(self, text):
+        self.name = text
+
+    def get_parameters(self):
+        return self.dict_dump()
+
+    def dict_dump(self):
+        res = dict()
+        res["name"] = self.name
+        execution_list = []
+        for el in self.execution_list:
+            sub_dict = dict()
+            sub_dict["type"] = el.__class__.__name__
+            if issubclass(el.__class__, tuple):
+                sub_dict["values"] = el.__dict__
+            elif isinstance(el, StatisticProfile):
+                sub_dict["values"] = el.get_parameters()
+            elif isinstance(el, SegmentationProfile):
+                sub_dict["values"] = el.get_parameters()
+            else:
+                raise ValueError("Not supported type")
+            execution_list.append(sub_dict)
+        res["execution_list"] = execution_list
+        return res
+
+    @staticmethod
+    def dict_load(data_dict):
+        res_plan = CalculationPlan()
+        name = data_dict["name"]
+        res_plan.set_name(name)
+        execution_list = data_dict["execution_list"]
+        for el in execution_list:
+            res_plan.add_step(CalculationPlan.correct_name[el["type"]](**el["values"]))
+        res_plan.build_execution_tree()
+        return res_plan
+
+    @staticmethod
+    def get_el_name(el):
+        """
+        :param el: Plan element
+        :return: str
+        """
+        if el.__class__.__name__ not in CalculationPlan.correct_name.keys():
+            raise ValueError("Unknown type")
+        if isinstance(el, Operations):
+            if el == Operations.clean_mask:
+                return "Clean mask"
+        if isinstance(el, SegmentationProfile):
+            return "Segmentation: {}".format(el.name)
+        if isinstance(el, StatisticProfile):
+            if el.name_prefix == "":
+                return "Statistics: {}".format(el.name)
+            else:
+                "Statistics: {} with prefix: {}".format(el.name, el.name_prefix)
+        if isinstance(el, MaskCreate):
+            return "Create mask: {}".format(el.name)
+        if isinstance(el, MaskUse):
+            return "Use mask: {}".format(el.name)
+        if isinstance(el, CmapProfile):
+            if el.suffix == "":
+                return "Camp save"
+            else:
+                return "Cmap save with suffix: {}".format(el.suffix)
+
+        raise ValueError("Unknown type")

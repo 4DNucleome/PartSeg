@@ -17,7 +17,7 @@ import matplotlib.colors as colors
 
 from PIL import Image
 
-from backend import Settings, Segment, UPPER, GAUSS, Profile, DrawType, MaskChange
+from backend import Settings, Segment, UPPER, GAUSS, SegmentationProfile, DrawType, MaskChange
 from batch_window import BatchWindow
 
 from io_functions import save_to_cmap, save_to_project, load_project, GaussUse
@@ -717,7 +717,7 @@ class MyDrawCanvas(MyCanvas):
         # noise_std = np.std(image[full_mask == 0])
         # noise_generator = norm(noise_mean, noise_std)
         noise_mask[mask > 0] = 0
-        profile = Profile("Clean_profile", **self.settings.get_profile_dict())
+        profile = SegmentationProfile("Clean_profile", **self.settings.get_profile_dict())
         self.settings.image_clean_profile = profile
         image[noise_mask > 0] = noise_mean
         # image[noise_mask > 0] = noise_generator.rvs(np.count_nonzero(noise_mask))

@@ -11,7 +11,7 @@ from copy import deepcopy
 from enum import Enum
 import auto_fit as af
 
-from backend import Settings, Segment, class_to_dict, calculate_statistic_from_image, get_segmented_data, Profile
+from backend import Settings, Segment, class_to_dict, calculate_statistic_from_image, get_segmented_data, SegmentationProfile
 
 __author__ = "Grzegorz Bokota"
 
@@ -239,7 +239,7 @@ def load_project(file_path, settings, segment):
         mask = None
     if "original_image.npy" in members:
         original_image = extract_numpy_file("original_image.npy")
-        settings.image_clean_profile = Profile(**important_data["image_clean_profile"])
+        settings.image_clean_profile = SegmentationProfile(**important_data["image_clean_profile"])
     else:
         original_image = None
         settings.image_clean_profile = None

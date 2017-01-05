@@ -1,8 +1,8 @@
 import os
 from glob import glob
 import multiprocessing
-from backend import Settings
-from batch_backed import CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile
+from backend import Settings, CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile
+from batch_backed import BatchManager
 from copy import copy
 from io_functions import GaussUse
 
@@ -426,25 +426,21 @@ class CreatePlan(QWidget):
     def save_to_cmap(self):
         dial = CmapSavePrepare("Settings for cmap create")
         if dial.exec_():
-            cmap_plan = dial.get_result()
-            if cmap_plan.suffix == "":
-                self.plan.addItem("Camp save")
-            else:
-                self.plan.addItem("Cmap save with suffix: {}".format(cmap_plan.suffix))
-            self.calculation_plan.add_step(cmap_plan)
+            text = self.calculation_plan.add_step(dial.get_result())
+            self.plan.addItem(text)
 
     def forgot_mask(self):
-        self.calculation_plan.add_step(Operations.clean_mask)
-        self.plan.addItem("Clean mask")
+        text = self.calculation_plan.add_step(Operations.clean_mask)
+        self.plan.addItem(text)
 
     def create_mask(self):
         text = str(self.mask_name.text())
         if text in self.mask_set:
             QMessageBox.warning(self, "Already exists", "Mask with this name already exists", QMessageBox.Ok)
             return
-        self.plan.addItem("Create mask: {}".format(text))
         self.mask_set.add(text)
-        self.calculation_plan.add_step(MaskCreate(text))
+        text = self.calculation_plan.add_step(MaskCreate(text))
+        self.plan.addItem(text)
         self.generate_mask.setDisabled(True)
         self.reuse_mask.setDisabled(False)
 
@@ -453,8 +449,8 @@ class CreatePlan(QWidget):
         if text not in self.mask_set:
             QMessageBox.warning(self, "Don`t exists", "Mask with this name do not exists", QMessageBox.Ok)
             return
-        self.plan.addItem("Use mask: {}".format(text))
-        self.calculation_plan.add_step(MaskUse(text))
+        text = self.calculation_plan.add_step(MaskUse(text))
+        self.plan.addItem(text)
 
     def mask_name_changed(self, text):
         if str(text) in self.mask_set:
@@ -467,21 +463,15 @@ class CreatePlan(QWidget):
     def add_segmentation(self):
         text = str(self.segment_profile.currentItem().text())
         profile = self.settings.segmentation_profiles_dict[text]
-        self.plan.addItem("Segmentation: {}".format(profile.name))
-        self.calculation_plan.add_step(profile)
+        text = self.calculation_plan.add_step(profile)
+        self.plan.addItem(text)
 
     def add_statistics(self):
         text = str(self.statistic_list.currentItem().text())
         statistics = self.settings.statistics_profile_dict[text]
         prefix = str(self.statistic_name_prefix.text()).strip()
-        if prefix == "":
-            self.plan.addItem("Statistics: {}".format(statistics.name))
-            self.calculation_plan.add_step(statistics)
-        else:
-            statistics = copy(statistics)
-            statistics.name_prefix = prefix
-            self.plan.addItem("Statistics: {} with prefix: {}".format(statistics.name, prefix))
-            self.calculation_plan.add_step(statistics)
+        text = self.calculation_plan.add_step(statistics)
+        self.plan.addItem(text)
 
     def remove_last(self):
         if len(self.calculation_plan) > 0:
@@ -506,7 +496,6 @@ class CreatePlan(QWidget):
             self.swap_mask_name_button.setDisabled(True)
 
     def add_calculation_plan(self, used_text=None):
-        print(used_text)
         if used_text is None or isinstance(used_text, bool):
             text, ok = QInputDialog.getText(self, "Plan title", "Set plan title")
         else:
@@ -596,6 +585,7 @@ class CalculateInfo(QWidget):
         info_chose_layout.addWidget(self.plan_view)
         info_layout.addLayout(info_chose_layout)
         self.setLayout(info_layout)
+        self.calculate_plans.addItems(list(sorted(self.settings.batch_plans.keys())))
         self.protect = False
 
     def update_plan_list(self):
@@ -614,7 +604,8 @@ class CalculateInfo(QWidget):
         if index != -1:
             self.calculate_plans.setCurrentRow(index)
         else:
-            self.plan_view.setText("")
+            pass
+            # self.plan_view.setText("")
         self.protect = False
 
     def plan_preview(self, text):
