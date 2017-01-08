@@ -1,12 +1,15 @@
+# coding=utf-8
 import os
 from glob import glob
 import multiprocessing
-from backend import Settings, CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, MaskSuffix, MaskSub, MaskFile, ProjectSave
+from backend import Settings, CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, MaskSuffix, MaskSub, \
+    MaskFile, ProjectSave, UNITS_LIST
 from batch_backed import BatchManager
 from copy import copy
 from io_functions import GaussUse
 from backend import StatisticProfile, SegmentationProfile
-
+from universal_gui_part import Spacing, right_label
+from global_settings import file_folder
 
 from qt_import import *
 
@@ -125,6 +128,9 @@ class AddFiles(QWidget):
         if self.selected_files.count() == 0:
             self.delete_button.setDisabled(True)
 
+    def get_paths(self):
+        return list(sorted(self.files_to_proceed))
+
 
 class ProgressView(QWidget):
     def __init__(self, parent):
@@ -190,6 +196,8 @@ class FileChoose(QWidget):
         self.chose_result = QPushButton("Choose save place", self)
         self.chose_result.clicked.connect(self.chose_result_file)
 
+        self.run_button.clicked.connect(self.prepare_calculation)
+
         layout = QVBoxLayout()
         layout.addWidget(self.files_widget)
         calc_layout = QHBoxLayout()
@@ -202,6 +210,13 @@ class FileChoose(QWidget):
         layout.addLayout(calc_layout)
         layout.addWidget(self.progress)
         self.setLayout(layout)
+
+    def prepare_calculation(self):
+        plan = self.settings.batch_plans[str(self.calculation_choose.currentText())]
+        dial = CalculationPrepare(self.files_widget.get_paths(), plan, str(self.result_file.text()), self.settings)
+        if dial.exec_():
+            final_settings = dial.get_data()
+
 
     def showEvent(self, _):
         current_calc = str(self.calculation_choose.currentText())
@@ -225,6 +240,7 @@ class FileChoose(QWidget):
         if self.settings.batch_directory is not None:
             dial.setDirectory(self.settings.batch_directory)
         dial.setFileMode(QFileDialog.AnyFile)
+        dial.setAcceptMode(QFileDialog.AcceptSave)
         dial.setFilter("(*.xlsx Excel file")
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
@@ -811,5 +827,99 @@ class BatchWindow(QTabWidget):
             else:
                 event.ignore()
 
+
+class CalculationPrepare(QDialog):
+    def __init__(self, file_list, calculation_plan, statistic_file_path, settings):
+        """
+
+        :param file_list: list of files to proceed
+        :type file_list: list[str]
+        :param calculation_plan: calculation plan for this run
+        :type calculation_plan: CalculationPlan
+        :param statistic_file_path: path to statistic file
+        :type statistic_file_path: str
+        :param settings: settings object
+        :type settings: Settings
+        """
+        super(CalculationPrepare, self).__init__()
+        self.setWindowTitle("Calculation start")
+        self.file_list = file_list
+        self.calculation_plan = calculation_plan
+        self.statistic_file_path = statistic_file_path
+        self.settings = settings
+        self.info_label = QLabel("information, <i><font color='blue'>warnings</font></i>, "
+                                 "<b><font color='red'>errors</font><b>")
+        self.voxel_size = Spacing("Voxel size", zip(['x:', 'y:', 'z:'], settings.voxel_size), self, units=UNITS_LIST,
+                                  units_index=UNITS_LIST.index(settings.size_unit))
+        all_prefix = os.path.commonprefix(file_list)
+        if not os.path.exists(all_prefix):
+            all_prefix = os.path.dirname(all_prefix)
+        self.base_prefix = QLineEdit(all_prefix, self)
+        self.result_prefix = QLineEdit(all_prefix, self)
+        self.base_prefix_btn = QPushButton("Choose data prefix")
+        self.result_prefix_btn = QPushButton("Choose save prefix")
+        self.sheet_name = QLineEdit("Sheet1")
+        self.statistic_file_path = QLineEdit(statistic_file_path)
+
+        self.file_list_widget = QTreeWidget()
+        self.file_list_widget.header().close()
+
+        self.execute_btn = QPushButton("Execute")
+        self.execute_btn.clicked.connect(self.accept)
+        self.cancel_btn = QPushButton("Cancel")
+        self.cancel_btn.clicked.connect(self.close)
+
+        layout = QGridLayout()
+        layout.addWidget(self.info_label, 0, 0, 1, 0)
+        layout.addWidget(self.voxel_size, 1, 0, 1, 3)
+        layout.addWidget(right_label("Statistics sheet name:"), 3, 3)
+        layout.addWidget(self.sheet_name, 3, 4)
+        layout.addWidget(right_label("Statistics file path:"), 2, 3)
+        layout.addWidget(self.statistic_file_path, 2, 4)
+
+        layout.addWidget(right_label("Data prefix:"), 2, 0)
+        layout.addWidget(self.base_prefix, 2, 1)
+        layout.addWidget(self.base_prefix_btn, 2, 2)
+        layout.addWidget(right_label("Save prefix:"), 3, 0)
+        layout.addWidget(self.result_prefix, 3, 1)
+        layout.addWidget(self.result_prefix_btn, 3, 2)
+
+        layout.addWidget(self.file_list_widget, 5, 0, 3, 6)
+        btn_layout = QHBoxLayout()
+        btn_layout.addWidget(self.execute_btn)
+        btn_layout.addStretch()
+        btn_layout.addWidget(self.cancel_btn)
+        layout.addLayout(btn_layout, 8, 0, 1, 3)
+        self.setLayout(layout)
+
+    def get_data(self):
+        res = {"file_list": self.file_list, "base_prefix": str(self.base_prefix.text()),
+               "result_prefix": str(self.result_prefix.text()),
+               "statistic_file_path": str(self.statistic_file_path.text()),
+               "sheet_name": str(self.sheet_name.text()), "calculation_plan": self.calculation_plan}
+        return res
+
+    def verify_data(self):
+        pass
+
+    def showEvent(self, event):
+        super(CalculationPrepare, self).showEvent(event)
+        ok_icon = QIcon(os.path.join(file_folder, "icons", "task-accepted.png"))
+        bad_icon = QIcon(os.path.join(file_folder, "icons", "task-reject.png"))
+        all_prefix = os.path.commonprefix(self.file_list)
+        if not os.path.exists(all_prefix):
+            all_prefix = os.path.dirname(all_prefix)
+        for file_path in self.file_list:
+            widget = QTreeWidgetItem(self.file_list_widget)
+            widget.setText(0, os.path.realpath(file_path, all_prefix))
+            if not os.path.exists(file_path):
+                widget.setIcon(0, bad_icon)
+                widget.setToolTip(0, "File do not exists")
+                sub_widget = QTreeWidgetItem(widget)
+                sub_widget.setText(0, "File do not exists")
+                continue
+
+            widget.setIcon(0, ok_icon)
+            widget.setToolTip(0, "Ok")
 
 

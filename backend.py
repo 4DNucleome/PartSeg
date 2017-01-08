@@ -1,3 +1,4 @@
+# coding=utf-8
 from __future__ import print_function, division
 import matplotlib
 from matplotlib import pyplot
@@ -30,6 +31,8 @@ UNITS_DICT = {
     "Moment of inertia": "",
     "Noise_std": "pixel brightness"
 }
+
+UNITS_LIST = ["mm", u"µm", "nm", "pm"]
 
 
 class MaskChange(Enum):

@@ -2,7 +2,7 @@
 import os
 import numpy as np
 from backend import StatisticProfile, get_segmented_data, calculate_statistic_from_image, UNITS_DICT, \
-    SegmentationProfile, Settings
+    SegmentationProfile, Settings, UNITS_LIST
 from qt_import import *
 from global_settings import file_folder
 
@@ -654,7 +654,7 @@ class AdvancedSettings(QWidget):
         self.y_size = create_voxel_size("y:", size_layout, 1)
         self.z_size = create_voxel_size("z:", size_layout, 2)
         self.units_size = QComboBox()
-        self.units_size.addItems(["mm", u"µm", "nm", "pm"])
+        self.units_size.addItems(UNITS_LIST)
         self.units_size.setCurrentIndex(2)
         for el in [self.x_size, self.y_size, self.z_size]:
             el.valueChanged.connect(self.update_volume)
