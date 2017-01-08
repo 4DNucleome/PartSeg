@@ -4,7 +4,7 @@ from glob import glob
 import multiprocessing
 from backend import Settings, CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, MaskSuffix, MaskSub, \
     MaskFile, ProjectSave, UNITS_LIST
-from batch_backed import BatchManager
+from parallel_backed import BatchManager
 from copy import copy
 from io_functions import GaussUse
 from backend import StatisticProfile, SegmentationProfile
@@ -180,10 +180,15 @@ class ProgressView(QWidget):
 
 
 class FileChoose(QWidget):
-    def __init__(self, settings, parent=None):
+    """
+    :type settings: Settings
+    :type batch_manager: BatchManager
+    """
+    def __init__(self, settings, batch_manager, parent=None):
         QWidget.__init__(self, parent)
         self.files_to_proceed = set()
         self.settings = settings
+        self.batch_manager = batch_manager
         self.files_widget = AddFiles(settings, self)
         self.progress = ProgressView(self)
         self.run_button = QPushButton("Run calculation")
@@ -213,10 +218,11 @@ class FileChoose(QWidget):
 
     def prepare_calculation(self):
         plan = self.settings.batch_plans[str(self.calculation_choose.currentText())]
-        dial = CalculationPrepare(self.files_widget.get_paths(), plan, str(self.result_file.text()), self.settings)
+        dial = CalculationPrepare(self.files_widget.get_paths(), plan, str(self.result_file.text()), self.settings,
+                                  self.batch_manager)
         if dial.exec_():
             final_settings = dial.get_data()
-
+            self.batch_manager.add_work(final_settings)
 
     def showEvent(self, _):
         current_calc = str(self.calculation_choose.currentText())
@@ -802,7 +808,8 @@ class BatchWindow(QTabWidget):
         QTabWidget.__init__(self)
         self.setWindowTitle("Batch processing")
         self.settings = settings
-        self.file_choose = FileChoose(self.settings, self)
+        self.batch_manager = BatchManager()
+        self.file_choose = FileChoose(self.settings, self.batch_manager, self)
         self.calculate_planer = CalculatePlaner(self.settings, self)
         self.addTab(self.file_choose, "Choose files")
         self.addTab(self.calculate_planer, "Prepare plan")
@@ -829,7 +836,7 @@ class BatchWindow(QTabWidget):
 
 
 class CalculationPrepare(QDialog):
-    def __init__(self, file_list, calculation_plan, statistic_file_path, settings):
+    def __init__(self, file_list, calculation_plan, statistic_file_path, settings, batch_manager):
         """
 
         :param file_list: list of files to proceed
@@ -840,6 +847,7 @@ class CalculationPrepare(QDialog):
         :type statistic_file_path: str
         :param settings: settings object
         :type settings: Settings
+        :type batch_manager: BatchManager
         """
         super(CalculationPrepare, self).__init__()
         self.setWindowTitle("Calculation start")
@@ -847,6 +855,7 @@ class CalculationPrepare(QDialog):
         self.calculation_plan = calculation_plan
         self.statistic_file_path = statistic_file_path
         self.settings = settings
+        self.batch_manager = batch_manager
         self.info_label = QLabel("information, <i><font color='blue'>warnings</font></i>, "
                                  "<b><font color='red'>errors</font><b>")
         self.voxel_size = Spacing("Voxel size", zip(['x:', 'y:', 'z:'], settings.voxel_size), self, units=UNITS_LIST,
@@ -900,7 +909,12 @@ class CalculationPrepare(QDialog):
         return res
 
     def verify_data(self):
-        pass
+        text = "information, <i><font color='blue'>warnings</font></i>, <b><font color='red'>errors</font><b><br>"
+        if not self.batch_manager.is_sheet_name_use(self.statistic_file_path.text(), self.sheet_name.text()):
+            text += "<i><font color='blue'>Sheet name already in use</i></font><br>"
+
+        text = text[:-4]
+        self.info_label.setText(text)
 
     def showEvent(self, event):
         super(CalculationPrepare, self).showEvent(event)
@@ -911,7 +925,7 @@ class CalculationPrepare(QDialog):
             all_prefix = os.path.dirname(all_prefix)
         for file_path in self.file_list:
             widget = QTreeWidgetItem(self.file_list_widget)
-            widget.setText(0, os.path.realpath(file_path, all_prefix))
+            widget.setText(0, os.path.relpath(file_path, all_prefix))
             if not os.path.exists(file_path):
                 widget.setIcon(0, bad_icon)
                 widget.setToolTip(0, "File do not exists")
