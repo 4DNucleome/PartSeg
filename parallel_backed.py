@@ -104,6 +104,12 @@ class BatchManager(object):
     def finished(self):
         return len(self.process_list) == 0
 
+    def get_responses(self):
+        res = []
+        while not self.result_queue.empty():
+            res.append(self.result_queue.get())
+        return res
+
 
 class BatchWorker(object):
     """
@@ -120,7 +126,7 @@ class BatchWorker(object):
         pass
 
     def calculate_task(self, task):
-        pass
+        self.result_queue.put(task)
 
     def run(self):
         logging.debug("Process started {}".format(os.getpid()))

@@ -9,6 +9,10 @@ import auto_fit as af
 import logging
 from enum import Enum
 from collections import OrderedDict, namedtuple
+from abc import ABCMeta, abstractmethod
+from six import add_metaclass
+import os
+from copy import copy
 UPPER = "Upper"
 GAUSS = "Gauss"
 
@@ -625,6 +629,8 @@ class Settings(object):
             ff.write(json_str)
 
     def load(self, file_path):
+        if file_path is None:
+            return
         try:
             with open(file_path, "r") as ff:
                 important_data = json.load(ff)
@@ -911,7 +917,7 @@ class Segment(object):
 
     def set_image(self, image):
         self._image = image
-        self.gauss_image = gaussian(self._image, self._settings.gauss_radius)
+        self.gauss_image = None
         self._segmentation_changed = True
         self._finally_segment = np.zeros(image.shape, dtype=np.uint8)
         self.threshold_updated()
@@ -923,6 +929,8 @@ class Segment(object):
             return
         self._threshold_image = np.zeros(self._image.shape, dtype=np.uint8)
         if self._settings.use_gauss:
+            if self.gauss_image is None:
+                self.gauss_image = gaussian(self._image, self._settings.gauss_radius)
             image_to_threshold = self.gauss_image
         else:
             image_to_threshold = self._image
@@ -1101,62 +1109,247 @@ def get_segmented_data(image, settings, segment, with_std=False, mask_morph=None
     return image, segmentation
 
 
-MaskCreate = namedtuple("MaskCreate", ['name'])
+MaskCreate = namedtuple("MaskCreate", ['name', 'radius'])
 MaskUse = namedtuple("MaskUse", ['name'])
 CmapProfile = namedtuple("CmapProfile", ["suffix", "gauss_type", "center_data", "rotation_axis", "cut_obsolete_are"])
-MaskSuffix = namedtuple("MaskSuffix", ["name", "suffix"])
-MaskSub = namedtuple("MaskSub", ["name", "sub", "rep"])
-MaskFile = namedtuple("MaskFile", ["name", "path"])
 ProjectSave = namedtuple("ProjectSave", ["suffix"])
+
+
+@add_metaclass(ABCMeta)
+class MaskMapper(object):
+    def __init__(self, name):
+        self.name = name
+
+    @abstractmethod
+    def get_mask_path(self, file_path):
+        pass
+
+    @abstractmethod
+    def get_parameters(self):
+        pass
+
+
+class MaskSuffix(MaskMapper):
+    def __init__(self, name, suffix):
+        super(MaskSuffix, self).__init__(name)
+        self.suffix = suffix
+
+    def get_mask_path(self, file_path):
+        base, ext = os.path.splitext(file_path)
+        return base + self.suffix + ext
+
+    def get_parameters(self):
+        return {"name": self.name, "suffix": self.suffix}
+
+
+class MaskSub(MaskMapper):
+    def __init__(self, name, base, rep):
+        super(MaskSub, self).__init__(name)
+        self.base = base
+        self.rep = rep
+
+    def get_mask_path(self, file_path):
+        dir_name, filename = os.path.split(file_path)
+        filename = filename.replace(self.base, self.rep)
+        return os.path.join(dir_name, filename)
+
+    def get_parameters(self):
+        return {"name": self.name, "base": self.base}
+
+
+class MaskFile(MaskMapper):
+    def __init__(self, name, path_to_file):
+        super(MaskFile, self).__init__(name)
+        self.path_to_file = path_to_file
+        self.name_dict = None
+
+    def get_mask_path(self, file_path):
+        if self.name_dict is None:
+            self.parse_map()
+        return self.name_dict[os.path.normpath(file_path)]
+
+    def get_parameters(self):
+        return {"name": self.name, "path_to_file": self.path_to_file}
+
+    def set_map_path(self, value):
+        self.path_to_file = value
+
+    def parse_map(self, sep=";"):
+        with open(self.path_to_file) as map_file:
+            dir_name = os.path.dirname(self.path_to_file)
+            for i, line in enumerate(map_file):
+                try:
+                    file_name, mask_name = line.split(sep)
+                except ValueError:
+                    logging.error(
+                        "Error in parsing map file\nline {}\n{}\nfrom file{}".format(i, line, self.path_to_file))
+                    continue
+                file_name = file_name.strip()
+                mask_name = mask_name.strip()
+                if not os.path.abspath(file_name):
+                    file_name = os.path.normpath(os.path.join(dir_name, file_name))
+                if not os.path.abspath(mask_name):
+                    mask_name = os.path.normpath(os.path.join(dir_name, mask_name))
+                self.name_dict[file_name] = mask_name
 
 
 class Operations(Enum):
     clean_mask = 1
+    up_mask = 2
+
+
+class PlanChanges(Enum):
+    add_node = 1
+    remove_node =2
+
+
+CalculationTree = namedtuple("CalculationTree", ["operation", "children"])
+
+
+class NodeType(Enum):
+    segment = 1
+    mask = 2
+    statics = 3
+    root = 4
+    save = 5
+    none = 6
 
 
 class CalculationPlan(object):
+    """
+    :type current_pos: list[int]
+    :type name: str
+    :type segmentation_count: int
+    """
     correct_name = {MaskCreate.__name__: MaskCreate, MaskUse.__name__: MaskUse, CmapProfile.__name__: CmapProfile,
                     StatisticProfile.__name__: StatisticProfile, SegmentationProfile.__name__: SegmentationProfile,
                     MaskSuffix.__name__: MaskSuffix, MaskSub.__name__: MaskSub, MaskFile.__name__: MaskFile,
                     ProjectSave.__name__: ProjectSave}
 
-    # TODO Batch plans dump and load
     def __init__(self):
         self.execution_list = []
-        self.execution_tree = None
+        self.execution_tree = CalculationTree("root", [])
         self.segmentation_count = 0
         self.name = ""
+        self.current_pos = []
+        self.changes = []
+
+    def get_changes(self):
+        ret = self.changes
+        self.changes = []
+        return ret
+
+    def position(self):
+        return self.current_pos
+
+    def set_position(self, value):
+        self.current_pos = value
 
     def clean(self):
         self.execution_list = []
+        self.execution_tree = CalculationTree("root", [])
+        self.current_pos = []
+
+    def get_node(self, search_pos=None):
+        node = self.execution_tree
+        if search_pos is None:
+            search_pos = self.current_pos
+        for pos in search_pos:
+            node = node.children[pos]
+        return node
+
+    def get_node_type(self):
+        if not self.current_pos:
+            return NodeType.root
+        if self.current_pos is None:
+            return NodeType.none
+        node = self.get_node()
+        if isinstance(node.operation, MaskMapper) or isinstance(node.operation, MaskCreate):
+            return NodeType.mask
+        if isinstance(node.operation, StatisticProfile):
+            return NodeType.statics
+        if isinstance(node.operation, SegmentationProfile):
+            return NodeType.segment
+        if isinstance(node.operation, ProjectSave) or isinstance(node.operation, CmapProfile):
+            return NodeType.save
 
     def add_step(self, step):
-        text = self.get_el_name(step)
+        if self.current_pos is None:
+            return
+        node = self.get_node()
         self.execution_list.append(step)
+        node.children.append(CalculationTree(step, []))
         if isinstance(step, SegmentationProfile):
             self.segmentation_count += 1
-        return text
+        self.changes.append((self.current_pos, node.children[-1], PlanChanges.add_node))
 
     def __len__(self):
         return len(self.execution_list)
+
+    def has_children(self):
+        node = self.get_node()
+        if len(node.children) > 0:
+            return True
+        return False
+
+    def remove_step(self):
+        path = copy(self.current_pos)
+        pos = path[-1]
+        parent_node = self.get_node(path[:-1])
+        del parent_node.children[pos]
+        self.changes.append((self.current_pos, None, PlanChanges.remove_node))
 
     def pop(self):
         el = self.execution_list.pop()
         if isinstance(el, SegmentationProfile):
             self.segmentation_count -= 1
+        self.execution_tree = None
         return el
 
     def is_segmentation(self):
         return self.segmentation_count > 0
 
     def build_execution_tree(self):
-        pass
+        mask_addres = dict()
+        self.execution_tree = CalculationTree("open", [])
+        node = self.execution_tree
+        node_children = []
+        for el in self.execution_list:
+            if isinstance(el, SegmentationProfile):
+                if el in node_children:
+                    index = node_children.index(el)
+                    node = node.children[index]
+                    node_children = [x.operation for x in node.children]
+                else:
+                    new_node = CalculationTree(el, [])
+                    node.children.append(new_node)
+                    node = new_node
+                    node_children = []
+            elif isinstance(el, MaskUse):
+                node = mask_addres[el.name]
+                node_children = [x.operation for x in node.children]
+            elif isinstance(el, Operations) and el == Operations.clean_mask:
+                node = self.execution_tree
+                node_children = [x.operation for x in node.children]
+            elif el.__class__ in []:
+                pass
+            else:
+                if el in node_children:
+                    continue
+                else:
+                    node_children.append(el)
+                    node.children.append(CalculationTree(el, []))
 
     def set_name(self, text):
         self.name = text
 
     def get_parameters(self):
         return self.dict_dump()
+
+    def get_execution_tree(self):
+        if self.execution_tree is None:
+            self.build_execution_tree()
+        return self.execution_tree
 
     def dict_dump(self):
         res = dict()
@@ -1171,15 +1364,17 @@ class CalculationPlan(object):
                 sub_dict["values"] = el.get_parameters()
             elif isinstance(el, SegmentationProfile):
                 sub_dict["values"] = el.get_parameters()
+            elif isinstance(el, MaskMapper):
+                sub_dict["values"] = el.get_parameters()
             else:
                 raise ValueError("Not supported type")
             execution_list.append(sub_dict)
         res["execution_list"] = execution_list
         return res
 
-    @staticmethod
-    def dict_load(data_dict):
-        res_plan = CalculationPlan()
+    @classmethod
+    def dict_load(cls, data_dict):
+        res_plan = cls()
         name = data_dict["name"]
         res_plan.set_name(name)
         execution_list = data_dict["execution_list"]
@@ -1195,6 +1390,7 @@ class CalculationPlan(object):
         :return: str
         """
         if el.__class__.__name__ not in CalculationPlan.correct_name.keys():
+            print(el)
             raise ValueError("Unknown type {}".format(el.__class__.__name__))
         if isinstance(el, Operations):
             if el == Operations.clean_mask:
@@ -1218,7 +1414,7 @@ class CalculationPlan(object):
         if isinstance(el, MaskSuffix):
             return "File mask: {} with suffix {}".format(el.name, el.suffix)
         if isinstance(el, MaskSub):
-            return "File mask: {} substitution {} on {}".format(el.name, el.sub, el.rep)
+            return "File mask: {} substitution {} on {}".format(el.name, el.base, el.rep)
         if isinstance(el, MaskFile):
             return "File mapping mask: {}".format(el.name)
         if isinstance(el, ProjectSave):
