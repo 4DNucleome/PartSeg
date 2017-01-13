@@ -1,16 +1,17 @@
 # coding=utf-8
 import os
-import logging
 from glob import glob
 import multiprocessing
-from backend import Settings, CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, MaskSuffix, MaskSub, \
-    MaskFile, ProjectSave, UNITS_LIST
+from backend import Settings,  UNITS_LIST
 from parallel_backed import BatchManager
-from copy import copy, deepcopy
+from copy import copy
 from io_functions import GaussUse
-from backend import StatisticProfile, SegmentationProfile, PlanChanges, NodeType, ChooseChanel
+from statistics_calculation import StatisticProfile
+from  segment import SegmentationProfile
 from universal_gui_part import Spacing, right_label
 from global_settings import file_folder
+from calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, MaskSuffix, MaskSub, \
+    MaskFile, ProjectSave, PlanChanges, NodeType, ChooseChanel
 
 from qt_import import *
 

@@ -17,8 +17,10 @@ import matplotlib.colors as colors
 
 from PIL import Image
 
-from backend import Settings, Segment, UPPER, GAUSS, SegmentationProfile, DrawType, MaskChange
+from backend import Settings, Segment, UPPER, GAUSS, SegmentationProfile, MaskChange
 from batch_window import BatchWindow
+
+from image_operations import DrawType
 
 from io_functions import save_to_cmap, save_to_project, load_project, GaussUse
 
