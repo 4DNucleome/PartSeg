@@ -353,7 +353,7 @@ class CreatePlan(QWidget):
         self.reuse_mask = QPushButton("Reuse mask")
         self.set_mask_name = QPushButton("Set mask name")
 
-        self.project_segmentation = QPushButton("Project segmentation")
+        self.project_segmentation = QPushButton("segmentation from project")
 
         self.chose_profile = QPushButton("Segment Profile")
         self.statistic_list = QListWidget(self)
@@ -509,6 +509,14 @@ class CreatePlan(QWidget):
     def node_type_changed(self):
         node_type = self.calculation_plan.get_node_type()
         self.node_type = node_type
+        if node_type in [NodeType.file_mask, NodeType.mask, NodeType.segment, NodeType.statics, NodeType.save]:
+            self.remove_btn.setEnabled(True)
+        else:
+            self.remove_btn.setEnabled(False)
+        self.cmap_save_btn.setDisabled(True)
+        self.project_save_btn.setDisabled(True)
+        self.project_segmentation.setDisabled(True)
+        self.choose_channel_btn.setDisabled(True)
         print(node_type)
         if node_type == NodeType.mask or node_type == NodeType.file_mask:
             self.mask_allow = False
@@ -518,15 +526,24 @@ class CreatePlan(QWidget):
             self.mask_allow = True
             self.segment_allow = False
             self.file_mask_allow = False
+            self.project_save_btn.setEnabled(True)
+            self.cmap_save_btn.setEnabled(True)
         elif node_type == NodeType.root:
             self.mask_allow = False
             self.segment_allow = True
             self.file_mask_allow = True
+            self.project_segmentation.setEnabled(True)
+            self.choose_channel_btn.setEnabled(True)
         elif node_type == NodeType.none or node_type == NodeType.statics or node_type == NodeType.save:
             self.mask_allow = False
             self.segment_allow = False
             self.file_mask_allow = False
         self.plan_node_changed.emit()
+
+    def set_mask_name(self):
+        name = str(self.mask_name.text()).strip()
+        self.calculation_plan.replace_name(name)
+        self.plan.update_view()
 
     def save_to_project(self):
         suffix, ok = QInputDialog.getText(self, "Project file suffix", "Set project name suffix")
@@ -626,6 +643,7 @@ class CreatePlan(QWidget):
     def clean_plan(self):
         self.calculation_plan = CalculationPlan()
         self.plan.set_plan(self.calculation_plan)
+        self.node_type_changed()
         self.mask_set = set()
 
     def mask_text_changed(self):
@@ -721,10 +739,11 @@ class CreatePlan(QWidget):
     def show_statistics(self, text=None):
         if self.protect:
             return
-        if text is None and self.statistic_list.currentItem() is not None:
-            text = str(self.statistic_list.currentItem().text())
-        else:
-            return
+        if text is None:
+            if self.statistic_list.currentItem() is not None:
+                text = str(self.statistic_list.currentItem().text())
+            else:
+                return
         if str(text) != "":
             self.information.setText(str(self.settings.statistics_profile_dict[str(text)]))
             if self.calculation_plan.is_segmentation():
@@ -737,10 +756,11 @@ class CreatePlan(QWidget):
     def show_segment(self, text=None):
         if self.protect:
             return
-        if text is None and self.segment_profile.currentItem() is not None:
-            text = str(self.segment_profile.currentItem().text())
-        else:
-            return
+        if text is None:
+            if self.segment_profile.currentItem() is not None:
+                text = str(self.segment_profile.currentItem().text())
+            else:
+                return
         if str(text) != "":
             self.information.setText(str(self.settings.segmentation_profiles_dict[str(text)]))
             self.chose_profile.setEnabled(self.segment_allow)

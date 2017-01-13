@@ -1116,6 +1116,7 @@ ProjectSave = namedtuple("ProjectSave", ["suffix"])
 
 MaskCreate.__new__.__defaults__ = (0,)
 
+
 @add_metaclass(ABCMeta)
 class MaskMapper(object):
     def __init__(self, name):
@@ -1254,12 +1255,33 @@ class CalculationPlan(object):
         self.current_pos = []
 
     def get_node(self, search_pos=None):
+        """
+        :param search_pos:
+        :return: CalculationTree
+        """
         node = self.execution_tree
         if search_pos is None:
             search_pos = self.current_pos
         for pos in search_pos:
             node = node.children[pos]
         return node
+
+    def _get_mask_name(self, node):
+        """
+        :type node: CalculationTree
+        :param node:
+        :return: set[str]
+        """
+        res = set()
+        if isinstance(node.operation, MaskCreate) or isinstance(node.operation, MaskMapper):
+            res.add(node.operation.name)
+        for el in node.children:
+            res += self._get_mask_name(el)
+        return res
+
+    def get_mask_names(self):
+        node = self.get_node()
+        return self._get_mask_name(node)
 
     def get_node_type(self):
         if self.current_pos is None:
@@ -1295,6 +1317,13 @@ class CalculationPlan(object):
         node.operation = step
         self.changes.append((self.current_pos, node, PlanChanges.replace_node))
 
+    def replace_name(self, name):
+        if self.current_pos is None:
+            return
+        node = self.get_node()
+        node.operation.name = name
+        self.changes.append((self.current_pos, node, PlanChanges.replace_node))
+
     def __len__(self):
         return len(self.execution_list)
 
@@ -1321,37 +1350,6 @@ class CalculationPlan(object):
     def is_segmentation(self):
         return self.segmentation_count > 0
 
-    def build_execution_tree(self):
-        mask_addres = dict()
-        self.execution_tree = CalculationTree("open", [])
-        node = self.execution_tree
-        node_children = []
-        for el in self.execution_list:
-            if isinstance(el, SegmentationProfile):
-                if el in node_children:
-                    index = node_children.index(el)
-                    node = node.children[index]
-                    node_children = [x.operation for x in node.children]
-                else:
-                    new_node = CalculationTree(el, [])
-                    node.children.append(new_node)
-                    node = new_node
-                    node_children = []
-            elif isinstance(el, MaskUse):
-                node = mask_addres[el.name]
-                node_children = [x.operation for x in node.children]
-            elif isinstance(el, Operations) and el == Operations.clean_mask:
-                node = self.execution_tree
-                node_children = [x.operation for x in node.children]
-            elif el.__class__ in []:
-                pass
-            else:
-                if el in node_children:
-                    continue
-                else:
-                    node_children.append(el)
-                    node.children.append(CalculationTree(el, []))
-
     def set_name(self, text):
         self.name = text
 
@@ -1359,29 +1357,38 @@ class CalculationPlan(object):
         return self.dict_dump()
 
     def get_execution_tree(self):
-        if self.execution_tree is None:
-            self.build_execution_tree()
         return self.execution_tree
+
+    def recursive_dump(self, node, pos):
+        """
+        :type node: CalculationTree
+        :type pos: list[int]
+        :param node:
+        :param pos:
+        :return: list[(list[int], object, PlanChanges)]
+        """
+        sub_dict = dict()
+        el = node.operation
+        sub_dict["type"] = el.__class__.__name__
+        if issubclass(el.__class__, tuple):
+            sub_dict["values"] = el.__dict__
+        elif isinstance(el, StatisticProfile):
+            sub_dict["values"] = el.get_parameters()
+        elif isinstance(el, SegmentationProfile):
+            sub_dict["values"] = el.get_parameters()
+        elif isinstance(el, MaskMapper):
+            sub_dict["values"] = el.get_parameters()
+        else:
+            raise ValueError("Not supported type {}".format(el))
+        res = [(pos, sub_dict, PlanChanges.add_node.value)]
+        for i, el in enumerate(node.children):
+            res.extend(self.recursive_dump(el, pos + [i]))
+        return res
 
     def dict_dump(self):
         res = dict()
         res["name"] = self.name
-        execution_list = []
-        for el in self.execution_list:
-            sub_dict = dict()
-            sub_dict["type"] = el.__class__.__name__
-            if issubclass(el.__class__, tuple):
-                sub_dict["values"] = el.__dict__
-            elif isinstance(el, StatisticProfile):
-                sub_dict["values"] = el.get_parameters()
-            elif isinstance(el, SegmentationProfile):
-                sub_dict["values"] = el.get_parameters()
-            elif isinstance(el, MaskMapper):
-                sub_dict["values"] = el.get_parameters()
-            else:
-                raise ValueError("Not supported type")
-            execution_list.append(sub_dict)
-        res["execution_list"] = execution_list
+        res["execution_tree"] = [self.recursive_dump(x, [i]) for i, x in enumerate(self.execution_tree.children)]
         return res
 
     @classmethod
