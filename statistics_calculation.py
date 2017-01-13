@@ -1,6 +1,7 @@
 from collections import namedtuple, OrderedDict
 from utils import class_to_dict
 import logging
+import SimpleITK as sitk
 import numpy as np
 
 import auto_fit as af

@@ -1,8 +1,9 @@
 from parallel_backed import BatchManager
-from backend import CalculationPlan, Settings, Segment
+from backend import Settings, Segment
 from os import path
 import tifffile
 import pandas as pd
+from calculation_plan import CalculationPlan
 
 
 def do_calculation(calculation_plan, file_path):

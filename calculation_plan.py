@@ -157,6 +157,12 @@ class CalculationPlan(object):
         self.execution_tree = CalculationTree("root", [])
         self.current_pos = []
 
+    def __copy__(self):
+        return CalculationPlan.dict_load(self.dict_dump())
+
+    def __deepcopy__(self):
+        return CalculationPlan.dict_load(self.dict_dump())
+
     def get_node(self, search_pos=None):
         """
         :param search_pos:

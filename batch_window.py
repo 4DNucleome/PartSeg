@@ -770,7 +770,7 @@ class CreatePlan(QWidget):
             if text in self.settings.batch_plans:
                 self.add_calculation_plan(text)
                 return
-            plan = CalculationPlan.dict_load(self.calculation_plan.dict_dump())
+            plan = copy(self.calculation_plan)
             plan.set_name(text)
             self.settings.batch_plans[text] = plan
             self.plan_created.emit()
@@ -853,7 +853,7 @@ class CreatePlan(QWidget):
 
     def edit_plan(self):
         plan = self.sender().plan_to_edit  # type: CalculationPlan
-        self.calculation_plan = CalculationPlan.dict_load(plan.dict_dump())
+        self.calculation_plan = copy(plan)
         self.plan.set_plan(self.calculation_plan)
         self.mask_set.clear()
 
