@@ -56,6 +56,54 @@ class SegmentationProfile(object):
         return class_to_dict(self, *self.PARAMETERS)
 
 
+class DummySegment(object):
+    def __init__(self):
+        self._image = None
+        self._full_segmentation = None
+        self._segmentation = None
+
+    def calculate_segmentation(self, profile, image, mask):
+        """
+        :type profile: SegmentationProfile
+        :type image: np.array
+        :type mask: np.array | None
+        :param profile:
+        :param image:
+        :return:
+        """
+        self._image = image
+        if profile.use_gauss:
+            image = gaussian(image, profile.gauss_radius)
+        if profile.threshold_type == UPPER:
+            def get_mask(img, threshold):
+                return np.array(img <= threshold)
+        else:
+            def get_mask(img, threshold):
+                return np.array(img >= threshold)
+        if profile.threshold_layer_separate:
+            threshold_image = np.zeros(image.shape, dtype=np.uint8)
+            for i in range(image.shape[0]):
+                threshold_image[i][get_mask(image[i], profile.threshold_list[i])] = 1
+        else:
+            threshold_image = get_mask(image, profile.threshold).astype(np.uint8)
+        if mask is not None:
+            threshold_image *= (mask > 0)
+        components = sitk.ConnectedComponent(sitk.GetImageFromArray(threshold_image))
+        self._full_segmentation = sitk.GetArrayFromImage(threshold_image)
+        self._segmentation = sitk.GetArrayFromImage(sitk.RelabelComponent(components, profile.minimum_size))
+
+    def get_segmentation(self):
+        return self.segmentation
+
+    @property
+    def segmentation(self):
+        return self._segmentation
+
+    @property
+    def draw_canvas(self):
+        return np.zeros(self._image.shape, dtype=np.uint8)
+
+
 class Segment(object):
     """
     :type _segmented_image: np.ndarray

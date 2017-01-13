@@ -640,6 +640,7 @@ class MyCanvas(QWidget):
 class MyDrawCanvas(MyCanvas):
     """
     :type segmentation: np.ndarray
+    :type segment: Segment
     """
 
     def __init__(self, figure_size, settings, info_object, segment, *args):

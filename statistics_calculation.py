@@ -1,3 +1,5 @@
+
+from __future__ import division
 from collections import namedtuple, OrderedDict
 from utils import class_to_dict
 import logging
@@ -55,6 +57,7 @@ class StatisticProfile(object):
                 tree = self.rebuild_tree(cf_val[0])
             self.chosen_fields.append((tree, user_name, None))
         self.settings = settings
+        self.voxel_size = (1, 1, 1)
         self.reversed_brightness = reversed_brightness
         self.use_gauss_image = use_gauss_image
         self.name_prefix = name_prefix
@@ -191,7 +194,8 @@ class StatisticProfile(object):
         logging.error("Wrong statistics: {}".format(node))
         return 1
 
-    def calculate(self, image, gauss_image, mask, full_mask, base_mask):
+    def calculate(self, image, gauss_image, mask, full_mask, base_mask, voxel_size):
+        self.voxel_size = voxel_size
         result = OrderedDict()
         if self.use_gauss_image:
             image = gauss_image.astype(np.float)
@@ -217,10 +221,10 @@ class StatisticProfile(object):
 
     def calculate_volume(self, mask, **_):
         print("Volume {}".format(np.max(mask)))
-        return np.count_nonzero(mask) * self.pixel_volume(self.settings.voxel_size)
+        return np.count_nonzero(mask) * self.pixel_volume(self.voxel_size)
 
     def calculate_component_volume(self, mask, **_):
-        return np.bincount(mask.flat)[1:] * self.pixel_volume(self.settings.voxel_size)
+        return np.bincount(mask.flat)[1:] * self.pixel_volume(self.voxel_size)
 
     @staticmethod
     def calculate_mass(mask, image, **_):
@@ -236,7 +240,7 @@ class StatisticProfile(object):
         return res
 
     def calculate_border_surface(self, mask, **_):
-        return calculate_volume_surface(mask, self.settings.voxel_size)
+        return calculate_volume_surface(mask, self.voxel_size)
 
     @staticmethod
     def maximum_brightness(mask, image, **_):
@@ -288,7 +292,7 @@ class StatisticProfile(object):
             return None
         img = np.copy(image)
         img[mask == 0] = 0
-        return af.calculate_density_momentum(img, self.settings.voxel_size,)
+        return af.calculate_density_momentum(img, self.voxel_size,)
 
     def border_mask(self, base_mask, radius, **_):
         if base_mask is None:
@@ -296,7 +300,7 @@ class StatisticProfile(object):
         base_mask = np.array(base_mask > 0)
         base_mask = base_mask.astype(np.uint8)
         border = sitk.LabelContour(sitk.GetImageFromArray(base_mask))
-        border.SetSpacing(self.settings.voxel_size)
+        border.SetSpacing(self.voxel_size)
         dilated_border = sitk.GetArrayFromImage(sitk.BinaryDilate(border, radius))
         dilated_border[base_mask == 0] = 0
         return dilated_border
@@ -315,7 +319,7 @@ class StatisticProfile(object):
         if border_mask is None:
             return None
         final_mask = np.array((border_mask > 0) * (mask > 0))
-        return np.count_nonzero(final_mask) * self.pixel_volume(self.settings.voxel_size)
+        return np.count_nonzero(final_mask) * self.pixel_volume(self.voxel_size)
 
 
 def calculate_volume_surface(volume_mask, voxel_size):

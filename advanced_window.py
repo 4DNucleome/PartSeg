@@ -418,6 +418,7 @@ class StatisticsSettings(QWidget):
 class StatisticsWindow(QWidget):
     """
     :type settings: Settings
+    :type segment: Segment
     """
     def __init__(self, settings, segment):
         super(StatisticsWindow, self).__init__()
@@ -430,6 +431,7 @@ class StatisticsWindow(QWidget):
         self.copy_button = QPushButton("Copy to clipboard", self)
         self.horizontal_statistics = QCheckBox("Horizontal", self)
         self.no_header = QCheckBox("No header", self)
+        self.no_units = QCheckBox("No units", self)
         self.horizontal_statistics.stateChanged.connect(self.horizontal_changed)
         self.copy_button.clicked.connect(self.copy_to_clipboard)
         self.statistic_type = QComboBox(self)
@@ -451,6 +453,7 @@ class StatisticsWindow(QWidget):
         butt_layout.setSpacing(10)
         butt_layout.addWidget(self.horizontal_statistics, 1)
         butt_layout.addWidget(self.no_header, 1)
+        butt_layout.addWidget(self.no_units, 1)
         butt_layout.addWidget(self.copy_button, 2)
         butt_layout.addWidget(self.statistic_type, 2)
         v_butt_layout.addLayout(up_butt_layout)
@@ -510,16 +513,22 @@ class StatisticsWindow(QWidget):
             mask = self.segment.get_segmentation()
             full_mask = self.segment.get_full_segmentation()
             base_mask = self.settings.mask
-            stat = compute_class.calculate(image, gauss_image, mask, full_mask, base_mask)
+            stat = compute_class.calculate(image, gauss_image, mask, full_mask, base_mask, self.settings.voxel_size)
         if self.no_header.isChecked():
             self.statistic_shift -= 1
+        if self.no_units.isChecked():
+            header_grow = self.statistic_shift - 1
+        else:
+            header_grow = self.statistic_shift
         if self.horizontal_statistics.isChecked():
             ver_headers = [self.info_field.verticalHeaderItem(x).text() for x in range(self.info_field.rowCount())]
-            self.info_field.setRowCount(3 + self.statistic_shift)
+            self.info_field.setRowCount(3 + header_grow)
             self.info_field.setColumnCount(max(len(stat), self.info_field.columnCount()))
             if not self.no_header.isChecked():
                 ver_headers.append("Name")
-            ver_headers.extend(["Value", "Units"])
+            ver_headers.extend(["Value"])
+            if not self.no_units.isChecked():
+                ver_headers.append("Units")
             self.info_field.setVerticalHeaderLabels(ver_headers)
             self.info_field.setHorizontalHeaderLabels([str(x) for x in range(len(stat))])
             for i, (key, val) in enumerate(stat.items()):
@@ -527,31 +536,36 @@ class StatisticsWindow(QWidget):
                 if not self.no_header.isChecked():
                     self.info_field.setItem(self.statistic_shift + 0, i, QTableWidgetItem(key))
                 self.info_field.setItem(self.statistic_shift + 1, i, QTableWidgetItem(str(val)))
-                try:
-                    self.info_field.setItem(self.statistic_shift + 2, i,
-                                            QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
-                except KeyError as k:
-                    logging.warning(k.message)
+                if not self.no_units.isChecked():
+                    try:
+                        self.info_field.setItem(self.statistic_shift + 2, i,
+                                                QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
+                    except KeyError as k:
+                        logging.warning(k.message)
         else:
             hor_headers = [self.info_field.horizontalHeaderItem(x).text() for x in range(self.info_field.columnCount())]
             self.info_field.setRowCount(max(len(stat), self.info_field.rowCount()))
-            self.info_field.setColumnCount(3 + self.statistic_shift)
+            self.info_field.setColumnCount(3 + header_grow)
             self.info_field.setVerticalHeaderLabels([str(x) for x in range(len(stat))])
             if not self.no_header.isChecked():
                 hor_headers.append("Name")
-            hor_headers.extend(["Value", "Units"])
+            hor_headers.extend(["Value"])
+            if not self.no_units.isChecked():
+                hor_headers.append("Units")
             self.info_field.setHorizontalHeaderLabels(hor_headers)
             for i, (key, val) in enumerate(stat.items()):
                 # print(i, key, val)
                 if not self.no_header.isChecked():
                     self.info_field.setItem(i, self.statistic_shift + 0, QTableWidgetItem(key))
                 self.info_field.setItem(i, self.statistic_shift + 1, QTableWidgetItem(str(val)))
-                try:
-                    self.info_field.setItem(i, self.statistic_shift + 2,
-                                            QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
-                except KeyError as k:
-                    logging.warning(k.message)
-
+                if not self.no_units.isChecked():
+                    try:
+                        self.info_field.setItem(i, self.statistic_shift + 2,
+                                                QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
+                    except KeyError as k:
+                        logging.warning(k.message)
+        if self.no_units.isChecked():
+            self.statistic_shift -= 1
         self.statistic_shift += 3
 
     def keyPressEvent(self, e):

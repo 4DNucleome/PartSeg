@@ -19,7 +19,6 @@ def do_calculation(calculation_plan, file_path):
     ext = path.split(file_path)[1]
     if ext in [".tiff", ".tif", ".lsm"]:
         image = tifffile.imread(file_path)
-
     pass
 
 
