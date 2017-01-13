@@ -1,5 +1,6 @@
 # coding=utf-8
 import os
+import logging
 from glob import glob
 import multiprocessing
 from backend import Settings, CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, MaskSuffix, MaskSub, \
@@ -325,6 +326,7 @@ class CreatePlan(QWidget):
     """
 
     plan_created = pyqtSignal()
+    plan_node_changed = pyqtSignal()
 
     def __init__(self, settings):
         super(CreatePlan, self).__init__()
@@ -374,9 +376,9 @@ class CreatePlan(QWidget):
         self.reuse_mask.clicked.connect(self.use_mask)
         self.clean_plan_btn.clicked.connect(self.clean_plan)
         self.remove_btn.clicked.connect(self.remove_last)
-        self.base_mask_name.textChanged.connect(self.file_mask_text_changed)
-        self.swap_mask_name.textChanged.connect(self.file_mask_text_changed)
-        self.mask_name.textChanged.connect(self.file_mask_text_changed)
+        self.base_mask_name.textChanged.connect(self.mask_text_changed)
+        self.swap_mask_name.textChanged.connect(self.mask_text_changed)
+        self.mask_name.textChanged.connect(self.mask_text_changed)
         self.chose_profile.clicked.connect(self.add_segmentation)
         self.add_calculation.clicked.connect(self.add_statistics)
         self.save_plan_btn.clicked.connect(self.add_calculation_plan)
@@ -386,6 +388,7 @@ class CreatePlan(QWidget):
         self.suffix_mask_name_button.clicked.connect(self.mask_by_suffix)
         self.mapping_file_button.clicked.connect(self.mask_by_mapping)
         self.project_save_btn.clicked.connect(self.save_to_project)
+        self.update_element_btn.stateChanged.connect(self.mask_text_changed)
 
         plan_box = QGroupBox("Calculate plan:")
         lay = QVBoxLayout()
@@ -477,9 +480,9 @@ class CreatePlan(QWidget):
         fst_col.addWidget(plan_box)
         fst_col.addWidget(mask_box)
         layout.addLayout(fst_col, 0, 0, 0, 1)
-        #layout.addWidget(plan_box, 0, 0, 3, 1)
-        #layout.addWidget(mask_box, 3, 0, 2, 1)
-        #layout.addWidget(segmentation_mask_box, 1, 1)
+        # layout.addWidget(plan_box, 0, 0, 3, 1)
+        # layout.addWidget(mask_box, 3, 0, 2, 1)
+        # layout.addWidget(segmentation_mask_box, 1, 1)
         layout.addWidget(segment_box, 0, 2)
         layout.addWidget(other_box, 0, 1)
         layout.addWidget(statistic_box, 1, 1, 1, 2)
@@ -494,6 +497,37 @@ class CreatePlan(QWidget):
         self.suffix_mask_name_button.setDisabled(True)
         self.mapping_file_button.setDisabled(True)
 
+        self.mask_allow = False
+        self.segment_allow = False
+        self.file_mask_allow = False
+        self.node_type = NodeType.root
+        self.plan_node_changed.connect(self.mask_text_changed)
+        self.plan.changed_node.connect(self.node_type_changed)
+        self.plan_node_changed.connect(self.show_segment)
+        self.plan_node_changed.connect(self.show_statistics)
+
+    def node_type_changed(self):
+        node_type = self.calculation_plan.get_node_type()
+        self.node_type = node_type
+        print(node_type)
+        if node_type == NodeType.mask or node_type == NodeType.file_mask:
+            self.mask_allow = False
+            self.segment_allow = True
+            self.file_mask_allow = False
+        elif node_type == NodeType.segment:
+            self.mask_allow = True
+            self.segment_allow = False
+            self.file_mask_allow = False
+        elif node_type == NodeType.root:
+            self.mask_allow = False
+            self.segment_allow = True
+            self.file_mask_allow = True
+        elif node_type == NodeType.none or node_type == NodeType.statics or node_type == NodeType.save:
+            self.mask_allow = False
+            self.segment_allow = False
+            self.file_mask_allow = False
+        self.plan_node_changed.emit()
+
     def save_to_project(self):
         suffix, ok = QInputDialog.getText(self, "Project file suffix", "Set project name suffix")
         if ok:
@@ -506,7 +540,7 @@ class CreatePlan(QWidget):
         self.calculation_plan.add_step(MaskFile(name, ""))
         self.plan.update_view()
         self.mask_set.add(name)
-        self.file_mask_text_changed()
+        self.mask_text_changed()
         self.mask_name_changed(self.mask_name.text)
 
     def mask_by_suffix(self):
@@ -515,7 +549,7 @@ class CreatePlan(QWidget):
         text = self.calculation_plan.add_step(MaskSuffix(name, suffix))
         self.plan.update_view()
         self.mask_set.add(name)
-        self.file_mask_text_changed()
+        self.mask_text_changed()
         self.mask_name_changed(self.mask_name.text)
 
     def mask_by_substitution(self):
@@ -525,7 +559,7 @@ class CreatePlan(QWidget):
         self.calculation_plan.add_step(MaskSub(name, base, repl))
         self.plan.update_view()
         self.mask_set.add(name)
-        self.file_mask_text_changed()
+        self.mask_text_changed()
         self.mask_name_changed(self.mask_name.text)
 
     def save_to_cmap(self):
@@ -594,23 +628,48 @@ class CreatePlan(QWidget):
         self.plan.set_plan(self.calculation_plan)
         self.mask_set = set()
 
-    def file_mask_text_changed(self):
+    def mask_text_changed(self):
         name = str(self.mask_name.text()).strip()
-        if name == "" or name in self.mask_set:
-            self.suffix_mask_name_button.setDisabled(True)
-            self.swap_mask_name_button.setDisabled(True)
-            self.mapping_file_button.setDisabled(True)
+        self.suffix_mask_name_button.setDisabled(True)
+        self.swap_mask_name_button.setDisabled(True)
+        self.mapping_file_button.setDisabled(True)
+        self.generate_mask.setDisabled(True)
+        self.reuse_mask.setDisabled(True)
+        self.set_mask_name.setDisabled(True)
+        # load mask from file
+        if not self.update_element_btn.isChecked():
+            self.set_mask_name.setDisabled(True)
+            if self.file_mask_allow and (name == "" or name not in self.mask_set):
+                base_text = str(self.base_mask_name.text()).strip()
+                rep_text = str(self.swap_mask_name.text()).strip()
+                self.suffix_mask_name_button.setEnabled(base_text != "")
+                self.swap_mask_name_button.setEnabled((base_text != "") and (rep_text != ""))
+                self.mapping_file_button.setEnabled(True)
+            # generate mask from segmentation
+            if self.mask_allow and (name == "" or name not in self.mask_set):
+                self.generate_mask.setEnabled(True)
+            # reuse mask
+            if self.file_mask_allow and name in self.mask_set:
+                self.reuse_mask.setEnabled(True)
+        # edit mask
         else:
-            self.mapping_file_button.setEnabled(True)
-        if str(self.base_mask_name.text()).strip() != "":
-            self.suffix_mask_name_button.setEnabled(True)
-            if str(self.swap_mask_name.text()).strip() != "":
-                self.swap_mask_name_button.setEnabled(True)
-            else:
-                self.swap_mask_name_button.setDisabled(True)
-        else:
-            self.suffix_mask_name_button.setDisabled(True)
-            self.swap_mask_name_button.setDisabled(True)
+            if self.node_type != NodeType.file_mask and self.node_type == NodeType.mask:
+                return
+            # change mask name
+            if name not in self.mask_set and name != "":
+                self.set_mask_name.setEnabled(True)
+            if self.node_type == NodeType.file_mask and (name == "" or name not in self.mask_set):
+                base_text = str(self.base_mask_name.text()).strip()
+                rep_text = str(self.swap_mask_name.text()).strip()
+                self.suffix_mask_name_button.setEnabled(base_text != "")
+                self.swap_mask_name_button.setEnabled((base_text != "") and (rep_text != ""))
+                self.mapping_file_button.setEnabled(True)
+            # generate mask from segmentation
+            if self.node_type == NodeType.mask and (name == "" or name not in self.mask_set):
+                self.generate_mask.setEnabled(True)
+            # reuse mask
+            if self.node_type == NodeType.file_mask and name in self.mask_set:
+                self.reuse_mask.setEnabled(True)
 
     def add_calculation_plan(self, used_text=None):
         if used_text is None or isinstance(used_text, bool):
@@ -659,24 +718,32 @@ class CreatePlan(QWidget):
             self.segment_profile.setCurrentRow(segment_index)
         self.protect = False
 
-    def show_statistics(self, text):
+    def show_statistics(self, text=None):
         if self.protect:
+            return
+        if text is None and self.statistic_list.currentItem() is not None:
+            text = str(self.statistic_list.currentItem().text())
+        else:
             return
         if str(text) != "":
             self.information.setText(str(self.settings.statistics_profile_dict[str(text)]))
             if self.calculation_plan.is_segmentation():
-                self.add_calculation.setEnabled(True)
+                self.add_calculation.setEnabled(self.mask_allow)
             else:
                 self.add_calculation.setDisabled(True)
         else:
             self.add_calculation.setDisabled(True)
 
-    def show_segment(self, text):
+    def show_segment(self, text=None):
         if self.protect:
+            return
+        if text is None and self.segment_profile.currentItem() is not None:
+            text = str(self.segment_profile.currentItem().text())
+        else:
             return
         if str(text) != "":
             self.information.setText(str(self.settings.segmentation_profiles_dict[str(text)]))
-            self.chose_profile.setEnabled(True)
+            self.chose_profile.setEnabled(self.segment_allow)
         else:
             self.chose_profile.setDisabled(True)
 
@@ -756,6 +823,11 @@ class PlanPreview(QTreeWidget):
         up_widget.setExpanded(True)
 
     def get_node(self, path):
+        """
+        :type path: list[int]
+        :param path:
+        :return: QTreeWidgetItem
+        """
         widget = self.topLevelItem(0)  # type : QTreeWidgetItem
         for index in path:
             if str(widget.child(0).text(0)) == "Description":
@@ -775,8 +847,11 @@ class PlanPreview(QTreeWidget):
             elif op_type == PlanChanges.remove_node:
                 node = self.get_node(path[:-1])
                 node.removeChild(path[-1])
+            elif op_type == PlanChanges.replace_node:
+                node = self.get_node(path)
+                node.setText(0, CalculationPlan.get_el_name(node.operation))
             else:
-                pass
+                logging.error("Unknown operation {}".format(op_type))
 
 
 class CalculateInfo(QWidget):

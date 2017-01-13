@@ -1114,6 +1114,7 @@ MaskUse = namedtuple("MaskUse", ['name'])
 CmapProfile = namedtuple("CmapProfile", ["suffix", "gauss_type", "center_data", "rotation_axis", "cut_obsolete_are"])
 ProjectSave = namedtuple("ProjectSave", ["suffix"])
 
+MaskCreate.__new__.__defaults__ = (0,)
 
 @add_metaclass(ABCMeta)
 class MaskMapper(object):
@@ -1200,7 +1201,8 @@ class Operations(Enum):
 
 class PlanChanges(Enum):
     add_node = 1
-    remove_node =2
+    remove_node = 2
+    replace_node = 3
 
 
 CalculationTree = namedtuple("CalculationTree", ["operation", "children"])
@@ -1213,6 +1215,7 @@ class NodeType(Enum):
     root = 4
     save = 5
     none = 6
+    file_mask = 7
 
 
 class CalculationPlan(object):
@@ -1259,12 +1262,14 @@ class CalculationPlan(object):
         return node
 
     def get_node_type(self):
-        if not self.current_pos:
-            return NodeType.root
         if self.current_pos is None:
             return NodeType.none
+        if not self.current_pos:
+            return NodeType.root
         node = self.get_node()
-        if isinstance(node.operation, MaskMapper) or isinstance(node.operation, MaskCreate):
+        if isinstance(node.operation, MaskMapper):
+            return NodeType.file_mask
+        if isinstance(node.operation, MaskCreate):
             return NodeType.mask
         if isinstance(node.operation, StatisticProfile):
             return NodeType.statics
@@ -1282,6 +1287,13 @@ class CalculationPlan(object):
         if isinstance(step, SegmentationProfile):
             self.segmentation_count += 1
         self.changes.append((self.current_pos, node.children[-1], PlanChanges.add_node))
+
+    def replace_step(self, step):
+        if self.current_pos is None:
+            return
+        node = self.get_node()
+        node.operation = step
+        self.changes.append((self.current_pos, node, PlanChanges.replace_node))
 
     def __len__(self):
         return len(self.execution_list)
@@ -1403,7 +1415,10 @@ class CalculationPlan(object):
             else:
                 return "Statistics: {} with prefix: {}".format(el.name, el.name_prefix)
         if isinstance(el, MaskCreate):
-            return "Create mask: {}".format(el.name)
+            if el.name != "":
+                return "Create mask: {}, dilate radius: {}".format(el.name, el.radius)
+            else:
+                return "Create mask with dilate radius: {}".format(el.radius)
         if isinstance(el, MaskUse):
             return "Use mask: {}".format(el.name)
         if isinstance(el, CmapProfile):
