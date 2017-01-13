@@ -6,9 +6,9 @@ import multiprocessing
 from backend import Settings, CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, MaskSuffix, MaskSub, \
     MaskFile, ProjectSave, UNITS_LIST
 from parallel_backed import BatchManager
-from copy import copy
+from copy import copy, deepcopy
 from io_functions import GaussUse
-from backend import StatisticProfile, SegmentationProfile, PlanChanges, NodeType
+from backend import StatisticProfile, SegmentationProfile, PlanChanges, NodeType, ChooseChanel
 from universal_gui_part import Spacing, right_label
 from global_settings import file_folder
 
@@ -352,8 +352,12 @@ class CreatePlan(QWidget):
         self.suffix_mask_name_button = QPushButton("Name suffix")
         self.reuse_mask = QPushButton("Reuse mask")
         self.set_mask_name = QPushButton("Set mask name")
+        self.chanel_pos = QSpinBox()
+        self.chanel_pos.setRange(0, 100)
+        self.chanel_num = QSpinBox()
+        self.chanel_num.setRange(0, 10)
 
-        self.project_segmentation = QPushButton("segmentation from project")
+        self.project_segmentation = QPushButton("Segmentation\nfrom project")
 
         self.chose_profile = QPushButton("Segment Profile")
         self.statistic_list = QListWidget(self)
@@ -375,7 +379,7 @@ class CreatePlan(QWidget):
         self.generate_mask.clicked.connect(self.create_mask)
         self.reuse_mask.clicked.connect(self.use_mask)
         self.clean_plan_btn.clicked.connect(self.clean_plan)
-        self.remove_btn.clicked.connect(self.remove_last)
+        self.remove_btn.clicked.connect(self.remove_element)
         self.base_mask_name.textChanged.connect(self.mask_text_changed)
         self.swap_mask_name.textChanged.connect(self.mask_text_changed)
         self.mask_name.textChanged.connect(self.mask_text_changed)
@@ -404,11 +408,15 @@ class CreatePlan(QWidget):
 
         other_box = QGroupBox("Other operations:")
         bt_lay = QGridLayout()
-        bt_lay.addWidget(self.choose_channel_btn, 1, 0)
+        bt_lay.addWidget(right_label("Chanel pos:"), 0, 0)
+        bt_lay.addWidget(self.chanel_pos, 0, 1)
+        bt_lay.addWidget(right_label("Chanel num:"), 1, 0)
+        bt_lay.addWidget(self.chanel_num, 1, 1)
+        bt_lay.addWidget(self.choose_channel_btn, 4, 0, 1, 2)
         # bt_lay.addWidget(self.forgot_mask_btn, 1, 0)
-        bt_lay.addWidget(self.cmap_save_btn, 2, 0)
-        bt_lay.addWidget(self.project_save_btn, 3, 0)
-        bt_lay.addWidget(self.project_segmentation, 4, 0)
+        bt_lay.addWidget(self.cmap_save_btn, 5, 0, 1, 2)
+        bt_lay.addWidget(self.project_save_btn, 6, 0, 1, 2)
+        bt_lay.addWidget(self.project_segmentation, 7, 0, 1, 2)
         other_box.setLayout(bt_lay)
         other_box.setStyleSheet(group_sheet)
 
@@ -505,18 +513,28 @@ class CreatePlan(QWidget):
         self.plan.changed_node.connect(self.node_type_changed)
         self.plan_node_changed.connect(self.show_segment)
         self.plan_node_changed.connect(self.show_statistics)
+        self.node_type_changed()
 
     def node_type_changed(self):
+        self.cmap_save_btn.setDisabled(True)
+        self.project_save_btn.setDisabled(True)
+        self.project_segmentation.setDisabled(True)
+        self.choose_channel_btn.setDisabled(True)
+        if self.plan.currentItem() is None:
+            self.mask_allow = False
+            self.file_mask_allow = False
+            self.segment_allow = False
+            self.remove_btn.setDisabled(True)
+            self.plan_node_changed.emit()
+            logging.info("[node_type_changed] return")
+            return
         node_type = self.calculation_plan.get_node_type()
+        logging.info("[node_type_changed] node type {}".format(node_type))
         self.node_type = node_type
         if node_type in [NodeType.file_mask, NodeType.mask, NodeType.segment, NodeType.statics, NodeType.save]:
             self.remove_btn.setEnabled(True)
         else:
             self.remove_btn.setEnabled(False)
-        self.cmap_save_btn.setDisabled(True)
-        self.project_save_btn.setDisabled(True)
-        self.project_segmentation.setDisabled(True)
-        self.choose_channel_btn.setDisabled(True)
         print(node_type)
         if node_type == NodeType.mask or node_type == NodeType.file_mask:
             self.mask_allow = False
@@ -539,6 +557,12 @@ class CreatePlan(QWidget):
             self.segment_allow = False
             self.file_mask_allow = False
         self.plan_node_changed.emit()
+
+    def choose_channel(self):
+        chanel_pos = self.chanel_pos.value()
+        chanel_num = self.chanel_num.value()
+        self.calculation_plan.add_step(ChooseChanel(chanel_pos, chanel_num))
+        self.plan.update_view()
 
     def set_mask_name(self):
         name = str(self.mask_name.text()).strip()
@@ -598,8 +622,6 @@ class CreatePlan(QWidget):
         self.mask_set.add(text)
         self.calculation_plan.add_step(MaskCreate(text, radius))
         self.plan.update_view()
-        self.generate_mask.setDisabled(True)
-        self.reuse_mask.setDisabled(False)
 
     def use_mask(self):
         text = str(self.mask_name.text())
@@ -632,13 +654,15 @@ class CreatePlan(QWidget):
         self.calculation_plan.add_step(statistics_copy)
         self.plan.update_view()
 
-    def remove_last(self):
-        if len(self.calculation_plan) > 0:
-            self.calculation_plan.pop()
-            # TODO Something better if need more information
-            el = self.plan.takeItem(len(self.calculation_plan))
-            if isinstance(el, MaskCreate):
-                self.mask_set.remove(el.name)
+    def remove_element(self):
+        conflict_mask, used_mask = self.calculation_plan.get_mask_names()
+        if len(conflict_mask) > 0:
+            logging.info("Mask in use")
+            QMessageBox.warning(self, "In use", "Masks {} are used in other places".format(", ".join(conflict_mask)))
+            return
+        self.mask_set -= used_mask
+        self.calculation_plan.remove_step()
+        self.plan.update_view()
 
     def clean_plan(self):
         self.calculation_plan = CalculationPlan()
@@ -671,7 +695,8 @@ class CreatePlan(QWidget):
                 self.reuse_mask.setEnabled(True)
         # edit mask
         else:
-            if self.node_type != NodeType.file_mask and self.node_type == NodeType.mask:
+            if self.node_type != NodeType.file_mask and self.node_type != NodeType.mask:
+                print("Buka")
                 return
             # change mask name
             if name not in self.mask_set and name != "":
@@ -700,7 +725,7 @@ class CreatePlan(QWidget):
             if text in self.settings.batch_plans:
                 self.add_calculation_plan(text)
                 return
-            plan = copy(self.calculation_plan)
+            plan = deepcopy(self.calculation_plan)
             plan.set_name(text)
             self.settings.batch_plans[text] = plan
             self.plan_created.emit()
@@ -822,6 +847,7 @@ class PlanPreview(QTreeWidget):
         """
         :type up_widget: QTreeWidgetItem
         :type node_plan: CalculationTree
+        :type deep: bool
         :param up_widget: List widget item
         :param node_plan: node from calculation plan
         :return:
@@ -860,18 +886,28 @@ class PlanPreview(QTreeWidget):
             self.clear()
             root = QTreeWidgetItem(self)
             root.setText(0, "Root")
+            for el in self.calculation_plan.execution_tree.children:
+                self.explore_tree(root, el, True)
+            return
+        self.blockSignals(True)
         for i, (path, el, op_type) in enumerate(self.calculation_plan.get_changes()):
             if op_type == PlanChanges.add_node:
                 node = self.get_node(path)
                 self.explore_tree(node, el, False)
             elif op_type == PlanChanges.remove_node:
                 node = self.get_node(path[:-1])
-                node.removeChild(path[-1])
+                index = path[-1]
+                if str(node.child(0).text(0)) == "Description":
+                    index += 1
+                node.removeChild(node.child(index))
             elif op_type == PlanChanges.replace_node:
                 node = self.get_node(path)
                 node.setText(0, CalculationPlan.get_el_name(node.operation))
             else:
                 logging.error("Unknown operation {}".format(op_type))
+        self.blockSignals(False)
+        self.set_path()
+        self.changed_node.emit()
 
 
 class CalculateInfo(QWidget):

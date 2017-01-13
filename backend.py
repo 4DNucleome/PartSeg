@@ -1113,6 +1113,7 @@ MaskCreate = namedtuple("MaskCreate", ['name', 'radius'])
 MaskUse = namedtuple("MaskUse", ['name'])
 CmapProfile = namedtuple("CmapProfile", ["suffix", "gauss_type", "center_data", "rotation_axis", "cut_obsolete_are"])
 ProjectSave = namedtuple("ProjectSave", ["suffix"])
+ChooseChanel = namedtuple("ChooseChanel", ["chanel_position", "chanel_num"])
 
 MaskCreate.__new__.__defaults__ = (0,)
 
@@ -1196,8 +1197,7 @@ class MaskFile(MaskMapper):
 
 
 class Operations(Enum):
-    clean_mask = 1
-    up_mask = 2
+    segment_from_project = 1
 
 
 class PlanChanges(Enum):
@@ -1228,7 +1228,8 @@ class CalculationPlan(object):
     correct_name = {MaskCreate.__name__: MaskCreate, MaskUse.__name__: MaskUse, CmapProfile.__name__: CmapProfile,
                     StatisticProfile.__name__: StatisticProfile, SegmentationProfile.__name__: SegmentationProfile,
                     MaskSuffix.__name__: MaskSuffix, MaskSub.__name__: MaskSub, MaskFile.__name__: MaskFile,
-                    ProjectSave.__name__: ProjectSave}
+                    ProjectSave.__name__: ProjectSave, Operations.__name__: Operations,
+                    ChooseChanel.__name__: ChooseChanel}
 
     def __init__(self):
         self.execution_list = []
@@ -1276,18 +1277,24 @@ class CalculationPlan(object):
         if isinstance(node.operation, MaskCreate) or isinstance(node.operation, MaskMapper):
             res.add(node.operation.name)
         for el in node.children:
-            res += self._get_mask_name(el)
+            res |= self._get_mask_name(el)
         return res
 
     def get_mask_names(self):
         node = self.get_node()
-        return self._get_mask_name(node)
+        used_mask = set()
+        for el in self.execution_tree.children:
+            if isinstance(el.operation, MaskUse):
+                used_mask.add(el.operation.name)
+        tree_mask_names = self._get_mask_name(node)
+        return used_mask & tree_mask_names, used_mask
 
     def get_node_type(self):
         if self.current_pos is None:
             return NodeType.none
         if not self.current_pos:
             return NodeType.root
+        # print("Pos {}".format(self.current_pos))
         node = self.get_node()
         if isinstance(node.operation, MaskMapper):
             return NodeType.file_mask
@@ -1299,6 +1306,11 @@ class CalculationPlan(object):
             return NodeType.segment
         if isinstance(node.operation, ProjectSave) or isinstance(node.operation, CmapProfile):
             return NodeType.save
+        if isinstance(node.operation, ChooseChanel):
+            return NodeType.root
+        if isinstance(node.operation, MaskUse):
+            return NodeType.file_mask
+        logging.error("[get_node_type] unknown node type {}".format(node.operation))
 
     def add_step(self, step):
         if self.current_pos is None:
@@ -1339,6 +1351,7 @@ class CalculationPlan(object):
         parent_node = self.get_node(path[:-1])
         del parent_node.children[pos]
         self.changes.append((self.current_pos, None, PlanChanges.remove_node))
+        self.current_pos = self.current_pos[:-1]
 
     def pop(self):
         el = self.execution_list.pop()
@@ -1388,7 +1401,10 @@ class CalculationPlan(object):
     def dict_dump(self):
         res = dict()
         res["name"] = self.name
-        res["execution_tree"] = [self.recursive_dump(x, [i]) for i, x in enumerate(self.execution_tree.children)]
+        flat_tree = []
+        for i, x in enumerate(self.execution_tree.children):
+            flat_tree.extend(self.recursive_dump(x, [i]))
+        res["execution_tree"] = flat_tree
         return res
 
     @classmethod
@@ -1396,10 +1412,11 @@ class CalculationPlan(object):
         res_plan = cls()
         name = data_dict["name"]
         res_plan.set_name(name)
-        execution_list = data_dict["execution_list"]
-        for el in execution_list:
+        execution_tree = data_dict["execution_tree"]
+        for pos, el, _ in execution_tree:
+            res_plan.current_pos = pos[:-1]
             res_plan.add_step(CalculationPlan.correct_name[el["type"]](**el["values"]))
-        res_plan.build_execution_tree()
+        res_plan.changes = []
         return res_plan
 
     @staticmethod
@@ -1412,8 +1429,10 @@ class CalculationPlan(object):
             print(el)
             raise ValueError("Unknown type {}".format(el.__class__.__name__))
         if isinstance(el, Operations):
-            if el == Operations.clean_mask:
-                return "Clean mask"
+            if el == Operations.segment_from_project:
+                return "Segment from project"
+        if isinstance(el, ChooseChanel):
+            return "Chose chanel, chanel pos: {}, chanel num {}".format(el.chanel_position, el.chanel_num)
         if isinstance(el, SegmentationProfile):
             return "Segmentation: {}".format(el.name)
         if isinstance(el, StatisticProfile):
