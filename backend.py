@@ -1206,7 +1206,13 @@ class PlanChanges(Enum):
     replace_node = 3
 
 
-CalculationTree = namedtuple("CalculationTree", ["operation", "children"])
+CalculationTree2 = namedtuple("CalculationTree", ["operation", "children"])
+
+
+class CalculationTree(object):
+    def __init__(self, operation, children):
+        self.operation = operation
+        self.children = children
 
 
 class NodeType(Enum):
