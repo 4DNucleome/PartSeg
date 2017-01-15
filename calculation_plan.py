@@ -30,6 +30,9 @@ class MaskMapper(object):
     def get_parameters(self):
         pass
 
+    def is_ready(self):
+        return True
+
 
 class MaskSuffix(MaskMapper):
     def __init__(self, name, suffix):
@@ -65,10 +68,18 @@ class MaskFile(MaskMapper):
         self.path_to_file = path_to_file
         self.name_dict = None
 
+    def is_ready(self):
+        return os.path.exists(self.path_to_file)
+
     def get_mask_path(self, file_path):
         if self.name_dict is None:
             self.parse_map()
-        return self.name_dict[os.path.normpath(file_path)]
+        try:
+            return self.name_dict[os.path.normpath(file_path)]
+        except KeyError:
+            return None
+        except AttributeError:
+            return None
 
     def get_parameters(self):
         return {"name": self.name, "path_to_file": self.path_to_file}
@@ -77,6 +88,8 @@ class MaskFile(MaskMapper):
         self.path_to_file = value
 
     def parse_map(self, sep=";"):
+        if not os.path.exists(self.path_to_file):
+            return
         with open(self.path_to_file) as map_file:
             dir_name = os.path.dirname(self.path_to_file)
             for i, line in enumerate(map_file):
@@ -134,12 +147,12 @@ class CalculationPlan(object):
                     ChooseChanel.__name__: ChooseChanel}
 
     def __init__(self):
-        self.execution_list = []
         self.execution_tree = CalculationTree("root", [])
         self.segmentation_count = 0
         self.name = ""
         self.current_pos = []
         self.changes = []
+        self.current_node = None
 
     def get_changes(self):
         ret = self.changes
@@ -151,9 +164,9 @@ class CalculationPlan(object):
 
     def set_position(self, value):
         self.current_pos = value
+        self.current_node = None
 
     def clean(self):
-        self.execution_list = []
         self.execution_tree = CalculationTree("root", [])
         self.current_pos = []
 
@@ -170,31 +183,34 @@ class CalculationPlan(object):
         """
         node = self.execution_tree
         if search_pos is None:
+            if self.current_node is not None:
+                return self.current_node
             search_pos = self.current_pos
         for pos in search_pos:
             node = node.children[pos]
         return node
 
-    def _get_mask_name(self, node):
+    def get_mask_names(self, node=None):
         """
         :type node: CalculationTree
         :param node:
         :return: set[str]
         """
+        if node is None:node = self.get_node()
         res = set()
         if isinstance(node.operation, MaskCreate) or isinstance(node.operation, MaskMapper):
             res.add(node.operation.name)
         for el in node.children:
-            res |= self._get_mask_name(el)
+            res |= self.get_mask_names(el)
         return res
 
-    def get_mask_names(self):
+    def get_file_mask_names(self):
         node = self.get_node()
         used_mask = set()
         for el in self.execution_tree.children:
             if isinstance(el.operation, MaskUse):
                 used_mask.add(el.operation.name)
-        tree_mask_names = self._get_mask_name(node)
+        tree_mask_names = self.get_mask_names(node)
         return used_mask & tree_mask_names, used_mask
 
     def get_node_type(self):
@@ -224,7 +240,6 @@ class CalculationPlan(object):
         if self.current_pos is None:
             return
         node = self.get_node()
-        self.execution_list.append(step)
         node.children.append(CalculationTree(step, []))
         if isinstance(step, SegmentationProfile):
             self.segmentation_count += 1
@@ -244,9 +259,6 @@ class CalculationPlan(object):
         node.operation.name = name
         self.changes.append((self.current_pos, node, PlanChanges.replace_node))
 
-    def __len__(self):
-        return len(self.execution_list)
-
     def has_children(self):
         node = self.get_node()
         if len(node.children) > 0:
@@ -261,13 +273,6 @@ class CalculationPlan(object):
         self.changes.append((self.current_pos, None, PlanChanges.remove_node))
         self.current_pos = self.current_pos[:-1]
 
-    def pop(self):
-        el = self.execution_list.pop()
-        if isinstance(el, SegmentationProfile):
-            self.segmentation_count -= 1
-        self.execution_tree = None
-        return el
-
     def is_segmentation(self):
         return self.segmentation_count > 0
 
@@ -279,6 +284,24 @@ class CalculationPlan(object):
 
     def get_execution_tree(self):
         return self.execution_tree
+
+    def get_list_file_mask(self):
+        """
+        :return: list[MaskMapper]
+        """
+        mask_mapper_list = []
+        for el in self.execution_tree.children:
+            if isinstance(el.operation, MaskMapper):
+                mask_mapper_list.append(el.operation)
+        return mask_mapper_list
+
+    def set_path_to_mapping_file(self, num, path):
+        for el in self.execution_tree.children:
+            if num == 0:
+                el.operation.path_to_file = path
+                return el.operation
+            if isinstance(el.operation, MaskFile):
+                num -= 1
 
     def recursive_dump(self, node, pos):
         """

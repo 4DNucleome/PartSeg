@@ -6,11 +6,13 @@ from backend import Settings,  UNITS_LIST
 from parallel_backed import BatchManager
 from universal_gui_part import Spacing, right_label
 from global_settings import file_folder
-from calculation_plan import CalculationPlan
+from calculation_plan import CalculationPlan, MaskFile, MaskMapper
 
 from prepare_plan_widget import CalculatePlaner
 
 from qt_import import *
+
+import numpy as np
 
 __author__ = "Grzegorz Bokota"
 
@@ -290,6 +292,10 @@ class BatchWindow(QTabWidget):
 
 
 class CalculationPrepare(QDialog):
+    """
+    :type mask_path_list: list[QLineEdit]
+    :type mask_mapper_list: list[MaskMapper]
+    """
     def __init__(self, file_list, calculation_plan, statistic_file_path, settings, batch_manager):
         """
 
@@ -324,6 +330,28 @@ class CalculationPrepare(QDialog):
         self.sheet_name = QLineEdit("Sheet1")
         self.statistic_file_path = QLineEdit(statistic_file_path)
 
+        self.mask_path_list = []
+        self.mask_mapper_list = self.calculation_plan.get_list_file_mask()
+        mask_file_list = []
+        for i, el in enumerate(self.mask_mapper_list):
+            if isinstance(el, MaskFile):
+                mask_file_list.append((i, el))
+        mask_path_layout = QGridLayout()
+        for i, (pos, mask_file) in enumerate(mask_file_list):
+            if mask_file.name == "":
+                mask_path_layout.addWidget(right_label("Path to file {} with mask mapping".format(i+1)))
+            else:
+                mask_path_layout.addWidget(right_label("Path to file {} with mask mapping for name: {}".format(i + 1, mask_file.name)))
+            mask_path = QLineEdit(self)
+            mask_path.setReadOnly(True)
+            self.mask_path_list.append(mask_path)
+            set_path = QPushButton("Choose file", self)
+            set_path.clicked.connect(self.set_mapping_mask(i, pos))
+            mask_path_layout.addWidget(mask_path, i, 1)
+            mask_path_layout.addWidget(set_path, i, 2)
+
+        self.state_list = np.zeros((len(self.file_list), len(self.mask_mapper_list)), dtype=np.uint8)
+
         self.file_list_widget = QTreeWidget()
         self.file_list_widget.header().close()
 
@@ -346,14 +374,30 @@ class CalculationPrepare(QDialog):
         layout.addWidget(right_label("Save prefix:"), 3, 0)
         layout.addWidget(self.result_prefix, 3, 1)
         layout.addWidget(self.result_prefix_btn, 3, 2)
+        layout.addLayout(mask_path_layout, 4, 0, 1, 0)
 
         layout.addWidget(self.file_list_widget, 5, 0, 3, 6)
         btn_layout = QHBoxLayout()
         btn_layout.addWidget(self.execute_btn)
         btn_layout.addStretch()
         btn_layout.addWidget(self.cancel_btn)
-        layout.addLayout(btn_layout, 8, 0, 1, 3)
+        layout.addLayout(btn_layout, 8, 0, 1, 0)
         self.setLayout(layout)
+
+    def set_mapping_mask(self, i, pos):
+        def mapping_dialog():
+            dial = QFileDialog(self, "Select file")
+            base_path = str(self.base_prefix.text()).strip()
+            if base_path != "":
+                dial.setDirectory(base_path)
+            dial.setFileMode(QFileDialog.ExistingFile)
+            if dial.exec_():
+                path = str(dial.selectedFiles())
+                self.mask_path_list[i].setText(path)
+                file_mapper = self.mask_mapper_list[pos]
+                """:type : MaskFile"""
+                file_mapper.set_map_path(path)
+        return mapping_dialog
 
     def get_data(self):
         res = {"file_list": self.file_list, "base_prefix": str(self.base_prefix.text()),
@@ -374,10 +418,11 @@ class CalculationPrepare(QDialog):
         super(CalculationPrepare, self).showEvent(event)
         ok_icon = QIcon(os.path.join(file_folder, "icons", "task-accepted.png"))
         bad_icon = QIcon(os.path.join(file_folder, "icons", "task-reject.png"))
+        warn_icon = QIcon(os.path.join(file_folder, "icons", "task-attempt.png"))
         all_prefix = os.path.commonprefix(self.file_list)
         if not os.path.exists(all_prefix):
             all_prefix = os.path.dirname(all_prefix)
-        for file_path in self.file_list:
+        for file_num, file_path in enumerate(self.file_list):
             widget = QTreeWidgetItem(self.file_list_widget)
             widget.setText(0, os.path.relpath(file_path, all_prefix))
             if not os.path.exists(file_path):
@@ -386,8 +431,32 @@ class CalculationPrepare(QDialog):
                 sub_widget = QTreeWidgetItem(widget)
                 sub_widget.setText(0, "File do not exists")
                 continue
-
-            widget.setIcon(0, ok_icon)
-            widget.setToolTip(0, "Ok")
+            for mask_num, mask_mapper in enumerate(self.mask_mapper_list):
+                if mask_mapper.is_ready():
+                    mask_path = mask_mapper.get_mask_path(file_path)
+                    exist = os.path.exists(mask_path)
+                    if exist:
+                        sub_widget = QTreeWidgetItem(widget)
+                        sub_widget.setText(0, "Mask {} ok".format(mask_mapper.name))
+                        sub_widget.setIcon(0, ok_icon)
+                        self.state_list[file_num, mask_num] = 0
+                    else:
+                        sub_widget = QTreeWidgetItem(widget)
+                        sub_widget.setText(0, "Mask {} do not exists (path: {})".format(
+                            mask_mapper.name, os.path.relpath(mask_path, all_prefix)))
+                        sub_widget.setIcon(0, bad_icon)
+                        self.state_list[file_num, mask_num] = 2
+                else:
+                    sub_widget = QTreeWidgetItem(widget)
+                    sub_widget.setText(0, "Mask {} unknown".format(mask_mapper.name))
+                    sub_widget.setIcon(0, warn_icon)
+                    self.state_list[file_num, mask_num] = 1
+            state = self.state_list[file_num].max()
+            if state == 0:
+                widget.setIcon(0, ok_icon)
+            elif state == 1:
+                widget.setIcon(0, warn_icon)
+            else:
+                widget.setIcon(0, bad_icon)
 
 

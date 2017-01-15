@@ -209,6 +209,7 @@ class CreatePlan(QWidget):
         self.segment_allow = False
         self.file_mask_allow = False
         self.node_type = NodeType.root
+        self.node_name = ""
         self.plan_node_changed.connect(self.mask_text_changed)
         self.plan.changed_node.connect(self.node_type_changed)
         self.plan_node_changed.connect(self.show_segment)
@@ -230,6 +231,7 @@ class CreatePlan(QWidget):
         self.project_save_btn.setDisabled(True)
         self.project_segmentation.setDisabled(True)
         self.choose_channel_btn.setDisabled(True)
+        self.node_name = ""
         if self.plan.currentItem() is None:
             self.mask_allow = False
             self.file_mask_allow = False
@@ -248,6 +250,7 @@ class CreatePlan(QWidget):
             self.mask_allow = False
             self.segment_allow = True
             self.file_mask_allow = False
+            self.node_name = self.calculation_plan.get_node().operation.name
         elif node_type == NodeType.segment:
             self.mask_allow = True
             self.segment_allow = False
@@ -396,7 +399,7 @@ class CreatePlan(QWidget):
         self.plan.update_view()
 
     def remove_element(self):
-        conflict_mask, used_mask = self.calculation_plan.get_mask_names()
+        conflict_mask, used_mask = self.calculation_plan.get_file_mask_names()
         if len(conflict_mask) > 0:
             logging.info("Mask in use")
             QMessageBox.warning(self, "In use", "Masks {} are used in other places".format(", ".join(conflict_mask)))
@@ -441,14 +444,14 @@ class CreatePlan(QWidget):
             # change mask name
             if name not in self.mask_set and name != "":
                 self.set_mask_name.setEnabled(True)
-            if self.node_type == NodeType.file_mask and (name == "" or name not in self.mask_set):
+            if self.node_type == NodeType.file_mask and (name == "" or name == self.node_name or name not in self.mask_set):
                 base_text = str(self.base_mask_name.text()).strip()
                 rep_text = str(self.swap_mask_name.text()).strip()
                 self.suffix_mask_name_button.setEnabled(base_text != "")
                 self.swap_mask_name_button.setEnabled((base_text != "") and (rep_text != ""))
                 self.mapping_file_button.setEnabled(True)
             # generate mask from segmentation
-            if self.node_type == NodeType.mask and (name == "" or name not in self.mask_set):
+            if self.node_type == NodeType.mask and (name == "" or name == self.node_name or name not in self.mask_set):
                 self.generate_mask.setEnabled(True)
             # reuse mask
             if self.node_type == NodeType.file_mask and name in self.mask_set:
@@ -551,6 +554,7 @@ class CreatePlan(QWidget):
         self.calculation_plan = copy(plan)
         self.plan.set_plan(self.calculation_plan)
         self.mask_set.clear()
+        self.mask_set.update(self.calculation_plan.get_mask_names())
 
 
 class PlanPreview(QTreeWidget):

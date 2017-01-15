@@ -100,6 +100,7 @@ class Settings(object):
         self.advanced_menu_geometry = None
         self.file_path = ""
         self.protect = False
+        # TODO read more about zstd compression
         self.prev_segmentation_settings = []
         self.next_segmentation_settings = []
         self.mask_dilate_radius = 0
