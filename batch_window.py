@@ -451,7 +451,11 @@ class CalculationPrepare(QDialog):
                     sub_widget.setText(0, "Mask {} unknown".format(mask_mapper.name))
                     sub_widget.setIcon(0, warn_icon)
                     self.state_list[file_num, mask_num] = 1
-            state = self.state_list[file_num].max()
+            if self.state_list.shape[1] == 0:
+                state = 0
+            else:
+                state = self.state_list[file_num].max()
+
             if state == 0:
                 widget.setIcon(0, ok_icon)
             elif state == 1:
