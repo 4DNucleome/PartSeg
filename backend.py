@@ -43,6 +43,89 @@ class MaskChange(Enum):
     next_seg = 2
 
 
+class SegmentationSettings(object):
+    def __init__(self):
+        self._threshold = 0
+        self._threshold_list = []
+        self._threshold_type = UPPER
+        self._threshold_layer_separate = False
+        self._current_layer = 0
+        self._use_gauss = False
+        self._gauss_radius = 1
+        self._image = None
+        self._mask = None
+        self._file_path = ""
+        self._gauss_image = None
+
+    def set_new_data(self, image, file_path):
+        self._image = image
+        self._file_path = file_path
+
+    @property
+    def threshold(self):
+        if self._threshold_layer_separate:
+            return self._threshold_list
+        return self._threshold
+
+    @threshold.setter
+    def threshold(self, value):
+        """
+        :type value: int | list[int]
+        :param value:
+        :return:
+        """
+        if isinstance(value, list):
+            self._threshold_list = value
+        if self._threshold_layer_separate:
+            self._threshold_list[self._current_layer] = value
+        else:
+            self._threshold = value
+
+    @property
+    def threshold_type(self):
+        return self._threshold_type
+
+    @threshold_type.setter
+    def threshold_type(self, value):
+        self._threshold_type = value
+
+    @property
+    def use_gauss(self):
+        return self._use_gauss
+
+    @use_gauss.setter
+    def use_gauss(self, value):
+        self._use_gauss = value
+
+    @property
+    def image(self):
+        return self._image
+
+    @image.setter
+    def image(self, value):
+        self._image = value
+        self._gauss_image = gaussian(value, self._gauss_radius)
+
+    @property
+    def segment_image(self):
+        if self._use_gauss:
+            return self._gauss_image
+        return self._image
+
+    @property
+    def gauss_radius(self):
+        return self._gauss_radius
+
+    @gauss_radius.setter
+    def gauss_radius(self, value):
+        self._gauss_radius = value
+        self._gauss_image = gaussian(self._image, self._gauss_radius)
+
+    @property
+    def mask(self):
+        return self._mask
+
+
 class Settings(object):
     """
     :type segmentation_profiles_dict: dict[str, SegmentationProfile]

@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
     def canvas_update(image):
         segment.draw_canvas = np.zeros(image.shape, dtype=np.uint8)
-        segment.set_image(image)
+        segment.set_image()
 
     settings.add_image_callback(canvas_update)
     num = len(files_to_proceed)

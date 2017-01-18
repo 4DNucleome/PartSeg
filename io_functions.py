@@ -11,7 +11,8 @@ from copy import deepcopy
 from enum import Enum
 import auto_fit as af
 
-from backend import Settings, Segment, class_to_dict, calculate_statistic_from_image, get_segmented_data, SegmentationProfile
+from backend import Settings, Segment, class_to_dict, calculate_statistic_from_image, get_segmented_data,\
+    SegmentationProfile, SegmentationSettings
 
 __author__ = "Grzegorz Bokota"
 
@@ -46,7 +47,7 @@ ROTATION_MATRIX_DICT = {"x": np.diag([1, -1, -1]), "y": np.diag([-1, 1, -1]), "z
 
 
 def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
-                 centered_data=True, morph_op=MorphChange.no_morph, scale_mass=(1,), rotate=None, with_cuting=True):
+                 centered_data=True, morph_op=MorphChange.no_morph, scale_mass=(1,), rotate=None, with_cutting=True):
     """
     :type file_path: str
     :type settings: Settings
@@ -57,7 +58,7 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
     :type morph_op: MorphChange
     :type scale_mass: (int)|list[int]
     :type rotate: str | None
-    :type with_cuting: bool
+    :type with_cutting: bool
     :return:
     """
     image = np.copy(settings.image)
@@ -101,7 +102,7 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
     f = h5py.File(file_path, "w")
     grp = f.create_group('Chimera/image1')
 
-    if with_cuting:
+    if with_cutting:
         cut_img = np.zeros(upper_bound - lower_bound + [3, 11, 11], dtype=image.dtype)
         coord = []
         for l, u in zip(lower_bound, upper_bound):
@@ -202,7 +203,7 @@ def save_to_project(file_path, settings, segment):
 def load_project(file_path, settings, segment):
     """
     :type file_path: str
-    :type settings: Settings
+    :type settings: Settings | SegmentationSettings
     :type segment: Segment
     :return:
     """

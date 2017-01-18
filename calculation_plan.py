@@ -10,7 +10,7 @@ from segment import SegmentationProfile
 
 MaskCreate = namedtuple("MaskCreate", ['name', 'radius'])
 MaskUse = namedtuple("MaskUse", ['name'])
-CmapProfile = namedtuple("CmapProfile", ["suffix", "gauss_type", "center_data", "rotation_axis", "cut_obsolete_are"])
+CmapProfile = namedtuple("CmapProfile", ["suffix", "gauss_type", "center_data", "rotation_axis", "cut_obsolete_area"])
 ProjectSave = namedtuple("ProjectSave", ["suffix"])
 ChooseChanel = namedtuple("ChooseChanel", ["chanel_position", "chanel_num"])
 
@@ -134,6 +134,32 @@ class NodeType(Enum):
     file_mask = 7
 
 
+class Calculation(object):
+    def __init__(self, file_list, base_prefix, result_prefix, statistic_file_path, sheet_name, calculation_plan):
+        self.file_list = file_list
+        self.base_prefix = base_prefix
+        self.result_prefix = result_prefix
+        self.statistic_file_path = statistic_file_path
+        self.sheet_name = sheet_name
+        self.calculation_plan = calculation_plan
+
+
+class FileCalculation(object):
+    """
+    :type file_path: str
+    :type base_prefix: str
+    :param base_prefix: path to directory
+    :type result_prefix: str
+    :param result_prefix: path to directory
+    :type calculation_plan: CalculationPlan
+    """
+    def __init__(self, file_path, base_prefix, result_prefix, calculation_plan):
+        self.file_path = file_path
+        self.base_prefix = base_prefix
+        self.result_prefix = result_prefix
+        self.calculation_plan = calculation_plan
+
+
 class CalculationPlan(object):
     """
     :type current_pos: list[int]
@@ -206,12 +232,16 @@ class CalculationPlan(object):
 
     def get_file_mask_names(self):
         node = self.get_node()
+        used_mask = self.get_reused_mask()
+        tree_mask_names = self.get_mask_names(node)
+        return used_mask & tree_mask_names, used_mask
+
+    def get_reused_mask(self):
         used_mask = set()
         for el in self.execution_tree.children:
             if isinstance(el.operation, MaskUse):
                 used_mask.add(el.operation.name)
-        tree_mask_names = self.get_mask_names(node)
-        return used_mask & tree_mask_names, used_mask
+        return used_mask
 
     def get_node_type(self):
         if self.current_pos is None:

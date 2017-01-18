@@ -848,7 +848,7 @@ class MyDrawCanvas(MyCanvas):
         self.ax_im = None
         self.original_rgb_image = None
         self.draw_canvas.set_image(image)
-        self.segment.set_image(image)
+        self.segment.set_image()
         self.update_rgb_image()
         if len(image.shape) > 2:
             self.slider.setRange(0, image.shape[0] - 1)
@@ -1420,7 +1420,7 @@ class MainMenu(QWidget):
                     QMessageBox.warning(self, "No object", "There is no component to export to cmap")
                     return
                 save_to_cmap(file_path, self.settings, self.segment, gauss_type=GaussUse.no_gauss,
-                             centered_data=False, with_cuting=False)
+                             centered_data=False, with_cutting=False)
             elif selected_filter == "Data for chimera (*.cmap)":
                 if not np.any(self.segment.get_segmentation()):
                     QMessageBox.warning(self, "No object", "There is no component to export to cmap")
@@ -2046,7 +2046,7 @@ class CmapSave(QDialog):
         options = {"No gauss": GaussUse.no_gauss, "2d gauss": GaussUse.gauss_2d, "2d + 3d gauss": GaussUse.gauss_3d}
         save_to_cmap(self.file_path, self.settings, self.segment, options[str(self.gauss_type.currentText())],
                      self.with_statistics.isChecked(), self.center_data.isChecked(),
-                     rotate=str(self.rotation_axis.currentText()), with_cuting=self.cut_data.isChecked())
+                     rotate=str(self.rotation_axis.currentText()), with_cutting=self.cut_data.isChecked())
         self.accept()
 
 

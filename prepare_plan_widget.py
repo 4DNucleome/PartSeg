@@ -857,4 +857,4 @@ class CmapSavePrepare(QDialog):
         options = {"No gauss": GaussUse.no_gauss, "2d gauss": GaussUse.gauss_2d, "2d + 3d gauss": GaussUse.gauss_3d}
         return CmapProfile(suffix=str(self.suffix_text.text()), gauss_type=options[str(self.gauss_type.currentText())],
                            center_data=self.center_data.isChecked(), rotation_axis=str(self.rotation_axis.currentText())
-                           , cut_obsolete_are=self.cut_data.isChecked())
+                           , cut_obsolete_area=self.cut_data.isChecked())

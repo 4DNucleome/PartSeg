@@ -6,7 +6,7 @@ from backend import Settings,  UNITS_LIST
 from parallel_backed import BatchManager
 from universal_gui_part import Spacing, right_label
 from global_settings import file_folder
-from calculation_plan import CalculationPlan, MaskFile, MaskMapper
+from calculation_plan import CalculationPlan, MaskFile, MaskMapper, Calculation
 
 from prepare_plan_widget import CalculatePlaner
 
@@ -404,7 +404,7 @@ class CalculationPrepare(QDialog):
                "result_prefix": str(self.result_prefix.text()),
                "statistic_file_path": str(self.statistic_file_path.text()),
                "sheet_name": str(self.sheet_name.text()), "calculation_plan": self.calculation_plan}
-        return res
+        return Calculation(**res)
 
     def verify_data(self):
         text = "information, <i><font color='blue'>warnings</font></i>, <b><font color='red'>errors</font><b><br>"

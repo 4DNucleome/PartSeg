@@ -208,11 +208,11 @@ class StatisticProfile(object):
         kw = {"image": image, "mask": mask, "base_mask": base_mask, "full_mask": full_mask}
         for tree, user_name, params in self.chosen_fields:
             try:
-                result[user_name] = self.calculate_tree(tree, help_dict, kw)
+                result[self.name_prefix + user_name] = self.calculate_tree(tree, help_dict, kw)
             except ZeroDivisionError:
-                result[user_name] = "Div by zero"
+                result[self.name_prefix + user_name] = "Div by zero"
             except TypeError:
-                result[user_name] = "None div"
+                result[self.name_prefix + user_name] = "None div"
         return result
 
     @staticmethod

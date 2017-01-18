@@ -2,8 +2,14 @@ import numpy as np
 from utils import class_to_dict
 from image_operations import gaussian, DrawType
 import SimpleITK as sitk
+from enum import Enum
 
-UPPER = "Upper"
+
+class ThresholdType(Enum):
+    upper = 1
+    lower = 2
+
+UPPER = ThresholdType.upper
 
 
 class SegmentationProfile(object):
@@ -110,7 +116,7 @@ class Segment(object):
     :type segmentation_change_callback: list[() -> None | (list[int] -> None]
     """
 
-    def __init__(self, settings):
+    def __init__(self, settings, callback=True):
         """
         :type settings: Settings
         """
@@ -126,15 +132,17 @@ class Segment(object):
         self.segmentation_change_callback = []
         self._segmentation_changed = True
         self.protect = False
-        self._settings.add_threshold_callback(self.threshold_updated)
-        self._settings.add_min_size_callback(self.min_size_updated)
-        self._settings.add_draw_callback(self.draw_update)
+        if callback:
+            self._settings.add_threshold_callback(self.threshold_updated)
+            self._settings.add_min_size_callback(self.min_size_updated)
+            self._settings.add_draw_callback(self.draw_update)
 
-    def set_image(self, image):
-        self._image = image
-        self.gauss_image = None
+    def recalculate(self):
+        self.threshold_updated()
+
+    def set_image(self):
         self._segmentation_changed = True
-        self._finally_segment = np.zeros(image.shape, dtype=np.uint8)
+        self._finally_segment = np.zeros(self._settings.image.shape, dtype=np.uint8)
         self.threshold_updated()
 
     def threshold_updated(self):
@@ -144,11 +152,9 @@ class Segment(object):
             return
         self._threshold_image = np.zeros(self._image.shape, dtype=np.uint8)
         if self._settings.use_gauss:
-            if self.gauss_image is None:
-                self.gauss_image = gaussian(self._image, self._settings.gauss_radius)
-            image_to_threshold = self.gauss_image
+            image_to_threshold = self._settings.gauss_image
         else:
-            image_to_threshold = self._image
+            image_to_threshold = self._settings.image
         # Define which threshold use
         if self._settings.threshold_type == UPPER:
             def get_mask(image, threshold):
