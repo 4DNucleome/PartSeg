@@ -159,6 +159,8 @@ class Settings(object):
         self.mask_overlay = 0.7
         self.power_norm = 1
         self.image = None
+        self.min_value = 0
+        self.max_value = 0
         self.original_image = None
         self.image_clean_profile = None
         self.gauss_image = None
@@ -391,6 +393,8 @@ class Settings(object):
 
     def add_image(self, image, file_path, mask=None, new_image=True, original_image=None):
         self.image = image
+        self.min_value = image.min()
+        self.max_value = image.max()
         if original_image is None:
             self.original_image = image
         else:
