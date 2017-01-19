@@ -6,7 +6,7 @@ from calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, C
     MaskFile, ProjectSave, PlanChanges, NodeType, ChooseChanel
 
 import logging
-from copy import copy
+from copy import copy, deepcopy
 from statistics_calculation import StatisticProfile
 from segment import SegmentationProfile
 from io_functions import GaussUse
@@ -389,7 +389,7 @@ class CreatePlan(QWidget):
     def add_statistics(self):
         text = str(self.statistic_list.currentItem().text())
         statistics = self.settings.statistics_profile_dict[text]
-        statistics_copy = copy(statistics)
+        statistics_copy = deepcopy(statistics)
         prefix = str(self.statistic_name_prefix.text()).strip()
         statistics_copy.name_prefix = prefix
         if self.update_element_btn.isChecked():

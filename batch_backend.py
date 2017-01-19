@@ -11,16 +11,18 @@ from calculation_plan import CalculationPlan, CalculationTree, MaskMapper, MaskU
 from copy import copy
 from utils import dict_set_class
 from queue import Queue
+from collections import Counter, OrderedDict
 
 
-def do_calculation(calculation_plan):
+def do_calculation(file_path, calculation):
     """
-    :type calculation_plan: FileCalculation
-    :param calculation_plan:
+    :type file_path: str
+    :type calculation: Calculation
+    :param calculation:
     :return:
     """
     calc = CalculationProcess()
-    calc.do_calculation(calculation_plan)
+    return calc.do_calculation(FileCalculation(file_path, calculation))
 
 
 class CalculationProcess(object):
@@ -34,9 +36,7 @@ class CalculationProcess(object):
 
     def do_calculation(self, calculation):
         """
-        :type file_path: str
         :type calculation: FileCalculation
-        :param file_path:
         :param calculation:
         :return:
         """
@@ -52,7 +52,7 @@ class CalculationProcess(object):
             load_project(calculation.file_path, self.settings, self.segment)
 
         self.iterate_over(calculation.calculation_plan.execution_tree)
-        return self.statistics
+        return calculation.file_path, self.statistics
 
     def iterate_over(self, node):
         """
@@ -72,7 +72,7 @@ class CalculationProcess(object):
         if isinstance(node.operation, MaskMapper):
             mask = tifffile.imread(node.operation.get_mask_path(self.settings.file_path))
             self.settings.mask = mask
-            self.iterate_over()
+            self.iterate_over(node)
         elif isinstance(node.operation, SegmentationProfile):
             old_segment = copy(self.segment)
             current_profile = SegmentationProfile("curr", **self.settings.get_profile_dict())
@@ -131,6 +131,9 @@ class CalculationManager(object):
         super(CalculationManager, self).__init__()
         self.batch_manager = BatchManager()
         self.calculation_queue = Queue()
+        self.calculation_dict = dict()
+        self.counter_dict = Counter()
+        self.errors_list = []
 
     def add_calculation(self, calculation):
         """
@@ -138,7 +141,28 @@ class CalculationManager(object):
         :param calculation: calculation
         :return:
         """
-        pass
+        self.calculation_dict[calculation.uuid] = calculation, calculation.calculation_plan.get_statistics()
+        self.counter_dict[calculation.uuid] = 0
+        self.batch_manager.add_work(calculation.file_list, calculation, do_calculation)
+
+    @property
+    def has_work(self):
+        return  self.batch_manager.has_work
+
+    def get_results(self):
+        responses = self.batch_manager.get_responses()
+        new_errors = []
+        for uuid, el in responses:
+            self.counter_dict[uuid] += 1
+            if isinstance(el, Exception):
+                self.errors_list.append(el)
+                new_errors.append(el)
+            else:
+                with open(self.calculation_dict[uuid].sheet_name, 'a') as ff:
+                    ff.write(el)
+
+
+
 
 
 

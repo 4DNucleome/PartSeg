@@ -366,7 +366,7 @@ class MyCanvas(QWidget):
         else:
             cmap = matplotlib.cm.get_cmap("gray")
         colored_image = cmap(float_image)
-        self.rgb_image = np.array(colored_image * 255).astype(np.uint8)
+        self.rgb_image = np.array(colored_image * 255, dtype=np.uint8)
 
     def change_layer(self, layer_num):
         self.layer_num = layer_num

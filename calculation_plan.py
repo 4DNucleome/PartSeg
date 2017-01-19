@@ -7,6 +7,7 @@ import logging
 from enum import Enum
 from statistics_calculation import StatisticProfile
 from segment import SegmentationProfile
+import uuid
 
 MaskCreate = namedtuple("MaskCreate", ['name', 'radius'])
 MaskUse = namedtuple("MaskUse", ['name'])
@@ -135,6 +136,15 @@ class NodeType(Enum):
 
 
 class Calculation(object):
+    """
+    :type file_list: list[str]
+    :type base_prefix: str
+    :type result_prefix: str
+    :type statistic_file_path: str
+    :type sheet_name: str
+    :type calculation_plan: CalculationPlan
+
+    """
     def __init__(self, file_list, base_prefix, result_prefix, statistic_file_path, sheet_name, calculation_plan):
         self.file_list = file_list
         self.base_prefix = base_prefix
@@ -142,22 +152,33 @@ class Calculation(object):
         self.statistic_file_path = statistic_file_path
         self.sheet_name = sheet_name
         self.calculation_plan = calculation_plan
+        self.uuid = uuid.uuid4()
 
 
 class FileCalculation(object):
     """
-    :type file_path: str
-    :type base_prefix: str
-    :param base_prefix: path to directory
-    :type result_prefix: str
-    :param result_prefix: path to directory
-    :type calculation_plan: CalculationPlan
+    :type file_path: st
+    :type calculation: Calculation
     """
-    def __init__(self, file_path, base_prefix, result_prefix, calculation_plan):
+    def __init__(self, file_path, calculation):
         self.file_path = file_path
-        self.base_prefix = base_prefix
-        self.result_prefix = result_prefix
-        self.calculation_plan = calculation_plan
+        self.calculation = calculation
+
+    @property
+    def base_prefix(self):
+        return self.calculation.base_prefix
+
+    @property
+    def result_prefix(self):
+        return self.calculation.result_prefix
+
+    @property
+    def calculation_plan(self):
+        return self.calculation.calculation_plan
+
+    @property
+    def uuid(self):
+        return self.calculation.uuid
 
 
 class CalculationPlan(object):
@@ -179,6 +200,17 @@ class CalculationPlan(object):
         self.current_pos = []
         self.changes = []
         self.current_node = None
+
+    def get_statistics(self, node=None):
+        if node is None:
+            node = self.execution_tree
+        if isinstance(node.operation, StatisticProfile):
+            return [node.operation]
+        else:
+            res = []
+            for el in node.children:
+                res.extend(self.get_statistics(el))
+            return res
 
     def get_changes(self):
         ret = self.changes
@@ -222,7 +254,8 @@ class CalculationPlan(object):
         :param node:
         :return: set[str]
         """
-        if node is None:node = self.get_node()
+        if node is None:
+            node = self.get_node()
         res = set()
         if isinstance(node.operation, MaskCreate) or isinstance(node.operation, MaskMapper):
             res.add(node.operation.name)
