@@ -600,7 +600,7 @@ class MainMenu(QWidget):
                         self.save_file()
                         return
 
-            if selected_filter == "Project (*.gz *.bz2)":
+            if selected_filter == "Project (*.tgz *.tbz2 *.gz *.bz2)":
                 save_to_project(file_path, self.settings, self.segment)
 
             elif selected_filter == "Labeled image (*.tif)":
@@ -623,30 +623,12 @@ class MainMenu(QWidget):
             elif selected_filter == "Mask for itk-snap (*.img)":
                 segmentation = sitk.GetImageFromArray(self.segment.get_segmentation())
                 sitk.WriteImage(segmentation, file_path)
-            elif selected_filter == "Raw Data for chimera (*.cmap)":
-                if not np.any(self.segment.get_segmentation()):
-                    QMessageBox.warning(self, "No object", "There is no component to export to cmap")
-                    return
-                save_to_cmap(file_path, self.settings, self.segment, gauss_type=GaussUse.no_gauss,
-                             centered_data=False, with_cutting=False)
             elif selected_filter == "Data for chimera (*.cmap)":
                 if not np.any(self.segment.get_segmentation()):
                     QMessageBox.warning(self, "No object", "There is no component to export to cmap")
                     return
                 ob = CmapSave(file_path, self.settings, self.segment)
                 ob.exec_()
-                return
-                save_to_cmap(file_path, self.settings, self.segment, gauss_type=GaussUse.no_gauss)
-            elif selected_filter == "Data for chimera with 2d gauss (*.cmap)":
-                if not np.any(self.segment.get_segmentation()):
-                    QMessageBox.warning(self, "No object", "There is no component to export to cmap")
-                    return
-                save_to_cmap(file_path, self.settings, self.segment, gauss_type=GaussUse.gauss_2d)
-            elif selected_filter == "Data for chimera with 3d gauss (*.cmap)":
-                if not np.any(self.segment.get_segmentation()):
-                    QMessageBox.warning(self, "No object", "There is no component to export to cmap")
-                    return
-                save_to_cmap(file_path, self.settings, self.segment, gauss_type=GaussUse.gauss_3d)
             elif selected_filter == "Image (*.tiff)":
                 image = self.settings.image
                 tifffile.imsave(file_path, image)
