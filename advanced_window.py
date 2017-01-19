@@ -333,7 +333,7 @@ class StatisticsSettings(QWidget):
             txt = str(self.profile_options_chosen.item(i).text())
             selected_values.append((txt, txt))
         stat_prof = StatisticProfile(str(self.profile_name.text()), selected_values,
-                                     self.reversed_brightness.isChecked(), self.settings,
+                                     self.reversed_brightness.isChecked(),
                                      self.gauss_img.isChecked())
 
         self.settings.statistics_profile_dict[stat_prof.name] = stat_prof
@@ -358,7 +358,7 @@ class StatisticsSettings(QWidget):
                 txt = str(self.profile_options_chosen.item(i).text())
                 selected_values.append((txt, val_dialog.result[txt]))
             stat_prof = StatisticProfile(str(self.profile_name.text()), selected_values,
-                                         self.reversed_brightness.isChecked(), self.settings,
+                                         self.reversed_brightness.isChecked(),
                                          self.gauss_img.isChecked())
             self.settings.statistics_profile_dict[stat_prof.name] = stat_prof
             self.profile_list.addItem(stat_prof.name)

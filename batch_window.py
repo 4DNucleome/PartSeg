@@ -7,6 +7,7 @@ from parallel_backed import BatchManager
 from universal_gui_part import Spacing, right_label
 from global_settings import file_folder
 from calculation_plan import CalculationPlan, MaskFile, MaskMapper, Calculation
+from batch_backend import CalculationManager
 
 from prepare_plan_widget import CalculatePlaner
 
@@ -134,8 +135,12 @@ class AddFiles(QWidget):
 
 
 class ProgressView(QWidget):
-    def __init__(self, parent):
+    """
+    :type batch_manager: CalculationManager
+    """
+    def __init__(self, parent, batch_manager):
         QWidget.__init__(self, parent)
+        self.batch_manager = batch_manager
         self.whole_progress = QProgressBar(self)
         self.whole_progress.setMinimum(0)
         self.whole_progress.setMaximum(1)
@@ -147,15 +152,17 @@ class ProgressView(QWidget):
         self.part_progress.setFormat("%v of %m")
         self.whole_label = QLabel("Whole progress:", self)
         self.part_label = QLabel("Part progress:", self)
-        self.logs = QTextEdit(self)
-        #self.logs.setMaximumHeight(50)
-        self.logs.setReadOnly(True)
+        self.logs = QListWidget(self)
         self.logs.setToolTip("Logs")
-        self.task_que = QTextEdit()
-        self.task_que.setReadOnly(True)
+        self.task_que = QListWidget()
+        self.process_num_timer = QTimer()
+        self.process_num_timer.setInterval(1000)
+        self.process_num_timer.setSingleShot(True)
+        self.process_num_timer.timeout.connect(self.change_number_of_workers)
         self.number_of_process = QSpinBox(self)
         self.number_of_process.setRange(1, multiprocessing.cpu_count())
         self.number_of_process.setValue(1)
+        self.number_of_process.valueChanged.connect(self.process_num_timer_start)
         layout = QGridLayout()
         layout.addWidget(self.whole_label, 0, 0, Qt.AlignRight)
         layout.addWidget(self.whole_progress, 0, 1, 1, 2)
@@ -168,6 +175,37 @@ class ProgressView(QWidget):
         layout.setColumnMinimumWidth(2, 10)
         layout.setColumnStretch(2, 1)
         self.setLayout(layout)
+        self.preview_timer = QTimer()
+        self.preview_timer.setInterval(1000)
+        self.preview_timer.timeout.connect(self.update_info)
+
+    def new_task(self):
+        self.whole_progress.setMaximum(self.batch_manager.calculation_size)
+        if not self.preview_timer.isActive():
+            self.update_info()
+            self.preview_timer.start()
+
+    def update_info(self):
+        errors, total, parts = self.batch_manager.get_results()
+        self.logs.addItems(list(map(str, errors)))
+        self.whole_progress.setValue(total)
+        working_search = True
+        for i, (progress, total)  in enumerate(parts):
+            if working_search and progress != total:
+                self.part_progress.setMaximum(total)
+                self.part_progress.setValue(progress)
+                working_search = False
+            if i < self.task_que.count():
+                item = self.task_que.item(i)
+                item.setText("Task {} ({}/{})".format(i, progress, total))
+            else:
+                self.task_que.addItem("Task {} ({}/{})".format(i, progress, total))
+        if not self.batch_manager.has_work:
+            self.part_progress.setValue(self.part_progress.maximum())
+            self.preview_timer.stop()
+
+    def process_num_timer_start(self):
+        self.process_num_timer.start()
 
     def update_progress(self, total_progress, part_progress):
         self.whole_progress.setValue(total_progress)
@@ -179,11 +217,14 @@ class ProgressView(QWidget):
     def set_part_size(self, size):
         self.part_progress.setMaximum(size)
 
+    def change_number_of_workers(self):
+        self.batch_manager.set_number_of_workers(self.number_of_process.value())
+
 
 class FileChoose(QWidget):
     """
     :type settings: Settings
-    :type batch_manager: BatchManager
+    :type batch_manager: CalculationManager
     """
     def __init__(self, settings, batch_manager, parent=None):
         QWidget.__init__(self, parent)
@@ -191,7 +232,7 @@ class FileChoose(QWidget):
         self.settings = settings
         self.batch_manager = batch_manager
         self.files_widget = AddFiles(settings, self)
-        self.progress = ProgressView(self)
+        self.progress = ProgressView(self, batch_manager)
         self.run_button = QPushButton("Run calculation")
         self.run_button.setDisabled(True)
         self.calculation_choose = QComboBox()
@@ -222,8 +263,12 @@ class FileChoose(QWidget):
         dial = CalculationPrepare(self.files_widget.get_paths(), plan, str(self.result_file.text()), self.settings,
                                   self.batch_manager)
         if dial.exec_():
-            final_settings = dial.get_data()
-            self.batch_manager.add_work(final_settings)
+            self.batch_manager.add_calculation(dial.get_data())
+            self.progress.new_task()
+
+    def update_info(self):
+        calc_done, partial = self.batch_manager.get_results()
+        self.progress.update_progress(calc_done, 0)
 
     def showEvent(self, _):
         current_calc = str(self.calculation_choose.currentText())
@@ -264,7 +309,7 @@ class BatchWindow(QTabWidget):
         QTabWidget.__init__(self)
         self.setWindowTitle("Batch processing")
         self.settings = settings
-        self.batch_manager = BatchManager()
+        self.batch_manager = CalculationManager()
         self.file_choose = FileChoose(self.settings, self.batch_manager, self)
         self.calculate_planer = CalculatePlaner(self.settings, self)
         self.addTab(self.file_choose, "Choose files")
@@ -307,7 +352,7 @@ class CalculationPrepare(QDialog):
         :type statistic_file_path: str
         :param settings: settings object
         :type settings: Settings
-        :type batch_manager: BatchManager
+        :type batch_manager: CalculationManager
         """
         super(CalculationPrepare, self).__init__()
         self.setWindowTitle("Calculation start")

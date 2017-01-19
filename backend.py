@@ -237,7 +237,7 @@ class Settings(object):
         with open(file_path, 'r') as ff:
             statistics_list = json.load(ff)
             for stat in statistics_list:
-                self.statistics_profile_dict[stat["name"]] = StatisticProfile(settings=self, **stat)
+                self.statistics_profile_dict[stat["name"]] = StatisticProfile(**stat)
 
     def dump_calculation_plans(self, file_path):
         json_str = json.dumps([x.get_parameters() for x in self.batch_plans.values()])
@@ -285,7 +285,7 @@ class Settings(object):
             for prof in important_data["profiles"]:
                 self.segmentation_profiles_dict[prof["name"]] = SegmentationProfile(**prof)
             for stat in important_data["statistics"]:
-                self.statistics_profile_dict[stat["name"]] = StatisticProfile(settings=self, **stat)
+                self.statistics_profile_dict[stat["name"]] = StatisticProfile(**stat)
             for plan in important_data["batch_plans"]:
                 calc_plan = CalculationPlan.dict_load(plan)
                 self.batch_plans[calc_plan.name] = calc_plan

@@ -56,7 +56,6 @@ class StatisticProfile(object):
             else:
                 tree = self.rebuild_tree(cf_val[0])
             self.chosen_fields.append((tree, user_name, None))
-        self.settings = settings
         self.voxel_size = (1, 1, 1)
         self.reversed_brightness = reversed_brightness
         self.use_gauss_image = use_gauss_image

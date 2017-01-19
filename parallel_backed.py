@@ -153,17 +153,17 @@ class BatchWorker(object):
     def calculate_task(self, (data, task_uuid)):
         global_data, function = self.calculation_dict[task_uuid]
         try:
-            self.result_queue.put(task_uuid, function(data, global_data))
+            self.result_queue.put((task_uuid, function(data, global_data)))
         except (MemoryError, KeyError, ValueError, AttributeError) as e:
-            self.result_queue.put(task_uuid, e)
+            self.result_queue.put((task_uuid, e))
 
     def run(self):
-        logging.debug("Process started {}".format(os.getpid()))
+        logging.info("Process started {}".format(os.getpid()))
         while True:
             if not self.order_queue.empty():
                 try:
                     order = self.order_queue.get_nowait()
-                    logging.debug("Order message: {}".format(order))
+                    logging.info("Order message: {}".format(order))
                     if order == SubprocessOrder.kill:
                         break
                 except Empty:

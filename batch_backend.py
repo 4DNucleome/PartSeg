@@ -11,7 +11,7 @@ from calculation_plan import CalculationPlan, CalculationTree, MaskMapper, MaskU
 from copy import copy
 from utils import dict_set_class
 from queue import Queue
-from collections import Counter, OrderedDict
+from collections import Counter, OrderedDict, defaultdict
 
 
 def do_calculation(file_path, calculation):
@@ -44,12 +44,15 @@ class CalculationProcess(object):
         self.reused_mask = calculation.calculation_plan.get_reused_mask()
         self.mask_dict = {}
         self.statistics = []
-        ext = path.split(calculation.file_path)[1]
+        print(calculation.file_path)
+        ext = path.splitext(calculation.file_path)[1]
         if ext in [".tiff", ".tif", ".lsm"]:
             image = tifffile.imread(calculation.file_path)
             self.settings.image = image
-        if ext in [".tgz", "gz", ".tbz2", ".bz2"]:
+        elif ext in [".tgz", "gz", ".tbz2", ".bz2"]:
             load_project(calculation.file_path, self.settings, self.segment)
+        else:
+            raise ValueError("Unknown file type: {} {}". format(ext, calculation.file_path))
 
         self.iterate_over(calculation.calculation_plan.execution_tree)
         return calculation.file_path, self.statistics
@@ -131,9 +134,16 @@ class CalculationManager(object):
         super(CalculationManager, self).__init__()
         self.batch_manager = BatchManager()
         self.calculation_queue = Queue()
-        self.calculation_dict = dict()
+        self.calculation_dict = OrderedDict()
+        self.calculation_sizes = []
+        self.calculation_size = 0
+        self.calculation_done = 0
         self.counter_dict = Counter()
         self.errors_list = []
+        self.sheet_name = defaultdict(set)
+
+    def is_valid_sheet_name(self, excel_path, sheet_name):
+        return sheet_name not in self.sheet_name[excel_path]
 
     def add_calculation(self, calculation):
         """
@@ -141,25 +151,35 @@ class CalculationManager(object):
         :param calculation: calculation
         :return:
         """
+        self.sheet_name[calculation.statistic_file_path].add(calculation.sheet_name)
         self.calculation_dict[calculation.uuid] = calculation, calculation.calculation_plan.get_statistics()
         self.counter_dict[calculation.uuid] = 0
+        size = len(calculation.file_list)
+        self.calculation_sizes.append(size)
+        self.calculation_size += size
         self.batch_manager.add_work(calculation.file_list, calculation, do_calculation)
 
     @property
     def has_work(self):
-        return  self.batch_manager.has_work
+        return self.batch_manager.has_work
+
+    def set_number_of_workers(self, val):
+        print("Number off process {}".format(val))
+        self.batch_manager.set_number_off_process(val)
 
     def get_results(self):
         responses = self.batch_manager.get_responses()
         new_errors = []
         for uuid, el in responses:
+            self.calculation_done += 1
             self.counter_dict[uuid] += 1
             if isinstance(el, Exception):
                 self.errors_list.append(el)
                 new_errors.append(el)
             else:
-                with open(self.calculation_dict[uuid].sheet_name, 'a') as ff:
-                    ff.write(el)
+                with open(self.calculation_dict[uuid][0].statistic_file_path, 'a') as ff:
+                    ff.write(str(el)+"\n")
+        return new_errors, self.calculation_done, zip(self.counter_dict.values(), self.calculation_sizes)
 
 
 

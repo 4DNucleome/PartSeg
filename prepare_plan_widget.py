@@ -94,6 +94,7 @@ class CreatePlan(QWidget):
         self.update_element_btn.stateChanged.connect(self.show_statistics)
         self.update_element_btn.stateChanged.connect(self.show_segment)
         self.update_element_btn.stateChanged.connect(self.update_names)
+        self.choose_channel_btn.clicked.connect(self.choose_channel)
         plan_box = QGroupBox("Calculate plan:")
         lay = QVBoxLayout()
         lay.addWidget(self.plan)
