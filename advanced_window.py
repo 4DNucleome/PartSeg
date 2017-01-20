@@ -154,7 +154,8 @@ class StatisticsSettings(QWidget):
         layout.addLayout(save_butt_layout)
         self.setLayout(layout)
 
-        for name, (_, help_text, _) in sorted(StatisticProfile.STATISTIC_DICT.items()):
+        for name, profile in sorted(StatisticProfile.STATISTIC_DICT.items()):
+            help_text = profile.help_message
             lw = QListWidgetItem(name)
             lw.setToolTip(help_text)
             self.profile_options.addItem(lw)

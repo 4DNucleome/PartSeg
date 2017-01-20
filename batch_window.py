@@ -303,7 +303,7 @@ class FileChoose(QWidget):
             dial.setDirectory(self.settings.batch_directory)
         dial.setFileMode(QFileDialog.AnyFile)
         dial.setAcceptMode(QFileDialog.AcceptSave)
-        dial.setFilter("(*.xlsx Excel file")
+        dial.setFilter("Excel file (*.xlsx)")
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
             if os.path.splitext(file_path)[1] == '':

@@ -106,11 +106,11 @@ class BatchManager(object):
         return True
 
     def join_all(self):
-        logging.info("Join begin {} {}".format(len(self.process_list), self.number_off_process))
+        logging.debug("Join begin {} {}".format(len(self.process_list), self.number_off_process))
         with self.locker:
             if len(self.process_list) > self.number_off_process:
                 to_remove = []
-                logging.info("Process list start {}".format(self.process_list))
+                logging.debug("Process list start {}".format(self.process_list))
                 for p in self.process_list:
                     if not p.is_alive():
                         p.join()
@@ -119,9 +119,9 @@ class BatchManager(object):
                 for p in to_remove:
                     self.process_list.remove(p)
                 self.number_off_alive_process -= len(to_remove)
-                logging.info("Process list end {}".format(self.process_list))
+                logging.debug("Process list end {}".format(self.process_list))
                 if len(self.process_list) > self.number_off_process:
-                    logging.info("Wait on process, time {}".format(time.time()))
+                    logging.debug("Wait on process, time {}".format(time.time()))
                     Timer(1, self.join_all, ()).start()
 
     @property
@@ -154,16 +154,16 @@ class BatchWorker(object):
         global_data, function = self.calculation_dict[task_uuid]
         try:
             self.result_queue.put((task_uuid, function(data, global_data)))
-        except (MemoryError, KeyError, ValueError, AttributeError) as e:
-            self.result_queue.put((task_uuid, e))
+        except Exception as e:
+            self.result_queue.put((task_uuid, (type(e), e)))
 
     def run(self):
-        logging.info("Process started {}".format(os.getpid()))
+        logging.debug("Process started {}".format(os.getpid()))
         while True:
             if not self.order_queue.empty():
                 try:
                     order = self.order_queue.get_nowait()
-                    logging.info("Order message: {}".format(order))
+                    logging.debug("Order message: {}".format(order))
                     if order == SubprocessOrder.kill:
                         break
                 except Empty:

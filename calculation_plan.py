@@ -202,6 +202,11 @@ class CalculationPlan(object):
         self.current_node = None
 
     def get_statistics(self, node=None):
+        """
+        :type node: CalculationTree
+        :param node:
+        :return: list[StatisticProfile]
+        """
         if node is None:
             node = self.execution_tree
         if isinstance(node.operation, StatisticProfile):

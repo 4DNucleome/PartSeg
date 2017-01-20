@@ -1,17 +1,20 @@
 from parallel_backed import BatchManager
 from backend import Settings, MaskChange
-from  statistics_calculation import StatisticProfile
+from statistics_calculation import StatisticProfile
 from segment import Segment, SegmentationProfile
 from io_functions import load_project, save_to_project, save_to_cmap
 from os import path
 import tifffile
 import pandas as pd
-from calculation_plan import CalculationPlan, CalculationTree, MaskMapper, MaskUse, MaskCreate, ProjectSave, \
+from calculation_plan import CalculationTree, MaskMapper, MaskUse, MaskCreate, ProjectSave, \
     CmapProfile, Operations, ChooseChanel, FileCalculation
 from copy import copy
 from utils import dict_set_class
 from queue import Queue
-from collections import Counter, OrderedDict, defaultdict
+from collections import OrderedDict, defaultdict
+import logging
+from enum import Enum
+import threading
 
 
 def do_calculation(file_path, calculation):
@@ -44,7 +47,6 @@ class CalculationProcess(object):
         self.reused_mask = calculation.calculation_plan.get_reused_mask()
         self.mask_dict = {}
         self.statistics = []
-        print(calculation.file_path)
         ext = path.splitext(calculation.file_path)[1]
         if ext in [".tiff", ".tif", ".lsm"]:
             image = tifffile.imread(calculation.file_path)
@@ -55,7 +57,7 @@ class CalculationProcess(object):
             raise ValueError("Unknown file type: {} {}". format(ext, calculation.file_path))
 
         self.iterate_over(calculation.calculation_plan.execution_tree)
-        return calculation.file_path, self.statistics
+        return path.relpath(calculation.file_path, calculation.base_prefix), self.statistics
 
     def iterate_over(self, node):
         """
@@ -141,6 +143,7 @@ class CalculationManager(object):
         self.counter_dict = OrderedDict()
         self.errors_list = []
         self.sheet_name = defaultdict(set)
+        self.writer = DataWriter()
 
     def is_valid_sheet_name(self, excel_path, sheet_name):
         return sheet_name not in self.sheet_name[excel_path]
@@ -158,13 +161,14 @@ class CalculationManager(object):
         self.calculation_sizes.append(size)
         self.calculation_size += size
         self.batch_manager.add_work(calculation.file_list, calculation, do_calculation)
+        self.writer.add_data_part(calculation)
 
     @property
     def has_work(self):
         return self.batch_manager.has_work
 
     def set_number_of_workers(self, val):
-        print("Number off process {}".format(val))
+        logging.debug("Number off process {}".format(val))
         self.batch_manager.set_number_off_process(val)
 
     def get_results(self):
@@ -173,15 +177,191 @@ class CalculationManager(object):
         for uuid, el in responses:
             self.calculation_done += 1
             self.counter_dict[uuid] += 1
+            calculation = self.calculation_dict[uuid][0]
             if isinstance(el, Exception):
                 self.errors_list.append(el)
                 new_errors.append(el)
             else:
-                with open(self.calculation_dict[uuid][0].statistic_file_path, 'a') as ff:
-                    ff.write(str(el)+"\n")
+                self.writer.add_result(el, calculation)
+            if self.counter_dict[uuid] == len(calculation.file_list):
+                self.writer.calculation_finished(calculation)
         return new_errors, self.calculation_done, zip(self.counter_dict.values(), self.calculation_sizes)
 
 
+class FileType(Enum):
+    excel_xlsx_file = 1
+    excel_xls_file = 2
+    text_file = 3
+
+
+class SheetData(object):
+    def __init__(self, name, columns):
+        self.name = name
+        self.columns = ["name"] + columns
+        self.data_frame = pd.DataFrame([], columns=self.columns)
+        self.row_list = []
+
+    def add_data(self, data):
+        self.row_list.append(data)
+
+    def add_data_list(self, data):
+        self.row_list.extend(data)
+
+    def get_data_to_write(self):
+        df = pd.DataFrame(self.row_list, columns=self.columns)
+        df2 = self.data_frame.append(df)
+        self.data_frame = df2
+        self.row_list = []
+        return self.name, self.data_frame
+
+
+class FileData(object):
+    component_str = "_components_"
+
+    def __init__(self, calculation):
+        """
+        :type calculation: Calculation
+        :param calculation:
+        """
+        self.file_path = calculation.statistic_file_path
+        ext = path.splitext(calculation.statistic_file_path)[1]
+        if ext == ".xlsx":
+            self.file_type = FileType.excel_xlsx_file
+        elif ext == ".xls":
+            self.file_type = FileType.excel_xls_file
+        else:
+            self.file_type = FileType.text_file
+        self.sheet_dict = dict()
+        self.sheet_set = set()
+        self.new_count = 0
+        self.write_threshold = 40
+        self.wrote_queue = Queue()
+        self.write_thread = threading.Thread(target=self.wrote_data_to_file)
+        self.write_thread.daemon = True
+        self.write_thread.start()
+        self.add_data_part(calculation)
+
+    def good_sheet_name(self, name):
+        if self.file_type == FileType.text_file:
+            return False, "Text file allow store only one sheet"
+        if FileData.component_str in name:
+            return False, "Sequence '{}' is reserved for auto generated sheets".format(FileData.component_str)
+        if name in self.sheet_set:
+            return False, "Sheet name {} already in use".format(name)
+        return True, True
+
+    def add_data_part(self, calculation):
+        """
+        :type calculation: Calculation
+        :param calculation:
+        :return:
+        """
+        if calculation.statistic_file_path != self.file_path:
+            raise ValueError("[FileData] different file path {} vs {}".format(calculation.statistic_file_path,
+                                                                              self.file_path))
+        if calculation.sheet_name in self.sheet_set:
+            raise ValueError("[FileData] sheet name {} already in use".format(calculation.sheet_name))
+        statistics = calculation.calculation_plan.get_statistics()
+        component_information = [x.get_component_info() for x in statistics]
+        num = 1
+        sheet_list = []
+        header_list = []
+        main_header = []
+        for i, el in enumerate(component_information):
+            local_header = []
+            if any([x[1] for x in el]):
+                sheet_list.append("{}{}{} - {}".format(calculation.sheet_name, FileData.component_str, num,
+                                                       statistics[i].name_prefix+statistics[i].name))
+                num += 1
+            else:
+                sheet_list.append(None)
+            for name, comp in el:
+                if comp:
+                    local_header.append(name)
+                else:
+                    main_header.append(name)
+            header_list.append(local_header)
+
+        self.sheet_dict[calculation.uuid] = (
+            SheetData(calculation.sheet_name, main_header),
+            [SheetData(name, header_list[i]) if name is not None else None for i, name in enumerate(sheet_list)],
+            component_information)
+
+    def wrote_data(self, uuid, data):
+        self.new_count += 1
+        main_sheet, component_sheets, component_information = self.sheet_dict[uuid]
+        name = data[0]
+        data_list = [name]
+        for el, comp_sheet, comp_info in zip(data[1], component_sheets, component_information):
+            comp_list = []
+            for val, info in zip(el.values(), comp_info):
+                if info[1]:
+                    comp_list.append(val)
+                else:
+                    data_list.append(val)
+            if len(comp_list) > 0:
+                comp_list.insert(0, ["{}_comp_{}".format(name, i) for i in range(len(comp_list[0]))])
+                comp_list = zip(*comp_list)
+            if comp_sheet is not None:
+                comp_sheet.add_data_list(comp_list)
+        main_sheet.add_data(data_list)
+        if self.new_count >= self.write_threshold:
+            self.dump_data()
+
+    def dump_data(self):
+        data = []
+        for main_sheet, component_sheets, _ in self.sheet_dict.values():
+            data.append(main_sheet.get_data_to_write())
+            for sheet in component_sheets:
+                if sheet is not None:
+                    data.append(sheet.get_data_to_write())
+        self.wrote_queue.put(data)
+
+    def wrote_data_to_file(self):
+        while True:
+            data = self.wrote_queue.get()
+            if data == "finish":
+                break
+            try:
+                if self.file_type == FileType.text_file:
+                    base_path, ext = path.splitext(self.file_path)
+                    for sheet_name, data_frame in data:
+                        data_frame.to_csv(base_path + "_" + sheet_name + ext)
+                else:
+                    writer = pd.ExcelWriter(self.file_path)
+                    for sheet_name, data_frame in data:
+                        data_frame.to_excel(writer, sheet_name=sheet_name)
+                    writer.save()
+            except Exception as e:
+                logging.error(e)
+
+    def finish(self):
+        self.wrote_queue.put("finish")
+
+
+class DataWriter(object):
+    def __init__(self):
+        self.file_dict = dict()
+
+    def add_data_part(self, calculation):
+        if calculation.statistic_file_path in self.file_dict:
+            self.file_dict[calculation.statistic_file_path].add_data_part(calculation)
+        else:
+            self.file_dict[calculation.statistic_file_path] = FileData(calculation)
+
+    def add_result(self, data, calculation):
+        if calculation.statistic_file_path not in self.file_dict:
+            raise ValueError("Unknown statistic file")
+        self.file_dict[calculation.statistic_file_path].wrote_data(calculation.uuid, data)
+
+    def finish(self):
+        for file_data in self.file_dict.keys():
+            file_data.finish()
+
+    def calculation_finished(self, calculation):
+        if calculation.statistic_file_path not in self.file_dict:
+            raise ValueError("Unknown statistic file")
+        self.file_dict[calculation.statistic_file_path].dump_data()
 
 
 

@@ -8,7 +8,7 @@ import numpy as np
 
 import auto_fit as af
 
-SettingsValue = namedtuple("SettingsValue", ["function_name", "help_message", "arguments"])
+SettingsValue = namedtuple("SettingsValue", ["function_name", "help_message", "arguments", "is_mask", "is_component"])
 Leaf = namedtuple("Leaf", ["name", "dict"])
 Node = namedtuple("Node", ["left", 'op', 'right'])
 
@@ -16,37 +16,41 @@ Node = namedtuple("Node", ["left", 'op', 'right'])
 class StatisticProfile(object):
 
     STATISTIC_DICT = {
-        "Volume": SettingsValue("calculate_volume", "Calculate volume of current segmentation", None),
+        "Volume": SettingsValue("calculate_volume", "Calculate volume of current segmentation", None, False, False),
         "Volume per component": SettingsValue("calculate_component_volume", "Calculate volume of each component "
-                                              "of cohesion of current segmentation", None),
-        "Mass": SettingsValue("calculate_mass", "Sum of pixel brightness for current segmentation", None),
+                                              "of cohesion of current segmentation", None, False, True),
+        "Mass": SettingsValue("calculate_mass", "Sum of pixel brightness for current segmentation", None, False, False),
         "Mass per component": SettingsValue("calculate_component_mass", "Sum of pixel brightness of each component of"
-                                            " cohesion for current segmentation", None),
+                                            " cohesion for current segmentation", None, False, True),
         "Border surface": SettingsValue("calculate_border_surface",
-                                        "Calculating surface of current segmentation", None),
+                                        "Calculating surface of current segmentation", None, False, False),
         "Maximum pixel brightness": SettingsValue(
-            "maximum_brightness", "Calculate maximum brightness of pixel for current segmentation", None),
+            "maximum_brightness", "Calculate maximum brightness of pixel for current segmentation", None, False, False),
         "Minimum pixel brightness": SettingsValue(
-            "minimum_brightness", "Calculate minimum brightness of pixel for current segmentation", None),
+            "minimum_brightness", "Calculate minimum brightness of pixel for current segmentation", None, False, False),
         "Median pixel brightness": SettingsValue(
-            "median_brightness", "Calculate median brightness of pixel for current segmentation", None),
+            "median_brightness", "Calculate median brightness of pixel for current segmentation", None, False, False),
         "Mean pixel brightness": SettingsValue(
-            "mean_brightness", "Calculate median brightness of pixel for current segmentation", None),
+            "mean_brightness", "Calculate median brightness of pixel for current segmentation", None, False, False),
         "Standard deviation of pixel brightness": SettingsValue(
-            "std_brightness", "Calculate  standard deviation of pixel brightness for current segmentation", None),
+            "std_brightness", "Calculate  standard deviation of pixel brightness for current segmentation", None,
+            False, False),
         "Standard deviation of Noise": SettingsValue(
-            "std_noise", "Calculate standard deviation of pixel brightness outside current segmentation", None),
+            "std_noise", "Calculate standard deviation of pixel brightness outside current segmentation", None,
+            False, False),
         "Moment of inertia": SettingsValue("moment_of_inertia", "Calculate moment of inertia for segmented structure."
                                            "Has one parameter thr (threshold). Only values above it are used "
-                                           "in calculation", None),
+                                           "in calculation", None, False, False),
         "Border Mass": SettingsValue("border_mass", "Calculate mass for elements in radius (in physical units)"
-                                                    " from mask", {"radius": int}),
+                                                    " from mask", {"radius": int}, False, False),
         "Border Volume": SettingsValue("border_volume", "Calculate volumes for elements in radius (in physical units)"
-                                                        " from mask", {"radius": int})
+                                                        " from mask", {"radius": int}, False, False),
+        "Components Number": SettingsValue("number_of_components", "Calculate number of connected components "
+                                                                   "on segmentation", None, False, False)
     }
     PARAMETERS = ["name", "chosen_fields", "reversed_brightness", "use_gauss_image", "name_prefix"]
 
-    def __init__(self, name, chosen_fields, reversed_brightness, settings=None, use_gauss_image=False, name_prefix=""):
+    def __init__(self, name, chosen_fields, reversed_brightness, use_gauss_image=False, name_prefix=""):
         self.name = name
         self.chosen_fields = []
         for cf_val in chosen_fields:
@@ -74,6 +78,15 @@ class StatisticProfile(object):
             else:
                 text += "{}\n".format(el[1])
         return text
+
+    def get_component_info(self):
+        """
+        :return: list[(str, bool)]
+        """
+        res = []
+        for tree, name, _ in self.chosen_fields:
+            res.append((name, self.is_component_statistic(tree)))
+        return res
 
     def get_parameters(self):
         return class_to_dict(self, *self.PARAMETERS)
@@ -167,6 +180,12 @@ class StatisticProfile(object):
         tree, l = self.build_tree(tokens)
         return self.tree_to_dict_tree(tree)
 
+    def is_component_statistic(self, node):
+        if isinstance(node, Leaf):
+            return self.STATISTIC_DICT[node.name].is_component
+        else:
+            return self.is_component_statistic(node.left) or self.is_component_statistic(node.right)
+
     def calculate_tree(self, node, help_dict, kwargs):
         """
         :type node: Leaf | Node
@@ -175,7 +194,7 @@ class StatisticProfile(object):
         :return: float
         """
         if isinstance(node, Leaf):
-            fun_name = self.STATISTIC_DICT[node.name][0]
+            fun_name = self.STATISTIC_DICT[node.name].function_name
             kw = dict(kwargs)
             kw.update(node.dict)
             hash_str = "{}: {}".format(fun_name, kw)
@@ -204,7 +223,7 @@ class StatisticProfile(object):
             noise_mean = np.mean(image[full_mask == 0])
             image = noise_mean - image
         help_dict = dict()
-        kw = {"image": image, "mask": mask, "base_mask": base_mask, "full_mask": full_mask}
+        kw = {"image": image, "segmentation": mask, "base_mask": base_mask, "full_segmentation": full_mask}
         for tree, user_name, params in self.chosen_fields:
             try:
                 result[self.name_prefix + user_name] = self.calculate_tree(tree, help_dict, kw)
@@ -218,78 +237,78 @@ class StatisticProfile(object):
     def pixel_volume(x):
         return x[0] * x[1] * x[2]
 
-    def calculate_volume(self, mask, **_):
-        return np.count_nonzero(mask) * self.pixel_volume(self.voxel_size)
+    def calculate_volume(self, segmentation, **_):
+        return np.count_nonzero(segmentation) * self.pixel_volume(self.voxel_size)
 
-    def calculate_component_volume(self, mask, **_):
-        return np.bincount(mask.flat)[1:] * self.pixel_volume(self.voxel_size)
+    def calculate_component_volume(self, segmentation, **_):
+        return np.bincount(segmentation.flat)[1:] * self.pixel_volume(self.voxel_size)
 
     @staticmethod
-    def calculate_mass(mask, image, **_):
-        if np.any(mask):
-            return np.sum(image[mask > 0])
+    def calculate_mass(segmentation, image, **_):
+        if np.any(segmentation):
+            return np.sum(image[segmentation > 0])
         return 0
 
     @staticmethod
-    def calculate_component_mass(mask, image, **_):
+    def calculate_component_mass(segmentation, image, **_):
         res = []
-        for i in range(1, mask.max()+1):
-            res.append(np.sum(image[mask == i]))
+        for i in range(1, segmentation.max()+1):
+            res.append(np.sum(image[segmentation == i]))
         return res
 
-    def calculate_border_surface(self, mask, **_):
-        return calculate_volume_surface(mask, self.voxel_size)
+    def calculate_border_surface(self, segmentation, **_):
+        return calculate_volume_surface(segmentation, self.voxel_size)
 
     @staticmethod
-    def maximum_brightness(mask, image, **_):
-        if np.any(mask):
-            return np.max(image[mask > 0])
+    def maximum_brightness(segmentation, image, **_):
+        if np.any(segmentation):
+            return np.max(image[segmentation > 0])
         else:
             return None
 
     @staticmethod
-    def minimum_brightness(mask, image, **_):
-        if np.any(mask):
-            return np.min(image[mask > 0])
+    def minimum_brightness(segmentation, image, **_):
+        if np.any(segmentation):
+            return np.min(image[segmentation > 0])
         else:
             return None
 
     @staticmethod
-    def median_brightness(mask, image, **_):
-        if np.any(mask):
-            return np.median(image[mask > 0])
+    def median_brightness(segmentation, image, **_):
+        if np.any(segmentation):
+            return np.median(image[segmentation > 0])
         else:
             return None
 
     @staticmethod
-    def std_brightness(mask, image, **_):
-        if np.any(mask):
-            return np.std(image[mask > 0])
+    def std_brightness(segmentation, image, **_):
+        if np.any(segmentation):
+            return np.std(image[segmentation > 0])
         else:
             return None
 
     @staticmethod
-    def mean_brightness(mask, image, **_):
-        if np.any(mask):
-            return np.mean(image[mask > 0])
+    def mean_brightness(segmentation, image, **_):
+        if np.any(segmentation):
+            return np.mean(image[segmentation > 0])
         else:
             return None
 
     @staticmethod
-    def std_noise(mask, base_mask, image, **_):
-        if np.any(mask):
+    def std_noise(full_segmentation, base_mask, image, **_):
+        if np.any(full_segmentation):
             if base_mask is not None:
-                return np.std(image[(mask == 0) * (base_mask > 0)])
+                return np.std(image[(full_segmentation == 0) * (base_mask > 0)])
             else:
-                return np.std(image[mask == 0])
+                return np.std(image[full_segmentation == 0])
         else:
             return None
 
-    def moment_of_inertia(self, image, mask, **_):
+    def moment_of_inertia(self, image, segmentation, **_):
         if image.ndim != 3:
             return None
         img = np.copy(image)
-        img[mask == 0] = 0
+        img[segmentation == 0] = 0
         return af.calculate_density_momentum(img, self.voxel_size,)
 
     def border_mask(self, base_mask, radius, **_):
@@ -303,21 +322,25 @@ class StatisticProfile(object):
         dilated_border[base_mask == 0] = 0
         return dilated_border
 
-    def border_mass(self, image, mask, **kwargs):
+    def border_mass(self, image, segmentation, **kwargs):
         border_mask = self.border_mask(**kwargs)
         if border_mask is None:
             return None
-        final_mask = np.array((border_mask > 0) * (mask > 0))
+        final_mask = np.array((border_mask > 0) * (segmentation > 0))
         if np.any(final_mask):
             return np.sum(image[final_mask])
         return 0
 
-    def border_volume(self, mask, **kwargs):
+    def border_volume(self, segmentation, **kwargs):
         border_mask = self.border_mask(**kwargs)
         if border_mask is None:
             return None
-        final_mask = np.array((border_mask > 0) * (mask > 0))
+        final_mask = np.array((border_mask > 0) * (segmentation > 0))
         return np.count_nonzero(final_mask) * self.pixel_volume(self.voxel_size)
+
+    @staticmethod
+    def number_of_components(segmentation):
+        return segmentation.max()
 
 
 def calculate_volume_surface(volume_mask, voxel_size):

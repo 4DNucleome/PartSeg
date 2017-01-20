@@ -194,10 +194,14 @@ class Segment(object):
             return
         ind = bisect(self._sizes_array[1:], self._settings.minimum_size, lambda x, y: x > y)
         # print(ind, self._sizes_array, self._settings.minimum_size)
-        hide_set = set(np.unique(self._segmented_image[self.draw_canvas == DrawType.force_hide.value]))
-        show_set = set(np.unique(self._segmented_image[self.draw_canvas == DrawType.force_show.value]))
-        hide_set -= show_set
-        show_set.discard(0)
+        if self.draw_canvas is not None:
+            hide_set = set(np.unique(self._segmented_image[self.draw_canvas == DrawType.force_hide.value]))
+            show_set = set(np.unique(self._segmented_image[self.draw_canvas == DrawType.force_show.value]))
+            hide_set -= show_set
+            show_set.discard(0)
+        else:
+            hide_set = set()
+            show_set = set()
         hide_set.discard(0)
         finally_segment = np.copy(self._segmented_image)
         finally_segment[finally_segment > ind] = 0
