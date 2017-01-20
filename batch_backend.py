@@ -168,7 +168,7 @@ class CalculationManager(object):
         self.batch_manager.set_number_off_process(val)
 
     def get_results(self):
-        responses = self.batch_manager.get_responses()
+        responses = self.batch_manager.get_result()
         new_errors = []
         for uuid, el in responses:
             self.calculation_done += 1
