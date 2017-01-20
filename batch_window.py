@@ -35,6 +35,7 @@ class AcceptFiles(QDialog):
         self.ok.setAutoDefault(True)
 
         layout = QVBoxLayout()
+        layout.addWidget(QLabel("Found {} files".format(len(files))))
         layout.addWidget(self.files)
         butt_layout = QHBoxLayout()
         butt_layout.addWidget(discard)
@@ -74,6 +75,8 @@ class AddFiles(QWidget):
         self.delete_button = QPushButton("Remove file from list", self)
         self.delete_button.setDisabled(True)
         self.delete_button.pyqtConfigure(clicked=self.delete_element)
+        self.clean_button = QPushButton("Clean file List", self)
+        self.clean_button.clicked.connect(self.clean)
         layout = QVBoxLayout()
         layout.addWidget(self.paths)
         select_layout = QHBoxLayout()
@@ -81,6 +84,7 @@ class AddFiles(QWidget):
         select_layout.addWidget(self.select_files_button)
         select_layout.addWidget(self.select_dir_button)
         select_layout.addStretch()
+        select_layout.addWidget(self.clean_button)
         select_layout.addWidget(self.delete_button)
         layout.addLayout(select_layout)
         layout.addWidget(self.selected_files)
@@ -126,9 +130,15 @@ class AddFiles(QWidget):
         self.delete_button.setEnabled(True)
 
     def delete_element(self):
-        self.selected_files.takeItem(self.selected_files.currentRow())
+        item = self.selected_files.takeItem(self.selected_files.currentRow())
+        path = str(item.text())
+        self.files_to_proceed.remove(path)
         if self.selected_files.count() == 0:
             self.delete_button.setDisabled(True)
+
+    def clean(self):
+        self.selected_files.clear()
+        self.files_to_proceed.clear()
 
     def get_paths(self):
         return list(sorted(self.files_to_proceed))

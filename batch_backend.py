@@ -138,7 +138,7 @@ class CalculationManager(object):
         self.calculation_sizes = []
         self.calculation_size = 0
         self.calculation_done = 0
-        self.counter_dict = Counter()
+        self.counter_dict = OrderedDict()
         self.errors_list = []
         self.sheet_name = defaultdict(set)
 

@@ -609,7 +609,7 @@ class MyDrawCanvas(MyCanvas):
         ax_lim = pyplot.xlim()
         ay_lim = pyplot.ylim()
         self.max_value = image.max()
-        self.min_value = image.min() / float(self.max_value)
+        self.min_value = image.min()
         self.gauss_image = gauss
         self.ax_im = None
         self.original_rgb_image = None

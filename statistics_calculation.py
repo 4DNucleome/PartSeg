@@ -219,7 +219,6 @@ class StatisticProfile(object):
         return x[0] * x[1] * x[2]
 
     def calculate_volume(self, mask, **_):
-        print("Volume {}".format(np.max(mask)))
         return np.count_nonzero(mask) * self.pixel_volume(self.voxel_size)
 
     def calculate_component_volume(self, mask, **_):
