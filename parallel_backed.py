@@ -155,7 +155,7 @@ class BatchWorker(object):
         try:
             self.result_queue.put((task_uuid, function(data, global_data)))
         except Exception as e:
-            self.result_queue.put((task_uuid, (type(e), e)))
+            self.result_queue.put((task_uuid, e))
 
     def run(self):
         logging.debug("Process started {}".format(os.getpid()))

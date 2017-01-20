@@ -58,6 +58,8 @@ class AddFiles(QWidget):
 
     """Docstring for AddFiles. """
 
+    file_list_changed = pyqtSignal()
+
     def __init__(self, settings, parent):
         """TODO: to be defined1. """
         QWidget.__init__(self, parent)
@@ -102,6 +104,7 @@ class AddFiles(QWidget):
                     lwi.setTextAlignment(Qt.AlignRight)
                     self.selected_files.addItem(lwi)
                 self.files_to_proceed.update(new_paths)
+                self.file_list_changed.emit()
         else:
             QMessageBox.warning(self, "No new files", "No new files found", QMessageBox.Ok)
 
@@ -117,6 +120,7 @@ class AddFiles(QWidget):
                 lwi.setTextAlignment(Qt.AlignRight)
                 self.selected_files.addItem(lwi)
             self.files_to_proceed.update(new_paths)
+            self.file_list_changed.emit()
 
     def select_directory(self):
         dial = QFileDialog(self, "Select directory")
@@ -133,12 +137,14 @@ class AddFiles(QWidget):
         item = self.selected_files.takeItem(self.selected_files.currentRow())
         path = str(item.text())
         self.files_to_proceed.remove(path)
+        self.file_list_changed.emit()
         if self.selected_files.count() == 0:
             self.delete_button.setDisabled(True)
 
     def clean(self):
         self.selected_files.clear()
         self.files_to_proceed.clear()
+        self.file_list_changed.emit()
 
     def get_paths(self):
         return list(sorted(self.files_to_proceed))
@@ -197,7 +203,7 @@ class ProgressView(QWidget):
 
     def update_info(self):
         errors, total, parts = self.batch_manager.get_results()
-        self.logs.addItems(list(map(str, errors)))
+        self.logs.addItems(list(map(lambda x: "{}: {}".format(type(x), str(x)), errors)))
         self.whole_progress.setValue(total)
         working_search = True
         for i, (progress, total)  in enumerate(parts):
@@ -247,13 +253,15 @@ class FileChoose(QWidget):
         self.run_button.setDisabled(True)
         self.calculation_choose = QComboBox()
         self.calculation_choose.addItem("<no calculation>")
-        self.calculation_choose.currentIndexChanged[str_type].connect(self.change_plan)
+        self.calculation_choose.currentIndexChanged[str_type].connect(self.change_situation)
         self.result_file = QLineEdit(self)
         self.result_file.setAlignment(Qt.AlignRight)
+        self.result_file.setReadOnly(True)
         self.chose_result = QPushButton("Choose save place", self)
         self.chose_result.clicked.connect(self.chose_result_file)
 
         self.run_button.clicked.connect(self.prepare_calculation)
+        self.files_widget.file_list_changed.connect(self.change_situation)
 
         layout = QVBoxLayout()
         layout.addWidget(self.files_widget)
@@ -276,10 +284,6 @@ class FileChoose(QWidget):
             self.batch_manager.add_calculation(dial.get_data())
             self.progress.new_task()
 
-    def update_info(self):
-        calc_done, partial = self.batch_manager.get_results()
-        self.progress.update_progress(calc_done, 0)
-
     def showEvent(self, _):
         current_calc = str(self.calculation_choose.currentText())
         new_list = ["<no calculation>"] + list(self.settings.batch_plans.keys())
@@ -291,11 +295,12 @@ class FileChoose(QWidget):
         self.calculation_choose.addItems(new_list)
         self.calculation_choose.setCurrentIndex(index)
 
-    def change_plan(self, text):
-        if str(text) == "<no calculation>":
-            self.run_button.setDisabled(True)
-        else:
+    def change_situation(self):
+        if str(self.calculation_choose.currentText()) != "<no calculation>" and \
+                        len(self.files_widget.files_to_proceed) != 0 and str(self.result_file.text()) != "":
             self.run_button.setEnabled(True)
+        else:
+            self.run_button.setDisabled(True)
 
     def chose_result_file(self):
         dial = QFileDialog(self, "Select result.file")
@@ -309,6 +314,7 @@ class FileChoose(QWidget):
             if os.path.splitext(file_path)[1] == '':
                 file_path += ".xlsx"
             self.result_file.setText(file_path)
+            self.change_situation()
 
 
 class BatchWindow(QTabWidget):
@@ -379,11 +385,14 @@ class CalculationPrepare(QDialog):
         if not os.path.exists(all_prefix):
             all_prefix = os.path.dirname(all_prefix)
         self.base_prefix = QLineEdit(all_prefix, self)
+        self.base_prefix.setReadOnly(True)
         self.result_prefix = QLineEdit(all_prefix, self)
+        self.result_prefix.setReadOnly(True)
         self.base_prefix_btn = QPushButton("Choose data prefix")
         self.result_prefix_btn = QPushButton("Choose save prefix")
         self.sheet_name = QLineEdit("Sheet1")
-        self.statistic_file_path = QLineEdit(statistic_file_path)
+        self.statistic_file_path_view = QLineEdit(statistic_file_path)
+        self.statistic_file_path_view.setReadOnly(True)
 
         self.mask_path_list = []
         self.mask_mapper_list = self.calculation_plan.get_list_file_mask()
@@ -421,7 +430,7 @@ class CalculationPrepare(QDialog):
         layout.addWidget(right_label("Statistics sheet name:"), 3, 3)
         layout.addWidget(self.sheet_name, 3, 4)
         layout.addWidget(right_label("Statistics file path:"), 2, 3)
-        layout.addWidget(self.statistic_file_path, 2, 4)
+        layout.addWidget(self.statistic_file_path_view, 2, 4)
 
         layout.addWidget(right_label("Data prefix:"), 2, 0)
         layout.addWidget(self.base_prefix, 2, 1)
@@ -457,13 +466,13 @@ class CalculationPrepare(QDialog):
     def get_data(self):
         res = {"file_list": self.file_list, "base_prefix": str(self.base_prefix.text()),
                "result_prefix": str(self.result_prefix.text()),
-               "statistic_file_path": str(self.statistic_file_path.text()),
+               "statistic_file_path": str(self.statistic_file_path_view.text()),
                "sheet_name": str(self.sheet_name.text()), "calculation_plan": self.calculation_plan}
         return Calculation(**res)
 
     def verify_data(self):
         text = "information, <i><font color='blue'>warnings</font></i>, <b><font color='red'>errors</font><b><br>"
-        if not self.batch_manager.is_sheet_name_use(self.statistic_file_path.text(), self.sheet_name.text()):
+        if not self.batch_manager.is_sheet_name_use(self.statistic_file_path_view.text(), self.sheet_name.text()):
             text += "<i><font color='blue'>Sheet name already in use</i></font><br>"
 
         text = text[:-4]

@@ -182,9 +182,13 @@ class CalculationManager(object):
                 self.errors_list.append(el)
                 new_errors.append(el)
             else:
-                self.writer.add_result(el, calculation)
+                errors = self.writer.add_result(el, calculation)
+                for err in errors:
+                    new_errors.append(err)
             if self.counter_dict[uuid] == len(calculation.file_list):
-                self.writer.calculation_finished(calculation)
+                errors = self.writer.calculation_finished(calculation)
+                for err in errors:
+                    new_errors.append(err)
         return new_errors, self.calculation_done, zip(self.counter_dict.values(), self.calculation_sizes)
 
 
@@ -236,6 +240,7 @@ class FileData(object):
         self.new_count = 0
         self.write_threshold = 40
         self.wrote_queue = Queue()
+        self.error_queue = Queue()
         self.write_thread = threading.Thread(target=self.wrote_data_to_file)
         self.write_thread.daemon = True
         self.write_thread.start()
@@ -334,6 +339,13 @@ class FileData(object):
                     writer.save()
             except Exception as e:
                 logging.error(e)
+                self.error_queue.put(e)
+
+    def get_errors(self):
+        res = []
+        while not self.error_queue.empty():
+            res.append(self.error_queue.get())
+        return res
 
     def finish(self):
         self.wrote_queue.put("finish")
@@ -352,7 +364,9 @@ class DataWriter(object):
     def add_result(self, data, calculation):
         if calculation.statistic_file_path not in self.file_dict:
             raise ValueError("Unknown statistic file")
-        self.file_dict[calculation.statistic_file_path].wrote_data(calculation.uuid, data)
+        file_writer = self.file_dict[calculation.statistic_file_path]
+        file_writer.wrote_data(calculation.uuid, data)
+        return file_writer.get_errors()
 
     def finish(self):
         for file_data in self.file_dict.keys():
@@ -362,6 +376,7 @@ class DataWriter(object):
         if calculation.statistic_file_path not in self.file_dict:
             raise ValueError("Unknown statistic file")
         self.file_dict[calculation.statistic_file_path].dump_data()
+        return self.file_dict[calculation.statistic_file_path].get_errors()
 
 
 
