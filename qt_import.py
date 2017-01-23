@@ -11,10 +11,10 @@ __author__ = "Grzegorz Bokota"
 
 if use_qt5:
     matplotlib.use("Qt5Agg")
-    logging.info("Qt5 backed")
+    logging.debug("Qt5 backed")
 else:
     matplotlib.use("Qt4Agg")
-    logging.info("Qt4 backend")
+    logging.debug("Qt4 backend")
 
 if use_qt5:
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas

@@ -178,13 +178,16 @@ class ProgressView(QWidget):
         self.number_of_process = QSpinBox(self)
         self.number_of_process.setRange(1, multiprocessing.cpu_count())
         self.number_of_process.setValue(1)
+        self.number_of_process.setToolTip("Number of process used in batch calculation")
         self.number_of_process.valueChanged.connect(self.process_num_timer_start)
         layout = QGridLayout()
         layout.addWidget(self.whole_label, 0, 0, Qt.AlignRight)
         layout.addWidget(self.whole_progress, 0, 1, 1, 2)
         layout.addWidget(self.part_label, 1, 0, Qt.AlignRight)
         layout.addWidget(self.part_progress, 1, 1, 1, 2)
-        layout.addWidget(QLabel("Process number:"), 2, 0)
+        lab = QLabel("Number of process:")
+        lab.setToolTip("Number of process used in batch calculation")
+        layout.addWidget(lab, 2, 0)
         layout.addWidget(self.number_of_process, 2, 1)
         layout.addWidget(self.logs, 3, 0, 1, 3)
         layout.addWidget(self.task_que, 0, 4, 0, 1)
@@ -471,9 +474,19 @@ class CalculationPrepare(QDialog):
         return Calculation(**res)
 
     def verify_data(self):
+        self.execute_btn.setEnabled(True)
         text = "information, <i><font color='blue'>warnings</font></i>, <b><font color='red'>errors</font><b><br>"
-        if not self.batch_manager.is_sheet_name_use(self.statistic_file_path_view.text(), self.sheet_name.text()):
+        if not self.batch_manager.is_valid_sheet_name(self.statistic_file_path_view.text(), self.sheet_name.text()):
             text += "<i><font color='blue'>Sheet name already in use</i></font><br>"
+            self.execute_btn.setDisabled(True)
+        if self.state_list.size > 0:
+            val = np.unique(self.state_list)
+            if 1 in val:
+                self.execute_btn.setDisabled(True)
+                text += "<i><font color='blue'>Some mask map file are not set</font></i><br>"
+            if 2 in val:
+                self.execute_btn.setDisabled(True)
+                text += "<b><font color='red'>Some mask do not exists</font><b><br>"
 
         text = text[:-4]
         self.info_label.setText(text)

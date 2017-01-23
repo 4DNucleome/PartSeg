@@ -350,10 +350,20 @@ class FileData(object):
     def finish(self):
         self.wrote_queue.put("finish")
 
+    def is_empty_sheet(self, sheet_name):
+        return sheet_name not in self.sheet_set
+
 
 class DataWriter(object):
     def __init__(self):
         self.file_dict = dict()
+
+    def is_empty_sheet(self, file_path, sheet_name):
+        if FileData.component_str in sheet_name:
+            return False
+        if file_path not in self.file_dict:
+            return True
+        return self.file_dict[file_path].is_empty_sheet(sheet_name)
 
     def add_data_part(self, calculation):
         if calculation.statistic_file_path in self.file_dict:

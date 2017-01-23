@@ -8,6 +8,7 @@ import numpy as np
 import json
 import re
 import appdirs
+import logging
 from qt_import import *
 from global_settings import file_folder
 
@@ -34,7 +35,7 @@ app_lab = "LFSG"
 reaction_time = 500
 
 config_folder = appdirs.user_data_dir(app_name, app_lab)
-print (config_folder)
+logging.debug(config_folder)
 
 if not os.path.isdir(config_folder):
     os.makedirs(config_folder)
@@ -714,7 +715,6 @@ class MainWindow(QMainWindow):
     def __init__(self, title, path_to_open, dev):
         super(MainWindow, self).__init__()
         self.open_path = path_to_open
-        print (path_to_open)
         self.setWindowTitle(title)
         self.title = title
         self.settings = Settings(os.path.join(config_folder, "settings.json"))
@@ -774,9 +774,8 @@ class MainWindow(QMainWindow):
         export.setDisabled(True)
         export.triggered.connect(self.export)
         self.main_menu.enable_list.extend([save, export])
-        if dev:
-            batch = menu.addAction("Batch processing")
-            batch.triggered.connect(self.batch_view)
+        batch = menu.addAction("Batch processing")
+        batch.triggered.connect(self.batch_view)
         exit_menu = menu.addAction("Exit")
         exit_menu.triggered.connect(self.close)
 
@@ -946,7 +945,6 @@ class ImageExporter(QDialog):
                           "Lanczos": Image.LANCZOS}  # "Box": Image.BOX, "Hamming": Image.HAMMING,
 
     def __init__(self, canvas, file_path, filter_name, parent, image=None):
-        print(filter_name)
         super(ImageExporter, self).__init__(parent)
         self.image = image
         self.keep_ratio = QCheckBox("Keep oryginal ratio", self)
@@ -1176,10 +1174,10 @@ class Credits(QDialog):
         label.setWordWrap(True)
 
     def showEvent(self, _):
-        print("Credits show")
+        logging.debug("Credits show")
 
     def closeEvent(self, _):
-        print("Credits close")
+        logging.debug("Credits close")
 
 
 class CmapSave(QDialog):

@@ -239,7 +239,7 @@ class CreatePlan(QWidget):
             self.segment_allow = False
             self.remove_btn.setDisabled(True)
             self.plan_node_changed.emit()
-            logging.info("[node_type_changed] return")
+            logging.debug("[node_type_changed] return")
             return
         node_type = self.calculation_plan.get_node_type()
         self.node_type = node_type

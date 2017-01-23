@@ -99,6 +99,9 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
     except ValueError:
         logging.error("No output")
         return
+
+    if not os.path.exists(os.path.dirname(file_path)):
+        os.makedirs(os.path.dirname(file_path))
     f = h5py.File(file_path, "w")
     grp = f.create_group('Chimera/image1')
 
@@ -190,6 +193,8 @@ def save_to_project(file_path, settings, segment):
         json.dump(important_data, ff)
     """if file_path[-3:] != ".gz":
         file_path += ".gz" """
+    if not os.path.exists(os.path.dirname(file_path)):
+        os.makedirs(os.path.dirname(file_path))
     ext = os.path.splitext(file_path)[1]
     if ext.lower() in ['.bz2', ".tbz2"]:
         tar = tarfile.open(file_path, 'w:bz2')
