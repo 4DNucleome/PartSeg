@@ -9,7 +9,7 @@ class ThresholdType(Enum):
     upper = 1
     lower = 2
 
-UPPER = ThresholdType.upper
+UPPER = "UPPER"
 
 
 class SegmentationProfile(object):

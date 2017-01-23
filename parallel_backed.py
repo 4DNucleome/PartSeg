@@ -1,6 +1,6 @@
 import multiprocessing
 from enum import Enum
-from queue import Queue, Empty
+from queue_bufix import Queue, Empty
 import logging
 import time
 import os

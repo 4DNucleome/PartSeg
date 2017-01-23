@@ -10,7 +10,7 @@ from calculation_plan import CalculationTree, MaskMapper, MaskUse, MaskCreate, P
     CmapProfile, Operations, ChooseChanel, FileCalculation
 from copy import copy
 from utils import dict_set_class
-from queue import Queue
+from queue_bufix import Queue
 from collections import OrderedDict, defaultdict
 import logging
 from enum import Enum
