@@ -60,7 +60,7 @@ class MaskSub(MaskMapper):
         return os.path.join(dir_name, filename)
 
     def get_parameters(self):
-        return {"name": self.name, "base": self.base}
+        return {"name": self.name, "base": self.base, "rep": self.rep}
 
 
 class MaskFile(MaskMapper):
@@ -414,7 +414,11 @@ class CalculationPlan(object):
         execution_tree = data_dict["execution_tree"]
         for pos, el, _ in execution_tree:
             res_plan.current_pos = pos[:-1]
-            res_plan.add_step(CalculationPlan.correct_name[el["type"]](**el["values"]))
+            try:
+                res_plan.add_step(CalculationPlan.correct_name[el["type"]](**el["values"]))
+            except TypeError as e:
+                logging.warning(el["type"])
+                raise e
         res_plan.changes = []
         return res_plan
 
