@@ -15,6 +15,7 @@ from collections import OrderedDict, defaultdict
 import logging
 from enum import Enum
 import threading
+import os
 
 
 def do_calculation(file_path, calculation):
@@ -51,11 +52,10 @@ class CalculationProcess(object):
         if ext in [".tiff", ".tif", ".lsm"]:
             image = tifffile.imread(calculation.file_path)
             self.settings.image = image
-        elif ext in [".tgz", "gz", ".tbz2", ".bz2"]:
+        elif ext in [".tgz", ".gz", ".tbz2", ".bz2"]:
             load_project(calculation.file_path, self.settings, self.segment)
         else:
             raise ValueError("Unknown file type: {} {}". format(ext, calculation.file_path))
-
         self.iterate_over(calculation.calculation_plan.execution_tree)
         return path.relpath(calculation.file_path, calculation.base_prefix), self.statistics
 
@@ -118,6 +118,7 @@ class CalculationProcess(object):
         elif isinstance(node.operation, Operations):
             if node.operation == Operations.segment_from_project:
                 load_project(self.settings.file_path, self.settings, self.segment)
+                self.iterate_over(node)
         elif isinstance(node.operation, ChooseChanel):
             image = self.settings.image
             new_image = image.take(node.operation.chanel_num, axis=node.operation.chanel_position)

@@ -147,10 +147,10 @@ class Settings(object):
         self.chosen_colormap = pyplot.colormaps()
         self.segmentation_profiles_dict = dict()
         self.profiles_list_changed_callback = []
-        self.use_gauss = False
+        self.use_gauss = True
         self.use_draw_result = False
         self.draw_callback = []
-        self.threshold = 33000
+        self.threshold = 37000
         self.threshold_list = []
         self.threshold_type = UPPER
         self.threshold_layer_separate = False

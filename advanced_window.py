@@ -491,7 +491,10 @@ class StatisticsWindow(QWidget):
         ob_array = np.zeros((rows, columns), dtype=object)
         for x in range(rows):
             for y in range(columns):
-                ob_array[x, y] = self.info_field.item(x, y).text()
+                field = self.info_field.item(x, y)
+                if field is not None:
+                    ob_array[x, y] = field.text()
+
         hor_headers = [self.info_field.horizontalHeaderItem(x).text() for x in range(columns)]
         ver_headers = [self.info_field.verticalHeaderItem(x).text() for x in range(rows)]
         self.info_field.setColumnCount(rows)

@@ -114,6 +114,7 @@ class AddFiles(QWidget):
             dial.setDirectory(self.settings.batch_directory)
         dial.setFileMode(QFileDialog.ExistingFiles)
         if dial.exec_():
+            self.settings.batch_directory = os.path.dirname(str(dial.selectedFiles()[0]))
             new_paths = sorted(set(map(str, dial.selectedFiles())) - self.files_to_proceed)
             for path in new_paths:
                 lwi = QListWidgetItem(path)
@@ -129,6 +130,7 @@ class AddFiles(QWidget):
         dial.setFileMode(QFileDialog.Directory)
         if dial.exec_():
             self.paths.setText(dial.selectedFiles()[0])
+            self.settings.batch_directory = os.path.dirname(str(dial.selectedFiles()[0]))
 
     def file_chosen(self):
         self.delete_button.setEnabled(True)
@@ -307,8 +309,8 @@ class FileChoose(QWidget):
 
     def chose_result_file(self):
         dial = QFileDialog(self, "Select result.file")
-        if self.settings.batch_directory is not None:
-            dial.setDirectory(self.settings.batch_directory)
+        if self.settings.save_directory is not None:
+            dial.setDirectory(self.settings.save_directory)
         dial.setFileMode(QFileDialog.AnyFile)
         dial.setAcceptMode(QFileDialog.AcceptSave)
         dial.setFilter("Excel file (*.xlsx)")
@@ -386,6 +388,8 @@ class CalculationPrepare(QDialog):
                                   units_index=UNITS_LIST.index(settings.size_unit))
         all_prefix = os.path.commonprefix(file_list)
         if not os.path.exists(all_prefix):
+            all_prefix = os.path.dirname(all_prefix)
+        if not os.path.isdir(all_prefix):
             all_prefix = os.path.dirname(all_prefix)
         self.base_prefix = QLineEdit(all_prefix, self)
         self.base_prefix.setReadOnly(True)

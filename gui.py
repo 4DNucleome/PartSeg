@@ -336,6 +336,7 @@ class MainMenu(QWidget):
         self.minimum_size_timer.timeout.connect(self.minimum_size_changed)
         self.minimum_size_timer.setSingleShot(True)
         self.gauss_check = QCheckBox("Use gauss", self)
+        self.gauss_check.setChecked(self.settings.use_gauss)
         self.gauss_check.stateChanged[int].connect(settings.change_gauss)
         self.draw_check = QCheckBox("Use draw\n result", self)
         self.draw_check.stateChanged[int].connect(settings.change_draw_use)

@@ -176,6 +176,8 @@ class Segment(object):
         if self.protect:
             return
         if canvas is not None:
+            if self.draw_canvas is None:
+                return
             self.draw_canvas[...] = canvas[...]
             return
         if self._settings.use_draw_result:

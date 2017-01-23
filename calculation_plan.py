@@ -302,6 +302,9 @@ class CalculationPlan(object):
             return NodeType.root
         if isinstance(node.operation, MaskUse):
             return NodeType.file_mask
+        if isinstance(node.operation, Operations):
+            if node.operation == Operations.segment_from_project:
+                return NodeType.segment
         logging.error("[get_node_type] unknown node type {}".format(node.operation))
 
     def add_step(self, step):
@@ -390,6 +393,8 @@ class CalculationPlan(object):
             sub_dict["values"] = el.get_parameters()
         elif isinstance(el, MaskMapper):
             sub_dict["values"] = el.get_parameters()
+        elif isinstance(el, Operations):
+            sub_dict["values"] = {"value": el.value}
         else:
             raise ValueError("Not supported type {}".format(el))
         res = [(pos, sub_dict, PlanChanges.add_node.value)]

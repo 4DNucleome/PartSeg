@@ -54,6 +54,7 @@ class CreatePlan(QWidget):
         self.chanel_num.setRange(0, 10)
 
         self.project_segmentation = QPushButton("Segmentation\nfrom project")
+        self.project_segmentation.clicked.connect(self.segmentation_from_project)
 
         self.chose_profile = QPushButton("Segment Profile")
         self.statistic_list = QListWidget(self)
@@ -216,6 +217,10 @@ class CreatePlan(QWidget):
         self.plan_node_changed.connect(self.show_segment)
         self.plan_node_changed.connect(self.show_statistics)
         self.node_type_changed()
+
+    def segmentation_from_project(self):
+        self.calculation_plan.add_step(Operations.segment_from_project)
+        self.plan.update_view()
 
     def update_names(self):
         if self.update_element_btn.isChecked():
