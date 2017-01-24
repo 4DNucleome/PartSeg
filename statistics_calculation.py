@@ -5,7 +5,6 @@ from utils import class_to_dict
 import logging
 import SimpleITK as sitk
 import numpy as np
-
 import auto_fit as af
 
 SettingsValue = namedtuple("SettingsValue", ["function_name", "help_message", "arguments", "is_mask", "is_component"])
@@ -46,7 +45,13 @@ class StatisticProfile(object):
         "Border Volume": SettingsValue("border_volume", "Calculate volumes for elements in radius (in physical units)"
                                                         " from mask", {"radius": int}, False, False),
         "Components Number": SettingsValue("number_of_components", "Calculate number of connected components "
-                                                                   "on segmentation", None, False, False)
+                                                                   "on segmentation", None, False, False),
+        "Mask Volume": SettingsValue("mask_volume", "Volume of mask", None, True, False),
+        "Mask Diameter": SettingsValue("mask_diameter", "Diameter of mask", None, True, False),
+        "Segmentation Diameter": SettingsValue("segmentation_diameter", "Diameter of segmentation", None, False, False),
+        "Segmentation component Diameter":
+            SettingsValue("component_diameter", "Diameter of each segmentation component", None, False, False)
+
     }
     PARAMETERS = ["name", "chosen_fields", "reversed_brightness", "use_gauss_image", "name_prefix"]
 
@@ -229,7 +234,8 @@ class StatisticProfile(object):
                 result[self.name_prefix + user_name] = self.calculate_tree(tree, help_dict, kw)
             except ZeroDivisionError:
                 result[self.name_prefix + user_name] = "Div by zero"
-            except TypeError:
+            except TypeError as e:
+                logging.warning(e)
                 result[self.name_prefix + user_name] = "None div"
         return result
 
@@ -339,8 +345,21 @@ class StatisticProfile(object):
         return np.count_nonzero(final_mask) * self.pixel_volume(self.voxel_size)
 
     @staticmethod
-    def number_of_components(segmentation):
+    def number_of_components(segmentation, **_):
         return segmentation.max()
+
+    def mask_volume(self, base_mask, **_):
+        return np.count_nonzero(base_mask) * self.pixel_volume(self.voxel_size)
+
+    def mask_diameter(self, base_mask, **_):
+        return calc_diam(get_border(base_mask), self.voxel_size)
+
+    def segmentation_diameter(self, segmentation, **_):
+        return calc_diam(get_border(segmentation), self.voxel_size)
+
+    def component_diameter(self, segmentation, **_):
+        unique = np.unique(segmentation[segmentation > 0])
+        return np.array([calc_diam(get_border(segmentation == i), self.voxel_size) for i in unique], dtype=np.float)
 
 
 def calculate_volume_surface(volume_mask, voxel_size):
@@ -352,3 +371,20 @@ def calculate_volume_surface(volume_mask, voxel_size):
         border_surface += np.count_nonzero(np.logical_xor(surf_im[:, :, 1:], surf_im[:, :, :-1])) * voxel_size[0] * \
                           voxel_size[1]
     return border_surface
+
+
+def get_border(array):
+    if array.dtype == np.bool:
+        array = array.astype(np.uint8)
+    return sitk.GetArrayFromImage(sitk.LabelContour(sitk.GetImageFromArray(array)))
+
+
+def calc_diam(array, voxel_size):
+    pos = np.transpose(np.nonzero(array)).astype(np.float)
+    for i, val in enumerate(voxel_size):
+        pos[:, i] *= val
+    diam = 0
+    for i, p in enumerate(zip(pos[:-1])):
+        tmp = np.array((pos[i+1:] - p) ** 2)
+        diam = max(diam, np.max(np.sum(tmp, 1)))
+    return np.sqrt(diam)
