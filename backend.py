@@ -14,6 +14,7 @@ from utils import class_to_dict, dict_set_class
 from segment import SegmentationProfile, Segment, UPPER
 from statistics_calculation import StatisticProfile, calculate_volume_surface
 from image_operations import gaussian, dilate
+from scipy.ndimage.interpolation import zoom
 
 UNITS_DICT = {
     "Volume": "{}^3",
@@ -390,6 +391,24 @@ class Settings(object):
     @property
     def available_colormap_list(self):
         return pyplot.colormaps()
+
+    def scale_image(self, scale_factor):
+        if self.image is None:
+            return
+        if len(self.image.shape) == 2:
+            self.image = zoom(self.image, scale_factor)
+        else:
+            self.image = zoom(self.image, (1, scale_factor, scale_factor))
+        if self.mask is not None:
+            if len(self.image.shape) == 2:
+                self.mask = zoom(self.mask, scale_factor)
+            else:
+                self.mask = zoom(self.mask, (1, scale_factor, scale_factor))
+
+        self.min_value = self.image.min()
+        self.max_value = self.image.max()
+        self.gauss_image = gaussian(self.image, self.gauss_radius)
+        self.image_changed_fun()
 
     def add_image(self, image, file_path, mask=None, new_image=True, original_image=None):
         self.image = image

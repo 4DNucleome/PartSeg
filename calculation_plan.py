@@ -145,7 +145,8 @@ class Calculation(object):
     :type calculation_plan: CalculationPlan
 
     """
-    def __init__(self, file_list, base_prefix, result_prefix, statistic_file_path, sheet_name, calculation_plan):
+    def __init__(self, file_list, base_prefix, result_prefix, statistic_file_path, sheet_name, calculation_plan,
+                 voxel_size):
         self.file_list = file_list
         self.base_prefix = base_prefix
         self.result_prefix = result_prefix
@@ -153,6 +154,7 @@ class Calculation(object):
         self.sheet_name = sheet_name
         self.calculation_plan = calculation_plan
         self.uuid = uuid.uuid4()
+        self.voxel_size = voxel_size
 
 
 class FileCalculation(object):
@@ -179,6 +181,10 @@ class FileCalculation(object):
     @property
     def uuid(self):
         return self.calculation.uuid
+
+    @property
+    def voxel_size(self):
+        return self.calculation.voxel_size
 
 
 class CalculationPlan(object):

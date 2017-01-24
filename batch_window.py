@@ -474,7 +474,8 @@ class CalculationPrepare(QDialog):
         res = {"file_list": self.file_list, "base_prefix": str(self.base_prefix.text()),
                "result_prefix": str(self.result_prefix.text()),
                "statistic_file_path": str(self.statistic_file_path_view.text()),
-               "sheet_name": str(self.sheet_name.text()), "calculation_plan": self.calculation_plan}
+               "sheet_name": str(self.sheet_name.text()), "calculation_plan": self.calculation_plan,
+               "voxel_size": self.voxel_size.get_values()}
         return Calculation(**res)
 
     def verify_data(self):

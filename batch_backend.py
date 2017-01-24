@@ -48,6 +48,7 @@ class CalculationProcess(object):
         self.reused_mask = calculation.calculation_plan.get_reused_mask()
         self.mask_dict = {}
         self.statistics = []
+        self.settings.voxel_size = calculation.voxel_size
         ext = path.splitext(calculation.file_path)[1]
         if ext in [".tiff", ".tif", ".lsm"]:
             image = tifffile.imread(calculation.file_path)

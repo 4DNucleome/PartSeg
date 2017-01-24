@@ -1,5 +1,5 @@
 from qt_import import QWidget, FigureCanvas, QToolButton, QSize, QIcon, QAction, QLabel, QDialog, NavigationToolbar, \
-    Qt, QSlider, QCheckBox, QVBoxLayout, QHBoxLayout, QPushButton, QDoubleSpinBox, QGridLayout
+    Qt, QSlider, QCheckBox, QVBoxLayout, QHBoxLayout, QPushButton, QDoubleSpinBox, QGridLayout, QInputDialog
 from matplotlib import pyplot
 from matplotlib import colors
 import matplotlib
@@ -427,6 +427,11 @@ class MyDrawCanvas(MyCanvas):
         self.erase_button.setIconSize(canvas_icon_size)
         self.erase_button.setCheckable(True)
         # self.erase_button.clicked[bool].connect(self.erase_click)
+        self.scale_button = QToolButton(self)
+        self.scale_button.setToolTip("x, y image scale")
+        self.scale_button.setIcon(QIcon(os.path.join(file_folder, "icons", "transform-scale.png")))
+        self.scale_button.setIconSize(canvas_icon_size)
+        self.scale_button.clicked.connect(self.scale_image)
         self.show_button = QPushButton("Show", self)
         self.hide_button = QPushButton("Hide", self)
         self.show_button.setCheckable(True)
@@ -445,7 +450,7 @@ class MyDrawCanvas(MyCanvas):
         self.clean_button.clicked.connect(self.draw_canvas.clean)
         self.clean_data_button = QPushButton("Clean data", self)
         self.clean_data_button.clicked.connect(self.action_choose)
-        self.button_list.extend([self.draw_button, self.erase_button, self.show_button, self.hide_button,
+        self.button_list.extend([self.draw_button, self.erase_button, self.scale_button, self.show_button, self.hide_button,
                                  self.clean_button, self.clean_data_button])
         self.segment = segment
         self.protect_button = False
@@ -461,6 +466,13 @@ class MyDrawCanvas(MyCanvas):
         self.figure_canvas.mpl_connect('button_press_event', self.draw_canvas.on_mouse_down)
         self.figure_canvas.mpl_connect('motion_notify_event', self.draw_canvas.on_mouse_move)
         self.figure_canvas.mpl_connect('button_release_event', self.draw_canvas.on_mouse_up)
+
+    def scale_image(self):
+        dial = QInputDialog()
+        dial.setss
+        val, ok = QInputDialog.getDouble(self, "Scale factor", "Set scale factor", 1, 0.01, 3, 2)
+        if ok :
+            print("Buka {}".format(val))
 
     def action_choose(self):
         if str(self.clean_data_button.text()) == "Clean data":
