@@ -2,7 +2,7 @@ if __name__ == '__main__':
     import logging
     logging.basicConfig(level=logging.INFO)
     import argparse
-    from global_settings import set_qt4, set_qt5
+    from global_settings import set_qt4, set_qt5, set_develop
     parser = argparse.ArgumentParser("Program for segment of connected components")
     parser.add_argument("file", nargs="?", help="file to open")
     parser.add_argument("-qt4", "--force-qt4", dest="qt4", const=True, default=False, action="store_const",
@@ -21,6 +21,8 @@ if __name__ == '__main__':
 
     if args.qt5:
         set_qt5()
+
+    set_develop(args.develop)
 
     from gui import MainWindow, QApplication
     import sys

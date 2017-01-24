@@ -4,7 +4,7 @@ from matplotlib import pyplot
 from matplotlib import colors
 import matplotlib
 import SimpleITK as sitk
-from global_settings import file_folder
+from global_settings import file_folder, develop
 from backend import GAUSS, UPPER
 import os
 import logging
@@ -432,6 +432,8 @@ class MyDrawCanvas(MyCanvas):
         self.scale_button.setIcon(QIcon(os.path.join(file_folder, "icons", "transform-scale.png")))
         self.scale_button.setIconSize(canvas_icon_size)
         self.scale_button.clicked.connect(self.scale_image)
+        if not develop:
+            self.scale_button.hide()
         self.show_button = QPushButton("Show", self)
         self.hide_button = QPushButton("Hide", self)
         self.show_button.setCheckable(True)

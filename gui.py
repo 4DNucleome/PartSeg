@@ -131,14 +131,15 @@ class ColormapCanvas(QWidget):
         self.protect = True
         self.norm.setValue(self.settings.power_norm)
         self.protect = False
+        self.timer.start(reaction_time)
         # self.update_colormap()
-        if abs(self.starting_value - val) > 500:
+        """if abs(self.starting_value - val) > 500:
             self.run_update(True)
             self.starting_value = val
             self.timer.stop()
         else:
             if not self.timer.isActive():
-                self.timer.start(2*reaction_time)
+                self.timer.start(2*reaction_time)"""
 
     def run_update(self, manual=False):
         # print("Update manual {}".format(manual))
