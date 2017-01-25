@@ -9,7 +9,7 @@ import logging
 import SimpleITK as sitk
 from copy import deepcopy
 from enum import Enum
-import auto_fit as af
+from math import acos, sqrt, pi
 
 from backend import Settings, Segment, class_to_dict, calculate_statistic_from_image, get_segmented_data,\
     SegmentationProfile, SegmentationSettings
@@ -142,13 +142,13 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
 
     if centered_data:
         swap_cut_img = np.swapaxes(cut_img, 0, 2)
-        center_of_mass = af.density_mass_center(swap_cut_img, settings.spacing)
-        model_orientation, eigen_values = af.find_density_orientation(swap_cut_img, settings.spacing, cutoff=1)
+        center_of_mass = density_mass_center(swap_cut_img, settings.spacing)
+        model_orientation, eigen_values = find_density_orientation(swap_cut_img, settings.spacing, cutoff=1)
         if rotate is not None and rotate != "None":
             rotation_matrix, rotation_axis, angel = \
-                af.get_rotation_parameters(np.dot(ROTATION_MATRIX_DICT[rotate], model_orientation.T))
+                get_rotation_parameters(np.dot(ROTATION_MATRIX_DICT[rotate], model_orientation.T))
         else:
-            rotation_matrix, rotation_axis, angel = af.get_rotation_parameters(model_orientation.T)
+            rotation_matrix, rotation_axis, angel = get_rotation_parameters(model_orientation.T)
         grp.attrs['rotation_axis'] = rotation_axis
         grp.attrs['rotation_angle'] = angel
         grp.attrs['origin'] = - np.dot(rotation_matrix, center_of_mass)
@@ -290,3 +290,84 @@ def load_project(file_path, settings, segment):
     settings.next_segmentation_settings = []
     segment.draw_update(draw)
     segment.threshold_updated()
+
+
+def find_density_orientation(img, voxel_size, cutoff=1):
+    """
+       Identify axis of point set.
+
+       Args:
+           img (3D array): value in x, y, z
+           voxel_size (len 3 vector): self explanatory
+           cutoff (float): minimum value of value in image to take into account
+       Returns:
+           3x3 numpy array of eigen vectors
+    """
+    logging.info("\n============ Performing weighted PCA on image ============")
+
+    points_l = np.nonzero(np.array(img > cutoff))
+    weights = img[points_l]
+    points_l = np.transpose(points_l).astype(np.float64)
+    points_l[:, 0] *= voxel_size[0]
+    points_l[:, 1] *= voxel_size[1]
+    points_l[:, 2] *= voxel_size[2]
+    points = points_l.astype(np.float64)
+    punkty_wazone = np.empty(points.shape)
+    for i in range(3):
+        punkty_wazone[:, i] = points[:, i] * weights
+    mean = np.sum(punkty_wazone, axis=0)/np.sum(weights)
+    points_shifted = points - mean
+    wheighted_points_shifted = np.copy(points_shifted)
+    for i in range(3):
+        wheighted_points_shifted[:, i] *= weights
+    cov = np.dot(wheighted_points_shifted.transpose(), points_shifted) * 1/(len(weights)-1)
+    # cov variable is weighted covariance matrix
+    values, vectors = np.linalg.eig(cov)
+    logging.info("Eigen values0\n %s", str(values))
+    logging.info('Eigen vectors0\n %s', str(vectors))
+    sorted_values = sorted([(values[i], vectors[:, i]) for i in range(3)], key=lambda y: y[0], reverse=True)
+    values = [x[0] for x in sorted_values]
+    vectors = np.array([x[1] for x in sorted_values]).T
+    logging.info("Eigen values\n %s", str(values))
+    logging.info('Eigen vectors\n %s', str(vectors))
+    w_n = values / np.sum(values) * 1000  # Drawing coordinates
+    return vectors, w_n
+
+
+def get_rotation_parameters(isometric_matrix):
+    """
+    If 3x3 isometric matrix is not rotation matrix
+    function transform it into rotation matrix
+    then calculate rotation axis and angel
+    :param isometric_matrix: 3x3 np.ndarray with determinant equal 1 or -1
+    :return: rotation_matrix, rotation axis, rotation angel
+    """
+    if np.linalg.det(isometric_matrix) < 0:
+        isometric_matrix = np.dot(np.diag([-1, 1, 1]), isometric_matrix)
+    angel = acos((np.sum(np.diag(isometric_matrix)) - 1) / 2) * 180 / pi
+    square_diff = (isometric_matrix - isometric_matrix.T) ** 2
+    denominator = sqrt(np.sum(square_diff) / 2)
+    x = (isometric_matrix[2, 1] - isometric_matrix[1, 2]) / denominator
+    y = (isometric_matrix[0, 2] - isometric_matrix[2, 0]) / denominator
+    z = (isometric_matrix[1, 0] - isometric_matrix[0, 1]) / denominator
+    return isometric_matrix, np.array((x, y, z)), angel
+
+
+def density_mass_center(image, voxel_size=(1.0, 1.0, 1.0)):
+    """
+        Args:
+            image: 3d numpy array
+
+        Returns:
+            x, y, z: three floats tuple with mass center coords
+        :type image: np.ndarray
+        :type voxel_size: tuple[float] | np.ndarray | list[float]
+        :return np.ndarray
+
+    """
+    x_size, y_size, z_size = image.shape
+    denominator = float(np.sum(image))
+    m_x = np.sum(np.sum(image, axis=(1, 2)) * np.arange(x_size))
+    m_y = np.sum(np.sum(image, axis=(0, 2)) * np.arange(y_size))
+    m_z = np.sum(np.sum(image, axis=(0, 1)) * np.arange(z_size))
+    return np.array([m_x/denominator, m_y/denominator, m_z/denominator]) * voxel_size
