@@ -806,7 +806,7 @@ class AdvancedSettings(QWidget):
             print("New profile", profile)
             self.profile_list.clear()
             self.profile_list.addItem("<current profile>")
-            self.profile_list.addItems(self.settings.segmentation_profiles_dict.keys())
+            self.profile_list.addItems(list(sorted(self.settings.segmentation_profiles_dict.keys())))
 
     def delete_profile(self):
         chosen_profile = self.profile_list.currentItem()
@@ -816,7 +816,7 @@ class AdvancedSettings(QWidget):
             self.settings.delete_profile(label)
             self.profile_list.clear()
             self.profile_list.addItem("<current profile>")
-            self.profile_list.addItems(self.settings.segmentation_profiles_dict.keys())
+            self.profile_list.addItems(list(sorted(self.settings.segmentation_profiles_dict.keys())))
 
     def update_volume(self):
         volume = self.x_size.value() * self.y_size.value() * self.z_size.value()
