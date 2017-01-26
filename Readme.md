@@ -15,11 +15,23 @@ based on threshold and connected components
 
 
 ## Save Format
-Saved project are tar files compressed with gzip  
+Saved project are tar files compressed with gzip or bz2 
+
+Metadata are saved in data.json file (in json format)
+images/mask are saved as *.npy (numpy array format)
+
 
 ## Interface
-![interface](images/interface.jpg)
+![interface](images/gui.jpg)
+![batch_interface](images/batch.jpg)
+![batch_interface](images/batch_plan.jpg)
+![statistics](images/statistics.jpg)
+
+
 
 ## Laboratory
 Laboratory of functional and structural genomics
 http://nucleus3d.cent.uw.edu.pl/
+
+## Project Web Page
+http://nucleus3d.cent.uw.edu.pl/PartSeg

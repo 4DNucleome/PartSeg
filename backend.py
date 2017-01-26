@@ -4,7 +4,6 @@ import matplotlib
 from matplotlib import pyplot
 import numpy as np
 import json
-import auto_fit as af
 import logging
 from enum import Enum
 from calculation_plan import CalculationPlan
@@ -15,6 +14,7 @@ from segment import SegmentationProfile, Segment, UPPER
 from statistics_calculation import StatisticProfile, calculate_volume_surface
 from image_operations import gaussian, dilate
 from scipy.ndimage.interpolation import zoom
+from autofit import calculate_density_momentum
 
 UNITS_DICT = {
     "Volume": "{}^3",
@@ -587,7 +587,7 @@ def calculate_statistic_from_image(img, mask, settings):
     except ZeroDivisionError:
         pass
     if len(img.shape) == 3:
-        res["Moment of inertia"] = af.calculate_density_momentum(img, voxel_size)
+        res["Moment of inertia"] = calculate_density_momentum(img, voxel_size)
     return res
 
 
@@ -624,3 +624,4 @@ def get_segmented_data(image, settings, segment, with_std=False, mask_morph=None
     if with_std:
         return image, segmentation, noise_std
     return image, segmentation
+

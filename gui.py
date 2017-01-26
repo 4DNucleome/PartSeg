@@ -132,6 +132,12 @@ class ColormapCanvas(QWidget):
         self.norm.setValue(self.settings.power_norm)
         self.protect = False
         self.timer.start(reaction_time)
+        norm = colors.PowerNorm(gamma=self.settings.power_norm, vmin=self.val_min, vmax=self.val_max)
+        fig = pyplot.figure(self.my_figure_num)
+        pyplot.clf()
+        ax = fig.add_axes([0.01, 0.01, 0.25, 0.98])
+        matplotlib.colorbar.ColorbarBase(ax, cmap=self.settings.color_map, norm=norm, orientation='vertical')
+        fig.canvas.draw()
         # self.update_colormap()
         """if abs(self.starting_value - val) > 500:
             self.run_update(True)

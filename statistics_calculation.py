@@ -5,7 +5,7 @@ from utils import class_to_dict
 import logging
 import SimpleITK as sitk
 import numpy as np
-import auto_fit as af
+import autofit as af
 
 SettingsValue = namedtuple("SettingsValue", ["function_name", "help_message", "arguments", "is_mask", "is_component"])
 Leaf = namedtuple("Leaf", ["name", "dict"])
