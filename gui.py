@@ -1177,7 +1177,7 @@ class Credits(QDialog):
         licenses = "LGPLv3 for Oxygen icons <a href=\"http://www.kde.org/\">http://www.kde.org/</a><br>" \
                    "GPL for PyQt project"
         text = program + separator + author + separator + licenses
-        label.setText(text)
+        label.setText(text.decode('utf-8'))
         label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         label.setWordWrap(True)
 

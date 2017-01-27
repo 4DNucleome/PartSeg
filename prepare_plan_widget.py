@@ -1,6 +1,6 @@
 from qt_import import QWidget, QSplitter, QTreeWidget, QTreeWidgetItem, pyqtSignal, QPushButton, QCheckBox, \
     QListWidget, QLineEdit, QSpinBox, QTextEdit, QGroupBox, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, \
-    QInputDialog, QMessageBox, QFileDialog, QDialog, QComboBox, str_type
+    QInputDialog, QMessageBox, QFileDialog, QDialog, QComboBox, str_type, QCompleter, Qt
 
 from calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, MaskSuffix, MaskSub, \
     MaskFile, ProjectSave, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, MaskSave
@@ -22,6 +22,45 @@ class TwoMaskDialog(QDialog):
         :type mask_names: set
         :param mask_names: iterable collection of all available mask names
         """
+        super(TwoMaskDialog, self).__init__()
+        self.mask_names = mask_names
+        completer = QCompleter(list(mask_names))
+        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.setWindowTitle("Masks name choose")
+        self.mask1_name = QLineEdit()
+        self.mask2_name = QLineEdit()
+        self.cancel_btn = QPushButton("Cancel")
+        self.ok_btn = QPushButton("Ok")
+
+        self.mask1_name.setCompleter(completer)
+        self.mask1_name.textChanged.connect(self.text_changed)
+        self.mask2_name.setCompleter(completer)
+        self.mask2_name.textChanged.connect(self.text_changed)
+        self.cancel_btn.clicked.connect(self.close)
+        self.ok_btn.clicked.connect(self.accept)
+        self.ok_btn.setDisabled(True)
+
+        layout = QGridLayout()
+        layout.addWidget(right_label("Mask 1 name:"), 0, 0)
+        layout.addWidget(self.mask1_name, 0, 1)
+        layout.addWidget(right_label("Mask 2 name:"), 1, 0)
+        layout.addWidget(self.mask2_name, 1, 1)
+        layout.addWidget(self.cancel_btn, 2, 0)
+        layout.addWidget(self.ok_btn, 2, 1)
+        self.setLayout(layout)
+
+    def text_changed(self):
+        text1, text2 = self.get_result()
+        if text1 == "" or text2 == "" or text1 not in self.mask_names or text2 not in self.mask_names:
+            self.ok_btn.setDisabled(True)
+            return
+        else:
+            self.ok_btn.setDisabled(text1 == text2)
+
+    def get_result(self):
+        text1 = str(self.mask1_name.text()).strip()
+        text2 = str(self.mask2_name.text()).strip()
+        return text1, text2
 
 
 class CreatePlan(QWidget):
@@ -107,6 +146,8 @@ class CreatePlan(QWidget):
         self.update_element_btn.stateChanged.connect(self.show_segment)
         self.update_element_btn.stateChanged.connect(self.update_names)
         self.choose_channel_btn.clicked.connect(self.choose_channel)
+        self.intersect_mask_btn.clicked.connect(self.mask_intersect)
+        self.sum_mask_btn.clicked.connect(self.mask_sum)
         plan_box = QGroupBox("Calculate plan:")
         lay = QVBoxLayout()
         lay.addWidget(self.plan)
@@ -290,6 +331,28 @@ class CreatePlan(QWidget):
             self.segment_allow = False
             self.file_mask_allow = False
         self.plan_node_changed.emit()
+
+    def mask_intersect(self):
+        dial = TwoMaskDialog(self.mask_set)
+        if dial.exec_():
+            mask_name = str(self.mask_name.text()).strip()
+            name1, name2 = dial.get_result()
+            if self.update_element_btn.isChecked():
+                self.calculation_plan.replace_step(MaskIntersection(mask_name, name1, name2))
+            else:
+                self.calculation_plan.add_step(MaskIntersection(mask_name, name1, name2))
+            self.plan.update_view()
+
+    def mask_sum(self):
+        dial = TwoMaskDialog(self.mask_set)
+        if dial.exec_():
+            mask_name = str(self.mask_name.text()).strip()
+            name1, name2 = dial.get_result()
+            if self.update_element_btn.isChecked():
+                self.calculation_plan.replace_step(MaskSum(mask_name, name1, name2))
+            else:
+                self.calculation_plan.add_step(MaskSum(mask_name, name1, name2))
+            self.plan.update_view()
 
     def choose_channel(self):
         chanel_pos = self.chanel_pos.value()
