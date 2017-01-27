@@ -11,11 +11,38 @@ import uuid
 
 MaskCreate = namedtuple("MaskCreate", ['name', 'radius'])
 MaskUse = namedtuple("MaskUse", ['name'])
+MaskSum = namedtuple("MaskSum", ["name", "mask1", "mask2"])
+MaskIntersection = namedtuple("MaskIntersection", ["name", "mask1", "mask2"])
 CmapProfile = namedtuple("CmapProfile", ["suffix", "gauss_type", "center_data", "rotation_axis", "cut_obsolete_area"])
 ProjectSave = namedtuple("ProjectSave", ["suffix"])
+MaskSave = namedtuple("MaskSave", ["suffix"])
 ChooseChanel = namedtuple("ChooseChanel", ["chanel_position", "chanel_num"])
 
 MaskCreate.__new__.__defaults__ = (0,)
+
+
+def get_save_path(op, calculation, base_path):
+    """
+    :type op: MaskSave | ProjectSave | CmapProfile
+    :type calculation: Calculation
+    :type base_path: str
+    :param op: operation to do
+    :param calculation: information about calculation
+    :param base_path: path to file
+    :return: str
+    """
+    if isinstance(op, MaskSave):
+        extension = ".tiff"
+    elif isinstance(op, ProjectSave):
+        extension = ".tgz"
+    elif isinstance(op, CmapProfile):
+        extension = ".cmap"
+    else:
+        raise ValueError("Unknown save operation {}".format(op))
+    rel_path = os.path.relpath(base_path, calculation.base_prefix)
+    rel_path, ext = os.path.splitext(rel_path)
+    file_path = os.path.join(calculation.result_prefix, rel_path + op.suffix + extension)
+    return file_path
 
 
 @add_metaclass(ABCMeta)
@@ -133,6 +160,7 @@ class NodeType(Enum):
     save = 5
     none = 6
     file_mask = 7
+    channel_choose = 8
 
 
 class Calculation(object):
@@ -197,7 +225,8 @@ class CalculationPlan(object):
                     StatisticProfile.__name__: StatisticProfile, SegmentationProfile.__name__: SegmentationProfile,
                     MaskSuffix.__name__: MaskSuffix, MaskSub.__name__: MaskSub, MaskFile.__name__: MaskFile,
                     ProjectSave.__name__: ProjectSave, Operations.__name__: Operations,
-                    ChooseChanel.__name__: ChooseChanel}
+                    ChooseChanel.__name__: ChooseChanel, MaskIntersection.__name__: MaskIntersection,
+                    MaskSum.__name__: MaskSum}
 
     def __init__(self):
         self.execution_tree = CalculationTree("root", [])
@@ -294,7 +323,8 @@ class CalculationPlan(object):
             return NodeType.root
         # print("Pos {}".format(self.current_pos))
         node = self.get_node()
-        if isinstance(node.operation, MaskMapper):
+        if isinstance(node.operation, MaskMapper) or isinstance(node.operation, MaskIntersection) or\
+                isinstance(node.operation, MaskSum):
             return NodeType.file_mask
         if isinstance(node.operation, MaskCreate):
             return NodeType.mask
@@ -305,7 +335,7 @@ class CalculationPlan(object):
         if isinstance(node.operation, ProjectSave) or isinstance(node.operation, CmapProfile):
             return NodeType.save
         if isinstance(node.operation, ChooseChanel):
-            return NodeType.root
+            return NodeType.channel_choose
         if isinstance(node.operation, MaskUse):
             return NodeType.file_mask
         if isinstance(node.operation, Operations):
@@ -361,6 +391,24 @@ class CalculationPlan(object):
 
     def get_execution_tree(self):
         return self.execution_tree
+
+    def _get_save_list(self, node):
+        """
+        :type node: CalculationTree
+        :param node:
+        :return:
+        """
+        if isinstance(node.operation, MaskSave) or isinstance(node.operation, CmapProfile) or \
+                isinstance(node.operation, ProjectSave):
+            return [node.operation]
+        else:
+            res = []
+            for chl in node.children:
+                res.extend(self._get_save_list(chl))
+            return res
+
+    def get_save_list(self):
+        return self._get_save_list(self.execution_tree)
 
     def get_list_file_mask(self):
         """
@@ -477,5 +525,20 @@ class CalculationPlan(object):
                 return "Save to project with suffix {}".format(el.suffix)
             else:
                 return "Save to project"
+        if isinstance(el, MaskSave):
+            if el.suffix != "":
+                return "Save mask with suffix {}".format(el.suffix)
+            else:
+                return "Save mask"
+        if isinstance(el, MaskIntersection):
+            if el.name == "":
+                return "Mask intersection of mask {} and {}".format(el.mask1, el.mask2)
+            else:
+                return "Mask {} intersection of mask {} and {}".format(el.name, el.mask1, el.mask2)
+        if isinstance(el, MaskSum):
+            if el.name == "":
+                return "Mask sum of mask {} and {}".format(el.mask1, el.mask2)
+            else:
+                return "Mask {} sum of mask {} and {}".format(el.name, el.mask1, el.mask2)
 
         raise ValueError("Unknown type {}".format(type(el)))

@@ -3,7 +3,7 @@ from qt_import import QWidget, QSplitter, QTreeWidget, QTreeWidgetItem, pyqtSign
     QInputDialog, QMessageBox, QFileDialog, QDialog, QComboBox, str_type
 
 from calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, MaskSuffix, MaskSub, \
-    MaskFile, ProjectSave, PlanChanges, NodeType, ChooseChanel
+    MaskFile, ProjectSave, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, MaskSave
 
 import logging
 from copy import copy, deepcopy
@@ -14,6 +14,14 @@ from universal_gui_part import right_label
 
 group_sheet = "QGroupBox {border: 1px solid gray; border-radius: 9px; margin-top: 0.5em;} " \
               "QGroupBox::title {subcontrol-origin: margin; left: 10px; padding: 0 3px 0 3px;}"
+
+
+class TwoMaskDialog(QDialog):
+    def __init__(self, mask_names):
+        """
+        :type mask_names: set
+        :param mask_names: iterable collection of all available mask names
+        """
 
 
 class CreatePlan(QWidget):
@@ -36,6 +44,7 @@ class CreatePlan(QWidget):
         self.choose_channel_btn = QPushButton("Choose channel")
         self.update_element_btn = QCheckBox("Update element")
         self.project_save_btn = QPushButton("Save to project")
+        self.save_mask_btn = QPushButton("Save mask")
         # self.forgot_mask_btn.setToolTip("Return to state on begin")
         self.segment_profile = QListWidget()
         self.generate_mask = QPushButton("Generate mask")
@@ -48,6 +57,8 @@ class CreatePlan(QWidget):
         self.suffix_mask_name_button = QPushButton("Name suffix")
         self.reuse_mask = QPushButton("Reuse mask")
         self.set_mask_name = QPushButton("Set mask name")
+        self.intersect_mask_btn = QPushButton("Mask intersection")
+        self.sum_mask_btn = QPushButton("Mask sum")
         self.chanel_pos = QSpinBox()
         self.chanel_pos.setRange(0, 100)
         self.chanel_num = QSpinBox()
@@ -118,7 +129,8 @@ class CreatePlan(QWidget):
         # bt_lay.addWidget(self.forgot_mask_btn, 1, 0)
         bt_lay.addWidget(self.cmap_save_btn, 5, 0, 1, 2)
         bt_lay.addWidget(self.project_save_btn, 6, 0, 1, 2)
-        bt_lay.addWidget(self.project_segmentation, 7, 0, 1, 2)
+        bt_lay.addWidget(self.save_mask_btn, 7, 0, 1, 2)
+        bt_lay.addWidget(self.project_segmentation, 8, 0, 1, 2)
         other_box.setLayout(bt_lay)
         other_box.setStyleSheet(group_sheet)
 
@@ -149,14 +161,17 @@ class CreatePlan(QWidget):
         mask_box = QGroupBox("Mask:")
         mask_box.setStyleSheet(group_sheet)
         lay = QGridLayout()
-        lay.addWidget(right_label("Mask name:"), 0, 0)
-        lay.addWidget(self.mask_name, 0, 1)
-        bt_lay = QHBoxLayout()
-        bt_lay.addWidget(self.set_mask_name)
-        bt_lay.addWidget(self.reuse_mask)
-        lay.addLayout(bt_lay, 1, 0, 1, 2)
-        lay.addWidget(file_mask_box, 2, 0, 1, 2)
-        lay.addWidget(segmentation_mask_box, 3, 0, 1, 2)
+        name_lay = QHBoxLayout()
+        name_lay.addWidget(right_label("Mask name:"))
+        name_lay.addWidget(self.mask_name)
+        lay.addLayout(name_lay, 0, 0, 1, 2)
+        lay.addWidget(self.set_mask_name, 1, 0)
+        lay.addWidget(self.reuse_mask, 1, 1)
+        lay.addWidget(self.intersect_mask_btn, 2, 0)
+        lay.addWidget(self.sum_mask_btn, 2, 1)
+        lay.addLayout(bt_lay, 2, 0, 1, 2)
+        lay.addWidget(file_mask_box, 3, 0, 1, 2)
+        lay.addWidget(segmentation_mask_box, 4, 0, 1, 2)
         mask_box.setLayout(lay)
 
         segment_box = QGroupBox("Segmentation")
@@ -248,7 +263,8 @@ class CreatePlan(QWidget):
             return
         node_type = self.calculation_plan.get_node_type()
         self.node_type = node_type
-        if node_type in [NodeType.file_mask, NodeType.mask, NodeType.segment, NodeType.statics, NodeType.save]:
+        if node_type in [NodeType.file_mask, NodeType.mask, NodeType.segment, NodeType.statics, NodeType.save,
+                         NodeType.channel_choose]:
             self.remove_btn.setEnabled(True)
         else:
             self.remove_btn.setEnabled(False)
@@ -263,12 +279,12 @@ class CreatePlan(QWidget):
             self.file_mask_allow = False
             self.project_save_btn.setEnabled(True)
             self.cmap_save_btn.setEnabled(True)
-        elif node_type == NodeType.root:
+        elif node_type == NodeType.root or node_type == NodeType.channel_choose:
             self.mask_allow = False
             self.segment_allow = True
             self.file_mask_allow = True
             self.project_segmentation.setEnabled(True)
-            self.choose_channel_btn.setEnabled(True)
+            self.choose_channel_btn.setEnabled(node_type == NodeType.root)
         elif node_type == NodeType.none or node_type == NodeType.statics or node_type == NodeType.save:
             self.mask_allow = False
             self.segment_allow = False
@@ -278,7 +294,10 @@ class CreatePlan(QWidget):
     def choose_channel(self):
         chanel_pos = self.chanel_pos.value()
         chanel_num = self.chanel_num.value()
-        self.calculation_plan.add_step(ChooseChanel(chanel_pos, chanel_num))
+        if self.update_element_btn.isChecked():
+            self.calculation_plan.replace_step(ChooseChanel(chanel_pos, chanel_num))
+        else:
+            self.calculation_plan.add_step(ChooseChanel(chanel_pos, chanel_num))
         self.plan.update_view()
 
     def set_mask_name(self):
@@ -290,7 +309,29 @@ class CreatePlan(QWidget):
         suffix, ok = QInputDialog.getText(self, "Project file suffix", "Set project name suffix")
         if ok:
             suffix = str(suffix)
-            self.calculation_plan.add_step(ProjectSave(suffix))
+            if self.update_element_btn.isChecked():
+                self.calculation_plan.replace_step(ProjectSave(suffix))
+            else:
+                self.calculation_plan.add_step(ProjectSave(suffix))
+            self.plan.update_view()
+
+    def save_to_cmap(self):
+        dial = CmapSavePrepare("Settings for cmap create")
+        if dial.exec_():
+            if self.update_element_btn.isChecked():
+                self.calculation_plan.replace_step(dial.get_result())
+            else:
+                self.calculation_plan.add_step(dial.get_result())
+            self.plan.update_view()
+
+    def save_mask(self):
+        suffix, ok = QInputDialog.getText(self, "Mask file suffix", "Set mask name suffix")
+        if ok:
+            suffix = str(suffix)
+            if self.update_element_btn.isChecked():
+                self.calculation_plan.replace_step(MaskSave(suffix))
+            else:
+                self.calculation_plan.add_step(MaskSave(suffix))
             self.plan.update_view()
 
     def mask_by_mapping(self):
@@ -337,12 +378,6 @@ class CreatePlan(QWidget):
         self.mask_set.add(name)
         self.mask_text_changed()
         self.mask_name_changed(self.mask_name.text)
-
-    def save_to_cmap(self):
-        dial = CmapSavePrepare("Settings for cmap create")
-        if dial.exec_():
-            self.calculation_plan.add_step(dial.get_result())
-            self.plan.update_view()
 
     def forgot_mask(self):
         self.calculation_plan.add_step(Operations.clean_mask)
@@ -428,6 +463,8 @@ class CreatePlan(QWidget):
         self.generate_mask.setDisabled(True)
         self.reuse_mask.setDisabled(True)
         self.set_mask_name.setDisabled(True)
+        self.intersect_mask_btn.setDisabled(True)
+        self.sum_mask_btn.setDisabled(True)
         # load mask from file
         if not self.update_element_btn.isChecked():
             self.set_mask_name.setDisabled(True)
@@ -437,6 +474,8 @@ class CreatePlan(QWidget):
                 self.suffix_mask_name_button.setEnabled(base_text != "")
                 self.swap_mask_name_button.setEnabled((base_text != "") and (rep_text != ""))
                 self.mapping_file_button.setEnabled(True)
+                self.intersect_mask_btn.setEnabled(len(self.mask_set) > 1)
+                self.sum_mask_btn.setEnabled(len(self.mask_set) > 1)
             # generate mask from segmentation
             if self.mask_allow and (name == "" or name not in self.mask_set):
                 self.generate_mask.setEnabled(True)
@@ -450,12 +489,15 @@ class CreatePlan(QWidget):
             # change mask name
             if name not in self.mask_set and name != "":
                 self.set_mask_name.setEnabled(True)
-            if self.node_type == NodeType.file_mask and (name == "" or name == self.node_name or name not in self.mask_set):
+            if self.node_type == NodeType.file_mask and \
+                    (name == "" or name == self.node_name or name not in self.mask_set):
                 base_text = str(self.base_mask_name.text()).strip()
                 rep_text = str(self.swap_mask_name.text()).strip()
                 self.suffix_mask_name_button.setEnabled(base_text != "")
                 self.swap_mask_name_button.setEnabled((base_text != "") and (rep_text != ""))
                 self.mapping_file_button.setEnabled(True)
+                self.intersect_mask_btn.setEnabled(len(self.mask_set) > 1)
+                self.sum_mask_btn.setEnabled(len(self.mask_set) > 1)
             # generate mask from segmentation
             if self.node_type == NodeType.mask and (name == "" or name == self.node_name or name not in self.mask_set):
                 self.generate_mask.setEnabled(True)

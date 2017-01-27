@@ -7,7 +7,7 @@ from os import path
 import tifffile
 import pandas as pd
 from calculation_plan import CalculationTree, MaskMapper, MaskUse, MaskCreate, ProjectSave, \
-    CmapProfile, Operations, ChooseChanel, FileCalculation
+    CmapProfile, Operations, ChooseChanel, FileCalculation, MaskIntersection, MaskSum, MaskSave, get_save_path
 from copy import copy
 from utils import dict_set_class
 from queue_bufix import Queue
@@ -15,7 +15,7 @@ from collections import OrderedDict, defaultdict
 import logging
 from enum import Enum
 import threading
-import os
+import numpy as np
 
 
 def do_calculation(file_path, calculation):
@@ -95,6 +95,27 @@ class CalculationProcess(object):
             self.settings.mask = mask
             self.iterate_over(node)
             self.settings.mask = old_mask
+        elif isinstance(node.operation, MaskSum):
+            old_mask = self.settings.mask
+            mask1 = self.mask_dict[node.operation.mask1]
+            mask2 = self.mask_dict[node.operation.mask2]
+            mask = np.logical_or(mask1, mask2).astype(np.uint8)
+            self.settings.mask = mask
+            self.iterate_over(node)
+            self.settings.mask = old_mask
+        elif isinstance(node.operation, MaskIntersection):
+            old_mask = self.settings.mask
+            mask1 = self.mask_dict[node.operation.mask1]
+            mask2 = self.mask_dict[node.operation.mask2]
+            mask = np.logical_and(mask1, mask2).astype(np.uint8)
+            self.settings.mask = mask
+            self.iterate_over(node)
+            self.settings.mask = old_mask
+        elif isinstance(node.operation, MaskSave):
+            if self.settings.mask is None:
+                return
+            file_path = get_save_path(node.operation, self.calculation, self.settings.file_path)
+            tifffile.imsave(file_path, self.settings.mask)
         elif isinstance(node.operation, MaskCreate):
             if node.operation.name in self.reused_mask:
                 mask = self.segment.get_segmentation()
@@ -103,16 +124,10 @@ class CalculationProcess(object):
             self.iterate_over(node)
             self.settings.change_segmentation_mask(self.segment, MaskChange.prev_seg, False)
         elif isinstance(node.operation, ProjectSave):
-            file_path = self.settings.file_path
-            file_path = path.relpath(file_path, self.calculation.base_prefix)
-            rel_path, ext = path.splitext(file_path)
-            file_path = path.join(self.calculation.result_prefix, rel_path + node.operation.suffix+".tgz")
+            file_path = get_save_path(node.operation, self.calculation, self.settings.file_path)
             save_to_project(file_path, self.settings, self.segment)
         elif isinstance(node.operation, CmapProfile):
-            file_path = self.settings.file_path
-            file_path = path.relpath(file_path, self.calculation.base_prefix)
-            rel_path, ext = path.splitext(file_path)
-            file_path = path.join(self.calculation.result_prefix, rel_path + node.operation.suffix + ".cmap")
+            file_path = get_save_path(node.operation, self.calculation, self.settings.file_path)
             save_to_cmap(file_path, self.settings, self.segment, node.operation.gauss_type, False,
                          node.operation.center_data, rotate=node.operation.rotation_axis,
                          with_cutting=node.operation.cut_obsolete_area)
@@ -389,7 +404,3 @@ class DataWriter(object):
             raise ValueError("Unknown statistic file")
         self.file_dict[calculation.statistic_file_path].dump_data()
         return self.file_dict[calculation.statistic_file_path].get_errors()
-
-
-
-
