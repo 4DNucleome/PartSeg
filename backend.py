@@ -310,8 +310,9 @@ class Settings(object):
 
         current_mask = segment.get_segmentation()
         seg_settings = class_to_dict(self, *save_fields)
-        seg_settings["draw_points"] = tuple(map(list, np.nonzero(np.array(segment.draw_canvas == 1))))
-        seg_settings["erase_points"] = tuple(map(list, np.nonzero(np.array(segment.draw_canvas == 2))))
+        if segment.draw_canvas is not None:
+            seg_settings["draw_points"] = tuple(map(list, np.nonzero(np.array(segment.draw_canvas == 1))))
+            seg_settings["erase_points"] = tuple(map(list, np.nonzero(np.array(segment.draw_canvas == 2))))
         save_draw_bck = np.copy(segment.draw_canvas)
         if order == MaskChange.next_seg:
             self.prev_segmentation_settings.append(seg_settings)
@@ -328,11 +329,13 @@ class Settings(object):
         else:
             self.next_segmentation_settings.append(seg_settings)
             new_seg = self.prev_segmentation_settings.pop()
-        segment.draw_canvas[...] = 0
+        if segment.draw_canvas is not None:
+            segment.draw_canvas[...] = 0
         if new_seg is not None:
             dict_set_class(self, new_seg, *save_fields)
-            segment.draw_canvas[tuple(map(lambda x: np.array(x, dtype=np.uint32), new_seg["draw_points"]))] = 1
-            segment.draw_canvas[tuple(map(lambda x: np.array(x, dtype=np.uint32), new_seg["erase_points"]))] = 2
+            if segment.draw_canvas is not None:
+                segment.draw_canvas[tuple(map(lambda x: np.array(x, dtype=np.uint32), new_seg["draw_points"]))] = 1
+                segment.draw_canvas[tuple(map(lambda x: np.array(x, dtype=np.uint32), new_seg["erase_points"]))] = 2
         if save_draw:
             segment.draw_canvas[save_draw_bck > 0] = save_draw_bck[save_draw_bck > 0]
         for fun in self.threshold_change_callback:

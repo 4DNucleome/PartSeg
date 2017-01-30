@@ -309,12 +309,28 @@ class CalculationPlan(object):
         tree_mask_names = self.get_mask_names(node)
         return used_mask & tree_mask_names, used_mask
 
-    def get_reused_mask(self):
+    def _get_reused_mask(self, node):
+        """
+        :type node: CalculationTree
+        :param node:
+        :return:
+        """
         used_mask = set()
-        for el in self.execution_tree.children:
+        for el in node.children:
             if isinstance(el.operation, MaskUse):
                 used_mask.add(el.operation.name)
+            elif isinstance(el.operation, MaskSum):
+                used_mask.add(el.operation.mask1)
+                used_mask.add(el.operation.mask2)
+            elif isinstance(el.operation, MaskIntersection):
+                used_mask.add(el.operation.mask1)
+                used_mask.add(el.operation.mask2)
+            elif isinstance(el.operation, ChooseChanel):
+                used_mask |= self._get_reused_mask(el)
         return used_mask
+
+    def get_reused_mask(self):
+        return self._get_reused_mask(self.execution_tree)
 
     def get_node_type(self):
         if self.current_pos is None:

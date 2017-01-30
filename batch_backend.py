@@ -231,7 +231,7 @@ class SheetData(object):
     def get_data_to_write(self):
         df = pd.DataFrame(self.row_list, columns=self.columns)
         df2 = self.data_frame.append(df)
-        self.data_frame = df2
+        self.data_frame = df2.reset_index(drop=True)
         self.row_list = []
         return self.name, self.data_frame
 
@@ -255,7 +255,7 @@ class FileData(object):
         self.sheet_dict = dict()
         self.sheet_set = set()
         self.new_count = 0
-        self.write_threshold = 40
+        self.write_threshold = 1
         self.wrote_queue = Queue()
         self.error_queue = Queue()
         self.write_thread = threading.Thread(target=self.wrote_data_to_file)
@@ -329,6 +329,7 @@ class FileData(object):
         main_sheet.add_data(data_list)
         if self.new_count >= self.write_threshold:
             self.dump_data()
+            self.new_count = 0
 
     def dump_data(self):
         data = []

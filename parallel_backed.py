@@ -4,7 +4,9 @@ from queue_bufix import Queue, Empty
 import logging
 import time
 import os
+import sys
 from threading import Timer, RLock
+import traceback
 
 __author__ = "Grzegorz Bokota"
 
@@ -155,6 +157,10 @@ class BatchWorker(object):
         try:
             self.result_queue.put((task_uuid, function(data, global_data)))
         except Exception as e:
+            traceback.print_exc()
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print(exc_type, fname, exc_tb.tb_lineno)
             self.result_queue.put((task_uuid, e))
 
     def run(self):

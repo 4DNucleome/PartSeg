@@ -100,7 +100,9 @@ class AddFiles(QWidget):
             if dialog.exec_():
                 new_paths = dialog.get_files()
                 for path in new_paths:
-                    lwi = QListWidgetItem(path)
+                    size = os.stat(path).st_size
+                    size = float(size) / (1024 ** 2)
+                    lwi = QListWidgetItem("{:s} ({:.2f} MB)".format(path, size))
                     lwi.setTextAlignment(Qt.AlignRight)
                     self.selected_files.addItem(lwi)
                 self.files_to_proceed.update(new_paths)
@@ -117,7 +119,9 @@ class AddFiles(QWidget):
             self.settings.batch_directory = os.path.dirname(str(dial.selectedFiles()[0]))
             new_paths = sorted(set(map(str, dial.selectedFiles())) - self.files_to_proceed)
             for path in new_paths:
-                lwi = QListWidgetItem(path)
+                size = os.stat(path).st_size
+                size = float(size) / (1024**2)
+                lwi = QListWidgetItem("{:s} ({:.2f} MB)". format(path, size))
                 lwi.setTextAlignment(Qt.AlignRight)
                 self.selected_files.addItem(lwi)
             self.files_to_proceed.update(new_paths)
@@ -130,7 +134,7 @@ class AddFiles(QWidget):
         dial.setFileMode(QFileDialog.Directory)
         if dial.exec_():
             self.paths.setText(dial.selectedFiles()[0])
-            self.settings.batch_directory = os.path.dirname(str(dial.selectedFiles()[0]))
+            self.settings.batch_directory = str(dial.selectedFiles()[0])
 
     def file_chosen(self):
         self.delete_button.setEnabled(True)
@@ -211,7 +215,7 @@ class ProgressView(QWidget):
         self.logs.addItems(list(map(lambda x: "{}: {}".format(type(x), str(x)), errors)))
         self.whole_progress.setValue(total)
         working_search = True
-        for i, (progress, total)  in enumerate(parts):
+        for i, (progress, total) in enumerate(parts):
             if working_search and progress != total:
                 self.part_progress.setMaximum(total)
                 self.part_progress.setValue(progress)
@@ -224,6 +228,7 @@ class ProgressView(QWidget):
         if not self.batch_manager.has_work:
             self.part_progress.setValue(self.part_progress.maximum())
             self.preview_timer.stop()
+            logging.info("Progress stop")
 
     def process_num_timer_start(self):
         self.process_num_timer.start()
