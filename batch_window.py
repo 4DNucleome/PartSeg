@@ -403,6 +403,7 @@ class CalculationPrepare(QDialog):
         self.base_prefix_btn = QPushButton("Choose data prefix")
         self.result_prefix_btn = QPushButton("Choose save prefix")
         self.sheet_name = QLineEdit("Sheet1")
+        self.sheet_name.textChanged.connect(self.verify_data)
         self.statistic_file_path_view = QLineEdit(statistic_file_path)
         self.statistic_file_path_view.setReadOnly(True)
 
@@ -459,6 +460,7 @@ class CalculationPrepare(QDialog):
         btn_layout.addWidget(self.cancel_btn)
         layout.addLayout(btn_layout, 8, 0, 1, 0)
         self.setLayout(layout)
+        self.verify_data()
 
     def set_mapping_mask(self, i, pos):
         def mapping_dialog():
@@ -486,7 +488,8 @@ class CalculationPrepare(QDialog):
     def verify_data(self):
         self.execute_btn.setEnabled(True)
         text = "information, <i><font color='blue'>warnings</font></i>, <b><font color='red'>errors</font><b><br>"
-        if not self.batch_manager.is_valid_sheet_name(self.statistic_file_path_view.text(), self.sheet_name.text()):
+        if not self.batch_manager.is_valid_sheet_name(str(self.statistic_file_path_view.text()),
+                                                      str(self.sheet_name.text())):
             text += "<i><font color='blue'>Sheet name already in use</i></font><br>"
             self.execute_btn.setDisabled(True)
         if self.state_list.size > 0:

@@ -210,7 +210,6 @@ class CreatePlan(QWidget):
         lay.addWidget(self.reuse_mask, 1, 1)
         lay.addWidget(self.intersect_mask_btn, 2, 0)
         lay.addWidget(self.sum_mask_btn, 2, 1)
-        lay.addLayout(bt_lay, 2, 0, 1, 2)
         lay.addWidget(file_mask_box, 3, 0, 1, 2)
         lay.addWidget(segmentation_mask_box, 4, 0, 1, 2)
         mask_box.setLayout(lay)
