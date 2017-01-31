@@ -665,6 +665,7 @@ class CreatePlan(QWidget):
         self.calculation_plan = copy(plan)
         self.plan.set_plan(self.calculation_plan)
         self.mask_set.clear()
+        self.calculation_plan.set_position([])
         self.mask_set.update(self.calculation_plan.get_mask_names())
 
 

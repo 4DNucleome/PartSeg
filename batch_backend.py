@@ -255,7 +255,7 @@ class FileData(object):
         self.sheet_dict = dict()
         self.sheet_set = set()
         self.new_count = 0
-        self.write_threshold = 1
+        self.write_threshold = 40
         self.wrote_queue = Queue()
         self.error_queue = Queue()
         self.write_thread = threading.Thread(target=self.wrote_data_to_file)

@@ -90,7 +90,7 @@ class StatisticProfile(object):
         """
         res = []
         for tree, name, _ in self.chosen_fields:
-            res.append((name, self.is_component_statistic(tree)))
+            res.append((self.name_prefix+name, self.is_component_statistic(tree)))
         return res
 
     def get_parameters(self):
