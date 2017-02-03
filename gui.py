@@ -606,7 +606,7 @@ class MainMenu(QWidget):
                     ret = QMessageBox.warning(self, "File exist", os.path.basename(file_path) +
                                               " already exists.\nDo you want to replace it?",
                                               QMessageBox.No | QMessageBox.Yes)
-                    if ret == QMessageBox.Yes:
+                    if ret == QMessageBox.No:
                         self.save_file()
                         return
 
@@ -647,11 +647,11 @@ class MainMenu(QWidget):
             elif selected_filter == "Segmented data in xyz (*.xyz)":
                 mask = self.segment.get_segmentation()
                 image = self.settings.image
-                positions = np.nonzero(mask > 0)
+                positions = np.transpose(np.nonzero(mask > 0))
                 values = image[mask > 0]
                 values = values.reshape(values.size, 1)
-                data = np.append(positions, values)
-                df = pd.Dataframe(data, copy=True)
+                data = np.append(positions, values, axis=1)
+                df = pd.DataFrame(data, copy=True)
                 df.to_csv(file_path, header=False, index=False, sep =' ')
 
 
