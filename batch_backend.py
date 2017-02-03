@@ -53,6 +53,7 @@ class CalculationProcess(object):
         if ext in [".tiff", ".tif", ".lsm"]:
             image = tifffile.imread(calculation.file_path)
             self.settings.image = image
+            self.settings.file_path = calculation.file_path
         elif ext in [".tgz", ".gz", ".tbz2", ".bz2"]:
             load_project(calculation.file_path, self.settings, self.segment)
         else:
@@ -76,7 +77,7 @@ class CalculationProcess(object):
         :return:
         """
         if isinstance(node.operation, MaskMapper):
-            mask = tifffile.imread(node.operation.get_mask_path(self.settings.file_path))
+            mask = tifffile.imread(node.operation.get_mask_path(self.calculation.file_path))
             self.settings.mask = mask
             self.iterate_over(node)
         elif isinstance(node.operation, SegmentationProfile):
@@ -114,7 +115,7 @@ class CalculationProcess(object):
         elif isinstance(node.operation, MaskSave):
             if self.settings.mask is None:
                 return
-            file_path = get_save_path(node.operation, self.calculation, self.settings.file_path)
+            file_path = get_save_path(node.operation, self.calculation)
             tifffile.imsave(file_path, self.settings.mask)
         elif isinstance(node.operation, MaskCreate):
             if node.operation.name in self.reused_mask:
@@ -124,10 +125,10 @@ class CalculationProcess(object):
             self.iterate_over(node)
             self.settings.change_segmentation_mask(self.segment, MaskChange.prev_seg, False)
         elif isinstance(node.operation, ProjectSave):
-            file_path = get_save_path(node.operation, self.calculation, self.settings.file_path)
+            file_path = get_save_path(node.operation, self.calculation)
             save_to_project(file_path, self.settings, self.segment)
         elif isinstance(node.operation, CmapProfile):
-            file_path = get_save_path(node.operation, self.calculation, self.settings.file_path)
+            file_path = get_save_path(node.operation, self.calculation)
             save_to_cmap(file_path, self.settings, self.segment, node.operation.gauss_type, False,
                          node.operation.center_data, rotate=node.operation.rotation_axis,
                          with_cutting=node.operation.cut_obsolete_area)
@@ -146,6 +147,8 @@ class CalculationProcess(object):
                                                   self.segment.get_segmentation(), self.segment.get_full_segmentation(),
                                                   self.settings.mask, self.settings.voxel_size)
             self.statistics.append(statistics)
+        else:
+            logging.error("Unknown operation {} {}".format(type(node.operation), node.operation))
 
 
 class CalculationManager(object):

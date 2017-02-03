@@ -167,6 +167,7 @@ def save_to_project(file_path, settings, segment):
     :type segment: Segment
     :return:
     """
+    print("PATH {}".format(file_path))
     folder_path = tempfile.mkdtemp()
     np.save(os.path.join(folder_path, "image.npy"), settings.image)
     np.save(os.path.join(folder_path, "draw.npy"), segment.draw_canvas)
@@ -188,7 +189,7 @@ def save_to_project(file_path, settings, segment):
         del mem["mask"]
     # image, segment_mask = get_segmented_data(settings.image, settings, segment)
     # important_data["statistics"] = calculate_statistic_from_image(image, segment_mask, settings)
-    print(important_data)
+    # print(important_data)
     with open(os.path.join(folder_path, "data.json"), 'w') as ff:
         json.dump(important_data, ff)
     """if file_path[-3:] != ".gz":

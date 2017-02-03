@@ -30,10 +30,10 @@ class Spacing(QWidget):
             layout.addWidget(lab)
             val = input_type()
             val.setButtonSymbols(QAbstractSpinBox.NoButtons)
-            val.setValue(value)
             if isinstance(val, QDoubleSpinBox):
                 val.setDecimals(decimals)
             val.setRange(*data_range)
+            val.setValue(value)
             val.setAlignment(Qt.AlignRight)
             val.setSingleStep(single_step)
             layout.addWidget(val)

@@ -21,10 +21,10 @@ ChooseChanel = namedtuple("ChooseChanel", ["chanel_position", "chanel_num"])
 MaskCreate.__new__.__defaults__ = (0,)
 
 
-def get_save_path(op, calculation, base_path):
+def get_save_path(op, calculation):
     """
     :type op: MaskSave | ProjectSave | CmapProfile
-    :type calculation: Calculation
+    :type calculation: FileCalculation
     :type base_path: str
     :param op: operation to do
     :param calculation: information about calculation
@@ -39,7 +39,7 @@ def get_save_path(op, calculation, base_path):
         extension = ".cmap"
     else:
         raise ValueError("Unknown save operation {}".format(op))
-    rel_path = os.path.relpath(base_path, calculation.base_prefix)
+    rel_path = os.path.relpath(calculation.file_path, calculation.base_prefix)
     rel_path, ext = os.path.splitext(rel_path)
     file_path = os.path.join(calculation.result_prefix, rel_path + op.suffix + extension)
     return file_path

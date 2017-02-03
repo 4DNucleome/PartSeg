@@ -94,7 +94,7 @@ class AddFiles(QWidget):
 
     def find_all(self):
         paths = glob(str(self.paths.text()))
-        paths = sorted(list(set(paths) - self.files_to_proceed))
+        paths = sorted([x for x in (set(paths) - self.files_to_proceed) if not os.path.isdir(x)])
         if len(paths) > 0:
             dialog = AcceptFiles(paths)
             if dialog.exec_():
@@ -401,7 +401,9 @@ class CalculationPrepare(QDialog):
         self.result_prefix = QLineEdit(all_prefix, self)
         self.result_prefix.setReadOnly(True)
         self.base_prefix_btn = QPushButton("Choose data prefix")
+        self.base_prefix_btn.clicked.connect(self.choose_data_prefix)
         self.result_prefix_btn = QPushButton("Choose save prefix")
+        self.result_prefix_btn.clicked.connect(self.choose_result_prefix)
         self.sheet_name = QLineEdit("Sheet1")
         self.sheet_name.textChanged.connect(self.verify_data)
         self.statistic_file_path_view = QLineEdit(statistic_file_path)
@@ -461,6 +463,24 @@ class CalculationPrepare(QDialog):
         layout.addLayout(btn_layout, 8, 0, 1, 0)
         self.setLayout(layout)
         self.verify_data()
+
+    def choose_data_prefix(self):
+        dial = QFileDialog()
+        dial.setAcceptMode(QFileDialog.AcceptOpen)
+        dial.setFileMode(QFileDialog.Directory)
+        dial.setDirectory(self.base_prefix.text())
+        if dial.exec_():
+            dir_path = str(dial.selectedFiles()[0])
+            self.base_prefix.setText(dir_path)
+
+    def choose_result_prefix(self):
+        dial = QFileDialog()
+        dial.setAcceptMode(QFileDialog.AcceptOpen)
+        dial.setFileMode(QFileDialog.Directory)
+        dial.setDirectory(self.result_prefix.text())
+        if dial.exec_():
+            dir_path = str(dial.selectedFiles()[0])
+            self.result_prefix.setText(dir_path)
 
     def set_mapping_mask(self, i, pos):
         def mapping_dialog():
