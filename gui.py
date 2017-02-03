@@ -8,7 +8,7 @@ import numpy as np
 import json
 import re
 import appdirs
-import logging
+import pandas as pd
 from qt_import import *
 from global_settings import file_folder
 
@@ -585,7 +585,8 @@ class MainMenu(QWidget):
             dial.setDirectory(self.settings.save_directory)
         dial.setFileMode(QFileDialog.AnyFile)
         filters = ["Project (*.tgz *.tbz2 *.gz *.bz2)", "Labeled image (*.tif)", "Mask in tiff (*.tif)",
-                   "Mask for itk-snap (*.img)", "Data for chimera (*.cmap)", "Image (*.tiff)", "Profiles (*.json)"]
+                   "Mask for itk-snap (*.img)", "Data for chimera (*.cmap)", "Image (*.tiff)", "Profiles (*.json)",
+                   "Segmented data in xyz (*.xyz)"]
         dial.setAcceptMode(QFileDialog.AcceptSave)
         dial.setNameFilters(filters)
         default_name = os.path.splitext(os.path.basename(self.settings.file_path))[0]
@@ -643,6 +644,17 @@ class MainMenu(QWidget):
                 tifffile.imsave(file_path, image)
             elif selected_filter == "Profiles (*.json)":
                 self.settings.dump_profiles(file_path)
+            elif selected_filter == "Segmented data in xyz (*.xyz)":
+                mask = self.segment.get_segmentation()
+                image = self.settings.image
+                positions = np.nonzero(mask > 0)
+                values = image[mask > 0]
+                values = values.reshape(values.size, 1)
+                data = np.append(positions, values)
+                df = pd.Dataframe(data, copy=True)
+                df.to_csv(file_path, header=False, index=False, sep =' ')
+
+
             else:
                 # noinspection PyCallByClass
                 _ = QMessageBox.critical(self, "Save error", "Option unknown")

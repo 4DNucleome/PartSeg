@@ -3,6 +3,9 @@ from utils import class_to_dict
 from image_operations import gaussian, DrawType
 import SimpleITK as sitk
 from enum import Enum
+import inspect
+import logging
+from global_settings import develop
 
 
 class ThresholdType(Enum):
@@ -124,7 +127,7 @@ class Segment(object):
         self._image = None
         self.draw_canvas = None
         self.draw_counter = 0
-        self.gauss_image = None
+        self._gauss_image = None
         self._threshold_image = None
         self._segmented_image = None
         self._finally_segment = None
@@ -136,6 +139,14 @@ class Segment(object):
             self._settings.add_threshold_callback(self.threshold_updated)
             self._settings.add_min_size_callback(self.min_size_updated)
             self._settings.add_draw_callback(self.draw_update)
+
+    @property
+    def gauss_image(self):
+        if develop:
+            cur_frame = inspect.currentframe()
+            cal_frame = inspect.getouterframes(cur_frame, 2)
+            logging.warning('caller name:', cal_frame[1][3])
+        return self._settings.gauss_image
 
     def recalculate(self):
         self.threshold_updated()

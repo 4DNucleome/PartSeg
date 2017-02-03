@@ -336,9 +336,9 @@ class StatisticsSettings(QWidget):
         stat_prof = StatisticProfile(str(self.profile_name.text()), selected_values,
                                      self.reversed_brightness.isChecked(),
                                      self.gauss_img.isChecked())
-
+        if stat_prof.name not in self.settings.statistics_profile_dict:
+            self.profile_list.addItem(stat_prof.name)
         self.settings.statistics_profile_dict[stat_prof.name] = stat_prof
-        self.profile_list.addItem(stat_prof.name)
         self.export_profiles_butt.setEnabled(True)
 
     def named_save_action(self):
@@ -361,8 +361,9 @@ class StatisticsSettings(QWidget):
             stat_prof = StatisticProfile(str(self.profile_name.text()), selected_values,
                                          self.reversed_brightness.isChecked(),
                                          self.gauss_img.isChecked())
+            if stat_prof.name not in self.settings.statistics_profile_dict:
+                self.profile_list.addItem(stat_prof.name)
             self.settings.statistics_profile_dict[stat_prof.name] = stat_prof
-            self.profile_list.addItem(stat_prof.name)
             self.export_profiles_butt.setEnabled(True)
 
     def reset_action(self):
@@ -433,10 +434,11 @@ class StatisticsWindow(QWidget):
         self.horizontal_statistics = QCheckBox("Horizontal", self)
         self.no_header = QCheckBox("No header", self)
         self.no_units = QCheckBox("No units", self)
+        self.no_units.setChecked(True)
         self.horizontal_statistics.stateChanged.connect(self.horizontal_changed)
         self.copy_button.clicked.connect(self.copy_to_clipboard)
         self.statistic_type = QComboBox(self)
-        self.statistic_type.addItem("Emish statistics (oryginal)")
+        # self.statistic_type.addItem("Emish statistics (oryginal)")
         self.statistic_type.addItems(list(self.settings.statistics_profile_dict.keys()))
         self.info_field = QTableWidget(self)
         self.info_field.setColumnCount(3)
@@ -512,7 +514,7 @@ class StatisticsWindow(QWidget):
 
         else:
             compute_class = self.settings.statistics_profile_dict[str(self.statistic_type.currentText())]
-            gauss_image = self.segment.gauss_image
+            gauss_image = self.settings.gauss_image
             image = self.settings.image
             mask = self.segment.get_segmentation()
             full_mask = self.segment.get_full_segmentation()
