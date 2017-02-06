@@ -3,7 +3,8 @@ from qt_import import QWidget, QSplitter, QTreeWidget, QTreeWidgetItem, pyqtSign
     QInputDialog, QMessageBox, QFileDialog, QDialog, QComboBox, str_type, QCompleter, Qt
 
 from calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, MaskSuffix, MaskSub, \
-    MaskFile, ProjectSave, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, MaskSave
+    MaskFile, ProjectSave, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, MaskSave, ImageSave, \
+    XYZSave
 
 import logging
 from copy import copy, deepcopy
@@ -79,11 +80,15 @@ class CreatePlan(QWidget):
         self.clean_plan_btn = QPushButton("Clean plan")
         self.remove_btn = QPushButton("Remove")
         # self.forgot_mask_btn = QPushButton("Forgot mask")
-        self.cmap_save_btn = QPushButton("Save to cmap")
+        # self.cmap_save_btn = QPushButton("Save to cmap")
         self.choose_channel_btn = QPushButton("Choose channel")
         self.update_element_btn = QCheckBox("Update element")
-        self.project_save_btn = QPushButton("Save to project")
-        self.save_mask_btn = QPushButton("Save mask")
+        self.save_choose = QComboBox()
+        self.save_choose.addItems(["<none>", "Mask", "Image", "Project", "xyz file", "Chimera cmap"])
+        self.director_save_chk = QCheckBox("Save in directory")
+        self.director_save_chk.setToolTip("Create directory using file name an put result file inside this directory")
+        self.project_save_btn = QPushButton("Save")
+        # self.save_mask_btn = QPushButton("Save mask")
         # self.forgot_mask_btn.setToolTip("Return to state on begin")
         self.segment_profile = QListWidget()
         self.generate_mask = QPushButton("Generate mask")
@@ -102,6 +107,8 @@ class CreatePlan(QWidget):
         self.chanel_pos.setRange(0, 100)
         self.chanel_num = QSpinBox()
         self.chanel_num.setRange(0, 10)
+        self.expected_node_type = None
+        self.save_constructor = None
 
         self.project_segmentation = QPushButton("Segmentation\nfrom project")
         self.project_segmentation.clicked.connect(self.segmentation_from_project)
@@ -120,6 +127,7 @@ class CreatePlan(QWidget):
         self.dilate_radius_spin = QSpinBox()
         self.dilate_radius_spin.setRange(0, 50)
 
+        self.save_choose.currentIndexChanged[str_type].connect(self.save_changed)
         self.statistic_list.currentTextChanged.connect(self.show_statistics)
         self.segment_profile.currentTextChanged.connect(self.show_segment)
         self.statistic_list.currentTextChanged[str_type].connect(self.show_statistics_info)
@@ -136,7 +144,7 @@ class CreatePlan(QWidget):
         self.add_calculation.clicked.connect(self.add_statistics)
         self.save_plan_btn.clicked.connect(self.add_calculation_plan)
         # self.forgot_mask_btn.clicked.connect(self.forgot_mask)
-        self.cmap_save_btn.clicked.connect(self.save_to_cmap)
+        # self.cmap_save_btn.clicked.connect(self.save_to_cmap)
         self.swap_mask_name_button.clicked.connect(self.mask_by_substitution)
         self.suffix_mask_name_button.clicked.connect(self.mask_by_suffix)
         self.mapping_file_button.clicked.connect(self.mask_by_mapping)
@@ -168,9 +176,9 @@ class CreatePlan(QWidget):
         bt_lay.addWidget(self.chanel_num, 1, 1)
         bt_lay.addWidget(self.choose_channel_btn, 4, 0, 1, 2)
         # bt_lay.addWidget(self.forgot_mask_btn, 1, 0)
-        bt_lay.addWidget(self.cmap_save_btn, 5, 0, 1, 2)
-        bt_lay.addWidget(self.project_save_btn, 6, 0, 1, 2)
-        bt_lay.addWidget(self.save_mask_btn, 7, 0, 1, 2)
+        bt_lay.addWidget(self.save_choose, 5, 0, 1, 2)
+        bt_lay.addWidget(self.director_save_chk, 6, 0, 1, 2)
+        bt_lay.addWidget(self.project_save_btn, 7, 0, 1, 2)
         bt_lay.addWidget(self.project_segmentation, 8, 0, 1, 2)
         other_box.setLayout(bt_lay)
         other_box.setStyleSheet(group_sheet)
@@ -273,6 +281,54 @@ class CreatePlan(QWidget):
         self.plan_node_changed.connect(self.show_statistics)
         self.node_type_changed()
 
+    def save_changed(self, text):
+        text = str(text)
+        if text == "<none>":
+            self.project_save_btn.setText("Save")
+            self.project_save_btn.setToolTip("Choose file type")
+            self.expected_node_type = None
+            self.save_constructor = None
+        elif text == "Mask":
+            self.project_save_btn.setText("Save to Mask")
+            self.project_save_btn.setToolTip("Choose mask create in plan view")
+            self.expected_node_type = NodeType.mask
+            self.save_constructor = MaskSave
+        elif text == "Image":
+            self.project_save_btn.setText("Save image")
+            self.project_save_btn.setToolTip("Choose root or channel choose in plan view")
+            self.expected_node_type = NodeType.root
+            self.save_constructor = ImageSave
+        elif text == "Project":
+            self.project_save_btn.setText("Save to project")
+            self.project_save_btn.setToolTip("Choose segmentation in plan view")
+            self.expected_node_type = NodeType.segment
+            self.save_constructor = ProjectSave
+        elif text == "xyz file":
+            self.project_save_btn.setText("Save to xyz")
+            self.project_save_btn.setToolTip("Choose segmentation in plan view")
+            self.expected_node_type = NodeType.segment
+            self.save_constructor = XYZSave
+        elif text == "Chimera cmap":
+            self.project_save_btn.setText("Save to cmap")
+            self.project_save_btn.setToolTip("Choose segmentation in plan view")
+            self.expected_node_type = NodeType.segment
+            self.save_constructor = CmapProfile
+        else:
+            self.project_save_btn.setText("Save")
+            self.project_save_btn.setToolTip("Choose file type")
+            self.expected_node_type = None
+            self.save_constructor = None
+            logging.error("[CreatePlan.save_changed] unknown option {}".format(text))
+        self.save_activate()
+
+    def save_activate(self):
+        self.project_save_btn.setDisabled(True)
+        if self.node_type == self.expected_node_type:
+            self.project_save_btn.setEnabled(True)
+            return
+        if self.node_type == NodeType.channel_choose and self.expected_node_type == NodeType.root:
+            self.project_save_btn.setEnabled(True)
+
     def segmentation_from_project(self):
         self.calculation_plan.add_step(Operations.segment_from_project)
         self.plan.update_view()
@@ -288,7 +344,7 @@ class CreatePlan(QWidget):
             self.generate_mask.setText("Generate mask")
 
     def node_type_changed(self):
-        self.cmap_save_btn.setDisabled(True)
+        # self.cmap_save_btn.setDisabled(True)
         self.project_save_btn.setDisabled(True)
         self.project_segmentation.setDisabled(True)
         self.choose_channel_btn.setDisabled(True)
@@ -318,7 +374,7 @@ class CreatePlan(QWidget):
             self.segment_allow = False
             self.file_mask_allow = False
             self.project_save_btn.setEnabled(True)
-            self.cmap_save_btn.setEnabled(True)
+            # self.cmap_save_btn.setEnabled(True)
         elif node_type == NodeType.root or node_type == NodeType.channel_choose:
             self.mask_allow = False
             self.segment_allow = True
@@ -329,6 +385,7 @@ class CreatePlan(QWidget):
             self.mask_allow = False
             self.segment_allow = False
             self.file_mask_allow = False
+        self.save_activate()
         self.plan_node_changed.emit()
 
     def mask_intersect(self):
@@ -368,17 +425,23 @@ class CreatePlan(QWidget):
         self.plan.update_view()
 
     def save_to_project(self):
-        suffix, ok = QInputDialog.getText(self, "Project file suffix", "Set project name suffix")
+        if self.save_constructor == CmapProfile:
+            self.save_to_cmap()
+            return
+        if self.director_save_chk.isChecked():
+            suffix, ok = QInputDialog.getText(self, "File name", "Set file name (without suffix)")
+        else:
+            suffix, ok = QInputDialog.getText(self, "File suffix", "Set file name suffix")
         if ok:
             suffix = str(suffix)
             if self.update_element_btn.isChecked():
-                self.calculation_plan.replace_step(ProjectSave(suffix))
+                self.calculation_plan.replace_step(self.save_constructor(suffix, self.director_save_chk.isChecked()))
             else:
-                self.calculation_plan.add_step(ProjectSave(suffix))
+                self.calculation_plan.add_step(self.save_constructor(suffix, self.director_save_chk.isChecked()))
             self.plan.update_view()
 
     def save_to_cmap(self):
-        dial = CmapSavePrepare("Settings for cmap create")
+        dial = CmapSavePrepare("Settings for cmap create", self.director_save_chk.isChecked())
         if dial.exec_():
             if self.update_element_btn.isChecked():
                 self.calculation_plan.replace_step(dial.get_result())
@@ -914,17 +977,18 @@ class CalculatePlaner(QSplitter):
 
 
 class CmapSavePrepare(QDialog):
-    def __init__(self, text, title="Cmap settings"):
+    def __init__(self, text, directory, title="Cmap settings"):
         super(CmapSavePrepare, self).__init__()
         text_label = QLabel(text)
         text_label.setWordWrap(True)
+        self.directory = directory
         self.setWindowTitle(title)
         self.gauss_type = QComboBox(self)
         self.gauss_type.addItems(["No gauss", "2d gauss", "2d + 3d gauss"])
         self.center_data = QCheckBox(self)
         self.center_data.setChecked(True)
-        self.with_statistics = QCheckBox(self)
-        self.with_statistics.setChecked(True)
+        # self.with_statistics = QCheckBox(self)
+        # self.with_statistics.setChecked(True)
         self.rotation_axis = QComboBox(self)
         self.rotation_axis.addItems(["None", "x", "y", "z"])
         self.cut_data = QCheckBox(self)
@@ -941,7 +1005,10 @@ class CmapSavePrepare(QDialog):
         grid.addWidget(self.rotation_axis, 3, 1)
         grid.addWidget(QLabel("Cut obsolete area"), 4, 0)
         grid.addWidget(self.cut_data, 4, 1)
-        grid.addWidget(QLabel("Suffix_text"), 5, 0)
+        if directory:
+            grid.addWidget(QLabel("File name"), 5, 0)
+        else:
+            grid.addWidget(QLabel("File suffix"), 5, 0)
         grid.addWidget(self.suffix_text, 5, 1)
 
         close = QPushButton("Cancel")
@@ -968,4 +1035,4 @@ class CmapSavePrepare(QDialog):
         options = {"No gauss": GaussUse.no_gauss, "2d gauss": GaussUse.gauss_2d, "2d + 3d gauss": GaussUse.gauss_3d}
         return CmapProfile(suffix=str(self.suffix_text.text()), gauss_type=options[str(self.gauss_type.currentText())],
                            center_data=self.center_data.isChecked(), rotation_axis=str(self.rotation_axis.currentText())
-                           , cut_obsolete_area=self.cut_data.isChecked())
+                           , cut_obsolete_area=self.cut_data.isChecked(), directory=self.directory)

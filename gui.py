@@ -653,8 +653,6 @@ class MainMenu(QWidget):
                 data = np.append(positions, values, axis=1)
                 df = pd.DataFrame(data, copy=True)
                 df.to_csv(file_path, header=False, index=False, sep =' ')
-
-
             else:
                 # noinspection PyCallByClass
                 _ = QMessageBox.critical(self, "Save error", "Option unknown")

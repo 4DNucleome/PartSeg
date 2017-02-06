@@ -13,17 +13,26 @@ MaskCreate = namedtuple("MaskCreate", ['name', 'radius'])
 MaskUse = namedtuple("MaskUse", ['name'])
 MaskSum = namedtuple("MaskSum", ["name", "mask1", "mask2"])
 MaskIntersection = namedtuple("MaskIntersection", ["name", "mask1", "mask2"])
-CmapProfile = namedtuple("CmapProfile", ["suffix", "gauss_type", "center_data", "rotation_axis", "cut_obsolete_area"])
-ProjectSave = namedtuple("ProjectSave", ["suffix"])
-MaskSave = namedtuple("MaskSave", ["suffix"])
+CmapProfile = namedtuple("CmapProfile", ["suffix", "gauss_type", "center_data", "rotation_axis", "cut_obsolete_area",
+                                         "directory"])
+ProjectSave = namedtuple("ProjectSave", ["suffix", "directory"])
+MaskSave = namedtuple("MaskSave", ["suffix", "directory"])
+XYZSave = namedtuple("XYZSave", ["suffix", "directory"])
+ImageSave = namedtuple("ImageSave", ["suffix", "directory"])
+
 ChooseChanel = namedtuple("ChooseChanel", ["chanel_position", "chanel_num"])
 
 MaskCreate.__new__.__defaults__ = (0,)
+CmapProfile.__new__.__defaults__ = (False,)
+ProjectSave.__new__.__defaults__ = (False,)
+MaskSave.__new__.__defaults__ = (False,)
+XYZSave.__new__.__defaults__ = (False,)
+ImageSave.__new__.__defaults__ = (False,)
 
 
 def get_save_path(op, calculation):
     """
-    :type op: MaskSave | ProjectSave | CmapProfile
+    :type op: MaskSave | ProjectSave | CmapProfile | XYZSave | ImageSave
     :type calculation: FileCalculation
     :type base_path: str
     :param op: operation to do
@@ -41,7 +50,10 @@ def get_save_path(op, calculation):
         raise ValueError("Unknown save operation {}".format(op))
     rel_path = os.path.relpath(calculation.file_path, calculation.base_prefix)
     rel_path, ext = os.path.splitext(rel_path)
-    file_path = os.path.join(calculation.result_prefix, rel_path + op.suffix + extension)
+    if op.directory:
+        file_path = os.path.join(calculation.result_prefix, rel_path, op.suffix + extension)
+    else:
+        file_path = os.path.join(calculation.result_prefix, rel_path + op.suffix + extension)
     return file_path
 
 
@@ -226,7 +238,7 @@ class CalculationPlan(object):
                     MaskSuffix.__name__: MaskSuffix, MaskSub.__name__: MaskSub, MaskFile.__name__: MaskFile,
                     ProjectSave.__name__: ProjectSave, Operations.__name__: Operations,
                     ChooseChanel.__name__: ChooseChanel, MaskIntersection.__name__: MaskIntersection,
-                    MaskSum.__name__: MaskSum}
+                    MaskSum.__name__: MaskSum, ImageSave.__name__: ImageSave, XYZSave.__name__: XYZSave}
 
     def __init__(self):
         self.execution_tree = CalculationTree("root", [])
@@ -525,17 +537,34 @@ class CalculationPlan(object):
                 return "Create mask with dilate radius: {}".format(el.radius)
         if isinstance(el, MaskUse):
             return "Use mask: {}".format(el.name)
-        if isinstance(el, CmapProfile):
-            if el.suffix == "":
-                return "Camp save"
-            else:
-                return "Cmap save with suffix: {}".format(el.suffix)
         if isinstance(el, MaskSuffix):
             return "File mask: {} with suffix {}".format(el.name, el.suffix)
         if isinstance(el, MaskSub):
             return "File mask: {} substitution {} on {}".format(el.name, el.base, el.rep)
         if isinstance(el, MaskFile):
             return "File mapping mask: {}".format(el.name)
+        if isinstance(el, ProjectSave) or isinstance(el, MaskSave) or isinstance(el, CmapProfile) or \
+                isinstance(el, ImageSave) or isinstance(el, XYZSave):
+            if isinstance(el, ProjectSave):
+                base = "Project save"
+            elif isinstance(el, MaskSave):
+                base = "Mask save"
+            elif isinstance(el, CmapProfile):
+                base = "Cmap save"
+            elif isinstance(el, ImageSave):
+                base = "Image save"
+            elif isinstance(el, XYZSave):
+                base = "XYZ save"
+            else:
+                raise ValueError("Unknown option")
+            if el.directory:
+                text = base + " in directory with name " + el.suffix
+            else:
+                if el.suffix != "":
+                    text = base + " with suffix " + el.suffix
+                else:
+                    text = base
+            return text
         if isinstance(el, ProjectSave):
             if el.suffix != "":
                 return "Save to project with suffix {}".format(el.suffix)
@@ -546,6 +575,11 @@ class CalculationPlan(object):
                 return "Save mask with suffix {}".format(el.suffix)
             else:
                 return "Save mask"
+        if isinstance(el, CmapProfile):
+            if el.suffix == "":
+                return "Camp save"
+            else:
+                return "Cmap save with suffix: {}".format(el.suffix)
         if isinstance(el, MaskIntersection):
             if el.name == "":
                 return "Mask intersection of mask {} and {}".format(el.mask1, el.mask2)
