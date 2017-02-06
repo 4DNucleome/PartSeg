@@ -46,6 +46,10 @@ def get_save_path(op, calculation):
         extension = ".tgz"
     elif isinstance(op, CmapProfile):
         extension = ".cmap"
+    elif isinstance(op, XYZSave):
+        extension = ".xyz"
+    elif isinstance(op, ImageSave):
+        extension = ".tif"
     else:
         raise ValueError("Unknown save operation {}".format(op))
     rel_path = os.path.relpath(calculation.file_path, calculation.base_prefix)

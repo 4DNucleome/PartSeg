@@ -2,11 +2,11 @@ from parallel_backed import BatchManager
 from backend import Settings, MaskChange
 from statistics_calculation import StatisticProfile
 from segment import Segment, SegmentationProfile
-from io_functions import load_project, save_to_project, save_to_cmap
+from io_functions import load_project, save_to_project, save_to_cmap, save_to_xyz
 from os import path
 import tifffile
 import pandas as pd
-from calculation_plan import CalculationTree, MaskMapper, MaskUse, MaskCreate, ProjectSave, \
+from calculation_plan import CalculationTree, MaskMapper, MaskUse, MaskCreate, ProjectSave, ImageSave, XYZSave, \
     CmapProfile, Operations, ChooseChanel, FileCalculation, MaskIntersection, MaskSum, MaskSave, get_save_path
 from copy import copy
 from utils import dict_set_class
@@ -117,6 +117,12 @@ class CalculationProcess(object):
                 return
             file_path = get_save_path(node.operation, self.calculation)
             tifffile.imsave(file_path, self.settings.mask)
+        elif isinstance(node.operation, ImageSave):
+            file_path = get_save_path(node.operation, self.calculation)
+            tifffile.imsave(file_path, self.settings.image)
+        elif isinstance(node.operation, XYZSave):
+            file_path = get_save_path(node.operation, self.calculation)
+            save_to_xyz(file_path, self.settings, self.segment)
         elif isinstance(node.operation, MaskCreate):
             if node.operation.name in self.reused_mask:
                 mask = self.segment.get_segmentation()

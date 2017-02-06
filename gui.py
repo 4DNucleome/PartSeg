@@ -21,7 +21,7 @@ from backend import Settings, Segment, UPPER, MaskChange
 from batch_window import BatchWindow
 
 
-from io_functions import save_to_cmap, save_to_project, load_project, GaussUse
+from io_functions import save_to_cmap, save_to_project, load_project, GaussUse, save_to_xyz
 
 from advanced_window import AdvancedWindow
 from image_view import MyCanvas, MyDrawCanvas
@@ -645,14 +645,7 @@ class MainMenu(QWidget):
             elif selected_filter == "Profiles (*.json)":
                 self.settings.dump_profiles(file_path)
             elif selected_filter == "Segmented data in xyz (*.xyz)":
-                mask = self.segment.get_segmentation()
-                image = self.settings.image
-                positions = np.transpose(np.nonzero(mask > 0))
-                values = image[mask > 0]
-                values = values.reshape(values.size, 1)
-                data = np.append(positions, values, axis=1)
-                df = pd.DataFrame(data, copy=True)
-                df.to_csv(file_path, header=False, index=False, sep =' ')
+                save_to_xyz(file_path, self.settings, self.segment)
             else:
                 # noinspection PyCallByClass
                 _ = QMessageBox.critical(self, "Save error", "Option unknown")

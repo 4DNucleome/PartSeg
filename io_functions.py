@@ -7,6 +7,7 @@ import numpy as np
 import json
 import logging
 import SimpleITK as sitk
+import pandas as pd
 from copy import deepcopy
 from enum import Enum
 from autofit import find_density_orientation, get_rotation_parameters, density_mass_center
@@ -167,7 +168,6 @@ def save_to_project(file_path, settings, segment):
     :type segment: Segment
     :return:
     """
-    print("PATH {}".format(file_path))
     folder_path = tempfile.mkdtemp()
     np.save(os.path.join(folder_path, "image.npy"), settings.image)
     np.save(os.path.join(folder_path, "draw.npy"), segment.draw_canvas)
@@ -291,3 +291,25 @@ def load_project(file_path, settings, segment):
     settings.next_segmentation_settings = []
     segment.draw_update(draw)
     segment.threshold_updated()
+
+
+def save_to_xyz(file_path, settings, segment):
+    """
+    :type file_path: str
+    :type settings: Settings
+    :type segment: Segment
+    :param file_path:
+    :param settings:
+    :param segment:
+    :return:
+    """
+    if not os.path.exists(os.path.dirname(file_path)):
+        os.makedirs(os.path.dirname(file_path))
+    mask = segment.get_segmentation()
+    image = settings.image
+    positions = np.transpose(np.nonzero(np.array(mask > 0)))
+    values = image[mask > 0]
+    values = values.reshape(values.size, 1)
+    data = np.append(positions, values, axis=1)
+    df = pd.DataFrame(data, copy=True)
+    df.to_csv(file_path, header=False, index=False, sep=' ')
