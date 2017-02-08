@@ -1,5 +1,5 @@
 from qt_import import QWidget, FigureCanvas, QToolButton, QSize, QIcon, QAction, QLabel, QDialog, NavigationToolbar, \
-    Qt, QSlider, QCheckBox, QVBoxLayout, QHBoxLayout, QPushButton, QDoubleSpinBox, QGridLayout, QInputDialog
+    Qt, QSlider, QCheckBox, QVBoxLayout, QHBoxLayout, QPushButton, QDoubleSpinBox, QGridLayout, QInputDialog, QApplication
 from matplotlib import pyplot
 from matplotlib import colors
 import matplotlib
@@ -134,6 +134,8 @@ class MyCanvas(QWidget):
     def zoom_scale(self, event):
         if self.zoom_button.isChecked() or self.move_button.isChecked():
             scale_factor = self.settings.scale_factor
+            if (QApplication.keyboardModifiers() & Qt.ControlModifier) == Qt.ControlModifier:
+                scale_factor -= (1 - scale_factor) * 2
             if event.button == "down":
                 scale_factor = 1 / scale_factor
 

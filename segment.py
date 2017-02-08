@@ -124,10 +124,8 @@ class Segment(object):
         :type settings: Settings
         """
         self._settings = settings
-        self._image = None
         self.draw_canvas = None
         self.draw_counter = 0
-        self._gauss_image = None
         self._threshold_image = None
         self._segmented_image = None
         self._finally_segment = None
@@ -174,7 +172,7 @@ class Segment(object):
 
         if self._settings.threshold_layer_separate:
             # print("Layer separate")
-            for i in range(self._image.shape[0]):
+            for i in range(self._settings.image.shape[0]):
                 self._threshold_image[i][get_mask(image_to_threshold[i], self._settings.threshold_list[i])] = 1
         else:
             # print("normal")
