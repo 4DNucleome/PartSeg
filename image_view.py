@@ -167,9 +167,9 @@ class MyCanvas(QWidget):
             """:type img: np.ndarray"""
             try:
                 if img.ndim == 2:
-                    self.info_object.update_brightness(img[y, x])
+                    self.info_object.update_brightness(img[y, x], (x, y))
                 else:
-                    self.info_object.update_brightness(img[self.layer_num, y, x])
+                    self.info_object.update_brightness(img[self.layer_num, y, x], (x,y))
             except IndexError:
                 pass
         else:
