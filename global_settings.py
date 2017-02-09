@@ -1,5 +1,17 @@
 import sys
 import os
+import appdirs
+import platform
+
+app_name = "PartSeg"
+app_lab = "LFSG"
+config_folder = appdirs.user_data_dir(app_name, app_lab)
+
+if getattr(sys, 'frozen', False):
+    os.environ["MPLCONFIGDIR"] = os.path.join(config_folder, ".matplotlib")
+    if platform.system() == "Linux":
+        os.environ["FONTCONFIG_FILE"] = "/etc/fonts/fonts.conf"
+
 if sys.version_info.major == 2:
     import pkgutil
     loader = pkgutil.find_loader("PyQt5")

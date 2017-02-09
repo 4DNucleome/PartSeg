@@ -64,8 +64,10 @@ class StatisticsSettings(QWidget):
         self.move_up = QPushButton(u"↑", self)
         self.move_down = QPushButton(u"↓", self)
         self.save_butt = QPushButton("Save statistic profile")
+        self.save_butt.setToolTip("Set name for profile and choose at least one statistic")
         self.save_butt_with_name = QPushButton("Save statistic profile with name")
-        self.reset_butt = QPushButton("Reset")
+        self.save_butt_with_name.setToolTip("Set name for profile and choose at least one statistic")
+        self.reset_butt = QPushButton("Clear")
         self.soft_reset_butt = QPushButton("Remove user statistics")
         self.profile_name = QLineEdit(self)
         self.reversed_brightness = QCheckBox("Reversed image", self)
@@ -104,7 +106,7 @@ class StatisticsSettings(QWidget):
         self.profile_options_chosen.itemSelectionChanged.connect(self.create_selection_chosen_changed)
 
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("Defined statistics list:"))
+        layout.addWidget(QLabel("Defined statistics profiles list:"))
         profile_layout = QHBoxLayout()
         profile_layout.addWidget(self.profile_list)
         profile_layout.addWidget(self.profile_description)
@@ -135,6 +137,7 @@ class StatisticsSettings(QWidget):
         butt_op_layout.addWidget(self.choose_butt)
         butt_op_layout.addWidget(self.discard_butt)
         butt_op_layout.addWidget(self.proportion_butt)
+        butt_op_layout.addWidget(self.reset_butt)
         butt_op_layout.addStretch()
         create_layout.addLayout(butt_op_layout)
         create_layout.addWidget(self.profile_options_chosen)
@@ -146,7 +149,6 @@ class StatisticsSettings(QWidget):
         create_layout.addLayout(butt_move_layout)
         layout.addLayout(create_layout)
         save_butt_layout = QHBoxLayout()
-        save_butt_layout.addWidget(self.reset_butt)
         save_butt_layout.addWidget(self.soft_reset_butt)
         save_butt_layout.addStretch()
         save_butt_layout.addWidget(self.save_butt)
@@ -593,7 +595,7 @@ class StatisticsWindow(QWidget):
 
     def showEvent(self, _):
         avali = list(self.settings.statistics_profile_dict.keys())
-        avali.insert(0, "Emish statistics (oryginal)")
+        # avali.insert(0, "Emish statistics (oryginal)")
         text = self.statistic_type.currentText()
         try:
             index = avali.index(text)
@@ -620,14 +622,14 @@ class AdvancedSettings(QWidget):
             up_layout.addLayout(layout)
             return widget
 
-        def create_spacing(label_text, layout, num):
+        """def create_spacing(label_text, layout, num):
             spacing = QSpinBox()
             spacing.setRange(0, 100)
             spacing.setValue(settings.spacing[num])
             spacing.setSingleStep(1)
             spacing.setButtonSymbols(QAbstractSpinBox.NoButtons)
             spacing.setAlignment(Qt.AlignRight)
-            return add_label(label_text, layout, spacing)
+            return add_label(label_text, layout, spacing)"""
 
         def create_voxel_size(label_text, layout, num):
             spinbox = QDoubleSpinBox()
@@ -659,14 +661,14 @@ class AdvancedSettings(QWidget):
 
         self.settings = settings
         vertical_layout = QVBoxLayout()
-        spacing_layout = QHBoxLayout()
+        """spacing_layout = QHBoxLayout()
         spacing_layout.addWidget(QLabel("Spacing"))
         spacing_layout.addSpacing(11)
         self.x_spacing = create_spacing("x:", spacing_layout, 0)
         self.y_spacing = create_spacing("y:", spacing_layout, 1)
         self.z_spacing = create_spacing("z:", spacing_layout, 2)
         spacing_layout.addStretch()
-        vertical_layout.addLayout(spacing_layout)
+        vertical_layout.addLayout(spacing_layout)"""
 
         size_layout = QHBoxLayout()
         size_layout.addWidget(QLabel("Voxel size"))
@@ -845,7 +847,7 @@ class AdvancedSettings(QWidget):
             if r == QMessageBox.Cancel:
                 return
         self.settings.scale_factor = self.zoom_scale.value()
-        self.settings.spacing = self.x_spacing.value(), self.y_spacing.value(), self.z_spacing.value()
+        # self.settings.spacing = self.x_spacing.value(), self.y_spacing.value(), self.z_spacing.value()
         self.settings.voxel_size = self.x_size.value(), self.y_size.value(), self.z_size.value()
         self.settings.mask_overlay = self.mask_overlay.value()
         self.settings.overlay = self.component_overlay.value()

@@ -206,6 +206,8 @@ class MyCanvas(QWidget):
             y_size = self.begin_pos[1], self.last_pos[1]
             if y_size[0] < y_size[1]:
                 y_size = y_size[1], y_size[0]
+            if abs(x_size[0] - x_size[1]) < 3 or abs(y_size[0] - y_size[1]) < 3:
+                return
             pyplot.xlim(x_size)
             pyplot.ylim(y_size)
             fig.canvas.draw()

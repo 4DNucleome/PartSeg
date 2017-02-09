@@ -180,8 +180,8 @@ class Settings(object):
         self.save_filter = None
         self.export_directory = None
         self.export_filter = None
-        self.spacing = [5, 5, 30]
-        self.voxel_size = [5, 5, 30]
+        #self.spacing = [5, 5, 30]
+        self.voxel_size = [1, 1, 1]
         self.size_unit = "nm"
         self.advanced_menu_geometry = None
         self.file_path = ""
@@ -198,6 +198,13 @@ class Settings(object):
             self.load(settings_path)
         except ValueError as e:
             logging.error("Saved profile problem: {}".format(e))
+    @property
+    def spacing(self):
+        return self.voxel_size
+
+    @spacing.setter
+    def spacing(self, value):
+        self.voxel_size = value
 
     def change_profile(self, name):
         print("%%%%%%%% {}".format(name))
@@ -254,7 +261,7 @@ class Settings(object):
 
     def dump(self, file_path):
         important_data = \
-            class_to_dict(self, "open_directory", "open_filter", "save_directory", "save_filter", "spacing",
+            class_to_dict(self, "open_directory", "open_filter", "save_directory", "save_filter",
                           "voxel_size", "size_unit", "threshold", "color_map_name", "overlay", "minimum_size",
                           "gauss_radius", "export_filter", "export_directory", "scale_factor", "statistic_dirs",
                           "chosen_colormap", "batch_directory")
@@ -275,7 +282,7 @@ class Settings(object):
             with open(file_path, "r") as ff:
                 important_data = json.load(ff)
             dict_set_class(self, important_data, "open_directory", "open_filter", "save_directory", "save_filter",
-                           "spacing", "voxel_size", "size_unit", "threshold", "color_map_name", "overlay",
+                           "voxel_size", "size_unit", "threshold", "color_map_name", "overlay",
                            "minimum_size", "gauss_radius", "export_filter", "export_directory", "scale_factor",
                            "statistic_dirs", "chosen_colormap", "batch_directory")
             # TODO Batch plans load

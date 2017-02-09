@@ -10,7 +10,7 @@ import re
 import appdirs
 import pandas as pd
 from qt_import import *
-from global_settings import file_folder
+from global_settings import file_folder, config_folder
 
 from matplotlib import pyplot
 import matplotlib.colors as colors
@@ -28,13 +28,9 @@ from image_view import MyCanvas, MyDrawCanvas
 
 __author__ = "Grzegorz Bokota"
 
-app_name = "PartSeg"
-app_lab = "LFSG"
-
 
 reaction_time = 500
 
-config_folder = appdirs.user_data_dir(app_name, app_lab)
 logging.debug(config_folder)
 
 if not os.path.isdir(config_folder):
@@ -359,6 +355,7 @@ class MainMenu(QWidget):
         self.advanced_window = None
 
         self.colormap_choose = QComboBox(self)
+        self.colormap_choose.setToolTip("Select colormap")
         self.colormap_choose.addItems(sorted(settings.colormap_list, key=lambda x: x.lower()))
         index = sorted(settings.colormap_list, key=lambda x: x.lower()).index(settings.color_map_name)
         self.colormap_choose.setCurrentIndex(index)
@@ -691,13 +688,12 @@ class InfoMenu(QLabel):
         layout.setContentsMargins(0, 0, 0, 0)
 
     def update_text(self):
-        spacing = self.settings.spacing
         voxel_size = self.settings.voxel_size
         draw_size = self.segment.draw_counter
-        logging.debug("Spacing: {}, Voxel size: {},  Number of changed pixels: {},  ".format(
-            spacing, voxel_size, draw_size))
-        self.text_filed.setText("Spacing: {}, Voxel size: {},  Number of changed pixels: {}, Gauss radius: {} ".format(
-            spacing, voxel_size, draw_size, self.settings.gauss_radius))
+        logging.debug("Voxel size: {},  Number of changed pixels: {},  ".format(
+            voxel_size, draw_size))
+        self.text_filed.setText("Voxel size: {},  Number of changed pixels: {}, Gauss radius: {} ".format(
+            voxel_size, draw_size, self.settings.gauss_radius))
 
     def update_info_text(self, s):
         self.info_filed.setText(s)
@@ -892,8 +888,8 @@ class MainWindow(QMainWindow):
         main_layout.addLayout(info_layout)
         image_layout = QHBoxLayout()
         image_layout.setSpacing(0)
-        image_layout.addWidget(self.normal_image_canvas)
         image_layout.addWidget(self.colormap_image_canvas)
+        image_layout.addWidget(self.normal_image_canvas)
         image_layout.addWidget(self.segmented_image_canvas)
         main_layout.addLayout(image_layout)
         main_layout.addSpacing(5)

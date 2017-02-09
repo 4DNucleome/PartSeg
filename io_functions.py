@@ -87,9 +87,9 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
         morph_fun = None
     image, mask, noise_std = get_segmented_data(image, settings, segment, True, morph_fun, scale_mass[0])
     if gauss_type == GaussUse.gauss_3d:
-        voxel = settings.spacing
+        voxel = settings.voxel_size
         sitk_image = sitk.GetImageFromArray(image)
-        sitk_image.SetSpacing(settings.spacing)
+        sitk_image.SetSpacing(settings.voxel_size)
         image = sitk.GetArrayFromImage(sitk.DiscreteGaussian(sitk_image, max(voxel)))
         logging.info("Gauss 3d")
 
@@ -139,12 +139,12 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
     grp.attrs['CLASS'] = np.string_('GROUP')
     grp.attrs['TITLE'] = np.string_('')
     grp.attrs['VERSION'] = np.string_('1.0')
-    grp.attrs['step'] = np.array(settings.spacing, dtype=np.float32)
+    grp.attrs['step'] = np.array(settings.voxel_size, dtype=np.float32)
 
     if centered_data:
         swap_cut_img = np.swapaxes(cut_img, 0, 2)
-        center_of_mass = density_mass_center(swap_cut_img, settings.spacing)
-        model_orientation, eigen_values = find_density_orientation(swap_cut_img, settings.spacing, cutoff=1)
+        center_of_mass = density_mass_center(swap_cut_img, settings.voxel_size)
+        model_orientation, eigen_values = find_density_orientation(swap_cut_img, settings.voxel_size, cutoff=1)
         if rotate is not None and rotate != "None":
             rotation_matrix, rotation_axis, angel = \
                 get_rotation_parameters(np.dot(ROTATION_MATRIX_DICT[rotate], model_orientation.T))
@@ -177,7 +177,7 @@ def save_to_project(file_path, settings, segment):
     if settings.mask is not None:
         np.save(os.path.join(folder_path, "mask.npy"), settings.mask)
     important_data = class_to_dict(settings, 'threshold_type', 'threshold_layer_separate', "threshold",
-                                   "threshold_list", 'use_gauss', 'spacing', 'minimum_size', 'use_draw_result',
+                                   "threshold_list", 'use_gauss', 'voxel_size', 'minimum_size', 'use_draw_result',
                                    "gauss_radius", "prev_segmentation_settings")
     if settings.image_clean_profile is not None:
         important_data["image_clean_profile"] = settings.image_clean_profile.__dict__
@@ -253,9 +253,10 @@ def load_project(file_path, settings, segment):
     settings.threshold = int(important_data["threshold"])
     settings.threshold_type = important_data["threshold_type"]
     settings.use_gauss = bool(important_data["use_gauss"])
-    settings.spacing = \
-        tuple(map(int, important_data["spacing"]))
-    settings.voxel_size = settings.spacing
+    if "spacing" in important_data:
+        settings.voxel_size = tuple(map(int, important_data["spacing"]))
+    else:
+        settings.voxel_size = tuple(map(int, important_data["voxel_size"]))
     settings.minimum_size = int(important_data["minimum_size"])
     try:
         if "use_draw_result" in important_data:

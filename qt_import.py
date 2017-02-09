@@ -4,10 +4,18 @@ import matplotlib
 import logging
 import platform
 import sys
+import appdirs
+import os
 
 __author__ = "Grzegorz Bokota"
 
+
+
 # use_qt5 = False
+
+
+import matplotlib as mpl
+print(mpl.get_cachedir())
 
 if use_qt5:
     matplotlib.use("Qt5Agg")
@@ -15,6 +23,7 @@ if use_qt5:
 else:
     matplotlib.use("Qt4Agg")
     logging.debug("Qt4 backend")
+
 
 if use_qt5:
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
