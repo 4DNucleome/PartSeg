@@ -16,6 +16,7 @@ class AdvancedWindow(QTabWidget):
     def __init__(self, settings, segment, parent=None):
         super(AdvancedWindow, self).__init__(parent)
         self.settings = settings
+        self.setWindowTitle("Settings and statistics")
         self.advanced_settings = AdvancedSettings(settings)
         self.colormap_settings = ColormapSettings(settings)
         self.statistics = StatisticsWindow(settings, segment)

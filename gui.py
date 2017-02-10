@@ -213,6 +213,7 @@ class MaskWindow(QDialog):
     """
     def __init__(self, settings, segment, settings_updated_function):
         super(MaskWindow, self).__init__()
+        self.setWindowTitle("Mask manager")
         self.settings = settings
         self.segment = segment
         self.settings_updated_function = settings_updated_function
