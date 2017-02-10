@@ -442,11 +442,13 @@ class StatisticsWindow(QWidget):
         self.copy_button.clicked.connect(self.copy_to_clipboard)
         self.statistic_type = QComboBox(self)
         # self.statistic_type.addItem("Emish statistics (oryginal)")
-        self.statistic_type.addItems(list(self.settings.statistics_profile_dict.keys()))
+        self.statistic_type.addItems(list(sorted(self.settings.statistics_profile_dict.keys())))
+        self.statistic_type.currentIndexChanged[str_type].connect(self.statistic_selection_changed)
         self.info_field = QTableWidget(self)
         self.info_field.setColumnCount(3)
         self.info_field.setHorizontalHeaderLabels(["Name", "Value", "Units"])
         self.statistic_shift = 0
+        self._protect = False
         layout = QVBoxLayout()
         # layout.addWidget(self.recalculate_button)
         v_butt_layout = QVBoxLayout()
@@ -471,6 +473,25 @@ class StatisticsWindow(QWidget):
         # noinspection PyArgumentList
         self.clip = QApplication.clipboard()
         # self.update_statistics()
+
+    def statistic_selection_changed(self, text):
+        if self._protect:
+            return
+        text = str(text)
+        try:
+            stat = self.settings.statistics_profile_dict[text]
+            is_mask = stat.is_any_mask_statistic()
+            disable = is_mask and (self.settings.mask is None)
+        except KeyError:
+            disable = True
+        self.recalculate_button.setDisabled(disable)
+        self.recalculate_append_button.setDisabled(disable)
+        if disable:
+            self.recalculate_button.setToolTip("Statistics contains mask statistic when mask is not loaded")
+            self.recalculate_append_button.setToolTip("Statistics contains mask statistic when mask is not loaded")
+        else:
+            self.recalculate_button.setToolTip("")
+            self.recalculate_append_button.setToolTip("")
 
     def copy_to_clipboard(self):
         s = ""
@@ -595,7 +616,8 @@ class StatisticsWindow(QWidget):
                 self.clip.setText(s)
 
     def showEvent(self, _):
-        avali = list(self.settings.statistics_profile_dict.keys())
+        self._protect = True
+        avali = list(sorted(self.settings.statistics_profile_dict.keys()))
         # avali.insert(0, "Emish statistics (oryginal)")
         text = self.statistic_type.currentText()
         try:
@@ -605,6 +627,7 @@ class StatisticsWindow(QWidget):
         self.statistic_type.clear()
         self.statistic_type.addItems(avali)
         self.statistic_type.setCurrentIndex(index)
+        self._protect = False
 
 
 class AdvancedSettings(QWidget):
