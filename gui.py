@@ -1,14 +1,11 @@
 # coding=utf-8
 from __future__ import print_function, division
 import os.path
-import os
 import tifffile
 import SimpleITK as sitk
 import numpy as np
 import json
 import re
-import appdirs
-import pandas as pd
 from qt_import import *
 from global_settings import file_folder, config_folder
 
