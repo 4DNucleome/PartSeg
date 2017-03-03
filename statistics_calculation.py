@@ -90,7 +90,7 @@ class StatisticProfile(object):
         """
         res = []
         for tree, name, _ in self.chosen_fields:
-            res.append((self.name_prefix+name, self.is_component_statistic(tree)))
+            res.append((self.name_prefix+name, self._is_component_statistic(tree)))
         return res
 
     def get_parameters(self):
@@ -185,11 +185,23 @@ class StatisticProfile(object):
         tree, l = self.build_tree(tokens)
         return self.tree_to_dict_tree(tree)
 
-    def is_component_statistic(self, node):
+    def is_any_mask_statistic(self):
+        for el in self.chosen_fields:
+            if self._is_mask_statistic(el[0]):
+                return True
+        return False
+
+    def _is_mask_statistic(self, node):
+        if isinstance(node, Leaf):
+            return self.STATISTIC_DICT[node.name].is_mask
+        else:
+            return self._is_mask_statistic(node.left) or self._is_mask_statistic(node.right)
+
+    def _is_component_statistic(self, node):
         if isinstance(node, Leaf):
             return self.STATISTIC_DICT[node.name].is_component
         else:
-            return self.is_component_statistic(node.left) or self.is_component_statistic(node.right)
+            return self._is_component_statistic(node.left) or self._is_component_statistic(node.right)
 
     def calculate_tree(self, node, help_dict, kwargs):
         """
@@ -237,6 +249,10 @@ class StatisticProfile(object):
             except TypeError as e:
                 logging.warning(e)
                 result[self.name_prefix + user_name] = "None div"
+            except AttributeError as e:
+                logging.warning(e)
+                result[self.name_prefix + user_name] = "No attribute"
+
         return result
 
     @staticmethod
