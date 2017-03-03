@@ -11,7 +11,7 @@ class ExportDialog(QDialog):
         self.list_view = QListWidget()
         self.check_state = np.zeros(len(export_dict), dtype=np.bool)
         self.check_state[...] = True
-        for el in export_dict.keys():
+        for el in sorted(export_dict.keys()):
             item = QListWidgetItem(el)
             item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
             item.setCheckState(Qt.Checked)
@@ -63,6 +63,14 @@ class ExportDialog(QDialog):
             item.setCheckState(Qt.Checked)
         self.check_state[...] = True
         self.export_btn.setDisabled(False)
+
+    def get_export_list(self):
+        res = []
+        for num in range(self.list_view.count()):
+            item = self.list_view.item(num)
+            if item.checkState() == Qt.Checked:
+                res.append(str(item.text()))
+        return res
 
 
 class ImportDialog(QDialog):
