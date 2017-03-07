@@ -2,6 +2,9 @@ if __name__ == '__main__':
     import logging
     logging.basicConfig(level=logging.INFO)
     import argparse
+    import sys
+    import multiprocessing 
+    multiprocessing.freeze_support()
     # import warnings
     # warnings.filterwarnings('error')
     from global_settings import set_qt4, set_qt5, set_develop
@@ -13,7 +16,8 @@ if __name__ == '__main__':
                         help="Force to use qt5 as backend, exclude with qt4 option")
     parser.add_argument("-d", "--develop", dest="develop", default=False, const=True, action="store_const",
                         help=argparse.SUPPRESS)
-
+    parser.add_argument("--multiprocessing-fork", dest="mf", nargs=1,
+                        help=argparse.SUPPRESS) # Windows bugfix
     args = parser.parse_args()
     if args.qt4 and args.qt5:
         parser.print_help()
