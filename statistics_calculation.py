@@ -397,7 +397,7 @@ def get_border(array):
 
 def calc_diam(array, voxel_size):
     pos = np.transpose(np.nonzero(array)).astype(np.float)
-    for i, val in enumerate(voxel_size):
+    for i, val in enumerate(reversed(voxel_size)):
         pos[:, i] *= val
     diam = 0
     for i, p in enumerate(zip(pos[:-1])):

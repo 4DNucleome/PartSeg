@@ -517,7 +517,7 @@ class MainMenu(QWidget):
             # TODO maybe something better. Now main window have to be parent
             if selected_filter == "raw image (*.tiff *.tif *.lsm)":
                 im = tifffile.imread(file_path)
-                if im.ndim == 4:
+                if im.ndim == 4 or im.shape[-1] < 5:
                     choose = MultiChannelFilePreview(im, self.settings)
                     if choose.exec_():
                         index, num = choose.get_result()
@@ -535,7 +535,7 @@ class MainMenu(QWidget):
                     self.settings.add_image(image, file_path, mask)
                 else:
                     image = tifffile.imread(file_path)
-                    if image.ndim == 4:
+                    if image.ndim == 4 or image.shape[-1] < 5:
                         choose = MultiChannelFilePreview(image, self.settings)
                         if choose.exec_():
                             index, num = choose.get_result()
