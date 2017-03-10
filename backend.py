@@ -262,7 +262,7 @@ class Settings(object):
     def dump(self, file_path):
         important_data = \
             class_to_dict(self, "open_directory", "open_filter", "save_directory", "save_filter",
-                          "voxel_size", "size_unit", "threshold", "color_map_name", "overlay", "minimum_size",
+                          "voxel_size", "size_unit", "threshold", "threshold_type", "color_map_name", "overlay", "minimum_size",
                           "gauss_radius", "export_filter", "export_directory", "scale_factor", "statistic_dirs",
                           "chosen_colormap", "batch_directory")
         # TODO Batch plans dump
@@ -282,7 +282,7 @@ class Settings(object):
             with open(file_path, "r") as ff:
                 important_data = json.load(ff)
             dict_set_class(self, important_data, "open_directory", "open_filter", "save_directory", "save_filter",
-                           "voxel_size", "size_unit", "threshold", "color_map_name", "overlay",
+                           "voxel_size", "size_unit", "threshold", "threshold_type", "color_map_name", "overlay",
                            "minimum_size", "gauss_radius", "export_filter", "export_directory", "scale_factor",
                            "statistic_dirs", "chosen_colormap", "batch_directory")
             # TODO Batch plans load

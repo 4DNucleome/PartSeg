@@ -1,5 +1,8 @@
 # coding=utf-8
 from __future__ import print_function, division
+
+from jedi import settings
+
 import os.path
 import tifffile
 import SimpleITK as sitk
@@ -309,6 +312,7 @@ class MainMenu(QWidget):
         self.threshold_type = QComboBox(self)
         self.threshold_type.addItem("Upper threshold:")
         self.threshold_type.addItem("Lower threshold:")
+        self.threshold_type.setCurrentIndex(0 if settings.threshold_type == UPPER else 1)
         self.threshold_type.currentIndexChanged[str_type].connect(settings.change_threshold_type)
         self.threshold_value = QSpinBox(self)
         self.threshold_value.setMinimumWidth(80)
