@@ -1,5 +1,5 @@
 from qt_import import QDialog, QListWidget, QListWidgetItem, Qt, QPushButton, QHBoxLayout, QVBoxLayout, QTreeWidget, \
-    QTreeWidgetItem, QLabel, QRadioButton, QButtonGroup, QLineEdit
+    QTreeWidgetItem, QLabel, QRadioButton, QButtonGroup, QLineEdit, QTextEdit
 import numpy as np
 from collections import namedtuple
 import re
@@ -127,6 +127,7 @@ class ImportDialog(QDialog):
 
         def rename_func(ob_name, new_name_field, rename_radio):
             end_reg = re.compile("(.*) \((\d+)\)$")
+
             def in_func():
                 if rename_radio.isChecked() and str(new_name_field.text()).strip() == "":
                     match = end_reg.match(ob_name)
@@ -267,4 +268,10 @@ class ImportDialog(QDialog):
         self.check_state[...] = True
         self.import_btn.setDisabled(False)
 
-ImportTuple = namedtuple("ImportTuple", ["overwrite", "rename", "text_line"])
+
+class StringViewer(QTextEdit):
+    def __init__(self):
+        super(StringViewer, self).__init__()
+
+    def preview_object(self, ob):
+        self.setText(str(ob))
