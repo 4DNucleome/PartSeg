@@ -1,10 +1,10 @@
 # coding=utf-8
-import os
 import numpy as np
 from backend import StatisticProfile, get_segmented_data, calculate_statistic_from_image, UNITS_DICT, \
     SegmentationProfile, Settings, UNITS_LIST
 from qt_import import *
 from global_settings import file_folder
+from profile_export import ExportDialog, ImportDialog, StringViewer
 
 __author__ = "Grzegorz Bokota"
 
@@ -392,6 +392,9 @@ class StatisticsSettings(QWidget):
         self.create_selection_changed()
 
     def export_statistic_profiles(self):
+        exp = ExportDialog(self.settings.statistics_profile_dict, StringViewer)
+        if not exp.exec_():
+            return
         dial = QFileDialog(self, "Export settings profiles")
         if self.settings.statistic_dirs is not None:
             dial.setDirectory(self.settings.statistic_dirs)
@@ -404,7 +407,7 @@ class StatisticsSettings(QWidget):
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
             self.settings.statistic_dirs = file_path
-            self.settings.dump_statistics(file_path)
+            self.settings.dump_statistics(file_path, exp.get_export_list())
 
     def import_statistic_profiles(self):
         dial = QFileDialog(self, "Import settings profiles")
@@ -415,7 +418,11 @@ class StatisticsSettings(QWidget):
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
             self.settings.statistic_dirs = file_path
-            self.settings.load_statistics(file_path)
+            stat = self.settings.load_statistics(file_path)
+            imp = ImportDialog(stat, self.settings.statistics_profile_dict, StringViewer)
+            if not imp.exec_():
+                return
+            self.settings.add_statistics(stat, imp.get_import_list())
             self.profile_list.clear()
             self.profile_list.addItems(list(sorted(self.settings.statistics_profile_dict.keys())))
 
@@ -787,6 +794,9 @@ class AdvancedSettings(QWidget):
         self.update_volume()
 
     def export_profile(self):
+        exp = ExportDialog(self.settings.segmentation_profiles_dict, StringViewer)
+        if not exp.exec_():
+            return
         dial = QFileDialog(self, "Export profile segment")
         dial.setFileMode(QFileDialog.AnyFile)
         dial.setAcceptMode(QFileDialog.AcceptSave)
@@ -797,7 +807,7 @@ class AdvancedSettings(QWidget):
         dial.selectFile("segment_profile.json")
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
-            self.settings.dump_profiles(file_path)
+            self.settings.dump_profiles(file_path, exp.get_export_list())
 
     def import_profiles(self):
         dial = QFileDialog(self, "Import profile segment")
@@ -808,7 +818,11 @@ class AdvancedSettings(QWidget):
         dial.setFilter("Segment profile (*.json)")
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
-            self.settings.load_profiles(file_path)
+            profs = self.settings.load_profiles(file_path)
+            imp = ImportDialog(profs, self.settings.segmentation_profiles_dict, StringViewer)
+            if not imp.exec_():
+                return
+            self.settings.add_profiles(profs, imp.get_import_list())
             self.profile_list.clear()
             self.profile_list.addItems(["<current profile>"] +
                                        list(sorted(self.settings.segmentation_profiles_dict.keys())))

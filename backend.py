@@ -180,7 +180,6 @@ class Settings(object):
         self.save_filter = None
         self.export_directory = None
         self.export_filter = None
-        #self.spacing = [5, 5, 30]
         self.voxel_size = [1, 1, 1]
         self.size_unit = "nm"
         self.advanced_menu_geometry = None
@@ -198,6 +197,7 @@ class Settings(object):
             self.load(settings_path)
         except ValueError as e:
             logging.error("Saved profile problem: {}".format(e))
+
     @property
     def spacing(self):
         return self.voxel_size
@@ -220,43 +220,73 @@ class Settings(object):
         return class_to_dict(self, "threshold", "threshold_list", "threshold_type", "minimum_size", "use_gauss",
                              "gauss_radius", "threshold_layer_separate")
 
-    def dump_profiles(self, file_path):
-        profiles_list = [x.get_parameters() for x in self.segmentation_profiles_dict.values()]
+    def dump_profiles(self, file_path, export_names):
+        export_names = set(export_names)
+        profiles_list = [x.get_parameters() for n, x in self.segmentation_profiles_dict.items() if n in export_names]
         with open(file_path, "w") as ff:
             json.dump(profiles_list, ff)
 
-    def load_profiles(self, file_path):
+    @staticmethod
+    def load_profiles(file_path):
+        res = dict()
         with open(file_path, "r") as ff:
             profiles_list = json.load(ff)
-            for prof in profiles_list:
-                self.segmentation_profiles_dict[prof["name"]] = SegmentationProfile(**prof)
+        for prof in profiles_list:
+            res[prof["name"]] = SegmentationProfile(**prof)
+        return res
+
+    def add_profiles(self, profile_dict, import_names):
+        for name, new_name in import_names:
+            prof = profile_dict[name]
+            prof.name = new_name
+            self.segmentation_profiles_dict[new_name] = prof
         for fun in self.threshold_change_callback:
             fun()
 
-    def dump_statistics(self, file_path):
+    def dump_statistics(self, file_path, export_names):
+        export_names = set(export_names)
         res = [x.get_parameters()
-               for x in self.statistics_profile_dict.values()]
+               for n, x in self.statistics_profile_dict.items() if n in export_names]
 
         json_str = json.dumps(res)
         with open(file_path, 'w') as ff:
             ff.write(json_str)
 
-    def load_statistics(self, file_path):
+    @staticmethod
+    def load_statistics(file_path):
+        res = dict()
         with open(file_path, 'r') as ff:
             statistics_list = json.load(ff)
-            for stat in statistics_list:
-                self.statistics_profile_dict[stat["name"]] = StatisticProfile(**stat)
+        for stat in statistics_list:
+            res[stat["name"]] = StatisticProfile(**stat)
+        return res
 
-    def dump_calculation_plans(self, file_path):
-        json_str = json.dumps([x.get_parameters() for x in self.batch_plans.values()])
+    def add_statistics(self, statistics, import_names):
+        for name, new_name in import_names:
+            stat = statistics[name]
+            stat.name = new_name
+            self.statistics_profile_dict[new_name] = stat
+
+    def dump_calculation_plans(self, file_path, export_names):
+        export_names = set(export_names)
+        json_str = json.dumps([x.get_parameters() for n, x in self.batch_plans.items() if n in export_names])
         with open(file_path, "w") as ff:
             ff.write(json_str)
 
-    def load_calculation_plans(self, file_path):
+    @staticmethod
+    def load_calculation_plans(file_path):
+        res = dict()
         with open(file_path, "r") as ff:
             calculation_plans = json.load(ff)
         for plan in calculation_plans:
             calc_plan = CalculationPlan.dict_load(plan)
+            res[calc_plan.name] = calc_plan
+        return res
+
+    def add_calculation_plans(self, calculation_plans, import_names):
+        for name, new_name in import_names:
+            calc_plan = calculation_plans[name]
+            calc_plan.name = new_name
             self.batch_plans[calc_plan.name] = calc_plan
 
     def dump(self, file_path):
@@ -634,4 +664,3 @@ def get_segmented_data(image, settings, segment, with_std=False, mask_morph=None
     if with_std:
         return image, segmentation, noise_std
     return image, segmentation
-

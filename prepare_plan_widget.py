@@ -6,6 +6,8 @@ from calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, C
     MaskFile, ProjectSave, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, MaskSave, ImageSave, \
     XYZSave
 
+from profile_export import ExportDialog, ImportDialog
+
 import logging
 from copy import copy, deepcopy
 from statistics_calculation import StatisticProfile
@@ -771,6 +773,9 @@ class PlanPreview(QTreeWidget):
         self.calculation_plan.set_position(self.restore_path(current_item, []))
         self.changed_node.emit()
 
+    def preview_object(self, calculation_plan):
+        self.set_plan(calculation_plan)
+
     def set_plan(self, calculation_plan):
         self.calculation_plan = calculation_plan
         self.update_view(True)
@@ -905,6 +910,9 @@ class CalculateInfo(QWidget):
         self.protect = False
 
     def export_plans(self):
+        choose = ExportDialog(self.settings.batch_plans, PlanPreview)
+        if not choose.exec_():
+            return
         dial = QFileDialog(self, "Export calculation plans")
         dial.setFileMode(QFileDialog.AnyFile)
         dial.setAcceptMode(QFileDialog.AcceptSave)
@@ -915,7 +923,7 @@ class CalculateInfo(QWidget):
         dial.selectFile("calculation_plans.json")
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
-            self.settings.dump_calculation_plans(file_path)
+            self.settings.dump_calculation_plans(file_path, choose.get_checked())
 
     def import_plans(self):
         dial = QFileDialog(self, "Export calculation plans")
@@ -927,8 +935,11 @@ class CalculateInfo(QWidget):
         dial.setDefaultSuffix("json")
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
-            self.settings.load_calculation_plans(file_path)
-            self.update_plan_list()
+            plans = self.settings.load_calculation_plans(file_path)
+            choose = ImportDialog(plans, self.settings.batch_plans, PlanPreview)
+            if choose.exec_():
+                self.settings.add_calculation_plans(plans, choose.get_import_list())
+                self.update_plan_list()
 
     def delete_plan(self):
         if self.calculate_plans.currentItem() is None:
