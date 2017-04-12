@@ -294,7 +294,7 @@ class Settings(object):
             class_to_dict(self, "open_directory", "open_filter", "save_directory", "save_filter",
                           "voxel_size", "size_unit", "threshold", "threshold_type", "color_map_name", "overlay", "minimum_size",
                           "gauss_radius", "export_filter", "export_directory", "scale_factor", "statistic_dirs",
-                          "chosen_colormap", "batch_directory")
+                          "chosen_colormap", "batch_directory", "use_gauss")
         # TODO Batch plans dump
         important_data["profiles"] = [x.get_parameters() for x in self.segmentation_profiles_dict.values()]
         important_data["statistics"] = \
@@ -314,7 +314,7 @@ class Settings(object):
             dict_set_class(self, important_data, "open_directory", "open_filter", "save_directory", "save_filter",
                            "voxel_size", "size_unit", "threshold", "threshold_type", "color_map_name", "overlay",
                            "minimum_size", "gauss_radius", "export_filter", "export_directory", "scale_factor",
-                           "statistic_dirs", "chosen_colormap", "batch_directory")
+                           "statistic_dirs", "chosen_colormap", "batch_directory", "use_gauss")
             # TODO Batch plans load
             chosen_colormap = set(self.chosen_colormap)
             avail_colormap = set(pyplot.colormaps())
