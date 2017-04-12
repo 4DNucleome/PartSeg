@@ -212,6 +212,10 @@ class MaskWindow(QDialog):
     :type settings: Settings
     """
     def __init__(self, settings, segment, settings_updated_function):
+        """
+
+        :type settings: Settings
+        """
         super(MaskWindow, self).__init__()
         self.setWindowTitle("Mask manager")
         self.settings = settings
@@ -234,6 +238,12 @@ class MaskWindow(QDialog):
         else:
             self.save_draw = QCheckBox("Add draw", self)
         op_layout.addWidget(self.save_draw)
+        self.fill_holes = QCheckBox("Fill holes", self)
+        self.fill_holes.setToolTip("Fill holes that are not connected in 3d")
+        op_layout.addWidget(self.fill_holes)
+        self.fill_holes_in_2d = QCheckBox("Fill holes in 2d")
+        self.fill_holes_in_2d.setToolTip("Fill holes thar are not connected to border on each slice separately")
+        op_layout.addWidget(self.fill_holes_in_2d)
         self.reset_next = QPushButton("Reset Next")
         self.reset_next.clicked.connect(self.reset_next_fun)
         if len(settings.next_segmentation_settings) == 0:
@@ -265,7 +275,8 @@ class MaskWindow(QDialog):
 
     def next_mask(self):
         self.settings.mask_dilate_radius = self.dilate_radius.value()
-        self.settings.change_segmentation_mask(self.segment, MaskChange.next_seg, self.save_draw.isChecked())
+        self.settings.change_segmentation_mask(self.segment, MaskChange.next_seg, self.save_draw.isChecked(),
+                                               self.fill_holes.isChecked(), self.fill_holes_in_2d.isChecked())
         self.settings_updated_function()
         self.close()
 

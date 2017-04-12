@@ -241,6 +241,7 @@ class Segment(object):
         return self._segmentation_changed
 
     def get_segmentation(self):
+        """:rtype: np.ndarray"""
         self._segmentation_changed = False
         return self._finally_segment
 
@@ -252,6 +253,32 @@ class Segment(object):
 
     def add_segmentation_callback(self, callback):
         self.segmentation_change_callback.append(callback)
+
+
+def fill_holes_in_mask(mask):
+    """:rtype: np.ndarray"""
+    holes_mask = (mask == 0).astype(np.uint8)
+    component_mask = sitk.GetArrayFromImage(sitk.ConnectedComponent(sitk.GetImageFromArray(holes_mask)))
+    border_set = set()
+    for dim_num in range(component_mask.ndim):
+        border_set.update(np.unique(np.take(component_mask, [0, -1], axis=dim_num)))
+    for i in range(1, np.max(component_mask)+1):
+        if i not in border_set:
+            component_mask[component_mask == i] = 0
+    return component_mask == 0
+
+
+def fill_2d_holes_in_mask(mask):
+    """
+    :type mask: np.ndarray
+    :rtype: np.ndarray
+    """
+    mask = np.copy(mask)
+    if mask.ndim == 2:
+        return fill_holes_in_mask(mask)
+    for i in range(mask.shape[0]):
+        mask[i] = fill_holes_in_mask(mask[i])
+    return mask
 
 
 def bisect(arr, val, comp):
