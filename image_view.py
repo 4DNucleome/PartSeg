@@ -1,5 +1,5 @@
 from qt_import import QWidget, FigureCanvas, QToolButton, QSize, QIcon, QAction, QLabel, QDialog, NavigationToolbar, \
-    Qt, QSlider, QCheckBox, QVBoxLayout, QHBoxLayout, QPushButton, QDoubleSpinBox, QGridLayout, QInputDialog, QApplication
+    Qt, QSlider, QCheckBox, QVBoxLayout, QHBoxLayout, QPushButton, QDoubleSpinBox, QGridLayout, QInputDialog, QApplication, QImage, QPixmap
 from matplotlib import pyplot
 from matplotlib import colors
 import matplotlib
@@ -19,6 +19,28 @@ def label_to_rgb(image):
     sitk_im = sitk.GetImageFromArray(image)
     lab_im = sitk.LabelToRGB(sitk_im)
     return sitk.GetArrayFromImage(lab_im)
+
+
+class ImageView(QWidget):
+    def __init__(self):
+        super(ImageView, self).__init__()
+        self.pixmap = None
+        self.label_pixmap = QLabel()
+
+    def draw_image(self, image):
+        """
+        :type image: np.ndarray
+        :param image: ARGB 8bit image 
+        :return: 
+        """
+        width, height = image.shape
+        im = QImage(image.data, width, height, image.dtype.itemsize * width * 4, QImage.Format_ARGB32)
+        self.pixmap = QPixmap.fromImage(im)
+        self.label_pixmap.setPixmap(self.pixmap)
+
+    def paint_pixel(self):
+        pass
+
 
 
 class MyCanvas(QWidget):
@@ -475,7 +497,6 @@ class MyDrawCanvas(MyCanvas):
 
     def scale_image(self):
         dial = QInputDialog()
-        dial.setss
         val, ok = QInputDialog.getDouble(self, "Scale factor", "Set scale factor", 1, 0.01, 3, 2)
         if ok :
             print("Buka {}".format(val))

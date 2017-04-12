@@ -732,7 +732,7 @@ def synchronize_zoom(fig1, fig2, sync_checkbox):
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, title, path_to_open, dev):
+    def __init__(self, title, path_to_open):
         super(MainWindow, self).__init__()
         self.open_path = path_to_open
         self.setWindowTitle(title)

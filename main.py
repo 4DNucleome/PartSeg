@@ -32,7 +32,7 @@ if __name__ == '__main__':
     from gui import MainWindow, QApplication
     import sys
     myApp = QApplication(sys.argv)
-    wind = MainWindow("PartSeg", args.file, args.develop)
+    wind = MainWindow("PartSeg", args.file)
     wind.show()
     myApp.exec_()
     sys.exit()
