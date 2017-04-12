@@ -10,7 +10,7 @@ from calculation_plan import CalculationPlan
 GAUSS = "Gauss"
 
 from utils import class_to_dict, dict_set_class
-from segment import SegmentationProfile, Segment, UPPER
+from segment import SegmentationProfile, Segment, UPPER, fill_holes_in_mask, fill_2d_holes_in_mask
 from statistics_calculation import StatisticProfile, calculate_volume_surface
 from image_operations import gaussian, dilate
 from scipy.ndimage.interpolation import zoom
@@ -180,7 +180,6 @@ class Settings(object):
         self.save_filter = None
         self.export_directory = None
         self.export_filter = None
-        #self.spacing = [5, 5, 30]
         self.voxel_size = [1, 1, 1]
         self.size_unit = "nm"
         self.advanced_menu_geometry = None
@@ -198,6 +197,7 @@ class Settings(object):
             self.load(settings_path)
         except ValueError as e:
             logging.error("Saved profile problem: {}".format(e))
+
     @property
     def spacing(self):
         return self.voxel_size
@@ -220,51 +220,81 @@ class Settings(object):
         return class_to_dict(self, "threshold", "threshold_list", "threshold_type", "minimum_size", "use_gauss",
                              "gauss_radius", "threshold_layer_separate")
 
-    def dump_profiles(self, file_path):
-        profiles_list = [x.get_parameters() for x in self.segmentation_profiles_dict.values()]
+    def dump_profiles(self, file_path, export_names):
+        export_names = set(export_names)
+        profiles_list = [x.get_parameters() for n, x in self.segmentation_profiles_dict.items() if n in export_names]
         with open(file_path, "w") as ff:
             json.dump(profiles_list, ff)
 
-    def load_profiles(self, file_path):
+    @staticmethod
+    def load_profiles(file_path):
+        res = dict()
         with open(file_path, "r") as ff:
             profiles_list = json.load(ff)
-            for prof in profiles_list:
-                self.segmentation_profiles_dict[prof["name"]] = SegmentationProfile(**prof)
+        for prof in profiles_list:
+            res[prof["name"]] = SegmentationProfile(**prof)
+        return res
+
+    def add_profiles(self, profile_dict, import_names):
+        for name, new_name in import_names:
+            prof = profile_dict[name]
+            prof.name = new_name
+            self.segmentation_profiles_dict[new_name] = prof
         for fun in self.threshold_change_callback:
             fun()
 
-    def dump_statistics(self, file_path):
+    def dump_statistics(self, file_path, export_names):
+        export_names = set(export_names)
         res = [x.get_parameters()
-               for x in self.statistics_profile_dict.values()]
+               for n, x in self.statistics_profile_dict.items() if n in export_names]
 
         json_str = json.dumps(res)
         with open(file_path, 'w') as ff:
             ff.write(json_str)
 
-    def load_statistics(self, file_path):
+    @staticmethod
+    def load_statistics(file_path):
+        res = dict()
         with open(file_path, 'r') as ff:
             statistics_list = json.load(ff)
-            for stat in statistics_list:
-                self.statistics_profile_dict[stat["name"]] = StatisticProfile(**stat)
+        for stat in statistics_list:
+            res[stat["name"]] = StatisticProfile(**stat)
+        return res
 
-    def dump_calculation_plans(self, file_path):
-        json_str = json.dumps([x.get_parameters() for x in self.batch_plans.values()])
+    def add_statistics(self, statistics, import_names):
+        for name, new_name in import_names:
+            stat = statistics[name]
+            stat.name = new_name
+            self.statistics_profile_dict[new_name] = stat
+
+    def dump_calculation_plans(self, file_path, export_names):
+        export_names = set(export_names)
+        json_str = json.dumps([x.get_parameters() for n, x in self.batch_plans.items() if n in export_names])
         with open(file_path, "w") as ff:
             ff.write(json_str)
 
-    def load_calculation_plans(self, file_path):
+    @staticmethod
+    def load_calculation_plans(file_path):
+        res = dict()
         with open(file_path, "r") as ff:
             calculation_plans = json.load(ff)
         for plan in calculation_plans:
             calc_plan = CalculationPlan.dict_load(plan)
+            res[calc_plan.name] = calc_plan
+        return res
+
+    def add_calculation_plans(self, calculation_plans, import_names):
+        for name, new_name in import_names:
+            calc_plan = calculation_plans[name]
+            calc_plan.name = new_name
             self.batch_plans[calc_plan.name] = calc_plan
 
     def dump(self, file_path):
         important_data = \
             class_to_dict(self, "open_directory", "open_filter", "save_directory", "save_filter",
-                          "voxel_size", "size_unit", "threshold", "color_map_name", "overlay", "minimum_size",
+                          "voxel_size", "size_unit", "threshold", "threshold_type", "color_map_name", "overlay", "minimum_size",
                           "gauss_radius", "export_filter", "export_directory", "scale_factor", "statistic_dirs",
-                          "chosen_colormap", "batch_directory")
+                          "chosen_colormap", "batch_directory", "use_gauss")
         # TODO Batch plans dump
         important_data["profiles"] = [x.get_parameters() for x in self.segmentation_profiles_dict.values()]
         important_data["statistics"] = \
@@ -282,9 +312,9 @@ class Settings(object):
             with open(file_path, "r") as ff:
                 important_data = json.load(ff)
             dict_set_class(self, important_data, "open_directory", "open_filter", "save_directory", "save_filter",
-                           "voxel_size", "size_unit", "threshold", "color_map_name", "overlay",
+                           "voxel_size", "size_unit", "threshold", "threshold_type", "color_map_name", "overlay",
                            "minimum_size", "gauss_radius", "export_filter", "export_directory", "scale_factor",
-                           "statistic_dirs", "chosen_colormap", "batch_directory")
+                           "statistic_dirs", "chosen_colormap", "batch_directory", "use_gauss")
             # TODO Batch plans load
             chosen_colormap = set(self.chosen_colormap)
             avail_colormap = set(pyplot.colormaps())
@@ -303,11 +333,13 @@ class Settings(object):
         except KeyError as e:
             logging.warning("Bad configuration: {}".format(e))
 
-    def change_segmentation_mask(self, segment, order, save_draw):
+    def change_segmentation_mask(self, segment, order, save_draw, fill_holes=False, fill_2d_holes=False):
         """
         :type segment: Segment
         :type order: MaskChange
         :type save_draw: bool
+        :type fill_holes: bool
+        :type fill_2d_holes: bool
         :return:
         """
         save_fields = ["threshold", "threshold_list", "threshold_type", "threshold_layer_separate",
@@ -316,12 +348,17 @@ class Settings(object):
             return
 
         current_mask = segment.get_segmentation()
+        current_mask = np.array(current_mask > 0)
         seg_settings = class_to_dict(self, *save_fields)
         if segment.draw_canvas is not None:
             seg_settings["draw_points"] = tuple(map(list, np.nonzero(np.array(segment.draw_canvas == 1))))
             seg_settings["erase_points"] = tuple(map(list, np.nonzero(np.array(segment.draw_canvas == 2))))
         save_draw_bck = np.copy(segment.draw_canvas)
         if order == MaskChange.next_seg:
+            if fill_2d_holes:
+                current_mask = fill_2d_holes_in_mask(current_mask)
+            elif fill_holes:
+                current_mask = fill_holes_in_mask(current_mask)
             self.prev_segmentation_settings.append(seg_settings)
             if self.mask_dilate_radius > 0:
                 self.mask = dilate(current_mask, self.mask_dilate_radius)
@@ -415,8 +452,8 @@ class Settings(object):
             else:
                 self.mask = zoom(self.mask, (1, scale_factor, scale_factor))
 
-        self.min_value = self.image.min()
-        self.max_value = self.image.max()
+        self.min_value = np.min(self.image)
+        self.max_value = np.max(self.image)
         self.gauss_image = gaussian(self.image, self.gauss_radius)
         self.image_changed_fun()
 
@@ -634,4 +671,3 @@ def get_segmented_data(image, settings, segment, with_std=False, mask_morph=None
     if with_std:
         return image, segmentation, noise_std
     return image, segmentation
-
