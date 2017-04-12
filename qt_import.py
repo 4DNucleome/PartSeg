@@ -37,7 +37,7 @@ if use_qt5:
         QTextBrowser, QSplitter, QProgressBar, QAbstractItemView, QGroupBox, QTreeWidget, QTreeWidgetItem, QCompleter, \
         QRadioButton, QButtonGroup
 
-    from PyQt5.QtGui import QFont, QFontMetrics, QIcon
+    from PyQt5.QtGui import QFont, QFontMetrics, QIcon, QPixmap, QImage
     from PyQt5.QtHelp import QHelpEngine
 else:
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
@@ -49,7 +49,7 @@ else:
         QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
         QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem, \
         QDockWidget, QTextBrowser, QSplitter, QProgressBar, QAbstractItemView, QGroupBox, QTreeWidget, QTreeWidgetItem,\
-        QCompleter, QRadioButton, QButtonGroup
+        QCompleter, QRadioButton, QButtonGroup, QPixmap, QImage
     from PyQt4.QtHelp import QHelpEngine
 
 
