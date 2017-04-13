@@ -532,6 +532,7 @@ class MainMenu(QWidget):
             # TODO maybe something better. Now main window have to be parent
             if selected_filter == "raw image (*.tiff *.tif *.lsm)":
                 im = tifffile.imread(file_path)
+                im = im.squeeze()
                 if im.ndim == 4 or im.shape[-1] < 5:
                     choose = MultiChannelFilePreview(im, self.settings)
                     if choose.exec_():
