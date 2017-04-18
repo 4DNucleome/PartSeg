@@ -154,6 +154,7 @@ class MaskFile(MaskMapper):
 
 class Operations(Enum):
     segment_from_project = 1
+    leave_the_biggest = 2
 
 
 class PlanChanges(Enum):
@@ -528,6 +529,8 @@ class CalculationPlan(object):
         if isinstance(el, ChooseChanel):
             return "Chose chanel, chanel pos: {}, chanel num {}".format(el.chanel_position, el.chanel_num)
         if isinstance(el, SegmentationProfile):
+            if el.leave_biggest:
+                return "Segmentation: {} (only biggest)".format(el.name)
             return "Segmentation: {}".format(el.name)
         if isinstance(el, StatisticProfile):
             if el.name_prefix == "":

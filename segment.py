@@ -17,12 +17,12 @@ UPPER = "Upper"
 
 class SegmentationProfile(object):
     PARAMETERS = ("name", "threshold", "threshold_list", "threshold_type", "minimum_size", "use_gauss", "gauss_radius",
-                  "threshold_layer_separate")
+                  "threshold_layer_separate", "leave_biggest")
     SEGMENTATION_PARAMETERS = ("threshold", "threshold_list", "threshold_type", "minimum_size", "use_gauss",
-                               "gauss_radius", "threshold_layer_separate")
+                               "gauss_radius", "threshold_layer_separate", "leave_biggest")
 
     def __init__(self, name, threshold, threshold_list, threshold_type, minimum_size, use_gauss, gauss_radius,
-                 threshold_layer_separate):
+                 threshold_layer_separate, leave_biggest=False):
         """
         :param name: str,
         :param threshold: int
@@ -42,6 +42,7 @@ class SegmentationProfile(object):
         self.minimum_size = minimum_size
         self.use_gauss = use_gauss
         self.gauss_radius = gauss_radius
+        self.leave_biggest = leave_biggest
         self.threshold_layer_separate = threshold_layer_separate
 
     def __str__(self):
@@ -63,6 +64,9 @@ class SegmentationProfile(object):
 
     def get_parameters(self):
         return class_to_dict(self, *self.PARAMETERS)
+
+    def leave_biggest_swap(self):
+        self.leave_biggest = not self.leave_biggest
 
 
 class DummySegment(object):
@@ -117,6 +121,7 @@ class Segment(object):
     """
     :type _segmented_image: np.ndarray
     :type segmentation_change_callback: list[() -> None | (list[int] -> None]
+    :type _settings: Settings
     """
 
     def __init__(self, settings, callback=True):
@@ -203,6 +208,16 @@ class Segment(object):
     def min_size_updated(self):
         if self.protect:
             return
+        if self._settings.leave_biggest:
+            self._finally_segment = np.copy(self._segmented_image)
+            self._finally_segment[self._finally_segment > 1] = 0
+            self._segmentation_changed = True
+            for fun in self.segmentation_change_callback:
+                if isinstance(fun, tuple):
+                    fun[0](self._sizes_array[1:2])
+                    continue
+                if callable(fun):
+                    fun()
         ind = bisect(self._sizes_array[1:], self._settings.minimum_size, lambda x, y: x > y)
         # print(ind, self._sizes_array, self._settings.minimum_size)
         if self.draw_canvas is not None:

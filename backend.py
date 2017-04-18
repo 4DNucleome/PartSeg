@@ -193,6 +193,7 @@ class Settings(object):
         self.statistics_profile_dict = dict()
         self.statistic_dirs = None
         self.batch_plans = {}
+        self.leave_biggest = False
         try:
             self.load(settings_path)
         except ValueError as e:
@@ -311,10 +312,14 @@ class Settings(object):
         try:
             with open(file_path, "r") as ff:
                 important_data = json.load(ff)
-            dict_set_class(self, important_data, "open_directory", "open_filter", "save_directory", "save_filter",
-                           "voxel_size", "size_unit", "threshold", "threshold_type", "color_map_name", "overlay",
-                           "minimum_size", "gauss_radius", "export_filter", "export_directory", "scale_factor",
-                           "statistic_dirs", "chosen_colormap", "batch_directory", "use_gauss")
+            try:
+                dict_set_class(self, important_data, "open_directory", "open_filter", "save_directory", "save_filter",
+                               "voxel_size", "size_unit", "threshold", "threshold_type", "color_map_name", "overlay",
+                               "minimum_size", "gauss_radius", "export_filter", "export_directory", "scale_factor",
+                               "statistic_dirs", "chosen_colormap", "batch_directory", "use_gauss")
+            except Exception as e:
+                print(e)
+                pass
             # TODO Batch plans load
             chosen_colormap = set(self.chosen_colormap)
             avail_colormap = set(pyplot.colormaps())

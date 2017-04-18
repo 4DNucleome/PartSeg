@@ -116,6 +116,7 @@ class CreatePlan(QWidget):
         self.project_segmentation.clicked.connect(self.segmentation_from_project)
 
         self.chose_profile = QPushButton("Segment Profile")
+        self.get_big = QPushButton("Leave the biggest")
         self.statistic_list = QListWidget(self)
         self.statistic_name_prefix = QLineEdit(self)
         self.add_calculation = QPushButton("Add statistic calculation")
@@ -143,6 +144,7 @@ class CreatePlan(QWidget):
         self.swap_mask_name.textChanged.connect(self.mask_text_changed)
         self.mask_name.textChanged.connect(self.mask_text_changed)
         self.chose_profile.clicked.connect(self.add_segmentation)
+        self.get_big.clicked.connect(self.add_leave_biggest)
         self.add_calculation.clicked.connect(self.add_statistics)
         self.save_plan_btn.clicked.connect(self.add_calculation_plan)
         # self.forgot_mask_btn.clicked.connect(self.forgot_mask)
@@ -229,6 +231,7 @@ class CreatePlan(QWidget):
         lay = QVBoxLayout()
         lay.addWidget(self.segment_profile)
         lay.addWidget(self.chose_profile)
+        lay.addWidget(self.get_big)
         segment_box.setLayout(lay)
 
         statistic_box = QGroupBox("Statistics")
@@ -545,6 +548,12 @@ class CreatePlan(QWidget):
             self.generate_mask.setDisabled(False)
             self.reuse_mask.setDisabled(True)
 
+    def add_leave_biggest(self):
+        profile = self.calculation_plan.get_node().operation
+        profile.leave_biggest_swap()
+        self.calculation_plan.replace_step(profile)
+        self.plan.update_view()
+
     def add_segmentation(self):
         text = str(self.segment_profile.currentItem().text())
         profile = self.settings.segmentation_profiles_dict[text]
@@ -714,11 +723,16 @@ class CreatePlan(QWidget):
 
     def show_segment(self):
         if self.update_element_btn.isChecked():
+            self.get_big.setDisabled(True)
             if self.node_type == NodeType.segment:
                 self.chose_profile.setEnabled(True)
             else:
                 self.chose_profile.setDisabled(True)
         else:
+            if self.node_type == NodeType.segment:
+                self.get_big.setEnabled(True)
+            else:
+                self.get_big.setDisabled(True)
             if self.segment_profile.currentItem() is not None:
                 self.chose_profile.setEnabled(self.segment_allow)
             else:
@@ -918,7 +932,7 @@ class CalculateInfo(QWidget):
         dial.setAcceptMode(QFileDialog.AcceptSave)
         if self.settings.save_directory is not None:
             dial.setDirectory(self.settings.save_directory)
-        dial.setFilter("Calculation plans (*.json)")
+        dial.setNameFilter("Calculation plans (*.json)")
         dial.setDefaultSuffix("json")
         dial.selectFile("calculation_plans.json")
         if dial.exec_():
@@ -931,7 +945,7 @@ class CalculateInfo(QWidget):
         dial.setAcceptMode(QFileDialog.AcceptOpen)
         if self.settings.open_directory is not None:
             dial.setDirectory(self.settings.save_directory)
-        dial.setFilter("Calculation plans (*.json)")
+        dial.setNameFilter("Calculation plans (*.json)")
         dial.setDefaultSuffix("json")
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
