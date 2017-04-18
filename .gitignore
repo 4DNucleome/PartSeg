@@ -93,7 +93,8 @@ var/
 *.manifest
 *.spec
 # I modified this file
-!main.spec 
+!main.spec
+!main-nonpack.spec
 !PartSeg.spec
 !PartSeg-non-pack.spec
 
