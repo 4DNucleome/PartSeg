@@ -42,7 +42,6 @@ class ImageView(QWidget):
         pass
 
 
-
 class MyCanvas(QWidget):
     """
     :type settings: Settings

@@ -11,7 +11,7 @@ GAUSS = "Gauss"
 
 from utils import class_to_dict, dict_set_class
 from segment import SegmentationProfile, Segment, UPPER, fill_holes_in_mask, fill_2d_holes_in_mask
-from statistics_calculation import StatisticProfile, calculate_volume_surface
+from statistics_calculation import StatisticProfile, calculate_volume_surface, calc_diam
 from image_operations import gaussian, dilate
 from scipy.ndimage.interpolation import zoom
 from autofit import calculate_density_momentum
@@ -640,6 +640,7 @@ def calculate_statistic_from_image(img, mask, settings):
         pass
     if len(img.shape) == 3:
         res["Moment of inertia"] = calculate_density_momentum(img, voxel_size)
+        #res["Diameter"] = calc_diam(img_mask, voxel_size)
     return res
 
 

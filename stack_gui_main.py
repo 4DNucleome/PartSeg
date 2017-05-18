@@ -6,6 +6,7 @@ from stack_settings import Settings
 import matplotlib
 from matplotlib import colors
 import numpy as np
+import pyqtgraph as pg
 
 
 class MainMenu(QWidget):
@@ -45,7 +46,7 @@ class MainWindow(QMainWindow):
         im = tif.imread("/home/czaki/Obrazy/160112_Chr1aqua_q488_pred_TOPRO/B/B.lsm")[0, 20, 3]
         width, height = im.shape
         im = colors.PowerNorm(gamma=1, vmin=im.min(), vmax=im.max())(im)
-        cmap = matplotlib.cm.get_cmap("gray")
+        cmap = matplotlib.cm.get_cmap("cubehelix")
         colored_image = cmap(im)
         # noinspection PyTypeChecker
         im = np.array(colored_image * 255, dtype=np.uint8)
@@ -55,10 +56,12 @@ class MainWindow(QMainWindow):
         im2 = QImage(im.data, width, height, im.dtype.itemsize*width*4, QImage.Format_ARGB32)
 
         self.pixmap.setPixmap(QPixmap.fromImage(im2))
-
+        self.im_view = pg.ImageView(self)
+        self.im_view.setImage(im)
+        #self.im_view.imageItem.c
         layout = QVBoxLayout()
         layout.addWidget(self.main_menu)
-        layout.addWidget(self.pixmap)
+        layout.addWidget(self.im_view)
         self.widget = QWidget()
         self.widget.setLayout(layout)
         self.setCentralWidget(self.widget)
