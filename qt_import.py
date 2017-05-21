@@ -29,13 +29,13 @@ if use_qt5:
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
-    from PyQt5.QtCore import Qt, QSize, QTimer, QVariant, pyqtSignal
+    from PyQt5.QtCore import Qt, QSize, QTimer, QVariant, pyqtSignal, QObject
     from PyQt5.QtWidgets import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget, \
         QLineEdit, QFrame,  QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, QToolButton, QDoubleSpinBox, \
         QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, QListWidget, \
         QTextEdit, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem, QDockWidget, \
         QTextBrowser, QSplitter, QProgressBar, QAbstractItemView, QGroupBox, QTreeWidget, QTreeWidgetItem, QCompleter, \
-        QRadioButton, QButtonGroup
+        QRadioButton, QButtonGroup, QPalette, QSizePolicy
 
     from PyQt5.QtGui import QFont, QFontMetrics, QIcon, QPixmap, QImage
     from PyQt5.QtHelp import QHelpEngine
@@ -43,13 +43,13 @@ else:
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 
-    from PyQt4.QtCore import Qt, QSize, QTimer, QVariant, pyqtSignal
+    from PyQt4.QtCore import Qt, QSize, QTimer, QVariant, pyqtSignal, QObject
     from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget, QLineEdit, QFont, \
         QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, QToolButton, QDoubleSpinBox, \
         QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
         QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem, \
         QDockWidget, QTextBrowser, QSplitter, QProgressBar, QAbstractItemView, QGroupBox, QTreeWidget, QTreeWidgetItem,\
-        QCompleter, QRadioButton, QButtonGroup, QPixmap, QImage
+        QCompleter, QRadioButton, QButtonGroup, QPixmap, QImage, QPalette, QSizePolicy
     from PyQt4.QtHelp import QHelpEngine
 
 
