@@ -1,5 +1,14 @@
-
+import sys
 __author__ = "Grzegorz Bokota"
+
+
+def my_excepthook(type, value, tback):
+    # log the exception here
+
+    # then call the default handler
+    sys.__excepthook__(type, value, tback)
+
+sys.excepthook = my_excepthook
 
 
 if __name__ == '__main__':

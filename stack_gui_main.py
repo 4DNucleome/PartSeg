@@ -1,7 +1,7 @@
 from __future__ import division
 import tifffile as tif
-from qt_import import QMainWindow, QPixmap, QImage, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, \
-    QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QSize, QAction, Qt, QPainter, QPen, QString, \
+from PyQt5.Qt import QMainWindow, QPixmap, QImage, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, \
+    QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QSize, QAction, Qt, QPainter, QPen, \
     QColor, QScrollBar, QApplication, pyqtSignal, QPoint
 from stack_settings import Settings
 
@@ -9,9 +9,9 @@ import matplotlib
 from matplotlib import colors
 import numpy as np
 import os
-from global_settings import file_folder
+from global_settings import file_folder, use_qt5
 from math import log
-step = 1.001
+step = 1.01
 max_step = log(1.2, step)
 
 canvas_icon_size = QSize(27, 27)
@@ -113,6 +113,12 @@ class ImageCanvas(QLabel):
         pen.setDashOffset(3)
         painter.setPen(pen)
         painter.drawRect(self.point.x(), self.point.y(), diff.x(), diff.y())
+
+    """def resizeEvent(self, event):
+        super(ImageCanvas, self).resizeEvent(event)
+        print("Buka")
+        event.accept()
+        pass"""
 
 
 def get_scroll_bar_proportion(scroll_bar):
@@ -226,7 +232,10 @@ class MyScrollArea(QScrollArea):
     def wheelEvent(self, event):
         if not (QApplication.keyboardModifiers() & Qt.ControlModifier) == Qt.ControlModifier:
             return
-        delta = event.delta()
+        if use_qt5:
+            delta = event.angleDelta().y()
+        else:
+            delta = event.delta()
         x, y = event.x(), event.y()
         if abs(delta) > max_step:
             delta = max_step * (delta/abs(delta))
@@ -245,7 +254,7 @@ class MyScrollArea(QScrollArea):
             self.pixmap.resize(new_size)
             set_scroll_bar_proportion(self.horizontalScrollBar(), y_ratio)
             set_scroll_bar_proportion(self.verticalScrollBar(), x_ratio)
-        pass
+        event.accept()
 
 
 def create_tool_button(text, icon):
@@ -316,7 +325,7 @@ class MainWindow(QMainWindow):
         #self.scroll_area.setVisible(False)
         #self.scroll_area.setS
 
-        im = tif.imread("data/A.lsm")[0, 20, 3]
+        im = tif.imread("stack.tif")
         width, height = im.shape
         im = colors.PowerNorm(gamma=1, vmin=im.min(), vmax=im.max())(im)
         cmap = matplotlib.cm.get_cmap("cubehelix")
