@@ -43,13 +43,14 @@ else:
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 
-    from PyQt4.QtCore import Qt, QSize, QTimer, QVariant, pyqtSignal, QObject
+    from PyQt4.QtCore import Qt, QSize, QTimer, QVariant, pyqtSignal, QObject, QString, QPoint
     from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget, QLineEdit, QFont, \
         QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, QToolButton, QDoubleSpinBox, \
         QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
         QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem, \
         QDockWidget, QTextBrowser, QSplitter, QProgressBar, QAbstractItemView, QGroupBox, QTreeWidget, QTreeWidgetItem,\
-        QCompleter, QRadioButton, QButtonGroup, QPixmap, QImage, QPalette, QSizePolicy
+        QCompleter, QRadioButton, QButtonGroup, QPixmap, QImage, QPalette, QSizePolicy, QPainter, QPen, QColor, \
+        QScrollBar
     from PyQt4.QtHelp import QHelpEngine
 
 

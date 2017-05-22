@@ -1,14 +1,18 @@
+from __future__ import division
 import tifffile as tif
 from qt_import import QMainWindow, QPixmap, QImage, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, \
-    QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QSize, QAction, Qt
+    QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QSize, QAction, Qt, QPainter, QPen, QString, \
+    QColor, QScrollBar, QApplication, pyqtSignal, QPoint
 from stack_settings import Settings
 
 import matplotlib
 from matplotlib import colors
 import numpy as np
 import os
-
 from global_settings import file_folder
+from math import log
+step = 1.001
+max_step = log(1.2, step)
 
 canvas_icon_size = QSize(27, 27)
 
@@ -38,10 +42,31 @@ class MainMenu(QWidget):
         self.settings.image = im
 
 
-class ImageCanvas(QLabel):
+class ImageSettings(object):
     def __init__(self):
+        self.zoom = False
+        self.move = False
+
+    def set_zoom(self, val):
+        self.zoom = val
+
+    def set_move(self, val):
+        self.move = val
+
+
+class ImageCanvas(QLabel):
+    zoom_mark = pyqtSignal(QPoint, QPoint)
+
+    def __init__(self, local_settings):
+        """
+        :type local_settings: ImageSettings
+        :param local_settings: 
+        """
         super(ImageCanvas, self).__init__()
         self.scale_factor = 1
+        self.local_settings = local_settings
+        self.point = None
+        self.point2 = None
 
     def update_size(self, scale_factor=None):
         if scale_factor is not None:
@@ -55,25 +80,98 @@ class ImageCanvas(QLabel):
         :return: 
         """
         super(ImageCanvas, self).mousePressEvent(event)
+        if self.local_settings.zoom:
+            self.point = event.pos()
+
+    def mouseMoveEvent(self, event):
+        super(ImageCanvas, self).mouseMoveEvent(event)
+        if self.local_settings.zoom:
+            self.point2 = event.pos()
+            self.update()
 
     def mouseReleaseEvent(self, event):
         super(ImageCanvas, self).mouseReleaseEvent(event)
+        if self.local_settings.zoom:
+            self.zoom_mark.emit(self.point, self.point2)
+            self.point2 = None
+            self.update()
+
+    def paintEvent(self, event):
+        super(ImageCanvas, self).paintEvent(event)
+        if not self.local_settings.zoom and self.point is None or self.point2 is None:
+            return
+        pen = QPen(QColor("white"))
+        pen.setStyle(Qt.DashLine)
+        pen.setDashPattern([5, 5])
+        painter = QPainter(self)
+        painter.setPen(pen)
+        diff = self.point2 - self.point
+        painter.drawRect(self.point.x(), self.point.y(), diff.x(), diff.y())
+        pen = QPen(QColor("blue"))
+        pen.setStyle(Qt.DashLine)
+        pen.setDashPattern([5, 5])
+        pen.setDashOffset(3)
+        painter.setPen(pen)
+        painter.drawRect(self.point.x(), self.point.y(), diff.x(), diff.y())
+
+
+def get_scroll_bar_proportion(scroll_bar):
+    """
+    :type scroll_bar: QScrollBar
+    :param scroll_bar: 
+    :return: float
+    """
+    dist = (scroll_bar.maximum() - scroll_bar.minimum())
+    if dist == 0:
+        return 0.5
+    else:
+        return float(scroll_bar.value()) / dist
+
+
+def set_scroll_bar_proportion(scroll_bar, proportion):
+    """
+    :type scroll_bar: QScrollBar
+    :type proportion: float
+    :param scroll_bar: 
+    """
+    scroll_bar.setValue(int((scroll_bar.maximum() - scroll_bar.minimum())*proportion))
 
 
 class MyScrollArea(QScrollArea):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, local_settings, *args, **kwargs):
+        """
+        :type local_settings: ImageSettings
+        :param local_settings: 
+        :param args: 
+        :param kwargs: 
+        """
         super(MyScrollArea, self).__init__(*args, **kwargs)
+        self.local_settings = local_settings
         self.setAlignment(Qt.AlignCenter)
         self.clicked = False
         self.prev_pos = None
-        self.pixmap = ImageCanvas()
+        self.pixmap = ImageCanvas(local_settings)
         self.pixmap.setScaledContents(True)
         self.pixmap.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
         self.pixmap.setBackgroundRole(QPalette.Base)
         self.pixmap.setScaledContents(True)
+        self.pixmap.zoom_mark.connect(self.zoom_image)
         self.setBackgroundRole(QPalette.Dark)
         self.setWidget(self.pixmap)
         self.ratio = 1
+
+    def zoom_image(self, point1, point2):
+        """
+        :type point1: QPoint
+        :type point2: QPoint
+        :param point1: 
+        :param point2: 
+        :return: 
+        """
+        x_ratio = self.width() / abs(point1.x() - point2.x())
+        y_ratio = self.height() / abs(point1.y() - point2.y())
+        self.pixmap.resize(self.pixmap.size() * min(x_ratio, y_ratio))
+        print(point1, point2, x_ratio, y_ratio)
 
     def reset_image(self):
         x = self.size().width() - 2
@@ -100,6 +198,8 @@ class MyScrollArea(QScrollArea):
         self.prev_pos = None
 
     def mouseMoveEvent(self, event):
+        if not self.local_settings.move:
+            return
         x, y = event.x(), event.y()
         x_dif, y_dif = self.prev_pos[0] - x, self.prev_pos[1] - y
         h_bar = self.horizontalScrollBar()
@@ -123,6 +223,30 @@ class MyScrollArea(QScrollArea):
         if self.size().width() - 2 > self.pixmap.width() and self.size().height() - 2 > self.pixmap.height():
             self.reset_image()
 
+    def wheelEvent(self, event):
+        if not (QApplication.keyboardModifiers() & Qt.ControlModifier) == Qt.ControlModifier:
+            return
+        delta = event.delta()
+        x, y = event.x(), event.y()
+        if abs(delta) > max_step:
+            delta = max_step * (delta/abs(delta))
+        new_size = self.pixmap.size() * (step**delta)
+        """:type : QSize"""
+        if new_size.width() < self.size().width() - 2 and new_size.height() < self.size().height() - 2:
+            self.reset_image()
+        else:
+            x0 = x - self.pixmap.x()
+            y0 = y - self.pixmap.y()
+            x_ratio = float(x0)/self.pixmap.width()
+            y_ratio = float(y0)/self.pixmap.height()
+            print x, y, self.pixmap.pos(), self.horizontalScrollBar().minimum(), self.horizontalScrollBar().value(), self.horizontalScrollBar().maximum()
+            #scroll_h_ratio = get_scroll_bar_proportion(self.horizontalScrollBar())
+            #scroll_v_ratio = get_scroll_bar_proportion(self.verticalScrollBar())
+            self.pixmap.resize(new_size)
+            set_scroll_bar_proportion(self.horizontalScrollBar(), y_ratio)
+            set_scroll_bar_proportion(self.verticalScrollBar(), x_ratio)
+        pass
+
 
 def create_tool_button(text, icon):
     res = QToolButton()
@@ -141,19 +265,20 @@ def create_tool_button(text, icon):
 class ImageView(QWidget):
     def __init__(self):
         super(ImageView, self).__init__()
+        self.local_settings = ImageSettings()
         self.btn_layout = QHBoxLayout()
-        self.image_area = MyScrollArea()
+        self.image_area = MyScrollArea(self.local_settings)
         self.reset_button = create_tool_button("Reset zoom", "zoom-original.png")
         self.reset_button.clicked.connect(self.reset_image_size)
         self.zoom_button = create_tool_button("Zoom", "zoom-select.png")
-        # self.zoom_button.clicked.connect(self.zoom)
+        self.zoom_button.clicked.connect(self.local_settings.set_zoom)
         self.zoom_button.setCheckable(True)
         self.zoom_button.setContextMenuPolicy(Qt.ActionsContextMenu)
         crop = QAction("Crop", self.zoom_button)
         # crop.triggered.connect(self.crop_view)
         self.zoom_button.addAction(crop)
         self.move_button = create_tool_button("Move", "transform-move.png")
-        # self.move_button.clicked.connect(self.move_action)
+        self.move_button.clicked.connect(self.local_settings.set_move)
         self.move_button.setCheckable(True)
         self.btn_layout.addWidget(self.reset_button)
         self.btn_layout.addWidget(self.zoom_button)
