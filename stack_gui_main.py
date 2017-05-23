@@ -1,6 +1,6 @@
 from __future__ import division
 import tifffile as tif
-from PyQt5.Qt import QMainWindow, QPixmap, QImage, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, \
+from qt_import import QMainWindow, QPixmap, QImage, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QSize, QAction, Qt, QPainter, QPen, \
     QColor, QScrollBar, QApplication, pyqtSignal, QPoint
 from stack_settings import Settings
@@ -174,10 +174,28 @@ class MyScrollArea(QScrollArea):
         :param point2: 
         :return: 
         """
-        x_ratio = self.width() / abs(point1.x() - point2.x())
-        y_ratio = self.height() / abs(point1.y() - point2.y())
-        self.pixmap.resize(self.pixmap.size() * min(x_ratio, y_ratio))
-        print(point1, point2, x_ratio, y_ratio)
+        x_width = abs(point1.x() - point2.x())
+        y_width = abs(point1.y() - point2.y())
+        if x_width < 10 or y_width < 10:
+            return
+        x_ratio = self.width() / x_width
+        y_ratio = self.height() / y_width
+        scale_ratio = min(x_ratio, y_ratio)
+        self.pixmap.resize(self.pixmap.size() * scale_ratio)
+        img_h = self.pixmap.size().height()
+        view_h = self.size().height() - 2
+        y_mid = (point1.y() + point2.y())/2 * scale_ratio
+        v_min = self.verticalScrollBar().minimum()
+        v_max = self.verticalScrollBar().maximum()
+        v_set = v_min + (v_max - v_min) * ((y_mid - view_h/2) / (img_h-view_h))
+        self.verticalScrollBar().setValue(v_set)
+        img_w = self.pixmap.size().width()
+        view_w = self.size().width() - 2
+        x_mid = (point1.x() + point2.x()) / 2 * scale_ratio
+        v_min = self.horizontalScrollBar().minimum()
+        v_max = self.horizontalScrollBar().maximum()
+        v_set = v_min + (v_max - v_min) * ((x_mid - view_w / 2) / (img_w - view_w))
+        self.horizontalScrollBar().setValue(v_set)
 
     def reset_image(self):
         x = self.size().width() - 2
@@ -248,7 +266,6 @@ class MyScrollArea(QScrollArea):
             y0 = y - self.pixmap.y()
             x_ratio = float(x0)/self.pixmap.width()
             y_ratio = float(y0)/self.pixmap.height()
-            print x, y, self.pixmap.pos(), self.horizontalScrollBar().minimum(), self.horizontalScrollBar().value(), self.horizontalScrollBar().maximum()
             #scroll_h_ratio = get_scroll_bar_proportion(self.horizontalScrollBar())
             #scroll_v_ratio = get_scroll_bar_proportion(self.verticalScrollBar())
             self.pixmap.resize(new_size)
@@ -299,9 +316,7 @@ class ImageView(QWidget):
         self.setLayout(main_layout)
 
     def reset_image_size(self):
-        print(self.image_area.size())
         self.image_area.reset_image()
-        # self.image_area.setWidgetResizable(True)
 
     def set_image(self, image):
         self.image_area.set_image(image)
