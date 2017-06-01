@@ -379,7 +379,8 @@ class MyCanvas(QWidget):
             float_image = norm(self.base_image)
         if self.mark_mask.isChecked() and self.settings.mask is not None:
             zero_mask = self.settings.mask == 0
-            if self.settings.threshold_type == UPPER:
+            mean_val = np.mean(float_image[zero_mask])
+            if mean_val < 0.5:
                 float_image[zero_mask] = \
                     (1 - self.settings.mask_overlay) * float_image[zero_mask] + self.settings.mask_overlay
             else:

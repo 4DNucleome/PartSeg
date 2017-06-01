@@ -512,12 +512,25 @@ class MainMenu(QWidget):
         self.mask_window = MaskWindow(self.settings, self.segment, self.settings_changed)
         self.mask_window.exec_()
 
+    def read_image(self, file_path):
+        im = tifffile.imread(file_path)
+        im = im.squeeze()
+        if im.ndim == 4 or im.shape[-1] < 5:
+            choose = MultiChannelFilePreview(im, self.settings)
+            if choose.exec_():
+                index, num = choose.get_result()
+                im = im.take(num, axis=index)
+                return im
+            else:
+                return
+
     def open_file(self):
         dial = QFileDialog(self, "Load data")
         if self.settings.open_directory is not None:
             dial.setDirectory(self.settings.open_directory)
         dial.setFileMode(QFileDialog.ExistingFile)
         filters = ["raw image (*.tiff *.tif *.lsm)", "image with mask (*.tiff *.tif *.lsm *json)",
+                   "mask to image (*.tiff *.tif *.lsm *json)", "image with current mask (*.tiff *.tif *.lsm *json)",
                    "saved project (*.tgz *.tbz2 *.gz *.bz2)", "Profiles (*.json)"]
         # dial.setFilters(filters)
         dial.setNameFilters(filters)
@@ -531,16 +544,20 @@ class MainMenu(QWidget):
             logging.debug("open file: {}, filter {}".format(file_path, selected_filter))
             # TODO maybe something better. Now main window have to be parent
             if selected_filter == "raw image (*.tiff *.tif *.lsm)":
-                im = tifffile.imread(file_path)
-                im = im.squeeze()
-                if im.ndim == 4 or im.shape[-1] < 5:
-                    choose = MultiChannelFilePreview(im, self.settings)
-                    if choose.exec_():
-                        index, num = choose.get_result()
-                        im = im.take(num, axis=index)
-                    else:
-                        return
+                im = self.read_image(file_path)
+                if im is None:
+                    return
                 self.settings.add_image(im, file_path)
+            elif selected_filter == "mask to image (*.tiff *.tif *.lsm *json)":
+                im = self.read_image(file_path)
+                if im is None:
+                    return
+                self.settings.add_image(self.settings.image, self.settings.file_path, im)
+            elif selected_filter == "image with current mask (*.tiff *.tif *.lsm *json)":
+                im = self.read_image(file_path)
+                if im is None:
+                    return
+                self.settings.add_image(im, file_path, self.settings.mask)
             elif selected_filter == "image with mask (*.tiff *.tif *.lsm *json)":
                 extension = os.path.splitext(file_path)
                 if extension == ".json":
@@ -550,28 +567,17 @@ class MainMenu(QWidget):
                     mask = tifffile.imread(info_dict["mask"])
                     self.settings.add_image(image, file_path, mask)
                 else:
-                    image = tifffile.imread(file_path)
-                    if image.ndim == 4 or image.shape[-1] < 5:
-                        choose = MultiChannelFilePreview(image, self.settings)
-                        if choose.exec_():
-                            index, num = choose.get_result()
-                            image = image.take(num, axis=index)
-                        else:
-                            return
+                    image = self.read_image(file_path)
+                    if image is None:
+                        return
                     org_name = os.path.basename(file_path)
                     mask_dial = QFileDialog(self, "Load mask for {}".format(org_name))
                     filters = ["mask (*.tiff *.tif *.lsm)"]
                     mask_dial.setNameFilters(filters)
                     if mask_dial.exec_():
-                        # print(mask_dial.selectedFiles()[0])
-                        mask = tifffile.imread(str(mask_dial.selectedFiles()[0]))
-                        if mask.ndim == 4:
-                            choose = MultiChannelFilePreview(mask, self.settings)
-                            if choose.exec_():
-                                index, num = choose.get_result()
-                                mask = mask.take(num, axis=index)
-                            else:
-                                return
+                        mask = self.read_image(file_path)
+                        if mask is None:
+                            return
                         if image.shape != mask.shape:
                             QMessageBox.critical(self, "Wrong shape", "Image and mask has different shapes")
                             return
