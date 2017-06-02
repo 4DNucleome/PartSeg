@@ -2,7 +2,7 @@ from __future__ import division
 import tifffile as tif
 from qt_import import QMainWindow, QPixmap, QImage, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QSize, QAction, Qt, QPainter, QPen, \
-    QColor, QScrollBar, QApplication, pyqtSignal, QPoint
+    QColor, QScrollBar, QApplication, pyqtSignal, QPoint, QSlider
 from stack_settings import Settings
 
 import matplotlib
@@ -22,6 +22,7 @@ class MainMenu(QWidget):
         super(MainMenu, self).__init__()
         self.settings = settings
         self.load_btn = QPushButton("Load")
+        self.load_btn.clicked.connect(self.load_image)
         self.save_btn = QPushButton("Save")
         layout = QHBoxLayout()
         layout.addWidget(self.load_btn)
@@ -39,7 +40,7 @@ class MainMenu(QWidget):
         file_path = str(dial.selectedFiles()[0])
         self.settings.open_directory = os.path.dirname(str(file_path))
         im = tif.imread(file_path)
-        self.settings.image = im
+        self.settings.image = im.squeeze()
 
 
 class ImageSettings(object):
@@ -144,6 +145,8 @@ def set_scroll_bar_proportion(scroll_bar, proportion):
 
 
 class MyScrollArea(QScrollArea):
+    resize_area = pyqtSignal(QSize)
+
     def __init__(self, local_settings, *args, **kwargs):
         """
         :type local_settings: ImageSettings
@@ -165,6 +168,8 @@ class MyScrollArea(QScrollArea):
         self.setBackgroundRole(QPalette.Dark)
         self.setWidget(self.pixmap)
         self.ratio = 1
+        self.max_ratio = 10
+        self.resize_area.connect(self.pixmap.resize)
 
     def zoom_image(self, point1, point2):
         """
@@ -181,6 +186,13 @@ class MyScrollArea(QScrollArea):
         x_ratio = self.width() / x_width
         y_ratio = self.height() / y_width
         scale_ratio = min(x_ratio, y_ratio)
+        self.ratio *= scale_ratio
+        if self.ratio > self.max_ratio:
+            scale_ratio *= self.max_ratio/self.ratio
+            self.ratio = self.max_ratio
+        print(self.ratio)
+        if scale_ratio == 1:
+            return
         self.pixmap.resize(self.pixmap.size() * scale_ratio)
         img_h = self.pixmap.size().height()
         view_h = self.size().height() - 2
@@ -205,6 +217,7 @@ class MyScrollArea(QScrollArea):
         else:
             y = int(x / self.ratio)
         self.pixmap.resize(x, y)
+        self.ratio = 1
 
     def set_image(self, im):
         width, height, _ = im.shape
@@ -257,7 +270,14 @@ class MyScrollArea(QScrollArea):
         x, y = event.x(), event.y()
         if abs(delta) > max_step:
             delta = max_step * (delta/abs(delta))
-        new_size = self.pixmap.size() * (step**delta)
+        scale_mod = (step**delta)
+        if self.ratio * scale_mod > self.max_ratio:
+            scale_mod = self.max_ratio/self.ratio
+
+        new_size = self.pixmap.size() * scale_mod
+        if scale_mod == 1:
+            return
+        self.ratio *= scale_mod
         """:type : QSize"""
         if new_size.width() < self.size().width() - 2 and new_size.height() < self.size().height() - 2:
             self.reset_image()
@@ -268,7 +288,7 @@ class MyScrollArea(QScrollArea):
             y_ratio = float(y0)/self.pixmap.height()
             #scroll_h_ratio = get_scroll_bar_proportion(self.horizontalScrollBar())
             #scroll_v_ratio = get_scroll_bar_proportion(self.verticalScrollBar())
-            self.pixmap.resize(new_size)
+            self.resize_area.emit(new_size)
             set_scroll_bar_proportion(self.horizontalScrollBar(), y_ratio)
             set_scroll_bar_proportion(self.verticalScrollBar(), x_ratio)
         event.accept()
@@ -309,10 +329,12 @@ class ImageView(QWidget):
         self.btn_layout.addWidget(self.reset_button)
         self.btn_layout.addWidget(self.zoom_button)
         self.btn_layout.addWidget(self.move_button)
+        self.stack_slider = QSlider(Qt.Horizontal)
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(self.btn_layout)
         main_layout.addWidget(self.image_area)
+        main_layout.addWidget(self.stack_slider)
         self.setLayout(main_layout)
 
     def reset_image_size(self):
