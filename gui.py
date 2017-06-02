@@ -646,6 +646,7 @@ class MainMenu(QWidget):
 
             elif selected_filter == "Mask in tiff (*.tif)":
                 segmentation = self.segment.get_segmentation()
+                segmentation = np.array(segmentation > 0).astype(np.uint8)
                 tifffile.imsave(file_path, segmentation)
             elif selected_filter == "Mask for itk-snap (*.img)":
                 segmentation = sitk.GetImageFromArray(self.segment.get_segmentation())
