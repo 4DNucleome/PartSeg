@@ -23,11 +23,30 @@ def dilate(image, radius):
     :param radius: radius for gaussian kernel
     :return:
     """
+    if image.dtype == np.bool:
+        image = image.astype(np.uint8)
     if len(image.shape) == 2:
         return sitk.GetArrayFromImage(sitk.GrayscaleDilate(sitk.GetImageFromArray(image), radius))
     res = np.copy(image)
+    print(image.shape, image.dtype)
     for layer in res:
         layer[...] = sitk.GetArrayFromImage(sitk.GrayscaleDilate(sitk.GetImageFromArray(layer), radius))
+    return res
+
+
+def erode(image, radius):
+    """
+    :param image: image to apply gaussian filter
+    :param radius: radius for gaussian kernel
+    :return:
+    """
+    if image.dtype == np.bool:
+        image = image.astype(np.uint8)
+    if len(image.shape) == 2:
+        return sitk.GetArrayFromImage(sitk.GrayscaleErode(sitk.GetImageFromArray(image), radius))
+    res = np.copy(image)
+    for layer in res:
+        layer[...] = sitk.GetArrayFromImage(sitk.GrayscaleErode(sitk.GetImageFromArray(layer), radius))
     return res
 
 

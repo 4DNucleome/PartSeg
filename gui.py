@@ -224,7 +224,7 @@ class MaskWindow(QDialog):
         main_layout = QVBoxLayout()
         dilate_label = QLabel("Dilate (x,y) radius (in pixels)", self)
         self.dilate_radius = QSpinBox(self)
-        self.dilate_radius.setRange(0, 100)
+        self.dilate_radius.setRange(-100, 100)
         self.dilate_radius.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.dilate_radius.setValue(settings.mask_dilate_radius)
         self.dilate_radius.setSingleStep(1)

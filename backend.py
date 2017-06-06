@@ -12,7 +12,7 @@ GAUSS = "Gauss"
 from utils import class_to_dict, dict_set_class
 from segment import SegmentationProfile, Segment, UPPER, fill_holes_in_mask, fill_2d_holes_in_mask
 from statistics_calculation import StatisticProfile, calculate_volume_surface, calc_diam
-from image_operations import gaussian, dilate
+from image_operations import gaussian, dilate, erode
 from scipy.ndimage.interpolation import zoom
 from autofit import calculate_density_momentum
 
@@ -367,6 +367,8 @@ class Settings(object):
             self.prev_segmentation_settings.append(seg_settings)
             if self.mask_dilate_radius > 0:
                 self.mask = dilate(current_mask, self.mask_dilate_radius)
+            elif self.mask_dilate_radius < 0:
+                self.mask = erode(current_mask, -self.mask_dilate_radius)
             else:
                 self.mask = current_mask
             if len(self.next_segmentation_settings) > 0:
