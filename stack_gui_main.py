@@ -14,6 +14,8 @@ import os
 
 
 class MainMenu(QWidget):
+    image_loaded = pyqtSignal()
+
     def __init__(self, settings):
         super(MainMenu, self).__init__()
         self.settings = settings
@@ -36,7 +38,8 @@ class MainMenu(QWidget):
         file_path = str(dial.selectedFiles()[0])
         self.settings.open_directory = os.path.dirname(str(file_path))
         im = tif.imread(file_path)
-        self.settings.image = im.squeeze()
+        self.settings.image = im
+        self.image_loaded.emit()
 
 
 class MainWindow(QMainWindow):
@@ -45,34 +48,38 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(title)
         self.settings = Settings()
         self.main_menu = MainMenu(self.settings)
+        self.image_view = ImageView()
+        self.main_menu.image_loaded.connect(self.image_read)
 
-        self.scroll_area = ImageView()
-
-
-        #self.scroll_area.setVisible(False)
-        #self.scroll_area.setS
+        # self.scroll_area.setVisible(False)
+        # self.scroll_area.setS
 
         im = tif.imread("stack.tif")
-        width, height = im.shape
-        im = colors.PowerNorm(gamma=1, vmin=im.min(), vmax=im.max())(im)
-        cmap = matplotlib.cm.get_cmap("cubehelix")
-        colored_image = cmap(im)
+        # width, height = im.shape
+        # im = colors.PowerNorm(gamma=1, vmin=im.min(), vmax=im.max())(im)
+        # cmap = matplotlib.cm.get_cmap("cubehelix")
+        # colored_image = cmap(im)
         # noinspection PyTypeChecker
-        im = np.array(colored_image * 255, dtype=np.uint8)
-        #im2 = QImage(im.data, width, height, im.dtype.itemsize*width*4, QImage.Format_ARGB32)
+        # im = np.array(colored_image * 255, dtype=np.uint8)
+        # im2 = QImage(im.data, width, height, im.dtype.itemsize*width*4, QImage.Format_ARGB32)
 
-        #self.pixmap.setPixmap(QPixmap.fromImage(im2))
-        #self.im_view = pg.ImageView(self)
-        #self.im_view.setImage(im)
+        # self.pixmap.setPixmap(QPixmap.fromImage(im2))
+        # self.im_view = pg.ImageView(self)
+        # self.im_view.setImage(im)
         layout = QVBoxLayout()
         layout.addWidget(self.main_menu)
-        layout.addWidget(self.scroll_area)
-        #self.pixmap.adjustSize()
-        #self.pixmap.update_size(2)
+        layout.addWidget(self.image_view)
+        # self.pixmap.adjustSize()
+        # self.pixmap.update_size(2)
         self.widget = QWidget()
         self.widget.setLayout(layout)
         self.setCentralWidget(self.widget)
-        self.scroll_area.set_image(im)
+        self.image_view.set_image(im)
+
+    def image_read(self):
+        print("buka1", self.settings.image.shape)
+        self.image_view.set_image(self.settings.image)
+
 
 
 

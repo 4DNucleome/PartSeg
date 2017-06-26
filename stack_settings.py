@@ -12,8 +12,12 @@ class Settings(QObject):
         
     @property
     def image(self):
-        return 
+        return self._image
     
     @image.setter
     def image(self, value):
-        pass
+        value = np.squeeze(value)
+        self._image = value
+        if len(value.shape) == 4:
+            if value.shape[-1] > 10:
+                self._image = np.swapaxes(value, 1, 3)
