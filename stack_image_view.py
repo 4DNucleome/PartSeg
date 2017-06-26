@@ -9,6 +9,7 @@ import numpy as np
 from matplotlib.colors import PowerNorm
 from matplotlib.cm import get_cmap
 from matplotlib import pyplot
+import custom_colormaps
 
 canvas_icon_size = QSize(27, 27)
 step = 1.01
@@ -130,6 +131,9 @@ def create_tool_button(text, icon):
     return res
 
 
+default_colors = ['BlackRed', 'BlackGreen', 'BlackBlue', 'BlackMagenta']
+
+
 class ChanelColor(QWidget):
     def __init__(self, num, *args, **kwargs):
         super(ChanelColor, self).__init__(*args, **kwargs)
@@ -137,6 +141,9 @@ class ChanelColor(QWidget):
         self.check_box = QCheckBox(self)
         self.color_list = QComboBox(self)
         self.color_list.addItems(pyplot.colormaps())
+        num2 = num % len(default_colors)
+        pos = pyplot.colormaps().index(default_colors[num2])
+        self.color_list.setCurrentIndex(pos)
         layout = QHBoxLayout()
         layout.addWidget(self.check_box)
         layout.addWidget(self.color_list)
@@ -388,7 +395,7 @@ class MyScrollArea(QScrollArea):
         height, width, _ = im.shape
         self.image_size = QSize(width, height)
         self.image_ratio = float(width) / float(height)
-        im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 4, QImage.Format_ARGB32)
+        im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 4, QImage.Format_RGBA8888)
         self.widget().setPixmap(QPixmap.fromImage(im2))
         if not keep_size:
             self.widget().adjustSize()
