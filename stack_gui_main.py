@@ -2,9 +2,10 @@ from __future__ import division
 import tifffile as tif
 from qt_import import QMainWindow, QPixmap, QImage, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QSize, QAction, Qt, QPainter, QPen, \
-    QColor, QScrollBar, QApplication, pyqtSignal, QPoint, QSlider
+    QColor, QScrollBar, QApplication, pyqtSignal, QPoint, QSlider, QSpinBox, QComboBox
 from stack_settings import Settings
 from stack_image_view import ImageView
+from universal_gui_part import right_label
 
 
 import matplotlib
@@ -42,6 +43,27 @@ class MainMenu(QWidget):
         self.image_loaded.emit()
 
 
+class AlgorithmOptions(QWidget):
+    def __init__(self):
+        super(AlgorithmOptions, self).__init__()
+        self.execute_btn = QPushButton("Execute")
+        self.minimum_size = QSpinBox()
+        self.minimum_size.setRange(0, 10**6)
+        self.minimum_size.setSingleStep(100)
+        self.units_combo = QComboBox()
+        self.units_combo.addItems(["px", "nm"])
+
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(self.execute_btn)
+        size_layout = QHBoxLayout()
+        size_layout.addWidget(right_label("Minimum size: "))
+        size_layout.addWidget(self.minimum_size, 1)
+        size_layout.addWidget(self.units_combo, 0)
+        main_layout.addLayout(size_layout)
+        main_layout.addStretch()
+        self.setLayout(main_layout)
+
+
 class MainWindow(QMainWindow):
     def __init__(self, title):
         super(MainWindow, self).__init__()
@@ -49,6 +71,7 @@ class MainWindow(QMainWindow):
         self.settings = Settings()
         self.main_menu = MainMenu(self.settings)
         self.image_view = ImageView()
+        self.algorithm_options = AlgorithmOptions()
         self.main_menu.image_loaded.connect(self.image_read)
 
         # self.scroll_area.setVisible(False)
@@ -68,7 +91,10 @@ class MainWindow(QMainWindow):
         # self.im_view.setImage(im)
         layout = QVBoxLayout()
         layout.addWidget(self.main_menu)
-        layout.addWidget(self.image_view)
+        sub_layout = QHBoxLayout()
+        sub_layout.addWidget(self.image_view, 1)
+        sub_layout.addWidget(self.algorithm_options, 0)
+        layout.addLayout(sub_layout)
         # self.pixmap.adjustSize()
         # self.pixmap.update_size(2)
         self.widget = QWidget()
