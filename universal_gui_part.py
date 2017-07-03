@@ -1,5 +1,6 @@
 # coding=utf-8
-from qt_import import QWidget, QHBoxLayout, QLabel, Qt, QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QComboBox
+from qt_import import QWidget, QHBoxLayout, QLabel, Qt, QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QComboBox, QFontMetrics
+from flow_layout import FlowLayout
 
 
 class Spacing(QWidget):
@@ -21,7 +22,7 @@ class Spacing(QWidget):
         :type units_index: int
         """
         super(Spacing, self).__init__(parent)
-        layout = QHBoxLayout()
+        layout = FlowLayout()
         layout.addWidget(QLabel("<strong>{}</strong>".format(title)))
         self.elements = []
         print(data_sequence)
@@ -36,6 +37,10 @@ class Spacing(QWidget):
             val.setValue(value)
             val.setAlignment(Qt.AlignRight)
             val.setSingleStep(single_step)
+            font = val.font()
+            fm = QFontMetrics(font)
+            val_len = max(fm.width(str(data_range[0])), fm.width(str(data_range[1]))) + fm.width(" "*8)
+            val.setFixedWidth(val_len)
             layout.addWidget(val)
             self.elements.append(val)
         if units is not None:
@@ -46,7 +51,7 @@ class Spacing(QWidget):
             self.has_units = True
         else:
             self.has_units = False
-        layout.addStretch()
+        #layout.addStretch()
         self.setLayout(layout)
 
     def get_values(self):

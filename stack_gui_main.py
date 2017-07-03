@@ -2,10 +2,12 @@ from __future__ import division
 import tifffile as tif
 from qt_import import QMainWindow, QPixmap, QImage, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QSize, QAction, Qt, QPainter, QPen, \
-    QColor, QScrollBar, QApplication, pyqtSignal, QPoint, QSlider, QSpinBox, QComboBox
+    QColor, QScrollBar, QApplication, pyqtSignal, QPoint, QSlider, QSpinBox, QComboBox, QTabWidget, QDoubleSpinBox, \
+    QFormLayout, QAbstractSpinBox
 from stack_settings import Settings
 from stack_image_view import ImageView
-from universal_gui_part import right_label
+from universal_gui_part import right_label, Spacing
+from universal_const import UNITS_LIST
 
 
 import matplotlib
@@ -64,6 +66,43 @@ class AlgorithmOptions(QWidget):
         self.setLayout(main_layout)
 
 
+class ImageInformation(QWidget):
+    def __init__(self, settings, parent=None):
+        super(ImageInformation, self).__init__(parent)
+        self._settings = settings
+        self.path = QLabel("<b>Path:</b>")
+        self.spacing = [QDoubleSpinBox() for _ in range(3)]
+        for el in self.spacing:
+            el.setAlignment(Qt.AlignRight)
+            el.setButtonSymbols(QAbstractSpinBox.NoButtons)
+            el.setRange(0, 1000)
+        self.units = QComboBox()
+        self.units.addItems(UNITS_LIST)
+
+        spacing_layout = QFormLayout()
+        spacing_layout.addRow("x:", self.spacing[0])
+        spacing_layout.addRow("y:", self.spacing[1])
+        spacing_layout.addRow("z:", self.spacing[2])
+        spacing_layout.addRow("Units:", self.units)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.path)
+        layout.addWidget(QLabel("Image spacing:"))
+        layout.addLayout(spacing_layout)
+        layout.addStretch()
+        self.setLayout(layout)
+
+
+class Options(QTabWidget):
+    def __init__(self, settings, parent=None):
+        super(Options, self).__init__(parent)
+        self._settings = settings
+        self.algorithm_options = AlgorithmOptions()
+        self.image_properties = ImageInformation(settings, parent)
+        self.addTab(self.image_properties, "Image")
+        self.addTab(self.algorithm_options, "Segmentation")
+
+
 class MainWindow(QMainWindow):
     def __init__(self, title):
         super(MainWindow, self).__init__()
@@ -71,7 +110,7 @@ class MainWindow(QMainWindow):
         self.settings = Settings()
         self.main_menu = MainMenu(self.settings)
         self.image_view = ImageView()
-        self.algorithm_options = AlgorithmOptions()
+        self.algorithm_options = Options(self.settings)
         self.main_menu.image_loaded.connect(self.image_read)
 
         # self.scroll_area.setVisible(False)
