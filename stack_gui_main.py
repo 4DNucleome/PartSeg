@@ -3,11 +3,12 @@ import tifffile as tif
 from qt_import import QMainWindow, QPixmap, QImage, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QSize, QAction, Qt, QPainter, QPen, \
     QColor, QScrollBar, QApplication, pyqtSignal, QPoint, QSlider, QSpinBox, QComboBox, QTabWidget, QDoubleSpinBox, \
-    QFormLayout, QAbstractSpinBox
+    QFormLayout, QAbstractSpinBox, QStackedLayout
 from stack_settings import Settings
 from stack_image_view import ImageView
 from universal_gui_part import right_label, Spacing
 from universal_const import UNITS_LIST
+from stack_algorithm import stack_algorithm_dict
 
 
 import matplotlib
@@ -48,22 +49,26 @@ class MainMenu(QWidget):
 class AlgorithmOptions(QWidget):
     def __init__(self):
         super(AlgorithmOptions, self).__init__()
+        self.algorithm_choose = QComboBox()
         self.execute_btn = QPushButton("Execute")
-        self.minimum_size = QSpinBox()
-        self.minimum_size.setRange(0, 10**6)
-        self.minimum_size.setSingleStep(100)
-        self.units_combo = QComboBox()
-        self.units_combo.addItems(["px", "nm"])
+        self.stack_layout = QStackedLayout()
+        for name, val in stack_algorithm_dict.items():
+            self.algorithm_choose.addItem(name)
+            widget = QWidget()
+            widget_layout = QFormLayout()
+            for el in val:
+                widget_layout.addRow(el.name, el.get_field())
+            widget.setLayout(widget_layout)
+            self.stack_layout.addWidget(widget)
 
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.execute_btn)
-        size_layout = QHBoxLayout()
-        size_layout.addWidget(right_label("Minimum size: "))
-        size_layout.addWidget(self.minimum_size, 1)
-        size_layout.addWidget(self.units_combo, 0)
-        main_layout.addLayout(size_layout)
+        main_layout.addWidget(self.algorithm_choose)
+        main_layout.addLayout(self.stack_layout)
         main_layout.addStretch()
         self.setLayout(main_layout)
+
+        self.algorithm_choose.currentIndexChanged.connect(self.stack_layout.setCurrentIndex)
 
 
 class ImageInformation(QWidget):

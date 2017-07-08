@@ -35,7 +35,7 @@ if use_qt5:
         QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, QListWidget, \
         QTextEdit, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem, QDockWidget, \
         QTextBrowser, QSplitter, QProgressBar, QAbstractItemView, QGroupBox, QTreeWidget, QTreeWidgetItem, QCompleter, \
-        QRadioButton, QButtonGroup, QSizePolicy, QScrollBar, QLayout, QLayoutItem, QStyle, QFormLayout
+        QRadioButton, QButtonGroup, QSizePolicy, QScrollBar, QLayout, QLayoutItem, QStyle, QFormLayout, QStackedLayout
 
     from PyQt5.QtGui import QFont, QFontMetrics, QIcon, QPixmap, QImage, QPainter, QPen, QColor, QPalette
     from PyQt5.QtHelp import QHelpEngine
@@ -50,7 +50,7 @@ else:
         QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem, \
         QDockWidget, QTextBrowser, QSplitter, QProgressBar, QAbstractItemView, QGroupBox, QTreeWidget, QTreeWidgetItem,\
         QCompleter, QRadioButton, QButtonGroup, QPixmap, QImage, QPalette, QSizePolicy, QPainter, QPen, QColor, \
-        QScrollBar, QLayout, QLayoutItem, QStyle
+        QScrollBar, QLayout, QLayoutItem, QStyle, QStackedLayout
     from PyQt4.QtHelp import QHelpEngine
 
 
