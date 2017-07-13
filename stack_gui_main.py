@@ -8,7 +8,7 @@ from stack_settings import Settings
 from stack_image_view import ImageView
 from universal_gui_part import right_label, Spacing
 from universal_const import UNITS_LIST
-from stack_algorithm import stack_algorithm_dict
+from stack_algorithm import stack_algorithm_dict, AlgorithmSettingsWidget
 
 
 import matplotlib
@@ -54,11 +54,7 @@ class AlgorithmOptions(QWidget):
         self.stack_layout = QStackedLayout()
         for name, val in stack_algorithm_dict.items():
             self.algorithm_choose.addItem(name)
-            widget = QWidget()
-            widget_layout = QFormLayout()
-            for el in val:
-                widget_layout.addRow(el.name, el.get_field())
-            widget.setLayout(widget_layout)
+            widget = AlgorithmSettingsWidget(val)
             self.stack_layout.addWidget(widget)
 
         main_layout = QVBoxLayout()
@@ -69,6 +65,11 @@ class AlgorithmOptions(QWidget):
         self.setLayout(main_layout)
 
         self.algorithm_choose.currentIndexChanged.connect(self.stack_layout.setCurrentIndex)
+        self.execute_btn.clicked.connect(self.execute_action)
+
+    def execute_action(self):
+        widget = self.stack_layout.currentWidget()
+        print(widget.get_values())
 
 
 class ImageInformation(QWidget):

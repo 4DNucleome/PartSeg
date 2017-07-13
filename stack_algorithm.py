@@ -1,4 +1,9 @@
-from qt_import import QDoubleSpinBox, QSpinBox, QComboBox
+from qt_import import QDoubleSpinBox, QSpinBox, QComboBox, QWidget, QFormLayout, QAbstractSpinBox
+import sys
+from abc import ABCMeta, abstractmethod
+if sys.version_info.major == 2:
+    from exceptions import ValueError
+
 
 class AlgorithmProperty(object):
     """
@@ -43,6 +48,44 @@ class QtAlgorithmProperty(AlgorithmProperty):
             if self.single_step is not None:
                 field.setSingleStep(self.single_step)
         return field
+
+
+class AbstractAlgorithmSettingsWidget:
+    __metaclass__ = ABCMeta
+
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def get_values(self):
+        """
+        :return: dict[str, object]
+        """
+        return dict()
+
+
+class AlgorithmSettingsWidget(QWidget):
+    def __init__(self, element_list):
+        super(AlgorithmSettingsWidget, self).__init__()
+        self.widget_list = []
+        widget_layout = QFormLayout()
+        for el in element_list:
+            self.widget_list.append((el.name, el.get_field()))
+            widget_layout.addRow(*self.widget_list[-1])
+        self.setLayout(widget_layout)
+
+    def get_values(self):
+        res = dict()
+        for name, el in self.widget_list:
+            if isinstance(el, QComboBox):
+                res[name] = str(el.currentText())
+            elif isinstance(el, QAbstractSpinBox):
+                res[name] = el.value()
+            else:
+                raise ValueError("unsuported type {}".format(type(el)))
+        return res
+
+AbstractAlgorithmSettingsWidget.register(AlgorithmSettingsWidget)
 
 
 threshold_algorithm = [AlgorithmProperty("Threshold", 1000, (0, 10**6), 100),
