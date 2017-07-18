@@ -309,6 +309,7 @@ def save_to_xyz(file_path, settings, segment):
     mask = segment.get_segmentation()
     image = settings.image
     positions = np.transpose(np.nonzero(np.array(mask > 0)))
+    positions = np.flip(positions, 1)
     values = image[mask > 0]
     values = values.reshape(values.size, 1)
     data = np.append(positions, values, axis=1)
