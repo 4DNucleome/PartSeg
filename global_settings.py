@@ -21,7 +21,7 @@ if sys.version_info.major == 2:
         use_qt5 = False
 else:
     import importlib
-    spam_spec = importlib.util.find_spec("PyQt5")
+    spam_spec = importlib.find_loader("PyQt5")
     if spam_spec is not None:
         use_qt5 = True
     else:

@@ -1,6 +1,8 @@
 from qt_import import QDoubleSpinBox, QSpinBox, QComboBox, QWidget, QFormLayout, QAbstractSpinBox
 import sys
 from abc import ABCMeta, abstractmethod
+from six import with_metaclass
+
 if sys.version_info.major == 2:
     from exceptions import ValueError
 
@@ -50,9 +52,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         return field
 
 
-class AbstractAlgorithmSettingsWidget:
-    __metaclass__ = ABCMeta
-
+class AbstractAlgorithmSettingsWidget(with_metaclass(ABCMeta, object)):
     def __init__(self):
         pass
 

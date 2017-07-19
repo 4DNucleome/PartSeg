@@ -523,14 +523,15 @@ class MainMenu(QWidget):
                 return im
             else:
                 return
+        return im
 
     def open_file(self):
         dial = QFileDialog(self, "Load data")
         if self.settings.open_directory is not None:
             dial.setDirectory(self.settings.open_directory)
         dial.setFileMode(QFileDialog.ExistingFile)
-        filters = ["raw image (*.tiff *.tif *.lsm)", "image with mask (*.tiff *.tif *.lsm *json)",
-                   "mask to image (*.tiff *.tif *.lsm *json)", "image with current mask (*.tiff *.tif *.lsm *json)",
+        filters = ["raw image (*.tiff *.tif *.lsm)", "image with mask (*.tiff *.tif *.lsm)",
+                   "mask to image (*.tiff *.tif *.lsm)", "image with current mask (*.tiff *.tif *.lsm)",
                    "saved project (*.tgz *.tbz2 *.gz *.bz2)", "Profiles (*.json)"]
         # dial.setFilters(filters)
         dial.setNameFilters(filters)
@@ -548,17 +549,17 @@ class MainMenu(QWidget):
                 if im is None:
                     return
                 self.settings.add_image(im, file_path)
-            elif selected_filter == "mask to image (*.tiff *.tif *.lsm *json)":
+            elif selected_filter == "mask to image (*.tiff *.tif *.lsm)":
                 im = self.read_image(file_path)
                 if im is None:
                     return
                 self.settings.add_image(self.settings.image, self.settings.file_path, im)
-            elif selected_filter == "image with current mask (*.tiff *.tif *.lsm *json)":
+            elif selected_filter == "image with current mask (*.tiff *.tif *.lsm)":
                 im = self.read_image(file_path)
                 if im is None:
                     return
                 self.settings.add_image(im, file_path, self.settings.mask)
-            elif selected_filter == "image with mask (*.tiff *.tif *.lsm *json)":
+            elif selected_filter == "image with mask (*.tiff *.tif *.lsm)":
                 extension = os.path.splitext(file_path)
                 if extension == ".json":
                     with open(file_path) as ff:
