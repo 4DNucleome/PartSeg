@@ -35,3 +35,14 @@ def dict_set_class(obj, dic, *args):
             setattr(obj, name, dic[name])
         except AttributeError as ae:
             logging.warning(ae)
+
+def bisect(arr, val, comp):
+    l = -1
+    r = len(arr)
+    while r - l > 1:
+        e = (l + r) >> 1
+        if comp(arr[e], val):
+            l = e
+        else:
+            r = e
+    return r

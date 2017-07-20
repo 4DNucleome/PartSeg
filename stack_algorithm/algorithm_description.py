@@ -1,6 +1,8 @@
 from qt_import import QDoubleSpinBox, QSpinBox, QComboBox, QWidget, QFormLayout, QAbstractSpinBox
 import sys
 from abc import ABCMeta, abstractmethod
+from stack_settings import ImageSettings
+
 if sys.version_info.major == 2:
     from exceptions import ValueError
 
@@ -11,8 +13,9 @@ class AlgorithmProperty(object):
     :type value_type: type
     :type default_value: object
     """
-    def __init__(self, name, default_value, options_range, single_steep=None):
+    def __init__(self, name, user_name, default_value, options_range, single_steep=None):
         self.name = name
+        self.user_name = user_name
         self.value_type = type(default_value)
         self.default_value = default_value
         self.range = options_range
@@ -34,7 +37,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         :param ob: AlgorithmProperty object
         :return: QtAlgorithmProperty
         """
-        return cls(name=ob.name, default_value=ob.default_value, options_range=ob.range,
+        return cls(name=ob.name, user_name=ob.user_name, default_value=ob.default_value, options_range=ob.range,
                    single_steep=ob.single_step)
 
     def get_field(self):
@@ -65,14 +68,29 @@ class AbstractAlgorithmSettingsWidget:
 
 
 class AlgorithmSettingsWidget(QWidget):
-    def __init__(self, element_list):
+    def __init__(self, element_list, settings):
+        """
+        :type settings: ImageSettings
+        :param element_list:
+        :param settings:
+        """
         super(AlgorithmSettingsWidget, self).__init__()
         self.widget_list = []
         widget_layout = QFormLayout()
+        self.channels_chose = QComboBox()
+        widget_layout.addRow("Channel", self.channels_chose)
         for el in element_list:
             self.widget_list.append((el.name, el.get_field()))
-            widget_layout.addRow(*self.widget_list[-1])
+            widget_layout.addRow(el.user_name, self.widget_list[-1][-1])
         self.setLayout(widget_layout)
+        self.settings = settings
+        self.settings.image_changed[int].connect(self.image_changed)
+
+    def image_changed(self, channels_num):
+        ind = self.channels_chose.currentIndex()
+        self.channels_chose.clear()
+        self.channels_chose.addItems(map(str, range(channels_num)))
+        self.channels_chose.setCurrentIndex(ind)
 
     def get_values(self):
         res = dict()
@@ -87,14 +105,16 @@ class AlgorithmSettingsWidget(QWidget):
 
 AbstractAlgorithmSettingsWidget.register(AlgorithmSettingsWidget)
 
+only_threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 1000, (0, 10**6), 100)]
 
-threshold_algorithm = [AlgorithmProperty("Threshold", 1000, (0, 10**6), 100),
-                       AlgorithmProperty("Minimum size", 80000, (0, 10**6), 1000)]
+threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 1000, (0, 10**6), 100),
+                       AlgorithmProperty("minimum_size", "Minimum size", 80000, (0, 10**6), 1000)]
 
-auto_threshold_algorithm = [AlgorithmProperty("Suggested size", 80000, (0, 10**6), 1000),
-                            AlgorithmProperty("Minimum Threshold", 1000, (0, 10**6), 100),
-                            AlgorithmProperty("Minimum size", 40000, (0, 10**6), 1000)]
+auto_threshold_algorithm = [AlgorithmProperty("suggested_size", "Suggested size", 80000, (0, 10**6), 1000),
+                            AlgorithmProperty("threshold", "Minimum Threshold", 1000, (0, 10**6), 100),
+                            AlgorithmProperty("minimum_size", "Minimum size", 40000, (0, 10**6), 1000)]
 
 
 stack_algorithm_dict = {"Threshold": map(QtAlgorithmProperty.from_algorithm_property, threshold_algorithm),
-                        "Auto Threshold": map(QtAlgorithmProperty.from_algorithm_property, auto_threshold_algorithm)}
+                        "Auto Threshold": map(QtAlgorithmProperty.from_algorithm_property, auto_threshold_algorithm),
+                        "Only Threshold": map(QtAlgorithmProperty.from_algorithm_property, only_threshold_algorithm)}

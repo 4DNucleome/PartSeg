@@ -4,11 +4,11 @@ from qt_import import QMainWindow, QPixmap, QImage, QPushButton, QFileDialog, QW
     QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QSize, QAction, Qt, QPainter, QPen, \
     QColor, QScrollBar, QApplication, pyqtSignal, QPoint, QSlider, QSpinBox, QComboBox, QTabWidget, QDoubleSpinBox, \
     QFormLayout, QAbstractSpinBox, QStackedLayout
-from stack_settings import Settings
+from stack_settings import ImageSettings
 from stack_image_view import ImageView
 from universal_gui_part import right_label, Spacing
 from universal_const import UNITS_LIST
-from stack_algorithm import stack_algorithm_dict, AlgorithmSettingsWidget
+from stack_algorithm.algorithm_description import stack_algorithm_dict, AlgorithmSettingsWidget
 
 
 import matplotlib
@@ -47,14 +47,14 @@ class MainMenu(QWidget):
 
 
 class AlgorithmOptions(QWidget):
-    def __init__(self):
+    def __init__(self, settings):
         super(AlgorithmOptions, self).__init__()
         self.algorithm_choose = QComboBox()
         self.execute_btn = QPushButton("Execute")
         self.stack_layout = QStackedLayout()
         for name, val in stack_algorithm_dict.items():
             self.algorithm_choose.addItem(name)
-            widget = AlgorithmSettingsWidget(val)
+            widget = AlgorithmSettingsWidget(val, settings)
             self.stack_layout.addWidget(widget)
 
         main_layout = QVBoxLayout()
@@ -103,7 +103,7 @@ class Options(QTabWidget):
     def __init__(self, settings, parent=None):
         super(Options, self).__init__(parent)
         self._settings = settings
-        self.algorithm_options = AlgorithmOptions()
+        self.algorithm_options = AlgorithmOptions(settings)
         self.image_properties = ImageInformation(settings, parent)
         self.addTab(self.image_properties, "Image")
         self.addTab(self.algorithm_options, "Segmentation")
@@ -113,7 +113,7 @@ class MainWindow(QMainWindow):
     def __init__(self, title):
         super(MainWindow, self).__init__()
         self.setWindowTitle(title)
-        self.settings = Settings()
+        self.settings = ImageSettings()
         self.main_menu = MainMenu(self.settings)
         self.image_view = ImageView()
         self.algorithm_options = Options(self.settings)

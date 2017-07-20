@@ -7,6 +7,8 @@ import inspect
 import logging
 from global_settings import develop
 
+from utils import bisect
+
 
 class ThresholdType(Enum):
     upper = 1
@@ -296,13 +298,4 @@ def fill_2d_holes_in_mask(mask):
     return mask
 
 
-def bisect(arr, val, comp):
-    l = -1
-    r = len(arr)
-    while r - l > 1:
-        e = (l + r) >> 1
-        if comp(arr[e], val):
-            l = e
-        else:
-            r = e
-    return r
+
