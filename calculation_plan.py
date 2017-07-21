@@ -473,7 +473,7 @@ class CalculationPlan(object):
         el = node.operation
         sub_dict["type"] = el.__class__.__name__
         if issubclass(el.__class__, tuple):
-            sub_dict["values"] = el.__dict__
+            sub_dict["values"] = el._asdict()
         elif isinstance(el, StatisticProfile):
             sub_dict["values"] = el.get_parameters()
         elif isinstance(el, SegmentationProfile):

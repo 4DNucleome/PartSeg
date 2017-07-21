@@ -3,7 +3,7 @@ import tifffile as tif
 from qt_import import QMainWindow, QPixmap, QImage, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QSize, QAction, Qt, QPainter, QPen, \
     QColor, QScrollBar, QApplication, pyqtSignal, QPoint, QSlider, QSpinBox, QComboBox, QTabWidget, QDoubleSpinBox, \
-    QFormLayout, QAbstractSpinBox, QStackedLayout
+    QFormLayout, QAbstractSpinBox, QStackedLayout, QCheckBox
 from stack_settings import ImageSettings
 from stack_image_view import ImageView
 from universal_gui_part import right_label, Spacing
@@ -21,6 +21,10 @@ class MainMenu(QWidget):
     image_loaded = pyqtSignal()
 
     def __init__(self, settings):
+        """
+        :type settings: ImageSettings
+        :param settings:
+        """
         super(MainMenu, self).__init__()
         self.settings = settings
         self.load_btn = QPushButton("Load")
@@ -42,22 +46,33 @@ class MainMenu(QWidget):
         file_path = str(dial.selectedFiles()[0])
         self.settings.open_directory = os.path.dirname(str(file_path))
         im = tif.imread(file_path)
-        self.settings.image = im
+        self.settings.image = im, file_path
         self.image_loaded.emit()
 
 
 class AlgorithmOptions(QWidget):
+    labels_changed = pyqtSignal(np.ndarray)
+
     def __init__(self, settings):
         super(AlgorithmOptions, self).__init__()
         self.algorithm_choose = QComboBox()
+        self.show_result = QCheckBox("Show result")
+        self.opacity = QDoubleSpinBox()
+        self.opacity.setRange(0, 1)
+        self.opacity.setValue(0.7)
         self.execute_btn = QPushButton("Execute")
         self.stack_layout = QStackedLayout()
         for name, val in stack_algorithm_dict.items():
             self.algorithm_choose.addItem(name)
-            widget = AlgorithmSettingsWidget(val, settings)
+            widget = AlgorithmSettingsWidget(settings, *val)
             self.stack_layout.addWidget(widget)
 
         main_layout = QVBoxLayout()
+        opt_layout =QHBoxLayout()
+        opt_layout.addWidget(self.show_result)
+        opt_layout.addWidget(right_label("Opacity:"))
+        opt_layout.addWidget(self.opacity)
+        main_layout.addLayout(opt_layout)
         main_layout.addWidget(self.execute_btn)
         main_layout.addWidget(self.algorithm_choose)
         main_layout.addLayout(self.stack_layout)
@@ -69,21 +84,26 @@ class AlgorithmOptions(QWidget):
 
     def execute_action(self):
         widget = self.stack_layout.currentWidget()
-        print(widget.get_values())
+        segmentation = widget.execute()
+        self.labels_changed.emit(segmentation)
 
 
 class ImageInformation(QWidget):
     def __init__(self, settings, parent=None):
+        """:type settings: ImageSettings"""
         super(ImageInformation, self).__init__(parent)
         self._settings = settings
-        self.path = QLabel("<b>Path:</b>")
+        self.path = QLabel("<b>Path:</b> example image")
+        self.path.setWordWrap(True)
         self.spacing = [QDoubleSpinBox() for _ in range(3)]
-        for el in self.spacing:
+        for i, el in enumerate(self.spacing):
             el.setAlignment(Qt.AlignRight)
             el.setButtonSymbols(QAbstractSpinBox.NoButtons)
             el.setRange(0, 1000)
+            el.setValue(self._settings.image_spacing[i])
         self.units = QComboBox()
         self.units.addItems(UNITS_LIST)
+        self.units.setCurrentIndex(2)
 
         spacing_layout = QFormLayout()
         spacing_layout.addRow("x:", self.spacing[0])
@@ -97,6 +117,10 @@ class ImageInformation(QWidget):
         layout.addLayout(spacing_layout)
         layout.addStretch()
         self.setLayout(layout)
+        self._settings.image_changed[str].connect(self.set_image_path)
+
+    def set_image_path(self, value):
+        self.path.setText("<b>Path:</b> {}".format(value))
 
 
 class Options(QTabWidget):
@@ -115,9 +139,11 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(title)
         self.settings = ImageSettings()
         self.main_menu = MainMenu(self.settings)
-        self.image_view = ImageView()
-        self.algorithm_options = Options(self.settings)
+        self.image_view = ImageView(self.settings)
+        self.options_panel = Options(self.settings)
         self.main_menu.image_loaded.connect(self.image_read)
+        self.settings.image_changed.connect(self.image_read)
+        self.options_panel.algorithm_options.labels_changed.connect(self.image_view.set_labels)
 
         # self.scroll_area.setVisible(False)
         # self.scroll_area.setS
@@ -138,14 +164,14 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.main_menu)
         sub_layout = QHBoxLayout()
         sub_layout.addWidget(self.image_view, 1)
-        sub_layout.addWidget(self.algorithm_options, 0)
+        sub_layout.addWidget(self.options_panel, 0)
         layout.addLayout(sub_layout)
         # self.pixmap.adjustSize()
         # self.pixmap.update_size(2)
         self.widget = QWidget()
         self.widget.setLayout(layout)
         self.setCentralWidget(self.widget)
-        self.image_view.set_image(im)
+        self.settings.image = im
 
     def image_read(self):
         print("buka1", self.settings.image.shape)

@@ -3,6 +3,7 @@ import sys
 from abc import ABCMeta, abstractmethod
 from stack_settings import ImageSettings
 from six import with_metaclass
+from .threshold_algorithm import ThresholdAlgorithm, ThresholdPreview
 
 if sys.version_info.major == 2:
     from exceptions import ValueError
@@ -14,6 +15,7 @@ class AlgorithmProperty(object):
     :type value_type: type
     :type default_value: object
     """
+
     def __init__(self, name, user_name, default_value, options_range, single_steep=None):
         self.name = name
         self.user_name = user_name
@@ -67,7 +69,7 @@ class AbstractAlgorithmSettingsWidget(with_metaclass(ABCMeta, object)):
 
 
 class AlgorithmSettingsWidget(QWidget):
-    def __init__(self, element_list, settings):
+    def __init__(self, settings, element_list, algorithm):
         """
         :type settings: ImageSettings
         :param element_list:
@@ -78,17 +80,21 @@ class AlgorithmSettingsWidget(QWidget):
         widget_layout = QFormLayout()
         self.channels_chose = QComboBox()
         widget_layout.addRow("Channel", self.channels_chose)
+        element_list = map(QtAlgorithmProperty.from_algorithm_property, element_list)
         for el in element_list:
             self.widget_list.append((el.name, el.get_field()))
             widget_layout.addRow(el.user_name, self.widget_list[-1][-1])
         self.setLayout(widget_layout)
         self.settings = settings
         self.settings.image_changed[int].connect(self.image_changed)
+        self.algorithm = algorithm()
 
     def image_changed(self, channels_num):
         ind = self.channels_chose.currentIndex()
         self.channels_chose.clear()
         self.channels_chose.addItems(map(str, range(channels_num)))
+        if ind < 0 or ind > channels_num:
+            ind = 0
         self.channels_chose.setCurrentIndex(ind)
 
     def get_values(self):
@@ -100,20 +106,27 @@ class AlgorithmSettingsWidget(QWidget):
                 res[name] = el.value()
             else:
                 raise ValueError("unsuported type {}".format(type(el)))
+        res["image"] = self.settings.get_chanel(self.channels_chose.currentIndex())
         return res
+
+    def execute(self):
+        return self.algorithm.execute(**self.get_values())
+
+
 
 AbstractAlgorithmSettingsWidget.register(AlgorithmSettingsWidget)
 
-only_threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 1000, (0, 10**6), 100)]
+only_threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 1000, (0, 10 ** 6), 100)]
 
-threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 1000, (0, 10**6), 100),
-                       AlgorithmProperty("minimum_size", "Minimum size", 80000, (0, 10**6), 1000)]
+threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 1000, (0, 10 ** 6), 100),
+                       AlgorithmProperty("minimum_size", "Minimum size", 80000, (0, 10 ** 6), 1000)]
 
-auto_threshold_algorithm = [AlgorithmProperty("suggested_size", "Suggested size", 80000, (0, 10**6), 1000),
-                            AlgorithmProperty("threshold", "Minimum Threshold", 1000, (0, 10**6), 100),
-                            AlgorithmProperty("minimum_size", "Minimum size", 40000, (0, 10**6), 1000)]
+auto_threshold_algorithm = [AlgorithmProperty("suggested_size", "Suggested size", 80000, (0, 10 ** 6), 1000),
+                            AlgorithmProperty("threshold", "Minimum Threshold", 1000, (0, 10 ** 6), 100),
+                            AlgorithmProperty("minimum_size", "Minimum size", 40000, (0, 10 ** 6), 1000)]
 
-
-stack_algorithm_dict = {"Threshold": map(QtAlgorithmProperty.from_algorithm_property, threshold_algorithm),
-                        "Auto Threshold": map(QtAlgorithmProperty.from_algorithm_property, auto_threshold_algorithm),
-                        "Only Threshold": map(QtAlgorithmProperty.from_algorithm_property, only_threshold_algorithm)}
+stack_algorithm_dict = {
+    "Threshold": (threshold_algorithm, ThresholdAlgorithm),
+    "Auto Threshold": (auto_threshold_algorithm, ThresholdAlgorithm),
+    "Only Threshold": (only_threshold_algorithm, ThresholdPreview)
+}

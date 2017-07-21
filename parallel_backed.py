@@ -152,7 +152,8 @@ class BatchWorker(object):
         self.calculation_dict = calculation_dict
         pass
 
-    def calculate_task(self, (data, task_uuid)):
+    def calculate_task(self, val):
+        data, task_uuid = val
         global_data, function = self.calculation_dict[task_uuid]
         try:
             self.result_queue.put((task_uuid, function(data, global_data)))

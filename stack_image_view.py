@@ -1,14 +1,16 @@
 from __future__ import division, print_function
 from qt_import import QMainWindow, QPixmap, QImage, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QSize, QAction, Qt, QPainter, QPen, \
-    QColor, QScrollBar, QApplication, pyqtSignal, QPoint, QSlider, QMessageBox, QCheckBox, QComboBox, QSize, QObject
+    QColor, QScrollBar, QApplication, pyqtSignal, QPoint, QSlider, QMessageBox, QCheckBox, QComboBox, QSize
 import os
 from global_settings import file_folder, use_qt5
+from stack_settings import ImageSettings
 from math import log
 import numpy as np
 from matplotlib.colors import PowerNorm
 from matplotlib.cm import get_cmap
 from matplotlib import pyplot
+import SimpleITK as sitk
 import custom_colormaps
 
 canvas_icon_size = QSize(27, 27)
@@ -16,10 +18,12 @@ step = 1.01
 max_step = log(1.2, step)
 
 
-class ImageSettings(object):
+class ImageState(object):
     def __init__(self):
         self.zoom = False
         self.move = False
+        self.opacity = 0.7
+        self.show_labels = True
 
     def set_zoom(self, val):
         self.zoom = val
@@ -33,7 +37,7 @@ class ImageCanvas(QLabel):
 
     def __init__(self, local_settings):
         """
-        :type local_settings: ImageSettings
+        :type local_settings: ImageState
         :param local_settings:
         """
         super(ImageCanvas, self).__init__()
@@ -187,22 +191,23 @@ class ChanelColor(QWidget):
 
 
 class ImageView(QWidget):
-    def __init__(self):
+    def __init__(self, settings):
+        """:type settings: ImageSettings"""
         super(ImageView, self).__init__()
-        self.local_settings = ImageSettings()
+        self.image_state = ImageState()
         self.btn_layout = QHBoxLayout()
-        self.image_area = MyScrollArea(self.local_settings)
+        self.image_area = MyScrollArea(self.image_state)
         self.reset_button = create_tool_button("Reset zoom", "zoom-original.png")
         self.reset_button.clicked.connect(self.reset_image_size)
         self.zoom_button = create_tool_button("Zoom", "zoom-select.png")
-        self.zoom_button.clicked.connect(self.local_settings.set_zoom)
+        self.zoom_button.clicked.connect(self.image_state.set_zoom)
         self.zoom_button.setCheckable(True)
         self.zoom_button.setContextMenuPolicy(Qt.ActionsContextMenu)
         crop = QAction("Crop", self.zoom_button)
         # crop.triggered.connect(self.crop_view)
         self.zoom_button.addAction(crop)
         self.move_button = create_tool_button("Move", "transform-move.png")
-        self.move_button.clicked.connect(self.local_settings.set_move)
+        self.move_button.clicked.connect(self.image_state.set_move)
         self.move_button.setCheckable(True)
         self.chanel_color = [ChanelColor(x, self) for x in range(10)]
         self.btn_layout.addWidget(self.reset_button)
@@ -221,6 +226,7 @@ class ImageView(QWidget):
         self.channels_num = 1
         self.layers_num = 1
         self.border_val = []
+        self.labels_layer = None
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(self.btn_layout)
@@ -255,9 +261,18 @@ class ImageView(QWidget):
                     break
         else:
             colormap = self.chanel_color[0].colormap(*self.border_val[0])
-            res = colormap(img)
+            res = colormap(img)[..., 0:3]
         # res[res > 1] = 1
         im = np.array(res * 255, dtype=np.uint8)
+        del res
+        if self.labels_layer is not None:
+            if self.layers_num > 1:
+                layers = self.labels_layer[self.stack_slider.value()]
+            else:
+                layers = self.labels_layer
+            labeled = sitk.GetArrayFromImage(sitk.LabelToRGB(sitk.GetImageFromArray(layers)))
+            layers_mask = layers > 0
+            im[layers_mask] = 0.5 * im[layers_mask] + 0.5 * labeled[layers_mask]
         self.image_area.set_image(im, self.sender() is not None)
 
     def set_image(self, image):
@@ -269,6 +284,7 @@ class ImageView(QWidget):
         self.channels_num = 1
         self.layers_num = 1
         self.border_val = []
+        self.labels_layer = None
         image = np.squeeze(image)
         self.image = image
         if len(image.shape) == 2:
@@ -302,6 +318,10 @@ class ImageView(QWidget):
         self.change_layer(int(self.layers_num/2))
         # self.image_area.set_image(image)
 
+    def set_labels(self, labels):
+        self.labels_layer = labels
+        self.change_image()
+
     def showEvent(self, event):
         super(ImageView, self).showEvent(event)
         if not event.spontaneous():
@@ -319,7 +339,7 @@ class MyScrollArea(QScrollArea):
 
     def __init__(self, local_settings, *args, **kwargs):
         """
-        :type local_settings: ImageSettings
+        :type local_settings: ImageState
         :param local_settings:
         :param args:
         :param kwargs:
@@ -395,7 +415,7 @@ class MyScrollArea(QScrollArea):
         height, width, _ = im.shape
         self.image_size = QSize(width, height)
         self.image_ratio = float(width) / float(height)
-        im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 4, QImage.Format_RGBA8888)
+        im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 3, QImage.Format_RGB888)
         self.widget().setPixmap(QPixmap.fromImage(im2))
         if not keep_size:
             self.widget().adjustSize()
