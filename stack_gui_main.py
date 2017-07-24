@@ -125,8 +125,8 @@ class AlgorithmOptions(QWidget):
         main_layout.addWidget(self.execute_btn)
         main_layout.addWidget(self.algorithm_choose)
         main_layout.addLayout(self.stack_layout)
-        main_layout.addStretch()
         main_layout.addWidget(self.choose_components)
+        main_layout.addStretch()
         self.setLayout(main_layout)
 
         self.algorithm_choose.currentIndexChanged.connect(self.stack_layout.setCurrentIndex)

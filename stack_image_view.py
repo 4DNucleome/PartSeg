@@ -1,7 +1,8 @@
 from __future__ import division, print_function
 from qt_import import QMainWindow, QPixmap, QImage, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QSize, QAction, Qt, QPainter, QPen, QGridLayout, \
-    QColor, QScrollBar, QApplication, pyqtSignal, QPoint, QSlider, QMessageBox, QCheckBox, QComboBox, QSize, QObject
+    QColor, QScrollBar, QApplication, pyqtSignal, QPoint, QSlider, QMessageBox, QCheckBox, QComboBox, QSize, QObject, \
+    QEvent, QToolTip
 import os
 from global_settings import file_folder, use_qt5
 from stack_settings import ImageSettings
@@ -236,6 +237,7 @@ class ImageView(QWidget):
         self.zoom_button.clicked.connect(self.image_state.set_zoom)
         self.zoom_button.setCheckable(True)
         self.zoom_button.setContextMenuPolicy(Qt.ActionsContextMenu)
+        self.component = None
         crop = QAction("Crop", self.zoom_button)
         # crop.triggered.connect(self.crop_view)
         self.zoom_button.addAction(crop)
@@ -279,6 +281,13 @@ class ImageView(QWidget):
         self.position_changed[int, int, int].connect(self.info_text_pos)
         self.position_changed[int, int].connect(self.info_text_pos)
 
+    def event(self, event: QEvent):
+
+        if event.type() == QEvent.ToolTip and self.component is not None:
+            print("buka")
+            QToolTip.showText(event.globalPos(), str(self.component))
+        return super(ImageView, self).event(event)
+
     def info_text_pos(self, *pos):
         brightness = self.image[pos]
         if isinstance(brightness, collections.Iterable):
@@ -291,8 +300,10 @@ class ImageView(QWidget):
                 brightness = brightness[0]
         if self.labels_layer is not None:
             comp = self.labels_layer[pos]
+            self.component = comp
             if comp == 0:
                 comp = "none"
+                self.component = None
             self.info_text.setText("Position: {}, Brightness: {}, component {}".format(tuple(pos), brightness, comp))
         else:
             self.info_text.setText("Position: {}, Brightness: {}".format(tuple(pos), brightness))
