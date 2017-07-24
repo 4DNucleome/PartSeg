@@ -1,7 +1,7 @@
 from __future__ import division, print_function
 from qt_import import QMainWindow, QPixmap, QImage, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, \
-    QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QSize, QAction, Qt, QPainter, QPen, \
-    QColor, QScrollBar, QApplication, pyqtSignal, QPoint, QSlider, QMessageBox, QCheckBox, QComboBox, QSize
+    QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QSize, QAction, Qt, QPainter, QPen, QGridLayout, \
+    QColor, QScrollBar, QApplication, pyqtSignal, QPoint, QSlider, QMessageBox, QCheckBox, QComboBox, QSize, QObject
 import os
 from global_settings import file_folder, use_qt5
 from stack_settings import ImageSettings
@@ -11,6 +11,7 @@ from matplotlib.colors import PowerNorm
 from matplotlib.cm import get_cmap
 from matplotlib import pyplot
 import SimpleITK as sitk
+import collections
 import custom_colormaps
 
 canvas_icon_size = QSize(27, 27)
@@ -18,12 +19,19 @@ step = 1.01
 max_step = log(1.2, step)
 
 
-class ImageState(object):
+class ImageState(QObject):
+    parameter_changed = pyqtSignal()
+    opacity_changed = pyqtSignal(float)
+    show_label_changed = pyqtSignal(bool)
+
     def __init__(self):
+        super(ImageState, self).__init__()
         self.zoom = False
         self.move = False
         self.opacity = 0.7
-        self.show_labels = True
+        self.show_label = True
+        self.only_borders = True
+        self.borders_thick = 2
 
     def set_zoom(self, val):
         self.zoom = val
@@ -31,9 +39,30 @@ class ImageState(object):
     def set_move(self, val):
         self.move = val
 
+    def set_borders(self, val):
+        if self.only_borders != val:
+            self.only_borders = val
+            self.parameter_changed.emit()
+
+    def set_borders_thick(self, val):
+        if val != self.borders_thick:
+            self.borders_thick = val
+            self.parameter_changed.emit()
+
+    def set_opacity(self, val):
+        if self.opacity != val:
+            self.opacity = val
+            self.parameter_changed.emit()
+
+    def set_show_label(self, val):
+        if self.show_label != val:
+            self.show_label = val
+            self.parameter_changed.emit()
+
 
 class ImageCanvas(QLabel):
     zoom_mark = pyqtSignal(QPoint, QPoint)
+    position_signal = pyqtSignal(QPoint, QSize)
 
     def __init__(self, local_settings):
         """
@@ -45,6 +74,7 @@ class ImageCanvas(QLabel):
         self.local_settings = local_settings
         self.point = None
         self.point2 = None
+        self.setMouseTracking(True)
 
     def update_size(self, scale_factor=None):
         if scale_factor is not None:
@@ -63,15 +93,17 @@ class ImageCanvas(QLabel):
 
     def mouseMoveEvent(self, event):
         super(ImageCanvas, self).mouseMoveEvent(event)
-        if self.local_settings.zoom:
+        if self.local_settings.zoom and self.point is not None:
             self.point2 = event.pos()
             self.update()
+        self.position_signal.emit(event.pos(), self.size())
 
     def mouseReleaseEvent(self, event):
         super(ImageCanvas, self).mouseReleaseEvent(event)
         if self.local_settings.zoom:
             self.zoom_mark.emit(self.point, self.point2)
             self.point2 = None
+            self.point = None
             self.update()
 
     def paintEvent(self, event):
@@ -191,11 +223,12 @@ class ChanelColor(QWidget):
 
 
 class ImageView(QWidget):
+    position_changed = pyqtSignal([int, int, int], [int, int])
+
     def __init__(self, settings):
         """:type settings: ImageSettings"""
         super(ImageView, self).__init__()
         self.image_state = ImageState()
-        self.btn_layout = QHBoxLayout()
         self.image_area = MyScrollArea(self.image_state)
         self.reset_button = create_tool_button("Reset zoom", "zoom-original.png")
         self.reset_button.clicked.connect(self.reset_image_size)
@@ -210,11 +243,14 @@ class ImageView(QWidget):
         self.move_button.clicked.connect(self.image_state.set_move)
         self.move_button.setCheckable(True)
         self.chanel_color = [ChanelColor(x, self) for x in range(10)]
+        self.info_text = QLabel()
+        self.btn_layout = QHBoxLayout()
         self.btn_layout.addWidget(self.reset_button)
         self.btn_layout.addWidget(self.zoom_button)
         self.btn_layout.addWidget(self.move_button)
-        self.btn_layout.addStretch(5)
-        self.btn_layout.setSpacing(0)
+        self.btn_layout.addStretch(1)
+        self.btn_layout.addWidget(self.info_text)
+        self.btn_layout.addStretch(1)
         for el in self.chanel_color:
             self.btn_layout.addWidget(el)
             el.register(self.change_image)
@@ -227,6 +263,7 @@ class ImageView(QWidget):
         self.layers_num = 1
         self.border_val = []
         self.labels_layer = None
+        self.image_shape = QSize(1, 1)
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(self.btn_layout)
@@ -236,6 +273,47 @@ class ImageView(QWidget):
         slider_layout.addWidget(self.layer_info)
         main_layout.addLayout(slider_layout)
         self.setLayout(main_layout)
+
+        self.image_state.parameter_changed.connect(self.change_image)
+        self.image_area.pixmap.position_signal.connect(self.position_info)
+        self.position_changed[int, int, int].connect(self.info_text_pos)
+        self.position_changed[int, int].connect(self.info_text_pos)
+
+    def info_text_pos(self, *pos):
+        brightness = self.image[pos]
+        if isinstance(brightness, collections.Iterable):
+            res_brightness = []
+            for i, b in enumerate(brightness):
+                if self.chanel_color[i].channel_visible():
+                    res_brightness.append(b)
+            brightness = res_brightness
+            if len(brightness) == 1:
+                brightness = brightness[0]
+        if self.labels_layer is not None:
+            comp = self.labels_layer[pos]
+            if comp == 0:
+                comp = "none"
+            self.info_text.setText("Position: {}, Brightness: {}, component {}".format(tuple(pos), brightness, comp))
+        else:
+            self.info_text.setText("Position: {}, Brightness: {}".format(tuple(pos), brightness))
+
+    def position_info(self, point, size):
+        """
+        :type point: QPoint
+        :type size: QSize
+        :param point:
+        :return:
+        """
+        x = int(point.x() / size.width() * self.image_shape.width())
+        y = int(point.y() / size.height() * self.image_shape.height())
+        if self.layers_num > 1:
+            self.position_changed[int, int, int].emit(self.stack_slider.value()+1, y, x)
+        else:
+            self.position_changed[int, int].emit(y, x)
+
+    def get_control_view(self):
+        # type: () -> ImageState
+        return self.image_state
 
     def reset_image_size(self):
         self.image_area.reset_image()
@@ -261,18 +339,26 @@ class ImageView(QWidget):
                     break
         else:
             colormap = self.chanel_color[0].colormap(*self.border_val[0])
-            res = colormap(img)[..., 0:3]
+            res = colormap(img)
         # res[res > 1] = 1
+        res = res[..., 0:3]
         im = np.array(res * 255, dtype=np.uint8)
         del res
-        if self.labels_layer is not None:
+        if self.labels_layer is not None and self.image_state.show_label:
             if self.layers_num > 1:
                 layers = self.labels_layer[self.stack_slider.value()]
             else:
                 layers = self.labels_layer
-            labeled = sitk.GetArrayFromImage(sitk.LabelToRGB(sitk.GetImageFromArray(layers)))
-            layers_mask = layers > 0
-            im[layers_mask] = 0.5 * im[layers_mask] + 0.5 * labeled[layers_mask]
+            if self.image_state.only_borders:
+                bord = sitk.LabelContour(sitk.GetImageFromArray(layers))
+                if self.image_state.borders_thick > 1:
+                    bord = sitk.GrayscaleDilate(bord, self.image_state.borders_thick)
+                labeled = sitk.GetArrayFromImage(sitk.LabelToRGB(bord))
+                layers_mask = sitk.GetArrayFromImage(bord) > 0
+            else:
+                labeled = sitk.GetArrayFromImage(sitk.LabelToRGB(sitk.GetImageFromArray(layers)))
+                layers_mask = layers > 0
+            im[layers_mask] = (1 - self.image_state.opacity) * im[layers_mask] + self.image_state.opacity * labeled[layers_mask]
         self.image_area.set_image(im, self.sender() is not None)
 
     def set_image(self, image):
@@ -288,16 +374,20 @@ class ImageView(QWidget):
         image = np.squeeze(image)
         self.image = image
         if len(image.shape) == 2:
+            self.image_shape = QSize(image.shape[1], image.shape[0])
             pass
             #self.image_area.set_image(image)
         elif len(image.shape) == 3:
             if image.shape[-1] < 10:
                 self.channels_num = image.shape[-1]
+                self.image_shape = QSize(image.shape[1], image.shape[0])
             else:
                 self.layers_num = image.shape[0]
+                self.image_shape = QSize(image.shape[2], image.shape[1])
         elif len(image.shape) == 4:
             self.channels_num = image.shape[-1]
             self.layers_num = image.shape[0]
+            self.image_shape = QSize(image.shape[2], image.shape[1])
         else:
             QMessageBox.warning(self, "Open error", "Shape {} of image do not supported".format(image.shape))
         self.border_val = []
@@ -324,8 +414,8 @@ class ImageView(QWidget):
 
     def showEvent(self, event):
         super(ImageView, self).showEvent(event)
-        if not event.spontaneous():
-            self.btn_layout.addStretch(1)
+        #if not event.spontaneous():
+        #    self.btn_layout.addStretch(1)
 
 
 class MyScrollArea(QScrollArea):

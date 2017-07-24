@@ -5,9 +5,6 @@ from stack_settings import ImageSettings
 from six import with_metaclass
 from .threshold_algorithm import ThresholdAlgorithm, ThresholdPreview
 
-if sys.version_info.major == 2:
-    from exceptions import ValueError
-
 
 class AlgorithmProperty(object):
     """
@@ -109,17 +106,16 @@ class AlgorithmSettingsWidget(QWidget):
         res["image"] = self.settings.get_chanel(self.channels_chose.currentIndex())
         return res
 
-    def execute(self):
-        return self.algorithm.execute(**self.get_values())
-
+    def execute(self, exclude_mask=None):
+        return self.algorithm.execute(**{"exclude_mask": exclude_mask, **self.get_values()})
 
 
 AbstractAlgorithmSettingsWidget.register(AlgorithmSettingsWidget)
 
 only_threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 1000, (0, 10 ** 6), 100)]
 
-threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 1000, (0, 10 ** 6), 100),
-                       AlgorithmProperty("minimum_size", "Minimum size", 80000, (0, 10 ** 6), 1000)]
+threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100),
+                       AlgorithmProperty("minimum_size", "Minimum size", 8000, (0, 10 ** 6), 1000)]
 
 auto_threshold_algorithm = [AlgorithmProperty("suggested_size", "Suggested size", 80000, (0, 10 ** 6), 1000),
                             AlgorithmProperty("threshold", "Minimum Threshold", 1000, (0, 10 ** 6), 100),

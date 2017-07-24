@@ -9,7 +9,7 @@ from stack_image_view import ImageView
 from universal_gui_part import right_label, Spacing
 from universal_const import UNITS_LIST
 from stack_algorithm.algorithm_description import stack_algorithm_dict, AlgorithmSettingsWidget
-
+from flow_layout import FlowLayout
 
 import matplotlib
 from matplotlib import colors
@@ -50,41 +50,112 @@ class MainMenu(QWidget):
         self.image_loaded.emit()
 
 
+class ChosenComponents(QWidget):
+    def __init__(self):
+        super(ChosenComponents, self).__init__()
+        self.setLayout(FlowLayout())
+        self.check_box = dict()
+
+    def set_chose(self, components_index, chosen_components):
+        self.layout().clear()
+        self.check_box.clear()
+        chosen_components = set(chosen_components)
+        for el in components_index:
+            check = QCheckBox(str(el))
+            if el in chosen_components:
+                check.setChecked(True)
+            self.check_box[el] = check
+            self.layout().addWidget(check)
+
+    def change_state(self, num, val):
+        self.check_box[num].setChecked(val)
+
+    def get_chosen(self):
+        res = []
+        for num, check in self.check_box.items():
+            if check.isChecked():
+                res.append(num)
+        return res
+
+
 class AlgorithmOptions(QWidget):
     labels_changed = pyqtSignal(np.ndarray)
 
-    def __init__(self, settings):
+    def __init__(self, settings, control_view):
+        """
+        :type control_view: ImageState
+        :type settings: ImageSettings
+        :param settings:
+        :param control_view:
+        """
         super(AlgorithmOptions, self).__init__()
+        self.old_segmentation = None
         self.algorithm_choose = QComboBox()
         self.show_result = QCheckBox("Show result")
+        self.show_result.setChecked(control_view.show_label)
         self.opacity = QDoubleSpinBox()
         self.opacity.setRange(0, 1)
-        self.opacity.setValue(0.7)
+        self.opacity.setSingleStep(0.1)
+        self.opacity.setValue(control_view.opacity)
+        self.only_borders = QCheckBox("Only borders")
+        self.only_borders.setChecked(control_view.only_borders)
+        self.borders_thick = QSpinBox()
+        self.borders_thick.setRange(1, 10)
+        self.borders_thick.setSingleStep(1)
+        self.borders_thick.setValue(control_view.borders_thick)
         self.execute_btn = QPushButton("Execute")
         self.stack_layout = QStackedLayout()
+        self.choose_components = ChosenComponents()
         for name, val in stack_algorithm_dict.items():
             self.algorithm_choose.addItem(name)
             widget = AlgorithmSettingsWidget(settings, *val)
             self.stack_layout.addWidget(widget)
 
         main_layout = QVBoxLayout()
-        opt_layout =QHBoxLayout()
+        opt_layout = QHBoxLayout()
         opt_layout.addWidget(self.show_result)
         opt_layout.addWidget(right_label("Opacity:"))
         opt_layout.addWidget(self.opacity)
         main_layout.addLayout(opt_layout)
+        opt_layout2 = QHBoxLayout()
+        opt_layout2.addWidget(self.only_borders)
+        opt_layout2.addWidget(right_label("Border thick"))
+        opt_layout2.addWidget(self.borders_thick)
+        main_layout.addLayout(opt_layout2)
         main_layout.addWidget(self.execute_btn)
         main_layout.addWidget(self.algorithm_choose)
         main_layout.addLayout(self.stack_layout)
         main_layout.addStretch()
+        main_layout.addWidget(self.choose_components)
         self.setLayout(main_layout)
 
         self.algorithm_choose.currentIndexChanged.connect(self.stack_layout.setCurrentIndex)
         self.execute_btn.clicked.connect(self.execute_action)
+        self.opacity.valueChanged.connect(control_view.set_opacity)
+        self.show_result.stateChanged.connect(control_view.set_show_label)
+        self.only_borders.stateChanged.connect(control_view.set_borders)
+        self.borders_thick.valueChanged.connect(control_view.set_borders_thick)
+        settings.image_changed.connect(self.image_changed)
+
+    def image_changed(self):
+        self.old_segmentation = None
 
     def execute_action(self):
+        chosen = sorted(self.choose_components.get_chosen())
+        if len(chosen) == 0:
+            blank = None
+        else:
+            if len(chosen) > 250:
+                blank = np.zeros(self.old_segmentation.shape, dtype=np.uint16)
+            else:
+                blank = np.zeros(self.old_segmentation.shape, dtype=np.uint8)
+            for i, v in enumerate(chosen):
+                blank[self.old_segmentation == v] = i+1
+
         widget = self.stack_layout.currentWidget()
-        segmentation = widget.execute()
+        segmentation = widget.execute(blank)
+        self.old_segmentation = segmentation
+        self.choose_components.set_chose(range(1, segmentation.max()+1), np.arange(len(chosen))+1)
         self.labels_changed.emit(segmentation)
 
 
@@ -124,10 +195,10 @@ class ImageInformation(QWidget):
 
 
 class Options(QTabWidget):
-    def __init__(self, settings, parent=None):
+    def __init__(self, settings, control_view, parent=None):
         super(Options, self).__init__(parent)
         self._settings = settings
-        self.algorithm_options = AlgorithmOptions(settings)
+        self.algorithm_options = AlgorithmOptions(settings, control_view)
         self.image_properties = ImageInformation(settings, parent)
         self.addTab(self.image_properties, "Image")
         self.addTab(self.algorithm_options, "Segmentation")
@@ -140,7 +211,8 @@ class MainWindow(QMainWindow):
         self.settings = ImageSettings()
         self.main_menu = MainMenu(self.settings)
         self.image_view = ImageView(self.settings)
-        self.options_panel = Options(self.settings)
+        image_view_control = self.image_view.get_control_view()
+        self.options_panel = Options(self.settings, image_view_control)
         self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
         self.options_panel.algorithm_options.labels_changed.connect(self.image_view.set_labels)

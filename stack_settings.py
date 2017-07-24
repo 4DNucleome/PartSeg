@@ -36,6 +36,10 @@ class ImageSettings(QObject):
         if file_path is not None:
             self._image_path = file_path
             self.image_changed[str].emit(self._image_path)
+        if self._image.shape[-1] < 10:
+            self.has_channels = True
+        else:
+            self.has_channels = False
         self.image_changed.emit(self._image)
         self.image_changed[int].emit(self.channels)
 
@@ -61,3 +65,7 @@ class ImageSettings(QObject):
         if self.has_channels:
             return self._image[..., chanel_num]
         return self._image
+    
+    def get_information(self, *pos):
+        return self._image[pos]
+

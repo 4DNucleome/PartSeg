@@ -1,8 +1,5 @@
 # coding=utf-8
 from __future__ import print_function, division
-
-from jedi import settings
-
 import os.path
 import tifffile
 import SimpleITK as sitk

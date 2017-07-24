@@ -76,6 +76,11 @@ class FlowLayout(QLayout):
         while item:
             item = self.takeAt(0)
 
+    def clear(self):
+        item = self.takeAt(0)
+        while item:
+            item = self.takeAt(0)
+
     def addItem(self, item):
         self.itemList.append(item)
 
@@ -94,7 +99,6 @@ class FlowLayout(QLayout):
     def takeAt(self, index):
         if 0 <= index < len(self.itemList):
             return self.itemList.pop(index)
-
         return None
 
     def expandingDirections(self):
