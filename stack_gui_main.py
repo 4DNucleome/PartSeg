@@ -141,6 +141,7 @@ class AlgorithmOptions(QWidget):
         self.old_segmentation = None
 
     def execute_action(self):
+        self.execute_btn.setDisabled(True)
         chosen = sorted(self.choose_components.get_chosen())
         if len(chosen) == 0:
             blank = None
@@ -156,6 +157,7 @@ class AlgorithmOptions(QWidget):
         segmentation = widget.execute(blank)
         self.old_segmentation = segmentation
         self.choose_components.set_chose(range(1, segmentation.max()+1), np.arange(len(chosen))+1)
+        self.execute_btn.setEnabled(True)
         self.labels_changed.emit(segmentation)
 
 

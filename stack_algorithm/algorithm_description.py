@@ -1,4 +1,4 @@
-from qt_import import QDoubleSpinBox, QSpinBox, QComboBox, QWidget, QFormLayout, QAbstractSpinBox
+from qt_import import QDoubleSpinBox, QSpinBox, QComboBox, QWidget, QFormLayout, QAbstractSpinBox, QCheckBox
 import sys
 from abc import ABCMeta, abstractmethod
 from stack_settings import ImageSettings
@@ -25,7 +25,7 @@ class AlgorithmProperty(object):
 
 
 class QtAlgorithmProperty(AlgorithmProperty):
-    qt_class_dict = {int: QSpinBox, float: QDoubleSpinBox, list: QComboBox}
+    qt_class_dict = {int: QSpinBox, float: QDoubleSpinBox, list: QComboBox, bool: QCheckBox}
 
     def __init__(self, *args, **kwargs):
         super(QtAlgorithmProperty, self).__init__(*args, **kwargs)
@@ -45,6 +45,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
         if isinstance(field, QComboBox):
             field.addItems(self.range)
             field.setCurrentIndex(self.range.index(self.default_value))
+        elif isinstance(field, QCheckBox):
+            field.setChecked(self.default_value)
         else:
             field.setRange(*self.range)
             field.setValue(self.default_value)
@@ -101,6 +103,8 @@ class AlgorithmSettingsWidget(QWidget):
                 res[name] = str(el.currentText())
             elif isinstance(el, QAbstractSpinBox):
                 res[name] = el.value()
+            elif isinstance(el, QCheckBox):
+                res[name] = el.isChecked()
             else:
                 raise ValueError("unsuported type {}".format(type(el)))
         res["image"] = self.settings.get_chanel(self.channels_chose.currentIndex())
@@ -115,7 +119,9 @@ AbstractAlgorithmSettingsWidget.register(AlgorithmSettingsWidget)
 only_threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 1000, (0, 10 ** 6), 100)]
 
 threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100),
-                       AlgorithmProperty("minimum_size", "Minimum size", 8000, (0, 10 ** 6), 1000)]
+                       AlgorithmProperty("minimum_size", "Minimum size", 8000, (0, 10 ** 6), 1000),
+                       AlgorithmProperty("close_holes", "Close small holes", True, (True, False)),
+                       AlgorithmProperty("smooth_border", "Smooth borders", True, (True, False))]
 
 auto_threshold_algorithm = [AlgorithmProperty("suggested_size", "Suggested size", 80000, (0, 10 ** 6), 1000),
                             AlgorithmProperty("threshold", "Minimum Threshold", 1000, (0, 10 ** 6), 100),

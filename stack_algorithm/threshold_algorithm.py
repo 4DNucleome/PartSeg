@@ -30,12 +30,13 @@ class ThresholdAlgorithm(object):
         self.segmentation = None
         self.sizes = None
 
-    def execute(self, image, threshold, minimum_size, exclude_mask):
+    def execute(self, image, threshold, minimum_size, exclude_mask, close_holes, smooth_border):
         if (image is not self.image) or (threshold != self.threshold) or exclude_mask is not None:
             mask = (image > threshold).astype(np.uint8)
             if exclude_mask is not None:
                 mask[exclude_mask > 0] = 0
-            mask = close_small_holes(mask, 200)
+            if close_holes:
+                mask = close_small_holes(mask, 200)
             self.segmentation = sitk.GetArrayFromImage(
                 sitk.RelabelComponent(
                     sitk.ConnectedComponent(
@@ -43,7 +44,8 @@ class ThresholdAlgorithm(object):
                     ), 20
                 )
             )
-            self.segmentation = opening(self.segmentation, 5, 20)
+            if smooth_border:
+                self.segmentation = opening(self.segmentation, 2, 20)
             self.sizes = np.bincount(self.segmentation.flat)
         ind = bisect(self.sizes[1:], minimum_size, lambda x, y: x > y)
         self.image = image
