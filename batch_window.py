@@ -60,7 +60,7 @@ class AddFiles(QWidget):
 
     file_list_changed = pyqtSignal()
 
-    def __init__(self, settings, parent):
+    def __init__(self, settings, parent=None, btn_layout=QHBoxLayout):
         """TODO: to be defined1. """
         QWidget.__init__(self, parent)
         self.settings = settings
@@ -81,7 +81,7 @@ class AddFiles(QWidget):
         self.clean_button.clicked.connect(self.clean)
         layout = QVBoxLayout()
         layout.addWidget(self.paths)
-        select_layout = QHBoxLayout()
+        select_layout = btn_layout()
         select_layout.addWidget(self.found_button)
         select_layout.addWidget(self.select_files_button)
         select_layout.addWidget(self.select_dir_button)

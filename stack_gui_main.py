@@ -16,6 +16,8 @@ from matplotlib import colors
 import numpy as np
 import os
 
+from batch_window import AddFiles
+
 
 class MainMenu(QWidget):
     image_loaded = pyqtSignal()
@@ -27,12 +29,17 @@ class MainMenu(QWidget):
         """
         super(MainMenu, self).__init__()
         self.settings = settings
-        self.load_btn = QPushButton("Load")
-        self.load_btn.clicked.connect(self.load_image)
-        self.save_btn = QPushButton("Save")
+        self.load_image_btn = QPushButton("Load image")
+        self.load_image_btn.clicked.connect(self.load_image)
+        self.load_segmentation_btn = QPushButton("Load segmentation")
+
+        self.save_segmentation_btn = QPushButton("Save segmentation")
+        self.save_cutted_parts = QPushButton("Save results")
         layout = QHBoxLayout()
-        layout.addWidget(self.load_btn)
-        layout.addWidget(self.save_btn)
+        layout.addWidget(self.load_image_btn)
+        layout.addWidget(self.load_segmentation_btn)
+        layout.addWidget(self.save_cutted_parts)
+        layout.addWidget(self.save_segmentation_btn)
         self.setLayout(layout)
 
     def load_image(self):
@@ -47,7 +54,7 @@ class MainMenu(QWidget):
         self.settings.open_directory = os.path.dirname(str(file_path))
         im = tif.imread(file_path)
         self.settings.image = im, file_path
-        self.image_loaded.emit()
+        # self.image_loaded.emit()
 
 
 class ChosenComponents(QWidget):
@@ -57,7 +64,9 @@ class ChosenComponents(QWidget):
         self.check_box = dict()
 
     def set_chose(self, components_index, chosen_components):
-        self.layout().clear()
+        widget = QWidget()
+        widget.setLayout(self.layout())
+        self.setLayout(FlowLayout())
         self.check_box.clear()
         chosen_components = set(chosen_components)
         for el in components_index:
@@ -66,6 +75,7 @@ class ChosenComponents(QWidget):
                 check.setChecked(True)
             self.check_box[el] = check
             self.layout().addWidget(check)
+        self.update()
 
     def change_state(self, num, val):
         self.check_box[num].setChecked(val)
@@ -104,6 +114,7 @@ class AlgorithmOptions(QWidget):
         self.borders_thick.setSingleStep(1)
         self.borders_thick.setValue(control_view.borders_thick)
         self.execute_btn = QPushButton("Execute")
+        self.execute_all_btn = QPushButton("Execute all")
         self.stack_layout = QStackedLayout()
         self.choose_components = ChosenComponents()
         for name, val in stack_algorithm_dict.items():
@@ -119,10 +130,13 @@ class AlgorithmOptions(QWidget):
         main_layout.addLayout(opt_layout)
         opt_layout2 = QHBoxLayout()
         opt_layout2.addWidget(self.only_borders)
-        opt_layout2.addWidget(right_label("Border thick"))
+        opt_layout2.addWidget(right_label("Border thick:"))
         opt_layout2.addWidget(self.borders_thick)
         main_layout.addLayout(opt_layout2)
-        main_layout.addWidget(self.execute_btn)
+        btn_layout = QHBoxLayout()
+        btn_layout.addWidget(self.execute_btn)
+        btn_layout.addWidget(self.execute_all_btn)
+        main_layout.addLayout(btn_layout)
         main_layout.addWidget(self.algorithm_choose)
         main_layout.addLayout(self.stack_layout)
         main_layout.addWidget(self.choose_components)
@@ -138,7 +152,9 @@ class AlgorithmOptions(QWidget):
         settings.image_changed.connect(self.image_changed)
 
     def image_changed(self):
+        print("buka2")
         self.old_segmentation = None
+        self.choose_components.set_chose([], [])
 
     def execute_action(self):
         self.execute_btn.setDisabled(True)
@@ -178,6 +194,8 @@ class ImageInformation(QWidget):
         self.units.addItems(UNITS_LIST)
         self.units.setCurrentIndex(2)
 
+        self.add_files = AddFiles(settings, btn_layout=FlowLayout)
+
         spacing_layout = QFormLayout()
         spacing_layout.addRow("x:", self.spacing[0])
         spacing_layout.addRow("y:", self.spacing[1])
@@ -188,6 +206,7 @@ class ImageInformation(QWidget):
         layout.addWidget(self.path)
         layout.addWidget(QLabel("Image spacing:"))
         layout.addLayout(spacing_layout)
+        layout.addWidget(self.add_files)
         layout.addStretch()
         self.setLayout(layout)
         self._settings.image_changed[str].connect(self.set_image_path)
@@ -248,7 +267,7 @@ class MainWindow(QMainWindow):
         self.settings.image = im
 
     def image_read(self):
-        print("buka1", self.settings.image.shape)
+        print("buka1", self.settings.image.shape, self.sender())
         self.image_view.set_image(self.settings.image)
 
 

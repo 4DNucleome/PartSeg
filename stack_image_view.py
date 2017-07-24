@@ -64,6 +64,7 @@ class ImageState(QObject):
 class ImageCanvas(QLabel):
     zoom_mark = pyqtSignal(QPoint, QPoint)
     position_signal = pyqtSignal(QPoint, QSize)
+    leave_signal = pyqtSignal()
 
     def __init__(self, local_settings):
         """
@@ -81,6 +82,9 @@ class ImageCanvas(QLabel):
         if scale_factor is not None:
             self.scale_factor = scale_factor
         self.resize(self.scale_factor * self.pixmap().size())
+
+    def leaveEvent(self, a0: QEvent):
+        self.leave_signal.emit()
 
     def mousePressEvent(self, event):
         """
@@ -102,7 +106,9 @@ class ImageCanvas(QLabel):
     def mouseReleaseEvent(self, event):
         super(ImageCanvas, self).mouseReleaseEvent(event)
         if self.local_settings.zoom:
-            self.zoom_mark.emit(self.point, self.point2)
+            diff = self.point2 - self.point
+            if abs(diff.x()) and abs(diff.y()):
+                self.zoom_mark.emit(self.point, self.point2)
             self.point2 = None
             self.point = None
             self.update()
@@ -124,12 +130,6 @@ class ImageCanvas(QLabel):
         pen.setDashOffset(3)
         painter.setPen(pen)
         painter.drawRect(self.point.x(), self.point.y(), diff.x(), diff.y())
-
-    """def resizeEvent(self, event):
-        super(ImageCanvas, self).resizeEvent(event)
-        print("Buka")
-        event.accept()
-        pass"""
 
 
 def get_scroll_bar_proportion(scroll_bar):
@@ -229,6 +229,7 @@ class ImageView(QWidget):
     def __init__(self, settings):
         """:type settings: ImageSettings"""
         super(ImageView, self).__init__()
+        self.exclude_btn_list =[]
         self.image_state = ImageState()
         self.image_area = MyScrollArea(self.image_state)
         self.reset_button = create_tool_button("Reset zoom", "zoom-original.png")
@@ -251,7 +252,6 @@ class ImageView(QWidget):
         self.btn_layout.addWidget(self.zoom_button)
         self.btn_layout.addWidget(self.move_button)
         self.btn_layout.addStretch(1)
-        self.btn_layout.addWidget(self.info_text)
         self.btn_layout.addStretch(1)
         for el in self.chanel_color:
             self.btn_layout.addWidget(el)
@@ -274,19 +274,33 @@ class ImageView(QWidget):
         slider_layout.addWidget(self.stack_slider)
         slider_layout.addWidget(self.layer_info)
         main_layout.addLayout(slider_layout)
+        main_layout.addWidget(self.info_text)
+
         self.setLayout(main_layout)
+        self.exclude_btn_list.extend([self.zoom_button, self.move_button])
+        self.zoom_button.clicked.connect(self.exclude_btn)
+        self.move_button.clicked.connect(self.exclude_btn)
 
         self.image_state.parameter_changed.connect(self.change_image)
         self.image_area.pixmap.position_signal.connect(self.position_info)
+        self.image_area.pixmap.leave_signal.connect(self.clean_text)
         self.position_changed[int, int, int].connect(self.info_text_pos)
         self.position_changed[int, int].connect(self.info_text_pos)
+
+    def exclude_btn(self):
+        sender = self.sender()
+        for el in self.exclude_btn_list:
+            if el != sender:
+                el.setChecked(False)
 
     def event(self, event: QEvent):
 
         if event.type() == QEvent.ToolTip and self.component is not None:
-            print("buka")
             QToolTip.showText(event.globalPos(), str(self.component))
         return super(ImageView, self).event(event)
+
+    def clean_text(self):
+        self.info_text.setText("")
 
     def info_text_pos(self, *pos):
         brightness = self.image[pos]

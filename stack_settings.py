@@ -15,6 +15,14 @@ class ImageSettings(QObject):
         self._image_path = ""
         self.has_channels = False
         self.image_spacing = 70, 70, 210
+
+    @property
+    def batch_directory(self):
+        return self.open_directory
+
+    @batch_directory.setter
+    def batch_directory(self, val):
+        self.open_directory = val
         
     @property
     def image(self):

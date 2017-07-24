@@ -2,13 +2,17 @@ import numpy as np
 import SimpleITK as sitk
 from utils import bisect
 from .segment import close_small_holes, opening
+from image_operations import gaussian
+
 
 class ThresholdPreview(object):
     def __init__(self):
         pass
 
     @staticmethod
-    def execute(image, threshold, exclude_mask):
+    def execute(image, threshold, exclude_mask, use_gauss):
+        if use_gauss:
+            image = gaussian(image, 1)
         if exclude_mask is None:
             return (image > threshold).astype(np.uint8)
         else:
@@ -30,13 +34,16 @@ class ThresholdAlgorithm(object):
         self.segmentation = None
         self.sizes = None
 
-    def execute(self, image, threshold, minimum_size, exclude_mask, close_holes, smooth_border):
+    def execute(self, image, threshold, minimum_size, exclude_mask, close_holes, smooth_border, use_gauss,
+                close_holes_size, smooth_border_radius, gauss_radius):
         if (image is not self.image) or (threshold != self.threshold) or exclude_mask is not None:
+            if use_gauss:
+                image = gaussian(image, gauss_radius)
             mask = (image > threshold).astype(np.uint8)
             if exclude_mask is not None:
                 mask[exclude_mask > 0] = 0
             if close_holes:
-                mask = close_small_holes(mask, 200)
+                mask = close_small_holes(mask, close_holes_size)
             self.segmentation = sitk.GetArrayFromImage(
                 sitk.RelabelComponent(
                     sitk.ConnectedComponent(
@@ -45,7 +52,7 @@ class ThresholdAlgorithm(object):
                 )
             )
             if smooth_border:
-                self.segmentation = opening(self.segmentation, 2, 20)
+                self.segmentation = opening(self.segmentation, smooth_border_radius, 20)
             self.sizes = np.bincount(self.segmentation.flat)
         ind = bisect(self.sizes[1:], minimum_size, lambda x, y: x > y)
         self.image = image

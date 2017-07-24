@@ -42,7 +42,7 @@
 #############################################################################
 
 
-from qt_import import QPoint, QRect, QSize, Qt, QApplication, QLayout, QPushButton, QSizePolicy, QWidget
+from qt_import import QPoint, QRect, QSize, Qt, QApplication, QLayout, QPushButton, QSizePolicy, QWidget, QLabel
 
 
 class Window(QWidget):
@@ -75,6 +75,7 @@ class FlowLayout(QLayout):
         item = self.takeAt(0)
         while item:
             item = self.takeAt(0)
+        self.itemList.append(QLabel())
 
     def clear(self):
         item = self.takeAt(0)
@@ -86,6 +87,9 @@ class FlowLayout(QLayout):
 
     def addLayout(self, layout):
         self.itemList.append(layout)
+
+    def addStretch(self):
+        pass
 
     def count(self):
         return len(self.itemList)
