@@ -58,10 +58,17 @@ class MainMenu(QWidget):
 
 
 class ChosenComponents(QWidget):
+    """
+    :type check_box: dict[int, QCheckBox]
+    """
     def __init__(self):
         super(ChosenComponents, self).__init__()
         self.setLayout(FlowLayout())
         self.check_box = dict()
+
+    def other_component_choose(self, num):
+        check = self.check_box[num]
+        check.setChecked(not check.isChecked())
 
     def set_chose(self, components_index, chosen_components):
         widget = QWidget()
@@ -91,7 +98,7 @@ class ChosenComponents(QWidget):
 class AlgorithmOptions(QWidget):
     labels_changed = pyqtSignal(np.ndarray)
 
-    def __init__(self, settings, control_view):
+    def __init__(self, settings, control_view, component_checker):
         """
         :type control_view: ImageState
         :type settings: ImageSettings
@@ -99,7 +106,7 @@ class AlgorithmOptions(QWidget):
         :param control_view:
         """
         super(AlgorithmOptions, self).__init__()
-        self.old_segmentation = None
+        self.settings = settings
         self.algorithm_choose = QComboBox()
         self.show_result = QCheckBox("Show result")
         self.show_result.setChecked(control_view.show_label)
@@ -150,10 +157,21 @@ class AlgorithmOptions(QWidget):
         self.only_borders.stateChanged.connect(control_view.set_borders)
         self.borders_thick.valueChanged.connect(control_view.set_borders_thick)
         settings.image_changed.connect(self.image_changed)
+        component_checker.component_clicked.connect(self.choose_components.other_component_choose)
+
+    def get_chosen_components(self):
+        return sorted(self.choose_components.get_chosen())
+
+    @property
+    def segmentation(self):
+        return self.settings.segmentation
+
+    @segmentation.setter
+    def segmentation(self, val):
+        self.settings.segmentation = val
 
     def image_changed(self):
-        print("buka2")
-        self.old_segmentation = None
+        self.segmentation = None
         self.choose_components.set_chose([], [])
 
     def execute_action(self):
@@ -163,15 +181,15 @@ class AlgorithmOptions(QWidget):
             blank = None
         else:
             if len(chosen) > 250:
-                blank = np.zeros(self.old_segmentation.shape, dtype=np.uint16)
+                blank = np.zeros(self.segmentation.shape, dtype=np.uint16)
             else:
-                blank = np.zeros(self.old_segmentation.shape, dtype=np.uint8)
+                blank = np.zeros(self.segmentation.shape, dtype=np.uint8)
             for i, v in enumerate(chosen):
-                blank[self.old_segmentation == v] = i+1
+                blank[self.segmentation == v] = i + 1
 
         widget = self.stack_layout.currentWidget()
         segmentation = widget.execute(blank)
-        self.old_segmentation = segmentation
+        self.segmentation = segmentation
         self.choose_components.set_chose(range(1, segmentation.max()+1), np.arange(len(chosen))+1)
         self.execute_btn.setEnabled(True)
         self.labels_changed.emit(segmentation)
@@ -216,13 +234,16 @@ class ImageInformation(QWidget):
 
 
 class Options(QTabWidget):
-    def __init__(self, settings, control_view, parent=None):
+    def __init__(self, settings, control_view, component_checker, parent=None):
         super(Options, self).__init__(parent)
         self._settings = settings
-        self.algorithm_options = AlgorithmOptions(settings, control_view)
+        self.algorithm_options = AlgorithmOptions(settings, control_view, component_checker)
         self.image_properties = ImageInformation(settings, parent)
         self.addTab(self.image_properties, "Image")
         self.addTab(self.algorithm_options, "Segmentation")
+
+    def get_chosen_components(self):
+        return self.algorithm_options.get_chosen_components()
 
 
 class MainWindow(QMainWindow):
@@ -233,7 +254,7 @@ class MainWindow(QMainWindow):
         self.main_menu = MainMenu(self.settings)
         self.image_view = ImageView(self.settings)
         image_view_control = self.image_view.get_control_view()
-        self.options_panel = Options(self.settings, image_view_control)
+        self.options_panel = Options(self.settings, image_view_control, self.image_view)
         self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
         self.options_panel.algorithm_options.labels_changed.connect(self.image_view.set_labels)

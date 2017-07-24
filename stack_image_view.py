@@ -64,6 +64,7 @@ class ImageState(QObject):
 class ImageCanvas(QLabel):
     zoom_mark = pyqtSignal(QPoint, QPoint)
     position_signal = pyqtSignal(QPoint, QSize)
+    click_signal = pyqtSignal(QPoint, QSize)
     leave_signal = pyqtSignal()
 
     def __init__(self, local_settings):
@@ -95,6 +96,8 @@ class ImageCanvas(QLabel):
         super(ImageCanvas, self).mousePressEvent(event)
         if self.local_settings.zoom:
             self.point = event.pos()
+        elif not self.local_settings.move:
+            self.click_signal.emit(event.pos(), self.size())
 
     def mouseMoveEvent(self, event):
         super(ImageCanvas, self).mouseMoveEvent(event)
@@ -225,6 +228,7 @@ class ChanelColor(QWidget):
 
 class ImageView(QWidget):
     position_changed = pyqtSignal([int, int, int], [int, int])
+    component_clicked = pyqtSignal(int)
 
     def __init__(self, settings):
         """:type settings: ImageSettings"""
@@ -278,16 +282,29 @@ class ImageView(QWidget):
 
         self.setLayout(main_layout)
         self.exclude_btn_list.extend([self.zoom_button, self.move_button])
-        self.zoom_button.clicked.connect(self.exclude_btn)
-        self.move_button.clicked.connect(self.exclude_btn)
+        self.zoom_button.clicked.connect(self.exclude_btn_fun)
+        self.move_button.clicked.connect(self.exclude_btn_fun)
 
         self.image_state.parameter_changed.connect(self.change_image)
         self.image_area.pixmap.position_signal.connect(self.position_info)
         self.image_area.pixmap.leave_signal.connect(self.clean_text)
+        self.image_area.pixmap.click_signal.connect(self.component_click)
         self.position_changed[int, int, int].connect(self.info_text_pos)
         self.position_changed[int, int].connect(self.info_text_pos)
 
-    def exclude_btn(self):
+    def component_click(self, point, size):
+        if self.labels_layer is None:
+            return
+        x = int(point.x() / size.width() * self.image_shape.width())
+        y = int(point.y() / size.height() * self.image_shape.height())
+        if self.layers_num > 1:
+            num = self.labels_layer[self.stack_slider.value(), y, x]
+        else:
+            num = self.labels_layer[y, x]
+        if num > 0:
+            self.component_clicked.emit(num)
+
+    def exclude_btn_fun(self):
         sender = self.sender()
         for el in self.exclude_btn_list:
             if el != sender:

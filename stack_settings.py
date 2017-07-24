@@ -15,6 +15,7 @@ class ImageSettings(QObject):
         self._image_path = ""
         self.has_channels = False
         self.image_spacing = 70, 70, 210
+        self.segmentation = None
 
     @property
     def batch_directory(self):
