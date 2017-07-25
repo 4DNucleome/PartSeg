@@ -13,6 +13,7 @@ from matplotlib.cm import get_cmap
 from matplotlib import pyplot
 import SimpleITK as sitk
 import collections
+from typing import Callable
 import custom_colormaps
 
 canvas_icon_size = QSize(27, 27)
@@ -233,7 +234,8 @@ class ImageView(QWidget):
     def __init__(self, settings):
         """:type settings: ImageSettings"""
         super(ImageView, self).__init__()
-        self.exclude_btn_list =[]
+        self.exclude_btn_list = []
+        self.check_fun = None
         self.image_state = ImageState()
         self.image_area = MyScrollArea(self.image_state)
         self.reset_button = create_tool_button("Reset zoom", "zoom-original.png")
@@ -292,6 +294,9 @@ class ImageView(QWidget):
         self.position_changed[int, int, int].connect(self.info_text_pos)
         self.position_changed[int, int].connect(self.info_text_pos)
 
+    def set_check_fun(self, fun: Callable[[int], bool]):
+        self.check_fun = fun
+
     def component_click(self, point, size):
         if self.labels_layer is None:
             return
@@ -313,7 +318,13 @@ class ImageView(QWidget):
     def event(self, event: QEvent):
 
         if event.type() == QEvent.ToolTip and self.component is not None:
-            QToolTip.showText(event.globalPos(), str(self.component))
+            text = str(self.component)
+            if self.check_fun is not None:
+                if self.check_fun(self.component):
+                    text = "☑{}".format(self.component)
+                else:
+                    text = "☐{}".format(self.component)
+            QToolTip.showText(event.globalPos(), text)
         return super(ImageView, self).event(event)
 
     def clean_text(self):

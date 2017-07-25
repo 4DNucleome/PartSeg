@@ -65,15 +65,34 @@ class ChosenComponents(QWidget):
         super(ChosenComponents, self).__init__()
         self.setLayout(FlowLayout())
         self.check_box = dict()
+        self.check_all_btn = QPushButton("Check all")
+        self.check_all_btn.clicked.connect(self.check_all)
+        self.un_check_all_btn = QPushButton("Un check all")
+        self.un_check_all_btn.clicked.connect(self.un_check_all)
 
     def other_component_choose(self, num):
         check = self.check_box[num]
         check.setChecked(not check.isChecked())
 
+    def check_all(self):
+        for el in self.check_box.values():
+            el.setChecked(True)
+
+    def un_check_all(self):
+        for el in self.check_box.values():
+            el.setChecked(False)
+
     def set_chose(self, components_index, chosen_components):
         widget = QWidget()
         widget.setLayout(self.layout())
-        self.setLayout(FlowLayout())
+        main_layout = QVBoxLayout()
+        btn_layout = QHBoxLayout()
+        btn_layout.addWidget(self.check_all_btn)
+        btn_layout.addWidget(self.un_check_all_btn)
+        check_layout = FlowLayout()
+        main_layout.addLayout(btn_layout)
+        main_layout.addLayout(check_layout)
+        self.setLayout(main_layout)
         self.check_box.clear()
         chosen_components = set(chosen_components)
         for el in components_index:
@@ -81,11 +100,14 @@ class ChosenComponents(QWidget):
             if el in chosen_components:
                 check.setChecked(True)
             self.check_box[el] = check
-            self.layout().addWidget(check)
+            check_layout.addWidget(check)
         self.update()
 
     def change_state(self, num, val):
         self.check_box[num].setChecked(val)
+
+    def get_state(self, num: int) -> bool:
+        return self.check_box[num].isChecked()
 
     def get_chosen(self):
         res = []
@@ -255,6 +277,7 @@ class MainWindow(QMainWindow):
         self.image_view = ImageView(self.settings)
         image_view_control = self.image_view.get_control_view()
         self.options_panel = Options(self.settings, image_view_control, self.image_view)
+        self.image_view.set_check_fun(self.options_panel.algorithm_options.choose_components.get_state)
         self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
         self.options_panel.algorithm_options.labels_changed.connect(self.image_view.set_labels)
