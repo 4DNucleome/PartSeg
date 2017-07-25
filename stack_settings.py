@@ -1,5 +1,7 @@
 from qt_import import QObject, pyqtSignal
 import numpy as np
+from typing import List
+from io_functions import save_stack_segmentation
 
 
 class ImageSettings(QObject):
@@ -10,12 +12,29 @@ class ImageSettings(QObject):
 
     def __init__(self):
         super(ImageSettings, self).__init__()
-        self.open_directory = ""
+        self.open_directory = None
+        self.save_directory = None
         self._image = None
         self._image_path = ""
         self.has_channels = False
         self.image_spacing = 70, 70, 210
         self.segmentation = None
+        self.chosen_components_widget = None
+
+    def chosen_components(self) -> List[int]:
+        if self.chosen_components_widget is not None:
+            return sorted(self.chosen_components_widget.get_chosen())
+        else:
+            raise RuntimeError("chosen_components_widget do not idealized")
+
+    def component_is_chosen(self, val: int) -> bool:
+        if self.chosen_components_widget is not None:
+            return self.chosen_components_widget.get_state(val)
+        else:
+            raise RuntimeError("chosen_components_widget do not idealized")
+
+    def save_segmentation(self, path):
+        save_stack_segmentation(path, self.segmentation, self.chosen_components())
 
     @property
     def batch_directory(self):
@@ -42,6 +61,14 @@ class ImageSettings(QObject):
             if value.shape[-1] > 10:
                 self._image = np.swapaxes(value, 1, 3)
                 self._image = np.swapaxes(self._image, 1, 2)
+        elif len(value.shape) == 3:
+            if value.shape[-1] > 10:
+                self._image = self._image.reshape(self._image.shape + (1,))
+            else:
+                self._image = self._image.reshape((1,) + self._image.shape)
+        else:
+            self._image = self._image.reshape((1,) + self._image.shape + (1,))
+
         if file_path is not None:
             self._image_path = file_path
             self.image_changed[str].emit(self._image_path)

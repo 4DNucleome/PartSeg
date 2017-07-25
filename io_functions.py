@@ -315,3 +315,16 @@ def save_to_xyz(file_path, settings, segment):
     data = np.append(positions, values, axis=1)
     df = pd.DataFrame(data, copy=True)
     df.to_csv(file_path, header=False, index=False, sep=' ')
+
+
+def save_stack_segmentation(file_path, segmentation, list_of_components):
+    folder_path = tempfile.mkdtemp()
+    np.save(os.path.join(folder_path, "segmentation.npy"), segmentation)
+    with open(os.path.join(folder_path, "metadata.json"), 'w') as ff:
+        json.dump(list_of_components, ff)
+    if not os.path.exists(os.path.dirname(file_path)):
+        os.makedirs(os.path.dirname(file_path))
+    tar = tarfile.open(file_path, 'w:gz')
+    for name in os.listdir(folder_path):
+        tar.add(os.path.join(folder_path, name), name)
+    tar.close()

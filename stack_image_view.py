@@ -2,7 +2,7 @@ from __future__ import division, print_function
 from qt_import import QMainWindow, QPixmap, QImage, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QSize, QAction, Qt, QPainter, QPen, QGridLayout, \
     QColor, QScrollBar, QApplication, pyqtSignal, QPoint, QSlider, QMessageBox, QCheckBox, QComboBox, QSize, QObject, \
-    QEvent, QToolTip
+    QEvent, QToolTip, QHelpEvent
 import os
 from global_settings import file_folder, use_qt5
 from stack_settings import ImageSettings
@@ -234,8 +234,8 @@ class ImageView(QWidget):
     def __init__(self, settings):
         """:type settings: ImageSettings"""
         super(ImageView, self).__init__()
+        self._settings = settings
         self.exclude_btn_list = []
-        self.check_fun = None
         self.image_state = ImageState()
         self.image_area = MyScrollArea(self.image_state)
         self.reset_button = create_tool_button("Reset zoom", "zoom-original.png")
@@ -294,9 +294,6 @@ class ImageView(QWidget):
         self.position_changed[int, int, int].connect(self.info_text_pos)
         self.position_changed[int, int].connect(self.info_text_pos)
 
-    def set_check_fun(self, fun: Callable[[int], bool]):
-        self.check_fun = fun
-
     def component_click(self, point, size):
         if self.labels_layer is None:
             return
@@ -319,11 +316,11 @@ class ImageView(QWidget):
 
         if event.type() == QEvent.ToolTip and self.component is not None:
             text = str(self.component)
-            if self.check_fun is not None:
-                if self.check_fun(self.component):
-                    text = "☑{}".format(self.component)
-                else:
-                    text = "☐{}".format(self.component)
+            assert(isinstance(event, QHelpEvent))
+            if self._settings.component_is_chosen(self.component):
+                text = "☑{}".format(self.component)
+            else:
+                text = "☐{}".format(self.component)
             QToolTip.showText(event.globalPos(), text)
         return super(ImageView, self).event(event)
 
@@ -332,6 +329,8 @@ class ImageView(QWidget):
 
     def info_text_pos(self, *pos):
         brightness = self.image[pos]
+        pos2 = list(pos)
+        pos2[0] += 1
         if isinstance(brightness, collections.Iterable):
             res_brightness = []
             for i, b in enumerate(brightness):
@@ -346,9 +345,9 @@ class ImageView(QWidget):
             if comp == 0:
                 comp = "none"
                 self.component = None
-            self.info_text.setText("Position: {}, Brightness: {}, component {}".format(tuple(pos), brightness, comp))
+            self.info_text.setText("Position: {}, Brightness: {}, component {}".format(tuple(pos2), brightness, comp))
         else:
-            self.info_text.setText("Position: {}, Brightness: {}".format(tuple(pos), brightness))
+            self.info_text.setText("Position: {}, Brightness: {}".format(tuple(pos2), brightness))
 
     def position_info(self, point, size):
         """
@@ -359,10 +358,7 @@ class ImageView(QWidget):
         """
         x = int(point.x() / size.width() * self.image_shape.width())
         y = int(point.y() / size.height() * self.image_shape.height())
-        if self.layers_num > 1:
-            self.position_changed[int, int, int].emit(self.stack_slider.value()+1, y, x)
-        else:
-            self.position_changed[int, int].emit(y, x)
+        self.position_changed[int, int, int].emit(self.stack_slider.value(), y, x)
 
     def get_control_view(self):
         # type: () -> ImageState
@@ -375,24 +371,17 @@ class ImageView(QWidget):
         self.layer_info.setText("{} of {}".format(num+1, self.layers_num))
 
     def change_image(self):
-        if self.layers_num > 1:
-            img = self.image[self.stack_slider.value()]
-        else:
-            img = self.image
-        if self.channels_num > 1:
-            res = np.zeros(img.shape[:2]+(4,), dtype=np.float)
-            for i in range(self.channels_num):
-                try:
-                    if self.chanel_color[i].channel_visible():
+        img = self.image[self.stack_slider.value()]
+        res = np.zeros(img.shape[:2]+(4,), dtype=np.float)
+        for i in range(self.channels_num):
+            try:
+                if self.chanel_color[i].channel_visible():
 
-                        colormap = self.chanel_color[i].colormap(*self.border_val[i])
-                        res = np.maximum(res,  colormap(img[..., i]))
-                except IndexError as e:
-                    print(e)
-                    break
-        else:
-            colormap = self.chanel_color[0].colormap(*self.border_val[0])
-            res = colormap(img)
+                    colormap = self.chanel_color[i].colormap(*self.border_val[i])
+                    res = np.maximum(res,  colormap(img[..., i]))
+            except IndexError as e:
+                print(e)
+                break
         # res[res > 1] = 1
         res = res[..., 0:3]
         im = np.array(res * 255, dtype=np.uint8)
@@ -424,27 +413,13 @@ class ImageView(QWidget):
         self.layers_num = 1
         self.border_val = []
         self.labels_layer = None
-        image = np.squeeze(image)
+        # image = np.squeeze(image)
         self.image = image
-        if len(image.shape) == 2:
-            self.image_shape = QSize(image.shape[1], image.shape[0])
-            pass
-            #self.image_area.set_image(image)
-        elif len(image.shape) == 3:
-            if image.shape[-1] < 10:
-                self.channels_num = image.shape[-1]
-                self.image_shape = QSize(image.shape[1], image.shape[0])
-            else:
-                self.layers_num = image.shape[0]
-                self.image_shape = QSize(image.shape[2], image.shape[1])
-        elif len(image.shape) == 4:
-            self.channels_num = image.shape[-1]
-            self.layers_num = image.shape[0]
-            self.image_shape = QSize(image.shape[2], image.shape[1])
-        else:
-            QMessageBox.warning(self, "Open error", "Shape {} of image do not supported".format(image.shape))
+        self.channels_num = image.shape[-1]
+        self.layers_num = image.shape[0]
+        self.image_shape = QSize(image.shape[2], image.shape[1])
         self.border_val = []
-        if self.channels_num > 1:
+        if self.channels_num > 0:
             for i in range(self.channels_num):
                 self.border_val.append((np.min(image[..., i]), np.max(image[..., i])))
         else:
@@ -457,7 +432,7 @@ class ImageView(QWidget):
             el.setVisible(False)
         for el in self.chanel_color[:self.channels_num]:
             el.setVisible(True)
-        self.change_image()
+        #self.change_image()
         self.change_layer(int(self.layers_num/2))
         # self.image_area.set_image(image)
 
@@ -467,8 +442,6 @@ class ImageView(QWidget):
 
     def showEvent(self, event):
         super(ImageView, self).showEvent(event)
-        #if not event.spontaneous():
-        #    self.btn_layout.addStretch(1)
 
 
 class MyScrollArea(QScrollArea):

@@ -3,7 +3,7 @@ import tifffile as tif
 from qt_import import QMainWindow, QPixmap, QImage, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QSize, QAction, Qt, QPainter, QPen, \
     QColor, QScrollBar, QApplication, pyqtSignal, QPoint, QSlider, QSpinBox, QComboBox, QTabWidget, QDoubleSpinBox, \
-    QFormLayout, QAbstractSpinBox, QStackedLayout, QCheckBox
+    QFormLayout, QAbstractSpinBox, QStackedLayout, QCheckBox, QMessageBox
 from stack_settings import ImageSettings
 from stack_image_view import ImageView
 from universal_gui_part import right_label, Spacing
@@ -34,11 +34,12 @@ class MainMenu(QWidget):
         self.load_segmentation_btn = QPushButton("Load segmentation")
 
         self.save_segmentation_btn = QPushButton("Save segmentation")
-        self.save_cutted_parts = QPushButton("Save results")
+        self.save_segmentation_btn.clicked.connect(self.save_segmentation)
+        self.save_catted_parts = QPushButton("Save results")
         layout = QHBoxLayout()
         layout.addWidget(self.load_image_btn)
         layout.addWidget(self.load_segmentation_btn)
-        layout.addWidget(self.save_cutted_parts)
+        layout.addWidget(self.save_catted_parts)
         layout.addWidget(self.save_segmentation_btn)
         self.setLayout(layout)
 
@@ -55,6 +56,22 @@ class MainMenu(QWidget):
         im = tif.imread(file_path)
         self.settings.image = im, file_path
         # self.image_loaded.emit()
+
+    def save_segmentation(self):
+        if self.settings.segmentation is None:
+            QMessageBox.warning(self, "No segmentation", "No segmentation to save")
+            return
+        dial = QFileDialog()
+        dial.setFileMode(QFileDialog.AnyFile)
+        dial.setDirectory(self.settings.save_directory)
+        dial.setAcceptMode(QFileDialog.AcceptSave)
+        filters = ["segmentation (*.seg *.tgz)"]
+        dial.setNameFilters(filters)
+        if not dial.exec_():
+            return
+        file_path = str(dial.selectedFiles()[0])
+        self.settings.save_directory = os.path.dirname(str(file_path))
+        self.settings.save_segmentation(file_path)
 
 
 class ChosenComponents(QWidget):
@@ -180,6 +197,7 @@ class AlgorithmOptions(QWidget):
         self.borders_thick.valueChanged.connect(control_view.set_borders_thick)
         settings.image_changed.connect(self.image_changed)
         component_checker.component_clicked.connect(self.choose_components.other_component_choose)
+        settings.chosen_components_widget = self.choose_components
 
     def get_chosen_components(self):
         return sorted(self.choose_components.get_chosen())
@@ -277,7 +295,6 @@ class MainWindow(QMainWindow):
         self.image_view = ImageView(self.settings)
         image_view_control = self.image_view.get_control_view()
         self.options_panel = Options(self.settings, image_view_control, self.image_view)
-        self.image_view.set_check_fun(self.options_panel.algorithm_options.choose_components.get_state)
         self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
         self.options_panel.algorithm_options.labels_changed.connect(self.image_view.set_labels)

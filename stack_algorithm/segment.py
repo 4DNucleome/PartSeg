@@ -343,6 +343,6 @@ def save_catted_list(images, path, prefix=""):
     for num, image in images:
         name = prefix + str(num) + ".tif"
         image = sitk.GetImageFromArray(image)
-        image.SetSpacing((1,1,3))
+        image.SetSpacing((1, 1, 3))
         sitk.WriteImage(image, join(path, name))
 

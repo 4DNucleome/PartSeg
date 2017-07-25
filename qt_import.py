@@ -38,7 +38,7 @@ if use_qt5:
         QRadioButton, QButtonGroup, QSizePolicy, QScrollBar, QLayout, QLayoutItem, QStyle, QFormLayout, \
         QStackedLayout, QToolTip
 
-    from PyQt5.QtGui import QFont, QFontMetrics, QIcon, QPixmap, QImage, QPainter, QPen, QColor, QPalette
+    from PyQt5.QtGui import QFont, QFontMetrics, QIcon, QPixmap, QImage, QPainter, QPen, QColor, QPalette, QHelpEvent
     from PyQt5.QtHelp import QHelpEngine
 else:
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
