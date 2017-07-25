@@ -111,7 +111,8 @@ class AlgorithmSettingsWidget(QWidget):
         return res
 
     def execute(self, exclude_mask=None):
-        return self.algorithm.execute(**{"exclude_mask": exclude_mask, **self.get_values()})
+        res = self.algorithm.execute(**{"exclude_mask": exclude_mask, **self.get_values()})
+        return res
 
 
 AbstractAlgorithmSettingsWidget.register(AlgorithmSettingsWidget)

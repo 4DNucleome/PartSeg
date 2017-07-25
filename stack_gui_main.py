@@ -32,10 +32,11 @@ class MainMenu(QWidget):
         self.load_image_btn = QPushButton("Load image")
         self.load_image_btn.clicked.connect(self.load_image)
         self.load_segmentation_btn = QPushButton("Load segmentation")
-
+        self.load_segmentation_btn.clicked.connect(self.load_segmentation)
         self.save_segmentation_btn = QPushButton("Save segmentation")
         self.save_segmentation_btn.clicked.connect(self.save_segmentation)
         self.save_catted_parts = QPushButton("Save results")
+        self.save_catted_parts.clicked.connect(self.save_result)
         layout = QHBoxLayout()
         layout.addWidget(self.load_image_btn)
         layout.addWidget(self.load_segmentation_btn)
@@ -57,6 +58,18 @@ class MainMenu(QWidget):
         self.settings.image = im, file_path
         # self.image_loaded.emit()
 
+    def load_segmentation(self):
+        dial = QFileDialog()
+        dial.setFileMode(QFileDialog.ExistingFile)
+        dial.setDirectory(self.settings.open_directory)
+        filters = ["segmentation (*.seg *.tgz)"]
+        dial.setNameFilters(filters)
+        if not dial.exec_():
+            return
+        file_path = str(dial.selectedFiles()[0])
+        self.settings.open_directory = os.path.dirname(str(file_path))
+        self.settings.load_segmentation(file_path)
+
     def save_segmentation(self):
         if self.settings.segmentation is None:
             QMessageBox.warning(self, "No segmentation", "No segmentation to save")
@@ -72,6 +85,19 @@ class MainMenu(QWidget):
         file_path = str(dial.selectedFiles()[0])
         self.settings.save_directory = os.path.dirname(str(file_path))
         self.settings.save_segmentation(file_path)
+
+    def save_result(self):
+        if self.settings.segmentation is None:
+            QMessageBox.warning(self, "No segmentation", "No segmentation to save")
+            return
+        dial = QFileDialog()
+        dial.setFileMode(QFileDialog.Directory)
+        dial.setDirectory(self.settings.save_directory)
+        if not dial.exec_():
+            return
+        file_path = str(dial.selectedFiles()[0])
+        self.settings.save_directory = os.path.dirname(str(file_path))
+        self.settings.save_result(file_path)
 
 
 class ChosenComponents(QWidget):
@@ -135,8 +161,6 @@ class ChosenComponents(QWidget):
 
 
 class AlgorithmOptions(QWidget):
-    labels_changed = pyqtSignal(np.ndarray)
-
     def __init__(self, settings, control_view, component_checker):
         """
         :type control_view: ImageState
@@ -232,7 +256,6 @@ class AlgorithmOptions(QWidget):
         self.segmentation = segmentation
         self.choose_components.set_chose(range(1, segmentation.max()+1), np.arange(len(chosen))+1)
         self.execute_btn.setEnabled(True)
-        self.labels_changed.emit(segmentation)
 
 
 class ImageInformation(QWidget):
@@ -297,8 +320,6 @@ class MainWindow(QMainWindow):
         self.options_panel = Options(self.settings, image_view_control, self.image_view)
         self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
-        self.options_panel.algorithm_options.labels_changed.connect(self.image_view.set_labels)
-
         # self.scroll_area.setVisible(False)
         # self.scroll_area.setS
 

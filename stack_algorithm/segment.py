@@ -53,8 +53,12 @@ def add_frame(image, frame):
     new_shape = []
     pos = []
     for x in image.shape[:3]:
-        new_shape.append(x + 2*frame)
-        pos.append(slice(frame, x+frame))
+        if x != 1:
+            new_shape.append(x + 2*frame)
+            pos.append(slice(frame, x+frame))
+        else:
+            new_shape.append(1)
+            pos.append(slice(0, 1))
     new_shape = tuple(new_shape) + image.shape[3:]
     pos = tuple(pos)
     res = np.zeros(new_shape, dtype=image.dtype)
@@ -90,7 +94,7 @@ def remove_frame(image, frame):
 def cut_positive(image, with_position=False, dtype=None):
     positions = np.transpose(np.nonzero(image))
     lower = np.min(positions, 0)
-    upper = np.max(positions, 0)
+    upper = np.max(positions, 0)+1
     pos = []
     for a, b in zip(lower, upper):
         pos.append(slice(a, b))
@@ -286,8 +290,6 @@ def cut_with_mask(mask, image, ignore=None, only=None):
         ignore = set()
     else:
         ignore = set(ignore)
-    #print "Image shape", image.shape
-    #print "Mask shape", mask.shape
     if len(image.shape) > len(mask.shape):
         apos = -1
         j = 0
@@ -302,11 +304,11 @@ def cut_with_mask(mask, image, ignore=None, only=None):
             else:
                 i+=1
                 j+=1
-        image = image.swapaxes(apos,len(image.shape)-1)
-        while apos < len(image.shape) - 2:
-            image = image.swapaxes(apos,apos+1);
-            apos += 1
-    #print "Image shape", image.shape
+        if apos != -1:
+            image = image.swapaxes(apos,len(image.shape)-1)
+            while apos < len(image.shape) - 2:
+                image = image.swapaxes(apos,apos+1);
+                apos += 1
     nonzero = np.bincount(mask.flat)
     res = []
     if only is None:
@@ -318,7 +320,6 @@ def cut_with_mask(mask, image, ignore=None, only=None):
             continue
         sub_mask, pos = cut_positive(mask == val, True)
         res2 = np.copy(image[pos])
-        #print val, res2.shape
         if len(res2.shape) > len(sub_mask.shape):
 
             for i in range(res2.shape[-1]):
@@ -326,13 +327,13 @@ def cut_with_mask(mask, image, ignore=None, only=None):
         else:
             res2 *= sub_mask
         res.append((val, add_frame(res2, 3)))
-        # print val, res2.shape
     return res
 
 
-def save_catted_list(images, path, prefix=""):
+def save_catted_list(images, path, prefix="", suffix=""):
     """
-    :type images: [int, np.ndarray]
+    :type images: list[int, np.ndarray]
+    :type path: str
     :param images:
     :param path:
     :param prefix:
@@ -341,8 +342,6 @@ def save_catted_list(images, path, prefix=""):
     if not isdir(path):
         makedirs(path)
     for num, image in images:
-        name = prefix + str(num) + ".tif"
-        image = sitk.GetImageFromArray(image)
-        image.SetSpacing((1, 1, 3))
-        sitk.WriteImage(image, join(path, name))
+        name = prefix + str(num) + suffix + ".tif"
+        tifffile.imsave(join(path, name), image)
 

@@ -320,11 +320,22 @@ def save_to_xyz(file_path, settings, segment):
 def save_stack_segmentation(file_path, segmentation, list_of_components):
     folder_path = tempfile.mkdtemp()
     np.save(os.path.join(folder_path, "segmentation.npy"), segmentation)
+    metadata = {"components" : list_of_components, "shape": segmentation.shape}
     with open(os.path.join(folder_path, "metadata.json"), 'w') as ff:
-        json.dump(list_of_components, ff)
+        json.dump(metadata, ff)
     if not os.path.exists(os.path.dirname(file_path)):
         os.makedirs(os.path.dirname(file_path))
     tar = tarfile.open(file_path, 'w:gz')
     for name in os.listdir(folder_path):
         tar.add(os.path.join(folder_path, name), name)
     tar.close()
+
+
+def load_stack_segmentation(file_path):
+    tar_ob = tarfile.open(file_path)
+    metadata = json.load(tar_ob.extractfile("metadata.json"))
+    folder_path = tempfile.mkdtemp()
+    tar_ob.extract("segmentation.npy", folder_path)
+    segmentation = np.load(os.path.join(folder_path, "segmentation.npy"))
+    segmentation = segmentation.reshape(metadata["shape"])
+    return segmentation, metadata["components"]

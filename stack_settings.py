@@ -1,7 +1,9 @@
 from qt_import import QObject, pyqtSignal
 import numpy as np
 from typing import List
-from io_functions import save_stack_segmentation
+from io_functions import save_stack_segmentation, load_stack_segmentation
+from stack_algorithm.segment import cut_with_mask, save_catted_list
+from os import path
 
 
 class ImageSettings(QObject):
@@ -9,6 +11,7 @@ class ImageSettings(QObject):
     :type _image: np.ndarray
     """
     image_changed = pyqtSignal([np.ndarray], [int], [str])
+    segmentation_changed = pyqtSignal(np.ndarray)
 
     def __init__(self):
         super(ImageSettings, self).__init__()
@@ -18,8 +21,18 @@ class ImageSettings(QObject):
         self._image_path = ""
         self.has_channels = False
         self.image_spacing = 70, 70, 210
-        self.segmentation = None
+        self._segmentation = None
         self.chosen_components_widget = None
+
+    @property
+    def segmentation(self) -> np.ndarray:
+        return self._segmentation
+
+    @segmentation.setter
+    def segmentation(self, val: np.ndarray):
+        self._segmentation = val
+        if val is not None:
+            self.segmentation_changed.emit(val)
 
     def chosen_components(self) -> List[int]:
         if self.chosen_components_widget is not None:
@@ -33,8 +46,19 @@ class ImageSettings(QObject):
         else:
             raise RuntimeError("chosen_components_widget do not idealized")
 
-    def save_segmentation(self, path):
-        save_stack_segmentation(path, self.segmentation, self.chosen_components())
+    def save_segmentation(self, file_path: str):
+        save_stack_segmentation(file_path, self.segmentation, self.chosen_components())
+
+    def load_segmentation(self, file_path: str):
+        self.segmentation, catted = load_stack_segmentation(file_path)
+        num = self.segmentation.max()
+        self.chosen_components_widget.set_chose(range(1, num+1), catted)
+
+    def save_result(self, dir_path: str):
+        res_img = cut_with_mask(self.segmentation, self._image, only=self.chosen_components())
+        res_mask = cut_with_mask(self.segmentation, self.segmentation, only=self.chosen_components())
+        save_catted_list(res_img, dir_path, prefix="component")
+        save_catted_list(res_mask, dir_path, prefix="component", suffix="_mask")
 
     @property
     def batch_directory(self):

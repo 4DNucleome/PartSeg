@@ -30,10 +30,10 @@ class ImageState(QObject):
         super(ImageState, self).__init__()
         self.zoom = False
         self.move = False
-        self.opacity = 0.7
+        self.opacity = 1
         self.show_label = True
         self.only_borders = True
-        self.borders_thick = 2
+        self.borders_thick = 1
 
     def set_zoom(self, val):
         self.zoom = val
@@ -293,16 +293,14 @@ class ImageView(QWidget):
         self.image_area.pixmap.click_signal.connect(self.component_click)
         self.position_changed[int, int, int].connect(self.info_text_pos)
         self.position_changed[int, int].connect(self.info_text_pos)
+        settings.segmentation_changed.connect(self.set_labels)
 
     def component_click(self, point, size):
         if self.labels_layer is None:
             return
         x = int(point.x() / size.width() * self.image_shape.width())
         y = int(point.y() / size.height() * self.image_shape.height())
-        if self.layers_num > 1:
-            num = self.labels_layer[self.stack_slider.value(), y, x]
-        else:
-            num = self.labels_layer[y, x]
+        num = self.labels_layer[self.stack_slider.value(), y, x]
         if num > 0:
             self.component_clicked.emit(num)
 
@@ -387,10 +385,7 @@ class ImageView(QWidget):
         im = np.array(res * 255, dtype=np.uint8)
         del res
         if self.labels_layer is not None and self.image_state.show_label:
-            if self.layers_num > 1:
-                layers = self.labels_layer[self.stack_slider.value()]
-            else:
-                layers = self.labels_layer
+            layers = self.labels_layer[self.stack_slider.value()]
             if self.image_state.only_borders:
                 bord = sitk.LabelContour(sitk.GetImageFromArray(layers))
                 if self.image_state.borders_thick > 1:
@@ -432,7 +427,7 @@ class ImageView(QWidget):
             el.setVisible(False)
         for el in self.chanel_color[:self.channels_num]:
             el.setVisible(True)
-        #self.change_image()
+        self.change_image()
         self.change_layer(int(self.layers_num/2))
         # self.image_area.set_image(image)
 
