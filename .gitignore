@@ -96,6 +96,7 @@ var/
 !main.spec
 !main-nonpack.spec
 !PartSeg.spec
+!PartSeg-linux.spec
 !PartSeg-non-pack.spec
 
 # Installer logs

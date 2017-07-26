@@ -177,7 +177,7 @@ def simply_segment(image, min_size, prefix, last_step=True, step_list=None, min_
     if min_threshold is not None:
         stat = sitk.MinimumMaximumImageFilter()
         stat.Execute(image)
-        thr2 = sitk.BinaryThreshold(image,min_threshold, stat.GetMaximum())
+        thr2 = sitk.BinaryThreshold(image, min_threshold, stat.GetMaximum())
         thr = sitk.Minimum(thr, thr2)
     if DEBUG:
         test = sitk.GetArrayFromImage(sitk.Mask(image, thr))

@@ -23,6 +23,7 @@ class ImageSettings(QObject):
         self.image_spacing = 70, 70, 210
         self._segmentation = None
         self.chosen_components_widget = None
+        self.sizes = []
 
     @property
     def segmentation(self) -> np.ndarray:
@@ -32,7 +33,10 @@ class ImageSettings(QObject):
     def segmentation(self, val: np.ndarray):
         self._segmentation = val
         if val is not None:
+            self.sizes = np.bincount(val.flat)
             self.segmentation_changed.emit(val)
+        else:
+            self.sizes = []
 
     def chosen_components(self) -> List[int]:
         if self.chosen_components_widget is not None:

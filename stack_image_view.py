@@ -343,7 +343,10 @@ class ImageView(QWidget):
             if comp == 0:
                 comp = "none"
                 self.component = None
-            self.info_text.setText("Position: {}, Brightness: {}, component {}".format(tuple(pos2), brightness, comp))
+            else:
+                comp = "{} (size: {})".format(comp, self._settings.sizes[comp])
+            self.info_text.setText("Position: {}, Brightness: {}, component {}".format(
+                tuple(pos2), brightness, comp))
         else:
             self.info_text.setText("Position: {}, Brightness: {}".format(tuple(pos2), brightness))
 

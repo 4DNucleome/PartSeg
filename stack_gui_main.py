@@ -328,6 +328,7 @@ class AlgorithmOptions(QWidget):
 
     def progress_info(self, text, num):
         self.progress_info_lab.setVisible(True)
+        print(text)
         self.progress_info_lab.setText(text)
         if self.is_batch_process:
             self.progress_bar.setValue(num)

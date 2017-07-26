@@ -62,9 +62,9 @@ b_exe = EXE(b_pyz,
           icon='icon.icns')
 
 b_coll = COLLECT(b_exe,
-               a.binaries,
-               a.zipfiles,
-               a.datas,
+               b.binaries,
+               b.zipfiles,
+               b.datas,
                strip=False,
                upx=True,
                name='StackSeg')

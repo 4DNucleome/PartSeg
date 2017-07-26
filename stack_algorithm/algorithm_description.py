@@ -4,7 +4,8 @@ import sys
 from abc import ABCMeta, abstractmethod
 from stack_settings import ImageSettings
 from six import with_metaclass
-from .threshold_algorithm import ThresholdAlgorithm, ThresholdPreview, SegmentationAlgorithm
+from .threshold_algorithm import ThresholdAlgorithm, ThresholdPreview, SegmentationAlgorithm, \
+    AutoThresholdAlgorithm
 from typing import Type
 from io_functions import save_stack_segmentation, load_stack_segmentation
 from os import path
@@ -217,12 +218,18 @@ threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 10000, (0, 10
                        AlgorithmProperty("use_gauss", "Use gauss", False, (True, False)),
                        AlgorithmProperty("gauss_radius", "Use gauss", 1.0, (0, 10), 0.1)]
 
-auto_threshold_algorithm = [AlgorithmProperty("suggested_size", "Suggested size", 80000, (0, 10 ** 6), 1000),
-                            AlgorithmProperty("threshold", "Minimum Threshold", 1000, (0, 10 ** 6), 100),
-                            AlgorithmProperty("minimum_size", "Minimum size", 40000, (0, 10 ** 6), 1000)]
+auto_threshold_algorithm = [AlgorithmProperty("suggested_size", "Suggested size", 200000, (0, 10 ** 6), 1000),
+                            AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100),
+                            AlgorithmProperty("minimum_size", "Minimum size", 8000, (0, 10 ** 6), 1000),
+                            AlgorithmProperty("close_holes", "Close small holes", True, (True, False)),
+                            AlgorithmProperty("close_holes_size", "Small holes size", 200, (0, 10 ** 3), 10),
+                            AlgorithmProperty("smooth_border", "Smooth borders", True, (True, False)),
+                            AlgorithmProperty("smooth_border_radius", "Smooth borders radius", 2, (0, 20), 1),
+                            AlgorithmProperty("use_gauss", "Use gauss", False, (True, False)),
+                            AlgorithmProperty("gauss_radius", "Use gauss", 1.0, (0, 10), 0.1)]
 
 stack_algorithm_dict = {
     "Threshold": (threshold_algorithm, ThresholdAlgorithm),
-    "Auto Threshold": (auto_threshold_algorithm, ThresholdAlgorithm),
+    "Auto Threshold": (auto_threshold_algorithm, AutoThresholdAlgorithm),
     "Only Threshold": (only_threshold_algorithm, ThresholdPreview)
 }
