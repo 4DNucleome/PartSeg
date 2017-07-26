@@ -1,8 +1,7 @@
 from __future__ import division
 import tifffile as tif
-from qt_import import QMainWindow, QPixmap, QImage, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, \
-    QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QSize, QAction, Qt, QPainter, QPen, \
-    QColor, QScrollBar, QApplication, pyqtSignal, QPoint, QSlider, QSpinBox, QComboBox, QTabWidget, QDoubleSpinBox, \
+from qt_import import QMainWindow, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel, Qt, \
+    pyqtSignal, QSpinBox, QComboBox, QTabWidget, QDoubleSpinBox, QProgressBar,\
     QFormLayout, QAbstractSpinBox, QStackedLayout, QCheckBox, QMessageBox
 from stack_settings import ImageSettings
 from stack_image_view import ImageView
@@ -190,7 +189,15 @@ class AlgorithmOptions(QWidget):
         for name, val in stack_algorithm_dict.items():
             self.algorithm_choose.addItem(name)
             widget = AlgorithmSettingsWidget(settings, *val)
+            widget.algorithm.execution_done.connect(self.execution_done)
+            widget.algorithm.progress_signal.connect(self.progress_info)
             self.stack_layout.addWidget(widget)
+        self.chosen_list = []
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 0)
+        self.progress_bar.setHidden(True)
+        self.progress_info = QLabel()
+        self.progress_info.setHidden(True)
 
         main_layout = QVBoxLayout()
         opt_layout = QHBoxLayout()
@@ -207,6 +214,8 @@ class AlgorithmOptions(QWidget):
         btn_layout.addWidget(self.execute_btn)
         btn_layout.addWidget(self.execute_all_btn)
         main_layout.addLayout(btn_layout)
+        main_layout.addWidget(self.progress_bar)
+        main_layout.addWidget(self.progress_info)
         main_layout.addWidget(self.algorithm_choose)
         main_layout.addLayout(self.stack_layout)
         main_layout.addWidget(self.choose_components)
@@ -250,12 +259,21 @@ class AlgorithmOptions(QWidget):
                 blank = np.zeros(self.segmentation.shape, dtype=np.uint8)
             for i, v in enumerate(chosen):
                 blank[self.segmentation == v] = i + 1
-
+        self.progress_bar.setHidden(False)
         widget = self.stack_layout.currentWidget()
-        segmentation = widget.execute(blank)
+        widget.execute(blank)
+        self.chosen_list = chosen
+
+    def progress_info(self, text, num):
+        self.progress_info.setVisible(True)
+        self.progress_info.setText(text)
+
+    def execution_done(self, segmentation):
         self.segmentation = segmentation
-        self.choose_components.set_chose(range(1, segmentation.max()+1), np.arange(len(chosen))+1)
+        self.choose_components.set_chose(range(1, segmentation.max() + 1), np.arange(len(self.chosen_list)) + 1)
         self.execute_btn.setEnabled(True)
+        self.progress_bar.setHidden(True)
+        self.progress_info.setHidden(True)
 
 
 class ImageInformation(QWidget):

@@ -3,67 +3,120 @@ import SimpleITK as sitk
 from utils import bisect
 from .segment import close_small_holes, opening
 from image_operations import gaussian
+from qt_import import QThread, pyqtSignal
 
 
-class ThresholdPreview(object):
+class SegmentationAlgorithm(QThread):
+    execution_done = pyqtSignal(np.ndarray)
+    progress_signal = pyqtSignal(str, int)
+
+    def set_parameters(self, *args, **kwargs):
+        raise NotImplementedError()
+
+
+class ThresholdPreview(SegmentationAlgorithm):
     def __init__(self):
-        pass
+        super(ThresholdPreview, self).__init__()
+        self.use_gauss = False
+        self.gauss_radius = 0
+        self.threshold = 0
+        self.exclude_mask = None
+        self.image = None
 
-    @staticmethod
-    def execute(image, threshold, exclude_mask, use_gauss):
-        if use_gauss:
+    def run(self):
+        image = self.image
+        if self.use_gauss:
             image = gaussian(image, 1)
-        if exclude_mask is None:
-            return (image > threshold).astype(np.uint8)
+        if self.exclude_mask is None:
+            res = (image > self.threshold).astype(np.uint8)
         else:
-            res = (image > threshold).astype(exclude_mask.dtype())
-            res[exclude_mask > 0] = 0
+            mask = self.exclude_mask > 0
+            res = (image > self.threshold).astype(self.exclude_mask.dtype())
+            res[mask] = 0
             res[res > 0] = image.max() + 1
-            res[exclude_mask > 0] = exclude_mask[exclude_mask > 0]
-            return res
+            res[mask] = self.exclude_mask[mask]
+        self.image = None
+        self.exclude_mask = None
+        self.execution_done.emit(res)
+
+    def set_parameters(self, image, threshold, exclude_mask, use_gauss, gauss_radius):
+        self.image = image
+        self.threshold = threshold
+        self.exclude_mask = exclude_mask
+        self.use_gauss = use_gauss
+        self.gauss_radius = gauss_radius
 
 
-class ThresholdAlgorithm(object):
+class ThresholdAlgorithm(SegmentationAlgorithm):
     """
     :type segmentation: np.ndarray
     """
     def __init__(self):
+        super(ThresholdAlgorithm, self).__init__()
         self.image = None
         self.threshold = None
         self.minimum_size = None
         self.segmentation = None
         self.sizes = None
+        self.use_gauss = False
+        self.gauss_radius = 0
+        self.exclude_mask = None
+        self.close_holes = False
+        self.close_holes_size = 0
+        self.smooth_border = False
+        self.smooth_border_radius = 0
 
-    def execute(self, image, threshold, minimum_size, exclude_mask, close_holes, smooth_border, use_gauss,
-                close_holes_size, smooth_border_radius, gauss_radius):
-        if (image is not self.image) or (threshold != self.threshold) or exclude_mask is not None:
-            if use_gauss:
-                image = gaussian(image, gauss_radius)
-            mask = (image > threshold).astype(np.uint8)
-            if exclude_mask is not None:
-                mask[exclude_mask > 0] = 0
-            if close_holes:
-                mask = close_small_holes(mask, close_holes_size)
-            self.segmentation = sitk.GetArrayFromImage(
-                sitk.RelabelComponent(
-                    sitk.ConnectedComponent(
-                        sitk.GetImageFromArray(mask)
-                    ), 20
-                )
+    def run(self):
+        if self.use_gauss:
+            image = gaussian(self.image, self.gauss_radius)
+            self.progress_signal.emit("Gauss done", 0)
+        else:
+            image = self.image
+        mask = (image > self.threshold).astype(np.uint8)
+        if self.exclude_mask is not None:
+            self.progress_signal.emit("Components exclusion apply", 1)
+            mask[self.exclude_mask > 0] = 0
+        if self.close_holes:
+            self.progress_signal.emit("Holes closing", 2)
+            mask = close_small_holes(mask, self.close_holes_size)
+        self.progress_signal.emit("Components calculating", 3)
+        self.segmentation = sitk.GetArrayFromImage(
+            sitk.RelabelComponent(
+                sitk.ConnectedComponent(
+                    sitk.GetImageFromArray(mask)
+                ), 20
             )
-            if smooth_border:
-                self.segmentation = opening(self.segmentation, smooth_border_radius, 20)
-            self.sizes = np.bincount(self.segmentation.flat)
-        ind = bisect(self.sizes[1:], minimum_size, lambda x, y: x > y)
+        )
+        if self.smooth_border:
+            self.progress_signal.emit("Smoothing borders", 4)
+            self.segmentation = opening(self.segmentation, self.smooth_border_radius, 20)
+
+        self.sizes = np.bincount(self.segmentation.flat)
+        ind = bisect(self.sizes[1:], self.minimum_size, lambda x, y: x > y)
+        self.image = image
+        self.threshold = self.threshold
+        self.minimum_size = self.minimum_size
+        resp = np.copy(self.segmentation)
+        resp[resp > ind] = 0
+        if self.exclude_mask is not None:
+            resp[resp > 0] += self.exclude_mask.max()
+            resp[self.exclude_mask > 0] = self.exclude_mask[self.exclude_mask > 0]
+        self.progress_signal.emit("Calculation done", 5)
+        self.execution_done.emit(resp)
+
+    def set_parameters(self, image, threshold, minimum_size, exclude_mask, close_holes, smooth_border, use_gauss,
+                       close_holes_size, smooth_border_radius, gauss_radius):
         self.image = image
         self.threshold = threshold
         self.minimum_size = minimum_size
-        resp = np.copy(self.segmentation)
-        resp[resp > ind] = 0
-        if exclude_mask is not None:
-            resp[resp > 0] += exclude_mask.max()
-            resp[exclude_mask > 0] = exclude_mask[exclude_mask > 0]
-        return resp
+        self.exclude_mask = exclude_mask
+        self.close_holes = close_holes
+        self.smooth_border = smooth_border
+        self.use_gauss = use_gauss
+        self.close_holes_size = close_holes_size
+        self.smooth_border_radius = smooth_border_radius
+        self.gauss_radius = gauss_radius
+
 
 
 

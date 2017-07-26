@@ -3,7 +3,8 @@ import sys
 from abc import ABCMeta, abstractmethod
 from stack_settings import ImageSettings
 from six import with_metaclass
-from .threshold_algorithm import ThresholdAlgorithm, ThresholdPreview
+from .threshold_algorithm import ThresholdAlgorithm, ThresholdPreview, SegmentationAlgorithm
+from typing import Type
 
 
 class AlgorithmProperty(object):
@@ -68,7 +69,7 @@ class AbstractAlgorithmSettingsWidget(with_metaclass(ABCMeta, object)):
 
 
 class AlgorithmSettingsWidget(QWidget):
-    def __init__(self, settings, element_list, algorithm):
+    def __init__(self, settings, element_list, algorithm: Type[SegmentationAlgorithm]):
         """
         :type settings: ImageSettings
         :param element_list:
@@ -111,14 +112,15 @@ class AlgorithmSettingsWidget(QWidget):
         return res
 
     def execute(self, exclude_mask=None):
-        res = self.algorithm.execute(**{"exclude_mask": exclude_mask, **self.get_values()})
-        return res
+        self.algorithm.set_parameters(**{"exclude_mask": exclude_mask, **self.get_values()})
+        self.algorithm.start()
 
 
 AbstractAlgorithmSettingsWidget.register(AlgorithmSettingsWidget)
 
 only_threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 1000, (0, 10 ** 6), 100),
-                            AlgorithmProperty("use_gauss", "Use gauss", False, (True, False))]
+                            AlgorithmProperty("use_gauss", "Use gauss", False, (True, False)),
+                            AlgorithmProperty("gauss_radius", "Use gauss", 1.0, (0, 10), 0.1)]
 
 threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100),
                        AlgorithmProperty("minimum_size", "Minimum size", 8000, (0, 10 ** 6), 1000),
