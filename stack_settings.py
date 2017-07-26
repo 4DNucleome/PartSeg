@@ -54,6 +54,11 @@ class ImageSettings(QObject):
         num = self.segmentation.max()
         self.chosen_components_widget.set_chose(range(1, num+1), metadata["components"])
 
+    def set_segmentation(self, segmentation, metadata):
+        self.segmentation = segmentation
+        num = self.segmentation.max()
+        self.chosen_components_widget.set_chose(range(1, num + 1), metadata["components"])
+
     def save_result(self, dir_path: str):
         res_img = cut_with_mask(self.segmentation, self._image, only=self.chosen_components())
         res_mask = cut_with_mask(self.segmentation, self.segmentation, only=self.chosen_components())

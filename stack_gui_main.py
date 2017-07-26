@@ -9,12 +9,12 @@ from universal_gui_part import right_label, Spacing
 from universal_const import UNITS_LIST
 from stack_algorithm.algorithm_description import stack_algorithm_dict, AlgorithmSettingsWidget, BatchProceed
 from flow_layout import FlowLayout
-
+from io_functions import load_stack_segmentation
 import matplotlib
 from matplotlib import colors
 import numpy as np
 import os
-
+from global_settings import file_folder
 from batch_window import AddFiles
 
 
@@ -47,14 +47,24 @@ class MainMenu(QWidget):
         dial = QFileDialog()
         dial.setFileMode(QFileDialog.ExistingFile)
         dial.setDirectory(self.settings.open_directory)
-        filters = ["raw image (*.tiff *.tif *.lsm)"]
+        filters = ["raw image (*.tiff *.tif *.lsm)", "image from mask (*.seg)"]
         dial.setNameFilters(filters)
         if not dial.exec_():
             return
         file_path = str(dial.selectedFiles()[0])
         self.settings.open_directory = os.path.dirname(str(file_path))
-        im = tif.imread(file_path)
-        self.settings.image = im, file_path
+        if dial.selectedNameFilter() == "image from mask (*.seg)":
+            segmentation, metadata = load_stack_segmentation(file_path)
+            if "base_file" not in metadata:
+                QMessageBox.warning(self, "Open error", "No information about base file")
+            if not os.path.exists(metadata["base_file"]):
+                QMessageBox.warning(self, "Open error", "Base file not found")
+            im = tif.imread(metadata["base_file"])
+            self.settings.image = im, metadata["base_file"]
+            self.settings.set_segmentation(segmentation, metadata)
+        else:
+            im = tif.imread(file_path)
+            self.settings.image = im, file_path
         # self.image_loaded.emit()
 
     def load_segmentation(self):
@@ -397,7 +407,7 @@ class MainWindow(QMainWindow):
         self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
 
-        im = tif.imread("stack.tif")
+        im = tif.imread(os.path.join(file_folder, "stack.tif"))
         # width, height = im.shape
         # im = colors.PowerNorm(gamma=1, vmin=im.min(), vmax=im.max())(im)
         # cmap = matplotlib.cm.get_cmap("cubehelix")

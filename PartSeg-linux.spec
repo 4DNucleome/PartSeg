@@ -4,11 +4,11 @@ block_cipher = None
 
 
 a = Analysis(['main.py'],
-             pathex=['/Users/grzegorzbokota/Documents/projekty/segmentacja-gui'],
+             pathex=['/home/czaki/Dokumenty/projekty/PartSeg'],
              binaries=None,
-             datas=[("clean_segment.tiff", "."), ("icon.png", "."), ("icons/*", "icons"),("icons/bigicons/*", "icons/bigicons")],
-             hiddenimports=["packaging", "packaging.version", "packaging.specifiers", "packaging.requirements"],
-             hookspath=["./hooks/mac/"],
+             datas=[("clean_segment.tiff", "."), ("stack.tif", "."), ("icon.png", "."), ("icons/*", "icons"),("icons/bigicons/*", "icons/bigicons")],
+             hiddenimports=["packaging", "packaging.version", "packaging.specifiers", "packaging.requirements", "h5py.defs", 'h5py.utils', 'h5py.h5ac', "h5py._proxy"],
+             hookspath=["./hooks/linux/"],
              runtime_hooks=[],
              excludes=[],
              win_no_prefer_redirects=False,
@@ -16,11 +16,11 @@ a = Analysis(['main.py'],
              cipher=block_cipher)
 
 b = Analysis(['stack_main.py'],
-             pathex=['/Users/grzegorzbokota/Documents/projekty/segmentacja-gui'],
+             pathex=['/home/czaki/Dokumenty/projekty/PartSeg'],
              binaries=None,
-             datas=[("clean_segment.tiff", "."), ("icon.png", "."), ("icons/*", "icons"),("icons/bigicons/*", "icons/bigicons")],
-             hiddenimports=["packaging", "packaging.version", "packaging.specifiers", "packaging.requirements"],
-             hookspath=["./hooks/mac/"],
+             datas=[("stack.tif", "."), ("icon.png", "."), ("icons/*", "icons"),("icons/bigicons/*", "icons/bigicons")],
+             hiddenimports=["packaging", "packaging.version", "packaging.specifiers", "packaging.requirements", "h5py.defs", 'h5py.utils', 'h5py.h5ac', "h5py._proxy"],
+             hookspath=["./hooks/linux/"],
              runtime_hooks=[],
              excludes=[],
              win_no_prefer_redirects=False,
@@ -54,28 +54,17 @@ b_pyz = PYZ(b.pure, b.zipped_data,
 b_exe = EXE(b_pyz,
           b.scripts,
           exclude_binaries=True,
-          name='PartSeg',
+          name='StackSeg',
           debug=False,
           strip=False,
           upx=True,
           console=False,
           icon='icon.icns')
 
-coll = COLLECT(exe,
+b_coll = COLLECT(b_exe,
                a.binaries,
                a.zipfiles,
                a.datas,
                strip=False,
                upx=True,
-               name='PartSeg')
-
-"""app = BUNDLE(exe,
-             a.binaries,
-             a.zipfiles,
-             a.datas,
-             name='PartSeg.app',
-             icon='icon.icns',
-             bundle_identifier=None,
-             info_plist={
-             'NSHighResolutionCapable': 'True'
-             },)"""
+               name='StackSeg')

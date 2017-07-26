@@ -73,7 +73,7 @@ class BatchProceed(QThread):
         while self.index < len(self.file_list):
             file_path = self.file_list[self.index]
             try:
-                if path.splitext(file_path) == ".seg":
+                if path.splitext(file_path)[1] == ".seg":
                     segmentation, metadata = load_stack_segmentation(file_path)
                     if "base_file" not in metadata or not path.exists(metadata["base_file"]):
                         self.index += 1
@@ -86,7 +86,7 @@ class BatchProceed(QThread):
                     else:
                         blank = np.zeros(segmentation.shape, dtype=np.uint8)
                     for i, v in enumerate(self.components):
-                        blank[self.segmentation == v] = i + 1
+                        blank[segmentation == v] = i + 1
                 else:
                     self.base_file = file_path
                     self.components = []
