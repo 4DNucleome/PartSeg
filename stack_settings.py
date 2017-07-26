@@ -47,12 +47,12 @@ class ImageSettings(QObject):
             raise RuntimeError("chosen_components_widget do not idealized")
 
     def save_segmentation(self, file_path: str):
-        save_stack_segmentation(file_path, self.segmentation, self.chosen_components())
+        save_stack_segmentation(file_path, self.segmentation, self.chosen_components(), self._image_path)
 
     def load_segmentation(self, file_path: str):
-        self.segmentation, catted = load_stack_segmentation(file_path)
+        self.segmentation, metadata = load_stack_segmentation(file_path)
         num = self.segmentation.max()
-        self.chosen_components_widget.set_chose(range(1, num+1), catted)
+        self.chosen_components_widget.set_chose(range(1, num+1), metadata["components"])
 
     def save_result(self, dir_path: str):
         res_img = cut_with_mask(self.segmentation, self._image, only=self.chosen_components())

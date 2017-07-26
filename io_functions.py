@@ -317,10 +317,12 @@ def save_to_xyz(file_path, settings, segment):
     df.to_csv(file_path, header=False, index=False, sep=' ')
 
 
-def save_stack_segmentation(file_path, segmentation, list_of_components):
+def save_stack_segmentation(file_path, segmentation, list_of_components, base_file=None):
     folder_path = tempfile.mkdtemp()
     np.save(os.path.join(folder_path, "segmentation.npy"), segmentation)
-    metadata = {"components" : list_of_components, "shape": segmentation.shape}
+    metadata = {"components": list_of_components, "shape": segmentation.shape}
+    if base_file is not None:
+        metadata["base_file"] = base_file
     with open(os.path.join(folder_path, "metadata.json"), 'w') as ff:
         json.dump(metadata, ff)
     if not os.path.exists(os.path.dirname(file_path)):
@@ -338,4 +340,4 @@ def load_stack_segmentation(file_path):
     tar_ob.extract("segmentation.npy", folder_path)
     segmentation = np.load(os.path.join(folder_path, "segmentation.npy"))
     segmentation = segmentation.reshape(metadata["shape"])
-    return segmentation, metadata["components"]
+    return segmentation, metadata

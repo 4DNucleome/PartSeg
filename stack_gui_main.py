@@ -7,7 +7,7 @@ from stack_settings import ImageSettings
 from stack_image_view import ImageView
 from universal_gui_part import right_label, Spacing
 from universal_const import UNITS_LIST
-from stack_algorithm.algorithm_description import stack_algorithm_dict, AlgorithmSettingsWidget
+from stack_algorithm.algorithm_description import stack_algorithm_dict, AlgorithmSettingsWidget, BatchProceed
 from flow_layout import FlowLayout
 
 import matplotlib
@@ -184,6 +184,8 @@ class AlgorithmOptions(QWidget):
         self.borders_thick.setValue(control_view.borders_thick)
         self.execute_btn = QPushButton("Execute")
         self.execute_all_btn = QPushButton("Execute all")
+        self.execute_all_btn.setDisabled(True)
+        self.block_execute_all_btn = False
         self.stack_layout = QStackedLayout()
         self.choose_components = ChosenComponents()
         for name, val in stack_algorithm_dict.items():
@@ -194,10 +196,15 @@ class AlgorithmOptions(QWidget):
             self.stack_layout.addWidget(widget)
         self.chosen_list = []
         self.progress_bar = QProgressBar()
-        self.progress_bar.setRange(0, 0)
         self.progress_bar.setHidden(True)
-        self.progress_info = QLabel()
-        self.progress_info.setHidden(True)
+        self.progress_info_lab = QLabel()
+        self.progress_info_lab.setHidden(True)
+        self.file_list = []
+        self.batch_process = BatchProceed()
+        self.batch_process.progress_signal.connect(self.progress_info)
+        self.batch_process.error_signal.connect(self.execution_all_error)
+        self.batch_process.execution_done.connect(self.execution_all_done)
+        self.is_batch_process = False
 
         main_layout = QVBoxLayout()
         opt_layout = QHBoxLayout()
@@ -215,7 +222,7 @@ class AlgorithmOptions(QWidget):
         btn_layout.addWidget(self.execute_all_btn)
         main_layout.addLayout(btn_layout)
         main_layout.addWidget(self.progress_bar)
-        main_layout.addWidget(self.progress_info)
+        main_layout.addWidget(self.progress_info_lab)
         main_layout.addWidget(self.algorithm_choose)
         main_layout.addLayout(self.stack_layout)
         main_layout.addWidget(self.choose_components)
@@ -224,6 +231,7 @@ class AlgorithmOptions(QWidget):
 
         self.algorithm_choose.currentIndexChanged.connect(self.stack_layout.setCurrentIndex)
         self.execute_btn.clicked.connect(self.execute_action)
+        self.execute_all_btn.clicked.connect(self.execute_all_action)
         self.opacity.valueChanged.connect(control_view.set_opacity)
         self.show_result.stateChanged.connect(control_view.set_show_label)
         self.only_borders.stateChanged.connect(control_view.set_borders)
@@ -231,6 +239,14 @@ class AlgorithmOptions(QWidget):
         settings.image_changed.connect(self.image_changed)
         component_checker.component_clicked.connect(self.choose_components.other_component_choose)
         settings.chosen_components_widget = self.choose_components
+
+    def file_list_change(self, val):
+        print("FF:", val)
+        self.file_list = val
+        if len(self.file_list) > 0 and not self.block_execute_all_btn:
+            self.execute_all_btn.setEnabled(True)
+        else:
+            self.execute_all_btn.setDisabled(True)
 
     def get_chosen_components(self):
         return sorted(self.choose_components.get_chosen())
@@ -247,8 +263,44 @@ class AlgorithmOptions(QWidget):
         self.segmentation = None
         self.choose_components.set_chose([], [])
 
+    def execute_all_action(self):
+        dial = QFileDialog()
+        dial.setFileMode(QFileDialog.Directory)
+        dial.setDirectory(self.settings.save_directory)
+        if not dial.exec_():
+            return
+        self.execute_all_btn.setDisabled(True)
+        self.block_execute_all_btn = True
+        self.is_batch_process = True
+        self.execute_btn.setDisabled(True)
+        self.progress_bar.setHidden(False)
+        self.progress_bar.setRange(0, len(self.file_list))
+        self.progress_bar.setValue(0)
+        folder_path = str(dial.selectedFiles()[0])
+        widget = self.stack_layout.currentWidget()
+        parameters = widget.get_values()
+        self.batch_process.set_parameters(type(widget.algorithm), parameters, widget.channel_num(),
+                                          self.file_list, folder_path)
+        self.batch_process.start()
+
+    def execution_all_error(self, text):
+        QMessageBox.warning(self, "Proceed error", text)
+
+    def execution_all_done(self):
+        print("buka")
+        self.execute_btn.setEnabled(True)
+        self.block_execute_all_btn = False
+        if len(self.file_list) > 0:
+            self.execute_all_btn.setEnabled(True)
+        self.progress_bar.setHidden(True)
+        self.progress_info_lab.setHidden(True)
+
     def execute_action(self):
         self.execute_btn.setDisabled(True)
+        self.execute_all_btn.setDisabled(True)
+        self.block_execute_all_btn = True
+        self.is_batch_process = False
+        self.progress_bar.setRange(0, 0)
         chosen = sorted(self.choose_components.get_chosen())
         if len(chosen) == 0:
             blank = None
@@ -265,15 +317,20 @@ class AlgorithmOptions(QWidget):
         self.chosen_list = chosen
 
     def progress_info(self, text, num):
-        self.progress_info.setVisible(True)
-        self.progress_info.setText(text)
+        self.progress_info_lab.setVisible(True)
+        self.progress_info_lab.setText(text)
+        if self.is_batch_process:
+            self.progress_bar.setValue(num)
 
     def execution_done(self, segmentation):
         self.segmentation = segmentation
         self.choose_components.set_chose(range(1, segmentation.max() + 1), np.arange(len(self.chosen_list)) + 1)
         self.execute_btn.setEnabled(True)
+        self.block_execute_all_btn = False
+        if len(self.file_list) > 0:
+            self.execute_all_btn.setEnabled(True)
         self.progress_bar.setHidden(True)
-        self.progress_info.setHidden(True)
+        self.progress_info_lab.setHidden(True)
 
 
 class ImageInformation(QWidget):
@@ -320,6 +377,7 @@ class Options(QTabWidget):
         self._settings = settings
         self.algorithm_options = AlgorithmOptions(settings, control_view, component_checker)
         self.image_properties = ImageInformation(settings, parent)
+        self.image_properties.add_files.file_list_changed.connect(self.algorithm_options.file_list_change)
         self.addTab(self.image_properties, "Image")
         self.addTab(self.algorithm_options, "Segmentation")
 
@@ -338,8 +396,6 @@ class MainWindow(QMainWindow):
         self.options_panel = Options(self.settings, image_view_control, self.image_view)
         self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
-        # self.scroll_area.setVisible(False)
-        # self.scroll_area.setS
 
         im = tif.imread("stack.tif")
         # width, height = im.shape

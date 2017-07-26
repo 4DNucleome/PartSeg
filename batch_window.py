@@ -58,7 +58,7 @@ class AddFiles(QWidget):
 
     """Docstring for AddFiles. """
 
-    file_list_changed = pyqtSignal()
+    file_list_changed = pyqtSignal(set)
 
     def __init__(self, settings, parent=None, btn_layout=QHBoxLayout):
         """TODO: to be defined1. """
@@ -106,7 +106,7 @@ class AddFiles(QWidget):
                     lwi.setTextAlignment(Qt.AlignRight)
                     self.selected_files.addItem(lwi)
                 self.files_to_proceed.update(new_paths)
-                self.file_list_changed.emit()
+                self.file_list_changed.emit(self.files_to_proceed)
         else:
             QMessageBox.warning(self, "No new files", "No new files found", QMessageBox.Ok)
 
@@ -125,7 +125,7 @@ class AddFiles(QWidget):
                 lwi.setTextAlignment(Qt.AlignRight)
                 self.selected_files.addItem(lwi)
             self.files_to_proceed.update(new_paths)
-            self.file_list_changed.emit()
+            self.file_list_changed.emit(self.files_to_proceed)
 
     def select_directory(self):
         dial = QFileDialog(self, "Select directory")
@@ -142,15 +142,16 @@ class AddFiles(QWidget):
     def delete_element(self):
         item = self.selected_files.takeItem(self.selected_files.currentRow())
         path = str(item.text())
+        path = path[:path.rfind("(") - 1]
         self.files_to_proceed.remove(path)
-        self.file_list_changed.emit()
+        self.file_list_changed.emit(self.files_to_proceed)
         if self.selected_files.count() == 0:
             self.delete_button.setDisabled(True)
 
     def clean(self):
         self.selected_files.clear()
         self.files_to_proceed.clear()
-        self.file_list_changed.emit()
+        self.file_list_changed.emit(self.files_to_proceed)
 
     def get_paths(self):
         return list(sorted(self.files_to_proceed))
