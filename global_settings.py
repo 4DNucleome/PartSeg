@@ -11,6 +11,7 @@ if getattr(sys, 'frozen', False):
     os.environ["MPLCONFIGDIR"] = os.path.join(config_folder, ".matplotlib")
     if platform.system() == "Linux":
         os.environ["FONTCONFIG_FILE"] = "/etc/fonts/fonts.conf"
+        os.environ["QT_XKB_CONFIG_ROOT"]="/usr/share/X11/xkb"
 
 if sys.version_info.major == 2:
     import pkgutil
