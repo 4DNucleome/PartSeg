@@ -44,40 +44,47 @@ class MainMenu(QWidget):
         self.setLayout(layout)
 
     def load_image(self):
-        dial = QFileDialog()
-        dial.setFileMode(QFileDialog.ExistingFile)
-        dial.setDirectory(self.settings.open_directory)
-        filters = ["raw image (*.tiff *.tif *.lsm)", "image from mask (*.seg)"]
-        dial.setNameFilters(filters)
-        if not dial.exec_():
-            return
-        file_path = str(dial.selectedFiles()[0])
-        self.settings.open_directory = os.path.dirname(str(file_path))
-        if dial.selectedNameFilter() == "image from mask (*.seg)":
-            segmentation, metadata = load_stack_segmentation(file_path)
-            if "base_file" not in metadata:
-                QMessageBox.warning(self, "Open error", "No information about base file")
-            if not os.path.exists(metadata["base_file"]):
-                QMessageBox.warning(self, "Open error", "Base file not found")
-            im = tif.imread(metadata["base_file"])
-            self.settings.image = im, metadata["base_file"]
-            self.settings.set_segmentation(segmentation, metadata)
-        else:
-            im = tif.imread(file_path)
-            self.settings.image = im, file_path
+        try:
+            dial = QFileDialog()
+            dial.setFileMode(QFileDialog.ExistingFile)
+            dial.setDirectory(self.settings.open_directory)
+            filters = ["raw image (*.tiff *.tif *.lsm)", "image from mask (*.seg)"]
+            dial.setNameFilters(filters)
+            if not dial.exec_():
+                return
+            file_path = str(dial.selectedFiles()[0])
+            self.settings.open_directory = os.path.dirname(str(file_path))
+            if dial.selectedNameFilter() == "image from mask (*.seg)":
+                segmentation, metadata = load_stack_segmentation(file_path)
+                if "base_file" not in metadata:
+                    QMessageBox.warning(self, "Open error", "No information about base file")
+                if not os.path.exists(metadata["base_file"]):
+                    QMessageBox.warning(self, "Open error", "Base file not found")
+                im = tif.imread(metadata["base_file"])
+                self.settings.image = im, metadata["base_file"]
+                self.settings.set_segmentation(segmentation, metadata)
+            else:
+                im = tif.imread(file_path)
+                self.settings.image = im, file_path
+        except Exception as e:
+            QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
         # self.image_loaded.emit()
 
     def load_segmentation(self):
-        dial = QFileDialog()
-        dial.setFileMode(QFileDialog.ExistingFile)
-        dial.setDirectory(self.settings.open_directory)
-        filters = ["segmentation (*.seg *.tgz)"]
-        dial.setNameFilters(filters)
-        if not dial.exec_():
-            return
-        file_path = str(dial.selectedFiles()[0])
-        self.settings.open_directory = os.path.dirname(str(file_path))
-        self.settings.load_segmentation(file_path)
+        try:
+
+            dial = QFileDialog()
+            dial.setFileMode(QFileDialog.ExistingFile)
+            dial.setDirectory(self.settings.open_directory)
+            filters = ["segmentation (*.seg *.tgz)"]
+            dial.setNameFilters(filters)
+            if not dial.exec_():
+                return
+            file_path = str(dial.selectedFiles()[0])
+            self.settings.open_directory = os.path.dirname(str(file_path))
+            self.settings.load_segmentation(file_path)
+        except Exception as e:
+            QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
 
     def save_segmentation(self):
         if self.settings.segmentation is None:

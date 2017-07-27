@@ -335,7 +335,8 @@ def save_stack_segmentation(file_path, segmentation, list_of_components, base_fi
 
 def load_stack_segmentation(file_path):
     tar_ob = tarfile.open(file_path)
-    metadata = json.load(tar_ob.extractfile("metadata.json"))
+    json_val = tar_ob.extractfile("metadata.json").read().decode("utf8")
+    metadata = json.loads(json_val)
     folder_path = tempfile.mkdtemp()
     tar_ob.extract("segmentation.npy", folder_path)
     segmentation = np.load(os.path.join(folder_path, "segmentation.npy"))
