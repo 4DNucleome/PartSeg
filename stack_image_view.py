@@ -86,6 +86,8 @@ class ImageCanvas(QLabel):
         self.resize(self.scale_factor * self.pixmap().size())
 
     def leaveEvent(self, a0: QEvent):
+        self.point = None
+        self.point2 = None
         self.leave_signal.emit()
 
     def mousePressEvent(self, event):
