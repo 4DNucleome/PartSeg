@@ -9,6 +9,7 @@ from qt_import import QThread, pyqtSignal
 class SegmentationAlgorithm(QThread):
     execution_done = pyqtSignal(np.ndarray)
     progress_signal = pyqtSignal(str, int)
+    info_signal = pyqtSignal(str)
 
     def set_parameters(self, *args, **kwargs):
         raise NotImplementedError()
@@ -31,7 +32,7 @@ class ThresholdPreview(SegmentationAlgorithm):
             res = (image > self.threshold).astype(np.uint8)
         else:
             mask = self.exclude_mask > 0
-            res = (image > self.threshold).astype(self.exclude_mask.dtype())
+            res = (image > self.threshold).astype(self.exclude_mask.dtype)
             res[mask] = 0
             res[res > 0] = image.max() + 1
             res[mask] = self.exclude_mask[mask]
@@ -154,7 +155,7 @@ class AutoThresholdAlgorithm(SegmentationAlgorithm):
         min_val = np.min(image[mask > 0])
         if self.threshold < min_val:
             self.threshold = min_val
-            print("change threshold")
+        self.info_signal.emit("Threshold: {}".format(self.threshold))
         mask = (image > self.threshold).astype(np.uint8)
         if self.close_holes:
             self.progress_signal.emit("Holes closing", 2)

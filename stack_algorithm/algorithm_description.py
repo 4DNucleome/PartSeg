@@ -1,5 +1,5 @@
 from qt_import import QDoubleSpinBox, QSpinBox, QComboBox, QWidget, QFormLayout, QAbstractSpinBox, QCheckBox, QThread, \
-    pyqtSignal
+    pyqtSignal, QLabel, QVBoxLayout
 import sys
 from abc import ABCMeta, abstractmethod
 from stack_settings import ImageSettings
@@ -160,6 +160,10 @@ class AlgorithmSettingsWidget(QWidget):
         """
         super(AlgorithmSettingsWidget, self).__init__()
         self.widget_list = []
+        main_layout = QVBoxLayout()
+        self.info_label = QLabel()
+        self.info_label.setHidden(True)
+        main_layout.addWidget(self.info_label)
         widget_layout = QFormLayout()
         self.channels_chose = QComboBox()
         widget_layout.addRow("Channel", self.channels_chose)
@@ -167,10 +171,16 @@ class AlgorithmSettingsWidget(QWidget):
         for el in element_list:
             self.widget_list.append((el.name, el.get_field()))
             widget_layout.addRow(el.user_name, self.widget_list[-1][-1])
-        self.setLayout(widget_layout)
+        main_layout.addLayout(widget_layout)
+        self.setLayout(main_layout)
         self.settings = settings
         self.settings.image_changed[int].connect(self.image_changed)
         self.algorithm = algorithm()
+        self.algorithm.info_signal.connect(self.show_info)
+
+    def show_info(self, text):
+        self.info_label.setText(text)
+        self.info_label.setVisible(True)
 
     def image_changed(self, channels_num):
         ind = self.channels_chose.currentIndex()
@@ -219,7 +229,7 @@ threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 10000, (0, 10
                        AlgorithmProperty("gauss_radius", "Use gauss", 1.0, (0, 10), 0.1)]
 
 auto_threshold_algorithm = [AlgorithmProperty("suggested_size", "Suggested size", 200000, (0, 10 ** 6), 1000),
-                            AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100),
+                            AlgorithmProperty("threshold", "Minimum threshold", 10000, (0, 10 ** 6), 100),
                             AlgorithmProperty("minimum_size", "Minimum size", 8000, (0, 10 ** 6), 1000),
                             AlgorithmProperty("close_holes", "Close small holes", True, (True, False)),
                             AlgorithmProperty("close_holes_size", "Small holes size", 200, (0, 10 ** 3), 10),
