@@ -1,4 +1,3 @@
-
 from __future__ import division
 from collections import namedtuple, OrderedDict
 from utils import class_to_dict
@@ -6,8 +5,11 @@ import logging
 import SimpleITK as sitk
 import numpy as np
 import autofit as af
+from typing import Dict
+import traceback
 
 SettingsValue = namedtuple("SettingsValue", ["function_name", "help_message", "arguments", "is_mask", "is_component"])
+
 Leaf = namedtuple("Leaf", ["name", "dict"])
 Node = namedtuple("Node", ["left", 'op', 'right'])
 
@@ -50,7 +52,19 @@ class StatisticProfile(object):
         "Mask Diameter": SettingsValue("mask_diameter", "Diameter of mask", None, True, False),
         "Segmentation Diameter": SettingsValue("segmentation_diameter", "Diameter of segmentation", None, False, False),
         "Segmentation component Diameter":
-            SettingsValue("component_diameter", "Diameter of each segmentation component", None, False, False)
+            SettingsValue("component_diameter", "Diameter of each segmentation component", None, False, False),
+        "Segmentation first main axis length":
+            SettingsValue("calculate_first_main_axis_length",
+                          "Length of first main axis of segmentation", None, False, False),
+        "Segmentation second main axis length":
+            SettingsValue("calculate_second_main_axis_length",
+                          "Length of second main axis of segmentation", None, False, False),
+        "Segmentation third main axis length":
+            SettingsValue("calculate_third_main_axis_length",
+                          "Length of third main axis of segmentation", None, False, False),
+        "Compactness":
+            SettingsValue("calculate_compactness",
+                          "Calculate compactness off segmentation (Border surface^1.5/volume)", None, False, False)
 
     }
     PARAMETERS = ["name", "chosen_fields", "reversed_brightness", "use_gauss_image", "name_prefix"]
@@ -203,6 +217,10 @@ class StatisticProfile(object):
         else:
             return self._is_component_statistic(node.left) or self._is_component_statistic(node.right)
 
+    @staticmethod
+    def hash_fun_call_name(fun_name, arguments):
+        return "{}: {}".format(fun_name, arguments)
+
     def calculate_tree(self, node, help_dict, kwargs):
         """
         :type node: Leaf | Node
@@ -214,9 +232,10 @@ class StatisticProfile(object):
             fun_name = self.STATISTIC_DICT[node.name].function_name
             kw = dict(kwargs)
             kw.update(node.dict)
-            hash_str = "{}: {}".format(fun_name, kw)
+            hash_str = self.hash_fun_call_name(fun_name, node.dict)
             if hash_str in help_dict:
                 return help_dict[hash_str]
+            kw['help_dict'] = help_dict
             fun = getattr(self, fun_name)
             val = fun(**kw)
             help_dict[hash_str] = val
@@ -248,11 +267,11 @@ class StatisticProfile(object):
                 result[self.name_prefix + user_name] = "Div by zero"
             except TypeError as e:
                 logging.warning(e)
+                print(traceback.print_exc())
                 result[self.name_prefix + user_name] = "None div"
             except AttributeError as e:
                 logging.warning(e)
                 result[self.name_prefix + user_name] = "No attribute"
-
         return result
 
     @staticmethod
@@ -264,6 +283,54 @@ class StatisticProfile(object):
 
     def calculate_component_volume(self, segmentation, **_):
         return np.bincount(segmentation.flat)[1:] * self.pixel_volume(self.voxel_size)
+
+    def calculate_main_axis(self, segmentation: np.ndarray, image: np.ndarray):
+        cut_img = np.copy(image)
+        cut_img[segmentation == 0] = 0
+        cut_img = np.swapaxes(cut_img, 0, 2)
+        orientation_matrix, _ = af.find_density_orientation(cut_img, self.voxel_size, 1)
+        center_of_mass = af.density_mass_center(cut_img, self.voxel_size)
+        # positions = np.array(np.nonzero(np.swapaxes(segmentation, 0, 2)), dtype=np.float64)
+        positions = np.array(np.nonzero(cut_img), dtype=np.float64)
+        for i, v in enumerate(self.voxel_size):
+            positions[i] *= v
+            positions[i] -= center_of_mass[i]
+        centered = np.dot(orientation_matrix.T, positions)
+        size = np.max(centered, axis=1) - np.min(centered, axis=1)
+        return size
+
+
+    def get_main_axis_length(self, index, segmentation: np.ndarray, image: np.ndarray, help_dict: Dict,  **_):
+        if "main_axis" not in help_dict:
+            help_dict["main_axis"] = self.calculate_main_axis(segmentation, image)
+        return help_dict["main_axis"][index]
+
+    def calculate_first_main_axis_length(self, **kwargs):
+        return self.get_main_axis_length(0, **kwargs)
+
+    def calculate_second_main_axis_length(self, **kwargs):
+        return self.get_main_axis_length(1, **kwargs)
+
+    def calculate_third_main_axis_length(self, **kwargs):
+        return self.get_main_axis_length(2, **kwargs)
+
+    def calculate_compactness(self, **kwargs):
+        help_dict = kwargs["help_dict"]
+        border_hash_str = self.hash_fun_call_name('calculate_border_surface', {})
+        if border_hash_str not in help_dict:
+            border_surface = self.calculate_border_surface(**kwargs)
+            help_dict[border_hash_str] = border_surface
+        else:
+            border_surface = help_dict[border_hash_str]
+
+        volume_hash_str = self.hash_fun_call_name('calculate_volume', {})
+
+        if volume_hash_str not in help_dict:
+            volume = self.calculate_volume(**kwargs)
+            help_dict[volume_hash_str] = volume
+        else:
+            volume = help_dict[volume_hash_str]
+        return border_surface**1.5/volume
 
     @staticmethod
     def calculate_mass(segmentation, image, **_):

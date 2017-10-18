@@ -269,7 +269,7 @@ def load_project(file_path, settings, segment):
     settings.add_image(image, file_path, mask, new_image=False, original_image=original_image)
     segment.protect = False
     if important_data["threshold_list"] is not None:
-        settings.threshold_list = map(int, important_data["threshold_list"])
+        settings.threshold_list = list(map(int, important_data["threshold_list"]))
     else:
         settings.threshold_list = []
     if "threshold_layer_separate" in important_data:

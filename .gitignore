@@ -2,6 +2,7 @@ settings.json
 # Created by https://www.gitignore.io/api/pycharm,python,ipythonnotebook,latex,macos,qt
 t_file.py
 help/html
+data/
 
 ### PyCharm ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and Webstorm
