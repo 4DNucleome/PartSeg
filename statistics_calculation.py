@@ -64,7 +64,8 @@ class StatisticProfile(object):
                           "Length of third main axis of segmentation", None, False, False),
         "Compactness":
             SettingsValue("calculate_compactness",
-                          "Calculate compactness off segmentation (Border surface^1.5/volume)", None, False, False)
+                          "Calculate compactness off segmentation (Border surface^1.5/volume)", None, False, False),
+        "Sphericity": SettingsValue("calculate_sphericity", "volume/(diameter**3/8)", None, False, False)
 
     }
     PARAMETERS = ["name", "chosen_fields", "reversed_brightness", "use_gauss_image", "name_prefix"]
@@ -331,6 +332,27 @@ class StatisticProfile(object):
         else:
             volume = help_dict[volume_hash_str]
         return border_surface**1.5/volume
+
+    def calculate_sphericity(self, **kwargs):
+        help_dict = kwargs["help_dict"]
+
+        volume_hash_str = self.hash_fun_call_name('calculate_volume', {})
+        if volume_hash_str not in help_dict:
+            volume = self.calculate_volume(**kwargs)
+            help_dict[volume_hash_str] = volume
+        else:
+            volume = help_dict[volume_hash_str]
+
+        diameter_hash_str = self.hash_fun_call_name('segmentation_diameter', {})
+        if diameter_hash_str not in help_dict:
+            diameter = self.segmentation_diameter(**kwargs)
+            help_dict[volume_hash_str] = diameter
+        else:
+            diameter = help_dict[volume_hash_str]
+        radius = diameter / 2
+        return volume/radius**3
+
+
 
     @staticmethod
     def calculate_mass(segmentation, image, **_):

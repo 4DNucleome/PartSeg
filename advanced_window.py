@@ -71,7 +71,7 @@ class StatisticsSettings(QWidget):
         self.reset_butt = QPushButton("Clear")
         self.soft_reset_butt = QPushButton("Remove user statistics")
         self.profile_name = QLineEdit(self)
-        self.reversed_brightness = QCheckBox("Reversed image", self)
+        self.reversed_brightness = QCheckBox("Reversed image (for electron microscope)", self)
         self.gauss_img = QCheckBox("2d gauss image", self)
         self.delete_profile_butt = QPushButton("Delete profile")
         self.restore_builtin_profiles = QPushButton("Restore builtin profiles")
