@@ -73,6 +73,7 @@ class StatisticProfile(object):
     def __init__(self, name, chosen_fields, reversed_brightness, use_gauss_image=False, name_prefix=""):
         self.name = name
         self.chosen_fields = []
+        self._need_mask = False
         for cf_val in chosen_fields:
             user_name = cf_val[1]
             if isinstance(cf_val[0], str):
@@ -80,10 +81,17 @@ class StatisticProfile(object):
             else:
                 tree = self.rebuild_tree(cf_val[0])
             self.chosen_fields.append((tree, user_name, None))
+            self._need_mask = self._need_mask or self.need_mask(tree)
         self.voxel_size = (1, 1, 1)
         self.reversed_brightness = reversed_brightness
         self.use_gauss_image = use_gauss_image
         self.name_prefix = name_prefix
+
+    def need_mask(self, tree):
+        if isinstance(tree, Leaf):
+            return self.STATISTIC_DICT[tree.name].is_mask
+        else:
+            return self.need_mask(tree.left) or self.need_mask(tree.right)
 
     def __str__(self):
         text = "Profile name: {}\n".format(self.name)
@@ -251,6 +259,8 @@ class StatisticProfile(object):
 
     def calculate(self, image, gauss_image, mask, full_mask, base_mask, voxel_size):
         self.voxel_size = voxel_size
+        if self._need_mask and base_mask is not None:
+            raise ValueError("Statistics need mask")
         result = OrderedDict()
         if self.use_gauss_image:
             image = gauss_image.astype(np.float)
@@ -299,7 +309,6 @@ class StatisticProfile(object):
         centered = np.dot(orientation_matrix.T, positions)
         size = np.max(centered, axis=1) - np.min(centered, axis=1)
         return size
-
 
     def get_main_axis_length(self, index, segmentation: np.ndarray, image: np.ndarray, help_dict: Dict,  **_):
         if "main_axis" not in help_dict:

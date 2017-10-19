@@ -5,6 +5,7 @@ from backend import StatisticProfile, get_segmented_data, calculate_statistic_fr
 from qt_import import *
 from global_settings import file_folder
 from profile_export import ExportDialog, ImportDialog, StringViewer
+import logging
 
 __author__ = "Grzegorz Bokota"
 
@@ -550,7 +551,11 @@ class StatisticsWindow(QWidget):
             mask = self.segment.get_segmentation()
             full_mask = self.segment.get_full_segmentation()
             base_mask = self.settings.mask
-            stat = compute_class.calculate(image, gauss_image, mask, full_mask, base_mask, self.settings.voxel_size)
+            try:
+                stat = compute_class.calculate(image, gauss_image, mask,
+                                               full_mask, base_mask, self.settings.voxel_size)
+            except ValueError as e:
+                logging.error(e)
         if self.no_header.isChecked():
             self.statistic_shift -= 1
         if self.no_units.isChecked():
