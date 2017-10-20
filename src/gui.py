@@ -787,7 +787,7 @@ class MainWindow(QMainWindow):
         self.settings.add_image_callback((self.set_info, str))
 
         # self.setGeometry(0, 0,  1400, 720)
-        icon = QIcon(os.path.join(file_folder, "icon.png"))
+        icon = QIcon(os.path.join(file_folder, 'icons', "icon.png"))
         self.setWindowIcon(icon)
         menu_bar = self.menuBar()
         menu = menu_bar.addMenu("File")
@@ -813,7 +813,7 @@ class MainWindow(QMainWindow):
         self.batch_widget = None
 
         self.update_objects_positions()
-        self.settings.add_image(tifffile.imread(os.path.join(file_folder, "clean_segment.tiff")), "")
+        self.settings.add_image(tifffile.imread(os.path.join(file_folder, 'initial_images', "clean_segment.tiff")), "")
 
     def batch_view(self):
         if self.batch_widget is not None and self.batch_widget.isVisible():

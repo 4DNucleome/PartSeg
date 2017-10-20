@@ -3,6 +3,7 @@ settings.json
 t_file.py
 help/html
 data/
+src/icons/32x32
 
 ### PyCharm ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and Webstorm

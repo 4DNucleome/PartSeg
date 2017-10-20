@@ -414,7 +414,7 @@ class MainWindow(QMainWindow):
         self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
 
-        im = tif.imread(os.path.join(file_folder, "stack.tif"))
+        im = tif.imread(os.path.join(file_folder, 'initial_images', "stack.tif"))
         # width, height = im.shape
         # im = colors.PowerNorm(gamma=1, vmin=im.min(), vmax=im.max())(im)
         # cmap = matplotlib.cm.get_cmap("cubehelix")
