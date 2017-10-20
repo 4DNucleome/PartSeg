@@ -1,4 +1,5 @@
 from __future__ import print_function
+
 import logging
 
 
@@ -55,7 +56,7 @@ if __name__ == '__main__':
     import glob
     import os
     import sys
-    import backend
+    from partseg import backend
     import io_functions
     import numpy as np
     mpr = MorphParser()

@@ -1,19 +1,18 @@
 # coding=utf-8
+import multiprocessing
 import os
 from glob import glob
-import multiprocessing
-from backend import Settings,  UNITS_LIST
-from parallel_backed import BatchManager
-from universal_gui_part import Spacing, right_label
-from global_settings import file_folder
-from calculation_plan import CalculationPlan, MaskFile, MaskMapper, Calculation
-from batch_backend import CalculationManager
-
-from prepare_plan_widget import CalculatePlaner
-
-from qt_import import *
 
 import numpy as np
+
+from partseg.backend import Settings
+from partseg.batch_processing.batch_backend import CalculationManager
+from partseg.batch_processing.calculation_plan import CalculationPlan, MaskFile, MaskMapper, Calculation
+from partseg.prepare_plan_widget import CalculatePlaner
+from project_utils.global_settings import file_folder
+from project_utils.universal_const import UNITS_LIST
+from qt_import import *
+from universal_gui_part import Spacing, right_label
 
 __author__ = "Grzegorz Bokota"
 

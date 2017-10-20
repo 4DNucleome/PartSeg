@@ -1,13 +1,14 @@
-import numpy as np
-from utils import class_to_dict
-from image_operations import gaussian, DrawType
-import SimpleITK as sitk
-from enum import Enum
 import inspect
 import logging
-from global_settings import develop
+from enum import Enum
 
-from utils import bisect
+import SimpleITK as sitk
+import numpy as np
+
+from project_utils import bisect
+from project_utils import class_to_dict
+from project_utils.global_settings import develop
+from project_utils.image_operations import gaussian, DrawType
 
 
 class ThresholdType(Enum):

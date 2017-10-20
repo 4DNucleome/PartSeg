@@ -46,5 +46,5 @@ def set_develop(value):
     develop = value
 
 
-file_folder = os.path.dirname(os.path.realpath(__file__))
+file_folder = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 

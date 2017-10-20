@@ -1,28 +1,26 @@
 # coding=utf-8
 from __future__ import print_function, division
-import os.path
-import tifffile
-import SimpleITK as sitk
-import numpy as np
+
 import json
+import os.path
 import re
+
+import SimpleITK as sitk
+import matplotlib.colors as colors
+import numpy as np
+import tifffile
+from PyQt5.QtWidgets import QWidget
+from PIL import Image
 from qt_import import *
-from global_settings import file_folder, config_folder
+
+from image_view import MyCanvas, MyDrawCanvas
+from io_functions import save_to_cmap, save_to_project, load_project, GaussUse, save_to_xyz
+from partseg.advanced_window import AdvancedWindow
+from partseg.backend import Settings, Segment, UPPER, MaskChange
+from partseg.batch_window import BatchWindow
+from project_utils.global_settings import file_folder, config_folder
 
 from matplotlib import pyplot
-import matplotlib.colors as colors
-
-from PIL import Image
-
-from backend import Settings, Segment, UPPER, MaskChange
-from batch_window import BatchWindow
-
-
-from io_functions import save_to_cmap, save_to_project, load_project, GaussUse, save_to_xyz
-
-from advanced_window import AdvancedWindow
-from image_view import MyCanvas, MyDrawCanvas
-
 __author__ = "Grzegorz Bokota"
 
 

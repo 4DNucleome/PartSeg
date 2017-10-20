@@ -1,15 +1,18 @@
-from qt_import import QWidget, FigureCanvas, QToolButton, QSize, QIcon, QAction, QLabel, QDialog, NavigationToolbar, \
-    Qt, QSlider, QCheckBox, QVBoxLayout, QHBoxLayout, QPushButton, QDoubleSpinBox, QGridLayout, QInputDialog, QApplication, QImage, QPixmap
-from matplotlib import pyplot
-from matplotlib import colors
-import matplotlib
-import SimpleITK as sitk
-from global_settings import file_folder, develop
-from backend import GAUSS, UPPER
-import os
 import logging
+import os
+
+import SimpleITK as sitk
+import matplotlib
 import numpy as np
-from image_operations import DrawType
+from matplotlib import colors
+from matplotlib import pyplot
+
+from partseg.backend import GAUSS
+from project_utils.global_settings import file_folder, develop
+from project_utils.image_operations import DrawType
+from qt_import import QWidget, FigureCanvas, QToolButton, QSize, QIcon, QAction, QLabel, QDialog, NavigationToolbar, \
+    Qt, QSlider, QCheckBox, QVBoxLayout, QHBoxLayout, QPushButton, QDoubleSpinBox, QGridLayout, QInputDialog, \
+    QApplication, QImage, QPixmap
 from segment import SegmentationProfile
 
 canvas_icon_size = QSize(27, 27)

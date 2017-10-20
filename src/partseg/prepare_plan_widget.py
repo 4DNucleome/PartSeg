@@ -1,18 +1,17 @@
+import logging
+from copy import copy, deepcopy
+
+from io_functions import GaussUse
+from partseg.batch_processing.calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, \
+    MaskSuffix, MaskSub, \
+    MaskFile, ProjectSave, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, MaskSave, ImageSave, \
+    XYZSave
+from partseg.statistics_calculation import StatisticProfile
+from profile_export import ExportDialog, ImportDialog
 from qt_import import QWidget, QSplitter, QTreeWidget, QTreeWidgetItem, pyqtSignal, QPushButton, QCheckBox, \
     QListWidget, QLineEdit, QSpinBox, QTextEdit, QGroupBox, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, \
     QInputDialog, QMessageBox, QFileDialog, QDialog, QComboBox, str_type, QCompleter, Qt
-
-from calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, MaskSuffix, MaskSub, \
-    MaskFile, ProjectSave, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, MaskSave, ImageSave, \
-    XYZSave
-
-from profile_export import ExportDialog, ImportDialog
-
-import logging
-from copy import copy, deepcopy
-from statistics_calculation import StatisticProfile
 from segment import SegmentationProfile
-from io_functions import GaussUse
 from universal_gui_part import right_label
 
 group_sheet = "QGroupBox {border: 1px solid gray; border-radius: 9px; margin-top: 0.5em;} " \

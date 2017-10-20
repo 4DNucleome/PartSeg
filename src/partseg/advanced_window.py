@@ -1,11 +1,13 @@
 # coding=utf-8
+
 import numpy as np
-from backend import StatisticProfile, get_segmented_data, calculate_statistic_from_image, UNITS_DICT, \
-    SegmentationProfile, Settings, UNITS_LIST
-from qt_import import *
-from global_settings import file_folder
+
+from partseg.backend import StatisticProfile, get_segmented_data, calculate_statistic_from_image, \
+    SegmentationProfile, Settings
 from profile_export import ExportDialog, ImportDialog, StringViewer
-import logging
+from project_utils.global_settings import file_folder
+from project_utils.universal_const import UNITS_DICT, UNITS_LIST
+from qt_import import *
 
 __author__ = "Grzegorz Bokota"
 

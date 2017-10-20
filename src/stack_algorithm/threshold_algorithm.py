@@ -1,9 +1,10 @@
-import numpy as np
 import SimpleITK as sitk
-from utils import bisect
-from .segment import close_small_holes, opening
-from image_operations import gaussian
+import numpy as np
+
+from project_utils import bisect
+from project_utils.image_operations import gaussian
 from qt_import import QThread, pyqtSignal
+from .segment import close_small_holes, opening
 
 
 class SegmentationAlgorithm(QThread):

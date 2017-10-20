@@ -1,11 +1,11 @@
 # coding=utf-8
-from global_settings import use_qt5
-import matplotlib
 import logging
 import platform
 import sys
-import appdirs
-import os
+
+import matplotlib
+
+from project_utils.global_settings import use_qt5
 
 __author__ = "Grzegorz Bokota"
 

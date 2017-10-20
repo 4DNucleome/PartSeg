@@ -1,12 +1,14 @@
 from __future__ import division
-from collections import namedtuple, OrderedDict
-from utils import class_to_dict
+
 import logging
+import traceback
+from collections import namedtuple, OrderedDict
+from typing import Dict
+
 import SimpleITK as sitk
 import numpy as np
-import autofit as af
-from typing import Dict
-import traceback
+
+from project_utils import class_to_dict, autofit as af
 
 SettingsValue = namedtuple("SettingsValue", ["function_name", "help_message", "arguments", "is_mask", "is_component"])
 

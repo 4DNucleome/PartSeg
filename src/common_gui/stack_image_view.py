@@ -1,20 +1,22 @@
 from __future__ import division, print_function
-from qt_import import QMainWindow, QPixmap, QImage, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, \
-    QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QSize, QAction, Qt, QPainter, QPen, QGridLayout, \
-    QColor, QScrollBar, QApplication, pyqtSignal, QPoint, QSlider, QMessageBox, QCheckBox, QComboBox, QSize, QObject, \
-    QEvent, QToolTip, QHelpEvent
-import os
-from global_settings import file_folder, use_qt5
-from stack_settings import ImageSettings
-from math import log
-import numpy as np
-from matplotlib.colors import PowerNorm
-from matplotlib.cm import get_cmap
-from matplotlib import pyplot
-import SimpleITK as sitk
+
 import collections
-from typing import Callable
-import custom_colormaps
+import os
+from math import log
+
+import SimpleITK as sitk
+import numpy as np
+from matplotlib import pyplot
+from matplotlib.cm import get_cmap
+from matplotlib.colors import PowerNorm
+
+from project_utils.global_settings import file_folder, use_qt5
+from qt_import import QPixmap, QImage, QWidget, QVBoxLayout, QHBoxLayout, \
+    QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QAction, Qt, QPainter, QPen, QColor, QApplication, \
+    pyqtSignal, QPoint, QSlider, QCheckBox, QComboBox, QSize, QObject, \
+    QEvent, QToolTip, QHelpEvent
+from stack_settings import ImageSettings
+from project_utils.custom_colormaps import default_colors
 
 canvas_icon_size = QSize(27, 27)
 step = 1.01
@@ -172,9 +174,6 @@ def create_tool_button(text, icon):
         else:
             res.setIcon(icon)
     return res
-
-
-default_colors = ['BlackRed', 'BlackGreen', 'BlackBlue', 'BlackMagenta']
 
 
 class ChanelColor(QWidget):

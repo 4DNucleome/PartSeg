@@ -1,21 +1,24 @@
-from parallel_backed import BatchManager
-from backend import Settings, MaskChange
-from statistics_calculation import StatisticProfile
-from segment import Segment, SegmentationProfile
-from io_functions import load_project, save_to_project, save_to_cmap, save_to_xyz
-from os import path
-import tifffile
-import pandas as pd
-from calculation_plan import CalculationTree, MaskMapper, MaskUse, MaskCreate, ProjectSave, ImageSave, XYZSave, \
-    CmapProfile, Operations, ChooseChanel, FileCalculation, MaskIntersection, MaskSum, MaskSave, get_save_path
-from copy import copy
-from utils import dict_set_class
-from queue_bufix import Queue
-from collections import OrderedDict, defaultdict
 import logging
-from enum import Enum
 import threading
+from collections import OrderedDict, defaultdict
+from copy import copy
+from enum import Enum
+from os import path
+from queue import Queue
+
 import numpy as np
+import pandas as pd
+import tifffile
+
+from io_functions import load_project, save_to_project, save_to_cmap, save_to_xyz
+from partseg.backend import Settings, MaskChange
+from partseg.batch_processing.calculation_plan import CalculationTree, MaskMapper, MaskUse, MaskCreate, ProjectSave, \
+    ImageSave, XYZSave, \
+    CmapProfile, Operations, ChooseChanel, FileCalculation, MaskIntersection, MaskSum, MaskSave, get_save_path
+from partseg.batch_processing.parallel_backed import BatchManager
+from partseg.statistics_calculation import StatisticProfile
+from project_utils import dict_set_class
+from segment import Segment, SegmentationProfile
 
 
 def do_calculation(file_path, calculation):

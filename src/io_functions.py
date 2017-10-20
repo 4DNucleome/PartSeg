@@ -1,19 +1,20 @@
-import h5py
-import tempfile
-import os
-import tarfile
-import sys
-import numpy as np
 import json
 import logging
-import SimpleITK as sitk
-import pandas as pd
+import os
+import sys
+import tarfile
+import tempfile
 from copy import deepcopy
 from enum import Enum
-from autofit import find_density_orientation, get_rotation_parameters, density_mass_center
 
-from backend import Settings, Segment, class_to_dict, calculate_statistic_from_image, get_segmented_data,\
+import SimpleITK as sitk
+import h5py
+import numpy as np
+import pandas as pd
+
+from partseg.backend import Settings, Segment, class_to_dict, calculate_statistic_from_image, get_segmented_data, \
     SegmentationProfile, SegmentationSettings
+from project_utils.autofit import find_density_orientation, get_rotation_parameters, density_mass_center
 
 __author__ = "Grzegorz Bokota"
 

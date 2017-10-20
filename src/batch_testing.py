@@ -1,9 +1,9 @@
-from parallel_backed import BatchManager
 import logging
-from collections import namedtuple
 import time
+from collections import namedtuple
 from uuid import uuid4
 
+from partseg.batch_processing.parallel_backed import BatchManager
 
 Test = namedtuple("Test", ["x", "y", "z"])
 

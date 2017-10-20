@@ -1,5 +1,6 @@
 from __future__ import print_function
-from backend import StatisticProfile
+
+from partseg.backend import StatisticProfile
 
 aa = StatisticProfile("aa", [("Moment of inertia", "Moment of inertia")], False, None)
 

@@ -1,22 +1,24 @@
 # coding=utf-8
 from __future__ import print_function, division
-import matplotlib
-from matplotlib import pyplot
-import numpy as np
+
 import json
 import logging
 from enum import Enum
-from calculation_plan import CalculationPlan
+
+import matplotlib
+import numpy as np
+from matplotlib import pyplot
+
+from partseg.batch_processing.calculation_plan import CalculationPlan
+
 GAUSS = "Gauss"
 
-from utils import class_to_dict, dict_set_class
+from project_utils import class_to_dict, dict_set_class
 from segment import SegmentationProfile, Segment, UPPER, fill_holes_in_mask, fill_2d_holes_in_mask
-from statistics_calculation import StatisticProfile, calculate_volume_surface, calc_diam
-from image_operations import gaussian, dilate, erode
+from partseg.statistics_calculation import StatisticProfile, calculate_volume_surface
+from project_utils.image_operations import gaussian, dilate, erode
 from scipy.ndimage.interpolation import zoom
-from autofit import calculate_density_momentum
-
-from universal_const import UNITS_DICT, UNITS_LIST
+from project_utils.autofit import calculate_density_momentum
 
 
 class MaskChange(Enum):

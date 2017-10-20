@@ -56,3 +56,4 @@ black_magenta = LinearSegmentedColormap('BlackMagenta', magenta_dict)
 plt.register_cmap(cmap=black_magenta)
 
 
+default_colors = ['BlackRed', 'BlackGreen', 'BlackBlue', 'BlackMagenta']

@@ -1,13 +1,15 @@
-from abc import ABCMeta, abstractmethod
-from six import add_metaclass
-import os
-from copy import copy
-from collections import namedtuple
 import logging
-from enum import Enum
-from statistics_calculation import StatisticProfile
-from segment import SegmentationProfile
+import os
 import uuid
+from abc import ABCMeta, abstractmethod
+from collections import namedtuple
+from copy import copy
+from enum import Enum
+
+from six import add_metaclass
+
+from partseg.statistics_calculation import StatisticProfile
+from segment import SegmentationProfile
 
 MaskCreate = namedtuple("MaskCreate", ['name', 'radius'])
 MaskUse = namedtuple("MaskUse", ['name'])

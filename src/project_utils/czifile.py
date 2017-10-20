@@ -120,7 +120,7 @@ from tifffile import FileHandle, decode_lzw, lazyattr, stripnull
 
 try:
     if __package__:
-        from . import _czifile
+        from src import _czifile
     else:
         import _czifile
     _have_czifile = True

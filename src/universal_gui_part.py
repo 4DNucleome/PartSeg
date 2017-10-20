@@ -1,6 +1,6 @@
 # coding=utf-8
-from qt_import import QWidget, QHBoxLayout, QLabel, Qt, QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QComboBox, QFontMetrics
-from flow_layout import FlowLayout
+from common_gui.flow_layout import FlowLayout
+from qt_import import QWidget, QLabel, Qt, QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QComboBox, QFontMetrics
 
 
 class Spacing(QWidget):
