@@ -72,3 +72,18 @@ def right_label(text):
     label = QLabel(text)
     label.setAlignment(Qt.AlignVCenter | Qt.AlignRight)
     return label
+
+
+def set_position(elem, previous, dist=10):
+    pos_y = previous.pos().y()
+    if platform.system() == "Darwin" and isinstance(elem, QLineEdit):
+        pos_y += 3
+    if platform.system() == "Darwin" and isinstance(previous, QLineEdit):
+        pos_y -= 3
+    if platform.system() == "Darwin" and isinstance(previous, QSlider):
+        pos_y -= 10
+    if platform.system() == "Darwin" and isinstance(elem, QSpinBox):
+        pos_y += 7
+    if platform.system() == "Darwin" and isinstance(previous, QSpinBox):
+        pos_y -= 7
+    elem.move(previous.pos().x() + previous.size().width() + dist, pos_y)

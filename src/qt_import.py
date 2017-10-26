@@ -76,23 +76,7 @@ def v_line():
     toto.setFrameShadow(QFrame.Sunken)
     return toto
 
-big_font_size = 15
-button_margin = 10
-button_height = 30
-button_small_dist = -2
 
-
-if platform.system() == "Linux":
-    big_font_size = 14
-
-if platform.system() == "Darwin":
-    big_font_size = 20
-    button_margin = 30
-    button_height = 34
-    button_small_dist = -10
-
-if platform.system() == "Windows":
-    big_font_size = 12
 
 
 def set_position(elem, previous, dist=10):

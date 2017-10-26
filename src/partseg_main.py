@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
     set_develop(args.develop)
     from PyQt5.QtWidgets import QApplication
-    from partseg.gui import MainWindow
+    from partseg.main_window import MainWindow
     import sys
     myApp = QApplication(sys.argv)
     wind = MainWindow("PartSeg", args.file)
