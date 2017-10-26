@@ -10,15 +10,15 @@ import numpy as np
 import pandas as pd
 import tifffile
 
-from io_functions import load_project, save_to_project, save_to_cmap, save_to_xyz
 from partseg.backend import Settings, MaskChange
 from partseg.batch_processing.calculation_plan import CalculationTree, MaskMapper, MaskUse, MaskCreate, ProjectSave, \
     ImageSave, XYZSave, \
     CmapProfile, Operations, ChooseChanel, FileCalculation, MaskIntersection, MaskSum, MaskSave, get_save_path
 from partseg.batch_processing.parallel_backed import BatchManager
+from partseg.io_functions import load_project, save_to_project, save_to_cmap, save_to_xyz
+from partseg.segment import Segment, SegmentationProfile
 from partseg.statistics_calculation import StatisticProfile
 from project_utils import dict_set_class
-from segment import Segment, SegmentationProfile
 
 
 def do_calculation(file_path, calculation):

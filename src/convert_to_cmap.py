@@ -41,7 +41,6 @@ class MorphParser(object):
         :return:
         """
         print("Morph op parse \"{}\"".format(name))
-        import io_functions
         if name == io_functions.MorphChange.no_morph:
             return name
         if name.lower() in ["open", "opening"]:
@@ -56,8 +55,7 @@ if __name__ == '__main__':
     import glob
     import os
     import sys
-    from partseg import backend
-    import io_functions
+    from partseg import backend, io_functions
     import numpy as np
     mpr = MorphParser()
     parser = argparse.ArgumentParser("Convert project to chimera cmap")

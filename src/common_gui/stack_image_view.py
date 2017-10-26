@@ -10,13 +10,13 @@ from matplotlib import pyplot
 from matplotlib.cm import get_cmap
 from matplotlib.colors import PowerNorm
 
+from project_utils.custom_colormaps import default_colors
 from project_utils.global_settings import file_folder, use_qt5
 from qt_import import QPixmap, QImage, QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QAction, Qt, QPainter, QPen, QColor, QApplication, \
     pyqtSignal, QPoint, QSlider, QCheckBox, QComboBox, QSize, QObject, \
     QEvent, QToolTip, QHelpEvent
-from stack_settings import ImageSettings
-from project_utils.custom_colormaps import default_colors
+from stackseg.stack_settings import ImageSettings
 
 canvas_icon_size = QSize(27, 27)
 step = 1.01

@@ -8,8 +8,8 @@ from enum import Enum
 
 from six import add_metaclass
 
+from partseg.segment import SegmentationProfile
 from partseg.statistics_calculation import StatisticProfile
-from segment import SegmentationProfile
 
 MaskCreate = namedtuple("MaskCreate", ['name', 'radius'])
 MaskUse = namedtuple("MaskUse", ['name'])

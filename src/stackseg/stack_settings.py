@@ -1,9 +1,10 @@
-from qt_import import QObject, pyqtSignal
-import numpy as np
 from typing import List
-from io_functions import save_stack_segmentation, load_stack_segmentation
-from stack_algorithm.segment import cut_with_mask, save_catted_list
-from os import path
+
+import numpy as np
+
+from partseg.io_functions import save_stack_segmentation, load_stack_segmentation
+from qt_import import QObject, pyqtSignal
+from stackseg.stack_algorithm.segment import cut_with_mask, save_catted_list
 
 
 class ImageSettings(QObject):

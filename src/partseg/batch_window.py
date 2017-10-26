@@ -12,7 +12,7 @@ from partseg.prepare_plan_widget import CalculatePlaner
 from project_utils.global_settings import file_folder
 from project_utils.universal_const import UNITS_LIST
 from qt_import import *
-from universal_gui_part import Spacing, right_label
+from common_gui.universal_gui_part import Spacing, right_label
 
 __author__ = "Grzegorz Bokota"
 

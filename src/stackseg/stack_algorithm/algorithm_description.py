@@ -1,16 +1,17 @@
+from abc import ABCMeta, abstractmethod
+from os import path
+from typing import Type
+
+import numpy as np
+import tifffile
+from six import with_metaclass
+
+from partseg.io_functions import save_stack_segmentation, load_stack_segmentation
 from qt_import import QDoubleSpinBox, QSpinBox, QComboBox, QWidget, QFormLayout, QAbstractSpinBox, QCheckBox, QThread, \
     pyqtSignal, QLabel, QVBoxLayout
-import sys
-from abc import ABCMeta, abstractmethod
-from stack_settings import ImageSettings
-from six import with_metaclass
+from stackseg.stack_settings import ImageSettings
 from .threshold_algorithm import ThresholdAlgorithm, ThresholdPreview, SegmentationAlgorithm, \
     AutoThresholdAlgorithm
-from typing import Type
-from io_functions import save_stack_segmentation, load_stack_segmentation
-from os import path
-import tifffile
-import numpy as np
 
 
 class AlgorithmProperty(object):

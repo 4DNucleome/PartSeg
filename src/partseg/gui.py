@@ -9,18 +9,18 @@ import SimpleITK as sitk
 import matplotlib.colors as colors
 import numpy as np
 import tifffile
-from PyQt5.QtWidgets import QWidget
 from PIL import Image
-from qt_import import *
+from PyQt5.QtWidgets import QWidget
+from matplotlib import pyplot
 
-from image_view import MyCanvas, MyDrawCanvas
-from io_functions import save_to_cmap, save_to_project, load_project, GaussUse, save_to_xyz
 from partseg.advanced_window import AdvancedWindow
 from partseg.backend import Settings, Segment, UPPER, MaskChange
 from partseg.batch_window import BatchWindow
+from partseg.image_view import MyCanvas, MyDrawCanvas
+from partseg.io_functions import save_to_cmap, save_to_project, load_project, GaussUse, save_to_xyz
 from project_utils.global_settings import file_folder, config_folder
+from qt_import import *
 
-from matplotlib import pyplot
 __author__ = "Grzegorz Bokota"
 
 

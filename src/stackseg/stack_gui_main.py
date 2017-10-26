@@ -5,19 +5,19 @@ import os
 import numpy as np
 import tifffile as tif
 from PyQt5.QtWidgets import QWidget
+from common_gui.universal_gui_part import right_label
 
 from common_gui.flow_layout import FlowLayout
 from common_gui.stack_image_view import ImageView
-from io_functions import load_stack_segmentation
 from partseg.batch_window import AddFiles
+from partseg.io_functions import load_stack_segmentation
 from project_utils.global_settings import file_folder
 from project_utils.universal_const import UNITS_LIST
 from qt_import import QMainWindow, QPushButton, QFileDialog, QVBoxLayout, QHBoxLayout, QLabel, Qt, \
     pyqtSignal, QSpinBox, QComboBox, QTabWidget, QDoubleSpinBox, QProgressBar, \
     QFormLayout, QAbstractSpinBox, QStackedLayout, QCheckBox, QMessageBox
-from stack_algorithm.algorithm_description import stack_algorithm_dict, AlgorithmSettingsWidget, BatchProceed
-from stack_settings import ImageSettings
-from universal_gui_part import right_label
+from stackseg.stack_algorithm.algorithm_description import stack_algorithm_dict, AlgorithmSettingsWidget, BatchProceed
+from stackseg.stack_settings import ImageSettings
 
 
 class MainMenu(QWidget):

@@ -8,12 +8,12 @@ from matplotlib import colors
 from matplotlib import pyplot
 
 from partseg.backend import GAUSS
+from partseg.segment import SegmentationProfile
 from project_utils.global_settings import file_folder, develop
 from project_utils.image_operations import DrawType
 from qt_import import QWidget, FigureCanvas, QToolButton, QSize, QIcon, QAction, QLabel, QDialog, NavigationToolbar, \
     Qt, QSlider, QCheckBox, QVBoxLayout, QHBoxLayout, QPushButton, QDoubleSpinBox, QGridLayout, QInputDialog, \
     QApplication, QImage, QPixmap
-from segment import SegmentationProfile
 
 canvas_icon_size = QSize(27, 27)
 
