@@ -5,7 +5,7 @@ import numpy as np
 from partseg.backend import StatisticProfile, get_segmented_data, calculate_statistic_from_image, \
     SegmentationProfile, Settings
 from partseg.profile_export import ExportDialog, ImportDialog, StringViewer
-from project_utils.global_settings import file_folder
+from project_utils.global_settings import static_file_folder
 from project_utils.universal_const import UNITS_DICT, UNITS_LIST
 from qt_import import *
 
@@ -205,7 +205,7 @@ class StatisticsSettings(QWidget):
     def choose_element(self):
         if self.chosen_element is None:
             item = self.profile_options.currentItem()
-            item.setIcon(QIcon(os.path.join(file_folder, "icons", "task-accepted.png")))
+            item.setIcon(QIcon(os.path.join(static_file_folder, "icons", "task-accepted.png")))
             self.chosen_element = item
         elif self.profile_options.currentItem() == self.chosen_element:
             self.chosen_element.setIcon(QIcon())

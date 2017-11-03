@@ -1,8 +1,8 @@
 import numpy as np
-from project_utils.global_settings import file_folder
+from project_utils.global_settings import static_file_folder
 from os import path
 import typing
-color_maps = np.load(path.join(file_folder, "static_files", "colors.npz"))
+color_maps = np.load(path.join(static_file_folder, "colors.npz"))
 
 def color_image(image: np.ndarray, colors: typing.List[str]):
     color_maps_local = [color_maps[x] for x in colors]

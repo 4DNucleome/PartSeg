@@ -11,7 +11,7 @@ from common_gui.flow_layout import FlowLayout
 from common_gui.stack_image_view import ImageView
 from partseg.batch_window import AddFiles
 from partseg.io_functions import load_stack_segmentation
-from project_utils.global_settings import file_folder
+from project_utils.global_settings import static_file_folder
 from project_utils.universal_const import UNITS_LIST
 from qt_import import QMainWindow, QPushButton, QFileDialog, QVBoxLayout, QHBoxLayout, QLabel, Qt, \
     pyqtSignal, QSpinBox, QComboBox, QTabWidget, QDoubleSpinBox, QProgressBar, \
@@ -416,7 +416,7 @@ class MainWindow(QMainWindow):
         self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
 
-        im = tif.imread(os.path.join(file_folder, 'initial_images', "stack.tif"))
+        im = tif.imread(os.path.join(static_file_folder, 'initial_images', "stack.tif"))
         # width, height = im.shape
         # im = colors.PowerNorm(gamma=1, vmin=im.min(), vmax=im.max())(im)
         # cmap = matplotlib.cm.get_cmap("cubehelix")

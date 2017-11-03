@@ -84,7 +84,7 @@ if __name__ == '__main__':
     parser.add_argument("-r", "--with_rotation", dest="with_rotation", const=True, default=False, action="store_const")
     args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING)
-    files_to_proceed = glob.glob(os.path.join(args.source_folder[0], "*.gz"))
+    files_to_proceed = glob.glob(os.path.join(args.source_folder[0], "*.tgz"))
     if len(files_to_proceed) == 0:
         files_to_proceed = glob.glob(os.path.join(args.source_folder[0], "*.bz2"))
         if len(files_to_proceed) == 0:

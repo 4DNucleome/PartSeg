@@ -18,7 +18,7 @@ from partseg.backend import Settings, Segment, UPPER, MaskChange
 from partseg.batch_window import BatchWindow
 from partseg.image_view import MyCanvas, MyDrawCanvas
 from partseg.io_functions import save_to_cmap, save_to_project, load_project, GaussUse, save_to_xyz
-from project_utils.global_settings import file_folder, config_folder
+from project_utils.global_settings import static_file_folder, config_folder
 from qt_import import *
 
 __author__ = "Grzegorz Bokota"
@@ -300,13 +300,13 @@ class MainMenu(QWidget):
         self.settings.add_image_callback(self.set_layer_threshold)
         self.settings.add_change_layer_callback(self.changed_layer)
         self.load_button = QToolButton(self)
-        self.load_button.setIcon(QIcon(os.path.join(file_folder, "icons", "document-open.png")))
+        self.load_button.setIcon(QIcon(os.path.join(static_file_folder, "icons", "document-open.png")))
         self.load_button.setIconSize(QSize(30,30))
         # self.load_button.setStyleSheet("padding: 3px;")
         self.load_button.setToolTip("Open")
         self.load_button.clicked.connect(self.open_file)
         self.save_button = QToolButton(self)
-        self.save_button.setIcon(QIcon(os.path.join(file_folder, "icons", "document-save-as.png")))
+        self.save_button.setIcon(QIcon(os.path.join(static_file_folder, "icons", "document-save-as.png")))
         self.save_button.setIconSize(QSize(30, 30))
         # self.save_button.setStyleSheet("padding: 3px;")
         self.save_button.setToolTip("Save")
@@ -356,7 +356,7 @@ class MainMenu(QWidget):
         self.profile_choose.addItems(list(sorted(self.settings.get_profile_list())))
         self.profile_choose.currentIndexChanged[str_type].connect(self.profile_changed)
         self.advanced_button = QToolButton(self)  # "Advanced"
-        self.advanced_button.setIcon(QIcon(os.path.join(file_folder, "icons", "configure.png")))
+        self.advanced_button.setIcon(QIcon(os.path.join(static_file_folder, "icons", "configure.png")))
         self.advanced_button.setIconSize(QSize(30, 30))
         self.advanced_button.setToolTip("Advanced settings and statistics")
         self.advanced_button.clicked.connect(self.open_advanced)
@@ -967,7 +967,7 @@ class Credits(QDialog):
         licenses = "LGPLv3 for Oxygen icons <a href=\"http://www.kde.org/\">http://www.kde.org/</a><br>" \
                    "GPL for PyQt project"
         text = program + separator + author + separator + licenses
-        label.setText(text.decode('utf-8'))
+        label.setText(text)
         label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         label.setWordWrap(True)
 
@@ -1039,7 +1039,8 @@ class CmapSave(QDialog):
 class HelpWindow(QDockWidget):
     def __init__(self, parent=None):
         super(HelpWindow, self).__init__(parent)
-        self.help_engine = QHelpEngine(os.path.join(file_folder, "help", "PartSeg.qhc"))
+        self.help_engine = QHelpEngine(os.path.join(os.path.dirname(os.path.dirname(static_file_folder)),
+                                                    "help", "PartSeg.qhc"))
         self.help_engine.setupData()
         self.menu_widget = QTabWidget(self)
         self.menu_widget.addTab(self.help_engine.contentWidget(), "Contents")

@@ -207,7 +207,7 @@ class StatisticProfile(object):
     def parse_statistic(self, text):
         tokens = self.tokenize(text)
 
-        tree, l = self.build_tree(tokens)
+        tree, _ = self.build_tree(tokens)
         return self.tree_to_dict_tree(tree)
 
     def is_any_mask_statistic(self):
@@ -362,7 +362,6 @@ class StatisticProfile(object):
             diameter = help_dict[volume_hash_str]
         radius = diameter / 2
         return volume/radius**3
-
 
 
     @staticmethod

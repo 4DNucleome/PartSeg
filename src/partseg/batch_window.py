@@ -9,7 +9,7 @@ from partseg.backend import Settings
 from partseg.batch_processing.batch_backend import CalculationManager
 from partseg.batch_processing.calculation_plan import CalculationPlan, MaskFile, MaskMapper, Calculation
 from partseg.prepare_plan_widget import CalculatePlaner
-from project_utils.global_settings import file_folder
+from project_utils.global_settings import static_file_folder
 from project_utils.universal_const import UNITS_LIST
 from qt_import import *
 from common_gui.universal_gui_part import Spacing, right_label
@@ -526,9 +526,9 @@ class CalculationPrepare(QDialog):
 
     def showEvent(self, event):
         super(CalculationPrepare, self).showEvent(event)
-        ok_icon = QIcon(os.path.join(file_folder, "icons", "task-accepted.png"))
-        bad_icon = QIcon(os.path.join(file_folder, "icons", "task-reject.png"))
-        warn_icon = QIcon(os.path.join(file_folder, "icons", "task-attempt.png"))
+        ok_icon = QIcon(os.path.join(static_file_folder, "icons", "task-accepted.png"))
+        bad_icon = QIcon(os.path.join(static_file_folder, "icons", "task-reject.png"))
+        warn_icon = QIcon(os.path.join(static_file_folder, "icons", "task-attempt.png"))
         all_prefix = os.path.commonprefix(self.file_list)
         if not os.path.exists(all_prefix):
             all_prefix = os.path.dirname(all_prefix)

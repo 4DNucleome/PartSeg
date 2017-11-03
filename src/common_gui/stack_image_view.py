@@ -11,7 +11,7 @@ from matplotlib.cm import get_cmap
 from matplotlib.colors import PowerNorm
 
 from project_utils.custom_colormaps import default_colors
-from project_utils.global_settings import file_folder, use_qt5
+from project_utils.global_settings import static_file_folder, use_qt5
 from qt_import import QPixmap, QImage, QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QAction, Qt, QPainter, QPen, QColor, QApplication, \
     pyqtSignal, QPoint, QSlider, QCheckBox, QComboBox, QSize, QObject, \
@@ -170,7 +170,7 @@ def create_tool_button(text, icon):
     else:
         res.setToolTip(text)
         if isinstance(icon, str):
-            res.setIcon(QIcon(os.path.join(file_folder, "icons", icon)))
+            res.setIcon(QIcon(os.path.join(static_file_folder, "icons", icon)))
         else:
             res.setIcon(icon)
     return res

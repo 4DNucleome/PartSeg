@@ -9,7 +9,7 @@ from matplotlib import pyplot
 
 from partseg.backend import GAUSS
 from partseg.segment import SegmentationProfile
-from project_utils.global_settings import file_folder, develop
+from project_utils.global_settings import static_file_folder, develop
 from project_utils.image_operations import DrawType
 from qt_import import QWidget, FigureCanvas, QToolButton, QSize, QIcon, QAction, QLabel, QDialog, NavigationToolbar, \
     Qt, QSlider, QCheckBox, QVBoxLayout, QHBoxLayout, QPushButton, QDoubleSpinBox, QGridLayout, QInputDialog, \
@@ -79,12 +79,12 @@ class MyCanvas(QWidget):
         self.toolbar = NavigationToolbar(self.figure_canvas, self)
         self.toolbar.hide()
         self.reset_button = QToolButton(self)
-        self.reset_button.setIcon(QIcon(os.path.join(file_folder, "icons", "zoom-original.png")))
+        self.reset_button.setIcon(QIcon(os.path.join(static_file_folder, "icons", "zoom-original.png")))
         self.reset_button.setIconSize(canvas_icon_size)
         self.reset_button.clicked.connect(self.reset)
         self.reset_button.setToolTip("Reset zoom")
         self.zoom_button = QToolButton(self)
-        self.zoom_button.setIcon(QIcon(os.path.join(file_folder, "icons", "zoom-select.png")))
+        self.zoom_button.setIcon(QIcon(os.path.join(static_file_folder, "icons", "zoom-select.png")))
         self.zoom_button.setIconSize(canvas_icon_size)
         self.zoom_button.setToolTip("Zoom")
         self.zoom_button.clicked.connect(self.zoom)
@@ -95,7 +95,7 @@ class MyCanvas(QWidget):
         self.zoom_button.addAction(crop)
         self.move_button = QToolButton(self)
         self.move_button.setToolTip("Move")
-        self.move_button.setIcon(QIcon(os.path.join(file_folder, "icons", "transform-move.png")))
+        self.move_button.setIcon(QIcon(os.path.join(static_file_folder, "icons", "transform-move.png")))
         self.move_button.setIconSize(canvas_icon_size)
         self.move_button.clicked.connect(self.move_action)
         self.move_button.setCheckable(True)
@@ -446,19 +446,19 @@ class MyDrawCanvas(MyCanvas):
 
         self.draw_button = QToolButton(self)
         self.draw_button.setToolTip("Draw")
-        self.draw_button.setIcon(QIcon(os.path.join(file_folder, "icons", "draw-path.png")))
+        self.draw_button.setIcon(QIcon(os.path.join(static_file_folder, "icons", "draw-path.png")))
         self.draw_button.setIconSize(canvas_icon_size)
         self.draw_button.setCheckable(True)
         # self.draw_button.clicked[bool].connect(self.draw_click)
         self.erase_button = QToolButton(self)
         self.erase_button.setToolTip("Erase")
-        self.erase_button.setIcon(QIcon(os.path.join(file_folder, "icons", "draw-eraser.png")))
+        self.erase_button.setIcon(QIcon(os.path.join(static_file_folder, "icons", "draw-eraser.png")))
         self.erase_button.setIconSize(canvas_icon_size)
         self.erase_button.setCheckable(True)
         # self.erase_button.clicked[bool].connect(self.erase_click)
         self.scale_button = QToolButton(self)
         self.scale_button.setToolTip("x, y image scale")
-        self.scale_button.setIcon(QIcon(os.path.join(file_folder, "icons", "transform-scale.png")))
+        self.scale_button.setIcon(QIcon(os.path.join(static_file_folder, "icons", "transform-scale.png")))
         self.scale_button.setIconSize(canvas_icon_size)
         self.scale_button.clicked.connect(self.scale_image)
         if not develop:
