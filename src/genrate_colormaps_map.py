@@ -10,6 +10,7 @@ if __name__ == '__main__':
     for colormap in pyplot.colormaps():
         color_array = np.copy(base_array)
         colored = get_cmap(colormap)(color_array)
+        colored = (colored * 255).astype(np.uint8)
         result[colormap] = colored[..., :-1]
     np.savez("static_files/colors.npz", **result)
 

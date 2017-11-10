@@ -5,7 +5,7 @@ import numpy as np
 from partseg.io_functions import save_stack_segmentation, load_stack_segmentation
 from qt_import import QObject, pyqtSignal
 from stackseg.stack_algorithm.segment import cut_with_mask, save_catted_list
-
+from project_utils.image_operations import normalize_shape
 
 class ImageSettings(QObject):
     """
@@ -90,18 +90,7 @@ class ImageSettings(QObject):
         else:
             file_path = None
         value = np.squeeze(value)
-        self._image = value
-        if len(value.shape) == 4:
-            if value.shape[-1] > 10:
-                self._image = np.swapaxes(value, 1, 3)
-                self._image = np.swapaxes(self._image, 1, 2)
-        elif len(value.shape) == 3:
-            if value.shape[-1] > 10:
-                self._image = self._image.reshape(self._image.shape + (1,))
-            else:
-                self._image = self._image.reshape((1,) + self._image.shape)
-        else:
-            self._image = self._image.reshape((1,) + self._image.shape + (1,))
+        self._image = normalize_shape(value)
 
         if file_path is not None:
             self._image_path = file_path
