@@ -1,4 +1,4 @@
-from common_gui.color_image import color_image, color_maps
+from common_gui.color_image.color_image_base import color_image, color_maps
 from project_utils.image_operations import normalize_shape
 from tifffile import imread
 

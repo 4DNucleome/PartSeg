@@ -10,6 +10,7 @@ from matplotlib import pyplot
 from matplotlib.cm import get_cmap
 from matplotlib.colors import PowerNorm
 
+from common_gui.color_image import color_image
 from project_utils.custom_colormaps import default_colors
 from project_utils.global_settings import static_file_folder, use_qt5
 from qt_import import QPixmap, QImage, QWidget, QVBoxLayout, QHBoxLayout, \
@@ -194,6 +195,9 @@ class ChanelColor(QWidget):
     def channel_visible(self):
         return self.check_box.isChecked()
 
+    def colormap_name(self):
+        return str(self.color_list.currentText())
+
     def colormap(self, vmin, vmax):
         cmap = get_cmap(str(self.color_list.currentText()))
         norm = PowerNorm(1, vmin=vmin, vmax=vmax)
@@ -374,8 +378,18 @@ class ImageView(QWidget):
 
     def change_image(self):
         img = self.image[self.stack_slider.value()]
-        res = np.zeros(img.shape[:2]+(4,), dtype=np.float)
+        color_maps = []
         for i in range(self.channels_num):
+            try:
+                if self.chanel_color[i].channel_visible():
+                    color_maps.append(self.chanel_color[i].colormap_name())
+                else:
+                    color_maps.append(None)
+            except IndexError as e:
+                print(e)
+                break
+        im = color_image(img, color_maps, self.border_val)
+        """for i in range(self.channels_num):
             try:
                 if self.chanel_color[i].channel_visible():
 
@@ -387,7 +401,7 @@ class ImageView(QWidget):
         # res[res > 1] = 1
         res = res[..., 0:3]
         im = np.array(res * 255, dtype=np.uint8)
-        del res
+        del res"""
         if self.labels_layer is not None and self.image_state.show_label:
             layers = self.labels_layer[self.stack_slider.value()]
             if self.image_state.only_borders:
