@@ -1,6 +1,7 @@
-from common_gui.color_image.color_image_base import color_image, color_maps
-from project_utils.image_operations import normalize_shape
 from tifffile import imread
+
+from project_utils.color_image.color_image_base import color_image, color_maps
+from project_utils.image_operations import normalize_shape
 
 names = list(color_maps.keys())
 pos = [2, 5, 8, 12]

@@ -1,4 +1,4 @@
-# cython: profile=True, boundscheck=False, wraparound=False, nonecheck=False
+# cython: boundscheck=False, wraparound=False, nonecheck=False
 # distutils: define_macros=CYTHON_TRACE_NOGIL=1
 
 import numpy as np
@@ -24,8 +24,8 @@ def min_max_calc_int(np.ndarray arr):
     return min, max
 
 def color_greyscale(np.ndarray[DTYPE_t, ndim=2] cmap, np.ndarray[DTYPE_t, ndim=2] image):
-    cdef x_max = image.shape[0]
-    cdef y_max = image.shape[1]
+    cdef Py_ssize_t x_max = image.shape[0]
+    cdef Py_ssize_t y_max = image.shape[1]
     cdef int val, x, y
     cdef np.ndarray[DTYPE_t, ndim=3] result_array = np.zeros((x_max, y_max, 3), dtype=DTYPE)
     for x in range(x_max):

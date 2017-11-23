@@ -10,7 +10,7 @@ from matplotlib import pyplot
 from matplotlib.cm import get_cmap
 from matplotlib.colors import PowerNorm
 
-from common_gui.color_image import color_image
+from project_utils.color_image import color_image
 from project_utils.custom_colormaps import default_colors
 from project_utils.global_settings import static_file_folder, use_qt5
 from qt_import import QPixmap, QImage, QWidget, QVBoxLayout, QHBoxLayout, \
