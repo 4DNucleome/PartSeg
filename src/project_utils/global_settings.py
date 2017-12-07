@@ -45,8 +45,8 @@ def set_develop(value):
     global develop
     develop = value
 
-
-static_file_folder = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'static_files')
+src_file_folder = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+static_file_folder = os.path.join(src_file_folder, 'static_files')
 
 big_font_size = 15
 button_margin = 10
