@@ -198,9 +198,10 @@ class AlgorithmOptions(QWidget):
         self.only_borders = QCheckBox("Only borders")
         self.only_borders.setChecked(control_view.only_borders)
         self.borders_thick = QSpinBox()
-        self.borders_thick.setRange(1, 10)
-        self.borders_thick.setSingleStep(1)
+        self.borders_thick.setRange(1, 11)
+        self.borders_thick.setSingleStep(2)
         self.borders_thick.setValue(control_view.borders_thick)
+        self.borders_thick.valueChanged.connect(self.border_value_check)
         self.execute_btn = QPushButton("Execute")
         self.execute_all_btn = QPushButton("Execute all")
         self.execute_all_btn.setDisabled(True)
@@ -258,6 +259,10 @@ class AlgorithmOptions(QWidget):
         settings.image_changed.connect(self.image_changed)
         component_checker.component_clicked.connect(self.choose_components.other_component_choose)
         settings.chosen_components_widget = self.choose_components
+
+    def border_value_check(self, value):
+        if value % 2 == 0:
+            self.borders_thick.setValue(value+1)
 
     def file_list_change(self, val):
         print("FF:", val)

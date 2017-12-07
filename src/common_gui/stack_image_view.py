@@ -10,7 +10,7 @@ from matplotlib import pyplot
 from matplotlib.cm import get_cmap
 from matplotlib.colors import PowerNorm
 
-from project_utils.color_image import color_image
+from project_utils.color_image import color_image, add_labels
 from project_utils.custom_colormaps import default_colors
 from project_utils.global_settings import static_file_folder, use_qt5
 from qt_import import QPixmap, QImage, QWidget, QVBoxLayout, QHBoxLayout, \
@@ -404,16 +404,18 @@ class ImageView(QWidget):
         del res"""
         if self.labels_layer is not None and self.image_state.show_label:
             layers = self.labels_layer[self.stack_slider.value()]
+            add_labels(im, layers, self.image_state.opacity, self.image_state.only_borders, int((self.image_state.borders_thick-1)/2))
+            """layers = self.labels_layer[self.stack_slider.value()]
             if self.image_state.only_borders:
                 bord = sitk.LabelContour(sitk.GetImageFromArray(layers))
                 if self.image_state.borders_thick > 1:
-                    bord = sitk.GrayscaleDilate(bord, self.image_state.borders_thick)
+                    bord = sitk.GrayscaleDilate(bord, int((self.image_state.borders_thick-1)/2))
                 labeled = sitk.GetArrayFromImage(sitk.LabelToRGB(bord))
                 layers_mask = sitk.GetArrayFromImage(bord) > 0
             else:
                 labeled = sitk.GetArrayFromImage(sitk.LabelToRGB(sitk.GetImageFromArray(layers)))
                 layers_mask = layers > 0
-            im[layers_mask] = (1 - self.image_state.opacity) * im[layers_mask] + self.image_state.opacity * labeled[layers_mask]
+            im[layers_mask] = (1 - self.image_state.opacity) * im[layers_mask] + self.image_state.opacity * labeled[layers_mask]"""
         self.image_area.set_image(im, self.sender() is not None)
 
     def set_image(self, image):
