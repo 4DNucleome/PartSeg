@@ -5,7 +5,7 @@ import sys
 
 import matplotlib
 
-from project_utils.global_settings import use_qt5
+from project_utils.global_settings import use_qt5,button_margin, button_small_dist
 
 __author__ = "Grzegorz Bokota"
 

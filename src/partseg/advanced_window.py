@@ -5,7 +5,7 @@ import numpy as np
 from partseg.backend import StatisticProfile, get_segmented_data, calculate_statistic_from_image, \
     SegmentationProfile, Settings
 from partseg.profile_export import ExportDialog, ImportDialog, StringViewer
-from project_utils.global_settings import static_file_folder
+from project_utils.global_settings import static_file_folder, button_small_dist, button_height
 from project_utils.universal_const import UNITS_DICT, UNITS_LIST
 from qt_import import *
 
