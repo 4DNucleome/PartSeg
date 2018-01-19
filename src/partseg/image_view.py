@@ -374,8 +374,13 @@ class MyCanvas(QWidget):
                 return self.base_image[self.layer_num]
 
     def update_rgb_image(self):
-        norm = colors.PowerNorm(gamma=self.settings.power_norm,
-                                vmin=self.min_value, vmax=self.max_value)
+        if not self.settings.normalize_range[2]:
+            norm = colors.PowerNorm(gamma=self.settings.power_norm,
+                                    vmin=self.min_value, vmax=self.max_value)
+        else:
+            norm = colors.PowerNorm(gamma=self.settings.power_norm,
+                                    vmin=self.settings.normalize_range[0],
+                                    vmax=self.settings.normalize_range[1])
         if self.gauss_view.isChecked():
             float_image = norm(self.gauss_image)
         else:

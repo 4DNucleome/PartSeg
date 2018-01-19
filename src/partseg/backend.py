@@ -176,6 +176,7 @@ class Settings(object):
         self.statistic_dirs = None
         self.batch_plans = {}
         self.leave_biggest = False
+        self.normalize_range = (0,2**16-1,False)
         try:
             self.load(settings_path)
         except ValueError as e:

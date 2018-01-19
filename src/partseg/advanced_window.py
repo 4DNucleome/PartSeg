@@ -1,6 +1,7 @@
 # coding=utf-8
 
 import numpy as np
+import os
 
 from partseg.backend import StatisticProfile, get_segmented_data, calculate_statistic_from_image, \
     SegmentationProfile, Settings
@@ -746,8 +747,25 @@ class AdvancedSettings(QWidget):
         gauss_layout.addWidget(self.zoom_scale)
         gauss_layout.addStretch()
 
+        normalize_range = QHBoxLayout()
+        self.min_range_value = QDoubleSpinBox(self)
+        self.min_range_value.setRange(0, 10**6)
+        self.min_range_value.setValue(self.settings.normalize_range[0])
+        self.max_range_value = QDoubleSpinBox(self)
+        self.max_range_value.setRange(0, 10**6)
+        self.max_range_value.setValue(self.settings.normalize_range[1])
+        self.use_const_range = QCheckBox(self)
+        self.use_const_range.setChecked(self.settings.normalize_range[2])
+        normalize_range.addWidget(QLabel("Min brightness"))
+        normalize_range.addWidget(self.min_range_value)
+        normalize_range.addWidget(QLabel("Max brightness"))
+        normalize_range.addWidget(self.max_range_value)
+        normalize_range.addWidget(QLabel("Use brightness_range"))
+        normalize_range.addWidget(self.use_const_range)
+
         vertical_layout.addLayout(overlay_layout)
         vertical_layout.addLayout(gauss_layout)
+        vertical_layout.addLayout(normalize_range)
 
         accept_button = QPushButton("Accept")
         accept_button.clicked.connect(self.accept)
@@ -799,6 +817,16 @@ class AdvancedSettings(QWidget):
         vertical_layout.addStretch()
         self.setLayout(vertical_layout)
         self.update_volume()
+
+    def normalize_range_change(self):
+        if self.use_const_range.isChecked():
+            self.settings.normalize_range = (
+                self.min_range_value.value(),
+                self.max_range_value.value(),
+                self.use_const_range.isChecked()
+            )
+        else:
+            self.settings.normalize_range = None
 
     def export_profile(self):
         exp = ExportDialog(self.settings.segmentation_profiles_dict, StringViewer)
@@ -897,6 +925,11 @@ class AdvancedSettings(QWidget):
         self.settings.mask_overlay = self.mask_overlay.value()
         self.settings.overlay = self.component_overlay.value()
         self.settings.power_norm = self.power_norm.value()
+        self.settings.normalize_range = (
+            self.min_range_value.value(),
+            self.max_range_value.value(),
+            self.use_const_range.isChecked()
+        )
         if self.gauss_radius.value() != self.settings.gauss_radius:
             self.settings.gauss_radius = self.gauss_radius.value()
             self.settings.changed_gauss_radius()

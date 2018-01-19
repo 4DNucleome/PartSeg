@@ -161,7 +161,12 @@ class ColormapCanvas(QWidget):
             new_val = (5000 + int(5000/9 * (self.settings.power_norm - 1)))
         self.slider.setValue(-new_val)
         self.starting_value = new_val
-        norm = colors.PowerNorm(gamma=self.settings.power_norm, vmin=self.val_min, vmax=self.val_max)
+        if not self.settings.normalize_range[2]:
+            norm = colors.PowerNorm(gamma=self.settings.power_norm, vmin=self.val_min, vmax=self.val_max)
+        else:
+            norm = colors.PowerNorm(gamma=self.settings.power_norm,
+                                    vmin=self.settings.normalize_range[0],
+                                    vmax=self.settings.normalize_range[1])
         fig = pyplot.figure(self.my_figure_num)
         pyplot.clf()
         ax = fig.add_axes([0.01, 0.01, 0.25, 0.98])
