@@ -447,3 +447,5 @@ Session.vim
 *~
 # auto-generated tag files
 tags
+
+src/project_utils/color_image/color_image\.c
