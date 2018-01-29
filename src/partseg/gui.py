@@ -17,9 +17,11 @@ from partseg.advanced_window import AdvancedWindow
 from partseg.backend import Settings, Segment, UPPER, MaskChange
 from partseg.batch_window import BatchWindow
 from partseg.image_view import MyCanvas, MyDrawCanvas
+from partseg.interpolate_dialog import InterpolateDialog
 from partseg.io_functions import save_to_cmap, save_to_project, load_project, GaussUse, save_to_xyz
 from project_utils.global_settings import static_file_folder, config_folder
 from qt_import import *
+from scipy.ndimage.interpolation import zoom
 
 __author__ = "Grzegorz Bokota"
 
@@ -370,6 +372,8 @@ class MainMenu(QWidget):
         self.colormap_choose.currentIndexChanged.connect(self.colormap_changed)
         self.settings.add_colormap_list_callback(self.colormap_list_changed)
         self.colormap_protect = False
+        self.interpolate = QPushButton("Interpolate", self)
+        self.interpolate.clicked.connect(self.interpolate_exec)
         # self.setMinimumHeight(50)
         self.update_elements_positions()
         self.one_line = True
@@ -380,7 +384,18 @@ class MainMenu(QWidget):
         self.threshold_type.currentIndexChanged.connect(self.no_profile)
         self.layer_thr_check.stateChanged.connect(self.no_profile)
         self.enable_list = [self.save_button, self.mask_button]
+
         # self.setStyleSheet(self.styleSheet()+";border: 1px solid black")
+
+    def interpolate_exec(self):
+        dialog = InterpolateDialog(self.settings.spacing)
+        if dialog.exec():
+            new_image = zoom(self.settings.image, dialog.get_zoom_factor())
+            self.settings.add_image(new_image, "")
+            self.settings.spacing = dialog.get_new_spacing()
+            print("Buka1", dialog.get_zoom_factor())
+        else:
+            print("Buka2")
 
     def minimum_size_change(self):
         self.minimum_size_timer.stop()
@@ -425,6 +440,7 @@ class MainMenu(QWidget):
         layout.addLayout(pack_layout(self.minimum_size_lab, self.minimum_size_value))
         for el in second_list:
             layout.addWidget(el)
+        layout.addWidget(self.interpolate)
         layout.addStretch()
         # self.setMinimumHeight(50)
         layout.setContentsMargins(0, 0, 0, 0)
