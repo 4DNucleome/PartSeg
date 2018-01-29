@@ -11,6 +11,7 @@ import numpy as np
 import tifffile
 from PIL import Image
 from PyQt5.QtWidgets import QWidget
+from PyQt5.QtGui import QKeyEvent
 from matplotlib import pyplot
 
 from partseg.advanced_window import AdvancedWindow
@@ -386,6 +387,13 @@ class MainMenu(QWidget):
         self.enable_list = [self.save_button, self.mask_button]
 
         # self.setStyleSheet(self.styleSheet()+";border: 1px solid black")
+
+    def keyPressEvent(self, event: QKeyEvent):
+        if event.modifiers() & Qt.ControlModifier:
+            if event.key() == Qt.Key_O:
+                self.open_file()
+            if event.key() == Qt.Key_S:
+                self.save_file()
 
     def interpolate_exec(self):
         dialog = InterpolateDialog(self.settings.spacing)
