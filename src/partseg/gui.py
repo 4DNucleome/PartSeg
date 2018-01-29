@@ -393,9 +393,6 @@ class MainMenu(QWidget):
             new_image = zoom(self.settings.image, dialog.get_zoom_factor())
             self.settings.add_image(new_image, "")
             self.settings.spacing = dialog.get_new_spacing()
-            print("Buka1", dialog.get_zoom_factor())
-        else:
-            print("Buka2")
 
     def minimum_size_change(self):
         self.minimum_size_timer.stop()
