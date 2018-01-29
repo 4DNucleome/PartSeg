@@ -42,14 +42,9 @@ def color_image(image: np.ndarray, colors: typing.List[str], min_max: typing.Lis
         if cmap is None:
             continue
         min_val, max_val = min_max[i] # min_max_calc_int(image[..., i])
-        chanel = (image[..., i] - min_val) / ((max_val - min_val) / 256)
+        chanel = (image[..., i] - min_val) / ((max_val - min_val) / 255)
         chanel = chanel.astype(np.uint8)
         temp_image = color_greyscale(cmap, chanel)
 
         result_image = np.maximum(result_image, temp_image )
     return result_image
-
-
-
-
-

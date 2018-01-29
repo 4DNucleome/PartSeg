@@ -184,7 +184,7 @@ class Settings(object):
 
     @property
     def spacing(self):
-        return self.voxel_size
+        return self.voxel_size[:self.image.ndim]
 
     @spacing.setter
     def spacing(self, value):
