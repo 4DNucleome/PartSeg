@@ -4,6 +4,7 @@ from __future__ import print_function, division
 import json
 import logging
 from enum import Enum
+from functools import reduce
 
 import matplotlib
 import numpy as np
@@ -195,6 +196,8 @@ class Settings(object):
             self.spacing = sx / scale_factor[1], sy / scale_factor[0], 1
         else:
             self.spacing = sx / scale_factor[2], sy / scale_factor[1], sz / scale_factor[0]
+
+        scale_min_size = reduce(lambda x,y: x*y, scale_factor)
         new_image = zoom(self.image, scale_factor)
         new_mask = None
         new_threshold = None
@@ -214,6 +217,7 @@ class Settings(object):
                 new_mask = new_mask[:-1]
             if new_threshold is not None:
                 new_threshold = new_threshold[:-1]
+        self.minimum_size = self.minimum_size * scale_min_size
         self.metadata_changed()
         self.add_image(new_image, self.file_path, new_mask, threshold_list=new_threshold)
 
