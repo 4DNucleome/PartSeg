@@ -115,11 +115,11 @@ def save_to_cmap(file_path, settings, segment, gauss_type, with_statistics=True,
         pos = tuple(coord)
         cut_img[1:-2, 5:-6, 5:-6] = image[pos]
         z, y, x = cut_img.shape
-        data_set = grp.create_dataset("data_zyx", (z, y, x), dtype='f')
+        data_set = grp.create_dataset("data_zyx", (z, y, x), dtype='f', compression="gzip")
         data_set[...] = cut_img
     else:
         z, y, x = image.shape
-        data_set = grp.create_dataset("data_zyx", (z, y, x), dtype='f')
+        data_set = grp.create_dataset("data_zyx", (z, y, x), dtype='f', compression="gzip")
         data_set[...] = image
         cut_img = image
 

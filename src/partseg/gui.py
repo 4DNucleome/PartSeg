@@ -738,7 +738,7 @@ class InfoMenu(QLabel):
         if val is None:
             self.brightness_field.setText("")
         else:
-            self.brightness_field.setText("Pixel {} brightness: {}".format(coords, val))
+            self.brightness_field.setText("Pixel {} value: {}".format(coords, val))
 
 
 def synchronize_zoom(fig1, fig2, sync_checkbox):
