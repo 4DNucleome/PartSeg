@@ -4,6 +4,7 @@ from __future__ import print_function, division
 import json
 import logging
 from enum import Enum
+from functools import reduce
 
 import matplotlib
 import numpy as np
@@ -189,6 +190,38 @@ class Settings(object):
     @spacing.setter
     def spacing(self, value):
         self.voxel_size = value
+
+    def rescale_image(self, scale_factor):
+        sx, sy, sz = self.spacing
+        if len(scale_factor) == 2:
+            self.spacing = sx / scale_factor[1], sy / scale_factor[0], 1
+        else:
+            self.spacing = sx / scale_factor[2], sy / scale_factor[1], sz / scale_factor[0]
+
+        scale_min_size = reduce(lambda x,y: x*y, scale_factor)
+        new_image = zoom(self.image, scale_factor)
+        new_mask = None
+        new_threshold = None
+        if len(self.threshold_list) != 0:
+            new_threshold = zoom(np.array(self.threshold_list), scale_factor[0])
+        if self.mask is not None:
+            new_mask = zoom(self.image, scale_factor)
+        if np.all(new_image[0] == 0):
+            new_image = new_image[1:]
+            if new_mask is not None:
+                new_mask = new_mask[1:]
+            if new_threshold is not None:
+                new_threshold = new_threshold[1:]
+        if np.all(new_image[-1] == 0):
+            new_image = new_image[:-1]
+            if new_mask is not None:
+                new_mask = new_mask[:-1]
+            if new_threshold is not None:
+                new_threshold = new_threshold[:-1]
+        self.minimum_size = self.minimum_size * scale_min_size
+        self.metadata_changed()
+        self.add_image(new_image, self.file_path, new_mask, threshold_list=new_threshold)
+
 
     def change_profile(self, name):
         print("%%%%%%%% {}".format(name))
@@ -447,7 +480,7 @@ class Settings(object):
         self.gauss_image = gaussian(self.image, self.gauss_radius)
         self.image_changed_fun()
 
-    def add_image(self, image, file_path, mask=None, new_image=True, original_image=None):
+    def add_image(self, image, file_path, mask=None, new_image=True, original_image=None, threshold_list=None):
         self.image = image
         self.min_value = image.min()
         self.max_value = image.max()
@@ -464,6 +497,8 @@ class Settings(object):
             self.prev_segmentation_settings = []
             self.next_segmentation_settings = []
             self.image_clean_profile = None
+        if threshold_list is not None:
+            self.threshold_list = threshold_list
         self.image_changed_fun()
 
     def image_changed_fun(self):

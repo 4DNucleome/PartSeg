@@ -403,9 +403,7 @@ class MainMenu(QWidget):
     def interpolate_exec(self):
         dialog = InterpolateDialog(self.settings.spacing)
         if dialog.exec():
-            new_image = zoom(self.settings.image, dialog.get_zoom_factor())
-            self.settings.add_image(new_image, "")
-            self.settings.spacing = dialog.get_new_spacing()
+            self.settings.rescale_image(dialog.get_zoom_factor())
 
     def minimum_size_change(self):
         self.minimum_size_timer.stop()
@@ -745,7 +743,7 @@ class InfoMenu(QLabel):
         if val is None:
             self.brightness_field.setText("")
         else:
-            self.brightness_field.setText("Pixel {} brightness: {}".format(coords, val))
+            self.brightness_field.setText("Pixel {} value: {}".format(coords, val))
 
 
 def synchronize_zoom(fig1, fig2, sync_checkbox):

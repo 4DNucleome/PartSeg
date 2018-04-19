@@ -10,6 +10,13 @@ def spacing(s):
     except:
         raise argparse.ArgumentTypeError("Spacing must be x,y,z")
 
+def scale(s):
+    try:
+        x, y, z = map(float, s.split(','))
+        return x, y, z
+    except:
+        raise argparse.ArgumentTypeError("Spacing must be x,y,z")
+
 
 class MorphParser(object):
     def __init__(self):
@@ -65,6 +72,8 @@ if __name__ == '__main__':
                         help="TBD")
     parser.add_argument("-s", "--spacing", dest="spacing", default=None, type=spacing,
                         help="Spacing between pixels saved to cmap")
+    parser.add_argument("-S", "--scale", dest="scale", default=None, type=scale,
+                        help="scaling image factor")
     parser.add_argument("-g", "--use_2d_gauss", dest="use_2d_gauss", default=io_functions.GaussUse.no_gauss,
                         const=io_functions.GaussUse.gauss_2d, action="store_const",
                         help="Apply 2d (x,y) gauss blur data to image before put in cmap")
@@ -127,6 +136,8 @@ if __name__ == '__main__':
         file_name += ".cmap"
         if args.spacing is not None:
             settings.spacing = args.spacing
+        if args.scale is not None:
+            settings.rescale_image(args.scale)
         if not os.path.isdir(os.path.join(args.destination_folder[0], rel_path)):
             os.makedirs(os.path.join(args.destination_folder[0], rel_path))
         if args.with_rotation:
