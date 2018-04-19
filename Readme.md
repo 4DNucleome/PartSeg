@@ -3,6 +3,9 @@
 This application is designed to help biologist with segmentation 
 based on threshold and connected components 
 
+## Run from code
+* PartSeg - `python src/partseg_main.py`
+* StackSeg - `python src/stackseg_main.py`
 
 ## Non standard python libraries dependencies
 * tifffile
