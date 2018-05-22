@@ -133,6 +133,7 @@ class ChannelControl(QWidget):
         widget = self.channels_widgets[self.current_channel]
         widget.deleteLater()
         new_widget = ChannelWidget(self.current_channel, value)
+        new_widget.clicked.connect(self.change_chanel)
         self.channels_layout.replaceWidget(widget, new_widget)
         self.channels_widgets[self.current_channel] = new_widget
         new_widget.set_active()
