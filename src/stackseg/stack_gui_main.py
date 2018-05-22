@@ -5,6 +5,8 @@ import os
 import numpy as np
 import tifffile as tif
 from PyQt5.QtWidgets import QWidget
+
+from common_gui.channel_control import ChannelControl
 from common_gui.universal_gui_part import right_label
 
 from common_gui.flow_layout import FlowLayout
@@ -416,6 +418,7 @@ class MainWindow(QMainWindow):
         self.settings = ImageSettings()
         self.main_menu = MainMenu(self.settings)
         self.image_view = ImageView(self.settings)
+        self.channel_control = ChannelControl(self.settings)
         image_view_control = self.image_view.get_control_view()
         self.options_panel = Options(self.settings, image_view_control, self.image_view)
         self.main_menu.image_loaded.connect(self.image_read)
@@ -436,8 +439,11 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout()
         layout.addWidget(self.main_menu)
         sub_layout = QHBoxLayout()
+        sub2_layout = QVBoxLayout()
         sub_layout.addWidget(self.image_view, 1)
-        sub_layout.addWidget(self.options_panel, 0)
+        sub2_layout.addWidget(self.options_panel, 1)
+        sub2_layout.addWidget(self.channel_control, 0)
+        sub_layout.addLayout(sub2_layout)
         layout.addLayout(sub_layout)
         # self.pixmap.adjustSize()
         # self.pixmap.update_size(2)

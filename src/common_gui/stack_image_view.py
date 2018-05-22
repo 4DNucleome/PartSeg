@@ -574,10 +574,10 @@ class MyScrollArea(QScrollArea):
         super(MyScrollArea, self).showEvent(event)
         if not event.spontaneous():
             scroll_bar = self.horizontalScrollBar()
-            n_val = (scroll_bar.minimum() + scroll_bar.maximum()) / 2
+            n_val = (scroll_bar.minimum() + scroll_bar.maximum()) // 2
             scroll_bar.setValue(n_val)
             scroll_bar = self.verticalScrollBar()
-            n_val = (scroll_bar.minimum() + scroll_bar.maximum()) / 2
+            n_val = (scroll_bar.minimum() + scroll_bar.maximum()) // 2
             scroll_bar.setValue(n_val)
 
     def resizeEvent(self, event):

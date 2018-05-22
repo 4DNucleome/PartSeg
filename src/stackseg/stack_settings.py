@@ -1,11 +1,15 @@
 from typing import List
 
 import numpy as np
+from matplotlib import pyplot
 
 from partseg.io_functions import save_stack_segmentation, load_stack_segmentation
 from qt_import import QObject, pyqtSignal
 from stackseg.stack_algorithm.segment import cut_with_mask, save_catted_list
 from project_utils.image_operations import normalize_shape
+
+default_colors = ['BlackRed', 'BlackGreen', 'BlackBlue', 'BlackMagenta']
+
 
 class ImageSettings(QObject):
     """
@@ -25,6 +29,8 @@ class ImageSettings(QObject):
         self._segmentation = None
         self.chosen_components_widget = None
         self.sizes = []
+        self.colors = []
+        self.chosen_colormap = pyplot.colormaps()
 
     @property
     def segmentation(self) -> np.ndarray:
@@ -57,7 +63,7 @@ class ImageSettings(QObject):
     def load_segmentation(self, file_path: str):
         self.segmentation, metadata = load_stack_segmentation(file_path)
         num = self.segmentation.max()
-        self.chosen_components_widget.set_chose(range(1, num+1), metadata["components"])
+        self.chosen_components_widget.set_chose(range(1, num + 1), metadata["components"])
 
     def set_segmentation(self, segmentation, metadata):
         self.segmentation = segmentation
@@ -77,11 +83,11 @@ class ImageSettings(QObject):
     @batch_directory.setter
     def batch_directory(self, val):
         self.open_directory = val
-        
+
     @property
     def image(self):
         return self._image
-    
+
     @image.setter
     def image(self, value):
         if isinstance(value, tuple):
@@ -99,6 +105,11 @@ class ImageSettings(QObject):
             self.has_channels = True
         else:
             self.has_channels = False
+
+        for i in range (len(self.colors), self.channels):
+            self.colors.append(default_colors[i % len(default_colors)])
+
+
         self.image_changed.emit(self._image)
         self.image_changed[int].emit(self.channels)
 
@@ -124,7 +135,6 @@ class ImageSettings(QObject):
         if self.has_channels:
             return self._image[..., chanel_num]
         return self._image
-    
+
     def get_information(self, *pos):
         return self._image[pos]
-
