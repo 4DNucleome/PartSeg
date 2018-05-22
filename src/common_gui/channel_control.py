@@ -75,6 +75,8 @@ class ChannelControl(QWidget):
     :Type channels_widgets: typing.List[ChannelWidget]
     """
 
+    coloring_update = pyqtSignal(list, bool)
+
     def __init__(self, settings, parent=None, flags=Qt.WindowFlags()):
         super().__init__(parent, flags)
         self._settings = settings
@@ -134,27 +136,45 @@ class ChannelControl(QWidget):
         widget.deleteLater()
         new_widget = ChannelWidget(self.current_channel, value)
         new_widget.clicked.connect(self.change_chanel)
+        new_widget.chosen.stateChanged.connect(self.send_info_wrap)
         self.channels_layout.replaceWidget(widget, new_widget)
         self.channels_widgets[self.current_channel] = new_widget
         new_widget.set_active()
         widget.clicked.disconnect()
+        widget.chosen.stateChanged.disconnect()
         self.change_color_preview(value)
+        self._settings.colors[self.current_channel] = str(value)
+        self.send_info()
 
     def update_channels_list(self):
         channels_num = self._settings.channels
         for el in self.channels_widgets:
             self.channels_layout.removeWidget(el)
             el.clicked.disconnect()
+            el.chosen.stateChanged.disconnect()
             el.deleteLater()
         self.channels_widgets = []
         for i in range(channels_num):
             self.channels_widgets.append(ChannelWidget(i, self._settings.colors[i]))
             self.channels_layout.addWidget(self.channels_widgets[-1])
             self.channels_widgets[-1].clicked.connect(self.change_chanel)
+            self.channels_widgets[-1].chosen.stateChanged.connect(self.send_info_wrap)
         self.channels_widgets[0].set_active()
         self.current_channel = 0
         self.image = self.channels_widgets[0].image
         self.colormap_chose.setCurrentText(self.channels_widgets[0].color)
+        self.send_info(True)
+
+    def send_info_wrap(self):
+        self.send_info()
+
+    def send_info(self, new_image=False):
+        channels_num = len(self.channels_widgets)
+        resp = [None] * channels_num
+        for i in range(channels_num):
+            if self.channels_widgets[i].chosen.isChecked():
+                resp[i] = self.channels_widgets[i].color
+        self.coloring_update.emit(resp, new_image)
 
     def showEvent(self, event: QShowEvent):
         self.update_channels_list()

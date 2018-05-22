@@ -235,11 +235,14 @@ class ChanelColor(QWidget):
 class ImageView(QWidget):
     position_changed = pyqtSignal([int, int, int], [int, int])
     component_clicked = pyqtSignal(int)
+    text_info_change = pyqtSignal(str)
 
-    def __init__(self, settings):
+    def __init__(self, settings, channel_control):
         """:type settings: ImageSettings"""
         super(ImageView, self).__init__()
         self._settings = settings
+        self.channel_control = channel_control
+        self._current_channels = ["BlackRed"]
         self.exclude_btn_list = []
         self.image_state = ImageState()
         self.image_area = MyScrollArea(self.image_state)
@@ -256,17 +259,12 @@ class ImageView(QWidget):
         self.move_button = create_tool_button("Move", "transform-move.png")
         self.move_button.clicked.connect(self.image_state.set_move)
         self.move_button.setCheckable(True)
-        self.chanel_color = [ChanelColor(x, self) for x in range(10)]
-        self.info_text = QLabel()
         self.btn_layout = QHBoxLayout()
         self.btn_layout.addWidget(self.reset_button)
         self.btn_layout.addWidget(self.zoom_button)
         self.btn_layout.addWidget(self.move_button)
         self.btn_layout.addStretch(1)
         self.btn_layout.addStretch(1)
-        for el in self.chanel_color:
-            self.btn_layout.addWidget(el)
-            el.register(self.change_image)
         self.stack_slider = QSlider(Qt.Horizontal)
         self.stack_slider.valueChanged.connect(self.change_image)
         self.stack_slider.valueChanged.connect(self.change_layer)
@@ -285,7 +283,6 @@ class ImageView(QWidget):
         slider_layout.addWidget(self.stack_slider)
         slider_layout.addWidget(self.layer_info)
         main_layout.addLayout(slider_layout)
-        main_layout.addWidget(self.info_text)
 
         self.setLayout(main_layout)
         self.exclude_btn_list.extend([self.zoom_button, self.move_button])
@@ -298,7 +295,14 @@ class ImageView(QWidget):
         self.image_area.pixmap.click_signal.connect(self.component_click)
         self.position_changed[int, int, int].connect(self.info_text_pos)
         self.position_changed[int, int].connect(self.info_text_pos)
+        self.channel_control.coloring_update.connect(self.update_channels_coloring)
+
         settings.segmentation_changed.connect(self.set_labels)
+
+    def update_channels_coloring(self, value, new_image: bool):
+        self._current_channels = value
+        if not new_image:
+            self.change_image()
 
     def component_click(self, point, size):
         if self.labels_layer is None:
@@ -328,7 +332,7 @@ class ImageView(QWidget):
         return super(ImageView, self).event(event)
 
     def clean_text(self):
-        self.info_text.setText("")
+        self.text_info_change.emit("")
 
     def info_text_pos(self, *pos):
         brightness = self.image[pos]
@@ -337,7 +341,7 @@ class ImageView(QWidget):
         if isinstance(brightness, collections.Iterable):
             res_brightness = []
             for i, b in enumerate(brightness):
-                if self.chanel_color[i].channel_visible():
+                if self._current_channels[i] is not None:
                     res_brightness.append(b)
             brightness = res_brightness
             if len(brightness) == 1:
@@ -350,10 +354,10 @@ class ImageView(QWidget):
                 self.component = None
             else:
                 comp = "{} (size: {})".format(comp, self._settings.sizes[comp])
-            self.info_text.setText("Position: {}, Brightness: {}, component {}".format(
+            self.text_info_change.emit("Position: {}, Brightness: {}, component {}".format(
                 tuple(pos2), brightness, comp))
         else:
-            self.info_text.setText("Position: {}, Brightness: {}".format(tuple(pos2), brightness))
+            self.text_info_change.emit("Position: {}, Brightness: {}".format(tuple(pos2), brightness))
 
     def position_info(self, point, size):
         """
@@ -378,16 +382,7 @@ class ImageView(QWidget):
 
     def change_image(self):
         img = self.image[self.stack_slider.value()]
-        color_maps = []
-        for i in range(self.channels_num):
-            try:
-                if self.chanel_color[i].channel_visible():
-                    color_maps.append(self.chanel_color[i].colormap_name())
-                else:
-                    color_maps.append(None)
-            except IndexError as e:
-                print(e)
-                break
+        color_maps = self._current_channels
         im = color_image(img, color_maps, self.border_val)
         """for i in range(self.channels_num):
             try:
@@ -443,10 +438,6 @@ class ImageView(QWidget):
         self.stack_slider.setRange(0, self.layers_num - 1)
         self.stack_slider.setValue(int(self.layers_num/2))
         self.stack_slider.blockSignals(False)
-        for el in self.chanel_color[self.channels_num:]:
-            el.setVisible(False)
-        for el in self.chanel_color[:self.channels_num]:
-            el.setVisible(True)
         self.change_image()
         self.change_layer(int(self.layers_num/2))
         # self.image_area.set_image(image)
