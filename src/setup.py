@@ -4,7 +4,7 @@ from distutils.extension import Extension
 import numpy as np
 
 extensions = [
-    Extension("color_image", ["color_image.pyx"],
+    Extension("project_utils.color_image.color_image", ["project_utils/color_image/color_image.pyx"],
         include_dirs = [np.get_include()])
     ]
 
