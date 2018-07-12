@@ -1,8 +1,14 @@
 # cython: boundscheck=False, wraparound=False, nonecheck=False, cdivision=True
 # distutils: define_macros=CYTHON_TRACE_NOGIL=1
 
+
 import numpy as np
 cimport numpy as np
+
+
+cdef extern from "<algorithm>" namespace "std" nogil:
+    T max[T](const T& v1, const T& v2)
+    T min[T](const T& v1, const T& v2)
 
 DTYPE = np.uint8
 ctypedef np.uint8_t DTYPE_t
@@ -14,6 +20,7 @@ ctypedef fused numpy_types:
     np.int8_t
     np.int16_t
     np.int32_t
+    np.int64_t
     np.float32_t
     np.float64_t
 
@@ -70,14 +77,19 @@ def min_max_calc_int(np.ndarray arr):
                 max = val
     return min, max
 
-def color_greyscale(np.ndarray[DTYPE_t, ndim=2] cmap, np.ndarray[DTYPE_t, ndim=2] image):
+cdef inline long scale_factor(numpy_types value, double min_val, double factor):
+    return max[long](0, min[long](1023,  <long>((value - min_val) / factor)))
+
+
+def color_grayscale(np.ndarray[DTYPE_t, ndim=2] cmap, np.ndarray[numpy_types, ndim=2] image, double min_val, double max_val):
     cdef Py_ssize_t x_max = image.shape[0]
     cdef Py_ssize_t y_max = image.shape[1]
     cdef int val, x, y
+    cdef double factor = ((max_val - min_val) / 1023)
     cdef np.ndarray[DTYPE_t, ndim=3] result_array = np.zeros((x_max, y_max, 3), dtype=DTYPE)
     for x in range(x_max):
         for y in range(y_max):
-            val = image[x, y]
+            val = scale_factor(image[x, y], min_val, factor)
             result_array[x, y, 0] = cmap[val, 0]
             result_array[x, y, 1] = cmap[val, 1]
             result_array[x, y, 2] = cmap[val, 2]

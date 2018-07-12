@@ -29,8 +29,9 @@ class ImageSettings(QObject):
         self._segmentation = None
         self.chosen_components_widget = None
         self.sizes = []
-        self.colors = []
+        self.color_map = []
         self.chosen_colormap = pyplot.colormaps()
+        self.fixed_range = 0, 255
 
     @property
     def segmentation(self) -> np.ndarray:
@@ -106,8 +107,8 @@ class ImageSettings(QObject):
         else:
             self.has_channels = False
 
-        for i in range (len(self.colors), self.channels):
-            self.colors.append(default_colors[i % len(default_colors)])
+        for i in range (len(self.color_map), self.channels):
+            self.color_map.append(default_colors[i % len(default_colors)])
 
 
         self.image_changed.emit(self._image)

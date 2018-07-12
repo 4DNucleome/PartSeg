@@ -6,6 +6,7 @@ from math import log
 
 import SimpleITK as sitk
 import numpy as np
+from PyQt5.QtGui import QShowEvent
 from matplotlib import pyplot
 from matplotlib.cm import get_cmap
 from matplotlib.colors import PowerNorm
@@ -18,6 +19,7 @@ from qt_import import QPixmap, QImage, QWidget, QVBoxLayout, QHBoxLayout, \
     pyqtSignal, QPoint, QSlider, QCheckBox, QComboBox, QSize, QObject, \
     QEvent, QToolTip, QHelpEvent
 from stackseg.stack_settings import ImageSettings
+from .channel_control import ChannelControl
 
 canvas_icon_size = QSize(27, 27)
 step = 1.01
@@ -237,12 +239,12 @@ class ImageView(QWidget):
     component_clicked = pyqtSignal(int)
     text_info_change = pyqtSignal(str)
 
-    def __init__(self, settings, channel_control):
+    def __init__(self, settings, channel_control: ChannelControl):
         """:type settings: ImageSettings"""
         super(ImageView, self).__init__()
         self._settings = settings
         self.channel_control = channel_control
-        self._current_channels = ["BlackRed"]
+        #self._current_channels = ["BlackRed"]
         self.exclude_btn_list = []
         self.image_state = ImageState()
         self.image_area = MyScrollArea(self.image_state)
@@ -263,7 +265,6 @@ class ImageView(QWidget):
         self.btn_layout.addWidget(self.reset_button)
         self.btn_layout.addWidget(self.zoom_button)
         self.btn_layout.addWidget(self.move_button)
-        self.btn_layout.addStretch(1)
         self.btn_layout.addStretch(1)
         self.stack_slider = QSlider(Qt.Horizontal)
         self.stack_slider.valueChanged.connect(self.change_image)
@@ -299,8 +300,13 @@ class ImageView(QWidget):
 
         settings.segmentation_changed.connect(self.set_labels)
 
-    def update_channels_coloring(self, value, new_image: bool):
-        self._current_channels = value
+    def showEvent(self, event: QShowEvent):
+        self.btn_layout.addStretch(1)
+        self.repaint()
+        print("Buka")
+
+
+    def update_channels_coloring(self, new_image: bool):
         if not new_image:
             self.change_image()
 
@@ -341,7 +347,7 @@ class ImageView(QWidget):
         if isinstance(brightness, collections.Iterable):
             res_brightness = []
             for i, b in enumerate(brightness):
-                if self._current_channels[i] is not None:
+                if self.channel_control.active_cannel(i):
                     res_brightness.append(b)
             brightness = res_brightness
             if len(brightness) == 1:
@@ -382,35 +388,15 @@ class ImageView(QWidget):
 
     def change_image(self):
         img = self.image[self.stack_slider.value()]
-        color_maps = self._current_channels
-        im = color_image(img, color_maps, self.border_val)
-        """for i in range(self.channels_num):
-            try:
-                if self.chanel_color[i].channel_visible():
-
-                    colormap = self.chanel_color[i].colormap(*self.border_val[i])
-                    res = np.maximum(res,  colormap(img[..., i]))
-            except IndexError as e:
-                print(e)
-                break
-        # res[res > 1] = 1
-        res = res[..., 0:3]
-        im = np.array(res * 255, dtype=np.uint8)
-        del res"""
+        color_maps = self.channel_control.current_colors
+        borders = self.border_val[:]
+        for i, p in enumerate(self.channel_control.get_limits()):
+            if p is not None:
+                borders[i] = p
+        im = color_image(img, color_maps, borders)
         if self.labels_layer is not None and self.image_state.show_label:
             layers = self.labels_layer[self.stack_slider.value()]
             add_labels(im, layers, self.image_state.opacity, self.image_state.only_borders, int((self.image_state.borders_thick-1)/2))
-            """layers = self.labels_layer[self.stack_slider.value()]
-            if self.image_state.only_borders:
-                bord = sitk.LabelContour(sitk.GetImageFromArray(layers))
-                if self.image_state.borders_thick > 1:
-                    bord = sitk.GrayscaleDilate(bord, int((self.image_state.borders_thick-1)/2))
-                labeled = sitk.GetArrayFromImage(sitk.LabelToRGB(bord))
-                layers_mask = sitk.GetArrayFromImage(bord) > 0
-            else:
-                labeled = sitk.GetArrayFromImage(sitk.LabelToRGB(sitk.GetImageFromArray(layers)))
-                layers_mask = layers > 0
-            im[layers_mask] = (1 - self.image_state.opacity) * im[layers_mask] + self.image_state.opacity * labeled[layers_mask]"""
         self.image_area.set_image(im, self.sender() is not None)
 
     def set_image(self, image):

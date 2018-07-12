@@ -28,9 +28,14 @@ class ChannelWidget(QWidget):
         self.color = color
         self.chosen = QCheckBox(self)
         self.chosen.setChecked(True)
+        self.info_label = QLabel("\U0001F512")
+        self.info_label.setHidden(True)
+        self.info_label.setStyleSheet("QLabel {background-color: white} ")
         layout = QHBoxLayout()
         layout.addWidget(self.chosen, 0)
-        layout.addWidget(QLabel(""), 1)
+        layout.addWidget(self.info_label, 0)
+        layout.addStretch(1)
+        #layout.addWidget(QLabel("aa"), 1)
         img = color_image(np.arange(0, 256).reshape((1, 256, 1)), [self.color], [(0, 256)])
         self.image = QImage(img.data, 256, 1, img.dtype.itemsize * 256 * 3, QImage.Format_RGB888)
         self.setLayout(layout)
@@ -46,6 +51,7 @@ class ChannelWidget(QWidget):
             pen1 = painter.pen()
             painter.setPen(pen)
             painter.drawRect(event.rect())
+            pen1.setWidth(0)
             painter.setPen(pen1)
         super().paintEvent(event)
 
@@ -53,8 +59,25 @@ class ChannelWidget(QWidget):
         self.active = val
         self.repaint()
 
+    @property
+    def locked(self):
+        return self.info_label.isVisible()
+
+    def set_locked(self, val=True):
+        if val:
+            self.info_label.setVisible(True)
+        else:
+            self.info_label.setHidden(True)
+        self.repaint()
+
     def set_inactive(self, val=True):
         self.active = not val
+        self.repaint()
+
+    def set_color(self, color):
+        self.color = color
+        img = color_image(np.arange(0, 256).reshape((1, 256, 1)), [self.color], [(0, 255)])
+        self.image = QImage(img.data, 256, 1, img.dtype.itemsize * 256 * 3, QImage.Format_RGB888)
         self.repaint()
 
     def mousePressEvent(self, a0: QMouseEvent):
@@ -71,11 +94,13 @@ class MyComboBox(QComboBox):
 
 
 class ChannelControl(QWidget):
+    #TODO improve adding own scaling
     """
-    :Type channels_widgets: typing.List[ChannelWidget]
+    :type channels_widgets: typing.List[ChannelWidget]
+    :type _settings: .stack_settings.ImageSettings
     """
 
-    coloring_update = pyqtSignal(list, bool)
+    coloring_update = pyqtSignal(bool)
 
     def __init__(self, settings, parent=None, flags=Qt.WindowFlags()):
         super().__init__(parent, flags)
@@ -89,12 +114,24 @@ class ChannelControl(QWidget):
         self.channel_preview_widget = ColorPreview(self)
         # self.channel_preview_widget.setPixmap(QPixmap.fromImage(self.channel_preview))
         self.minimum_value = QSpinBox(self)
+        self.minimum_value.setRange(-10**6, 10**6)
+        self.minimum_value.setValue(self._settings.fixed_range[0])
+        self.minimum_value.valueChanged.connect(self.range_changed)
         self.maximum_value = QSpinBox(self)
+        self.maximum_value.setRange(-10 ** 6, 10 ** 6)
+        self.maximum_value.setValue(self._settings.fixed_range[1])
+        self.maximum_value.valueChanged.connect(self.range_changed)
         self.fixed = QCheckBox("Fix range")
+        self.fixed.stateChanged.connect(self.lock_channel)
+        self.grayscale = QCheckBox("Gray scale")
+        self.grayscale.setToolTip("Only current channel")
+        self.grayscale.stateChanged.connect(self.coloring_update.emit)
         self.collapse_widget = CollapseCheckbox()
         self.collapse_widget.add_hide_element(self.minimum_value)
         self.collapse_widget.add_hide_element(self.maximum_value)
         self.collapse_widget.add_hide_element(self.fixed)
+        self.collapse_widget.add_hide_element(self.grayscale)
+
         self.channels_widgets = []
         self.channels_layout = QHBoxLayout()
         layout = QGridLayout()
@@ -106,17 +143,32 @@ class ChannelControl(QWidget):
         layout.addWidget(label1, 4, 0)
         layout.addWidget(self.minimum_value, 4, 1)
         label2 = QLabel("Max bright")
-        layout.addWidget(label2, 4, 2)
-        layout.addWidget(self.maximum_value, 4, 3)
-        layout.addWidget(self.fixed, 5, 0, 1, 2)
+        layout.addWidget(label2, 5, 0)
+        layout.addWidget(self.maximum_value, 5, 1)
+        layout.addWidget(self.fixed, 4, 2, 1, 2)
+        layout.addWidget(self.grayscale, 5, 2, 1, 2)
         self.collapse_widget.add_hide_element(label1)
         self.collapse_widget.add_hide_element(label2)
         self.setLayout(layout)
+        self.collapse_widget.setChecked(True)
         self._settings.image_changed.connect(self.update_channels_list)
 
+    def lock_channel(self, value):
+        self.channels_widgets[self.current_channel].set_locked(value)
+        self.coloring_update.emit(False)
+
+    def range_changed(self):
+        if self.fixed.isChecked():
+            self.coloring_update.emit(False)
+
     def change_chanel(self, id):
+        if id == self.current_channel:
+            return
+
         self.channels_widgets[self.current_channel].set_inactive()
+        self.current_channel = id
         self.channels_widgets[id].set_active()
+        self.fixed.setChecked(self.channels_widgets[id].locked)
         self.current_channel = id
         self.image = self.channels_widgets[id].image
         self.colormap_chose.setCurrentText(self.channels_widgets[id].color)
@@ -132,19 +184,11 @@ class ChannelControl(QWidget):
         self.channel_preview_widget.repaint()
 
     def change_color(self, value):
-        widget = self.channels_widgets[self.current_channel]
-        widget.deleteLater()
-        new_widget = ChannelWidget(self.current_channel, value)
-        new_widget.clicked.connect(self.change_chanel)
-        new_widget.chosen.stateChanged.connect(self.send_info_wrap)
-        self.channels_layout.replaceWidget(widget, new_widget)
-        self.channels_widgets[self.current_channel] = new_widget
-        new_widget.set_active()
-        widget.clicked.disconnect()
-        widget.chosen.stateChanged.disconnect()
+        self.channels_widgets[self.current_channel].set_color(value)
         self.change_color_preview(value)
-        self._settings.colors[self.current_channel] = str(value)
+        self._settings.color_map[self.current_channel] = str(value)
         self.send_info()
+
 
     def update_channels_list(self):
         channels_num = self._settings.channels
@@ -155,7 +199,7 @@ class ChannelControl(QWidget):
             el.deleteLater()
         self.channels_widgets = []
         for i in range(channels_num):
-            self.channels_widgets.append(ChannelWidget(i, self._settings.colors[i]))
+            self.channels_widgets.append(ChannelWidget(i, self._settings.color_map[i]))
             self.channels_layout.addWidget(self.channels_widgets[-1])
             self.channels_widgets[-1].clicked.connect(self.change_chanel)
             self.channels_widgets[-1].chosen.stateChanged.connect(self.send_info_wrap)
@@ -168,13 +212,31 @@ class ChannelControl(QWidget):
     def send_info_wrap(self):
         self.send_info()
 
-    def send_info(self, new_image=False):
+    @property
+    def current_colors(self):
         channels_num = len(self.channels_widgets)
-        resp = [None] * channels_num
+        resp :typing.List[typing.Union[str, None]] = [None] * channels_num
         for i in range(channels_num):
             if self.channels_widgets[i].chosen.isChecked():
                 resp[i] = self.channels_widgets[i].color
-        self.coloring_update.emit(resp, new_image)
+        return resp
+
+    def get_limits(self):
+        channels_num = len(self.channels_widgets)
+        resp: typing.List[typing.Union[str, None]] = [None] * channels_num
+        for i in range(channels_num):
+            if self.channels_widgets[i].locked:
+                resp[i] = self.minimum_value.value(), self.maximum_value.value()
+        return resp
+
+    def active_cannel(self, index):
+        return self.channels_widgets[index].chosen.isChecked()
+
+    def send_info(self, new_image=False):
+        self.coloring_update.emit(new_image)
+
+    def range_update(self):
+        self.coloring_update.emit(False)
 
     def showEvent(self, event: QShowEvent):
         self.update_channels_list()

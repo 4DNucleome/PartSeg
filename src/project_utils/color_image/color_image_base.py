@@ -2,7 +2,7 @@ import numpy as np
 from project_utils.global_settings import static_file_folder
 from os import path
 import typing
-from .color_image import color_greyscale
+from .color_image import color_grayscale
 from numba import jit
 
 color_maps = np.load(path.join(static_file_folder, "colors.npz"))
@@ -37,14 +37,24 @@ def color_chanel(cmap, chanel, max_val, min_val):
 def color_image(image: np.ndarray, colors: typing.List[str], min_max: typing.List[typing.Tuple]) -> np.ndarray:
     color_maps_local = [color_maps[x] if x is not None else None for x in colors]
     new_shape = image.shape[:-1] + (3,)
-    result_image = np.zeros(new_shape, dtype=np.uint8)
+
+    result_images = [] # = np.zeros(new_shape, dtype=np.uint8)
     for i, cmap in enumerate(color_maps_local):
         if cmap is None:
             continue
         min_val, max_val = min_max[i] # min_max_calc_int(image[..., i])
-        chanel = (image[..., i] - min_val) / ((max_val - min_val) / 255)
-        chanel = chanel.astype(np.uint8)
-        temp_image = color_greyscale(cmap, chanel)
+        #chanel = (image[..., i] - min_val) / ((max_val - min_val) / 255)
+        #chanel = chanel.astype(np.uint8)
+        try:
+            result_images.append([color_grayscale(cmap, image[..., i], min_val, max_val)])
+        except TypeError as e:
+            print(image.dtype)
+            print(e)
+    if len(result_images) > 0:
+        if len(result_images) == 1:
+            return result_images[0][0]
+        else:
 
-        result_image = np.maximum(result_image, temp_image )
-    return result_image
+            return np.vstack(result_images).max(axis=0)
+    else:
+         return np.zeros(new_shape, dtype=np.uint8)
