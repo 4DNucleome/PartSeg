@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QSpinBox, QCheckBox, QGridLayout, QLabel, QHBoxLayout, QComboBox
-from PyQt5.QtGui import QImage, QShowEvent, QPaintEvent, QPainter, QPen, QMouseEvent, QPixmap
+from PyQt5.QtGui import QImage, QShowEvent, QPaintEvent, QPainter, QPen, QMouseEvent
 from PyQt5.QtCore import Qt, pyqtSignal
 import numpy as np
 from common_gui.collapse_checkbox import CollapseCheckbox
@@ -123,6 +123,7 @@ class ChannelControl(QWidget):
         super().__init__(parent, flags)
         self._settings = settings
         self.current_channel = 0
+        self.current_bounds = []
         self.colormap_chose = MyComboBox()
         self.colormap_chose.addItems(self._settings.chosen_colormap)
         self.colormap_chose.highlighted[str].connect(self.change_color_preview)
@@ -175,18 +176,20 @@ class ChannelControl(QWidget):
         self.coloring_update.emit(False)
 
     def range_changed(self):
+        self.current_bounds[self.current_channel] = self.minimum_value.value(), self.maximum_value.value()
         if self.fixed.isChecked():
             self.coloring_update.emit(False)
 
     def change_chanel(self, id):
         if id == self.current_channel:
             return
-
-        self.channels_widgets[self.current_channel].set_inactive()
         self.current_channel = id
+        self.minimum_value.setValue(self.current_bounds[id][0])
+        self.maximum_value.setValue(self.current_bounds[id][1])
+        self.channels_widgets[self.current_channel].set_inactive()
+
         self.channels_widgets[id].set_active()
         self.fixed.setChecked(self.channels_widgets[id].locked)
-        self.current_channel = id
         self.image = self.channels_widgets[id].image
         self.colormap_chose.setCurrentText(self.channels_widgets[id].color)
         self.channel_preview_widget.repaint()
@@ -209,6 +212,8 @@ class ChannelControl(QWidget):
 
     def update_channels_list(self):
         channels_num = self._settings.channels
+        for i in range(len(self.current_bounds), channels_num):
+            self.current_bounds.append([0, 255])
         for el in self.channels_widgets:
             self.channels_layout.removeWidget(el)
             el.clicked.disconnect()
@@ -240,10 +245,10 @@ class ChannelControl(QWidget):
 
     def get_limits(self):
         channels_num = len(self.channels_widgets)
-        resp: typing.List[typing.Union[str, None]] = [None] * channels_num
+        resp: typing.List[typing.Union[typing.Tuple[int, int], None]] = self.current_bounds[:channels_num]
         for i in range(channels_num):
-            if self.channels_widgets[i].locked:
-                resp[i] = self.minimum_value.value(), self.maximum_value.value()
+            if not self.channels_widgets[i].locked:
+                resp[i] = None
         return resp
 
     def active_cannel(self, index):
