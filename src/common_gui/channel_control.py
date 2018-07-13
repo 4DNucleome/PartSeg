@@ -30,7 +30,7 @@ class ChannelWidget(QWidget):
         self.chosen.setChecked(True)
         self.info_label = QLabel("\U0001F512")
         self.info_label.setHidden(True)
-        self.info_label.setStyleSheet("QLabel {background-color: white} ")
+        self.info_label.setStyleSheet("QLabel {background-color: white; border-radius: 3px;} ")
         layout = QHBoxLayout()
         layout.addWidget(self.chosen, 0)
         layout.addWidget(self.info_label, 0)
@@ -93,6 +93,23 @@ class MyComboBox(QComboBox):
         self.hide_popup.emit()
 
 
+class CustomSpinBox(QSpinBox):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.valueChanged.connect(self.value_changed)
+
+    def value_changed(self, val: int):
+        if val < 300:
+            self.setSingleStep(1)
+        elif val < 1000:
+            self.setSingleStep(10)
+        elif val < 10000:
+            self.setSingleStep(100)
+        else:
+            self.setSingleStep(1000)
+
+
+
 class ChannelControl(QWidget):
     #TODO improve adding own scaling
     """
@@ -113,11 +130,11 @@ class ChannelControl(QWidget):
         self.colormap_chose.activated[str].connect(self.change_color)
         self.channel_preview_widget = ColorPreview(self)
         # self.channel_preview_widget.setPixmap(QPixmap.fromImage(self.channel_preview))
-        self.minimum_value = QSpinBox(self)
+        self.minimum_value = CustomSpinBox(self)
         self.minimum_value.setRange(-10**6, 10**6)
         self.minimum_value.setValue(self._settings.fixed_range[0])
         self.minimum_value.valueChanged.connect(self.range_changed)
-        self.maximum_value = QSpinBox(self)
+        self.maximum_value = CustomSpinBox(self)
         self.maximum_value.setRange(-10 ** 6, 10 ** 6)
         self.maximum_value.setValue(self._settings.fixed_range[1])
         self.maximum_value.valueChanged.connect(self.range_changed)
