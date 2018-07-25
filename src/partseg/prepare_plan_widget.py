@@ -101,7 +101,7 @@ class CreatePlan(QWidget):
         self.mapping_file_button = QPushButton("Mask mapping file")
         self.swap_mask_name_button = QPushButton("Name Substitution")
         self.suffix_mask_name_button = QPushButton("Name suffix")
-        self.reuse_mask = QPushButton("Reuse mask")
+        self.reuse_mask = QPushButton("Reuchoose_channelse mask")
         self.set_mask_name = QPushButton("Set mask name")
         self.intersect_mask_btn = QPushButton("Mask intersection")
         self.sum_mask_btn = QPushButton("Mask sum")
@@ -111,6 +111,7 @@ class CreatePlan(QWidget):
         self.chanel_num.setRange(0, 10)
         self.expected_node_type = None
         self.save_constructor = None
+        self.channels_used = False
 
         self.project_segmentation = QPushButton("Segmentation\nfrom project")
         self.project_segmentation.clicked.connect(self.segmentation_from_project)
@@ -418,6 +419,7 @@ class CreatePlan(QWidget):
     def choose_channel(self):
         chanel_pos = self.chanel_pos.value()
         chanel_num = self.chanel_num.value()
+        self.channels_used = True
         if self.update_element_btn.isChecked():
             self.calculation_plan.replace_step(ChooseChanel(chanel_pos, chanel_num))
         else:
@@ -555,6 +557,15 @@ class CreatePlan(QWidget):
         self.plan.update_view()
 
     def add_segmentation(self):
+        print("Buka")
+        if self.channels_used and self.node_type == NodeType.root:
+            ret = QMessageBox.question(self, "Segmentation from root",
+                                        "You use channel choose in your plan. Are you sure "
+                                        "to choose segmentation on root", QMessageBox.Cancel | QMessageBox.Ok,
+                                        QMessageBox.Cancel)
+            if ret == QMessageBox.Cancel:
+                return
+
         text = str(self.segment_profile.currentItem().text())
         profile = self.settings.segmentation_profiles_dict[text]
         if self.update_element_btn.isChecked():
@@ -586,6 +597,7 @@ class CreatePlan(QWidget):
         self.plan.update_view()
 
     def clean_plan(self):
+        self.channels_used = False
         self.calculation_plan = CalculationPlan()
         self.plan.set_plan(self.calculation_plan)
         self.node_type_changed()
@@ -741,6 +753,10 @@ class CreatePlan(QWidget):
     def edit_plan(self):
         plan = self.sender().plan_to_edit  # type: CalculationPlan
         self.calculation_plan = copy(plan)
+        self.channels_used = False
+        for el in plan.execution_tree.children:
+            if isinstance(el.operation, ChooseChanel):
+                self.channels_used = True
         self.plan.set_plan(self.calculation_plan)
         self.mask_set.clear()
         self.calculation_plan.set_position([])
@@ -805,6 +821,7 @@ class PlanPreview(QTreeWidget):
         """
         widget = QTreeWidgetItem(up_widget)
         widget.setText(0, CalculationPlan.get_el_name(node_plan.operation))
+        self.setCurrentItem(widget)
         if isinstance(node_plan.operation, StatisticProfile) or isinstance(node_plan.operation, SegmentationProfile):
             desc = QTreeWidgetItem(widget)
             desc.setText(0, "Description")
@@ -837,6 +854,7 @@ class PlanPreview(QTreeWidget):
             self.clear()
             root = QTreeWidgetItem(self)
             root.setText(0, "Root")
+            self.setCurrentItem(root)
             for el in self.calculation_plan.execution_tree.children:
                 self.explore_tree(root, el, True)
             return

@@ -36,10 +36,8 @@ def get_save_path(op, calculation):
     """
     :type op: MaskSave | ProjectSave | CmapProfile | XYZSave | ImageSave
     :type calculation: FileCalculation
-    :type base_path: str
     :param op: operation to do
     :param calculation: information about calculation
-    :param base_path: path to file
     :return: str
     """
     if isinstance(op, MaskSave):
@@ -166,7 +164,7 @@ class PlanChanges(Enum):
 
 
 class CalculationTree(object):
-    def __init__(self, operation, children):
+    def __init__(self, operation, children: list):
         self.operation = operation
         self.children = children
 

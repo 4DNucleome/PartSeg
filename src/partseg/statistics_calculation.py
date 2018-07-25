@@ -261,7 +261,7 @@ class StatisticProfile(object):
 
     def calculate(self, image, gauss_image, mask, full_mask, base_mask, voxel_size):
         self.voxel_size = voxel_size
-        if self._need_mask and base_mask is not None:
+        if self._need_mask and base_mask is None:
             raise ValueError("Statistics need mask")
         result = OrderedDict()
         if self.use_gauss_image:

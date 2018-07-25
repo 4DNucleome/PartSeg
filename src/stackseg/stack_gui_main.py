@@ -38,7 +38,7 @@ class MainMenu(QWidget):
         self.load_segmentation_btn.clicked.connect(self.load_segmentation)
         self.save_segmentation_btn = QPushButton("Save segmentation")
         self.save_segmentation_btn.clicked.connect(self.save_segmentation)
-        self.save_catted_parts = QPushButton("Save results")
+        self.save_catted_parts = QPushButton("Save components")
         self.save_catted_parts.clicked.connect(self.save_result)
         layout = QHBoxLayout()
         layout.addWidget(self.load_image_btn)
@@ -108,7 +108,7 @@ class MainMenu(QWidget):
 
     def save_result(self):
         if self.settings.segmentation is None:
-            QMessageBox.warning(self, "No segmentation", "No segmentation to save")
+            QMessageBox.warning(self, "No components", "No components to save")
             return
         dial = QFileDialog()
         dial.setFileMode(QFileDialog.Directory)

@@ -2,7 +2,7 @@ from typing import List
 
 import numpy as np
 from matplotlib import pyplot
-
+from os import path
 from partseg.io_functions import save_stack_segmentation, load_stack_segmentation
 from qt_import import QObject, pyqtSignal
 from stackseg.stack_algorithm.segment import cut_with_mask, save_catted_list
@@ -74,8 +74,9 @@ class ImageSettings(QObject):
     def save_result(self, dir_path: str):
         res_img = cut_with_mask(self.segmentation, self._image, only=self.chosen_components())
         res_mask = cut_with_mask(self.segmentation, self.segmentation, only=self.chosen_components())
-        save_catted_list(res_img, dir_path, prefix="component")
-        save_catted_list(res_mask, dir_path, prefix="component", suffix="_mask")
+        file_name = path.splitext(path.basename(self.image_path))[0]
+        save_catted_list(res_img, dir_path, prefix=f"{file_name}_component")
+        save_catted_list(res_mask, dir_path, prefix=f"{file_name}_component", suffix="_mask")
 
     @property
     def batch_directory(self):
