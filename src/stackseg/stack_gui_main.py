@@ -2,6 +2,7 @@ from __future__ import division
 
 import os
 
+import appdirs
 import numpy as np
 import tifffile as tif
 from PyQt5.QtWidgets import QWidget
@@ -19,15 +20,18 @@ from qt_import import QMainWindow, QPushButton, QFileDialog, QVBoxLayout, QHBoxL
     pyqtSignal, QSpinBox, QComboBox, QTabWidget, QDoubleSpinBox, QProgressBar, \
     QFormLayout, QAbstractSpinBox, QStackedLayout, QCheckBox, QMessageBox
 from stackseg.stack_algorithm.algorithm_description import stack_algorithm_dict, AlgorithmSettingsWidget, BatchProceed
-from stackseg.stack_settings import ImageSettings
+from stackseg.stack_settings import StackSettings
 
+app_name = "StackSeg"
+app_lab = "LFSG"
+config_folder = appdirs.user_data_dir(app_name, app_lab)
 
 class MainMenu(QWidget):
     image_loaded = pyqtSignal()
 
     def __init__(self, settings):
         """
-        :type settings: ImageSettings
+        :type settings: StackSettings
         :param settings:
         """
         super(MainMenu, self).__init__()
@@ -415,7 +419,9 @@ class MainWindow(QMainWindow):
     def __init__(self, title):
         super(MainWindow, self).__init__()
         self.setWindowTitle(title)
-        self.settings = ImageSettings()
+        self.settings = StackSettings()
+        if os.path.exists(os.path.join(config_folder, "settings.json")):
+            self.settings.load(os.path.join(config_folder, "settings.json"))
         self.main_menu = MainMenu(self.settings)
         self.channel_control = ChannelControl(self.settings)
         self.image_view = ImageView(self.settings, self.channel_control)
@@ -461,6 +467,10 @@ class MainWindow(QMainWindow):
     def image_read(self):
         print("buka1", self.settings.image.shape, self.sender())
         self.image_view.set_image(self.settings.image)
+
+    def closeEvent(self, _):
+        print(self.settings.dump_view_profiles())
+        self.settings.dump(os.path.join(config_folder, "settings.json"))
 
 
 

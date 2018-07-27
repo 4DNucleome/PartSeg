@@ -6,6 +6,8 @@ from common_gui.collapse_checkbox import CollapseCheckbox
 from project_utils.color_image import color_image
 import typing
 
+from stackseg.stack_settings import ViewSettings, default_colors
+
 
 class ColorPreview(QWidget):
     def __init__(self, parent):
@@ -119,11 +121,12 @@ class ChannelControl(QWidget):
 
     coloring_update = pyqtSignal(bool)
 
-    def __init__(self, settings, parent=None, flags=Qt.WindowFlags()):
+    def __init__(self, settings : ViewSettings, parent=None, flags=Qt.WindowFlags(), name="channelcontrol"):
         super().__init__(parent, flags)
+        self._name = name
         self._settings = settings
         self.current_channel = 0
-        self.current_bounds = []
+        self.current_bounds = settings.get_from_profile(f"{self._name}.bounds", [])
         self.colormap_chose = MyComboBox()
         self.colormap_chose.addItems(self._settings.chosen_colormap)
         self.colormap_chose.highlighted[str].connect(self.change_color_preview)
@@ -133,11 +136,9 @@ class ChannelControl(QWidget):
         # self.channel_preview_widget.setPixmap(QPixmap.fromImage(self.channel_preview))
         self.minimum_value = CustomSpinBox(self)
         self.minimum_value.setRange(-10**6, 10**6)
-        self.minimum_value.setValue(self._settings.fixed_range[0])
         self.minimum_value.valueChanged.connect(self.range_changed)
         self.maximum_value = CustomSpinBox(self)
         self.maximum_value.setRange(-10 ** 6, 10 ** 6)
-        self.maximum_value.setValue(self._settings.fixed_range[1])
         self.maximum_value.valueChanged.connect(self.range_changed)
         self.fixed = QCheckBox("Fix range")
         self.fixed.stateChanged.connect(self.lock_channel)
@@ -177,16 +178,17 @@ class ChannelControl(QWidget):
 
     def range_changed(self):
         self.current_bounds[self.current_channel] = self.minimum_value.value(), self.maximum_value.value()
+        self._settings.set_in_profile(f"{self._name}.bounds", self.current_bounds)
         if self.fixed.isChecked():
             self.coloring_update.emit(False)
 
     def change_chanel(self, id):
         if id == self.current_channel:
             return
-        self.current_channel = id
         self.minimum_value.setValue(self.current_bounds[id][0])
         self.maximum_value.setValue(self.current_bounds[id][1])
         self.channels_widgets[self.current_channel].set_inactive()
+        self.current_channel = id
 
         self.channels_widgets[id].set_active()
         self.fixed.setChecked(self.channels_widgets[id].locked)
@@ -206,14 +208,15 @@ class ChannelControl(QWidget):
     def change_color(self, value):
         self.channels_widgets[self.current_channel].set_color(value)
         self.change_color_preview(value)
-        self._settings.color_map[self.current_channel] = str(value)
+        self._settings.set_in_profile(f"{self._name}.cmap{self.current_channel}", str(value))
         self.send_info()
 
 
     def update_channels_list(self):
         channels_num = self._settings.channels
         for i in range(len(self.current_bounds), channels_num):
-            self.current_bounds.append([0, 255])
+            self.current_bounds.append([0, 65000])
+        self._settings.set_in_profile(f"{self._name}.bounds", self.current_bounds)
         for el in self.channels_widgets:
             self.channels_layout.removeWidget(el)
             el.clicked.disconnect()
@@ -221,11 +224,14 @@ class ChannelControl(QWidget):
             el.deleteLater()
         self.channels_widgets = []
         for i in range(channels_num):
-            self.channels_widgets.append(ChannelWidget(i, self._settings.color_map[i]))
+            self.channels_widgets.append(ChannelWidget(i, self._settings.get_from_profile(f"{self._name}.cmap{i}",
+                                                       default_colors[i % len(default_colors)])))
             self.channels_layout.addWidget(self.channels_widgets[-1])
             self.channels_widgets[-1].clicked.connect(self.change_chanel)
             self.channels_widgets[-1].chosen.stateChanged.connect(self.send_info_wrap)
         self.channels_widgets[0].set_active()
+        self.minimum_value.setValue(self.current_bounds[0][0])
+        self.maximum_value.setValue(self.current_bounds[0][1])
         self.current_channel = 0
         self.image = self.channels_widgets[0].image
         self.colormap_chose.setCurrentText(self.channels_widgets[0].color)
