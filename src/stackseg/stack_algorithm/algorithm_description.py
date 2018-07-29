@@ -4,15 +4,17 @@ from typing import Type
 
 import numpy as np
 import tifffile
+from PyQt5.QtWidgets import QSpinBox, QDoubleSpinBox, QComboBox, QCheckBox, QWidget, QVBoxLayout, QLabel, QFormLayout, \
+    QAbstractSpinBox
 from six import with_metaclass
 
 from partseg.io_functions import save_stack_segmentation, load_stack_segmentation
-from qt_import import QDoubleSpinBox, QSpinBox, QComboBox, QWidget, QFormLayout, QAbstractSpinBox, QCheckBox, QThread, \
-    pyqtSignal, QLabel, QVBoxLayout
+#from qt_import import QDoubleSpinBox, QSpinBox, QComboBox, QWidget, QFormLayout, QAbstractSpinBox, QCheckBox, QThread, \
+#    pyqtSignal, QLabel, QVBoxLayout
 from stackseg.stack_settings import ImageSettings
 from .threshold_algorithm import ThresholdAlgorithm, ThresholdPreview, SegmentationAlgorithm, \
     AutoThresholdAlgorithm
-
+from PyQt5.QtCore import QThread, pyqtSignal
 
 class AlgorithmProperty(object):
     """

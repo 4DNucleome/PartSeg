@@ -452,3 +452,4 @@ src/project_utils/color_image/color_image\.c
 notebooks
 *.cpp
 *.html
+!help/*.html
