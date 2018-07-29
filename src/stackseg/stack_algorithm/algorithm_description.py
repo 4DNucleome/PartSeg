@@ -5,7 +5,7 @@ from typing import Type
 import numpy as np
 import tifffile
 from PyQt5.QtWidgets import QSpinBox, QDoubleSpinBox, QComboBox, QCheckBox, QWidget, QVBoxLayout, QLabel, QFormLayout, \
-    QAbstractSpinBox
+    QAbstractSpinBox, QScrollArea
 from six import with_metaclass
 
 from partseg.io_functions import save_stack_segmentation, load_stack_segmentation
@@ -154,7 +154,7 @@ class AbstractAlgorithmSettingsWidget(with_metaclass(ABCMeta, object)):
         return dict()
 
 
-class AlgorithmSettingsWidget(QWidget):
+class AlgorithmSettingsWidget(QScrollArea):
     def __init__(self, settings, element_list, algorithm: Type[SegmentationAlgorithm]):
         """
         :type settings: ImageSettings
@@ -174,8 +174,18 @@ class AlgorithmSettingsWidget(QWidget):
         for el in element_list:
             self.widget_list.append((el.name, el.get_field()))
             widget_layout.addRow(el.user_name, self.widget_list[-1][-1])
-        main_layout.addLayout(widget_layout)
-        self.setLayout(main_layout)
+        """scroll_area = QScrollArea()
+        ww = QWidget()
+        ww.setLayout(widget_layout)
+
+        scroll_area.setWidget(ww)
+        #scroll_area.setStyleSheet("background-color: green")
+        #main_layout.addLayout(widget_layout)
+        main_layout.addWidget(scroll_area)"""
+        ww = QWidget()
+        ww.setLayout(widget_layout)
+        #self.setLayout(main_layout)
+        self.setWidget(ww)
         self.settings = settings
         self.settings.image_changed[int].connect(self.image_changed)
         self.algorithm = algorithm()
