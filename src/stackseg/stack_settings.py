@@ -49,9 +49,11 @@ class ImageSettings(QObject):
             self.sizes = []
 
     def set_segmentation(self, segmentation, metadata):
-        self.segmentation = segmentation
-        num = self.segmentation.max()
+
+        num = segmentation.max()
         self.chosen_components_widget.set_chose(range(1, num + 1), metadata["components"])
+        self.segmentation = segmentation
+
 
     @property
     def batch_directory(self):
@@ -70,6 +72,8 @@ class ImageSettings(QObject):
         if isinstance(value, tuple):
             file_path = value[1]
             value = value[0]
+            #if len(value) > 3:
+            #    self.set_segmentation(value[2], value[3])
         else:
             file_path = None
         value = np.squeeze(value)
@@ -238,3 +242,9 @@ class StackSettings(ViewSettings):
             return self.chosen_components_widget.get_state(val)
         else:
             raise RuntimeError("chosen_components_widget do not idealized")
+
+    def components_mask(self) -> np.ndarray:
+        if self.chosen_components_widget is not None:
+            return self.chosen_components_widget.get_mask()
+        else:
+            raise RuntimeError("chosen_components_widget do not initialized")

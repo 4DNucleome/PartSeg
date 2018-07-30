@@ -128,14 +128,23 @@ class ChosenComponents(QWidget):
     """
     :type check_box: dict[int, QCheckBox]
     """
+    check_change_signal = pyqtSignal()
     def __init__(self):
         super(ChosenComponents, self).__init__()
-        self.setLayout(FlowLayout())
+        # self.setLayout(FlowLayout())
         self.check_box = dict()
         self.check_all_btn = QPushButton("Check all")
         self.check_all_btn.clicked.connect(self.check_all)
         self.un_check_all_btn = QPushButton("Un check all")
         self.un_check_all_btn.clicked.connect(self.un_check_all)
+        main_layout = QVBoxLayout()
+        btn_layout = QHBoxLayout()
+        btn_layout.addWidget(self.check_all_btn)
+        btn_layout.addWidget(self.un_check_all_btn)
+        self.check_layout = FlowLayout()
+        main_layout.addLayout(btn_layout)
+        main_layout.addLayout(self.check_layout)
+        self.setLayout(main_layout)
 
     def other_component_choose(self, num):
         check = self.check_box[num]
@@ -150,25 +159,28 @@ class ChosenComponents(QWidget):
             el.setChecked(False)
 
     def set_chose(self, components_index, chosen_components):
-        widget = QWidget()
-        widget.setLayout(self.layout())
-        main_layout = QVBoxLayout()
-        btn_layout = QHBoxLayout()
-        btn_layout.addWidget(self.check_all_btn)
-        btn_layout.addWidget(self.un_check_all_btn)
-        check_layout = FlowLayout()
-        main_layout.addLayout(btn_layout)
-        main_layout.addLayout(check_layout)
-        self.setLayout(main_layout)
+        self.blockSignals(True)
+        self.check_layout.clear()
+        for el in self.check_box.values():
+            """:type el: QCheckBox"""
+            el.deleteLater()
+            el.stateChanged.disconnect()
         self.check_box.clear()
         chosen_components = set(chosen_components)
         for el in components_index:
             check = QCheckBox(str(el))
             if el in chosen_components:
                 check.setChecked(True)
+            check.stateChanged.connect(self.check_change)
             self.check_box[el] = check
-            check_layout.addWidget(check)
+            self.check_layout.addWidget(check)
+        self.blockSignals(False)
         self.update()
+        self.check_change_signal.emit()
+
+
+    def check_change(self):
+        self.check_change_signal.emit()
 
     def change_state(self, num, val):
         self.check_box[num].setChecked(val)
@@ -183,6 +195,13 @@ class ChosenComponents(QWidget):
                 res.append(num)
         return res
 
+    def get_mask(self):
+        res = [0]
+        for _, check in sorted(self.check_box.items()):
+            res.append(check.isChecked())
+        return np.array(res, dtype=np.uint8)
+
+
 
 class AlgorithmOptions(QWidget):
     def __init__(self, settings, control_view, component_checker):
@@ -195,8 +214,9 @@ class AlgorithmOptions(QWidget):
         super(AlgorithmOptions, self).__init__()
         self.settings = settings
         self.algorithm_choose = QComboBox()
-        self.show_result = QCheckBox("Show result")
-        self.show_result.setChecked(control_view.show_label)
+        self.show_result = QComboBox() #  QCheckBox("Show result")
+        self.show_result.addItems(["Not show", "Show results", "Show choosen"])
+        self.show_result.setCurrentIndex(control_view.show_label)
         self.opacity = QDoubleSpinBox()
         self.opacity.setRange(0, 1)
         self.opacity.setSingleStep(0.1)
@@ -214,6 +234,7 @@ class AlgorithmOptions(QWidget):
         self.block_execute_all_btn = False
         self.stack_layout = QStackedLayout()
         self.choose_components = ChosenComponents()
+        self.choose_components.check_change_signal.connect(control_view.components_change)
         for name, val in stack_algorithm_dict.items():
             self.algorithm_choose.addItem(name)
             widget = AlgorithmSettingsWidget(settings, *val)
@@ -261,7 +282,7 @@ class AlgorithmOptions(QWidget):
         self.execute_btn.clicked.connect(self.execute_action)
         self.execute_all_btn.clicked.connect(self.execute_all_action)
         self.opacity.valueChanged.connect(control_view.set_opacity)
-        self.show_result.stateChanged.connect(control_view.set_show_label)
+        self.show_result.currentIndexChanged.connect(control_view.set_show_label)
         self.only_borders.stateChanged.connect(control_view.set_borders)
         self.borders_thick.valueChanged.connect(control_view.set_borders_thick)
         settings.image_changed.connect(self.image_changed)

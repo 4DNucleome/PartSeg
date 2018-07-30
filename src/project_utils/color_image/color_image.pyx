@@ -97,12 +97,13 @@ def color_grayscale(np.ndarray[DTYPE_t, ndim=2] cmap, np.ndarray[numpy_types, nd
     return result_array
 
 def add_labels(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[label_types, ndim=2] labels, float overlay, int only_border,
-              int border_thick):
+              int border_thick, np.ndarray[np.uint8_t, ndim=1] use_labels):
     if labels is None:
         return image
     cdef Py_ssize_t x_max = image.shape[0]
     cdef Py_ssize_t y_max = image.shape[1]
     cdef Py_ssize_t x, y
+    cdef Py_ssize_t comp_num = use_labels.size
     cdef int R, Y
     cdef Py_ssize_t circle_len, circle_pos
     cdef np.ndarray[np.int8_t, ndim=2] circle_shift
@@ -113,7 +114,7 @@ def add_labels(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[label_types, ndim=2
 
     if only_border:
         circle_list = []
-        if border_thick > 1:
+        if border_thick > 0:
             R = border_thick
             for x in range(-R,R+1):
                 Y = int((R*R-x*x)**0.5) # bound for y given x
@@ -129,20 +130,23 @@ def add_labels(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[label_types, ndim=2
         local_labels = np.zeros((labels.shape[0] + 2*border_thick, labels.shape[1] + 2*border_thick), dtype=labels.dtype)
         for x in range(1,x_max-1):
             for y in range(1,y_max-1):
-                if labels[x,y] > 0 and (labels[x+1,y] == 0 or labels[x-1, y] == 0 or labels[x, y+1] == 0 or labels[x, y-1] == 0):
+                if use_labels[labels[x,y]] and (labels[x+1,y] == 0 or labels[x-1, y] == 0 or labels[x, y+1] == 0 or labels[x, y-1] == 0):
                     for circle_pos in range(circle_len):
                         local_labels[x + circle_shift[circle_pos, 0], y + circle_shift[circle_pos, 1]] = labels[x,y]
 
         if border_thick > 0:
             local_labels = local_labels[border_thick:-border_thick, border_thick:-border_thick]
     else:
-        local_labels = labels
+        local_labels = np.copy(labels)
+        for i in range(1, comp_num):
+            if not use_labels[i]:
+                local_labels[local_labels == i] = 0
     cdef float part1, part2
     cdef label_types col_num
     for x in range(x_max):
         for y in range(y_max):
             if local_labels[x,y] > 0:
-                col_num = local_labels[x,y] % 30
+                col_num = local_labels[x,y] % 30 # TODO move to global variable
                 image[x, y, 0] = <DTYPE_t> (image[x, y, 0] * (1-overlay) + label_colors[col_num, 0] * overlay)
                 image[x, y, 1] = <DTYPE_t> (image[x, y, 1] * (1-overlay) + label_colors[col_num, 1] * overlay)
                 image[x, y, 2] = <DTYPE_t> (image[x, y, 2] * (1-overlay) + label_colors[col_num, 2] * overlay)

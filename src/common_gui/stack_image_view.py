@@ -18,7 +18,7 @@ from qt_import import QPixmap, QImage, QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QAction, Qt, QPainter, QPen, QColor, QApplication, \
     pyqtSignal, QPoint, QSlider, QCheckBox, QComboBox, QSize, QObject, \
     QEvent, QToolTip, QHelpEvent
-from stackseg.stack_settings import ImageSettings
+from stackseg.stack_settings import ImageSettings, StackSettings
 from .channel_control import ChannelControl
 
 canvas_icon_size = QSize(27, 27)
@@ -36,7 +36,7 @@ class ImageState(QObject):
         self.zoom = False
         self.move = False
         self.opacity = 1
-        self.show_label = True
+        self.show_label = 1 # 0 - no show, 1 - show all, 2 - show chosen
         self.only_borders = True
         self.borders_thick = 1
 
@@ -59,6 +59,10 @@ class ImageState(QObject):
     def set_opacity(self, val):
         if self.opacity != val:
             self.opacity = val
+            self.parameter_changed.emit()
+
+    def components_change(self):
+        if self.show_label == 2:
             self.parameter_changed.emit()
 
     def set_show_label(self, val):
@@ -242,7 +246,7 @@ class ImageView(QWidget):
     def __init__(self, settings, channel_control: ChannelControl):
         """:type settings: ImageSettings"""
         super(ImageView, self).__init__()
-        self._settings = settings
+        self._settings : StackSettings = settings
         self.channel_control = channel_control
         #self._current_channels = ["BlackRed"]
         self.exclude_btn_list = []
@@ -395,8 +399,12 @@ class ImageView(QWidget):
                 borders[i] = p
         im = color_image(img, color_maps, borders)
         if self.labels_layer is not None and self.image_state.show_label:
+            # TODO fix
             layers = self.labels_layer[self.stack_slider.value()]
-            add_labels(im, layers, self.image_state.opacity, self.image_state.only_borders, int((self.image_state.borders_thick-1)/2))
+            components_mask = self._settings.components_mask()
+            if self.image_state.show_label == 1:
+                components_mask[1:] = 1
+            add_labels(im, layers, self.image_state.opacity, self.image_state.only_borders, int((self.image_state.borders_thick-1)/2), components_mask)
         self.image_area.set_image(im, self.sender() is not None)
 
     def set_image(self, image):
