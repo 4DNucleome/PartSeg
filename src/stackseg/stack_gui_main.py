@@ -14,7 +14,7 @@ from common_gui.channel_control import ChannelControl
 from common_gui.universal_gui_part import right_label
 
 from common_gui.flow_layout import FlowLayout
-from common_gui.stack_image_view import ImageView
+from .image_view import StackImageView
 from partseg.batch_window import AddFiles
 from partseg.io_functions import load_stack_segmentation
 from project_utils.global_settings import static_file_folder
@@ -410,6 +410,7 @@ class ImageInformation(QWidget):
             el.setButtonSymbols(QAbstractSpinBox.NoButtons)
             el.setRange(0, 1000)
             el.setValue(self._settings.image_spacing[i])
+            el.valueChanged.connect(self.image_spacing_change)
         self.units = QComboBox()
         self.units.addItems(UNITS_LIST)
         self.units.setCurrentIndex(2)
@@ -433,6 +434,9 @@ class ImageInformation(QWidget):
 
     def set_image_path(self, value):
         self.path.setText("<b>Path:</b> {}".format(value))
+
+    def image_spacing_change(self):
+        self._settings.image_spacing = [el.value() for el in self.spacing]
 
 
 class Options(QTabWidget):
@@ -458,7 +462,7 @@ class MainWindow(QMainWindow):
             self.settings.load(os.path.join(config_folder, "settings.json"))
         self.main_menu = MainMenu(self.settings)
         self.channel_control = ChannelControl(self.settings)
-        self.image_view = ImageView(self.settings, self.channel_control)
+        self.image_view = StackImageView(self.settings, self.channel_control)
         self.image_view.setMinimumWidth(450)
         self.info_text = QLabel()
         self.image_view.text_info_change.connect(self.info_text.setText)

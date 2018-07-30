@@ -32,7 +32,8 @@ class StackSettings(ViewSettings):
         with open(file_path, 'w') as ff:
             json.dump(
                 {"view_profiles": dump_view,
-                 "segment_profile": dump_seg
+                 "segment_profile": dump_seg,
+                 "image_spacing": self.image_spacing
                  },
                 ff)
 
@@ -42,9 +43,16 @@ class StackSettings(ViewSettings):
                 data = json.load(ff)
             try:
                 self.load_view_profiles(data["view_profiles"])
+            except KeyError:
+                pass
+            try:
                 for k, v in json.loads(data["segment_profile"]).items():
                     self.segmentation_dict[k] = ProfileDict()
                     self.segmentation_dict[k].my_dict = v
+            except KeyError:
+                pass
+            try:
+                self.image_spacing = data["image_spacing"]
             except KeyError:
                 pass
         except json.decoder.JSONDecodeError:
