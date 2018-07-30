@@ -500,14 +500,14 @@ class MyScrollArea(QScrollArea):
         v_min = self.verticalScrollBar().minimum()
         v_max = self.verticalScrollBar().maximum()
         v_set = v_min + (v_max - v_min) * ((y_mid - view_h/2) / (img_h-view_h))
-        self.verticalScrollBar().setValue(v_set)
+        self.verticalScrollBar().setValue(int(v_set))
         img_w = self.pixmap.size().width()
         view_w = self.size().width() - 2
         x_mid = (point1.x() + point2.x()) / 2 * scale_ratio
         v_min = self.horizontalScrollBar().minimum()
         v_max = self.horizontalScrollBar().maximum()
         v_set = v_min + (v_max - v_min) * ((x_mid - view_w / 2) / (img_w - view_w))
-        self.horizontalScrollBar().setValue(v_set)
+        self.horizontalScrollBar().setValue(int(v_set))
 
     def reset_image(self):
         x = self.size().width() - 2

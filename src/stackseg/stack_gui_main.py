@@ -36,7 +36,7 @@ class MainMenu(QWidget):
         """
         super(MainMenu, self).__init__()
         self.settings = settings
-        self.load_image_btn = QPushButton("Load image")
+        self.load_image_btn = QPushButton("Load image (also from mask)")
         self.load_image_btn.clicked.connect(self.load_image)
         self.load_segmentation_btn = QPushButton("Load segmentation")
         self.load_segmentation_btn.clicked.connect(self.load_segmentation)
