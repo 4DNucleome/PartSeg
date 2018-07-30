@@ -243,7 +243,7 @@ class AlgorithmOptions(QWidget):
         widgets_list = []
         for name, val in stack_algorithm_dict.items():
             self.algorithm_choose.addItem(name)
-            widget = AlgorithmSettingsWidget(settings, *val)
+            widget = AlgorithmSettingsWidget(settings, name, *val)
             widgets_list.append(widget)
             widget.algorithm.execution_done.connect(self.execution_done)
             widget.algorithm.progress_signal.connect(self.progress_info)

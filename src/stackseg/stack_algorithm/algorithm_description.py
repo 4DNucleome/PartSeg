@@ -155,7 +155,7 @@ class AbstractAlgorithmSettingsWidget(with_metaclass(ABCMeta, object)):
 
 
 class AlgorithmSettingsWidget(QScrollArea):
-    def __init__(self, settings, element_list, algorithm: Type[SegmentationAlgorithm]):
+    def __init__(self, settings, name, element_list, algorithm: Type[SegmentationAlgorithm]):
         """
         For algorithm which works on one channel
         :type settings: ImageSettings
@@ -164,6 +164,7 @@ class AlgorithmSettingsWidget(QScrollArea):
         """
         super(AlgorithmSettingsWidget, self).__init__()
         self.widget_list = []
+        self.name = name
         main_layout = QVBoxLayout()
         self.info_label = QLabel()
         self.info_label.setHidden(True)
@@ -188,6 +189,8 @@ class AlgorithmSettingsWidget(QScrollArea):
         #self.setLayout(main_layout)
         self.setWidget(ww)
         self.settings = settings
+        value_dict = self.settings.get(f"algorithms.{self.name}", {})
+        self.set_values(value_dict)
         self.settings.image_changed[int].connect(self.image_changed)
         self.algorithm = algorithm()
         self.algorithm.info_signal.connect(self.show_info)
@@ -203,6 +206,19 @@ class AlgorithmSettingsWidget(QScrollArea):
         if ind < 0 or ind > channels_num:
             ind = 0
         self.channels_chose.setCurrentIndex(ind)
+
+    def set_values(self, values_dict):
+        for name, el in self.widget_list:
+            if name not in values_dict:
+                continue
+            if isinstance(el, QComboBox):
+                el.setCurrentText(values_dict[name])
+            elif isinstance(el, QAbstractSpinBox):
+                el.setValue(values_dict[name])
+            elif isinstance(el, QCheckBox):
+                el.setChecked(values_dict[name])
+            else:
+                raise ValueError("unsuported type {}".format(type(el)))
 
     def get_values(self):
         res = dict()
@@ -221,9 +237,11 @@ class AlgorithmSettingsWidget(QScrollArea):
         return self.channels_chose.currentIndex()
 
     def execute(self, exclude_mask=None):
+        values = self.get_values()
         self.algorithm.set_parameters(**{"exclude_mask": exclude_mask,
                                          "image": self.settings.get_chanel(self.channels_chose.currentIndex()),
-                                         **self.get_values()})
+                                         **values})
+        self.settings.set(f"algorithms.{self.name}", values)
         self.algorithm.start()
 
 
