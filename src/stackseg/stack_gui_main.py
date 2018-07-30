@@ -55,14 +55,16 @@ class MainMenu(QWidget):
         try:
             dial = QFileDialog()
             dial.setFileMode(QFileDialog.ExistingFile)
-            dial.setDirectory(self.settings.open_directory)
-            filters = ["raw image (*.tiff *.tif *.lsm)", "image from mask (*.seg)"]
+            dial.setDirectory(self.settings.get("io.load_image_directory", ""))
+            filters = ["raw image (*.tiff *.tif *.lsm)", "image from mask (*.seg *.tgz)"]
             dial.setNameFilters(filters)
+            dial.selectNameFilter(self.settings.get("io.load_image_filter", filters[0]))
             if not dial.exec_():
                 return
             file_path = str(dial.selectedFiles()[0])
-            self.settings.open_directory = os.path.dirname(str(file_path))
-            if dial.selectedNameFilter() == "image from mask (*.seg)":
+            self.settings.set("io.load_image_directory", os.path.dirname(str(file_path)))
+            self.settings.set("io.load_image_filter", dial.selectedNameFilter())
+            if dial.selectedNameFilter() == filters[1]:
                 segmentation, metadata = load_stack_segmentation(file_path)
                 if "base_file" not in metadata:
                     QMessageBox.warning(self, "Open error", "No information about base file")
@@ -75,6 +77,8 @@ class MainMenu(QWidget):
                 im = tif.imread(file_path)
                 self.settings.image = im, file_path
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
         # self.image_loaded.emit()
 
@@ -83,13 +87,13 @@ class MainMenu(QWidget):
 
             dial = QFileDialog()
             dial.setFileMode(QFileDialog.ExistingFile)
-            dial.setDirectory(self.settings.open_directory)
+            dial.setDirectory(self.settings.get("io.open_segmentation_directory", ""))
             filters = ["segmentation (*.seg *.tgz)"]
             dial.setNameFilters(filters)
             if not dial.exec_():
                 return
             file_path = str(dial.selectedFiles()[0])
-            self.settings.open_directory = os.path.dirname(str(file_path))
+            self.settings.set("io.open_segmentation_directory", os.path.dirname(str(file_path)))
             self.settings.load_segmentation(file_path)
         except Exception as e:
             QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
@@ -100,14 +104,15 @@ class MainMenu(QWidget):
             return
         dial = QFileDialog()
         dial.setFileMode(QFileDialog.AnyFile)
-        dial.setDirectory(self.settings.save_directory)
+        dial.setDirectory(self.settings.get("io.save_segmentation_directory", ""))
         dial.setAcceptMode(QFileDialog.AcceptSave)
         filters = ["segmentation (*.seg *.tgz)"]
         dial.setNameFilters(filters)
         if not dial.exec_():
             return
         file_path = str(dial.selectedFiles()[0])
-        self.settings.save_directory = os.path.dirname(str(file_path))
+        self.settings.set("io.save_segmentation_directory", os.path.dirname(str(file_path)))
+        #self.settings.save_directory = os.path.dirname(str(file_path))
         self.settings.save_segmentation(file_path)
 
     def save_result(self):
@@ -116,11 +121,11 @@ class MainMenu(QWidget):
             return
         dial = QFileDialog()
         dial.setFileMode(QFileDialog.Directory)
-        dial.setDirectory(self.settings.save_directory)
+        dial.setDirectory(self.settings.get("io.save_components_directory", ""))
         if not dial.exec_():
             return
         file_path = str(dial.selectedFiles()[0])
-        self.settings.save_directory = os.path.dirname(str(file_path))
+        self.settings.set("io.save_components_directory", os.path.dirname(str(file_path)))
         self.settings.save_result(file_path)
 
 
@@ -319,9 +324,11 @@ class AlgorithmOptions(QWidget):
     def execute_all_action(self):
         dial = QFileDialog()
         dial.setFileMode(QFileDialog.Directory)
-        dial.setDirectory(self.settings.save_directory)
+        dial.setDirectory(self.settings.get("io.save_batch", self.settings.get("io.save_segmentation_directory", "")))
         if not dial.exec_():
             return
+        folder_path = str(dial.selectedFiles()[0])
+        self.settings.set("io.save_batch", folder_path)
         self.execute_all_btn.setDisabled(True)
         self.block_execute_all_btn = True
         self.is_batch_process = True
@@ -329,7 +336,7 @@ class AlgorithmOptions(QWidget):
         self.progress_bar.setHidden(False)
         self.progress_bar.setRange(0, len(self.file_list))
         self.progress_bar.setValue(0)
-        folder_path = str(dial.selectedFiles()[0])
+
         widget = self.stack_layout.currentWidget()
         parameters = widget.get_values()
         self.batch_process.set_parameters(type(widget.algorithm), parameters, widget.channel_num(),

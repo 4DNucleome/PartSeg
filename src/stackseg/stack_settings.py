@@ -23,8 +23,6 @@ class ImageSettings(QObject):
 
     def __init__(self):
         super(ImageSettings, self).__init__()
-        self.open_directory = None
-        self.save_directory = None
         self._image = None
         self._image_path = ""
         self.segmentation = None
@@ -54,15 +52,6 @@ class ImageSettings(QObject):
         self.chosen_components_widget.set_chose(range(1, num + 1), metadata["components"])
         self.segmentation = segmentation
 
-
-    @property
-    def batch_directory(self):
-        return self.open_directory
-
-    @batch_directory.setter
-    def batch_directory(self, val):
-        self.open_directory = val
-
     @property
     def image(self):
         return self._image
@@ -72,7 +61,7 @@ class ImageSettings(QObject):
         if isinstance(value, tuple):
             file_path = value[1]
             value = value[0]
-            #if len(value) > 3:
+            # if len(value) > 3:
             #    self.set_segmentation(value[2], value[3])
         else:
             file_path = None
@@ -135,12 +124,11 @@ class ProfileDict(object):
             try:
                 curr_dict = curr_dict[key]
             except KeyError:
-                for key in key_path[i:-1]:
-                    curr_dict[key] = dict()
-                    curr_dict = curr_dict[key]
+                for key2 in key_path[i:-1]:
+                    curr_dict[key2] = dict()
+                    curr_dict = curr_dict[key2]
                     break
         curr_dict[key_path[-1]] = value
-
 
     def get(self, key_path: typing.Union[list, str], default):
         if isinstance(key_path, str):
@@ -167,54 +155,81 @@ class ViewSettings(ImageSettings):
     def __init__(self):
         super().__init__()
         self.color_map = []
-        self.current_dict = "default"
-        self.profile_dict : typing.Dict[str, ProfileDict] = {self.current_dict: ProfileDict()}
+        self.current_profile_dict = "default"
+        self.profile_dict: typing.Dict[str, ProfileDict] = {self.current_profile_dict: ProfileDict()}
 
     def _image_changed(self):
         for i in range(len(self.color_map), self.channels):
             self.color_map.append(default_colors[i % len(default_colors)])
 
     def change_profile(self, name):
-        self.current_dict = name
-        if self.current_dict not in self.profile_dict:
-            self.profile_dict = {self.current_dict: ProfileDict()}
+        self.current_profile_dict = name
+        if self.current_profile_dict not in self.profile_dict:
+            self.profile_dict = {self.current_profile_dict: ProfileDict()}
 
     def set_in_profile(self, key_path, value):
-        self.profile_dict[self.current_dict].set(key_path, value)
+        self.profile_dict[self.current_profile_dict].set(key_path, value)
 
     def get_from_profile(self, key_path, default):
-        return self.profile_dict[self.current_dict].get(key_path, default)
+        return self.profile_dict[self.current_profile_dict].get(key_path, default)
 
     def dump_view_profiles(self):
         return json.dumps(self.profile_dict, cls=ProfileEncoder)
 
     def load_view_profiles(self, data):
-        dicts:dict = json.loads(data)
+        dicts: dict = json.loads(data)
         for k, v in dicts.items():
             self.profile_dict[k] = ProfileDict()
             self.profile_dict[k].my_dict = v
 
 
 class StackSettings(ViewSettings):
+    def __init__(self):
+        super().__init__()
+        self.chosen_components_widget = None
+        self.current_segmentation_dict = "default"
+        self.segmentation_dict: typing.Dict[str, ProfileDict] = {self.current_segmentation_dict: ProfileDict()}
+
+    def set(self, key_path, value):
+        self.segmentation_dict[self.current_segmentation_dict].set(key_path, value)
+
+    def get(self, key_path, default):
+        return self.segmentation_dict[self.current_segmentation_dict].get(key_path, default)
 
     def dump(self, file_path):
         if not path.exists(path.dirname(file_path)):
             makedirs(path.dirname(file_path))
+        dump_view = self.dump_view_profiles()
+        dump_seg = json.dumps(self.segmentation_dict, cls=ProfileEncoder)
         with open(file_path, 'w') as ff:
-            json.dump({"view_profiles": self.dump_view_profiles()}, ff)
+            json.dump(
+                {"view_profiles": dump_view,
+                 "segment_profile": dump_seg
+                 },
+                ff)
 
     def load(self, file_path):
-        with open(file_path, 'r') as ff:
-            data = json.load(ff)
         try:
-            self.load_view_profiles(data["view_profiles"])
-        except KeyError:
+            with open(file_path, 'r') as ff:
+                data = json.load(ff)
+            try:
+                self.load_view_profiles(data["view_profiles"])
+                for k, v in json.loads(data["segment_profile"]).items():
+                    self.segmentation_dict[k] = ProfileDict()
+                    self.segmentation_dict[k].my_dict = v
+            except KeyError:
+                pass
+        except json.decoder.JSONDecodeError:
             pass
 
+    @property
+    def batch_directory(self):
+        # TODO update batch widget to use new style settings
+        return self.get("io.batch_directory", self.get("io.load_image_directory", ""))
 
-    def __init__(self):
-        super().__init__()
-        self.chosen_components_widget = None
+    @batch_directory.setter
+    def batch_directory(self, val):
+        self.set("io.batch_directory", val)
 
     def save_result(self, dir_path: str):
         res_img = cut_with_mask(self.segmentation, self._image, only=self.chosen_components())
