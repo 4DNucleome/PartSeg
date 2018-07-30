@@ -18,7 +18,8 @@ from qt_import import QPixmap, QImage, QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QAction, Qt, QPainter, QPen, QColor, QApplication, \
     pyqtSignal, QPoint, QSlider, QCheckBox, QComboBox, QSize, QObject, \
     QEvent, QToolTip, QHelpEvent
-from stackseg.stack_settings import ImageSettings, StackSettings
+from stackseg.stack_settings import StackSettings
+from project_utils.settings import ImageSettings
 from .channel_control import ChannelControl
 
 canvas_icon_size = QSize(27, 27)
