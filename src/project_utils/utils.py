@@ -1,5 +1,7 @@
 import logging
 
+from PyQt5.QtWidgets import QComboBox
+
 __author__ = "Grzegorz Bokota"
 
 
@@ -46,3 +48,18 @@ def bisect(arr, val, comp):
         else:
             r = e
     return r
+
+
+class SynchronizeValues(object):
+    @staticmethod
+    def add_synchronization(field_name, widgets):
+        w = widgets[0]
+        field = getattr(w, field_name)
+        if isinstance(field, QComboBox):
+            def synchronize(val):
+                for el in widgets:
+                    f = getattr(el, field_name)
+                    f.setCurrentIndex(val)
+            for el in widgets:
+                f = getattr(el, field_name)
+                f.currentIndexChanged[int].connect(synchronize)

@@ -19,6 +19,7 @@ from partseg.batch_window import AddFiles
 from partseg.io_functions import load_stack_segmentation
 from project_utils.global_settings import static_file_folder
 from project_utils.universal_const import UNITS_LIST
+from project_utils.utils import SynchronizeValues
 from stackseg.stack_algorithm.algorithm_description import stack_algorithm_dict, AlgorithmSettingsWidget, BatchProceed
 from stackseg.stack_settings import StackSettings
 
@@ -207,7 +208,6 @@ class ChosenComponents(QWidget):
         return np.array(res, dtype=np.uint8)
 
 
-
 class AlgorithmOptions(QWidget):
     def __init__(self, settings, control_view, component_checker):
         """
@@ -240,12 +240,16 @@ class AlgorithmOptions(QWidget):
         self.stack_layout = QStackedLayout()
         self.choose_components = ChosenComponents()
         self.choose_components.check_change_signal.connect(control_view.components_change)
+        widgets_list = []
         for name, val in stack_algorithm_dict.items():
             self.algorithm_choose.addItem(name)
             widget = AlgorithmSettingsWidget(settings, *val)
+            widgets_list.append(widget)
             widget.algorithm.execution_done.connect(self.execution_done)
             widget.algorithm.progress_signal.connect(self.progress_info)
             self.stack_layout.addWidget(widget)
+        # WARNING works only with one channels algorithms
+        SynchronizeValues.add_synchronization("channels_chose", widgets_list)
         self.chosen_list = []
         self.progress_bar = QProgressBar()
         self.progress_bar.setHidden(True)

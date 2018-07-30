@@ -157,6 +157,7 @@ class AbstractAlgorithmSettingsWidget(with_metaclass(ABCMeta, object)):
 class AlgorithmSettingsWidget(QScrollArea):
     def __init__(self, settings, element_list, algorithm: Type[SegmentationAlgorithm]):
         """
+        For algorithm which works on one channel
         :type settings: ImageSettings
         :param element_list:
         :param settings:
@@ -253,6 +254,6 @@ auto_threshold_algorithm = [AlgorithmProperty("suggested_size", "Suggested size"
 
 stack_algorithm_dict = {
     "Threshold": (threshold_algorithm, ThresholdAlgorithm),
-    "Auto Threshold": (auto_threshold_algorithm, AutoThresholdAlgorithm),
-    "Only Threshold": (only_threshold_algorithm, ThresholdPreview)
+    "Only Threshold": (only_threshold_algorithm, ThresholdPreview),
+    "Auto Threshold": (auto_threshold_algorithm, AutoThresholdAlgorithm)
 }
