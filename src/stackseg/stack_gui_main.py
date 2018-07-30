@@ -5,7 +5,10 @@ import os
 import appdirs
 import numpy as np
 import tifffile as tif
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox, QVBoxLayout, QCheckBox, \
+    QComboBox, QDoubleSpinBox, QSpinBox, QStackedLayout, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
+    QTabWidget, QMainWindow
 
 from common_gui.channel_control import ChannelControl
 from common_gui.universal_gui_part import right_label
@@ -16,9 +19,6 @@ from partseg.batch_window import AddFiles
 from partseg.io_functions import load_stack_segmentation
 from project_utils.global_settings import static_file_folder
 from project_utils.universal_const import UNITS_LIST
-from qt_import import QMainWindow, QPushButton, QFileDialog, QVBoxLayout, QHBoxLayout, QLabel, Qt, \
-    pyqtSignal, QSpinBox, QComboBox, QTabWidget, QDoubleSpinBox, QProgressBar, \
-    QFormLayout, QAbstractSpinBox, QStackedLayout, QCheckBox, QMessageBox
 from stackseg.stack_algorithm.algorithm_description import stack_algorithm_dict, AlgorithmSettingsWidget, BatchProceed
 from stackseg.stack_settings import StackSettings
 
