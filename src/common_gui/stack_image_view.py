@@ -163,7 +163,6 @@ class ImageCanvas(QLabel):
         super().resize(*args)
 
     def resizeEvent(self, event: QtGui.QResizeEvent):
-        print(f"buka {event.size()}")
         im = self.image
         height, width, _ = im.shape
         self.image_size = QSize(width, height)
@@ -480,7 +479,7 @@ class MyScrollArea(QScrollArea):
         self.setWidget(self.pixmap)
         self.image_ratio = 1
         self.zoom_scale = 1
-        self.max_zoom = 10
+        self.max_zoom = 15
         self.image_size = QSize(1, 1)
         self.resize_area.connect(self.pixmap.resize)
 
@@ -506,7 +505,6 @@ class MyScrollArea(QScrollArea):
         print(self.zoom_scale)
         if scale_ratio == 1:
             return
-        print(f"buka3 {self.pixmap.size()}, {scale_ratio}")
         self.pixmap.resize(self.pixmap.size() * scale_ratio)
         img_h = self.pixmap.size().height()
         view_h = self.size().height() - 2
@@ -531,7 +529,7 @@ class MyScrollArea(QScrollArea):
         else:
             y = int(x / self.image_ratio)
         self.pixmap.resize(x, y)
-        self.zoom_scale = x/self.image_size.width()
+        self.zoom_scale = x/self.pixmap.width()
 
     def set_image(self, im, keep_size=False):
         self.widget().set_image(im)

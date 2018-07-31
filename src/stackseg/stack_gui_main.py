@@ -351,7 +351,6 @@ class AlgorithmOptions(QWidget):
         QMessageBox.warning(self, "Proceed error", text)
 
     def execution_all_done(self):
-        print("buka")
         self.execute_btn.setEnabled(True)
         self.block_execute_all_btn = False
         if len(self.file_list) > 0:
