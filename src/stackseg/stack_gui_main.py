@@ -8,7 +8,7 @@ import tifffile as tif
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox, QVBoxLayout, QCheckBox, \
     QComboBox, QDoubleSpinBox, QSpinBox, QStackedLayout, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
-    QTabWidget, QMainWindow
+    QTabWidget, QMainWindow, QSizePolicy
 
 from common_gui.channel_control import ChannelControl
 from common_gui.universal_gui_part import right_label
@@ -465,6 +465,7 @@ class MainWindow(QMainWindow):
         self.image_view = StackImageView(self.settings, self.channel_control)
         self.image_view.setMinimumWidth(450)
         self.info_text = QLabel()
+        self.info_text.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         self.image_view.text_info_change.connect(self.info_text.setText)
         image_view_control = self.image_view.get_control_view()
         self.options_panel = Options(self.settings, image_view_control, self.image_view)
