@@ -142,15 +142,18 @@ class ChannelControl(QWidget):
         self.maximum_value.valueChanged.connect(self.range_changed)
         self.fixed = QCheckBox("Fix range")
         self.fixed.stateChanged.connect(self.lock_channel)
-        self.gauss = QCheckBox("Gauss")
-        self.gauss.setToolTip("Only current channel")
-        self.gauss.stateChanged.connect(self.coloring_update.emit)
+        self.use_gauss = QCheckBox("Gauss")
+        self.use_gauss.setToolTip("Only current channel")
+        self.use_gauss.stateChanged.connect(self.coloring_update.emit)
         self.gauss_radius = QDoubleSpinBox()
+        self.gauss_radius.setSingleStep(0.1)
+        self.gauss_radius.valueChanged.connect(self.gauss_changed)
+        self.use_gauss.stateChanged.connect(self.gauss_changed)
         self.collapse_widget = CollapseCheckbox()
         self.collapse_widget.add_hide_element(self.minimum_value)
         self.collapse_widget.add_hide_element(self.maximum_value)
         self.collapse_widget.add_hide_element(self.fixed)
-        self.collapse_widget.add_hide_element(self.gauss)
+        self.collapse_widget.add_hide_element(self.use_gauss)
         self.collapse_widget.add_hide_element(self.gauss_radius)
 
         self.channels_widgets = []
@@ -167,7 +170,7 @@ class ChannelControl(QWidget):
         layout.addWidget(label2, 5, 0)
         layout.addWidget(self.maximum_value, 5, 1)
         layout.addWidget(self.fixed, 4, 2, 1, 2)
-        layout.addWidget(self.gauss, 5, 2, 1, 1)
+        layout.addWidget(self.use_gauss, 5, 2, 1, 1)
         layout.addWidget(self.gauss_radius, 5, 3, 1, 1)
         self.collapse_widget.add_hide_element(label1)
         self.collapse_widget.add_hide_element(label2)
@@ -185,13 +188,22 @@ class ChannelControl(QWidget):
         if self.fixed.isChecked():
             self.coloring_update.emit(False)
 
+    def gauss_changed(self):
+        self._settings.set(f"{self._name}.use_gauss_{self.current_channel}", self.use_gauss.isChecked())
+        self._settings.set(f"{self._name}.gauss_radius_{self.current_channel}", self.gauss_radius.value())
+        if isinstance(self.sender(), QCheckBox) or self.use_gauss.isChecked():
+            self.coloring_update.emit(False)
+
     def change_chanel(self, id):
         if id == self.current_channel:
             return
-        self.minimum_value.setValue(self.current_bounds[id][0])
-        self.maximum_value.setValue(self.current_bounds[id][1])
         self.channels_widgets[self.current_channel].set_inactive()
         self.current_channel = id
+        self.minimum_value.setValue(self.current_bounds[id][0])
+        self.maximum_value.setValue(self.current_bounds[id][1])
+        self.use_gauss.setChecked(self._settings.get(f"{self._name}.use_gauss_{id}", False))
+        self.gauss_radius.setValue(self._settings.get(f"{self._name}.gauss_radius_{id}", 1))
+
 
         self.channels_widgets[id].set_active()
         self.fixed.setChecked(self.channels_widgets[id].locked)
@@ -235,6 +247,8 @@ class ChannelControl(QWidget):
         self.channels_widgets[0].set_active()
         self.minimum_value.setValue(self.current_bounds[0][0])
         self.maximum_value.setValue(self.current_bounds[0][1])
+        self.use_gauss.setChecked(self._settings.get(f"{self._name}.use_gauss_{0}", False))
+        self.gauss_radius.setValue(self._settings.get(f"{self._name}.gauss_radius_{0}", 1))
         self.current_channel = 0
         self.image = self.channels_widgets[0].image
         self.colormap_chose.setCurrentText(self.channels_widgets[0].color)
@@ -258,6 +272,16 @@ class ChannelControl(QWidget):
         for i in range(channels_num):
             if not self.channels_widgets[i].locked:
                 resp[i] = None
+        return resp
+
+    def get_gauss(self):
+        channels_num = len(self.channels_widgets)
+        resp = []
+        for i in range(channels_num):
+            resp.append((
+                self._settings.get(f"{self._name}.use_gauss_{i}", False),
+                self._settings.get(f"{self._name}.gauss_radius_{i}", 1)
+            ))
         return resp
 
     def active_cannel(self, index):

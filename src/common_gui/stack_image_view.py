@@ -10,6 +10,7 @@ from PyQt5.QtGui import QShowEvent
 from matplotlib import pyplot
 from matplotlib.cm import get_cmap
 from matplotlib.colors import PowerNorm
+from scipy.ndimage import gaussian_filter
 
 from project_utils.color_image import color_image, add_labels
 from project_utils.custom_colormaps import default_colors
@@ -370,12 +371,16 @@ class ImageView(QWidget):
         self.layer_info.setText("{} of {}".format(num+1, self.layers_num))
 
     def change_image(self):
-        img = self.image[self.stack_slider.value()]
+        img = np.copy(self.image[self.stack_slider.value()])
         color_maps = self.channel_control.current_colors
         borders = self.border_val[:]
         for i, p in enumerate(self.channel_control.get_limits()):
             if p is not None:
                 borders[i] = p
+        for i, (use, radius) in enumerate(self.channel_control.get_gauss()):
+            if use and radius > 0:
+                img[..., i] = gaussian_filter(img[..., i], radius)
+
         im = color_image(img, color_maps, borders)
         if self.labels_layer is not None and self.image_state.show_label:
             # TODO fix

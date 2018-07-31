@@ -1,4 +1,5 @@
 import json
+import logging
 import typing
 
 from qt_import import QObject, pyqtSignal
@@ -211,16 +212,16 @@ class BaseSettings(ViewSettings):
             try:
                 self.load_view_profiles(data["view_profiles"])
             except KeyError:
-                pass
+                logging.error('error in load "view_profiles"')
             try:
                 for k, v in json.loads(data["segment_profile"]).items():
                     self.segmentation_dict[k] = ProfileDict()
                     self.segmentation_dict[k].my_dict = v
             except KeyError:
-                pass
+                logging.error('error in load "segment_profile"')
             try:
                 self.image_spacing = data["image_spacing"]
             except KeyError:
-                pass
+                logging.error('error in load "image_spacing"')
         except json.decoder.JSONDecodeError:
             pass

@@ -507,7 +507,8 @@ class MainWindow(QMainWindow):
         self.image_view.set_image(self.settings.image)
 
     def closeEvent(self, _):
-        print(self.settings.dump_view_profiles())
+        # print(self.settings.dump_view_profiles())
+        # print(self.settings.segmentation_dict["default"].my_dict)
         self.settings.dump(os.path.join(config_folder, "settings.json"))
 
 
