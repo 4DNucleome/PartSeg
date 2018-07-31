@@ -1,7 +1,9 @@
 settings.json
 # Created by https://www.gitignore.io/api/pycharm,python,ipythonnotebook,latex,macos,qt
-
+t_file.py
 help/html
+data/
+src/static_files/icons/32x32
 
 ### PyCharm ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and Webstorm
@@ -93,8 +95,10 @@ var/
 *.manifest
 *.spec
 # I modified this file
-!main.spec 
+!main.spec
+!main-nonpack.spec
 !PartSeg.spec
+!PartSeg-linux.spec
 !PartSeg-non-pack.spec
 
 # Installer logs
@@ -443,3 +447,9 @@ Session.vim
 *~
 # auto-generated tag files
 tags
+
+src/project_utils/color_image/color_image\.c
+notebooks
+*.cpp
+*.html
+!help/*.html
