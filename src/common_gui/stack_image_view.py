@@ -6,6 +6,7 @@ from math import log
 
 import SimpleITK as sitk
 import numpy as np
+from PyQt5 import QtGui, QtCore
 from PyQt5.QtGui import QShowEvent
 from matplotlib import pyplot
 from matplotlib.cm import get_cmap
@@ -89,7 +90,16 @@ class ImageCanvas(QLabel):
         self.local_settings = local_settings
         self.point = None
         self.point2 = None
+        self.image = None
         self.setMouseTracking(True)
+
+    def set_image(self, im):
+        self.image = im
+        height, width, _ = im.shape
+        self.image_size = QSize(width, height)
+        self.image_ratio = float(width) / float(height)
+        im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 3, QImage.Format_RGB888)
+        self.setPixmap(QPixmap.fromImage(im2.scaled(self.width(), self.height(), Qt.KeepAspectRatio)))
 
     def update_size(self, scale_factor=None):
         if scale_factor is not None:
@@ -147,6 +157,19 @@ class ImageCanvas(QLabel):
         pen.setDashOffset(3)
         painter.setPen(pen)
         painter.drawRect(self.point.x(), self.point.y(), diff.x(), diff.y())
+
+    def resize(self, *args):
+        print(f"Buka1 {args}")
+        super().resize(*args)
+
+    def resizeEvent(self, event: QtGui.QResizeEvent):
+        print(f"buka {event.size()}")
+        im = self.image
+        height, width, _ = im.shape
+        self.image_size = QSize(width, height)
+        self.image_ratio = float(width) / float(height)
+        im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 3, QImage.Format_RGB888)
+        self.setPixmap(QPixmap.fromImage(im2.scaled(event.size().width(), event.size().height(), Qt.KeepAspectRatio)))
 
 
 def get_scroll_bar_proportion(scroll_bar):
@@ -380,9 +403,8 @@ class ImageView(QWidget):
             if p is not None:
                 borders[i] = p
         for i, (use, radius) in enumerate(self.channel_control.get_gauss()):
-            if use and radius > 0:
+            if use and color_maps[i] is not None and radius > 0:
                 img[..., i] = gaussian_filter(img[..., i], radius)
-
         im = color_image(img, color_maps, borders)
         if self.labels_layer is not None and self.image_state.show_label:
             # TODO fix
@@ -484,6 +506,7 @@ class MyScrollArea(QScrollArea):
         print(self.zoom_scale)
         if scale_ratio == 1:
             return
+        print(f"buka3 {self.pixmap.size()}, {scale_ratio}")
         self.pixmap.resize(self.pixmap.size() * scale_ratio)
         img_h = self.pixmap.size().height()
         view_h = self.size().height() - 2
@@ -511,11 +534,7 @@ class MyScrollArea(QScrollArea):
         self.zoom_scale = x/self.image_size.width()
 
     def set_image(self, im, keep_size=False):
-        height, width, _ = im.shape
-        self.image_size = QSize(width, height)
-        self.image_ratio = float(width) / float(height)
-        im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 3, QImage.Format_RGB888)
-        self.widget().setPixmap(QPixmap.fromImage(im2))
+        self.widget().set_image(im)
         if not keep_size:
             self.widget().adjustSize()
 
