@@ -371,6 +371,8 @@ class ImageView(QWidget):
         self.layer_info.setText("{} of {}".format(num+1, self.layers_num))
 
     def change_image(self):
+        if self.image is None:
+            return
         img = np.copy(self.image[self.stack_slider.value()])
         color_maps = self.channel_control.current_colors
         borders = self.border_val[:]
