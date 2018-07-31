@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QSpinBox, QCheckBox, QGridLayout, QLabel, QHBoxLayout, QComboBox
+from PyQt5.QtWidgets import QWidget, QSpinBox, QCheckBox, QGridLayout, QLabel, QHBoxLayout, QComboBox, QDoubleSpinBox
 from PyQt5.QtGui import QImage, QShowEvent, QPaintEvent, QPainter, QPen, QMouseEvent
 from PyQt5.QtCore import Qt, pyqtSignal
 import numpy as np
@@ -6,8 +6,8 @@ from common_gui.collapse_checkbox import CollapseCheckbox
 from project_utils.color_image import color_image
 import typing
 
-from stackseg.stack_settings import ViewSettings, default_colors
-
+from stackseg.stack_settings import default_colors
+from project_utils.settings import ViewSettings
 
 class ColorPreview(QWidget):
     def __init__(self, parent):
@@ -142,14 +142,16 @@ class ChannelControl(QWidget):
         self.maximum_value.valueChanged.connect(self.range_changed)
         self.fixed = QCheckBox("Fix range")
         self.fixed.stateChanged.connect(self.lock_channel)
-        self.grayscale = QCheckBox("Gray scale")
-        self.grayscale.setToolTip("Only current channel")
-        self.grayscale.stateChanged.connect(self.coloring_update.emit)
+        self.gauss = QCheckBox("Gauss")
+        self.gauss.setToolTip("Only current channel")
+        self.gauss.stateChanged.connect(self.coloring_update.emit)
+        self.gauss_radius = QDoubleSpinBox()
         self.collapse_widget = CollapseCheckbox()
         self.collapse_widget.add_hide_element(self.minimum_value)
         self.collapse_widget.add_hide_element(self.maximum_value)
         self.collapse_widget.add_hide_element(self.fixed)
-        self.collapse_widget.add_hide_element(self.grayscale)
+        self.collapse_widget.add_hide_element(self.gauss)
+        self.collapse_widget.add_hide_element(self.gauss_radius)
 
         self.channels_widgets = []
         self.channels_layout = QHBoxLayout()
@@ -165,7 +167,8 @@ class ChannelControl(QWidget):
         layout.addWidget(label2, 5, 0)
         layout.addWidget(self.maximum_value, 5, 1)
         layout.addWidget(self.fixed, 4, 2, 1, 2)
-        layout.addWidget(self.grayscale, 5, 2, 1, 2)
+        layout.addWidget(self.gauss, 5, 2, 1, 1)
+        layout.addWidget(self.gauss_radius, 5, 3, 1, 1)
         self.collapse_widget.add_hide_element(label1)
         self.collapse_widget.add_hide_element(label2)
         self.setLayout(layout)

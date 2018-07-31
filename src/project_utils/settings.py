@@ -7,6 +7,7 @@ from matplotlib import pyplot
 import copy
 import numpy as np
 from .custom_colormaps import default_colors
+from os import path
 
 
 class ImageSettings(QObject):
@@ -176,3 +177,50 @@ class ViewSettings(ImageSettings):
         for k, v in dicts.items():
             self.profile_dict[k] = ProfileDict()
             self.profile_dict[k].my_dict = v
+
+
+class BaseSettings(ViewSettings):
+    def __init__(self):
+        super().__init__()
+        self.current_segmentation_dict = "default"
+        self.segmentation_dict: typing.Dict[str, ProfileDict] = {self.current_segmentation_dict: ProfileDict()}
+
+    def set(self, key_path, value):
+        self.segmentation_dict[self.current_segmentation_dict].set(key_path, value)
+
+    def get(self, key_path, default):
+        return self.segmentation_dict[self.current_segmentation_dict].get(key_path, default)
+
+    def dump(self, file_path):
+        if not path.exists(path.dirname(file_path)):
+            makedirs(path.dirname(file_path))
+        dump_view = self.dump_view_profiles()
+        dump_seg = json.dumps(self.segmentation_dict, cls=ProfileEncoder)
+        with open(file_path, 'w') as ff:
+            json.dump(
+                {"view_profiles": dump_view,
+                 "segment_profile": dump_seg,
+                 "image_spacing": self.image_spacing
+                 },
+                ff)
+
+    def load(self, file_path):
+        try:
+            with open(file_path, 'r') as ff:
+                data = json.load(ff)
+            try:
+                self.load_view_profiles(data["view_profiles"])
+            except KeyError:
+                pass
+            try:
+                for k, v in json.loads(data["segment_profile"]).items():
+                    self.segmentation_dict[k] = ProfileDict()
+                    self.segmentation_dict[k].my_dict = v
+            except KeyError:
+                pass
+            try:
+                self.image_spacing = data["image_spacing"]
+            except KeyError:
+                pass
+        except json.decoder.JSONDecodeError:
+            pass

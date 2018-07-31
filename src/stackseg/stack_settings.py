@@ -1,62 +1,18 @@
-import json
-import typing
 from typing import List
 
 import numpy as np
-from os import path, makedirs
+from os import path
 from partseg.io_functions import save_stack_segmentation, load_stack_segmentation
-from project_utils.settings import ViewSettings, ProfileDict, ProfileEncoder
+from project_utils.settings import BaseSettings
 from stackseg.stack_algorithm.segment import cut_with_mask, save_catted_list
 
 default_colors = ['BlackRed', 'BlackGreen', 'BlackBlue', 'BlackMagenta']
 
 
-class StackSettings(ViewSettings):
+class StackSettings(BaseSettings):
     def __init__(self):
         super().__init__()
         self.chosen_components_widget = None
-        self.current_segmentation_dict = "default"
-        self.segmentation_dict: typing.Dict[str, ProfileDict] = {self.current_segmentation_dict: ProfileDict()}
-
-    def set(self, key_path, value):
-        self.segmentation_dict[self.current_segmentation_dict].set(key_path, value)
-
-    def get(self, key_path, default):
-        return self.segmentation_dict[self.current_segmentation_dict].get(key_path, default)
-
-    def dump(self, file_path):
-        if not path.exists(path.dirname(file_path)):
-            makedirs(path.dirname(file_path))
-        dump_view = self.dump_view_profiles()
-        dump_seg = json.dumps(self.segmentation_dict, cls=ProfileEncoder)
-        with open(file_path, 'w') as ff:
-            json.dump(
-                {"view_profiles": dump_view,
-                 "segment_profile": dump_seg,
-                 "image_spacing": self.image_spacing
-                 },
-                ff)
-
-    def load(self, file_path):
-        try:
-            with open(file_path, 'r') as ff:
-                data = json.load(ff)
-            try:
-                self.load_view_profiles(data["view_profiles"])
-            except KeyError:
-                pass
-            try:
-                for k, v in json.loads(data["segment_profile"]).items():
-                    self.segmentation_dict[k] = ProfileDict()
-                    self.segmentation_dict[k].my_dict = v
-            except KeyError:
-                pass
-            try:
-                self.image_spacing = data["image_spacing"]
-            except KeyError:
-                pass
-        except json.decoder.JSONDecodeError:
-            pass
 
     @property
     def batch_directory(self):
