@@ -6,6 +6,7 @@ import appdirs
 import numpy as np
 import tifffile as tif
 from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox, QVBoxLayout, QCheckBox, \
     QComboBox, QDoubleSpinBox, QSpinBox, QStackedLayout, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
     QTabWidget, QMainWindow, QSizePolicy
@@ -107,6 +108,7 @@ class MainMenu(QWidget):
         dial.setFileMode(QFileDialog.AnyFile)
         dial.setDirectory(self.settings.get("io.save_segmentation_directory", ""))
         dial.setAcceptMode(QFileDialog.AcceptSave)
+        dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0]+".seg")
         filters = ["segmentation (*.seg *.tgz)"]
         dial.setNameFilters(filters)
         if not dial.exec_():
@@ -117,12 +119,19 @@ class MainMenu(QWidget):
         self.settings.save_segmentation(file_path)
 
     def save_result(self):
+        if self.settings.image_path is not None and \
+            QMessageBox.Yes ==  QMessageBox.question(self, "Copy", "Copy name to clipboard?",
+                                                     QMessageBox.Yes| QMessageBox.No, QMessageBox.Yes):
+            clipboard = QGuiApplication.clipboard()
+            clipboard.setText(os.path.splitext(os.path.basename(self.settings.image_path))[0])
+
         if self.settings.segmentation is None:
             QMessageBox.warning(self, "No components", "No components to save")
             return
         dial = QFileDialog()
         dial.setFileMode(QFileDialog.Directory)
         dial.setDirectory(self.settings.get("io.save_components_directory", ""))
+        dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0])
         if not dial.exec_():
             return
         file_path = str(dial.selectedFiles()[0])
@@ -505,6 +514,7 @@ class MainWindow(QMainWindow):
     def image_read(self):
         print("buka1", self.settings.image.shape, self.sender())
         self.image_view.set_image(self.settings.image)
+        self.setWindowTitle(f"PartSeg: {self.settings.image_path}")
 
     def closeEvent(self, _):
         # print(self.settings.dump_view_profiles())

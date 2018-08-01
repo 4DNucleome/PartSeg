@@ -8,7 +8,7 @@ from matplotlib import pyplot
 import copy
 import numpy as np
 from .custom_colormaps import default_colors
-from os import path
+from os import path, makedirs
 
 
 class ImageSettings(QObject):

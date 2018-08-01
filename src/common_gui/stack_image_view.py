@@ -158,10 +158,6 @@ class ImageCanvas(QLabel):
         painter.setPen(pen)
         painter.drawRect(self.point.x(), self.point.y(), diff.x(), diff.y())
 
-    def resize(self, *args):
-        print(f"Buka1 {args}")
-        super().resize(*args)
-
     def resizeEvent(self, event: QtGui.QResizeEvent):
         im = self.image
         height, width, _ = im.shape
