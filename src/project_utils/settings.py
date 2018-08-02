@@ -22,7 +22,6 @@ class ImageSettings(QObject):
         super(ImageSettings, self).__init__()
         self._image = None
         self._image_path = ""
-        self.segmentation = None
         self.has_channels = False
         self.image_spacing = 70, 70, 210
         self._segmentation = None
@@ -74,6 +73,7 @@ class ImageSettings(QObject):
             self.has_channels = False
 
         self._image_changed()
+        self.segmentation = None
 
         self.image_changed.emit(self._image)
         self.image_changed[int].emit(self.channels)
@@ -154,10 +154,6 @@ class ViewSettings(ImageSettings):
         self.color_map = []
         self.current_profile_dict = "default"
         self.profile_dict: typing.Dict[str, ProfileDict] = {self.current_profile_dict: ProfileDict()}
-
-    def _image_changed(self):
-        for i in range(len(self.color_map), self.channels):
-            self.color_map.append(default_colors[i % len(default_colors)])
 
     def change_profile(self, name):
         self.current_profile_dict = name

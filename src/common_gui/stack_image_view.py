@@ -159,6 +159,8 @@ class ImageCanvas(QLabel):
         painter.drawRect(self.point.x(), self.point.y(), diff.x(), diff.y())
 
     def resizeEvent(self, event: QtGui.QResizeEvent):
+        if self.image is None:
+            return
         im = self.image
         height, width, _ = im.shape
         self.image_size = QSize(width, height)
@@ -317,7 +319,6 @@ class ImageView(QWidget):
         self.image_state.parameter_changed.connect(self.change_image)
         self.image_area.pixmap.position_signal.connect(self.position_info)
         self.image_area.pixmap.leave_signal.connect(self.clean_text)
-        self.image_area.pixmap.click_signal.connect(self.component_click)
         self.position_changed[int, int, int].connect(self.info_text_pos)
         self.position_changed[int, int].connect(self.info_text_pos)
         self.channel_control.coloring_update.connect(self.update_channels_coloring)
@@ -343,6 +344,8 @@ class ImageView(QWidget):
         self.text_info_change.emit("")
 
     def info_text_pos(self, *pos):
+        if self.image is None:
+            return
         brightness = self.image[pos]
         pos2 = list(pos)
         pos2[0] += 1

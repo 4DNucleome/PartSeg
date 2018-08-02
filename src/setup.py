@@ -13,5 +13,5 @@ extensions = [
 
 setup(
     ext_modules = cythonize(extensions),
-    name="coloring image", requires=['numpy', 'matplotlib']
+    name="coloring image", requires=['numpy', 'matplotlib', 'tifffile', 'appdirs']
 )

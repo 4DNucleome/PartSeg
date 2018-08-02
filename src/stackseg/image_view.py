@@ -6,6 +6,10 @@ from common_gui.stack_image_view import ImageView
 
 
 class StackImageView(ImageView):
+    def __init__(self, settings, channel_control):
+        super().__init__(settings, channel_control)
+        self.image_area.pixmap.click_signal.connect(self.component_click)
+
     def component_click(self, point, size):
         if self.labels_layer is None:
             return
@@ -18,7 +22,7 @@ class StackImageView(ImageView):
     def event(self, event: QEvent):
 
         if event.type() == QEvent.ToolTip and self.component is not None:
-            text = str(self.component)
+            # text = str(self.component)
             assert(isinstance(event, QHelpEvent))
             if self._settings.component_is_chosen(self.component):
                 text = "☑{}".format(self.component)
