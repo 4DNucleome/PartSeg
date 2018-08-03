@@ -26,6 +26,7 @@ class StackSettings(BaseSettings):
     def save_result(self, dir_path: str):
         res_img = cut_with_mask(self.segmentation, self._image, only=self.chosen_components())
         res_mask = cut_with_mask(self.segmentation, self.segmentation, only=self.chosen_components())
+        res_mask = (res_mask > 0).astype(np.uint8)
         file_name = path.splitext(path.basename(self.image_path))[0]
         save_catted_list(res_img, dir_path, prefix=f"{file_name}_component")
         save_catted_list(res_mask, dir_path, prefix=f"{file_name}_component", suffix="_mask")

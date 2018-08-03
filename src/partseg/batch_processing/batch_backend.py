@@ -81,6 +81,7 @@ class CalculationProcess(object):
         """
         if isinstance(node.operation, MaskMapper):
             mask = tifffile.imread(node.operation.get_mask_path(self.calculation.file_path))
+            mask = (mask > 0).astype(np.uint8)
             self.settings.mask = mask
             self.iterate_over(node)
         elif isinstance(node.operation, SegmentationProfile):
