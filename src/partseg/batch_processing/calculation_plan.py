@@ -133,7 +133,8 @@ class MaskFile(MaskMapper):
 
     def parse_map(self, sep=";"):
         if not os.path.exists(self.path_to_file):
-            return
+            logging.error(f"File does not exists: {self.path_to_file}")
+            raise ValueError(f"File for mapping mask does not exists: {self.path_to_file}")
         with open(self.path_to_file) as map_file:
             dir_name = os.path.dirname(self.path_to_file)
             for i, line in enumerate(map_file):
