@@ -291,7 +291,7 @@ class ChannelControl(QWidget):
             ))
         return resp
 
-    def active_cannel(self, index):
+    def active_channel(self, index):
         return self.channels_widgets[index].chosen.isChecked()
 
     def send_info(self, new_image=False):

@@ -352,7 +352,7 @@ class ImageView(QWidget):
         if isinstance(brightness, collections.Iterable):
             res_brightness = []
             for i, b in enumerate(brightness):
-                if self.channel_control.active_cannel(i):
+                if self.channel_control.active_channel(i):
                     res_brightness.append(b)
             brightness = res_brightness
             if len(brightness) == 1:
