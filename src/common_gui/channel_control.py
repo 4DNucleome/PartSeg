@@ -147,8 +147,8 @@ class ChannelControl(QWidget):
         self.use_gauss.stateChanged.connect(self.coloring_update.emit)
         self.gauss_radius = QDoubleSpinBox()
         self.gauss_radius.setSingleStep(0.1)
-        self.gauss_radius.valueChanged.connect(self.gauss_changed)
-        self.use_gauss.stateChanged.connect(self.gauss_changed)
+        self.gauss_radius.valueChanged.connect(self.gauss_radius_changed)
+        self.use_gauss.stateChanged.connect(self.gauss_use_changed)
         self.collapse_widget = CollapseCheckbox()
         self.collapse_widget.add_hide_element(self.minimum_value)
         self.collapse_widget.add_hide_element(self.maximum_value)
@@ -188,11 +188,18 @@ class ChannelControl(QWidget):
         if self.fixed.isChecked():
             self.coloring_update.emit(False)
 
-    def gauss_changed(self):
+    def gauss_radius_changed(self):
         self._settings.set(f"{self._name}.use_gauss_{self.current_channel}", self.use_gauss.isChecked())
         self._settings.set(f"{self._name}.gauss_radius_{self.current_channel}", self.gauss_radius.value())
         if isinstance(self.sender(), QCheckBox) or self.use_gauss.isChecked():
             self.coloring_update.emit(False)
+
+
+    def gauss_use_changed(self):
+        self._settings.set(f"{self._name}.use_gauss_{self.current_channel}", self.use_gauss.isChecked())
+        if isinstance(self.sender(), QCheckBox) or self.use_gauss.isChecked():
+            self.coloring_update.emit(False)
+
 
     def change_chanel(self, id):
         if id == self.current_channel:
