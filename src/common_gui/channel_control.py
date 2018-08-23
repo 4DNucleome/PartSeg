@@ -114,17 +114,21 @@ class CustomSpinBox(QSpinBox):
 
 class ChannelControl(QWidget):
     #TODO improve adding own scaling
+    #TODO I add some possibiity to synchronization state beeten two image wiews. Im not shure it is well projected  
     """
     :type channels_widgets: typing.List[ChannelWidget]
-    :type _settings: .stack_settings.ImageSettings
+    :type _settings: BaseSettings
     """
 
     coloring_update = pyqtSignal(bool)
+    parameters_changed = pyqtSignal()
 
-    def __init__(self, settings : ViewSettings, parent=None, flags=Qt.WindowFlags(), name="channelcontrol"):
+    def __init__(self, settings : ViewSettings, parent=None, flags=Qt.WindowFlags(), name="channelcontrol", text=""):
         super().__init__(parent, flags)
         self._name = name
+        self._main_name = name
         self._settings = settings
+        self.enable_synchronize = False
         self.current_channel = 0
         self.current_bounds = settings.get_from_profile(f"{self._name}.bounds", [])
         self.colormap_chose = MyComboBox()
@@ -144,7 +148,6 @@ class ChannelControl(QWidget):
         self.fixed.stateChanged.connect(self.lock_channel)
         self.use_gauss = QCheckBox("Gauss")
         self.use_gauss.setToolTip("Only current channel")
-        self.use_gauss.stateChanged.connect(self.coloring_update.emit)
         self.gauss_radius = QDoubleSpinBox()
         self.gauss_radius.setSingleStep(0.1)
         self.gauss_radius.valueChanged.connect(self.gauss_radius_changed)
@@ -155,11 +158,15 @@ class ChannelControl(QWidget):
         self.collapse_widget.add_hide_element(self.fixed)
         self.collapse_widget.add_hide_element(self.use_gauss)
         self.collapse_widget.add_hide_element(self.gauss_radius)
+        self.setContentsMargins(0,0,0,0)
 
         self.channels_widgets = []
         self.channels_layout = QHBoxLayout()
         layout = QGridLayout()
-        layout.addLayout(self.channels_layout, 0, 0, 1, 4)
+        layout.setContentsMargins(0,0,0,0)
+        if text != "":
+            layout.addWidget(QLabel(text), 0, 0, 1, 4)
+        layout.addLayout(self.channels_layout, 1, 0, 1, 4)
         layout.addWidget(self.channel_preview_widget, 2, 0, 1, 2)
         layout.addWidget(self.colormap_chose, 2, 2, 1, 2)
         layout.addWidget(self.collapse_widget, 3, 0, 1, 4)
@@ -172,44 +179,57 @@ class ChannelControl(QWidget):
         layout.addWidget(self.fixed, 4, 2, 1, 2)
         layout.addWidget(self.use_gauss, 5, 2, 1, 1)
         layout.addWidget(self.gauss_radius, 5, 3, 1, 1)
+        #layout.setVerticalSpacing(0)
         self.collapse_widget.add_hide_element(label1)
         self.collapse_widget.add_hide_element(label2)
         self.setLayout(layout)
         self.collapse_widget.setChecked(True)
         self._settings.image_changed.connect(self.update_channels_list)
 
+    def refresh_info(self):
+        """Function for synchronization preview settings between two previews"""
+        self.coloring_update.emit(False)
+
+    def set_temp_name(self, new_name=None):
+        """Function for synchronization preview settings between two previews"""
+        if new_name is None:
+            self._name = self._main_name
+        else:
+            self._name = new_name
+        self.coloring_update.emit(False)
+
     def lock_channel(self, value):
         self.channels_widgets[self.current_channel].set_locked(value)
+        self._settings.set_in_profile(f"{self._name}.lock_{self.current_channel}", value)
         self.coloring_update.emit(False)
 
     def range_changed(self):
-        self.current_bounds[self.current_channel] = self.minimum_value.value(), self.maximum_value.value()
-        self._settings.set_in_profile(f"{self._name}.bounds", self.current_bounds)
+        self._settings.set_in_profile(f"{self._name}.range_{self.current_channel}", (self.minimum_value.value(), self.maximum_value.value()))
+        # self.current_bounds[self.current_channel] = self.minimum_value.value(), self.maximum_value.value()
+        # self._settings.set_in_profile(f"{self._name}.bounds", self.current_bounds)
         if self.fixed.isChecked():
             self.coloring_update.emit(False)
 
     def gauss_radius_changed(self):
-        self._settings.set(f"{self._name}.use_gauss_{self.current_channel}", self.use_gauss.isChecked())
-        self._settings.set(f"{self._name}.gauss_radius_{self.current_channel}", self.gauss_radius.value())
-        if isinstance(self.sender(), QCheckBox) or self.use_gauss.isChecked():
+        self._settings.set_in_profile(f"{self._name}.gauss_radius_{self.current_channel}", self.gauss_radius.value())
+        if self.use_gauss.isChecked():
             self.coloring_update.emit(False)
-
 
     def gauss_use_changed(self):
-        self._settings.set(f"{self._name}.use_gauss_{self.current_channel}", self.use_gauss.isChecked())
-        if isinstance(self.sender(), QCheckBox) or self.use_gauss.isChecked():
-            self.coloring_update.emit(False)
-
+        self._settings.set_in_profile(f"{self._name}.use_gauss_{self.current_channel}", self.use_gauss.isChecked())
+        self.coloring_update.emit(False)
 
     def change_chanel(self, id):
         if id == self.current_channel:
             return
         self.channels_widgets[self.current_channel].set_inactive()
         self.current_channel = id
-        self.minimum_value.setValue(self.current_bounds[id][0])
-        self.maximum_value.setValue(self.current_bounds[id][1])
-        self.use_gauss.setChecked(self._settings.get(f"{self._name}.use_gauss_{id}", False))
-        self.gauss_radius.setValue(self._settings.get(f"{self._name}.gauss_radius_{id}", 1))
+        self.minimum_value.blockSignals(True)
+        self.minimum_value.setValue(self._settings.get_from_profile(f"{self._name}.range_{id}", (0, 65000))[0])
+        self.minimum_value.blockSignals(False)
+        self.maximum_value.setValue(self._settings.get_from_profile(f"{self._name}.range_{id}", (0, 65000))[1])
+        self.use_gauss.setChecked(self._settings.get_from_profile(f"{self._name}.use_gauss_{id}", False))
+        self.gauss_radius.setValue(self._settings.get_from_profile(f"{self._name}.gauss_radius_{id}", 1))
 
 
         self.channels_widgets[id].set_active()
@@ -238,7 +258,7 @@ class ChannelControl(QWidget):
         channels_num = self._settings.channels
         for i in range(len(self.current_bounds), channels_num):
             self.current_bounds.append([0, 65000])
-        self._settings.set_in_profile(f"{self._name}.bounds", self.current_bounds)
+        #self._settings.set_in_profile(f"{self._name}.bounds", self.current_bounds)
         for el in self.channels_widgets:
             self.channels_layout.removeWidget(el)
             el.clicked.disconnect()
@@ -252,10 +272,12 @@ class ChannelControl(QWidget):
             self.channels_widgets[-1].clicked.connect(self.change_chanel)
             self.channels_widgets[-1].chosen.stateChanged.connect(self.send_info_wrap)
         self.channels_widgets[0].set_active()
-        self.minimum_value.setValue(self.current_bounds[0][0])
-        self.maximum_value.setValue(self.current_bounds[0][1])
-        self.use_gauss.setChecked(self._settings.get(f"{self._name}.use_gauss_{0}", False))
-        self.gauss_radius.setValue(self._settings.get(f"{self._name}.gauss_radius_{0}", 1))
+        self.minimum_value.blockSignals(True)
+        self.minimum_value.setValue(self._settings.get_from_profile(f"{self._name}.range_0", (0, 65000))[0])
+        self.minimum_value.blockSignals(False)
+        self.maximum_value.setValue(self._settings.get_from_profile(f"{self._name}.range_0", (0, 65000))[1])
+        self.use_gauss.setChecked(self._settings.get_from_profile(f"{self._name}.use_gauss_0", False))
+        self.gauss_radius.setValue(self._settings.get_from_profile(f"{self._name}.gauss_radius_0", 1))
         self.current_channel = 0
         self.image = self.channels_widgets[0].image
         self.colormap_chose.setCurrentText(self.channels_widgets[0].color)
@@ -270,15 +292,17 @@ class ChannelControl(QWidget):
         resp :typing.List[typing.Union[str, None]] = [None] * channels_num
         for i in range(channels_num):
             if self.channels_widgets[i].chosen.isChecked():
-                resp[i] = self.channels_widgets[i].color
+                resp[i] = self._settings.get_from_profile(f"{self._name}.cmap{self.current_channel}", self.channels_widgets[i].color)
         return resp
 
     def get_limits(self):
         channels_num = len(self.channels_widgets)
-        resp: typing.List[typing.Union[typing.Tuple[int, int], None]] = self.current_bounds[:channels_num]
+        resp = [(0,0)] * channels_num  # : typing.List[typing.Union[typing.Tuple[int, int], None]] = self.current_bounds[:channels_num]
         for i in range(channels_num):
-            if not self.channels_widgets[i].locked:
+            if not self._settings.get_from_profile(f"{self._name}.lock_{self.current_channel}", True):
                 resp[i] = None
+            else:
+                resp[i] = self._settings.get_from_profile(f"{self._name}.range_{i}", (0, 65000))
         return resp
 
     def get_gauss(self):
@@ -286,8 +310,8 @@ class ChannelControl(QWidget):
         resp = []
         for i in range(channels_num):
             resp.append((
-                self._settings.get(f"{self._name}.use_gauss_{i}", False),
-                self._settings.get(f"{self._name}.gauss_radius_{i}", 1)
+                self._settings.get_from_profile(f"{self._name}.use_gauss_{i}", False),
+                self._settings.get_from_profile(f"{self._name}.gauss_radius_{i}", 1)
             ))
         return resp
 

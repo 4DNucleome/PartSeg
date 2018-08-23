@@ -167,10 +167,10 @@ class ViewSettings(ImageSettings):
         return self.profile_dict[self.current_profile_dict].get(key_path, default)
 
     def dump_view_profiles(self):
-        return json.dumps(self.profile_dict, cls=ProfileEncoder)
+        # return json.dumps(self.profile_dict, cls=ProfileEncoder)
+        return self.profile_dict
 
-    def load_view_profiles(self, data):
-        dicts: dict = json.loads(data)
+    def load_view_profiles(self, dicts):
         for k, v in dicts.items():
             self.profile_dict[k] = ProfileDict()
             self.profile_dict[k].my_dict = v
@@ -196,10 +196,10 @@ class BaseSettings(ViewSettings):
         with open(file_path, 'w') as ff:
             json.dump(
                 {"view_profiles": dump_view,
-                 "segment_profile": dump_seg,
+                 "segment_profile": self.segmentation_dict,
                  "image_spacing": self.image_spacing
                  },
-                ff)
+                ff, cls=ProfileEncoder)
 
     def load(self, file_path):
         try:
@@ -209,8 +209,10 @@ class BaseSettings(ViewSettings):
                 self.load_view_profiles(data["view_profiles"])
             except KeyError:
                 logging.error('error in load "view_profiles"')
+            except AttributeError:
+                logging.error('error in load "view_profiles"')
             try:
-                for k, v in json.loads(data["segment_profile"]).items():
+                for k, v in data["segment_profile"].items():
                     self.segmentation_dict[k] = ProfileDict()
                     self.segmentation_dict[k].my_dict = v
             except KeyError:
