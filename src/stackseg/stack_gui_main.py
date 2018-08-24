@@ -15,13 +15,14 @@ from common_gui.channel_control import ChannelControl
 from common_gui.universal_gui_part import right_label
 
 from common_gui.flow_layout import FlowLayout
+from project_utils.algorithms_description import AlgorithmSettingsWidget, BatchProceed
 from .image_view import StackImageView
 from partseg.batch_window import AddFiles
 from partseg.io_functions import load_stack_segmentation
 from project_utils.global_settings import static_file_folder
 from project_utils.universal_const import UNITS_LIST
 from project_utils.utils import SynchronizeValues
-from stackseg.stack_algorithm.algorithm_description import stack_algorithm_dict, AlgorithmSettingsWidget, BatchProceed
+from stackseg.stack_algorithm.algorithm_description import stack_algorithm_dict
 from stackseg.stack_settings import StackSettings
 
 app_name = "StackSeg"

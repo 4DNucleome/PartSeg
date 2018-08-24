@@ -217,6 +217,8 @@ class BaseSettings(ViewSettings):
                     self.segmentation_dict[k].my_dict = v
             except KeyError:
                 logging.error('error in load "segment_profile"')
+            except AttributeError:
+                logging.error('error in load "segment_profile"')
             try:
                 self.image_spacing = data["image_spacing"]
             except KeyError:
