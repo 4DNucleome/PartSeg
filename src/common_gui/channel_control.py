@@ -114,7 +114,7 @@ class CustomSpinBox(QSpinBox):
 
 class ChannelControl(QWidget):
     #TODO improve adding own scaling
-    #TODO I add some possibiity to synchronization state beeten two image wiews. Im not shure it is well projected  
+    #TODO I add some possibiity to synchronization state beeten two image wiews. Im not shure it is well projected
     """
     :type channels_widgets: typing.List[ChannelWidget]
     :type _settings: BaseSettings
@@ -292,14 +292,14 @@ class ChannelControl(QWidget):
         resp :typing.List[typing.Union[str, None]] = [None] * channels_num
         for i in range(channels_num):
             if self.channels_widgets[i].chosen.isChecked():
-                resp[i] = self._settings.get_from_profile(f"{self._name}.cmap{self.current_channel}", self.channels_widgets[i].color)
+                resp[i] = self._settings.get_from_profile(f"{self._name}.cmap{i}", self.channels_widgets[i].color)
         return resp
 
     def get_limits(self):
         channels_num = len(self.channels_widgets)
         resp = [(0,0)] * channels_num  # : typing.List[typing.Union[typing.Tuple[int, int], None]] = self.current_bounds[:channels_num]
         for i in range(channels_num):
-            if not self._settings.get_from_profile(f"{self._name}.lock_{self.current_channel}", True):
+            if not self._settings.get_from_profile(f"{self._name}.lock_{i}", False):
                 resp[i] = None
             else:
                 resp[i] = self._settings.get_from_profile(f"{self._name}.range_{i}", (0, 65000))
