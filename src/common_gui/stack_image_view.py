@@ -24,7 +24,7 @@ from stackseg.stack_settings import StackSettings
 from project_utils.settings import ImageSettings
 from .channel_control import ChannelControl
 
-canvas_icon_size = QSize(27, 27)
+canvas_icon_size = QSize(20, 20)
 step = 1.01
 max_step = log(1.2, step)
 
@@ -193,7 +193,7 @@ def set_scroll_bar_proportion(scroll_bar, proportion):
 
 def create_tool_button(text, icon):
     res = QToolButton()
-    res.setIconSize(canvas_icon_size)
+    # res.setIconSize(canvas_icon_size)
     if icon is None:
         res.setText(text)
     else:
@@ -297,6 +297,7 @@ class ImageView(QWidget):
         self.stack_slider.valueChanged.connect(self.change_layer)
         self.layer_info = QLabel()
         self.image = None
+        self.tmp_image = None
         self.channels_num = 1
         self.layers_num = 1
         self.border_val = []
@@ -344,9 +345,9 @@ class ImageView(QWidget):
         self.text_info_change.emit("")
 
     def info_text_pos(self, *pos):
-        if self.image is None:
+        if self.tmp_image is None:
             return
-        brightness = self.image[pos]
+        brightness = self.tmp_image[pos]
         pos2 = list(pos)
         pos2[0] += 1
         if isinstance(brightness, collections.Iterable):
@@ -408,10 +409,12 @@ class ImageView(QWidget):
             # TODO fix
             layers = self.labels_layer[self.stack_slider.value()]
             components_mask = self._settings.components_mask()
+            print(components_mask)
             if self.image_state.show_label == 1:
                 components_mask[1:] = 1
             add_labels(im, layers, self.image_state.opacity, self.image_state.only_borders, int((self.image_state.borders_thick-1)/2), components_mask)
         self.image_area.set_image(im, self.sender() is not None)
+        self.tmp_image = np.array([img])
 
     def set_image(self, image):
         """

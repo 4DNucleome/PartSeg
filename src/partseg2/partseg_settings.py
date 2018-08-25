@@ -1,6 +1,7 @@
 from PyQt5.QtCore import pyqtSignal
 
 from project_utils.settings import BaseSettings
+import numpy as np
 
 class PartSettings(BaseSettings):
     mask_changed = pyqtSignal()
@@ -25,6 +26,9 @@ class PartSettings(BaseSettings):
 
     def load_profiles(self):
         pass
+
+    def components_mask(self):
+        return np.array([0] + [1] * self.segmentation.max(), dtype=np.uint8)
 
 def load_project(file_path, settings):
     pass

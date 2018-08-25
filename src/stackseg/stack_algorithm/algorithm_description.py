@@ -13,7 +13,7 @@ from partseg.io_functions import save_stack_segmentation, load_stack_segmentatio
 #    pyqtSignal, QLabel, QVBoxLayout
 from project_utils.algorithms_description import AlgorithmProperty
 
-from .threshold_algorithm import ThresholdAlgorithm, ThresholdPreview, SegmentationAlgorithm, \
+from .threshold_algorithm import ThresholdAlgorithm, ThresholdPreview, \
     AutoThresholdAlgorithm
 
 
@@ -21,7 +21,7 @@ from .threshold_algorithm import ThresholdAlgorithm, ThresholdPreview, Segmentat
 
 only_threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 1000, (0, 10 ** 6), 100),
                             AlgorithmProperty("use_gauss", "Use gauss", False, (True, False)),
-                            AlgorithmProperty("gauss_radius", "Use gauss", 1.0, (0, 10), 0.1)]
+                            AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1)]
 
 threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100),
                        AlgorithmProperty("minimum_size", "Minimum size", 8000, (0, 10 ** 6), 1000),
@@ -30,7 +30,7 @@ threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 10000, (0, 10
                        AlgorithmProperty("smooth_border", "Smooth borders", True, (True, False)),
                        AlgorithmProperty("smooth_border_radius", "Smooth borders radius", 2, (0, 20), 1),
                        AlgorithmProperty("use_gauss", "Use gauss", False, (True, False)),
-                       AlgorithmProperty("gauss_radius", "Use gauss", 1.0, (0, 10), 0.1)]
+                       AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1)]
 
 auto_threshold_algorithm = [AlgorithmProperty("suggested_size", "Suggested size", 200000, (0, 10 ** 6), 1000),
                             AlgorithmProperty("threshold", "Minimum threshold", 10000, (0, 10 ** 6), 100),
@@ -40,7 +40,7 @@ auto_threshold_algorithm = [AlgorithmProperty("suggested_size", "Suggested size"
                             AlgorithmProperty("smooth_border", "Smooth borders", True, (True, False)),
                             AlgorithmProperty("smooth_border_radius", "Smooth borders radius", 2, (0, 20), 1),
                             AlgorithmProperty("use_gauss", "Use gauss", False, (True, False)),
-                            AlgorithmProperty("gauss_radius", "Use gauss", 1.0, (0, 10), 0.1)]
+                            AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1)]
 
 stack_algorithm_dict = {
     "Threshold": (threshold_algorithm, ThresholdAlgorithm),

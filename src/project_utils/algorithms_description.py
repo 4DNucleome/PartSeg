@@ -4,6 +4,7 @@ from typing import Type
 
 import numpy as np
 import tifffile
+from PyQt5.QtGui import QHideEvent, QShowEvent
 from PyQt5.QtWidgets import QSpinBox, QDoubleSpinBox, QComboBox, QCheckBox, QWidget, QVBoxLayout, QLabel, QFormLayout, \
     QAbstractSpinBox, QScrollArea
 from six import with_metaclass
@@ -241,6 +242,39 @@ class AlgorithmSettingsWidget(QScrollArea):
                                          **values})
         self.settings.set(f"algorithms.{self.name}", values)
         self.algorithm.start()
+
+    def hideEvent(self, a0: QHideEvent):
+        self.algorithm.clean()
+
+class InteractiveAlgorithmSettingsWidget(AlgorithmSettingsWidget):
+    def __init__(self, settings, name, element_list, algorithm: Type[SegmentationAlgorithm]):
+        super().__init__(settings, name, element_list, algorithm)
+        for _, el in self.widget_list:
+            if isinstance(el, QAbstractSpinBox):
+                el.valueChanged.connect(self.value_updated)
+            elif isinstance(el, QCheckBox):
+                el.stateChanged.connect(self.value_updated)
+            elif isinstance(el, QComboBox):
+                el.currentIndexChanged.connect(self.value_updated)
+        self.channels_chose.currentIndexChanged.connect(self.channel_change)
+
+    def value_updated(self):
+        print(self.parent())
+        if not self.parent().interactive:
+            return
+        self.execute()
+
+    def channel_change(self):
+        self.algorithm.set_image(self.settings.get_chanel(self.channels_chose.currentIndex()))
+
+    def execute(self, exclude_mask=None):
+        values = self.get_values()
+        self.algorithm.set_parameters(**values)
+        self.settings.set(f"algorithms.{self.name}", values)
+        self.algorithm.start()
+
+    def showEvent(self, a0: QShowEvent):
+        self.channel_change()
 
 
 AbstractAlgorithmSettingsWidget.register(AlgorithmSettingsWidget)

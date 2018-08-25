@@ -385,7 +385,7 @@ class AlgorithmOptions(QWidget):
             for i, v in enumerate(chosen):
                 blank[self.segmentation == v] = i + 1
         self.progress_bar.setHidden(False)
-        widget = self.stack_layout.currentWidget()
+        widget: AlgorithmSettingsWidget = self.stack_layout.currentWidget()
         widget.execute(blank)
         self.chosen_list = chosen
 

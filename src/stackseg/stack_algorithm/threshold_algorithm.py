@@ -7,17 +7,22 @@ from project_utils.image_operations import gaussian
 from .segment import close_small_holes, opening
 
 
+class StackAlgorithm(SegmentationAlgorithm):
+    def __init__(self):
+        super().__init__()
+        self.exclude_mask = None
+
+    def clean(self):
+        super().clean()
+        self.exclude_mask = None
 
 
-
-class ThresholdPreview(SegmentationAlgorithm):
+class ThresholdPreview(StackAlgorithm):
     def __init__(self):
         super(ThresholdPreview, self).__init__()
         self.use_gauss = False
         self.gauss_radius = 0
         self.threshold = 0
-        self.exclude_mask = None
-        self.image = None
 
     def run(self):
         image = self.image
@@ -27,9 +32,14 @@ class ThresholdPreview(SegmentationAlgorithm):
             res = (image > self.threshold).astype(np.uint8)
         else:
             mask = self.exclude_mask > 0
-            res = (image > self.threshold).astype(self.exclude_mask.dtype)
+            if self.exclude_mask is not None:
+                result_data_type = self.exclude_mask.dtype
+            else:
+                result_data_type = np.uint8
+            res = (image > self.threshold).astype(result_data_type)
             res[mask] = 0
-            res[res > 0] = image.max() + 1
+            if self.exclude_mask is not None:
+                res[res > 0] = self.exclude_mask.max() + 1
             res[mask] = self.exclude_mask[mask]
         self.image = None
         self.exclude_mask = None
@@ -43,20 +53,17 @@ class ThresholdPreview(SegmentationAlgorithm):
         self.gauss_radius = gauss_radius
 
 
-class ThresholdAlgorithm(SegmentationAlgorithm):
+class ThresholdAlgorithm(StackAlgorithm):
     """
     :type segmentation: np.ndarray
     """
     def __init__(self):
         super(ThresholdAlgorithm, self).__init__()
-        self.image = None
         self.threshold = None
         self.minimum_size = None
-        self.segmentation = None
         self.sizes = None
         self.use_gauss = False
         self.gauss_radius = 0
-        self.exclude_mask = None
         self.close_holes = False
         self.close_holes_size = 0
         self.smooth_border = False
@@ -114,20 +121,17 @@ class ThresholdAlgorithm(SegmentationAlgorithm):
         self.gauss_radius = gauss_radius
 
 
-class AutoThresholdAlgorithm(SegmentationAlgorithm):
+class AutoThresholdAlgorithm(StackAlgorithm):
     """
     :type segmentation: np.ndarray
     """
     def __init__(self):
         super(AutoThresholdAlgorithm, self).__init__()
-        self.image = None
         self.threshold = None
         self.minimum_size = None
-        self.segmentation = None
         self.sizes = None
         self.use_gauss = False
         self.gauss_radius = 0
-        self.exclude_mask = None
         self.close_holes = False
         self.close_holes_size = 0
         self.smooth_border = False

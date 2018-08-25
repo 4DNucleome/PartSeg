@@ -9,12 +9,14 @@ import SimpleITK as sitk
 import appdirs
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMainWindow, QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
-    QFileDialog, QMessageBox, QCheckBox
+    QFileDialog, QMessageBox, QCheckBox, QComboBox, QStackedLayout
 
 from common_gui.channel_control import ChannelControl
+from project_utils.algorithms_description import InteractiveAlgorithmSettingsWidget
 from project_utils.global_settings import static_file_folder
 from .partseg_settings import PartSettings, load_project, save_project,save_labeled_image
 from .image_view import RawImageView, ResultImageView
+from .algorithm_description import part_algorithm_dict
 
 app_name = "PartSeg2"
 app_lab = "LFSG"
@@ -34,19 +36,60 @@ class Options(QWidget):
         self.off_left = QCheckBox("Hide left panel")
         self.off_left.stateChanged.connect(self.hide_left_panel)
         self._ch_control2.coloring_update.connect(self.control2_change)
+        self.stack_layout = QStackedLayout()
+        self.algorithm_choose = QComboBox()
+        self.interactive_use = QCheckBox("Interactive use")
+        self.execute_btn = QPushButton("Execute")
+        self.execute_btn.clicked.connect(self.execute_algorithm)
+        self.interactive_use.stateChanged.connect(self.execute_btn.setDisabled)
+        self.interactive_use.stateChanged.connect(self.interactive_change)
+        widgets_list = []
+        for name, val in part_algorithm_dict.items():
+            self.algorithm_choose.addItem(name)
+            widget = InteractiveAlgorithmSettingsWidget(settings, name, *val)
+            widgets_list.append(widget)
+            widget.algorithm.execution_done.connect(self.execution_done)
+            #widget.algorithm.progress_signal.connect(self.progress_info)
+            self.stack_layout.addWidget(widget)
 
         self.label = QLabel()
         layout = QVBoxLayout()
         layout2 = QHBoxLayout()
+        layout2.setSpacing(1)
         layout2.setContentsMargins(0, 0, 0, 0)
+        layout3 = QHBoxLayout()
+        layout3.setContentsMargins(0, 0, 0, 0)
         layout.setContentsMargins(0,0,0,0)
+        layout3.addWidget(self.interactive_use)
+        layout3.addWidget(self.execute_btn)
+        layout.addLayout(layout3)
+        layout.addWidget(self.algorithm_choose)
+        layout.addLayout(self.stack_layout)
         layout.addWidget(self.label, 1)
         layout2.addWidget(self.synchronize)
         layout2.addWidget(self.off_left)
         layout.addLayout(layout2)
         layout.addWidget(self._ch_control2)
         layout.addWidget(self._ch_control1)
+        layout.setSpacing(0)
         self.setLayout(layout)
+        self.algorithm_choose.currentIndexChanged.connect(self.stack_layout.setCurrentIndex)
+        self.algorithm_choose.currentIndexChanged.connect(self.algorithm_change)
+
+    @property
+    def segmentation(self):
+        return self._settings.segmentation
+
+    @segmentation.setter
+    def segmentation(self, val):
+        self._settings.segmentation = val
+
+    def image_changed(self):
+        self.segmentation = None
+
+    @property
+    def interactive(self):
+        return self.interactive_use.isChecked()
 
     def synchronize_change(self, val):
         if val:
@@ -64,6 +107,20 @@ class Options(QWidget):
         self._ch_control1.setHidden(val)
         self.left_panel.setHidden(val)
 
+    def interactive_change(self, val):
+        if val:
+            self.execute_algorithm()
+
+    def algorithm_change(self):
+        if self.interactive:
+            self.execute_algorithm()
+
+    def execute_algorithm(self):
+        widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.currentWidget()
+        widget.execute()
+
+    def execution_done(self, segmentation):
+        self.segmentation = segmentation
 
 class MainMenu(QWidget):
     def __init__(self, settings: PartSettings):
@@ -242,6 +299,8 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.raw_image, 2, 0)  # , 0, 0)
         layout.addWidget(self.result_image, 2, 1)  # , 0, 0)
         layout.addWidget(self.options_panel, 2, 2)  # , 0, 0)
+        layout.setColumnStretch(0, 1)
+        layout.setColumnStretch(1, 1)
         widget = QWidget()
         widget.setLayout(layout)
         self.setCentralWidget(widget)
