@@ -32,9 +32,6 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm):
 
     def run(self):
         restarted = False
-        print(self.new_parameters["use_gauss"])
-        print(self.parameters)
-        print(self.parameters["use_gauss"])
         if self.new_parameters["use_gauss"]:
             if self.parameters["gauss_radius"] != self.new_parameters["gauss_radius"]:
                 self.gauss_image = gaussian(self.image, self.new_parameters["gauss_radius"])
@@ -74,6 +71,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm):
         self.parameters["threshold"] = None
 
 
+class OneTHresholdAlgorithm(ThresholdBaseAlgorithm):
     def set_parameters(self, threshold, minimum_size,  use_gauss, gauss_radius):
         self.new_parameters["threshold"] = threshold
         self.new_parameters["minimum_size"] = minimum_size
@@ -81,10 +79,20 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm):
         self.new_parameters["gauss_radius"] = gauss_radius
 
 
-class LowerThresholdAlgorithm(ThresholdBaseAlgorithm):
+class LowerThresholdAlgorithm(OneTHresholdAlgorithm):
     def _threshold(self, image):
         return (image > self.new_parameters["threshold"]).astype(np.uint8)
 
-class UpperThresholdAlgorithm(ThresholdBaseAlgorithm):
+class UpperThresholdAlgorithm(OneTHresholdAlgorithm):
     def _threshold(self, image):
         return (image < self.new_parameters["threshold"]).astype(np.uint8)
+
+class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
+    def set_parameters(self, lower_threshold, upper_threshold, minimum_size,  use_gauss, gauss_radius):
+        self.new_parameters["threshold"] = lower_threshold, upper_threshold
+        self.new_parameters["minimum_size"] = minimum_size
+        self.new_parameters["use_gauss"] = use_gauss
+        self.new_parameters["gauss_radius"] = gauss_radius
+
+    def _threshold(self, image):
+        return ((image > self.new_parameters["threshold"][0]) * (image < self.new_parameters["threshold"][1])).astype(np.uint8)

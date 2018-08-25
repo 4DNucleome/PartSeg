@@ -409,7 +409,6 @@ class ImageView(QWidget):
             # TODO fix
             layers = self.labels_layer[self.stack_slider.value()]
             components_mask = self._settings.components_mask()
-            print(components_mask)
             if self.image_state.show_label == 1:
                 components_mask[1:] = 1
             add_labels(im, layers, self.image_state.opacity, self.image_state.only_borders, int((self.image_state.borders_thick-1)/2), components_mask)
