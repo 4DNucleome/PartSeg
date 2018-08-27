@@ -6,7 +6,7 @@ import appdirs
 import numpy as np
 import tifffile as tif
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtGui import QGuiApplication
+from PyQt5.QtGui import QGuiApplication, QIcon
 from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox, QVBoxLayout, QCheckBox, \
     QComboBox, QDoubleSpinBox, QSpinBox, QStackedLayout, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
     QTabWidget, QMainWindow, QSizePolicy
@@ -482,17 +482,10 @@ class MainWindow(QMainWindow):
         self.settings.image_changed.connect(self.image_read)
 
         im = tif.imread(os.path.join(static_file_folder, 'initial_images', "stack.tif"))
-        # width, height = im.shape
-        # im = colors.PowerNorm(gamma=1, vmin=im.min(), vmax=im.max())(im)
-        # cmap = matplotlib.cm.get_cmap("cubehelix")
-        # colored_image = cmap(im)
-        # noinspection PyTypeChecker
-        # im = np.array(colored_image * 255, dtype=np.uint8)
-        # im2 = QImage(im.data, width, height, im.dtype.itemsize*width*4, QImage.Format_ARGB32)
 
-        # self.pixmap.setPixmap(QPixmap.fromImage(im2))
-        # self.im_view = pg.ImageView(self)
-        # self.im_view.setImage(im)
+        icon = QIcon(os.path.join(static_file_folder, 'icons', "icon_stack.png"))
+        self.setWindowIcon(icon)
+
         layout = QVBoxLayout()
         layout.addWidget(self.main_menu)
         sub_layout = QHBoxLayout()

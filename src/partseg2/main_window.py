@@ -8,6 +8,7 @@ import numpy as np
 import SimpleITK as sitk
 import appdirs
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
     QFileDialog, QMessageBox, QCheckBox, QComboBox, QStackedLayout
 
@@ -292,6 +293,9 @@ class MainWindow(QMainWindow):
 
         im = tif.imread(os.path.join(static_file_folder, 'initial_images', "clean_segment.tiff"))
         self.settings.image = im
+
+        icon = QIcon(os.path.join(static_file_folder, 'icons', "icon.png"))
+        self.setWindowIcon(icon)
 
         layout = QGridLayout()
         layout.setSpacing(0)
