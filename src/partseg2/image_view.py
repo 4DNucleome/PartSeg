@@ -16,26 +16,14 @@ class RawImageView(ImageView):
     def showEvent(self, event: QShowEvent):
         self.parent().layout().setColumnStretch(0, 1)
 
-    def change_image(self):
-        if self.image is None:
-            return
-        img = np.copy(self.image[self.stack_slider.value()])
-        color_maps = self.channel_control.current_colors
-        borders = self.border_val[:]
-        for i, p in enumerate(self.channel_control.get_limits()):
-            if p is not None:
-                borders[i] = p
-        for i, (use, radius) in enumerate(self.channel_control.get_gauss()):
-            if use and color_maps[i] is not None and radius > 0:
-                img[..., i] = gaussian_filter(img[..., i], radius)
-        im = color_image(img, color_maps, borders)
-        self.image_area.set_image(im, self.sender() is not None)
-        self.tmp_image = np.array([img])
+    def add_labels(self, im):
+        return im
 
     def info_text_pos(self, *pos):
         if self.tmp_image is None:
             return
-        brightness = self.tmp_image[pos]
+
+        brightness = self.tmp_image[pos if len(pos) == self.tmp_image.ndim -1 else pos[1:]]
         pos2 = list(pos)
         pos2[0] += 1
         if isinstance(brightness, collections.Iterable):

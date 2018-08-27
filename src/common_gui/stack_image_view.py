@@ -347,7 +347,7 @@ class ImageView(QWidget):
     def info_text_pos(self, *pos):
         if self.tmp_image is None:
             return
-        brightness = self.tmp_image[pos]
+        brightness = self.tmp_image[pos if len(pos) == self.tmp_image.ndim - 1 else pos[1:]]
         pos2 = list(pos)
         pos2[0] += 1
         if isinstance(brightness, collections.Iterable):
@@ -405,6 +405,11 @@ class ImageView(QWidget):
             if use and color_maps[i] is not None and radius > 0:
                 img[..., i] = gaussian_filter(img[..., i], radius)
         im = color_image(img, color_maps, borders)
+        self.add_labels(im)
+        self.image_area.set_image(im, self.sender() is not None)
+        self.tmp_image = np.array(img)
+
+    def add_labels(self, im):
         if self.labels_layer is not None and self.image_state.show_label:
             # TODO fix
             layers = self.labels_layer[self.stack_slider.value()]
@@ -412,8 +417,7 @@ class ImageView(QWidget):
             if self.image_state.show_label == 1:
                 components_mask[1:] = 1
             add_labels(im, layers, self.image_state.opacity, self.image_state.only_borders, int((self.image_state.borders_thick-1)/2), components_mask)
-        self.image_area.set_image(im, self.sender() is not None)
-        self.tmp_image = np.array([img])
+        return im
 
     def set_image(self, image):
         """

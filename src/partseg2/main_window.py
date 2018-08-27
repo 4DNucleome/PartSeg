@@ -106,6 +106,7 @@ class Options(QWidget):
     def hide_left_panel(self, val):
         self._ch_control1.setHidden(val)
         self.left_panel.setHidden(val)
+        self.synchronize.setChecked(False)
 
     def interactive_change(self, val):
         if val:
