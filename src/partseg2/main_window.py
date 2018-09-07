@@ -309,6 +309,12 @@ class MainWindow(QMainWindow):
         widget = QWidget()
         widget.setLayout(layout)
         self.setCentralWidget(widget)
+        try:
+            geometry = self.settings.get_from_profile("main_window_geometry")
+            self.restoreGeometry(QByteArray.fromHex(bytes(geometry, 'ascii')))
+        except KeyError:
+            pass
+
 
     def image_read(self):
         print("buka1", self.settings.image.shape, self.sender())
@@ -319,4 +325,5 @@ class MainWindow(QMainWindow):
     def closeEvent(self, _):
         # print(self.settings.dump_view_profiles())
         # print(self.settings.segmentation_dict["default"].my_dict)
+        self.settings.set_in_profile("main_window_geometry", bytes(self.saveGeometry().toHex()).decode('ascii'))
         self.settings.dump(os.path.join(config_folder, "settings.json"))

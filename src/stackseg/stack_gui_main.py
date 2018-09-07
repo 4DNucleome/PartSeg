@@ -5,7 +5,7 @@ import os
 import appdirs
 import numpy as np
 import tifffile as tif
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import pyqtSignal, Qt, QByteArray
 from PyQt5.QtGui import QGuiApplication, QIcon
 from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox, QVBoxLayout, QCheckBox, \
     QComboBox, QDoubleSpinBox, QSpinBox, QStackedLayout, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
@@ -507,6 +507,11 @@ class MainWindow(QMainWindow):
         self.widget.setLayout(layout)
         self.setCentralWidget(self.widget)
         self.settings.image = im
+        try:
+            geometry = self.settings.get_from_profile("main_window_geometry")
+            self.restoreGeometry(QByteArray.fromHex(bytes(geometry, 'ascii')))
+        except KeyError:
+            pass
 
     def image_read(self):
         print("buka1", self.settings.image.shape, self.sender())
@@ -516,6 +521,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, _):
         # print(self.settings.dump_view_profiles())
         # print(self.settings.segmentation_dict["default"].my_dict)
+        self.settings.set_in_profile("main_window_geometry", bytes(self.saveGeometry().toHex()).decode('ascii'))
         self.settings.dump(os.path.join(config_folder, "settings.json"))
 
 
