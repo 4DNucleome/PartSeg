@@ -7,12 +7,13 @@ import tifffile as tif
 import numpy as np
 import SimpleITK as sitk
 import appdirs
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QByteArray
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
     QFileDialog, QMessageBox, QCheckBox, QComboBox, QStackedLayout
 
 from common_gui.channel_control import ChannelControl
+from partseg2.advanced_window import AdvancedWindow
 from project_utils.algorithms_description import InteractiveAlgorithmSettingsWidget
 from project_utils.global_settings import static_file_folder
 from .partseg_settings import PartSettings, load_project, save_project,save_labeled_image
@@ -133,6 +134,8 @@ class MainMenu(QWidget):
         self.advanced_btn = QPushButton("Advanced")
         self.interpolate_btn = QPushButton("Interpolate")
 
+        self.advanced_window = None
+
         layout = QHBoxLayout()
         layout.addWidget(self.open_btn)
         layout.addWidget(self.save_btn)
@@ -141,6 +144,7 @@ class MainMenu(QWidget):
         self.setLayout(layout)
 
         self.open_btn.clicked.connect(self.load_data)
+        self.advanced_btn.clicked.connect(self.advanced_window_show)
 
     def load_data(self):
         try:
@@ -267,6 +271,15 @@ class MainMenu(QWidget):
             import traceback
             traceback.print_exc()
             QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
+
+    def advanced_window_show(self):
+        print("AAA")
+        if self.advanced_window is not None and self.advanced_window.isVisible():
+            self.advanced_window.activateWindow()
+            return
+        self.advanced_window = AdvancedWindow(self._settings)
+        self.advanced_window.show()
+
 
 
 class MainWindow(QMainWindow):

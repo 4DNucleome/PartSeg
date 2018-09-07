@@ -216,7 +216,7 @@ class BaseSettings(ViewSettings):
                  "segment_profile": self.segmentation_dict,
                  "image_spacing": self.image_spacing
                  },
-                ff, cls=ProfileEncoder)
+                ff, cls=ProfileEncoder, indent=2)
 
     def load(self, file_path):
         try:
