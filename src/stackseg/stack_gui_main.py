@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMes
     QTabWidget, QMainWindow, QSizePolicy
 
 from common_gui.channel_control import ChannelControl
+from common_gui.colors_choose import ColorSelector
 from common_gui.universal_gui_part import right_label
 
 from common_gui.flow_layout import FlowLayout
@@ -455,8 +456,10 @@ class Options(QTabWidget):
         self.algorithm_options = AlgorithmOptions(settings, control_view, component_checker)
         self.image_properties = ImageInformation(settings, parent)
         self.image_properties.add_files.file_list_changed.connect(self.algorithm_options.file_list_change)
+        self.colormap_choose = ColorSelector(settings, ["channelcontrol"])
         self.addTab(self.image_properties, "Image")
         self.addTab(self.algorithm_options, "Segmentation")
+        self.addTab(self.colormap_choose, "Colormap filter")
 
     def get_chosen_components(self):
         return self.algorithm_options.get_chosen_components()
@@ -470,7 +473,7 @@ class MainWindow(QMainWindow):
         if os.path.exists(os.path.join(config_folder, "settings.json")):
             self.settings.load(os.path.join(config_folder, "settings.json"))
         self.main_menu = MainMenu(self.settings)
-        self.channel_control = ChannelControl(self.settings)
+        self.channel_control = ChannelControl(self.settings, name="channelcontrol")
         self.image_view = StackImageView(self.settings, self.channel_control)
         self.image_view.setMinimumWidth(450)
         self.info_text = QLabel()
@@ -508,7 +511,7 @@ class MainWindow(QMainWindow):
     def image_read(self):
         print("buka1", self.settings.image.shape, self.sender())
         self.image_view.set_image(self.settings.image)
-        self.setWindowTitle(f"PartSeg: {self.settings.image_path}")
+        self.setWindowTitle(f"StackSeg: {self.settings.image_path}")
 
     def closeEvent(self, _):
         # print(self.settings.dump_view_profiles())

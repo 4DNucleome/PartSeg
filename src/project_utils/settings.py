@@ -26,7 +26,6 @@ class ImageSettings(QObject):
         self.image_spacing = 70, 70, 210
         self._segmentation = None
         self.sizes = []
-        self.chosen_colormap = pyplot.colormaps()
         # self.fixed_range = 0, 255
 
     @property
@@ -134,10 +133,13 @@ class ProfileDict(object):
         for i, key in enumerate(key_path):
             try:
                 curr_dict = curr_dict[key]
-            except KeyError:
-                val = copy.deepcopy(default)
-                self.set(key_path, val)
-                return val
+            except KeyError as e:
+                if default is not None:
+                    val = copy.deepcopy(default)
+                    self.set(key_path, val)
+                    return val
+                else:
+                    raise e
         return curr_dict
 
 
@@ -149,11 +151,26 @@ class ProfileEncoder(json.JSONEncoder):
 
 
 class ViewSettings(ImageSettings):
+    colormap_changes = pyqtSignal()
     def __init__(self):
         super().__init__()
         self.color_map = []
+        # self.chosen_colormap = pyplot.colormaps()
         self.current_profile_dict = "default"
         self.profile_dict: typing.Dict[str, ProfileDict] = {self.current_profile_dict: ProfileDict()}
+
+    @property
+    def chosen_colormap(self):
+        return self.get_from_profile("colormaps", pyplot.colormaps())
+
+    @chosen_colormap.setter
+    def chosen_colormap(self, val):
+        self.set_in_profile("colormaps", val)
+        self.colormap_changes.emit()
+
+    @property
+    def available_colormaps(_):
+        return pyplot.colormaps()
 
     def change_profile(self, name):
         self.current_profile_dict = name
@@ -163,7 +180,7 @@ class ViewSettings(ImageSettings):
     def set_in_profile(self, key_path, value):
         self.profile_dict[self.current_profile_dict].set(key_path, value)
 
-    def get_from_profile(self, key_path, default):
+    def get_from_profile(self, key_path, default=None):
         return self.profile_dict[self.current_profile_dict].get(key_path, default)
 
     def dump_view_profiles(self):

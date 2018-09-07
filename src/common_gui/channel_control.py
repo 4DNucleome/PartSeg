@@ -16,8 +16,8 @@ class ColorPreview(QWidget):
     def paintEvent(self, event: QPaintEvent):
         rect = event.rect()
         painter = QPainter(self)
-
-        painter.drawImage(rect, self.parent().image)
+        if hasattr(self.parent(), "image"):
+            painter.drawImage(rect, self.parent().image)
 
 
 class ChannelWidget(QWidget):
@@ -128,6 +128,8 @@ class ChannelControl(QWidget):
         self._name = name
         self._main_name = name
         self._settings = settings
+        self._settings.colormap_changes.connect(self.colormap_list_changed)
+
         self.enable_synchronize = False
         self.current_channel = 0
         self.current_bounds = settings.get_from_profile(f"{self._name}.bounds", [])
@@ -185,6 +187,21 @@ class ChannelControl(QWidget):
         self.setLayout(layout)
         self.collapse_widget.setChecked(True)
         self._settings.image_changed.connect(self.update_channels_list)
+
+    def colormap_list_changed(self):
+        self.colormap_chose.blockSignals(True)
+        text = self.colormap_chose.currentText()
+        self.colormap_chose.clear()
+        colormaps: list = self._settings.chosen_colormap
+        self.colormap_chose.addItems(colormaps)
+        try:
+            index = colormaps.index(text)
+            self.colormap_chose.setCurrentIndex(index)
+        except KeyError:
+            pass
+
+
+        self.colormap_chose.blockSignals(False)
 
     def refresh_info(self):
         """Function for synchronization preview settings between two previews"""
