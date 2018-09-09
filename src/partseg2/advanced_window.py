@@ -146,14 +146,14 @@ class StatisticsSettings(QWidget):
             lw = QListWidgetItem(name)
             lw.setToolTip(help_text)
             self.profile_options.addItem(lw)
-        #self.profile_list.addItems(list(sorted([x[0] for x in self.settings.statistics_profile_dict.items()])))
+        self.profile_list.addItems(list(sorted( self.settings.get("statistic_profiles", dict()).keys())))
         if self.profile_list.count() == 0:
             self.export_profiles_butt.setDisabled(True)
 
     def delete_profile(self):
         row = self.profile_list.currentRow()
         item = self.profile_list.currentItem()
-        del self.settings.statistics_profile_dict[str(item.text())]
+        del self.settings.get(f"statistic_profiles.")[str(item.text())]
         self.profile_list.takeItem(row)
         if self.profile_list.count() == 0:
             self.delete_profile_butt.setDisabled(True)
@@ -168,7 +168,7 @@ class StatisticsSettings(QWidget):
             self.profile_description.setText("")
             return
         text = "Profile name: {}\n".format(item.text())
-        profile = self.settings.statistics_profile_dict[str(item.text())]  # type: StatisticProfile
+        profile =self.settings.get(f"statistic_profiles.{item.text()}")  # type: StatisticProfile
         text += "Reversed image [{}]\n".format(profile.reversed_brightness)
         text += "Gaussed image [{}]\n".format(profile.use_gauss_image)
         text += "statistics list:\n"
@@ -299,7 +299,7 @@ class StatisticsSettings(QWidget):
         item = self.profile_list.currentItem()
         if item is None:
             return
-        profile = self.settings.statistics_profile_dict[str(item.text())]  # type: StatisticProfile
+        profile = self.self.settings.get("statistic_profiles")[str(item.text())]  # type: StatisticProfile
         self.profile_options_chosen.clear()
         self.profile_name.setText(item.text())
         for ch in profile.chosen_fields:
@@ -325,7 +325,7 @@ class StatisticsSettings(QWidget):
                                      self.gauss_img.isChecked())
         if stat_prof.name not in self.settings.get("statistic_profiles", dict()):
             self.profile_list.addItem(stat_prof.name)
-        self.settings.set_in_profile(f"statistic_profiles.{stat_prof.name}", stat_prof)
+        self.settings.set(f"statistic_profiles.{stat_prof.name}", stat_prof)
         self.export_profiles_butt.setEnabled(True)
 
     def named_save_action(self):
@@ -348,9 +348,9 @@ class StatisticsSettings(QWidget):
             stat_prof = StatisticProfile(str(self.profile_name.text()), selected_values,
                                          self.reversed_brightness.isChecked(),
                                          self.gauss_img.isChecked())
-            if stat_prof.name not in self.settings.statistics_profile_dict:
+            if stat_prof.name not in self.settings.get("statistic_profiles"):
                 self.profile_list.addItem(stat_prof.name)
-            self.settings.statistics_profile_dict[stat_prof.name] = stat_prof
+            self.self.settings.set(f"statistic_profiles.{stat_prof.name}",  stat_prof)
             self.export_profiles_butt.setEnabled(True)
 
     def reset_action(self):
@@ -376,7 +376,7 @@ class StatisticsSettings(QWidget):
         self.create_selection_changed()
 
     def export_statistic_profiles(self):
-        exp = ExportDialog(self.settings.statistics_profile_dict, StringViewer)
+        exp = ExportDialog(self.settings.get("statistic_profiles"), StringViewer)
         if not exp.exec_():
             return
         dial = QFileDialog(self, "Export settings profiles")

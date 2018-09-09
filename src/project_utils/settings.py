@@ -146,8 +146,17 @@ class ProfileDict(object):
 class ProfileEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, ProfileDict):
-            return o.my_dict
+            return {"__ProfileDict__": True, **o.my_dict}
         return super().default(o)
+
+def profile_hook(_, dkt):
+    if "__ProfileDict__" in dkt:
+        del dkt["__ProfileDict__"]
+        res = ProfileDict()
+        res.my_dict = dkt
+        return res
+    return dkt
+
 
 
 class ViewSettings(ImageSettings):
@@ -189,11 +198,14 @@ class ViewSettings(ImageSettings):
 
     def load_view_profiles(self, dicts):
         for k, v in dicts.items():
-            self.profile_dict[k] = ProfileDict()
-            self.profile_dict[k].my_dict = v
+            self.profile_dict[k] = v # ProfileDict()
+            # self.profile_dict[k].my_dict = v
 
 
 class BaseSettings(ViewSettings):
+    json_encoder_class = ProfileEncoder
+    decode_hook = profile_hook
+
     def __init__(self):
         super().__init__()
         self.current_segmentation_dict = "default"
@@ -202,26 +214,25 @@ class BaseSettings(ViewSettings):
     def set(self, key_path, value):
         self.segmentation_dict[self.current_segmentation_dict].set(key_path, value)
 
-    def get(self, key_path, default):
+    def get(self, key_path, default=None):
         return self.segmentation_dict[self.current_segmentation_dict].get(key_path, default)
 
     def dump(self, file_path):
         if not path.exists(path.dirname(file_path)):
             makedirs(path.dirname(file_path))
         dump_view = self.dump_view_profiles()
-        dump_seg = json.dumps(self.segmentation_dict, cls=ProfileEncoder)
         with open(file_path, 'w') as ff:
             json.dump(
                 {"view_profiles": dump_view,
                  "segment_profile": self.segmentation_dict,
                  "image_spacing": self.image_spacing
                  },
-                ff, cls=ProfileEncoder, indent=2)
+                ff, cls=self.json_encoder_class, indent=2)
 
     def load(self, file_path):
         try:
             with open(file_path, 'r') as ff:
-                data = json.load(ff)
+                data = json.load(ff, object_hook=self.decode_hook)
             try:
                 self.load_view_profiles(data["view_profiles"])
             except KeyError:
@@ -230,8 +241,9 @@ class BaseSettings(ViewSettings):
                 logging.error('error in load "view_profiles"')
             try:
                 for k, v in data["segment_profile"].items():
-                    self.segmentation_dict[k] = ProfileDict()
-                    self.segmentation_dict[k].my_dict = v
+                    self.segmentation_dict[k] = v #ProfileDict()
+                    print(self.segmentation_dict[k].my_dict)
+                    #self.segmentation_dict[k].my_dict = v
             except KeyError:
                 logging.error('error in load "segment_profile"')
             except AttributeError:

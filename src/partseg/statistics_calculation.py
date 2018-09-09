@@ -89,6 +89,10 @@ class StatisticProfile(object):
         self.use_gauss_image = use_gauss_image
         self.name_prefix = name_prefix
 
+    def to_dict(self):
+        return {"name": self.name, "chosen_fields": self.chosen_fields,
+                "reversed_brightness": self.reversed_brightness, "use_gauss_image":self.use_gauss_image}
+
     def need_mask(self, tree):
         if isinstance(tree, Leaf):
             return self.STATISTIC_DICT[tree.name].is_mask

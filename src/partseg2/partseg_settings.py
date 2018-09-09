@@ -1,10 +1,29 @@
 from PyQt5.QtCore import pyqtSignal
 
-from project_utils.settings import BaseSettings
+from partseg.statistics_calculation import StatisticProfile
+from project_utils.settings import BaseSettings, ProfileEncoder, profile_hook
 import numpy as np
+
+class PartEncoder(ProfileEncoder):
+    def default(self, o):
+        if isinstance(o, StatisticProfile):
+            return {"__StatisticProfile__": True, **o.to_dict()}
+        return super().default(o)
+
+
+def part_hook(_, dkt):
+    if "__StatisticProfile__" in dkt:
+        del dkt["__StatisticProfile__"]
+        res = StatisticProfile(**dkt)
+        return res
+    return profile_hook(_, dkt)
+
 
 class PartSettings(BaseSettings):
     mask_changed = pyqtSignal()
+    json_encoder_class = PartEncoder
+    decode_hook = part_hook
+
     def __init__(self):
         super().__init__()
         self._mask = None
