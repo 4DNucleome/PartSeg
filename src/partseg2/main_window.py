@@ -17,7 +17,7 @@ from partseg2.advanced_window import AdvancedWindow
 from project_utils.algorithms_description import InteractiveAlgorithmSettingsWidget
 from project_utils.global_settings import static_file_folder
 from .partseg_settings import PartSettings, load_project, save_project,save_labeled_image
-from .image_view import RawImageView, ResultImageView
+from .image_view import RawImageView, ResultImageView, RawImageStack
 from .algorithm_description import part_algorithm_dict
 
 app_name = "PartSeg2"
@@ -50,7 +50,7 @@ class Options(QWidget):
             self.algorithm_choose.addItem(name)
             widget = InteractiveAlgorithmSettingsWidget(settings, name, *val)
             widgets_list.append(widget)
-            widget.algorithm.execution_done.connect(self.execution_done)
+            widget.algorithm.execution_done_extend.connect(self.execution_done)
             #widget.algorithm.progress_signal.connect(self.progress_info)
             self.stack_layout.addWidget(widget)
 
@@ -102,12 +102,11 @@ class Options(QWidget):
 
     def control2_change(self):
         if self.synchronize.isChecked():
-            print("AAAAAAA")
             self._ch_control1.refresh_info()
 
     def hide_left_panel(self, val):
         self._ch_control1.setHidden(val)
-        self.left_panel.setHidden(val)
+        self.left_panel.parent().setHidden(val)
         self.synchronize.setChecked(False)
 
     def interactive_change(self, val):
@@ -122,8 +121,9 @@ class Options(QWidget):
         widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.currentWidget()
         widget.execute()
 
-    def execution_done(self, segmentation):
+    def execution_done(self, segmentation, full_segmentation):
         self.segmentation = segmentation
+        self._settings.full_segmentation = full_segmentation
 
 class MainMenu(QWidget):
     def __init__(self, settings: PartSettings):
@@ -273,7 +273,6 @@ class MainMenu(QWidget):
             QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
 
     def advanced_window_show(self):
-        print("AAA")
         if self.advanced_window is not None and self.advanced_window.isVisible():
             self.advanced_window.activateWindow()
             return
@@ -294,13 +293,13 @@ class MainWindow(QMainWindow):
         self.main_menu = MainMenu(self.settings)
         self.channel_control1 = ChannelControl(self.settings, name="raw_control", text="Left panel:")
         self.channel_control2 = ChannelControl(self.settings, name="result_control", text="Right panel:")
-        self.raw_image = RawImageView(self.settings, self.channel_control1)
+        self.raw_image = RawImageStack(self.settings, self.channel_control1) # RawImageView(self.settings, self.channel_control1)
         self.result_image = ResultImageView(self.settings, self.channel_control2)
         self.info_text = QLabel()
-        self.raw_image.text_info_change.connect(self.info_text.setText)
+        self.raw_image.raw_image.text_info_change.connect(self.info_text.setText)
         self.result_image.text_info_change.connect(self.info_text.setText)
         # image_view_control = self.image_view.get_control_view()
-        self.options_panel = Options(self.settings, self.channel_control1, self.channel_control2, self.raw_image)
+        self.options_panel = Options(self.settings, self.channel_control1, self.channel_control2, self.raw_image.raw_image)
         # self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
 
@@ -331,7 +330,7 @@ class MainWindow(QMainWindow):
 
     def image_read(self):
         print("buka1", self.settings.image.shape, self.sender())
-        self.raw_image.set_image(self.settings.image)
+        self.raw_image.raw_image.set_image(self.settings.image)
         self.result_image.set_image(self.settings.image)
         self.setWindowTitle(f"PartSeg: {self.settings.image_path}")
 

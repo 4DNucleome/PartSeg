@@ -263,7 +263,7 @@ class StatisticProfile(object):
         logging.error("Wrong statistics: {}".format(node))
         return 1
 
-    def calculate(self, image, gauss_image, mask, full_mask, base_mask, voxel_size):
+    def calculate(self, image, gauss_image, segmentation, full_mask, base_mask, voxel_size):
         self.voxel_size = voxel_size
         if self._need_mask and base_mask is None:
             raise ValueError("Statistics need mask")
@@ -276,7 +276,7 @@ class StatisticProfile(object):
             noise_mean = np.mean(image[full_mask == 0])
             image = noise_mean - image
         help_dict = dict()
-        kw = {"image": image, "segmentation": mask, "base_mask": base_mask, "full_segmentation": full_mask}
+        kw = {"image": image, "segmentation": segmentation, "base_mask": base_mask, "full_segmentation": full_mask}
         for tree, user_name, params in self.chosen_fields:
             try:
                 result[self.name_prefix + user_name] = self.calculate_tree(tree, help_dict, kw)

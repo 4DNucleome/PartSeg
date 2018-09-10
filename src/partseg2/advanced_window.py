@@ -1,24 +1,23 @@
+import logging
 import os
-
+import numpy as np
 from PyQt5.QtCore import QByteArray, Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushButton, QCheckBox, QLineEdit, QVBoxLayout, \
     QLabel, QHBoxLayout, QListWidgetItem, QDialog, QDoubleSpinBox, QSpinBox, QGridLayout, QApplication, QMessageBox, \
-    QFileDialog
+    QFileDialog, QComboBox, QTableWidget, QTableWidgetItem
 
 from common_gui.colors_choose import ColorSelector
+from partseg2.partseg_settings import PartSettings
+from partseg2.profile_export import ExportDialog, StringViewer, ImportDialog
 from partseg.statistics_calculation import StatisticProfile
 from project_utils.global_settings import static_file_folder
+from project_utils.settings import BaseSettings
+from project_utils.universal_const import UNITS_DICT
 from qt_import import h_line
 
 
 class AdvancedSettings(QWidget):
-    def __init__(self, settings):
-        super().__init__()
-        self.settings = settings
-
-
-class StatisticsWindow(QWidget):
     def __init__(self, settings):
         super().__init__()
         self.settings = settings
@@ -33,7 +32,7 @@ class StatisticsSettings(QWidget):
     """
     :type settings: Settings
     """
-    def __init__(self, settings):
+    def __init__(self, settings: BaseSettings):
         super(StatisticsSettings, self).__init__()
         self.chosen_element = None
         self.settings = settings
@@ -153,7 +152,7 @@ class StatisticsSettings(QWidget):
     def delete_profile(self):
         row = self.profile_list.currentRow()
         item = self.profile_list.currentItem()
-        del self.settings.get(f"statistic_profiles.")[str(item.text())]
+        del self.settings.get(f"statistic_profiles")[str(item.text())]
         self.profile_list.takeItem(row)
         if self.profile_list.count() == 0:
             self.delete_profile_butt.setDisabled(True)
@@ -380,35 +379,35 @@ class StatisticsSettings(QWidget):
         if not exp.exec_():
             return
         dial = QFileDialog(self, "Export settings profiles")
-        if self.settings.statistic_dirs is not None:
-            dial.setDirectory(self.settings.statistic_dirs)
+        dial.setDirectory(self.settings.get("io.export_directory", ""))
         dial.setFileMode(QFileDialog.AnyFile)
         dial.setAcceptMode(QFileDialog.AcceptSave)
-        dial.setFilter("statistic profile (*.json)")
+        dial.setNameFilter("statistic profile (*.json)")
         dial.setDefaultSuffix("json")
         dial.selectFile("statistic_profile.json")
 
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
-            self.settings.statistic_dirs = file_path
-            self.settings.dump_statistics(file_path, exp.get_export_list())
+            self.settings.set("io.export_directory", file_path)
+            self.settings.dump_part(file_path, "statistic_profiles", exp.get_export_list())
 
     def import_statistic_profiles(self):
         dial = QFileDialog(self, "Import settings profiles")
-        if self.settings.statistic_dirs is not None:
-            dial.setDirectory(self.settings.statistic_dirs)
+        dial.setDirectory(self.settings.get("io.export_directory", ""))
         dial.setFileMode(QFileDialog.ExistingFile)
-        dial.setFilter("statistic profile (*.json)")
+        dial.setNameFilter("statistic profile (*.json)")
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
-            self.settings.statistic_dirs = file_path
-            stat = self.settings.load_statistics(file_path)
-            imp = ImportDialog(stat, self.settings.statistics_profile_dict, StringViewer)
+            self.settings.set("io.export_directory", file_path)
+            stat = self.settings.load_part(file_path)
+            statistic_dict = self.settings.get("statistic_profiles")
+            imp = ImportDialog(stat, statistic_dict, StringViewer)
             if not imp.exec_():
                 return
-            self.settings.add_statistics(stat, imp.get_import_list())
+            for n,_ in imp.get_import_list():
+                statistic_dict[n] = stat[n]
             self.profile_list.clear()
-            self.profile_list.addItems(list(sorted(self.settings.statistics_profile_dict.keys())))
+            self.profile_list.addItems(list(sorted(statistic_dict.keys())))
 
 
 
@@ -518,7 +517,7 @@ class MultipleInput(QDialog):
                 if val.strip() != "":
                     res[name] = val
                 else:
-                    QMessageBox.warning("Not all fields filled")
+                    QMessageBox.warning(self, "Not all fields filled", "")
                     return
             else:
                 val = type_of(item.value())
@@ -529,3 +528,213 @@ class MultipleInput(QDialog):
     @property
     def get_response(self):
         return self.result
+
+class StatisticsWindow(QWidget):
+    """
+    :type settings: Settings
+    :type segment: Segment
+    """
+    def __init__(self, settings: PartSettings, segment=None):
+        super(StatisticsWindow, self).__init__()
+        self.settings = settings
+        self.segment = segment
+        self.recalculate_button = QPushButton("Recalculate and\n replace statistics", self)
+        self.recalculate_button.clicked.connect(self.replace_statistics)
+        self.recalculate_append_button = QPushButton("Recalculate and\n append statistics", self)
+        self.recalculate_append_button.clicked.connect(self.append_statistics)
+        self.copy_button = QPushButton("Copy to clipboard", self)
+        self.horizontal_statistics = QCheckBox("Horizontal", self)
+        self.no_header = QCheckBox("No header", self)
+        self.no_units = QCheckBox("No units", self)
+        self.no_units.setChecked(True)
+        self.horizontal_statistics.stateChanged.connect(self.horizontal_changed)
+        self.copy_button.clicked.connect(self.copy_to_clipboard)
+        self.statistic_type = QComboBox(self)
+        # self.statistic_type.addItem("Emish statistics (oryginal)")
+        self.statistic_type.addItems(list(sorted(self.settings.get("statistic_profiles").keys())))
+        self.statistic_type.currentIndexChanged[str].connect(self.statistic_selection_changed)
+        self.info_field = QTableWidget(self)
+        self.info_field.setColumnCount(3)
+        self.info_field.setHorizontalHeaderLabels(["Name", "Value", "Units"])
+        self.statistic_shift = 0
+        self._protect = False
+        layout = QVBoxLayout()
+        # layout.addWidget(self.recalculate_button)
+        v_butt_layout = QVBoxLayout()
+        v_butt_layout.setSpacing(1)
+        self.up_butt_layout = QHBoxLayout()
+        self.up_butt_layout.addWidget(self.recalculate_button)
+        self.up_butt_layout.addWidget(self.recalculate_append_button)
+        butt_layout = QHBoxLayout()
+        # butt_layout.setMargin(0)
+        butt_layout.setSpacing(10)
+        butt_layout.addWidget(self.horizontal_statistics, 1)
+        butt_layout.addWidget(self.no_header, 1)
+        butt_layout.addWidget(self.no_units, 1)
+        butt_layout.addWidget(self.copy_button, 2)
+        butt_layout.addWidget(self.statistic_type, 2)
+        v_butt_layout.addLayout(self.up_butt_layout)
+        v_butt_layout.addLayout(butt_layout)
+        layout.addLayout(v_butt_layout)
+        # layout.addLayout(butt_layout)
+        layout.addWidget(self.info_field)
+        self.setLayout(layout)
+        # noinspection PyArgumentList
+        self.clip = QApplication.clipboard()
+        # self.update_statistics()
+
+    def statistic_selection_changed(self, text):
+        if self._protect:
+            return
+        text = str(text)
+        try:
+            stat = self.settings.statistics_profile_dict[text]
+            is_mask = stat.is_any_mask_statistic()
+            disable = is_mask and (self.settings.mask is None)
+        except KeyError:
+            disable = True
+        self.recalculate_button.setDisabled(disable)
+        self.recalculate_append_button.setDisabled(disable)
+        if disable:
+            self.recalculate_button.setToolTip("Statistics contains mask statistic when mask is not loaded")
+            self.recalculate_append_button.setToolTip("Statistics contains mask statistic when mask is not loaded")
+        else:
+            self.recalculate_button.setToolTip("")
+            self.recalculate_append_button.setToolTip("")
+
+    def copy_to_clipboard(self):
+        s = ""
+        for r in range(self.info_field.rowCount()):
+            for c in range(self.info_field.columnCount()):
+                try:
+                    s += str(self.info_field.item(r, c).text()) + "\t"
+                except AttributeError:
+                    s += "\t"
+                    logging.info("Copy problem")
+            s = s[:-1] + "\n"  # eliminate last '\t'
+        self.clip.setText(s)
+
+    def replace_statistics(self):
+        self.statistic_shift = 0
+        self.info_field.setRowCount(0)
+        self.info_field.setColumnCount(0)
+        self.append_statistics()
+
+    def horizontal_changed(self):
+        rows = self.info_field.rowCount()
+        columns = self.info_field.columnCount()
+        ob_array = np.zeros((rows, columns), dtype=object)
+        for x in range(rows):
+            for y in range(columns):
+                field = self.info_field.item(x, y)
+                if field is not None:
+                    ob_array[x, y] = field.text()
+
+        hor_headers = [self.info_field.horizontalHeaderItem(x).text() for x in range(columns)]
+        ver_headers = [self.info_field.verticalHeaderItem(x).text() for x in range(rows)]
+        self.info_field.setColumnCount(rows)
+        self.info_field.setRowCount(columns)
+        self.info_field.setHorizontalHeaderLabels(ver_headers)
+        self.info_field.setVerticalHeaderLabels(hor_headers)
+        for x in range(rows):
+            for y in range(columns):
+                self.info_field.setItem(y, x,  QTableWidgetItem(ob_array[x, y]))
+
+    def append_statistics(self):
+
+        compute_class:StatisticProfile = self.settings.get(f"statistic_profiles.{self.statistic_type.currentText()}")
+        gauss_image = self.settings.gauss_image
+        image = self.settings.image
+        segmentation = self.settings.segmentation
+        full_mask = self.settings.full_segmentation
+        base_mask = self.settings.mask
+        try:
+            stat = compute_class.calculate(image, gauss_image, segmentation,
+                                           full_mask, base_mask, self.settings.voxel_size)
+        except ValueError as e:
+            logging.error(e)
+            return
+        if self.no_header.isChecked():
+            self.statistic_shift -= 1
+        if self.no_units.isChecked():
+            header_grow = self.statistic_shift - 1
+        else:
+            header_grow = self.statistic_shift
+        if self.horizontal_statistics.isChecked():
+            ver_headers = [self.info_field.verticalHeaderItem(x).text() for x in range(self.info_field.rowCount())]
+            self.info_field.setRowCount(3 + header_grow)
+            self.info_field.setColumnCount(max(len(stat), self.info_field.columnCount()))
+            if not self.no_header.isChecked():
+                ver_headers.append("Name")
+            ver_headers.extend(["Value"])
+            if not self.no_units.isChecked():
+                ver_headers.append("Units")
+            self.info_field.setVerticalHeaderLabels(ver_headers)
+            self.info_field.setHorizontalHeaderLabels([str(x) for x in range(len(stat))])
+            for i, (key, val) in enumerate(stat.items()):
+                print(i, key, val)
+                if not self.no_header.isChecked():
+                    self.info_field.setItem(self.statistic_shift + 0, i, QTableWidgetItem(key))
+                self.info_field.setItem(self.statistic_shift + 1, i, QTableWidgetItem(str(val)))
+                if not self.no_units.isChecked():
+                    try:
+                        self.info_field.setItem(self.statistic_shift + 2, i,
+                                                QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
+                    except KeyError as k:
+                        logging.warning(k.message)
+        else:
+            hor_headers = [self.info_field.horizontalHeaderItem(x).text() for x in range(self.info_field.columnCount())]
+            self.info_field.setRowCount(max(len(stat), self.info_field.rowCount()))
+            self.info_field.setColumnCount(3 + header_grow)
+            self.info_field.setVerticalHeaderLabels([str(x) for x in range(len(stat))])
+            if not self.no_header.isChecked():
+                hor_headers.append("Name")
+            hor_headers.extend(["Value"])
+            if not self.no_units.isChecked():
+                hor_headers.append("Units")
+            self.info_field.setHorizontalHeaderLabels(hor_headers)
+            for i, (key, val) in enumerate(stat.items()):
+                # print(i, key, val)
+                if not self.no_header.isChecked():
+                    self.info_field.setItem(i, self.statistic_shift + 0, QTableWidgetItem(key))
+                self.info_field.setItem(i, self.statistic_shift + 1, QTableWidgetItem(str(val)))
+                if not self.no_units.isChecked():
+                    try:
+                        self.info_field.setItem(i, self.statistic_shift + 2,
+                                                QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
+                    except KeyError as k:
+                        logging.warning(k.message)
+        if self.no_units.isChecked():
+            self.statistic_shift -= 1
+        self.statistic_shift += 3
+
+    def keyPressEvent(self, e):
+        if e.modifiers() & Qt.ControlModifier:
+            selected = self.info_field.selectedRanges()
+
+            if e.key() == Qt.Key_C:  # copy
+                s = ""
+
+                for r in range(selected[0].topRow(), selected[0].bottomRow() + 1):
+                    for c in range(selected[0].leftColumn(), selected[0].rightColumn() + 1):
+                        try:
+                            s += str(self.info_field.item(r, c).text()) + "\t"
+                        except AttributeError:
+                            s += "\t"
+                            logging.info("Copy problem")
+                    s = s[:-1] + "\n"  # eliminate last '\t'
+                self.clip.setText(s)
+
+    def showEvent(self, _):
+        self._protect = True
+        avali = list(sorted(self.settings.get("statistic_profiles").keys()))
+        # avali.insert(0, "Emish statistics (oryginal)")
+        text = self.statistic_type.currentText()
+        try:
+            index = avali.index(text)
+        except ValueError:
+            index = 0
+        self.statistic_type.clear()
+        self.statistic_type.addItems(avali)
+        self.statistic_type.setCurrentIndex(index)
+        self._protect = False

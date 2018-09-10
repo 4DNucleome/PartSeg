@@ -27,6 +27,7 @@ class PartSettings(BaseSettings):
     def __init__(self):
         super().__init__()
         self._mask = None
+        self.full_segmentation = None
 
     @property
     def mask(self):

@@ -259,7 +259,6 @@ class InteractiveAlgorithmSettingsWidget(AlgorithmSettingsWidget):
         self.channels_chose.currentIndexChanged.connect(self.channel_change)
 
     def value_updated(self):
-        print(self.parent())
         if not self.parent().interactive:
             return
         self.execute()

@@ -217,6 +217,17 @@ class BaseSettings(ViewSettings):
     def get(self, key_path, default=None):
         return self.segmentation_dict[self.current_segmentation_dict].get(key_path, default)
 
+    def dump_part(self, file_path, path_in_dict, names=None):
+        data = self.get(path_in_dict)
+        if names is not None:
+            data = dict([(name, data[name]) for name in names ])
+        with open(file_path, 'w') as ff:
+            json.dump(data, ff, cls=self.json_encoder_class, indent=2)
+
+    def load_part(self, file_path):
+        with open(file_path, 'r') as ff:
+           return json.load(ff, object_hook=self.decode_hook)
+
     def dump(self, file_path):
         if not path.exists(path.dirname(file_path)):
             makedirs(path.dirname(file_path))

@@ -404,7 +404,7 @@ class StatisticsSettings(QWidget):
             dial.setDirectory(self.settings.statistic_dirs)
         dial.setFileMode(QFileDialog.AnyFile)
         dial.setAcceptMode(QFileDialog.AcceptSave)
-        dial.setFilter("statistic profile (*.json)")
+        dial.setNameFilter("statistic profile (*.json)")
         dial.setDefaultSuffix("json")
         dial.selectFile("statistic_profile.json")
 
@@ -418,7 +418,7 @@ class StatisticsSettings(QWidget):
         if self.settings.statistic_dirs is not None:
             dial.setDirectory(self.settings.statistic_dirs)
         dial.setFileMode(QFileDialog.ExistingFile)
-        dial.setFilter("statistic profile (*.json)")
+        dial.setNameFilter("statistic profile (*.json)")
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
             self.settings.statistic_dirs = file_path

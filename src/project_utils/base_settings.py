@@ -1,4 +1,4 @@
-from PyQt5.QtCore import pyqtSignal, QObject
+"""from PyQt5.QtCore import pyqtSignal, QObject
 import sqlite3
 import os
 
@@ -13,4 +13,4 @@ class BaseSettings(QObject):
 
     def create_database(self, database_path):
 
-        pass
+        pass"""

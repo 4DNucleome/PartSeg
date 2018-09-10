@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+from PyQt5.QtCore import pyqtSignal
+
 from project_utils.algorithm_base import SegmentationAlgorithm
 from project_utils.image_operations import gaussian
 import numpy as np
@@ -8,6 +10,8 @@ from project_utils import bisect
 
 
 class RestartableAlgorithm(SegmentationAlgorithm):
+    execution_done_extend = pyqtSignal(np.ndarray, np.ndarray)
+
     def __init__(self):
         super().__init__()
         self.parameters = defaultdict(lambda: None)
@@ -52,6 +56,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm):
             finally_segment = np.copy(self.segmentation)
             finally_segment[finally_segment > ind] = 0
             self.execution_done.emit(finally_segment)
+            self.execution_done_extend.emit(finally_segment, self.segmentation)
 
     def clean(self):
         super().clean()
