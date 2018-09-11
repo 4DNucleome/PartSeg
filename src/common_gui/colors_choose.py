@@ -4,11 +4,12 @@ from itertools import count
 import numpy as np
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QShowEvent, QImage
-from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QCheckBox, QScrollArea, QPushButton, QHBoxLayout
+from PyQt5.QtGui import QImage
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QCheckBox, QPushButton, QHBoxLayout
 
 from common_gui.channel_control import ColorPreview
 from common_gui.flow_layout import FlowLayout
+from common_gui.vetical_scroll_area import VerticalScrollArea
 from project_utils.color_image import color_image
 from project_utils.settings import ViewSettings
 
@@ -37,7 +38,7 @@ class ColorSelector(QWidget):
         self.mark_all_btn.clicked.connect(self.mark_all)
         self.un_mark_all_btn.clicked.connect(self.un_mark_all)
         self.current_color = ""
-        self.scroll = QScrollArea()
+        self.scroll = VerticalScrollArea()
         widget = QWidget()
 
         layout = QVBoxLayout()

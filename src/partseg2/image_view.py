@@ -21,7 +21,8 @@ class RawImageStack(QStackedWidget):
 class StatisticsWindowForRaw(StatisticsWindow):
     def __init__(self, settings):
         super().__init__(settings)
-        self.image_view = QPushButton("Image preview")
+        self.image_view = QPushButton("Image\npreview")
+        self.image_view.setMinimumWidth(50)
         self.up_butt_layout.addWidget(self.image_view)
         self.image_view.clicked.connect(self.image_view_fun)
 

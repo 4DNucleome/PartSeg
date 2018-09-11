@@ -551,8 +551,10 @@ class StatisticsWindow(QWidget):
         self.copy_button.clicked.connect(self.copy_to_clipboard)
         self.statistic_type = QComboBox(self)
         # self.statistic_type.addItem("Emish statistics (oryginal)")
-        self.statistic_type.addItems(list(sorted(self.settings.get("statistic_profiles").keys())))
+        self.statistic_type.addItems(list(sorted(self.settings.get("statistic_profiles", dict()).keys())))
         self.statistic_type.currentIndexChanged[str].connect(self.statistic_selection_changed)
+        self.channels_chose = QComboBox()
+        self.channels_chose.addItems(map(str, range(self.settings.channels)))
         self.info_field = QTableWidget(self)
         self.info_field.setColumnCount(3)
         self.info_field.setHorizontalHeaderLabels(["Name", "Value", "Units"])
@@ -572,16 +574,30 @@ class StatisticsWindow(QWidget):
         butt_layout.addWidget(self.no_header, 1)
         butt_layout.addWidget(self.no_units, 1)
         butt_layout.addWidget(self.copy_button, 2)
-        butt_layout.addWidget(self.statistic_type, 2)
+        butt_layout2 = QHBoxLayout()
+        butt_layout2.addWidget(QLabel("Channel:"))
+        butt_layout2.addWidget(self.channels_chose)
+        butt_layout2.addWidget(QLabel("Statistic:"))
+        butt_layout2.addWidget(self.statistic_type, 2)
         v_butt_layout.addLayout(self.up_butt_layout)
         v_butt_layout.addLayout(butt_layout)
+        v_butt_layout.addLayout(butt_layout2)
         layout.addLayout(v_butt_layout)
         # layout.addLayout(butt_layout)
         layout.addWidget(self.info_field)
         self.setLayout(layout)
         # noinspection PyArgumentList
         self.clip = QApplication.clipboard()
+        self.settings.image_changed[int].connect(self.image_changed)
         # self.update_statistics()
+
+    def image_changed(self, channels_num):
+        ind = self.channels_chose.currentIndex()
+        self.channels_chose.clear()
+        self.channels_chose.addItems(map(str, range(channels_num)))
+        if ind < 0 or ind > channels_num:
+            ind = 0
+        self.channels_chose.setCurrentIndex(ind)
 
     def statistic_selection_changed(self, text):
         if self._protect:
