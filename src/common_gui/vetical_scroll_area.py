@@ -11,7 +11,5 @@ class VerticalScrollArea(QScrollArea):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 
     def resizeEvent(self, a0: QtGui.QResizeEvent):
-        print("buka1")
         if self.widget() and self.width() > 0:
-            print("buka2")
             self.widget().setMinimumWidth(self.width() - self.verticalScrollBar().width())

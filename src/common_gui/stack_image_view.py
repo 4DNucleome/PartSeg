@@ -330,7 +330,6 @@ class ImageView(QWidget):
         self.btn_layout.addStretch(1)
         self.repaint()
 
-
     def update_channels_coloring(self, new_image: bool):
         if not new_image:
             self.change_image()
@@ -572,6 +571,11 @@ class MyScrollArea(QScrollArea):
 
     def resizeEvent(self, event):
         super(MyScrollArea, self).resizeEvent(event)
+        if event.oldSize().width() != -1:
+            ratio_h = self.height() / event.oldSize().height()
+            ratio_w = self.width() / event.oldSize().width()
+            ratio = min(ratio_w, ratio_h)
+            self.pixmap.resize(self.pixmap.size() * ratio)
         if self.size().width() - 2 > self.pixmap.width() and self.size().height() - 2 > self.pixmap.height():
             self.reset_image()
 
