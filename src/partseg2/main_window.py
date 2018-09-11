@@ -117,6 +117,10 @@ class Options(QWidget):
         if self.interactive:
             self.execute_algorithm()
 
+    def image_changed_exec(self):
+        if self.interactive:
+            self.execute_algorithm()
+
     def execute_algorithm(self):
         widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.currentWidget()
         widget.execute()
@@ -332,6 +336,7 @@ class MainWindow(QMainWindow):
         print("buka1", self.settings.image.shape, self.sender())
         self.raw_image.raw_image.set_image(self.settings.image)
         self.result_image.set_image(self.settings.image)
+        self.options_panel.image_changed_exec()
         self.setWindowTitle(f"PartSeg: {self.settings.image_path}")
 
     def closeEvent(self, _):

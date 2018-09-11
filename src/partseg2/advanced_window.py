@@ -588,7 +588,7 @@ class StatisticsWindow(QWidget):
             return
         text = str(text)
         try:
-            stat = self.settings.statistics_profile_dict[text]
+            stat = self.settings.get(f"statistic_profiles.{text}")
             is_mask = stat.is_any_mask_statistic()
             disable = is_mask and (self.settings.mask is None)
         except KeyError:
@@ -643,14 +643,14 @@ class StatisticsWindow(QWidget):
     def append_statistics(self):
 
         compute_class:StatisticProfile = self.settings.get(f"statistic_profiles.{self.statistic_type.currentText()}")
-        gauss_image = self.settings.gauss_image
+        gauss_image = self.settings.image
         image = self.settings.image
         segmentation = self.settings.segmentation
         full_mask = self.settings.full_segmentation
         base_mask = self.settings.mask
         try:
             stat = compute_class.calculate(image, gauss_image, segmentation,
-                                           full_mask, base_mask, self.settings.voxel_size)
+                                           full_mask, base_mask, self.settings.image_spacing)
         except ValueError as e:
             logging.error(e)
             return
