@@ -21,7 +21,7 @@ from qt_import import QPixmap, QImage, QWidget, QVBoxLayout, QHBoxLayout, \
     pyqtSignal, QPoint, QSlider, QCheckBox, QComboBox, QSize, QObject, \
     QEvent, QToolTip, QHelpEvent
 from stackseg.stack_settings import StackSettings
-from project_utils.settings import ImageSettings
+from project_utils.settings import ImageSettings, ViewSettings
 from .channel_control import ChannelControl
 
 canvas_icon_size = QSize(20, 20)
@@ -91,20 +91,23 @@ class ImageCanvas(QLabel):
         self.point = None
         self.point2 = None
         self.image = None
+        self.image_size = QSize(1,1)
+        self.image_ratio = 1
         self.setMouseTracking(True)
 
-    def set_image(self, im):
+    def set_image(self, im, paint):
         self.image = im
         height, width, _ = im.shape
         self.image_size = QSize(width, height)
         self.image_ratio = float(width) / float(height)
-        im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 3, QImage.Format_RGB888)
-        self.setPixmap(QPixmap.fromImage(im2.scaled(self.width(), self.height(), Qt.KeepAspectRatio)))
+        if paint:
+            im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 3, QImage.Format_RGB888)
+            self.setPixmap(QPixmap.fromImage(im2.scaled(self.width(), self.height(), Qt.KeepAspectRatio)))
 
-    def update_size(self, scale_factor=None):
+    """def update_size(self, scale_factor=None):
         if scale_factor is not None:
             self.scale_factor = scale_factor
-        self.resize(self.scale_factor * self.pixmap().size())
+        self.resize(self.scale_factor * self.pixmap().size())"""
 
     def leaveEvent(self, a0: QEvent):
         self.point = None
@@ -117,6 +120,7 @@ class ImageCanvas(QLabel):
         :param event:
         :return:
         """
+        print("press", event)
         super(ImageCanvas, self).mousePressEvent(event)
         if self.local_settings.zoom:
             self.point = event.pos()
@@ -131,6 +135,7 @@ class ImageCanvas(QLabel):
         self.position_signal.emit(event.pos(), self.size())
 
     def mouseReleaseEvent(self, event):
+        print("release", event)
         super(ImageCanvas, self).mouseReleaseEvent(event)
         if self.local_settings.zoom:
             diff = self.point2 - self.point
@@ -162,11 +167,9 @@ class ImageCanvas(QLabel):
         if self.image is None:
             return
         im = self.image
-        height, width, _ = im.shape
-        self.image_size = QSize(width, height)
-        self.image_ratio = float(width) / float(height)
+        width, height = self.image_size.width(), self.image_size.height()
         im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 3, QImage.Format_RGB888)
-        self.setPixmap(QPixmap.fromImage(im2.scaled(event.size().width(), event.size().height(), Qt.KeepAspectRatio)))
+        self.setPixmap(QPixmap.fromImage(im2.scaled(self.width(), self.height(), Qt.KeepAspectRatio)))
 
 
 def get_scroll_bar_proportion(scroll_bar):
@@ -405,7 +408,7 @@ class ImageView(QWidget):
                 img[..., i] = gaussian_filter(img[..., i], radius)
         im = color_image(img, color_maps, borders)
         self.add_labels(im)
-        self.image_area.set_image(im, self.sender() is not None)
+        self.image_area.set_image(im, not isinstance(self.sender(), ViewSettings))
         self.tmp_image = np.array(img)
 
     def add_labels(self, im):
@@ -459,7 +462,7 @@ class MyScrollArea(QScrollArea):
     :type zoom_scale: float
     :param zoom_scale: zoom scale
     """
-    resize_area = pyqtSignal(QSize)
+    #resize_area = pyqtSignal(QSize)
 
     def __init__(self, local_settings, *args, **kwargs):
         """
@@ -481,11 +484,12 @@ class MyScrollArea(QScrollArea):
         self.pixmap.zoom_mark.connect(self.zoom_image)
         self.setBackgroundRole(QPalette.Dark)
         self.setWidget(self.pixmap)
-        self.image_ratio = 1
+        #self.image_ratio = 1
         self.zoom_scale = 1
         self.max_zoom = 15
         self.image_size = QSize(1, 1)
-        self.resize_area.connect(self.pixmap.resize)
+        #self.resize_area.connect(self.pixmap.resize)
+
 
     def zoom_image(self, point1, point2):
         """
@@ -502,11 +506,13 @@ class MyScrollArea(QScrollArea):
         x_ratio = self.width() / x_width
         y_ratio = self.height() / y_width
         scale_ratio = min(x_ratio, y_ratio)
-        self.zoom_scale *= scale_ratio
-        if self.zoom_scale > self.max_zoom:
-            scale_ratio *= self.max_zoom / self.zoom_scale
+
+        if self.zoom_scale * scale_ratio > self.max_zoom:
+            scale_ratio = self.max_zoom / self.zoom_scale
             self.zoom_scale = self.max_zoom
-        print(self.zoom_scale)
+        else:
+            self.zoom_scale *= scale_ratio
+        print(f"Zoom scale: {self.zoom_scale}")
         if scale_ratio == 1:
             return
         self.pixmap.resize(self.pixmap.size() * scale_ratio)
@@ -525,6 +531,10 @@ class MyScrollArea(QScrollArea):
         v_set = v_min + (v_max - v_min) * ((x_mid - view_w / 2) / (img_w - view_w))
         self.horizontalScrollBar().setValue(int(v_set))
 
+    @property
+    def image_ratio(self):
+        return self.widget().image_ratio
+
     def reset_image(self):
         x = self.size().width() - 2
         y = self.size().height() - 2
@@ -533,12 +543,13 @@ class MyScrollArea(QScrollArea):
         else:
             y = int(x / self.image_ratio)
         self.pixmap.resize(x, y)
-        self.zoom_scale = x/self.pixmap.width()
+        self.zoom_scale = 1
 
     def set_image(self, im, keep_size=False):
-        self.widget().set_image(im)
+        self.widget().set_image(im, keep_size)
         if not keep_size:
-            self.widget().adjustSize()
+            self.reset_image()
+            #self.widget().adjustSize()
 
     def mousePressEvent(self, event):
         self.clicked = True
@@ -569,30 +580,77 @@ class MyScrollArea(QScrollArea):
             n_val = (scroll_bar.minimum() + scroll_bar.maximum()) // 2
             scroll_bar.setValue(n_val)
 
+    def resize_pixmap(self):
+        pixmap_ratio = self.pixmap.image_size.width() / self.pixmap.image_size.height()
+        area_ratio = self.width() / self.height()
+        if pixmap_ratio < area_ratio:
+            ratio = self.height() / self.pixmap.image_size.height()
+        else:
+            ratio = self.width() / self.pixmap.image_size.width()
+        ratio = ratio * self.zoom_scale
+        # ratio = min(ratio_w, ratio_h)
+        s_h = 0
+        s_v = 0
+        try:
+            s_h = self.horizontalScrollBar().value() / self.horizontalScrollBar().maximum()
+        except ZeroDivisionError:
+            pass
+        try:
+            s_v = self.verticalScrollBar().value() / self.verticalScrollBar().maximum()
+        except ZeroDivisionError:
+            pass
+        self.pixmap.resize(self.pixmap.image_size * ratio - QSize(2, 2))
+        # print(self.parent().__class__, self.pixmap.image_size, ratio, self.pixmap.image_size * ratio,
+        #      self.pixmap.size())
+        self.horizontalScrollBar().setValue(self.horizontalScrollBar().maximum() * s_h)
+        self.verticalScrollBar().setValue(self.verticalScrollBar().maximum() * s_v)
+
     def resizeEvent(self, event):
-        super(MyScrollArea, self).resizeEvent(event)
-        if event.oldSize().width() != -1:
-            ratio_h = self.height() / event.oldSize().height()
-            ratio_w = self.width() / event.oldSize().width()
-            ratio = min(ratio_w, ratio_h)
-            self.pixmap.resize(self.pixmap.size() * ratio)
+        #super(MyScrollArea, self).resizeEvent(event)
+        if self.size() == event.oldSize():
+            return
         if self.size().width() - 2 > self.pixmap.width() and self.size().height() - 2 > self.pixmap.height():
             self.reset_image()
+        elif event.oldSize().width() != -1:
+            self.resize_pixmap()
+
 
     def wheelEvent(self, event):
         if not (QApplication.keyboardModifiers() & Qt.ControlModifier) == Qt.ControlModifier:
             return
-        if use_qt5:
-            delta = event.angleDelta().y()
-        else:
-            delta = event.delta()
+
+        delta = event.angleDelta().y()
         x, y = event.x(), event.y()
         if abs(delta) > max_step:
             delta = max_step * (delta/abs(delta))
         scale_mod = (step**delta)
+        if scale_mod == 1 or (scale_mod > 1 and self.zoom_scale == self.max_zoom):
+            return
         if self.zoom_scale * scale_mod > self.max_zoom:
-            scale_mod = self.max_zoom / self.zoom_scale
-
+            self.zoom_scale = self.max_zoom
+        elif self.zoom_scale * scale_mod < 1:
+            return
+        else:
+            self.zoom_scale *= scale_mod
+        self.resize_pixmap()
+        if self.horizontalScrollBar().maximum() > 0 or self.verticalScrollBar().maximum() > 0:
+            print(x,y, self.pixmap.x(), self.pixmap.y())
+            x0 = x - self.pixmap.x()
+            y0 = y - self.pixmap.y()
+            if self.pixmap.width() > self.width():
+                x_ratio = (x0 - self.width()/2)  / (self.pixmap.width() - self.width())
+                set_scroll_bar_proportion(self.horizontalScrollBar(), x_ratio)
+                print(f"x_ratio {x_ratio}")
+            if self.pixmap.height() > self.height():
+                y_ratio = (y0 - self.height()/2)/ (self.pixmap.height()-self.height())
+                set_scroll_bar_proportion(self.verticalScrollBar(), y_ratio)
+                print(f"y_ratio {y_ratio}")
+            # scroll_h_ratio = get_scroll_bar_proportion(self.horizontalScrollBar())
+            # scroll_v_ratio = get_scroll_bar_proportion(self.verticalScrollBar())
+            # self.pixmap.width() - self.width()
+            # set_scroll_bar_proportion(self.horizontalScrollBar(), y_ratio)
+            # set_scroll_bar_proportion(self.verticalScrollBar(), x_ratio)
+        return
         new_size = self.pixmap.size() * scale_mod
         if scale_mod == 1:
             return
