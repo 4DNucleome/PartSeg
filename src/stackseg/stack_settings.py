@@ -23,11 +23,23 @@ class StackSettings(BaseSettings):
     def batch_directory(self, val):
         self.set("io.batch_directory", val)
 
+    def file_save_name(self):
+        return path.splitext(path.basename(self.image_path))[0]
+
+    def get_file_names_for_save_result(self, dir_path):
+        components = self.chosen_components()
+        file_name = self.file_save_name()
+        res = []
+        for i in components:
+            res.append(path.join(dir_path, f"{file_name}_component{i}.tif"))
+            res.append(path.join(dir_path, f"{file_name}_component{i}_mask.tif"))
+        return res
+
     def save_result(self, dir_path: str):
         res_img = cut_with_mask(self.segmentation, self._image, only=self.chosen_components())
         res_mask = cut_with_mask(self.segmentation, self.segmentation, only=self.chosen_components())
-        res_mask = (res_mask > 0).astype(np.uint8)
-        file_name = path.splitext(path.basename(self.image_path))[0]
+        res_mask = [(int(n), np.array((v > 0).astype(np.uint8))) for n,v in res_mask]
+        file_name = self.file_save_name()
         save_catted_list(res_img, dir_path, prefix=f"{file_name}_component")
         save_catted_list(res_mask, dir_path, prefix=f"{file_name}_component", suffix="_mask")
 

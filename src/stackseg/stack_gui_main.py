@@ -136,9 +136,21 @@ class MainMenu(QWidget):
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0])
         if not dial.exec_():
             return
-        file_path = str(dial.selectedFiles()[0])
-        self.settings.set("io.save_components_directory", os.path.dirname(str(file_path)))
-        self.settings.save_result(file_path)
+        dir_path = str(dial.selectedFiles()[0])
+        potential_names = self.settings.get_file_names_for_save_result(dir_path)
+        conflict = []
+        for el in potential_names:
+            if os.path.exists(el):
+                conflict.append(el)
+        if len(conflict) > 0:
+            conflict_str = "\n".join(conflict)
+            if QMessageBox.No == QMessageBox.warning(self, "Overwrite", f"Overwrite files:\n {conflict_str}",
+                                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No):
+                self.save_result()
+                return
+
+        self.settings.set("io.save_components_directory", os.path.dirname(str(dir_path)))
+        self.settings.save_result(dir_path)
 
 
 class ChosenComponents(QWidget):

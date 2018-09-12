@@ -332,7 +332,7 @@ def cut_with_mask(mask, image, ignore=None, only=None):
 
 def save_catted_list(images, path, prefix="", suffix=""):
     """
-    :type images: list[int, np.ndarray]
+    :type images: list[tuple(int, np.ndarray)]
     :type path: str
     :param images:
     :param path:
