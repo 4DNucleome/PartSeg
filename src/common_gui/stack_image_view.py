@@ -506,6 +506,17 @@ class MyScrollArea(QScrollArea):
             self.sender().setValue(min_val + (max_val - min_val) * self.vertical_ratio[1])
             self.vertical_ratio = False, 1
 
+    def get_ratio_factor(self):
+        pixmap_ratio = self.pixmap.image_size.width() / self.pixmap.image_size.height()
+        area_ratio = self.width() / self.height()
+        if pixmap_ratio < area_ratio:
+            ratio = self.height() / self.pixmap.image_size.height()
+        else:
+            ratio = self.width() / self.pixmap.image_size.width()
+        ratio = ratio * self.zoom_scale
+        # noinspection PyTypeChecker
+        return ratio
+
     def zoom_image(self, point1, point2):
         """
         :type point1: QPoint
@@ -514,6 +525,7 @@ class MyScrollArea(QScrollArea):
         :param point2:
         :return:
         """
+        print(point1, point2)
         x_width = abs(point1.x() - point2.x())
         y_width = abs(point1.y() - point2.y())
         if x_width < 10 or y_width < 10:
@@ -530,7 +542,12 @@ class MyScrollArea(QScrollArea):
         print(f"Zoom scale: {self.zoom_scale}")
         if scale_ratio == 1:
             return
-        self.pixmap.resize(self.pixmap.size() * scale_ratio)
+        ratio = self.get_ratio_factor()
+        # noinspection PyTypeChecker
+        final_size = QSize(self.pixmap.image_size * ratio - QSize(2, 2))
+        self.pixmap.resize(final_size)
+
+
         img_h = self.pixmap.size().height()
         view_h = self.size().height() - 2
         y_mid = (point1.y() + point2.y())/2 * scale_ratio
@@ -600,14 +617,8 @@ class MyScrollArea(QScrollArea):
             print("calculate_shift", self.__class__, pixmap_len, pixmap_len - self_len, scroll_bar.maximum())
             scroll_bar.setValue(pixmap_len * pix_ratio - self_len * cursor_ratio)
 
-    def resize_pixmap(self, pixmap_mid, cursor_pos):
-        pixmap_ratio = self.pixmap.image_size.width() / self.pixmap.image_size.height()
-        area_ratio = self.width() / self.height()
-        if pixmap_ratio < area_ratio:
-            ratio = self.height() / self.pixmap.image_size.height()
-        else:
-            ratio = self.width() / self.pixmap.image_size.width()
-        ratio = ratio * self.zoom_scale
+    def resize_pixmap(self):
+        ratio = self.get_ratio_factor()
         # noinspection PyTypeChecker
         final_size = QSize(self.pixmap.image_size * ratio - QSize(2, 2))
         if self.horizontalScrollBar().maximum():
@@ -635,7 +646,7 @@ class MyScrollArea(QScrollArea):
             pixmap_mid = (self.width()/2 - self.pixmap.x()) /self.pixmap.width(),\
                          (self.height()/2 - self.pixmap.y()) / self.pixmap.height()
             cursor_pos = (0.5, 0.5)
-            self.resize_pixmap(pixmap_mid, cursor_pos)
+            self.resize_pixmap()
 
 
     def wheelEvent(self, event):
@@ -656,5 +667,5 @@ class MyScrollArea(QScrollArea):
         cursor_pos = event.x() / self.width(), event.y() / self.height()
         pixmap_mid = (event.x() - self.pixmap.x()) / self.pixmap.width(), \
                      (event.y() / 2 - self.pixmap.y()) / self.pixmap.height()
-        self.resize_pixmap(pixmap_mid, cursor_pos)
+        self.resize_pixmap()
         event.accept()
