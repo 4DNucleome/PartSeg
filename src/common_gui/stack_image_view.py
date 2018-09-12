@@ -101,9 +101,9 @@ class ImageCanvas(QLabel):
         height, width, _ = im.shape
         self.image_size = QSize(width, height)
         self.image_ratio = float(width) / float(height)
-        if paint:
-            im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 3, QImage.Format_RGB888)
-            self.setPixmap(QPixmap.fromImage(im2.scaled(self.width(), self.height(), Qt.KeepAspectRatio)))
+        # TODO Maybe something to avoid double paint when resize
+        im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 3, QImage.Format_RGB888)
+        self.setPixmap(QPixmap.fromImage(im2.scaled(self.width(), self.height(), Qt.KeepAspectRatio)))
 
     """def update_size(self, scale_factor=None):
         if scale_factor is not None:
@@ -410,7 +410,7 @@ class ImageView(QWidget):
                 img[..., i] = gaussian_filter(img[..., i], radius)
         im = color_image(img, color_maps, borders)
         self.add_labels(im)
-        self.image_area.set_image(im, not isinstance(self.sender(), ViewSettings))
+        self.image_area.set_image(im, True)
         self.tmp_image = np.array(img)
 
     def add_labels(self, im):

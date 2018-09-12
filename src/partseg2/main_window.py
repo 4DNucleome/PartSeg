@@ -335,7 +335,9 @@ class MainWindow(QMainWindow):
     def image_read(self):
         print("buka1", self.settings.image.shape, self.sender())
         self.raw_image.raw_image.set_image(self.settings.image)
+        self.raw_image.raw_image.reset_image_size()
         self.result_image.set_image(self.settings.image)
+        self.result_image.reset_image_size()
         self.options_panel.image_changed_exec()
         self.setWindowTitle(f"PartSeg: {self.settings.image_path}")
 

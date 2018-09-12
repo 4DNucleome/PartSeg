@@ -528,6 +528,7 @@ class MainWindow(QMainWindow):
     def image_read(self):
         print("buka1", self.settings.image.shape, self.sender())
         self.image_view.set_image(self.settings.image)
+        self.image_view.reset_image_size()
         self.setWindowTitle(f"StackSeg: {self.settings.image_path}")
 
     def closeEvent(self, _):
