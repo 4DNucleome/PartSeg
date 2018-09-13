@@ -164,6 +164,7 @@ class ViewSettings(ImageSettings):
     def __init__(self):
         super().__init__()
         self.color_map = []
+        self.border_val = []
         # self.chosen_colormap = pyplot.colormaps()
         self.current_profile_dict = "default"
         self.profile_dict: typing.Dict[str, ProfileDict] = {self.current_profile_dict: ProfileDict()}

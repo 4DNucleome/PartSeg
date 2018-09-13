@@ -7,6 +7,7 @@ from math import log
 import SimpleITK as sitk
 import numpy as np
 from PyQt5 import QtGui, QtCore
+from PyQt5.QtCore import QRect
 from PyQt5.QtGui import QShowEvent, QResizeEvent
 from PyQt5.QtWidgets import QScrollBar
 from matplotlib import pyplot
@@ -328,6 +329,14 @@ class ImageView(QWidget):
 
         settings.segmentation_changed.connect(self.set_labels)
 
+    @property
+    def border_val(self):
+        return self._settings.border_val
+
+    @border_val.setter
+    def border_val(self, val):
+        self._settings.border_val = val
+
     def showEvent(self, event: QShowEvent):
         self.btn_layout.addStretch(1)
         self.repaint()
@@ -525,7 +534,6 @@ class MyScrollArea(QScrollArea):
         :param point2:
         :return:
         """
-        print(point1, point2)
         x_width = abs(point1.x() - point2.x())
         y_width = abs(point1.y() - point2.y())
         if x_width < 10 or y_width < 10:
@@ -664,8 +672,50 @@ class MyScrollArea(QScrollArea):
             return
         else:
             self.zoom_scale *= scale_mod
-        cursor_pos = event.x() / self.width(), event.y() / self.height()
-        pixmap_mid = (event.x() - self.pixmap.x()) / self.pixmap.width(), \
-                     (event.y() / 2 - self.pixmap.y()) / self.pixmap.height()
         self.resize_pixmap()
         event.accept()
+
+
+class ColorBar(QLabel):
+    def __init__(self, settings: ViewSettings , channel_control: ChannelControl):
+        super().__init__()
+        self.channel_control = channel_control
+        self._settings = settings
+        self.image = None
+        self.channel_control.channel_change.connect(self.update_colormap)
+        self.range = None
+        self.setMinimumWidth(80)
+        #layout = QHBoxLayout()
+        #layout.addWidget(QLabel("aaa"))
+        #self.setLayout(layout)
+
+    def update_colormap(self, id):
+        fixed_range = self._settings.get_from_profile(f"{self.channel_control.name}.lock_{id}")
+        if fixed_range:
+            self.range = self._settings.get_from_profile(f"{self.channel_control.name}.range_{id}")
+        else:
+            self.range = self._settings.border_val[id]
+        cmap = self._settings.get_from_profile(f"{self.channel_control.name}.cmap{id}")
+
+        img = color_image(np.linspace(0, 256, 512).reshape((1,512, 1))[:, ::-1], [cmap], [(0, 256)])
+        self.image = QImage(img.data, 1, 512, img.dtype.itemsize * 3, QImage.Format_RGB888)
+        self.repaint()
+
+    def paintEvent(self, event: QtGui.QPaintEvent):
+        bar_width = 30
+        if self.image is None:
+            return
+        rect = event.rect()
+        image_rect = QRect(rect.topLeft(), QSize(bar_width, rect.size().height()))
+        painter = QPainter(self)
+        old_font = painter.font()
+        new_font = painter.font()
+        new_font.setPointSizeF(new_font.pointSizeF() / 1.1)
+        painter.setFont(new_font)
+        painter.drawImage(image_rect, self.image)
+        for pos, val  in zip(np.linspace(10, rect.size().height(), 10),
+                             np.linspace(self.range[1], self.range[0], 10, dtype=np.uint32)):
+            painter.drawText(bar_width+5, pos, f"{val}")
+        painter.setFont(old_font)
+        # print(self.image.shape)
+

@@ -120,8 +120,9 @@ class ChannelControl(QWidget):
     :type _settings: BaseSettings
     """
 
-    coloring_update = pyqtSignal(bool)
+    coloring_update = pyqtSignal(bool) # gave info if it is new image
     parameters_changed = pyqtSignal()
+    channel_change = pyqtSignal(int)
 
     def __init__(self, settings : ViewSettings, parent=None, flags=Qt.WindowFlags(), name="channelcontrol", text=""):
         super().__init__(parent, flags)
@@ -187,6 +188,13 @@ class ChannelControl(QWidget):
         self.setLayout(layout)
         self.collapse_widget.setChecked(True)
         self._settings.image_changed.connect(self.update_channels_list)
+        self.minimum_value.setMinimumWidth(50)
+        self.maximum_value.setMinimumWidth(50)
+        self.gauss_radius.setMinimumWidth(30)
+
+    @property
+    def name(self):
+        return self._name
 
     def colormap_list_changed(self):
         self.colormap_chose.blockSignals(True)
@@ -199,8 +207,6 @@ class ChannelControl(QWidget):
             self.colormap_chose.setCurrentIndex(index)
         except KeyError:
             pass
-
-
         self.colormap_chose.blockSignals(False)
 
     def refresh_info(self):
@@ -219,6 +225,7 @@ class ChannelControl(QWidget):
         self.channels_widgets[self.current_channel].set_locked(value)
         self._settings.set_in_profile(f"{self._name}.lock_{self.current_channel}", value)
         self.coloring_update.emit(False)
+        self.channel_change.emit(self.current_channel)
 
     def range_changed(self):
         self._settings.set_in_profile(f"{self._name}.range_{self.current_channel}", (self.minimum_value.value(), self.maximum_value.value()))
@@ -226,6 +233,7 @@ class ChannelControl(QWidget):
         # self._settings.set_in_profile(f"{self._name}.bounds", self.current_bounds)
         if self.fixed.isChecked():
             self.coloring_update.emit(False)
+            self.channel_change.emit(self.current_channel)
 
     def gauss_radius_changed(self):
         self._settings.set_in_profile(f"{self._name}.gauss_radius_{self.current_channel}", self.gauss_radius.value())
@@ -254,6 +262,7 @@ class ChannelControl(QWidget):
         self.image = self.channels_widgets[id].image
         self.colormap_chose.setCurrentText(self.channels_widgets[id].color)
         self.channel_preview_widget.repaint()
+        self.channel_change.emit(id)
 
     def change_closed(self):
         text = self.colormap_chose.currentText()
@@ -268,6 +277,7 @@ class ChannelControl(QWidget):
         self.channels_widgets[self.current_channel].set_color(value)
         self.change_color_preview(value)
         self._settings.set_in_profile(f"{self._name}.cmap{self.current_channel}", str(value))
+        self.channel_change.emit(self.current_channel)
         self.send_info()
 
 
@@ -299,6 +309,7 @@ class ChannelControl(QWidget):
         self.image = self.channels_widgets[0].image
         self.colormap_chose.setCurrentText(self.channels_widgets[0].color)
         self.send_info(True)
+        self.channel_change.emit(self.current_channel)
 
     def send_info_wrap(self):
         self.send_info()

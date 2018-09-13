@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMes
 
 from common_gui.channel_control import ChannelControl
 from common_gui.colors_choose import ColorSelector
+from common_gui.stack_image_view import ColorBar
 from common_gui.universal_gui_part import right_label
 
 from common_gui.flow_layout import FlowLayout
@@ -495,6 +496,8 @@ class MainWindow(QMainWindow):
         self.options_panel = Options(self.settings, image_view_control, self.image_view)
         self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
+        self.color_bar = ColorBar(self.settings, self.channel_control)
+
 
         im = tif.imread(os.path.join(static_file_folder, 'initial_images', "stack.tif"))
 
@@ -506,10 +509,12 @@ class MainWindow(QMainWindow):
         sub_layout = QHBoxLayout()
         sub2_layout = QVBoxLayout()
         sub3_layout = QVBoxLayout()
+        sub_layout.addWidget(self.color_bar, 0)
         sub3_layout.addWidget(self.image_view, 1)
         sub3_layout.addWidget(self.info_text, 0)
         sub2_layout.addWidget(self.options_panel, 1)
         sub2_layout.addWidget(self.channel_control, 0)
+
         sub_layout.addLayout(sub3_layout,1)
         sub_layout.addLayout(sub2_layout,0)
         layout.addLayout(sub_layout)
