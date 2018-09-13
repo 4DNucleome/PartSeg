@@ -1,4 +1,5 @@
-from partseg2.segment_algorithms import LowerThresholdAlgorithm, UpperThresholdAlgorithm, RangeThresholdAlgorithm
+from partseg2.segment_algorithms import LowerThresholdAlgorithm, UpperThresholdAlgorithm, RangeThresholdAlgorithm, \
+    LowerThresholdDistanceFlowAlgorithm, UpperThresholdDistanceFlowAlgorithm
 from project_utils.algorithms_description import AlgorithmProperty
 from copy import  deepcopy
 
@@ -15,9 +16,16 @@ range_threshold_algorithm = [AlgorithmProperty("lower_threshold", "Lower thresho
                              AlgorithmProperty("use_gauss", "Use gauss", False, (True, False)),
                              AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1)]
 
+lower_flow_threshold_algorithm = deepcopy(lower_threshold_algorithm)
+lower_flow_threshold_algorithm.insert(1, AlgorithmProperty("base_threshold", "Base threshold", 10000, (0, 10 ** 6), 100))
+
+upper_flow_threshold_algorithm = deepcopy(lower_flow_threshold_algorithm)
+
 
 part_algorithm_dict = {
     "Lower threshold": (lower_threshold_algorithm, LowerThresholdAlgorithm),
     "Upper threshold": (upper_threshold_algorithm, UpperThresholdAlgorithm),
-    "Range threshold": (range_threshold_algorithm, RangeThresholdAlgorithm)
+    "Range threshold": (range_threshold_algorithm, RangeThresholdAlgorithm),
+    "Lower threshold euclidean": (lower_flow_threshold_algorithm, LowerThresholdDistanceFlowAlgorithm),
+    "Upper threshold euclidean": (upper_flow_threshold_algorithm, UpperThresholdDistanceFlowAlgorithm)
 }

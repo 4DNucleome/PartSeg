@@ -40,10 +40,10 @@ class RawImageView(ImageView):
         self.parent().setCurrentIndex(1)
 
     def hideEvent(self, a0: QHideEvent):
-        self.parent().parent().layout().setColumnStretch(0, 0)
+        self.parent().parent().layout().setColumnStretch(1, 0)
 
     def showEvent(self, event: QShowEvent):
-        self.parent().parent().layout().setColumnStretch(0, 1)
+        self.parent().parent().layout().setColumnStretch(1, 1)
 
     def add_labels(self, im):
         return im

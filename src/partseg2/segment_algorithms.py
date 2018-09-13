@@ -3,6 +3,7 @@ from collections import defaultdict
 from PyQt5.QtCore import pyqtSignal
 
 from project_utils.algorithm_base import SegmentationAlgorithm
+from project_utils.distance_in_structure.find_split import distance_sprawl
 from project_utils.image_operations import gaussian
 import numpy as np
 import SimpleITK as sitk
@@ -35,6 +36,12 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm):
 
 
     def run(self):
+        finally_segment = self.calculation_run()
+        if finally_segment is not None:
+            self.execution_done.emit(finally_segment)
+            self.execution_done_extend.emit(finally_segment, self.segmentation)
+
+    def calculation_run(self):
         restarted = False
         if self.new_parameters["use_gauss"]:
             if self.parameters["gauss_radius"] != self.new_parameters["gauss_radius"]:
@@ -55,15 +62,15 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm):
             ind = bisect(self._sizes_array[1:], self.new_parameters["minimum_size"], lambda x, y: x > y)
             finally_segment = np.copy(self.segmentation)
             finally_segment[finally_segment > ind] = 0
-            self.execution_done.emit(finally_segment)
-            self.execution_done_extend.emit(finally_segment, self.segmentation)
+            return finally_segment
+
 
     def clean(self):
         super().clean()
         self.gauss_image = None
 
 
-    def _threshold(self, image):
+    def _threshold(self, image, thr=None):
         raise NotImplementedError()
 
     def set_image(self, image):
@@ -85,11 +92,11 @@ class OneTHresholdAlgorithm(ThresholdBaseAlgorithm):
 
 
 class LowerThresholdAlgorithm(OneTHresholdAlgorithm):
-    def _threshold(self, image):
+    def _threshold(self, image, thr=None):
         return (image > self.new_parameters["threshold"]).astype(np.uint8)
 
 class UpperThresholdAlgorithm(OneTHresholdAlgorithm):
-    def _threshold(self, image):
+    def _threshold(self, image, thr=None):
         return (image < self.new_parameters["threshold"]).astype(np.uint8)
 
 class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
@@ -99,5 +106,48 @@ class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
         self.new_parameters["use_gauss"] = use_gauss
         self.new_parameters["gauss_radius"] = gauss_radius
 
-    def _threshold(self, image):
+    def _threshold(self, image, thr=None):
         return ((image > self.new_parameters["threshold"][0]) * (image < self.new_parameters["threshold"][1])).astype(np.uint8)
+
+
+class BaseThresholdDistanceFlowAlgorithm(ThresholdBaseAlgorithm):
+    def __init__(self):
+        super().__init__()
+        self.finally_segment = None
+
+    def set_parameters(self, threshold, minimum_size,  use_gauss, gauss_radius, base_threshold):
+        self.new_parameters["threshold"] = threshold
+        self.new_parameters["minimum_size"] = minimum_size
+        self.new_parameters["use_gauss"] = use_gauss
+        self.new_parameters["gauss_radius"] = gauss_radius
+        self.new_parameters["base_threshold"] = base_threshold
+
+    def run(self):
+        finally_segment = self.calculation_run()
+        if finally_segment is None:
+            restarted = False
+            finally_segment = self.finally_segment
+        else:
+            self.finally_segment = finally_segment
+            restarted = True
+
+        if restarted or self.new_parameters["base_threshold"] != self.parameters["base_threshold"]:
+            threshold_image = self._threshold(self.gauss_image, self.new_parameters["base_threshold"])
+            if self.mask is not None:
+                threshold_image *= (self.mask > 0)
+            new_segment = distance_sprawl(threshold_image, finally_segment, finally_segment.max())
+            self.execution_done.emit(new_segment)
+            self.execution_done_extend.emit(new_segment, threshold_image)
+
+
+class LowerThresholdDistanceFlowAlgorithm(BaseThresholdDistanceFlowAlgorithm):
+    def _threshold(self, image, thr=None):
+        if thr is None:
+            thr = self.new_parameters["threshold"]
+        return (image > thr).astype(np.uint8)
+
+class UpperThresholdDistanceFlowAlgorithm(BaseThresholdDistanceFlowAlgorithm):
+    def _threshold(self, image, thr=None):
+        if thr is None:
+            thr = self.new_parameters["threshold"]
+        return (image < thr).astype(np.uint8)

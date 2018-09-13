@@ -318,7 +318,7 @@ class MainWindow(QMainWindow):
         layout = QGridLayout()
         layout.setSpacing(0)
         layout.addWidget(self.main_menu, 0, 0, 1, 4)
-        layout.addWidget(self.info_text, 1, 0, 1, 2, Qt.AlignHCenter)  # , 0, 4)
+        layout.addWidget(self.info_text, 1, 0, 1, 3, Qt.AlignHCenter)  # , 0, 4)
         layout.addWidget(self.color_bar, 2, 0)
         layout.addWidget(self.raw_image, 2, 1)  # , 0, 0)
         layout.addWidget(self.result_image, 2, 2)  # , 0, 0)
