@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import QMainWindow, QLabel, QWidget, QPushButton, QHBoxLayo
     QFileDialog, QMessageBox, QCheckBox, QComboBox, QStackedLayout
 
 from common_gui.channel_control import ChannelControl
+from common_gui.stack_image_view import ColorBar
 from partseg2.advanced_window import AdvancedWindow
 from project_utils.algorithms_description import InteractiveAlgorithmSettingsWidget
 from project_utils.global_settings import static_file_folder
@@ -297,6 +298,7 @@ class MainWindow(QMainWindow):
         self.main_menu = MainMenu(self.settings)
         self.channel_control1 = ChannelControl(self.settings, name="raw_control", text="Left panel:")
         self.channel_control2 = ChannelControl(self.settings, name="result_control", text="Right panel:")
+        self.color_bar = ColorBar(self.settings, self.channel_control2)
         self.raw_image = RawImageStack(self.settings, self.channel_control1) # RawImageView(self.settings, self.channel_control1)
         self.result_image = ResultImageView(self.settings, self.channel_control2)
         self.info_text = QLabel()
@@ -317,11 +319,12 @@ class MainWindow(QMainWindow):
         layout.setSpacing(0)
         layout.addWidget(self.main_menu, 0, 0, 1, 4)
         layout.addWidget(self.info_text, 1, 0, 1, 2, Qt.AlignHCenter)  # , 0, 4)
-        layout.addWidget(self.raw_image, 2, 0)  # , 0, 0)
-        layout.addWidget(self.result_image, 2, 1)  # , 0, 0)
-        layout.addWidget(self.options_panel, 2, 2)  # , 0, 0)
-        layout.setColumnStretch(0, 1)
+        layout.addWidget(self.color_bar, 2, 0)
+        layout.addWidget(self.raw_image, 2, 1)  # , 0, 0)
+        layout.addWidget(self.result_image, 2, 2)  # , 0, 0)
+        layout.addWidget(self.options_panel, 2, 3)  # , 0, 0)
         layout.setColumnStretch(1, 1)
+        layout.setColumnStretch(2, 1)
         widget = QWidget()
         widget.setLayout(layout)
         self.setCentralWidget(widget)

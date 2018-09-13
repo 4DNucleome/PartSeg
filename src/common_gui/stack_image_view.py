@@ -691,7 +691,8 @@ class ColorBar(QLabel):
         self.image = None
         self.channel_control.channel_change.connect(self.update_colormap)
         self.range = None
-        self.setMinimumWidth(80)
+        self.round_range = None
+        self.setFixedWidth(80)
         #layout = QHBoxLayout()
         #layout.addWidget(QLabel("aaa"))
         #self.setLayout(layout)
@@ -703,17 +704,46 @@ class ColorBar(QLabel):
         else:
             self.range = self._settings.border_val[id]
         cmap = self._settings.get_from_profile(f"{self.channel_control.name}.cmap{id}")
+        round_factor = self.round_base(self.range[1])
+        self.round_range = int(round(self.range[0] / round_factor) * round_factor), \
+                      int(round(self.range[1] / round_factor) * round_factor)
+        if self.round_range[0] < self.range[0]:
+            self.round_range = self.round_range[0] + round_factor, self.round_range[1]
+        if self.round_range[1] > self.range[1]:
+            self.round_range = self.round_range[0] , self.round_range[1] - round_factor
+        print(self.range, self.round_range)
 
         img = color_image(np.linspace(0, 256, 512).reshape((1,512, 1))[:, ::-1], [cmap], [(0, 256)])
         self.image = QImage(img.data, 1, 512, img.dtype.itemsize * 3, QImage.Format_RGB888)
         self.repaint()
 
+    @staticmethod
+    def round_base(val):
+        if val > 10000:
+            return 1000
+        if val > 1000:
+            return 100
+        if val > 100:
+            return 10
+        return 1
+
+    @staticmethod
+    def number_of_marks(val):
+        if val < 500:
+            return 6
+        if val > 1300:
+            return 21
+        return 11
+
+
     def paintEvent(self, event: QtGui.QPaintEvent):
         bar_width = 30
-        number_of_marks = 11
+
         if self.image is None:
             return
+
         rect = event.rect()
+        number_of_marks = self.number_of_marks(rect.height())
         image_rect = QRect(rect.topLeft(), QSize(bar_width, rect.size().height()))
         painter = QPainter(self)
         old_font = painter.font()
@@ -721,8 +751,11 @@ class ColorBar(QLabel):
         new_font.setPointSizeF(new_font.pointSizeF() / 1.1)
         painter.setFont(new_font)
         painter.drawImage(image_rect, self.image)
-        for pos, val  in zip(np.linspace(10, rect.size().height(), number_of_marks),
-                             np.linspace(self.range[1], self.range[0], number_of_marks, dtype=np.uint32)):
+        start_prop = 1 - (self.round_range[0] - self.range[0]) / (self.range[1] - self.range[0])
+        end_prop = 1 - (self.round_range[1] - self.range[0]) / (self.range[1] - self.range[0])
+        for pos, val  in zip(np.linspace(10 + end_prop * rect.size().height() , start_prop * rect.size().height(),
+                                         number_of_marks),
+                             np.linspace(self.round_range[1], self.round_range[0], number_of_marks, dtype=np.uint32)):
             painter.drawText(bar_width+5, pos, f"{val}")
         painter.setFont(old_font)
         # print(self.image.shape)
