@@ -87,3 +87,35 @@ def set_position(elem, previous, dist=10):
     if platform.system() == "Darwin" and isinstance(previous, QSpinBox):
         pos_y -= 7
     elem.move(previous.pos().x() + previous.size().width() + dist, pos_y)
+
+
+class CustomSpinBox(QSpinBox):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.valueChanged.connect(self.value_changed)
+
+    def value_changed(self, val: int):
+        if val < 300:
+            self.setSingleStep(1)
+        elif val < 1000:
+            self.setSingleStep(10)
+        elif val < 10000:
+            self.setSingleStep(100)
+        else:
+            self.setSingleStep(1000)
+
+
+class CustomDoubleSpinBox(QDoubleSpinBox):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.valueChanged.connect(self.value_changed)
+
+    def value_changed(self, val: int):
+        if val < 300:
+            self.setSingleStep(1)
+        elif val < 1000:
+            self.setSingleStep(10)
+        elif val < 10000:
+            self.setSingleStep(100)
+        else:
+            self.setSingleStep(1000)

@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QSpinBox, QDoubleSpinBox, QComboBox, QCheckBox, QWid
     QAbstractSpinBox, QScrollArea
 from six import with_metaclass
 
+from common_gui.universal_gui_part import CustomSpinBox, CustomDoubleSpinBox
 from project_utils.algorithm_base import SegmentationAlgorithm
 from .settings import ImageSettings
 from partseg.io_functions import save_stack_segmentation, load_stack_segmentation
@@ -111,7 +112,7 @@ class BatchProceed(QThread):
 
 
 class QtAlgorithmProperty(AlgorithmProperty):
-    qt_class_dict = {int: QSpinBox, float: QDoubleSpinBox, list: QComboBox, bool: QCheckBox}
+    qt_class_dict = {int: CustomSpinBox, float: CustomDoubleSpinBox, list: QComboBox, bool: QCheckBox}
 
     def __init__(self, *args, **kwargs):
         super(QtAlgorithmProperty, self).__init__(*args, **kwargs)

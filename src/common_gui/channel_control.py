@@ -3,6 +3,7 @@ from PyQt5.QtGui import QImage, QShowEvent, QPaintEvent, QPainter, QPen, QMouseE
 from PyQt5.QtCore import Qt, pyqtSignal
 import numpy as np
 from common_gui.collapse_checkbox import CollapseCheckbox
+from common_gui.universal_gui_part import CustomSpinBox
 from project_utils.color_image import color_image
 import typing
 
@@ -93,23 +94,6 @@ class MyComboBox(QComboBox):
     def hidePopup(self):
         super().hidePopup()
         self.hide_popup.emit()
-
-
-class CustomSpinBox(QSpinBox):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.valueChanged.connect(self.value_changed)
-
-    def value_changed(self, val: int):
-        if val < 300:
-            self.setSingleStep(1)
-        elif val < 1000:
-            self.setSingleStep(10)
-        elif val < 10000:
-            self.setSingleStep(100)
-        else:
-            self.setSingleStep(1000)
-
 
 
 class ChannelControl(QWidget):
