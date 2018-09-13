@@ -7,7 +7,7 @@ from math import log
 import SimpleITK as sitk
 import numpy as np
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtCore import QRect
+from PyQt5.QtCore import QRect, QTimerEvent
 from PyQt5.QtGui import QShowEvent, QResizeEvent
 from PyQt5.QtWidgets import QScrollBar
 from matplotlib import pyplot
@@ -147,7 +147,7 @@ class ImageCanvas(QLabel):
 
     def paintEvent(self, event):
         super(ImageCanvas, self).paintEvent(event)
-        if not self.local_settings.zoom and self.point is None or self.point2 is None:
+        if not self.local_settings.zoom or self.point is None or self.point2 is None:
             return
         pen = QPen(QColor("white"))
         pen.setStyle(Qt.DashLine)
@@ -303,7 +303,7 @@ class ImageView(QWidget):
         self.tmp_image = None
         self.channels_num = 1
         self.layers_num = 1
-        self.border_val = []
+        self.border_val = [(0, 65000)]
         self.labels_layer = None
         self.image_shape = QSize(1, 1)
 
@@ -504,6 +504,7 @@ class MyScrollArea(QScrollArea):
         #self.setWidgetResizable(True)
         self.horizontalScrollBar().rangeChanged.connect(self.horizontal_range_changed)
         self.verticalScrollBar().rangeChanged.connect(self.vertical_range_changed)
+        self.timer_id = 0
 
     def horizontal_range_changed(self, min_val, max_val):
         if self.horizontal_ratio[0]:
@@ -634,26 +635,32 @@ class MyScrollArea(QScrollArea):
 
         if self.verticalScrollBar().maximum():
             self.vertical_ratio = True, self.verticalScrollBar().value() / self.verticalScrollBar().maximum()
-        self.pixmap.resize(final_size)
-        #self.horizontalScrollBar().setValue(final_size.width() * hor_ratio)
-        # print(self.parent().__class__, self.pixmap.image_size, ratio, self.pixmap.image_size * ratio,
-        #      self.pixmap.size())
-        #self.calculate_shift(self.pixmap.width(), self.width(), pixmap_mid[0], cursor_pos[0],
-        #                     self.horizontalScrollBar())
-        #self.calculate_shift(self.pixmap.height(), self.height(), pixmap_mid[1], cursor_pos[1],
-        #                     self.verticalScrollBar())
+        if final_size == self.pixmap.size():
+            diff = (self.size() - self.pixmap.size() - QSize(2,2))/2
+            self.pixmap.move(diff.width(), diff.height())
+        else:
+            self.pixmap.resize(final_size)
 
 
     def resizeEvent(self, event):
         #super(MyScrollArea, self).resizeEvent(event)
-        if self.size() == event.oldSize():
+        if self.size() == event.oldSize() or event.oldSize().width() == -1:
             return
+        if (self.timer_id):
+            self.killTimer(self.timer_id)
+            self.timer_id = 0
+        self.timer_id = self.startTimer(50)
+
+
+    def timerEvent(self, a0: 'QTimerEvent'):
+        # Some try to reduce number of repaint event
+        self.killTimer(self.timer_id)
+        self.timer_id = 0
         if self.size().width() - 2 > self.pixmap.width() and self.size().height() - 2 > self.pixmap.height():
+            #print("B")
             self.reset_image()
-        elif event.oldSize().width() != -1:
-            pixmap_mid = (self.width()/2 - self.pixmap.x()) /self.pixmap.width(),\
-                         (self.height()/2 - self.pixmap.y()) / self.pixmap.height()
-            cursor_pos = (0.5, 0.5)
+        else :
+            #print("C", self.pixmap.size())
             self.resize_pixmap()
 
 
@@ -703,6 +710,7 @@ class ColorBar(QLabel):
 
     def paintEvent(self, event: QtGui.QPaintEvent):
         bar_width = 30
+        number_of_marks = 11
         if self.image is None:
             return
         rect = event.rect()
@@ -713,8 +721,8 @@ class ColorBar(QLabel):
         new_font.setPointSizeF(new_font.pointSizeF() / 1.1)
         painter.setFont(new_font)
         painter.drawImage(image_rect, self.image)
-        for pos, val  in zip(np.linspace(10, rect.size().height(), 10),
-                             np.linspace(self.range[1], self.range[0], 10, dtype=np.uint32)):
+        for pos, val  in zip(np.linspace(10, rect.size().height(), number_of_marks),
+                             np.linspace(self.range[1], self.range[0], number_of_marks, dtype=np.uint32)):
             painter.drawText(bar_width+5, pos, f"{val}")
         painter.setFont(old_font)
         # print(self.image.shape)
