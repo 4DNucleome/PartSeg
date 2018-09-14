@@ -3,7 +3,7 @@ from collections import defaultdict
 from PyQt5.QtCore import pyqtSignal
 
 from project_utils.algorithm_base import SegmentationAlgorithm
-from project_utils.distance_in_structure.find_split import distance_sprawl
+from project_utils.distance_in_structure.find_split import distance_sprawl, path_minimum_sprawl, path_maximum_sprawl
 from project_utils.image_operations import gaussian
 import numpy as np
 import SimpleITK as sitk
@@ -27,13 +27,14 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm):
     """
     :type segmentation: np.ndarray
     """
+
     def __init__(self):
         super(ThresholdBaseAlgorithm, self).__init__()
         self.mask = None
         self.gauss_image = None
         self.threshold_image = None
         self._sizes_array = []
-
+        self.components_num = 0
 
     def run(self):
         finally_segment = self.calculation_run()
@@ -62,13 +63,12 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm):
             ind = bisect(self._sizes_array[1:], self.new_parameters["minimum_size"], lambda x, y: x > y)
             finally_segment = np.copy(self.segmentation)
             finally_segment[finally_segment > ind] = 0
+            self.components_num = ind
             return finally_segment
-
 
     def clean(self):
         super().clean()
         self.gauss_image = None
-
 
     def _threshold(self, image, thr=None):
         raise NotImplementedError()
@@ -84,7 +84,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm):
 
 
 class OneTHresholdAlgorithm(ThresholdBaseAlgorithm):
-    def set_parameters(self, threshold, minimum_size,  use_gauss, gauss_radius):
+    def set_parameters(self, threshold, minimum_size, use_gauss, gauss_radius):
         self.new_parameters["threshold"] = threshold
         self.new_parameters["minimum_size"] = minimum_size
         self.new_parameters["use_gauss"] = use_gauss
@@ -95,27 +95,33 @@ class LowerThresholdAlgorithm(OneTHresholdAlgorithm):
     def _threshold(self, image, thr=None):
         return (image > self.new_parameters["threshold"]).astype(np.uint8)
 
+
 class UpperThresholdAlgorithm(OneTHresholdAlgorithm):
     def _threshold(self, image, thr=None):
         return (image < self.new_parameters["threshold"]).astype(np.uint8)
 
+
 class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
-    def set_parameters(self, lower_threshold, upper_threshold, minimum_size,  use_gauss, gauss_radius):
+    def set_parameters(self, lower_threshold, upper_threshold, minimum_size, use_gauss, gauss_radius):
         self.new_parameters["threshold"] = lower_threshold, upper_threshold
         self.new_parameters["minimum_size"] = minimum_size
         self.new_parameters["use_gauss"] = use_gauss
         self.new_parameters["gauss_radius"] = gauss_radius
 
     def _threshold(self, image, thr=None):
-        return ((image > self.new_parameters["threshold"][0]) * (image < self.new_parameters["threshold"][1])).astype(np.uint8)
+        return ((image > self.new_parameters["threshold"][0]) * (image < self.new_parameters["threshold"][1])).astype(
+            np.uint8)
 
 
-class BaseThresholdDistanceFlowAlgorithm(ThresholdBaseAlgorithm):
+class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm):
+    def path_sprawl(self, base_image, object_image):
+        raise NotImplementedError()
+
     def __init__(self):
         super().__init__()
         self.finally_segment = None
 
-    def set_parameters(self, threshold, minimum_size,  use_gauss, gauss_radius, base_threshold):
+    def set_parameters(self, threshold, minimum_size, use_gauss, gauss_radius, base_threshold):
         self.new_parameters["threshold"] = threshold
         self.new_parameters["minimum_size"] = minimum_size
         self.new_parameters["use_gauss"] = use_gauss
@@ -135,19 +141,58 @@ class BaseThresholdDistanceFlowAlgorithm(ThresholdBaseAlgorithm):
             threshold_image = self._threshold(self.gauss_image, self.new_parameters["base_threshold"])
             if self.mask is not None:
                 threshold_image *= (self.mask > 0)
-            new_segment = distance_sprawl(threshold_image, finally_segment, finally_segment.max())
+            new_segment = self.path_sprawl(threshold_image, finally_segment)
             self.execution_done.emit(new_segment)
             self.execution_done_extend.emit(new_segment, threshold_image)
 
 
-class LowerThresholdDistanceFlowAlgorithm(BaseThresholdDistanceFlowAlgorithm):
+class LowerThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
     def _threshold(self, image, thr=None):
         if thr is None:
             thr = self.new_parameters["threshold"]
         return (image > thr).astype(np.uint8)
 
-class UpperThresholdDistanceFlowAlgorithm(BaseThresholdDistanceFlowAlgorithm):
+
+class UpperThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
     def _threshold(self, image, thr=None):
         if thr is None:
             thr = self.new_parameters["threshold"]
         return (image < thr).astype(np.uint8)
+
+
+class LowerThresholdDistanceFlowAlgorithm(LowerThresholdFlowAlgorithm):
+    def path_sprawl(self, base_image, object_image):
+        return distance_sprawl(base_image, object_image, self.components_num)
+
+
+class UpperThresholdDistanceFlowAlgorithm(LowerThresholdFlowAlgorithm):
+    def path_sprawl(self, base_image, object_image):
+        return distance_sprawl(base_image, object_image, self.components_num)
+
+
+class LowerThresholdPathFlowAlgorithm(LowerThresholdFlowAlgorithm):
+    def path_sprawl(self, base_image, object_image):
+        image = self.image.astype(np.float64)
+        image[base_image != 0] = 0
+        mid = path_maximum_sprawl(image, object_image, self.components_num)
+        return path_maximum_sprawl(image, mid, self.components_num)
+
+
+class UpperThresholdPathFlowAlgorithm(UpperThresholdFlowAlgorithm):
+    def path_sprawl(self, base_image, object_image):
+        image = self.image.astype(np.float64)
+        image[base_image != 0] = 0
+        mid = path_minimum_sprawl(image, object_image, self.components_num)
+        return path_minimum_sprawl(image, mid, self.components_num)
+
+
+class LowerThresholdPathDistanceFlowAlgorithm(LowerThresholdPathFlowAlgorithm):
+    def path_sprawl(self, base_image, object_image):
+        mid = super().path_sprawl(base_image, object_image)
+        return distance_sprawl(base_image, mid, self.components_num)
+
+
+class UpperThresholdPathDistanceFlowAlgorithm(UpperThresholdPathFlowAlgorithm):
+    def path_sprawl(self, base_image, object_image):
+        mid = super().path_sprawl(base_image, object_image)
+        return distance_sprawl(base_image, mid, self.components_num)

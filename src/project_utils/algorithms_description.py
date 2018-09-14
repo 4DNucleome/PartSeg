@@ -120,12 +120,16 @@ class QtAlgorithmProperty(AlgorithmProperty):
     @classmethod
     def from_algorithm_property(cls, ob):
         """
-        :type ob: AlgorithmProperty
+        :type ob: AlgorithmProperty | str
         :param ob: AlgorithmProperty object
-        :return: QtAlgorithmProperty
+        :return: QtAlgorithmProperty | QLabel
         """
-        return cls(name=ob.name, user_name=ob.user_name, default_value=ob.default_value, options_range=ob.range,
-                   single_steep=ob.single_step)
+        if isinstance(ob, AlgorithmProperty):
+            return cls(name=ob.name, user_name=ob.user_name, default_value=ob.default_value, options_range=ob.range,
+                       single_steep=ob.single_step)
+        elif isinstance(ob, str):
+            return QLabel(ob)
+        raise ValueError(f"unknown parameter type {type(ob)} of {ob}")
 
     def get_field(self):
         field = self.qt_class_dict[self.value_type]()
@@ -174,8 +178,12 @@ class AlgorithmSettingsWidget(QScrollArea):
         widget_layout.addRow("Channel", self.channels_chose)
         element_list = map(QtAlgorithmProperty.from_algorithm_property, element_list)
         for el in element_list:
-            self.widget_list.append((el.name, el.get_field()))
-            widget_layout.addRow(el.user_name, self.widget_list[-1][-1])
+            if isinstance(el, QLabel):
+                widget_layout.addRow(el)
+                print("buka")
+            else:
+                self.widget_list.append((el.name, el.get_field()))
+                widget_layout.addRow(el.user_name, self.widget_list[-1][-1])
         """scroll_area = QScrollArea()
         ww = QWidget()
         ww.setLayout(widget_layout)
