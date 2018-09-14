@@ -89,7 +89,13 @@ class Options(QWidget):
         layout.setSpacing(0)
         self.setLayout(layout)
         self.algorithm_choose.currentIndexChanged.connect(self.stack_layout.setCurrentIndex)
-        self.algorithm_choose.currentIndexChanged.connect(self.algorithm_change)
+        self.algorithm_choose.currentTextChanged.connect(self.algorithm_change)
+        current_algorithm = self._settings.get("current_algorithm", self.algorithm_choose.currentText())
+        for i, el in enumerate(widgets_list):
+            if el.name == current_algorithm:
+                self.algorithm_choose.setCurrentIndex(i)
+                break
+
 
     def save_profile(self):
         widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.currentWidget()
@@ -168,7 +174,8 @@ class Options(QWidget):
         if val:
             self.execute_algorithm()
 
-    def algorithm_change(self):
+    def algorithm_change(self, val):
+        self._settings.set("current_algorithm", val)
         if self.interactive:
             self.execute_algorithm()
 
