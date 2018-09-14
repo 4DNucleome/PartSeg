@@ -107,6 +107,7 @@ def add_labels(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[label_types, ndim=2
     cdef int R, Y
     cdef Py_ssize_t circle_len, circle_pos
     cdef np.ndarray[np.int8_t, ndim=2] circle_shift
+    cdef label_types label_val
 
     cdef np.ndarray[label_types, ndim=2] local_labels
 
@@ -130,7 +131,8 @@ def add_labels(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[label_types, ndim=2
         local_labels = np.zeros((labels.shape[0] + 2*border_thick, labels.shape[1] + 2*border_thick), dtype=labels.dtype)
         for x in range(1,x_max-1):
             for y in range(1,y_max-1):
-                if use_labels[labels[x,y]] and (labels[x+1,y] == 0 or labels[x-1, y] == 0 or labels[x, y+1] == 0 or labels[x, y-1] == 0):
+                label_val =labels[x,y]
+                if use_labels[label_val] and (labels[x+1,y] != label_val or labels[x-1, y] != label_val or labels[x, y+1] != label_val or labels[x, y-1] != label_val):
                     for circle_pos in range(circle_len):
                         local_labels[x + circle_shift[circle_pos, 0], y + circle_shift[circle_pos, 1]] = labels[x,y]
 

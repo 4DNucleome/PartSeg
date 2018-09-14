@@ -24,8 +24,8 @@ class PartSettings(BaseSettings):
     json_encoder_class = PartEncoder
     decode_hook = part_hook
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, json_path):
+        super().__init__(json_path)
         self._mask = None
         self.full_segmentation = None
 

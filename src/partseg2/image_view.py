@@ -67,4 +67,6 @@ class RawImageView(ImageView):
         self.text_info_change.emit("Position: {}, Brightness: {}".format(tuple(pos2), brightness))
 
 class ResultImageView(ImageView):
-    pass
+    def __init__(self, settings, channel_control: ChannelControl):
+        super().__init__(settings, channel_control)
+        self.image_state.only_borders = False

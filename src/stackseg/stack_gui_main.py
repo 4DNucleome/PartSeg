@@ -482,9 +482,9 @@ class MainWindow(QMainWindow):
     def __init__(self, title):
         super(MainWindow, self).__init__()
         self.setWindowTitle(title)
-        self.settings = StackSettings()
+        self.settings = StackSettings(os.path.join(config_folder, "settings.json"))
         if os.path.exists(os.path.join(config_folder, "settings.json")):
-            self.settings.load(os.path.join(config_folder, "settings.json"))
+            self.settings.load()
         self.main_menu = MainMenu(self.settings)
         self.channel_control = ChannelControl(self.settings, name="channelcontrol")
         self.image_view = StackImageView(self.settings, self.channel_control)
@@ -540,7 +540,7 @@ class MainWindow(QMainWindow):
         # print(self.settings.dump_view_profiles())
         # print(self.settings.segmentation_dict["default"].my_dict)
         self.settings.set_in_profile("main_window_geometry", bytes(self.saveGeometry().toHex()).decode('ascii'))
-        self.settings.dump(os.path.join(config_folder, "settings.json"))
+        self.settings.dump()
 
 
 

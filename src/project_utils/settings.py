@@ -207,10 +207,11 @@ class BaseSettings(ViewSettings):
     json_encoder_class = ProfileEncoder
     decode_hook = profile_hook
 
-    def __init__(self):
+    def __init__(self, json_path):
         super().__init__()
         self.current_segmentation_dict = "default"
         self.segmentation_dict: typing.Dict[str, ProfileDict] = {self.current_segmentation_dict: ProfileDict()}
+        self.json_path = json_path
 
     def set(self, key_path, value):
         self.segmentation_dict[self.current_segmentation_dict].set(key_path, value)
@@ -229,7 +230,9 @@ class BaseSettings(ViewSettings):
         with open(file_path, 'r') as ff:
            return json.load(ff, object_hook=self.decode_hook)
 
-    def dump(self, file_path):
+    def dump(self, file_path=None):
+        if file_path is None:
+            file_path = self.json_path
         if not path.exists(path.dirname(file_path)):
             makedirs(path.dirname(file_path))
         dump_view = self.dump_view_profiles()
@@ -241,7 +244,9 @@ class BaseSettings(ViewSettings):
                  },
                 ff, cls=self.json_encoder_class, indent=2)
 
-    def load(self, file_path):
+    def load(self, file_path=None):
+        if file_path is None:
+            file_path = self.json_path
         try:
             with open(file_path, 'r') as ff:
                 data = json.load(ff, object_hook=self.decode_hook)

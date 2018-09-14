@@ -10,7 +10,7 @@ import appdirs
 from PyQt5.QtCore import Qt, QByteArray
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
-    QFileDialog, QMessageBox, QCheckBox, QComboBox, QStackedLayout
+    QFileDialog, QMessageBox, QCheckBox, QComboBox, QStackedLayout, QInputDialog
 
 from common_gui.channel_control import ChannelControl
 from common_gui.stack_image_view import ColorBar
@@ -44,8 +44,14 @@ class Options(QWidget):
         self.interactive_use = QCheckBox("Interactive use")
         self.execute_btn = QPushButton("Execute")
         self.execute_btn.clicked.connect(self.execute_algorithm)
+        self.save_profile_btn = QPushButton("Save segmentation profile")
+        self.choose_profile = QComboBox()
+        self.choose_profile.addItem("<none>")
+        self.choose_profile.addItems(self._settings.get("segmentation_profiles", dict()).keys())
+        self.choose_profile.currentTextChanged.connect(self.change_profile)
         self.interactive_use.stateChanged.connect(self.execute_btn.setDisabled)
         self.interactive_use.stateChanged.connect(self.interactive_change)
+        self.save_profile_btn.clicked.connect(self.save_profile)
         widgets_list = []
         for name, val in part_algorithm_dict.items():
             self.algorithm_choose.addItem(name)
@@ -56,6 +62,7 @@ class Options(QWidget):
             self.stack_layout.addWidget(widget)
 
         self.label = QLabel()
+        self.label.setWordWrap(True)
         layout = QVBoxLayout()
         layout2 = QHBoxLayout()
         layout2.setSpacing(1)
@@ -63,8 +70,13 @@ class Options(QWidget):
         layout3 = QHBoxLayout()
         layout3.setContentsMargins(0, 0, 0, 0)
         layout.setContentsMargins(0,0,0,0)
+        layout4 = QHBoxLayout()
+        layout4.setContentsMargins(0, 0, 0, 0)
+        layout4.addWidget(self.save_profile_btn)
+        layout4.addWidget(self.choose_profile)
         layout3.addWidget(self.interactive_use)
         layout3.addWidget(self.execute_btn)
+        layout.addLayout(layout4)
         layout.addLayout(layout3)
         layout.addWidget(self.algorithm_choose)
         layout.addLayout(self.stack_layout)
@@ -78,6 +90,48 @@ class Options(QWidget):
         self.setLayout(layout)
         self.algorithm_choose.currentIndexChanged.connect(self.stack_layout.setCurrentIndex)
         self.algorithm_choose.currentIndexChanged.connect(self.algorithm_change)
+
+    def save_profile(self):
+        widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.currentWidget()
+        while True:
+            text, ok = QInputDialog.getText(self, "Profile Name", "Input profile_name_here")
+            if not ok:
+                return
+            if text in self._settings.get("segmentation_profiles", dict()):
+                if  QMessageBox.No == QMessageBox.warning(
+                        self, "Already exists",
+                        "Profile with this name already exist. Overwrite?",
+                        QMessageBox.Yes | QMessageBox.No, QMessageBox.No):
+                    continue
+            print(widget.get_values(), text, ok)
+            resp = {"algorithm": widget.name,
+                    "values": widget.get_values()
+                    }
+
+            self._settings.set(f"segmentation_profiles.{text}", resp)
+            self._settings.dump()
+            self.choose_profile.addItem(text)
+            break
+
+    def change_profile(self, val):
+        if val == "<none>":
+            return
+        interactive = self.interactive_use.isChecked()
+        self.interactive_use.setChecked(False)
+        profile = self._settings.get(f"segmentation_profiles.{val}")
+        for i in range(self.stack_layout.count()):
+            widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.widget(i)
+            if widget.name == profile["algorithm"]:
+                self.algorithm_choose.setCurrentIndex(i)
+                widget.set_values(profile["values"])
+                self.choose_profile.blockSignals(True)
+                self.choose_profile.setCurrentIndex(0)
+                self.choose_profile.blockSignals(False)
+                break
+
+
+        self.interactive_use.setChecked(interactive)
+
 
     @property
     def segmentation(self):
@@ -129,6 +183,7 @@ class Options(QWidget):
     def execution_done(self, segmentation, full_segmentation):
         self.segmentation = segmentation
         self._settings.full_segmentation = full_segmentation
+        self.label.setText(", ".join(map(str, self._settings.sizes[1:])))
 
 class MainMenu(QWidget):
     def __init__(self, settings: PartSettings):
@@ -138,6 +193,7 @@ class MainMenu(QWidget):
         self.save_btn = QPushButton("Save")
         self.advanced_btn = QPushButton("Advanced")
         self.interpolate_btn = QPushButton("Interpolate")
+        self.mask_manager = QPushButton("Mask Manager")
 
         self.advanced_window = None
 
@@ -146,6 +202,7 @@ class MainMenu(QWidget):
         layout.addWidget(self.save_btn)
         layout.addWidget(self.advanced_btn)
         layout.addWidget(self.interpolate_btn)
+        layout.addWidget(self.mask_manager)
         self.setLayout(layout)
 
         self.open_btn.clicked.connect(self.load_data)
@@ -292,9 +349,9 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(title)
         self.title = title
         self.setMinimumWidth(600)
-        self.settings = PartSettings()
+        self.settings = PartSettings(os.path.join(config_folder, "settings.json"))
         if os.path.exists(os.path.join(config_folder, "settings.json")):
-            self.settings.load(os.path.join(config_folder, "settings.json"))
+            self.settings.load()
         self.main_menu = MainMenu(self.settings)
         self.channel_control1 = ChannelControl(self.settings, name="raw_control", text="Left panel:")
         self.channel_control2 = ChannelControl(self.settings, name="result_control", text="Right panel:")
@@ -317,12 +374,12 @@ class MainWindow(QMainWindow):
 
         layout = QGridLayout()
         layout.setSpacing(0)
-        layout.addWidget(self.main_menu, 0, 0, 1, 4)
+        layout.addWidget(self.main_menu, 0, 0, 1, 3)
         layout.addWidget(self.info_text, 1, 0, 1, 3, Qt.AlignHCenter)  # , 0, 4)
         layout.addWidget(self.color_bar, 2, 0)
         layout.addWidget(self.raw_image, 2, 1)  # , 0, 0)
         layout.addWidget(self.result_image, 2, 2)  # , 0, 0)
-        layout.addWidget(self.options_panel, 2, 3)  # , 0, 0)
+        layout.addWidget(self.options_panel, 0, 3, 3, 1)
         layout.setColumnStretch(1, 1)
         layout.setColumnStretch(2, 1)
         widget = QWidget()
@@ -348,4 +405,4 @@ class MainWindow(QMainWindow):
         # print(self.settings.dump_view_profiles())
         # print(self.settings.segmentation_dict["default"].my_dict)
         self.settings.set_in_profile("main_window_geometry", bytes(self.saveGeometry().toHex()).decode('ascii'))
-        self.settings.dump(os.path.join(config_folder, "settings.json"))
+        self.settings.dump()

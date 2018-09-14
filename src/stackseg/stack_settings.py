@@ -10,8 +10,8 @@ default_colors = ['BlackRed', 'BlackGreen', 'BlackBlue', 'BlackMagenta']
 
 
 class StackSettings(BaseSettings):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, json_path):
+        super().__init__(json_path)
         self.chosen_components_widget = None
 
     @property

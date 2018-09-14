@@ -325,6 +325,7 @@ class StatisticsSettings(QWidget):
         if stat_prof.name not in self.settings.get("statistic_profiles", dict()):
             self.profile_list.addItem(stat_prof.name)
         self.settings.set(f"statistic_profiles.{stat_prof.name}", stat_prof)
+        self.settings.dump()
         self.export_profiles_butt.setEnabled(True)
 
     def named_save_action(self):
