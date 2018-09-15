@@ -8,7 +8,7 @@ import numpy as np
 import SimpleITK as sitk
 import appdirs
 from PyQt5.QtCore import Qt, QByteArray
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QKeyEvent
 from PyQt5.QtWidgets import QMainWindow, QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
     QFileDialog, QMessageBox, QCheckBox, QComboBox, QStackedLayout, QInputDialog
 
@@ -86,6 +86,10 @@ class Options(QWidget):
         self.setLayout(layout)
         self.algorithm_choose.currentIndexChanged.connect(self.stack_layout.setCurrentIndex)
         self.algorithm_choose.currentIndexChanged.connect(self.algorithm_change)
+
+    def keyPressEvent(self, event: QKeyEvent):
+        if (event.key() == Qt.Key_Enter or event.key() == Qt.Key_Return) and (event.modifiers() == Qt.ControlModifier):
+            self.execute_btn.click()
 
     def save_profile(self):
         widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.currentWidget()
