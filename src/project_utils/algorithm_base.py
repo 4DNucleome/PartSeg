@@ -27,6 +27,7 @@ class SegmentationAlgorithm(QThread):
             self.cache = None
             self.clean_later = False
         if self.rerun[0]:
+            self.rerun = False, QThread.InheritPriority
             super().start(self.rerun[1])
         elif self.clean_later:
             self._clean()

@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from os import path
-from typing import Type
+from typing import Type, List
 
 import numpy as np
 import tifffile
@@ -257,8 +257,12 @@ class AlgorithmSettingsWidget(QScrollArea):
         self.algorithm.clean()
 
 class InteractiveAlgorithmSettingsWidget(AlgorithmSettingsWidget):
-    def __init__(self, settings: PartSettings, name, element_list, algorithm: Type[RestartableAlgorithm]):
+    def __init__(self, settings: PartSettings, name, element_list, algorithm: Type[RestartableAlgorithm],
+                 selector: List[QWidget]):
         super().__init__(settings, name, element_list, algorithm)
+        self.selector = selector
+        self.algorithm.finished.connect(self.enable_selector)
+        self.algorithm.started.connect(self.disable_selector)
         for _, el in self.widget_list:
             if isinstance(el, QAbstractSpinBox):
                 el.valueChanged.connect(self.value_updated)
@@ -286,6 +290,14 @@ class InteractiveAlgorithmSettingsWidget(AlgorithmSettingsWidget):
 
     def showEvent(self, a0: QShowEvent):
         self.channel_change()
+
+    def disable_selector(self):
+        for el in  self.selector:
+            el.setDisabled(True)
+
+    def enable_selector(self):
+        for el in  self.selector:
+            el.setEnabled(True)
 
 
 AbstractAlgorithmSettingsWidget.register(AlgorithmSettingsWidget)

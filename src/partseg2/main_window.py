@@ -51,7 +51,8 @@ class Options(QWidget):
         widgets_list = []
         for name, val in part_algorithm_dict.items():
             self.algorithm_choose.addItem(name)
-            widget = InteractiveAlgorithmSettingsWidget(settings, name, *val)
+            widget = InteractiveAlgorithmSettingsWidget(settings, name, *val,
+                                                        selector=[self.algorithm_choose, self.choose_profile])
             widgets_list.append(widget)
             widget.algorithm.execution_done_extend.connect(self.execution_done)
             #widget.algorithm.progress_signal.connect(self.progress_info)
