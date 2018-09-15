@@ -336,8 +336,9 @@ class ImageView(QWidget):
         self._settings.border_val = val"""
 
     def showEvent(self, event: QShowEvent):
-        self.btn_layout.addStretch(1)
-        self.repaint()
+        pass
+        # self.btn_layout.addStretch(1)
+        #self.repaint()
 
     def update_channels_coloring(self, new_image: bool):
         if not new_image:
@@ -647,7 +648,6 @@ class MyScrollArea(QScrollArea):
 
     def timerEvent(self, a0: 'QTimerEvent'):
         # Some try to reduce number of repaint event
-        print("AAAAAA")
         self.killTimer(self.timer_id)
         self.timer_id = 0
         if self.size().width() - 2 > self.pixmap.width() and self.size().height() - 2 > self.pixmap.height():

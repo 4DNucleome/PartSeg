@@ -41,11 +41,13 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm):
         if finally_segment is not None:
             self.execution_done.emit(finally_segment)
             self.execution_done_extend.emit(finally_segment, self.segmentation)
+            self.parameters.update(self.new_parameters)
 
     def calculation_run(self):
         restarted = False
         if self.new_parameters["use_gauss"]:
-            if self.parameters["gauss_radius"] != self.new_parameters["gauss_radius"]:
+            if self.parameters["gauss_radius"] != self.new_parameters["gauss_radius"] or \
+                    self.new_parameters["use_gauss"] != self.parameters["use_gauss"]:
                 self.gauss_image = gaussian(self.image, self.new_parameters["gauss_radius"])
                 restarted = True
         elif self.new_parameters["use_gauss"] != self.parameters["use_gauss"]:
@@ -66,9 +68,11 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm):
             self.components_num = ind
             return finally_segment
 
-    def clean(self):
-        super().clean()
+    def _clean(self):
+        super()._clean()
+        self.parameters = defaultdict(lambda: None)
         self.gauss_image = None
+        self.mask = None
 
     def _threshold(self, image, thr=None):
         raise NotImplementedError()
@@ -132,24 +136,27 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm):
         finally_segment = self.calculation_run()
         if finally_segment is None:
             restarted = False
-            finally_segment = self.finally_segment
+            finally_segment =np.copy(self.finally_segment)
         else:
             self.finally_segment = finally_segment
             restarted = True
 
         if restarted or self.new_parameters["base_threshold"] != self.parameters["base_threshold"]:
             threshold_image = self._threshold(self.gauss_image, self.new_parameters["base_threshold"])
+            print(f"Sizes {np.count_nonzero(threshold_image)}, {np.count_nonzero(finally_segment)}", self.__class__)
             if self.mask is not None:
                 threshold_image *= (self.mask > 0)
             new_segment = self.path_sprawl(threshold_image, finally_segment)
             self.execution_done.emit(new_segment)
             self.execution_done_extend.emit(new_segment, threshold_image)
+            self.parameters.update(self.new_parameters)
 
 
 class LowerThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
     def _threshold(self, image, thr=None):
         if thr is None:
             thr = self.new_parameters["threshold"]
+        print(f"Threshold {thr}")
         return (image > thr).astype(np.uint8)
 
 
@@ -165,7 +172,7 @@ class LowerThresholdDistanceFlowAlgorithm(LowerThresholdFlowAlgorithm):
         return distance_sprawl(base_image, object_image, self.components_num)
 
 
-class UpperThresholdDistanceFlowAlgorithm(LowerThresholdFlowAlgorithm):
+class UpperThresholdDistanceFlowAlgorithm(UpperThresholdFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
         return distance_sprawl(base_image, object_image, self.components_num)
 
@@ -173,7 +180,7 @@ class UpperThresholdDistanceFlowAlgorithm(LowerThresholdFlowAlgorithm):
 class LowerThresholdPathFlowAlgorithm(LowerThresholdFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
         image = self.image.astype(np.float64)
-        image[base_image != 0] = 0
+        image[base_image == 0] = 0
         mid = path_maximum_sprawl(image, object_image, self.components_num)
         return path_maximum_sprawl(image, mid, self.components_num)
 
@@ -181,7 +188,7 @@ class LowerThresholdPathFlowAlgorithm(LowerThresholdFlowAlgorithm):
 class UpperThresholdPathFlowAlgorithm(UpperThresholdFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
         image = self.image.astype(np.float64)
-        image[base_image != 0] = 0
+        image[base_image == 0] = 0
         mid = path_minimum_sprawl(image, object_image, self.components_num)
         return path_minimum_sprawl(image, mid, self.components_num)
 

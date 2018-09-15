@@ -43,7 +43,7 @@ def path_maximum_sprawl(data_f, components, components_count, distance_cache=Non
     for component in range(1, components_count + 1):
         np.copyto(data_cache, data_f)
         data_cache[(components > 0) * (components != component)] = 0
-        distance_cache[component - 1] = calculate_maximum(data_cache, (components == component).astype(np.uint8), 2)
+        distance_cache[component - 1] = calculate_maximum(data_cache, (components == component).astype(np.uint8), 0)
     components = get_maximum_component(components, (data_f > 0).astype(np.uint8), distance_cache[:components_count], components_count)
     return components
 
@@ -53,34 +53,38 @@ def path_minimum_sprawl(data_f, components, components_count, distance_cache=Non
         data_cache = np.zeros(data_f.shape, data_f.dtype)
     if components_count == 1:
         np.copyto(data_cache, data_f)
-        tmp = calculate_maximum(data_cache, (components == 1).astype(np.uint8), 2)
-        components[tmp > 0] = 1
+        tmp = calculate_minimum(data_cache, (components == 1).astype(np.uint8), 0, maximum)
+        components[tmp < maximum] = 1
         return components
     if distance_cache is None:
         distance_cache = np.zeros((components_count,) + data_f.shape, dtype=np.float64)
     for component in range(1, components_count + 1):
         np.copyto(data_cache, data_f)
         data_cache[(components > 0) * (components != component)] = 0
-        distance_cache[component - 1] = calculate_minimum(data_cache, (components == component).astype(np.uint8), 2,  maximum)
+        distance_cache[component - 1] = calculate_minimum(data_cache, (components == component).astype(np.uint8), 0,  maximum)
     components = get_minimum_component(components, (data_f > 0).astype(np.uint8), distance_cache[:components_count], components_count)
     return components
 
 
 def distance_sprawl(data_m: np.ndarray, components: np.ndarray, components_count: int, distance_cache=None, data_cache=None):
+
     if data_cache is None:
         data_cache = np.zeros(data_m.shape, data_m.dtype)
     if components_count == 1:
         np.copyto(data_cache, data_m)
-        tmp = calculate_euclidean(data_cache, (components == 1).astype(np.uint8), 2)
-        components[tmp > 0] = 1
+        print("AAAAAA", data_cache.size, np.count_nonzero(data_cache))
+        tmp = calculate_euclidean(data_cache, (components == 1).astype(np.uint8), 0)
+        print("BBBBB", tmp.size, np.count_nonzero(tmp))
+        components[tmp < 2**17] = 1
         return components
     if distance_cache is None:
         distance_cache = np.zeros((components_count,) + data_m.shape, dtype=np.float64)
     for component in range(1, components_count + 1):
         np.copyto(data_cache, data_m)
         data_cache[(components > 0) * (components != component)] = 0
-        distance_cache[component - 1] = calculate_euclidean(data_cache, (components == component).astype(np.uint8), 2)
-    components = get_closest_component(components, (data_m > 0).astype(np.uint8), distance_cache[:components_count], components_count)
+        distance_cache[component - 1] = calculate_euclidean(data_cache, (components == component).astype(np.uint8), 0)
+    else:
+        components = get_closest_component(components, (data_m > 0).astype(np.uint8), distance_cache[:components_count], components_count)
     return components
 
 
