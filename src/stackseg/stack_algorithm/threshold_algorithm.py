@@ -12,8 +12,8 @@ class StackAlgorithm(SegmentationAlgorithm):
         super().__init__()
         self.exclude_mask = None
 
-    def clean(self):
-        super().clean()
+    def _clean(self):
+        super()._clean()
         self.exclude_mask = None
 
 

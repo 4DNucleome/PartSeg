@@ -50,6 +50,8 @@ def color_image(image: np.ndarray, colors: typing.List[str], min_max: typing.Lis
         except TypeError as e:
             print(image.dtype)
             print(e)
+        except IndexError as e:
+            raise e
     if len(result_images) > 0:
         if len(result_images) == 1:
             return result_images[0][0]

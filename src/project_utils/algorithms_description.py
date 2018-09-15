@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from os import path
-from typing import Type
+from typing import Type, List
 
 import numpy as np
 import tifffile
@@ -10,6 +10,8 @@ from PyQt5.QtWidgets import QSpinBox, QDoubleSpinBox, QComboBox, QCheckBox, QWid
 from six import with_metaclass
 
 from common_gui.universal_gui_part import CustomSpinBox, CustomDoubleSpinBox
+from partseg2.partseg_settings import PartSettings
+from partseg2.segment_algorithms import RestartableAlgorithm
 from project_utils.algorithm_base import SegmentationAlgorithm
 from .settings import ImageSettings
 from partseg.io_functions import save_stack_segmentation, load_stack_segmentation
@@ -180,7 +182,6 @@ class AlgorithmSettingsWidget(QScrollArea):
         for el in element_list:
             if isinstance(el, QLabel):
                 widget_layout.addRow(el)
-                print("buka")
             else:
                 self.widget_list.append((el.name, el.get_field()))
                 widget_layout.addRow(el.user_name, self.widget_list[-1][-1])
@@ -246,7 +247,7 @@ class AlgorithmSettingsWidget(QScrollArea):
 
     def execute(self, exclude_mask=None):
         values = self.get_values()
-        self.algorithm.set_parameters(**{"exclude_mask": exclude_mask,
+        self.algorithm.set_parameters_wait(**{"exclude_mask": exclude_mask,
                                          "image": self.settings.get_chanel(self.channels_chose.currentIndex()),
                                          **values})
         self.settings.set(f"algorithms.{self.name}", values)
@@ -256,8 +257,12 @@ class AlgorithmSettingsWidget(QScrollArea):
         self.algorithm.clean()
 
 class InteractiveAlgorithmSettingsWidget(AlgorithmSettingsWidget):
-    def __init__(self, settings, name, element_list, algorithm: Type[SegmentationAlgorithm]):
+    def __init__(self, settings: PartSettings, name, element_list, algorithm: Type[RestartableAlgorithm],
+                 selector: List[QWidget]):
         super().__init__(settings, name, element_list, algorithm)
+        self.selector = selector
+        self.algorithm.finished.connect(self.enable_selector)
+        self.algorithm.started.connect(self.disable_selector)
         for _, el in self.widget_list:
             if isinstance(el, QAbstractSpinBox):
                 el.valueChanged.connect(self.value_updated)
@@ -274,15 +279,25 @@ class InteractiveAlgorithmSettingsWidget(AlgorithmSettingsWidget):
 
     def channel_change(self):
         self.algorithm.set_image(self.settings.get_chanel(self.channels_chose.currentIndex()))
+        if self.settings.mask is not None:
+            self.algorithm.set_mask(self.settings.mask)
 
     def execute(self, exclude_mask=None):
         values = self.get_values()
-        self.algorithm.set_parameters(**values)
+        self.algorithm.set_parameters_wait(**values)
         self.settings.set(f"algorithms.{self.name}", values)
         self.algorithm.start()
 
     def showEvent(self, a0: QShowEvent):
         self.channel_change()
+
+    def disable_selector(self):
+        for el in  self.selector:
+            el.setDisabled(True)
+
+    def enable_selector(self):
+        for el in  self.selector:
+            el.setEnabled(True)
 
 
 AbstractAlgorithmSettingsWidget.register(AlgorithmSettingsWidget)
