@@ -27,18 +27,14 @@ config_folder = appdirs.user_data_dir(app_name, app_lab)
 
 
 class Options(QWidget):
-    def __init__(self, settings: PartSettings, channel_control1: ChannelControl, channel_control2: ChannelControl,
+    def __init__(self, settings: PartSettings, channel_control2: ChannelControl,
                  left_panel: RawImageView):
         super().__init__()
         self._settings = settings
         self.left_panel = left_panel
-        self._ch_control1 = channel_control1
         self._ch_control2 = channel_control2
-        self.synchronize = QCheckBox("Synchronize views")
-        self.synchronize.stateChanged.connect(self.synchronize_change)
         self.off_left = QCheckBox("Hide left panel")
         self.off_left.stateChanged.connect(self.hide_left_panel)
-        self._ch_control2.coloring_update.connect(self.control2_change)
         self.stack_layout = QStackedLayout()
         self.algorithm_choose = QComboBox()
         self.interactive_use = QCheckBox("Interactive use")
@@ -81,10 +77,8 @@ class Options(QWidget):
         layout.addWidget(self.algorithm_choose)
         layout.addLayout(self.stack_layout)
         layout.addWidget(self.label, 1)
-        layout2.addWidget(self.synchronize)
         layout2.addWidget(self.off_left)
         layout.addLayout(layout2)
-        layout.addWidget(self._ch_control1)
         layout.addWidget(self._ch_control2)
         layout.setSpacing(0)
         self.setLayout(layout)
@@ -148,21 +142,9 @@ class Options(QWidget):
     def interactive(self):
         return self.interactive_use.isChecked()
 
-    def synchronize_change(self, val):
-        if val:
-            self._ch_control1.set_temp_name(self._ch_control2._name)
-        else:
-            self._ch_control1.set_temp_name()
-        self._ch_control1.setHidden(val)
-
-    def control2_change(self):
-        if self.synchronize.isChecked():
-            self._ch_control1.refresh_info()
 
     def hide_left_panel(self, val):
-        self._ch_control1.setHidden(val)
         self.left_panel.parent().setHidden(val)
-        self.synchronize.setChecked(False)
 
     def interactive_change(self, val):
         if val:
@@ -353,16 +335,16 @@ class MainWindow(QMainWindow):
         if os.path.exists(os.path.join(config_folder, "settings.json")):
             self.settings.load()
         self.main_menu = MainMenu(self.settings)
-        self.channel_control1 = ChannelControl(self.settings, name="raw_control", text="Left panel:")
-        self.channel_control2 = ChannelControl(self.settings, name="result_control", text="Right panel:")
-        self.color_bar = ColorBar(self.settings, self.channel_control2)
-        self.raw_image = RawImageStack(self.settings, self.channel_control1) # RawImageView(self.settings, self.channel_control1)
+        # self.channel_control1 = ChannelControl(self.settings, name="raw_control", text="Left panel:")
+        self.channel_control2 = ChannelControl(self.settings, name="result_control")
+        self.raw_image = RawImageStack(self.settings, self.channel_control2) # RawImageView(self.settings, self.channel_control1)
         self.result_image = ResultImageView(self.settings, self.channel_control2)
+        self.color_bar = ColorBar(self.settings, self.raw_image.raw_image.channel_control)
         self.info_text = QLabel()
         self.raw_image.raw_image.text_info_change.connect(self.info_text.setText)
         self.result_image.text_info_change.connect(self.info_text.setText)
         # image_view_control = self.image_view.get_control_view()
-        self.options_panel = Options(self.settings, self.channel_control1, self.channel_control2, self.raw_image.raw_image)
+        self.options_panel = Options(self.settings, self.channel_control2, self.raw_image.raw_image)
         # self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
 
@@ -393,10 +375,9 @@ class MainWindow(QMainWindow):
 
 
     def image_read(self):
-        print("buka1", self.settings.image.shape, self.sender())
-        self.raw_image.raw_image.set_image(self.settings.image)
+        self.raw_image.raw_image.set_image()
         self.raw_image.raw_image.reset_image_size()
-        self.result_image.set_image(self.settings.image)
+        self.result_image.set_image()
         self.result_image.reset_image_size()
         self.options_panel.image_changed_exec()
         self.setWindowTitle(f"PartSeg: {self.settings.image_path}")

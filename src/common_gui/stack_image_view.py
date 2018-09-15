@@ -299,11 +299,9 @@ class ImageView(QWidget):
         self.stack_slider.valueChanged.connect(self.change_image)
         self.stack_slider.valueChanged.connect(self.change_layer)
         self.layer_info = QLabel()
-        self.image = None
         self.tmp_image = None
         self.channels_num = 1
         self.layers_num = 1
-        self.border_val = [(0, 65000)]
         self.labels_layer = None
         self.image_shape = QSize(1, 1)
 
@@ -333,9 +331,9 @@ class ImageView(QWidget):
     def border_val(self):
         return self._settings.border_val
 
-    @border_val.setter
+    """"@border_val.setter
     def border_val(self, val):
-        self._settings.border_val = val
+        self._settings.border_val = val"""
 
     def showEvent(self, event: QShowEvent):
         self.btn_layout.addStretch(1)
@@ -432,27 +430,22 @@ class ImageView(QWidget):
             add_labels(im, layers, self.image_state.opacity, self.image_state.only_borders, int((self.image_state.borders_thick-1)/2), components_mask)
         return im
 
-    def set_image(self, image):
+    @property
+    def image(self):
+        return self._settings.image
+
+    def set_image(self):
         """
-        :type image: np.ndarray
-        :param image:
         :return:
         """
         self.channels_num = 1
         self.layers_num = 1
-        self.border_val = []
         self.labels_layer = None
         # image = np.squeeze(image)
-        self.image = image
-        self.channels_num = image.shape[-1]
-        self.layers_num = image.shape[0]
-        self.image_shape = QSize(image.shape[2], image.shape[1])
-        self.border_val = []
-        if self.channels_num > 0:
-            for i in range(self.channels_num):
-                self.border_val.append((np.min(image[..., i]), np.max(image[..., i])))
-        else:
-            self.border_val = [(np.min(image), np.max(image))]
+        #self.image = image
+        self.channels_num = self.image.shape[-1]
+        self.layers_num = self.image.shape[0]
+        self.image_shape = QSize(self.image.shape[2], self.image.shape[1])
         self.stack_slider.blockSignals(True)
         self.stack_slider.setRange(0, self.layers_num - 1)
         self.stack_slider.setValue(int(self.layers_num/2))
@@ -644,7 +637,7 @@ class MyScrollArea(QScrollArea):
 
     def resizeEvent(self, event):
         #super(MyScrollArea, self).resizeEvent(event)
-        if self.size() == event.oldSize() or event.oldSize().width() == -1:
+        if self.size() == event.oldSize():
             return
         if (self.timer_id):
             self.killTimer(self.timer_id)
@@ -654,6 +647,7 @@ class MyScrollArea(QScrollArea):
 
     def timerEvent(self, a0: 'QTimerEvent'):
         # Some try to reduce number of repaint event
+        print("AAAAAA")
         self.killTimer(self.timer_id)
         self.timer_id = 0
         if self.size().width() - 2 > self.pixmap.width() and self.size().height() - 2 > self.pixmap.height():
@@ -697,13 +691,13 @@ class ColorBar(QLabel):
         #layout.addWidget(QLabel("aaa"))
         #self.setLayout(layout)
 
-    def update_colormap(self, id):
-        fixed_range = self._settings.get_from_profile(f"{self.channel_control.name}.lock_{id}")
+    def update_colormap(self, channel_id):
+        fixed_range = self._settings.get_from_profile(f"{self.channel_control.name}.lock_{channel_id}")
         if fixed_range:
-            self.range = self._settings.get_from_profile(f"{self.channel_control.name}.range_{id}")
+            self.range = self._settings.get_from_profile(f"{self.channel_control.name}.range_{channel_id}")
         else:
-            self.range = self._settings.border_val[id]
-        cmap = self._settings.get_from_profile(f"{self.channel_control.name}.cmap{id}")
+            self.range = self._settings.border_val[channel_id]
+        cmap = self._settings.get_from_profile(f"{self.channel_control.name}.cmap{channel_id}")
         round_factor = self.round_base(self.range[1])
         self.round_range = int(round(self.range[0] / round_factor) * round_factor), \
                       int(round(self.range[1] / round_factor) * round_factor)
@@ -711,7 +705,7 @@ class ColorBar(QLabel):
             self.round_range = self.round_range[0] + round_factor, self.round_range[1]
         if self.round_range[1] > self.range[1]:
             self.round_range = self.round_range[0] , self.round_range[1] - round_factor
-        print(self.range, self.round_range)
+        #print(self.range, self.round_range)
 
         img = color_image(np.linspace(0, 256, 512).reshape((1,512, 1))[:, ::-1], [cmap], [(0, 256)])
         self.image = QImage(img.data, 1, 512, img.dtype.itemsize * 3, QImage.Format_RGB888)

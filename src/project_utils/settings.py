@@ -1,5 +1,6 @@
 import json
 import logging
+import sys
 import typing
 
 from qt_import import QObject, pyqtSignal
@@ -139,6 +140,7 @@ class ProfileDict(object):
                     self.set(key_path, val)
                     return val
                 else:
+                    print(f"{key_path}: {curr_dict.items()}", file=sys.stderr)
                     raise e
         return curr_dict
 
@@ -181,6 +183,10 @@ class ViewSettings(ImageSettings):
     @property
     def available_colormaps(_):
         return pyplot.colormaps()
+
+    def _image_changed(self):
+        super()._image_changed()
+        self.border_val = list(zip(self.image.min(axis=(0,1,2)), self.image.max(axis=(0,1,2))))
 
     def change_profile(self, name):
         self.current_profile_dict = name
@@ -259,7 +265,6 @@ class BaseSettings(ViewSettings):
             try:
                 for k, v in data["segment_profile"].items():
                     self.segmentation_dict[k] = v #ProfileDict()
-                    print(self.segmentation_dict[k].my_dict)
                     #self.segmentation_dict[k].my_dict = v
             except KeyError:
                 logging.error('error in load "segment_profile"')

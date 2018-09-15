@@ -180,7 +180,6 @@ class AlgorithmSettingsWidget(QScrollArea):
         for el in element_list:
             if isinstance(el, QLabel):
                 widget_layout.addRow(el)
-                print("buka")
             else:
                 self.widget_list.append((el.name, el.get_field()))
                 widget_layout.addRow(el.user_name, self.widget_list[-1][-1])

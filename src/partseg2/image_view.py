@@ -4,7 +4,7 @@ from PyQt5.QtGui import QHideEvent, QShowEvent
 from PyQt5.QtWidgets import QPushButton, QStackedWidget
 from scipy.ndimage import gaussian_filter
 
-from common_gui.channel_control import ChannelControl
+from common_gui.channel_control import ChannelControl, ChannelChoose
 from common_gui.stack_image_view import ImageView, create_tool_button
 from partseg2.advanced_window import StatisticsWindow
 from project_utils.color_image import color_image
@@ -31,9 +31,13 @@ class StatisticsWindowForRaw(StatisticsWindow):
 
 class RawImageView(ImageView):
     def __init__(self, settings, channel_control: ChannelControl):
-        super().__init__(settings, channel_control)
+        channel_chose = ChannelChoose(settings, channel_control)
+        super().__init__(settings, channel_chose)
         self.statistic_image_view_btn = create_tool_button("Statistic calculation", None)
+        self.btn_layout.takeAt(self.btn_layout.count() - 1)
+        self.btn_layout.addWidget(channel_chose, 2)
         self.btn_layout.addWidget(self.statistic_image_view_btn)
+
         self.statistic_image_view_btn.clicked.connect(self.show_statistic)
 
     def show_statistic(self):
