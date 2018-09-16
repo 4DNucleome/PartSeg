@@ -590,6 +590,7 @@ class StatisticsWindow(QWidget):
         # noinspection PyArgumentList
         self.clip = QApplication.clipboard()
         self.settings.image_changed[int].connect(self.image_changed)
+        self.previous_profile = None
         # self.update_statistics()
 
     def image_changed(self, channels_num):
@@ -635,6 +636,7 @@ class StatisticsWindow(QWidget):
         self.statistic_shift = 0
         self.info_field.setRowCount(0)
         self.info_field.setColumnCount(0)
+        self.previous_profile = None
         self.append_statistics()
 
     def horizontal_changed(self):
@@ -671,7 +673,7 @@ class StatisticsWindow(QWidget):
         except ValueError as e:
             logging.error(e)
             return
-        if self.no_header.isChecked():
+        if self.no_header.isChecked() or self.previous_profile == compute_class.name:
             self.statistic_shift -= 1
         if self.no_units.isChecked():
             header_grow = self.statistic_shift - 1
@@ -681,7 +683,7 @@ class StatisticsWindow(QWidget):
             ver_headers = [self.info_field.verticalHeaderItem(x).text() for x in range(self.info_field.rowCount())]
             self.info_field.setRowCount(3 + header_grow)
             self.info_field.setColumnCount(max(len(stat), self.info_field.columnCount()))
-            if not self.no_header.isChecked():
+            if not self.no_header.isChecked()  and (self.previous_profile != compute_class.name):
                 ver_headers.append("Name")
             ver_headers.extend(["Value"])
             if not self.no_units.isChecked():
@@ -690,7 +692,7 @@ class StatisticsWindow(QWidget):
             self.info_field.setHorizontalHeaderLabels([str(x) for x in range(len(stat))])
             for i, (key, val) in enumerate(stat.items()):
                 print(i, key, val)
-                if not self.no_header.isChecked():
+                if not self.no_header.isChecked() and (self.previous_profile != compute_class.name):
                     self.info_field.setItem(self.statistic_shift + 0, i, QTableWidgetItem(key))
                 self.info_field.setItem(self.statistic_shift + 1, i, QTableWidgetItem(str(val)))
                 if not self.no_units.isChecked():
@@ -704,7 +706,7 @@ class StatisticsWindow(QWidget):
             self.info_field.setRowCount(max(len(stat), self.info_field.rowCount()))
             self.info_field.setColumnCount(3 + header_grow)
             self.info_field.setVerticalHeaderLabels([str(x) for x in range(len(stat))])
-            if not self.no_header.isChecked():
+            if not self.no_header.isChecked() and (self.previous_profile != compute_class.name):
                 hor_headers.append("Name")
             hor_headers.extend(["Value"])
             if not self.no_units.isChecked():
@@ -712,7 +714,7 @@ class StatisticsWindow(QWidget):
             self.info_field.setHorizontalHeaderLabels(hor_headers)
             for i, (key, val) in enumerate(stat.items()):
                 # print(i, key, val)
-                if not self.no_header.isChecked():
+                if not self.no_header.isChecked() and (self.previous_profile != compute_class.name):
                     self.info_field.setItem(i, self.statistic_shift + 0, QTableWidgetItem(key))
                 self.info_field.setItem(i, self.statistic_shift + 1, QTableWidgetItem(str(val)))
                 if not self.no_units.isChecked():
@@ -724,6 +726,7 @@ class StatisticsWindow(QWidget):
         if self.no_units.isChecked():
             self.statistic_shift -= 1
         self.statistic_shift += 3
+        self.previous_profile = compute_class.name
 
     def keyPressEvent(self, e):
         if e.modifiers() & Qt.ControlModifier:
