@@ -7,7 +7,7 @@ import tifffile as tif
 import numpy as np
 import SimpleITK as sitk
 import appdirs
-from PyQt5.QtCore import Qt, QByteArray
+from PyQt5.QtCore import Qt, QByteArray, QEvent
 from PyQt5.QtGui import QIcon, QKeyEvent
 from PyQt5.QtWidgets import QMainWindow, QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
     QFileDialog, QMessageBox, QCheckBox, QComboBox, QStackedLayout, QInputDialog
@@ -17,7 +17,7 @@ from common_gui.stack_image_view import ColorBar
 from partseg2.advanced_window import AdvancedWindow
 from project_utils.algorithms_description import InteractiveAlgorithmSettingsWidget
 from project_utils.global_settings import static_file_folder
-from .partseg_settings import PartSettings, load_project, save_project,save_labeled_image
+from .partseg_settings import PartSettings, load_project, save_project, save_labeled_image
 from .image_view import RawImageView, ResultImageView, RawImageStack
 from .algorithm_description import part_algorithm_dict
 
@@ -44,6 +44,7 @@ class Options(QWidget):
         self.choose_profile = QComboBox()
         self.choose_profile.addItem("<none>")
         self.choose_profile.addItems(self._settings.get("segmentation_profiles", dict()).keys())
+        self.update_tooltips()
         self.choose_profile.currentTextChanged.connect(self.change_profile)
         self.interactive_use.stateChanged.connect(self.execute_btn.setDisabled)
         self.interactive_use.stateChanged.connect(self.interactive_change)
@@ -55,7 +56,7 @@ class Options(QWidget):
                                                         selector=[self.algorithm_choose, self.choose_profile])
             widgets_list.append(widget)
             widget.algorithm.execution_done_extend.connect(self.execution_done)
-            #widget.algorithm.progress_signal.connect(self.progress_info)
+            # widget.algorithm.progress_signal.connect(self.progress_info)
             self.stack_layout.addWidget(widget)
 
         self.label = QLabel()
@@ -66,7 +67,7 @@ class Options(QWidget):
         layout2.setContentsMargins(0, 0, 0, 0)
         layout3 = QHBoxLayout()
         layout3.setContentsMargins(0, 0, 0, 0)
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout4 = QHBoxLayout()
         layout4.setContentsMargins(0, 0, 0, 0)
         layout4.addWidget(self.save_profile_btn)
@@ -92,6 +93,33 @@ class Options(QWidget):
                 self.algorithm_choose.setCurrentIndex(i)
                 break
 
+    def update_tooltips(self):
+        for i in range(1, self.choose_profile.count()):
+            if self.choose_profile.itemData(i, Qt.ToolTipRole) is not None:
+                continue
+            text = self.choose_profile.itemText(i)
+            profile = self._settings.get(f"segmentation_profiles.{text}")
+            tool_tip_text = profile["algorithm"] + "\n" + "\n".join(
+                [f"{k.replace('_', ' ')}: {v}" for k, v in profile["values"].items()])
+            self.choose_profile.setItemData(i, tool_tip_text, Qt.ToolTipRole)
+
+    def event(self, event: QEvent):
+        if event.type() == QEvent.WindowActivate:
+            current_names = set(self._settings.get(f"segmentation_profiles", dict()).items())
+            prev_names = set([self.choose_profile.itemText(i) for i in range(1, self.choose_profile.count())])
+            new_names = current_names - prev_names
+            delete_names = prev_names - current_names
+            if len(delete_names) > 0:
+                i = 1
+                while i < self.choose_profile.count():
+                    if self.choose_profile.itemText(i) in delete_names:
+                        self.choose_profile.removeItem(i)
+                    else:
+                        i += 1
+            if len(new_names) > 0:
+                self.choose_profile.addItems(list(sorted(new_names)))
+            self.update_tooltips()
+        return super().event(event)
 
     def keyPressEvent(self, event: QKeyEvent):
         if (event.key() == Qt.Key_Enter or event.key() == Qt.Key_Return) and (event.modifiers() == Qt.ControlModifier):
@@ -104,7 +132,7 @@ class Options(QWidget):
             if not ok:
                 return
             if text in self._settings.get("segmentation_profiles", dict()):
-                if  QMessageBox.No == QMessageBox.warning(
+                if QMessageBox.No == QMessageBox.warning(
                         self, "Already exists",
                         "Profile with this name already exist. Overwrite?",
                         QMessageBox.Yes | QMessageBox.No, QMessageBox.No):
@@ -117,9 +145,11 @@ class Options(QWidget):
             self._settings.set(f"segmentation_profiles.{text}", resp)
             self._settings.dump()
             self.choose_profile.addItem(text)
+            self.update_tooltips()
             break
 
     def change_profile(self, val):
+        self.choose_profile.setToolTip("")
         if val == "<none>":
             return
         interactive = self.interactive_use.isChecked()
@@ -134,10 +164,7 @@ class Options(QWidget):
                 self.choose_profile.setCurrentIndex(0)
                 self.choose_profile.blockSignals(False)
                 break
-
-
         self.interactive_use.setChecked(interactive)
-
 
     @property
     def segmentation(self):
@@ -153,7 +180,6 @@ class Options(QWidget):
     @property
     def interactive(self):
         return self.interactive_use.isChecked()
-
 
     def hide_left_panel(self, val):
         self.left_panel.parent().setHidden(val)
@@ -179,6 +205,7 @@ class Options(QWidget):
         self.segmentation = segmentation
         self._settings.full_segmentation = full_segmentation
         self.label.setText(", ".join(map(str, self._settings.sizes[1:])))
+
 
 class MainMenu(QWidget):
     def __init__(self, settings: PartSettings):
@@ -337,7 +364,6 @@ class MainMenu(QWidget):
         self.advanced_window.show()
 
 
-
 class MainWindow(QMainWindow):
     def __init__(self, title):
         super(MainWindow, self).__init__()
@@ -350,7 +376,8 @@ class MainWindow(QMainWindow):
         self.main_menu = MainMenu(self.settings)
         # self.channel_control1 = ChannelControl(self.settings, name="raw_control", text="Left panel:")
         self.channel_control2 = ChannelControl(self.settings, name="result_control")
-        self.raw_image = RawImageStack(self.settings, self.channel_control2) # RawImageView(self.settings, self.channel_control1)
+        self.raw_image = RawImageStack(self.settings,
+                                       self.channel_control2)  # RawImageView(self.settings, self.channel_control1)
         self.result_image = ResultImageView(self.settings, self.channel_control2)
         self.color_bar = ColorBar(self.settings, self.raw_image.raw_image.channel_control)
         self.info_text = QLabel()
@@ -385,7 +412,6 @@ class MainWindow(QMainWindow):
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, 'ascii')))
         except KeyError:
             pass
-
 
     def image_read(self):
         self.raw_image.raw_image.set_image()

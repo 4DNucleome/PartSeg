@@ -1,5 +1,5 @@
 from typing import List
-
+import tifffile
 import numpy as np
 from os import path
 from partseg.io_functions import save_stack_segmentation, load_stack_segmentation

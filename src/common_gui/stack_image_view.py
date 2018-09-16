@@ -692,7 +692,7 @@ class ColorBar(QLabel):
         #self.setLayout(layout)
 
     def update_colormap(self, channel_id):
-        fixed_range = self._settings.get_from_profile(f"{self.channel_control.name}.lock_{channel_id}")
+        fixed_range = self._settings.get_from_profile(f"{self.channel_control.name}.lock_{channel_id}", False)
         if fixed_range:
             self.range = self._settings.get_from_profile(f"{self.channel_control.name}.range_{channel_id}")
         else:

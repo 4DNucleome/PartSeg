@@ -22,7 +22,7 @@ from .image_view import StackImageView
 from partseg.batch_window import AddFiles
 from partseg.io_functions import load_stack_segmentation
 from project_utils.global_settings import static_file_folder
-from project_utils.universal_const import UNITS_LIST
+from project_utils.universal_const import UNITS_LIST, UNIT_SCALE
 from project_utils.utils import SynchronizeValues
 from stackseg.stack_algorithm.algorithm_description import stack_algorithm_dict
 from stackseg.stack_settings import StackSettings
@@ -30,6 +30,7 @@ from stackseg.stack_settings import StackSettings
 app_name = "StackSeg"
 app_lab = "LFSG"
 config_folder = appdirs.user_data_dir(app_name, app_lab)
+
 
 class MainMenu(QWidget):
     image_loaded = pyqtSignal()
@@ -79,8 +80,7 @@ class MainMenu(QWidget):
                 self.settings.image = im, metadata["base_file"]
                 self.settings.set_segmentation(segmentation, metadata)
             else:
-                im = tif.imread(file_path)
-                self.settings.image = im, file_path
+                self.settings.load_image(file_path)
         except Exception as e:
             import traceback
             traceback.print_exc()
@@ -111,14 +111,14 @@ class MainMenu(QWidget):
         dial.setFileMode(QFileDialog.AnyFile)
         dial.setDirectory(self.settings.get("io.save_segmentation_directory", ""))
         dial.setAcceptMode(QFileDialog.AcceptSave)
-        dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0]+".seg")
+        dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0] + ".seg")
         filters = ["segmentation (*.seg *.tgz)"]
         dial.setNameFilters(filters)
         if not dial.exec_():
             return
         file_path = str(dial.selectedFiles()[0])
         self.settings.set("io.save_segmentation_directory", os.path.dirname(str(file_path)))
-        #self.settings.save_directory = os.path.dirname(str(file_path))
+        # self.settings.save_directory = os.path.dirname(str(file_path))
         try:
             self.settings.save_segmentation(file_path)
         except IOError as e:
@@ -126,11 +126,10 @@ class MainMenu(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "Save error", f"Unexpected error. Text: {e}", QMessageBox.Ok)
 
-
     def save_result(self):
         if self.settings.image_path is not None and \
-            QMessageBox.Yes ==  QMessageBox.question(self, "Copy", "Copy name to clipboard?",
-                                                     QMessageBox.Yes| QMessageBox.No, QMessageBox.Yes):
+                QMessageBox.Yes == QMessageBox.question(self, "Copy", "Copy name to clipboard?",
+                                                        QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes):
             clipboard = QGuiApplication.clipboard()
             clipboard.setText(os.path.splitext(os.path.basename(self.settings.image_path))[0])
 
@@ -170,6 +169,7 @@ class ChosenComponents(QWidget):
     :type check_box: dict[int, QCheckBox]
     """
     check_change_signal = pyqtSignal()
+
     def __init__(self):
         super(ChosenComponents, self).__init__()
         # self.setLayout(FlowLayout())
@@ -219,7 +219,6 @@ class ChosenComponents(QWidget):
         self.update()
         self.check_change_signal.emit()
 
-
     def check_change(self):
         self.check_change_signal.emit()
 
@@ -254,7 +253,7 @@ class AlgorithmOptions(QWidget):
         super(AlgorithmOptions, self).__init__()
         self.settings = settings
         self.algorithm_choose = QComboBox()
-        self.show_result = QComboBox() #  QCheckBox("Show result")
+        self.show_result = QComboBox()  # QCheckBox("Show result")
         self.show_result.addItems(["Not show", "Show results", "Show choosen"])
         self.show_result.setCurrentIndex(control_view.show_label)
         self.opacity = QDoubleSpinBox()
@@ -318,7 +317,7 @@ class AlgorithmOptions(QWidget):
         main_layout.addLayout(self.stack_layout)
         main_layout.addWidget(self.choose_components)
         main_layout.addStretch()
-        main_layout.setContentsMargins(0,0,0,0)
+        main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         self.setLayout(main_layout)
 
@@ -335,7 +334,7 @@ class AlgorithmOptions(QWidget):
 
     def border_value_check(self, value):
         if value % 2 == 0:
-            self.borders_thick.setValue(value+1)
+            self.borders_thick.setValue(value + 1)
 
     def file_list_change(self, val):
         print("FF:", val)
@@ -439,15 +438,17 @@ class ImageInformation(QWidget):
         self.path = QLabel("<b>Path:</b> example image")
         self.path.setWordWrap(True)
         self.spacing = [QDoubleSpinBox() for _ in range(3)]
+        units_index = self._settings.get("units_index", 2)
         for i, el in enumerate(self.spacing):
             el.setAlignment(Qt.AlignRight)
             el.setButtonSymbols(QAbstractSpinBox.NoButtons)
-            el.setRange(0, 1000)
-            el.setValue(self._settings.image_spacing[i])
+            el.setRange(0, 100000)
+            el.setValue(self._settings.image_spacing[i] * UNIT_SCALE[units_index])
             el.valueChanged.connect(self.image_spacing_change)
         self.units = QComboBox()
         self.units.addItems(UNITS_LIST)
-        self.units.setCurrentIndex(2)
+        self.units.setCurrentIndex(units_index)
+        self.units.currentIndexChanged.connect(self.update_spacing)
 
         self.add_files = AddFiles(settings, btn_layout=FlowLayout)
 
@@ -466,11 +467,20 @@ class ImageInformation(QWidget):
         self.setLayout(layout)
         self._settings.image_changed[str].connect(self.set_image_path)
 
+    def update_spacing(self, index=None):
+        if index is not None:
+            self._settings.set("units_index", index)
+        for i, el in enumerate(self.spacing):
+            el.blockSignals(True)
+            el.setValue(self._settings.image_spacing[i] * UNIT_SCALE[self.units.currentIndex()])
+            el.blockSignals(False)
+
     def set_image_path(self, value):
         self.path.setText("<b>Path:</b> {}".format(value))
+        self.update_spacing()
 
     def image_spacing_change(self):
-        self._settings.image_spacing = [el.value() for el in self.spacing]
+        self._settings.image_spacing = [el.value() / UNIT_SCALE[i] for i, el in enumerate(self.spacing)]
 
 
 class Options(QTabWidget):
@@ -509,7 +519,6 @@ class MainWindow(QMainWindow):
         self.settings.image_changed.connect(self.image_read)
         self.color_bar = ColorBar(self.settings, self.channel_control)
 
-
         im = tif.imread(os.path.join(static_file_folder, 'initial_images', "stack.tif"))
 
         icon = QIcon(os.path.join(static_file_folder, 'icons', "icon_stack.png"))
@@ -526,8 +535,8 @@ class MainWindow(QMainWindow):
         sub2_layout.addWidget(self.options_panel, 1)
         sub2_layout.addWidget(self.channel_control, 0)
 
-        sub_layout.addLayout(sub3_layout,1)
-        sub_layout.addLayout(sub2_layout,0)
+        sub_layout.addLayout(sub3_layout, 1)
+        sub_layout.addLayout(sub2_layout, 0)
         layout.addLayout(sub_layout)
         # self.pixmap.adjustSize()
         # self.pixmap.update_size(2)
@@ -552,7 +561,3 @@ class MainWindow(QMainWindow):
         # print(self.settings.segmentation_dict["default"].my_dict)
         self.settings.set_in_profile("main_window_geometry", bytes(self.saveGeometry().toHex()).decode('ascii'))
         self.settings.dump()
-
-
-
-

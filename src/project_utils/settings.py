@@ -2,6 +2,7 @@ import json
 import logging
 import sys
 import typing
+import tifffile
 
 from qt_import import QObject, pyqtSignal
 from .image_operations import normalize_shape
@@ -28,6 +29,20 @@ class ImageSettings(QObject):
         self._segmentation = None
         self.sizes = []
         # self.fixed_range = 0, 255
+
+    def load_image(self, file_path):
+        print("Bukkakakka")
+        with tifffile.TiffFile(file_path) as  tif_file:
+            im = tif_file.asarray()
+            if tif_file.is_lsm:
+                try:
+                    spacing = [tif_file.lsm_metadata["VoxelSizeX"], tif_file.lsm_metadata["VoxelSizeY"],
+                               tif_file.lsm_metadata["VoxelSizeZ"]]
+                    self.image_spacing = spacing
+                except KeyError:
+                    pass
+            # print(tif_file.imagej_metadata)
+        self.image = im, file_path
 
     @property
     def segmentation(self) -> np.ndarray:

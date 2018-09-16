@@ -21,3 +21,4 @@ UNITS_DICT = {
 }
 
 UNITS_LIST = ["mm", u"µm", "nm", "pm"]
+UNIT_SCALE = [10**3, 10**6, 10**9, 10**12]
