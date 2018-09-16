@@ -119,7 +119,13 @@ class MainMenu(QWidget):
         file_path = str(dial.selectedFiles()[0])
         self.settings.set("io.save_segmentation_directory", os.path.dirname(str(file_path)))
         #self.settings.save_directory = os.path.dirname(str(file_path))
-        self.settings.save_segmentation(file_path)
+        try:
+            self.settings.save_segmentation(file_path)
+        except IOError as e:
+            QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {e}", QMessageBox.Ok)
+        except Exception as e:
+            QMessageBox.critical(self, "Save error", f"Unexpected error. Text: {e}", QMessageBox.Ok)
+
 
     def save_result(self):
         if self.settings.image_path is not None and \
@@ -151,7 +157,12 @@ class MainMenu(QWidget):
                 return
 
         self.settings.set("io.save_components_directory", os.path.dirname(str(dir_path)))
-        self.settings.save_result(dir_path)
+        try:
+            self.settings.save_result(dir_path)
+        except IOError as e:
+            QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {e}", QMessageBox.Ok)
+        except Exception as e:
+            QMessageBox.critical(self, "Save error", f"Unexpected error. Text: {e}", QMessageBox.Ok)
 
 
 class ChosenComponents(QWidget):
