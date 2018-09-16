@@ -1,7 +1,7 @@
 import logging
 import os
 import numpy as np
-from PyQt5.QtCore import QByteArray, Qt
+from PyQt5.QtCore import QByteArray, Qt, QEvent
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushButton, QCheckBox, QLineEdit, QVBoxLayout, \
     QLabel, QHBoxLayout, QListWidgetItem, QDialog, QDoubleSpinBox, QSpinBox, QGridLayout, QApplication, QMessageBox, \
@@ -552,15 +552,14 @@ class StatisticsWindow(QWidget):
         self.copy_button.clicked.connect(self.copy_to_clipboard)
         self.statistic_type = QComboBox(self)
         # self.statistic_type.addItem("Emish statistics (oryginal)")
-        self.statistic_type.addItems(list(sorted(self.settings.get("statistic_profiles", dict()).keys())))
         self.statistic_type.currentIndexChanged[str].connect(self.statistic_selection_changed)
+        self.statistic_type.addItems(list(sorted(self.settings.get("statistic_profiles", dict()).keys())))
         self.channels_chose = QComboBox()
         self.channels_chose.addItems(map(str, range(self.settings.channels)))
         self.info_field = QTableWidget(self)
         self.info_field.setColumnCount(3)
         self.info_field.setHorizontalHeaderLabels(["Name", "Value", "Units"])
         self.statistic_shift = 0
-        self._protect = False
         layout = QVBoxLayout()
         # layout.addWidget(self.recalculate_button)
         v_butt_layout = QVBoxLayout()
@@ -602,8 +601,6 @@ class StatisticsWindow(QWidget):
         self.channels_chose.setCurrentIndex(ind)
 
     def statistic_selection_changed(self, text):
-        if self._protect:
-            return
         text = str(text)
         try:
             stat = self.settings.get(f"statistic_profiles.{text}")
@@ -745,8 +742,8 @@ class StatisticsWindow(QWidget):
                     s = s[:-1] + "\n"  # eliminate last '\t'
                 self.clip.setText(s)
 
-    def showEvent(self, _):
-        self._protect = True
+    def update_statistic_list(self):
+        self.statistic_type.blockSignals(True)
         avali = list(sorted(self.settings.get("statistic_profiles").keys()))
         # avali.insert(0, "Emish statistics (oryginal)")
         text = self.statistic_type.currentText()
@@ -757,4 +754,12 @@ class StatisticsWindow(QWidget):
         self.statistic_type.clear()
         self.statistic_type.addItems(avali)
         self.statistic_type.setCurrentIndex(index)
-        self._protect = False
+        self.statistic_type.blockSignals(False)
+
+    def showEvent(self, _):
+        self.update_statistic_list()
+
+    def event(self, event: QEvent):
+        if event.type() == QEvent.WindowActivate:
+            self.update_statistic_list()
+        return super().event(event)
