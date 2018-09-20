@@ -11,6 +11,8 @@ def gaussian(image, radius):
     """
     if len(image.shape) == 2:
         return sitk.GetArrayFromImage(sitk.DiscreteGaussian(sitk.GetImageFromArray(image), radius))
+    if isinstance(radius, (tuple, list)):
+        return sitk.GetArrayFromImage(sitk.DiscreteGaussian(sitk.GetImageFromArray(image), radius))
     res = np.copy(image)
     for layer in res:
         layer[...] = sitk.GetArrayFromImage(sitk.DiscreteGaussian(sitk.GetImageFromArray(layer), radius))
@@ -59,6 +61,7 @@ class DrawType(Enum):
     erase = 2
     force_show = 3
     force_hide = 4
+
 
 def normalize_shape(image):
     if len(image.shape) == 4:

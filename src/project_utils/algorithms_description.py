@@ -161,6 +161,8 @@ class AbstractAlgorithmSettingsWidget(with_metaclass(ABCMeta, object)):
 
 
 class AlgorithmSettingsWidget(QScrollArea):
+    gauss_radius_name = "gauss_radius"
+
     def __init__(self, settings, name, element_list, algorithm: Type[SegmentationAlgorithm]):
         """
         For algorithm which works on one channel
@@ -240,6 +242,10 @@ class AlgorithmSettingsWidget(QScrollArea):
                 res[name] = el.isChecked()
             else:
                 raise ValueError("unsuported type {}".format(type(el)))
+        if self.gauss_radius_name in res and self.settings.gauss_3d:
+            base = min(self.settings.image_spacing)
+            val = res[self.gauss_radius_name]
+            res[self.gauss_radius_name] = [val * (base/x) for x in self.settings.image_spacing]
         return res
 
     def channel_num(self):
