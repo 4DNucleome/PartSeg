@@ -18,7 +18,7 @@ from partseg2.advanced_window import AdvancedWindow
 from project_utils.algorithms_description import InteractiveAlgorithmSettingsWidget
 from project_utils.global_settings import static_file_folder
 from .partseg_settings import PartSettings, load_project, save_project, save_labeled_image
-from .image_view import RawImageView, ResultImageView, RawImageStack
+from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
 from .algorithm_description import part_algorithm_dict
 
 app_name = "PartSeg2"
@@ -28,13 +28,15 @@ config_folder = appdirs.user_data_dir(app_name, app_lab)
 
 class Options(QWidget):
     def __init__(self, settings: PartSettings, channel_control2: ChannelControl,
-                 left_panel: RawImageView):
+                 left_panel: RawImageView, synchronize: SynchronizeView):
         super().__init__()
         self._settings = settings
         self.left_panel = left_panel
         self._ch_control2 = channel_control2
         self.off_left = QCheckBox("Hide left panel")
         self.off_left.stateChanged.connect(self.hide_left_panel)
+        self.synchronize_checkbox = QCheckBox("Synchronize view")
+        self.synchronize_checkbox.stateChanged.connect(synchronize.set_synchronize)
         self.stack_layout = QStackedLayout()
         self.algorithm_choose = QComboBox()
         self.interactive_use = QCheckBox("Interactive use")
@@ -81,6 +83,7 @@ class Options(QWidget):
         layout.addWidget(self.label)
         layout.addStretch(1)
         layout2.addWidget(self.off_left)
+        layout2.addWidget(self.synchronize_checkbox)
         layout.addLayout(layout2)
         layout.addWidget(self._ch_control2)
         layout.setSpacing(0)
@@ -105,7 +108,7 @@ class Options(QWidget):
 
     def event(self, event: QEvent):
         if event.type() == QEvent.WindowActivate:
-            current_names = set(self._settings.get(f"segmentation_profiles", dict()).items())
+            current_names = set(self._settings.get(f"segmentation_profiles", dict()).keys())
             prev_names = set([self.choose_profile.itemText(i) for i in range(1, self.choose_profile.count())])
             new_names = current_names - prev_names
             delete_names = prev_names - current_names
@@ -182,6 +185,8 @@ class Options(QWidget):
         return self.interactive_use.isChecked()
 
     def hide_left_panel(self, val):
+        self.synchronize_checkbox.setChecked(not val)
+        self.synchronize_checkbox.setDisabled(val)
         self.left_panel.parent().setHidden(val)
 
     def interactive_change(self, val):
@@ -383,8 +388,10 @@ class MainWindow(QMainWindow):
         self.info_text = QLabel()
         self.raw_image.raw_image.text_info_change.connect(self.info_text.setText)
         self.result_image.text_info_change.connect(self.info_text.setText)
+        self.synchronize_tool = SynchronizeView(self.raw_image.raw_image, self.result_image, self)
         # image_view_control = self.image_view.get_control_view()
-        self.options_panel = Options(self.settings, self.channel_control2, self.raw_image.raw_image)
+        self.options_panel = Options(self.settings, self.channel_control2, self.raw_image.raw_image,
+                                     self.synchronize_tool)
         # self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
 

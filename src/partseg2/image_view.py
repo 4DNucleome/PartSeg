@@ -1,5 +1,6 @@
 import collections
 
+from PyQt5.QtCore import QObject
 from PyQt5.QtGui import QHideEvent, QShowEvent
 from PyQt5.QtWidgets import QPushButton, QStackedWidget, QCheckBox, QDoubleSpinBox, QLabel
 from scipy.ndimage import gaussian_filter
@@ -88,5 +89,33 @@ class ResultImageView(ImageView):
         self.btn_layout.addWidget(self.only_border)
         self.btn_layout.addWidget(QLabel("Opacity:"))
         self.btn_layout.addWidget(self.opacity)
+
+class SynchronizeView(QObject):
+    def __init__(self, image_view1: ImageView, image_view2: ImageView, parent=None):
+        super(). __init__(parent)
+        self.image_view1 = image_view1
+        self.image_view2 = image_view2
+        self.synchronize = False
+        self.image_view1.stack_slider.sliderMoved.connect(self.synchronize_sliders)
+        self.image_view2.stack_slider.sliderMoved.connect(self.synchronize_sliders)
+        self.image_view1.zoom_changed.connect(self.synchronize_zoom)
+        self.image_view2.zoom_changed.connect(self.synchronize_zoom)
+
+
+    def set_synchronize(self, val: bool):
+        self.synchronize = val
+
+    def synchronize_sliders(self, val):
+        if not self.synchronize:
+            return
+        if self.sender() == self.image_view2.stack_slider:
+            self.image_view1.stack_slider.setValue(val)
+        else:
+            self.image_view2.stack_slider.setValue(val)
+
+    def synchronize_zoom(self, v1, v2 ,v3):
+        if not self.synchronize:
+            return
+
 
 

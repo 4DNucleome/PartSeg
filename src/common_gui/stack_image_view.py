@@ -268,6 +268,8 @@ class ImageView(QWidget):
     component_clicked = pyqtSignal(int)
     text_info_change = pyqtSignal(str)
 
+    zoom_changed = pyqtSignal(float, float, float)
+
     def __init__(self, settings, channel_control: ChannelControl):
         """:type settings: ImageSettings"""
         super(ImageView, self).__init__()
@@ -673,7 +675,10 @@ class MyScrollArea(QScrollArea):
             return
         else:
             self.zoom_scale *= scale_mod
-        self.resize_pixmap()
+        if (self.timer_id):
+            self.killTimer(self.timer_id)
+            self.timer_id = 0
+        self.timer_id = self.startTimer(50)
         event.accept()
 
 

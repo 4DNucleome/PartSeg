@@ -28,11 +28,10 @@ class ImageSettings(QObject):
         self.image_spacing = 70, 70, 210
         self._segmentation = None
         self.sizes = []
-        gauss_3d = True
+        self.gauss_3d = True
         # self.fixed_range = 0, 255
 
     def load_image(self, file_path):
-        print("Bukkakakka")
         with tifffile.TiffFile(file_path) as  tif_file:
             im = tif_file.asarray()
             if tif_file.is_lsm:

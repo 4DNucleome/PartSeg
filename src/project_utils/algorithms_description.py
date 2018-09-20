@@ -187,14 +187,6 @@ class AlgorithmSettingsWidget(QScrollArea):
             else:
                 self.widget_list.append((el.name, el.get_field()))
                 widget_layout.addRow(el.user_name, self.widget_list[-1][-1])
-        """scroll_area = QScrollArea()
-        ww = QWidget()
-        ww.setLayout(widget_layout)
-
-        scroll_area.setWidget(ww)
-        #scroll_area.setStyleSheet("background-color: green")
-        #main_layout.addLayout(widget_layout)
-        main_layout.addWidget(scroll_area)"""
         ww = QWidget()
         ww.setLayout(widget_layout)
         #self.setLayout(main_layout)
@@ -242,10 +234,6 @@ class AlgorithmSettingsWidget(QScrollArea):
                 res[name] = el.isChecked()
             else:
                 raise ValueError("unsuported type {}".format(type(el)))
-        if self.gauss_radius_name in res and self.settings.gauss_3d:
-            base = min(self.settings.image_spacing)
-            val = res[self.gauss_radius_name]
-            res[self.gauss_radius_name] = [val * (base/x) for x in self.settings.image_spacing]
         return res
 
     def channel_num(self):
@@ -253,10 +241,14 @@ class AlgorithmSettingsWidget(QScrollArea):
 
     def execute(self, exclude_mask=None):
         values = self.get_values()
+        self.settings.set(f"algorithms.{self.name}", values)
+        if self.gauss_radius_name in values and self.settings.gauss_3d:
+            base = min(self.settings.image_spacing)
+            val = values[self.gauss_radius_name]
+            values[self.gauss_radius_name] = [val * (base/x) for x in self.settings.image_spacing]
         self.algorithm.set_parameters_wait(**{"exclude_mask": exclude_mask,
                                          "image": self.settings.get_chanel(self.channels_chose.currentIndex()),
                                          **values})
-        self.settings.set(f"algorithms.{self.name}", values)
         self.algorithm.start()
 
     def hideEvent(self, a0: QHideEvent):
