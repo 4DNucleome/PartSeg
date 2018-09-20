@@ -98,24 +98,53 @@ class SynchronizeView(QObject):
         self.synchronize = False
         self.image_view1.stack_slider.sliderMoved.connect(self.synchronize_sliders)
         self.image_view2.stack_slider.sliderMoved.connect(self.synchronize_sliders)
-        self.image_view1.zoom_changed.connect(self.synchronize_zoom)
-        self.image_view2.zoom_changed.connect(self.synchronize_zoom)
+        self.image_view1.image_area.zoom_changed.connect(self.synchronize_zoom)
+        self.image_view2.image_area.zoom_changed.connect(self.synchronize_zoom)
+        self.image_view1.image_area.horizontalScrollBar().valueChanged.connect(self.synchronize_shift)
+        self.image_view2.image_area.horizontalScrollBar().valueChanged.connect(self.synchronize_shift)
+        self.image_view1.image_area.verticalScrollBar().valueChanged.connect(self.synchronize_shift)
+        self.image_view2.image_area.verticalScrollBar().valueChanged.connect(self.synchronize_shift)
 
 
     def set_synchronize(self, val: bool):
         self.synchronize = val
 
     def synchronize_sliders(self, val):
-        if not self.synchronize:
+        if not self.synchronize or self.image_view1.isHidden() or self.image_view2.isHidden():
             return
         if self.sender() == self.image_view2.stack_slider:
             self.image_view1.stack_slider.setValue(val)
         else:
             self.image_view2.stack_slider.setValue(val)
 
-    def synchronize_zoom(self, v1, v2 ,v3):
-        if not self.synchronize:
+    def synchronize_zoom(self):
+        if not self.synchronize or self.image_view1.isHidden() or self.image_view2.isHidden():
             return
+        if self.sender() == self.image_view1.image_area:
+            origin = self.image_view1.image_area
+            dest = self.image_view2.image_area
+        else:
+            origin = self.image_view2.image_area
+            dest = self.image_view1.image_area
+
+        dest.zoom_scale = origin.zoom_scale
+        dest.x_mid = origin.x_mid
+        dest.y_mid = origin.y_mid
+        dest.resize_pixmap()
+
+    def synchronize_shift(self):
+        if not self.synchronize or self.image_view1.isHidden() or self.image_view2.isHidden():
+            return
+        if self.sender().parent() == self.image_view1.image_area:
+            origin = self.image_view1.image_area
+            dest = self.image_view2.image_area
+        else:
+            origin = self.image_view2.image_area
+            dest = self.image_view1.image_area
+        dest.horizontalScrollBar().setValue(origin.horizontalScrollBar().value())
+        dest.verticalScrollBar().setValue(origin.verticalScrollBar().value())
+
+
 
 
 
