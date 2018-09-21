@@ -659,6 +659,7 @@ class MyScrollArea(QScrollArea):
             return
         if self.x_mid is None:
             self.x_mid = - self.widget().pos().x() + (self.get_width(event.oldSize().width())) / 2
+        if self.y_mid is None:
             self.y_mid = - self.widget().pos().y() + (self.get_height(event.oldSize().height())) / 2
         old_ratio = self.get_ratio_factor(event.oldSize())
         new_ratio = self.get_ratio_factor(event.size())

@@ -83,12 +83,17 @@ class ResultImageView(ImageView):
         self.opacity.setValue(self.image_state.opacity)
         self.opacity.setSingleStep(0.1)
         self.opacity.valueChanged.connect(self.image_state.set_opacity)
+        self.mask_opacity = QDoubleSpinBox()
+        self.mask_opacity.setRange(0, 1)
+        self.mask_opacity.setSingleStep(0.1)
 
         self.btn_layout.addStretch(1)
         self.btn_layout.addWidget(QLabel("Borders:"))
         self.btn_layout.addWidget(self.only_border)
         self.btn_layout.addWidget(QLabel("Opacity:"))
         self.btn_layout.addWidget(self.opacity)
+        self.btn_layout.addWidget(QLabel("Mask opacity:"))
+        self.btn_layout.addWidget(self.mask_opacity)
 
 class SynchronizeView(QObject):
     def __init__(self, image_view1: ImageView, image_view2: ImageView, parent=None):

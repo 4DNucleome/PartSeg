@@ -222,6 +222,7 @@ class MainMenu(QWidget):
         self.advanced_btn = QPushButton("Advanced")
         self.interpolate_btn = QPushButton("Interpolate")
         self.mask_manager = QPushButton("Mask Manager")
+        self.batch_processing = QPushButton("Batch Processing")
 
         self.advanced_window = None
 
@@ -231,6 +232,7 @@ class MainMenu(QWidget):
         layout.addWidget(self.advanced_btn)
         layout.addWidget(self.interpolate_btn)
         layout.addWidget(self.mask_manager)
+        layout.addWidget(self.batch_processing)
         self.setLayout(layout)
 
         self.open_btn.clicked.connect(self.load_data)
