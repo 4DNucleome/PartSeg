@@ -642,7 +642,6 @@ class MyScrollArea(QScrollArea):
 
     def resize_pixmap(self):
         ratio = self.get_ratio_factor()
-        print("Ratio", ratio)
         # noinspection PyTypeChecker
         final_size = QSize(self.pixmap.image_size * ratio - QSize(2, 2))
 
@@ -656,19 +655,16 @@ class MyScrollArea(QScrollArea):
         #super(MyScrollArea, self).resizeEvent(event)
         self.pixmap.point = None
         size_diff = self.size() - event.oldSize()
-        if abs(size_diff.width()) < 10 or abs(size_diff.height()) < 10 :
+        if abs(size_diff.width()) < 10 and abs(size_diff.height()) < 10 :
             return
-        print("aaaa")
         if self.x_mid is None:
             self.x_mid = - self.widget().pos().x() + (self.get_width(event.oldSize().width())) / 2
             self.y_mid = - self.widget().pos().y() + (self.get_height(event.oldSize().height())) / 2
         old_ratio = self.get_ratio_factor(event.oldSize())
         new_ratio = self.get_ratio_factor(event.size())
         scalar = new_ratio/old_ratio
-        print("X_mid:", self.x_mid, scalar)
         self.x_mid *= scalar
         self.y_mid *= scalar
-        print("X_mid:", self.x_mid)
         if (self.timer_id):
             self.killTimer(self.timer_id)
             self.timer_id = 0

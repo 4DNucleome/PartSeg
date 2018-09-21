@@ -1,7 +1,6 @@
 from qt_import import QDialog, QListWidget, QListWidgetItem, Qt, QPushButton, QHBoxLayout, QVBoxLayout, QTreeWidget, \
     QTreeWidgetItem, QLabel, QRadioButton, QButtonGroup, QLineEdit, QTextEdit
 import numpy as np
-from collections import namedtuple
 import re
 
 class ExportDialog(QDialog):
@@ -275,3 +274,12 @@ class StringViewer(QTextEdit):
 
     def preview_object(self, ob):
         self.setText(str(ob))
+
+class ProfileDictViewer(QTextEdit):
+    def __init__(self):
+        super().__init__()
+
+    def preview_object(self, profile):
+        text = profile["algorithm"] + "\n" + "\n".join(
+            [f"{k.replace('_', ' ')}: {v}" for k, v in profile["values"].items()])
+        self.setText(text)

@@ -46,6 +46,7 @@ class Options(QWidget):
         self.choose_profile = QComboBox()
         self.choose_profile.addItem("<none>")
         self.choose_profile.addItems(self._settings.get("segmentation_profiles", dict()).keys())
+        self.choose_profile.setToolTip("Select profile to restore its settings")
         self.update_tooltips()
         self.choose_profile.currentTextChanged.connect(self.change_profile)
         self.interactive_use.stateChanged.connect(self.execute_btn.setDisabled)

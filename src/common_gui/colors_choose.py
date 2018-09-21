@@ -24,6 +24,7 @@ class CheckBoxWithMouseSignal(QCheckBox):
 class ColorSelector(QWidget):
     def __init__(self, settings: ViewSettings, control_names: typing.List[str], parent=None):
         super().__init__(parent)
+        self.image = None
         self.preview = ColorPreview(self)
         self.preview.setMinimumHeight(40)
         self.control_names = control_names

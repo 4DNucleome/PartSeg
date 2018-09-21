@@ -5,28 +5,187 @@ from PyQt5.QtCore import QByteArray, Qt, QEvent
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushButton, QCheckBox, QLineEdit, QVBoxLayout, \
     QLabel, QHBoxLayout, QListWidgetItem, QDialog, QDoubleSpinBox, QSpinBox, QGridLayout, QApplication, QMessageBox, \
-    QFileDialog, QComboBox, QTableWidget, QTableWidgetItem
+    QFileDialog, QComboBox, QTableWidget, QTableWidgetItem, QAbstractSpinBox, QInputDialog
 
 from common_gui.colors_choose import ColorSelector
 from partseg2.partseg_settings import PartSettings
-from partseg2.profile_export import ExportDialog, StringViewer, ImportDialog
+from partseg2.profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer
 from partseg.statistics_calculation import StatisticProfile
 from project_utils.global_settings import static_file_folder
 from project_utils.settings import BaseSettings
-from project_utils.universal_const import UNITS_DICT
+from project_utils.universal_const import UNITS_DICT, UNIT_SCALE, UNITS_LIST
 from qt_import import h_line
-
+import functools
+import operator
 
 class AdvancedSettings(QWidget):
     def __init__(self, settings):
         super().__init__()
-        self.settings = settings
+        self._settings = settings
+        self.read_spacing_chk = QCheckBox("Read voxel size from file")
+        self.export_btn = QPushButton("Export profile")
+        self.export_btn.clicked.connect(self.export_profile)
+        self.import_btn = QPushButton("Import profile")
+        self.import_btn.clicked.connect(self.import_profiles)
+        self.delete_btn = QPushButton("Delete profile")
+        self.delete_btn.setDisabled(True)
+        self.delete_btn.clicked.connect(self.delete_profile)
+        self.rename_btn = QPushButton("Rename Profile")
+        self.rename_btn.clicked.connect(self.rename_profile)
+        self.rename_btn.setDisabled(True)
+        self.voxel_size_label = QLabel()
+        self.info_label = QLabel()
+        self.profile_list = QListWidget()
+        self.profile_list.currentTextChanged.connect(self.profile_chosen)
+        self.spacing = [QDoubleSpinBox() for _ in range(3)]
+        units_index = self._settings.get("units_index", 2)
+        for i, el in enumerate(self.spacing):
+            el.setAlignment(Qt.AlignRight)
+            el.setButtonSymbols(QAbstractSpinBox.NoButtons)
+            el.setRange(0, 100000)
+            el.setValue(self._settings.image_spacing[i] * UNIT_SCALE[units_index])
+            el.valueChanged.connect(self.image_spacing_change)
+        self.units = QComboBox()
+        self.units.addItems(UNITS_LIST)
+        self.units.setCurrentIndex(units_index)
+        self.units.currentIndexChanged.connect(self.update_spacing)
+
+        spacing_layout = QHBoxLayout()
+        for i in range(3):
+            spacing_layout.addWidget(self.spacing[i])
+        spacing_layout.addWidget(self.units)
+        spacing_layout.addWidget(self.read_spacing_chk)
+        profile_layout = QGridLayout()
+        profile_layout.addWidget(self.profile_list,0, 0, 2, 1)
+        profile_layout.addWidget(self.info_label, 0, 1, 1, 4)
+        profile_layout.addWidget(self.export_btn, 1, 1)
+        profile_layout.addWidget(self.import_btn, 1, 2)
+        profile_layout.addWidget(self.delete_btn, 2, 1)
+        profile_layout.addWidget(self.rename_btn, 2, 2)
+        layout = QVBoxLayout()
+        layout.addLayout(spacing_layout)
+        layout.addWidget(self.voxel_size_label)
+
+        layout.addLayout(profile_layout, 1)
+        self.setLayout(layout)
+
+    def profile_chosen(self, text):
+        if text == "":
+            self.delete_btn.setEnabled(False)
+            self.rename_btn.setEnabled(False)
+            self.info_label.setText("")
+            return
+        try:
+            profile = self._settings.get(f"segmentation_profiles.{text}")
+        except KeyError:
+            return
+
+        # TODO update with knowlega fro profile dict
+        description = profile["algorithm"] + "\n" + "\n".join(
+            [f"{k.replace('_', ' ')}: {v}" for k, v in profile["values"].items()])
+        self.info_label.setText(description)
+        self.delete_btn.setEnabled(True)
+        self.rename_btn.setEnabled(True)
 
 
-"""class StatisticsSettings(QWidget):
-    def __init__(self, settings):
-        super().__init__()
-        self.settings = settings"""
+    def image_spacing_change(self):
+        self._settings.image_spacing = \
+            [el.value() / UNIT_SCALE[self.units.currentIndex()] for i, el in enumerate(self.spacing)]
+        voxel_size = 1
+        for i, el in enumerate(self.spacing):
+            voxel_size *= self._settings.image_spacing[i] * UNIT_SCALE[self.units.currentIndex()]
+        self.voxel_size_label.setText(f"Voxel_size: {voxel_size} {UNITS_LIST[self.units.currentIndex()]}")
+
+
+    def update_spacing(self, index=None):
+        voxel_size = 1
+        if index is not None:
+            self._settings.set("units_index", index)
+        for i, el in enumerate(self.spacing):
+            el.blockSignals(True)
+            current_size = self._settings.image_spacing[i] * UNIT_SCALE[self.units.currentIndex()]
+            voxel_size *= current_size
+            el.setValue(current_size)
+            el.blockSignals(False)
+        self.voxel_size_label.setText(f"Voxel_size: {voxel_size} {UNITS_LIST[self.units.currentIndex()]}")
+
+    def update_profile_list(self):
+        current_names = set(self._settings.get(f"segmentation_profiles", dict()).keys())
+        self.profile_list.clear()
+        self.profile_list.addItems(sorted(current_names))
+
+    def showEvent(self, a0):
+        self.update_profile_list()
+        self.update_spacing()
+
+    def event(self, event: QEvent):
+        if event.type() == QEvent.WindowActivate and self.isVisible():
+            self.update_profile_list()
+            self.update_spacing()
+        return super().event(event)
+
+    def delete_profile(self):
+        chosen_profile = self.profile_list.currentItem()
+        label = chosen_profile.text()
+        if label != "":
+            self.delete_btn.setDisabled(True)
+            del self._settings.get(f"segmentation_profiles")[label]
+            self.profile_list.clear()
+            self.update_profile_list()
+
+    def export_profile(self):
+        exp = ExportDialog( self._settings.get(f"segmentation_profiles", dict()), ProfileDictViewer)
+        if not exp.exec_():
+            return
+        dial = QFileDialog(self, "Export profile segment")
+        dial.setFileMode(QFileDialog.AnyFile)
+        dial.setAcceptMode(QFileDialog.AcceptSave)
+        dial.setDirectory(self._settings.get("io.save_directory", ""))
+        dial.setNameFilter("Segment profile (*.json)")
+        dial.setDefaultSuffix("json")
+        dial.selectFile("segment_profile.json")
+        if dial.exec_():
+            file_path = dial.selectedFiles()[0]
+            self._settings.dump_part(file_path, "segmentation_profiles", exp.get_export_list())
+            self._settings.set("io.save_directory", os.path.dirname(file_path))
+
+    def import_profiles(self):
+        dial = QFileDialog(self, "Import profile segment")
+        dial.setFileMode(QFileDialog.ExistingFile)
+        dial.setAcceptMode(QFileDialog.AcceptOpen)
+        dial.setDirectory(self._settings.get("io.save_directory", ""))
+        dial.setNameFilter("Segment profile (*.json)")
+        if dial.exec_():
+            file_path = dial.selectedFiles()[0]
+            self._settings.set("io.save_directory", os.path.dirname(file_path))
+            profs = self._settings.load_part(file_path)
+            profiles_dict = self._settings.get(f"segmentation_profiles", dict())
+            imp = ImportDialog(profs, profiles_dict, ProfileDictViewer)
+            if not imp.exec_():
+                return
+            for original_name, final_name in imp.get_import_list():
+                profiles_dict[final_name] = profs[original_name]
+            self._settings.dump()
+            self.update_profile_list()
+
+    def rename_profile(self):
+        profile_name = self.profile_list.currentItem().text()
+        text, ok = QInputDialog.getText(self, "New profile name", f"New name for {profile_name}", text=profile_name)
+        if ok:
+            text = text.strip()
+            profiles_dict = self._settings.get(f"segmentation_profiles", dict())
+            if text in profiles_dict:
+                res = QMessageBox.warning(self, "Already exist",
+                                          f"Profile with name {text} already exist. Would you like to overwrite?",
+                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                if res == QMessageBox.No:
+                    self.rename_profile()
+                    return
+            profiles_dict[text] = profiles_dict.pop(profile_name)
+            self._settings.dump()
+            self.update_profile_list()
+
+
 
 class StatisticsSettings(QWidget):
     """
@@ -405,10 +564,11 @@ class StatisticsSettings(QWidget):
             imp = ImportDialog(stat, statistic_dict, StringViewer)
             if not imp.exec_():
                 return
-            for n,_ in imp.get_import_list():
-                statistic_dict[n] = stat[n]
+            for original_name, final_name in imp.get_import_list():
+                statistic_dict[final_name] = stat[original_name]
             self.profile_list.clear()
             self.profile_list.addItems(list(sorted(statistic_dict.keys())))
+            self.settings.dump()
 
 
 
@@ -554,6 +714,8 @@ class StatisticsWindow(QWidget):
         # self.statistic_type.addItem("Emish statistics (oryginal)")
         self.statistic_type.currentIndexChanged[str].connect(self.statistic_selection_changed)
         self.statistic_type.addItems(list(sorted(self.settings.get("statistic_profiles", dict()).keys())))
+        self.statistic_type.setToolTip(
+            "You can create new statistic profile in advanced window, in tab \"Statistic settings\"")
         self.channels_chose = QComboBox()
         self.channels_chose.addItems(map(str, range(self.settings.channels)))
         self.info_field = QTableWidget(self)
