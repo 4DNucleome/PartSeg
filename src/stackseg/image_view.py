@@ -19,6 +19,7 @@ class StackImageView(ImageView):
         if num > 0:
             self.component_clicked.emit(num)
 
+
     def event(self, event: QEvent):
 
         if event.type() == QEvent.ToolTip and self.component is not None:

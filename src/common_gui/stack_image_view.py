@@ -419,8 +419,12 @@ class ImageView(QWidget):
                 img[..., i] = gaussian_filter(img[..., i], radius)
         im = color_image(img, color_maps, borders)
         self.add_labels(im)
+        self.add_mask(im)
         self.image_area.set_image(im, True)
         self.tmp_image = np.array(img)
+
+    def add_mask(self, im):
+        pass
 
     def add_labels(self, im):
         if self.labels_layer is not None and self.image_state.show_label:

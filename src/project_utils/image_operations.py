@@ -2,6 +2,17 @@ import numpy as np
 import SimpleITK as sitk
 from enum import Enum
 
+def _generic_image_operation(image, radius, fun):
+    if image.dtype == np.bool:
+        image = image.astype(np.uint8)
+    if len(image.shape) == 2:
+        return sitk.GetArrayFromImage(fun(sitk.GetImageFromArray(image), radius))
+    if isinstance(radius, (tuple, list)):
+        return sitk.GetArrayFromImage(fun(sitk.GetImageFromArray(image), radius))
+    res = np.copy(image)
+    for layer in res:
+        layer[...] = sitk.GetArrayFromImage(fun(sitk.GetImageFromArray(layer), radius))
+    return res
 
 def gaussian(image, radius):
     """
@@ -9,14 +20,7 @@ def gaussian(image, radius):
     :param radius: radius for gaussian kernel
     :return:
     """
-    if len(image.shape) == 2:
-        return sitk.GetArrayFromImage(sitk.DiscreteGaussian(sitk.GetImageFromArray(image), radius))
-    if isinstance(radius, (tuple, list)):
-        return sitk.GetArrayFromImage(sitk.DiscreteGaussian(sitk.GetImageFromArray(image), radius))
-    res = np.copy(image)
-    for layer in res:
-        layer[...] = sitk.GetArrayFromImage(sitk.DiscreteGaussian(sitk.GetImageFromArray(layer), radius))
-    return res
+    return _generic_image_operation(image, radius, sitk.DiscreteGaussian)
 
 
 def dilate(image, radius):
@@ -25,15 +29,8 @@ def dilate(image, radius):
     :param radius: radius for gaussian kernel
     :return:
     """
-    if image.dtype == np.bool:
-        image = image.astype(np.uint8)
-    if len(image.shape) == 2:
-        return sitk.GetArrayFromImage(sitk.GrayscaleDilate(sitk.GetImageFromArray(image), radius))
-    res = np.copy(image)
-    print(image.shape, image.dtype)
-    for layer in res:
-        layer[...] = sitk.GetArrayFromImage(sitk.GrayscaleDilate(sitk.GetImageFromArray(layer), radius))
-    return res
+    return _generic_image_operation(image, radius, sitk.GrayscaleDilate)
+
 
 
 def erode(image, radius):
@@ -42,14 +39,7 @@ def erode(image, radius):
     :param radius: radius for gaussian kernel
     :return:
     """
-    if image.dtype == np.bool:
-        image = image.astype(np.uint8)
-    if len(image.shape) == 2:
-        return sitk.GetArrayFromImage(sitk.GrayscaleErode(sitk.GetImageFromArray(image), radius))
-    res = np.copy(image)
-    for layer in res:
-        layer[...] = sitk.GetArrayFromImage(sitk.GrayscaleErode(sitk.GetImageFromArray(layer), radius))
-    return res
+    return _generic_image_operation(image, radius, sitk.GrayscaleErode)
 
 
 def to_binary_image(image):

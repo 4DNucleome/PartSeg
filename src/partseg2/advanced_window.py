@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushBu
     QFileDialog, QComboBox, QTableWidget, QTableWidgetItem, QAbstractSpinBox, QInputDialog
 
 from common_gui.colors_choose import ColorSelector
-from partseg2.partseg_settings import PartSettings
+from partseg2.partseg_settings import PartSettings, MASK_COLORS
 from partseg2.profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer
 from partseg.statistics_calculation import StatisticProfile
 from project_utils.global_settings import static_file_folder
@@ -19,7 +19,7 @@ import functools
 import operator
 
 class AdvancedSettings(QWidget):
-    def __init__(self, settings):
+    def __init__(self, settings: PartSettings):
         super().__init__()
         self._settings = settings
         self.read_spacing_chk = QCheckBox("Read voxel size from file")
@@ -50,13 +50,34 @@ class AdvancedSettings(QWidget):
         self.units.setCurrentIndex(units_index)
         self.units.currentIndexChanged.connect(self.update_spacing)
 
+        color, opacity = self._settings.get_from_profile("mask_presentation", (list(MASK_COLORS.keys())[0], 1))
+        self.mask_color = QComboBox()
+        self.mask_color.addItems(MASK_COLORS.keys())
+        self.mask_opacity = QDoubleSpinBox()
+        self.mask_opacity.setRange(0, 1)
+        self.mask_opacity.setSingleStep(0.1)
+        try:
+            index = list(MASK_COLORS.keys()).index(color)
+        except IndexError:
+            index = 0
+        self.mask_color.setCurrentIndex(index)
+        self.mask_opacity.setValue(opacity)
+        self.mask_opacity.valueChanged.connect(self.mask_prop_changed)
+        self.mask_color.currentIndexChanged.connect(self.mask_prop_changed)
+
         spacing_layout = QHBoxLayout()
         for i in range(3):
             spacing_layout.addWidget(self.spacing[i])
         spacing_layout.addWidget(self.units)
         spacing_layout.addWidget(self.read_spacing_chk)
+        spacing_layout.addStretch(1)
+        mask_layout = QHBoxLayout()
+        mask_layout.addWidget(self.mask_color)
+        mask_layout.addWidget(QLabel("Mask opacity"))
+        mask_layout.addWidget(self.mask_opacity)
+        mask_layout.addStretch(1)
         profile_layout = QGridLayout()
-        profile_layout.addWidget(self.profile_list,0, 0, 2, 1)
+        profile_layout.addWidget(self.profile_list,0, 0, 3, 1)
         profile_layout.addWidget(self.info_label, 0, 1, 1, 4)
         profile_layout.addWidget(self.export_btn, 1, 1)
         profile_layout.addWidget(self.import_btn, 1, 2)
@@ -65,9 +86,13 @@ class AdvancedSettings(QWidget):
         layout = QVBoxLayout()
         layout.addLayout(spacing_layout)
         layout.addWidget(self.voxel_size_label)
+        layout.addLayout(mask_layout)
 
         layout.addLayout(profile_layout, 1)
         self.setLayout(layout)
+
+    def mask_prop_changed(self):
+        self._settings.set_in_profile("mask_presentation", (self.mask_color.currentText(), self.mask_opacity.value()))
 
     def profile_chosen(self, text):
         if text == "":

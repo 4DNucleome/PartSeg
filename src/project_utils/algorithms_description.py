@@ -269,13 +269,18 @@ class InteractiveAlgorithmSettingsWidget(AlgorithmSettingsWidget):
             elif isinstance(el, QComboBox):
                 el.currentIndexChanged.connect(self.value_updated)
         self.channels_chose.currentIndexChanged.connect(self.channel_change)
+        settings.mask_changed.connect(self.change_mask)
 
     def value_updated(self):
         if not self.parent().interactive:
             return
         self.execute()
 
+    def change_mask(self):
+        self.algorithm.set_mask(self.settings.mask)
+
     def channel_change(self):
+        # called on image change because of reinitialize list of channels
         self.algorithm.set_image(self.settings.get_chanel(self.channels_chose.currentIndex()))
         if self.settings.mask is not None:
             self.algorithm.set_mask(self.settings.mask)

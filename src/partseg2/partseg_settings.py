@@ -1,8 +1,13 @@
+from collections import namedtuple
+
 from PyQt5.QtCore import pyqtSignal
 
 from partseg.statistics_calculation import StatisticProfile
 from project_utils.settings import BaseSettings, ProfileEncoder, profile_hook
 import numpy as np
+
+MASK_COLORS = {"black":np.array((0,0,0)), "white": np.array((255, 255, 255)), "red": np.array((255, 0, 0)),
+               "green": np.array((0, 255, 0)), "blue": np.array((0, 0, 255))}
 
 class PartEncoder(ProfileEncoder):
     def default(self, o):
@@ -28,6 +33,8 @@ class PartSettings(BaseSettings):
         super().__init__(json_path)
         self._mask = None
         self.full_segmentation = None
+        self.segmentation_history = []
+        self.undo_segmentation_history = []
 
     @property
     def mask(self):
@@ -35,7 +42,7 @@ class PartSettings(BaseSettings):
 
     @mask.setter
     def mask(self, value):
-        if self._image.shape[:-1] != value.shape:
+        if value is not None and self._image.shape[:-1] != value.shape:
             raise ValueError("mask do not fit to image")
         self._mask = value
         self.mask_changed.emit()
@@ -58,3 +65,6 @@ def save_project(*args, **kwwargs):
 
 def save_labeled_image(file_path, settings):
     pass
+
+
+HistoryElement = namedtuple("HistoryElement", ["algorithm_name", "algorithm_values", "segmentation", "mask"])

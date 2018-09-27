@@ -1,6 +1,7 @@
 import collections
 
-from PyQt5.QtCore import QObject
+from PyQt5 import QtCore
+from PyQt5.QtCore import QObject, QEvent
 from PyQt5.QtGui import QHideEvent, QShowEvent
 from PyQt5.QtWidgets import QPushButton, QStackedWidget, QCheckBox, QDoubleSpinBox, QLabel
 from scipy.ndimage import gaussian_filter
@@ -8,6 +9,7 @@ from scipy.ndimage import gaussian_filter
 from common_gui.channel_control import ChannelControl, ChannelChoose
 from common_gui.stack_image_view import ImageView, create_tool_button
 from partseg2.advanced_window import StatisticsWindow
+from partseg2.partseg_settings import MASK_COLORS, PartSettings
 from project_utils.color_image import color_image
 import numpy as np
 
@@ -30,12 +32,57 @@ class StatisticsWindowForRaw(StatisticsWindow):
     def image_view_fun(self):
         self.parent().setCurrentIndex(0)
 
-class RawImageView(ImageView):
+
+class ImageViewWithMask(ImageView):
+    """
+    :type _settings PartSettings:
+    """
+    def __init__(self, settings: PartSettings, channel_control: ChannelControl):
+        super().__init__(settings, channel_control)
+        self.mask_show = QCheckBox()
+        self.mask_label = QLabel("Mask:")
+        self.btn_layout.takeAt(self.btn_layout.count()-1)
+        self.btn_layout.addWidget(self.mask_label)
+        self.btn_layout.addWidget(self.mask_show)
+        self.mask_prop = self._settings.get_from_profile("mask_presentation", (list(MASK_COLORS.keys())[0], 1))
+        self.mask_show.setDisabled(True)
+        self.mask_label.setDisabled(True)
+        settings.mask_changed.connect(self.mask_changed)
+        self.mask_show.stateChanged.connect(self.change_image)
+
+
+    def event(self, event: QtCore.QEvent):
+        if event.type() == QEvent.WindowActivate:
+            if self.mask_show.isChecked():
+                color, opacity = self._settings.get_from_profile("mask_presentation")
+                if color != self.mask_prop[0] or opacity != self.mask_prop[1]:
+                    self.mask_prop = color, opacity
+                    self.change_image()
+        return super().event(event)
+
+    def mask_changed(self):
+        self.mask_show.setDisabled(self._settings.mask is None)
+        self.mask_label.setDisabled(self._settings.mask is None)
+
+    def add_mask(self, im):
+        if not self.mask_show.isChecked() or self._settings.mask is None:
+            return
+        mask_layer = self._settings.mask[self.stack_slider.value()]
+
+        if self.mask_prop[1] == 1:
+            im[~mask_layer] = MASK_COLORS[self.mask_prop[0]]
+        else:
+            im[~mask_layer] = (1 - self.mask_prop[1]) * im[~mask_layer] + \
+                              self.mask_prop[1] * MASK_COLORS[self.mask_prop[0]]
+
+
+
+
+class RawImageView(ImageViewWithMask):
     def __init__(self, settings, channel_control: ChannelControl):
         channel_chose = ChannelChoose(settings, channel_control)
         super().__init__(settings, channel_chose)
         self.statistic_image_view_btn = create_tool_button("Statistic calculation", None)
-        self.btn_layout.takeAt(self.btn_layout.count() - 1)
         self.btn_layout.addWidget(channel_chose, 2)
         self.btn_layout.addWidget(self.statistic_image_view_btn)
 
@@ -71,7 +118,7 @@ class RawImageView(ImageView):
 
         self.text_info_change.emit("Position: {}, Brightness: {}".format(tuple(pos2), brightness))
 
-class ResultImageView(ImageView):
+class ResultImageView(ImageViewWithMask):
     def __init__(self, settings, channel_control: ChannelControl):
         super().__init__(settings, channel_control)
         self.only_border = QCheckBox("")
@@ -83,17 +130,15 @@ class ResultImageView(ImageView):
         self.opacity.setValue(self.image_state.opacity)
         self.opacity.setSingleStep(0.1)
         self.opacity.valueChanged.connect(self.image_state.set_opacity)
-        self.mask_opacity = QDoubleSpinBox()
-        self.mask_opacity.setRange(0, 1)
-        self.mask_opacity.setSingleStep(0.1)
+        #self.mask_opacity.setRange(0, 1)
+        #self.mask_opacity.setSingleStep(0.1)
 
         self.btn_layout.addStretch(1)
         self.btn_layout.addWidget(QLabel("Borders:"))
         self.btn_layout.addWidget(self.only_border)
         self.btn_layout.addWidget(QLabel("Opacity:"))
         self.btn_layout.addWidget(self.opacity)
-        self.btn_layout.addWidget(QLabel("Mask opacity:"))
-        self.btn_layout.addWidget(self.mask_opacity)
+
 
 class SynchronizeView(QObject):
     def __init__(self, image_view1: ImageView, image_view2: ImageView, parent=None):

@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import re
+from io import BytesIO
 
 import tifffile as tif
 import numpy as np
@@ -10,14 +11,15 @@ import appdirs
 from PyQt5.QtCore import Qt, QByteArray, QEvent
 from PyQt5.QtGui import QIcon, QKeyEvent
 from PyQt5.QtWidgets import QMainWindow, QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
-    QFileDialog, QMessageBox, QCheckBox, QComboBox, QStackedLayout, QInputDialog
+    QFileDialog, QMessageBox, QCheckBox, QComboBox, QStackedLayout, QInputDialog, QDialog, QSpinBox, QAbstractSpinBox
 
 from common_gui.channel_control import ChannelControl
 from common_gui.stack_image_view import ColorBar
 from partseg2.advanced_window import AdvancedWindow
 from project_utils.algorithms_description import InteractiveAlgorithmSettingsWidget
 from project_utils.global_settings import static_file_folder
-from .partseg_settings import PartSettings, load_project, save_project, save_labeled_image
+from project_utils.image_operations import dilate, erode
+from .partseg_settings import PartSettings, load_project, save_project, save_labeled_image, HistoryElement
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
 from .algorithm_description import part_algorithm_dict
 
@@ -123,6 +125,15 @@ class Options(QWidget):
             if len(new_names) > 0:
                 self.choose_profile.addItems(list(sorted(new_names)))
             self.update_tooltips()
+            algorithm_name =  self._settings.get("current_algorithm", self.algorithm_choose.currentText())
+            if algorithm_name != self.algorithm_choose.currentText():
+                interactive = self.interactive_use.isChecked()
+                self.interactive_use.setChecked(False)
+                try:
+                    self._change_profile(algorithm_name, self._settings.get(f"algorithms.{algorithm_name}"))
+                except KeyError:
+                    pass
+                self.interactive_use.setChecked(interactive)
         return super().event(event)
 
     def keyPressEvent(self, event: QKeyEvent):
@@ -159,17 +170,19 @@ class Options(QWidget):
         interactive = self.interactive_use.isChecked()
         self.interactive_use.setChecked(False)
         profile = self._settings.get(f"segmentation_profiles.{val}")
-        for i in range(self.stack_layout.count()):
-            widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.widget(i)
-            if widget.name == profile["algorithm"]:
-                self.algorithm_choose.setCurrentIndex(i)
-                widget.set_values(profile["values"])
-                self.choose_profile.blockSignals(True)
-                self.choose_profile.setCurrentIndex(0)
-                self.choose_profile.blockSignals(False)
-                break
+        self._change_profile(profile["algorithm"], profile["values"])
+        self.choose_profile.blockSignals(True)
+        self.choose_profile.setCurrentIndex(0)
+        self.choose_profile.blockSignals(False)
         self.interactive_use.setChecked(interactive)
 
+    def _change_profile(self, name, values):
+        for i in range(self.stack_layout.count()):
+            widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.widget(i)
+            if widget.name == name:
+                self.algorithm_choose.setCurrentIndex(i)
+                widget.set_values(values)
+                break
     @property
     def segmentation(self):
         return self._settings.segmentation
@@ -205,6 +218,7 @@ class Options(QWidget):
 
     def execute_algorithm(self):
         widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.currentWidget()
+        self._settings.set("last_executed_algorithm", widget.name)
         widget.execute()
 
     def execution_done(self, segmentation, full_segmentation):
@@ -221,7 +235,7 @@ class MainMenu(QWidget):
         self.save_btn = QPushButton("Save")
         self.advanced_btn = QPushButton("Advanced")
         self.interpolate_btn = QPushButton("Interpolate")
-        self.mask_manager = QPushButton("Mask Manager")
+        self.mask_manager_btn = QPushButton("Mask Manager")
         self.batch_processing = QPushButton("Batch Processing")
 
         self.advanced_window = None
@@ -231,12 +245,20 @@ class MainMenu(QWidget):
         layout.addWidget(self.save_btn)
         layout.addWidget(self.advanced_btn)
         layout.addWidget(self.interpolate_btn)
-        layout.addWidget(self.mask_manager)
+        layout.addWidget(self.mask_manager_btn)
         layout.addWidget(self.batch_processing)
         self.setLayout(layout)
 
         self.open_btn.clicked.connect(self.load_data)
         self.advanced_btn.clicked.connect(self.advanced_window_show)
+        self.mask_manager_btn.clicked.connect(self.mask_manager)
+
+    def mask_manager(self):
+        if self._settings.segmentation is None:
+            QMessageBox.information(self, "No segmentation", "Cannot create mask without segmentation")
+            return
+        dial = MaskWindow(self._settings)
+        dial.exec_()
 
     def load_data(self):
         try:
@@ -436,3 +458,107 @@ class MainWindow(QMainWindow):
         # print(self.settings.segmentation_dict["default"].my_dict)
         self.settings.set_in_profile("main_window_geometry", bytes(self.saveGeometry().toHex()).decode('ascii'))
         self.settings.dump()
+
+
+class MaskWindow(QDialog):
+    """
+    :type settings: Settings
+    """
+    def __init__(self, settings:PartSettings):
+        """
+
+        :type settings: Settings
+        """
+        super(MaskWindow, self).__init__()
+        self.setWindowTitle("Mask manager")
+        self.settings = settings
+        main_layout = QVBoxLayout()
+        dilate_label = QLabel("Dilate (x,y) radius (in pixels)", self)
+        self.dilate_radius = QSpinBox(self)
+        self.dilate_radius.setRange(-100, 100)
+        self.dilate_radius.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.dilate_radius.setValue(self.settings.get("mask_manager.dilate_radius", 1))
+        self.dilate_radius.setSingleStep(1)
+        dilate_layout = QHBoxLayout()
+        dilate_layout.addWidget(dilate_label)
+        dilate_layout.addWidget(self.dilate_radius)
+        main_layout.addLayout(dilate_layout)
+        op_layout = QHBoxLayout()
+        if len(settings.undo_segmentation_history) == 0:
+            self.save_draw = QCheckBox("Save draw", self)
+        else:
+            self.save_draw = QCheckBox("Add draw", self)
+        op_layout.addWidget(self.save_draw)
+        self.fill_holes = QCheckBox("Fill holes", self)
+        self.fill_holes.setToolTip("Fill holes that are not connected in 3d")
+        op_layout.addWidget(self.fill_holes)
+        self.fill_holes_in_2d = QCheckBox("Fill holes in 2d")
+        self.fill_holes_in_2d.setToolTip("Fill holes thar are not connected to border on each slice separately")
+        op_layout.addWidget(self.fill_holes_in_2d)
+        self.reset_next = QPushButton("Reset Next")
+        self.reset_next.clicked.connect(self.reset_next_fun)
+        if len(settings.undo_segmentation_history) == 0:
+            self.reset_next.setDisabled(True)
+        op_layout.addStretch()
+        op_layout.addWidget(self.reset_next)
+        main_layout.addLayout(op_layout)
+        self.prev_button = QPushButton(f"Previous mask ({len(settings.segmentation_history)})", self)
+        if len(settings.segmentation_history) == 0:
+            self.prev_button.setDisabled(True)
+        self.cancel = QPushButton("Cancel", self)
+        self.cancel.clicked.connect(self.close)
+        self.next_button = QPushButton(f"Next mask ({len(settings.undo_segmentation_history)})", self)
+        if len(settings.undo_segmentation_history) == 0:
+            self.next_button.setText("Next mask (new)")
+        self.next_button.clicked.connect(self.next_mask)
+        self.prev_button.clicked.connect(self.prev_mask)
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.prev_button)
+        button_layout.addWidget(self.cancel)
+        button_layout.addWidget(self.next_button)
+        main_layout.addLayout(button_layout)
+        self.setLayout(main_layout)
+
+    def reset_next_fun(self):
+        self.settings.undo_segmentation_settings = []
+        self.next_button.setText("Next mask (new)")
+        self.reset_next.setDisabled(True)
+
+    def next_mask(self):
+        dilate_radius = self.dilate_radius.value()
+        self.settings.set("mask_manager.dilate_radius", dilate_radius)
+        algorithm_name = self.settings.get("last_executed_algorithm")
+        algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
+        segmentation = self.settings.segmentation
+        mask = segmentation > 0
+
+        if dilate_radius > 0:
+            mask = dilate(mask, dilate_radius)
+        elif dilate_radius < 0:
+            mask = erode(mask, -dilate_radius)
+        mask = mask.astype(np.bool)
+        compressed_segmentation = BytesIO()
+        np.savez(compressed_segmentation, segmentation)
+        if self.settings.mask is not None:
+            compressed_mask = BytesIO()
+            np.savez(compressed_mask, mask)
+        else:
+            compressed_mask = None
+        self.settings.segmentation_history.append(
+            HistoryElement(algorithm_name, algorithm_values, segmentation, compressed_mask))
+        self.settings.undo_segmentation_history = []
+        self.settings.mask = mask
+        self.close()
+
+    def prev_mask(self):
+        history: HistoryElement = self.settings.segmentation_history.pop()
+        self.settings.set("current_algorithm", history.algorithm_name)
+        self.settings.set(f"algorithm.{history.algorithm_name}", history.algorithm_values)
+        self.settings.segmentation = np.load(history.segmentation)
+        if history.mask is not None:
+            self.settings.mask = np.load(history.mask)
+        else:
+            self.settings.mask = None
+        self.settings.change_segmentation_mask(self.segment, MaskChange.prev_seg, False)
+        self.settings_updated_function()
+        self.close()

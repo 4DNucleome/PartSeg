@@ -43,7 +43,6 @@ class SegmentationAlgorithm(QThread):
             self._clean()
         self.mutex.unlock()
 
-
     def _clean(self):
         self.image = None
         self.segmentation = None
