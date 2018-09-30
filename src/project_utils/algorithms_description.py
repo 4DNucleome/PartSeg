@@ -1,3 +1,4 @@
+import traceback
 from abc import ABCMeta, abstractmethod
 from os import path
 from typing import Type, List
@@ -277,13 +278,18 @@ class InteractiveAlgorithmSettingsWidget(AlgorithmSettingsWidget):
         self.execute()
 
     def change_mask(self):
+        if not self.isVisible():
+            return
         self.algorithm.set_mask(self.settings.mask)
 
     def channel_change(self):
+        if not self.isVisible() or self.channels_chose.currentIndex() < 0:
+            return
         # called on image change because of reinitialize list of channels
         self.algorithm.set_image(self.settings.get_chanel(self.channels_chose.currentIndex()))
         if self.settings.mask is not None:
             self.algorithm.set_mask(self.settings.mask)
+        self.value_updated()
 
     def execute(self, exclude_mask=None):
         values = self.get_values()

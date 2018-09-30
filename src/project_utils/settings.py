@@ -25,11 +25,26 @@ class ImageSettings(QObject):
         self._image = None
         self._image_path = ""
         self.has_channels = False
-        self.image_spacing = 70, 70, 210
+        self._image_spacing = 70, 70, 210
         self._segmentation = None
         self.sizes = []
         self.gauss_3d = True
         # self.fixed_range = 0, 255
+
+    @property
+    def image_spacing(self):
+        if self._image.shape[0] > 1:
+            return self._image_spacing
+        else:
+            return self._image_spacing[:2]
+
+    @image_spacing.setter
+    def image_spacing(self, value):
+        assert (len(value) in [2,3])
+        if len(value) == 2:
+            self._image_spacing = list(value) + [self._image_spacing[2]]
+        else:
+            self._image_spacing = value
 
     def load_image(self, file_path):
         with tifffile.TiffFile(file_path) as  tif_file:
@@ -261,7 +276,7 @@ class BaseSettings(ViewSettings):
             json.dump(
                 {"view_profiles": dump_view,
                  "segment_profile": self.segmentation_dict,
-                 "image_spacing": self.image_spacing
+                 "image_spacing": self._image_spacing
                  },
                 ff, cls=self.json_encoder_class, indent=2)
 

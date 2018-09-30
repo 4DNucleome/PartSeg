@@ -12,10 +12,14 @@ from PyQt5.QtCore import Qt, QByteArray, QEvent
 from PyQt5.QtGui import QIcon, QKeyEvent
 from PyQt5.QtWidgets import QMainWindow, QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
     QFileDialog, QMessageBox, QCheckBox, QComboBox, QStackedLayout, QInputDialog, QDialog, QSpinBox, QAbstractSpinBox
+from scipy.ndimage import zoom
 
 from common_gui.channel_control import ChannelControl
 from common_gui.stack_image_view import ColorBar
+from common_gui.waiting_dialog import WaitingDialog
 from partseg2.advanced_window import AdvancedWindow
+from partseg2.interpolate_dialog import InterpolateDialog
+from partseg2.interpolate_thread import InterpolateThread
 from project_utils.algorithms_description import InteractiveAlgorithmSettingsWidget
 from project_utils.global_settings import static_file_folder
 from project_utils.image_operations import dilate, erode
@@ -252,6 +256,31 @@ class MainMenu(QWidget):
         self.open_btn.clicked.connect(self.load_data)
         self.advanced_btn.clicked.connect(self.advanced_window_show)
         self.mask_manager_btn.clicked.connect(self.mask_manager)
+        self.interpolate_btn.clicked.connect(self.interpolate_exec)
+
+    def interpolate_exec(self):
+        dialog = InterpolateDialog(self._settings.image_spacing)
+        if dialog.exec():
+            scale_factor = dialog.get_zoom_factor()
+            print(scale_factor)
+            interp_ob = InterpolateThread()
+            dial = WaitingDialog(interp_ob)
+            args = [self._settings.image]
+            if self._settings.mask is not None:
+                mask = self._settings.mask.astype(np.uint8)
+                mask[mask > 0] = 255
+                args.append(mask)
+            interp_ob.set_arrays(args)
+            interp_ob.set_scaling(scale_factor)
+            if dial.exec():
+                self._settings.image = interp_ob.result[0], self._settings.image_path
+                if len(interp_ob.result) == 2:
+                    self._settings.mask = interp_ob.result[1] > 128
+                self._settings.image_spacing = [x/y for x,y in zip(self._settings.image_spacing, scale_factor[::-1])]
+            else:
+                if interp_ob.isRunning():
+                    interp_ob.terminate()
+            #self.settings.rescale_image(dialog.get_zoom_factor())
 
     def mask_manager(self):
         if self._settings.segmentation is None:
@@ -281,6 +310,7 @@ class MainMenu(QWidget):
                 if selected_filter == "raw image (*.tiff *.tif *.lsm)":
                     im = tif.imread(file_path)
                     self._settings.image = im, file_path
+                    #self._settings.image_spacing = list(np.array([70, 70 ,210]) * 0.1**9)
                 elif selected_filter == "mask to image (*.tiff *.tif *.lsm)":
                     im = tif.imread(file_path)
                     self._settings.mask = im

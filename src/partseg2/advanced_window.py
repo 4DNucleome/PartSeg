@@ -42,8 +42,7 @@ class AdvancedSettings(QWidget):
         for i, el in enumerate(self.spacing):
             el.setAlignment(Qt.AlignRight)
             el.setButtonSymbols(QAbstractSpinBox.NoButtons)
-            el.setRange(0, 100000)
-            el.setValue(self._settings.image_spacing[i] * UNIT_SCALE[units_index])
+            el.setRange(0, 1000000)
             el.valueChanged.connect(self.image_spacing_change)
         self.units = QComboBox()
         self.units.addItems(UNITS_LIST)
@@ -72,8 +71,9 @@ class AdvancedSettings(QWidget):
         spacing_layout.addWidget(self.read_spacing_chk)
         spacing_layout.addStretch(1)
         mask_layout = QHBoxLayout()
+        mask_layout.addWidget(QLabel("Mask mark color"))
         mask_layout.addWidget(self.mask_color)
-        mask_layout.addWidget(QLabel("Mask opacity"))
+        mask_layout.addWidget(QLabel("Mask mark opacity"))
         mask_layout.addWidget(self.mask_opacity)
         mask_layout.addStretch(1)
         profile_layout = QGridLayout()
@@ -115,7 +115,7 @@ class AdvancedSettings(QWidget):
 
     def image_spacing_change(self):
         self._settings.image_spacing = \
-            [el.value() / UNIT_SCALE[self.units.currentIndex()] for i, el in enumerate(self.spacing)]
+            [el.value() / UNIT_SCALE[self.units.currentIndex()] for i, el in enumerate(self.spacing) if el.isEnabled()]
         voxel_size = 1
         for i, el in enumerate(self.spacing):
             voxel_size *= self._settings.image_spacing[i] * UNIT_SCALE[self.units.currentIndex()]
@@ -126,13 +126,15 @@ class AdvancedSettings(QWidget):
         voxel_size = 1
         if index is not None:
             self._settings.set("units_index", index)
-        for i, el in enumerate(self.spacing):
+        for i, (el, sp) in enumerate(zip(self.spacing, self._settings.image_spacing)):
             el.blockSignals(True)
-            current_size = self._settings.image_spacing[i] * UNIT_SCALE[self.units.currentIndex()]
+            current_size = sp * UNIT_SCALE[self.units.currentIndex()]
             voxel_size *= current_size
             el.setValue(current_size)
             el.blockSignals(False)
-        self.voxel_size_label.setText(f"Voxel_size: {voxel_size} {UNITS_LIST[self.units.currentIndex()]}")
+        self.spacing[-1].setDisabled(len(self._settings.image_spacing) == 2)
+        self.voxel_size_label.setText(f"Voxel_size: {voxel_size} {UNITS_LIST[self.units.currentIndex()]}"
+                                      f"<sup>{len(self._settings.image_spacing)}</sup>")
 
     def update_profile_list(self):
         current_names = set(self._settings.get(f"segmentation_profiles", dict()).keys())

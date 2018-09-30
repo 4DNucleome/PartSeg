@@ -19,6 +19,7 @@ class RestartableAlgorithm(SegmentationAlgorithm):
         self.new_parameters = {}
 
     def set_image(self, image):
+        print("bbbb")
         self.image = image
         self.parameters.clear()
 
@@ -80,6 +81,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm):
     def set_image(self, image):
         self.image = image
         self.parameters["gauss_radius"] = None
+        self.parameters["use_gauss"] = None
 
     def set_mask(self, mask):
         self.mask = mask
