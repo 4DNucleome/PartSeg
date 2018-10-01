@@ -14,6 +14,7 @@ from common_gui.universal_gui_part import CustomSpinBox, CustomDoubleSpinBox
 from partseg2.partseg_settings import PartSettings
 from partseg2.segment_algorithms import RestartableAlgorithm
 from project_utils.algorithm_base import SegmentationAlgorithm
+from project_utils.universal_const import UNIT_SCALE
 from .settings import ImageSettings
 from partseg.io_functions import save_stack_segmentation, load_stack_segmentation
 
@@ -297,7 +298,9 @@ class InteractiveAlgorithmSettingsWidget(AlgorithmSettingsWidget):
     def execute(self, exclude_mask=None):
         values = self.get_values()
         self.algorithm.set_parameters_wait(**values)
-        self.algorithm.set_size_information(self.settings.image_spacing, self.settings.use_physical_unit)
+        scale = UNIT_SCALE[self.settings.get("units_index")]
+        self.algorithm.set_size_information([x * scale for x in self.settings.image_spacing],
+                                            self.settings.use_physical_unit)
         self.settings.set(f"algorithms.{self.name}", values)
         self.algorithm.start()
 

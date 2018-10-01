@@ -18,21 +18,22 @@ cdef extern from 'my_queue.h':
         bool empty()
 
 cdef extern from "global_consts.h":
-    const signed char neighbourhood[26][3]
+    # const signed char neighbourhood[26][3]
     const char neigh_level[]
-    const float distance[]
+    # const float distance[]
 
 cdef struct Point:
     Size x
     Size y
     Size z
 
-def calculate_euclidean(np.ndarray[np.uint8_t, ndim=3] object_area, np.ndarray[np.uint8_t, ndim=3] base_object, int level):
+def calculate_euclidean(np.ndarray[np.uint8_t, ndim=3] object_area, np.ndarray[np.uint8_t, ndim=3] base_object,
+                        np.ndarray[np.uint8_t, ndim=2] neighbourhood, np.ndarray[np.float64_t, ndim=1] distance):
     cdef np.ndarray[np.uint8_t, ndim=3] consumed_area = np.copy(base_object)
     cdef np.ndarray[np.float64_t, ndim=3] result
     cdef Size x_size, y_size, z_size, array_pos, x, y, z
     cdef Py_ssize_t count = 0
-    cdef char neigh_length = neigh_level[level]
+    cdef char neigh_length = neighbourhood.shape[0]
     cdef int neigh_it
     cdef my_queue[Point] current_points, new_points
     cdef Point p, p1
@@ -46,7 +47,7 @@ def calculate_euclidean(np.ndarray[np.uint8_t, ndim=3] object_area, np.ndarray[n
             for x in range (1, x_size-1):
                 if base_object[z,y,x] > 0:
                     for neigh_it in range(neigh_length):
-                        if base_object[z+neighbourhood[neigh_it][0], y+neighbourhood[neigh_it][1], x+neighbourhood[neigh_it][2]] == 0:
+                        if base_object[z+neighbourhood[neigh_it, 0], y+neighbourhood[neigh_it, 1], x+neighbourhood[neigh_it, 2]] == 0:
                             p.z = z
                             p.y = y
                             p.x = x
@@ -63,9 +64,9 @@ def calculate_euclidean(np.ndarray[np.uint8_t, ndim=3] object_area, np.ndarray[n
             continue"""
         consumed_area[p.z, p.y, p.x] = 0
         for neigh_it in range(neigh_length):
-            z = p.z + neighbourhood[neigh_it][0]
-            y = p.y + neighbourhood[neigh_it][1]
-            x = p.x + neighbourhood[neigh_it][2]
+            z = p.z + neighbourhood[neigh_it, 0]
+            y = p.y + neighbourhood[neigh_it, 1]
+            x = p.x + neighbourhood[neigh_it, 2]
             if x == 0 or y == 0 or z == 0 or x >= x_size-1 or y >= y_size-1 or z >= z_size-1:
                 continue
             if object_area[z, y, x] == 0:

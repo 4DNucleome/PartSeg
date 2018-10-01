@@ -22,7 +22,7 @@ extensions = [
               language='c++', extra_compile_args=["-std=c++11"], extra_link_args=["-std=c++11"]),
     Extension("project_utils.color_image.color_image", ["project_utils/color_image/color_image.pyx"],
         include_dirs = [np.get_include()],
-              extra_compile_args=['-Wno-unused-function', '-std=c++11'],
+              extra_compile_args=['-std=c++11'],
               language='c++',
               )
     ]

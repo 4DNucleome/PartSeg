@@ -1,4 +1,5 @@
 from collections import defaultdict
+from enum import Enum
 from functools import reduce
 
 from PyQt5.QtCore import pyqtSignal
@@ -9,6 +10,7 @@ from project_utils.image_operations import gaussian
 import numpy as np
 import SimpleITK as sitk
 from project_utils import bisect
+from project_utils.universal_const import UNIT_SCALE
 
 
 class RestartableAlgorithm(SegmentationAlgorithm):
@@ -180,14 +182,14 @@ class UpperThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
 
 class LowerThresholdDistanceFlowAlgorithm(LowerThresholdFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
-        min_val = min(self.spacing)
-
-        return distance_sprawl(base_image, object_image, self.components_num)
+        neigh, dist = calculate_distances_array(self.spacing, NeighType.edges)
+        return distance_sprawl(base_image, object_image, self.components_num, neigh, dist)
 
 
 class UpperThresholdDistanceFlowAlgorithm(UpperThresholdFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
-        return distance_sprawl(base_image, object_image, self.components_num)
+        neigh, dist = calculate_distances_array(self.spacing, NeighType.edges)
+        return distance_sprawl(base_image, object_image, self.components_num, neigh, dist)
 
 
 class LowerThresholdPathFlowAlgorithm(LowerThresholdFlowAlgorithm):
@@ -209,15 +211,52 @@ class UpperThresholdPathFlowAlgorithm(UpperThresholdFlowAlgorithm):
 class LowerThresholdPathDistanceFlowAlgorithm(LowerThresholdPathFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
         mid = super().path_sprawl(base_image, object_image)
-        return distance_sprawl(base_image, mid, self.components_num)
+        neigh, dist = calculate_distances_array(self.spacing, NeighType.edges)
+        return distance_sprawl(base_image, mid, self.components_num, neigh, dist)
 
 
 class UpperThresholdPathDistanceFlowAlgorithm(UpperThresholdPathFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
         mid = super().path_sprawl(base_image, object_image)
-        return distance_sprawl(base_image, mid, self.components_num)
+        neigh, dist = calculate_distances_array(self.spacing, NeighType.edges)
+        return distance_sprawl(base_image, mid, self.components_num, neigh, dist)
+
+class NeighType(Enum):
+    sides = 6
+    edges = 18
+    vertex = 26
 
 
-def calculate_distances_array(spacing):
+def calculate_distances_array(spacing, neigh_type: NeighType):
     min_dist = min(spacing)
-    normalize = [x/min_dist for x in spacing]
+    normalized_spacing = [x/min_dist for x in spacing]
+    if len(normalized_spacing) == 2:
+        neighbourhood_array = neighbourhood2d
+        if neigh_type == NeighType.sides:
+            neighbourhood_array = neighbourhood_array[:4]
+        normalized_spacing = [0] + normalized_spacing
+    else:
+        neighbourhood_array = neighbourhood[:neigh_type.value]
+    normalized_spacing = np.array(normalized_spacing)
+    return neighbourhood_array, np.sqrt(np.sum((neighbourhood_array*normalized_spacing)**2, axis=1))
+
+
+
+
+neighbourhood = np.array([[0,-1, 0], [0, 0,-1],
+    [0, 1, 0], [0, 0, 1],
+    [-1, 0, 0], [1, 0, 0],
+
+    [-1, -1, 0], [1, -1, 0], [-1, 1, 0], [1, 1, 0],
+    [-1, 0, -1], [1, 0, -1], [-1, 0, 1], [1, 0, 1],
+    [0, -1, -1], [0, 1, -1], [0, -1, 1], [0, 1, 1],
+
+    [1, -1, -1], [-1, 1, -1], [-1, -1, 1], [-1, -1, -1],
+    [1, 1, -1], [1, -1, 1], [-1, 1, 1], [1, 1, 1]], dtype=np.uint8)
+
+neighbourhood2d = np.array( [
+    [0,-1, 0], [0, 0,-1],
+    [0, 1, 0], [0, 0, 1],
+    [0, -1, -1], [0, 1, -1], [0, -1, 1], [0, 1, 1],
+], dtype=np.uint8)
+
