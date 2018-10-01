@@ -137,7 +137,7 @@ class ImageCanvas(QLabel):
 
     def mouseReleaseEvent(self, event):
         super(ImageCanvas, self).mouseReleaseEvent(event)
-        if self.local_settings.zoom:
+        if self.local_settings.zoom and self.point is not None:
             diff = self.point2 - self.point
             if abs(diff.x()) and abs(diff.y()):
                 self.zoom_mark.emit(self.point, self.point2)

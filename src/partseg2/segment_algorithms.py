@@ -10,7 +10,11 @@ from project_utils.image_operations import gaussian
 import numpy as np
 import SimpleITK as sitk
 from project_utils import bisect
+import operator
 from project_utils.universal_const import UNIT_SCALE
+
+def blank_operator(x, y):
+    raise NotImplemented()
 
 
 class RestartableAlgorithm(SegmentationAlgorithm):
@@ -32,13 +36,17 @@ class RestartableAlgorithm(SegmentationAlgorithm):
         self.use_psychical_unit = use_physicla_unit
 
     def get_info_text(self):
-        return ""
+        return "No info [Report this ass error]"
+
+
 
 
 class ThresholdBaseAlgorithm(RestartableAlgorithm):
     """
     :type segmentation: np.ndarray
     """
+
+    threshold_operator = blank_operator
 
     def __init__(self):
         super(ThresholdBaseAlgorithm, self).__init__()
@@ -72,7 +80,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm):
             threshold_image = self._threshold(self.gauss_image)
             if self.mask is not None:
                 threshold_image *= (self.mask > 0)
-            connect = sitk.ConnectedComponent(sitk.GetImageFromArray(threshold_image))
+            connect = sitk.ConnectedComponent(sitk.GetImageFromArray(threshold_image), True)
             self.segmentation = sitk.GetArrayFromImage(sitk.RelabelComponent(connect))
             self._sizes_array = np.bincount(self.segmentation.flat)
             restarted = True
@@ -93,7 +101,9 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm):
         self.mask = None
 
     def _threshold(self, image, thr=None):
-        raise NotImplementedError()
+        if thr is None:
+            thr = self.new_parameters["threshold"]
+        return self.threshold_operator(image, thr).astype(np.uint8)
 
     def set_image(self, image):
         self.image = image
@@ -106,7 +116,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm):
         self.parameters["threshold"] = None
 
 
-class OneTHresholdAlgorithm(ThresholdBaseAlgorithm):
+class OneThresholdAlgorithm(ThresholdBaseAlgorithm):
     def set_parameters(self, threshold, minimum_size, use_gauss, gauss_radius):
         self.new_parameters["threshold"] = threshold
         self.new_parameters["minimum_size"] = minimum_size
@@ -114,14 +124,16 @@ class OneTHresholdAlgorithm(ThresholdBaseAlgorithm):
         self.new_parameters["gauss_radius"] = gauss_radius
 
 
-class LowerThresholdAlgorithm(OneTHresholdAlgorithm):
-    def _threshold(self, image, thr=None):
-        return (image > self.new_parameters["threshold"]).astype(np.uint8)
+class LowerThresholdAlgorithm(OneThresholdAlgorithm):
+    threshold_operator = operator.gt
+    """def _threshold(self, image, thr=None):
+        return (image > self.new_parameters["threshold"]).astype(np.uint8)"""
 
 
-class UpperThresholdAlgorithm(OneTHresholdAlgorithm):
-    def _threshold(self, image, thr=None):
-        return (image < self.new_parameters["threshold"]).astype(np.uint8)
+class UpperThresholdAlgorithm(OneThresholdAlgorithm):
+    threshold_operator = operator.lt
+    """def _threshold(self, image, thr=None):
+        return (image < self.new_parameters["threshold"]).astype(np.uint8)"""
 
 
 class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
@@ -158,6 +170,13 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm):
 
     def run(self):
         finally_segment = self.calculation_run()
+        if finally_segment is not None and self.components_num == 0:
+            self.final_sizes = []
+            self.execution_done.emit(finally_segment)
+            self.execution_done_extend.emit(finally_segment, self.segmentation)
+            self.parameters.update(self.new_parameters)
+            return
+
         if finally_segment is None:
             restarted = False
             finally_segment =np.copy(self.finally_segment)
@@ -166,9 +185,14 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm):
             restarted = True
 
         if restarted or self.new_parameters["base_threshold"] != self.parameters["base_threshold"]:
+            if self.threshold_operator(self.new_parameters["base_threshold"], self.new_parameters["threshold"]):
+                print("buka1")
+            else:
+                print("buka2")
             threshold_image = self._threshold(self.gauss_image, self.new_parameters["base_threshold"])
             print(f"Sizes {np.count_nonzero(threshold_image)}, {np.count_nonzero(finally_segment)}", self.__class__)
             if self.mask is not None:
+                print("maskkkk")
                 threshold_image *= (self.mask > 0)
             new_segment = self.path_sprawl(threshold_image, finally_segment)
             self.final_sizes = np.bincount(new_segment.flat)
@@ -178,18 +202,19 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm):
 
 
 class LowerThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
-    def _threshold(self, image, thr=None):
+    threshold_operator = operator.gt
+    """def _threshold(self, image, thr=None):
         if thr is None:
             thr = self.new_parameters["threshold"]
-        print(f"Threshold {thr}")
-        return (image > thr).astype(np.uint8)
+        return (image > thr).astype(np.uint8)"""
 
 
 class UpperThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
-    def _threshold(self, image, thr=None):
+    threshold_operator = operator.lt
+    """def _threshold(self, image, thr=None):
         if thr is None:
             thr = self.new_parameters["threshold"]
-        return (image < thr).astype(np.uint8)
+        return (image < thr).astype(np.uint8)"""
 
 
 class LowerThresholdDistanceFlowAlgorithm(LowerThresholdFlowAlgorithm):
@@ -264,11 +289,11 @@ neighbourhood = np.array([[0,-1, 0], [0, 0,-1],
     [0, -1, -1], [0, 1, -1], [0, -1, 1], [0, 1, 1],
 
     [1, -1, -1], [-1, 1, -1], [-1, -1, 1], [-1, -1, -1],
-    [1, 1, -1], [1, -1, 1], [-1, 1, 1], [1, 1, 1]], dtype=np.uint8)
+    [1, 1, -1], [1, -1, 1], [-1, 1, 1], [1, 1, 1]], dtype=np.int8)
 
 neighbourhood2d = np.array( [
     [0,-1, 0], [0, 0,-1],
     [0, 1, 0], [0, 0, 1],
     [0, -1, -1], [0, 1, -1], [0, -1, 1], [0, 1, 1],
-], dtype=np.uint8)
+], dtype=np.int8)
 

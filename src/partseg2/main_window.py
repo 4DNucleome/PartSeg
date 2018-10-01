@@ -574,26 +574,34 @@ class MaskWindow(QDialog):
         mask = mask.astype(np.bool)
         compressed_segmentation = BytesIO()
         np.savez(compressed_segmentation, segmentation)
+        compressed_segmentation.seek(0)
         if self.settings.mask is not None:
             compressed_mask = BytesIO()
             np.savez(compressed_mask, mask)
+            compressed_mask.seek(0)
         else:
             compressed_mask = None
         self.settings.segmentation_history.append(
-            HistoryElement(algorithm_name, algorithm_values, segmentation, compressed_mask))
+            HistoryElement(algorithm_name, algorithm_values, compressed_segmentation, compressed_mask))
         self.settings.undo_segmentation_history = []
         self.settings.mask = mask
+        print(self.settings.segmentation_history[-1])
         self.close()
 
     def prev_mask(self):
         history: HistoryElement = self.settings.segmentation_history.pop()
+        print(history)
         self.settings.set("current_algorithm", history.algorithm_name)
         self.settings.set(f"algorithm.{history.algorithm_name}", history.algorithm_values)
-        self.settings.segmentation = np.load(history.segmentation)
+        seg = np.load(history.segmentation)
+        print(seg)
+        history.segmentation.seek(0)
+        self.settings.segmentation = seg[seg.files[0]]
         if history.mask is not None:
-            self.settings.mask = np.load(history.mask)
+            mask = np.load(history.mask)
+            self.settings.mask = mask[mask.files[0]]
+            history.mask.seek(0)
         else:
             self.settings.mask = None
-        self.settings.change_segmentation_mask(self.segment, MaskChange.prev_seg, False)
-        self.settings_updated_function()
+        self.settings.undo_segmentation_history.append(history)
         self.close()

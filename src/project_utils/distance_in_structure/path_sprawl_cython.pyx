@@ -47,7 +47,7 @@ def _calculate_maximum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[
                        int level, np.ndarray[np.float64_t, ndim=3] result):
     # cdef np.ndarray[np.uint8_t, ndim=3] consumed_area = np.copy(base_object)
     # cdef np.ndarray[np.float64_t, ndim=3] result
-    cdef Size x_size, y_size, z_size, array_pos, x, y, z
+    cdef Size x_size, y_size, z_size, array_pos, x, y, z, xx, yy, zz
     cdef Py_ssize_t count = 0
     cdef char neigh_length = neigh_level[level]
     cdef int neigh_it
@@ -67,7 +67,12 @@ def _calculate_maximum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[
             for x in range (1, x_size-1):
                 if base_object[z,y,x] > 0:
                     for neigh_it in range(neigh_length):
-                        if base_object[z+neighbourhood[neigh_it][0], y+neighbourhood[neigh_it][1], x+neighbourhood[neigh_it][2]] == 0:
+                        zz = z+neighbourhood[neigh_it][0]
+                        yy = y+neighbourhood[neigh_it][1]
+                        xx = x+neighbourhood[neigh_it][2]
+                        if xx == -1 or xx == x_size or xx == -1 or yy == y_size or zz == -1 or zz == z_size:
+                            continue
+                        if base_object[zz, yy, zz] == 0:
                             p.z = z
                             p.y = y
                             p.x = x
@@ -121,7 +126,7 @@ def _calculate_minimum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[
                        int level, np.ndarray[np.float64_t, ndim=3] result):
     # cdef np.ndarray[np.uint8_t, ndim=3] consumed_area = np.copy(base_object)
     # cdef np.ndarray[np.float64_t, ndim=3] result
-    cdef Size x_size, y_size, z_size, array_pos, x, y, z
+    cdef Size x_size, y_size, z_size, array_pos, x, y, z, xx, yy, zz
     cdef Py_ssize_t count = 0
     cdef char neigh_length = neigh_level[level]
     cdef int neigh_it
@@ -141,7 +146,12 @@ def _calculate_minimum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[
             for x in range (0, x_size):
                 if base_object[z,y,x] > 0:
                     for neigh_it in range(neigh_length):
-                        if base_object[z+neighbourhood[neigh_it][0], y+neighbourhood[neigh_it][1], x+neighbourhood[neigh_it][2]] == 0:
+                        zz = z+neighbourhood[neigh_it][0]
+                        yy = y+neighbourhood[neigh_it][1]
+                        xx = x+neighbourhood[neigh_it][2]
+                        if xx == -1 or xx == x_size or xx == -1 or yy == y_size or zz == -1 or zz == z_size:
+                            continue
+                        if base_object[zz, yy, zz] == 0:
                             p.z = z
                             p.y = y
                             p.x = x

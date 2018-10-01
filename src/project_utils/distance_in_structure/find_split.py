@@ -68,12 +68,11 @@ def path_minimum_sprawl(data_f, components, components_count, distance_cache=Non
 
 def distance_sprawl(data_m: np.ndarray, components: np.ndarray, components_count: int, neigh_arr, dist_arr,
                     distance_cache=None, data_cache=None):
-
     if data_cache is None:
         data_cache = np.zeros(data_m.shape, data_m.dtype)
     if components_count == 1:
         np.copyto(data_cache, data_m)
-        tmp = calculate_euclidean(data_cache, (components == 1).astype(np.uint8),neigh_arr, dist_arr)
+        tmp = calculate_euclidean(data_cache, (components == 1).astype(np.uint8), neigh_arr, dist_arr)
         components[tmp < 2**17] = 1
         return components
     if distance_cache is None:
