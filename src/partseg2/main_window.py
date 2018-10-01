@@ -233,7 +233,7 @@ class Options(QWidget):
     def execution_done(self, segmentation, full_segmentation):
         self.segmentation = segmentation
         self._settings.full_segmentation = full_segmentation
-        self.label.setText(", ".join(map(str, self._settings.sizes[1:])))
+        self.label.setText(self.sender().get_info_text())
 
 
 class MainMenu(QWidget):

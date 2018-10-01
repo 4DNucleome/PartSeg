@@ -31,6 +31,9 @@ class RestartableAlgorithm(SegmentationAlgorithm):
         self.spacing = spacing
         self.use_psychical_unit = use_physicla_unit
 
+    def get_info_text(self):
+        return ""
+
 
 class ThresholdBaseAlgorithm(RestartableAlgorithm):
     """
@@ -44,6 +47,9 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm):
         self.threshold_image = None
         self._sizes_array = []
         self.components_num = 0
+
+    def get_info_text(self):
+        return ", ".join(map(str, self._sizes_array[1:self.components_num+1]))
 
     def run(self):
         finally_segment = self.calculation_run()
@@ -131,12 +137,17 @@ class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
 
 
 class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm):
-    def path_sprawl(self, base_image, object_image):
+    def path_sprawl(self, base_image, object_image) -> np.ndarray:
         raise NotImplementedError()
+
+    def get_info_text(self):
+        return "Mid sizes: "  + ", ".join(map(str, self._sizes_array[1:self.components_num+1])) + \
+               "\nFinal sizes: " +  ", ".join(map(str, self.final_sizes[1:]))
 
     def __init__(self):
         super().__init__()
         self.finally_segment = None
+        self.final_sizes = []
 
     def set_parameters(self, threshold, minimum_size, use_gauss, gauss_radius, base_threshold):
         self.new_parameters["threshold"] = threshold
@@ -160,6 +171,7 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm):
             if self.mask is not None:
                 threshold_image *= (self.mask > 0)
             new_segment = self.path_sprawl(threshold_image, finally_segment)
+            self.final_sizes = np.bincount(new_segment.flat)
             self.execution_done.emit(new_segment)
             self.execution_done_extend.emit(new_segment, threshold_image)
             self.parameters.update(self.new_parameters)
