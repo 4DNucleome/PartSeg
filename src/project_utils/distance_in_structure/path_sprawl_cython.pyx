@@ -8,7 +8,7 @@ from libcpp cimport bool
 import numpy as np
 cimport numpy as np
 
-ctypedef np.uint16_t Size
+ctypedef np.int16_t Size
 
 cdef extern from 'my_queue.h':
     cdef cppclass my_queue[T]:
@@ -58,6 +58,7 @@ def _calculate_maximum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[
     y_size = object_area.shape[1]
     x_size = object_area.shape[2]
 
+
     result[base_object > 0] = object_area[base_object > 0]
 
     # Find border of component
@@ -81,7 +82,7 @@ def _calculate_maximum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[
             z = p.z + neighbourhood[neigh_it][0]
             y = p.y + neighbourhood[neigh_it][1]
             x = p.x + neighbourhood[neigh_it][2]
-            if x == 0 or y == 0 or z == 0 or x >= x_size-1 or y >= y_size-1 or z >= z_size-1:
+            if x < 0 or y < 0 or z < 0 or x >= x_size or y >= y_size or z >= z_size:
                 continue
             object_area_value = object_area[z, y, x]
             if object_area_value == 0:
@@ -113,7 +114,7 @@ def calculate_minimum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[n
     if result is None:
         result = np.zeros((object_area.shape[0], object_area.shape[1], object_area.shape[2]), dtype=np.float64)
         result[:] = maximum
-    res, c = _calculate_maximum(object_area, base_object, level, result)
+    res, c = _calculate_minimum(object_area, base_object, level, result)
     return res
 
 def _calculate_minimum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[np.uint8_t, ndim=3] base_object,
@@ -130,13 +131,14 @@ def _calculate_minimum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[
     z_size = object_area.shape[0]
     y_size = object_area.shape[1]
     x_size = object_area.shape[2]
+    print("_calculate_minimum")
 
     result[base_object > 0] = object_area[base_object > 0]
 
     # Find border of component
-    for z in range(1, z_size-1):
-        for y in range(1, y_size-1):
-            for x in range (1, x_size-1):
+    for z in range(0, z_size):
+        for y in range(0, y_size):
+            for x in range (0, x_size):
                 if base_object[z,y,x] > 0:
                     for neigh_it in range(neigh_length):
                         if base_object[z+neighbourhood[neigh_it][0], y+neighbourhood[neigh_it][1], x+neighbourhood[neigh_it][2]] == 0:
@@ -154,7 +156,7 @@ def _calculate_minimum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[
             z = p.z + neighbourhood[neigh_it][0]
             y = p.y + neighbourhood[neigh_it][1]
             x = p.x + neighbourhood[neigh_it][2]
-            if x == 0 or y == 0 or z == 0 or x >= x_size-1 or y >= y_size-1 or z >= z_size-1:
+            if x < 0 or y < 0 or z < 0 or x >= x_size or y >= y_size or z >= z_size:
                 continue
             object_area_value = object_area[z, y, x]
             if object_area_value == 0:

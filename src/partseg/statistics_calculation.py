@@ -3,6 +3,7 @@ from __future__ import division
 import logging
 import traceback
 from collections import namedtuple, OrderedDict
+from functools import reduce
 from typing import Dict
 
 import SimpleITK as sitk
@@ -292,8 +293,8 @@ class StatisticProfile(object):
         return result
 
     @staticmethod
-    def pixel_volume(x):
-        return x[0] * x[1] * x[2]
+    def pixel_volume(spacing):
+        return reduce((lambda x, y: x * y), spacing)
 
     def calculate_volume(self, segmentation, **_):
         return np.count_nonzero(segmentation) * self.pixel_volume(self.voxel_size)

@@ -21,6 +21,12 @@ class RawImageStack(QStackedWidget):
         self.addWidget(self.raw_image)
         self.addWidget(self.statistic_calculate)
 
+    def hideEvent(self, a0: QHideEvent):
+        self.parent().layout().setColumnStretch(1, 0)
+
+    def showEvent(self, event: QShowEvent):
+        self.parent().layout().setColumnStretch(1, 1)
+
 class StatisticsWindowForRaw(StatisticsWindow):
     def __init__(self, settings):
         super().__init__(settings)
@@ -90,12 +96,6 @@ class RawImageView(ImageViewWithMask):
 
     def show_statistic(self):
         self.parent().setCurrentIndex(1)
-
-    def hideEvent(self, a0: QHideEvent):
-        self.parent().parent().layout().setColumnStretch(1, 0)
-
-    def showEvent(self, event: QShowEvent):
-        self.parent().parent().layout().setColumnStretch(1, 1)
 
     def add_labels(self, im):
         return im

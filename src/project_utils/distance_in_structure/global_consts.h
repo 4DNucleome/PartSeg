@@ -1,6 +1,7 @@
 static const signed char neighbourhood[26][3] = {
-    {-1, 0, 0}, {0,-1, 0}, {0, 0,-1},
-    {1, 0, 0}, {0, 1, 0}, {0, 0, 1},
+    {0,-1, 0}, {0, 0,-1},
+    {0, 1, 0}, {0, 0, 1},
+    {-1, 0, 0}, {1, 0, 0},
 
     {-1, -1, 0}, {1, -1, 0}, {-1, 1, 0}, {1, 1, 0},
     {-1, 0, -1}, {1, 0, -1}, {-1, 0, 1}, {1, 0, 1},
@@ -10,7 +11,13 @@ static const signed char neighbourhood[26][3] = {
     {1, 1, -1}, {1, -1, 1}, {-1, 1, 1}, {1, 1, 1}
 };
 
-static const char neigh_level[] = {6, 18, 26, 26};
+static const signed char neighbourhood2d[8][3] = {
+    {0,-1, 0}, {0, 0,-1},
+    {0, 1, 0}, {0, 0, 1},
+    {0, -1, -1}, {0, 1, -1}, {0, -1, 1}, {0, 1, 1},
+};
+
+static const char neigh_level[] = {4, 6, 18, 26, 26};
 
 static const float distance[26] = {
     1,1,1,

@@ -25,7 +25,7 @@ class ImageSettings(QObject):
         self._image = None
         self._image_path = ""
         self.has_channels = False
-        self._image_spacing = 70, 70, 210
+        self._image_spacing = 210, 70, 70
         self._segmentation = None
         self.sizes = []
         self.gauss_3d = True
@@ -36,13 +36,13 @@ class ImageSettings(QObject):
         if self._image.shape[0] > 1:
             return self._image_spacing
         else:
-            return self._image_spacing[:2]
+            return self._image_spacing[1:]
 
     @image_spacing.setter
     def image_spacing(self, value):
         assert (len(value) in [2,3])
         if len(value) == 2:
-            self._image_spacing = list(value) + [self._image_spacing[2]]
+            self._image_spacing = [self._image_spacing[0]] + list(value)
         else:
             self._image_spacing = value
 

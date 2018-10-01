@@ -33,6 +33,7 @@ class AdvancedSettings(QWidget):
         self.rename_btn = QPushButton("Rename Profile")
         self.rename_btn.clicked.connect(self.rename_profile)
         self.rename_btn.setDisabled(True)
+        self.use_physicla_unit_chk = QCheckBox()
         self.voxel_size_label = QLabel()
         self.info_label = QLabel()
         self.profile_list = QListWidget()
@@ -65,11 +66,17 @@ class AdvancedSettings(QWidget):
         self.mask_color.currentIndexChanged.connect(self.mask_prop_changed)
 
         spacing_layout = QHBoxLayout()
-        for i in range(3):
-            spacing_layout.addWidget(self.spacing[i])
+        for txt, el in zip(["x", "y", "z"], self.spacing[::-1]):
+            spacing_layout.addWidget(QLabel(txt+":"))
+            spacing_layout.addWidget(el)
         spacing_layout.addWidget(self.units)
         spacing_layout.addWidget(self.read_spacing_chk)
         spacing_layout.addStretch(1)
+        voxel_size_layout = QHBoxLayout()
+        voxel_size_layout.addWidget(self.voxel_size_label)
+        voxel_size_layout.addSpacing(30)
+        voxel_size_layout.addWidget(QLabel("Use physical units in minimum size:"))
+        voxel_size_layout.addWidget(self.use_physicla_unit_chk)
         mask_layout = QHBoxLayout()
         mask_layout.addWidget(QLabel("Mask mark color"))
         mask_layout.addWidget(self.mask_color)
@@ -85,7 +92,7 @@ class AdvancedSettings(QWidget):
         profile_layout.addWidget(self.rename_btn, 2, 2)
         layout = QVBoxLayout()
         layout.addLayout(spacing_layout)
-        layout.addWidget(self.voxel_size_label)
+        layout.addLayout(voxel_size_layout)
         layout.addLayout(mask_layout)
 
         layout.addLayout(profile_layout, 1)
@@ -117,22 +124,23 @@ class AdvancedSettings(QWidget):
         self._settings.image_spacing = \
             [el.value() / UNIT_SCALE[self.units.currentIndex()] for i, el in enumerate(self.spacing) if el.isEnabled()]
         voxel_size = 1
-        for i, el in enumerate(self.spacing):
-            voxel_size *= self._settings.image_spacing[i] * UNIT_SCALE[self.units.currentIndex()]
-        self.voxel_size_label.setText(f"Voxel_size: {voxel_size} {UNITS_LIST[self.units.currentIndex()]}")
+        for el in self._settings.image_spacing:
+            voxel_size *= el * UNIT_SCALE[self.units.currentIndex()]
+        self.voxel_size_label.setText(f"Voxel_size: {voxel_size} {UNITS_LIST[self.units.currentIndex()]}"
+                                      f"<sup>{len(self._settings.image_spacing)}</sup>")
 
 
     def update_spacing(self, index=None):
         voxel_size = 1
         if index is not None:
             self._settings.set("units_index", index)
-        for i, (el, sp) in enumerate(zip(self.spacing, self._settings.image_spacing)):
+        for i, (el, sp) in enumerate(zip(self.spacing[::-1], self._settings.image_spacing[::-1])):
             el.blockSignals(True)
             current_size = sp * UNIT_SCALE[self.units.currentIndex()]
             voxel_size *= current_size
             el.setValue(current_size)
             el.blockSignals(False)
-        self.spacing[-1].setDisabled(len(self._settings.image_spacing) == 2)
+        self.spacing[0].setDisabled(len(self._settings.image_spacing) == 2)
         self.voxel_size_label.setText(f"Voxel_size: {voxel_size} {UNITS_LIST[self.units.currentIndex()]}"
                                       f"<sup>{len(self._settings.image_spacing)}</sup>")
 

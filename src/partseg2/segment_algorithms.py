@@ -1,4 +1,5 @@
 from collections import defaultdict
+from functools import reduce
 
 from PyQt5.QtCore import pyqtSignal
 
@@ -17,11 +18,16 @@ class RestartableAlgorithm(SegmentationAlgorithm):
         super().__init__()
         self.parameters = defaultdict(lambda: None)
         self.new_parameters = {}
+        self.spacing = None
+        self.use_psychical_unit = False
 
     def set_image(self, image):
-        print("bbbb")
         self.image = image
         self.parameters.clear()
+
+    def set_size_information(self, spacing, use_physicla_unit):
+        self.spacing = spacing
+        self.use_psychical_unit = use_physicla_unit
 
 
 class ThresholdBaseAlgorithm(RestartableAlgorithm):
@@ -63,7 +69,10 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm):
             self._sizes_array = np.bincount(self.segmentation.flat)
             restarted = True
         if restarted or self.new_parameters["minimum_size"] != self.parameters["minimum_size"]:
-            ind = bisect(self._sizes_array[1:], self.new_parameters["minimum_size"], lambda x, y: x > y)
+            minimum_size =  self.new_parameters["minimum_size"]
+            if self.use_psychical_unit:
+                minimum_size /= reduce((lambda x, y: x * y), self.spacing)
+            ind = bisect(self._sizes_array[1:], minimum_size, lambda x, y: x > y)
             finally_segment = np.copy(self.segmentation)
             finally_segment[finally_segment > ind] = 0
             self.components_num = ind
@@ -171,6 +180,8 @@ class UpperThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
 
 class LowerThresholdDistanceFlowAlgorithm(LowerThresholdFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
+        min_val = min(self.spacing)
+
         return distance_sprawl(base_image, object_image, self.components_num)
 
 
@@ -205,3 +216,8 @@ class UpperThresholdPathDistanceFlowAlgorithm(UpperThresholdPathFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
         mid = super().path_sprawl(base_image, object_image)
         return distance_sprawl(base_image, mid, self.components_num)
+
+
+def calculate_distances_array(spacing):
+    min_dist = min(spacing)
+    normalize = [x/min_dist for x in spacing]

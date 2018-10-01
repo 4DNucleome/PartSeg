@@ -162,6 +162,7 @@ class AbstractAlgorithmSettingsWidget(with_metaclass(ABCMeta, object)):
 
 
 class AlgorithmSettingsWidget(QScrollArea):
+    algorithm: SegmentationAlgorithm
     gauss_radius_name = "gauss_radius"
 
     def __init__(self, settings, name, element_list, algorithm: Type[SegmentationAlgorithm]):
@@ -256,7 +257,9 @@ class AlgorithmSettingsWidget(QScrollArea):
         self.algorithm.clean()
 
 class InteractiveAlgorithmSettingsWidget(AlgorithmSettingsWidget):
-    def __init__(self, settings: PartSettings, name, element_list, algorithm: Type[RestartableAlgorithm],
+    algorithm: RestartableAlgorithm
+    settings: PartSettings
+    def __init__(self, settings: PartSettings, name, element_list, algorithm: RestartableAlgorithm,
                  selector: List[QWidget]):
         super().__init__(settings, name, element_list, algorithm)
         self.selector = selector
@@ -294,6 +297,7 @@ class InteractiveAlgorithmSettingsWidget(AlgorithmSettingsWidget):
     def execute(self, exclude_mask=None):
         values = self.get_values()
         self.algorithm.set_parameters_wait(**values)
+        self.algorithm.set_size_information(self.settings.image_spacing, self.settings.use_physical_unit)
         self.settings.set(f"algorithms.{self.name}", values)
         self.algorithm.start()
 

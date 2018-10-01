@@ -37,6 +37,13 @@ class PartSettings(BaseSettings):
         self.undo_segmentation_history = []
 
     @property
+    def use_physical_unit(self):
+        return self.get("use_physical_unit", False)
+
+    def set_use_physical_unit(self, value):
+        self.set("use_physical_unit", value)
+
+    @property
     def mask(self):
         return self._mask
 

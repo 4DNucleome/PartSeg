@@ -203,6 +203,11 @@ class Options(QWidget):
         return self.interactive_use.isChecked()
 
     def hide_left_panel(self, val):
+        if val:
+            self.synchronize_val = self.synchronize_checkbox.isChecked()
+            self.synchronize_checkbox.setChecked(False)
+        else:
+            self.synchronize_checkbox.setChecked(self.synchronize_val)
         self.synchronize_checkbox.setChecked(not val)
         self.synchronize_checkbox.setDisabled(val)
         self.left_panel.parent().setHidden(val)
@@ -276,7 +281,7 @@ class MainMenu(QWidget):
                 self._settings.image = interp_ob.result[0], self._settings.image_path
                 if len(interp_ob.result) == 2:
                     self._settings.mask = interp_ob.result[1] > 128
-                self._settings.image_spacing = [x/y for x,y in zip(self._settings.image_spacing, scale_factor[::-1])]
+                self._settings.image_spacing = [x/y for x,y in zip(self._settings.image_spacing, scale_factor)]
             else:
                 if interp_ob.isRunning():
                     interp_ob.terminate()

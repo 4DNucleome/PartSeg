@@ -47,7 +47,7 @@ def get_minimum_component(components, data_mask, paths, num_of_components=None):
     if num_of_components is None:
         num_of_components = len(paths)
     new_paths = paths.reshape((num_of_components, components.size))
-    _get_maximum_component(components.ravel(), data_mask.ravel(), new_paths, num_of_components)
+    _get_minimum_component(components.ravel(), data_mask.ravel(), new_paths, num_of_components)
     return components
 
 

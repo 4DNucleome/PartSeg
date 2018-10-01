@@ -431,7 +431,7 @@ class AlgorithmOptions(QWidget):
 
 
 class ImageInformation(QWidget):
-    def __init__(self, settings, parent=None):
+    def __init__(self, settings: StackSettings, parent=None):
         """:type settings: ImageSettings"""
         super(ImageInformation, self).__init__(parent)
         self._settings = settings
