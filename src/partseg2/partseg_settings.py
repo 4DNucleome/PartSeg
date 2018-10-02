@@ -2,7 +2,7 @@ from collections import namedtuple
 
 from PyQt5.QtCore import pyqtSignal
 
-from partseg.statistics_calculation import StatisticProfile
+from partseg2.statistics_calculation import StatisticProfile
 from project_utils.settings import BaseSettings, ProfileEncoder, profile_hook
 import numpy as np
 

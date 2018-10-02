@@ -10,13 +10,12 @@ from PyQt5.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushBu
 from common_gui.colors_choose import ColorSelector
 from partseg2.partseg_settings import PartSettings, MASK_COLORS
 from partseg2.profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer
-from partseg.statistics_calculation import StatisticProfile
+from partseg2.statistics_calculation import StatisticProfile
 from project_utils.global_settings import static_file_folder
 from project_utils.settings import BaseSettings
 from project_utils.universal_const import UNITS_DICT, UNIT_SCALE, UNITS_LIST
 from qt_import import h_line
-import functools
-import operator
+
 
 class AdvancedSettings(QWidget):
     def __init__(self, settings: PartSettings):
