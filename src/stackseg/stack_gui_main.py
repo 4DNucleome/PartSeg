@@ -480,7 +480,8 @@ class ImageInformation(QWidget):
         self.update_spacing()
 
     def image_spacing_change(self):
-        self._settings.image_spacing = [el.value() / UNIT_SCALE[self.units.currentIndex()] for i, el in enumerate(self.spacing)]
+        self._settings.image_spacing = [el.value() / UNIT_SCALE[self.units.currentIndex()] for i, el in
+                                        enumerate(self.spacing)]
 
 
 class Options(QTabWidget):

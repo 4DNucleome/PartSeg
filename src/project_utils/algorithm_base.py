@@ -1,3 +1,5 @@
+from abc import ABC
+
 from PyQt5.QtCore import QMutex
 
 from qt_import import QThread, pyqtSignal

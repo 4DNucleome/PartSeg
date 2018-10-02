@@ -5,7 +5,7 @@ class InterpolateDialog(QDialog):
     def __init__(self, spacing, *args, **kwargs):
         super().__init__(*args, **kwargs)
         min_val = min(spacing)
-        start_value = [x/min_val for x in spacing]
+        start_value = [x / min_val for x in spacing]
         info_label = QLabel()
         info_label.setText("This operation cannot be undone,\nit also update image spacing")
         self.start_value = start_value
@@ -35,7 +35,7 @@ class InterpolateDialog(QDialog):
         self.cancel_button.clicked.connect(self.reject)
 
         layout = QGridLayout()
-        layout.addWidget(info_label, 0 , 0, 1, 2)
+        layout.addWidget(info_label, 0, 0, 1, 2)
         layout.addWidget(QLabel("x scale"), 1, 0)
         layout.addWidget(self.x_spacing, 1, 1)
         layout.addWidget(QLabel("y scale"), 2, 0)
@@ -57,9 +57,8 @@ class InterpolateDialog(QDialog):
         if len(self.start_value) == 3:
             return [self.spacing[0] / self.x_spacing.value(),
                     self.spacing[1] / self.y_spacing.value(),
-                    self.spacing[2] /self.z_spacing.value()]
+                    self.spacing[2] / self.z_spacing.value()]
         else:
             return [self.spacing[0] / self.x_spacing.value(),
                     self.spacing[1] / self.y_spacing.value(),
                     1]
-

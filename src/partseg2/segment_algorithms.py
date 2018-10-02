@@ -11,9 +11,9 @@ import numpy as np
 import SimpleITK as sitk
 from project_utils import bisect
 import operator
-from project_utils.universal_const import UNIT_SCALE
 
-def blank_operator(x, y):
+
+def blank_operator(_x, _y):
     raise NotImplemented()
 
 
@@ -39,8 +39,6 @@ class RestartableAlgorithm(SegmentationAlgorithm):
         return "No info [Report this ass error]"
 
 
-
-
 class ThresholdBaseAlgorithm(RestartableAlgorithm):
     """
     :type segmentation: np.ndarray
@@ -57,7 +55,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm):
         self.components_num = 0
 
     def get_info_text(self):
-        return ", ".join(map(str, self._sizes_array[1:self.components_num+1]))
+        return ", ".join(map(str, self._sizes_array[1:self.components_num + 1]))
 
     def run(self):
         finally_segment = self.calculation_run()
@@ -85,7 +83,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm):
             self._sizes_array = np.bincount(self.segmentation.flat)
             restarted = True
         if restarted or self.new_parameters["minimum_size"] != self.parameters["minimum_size"]:
-            minimum_size =  self.new_parameters["minimum_size"]
+            minimum_size = self.new_parameters["minimum_size"]
             if self.use_psychical_unit:
                 minimum_size /= reduce((lambda x, y: x * y), self.spacing)
             ind = bisect(self._sizes_array[1:], minimum_size, lambda x, y: x > y)
@@ -153,8 +151,8 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm):
         raise NotImplementedError()
 
     def get_info_text(self):
-        return "Mid sizes: "  + ", ".join(map(str, self._sizes_array[1:self.components_num+1])) + \
-               "\nFinal sizes: " +  ", ".join(map(str, self.final_sizes[1:]))
+        return "Mid sizes: " + ", ".join(map(str, self._sizes_array[1:self.components_num + 1])) + \
+               "\nFinal sizes: " + ", ".join(map(str, self.final_sizes[1:]))
 
     def __init__(self):
         super().__init__()
@@ -179,7 +177,7 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm):
 
         if finally_segment is None:
             restarted = False
-            finally_segment =np.copy(self.finally_segment)
+            finally_segment = np.copy(self.finally_segment)
         else:
             self.finally_segment = finally_segment
             restarted = True
@@ -246,6 +244,7 @@ class UpperThresholdPathFlowAlgorithm(UpperThresholdFlowAlgorithm):
         mid = path_minimum_sprawl(image, object_image, self.components_num, neigh)
         return path_minimum_sprawl(image, mid, self.components_num, neigh)
 
+
 class LowerThresholdPathDistanceFlowAlgorithm(LowerThresholdPathFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
         mid = super().path_sprawl(base_image, object_image)
@@ -259,6 +258,7 @@ class UpperThresholdPathDistanceFlowAlgorithm(UpperThresholdPathFlowAlgorithm):
         neigh, dist = calculate_distances_array(self.spacing, NeighType.edges)
         return distance_sprawl(base_image, mid, self.components_num, neigh, dist)
 
+
 class NeighType(Enum):
     sides = 6
     edges = 18
@@ -267,7 +267,7 @@ class NeighType(Enum):
 
 def calculate_distances_array(spacing, neigh_type: NeighType):
     min_dist = min(spacing)
-    normalized_spacing = [x/min_dist for x in spacing]
+    normalized_spacing = [x / min_dist for x in spacing]
     if len(normalized_spacing) == 2:
         neighbourhood_array = neighbourhood2d
         if neigh_type == NeighType.sides:
@@ -276,7 +276,8 @@ def calculate_distances_array(spacing, neigh_type: NeighType):
     else:
         neighbourhood_array = neighbourhood[:neigh_type.value]
     normalized_spacing = np.array(normalized_spacing)
-    return neighbourhood_array, np.sqrt(np.sum((neighbourhood_array*normalized_spacing)**2, axis=1))
+    return neighbourhood_array, np.sqrt(np.sum((neighbourhood_array * normalized_spacing) ** 2, axis=1))
+
 
 def get_neighbourhood(spacing, neigh_type: NeighType):
     if len(spacing) == 2:
@@ -287,20 +288,19 @@ def get_neighbourhood(spacing, neigh_type: NeighType):
         return neighbourhood[:neigh_type.value]
 
 
-neighbourhood = np.array([[0,-1, 0], [0, 0,-1],
-    [0, 1, 0], [0, 0, 1],
-    [-1, 0, 0], [1, 0, 0],
+neighbourhood = np.array([[0, -1, 0], [0, 0, -1],
+                          [0, 1, 0], [0, 0, 1],
+                          [-1, 0, 0], [1, 0, 0],
 
-    [-1, -1, 0], [1, -1, 0], [-1, 1, 0], [1, 1, 0],
-    [-1, 0, -1], [1, 0, -1], [-1, 0, 1], [1, 0, 1],
-    [0, -1, -1], [0, 1, -1], [0, -1, 1], [0, 1, 1],
+                          [-1, -1, 0], [1, -1, 0], [-1, 1, 0], [1, 1, 0],
+                          [-1, 0, -1], [1, 0, -1], [-1, 0, 1], [1, 0, 1],
+                          [0, -1, -1], [0, 1, -1], [0, -1, 1], [0, 1, 1],
 
-    [1, -1, -1], [-1, 1, -1], [-1, -1, 1], [-1, -1, -1],
-    [1, 1, -1], [1, -1, 1], [-1, 1, 1], [1, 1, 1]], dtype=np.int8)
+                          [1, -1, -1], [-1, 1, -1], [-1, -1, 1], [-1, -1, -1],
+                          [1, 1, -1], [1, -1, 1], [-1, 1, 1], [1, 1, 1]], dtype=np.int8)
 
-neighbourhood2d = np.array( [
-    [0,-1, 0], [0, 0,-1],
+neighbourhood2d = np.array([
+    [0, -1, 0], [0, 0, -1],
     [0, 1, 0], [0, 0, 1],
     [0, -1, -1], [0, 1, -1], [0, -1, 1], [0, 1, 1],
 ], dtype=np.int8)
-
