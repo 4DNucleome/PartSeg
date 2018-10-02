@@ -2,6 +2,7 @@
 
 UNITS_DICT = {
     "Volume": "{}^3",
+    "Mask Volume": "{}^3",
     "Mass": "pixel sum",
     "Border Volume": "{}^3",
     "Border Surface": "{}^2",

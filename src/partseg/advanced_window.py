@@ -605,10 +605,11 @@ class StatisticsWindow(QWidget):
                 self.info_field.setItem(i, self.statistic_shift + 1, QTableWidgetItem(str(val)))
                 if not self.no_units.isChecked():
                     try:
+                        key_f = key.split("[")[0]
                         self.info_field.setItem(i, self.statistic_shift + 2,
-                                                QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
+                                                QTableWidgetItem(UNITS_DICT[key_f].format(self.settings.size_unit)))
                     except KeyError as k:
-                        logging.warning(k.message)
+                        logging.warning(k)
         if self.no_units.isChecked():
             self.statistic_shift -= 1
         self.statistic_shift += 3
@@ -1050,6 +1051,7 @@ class MultipleInput(QDialog):
             else:
                 val = 0
             res = QDoubleSpinBox(obj)
+            res.setDecimals(4)
             res.setRange(-1000000, 1000000)
             res.setValue(val)
             return res

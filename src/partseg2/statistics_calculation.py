@@ -440,14 +440,12 @@ class StatisticProfile(object):
     def border_mask(self, base_mask, radius, **_):
         if base_mask is None:
             return None
-        final_radius = [int(radius / x) for x in self.voxel_size[::-1]]
+        final_radius = [int(radius / x) for x in self.voxel_size]
         base_mask = np.array(base_mask > 0)
-        base_mask = base_mask.astype(np.uint8)
-        border = sitk.LabelContour(sitk.GetImageFromArray(base_mask))
-        border.SetSpacing(self.voxel_size)
-        dilated_border = sitk.GetArrayFromImage(sitk.BinaryDilate(border, final_radius))
-        dilated_border[base_mask == 0] = 0
-        return dilated_border
+        mask = base_mask.astype(np.uint8)
+        eroded = sitk.GetArrayFromImage(sitk.BinaryErode(sitk.GetImageFromArray(mask), final_radius))
+        mask[eroded > 0] = 0
+        return mask
 
     def border_mass(self, image, segmentation, **kwargs):
         border_mask = self.border_mask(**kwargs)

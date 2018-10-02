@@ -46,9 +46,9 @@ class StatisticProfile(object):
                                            "Has one parameter thr (threshold). Only values above it are used "
                                            "in calculation", None, False, False),
         "Border Mass": SettingsValue("border_mass", "Calculate mass for elements in radius (in physical units)"
-                                                    " from mask", {"radius": int}, False, False),
+                                                    " from mask", {"radius": float}, False, False),
         "Border Volume": SettingsValue("border_volume", "Calculate volumes for elements in radius (in physical units)"
-                                                        " from mask", {"radius": int}, False, False),
+                                                        " from mask", {"radius": float}, False, False),
         "Components Number": SettingsValue("number_of_components", "Calculate number of connected components "
                                                                    "on segmentation", None, False, False),
         "Mask Volume": SettingsValue("mask_volume", "Volume of mask", None, True, False),
@@ -442,12 +442,10 @@ class StatisticProfile(object):
             return None
         final_radius = [int(radius / x) for x in self.voxel_size[::-1]]
         base_mask = np.array(base_mask > 0)
-        base_mask = base_mask.astype(np.uint8)
-        border = sitk.LabelContour(sitk.GetImageFromArray(base_mask))
-        border.SetSpacing(self.voxel_size)
-        dilated_border = sitk.GetArrayFromImage(sitk.BinaryDilate(border, final_radius))
-        dilated_border[base_mask == 0] = 0
-        return dilated_border
+        mask = base_mask.astype(np.uint8)
+        eroded = sitk.GetArrayFromImage(sitk.BinaryErode(sitk.GetImageFromArray(mask), final_radius))
+        mask[eroded > 0] = 0
+        return mask
 
     def border_mass(self, image, segmentation, **kwargs):
         border_mask = self.border_mask(**kwargs)
