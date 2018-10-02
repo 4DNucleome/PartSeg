@@ -45,7 +45,7 @@ def calculate_maximum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[n
     return res
 
 def _calculate_maximum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[np.uint8_t, ndim=3] base_object,
-                       int level, np.ndarray[np.int8_t, ndim=2] neighbourhood, np.ndarray[np.float64_t, ndim=3] result):
+                       np.ndarray[np.int8_t, ndim=2] neighbourhood, np.ndarray[np.float64_t, ndim=3] result):
     # cdef np.ndarray[np.uint8_t, ndim=3] consumed_area = np.copy(base_object)
     # cdef np.ndarray[np.float64_t, ndim=3] result
     cdef Size x_size, y_size, z_size, array_pos, x, y, z, xx, yy, zz
