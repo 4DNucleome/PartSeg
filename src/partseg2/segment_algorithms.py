@@ -1,9 +1,11 @@
+from abc import ABC
 from collections import defaultdict
 from enum import Enum
 from functools import reduce
 
 from PyQt5.QtCore import pyqtSignal
 
+from project_utils.abstract_class import QtMeta
 from project_utils.algorithm_base import SegmentationAlgorithm
 from project_utils.distance_in_structure.find_split import distance_sprawl, path_minimum_sprawl, path_maximum_sprawl
 from project_utils.image_operations import gaussian
@@ -17,10 +19,10 @@ def blank_operator(_x, _y):
     raise NotImplemented()
 
 
-class RestartableAlgorithm(SegmentationAlgorithm):
+class RestartableAlgorithm(SegmentationAlgorithm, ABC, metaclass=QtMeta):
     execution_done_extend = pyqtSignal(np.ndarray, np.ndarray)
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
         self.parameters = defaultdict(lambda: None)
         self.new_parameters = {}
@@ -39,14 +41,14 @@ class RestartableAlgorithm(SegmentationAlgorithm):
         return "No info [Report this ass error]"
 
 
-class ThresholdBaseAlgorithm(RestartableAlgorithm):
+class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC, metaclass=QtMeta):
     """
     :type segmentation: np.ndarray
     """
 
     threshold_operator = blank_operator
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super(ThresholdBaseAlgorithm, self).__init__()
         self.mask = None
         self.gauss_image = None
@@ -199,20 +201,12 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm):
             self.parameters.update(self.new_parameters)
 
 
-class LowerThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
+class LowerThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm, ABC, metaclass=QtMeta):
     threshold_operator = operator.gt
-    """def _threshold(self, image, thr=None):
-        if thr is None:
-            thr = self.new_parameters["threshold"]
-        return (image > thr).astype(np.uint8)"""
 
 
-class UpperThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
+class UpperThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm, ABC, metaclass=QtMeta):
     threshold_operator = operator.lt
-    """def _threshold(self, image, thr=None):
-        if thr is None:
-            thr = self.new_parameters["threshold"]
-        return (image < thr).astype(np.uint8)"""
 
 
 class LowerThresholdDistanceFlowAlgorithm(LowerThresholdFlowAlgorithm):

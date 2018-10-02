@@ -20,9 +20,11 @@ range_threshold_algorithm = [AlgorithmProperty("lower_threshold", "Lower thresho
 base_flow_threshold_algorithm = deepcopy(lower_threshold_algorithm)
 base_flow_threshold_algorithm.insert(1, AlgorithmProperty("base_threshold", "Base threshold", 10000, (0, 10 ** 6), 100))
 
+# noinspection PyTypeChecker
 upper_euclidean_flow_threshold_algorithm = ["May not work proper when voxel is not cube"] + deepcopy(
     base_flow_threshold_algorithm)
 
+# noinspection PyTypeChecker
 lower_euclidean_flow_threshold_algorithm = ["May not work proper when voxel is not cube"] + deepcopy(
     base_flow_threshold_algorithm)
 
@@ -43,7 +45,7 @@ part_algorithm_dict = {
     "Lower threshold path": (lower_path_flow_threshold_algorithm, LowerThresholdPathFlowAlgorithm),
     "Upper threshold path": (upper_path_flow_threshold_algorithm, UpperThresholdPathFlowAlgorithm),
     "Lower threshold path euclidean": (
-    lower_path_euclidean_flow_threshold_algorithm, LowerThresholdPathDistanceFlowAlgorithm),
+        lower_path_euclidean_flow_threshold_algorithm, LowerThresholdPathDistanceFlowAlgorithm),
     "Upper threshold path euclidean": (
-    upper_path_euclidean_flow_threshold_algorithm, UpperThresholdPathDistanceFlowAlgorithm)
+        upper_path_euclidean_flow_threshold_algorithm, UpperThresholdPathDistanceFlowAlgorithm)
 }

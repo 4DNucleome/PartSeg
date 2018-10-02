@@ -1,10 +1,11 @@
-from PyQt5.QtCore import QThread, QObject, pyqtSignal
+from PyQt5.QtCore import QThread, pyqtSignal
 import numpy as np
 from scipy.ndimage import zoom
 
 
 class InterpolateThread(QThread):
-    # finished = pyqtSignal(list)
+    finished = pyqtSignal(list)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.scaling = None
