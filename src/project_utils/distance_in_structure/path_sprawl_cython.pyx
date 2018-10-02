@@ -29,7 +29,8 @@ cdef struct Point:
     Size y
     Size z
 
-def calculate_maximum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[np.uint8_t, ndim=3] base_object, int level, result=None):
+def calculate_maximum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[np.uint8_t, ndim=3] base_object,
+                      np.ndarray[np.int8_t, ndim=2] neighbourhood, result=None):
     """
     Calculate maximum path from source
     :param object_area: data with removed other components
@@ -40,16 +41,16 @@ def calculate_maximum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[n
     """
     if result is None:
         result = np.zeros((object_area.shape[0], object_area.shape[1], object_area.shape[2]), dtype=np.float64)
-    res, c = _calculate_maximum(object_area, base_object, level, result)
+    res, c = _calculate_maximum(object_area, base_object, neighbourhood, result)
     return res
 
 def _calculate_maximum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[np.uint8_t, ndim=3] base_object,
-                       int level, np.ndarray[np.float64_t, ndim=3] result):
+                       int level, np.ndarray[np.int8_t, ndim=2] neighbourhood, np.ndarray[np.float64_t, ndim=3] result):
     # cdef np.ndarray[np.uint8_t, ndim=3] consumed_area = np.copy(base_object)
     # cdef np.ndarray[np.float64_t, ndim=3] result
     cdef Size x_size, y_size, z_size, array_pos, x, y, z, xx, yy, zz
     cdef Py_ssize_t count = 0
-    cdef char neigh_length = neigh_level[level]
+    cdef char neigh_length = neighbourhood.shape[0]
     cdef int neigh_it
     cdef my_queue[Point] current_points
     cdef Point p, p1
@@ -67,9 +68,9 @@ def _calculate_maximum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[
             for x in range (1, x_size-1):
                 if base_object[z,y,x] > 0:
                     for neigh_it in range(neigh_length):
-                        zz = z+neighbourhood[neigh_it][0]
-                        yy = y+neighbourhood[neigh_it][1]
-                        xx = x+neighbourhood[neigh_it][2]
+                        zz = z+neighbourhood[neigh_it, 0]
+                        yy = y+neighbourhood[neigh_it, 1]
+                        xx = x+neighbourhood[neigh_it, 2]
                         if xx == -1 or xx == x_size or xx == -1 or yy == y_size or zz == -1 or zz == z_size:
                             continue
                         if base_object[zz, yy, zz] == 0:
@@ -84,9 +85,9 @@ def _calculate_maximum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[
         current_points.pop()
         base_object[p.z, p.y, p.x] = 0
         for neigh_it in range(neigh_length):
-            z = p.z + neighbourhood[neigh_it][0]
-            y = p.y + neighbourhood[neigh_it][1]
-            x = p.x + neighbourhood[neigh_it][2]
+            z = p.z + neighbourhood[neigh_it, 0]
+            y = p.y + neighbourhood[neigh_it, 1]
+            x = p.x + neighbourhood[neigh_it, 2]
             if x < 0 or y < 0 or z < 0 or x >= x_size or y >= y_size or z >= z_size:
                 continue
             object_area_value = object_area[z, y, x]
@@ -107,7 +108,8 @@ def _calculate_maximum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[
                     base_object[z, y, x] = 1
     return result, count
 
-def calculate_minimum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[np.uint8_t, ndim=3] base_object, int level, float maximum, result=None):
+def calculate_minimum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[np.uint8_t, ndim=3] base_object,
+                      np.ndarray[np.int8_t, ndim=2] neighbourhood, float maximum, result=None):
     """
     Calculate maximum path from source
     :param object_area: data with removed other components
@@ -119,16 +121,16 @@ def calculate_minimum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[n
     if result is None:
         result = np.zeros((object_area.shape[0], object_area.shape[1], object_area.shape[2]), dtype=np.float64)
         result[:] = maximum
-    res, c = _calculate_minimum(object_area, base_object, level, result)
+    res, c = _calculate_minimum(object_area, base_object, neighbourhood, result)
     return res
 
 def _calculate_minimum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[np.uint8_t, ndim=3] base_object,
-                       int level, np.ndarray[np.float64_t, ndim=3] result):
+                       np.ndarray[np.int8_t, ndim=2] neighbourhood, np.ndarray[np.float64_t, ndim=3] result):
     # cdef np.ndarray[np.uint8_t, ndim=3] consumed_area = np.copy(base_object)
     # cdef np.ndarray[np.float64_t, ndim=3] result
     cdef Size x_size, y_size, z_size, array_pos, x, y, z, xx, yy, zz
     cdef Py_ssize_t count = 0
-    cdef char neigh_length = neigh_level[level]
+    cdef char neigh_length = neighbourhood.shape[0]
     cdef int neigh_it
     cdef my_queue[Point] current_points
     cdef Point p, p1
@@ -146,9 +148,9 @@ def _calculate_minimum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[
             for x in range (0, x_size):
                 if base_object[z,y,x] > 0:
                     for neigh_it in range(neigh_length):
-                        zz = z+neighbourhood[neigh_it][0]
-                        yy = y+neighbourhood[neigh_it][1]
-                        xx = x+neighbourhood[neigh_it][2]
+                        zz = z+neighbourhood[neigh_it, 0]
+                        yy = y+neighbourhood[neigh_it, 1]
+                        xx = x+neighbourhood[neigh_it, 2]
                         if xx == -1 or xx == x_size or xx == -1 or yy == y_size or zz == -1 or zz == z_size:
                             continue
                         if base_object[zz, yy, zz] == 0:
@@ -163,9 +165,9 @@ def _calculate_minimum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[
         current_points.pop()
         base_object[p.z, p.y, p.x] = 0
         for neigh_it in range(neigh_length):
-            z = p.z + neighbourhood[neigh_it][0]
-            y = p.y + neighbourhood[neigh_it][1]
-            x = p.x + neighbourhood[neigh_it][2]
+            z = p.z + neighbourhood[neigh_it, 0]
+            y = p.y + neighbourhood[neigh_it, 1]
+            x = p.x + neighbourhood[neigh_it, 2]
             if x < 0 or y < 0 or z < 0 or x >= x_size or y >= y_size or z >= z_size:
                 continue
             object_area_value = object_area[z, y, x]

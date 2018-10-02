@@ -233,17 +233,18 @@ class LowerThresholdPathFlowAlgorithm(LowerThresholdFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
         image = self.image.astype(np.float64)
         image[base_image == 0] = 0
-        mid = path_maximum_sprawl(image, object_image, self.components_num)
-        return path_maximum_sprawl(image, mid, self.components_num)
+        neigh = get_neighbourhood(self.spacing, NeighType.edges)
+        mid = path_maximum_sprawl(image, object_image, self.components_num, neigh)
+        return path_maximum_sprawl(image, mid, self.components_num, neigh)
 
 
 class UpperThresholdPathFlowAlgorithm(UpperThresholdFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
         image = self.image.astype(np.float64)
         image[base_image == 0] = 0
-        mid = path_minimum_sprawl(image, object_image, self.components_num)
-        return path_minimum_sprawl(image, mid, self.components_num)
-
+        neigh = get_neighbourhood(self.spacing, NeighType.edges)
+        mid = path_minimum_sprawl(image, object_image, self.components_num, neigh)
+        return path_minimum_sprawl(image, mid, self.components_num, neigh)
 
 class LowerThresholdPathDistanceFlowAlgorithm(LowerThresholdPathFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
@@ -277,7 +278,13 @@ def calculate_distances_array(spacing, neigh_type: NeighType):
     normalized_spacing = np.array(normalized_spacing)
     return neighbourhood_array, np.sqrt(np.sum((neighbourhood_array*normalized_spacing)**2, axis=1))
 
-
+def get_neighbourhood(spacing, neigh_type: NeighType):
+    if len(spacing) == 2:
+        if neigh_type == NeighType.sides:
+            return neighbourhood2d[:4]
+        return neighbourhood2d
+    else:
+        return neighbourhood[:neigh_type.value]
 
 
 neighbourhood = np.array([[0,-1, 0], [0, 0,-1],
