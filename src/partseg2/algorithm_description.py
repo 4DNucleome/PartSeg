@@ -6,16 +6,18 @@ from copy import deepcopy
 
 lower_threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100),
                              AlgorithmProperty("minimum_size", "Minimum size (pix)", 8000, (0, 10 ** 6), 1000),
-                             AlgorithmProperty("use_gauss", "Use gauss", False, (True, False)),
-                             AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1)]
+                             AlgorithmProperty("use_gauss", "Use gauss", "No", ["No", "2d", "3d"]),
+                             AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1),
+                             AlgorithmProperty("side_connection", "Connect only sides", False, (True, False))]
 
 upper_threshold_algorithm = deepcopy(lower_threshold_algorithm)
 
 range_threshold_algorithm = [AlgorithmProperty("lower_threshold", "Lower threshold", 10000, (0, 10 ** 6), 100),
                              AlgorithmProperty("upper_threshold", "Upper threshold", 10000, (0, 10 ** 6), 100),
                              AlgorithmProperty("minimum_size", "Minimum size (pix)", 8000, (0, 10 ** 6), 1000),
-                             AlgorithmProperty("use_gauss", "Use gauss", False, (True, False)),
-                             AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1)]
+                             AlgorithmProperty("use_gauss", "Use gauss", "No", ["No", "2d", "3d"]),
+                             AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1),
+                             AlgorithmProperty("side_connection", "Connect only sides", False, (True, False))]
 
 base_flow_threshold_algorithm = deepcopy(lower_threshold_algorithm)
 base_flow_threshold_algorithm.insert(1, AlgorithmProperty("base_threshold", "Base threshold", 10000, (0, 10 ** 6), 100))

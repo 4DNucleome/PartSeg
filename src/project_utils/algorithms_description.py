@@ -1,5 +1,6 @@
 import traceback
 from abc import ABCMeta, abstractmethod
+from copy import deepcopy
 from os import path
 from typing import Type, List
 
@@ -14,6 +15,7 @@ from common_gui.universal_gui_part import CustomSpinBox, CustomDoubleSpinBox
 from partseg2.partseg_settings import PartSettings
 from partseg2.segment_algorithms import RestartableAlgorithm
 from project_utils.algorithm_base import SegmentationAlgorithm
+from project_utils.segmentation_thread import SegmentationThread
 from project_utils.universal_const import UNIT_SCALE
 from .settings import ImageSettings
 from partseg.io_functions import save_stack_segmentation, load_stack_segmentation
@@ -30,7 +32,10 @@ class AlgorithmProperty(object):
     def __init__(self, name, user_name, default_value, options_range, single_steep=None):
         self.name = name
         self.user_name = user_name
-        self.value_type = type(default_value)
+        if type(options_range) is list:
+            self.value_type = list
+        else:
+            self.value_type = type(default_value)
         self.default_value = default_value
         self.range = options_range
         self.single_step = single_steep
@@ -163,7 +168,7 @@ class AbstractAlgorithmSettingsWidget(with_metaclass(ABCMeta, object)):
 
 
 class AlgorithmSettingsWidget(QScrollArea):
-    algorithm: SegmentationAlgorithm
+    algorithm_thread: SegmentationAlgorithm
     gauss_radius_name = "gauss_radius"
 
     def __init__(self, settings, name, element_list, algorithm: Type[SegmentationAlgorithm]):
@@ -198,8 +203,8 @@ class AlgorithmSettingsWidget(QScrollArea):
         value_dict = self.settings.get(f"algorithms.{self.name}", {})
         self.set_values(value_dict)
         self.settings.image_changed[int].connect(self.image_changed)
-        self.algorithm = algorithm()
-        self.algorithm.info_signal.connect(self.show_info)
+        self.algorithm_thread = SegmentationThread(algorithm())
+        self.algorithm_thread.info_signal.connect(self.show_info)
 
     def show_info(self, text):
         self.info_label.setText(text)
@@ -218,7 +223,7 @@ class AlgorithmSettingsWidget(QScrollArea):
             if name not in values_dict:
                 continue
             if isinstance(el, QComboBox):
-                el.setCurrentText(values_dict[name])
+                el.setCurrentText(str(values_dict[name]))
             elif isinstance(el, QAbstractSpinBox):
                 el.setValue(values_dict[name])
             elif isinstance(el, QCheckBox):
@@ -244,28 +249,27 @@ class AlgorithmSettingsWidget(QScrollArea):
 
     def execute(self, exclude_mask=None):
         values = self.get_values()
-        self.settings.set(f"algorithms.{self.name}", values)
-        if self.gauss_radius_name in values and self.settings.gauss_3d:
-            base = min(self.settings.image_spacing)
-            val = values[self.gauss_radius_name]
-            values[self.gauss_radius_name] = [val * (base/x) for x in self.settings.image_spacing]
-        self.algorithm.set_parameters_wait(**{"exclude_mask": exclude_mask,
+        self.settings.set(f"algorithms.{self.name}", deepcopy(values))
+        scale = UNIT_SCALE[self.settings.get("units_index")]
+        self.algorithm_thread.algorithm.set_size_information(self.settings.image_spacing,
+                                                             False, scale)
+        self.algorithm_thread.set_parameters(**{"exclude_mask": exclude_mask,
                                          "image": self.settings.get_chanel(self.channels_chose.currentIndex()),
-                                         **values})
-        self.algorithm.start()
+                                                     **values})
+        self.algorithm_thread.start()
 
     def hideEvent(self, a0: QHideEvent):
-        self.algorithm.clean()
+        self.algorithm_thread.clean()
 
 class InteractiveAlgorithmSettingsWidget(AlgorithmSettingsWidget):
-    algorithm: RestartableAlgorithm
+    algorithm_thread: SegmentationThread
     settings: PartSettings
-    def __init__(self, settings: PartSettings, name, element_list, algorithm: RestartableAlgorithm,
+    def __init__(self, settings: PartSettings, name, element_list, algorithm: SegmentationThread,
                  selector: List[QWidget]):
         super().__init__(settings, name, element_list, algorithm)
         self.selector = selector
-        self.algorithm.finished.connect(self.enable_selector)
-        self.algorithm.started.connect(self.disable_selector)
+        self.algorithm_thread.finished.connect(self.enable_selector)
+        self.algorithm_thread.started.connect(self.disable_selector)
         for _, el in self.widget_list:
             if isinstance(el, QAbstractSpinBox):
                 el.valueChanged.connect(self.value_updated)
@@ -284,25 +288,25 @@ class InteractiveAlgorithmSettingsWidget(AlgorithmSettingsWidget):
     def change_mask(self):
         if not self.isVisible():
             return
-        self.algorithm.set_mask(self.settings.mask)
+        self.algorithm_thread.set_mask(self.settings.mask)
 
     def channel_change(self):
         if not self.isVisible() or self.channels_chose.currentIndex() < 0:
             return
         # called on image change because of reinitialize list of channels
-        self.algorithm.set_image(self.settings.get_chanel(self.channels_chose.currentIndex()))
+        self.algorithm_thread.algorithm.set_image(self.settings.get_chanel(self.channels_chose.currentIndex()))
         if self.settings.mask is not None:
-            self.algorithm.set_mask(self.settings.mask)
+            self.algorithm_thread.algorithm.set_mask(self.settings.mask)
         self.value_updated()
 
     def execute(self, exclude_mask=None):
         values = self.get_values()
-        self.algorithm.set_parameters_wait(**values)
+        self.algorithm_thread.set_parameters(**values)
         scale = UNIT_SCALE[self.settings.get("units_index")]
-        self.algorithm.set_size_information([x * scale for x in self.settings.image_spacing],
-                                            self.settings.use_physical_unit)
+        self.algorithm_thread.algorithm.set_size_information(self.settings.image_spacing,
+                                                   self.settings.use_physical_unit, scale)
         self.settings.set(f"algorithms.{self.name}", values)
-        self.algorithm.start()
+        self.algorithm_thread.start()
 
     def showEvent(self, a0: QShowEvent):
         self.channel_change()

@@ -33,6 +33,8 @@ class ImageSettings(QObject):
 
     @property
     def image_spacing(self):
+        if self._image is None:
+            return self._image_spacing
         if self._image.shape[0] > 1:
             return self._image_spacing
         else:

@@ -8,7 +8,8 @@ def _generic_image_operation(image, radius, fun):
     if len(image.shape) == 2:
         return sitk.GetArrayFromImage(fun(sitk.GetImageFromArray(image), radius))
     if isinstance(radius, (tuple, list)):
-        return sitk.GetArrayFromImage(fun(sitk.GetImageFromArray(image), radius))
+        shape = image.shape
+        return sitk.GetArrayFromImage(fun(sitk.GetImageFromArray(np.squeeze(image)), radius)).reshape(shape)
     res = np.copy(image)
     for layer in res:
         layer[...] = sitk.GetArrayFromImage(fun(sitk.GetImageFromArray(layer), radius))

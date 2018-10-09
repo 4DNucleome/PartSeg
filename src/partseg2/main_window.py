@@ -64,7 +64,7 @@ class Options(QWidget):
             widget = InteractiveAlgorithmSettingsWidget(settings, name, *val,
                                                         selector=[self.algorithm_choose, self.choose_profile])
             widgets_list.append(widget)
-            widget.algorithm.execution_done_extend.connect(self.execution_done)
+            widget.algorithm_thread.execution_done[np.ndarray, np.ndarray].connect(self.execution_done)
             # widget.algorithm.progress_signal.connect(self.progress_info)
             self.stack_layout.addWidget(widget)
 

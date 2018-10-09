@@ -3,9 +3,7 @@ from collections import defaultdict
 from enum import Enum
 from functools import reduce
 
-from PyQt5.QtCore import pyqtSignal
 
-from project_utils.abstract_class import QtMeta
 from project_utils.algorithm_base import SegmentationAlgorithm
 from project_utils.distance_in_structure.find_split import distance_sprawl, path_minimum_sprawl, path_maximum_sprawl
 from project_utils.image_operations import gaussian
@@ -19,29 +17,22 @@ def blank_operator(_x, _y):
     raise NotImplemented()
 
 
-class RestartableAlgorithm(SegmentationAlgorithm, ABC, metaclass=QtMeta):
-    execution_done_extend = pyqtSignal(np.ndarray, np.ndarray)
+class RestartableAlgorithm(SegmentationAlgorithm, ABC):
 
     def __init__(self, **kwargs):
         super().__init__()
         self.parameters = defaultdict(lambda: None)
         self.new_parameters = {}
-        self.spacing = None
-        self.use_psychical_unit = False
 
     def set_image(self, image):
         self.image = image
         self.parameters.clear()
 
-    def set_size_information(self, spacing, use_physical_unit):
-        self.spacing = spacing
-        self.use_psychical_unit = use_physical_unit
-
     def get_info_text(self):
         return "No info [Report this ass error]"
 
 
-class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC, metaclass=QtMeta):
+class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
     """
     :type segmentation: np.ndarray
     """
@@ -59,19 +50,18 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC, metaclass=QtMeta):
     def get_info_text(self):
         return ", ".join(map(str, self._sizes_array[1:self.components_num + 1]))
 
-    def run(self):
-        segment_data = self.calculation_run()
-        if segment_data is not None:
-            finally_segment, full_segment = segment_data
-            self.execution_done.emit(finally_segment)
-            self.execution_done_extend.emit(finally_segment, full_segment)
-            self.parameters.update(self.new_parameters)
-
-    def calculation_run(self):
+    def calculation_run(self, _report_fun):
         restarted = False
-        if self.new_parameters["use_gauss"]:
+        if self.new_parameters["use_gauss"] != "No":
             if self.parameters["gauss_radius"] != self.new_parameters["gauss_radius"] or \
                     self.new_parameters["use_gauss"] != self.parameters["use_gauss"]:
+                if self.new_parameters["use_gauss"] != "2d":
+                    self.gauss_image = gaussian(self.image, self.new_parameters["gauss_radius"])
+                elif self.new_parameters["use_gauss"] != "3d":
+                    base = min(self.spacing)
+                    ratio = [x / base for x in self.spacing]
+                    gauss_radius = [self.new_parameters["gauss_radius"] / r for r in ratio]
+                    self.gauss_image = gaussian(self.image, gauss_radius)
                 self.gauss_image = gaussian(self.image, self.new_parameters["gauss_radius"])
                 restarted = True
         elif self.new_parameters["use_gauss"] != self.parameters["use_gauss"]:
@@ -118,31 +108,28 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC, metaclass=QtMeta):
 
 
 class OneThresholdAlgorithm(ThresholdBaseAlgorithm):
-    def set_parameters(self, threshold, minimum_size, use_gauss, gauss_radius):
+    def set_parameters(self, threshold, minimum_size, use_gauss, gauss_radius, side_connection):
         self.new_parameters["threshold"] = threshold
         self.new_parameters["minimum_size"] = minimum_size
         self.new_parameters["use_gauss"] = use_gauss
         self.new_parameters["gauss_radius"] = gauss_radius
-
+        self.new_parameters["side_connection"] = side_connection
 
 class LowerThresholdAlgorithm(OneThresholdAlgorithm):
     threshold_operator = operator.gt
-    """def _threshold(self, image, thr=None):
-        return (image > self.new_parameters["threshold"]).astype(np.uint8)"""
 
 
 class UpperThresholdAlgorithm(OneThresholdAlgorithm):
     threshold_operator = operator.lt
-    """def _threshold(self, image, thr=None):
-        return (image < self.new_parameters["threshold"]).astype(np.uint8)"""
 
 
 class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
-    def set_parameters(self, lower_threshold, upper_threshold, minimum_size, use_gauss, gauss_radius):
+    def set_parameters(self, lower_threshold, upper_threshold, minimum_size, use_gauss, gauss_radius, side_connection):
         self.new_parameters["threshold"] = lower_threshold, upper_threshold
         self.new_parameters["minimum_size"] = minimum_size
         self.new_parameters["use_gauss"] = use_gauss
         self.new_parameters["gauss_radius"] = gauss_radius
+        self.new_parameters["side_connection"] = side_connection
 
     def _threshold(self, image, thr=None):
         return ((image > self.new_parameters["threshold"][0]) * (image < self.new_parameters["threshold"][1])).astype(
@@ -162,15 +149,16 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm):
         self.finally_segment = None
         self.final_sizes = []
 
-    def set_parameters(self, threshold, minimum_size, use_gauss, gauss_radius, base_threshold):
+    def set_parameters(self, threshold, minimum_size, use_gauss, gauss_radius, base_threshold, side_connection):
         self.new_parameters["threshold"] = threshold
         self.new_parameters["minimum_size"] = minimum_size
         self.new_parameters["use_gauss"] = use_gauss
         self.new_parameters["gauss_radius"] = gauss_radius
         self.new_parameters["base_threshold"] = base_threshold
+        self.new_parameters["side_connection"] = side_connection
 
-    def calculation_run(self):
-        segment_data = super().calculation_run()
+    def calculation_run(self, report_fun):
+        segment_data = super().calculation_run(report_fun)
         if segment_data is not None and self.components_num == 0:
             self.final_sizes = []
             return segment_data
@@ -194,11 +182,11 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm):
             return new_segment, threshold_image
 
 
-class LowerThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm, ABC, metaclass=QtMeta):
+class LowerThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm, ABC):
     threshold_operator = operator.gt
 
 
-class UpperThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm, ABC, metaclass=QtMeta):
+class UpperThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm, ABC):
     threshold_operator = operator.lt
 
 

@@ -279,8 +279,8 @@ class AlgorithmOptions(QWidget):
             self.algorithm_choose.addItem(name)
             widget = AlgorithmSettingsWidget(settings, name, *val)
             widgets_list.append(widget)
-            widget.algorithm.execution_done.connect(self.execution_done)
-            widget.algorithm.progress_signal.connect(self.progress_info)
+            widget.algorithm_thread.execution_done.connect(self.execution_done)
+            widget.algorithm_thread.progress_signal.connect(self.progress_info)
             self.stack_layout.addWidget(widget)
         # WARNING works only with one channels algorithms
         SynchronizeValues.add_synchronization("channels_chose", widgets_list)
@@ -439,11 +439,11 @@ class ImageInformation(QWidget):
         self.path.setWordWrap(True)
         self.spacing = [QDoubleSpinBox() for _ in range(3)]
         units_index = self._settings.get("units_index", 2)
-        for i, el in enumerate(self.spacing):
+        for el, val in zip(self.spacing, self._settings.image_spacing[::-1]):
             el.setAlignment(Qt.AlignRight)
             el.setButtonSymbols(QAbstractSpinBox.NoButtons)
             el.setRange(0, 100000)
-            el.setValue(self._settings.image_spacing[i] * UNIT_SCALE[units_index])
+            el.setValue(val * UNIT_SCALE[units_index])
             el.valueChanged.connect(self.image_spacing_change)
         self.units = QComboBox()
         self.units.addItems(UNITS_LIST)
@@ -470,9 +470,9 @@ class ImageInformation(QWidget):
     def update_spacing(self, index=None):
         if index is not None:
             self._settings.set("units_index", index)
-        for i, el in enumerate(self.spacing):
+        for el, val in zip(self.spacing, self._settings.image_spacing[::-1]):
             el.blockSignals(True)
-            el.setValue(self._settings.image_spacing[i] * UNIT_SCALE[self.units.currentIndex()])
+            el.setValue(val * UNIT_SCALE[self.units.currentIndex()])
             el.blockSignals(False)
 
     def set_image_path(self, value):
@@ -481,7 +481,7 @@ class ImageInformation(QWidget):
 
     def image_spacing_change(self):
         self._settings.image_spacing = [el.value() / UNIT_SCALE[self.units.currentIndex()] for i, el in
-                                        enumerate(self.spacing)]
+                                        enumerate(self.spacing[::-1])]
 
 
 class Options(QTabWidget):

@@ -1,3 +1,5 @@
+from abc import ABC
+
 import SimpleITK as sitk
 import numpy as np
 
@@ -7,7 +9,7 @@ from project_utils.image_operations import gaussian
 from .segment import close_small_holes, opening
 
 
-class StackAlgorithm(SegmentationAlgorithm):
+class StackAlgorithm(SegmentationAlgorithm, ABC):
     def __init__(self):
         super().__init__()
         self.exclude_mask = None
@@ -18,16 +20,24 @@ class StackAlgorithm(SegmentationAlgorithm):
 
 
 class ThresholdPreview(StackAlgorithm):
+
     def __init__(self):
         super(ThresholdPreview, self).__init__()
-        self.use_gauss = False
+        self.use_gauss = "No"
         self.gauss_radius = 0
+        self.gauss_2d = False
         self.threshold = 0
 
-    def run(self):
+    def calculation_run(self, _report_fun):
         image = self.image
-        if self.use_gauss:
-            image = gaussian(image, 1)
+        if self.use_gauss != "2d":
+            image = gaussian(image, self.gauss_radius)
+        elif self.use_gauss != "3d":
+            base = min(self.spacing)
+            ratio = [x/base for x in self.spacing]
+            gauss_radius = [self.gauss_radius / r for r in ratio]
+            image = gaussian(image, gauss_radius)
+
         if self.exclude_mask is None:
             res = (image > self.threshold).astype(np.uint8)
         else:
@@ -43,7 +53,7 @@ class ThresholdPreview(StackAlgorithm):
             res[mask] = self.exclude_mask[mask]
         self.image = None
         self.exclude_mask = None
-        self.execution_done.emit(res)
+        return res
 
     def set_parameters(self, image, threshold, exclude_mask, use_gauss, gauss_radius):
         self.image = image
@@ -51,6 +61,9 @@ class ThresholdPreview(StackAlgorithm):
         self.exclude_mask = exclude_mask
         self.use_gauss = use_gauss
         self.gauss_radius = gauss_radius
+
+    def get_info_text(self):
+        return ""
 
 
 class ThresholdAlgorithm(StackAlgorithm):
@@ -68,30 +81,38 @@ class ThresholdAlgorithm(StackAlgorithm):
         self.close_holes_size = 0
         self.smooth_border = False
         self.smooth_border_radius = 0
+        self.gauss_2d = False
+        self.edge_connection = True
 
-    def run(self):
-        if self.use_gauss:
+    def calculation_run(self, report_fun):
+        if self.use_gauss != "2d":
             image = gaussian(self.image, self.gauss_radius)
-            self.progress_signal.emit("Gauss done", 0)
+            report_fun("Gauss done", 0)
+        elif self.use_gauss != "3d":
+            base = min(self.spacing)
+            ratio = [x/base for x in self.spacing]
+            gauss_radius = [self.gauss_radius / r for r in ratio]
+            image = gaussian(self.image, gauss_radius)
+            report_fun("Gauss done", 0)
         else:
             image = self.image
         mask = (image > self.threshold).astype(np.uint8)
         if self.exclude_mask is not None:
-            self.progress_signal.emit("Components exclusion apply", 1)
+            report_fun("Components exclusion apply", 1)
             mask[self.exclude_mask > 0] = 0
         if self.close_holes:
-            self.progress_signal.emit("Holes closing", 2)
+            report_fun("Holes closing", 2)
             mask = close_small_holes(mask, self.close_holes_size)
-        self.progress_signal.emit("Components calculating", 3)
+        report_fun("Components calculating", 3)
         self.segmentation = sitk.GetArrayFromImage(
             sitk.RelabelComponent(
                 sitk.ConnectedComponent(
-                    sitk.GetImageFromArray(mask)
+                    sitk.GetImageFromArray(mask), self.edge_connection
                 ), 20
             )
         )
         if self.smooth_border:
-            self.progress_signal.emit("Smoothing borders", 4)
+            report_fun("Smoothing borders", 4)
             self.segmentation = opening(self.segmentation, self.smooth_border_radius, 20)
 
         self.sizes = np.bincount(self.segmentation.flat)
@@ -104,11 +125,11 @@ class ThresholdAlgorithm(StackAlgorithm):
         if self.exclude_mask is not None:
             resp[resp > 0] += self.exclude_mask.max()
             resp[self.exclude_mask > 0] = self.exclude_mask[self.exclude_mask > 0]
-        self.progress_signal.emit("Calculation done", 5)
-        self.execution_done.emit(resp)
+            report_fun("Calculation done", 5)
+        return resp
 
     def set_parameters(self, image, threshold, minimum_size, exclude_mask, close_holes, smooth_border, use_gauss,
-                       close_holes_size, smooth_border_radius, gauss_radius):
+                       close_holes_size, smooth_border_radius, gauss_radius, side_connection):
         self.image = image
         self.threshold = threshold
         self.minimum_size = minimum_size
@@ -119,6 +140,10 @@ class ThresholdAlgorithm(StackAlgorithm):
         self.close_holes_size = close_holes_size
         self.smooth_border_radius = smooth_border_radius
         self.gauss_radius = gauss_radius
+        self.edge_connection = not side_connection
+
+    def get_info_text(self):
+        return ""
 
 
 class AutoThresholdAlgorithm(StackAlgorithm):
@@ -137,39 +162,46 @@ class AutoThresholdAlgorithm(StackAlgorithm):
         self.smooth_border = False
         self.smooth_border_radius = 0
         self.suggested_size = 0
+        self.edge_connection = True
 
-    def run(self):
-        if self.use_gauss:
+    def calculation_run(self, report_fun):
+        if self.use_gauss != "2d":
             image = gaussian(self.image, self.gauss_radius)
-            self.progress_signal.emit("Gauss done", 0)
+            report_fun("Gauss done", 0)
+        elif self.use_gauss != "3d":
+            base = min(self.spacing)
+            ratio = [x/base for x in self.spacing]
+            gauss_radius = [self.gauss_radius / r for r in ratio]
+            image = gaussian(self.image, gauss_radius)
+            report_fun("Gauss done", 0)
         else:
             image = np.copy(self.image)
         if self.exclude_mask is not None:
-            self.progress_signal.emit("Components exclusion apply", 1)
+            report_fun("Components exclusion apply", 1)
             image[self.exclude_mask > 0] = 0
-        self.progress_signal.emit("Threshold calculation", 1)
+        report_fun("Threshold calculation", 1)
         sitk_image = sitk.GetImageFromArray(image)
         sitk_mask = sitk.ThresholdMaximumConnectedComponents(sitk_image, self.suggested_size)
         mask = sitk.GetArrayFromImage(sitk_mask)
         min_val = np.min(image[mask > 0])
         if self.threshold < min_val:
             self.threshold = min_val
-        self.info_signal.emit("Threshold: {}".format(self.threshold))
+            report_fun("Threshold: {}".format(self.threshold))
         mask = (image > self.threshold).astype(np.uint8)
         if self.close_holes:
-            self.progress_signal.emit("Holes closing", 2)
+            report_fun("Holes closing", 2)
             mask = close_small_holes(mask, self.close_holes_size)
-        self.progress_signal.emit("Components calculating", 3)
+        report_fun("Components calculating", 3)
 
         self.segmentation = sitk.GetArrayFromImage(
             sitk.RelabelComponent(
                 sitk.ConnectedComponent(
-                    sitk.GetImageFromArray(mask)
+                    sitk.GetImageFromArray(mask), self.edge_connection
                 ), 20
             )
         )
         if self.smooth_border:
-            self.progress_signal.emit("Smoothing borders", 4)
+            report_fun("Smoothing borders", 4)
             self.segmentation = opening(self.segmentation, self.smooth_border_radius, 20)
 
         self.sizes = np.bincount(self.segmentation.flat)
@@ -182,11 +214,11 @@ class AutoThresholdAlgorithm(StackAlgorithm):
         if self.exclude_mask is not None:
             resp[resp > 0] += self.exclude_mask.max()
             resp[self.exclude_mask > 0] = self.exclude_mask[self.exclude_mask > 0]
-        self.progress_signal.emit("Calculation done", 5)
-        self.execution_done.emit(resp)
+        report_fun("Calculation done", 5)
+        return resp
 
     def set_parameters(self, image, suggested_size, threshold, minimum_size, exclude_mask, close_holes, smooth_border,
-                       use_gauss, close_holes_size, smooth_border_radius, gauss_radius):
+                       use_gauss, close_holes_size, smooth_border_radius, gauss_radius, side_connection):
         self.image = image
         self.threshold = threshold
         self.minimum_size = minimum_size
@@ -198,6 +230,7 @@ class AutoThresholdAlgorithm(StackAlgorithm):
         self.smooth_border_radius = smooth_border_radius
         self.gauss_radius = gauss_radius
         self.suggested_size = suggested_size
+        self.edge_connection = not side_connection
 
-
-
+    def get_info_text(self):
+        return ""
