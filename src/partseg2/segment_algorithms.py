@@ -33,9 +33,9 @@ class RestartableAlgorithm(SegmentationAlgorithm, ABC, metaclass=QtMeta):
         self.image = image
         self.parameters.clear()
 
-    def set_size_information(self, spacing, use_physicla_unit):
+    def set_size_information(self, spacing, use_physical_unit):
         self.spacing = spacing
-        self.use_psychical_unit = use_physicla_unit
+        self.use_psychical_unit = use_physical_unit
 
     def get_info_text(self):
         return "No info [Report this ass error]"
@@ -60,10 +60,11 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC, metaclass=QtMeta):
         return ", ".join(map(str, self._sizes_array[1:self.components_num + 1]))
 
     def run(self):
-        finally_segment = self.calculation_run()
-        if finally_segment is not None:
+        segment_data = self.calculation_run()
+        if segment_data is not None:
+            finally_segment, full_segment = segment_data
             self.execution_done.emit(finally_segment)
-            self.execution_done_extend.emit(finally_segment, self.segmentation)
+            self.execution_done_extend.emit(finally_segment, full_segment)
             self.parameters.update(self.new_parameters)
 
     def calculation_run(self):
@@ -92,7 +93,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC, metaclass=QtMeta):
             finally_segment = np.copy(self.segmentation)
             finally_segment[finally_segment > ind] = 0
             self.components_num = ind
-            return finally_segment
+            return finally_segment, self.segmentation
 
     def _clean(self):
         super()._clean()
@@ -168,37 +169,29 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm):
         self.new_parameters["gauss_radius"] = gauss_radius
         self.new_parameters["base_threshold"] = base_threshold
 
-    def run(self):
-        finally_segment = self.calculation_run()
-        if finally_segment is not None and self.components_num == 0:
+    def calculation_run(self):
+        segment_data = super().calculation_run()
+        if segment_data is not None and self.components_num == 0:
             self.final_sizes = []
-            self.execution_done.emit(finally_segment)
-            self.execution_done_extend.emit(finally_segment, self.segmentation)
-            self.parameters.update(self.new_parameters)
-            return
+            return segment_data
 
-        if finally_segment is None:
+        if segment_data is None:
             restarted = False
             finally_segment = np.copy(self.finally_segment)
         else:
-            self.finally_segment = finally_segment
+            self.finally_segment = segment_data[0]
+            finally_segment = segment_data[0]
             restarted = True
 
         if restarted or self.new_parameters["base_threshold"] != self.parameters["base_threshold"]:
             if self.threshold_operator(self.new_parameters["base_threshold"], self.new_parameters["threshold"]):
-                print("buka1")
-            else:
-                print("buka2")
+                return self.finally_segment, self.segmentation
             threshold_image = self._threshold(self.gauss_image, self.new_parameters["base_threshold"])
-            print(f"Sizes {np.count_nonzero(threshold_image)}, {np.count_nonzero(finally_segment)}", self.__class__)
             if self.mask is not None:
-                print("maskkkk")
                 threshold_image *= (self.mask > 0)
             new_segment = self.path_sprawl(threshold_image, finally_segment)
             self.final_sizes = np.bincount(new_segment.flat)
-            self.execution_done.emit(new_segment)
-            self.execution_done_extend.emit(new_segment, threshold_image)
-            self.parameters.update(self.new_parameters)
+            return new_segment, threshold_image
 
 
 class LowerThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm, ABC, metaclass=QtMeta):
