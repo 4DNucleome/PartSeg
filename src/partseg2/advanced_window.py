@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushBu
     QFileDialog, QComboBox, QTableWidget, QTableWidgetItem, QAbstractSpinBox, QInputDialog
 
 from common_gui.colors_choose import ColorSelector
+from common_gui.lock_checkbox import LockCheckBox
 from partseg2.partseg_settings import PartSettings, MASK_COLORS
 from partseg2.profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer
 from partseg2.statistics_calculation import StatisticProfile
@@ -15,6 +16,8 @@ from project_utils.global_settings import static_file_folder
 from project_utils.settings import BaseSettings
 from project_utils.universal_const import UNITS_DICT, UNIT_SCALE, UNITS_LIST
 from qt_import import h_line
+
+
 
 
 class AdvancedSettings(QWidget):
@@ -38,6 +41,10 @@ class AdvancedSettings(QWidget):
         self.profile_list = QListWidget()
         self.profile_list.currentTextChanged.connect(self.profile_chosen)
         self.spacing = [QDoubleSpinBox() for _ in range(3)]
+        self.lock_spacing = LockCheckBox()
+        self.lock_spacing.stateChanged.connect(self.spacing[1].setDisabled)
+        self.lock_spacing.stateChanged.connect(self.synchronize_spacing)
+        self.spacing[2].valueChanged.connect(self.synchronize_spacing)
         units_index = self._settings.get("units_index", 2)
         for i, el in enumerate(self.spacing):
             el.setAlignment(Qt.AlignRight)
@@ -65,6 +72,7 @@ class AdvancedSettings(QWidget):
         self.mask_color.currentIndexChanged.connect(self.mask_prop_changed)
 
         spacing_layout = QHBoxLayout()
+        spacing_layout.addWidget(self.lock_spacing)
         for txt, el in zip(["x", "y", "z"], self.spacing[::-1]):
             spacing_layout.addWidget(QLabel(txt+":"))
             spacing_layout.addWidget(el)
@@ -118,10 +126,16 @@ class AdvancedSettings(QWidget):
         self.delete_btn.setEnabled(True)
         self.rename_btn.setEnabled(True)
 
+    def synchronize_spacing(self):
+        if self.lock_spacing.isChecked():
+            self.spacing[1].setValue(self.spacing[2].value())
 
     def image_spacing_change(self):
-        self._settings.image_spacing = \
-            [el.value() / UNIT_SCALE[self.units.currentIndex()] for i, el in enumerate(self.spacing) if el.isEnabled()]
+        spacing = [el.value() / UNIT_SCALE[self.units.currentIndex()] for i, el in enumerate(self.spacing)]
+        if not self.spacing[0].isEnabled():
+            spacing = spacing[1:]
+        self._settings.image_spacing = spacing
+
         voxel_size = 1
         for el in self._settings.image_spacing:
             voxel_size *= el * UNIT_SCALE[self.units.currentIndex()]
