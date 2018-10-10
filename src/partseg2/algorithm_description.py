@@ -51,3 +51,21 @@ part_algorithm_dict = {
     "Upper threshold path euclidean": (
         upper_path_euclidean_flow_threshold_algorithm, UpperThresholdPathDistanceFlowAlgorithm)
 }
+
+
+class SegmentationProfile(object):
+    def __init__(self, name, algorithm, values):
+        self.name = name
+        self.algorithm = algorithm
+        self.values = values
+
+    def __getitem__(self, item):
+        if item == "algorithm":
+            return self.algorithm
+        if item == "values":
+            return self.values
+        raise KeyError()
+
+    def __str__(self):
+        return "Name: " + self.name + "\nAlgorithm: " + self.algorithm + "\n" + "\n".join(
+            [f"{k.replace('_', ' ')}: {v}" for k, v in self.values.items()])

@@ -105,8 +105,10 @@ class RawImageView(ImageViewWithMask):
     def info_text_pos(self, *pos):
         if self.tmp_image is None:
             return
-
-        brightness = self.tmp_image[pos if len(pos) == self.tmp_image.ndim -1 else pos[1:]]
+        try:
+            brightness = self.tmp_image[pos if len(pos) == self.tmp_image.ndim -1 else pos[1:]]
+        except IndexError:
+            return
         pos2 = list(pos)
         pos2[0] += 1
         if isinstance(brightness, collections.Iterable):

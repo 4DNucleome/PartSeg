@@ -7,13 +7,11 @@ from typing import Type, List
 import numpy as np
 import tifffile
 from PyQt5.QtGui import QHideEvent, QShowEvent
-from PyQt5.QtWidgets import QSpinBox, QDoubleSpinBox, QComboBox, QCheckBox, QWidget, QVBoxLayout, QLabel, QFormLayout, \
+from PyQt5.QtWidgets import QComboBox, QCheckBox, QWidget, QVBoxLayout, QLabel, QFormLayout, \
     QAbstractSpinBox, QScrollArea
 from six import with_metaclass
 
 from common_gui.universal_gui_part import CustomSpinBox, CustomDoubleSpinBox
-from partseg2.partseg_settings import PartSettings
-from partseg2.segment_algorithms import RestartableAlgorithm
 from project_utils.algorithm_base import SegmentationAlgorithm
 from project_utils.segmentation_thread import SegmentationThread
 from project_utils.universal_const import UNIT_SCALE
@@ -263,8 +261,7 @@ class AlgorithmSettingsWidget(QScrollArea):
 
 class InteractiveAlgorithmSettingsWidget(AlgorithmSettingsWidget):
     algorithm_thread: SegmentationThread
-    settings: PartSettings
-    def __init__(self, settings: PartSettings, name, element_list, algorithm: SegmentationThread,
+    def __init__(self, settings, name, element_list, algorithm: SegmentationThread,
                  selector: List[QWidget]):
         super().__init__(settings, name, element_list, algorithm)
         self.selector = selector

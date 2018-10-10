@@ -120,9 +120,7 @@ class AdvancedSettings(QWidget):
             return
 
         # TODO update with knowlega fro profile dict
-        description = profile["algorithm"] + "\n" + "\n".join(
-            [f"{k.replace('_', ' ')}: {v}" for k, v in profile["values"].items()])
-        self.info_label.setText(description)
+        self.info_label.setText(str(profile))
         self.delete_btn.setEnabled(True)
         self.rename_btn.setEnabled(True)
 

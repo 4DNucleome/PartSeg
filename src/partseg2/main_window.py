@@ -18,6 +18,7 @@ from common_gui.channel_control import ChannelControl
 from common_gui.stack_image_view import ColorBar
 from common_gui.waiting_dialog import WaitingDialog
 from partseg2.advanced_window import AdvancedWindow
+from partseg2.batch_window import BatchWindow
 from partseg2.interpolate_dialog import InterpolateDialog
 from partseg2.interpolate_thread import InterpolateThread
 from project_utils.algorithms_description import InteractiveAlgorithmSettingsWidget
@@ -25,7 +26,7 @@ from project_utils.global_settings import static_file_folder
 from project_utils.image_operations import dilate, erode
 from .partseg_settings import PartSettings, load_project, save_project, save_labeled_image, HistoryElement
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
-from .algorithm_description import part_algorithm_dict
+from .algorithm_description import part_algorithm_dict, SegmentationProfile
 
 app_name = "PartSeg2"
 app_lab = "LFSG"
@@ -157,10 +158,7 @@ class Options(QWidget):
                         QMessageBox.Yes | QMessageBox.No, QMessageBox.No):
                     continue
             print(widget.get_values(), text, ok)
-            resp = {"algorithm": widget.name,
-                    "values": widget.get_values()
-                    }
-
+            resp = SegmentationProfile(text, widget.name, widget.get_values())
             self._settings.set(f"segmentation_profiles.{text}", resp)
             self._settings.dump()
             self.choose_profile.addItem(text)
@@ -174,7 +172,7 @@ class Options(QWidget):
         interactive = self.interactive_use.isChecked()
         self.interactive_use.setChecked(False)
         profile = self._settings.get(f"segmentation_profiles.{val}")
-        self._change_profile(profile["algorithm"], profile["values"])
+        self._change_profile(profile.algorithm, profile.values)
         self.choose_profile.blockSignals(True)
         self.choose_profile.setCurrentIndex(0)
         self.choose_profile.blockSignals(False)
@@ -245,8 +243,8 @@ class MainMenu(QWidget):
         self.advanced_btn = QPushButton("Advanced")
         self.interpolate_btn = QPushButton("Interpolate")
         self.mask_manager_btn = QPushButton("Mask Manager")
-        self.batch_processing = QPushButton("Batch Processing")
-
+        self.batch_processing_btn = QPushButton("Batch Processing")
+        self.batch_widget = None
         self.advanced_window = None
 
         layout = QHBoxLayout()
@@ -255,13 +253,14 @@ class MainMenu(QWidget):
         layout.addWidget(self.advanced_btn)
         layout.addWidget(self.interpolate_btn)
         layout.addWidget(self.mask_manager_btn)
-        layout.addWidget(self.batch_processing)
+        layout.addWidget(self.batch_processing_btn)
         self.setLayout(layout)
 
         self.open_btn.clicked.connect(self.load_data)
         self.advanced_btn.clicked.connect(self.advanced_window_show)
         self.mask_manager_btn.clicked.connect(self.mask_manager)
         self.interpolate_btn.clicked.connect(self.interpolate_exec)
+        self.batch_processing_btn.clicked.connect(self.batch_window)
 
     def interpolate_exec(self):
         dialog = InterpolateDialog(self._settings.image_spacing)
@@ -356,6 +355,14 @@ class MainMenu(QWidget):
             import traceback
             traceback.print_exc()
             QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
+
+    def batch_window(self):
+        if self.batch_widget is not None and self.batch_widget.isVisible():
+            self.batch_widget.activateWindow()
+            return
+        self.batch_widget = BatchWindow(self._settings)
+        self.batch_widget.show()
+
 
     def save_file(self):
         try:

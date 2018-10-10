@@ -115,6 +115,7 @@ class OneThresholdAlgorithm(ThresholdBaseAlgorithm):
         self.new_parameters["gauss_radius"] = gauss_radius
         self.new_parameters["side_connection"] = side_connection
 
+
 class LowerThresholdAlgorithm(OneThresholdAlgorithm):
     threshold_operator = operator.gt
 

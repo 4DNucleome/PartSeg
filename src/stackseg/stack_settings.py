@@ -1,5 +1,4 @@
 from typing import List
-import tifffile
 import numpy as np
 from os import path
 from partseg.io_functions import save_stack_segmentation, load_stack_segmentation
@@ -14,14 +13,14 @@ class StackSettings(BaseSettings):
         super().__init__(json_path)
         self.chosen_components_widget = None
 
-    @property
+    """@property
     def batch_directory(self):
         # TODO update batch widget to use new style settings
         return self.get("io.batch_directory", self.get("io.load_image_directory", ""))
 
     @batch_directory.setter
     def batch_directory(self, val):
-        self.set("io.batch_directory", val)
+        self.set("io.batch_directory", val)"""
 
     def file_save_name(self):
         return path.splitext(path.basename(self.image_path))[0]
