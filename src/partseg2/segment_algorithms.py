@@ -6,7 +6,6 @@ from functools import reduce
 
 from project_utils.algorithm_base import SegmentationAlgorithm
 from project_utils.distance_in_structure.find_split import distance_sprawl, path_minimum_sprawl, path_maximum_sprawl
-from project_utils.image_operations import gaussian
 import numpy as np
 import SimpleITK as sitk
 from project_utils import bisect
@@ -52,26 +51,17 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
 
     def calculation_run(self, _report_fun):
         restarted = False
-        if self.new_parameters["use_gauss"] != "No":
-            if self.parameters["gauss_radius"] != self.new_parameters["gauss_radius"] or \
-                    self.new_parameters["use_gauss"] != self.parameters["use_gauss"]:
-                if self.new_parameters["use_gauss"] != "2d":
-                    self.gauss_image = gaussian(self.image, self.new_parameters["gauss_radius"])
-                elif self.new_parameters["use_gauss"] != "3d":
-                    base = min(self.spacing)
-                    ratio = [x / base for x in self.spacing]
-                    gauss_radius = [self.new_parameters["gauss_radius"] / r for r in ratio]
-                    self.gauss_image = gaussian(self.image, gauss_radius)
-                self.gauss_image = gaussian(self.image, self.new_parameters["gauss_radius"])
-                restarted = True
-        elif self.new_parameters["use_gauss"] != self.parameters["use_gauss"]:
-            self.gauss_image = self.image
+        if self.parameters["gauss_radius"] != self.new_parameters["gauss_radius"] or \
+                self.new_parameters["use_gauss"] != self.parameters["use_gauss"]:
+            self.gauss_image = self.get_gauss(self.new_parameters["use_gauss"], self.new_parameters["gauss_radius"])
             restarted = True
-        if restarted or self.new_parameters["threshold"] != self.parameters["threshold"]:
+        if restarted or self.new_parameters["threshold"] != self.parameters["threshold"] \
+                or self.new_parameters["side_connection"] != self.parameters["side_connection"]:
             threshold_image = self._threshold(self.gauss_image)
             if self.mask is not None:
                 threshold_image *= (self.mask > 0)
-            connect = sitk.ConnectedComponent(sitk.GetImageFromArray(threshold_image), True)
+            connect = sitk.ConnectedComponent(sitk.GetImageFromArray(threshold_image),
+                                              self.new_parameters["side_connection"])
             self.segmentation = sitk.GetArrayFromImage(sitk.RelabelComponent(connect))
             self._sizes_array = np.bincount(self.segmentation.flat)
             restarted = True
@@ -193,13 +183,13 @@ class UpperThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm, ABC):
 
 class LowerThresholdDistanceFlowAlgorithm(LowerThresholdFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
-        neigh, dist = calculate_distances_array(self.spacing, NeighType.edges)
+        neigh, dist = calculate_distances_array(self.spacing, get_neigh(self.new_parameters["side_connection"]))
         return distance_sprawl(base_image, object_image, self.components_num, neigh, dist)
 
 
 class UpperThresholdDistanceFlowAlgorithm(UpperThresholdFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
-        neigh, dist = calculate_distances_array(self.spacing, NeighType.edges)
+        neigh, dist = calculate_distances_array(self.spacing, get_neigh(self.new_parameters["side_connection"]))
         return distance_sprawl(base_image, object_image, self.components_num, neigh, dist)
 
 
@@ -207,7 +197,7 @@ class LowerThresholdPathFlowAlgorithm(LowerThresholdFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
         image = self.image.astype(np.float64)
         image[base_image == 0] = 0
-        neigh = get_neighbourhood(self.spacing, NeighType.edges)
+        neigh = get_neighbourhood(self.spacing, get_neigh(self.new_parameters["side_connection"]))
         mid = path_maximum_sprawl(image, object_image, self.components_num, neigh)
         return path_maximum_sprawl(image, mid, self.components_num, neigh)
 
@@ -216,7 +206,7 @@ class UpperThresholdPathFlowAlgorithm(UpperThresholdFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
         image = self.image.astype(np.float64)
         image[base_image == 0] = 0
-        neigh = get_neighbourhood(self.spacing, NeighType.edges)
+        neigh = get_neighbourhood(self.spacing, get_neigh(self.new_parameters["side_connection"]))
         mid = path_minimum_sprawl(image, object_image, self.components_num, neigh)
         return path_minimum_sprawl(image, mid, self.components_num, neigh)
 
@@ -224,16 +214,21 @@ class UpperThresholdPathFlowAlgorithm(UpperThresholdFlowAlgorithm):
 class LowerThresholdPathDistanceFlowAlgorithm(LowerThresholdPathFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
         mid = super().path_sprawl(base_image, object_image)
-        neigh, dist = calculate_distances_array(self.spacing, NeighType.edges)
+        neigh, dist = calculate_distances_array(self.spacing, get_neigh(self.new_parameters["side_connection"]))
         return distance_sprawl(base_image, mid, self.components_num, neigh, dist)
 
 
 class UpperThresholdPathDistanceFlowAlgorithm(UpperThresholdPathFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
         mid = super().path_sprawl(base_image, object_image)
-        neigh, dist = calculate_distances_array(self.spacing, NeighType.edges)
+        neigh, dist = calculate_distances_array(self.spacing, get_neigh(self.new_parameters["side_connection"]))
         return distance_sprawl(base_image, mid, self.components_num, neigh, dist)
 
+def get_neigh(sides):
+    if sides:
+        return NeighType.sides
+    else:
+        return NeighType.edges
 
 class NeighType(Enum):
     sides = 6

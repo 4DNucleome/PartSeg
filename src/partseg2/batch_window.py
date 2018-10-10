@@ -5,7 +5,7 @@ import os
 from glob import glob
 
 import numpy as np
-from PyQt5.QtCore import pyqtSignal, Qt, QTimer
+from PyQt5.QtCore import pyqtSignal, Qt, QTimer, QByteArray
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QPushButton, QListWidget, QAbstractItemView, QVBoxLayout, QHBoxLayout, QLineEdit, \
     QListWidgetItem, QFileDialog, QWidget, QDialog, QLabel, QMessageBox, QProgressBar, QSpinBox, QGridLayout, QComboBox, \
@@ -208,6 +208,11 @@ class BatchWindow(QTabWidget):
         self.addTab(self.file_choose, "Choose files")
         self.addTab(self.calculate_planer, "Prepare plan")
         self.working = False
+        try:
+            geometry = self.settings.get_from_profile("batch_window_geometry")
+            self.restoreGeometry(QByteArray.fromHex(bytes(geometry, 'ascii')))
+        except KeyError:
+            pass
 
     def focusInEvent(self, event):
         self.calculate_planer.showEvent(event)
@@ -227,6 +232,7 @@ class BatchWindow(QTabWidget):
                 self.terminate()
             else:
                 event.ignore()
+        self.settings.set_in_profile("batch_window_geometry", bytes(self.saveGeometry().toHex()).decode('ascii'))
 
 
 class CalculationPrepare(QDialog):

@@ -5,7 +5,6 @@ import numpy as np
 
 from project_utils import bisect
 from project_utils.algorithm_base import SegmentationAlgorithm
-from project_utils.image_operations import gaussian
 from .segment import close_small_holes, opening
 
 
@@ -25,19 +24,10 @@ class ThresholdPreview(StackAlgorithm):
         super(ThresholdPreview, self).__init__()
         self.use_gauss = "No"
         self.gauss_radius = 0
-        self.gauss_2d = False
         self.threshold = 0
 
     def calculation_run(self, _report_fun):
-        image = self.image
-        if self.use_gauss != "2d":
-            image = gaussian(image, self.gauss_radius)
-        elif self.use_gauss != "3d":
-            base = min(self.spacing)
-            ratio = [x/base for x in self.spacing]
-            gauss_radius = [self.gauss_radius / r for r in ratio]
-            image = gaussian(image, gauss_radius)
-
+        image = self.get_gauss(self.use_gauss, self.gauss_radius)
         if self.exclude_mask is None:
             res = (image > self.threshold).astype(np.uint8)
         else:
@@ -85,18 +75,8 @@ class ThresholdAlgorithm(StackAlgorithm):
         self.edge_connection = True
 
     def calculation_run(self, report_fun):
-        if self.use_gauss != "2d":
-            image = gaussian(self.image, self.gauss_radius)
-            report_fun("Gauss done", 0)
-        elif self.use_gauss != "3d":
-            base = min(self.spacing)
-            ratio = [x/base for x in self.spacing]
-            gauss_radius = [self.gauss_radius / r for r in ratio]
-            image = gaussian(self.image, gauss_radius)
-            report_fun("Gauss done", 0)
-        else:
-            image = self.image
-        mask = (image > self.threshold).astype(np.uint8)
+        image = self.get_gauss(self.use_gauss, self.gauss_radius)
+        mask = np.array(image > self.threshold).astype(np.uint8)
         if self.exclude_mask is not None:
             report_fun("Components exclusion apply", 1)
             mask[self.exclude_mask > 0] = 0
@@ -165,17 +145,11 @@ class AutoThresholdAlgorithm(StackAlgorithm):
         self.edge_connection = True
 
     def calculation_run(self, report_fun):
-        if self.use_gauss != "2d":
-            image = gaussian(self.image, self.gauss_radius)
-            report_fun("Gauss done", 0)
-        elif self.use_gauss != "3d":
-            base = min(self.spacing)
-            ratio = [x/base for x in self.spacing]
-            gauss_radius = [self.gauss_radius / r for r in ratio]
-            image = gaussian(self.image, gauss_radius)
-            report_fun("Gauss done", 0)
-        else:
+        if self.use_gauss == "No":
             image = np.copy(self.image)
+        else:
+            image = self.get_gauss(self.use_gauss, self.gauss_radius)
+            report_fun("Gauss done", 0)
         if self.exclude_mask is not None:
             report_fun("Components exclusion apply", 1)
             image[self.exclude_mask > 0] = 0

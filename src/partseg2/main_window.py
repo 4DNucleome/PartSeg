@@ -248,6 +248,8 @@ class MainMenu(QWidget):
         self.advanced_window = None
 
         layout = QHBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins(0,0,0,0)
         layout.addWidget(self.open_btn)
         layout.addWidget(self.save_btn)
         layout.addWidget(self.advanced_btn)

@@ -103,7 +103,7 @@ class CreatePlan(QWidget):
         self.mapping_file_button = QPushButton("Mask mapping file")
         self.swap_mask_name_button = QPushButton("Name Substitution")
         self.suffix_mask_name_button = QPushButton("Name suffix")
-        self.reuse_mask = QPushButton("Reuchoose_channelse mask")
+        self.reuse_mask = QPushButton("Reuse mask")
         self.set_mask_name = QPushButton("Set mask name")
         self.intersect_mask_btn = QPushButton("Mask intersection")
         self.sum_mask_btn = QPushButton("Mask sum")
@@ -118,8 +118,11 @@ class CreatePlan(QWidget):
         self.project_segmentation = QPushButton("Segmentation\nfrom project")
         self.project_segmentation.clicked.connect(self.segmentation_from_project)
 
-        self.chose_profile = QPushButton("Segment Profile")
-        self.get_big = QPushButton("Leave the biggest")
+        self.chose_profile_btn = QPushButton("Segment Profile")
+        self.get_big_btn = QPushButton("Leave the biggest")
+        self.add_new_segmentation_btn = QPushButton("Add new segmantation")
+        self.get_big_btn.setDisabled(True)
+        self.add_new_segmentation_btn.setDisabled(True)
         self.statistic_list = QListWidget(self)
         self.statistic_name_prefix = QLineEdit(self)
         self.add_calculation = QPushButton("Add statistic calculation")
@@ -146,8 +149,8 @@ class CreatePlan(QWidget):
         self.base_mask_name.textChanged.connect(self.mask_text_changed)
         self.swap_mask_name.textChanged.connect(self.mask_text_changed)
         self.mask_name.textChanged.connect(self.mask_text_changed)
-        self.chose_profile.clicked.connect(self.add_segmentation)
-        self.get_big.clicked.connect(self.add_leave_biggest)
+        self.chose_profile_btn.clicked.connect(self.add_segmentation)
+        self.get_big_btn.clicked.connect(self.add_leave_biggest)
         self.add_calculation.clicked.connect(self.add_statistics)
         self.save_plan_btn.clicked.connect(self.add_calculation_plan)
         # self.forgot_mask_btn.clicked.connect(self.forgot_mask)
@@ -163,6 +166,7 @@ class CreatePlan(QWidget):
         self.choose_channel_btn.clicked.connect(self.choose_channel)
         self.intersect_mask_btn.clicked.connect(self.mask_intersect)
         self.sum_mask_btn.clicked.connect(self.mask_sum)
+
         plan_box = QGroupBox("Calculate plan:")
         lay = QVBoxLayout()
         lay.addWidget(self.plan)
@@ -176,7 +180,10 @@ class CreatePlan(QWidget):
         plan_box.setStyleSheet(group_sheet)
 
         other_box = QGroupBox("Other operations:")
+        other_box.setContentsMargins(0, 0, 0, 0)
         bt_lay = QGridLayout()
+        bt_lay.setSpacing(0)
+        #bt_lay.setContentsMargins(0, 0, 0, 0)
         bt_lay.addWidget(right_label("Chanel pos:"), 0, 0)
         bt_lay.addWidget(self.chanel_pos, 0, 1)
         bt_lay.addWidget(right_label("Chanel num:"), 1, 0)
@@ -229,17 +236,20 @@ class CreatePlan(QWidget):
         lay.addWidget(segmentation_mask_box, 4, 0, 1, 2)
         mask_box.setLayout(lay)
 
-        segment_box = QGroupBox("Segmentation")
+        segment_box = QGroupBox("Segmentation:")
         segment_box.setStyleSheet(group_sheet)
         lay = QVBoxLayout()
+        lay.setSpacing(0)
         lay.addWidget(self.segment_profile)
-        lay.addWidget(self.chose_profile)
-        lay.addWidget(self.get_big)
+        lay.addWidget(self.chose_profile_btn)
+        lay.addWidget(self.get_big_btn)
+        lay.addWidget(self.add_new_segmentation_btn)
         segment_box.setLayout(lay)
 
-        statistic_box = QGroupBox("Statistics")
+        statistic_box = QGroupBox("Statistics:")
         statistic_box.setStyleSheet(group_sheet)
         lay = QVBoxLayout()
+        lay.setSpacing(0)
         lay.addWidget(self.statistic_list)
         lab = QLabel("Name prefix:")
         lab.setToolTip("Prefix added before each column name")
@@ -272,7 +282,7 @@ class CreatePlan(QWidget):
 
         self.reuse_mask.setDisabled(True)
         self.generate_mask.setDisabled(True)
-        self.chose_profile.setDisabled(True)
+        self.chose_profile_btn.setDisabled(True)
         self.add_calculation.setDisabled(True)
         self.swap_mask_name_button.setDisabled(True)
         self.suffix_mask_name_button.setDisabled(True)
@@ -343,11 +353,11 @@ class CreatePlan(QWidget):
 
     def update_names(self):
         if self.update_element_btn.isChecked():
-            self.chose_profile.setText("Replace Segment Profile")
+            self.chose_profile_btn.setText("Replace Segment Profile")
             self.add_calculation.setText("Replace statistic calculation")
             self.generate_mask.setText("Replace mask")
         else:
-            self.chose_profile.setText("Segment Profile")
+            self.chose_profile_btn.setText("Segment Profile")
             self.add_calculation.setText("Add statistic calculation")
             self.generate_mask.setText("Generate mask")
 
@@ -737,20 +747,20 @@ class CreatePlan(QWidget):
 
     def show_segment(self):
         if self.update_element_btn.isChecked():
-            self.get_big.setDisabled(True)
+            self.get_big_btn.setDisabled(True)
             if self.node_type == NodeType.segment:
-                self.chose_profile.setEnabled(True)
+                self.chose_profile_btn.setEnabled(True)
             else:
-                self.chose_profile.setDisabled(True)
+                self.chose_profile_btn.setDisabled(True)
         else:
             if self.node_type == NodeType.segment:
-                self.get_big.setEnabled(True)
+                self.get_big_btn.setEnabled(True)
             else:
-                self.get_big.setDisabled(True)
+                self.get_big_btn.setDisabled(True)
             if self.segment_profile.currentItem() is not None:
-                self.chose_profile.setEnabled(self.segment_allow)
+                self.chose_profile_btn.setEnabled(self.segment_allow)
             else:
-                self.chose_profile.setDisabled(True)
+                self.chose_profile_btn.setDisabled(True)
 
     def edit_plan(self):
         plan = self.sender().plan_to_edit  # type: CalculationPlan
@@ -897,19 +907,19 @@ class CalculateInfo(QWidget):
         self.export_plans_btn = QPushButton("Export plans")
         self.import_plans_btn = QPushButton("Import plans")
         info_layout = QVBoxLayout()
-        info_butt_layout = QHBoxLayout()
-        info_butt_layout.addWidget(self.delete_plan_btn)
-        info_butt_layout.addWidget(self.edit_plan_btn)
+        info_butt_layout = QGridLayout()
+        info_butt_layout.setSpacing(0)
+        info_butt_layout.addWidget(self.delete_plan_btn, 0 ,0)
+        info_butt_layout.addWidget(self.edit_plan_btn, 0, 1)
+        info_butt_layout.addWidget(self.export_plans_btn, 1, 0)
+        info_butt_layout.addWidget(self.import_plans_btn, 1, 1)
         info_layout.addLayout(info_butt_layout)
-        info_butt_layout = QHBoxLayout()
-        info_butt_layout.addWidget(self.export_plans_btn)
-        info_butt_layout.addWidget(self.import_plans_btn)
-        info_layout.addLayout(info_butt_layout)
-        info_chose_layout = QGridLayout()
-        info_chose_layout.addWidget(QLabel("List of plans:"), 0, 0)
-        info_chose_layout.addWidget(QLabel("Plan preview:"), 2, 0)
-        info_chose_layout.addWidget(self.calculate_plans, 1, 0)
-        info_chose_layout.addWidget(self.plan_view, 3, 0)
+        info_chose_layout = QVBoxLayout()
+        info_chose_layout.setSpacing(2)
+        info_chose_layout.addWidget(QLabel("List of plans:"))
+        info_chose_layout.addWidget(self.calculate_plans)
+        info_chose_layout.addWidget(QLabel("Plan preview:"))
+        info_chose_layout.addWidget(self.plan_view)
         info_layout.addLayout(info_chose_layout)
         self.setLayout(info_layout)
         self.calculate_plans.addItems(list(sorted(self.settings.get("batch_plans", dict()).keys())))

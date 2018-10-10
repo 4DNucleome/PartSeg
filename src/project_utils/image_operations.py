@@ -2,45 +2,43 @@ import numpy as np
 import SimpleITK as sitk
 from enum import Enum
 
-def _generic_image_operation(image, radius, fun):
+def _generic_image_operation(image, radius, fun, layer):
     if image.dtype == np.bool:
         image = image.astype(np.uint8)
-    if len(image.shape) == 2:
+    if not layer:
         return sitk.GetArrayFromImage(fun(sitk.GetImageFromArray(image), radius))
-    if isinstance(radius, (tuple, list)):
-        shape = image.shape
-        return sitk.GetArrayFromImage(fun(sitk.GetImageFromArray(np.squeeze(image)), radius)).reshape(shape)
-    res = np.copy(image)
-    for layer in res:
-        layer[...] = sitk.GetArrayFromImage(fun(sitk.GetImageFromArray(layer), radius))
-    return res
+    else:
+        res = np.copy(image)
+        for layer in res:
+            layer[...] = sitk.GetArrayFromImage(fun(sitk.GetImageFromArray(layer), radius))
+        return res
 
-def gaussian(image, radius):
+def gaussian(image, radius, layer=True):
     """
     :param image: image to apply gaussian filter
     :param radius: radius for gaussian kernel
     :return:
     """
-    return _generic_image_operation(image, radius, sitk.DiscreteGaussian)
+    return _generic_image_operation(image, radius, sitk.DiscreteGaussian, layer)
 
 
-def dilate(image, radius):
+def dilate(image, radius, layer=True):
     """
     :param image: image to apply gaussian filter
     :param radius: radius for gaussian kernel
     :return:
     """
-    return _generic_image_operation(image, radius, sitk.GrayscaleDilate)
+    return _generic_image_operation(image, radius, sitk.GrayscaleDilate, layer)
 
 
 
-def erode(image, radius):
+def erode(image, radius, layer=True):
     """
     :param image: image to apply gaussian filter
     :param radius: radius for gaussian kernel
     :return:
     """
-    return _generic_image_operation(image, radius, sitk.GrayscaleErode)
+    return _generic_image_operation(image, radius, sitk.GrayscaleErode, layer)
 
 
 def to_binary_image(image):
