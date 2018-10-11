@@ -1,6 +1,7 @@
 import traceback
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
+from enum import Enum
 from os import path
 from typing import Type, List
 
@@ -11,8 +12,10 @@ from PyQt5.QtWidgets import QComboBox, QCheckBox, QWidget, QVBoxLayout, QLabel, 
     QAbstractSpinBox, QScrollArea
 from six import with_metaclass
 
+from common_gui.dim_combobox import DimComboBox
 from common_gui.universal_gui_part import CustomSpinBox, CustomDoubleSpinBox
 from project_utils.algorithm_base import SegmentationAlgorithm
+from project_utils.image_operations import to_radius_type_dict, RadiusType
 from project_utils.segmentation_thread import SegmentationThread
 from project_utils.universal_const import UNIT_SCALE
 from .settings import ImageSettings
@@ -119,10 +122,11 @@ class BatchProceed(QThread):
 
 
 class QtAlgorithmProperty(AlgorithmProperty):
-    qt_class_dict = {int: CustomSpinBox, float: CustomDoubleSpinBox, list: QComboBox, bool: QCheckBox}
+    qt_class_dict = {int: CustomSpinBox, float: CustomDoubleSpinBox, list: QComboBox, bool: QCheckBox,
+                     RadiusType: DimComboBox}
 
     def __init__(self, *args, **kwargs):
-        super(QtAlgorithmProperty, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @classmethod
     def from_algorithm_property(cls, ob):
@@ -140,11 +144,13 @@ class QtAlgorithmProperty(AlgorithmProperty):
 
     def get_field(self):
         field = self.qt_class_dict[self.value_type]()
-        if isinstance(field, QComboBox):
+        if isinstance(field, DimComboBox):
+            field.setValue(self.default_value)
+        elif isinstance(field, QComboBox):
             field.addItems(self.range)
             field.setCurrentIndex(self.range.index(self.default_value))
         elif isinstance(field, QCheckBox):
-            field.setChecked(self.default_value)
+            field.setChecked(bool(self.default_value))
         else:
             field.setRange(*self.range)
             field.setValue(self.default_value)
@@ -168,6 +174,7 @@ class AbstractAlgorithmSettingsWidget(with_metaclass(ABCMeta, object)):
 class AlgorithmSettingsWidget(QScrollArea):
     algorithm_thread: SegmentationAlgorithm
     gauss_radius_name = "gauss_radius"
+    use_gauss_name = "use_gauss"
 
     def __init__(self, settings, name, element_list, algorithm: Type[SegmentationAlgorithm]):
         """
@@ -220,7 +227,9 @@ class AlgorithmSettingsWidget(QScrollArea):
         for name, el in self.widget_list:
             if name not in values_dict:
                 continue
-            if isinstance(el, QComboBox):
+            if isinstance(el, DimComboBox):
+                el.setValue(values_dict[name])
+            elif isinstance(el, QComboBox):
                 el.setCurrentText(str(values_dict[name]))
             elif isinstance(el, QAbstractSpinBox):
                 el.setValue(values_dict[name])
@@ -232,6 +241,8 @@ class AlgorithmSettingsWidget(QScrollArea):
     def get_values(self):
         res = dict()
         for name, el in self.widget_list:
+            if isinstance(el, DimComboBox):
+                res[name] = el.value()
             if isinstance(el, QComboBox):
                 res[name] = str(el.currentText())
             elif isinstance(el, QAbstractSpinBox):
@@ -240,6 +251,9 @@ class AlgorithmSettingsWidget(QScrollArea):
                 res[name] = el.isChecked()
             else:
                 raise ValueError("unsuported type {}".format(type(el)))
+            # TODO mayby do it better. Maybe some special class for gauss choose
+            if name == self.use_gauss_name:
+                res[name] = to_radius_type_dict[res[name]]
         return res
 
     def channel_num(self):
@@ -285,7 +299,7 @@ class InteractiveAlgorithmSettingsWidget(AlgorithmSettingsWidget):
     def change_mask(self):
         if not self.isVisible():
             return
-        self.algorithm_thread.set_mask(self.settings.mask)
+        self.algorithm_thread.algorithm.set_mask(self.settings.mask)
 
     def channel_change(self):
         if not self.isVisible() or self.channels_chose.currentIndex() < 0:

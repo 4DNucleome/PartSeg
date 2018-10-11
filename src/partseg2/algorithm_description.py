@@ -4,9 +4,11 @@ from partseg2.segment_algorithms import LowerThresholdAlgorithm, UpperThresholdA
 from project_utils.algorithms_description import AlgorithmProperty
 from copy import deepcopy
 
+from project_utils.image_operations import RadiusType
+
 lower_threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100),
                              AlgorithmProperty("minimum_size", "Minimum size (pix)", 8000, (0, 10 ** 6), 1000),
-                             AlgorithmProperty("use_gauss", "Use gauss", "No", ["No", "2d", "3d"]),
+                             AlgorithmProperty("use_gauss", "Use gauss", RadiusType.NO, None),
                              AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1),
                              AlgorithmProperty("side_connection", "Connect only sides", False, (True, False))]
 
@@ -15,7 +17,7 @@ upper_threshold_algorithm = deepcopy(lower_threshold_algorithm)
 range_threshold_algorithm = [AlgorithmProperty("lower_threshold", "Lower threshold", 10000, (0, 10 ** 6), 100),
                              AlgorithmProperty("upper_threshold", "Upper threshold", 10000, (0, 10 ** 6), 100),
                              AlgorithmProperty("minimum_size", "Minimum size (pix)", 8000, (0, 10 ** 6), 1000),
-                             AlgorithmProperty("use_gauss", "Use gauss", "No", ["No", "2d", "3d"]),
+                             AlgorithmProperty("use_gauss", "Use gauss", RadiusType.NO, None),
                              AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1),
                              AlgorithmProperty("side_connection", "Connect only sides", False, (True, False))]
 

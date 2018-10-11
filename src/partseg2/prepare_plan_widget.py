@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QDialog, QCompleter, QLineEdit, QPushButton, QGridLa
     QListWidget, QSpinBox, QTextEdit, QVBoxLayout, QGroupBox, QLabel, QHBoxLayout, QInputDialog, QMessageBox, \
     QTreeWidget, QTreeWidgetItem, QFileDialog, QSplitter
 
+from common_gui.mask_widget import MaskWidget
 from common_gui.universal_gui_part import right_label
 from partseg2.algorithm_description import SegmentationProfile
 
@@ -83,8 +84,6 @@ class CreatePlan(QWidget):
         self.save_plan_btn = QPushButton("Save plan")
         self.clean_plan_btn = QPushButton("Clean plan")
         self.remove_btn = QPushButton("Remove")
-        # self.forgot_mask_btn = QPushButton("Forgot mask")
-        # self.cmap_save_btn = QPushButton("Save to cmap")
         self.choose_channel_btn = QPushButton("Choose channel")
         self.update_element_btn = QCheckBox("Update element")
         self.save_choose = QComboBox()
@@ -92,8 +91,6 @@ class CreatePlan(QWidget):
         self.director_save_chk = QCheckBox("Save in directory")
         self.director_save_chk.setToolTip("Create directory using file name an put result file inside this directory")
         self.project_save_btn = QPushButton("Save")
-        # self.save_mask_btn = QPushButton("Save mask")
-        # self.forgot_mask_btn.setToolTip("Return to state on begin")
         self.segment_profile = QListWidget()
         self.generate_mask = QPushButton("Generate mask")
         self.generate_mask.setToolTip("Mask need to have unique name")
@@ -107,8 +104,6 @@ class CreatePlan(QWidget):
         self.set_mask_name = QPushButton("Set mask name")
         self.intersect_mask_btn = QPushButton("Mask intersection")
         self.sum_mask_btn = QPushButton("Mask sum")
-        self.chanel_pos = QSpinBox()
-        self.chanel_pos.setRange(0, 100)
         self.chanel_num = QSpinBox()
         self.chanel_num.setRange(0, 10)
         self.expected_node_type = None
@@ -133,8 +128,7 @@ class CreatePlan(QWidget):
         self.mask_set = set()
         self.calculation_plan = CalculationPlan()
         self.plan.set_plan(self.calculation_plan)
-        self.dilate_radius_spin = QSpinBox()
-        self.dilate_radius_spin.setRange(0, 50)
+        self.dilate_mask = MaskWidget(settings)
 
         self.save_choose.currentIndexChanged[str].connect(self.save_changed)
         self.statistic_list.currentTextChanged.connect(self.show_statistics)
@@ -184,8 +178,6 @@ class CreatePlan(QWidget):
         bt_lay = QGridLayout()
         bt_lay.setSpacing(0)
         #bt_lay.setContentsMargins(0, 0, 0, 0)
-        bt_lay.addWidget(right_label("Chanel pos:"), 0, 0)
-        bt_lay.addWidget(self.chanel_pos, 0, 1)
         bt_lay.addWidget(right_label("Chanel num:"), 1, 0)
         bt_lay.addWidget(self.chanel_num, 1, 1)
         bt_lay.addWidget(self.choose_channel_btn, 4, 0, 1, 2)
@@ -216,11 +208,13 @@ class CreatePlan(QWidget):
         segmentation_mask_box.setStyleSheet(group_sheet)
         lay = QGridLayout()
         lay.setSpacing(0)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.addWidget(self.dilate_mask)
         # lay.addWidget(right_label("Mask name:"), 0, 0)
         # lay.addWidget(self.mask_name, 0, 1, 1, 2)
-        lay.addWidget(right_label("Dilate radius"), 1, 0)
-        lay.addWidget(self.dilate_radius_spin, 1, 1)
-        lay.addWidget(self.generate_mask, 1, 2)
+        #lay.addWidget(right_label("Dilate radius"), 1, 0)
+        #lay.addWidget(self.dilate_radius_spin, 1, 1)
+        #lay.addWidget(self.generate_mask, 1, 2)
         segmentation_mask_box.setLayout(lay)
 
         mask_box = QGroupBox("Mask:")
@@ -432,13 +426,12 @@ class CreatePlan(QWidget):
             self.plan.update_view()
 
     def choose_channel(self):
-        chanel_pos = self.chanel_pos.value()
         chanel_num = self.chanel_num.value()
         self.channels_used = True
         if self.update_element_btn.isChecked():
-            self.calculation_plan.replace_step(ChooseChanel(chanel_pos, chanel_num))
+            self.calculation_plan.replace_step(ChooseChanel(chanel_num))
         else:
-            self.calculation_plan.add_step(ChooseChanel(chanel_pos, chanel_num))
+            self.calculation_plan.add_step(ChooseChanel(chanel_num))
         self.plan.update_view()
 
     def set_mask_name(self):

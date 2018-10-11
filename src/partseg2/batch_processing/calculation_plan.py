@@ -22,7 +22,7 @@ MaskSave = namedtuple("MaskSave", ["suffix", "directory"])
 XYZSave = namedtuple("XYZSave", ["suffix", "directory"])
 ImageSave = namedtuple("ImageSave", ["suffix", "directory"])
 
-ChooseChanel = namedtuple("ChooseChanel", ["chanel_position", "chanel_num"])
+ChooseChanel = namedtuple("ChooseChanel", ["chanel_num"])
 
 MaskCreate.__new__.__defaults__ = (0,)
 CmapProfile.__new__.__defaults__ = (False,)
@@ -529,7 +529,7 @@ class CalculationPlan(object):
             if el == Operations.segment_from_project:
                 return "Segment from project"
         if isinstance(el, ChooseChanel):
-            return "Chose chanel, chanel pos: {}, chanel num {}".format(el.chanel_position, el.chanel_num)
+            return "Chose chanel: chanel num {}".format(el.chanel_num)
         if isinstance(el, SegmentationProfile):
             """if el.leave_biggest:
                 return "Segmentation: {} (only biggest)".format(el.name)"""

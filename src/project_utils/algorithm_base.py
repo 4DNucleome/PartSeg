@@ -1,10 +1,15 @@
-from abc import ABC
-
-from project_utils.image_operations import gaussian
-from qt_import import QThread, pyqtSignal
-import numpy as np
+from project_utils.image_operations import gaussian, RadiusType
 
 
+def calculate_operation_radius(radius, spacing, gauss_type):
+    if gauss_type == RadiusType.R2D:
+        if len(spacing) == 3:
+            spacing = spacing[1:]
+    base = min(spacing)
+    if base != max(spacing):
+        ratio = [x / base for x in  spacing]
+        return [radius / r for r in ratio]
+    return  radius
 
 
 class SegmentationAlgorithm(object):
@@ -32,32 +37,13 @@ class SegmentationAlgorithm(object):
         self.use_psychical_unit = use_physical_unit
 
     def get_gauss(self, gauss_type, gauss_radius):
-        spacing = self.spacing
-        if gauss_type == "2d":
-            layer = True
-            if len(self.spacing) == 3:
-                spacing = self.spacing[1:]
-        elif gauss_type == "3d":
-            layer = False
-        elif gauss_type == "No":
+        if gauss_type == RadiusType.NO:
             return self.image
-        else:
-            raise ValueError(f"Wrong value of gauss_type: {gauss_type}")
-        base = min(spacing)
-        if base != max(spacing):
-            ratio = [x / base for x in self.spacing]
-            gauss_radius = [gauss_radius / r for r in ratio]
+        assert isinstance(gauss_type, RadiusType)
+        gauss_radius = calculate_operation_radius(gauss_radius, self.spacing, gauss_type)
+        layer = gauss_type == RadiusType.R2D
         return gaussian(self.image, gauss_radius, layer=layer)
 
-
-    """def set_parameters_wait(self, *args, **kwargs):
-        self.mutex.lock()
-        if self.isRunning():
-            self.cache = args, kwargs
-            self.clean_later = False
-        else:
-            self.set_parameters(*args, **kwargs)
-        self.mutex.unlock()"""
 
     def set_parameters(self, *args, **kwargs):
         raise NotImplementedError()

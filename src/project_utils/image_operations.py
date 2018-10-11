@@ -2,6 +2,15 @@ import numpy as np
 import SimpleITK as sitk
 from enum import Enum
 
+class RadiusType(Enum):
+    NO = 1
+    R2D = 2
+    R3D = 3
+
+
+to_radius_type_dict = {"No": RadiusType.NO, "2d": RadiusType.R2D, "3d": RadiusType.R3D}
+
+
 def _generic_image_operation(image, radius, fun, layer):
     if image.dtype == np.bool:
         image = image.astype(np.uint8)

@@ -5,7 +5,7 @@ import typing
 import tifffile
 
 from qt_import import QObject, pyqtSignal
-from .image_operations import normalize_shape
+from .image_operations import normalize_shape, RadiusType
 from matplotlib import pyplot
 import copy
 import numpy as np
@@ -181,6 +181,8 @@ class ProfileEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, ProfileDict):
             return {"__ProfileDict__": True, **o.my_dict}
+        if isinstance(o, RadiusType):
+            return {"__RadiusType__": True, "value": o.value}
         return super().default(o)
 
 def profile_hook(_, dkt):
@@ -189,6 +191,8 @@ def profile_hook(_, dkt):
         res = ProfileDict()
         res.my_dict = dkt
         return res
+    if "__RadiusType__" in dkt:
+        return RadiusType(dkt["value"])
     return dkt
 
 
@@ -274,13 +278,15 @@ class BaseSettings(ViewSettings):
         if not path.exists(path.dirname(file_path)):
             makedirs(path.dirname(file_path))
         dump_view = self.dump_view_profiles()
+        data_dump = json.dumps(
+            {"view_profiles": dump_view,
+             "segment_profile": self.segmentation_dict,
+             "image_spacing": self._image_spacing
+             },
+            cls=self.json_encoder_class, indent=2)
         with open(file_path, 'w') as ff:
-            json.dump(
-                {"view_profiles": dump_view,
-                 "segment_profile": self.segmentation_dict,
-                 "image_spacing": self._image_spacing
-                 },
-                ff, cls=self.json_encoder_class, indent=2)
+            ff.write(data_dump)
+
 
     def load(self, file_path=None):
         if file_path is None:

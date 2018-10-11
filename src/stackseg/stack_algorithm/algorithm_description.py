@@ -12,6 +12,7 @@ from partseg.io_functions import save_stack_segmentation, load_stack_segmentatio
 #from qt_import import QDoubleSpinBox, QSpinBox, QComboBox, QWidget, QFormLayout, QAbstractSpinBox, QCheckBox, QThread, \
 #    pyqtSignal, QLabel, QVBoxLayout
 from project_utils.algorithms_description import AlgorithmProperty
+from project_utils.image_operations import RadiusType
 
 from .threshold_algorithm import ThresholdAlgorithm, ThresholdPreview, \
     AutoThresholdAlgorithm
@@ -20,7 +21,7 @@ from .threshold_algorithm import ThresholdAlgorithm, ThresholdPreview, \
 
 
 only_threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 1000, (0, 10 ** 6), 100),
-                            AlgorithmProperty("use_gauss", "Use gauss", "No", ["No", "2d", "3d"]),
+                            AlgorithmProperty("use_gauss", "Use gauss", RadiusType.NO, None),
                             AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1)]
 
 threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100),
@@ -29,7 +30,7 @@ threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 10000, (0, 10
                        AlgorithmProperty("close_holes_size", "Small holes size", 200, (0, 10**3), 10),
                        AlgorithmProperty("smooth_border", "Smooth borders", True, (True, False)),
                        AlgorithmProperty("smooth_border_radius", "Smooth borders radius", 2, (0, 20), 1),
-                       AlgorithmProperty("use_gauss", "Use gauss", "No", ["No", "2d", "3d"]),
+                       AlgorithmProperty("use_gauss", "Use gauss", RadiusType.NO, None),
                        AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1),
                        AlgorithmProperty("side_connection", "Connect only sides", False, (True, False))]
 
@@ -40,7 +41,7 @@ auto_threshold_algorithm = [AlgorithmProperty("suggested_size", "Suggested size"
                             AlgorithmProperty("close_holes_size", "Small holes size", 200, (0, 10 ** 3), 10),
                             AlgorithmProperty("smooth_border", "Smooth borders", True, (True, False)),
                             AlgorithmProperty("smooth_border_radius", "Smooth borders radius", 2, (0, 20), 1),
-                            AlgorithmProperty("use_gauss", "Use gauss", "No", ["No", "2d", "3d"]),
+                            AlgorithmProperty("use_gauss", "Use gauss", RadiusType.NO, None),
                             AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1),
                             AlgorithmProperty("side_connection", "Connect only sides", False, (True, False))]
 

@@ -12,9 +12,9 @@ from PyQt5.QtCore import Qt, QByteArray, QEvent
 from PyQt5.QtGui import QIcon, QKeyEvent
 from PyQt5.QtWidgets import QMainWindow, QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
     QFileDialog, QMessageBox, QCheckBox, QComboBox, QStackedLayout, QInputDialog, QDialog, QSpinBox, QAbstractSpinBox
-from scipy.ndimage import zoom
 
 from common_gui.channel_control import ChannelControl
+from common_gui.mask_widget import MaskWidget
 from common_gui.stack_image_view import ColorBar
 from common_gui.waiting_dialog import WaitingDialog
 from partseg2.advanced_window import AdvancedWindow
@@ -23,7 +23,7 @@ from partseg2.interpolate_dialog import InterpolateDialog
 from partseg2.interpolate_thread import InterpolateThread
 from project_utils.algorithms_description import InteractiveAlgorithmSettingsWidget
 from project_utils.global_settings import static_file_folder
-from project_utils.image_operations import dilate, erode
+from project_utils.image_operations import dilate, erode, RadiusType
 from .partseg_settings import PartSettings, load_project, save_project, save_labeled_image, HistoryElement
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
 from .algorithm_description import part_algorithm_dict, SegmentationProfile
@@ -505,60 +505,43 @@ class MainWindow(QMainWindow):
 
 
 class MaskWindow(QDialog):
-    """
-    :type settings: Settings
-    """
     def __init__(self, settings:PartSettings):
-        """
-
-        :type settings: Settings
-        """
         super(MaskWindow, self).__init__()
         self.setWindowTitle("Mask manager")
         self.settings = settings
         main_layout = QVBoxLayout()
-        dilate_label = QLabel("Dilate (x,y) radius (in pixels)", self)
-        self.dilate_radius = QSpinBox(self)
-        self.dilate_radius.setRange(-100, 100)
-        self.dilate_radius.setButtonSymbols(QAbstractSpinBox.NoButtons)
-        self.dilate_radius.setValue(self.settings.get("mask_manager.dilate_radius", 1))
-        self.dilate_radius.setSingleStep(1)
-        dilate_layout = QHBoxLayout()
-        dilate_layout.addWidget(dilate_label)
-        dilate_layout.addWidget(self.dilate_radius)
-        main_layout.addLayout(dilate_layout)
+        self.mask_widget = MaskWidget(settings, self)
+        main_layout.addWidget(self.mask_widget)
+        self.mask_widget.dilate_radius.setValue(self.settings.get("mask_manager.dilate_radius", 1))
+
         op_layout = QHBoxLayout()
         if len(settings.undo_segmentation_history) == 0:
             self.save_draw = QCheckBox("Save draw", self)
         else:
             self.save_draw = QCheckBox("Add draw", self)
         op_layout.addWidget(self.save_draw)
-        self.fill_holes = QCheckBox("Fill holes", self)
-        self.fill_holes.setToolTip("Fill holes that are not connected in 3d")
-        op_layout.addWidget(self.fill_holes)
-        self.fill_holes_in_2d = QCheckBox("Fill holes in 2d")
-        self.fill_holes_in_2d.setToolTip("Fill holes thar are not connected to border on each slice separately")
-        op_layout.addWidget(self.fill_holes_in_2d)
+        op_layout.addWidget(self.mask_widget.radius_information)
         self.reset_next = QPushButton("Reset Next")
         self.reset_next.clicked.connect(self.reset_next_fun)
         if len(settings.undo_segmentation_history) == 0:
             self.reset_next.setDisabled(True)
-        op_layout.addStretch()
-        op_layout.addWidget(self.reset_next)
+        self.cancel = QPushButton("Cancel", self)
+        self.cancel.clicked.connect(self.close)
         main_layout.addLayout(op_layout)
         self.prev_button = QPushButton(f"Previous mask ({len(settings.segmentation_history)})", self)
         if len(settings.segmentation_history) == 0:
             self.prev_button.setDisabled(True)
-        self.cancel = QPushButton("Cancel", self)
-        self.cancel.clicked.connect(self.close)
         self.next_button = QPushButton(f"Next mask ({len(settings.undo_segmentation_history)})", self)
         if len(settings.undo_segmentation_history) == 0:
             self.next_button.setText("Next mask (new)")
         self.next_button.clicked.connect(self.next_mask)
         self.prev_button.clicked.connect(self.prev_mask)
         button_layout = QHBoxLayout()
-        button_layout.addWidget(self.prev_button)
         button_layout.addWidget(self.cancel)
+        button_layout.addWidget(self.reset_next)
+        main_layout.addLayout(button_layout)
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.prev_button)
         button_layout.addWidget(self.next_button)
         main_layout.addLayout(button_layout)
         self.setLayout(main_layout)
@@ -569,17 +552,23 @@ class MaskWindow(QDialog):
         self.reset_next.setDisabled(True)
 
     def next_mask(self):
-        dilate_radius = self.dilate_radius.value()
-        self.settings.set("mask_manager.dilate_radius", dilate_radius)
+        dilate_radius = self.mask_widget.get_dilate_radius()
+        dilate_radius_sign = self.mask_widget.dilate_radius.value()
+        self.settings.set("mask_manager.dilate_radius", dilate_radius_sign)
         algorithm_name = self.settings.get("last_executed_algorithm")
         algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
         segmentation = self.settings.segmentation
         mask = segmentation > 0
-
-        if dilate_radius > 0:
-            mask = dilate(mask, dilate_radius)
-        elif dilate_radius < 0:
-            mask = erode(mask, -dilate_radius)
+        dilate_use = self.mask_widget.dilate_dim.value()
+        if dilate_use != RadiusType.NO:
+            if dilate_radius_sign > 0:
+                mask = dilate(mask, dilate_radius, dilate_use == RadiusType.R2D)
+            elif dilate_radius_sign < 0:
+                mask = erode(mask, -dilate_radius, dilate_use == RadiusType.R2D)
+        if self.mask_widget.fill_holes.value() == RadiusType.R2D:
+            mask = fill_2d_holes_in_mask(mask, self.mask_widget.max_hole_size.value())
+        elif self.mask_widget.fill_holes.value() == RadiusType.R3D:
+            mask = fill_holes_in_mask(mask, self.mask_widget.max_hole_size.value())
         mask = mask.astype(np.bool)
         compressed_segmentation = BytesIO()
         np.savez(compressed_segmentation, segmentation)
@@ -614,3 +603,34 @@ class MaskWindow(QDialog):
             self.settings.mask = None
         self.settings.undo_segmentation_history.append(history)
         self.close()
+
+def fill_holes_in_mask(mask, volume):
+    """:rtype: np.ndarray"""
+    holes_mask = (mask == 0).astype(np.uint8)
+    component_mask = sitk.GetArrayFromImage(sitk.ConnectedComponent(sitk.GetImageFromArray(holes_mask)))
+    border_set = set()
+    for dim_num in range(component_mask.ndim):
+        border_set.update(np.unique(np.take(component_mask, [0, -1], axis=dim_num)))
+    if volume > 0:
+        sizes = np.bincount(component_mask)
+        for i, v in enumerate(sizes[1:], 1):
+            if v < volume:
+                component_mask[component_mask == i] = 0
+    else:
+        for i in range(1, np.max(component_mask)+1):
+            if i not in border_set:
+                component_mask[component_mask == i] = 0
+    return component_mask == 0
+
+
+def fill_2d_holes_in_mask(mask, volume):
+    """
+    :type mask: np.ndarray
+    :rtype: np.ndarray
+    """
+    mask = np.copy(mask)
+    if mask.ndim == 2:
+        return fill_holes_in_mask(mask, volume)
+    for i in range(mask.shape[0]):
+        mask[i] = fill_holes_in_mask(mask[i], volume)
+    return mask
