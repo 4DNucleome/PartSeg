@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QCheckBox, QGridLayout, QLabel, QHBoxLayout, QComboBox, QDoubleSpinBox
 from PyQt5.QtGui import QImage, QShowEvent, QPaintEvent, QPainter, QPen, QMouseEvent
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import pyqtSignal
 import numpy as np
 from common_gui.collapse_checkbox import CollapseCheckbox
 from common_gui.universal_gui_part import CustomSpinBox

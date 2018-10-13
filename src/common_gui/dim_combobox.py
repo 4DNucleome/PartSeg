@@ -9,9 +9,7 @@ class DimComboBox(QComboBox):
         self.addItems(["No", "2d", "3d"])
 
     def value(self):
-        resp = RadiusType(self.currentIndex()+1)
-        print(resp)
-        return(resp)
+        return(RadiusType(self.currentIndex()))
 
     def setValue(self, val:RadiusType):
-        self.setCurrentIndex(val.value - 1)
+        self.setCurrentIndex(val.value)

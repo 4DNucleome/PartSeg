@@ -3,9 +3,9 @@ import SimpleITK as sitk
 from enum import Enum
 
 class RadiusType(Enum):
-    NO = 1
-    R2D = 2
-    R3D = 3
+    NO = 0
+    R2D = 1
+    R3D = 2
 
 
 to_radius_type_dict = {"No": RadiusType.NO, "2d": RadiusType.R2D, "3d": RadiusType.R3D}

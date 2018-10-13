@@ -1,16 +1,3 @@
-from abc import ABCMeta, abstractmethod
-from os import path
-from typing import Type
-
-import numpy as np
-import tifffile
-from PyQt5.QtWidgets import QSpinBox, QDoubleSpinBox, QComboBox, QCheckBox, QWidget, QVBoxLayout, QLabel, QFormLayout, \
-    QAbstractSpinBox, QScrollArea
-from six import with_metaclass
-
-from partseg.io_functions import save_stack_segmentation, load_stack_segmentation
-#from qt_import import QDoubleSpinBox, QSpinBox, QComboBox, QWidget, QFormLayout, QAbstractSpinBox, QCheckBox, QThread, \
-#    pyqtSignal, QLabel, QVBoxLayout
 from project_utils.algorithms_description import AlgorithmProperty
 from project_utils.image_operations import RadiusType
 
