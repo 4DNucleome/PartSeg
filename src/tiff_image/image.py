@@ -1,3 +1,5 @@
+from copy import copy
+
 import numpy as np
 import typing
 
@@ -27,6 +29,18 @@ class Image(object):
                 zip(np.min(self._image_array, axis=(0, 1, 2, 3)), np.max(self._image_array, axis=(0, 1, 2, 3))))
         else:
             self.ranges = ranges
+
+    def set_mask(self, mask: np.ndarray):
+        self._mask_array = self.fit_array_to_image(mask)
+
+    def fit_array_to_image(self, array: np.ndarray):
+        shape = list(array.shape)
+        for i, el in enumerate(self._image_array.shape[:-1]):
+            if el == 1 and el != shape[i]:
+                shape.insert(i, 1)
+            elif el != shape[i]:
+                raise ValueError("Wrong array shape")
+        return np.reshape(array, shape)
 
     def get_image_for_save(self):
         array = np.moveaxis(self._image_array, 4, 2)
@@ -89,7 +103,7 @@ class Image(object):
     def spacing(self):
         return self._image_spacing
 
-    def cut_image(self, cut_area: typing.Union[np.ndarray, typing.List[slice]]):
+    def cut_image(self, cut_area: typing.Union[np.ndarray, typing.List[slice]], replace_mask=False):
         """
         Create new image base on mask or list of slices
         :param cut_area: area to cut. Defined with slices or mask
@@ -101,17 +115,21 @@ class Image(object):
             if self._mask_array is not None:
                 new_mask = self._mask_array[cut_area]
         else:
+            cut_area = self.fit_array_to_image(cut_area)
             points = np.nonzero(cut_area)
             lower_bound = np.min(points, axis=1)
             upper_bound = np.max(points, axis=1)
-            new_cut = [slice(x, y) for x, y in zip(lower_bound, upper_bound)]
+            new_cut = tuple([slice(x, y+1) for x, y in zip(lower_bound, upper_bound)])
             new_image = self._image_array[new_cut]
             catted_cut_area = cut_area[new_cut]
             new_image[catted_cut_area == 0] = 0
-            if self._mask_array is not None:
-                new_mask = self._mask_array[cut_area]
+            if replace_mask:
+                new_mask = catted_cut_area
+            elif self._mask_array is not None:
+                new_mask = self._mask_array[new_cut]
                 new_mask[catted_cut_area == 0] = 0
-        return self.__class__(new_image, self._image_spacing, new_mask)
+        return self.__class__(new_image, self._image_spacing, None, new_mask,
+                              self.default_coloring, self.ranges, self.labels)
 
     def get_imagej_colors(self):
         if self.default_coloring is None:

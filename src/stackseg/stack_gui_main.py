@@ -20,6 +20,7 @@ from common_gui.flow_layout import FlowLayout
 from common_gui.waiting_dialog import WaitingDialog
 from project_utils.algorithms_description import AlgorithmSettingsWidget, BatchProceed
 from project_utils.image_read_thread import ImageReaderThread
+from stackseg.save_result_thread import SaveResultThread
 from .image_view import StackImageView
 from common_gui.select_multiple_files import AddFiles
 from partseg.io_functions import load_stack_segmentation
@@ -177,11 +178,13 @@ class MainMenu(QWidget):
             return
         dir_path = str(dial.selectedFiles()[0])
         potential_names = self.settings.get_file_names_for_save_result(dir_path)
+        print("\n".join(potential_names))
         conflict = []
         for el in potential_names:
             if os.path.exists(el):
                 conflict.append(el)
         if len(conflict) > 0:
+            # TODO modify because of long lists
             conflict_str = "\n".join(conflict)
             if QMessageBox.No == QMessageBox.warning(self, "Overwrite", f"Overwrite files:\n {conflict_str}",
                                                      QMessageBox.Yes | QMessageBox.No, QMessageBox.No):
@@ -190,7 +193,9 @@ class MainMenu(QWidget):
 
         self.settings.set("io.save_components_directory", os.path.dirname(str(dir_path)))
         try:
-            self.settings.save_result(dir_path)
+            read_thread = SaveResultThread(self.settings, dir_path, parent=self)
+            dial = WaitingDialog(read_thread)
+            dial.exec()
         except IOError as e:
             QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {e}", QMessageBox.Ok)
         except Exception as e:

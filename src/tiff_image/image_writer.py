@@ -7,6 +7,7 @@ import numpy as np
 class ImageWriter(object):
     @classmethod
     def save(cls, image: Image, save_path: str):
+        print(f"[save] {save_path}")
         data = image.get_image_for_save()
         imagej_kwargs = {}
         if image.labels is not None:
@@ -30,7 +31,13 @@ class ImageWriter(object):
 
     @classmethod
     def save_mask(cls, image: Image, save_path: str):
-        cls._save(image.get_mask_for_save(), save_path)
+        mask = image.get_mask_for_save()
+        if mask is None:
+            return
+        if mask.dtype == np.bool:
+            mask = mask.astype(np.uint8)
+        print(f"[save_mask] {save_path}")
+        cls._save(mask, save_path)
 
     @staticmethod
     def _save(data: np.ndarray, save_path, resolution=None, metadata=None, imagej_metadata=None):

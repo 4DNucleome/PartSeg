@@ -20,6 +20,11 @@ class WaitingDialog(QDialog):
         if isinstance(thread, ProgressTread):
             thread.range_changed.connect(self.progress.setRange)
             thread.step_changed.connect(self.progress.setValue)
+            thread.error_signal.connect(self.error_catch)
+
+    def error_catch(self, error):
+        self.close()
+        raise error
 
     def exec(self):
         self.thread_to_wait.start()

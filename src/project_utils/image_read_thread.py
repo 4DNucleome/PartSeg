@@ -26,8 +26,8 @@ class ImageReaderThread(ProgressTread):
         try:
             self.image = self.reader.read(self.file_path, self.mask_path)
             self.image_read_finish.emit(self.image)
-        except Exception:
-            pass
+        except Exception as e:
+            self.error_signal.emit(e)
 
     def info_function(self, label: str, val: int):
         if label == "max":

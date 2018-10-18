@@ -6,7 +6,7 @@ import tifffile.tifffile
 
 from .image import Image
 import numpy as np
-
+import os.path
 
 class ImageReader(object):
     """
@@ -87,7 +87,7 @@ class ImageReader(object):
             self.mask_file.close()
 
         return Image(image_data, self.spacing, mask=mask_data, default_coloring=self.colors, labels=self.labels,
-                     ranges=self.ranges, file_path=image_path)
+                     ranges=self.ranges, file_path=os.path.abspath(image_path))
 
     @staticmethod
     def update_array_shape(array: np.ndarray, axes: str):
