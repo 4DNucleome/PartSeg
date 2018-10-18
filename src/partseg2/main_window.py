@@ -316,6 +316,7 @@ class MainMenu(QWidget):
                 if selected_filter == "raw image (*.tiff *.tif *.lsm)":
                     im = tif.imread(file_path)
                     self._settings.image = im, file_path
+                    self._settings.mask = None
                     #self._settings.image_spacing = list(np.array([70, 70 ,210]) * 0.1**9)
                 elif selected_filter == "mask to image (*.tiff *.tif *.lsm)":
                     im = tif.imread(file_path)

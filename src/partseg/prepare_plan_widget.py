@@ -129,7 +129,7 @@ class CreatePlan(QWidget):
         self.calculation_plan = CalculationPlan()
         self.plan.set_plan(self.calculation_plan)
         self.dilate_radius_spin = QSpinBox()
-        self.dilate_radius_spin.setRange(0, 50)
+        self.dilate_radius_spin.setRange(-50, 50)
 
         self.save_choose.currentIndexChanged[str_type].connect(self.save_changed)
         self.statistic_list.currentTextChanged.connect(self.show_statistics)

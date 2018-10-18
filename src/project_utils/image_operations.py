@@ -12,6 +12,8 @@ to_radius_type_dict = {"No": RadiusType.NO, "2d": RadiusType.R2D, "3d": RadiusTy
 
 
 def _generic_image_operation(image, radius, fun, layer):
+    if image.ndim == 2:
+        layer = False
     if image.dtype == np.bool:
         image = image.astype(np.uint8)
     if not layer:

@@ -131,6 +131,7 @@ class CalculationProcess(object):
             if node.operation.name in self.reused_mask:
                 mask = self.segment.get_segmentation()
                 self.mask_dict[node.operation.name] = mask
+            self.settings.mask_dilate_radius = node.operation.radius
             self.settings.change_segmentation_mask(self.segment, MaskChange.next_seg, False)
             self.iterate_over(node)
             self.settings.change_segmentation_mask(self.segment, MaskChange.prev_seg, False)
