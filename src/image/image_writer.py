@@ -1,0 +1,40 @@
+from fractions import Fraction
+
+from image.image import Image
+from tifffile import imsave
+import numpy as np
+
+class ImageWriter(object):
+    @classmethod
+    def save(cls, image: Image, save_path: str):
+        data = image.get_image_for_save()
+        imagej_kwargs = {}
+        if image.labels is not None:
+            imagej_kwargs["Labels"] = image.labels * image.layers
+        coloring = image.get_imagej_colors()
+        if coloring is not None:
+            imagej_kwargs["LUTs"] = coloring
+        ranges = image.get_ranges()
+        ranges = np.array(ranges).reshape(len(ranges)*2)
+        print(ranges)
+        imagej_kwargs["Ranges"] = ranges
+        spacing = image.get_um_spacing()
+
+        metadata = {"mode": "color",}
+        print(spacing)
+        if len(spacing) == 3:
+            metadata.update({"spacing":spacing[0], "unit": "\\u00B5m"})
+        resolution = [Fraction.from_float(x).limit_denominator(1000000) for x in spacing[-2:]]
+        resolution = [(x.denominator, x.numerator) for x in resolution]
+        cls._save(data, save_path, resolution, metadata, imagej_kwargs)
+
+    @classmethod
+    def save_mask(cls, image: Image, save_path: str):
+        cls._save(image.get_mask_for_save(), save_path)
+
+    @staticmethod
+    def _save(data: np.ndarray, save_path, resolution=None, metadata=None, imagej_metadata=None):
+        if data.dtype in [np.uint8, np.uint16, np.float32]:
+            imsave(save_path, data, imagej=True, software="PartSeg", metadata=metadata, ijmetadata=imagej_metadata,
+                   resolution=resolution)#, compress=6,
+                   #imagej=True, software="PartSeg")
