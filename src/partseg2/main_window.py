@@ -24,6 +24,7 @@ from partseg2.interpolate_thread import InterpolateThread
 from project_utils.algorithms_description import InteractiveAlgorithmSettingsWidget
 from project_utils.global_settings import static_file_folder
 from project_utils.image_operations import dilate, erode, RadiusType
+from project_utils.image_read_thread import ImageReaderThread
 from .partseg_settings import PartSettings, load_project, save_project, save_labeled_image, HistoryElement
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
 from .algorithm_description import part_algorithm_dict, SegmentationProfile
@@ -315,9 +316,10 @@ class MainMenu(QWidget):
                 logging.debug("open file: {}, filter {}".format(file_path, selected_filter))
                 # TODO maybe something better. Now main window have to be parent
                 if selected_filter == "raw image (*.tiff *.tif *.lsm)":
-                    reader = ImageReader()
-                    im = reader.read(file_path)
-                    self._settings.image = im, file_path
+                    read_thread = ImageReaderThread(file_path, parent=self)
+                    dial = WaitingDialog(read_thread)
+                    dial.exec()
+                    self._settings.image = read_thread.image
                     self._settings.mask = None
                     #self._settings.image_spacing = list(np.array([70, 70 ,210]) * 0.1**9)
                 elif selected_filter == "mask to image (*.tiff *.tif *.lsm)":

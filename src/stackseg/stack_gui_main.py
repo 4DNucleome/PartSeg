@@ -17,7 +17,9 @@ from common_gui.stack_image_view import ColorBar
 from common_gui.universal_gui_part import right_label
 
 from common_gui.flow_layout import FlowLayout
+from common_gui.waiting_dialog import WaitingDialog
 from project_utils.algorithms_description import AlgorithmSettingsWidget, BatchProceed
+from project_utils.image_read_thread import ImageReaderThread
 from .image_view import StackImageView
 from common_gui.select_multiple_files import AddFiles
 from partseg.io_functions import load_stack_segmentation
@@ -26,7 +28,7 @@ from project_utils.universal_const import UNITS_LIST, UNIT_SCALE
 from project_utils.utils import SynchronizeValues
 from stackseg.stack_algorithm.algorithm_description import stack_algorithm_dict
 from stackseg.stack_settings import StackSettings
-from tiff_image import ImageReader
+from tiff_image import ImageReader, Image
 
 app_name = "StackSeg"
 app_lab = "LFSG"
@@ -43,6 +45,8 @@ class MainMenu(QWidget):
         """
         super(MainMenu, self).__init__()
         self.settings = settings
+        self.segmentation_cache = None
+        self.read_thread = None
         self.load_image_btn = QPushButton("Load image (also from mask)")
         self.load_image_btn.clicked.connect(self.load_image)
         self.load_segmentation_btn = QPushButton("Load segmentation")
@@ -71,39 +75,50 @@ class MainMenu(QWidget):
             file_path = str(dial.selectedFiles()[0])
             self.settings.set("io.load_image_directory", os.path.dirname(str(file_path)))
             self.settings.set("io.load_image_filter", dial.selectedNameFilter())
+            read_thread = ImageReaderThread(parent=self)
             if dial.selectedNameFilter() == filters[1]:
                 segmentation, metadata = load_stack_segmentation(file_path)
                 if "base_file" not in metadata:
                     QMessageBox.warning(self, "Open error", "No information about base file")
                 if not os.path.exists(metadata["base_file"]):
                     QMessageBox.warning(self, "Open error", "Base file not found")
-                im = tif.imread(metadata["base_file"])
-                self.settings.image = im, metadata["base_file"]
+                read_thread.set_path(metadata["base_file"])
+                dial = WaitingDialog(read_thread)
+                dial.exec()
+                self.set_image(read_thread.image)
                 self.settings.set_segmentation(segmentation, metadata)
             else:
-                reader = ImageReader()
-                image = reader.read(file_path)
-                if image.is_time:
-                    if image.is_stack:
-                        QMessageBox.warning(
-                            self, "Not supported", "Data that are time data are currently not supported")
-                        return
-                    else:
-                        res = QMessageBox.question(self, "Not supported",
-                                                   "Time data are currently not supported. "
-                                                   "Maybe You would like to treat time as z-stack",
-                                                   QMessageBox.Yes|QMessageBox.No, QMessageBox.No)
-                        if res == QMessageBox.Yes:
-                            image.swap_time_and_stack()
-                        else:
-                            return
-                self.settings.image = image, file_path
+                read_thread.set_path(file_path)
+                dial = WaitingDialog(read_thread)
+                dial.exec()
+                if read_thread.image:
+                    self.set_image(read_thread.image)
 
         except Exception as e:
             import traceback
             traceback.print_exc()
             QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
         # self.image_loaded.emit()
+
+    def set_image(self, image: Image) -> bool:
+        if image.is_time:
+            if image.is_stack:
+                QMessageBox.warning(
+                    self, "Not supported", "Data that are time data are currently not supported")
+                return False
+            else:
+                res = QMessageBox.question(
+                    self, "Not supported",
+                    "Time data are currently not supported. Maybe You would like to treat time as z-stack",
+                    QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+                if res == QMessageBox.Yes:
+                    image.swap_time_and_stack()
+                else:
+                    return False
+        self.settings.image = image
+        return True
+
 
     def load_segmentation(self):
         try:

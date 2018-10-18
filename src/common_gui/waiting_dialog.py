@@ -1,5 +1,6 @@
 from PyQt5.QtCore import QThread
 from PyQt5.QtWidgets import QDialog, QProgressBar, QPushButton, QHBoxLayout
+from project_utils.progress_thread import ProgressTread
 
 
 class WaitingDialog(QDialog):
@@ -16,8 +17,10 @@ class WaitingDialog(QDialog):
         thread.finished.connect(self.accept)
         self.thread_to_wait = thread
         self.setLayout(layout)
+        if isinstance(thread, ProgressTread):
+            thread.range_changed.connect(self.progress.setRange)
+            thread.step_changed.connect(self.progress.setValue)
 
     def exec(self):
         self.thread_to_wait.start()
         return super().exec()
-

@@ -10,11 +10,12 @@ class Image(object):
     """
     return_order = "TZCYX"
 
-    def __init__(self, data: np.ndarray, image_spacing, mask: typing.Union[None, np.ndarray] = None,
+    def __init__(self, data: np.ndarray, image_spacing, file_path = None, mask: typing.Union[None, np.ndarray] = None,
                  default_coloring=None, ranges=None, labels=None):
         self._image_array = data
         self._mask_array = mask
         self._image_spacing = image_spacing
+        self.file_path = file_path
         self.default_coloring = default_coloring
         if self.default_coloring is not None:
             self.default_coloring = [np.array(x) for x in default_coloring]

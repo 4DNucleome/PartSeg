@@ -4,7 +4,7 @@ from tifffile import TiffFile
 from tifffile.tifffile import TiffPage
 import tifffile.tifffile
 
-from image.image import Image
+from .image import Image
 import numpy as np
 
 
@@ -33,7 +33,14 @@ class ImageReader(object):
             raise ValueError(f"wrong spacing {spacing}")
         self.default_spacing = spacing
 
-    def read(self, image_path, mask_path=None):
+    def read(self, image_path: str, mask_path=None) -> Image:
+        """
+        Read tiff image from tiff_file
+
+        :param image_path:
+        :param mask_path:
+        :return: Image
+        """
         print(image_path)
         self.spacing, self.colors, self.labels, self.ranges, order = self.default_spacing, None, None, None,None
         self.image_file = TiffFile(image_path)
@@ -80,7 +87,7 @@ class ImageReader(object):
             self.mask_file.close()
 
         return Image(image_data, self.spacing, mask=mask_data, default_coloring=self.colors, labels=self.labels,
-                     ranges=self.ranges)
+                     ranges=self.ranges, file_path=image_path)
 
     @staticmethod
     def update_array_shape(array: np.ndarray, axes: str):

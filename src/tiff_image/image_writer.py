@@ -1,6 +1,6 @@
 from fractions import Fraction
 
-from image.image import Image
+from .image import Image
 from tifffile import imsave
 import numpy as np
 
