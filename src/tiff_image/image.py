@@ -56,6 +56,10 @@ class Image(object):
     def layers(self):
         return self._image_array.shape[1]
 
+    @property
+    def plane_shape(self):
+        return self._image_array.shape[2:4]
+
     def swap_time_and_stack(self):
         self._image_array = np.swapaxes(self._image_array, 0, 1)
 
@@ -72,6 +76,9 @@ class Image(object):
 
     def get_channel(self, num):
         return self._image_array[..., num]
+
+    def get_layer(self, num) -> np.ndarray:
+        return self._image_array[0, num]
 
     @property
     def is_2d(self):

@@ -24,6 +24,7 @@ from qt_import import QPixmap, QImage, QWidget, QVBoxLayout, QHBoxLayout, \
     QEvent, QToolTip, QHelpEvent
 from stackseg.stack_settings import StackSettings
 from project_utils.settings import ImageSettings, ViewSettings
+from tiff_image import Image
 from .channel_control import ChannelControl
 
 canvas_icon_size = QSize(20, 20)
@@ -408,7 +409,7 @@ class ImageView(QWidget):
     def change_image(self):
         if self.image is None:
             return
-        img = np.copy(self.image[self.stack_slider.value()])
+        img = np.copy(self.image.get_layer(self.stack_slider.value()))
         color_maps = self.channel_control.current_colors
         borders = self.border_val[:]
         for i, p in enumerate(self.channel_control.get_limits()):
@@ -437,7 +438,7 @@ class ImageView(QWidget):
         return im
 
     @property
-    def image(self):
+    def image(self) -> Image:
         return self._settings.image
 
     def set_image(self):
@@ -449,9 +450,9 @@ class ImageView(QWidget):
         self.labels_layer = None
         # image = np.squeeze(image)
         #self.image = image
-        self.channels_num = self.image.shape[-1]
-        self.layers_num = self.image.shape[0]
-        self.image_shape = QSize(self.image.shape[2], self.image.shape[1])
+        self.channels_num = self.image.channels
+        self.layers_num = self.image.layers
+        self.image_shape = QSize(self.image.plane_shape[1], self.image.plane_shape[0])
         self.stack_slider.blockSignals(True)
         self.stack_slider.setRange(0, self.layers_num - 1)
         self.stack_slider.setValue(int(self.layers_num/2))

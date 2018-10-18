@@ -27,6 +27,7 @@ from project_utils.image_operations import dilate, erode, RadiusType
 from .partseg_settings import PartSettings, load_project, save_project, save_labeled_image, HistoryElement
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
 from .algorithm_description import part_algorithm_dict, SegmentationProfile
+from tiff_image import ImageReader
 
 app_name = "PartSeg2"
 app_lab = "LFSG"
@@ -314,7 +315,8 @@ class MainMenu(QWidget):
                 logging.debug("open file: {}, filter {}".format(file_path, selected_filter))
                 # TODO maybe something better. Now main window have to be parent
                 if selected_filter == "raw image (*.tiff *.tif *.lsm)":
-                    im = tif.imread(file_path)
+                    reader = ImageReader()
+                    im = reader.read(file_path)
                     self._settings.image = im, file_path
                     self._settings.mask = None
                     #self._settings.image_spacing = list(np.array([70, 70 ,210]) * 0.1**9)
@@ -465,7 +467,8 @@ class MainWindow(QMainWindow):
         # self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
 
-        im = tif.imread(os.path.join(static_file_folder, 'initial_images', "clean_segment.tiff"))
+        reader =ImageReader()
+        im = reader.read(os.path.join(static_file_folder, 'initial_images', "clean_segment.tiff"))
         self.settings.image = im
 
         icon = QIcon(os.path.join(static_file_folder, 'icons', "icon.png"))

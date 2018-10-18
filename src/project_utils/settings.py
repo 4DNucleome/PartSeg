@@ -2,29 +2,29 @@ import json
 import logging
 import sys
 import typing
-import tifffile
 
 from qt_import import QObject, pyqtSignal
-from .image_operations import normalize_shape, RadiusType
+from .image_operations import RadiusType
 from matplotlib import pyplot
 import copy
 import numpy as np
 from .custom_colormaps import default_colors
 from os import path, makedirs
 
+from tiff_image import Image, ImageReader
+
 
 class ImageSettings(QObject):
     """
-    :type _image: np.ndarray
+    :type _image: Image
     """
-    image_changed = pyqtSignal([np.ndarray], [int], [str])
+    image_changed = pyqtSignal([Image], [int], [str])
     segmentation_changed = pyqtSignal(np.ndarray)
 
     def __init__(self):
         super(ImageSettings, self).__init__()
         self._image = None
         self._image_path = ""
-        self.has_channels = False
         self._image_spacing = 210, 70, 70
         self._segmentation = None
         self.sizes = []
@@ -33,12 +33,7 @@ class ImageSettings(QObject):
 
     @property
     def image_spacing(self):
-        if self._image is None:
-            return self._image_spacing
-        if self._image.shape[0] > 1:
-            return self._image_spacing
-        else:
-            return self._image_spacing[1:]
+        return self._image.spacing
 
     @image_spacing.setter
     def image_spacing(self, value):
@@ -49,16 +44,8 @@ class ImageSettings(QObject):
             self._image_spacing = value
 
     def load_image(self, file_path):
-        with tifffile.TiffFile(file_path) as  tif_file:
-            im = tif_file.asarray()
-            if tif_file.is_lsm:
-                try:
-                    spacing = [tif_file.lsm_metadata["VoxelSizeX"], tif_file.lsm_metadata["VoxelSizeY"],
-                               tif_file.lsm_metadata["VoxelSizeZ"]]
-                    self.image_spacing = spacing
-                except KeyError:
-                    pass
-            # print(tif_file.imagej_metadata)
+        reader = ImageReader()
+        im = reader.read(file_path)
         self.image = im, file_path
 
     @property
@@ -89,26 +76,22 @@ class ImageSettings(QObject):
         if isinstance(value, tuple):
             file_path = value[1]
             value = value[0]
-            # if len(value) > 3:
-            #    self.set_segmentation(value[2], value[3])
         else:
             file_path = None
-        value = np.squeeze(value)
-        self._image = normalize_shape(value)
+        self._image = value
 
         if file_path is not None:
             self._image_path = file_path
             self.image_changed[str].emit(self._image_path)
-        if self._image.shape[-1] < 10:
-            self.has_channels = True
-        else:
-            self.has_channels = False
-
         self._image_changed()
         self.segmentation = None
 
         self.image_changed.emit(self._image)
-        self.image_changed[int].emit(self.channels)
+        self.image_changed[int].emit(self._image.channels)
+
+    @property
+    def has_channels(self):
+        return self._image.channels > 1
 
     def _image_changed(self):
         pass
@@ -126,15 +109,10 @@ class ImageSettings(QObject):
     def channels(self):
         if self._image is None:
             return 0
-        if len(self._image.shape) == 4:
-            return self._image.shape[-1]
-        else:
-            return 1
+        return self._image.channels
 
     def get_chanel(self, chanel_num):
-        if self.has_channels:
-            return self._image[..., chanel_num]
-        return self._image
+        return self._image.get_channel(chanel_num)[0]
 
     def get_information(self, *pos):
         return self._image[pos]
@@ -222,7 +200,7 @@ class ViewSettings(ImageSettings):
 
     def _image_changed(self):
         super()._image_changed()
-        self.border_val = list(zip(self.image.min(axis=(0,1,2)), self.image.max(axis=(0,1,2))))
+        self.border_val = self.image.get_ranges()
 
     def change_profile(self, name):
         self.current_profile_dict = name

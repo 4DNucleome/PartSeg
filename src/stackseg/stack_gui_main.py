@@ -26,6 +26,7 @@ from project_utils.universal_const import UNITS_LIST, UNIT_SCALE
 from project_utils.utils import SynchronizeValues
 from stackseg.stack_algorithm.algorithm_description import stack_algorithm_dict
 from stackseg.stack_settings import StackSettings
+from tiff_image import ImageReader
 
 app_name = "StackSeg"
 app_lab = "LFSG"
@@ -80,7 +81,24 @@ class MainMenu(QWidget):
                 self.settings.image = im, metadata["base_file"]
                 self.settings.set_segmentation(segmentation, metadata)
             else:
-                self.settings.load_image(file_path)
+                reader = ImageReader()
+                image = reader.read(file_path)
+                if image.is_time:
+                    if image.is_stack:
+                        QMessageBox.warning(
+                            self, "Not supported", "Data that are time data are currently not supported")
+                        return
+                    else:
+                        res = QMessageBox.question(self, "Not supported",
+                                                   "Time data are currently not supported. "
+                                                   "Maybe You would like to treat time as z-stack",
+                                                   QMessageBox.Yes|QMessageBox.No, QMessageBox.No)
+                        if res == QMessageBox.Yes:
+                            image.swap_time_and_stack()
+                        else:
+                            return
+                self.settings.image = image, file_path
+
         except Exception as e:
             import traceback
             traceback.print_exc()
@@ -439,11 +457,10 @@ class ImageInformation(QWidget):
         self.path.setWordWrap(True)
         self.spacing = [QDoubleSpinBox() for _ in range(3)]
         units_index = self._settings.get("units_index", 2)
-        for el, val in zip(self.spacing, self._settings.image_spacing[::-1]):
+        for el in self.spacing:
             el.setAlignment(Qt.AlignRight)
             el.setButtonSymbols(QAbstractSpinBox.NoButtons)
             el.setRange(0, 100000)
-            el.setValue(val * UNIT_SCALE[units_index])
             el.valueChanged.connect(self.image_spacing_change)
         self.units = QComboBox()
         self.units.addItems(UNITS_LIST)
@@ -483,6 +500,11 @@ class ImageInformation(QWidget):
         self._settings.image_spacing = [el.value() / UNIT_SCALE[self.units.currentIndex()] for i, el in
                                         enumerate(self.spacing[::-1])]
 
+    def showEvent(self, _a0):
+        units_index = self._settings.get("units_index", 2)
+        for el, val in zip(self.spacing, self._settings.image_spacing[::-1]):
+            el.setValue(val * UNIT_SCALE[units_index])
+
 
 class Options(QTabWidget):
     def __init__(self, settings, control_view, component_checker, parent=None):
@@ -520,8 +542,6 @@ class MainWindow(QMainWindow):
         self.settings.image_changed.connect(self.image_read)
         self.color_bar = ColorBar(self.settings, self.channel_control)
 
-        im = tif.imread(os.path.join(static_file_folder, 'initial_images', "stack.tif"))
-
         icon = QIcon(os.path.join(static_file_folder, 'icons', "icon_stack.png"))
         self.setWindowIcon(icon)
 
@@ -544,7 +564,8 @@ class MainWindow(QMainWindow):
         self.widget = QWidget()
         self.widget.setLayout(layout)
         self.setCentralWidget(self.widget)
-        self.settings.image = im
+        reader = ImageReader()
+        self.settings.image = reader.read(os.path.join(static_file_folder, 'initial_images', "stack.tif"))
         try:
             geometry = self.settings.get_from_profile("main_window_geometry")
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, 'ascii')))
@@ -552,7 +573,6 @@ class MainWindow(QMainWindow):
             pass
 
     def image_read(self):
-        print("buka1", self.settings.image.shape, self.sender())
         self.image_view.set_image()
         self.image_view.reset_image_size()
         self.setWindowTitle(f"StackSeg: {self.settings.image_path}")
