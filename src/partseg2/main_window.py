@@ -303,7 +303,7 @@ class MainMenu(QWidget):
             dial.setDirectory(self._settings.get("io.open_directory", ""))
             dial.setFileMode(QFileDialog.ExistingFile)
             filters = ["raw image (*.tiff *.tif *.lsm)", "image with mask (*.tiff *.tif *.lsm)",
-                       "mask to image (*.tiff *.tif *.lsm)", "image with current mask (*.tiff *.tif *.lsm)",
+                       "mask to image (*.tiff *.tif *.lsm)",
                        "saved project (*.tgz *.tbz2 *.gz *.bz2)", "Profiles (*.json)"]
             # dial.setFilters(filters)
             dial.setNameFilters(filters)
@@ -315,40 +315,34 @@ class MainMenu(QWidget):
                 self._settings.set("io.open_filter", selected_filter)
                 logging.debug("open file: {}, filter {}".format(file_path, selected_filter))
                 # TODO maybe something better. Now main window have to be parent
+                read_thread = ImageReaderThread(parent=self)
+                dial = WaitingDialog(read_thread)
                 if selected_filter == "raw image (*.tiff *.tif *.lsm)":
-                    read_thread = ImageReaderThread(file_path, parent=self)
-                    dial = WaitingDialog(read_thread)
+                    read_thread.set_path(file_path)
                     dial.exec()
                     self._settings.image = read_thread.image
-                    self._settings.mask = None
                     #self._settings.image_spacing = list(np.array([70, 70 ,210]) * 0.1**9)
                 elif selected_filter == "mask to image (*.tiff *.tif *.lsm)":
                     im = tif.imread(file_path)
                     self._settings.mask = im
-                elif selected_filter == "image with current mask (*.tiff *.tif *.lsm)":
-                    mask = self._settings
-                    im = tif.imread(file_path)
-                    self._settings.image = im, file_path
-                    self._settings.mask = mask
                 elif selected_filter == "image with mask (*.tiff *.tif *.lsm)":
                     extension = os.path.splitext(file_path)
                     if extension == ".json":
                         with open(file_path) as ff:
                             info_dict = json.load(ff)
-                        image = tif.imread(info_dict["image"])
-                        mask = tif.imread(info_dict["mask"])
-                        self._settings.image = image, info_dict["image"]
-                        self._settings.mask = mask
+                        read_thread.set_path(info_dict["image"], info_dict["mask"])
+                        dial.exec()
+                        self._settings.image = read_thread.image
                     else:
-                        image = tif.imread(file_path)
                         org_name = os.path.basename(file_path)
                         mask_dial = QFileDialog(self, "Load mask for {}".format(org_name))
                         filters = ["mask (*.tiff *.tif *.lsm)"]
                         mask_dial.setNameFilters(filters)
                         if mask_dial.exec_():
                             mask = tif.imread(mask_dial.selectedFiles()[0])
-                            self._settings.image = image, file_path
-                            self._settings.mask = mask
+                            read_thread.set_path(file_path, mask_dial.selectedFiles()[0])
+                            dial.exec()
+                            self._settings.image = read_thread.image
                 elif selected_filter == "saved project (*.tgz *.tbz2 *.gz *.bz2)":
                     load_project(file_path, self._settings)
                     # self.segment.threshold_updated()

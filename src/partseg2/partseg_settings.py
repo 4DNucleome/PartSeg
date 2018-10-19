@@ -52,14 +52,14 @@ class PartSettings(BaseSettings):
 
     @property
     def mask(self):
-        return self._mask
+        return self._image.mask[0]
 
     @mask.setter
     def mask(self, value):
-        if value is not None and self._image.shape[:-1] != value.shape:
+        try:
+            self._image.set_mask(value)
+        except ValueError:
             raise ValueError("mask do not fit to image")
-        self._mask = value
-        self.mask_changed.emit()
 
     def _image_changed(self):
         super()._image_changed()
