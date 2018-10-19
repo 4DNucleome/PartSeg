@@ -72,17 +72,10 @@ class ImageSettings(QObject):
         return self._image
 
     @image.setter
-    def image(self, value):
-        if isinstance(value, tuple):
-            file_path = value[1]
-            value = value[0]
-        else:
-            file_path = None
+    def image(self, value: Image):
         self._image = value
-
-        if file_path is not None:
-            self._image_path = file_path
-            self.image_changed[str].emit(self._image_path)
+        if value.file_path is not None:
+            self.image_changed[str].emit(value.file_path)
         self._image_changed()
         self.segmentation = None
 

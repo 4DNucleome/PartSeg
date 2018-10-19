@@ -1,5 +1,3 @@
-from copy import copy
-
 import numpy as np
 import typing
 
@@ -12,7 +10,7 @@ class Image(object):
     """
     return_order = "TZCYX"
 
-    def __init__(self, data: np.ndarray, image_spacing, file_path = None, mask: typing.Union[None, np.ndarray] = None,
+    def __init__(self, data: np.ndarray, image_spacing, file_path=None, mask: typing.Union[None, np.ndarray] = None,
                  default_coloring=None, ranges=None, labels=None):
         self._image_array = data
         self._mask_array = mask
@@ -31,7 +29,13 @@ class Image(object):
             self.ranges = ranges
 
     def set_mask(self, mask: np.ndarray):
+        if mask is None:
+            self._mask_array = None
         self._mask_array = self.fit_array_to_image(mask)
+
+    @property
+    def mask(self):
+        return self._mask_array
 
     def fit_array_to_image(self, array: np.ndarray):
         shape = list(array.shape)
@@ -95,6 +99,11 @@ class Image(object):
     def get_layer(self, num) -> np.ndarray:
         return self._image_array[0, num]
 
+    def get_mask_layer(self, num) -> np.ndarray:
+        if self._mask_array is None:
+            raise ValueError("No mask")
+        return self._mask_array[0, num]
+
     @property
     def is_2d(self):
         return False
@@ -106,6 +115,8 @@ class Image(object):
     def cut_image(self, cut_area: typing.Union[np.ndarray, typing.List[slice]], replace_mask=False):
         """
         Create new image base on mask or list of slices
+        :param replace_mask: if cut area is represented by mask array,
+        then in result image the mask is set base on cut_area
         :param cut_area: area to cut. Defined with slices or mask
         :return: Image
         """
@@ -119,7 +130,7 @@ class Image(object):
             points = np.nonzero(cut_area)
             lower_bound = np.min(points, axis=1)
             upper_bound = np.max(points, axis=1)
-            new_cut = tuple([slice(x, y+1) for x, y in zip(lower_bound, upper_bound)])
+            new_cut = tuple([slice(x, y + 1) for x, y in zip(lower_bound, upper_bound)])
             new_image = self._image_array[new_cut]
             catted_cut_area = cut_area[new_cut]
             new_image[catted_cut_area == 0] = 0
@@ -164,7 +175,7 @@ class Image(object):
         return res
 
     def get_um_spacing(self):
-        return [x * 10 **6 for x in self.spacing]
+        return [x * 10 ** 6 for x in self.spacing]
 
     def get_ranges(self):
         return self.ranges

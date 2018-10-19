@@ -4,7 +4,6 @@ import os
 
 import appdirs
 import numpy as np
-import tifffile as tif
 from PyQt5.QtCore import pyqtSignal, Qt, QByteArray
 from PyQt5.QtGui import QGuiApplication, QIcon
 from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox, QVBoxLayout, QCheckBox, \
@@ -18,7 +17,8 @@ from common_gui.universal_gui_part import right_label
 
 from common_gui.flow_layout import FlowLayout
 from common_gui.waiting_dialog import WaitingDialog
-from project_utils.algorithms_description import AlgorithmSettingsWidget, BatchProceed
+from project_utils.algorithms_description import AlgorithmSettingsWidget
+from .batch_proceed import BatchProceed
 from project_utils.image_read_thread import ImageReaderThread
 from stackseg.save_result_thread import SaveResultThread
 from .image_view import StackImageView
@@ -415,7 +415,7 @@ class AlgorithmOptions(QWidget):
 
         widget = self.stack_layout.currentWidget()
         parameters = widget.get_values()
-        self.batch_process.set_parameters(type(widget.algorithm), parameters, widget.channel_num(),
+        self.batch_process.set_parameters(widget.algorithm, parameters, widget.channel_num(),
                                           self.file_list, folder_path)
         self.batch_process.start()
 

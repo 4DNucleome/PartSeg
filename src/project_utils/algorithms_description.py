@@ -1,8 +1,5 @@
-import traceback
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
-from enum import Enum
-from os import path
 from typing import Type, List
 
 import numpy as np
@@ -18,10 +15,9 @@ from project_utils.algorithm_base import SegmentationAlgorithm
 from project_utils.image_operations import to_radius_type_dict, RadiusType
 from project_utils.segmentation_thread import SegmentationThread
 from project_utils.universal_const import UNIT_SCALE
-from .settings import ImageSettings
-from partseg.io_functions import save_stack_segmentation, load_stack_segmentation
 
-from PyQt5.QtCore import QThread, pyqtSignal
+from .settings import ImageSettings
+
 
 class AlgorithmProperty(object):
     """
@@ -44,81 +40,7 @@ class AlgorithmProperty(object):
             assert default_value in options_range
 
 
-class BatchProceed(QThread):
-    error_signal = pyqtSignal(str)
-    progress_signal = pyqtSignal(str, int)
-    execution_done = pyqtSignal()
 
-    def __init__(self):
-        super(BatchProceed, self).__init__()
-        self.algorithm = None
-        self.parameters = None
-        self.file_list = []
-        self.base_file = ""
-        self.components = []
-        self.index = 0
-        self.result_dir = ""
-        self.channel_num = 0
-
-    def set_parameters(self, algorithm: Type[SegmentationAlgorithm], parameters, channel_num, file_list, result_dir):
-        self.algorithm = algorithm()
-        self.parameters = parameters
-        self.file_list = list(sorted(file_list))
-        self.result_dir = result_dir
-        self.channel_num = channel_num
-        self.algorithm.execution_done.connect(self.calc_one_finished)
-        self.algorithm.progress_signal.connect(self.progress_info)
-
-    def progress_info(self, text, num):
-        name = path.basename(self.file_list[self.index])
-        self.progress_signal.emit("file {} ({}): {}".format(self.index+1, name, text), self.index)
-
-    def calc_one_finished(self, segmentation):
-        print("Step finished", self.index)
-        name = path.basename(self.file_list[self.index])
-        name = path.splitext(name)[0]+".seg"
-        save_stack_segmentation(path.join(self.result_dir, name), segmentation,
-                                list(range(1, len(self.components)+1)), self.base_file)
-        self.index += 1
-        self.run_calculation()
-
-    def run_calculation(self):
-        temp_settings = ImageSettings()
-        while self.index < len(self.file_list):
-            file_path = self.file_list[self.index]
-            try:
-                if path.splitext(file_path)[1] == ".seg":
-                    segmentation, metadata = load_stack_segmentation(file_path)
-                    if "base_file" not in metadata or not path.exists(metadata["base_file"]):
-                        self.index += 1
-                        self.error_signal.emit("not found base file for {}".format(file_path))
-                        continue
-                    self.base_file = metadata["base_file"]
-                    self.components = metadata["components"]
-                    if len(self.components) > 250:
-                        blank = np.zeros(segmentation.shape, dtype=np.uint16)
-                    else:
-                        blank = np.zeros(segmentation.shape, dtype=np.uint8)
-                    for i, v in enumerate(self.components):
-                        blank[segmentation == v] = i + 1
-                else:
-                    self.base_file = file_path
-                    self.components = []
-                    blank = None
-                temp_settings.image = tifffile.imread(self.base_file)
-                self.algorithm.set_parameters(image=temp_settings.image[..., self.channel_num], exclude_mask=blank,
-                                              **self.parameters)
-                self.algorithm.start()
-                break
-            except Exception as e:
-                self.error_signal.emit("Exception occurred during proceed {}. Exception info {}".format(file_path, e))
-                self.index += 1
-        if self.index >= len(self.file_list):
-            self.execution_done.emit()
-
-    def run(self):
-        self.index = 0
-        self.run_calculation()
 
 
 class QtAlgorithmProperty(AlgorithmProperty):
@@ -186,6 +108,7 @@ class AlgorithmSettingsWidget(QScrollArea):
         super(AlgorithmSettingsWidget, self).__init__()
         self.widget_list = []
         self.name = name
+        self.algorithm = algorithm
         main_layout = QVBoxLayout()
         self.info_label = QLabel()
         self.info_label.setHidden(True)
