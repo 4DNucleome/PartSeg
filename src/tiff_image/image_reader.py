@@ -8,6 +8,7 @@ from .image import Image
 import numpy as np
 import os.path
 
+
 class ImageReader(object):
     """
     image_file: TiffFile
@@ -42,7 +43,7 @@ class ImageReader(object):
         :return: Image
         """
         print(image_path)
-        self.spacing, self.colors, self.labels, self.ranges, order = self.default_spacing, None, None, None,None
+        self.spacing, self.colors, self.labels, self.ranges, order = self.default_spacing, None, None, None, None
         self.image_file = TiffFile(image_path)
         total_pages_num = len(self.image_file.series[0])
         if mask_path is not None:
@@ -128,7 +129,8 @@ class ImageReader(object):
     def read_imagej_metadata(self):
         assert self.image_file.is_imagej
         try:
-            z_spacing = self.image_file.imagej_metadata["spacing"] * name_to_scalar[self.image_file.imagej_metadata["unit"]]
+            z_spacing = \
+                self.image_file.imagej_metadata["spacing"] * name_to_scalar[self.image_file.imagej_metadata["unit"]]
         except KeyError:
             z_spacing = 1
         tags = self.image_file.pages[0].tags
@@ -159,9 +161,10 @@ class ImageReader(object):
             [self.image_file.lsm_metadata[f"VoxelSize{x}"] for x in ["Z", "Y", "X"]]
         if "ChannelColors" in self.image_file.lsm_metadata:
             if "Colors" in self.image_file.lsm_metadata["ChannelColors"]:
-                self.colors =  [x[:3] for x in self.image_file.lsm_metadata["ChannelColors"]["Colors"]]
+                self.colors = [x[:3] for x in self.image_file.lsm_metadata["ChannelColors"]["Colors"]]
             if "ColorNames" in self.image_file.lsm_metadata["ChannelColors"]:
-                self.labels= self.image_file.lsm_metadata["ChannelColors"]["ColorNames"]
+                self.labels = self.image_file.lsm_metadata["ChannelColors"]["ColorNames"]
+
 
 def increment_dict(dkt: dict):
     for el in dkt:

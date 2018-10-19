@@ -12,4 +12,6 @@ class DimComboBox(QComboBox):
         return(RadiusType(self.currentIndex()))
 
     def setValue(self, val:RadiusType):
+        if not isinstance(val, RadiusType):
+            val = RadiusType.NO
         self.setCurrentIndex(val.value)

@@ -25,8 +25,7 @@ class ImageWriter(object):
         print(spacing)
         if len(spacing) == 3:
             metadata.update({"spacing":spacing[0], "unit": "\\u00B5m"})
-        resolution = [Fraction.from_float(x).limit_denominator(1000000) for x in spacing[-2:]]
-        resolution = [(x.denominator, x.numerator) for x in resolution]
+        resolution = [1/x for x in spacing[-2:]]
         cls._save(data, save_path, resolution, metadata, imagej_kwargs)
 
     @classmethod
