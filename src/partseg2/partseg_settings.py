@@ -52,7 +52,9 @@ class PartSettings(BaseSettings):
 
     @property
     def mask(self):
-        return self._image.mask[0]
+        if self._image.mask is not None:
+            return self._image.mask[0]
+        return None
 
     @mask.setter
     def mask(self, value):

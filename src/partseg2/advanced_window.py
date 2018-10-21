@@ -16,6 +16,7 @@ from project_utils.global_settings import static_file_folder
 from project_utils.settings import BaseSettings
 from project_utils.universal_const import UNITS_DICT, UNIT_SCALE, UNITS_LIST
 from qt_import import h_line
+from common_gui.dim_combobox import DimComboBox
 
 
 
@@ -259,8 +260,10 @@ class StatisticsSettings(QWidget):
         self.reset_butt = QPushButton("Clear")
         self.soft_reset_butt = QPushButton("Remove user statistics")
         self.profile_name = QLineEdit(self)
-        self.reversed_brightness = QCheckBox("Reversed image (for electron microscope)", self)
-        self.gauss_img = QCheckBox("2d gauss image", self)
+        self.reversed_brightness = QCheckBox("Reversed image", self)
+        self.reversed_brightness.setToolTip("This is option usefull for electrom microscope images")
+        self.gauss_img = DimComboBox(self)
+        self.gauss_radius = QDoubleSpinBox(self)# QCheckBox("2d gauss image", self)
         self.delete_profile_butt = QPushButton("Delete profile")
         self.restore_builtin_profiles = QPushButton("Restore builtin profiles")
         self.export_profiles_butt = QPushButton("Export profiles")
@@ -317,7 +320,10 @@ class StatisticsSettings(QWidget):
         name_layout.addWidget(self.profile_name)
         name_layout.addStretch()
         name_layout.addWidget(self.reversed_brightness)
+        name_layout.addWidget(QLabel("Gauss image:"))
         name_layout.addWidget(self.gauss_img)
+        name_layout.addWidget(QLabel("Gauss radius (pix):"))
+        name_layout.addWidget(self.gauss_radius)
         layout.addLayout(name_layout)
         create_layout = QHBoxLayout()
         create_layout.addWidget(self.profile_options)
@@ -552,7 +558,7 @@ class StatisticsSettings(QWidget):
                 selected_values.append((txt, val_dialog.result[txt]))
             stat_prof = StatisticProfile(str(self.profile_name.text()), selected_values,
                                          self.reversed_brightness.isChecked(),
-                                         self.gauss_img.isChecked())
+                                         (self.gauss_img.value() ,self.gauss_radius.value()))
             if stat_prof.name not in self.settings.get("statistic_profiles"):
                 self.profile_list.addItem(stat_prof.name)
             self.self.settings.set(f"statistic_profiles.{stat_prof.name}",  stat_prof)
@@ -627,7 +633,7 @@ class AdvancedWindow(QTabWidget):
         self.settings = settings
         self.setWindowTitle("Settings and statistics")
         self.advanced_settings = AdvancedSettings(settings)
-        self.colormap_settings = ColorSelector(settings, ["raw_control", "result_control"])
+        self.colormap_settings = ColorSelector(settings, ["result_control"])
         self.statistics = StatisticsWindow(settings)
         self.statistics_settings = StatisticsSettings(settings)
         self.addTab(self.advanced_settings, "Settings")
