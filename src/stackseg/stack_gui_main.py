@@ -8,7 +8,7 @@ from PyQt5.QtCore import pyqtSignal, Qt, QByteArray
 from PyQt5.QtGui import QGuiApplication, QIcon
 from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox, QVBoxLayout, QCheckBox, \
     QComboBox, QDoubleSpinBox, QSpinBox, QStackedLayout, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
-    QTabWidget, QMainWindow, QSizePolicy
+    QTabWidget, QSizePolicy
 
 from common_gui.channel_control import ChannelControl
 from common_gui.colors_choose import ColorSelector
@@ -18,6 +18,7 @@ from common_gui.universal_gui_part import right_label
 from common_gui.flow_layout import FlowLayout
 from common_gui.waiting_dialog import WaitingDialog
 from project_utils.algorithms_description import AlgorithmSettingsWidget
+from project_utils.main_window import BaseMainWindow
 from .batch_proceed import BatchProceed
 from project_utils.image_read_thread import ImageReaderThread
 from stackseg.save_result_thread import SaveResultThread
@@ -542,9 +543,9 @@ class Options(QTabWidget):
         return self.algorithm_options.get_chosen_components()
 
 
-class MainWindow(QMainWindow):
-    def __init__(self, title):
-        super(MainWindow, self).__init__()
+class MainWindow(BaseMainWindow):
+    def __init__(self, title, signal_fun=None):
+        super().__init__(signal_fun)
         self.setWindowTitle(title)
         self.settings = StackSettings(os.path.join(config_folder, "settings.json"))
         if os.path.exists(os.path.join(config_folder, "settings.json")):
@@ -597,7 +598,7 @@ class MainWindow(QMainWindow):
         self.image_view.reset_image_size()
         self.setWindowTitle(f"StackSeg: {self.settings.image_path}")
 
-    def closeEvent(self, _):
+    def closeEvent(self, e):
         # print(self.settings.dump_view_profiles())
         # print(self.settings.segmentation_dict["default"].my_dict)
         self.settings.set_in_profile("main_window_geometry", bytes(self.saveGeometry().toHex()).decode('ascii'))

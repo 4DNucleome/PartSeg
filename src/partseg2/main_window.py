@@ -10,7 +10,7 @@ import SimpleITK as sitk
 import appdirs
 from PyQt5.QtCore import Qt, QByteArray, QEvent
 from PyQt5.QtGui import QIcon, QKeyEvent
-from PyQt5.QtWidgets import QMainWindow, QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
+from PyQt5.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
     QFileDialog, QMessageBox, QCheckBox, QComboBox, QStackedLayout, QInputDialog, QDialog, QSpinBox, QAbstractSpinBox
 
 from common_gui.channel_control import ChannelControl
@@ -25,6 +25,7 @@ from project_utils.algorithms_description import InteractiveAlgorithmSettingsWid
 from project_utils.global_settings import static_file_folder
 from project_utils.image_operations import dilate, erode, RadiusType
 from project_utils.image_read_thread import ImageReaderThread
+from project_utils.main_window import BaseMainWindow
 from .partseg_settings import PartSettings, load_project, save_project, save_labeled_image, HistoryElement
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
 from .algorithm_description import part_algorithm_dict, SegmentationProfile
@@ -437,9 +438,9 @@ class MainMenu(QWidget):
         self.advanced_window.show()
 
 
-class MainWindow(QMainWindow):
-    def __init__(self, title):
-        super(MainWindow, self).__init__()
+class MainWindow(BaseMainWindow):
+    def __init__(self, title, signal_fun):
+        super().__init__(signal_fun)
         self.setWindowTitle(title)
         self.title = title
         self.setMinimumWidth(600)
@@ -497,7 +498,7 @@ class MainWindow(QMainWindow):
         self.options_panel.image_changed_exec()
         self.setWindowTitle(f"PartSeg: {self.settings.image_path}")
 
-    def closeEvent(self, _):
+    def closeEvent(self, e):
         # print(self.settings.dump_view_profiles())
         # print(self.settings.segmentation_dict["default"].my_dict)
         self.settings.set_in_profile("main_window_geometry", bytes(self.saveGeometry().toHex()).decode('ascii'))

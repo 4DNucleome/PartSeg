@@ -11,7 +11,7 @@ def my_excepthook(type, value, tback):
 sys.excepthook = my_excepthook
 
 
-if __name__ == '__main__':
+def main():
     import logging
     logging.basicConfig(level=logging.INFO)
     from qt_import import QApplication
@@ -22,3 +22,6 @@ if __name__ == '__main__':
     wind.show()
     myApp.exec_()
     sys.exit()
+
+if __name__ == '__main__':
+     main()
