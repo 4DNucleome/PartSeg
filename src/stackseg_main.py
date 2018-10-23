@@ -14,7 +14,7 @@ sys.excepthook = my_excepthook
 def main():
     import logging
     logging.basicConfig(level=logging.INFO)
-    from qt_import import QApplication
+    from PyQt5.QtWidgets import QApplication
     from stackseg.stack_gui_main import MainWindow
     import sys
     myApp = QApplication(sys.argv)

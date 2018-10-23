@@ -41,18 +41,7 @@ if use_qt5:
     from PyQt5.QtGui import QFont, QFontMetrics, QIcon, QPixmap, QImage, QPainter, QPen, QColor, QPalette, QHelpEvent
     from PyQt5.QtHelp import QHelpEngine
 else:
-    from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-    from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
-
-    from PyQt4.QtCore import Qt, QSize, QTimer, QVariant, pyqtSignal, QObject, QString, QPoint, QRect
-    from PyQt4.QtGui import QLabel, QPushButton, QFileDialog, QMainWindow, QStatusBar, QWidget, QLineEdit, QFont, \
-        QFrame, QFontMetrics, QMessageBox, QSlider, QCheckBox, QComboBox, QSpinBox, QToolButton, QDoubleSpinBox, \
-        QAbstractSpinBox, QApplication, QTabWidget, QScrollArea, QInputDialog, QHBoxLayout, QVBoxLayout, \
-        QListWidget, QTextEdit, QIcon, QDialog, QTableWidget, QTableWidgetItem, QGridLayout, QAction, QListWidgetItem, \
-        QDockWidget, QTextBrowser, QSplitter, QProgressBar, QAbstractItemView, QGroupBox, QTreeWidget, QTreeWidgetItem,\
-        QCompleter, QRadioButton, QButtonGroup, QPixmap, QImage, QPalette, QSizePolicy, QPainter, QPen, QColor, \
-        QScrollBar, QLayout, QLayoutItem, QStyle, QStackedLayout
-    from PyQt4.QtHelp import QHelpEngine
+    raise NotImplementedError()
 
 
 # from http://stackoverflow.com/questions/5671354/how-to-programmatically-make-a-horizontal-line-in-qt

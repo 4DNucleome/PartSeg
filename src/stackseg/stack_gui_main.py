@@ -34,6 +34,7 @@ from tiff_image import ImageReader, Image
 
 app_name = "StackSeg"
 app_lab = "LFSG"
+
 config_folder = appdirs.user_data_dir(app_name, app_lab)
 
 

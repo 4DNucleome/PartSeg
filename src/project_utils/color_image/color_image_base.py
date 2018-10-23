@@ -3,7 +3,6 @@ from project_utils.global_settings import static_file_folder
 from os import path
 import typing
 from .color_image import color_grayscale
-from numba import jit
 
 color_maps = np.load(path.join(static_file_folder, "colors.npz"))
 

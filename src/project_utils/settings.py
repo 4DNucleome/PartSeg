@@ -3,12 +3,11 @@ import logging
 import sys
 import typing
 
-from qt_import import QObject, pyqtSignal
+from PyQt5.QtCore import QObject, pyqtSignal
 from .image_operations import RadiusType
 from matplotlib import pyplot
 import copy
 import numpy as np
-from .custom_colormaps import default_colors
 from os import path, makedirs
 
 from tiff_image import Image, ImageReader

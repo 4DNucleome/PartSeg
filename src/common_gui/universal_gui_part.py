@@ -1,6 +1,12 @@
 # coding=utf-8
+from sys import platform
+
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFontMetrics
+
 from common_gui.flow_layout import FlowLayout
-from qt_import import QWidget, QLabel, Qt, QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QComboBox, QFontMetrics
+from PyQt5.QtWidgets import QWidget, QLabel, QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QComboBox, QSlider,\
+    QLineEdit
 
 
 class Spacing(QWidget):

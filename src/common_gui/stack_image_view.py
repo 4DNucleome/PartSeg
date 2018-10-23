@@ -7,9 +7,9 @@ from math import log
 import SimpleITK as sitk
 import numpy as np
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtCore import QRect, QTimerEvent
-from PyQt5.QtGui import QShowEvent, QResizeEvent, QWheelEvent
-from PyQt5.QtWidgets import QScrollBar
+from PyQt5.QtCore import QRect, QTimerEvent, QSize, QObject, pyqtSignal, QPoint, Qt, QEvent
+from PyQt5.QtGui import QShowEvent, QResizeEvent, QWheelEvent, QPainter, QPen, QColor, QPalette, QPixmap, QImage, QIcon
+from PyQt5.QtWidgets import QScrollBar, QLabel
 from matplotlib import pyplot
 from matplotlib.cm import get_cmap
 from matplotlib.colors import PowerNorm
@@ -18,10 +18,9 @@ from scipy.ndimage import gaussian_filter
 from project_utils.color_image import color_image, add_labels
 from project_utils.custom_colormaps import default_colors
 from project_utils.global_settings import static_file_folder, use_qt5
-from qt_import import QPixmap, QImage, QWidget, QVBoxLayout, QHBoxLayout, \
-    QLabel, QScrollArea, QPalette, QSizePolicy, QToolButton, QIcon, QAction, Qt, QPainter, QPen, QColor, QApplication, \
-    pyqtSignal, QPoint, QSlider, QCheckBox, QComboBox, QSize, QObject, \
-    QEvent, QToolTip, QHelpEvent
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
+    QScrollArea, QSizePolicy, QToolButton, QAction, QApplication, \
+    QSlider, QCheckBox, QComboBox
 from stackseg.stack_settings import StackSettings
 from project_utils.settings import ImageSettings, ViewSettings
 from tiff_image import Image
