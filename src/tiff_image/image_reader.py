@@ -153,8 +153,14 @@ class ImageReader(object):
         self.spacing = \
             [meta_data[f"PhysicalSize{x}"] * name_to_scalar[meta_data[f"PhysicalSize{x}Unit"]] for x in ["Z", "Y", "X"]]
         if "Channel" in meta_data and isinstance(meta_data["Channel"], (list, tuple)):
-            self.colors = [self.decode_int(ch["Color"])[:-1] for ch in meta_data["Channel"]]
-            self.labels = [ch["Name"] for ch in meta_data["Channel"]]
+            try:
+                self.labels = [ch["Name"] for ch in meta_data["Channel"]]
+            except KeyError:
+                pass
+            try:
+                self.colors = [self.decode_int(ch["Color"])[:-1] for ch in meta_data["Channel"]]
+            except KeyError:
+                pass
 
     def read_lsm_metadata(self):
         self.spacing = \
