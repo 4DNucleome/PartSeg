@@ -3,6 +3,9 @@ import logging
 import sys
 import typing
 
+import matplotlib
+matplotlib.use("Qt5Agg")
+
 from PyQt5.QtCore import QObject, pyqtSignal
 from .image_operations import RadiusType
 from matplotlib import pyplot

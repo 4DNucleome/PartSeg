@@ -3,7 +3,8 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     import argparse
     import sys
-    import multiprocessing 
+    import multiprocessing
+    import matplotlib
     multiprocessing.freeze_support()
     # import warnings
     # warnings.filterwarnings('error')
@@ -24,10 +25,10 @@ if __name__ == '__main__':
         parser.exit(-1)
     if args.qt4:
         set_qt4()
-
+        matplotlib.use("Qt4Agg")
     if args.qt5:
         set_qt5()
-
+        matplotlib.use("Qt5Agg")
     set_develop(args.develop)
     from PyQt5.QtWidgets import QApplication
     from partseg.main_window import MainWindow

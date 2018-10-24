@@ -22,7 +22,6 @@ def main():
     import logging
     logging.basicConfig(level=logging.INFO)
     from PyQt5.QtWidgets import QApplication
-    from PyQt5.QtCore import QThread
     from stackseg.stack_gui_main import MainWindow
     import sys
     myApp = QApplication(sys.argv)

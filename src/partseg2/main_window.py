@@ -439,7 +439,7 @@ class MainMenu(QWidget):
 
 
 class MainWindow(BaseMainWindow):
-    def __init__(self, title, signal_fun):
+    def __init__(self, title, signal_fun=None):
         super().__init__(signal_fun)
         self.setWindowTitle(title)
         self.title = title

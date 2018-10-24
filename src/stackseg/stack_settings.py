@@ -1,7 +1,7 @@
 from typing import List
 import numpy as np
 from os import path
-from partseg.io_functions import save_stack_segmentation, load_stack_segmentation
+# from partseg.io_functions import save_stack_segmentation, load_stack_segmentation
 from project_utils.settings import BaseSettings
 from stackseg.stack_algorithm.segment import cut_with_mask, save_catted_list
 from deprecation import deprecated

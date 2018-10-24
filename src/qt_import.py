@@ -5,7 +5,7 @@ import sys
 
 import matplotlib
 
-from project_utils.global_settings import use_qt5,button_margin, button_small_dist
+from project_utils.global_settings import use_qt5, button_margin, button_small_dist
 
 __author__ = "Grzegorz Bokota"
 
@@ -16,13 +16,6 @@ __author__ = "Grzegorz Bokota"
 
 import matplotlib as mpl
 print(mpl.get_cachedir())
-
-if use_qt5:
-    matplotlib.use("Qt5Agg")
-    logging.debug("Qt5 backed")
-else:
-    matplotlib.use("Qt4Agg")
-    logging.debug("Qt4 backend")
 
 
 if use_qt5:
