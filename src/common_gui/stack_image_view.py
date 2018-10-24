@@ -36,14 +36,16 @@ class ImageState(QObject):
     opacity_changed = pyqtSignal(float)
     show_label_changed = pyqtSignal(bool)
 
-    def __init__(self):
+    def __init__(self, settings: ViewSettings):
         super(ImageState, self).__init__()
+        self.settings = settings
         self.zoom = False
         self.move = False
-        self.opacity = 1
-        self.show_label = 1 # 0 - no show, 1 - show all, 2 - show chosen
-        self.only_borders = True
-        self.borders_thick = 1
+        self.opacity = settings.get_from_profile("image_state.opacity", 1)
+        self.show_label =   settings.get_from_profile("image_state.show_label", 1)
+        # 0 - no show, 1 - show all, 2 - show chosen
+        self.only_borders = settings.get_from_profile("image_state.only_border", True)
+        self.borders_thick = settings.get_from_profile("image_state.border_thick", 1)
 
     def set_zoom(self, val):
         self.zoom = val
@@ -53,16 +55,19 @@ class ImageState(QObject):
 
     def set_borders(self, val):
         if self.only_borders != val:
+            self.settings.set_in_profile("image_state.only_border", val)
             self.only_borders = val
             self.parameter_changed.emit()
 
     def set_borders_thick(self, val):
         if val != self.borders_thick:
+            self.settings.set_in_profile("image_state.border_thick", val)
             self.borders_thick = val
             self.parameter_changed.emit()
 
     def set_opacity(self, val):
         if self.opacity != val:
+            self.settings.set_in_profile("image_state.opacity", val)
             self.opacity = val
             self.parameter_changed.emit()
 
@@ -72,6 +77,7 @@ class ImageState(QObject):
 
     def set_show_label(self, val):
         if self.show_label != val:
+            self.settings.set_in_profile("image_state.show_label", val)
             self.show_label = val
             self.parameter_changed.emit()
 
@@ -276,7 +282,7 @@ class ImageView(QWidget):
         self.channel_control = channel_control
         #self._current_channels = ["BlackRed"]
         self.exclude_btn_list = []
-        self.image_state = ImageState()
+        self.image_state = ImageState(settings)
         self.image_area = MyScrollArea(self.image_state)
         self.reset_button = create_tool_button("Reset zoom", "zoom-original.png")
         self.reset_button.clicked.connect(self.reset_image_size)
