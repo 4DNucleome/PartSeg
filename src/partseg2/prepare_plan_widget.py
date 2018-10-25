@@ -10,10 +10,9 @@ from common_gui.mask_widget import MaskWidget
 from common_gui.universal_gui_part import right_label
 from partseg2.algorithm_description import SegmentationProfile
 
-from partseg2.batch_processing.calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, \
-    MaskSuffix, MaskSub, \
-    MaskFile, ProjectSave, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, MaskSave, ImageSave, \
-    XYZSave
+from .batch_processing.calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, \
+    MaskSuffix, MaskSub, MaskFile, ProjectSave, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, \
+    MaskSave, ImageSave, XYZSave
 from partseg2.partseg_settings import PartSettings
 from partseg2.profile_export import ExportDialog, ImportDialog
 from partseg2.statistics_calculation import StatisticProfile
@@ -165,6 +164,7 @@ class CreatePlan(QWidget):
         lay = QVBoxLayout()
         lay.addWidget(self.plan)
         bt_lay = QGridLayout()
+        bt_lay.setSpacing(0)
         bt_lay.addWidget(self.save_plan_btn, 0, 0)
         bt_lay.addWidget(self.clean_plan_btn, 0, 1)
         bt_lay.addWidget(self.remove_btn, 1, 0)

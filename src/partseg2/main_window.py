@@ -262,6 +262,7 @@ class MainMenu(QWidget):
         self.setLayout(layout)
 
         self.open_btn.clicked.connect(self.load_data)
+        self.save_btn.clicked.connect(self.save_file)
         self.advanced_btn.clicked.connect(self.advanced_window_show)
         self.mask_manager_btn.clicked.connect(self.mask_manager)
         self.interpolate_btn.clicked.connect(self.interpolate_exec)
@@ -367,6 +368,7 @@ class MainMenu(QWidget):
 
 
     def save_file(self):
+        raise ValueError("WWWW")
         try:
             dial = QFileDialog(self, "Save data")
             dial.setDirectory(self._settings.get("io.save_directory", self._settings.get("io.open_directory", "")))

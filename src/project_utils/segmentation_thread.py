@@ -9,6 +9,7 @@ class SegmentationThread(QThread):
     execution_done_extend = pyqtSignal(np.ndarray, np.ndarray)
     progress_signal = pyqtSignal(str, int)
     info_signal = pyqtSignal(str)
+    exception_occurred = pyqtSignal(Exception)
 
     def __init__(self, algorithm: SegmentationAlgorithm):
         super().__init__()
@@ -26,7 +27,10 @@ class SegmentationThread(QThread):
         self.progress_signal.emit(text, num)
 
     def run(self):
-        segment_data = self.algorithm.calculation_run(self.send_info)
+        try:
+            segment_data = self.algorithm.calculation_run(self.send_info)
+        except Exception as e:
+            return
         if segment_data is None:
             return
         if isinstance(segment_data, tuple):

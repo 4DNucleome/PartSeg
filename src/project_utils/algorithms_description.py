@@ -6,7 +6,7 @@ import numpy as np
 import tifffile
 from PyQt5.QtGui import QHideEvent, QShowEvent
 from PyQt5.QtWidgets import QComboBox, QCheckBox, QWidget, QVBoxLayout, QLabel, QFormLayout, \
-    QAbstractSpinBox, QScrollArea
+    QAbstractSpinBox, QScrollArea, QMessageBox
 from six import with_metaclass
 
 from common_gui.dim_combobox import DimComboBox
@@ -94,7 +94,7 @@ class AbstractAlgorithmSettingsWidget(with_metaclass(ABCMeta, object)):
 
 
 class AlgorithmSettingsWidget(QScrollArea):
-    algorithm_thread: SegmentationAlgorithm
+    algorithm_thread: SegmentationThread
     gauss_radius_name = "gauss_radius"
     use_gauss_name = "use_gauss"
 
@@ -133,6 +133,10 @@ class AlgorithmSettingsWidget(QScrollArea):
         self.settings.image_changed[int].connect(self.image_changed)
         self.algorithm_thread = SegmentationThread(algorithm())
         self.algorithm_thread.info_signal.connect(self.show_info)
+        self.algorithm_thread.exception_occurred.connect(self.exception_occurred)
+
+    def exception_occurred(self, exc: Exception):
+        raise exc
 
     def show_info(self, text):
         self.info_label.setText(text)

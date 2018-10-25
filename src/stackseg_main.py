@@ -1,19 +1,12 @@
 import sys
 __author__ = "Grzegorz Bokota"
-
-import os
-import signal
+from project_utils.except_hook import my_excepthook
 
 def sig_handler(signum, frame):
     print ("segfault")
 
 # signal.signal(signal.SIGSEGV, sig_handler)
 
-def my_excepthook(type, value, tback):
-    # log the exception here
-
-    # then call the default handler
-    sys.__excepthook__(type, value, tback)
 
 sys.excepthook = my_excepthook
 
