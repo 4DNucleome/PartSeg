@@ -18,6 +18,7 @@ from common_gui.universal_gui_part import right_label
 from common_gui.flow_layout import FlowLayout
 from common_gui.waiting_dialog import WaitingDialog
 from project_utils.algorithms_description import AlgorithmSettingsWidget
+from project_utils.error_dialog import ErrorDialog
 from project_utils.main_window import BaseMainWindow
 from .batch_proceed import BatchProceed
 from project_utils.image_read_thread import ImageReaderThread
@@ -97,10 +98,12 @@ class MainMenu(QWidget):
                 if read_thread.image:
                     self.set_image(read_thread.image)
 
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
+        except (MemoryError, IOError) as e:
             QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
+
+        except Exception as e:
+            ErrorDialog(e, "Image read").exec()
+
         # self.image_loaded.emit()
 
     def set_image(self, image: Image) -> bool:
@@ -160,7 +163,7 @@ class MainMenu(QWidget):
         except IOError as e:
             QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {e}", QMessageBox.Ok)
         except Exception as e:
-            QMessageBox.critical(self, "Save error", f"Unexpected error. Text: {e}", QMessageBox.Ok)
+            ErrorDialog(e, "Image read").exec()
 
     def save_result(self):
         if self.settings.image_path is not None and \
@@ -201,7 +204,7 @@ class MainMenu(QWidget):
         except IOError as e:
             QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {e}", QMessageBox.Ok)
         except Exception as e:
-            QMessageBox.critical(self, "Save error", f"Unexpected error. Text: {e}", QMessageBox.Ok)
+            ErrorDialog(e, "Save error").exec()
 
 
 class ChosenComponents(QWidget):
@@ -321,6 +324,7 @@ class AlgorithmOptions(QWidget):
             widgets_list.append(widget)
             widget.algorithm_thread.execution_done.connect(self.execution_done)
             widget.algorithm_thread.progress_signal.connect(self.progress_info)
+            widget.algorithm_thread.finished.connect(self.execution_finished)
             self.stack_layout.addWidget(widget)
         # WARNING works only with one channels algorithms
         SynchronizeValues.add_synchronization("channels_chose", widgets_list)
@@ -459,15 +463,17 @@ class AlgorithmOptions(QWidget):
         if self.is_batch_process:
             self.progress_bar.setValue(num)
 
-    def execution_done(self, segmentation):
-        self.segmentation = segmentation
-        self.choose_components.set_chose(range(1, segmentation.max() + 1), np.arange(len(self.chosen_list)) + 1)
+    def execution_finished(self):
         self.execute_btn.setEnabled(True)
         self.block_execute_all_btn = False
         if len(self.file_list) > 0:
             self.execute_all_btn.setEnabled(True)
         self.progress_bar.setHidden(True)
         self.progress_info_lab.setHidden(True)
+
+    def execution_done(self, segmentation):
+        self.segmentation = segmentation
+        self.choose_components.set_chose(range(1, segmentation.max() + 1), np.arange(len(self.chosen_list)) + 1)
 
 
 class ImageInformation(QWidget):

@@ -12,6 +12,7 @@ from six import with_metaclass
 from common_gui.dim_combobox import DimComboBox
 from common_gui.universal_gui_part import CustomSpinBox, CustomDoubleSpinBox
 from project_utils.algorithm_base import SegmentationAlgorithm
+from project_utils.error_dialog import ErrorDialog
 from project_utils.image_operations import to_radius_type_dict, RadiusType
 from project_utils.segmentation_thread import SegmentationThread
 from project_utils.universal_const import UNIT_SCALE
@@ -136,7 +137,8 @@ class AlgorithmSettingsWidget(QScrollArea):
         self.algorithm_thread.exception_occurred.connect(self.exception_occurred)
 
     def exception_occurred(self, exc: Exception):
-        raise exc
+        dial = ErrorDialog(exc, "Error during segmentation", "test")
+        dial.exec()
 
     def show_info(self, text):
         self.info_label.setText(text)

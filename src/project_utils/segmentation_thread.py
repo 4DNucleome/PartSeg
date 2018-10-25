@@ -30,6 +30,7 @@ class SegmentationThread(QThread):
         try:
             segment_data = self.algorithm.calculation_run(self.send_info)
         except Exception as e:
+            self.exception_occurred.emit(e)
             return
         if segment_data is None:
             return

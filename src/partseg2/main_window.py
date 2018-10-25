@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import re
+from functools import partial
 from io import BytesIO
 
 import tifffile as tif
@@ -22,6 +23,7 @@ from partseg2.batch_window import BatchWindow
 from partseg2.interpolate_dialog import InterpolateDialog
 from partseg2.interpolate_thread import InterpolateThread
 from project_utils.algorithms_description import InteractiveAlgorithmSettingsWidget
+from project_utils.error_dialog import ErrorDialog
 from project_utils.global_settings import static_file_folder
 from project_utils.image_operations import dilate, erode, RadiusType
 from project_utils.image_read_thread import ImageReaderThread
@@ -69,6 +71,7 @@ class Options(QWidget):
                                                         selector=[self.algorithm_choose, self.choose_profile])
             widgets_list.append(widget)
             widget.algorithm_thread.execution_done[np.ndarray, np.ndarray].connect(self.execution_done)
+            widget.algorithm_thread.finished.connect(partial(self.execute_btn.setEnabled, True))
             # widget.algorithm.progress_signal.connect(self.progress_info)
             self.stack_layout.addWidget(widget)
 
@@ -229,6 +232,7 @@ class Options(QWidget):
     def execute_algorithm(self):
         widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.currentWidget()
         self._settings.set("last_executed_algorithm", widget.name)
+        self.execute_btn.setDisabled(True)
         widget.execute()
 
     def execution_done(self, segmentation, full_segmentation):
@@ -354,10 +358,11 @@ class MainMenu(QWidget):
                     # noinspection PyCallByClass
                     _ = QMessageBox.warning(self, "Load error", "Function do not implemented yet")
                     return
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
+        except (IOError, MemoryError) as e:
             QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
+        except Exception as e:
+            ErrorDialog(e, "Image read").exec()
+
 
     def batch_window(self):
         if self.batch_widget is not None and self.batch_widget.isVisible():
@@ -368,7 +373,6 @@ class MainMenu(QWidget):
 
 
     def save_file(self):
-        raise ValueError("WWWW")
         try:
             dial = QFileDialog(self, "Save data")
             dial.setDirectory(self._settings.get("io.save_directory", self._settings.get("io.open_directory", "")))
