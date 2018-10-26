@@ -242,7 +242,7 @@ class InteractiveAlgorithmSettingsWidget(AlgorithmSettingsWidget):
     def execute(self, exclude_mask=None):
         values = self.get_values()
         self.algorithm_thread.set_parameters(**values)
-        scale = UNIT_SCALE[self.settings.get("units_index"), 2] # 2- position of nm
+        scale = UNIT_SCALE[self.settings.get("units_index", 2)] # 2- position of nm
         self.algorithm_thread.algorithm.set_size_information(self.settings.image_spacing,
                                                    self.settings.use_physical_unit, scale)
         self.settings.set(f"algorithms.{self.name}", values)
