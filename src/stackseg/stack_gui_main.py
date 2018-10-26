@@ -610,3 +610,15 @@ class MainWindow(BaseMainWindow):
         # print(self.settings.segmentation_dict["default"].my_dict)
         self.settings.set_in_profile("main_window_geometry", bytes(self.saveGeometry().toHex()).decode('ascii'))
         self.settings.dump()
+
+    def read_drop(self, paths):
+        assert len(paths) == 1
+        ext = os.path.splitext(paths[0])
+        read_thread = ImageReaderThread(parent=self)
+        if ext in [".tif", ".tiff", ".lsm"]:
+            read_thread.set_path(paths[0])
+            dial = WaitingDialog(read_thread)
+            dial.exec()
+            if read_thread.image:
+                self.main_menu.set_image(read_thread.image)
+
