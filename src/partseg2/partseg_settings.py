@@ -39,6 +39,7 @@ class PartSettings(BaseSettings):
     def mask(self, value):
         try:
             self._image.set_mask(value)
+            self.mask_changed.emit()
         except ValueError:
             raise ValueError("mask do not fit to image")
 
