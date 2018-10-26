@@ -11,7 +11,8 @@ class ErrorDialog(QDialog):
         self.send_report_btn = QPushButton("Send information")
         self.cancel_btn = QPushButton("Cancel")
         self.error_description = QTextEdit()
-        self.error_description.setText("".join(traceback.format_tb(exception.__traceback__)))
+        self.error_description.setText("".join(
+            traceback.format_exception(type(exception), exception.args, exception.__traceback__)))
         self.error_description.append(str(exception))
         self.error_description.setReadOnly(True)
         self.additional_info = QTextEdit()
