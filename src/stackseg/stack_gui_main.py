@@ -613,7 +613,7 @@ class MainWindow(BaseMainWindow):
 
     def read_drop(self, paths):
         assert len(paths) == 1
-        ext = os.path.splitext(paths[0])
+        ext = os.path.splitext(paths[0])[1]
         read_thread = ImageReaderThread(parent=self)
         if ext in [".tif", ".tiff", ".lsm"]:
             read_thread.set_path(paths[0])
