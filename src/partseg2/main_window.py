@@ -28,7 +28,8 @@ from project_utils.global_settings import static_file_folder
 from project_utils.image_operations import dilate, erode, RadiusType
 from project_utils.image_read_thread import ImageReaderThread
 from project_utils.main_window import BaseMainWindow
-from .partseg_settings import PartSettings, load_project, save_project, save_labeled_image, HistoryElement
+from .partseg_settings import PartSettings, load_project, save_project, save_labeled_image
+from .partseg_utils import HistoryElement
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
 from .algorithm_description import part_algorithm_dict, SegmentationProfile
 from tiff_image import ImageReader
@@ -382,7 +383,7 @@ class MainMenu(QWidget):
                        "Segmented data in xyz (*.xyz)"]
             dial.setAcceptMode(QFileDialog.AcceptSave)
             dial.setNameFilters(filters)
-            default_name = os.path.splitext(os.path.basename(self._settings.file_path))[0]
+            default_name = os.path.splitext(os.path.basename(self._settings.image.file_path))[0]
             dial.selectFile(default_name)
             dial.selectNameFilter(self._settings.get("io.save_filter", ""))
             if dial.exec_():
@@ -403,8 +404,7 @@ class MainMenu(QWidget):
                             return
 
                 if selected_filter == "Project (*.tgz *.tbz2 *.gz *.bz2)":
-                    save_project(file_path, self.settings, self.segment)
-
+                    self._settings.save_project(file_path)
                 elif selected_filter == "Labeled image (*.tif)":
                     save_labeled_image(file_path, self._settings)
 
@@ -431,9 +431,7 @@ class MainMenu(QWidget):
                 else:
                     # noinspection PyCallByClass
                     _ = QMessageBox.critical(self, "Save error", "Option unknown")
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
+        except IOError as e:
             QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
 
     def advanced_window_show(self):

@@ -1,34 +1,13 @@
-from collections import namedtuple
 
 from PyQt5.QtCore import pyqtSignal
 
-from partseg2.algorithm_description import SegmentationProfile
-from partseg2.statistics_calculation import StatisticProfile
-from project_utils.settings import BaseSettings, ProfileEncoder, profile_hook
+from partseg2.partseg_utils import PartEncoder, part_hook
+from .io_functions import save_project
+from project_utils.settings import BaseSettings
 import numpy as np
 
 MASK_COLORS = {"black":np.array((0,0,0)), "white": np.array((255, 255, 255)), "red": np.array((255, 0, 0)),
                "green": np.array((0, 255, 0)), "blue": np.array((0, 0, 255))}
-
-class PartEncoder(ProfileEncoder):
-    def default(self, o):
-        if isinstance(o, StatisticProfile):
-            return {"__StatisticProfile__": True, **o.to_dict()}
-        if isinstance(o, SegmentationProfile):
-            return {"__SegmentationProperty__": True, "name": o.name, "algorithm": o.algorithm, "values": o.values}
-        return super().default(o)
-
-
-def part_hook(_, dkt):
-    if "__StatisticProfile__" in dkt:
-        del dkt["__StatisticProfile__"]
-        res = StatisticProfile(**dkt)
-        return res
-    if "__SegmentationProperty__" in dkt:
-        del dkt["__SegmentationProperty__"]
-        res = SegmentationProfile(**dkt)
-        return res
-    return profile_hook(_, dkt)
 
 
 class PartSettings(BaseSettings):
@@ -73,14 +52,20 @@ class PartSettings(BaseSettings):
     def components_mask(self):
         return np.array([0] + [1] * self.segmentation.max(), dtype=np.uint8)
 
-def load_project(file_path, settings):
-    pass
+    def save_project(self, file_path):
+        dkt = dict()
+        dkt["segmentation"] = self.segmentation
+        algorithm_name = self.get("last_executed_algorithm")
+        dkt["algorithm_parameters"] = {"name": algorithm_name, "values": self.get(f"algorithms.{algorithm_name}")}
+        dkt["mask"] = self.mask
+        dkt["full_segmentation"] = self.full_segmentation
+        dkt["history"] = self.segmentation_history
+        dkt["image"] = self.image
+        save_project(file_path, **dkt)
 
-def save_project(*args, **kwwargs):
+
+def load_project(file_path, settings):
     pass
 
 def save_labeled_image(file_path, settings):
     pass
-
-
-HistoryElement = namedtuple("HistoryElement", ["algorithm_name", "algorithm_values", "segmentation", "mask"])

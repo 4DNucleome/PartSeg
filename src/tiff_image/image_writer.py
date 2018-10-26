@@ -1,12 +1,12 @@
-from fractions import Fraction
-
+import typing
+from io import BytesIO
 from .image import Image
 from tifffile import imsave
 import numpy as np
 
 class ImageWriter(object):
     @classmethod
-    def save(cls, image: Image, save_path: str):
+    def save(cls, image: Image, save_path: typing.Union[str, BytesIO]):
         print(f"[save] {save_path}")
         data = image.get_image_for_save()
         imagej_kwargs = {}
