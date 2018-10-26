@@ -19,7 +19,7 @@ def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
     return tar_info
 
 
-def save_project(file_path: str , image: Image, segmentation: np.ndarray, full_segmentation: np.ndarray,
+def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_segmentation: np.ndarray,
                  mask: typing.Union[np.ndarray, None], history: typing.List[HistoryElement], algorithm_parameters: dict):
     ext = os.path.splitext(file_path)[1]
     if ext.lower() in ['.bz2', ".tbz2"]:
@@ -42,3 +42,13 @@ def save_project(file_path: str , image: Image, segmentation: np.ndarray, full_s
         parameters_buff = BytesIO(para_str.encode('utf-8'))
         tar_algorithm = get_tarinfo("algorithm.json", parameters_buff)
         tar.addfile(tar_algorithm, parameters_buff)
+        el_info = []
+        for i, el in enumerate(history):
+            el_info.append({"index": i, "algorithm_name": el.algorithm_name, "values": el.algorithm_values})
+            hist_info = get_tarinfo(f"history/arrays_{i}.npz", el.arrays)
+            tar.addfile(hist_info, el.arrays)
+        if len(el_info) > 0:
+            hist_str = json.dumps(el_info, cls=PartEncoder)
+            hist_buff = BytesIO(hist_str.encode('utf-8'))
+            tar_algorithm = get_tarinfo("history/history.json", hist_buff)
+            tar.addfile(tar_algorithm, hist_buff)

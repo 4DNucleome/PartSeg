@@ -586,17 +586,14 @@ class MaskWindow(QDialog):
         elif self.mask_widget.fill_holes.value() == RadiusType.R3D:
             mask = fill_holes_in_mask(mask, self.mask_widget.max_hole_size.value())
         mask = mask.astype(np.bool)
-        compressed_segmentation = BytesIO()
-        np.savez(compressed_segmentation, segmentation)
-        compressed_segmentation.seek(0)
+        arrays = BytesIO()
+        arrays_dict = {"segmentation" : segmentation, "full_segmentation": self.settings.full_segmentation}
         if self.settings.mask is not None:
-            compressed_mask = BytesIO()
-            np.savez(compressed_mask, mask)
-            compressed_mask.seek(0)
-        else:
-            compressed_mask = None
+            arrays_dict["mask"] = self.settings.mask
+        np.savez_compressed(arrays, arrays_dict)
+        arrays.seek(0)
         self.settings.segmentation_history.append(
-            HistoryElement(algorithm_name, algorithm_values, compressed_segmentation, compressed_mask))
+            HistoryElement(algorithm_name, algorithm_values, arrays))
         self.settings.undo_segmentation_history = []
         self.settings.mask = mask
         print(self.settings.segmentation_history[-1])
@@ -607,14 +604,13 @@ class MaskWindow(QDialog):
         print(history)
         self.settings.set("current_algorithm", history.algorithm_name)
         self.settings.set(f"algorithm.{history.algorithm_name}", history.algorithm_values)
-        seg = np.load(history.segmentation)
+        seg = np.load(history.arrays)
         print(seg)
-        history.segmentation.seek(0)
-        self.settings.segmentation = seg[seg.files[0]]
-        if history.mask is not None:
-            mask = np.load(history.mask)
-            self.settings.mask = mask[mask.files[0]]
-            history.mask.seek(0)
+        history.arrays.seek(0)
+        self.settings.segmentation = seg["segmentation"]
+        self.settings.full_segmentation = seg["full_segmentation"]
+        if "mask" in seg:
+            self.settings.mask = seg["mask"]
         else:
             self.settings.mask = None
         self.settings.undo_segmentation_history.append(history)
