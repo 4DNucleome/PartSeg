@@ -1,5 +1,5 @@
-from PyQt5.QtGui import QShowEvent, QCloseEvent
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtGui import QShowEvent, QDragEnterEvent, QDropEvent
+from PyQt5.QtWidgets import QMainWindow, QMessageBox
 from PyQt5.QtCore import pyqtSignal
 
 
@@ -10,6 +10,21 @@ class BaseMainWindow(QMainWindow):
         super().__init__()
         if signal_fun is not None:
             self.show_signal.connect(signal_fun)
+        self.single_file = True
+        self.setAcceptDrops(True)
 
     def showEvent(self, a0: QShowEvent):
         self.show_signal.emit()
+
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        print("Ala")
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event: QDropEvent):
+        assert all([x.isLocalFile() for x in event.mimeData().urls()])
+        paths = [x.path() for x in event.mimeData().urls()]
+        if self.single_file and len(paths) > 1:
+            QMessageBox.information(self, "To many files", "currently support only drag and drop one file")
+            return
+        print("Drop", paths)

@@ -12,6 +12,7 @@ class ErrorDialog(QDialog):
         self.cancel_btn = QPushButton("Cancel")
         self.error_description = QTextEdit()
         self.error_description.setText("".join(traceback.format_tb(exception.__traceback__)))
+        self.error_description.append(str(exception))
         self.error_description.setReadOnly(True)
         self.additional_info = QTextEdit()
 
