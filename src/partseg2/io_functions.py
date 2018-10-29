@@ -44,7 +44,8 @@ def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_se
         tar.addfile(tar_algorithm, parameters_buff)
         el_info = []
         for i, el in enumerate(history):
-            el_info.append({"index": i, "algorithm_name": el.algorithm_name, "values": el.algorithm_values})
+            el_info.append({"index": i, "algorithm_name": el.algorithm_name, "values": el.algorithm_values,
+                            "mask_property": el.mask_property})
             hist_info = get_tarinfo(f"history/arrays_{i}.npz", el.arrays)
             tar.addfile(hist_info, el.arrays)
         if len(el_info) > 0:

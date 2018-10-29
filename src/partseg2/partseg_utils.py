@@ -4,7 +4,7 @@ from .algorithm_description import SegmentationProfile
 from .statistics_calculation import StatisticProfile
 from project_utils.settings import ProfileEncoder, profile_hook
 
-HistoryElement = namedtuple("HistoryElement", ["algorithm_name", "algorithm_values", "arrays"])
+HistoryElement = namedtuple("HistoryElement", ["algorithm_name", "algorithm_values", "mask_property", "arrays"])
 
 
 class PartEncoder(ProfileEncoder):

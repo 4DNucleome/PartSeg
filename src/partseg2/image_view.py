@@ -76,6 +76,7 @@ class ImageViewWithMask(ImageView):
         if not self.mask_show.isChecked() or self._settings.mask is None:
             return
         mask_layer = self._settings.mask[self.stack_slider.value()]
+        mask_layer = mask_layer.astype(np.bool)
 
         if self.mask_prop[1] == 1:
             im[~mask_layer] = MASK_COLORS[self.mask_prop[0]]

@@ -4,10 +4,12 @@ import sys
 import typing
 
 import matplotlib
+
 matplotlib.use("Qt5Agg")
 
 from PyQt5.QtCore import QObject, pyqtSignal
 from .image_operations import RadiusType
+from .mask_create import MaskProperty
 from matplotlib import pyplot
 import copy
 import numpy as np
@@ -39,7 +41,7 @@ class ImageSettings(QObject):
 
     @image_spacing.setter
     def image_spacing(self, value):
-        assert (len(value) in [2,3])
+        assert (len(value) in [2, 3])
         if len(value) == 2:
             self._image_spacing = [self._image_spacing[0]] + list(value)
         else:
@@ -79,7 +81,8 @@ class ImageSettings(QObject):
         if value.file_path is not None:
             self.image_changed[str].emit(value.file_path)
         self._image_changed()
-        self.segmentation = None
+        self._segmentation = None
+        self.sizes = []
 
         self.image_changed.emit(self._image)
         self.image_changed[int].emit(self._image.channels)
@@ -156,7 +159,10 @@ class ProfileEncoder(json.JSONEncoder):
             return {"__ProfileDict__": True, **o.my_dict}
         if isinstance(o, RadiusType):
             return {"__RadiusType__": True, "value": o.value}
+        if isinstance(o, MaskProperty):
+            return {"__MaskProperty__": True, "value": o._asdict()}
         return super().default(o)
+
 
 def profile_hook(_, dkt):
     if "__ProfileDict__" in dkt:
@@ -166,12 +172,14 @@ def profile_hook(_, dkt):
         return res
     if "__RadiusType__" in dkt:
         return RadiusType(dkt["value"])
+    if "__MaskProperty__" in dkt:
+        return RadiusType(**dkt["value"])
     return dkt
-
 
 
 class ViewSettings(ImageSettings):
     colormap_changes = pyqtSignal()
+
     def __init__(self):
         super().__init__()
         self.color_map = []
@@ -190,7 +198,7 @@ class ViewSettings(ImageSettings):
         self.colormap_changes.emit()
 
     @property
-    def available_colormaps(_):
+    def available_colormaps(self):
         return pyplot.colormaps()
 
     def _image_changed(self):
@@ -214,7 +222,7 @@ class ViewSettings(ImageSettings):
 
     def load_view_profiles(self, dicts):
         for k, v in dicts.items():
-            self.profile_dict[k] = v # ProfileDict()
+            self.profile_dict[k] = v  # ProfileDict()
             # self.profile_dict[k].my_dict = v
 
 
@@ -237,13 +245,13 @@ class BaseSettings(ViewSettings):
     def dump_part(self, file_path, path_in_dict, names=None):
         data = self.get(path_in_dict)
         if names is not None:
-            data = dict([(name, data[name]) for name in names ])
+            data = dict([(name, data[name]) for name in names])
         with open(file_path, 'w') as ff:
             json.dump(data, ff, cls=self.json_encoder_class, indent=2)
 
     def load_part(self, file_path):
         with open(file_path, 'r') as ff:
-           return json.load(ff, object_hook=self.decode_hook)
+            return json.load(ff, object_hook=self.decode_hook)
 
     def dump(self, file_path=None):
         if file_path is None:
@@ -260,7 +268,6 @@ class BaseSettings(ViewSettings):
         with open(file_path, 'w') as ff:
             ff.write(data_dump)
 
-
     def load(self, file_path=None):
         if file_path is None:
             file_path = self.json_path
@@ -275,8 +282,8 @@ class BaseSettings(ViewSettings):
                 logging.error('error in load "view_profiles"')
             try:
                 for k, v in data["segment_profile"].items():
-                    self.segmentation_dict[k] = v #ProfileDict()
-                    #self.segmentation_dict[k].my_dict = v
+                    self.segmentation_dict[k] = v  # ProfileDict()
+                    # self.segmentation_dict[k].my_dict = v
             except KeyError:
                 logging.error('error in load "segment_profile"')
             except AttributeError:

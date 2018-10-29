@@ -28,6 +28,7 @@ from project_utils.global_settings import static_file_folder
 from project_utils.image_operations import dilate, erode, RadiusType
 from project_utils.image_read_thread import ImageReaderThread
 from project_utils.main_window import BaseMainWindow
+from project_utils.mask_create import calculate_mask
 from .partseg_settings import PartSettings, load_project, save_project, save_labeled_image
 from .partseg_utils import HistoryElement
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
@@ -574,18 +575,9 @@ class MaskWindow(QDialog):
         algorithm_name = self.settings.get("last_executed_algorithm")
         algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
         segmentation = self.settings.segmentation
-        mask = segmentation > 0
-        dilate_use = self.mask_widget.dilate_dim.value()
-        if dilate_use != RadiusType.NO:
-            if dilate_radius_sign > 0:
-                mask = dilate(mask, dilate_radius, dilate_use == RadiusType.R2D)
-            elif dilate_radius_sign < 0:
-                mask = erode(mask, -dilate_radius, dilate_use == RadiusType.R2D)
-        if self.mask_widget.fill_holes.value() == RadiusType.R2D:
-            mask = fill_2d_holes_in_mask(mask, self.mask_widget.max_hole_size.value())
-        elif self.mask_widget.fill_holes.value() == RadiusType.R3D:
-            mask = fill_holes_in_mask(mask, self.mask_widget.max_hole_size.value())
-        mask = mask.astype(np.bool)
+        mask_property = self.mask_widget.get_mask_property()
+        mask = calculate_mask(mask_property, segmentation,
+                       self.settings.mask, self.settings.image_spacing)
         arrays = BytesIO()
         arrays_dict = {"segmentation" : segmentation, "full_segmentation": self.settings.full_segmentation}
         if self.settings.mask is not None:
@@ -593,10 +585,9 @@ class MaskWindow(QDialog):
         np.savez_compressed(arrays, arrays_dict)
         arrays.seek(0)
         self.settings.segmentation_history.append(
-            HistoryElement(algorithm_name, algorithm_values, arrays))
+            HistoryElement(algorithm_name, algorithm_values, mask_property, arrays))
         self.settings.undo_segmentation_history = []
         self.settings.mask = mask
-        print(self.settings.segmentation_history[-1])
         self.close()
 
     def prev_mask(self):
