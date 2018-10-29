@@ -46,7 +46,9 @@ def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_se
         for i, el in enumerate(history):
             el_info.append({"index": i, "algorithm_name": el.algorithm_name, "values": el.algorithm_values,
                             "mask_property": el.mask_property})
+            el.arrays.seek(0)
             hist_info = get_tarinfo(f"history/arrays_{i}.npz", el.arrays)
+            el.arrays.seek(0)
             tar.addfile(hist_info, el.arrays)
         if len(el_info) > 0:
             hist_str = json.dumps(el_info, cls=PartEncoder)

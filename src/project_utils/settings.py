@@ -14,7 +14,7 @@ from matplotlib import pyplot
 import copy
 import numpy as np
 from os import path, makedirs
-
+from .class_generator import ReadonlyClassEncoder, readonly_hook
 from tiff_image import Image, ImageReader
 
 
@@ -153,14 +153,12 @@ class ProfileDict(object):
         return curr_dict
 
 
-class ProfileEncoder(json.JSONEncoder):
+class ProfileEncoder(ReadonlyClassEncoder):
     def default(self, o):
         if isinstance(o, ProfileDict):
             return {"__ProfileDict__": True, **o.my_dict}
         if isinstance(o, RadiusType):
             return {"__RadiusType__": True, "value": o.value}
-        if isinstance(o, MaskProperty):
-            return {"__MaskProperty__": True, "value": o._asdict()}
         return super().default(o)
 
 
@@ -172,9 +170,7 @@ def profile_hook(_, dkt):
         return res
     if "__RadiusType__" in dkt:
         return RadiusType(dkt["value"])
-    if "__MaskProperty__" in dkt:
-        return RadiusType(**dkt["value"])
-    return dkt
+    return readonly_hook(_, dkt)
 
 
 class ViewSettings(ImageSettings):

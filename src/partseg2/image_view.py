@@ -71,6 +71,8 @@ class ImageViewWithMask(ImageView):
         self.mask_label.setDisabled(self._settings.mask is None)
         if self._settings.mask is None:
             self.mask_show.setChecked(False)
+        elif self.mask_show.isChecked():
+            self.change_image()
 
     def add_mask(self, im):
         if not self.mask_show.isChecked() or self._settings.mask is None:

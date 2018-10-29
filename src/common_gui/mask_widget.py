@@ -97,3 +97,11 @@ class MaskWidget(QWidget):
                             fill_holes=self.fill_holes.value(), max_holes_size=self.max_hole_size.value(),
                             save_components=self.save_components.isChecked(),
                             clip_to_mask=self.clip_to_mask.isChecked())
+
+    def set_mask_property(self, property: MaskProperty):
+        self.dilate_dim.setValue(property.dilate)
+        self.dilate_radius.setValue(property.dilate_radius)
+        self.fill_holes.setValue(property.fill_holes)
+        self.max_hole_size.setValue(property.max_holes_size)
+        self.save_components.setChecked(property.save_components)
+        self.clip_to_mask.setChecked(property.clip_to_mask)

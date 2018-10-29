@@ -28,7 +28,7 @@ from project_utils.global_settings import static_file_folder
 from project_utils.image_operations import dilate, erode, RadiusType
 from project_utils.image_read_thread import ImageReaderThread
 from project_utils.main_window import BaseMainWindow
-from project_utils.mask_create import calculate_mask
+from project_utils.mask_create import calculate_mask, MaskProperty
 from .partseg_settings import PartSettings, load_project, save_project, save_labeled_image
 from .partseg_utils import HistoryElement
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
@@ -562,6 +562,9 @@ class MaskWindow(QDialog):
         button_layout.addWidget(self.next_button)
         main_layout.addLayout(button_layout)
         self.setLayout(main_layout)
+        if self.settings.undo_segmentation_history:
+            mask_prop: MaskProperty = self.settings.undo_segmentation_history[-1].mask_property
+            self.mask_widget.set_mask_property(mask_prop)
 
     def reset_next_fun(self):
         self.settings.undo_segmentation_settings = []
@@ -582,7 +585,7 @@ class MaskWindow(QDialog):
         arrays_dict = {"segmentation" : segmentation, "full_segmentation": self.settings.full_segmentation}
         if self.settings.mask is not None:
             arrays_dict["mask"] = self.settings.mask
-        np.savez_compressed(arrays, arrays_dict)
+        np.savez_compressed(arrays, **arrays_dict)
         arrays.seek(0)
         self.settings.segmentation_history.append(
             HistoryElement(algorithm_name, algorithm_values, mask_property, arrays))
@@ -592,11 +595,10 @@ class MaskWindow(QDialog):
 
     def prev_mask(self):
         history: HistoryElement = self.settings.segmentation_history.pop()
-        print(history)
         self.settings.set("current_algorithm", history.algorithm_name)
         self.settings.set(f"algorithm.{history.algorithm_name}", history.algorithm_values)
+        history.arrays.seek(0)
         seg = np.load(history.arrays)
-        print(seg)
         history.arrays.seek(0)
         self.settings.segmentation = seg["segmentation"]
         self.settings.full_segmentation = seg["full_segmentation"]

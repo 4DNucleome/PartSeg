@@ -1,9 +1,19 @@
-from __future__ import print_function
+from project_utils.class_generator import BaseReadonlyClass
+from typing import NamedTuple, Any
+from project_utils.mask_create import calculate_mask, MaskProperty
+import typing
 
-from partseg.backend import StatisticProfile
 
-aa = StatisticProfile("aa", [("Moment of inertia", "Moment of inertia")], False, None)
+class AAA(BaseReadonlyClass):
+    field1: int
+    field2: str
+    field5: MaskProperty
+    field3: Any = "ala"
+    field4: float = 0.4
+    field6: typing.Tuple[int] = [1,2,3]
 
-print(aa.parse_statistic("Mass/(Volume/Moment of inertia)"))
-print(aa.parse_statistic("(Mass aa/Moment of inertia[thr=2200]/(Volume/Moment of inertia)"))
-print(aa.parse_statistic("Mass"))
+a = AAA(1, "a", 3)
+print(a.field5)
+
+#print(calculate_mask.__annotations__)
+#print(MaskProperty._source)

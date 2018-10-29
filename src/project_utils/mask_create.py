@@ -3,32 +3,23 @@ from copy import copy
 
 import numpy as np
 import typing
-
+from .class_generator import BaseReadonlyClass
 from project_utils.image_operations import dilate, erode, RadiusType
 import SimpleITK as sitk
 
-MaskProperty = namedtuple("MaskProperty",
+"""MaskProperty = namedtuple("MaskProperty",
                           ["dilate", "dilate_radius", "fill_holes", "max_holes_size", "save_components",
-                           "clip_to_mask"])
+                           "clip_to_mask"])"""
 
-print(MaskProperty._source)
 
-class MaskProperty2(object):
-    def __init__(self, dilate: RadiusType, dilate_radius: float, fill_holes: RadiusType, max_holes_size: int,
-                 save_components: bool, clip_to_mask: bool):
-        self._dilate = dilate
-        self._dilate_radius = dilate_radius,
-        self._fill_holes = fill_holes
-        self._max_holes_size = max_holes_size
-        self._save_components = save_components
-        self._clip_to_mask = clip_to_mask
+class MaskProperty(BaseReadonlyClass):
+    dilate: RadiusType
+    dilate_radius: int
+    fill_holes: RadiusType
+    max_holes_size: int
+    save_components: bool
+    clip_to_mask: bool
 
-    def to_dict(self):
-        return {}
-
-    @property
-    def dilate(self):
-        return self._dilate
 
 
 

@@ -31,7 +31,8 @@ class Image(object):
     def set_mask(self, mask: np.ndarray):
         if mask is None:
             self._mask_array = None
-        self._mask_array = self.fit_array_to_image(mask)
+        else:
+            self._mask_array = self.fit_array_to_image(mask)
 
     @property
     def mask(self):
