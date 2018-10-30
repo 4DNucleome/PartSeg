@@ -20,7 +20,14 @@ class MaskProperty(BaseReadonlyClass):
     save_components: bool
     clip_to_mask: bool
 
+def mp_eq(self, other):
+    return self.__class__ == other.__class__ and self.dilate == other.dilate and \
+           self.fill_holes == other.fill_holes and self.save_components == other.save_components and \
+           self.clip_to_mask == other.clip_to_mask and \
+           (self.dilate == RadiusType.NO or (self.dilate_radius == other.dilate_radius)) and \
+           (self.fill_holes == RadiusType.NO or (self.max_holes_size == other.max_holes_size))
 
+MaskProperty.__eq__ = mp_eq
 
 
 def calculate_mask(mask_description: MaskProperty, segmentation: np.ndarray, old_mask: typing.Union[None, np.ndarray],

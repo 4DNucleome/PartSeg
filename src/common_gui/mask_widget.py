@@ -1,5 +1,6 @@
 from functools import partial
 
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget, QAbstractSpinBox, QCheckBox, QLabel, QHBoxLayout, QSpinBox, QVBoxLayout
 from common_gui.dim_combobox import DimComboBox
 from project_utils.algorithm_base import calculate_operation_radius
@@ -13,6 +14,8 @@ def off_widget(widget: QWidget, combo_box: DimComboBox):
 
 
 class MaskWidget(QWidget):
+    values_changed = pyqtSignal()
+
     def __init__(self, settings: ImageSettings, parent=None):
         super().__init__(parent)
         self.setContentsMargins(0, 0, 0, 0)
@@ -47,6 +50,17 @@ class MaskWidget(QWidget):
         self.save_components = QCheckBox()
         self.clip_to_mask = QCheckBox()
 
+        # noinspection PyUnresolvedReferences
+        self.dilate_radius.valueChanged.connect(self.values_changed.emit)
+        # noinspection PyUnresolvedReferences
+        self.dilate_dim.currentIndexChanged.connect(self.values_changed.emit)
+        # noinspection PyUnresolvedReferences
+        self.fill_holes.currentIndexChanged.connect(self.values_changed.emit)
+        # noinspection PyUnresolvedReferences
+        self.max_hole_size.valueChanged.connect(self.values_changed.emit)
+        self.save_components.stateChanged.connect(self.values_changed.emit)
+        self.clip_to_mask.stateChanged.connect(self.values_changed.emit)
+
         layout = QVBoxLayout()
         layout1 = QHBoxLayout()
         layout1.addWidget(QLabel("Dilate mask:"))
@@ -79,7 +93,7 @@ class MaskWidget(QWidget):
         radius = calculate_operation_radius(self.dilate_radius.value(), self.settings.image_spacing,
                                             self.dilate_dim.value())
         if isinstance(radius, (list, tuple)):
-            return [int(x+0.5) for x in radius]
+            return [int(x + 0.5) for x in radius]
         return int(radius)
 
     def dilate_change(self):
@@ -93,10 +107,13 @@ class MaskWidget(QWidget):
                 self.radius_information.setText(f"Real radius: {dilate_radius}")
 
     def get_mask_property(self):
-        return MaskProperty(dilate=self.dilate_dim.value(), dilate_radius=self.dilate_radius.value(),
-                            fill_holes=self.fill_holes.value(), max_holes_size=self.max_hole_size.value(),
-                            save_components=self.save_components.isChecked(),
-                            clip_to_mask=self.clip_to_mask.isChecked())
+        return \
+            MaskProperty(dilate=self.dilate_dim.value(),
+                         dilate_radius=self.dilate_radius.value() if self.dilate_dim.value() != RadiusType.NO else 0,
+                         fill_holes=self.fill_holes.value(),
+                         max_holes_size=self.max_hole_size.value() if self.fill_holes.value() != RadiusType.NO else 0,
+                         save_components=self.save_components.isChecked(),
+                         clip_to_mask=self.clip_to_mask.isChecked())
 
     def set_mask_property(self, property: MaskProperty):
         self.dilate_dim.setValue(property.dilate)

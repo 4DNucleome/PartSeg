@@ -443,6 +443,118 @@ class MainMenu(QWidget):
         self.advanced_window.show()
 
 
+class MaskWindow(QDialog):
+    def __init__(self, settings:PartSettings):
+        super(MaskWindow, self).__init__()
+        self.setWindowTitle("Mask manager")
+        self.settings = settings
+        main_layout = QVBoxLayout()
+        self.mask_widget = MaskWidget(settings, self)
+        main_layout.addWidget(self.mask_widget)
+        try:
+            mask_property = self.settings.get("mask_manager.mask_property")
+            self.mask_widget.set_mask_property(mask_property)
+        except KeyError:
+            pass
+
+        if len(settings.undo_segmentation_history) == 0:
+            self.save_draw = QCheckBox("Save draw", self)
+        else:
+            self.save_draw = QCheckBox("Add draw", self)
+        self.reset_next_btn = QPushButton("Reset Next")
+        self.reset_next_btn.clicked.connect(self.reset_next_fun)
+        if len(settings.undo_segmentation_history) == 0:
+            self.reset_next_btn.setDisabled(True)
+        self.set_next_btn = QPushButton("Set Next")
+        if not self.settings.undo_segmentation_history:
+            self.set_next_btn.setDisabled(True)
+        self.set_next_btn.clicked.connect(self.set_next)
+        self.cancel = QPushButton("Cancel", self)
+        self.cancel.clicked.connect(self.close)
+        self.prev_button = QPushButton(f"Previous mask ({len(settings.segmentation_history)})", self)
+        if len(settings.segmentation_history) == 0:
+            self.prev_button.setDisabled(True)
+        self.next_button = QPushButton(f"Next mask ({len(settings.undo_segmentation_history)})", self)
+        if len(settings.undo_segmentation_history) == 0:
+            self.next_button.setText("Next mask (new)")
+        self.next_button.clicked.connect(self.next_mask)
+        self.prev_button.clicked.connect(self.prev_mask)
+        op_layout = QHBoxLayout()
+        op_layout.addWidget(self.save_draw)
+        op_layout.addWidget(self.mask_widget.radius_information)
+        main_layout.addLayout(op_layout)
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.cancel)
+        button_layout.addWidget(self.set_next_btn)
+        button_layout.addWidget(self.reset_next_btn)
+        main_layout.addLayout(button_layout)
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.prev_button)
+        button_layout.addWidget(self.next_button)
+        main_layout.addLayout(button_layout)
+        self.setLayout(main_layout)
+        if self.settings.undo_segmentation_history:
+            mask_prop: MaskProperty = self.settings.undo_segmentation_history[-1].mask_property
+            self.mask_widget.set_mask_property(mask_prop)
+        self.mask_widget.values_changed.connect(self.values_changed)
+
+    def set_next(self):
+        if self.settings.undo_segmentation_history:
+            self.mask_widget.set_mask_property(self.settings.undo_segmentation_history[-1].mask_property)
+
+    def values_changed(self):
+        if self.settings.undo_segmentation_history and \
+                self.mask_widget.get_mask_property() == self.settings.undo_segmentation_history[-1].mask_property:
+            self.next_button.setText(f"Next mask ({len(self.settings.undo_segmentation_history)})")
+        else:
+            self.next_button.setText("Next mask (new)")
+
+    def reset_next_fun(self):
+        self.settings.undo_segmentation_settings = []
+        self.next_button.setText("Next mask (new)")
+        self.reset_next_btn.setDisabled(True)
+
+    def next_mask(self):
+        algorithm_name = self.settings.get("last_executed_algorithm")
+        algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
+        segmentation = self.settings.segmentation
+        mask_property = self.mask_widget.get_mask_property()
+        self.settings.set("mask_manager.mask_property", mask_property)
+        mask = calculate_mask(mask_property, segmentation,
+                       self.settings.mask, self.settings.image_spacing)
+        arrays = BytesIO()
+        arrays_dict = {"segmentation" : segmentation, "full_segmentation": self.settings.full_segmentation}
+        if self.settings.mask is not None:
+            arrays_dict["mask"] = self.settings.mask
+        np.savez_compressed(arrays, **arrays_dict)
+        arrays.seek(0)
+        self.settings.segmentation_history.append(
+            HistoryElement(algorithm_name, algorithm_values, mask_property, arrays))
+        if self.settings.undo_segmentation_history and \
+                self.settings.undo_segmentation_history[-1] == self.settings.segmentation_history[-1]:
+            self.settings.undo_segmentation_history.pop()
+        else:
+            self.settings.undo_segmentation_history = []
+        self.settings.mask = mask
+        self.close()
+
+    def prev_mask(self):
+        history: HistoryElement = self.settings.segmentation_history.pop()
+        self.settings.set("current_algorithm", history.algorithm_name)
+        self.settings.set(f"algorithm.{history.algorithm_name}", history.algorithm_values)
+        history.arrays.seek(0)
+        seg = np.load(history.arrays)
+        history.arrays.seek(0)
+        self.settings.segmentation = seg["segmentation"]
+        self.settings.full_segmentation = seg["full_segmentation"]
+        if "mask" in seg:
+            self.settings.mask = seg["mask"]
+        else:
+            self.settings.mask = None
+        self.settings.undo_segmentation_history.append(history)
+        self.close()
+
+
 class MainWindow(BaseMainWindow):
     def __init__(self, title, signal_fun=None):
         super().__init__(signal_fun)
@@ -519,123 +631,3 @@ class MainWindow(BaseMainWindow):
         # print(self.settings.segmentation_dict["default"].my_dict)
         self.settings.set_in_profile("main_window_geometry", bytes(self.saveGeometry().toHex()).decode('ascii'))
         self.settings.dump()
-
-
-class MaskWindow(QDialog):
-    def __init__(self, settings:PartSettings):
-        super(MaskWindow, self).__init__()
-        self.setWindowTitle("Mask manager")
-        self.settings = settings
-        main_layout = QVBoxLayout()
-        self.mask_widget = MaskWidget(settings, self)
-        main_layout.addWidget(self.mask_widget)
-        self.mask_widget.dilate_radius.setValue(self.settings.get("mask_manager.dilate_radius", 1))
-
-        op_layout = QHBoxLayout()
-        if len(settings.undo_segmentation_history) == 0:
-            self.save_draw = QCheckBox("Save draw", self)
-        else:
-            self.save_draw = QCheckBox("Add draw", self)
-        op_layout.addWidget(self.save_draw)
-        op_layout.addWidget(self.mask_widget.radius_information)
-        self.reset_next = QPushButton("Reset Next")
-        self.reset_next.clicked.connect(self.reset_next_fun)
-        if len(settings.undo_segmentation_history) == 0:
-            self.reset_next.setDisabled(True)
-        self.cancel = QPushButton("Cancel", self)
-        self.cancel.clicked.connect(self.close)
-        main_layout.addLayout(op_layout)
-        self.prev_button = QPushButton(f"Previous mask ({len(settings.segmentation_history)})", self)
-        if len(settings.segmentation_history) == 0:
-            self.prev_button.setDisabled(True)
-        self.next_button = QPushButton(f"Next mask ({len(settings.undo_segmentation_history)})", self)
-        if len(settings.undo_segmentation_history) == 0:
-            self.next_button.setText("Next mask (new)")
-        self.next_button.clicked.connect(self.next_mask)
-        self.prev_button.clicked.connect(self.prev_mask)
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(self.cancel)
-        button_layout.addWidget(self.reset_next)
-        main_layout.addLayout(button_layout)
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(self.prev_button)
-        button_layout.addWidget(self.next_button)
-        main_layout.addLayout(button_layout)
-        self.setLayout(main_layout)
-        if self.settings.undo_segmentation_history:
-            mask_prop: MaskProperty = self.settings.undo_segmentation_history[-1].mask_property
-            self.mask_widget.set_mask_property(mask_prop)
-
-    def reset_next_fun(self):
-        self.settings.undo_segmentation_settings = []
-        self.next_button.setText("Next mask (new)")
-        self.reset_next.setDisabled(True)
-
-    def next_mask(self):
-        dilate_radius = self.mask_widget.get_dilate_radius()
-        dilate_radius_sign = self.mask_widget.dilate_radius.value()
-        self.settings.set("mask_manager.dilate_radius", dilate_radius_sign)
-        algorithm_name = self.settings.get("last_executed_algorithm")
-        algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
-        segmentation = self.settings.segmentation
-        mask_property = self.mask_widget.get_mask_property()
-        mask = calculate_mask(mask_property, segmentation,
-                       self.settings.mask, self.settings.image_spacing)
-        arrays = BytesIO()
-        arrays_dict = {"segmentation" : segmentation, "full_segmentation": self.settings.full_segmentation}
-        if self.settings.mask is not None:
-            arrays_dict["mask"] = self.settings.mask
-        np.savez_compressed(arrays, **arrays_dict)
-        arrays.seek(0)
-        self.settings.segmentation_history.append(
-            HistoryElement(algorithm_name, algorithm_values, mask_property, arrays))
-        self.settings.undo_segmentation_history = []
-        self.settings.mask = mask
-        self.close()
-
-    def prev_mask(self):
-        history: HistoryElement = self.settings.segmentation_history.pop()
-        self.settings.set("current_algorithm", history.algorithm_name)
-        self.settings.set(f"algorithm.{history.algorithm_name}", history.algorithm_values)
-        history.arrays.seek(0)
-        seg = np.load(history.arrays)
-        history.arrays.seek(0)
-        self.settings.segmentation = seg["segmentation"]
-        self.settings.full_segmentation = seg["full_segmentation"]
-        if "mask" in seg:
-            self.settings.mask = seg["mask"]
-        else:
-            self.settings.mask = None
-        self.settings.undo_segmentation_history.append(history)
-        self.close()
-
-def fill_holes_in_mask(mask, volume):
-    """:rtype: np.ndarray"""
-    holes_mask = (mask == 0).astype(np.uint8)
-    component_mask = sitk.GetArrayFromImage(sitk.ConnectedComponent(sitk.GetImageFromArray(holes_mask)))
-    border_set = set()
-    for dim_num in range(component_mask.ndim):
-        border_set.update(np.unique(np.take(component_mask, [0, -1], axis=dim_num)))
-    if volume > 0:
-        sizes = np.bincount(component_mask)
-        for i, v in enumerate(sizes[1:], 1):
-            if v < volume:
-                component_mask[component_mask == i] = 0
-    else:
-        for i in range(1, np.max(component_mask)+1):
-            if i not in border_set:
-                component_mask[component_mask == i] = 0
-    return component_mask == 0
-
-
-def fill_2d_holes_in_mask(mask, volume):
-    """
-    :type mask: np.ndarray
-    :rtype: np.ndarray
-    """
-    mask = np.copy(mask)
-    if mask.ndim == 2:
-        return fill_holes_in_mask(mask, volume)
-    for i in range(mask.shape[0]):
-        mask[i] = fill_holes_in_mask(mask[i], volume)
-    return mask

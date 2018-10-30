@@ -49,10 +49,16 @@ class {typename}(BaseReadonlyClass):
     def __repr__(self):
         'Return a nicely formatted representation string'
         return self.__class__.__name__ + '({repr_fmt})' % _attrgetter(*self.__slots__)(self)
+    
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ and self.as_tuple() == other.as_tuple()
 
     def asdict(self):
         'Return a new OrderedDict which maps field names to their values.'
         return OrderedDict(zip(self._fields, _attrgetter(*self.__slots__)(self)))
+    
+    def as_tuple(self):
+        return {tuple_fields}
 
     def __getnewargs__(self):
         'Return self as a plain tuple.  Used by copy and pickle.'
@@ -97,10 +103,12 @@ def _make_class(typename, types, defaults_dict, base_class):
         defaults_dict[name_])) if name_ in defaults_dict else "{}: {}".format(name_, type_dict[name_]) for name_ in
                            types.keys()])
     init_sig = ["self._{name} = {name}".format(name=name_) for name_ in type_dict.keys()]
+    tuple_list = ["self._{name}".format(name=name_) for name_ in type_dict.keys()]
     class_definition = _class_template.format(
         imports="\n".join(import_set),
         typename=typename,
         init_fields="\n        ".join(init_sig),
+        tuple_fields=", ".join(tuple_list),
         signature=signature,
         module = BaseReadonlyClass_.__module__,
         field_names=tuple(field_names),
@@ -124,7 +132,7 @@ def _make_class(typename, types, defaults_dict, base_class):
 
 class BaseMeta(type):
     def __new__(cls, name, bases, attrs):
-        print("BaseMeta.__new__", cls, name, bases, attrs)
+        # print("BaseMeta.__new__", cls, name, bases, attrs)
         if attrs.get('_root', False):
             return super().__new__(cls, name, bases, attrs)
         if name in class_register:
@@ -196,7 +204,7 @@ class ReadonlyClassEncoder(json.JSONEncoder):
 
 def readonly_hook(_, dkt):
     if "__ReadOnly__" in dkt:
-        del dkt["__ProfileDict__"]
+        del dkt["__ReadOnly__"]
         cls = class_register[dkt["__subtype__"]]
         del dkt["__subtype__"]
         res = cls(**dkt)
