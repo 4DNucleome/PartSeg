@@ -1,4 +1,5 @@
 from project_utils.image_operations import gaussian, RadiusType
+from tiff_image import Image
 
 
 def calculate_operation_radius(radius, spacing, gauss_type):
@@ -15,7 +16,8 @@ def calculate_operation_radius(radius, spacing, gauss_type):
 class SegmentationAlgorithm(object):
     def __init__(self):
         super().__init__()
-        self.image = None
+        self.image: Image = None
+        self.channel = None
         self.segmentation = None
         self.spacing = None
         self.use_psychical_unit = False
@@ -36,14 +38,24 @@ class SegmentationAlgorithm(object):
         self.spacing = spacing
         self.use_psychical_unit = use_physical_unit
 
+    def get_channel(self, channel_idx):
+        return self.image.get_channel(channel_idx)
+
+
     def get_gauss(self, gauss_type, gauss_radius):
         if gauss_type == RadiusType.NO:
-            return self.image
+            return self.channel
         assert isinstance(gauss_type, RadiusType)
         gauss_radius = calculate_operation_radius(gauss_radius, self.spacing, gauss_type)
         layer = gauss_type == RadiusType.R2D
-        return gaussian(self.image, gauss_radius, layer=layer)
+        return gaussian(self.channel, gauss_radius, layer=layer)
 
+    def set_image(self, image):
+        self.image = image
+
+    def set_exclude_mask(self):
+        """For Stack Seg - designed for mask part of image - maybe use standardize it to mask"""
+        pass
 
     def set_parameters(self, *args, **kwargs):
         raise NotImplementedError()

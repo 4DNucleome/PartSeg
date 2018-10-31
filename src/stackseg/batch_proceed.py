@@ -63,7 +63,7 @@ class BatchProceed(QThread):
                     self.components = []
                     blank = None
                 temp_settings.image = reader.read(self.base_file)
-                self.algorithm.set_parameters(image=temp_settings.image.get_channel(self.channel_num)[0],
+                self.algorithm.set_parameters(image=temp_settings.image.get_channel(self.channel_num),
                                               exclude_mask=blank, **self.parameters)
                 segmentation = self.algorithm.calculation_run(self.progress_info)
                 name = path.basename(file_path)

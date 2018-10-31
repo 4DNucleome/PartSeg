@@ -416,7 +416,7 @@ class MainMenu(QWidget):
                     if self._settings.segmentation is None:
                         QMessageBox.warning(self, "No segmentation", "Cannot save project with no segmentation",
                                             QMessageBox.Ok)
-                        return 
+                        return
                     self._settings.save_project(file_path)
                 elif selected_filter == "Labeled image (*.tif)":
                     save_labeled_image(file_path, self._settings)

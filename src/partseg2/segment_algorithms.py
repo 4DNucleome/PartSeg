@@ -24,7 +24,7 @@ class RestartableAlgorithm(SegmentationAlgorithm, ABC):
         self.new_parameters = {}
 
     def set_image(self, image):
-        self.image = image
+        super().set_image(image)
         self.parameters.clear()
 
     def get_info_text(self):
@@ -51,7 +51,10 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
 
     def calculation_run(self, _report_fun):
         restarted = False
-        if self.parameters["gauss_radius"] != self.new_parameters["gauss_radius"] or \
+        if self.parameters["channel"] != self.new_parameters["channel"]:
+            self.channel = self.get_channel(self.new_parameters["channel"])
+            restarted = True
+        if restarted or self.parameters["gauss_radius"] != self.new_parameters["gauss_radius"] or \
                 self.new_parameters["use_gauss"] != self.parameters["use_gauss"]:
             self.gauss_image = self.get_gauss(self.new_parameters["use_gauss"], self.new_parameters["gauss_radius"])
             restarted = True
@@ -86,24 +89,23 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             thr = self.new_parameters["threshold"]
         return self.threshold_operator(image, thr).astype(np.uint8)
 
-    def set_image(self, image):
-        self.image = image
-        self.parameters["gauss_radius"] = None
-        self.parameters["use_gauss"] = None
-
     def set_mask(self, mask):
         self.mask = mask
         self.new_parameters["threshold"] = self.parameters["threshold"]
         self.parameters["threshold"] = None
 
-
-class OneThresholdAlgorithm(ThresholdBaseAlgorithm):
-    def set_parameters(self, threshold, minimum_size, use_gauss, gauss_radius, side_connection):
+    def _set_parameters(self, channel, threshold, minimum_size, use_gauss, gauss_radius, side_connection):
+        self.new_parameters["channel"] = channel
         self.new_parameters["threshold"] = threshold
         self.new_parameters["minimum_size"] = minimum_size
         self.new_parameters["use_gauss"] = use_gauss
         self.new_parameters["gauss_radius"] = gauss_radius
         self.new_parameters["side_connection"] = side_connection
+
+
+class OneThresholdAlgorithm(ThresholdBaseAlgorithm):
+    def set_parameters(self, *args, **kwargs):
+        self._set_parameters(*args, **kwargs)
 
 
 class LowerThresholdAlgorithm(OneThresholdAlgorithm):
@@ -115,12 +117,8 @@ class UpperThresholdAlgorithm(OneThresholdAlgorithm):
 
 
 class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
-    def set_parameters(self, lower_threshold, upper_threshold, minimum_size, use_gauss, gauss_radius, side_connection):
-        self.new_parameters["threshold"] = lower_threshold, upper_threshold
-        self.new_parameters["minimum_size"] = minimum_size
-        self.new_parameters["use_gauss"] = use_gauss
-        self.new_parameters["gauss_radius"] = gauss_radius
-        self.new_parameters["side_connection"] = side_connection
+    def set_parameters(self, lower_threshold, upper_threshold, *args, **kwargs):
+        self._set_parameters(threshold=(lower_threshold, upper_threshold), *args, **kwargs)
 
     def _threshold(self, image, thr=None):
         return ((image > self.new_parameters["threshold"][0]) * (image < self.new_parameters["threshold"][1])).astype(
@@ -140,13 +138,9 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm):
         self.finally_segment = None
         self.final_sizes = []
 
-    def set_parameters(self, threshold, minimum_size, use_gauss, gauss_radius, base_threshold, side_connection):
-        self.new_parameters["threshold"] = threshold
-        self.new_parameters["minimum_size"] = minimum_size
-        self.new_parameters["use_gauss"] = use_gauss
-        self.new_parameters["gauss_radius"] = gauss_radius
+    def set_parameters(self, base_threshold, *args, **kwargs):
+        self._set_parameters(*args, **kwargs)
         self.new_parameters["base_threshold"] = base_threshold
-        self.new_parameters["side_connection"] = side_connection
 
     def calculation_run(self, report_fun):
         segment_data = super().calculation_run(report_fun)

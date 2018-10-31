@@ -2,11 +2,10 @@ from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 from typing import Type, List
 
-import numpy as np
-import tifffile
 from PyQt5.QtGui import QHideEvent, QShowEvent
 from PyQt5.QtWidgets import QComboBox, QCheckBox, QWidget, QVBoxLayout, QLabel, QFormLayout, \
-    QAbstractSpinBox, QScrollArea, QMessageBox
+    QAbstractSpinBox, QScrollArea
+
 from six import with_metaclass
 
 from common_gui.dim_combobox import DimComboBox
@@ -16,8 +15,9 @@ from project_utils.error_dialog import ErrorDialog
 from project_utils.image_operations import to_radius_type_dict, RadiusType
 from project_utils.segmentation_thread import SegmentationThread
 from project_utils.universal_const import UNIT_SCALE
+from tiff_image import Image
 
-from .settings import ImageSettings
+from .settings import ImageSettings, BaseSettings
 
 
 class AlgorithmProperty(object):
@@ -68,6 +68,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
     def get_field(self):
         field = self.qt_class_dict[self.value_type]()
         if isinstance(field, DimComboBox):
+            # noinspection PyTypeChecker
             field.setValue(self.default_value)
         elif isinstance(field, QComboBox):
             field.addItems(self.range)
@@ -94,19 +95,19 @@ class AbstractAlgorithmSettingsWidget(with_metaclass(ABCMeta, object)):
         return dict()
 
 
-class AlgorithmSettingsWidget(QScrollArea):
+class BaseAlgorithmSettingsWidget(QScrollArea):
     algorithm_thread: SegmentationThread
     gauss_radius_name = "gauss_radius"
     use_gauss_name = "use_gauss"
 
-    def __init__(self, settings, name, element_list, algorithm: Type[SegmentationAlgorithm]):
+    def __init__(self, settings: BaseSettings, name, element_list, algorithm: Type[SegmentationAlgorithm]):
         """
         For algorithm which works on one channel
         :type settings: ImageSettings
         :param element_list:
         :param settings:
         """
-        super(AlgorithmSettingsWidget, self).__init__()
+        super().__init__()
         self.widget_list = []
         self.name = name
         self.algorithm = algorithm
@@ -131,21 +132,23 @@ class AlgorithmSettingsWidget(QScrollArea):
         self.settings = settings
         value_dict = self.settings.get(f"algorithms.{self.name}", {})
         self.set_values(value_dict)
-        self.settings.image_changed[int].connect(self.image_changed)
+        self.settings.image_changed[Image].connect(self.image_changed)
         self.algorithm_thread = SegmentationThread(algorithm())
         self.algorithm_thread.info_signal.connect(self.show_info)
         self.algorithm_thread.exception_occurred.connect(self.exception_occurred)
 
     def exception_occurred(self, exc: Exception):
-        dial = ErrorDialog(exc, "Error during segmentation", "test")
+        dial = ErrorDialog(exc, "Error during segmentation", f"{self.name}")
         dial.exec()
 
     def show_info(self, text):
         self.info_label.setText(text)
         self.info_label.setVisible(True)
 
-    def image_changed(self, channels_num):
+    def image_changed(self, image: Image):
         ind = self.channels_chose.currentIndex()
+        channels_num = image.channels
+        self.algorithm_thread.algorithm.set_image(image)
         self.channels_chose.clear()
         self.channels_chose.addItems(map(str, range(channels_num)))
         if ind < 0 or ind > channels_num:
@@ -153,6 +156,8 @@ class AlgorithmSettingsWidget(QScrollArea):
         self.channels_chose.setCurrentIndex(ind)
 
     def set_values(self, values_dict):
+        if "channel" in values_dict:
+            self.channels_chose.setCurrentIndex(values_dict["channel"])
         for name, el in self.widget_list:
             if name not in values_dict:
                 continue
@@ -183,6 +188,7 @@ class AlgorithmSettingsWidget(QScrollArea):
             # TODO mayby do it better. Maybe some special class for gauss choose
             if name == self.use_gauss_name:
                 res[name] = to_radius_type_dict[res[name]]
+        res["channel"] = self.channels_chose.currentIndex()
         return res
 
     def channel_num(self):
@@ -194,17 +200,21 @@ class AlgorithmSettingsWidget(QScrollArea):
         scale = UNIT_SCALE[self.settings.get("units_index")]
         self.algorithm_thread.algorithm.set_size_information(self.settings.image_spacing,
                                                              False, scale)
-        self.algorithm_thread.set_parameters(**{"exclude_mask": exclude_mask,
-                                         "image": self.settings.get_chanel(self.channels_chose.currentIndex()),
-                                                     **values})
+        self.algorithm_thread.set_parameters(**values)
         self.algorithm_thread.start()
 
     def hideEvent(self, a0: QHideEvent):
         self.algorithm_thread.clean()
 
-class InteractiveAlgorithmSettingsWidget(AlgorithmSettingsWidget):
+class AlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
+    def execute(self, exclude_mask=None):
+        self.algorithm_thread.algorithm.set_exclude_mask(exclude_mask)
+        self.algorithm_thread.algorithm.set_image(self.settings.image)
+        super().execute(exclude_mask)
+
+class InteractiveAlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
     algorithm_thread: SegmentationThread
-    def __init__(self, settings, name, element_list, algorithm: SegmentationThread,
+    def __init__(self, settings, name, element_list, algorithm: Type[SegmentationAlgorithm],
                  selector: List[QWidget]):
         super().__init__(settings, name, element_list, algorithm)
         self.selector = selector
@@ -216,8 +226,10 @@ class InteractiveAlgorithmSettingsWidget(AlgorithmSettingsWidget):
             elif isinstance(el, QCheckBox):
                 el.stateChanged.connect(self.value_updated)
             elif isinstance(el, QComboBox):
+                # noinspection PyUnresolvedReferences
                 el.currentIndexChanged.connect(self.value_updated)
-        self.channels_chose.currentIndexChanged.connect(self.channel_change)
+        # noinspection PyUnresolvedReferences
+        self.channels_chose.currentIndexChanged.connect(self.value_updated)
         settings.mask_changed.connect(self.change_mask)
 
     def value_updated(self):
@@ -229,27 +241,6 @@ class InteractiveAlgorithmSettingsWidget(AlgorithmSettingsWidget):
         if not self.isVisible():
             return
         self.algorithm_thread.algorithm.set_mask(self.settings.mask)
-
-    def channel_change(self):
-        if not self.isVisible() or self.channels_chose.currentIndex() < 0:
-            return
-        # called on image change because of reinitialize list of channels
-        self.algorithm_thread.algorithm.set_image(self.settings.get_chanel(self.channels_chose.currentIndex()))
-        if self.settings.mask is not None:
-            self.algorithm_thread.algorithm.set_mask(self.settings.mask)
-        self.value_updated()
-
-    def execute(self, exclude_mask=None):
-        values = self.get_values()
-        self.algorithm_thread.set_parameters(**values)
-        scale = UNIT_SCALE[self.settings.get("units_index", 2)] # 2- position of nm
-        self.algorithm_thread.algorithm.set_size_information(self.settings.image_spacing,
-                                                   self.settings.use_physical_unit, scale)
-        self.settings.set(f"algorithms.{self.name}", values)
-        self.algorithm_thread.start()
-
-    def showEvent(self, a0: QShowEvent):
-        self.channel_change()
 
     def disable_selector(self):
         for el in  self.selector:

@@ -27,6 +27,9 @@ class SegmentationThread(QThread):
         self.progress_signal.emit(text, num)
 
     def run(self):
+        if self.algorithm.image is None:
+            #assertion for runing algorith without image
+            return
         try:
             segment_data = self.algorithm.calculation_run(self.send_info)
         except Exception as e:

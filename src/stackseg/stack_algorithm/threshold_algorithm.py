@@ -19,6 +19,9 @@ class StackAlgorithm(SegmentationAlgorithm, ABC):
         super()._clean()
         self.exclude_mask = None
 
+    def set_exclude_mask(self, exclude_mask):
+        self.exclude_mask = exclude_mask
+
 
 class ThresholdPreview(StackAlgorithm):
 
@@ -29,6 +32,7 @@ class ThresholdPreview(StackAlgorithm):
         self.threshold = 0
 
     def calculation_run(self, _report_fun):
+        self.channel = self.get_channel(self.channel_num)
         image = self.get_gauss(self.use_gauss, self.gauss_radius)
         if self.exclude_mask is None:
             res = (image > self.threshold).astype(np.uint8)
@@ -44,13 +48,13 @@ class ThresholdPreview(StackAlgorithm):
                 res[res > 0] = self.exclude_mask.max() + 1
             res[mask] = self.exclude_mask[mask]
         self.image = None
+        self.channel = None
         self.exclude_mask = None
         return res
 
-    def set_parameters(self, image, threshold, exclude_mask, use_gauss, gauss_radius):
-        self.image = image
+    def set_parameters(self, channel, threshold, use_gauss, gauss_radius):
+        self.channel_num = channel
         self.threshold = threshold
-        self.exclude_mask = exclude_mask
         self.use_gauss = use_gauss
         self.gauss_radius = gauss_radius
 
@@ -82,6 +86,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
 
     def calculation_run(self, report_fun):
         report_fun("Gauss", 0)
+        self.channel = self.get_channel(self.channel_num)
         image = self.get_gauss(self.use_gauss, self.gauss_radius)
         mask = self._threshold_and_exclude(image, report_fun)
         if self.close_holes:
@@ -114,6 +119,20 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
             report_fun("Calculation done", 6)
         return resp
 
+    def _set_parameters(self, channel, threshold, minimum_size, close_holes, smooth_border, use_gauss,
+                       close_holes_size, smooth_border_radius, gauss_radius, side_connection, use_convex):
+        self.channel_num = channel
+        self.threshold = threshold
+        self.minimum_size = minimum_size
+        self.close_holes = close_holes
+        self.smooth_border = smooth_border
+        self.use_gauss = use_gauss
+        self.close_holes_size = close_holes_size
+        self.smooth_border_radius = smooth_border_radius
+        self.gauss_radius = gauss_radius
+        self.edge_connection = not side_connection
+        self.use_convex = use_convex
+
 
 class ThresholdAlgorithm(BaseThresholdAlgorithm):
     def __init__(self):
@@ -130,20 +149,8 @@ class ThresholdAlgorithm(BaseThresholdAlgorithm):
             mask[self.exclude_mask > 0] = 0
         return mask
 
-    def set_parameters(self, image, threshold, minimum_size, exclude_mask, close_holes, smooth_border, use_gauss,
-                       close_holes_size, smooth_border_radius, gauss_radius, side_connection, use_convex):
-        self.image = image
-        self.threshold = threshold
-        self.minimum_size = minimum_size
-        self.exclude_mask = exclude_mask
-        self.close_holes = close_holes
-        self.smooth_border = smooth_border
-        self.use_gauss = use_gauss
-        self.close_holes_size = close_holes_size
-        self.smooth_border_radius = smooth_border_radius
-        self.gauss_radius = gauss_radius
-        self.edge_connection = not side_connection
-        self.use_convex = use_convex
+    def set_parameters(self,*args, **kwargs):
+        super()._set_parameters(*args, **kwargs)
 
     def get_info_text(self):
         return ""
@@ -179,21 +186,10 @@ class AutoThresholdAlgorithm(BaseThresholdAlgorithm):
         mask = self._threshold_image(image)
         return mask
 
-    def set_parameters(self, image, suggested_size, threshold, minimum_size, exclude_mask, close_holes, smooth_border,
-                       use_gauss, close_holes_size, smooth_border_radius, gauss_radius, side_connection, use_convex):
-        self.image = image
-        self.threshold = threshold
-        self.minimum_size = minimum_size
-        self.exclude_mask = exclude_mask
-        self.close_holes = close_holes
-        self.smooth_border = smooth_border
-        self.use_gauss = use_gauss
-        self.close_holes_size = close_holes_size
-        self.smooth_border_radius = smooth_border_radius
-        self.gauss_radius = gauss_radius
+    def set_parameters(self, suggested_size, *args, **kwargs):
+        self._set_parameters(*args, **kwargs)
         self.suggested_size = suggested_size
-        self.edge_connection = not side_connection
-        self.use_convex = use_convex
+
 
     def get_info_text(self):
         return ""

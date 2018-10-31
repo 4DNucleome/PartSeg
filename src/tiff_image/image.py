@@ -86,16 +86,21 @@ class Image(object):
     def __getitem__(self, item):
         # TODO not good solution, improve it
         li = []
-        if self.is_time():
+        if self.is_time:
             li.append(slice(None))
         else:
             li.append(0)
-        if not self.is_stack():
+        if not self.is_stack:
             li.append(0)
+        li = tuple(li)
         return self._image_array[li][item]
 
     def get_channel(self, num):
-        return self._image_array[..., num]
+        if self.is_time:
+            li = slice(None)
+        else:
+            li = 0
+        return self._image_array[li][..., num]
 
     def get_layer(self, num) -> np.ndarray:
         return self._image_array[0, num]

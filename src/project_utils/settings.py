@@ -4,6 +4,7 @@ import sys
 import typing
 
 import matplotlib
+from PyQt5.QtWidgets import QMessageBox
 
 matplotlib.use("Qt5Agg")
 
@@ -110,7 +111,7 @@ class ImageSettings(QObject):
         return self._image.channels
 
     def get_chanel(self, chanel_num):
-        return self._image.get_channel(chanel_num)[0]
+        return self._image.get_channel(chanel_num)
 
     def get_information(self, *pos):
         return self._image[pos]
