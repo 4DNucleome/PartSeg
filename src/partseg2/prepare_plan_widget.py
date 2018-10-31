@@ -69,14 +69,11 @@ class TwoMaskDialog(QDialog):
 
 
 class CreatePlan(QWidget):
-    """
-    :type settings: Settings
-    """
 
     plan_created = pyqtSignal()
     plan_node_changed = pyqtSignal()
 
-    def __init__(self, settings):
+    def __init__(self, settings: PartSettings):
         super(CreatePlan, self).__init__()
         self.settings = settings
         self.plan = PlanPreview(self)

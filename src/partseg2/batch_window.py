@@ -116,10 +116,9 @@ class ProgressView(QWidget):
 
 class FileChoose(QWidget):
     """
-    :type settings: Settings
     :type batch_manager: CalculationManager
     """
-    def __init__(self, settings, batch_manager, parent=None):
+    def __init__(self, settings: PartSettings, batch_manager, parent=None):
         QWidget.__init__(self, parent)
         self.files_to_proceed = set()
         self.settings = settings

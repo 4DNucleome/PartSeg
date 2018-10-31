@@ -1,7 +1,7 @@
-
+import typing
 from PyQt5.QtCore import pyqtSignal
 
-from partseg2.partseg_utils import PartEncoder, part_hook
+from partseg2.partseg_utils import PartEncoder, part_hook, HistoryElement
 from .io_functions import save_project
 from project_utils.settings import BaseSettings
 import numpy as np
@@ -19,8 +19,8 @@ class PartSettings(BaseSettings):
         super().__init__(json_path)
         self._mask = None
         self.full_segmentation = None
-        self.segmentation_history = []
-        self.undo_segmentation_history = []
+        self.segmentation_history: typing.List[HistoryElement]  = []
+        self.undo_segmentation_history: typing.List[HistoryElement] = []
 
     @property
     def use_physical_unit(self):

@@ -56,6 +56,9 @@ class Options(QWidget):
         self.interactive_use = QCheckBox("Interactive use")
         self.execute_btn = QPushButton("Execute")
         self.execute_btn.clicked.connect(self.execute_algorithm)
+        self.save_pipe_btn = QPushButton("Save pipeline")
+        self.choose_pipe = QComboBox()
+        self.choose_pipe.addItem("<none>")
         self.save_profile_btn = QPushButton("Save segmentation profile")
         self.choose_profile = QComboBox()
         self.choose_profile.addItem("<none>")
@@ -86,12 +89,17 @@ class Options(QWidget):
         layout3 = QHBoxLayout()
         layout3.setContentsMargins(0, 0, 0, 0)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout5 = QHBoxLayout()
+        layout5.setContentsMargins(0, 0, 0, 0)
+        layout5.addWidget(self.save_pipe_btn)
+        layout5.addWidget(self.choose_pipe)
         layout4 = QHBoxLayout()
         layout4.setContentsMargins(0, 0, 0, 0)
         layout4.addWidget(self.save_profile_btn)
         layout4.addWidget(self.choose_profile)
         layout3.addWidget(self.interactive_use)
         layout3.addWidget(self.execute_btn)
+        layout.addLayout(layout5)
         layout.addLayout(layout4)
         layout.addLayout(layout3)
         layout.addWidget(self.algorithm_choose)
@@ -117,9 +125,9 @@ class Options(QWidget):
             if self.choose_profile.itemData(i, Qt.ToolTipRole) is not None:
                 continue
             text = self.choose_profile.itemText(i)
-            profile = self._settings.get(f"segmentation_profiles.{text}")
-            tool_tip_text = profile["algorithm"] + "\n" + "\n".join(
-                [f"{k.replace('_', ' ')}: {v}" for k, v in profile["values"].items()])
+            profile: SegmentationProfile = self._settings.get(f"segmentation_profiles.{text}")
+            tool_tip_text = profile.algorithm + "\n" + "\n".join(
+                [f"{k.replace('_', ' ')}: {v}" for k, v in profile.values.items()])
             self.choose_profile.setItemData(i, tool_tip_text, Qt.ToolTipRole)
 
     def event(self, event: QEvent):

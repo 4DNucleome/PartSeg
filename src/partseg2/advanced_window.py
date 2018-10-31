@@ -221,7 +221,7 @@ class AdvancedSettings(QWidget):
         if ok:
             text = text.strip()
             profiles_dict = self._settings.get(f"segmentation_profiles", dict())
-            if text in profiles_dict:
+            if text in profiles_dict.keys():
                 res = QMessageBox.warning(self, "Already exist",
                                           f"Profile with name {text} already exist. Would you like to overwrite?",
                                           QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -509,7 +509,7 @@ class StatisticsSettings(QWidget):
         item = self.profile_list.currentItem()
         if item is None:
             return
-        profile = self.self.settings.get("statistic_profiles")[str(item.text())]  # type: StatisticProfile
+        profile = self.settings.get("statistic_profiles")[str(item.text())]  # type: StatisticProfile
         self.profile_options_chosen.clear()
         self.profile_name.setText(item.text())
         for ch in profile.chosen_fields:
