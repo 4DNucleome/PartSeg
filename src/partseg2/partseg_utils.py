@@ -35,3 +35,12 @@ def part_hook(_, dkt):
         res = SegmentationProfile(**dkt)
         return res
     return profile_hook(_, dkt)
+
+class SegmentationPipelineElement(BaseReadonlyClass):
+    segmentation: SegmentationProfile
+    mask_property: MaskProperty
+
+class SegmentationPipeline(BaseReadonlyClass):
+    name: str
+    segmentation: SegmentationProfile
+    mask_history: typing.List[SegmentationPipelineElement]

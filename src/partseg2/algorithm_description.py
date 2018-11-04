@@ -6,6 +6,7 @@ from copy import deepcopy
 
 from project_utils.image_operations import RadiusType
 
+
 lower_threshold_algorithm = [AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100),
                              AlgorithmProperty("minimum_size", "Minimum size (pix)", 8000, (0, 10 ** 6), 1000),
                              AlgorithmProperty("use_gauss", "Use gauss", RadiusType.NO, None),
@@ -64,3 +65,6 @@ class SegmentationProfile(object):
     def __str__(self):
         return "Name: " + self.name + "\nAlgorithm: " + self.algorithm + "\n" + "\n".join(
             [f"{k.replace('_', ' ')}: {v}" for k, v in self.values.items()])
+
+    def __repr__(self):
+        return f"SegmentationProfile(name={self.name}, algorithm={self.algorithm}, values={self.values})"

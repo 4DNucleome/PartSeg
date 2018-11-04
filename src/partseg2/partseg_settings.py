@@ -1,12 +1,13 @@
 import typing
 from PyQt5.QtCore import pyqtSignal
 
-from partseg2.partseg_utils import PartEncoder, part_hook, HistoryElement
+from .algorithm_description import SegmentationProfile
+from .partseg_utils import PartEncoder, part_hook, HistoryElement, SegmentationPipeline
 from .io_functions import save_project
 from project_utils.settings import BaseSettings
 import numpy as np
 
-MASK_COLORS = {"black":np.array((0,0,0)), "white": np.array((255, 255, 255)), "red": np.array((255, 0, 0)),
+MASK_COLORS = {"black": np.array((0, 0, 0)), "white": np.array((255, 255, 255)), "red": np.array((255, 0, 0)),
                "green": np.array((0, 255, 0)), "blue": np.array((0, 0, 255))}
 
 
@@ -19,7 +20,7 @@ class PartSettings(BaseSettings):
         super().__init__(json_path)
         self._mask = None
         self.full_segmentation = None
-        self.segmentation_history: typing.List[HistoryElement]  = []
+        self.segmentation_history: typing.List[HistoryElement] = []
         self.undo_segmentation_history: typing.List[HistoryElement] = []
 
     @property
@@ -63,6 +64,14 @@ class PartSettings(BaseSettings):
         dkt["history"] = self.segmentation_history
         dkt["image"] = self.image
         save_project(file_path, **dkt)
+
+    @property
+    def segmentation_pipelines(self) -> typing.Dict[str, SegmentationPipeline]:
+        return self.get("segmentation_pipelines", dict())
+
+    @property
+    def segmentation_profiles(self) -> typing.Dict[str, SegmentationProfile]:
+        return self.get("segmentation_profiles", dict())
 
 
 def load_project(file_path, settings):

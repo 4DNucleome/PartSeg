@@ -13,7 +13,9 @@ from builtins import property as _property, tuple as _tuple
 from operator import attrgetter as _attrgetter
 from collections import OrderedDict
 from {module} import BaseReadonlyClass
+\"\"\"
 {imports}
+\"\"\"
 
 class {typename}(BaseReadonlyClass):
     "{typename}({signature})"
@@ -27,7 +29,7 @@ class {typename}(BaseReadonlyClass):
     #    cls.__init__(ob, {arg_list})
     #    return ob
 
-    def __init__(self, {signature}):
+    def __init__(self, {signature_without_types}):
         'Create new instance of {typename}({arg_list})'
         {init_fields}
 
@@ -112,6 +114,7 @@ def _make_class(typename, types, defaults_dict, base_class):
         signature=signature,
         module = BaseReadonlyClass_.__module__,
         field_names=tuple(field_names),
+        signature_without_types=", ".join(field_names),
         slots=tuple(["_" + x for x in field_names]),
         num_fields=len(field_names),
         arg_list=repr(tuple(field_names)).replace("'", "")[1:-1],
@@ -120,8 +123,18 @@ def _make_class(typename, types, defaults_dict, base_class):
         field_defs='\n'.join(_field_template.format(name=name)
                              for index, name in enumerate(field_names))
     )
+
     namespace = dict(__name__='namedtuple_%s' % typename)
-    exec(class_definition, namespace)
+    try:
+        exec(class_definition, namespace)
+    except AttributeError as e:
+        print(class_definition, file=sys.stderr)
+        raise e
+    except NameError as e:
+        for i, el in enumerate(class_definition.split("\n"), 1):
+            print(f"{i}: {el}")
+        raise e
+
     result = namespace[typename]
     result._source = class_definition
     result._field_defaults = defaults_dict
@@ -210,3 +223,5 @@ def readonly_hook(_, dkt):
         res = cls(**dkt)
         return res
     return dkt
+
+typing.NamedTuple

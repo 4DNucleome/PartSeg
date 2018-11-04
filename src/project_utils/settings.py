@@ -4,13 +4,12 @@ import sys
 import typing
 
 import matplotlib
-from PyQt5.QtWidgets import QMessageBox
+
 
 matplotlib.use("Qt5Agg")
 
 from PyQt5.QtCore import QObject, pyqtSignal
 from .image_operations import RadiusType
-from .mask_create import MaskProperty
 from matplotlib import pyplot
 import copy
 import numpy as np
@@ -208,9 +207,11 @@ class ViewSettings(ImageSettings):
             self.profile_dict = {self.current_profile_dict: ProfileDict()}
 
     def set_in_profile(self, key_path, value):
+        """function for saving information used in visualization"""
         self.profile_dict[self.current_profile_dict].set(key_path, value)
 
     def get_from_profile(self, key_path, default=None):
+        """function for getting information used in visualization"""
         return self.profile_dict[self.current_profile_dict].get(key_path, default)
 
     def dump_view_profiles(self):
@@ -234,9 +235,11 @@ class BaseSettings(ViewSettings):
         self.json_path = json_path
 
     def set(self, key_path, value):
+        """function for saving general state (not visualization) """
         self.segmentation_dict[self.current_segmentation_dict].set(key_path, value)
 
     def get(self, key_path, default=None):
+        """function for getting general state (not visualization) """
         return self.segmentation_dict[self.current_segmentation_dict].get(key_path, default)
 
     def dump_part(self, file_path, path_in_dict, names=None):

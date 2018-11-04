@@ -30,7 +30,7 @@ from project_utils.image_read_thread import ImageReaderThread
 from project_utils.main_window import BaseMainWindow
 from project_utils.mask_create import calculate_mask, MaskProperty
 from .partseg_settings import PartSettings, load_project, save_project, save_labeled_image
-from .partseg_utils import HistoryElement
+from .partseg_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
 from .algorithm_description import part_algorithm_dict, SegmentationProfile
 from tiff_image import ImageReader
@@ -57,12 +57,15 @@ class Options(QWidget):
         self.execute_btn = QPushButton("Execute")
         self.execute_btn.clicked.connect(self.execute_algorithm)
         self.save_pipe_btn = QPushButton("Save pipeline")
+        self.save_pipe_btn.clicked.connect(self.save_pipeline)
         self.choose_pipe = QComboBox()
         self.choose_pipe.addItem("<none>")
+        self.choose_pipe.addItems(self._settings.segmentation_pipelines.keys())
+        self.choose_pipe.currentTextChanged.connect(self.choose_pipeline)
         self.save_profile_btn = QPushButton("Save segmentation profile")
         self.choose_profile = QComboBox()
         self.choose_profile.addItem("<none>")
-        self.choose_profile.addItems(self._settings.get("segmentation_profiles", dict()).keys())
+        self.choose_profile.addItems(self._settings.segmentation_profiles.keys())
         self.choose_profile.setToolTip("Select profile to restore its settings")
         self.update_tooltips()
         self.choose_profile.currentTextChanged.connect(self.change_profile)
@@ -120,6 +123,43 @@ class Options(QWidget):
                 self.algorithm_choose.setCurrentIndex(i)
                 break
 
+    def save_pipeline(self):
+        history = self._settings.segmentation_history
+        if not history:
+            QMessageBox.information(self, "No mask created", "There is no new mask created", QMessageBox.Ok)
+            return
+        mask_history = []
+        for el in history:
+            mask = el.mask_property
+            segmentation = SegmentationProfile(name="Unknown", algorithm=el.algorithm_name, values=el.algorithm_values)
+            new_el = SegmentationPipelineElement(mask_property=mask, segmentation=segmentation)
+            mask_history.append(new_el)
+        widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.currentWidget()
+        current_segmentation = SegmentationProfile(name="Unknown", algorithm=widget.name, values=widget.get_values())
+
+        while True:
+            text, ok = QInputDialog.getText(self, "Pipeline name", "Input pipeline name here")
+            if not ok:
+                return
+            if text in self._settings.segmentation_pipelines:
+                if QMessageBox.No == QMessageBox.warning(
+                        self, "Already exists",
+                        "Profile with this name already exist. Overwrite?",
+                        QMessageBox.Yes | QMessageBox.No, QMessageBox.No):
+                    continue
+            profile = SegmentationPipeline(name=text, segmentation=current_segmentation, mask_history=mask_history)
+            self._settings.segmentation_pipelines[text] = profile
+            self._settings.dump()
+            self.choose_pipe.addItem(text)
+            break
+
+    def choose_pipeline(self, text):
+        if text =="<none>":
+            return
+        for el in self._settings.segmentation_pipelines[text]:
+            print(el)
+        self.choose_pipe.setCurrentIndex(0)
+
     def update_tooltips(self):
         for i in range(1, self.choose_profile.count()):
             if self.choose_profile.itemData(i, Qt.ToolTipRole) is not None:
@@ -130,21 +170,28 @@ class Options(QWidget):
                 [f"{k.replace('_', ' ')}: {v}" for k, v in profile.values.items()])
             self.choose_profile.setItemData(i, tool_tip_text, Qt.ToolTipRole)
 
+    @staticmethod
+    def update_combo_box(combo_box: QComboBox, dkt: dict):
+        current_names = set(dkt.keys())
+        prev_names = set([combo_box.itemText(i) for i in range(1, combo_box.count())])
+        new_names = current_names - prev_names
+        delete_names = prev_names - current_names
+        if len(delete_names) > 0:
+            i = 1
+            while i < combo_box.count():
+                if combo_box.itemText(i) in delete_names:
+                    combo_box.removeItem(i)
+                else:
+                    i += 1
+        if len(new_names) > 0:
+            combo_box.addItems(list(sorted(new_names)))
+
     def event(self, event: QEvent):
         if event.type() == QEvent.WindowActivate:
-            current_names = set(self._settings.get(f"segmentation_profiles", dict()).keys())
-            prev_names = set([self.choose_profile.itemText(i) for i in range(1, self.choose_profile.count())])
-            new_names = current_names - prev_names
-            delete_names = prev_names - current_names
-            if len(delete_names) > 0:
-                i = 1
-                while i < self.choose_profile.count():
-                    if self.choose_profile.itemText(i) in delete_names:
-                        self.choose_profile.removeItem(i)
-                    else:
-                        i += 1
-            if len(new_names) > 0:
-                self.choose_profile.addItems(list(sorted(new_names)))
+            # update combobox for segmentation
+            self.update_combo_box(self.choose_profile, self._settings.segmentation_profiles)
+            # update combobox for pipeline
+            self.update_combo_box(self.choose_pipe, self._settings.segmentation_pipelines)
             self.update_tooltips()
             algorithm_name =  self._settings.get("current_algorithm", self.algorithm_choose.currentText())
             if algorithm_name != self.algorithm_choose.currentText():
@@ -164,16 +211,15 @@ class Options(QWidget):
     def save_profile(self):
         widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.currentWidget()
         while True:
-            text, ok = QInputDialog.getText(self, "Profile Name", "Input profile_name_here")
+            text, ok = QInputDialog.getText(self, "Profile Name", "Input profile name here")
             if not ok:
                 return
-            if text in self._settings.get("segmentation_profiles", dict()):
+            if text in self._settings.segmentation_profiles:
                 if QMessageBox.No == QMessageBox.warning(
                         self, "Already exists",
                         "Profile with this name already exist. Overwrite?",
                         QMessageBox.Yes | QMessageBox.No, QMessageBox.No):
                     continue
-            print(widget.get_values(), text, ok)
             resp = SegmentationProfile(text, widget.name, widget.get_values())
             self._settings.set(f"segmentation_profiles.{text}", resp)
             self._settings.dump()
