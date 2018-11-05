@@ -585,14 +585,10 @@ class MaskWindow(QDialog):
         self.settings.set("mask_manager.mask_property", mask_property)
         mask = calculate_mask(mask_property, segmentation,
                        self.settings.mask, self.settings.image_spacing)
-        arrays = BytesIO()
-        arrays_dict = {"segmentation" : segmentation, "full_segmentation": self.settings.full_segmentation}
-        if self.settings.mask is not None:
-            arrays_dict["mask"] = self.settings.mask
-        np.savez_compressed(arrays, **arrays_dict)
-        arrays.seek(0)
         self.settings.segmentation_history.append(
-            HistoryElement(algorithm_name, algorithm_values, mask_property, arrays))
+            HistoryElement.create(segmentation, self.settings.full_segmentation, self.settings.mask, algorithm_name,
+                                  algorithm_values, mask_property)
+        )
         if self.settings.undo_segmentation_history and \
                 self.settings.undo_segmentation_history[-1] == self.settings.segmentation_history[-1]:
             self.settings.undo_segmentation_history.pop()

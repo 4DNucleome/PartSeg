@@ -50,6 +50,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         return ", ".join(map(str, self._sizes_array[1:self.components_num + 1]))
 
     def calculation_run(self, _report_fun):
+        """main calculation function.  return segmentation, full_segmentation"""
         restarted = False
         if self.parameters["channel"] != self.new_parameters["channel"]:
             self.channel = self.get_channel(self.new_parameters["channel"])

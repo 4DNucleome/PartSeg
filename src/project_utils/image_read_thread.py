@@ -28,9 +28,3 @@ class ImageReaderThread(ProgressTread):
             self.image_read_finish.emit(self.image)
         except Exception as e:
             self.error_signal.emit(e)
-
-    def info_function(self, label: str, val: int):
-        if label == "max":
-            self.range_changed.emit(0, val)
-        elif label == "step":
-            self.step_changed.emit(val)
