@@ -1,5 +1,6 @@
 import logging
 import os
+import typing
 import uuid
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
@@ -10,11 +11,35 @@ from six import add_metaclass
 
 from partseg2.statistics_calculation import StatisticProfile
 from partseg2.algorithm_description import SegmentationProfile
+from project_utils.mask_create import MaskProperty
+from project_utils.class_generator import BaseReadonlyClass
 
-MaskCreate = namedtuple("MaskCreate", ['name', 'radius'])
-MaskUse = namedtuple("MaskUse", ['name'])
-MaskSum = namedtuple("MaskSum", ["name", "mask1", "mask2"])
-MaskIntersection = namedtuple("MaskIntersection", ["name", "mask1", "mask2"])
+
+class MaskBase:
+    name: str
+
+# MaskCreate = namedtuple("MaskCreate", ['name', 'radius'])
+
+class MaskCreate(MaskBase, BaseReadonlyClass):
+    mask_property: MaskProperty
+
+    def __str__(self):
+        return f"Mask create: {self.name}\n" + str(self.mask_property).split("\n", 1)[1]
+
+# MaskUse = namedtuple("MaskUse", ['name'])
+class MaskUse(MaskBase, BaseReadonlyClass):
+    pass
+
+#MaskSum = namedtuple("MaskSum", ["name", "mask1", "mask2"])
+class MaskSum(MaskBase, BaseReadonlyClass):
+    mask1: str
+    mask2: str
+
+# MaskIntersection = namedtuple("MaskIntersection", ["name", "mask1", "mask2"])
+class MaskIntersection(MaskBase, BaseReadonlyClass):
+    mask1: str
+    mask2: str
+
 CmapProfile = namedtuple("CmapProfile", ["suffix", "gauss_type", "center_data", "rotation_axis", "cut_obsolete_area",
                                          "directory"])
 ProjectSave = namedtuple("ProjectSave", ["suffix", "directory"])
@@ -24,7 +49,7 @@ ImageSave = namedtuple("ImageSave", ["suffix", "directory"])
 
 ChooseChanel = namedtuple("ChooseChanel", ["chanel_num"])
 
-MaskCreate.__new__.__defaults__ = (0,)
+# MaskCreate.__new__.__defaults__ = (0,)
 CmapProfile.__new__.__defaults__ = (False,)
 ProjectSave.__new__.__defaults__ = (False,)
 MaskSave.__new__.__defaults__ = (False,)
@@ -164,10 +189,12 @@ class PlanChanges(Enum):
     replace_node = 3
 
 
-class CalculationTree(object):
-    def __init__(self, operation, children: list):
+class CalculationTree:
+    def __init__(self, operation: BaseReadonlyClass, children: typing.Optional['CalculationTree']):
         self.operation = operation
         self.children = children
+
+
 
 
 class NodeType(Enum):
@@ -397,7 +424,7 @@ class CalculationPlan(object):
         if self.current_pos is None:
             return
         node = self.get_node()
-        node.operation.name = name
+        node.operation = node.operation.replace_(name=name)
         self.changes.append((self.current_pos, node, PlanChanges.replace_node))
 
     def has_children(self):
@@ -541,9 +568,9 @@ class CalculationPlan(object):
                 return "Statistics: {} with prefix: {}".format(el.name, el.name_prefix)
         if isinstance(el, MaskCreate):
             if el.name != "":
-                return "Create mask: {}, dilate radius: {}".format(el.name, el.radius)
+                return "Create mask: {}".format(el.name)
             else:
-                return "Create mask with dilate radius: {}".format(el.radius)
+                return "Create mask:"
         if isinstance(el, MaskUse):
             return "Use mask: {}".format(el.name)
         if isinstance(el, MaskSuffix):

@@ -95,7 +95,7 @@ _special = ('__module__', '__name__', '__qualname__', '__annotations__')
 
 def _make_class(typename, types, defaults_dict, base_classes):
     if base_classes:
-        print(base_classes)
+        # TODO add function inheritance
         types_ = types
         types = {}
         for el in base_classes:
@@ -208,6 +208,9 @@ class BaseReadonlyClass(metaclass=BaseMeta):
 
     def asdict(self) -> collections.OrderedDict:
         pass
+
+    def replace_(self, **_kwargs):
+        return self
 
     """def __new__(cls, *fields, **kwargs):
         ob = super().__new__(cls)

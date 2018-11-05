@@ -7,6 +7,9 @@ class RadiusType(Enum):
     R2D = 1
     R3D = 2
 
+    def __str__(self):
+        return self.name
+
 
 to_radius_type_dict = {"No": RadiusType.NO, "2d": RadiusType.R2D, "3d": RadiusType.R3D}
 

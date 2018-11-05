@@ -88,16 +88,16 @@ class CreatePlan(QWidget):
         self.director_save_chk.setToolTip("Create directory using file name an put result file inside this directory")
         self.project_save_btn = QPushButton("Save")
         self.segment_profile = QListWidget()
-        self.generate_mask = QPushButton("Generate mask")
-        self.generate_mask.setToolTip("Mask need to have unique name")
+        self.generate_mask_btn = QPushButton("Generate mask")
+        self.generate_mask_btn.setToolTip("Mask need to have unique name")
         self.mask_name = QLineEdit()
         self.base_mask_name = QLineEdit()
         self.swap_mask_name = QLineEdit()
         self.mapping_file_button = QPushButton("Mask mapping file")
         self.swap_mask_name_button = QPushButton("Name Substitution")
         self.suffix_mask_name_button = QPushButton("Name suffix")
-        self.reuse_mask = QPushButton("Reuse mask")
-        self.set_mask_name = QPushButton("Set mask name")
+        self.reuse_mask_btn = QPushButton("Reuse mask")
+        self.set_mask_name_btn = QPushButton("Set mask name")
         self.intersect_mask_btn = QPushButton("Mask intersection")
         self.sum_mask_btn = QPushButton("Mask sum")
         self.chanel_num = QSpinBox()
@@ -116,7 +116,7 @@ class CreatePlan(QWidget):
         self.add_new_segmentation_btn.setDisabled(True)
         self.statistic_list = QListWidget(self)
         self.statistic_name_prefix = QLineEdit(self)
-        self.add_calculation = QPushButton("Add statistic calculation")
+        self.add_calculation_btn = QPushButton("Add statistic calculation")
         self.information = QTextEdit()
         self.information.setReadOnly(True)
 
@@ -132,8 +132,8 @@ class CreatePlan(QWidget):
         self.statistic_list.currentTextChanged[str].connect(self.show_statistics_info)
         self.segment_profile.currentTextChanged[str].connect(self.show_segment_info)
         self.mask_name.textChanged[str].connect(self.mask_name_changed)
-        self.generate_mask.clicked.connect(self.create_mask)
-        self.reuse_mask.clicked.connect(self.use_mask)
+        self.generate_mask_btn.clicked.connect(self.create_mask)
+        self.reuse_mask_btn.clicked.connect(self.use_mask)
         self.clean_plan_btn.clicked.connect(self.clean_plan)
         self.remove_btn.clicked.connect(self.remove_element)
         self.base_mask_name.textChanged.connect(self.mask_text_changed)
@@ -141,7 +141,7 @@ class CreatePlan(QWidget):
         self.mask_name.textChanged.connect(self.mask_text_changed)
         self.chose_profile_btn.clicked.connect(self.add_segmentation)
         self.get_big_btn.clicked.connect(self.add_leave_biggest)
-        self.add_calculation.clicked.connect(self.add_statistics)
+        self.add_calculation_btn.clicked.connect(self.add_statistics)
         self.save_plan_btn.clicked.connect(self.add_calculation_plan)
         # self.forgot_mask_btn.clicked.connect(self.forgot_mask)
         # self.cmap_save_btn.clicked.connect(self.save_to_cmap)
@@ -155,6 +155,7 @@ class CreatePlan(QWidget):
         self.update_element_btn.stateChanged.connect(self.update_names)
         self.choose_channel_btn.clicked.connect(self.choose_channel)
         self.intersect_mask_btn.clicked.connect(self.mask_intersect)
+        self.set_mask_name_btn.clicked.connect(self.set_mask_name)
         self.sum_mask_btn.clicked.connect(self.mask_sum)
 
         plan_box = QGroupBox("Calculate plan:")
@@ -188,6 +189,7 @@ class CreatePlan(QWidget):
 
         file_mask_box = QGroupBox("Mask from file")
         file_mask_box.setStyleSheet(group_sheet)
+        file_mask_box.setCheckable(True)
         lay = QGridLayout()
         lay.setSpacing(0)
         # lay.addWidget(QLabel("Mask name:"), 0, 0)
@@ -207,6 +209,7 @@ class CreatePlan(QWidget):
         lay.setSpacing(0)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.addWidget(self.dilate_mask)
+        lay.addWidget(self.generate_mask_btn)
         # lay.addWidget(right_label("Mask name:"), 0, 0)
         # lay.addWidget(self.mask_name, 0, 1, 1, 2)
         #lay.addWidget(right_label("Dilate radius"), 1, 0)
@@ -222,12 +225,12 @@ class CreatePlan(QWidget):
         name_lay.addWidget(right_label("Mask name:"))
         name_lay.addWidget(self.mask_name)
         lay.addLayout(name_lay, 0, 0, 1, 2)
-        lay.addWidget(self.set_mask_name, 1, 0)
-        lay.addWidget(self.reuse_mask, 1, 1)
+        lay.addWidget(self.set_mask_name_btn, 1, 0)
+        lay.addWidget(self.reuse_mask_btn, 1, 1)
         lay.addWidget(self.intersect_mask_btn, 2, 0)
         lay.addWidget(self.sum_mask_btn, 2, 1)
-        lay.addWidget(file_mask_box, 3, 0, 1, 2)
-        lay.addWidget(segmentation_mask_box, 4, 0, 1, 2)
+        lay.addWidget(file_mask_box, 4, 0, 1, 2)
+        lay.addWidget(segmentation_mask_box, 3, 0, 1, 2)
         mask_box.setLayout(lay)
 
         segment_box = QGroupBox("Segmentation:")
@@ -251,7 +254,7 @@ class CreatePlan(QWidget):
         line_lay.addWidget(lab)
         line_lay.addWidget(self.statistic_name_prefix)
         lay.addLayout(line_lay)
-        lay.addWidget(self.add_calculation)
+        lay.addWidget(self.add_calculation_btn)
         statistic_box.setLayout(lay)
 
         info_box = QGroupBox("Information")
@@ -274,10 +277,10 @@ class CreatePlan(QWidget):
         layout.addWidget(info_box, 3, 1, 1, 2)
         self.setLayout(layout)
 
-        self.reuse_mask.setDisabled(True)
-        self.generate_mask.setDisabled(True)
+        self.reuse_mask_btn.setDisabled(True)
+        self.generate_mask_btn.setDisabled(True)
         self.chose_profile_btn.setDisabled(True)
-        self.add_calculation.setDisabled(True)
+        self.add_calculation_btn.setDisabled(True)
         self.swap_mask_name_button.setDisabled(True)
         self.suffix_mask_name_button.setDisabled(True)
         self.mapping_file_button.setDisabled(True)
@@ -348,12 +351,12 @@ class CreatePlan(QWidget):
     def update_names(self):
         if self.update_element_btn.isChecked():
             self.chose_profile_btn.setText("Replace Segment Profile")
-            self.add_calculation.setText("Replace statistic calculation")
-            self.generate_mask.setText("Replace mask")
+            self.add_calculation_btn.setText("Replace statistic calculation")
+            self.generate_mask_btn.setText("Replace mask")
         else:
             self.chose_profile_btn.setText("Segment Profile")
-            self.add_calculation.setText("Add statistic calculation")
-            self.generate_mask.setText("Generate mask")
+            self.add_calculation_btn.setText("Add statistic calculation")
+            self.generate_mask_btn.setText("Generate mask")
 
     def node_type_changed(self):
         # self.cmap_save_btn.setDisabled(True)
@@ -433,6 +436,14 @@ class CreatePlan(QWidget):
 
     def set_mask_name(self):
         name = str(self.mask_name.text()).strip()
+        if  name != "" and name in self.mask_set:
+            QMessageBox.information(self, "Exists", "mask with this name already exists")
+            return
+        conflict_mask, used_mask = self.calculation_plan.get_file_mask_names()
+        if len(conflict_mask) > 0:
+            logging.info("Mask in use")
+            QMessageBox.warning(self, "In use", "Masks {} are used in other places".format(", ".join(conflict_mask)))
+            return
         self.calculation_plan.replace_name(name)
         self.plan.update_view()
 
@@ -522,7 +533,7 @@ class CreatePlan(QWidget):
 
     def create_mask(self):
         text = str(self.mask_name.text()).strip()
-        radius = self.dilate_radius_spin.value()
+        mask_property = self.dilate_mask.get_mask_property()
         if text != "" and text in self.mask_set:
             QMessageBox.warning(self, "Already exists", "Mask with this name already exists", QMessageBox.Ok)
             return
@@ -531,11 +542,11 @@ class CreatePlan(QWidget):
             name = node.operation.name
             self.mask_set.remove(name)
             self.mask_set.add(text)
-            self.calculation_plan.replace_step(MaskCreate(text, radius))
+            self.calculation_plan.replace_step(MaskCreate(text, mask_property))
             pass
         else:
             self.mask_set.add(text)
-            self.calculation_plan.add_step(MaskCreate(text, radius))
+            self.calculation_plan.add_step(MaskCreate(text, mask_property))
         self.plan.update_view()
         self.mask_text_changed()
 
@@ -549,11 +560,11 @@ class CreatePlan(QWidget):
 
     def mask_name_changed(self, text):
         if str(text) in self.mask_set:
-            self.generate_mask.setDisabled(True)
-            self.reuse_mask.setDisabled(False)
+            self.generate_mask_btn.setDisabled(True)
+            self.reuse_mask_btn.setDisabled(False)
         else:
-            self.generate_mask.setDisabled(False)
-            self.reuse_mask.setDisabled(True)
+            self.generate_mask_btn.setDisabled(False)
+            self.reuse_mask_btn.setDisabled(True)
 
     def add_leave_biggest(self):
         profile = self.calculation_plan.get_node().operation
@@ -562,7 +573,6 @@ class CreatePlan(QWidget):
         self.plan.update_view()
 
     def add_segmentation(self):
-        print("Buka")
         if self.channels_used and self.node_type == NodeType.root:
             ret = QMessageBox.question(self, "Segmentation from root",
                                         "You use channel choose in your plan. Are you sure "
@@ -613,14 +623,14 @@ class CreatePlan(QWidget):
         self.suffix_mask_name_button.setDisabled(True)
         self.swap_mask_name_button.setDisabled(True)
         self.mapping_file_button.setDisabled(True)
-        self.generate_mask.setDisabled(True)
-        self.reuse_mask.setDisabled(True)
-        self.set_mask_name.setDisabled(True)
+        self.generate_mask_btn.setDisabled(True)
+        self.reuse_mask_btn.setDisabled(True)
+        self.set_mask_name_btn.setDisabled(True)
         self.intersect_mask_btn.setDisabled(True)
         self.sum_mask_btn.setDisabled(True)
         # load mask from file
         if not self.update_element_btn.isChecked():
-            self.set_mask_name.setDisabled(True)
+            self.set_mask_name_btn.setDisabled(True)
             if self.file_mask_allow and (name == "" or name not in self.mask_set):
                 base_text = str(self.base_mask_name.text()).strip()
                 rep_text = str(self.swap_mask_name.text()).strip()
@@ -631,17 +641,17 @@ class CreatePlan(QWidget):
                 self.sum_mask_btn.setEnabled(len(self.mask_set) > 1)
             # generate mask from segmentation
             if self.mask_allow and (name == "" or name not in self.mask_set):
-                self.generate_mask.setEnabled(True)
+                self.generate_mask_btn.setEnabled(True)
             # reuse mask
             if self.file_mask_allow and name in self.mask_set:
-                self.reuse_mask.setEnabled(True)
+                self.reuse_mask_btn.setEnabled(True)
         # edit mask
         else:
             if self.node_type != NodeType.file_mask and self.node_type != NodeType.mask:
                 return
             # change mask name
             if name not in self.mask_set and name != "":
-                self.set_mask_name.setEnabled(True)
+                self.set_mask_name_btn.setEnabled(True)
             if self.node_type == NodeType.file_mask and \
                     (name == "" or name == self.node_name or name not in self.mask_set):
                 base_text = str(self.base_mask_name.text()).strip()
@@ -653,10 +663,10 @@ class CreatePlan(QWidget):
                 self.sum_mask_btn.setEnabled(len(self.mask_set) > 1)
             # generate mask from segmentation
             if self.node_type == NodeType.mask and (name == "" or name == self.node_name or name not in self.mask_set):
-                self.generate_mask.setEnabled(True)
+                self.generate_mask_btn.setEnabled(True)
             # reuse mask
             if self.node_type == NodeType.file_mask and name in self.mask_set:
-                self.reuse_mask.setEnabled(True)
+                self.reuse_mask_btn.setEnabled(True)
 
     def add_calculation_plan(self, used_text=None):
         if used_text is None or isinstance(used_text, bool):
@@ -719,14 +729,14 @@ class CreatePlan(QWidget):
     def show_statistics(self):
         if self.update_element_btn.isChecked():
             if self.node_type == NodeType.statics:
-                self.add_calculation.setEnabled(True)
+                self.add_calculation_btn.setEnabled(True)
             else:
-                self.add_calculation.setDisabled(True)
+                self.add_calculation_btn.setDisabled(True)
         else:
             if self.statistic_list.currentItem() is not None:
-                self.add_calculation.setEnabled(self.mask_allow)
+                self.add_calculation_btn.setEnabled(self.mask_allow)
             else:
-                self.add_calculation.setDisabled(True)
+                self.add_calculation_btn.setDisabled(True)
 
     def show_segment_info(self, text=None):
         if self.protect:
@@ -827,15 +837,11 @@ class PlanPreview(QTreeWidget):
         widget = QTreeWidgetItem(up_widget)
         widget.setText(0, CalculationPlan.get_el_name(node_plan.operation))
         self.setCurrentItem(widget)
-        if isinstance(node_plan.operation, StatisticProfile) or isinstance(node_plan.operation, SegmentationProfile):
+        if isinstance(node_plan.operation, (StatisticProfile, SegmentationProfile, MaskCreate)):
             desc = QTreeWidgetItem(widget)
             desc.setText(0, "Description")
-            description = str(node_plan.operation).split("\n")
-            for line in description[1:]:
-                if line.strip() == "":
-                    continue
-                w = QTreeWidgetItem(desc)
-                w.setText(0, line)
+            for line in str(node_plan.operation).split("\n")[1:]:
+                QTreeWidgetItem(desc, [line])
         if deep:
             for el in node_plan.children:
                 self.explore_tree(widget, el)
@@ -877,6 +883,12 @@ class PlanPreview(QTreeWidget):
             elif op_type == PlanChanges.replace_node:
                 node = self.get_node(path)
                 node.setText(0, CalculationPlan.get_el_name(el.operation))
+                if isinstance(el.operation, (StatisticProfile, SegmentationProfile, MaskCreate)):
+                    child = node.child(0)
+                    child.takeChildren()
+                    for line in str(el.operation).split("\n")[1:]:
+                        QTreeWidgetItem(child, [line])
+
             else:
                 logging.error("Unknown operation {}".format(op_type))
         self.blockSignals(False)

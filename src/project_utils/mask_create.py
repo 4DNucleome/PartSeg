@@ -22,9 +22,9 @@ class MaskProperty(BaseReadonlyClass):
 
     def __str__(self):
         return f"Mask property\ndilate: {self.dilate}\n" + \
-               f"dilate radius {self.dilate_radius}\n" if self.dilate != RadiusType.NO else "" + \
+               (f"dilate radius {self.dilate_radius}\n" if self.dilate != RadiusType.NO else "") + \
                f"fill holes: {self.fill_holes}\n" + \
-               f"max holes size: {self.max_holes_size}" if self.fill_holes != RadiusType.NO else "" + \
+               (f"max holes size: {self.max_holes_size}\n" if self.fill_holes != RadiusType.NO else "") + \
                f"save components: {self.save_components}\nclip to mask: {self.clip_to_mask}"
 
 def mp_eq(self, other):
