@@ -34,19 +34,18 @@ class {typename}(BaseReadonlyClass):
         {init_fields}
 
     @classmethod
-    def _make(cls, iterable, new=tuple.__new__, len=len):
+    def _make(cls, iterable):
         'Make a new {typename} object from a sequence or iterable'
         result = new(cls, iterable)
         if len(result) != {num_fields:d}:
             raise TypeError('Expected {num_fields:d} arguments, got %d' % len(result))
         return result
 
-    def _replace(_self, **kwds):
+    def replace_(self, **kwds):
         'Return a new {typename} object replacing specified fields with new values'
-        result = _self._make(map(kwds.pop, {field_names!r}, _self))
-        if kwds:
-            raise ValueError('Got unexpected field names: %r' % list(kwds))
-        return result
+        dkt = self.asdict()
+        dkt.update(kwds)
+        return self.__class__(**dkt)
 
     def __repr__(self):
         'Return a nicely formatted representation string'
@@ -77,22 +76,32 @@ _field_template = '''\
 
 class_register = dict()
 
+
 def extract_type_info(type_):
-    if isinstance(type_, typing.GenericMeta) or type_ == typing.Any:
+    if isinstance(type_, (typing.GenericMeta, typing._Any, typing._Union)):
         return str(type_), type_.__module__
     elif hasattr(type_, "__module__"):
         return "{}.{}".format(type_.__module__, type_.__name__), type_.__module__
     else:
         return type_.__name__, None
 
+
 _prohibited = ('__new__', '__init__', '__slots__', '__getnewargs__',
                '_fields', '_field_defaults', '_field_types',
-               '_make', '_replace', '_asdict', '_source', 'asdict')
+               '_make', 'replace_', 'asdict', '_source', 'asdict')
 
 _special = ('__module__', '__name__', '__qualname__', '__annotations__')
 
 
-def _make_class(typename, types, defaults_dict, base_class):
+def _make_class(typename, types, defaults_dict, base_classes):
+    if base_classes:
+        print(base_classes)
+        types_ = types
+        types = {}
+        for el in base_classes:
+            if hasattr(el, "__annotations__"):
+                types.update(el.__annotations__)
+        types.update(types_)
     field_names = list(types.keys())
     import_set = set()
     type_dict = {}
@@ -104,6 +113,9 @@ def _make_class(typename, types, defaults_dict, base_class):
     signature = ", ".join(["{}: {} = {}".format(name_, type_dict[name_], pprint.pformat(
         defaults_dict[name_])) if name_ in defaults_dict else "{}: {}".format(name_, type_dict[name_]) for name_ in
                            types.keys()])
+    signature_without_types = ", ".join(["{} = {}".format(name_, pprint.pformat(defaults_dict[name_]))
+                                         if name_ in defaults_dict else "{}".format(name_) for name_ in
+                                         types.keys()])
     init_sig = ["self._{name} = {name}".format(name=name_) for name_ in type_dict.keys()]
     tuple_list = ["self._{name}".format(name=name_) for name_ in type_dict.keys()]
     class_definition = _class_template.format(
@@ -112,9 +124,9 @@ def _make_class(typename, types, defaults_dict, base_class):
         init_fields="\n        ".join(init_sig),
         tuple_fields=", ".join(tuple_list),
         signature=signature,
-        module = BaseReadonlyClass_.__module__,
+        module=BaseReadonlyClass_.__module__,
         field_names=tuple(field_names),
-        signature_without_types=", ".join(field_names),
+        signature_without_types=signature_without_types,
         slots=tuple(["_" + x for x in field_names]),
         num_fields=len(field_names),
         arg_list=repr(tuple(field_names)).replace("'", "")[1:-1],
@@ -143,11 +155,12 @@ def _make_class(typename, types, defaults_dict, base_class):
     result._field_types = collections.OrderedDict(types)
     return result
 
+
 class BaseMeta(type):
-    def __new__(cls, name, bases, attrs):
-        # print("BaseMeta.__new__", cls, name, bases, attrs)
+    def __new__(mcs, name, bases, attrs):
+        print("BaseMeta.__new__", mcs, name, bases, attrs)
         if attrs.get('_root', False):
-            return super().__new__(cls, name, bases, attrs)
+            return super().__new__(mcs, name, bases, attrs)
         if name in class_register:
             raise ValueError(f"Class {name} already exists")
         types = attrs.get("__annotations__", {})
@@ -163,10 +176,10 @@ class BaseMeta(type):
                                 "follow default field(s) {default_names}"
                                 .format(field_name=field_name,
                                         default_names=', '.join(defaults_dict.keys())))
-        result = _make_class(name, types, defaults_dict, bases[0])
-        #nm_tpl.__new__.__annotations__ = collections.OrderedDict(types)
-        #nm_tpl.__new__.__defaults__ = tuple(defaults)
-        #nm_tpl._field_defaults = defaults_dict
+        result = _make_class(name, types, defaults_dict, [x for x in bases if x != BaseReadonlyClass])
+        # nm_tpl.__new__.__annotations__ = collections.OrderedDict(types)
+        # nm_tpl.__new__.__defaults__ = tuple(defaults)
+        # nm_tpl._field_defaults = defaults_dict
         module = attrs.get("__module__", None)
         if module is None:
             try:
@@ -183,10 +196,7 @@ class BaseMeta(type):
                 setattr(result, key, attrs[key])
 
         class_register[name] = result
-
-
         return result
-
 
 
 class BaseReadonlyClass(metaclass=BaseMeta):
@@ -223,5 +233,3 @@ def readonly_hook(_, dkt):
         res = cls(**dkt)
         return res
     return dkt
-
-typing.NamedTuple
