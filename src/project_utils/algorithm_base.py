@@ -45,7 +45,7 @@ class SegmentationAlgorithm(object):
     def set_image(self, image):
         self.image = image
 
-    def set_exclude_mask(self):
+    def set_exclude_mask(self, exclude_mask):
         """For Stack Seg - designed for mask part of image - maybe use standardize it to mask"""
         pass
 

@@ -163,7 +163,7 @@ class AutoThresholdAlgorithm(BaseThresholdAlgorithm):
 
     def get_gauss(self, gauss_type, gauss_radius):
         if gauss_type == RadiusType.NO:
-            return np.copy(self.image)
+            return np.copy(self.channel)
         else:
             return super().get_gauss(gauss_type, gauss_radius)
 
