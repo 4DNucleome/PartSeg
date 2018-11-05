@@ -316,7 +316,7 @@ class Options(QWidget):
 
 
 class MainMenu(QWidget):
-    def __init__(self, settings: PartSettings):
+    def __init__(self, settings: PartSettings, main_window):
         super().__init__()
         self._settings = settings
         self.open_btn = QPushButton("Open")
@@ -325,8 +325,7 @@ class MainMenu(QWidget):
         self.interpolate_btn = QPushButton("Interpolate")
         self.mask_manager_btn = QPushButton("Mask Manager")
         self.batch_processing_btn = QPushButton("Batch Processing")
-        self.batch_widget = None
-        self.advanced_window = None
+        self.main_window: MainWindow = main_window
 
         layout = QHBoxLayout()
         layout.setSpacing(0)
@@ -438,12 +437,10 @@ class MainMenu(QWidget):
 
 
     def batch_window(self):
-        if self.batch_widget is not None and self.batch_widget.isVisible():
-            self.batch_widget.activateWindow()
-            return
-        self.batch_widget = BatchWindow(self._settings)
-        self.batch_widget.show()
-
+        if self.main_window.batch_window.isVisible():
+            self.main_window.batch_window.activateWindow()
+        else:
+            self.main_window.batch_window.show()
 
     def save_file(self):
         try:
@@ -511,11 +508,10 @@ class MainMenu(QWidget):
             QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
 
     def advanced_window_show(self):
-        if self.advanced_window is not None and self.advanced_window.isVisible():
-            self.advanced_window.activateWindow()
-            return
-        self.advanced_window = AdvancedWindow(self._settings)
-        self.advanced_window.show()
+        if self.main_window.advanced_window.isVisible():
+            self.main_window.advanced_window.activateWindow()
+        else:
+            self.main_window.advanced_window.show()
 
 
 class MaskWindow(QDialog):
@@ -635,7 +631,7 @@ class MainWindow(BaseMainWindow):
         self.settings = PartSettings(os.path.join(config_folder, "settings.json"))
         if os.path.exists(os.path.join(config_folder, "settings.json")):
             self.settings.load()
-        self.main_menu = MainMenu(self.settings)
+        self.main_menu = MainMenu(self.settings, self)
         # self.channel_control1 = ChannelControl(self.settings, name="raw_control", text="Left panel:")
         self.channel_control2 = ChannelControl(self.settings, name="result_control")
         self.raw_image = RawImageStack(self.settings,
@@ -651,6 +647,8 @@ class MainWindow(BaseMainWindow):
                                      self.synchronize_tool)
         # self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
+        self.advanced_window = AdvancedWindow(self.settings)
+        self.batch_window = BatchWindow(self.settings)
 
         reader =ImageReader()
         im = reader.read(os.path.join(static_file_folder, 'initial_images', "clean_segment.tiff"))
@@ -697,8 +695,19 @@ class MainWindow(BaseMainWindow):
             if read_thread.image:
                 self.settings.image = read_thread.image
 
-    def closeEvent(self, e):
+    def closeEvent(self, event):
         # print(self.settings.dump_view_profiles())
         # print(self.settings.segmentation_dict["default"].my_dict)
         self.settings.set_in_profile("main_window_geometry", bytes(self.saveGeometry().toHex()).decode('ascii'))
+        if self.batch_window.is_working():
+            ret = QMessageBox.warning(self, "Batch work", "Batch work is not finished. "
+                                                          "Would you like to terminate it?",
+                                      QMessageBox.No | QMessageBox.Yes)
+            if ret == QMessageBox.Yes:
+                self.batch_window.terminate()
+            else:
+                event.ignore()
+                return
+        self.batch_window.close()
+        self.advanced_window.close()
         self.settings.dump()

@@ -197,8 +197,8 @@ class BatchWindow(QTabWidget):
     """
     :type settings: PartSettings
     """
-    def __init__(self, settings):
-        super().__init__()
+    def __init__(self, settings, parent=None):
+        super().__init__(parent)
         self.setWindowTitle("Batch processing")
         self.settings = settings
         self.batch_manager = CalculationManager()
