@@ -108,9 +108,9 @@ class MaskWidget(QWidget):
 
     def get_mask_property(self):
         return \
-            MaskProperty(dilate=self.dilate_dim.value(),
+            MaskProperty(dilate=self.dilate_dim.value() if self.dilate_radius.value() != 0 else RadiusType.NO,
                          dilate_radius=self.dilate_radius.value() if self.dilate_dim.value() != RadiusType.NO else 0,
-                         fill_holes=self.fill_holes.value(),
+                         fill_holes=self.fill_holes.value() if self.max_hole_size.value() != 0 else RadiusType.NO,
                          max_holes_size=self.max_hole_size.value() if self.fill_holes.value() != RadiusType.NO else 0,
                          save_components=self.save_components.isChecked(),
                          clip_to_mask=self.clip_to_mask.isChecked())
