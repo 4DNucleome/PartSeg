@@ -63,7 +63,7 @@ class SegmentationProfile(object):
         self.values = values
 
     def __str__(self):
-        return "Name: " + self.name + "\nAlgorithm: " + self.algorithm + "\n" + "\n".join(
+        return "Segmentation profile name: " + self.name + "\nAlgorithm: " + self.algorithm + "\n" + "\n".join(
             [f"{k.replace('_', ' ')}: {v}" for k, v in self.values.items()])
 
     def __repr__(self):

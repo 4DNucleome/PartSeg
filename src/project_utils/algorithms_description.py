@@ -198,8 +198,6 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
         values = self.get_values()
         self.settings.set(f"algorithms.{self.name}", deepcopy(values))
         scale = UNIT_SCALE[self.settings.get("units_index")]
-        self.algorithm_thread.algorithm.set_size_information(self.settings.image_spacing,
-                                                             False, scale)
         self.algorithm_thread.set_parameters(**values)
         self.algorithm_thread.start()
 

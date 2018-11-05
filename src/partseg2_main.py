@@ -15,6 +15,7 @@ def main():
     wind = MainWindow("PartSeg")
     wind.show()
     myApp.exec_()
+    del wind
     sys.exit()
 
 if __name__ == '__main__':

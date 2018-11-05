@@ -19,9 +19,6 @@ class SegmentationAlgorithm(object):
         self.image: Image = None
         self.channel = None
         self.segmentation = None
-        self.spacing = None
-        self.use_psychical_unit = False
-        self.unit_scalar = 1
 
     def _clean(self):
         self.image = None
@@ -33,11 +30,6 @@ class SegmentationAlgorithm(object):
     def get_info_text(self):
         raise NotImplementedError()
 
-    def set_size_information(self, spacing, use_physical_unit, unit_scalar):
-        self.unit_scalar = unit_scalar
-        self.spacing = spacing
-        self.use_psychical_unit = use_physical_unit
-
     def get_channel(self, channel_idx):
         return self.image.get_channel(channel_idx)
 
@@ -46,7 +38,7 @@ class SegmentationAlgorithm(object):
         if gauss_type == RadiusType.NO:
             return self.channel
         assert isinstance(gauss_type, RadiusType)
-        gauss_radius = calculate_operation_radius(gauss_radius, self.spacing, gauss_type)
+        gauss_radius = calculate_operation_radius(gauss_radius, self.image.spacing, gauss_type)
         layer = gauss_type == RadiusType.R2D
         return gaussian(self.channel, gauss_radius, layer=layer)
 

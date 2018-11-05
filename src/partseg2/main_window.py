@@ -156,8 +156,7 @@ class Options(QWidget):
     def choose_pipeline(self, text):
         if text =="<none>":
             return
-        for el in self._settings.segmentation_pipelines[text]:
-            print(el)
+        print(self._settings.segmentation_pipelines[text])
         self.choose_pipe.setCurrentIndex(0)
 
     def update_tooltips(self):
@@ -165,10 +164,16 @@ class Options(QWidget):
             if self.choose_profile.itemData(i, Qt.ToolTipRole) is not None:
                 continue
             text = self.choose_profile.itemText(i)
-            profile: SegmentationProfile = self._settings.get(f"segmentation_profiles.{text}")
-            tool_tip_text = profile.algorithm + "\n" + "\n".join(
-                [f"{k.replace('_', ' ')}: {v}" for k, v in profile.values.items()])
+            profile: SegmentationProfile = self._settings.segmentation_profiles[text]
+            tool_tip_text = str(profile)
             self.choose_profile.setItemData(i, tool_tip_text, Qt.ToolTipRole)
+        for i in range(1, self.choose_pipe.count()):
+            if self.choose_pipe.itemData(i, Qt.ToolTipRole) is not None:
+                continue
+            text = self.choose_pipe.itemText(i)
+            profile: SegmentationPipeline = self._settings.segmentation_pipelines[text]
+            tool_tip_text = str(profile)
+            self.choose_pipe.setItemData(i, tool_tip_text, Qt.ToolTipRole)
 
     @staticmethod
     def update_combo_box(combo_box: QComboBox, dkt: dict):

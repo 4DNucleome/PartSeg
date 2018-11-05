@@ -70,8 +70,6 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             restarted = True
         if restarted or self.new_parameters["minimum_size"] != self.parameters["minimum_size"]:
             minimum_size = self.new_parameters["minimum_size"]
-            if self.use_psychical_unit:
-                minimum_size /= reduce((lambda x, y: x * y), self.spacing)
             ind = bisect(self._sizes_array[1:], minimum_size, lambda x, y: x > y)
             finally_segment = np.copy(self.segmentation)
             finally_segment[finally_segment > ind] = 0
@@ -177,30 +175,30 @@ class UpperThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm, ABC):
 
 class LowerThresholdDistanceFlowAlgorithm(LowerThresholdFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
-        neigh, dist = calculate_distances_array(self.spacing, get_neigh(self.new_parameters["side_connection"]))
+        neigh, dist = calculate_distances_array(self.image.spacing, get_neigh(self.new_parameters["side_connection"]))
         return distance_sprawl(base_image, object_image, self.components_num, neigh, dist)
 
 
 class UpperThresholdDistanceFlowAlgorithm(UpperThresholdFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
-        neigh, dist = calculate_distances_array(self.spacing, get_neigh(self.new_parameters["side_connection"]))
+        neigh, dist = calculate_distances_array(self.image.spacing, get_neigh(self.new_parameters["side_connection"]))
         return distance_sprawl(base_image, object_image, self.components_num, neigh, dist)
 
 
 class LowerThresholdPathFlowAlgorithm(LowerThresholdFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
-        image = self.image.astype(np.float64)
+        image = self.channel.astype(np.float64)
         image[base_image == 0] = 0
-        neigh = get_neighbourhood(self.spacing, get_neigh(self.new_parameters["side_connection"]))
+        neigh = get_neighbourhood(self.image.spacing, get_neigh(self.new_parameters["side_connection"]))
         mid = path_maximum_sprawl(image, object_image, self.components_num, neigh)
         return path_maximum_sprawl(image, mid, self.components_num, neigh)
 
 
 class UpperThresholdPathFlowAlgorithm(UpperThresholdFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
-        image = self.image.astype(np.float64)
+        image = self.channel.astype(np.float64)
         image[base_image == 0] = 0
-        neigh = get_neighbourhood(self.spacing, get_neigh(self.new_parameters["side_connection"]))
+        neigh = get_neighbourhood(self.image.spacing, get_neigh(self.new_parameters["side_connection"]))
         mid = path_minimum_sprawl(image, object_image, self.components_num, neigh)
         return path_minimum_sprawl(image, mid, self.components_num, neigh)
 
@@ -208,14 +206,14 @@ class UpperThresholdPathFlowAlgorithm(UpperThresholdFlowAlgorithm):
 class LowerThresholdPathDistanceFlowAlgorithm(LowerThresholdPathFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
         mid = super().path_sprawl(base_image, object_image)
-        neigh, dist = calculate_distances_array(self.spacing, get_neigh(self.new_parameters["side_connection"]))
+        neigh, dist = calculate_distances_array(self.image.spacing, get_neigh(self.new_parameters["side_connection"]))
         return distance_sprawl(base_image, mid, self.components_num, neigh, dist)
 
 
 class UpperThresholdPathDistanceFlowAlgorithm(UpperThresholdPathFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
         mid = super().path_sprawl(base_image, object_image)
-        neigh, dist = calculate_distances_array(self.spacing, get_neigh(self.new_parameters["side_connection"]))
+        neigh, dist = calculate_distances_array(self.image.spacing, get_neigh(self.new_parameters["side_connection"]))
         return distance_sprawl(base_image, mid, self.components_num, neigh, dist)
 
 def get_neigh(sides):

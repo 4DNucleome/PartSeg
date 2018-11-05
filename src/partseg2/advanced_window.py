@@ -5,7 +5,7 @@ from PyQt5.QtCore import QByteArray, Qt, QEvent
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushButton, QCheckBox, QLineEdit, QVBoxLayout, \
     QLabel, QHBoxLayout, QListWidgetItem, QDialog, QDoubleSpinBox, QSpinBox, QGridLayout, QApplication, QMessageBox, \
-    QFileDialog, QComboBox, QTableWidget, QTableWidgetItem, QAbstractSpinBox, QInputDialog
+    QFileDialog, QComboBox, QTableWidget, QTableWidgetItem, QAbstractSpinBox, QInputDialog, QPlainTextEdit
 
 from common_gui.colors_choose import ColorSelector
 from common_gui.lock_checkbox import LockCheckBox
@@ -36,11 +36,14 @@ class AdvancedSettings(QWidget):
         self.rename_btn = QPushButton("Rename Profile")
         self.rename_btn.clicked.connect(self.rename_profile)
         self.rename_btn.setDisabled(True)
-        self.use_physicla_unit_chk = QCheckBox()
+        self.use_physical_unit_chk = QCheckBox()
         self.voxel_size_label = QLabel()
-        self.info_label = QLabel()
+        self.info_label = QPlainTextEdit()
+        self.info_label.setReadOnly(True)
         self.profile_list = QListWidget()
         self.profile_list.currentTextChanged.connect(self.profile_chosen)
+        self.pipeline_list = QListWidget()
+        self.pipeline_list.currentTextChanged.connect(self.profile_chosen)
         self.spacing = [QDoubleSpinBox() for _ in range(3)]
         self.lock_spacing = LockCheckBox()
         self.lock_spacing.stateChanged.connect(self.spacing[1].setDisabled)
@@ -84,7 +87,7 @@ class AdvancedSettings(QWidget):
         voxel_size_layout.addWidget(self.voxel_size_label)
         voxel_size_layout.addSpacing(30)
         voxel_size_layout.addWidget(QLabel("Use physical units in minimum size:"))
-        voxel_size_layout.addWidget(self.use_physicla_unit_chk)
+        voxel_size_layout.addWidget(self.use_physical_unit_chk)
         mask_layout = QHBoxLayout()
         mask_layout.addWidget(QLabel("Mask mark color"))
         mask_layout.addWidget(self.mask_color)
@@ -92,12 +95,16 @@ class AdvancedSettings(QWidget):
         mask_layout.addWidget(self.mask_opacity)
         mask_layout.addStretch(1)
         profile_layout = QGridLayout()
-        profile_layout.addWidget(self.profile_list,0, 0, 3, 1)
-        profile_layout.addWidget(self.info_label, 0, 1, 1, 4)
-        profile_layout.addWidget(self.export_btn, 1, 1)
-        profile_layout.addWidget(self.import_btn, 1, 2)
-        profile_layout.addWidget(self.delete_btn, 2, 1)
-        profile_layout.addWidget(self.rename_btn, 2, 2)
+        profile_layout.setSpacing(0)
+        profile_layout.addWidget(QLabel("Profiles:"), 0, 0)
+        profile_layout.addWidget(self.profile_list, 1, 0)
+        profile_layout.addWidget(QLabel("Pipelines:"), 2, 0)
+        profile_layout.addWidget(self.pipeline_list, 3, 0, 3, 1)
+        profile_layout.addWidget(self.info_label, 1, 1, 3, 2)
+        profile_layout.addWidget(self.export_btn, 4, 1)
+        profile_layout.addWidget(self.import_btn, 4, 2)
+        profile_layout.addWidget(self.delete_btn, 5, 1)
+        profile_layout.addWidget(self.rename_btn, 5, 2)
         layout = QVBoxLayout()
         layout.addLayout(spacing_layout)
         layout.addLayout(voxel_size_layout)
@@ -110,18 +117,26 @@ class AdvancedSettings(QWidget):
         self._settings.set_in_profile("mask_presentation", (self.mask_color.currentText(), self.mask_opacity.value()))
 
     def profile_chosen(self, text):
+        print("[profile_chosen]", self.sender(), text)
         if text == "":
             self.delete_btn.setEnabled(False)
             self.rename_btn.setEnabled(False)
-            self.info_label.setText("")
+            self.info_label.setPlainText("")
             return
         try:
-            profile = self._settings.get(f"segmentation_profiles.{text}")
+            if self.sender() == self.profile_list:
+                profile = self._settings.segmentation_profiles[text]
+                self.pipeline_list.selectionModel().clear()
+            elif self.sender() == self.pipeline_list:
+                profile = self._settings.segmentation_pipelines[text]
+                self.profile_list.selectionModel().clear()
+            else:
+                return
         except KeyError:
             return
 
-        # TODO update with knowlega fro profile dict
-        self.info_label.setText(str(profile))
+        # TODO update with knowledge from profile dict
+        self.info_label.setPlainText(str(profile))
         self.delete_btn.setEnabled(True)
         self.rename_btn.setEnabled(True)
 
@@ -157,27 +172,39 @@ class AdvancedSettings(QWidget):
                                       f"<sup>{len(self._settings.image_spacing)}</sup>")
 
     def update_profile_list(self):
-        current_names = set(self._settings.get(f"segmentation_profiles", dict()).keys())
+        print("[update_profile_list]")
+        current_names = set(self._settings.segmentation_profiles.keys())
         self.profile_list.clear()
         self.profile_list.addItems(sorted(current_names))
+        self.pipeline_list.clear()
+        self.pipeline_list.addItems(sorted(set(self._settings.segmentation_pipelines.keys())))
+        self.delete_btn.setDisabled(True)
+        self.rename_btn.setDisabled(True)
+        self.info_label.setPlainText("")
 
     def showEvent(self, a0):
+        print("[ShowEvent]")
         self.update_profile_list()
         self.update_spacing()
 
     def event(self, event: QEvent):
         if event.type() == QEvent.WindowActivate and self.isVisible():
+            print("[event]")
             self.update_profile_list()
             self.update_spacing()
         return super().event(event)
 
     def delete_profile(self):
-        chosen_profile = self.profile_list.currentItem()
-        label = chosen_profile.text()
-        if label != "":
+        text, dkt = "", {}
+        if self.profile_list.selectedItems():
+            text = self.profile_list.selectedItems()[0].text()
+            dkt = self._settings.segmentation_profiles
+        elif self.pipeline_list.selectedItems():
+            text = self.pipeline_list.selectedItems()[0].text()
+            dkt = self._settings.segmentation_pipelines
+        if text != "":
             self.delete_btn.setDisabled(True)
-            del self._settings.get(f"segmentation_profiles")[label]
-            self.profile_list.clear()
+            del dkt[text]
             self.update_profile_list()
 
     def export_profile(self):
