@@ -15,9 +15,8 @@ def main():
     import logging
     logging.basicConfig(level=logging.INFO)
     from PyQt5.QtWidgets import QApplication
-    from stackseg.stack_gui_main import MainWindow
-    import sys
     myApp = QApplication(sys.argv)
+    from stackseg.stack_gui_main import MainWindow
     wind = MainWindow("StackSeg")
     wind.show()
     myApp.exec_()
