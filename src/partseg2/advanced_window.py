@@ -117,7 +117,6 @@ class AdvancedSettings(QWidget):
         self._settings.set_in_profile("mask_presentation", (self.mask_color.currentText(), self.mask_opacity.value()))
 
     def profile_chosen(self, text):
-        print("[profile_chosen]", self.sender(), text)
         if text == "":
             self.delete_btn.setEnabled(False)
             self.rename_btn.setEnabled(False)
@@ -172,7 +171,6 @@ class AdvancedSettings(QWidget):
                                       f"<sup>{len(self._settings.image_spacing)}</sup>")
 
     def update_profile_list(self):
-        print("[update_profile_list]")
         current_names = set(self._settings.segmentation_profiles.keys())
         self.profile_list.clear()
         self.profile_list.addItems(sorted(current_names))
@@ -183,13 +181,11 @@ class AdvancedSettings(QWidget):
         self.info_label.setPlainText("")
 
     def showEvent(self, a0):
-        print("[ShowEvent]")
         self.update_profile_list()
         self.update_spacing()
 
     def event(self, event: QEvent):
         if event.type() == QEvent.WindowActivate and self.isVisible():
-            print("[event]")
             self.update_profile_list()
             self.update_spacing()
         return super().event(event)

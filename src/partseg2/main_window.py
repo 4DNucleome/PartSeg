@@ -20,6 +20,7 @@ from common_gui.stack_image_view import ColorBar
 from common_gui.waiting_dialog import WaitingDialog
 from partseg2.advanced_window import AdvancedWindow
 from partseg2.batch_window import BatchWindow
+from partseg2.calculation_pipeline_thread import CalculatePipelineThread
 from partseg2.interpolate_dialog import InterpolateDialog
 from partseg2.interpolate_thread import InterpolateThread
 from project_utils.algorithms_description import InteractiveAlgorithmSettingsWidget
@@ -156,7 +157,19 @@ class Options(QWidget):
     def choose_pipeline(self, text):
         if text =="<none>":
             return
-        print(self._settings.segmentation_pipelines[text])
+        pipeline = self._settings.segmentation_pipelines[text]
+        process_thread = CalculatePipelineThread(self._settings.image, self._settings.mask, pipeline, self)
+        dial = WaitingDialog(process_thread)
+
+        if dial.exec() and process_thread.result:
+            pipeline_result = process_thread.result
+            self._settings.mask = pipeline_result.mask
+            self._settings.segmentation = pipeline_result.segmentation
+            self._settings.full_segmentation = pipeline_result.full_segmentation
+            self._settings.segmentation_history = pipeline_result.history
+            self._settings.undo_segmentation_history = []
+            self.label.setText(pipeline_result.description)
+            self._change_profile(pipeline.segmentation.algorithm, pipeline.segmentation.values)
         self.choose_pipe.setCurrentIndex(0)
 
     def update_tooltips(self):
@@ -406,7 +419,6 @@ class MainMenu(QWidget):
                         filters = ["mask (*.tiff *.tif *.lsm)"]
                         mask_dial.setNameFilters(filters)
                         if mask_dial.exec_():
-                            mask = tif.imread(mask_dial.selectedFiles()[0])
                             read_thread.set_path(file_path, mask_dial.selectedFiles()[0])
                             dial.exec()
                             self._settings.image = read_thread.image

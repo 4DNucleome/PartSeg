@@ -7,8 +7,8 @@ import typing
 
 
 class CalculatePipelineThread(ProgressTread):
-    def __init__(self, image: Image, mask:typing.Union[np.ndarray, None], pipeline: SegmentationPipeline):
-        super().__init__()
+    def __init__(self, image: Image, mask:typing.Union[np.ndarray, None], pipeline: SegmentationPipeline, parent=None):
+        super().__init__(parent=parent)
         self.image =image
         self.mask = mask
         self.pipeline = pipeline
