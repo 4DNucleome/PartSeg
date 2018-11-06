@@ -4,15 +4,16 @@ import typing
 import uuid
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
-from copy import copy
+from copy import copy, deepcopy
 from enum import Enum
-
+from deprecation import deprecated
 from six import add_metaclass
 
 from partseg2.statistics_calculation import StatisticProfile
 from partseg2.algorithm_description import SegmentationProfile
+from project_utils.image_operations import RadiusType
 from project_utils.mask_create import MaskProperty
-from project_utils.class_generator import BaseReadonlyClass
+from project_utils.class_generator import BaseReadonlyClass, BaseReadonlyClass_
 
 
 class MaskBase:
@@ -40,21 +41,43 @@ class MaskIntersection(MaskBase, BaseReadonlyClass):
     mask1: str
     mask2: str
 
-CmapProfile = namedtuple("CmapProfile", ["suffix", "gauss_type", "center_data", "rotation_axis", "cut_obsolete_area",
-                                         "directory"])
-ProjectSave = namedtuple("ProjectSave", ["suffix", "directory"])
-MaskSave = namedtuple("MaskSave", ["suffix", "directory"])
-XYZSave = namedtuple("XYZSave", ["suffix", "directory"])
-ImageSave = namedtuple("ImageSave", ["suffix", "directory"])
+
+class SaveBase:
+    suffix: str
+    directory: str
+
+# CmapProfile = namedtuple("CmapProfile", ["suffix", "gauss_type", "center_data", "rotation_axis", "cut_obsolete_area",
+#                                         "directory"])
+class CmapProfile(SaveBase, BaseReadonlyClass):
+    gauss_type: RadiusType
+    center_data: bool
+    rotation_axis: bool
+    cut_obsolete_area: bool
+
+# ProjectSave = namedtuple("ProjectSave", ["suffix", "directory"])
+class ProjectSave(SaveBase, BaseReadonlyClass):
+    pass
+
+# MaskSave = namedtuple("MaskSave", ["suffix", "directory"])
+class MaskSave(SaveBase, BaseReadonlyClass):
+    pass
+
+# XYZSave = namedtuple("XYZSave", ["suffix", "directory"])
+class XYZSave(SaveBase, BaseReadonlyClass):
+    pass
+
+# ImageSave = namedtuple("ImageSave", ["suffix", "directory"])
+class ImageSave(SaveBase, BaseReadonlyClass):
+    pass
 
 ChooseChanel = namedtuple("ChooseChanel", ["chanel_num"])
 
-# MaskCreate.__new__.__defaults__ = (0,)
+"""MaskCreate.__new__.__defaults__ = (0,)
 CmapProfile.__new__.__defaults__ = (False,)
 ProjectSave.__new__.__defaults__ = (False,)
 MaskSave.__new__.__defaults__ = (False,)
 XYZSave.__new__.__defaults__ = (False,)
-ImageSave.__new__.__defaults__ = (False,)
+ImageSave.__new__.__defaults__ = (False,)"""
 
 
 def get_save_path(op, calculation):
@@ -190,11 +213,10 @@ class PlanChanges(Enum):
 
 
 class CalculationTree:
-    def __init__(self, operation: BaseReadonlyClass, children: typing.Optional['CalculationTree']):
+    def __init__(self, operation: typing.Union[BaseReadonlyClass, SegmentationProfile, StatisticProfile, str],
+                 children: typing.List['CalculationTree']):
         self.operation = operation
         self.children = children
-
-
 
 
 class NodeType(Enum):
@@ -273,10 +295,13 @@ class CalculationPlan(object):
                     ChooseChanel.__name__: ChooseChanel, MaskIntersection.__name__: MaskIntersection,
                     MaskSum.__name__: MaskSum, ImageSave.__name__: ImageSave, XYZSave.__name__: XYZSave}
 
-    def __init__(self):
-        self.execution_tree = CalculationTree("root", [])
+    def __init__(self, tree: typing.Optional[CalculationTree] = None, name:str = ""):
+        if tree is None:
+            self.execution_tree = CalculationTree("root", [])
+        else:
+            self.execution_tree = tree
         self.segmentation_count = 0
-        self.name = ""
+        self.name = name
         self.current_pos = []
         self.changes = []
         self.current_node = None
@@ -314,10 +339,10 @@ class CalculationPlan(object):
         self.current_pos = []
 
     def __copy__(self):
-        return CalculationPlan.dict_load(self.dict_dump())
+        return CalculationPlan(name=self.name, tree=deepcopy(self.execution_tree))
 
     def __deepcopy__(self):
-        return CalculationPlan.dict_load(self.dict_dump())
+        return CalculationPlan(name=self.name, tree=deepcopy(self.execution_tree))
 
     def get_node(self, search_pos=None):
         """
@@ -489,6 +514,7 @@ class CalculationPlan(object):
             if isinstance(el.operation, MaskFile):
                 num -= 1
 
+    @deprecated
     def recursive_dump(self, node, pos):
         """
         :type node: CalculationTree
@@ -518,6 +544,7 @@ class CalculationPlan(object):
             res.extend(self.recursive_dump(el, pos + [i]))
         return res
 
+    @deprecated
     def dict_dump(self):
         res = dict()
         res["name"] = self.name

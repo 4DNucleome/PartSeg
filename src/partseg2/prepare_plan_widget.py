@@ -669,20 +669,21 @@ class CreatePlan(QWidget):
                 self.reuse_mask_btn.setEnabled(True)
 
     def add_calculation_plan(self, used_text=None):
-        if used_text is None or isinstance(used_text, bool):
-            text, ok = QInputDialog.getText(self, "Plan title", "Set plan title")
-        else:
-            text, ok = QInputDialog.getText(self, "Plan title", "Set plan title. Previous ({}) "
-                                                                "is already in use".format(used_text))
-        if ok:
-            text = str(text)
-            if text in self.settings.batch_plans:
-                self.add_calculation_plan(text)
-                return
-            plan = copy(self.calculation_plan)
-            plan.set_name(text)
-            self.settings.batch_plans[text] = plan
-            self.plan_created.emit()
+        while True:
+            if used_text is None or isinstance(used_text, bool):
+                text, ok = QInputDialog.getText(self, "Plan title", "Set plan title")
+            else:
+                text, ok = QInputDialog.getText(self, "Plan title", "Set plan title. Previous ({}) "
+                                                                    "is already in use".format(used_text))
+            if ok:
+                text = str(text)
+                if text in self.settings.batch_plans:
+                    continue
+                plan = copy(self.calculation_plan)
+                plan.set_name(text)
+                self.settings.batch_plans[text] = plan
+                self.plan_created.emit()
+                break
 
     def showEvent(self, _):
         new_statistics = list(sorted(self.settings.get("statistic_profiles", dict()).keys()))

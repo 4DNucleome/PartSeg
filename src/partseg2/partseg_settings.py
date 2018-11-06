@@ -1,6 +1,7 @@
 import typing
 from PyQt5.QtCore import pyqtSignal
 
+from partseg2.batch_processing.calculation_plan import CalculationPlan
 from .algorithm_description import SegmentationProfile
 from .partseg_utils import PartEncoder, part_hook, HistoryElement, SegmentationPipeline
 from .io_functions import save_project
@@ -72,6 +73,10 @@ class PartSettings(BaseSettings):
     @property
     def segmentation_profiles(self) -> typing.Dict[str, SegmentationProfile]:
         return self.get("segmentation_profiles", dict())
+
+    @property
+    def batch_plans(self) -> typing.Dict[str, CalculationPlan]:
+        return self.get("batch_plans", dict())
 
 
 def load_project(file_path, settings):
