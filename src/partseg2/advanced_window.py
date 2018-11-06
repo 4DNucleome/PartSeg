@@ -261,7 +261,7 @@ class StatisticsSettings(QWidget):
     """
     :type settings: Settings
     """
-    def __init__(self, settings: BaseSettings):
+    def __init__(self, settings: PartSettings):
         super(StatisticsSettings, self).__init__()
         self.chosen_element = None
         self.settings = settings
@@ -379,14 +379,14 @@ class StatisticsSettings(QWidget):
             lw = QListWidgetItem(name)
             lw.setToolTip(help_text)
             self.profile_options.addItem(lw)
-        self.profile_list.addItems(list(sorted( self.settings.get("statistic_profiles", dict()).keys())))
+        self.profile_list.addItems(list(sorted(self.settings.statistic_profiles.keys())))
         if self.profile_list.count() == 0:
             self.export_profiles_butt.setDisabled(True)
 
     def delete_profile(self):
         row = self.profile_list.currentRow()
         item = self.profile_list.currentItem()
-        del self.settings.get(f"statistic_profiles")[str(item.text())]
+        del self.settings.statistic_profiles[str(item.text())]
         self.profile_list.takeItem(row)
         if self.profile_list.count() == 0:
             self.delete_profile_butt.setDisabled(True)
@@ -401,7 +401,7 @@ class StatisticsSettings(QWidget):
             self.profile_description.setText("")
             return
         text = "Profile name: {}\n".format(item.text())
-        profile =self.settings.get(f"statistic_profiles.{item.text()}")  # type: StatisticProfile
+        profile = self.settings.statistic_profiles[item.text()]
         text += "Reversed image [{}]\n".format(profile.reversed_brightness)
         text += "Gaussed image [{}]\n".format(profile.use_gauss_image)
         text += "statistics list:\n"
@@ -532,7 +532,7 @@ class StatisticsSettings(QWidget):
         item = self.profile_list.currentItem()
         if item is None:
             return
-        profile = self.settings.get("statistic_profiles")[str(item.text())]  # type: StatisticProfile
+        profile = self.settings.statistic_profiles[str(item.text())]
         self.profile_options_chosen.clear()
         self.profile_name.setText(item.text())
         for ch in profile.chosen_fields:
@@ -556,9 +556,9 @@ class StatisticsSettings(QWidget):
         stat_prof = StatisticProfile(str(self.profile_name.text()), selected_values,
                                      self.reversed_brightness.isChecked(),
                                      self.gauss_img.isChecked())
-        if stat_prof.name not in self.settings.get("statistic_profiles", dict()):
+        if stat_prof.name not in self.settings.statistic_profiles:
             self.profile_list.addItem(stat_prof.name)
-        self.settings.set(f"statistic_profiles.{stat_prof.name}", stat_prof)
+        self.settings.statistic_profiles[stat_prof.name] = stat_prof
         self.settings.dump()
         self.export_profiles_butt.setEnabled(True)
 
@@ -582,9 +582,9 @@ class StatisticsSettings(QWidget):
             stat_prof = StatisticProfile(str(self.profile_name.text()), selected_values,
                                          self.reversed_brightness.isChecked(),
                                          (self.gauss_img.value() ,self.gauss_radius.value()))
-            if stat_prof.name not in self.settings.get("statistic_profiles"):
+            if stat_prof.name not in self.settings.statistic_profiles:
                 self.profile_list.addItem(stat_prof.name)
-            self.self.settings.set(f"statistic_profiles.{stat_prof.name}",  stat_prof)
+            self.self.settings.statistic_profiles[stat_prof.name] = stat_prof
             self.export_profiles_butt.setEnabled(True)
 
     def reset_action(self):
@@ -610,7 +610,7 @@ class StatisticsSettings(QWidget):
         self.create_selection_changed()
 
     def export_statistic_profiles(self):
-        exp = ExportDialog(self.settings.get("statistic_profiles"), StringViewer)
+        exp = ExportDialog(self.settings.statistic_profiles, StringViewer)
         if not exp.exec_():
             return
         dial = QFileDialog(self, "Export settings profiles")
@@ -635,7 +635,7 @@ class StatisticsSettings(QWidget):
             file_path = str(dial.selectedFiles()[0])
             self.settings.set("io.export_directory", file_path)
             stat = self.settings.load_part(file_path)
-            statistic_dict = self.settings.get("statistic_profiles")
+            statistic_dict = self.settings.statistic_profiles
             imp = ImportDialog(stat, statistic_dict, StringViewer)
             if not imp.exec_():
                 return
@@ -788,7 +788,7 @@ class StatisticsWindow(QWidget):
         self.statistic_type = QComboBox(self)
         # self.statistic_type.addItem("Emish statistics (oryginal)")
         self.statistic_type.currentIndexChanged[str].connect(self.statistic_selection_changed)
-        self.statistic_type.addItems(list(sorted(self.settings.get("statistic_profiles", dict()).keys())))
+        self.statistic_type.addItems(list(sorted(self.settings.statistic_profiles.keys())))
         self.statistic_type.setToolTip(
             "You can create new statistic profile in advanced window, in tab \"Statistic settings\"")
         self.channels_chose = QComboBox()
@@ -840,7 +840,7 @@ class StatisticsWindow(QWidget):
     def statistic_selection_changed(self, text):
         text = str(text)
         try:
-            stat = self.settings.get(f"statistic_profiles.{text}")
+            stat = self.settings.statistic_profiles[text]
             is_mask = stat.is_any_mask_statistic()
             disable = is_mask and (self.settings.mask is None)
         except KeyError:
@@ -894,10 +894,9 @@ class StatisticsWindow(QWidget):
                 self.info_field.setItem(y, x,  QTableWidgetItem(ob_array[x, y]))
 
     def append_statistics(self):
-
-        compute_class:StatisticProfile = self.settings.get(f"statistic_profiles.{self.statistic_type.currentText()}")
+        compute_class = self.settings.statistic_profiles[self.statistic_type.currentText()]
         gauss_image = self.settings.image
-        image = self.settings.image
+        image = self.settings.image.get_channel(self.channels_chose.currentIndex())
         segmentation = self.settings.segmentation
         full_mask = self.settings.full_segmentation
         base_mask = self.settings.mask
@@ -981,7 +980,7 @@ class StatisticsWindow(QWidget):
 
     def update_statistic_list(self):
         self.statistic_type.blockSignals(True)
-        avali = list(sorted(self.settings.get("statistic_profiles").keys()))
+        avali = list(sorted(self.settings.statistic_profiles.keys()))
         # avali.insert(0, "Emish statistics (oryginal)")
         text = self.statistic_type.currentText()
         try:
