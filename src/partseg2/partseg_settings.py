@@ -2,9 +2,10 @@ import typing
 from PyQt5.QtCore import pyqtSignal
 
 from partseg2.batch_processing.calculation_plan import CalculationPlan
+from project_utils.cmap_utils import CmapProfile
 from .algorithm_description import SegmentationProfile
 from .partseg_utils import PartEncoder, part_hook, HistoryElement, SegmentationPipeline
-from .io_functions import save_project
+from .io_functions import save_project, save_cmap
 from project_utils.settings import BaseSettings
 import numpy as np
 
@@ -65,6 +66,9 @@ class PartSettings(BaseSettings):
         dkt["history"] = self.segmentation_history
         dkt["image"] = self.image
         save_project(file_path, **dkt)
+
+    def save_cmap(self, file_path: str, cmap_profile: CmapProfile):
+        save_cmap(file_path, self.image, cmap_profile)
 
     @property
     def segmentation_pipelines(self) -> typing.Dict[str, SegmentationPipeline]:

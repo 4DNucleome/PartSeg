@@ -9,11 +9,11 @@ from enum import Enum
 from deprecation import deprecated
 from six import add_metaclass
 
+from project_utils.cmap_utils import CmapProfileBase
 from partseg2.statistics_calculation import StatisticProfile
 from partseg2.algorithm_description import SegmentationProfile
-from project_utils.image_operations import RadiusType
 from project_utils.mask_create import MaskProperty
-from project_utils.class_generator import BaseReadonlyClass, BaseReadonlyClass_
+from project_utils.class_generator import BaseReadonlyClass
 
 
 class MaskBase:
@@ -41,18 +41,14 @@ class MaskIntersection(MaskBase, BaseReadonlyClass):
     mask1: str
     mask2: str
 
-
 class SaveBase:
     suffix: str
     directory: str
 
 # CmapProfile = namedtuple("CmapProfile", ["suffix", "gauss_type", "center_data", "rotation_axis", "cut_obsolete_area",
 #                                         "directory"])
-class CmapProfile(SaveBase, BaseReadonlyClass):
-    gauss_type: RadiusType
-    center_data: bool
-    rotation_axis: bool
-    cut_obsolete_area: bool
+class CmapProfile(SaveBase, CmapProfileBase, BaseReadonlyClass):
+    pass
 
 # ProjectSave = namedtuple("ProjectSave", ["suffix", "directory"])
 class ProjectSave(SaveBase, BaseReadonlyClass):

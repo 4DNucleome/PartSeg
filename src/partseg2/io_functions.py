@@ -1,3 +1,6 @@
+from project_utils.class_generator import BaseReadonlyClass
+from project_utils.cmap_utils import CmapProfile
+from project_utils.image_operations import RadiusType
 from .partseg_utils import HistoryElement, PartEncoder
 import numpy as np
 from tiff_image import Image, ImageWriter
@@ -7,6 +10,7 @@ import typing
 import os.path
 import json
 import datetime
+
 
 def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
     tar_info = tarfile.TarInfo(name=name)
@@ -20,7 +24,8 @@ def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
 
 
 def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_segmentation: np.ndarray,
-                 mask: typing.Union[np.ndarray, None], history: typing.List[HistoryElement], algorithm_parameters: dict):
+                 mask: typing.Union[np.ndarray, None], history: typing.List[HistoryElement],
+                 algorithm_parameters: dict):
     ext = os.path.splitext(file_path)[1]
     if ext.lower() in ['.bz2', ".tbz2"]:
         tar_mod = 'w:bz2'
@@ -55,3 +60,6 @@ def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_se
             hist_buff = BytesIO(hist_str.encode('utf-8'))
             tar_algorithm = get_tarinfo("history/history.json", hist_buff)
             tar.addfile(tar_algorithm, hist_buff)
+
+def save_cmap(file_path: str, image:Image, cmap_profile: CmapProfile):
+    pass
