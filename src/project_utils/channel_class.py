@@ -1,0 +1,2 @@
+class Channel(int):
+    pass
