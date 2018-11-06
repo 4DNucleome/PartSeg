@@ -41,10 +41,10 @@ class {typename}(BaseReadonlyClass):
             raise TypeError('Expected {num_fields:d} arguments, got %d' % len(result))
         return result
 
-    def replace_(self, **kwds):
+    def replace_(self, **kwargs):
         'Return a new {typename} object replacing specified fields with new values'
         dkt = self.asdict()
-        dkt.update(kwds)
+        dkt.update(kwargs)
         return self.__class__(**dkt)
 
     def __repr__(self):
@@ -65,7 +65,7 @@ class {typename}(BaseReadonlyClass):
         'Return self as a plain tuple.  Used by copy and pickle.'
         return tuple(_attrgetter(*self.__slots__)(self))
 
-{field_defs}
+{field_definitions}
 """
 
 _repr_template = '{name}=%r'
@@ -132,8 +132,8 @@ def _make_class(typename, types, defaults_dict, base_classes):
         arg_list=repr(tuple(field_names)).replace("'", "")[1:-1],
         repr_fmt=', '.join(_repr_template.format(name=name)
                            for name in field_names),
-        field_defs='\n'.join(_field_template.format(name=name)
-                             for index, name in enumerate(field_names))
+        field_definitions='\n'.join(_field_template.format(name=name)
+                                    for index, name in enumerate(field_names))
     )
 
     namespace = dict(__name__='namedtuple_%s' % typename)
@@ -158,7 +158,7 @@ def _make_class(typename, types, defaults_dict, base_classes):
 
 class BaseMeta(type):
     def __new__(mcs, name, bases, attrs):
-        print("BaseMeta.__new__", mcs, name, bases, attrs)
+        # print("BaseMeta.__new__", mcs, name, bases, attrs)
         if attrs.get('_root', False):
             return super().__new__(mcs, name, bases, attrs)
         if name in class_register:
