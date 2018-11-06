@@ -48,8 +48,8 @@ class Options(QWidget):
         self._settings = settings
         self.left_panel = left_panel
         self._ch_control2 = channel_control2
-        self.off_left = QCheckBox("Hide left panel")
-        self.off_left.stateChanged.connect(self.hide_left_panel)
+        self.hide_left_panel_chk = QCheckBox("Hide left panel")
+        self.hide_left_panel_chk.stateChanged.connect(self.hide_left_panel)
         self.synchronize_checkbox = QCheckBox("Synchronize view")
         self.synchronize_checkbox.stateChanged.connect(synchronize.set_synchronize)
         self.stack_layout = QStackedLayout()
@@ -110,7 +110,7 @@ class Options(QWidget):
         layout.addLayout(self.stack_layout)
         layout.addWidget(self.label)
         layout.addStretch(1)
-        layout2.addWidget(self.off_left)
+        layout2.addWidget(self.hide_left_panel_chk)
         layout2.addWidget(self.synchronize_checkbox)
         layout.addLayout(layout2)
         layout.addWidget(self._ch_control2)
@@ -281,12 +281,12 @@ class Options(QWidget):
         return self.interactive_use.isChecked()
 
     def hide_left_panel(self, val):
+        self._settings.set_in_profile("hide_left_panel", val)
         if val:
             self.synchronize_val = self.synchronize_checkbox.isChecked()
             self.synchronize_checkbox.setChecked(False)
         else:
             self.synchronize_checkbox.setChecked(self.synchronize_val)
-        self.synchronize_checkbox.setChecked(not val)
         self.synchronize_checkbox.setDisabled(val)
         self.left_panel.parent().setHidden(val)
 
@@ -313,6 +313,9 @@ class Options(QWidget):
         self.segmentation = segmentation
         self._settings.full_segmentation = full_segmentation
         self.label.setText(self.sender().get_info_text())
+
+    def showEvent(self, _event):
+        self.hide_left_panel_chk.setChecked(self._settings.get_from_profile("hide_left_panel", False))
 
 
 class MainMenu(QWidget):
