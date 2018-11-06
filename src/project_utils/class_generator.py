@@ -194,8 +194,7 @@ class BaseMeta(type):
                 raise AttributeError("Cannot overwrite NamedTuple attribute " + key)
             elif key not in _special and key not in result._fields:
                 setattr(result, key, attrs[key])
-
-        class_register[name] = result
+        class_register[extract_type_info(result)[0]] = result
         return result
 
 
@@ -224,7 +223,7 @@ class BaseReadonlyClass(metaclass=BaseMeta):
 class ReadonlyClassEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, BaseReadonlyClass_):
-            return {"__ReadOnly__": True, "__subtype__": o.__class__.__name__,  **o.asdict()}
+            return {"__ReadOnly__": True, "__subtype__": extract_type_info(o.__class__)[0],  **o.asdict()}
         return super().default(o)
 
 
