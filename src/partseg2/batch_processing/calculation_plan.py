@@ -66,6 +66,25 @@ class XYZSave(SaveBase, BaseReadonlyClass):
 class ImageSave(SaveBase, BaseReadonlyClass):
     pass
 
+class StatisticCalculate(BaseReadonlyClass):
+    channel: int
+    statistic_profile: StatisticProfile
+    name_prefix: str
+
+    @property
+    def name(self):
+        return self.statistic_profile.name
+
+    def __str__(self):
+        channel = "Like segmentation" if self.channel == -1 else str(self.channel)
+        desc = str(self.statistic_profile).split('\n', 1)[1]
+        return  f"{self.__class__.name}\nChannel: {channel}\n{desc}\n"
+
+
+
+
+
+
 ChooseChanel = namedtuple("ChooseChanel", ["chanel_num"])
 
 """MaskCreate.__new__.__defaults__ = (0,)
@@ -209,7 +228,7 @@ class PlanChanges(Enum):
 
 
 class CalculationTree:
-    def __init__(self, operation: typing.Union[BaseReadonlyClass, SegmentationProfile, StatisticProfile, str],
+    def __init__(self, operation: typing.Union[BaseReadonlyClass, SegmentationProfile, StatisticCalculate, str],
                  children: typing.List['CalculationTree']):
         self.operation = operation
         self.children = children
@@ -285,7 +304,7 @@ class CalculationPlan(object):
     :type segmentation_count: int
     """
     correct_name = {MaskCreate.__name__: MaskCreate, MaskUse.__name__: MaskUse, CmapProfile.__name__: CmapProfile,
-                    StatisticProfile.__name__: StatisticProfile, SegmentationProfile.__name__: SegmentationProfile,
+                    StatisticCalculate.__name__: StatisticCalculate, SegmentationProfile.__name__: SegmentationProfile,
                     MaskSuffix.__name__: MaskSuffix, MaskSub.__name__: MaskSub, MaskFile.__name__: MaskFile,
                     ProjectSave.__name__: ProjectSave, Operations.__name__: Operations,
                     ChooseChanel.__name__: ChooseChanel, MaskIntersection.__name__: MaskIntersection,
@@ -410,7 +429,7 @@ class CalculationPlan(object):
             return NodeType.file_mask
         if isinstance(node.operation, MaskCreate):
             return NodeType.mask
-        if isinstance(node.operation, StatisticProfile):
+        if isinstance(node.operation, StatisticCalculate):
             return NodeType.statics
         if isinstance(node.operation, SegmentationProfile):
             return NodeType.segment
@@ -584,7 +603,7 @@ class CalculationPlan(object):
             """if el.leave_biggest:
                 return "Segmentation: {} (only biggest)".format(el.name)"""
             return "Segmentation: {}".format(el.name)
-        if isinstance(el, StatisticProfile):
+        if isinstance(el, StatisticCalculate):
             if el.name_prefix == "":
                 return "Statistics: {}".format(el.name)
             else:

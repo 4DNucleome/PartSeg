@@ -12,7 +12,7 @@ from partseg2.algorithm_description import SegmentationProfile
 
 from .batch_processing.calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, \
     MaskSuffix, MaskSub, MaskFile, ProjectSave, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, \
-    MaskSave, ImageSave, XYZSave
+    MaskSave, ImageSave, XYZSave, StatisticCalculate
 from partseg2.partseg_settings import PartSettings
 from partseg2.profile_export import ExportDialog, ImportDialog
 from partseg2.statistics_calculation import StatisticProfile
@@ -20,6 +20,7 @@ from partseg2.statistics_calculation import StatisticProfile
 group_sheet = "QGroupBox {border: 1px solid gray; border-radius: 9px; margin-top: 0.5em;} " \
               "QGroupBox::title {subcontrol-origin: margin; left: 10px; padding: 0 3px 0 3px;}"
 
+MAX_CHANNEL_NUM = 10
 
 class TwoMaskDialog(QDialog):
     def __init__(self, mask_names):
@@ -101,6 +102,8 @@ class CreatePlan(QWidget):
         self.intersect_mask_btn = QPushButton("Mask intersection")
         self.sum_mask_btn = QPushButton("Mask sum")
         self.chanel_num = QSpinBox()
+        self.channel_statistic_choose = QComboBox()
+        self.channel_statistic_choose.addItems(["Same as segmentation"] + [str(x) for x in range(MAX_CHANNEL_NUM)])
         self.chanel_num.setRange(0, 10)
         self.expected_node_type = None
         self.save_constructor = None
@@ -254,6 +257,7 @@ class CreatePlan(QWidget):
         line_lay.addWidget(lab)
         line_lay.addWidget(self.statistic_name_prefix)
         lay.addLayout(line_lay)
+        lay.addWidget(self.channel_statistic_choose)
         lay.addWidget(self.add_calculation_btn)
         statistic_box.setLayout(lay)
 
@@ -591,14 +595,16 @@ class CreatePlan(QWidget):
 
     def add_statistics(self):
         text = str(self.statistic_list.currentItem().text())
-        statistics = self.settings.get(f"statistic_profiles.{text}")
+        statistics = self.settings.statistic_profiles[text]
         statistics_copy = deepcopy(statistics)
         prefix = str(self.statistic_name_prefix.text()).strip()
+        channel = self.channel_statistic_choose.currentIndex() - 1
         statistics_copy.name_prefix = prefix
+        statistic_calculate = StatisticCalculate(channel=channel, statistic_profile=statistics_copy, name_prefix=prefix)
         if self.update_element_btn.isChecked():
-            self.calculation_plan.replace_step(statistics_copy)
+            self.calculation_plan.replace_step(statistic_calculate)
         else:
-            self.calculation_plan.add_step(statistics_copy)
+            self.calculation_plan.add_step(statistic_calculate)
         self.plan.update_view()
 
     def remove_element(self):
@@ -838,7 +844,7 @@ class PlanPreview(QTreeWidget):
         widget = QTreeWidgetItem(up_widget)
         widget.setText(0, CalculationPlan.get_el_name(node_plan.operation))
         self.setCurrentItem(widget)
-        if isinstance(node_plan.operation, (StatisticProfile, SegmentationProfile, MaskCreate)):
+        if isinstance(node_plan.operation, (StatisticCalculate, SegmentationProfile, MaskCreate)):
             desc = QTreeWidgetItem(widget)
             desc.setText(0, "Description")
             for line in str(node_plan.operation).split("\n")[1:]:
