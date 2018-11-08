@@ -76,7 +76,7 @@ class Options(QWidget):
         widgets_list = []
         for name, val in part_algorithm_dict.items():
             self.algorithm_choose.addItem(name)
-            widget = InteractiveAlgorithmSettingsWidget(settings, name, *val,
+            widget = InteractiveAlgorithmSettingsWidget(settings, name, val,
                                                         selector=[self.algorithm_choose, self.choose_profile])
             widgets_list.append(widget)
             widget.algorithm_thread.execution_done[np.ndarray, np.ndarray].connect(self.execution_done)

@@ -13,7 +13,35 @@ def calculate_operation_radius(radius, spacing, gauss_type):
     return  radius
 
 
+class AlgorithmProperty(object):
+    """
+    :type name: str
+    :type value_type: type
+    :type default_value: object
+    """
+
+    def __init__(self, name, user_name, default_value, options_range, single_steep=None):
+        self.name = name
+        self.user_name = user_name
+        if type(options_range) is list:
+            self.value_type = list
+        else:
+            self.value_type = type(default_value)
+        self.default_value = default_value
+        self.range = options_range
+        self.single_step = single_steep
+        if self.value_type is list:
+            assert default_value in options_range
+
+    def __repr__(self):
+        return f"{self.__class__.__module__}.{self.__class__.__name__}(name='{self.name}', user_name='{self.user_name}', " + \
+               f"default_value={self.default_value}, range={self.range})"
+
 class SegmentationAlgorithm(object):
+    @classmethod
+    def get_fields(cls):
+        raise NotImplementedError
+
     def __init__(self):
         super().__init__()
         self.image: Image = None

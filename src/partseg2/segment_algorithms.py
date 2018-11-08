@@ -3,13 +3,14 @@ from collections import defaultdict
 from enum import Enum
 from functools import reduce
 
-
-from project_utils.algorithm_base import SegmentationAlgorithm
+from project_utils.algorithm_base import SegmentationAlgorithm, AlgorithmProperty
 from project_utils.distance_in_structure.find_split import distance_sprawl, path_minimum_sprawl, path_maximum_sprawl
 import numpy as np
 import SimpleITK as sitk
 from project_utils import bisect
 import operator
+
+from project_utils.image_operations import RadiusType
 
 
 def blank_operator(_x, _y):
@@ -37,6 +38,13 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
     """
 
     threshold_operator = blank_operator
+
+    @classmethod
+    def get_fields(cls):
+        return [AlgorithmProperty("minimum_size", "Minimum size (pix)", 8000, (0, 10 ** 6), 1000),
+                AlgorithmProperty("use_gauss", "Use gauss", RadiusType.NO, None),
+                AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1),
+                AlgorithmProperty("side_connection", "Connect only sides", False, (True, False))]
 
     def __init__(self, **kwargs):
         super(ThresholdBaseAlgorithm, self).__init__()
@@ -106,6 +114,10 @@ class OneThresholdAlgorithm(ThresholdBaseAlgorithm):
     def set_parameters(self, *args, **kwargs):
         self._set_parameters(*args, **kwargs)
 
+    @classmethod
+    def get_fields(cls):
+        return [AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100)] + super().get_fields()
+
 
 class LowerThresholdAlgorithm(OneThresholdAlgorithm):
     threshold_operator = operator.gt
@@ -123,8 +135,19 @@ class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
         return ((image > self.new_parameters["threshold"][0]) * (image < self.new_parameters["threshold"][1])).astype(
             np.uint8)
 
+    @classmethod
+    def get_fields(cls):
+        return [AlgorithmProperty("lower_threshold", "Lower threshold", 10000, (0, 10 ** 6), 100),
+                AlgorithmProperty("upper_threshold", "Upper threshold", 10000, (0, 10 ** 6), 100)] + \
+               super().get_fields()
+
 
 class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm):
+    @classmethod
+    def get_fields(cls):
+        return [AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100),
+                AlgorithmProperty("base_threshold", "Base threshold", 10000, (0, 10 ** 6), 100)] + super().get_fields()
+
     def path_sprawl(self, base_image, object_image) -> np.ndarray:
         raise NotImplementedError()
 
@@ -217,11 +240,13 @@ class UpperThresholdPathDistanceFlowAlgorithm(UpperThresholdPathFlowAlgorithm):
         neigh, dist = calculate_distances_array(self.image.spacing, get_neigh(self.new_parameters["side_connection"]))
         return distance_sprawl(base_image, mid, self.components_num, neigh, dist)
 
+
 def get_neigh(sides):
     if sides:
         return NeighType.sides
     else:
         return NeighType.edges
+
 
 class NeighType(Enum):
     sides = 6

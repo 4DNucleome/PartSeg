@@ -4,7 +4,7 @@ import SimpleITK as sitk
 import numpy as np
 
 from project_utils import bisect
-from project_utils.algorithm_base import SegmentationAlgorithm
+from project_utils.algorithm_base import SegmentationAlgorithm, AlgorithmProperty
 from project_utils.convex_fill import convex_fill
 from project_utils.image_operations import RadiusType
 from .segment import close_small_holes, opening
@@ -24,6 +24,11 @@ class StackAlgorithm(SegmentationAlgorithm, ABC):
 
 
 class ThresholdPreview(StackAlgorithm):
+    @classmethod
+    def get_fields(cls):
+        return [AlgorithmProperty("threshold", "Threshold", 1000, (0, 10 ** 6), 100),
+                AlgorithmProperty("use_gauss", "Use gauss", RadiusType.NO, None),
+                AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1)]
 
     def __init__(self):
         super(ThresholdPreview, self).__init__()
@@ -63,6 +68,18 @@ class ThresholdPreview(StackAlgorithm):
 
 
 class BaseThresholdAlgorithm(StackAlgorithm, ABC):
+    @classmethod
+    def get_fields(cls):
+        return [AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100),
+                       AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10 ** 6), 1000),
+                       AlgorithmProperty("close_holes", "Close small holes", True, (True, False)),
+                       AlgorithmProperty("close_holes_size", "Small holes size", 200, (0, 10**3), 10),
+                       AlgorithmProperty("smooth_border", "Smooth borders", True, (True, False)),
+                       AlgorithmProperty("smooth_border_radius", "Smooth borders radius", 2, (0, 20), 1),
+                       AlgorithmProperty("use_gauss", "Use gauss", RadiusType.NO, None),
+                       AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1),
+                       AlgorithmProperty("side_connection", "Connect only sides", False, (True, False)),
+                       AlgorithmProperty("use_convex", "Use convex_hull", False, (True, False))]
     def __init__(self):
         super().__init__()
         self.threshold = None
@@ -157,6 +174,11 @@ class ThresholdAlgorithm(BaseThresholdAlgorithm):
 
 
 class AutoThresholdAlgorithm(BaseThresholdAlgorithm):
+    @classmethod
+    def get_fields(cls):
+        return [AlgorithmProperty("suggested_size", "Suggested size", 200000, (0, 10 ** 6), 1000)] + \
+               super().get_fields()
+
     def __init__(self):
         super().__init__()
         self.suggested_size = 0

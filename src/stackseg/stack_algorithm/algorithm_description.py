@@ -30,7 +30,7 @@ auto_threshold_algorithm.insert(0, AlgorithmProperty("suggested_size", "Suggeste
 
 
 stack_algorithm_dict = {
-    "Threshold": (threshold_algorithm, ThresholdAlgorithm),
-    "Only Threshold": (only_threshold_algorithm, ThresholdPreview),
-    "Auto Threshold": (auto_threshold_algorithm, AutoThresholdAlgorithm)
+    "Threshold": ThresholdAlgorithm,
+    "Only Threshold": ThresholdPreview,
+    "Auto Threshold": AutoThresholdAlgorithm
 }

@@ -42,17 +42,15 @@ lower_path_euclidean_flow_threshold_algorithm = deepcopy(lower_euclidean_flow_th
 upper_path_euclidean_flow_threshold_algorithm = deepcopy(upper_euclidean_flow_threshold_algorithm)
 
 part_algorithm_dict = {
-    "Lower threshold": (lower_threshold_algorithm, LowerThresholdAlgorithm),
-    "Upper threshold": (upper_threshold_algorithm, UpperThresholdAlgorithm),
-    "Range threshold": (range_threshold_algorithm, RangeThresholdAlgorithm),
-    "Lower threshold euclidean": (lower_euclidean_flow_threshold_algorithm, LowerThresholdDistanceFlowAlgorithm),
-    "Upper threshold euclidean": (upper_euclidean_flow_threshold_algorithm, UpperThresholdDistanceFlowAlgorithm),
-    "Lower threshold path": (lower_path_flow_threshold_algorithm, LowerThresholdPathFlowAlgorithm),
-    "Upper threshold path": (upper_path_flow_threshold_algorithm, UpperThresholdPathFlowAlgorithm),
-    "Lower threshold path euclidean": (
-        lower_path_euclidean_flow_threshold_algorithm, LowerThresholdPathDistanceFlowAlgorithm),
-    "Upper threshold path euclidean": (
-        upper_path_euclidean_flow_threshold_algorithm, UpperThresholdPathDistanceFlowAlgorithm)
+    "Lower threshold": LowerThresholdAlgorithm,
+    "Upper threshold": UpperThresholdAlgorithm,
+    "Range threshold": RangeThresholdAlgorithm,
+    "Lower threshold euclidean": LowerThresholdDistanceFlowAlgorithm,
+    "Upper threshold euclidean": UpperThresholdDistanceFlowAlgorithm,
+    "Lower threshold path": LowerThresholdPathFlowAlgorithm,
+    "Upper threshold path": UpperThresholdPathFlowAlgorithm,
+    "Lower threshold path euclidean": LowerThresholdPathDistanceFlowAlgorithm,
+    "Upper threshold path euclidean": UpperThresholdPathDistanceFlowAlgorithm
 }
 
 

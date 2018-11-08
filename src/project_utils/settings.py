@@ -294,3 +294,5 @@ class BaseSettings(ViewSettings):
                 logging.error('error in load "image_spacing"')
         except json.decoder.JSONDecodeError:
             pass
+        except KeyError as e:
+            logging.error(e)

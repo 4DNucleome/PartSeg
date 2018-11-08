@@ -10,7 +10,7 @@ from six import with_metaclass
 
 from common_gui.dim_combobox import DimComboBox
 from common_gui.universal_gui_part import CustomSpinBox, CustomDoubleSpinBox
-from project_utils.algorithm_base import SegmentationAlgorithm
+from project_utils.algorithm_base import SegmentationAlgorithm, AlgorithmProperty
 from project_utils.error_dialog import ErrorDialog
 from project_utils.image_operations import to_radius_type_dict, RadiusType
 from project_utils.segmentation_thread import SegmentationThread
@@ -18,30 +18,6 @@ from project_utils.universal_const import UNIT_SCALE
 from tiff_image import Image
 
 from .settings import ImageSettings, BaseSettings
-
-
-class AlgorithmProperty(object):
-    """
-    :type name: str
-    :type value_type: type
-    :type default_value: object
-    """
-
-    def __init__(self, name, user_name, default_value, options_range, single_steep=None):
-        self.name = name
-        self.user_name = user_name
-        if type(options_range) is list:
-            self.value_type = list
-        else:
-            self.value_type = type(default_value)
-        self.default_value = default_value
-        self.range = options_range
-        self.single_step = single_steep
-        if self.value_type is list:
-            assert default_value in options_range
-
-
-
 
 
 class QtAlgorithmProperty(AlgorithmProperty):
@@ -100,7 +76,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
     gauss_radius_name = "gauss_radius"
     use_gauss_name = "use_gauss"
 
-    def __init__(self, settings: BaseSettings, name, element_list, algorithm: Type[SegmentationAlgorithm]):
+    def __init__(self, settings: BaseSettings, name, algorithm: Type[SegmentationAlgorithm]):
         """
         For algorithm which works on one channel
         :type settings: ImageSettings
@@ -118,7 +94,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
         widget_layout = QFormLayout()
         self.channels_chose = QComboBox()
         widget_layout.addRow("Channel", self.channels_chose)
-        element_list = map(QtAlgorithmProperty.from_algorithm_property, element_list)
+        element_list = map(QtAlgorithmProperty.from_algorithm_property, algorithm.get_fields())
         for el in element_list:
             if isinstance(el, QLabel):
                 widget_layout.addRow(el)
@@ -212,9 +188,9 @@ class AlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
 
 class InteractiveAlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
     algorithm_thread: SegmentationThread
-    def __init__(self, settings, name, element_list, algorithm: Type[SegmentationAlgorithm],
+    def __init__(self, settings, name, algorithm: Type[SegmentationAlgorithm],
                  selector: List[QWidget]):
-        super().__init__(settings, name, element_list, algorithm)
+        super().__init__(settings, name, algorithm)
         self.selector = selector
         self.algorithm_thread.finished.connect(self.enable_selector)
         self.algorithm_thread.started.connect(self.disable_selector)
