@@ -229,4 +229,5 @@ class AutoThresholdAlgorithm(BaseThresholdAlgorithm):
     def get_info_text(self):
         return ""
 
+
 final_algorithm_list = [ThresholdAlgorithm, ThresholdPreview, AutoThresholdAlgorithm]

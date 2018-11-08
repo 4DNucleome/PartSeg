@@ -4,6 +4,7 @@ from project_utils.segmentation.algorithm_base import SegmentationAlgorithm
 from PyQt5.QtCore import QThread, pyqtSignal
 import numpy as np
 
+
 class SegmentationThread(QThread):
     execution_done = pyqtSignal([np.ndarray], [np.ndarray, np.ndarray])
     execution_done_extend = pyqtSignal(np.ndarray, np.ndarray)
@@ -28,7 +29,7 @@ class SegmentationThread(QThread):
 
     def run(self):
         if self.algorithm.image is None:
-            #assertion for runing algorith without image
+            # assertion for running algorithm without image
             return
         try:
             segment_data = self.algorithm.calculation_run(self.send_info)
