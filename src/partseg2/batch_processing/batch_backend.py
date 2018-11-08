@@ -11,13 +11,13 @@ import pandas as pd
 import tifffile
 
 from partseg.backend import Settings, MaskChange
-from partseg.batch_processing.calculation_plan import CalculationTree, MaskMapper, MaskUse, MaskCreate, ProjectSave, \
+from partseg2.batch_processing.calculation_plan import CalculationTree, MaskMapper, MaskUse, MaskCreate, ProjectSave, \
     ImageSave, XYZSave, \
     CmapProfile, Operations, ChooseChanel, FileCalculation, MaskIntersection, MaskSum, MaskSave, get_save_path
-from partseg.batch_processing.parallel_backed import BatchManager
+from partseg2.batch_processing.parallel_backed import BatchManager
 from partseg.io_functions import load_project, save_to_project, save_to_cmap, save_to_xyz
 from partseg.segment import Segment, SegmentationProfile
-from partseg.statistics_calculation import StatisticProfile
+from partseg2.statistics_calculation import StatisticProfile
 from project_utils import dict_set_class
 
 

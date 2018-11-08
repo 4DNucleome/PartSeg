@@ -425,7 +425,7 @@ class MainMenu(QWidget):
                             dial.exec()
                             self._settings.image = read_thread.image
                 elif selected_filter == "saved project (*.tgz *.tbz2 *.gz *.bz2)":
-                    load_project(file_path, self._settings)
+                    self._settings.load_project(file_path)
                     # self.segment.threshold_updated()
                 elif selected_filter == "Profiles (*.json)":
                     self._settings.load_profiles(file_path)
@@ -601,8 +601,11 @@ class MaskWindow(QDialog):
                                   algorithm_values, mask_property)
         )
         if self.settings.undo_segmentation_history and \
-                self.settings.undo_segmentation_history[-1] == self.settings.segmentation_history[-1]:
-            self.settings.undo_segmentation_history.pop()
+                self.settings.undo_segmentation_history[-1].mask_property == \
+                self.settings.segmentation_history[-1].mask_property:
+            history = self.settings.undo_segmentation_history.pop()
+            self.settings.set("current_algorithm", history.algorithm_name)
+            self.settings.set(f"algorithm.{history.algorithm_name}", history.algorithm_values)
         else:
             self.settings.undo_segmentation_history = []
         self.settings.mask = mask
@@ -610,6 +613,9 @@ class MaskWindow(QDialog):
 
     def prev_mask(self):
         history: HistoryElement = self.settings.segmentation_history.pop()
+        algorithm_name = self.settings.get("last_executed_algorithm")
+        algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
+        history2 = history.replace_(algorithm_name=algorithm_name, algorithm_values=algorithm_values)
         self.settings.set("current_algorithm", history.algorithm_name)
         self.settings.set(f"algorithm.{history.algorithm_name}", history.algorithm_values)
         history.arrays.seek(0)
@@ -621,7 +627,7 @@ class MaskWindow(QDialog):
             self.settings.mask = seg["mask"]
         else:
             self.settings.mask = None
-        self.settings.undo_segmentation_history.append(history)
+        self.settings.undo_segmentation_history.append(history2)
         self.close()
 
 

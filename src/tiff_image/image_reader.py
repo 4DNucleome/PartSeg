@@ -1,3 +1,5 @@
+import typing
+from io import BytesIO
 from threading import Lock
 
 from tifffile import TiffFile
@@ -34,7 +36,7 @@ class ImageReader(object):
             raise ValueError(f"wrong spacing {spacing}")
         self.default_spacing = spacing
 
-    def read(self, image_path: str, mask_path=None) -> Image:
+    def read(self, image_path: typing.Union[str, BytesIO], mask_path=None) -> Image:
         """
         Read tiff image from tiff_file
 
@@ -42,7 +44,7 @@ class ImageReader(object):
         :param mask_path:
         :return: Image
         """
-        print(image_path)
+        # print(image_path)
         self.spacing, self.colors, self.labels, self.ranges, order = self.default_spacing, None, None, None, None
         self.image_file = TiffFile(image_path)
         total_pages_num = len(self.image_file.series[0])
@@ -86,7 +88,8 @@ class ImageReader(object):
         self.image_file.close()
         if self.mask_file is not None:
             self.mask_file.close()
-
+        if not isinstance(image_path, str):
+            image_path = ""
         return Image(image_data, self.spacing, mask=mask_data, default_coloring=self.colors, labels=self.labels,
                      ranges=self.ranges, file_path=os.path.abspath(image_path))
 

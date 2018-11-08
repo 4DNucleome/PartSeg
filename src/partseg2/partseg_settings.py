@@ -6,7 +6,7 @@ from partseg2.statistics_calculation import StatisticProfile
 from project_utils.cmap_utils import CmapProfile
 from .algorithm_description import SegmentationProfile
 from .partseg_utils import PartEncoder, part_hook, HistoryElement, SegmentationPipeline
-from .io_functions import save_project, save_cmap
+from .io_functions import save_project, save_cmap, load_project
 from project_utils.settings import BaseSettings
 import numpy as np
 
@@ -68,6 +68,19 @@ class PartSettings(BaseSettings):
         dkt["image"] = self.image
         save_project(file_path, **dkt)
 
+    def load_project(self, file_path):
+        project_tuple = load_project(file_path)
+        self.image = project_tuple.image
+        self.mask = project_tuple.mask
+        self.segmentation = project_tuple.segmentation
+        self.full_segmentation = project_tuple.full_segmentation
+        self.segmentation_history = project_tuple.history
+        self.undo_segmentation_history = []
+        algorithm_name = project_tuple.algorithm_parameters["name"]
+        self.set("last_executed_algorithm", algorithm_name)
+        self.set(f"algorithms.{algorithm_name}", project_tuple.algorithm_parameters["values"])
+
+
     def save_cmap(self, file_path: str, cmap_profile: CmapProfile):
         save_cmap(file_path, self.image, cmap_profile)
 
@@ -86,10 +99,6 @@ class PartSettings(BaseSettings):
     @property
     def statistic_profiles(self) -> typing.Dict[str, StatisticProfile]:
         return self.get("statistic_profiles", dict())
-
-
-def load_project(file_path, settings):
-    pass
 
 def save_labeled_image(file_path, settings):
     pass

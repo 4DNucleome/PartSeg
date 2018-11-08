@@ -1,16 +1,17 @@
 from project_utils.segmentation.algorithm_base import calculate_operation_radius
 from project_utils.cmap_utils import CmapProfile
 from project_utils.image_operations import RadiusType, gaussian
-from .partseg_utils import HistoryElement, PartEncoder
+from .partseg_utils import HistoryElement, PartEncoder, part_hook
 import numpy as np
-from tiff_image import Image, ImageWriter
+from tiff_image import Image, ImageWriter, ImageReader
 import tarfile
-from io import BytesIO, StringIO
+from io import BytesIO, StringIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
 import h5py
 import typing
 import os.path
 import json
 import datetime
+from functools import partial
 
 # TODO add progress function to io
 
@@ -27,8 +28,9 @@ def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
 
 
 def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_segmentation: np.ndarray,
-                 mask: typing.Union[np.ndarray, None], history: typing.List[HistoryElement],
+                 mask: typing.Optional[np.ndarray], history: typing.List[HistoryElement],
                  algorithm_parameters: dict):
+    # TODO add support for binary objects
     ext = os.path.splitext(file_path)[1]
     if ext.lower() in ['.bz2', ".tbz2"]:
         tar_mod = 'w:bz2'
@@ -39,7 +41,7 @@ def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_se
         if mask is not None:
             sek_dkt["mask"] = mask
         seg_buff = BytesIO()
-        np.savez(seg_buff, sek_dkt)
+        np.savez(seg_buff, **sek_dkt)
         tar_numpy = get_tarinfo("segmentation.npz", seg_buff)
         tar.addfile(tarinfo=tar_numpy, fileobj=seg_buff)
         image_buff = BytesIO()
@@ -63,6 +65,62 @@ def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_se
             hist_buff = BytesIO(hist_str.encode('utf-8'))
             tar_algorithm = get_tarinfo("history/history.json", hist_buff)
             tar.addfile(tar_algorithm, hist_buff)
+
+
+class ProjectTuple(typing.NamedTuple):
+    file_path: str
+    image: Image
+    segmentation: np.ndarray
+    full_segmentation: np.ndarray
+    mask: typing.Optional[np.ndarray]
+    history: typing.List[HistoryElement]
+    algorithm_parameters: dict
+
+
+def load_project(file_):
+    if isinstance(file_, tarfile.TarFile):
+        tar_file = file_
+        file_path = ""
+    elif isinstance(file_, str):
+        tar_file = tarfile.open(file_)
+        file_path = file_
+    elif isinstance(file_, (TextIOBase, BufferedIOBase, RawIOBase, IOBase)):
+        tar_file = tarfile.open(fileobj=file_)
+        file_path = ""
+    else:
+        raise ValueError(f"wrong type of file_ argument: {type(file_)}")
+    image_buffer = BytesIO()
+    image_tar = tar_file.extractfile(tar_file.getmember("image.tif"))
+    image_buffer.write(image_tar.read())
+    image_buffer.seek(0)
+    reader = ImageReader()
+    image = reader.read(image_buffer)
+    seg_tar = tar_file.extractfile(tar_file.getmember("segmentation.npz"))
+    seg_buffer = BytesIO()
+    seg_buffer.write(seg_tar.read())
+    seg_buffer.seek(0)
+    seg_dict = np.load(seg_buffer)
+    if "mask" in seg_dict:
+        mask = seg_dict["mask"]
+    else:
+        mask = None
+    algorithm_str = tar_file.extractfile("algorithm.json").read()
+    algorithm_dict = json.loads(algorithm_str, object_hook=partial(part_hook, None))
+    history = []
+    try:
+        history_buff = tar_file.extractfile(tar_file.getmember("history/history.json"))
+        history_json = json.load(history_buff, object_hook=partial(part_hook, None))
+        for el in history_json:
+            history_buffer = BytesIO()
+            history_buffer.write(tar_file.extractfile(f"history/arrays_{el['index']}.npz").read())
+            history_buffer.seek(0)
+            history.append(HistoryElement(algorithm_name=el["algorithm_name"], algorithm_values=el["values"],
+                                          mask_property=el["mask_property"], arrays=history_buffer))
+
+    except KeyError:
+        pass
+    return ProjectTuple(file_path, image, seg_dict["segmentation"], seg_dict["full_segmentation"], mask, history,
+                        algorithm_dict)
 
 
 def save_cmap(file: typing.Union[str, h5py.File], image: Image, segmentation: np.ndarray, cmap_profile: CmapProfile,
