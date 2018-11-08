@@ -7,7 +7,7 @@ from project_utils import bisect
 from project_utils.algorithm_base import SegmentationAlgorithm, AlgorithmProperty
 from project_utils.convex_fill import convex_fill
 from project_utils.image_operations import RadiusType
-from .segment import close_small_holes, opening
+from project_utils.segmentation.segment import close_small_holes, opening
 
 
 class StackAlgorithm(SegmentationAlgorithm, ABC):

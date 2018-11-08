@@ -3,7 +3,7 @@ import numpy as np
 from os import path
 # from partseg.io_functions import save_stack_segmentation, load_stack_segmentation
 from project_utils.settings import BaseSettings
-from stackseg.stack_algorithm.segment import cut_with_mask, save_catted_list
+from project_utils.segmentation.segment import cut_with_mask, save_catted_list
 from deprecation import deprecated
 default_colors = ['BlackRed', 'BlackGreen', 'BlackBlue', 'BlackMagenta']
 

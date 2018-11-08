@@ -3,7 +3,7 @@ from copy import deepcopy
 from project_utils.algorithms_description import AlgorithmProperty
 from project_utils.image_operations import RadiusType
 
-from .threshold_algorithm import ThresholdAlgorithm, ThresholdPreview, \
+from project_utils.segmentation.segmentation_algorithm import ThresholdAlgorithm, ThresholdPreview, \
     AutoThresholdAlgorithm
 
 

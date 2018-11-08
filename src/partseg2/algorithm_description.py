@@ -1,4 +1,4 @@
-from partseg2.segment_algorithms import LowerThresholdAlgorithm, UpperThresholdAlgorithm, RangeThresholdAlgorithm, \
+from project_utils.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm, UpperThresholdAlgorithm, RangeThresholdAlgorithm, \
     LowerThresholdDistanceFlowAlgorithm, UpperThresholdDistanceFlowAlgorithm, LowerThresholdPathFlowAlgorithm, \
     UpperThresholdPathFlowAlgorithm, UpperThresholdPathDistanceFlowAlgorithm, LowerThresholdPathDistanceFlowAlgorithm
 from project_utils.algorithms_description import AlgorithmProperty
