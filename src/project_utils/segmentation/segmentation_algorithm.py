@@ -4,7 +4,7 @@ import SimpleITK as sitk
 import numpy as np
 
 from project_utils import bisect
-from project_utils.algorithm_base import SegmentationAlgorithm, AlgorithmProperty
+from project_utils.segmentation.algorithm_base import SegmentationAlgorithm, AlgorithmProperty
 from project_utils.convex_fill import convex_fill
 from project_utils.image_operations import RadiusType
 from project_utils.segmentation.segment import close_small_holes, opening
@@ -14,6 +14,7 @@ class StackAlgorithm(SegmentationAlgorithm, ABC):
     def __init__(self):
         super().__init__()
         self.exclude_mask = None
+        self.channel_num = 0
 
     def _clean(self):
         super()._clean()
@@ -29,6 +30,10 @@ class ThresholdPreview(StackAlgorithm):
         return [AlgorithmProperty("threshold", "Threshold", 1000, (0, 10 ** 6), 100),
                 AlgorithmProperty("use_gauss", "Use gauss", RadiusType.NO, None),
                 AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1)]
+
+    @classmethod
+    def get_name(cls):
+        return "Only Threshold"
 
     def __init__(self):
         super(ThresholdPreview, self).__init__()
@@ -71,15 +76,16 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100),
-                       AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10 ** 6), 1000),
-                       AlgorithmProperty("close_holes", "Close small holes", True, (True, False)),
-                       AlgorithmProperty("close_holes_size", "Small holes size", 200, (0, 10**3), 10),
-                       AlgorithmProperty("smooth_border", "Smooth borders", True, (True, False)),
-                       AlgorithmProperty("smooth_border_radius", "Smooth borders radius", 2, (0, 20), 1),
-                       AlgorithmProperty("use_gauss", "Use gauss", RadiusType.NO, None),
-                       AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1),
-                       AlgorithmProperty("side_connection", "Connect only sides", False, (True, False)),
-                       AlgorithmProperty("use_convex", "Use convex_hull", False, (True, False))]
+                AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10 ** 6), 1000),
+                AlgorithmProperty("close_holes", "Close small holes", True, (True, False)),
+                AlgorithmProperty("close_holes_size", "Small holes size", 200, (0, 10 ** 3), 10),
+                AlgorithmProperty("smooth_border", "Smooth borders", True, (True, False)),
+                AlgorithmProperty("smooth_border_radius", "Smooth borders radius", 2, (0, 20), 1),
+                AlgorithmProperty("use_gauss", "Use gauss", RadiusType.NO, None),
+                AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1),
+                AlgorithmProperty("side_connection", "Connect only sides", False, (True, False)),
+                AlgorithmProperty("use_convex", "Use convex_hull", False, (True, False))]
+
     def __init__(self):
         super().__init__()
         self.threshold = None
@@ -137,7 +143,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
         return resp
 
     def _set_parameters(self, channel, threshold, minimum_size, close_holes, smooth_border, use_gauss,
-                       close_holes_size, smooth_border_radius, gauss_radius, side_connection, use_convex):
+                        close_holes_size, smooth_border_radius, gauss_radius, side_connection, use_convex):
         self.channel_num = channel
         self.threshold = threshold
         self.minimum_size = minimum_size
@@ -155,6 +161,10 @@ class ThresholdAlgorithm(BaseThresholdAlgorithm):
     def __init__(self):
         super().__init__()
 
+    @classmethod
+    def get_name(cls):
+        return "Threshold"
+
     def _threshold_image(self, image: np.ndarray) -> np.ndarray:
         return np.array(image > self.threshold).astype(np.uint8)
 
@@ -166,7 +176,7 @@ class ThresholdAlgorithm(BaseThresholdAlgorithm):
             mask[self.exclude_mask > 0] = 0
         return mask
 
-    def set_parameters(self,*args, **kwargs):
+    def set_parameters(self, *args, **kwargs):
         super()._set_parameters(*args, **kwargs)
 
     def get_info_text(self):
@@ -178,6 +188,10 @@ class AutoThresholdAlgorithm(BaseThresholdAlgorithm):
     def get_fields(cls):
         return [AlgorithmProperty("suggested_size", "Suggested size", 200000, (0, 10 ** 6), 1000)] + \
                super().get_fields()
+
+    @classmethod
+    def get_name(cls):
+        return "Auto Threshold"
 
     def __init__(self):
         super().__init__()
@@ -212,6 +226,7 @@ class AutoThresholdAlgorithm(BaseThresholdAlgorithm):
         self._set_parameters(*args, **kwargs)
         self.suggested_size = suggested_size
 
-
     def get_info_text(self):
         return ""
+
+final_algorithm_list = [ThresholdAlgorithm, ThresholdPreview, AutoThresholdAlgorithm]

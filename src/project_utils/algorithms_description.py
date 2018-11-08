@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 from typing import Type, List
 
-from PyQt5.QtGui import QHideEvent, QShowEvent
+from PyQt5.QtGui import QHideEvent
 from PyQt5.QtWidgets import QComboBox, QCheckBox, QWidget, QVBoxLayout, QLabel, QFormLayout, \
     QAbstractSpinBox, QScrollArea
 
@@ -10,7 +10,7 @@ from six import with_metaclass
 
 from common_gui.dim_combobox import DimComboBox
 from common_gui.universal_gui_part import CustomSpinBox, CustomDoubleSpinBox
-from project_utils.algorithm_base import SegmentationAlgorithm, AlgorithmProperty
+from project_utils.segmentation.algorithm_base import SegmentationAlgorithm, AlgorithmProperty
 from project_utils.error_dialog import ErrorDialog
 from project_utils.image_operations import to_radius_type_dict, RadiusType
 from project_utils.segmentation_thread import SegmentationThread

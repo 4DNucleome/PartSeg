@@ -40,6 +40,10 @@ class AlgorithmProperty(object):
 class SegmentationAlgorithm(object):
     @classmethod
     def get_fields(cls):
+        raise NotImplementedError\
+
+    @classmethod
+    def get_name(cls):
         raise NotImplementedError
 
     def __init__(self):

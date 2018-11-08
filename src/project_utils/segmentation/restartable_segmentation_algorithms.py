@@ -1,9 +1,7 @@
 from abc import ABC
 from collections import defaultdict
 from enum import Enum
-from functools import reduce
-
-from project_utils.algorithm_base import SegmentationAlgorithm, AlgorithmProperty
+from project_utils.segmentation.algorithm_base import SegmentationAlgorithm, AlgorithmProperty
 from project_utils.distance_in_structure.find_split import distance_sprawl, path_minimum_sprawl, path_maximum_sprawl
 import numpy as np
 import SimpleITK as sitk
@@ -110,7 +108,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         self.new_parameters["side_connection"] = side_connection
 
 
-class OneThresholdAlgorithm(ThresholdBaseAlgorithm):
+class OneThresholdAlgorithm(ThresholdBaseAlgorithm, ABC):
     def set_parameters(self, *args, **kwargs):
         self._set_parameters(*args, **kwargs)
 
@@ -122,9 +120,17 @@ class OneThresholdAlgorithm(ThresholdBaseAlgorithm):
 class LowerThresholdAlgorithm(OneThresholdAlgorithm):
     threshold_operator = operator.gt
 
+    @classmethod
+    def get_name(cls):
+        return "Lower threshold"
+
 
 class UpperThresholdAlgorithm(OneThresholdAlgorithm):
     threshold_operator = operator.lt
+
+    @classmethod
+    def get_name(cls):
+        return "Upper threshold"
 
 
 class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
@@ -141,8 +147,12 @@ class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
                 AlgorithmProperty("upper_threshold", "Upper threshold", 10000, (0, 10 ** 6), 100)] + \
                super().get_fields()
 
+    @classmethod
+    def get_name(cls):
+        return "Range threshold"
 
-class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm):
+
+class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100),
@@ -202,11 +212,19 @@ class LowerThresholdDistanceFlowAlgorithm(LowerThresholdFlowAlgorithm):
         neigh, dist = calculate_distances_array(self.image.spacing, get_neigh(self.new_parameters["side_connection"]))
         return distance_sprawl(base_image, object_image, self.components_num, neigh, dist)
 
+    @classmethod
+    def get_name(cls):
+        return "Lower threshold euclidean"
+
 
 class UpperThresholdDistanceFlowAlgorithm(UpperThresholdFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
         neigh, dist = calculate_distances_array(self.image.spacing, get_neigh(self.new_parameters["side_connection"]))
         return distance_sprawl(base_image, object_image, self.components_num, neigh, dist)
+
+    @classmethod
+    def get_name(cls):
+        return "Upper threshold euclidean"
 
 
 class LowerThresholdPathFlowAlgorithm(LowerThresholdFlowAlgorithm):
@@ -217,6 +235,10 @@ class LowerThresholdPathFlowAlgorithm(LowerThresholdFlowAlgorithm):
         mid = path_maximum_sprawl(image, object_image, self.components_num, neigh)
         return path_maximum_sprawl(image, mid, self.components_num, neigh)
 
+    @classmethod
+    def get_name(cls):
+        return "Lower threshold path"
+
 
 class UpperThresholdPathFlowAlgorithm(UpperThresholdFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
@@ -226,6 +248,10 @@ class UpperThresholdPathFlowAlgorithm(UpperThresholdFlowAlgorithm):
         mid = path_minimum_sprawl(image, object_image, self.components_num, neigh)
         return path_minimum_sprawl(image, mid, self.components_num, neigh)
 
+    @classmethod
+    def get_name(cls):
+        return "Upper threshold path"
+
 
 class LowerThresholdPathDistanceFlowAlgorithm(LowerThresholdPathFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
@@ -233,12 +259,20 @@ class LowerThresholdPathDistanceFlowAlgorithm(LowerThresholdPathFlowAlgorithm):
         neigh, dist = calculate_distances_array(self.image.spacing, get_neigh(self.new_parameters["side_connection"]))
         return distance_sprawl(base_image, mid, self.components_num, neigh, dist)
 
+    @classmethod
+    def get_name(cls):
+        return "Lower threshold path euclidean"
+
 
 class UpperThresholdPathDistanceFlowAlgorithm(UpperThresholdPathFlowAlgorithm):
     def path_sprawl(self, base_image, object_image):
         mid = super().path_sprawl(base_image, object_image)
         neigh, dist = calculate_distances_array(self.image.spacing, get_neigh(self.new_parameters["side_connection"]))
         return distance_sprawl(base_image, mid, self.components_num, neigh, dist)
+
+    @classmethod
+    def get_name(cls):
+        return "Upper threshold path euclidean"
 
 
 def get_neigh(sides):
@@ -292,3 +326,9 @@ neighbourhood = \
 neighbourhood2d = \
     np.array([[0, -1, 0], [0, 0, -1], [0, 1, 0], [0, 0, 1],
               [0, -1, -1], [0, 1, -1], [0, -1, 1], [0, 1, 1]], dtype=np.int8)
+
+
+final_algorithm_list = [LowerThresholdAlgorithm, UpperThresholdAlgorithm, RangeThresholdAlgorithm,
+                        LowerThresholdDistanceFlowAlgorithm, UpperThresholdDistanceFlowAlgorithm,
+                        LowerThresholdPathFlowAlgorithm, UpperThresholdPathFlowAlgorithm,
+                        UpperThresholdPathDistanceFlowAlgorithm, LowerThresholdPathDistanceFlowAlgorithm]

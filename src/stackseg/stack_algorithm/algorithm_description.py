@@ -1,8 +1,3 @@
-from project_utils.segmentation.segmentation_algorithm import ThresholdAlgorithm, ThresholdPreview, \
-    AutoThresholdAlgorithm
+from project_utils.segmentation.segmentation_algorithm import final_algorithm_list
 
-stack_algorithm_dict = {
-    "Threshold": ThresholdAlgorithm,
-    "Only Threshold": ThresholdPreview,
-    "Auto Threshold": AutoThresholdAlgorithm
-}
+stack_algorithm_dict = dict(((x.get_name(), x) for x in final_algorithm_list))

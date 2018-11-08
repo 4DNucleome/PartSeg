@@ -1,18 +1,6 @@
-from project_utils.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm, UpperThresholdAlgorithm, RangeThresholdAlgorithm, \
-    LowerThresholdDistanceFlowAlgorithm, UpperThresholdDistanceFlowAlgorithm, LowerThresholdPathFlowAlgorithm, \
-    UpperThresholdPathFlowAlgorithm, UpperThresholdPathDistanceFlowAlgorithm, LowerThresholdPathDistanceFlowAlgorithm
+from project_utils.segmentation.restartable_segmentation_algorithms import final_algorithm_list
 
-part_algorithm_dict = {
-    "Lower threshold": LowerThresholdAlgorithm,
-    "Upper threshold": UpperThresholdAlgorithm,
-    "Range threshold": RangeThresholdAlgorithm,
-    "Lower threshold euclidean": LowerThresholdDistanceFlowAlgorithm,
-    "Upper threshold euclidean": UpperThresholdDistanceFlowAlgorithm,
-    "Lower threshold path": LowerThresholdPathFlowAlgorithm,
-    "Upper threshold path": UpperThresholdPathFlowAlgorithm,
-    "Lower threshold path euclidean": LowerThresholdPathDistanceFlowAlgorithm,
-    "Upper threshold path euclidean": UpperThresholdPathDistanceFlowAlgorithm
-}
+part_algorithm_dict = dict(((x.get_name(), x) for x in final_algorithm_list))
 
 
 class SegmentationProfile(object):

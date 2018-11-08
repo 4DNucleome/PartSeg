@@ -1,4 +1,4 @@
-from project_utils.algorithm_base import calculate_operation_radius
+from project_utils.segmentation.algorithm_base import calculate_operation_radius
 from project_utils.cmap_utils import CmapProfile
 from project_utils.image_operations import RadiusType, gaussian
 from .partseg_utils import HistoryElement, PartEncoder

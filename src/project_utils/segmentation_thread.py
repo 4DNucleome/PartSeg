@@ -1,6 +1,6 @@
 from PyQt5.QtCore import QMutex
 
-from project_utils.algorithm_base import SegmentationAlgorithm
+from project_utils.segmentation.algorithm_base import SegmentationAlgorithm
 from PyQt5.QtCore import QThread, pyqtSignal
 import numpy as np
 
