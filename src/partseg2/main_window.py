@@ -3,7 +3,6 @@ import logging
 import os
 import re
 from functools import partial
-from io import BytesIO
 
 import tifffile as tif
 import numpy as np
@@ -12,7 +11,7 @@ import appdirs
 from PyQt5.QtCore import Qt, QByteArray, QEvent
 from PyQt5.QtGui import QIcon, QKeyEvent
 from PyQt5.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
-    QFileDialog, QMessageBox, QCheckBox, QComboBox, QStackedLayout, QInputDialog, QDialog, QSpinBox, QAbstractSpinBox
+    QFileDialog, QMessageBox, QCheckBox, QComboBox, QStackedLayout, QInputDialog, QDialog
 
 from common_gui.channel_control import ChannelControl
 from common_gui.mask_widget import MaskWidget
@@ -23,14 +22,13 @@ from partseg2.batch_window import BatchWindow
 from partseg2.calculation_pipeline_thread import CalculatePipelineThread
 from partseg2.interpolate_dialog import InterpolateDialog
 from partseg2.interpolate_thread import InterpolateThread
-from project_utils.algorithms_description import InteractiveAlgorithmSettingsWidget
+from common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget
 from project_utils.error_dialog import ErrorDialog
 from project_utils.global_settings import static_file_folder
-from project_utils.image_operations import dilate, erode, RadiusType
 from project_utils.image_read_thread import ImageReaderThread
 from project_utils.main_window import BaseMainWindow
 from project_utils.mask_create import calculate_mask, MaskProperty
-from .partseg_settings import PartSettings, load_project, save_project, save_labeled_image
+from .partseg_settings import PartSettings, save_labeled_image
 from .partseg_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
 from .algorithm_description import part_algorithm_dict, SegmentationProfile

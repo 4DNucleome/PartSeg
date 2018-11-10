@@ -1,6 +1,7 @@
 import numpy as np
 import SimpleITK as sitk
 from enum import Enum
+from .class_generator import enum_register
 
 class RadiusType(Enum):
     NO = 0
@@ -9,6 +10,8 @@ class RadiusType(Enum):
 
     def __str__(self):
         return self.name
+
+enum_register.register_class(RadiusType)
 
 
 to_radius_type_dict = {"No": RadiusType.NO, "2d": RadiusType.R2D, "3d": RadiusType.R3D}

@@ -4,9 +4,12 @@ import SimpleITK as sitk
 import numpy as np
 
 from project_utils import bisect
-from project_utils.segmentation.algorithm_base import SegmentationAlgorithm, AlgorithmProperty
+from project_utils.channel_class import Channel
+from project_utils.segmentation.algorithm_base import SegmentationAlgorithm
 from project_utils.convex_fill import convex_fill
 from project_utils.image_operations import RadiusType
+from project_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
+from project_utils.segmentation.denoising import noise_removal_dict
 from project_utils.segmentation.segment import close_small_holes, opening
 
 
@@ -27,9 +30,11 @@ class StackAlgorithm(SegmentationAlgorithm, ABC):
 class ThresholdPreview(StackAlgorithm):
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("threshold", "Threshold", 1000, (0, 10 ** 6), 100),
-                AlgorithmProperty("use_gauss", "Use gauss", RadiusType.NO, None),
-                AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1)]
+        return [
+                AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
+                AlgorithmProperty("noise_removal", "Noise Removal", next(iter(noise_removal_dict.keys())),
+                                  possible_values=noise_removal_dict, property_type=AlgorithmDescribeBase),
+                AlgorithmProperty("threshold", "Threshold", 1000, (0, 10 ** 6), 100)]
 
     @classmethod
     def get_name(cls):
@@ -37,13 +42,13 @@ class ThresholdPreview(StackAlgorithm):
 
     def __init__(self):
         super(ThresholdPreview, self).__init__()
-        self.use_gauss = "No"
-        self.gauss_radius = 0
+        self.noise_removal = None
         self.threshold = 0
 
     def calculation_run(self, _report_fun):
         self.channel = self.get_channel(self.channel_num)
-        image = self.get_gauss(self.use_gauss, self.gauss_radius)
+        image = noise_removal_dict[self.noise_removal["name"]].noise_remove(self.channel, self.image.spacing,
+                                                                            self.noise_removal["values"])
         if self.exclude_mask is None:
             res = (image > self.threshold).astype(np.uint8)
         else:
@@ -62,11 +67,10 @@ class ThresholdPreview(StackAlgorithm):
         self.exclude_mask = None
         return res
 
-    def set_parameters(self, channel, threshold, use_gauss, gauss_radius):
+    def set_parameters(self, channel, threshold, noise_removal):
         self.channel_num = channel
         self.threshold = threshold
-        self.use_gauss = use_gauss
-        self.gauss_radius = gauss_radius
+        self.noise_removal = noise_removal
 
     def get_info_text(self):
         return ""
@@ -75,14 +79,15 @@ class ThresholdPreview(StackAlgorithm):
 class BaseThresholdAlgorithm(StackAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100),
+        return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
+                AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100),
                 AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10 ** 6), 1000),
                 AlgorithmProperty("close_holes", "Close small holes", True, (True, False)),
                 AlgorithmProperty("close_holes_size", "Small holes size", 200, (0, 10 ** 3), 10),
                 AlgorithmProperty("smooth_border", "Smooth borders", True, (True, False)),
                 AlgorithmProperty("smooth_border_radius", "Smooth borders radius", 2, (0, 20), 1),
-                AlgorithmProperty("use_gauss", "Use gauss", RadiusType.NO, None),
-                AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1),
+                AlgorithmProperty("noise_removal", "Noise Removal", next(iter(noise_removal_dict.keys())),
+                                  possible_values=noise_removal_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("side_connection", "Connect only sides", False, (True, False)),
                 AlgorithmProperty("use_convex", "Use convex_hull", False, (True, False))]
 
@@ -91,8 +96,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
         self.threshold = None
         self.minimum_size = None
         self.sizes = None
-        self.use_gauss = False
-        self.gauss_radius = 0
+        self.noise_removal = None
         self.close_holes = False
         self.close_holes_size = 0
         self.smooth_border = False
@@ -110,7 +114,8 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
     def calculation_run(self, report_fun):
         report_fun("Gauss", 0)
         self.channel = self.get_channel(self.channel_num)
-        image = self.get_gauss(self.use_gauss, self.gauss_radius)
+        image = noise_removal_dict[self.noise_removal["name"]].noise_remove(self.channel, self.image.spacing,
+                                                                            self.noise_removal["values"])
         mask = self._threshold_and_exclude(image, report_fun)
         if self.close_holes:
             report_fun("Holes closing", 3)
@@ -142,17 +147,16 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
             report_fun("Calculation done", 6)
         return resp
 
-    def _set_parameters(self, channel, threshold, minimum_size, close_holes, smooth_border, use_gauss,
-                        close_holes_size, smooth_border_radius, gauss_radius, side_connection, use_convex):
+    def _set_parameters(self, channel, threshold, minimum_size, close_holes, smooth_border, noise_removal,
+                        close_holes_size, smooth_border_radius, side_connection, use_convex):
         self.channel_num = channel
         self.threshold = threshold
         self.minimum_size = minimum_size
         self.close_holes = close_holes
         self.smooth_border = smooth_border
-        self.use_gauss = use_gauss
+        self.noise_removal = noise_removal
         self.close_holes_size = close_holes_size
         self.smooth_border_radius = smooth_border_radius
-        self.gauss_radius = gauss_radius
         self.edge_connection = not side_connection
         self.use_convex = use_convex
 
@@ -186,8 +190,9 @@ class ThresholdAlgorithm(BaseThresholdAlgorithm):
 class AutoThresholdAlgorithm(BaseThresholdAlgorithm):
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("suggested_size", "Suggested size", 200000, (0, 10 ** 6), 1000)] + \
-               super().get_fields()
+        res = super().get_fields()
+        res.insert(1, AlgorithmProperty("suggested_size", "Suggested size", 200000, (0, 10 ** 6), 1000))
+        return res
 
     @classmethod
     def get_name(cls):

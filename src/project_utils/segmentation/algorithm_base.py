@@ -1,4 +1,7 @@
+from abc import ABC
+
 from project_utils.image_operations import gaussian, RadiusType
+from project_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase
 from tiff_image import Image
 
 
@@ -8,44 +11,12 @@ def calculate_operation_radius(radius, spacing, gauss_type):
             spacing = spacing[1:]
     base = min(spacing)
     if base != max(spacing):
-        ratio = [x / base for x in  spacing]
+        ratio = [x / base for x in spacing]
         return [radius / r for r in ratio]
-    return  radius
+    return radius
 
 
-class AlgorithmProperty(object):
-    """
-    :type name: str
-    :type value_type: type
-    :type default_value: object
-    """
-
-    def __init__(self, name, user_name, default_value, options_range, single_steep=None):
-        self.name = name
-        self.user_name = user_name
-        if type(options_range) is list:
-            self.value_type = list
-        else:
-            self.value_type = type(default_value)
-        self.default_value = default_value
-        self.range = options_range
-        self.single_step = single_steep
-        if self.value_type is list:
-            assert default_value in options_range
-
-    def __repr__(self):
-        return f"{self.__class__.__module__}.{self.__class__.__name__}(name='{self.name}', user_name='{self.user_name}', " + \
-               f"default_value={self.default_value}, range={self.range})"
-
-class SegmentationAlgorithm(object):
-    @classmethod
-    def get_fields(cls):
-        raise NotImplementedError\
-
-    @classmethod
-    def get_name(cls):
-        raise NotImplementedError
-
+class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
     def __init__(self):
         super().__init__()
         self.image: Image = None
@@ -64,7 +35,6 @@ class SegmentationAlgorithm(object):
 
     def get_channel(self, channel_idx):
         return self.image.get_channel(channel_idx)
-
 
     def get_gauss(self, gauss_type, gauss_radius):
         if gauss_type == RadiusType.NO:

@@ -1,7 +1,8 @@
 from abc import ABC
 from collections import defaultdict
 from enum import Enum
-from project_utils.segmentation.algorithm_base import SegmentationAlgorithm, AlgorithmProperty
+from project_utils.segmentation.algorithm_base import SegmentationAlgorithm
+from project_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
 from project_utils.distance_in_structure.find_split import distance_sprawl, path_minimum_sprawl, path_maximum_sprawl
 import numpy as np
 import SimpleITK as sitk

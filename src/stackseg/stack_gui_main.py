@@ -17,7 +17,7 @@ from common_gui.universal_gui_part import right_label
 
 from common_gui.flow_layout import FlowLayout
 from common_gui.waiting_dialog import WaitingDialog
-from project_utils.algorithms_description import AlgorithmSettingsWidget
+from common_gui.algorithms_description import AlgorithmSettingsWidget
 from project_utils.error_dialog import ErrorDialog
 from project_utils.main_window import BaseMainWindow
 from .batch_proceed import BatchProceed
@@ -327,7 +327,7 @@ class AlgorithmOptions(QWidget):
             widget.algorithm_thread.finished.connect(self.execution_finished)
             self.stack_layout.addWidget(widget)
         # WARNING works only with one channels algorithms
-        SynchronizeValues.add_synchronization("channels_chose", widgets_list)
+        # SynchronizeValues.add_synchronization("channels_chose", widgets_list)
         self.chosen_list = []
         self.progress_bar = QProgressBar()
         self.progress_bar.setHidden(True)

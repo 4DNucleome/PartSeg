@@ -4,8 +4,9 @@ import collections
 import typing
 import pprint
 import inspect
-from .class_generate_base import BaseReadonlyClass as BaseReadonlyClass_
+from enum import Enum
 
+from .class_generate_base import BaseReadonlyClass as BaseReadonlyClass_
 _PY36 = sys.version_info[:2] >= (3, 6)
 
 _class_template = """\
@@ -74,10 +75,39 @@ _field_template = '''\
     {name} = _property(_attrgetter("_{name}"), doc='getter for field _{name}')
 '''
 
-class_register = dict()
+class RegisterClass:
+    def __init__(self):
+        self.exact_class_register = dict()
+        self.predict_class_register = collections.defaultdict(list)
+
+    def register_class(self, cls: type, old_name=None):
+        path = extract_type_info(cls)[0]
+        name = cls.__name__
+        if path in self.exact_class_register:
+            raise ValueError("class already registered")
+        self.exact_class_register[path] = cls
+        self.predict_class_register[name].append(cls)
+        if old_name is not None:
+            self.predict_class_register[old_name].append(cls)
+
+    def get_class(self, path: str):
+        if path in self.exact_class_register:
+            return self.exact_class_register[path]
+        else:
+            name = path[path.rfind(".")+1:]
+            if name in self.predict_class_register:
+                if len(self.predict_class_register[name]) == 1:
+                    return self.predict_class_register[name][0]
+                return iter(self.predict_class_register[name])
+            raise ValueError(f"unregistered class {path}")
+
+
+base_readonly_register = RegisterClass()
+enum_register = RegisterClass()
 
 
 def extract_type_info(type_):
+    # noinspection PyUnresolvedReferences
     if isinstance(type_, (typing.GenericMeta, typing._Any, typing._Union)):
         return str(type_), type_.__module__
     elif hasattr(type_, "__module__"):
@@ -161,8 +191,8 @@ class BaseMeta(type):
         # print("BaseMeta.__new__", mcs, name, bases, attrs)
         if attrs.get('_root', False):
             return super().__new__(mcs, name, bases, attrs)
-        if name in class_register:
-            raise ValueError(f"Class {name} already exists")
+        """if name in class_register:
+            raise ValueError(f"Class {name} already exists")"""
         types = attrs.get("__annotations__", {})
         defaults = []
         defaults_dict = {}
@@ -194,7 +224,7 @@ class BaseMeta(type):
                 raise AttributeError("Cannot overwrite NamedTuple attribute " + key)
             elif key not in _special and key not in result._fields:
                 setattr(result, key, attrs[key])
-        class_register[extract_type_info(result)[0]] = result
+        base_readonly_register.register_class(result)
         return result
 
 
@@ -222,16 +252,33 @@ class BaseReadonlyClass(metaclass=BaseMeta):
 
 class ReadonlyClassEncoder(json.JSONEncoder):
     def default(self, o):
+        if isinstance(o, Enum):
+            return {"__Enum__": True, "__subtype__": extract_type_info(o.__class__)[0], "value": o.value}
         if isinstance(o, BaseReadonlyClass_):
             return {"__ReadOnly__": True, "__subtype__": extract_type_info(o.__class__)[0],  **o.asdict()}
         return super().default(o)
 
 
-def readonly_hook(_, dkt):
+def readonly_hook(_, dkt: dict):
     if "__ReadOnly__" in dkt:
         del dkt["__ReadOnly__"]
-        cls = class_register[dkt["__subtype__"]]
+        cls = base_readonly_register.get_class(dkt["__subtype__"])
         del dkt["__subtype__"]
-        res = cls(**dkt)
-        return res
+        if isinstance(cls, collections.Iterator):
+            keys = set(dkt.keys())
+            for el in cls:
+                el_keys = set(inspect.signature(el).parameters.keys())
+                if keys == el_keys:
+                    cls = el
+                    break
+            else:
+                raise ValueError(f"cannot decode {dkt}")
+        return cls(**dkt)
+    if "__Enum__" in dkt:
+        del dkt["__Enum__"]
+        cls = enum_register.get_class(dkt["__subtype__"])
+        del dkt["__subtype__"]
+        if isinstance(cls, collections.Iterator):
+            raise ValueError("Two enum with same name")
+        return cls(dkt["value"])
     return dkt

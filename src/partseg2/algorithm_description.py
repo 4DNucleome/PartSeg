@@ -1,6 +1,7 @@
 from project_utils.segmentation.restartable_segmentation_algorithms import final_algorithm_list
+from collections import OrderedDict
 
-part_algorithm_dict = dict(((x.get_name(), x) for x in final_algorithm_list))
+part_algorithm_dict = OrderedDict(((x.get_name(), x) for x in final_algorithm_list))
 
 
 class SegmentationProfile(object):
