@@ -1,6 +1,7 @@
 from __future__ import division
 
 import os
+import sys
 
 import appdirs
 import numpy as np
@@ -20,6 +21,7 @@ from common_gui.waiting_dialog import WaitingDialog
 from common_gui.algorithms_description import AlgorithmSettingsWidget
 from project_utils.error_dialog import ErrorDialog
 from project_utils.main_window import BaseMainWindow
+from project_utils.segmentation.algorithm_base import SegmentationResult
 from .batch_proceed import BatchProceed
 from project_utils.image_read_thread import ImageReaderThread
 from stackseg.save_result_thread import SaveResultThread
@@ -372,7 +374,6 @@ class AlgorithmOptions(QWidget):
         self.show_result.currentIndexChanged.connect(control_view.set_show_label)
         self.only_borders.stateChanged.connect(control_view.set_borders)
         self.borders_thick.valueChanged.connect(control_view.set_borders_thick)
-        settings.image_changed.connect(self.image_changed)
         component_checker.component_clicked.connect(self.choose_components.other_component_choose)
         settings.chosen_components_widget = self.choose_components
 
@@ -471,9 +472,9 @@ class AlgorithmOptions(QWidget):
         self.progress_bar.setHidden(True)
         self.progress_info_lab.setHidden(True)
 
-    def execution_done(self, segmentation):
-        self.segmentation = segmentation
-        self.choose_components.set_chose(range(1, segmentation.max() + 1), np.arange(len(self.chosen_list)) + 1)
+    def execution_done(self, segmentation: SegmentationResult): #, full, remov):
+        self.segmentation = segmentation.segmentation
+        self.choose_components.set_chose(range(1, segmentation.segmentation.max() + 1), np.arange(len(self.chosen_list)) + 1)
 
 
 class ImageInformation(QWidget):

@@ -13,6 +13,7 @@ class BatchProceed(QThread):
     error_signal = pyqtSignal(str)
     progress_signal = pyqtSignal(str, int)
     execution_done = pyqtSignal()
+    algorithm: SegmentationAlgorithm
 
     def __init__(self):
         super(BatchProceed, self).__init__()
@@ -68,7 +69,7 @@ class BatchProceed(QThread):
                 segmentation = self.algorithm.calculation_run(self.progress_info)
                 name = path.basename(file_path)
                 name = path.splitext(name)[0] + ".seg"
-                save_stack_segmentation(path.join(self.result_dir, name), segmentation,
+                save_stack_segmentation(path.join(self.result_dir, name), segmentation.segmentation,
                                         list(range(1, len(self.components) + 1)), self.base_file)
 
             except Exception as e:

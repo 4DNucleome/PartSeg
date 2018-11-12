@@ -5,7 +5,7 @@ import numpy as np
 
 from project_utils import bisect
 from project_utils.channel_class import Channel
-from project_utils.segmentation.algorithm_base import SegmentationAlgorithm
+from project_utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
 from project_utils.convex_fill import convex_fill
 from project_utils.image_operations import RadiusType
 from project_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
@@ -45,7 +45,7 @@ class ThresholdPreview(StackAlgorithm):
         self.noise_removal = None
         self.threshold = 0
 
-    def calculation_run(self, _report_fun):
+    def calculation_run(self, _report_fun) -> SegmentationResult:
         self.channel = self.get_channel(self.channel_num)
         image = noise_removal_dict[self.noise_removal["name"]].noise_remove(self.channel, self.image.spacing,
                                                                             self.noise_removal["values"])
@@ -65,7 +65,7 @@ class ThresholdPreview(StackAlgorithm):
         self.image = None
         self.channel = None
         self.exclude_mask = None
-        return res
+        return SegmentationResult(res, res, cleaned_channel=self.channel)
 
     def set_parameters(self, channel, threshold, noise_removal):
         self.channel_num = channel
@@ -134,7 +134,6 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
 
         self.sizes = np.bincount(self.segmentation.flat)
         ind = bisect(self.sizes[1:], self.minimum_size, lambda x, y: x > y)
-        self.image = image
         self.threshold = self.threshold
         self.minimum_size = self.minimum_size
         resp = np.copy(self.segmentation)
@@ -145,7 +144,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
             resp[resp > 0] += self.exclude_mask.max()
             resp[self.exclude_mask > 0] = self.exclude_mask[self.exclude_mask > 0]
             report_fun("Calculation done", 6)
-        return resp
+        return SegmentationResult(resp, self.segmentation, image)
 
     def _set_parameters(self, channel, threshold, minimum_size, close_holes, smooth_border, noise_removal,
                         close_holes_size, smooth_border_radius, side_connection, use_convex):

@@ -1,15 +1,16 @@
 from abc import ABC
 from collections import defaultdict
 from enum import Enum
-from project_utils.segmentation.algorithm_base import SegmentationAlgorithm
+
+from project_utils.channel_class import Channel
+from project_utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
 from project_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
 from project_utils.distance_in_structure.find_split import distance_sprawl, path_minimum_sprawl, path_maximum_sprawl
 import numpy as np
 import SimpleITK as sitk
 from project_utils import bisect
 import operator
-
-from project_utils.image_operations import RadiusType
+from project_utils.segmentation.denoising import noise_removal_dict
 
 
 def blank_operator(_x, _y):
@@ -22,10 +23,16 @@ class RestartableAlgorithm(SegmentationAlgorithm, ABC):
         super().__init__()
         self.parameters = defaultdict(lambda: None)
         self.new_parameters = {}
+        self.mask = None
 
     def set_image(self, image):
         super().set_image(image)
         self.parameters.clear()
+
+    def set_mask(self, mask):
+        self.mask = mask
+        self.new_parameters["threshold"] = self.parameters["threshold"]
+        self.parameters["threshold"] = None
 
     def get_info_text(self):
         return "No info [Report this ass error]"
@@ -40,15 +47,15 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("minimum_size", "Minimum size (pix)", 8000, (0, 10 ** 6), 1000),
-                AlgorithmProperty("use_gauss", "Use gauss", RadiusType.NO, None),
-                AlgorithmProperty("gauss_radius", "Gauss radius", 1.0, (0, 10), 0.1),
+        return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
+                AlgorithmProperty("minimum_size", "Minimum size (pix)", 8000, (0, 10 ** 6), 1000),
+                AlgorithmProperty("noise_removal", "Noise Removal", next(iter(noise_removal_dict.keys())),
+                                  possible_values=noise_removal_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("side_connection", "Connect only sides", False, (True, False))]
 
     def __init__(self, **kwargs):
         super(ThresholdBaseAlgorithm, self).__init__()
-        self.mask = None
-        self.gauss_image = None
+        self.cleaned_image = None
         self.threshold_image = None
         self._sizes_array = []
         self.components_num = 0
@@ -56,19 +63,20 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
     def get_info_text(self):
         return ", ".join(map(str, self._sizes_array[1:self.components_num + 1]))
 
-    def calculation_run(self, _report_fun):
+    def calculation_run(self, _report_fun) -> SegmentationResult:
         """main calculation function.  return segmentation, full_segmentation"""
         restarted = False
         if self.parameters["channel"] != self.new_parameters["channel"]:
             self.channel = self.get_channel(self.new_parameters["channel"])
             restarted = True
-        if restarted or self.parameters["gauss_radius"] != self.new_parameters["gauss_radius"] or \
-                self.new_parameters["use_gauss"] != self.parameters["use_gauss"]:
-            self.gauss_image = self.get_gauss(self.new_parameters["use_gauss"], self.new_parameters["gauss_radius"])
+        if restarted or self.parameters["noise_removal"] != self.new_parameters["noise_removal"]:
+            noise_removal_parameters = self.new_parameters["noise_removal"]
+            self.cleaned_image = noise_removal_dict[noise_removal_parameters["name"]].\
+                noise_remove(self.channel, self.image.spacing, noise_removal_parameters["values"])
             restarted = True
         if restarted or self.new_parameters["threshold"] != self.parameters["threshold"] \
                 or self.new_parameters["side_connection"] != self.parameters["side_connection"]:
-            threshold_image = self._threshold(self.gauss_image)
+            threshold_image = self._threshold(self.cleaned_image)
             if self.mask is not None:
                 threshold_image *= (self.mask > 0)
             connect = sitk.ConnectedComponent(sitk.GetImageFromArray(threshold_image),
@@ -82,12 +90,13 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             finally_segment = np.copy(self.segmentation)
             finally_segment[finally_segment > ind] = 0
             self.components_num = ind
-            return finally_segment, self.segmentation
+            return SegmentationResult(finally_segment, self.segmentation, self.cleaned_image)
 
     def _clean(self):
+        print(f"clean {self.__class__}")
         super()._clean()
         self.parameters = defaultdict(lambda: None)
-        self.gauss_image = None
+        self.cleaned_image = None
         self.mask = None
 
     def _threshold(self, image, thr=None):
@@ -95,17 +104,11 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             thr = self.new_parameters["threshold"]
         return self.threshold_operator(image, thr).astype(np.uint8)
 
-    def set_mask(self, mask):
-        self.mask = mask
-        self.new_parameters["threshold"] = self.parameters["threshold"]
-        self.parameters["threshold"] = None
-
-    def _set_parameters(self, channel, threshold, minimum_size, use_gauss, gauss_radius, side_connection):
+    def _set_parameters(self, channel, threshold, minimum_size, noise_removal, side_connection):
         self.new_parameters["channel"] = channel
         self.new_parameters["threshold"] = threshold
         self.new_parameters["minimum_size"] = minimum_size
-        self.new_parameters["use_gauss"] = use_gauss
-        self.new_parameters["gauss_radius"] = gauss_radius
+        self.new_parameters["noise_removal"] = noise_removal
         self.new_parameters["side_connection"] = side_connection
 
 
@@ -139,8 +142,8 @@ class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
         self._set_parameters(threshold=(lower_threshold, upper_threshold), *args, **kwargs)
 
     def _threshold(self, image, thr=None):
-        return ((image > self.new_parameters["threshold"][0]) * (image < self.new_parameters["threshold"][1])).astype(
-            np.uint8)
+        return ((image > self.new_parameters["threshold"][0]) *
+                np.array(image < self.new_parameters["threshold"][1])).astype(np.uint8)
 
     @classmethod
     def get_fields(cls):
@@ -175,7 +178,7 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
         self._set_parameters(*args, **kwargs)
         self.new_parameters["base_threshold"] = base_threshold
 
-    def calculation_run(self, report_fun):
+    def calculation_run(self, report_fun) -> SegmentationResult:
         segment_data = super().calculation_run(report_fun)
         if segment_data is not None and self.components_num == 0:
             self.final_sizes = []
@@ -185,19 +188,19 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
             restarted = False
             finally_segment = np.copy(self.finally_segment)
         else:
-            self.finally_segment = segment_data[0]
-            finally_segment = segment_data[0]
+            self.finally_segment = segment_data.segmentation
+            finally_segment = segment_data.segmentation
             restarted = True
 
         if restarted or self.new_parameters["base_threshold"] != self.parameters["base_threshold"]:
             if self.threshold_operator(self.new_parameters["base_threshold"], self.new_parameters["threshold"]):
-                return self.finally_segment, self.segmentation
-            threshold_image = self._threshold(self.gauss_image, self.new_parameters["base_threshold"])
+                return SegmentationResult(self.finally_segment, self.segmentation, self.cleaned_image)
+            threshold_image = self._threshold(self.cleaned_image, self.new_parameters["base_threshold"])
             if self.mask is not None:
                 threshold_image *= (self.mask > 0)
             new_segment = self.path_sprawl(threshold_image, finally_segment)
             self.final_sizes = np.bincount(new_segment.flat)
-            return new_segment, threshold_image
+            return SegmentationResult(new_segment, threshold_image, self.cleaned_image)
 
 
 class LowerThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm, ABC):

@@ -22,12 +22,13 @@ from partseg2.batch_window import BatchWindow
 from partseg2.calculation_pipeline_thread import CalculatePipelineThread
 from partseg2.interpolate_dialog import InterpolateDialog
 from partseg2.interpolate_thread import InterpolateThread
-from common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget
+from common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, BaseAlgorithmSettingsWidget, AlgorithmChoose
 from project_utils.error_dialog import ErrorDialog
 from project_utils.global_settings import static_file_folder
 from project_utils.image_read_thread import ImageReaderThread
 from project_utils.main_window import BaseMainWindow
 from project_utils.mask_create import calculate_mask, MaskProperty
+from project_utils.segmentation.algorithm_base import SegmentationResult
 from .partseg_settings import PartSettings, save_labeled_image
 from .partseg_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
@@ -50,37 +51,42 @@ class Options(QWidget):
         self.hide_left_panel_chk.stateChanged.connect(self.hide_left_panel)
         self.synchronize_checkbox = QCheckBox("Synchronize view")
         self.synchronize_checkbox.stateChanged.connect(synchronize.set_synchronize)
-        self.stack_layout = QStackedLayout()
-        self.algorithm_choose = QComboBox()
         self.interactive_use = QCheckBox("Interactive use")
         self.execute_btn = QPushButton("Execute")
         self.execute_btn.clicked.connect(self.execute_algorithm)
         self.save_pipe_btn = QPushButton("Save pipeline")
         self.save_pipe_btn.clicked.connect(self.save_pipeline)
+        self.save_pipe_btn.setToolTip("Save current pipeline. Last element is last executed algorithm")
         self.choose_pipe = QComboBox()
         self.choose_pipe.addItem("<none>")
         self.choose_pipe.addItems(self._settings.segmentation_pipelines.keys())
         self.choose_pipe.currentTextChanged.connect(self.choose_pipeline)
+        self.choose_pipe.setToolTip("Execute chosen pipeline")
         self.save_profile_btn = QPushButton("Save segmentation profile")
+        self.save_profile_btn.setToolTip("Save values from current view")
+        self.save_profile_btn.clicked.connect(self.save_profile)
         self.choose_profile = QComboBox()
         self.choose_profile.addItem("<none>")
         self.choose_profile.addItems(self._settings.segmentation_profiles.keys())
-        self.choose_profile.setToolTip("Select profile to restore its settings")
+        self.choose_profile.setToolTip("Select profile to restore its settings. Execute if interactive is checked")
         self.update_tooltips()
         self.choose_profile.currentTextChanged.connect(self.change_profile)
         self.interactive_use.stateChanged.connect(self.execute_btn.setDisabled)
         self.interactive_use.stateChanged.connect(self.interactive_change)
-        self.save_profile_btn.clicked.connect(self.save_profile)
-        widgets_list = []
+        self.algorithm_choose_widget = AlgorithmChoose(settings, part_algorithm_dict)
+        self.algorithm_choose_widget.result.connect(self.execution_done)
+        self.algorithm_choose_widget.finished.connect(self.calculation_finished)
+        self.algorithm_choose_widget.value_changed.connect(self.interactive_algorithm_execute)
+        """widgets_list = []
         for name, val in part_algorithm_dict.items():
             self.algorithm_choose.addItem(name)
             widget = InteractiveAlgorithmSettingsWidget(settings, name, val,
                                                         selector=[self.algorithm_choose, self.choose_profile])
             widgets_list.append(widget)
-            widget.algorithm_thread.execution_done[np.ndarray, np.ndarray].connect(self.execution_done)
+            widget.algorithm_thread.execution_done.connect(self.execution_done)
             widget.algorithm_thread.finished.connect(partial(self.execute_btn.setEnabled, True))
             # widget.algorithm.progress_signal.connect(self.progress_info)
-            self.stack_layout.addWidget(widget)
+            self.stack_layout.addWidget(widget)"""
 
         self.label = QLabel()
         self.label.setWordWrap(True)
@@ -104,8 +110,8 @@ class Options(QWidget):
         layout.addLayout(layout5)
         layout.addLayout(layout4)
         layout.addLayout(layout3)
-        layout.addWidget(self.algorithm_choose)
-        layout.addLayout(self.stack_layout)
+        layout.addWidget(self.algorithm_choose_widget)
+        #layout.addLayout(self.stack_layout)
         layout.addWidget(self.label)
         layout.addStretch(1)
         layout2.addWidget(self.hide_left_panel_chk)
@@ -114,13 +120,17 @@ class Options(QWidget):
         layout.addWidget(self._ch_control2)
         layout.setSpacing(0)
         self.setLayout(layout)
-        self.algorithm_choose.currentIndexChanged.connect(self.stack_layout.setCurrentIndex)
-        self.algorithm_choose.currentTextChanged.connect(self.algorithm_change)
-        current_algorithm = self._settings.get("current_algorithm", self.algorithm_choose.currentText())
-        for i, el in enumerate(widgets_list):
-            if el.name == current_algorithm:
-                self.algorithm_choose.setCurrentIndex(i)
-                break
+        # self.algorithm_choose.currentIndexChanged.connect(self.stack_layout.setCurrentIndex)
+        # self.algorithm_choose.currentTextChanged.connect(self.algorithm_change)
+        # current_algorithm = self._settings.get("current_algorithm", self.algorithm_choose.currentText())
+        # for i, el in enumerate(widgets_list):
+        #     if el.name == current_algorithm:
+        #        self.algorithm_choose.setCurrentIndex(i)
+        #        break
+
+    def calculation_finished(self):
+        self.execute_btn.setDisabled(self.interactive_use.isChecked())
+        self.interactive_use.setEnabled(True)
 
     def save_pipeline(self):
         history = self._settings.segmentation_history
@@ -133,8 +143,16 @@ class Options(QWidget):
             segmentation = SegmentationProfile(name="Unknown", algorithm=el.algorithm_name, values=el.algorithm_values)
             new_el = SegmentationPipelineElement(mask_property=mask, segmentation=segmentation)
             mask_history.append(new_el)
-        widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.currentWidget()
-        current_segmentation = SegmentationProfile(name="Unknown", algorithm=widget.name, values=widget.get_values())
+        self._settings.get("last_segmentation")
+        name = self._settings.last_executed_algorithm
+        if not name:
+            QMessageBox.information(self, "No segmentation", "No segmentation executed", QMessageBox.Ok)
+            return
+        values = self._settings.set(f"algorithms.{self.name}", None)
+        if not values:
+            QMessageBox.information(self, "Some problem", "Pleas run execution again", QMessageBox.Ok)
+            return
+        current_segmentation = SegmentationProfile(name="Unknown", algorithm=name, values=values)
 
         while True:
             text, ok = QInputDialog.getText(self, "Pipeline name", "Input pipeline name here")
@@ -167,7 +185,7 @@ class Options(QWidget):
             self._settings.segmentation_history = pipeline_result.history
             self._settings.undo_segmentation_history = []
             self.label.setText(pipeline_result.description)
-            self._change_profile(pipeline.segmentation.algorithm, pipeline.segmentation.values)
+            self.algorithm_choose_widget.change_algorithm(pipeline.segmentation.algorithm, pipeline.segmentation.values)
         self.choose_pipe.setCurrentIndex(0)
 
     def update_tooltips(self):
@@ -209,7 +227,7 @@ class Options(QWidget):
             # update combobox for pipeline
             self.update_combo_box(self.choose_pipe, self._settings.segmentation_pipelines)
             self.update_tooltips()
-            algorithm_name =  self._settings.get("current_algorithm", self.algorithm_choose.currentText())
+            """algorithm_name =  self._settings.get("current_algorithm", self.algorithm_choose.currentText())
             if algorithm_name != self.algorithm_choose.currentText():
                 interactive = self.interactive_use.isChecked()
                 self.interactive_use.setChecked(False)
@@ -217,7 +235,7 @@ class Options(QWidget):
                     self._change_profile(algorithm_name, self._settings.get(f"algorithms.{algorithm_name}"))
                 except KeyError:
                     pass
-                self.interactive_use.setChecked(interactive)
+                self.interactive_use.setChecked(interactive)"""
         return super().event(event)
 
     def keyPressEvent(self, event: QKeyEvent):
@@ -225,7 +243,7 @@ class Options(QWidget):
             self.execute_btn.click()
 
     def save_profile(self):
-        widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.currentWidget()
+        widget: InteractiveAlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
         while True:
             text, ok = QInputDialog.getText(self, "Profile Name", "Input profile name here")
             if not ok:
@@ -250,29 +268,15 @@ class Options(QWidget):
         interactive = self.interactive_use.isChecked()
         self.interactive_use.setChecked(False)
         profile = self._settings.get(f"segmentation_profiles.{val}")
-        self._change_profile(profile.algorithm, profile.values)
+        self.algorithm_choose_widget.change_algorithm(profile.algorithm, profile.values)
         self.choose_profile.blockSignals(True)
         self.choose_profile.setCurrentIndex(0)
         self.choose_profile.blockSignals(False)
         self.interactive_use.setChecked(interactive)
 
-    def _change_profile(self, name, values):
-        for i in range(self.stack_layout.count()):
-            widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.widget(i)
-            if widget.name == name:
-                self.algorithm_choose.setCurrentIndex(i)
-                widget.set_values(values)
-                break
     @property
     def segmentation(self):
         return self._settings.segmentation
-
-    @segmentation.setter
-    def segmentation(self, val):
-        self._settings.segmentation = val
-
-    def image_changed(self):
-        self.segmentation = None
 
     @property
     def interactive(self):
@@ -297,19 +301,20 @@ class Options(QWidget):
         if self.interactive:
             self.execute_algorithm()
 
-    def image_changed_exec(self):
+    def interactive_algorithm_execute(self):
         if self.interactive:
             self.execute_algorithm()
 
     def execute_algorithm(self):
-        widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.currentWidget()
-        self._settings.set("last_executed_algorithm", widget.name)
+        widget: InteractiveAlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
+        self._settings.last_executed_algorithm = widget.name
         self.execute_btn.setDisabled(True)
+        self.interactive_use.setDisabled(True)
         widget.execute()
 
-    def execution_done(self, segmentation, full_segmentation):
-        self.segmentation = segmentation
-        self._settings.full_segmentation = full_segmentation
+    def execution_done(self, segmentation: SegmentationResult):
+        self._settings.segmentation = segmentation.segmentation
+        self._settings.full_segmentation = segmentation.full_segmentation
         self.label.setText(self.sender().get_info_text())
 
     def showEvent(self, _event):
@@ -587,7 +592,7 @@ class MaskWindow(QDialog):
         self.reset_next_btn.setDisabled(True)
 
     def next_mask(self):
-        algorithm_name = self.settings.get("last_executed_algorithm")
+        algorithm_name = self.settings.last_executed_algorithm
         algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
         segmentation = self.settings.segmentation
         mask_property = self.mask_widget.get_mask_property()
@@ -611,7 +616,7 @@ class MaskWindow(QDialog):
 
     def prev_mask(self):
         history: HistoryElement = self.settings.segmentation_history.pop()
-        algorithm_name = self.settings.get("last_executed_algorithm")
+        algorithm_name = self.settings.last_executed_algorithm
         algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
         history2 = history.replace_(algorithm_name=algorithm_name, algorithm_values=algorithm_values)
         self.settings.set("current_algorithm", history.algorithm_name)
@@ -688,7 +693,7 @@ class MainWindow(BaseMainWindow):
         self.raw_image.raw_image.reset_image_size()
         self.result_image.set_image()
         self.result_image.reset_image_size()
-        self.options_panel.image_changed_exec()
+        self.options_panel.interactive_algorithm_execute()
         self.setWindowTitle(f"PartSeg: {self.settings.image_path}")
 
     def read_drop(self, paths):

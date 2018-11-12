@@ -2,27 +2,24 @@ import typing
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 from enum import Enum
-from typing import Type, List
+from typing import List, Type, Dict
 
-from PyQt5.QtGui import QHideEvent, QPaintEvent, QPainter
-from PyQt5.QtWidgets import QComboBox, QCheckBox, QWidget, QVBoxLayout, QLabel, QFormLayout, \
-    QAbstractSpinBox, QScrollArea, QLineEdit, QHBoxLayout, QStackedWidget, QGridLayout
 from PyQt5.QtCore import pyqtSignal
-
+from PyQt5.QtGui import QHideEvent
+from PyQt5.QtWidgets import QComboBox, QCheckBox, QWidget, QVBoxLayout, QLabel, QFormLayout, \
+    QScrollArea, QLineEdit, QStackedLayout
 from six import with_metaclass
 
 from common_gui.dim_combobox import DimComboBox
 from common_gui.universal_gui_part import CustomSpinBox, CustomDoubleSpinBox
 from project_utils.channel_class import Channel
-from project_utils.segmentation.algorithm_base import SegmentationAlgorithm
 from project_utils.error_dialog import ErrorDialog
-from project_utils.image_operations import to_radius_type_dict, RadiusType
+from project_utils.image_operations import RadiusType
+from project_utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
 from project_utils.segmentation.algorithm_describe_base import AlgorithmProperty, AlgorithmDescribeBase
-from project_utils.segmentation_thread import SegmentationThread
-from project_utils.universal_const import UNIT_SCALE
-from tiff_image import Image
-
+from project_utils.segmentation.segmentation_thread import SegmentationThread
 from project_utils.settings import ImageSettings, BaseSettings
+from tiff_image import Image
 
 
 class EnumComboBox(QComboBox):
@@ -99,15 +96,15 @@ class QtAlgorithmProperty(AlgorithmProperty):
         elif issubclass(self.value_type, int):
             res = CustomSpinBox()
             assert isinstance(self.default_value, int)
-            res.setValue(self.default_value)
             if self.range is not None:
                 res.setRange(*self.range)
+            res.setValue(self.default_value)
         elif issubclass(self.value_type, float):
             res = CustomDoubleSpinBox()
             assert isinstance(self.default_value, float)
-            res.setValue(self.default_value)
             if self.range is not None:
                 res.setRange(*self.range)
+            res.setValue(self.default_value)
         elif issubclass(self.value_type, str):
             res = QLineEdit()
             res.setText(str(self.default_value))
@@ -172,33 +169,15 @@ class FormWidget(QWidget):
                 layout.addRow(QLabel(el.user_name), el.get_field().choose)
                 layout.addRow(el.get_field())
                 self.widgets_dict[el.name] = el
+                el.change_fun.connect(self.value_changed.emit)
             else:
                 self.widgets_dict[el.name] = el
                 layout.addRow(QLabel(el.user_name), el.get_field())
                 # noinspection PyUnresolvedReferences
-                el.change_fun.connect(self.value_changed)
+                el.change_fun.connect(self.value_changed.emit)
                 if issubclass(el.value_type, Channel):
+                    # noinspection PyTypeChecker
                     self.channels_chose.append(el.get_field())
-        """row = 0
-        for el in element_list:
-            if isinstance(el, QLabel):
-                layout.addWidget(el, row, 0, 1, 2)
-            elif isinstance(el.get_field(), SubAlgorithmWidget):
-                layout.addWidget(QLabel(el.user_name), row, 0)
-                layout.addWidget(el.get_field().choose, row, 1)
-                layout.addWidget(el.get_field(), row + 1, 0, 1, 2)
-                row += 1
-            else:
-                self.widgets_dict[el.name] = el
-                layout.addWidget(QLabel(el.user_name), row, 0)
-                layout.addWidget(el.get_field(), row, 1)
-                # noinspection PyUnresolvedReferences
-                el.change_fun.connect(self.value_changed)
-                if issubclass(el.value_type, Channel):
-                    self.channels_chose.append(el.get_field())
-            row += 1
-            """
-
         self.setLayout(layout)
 
     def get_values(self):
@@ -210,6 +189,8 @@ class FormWidget(QWidget):
                 self.widgets_dict[name].set_value(value)
 
     def image_changed(self, image: Image):
+        if not image:
+            return
         for channel_widget in self.channels_chose:
             if isinstance(channel_widget, ChannelComboBox):
                 channel_widget.change_channels_num(image.channels)
@@ -220,23 +201,23 @@ class FormWidget(QWidget):
 class SubAlgorithmWidget(QWidget):
     values_changed = pyqtSignal()
 
-    def __init__(self, property: AlgorithmProperty):
+    def __init__(self, algorithm_property: AlgorithmProperty):
         super().__init__()
-        print(property)
-        assert isinstance(property.possible_values, dict)
-        assert isinstance(property.default_value, str)
-        self.property = property
+        assert isinstance(algorithm_property.possible_values, dict)
+        assert isinstance(algorithm_property.default_value, str)
+        self.property = algorithm_property
         self.widget_dict: typing.Dict[str, FormWidget] = {}
         # TODO protect for recursion
-        widget = FormWidget(property.possible_values[property.default_value].get_fields())
-        widget.layout().setContentsMargins(0,0,0,0)
+        widget = FormWidget(algorithm_property.possible_values[algorithm_property.default_value].get_fields())
+        widget.layout().setContentsMargins(0, 0, 0, 0)
+        widget.value_changed.connect(self.values_changed)
 
-        self.widget_dict[property.default_value] = widget
+        self.widget_dict[algorithm_property.default_value] = widget
         self.choose = QComboBox(self)
-        self.choose.addItems(property.possible_values.keys())
+        self.choose.addItems(algorithm_property.possible_values.keys())
         self.setContentsMargins(0, 0, 0, 0)
 
-        self.choose.setCurrentText(property.default_value)
+        self.choose.setCurrentText(algorithm_property.default_value)
 
         self.choose.currentTextChanged.connect(self.algorithm_choose)
         # self.setStyleSheet("border: 1px solid red")
@@ -271,7 +252,6 @@ class SubAlgorithmWidget(QWidget):
         values = self.widget_dict[name].get_values()
         return {"name": name, "values": values}
 
-
     def change_channels_num(self, image: Image):
         for i in range(self.layout().count()):
             el = self.layout().itemAt(i)
@@ -285,12 +265,14 @@ class SubAlgorithmWidget(QWidget):
             print(self.widget_dict[name].minimumSize())
             self.widget_dict[name].layout().setContentsMargins(0, 0, 0, 0)
             self.layout().addWidget(self.widget_dict[name])
+            self.widget_dict[name].value_changed.connect(self.values_changed)
         widget = self.widget_dict[name]
         for i in range(self.layout().count()):
             lay_elem = self.layout().itemAt(i)
             if lay_elem.widget():
                 lay_elem.widget().hide()
         widget.show()
+        self.values_changed.emit()
 
     def showEvent(self, _event):
         # workaround for changing size
@@ -310,6 +292,7 @@ class AbstractAlgorithmSettingsWidget(with_metaclass(ABCMeta, object)):
 
 
 class BaseAlgorithmSettingsWidget(QScrollArea):
+    values_changed = pyqtSignal()
     algorithm_thread: SegmentationThread
     gauss_radius_name = "gauss_radius"
     use_gauss_name = "use_gauss"
@@ -329,11 +312,12 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
         self.info_label.setHidden(True)
         main_layout.addWidget(self.info_label)
         self.form_widget = FormWidget(algorithm.get_fields())
+        self.form_widget.value_changed.connect(self.values_changed.emit)
         self.setWidget(self.form_widget)
         self.settings = settings
         value_dict = self.settings.get(f"algorithms.{self.name}", {})
         self.set_values(value_dict)
-        self.settings.image_changed[Image].connect(self.image_changed)
+        # self.settings.image_changed[Image].connect(self.image_changed)
         self.algorithm_thread = SegmentationThread(algorithm())
         self.algorithm_thread.info_signal.connect(self.show_info)
         self.algorithm_thread.exception_occurred.connect(self.exception_occurred)
@@ -362,8 +346,6 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
     def execute(self, exclude_mask=None):
         values = self.get_values()
         self.settings.set(f"algorithms.{self.name}", deepcopy(values))
-        scale = UNIT_SCALE[self.settings.get("units_index")]
-        print(f"values: {values}")
         self.algorithm_thread.set_parameters(**values)
         self.algorithm_thread.start()
 
@@ -387,7 +369,7 @@ class InteractiveAlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
         self.selector = selector
         self.algorithm_thread.finished.connect(self.enable_selector)
         self.algorithm_thread.started.connect(self.disable_selector)
-        self.form_widget.value_changed.connect(self.value_updated)
+        # self.form_widget.value_changed.connect(self.value_updated)
         # noinspection PyUnresolvedReferences
         settings.mask_changed.connect(self.change_mask)
 
@@ -410,4 +392,74 @@ class InteractiveAlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
             el.setEnabled(True)
 
 
-AbstractAlgorithmSettingsWidget.register(AlgorithmSettingsWidget)
+class AlgorithmChoose(QWidget):
+    finished = pyqtSignal()
+    started = pyqtSignal()
+    result = pyqtSignal(SegmentationResult)
+    value_changed = pyqtSignal()
+    algorithm_changed = pyqtSignal(str)
+
+    def __init__(self, settings: BaseSettings, algorithms: Dict[str, Type[SegmentationAlgorithm]],
+                 parent=None):
+        super().__init__(parent)
+        self.settings = settings
+        self.stack_layout = QStackedLayout()
+        self.algorithm_choose = QComboBox()
+        self.algorithm_dict = {}
+        widgets_list = []
+        for name, val in algorithms.items():
+            self.algorithm_choose.addItem(name)
+            widget = InteractiveAlgorithmSettingsWidget(settings, name, val, [])
+            self.algorithm_dict[name] = widget
+            widgets_list.append(widget)
+            widget.algorithm_thread.execution_done.connect(self.result.emit)
+            widget.algorithm_thread.finished.connect(self.finished.emit)
+            widget.algorithm_thread.started.connect(self.started.emit)
+            widget.values_changed.connect(self.value_changed.emit)
+            # widget.algorithm.progress_signal.connect(self.progress_info)
+            self.stack_layout.addWidget(widget)
+
+        self.algorithm_choose.currentTextChanged.connect(self.change_algorithm)
+        self.settings.image_changed.connect(self.image_changed)
+
+        name = self.settings.get("current_algorithm", "")
+        if name:
+            self.algorithm_choose.setCurrentText(name)
+
+        self.setContentsMargins(0, 0, 0, 0)
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.algorithm_choose)
+        layout.addLayout(self.stack_layout)
+        self.setLayout(layout)
+
+    def change_algorithm(self, name, values: dict = None):
+        self.settings.set("current_algorithm", name)
+        widget = self.stack_layout.currentWidget()
+        if name != widget.name:
+            widget = self.algorithm_dict[name]
+            self.stack_layout.setCurrentWidget(widget)
+            widget.image_changed(self.settings.image)
+        elif values is None:
+            return
+        if values is not None:
+            widget.blockSignals(True)
+            widget.set_values(values)
+            widget.blockSignals(False)
+        self.algorithm_choose.blockSignals(True)
+        self.algorithm_choose.setCurrentText(name)
+        self.algorithm_choose.blockSignals(False)
+        self.algorithm_changed.emit(name)
+
+    def image_changed(self):
+        current_widget = self.stack_layout.currentWidget()
+        current_widget.image_changed(self.settings.image)
+
+    def current_widget(self):
+        return self.stack_layout.currentWidget()
+
+    def get_info_text(self):
+        return self.current_widget().algorithm_thread.get_info_text()
+
+
+# AbstractAlgorithmSettingsWidget.register(AlgorithmSettingsWidget)

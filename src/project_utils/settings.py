@@ -233,6 +233,7 @@ class BaseSettings(ViewSettings):
         self.current_segmentation_dict = "default"
         self.segmentation_dict: typing.Dict[str, ProfileDict] = {self.current_segmentation_dict: ProfileDict()}
         self.json_path = json_path
+        self.last_executed_algorithm = ""
 
     def set(self, key_path, value):
         """function for saving general state (not visualization) """

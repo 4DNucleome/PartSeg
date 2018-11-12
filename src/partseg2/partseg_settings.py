@@ -15,9 +15,13 @@ MASK_COLORS = {"black": np.array((0, 0, 0)), "white": np.array((255, 255, 255)),
 
 
 class PartSettings(BaseSettings):
+    """
+    last_executed_algorithm - parameter for caring last used algorithm
+    """
     mask_changed = pyqtSignal()
     json_encoder_class = PartEncoder
     decode_hook = part_hook
+    last_executed_algorithm: str
 
     def __init__(self, json_path):
         super().__init__(json_path)
@@ -25,6 +29,7 @@ class PartSettings(BaseSettings):
         self.full_segmentation = None
         self.segmentation_history: typing.List[HistoryElement] = []
         self.undo_segmentation_history: typing.List[HistoryElement] = []
+        self.last_executed_algorithm = ""
 
     @property
     def use_physical_unit(self):
@@ -50,6 +55,7 @@ class PartSettings(BaseSettings):
     def _image_changed(self):
         super()._image_changed()
         self._mask = None
+        self.full_segmentation = None
 
     def load_profiles(self):
         pass
@@ -60,7 +66,7 @@ class PartSettings(BaseSettings):
     def save_project(self, file_path):
         dkt = dict()
         dkt["segmentation"] = self.segmentation
-        algorithm_name = self.get("last_executed_algorithm")
+        algorithm_name = self.last_executed_algorithm
         dkt["algorithm_parameters"] = {"name": algorithm_name, "values": self.get(f"algorithms.{algorithm_name}")}
         dkt["mask"] = self.mask
         dkt["full_segmentation"] = self.full_segmentation
@@ -77,7 +83,7 @@ class PartSettings(BaseSettings):
         self.segmentation_history = project_tuple.history
         self.undo_segmentation_history = []
         algorithm_name = project_tuple.algorithm_parameters["name"]
-        self.set("last_executed_algorithm", algorithm_name)
+        self.last_executed_algorithm = algorithm_name
         self.set(f"algorithms.{algorithm_name}", project_tuple.algorithm_parameters["values"])
 
 

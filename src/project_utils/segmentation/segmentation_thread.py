@@ -1,13 +1,14 @@
+import sys
+
 from PyQt5.QtCore import QMutex
 
-from project_utils.segmentation.algorithm_base import SegmentationAlgorithm
+from project_utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
 from PyQt5.QtCore import QThread, pyqtSignal
 import numpy as np
 
 
 class SegmentationThread(QThread):
-    execution_done = pyqtSignal([np.ndarray], [np.ndarray, np.ndarray])
-    execution_done_extend = pyqtSignal(np.ndarray, np.ndarray)
+    execution_done = pyqtSignal(SegmentationResult)
     progress_signal = pyqtSignal(str, int)
     info_signal = pyqtSignal(str)
     exception_occurred = pyqtSignal(Exception)
@@ -30,6 +31,7 @@ class SegmentationThread(QThread):
     def run(self):
         if self.algorithm.image is None:
             # assertion for running algorithm without image
+            print(f"No image in class {self.algorithm.__class__}", file=sys.stderr)
             return
         try:
             segment_data = self.algorithm.calculation_run(self.send_info)
@@ -38,11 +40,7 @@ class SegmentationThread(QThread):
             return
         if segment_data is None:
             return
-        if isinstance(segment_data, tuple):
-            self.execution_done.emit(segment_data[0])
-            self.execution_done[np.ndarray, np.ndarray].emit(segment_data[0], segment_data[1])
-        else:
-            self.execution_done.emit(segment_data)
+        self.execution_done.emit(segment_data)
 
     def finished_task(self):
         self.mutex.lock()

@@ -9,6 +9,8 @@ from enum import Enum
 from .class_generate_base import BaseReadonlyClass as BaseReadonlyClass_
 _PY36 = sys.version_info[:2] >= (3, 6)
 
+# TODO read about dataclsss and maybe apply
+
 _class_template = """\
 from builtins import property as _property, tuple as _tuple
 from operator import attrgetter as _attrgetter

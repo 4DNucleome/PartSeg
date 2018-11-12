@@ -3,7 +3,8 @@ from abc import ABC
 from project_utils.image_operations import gaussian, RadiusType
 from project_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase
 from tiff_image import Image
-
+from typing import NamedTuple, Union
+import numpy as np
 
 def calculate_operation_radius(radius, spacing, gauss_type):
     if gauss_type == RadiusType.R2D:
@@ -16,7 +17,14 @@ def calculate_operation_radius(radius, spacing, gauss_type):
     return radius
 
 
+class SegmentationResult(NamedTuple):
+    segmentation: np.ndarray
+    full_segmentation: Union[np.ndarray, None] = None
+    cleaned_channel: Union[np.ndarray, None] = None
+
+
 class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
+    channel: np.ndarray
     def __init__(self):
         super().__init__()
         self.image: Image = None
@@ -27,7 +35,7 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         self.image = None
         self.segmentation = None
 
-    def calculation_run(self, report_fun):
+    def calculation_run(self, report_fun) -> SegmentationResult:
         raise NotImplementedError()
 
     def get_info_text(self):

@@ -1,5 +1,5 @@
 from .partseg_utils import SegmentationPipeline
-from .calculate_pipeline import calculate_pipeline
+from .calculate_pipeline import calculate_pipeline, PipelineResult
 from project_utils.progress_thread import ProgressTread
 from tiff_image import Image
 import numpy as np
@@ -7,9 +7,11 @@ import typing
 
 
 class CalculatePipelineThread(ProgressTread):
-    def __init__(self, image: Image, mask:typing.Union[np.ndarray, None], pipeline: SegmentationPipeline, parent=None):
+    result: PipelineResult
+
+    def __init__(self, image: Image, mask: typing.Union[np.ndarray, None], pipeline: SegmentationPipeline, parent=None):
         super().__init__(parent=parent)
-        self.image =image
+        self.image = image
         self.mask = mask
         self.pipeline = pipeline
         self.result = None
