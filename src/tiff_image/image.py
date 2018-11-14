@@ -77,6 +77,10 @@ class Image(object):
         return self._image_array.shape[1]
 
     @property
+    def times(self):
+        return self._image_array.shape[0]
+
+    @property
     def plane_shape(self):
         return self._image_array.shape[2:4]
 
@@ -102,8 +106,8 @@ class Image(object):
             li = 0
         return self._image_array[li][..., num]
 
-    def get_layer(self, num) -> np.ndarray:
-        return self._image_array[0, num]
+    def get_layer(self, time, stack) -> np.ndarray:
+        return self._image_array[time, stack]
 
     def get_mask_layer(self, num) -> np.ndarray:
         if self._mask_array is None:

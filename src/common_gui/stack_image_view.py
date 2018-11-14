@@ -4,12 +4,14 @@ import collections
 import os
 from math import log
 
-import SimpleITK as sitk
 import numpy as np
-from PyQt5 import QtGui, QtCore
+from PyQt5 import QtGui
 from PyQt5.QtCore import QRect, QTimerEvent, QSize, QObject, pyqtSignal, QPoint, Qt, QEvent
-from PyQt5.QtGui import QShowEvent, QResizeEvent, QWheelEvent, QPainter, QPen, QColor, QPalette, QPixmap, QImage, QIcon
-from PyQt5.QtWidgets import QScrollBar, QLabel
+from PyQt5.QtGui import QShowEvent, QWheelEvent, QPainter, QPen, QColor, QPalette, QPixmap, QImage, QIcon
+from PyQt5.QtWidgets import QScrollBar, QLabel, QGridLayout
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
+    QScrollArea, QSizePolicy, QToolButton, QAction, QApplication, \
+    QSlider, QCheckBox, QComboBox
 from matplotlib import pyplot
 from matplotlib.cm import get_cmap
 from matplotlib.colors import PowerNorm
@@ -17,12 +19,9 @@ from scipy.ndimage import gaussian_filter
 
 from project_utils.color_image import color_image, add_labels
 from project_utils.custom_colormaps import default_colors
-from project_utils.global_settings import static_file_folder, use_qt5
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
-    QScrollArea, QSizePolicy, QToolButton, QAction, QApplication, \
-    QSlider, QCheckBox, QComboBox
+from project_utils.global_settings import static_file_folder
+from project_utils.settings import ViewSettings
 from stackseg.stack_settings import StackSettings
-from project_utils.settings import ImageSettings, ViewSettings
 from tiff_image import Image
 from .channel_control import ChannelControl
 
@@ -42,7 +41,7 @@ class ImageState(QObject):
         self.zoom = False
         self.move = False
         self.opacity = settings.get_from_profile("image_state.opacity", 1)
-        self.show_label =   settings.get_from_profile("image_state.show_label", 1)
+        self.show_label = settings.get_from_profile("image_state.show_label", 1)
         # 0 - no show, 1 - show all, 2 - show chosen
         self.only_borders = settings.get_from_profile("image_state.only_border", True)
         self.borders_thick = settings.get_from_profile("image_state.border_thick", 1)
@@ -99,7 +98,7 @@ class ImageCanvas(QLabel):
         self.point = None
         self.point2 = None
         self.image = None
-        self.image_size = QSize(1,1)
+        self.image_size = QSize(1, 1)
         self.image_ratio = 1
         self.setMouseTracking(True)
 
@@ -177,6 +176,7 @@ class ImageCanvas(QLabel):
         im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 3, QImage.Format_RGB888)
         self.setPixmap(QPixmap.fromImage(im2.scaled(self.width(), self.height(), Qt.KeepAspectRatio)))
 
+
 def get_scroll_bar_proportion(scroll_bar):
     """
     :type scroll_bar: QScrollBar
@@ -196,7 +196,7 @@ def set_scroll_bar_proportion(scroll_bar, proportion):
     :type proportion: float
     :param scroll_bar:
     """
-    scroll_bar.setValue(int((scroll_bar.maximum() - scroll_bar.minimum())*proportion))
+    scroll_bar.setValue(int((scroll_bar.maximum() - scroll_bar.minimum()) * proportion))
 
 
 def create_tool_button(text, icon):
@@ -240,6 +240,7 @@ class ChanelColor(QWidget):
         return lambda x: cmap(norm(x))
 
     def register(self, fun):
+        # noinspection PyUnresolvedReferences
         self.color_list.currentIndexChanged.connect(fun)
         self.check_box.stateChanged.connect(fun)
 
@@ -256,7 +257,7 @@ class ChanelColor(QWidget):
         text = str(self.color_list.currentText())
         try:
             index = colormap_list.index(text)
-        except ValueError as e:
+        except ValueError:
             index = -1
 
         if index != -1:
@@ -276,11 +277,10 @@ class ImageView(QWidget):
     # zoom_changed = pyqtSignal(float, float, float)
 
     def __init__(self, settings, channel_control: ChannelControl):
-        """:type settings: ImageSettings"""
+        """:type settings: ViewSettings"""
         super(ImageView, self).__init__()
-        self._settings : StackSettings = settings
+        self._settings: StackSettings = settings
         self.channel_control = channel_control
-        #self._current_channels = ["BlackRed"]
         self.exclude_btn_list = []
         self.image_state = ImageState(settings)
         self.image_area = MyScrollArea(self.image_state)
@@ -302,23 +302,37 @@ class ImageView(QWidget):
         self.btn_layout.addWidget(self.zoom_button)
         self.btn_layout.addWidget(self.move_button)
         self.btn_layout.addStretch(1)
+
         self.stack_slider = QSlider(Qt.Horizontal)
         self.stack_slider.valueChanged.connect(self.change_image)
         self.stack_slider.valueChanged.connect(self.change_layer)
-        self.layer_info = QLabel()
+        self.time_slider = QSlider(Qt.Vertical)
+        self.time_slider.valueChanged.connect(self.change_image)
+        self.time_slider.valueChanged.connect(self.change_time)
+        self.stack_layer_info = QLabel()
+        self.time_layer_info = QLabel()
+        self.time_layer_info.setAlignment(Qt.AlignCenter)
         self.tmp_image = None
-        self.channels_num = 1
-        self.layers_num = 1
         self.labels_layer = None
         self.image_shape = QSize(1, 1)
 
-        main_layout = QVBoxLayout()
-        main_layout.addLayout(self.btn_layout)
-        main_layout.addWidget(self.image_area)
-        slider_layout = QHBoxLayout()
-        slider_layout.addWidget(self.stack_slider)
-        slider_layout.addWidget(self.layer_info)
-        main_layout.addLayout(slider_layout)
+        main_layout = QGridLayout()
+        main_layout.setSpacing(0)
+        self.btn_layout.setSpacing(10)
+        # main_layout.setContentsMargins(0, 0, 0, 0)
+        self.setContentsMargins(0, 0, 0, 0)
+        main_layout.addLayout(self.btn_layout, 0, 1)
+        time_slider_layout = QVBoxLayout()
+        time_slider_layout.setContentsMargins(0, 0, 0, 0)
+        time_slider_layout.addWidget(self.time_layer_info)
+        time_slider_layout.addWidget(self.time_slider)
+        main_layout.addLayout(time_slider_layout, 1, 0)
+        main_layout.addWidget(self.image_area, 1, 1)
+        stack_slider_layout = QHBoxLayout()
+        stack_slider_layout.setContentsMargins(0, 0, 0, 0)
+        stack_slider_layout.addWidget(self.stack_slider)
+        stack_slider_layout.addWidget(self.stack_layer_info)
+        main_layout.addLayout(stack_slider_layout, 2, 1)
 
         self.setLayout(main_layout)
         self.exclude_btn_list.extend([self.zoom_button, self.move_button])
@@ -345,7 +359,7 @@ class ImageView(QWidget):
     def showEvent(self, event: QShowEvent):
         pass
         # self.btn_layout.addStretch(1)
-        #self.repaint()
+        # self.repaint()
 
     def update_channels_coloring(self, new_image: bool):
         if not new_image:
@@ -409,12 +423,19 @@ class ImageView(QWidget):
         self.image_area.reset_image()
 
     def change_layer(self, num):
-        self.layer_info.setText("{} of {}".format(num+1, self.layers_num))
+        self.stack_layer_info.setText("{} of {}".format(num + 1, self.image.layers))
+
+    def change_time(self, num):
+        self.time_layer_info.setText("{}\nof\n{}".format(num + 1, self.image.times))
+
+    def get_layer(self):
+        """ Function to overwrite if need create viewer in other dimensions"""
+        return self.image.get_layer(self.time_slider.value(), self.stack_slider.value())
 
     def change_image(self):
         if self.image is None:
             return
-        img = np.copy(self.image.get_layer(self.stack_slider.value()))
+        img = np.copy(self.get_layer())
         color_maps = self.channel_control.current_colors
         borders = self.border_val[:]
         for i, p in enumerate(self.channel_control.get_limits()):
@@ -439,7 +460,8 @@ class ImageView(QWidget):
             components_mask = self._settings.components_mask()
             if self.image_state.show_label == 1:
                 components_mask[1:] = 1
-            add_labels(im, layers, self.image_state.opacity, self.image_state.only_borders, int((self.image_state.borders_thick-1)/2), components_mask)
+            add_labels(im, layers, self.image_state.opacity, self.image_state.only_borders,
+                       int((self.image_state.borders_thick - 1) / 2), components_mask)
         return im
 
     @property
@@ -448,22 +470,25 @@ class ImageView(QWidget):
 
     def set_image(self):
         """
-        :return:
+        function which set sliders and image size. If create viewers in other dimensions need to overwrite
         """
-        self.channels_num = 1
-        self.layers_num = 1
         self.labels_layer = None
-        # image = np.squeeze(image)
-        #self.image = image
-        self.channels_num = self.image.channels
-        self.layers_num = self.image.layers
         self.image_shape = QSize(self.image.plane_shape[1], self.image.plane_shape[0])
         self.stack_slider.blockSignals(True)
-        self.stack_slider.setRange(0, self.layers_num - 1)
-        self.stack_slider.setValue(int(self.layers_num/2))
+        self.stack_slider.setRange(0, self.image.layers - 1)
+        self.stack_slider.setValue(self.image.layers // 2)
         self.stack_slider.blockSignals(False)
+        self.time_slider.blockSignals(True)
+        self.time_slider.setRange(0, self.image.times - 1)
+        self.time_slider.setValue(self.image.times // 2)
+        self.time_slider.blockSignals(False)
         self.change_image()
-        self.change_layer(int(self.layers_num/2))
+        self.change_layer(self.image.layers // 2)
+        self.change_time(self.image.times // 2)
+        self.stack_slider.setHidden(self.image.layers == 1)
+        self.stack_layer_info.setHidden(self.image.layers == 1)
+        self.time_slider.setHidden(self.image.times == 1)
+        self.time_layer_info.setHidden(self.image.times == 1)
         # self.image_area.set_image(image)
 
     def set_labels(self, labels):
@@ -478,7 +503,7 @@ class MyScrollArea(QScrollArea):
     :type zoom_scale: float
     :param zoom_scale: zoom scale
     """
-    #resize_area = pyqtSignal(QSize)
+    # resize_area = pyqtSignal(QSize)
 
     zoom_changed = pyqtSignal()
 
@@ -502,7 +527,7 @@ class MyScrollArea(QScrollArea):
         self.pixmap.zoom_mark.connect(self.zoom_image)
         self.setBackgroundRole(QPalette.Dark)
         self.setWidget(self.pixmap)
-        #self.image_ratio = 1
+        # self.image_ratio = 1
         self.zoom_scale = 1
         self.max_zoom = 15
         self.image_size = QSize(1, 1)
@@ -510,28 +535,28 @@ class MyScrollArea(QScrollArea):
         self.vertical_ratio = False, 1
         self.y_mid = None
         self.x_mid = None
-        #self.setWidgetResizable(True)
+        # self.setWidgetResizable(True)
         self.horizontalScrollBar().rangeChanged.connect(self.horizontal_range_changed)
         self.verticalScrollBar().rangeChanged.connect(self.vertical_range_changed)
-        #self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        #self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        # self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        # self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.timer_id = 0
 
     def horizontal_range_changed(self, min_val, max_val):
         if self.x_mid is not None and self.sender().isVisible():
             diff = self.widget().size().width() - (max_val - min_val)
-            self.sender().setValue(self.x_mid - diff/2)
+            self.sender().setValue(self.x_mid - diff / 2)
             self.x_mid = None
 
     def vertical_range_changed(self, min_val, max_val):
         if self.y_mid is not None and self.sender().isVisible():
             print("aaaa", max_val, self.y_mid)
             diff = self.widget().size().height() - (max_val - min_val)
-            self.sender().setValue(self.y_mid - diff/2)
+            self.sender().setValue(self.y_mid - diff / 2)
             self.y_mid = None
 
     def get_ratio_factor(self, size=None):
-        if size == None:
+        if size is None:
             size = self.size()
         pixmap_ratio = self.pixmap.image_size.width() / self.pixmap.image_size.height()
         area_ratio = size.width() / size.height()
@@ -575,7 +600,6 @@ class MyScrollArea(QScrollArea):
         self.pixmap.resize(final_size)
         self.zoom_changed.emit()
 
-
         """img_h = self.pixmap.size().height()
         view_h = self.size().height() - 2
         
@@ -591,7 +615,6 @@ class MyScrollArea(QScrollArea):
         v_max = self.horizontalScrollBar().maximum()
         v_set = v_min + (v_max - v_min) * ((x_mid - view_w / 2) / (img_w - view_w))
         self.horizontalScrollBar().setValue(int(v_set))"""
-
 
     @property
     def image_ratio(self):
@@ -614,7 +637,7 @@ class MyScrollArea(QScrollArea):
         self.widget().set_image(im, keep_size)
         if not keep_size:
             self.reset_image()
-            #self.widget().adjustSize()
+            # self.widget().adjustSize()
 
     def mousePressEvent(self, event):
         self.clicked = True
@@ -646,7 +669,7 @@ class MyScrollArea(QScrollArea):
             scroll_bar.setValue(n_val)
 
     def calculate_shift(self, pixmap_len, self_len, pix_ratio, cursor_ratio, scroll_bar: QScrollBar):
-        if  pixmap_len - self_len > 0:
+        if pixmap_len - self_len > 0:
             print("calculate_shift", self.__class__, pixmap_len, pixmap_len - self_len, scroll_bar.maximum())
             scroll_bar.setValue(pixmap_len * pix_ratio - self_len * cursor_ratio)
 
@@ -660,12 +683,11 @@ class MyScrollArea(QScrollArea):
         else:
             self.pixmap.resize(final_size)
 
-
     def resizeEvent(self, event):
-        #super(MyScrollArea, self).resizeEvent(event)
+        # super(MyScrollArea, self).resizeEvent(event)
         self.pixmap.point = None
         size_diff = self.size() - event.oldSize()
-        if abs(size_diff.width()) < 10 and abs(size_diff.height()) < 10 :
+        if abs(size_diff.width()) < 10 and abs(size_diff.height()) < 10:
             return
         if self.x_mid is None:
             self.x_mid = - self.widget().pos().x() + (self.get_width(event.oldSize().width())) / 2
@@ -673,24 +695,23 @@ class MyScrollArea(QScrollArea):
             self.y_mid = - self.widget().pos().y() + (self.get_height(event.oldSize().height())) / 2
         old_ratio = self.get_ratio_factor(event.oldSize())
         new_ratio = self.get_ratio_factor(event.size())
-        scalar = new_ratio/old_ratio
+        scalar = new_ratio / old_ratio
         self.x_mid *= scalar
         self.y_mid *= scalar
-        if (self.timer_id):
+        if self.timer_id:
             self.killTimer(self.timer_id)
             self.timer_id = 0
         self.timer_id = self.startTimer(50)
-
 
     def timerEvent(self, a0: 'QTimerEvent'):
         # Some try to reduce number of repaint event
         self.killTimer(self.timer_id)
         self.timer_id = 0
         if self.size().width() - 2 > self.pixmap.width() and self.size().height() - 2 > self.pixmap.height():
-            #print("B")
+            # print("B")
             self.reset_image()
-        else :
-            #print("C", self.pixmap.size())
+        else:
+            # print("C", self.pixmap.size())
             self.resize_pixmap()
 
     def get_width(self, width=None):
@@ -709,14 +730,14 @@ class MyScrollArea(QScrollArea):
         else:
             return height
 
-
     def wheelEvent(self, event: QWheelEvent):
+        # noinspection PyTypeChecker
         if not (QApplication.keyboardModifiers() & Qt.ControlModifier) == Qt.ControlModifier:
             return
         delta = event.angleDelta().y()
         if abs(delta) > max_step:
-            delta = max_step * (delta/abs(delta))
-        scale_mod = (step**delta)
+            delta = max_step * (delta / abs(delta))
+        scale_mod = (step ** delta)
         if scale_mod == 1 or (scale_mod > 1 and self.zoom_scale == self.max_zoom):
             return
         if self.zoom_scale * scale_mod > self.max_zoom:
@@ -731,13 +752,14 @@ class MyScrollArea(QScrollArea):
         x_ratio = x_pos / self.widget().size().width()
         y_ratio = y_pos / self.widget().size().height()
         ratio = self.get_ratio_factor()
+        # noinspection PyTypeChecker
         final_size = QSize(self.pixmap.image_size * ratio - QSize(2, 2))
         x_pos_new = final_size.width() * x_ratio
         y_pos_new = final_size.height() * y_ratio
         self.x_mid = x_pos_new - event.x() + (self.get_width()) / 2
         self.y_mid = y_pos_new - event.y() + (self.get_height()) / 2
 
-        if (self.timer_id):
+        if self.timer_id:
             self.killTimer(self.timer_id)
             self.timer_id = 0
         self.timer_id = self.startTimer(50)
@@ -746,7 +768,7 @@ class MyScrollArea(QScrollArea):
 
 
 class ColorBar(QLabel):
-    def __init__(self, settings: ViewSettings , channel_control: ChannelControl):
+    def __init__(self, settings: ViewSettings, channel_control: ChannelControl):
         super().__init__()
         self.channel_control = channel_control
         self._settings = settings
@@ -755,9 +777,9 @@ class ColorBar(QLabel):
         self.range = None
         self.round_range = None
         self.setFixedWidth(80)
-        #layout = QHBoxLayout()
-        #layout.addWidget(QLabel("aaa"))
-        #self.setLayout(layout)
+        # layout = QHBoxLayout()
+        # layout.addWidget(QLabel("aaa"))
+        # self.setLayout(layout)
 
     def update_colormap(self, channel_id):
         fixed_range = self._settings.get_from_profile(f"{self.channel_control.name}.lock_{channel_id}", False)
@@ -767,15 +789,15 @@ class ColorBar(QLabel):
             self.range = self._settings.border_val[channel_id]
         cmap = self._settings.get_from_profile(f"{self.channel_control.name}.cmap{channel_id}")
         round_factor = self.round_base(self.range[1])
-        self.round_range = int(round(self.range[0] / round_factor) * round_factor), \
-                      int(round(self.range[1] / round_factor) * round_factor)
+        self.round_range = (int(round(self.range[0] / round_factor) * round_factor),
+                            int(round(self.range[1] / round_factor) * round_factor))
         if self.round_range[0] < self.range[0]:
             self.round_range = self.round_range[0] + round_factor, self.round_range[1]
         if self.round_range[1] > self.range[1]:
-            self.round_range = self.round_range[0] , self.round_range[1] - round_factor
-        #print(self.range, self.round_range)
+            self.round_range = self.round_range[0], self.round_range[1] - round_factor
+        # print(self.range, self.round_range)
 
-        img = color_image(np.linspace(0, 256, 512).reshape((1,512, 1))[:, ::-1], [cmap], [(0, 256)])
+        img = color_image(np.linspace(0, 256, 512).reshape((1, 512, 1))[:, ::-1], [cmap], [(0, 256)])
         self.image = QImage(img.data, 1, 512, img.dtype.itemsize * 3, QImage.Format_RGB888)
         self.repaint()
 
@@ -797,7 +819,6 @@ class ColorBar(QLabel):
             return 21
         return 11
 
-
     def paintEvent(self, event: QtGui.QPaintEvent):
         bar_width = 30
 
@@ -815,10 +836,9 @@ class ColorBar(QLabel):
         painter.drawImage(image_rect, self.image)
         start_prop = 1 - (self.round_range[0] - self.range[0]) / (self.range[1] - self.range[0])
         end_prop = 1 - (self.round_range[1] - self.range[0]) / (self.range[1] - self.range[0])
-        for pos, val  in zip(np.linspace(10 + end_prop * rect.size().height() , start_prop * rect.size().height(),
-                                         number_of_marks),
-                             np.linspace(self.round_range[1], self.round_range[0], number_of_marks, dtype=np.uint32)):
-            painter.drawText(bar_width+5, pos, f"{val}")
+        for pos, val in zip(np.linspace(10 + end_prop * rect.size().height(), start_prop * rect.size().height(),
+                                        number_of_marks),
+                            np.linspace(self.round_range[1], self.round_range[0], number_of_marks, dtype=np.uint32)):
+            painter.drawText(bar_width + 5, pos, f"{val}")
         painter.setFont(old_font)
         # print(self.image.shape)
-
