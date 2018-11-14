@@ -77,6 +77,7 @@ class Options(QWidget):
         self.algorithm_choose_widget.result.connect(self.execution_done)
         self.algorithm_choose_widget.finished.connect(self.calculation_finished)
         self.algorithm_choose_widget.value_changed.connect(self.interactive_algorithm_execute)
+        self.algorithm_choose_widget.algorithm_changed.connect(self.interactive_algorithm_execute)
         """widgets_list = []
         for name, val in part_algorithm_dict.items():
             self.algorithm_choose.addItem(name)

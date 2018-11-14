@@ -436,19 +436,18 @@ class AlgorithmChoose(QWidget):
     def change_algorithm(self, name, values: dict = None):
         self.settings.set("current_algorithm", name)
         widget = self.stack_layout.currentWidget()
+        self.blockSignals(True)
         if name != widget.name:
             widget = self.algorithm_dict[name]
             self.stack_layout.setCurrentWidget(widget)
             widget.image_changed(self.settings.image)
         elif values is None:
+            self.blockSignals(False)
             return
         if values is not None:
-            widget.blockSignals(True)
             widget.set_values(values)
-            widget.blockSignals(False)
-        self.algorithm_choose.blockSignals(True)
         self.algorithm_choose.setCurrentText(name)
-        self.algorithm_choose.blockSignals(False)
+        self.blockSignals(False)
         self.algorithm_changed.emit(name)
 
     def image_changed(self):
