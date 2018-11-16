@@ -5,6 +5,7 @@ import traceback
 import project_utils.report_utils as report_utils
 import sentry_sdk
 
+
 class ErrorDialog(QDialog):
     def __init__(self, exception: Exception, description: str, additional_notes: str = ""):
         super().__init__()
@@ -44,10 +45,9 @@ class ErrorDialog(QDialog):
     def send_information(self):
         text = self.desc.text() + "\n"
         if len(self.additional_notes) > 0:
-            text += "Additional notes: " + self.additional_notes +"\n"
-        text +=  self.error_description.toPlainText() + "\n\n"
+            text += "Additional notes: " + self.additional_notes + "\n"
+        text += self.error_description.toPlainText() + "\n\n"
         if len(self.additional_info.toPlainText()) > 0:
             text += "User information:\n" + self.additional_info.toPlainText()
         sentry_sdk.capture_message(text)
         self.accept()
-

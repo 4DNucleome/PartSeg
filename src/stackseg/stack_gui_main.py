@@ -1,7 +1,6 @@
 from __future__ import division
 
 import os
-import sys
 
 import appdirs
 import numpy as np
@@ -30,7 +29,6 @@ from common_gui.select_multiple_files import AddFiles
 from partseg.io_functions import load_stack_segmentation
 from project_utils.global_settings import static_file_folder
 from project_utils.universal_const import UNITS_LIST, UNIT_SCALE
-from project_utils.utils import SynchronizeValues
 from stackseg.stack_algorithm.algorithm_description import stack_algorithm_dict
 from stackseg.stack_settings import StackSettings
 from tiff_image import ImageReader, Image
@@ -126,7 +124,6 @@ class MainMenu(QWidget):
                     return False
         self.settings.image = image
         return True
-
 
     def load_segmentation(self):
         try:
@@ -311,6 +308,7 @@ class AlgorithmOptions(QWidget):
         self.borders_thick.setRange(1, 11)
         self.borders_thick.setSingleStep(2)
         self.borders_thick.setValue(control_view.borders_thick)
+        # noinspection PyUnresolvedReferences
         self.borders_thick.valueChanged.connect(self.border_value_check)
         self.execute_btn = QPushButton("Execute")
         self.execute_all_btn = QPushButton("Execute all")
@@ -367,12 +365,16 @@ class AlgorithmOptions(QWidget):
         main_layout.setSpacing(0)
         self.setLayout(main_layout)
 
+        # noinspection PyUnresolvedReferences
         self.algorithm_choose.currentIndexChanged.connect(self.stack_layout.setCurrentIndex)
         self.execute_btn.clicked.connect(self.execute_action)
         self.execute_all_btn.clicked.connect(self.execute_all_action)
+        # noinspection PyUnresolvedReferences
         self.opacity.valueChanged.connect(control_view.set_opacity)
+        # noinspection PyUnresolvedReferences
         self.show_result.currentIndexChanged.connect(control_view.set_show_label)
         self.only_borders.stateChanged.connect(control_view.set_borders)
+        # noinspection PyUnresolvedReferences
         self.borders_thick.valueChanged.connect(control_view.set_borders_thick)
         component_checker.component_clicked.connect(self.choose_components.other_component_choose)
         settings.chosen_components_widget = self.choose_components
@@ -401,7 +403,7 @@ class AlgorithmOptions(QWidget):
         self.settings.segmentation = val
 
     def image_changed(self):
-        self.segmentation = None
+        self.settings.segmentation = None
         self.choose_components.set_chose([], [])
 
     def execute_all_action(self):
@@ -472,9 +474,10 @@ class AlgorithmOptions(QWidget):
         self.progress_bar.setHidden(True)
         self.progress_info_lab.setHidden(True)
 
-    def execution_done(self, segmentation: SegmentationResult): #, full, remov):
-        self.segmentation = segmentation.segmentation
-        self.choose_components.set_chose(range(1, segmentation.segmentation.max() + 1), np.arange(len(self.chosen_list)) + 1)
+    def execution_done(self, segmentation: SegmentationResult):
+        self.settings.segmentation = segmentation.segmentation
+        self.choose_components.set_chose(range(1, segmentation.segmentation.max() + 1),
+                                         np.arange(len(self.chosen_list)) + 1)
 
 
 class ImageInformation(QWidget):
@@ -490,10 +493,12 @@ class ImageInformation(QWidget):
             el.setAlignment(Qt.AlignRight)
             el.setButtonSymbols(QAbstractSpinBox.NoButtons)
             el.setRange(0, 100000)
+            # noinspection PyUnresolvedReferences
             el.valueChanged.connect(self.image_spacing_change)
         self.units = QComboBox()
         self.units.addItems(UNITS_LIST)
         self.units.setCurrentIndex(units_index)
+        # noinspection PyUnresolvedReferences
         self.units.currentIndexChanged.connect(self.update_spacing)
 
         self.add_files = AddFiles(settings, btn_layout=FlowLayout)
