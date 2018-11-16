@@ -7,7 +7,7 @@ import numpy as np
 class ImageWriter(object):
     @classmethod
     def save(cls, image: Image, save_path: typing.Union[str, BytesIO]):
-        print(f"[save] {save_path}")
+        # print(f"[save] {save_path}")
         data = image.get_image_for_save()
         imagej_kwargs = {}
         if image.labels is not None:
@@ -17,7 +17,7 @@ class ImageWriter(object):
             imagej_kwargs["LUTs"] = coloring
         ranges = image.get_ranges()
         ranges = np.array(ranges).reshape(len(ranges)*2)
-        print(ranges)
+        # print(ranges)
         imagej_kwargs["Ranges"] = ranges
         spacing = image.get_um_spacing()
 
@@ -35,7 +35,7 @@ class ImageWriter(object):
             return
         if mask.dtype == np.bool:
             mask = mask.astype(np.uint8)
-        print(f"[save_mask] {save_path}")
+        # print(f"[save_mask] {save_path}")
         cls._save(mask, save_path)
 
     @staticmethod

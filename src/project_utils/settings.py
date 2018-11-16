@@ -58,18 +58,16 @@ class ImageSettings(QObject):
 
     @segmentation.setter
     def segmentation(self, val: np.ndarray):
+        try:
+            self.image.fit_array_to_image(val)
+        except ValueError:
+            raise ValueError("Segmentation do not fit to image")
         self._segmentation = val
         if val is not None:
             self.sizes = np.bincount(val.flat)
             self.segmentation_changed.emit(val)
         else:
             self.sizes = []
-
-    def set_segmentation(self, segmentation, metadata):
-
-        num = segmentation.max()
-        self.chosen_components_widget.set_chose(range(1, num + 1), metadata["components"])
-        self.segmentation = segmentation
 
     @property
     def image(self):
@@ -96,7 +94,7 @@ class ImageSettings(QObject):
 
     @property
     def image_path(self):
-        return self._image_path
+        return self._image.file_path
 
     @image_path.setter
     def image_path(self, value):

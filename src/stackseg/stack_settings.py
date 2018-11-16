@@ -1,14 +1,20 @@
 from typing import List
 import numpy as np
 from os import path
-# from partseg.io_functions import save_stack_segmentation, load_stack_segmentation
+from PyQt5.QtCore import pyqtSignal
+
 from project_utils.settings import BaseSettings
 from project_utils.segmentation.segment import cut_with_mask, save_catted_list
 from deprecation import deprecated
+
+from stackseg.io_functions import save_stack_segmentation, load_stack_segmentation, save_components
+
 default_colors = ['BlackRed', 'BlackGreen', 'BlackBlue', 'BlackMagenta']
 
 
 class StackSettings(BaseSettings):
+    components_change = pyqtSignal([int, list])
+
     def __init__(self, json_path):
         super().__init__(json_path)
         self.chosen_components_widget = None
@@ -34,6 +40,11 @@ class StackSettings(BaseSettings):
             res.append(path.join(dir_path, f"{file_name}_component{i}_mask.tif"))
         return res
 
+    def set_segmentation(self, segmentation, metadata):
+        num = segmentation.max()
+        self.chosen_components_widget.set_chose(range(1, num + 1), metadata["components"])
+        self.segmentation = segmentation
+
     @deprecated()
     def save_result(self, dir_path: str):
         # TODO remove
@@ -44,13 +55,20 @@ class StackSettings(BaseSettings):
         save_catted_list(res_img, dir_path, prefix=f"{file_name}_component")
         save_catted_list(res_mask, dir_path, prefix=f"{file_name}_component", suffix="_mask")
 
-    def save_segmentation(self, file_path: str):
-        save_stack_segmentation(file_path, self.segmentation, self.chosen_components(), self.image.file_path)
+    def save_components(self, dir_path, range_changed=None, step_changed=None):
+        save_components(self.image, self.chosen_components_widget.get_chosen(), self.segmentation, dir_path,
+                        range_changed=range_changed, step_changed=step_changed)
 
-    def load_segmentation(self, file_path: str):
-        self.segmentation, metadata = load_stack_segmentation(file_path)
+    def save_segmentation(self, file_path: str, range_changed=None, step_changed=None):
+        save_stack_segmentation(file_path, self.segmentation, self.chosen_components(), self.image.file_path,
+                                range_changed=range_changed, step_changed=step_changed)
+
+    def load_segmentation(self, file_path: str, range_changed=None, step_changed=None):
+        self.segmentation, metadata = load_stack_segmentation(file_path,
+                                                              range_changed=range_changed, step_changed=step_changed)
         num = self.segmentation.max()
-        self.chosen_components_widget.set_chose(range(1, num + 1), metadata["components"])
+        self.components_change.emit(num, list(metadata["components"]))
+        # self.chosen_components_widget.set_chose(range(1, num + 1), metadata["components"])
 
     def chosen_components(self) -> List[int]:
         if self.chosen_components_widget is not None:

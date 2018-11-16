@@ -5,26 +5,15 @@ from .partseg_utils import HistoryElement, PartEncoder, part_hook
 import numpy as np
 from tiff_image import Image, ImageWriter, ImageReader
 import tarfile
-from io import BytesIO, StringIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
+from io import BytesIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
 import h5py
 import typing
 import os.path
 import json
-import datetime
 from functools import partial
+from project_utils.io_utils import get_tarinfo
 
 # TODO add progress function to io
-
-
-def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
-    tar_info = tarfile.TarInfo(name=name)
-    buffer.seek(0)
-    if isinstance(buffer, BytesIO):
-        tar_info.size = len(buffer.getbuffer())
-    else:
-        tar_info.size = len(buffer.getvalue())
-    tar_info.mtime = datetime.datetime.now().timestamp()
-    return tar_info
 
 
 def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_segmentation: np.ndarray,
@@ -77,18 +66,18 @@ class ProjectTuple(typing.NamedTuple):
     algorithm_parameters: dict
 
 
-def load_project(file_):
-    if isinstance(file_, tarfile.TarFile):
-        tar_file = file_
+def load_project(file):
+    if isinstance(file, tarfile.TarFile):
+        tar_file = file
         file_path = ""
-    elif isinstance(file_, str):
-        tar_file = tarfile.open(file_)
-        file_path = file_
-    elif isinstance(file_, (TextIOBase, BufferedIOBase, RawIOBase, IOBase)):
-        tar_file = tarfile.open(fileobj=file_)
+    elif isinstance(file, str):
+        tar_file = tarfile.open(file)
+        file_path = file
+    elif isinstance(file, (TextIOBase, BufferedIOBase, RawIOBase, IOBase)):
+        tar_file = tarfile.open(fileobj=file)
         file_path = ""
     else:
-        raise ValueError(f"wrong type of file_ argument: {type(file_)}")
+        raise ValueError(f"wrong type of file_ argument: {type(file)}")
     image_buffer = BytesIO()
     image_tar = tar_file.extractfile(tar_file.getmember("image.tif"))
     image_buffer.write(image_tar.read())
@@ -119,6 +108,8 @@ def load_project(file_):
 
     except KeyError:
         pass
+    if isinstance(file, str):
+        tar_file.close()
     return ProjectTuple(file_path, image, seg_dict["segmentation"], seg_dict["full_segmentation"], mask, history,
                         algorithm_dict)
 

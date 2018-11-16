@@ -8,7 +8,7 @@ from PyQt5.QtCore import pyqtSignal, Qt, QByteArray
 from PyQt5.QtGui import QGuiApplication, QIcon
 from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox, QVBoxLayout, QCheckBox, \
     QComboBox, QDoubleSpinBox, QSpinBox, QStackedLayout, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
-    QTabWidget, QSizePolicy
+    QTabWidget, QSizePolicy, QApplication
 
 from common_gui.channel_control import ChannelControl
 from common_gui.colors_choose import ColorSelector
@@ -23,10 +23,10 @@ from project_utils.main_window import BaseMainWindow
 from project_utils.segmentation.algorithm_base import SegmentationResult
 from .batch_proceed import BatchProceed
 from project_utils.image_read_thread import ImageReaderThread
-from stackseg.save_result_thread import SaveResultThread
+from stackseg.execute_function_thread import ExecuteFunctionThread
 from .image_view import StackImageView
 from common_gui.select_multiple_files import AddFiles
-from partseg.io_functions import load_stack_segmentation
+from .io_functions import load_stack_segmentation, save_components
 from project_utils.global_settings import static_file_folder
 from project_utils.universal_const import UNITS_LIST, UNIT_SCALE
 from stackseg.stack_algorithm.algorithm_description import stack_algorithm_dict
@@ -80,6 +80,15 @@ class MainMenu(QWidget):
             self.settings.set("io.load_image_directory", os.path.dirname(str(file_path)))
             self.settings.set("io.load_image_filter", dial.selectedNameFilter())
             read_thread = ImageReaderThread(parent=self)
+            def exception_hook(exception):
+                if isinstance(exception, ValueError) and exception.args[0] == "not a TIFF file":
+                    QMessageBox.warning(self, "Open error", "Image is not proper tiff/lsm image")
+                elif isinstance(exception, MemoryError):
+                    QMessageBox.warning(self, "Open error", "Not enough memory to read this image")
+                elif isinstance(exception, IOError):
+                    QMessageBox.warning(self, "Open error", "Some problem with reading from disc")
+                else:
+                    raise exception
             if dial.selectedNameFilter() == filters[1]:
                 segmentation, metadata = load_stack_segmentation(file_path)
                 if "base_file" not in metadata:
@@ -87,13 +96,13 @@ class MainMenu(QWidget):
                 if not os.path.exists(metadata["base_file"]):
                     QMessageBox.warning(self, "Open error", "Base file not found")
                 read_thread.set_path(metadata["base_file"])
-                dial = WaitingDialog(read_thread)
+                dial = WaitingDialog(read_thread, "Load image", exception_hook=exception_hook)
                 dial.exec()
                 self.set_image(read_thread.image)
                 self.settings.set_segmentation(segmentation, metadata)
             else:
                 read_thread.set_path(file_path)
-                dial = WaitingDialog(read_thread)
+                dial = WaitingDialog(read_thread, "Load image", exception_hook=exception_hook)
                 dial.exec()
                 if read_thread.image:
                     self.set_image(read_thread.image)
@@ -127,7 +136,6 @@ class MainMenu(QWidget):
 
     def load_segmentation(self):
         try:
-
             dial = QFileDialog()
             dial.setFileMode(QFileDialog.ExistingFile)
             dial.setDirectory(self.settings.get("io.open_segmentation_directory", ""))
@@ -137,7 +145,18 @@ class MainMenu(QWidget):
                 return
             file_path = str(dial.selectedFiles()[0])
             self.settings.set("io.open_segmentation_directory", os.path.dirname(str(file_path)))
-            self.settings.load_segmentation(file_path)
+            execute_thread = ExecuteFunctionThread(self.settings.load_segmentation, [file_path])
+            def exception_hook(exception):
+                if isinstance(exception, ValueError) and exception.args[0] == "Segmentation do not fit to image":
+                    QMessageBox.warning(self, "Open error", "Segmentation do not fit to image")
+                elif isinstance(exception, MemoryError):
+                    QMessageBox.warning(self, "Open error", "Not enough memory to read this image")
+                elif isinstance(exception, IOError):
+                    QMessageBox.warning(self, "Open error", "Some problem with reading from disc")
+                else:
+                    raise exception
+            dial = WaitingDialog(execute_thread, "Save segmentation", exception_hook=exception_hook)
+            dial.exec()
         except Exception as e:
             QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
 
@@ -158,7 +177,9 @@ class MainMenu(QWidget):
         self.settings.set("io.save_segmentation_directory", os.path.dirname(str(file_path)))
         # self.settings.save_directory = os.path.dirname(str(file_path))
         try:
-            self.settings.save_segmentation(file_path)
+            execute_thread = ExecuteFunctionThread(self.settings.save_segmentation, [file_path])
+            dial = WaitingDialog(execute_thread, "Save segmentation")
+            dial.exec()
         except IOError as e:
             QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {e}", QMessageBox.Ok)
         except Exception as e:
@@ -197,8 +218,8 @@ class MainMenu(QWidget):
 
         self.settings.set("io.save_components_directory", os.path.dirname(str(dir_path)))
         try:
-            read_thread = SaveResultThread(self.settings, dir_path, parent=self)
-            dial = WaitingDialog(read_thread)
+            execute_thread = ExecuteFunctionThread(self.settings.save_components, [dir_path])
+            dial = WaitingDialog(execute_thread, "Save components")
             dial.exec()
         except IOError as e:
             QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {e}", QMessageBox.Ok)
@@ -241,7 +262,11 @@ class ChosenComponents(QWidget):
         for el in self.check_box.values():
             el.setChecked(False)
 
+    def new_choose(self, num, chosen_components):
+        self.set_chose(range(1, num + 1), chosen_components)
+
     def set_chose(self, components_index, chosen_components):
+        chosen_components = set(chosen_components)
         self.blockSignals(True)
         self.check_layout.clear()
         for el in self.check_box.values():
@@ -318,6 +343,7 @@ class AlgorithmOptions(QWidget):
         self.choose_components = ChosenComponents()
         self.choose_components.check_change_signal.connect(control_view.components_change)
         widgets_list = []
+        # TODO restore refresh channels num
         for name, val in stack_algorithm_dict.items():
             self.algorithm_choose.addItem(name)
             widget = AlgorithmSettingsWidget(settings, name, val)
@@ -378,6 +404,7 @@ class AlgorithmOptions(QWidget):
         self.borders_thick.valueChanged.connect(control_view.set_borders_thick)
         component_checker.component_clicked.connect(self.choose_components.other_component_choose)
         settings.chosen_components_widget = self.choose_components
+        settings.components_change.connect(self.choose_components.new_choose)
 
     def border_value_check(self, value):
         if value % 2 == 0:
