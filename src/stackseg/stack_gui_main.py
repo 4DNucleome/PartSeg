@@ -622,4 +622,3 @@ class MainWindow(BaseMainWindow):
             dial.exec()
             if read_thread.image:
                 self.main_menu.set_image(read_thread.image)
-

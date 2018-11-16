@@ -4,12 +4,13 @@ import logging
 
 from PyQt5.QtWidgets import QApplication
 
+from project_utils.base_argparser import CustomParser
 from project_utils.except_hook import my_excepthook
 
 sys.excepthook = my_excepthook
 
 def main():
-    parser = argparse.ArgumentParser("PartSeg")
+    parser = CustomParser("PartSeg")
     sp = parser.add_subparsers()
     sp_a = sp.add_parser("analysis", help="Starts GUI for analysis")
     sp_s = sp.add_parser("segmentation", help="Starts GUI for segmentation")

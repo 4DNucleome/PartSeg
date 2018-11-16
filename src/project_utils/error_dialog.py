@@ -1,12 +1,14 @@
+import sys
+
 from PyQt5.QtWidgets import QDialog, QPushButton, QTextEdit, QHBoxLayout, QVBoxLayout, QLabel
 import traceback
+import project_utils.report_utils as report_utils
 import sentry_sdk
-
-sentry_sdk.init("https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302")
 
 class ErrorDialog(QDialog):
     def __init__(self, exception: Exception, description: str, additional_notes: str = ""):
         super().__init__()
+        self.exception = exception
         self.additional_notes = additional_notes
         self.send_report_btn = QPushButton("Send information")
         self.cancel_btn = QPushButton("Cancel")
@@ -32,6 +34,12 @@ class ErrorDialog(QDialog):
         btn_layout.addWidget(self.send_report_btn)
         layout.addLayout(btn_layout)
         self.setLayout(layout)
+
+    def exec(self):
+        if not report_utils.report_errors:
+            sys.__excepthook__(type(self.exception), self.exception, self.exception.__traceback__)
+            return False
+        super().exec()
 
     def send_information(self):
         text = self.desc.text() + "\n"
