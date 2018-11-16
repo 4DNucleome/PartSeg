@@ -546,6 +546,7 @@ class Options(QTabWidget):
         self.addTab(self.image_properties, "Image")
         self.addTab(self.algorithm_options, "Segmentation")
         self.addTab(self.colormap_choose, "Colormap filter")
+        self.setCurrentIndex(1)
 
     def get_chosen_components(self):
         return self.algorithm_options.get_chosen_components()
