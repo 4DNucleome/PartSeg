@@ -259,7 +259,6 @@ class ChanelColor(QWidget):
             index = colormap_list.index(text)
         except ValueError:
             index = -1
-
         if index != -1:
             self.color_list.blockSignals(True)
         self.color_list.clear()

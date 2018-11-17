@@ -1,11 +1,10 @@
 import typing
 from abc import ABC
 from enum import Enum
-from collections import OrderedDict
 import numpy as np
 
 from project_utils.image_operations import gaussian
-from project_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
+from project_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
 from project_utils.class_generator import enum_register
 
 class GaussType(Enum):
@@ -60,5 +59,7 @@ def calculate_operation_radius(radius, spacing, gauss_type):
         return [radius / r for r in ratio]
     return radius
 
+noise_removal_dict = Register()
+noise_removal_dict.register(NoneNoiseRemoval)
+noise_removal_dict.register(GaussNoiseRemoval)
 
-noise_removal_dict = OrderedDict(((x.get_name(), x) for x in [NoneNoiseRemoval, GaussNoiseRemoval]))
