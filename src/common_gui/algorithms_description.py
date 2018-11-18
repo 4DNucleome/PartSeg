@@ -5,7 +5,7 @@ from enum import Enum
 from typing import List, Type, Dict
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QHideEvent
+from PyQt5.QtGui import QHideEvent, QPainter, QPaintEvent
 from PyQt5.QtWidgets import QComboBox, QCheckBox, QWidget, QVBoxLayout, QLabel, QFormLayout, \
     QScrollArea, QLineEdit, QStackedLayout
 from six import with_metaclass
@@ -222,7 +222,7 @@ class SubAlgorithmWidget(QWidget):
         self.choose.currentTextChanged.connect(self.algorithm_choose)
         # self.setStyleSheet("border: 1px solid red")
         layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(0, 2, 0, 2)
         layout.addWidget(widget)
         tmp_widget = QWidget(self)
         tmp_widget.setMinimumHeight(5000)
@@ -242,6 +242,8 @@ class SubAlgorithmWidget(QWidget):
         self.current_layout = layout"""
 
     def set_values(self, val: dict):
+        if not isinstance(val, dict):
+            return
         self.choose.setCurrentText(val["name"])
         if val["name"] not in self.widget_dict:
             self.algorithm_choose(val["name"])
@@ -277,6 +279,11 @@ class SubAlgorithmWidget(QWidget):
     def showEvent(self, _event):
         # workaround for changing size
         self.tmp_widget.hide()
+
+    def paintEvent(self, event: QPaintEvent):
+        if event.rect().top()  == 0 and event.rect().left() == 0:
+            painter = QPainter(self)
+            painter.drawRect(event.rect())
 
 
 class AbstractAlgorithmSettingsWidget(with_metaclass(ABCMeta, object)):

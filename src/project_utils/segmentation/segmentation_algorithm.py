@@ -3,6 +3,7 @@ from abc import ABC
 import SimpleITK as sitk
 import numpy as np
 
+import operator
 from project_utils import bisect
 from project_utils.channel_class import Channel
 from project_utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
@@ -10,6 +11,7 @@ from project_utils.convex_fill import convex_fill
 from project_utils.image_operations import RadiusType
 from project_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
 from project_utils.segmentation.denoising import noise_removal_dict
+from project_utils.segmentation.threshold import threshold_dict, BaseThreshold
 from project_utils.segmentation.segment import close_small_holes, opening
 
 
@@ -80,7 +82,9 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
-                AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100),
+                #AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100),
+                AlgorithmProperty("threshold", "Threshold", next(iter(threshold_dict.keys())),
+                                  possible_values=threshold_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10 ** 6), 1000),
                 AlgorithmProperty("close_holes", "Close small holes", True, (True, False)),
                 AlgorithmProperty("close_holes_size", "Small holes size", 200, (0, 10 ** 3), 10),
@@ -169,15 +173,20 @@ class ThresholdAlgorithm(BaseThresholdAlgorithm):
         return "Threshold"
 
     def _threshold_image(self, image: np.ndarray) -> np.ndarray:
-        return np.array(image > self.threshold).astype(np.uint8)
+
+        return None
 
     def _threshold_and_exclude(self, image, report_fun):
         report_fun("Threshold calculation", 1)
-        mask = self._threshold_image(image)
         if self.exclude_mask is not None:
-            report_fun("Components exclusion apply", 2)
-            mask[self.exclude_mask > 0] = 0
+            mask = (self.exclude_mask == 0).astype(np.uint8)
+        else:
+            mask = None
+        threshold_algorithm: BaseThreshold = threshold_dict[self.threshold["name"]]
+        mask, thr_val = threshold_algorithm.calculate_mask(image, mask, self.threshold["values"], operator.ge)
+        report_fun("Threshold calculated", 2)
         return mask
+
 
     def set_parameters(self, *args, **kwargs):
         super()._set_parameters(*args, **kwargs)
@@ -213,10 +222,12 @@ class AutoThresholdAlgorithm(BaseThresholdAlgorithm):
         # TODO what exactly it returns. Maybe it is already segmented.
         mask = sitk.GetArrayFromImage(sitk_mask)
         min_val = np.min(image[mask > 0])
-        if self.threshold < min_val:
-            self.threshold = min_val
-        mask = (image > self.threshold).astype(np.uint8)
-        return mask
+        threshold_algorithm: BaseThreshold = threshold_dict[self.threshold["name"]]
+        mask2, thr_val = threshold_algorithm.calculate_mask(image, None, self.threshold["values"], operator.le)
+        if thr_val < min_val:
+            return mask
+        else:
+            return mask2
 
     def _threshold_and_exclude(self, image, report_fun):
         if self.exclude_mask is not None:

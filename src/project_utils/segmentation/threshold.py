@@ -37,16 +37,21 @@ class SitkThreshold(BaseThreshold, ABC):
 
     @classmethod
     def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict, operator):
+        if mask is not None and mask.dtype == np.bool:
+            mask = mask.astype(np.uint8)
         if operator(1, 0):
-            ob, bg, th_op = 1, 0, np.min
+            ob, bg, th_op = 0, 1, np.min
         else:
-            ob, bg, th_op = 0, 1, np.max
+            ob, bg, th_op = 1, 0, np.max
+        print(operator, ob, bg, th_op)
         image_sitk = sitk.GetImageFromArray(data)
         if arguments["masked"] and mask is not None:
             mask_sitk = sitk.GetImageFromArray(mask)
+            print("masked")
             calculated = cls.calculate_threshold(image_sitk, mask_sitk, ob, bg, arguments["bins"], True, 1)
         else:
-            calculated = cls.calculate_threshold(image_sitk, ob, bg)
+            print("non masked")
+            calculated = cls.calculate_threshold(image_sitk, ob, bg, arguments["bins"])
         result = sitk.GetArrayFromImage(calculated)
         threshold = th_op(result[result > 0])
         return result, threshold
@@ -63,6 +68,7 @@ class OtsuThreshold(SitkThreshold):
 
     @staticmethod
     def calculate_threshold(*args, **kwargs):
+        print("otsu:", *args)
         return sitk.OtsuThreshold(*args)
 
 
@@ -76,6 +82,17 @@ class LiThreshold(SitkThreshold):
     @staticmethod
     def calculate_threshold(*args, **kwargs):
         return sitk.LiThreshold(*args)
+
+class MaximumEntropyThreshold(SitkThreshold):
+    bins_num = 256
+
+    @classmethod
+    def get_name(cls):
+        return "Maximum Entropy"
+
+    @staticmethod
+    def calculate_threshold(*args, **kwargs):
+        return sitk.MaximumEntropyThreshold(*args)
 
 
 threshold_dict = Register()
