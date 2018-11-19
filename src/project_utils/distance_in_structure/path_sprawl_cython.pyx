@@ -1,9 +1,8 @@
 # distutils: language = c++
 # cython: boundscheck=False, wraparound=False, nonecheck=False, cdivision=True
 # cython: profile=True
+# cython: language_level=3
 
-
-from libcpp.queue cimport queue
 from libcpp cimport bool
 import numpy as np
 cimport numpy as np

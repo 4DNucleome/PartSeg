@@ -1,13 +1,13 @@
 # distutils: language = c++
 # cython: boundscheck=False, wraparound=False, nonecheck=False, cdivision=True
+# cython: language_level=3
 
-from libcpp.queue cimport queue
 from libcpp cimport bool
 
 import numpy as np
 cimport numpy as np
 
-ctypedef np.uint16_t Size
+ctypedef np.int16_t Size
 
 cdef extern from 'my_queue.h':
     cdef cppclass my_queue[T]:

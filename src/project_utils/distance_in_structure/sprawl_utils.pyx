@@ -1,9 +1,10 @@
 # distutils: language = c++
 # cython: boundscheck=False, wraparound=False, nonecheck=False, cdivision=True, embedsignature=True
 # cython: profile=True
+# cython: language_level=3
+
 import numpy as np
 cimport numpy as np
-from libc.stdlib cimport malloc, free
 
 ctypedef fused image_types:
     np.float32_t
