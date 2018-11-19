@@ -11,6 +11,7 @@ import SimpleITK as sitk
 from project_utils import bisect
 import operator
 from project_utils.segmentation.denoising import noise_removal_dict
+from project_utils.segmentation.threshold import threshold_dict, BaseThreshold
 
 
 def blank_operator(_x, _y):
@@ -59,9 +60,10 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         self.threshold_image = None
         self._sizes_array = []
         self.components_num = 0
+        self.threshold_info = 0
 
     def get_info_text(self):
-        return ", ".join(map(str, self._sizes_array[1:self.components_num + 1]))
+        return f"Threshold: {self.threshold_info}\nSizes: " + ", ".join(map(str, self._sizes_array[1:self.components_num + 1]))
 
     def calculation_run(self, _report_fun) -> SegmentationResult:
         """main calculation function.  return segmentation, full_segmentation"""
@@ -101,8 +103,11 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
 
     def _threshold(self, image, thr=None):
         if thr is None:
-            thr = self.new_parameters["threshold"]
-        return self.threshold_operator(image, thr).astype(np.uint8)
+            thr: BaseThreshold = threshold_dict[self.new_parameters["threshold"]["name"]]
+        mask, thr_val = thr.calculate_mask(image, self.mask, self.new_parameters["threshold"]["values"],
+                                           self.threshold_operator)
+        self.threshold_info = thr_val
+        return mask
 
     def _set_parameters(self, channel, threshold, minimum_size, noise_removal, side_connection):
         self.new_parameters["channel"] = channel
@@ -118,7 +123,9 @@ class OneThresholdAlgorithm(ThresholdBaseAlgorithm, ABC):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100)] + super().get_fields()
+        return [AlgorithmProperty("threshold", "Threshold", next(iter(threshold_dict.keys())),
+                                  possible_values=threshold_dict, property_type=AlgorithmDescribeBase),] \
+               + super().get_fields()
 
 
 class LowerThresholdAlgorithm(OneThresholdAlgorithm):
@@ -332,7 +339,64 @@ neighbourhood2d = \
               [0, -1, -1], [0, 1, -1], [0, -1, 1], [0, 1, 1]], dtype=np.int8)
 
 
+class OtsuSegment(RestartableAlgorithm):
+    @classmethod
+    def get_name(cls):
+        return "Multiple Otsu"
+
+    @classmethod
+    def get_fields(cls):
+        return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
+                AlgorithmProperty("noise_removal", "Noise Removal", next(iter(noise_removal_dict.keys())),
+                                  possible_values=noise_removal_dict, property_type=AlgorithmDescribeBase),
+                AlgorithmProperty("components", "Number of Components", 2, (0, 100)),
+                AlgorithmProperty("mask", "Use mask in calculation", True),
+                AlgorithmProperty("valley", "Valley emphasis", True),
+                AlgorithmProperty("hist_num", "Number of histogram bins", 128, (8, 2**16))]
+
+    def __init__(self):
+        super().__init__()
+        self._sizes_array = []
+        self.threshold_info = []
+
+    def set_parameters(self, channel, noise_removal, components, mask, valley, hist_num):
+        self.new_parameters["components"] = components
+        self.new_parameters["mask"] = mask
+        self.new_parameters["hist_num"] = hist_num
+        self.new_parameters["channel"] = channel
+        self.new_parameters["valley"] = valley
+        self.new_parameters["noise_removal"] = noise_removal
+
+    def calculation_run(self, report_fun):
+        channel = self.get_channel(self.new_parameters["channel"])
+        noise_removal_parameters = self.new_parameters["noise_removal"]
+        cleaned_image = noise_removal_dict[noise_removal_parameters["name"]]. \
+            noise_remove(channel, self.image.spacing, noise_removal_parameters["values"])
+        cleaned_image_sitk = sitk.GetImageFromArray(cleaned_image)
+        res = sitk.OtsuMultipleThresholds(cleaned_image_sitk, self.new_parameters["components"], 0,
+                                          self.new_parameters["hist_num"], self.new_parameters["valley"])
+        res = sitk.GetArrayFromImage(res)
+        self._sizes_array = np.bincount(res.flat)[1:]
+        self.threshold_info = []
+        for i in range(1, self.new_parameters["components"]+1):
+            val = cleaned_image[res == i]
+            if val.size:
+                self.threshold_info.append(np.min(val))
+            elif self.threshold_info:
+                self.threshold_info.append(self.threshold_info[-1])
+            else:
+                self.threshold_info.append(0)
+        return SegmentationResult(res, res, cleaned_image)
+
+    def get_info_text(self):
+        return f"Threshold: " + ", ".join(map(str, self.threshold_info)) + \
+               "\nSizes: " + ", ".join(map(str, self._sizes_array))
+
+
+
+
 final_algorithm_list = [LowerThresholdAlgorithm, UpperThresholdAlgorithm, RangeThresholdAlgorithm,
                         LowerThresholdDistanceFlowAlgorithm, UpperThresholdDistanceFlowAlgorithm,
                         LowerThresholdPathFlowAlgorithm, UpperThresholdPathFlowAlgorithm,
-                        UpperThresholdPathDistanceFlowAlgorithm, LowerThresholdPathDistanceFlowAlgorithm]
+                        UpperThresholdPathDistanceFlowAlgorithm, LowerThresholdPathDistanceFlowAlgorithm,
+                        OtsuSegment]

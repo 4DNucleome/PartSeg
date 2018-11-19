@@ -91,6 +91,7 @@ class Options(QWidget):
 
         self.label = QLabel()
         self.label.setWordWrap(True)
+        self.label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         layout = QVBoxLayout()
         layout2 = QHBoxLayout()
         layout2.setSpacing(1)
