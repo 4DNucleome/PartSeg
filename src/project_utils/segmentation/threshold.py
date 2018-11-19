@@ -43,14 +43,11 @@ class SitkThreshold(BaseThreshold, ABC):
             ob, bg, th_op = 0, 1, np.min
         else:
             ob, bg, th_op = 1, 0, np.max
-        print(operator, ob, bg, th_op)
         image_sitk = sitk.GetImageFromArray(data)
         if arguments["masked"] and mask is not None:
             mask_sitk = sitk.GetImageFromArray(mask)
-            print("masked")
             calculated = cls.calculate_threshold(image_sitk, mask_sitk, ob, bg, arguments["bins"], True, 1)
         else:
-            print("non masked")
             calculated = cls.calculate_threshold(image_sitk, ob, bg, arguments["bins"])
         result = sitk.GetArrayFromImage(calculated)
         threshold = th_op(data[result > 0])
@@ -68,7 +65,6 @@ class OtsuThreshold(SitkThreshold):
 
     @staticmethod
     def calculate_threshold(*args, **kwargs):
-        print("otsu:", *args)
         return sitk.OtsuThreshold(*args)
 
 
@@ -82,6 +78,7 @@ class LiThreshold(SitkThreshold):
     @staticmethod
     def calculate_threshold(*args, **kwargs):
         return sitk.LiThreshold(*args)
+
 
 class MaximumEntropyThreshold(SitkThreshold):
     bins_num = 256
@@ -100,6 +97,7 @@ threshold_dict.register(ManualThreshold)
 threshold_dict.register(OtsuThreshold)
 threshold_dict.register(LiThreshold)
 
+
 class DoubleThreshold(BaseThreshold):
     @classmethod
     def get_name(cls):
@@ -117,15 +115,14 @@ class DoubleThreshold(BaseThreshold):
     def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict, operator):
         thr: BaseThreshold = threshold_dict[arguments["core_threshold"]["name"]]
         mask1, thr_val1 = thr.calculate_mask(data, mask, arguments["core_threshold"]["values"],
-                                           operator)
+                                             operator)
 
         thr: BaseThreshold = threshold_dict[arguments["base_threshold"]["name"]]
         mask2, thr_val2 = thr.calculate_mask(data, mask, arguments["base_threshold"]["values"],
                                              operator)
-        mask2[mask2 > 0] = 2
-        mask2[mask1 > 0] = 1
+        mask2[mask2 > 0] = 1
+        mask2[mask1 > 0] = 2
         return mask2, (thr_val1, thr_val2)
-
 
 
 double_threshold_dict = Register()

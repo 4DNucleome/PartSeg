@@ -11,7 +11,7 @@ import SimpleITK as sitk
 from project_utils import bisect
 import operator
 from project_utils.segmentation.denoising import noise_removal_dict
-from project_utils.segmentation.threshold import threshold_dict, BaseThreshold
+from project_utils.segmentation.threshold import threshold_dict, BaseThreshold, double_threshold_dict
 
 
 def blank_operator(_x, _y):
@@ -24,14 +24,13 @@ class RestartableAlgorithm(SegmentationAlgorithm, ABC):
         super().__init__()
         self.parameters = defaultdict(lambda: None)
         self.new_parameters = {}
-        self.mask = None
 
     def set_image(self, image):
         super().set_image(image)
         self.parameters.clear()
 
     def set_mask(self, mask):
-        self.mask = mask
+        super().set_mask(mask)
         self.new_parameters["threshold"] = self.parameters["threshold"]
         self.parameters["threshold"] = None
 
@@ -60,13 +59,20 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         self.threshold_image = None
         self._sizes_array = []
         self.components_num = 0
-        self.threshold_info = 0
+        self.threshold_info = None
+        self.old_threshold_info = None
+
+    def set_image(self, image):
+        super().set_image(image)
+        self.threshold_info = None
 
     def get_info_text(self):
-        return f"Threshold: {self.threshold_info}\nSizes: " + ", ".join(map(str, self._sizes_array[1:self.components_num + 1]))
+        return f"Threshold: {self.threshold_info}\nSizes: " + \
+               ", ".join(map(str, self._sizes_array[1:self.components_num + 1]))
 
     def calculation_run(self, _report_fun) -> SegmentationResult:
         """main calculation function.  return segmentation, full_segmentation"""
+        self.old_threshold_info = self.threshold_info
         restarted = False
         if self.parameters["channel"] != self.new_parameters["channel"]:
             self.channel = self.get_channel(self.new_parameters["channel"])
@@ -76,12 +82,15 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             self.cleaned_image = noise_removal_dict[noise_removal_parameters["name"]].\
                 noise_remove(self.channel, self.image.spacing, noise_removal_parameters["values"])
             restarted = True
-        if restarted or self.new_parameters["threshold"] != self.parameters["threshold"] \
-                or self.new_parameters["side_connection"] != self.parameters["side_connection"]:
-            threshold_image = self._threshold(self.cleaned_image)
-            if self.mask is not None:
-                threshold_image *= (self.mask > 0)
-            connect = sitk.ConnectedComponent(sitk.GetImageFromArray(threshold_image),
+        if restarted or self.new_parameters["threshold"] != self.parameters["threshold"]:
+            self.threshold_image = self._threshold(self.cleaned_image)
+            if isinstance(self.threshold_info, (list, tuple)):
+                if self.old_threshold_info[0] != self.threshold_info[0]:
+                    restarted = True
+            elif self.old_threshold_info != self.threshold_info:
+                restarted = True
+        if restarted or self.new_parameters["side_connection"] != self.parameters["side_connection"]:
+            connect = sitk.ConnectedComponent(sitk.GetImageFromArray(self.threshold_image),
                                               self.new_parameters["side_connection"])
             self.segmentation = sitk.GetArrayFromImage(sitk.RelabelComponent(connect))
             self._sizes_array = np.bincount(self.segmentation.flat)
@@ -124,7 +133,7 @@ class OneThresholdAlgorithm(ThresholdBaseAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty("threshold", "Threshold", next(iter(threshold_dict.keys())),
-                                  possible_values=threshold_dict, property_type=AlgorithmDescribeBase),] \
+                                  possible_values=threshold_dict, property_type=AlgorithmDescribeBase)] \
                + super().get_fields()
 
 
@@ -166,24 +175,39 @@ class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
 class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100),
-                AlgorithmProperty("base_threshold", "Base threshold", 10000, (0, 10 ** 6), 100)] + super().get_fields()
+        return [AlgorithmProperty("threshold", "Threshold", next(iter(double_threshold_dict.keys())),
+                                  possible_values=double_threshold_dict, property_type=AlgorithmDescribeBase)]\
+                + super().get_fields()
 
     def path_sprawl(self, base_image, object_image) -> np.ndarray:
         raise NotImplementedError()
 
     def get_info_text(self):
-        return "Mid sizes: " + ", ".join(map(str, self._sizes_array[1:self.components_num + 1])) + \
+        return f"Threshold: " + ", ".join(map(str, self.threshold_info))+\
+               "\nMid sizes: " + ", ".join(map(str, self._sizes_array[1:self.components_num + 1])) + \
                "\nFinal sizes: " + ", ".join(map(str, self.final_sizes[1:]))
 
     def __init__(self):
         super().__init__()
         self.finally_segment = None
         self.final_sizes = []
+        self.threshold_info = [None, None]
 
-    def set_parameters(self, base_threshold, *args, **kwargs):
+    def _threshold(self, image, thr=None):
+        if thr is None:
+            thr: BaseThreshold = double_threshold_dict[self.new_parameters["threshold"]["name"]]
+        mask, thr_val = thr.calculate_mask(image, self.mask, self.new_parameters["threshold"]["values"],
+                                           self.threshold_operator)
+        self.threshold_info = thr_val
+        self.sprawl_area = (mask == 1).astype(np.uint8)
+        return (mask == 2).astype(np.uint8)
+
+    def set_parameters(self, *args, **kwargs):
         self._set_parameters(*args, **kwargs)
-        self.new_parameters["base_threshold"] = base_threshold
+
+    def set_image(self, image):
+        super().set_image(image)
+        self.threshold_info = [None, None]
 
     def calculation_run(self, report_fun) -> SegmentationResult:
         segment_data = super().calculation_run(report_fun)
@@ -199,22 +223,31 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
             finally_segment = segment_data.segmentation
             restarted = True
 
-        if restarted or self.new_parameters["base_threshold"] != self.parameters["base_threshold"]:
-            if self.threshold_operator(self.new_parameters["base_threshold"], self.new_parameters["threshold"]):
+
+        if restarted or self.old_threshold_info[1] != self.threshold_info[1]:
+            if self.threshold_operator(self.threshold_info[1], self.threshold_info[0]):
+                self.final_sizes = np.bincount(finally_segment.flat)
                 return SegmentationResult(self.finally_segment, self.segmentation, self.cleaned_image)
-            threshold_image = self._threshold(self.cleaned_image, self.new_parameters["base_threshold"])
-            if self.mask is not None:
-                threshold_image *= (self.mask > 0)
-            new_segment = self.path_sprawl(threshold_image, finally_segment)
+            new_segment = self.path_sprawl(self.sprawl_area, finally_segment)
             self.final_sizes = np.bincount(new_segment.flat)
-            return SegmentationResult(new_segment, threshold_image, self.cleaned_image)
+            return SegmentationResult(new_segment, self.sprawl_area, self.cleaned_image)
 
 
-class LowerThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm, ABC):
+class BaseThresholdSprawlAlgorithm(BaseThresholdFlowAlgorithm, ABC):
+    def __init__(self):
+        super().__init__()
+        self.sprawl_area = None
+
+    def _clean(self):
+        self.sprawl_area = None
+        super()._clean()
+
+
+class LowerThresholdFlowAlgorithm(BaseThresholdSprawlAlgorithm, ABC):
     threshold_operator = operator.gt
 
 
-class UpperThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm, ABC):
+class UpperThresholdFlowAlgorithm(BaseThresholdSprawlAlgorithm, ABC):
     threshold_operator = operator.lt
 
 
@@ -393,10 +426,8 @@ class OtsuSegment(RestartableAlgorithm):
                "\nSizes: " + ", ".join(map(str, self._sizes_array))
 
 
-
-
 final_algorithm_list = [LowerThresholdAlgorithm, UpperThresholdAlgorithm, RangeThresholdAlgorithm,
                         LowerThresholdDistanceFlowAlgorithm, UpperThresholdDistanceFlowAlgorithm,
                         LowerThresholdPathFlowAlgorithm, UpperThresholdPathFlowAlgorithm,
-                        UpperThresholdPathDistanceFlowAlgorithm, LowerThresholdPathDistanceFlowAlgorithm,
+                        LowerThresholdPathDistanceFlowAlgorithm, UpperThresholdPathDistanceFlowAlgorithm,
                         OtsuSegment]

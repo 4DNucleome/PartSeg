@@ -261,10 +261,8 @@ class SubAlgorithmWidget(QWidget):
                 el.widget().image_changed(image)
 
     def algorithm_choose(self, name):
-        print(f"change to name: {name}")
         if name not in self.widget_dict:
             self.widget_dict[name] = FormWidget(self.property.possible_values[name].get_fields())
-            print(self.widget_dict[name].minimumSize())
             self.widget_dict[name].layout().setContentsMargins(0, 0, 0, 0)
             self.layout().addWidget(self.widget_dict[name])
             self.widget_dict[name].value_changed.connect(self.values_changed)
@@ -340,6 +338,9 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
     def image_changed(self, image: Image):
         self.algorithm_thread.algorithm.set_image(image)
         self.form_widget.image_changed(image)
+
+    def set_mask(self, mask):
+        self.algorithm_thread.algorithm.set_mask(mask)
 
     def set_values(self, values_dict):
         self.form_widget.set_values(values_dict)
@@ -448,6 +449,8 @@ class AlgorithmChoose(QWidget):
             widget = self.algorithm_dict[name]
             self.stack_layout.setCurrentWidget(widget)
             widget.image_changed(self.settings.image)
+            if hasattr(widget, "set_mask") and hasattr(self.settings, "mask"):
+                widget.set_mask(self.settings.mask)
         elif values is None:
             self.blockSignals(False)
             return

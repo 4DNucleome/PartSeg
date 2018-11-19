@@ -30,10 +30,16 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         self.image: Image = None
         self.channel = None
         self.segmentation = None
+        self.mask = None
 
     def _clean(self):
         self.image = None
         self.segmentation = None
+        self.channel = None
+        self.mask = None
+
+    def set_mask(self, mask):
+        self.mask = mask
 
     def calculation_run(self, report_fun) -> SegmentationResult:
         raise NotImplementedError()
