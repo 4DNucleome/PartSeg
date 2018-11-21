@@ -13,6 +13,7 @@ from partseg2.partseg_settings import PartSettings, MASK_COLORS
 from partseg2.profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer
 from partseg2.statistics_calculation import StatisticProfile
 from project_utils.global_settings import static_file_folder
+from project_utils.segmentation.denoising import noise_removal_dict
 from project_utils.settings import BaseSettings
 from project_utils.universal_const import UNITS_DICT, UNIT_SCALE, UNITS_LIST
 from qt_import import h_line
@@ -793,6 +794,9 @@ class StatisticsWindow(QWidget):
             "You can create new statistic profile in advanced window, in tab \"Statistic settings\"")
         self.channels_chose = QComboBox()
         self.channels_chose.addItems(map(str, range(self.settings.channels)))
+        #self.noise_removal_method = QComboBox()
+        #self.noise_removal_method.addItem("Like segmentation")
+        #self.noise_removal_method.addItems(noise_removal_dict.keys())
         self.info_field = QTableWidget(self)
         self.info_field.setColumnCount(3)
         self.info_field.setHorizontalHeaderLabels(["Name", "Value", "Units"])
@@ -814,6 +818,8 @@ class StatisticsWindow(QWidget):
         butt_layout2 = QHBoxLayout()
         butt_layout2.addWidget(QLabel("Channel:"))
         butt_layout2.addWidget(self.channels_chose)
+        # butt_layout2.addWidget(QLabel("Noise removal:"))
+        # butt_layout2.addWidget(self.noise_removal_method)
         butt_layout2.addWidget(QLabel("Statistic:"))
         butt_layout2.addWidget(self.statistic_type, 2)
         v_butt_layout.addLayout(self.up_butt_layout)
@@ -894,8 +900,13 @@ class StatisticsWindow(QWidget):
                 self.info_field.setItem(y, x,  QTableWidgetItem(ob_array[x, y]))
 
     def append_statistics(self):
-        compute_class = self.settings.statistic_profiles[self.statistic_type.currentText()]
-        gauss_image = self.settings.image
+        try:
+            compute_class = self.settings.statistic_profiles[self.statistic_type.currentText()]
+        except KeyError:
+            QMessageBox.warning(self, "Statistic profile not found",
+                                f"Statistic profile '{self.statistic_type.currentText()}' not found'")
+            return
+        gauss_image = self.settings.noise_remove_image_part
         image = self.settings.image.get_channel(self.channels_chose.currentIndex())
         segmentation = self.settings.segmentation
         full_mask = self.settings.full_segmentation

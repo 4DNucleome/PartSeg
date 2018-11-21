@@ -38,6 +38,9 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         self.channel = None
         self.mask = None
 
+    def single_channel(self):
+        return True
+
     def set_mask(self, mask):
         self.mask = mask
 

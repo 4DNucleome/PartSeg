@@ -21,9 +21,11 @@ from tiff_image import Image, ImageReader
 class ImageSettings(QObject):
     """
     :type _image: Image
+    noise_removed - for image cleaned by algorithm
     """
     image_changed = pyqtSignal([Image], [int], [str])
     segmentation_changed = pyqtSignal(np.ndarray)
+    noise_remove_image_part_changed = pyqtSignal()
 
     def __init__(self):
         super(ImageSettings, self).__init__()
@@ -31,9 +33,19 @@ class ImageSettings(QObject):
         self._image_path = ""
         self._image_spacing = 210, 70, 70
         self._segmentation = None
+        self._noise_removed = None
         self.sizes = []
         self.gauss_3d = True
         # self.fixed_range = 0, 255
+
+    @property
+    def noise_remove_image_part(self):
+        return self._noise_removed
+
+    @noise_remove_image_part.setter
+    def noise_remove_image_part(self, val):
+        self._noise_removed = val
+        self.noise_remove_image_part_changed.emit()
 
     @property
     def image_spacing(self):

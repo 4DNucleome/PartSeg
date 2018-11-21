@@ -6,7 +6,7 @@ from partseg2.statistics_calculation import StatisticProfile
 from project_utils.cmap_utils import CmapProfile
 from .algorithm_description import SegmentationProfile
 from .partseg_utils import PartEncoder, part_hook, HistoryElement, SegmentationPipeline
-from .io_functions import save_project, save_cmap, load_project
+from .io_functions import save_project, save_cmap, load_project, ProjectTuple
 from project_utils.settings import BaseSettings
 import numpy as np
 
@@ -63,6 +63,15 @@ class PartSettings(BaseSettings):
     def components_mask(self):
         return np.array([0] + [1] * self.segmentation.max(), dtype=np.uint8)
 
+    def get_project_info(self) -> ProjectTuple:
+        algorithm_name = self.last_executed_algorithm
+        if algorithm_name:
+            algorithm_val = {"name": algorithm_name, "values": self.get(f"algorithms.{algorithm_name}")}
+        else:
+            algorithm_val = {}
+        return ProjectTuple(self.image.file_path, self.image, self.segmentation, self.full_segmentation,
+                            self.mask, self.segmentation_history, algorithm_val)
+
     def save_project(self, file_path):
         dkt = dict()
         dkt["segmentation"] = self.segmentation
@@ -85,7 +94,6 @@ class PartSettings(BaseSettings):
         algorithm_name = project_tuple.algorithm_parameters["name"]
         self.last_executed_algorithm = algorithm_name
         self.set(f"algorithms.{algorithm_name}", project_tuple.algorithm_parameters["values"])
-
 
     def save_cmap(self, file_path: str, cmap_profile: CmapProfile):
         save_cmap(file_path, self.image, cmap_profile)

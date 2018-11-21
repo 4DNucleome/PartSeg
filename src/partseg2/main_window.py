@@ -316,6 +316,7 @@ class Options(QWidget):
 
     def execution_done(self, segmentation: SegmentationResult):
         self._settings.segmentation = segmentation.segmentation
+        self._settings.noise_remove_image_part = segmentation.cleaned_channel
         self._settings.full_segmentation = segmentation.full_segmentation
         self.label.setText(self.sender().get_info_text())
 
@@ -333,6 +334,7 @@ class MainMenu(QWidget):
         self.interpolate_btn = QPushButton("Interpolate")
         self.mask_manager_btn = QPushButton("Mask Manager")
         self.batch_processing_btn = QPushButton("Batch Processing")
+        self.test_btn = QPushButton("Test")
         self.main_window: MainWindow = main_window
 
         layout = QHBoxLayout()
@@ -344,6 +346,7 @@ class MainMenu(QWidget):
         layout.addWidget(self.interpolate_btn)
         layout.addWidget(self.mask_manager_btn)
         layout.addWidget(self.batch_processing_btn)
+        layout.addWidget(self.test_btn)
         self.setLayout(layout)
 
         self.open_btn.clicked.connect(self.load_data)
@@ -352,6 +355,19 @@ class MainMenu(QWidget):
         self.mask_manager_btn.clicked.connect(self.mask_manager)
         self.interpolate_btn.clicked.connect(self.interpolate_exec)
         self.batch_processing_btn.clicked.connect(self.batch_window)
+        self.test_btn.clicked.connect(self.test_fun)
+
+    def test_fun(self):
+        from common_gui.custom_save import SaveDialog
+        from .io_functions import save_register
+        dial = SaveDialog(save_register, system_widget=False)
+        if dial.exec():
+            save_location, _, save_class, values = dial.get_result()
+            project_info = self._settings.get_project_info()
+            try:
+                save_class.save(save_location, project_info, values)
+            except ValueError as e:
+                QMessageBox.warning(self, "Save error", f"Error during saving\n{e.args}")
 
     def interpolate_exec(self):
         dialog = InterpolateDialog(self._settings.image_spacing)

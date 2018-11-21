@@ -180,6 +180,9 @@ class FormWidget(QWidget):
                     self.channels_chose.append(el.get_field())
         self.setLayout(layout)
 
+    def has_elements(self):
+        return len(self.widgets_dict) > 0
+
     def get_values(self):
         return dict(((name, el.get_value()) for name, el in self.widgets_dict.items()))
 
@@ -222,10 +225,10 @@ class SubAlgorithmWidget(QWidget):
         self.choose.currentTextChanged.connect(self.algorithm_choose)
         # self.setStyleSheet("border: 1px solid red")
         layout = QVBoxLayout()
-        layout.setContentsMargins(0, 2, 0, 2)
+        layout.setContentsMargins(4, 4, 4, 4)
         layout.addWidget(widget)
         tmp_widget = QWidget(self)
-        tmp_widget.setMinimumHeight(5000)
+        # tmp_widget.setMinimumHeight(5000)
         layout.addWidget(tmp_widget)
         self.tmp_widget = tmp_widget
         self.setLayout(layout)
@@ -279,7 +282,8 @@ class SubAlgorithmWidget(QWidget):
         self.tmp_widget.hide()
 
     def paintEvent(self, event: QPaintEvent):
-        if event.rect().top()  == 0 and event.rect().left() == 0:
+        name = self.choose.currentText()
+        if self.widget_dict[name].has_elements() and event.rect().top()  == 0 and event.rect().left() == 0:
             painter = QPainter(self)
             painter.drawRect(event.rect())
 
@@ -318,6 +322,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
         main_layout.addWidget(self.info_label)
         self.form_widget = FormWidget(algorithm.get_fields())
         self.form_widget.value_changed.connect(self.values_changed.emit)
+        self.form_widget.setMinimumHeight(1500)
         self.setWidget(self.form_widget)
         self.settings = settings
         value_dict = self.settings.get(f"algorithms.{self.name}", {})
@@ -424,6 +429,7 @@ class AlgorithmChoose(QWidget):
             widget.algorithm_thread.finished.connect(self.finished.emit)
             widget.algorithm_thread.started.connect(self.started.emit)
             widget.values_changed.connect(self.value_changed.emit)
+            # widget.setMinimumHeight(5000)
             # widget.algorithm.progress_signal.connect(self.progress_info)
             self.stack_layout.addWidget(widget)
 

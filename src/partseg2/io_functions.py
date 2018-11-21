@@ -1,6 +1,10 @@
+from pathlib import Path
+
+from project_utils.channel_class import Channel
 from project_utils.segmentation.algorithm_base import calculate_operation_radius
 from project_utils.cmap_utils import CmapProfile
 from project_utils.image_operations import RadiusType, gaussian
+from project_utils.segmentation.algorithm_describe_base import Register, AlgorithmProperty
 from .partseg_utils import HistoryElement, PartEncoder, part_hook
 import numpy as np
 from tiff_image import Image, ImageWriter, ImageReader
@@ -11,9 +15,11 @@ import typing
 import os.path
 import json
 from functools import partial
-from project_utils.io_utils import get_tarinfo
+from project_utils.io_utils import get_tarinfo, SaveBase
 
 # TODO add progress function to io
+
+save_register = Register(class_methods=["save", "get_name_with_suffix", "get_short_name"])
 
 
 def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_segmentation: np.ndarray,
@@ -115,7 +121,7 @@ def load_project(file):
 
 
 def save_cmap(file: typing.Union[str, h5py.File], image: Image, segmentation: np.ndarray, cmap_profile: CmapProfile,
-              metadata: typing.Optional[dict]):
+              metadata: typing.Optional[dict]=None):
     if segmentation is None or segmentation.max() == 0:
         raise ValueError("No segmentation")
     if isinstance(file, (str, BytesIO)):
@@ -163,3 +169,104 @@ def save_cmap(file: typing.Union[str, h5py.File], image: Image, segmentation: np
     if isinstance(file, str):
         cmap_file.close()
     pass
+
+class SaveProject(SaveBase):
+    @classmethod
+    def get_name(cls):
+        return "Project (*.tgz *.tbz2 *.gz *.bz2)"
+
+    @classmethod
+    def get_short_name(cls):
+        return "project"
+
+    @classmethod
+    def get_fields(cls):
+        return []
+
+    @classmethod
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict):
+        save_project(save_location, project_info.image, project_info.segmentation, project_info.full_segmentation,
+                     project_info.mask, project_info.history, project_info.algorithm_parameters)
+
+
+class SaveCmap(SaveBase):
+    @classmethod
+    def get_name(cls):
+        return "Chimera CMAP (*.cmap)"
+
+    @classmethod
+    def get_short_name(cls):
+        return "cmap"
+
+    @classmethod
+    def get_fields(cls):
+        return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
+                AlgorithmProperty("separated_objects", "Separate Objects", False),
+                AlgorithmProperty("clip", "Clip area", False)]
+
+    @classmethod
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple,  parameters: dict):
+        save_cmap(save_location, project_info.image, project_info.segmentation, parameters[""])
+
+class SaveXYZ(SaveBase):
+    @classmethod
+    def get_name(cls):
+        return "XYZ text (*.xyz *.txt)"
+
+    @classmethod
+    def get_short_name(cls):
+        return "xyz"
+
+    @classmethod
+    def get_fields(cls):
+        return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
+                AlgorithmProperty("separated_objects", "Separate Objects", False),
+                AlgorithmProperty("clip", "Clip area", False)]
+
+    @classmethod
+    def _save(cls, save_location, channel_image, segmentation_mask, shift):
+        positions = np.transpose(np.nonzero(segmentation_mask))
+        positions = np.flip(positions, 1)
+        positions -= shift
+        values = channel_image[segmentation_mask]
+        values = values.reshape(values.size, 1)
+        data = np.append(positions, values, axis=1)
+        if np.issubdtype(channel_image.dtype, np.integer):
+            fm = "%d"
+        else:
+            fm = "%f"
+        # noinspection PyTypeChecker
+        np.savetxt(save_location, data, fmt=['%d'] * channel_image.ndim + [fm],  delimiter=" ")
+
+    @classmethod
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple,  parameters: dict):
+        print(f"[save]", save_location)
+        if project_info.segmentation is None:
+            raise ValueError("Not segmentation")
+        if isinstance(save_location, (str, Path)):
+            if not os.path.exists(os.path.dirname(save_location)):
+                os.makedirs(os.path.dirname(save_location))
+        if parameters.get("separated_objects", False) and not isinstance(save_location, (str, Path)):
+            raise ValueError("Saving components to buffer not supported")
+        channel_image = project_info.image.get_channel(parameters["channel"])
+        segmentation_mask = np.array(project_info.segmentation > 0)
+        if parameters.get("clip", False):
+            positions = np.transpose(np.nonzero(segmentation_mask))
+            positions = np.flip(positions, 1)
+            shift = np.min(positions, 0)
+        else:
+            shift = np.array([0] * segmentation_mask.ndim)
+        cls._save(save_location, channel_image, segmentation_mask, shift)
+        if parameters.get("separated_objects", False):
+            components_count = np.bincount(project_info.segmentation.flat)
+            for i, size in enumerate(components_count[1:], 1):
+                if size >0:
+                    segmentation_mask = np.array(project_info.segmentation == i)
+                    base_path, ext = os.path.splitext(save_location)
+                    new_save_location = base_path + f"_part{i}" + ext
+                    cls._save(new_save_location, channel_image, segmentation_mask, shift)
+
+
+save_register.register(SaveProject)
+save_register.register(SaveCmap)
+save_register.register(SaveXYZ)

@@ -45,6 +45,10 @@ class AlgorithmDescribeBase:
 
 
 class Register(OrderedDict):
+    def __init__(self, class_methods=None, methods=None, **kwargs):
+        super().__init__(**kwargs)
+        self.class_methods = list(class_methods) if class_methods else []
+        self.methods = list(methods) if methods else []
 
     def __getitem__(self, item):
         return super().__getitem__(item)
@@ -84,5 +88,10 @@ class Register(OrderedDict):
         except NotImplementedError:
             raise ValueError(f"Method get_fields of class {value} need to be implemented")
         if not isinstance(val, list):
-            raise ValueError(f"Function get_name of class {value} need return list not {type(val)}")
+            raise ValueError(f"Function get_fields of class {value} need return list not {type(val)}")
+        for el in self.class_methods:
+            self.check_function(value, el, True)
+        for el in self.methods:
+            self.check_function(value, el, False)
+
         super().__setitem__(key, value)
