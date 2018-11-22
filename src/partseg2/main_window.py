@@ -367,7 +367,7 @@ class MainMenu(QWidget):
             try:
                 save_class.save(save_location, project_info, values)
             except ValueError as e:
-                QMessageBox.warning(self, "Save error", f"Error during saving\n{e.args}")
+                QMessageBox.warning(self, "Save error", f"Error during saving\n{e.args[0]}")
 
     def interpolate_exec(self):
         dialog = InterpolateDialog(self._settings.image_spacing)

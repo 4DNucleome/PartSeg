@@ -1,4 +1,5 @@
 import typing
+import re
 from abc import ABC
 from pathlib import Path
 from tarfile import TarInfo
@@ -28,3 +29,15 @@ class SaveBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def get_name_with_suffix(cls):
         return cls.get_name()
+
+    @classmethod
+    def get_default_extension(cls):
+        return re.search(r'\(\*(\.\w+)', cls.get_name_with_suffix()).group(1)
+
+    @classmethod
+    def need_segmentation(cls):
+        return True
+
+    @classmethod
+    def need_mask(cls):
+        return False

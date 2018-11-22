@@ -64,7 +64,7 @@ class SaveDialog(QFileDialog):
                 self.stack_widget = widget
 
     def change_filter(self, current_filter):
-        ext = re.search(r'\(\*(\.\w+)', current_filter).group(1)
+        ext = self.save_register[current_filter].get_default_extension()
         self.setDefaultSuffix(ext)
 
     def accept(self):
@@ -85,23 +85,6 @@ class SaveDialog(QFileDialog):
             super().accept()
         else:
             super().reject()
-
-    @staticmethod
-    def get_suffix(filter_name: str):
-        try:
-            pos1 = filter_name.index("(")
-            pos2 = filter_name.index(")")
-            suffix_list = filter_name[pos1+1: pos2].split(" ")
-            return suffix_list[0][1:]
-        except (ValueError, IndexError):
-            return ""
-
-    @classmethod
-    def add_suffix(cls, file_path :str, filter: str):
-        base, ext = path.splitext(file_path)
-        if len(ext) == 0:
-            return base + cls.get_suffix(filter)
-        return file_path
 
     def get_result(self) -> SaveProperty:
         files = self.selectedFiles()

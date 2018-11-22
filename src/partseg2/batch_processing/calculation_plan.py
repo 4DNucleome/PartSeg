@@ -9,6 +9,7 @@ from enum import Enum
 from deprecation import deprecated
 from six import add_metaclass
 
+from partseg2.save_register import save_register
 from project_utils.cmap_utils import CmapProfileBase
 from partseg2.statistics_calculation import StatisticProfile
 from partseg2.algorithm_description import SegmentationProfile
@@ -44,6 +45,13 @@ class MaskIntersection(MaskBase, BaseReadonlyClass):
 class SaveBase:
     suffix: str
     directory: str
+
+class Save(BaseReadonlyClass):
+    suffix: str
+    directory: str
+    algorithm: str
+    short_name: str
+    values: dict
 
 # CmapProfile = namedtuple("CmapProfile", ["suffix", "gauss_type", "center_data", "rotation_axis", "cut_obsolete_area",
 #                                         "directory"])
@@ -95,26 +103,14 @@ XYZSave.__new__.__defaults__ = (False,)
 ImageSave.__new__.__defaults__ = (False,)"""
 
 
-def get_save_path(op, calculation):
+def get_save_path(op: Save, calculation):
     """
-    :type op: MaskSave | ProjectSave | CmapProfile | XYZSave | ImageSave
     :type calculation: FileCalculation
     :param op: operation to do
     :param calculation: information about calculation
     :return: str
     """
-    if isinstance(op, MaskSave):
-        extension = ".tiff"
-    elif isinstance(op, ProjectSave):
-        extension = ".tgz"
-    elif isinstance(op, CmapProfile):
-        extension = ".cmap"
-    elif isinstance(op, XYZSave):
-        extension = ".xyz"
-    elif isinstance(op, ImageSave):
-        extension = ".tif"
-    else:
-        raise ValueError("Unknown save operation {}".format(op))
+    extension = save_register[op.algorithm].get_default_extension()
     rel_path = os.path.relpath(calculation.file_path, calculation.base_prefix)
     rel_path, ext = os.path.splitext(rel_path)
     if op.directory:
@@ -303,7 +299,7 @@ class CalculationPlan(object):
     :type name: str
     :type segmentation_count: int
     """
-    correct_name = {MaskCreate.__name__: MaskCreate, MaskUse.__name__: MaskUse, CmapProfile.__name__: CmapProfile,
+    correct_name = {MaskCreate.__name__: MaskCreate, MaskUse.__name__: MaskUse, Save.__name__: Save,
                     StatisticCalculate.__name__: StatisticCalculate, SegmentationProfile.__name__: SegmentationProfile,
                     MaskSuffix.__name__: MaskSuffix, MaskSub.__name__: MaskSub, MaskFile.__name__: MaskFile,
                     ProjectSave.__name__: ProjectSave, Operations.__name__: Operations,
@@ -424,8 +420,7 @@ class CalculationPlan(object):
             return NodeType.root
         # print("Pos {}".format(self.current_pos))
         node = self.get_node()
-        if isinstance(node.operation, MaskMapper) or isinstance(node.operation, MaskIntersection) or\
-                isinstance(node.operation, MaskSum):
+        if isinstance(node.operation, (MaskMapper, MaskIntersection, MaskSum)):
             return NodeType.file_mask
         if isinstance(node.operation, MaskCreate):
             return NodeType.mask
@@ -433,7 +428,7 @@ class CalculationPlan(object):
             return NodeType.statics
         if isinstance(node.operation, SegmentationProfile):
             return NodeType.segment
-        if isinstance(node.operation, ProjectSave) or isinstance(node.operation, CmapProfile):
+        if isinstance(node.operation, Save):
             return NodeType.save
         if isinstance(node.operation, ChooseChanel):
             return NodeType.channel_choose
@@ -499,8 +494,7 @@ class CalculationPlan(object):
         :param node:
         :return:
         """
-        if isinstance(node.operation, MaskSave) or isinstance(node.operation, CmapProfile) or \
-                isinstance(node.operation, ProjectSave):
+        if isinstance(node.operation, Save):
             return [node.operation]
         else:
             res = []
@@ -621,43 +615,16 @@ class CalculationPlan(object):
             return "File mask: {} substitution {} on {}".format(el.name, el.base, el.rep)
         if isinstance(el, MaskFile):
             return "File mapping mask: {}".format(el.name)
-        if isinstance(el, ProjectSave) or isinstance(el, MaskSave) or isinstance(el, CmapProfile) or \
-                isinstance(el, ImageSave) or isinstance(el, XYZSave):
-            if isinstance(el, ProjectSave):
-                base = "Project save"
-            elif isinstance(el, MaskSave):
-                base = "Mask save"
-            elif isinstance(el, CmapProfile):
-                base = "Cmap save"
-            elif isinstance(el, ImageSave):
-                base = "Image save"
-            elif isinstance(el, XYZSave):
-                base = "XYZ save"
-            else:
-                raise ValueError("Unknown option")
+        if isinstance(el, Save):
+            base = el.short_name
             if el.directory:
-                text = base + " in directory with name " + el.suffix
+                text = f"Save {base} in directory with name " + el.suffix
             else:
                 if el.suffix != "":
                     text = base + " with suffix " + el.suffix
                 else:
                     text = base
             return text
-        if isinstance(el, ProjectSave):
-            if el.suffix != "":
-                return "Save to project with suffix {}".format(el.suffix)
-            else:
-                return "Save to project"
-        if isinstance(el, MaskSave):
-            if el.suffix != "":
-                return "Save mask with suffix {}".format(el.suffix)
-            else:
-                return "Save mask"
-        if isinstance(el, CmapProfile):
-            if el.suffix == "":
-                return "Camp save"
-            else:
-                return "Cmap save with suffix: {}".format(el.suffix)
         if isinstance(el, MaskIntersection):
             if el.name == "":
                 return "Mask intersection of mask {} and {}".format(el.mask1, el.mask2)

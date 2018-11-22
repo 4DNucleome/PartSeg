@@ -1,11 +1,12 @@
 from pathlib import Path
 
+from partseg2.partseg_utils import HistoryElement
 from project_utils.channel_class import Channel
 from project_utils.segmentation.algorithm_base import calculate_operation_radius
 from project_utils.cmap_utils import CmapProfile
 from project_utils.image_operations import RadiusType, gaussian
 from project_utils.segmentation.algorithm_describe_base import Register, AlgorithmProperty
-from .partseg_utils import HistoryElement, PartEncoder, part_hook
+from .save_hooks import PartEncoder, part_hook
 import numpy as np
 from tiff_image import Image, ImageWriter, ImageReader
 import tarfile
@@ -16,10 +17,8 @@ import os.path
 import json
 from functools import partial
 from project_utils.io_utils import get_tarinfo, SaveBase
-
+from .save_register import save_register
 # TODO add progress function to io
-
-save_register = Register(class_methods=["save", "get_name_with_suffix", "get_short_name"])
 
 
 def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_segmentation: np.ndarray,
