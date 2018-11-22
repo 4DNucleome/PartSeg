@@ -1,9 +1,8 @@
 from PyQt5.QtWidgets import QFileDialog, QDialog, QPushButton, QGridLayout, QStackedWidget
 import typing
-from os import path
 from common_gui.algorithms_description import FormWidget
 from project_utils.io_utils import SaveBase
-import re
+
 
 class SaveProperty(typing.NamedTuple):
     save_destination: typing.Union[str, typing.List[str]]
@@ -33,9 +32,13 @@ class FormDialog(QDialog):
     def get_values(self):
         return self.widget.get_values()
 
+    def set_values(self, values):
+        return self.widget.set_values(values)
+
 
 class SaveDialog(QFileDialog):
-    def __init__(self, save_register: typing.Dict[str, type(SaveBase)], system_widget=True, parent=None):
+    def __init__(self, save_register: typing.Dict[str, type(SaveBase)], system_widget=True,
+                 base_values: typing.Optional[dict] = None, parent=None):
         super().__init__(parent)
         self.save_register = dict((x.get_name_with_suffix(), x) for x in save_register.values())
         self.setOption(QFileDialog.DontUseNativeDialog, not system_widget)
@@ -45,23 +48,36 @@ class SaveDialog(QFileDialog):
         self.setNameFilters(self.save_register.keys())
         self.accepted_native = False
         self.values = {}
+        self.names = []
+        self.base_values = base_values if base_values is not None else {}
         if not system_widget:
             widget = QStackedWidget()
-            names = []
             for name, val in self.save_register.items():
                 wi = FormWidget(val.get_fields())
+                if name in self.base_values:
+                    wi.set_values(self.base_values[name])
                 widget.addWidget(wi)
-                names.append(name)
+                self.names.append(name)
 
-            def change_parameters(text):
-                widget.setCurrentIndex(names.index(text))
-            self.filterSelected.connect(change_parameters)
+            self.filterSelected.connect(self.change_parameters)
 
             layout = self.layout()
             if isinstance(layout, QGridLayout):
                 print(layout.columnCount(), layout.rowCount())
                 layout.addWidget(widget, 0, layout.columnCount(), layout.rowCount(), 1)
                 self.stack_widget = widget
+
+    def change_parameters(self, text):
+        if not hasattr(self, "stack_widget"):
+            return
+        self.stack_widget.setCurrentIndex(self.names.index(text))
+
+    def selectNameFilter(self, filter: str):
+        try:
+            self.change_parameters(filter)
+        except IndexError:
+            pass
+        super().selectNameFilter(filter)
 
     def change_filter(self, current_filter):
         ext = self.save_register[current_filter].get_default_extension()
@@ -80,6 +96,8 @@ class SaveDialog(QFileDialog):
             super().accept()
             return
         dial = FormDialog(fields)
+        if self.selectedNameFilter() in self.base_values:
+            dial.set_values(self.base_values[self.selectedNameFilter()])
         if dial.exec():
             self.values = dial.get_values()
             super().accept()
