@@ -1,9 +1,10 @@
 from enum import Enum
-
 from project_utils.segmentation.algorithm_describe_base import Register
 from project_utils.segmentation.restartable_segmentation_algorithms import final_algorithm_list
 
 part_algorithm_dict = Register()
+
+assert hasattr(part_algorithm_dict, "register")
 
 for el in final_algorithm_list:
     part_algorithm_dict.register(el)

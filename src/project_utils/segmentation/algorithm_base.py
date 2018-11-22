@@ -3,8 +3,9 @@ from abc import ABC
 from project_utils.image_operations import gaussian, RadiusType
 from project_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase
 from tiff_image import Image
-from typing import NamedTuple, Union
+from typing import NamedTuple, Union, Callable
 import numpy as np
+
 
 def calculate_operation_radius(radius, spacing, gauss_type):
     if gauss_type == RadiusType.R2D:
@@ -23,8 +24,13 @@ class SegmentationResult(NamedTuple):
     cleaned_channel: Union[np.ndarray, None] = None
 
 
+def report_empty_fun(_x, _y):
+    pass
+
+
 class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
     channel: np.ndarray
+
     def __init__(self):
         super().__init__()
         self.image: Image = None
@@ -44,7 +50,7 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
     def set_mask(self, mask):
         self.mask = mask
 
-    def calculation_run(self, report_fun) -> SegmentationResult:
+    def calculation_run(self, report_fun: Callable[[str, int], None]) -> SegmentationResult:
         raise NotImplementedError()
 
     def get_info_text(self):

@@ -116,7 +116,7 @@ class CreatePlan(QWidget):
         self.save_constructor = None
         self.channels_used = False
 
-        self.project_segmentation = QPushButton("Segmentation\nfrom project")
+        self.project_segmentation = QPushButton("Reset project")
         self.project_segmentation.clicked.connect(self.segmentation_from_project)
 
         self.chose_profile_btn = QPushButton("Segment Profile")
@@ -186,9 +186,9 @@ class CreatePlan(QWidget):
         bt_lay = QGridLayout()
         bt_lay.setSpacing(0)
         #bt_lay.setContentsMargins(0, 0, 0, 0)
-        bt_lay.addWidget(right_label("Chanel num:"), 1, 0)
-        bt_lay.addWidget(self.chanel_num, 1, 1)
-        bt_lay.addWidget(self.choose_channel_btn, 4, 0, 1, 2)
+        #bt_lay.addWidget(right_label("Chanel num:"), 1, 0)
+        #bt_lay.addWidget(self.chanel_num, 1, 1)
+        #bt_lay.addWidget(self.choose_channel_btn, 4, 0, 1, 2)
         # bt_lay.addWidget(self.forgot_mask_btn, 1, 0)
         bt_lay.addWidget(self.save_choose, 5, 0, 1, 2)
         bt_lay.addWidget(self.director_save_chk, 6, 0, 1, 2)
@@ -339,7 +339,7 @@ class CreatePlan(QWidget):
             self.save_btn.setEnabled(True)
 
     def segmentation_from_project(self):
-        self.calculation_plan.add_step(Operations.segment_from_project)
+        self.calculation_plan.add_step(Operations.reset_to_base)
         self.plan.update_view()
 
     def update_names(self):

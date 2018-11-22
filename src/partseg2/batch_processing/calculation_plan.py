@@ -213,8 +213,8 @@ class MaskFile(MaskMapper):
 
 
 class Operations(Enum):
-    segment_from_project = 1
-    leave_the_biggest = 2
+    reset_to_base = 1
+    # leave_the_biggest = 2
 
 
 class PlanChanges(Enum):
@@ -435,9 +435,9 @@ class CalculationPlan(object):
         if isinstance(node.operation, MaskUse):
             return NodeType.file_mask
         if isinstance(node.operation, Operations):
-            if node.operation == Operations.segment_from_project:
-                return NodeType.segment
-        logging.error("[get_node_type] unknown node type {}".format(node.operation))
+            if node.operation == Operations.reset_to_base:
+                return NodeType.mask
+        raise ValueError("[get_node_type] unknown node type {}".format(node.operation))
 
     def add_step(self, step):
         if self.current_pos is None:
@@ -589,8 +589,8 @@ class CalculationPlan(object):
             print(el)
             raise ValueError("Unknown type {}".format(el.__class__.__name__))
         if isinstance(el, Operations):
-            if el == Operations.segment_from_project:
-                return "Segment from project"
+            if el == Operations.reset_to_base:
+                return "reset project to base image with mask"
         if isinstance(el, ChooseChanel):
             return "Chose chanel: chanel num {}".format(el.chanel_num)
         if isinstance(el, SegmentationProfile):

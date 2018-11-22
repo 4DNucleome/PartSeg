@@ -29,7 +29,7 @@ class ImageSettings(QObject):
 
     def __init__(self):
         super(ImageSettings, self).__init__()
-        self._image = None
+        self._image :Image = None
         self._image_path = ""
         self._image_spacing = 210, 70, 70
         self._segmentation = None

@@ -18,6 +18,8 @@ import json
 from functools import partial
 from project_utils.io_utils import get_tarinfo, SaveBase
 from .save_register import save_register
+
+
 # TODO add progress function to io
 
 
@@ -71,7 +73,9 @@ class ProjectTuple(typing.NamedTuple):
     algorithm_parameters: dict
 
 
-def load_project(file):
+def load_project(
+        file: typing.Union[str, tarfile.TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase]) -> ProjectTuple:
+    """Load project from archive"""
     if isinstance(file, tarfile.TarFile):
         tar_file = file
         file_path = ""
@@ -120,7 +124,7 @@ def load_project(file):
 
 
 def save_cmap(file: typing.Union[str, h5py.File], image: Image, segmentation: np.ndarray, cmap_profile: CmapProfile,
-              metadata: typing.Optional[dict]=None):
+              metadata: typing.Optional[dict] = None):
     if segmentation is None or segmentation.max() == 0:
         raise ValueError("No segmentation")
     if isinstance(file, (str, BytesIO)):
@@ -169,6 +173,7 @@ def save_cmap(file: typing.Union[str, h5py.File], image: Image, segmentation: np
         cmap_file.close()
     pass
 
+
 class SaveProject(SaveBase):
     @classmethod
     def get_name(cls):
@@ -204,8 +209,9 @@ class SaveCmap(SaveBase):
                 AlgorithmProperty("clip", "Clip area", False)]
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple,  parameters: dict):
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict):
         save_cmap(save_location, project_info.image, project_info.segmentation, parameters[""])
+
 
 class SaveXYZ(SaveBase):
     @classmethod
@@ -235,10 +241,10 @@ class SaveXYZ(SaveBase):
         else:
             fm = "%f"
         # noinspection PyTypeChecker
-        np.savetxt(save_location, data, fmt=['%d'] * channel_image.ndim + [fm],  delimiter=" ")
+        np.savetxt(save_location, data, fmt=['%d'] * channel_image.ndim + [fm], delimiter=" ")
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple,  parameters: dict):
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict):
         print(f"[save]", save_location)
         if project_info.segmentation is None:
             raise ValueError("Not segmentation")
@@ -259,7 +265,7 @@ class SaveXYZ(SaveBase):
         if parameters.get("separated_objects", False):
             components_count = np.bincount(project_info.segmentation.flat)
             for i, size in enumerate(components_count[1:], 1):
-                if size >0:
+                if size > 0:
                     segmentation_mask = np.array(project_info.segmentation == i)
                     base_path, ext = os.path.splitext(save_location)
                     new_save_location = base_path + f"_part{i}" + ext
