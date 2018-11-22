@@ -3,7 +3,7 @@ import logging
 import os
 import re
 from functools import partial
-
+from pathlib import Path
 import tifffile as tif
 import numpy as np
 import SimpleITK as sitk
@@ -334,7 +334,6 @@ class MainMenu(QWidget):
         self.interpolate_btn = QPushButton("Interpolate")
         self.mask_manager_btn = QPushButton("Mask Manager")
         self.batch_processing_btn = QPushButton("Batch Processing")
-        self.test_btn = QPushButton("Test")
         self.main_window: MainWindow = main_window
 
         layout = QHBoxLayout()
@@ -346,7 +345,6 @@ class MainMenu(QWidget):
         layout.addWidget(self.interpolate_btn)
         layout.addWidget(self.mask_manager_btn)
         layout.addWidget(self.batch_processing_btn)
-        layout.addWidget(self.test_btn)
         self.setLayout(layout)
 
         self.open_btn.clicked.connect(self.load_data)
@@ -355,15 +353,22 @@ class MainMenu(QWidget):
         self.mask_manager_btn.clicked.connect(self.mask_manager)
         self.interpolate_btn.clicked.connect(self.interpolate_exec)
         self.batch_processing_btn.clicked.connect(self.batch_window)
-        self.test_btn.clicked.connect(self.test_fun)
+        # self.test_btn.clicked.connect(self.test_fun)
 
-    def test_fun(self):
+    def save_file(self):
         from common_gui.custom_save import SaveDialog
         from .io_functions import save_register
-        dial = SaveDialog(save_register, system_widget=False)
+        base_values = self._settings.get("save_parameters", dict())
+        dial = SaveDialog(save_register, system_widget=False, base_values=base_values)
+        dial.setDirectory(self._settings.get("io.save_directory", self._settings.get("io.open_directory",
+                                                                                     str(Path.home()))))
+        dial.selectNameFilter(self._settings.get("io.save_filter", ""))
         if dial.exec():
-            save_location, _, save_class, values = dial.get_result()
+            save_location, selected_filter, save_class, values = dial.get_result()
             project_info = self._settings.get_project_info()
+            self._settings.set("io.save_filter", selected_filter)
+            self._settings.set("io.save_directory", os.path.dirname(save_location))
+            base_values[selected_filter] = values
             try:
                 save_class.save(save_location, project_info, values)
             except ValueError as e:
@@ -403,7 +408,7 @@ class MainMenu(QWidget):
     def load_data(self):
         try:
             dial = QFileDialog(self, "Load data")
-            dial.setDirectory(self._settings.get("io.open_directory", ""))
+            dial.setDirectory(self._settings.get("io.open_directory", str(Path.home())))
             dial.setFileMode(QFileDialog.ExistingFile)
             filters = ["raw image (*.tiff *.tif *.lsm)", "image with mask (*.tiff *.tif *.lsm)",
                        "mask to image (*.tiff *.tif *.lsm)",
@@ -466,10 +471,10 @@ class MainMenu(QWidget):
         else:
             self.main_window.batch_window.show()
 
-    def save_file(self):
+    def _save_file(self):
         try:
             dial = QFileDialog(self, "Save data")
-            dial.setDirectory(self._settings.get("io.save_directory", self._settings.get("io.open_directory", "")))
+            dial.setDirectory(self._settings.get("io.save_directory", self._settings.get("io.open_directory", str(Path.home()))))
             dial.setFileMode(QFileDialog.AnyFile)
             filters = ["Project (*.tgz *.tbz2 *.gz *.bz2)", "Labeled image (*.tif)", "Mask in tiff (*.tif)",
                        "Mask for itk-snap (*.img)", "Data for chimera (*.cmap)", "Image (*.tiff)", "Profiles (*.json)",

@@ -3,6 +3,7 @@ import logging
 import multiprocessing
 import os
 from glob import glob
+from pathlib import Path
 
 import numpy as np
 from PyQt5.QtCore import pyqtSignal, Qt, QTimer, QByteArray
@@ -179,9 +180,9 @@ class FileChoose(QWidget):
             self.run_button.setDisabled(True)
 
     def chose_result_file(self):
-        dial = QFileDialog(self, "Select result.file")
-        if self.settings.save_directory is not None:
-            dial.setDirectory(self.settings.save_directory)
+        dial = QFileDialog(self, "Select result file")
+        dial.setDirectory(
+            self.settings.get("io.save_directory", self.settings.get("io.open_directory", str(Path.home()))))
         dial.setFileMode(QFileDialog.AnyFile)
         dial.setAcceptMode(QFileDialog.AcceptSave)
         dial.setNameFilter("Excel file (*.xlsx)")
@@ -249,7 +250,7 @@ class CalculationPrepare(QDialog):
         :param statistic_file_path: path to statistic file
         :type statistic_file_path: str
         :param settings: settings object
-        :type settings: Settings
+        :type settings: PartSettings
         :type batch_manager: CalculationManager
         """
         super(CalculationPrepare, self).__init__()
@@ -261,8 +262,8 @@ class CalculationPrepare(QDialog):
         self.batch_manager = batch_manager
         self.info_label = QLabel("information, <i><font color='blue'>warnings</font></i>, "
                                  "<b><font color='red'>errors</font><b>")
-        self.voxel_size = Spacing("Voxel size", list(zip(['x:', 'y:', 'z:'], settings.voxel_size)), self, units=UNITS_LIST,
-                                  units_index=UNITS_LIST.index(settings.size_unit))
+        self.voxel_size = Spacing("Voxel size", list(zip(['x:', 'y:', 'z:'], settings.image.spacing)), self,
+                                  units=UNITS_LIST, units_index=self.settings.get("units_index", 2))
         all_prefix = os.path.commonprefix(file_list)
         if not os.path.exists(all_prefix):
             all_prefix = os.path.dirname(all_prefix)

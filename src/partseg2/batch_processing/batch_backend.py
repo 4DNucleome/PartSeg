@@ -10,9 +10,9 @@ import numpy as np
 import pandas as pd
 import tifffile
 
-from partseg2.algorithm_description import SegmentationProfile
+from partseg2.algorithm_description import SegmentationProfile, part_algorithm_dict
 from partseg2.batch_processing.calculation_plan import CalculationTree, MaskMapper, MaskUse, MaskCreate, Save, \
-    Operations, FileCalculation, MaskIntersection, MaskSum, get_save_path
+    Operations, FileCalculation, MaskIntersection, MaskSum, get_save_path, StatisticCalculate, Calculation
 from partseg2.batch_processing.parallel_backed import BatchManager
 from partseg2.io_functions import load_project, ProjectTuple
 from partseg2.partseg_utils import HistoryElement
@@ -102,14 +102,13 @@ class CalculationProcess(object):
             self.iterate_over(node)
             self.mask = old_mask
         elif isinstance(node.operation, SegmentationProfile):
-            part_algorithm_dict: typing.Dict[str, typing.Type[SegmentationAlgorithm]]
             segmentation_class = part_algorithm_dict.get(node.operation.algorithm, None)
             if segmentation_class is None:
                 raise ValueError(f"Segmentation class {node.operation.algorithm} do not found")
             segmentation_algorithm = segmentation_class()
             segmentation_algorithm.set_image(self.image)
             segmentation_algorithm.set_mask(self.mask)
-            segmentation_algorithm.set_parameters(node.operation.values)
+            segmentation_algorithm.set_parameters(**node.operation.values)
             result = segmentation_algorithm.calculation_run(report_empty_fun)
             backup_data = self.segmentation, self.full_segmentation, self.cleaned_channel, self.algorithm_parameters
             self.segmentation = result.segmentation
@@ -178,8 +177,13 @@ class CalculationProcess(object):
                     self.history, self.mask, self.segmentation, self.full_segmentation, self.cleaned_channel = backup
                 else:
                     self.iterate_over(node)
-        elif isinstance(node.operation, StatisticProfile):
-            statistics = node.operation.calculate(self.image, self.image,
+        elif isinstance(node.operation, StatisticCalculate):
+            channel = node.operation.channel
+            if channel == -1:
+                channel = self.algorithm_parameters["values"]["channel"]
+
+            image_channel = self.image.get_channel(channel)
+            statistics = node.operation.statistic_profile.calculate(image_channel, image_channel,
                                                   self.segmentation, self.full_segmentation,
                                                   self.mask, self.image.spacing)
             self.statistics.append(statistics)
@@ -311,7 +315,7 @@ class FileData(object):
             return False, "Sheet name {} already in use".format(name)
         return True, True
 
-    def add_data_part(self, calculation):
+    def add_data_part(self, calculation: Calculation):
         """
         :type calculation: Calculation
         :param calculation:
@@ -323,7 +327,7 @@ class FileData(object):
         if calculation.sheet_name in self.sheet_set:
             raise ValueError("[FileData] sheet name {} already in use".format(calculation.sheet_name))
         statistics = calculation.calculation_plan.get_statistics()
-        component_information = [x.get_component_info() for x in statistics]
+        component_information = [x.statistic_profile.get_component_info() for x in statistics]
         num = 1
         sheet_list = []
         header_list = []

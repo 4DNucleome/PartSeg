@@ -321,11 +321,11 @@ class CalculationPlan(object):
         """
         :type node: CalculationTree
         :param node:
-        :return: list[StatisticProfile]
+        :return: list[StatisticCalculate]
         """
         if node is None:
             node = self.execution_tree
-        if isinstance(node.operation, StatisticProfile):
+        if isinstance(node.operation, StatisticCalculate):
             return [node.operation]
         else:
             res = []
@@ -469,6 +469,7 @@ class CalculationPlan(object):
         return False
 
     def remove_step(self):
+        print("[remove_step]", self.current_pos)
         path = copy(self.current_pos)
         pos = path[-1]
         parent_node = self.get_node(path[:-1])

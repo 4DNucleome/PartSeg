@@ -538,7 +538,7 @@ class StatisticsSettings(QWidget):
         self.profile_name.setText(item.text())
         for ch in profile.chosen_fields:
             self.profile_options_chosen.addItem(profile.flat_tree(ch[0]))
-        self.gauss_img.setChecked(profile.use_gauss_image)
+        # self.gauss_img.setChecked(profile.use_gauss_image)
         self.reversed_brightness.setChecked(profile.reversed_brightness)
         self.save_butt.setEnabled(True)
         self.save_butt_with_name.setEnabled(True)
@@ -556,7 +556,7 @@ class StatisticsSettings(QWidget):
             selected_values.append((txt, txt))
         stat_prof = StatisticProfile(str(self.profile_name.text()), selected_values,
                                      self.reversed_brightness.isChecked(),
-                                     self.gauss_img.isChecked())
+                                     False)
         if stat_prof.name not in self.settings.statistic_profiles:
             self.profile_list.addItem(stat_prof.name)
         self.settings.statistic_profiles[stat_prof.name] = stat_prof
