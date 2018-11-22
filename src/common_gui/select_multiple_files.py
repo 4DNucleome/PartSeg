@@ -1,5 +1,6 @@
 from glob import glob
 import os
+from pathlib import Path
 
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QListWidget, QLineEdit, QListWidgetItem, \
@@ -100,7 +101,8 @@ class AddFiles(QWidget):
 
     def select_files(self):
         dial = QFileDialog(self, "Select files")
-        dial.setDirectory(self.settings.get("io.batch_directory", self.settings.get("io.load_image_directory", "")))
+        dial.setDirectory(
+            self.settings.get("io.batch_directory", self.settings.get("io.load_image_directory", str(Path.home()))))
         dial.setFileMode(QFileDialog.ExistingFiles)
         if dial.exec_():
             self.settings.set("io.batch_directory", os.path.dirname(str(dial.selectedFiles()[0])))
@@ -116,7 +118,8 @@ class AddFiles(QWidget):
 
     def select_directory(self):
         dial = QFileDialog(self, "Select directory")
-        dial.setDirectory(self.settings.get("io.batch_directory", self.settings.get("io.load_image_directory", "")))
+        dial.setDirectory(
+            self.settings.get("io.batch_directory", self.settings.get("io.load_image_directory", str(Path.home()))))
         dial.setFileMode(QFileDialog.Directory)
         if dial.exec_():
             self.paths.setText(dial.selectedFiles()[0])
