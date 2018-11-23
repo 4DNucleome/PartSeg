@@ -3,14 +3,10 @@ import logging
 import sys
 import typing
 
-import matplotlib
-
-
-matplotlib.use("Qt5Agg")
-
 from PyQt5.QtCore import QObject, pyqtSignal
+
+from project_utils.color_image.color_image_base import color_maps
 from .image_operations import RadiusType
-from matplotlib import pyplot
 import copy
 import numpy as np
 from os import path, makedirs
@@ -196,7 +192,7 @@ class ViewSettings(ImageSettings):
 
     @property
     def chosen_colormap(self):
-        return self.get_from_profile("colormaps", pyplot.colormaps())
+        return self.get_from_profile("colormaps", color_maps.keys())
 
     @chosen_colormap.setter
     def chosen_colormap(self, val):
@@ -205,7 +201,7 @@ class ViewSettings(ImageSettings):
 
     @property
     def available_colormaps(self):
-        return pyplot.colormaps()
+        return list(color_maps.keys())
 
     def _image_changed(self):
         super()._image_changed()

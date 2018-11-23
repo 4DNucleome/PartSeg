@@ -1,7 +1,10 @@
-from qt_import import QDialog, QListWidget, QListWidgetItem, Qt, QPushButton, QHBoxLayout, QVBoxLayout, QTreeWidget, \
-    QTreeWidgetItem, QLabel, QRadioButton, QButtonGroup, QLineEdit, QTextEdit
 import numpy as np
 import re
+
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QDialog, QListWidget, QListWidgetItem, QPushButton, QHBoxLayout, QVBoxLayout, QTreeWidget, \
+    QTreeWidgetItem, QLabel, QRadioButton, QButtonGroup, QLineEdit, QTextEdit
+
 
 class ExportDialog(QDialog):
     def __init__(self, export_dict, viewer):
@@ -14,6 +17,7 @@ class ExportDialog(QDialog):
         self.check_state[...] = True
         for el in sorted(export_dict.keys()):
             item = QListWidgetItem(el)
+            # noinspection PyTypeChecker
             item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
             item.setCheckState(Qt.Checked)
             self.list_view.addItem(item)
@@ -155,6 +159,7 @@ class ImportDialog(QDialog):
         for name in sorted(import_dict.keys()):
             item = QTreeWidgetItem()
             item.setText(0, name)
+            # noinspection PyTypeChecker
             item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
             item.setCheckState(0, Qt.Checked)
             self.list_view.addTopLevelItem(item)
@@ -196,7 +201,7 @@ class ImportDialog(QDialog):
         v1_lay.addWidget(QLabel("Import:"))
         v1_lay.addWidget(self.viewer)
         info_layout.addLayout(v1_lay, 1)
-        #info_layout.addWidget(self.local_viewer, 1)
+        # info_layout.addWidget(self.local_viewer, 1)
         v2_lay = QVBoxLayout()
         v2_lay.addWidget(QLabel("Local:"))
         v2_lay.addWidget(self.local_viewer)
@@ -274,6 +279,7 @@ class StringViewer(QTextEdit):
 
     def preview_object(self, ob):
         self.setText(str(ob))
+
 
 class ProfileDictViewer(QTextEdit):
     def __init__(self):

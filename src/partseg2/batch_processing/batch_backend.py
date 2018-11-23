@@ -17,9 +17,8 @@ from partseg2.batch_processing.parallel_backed import BatchManager
 from partseg2.io_functions import load_project, ProjectTuple
 from partseg2.partseg_utils import HistoryElement
 from partseg2.save_register import save_register
-from partseg2.statistics_calculation import StatisticProfile
 from project_utils.mask_create import calculate_mask
-from project_utils.segmentation.algorithm_base import SegmentationAlgorithm, report_empty_fun
+from project_utils.segmentation.algorithm_base import report_empty_fun
 from tiff_image import ImageReader, Image
 
 
@@ -183,9 +182,10 @@ class CalculationProcess(object):
                 channel = self.algorithm_parameters["values"]["channel"]
 
             image_channel = self.image.get_channel(channel)
-            statistics = node.operation.statistic_profile.calculate(image_channel, image_channel,
-                                                  self.segmentation, self.full_segmentation,
-                                                  self.mask, self.image.spacing)
+            statistics = \
+                node.operation.statistic_profile.calculate(image_channel, image_channel,
+                                                           self.segmentation, self.full_segmentation,
+                                                           self.mask, self.image.spacing)
             self.statistics.append(statistics)
         else:
             raise ValueError("Unknown operation {} {}".format(type(node.operation), node.operation))

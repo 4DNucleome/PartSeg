@@ -12,12 +12,12 @@ from PyQt5.QtWidgets import QScrollBar, QLabel, QGridLayout
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
     QScrollArea, QSizePolicy, QToolButton, QAction, QApplication, \
     QSlider, QCheckBox, QComboBox
-from matplotlib import pyplot
-from matplotlib.cm import get_cmap
-from matplotlib.colors import PowerNorm
+# from matplotlib.cm import get_cmap
+# from matplotlib.colors import PowerNorm
 from scipy.ndimage import gaussian_filter
 
 from project_utils.color_image import color_image, add_labels
+from project_utils.color_image.color_image_base import color_maps
 from project_utils.custom_colormaps import default_colors
 from project_utils.global_settings import static_file_folder
 from project_utils.settings import ViewSettings
@@ -219,9 +219,9 @@ class ChanelColor(QWidget):
         self.num = num
         self.check_box = QCheckBox(self)
         self.color_list = QComboBox(self)
-        self.color_list.addItems(pyplot.colormaps())
+        self.color_list.addItems(color_maps.keys())
         num2 = num % len(default_colors)
-        pos = pyplot.colormaps().index(default_colors[num2])
+        pos = list(color_maps.keys()).index(default_colors[num2])
         self.color_list.setCurrentIndex(pos)
         layout = QHBoxLayout()
         layout.addWidget(self.check_box)
@@ -234,10 +234,10 @@ class ChanelColor(QWidget):
     def colormap_name(self):
         return str(self.color_list.currentText())
 
-    def colormap(self, vmin, vmax):
+    """def colormap(self, vmin, vmax):
         cmap = get_cmap(str(self.color_list.currentText()))
         norm = PowerNorm(1, vmin=vmin, vmax=vmax)
-        return lambda x: cmap(norm(x))
+        return lambda x: cmap(norm(x))"""
 
     def register(self, fun):
         # noinspection PyUnresolvedReferences

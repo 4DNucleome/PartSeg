@@ -5,7 +5,7 @@ from PyQt5.QtCore import QByteArray, Qt, QEvent
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushButton, QCheckBox, QLineEdit, QVBoxLayout, \
     QLabel, QHBoxLayout, QListWidgetItem, QDialog, QDoubleSpinBox, QSpinBox, QGridLayout, QApplication, QMessageBox, \
-    QFileDialog, QComboBox, QTableWidget, QTableWidgetItem, QAbstractSpinBox, QInputDialog, QPlainTextEdit
+    QFileDialog, QComboBox, QTableWidget, QTableWidgetItem, QAbstractSpinBox, QInputDialog, QPlainTextEdit, QFrame
 
 from common_gui.colors_choose import ColorSelector
 from common_gui.lock_checkbox import LockCheckBox
@@ -16,10 +16,13 @@ from project_utils.global_settings import static_file_folder
 from project_utils.segmentation.denoising import noise_removal_dict
 from project_utils.settings import BaseSettings
 from project_utils.universal_const import UNITS_DICT, UNIT_SCALE, UNITS_LIST
-from qt_import import h_line
 from common_gui.dim_combobox import DimComboBox
 
-
+def h_line():
+    toto = QFrame()
+    toto.setFrameShape(QFrame.HLine)
+    toto.setFrameShadow(QFrame.Sunken)
+    return toto
 
 
 class AdvancedSettings(QWidget):
