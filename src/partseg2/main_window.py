@@ -683,7 +683,7 @@ class MainWindow(BaseMainWindow):
         # self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
         self.advanced_window = AdvancedWindow(self.settings)
-        self.batch_window = BatchWindow(self.settings)
+        self.batch_window = None # BatchWindow(self.settings)
 
         reader =ImageReader()
         im = reader.read(os.path.join(static_file_folder, 'initial_images', "clean_segment.tiff"))
@@ -729,6 +729,11 @@ class MainWindow(BaseMainWindow):
             dial.exec()
             if read_thread.image:
                 self.settings.image = read_thread.image
+
+    def showEvent(self, a0):
+        super().showEvent(a0)
+        self.batch_window = BatchWindow(self.settings)
+
 
     def closeEvent(self, event):
         # print(self.settings.dump_view_profiles())
