@@ -466,9 +466,13 @@ class MainMenu(QWidget):
 
 
     def batch_window(self):
-        if self.main_window.batch_window.isVisible():
-            self.main_window.batch_window.activateWindow()
+        if self.main_window.batch_window is not None:
+            if self.main_window.batch_window.isVisible():
+                self.main_window.batch_window.activateWindow()
+            else:
+                self.main_window.batch_window.show()
         else:
+            self.main_window.batch_window = BatchWindow(self._settings)
             self.main_window.batch_window.show()
 
     def _save_file(self):
@@ -730,25 +734,22 @@ class MainWindow(BaseMainWindow):
             if read_thread.image:
                 self.settings.image = read_thread.image
 
-    def showEvent(self, a0):
-        super().showEvent(a0)
-        self.batch_window = BatchWindow(self.settings)
-
 
     def closeEvent(self, event):
         # print(self.settings.dump_view_profiles())
         # print(self.settings.segmentation_dict["default"].my_dict)
         self.settings.set_in_profile("main_window_geometry", bytes(self.saveGeometry().toHex()).decode('ascii'))
-        if self.batch_window.is_working():
-            ret = QMessageBox.warning(self, "Batch work", "Batch work is not finished. "
-                                                          "Would you like to terminate it?",
-                                      QMessageBox.No | QMessageBox.Yes)
-            if ret == QMessageBox.Yes:
-                self.batch_window.terminate()
-            else:
-                event.ignore()
-                return
-        self.batch_window.close()
+        if self.batch_window is not None:
+            if self.batch_window.is_working():
+                ret = QMessageBox.warning(self, "Batch work", "Batch work is not finished. "
+                                                              "Would you like to terminate it?",
+                                          QMessageBox.No | QMessageBox.Yes)
+                if ret == QMessageBox.Yes:
+                    self.batch_window.terminate()
+                else:
+                    event.ignore()
+                    return
+            self.batch_window.close()
         self.advanced_window.close()
         self.settings.dump()
         del self.batch_window
