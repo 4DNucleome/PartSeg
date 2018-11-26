@@ -188,10 +188,9 @@ name_to_scalar = {
 
 
 class MyTiffPage(TiffPage):
-    def asarray(self, out=None, squeeze=True, lock=None, reopen=True,
-                maxsize=2**44, validate=True):
+    def asarray(self, *args, **kwargs):
         # Because of TiffFrame usage
-        res = TiffPage.asarray(self, out, squeeze, lock, reopen, maxsize, validate)
+        res = TiffPage.asarray(self, *args, **kwargs)
         self.parent.report_func()
         return res
 

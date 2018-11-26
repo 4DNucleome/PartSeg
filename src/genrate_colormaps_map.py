@@ -1,9 +1,10 @@
-from project_utils.custom_colormaps import default_colors
+from project_utils.custom_colormaps import black_blue
+from project_utils.colors import default_colors
 from matplotlib import pyplot
 from matplotlib.cm import get_cmap
 import numpy as np
 
-print(default_colors)
+print(black_blue, default_colors)
 if __name__ == '__main__':
     result = dict()
     base_array = np.linspace(0, 1, 1024)

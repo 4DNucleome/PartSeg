@@ -18,7 +18,7 @@ from scipy.ndimage import gaussian_filter
 
 from project_utils.color_image import color_image, add_labels
 from project_utils.color_image.color_image_base import color_maps
-from project_utils.custom_colormaps import default_colors
+from project_utils.colors import default_colors
 from project_utils.global_settings import static_file_folder
 from project_utils.settings import ViewSettings
 from stackseg.stack_settings import StackSettings
