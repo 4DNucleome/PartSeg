@@ -265,18 +265,21 @@ class ChosenComponents(QWidget):
         for el in self.check_box.values():
             el.setChecked(False)
 
-    def new_choose(self, num, chosen_components):
-        self.set_chose(range(1, num + 1), chosen_components)
-
-    def set_chose(self, components_index, chosen_components):
-        chosen_components = set(chosen_components)
-        self.blockSignals(True)
+    def remove_components(self):
         self.check_layout.clear()
         for el in self.check_box.values():
             """:type el: QCheckBox"""
             el.deleteLater()
             el.stateChanged.disconnect()
         self.check_box.clear()
+
+    def new_choose(self, num, chosen_components):
+        self.set_chose(range(1, num + 1), chosen_components)
+
+    def set_chose(self, components_index, chosen_components):
+        chosen_components = set(chosen_components)
+        self.blockSignals(True)
+        self.remove_components()
         chosen_components = set(chosen_components)
         for el in components_index:
             check = QCheckBox(str(el))
@@ -316,7 +319,7 @@ class AlgorithmOptions(QWidget):
     def __init__(self, settings, control_view, component_checker):
         """
         :type control_view: ImageState
-        :type settings: ImageSettings
+        :type settings: StackSettings
         :param settings:
         :param control_view:
         """
@@ -412,7 +415,8 @@ class AlgorithmOptions(QWidget):
         self.borders_thick.valueChanged.connect(control_view.set_borders_thick)
         component_checker.component_clicked.connect(self.choose_components.other_component_choose)
         settings.chosen_components_widget = self.choose_components
-        settings.components_change.connect(self.choose_components.new_choose)
+        settings.components_change_list.connect(self.choose_components.new_choose)
+        settings.image_changed.connect(self.choose_components.remove_components)
 
     def border_value_check(self, value):
         if value % 2 == 0:
