@@ -7,6 +7,9 @@ from PyQt5.QtWidgets import QApplication
 from project_utils.base_argparser import CustomParser
 from project_utils.except_hook import my_excepthook
 
+import multiprocessing
+multiprocessing.freeze_support()
+
 sys.excepthook = my_excepthook
 print("buka")
 def main():

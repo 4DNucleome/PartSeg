@@ -1,5 +1,6 @@
 import sys
-
+import multiprocessing
+multiprocessing.freeze_support()
 
 __author__ = "Grzegorz Bokota"
 from project_utils.except_hook import my_excepthook
