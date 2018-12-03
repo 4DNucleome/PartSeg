@@ -86,6 +86,11 @@ class ImageViewWithMask(ImageView):
             im[~mask_layer] = (1 - self.mask_prop[1]) * im[~mask_layer] + \
                               self.mask_prop[1] * MASK_COLORS[self.mask_prop[0]]
 
+    def set_image(self):
+        super().set_image()
+        if self.image.mask is not None:
+            self.mask_changed()
+
 
 
 
