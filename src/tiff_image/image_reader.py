@@ -96,7 +96,7 @@ class ImageReader(object):
     @staticmethod
     def update_array_shape(array: np.ndarray, axes: str):
         try:
-            final_mapping_dict = {"T": 0, "Z": 1, "Y": 2, "X": 3, "C": 4, "I": 1, "S": 4}
+            final_mapping_dict = {"T": 0, "Z": 1, "Y": 2, "X": 3, "C": 4, "I": 1, "S": 4, "Q": 1}
             final_mapping = [final_mapping_dict[letter] for letter in axes]
         except KeyError:
             raise NotImplementedError("Data type not supported. Please contact with author for update code")

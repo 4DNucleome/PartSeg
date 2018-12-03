@@ -360,6 +360,7 @@ class MainMenu(QWidget):
         from .io_functions import save_register
         base_values = self._settings.get("save_parameters", dict())
         dial = SaveDialog(save_register, system_widget=False, base_values=base_values)
+        dial.selectFile(os.path.splitext(os.path.basename(self._settings.image_path))[0])
         dial.setDirectory(self._settings.get("io.save_directory", self._settings.get("io.open_directory",
                                                                                      str(Path.home()))))
         dial.selectNameFilter(self._settings.get("io.save_filter", ""))
@@ -451,6 +452,7 @@ class MainMenu(QWidget):
                             dial.exec()
                             self._settings.image = read_thread.image
                 elif selected_filter == "saved project (*.tgz *.tbz2 *.gz *.bz2)":
+                    #TODO chnage to load dialog
                     self._settings.load_project(file_path)
                     # self.segment.threshold_updated()
                 elif selected_filter == "Profiles (*.json)":
@@ -664,6 +666,7 @@ class MaskWindow(QDialog):
 class MainWindow(BaseMainWindow):
     def __init__(self, title, signal_fun=None):
         super().__init__(signal_fun)
+        self.files_num = 2
         self.setWindowTitle(title)
         self.title = title
         self.setMinimumWidth(600)
@@ -724,15 +727,32 @@ class MainWindow(BaseMainWindow):
         self.setWindowTitle(f"PartSeg: {self.settings.image_path}")
 
     def read_drop(self, paths):
-        assert len(paths) == 1
-        ext = os.path.splitext(paths[0])[1]
         read_thread = ImageReaderThread(parent=self)
-        if ext in [".tif", ".tiff", ".lsm"]:
-            read_thread.set_path(paths[0])
-            dial = WaitingDialog(read_thread)
+        dial = WaitingDialog(read_thread)
+        if len(paths) == 1:
+            file_path = paths[0]
+            ext = os.path.splitext(file_path)[1]
+            if ext in [".tif", ".tiff", ".lsm"]:
+                read_thread.set_path(file_path)
+                dial.exec()
+                if read_thread.image:
+                    self.settings.image = read_thread.image
+            elif ext in [".tgz", ".tbz2", ".gz", ".bz2"]:
+                self.settings.load_project(file_path)
+        elif len(paths) == 2:
+            name1, name2  = [os.path.basename(os.path.splitext(x)[0]) for x in paths]
+            if name1.endswith("_mask"):
+                read_thread.set_path(paths[1], paths[0])
+            elif name2.endswith("_mask"):
+                read_thread.set_path(paths[0], paths[1])
+            else:
+                return
             dial.exec()
             if read_thread.image:
                 self.settings.image = read_thread.image
+
+
+
 
 
     def closeEvent(self, event):

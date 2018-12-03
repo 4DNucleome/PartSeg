@@ -58,7 +58,7 @@ class PartSettings(BaseSettings):
         self._mask = None
         self.full_segmentation = None
 
-    def load_profiles(self):
+    def load_profiles(self, file_path):
         pass
 
     def components_mask(self):
@@ -86,7 +86,9 @@ class PartSettings(BaseSettings):
 
     def load_project(self, file_path):
         project_tuple = load_project(file_path)
-        self.image = project_tuple.image
+        im = project_tuple.image
+        im.file_path = file_path
+        self.image = im
         self.mask = project_tuple.mask
         self.segmentation = project_tuple.segmentation
         self.full_segmentation = project_tuple.full_segmentation

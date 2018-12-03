@@ -70,7 +70,10 @@ class SaveDialog(QFileDialog):
     def change_parameters(self, text):
         if not hasattr(self, "stack_widget"):
             return
-        self.stack_widget.setCurrentIndex(self.names.index(text))
+        try:
+            self.stack_widget.setCurrentIndex(self.names.index(text))
+        except ValueError:
+            pass
 
     def selectNameFilter(self, filter: str):
         try:
