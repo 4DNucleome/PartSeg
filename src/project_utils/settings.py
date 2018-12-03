@@ -192,7 +192,7 @@ class ViewSettings(ImageSettings):
 
     @property
     def chosen_colormap(self):
-        return self.get_from_profile("colormaps", color_maps.keys())
+        return self.get_from_profile("colormaps", list(color_maps.keys()))
 
     @chosen_colormap.setter
     def chosen_colormap(self, val):
