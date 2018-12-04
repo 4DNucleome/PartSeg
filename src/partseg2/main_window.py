@@ -9,7 +9,7 @@ import numpy as np
 import SimpleITK as sitk
 import appdirs
 from PyQt5.QtCore import Qt, QByteArray, QEvent
-from PyQt5.QtGui import QIcon, QKeyEvent
+from PyQt5.QtGui import QIcon, QKeyEvent, QKeySequence
 from PyQt5.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
     QFileDialog, QMessageBox, QCheckBox, QComboBox, QStackedLayout, QInputDialog, QDialog
 
@@ -353,7 +353,15 @@ class MainMenu(QWidget):
         self.mask_manager_btn.clicked.connect(self.mask_manager)
         self.interpolate_btn.clicked.connect(self.interpolate_exec)
         self.batch_processing_btn.clicked.connect(self.batch_window)
+        self.setFocusPolicy(Qt.StrongFocus)
         # self.test_btn.clicked.connect(self.test_fun)
+
+    def keyPressEvent(self, event: QKeyEvent):
+        if event.matches(QKeySequence.Save):
+            self.save_file()
+        elif event.matches(QKeySequence.Open):
+            self.load_data()
+        super().keyPressEvent(event)
 
     def save_file(self):
         from common_gui.custom_save import SaveDialog
@@ -750,10 +758,6 @@ class MainWindow(BaseMainWindow):
             dial.exec()
             if read_thread.image:
                 self.settings.image = read_thread.image
-
-
-
-
 
     def closeEvent(self, event):
         # print(self.settings.dump_view_profiles())
