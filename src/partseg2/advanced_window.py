@@ -994,7 +994,7 @@ class StatisticsWindow(QWidget):
         # avali.insert(0, "Emish statistics (oryginal)")
         text = self.statistic_type.currentText()
         try:
-            index = avali.index(text)
+            index = avali.index(text) + 1
         except ValueError:
             index = 0
         self.statistic_type.clear()
