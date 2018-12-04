@@ -332,6 +332,7 @@ class StatisticsSettings(QWidget):
         profile_buttons_layout = QHBoxLayout()
         profile_buttons_layout.addWidget(self.delete_profile_butt)
         profile_buttons_layout.addWidget(self.restore_builtin_profiles)
+        self.restore_builtin_profiles.setHidden(True)
         profile_buttons_layout.addWidget(self.export_profiles_butt)
         profile_buttons_layout.addWidget(self.import_profiles_butt)
         profile_buttons_layout.addWidget(self.edit_profile_butt)
@@ -407,17 +408,8 @@ class StatisticsSettings(QWidget):
         if item is None:
             self.profile_description.setText("")
             return
-        text = "Profile name: {}\n".format(item.text())
         profile = self.settings.statistic_profiles[item.text()]
-        text += "Reversed image [{}]\n".format(profile.reversed_brightness)
-        text += "Gaussed image [{}]\n".format(profile.use_gauss_image)
-        text += "statistics list:\n"
-        for el in profile.chosen_fields:
-            if el[2] is not None:
-                text += "{}: {}\n".format(el[1], el[2])
-            else:
-                text += "{}\n".format(el[1])
-        self.profile_description.setText(text)
+        self.profile_description.setText(str(profile))
 
     def create_selection_changed(self):
         self.choose_butt.setEnabled(True)
@@ -795,6 +787,7 @@ class StatisticsWindow(QWidget):
         self.statistic_type = QComboBox(self)
         # self.statistic_type.addItem("Emish statistics (oryginal)")
         self.statistic_type.currentIndexChanged[str].connect(self.statistic_selection_changed)
+        self.statistic_type.addItem("<none>")
         self.statistic_type.addItems(list(sorted(self.settings.statistic_profiles.keys())))
         self.statistic_type.setToolTip(
             "You can create new statistic profile in advanced window, in tab \"Statistic settings\"")
@@ -1005,6 +998,7 @@ class StatisticsWindow(QWidget):
         except ValueError:
             index = 0
         self.statistic_type.clear()
+        self.statistic_type.addItem("<none>")
         self.statistic_type.addItems(avali)
         self.statistic_type.setCurrentIndex(index)
         self.statistic_type.blockSignals(False)

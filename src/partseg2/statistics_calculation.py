@@ -103,8 +103,8 @@ class StatisticProfile(object):
 
     def __str__(self):
         text = "Profile name: {}\n".format(self.name)
-        text += "Reversed image [{}]\n".format(self.reversed_brightness)
-        text += "Gaussed image [{}]\n".format(self.use_gauss_image)
+        # text += "Reversed image [{}]\n".format(self.reversed_brightness)
+        # text += "Gaussed image [{}]\n".format(self.use_gauss_image)
         if self.name_prefix != "":
             text += "Name prefix: {}\n".format(self.name_prefix)
         text += "statistics list:\n"

@@ -3,6 +3,7 @@ from __future__ import division, print_function
 import collections
 import os
 from math import log
+from typing import Type
 
 import numpy as np
 from PyQt5 import QtGui
@@ -273,6 +274,8 @@ class ImageView(QWidget):
     component_clicked = pyqtSignal(int)
     text_info_change = pyqtSignal(str)
 
+    image_canvas = ImageCanvas
+
     # zoom_changed = pyqtSignal(float, float, float)
 
     def __init__(self, settings, channel_control: ChannelControl):
@@ -282,7 +285,7 @@ class ImageView(QWidget):
         self.channel_control = channel_control
         self.exclude_btn_list = []
         self.image_state = ImageState(settings)
-        self.image_area = MyScrollArea(self.image_state)
+        self.image_area = MyScrollArea(self.image_state, self.image_canvas)
         self.reset_button = create_tool_button("Reset zoom", "zoom-original.png")
         self.reset_button.clicked.connect(self.reset_image_size)
         self.zoom_button = create_tool_button("Zoom", "zoom-select.png")
@@ -454,7 +457,7 @@ class ImageView(QWidget):
 
     def add_labels(self, im):
         if self.labels_layer is not None and self.image_state.show_label:
-            # TODO fix
+            # TODO fix to support time
             layers = self.labels_layer[self.stack_slider.value()]
             components_mask = self._settings.components_mask()
             if self.image_state.show_label == 1:
@@ -506,7 +509,7 @@ class MyScrollArea(QScrollArea):
 
     zoom_changed = pyqtSignal()
 
-    def __init__(self, local_settings, *args, **kwargs):
+    def __init__(self, local_settings, image_canvas: Type[ImageCanvas], *args, **kwargs):
         """
         :type local_settings: ImageState
         :param local_settings:
@@ -518,7 +521,7 @@ class MyScrollArea(QScrollArea):
         self.setAlignment(Qt.AlignCenter)
         self.clicked = False
         self.prev_pos = None
-        self.pixmap = ImageCanvas(local_settings)
+        self.pixmap = image_canvas(local_settings)
         self.pixmap.setScaledContents(True)
         self.pixmap.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
         self.pixmap.setBackgroundRole(QPalette.Base)

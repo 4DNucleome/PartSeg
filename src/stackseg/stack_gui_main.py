@@ -1,14 +1,14 @@
 from __future__ import division
 
 import os
-
+from functools import partial
 import appdirs
 import numpy as np
 from PyQt5.QtCore import pyqtSignal, Qt, QByteArray
 from PyQt5.QtGui import QGuiApplication, QIcon
 from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox, QVBoxLayout, QCheckBox, \
     QComboBox, QDoubleSpinBox, QSpinBox, QStackedLayout, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
-    QTabWidget, QSizePolicy, QApplication
+    QTabWidget, QSizePolicy
 
 from common_gui.channel_control import ChannelControl
 from common_gui.colors_choose import ColorSelector
@@ -26,7 +26,7 @@ from project_utils.image_read_thread import ImageReaderThread
 from stackseg.execute_function_thread import ExecuteFunctionThread
 from .image_view import StackImageView
 from common_gui.select_multiple_files import AddFiles
-from .io_functions import load_stack_segmentation, save_components
+from .io_functions import load_stack_segmentation
 from project_utils.global_settings import static_file_folder
 from project_utils.universal_const import UNITS_LIST, UNIT_SCALE
 from stackseg.stack_algorithm.algorithm_description import stack_algorithm_dict
@@ -51,7 +51,7 @@ class MainMenu(QWidget):
         self.settings = settings
         self.segmentation_cache = None
         self.read_thread = None
-        self.load_image_btn = QPushButton("Load image (also from mask)")
+        self.load_image_btn = QPushButton("Load image (also from segmentation)")
         self.load_image_btn.clicked.connect(self.load_image)
         self.load_segmentation_btn = QPushButton("Load segmentation")
         self.load_segmentation_btn.clicked.connect(self.load_segmentation)
@@ -230,11 +230,29 @@ class MainMenu(QWidget):
             ErrorDialog(e, "Save error").exec()
 
 
+class ComponentCheckBox(QCheckBox):
+    mouse_enter = pyqtSignal(int)
+    mouse_leave = pyqtSignal(int)
+
+    def __init__(self, number: int, parent=None):
+        super().__init__(str(number), parent)
+        self.number = number
+
+    def enterEvent(self, event):
+        self.mouse_enter.emit(self.number)
+
+    def leaveEvent(self, event):
+        self.mouse_leave.emit(self.number)
+
+
+
 class ChosenComponents(QWidget):
     """
     :type check_box: dict[int, QCheckBox]
     """
     check_change_signal = pyqtSignal()
+    mouse_enter = pyqtSignal(int)
+    mouse_leave = pyqtSignal(int)
 
     def __init__(self):
         super(ChosenComponents, self).__init__()
@@ -268,9 +286,11 @@ class ChosenComponents(QWidget):
     def remove_components(self):
         self.check_layout.clear()
         for el in self.check_box.values():
-            """:type el: QCheckBox"""
+            """:type el: ComponentCheckBox"""
             el.deleteLater()
             el.stateChanged.disconnect()
+            el.mouse_leave.disconnect()
+            el.mouse_enter.disconnect()
         self.check_box.clear()
 
     def new_choose(self, num, chosen_components):
@@ -282,10 +302,12 @@ class ChosenComponents(QWidget):
         self.remove_components()
         chosen_components = set(chosen_components)
         for el in components_index:
-            check = QCheckBox(str(el))
+            check = ComponentCheckBox(el)
             if el in chosen_components:
                 check.setChecked(True)
             check.stateChanged.connect(self.check_change)
+            check.mouse_enter.connect(self.mouse_enter.emit)
+            check.mouse_leave.connect(self.mouse_leave.emit)
             self.check_box[el] = check
             self.check_layout.addWidget(check)
         self.blockSignals(False)
@@ -316,13 +338,14 @@ class ChosenComponents(QWidget):
 
 
 class AlgorithmOptions(QWidget):
-    def __init__(self, settings, control_view, component_checker):
+    def __init__(self, settings, image_view, component_checker):
         """
-        :type control_view: ImageState
+        :type image_view: StackImageView
         :type settings: StackSettings
         :param settings:
         :param control_view:
         """
+        control_view = image_view.get_control_view()
         super(AlgorithmOptions, self).__init__()
         self.settings = settings
         self.algorithm_choose = QComboBox()
@@ -348,6 +371,8 @@ class AlgorithmOptions(QWidget):
         self.stack_layout = QStackedLayout()
         self.choose_components = ChosenComponents()
         self.choose_components.check_change_signal.connect(control_view.components_change)
+        self.choose_components.mouse_leave.connect(image_view.component_unmark)
+        self.choose_components.mouse_enter.connect(image_view.component_mark)
         widgets_list = []
         # TODO restore refresh channels num
         for name, val in stack_algorithm_dict.items():
@@ -580,10 +605,10 @@ class ImageInformation(QWidget):
 
 
 class Options(QTabWidget):
-    def __init__(self, settings, control_view, component_checker, parent=None):
+    def __init__(self, settings, image_view, component_checker, parent=None):
         super(Options, self).__init__(parent)
         self._settings = settings
-        self.algorithm_options = AlgorithmOptions(settings, control_view, component_checker)
+        self.algorithm_options = AlgorithmOptions(settings, image_view, component_checker)
         self.image_properties = ImageInformation(settings, parent)
         self.image_properties.add_files.file_list_changed.connect(self.algorithm_options.file_list_change)
         self.colormap_choose = ColorSelector(settings, ["channelcontrol"])
@@ -610,8 +635,7 @@ class MainWindow(BaseMainWindow):
         self.info_text = QLabel()
         self.info_text.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         self.image_view.text_info_change.connect(self.info_text.setText)
-        image_view_control = self.image_view.get_control_view()
-        self.options_panel = Options(self.settings, image_view_control, self.image_view)
+        self.options_panel = Options(self.settings, self.image_view, self.image_view)
         self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
         self.color_bar = ColorBar(self.settings, self.channel_control)
