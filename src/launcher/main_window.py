@@ -1,12 +1,27 @@
-from PyQt5.QtWidgets import QMainWindow, QPushButton, QHBoxLayout, QWidget
+import os
+
+from PyQt5.QtCore import QSize, Qt
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QMainWindow, QToolButton, QHBoxLayout, QWidget
+from project_utils.global_settings import static_file_folder
 
 
 class MainWindow(QMainWindow):
     def __init__(self, title):
         super().__init__()
         self.setWindowTitle(title)
-        self.partseg_button = QPushButton("Analysis GUI")
-        self.stackseg_button = QPushButton("Segmentation GUI")
+        analysis_icon = QIcon(os.path.join(static_file_folder, 'icons', "icon.png"))
+        stack_icon = QIcon(os.path.join(static_file_folder, 'icons', "icon_stack.png"))
+        self.partseg_button = QToolButton(self) # QPushButton(analysis_icon, "Analysis GUI")
+        self.partseg_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.partseg_button.setIcon(analysis_icon)
+        self.partseg_button.setText("Analysis GUI")
+        self.partseg_button.setIconSize(QSize(100, 100))
+        self.stackseg_button = QToolButton(self) # QPushButton(stack_icon, "Segmentation GUI")
+        self.stackseg_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.stackseg_button.setIcon(stack_icon)
+        self.stackseg_button.setText("Segmentation GUI")
+        self.stackseg_button.setIconSize(QSize(100, 100))
         self.partseg_button.clicked.connect(self.launch_partseg)
         self.stackseg_button.clicked.connect(self.launch_stackseg)
         layout = QHBoxLayout()
@@ -15,6 +30,7 @@ class MainWindow(QMainWindow):
         widget = QWidget()
         widget.setLayout(layout)
         self.setCentralWidget(widget)
+        self.setWindowIcon(analysis_icon)
 
     def launch_partseg(self):
         from partseg2.main_window import MainWindow

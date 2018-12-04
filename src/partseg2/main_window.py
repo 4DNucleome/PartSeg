@@ -702,6 +702,7 @@ class MainWindow(BaseMainWindow):
 
         reader =ImageReader()
         im = reader.read(os.path.join(static_file_folder, 'initial_images', "clean_segment.tiff"))
+        im.file_path = ""
         self.settings.image = im
 
         icon = QIcon(os.path.join(static_file_folder, 'icons', "icon.png"))
