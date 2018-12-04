@@ -24,6 +24,7 @@ class StatisticProfile(object):
         "Volume per component": SettingsValue("calculate_component_volume", "Calculate volume of each component "
                                               "of cohesion of current segmentation", None, False, True),
         "Mass": SettingsValue("calculate_mass", "Sum of pixel brightness for current segmentation", None, False, False),
+        "Mask Mass": SettingsValue("calculate_mask_mass", "Sum of pixel brightness for current mask", None, False, False),
         "Mass per component": SettingsValue("calculate_component_mass", "Sum of pixel brightness of each component of"
                                             " cohesion for current segmentation", None, False, True),
         "Border surface": SettingsValue("calculate_border_surface",
@@ -373,6 +374,12 @@ class StatisticProfile(object):
     def calculate_mass(segmentation, image, **_):
         if np.any(segmentation):
             return np.sum(image[segmentation > 0])
+        return 0
+
+    @staticmethod
+    def calculate_mask_mass(base_mask, image, **_):
+        if np.any(base_mask):
+            return np.sum(image[base_mask > 0])
         return 0
 
     @staticmethod
