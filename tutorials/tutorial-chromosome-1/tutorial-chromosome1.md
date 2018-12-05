@@ -3,30 +3,19 @@
 
 In this tutorial we will show how to use PartSeg to segment territories of chromosome 1 inside human cell nucleus and then do simple analysis.  
 
-## Dataset 
+## Use case 
 
 We are dealing with dataset of photos from confocal microscopy obtained with TO-PRO3 probe which is bind non-specyffic to chromatin fiber. This means that it can be assumed that the brighter the voxel of photo is the more chromatin it represends. This dependency is assumed to be linear.
 We will use this depndency to tune parameters of segmentation algorithm.
 
-Dataset for this tutorial can be download from [here](http://nucleus3d.cent.uw.edu.pl/PartSeg/Downloads/A_deconv_elements.zip). It contains 16 catted nucleus with marked chromosome 1 territory.
+The length of human genome is 3,088 Mbp (milions of base pairs), while the length of chromosome 1 is 248 Mbp. So length of chromosome 1 is ~8% of total length and it contains about 8% of total mass of chromatin inside nucleus.
+The length of centromere of chromosome 1 is 7.4 Mbp, so we expect that the probe have marked about 7.7% of chromatin inside nucleus. By trial and error we will use PertSeg to set parameters for segmentation algorithm to find 2 components wchich contains about 7.7% of chromatin.
+We assume that each nucleus sould contain 2 copies of chromosome 1. If it is not the case then the cell is under division and such data should not be processed.
 
-The length of human genome is 3,088,286,401bp (base pairs), while the length of chromosome 1 is 248,956,422bp. So length of chromosome 1 is ~8% of total length and it contains about 8% of total mass of chromatin inside nucleus.
-The length of centromere is 7.4 Mbp. 
-So estimated mass of visible under marker is about 7.7% of chromatin inside nucleus.
-This analysis cannot base on volume, because of nucleous. [link1](https://en.wikipedia.org/wiki/Human_genome)
-[link2](https://en.wikipedia.org/wiki/Chromosome_1) [link3](https://en.wikipedia.org/wiki/Centromere#Positions)
+We base our analysis on chromatin lenght estimation based on density and not on volume, because of nucleous which takes space but does not contain chromatin. [link1](https://en.wikipedia.org/wiki/Human_genome) [link2](https://en.wikipedia.org/wiki/Chromosome_1) [link3](https://en.wikipedia.org/wiki/Centromere#Positions)
 
-Each nucleus should contain 2 copies of chromosome 1. 
-It may happenthat some cell is under division and such data should not be processed.  
-
-1. Data are comes from confocal microscope. Voxel size is 77x77x210 nm   
-2. Data contains four channels: 
-    * channel 0  - chromosome 1 territory (without centromere). Marker do not bind uniformly to 
-    chromatin so this data cannot be used to estimate chromatin density.  
-    * channel 1 - chromosome 1 telomere 3'
-    * channel 2 - chromosome 1 telomere 5'
-    * channel 3 - chromatin density inside nucleus
-3. Data are deconvoluted
+Dataset for this tutorial can be download from [here](http://nucleus3d.cent.uw.edu.pl/PartSeg/Downloads/A_deconv_elements.zip). It contains 16 cut out nuclei with marked chromosome 1 territory. Voxel size is 77x77x210 nm. Data is deconvoluted. Data contains four channels: channel 0 - chromosome 1 territory (without centromere).
+(Marker does not bind uniformly to chromatin so this cannot be used to estimate chromatin density), channel 1 - chromosome 1 telomere 3', channel 2 - chromosome 1 telomere 5', channel 3 - chromatin density inside nucleus.
 
 ## Sample data process
 
