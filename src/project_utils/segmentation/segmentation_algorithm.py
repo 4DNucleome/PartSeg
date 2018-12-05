@@ -10,7 +10,7 @@ from project_utils.segmentation.algorithm_base import SegmentationAlgorithm, Seg
 from project_utils.convex_fill import convex_fill
 from project_utils.image_operations import RadiusType
 from project_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
-from project_utils.segmentation.denoising import noise_removal_dict
+from project_utils.segmentation.noise_removing import noise_removal_dict
 from project_utils.segmentation.threshold import threshold_dict, BaseThreshold
 from project_utils.segmentation.segment import close_small_holes, opening
 

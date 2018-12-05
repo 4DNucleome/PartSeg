@@ -11,7 +11,7 @@ class AlgorithmProperty(object):
     """
 
     def __init__(self, name: str, user_name: str, default_value, options_range=None, single_steep=None,
-                 possible_values=None, property_type=None):
+                 possible_values=None, property_type=None, tool_tip=""):
         self.name = name
         self.user_name = user_name
         if type(options_range) is list:
@@ -24,6 +24,7 @@ class AlgorithmProperty(object):
         self.range = options_range
         self.possible_values = possible_values
         self.single_step = single_steep
+        self.tool_tip = tool_tip
         if self.value_type is list:
             assert default_value in options_range
 
@@ -40,12 +41,17 @@ class AlgorithmDescribeBase:
         raise NotImplementedError()
 
     @classmethod
-    def get_fields(cls) -> typing.List[AlgorithmProperty]:
+    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
         raise NotImplementedError()
 
 
 class Register(OrderedDict):
     def __init__(self, class_methods=None, methods=None, **kwargs):
+        """
+        :param class_methods: list of method which should be class method
+        :param methods: list of method which should be instance method
+        :param kwargs: elements passed to OrderedDict constructor (may be initial elements). I suggest to not use this.
+        """
         super().__init__(**kwargs)
         self.class_methods = list(class_methods) if class_methods else []
         self.methods = list(methods) if methods else []
@@ -62,7 +68,8 @@ class Register(OrderedDict):
             raise ValueError(f"Function get_name of class {value} need return string not {type(name)}")
         self[name] = value
 
-    def check_function(self, ob, function_name, is_class):
+    @staticmethod
+    def check_function(ob, function_name, is_class):
         fun = getattr(ob, function_name, None)
         if not is_class and not inspect.isfunction(fun):
             raise ValueError(f"Class {ob} need to define method {function_name}")

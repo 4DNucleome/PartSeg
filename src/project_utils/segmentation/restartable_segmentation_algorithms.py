@@ -10,7 +10,7 @@ import numpy as np
 import SimpleITK as sitk
 from project_utils import bisect
 import operator
-from project_utils.segmentation.denoising import noise_removal_dict
+from project_utils.segmentation.noise_removing import noise_removal_dict
 from project_utils.segmentation.threshold import threshold_dict, BaseThreshold, double_threshold_dict
 
 
