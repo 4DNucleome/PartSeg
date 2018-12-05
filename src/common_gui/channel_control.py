@@ -52,18 +52,27 @@ class ChannelWidget(QWidget):
         self.setLayout(layout)
 
     def paintEvent(self, event: QPaintEvent):
-        rect = event.rect()
         painter = QPainter(self)
+        if event.rect().top()  == 0 and event.rect().left() == 0:
+            rect = event.rect()
 
-        painter.drawImage(rect, self.image)
-        if self.active:
-            pen = QPen()
-            pen.setWidth(5)
-            pen1 = painter.pen()
-            painter.setPen(pen)
-            painter.drawRect(event.rect())
-            pen1.setWidth(0)
-            painter.setPen(pen1)
+            painter.drawImage(rect, self.image)
+            if self.active:
+                pen = QPen()
+                pen.setWidth(5)
+                pen1 = painter.pen()
+                painter.setPen(pen)
+                painter.drawRect(event.rect())
+                pen1.setWidth(0)
+                painter.setPen(pen1)
+        else:
+            length = self.rect().width()
+            image_length = self.image.width()
+            scalar = image_length/length
+            begin = int(event.rect().x() * scalar)
+            width = int(event.rect().width() * scalar)
+            image_cut = self.image.copy(begin, 0, width, 1)
+            painter.drawImage(event.rect(), image_cut)
         super().paintEvent(event)
 
     def set_active(self, val=True):
@@ -353,7 +362,7 @@ class ChannelControl(ChannelChooseBase):
     def get_limits(self):
         channels_num = len(self.channels_widgets)
         resp = [(0, 0)] * channels_num
-        # : typing.List[typing.Union[typing.Tuple[int, int], None]] = self.current_bounds[:channels_num]
+        # : typing.List[typing.Union[typing.Tuple[int, int], None]]
         for i in range(channels_num):
             if not self._settings.get_from_profile(f"{self._name}.lock_{i}", False):
                 resp[i] = None
@@ -378,7 +387,7 @@ class ChannelControl(ChannelChooseBase):
         self.coloring_update.emit(False)
 
     def showEvent(self, event: QShowEvent):
-        self.update_channels_list()
+        pass # self.update_channels_list()
 
 
 class ChannelChoose(ChannelChooseBase):
