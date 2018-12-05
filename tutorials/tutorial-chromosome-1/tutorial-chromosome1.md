@@ -1,16 +1,16 @@
 
 # Chromosome 1 territory analysis 
 
-In this tutorial we will show how use PartSeg to segment territories of chromosome 1 inside human cell nucleus. 
-And then do simple analysis.  
+In this tutorial we will show how to use PartSeg to segment territories of chromosome 1 inside human cell nucleus and then do simple analysis.  
 
 ## Dataset 
 
-Dataset for this tutorial can be download from [here](http://nucleus3d.cent.uw.edu.pl/PartSeg/Downloads/A_deconv_elements.zip). It contains 16 catted nucleus with marked chromosome 1 territory
-This dataset contains 16 catted nucleus with marked chromosome 1 territory.
+We are dealing with dataset of photos from confocal microscopy obtained with TO-PRO3 probe which is bind non-specyffic to chromatin fiber. This means that it can be assumed that the brighter the voxel of photo is the more chromatin it represends. This dependency is assumed to be linear.
+We will use this depndency to tune parameters of segmentation algorithm.
 
-The length of human genome is 3,088,286,401bp (base pairs). The length of chromosome 1 is 248,956,422bp. 
-So length on chromosome 1 is ~8% of total length, so about 8% of total mass of chromatin inside nucleus.
+Dataset for this tutorial can be download from [here](http://nucleus3d.cent.uw.edu.pl/PartSeg/Downloads/A_deconv_elements.zip). It contains 16 catted nucleus with marked chromosome 1 territory.
+
+The length of human genome is 3,088,286,401bp (base pairs), while the length of chromosome 1 is 248,956,422bp. So length of chromosome 1 is ~8% of total length and it contains about 8% of total mass of chromatin inside nucleus.
 The length of centromere is 7.4 Mbp. 
 So estimated mass of visible under marker is about 7.7% of chromatin inside nucleus.
 This analysis cannot base on volume, because of nucleous. [link1](https://en.wikipedia.org/wiki/Human_genome)
