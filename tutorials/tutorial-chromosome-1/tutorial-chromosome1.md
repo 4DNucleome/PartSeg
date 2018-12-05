@@ -1,10 +1,12 @@
 
 # Chromosome 1 territory analysis 
 
+In this tutorial we will show how use PartSeg to segment territories of chromosome 1 inside human cell nucleus. 
+And then do simple analysis.  
+
 ## Dataset 
 
-Dataset for this tutorial can be download from [link](http://nucleus3d.cent.uw.edu.pl/PartSeg/Downloads/A_deconv_elements.zip)
-
+Dataset for this tutorial can be download from [here](http://nucleus3d.cent.uw.edu.pl/PartSeg/Downloads/A_deconv_elements.zip). It contains 16 catted nucleus with marked chromosome 1 territory
 This dataset contains 16 catted nucleus with marked chromosome 1 territory.
 
 The length of human genome is 3,088,286,401bp (base pairs). The length of chromosome 1 is 248,956,422bp. 
