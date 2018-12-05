@@ -8,7 +8,7 @@ import typing
 
 class BaseThreshold(AlgorithmDescribeBase, ABC):
     @classmethod
-    def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict, operator):
+    def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict, operator: typing.Callable[[object, object], bool]):
         raise NotImplementedError()
 
 
