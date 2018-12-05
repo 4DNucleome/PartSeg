@@ -14,10 +14,10 @@ We assume that each nucleus sould contain 2 copies of chromosome 1. If it is not
 
 We base our analysis on chromatin lenght estimation based on density and not on volume, because of nucleous which takes space but does not contain chromatin. [link1](https://en.wikipedia.org/wiki/Human_genome) [link2](https://en.wikipedia.org/wiki/Chromosome_1) [link3](https://en.wikipedia.org/wiki/Centromere#Positions)
 
-Dataset for this tutorial can be download from [here](http://nucleus3d.cent.uw.edu.pl/PartSeg/Downloads/A_deconv_elements.zip). It contains 16 cut out nuclei with marked chromosome 1 territory. Voxel size is 77x77x210 nm. Data is deconvoluted. Data contains four channels: channel 0 - chromosome 1 territory (without centromere).
-(Marker does not bind uniformly to chromatin so this cannot be used to estimate chromatin density), channel 1 - chromosome 1 telomere 3', channel 2 - chromosome 1 telomere 5', channel 3 - chromatin density inside nucleus.
+Dataset for this tutorial can be download from [here](http://nucleus3d.cent.uw.edu.pl/PartSeg/Downloads/A_deconv_elements.zip). It contains 16 cut out nuclei with marked chromosome 1 territory. Voxel size is 77x77x210 nm. Data is deconvoluted. Data contains four channels: channel 0 - chromosome 1 territory without centromere.
+channel 1 - chromosome 1 telomere 3', channel 2 - chromosome 1 telomere 5', channel 3 - chromatin density inside nucleus. We will use channel 0 for segmentation and channel 1 for verification. As marker does not bind uniformly to chromatin channel 0 cannot be used to estimate chromatin density),
 
-## Sample data process
+## Analysis steps
 
 ### Preparation
 
