@@ -22,66 +22,61 @@ channel 1 - chromosome 1 telomere 3', channel 2 - chromosome 1 telomere 5', chan
 ### Preparation
 
 1. Open PartSeg
-2. Press "Analysis GUI" button  
+2. Click "Analysis GUI" button  
     ![launcher GUI](./images/launcher.png)
-3. Press "Advanced" on top of the window (third from the right)  
+3. Click "Advanced" on top of the window (third from the right)  
     ![PartSeg GUI](images/main_window.png)
 4. Choose "Statistic settings" tab (number 1)  
     ![Advanced window](images/advanced.png) 
 5. Prepare Statistic profile which will giv information about percentage occupancy of segmented region.
     1. Choose "Mass" from list in lower left part (number 2)
-    2. Press button with ∺ symbol (number 3) 
+    2. Click button with symbol ∺ (number 3) 
     3. Choose "Mask mass" (number 4)
-    4. Again push button with ∺ symbol (number 3)
+    4. Again push button with symbol ∺ (number 3)
     5. Set name of statistic profile (number 5)
-    6. Push button "Save statistic profile" (number 6)
-    7. (optionally) you can do it with "Volume" and "Mask Volume" to get more information  
+    6. Click button "Save statistic profile" (number 6)
+    7. (optionally) You can repeat steps 1-6 for statistics "Volume" and "Mask Volume" to get more information
        
 
 ### Data process
 1. Load data:
-    1. Push **Open** button or press **ctrl+O** (cmd+O on mac) 
+    1. Click **Open** button or press **ctrl+O** (cmd+O on mac) 
     2. Choose `image with mask` file filter  
     ![open dialog](images/open_file.png)
     3. Choose data to load
     4. In next widow choose matching file with `_mask` suffix
     
     You can also drag and drop both files on main window
-2. Push the "Statistic calculation" to get preview on statistic (number 1)  
+2. Click the "Statistic calculation" to get preview on statistic (number 1)  
 ![PartSeg GUI](images/main_window_analysis.png) 
     * If you prefer to see booth panels and have place on screen you can preview statistic in 
-    "Advanced" window in tab "Statistics". This views are independent.
-    * On this view you can see difference between checked and unchecked mask checkbox (number 2).
+    "Advanced" window in tab "Statistics". These views are independent.
+    * In this view you can see difference between checked and unchecked mask checkbox (number 2).
     The mask coloring property can be set in "Advanced" window in tab "Settings" 
 3. In the right panel (number 1) you should chose algorithm (I suggest Lower threshold on beginning). 
-Then set parameters. Remember channel is important. And press "Execute" button (number 3)    
+Then set parameters. Don't forget to choose the right channel. And click "Execute" button (number 3)    
 ![PartSeg GUI](images/main_window_analysis2.png)      
 
-4. To verify if segmentation is good in left panel choose channel of chromatin - in this case it is 3 (number 4)
-and choose statistic set prepared in Preparation part (number 5). And then press "Recalculate and replace statistics" 
+4. To verify if segmentation is good, in the left panel choose channel with chromatin - in this case it is 3 (number 4)
+and choose statistic set prepared in Preparation part (number 5). Then press "Recalculate and replace statistics" 
 button (number 6)
 
-5. Base on result decide how to modify parameters of algorithm.
-6. If result is only one component then I suggest to try it split using "Lower threshold path euclidean" to 
-split it on components.
+5. Based on result decide how to modify parameters of the algorithm.
+6. If the result is only one component then you can try it split using "Lower threshold path euclidean".
   
     
 ## Apendix 
 ### A little more about statistics 
 
-1. If you are interested with some statistic which are on the list you can add 
-it to set using button with symbol "→"
+1. If you are interested with some statistic which are on the list you can add it to set using button with symbol "→"
 2. If you wold like to remove statistic from set use button with symbol "←"
 3. The statistic profiles can be exported to `.json` file as a backup or to import in another instance.
 4. When user choose profile name in the box in upper left part then its description will show in area on right.
-5. You can set custom names for statistics 
+5. You can set custom names for statistics.
   
 ### Segment nucleus from stack
 The original deconvoluted stack is available under this [link]([link](http://nucleus3d.cent.uw.edu.pl/PartSeg/Downloads/A_deconv_stack.zip)) 
 
-You can try to improve segmentation on your hand. 
-To do it with PartSeg tool on laucher screen choose button "Segmentation GUI"
-
-the workflow is similar but in current stage tool is more primitive than main.   
+You can try to improve segmentation by hand. To do it with PartSeg tool on laucher screen choose button "Segmentation GUI". The workflow is similar.
 
 [comment]: <> (pandoc -t html -s -o tutorial-chromosome1.html --css pandoc.css -M pagetitle:"Chromosome 1 territory analysis"  tutorial-chromosome1.md)
