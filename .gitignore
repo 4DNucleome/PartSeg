@@ -454,3 +454,4 @@ notebooks
 *.html
 !help/*.html
 test_data/
+!src/launcher.spec
