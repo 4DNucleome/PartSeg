@@ -3,6 +3,7 @@ settings.json
 t_file.py
 help/html
 data/
+*.xcf
 src/static_files/icons/32x32
 
 ### PyCharm ###

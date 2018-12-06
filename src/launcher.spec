@@ -4,6 +4,15 @@ block_cipher = None
 import sys 
 sys.setrecursionlimit(5000)
 
+import tifffile
+
+num = tifffile.__version__.split(".")[0]
+
+if num == '0':
+    hiddenimports = ["tifffile._tifffile"]
+else:
+    hiddenimports = ["imagecodecs._imagecodecs"]
+
 a = Analysis(['launcher_main.py'],
              pathex=['C:\\Users\\Grzegorz\\Documents\\segmentation-gui\\src'],
              binaries=[],
