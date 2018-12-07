@@ -96,6 +96,7 @@ threshold_dict = Register()
 threshold_dict.register(ManualThreshold)
 threshold_dict.register(OtsuThreshold)
 threshold_dict.register(LiThreshold)
+threshold_dict.register(MaximumEntropyThreshold)
 
 
 class DoubleThreshold(BaseThreshold):
