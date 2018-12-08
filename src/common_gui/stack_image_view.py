@@ -115,7 +115,7 @@ class ImageCanvas(QLabel):
         im = self.image
         width, height = self.image_size.width(), self.image_size.height()
         im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 3, QImage.Format_RGB888)
-        self.my_pixmap = QPixmap.fromImage(im2.scaled(self.width(), self.height(), Qt.KeepAspectRatio))
+        self.my_pixmap = QPixmap.fromImage(im2)# .scaled(self.width(), self.height(), Qt.KeepAspectRatio))
         self.repaint()
 
     def leaveEvent(self, a0: QEvent):
@@ -173,8 +173,9 @@ class ImageCanvas(QLabel):
         painter.drawRect(self.point.x(), self.point.y(), diff.x(), diff.y())
 
     def resizeEvent(self, event: QtGui.QResizeEvent):
+        pass
         # print("[resize]", self.size(), self.parent().size(), event.oldSize(), event.size())
-        self.paint_image()
+        # self.paint_image()
 
 
 def get_scroll_bar_proportion(scroll_bar):
