@@ -61,9 +61,6 @@ class PartSettings(BaseSettings):
     def load_profiles(self, file_path):
         pass
 
-    def components_mask(self):
-        return np.array([0] + [1] * self.segmentation.max(), dtype=np.uint8)
-
     def get_project_info(self) -> ProjectTuple:
         algorithm_name = self.last_executed_algorithm
         if algorithm_name:

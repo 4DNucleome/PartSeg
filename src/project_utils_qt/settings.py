@@ -121,6 +121,9 @@ class ImageSettings(QObject):
     def get_information(self, *pos):
         return self._image[pos]
 
+    def components_mask(self):
+        return np.array([0] + [1] * self.segmentation.max(), dtype=np.uint8)
+
 
 class ProfileDict(object):
     def __init__(self):

@@ -1,6 +1,5 @@
-from __future__ import division
-
 import os
+
 import appdirs
 import numpy as np
 from PyQt5.QtCore import pyqtSignal, Qt, QByteArray
@@ -9,28 +8,27 @@ from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMes
     QComboBox, QDoubleSpinBox, QSpinBox, QStackedLayout, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
     QTabWidget, QSizePolicy
 
+from common_gui.algorithms_description import AlgorithmSettingsWidget
 from common_gui.channel_control import ChannelControl
 from common_gui.colors_choose import ColorSelector
+from common_gui.flow_layout import FlowLayout
+from common_gui.select_multiple_files import AddFiles
 from common_gui.stack_image_view import ColorBar
 from common_gui.universal_gui_part import right_label
-
-from common_gui.flow_layout import FlowLayout
 from common_gui.waiting_dialog import WaitingDialog
-from common_gui.algorithms_description import AlgorithmSettingsWidget
-from project_utils_qt.error_dialog import ErrorDialog
-from project_utils_qt.main_window import BaseMainWindow
-from partseg_utils.segmentation.algorithm_base import SegmentationResult
-from .batch_proceed import BatchProceed
-from project_utils_qt.image_read_thread import ImageReaderThread
-from stackseg.execute_function_thread import ExecuteFunctionThread
-from .image_view import StackImageView
-from common_gui.select_multiple_files import AddFiles
-from .io_functions import load_stack_segmentation
 from partseg_utils.global_settings import static_file_folder
+from partseg_utils.segmentation.algorithm_base import SegmentationResult
 from partseg_utils.universal_const import UNITS_LIST, UNIT_SCALE
+from project_utils_qt.error_dialog import ErrorDialog
+from project_utils_qt.image_read_thread import ImageReaderThread
+from project_utils_qt.main_window import BaseMainWindow
+from stackseg.execute_function_thread import ExecuteFunctionThread
 from stackseg.stack_algorithm.algorithm_description import stack_algorithm_dict
 from stackseg.stack_settings import StackSettings
 from tiff_image import ImageReader, Image
+from .batch_proceed import BatchProceed
+from .image_view import StackImageView
+from .io_functions import load_stack_segmentation
 
 app_name = "StackSeg"
 app_lab = "LFSG"
@@ -58,7 +56,7 @@ class MainMenu(QWidget):
         self.save_segmentation_btn.clicked.connect(self.save_segmentation)
         self.save_catted_parts = QPushButton("Save components")
         self.save_catted_parts.clicked.connect(self.save_result)
-        self. setContentsMargins(0, 0, 0, 0)
+        self.setContentsMargins(0, 0, 0, 0)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -82,6 +80,7 @@ class MainMenu(QWidget):
             self.settings.set("io.load_image_directory", os.path.dirname(str(file_path)))
             self.settings.set("io.load_image_filter", dial.selectedNameFilter())
             read_thread = ImageReaderThread(parent=self)
+
             def exception_hook(exception):
                 if isinstance(exception, ValueError) and exception.args[0] == "not a TIFF file":
                     QMessageBox.warning(self, "Open error", "Image is not proper tiff/lsm image")
@@ -91,6 +90,7 @@ class MainMenu(QWidget):
                     QMessageBox.warning(self, "Open error", "Some problem with reading from disc")
                 else:
                     raise exception
+
             if dial.selectedNameFilter() == filters[1]:
                 segmentation, metadata = load_stack_segmentation(file_path)
                 if "base_file" not in metadata:
@@ -148,6 +148,7 @@ class MainMenu(QWidget):
             file_path = str(dial.selectedFiles()[0])
             self.settings.set("io.open_segmentation_directory", os.path.dirname(str(file_path)))
             execute_thread = ExecuteFunctionThread(self.settings.load_segmentation, [file_path])
+
             def exception_hook(exception):
                 if isinstance(exception, ValueError) and exception.args[0] == "Segmentation do not fit to image":
                     QMessageBox.warning(self, "Open error", "Segmentation do not fit to image")
@@ -157,6 +158,7 @@ class MainMenu(QWidget):
                     QMessageBox.warning(self, "Open error", "Some problem with reading from disc")
                 else:
                     raise exception
+
             dial = WaitingDialog(execute_thread, "Save segmentation", exception_hook=exception_hook)
             dial.exec()
         except Exception as e:
@@ -242,7 +244,6 @@ class ComponentCheckBox(QCheckBox):
 
     def leaveEvent(self, event):
         self.mouse_leave.emit(self.number)
-
 
 
 class ChosenComponents(QWidget):
@@ -342,7 +343,6 @@ class AlgorithmOptions(QWidget):
         :type image_view: StackImageView
         :type settings: StackSettings
         :param settings:
-        :param control_view:
         """
         control_view = image_view.get_control_view()
         super(AlgorithmOptions, self).__init__()
@@ -400,7 +400,7 @@ class AlgorithmOptions(QWidget):
         main_layout = QVBoxLayout()
         main_layout.setSpacing(0)
         opt_layout = QHBoxLayout()
-        opt_layout.setContentsMargins(0 ,0 ,0 ,0)
+        opt_layout.setContentsMargins(0, 0, 0, 0)
         opt_layout.addWidget(self.show_result)
         opt_layout.addWidget(right_label("Opacity:"))
         opt_layout.addWidget(self.opacity)
@@ -538,9 +538,9 @@ class AlgorithmOptions(QWidget):
         self.progress_info_lab.setHidden(True)
 
     def execution_done(self, segmentation: SegmentationResult):
-        self.settings.segmentation = segmentation.segmentation
         self.choose_components.set_chose(range(1, segmentation.segmentation.max() + 1),
                                          np.arange(len(self.chosen_list)) + 1)
+        self.settings.segmentation = segmentation.segmentation
 
 
 class ImageInformation(QWidget):
@@ -656,8 +656,6 @@ class MainWindow(BaseMainWindow):
         sub_layout.addLayout(sub3_layout, 1)
         sub_layout.addLayout(sub2_layout, 0)
         layout.addLayout(sub_layout)
-        # self.pixmap.adjustSize()
-        # self.pixmap.update_size(2)
         self.widget = QWidget()
         self.widget.setLayout(layout)
         self.setCentralWidget(self.widget)

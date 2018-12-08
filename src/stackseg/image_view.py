@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QToolTip
 from common_gui.stack_image_view import ImageView, ImageCanvas
 import numpy as np
 
+
 class StackImageCanvas(ImageCanvas):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -58,7 +59,6 @@ class StackImageView(ImageView):
         num = self.labels_layer[self.stack_slider.value(), y, x]
         if num > 0:
             self.component_clicked.emit(num)
-
 
     def event(self, event: QEvent):
         if event.type() == QEvent.ToolTip and self.component is not None:
