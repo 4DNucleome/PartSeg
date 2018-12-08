@@ -4,15 +4,15 @@ import SimpleITK as sitk
 import numpy as np
 
 import operator
-from project_utils import bisect
-from project_utils.channel_class import Channel
-from project_utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
-from project_utils.convex_fill import convex_fill
-from project_utils.image_operations import RadiusType
-from project_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
-from project_utils.segmentation.noise_removing import noise_removal_dict
-from project_utils.segmentation.threshold import threshold_dict, BaseThreshold
-from project_utils.segmentation.segment import close_small_holes, opening
+from partseg_utils import bisect
+from partseg_utils.channel_class import Channel
+from partseg_utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
+from partseg_utils.convex_fill import convex_fill
+from partseg_utils.image_operations import RadiusType
+from partseg_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
+from partseg_utils.segmentation.noise_removing import noise_removal_dict
+from partseg_utils.segmentation.threshold import threshold_dict, BaseThreshold
+from partseg_utils.segmentation.segment import close_small_holes, opening
 
 
 class StackAlgorithm(SegmentationAlgorithm, ABC):

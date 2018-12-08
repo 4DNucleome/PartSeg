@@ -4,7 +4,7 @@ import numpy as np
 import json
 from typing import Union, Optional
 from io import BytesIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
-from project_utils.io_utils import get_tarinfo
+from partseg_utils.io_utils import get_tarinfo
 from tiff_image import Image, ImageWriter
 
 

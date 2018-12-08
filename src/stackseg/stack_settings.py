@@ -4,7 +4,7 @@ from os import path
 from PyQt5.QtCore import pyqtSignal
 
 from project_utils_qt.settings import BaseSettings
-from project_utils.segmentation.segment import cut_with_mask, save_catted_list
+from partseg_utils.segmentation.segment import cut_with_mask, save_catted_list
 from deprecation import deprecated
 
 from stackseg.io_functions import save_stack_segmentation, load_stack_segmentation, save_components

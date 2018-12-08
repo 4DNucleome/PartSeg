@@ -2,16 +2,16 @@ from abc import ABC
 from collections import defaultdict
 from enum import Enum
 
-from project_utils.channel_class import Channel
-from project_utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
-from project_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
-from project_utils.distance_in_structure.find_split import distance_sprawl, path_minimum_sprawl, path_maximum_sprawl
+from partseg_utils.channel_class import Channel
+from partseg_utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
+from partseg_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
+from partseg_utils.distance_in_structure.find_split import distance_sprawl, path_minimum_sprawl, path_maximum_sprawl
 import numpy as np
 import SimpleITK as sitk
-from project_utils import bisect
+from partseg_utils import bisect
 import operator
-from project_utils.segmentation.noise_removing import noise_removal_dict
-from project_utils.segmentation.threshold import threshold_dict, BaseThreshold, double_threshold_dict
+from partseg_utils.segmentation.noise_removing import noise_removal_dict
+from partseg_utils.segmentation.threshold import threshold_dict, BaseThreshold, double_threshold_dict
 
 
 def blank_operator(_x, _y):

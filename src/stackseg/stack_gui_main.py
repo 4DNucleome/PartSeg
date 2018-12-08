@@ -19,15 +19,15 @@ from common_gui.waiting_dialog import WaitingDialog
 from common_gui.algorithms_description import AlgorithmSettingsWidget
 from project_utils_qt.error_dialog import ErrorDialog
 from project_utils_qt.main_window import BaseMainWindow
-from project_utils.segmentation.algorithm_base import SegmentationResult
+from partseg_utils.segmentation.algorithm_base import SegmentationResult
 from .batch_proceed import BatchProceed
 from project_utils_qt.image_read_thread import ImageReaderThread
 from stackseg.execute_function_thread import ExecuteFunctionThread
 from .image_view import StackImageView
 from common_gui.select_multiple_files import AddFiles
 from .io_functions import load_stack_segmentation
-from project_utils.global_settings import static_file_folder
-from project_utils.universal_const import UNITS_LIST, UNIT_SCALE
+from partseg_utils.global_settings import static_file_folder
+from partseg_utils.universal_const import UNITS_LIST, UNIT_SCALE
 from stackseg.stack_algorithm.algorithm_description import stack_algorithm_dict
 from stackseg.stack_settings import StackSettings
 from tiff_image import ImageReader, Image

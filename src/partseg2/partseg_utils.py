@@ -2,8 +2,8 @@ import typing
 from io import BytesIO
 from textwrap import indent
 import numpy as np
-from project_utils.class_generator import BaseReadonlyClass
-from project_utils.mask_create import MaskProperty
+from partseg_utils.class_generator import BaseReadonlyClass
+from partseg_utils.mask_create import MaskProperty
 from .algorithm_description import SegmentationProfile
 
 

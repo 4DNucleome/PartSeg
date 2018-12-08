@@ -9,8 +9,8 @@ from matplotlib import pyplot
 
 from partseg.backend import GAUSS
 from partseg.segment import SegmentationProfile
-from project_utils.global_settings import static_file_folder, develop
-from project_utils.image_operations import DrawType
+from partseg_utils.global_settings import static_file_folder, develop
+from partseg_utils.image_operations import DrawType
 from qt_import import QWidget, FigureCanvas, QToolButton, QSize, QIcon, QAction, QLabel, QDialog, NavigationToolbar, \
     Qt, QSlider, QCheckBox, QVBoxLayout, QHBoxLayout, QPushButton, QDoubleSpinBox, QGridLayout, QInputDialog, \
     QApplication, QImage, QPixmap

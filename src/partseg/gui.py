@@ -20,7 +20,7 @@ from partseg.batch_window import BatchWindow
 from partseg.image_view import MyCanvas, MyDrawCanvas
 from partseg.interpolate_dialog import InterpolateDialog
 from partseg.io_functions import save_to_cmap, save_to_project, load_project, GaussUse, save_to_xyz
-from project_utils.global_settings import static_file_folder, config_folder
+from partseg_utils.global_settings import static_file_folder, config_folder
 from qt_import import *
 from scipy.ndimage.interpolation import zoom
 

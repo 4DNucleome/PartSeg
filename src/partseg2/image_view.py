@@ -10,7 +10,7 @@ from common_gui.channel_control import ChannelControl, ChannelChoose
 from common_gui.stack_image_view import ImageView, create_tool_button
 from partseg2.advanced_window import StatisticsWindow
 from partseg2.partseg_settings import MASK_COLORS, PartSettings
-from project_utils.color_image import color_image
+from partseg_utils.color_image import color_image
 import numpy as np
 
 class RawImageStack(QStackedWidget):

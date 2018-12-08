@@ -1,5 +1,5 @@
 import sys
-import project_utils.report_utils as report_utils
+import partseg_utils.report_utils as report_utils
 
 
 def my_excepthook(type_, value, trace_back):

@@ -8,7 +8,7 @@ if __name__ == '__main__':
     multiprocessing.freeze_support()
     # import warnings
     # warnings.filterwarnings('error')
-    from project_utils.global_settings import set_qt4, set_qt5, set_develop
+    from partseg_utils.global_settings import set_qt4, set_qt5, set_develop
     parser = argparse.ArgumentParser("Program for segment of connected components")
     parser.add_argument("file", nargs="?", help="file to open")
     parser.add_argument("-qt4", "--force-qt4", dest="qt4", const=True, default=False, action="store_const",

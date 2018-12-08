@@ -12,7 +12,7 @@ def main():
     logging.basicConfig(level=logging.INFO)
     from PyQt5.QtWidgets import QApplication
     myApp = QApplication(sys.argv)
-    from project_utils.base_argparser import CustomParser
+    from partseg_utils.base_argparser import CustomParser
     args = CustomParser("PartSeg").parse_args()
     print(args)
     from partseg2.main_window import MainWindow

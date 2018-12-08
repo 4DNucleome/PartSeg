@@ -12,8 +12,8 @@ from common_gui.mask_widget import MaskWidget
 from common_gui.universal_gui_part import right_label
 from partseg2.algorithm_description import SegmentationProfile
 from partseg2.io_functions import save_register
-from project_utils.io_utils import SaveBase
-from project_utils.segmentation.algorithm_describe_base import AlgorithmProperty
+from partseg_utils.io_utils import SaveBase
+from partseg_utils.segmentation.algorithm_describe_base import AlgorithmProperty
 
 from .batch_processing.calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, \
     MaskSuffix, MaskSub, MaskFile, ProjectSave, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, \

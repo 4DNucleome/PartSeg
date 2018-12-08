@@ -15,10 +15,10 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
     QSlider, QCheckBox, QComboBox
 from scipy.ndimage import gaussian_filter
 
-from project_utils.color_image import color_image, add_labels
-from project_utils.color_image.color_image_base import color_maps
-from project_utils.colors import default_colors
-from project_utils.global_settings import static_file_folder
+from partseg_utils.color_image import color_image, add_labels
+from partseg_utils.color_image.color_image_base import color_maps
+from partseg_utils.colors import default_colors
+from partseg_utils.global_settings import static_file_folder
 from project_utils_qt.settings import ViewSettings
 from stackseg.stack_settings import StackSettings
 from tiff_image import Image

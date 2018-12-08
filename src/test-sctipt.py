@@ -1,6 +1,6 @@
-from project_utils.class_generator import BaseReadonlyClass
+from partseg_utils.class_generator import BaseReadonlyClass
 from typing import NamedTuple, Any
-from project_utils.mask_create import calculate_mask, MaskProperty
+from partseg_utils.mask_create import calculate_mask, MaskProperty
 import typing
 
 

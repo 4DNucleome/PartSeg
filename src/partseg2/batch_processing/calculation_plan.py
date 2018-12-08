@@ -10,11 +10,11 @@ from deprecation import deprecated
 from six import add_metaclass
 
 from partseg2.save_register import save_register
-from project_utils.cmap_utils import CmapProfileBase
+from partseg_utils.cmap_utils import CmapProfileBase
 from partseg2.statistics_calculation import StatisticProfile
 from partseg2.algorithm_description import SegmentationProfile
-from project_utils.mask_create import MaskProperty
-from project_utils.class_generator import BaseReadonlyClass
+from partseg_utils.mask_create import MaskProperty
+from partseg_utils.class_generator import BaseReadonlyClass
 
 
 class MaskBase:

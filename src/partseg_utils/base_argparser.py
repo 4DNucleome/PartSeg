@@ -1,6 +1,6 @@
 import argparse
 from typing import Optional, Sequence, Text
-import project_utils.report_utils as report_utils
+import partseg_utils.report_utils as report_utils
 
 
 class CustomParser(argparse.ArgumentParser):

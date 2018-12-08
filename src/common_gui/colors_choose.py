@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QCheckBox, QPushButton, QHBoxL
 from common_gui.channel_control import ColorPreview
 from common_gui.flow_layout import FlowLayout
 from common_gui.vetical_scroll_area import VerticalScrollArea
-from project_utils.color_image import color_image
+from partseg_utils.color_image import color_image
 from project_utils_qt.settings import ViewSettings
 
 

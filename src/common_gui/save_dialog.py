@@ -3,8 +3,8 @@ from enum import Enum
 from PyQt5.QtWidgets import QDialog, QWidget, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QFormLayout, QSpinBox, \
     QDoubleSpinBox, QCheckBox, QLineEdit, QComboBox
 
-from project_utils.channel_class import Channel
-from project_utils.class_generator import BaseReadonlyClass
+from partseg_utils.channel_class import Channel
+from partseg_utils.class_generator import BaseReadonlyClass
 
 
 class GetPropertyWidget(QWidget):

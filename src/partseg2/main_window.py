@@ -23,11 +23,11 @@ from partseg2.interpolate_dialog import InterpolateDialog
 from partseg2.interpolate_thread import InterpolateThread
 from common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, AlgorithmChoose
 from project_utils_qt.error_dialog import ErrorDialog
-from project_utils.global_settings import static_file_folder
+from partseg_utils.global_settings import static_file_folder
 from project_utils_qt.image_read_thread import ImageReaderThread
 from project_utils_qt.main_window import BaseMainWindow
-from project_utils.mask_create import calculate_mask, MaskProperty
-from project_utils.segmentation.algorithm_base import SegmentationResult
+from partseg_utils.mask_create import calculate_mask, MaskProperty
+from partseg_utils.segmentation.algorithm_base import SegmentationResult
 from .partseg_settings import PartSettings, save_labeled_image
 from .partseg_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
