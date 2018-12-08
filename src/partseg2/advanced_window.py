@@ -13,8 +13,6 @@ from partseg2.partseg_settings import PartSettings, MASK_COLORS
 from partseg2.profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer
 from partseg2.statistics_calculation import StatisticProfile
 from project_utils.global_settings import static_file_folder
-from project_utils.segmentation.noise_removing import noise_removal_dict
-from project_utils.settings import BaseSettings
 from project_utils.universal_const import UNITS_DICT, UNIT_SCALE, UNITS_LIST
 from common_gui.dim_combobox import DimComboBox
 

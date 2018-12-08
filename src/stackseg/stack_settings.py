@@ -3,7 +3,7 @@ import numpy as np
 from os import path
 from PyQt5.QtCore import pyqtSignal
 
-from project_utils.settings import BaseSettings
+from project_utils_qt.settings import BaseSettings
 from project_utils.segmentation.segment import cut_with_mask, save_catted_list
 from deprecation import deprecated
 

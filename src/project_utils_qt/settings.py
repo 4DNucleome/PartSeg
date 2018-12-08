@@ -6,11 +6,11 @@ import typing
 from PyQt5.QtCore import QObject, pyqtSignal
 
 from project_utils.color_image.color_image_base import color_maps
-from .image_operations import RadiusType
+from project_utils.image_operations import RadiusType
 import copy
 import numpy as np
 from os import path, makedirs
-from .class_generator import ReadonlyClassEncoder, readonly_hook
+from project_utils.class_generator import ReadonlyClassEncoder, readonly_hook
 from tiff_image import Image, ImageReader
 
 

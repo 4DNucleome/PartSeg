@@ -1,6 +1,6 @@
 from partseg2.algorithm_description import SegmentationProfile
 from .statistics_calculation import StatisticProfile
-from project_utils.settings import ProfileEncoder, profile_hook
+from project_utils_qt.settings import ProfileEncoder, profile_hook
 from partseg2.batch_processing.calculation_plan import CalculationPlan, CalculationTree
 
 

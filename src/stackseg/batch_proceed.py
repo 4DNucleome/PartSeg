@@ -3,7 +3,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 
 from .io_functions import load_stack_segmentation, save_stack_segmentation
 from project_utils.segmentation.algorithm_base import SegmentationAlgorithm
-from project_utils.settings import ImageSettings
+from project_utils_qt.settings import ImageSettings
 from tiff_image import ImageReader
 from typing import Type
 from os import path

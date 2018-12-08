@@ -13,15 +13,13 @@ from PyQt5.QtWidgets import QScrollBar, QLabel, QGridLayout
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
     QScrollArea, QSizePolicy, QToolButton, QAction, QApplication, \
     QSlider, QCheckBox, QComboBox
-# from matplotlib.cm import get_cmap
-# from matplotlib.colors import PowerNorm
 from scipy.ndimage import gaussian_filter
 
 from project_utils.color_image import color_image, add_labels
 from project_utils.color_image.color_image_base import color_maps
 from project_utils.colors import default_colors
 from project_utils.global_settings import static_file_folder
-from project_utils.settings import ViewSettings
+from project_utils_qt.settings import ViewSettings
 from stackseg.stack_settings import StackSettings
 from tiff_image import Image
 from .channel_control import ChannelControl
@@ -118,6 +116,7 @@ class ImageCanvas(QLabel):
         width, height = self.image_size.width(), self.image_size.height()
         im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 3, QImage.Format_RGB888)
         self.my_pixmap = QPixmap.fromImage(im2.scaled(self.width(), self.height(), Qt.KeepAspectRatio))
+        self.repaint()
 
     def leaveEvent(self, a0: QEvent):
         self.point = None

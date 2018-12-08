@@ -8,7 +8,7 @@ from project_utils.color_image import color_image
 import typing
 
 from stackseg.stack_settings import default_colors
-from project_utils.settings import ViewSettings
+from project_utils_qt.settings import ViewSettings
 
 
 class ColorPreview(QWidget):

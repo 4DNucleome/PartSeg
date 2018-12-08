@@ -1,5 +1,5 @@
 from tiff_image import ImageReader, Image
-from .progress_thread import ProgressTread
+from project_utils_qt.progress_thread import ProgressTread
 from PyQt5.QtCore import pyqtSignal
 
 

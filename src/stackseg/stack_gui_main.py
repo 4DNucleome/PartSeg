@@ -1,7 +1,6 @@
 from __future__ import division
 
 import os
-from functools import partial
 import appdirs
 import numpy as np
 from PyQt5.QtCore import pyqtSignal, Qt, QByteArray
@@ -18,11 +17,11 @@ from common_gui.universal_gui_part import right_label
 from common_gui.flow_layout import FlowLayout
 from common_gui.waiting_dialog import WaitingDialog
 from common_gui.algorithms_description import AlgorithmSettingsWidget
-from project_utils.error_dialog import ErrorDialog
-from project_utils.main_window import BaseMainWindow
+from project_utils_qt.error_dialog import ErrorDialog
+from project_utils_qt.main_window import BaseMainWindow
 from project_utils.segmentation.algorithm_base import SegmentationResult
 from .batch_proceed import BatchProceed
-from project_utils.image_read_thread import ImageReaderThread
+from project_utils_qt.image_read_thread import ImageReaderThread
 from stackseg.execute_function_thread import ExecuteFunctionThread
 from .image_view import StackImageView
 from common_gui.select_multiple_files import AddFiles

@@ -8,7 +8,7 @@ from .algorithm_description import SegmentationProfile
 from .partseg_utils import HistoryElement, SegmentationPipeline
 from .save_hooks import PartEncoder, part_hook
 from .io_functions import save_project, save_cmap, load_project, ProjectTuple
-from project_utils.settings import BaseSettings
+from project_utils_qt.settings import BaseSettings
 import numpy as np
 
 MASK_COLORS = {"black": np.array((0, 0, 0)), "white": np.array((255, 255, 255)), "red": np.array((255, 0, 0)),

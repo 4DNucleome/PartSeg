@@ -3,7 +3,7 @@ import multiprocessing
 multiprocessing.freeze_support()
 
 __author__ = "Grzegorz Bokota"
-from project_utils.except_hook import my_excepthook
+from project_utils_qt.except_hook import my_excepthook
 
 def sig_handler(signum, frame):
     print ("segfault")

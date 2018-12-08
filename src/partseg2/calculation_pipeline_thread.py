@@ -1,6 +1,6 @@
 from .partseg_utils import SegmentationPipeline
 from .calculate_pipeline import calculate_pipeline, PipelineResult
-from project_utils.progress_thread import ProgressTread
+from project_utils_qt.progress_thread import ProgressTread
 from tiff_image import Image
 import numpy as np
 import typing

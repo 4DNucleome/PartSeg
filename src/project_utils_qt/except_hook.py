@@ -10,7 +10,7 @@ def my_excepthook(type_, value, trace_back):
             from PyQt5.QtWidgets import QApplication
             if QApplication.instance():
                 # noinspection PyUnresolvedReferences
-                from .error_dialog import ErrorDialog
+                from project_utils_qt.error_dialog import ErrorDialog
                 dial = ErrorDialog(value, "Exception during program run")
                 dial.exec()
         except ImportError:
