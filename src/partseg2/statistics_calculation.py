@@ -87,7 +87,6 @@ class StatisticProfile(object):
                 tree = self.rebuild_tree(cf_val[0])
             self.chosen_fields.append((tree, user_name, None))
             self._need_mask = self._need_mask or self.need_mask(tree)
-        self.voxel_size = (1, 1, 1)
         self.reversed_brightness = reversed_brightness
         self.use_gauss_image = use_gauss_image
         self.name_prefix = name_prefix
@@ -267,7 +266,6 @@ class StatisticProfile(object):
         return 1
 
     def calculate(self, image, gauss_image, segmentation, full_mask, base_mask, voxel_size):
-        self.voxel_size = voxel_size
         if self._need_mask and base_mask is None:
             raise ValueError("Statistics need mask")
         result = OrderedDict()
@@ -279,7 +277,8 @@ class StatisticProfile(object):
             noise_mean = np.mean(image[full_mask == 0])
             image = noise_mean - image
         help_dict = dict()
-        kw = {"image": image, "segmentation": segmentation, "base_mask": base_mask, "full_segmentation": full_mask}
+        kw = {"image": image, "segmentation": segmentation, "base_mask": base_mask, "full_segmentation": full_mask,
+              "voxel_size": voxel_size}
         for tree, user_name, params in self.chosen_fields:
             try:
                 result[self.name_prefix + user_name] = self.calculate_tree(tree, help_dict, kw)
@@ -295,33 +294,32 @@ class StatisticProfile(object):
         return result
 
     @staticmethod
-    def pixel_volume(spacing):
-        return reduce((lambda x, y: x * y), spacing)
+    def calculate_volume(segmentation, voxel_size, **_):
+        return np.count_nonzero(segmentation) * pixel_volume(voxel_size)
 
-    def calculate_volume(self, segmentation, **_):
-        return np.count_nonzero(segmentation) * self.pixel_volume(self.voxel_size)
+    @staticmethod
+    def calculate_component_volume(segmentation, voxel_size, **_):
+        return np.bincount(segmentation.flat)[1:] * pixel_volume(voxel_size)
 
-    def calculate_component_volume(self, segmentation, **_):
-        return np.bincount(segmentation.flat)[1:] * self.pixel_volume(self.voxel_size)
-
-    def calculate_main_axis(self, segmentation: np.ndarray, image: np.ndarray):
+    @staticmethod
+    def calculate_main_axis(segmentation: np.ndarray, image: np.ndarray, voxel_size):
         cut_img = np.copy(image)
         cut_img[segmentation == 0] = 0
         cut_img = np.swapaxes(cut_img, 0, 2)
-        orientation_matrix, _ = af.find_density_orientation(cut_img, self.voxel_size, 1)
-        center_of_mass = af.density_mass_center(cut_img, self.voxel_size)
+        orientation_matrix, _ = af.find_density_orientation(cut_img, voxel_size, 1)
+        center_of_mass = af.density_mass_center(cut_img, voxel_size)
         # positions = np.array(np.nonzero(np.swapaxes(segmentation, 0, 2)), dtype=np.float64)
         positions = np.array(np.nonzero(cut_img), dtype=np.float64)
-        for i, v in enumerate(self.voxel_size):
+        for i, v in enumerate(voxel_size):
             positions[i] *= v
             positions[i] -= center_of_mass[i]
         centered = np.dot(orientation_matrix.T, positions)
         size = np.max(centered, axis=1) - np.min(centered, axis=1)
         return size
 
-    def get_main_axis_length(self, index, segmentation: np.ndarray, image: np.ndarray, help_dict: Dict,  **_):
+    def get_main_axis_length(self, index, segmentation: np.ndarray, image: np.ndarray, help_dict: Dict, voxel_size, **_):
         if "main_axis" not in help_dict:
-            help_dict["main_axis"] = self.calculate_main_axis(segmentation, image)
+            help_dict["main_axis"] = self.calculate_main_axis(segmentation, image, voxel_size)
         return help_dict["main_axis"][index]
 
     def calculate_first_main_axis_length(self, **kwargs):
@@ -390,8 +388,9 @@ class StatisticProfile(object):
             res.append(np.sum(image[segmentation == i]))
         return res
 
-    def calculate_border_surface(self, segmentation, **_):
-        return calculate_volume_surface(segmentation, self.voxel_size)
+    @staticmethod
+    def calculate_border_surface(segmentation, voxel_size, **_):
+        return calculate_volume_surface(segmentation, voxel_size)
 
     @staticmethod
     def maximum_brightness(segmentation, image, **_):
@@ -438,17 +437,19 @@ class StatisticProfile(object):
         else:
             return None
 
-    def moment_of_inertia(self, image, segmentation, **_):
+    @staticmethod
+    def moment_of_inertia(image, segmentation, voxel_size, **_):
         if image.ndim != 3:
             return None
         img = np.copy(image)
         img[segmentation == 0] = 0
-        return af.calculate_density_momentum(img, self.voxel_size,)
+        return af.calculate_density_momentum(img, voxel_size,)
 
-    def border_mask(self, base_mask, radius, **_):
+    @staticmethod
+    def border_mask(base_mask, radius, voxel_size, **_):
         if base_mask is None:
             return None
-        final_radius = [int(radius / x) for x in self.voxel_size]
+        final_radius = [int(radius / x) for x in voxel_size]
         base_mask = np.array(base_mask > 0)
         mask = base_mask.astype(np.uint8)
         eroded = sitk.GetArrayFromImage(sitk.BinaryErode(sitk.GetImageFromArray(mask), final_radius))
@@ -464,29 +465,33 @@ class StatisticProfile(object):
             return np.sum(image[final_mask])
         return 0
 
-    def border_volume(self, segmentation, **kwargs):
+    def border_volume(self, segmentation, voxel_size, **kwargs):
         border_mask = self.border_mask(**kwargs)
         if border_mask is None:
             return None
         final_mask = np.array((border_mask > 0) * (segmentation > 0))
-        return np.count_nonzero(final_mask) * self.pixel_volume(self.voxel_size)
+        return np.count_nonzero(final_mask) * pixel_volume(voxel_size)
 
     @staticmethod
     def number_of_components(segmentation, **_):
         return segmentation.max()
 
-    def mask_volume(self, base_mask, **_):
-        return np.count_nonzero(base_mask) * self.pixel_volume(self.voxel_size)
+    def mask_volume(self, base_mask, voxel_size, **_):
+        return np.count_nonzero(base_mask) * pixel_volume(voxel_size)
 
-    def mask_diameter(self, base_mask, **_):
-        return calc_diam(get_border(base_mask), self.voxel_size)
+    def mask_diameter(self, base_mask, voxel_size, **_):
+        return calc_diam(get_border(base_mask), voxel_size)
 
-    def segmentation_diameter(self, segmentation, **_):
-        return calc_diam(get_border(segmentation), self.voxel_size)
+    def segmentation_diameter(self, segmentation, voxel_size, **_):
+        return calc_diam(get_border(segmentation), voxel_size)
 
-    def component_diameter(self, segmentation, **_):
+    def component_diameter(self, segmentation, voxel_size, **_):
         unique = np.unique(segmentation[segmentation > 0])
-        return np.array([calc_diam(get_border(segmentation == i), self.voxel_size) for i in unique], dtype=np.float)
+        return np.array([calc_diam(get_border(segmentation == i), voxel_size) for i in unique], dtype=np.float)
+
+
+def pixel_volume(spacing):
+    return reduce((lambda x, y: x * y), spacing)
 
 
 def calculate_volume_surface(volume_mask, voxel_size):
