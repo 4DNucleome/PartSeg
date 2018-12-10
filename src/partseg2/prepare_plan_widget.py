@@ -14,10 +14,11 @@ from partseg2.algorithm_description import SegmentationProfile
 from partseg2.io_functions import save_register
 from partseg_utils.io_utils import SaveBase
 from partseg_utils.segmentation.algorithm_describe_base import AlgorithmProperty
+from partseg_utils.universal_const import UNITS_LIST
 
-from .batch_processing.calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, \
-    MaskSuffix, MaskSub, MaskFile, ProjectSave, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, \
-    MaskSave, ImageSave, XYZSave, StatisticCalculate, Save
+from .batch_processing.calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, \
+    MaskSuffix, MaskSub, MaskFile, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, \
+    StatisticCalculate, Save
 from partseg2.partseg_settings import PartSettings
 from partseg2.profile_export import ExportDialog, ImportDialog
 from partseg2.statistics_calculation import StatisticProfile
@@ -111,6 +112,9 @@ class CreatePlan(QWidget):
         self.chanel_num = QSpinBox()
         self.channel_statistic_choose = QComboBox()
         self.channel_statistic_choose.addItems(["Same as segmentation"] + [str(x) for x in range(MAX_CHANNEL_NUM)])
+        self.units_choose = QComboBox()
+        self.units_choose.addItems(UNITS_LIST)
+        self.units_choose.setCurrentIndex(self.settings.get("units_index", 2))
         self.chanel_num.setRange(0, 10)
         self.expected_node_type = None
         self.save_constructor = None
@@ -255,17 +259,18 @@ class CreatePlan(QWidget):
 
         statistic_box = QGroupBox("Statistics:")
         statistic_box.setStyleSheet(group_sheet)
-        lay = QVBoxLayout()
+        lay = QGridLayout()
         lay.setSpacing(0)
-        lay.addWidget(self.statistic_list)
+        lay.addWidget(self.statistic_list, 0, 0, 1, 2)
         lab = QLabel("Name prefix:")
         lab.setToolTip("Prefix added before each column name")
-        line_lay = QHBoxLayout()
-        line_lay.addWidget(lab)
-        line_lay.addWidget(self.statistic_name_prefix)
-        lay.addLayout(line_lay)
-        lay.addWidget(self.channel_statistic_choose)
-        lay.addWidget(self.add_calculation_btn)
+        lay.addWidget(lab, 1, 0)
+        lay.addWidget(self.statistic_name_prefix, 1, 1)
+        lay.addWidget(QLabel("Channel:"), 2, 0)
+        lay.addWidget(self.channel_statistic_choose, 2, 1)
+        lay.addWidget(QLabel("Units:"))
+        lay.addWidget(self.units_choose, 3, 1)
+        lay.addWidget(self.add_calculation_btn, 4, 0, 1, 2)
         statistic_box.setLayout(lay)
 
         info_box = QGroupBox("Information")
@@ -575,7 +580,8 @@ class CreatePlan(QWidget):
         prefix = str(self.statistic_name_prefix.text()).strip()
         channel = self.channel_statistic_choose.currentIndex() - 1
         statistics_copy.name_prefix = prefix
-        statistic_calculate = StatisticCalculate(channel=channel, statistic_profile=statistics_copy, name_prefix=prefix)
+        statistic_calculate = StatisticCalculate(channel=channel, statistic_profile=statistics_copy, name_prefix=prefix,
+                                                 units=self.units_choose.currentText())
         if self.update_element_btn.isChecked():
             self.calculation_plan.replace_step(statistic_calculate)
         else:

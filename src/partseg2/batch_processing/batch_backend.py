@@ -19,6 +19,7 @@ from partseg2.partseg_utils import HistoryElement
 from partseg2.save_register import save_register
 from partseg_utils.mask_create import calculate_mask
 from partseg_utils.segmentation.algorithm_base import report_empty_fun
+from partseg_utils.universal_const import UNITS_LIST, UNIT_SCALE
 from tiff_image import ImageReader, Image
 
 
@@ -182,10 +183,15 @@ class CalculationProcess(object):
                 channel = self.algorithm_parameters["values"]["channel"]
 
             image_channel = self.image.get_channel(channel)
+            try:
+                scalar = UNIT_SCALE[UNITS_LIST.index(node.operation.units)]
+            except IndexError:
+                raise ValueError(f"Unknown units: '{node.operation.units}'")
+
             statistics = \
                 node.operation.statistic_profile.calculate(image_channel, image_channel,
                                                            self.segmentation, self.full_segmentation,
-                                                           self.mask, self.image.spacing)
+                                                           self.mask, [x * scalar for x in self.image.spacing])
             self.statistics.append(statistics)
         else:
             raise ValueError("Unknown operation {} {}".format(type(node.operation), node.operation))

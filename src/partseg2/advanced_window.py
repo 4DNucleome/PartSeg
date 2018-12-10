@@ -13,7 +13,7 @@ from common_gui.colors_choose import ColorSelector
 from common_gui.lock_checkbox import LockCheckBox
 from partseg2.partseg_settings import PartSettings, MASK_COLORS
 from partseg2.profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer
-from partseg2.statistics_calculation import StatisticProfile
+from partseg2.statistics_calculation import StatisticProfile, STATISTIC_DICT
 from partseg_utils.global_settings import static_file_folder
 from partseg_utils.universal_const import UNITS_DICT, UNIT_SCALE, UNITS_LIST
 from common_gui.dim_combobox import DimComboBox
@@ -382,7 +382,7 @@ class StatisticsSettings(QWidget):
         layout.addLayout(save_butt_layout)
         self.setLayout(layout)
 
-        for name, profile in sorted(StatisticProfile.STATISTIC_DICT.items()):
+        for name, profile in sorted(STATISTIC_DICT.items()):
             help_text = profile.help_message
             lw = QListWidgetItem(name)
             lw.setToolTip(help_text)
@@ -482,13 +482,13 @@ class StatisticsSettings(QWidget):
     def choose_option(self):
         selected_item = self.profile_options.currentItem()
         # selected_row = self.profile_options.currentRow()
-        if str(selected_item.text()) in StatisticProfile.STATISTIC_DICT:
-            arguments = StatisticProfile.STATISTIC_DICT[str(selected_item.text())].arguments
+        if str(selected_item.text()) in STATISTIC_DICT:
+            arguments = STATISTIC_DICT[str(selected_item.text())].arguments
         else:
             arguments = None
         if arguments is not None:
             val_dialog = MultipleInput("Set parameters:",
-                                       StatisticProfile.STATISTIC_DICT[str(selected_item.text())].help_message,
+                                       STATISTIC_DICT[str(selected_item.text())].help_message,
                                        list(arguments.items()))
             if val_dialog.exec_():
                 res = ""
@@ -597,13 +597,13 @@ class StatisticsSettings(QWidget):
         self.proportion_butt.setDisabled(True)
         self.choose_butt.setDisabled(True)
         self.discard_butt.setDisabled(True)
-        self.profile_options.addItems(list(sorted(StatisticProfile.STATISTIC_DICT.keys())))
+        self.profile_options.addItems(list(sorted(STATISTIC_DICT.keys())))
 
     def soft_reset(self):
         shift = 0
         for i in range(self.profile_options.count()):
             item = self.profile_options.item(i - shift)
-            if str(item.text()) not in StatisticProfile.STATISTIC_DICT:
+            if str(item.text()) not in STATISTIC_DICT:
                 self.profile_options.takeItem(i - shift)
                 shift += 1
         self.create_selection_changed()

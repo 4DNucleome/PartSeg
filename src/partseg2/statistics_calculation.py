@@ -16,10 +16,7 @@ SettingsValue = namedtuple("SettingsValue", ["function_name", "help_message", "a
 Leaf = namedtuple("Leaf", ["name", "dict"])
 Node = namedtuple("Node", ["left", 'op', 'right'])
 
-
-class StatisticProfile(object):
-
-    STATISTIC_DICT = {
+STATISTIC_DICT = {
         "Volume": SettingsValue("calculate_volume", "Calculate volume of current segmentation", None, False, False),
         "Volume per component": SettingsValue("calculate_component_volume", "Calculate volume of each component "
                                               "of cohesion of current segmentation", None, False, True),
@@ -72,6 +69,10 @@ class StatisticProfile(object):
         "Sphericity": SettingsValue("calculate_sphericity", "volume/(diameter**3/8)", None, False, False)
 
     }
+
+class StatisticProfile(object):
+
+
     PARAMETERS = ["name", "chosen_fields", "reversed_brightness", "use_gauss_image", "name_prefix"]
 
     def __init__(self, name, chosen_fields, reversed_brightness, use_gauss_image=False, name_prefix=""):
@@ -97,7 +98,7 @@ class StatisticProfile(object):
 
     def need_mask(self, tree):
         if isinstance(tree, Leaf):
-            return self.STATISTIC_DICT[tree.name].is_mask
+            return STATISTIC_DICT[tree.name].is_mask
         else:
             return self.need_mask(tree.left) or self.need_mask(tree.right)
 
@@ -203,7 +204,7 @@ class StatisticProfile(object):
             return Node(left_tree, tree[1], right_tree)
         else:
             name = tree[0]
-            base_stat = self.STATISTIC_DICT[name]
+            base_stat = STATISTIC_DICT[name]
             d = dict()
             for el in tree[1:]:
                 sp = el.split("=")
@@ -224,13 +225,13 @@ class StatisticProfile(object):
 
     def _is_mask_statistic(self, node):
         if isinstance(node, Leaf):
-            return self.STATISTIC_DICT[node.name].is_mask
+            return STATISTIC_DICT[node.name].is_mask
         else:
             return self._is_mask_statistic(node.left) or self._is_mask_statistic(node.right)
 
     def _is_component_statistic(self, node):
         if isinstance(node, Leaf):
-            return self.STATISTIC_DICT[node.name].is_component
+            return STATISTIC_DICT[node.name].is_component
         else:
             return self._is_component_statistic(node.left) or self._is_component_statistic(node.right)
 
@@ -246,7 +247,7 @@ class StatisticProfile(object):
         :return: float
         """
         if isinstance(node, Leaf):
-            fun_name = self.STATISTIC_DICT[node.name].function_name
+            fun_name = STATISTIC_DICT[node.name].function_name
             kw = dict(kwargs)
             kw.update(node.dict)
             hash_str = self.hash_fun_call_name(fun_name, node.dict)

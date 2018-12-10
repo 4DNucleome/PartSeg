@@ -10,7 +10,6 @@ from deprecation import deprecated
 from six import add_metaclass
 
 from partseg2.save_register import save_register
-from partseg_utils.cmap_utils import CmapProfileBase
 from partseg2.statistics_calculation import StatisticProfile
 from partseg2.algorithm_description import SegmentationProfile
 from partseg_utils.mask_create import MaskProperty
@@ -28,16 +27,13 @@ class MaskCreate(MaskBase, BaseReadonlyClass):
     def __str__(self):
         return f"Mask create: {self.name}\n" + str(self.mask_property).split("\n", 1)[1]
 
-# MaskUse = namedtuple("MaskUse", ['name'])
 class MaskUse(MaskBase, BaseReadonlyClass):
     pass
 
-#MaskSum = namedtuple("MaskSum", ["name", "mask1", "mask2"])
 class MaskSum(MaskBase, BaseReadonlyClass):
     mask1: str
     mask2: str
 
-# MaskIntersection = namedtuple("MaskIntersection", ["name", "mask1", "mask2"])
 class MaskIntersection(MaskBase, BaseReadonlyClass):
     mask1: str
     mask2: str
@@ -53,29 +49,10 @@ class Save(BaseReadonlyClass):
     short_name: str
     values: dict
 
-# CmapProfile = namedtuple("CmapProfile", ["suffix", "gauss_type", "center_data", "rotation_axis", "cut_obsolete_area",
-#                                         "directory"])
-class CmapProfile(SaveBase, CmapProfileBase, BaseReadonlyClass):
-    pass
-
-# ProjectSave = namedtuple("ProjectSave", ["suffix", "directory"])
-class ProjectSave(SaveBase, BaseReadonlyClass):
-    pass
-
-# MaskSave = namedtuple("MaskSave", ["suffix", "directory"])
-class MaskSave(SaveBase, BaseReadonlyClass):
-    pass
-
-# XYZSave = namedtuple("XYZSave", ["suffix", "directory"])
-class XYZSave(SaveBase, BaseReadonlyClass):
-    pass
-
-# ImageSave = namedtuple("ImageSave", ["suffix", "directory"])
-class ImageSave(SaveBase, BaseReadonlyClass):
-    pass
 
 class StatisticCalculate(BaseReadonlyClass):
     channel: int
+    units: str
     statistic_profile: StatisticProfile
     name_prefix: str
 
@@ -86,7 +63,7 @@ class StatisticCalculate(BaseReadonlyClass):
     def __str__(self):
         channel = "Like segmentation" if self.channel == -1 else str(self.channel)
         desc = str(self.statistic_profile).split('\n', 1)[1]
-        return  f"{self.__class__.name}\nChannel: {channel}\n{desc}\n"
+        return  f"{self.__class__.name}\nChannel: {channel}\nUnits: {self.units}\n{desc}\n"
 
 
 
@@ -302,9 +279,8 @@ class CalculationPlan(object):
     correct_name = {MaskCreate.__name__: MaskCreate, MaskUse.__name__: MaskUse, Save.__name__: Save,
                     StatisticCalculate.__name__: StatisticCalculate, SegmentationProfile.__name__: SegmentationProfile,
                     MaskSuffix.__name__: MaskSuffix, MaskSub.__name__: MaskSub, MaskFile.__name__: MaskFile,
-                    ProjectSave.__name__: ProjectSave, Operations.__name__: Operations,
-                    ChooseChanel.__name__: ChooseChanel, MaskIntersection.__name__: MaskIntersection,
-                    MaskSum.__name__: MaskSum, ImageSave.__name__: ImageSave, XYZSave.__name__: XYZSave}
+                    Operations.__name__: Operations, ChooseChanel.__name__: ChooseChanel,
+                    MaskIntersection.__name__: MaskIntersection, MaskSum.__name__: MaskSum}
 
     def __init__(self, tree: typing.Optional[CalculationTree] = None, name:str = ""):
         if tree is None:
