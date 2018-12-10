@@ -214,6 +214,7 @@ threshold_dict.register(IntermodesThreshold)
 threshold_dict.register(IsoDataThreshold)
 threshold_dict.register(KittlerIllingworthThreshold)
 threshold_dict.register(MomentsThreshold)
+threshold_dict.register(MaximumEntropyThreshold)
 
 
 class DoubleThreshold(BaseThreshold):
