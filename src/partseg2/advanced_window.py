@@ -1,5 +1,7 @@
 import logging
 import os
+import sys
+
 import numpy as np
 from PyQt5.QtCore import QByteArray, Qt, QEvent
 from PyQt5.QtGui import QIcon
@@ -791,6 +793,9 @@ class StatisticsWindow(QWidget):
             "You can create new statistic profile in advanced window, in tab \"Statistic settings\"")
         self.channels_chose = QComboBox()
         self.channels_chose.addItems(map(str, range(self.settings.channels)))
+        self.units_choose = QComboBox()
+        self.units_choose.addItems(UNITS_LIST)
+        self.units_choose.setCurrentIndex(self.settings.get("units_index", 2))
         #self.noise_removal_method = QComboBox()
         #self.noise_removal_method.addItem("Like segmentation")
         #self.noise_removal_method.addItems(noise_removal_dict.keys())
@@ -815,6 +820,8 @@ class StatisticsWindow(QWidget):
         butt_layout2 = QHBoxLayout()
         butt_layout2.addWidget(QLabel("Channel:"))
         butt_layout2.addWidget(self.channels_chose)
+        butt_layout2.addWidget(QLabel("Units:"))
+        butt_layout2.addWidget(self.units_choose)
         # butt_layout2.addWidget(QLabel("Noise removal:"))
         # butt_layout2.addWidget(self.noise_removal_method)
         butt_layout2.addWidget(QLabel("Statistic:"))
@@ -908,9 +915,11 @@ class StatisticsWindow(QWidget):
         segmentation = self.settings.segmentation
         full_mask = self.settings.full_segmentation
         base_mask = self.settings.mask
+        units_scalar = UNIT_SCALE[self.units_choose.currentIndex()]
+        units_name = UNITS_LIST[self.units_choose.currentIndex()]
         try:
             stat = compute_class.calculate(image, gauss_image, segmentation,
-                                           full_mask, base_mask, self.settings.image_spacing)
+                                           full_mask, base_mask, [x * units_scalar for x in self.settings.image_spacing])
         except ValueError as e:
             logging.error(e)
             return
@@ -939,7 +948,7 @@ class StatisticsWindow(QWidget):
                 if not self.no_units.isChecked():
                     try:
                         self.info_field.setItem(self.statistic_shift + 2, i,
-                                                QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
+                                                QTableWidgetItem(UNITS_DICT[key].format(units_name)))
                     except KeyError as k:
                         logging.warning(k.message)
         else:
@@ -961,9 +970,9 @@ class StatisticsWindow(QWidget):
                 if not self.no_units.isChecked():
                     try:
                         self.info_field.setItem(i, self.statistic_shift + 2,
-                                                QTableWidgetItem(UNITS_DICT[key].format(self.settings.size_unit)))
+                                                QTableWidgetItem(UNITS_DICT[key].format(units_name)))
                     except KeyError as k:
-                        logging.warning(k.message)
+                        print(k, file=sys.stderr)
         if self.no_units.isChecked():
             self.statistic_shift -= 1
         self.statistic_shift += 3
