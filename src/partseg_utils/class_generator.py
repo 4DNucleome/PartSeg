@@ -110,9 +110,11 @@ enum_register = RegisterClass()
 
 def extract_type_info(type_):
     # noinspection PyUnresolvedReferences
-    if isinstance(type_, (typing.GenericMeta, typing._Any, typing._Union)):
-        return str(type_), type_.__module__
-    elif hasattr(type_, "__module__"):
+    # if issubclass(type_, (typing.Any, typing.Union)):
+    #    return str(type_), type_.__module__
+    if hasattr(type_, "__module__"):
+        if type_.__module__ == "typing":
+            return str(type_), type_.__module__
         return "{}.{}".format(type_.__module__, type_.__name__), type_.__module__
     else:
         return type_.__name__, None
