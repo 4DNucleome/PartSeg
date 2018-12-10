@@ -1,7 +1,7 @@
 # API 
 
 ## Base classes for creating plugin
-The base classes for creating extensions are stored in `project_utils.segmentation.algorithm_describe_base.py` 
+The base classes for creating extensions are stored in `partseg_utils.segmentation.algorithm_describe_base.py` 
 There are three classes 
 
 * `AlgorithmProperty` - base class for describing data needed by some algorithm
@@ -16,18 +16,18 @@ on start time.
 
 ## Currents algorithms groups
 
-* Noise removing - `project_utils.segmentation.noise_removing`. The register is `noise_removal_dict`
+* Noise removing - `partseg_utils.segmentation.noise_removing`. The register is `noise_removal_dict`
 from this file. This is designed for preprocess step of removing noise from image.
 Currently only "None" and gauss blur are available. 
 Other implementations should inherit from `NoiseRemovalBase` from this file. 
 They need to implement `noise_remove(cls, chanel: np.ndarray, spacing: typing.Iterable[float], arguments: dict) -> np.ndarray`
 interface where `arguments` contains data defined in `get_fields()` 
-* Threshold - `project_utils.segmentation.threshold`. There are two registers here:
+* Threshold - `partseg_utils.segmentation.threshold`. There are two registers here:
     * `threshold_dict` - for one threshold algorithm (currently Lower Threshold and Upper threshold).
     Currently it contains manual threshold and automated choose threshold method, like Li, Otsu from SimpleITK library
     * `double_threshold_dict` - for algorithm where part of area need to be decided where it belongs.
     used for `path` and `euclideans` algorithms.
-* Segmentation algorithms. - base class for this group is defined in `project_utils.segmentation.algorithm_base`
+* Segmentation algorithms. - base class for this group is defined in `partseg_utils.segmentation.algorithm_base`
 All method from interface need to be object method. 
 To get ability of restarting segmentation without calculating every step the interface contains 5 functions:
 * `set_image(self, image: Image)` - set new image for algorithm
