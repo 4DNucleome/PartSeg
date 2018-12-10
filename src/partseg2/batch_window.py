@@ -17,8 +17,8 @@ from partseg2.partseg_settings import PartSettings
 from partseg2.batch_processing.batch_backend import CalculationManager
 from partseg2.batch_processing.calculation_plan import CalculationPlan, MaskFile, MaskMapper, Calculation
 from partseg2.prepare_plan_widget import CalculatePlaner
-from project_utils.global_settings import static_file_folder
-from project_utils.universal_const import UNITS_LIST
+from partseg_utils.global_settings import static_file_folder
+from partseg_utils.universal_const import UNITS_LIST
 from common_gui.universal_gui_part import Spacing, right_label
 
 __author__ = "Grzegorz Bokota"

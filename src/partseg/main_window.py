@@ -6,7 +6,7 @@ import tifffile
 import numpy as np
 import logging
 
-from project_utils.global_settings import config_folder, big_font_size, static_file_folder
+from partseg_utils.global_settings import config_folder, big_font_size, static_file_folder
 from common_gui.universal_gui_part import set_position
 from .backend import Settings, Segment
 from .gui import MainMenu, InfoMenu, ColormapCanvas, SynchronizeSliders, HelpWindow, Credits, ImageExporter, synchronize_zoom

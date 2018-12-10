@@ -3,12 +3,12 @@ from PyQt5.QtCore import pyqtSignal
 
 from partseg2.batch_processing.calculation_plan import CalculationPlan
 from partseg2.statistics_calculation import StatisticProfile
-from project_utils.cmap_utils import CmapProfile
+from partseg_utils.cmap_utils import CmapProfile
 from .algorithm_description import SegmentationProfile
 from .partseg_utils import HistoryElement, SegmentationPipeline
 from .save_hooks import PartEncoder, part_hook
 from .io_functions import save_project, save_cmap, load_project, ProjectTuple
-from project_utils.settings import BaseSettings
+from project_utils_qt.settings import BaseSettings
 import numpy as np
 
 MASK_COLORS = {"black": np.array((0, 0, 0)), "white": np.array((255, 255, 255)), "red": np.array((255, 0, 0)),
@@ -60,9 +60,6 @@ class PartSettings(BaseSettings):
 
     def load_profiles(self, file_path):
         pass
-
-    def components_mask(self):
-        return np.array([0] + [1] * self.segmentation.max(), dtype=np.uint8)
 
     def get_project_info(self) -> ProjectTuple:
         algorithm_name = self.last_executed_algorithm

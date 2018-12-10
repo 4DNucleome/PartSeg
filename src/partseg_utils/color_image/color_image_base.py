@@ -1,5 +1,5 @@
 import numpy as np
-from project_utils.global_settings import static_file_folder
+from partseg_utils.global_settings import static_file_folder
 from os import path
 import typing
 from .color_image import color_grayscale

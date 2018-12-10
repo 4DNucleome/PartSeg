@@ -18,7 +18,7 @@ from partseg.batch_processing.parallel_backed import BatchManager
 from partseg.io_functions import load_project, save_to_project, save_to_cmap, save_to_xyz
 from partseg.segment import Segment, SegmentationProfile
 from partseg.statistics_calculation import StatisticProfile
-from project_utils import dict_set_class
+from partseg_utils import dict_set_class
 
 
 def do_calculation(file_path, calculation):

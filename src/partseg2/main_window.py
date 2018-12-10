@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import re
-from functools import partial
 from pathlib import Path
 import tifffile as tif
 import numpy as np
@@ -11,7 +10,7 @@ import appdirs
 from PyQt5.QtCore import Qt, QByteArray, QEvent
 from PyQt5.QtGui import QIcon, QKeyEvent, QKeySequence
 from PyQt5.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
-    QFileDialog, QMessageBox, QCheckBox, QComboBox, QStackedLayout, QInputDialog, QDialog
+    QFileDialog, QMessageBox, QCheckBox, QComboBox, QInputDialog, QDialog
 
 from common_gui.channel_control import ChannelControl
 from common_gui.mask_widget import MaskWidget
@@ -22,13 +21,13 @@ from partseg2.batch_window import BatchWindow
 from partseg2.calculation_pipeline_thread import CalculatePipelineThread
 from partseg2.interpolate_dialog import InterpolateDialog
 from partseg2.interpolate_thread import InterpolateThread
-from common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, BaseAlgorithmSettingsWidget, AlgorithmChoose
-from project_utils.error_dialog import ErrorDialog
-from project_utils.global_settings import static_file_folder
-from project_utils.image_read_thread import ImageReaderThread
-from project_utils.main_window import BaseMainWindow
-from project_utils.mask_create import calculate_mask, MaskProperty
-from project_utils.segmentation.algorithm_base import SegmentationResult
+from common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, AlgorithmChoose
+from project_utils_qt.error_dialog import ErrorDialog
+from partseg_utils.global_settings import static_file_folder
+from project_utils_qt.image_read_thread import ImageReaderThread
+from project_utils_qt.main_window import BaseMainWindow
+from partseg_utils.mask_create import calculate_mask, MaskProperty
+from partseg_utils.segmentation.algorithm_base import SegmentationResult
 from .partseg_settings import PartSettings, save_labeled_image
 from .partseg_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView

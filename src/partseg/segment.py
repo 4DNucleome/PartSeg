@@ -5,10 +5,10 @@ from enum import Enum
 import SimpleITK as sitk
 import numpy as np
 
-from project_utils import bisect
-from project_utils import class_to_dict
-from project_utils.global_settings import develop
-from project_utils.image_operations import gaussian, DrawType
+from partseg_utils import bisect
+from partseg_utils import class_to_dict
+from partseg_utils.global_settings import develop
+from partseg_utils.image_operations import gaussian, DrawType
 
 
 class ThresholdType(Enum):

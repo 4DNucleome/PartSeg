@@ -1,4 +1,4 @@
-from project_utils.progress_thread import ProgressTread
+from project_utils_qt.progress_thread import ProgressTread
 from typing import Union
 
 

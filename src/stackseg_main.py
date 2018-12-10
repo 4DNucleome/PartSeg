@@ -3,7 +3,7 @@ import multiprocessing
 multiprocessing.freeze_support()
 
 __author__ = "Grzegorz Bokota"
-from project_utils.except_hook import my_excepthook
+from project_utils_qt.except_hook import my_excepthook
 
 def sig_handler(signum, frame):
     print ("segfault")
@@ -19,7 +19,7 @@ def main():
     logging.basicConfig(level=logging.INFO)
     from PyQt5.QtWidgets import QApplication
     myApp = QApplication(sys.argv)
-    from project_utils.base_argparser import CustomParser
+    from partseg_utils.base_argparser import CustomParser
     CustomParser("PartSeg").parse_args()
     from stackseg.stack_gui_main import MainWindow
     wind = MainWindow("StackSeg")

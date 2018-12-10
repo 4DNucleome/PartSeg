@@ -1,14 +1,16 @@
+import typing
 from abc import ABC
 
-from .algorithm_describe_base import Register, AlgorithmDescribeBase, AlgorithmProperty
-import numpy as np
 import SimpleITK as sitk
-import typing
+import numpy as np
+
+from .algorithm_describe_base import Register, AlgorithmDescribeBase, AlgorithmProperty
 
 
 class BaseThreshold(AlgorithmDescribeBase, ABC):
     @classmethod
-    def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict, operator: typing.Callable[[object, object], bool]):
+    def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict,
+                       operator: typing.Callable[[object, object], bool]):
         raise NotImplementedError()
 
 
@@ -23,7 +25,7 @@ class ManualThreshold(BaseThreshold):
 
     @classmethod
     def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict, operator):
-        result = operator(data, arguments["threshold"]).astype(np.uint8)
+        result = np.array(operator(data, arguments["threshold"])).astype(np.uint8)
         return result, arguments["threshold"]
 
 
@@ -92,10 +94,126 @@ class MaximumEntropyThreshold(SitkThreshold):
         return sitk.MaximumEntropyThreshold(*args)
 
 
+class RenyiEntropyThreshold(SitkThreshold):
+    bins_num = 256
+
+    @classmethod
+    def get_name(cls):
+        return "Renyi Entropy"
+
+    @staticmethod
+    def calculate_threshold(*args, **kwargs):
+        return sitk.RenyiEntropyThreshold(*args)
+
+
+class ShanbhagThreshold(SitkThreshold):
+    bins_num = 256
+
+    @classmethod
+    def get_name(cls):
+        return "Shanbhag"
+
+    @staticmethod
+    def calculate_threshold(*args, **kwargs):
+        return sitk.ShanbhagThreshold(*args)
+
+
+class TriangleThreshold(SitkThreshold):
+    bins_num = 256
+
+    @classmethod
+    def get_name(cls):
+        return "Triangle"
+
+    @staticmethod
+    def calculate_threshold(*args, **kwargs):
+        return sitk.TriangleThreshold(*args)
+
+
+class YenThreshold(SitkThreshold):
+    bins_num = 256
+
+    @classmethod
+    def get_name(cls):
+        return "Yen"
+
+    @staticmethod
+    def calculate_threshold(*args, **kwargs):
+        return sitk.YenThreshold(*args)
+
+
+class HuangThreshold(SitkThreshold):
+    bins_num = 128
+
+    @classmethod
+    def get_name(cls):
+        return "Huang"
+
+    @staticmethod
+    def calculate_threshold(*args, **kwargs):
+        return sitk.HuangThreshold(*args)
+
+
+class IntermodesThreshold(SitkThreshold):
+    bins_num = 256
+
+    @classmethod
+    def get_name(cls):
+        return "Yen"
+
+    @staticmethod
+    def calculate_threshold(*args, **kwargs):
+        return sitk.IntermodesThreshold(*args)
+
+
+class IsoDataThreshold(SitkThreshold):
+    bins_num = 256
+
+    @classmethod
+    def get_name(cls):
+        return "Iso Data"
+
+    @staticmethod
+    def calculate_threshold(*args, **kwargs):
+        return sitk.IsoDataThreshold(*args)
+
+
+class KittlerIllingworthThreshold(SitkThreshold):
+    bins_num = 256
+
+    @classmethod
+    def get_name(cls):
+        return "Kittler Illingworth"
+
+    @staticmethod
+    def calculate_threshold(*args, **kwargs):
+        return sitk.KittlerIllingworthThreshold(*args)
+
+
+class MomentsThreshold(SitkThreshold):
+    bins_num = 256
+
+    @classmethod
+    def get_name(cls):
+        return "Moments"
+
+    @staticmethod
+    def calculate_threshold(*args, **kwargs):
+        return sitk.MomentsThreshold(*args)
+
+
 threshold_dict = Register()
 threshold_dict.register(ManualThreshold)
 threshold_dict.register(OtsuThreshold)
 threshold_dict.register(LiThreshold)
+threshold_dict.register(RenyiEntropyThreshold)
+threshold_dict.register(ShanbhagThreshold)
+threshold_dict.register(TriangleThreshold)
+threshold_dict.register(HuangThreshold)
+threshold_dict.register(IntermodesThreshold)
+threshold_dict.register(IsoDataThreshold)
+threshold_dict.register(KittlerIllingworthThreshold)
+threshold_dict.register(MomentsThreshold)
 threshold_dict.register(MaximumEntropyThreshold)
 
 

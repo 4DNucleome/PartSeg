@@ -13,15 +13,13 @@ from PyQt5.QtWidgets import QScrollBar, QLabel, QGridLayout
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
     QScrollArea, QSizePolicy, QToolButton, QAction, QApplication, \
     QSlider, QCheckBox, QComboBox
-# from matplotlib.cm import get_cmap
-# from matplotlib.colors import PowerNorm
 from scipy.ndimage import gaussian_filter
 
-from project_utils.color_image import color_image, add_labels
-from project_utils.color_image.color_image_base import color_maps
-from project_utils.colors import default_colors
-from project_utils.global_settings import static_file_folder
-from project_utils.settings import ViewSettings
+from partseg_utils.color_image import color_image, add_labels
+from partseg_utils.color_image.color_image_base import color_maps
+from partseg_utils.colors import default_colors
+from partseg_utils.global_settings import static_file_folder
+from project_utils_qt.settings import ViewSettings
 from stackseg.stack_settings import StackSettings
 from tiff_image import Image
 from .channel_control import ChannelControl
@@ -93,7 +91,7 @@ class ImageCanvas(QLabel):
         :type local_settings: ImageState
         :param local_settings:
         """
-        super(ImageCanvas, self).__init__()
+        super().__init__()
         self.scale_factor = 1
         self.local_settings = local_settings
         self.point = None
@@ -102,20 +100,23 @@ class ImageCanvas(QLabel):
         self.image_size = QSize(1, 1)
         self.image_ratio = 1
         self.setMouseTracking(True)
+        self.my_pixmap = None
 
     def set_image(self, im, paint):
         self.image = im
         height, width, _ = im.shape
         self.image_size = QSize(width, height)
         self.image_ratio = float(width) / float(height)
-        # TODO Maybe something to avoid double paint when resize
-        im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 3, QImage.Format_RGB888)
-        self.setPixmap(QPixmap.fromImage(im2.scaled(self.width(), self.height(), Qt.KeepAspectRatio)))
+        self.paint_image()
 
-    """def update_size(self, scale_factor=None):
-        if scale_factor is not None:
-            self.scale_factor = scale_factor
-        self.resize(self.scale_factor * self.pixmap().size())"""
+    def paint_image(self):
+        if self.image is None:
+            return
+        im = self.image
+        width, height = self.image_size.width(), self.image_size.height()
+        im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 3, QImage.Format_RGB888)
+        self.my_pixmap = QPixmap.fromImage(im2)# .scaled(self.width(), self.height(), Qt.KeepAspectRatio))
+        self.repaint()
 
     def leaveEvent(self, a0: QEvent):
         self.point = None
@@ -128,21 +129,21 @@ class ImageCanvas(QLabel):
         :param event:
         :return:
         """
-        super(ImageCanvas, self).mousePressEvent(event)
+        super().mousePressEvent(event)
         if self.local_settings.zoom:
             self.point = event.pos()
         elif not self.local_settings.move:
             self.click_signal.emit(event.pos(), self.size())
 
     def mouseMoveEvent(self, event):
-        super(ImageCanvas, self).mouseMoveEvent(event)
+        super().mouseMoveEvent(event)
         if self.local_settings.zoom and self.point is not None:
             self.point2 = event.pos()
             self.update()
         self.position_signal.emit(event.pos(), self.size())
 
     def mouseReleaseEvent(self, event):
-        super(ImageCanvas, self).mouseReleaseEvent(event)
+        super().mouseReleaseEvent(event)
         if self.local_settings.zoom and self.point is not None and self.point2 is not None:
             diff = self.point2 - self.point
             if abs(diff.x()) and abs(diff.y()):
@@ -152,13 +153,15 @@ class ImageCanvas(QLabel):
             self.update()
 
     def paintEvent(self, event):
-        super(ImageCanvas, self).paintEvent(event)
+        super().paintEvent(event)
+        painter = QPainter(self)
+        if self.my_pixmap is not None:
+            painter.drawPixmap(self.rect(), self.my_pixmap)
         if not self.local_settings.zoom or self.point is None or self.point2 is None:
             return
         pen = QPen(QColor("white"))
         pen.setStyle(Qt.DashLine)
         pen.setDashPattern([5, 5])
-        painter = QPainter(self)
         painter.setPen(pen)
         diff = self.point2 - self.point
         painter.drawRect(self.point.x(), self.point.y(), diff.x(), diff.y())
@@ -170,12 +173,9 @@ class ImageCanvas(QLabel):
         painter.drawRect(self.point.x(), self.point.y(), diff.x(), diff.y())
 
     def resizeEvent(self, event: QtGui.QResizeEvent):
-        if self.image is None:
-            return
-        im = self.image
-        width, height = self.image_size.width(), self.image_size.height()
-        im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 3, QImage.Format_RGB888)
-        self.setPixmap(QPixmap.fromImage(im2.scaled(self.width(), self.height(), Qt.KeepAspectRatio)))
+        pass
+        # print("[resize]", self.size(), self.parent().size(), event.oldSize(), event.size())
+        # self.paint_image()
 
 
 def get_scroll_bar_proportion(scroll_bar):
@@ -531,7 +531,7 @@ class MyScrollArea(QScrollArea):
         self.setWidget(self.pixmap)
         # self.image_ratio = 1
         self.zoom_scale = 1
-        self.max_zoom = 15
+        self.max_zoom = 20
         self.image_size = QSize(1, 1)
         self.horizontal_ratio = False, 1
         self.vertical_ratio = False, 1
@@ -703,7 +703,7 @@ class MyScrollArea(QScrollArea):
         if self.timer_id:
             self.killTimer(self.timer_id)
             self.timer_id = 0
-        self.timer_id = self.startTimer(50)
+        self.timer_id = self.startTimer(0)
 
     def timerEvent(self, a0: 'QTimerEvent'):
         # Some try to reduce number of repaint event

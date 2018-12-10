@@ -9,7 +9,7 @@ from typing import Dict
 import SimpleITK as sitk
 import numpy as np
 
-from project_utils import class_to_dict, autofit as af
+from partseg_utils import class_to_dict, autofit as af
 
 SettingsValue = namedtuple("SettingsValue", ["function_name", "help_message", "arguments", "is_mask", "is_component"])
 

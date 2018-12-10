@@ -14,12 +14,12 @@ from partseg.batch_processing.calculation_plan import CalculationPlan
 
 GAUSS = "Gauss"
 
-from project_utils import class_to_dict, dict_set_class
+from partseg_utils import class_to_dict, dict_set_class
 from partseg.segment import SegmentationProfile, Segment, UPPER, fill_holes_in_mask, fill_2d_holes_in_mask
 from partseg.statistics_calculation import StatisticProfile, calculate_volume_surface
-from project_utils.image_operations import gaussian, dilate, erode
+from partseg_utils.image_operations import gaussian, dilate, erode
 from scipy.ndimage.interpolation import zoom
-from project_utils.autofit import calculate_density_momentum
+from partseg_utils.autofit import calculate_density_momentum
 
 
 class MaskChange(Enum):

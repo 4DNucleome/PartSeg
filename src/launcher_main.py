@@ -4,8 +4,8 @@ import logging
 
 from PyQt5.QtWidgets import QApplication
 
-from project_utils.base_argparser import CustomParser
-from project_utils.except_hook import my_excepthook
+from partseg_utils.base_argparser import CustomParser
+from project_utils_qt.except_hook import my_excepthook
 
 import multiprocessing
 multiprocessing.freeze_support()

@@ -1,5 +1,5 @@
-from project_utils.custom_colormaps import black_blue
-from project_utils.colors import default_colors
+from partseg_utils.custom_colormaps import black_blue
+from partseg_utils.colors import default_colors
 from matplotlib import pyplot
 from matplotlib.cm import get_cmap
 import numpy as np

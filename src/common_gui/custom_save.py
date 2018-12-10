@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QFileDialog, QDialog, QPushButton, QGridLayout, QStackedWidget
 import typing
 from common_gui.algorithms_description import FormWidget
-from project_utils.io_utils import SaveBase
+from partseg_utils.io_utils import SaveBase
 
 
 class SaveProperty(typing.NamedTuple):

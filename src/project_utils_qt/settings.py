@@ -5,12 +5,12 @@ import typing
 
 from PyQt5.QtCore import QObject, pyqtSignal
 
-from project_utils.color_image.color_image_base import color_maps
-from .image_operations import RadiusType
+from partseg_utils.color_image.color_image_base import color_maps
+from partseg_utils.image_operations import RadiusType
 import copy
 import numpy as np
 from os import path, makedirs
-from .class_generator import ReadonlyClassEncoder, readonly_hook
+from partseg_utils.class_generator import ReadonlyClassEncoder, readonly_hook
 from tiff_image import Image, ImageReader
 
 
@@ -120,6 +120,9 @@ class ImageSettings(QObject):
 
     def get_information(self, *pos):
         return self._image[pos]
+
+    def components_mask(self):
+        return np.array([0] + [1] * self.segmentation.max(), dtype=np.uint8)
 
 
 class ProfileDict(object):
