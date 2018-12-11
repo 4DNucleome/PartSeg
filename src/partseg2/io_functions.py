@@ -1,11 +1,12 @@
 from pathlib import Path
 
-from partseg2.partseg_utils import HistoryElement
+from partseg2.analysis_utils import HistoryElement
 from partseg_utils.channel_class import Channel
 from partseg_utils.segmentation.algorithm_base import calculate_operation_radius
 from partseg_utils.cmap_utils import CmapProfile
 from partseg_utils.image_operations import RadiusType, gaussian
 from partseg_utils.segmentation.algorithm_describe_base import Register, AlgorithmProperty
+from partseg_utils.universal_const import UNITS_LIST, UNIT_SCALE
 from .save_hooks import PartEncoder, part_hook
 import numpy as np
 from tiff_image import Image, ImageWriter, ImageReader
@@ -123,25 +124,27 @@ def load_project(
                         algorithm_dict)
 
 
-def save_cmap(file: typing.Union[str, h5py.File], image: Image, segmentation: np.ndarray, cmap_profile: CmapProfile,
+def save_cmap(file: typing.Union[str, h5py.File], image: Image, segmentation: np.ndarray, cmap_profile: dict,
               metadata: typing.Optional[dict] = None):
     if segmentation is None or segmentation.max() == 0:
         raise ValueError("No segmentation")
     if isinstance(file, (str, BytesIO)):
+        if isinstance(file, str) and os.path.exists(file):
+            os.remove(file)
         cmap_file = h5py.File(file)
     elif isinstance(file, h5py.File):
         cmap_file = file
     else:
         raise ValueError(f"Wrong type of file argument, type: {type(file)}")
-    data = image.get_channel(cmap_profile.channel)
-    if cmap_profile.gauss_radius > 0 and cmap_profile.gauss_type != RadiusType.NO:
+    data = image.get_channel(cmap_profile["channel"])
+    """if cmap_profile.gauss_radius > 0 and cmap_profile.gauss_type != RadiusType.NO:
         gauss_radius = calculate_operation_radius(cmap_profile.gauss_radius, image.spacing, cmap_profile.gauss_radius)
         layer = cmap_profile.gauss_type == RadiusType.R2D
-        data = gaussian(data, gauss_radius, layer=layer)
+        data = gaussian(data, gauss_radius, layer=layer)"""
 
     data[segmentation == 0] = 0
     grp = cmap_file.create_group('Chimera/image1')
-    if cmap_profile.cut_obsolete_area:
+    if cmap_profile["clip"]:
         points = np.nonzero(segmentation)
         lower_bound = np.min(points, axis=1)
         upper_bound = np.max(points, axis=1)
@@ -167,7 +170,8 @@ def save_cmap(file: typing.Union[str, h5py.File], image: Image, segmentation: np
     grp.attrs['CLASS'] = np.string_('GROUP')
     grp.attrs['TITLE'] = np.string_('')
     grp.attrs['VERSION'] = np.string_('1.0')
-    grp.attrs['step'] = np.array(image._image_spacing, dtype=np.float32)
+    grp.attrs['step'] = np.array(image._image_spacing, dtype=np.float32)[::-1] * \
+                        UNIT_SCALE[UNITS_LIST.index(cmap_profile["units"])]
 
     if isinstance(file, str):
         cmap_file.close()
@@ -206,11 +210,12 @@ class SaveCmap(SaveBase):
     def get_fields(cls):
         return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
                 AlgorithmProperty("separated_objects", "Separate Objects", False),
-                AlgorithmProperty("clip", "Clip area", False)]
+                AlgorithmProperty("clip", "Clip area", False),
+                AlgorithmProperty("units", "Units", UNITS_LIST[2], possible_values=UNITS_LIST, property_type=list)]
 
     @classmethod
     def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict):
-        save_cmap(save_location, project_info.image, project_info.segmentation, parameters[""])
+        save_cmap(save_location, project_info.image, project_info.segmentation, parameters)
 
 
 class SaveXYZ(SaveBase):

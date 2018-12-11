@@ -39,12 +39,12 @@ class ChannelComboBox(QComboBox):
         return self.currentIndex()
 
     def set_value(self, val):
-        self.setCurrentText(str(val))
+        self.setCurrentIndex(int(val))
 
     def change_channels_num(self, num):
         index = self.currentIndex()
         self.clear()
-        self.addItems(map(str, range(num)))
+        self.addItems(map(str, range(1, num + 1)))
         if index < 0 or index > num:
             index = 0
         self.setCurrentIndex(index)
@@ -86,7 +86,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
     def _get_field(self) -> QWidget:
         if issubclass(self.value_type, Channel):
             res = ChannelComboBox()
-            res.addItems([str(x) for x in range(10)])
+            res.change_channels_num(10)
             return res
         elif issubclass(self.value_type, AlgorithmDescribeBase):
             res = SubAlgorithmWidget(self)
@@ -114,6 +114,10 @@ class QtAlgorithmProperty(AlgorithmProperty):
             res.addItems(self.value_type.__members__.keys())
             # noinspection PyUnresolvedReferences
             res.set_value(self.default_value)
+        elif issubclass(self.value_type, list):
+            res = QComboBox()
+            res.addItems(list(map(str, self.possible_values)))
+            res.setCurrentIndex(self.possible_values.index(self.default_value))
         else:
             raise ValueError(f"Unknown class: {self.value_type}")
         return res

@@ -14,7 +14,7 @@ class AlgorithmProperty(object):
                  possible_values=None, property_type=None, tool_tip=""):
         self.name = name
         self.user_name = user_name
-        if type(options_range) is list:
+        if type(possible_values) is list:
             self.value_type = list
         elif property_type is not None:
             self.value_type = property_type
@@ -26,7 +26,7 @@ class AlgorithmProperty(object):
         self.single_step = single_steep
         self.tool_tip = tool_tip
         if self.value_type is list:
-            assert default_value in options_range
+            assert default_value in possible_values
 
     def __repr__(self):
         return f"{self.__class__.__module__}.{self.__class__.__name__}(name='{self.name}'," \
