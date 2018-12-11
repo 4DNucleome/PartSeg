@@ -81,6 +81,11 @@ class SaveDialog(QFileDialog):
         except IndexError:
             pass
         super().selectNameFilter(filter)
+        try:
+            ext = self.save_register[filter].get_default_extension()
+            self.setDefaultSuffix(ext)
+        except Exception:
+            pass
 
     def change_filter(self, current_filter):
         ext = self.save_register[current_filter].get_default_extension()
