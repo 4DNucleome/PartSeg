@@ -48,6 +48,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
 
     @classmethod
     def get_fields(cls):
+        # TODO coś z noise removal zrobić
         return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
                 AlgorithmProperty("minimum_size", "Minimum size (pix)", 8000, (0, 10 ** 6), 1000),
                 AlgorithmProperty("noise_removal", "Noise Removal", next(iter(noise_removal_dict.keys())),
@@ -199,7 +200,7 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
         mask, thr_val = thr.calculate_mask(image, self.mask, self.new_parameters["threshold"]["values"],
                                            self.threshold_operator)
         self.threshold_info = thr_val
-        self.sprawl_area = (mask == 1).astype(np.uint8)
+        self.sprawl_area = (mask >= 1).astype(np.uint8)
         return (mask == 2).astype(np.uint8)
 
     def set_parameters(self, *args, **kwargs):
