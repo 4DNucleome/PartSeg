@@ -4,7 +4,7 @@ import sys
 from copy import deepcopy
 
 import numpy as np
-from typing import Union, Optional
+from typing import Union, Optional, Tuple
 from PyQt5.QtCore import QByteArray, Qt, QEvent
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushButton, QCheckBox, QLineEdit, QVBoxLayout, \
@@ -272,7 +272,7 @@ class StatisticsSettings(QWidget):
     def __init__(self, settings: PartSettings):
         super(StatisticsSettings, self).__init__()
         self.chosen_element: Optional[StatisticListWidgetItem] = None
-        self.chosen_element_area: Optional[AreaType] = None
+        self.chosen_element_area: Optional[Tuple[AreaType, float]] = None
         self.settings = settings
         self.profile_list = QListWidget(self)
         self.profile_description = QTextEdit(self)
@@ -280,6 +280,10 @@ class StatisticsSettings(QWidget):
         self.profile_options = QListWidget()
         self.profile_options_chosen = QListWidget()
         self.statistic_area_choose = EnumComboBox(AreaType)
+        self.power_num = QDoubleSpinBox()
+        self.power_num.setDecimals(3)
+        self.power_num.setRange(-100, 100)
+        self.power_num.setValue(1)
         # self.statistic_object_choose.addItems(["Mask", "Segmentation", "Mask without segmentation"])
         self.choose_butt = QPushButton(u"→", self)
         self.discard_butt = QPushButton(u"←", self)
@@ -354,7 +358,10 @@ class StatisticsSettings(QWidget):
         name_layout.addWidget(QLabel("Profile name:"))
         name_layout.addWidget(self.profile_name)
         name_layout.addStretch()
+        name_layout.addWidget(QLabel("Area:"))
         name_layout.addWidget(self.statistic_area_choose)
+        name_layout.addWidget(QLabel("to power:"))
+        name_layout.addWidget(self.power_num)
         """name_layout.addWidget(self.reversed_brightness)
         name_layout.addWidget(QLabel("Gauss image:"))
         name_layout.addWidget(self.gauss_img)
@@ -428,7 +435,7 @@ class StatisticsSettings(QWidget):
             item = self.profile_options.currentItem()
             item.setIcon(QIcon(os.path.join(static_file_folder, "icons", "task-accepted.png")))
             self.chosen_element = item
-            self.chosen_element_area = self.statistic_area_choose.get_value()
+            self.chosen_element_area = self.statistic_area_choose.get_value(), self.power_num.value()
         elif self.profile_options.currentItem() == self.chosen_element:
             self.chosen_element.setIcon(QIcon())
             self.chosen_element = None
@@ -436,8 +443,10 @@ class StatisticsSettings(QWidget):
             item : StatisticListWidgetItem = self.profile_options.currentItem()
 
             lw = StatisticListWidgetItem(
-                Node(op="/", left=self.get_parameters(deepcopy(self.chosen_element.stat), self.chosen_element_area),
-                     right=self.get_parameters(deepcopy(item.stat), self.statistic_area_choose.get_value())))
+                Node(op="/", left=self.get_parameters(deepcopy(self.chosen_element.stat), self.chosen_element_area[0],
+                                                      self.chosen_element_area[1]),
+                     right=self.get_parameters(deepcopy(item.stat), self.statistic_area_choose.get_value(),
+                                               self.power_num.value())))
             lw.setToolTip("User defined")
             self.profile_options_chosen.addItem(lw)
             self.chosen_element.setIcon(QIcon())
@@ -486,11 +495,11 @@ class StatisticsSettings(QWidget):
             self.save_butt.setDisabled(True)
             self.save_butt_with_name.setDisabled(True)
 
-    def get_parameters(self, node: Union[Node, Leaf], area: AreaType):
+    def get_parameters(self, node: Union[Node, Leaf], area: AreaType, power: float):
         if isinstance(node, Node):
             return node
-        if node.area is not None:
-            node = node._replace(area=area)
+        if node.area is None:
+            node = node._replace(area=area, power=power)
         arguments = STATISTIC_DICT[node.name].arguments
         if arguments is not None and len(node.dict) == 0:
             val_dialog = MultipleInput("Set parameters:",
@@ -507,7 +516,7 @@ class StatisticsSettings(QWidget):
         # selected_row = self.profile_options.currentRow()
         assert isinstance(selected_item, StatisticListWidgetItem)
         node = deepcopy(selected_item.stat)
-        node = self.get_parameters(node, self.statistic_area_choose.get_value())
+        node = self.get_parameters(node, self.statistic_area_choose.get_value(), self.power_num.value())
         lw = StatisticListWidgetItem(node)
         for i in range(self.profile_options_chosen.count()):
             if lw.text() == self.profile_options_chosen.item(i).text():

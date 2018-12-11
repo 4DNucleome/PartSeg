@@ -49,7 +49,7 @@ class Leaf(NamedTuple):
                 resp = resp[:-1]
             resp += "]"
         if self.power != 1.0:
-            resp += f"to the power {self.power}"
+            resp += f" to the power {self.power}"
         return resp
 
 
