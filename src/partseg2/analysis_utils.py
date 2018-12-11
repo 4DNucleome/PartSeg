@@ -41,4 +41,4 @@ class SegmentationPipeline(BaseReadonlyClass):
     def __str__(self):
         return f"Segmentation pipeline name: {self.name}\n" + \
                "\n––––––––––––––\n".join([str(x) for x in self.mask_history]) + \
-               "––––––––––––––\nLast segmentation\n" + str(self.segmentation)
+               "\n––––––––––––––\nLast segmentation\n" + str(self.segmentation)

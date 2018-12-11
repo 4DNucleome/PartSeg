@@ -15,7 +15,7 @@ from partseg2.batch_processing.calculation_plan import CalculationTree, MaskMapp
     Operations, FileCalculation, MaskIntersection, MaskSum, get_save_path, StatisticCalculate, Calculation
 from partseg2.batch_processing.parallel_backed import BatchManager
 from partseg2.io_functions import load_project, ProjectTuple
-from partseg2.partseg_utils import HistoryElement
+from partseg2.analysis_utils import HistoryElement
 from partseg2.save_register import save_register
 from partseg_utils.mask_create import calculate_mask
 from partseg_utils.segmentation.algorithm_base import report_empty_fun

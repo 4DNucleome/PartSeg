@@ -29,7 +29,7 @@ from project_utils_qt.main_window import BaseMainWindow
 from partseg_utils.mask_create import calculate_mask, MaskProperty
 from partseg_utils.segmentation.algorithm_base import SegmentationResult
 from .partseg_settings import PartSettings, save_labeled_image
-from .partseg_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
+from .analysis_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
 from .algorithm_description import part_algorithm_dict, SegmentationProfile
 from tiff_image import ImageReader
@@ -144,13 +144,12 @@ class Options(QWidget):
             segmentation = SegmentationProfile(name="Unknown", algorithm=el.algorithm_name, values=el.algorithm_values)
             new_el = SegmentationPipelineElement(mask_property=mask, segmentation=segmentation)
             mask_history.append(new_el)
-        self._settings.get("last_segmentation")
         name = self._settings.last_executed_algorithm
         if not name:
             QMessageBox.information(self, "No segmentation", "No segmentation executed", QMessageBox.Ok)
             return
-        values = self._settings.set(f"algorithms.{self.name}", None)
-        if not values:
+        values = self._settings.get(f"algorithms.{name}", {})
+        if len(values) == 0:
             QMessageBox.information(self, "Some problem", "Pleas run execution again", QMessageBox.Ok)
             return
         current_segmentation = SegmentationProfile(name="Unknown", algorithm=name, values=values)

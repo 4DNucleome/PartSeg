@@ -2,7 +2,7 @@ import typing
 
 from partseg_utils.class_generator import BaseReadonlyClass
 from partseg_utils.segmentation.restartable_segmentation_algorithms import RestartableAlgorithm
-from .partseg_utils import SegmentationPipeline, HistoryElement
+from .analysis_utils import SegmentationPipeline, HistoryElement
 from .algorithm_description import part_algorithm_dict
 from partseg_utils.mask_create import calculate_mask
 from tiff_image import Image

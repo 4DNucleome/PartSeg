@@ -35,7 +35,7 @@ class SitkThreshold(BaseThreshold, ABC):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty("masked", "Apply mask", True),
-                AlgorithmProperty("bins", f"{cls.get_name()} bins", cls.bins_num, (8, 2 ** 16))]
+                AlgorithmProperty("bins", f"histogram bins", cls.bins_num, (8, 2 ** 16))]
 
     @classmethod
     def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict, operator):

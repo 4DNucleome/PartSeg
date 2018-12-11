@@ -5,7 +5,7 @@ from partseg2.batch_processing.calculation_plan import CalculationPlan
 from partseg2.statistics_calculation import StatisticProfile
 from partseg_utils.cmap_utils import CmapProfile
 from .algorithm_description import SegmentationProfile
-from .partseg_utils import HistoryElement, SegmentationPipeline
+from .analysis_utils import HistoryElement, SegmentationPipeline
 from .save_hooks import PartEncoder, part_hook
 from .io_functions import save_project, save_cmap, load_project, ProjectTuple
 from project_utils_qt.settings import BaseSettings
