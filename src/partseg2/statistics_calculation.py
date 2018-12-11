@@ -3,72 +3,114 @@ from __future__ import division
 import logging
 import traceback
 from collections import namedtuple, OrderedDict
+from enum import Enum
 from functools import reduce
 from typing import Dict
 
 import SimpleITK as sitk
 import numpy as np
-
+from typing import NamedTuple, Optional, Union, Dict
 from partseg_utils import class_to_dict, autofit as af
 
-SettingsValue = namedtuple("SettingsValue", ["function_name", "help_message", "arguments", "is_mask", "is_component"])
+class SettingsValue(NamedTuple):
+    function_name: str
+    help_message: str
+    arguments: Optional[dict]
+    is_mask: bool
+    is_component: bool
 
-Leaf = namedtuple("Leaf", ["name", "dict"])
-Node = namedtuple("Node", ["left", 'op', 'right'])
+#Leaf = namedtuple("Leaf", ["name", "dict"])
+#Node = namedtuple("Node", ["left", 'op', 'right'])
 
-STATISTIC_DICT = {
-        "Volume": SettingsValue("calculate_volume", "Calculate volume of current segmentation", None, False, False),
-        "Volume per component": SettingsValue("calculate_component_volume", "Calculate volume of each component "
-                                              "of cohesion of current segmentation", None, False, True),
-        "Mass": SettingsValue("calculate_mass", "Sum of pixel brightness for current segmentation", None, False, False),
-        "Mask Mass": SettingsValue("calculate_mask_mass", "Sum of pixel brightness for current mask", None, False, False),
-        "Mass per component": SettingsValue("calculate_component_mass", "Sum of pixel brightness of each component of"
-                                            " cohesion for current segmentation", None, False, True),
-        "Border surface": SettingsValue("calculate_border_surface",
-                                        "Calculating surface of current segmentation", None, False, False),
-        "Maximum pixel brightness": SettingsValue(
-            "maximum_brightness", "Calculate maximum brightness of pixel for current segmentation", None, False, False),
-        "Minimum pixel brightness": SettingsValue(
-            "minimum_brightness", "Calculate minimum brightness of pixel for current segmentation", None, False, False),
-        "Median pixel brightness": SettingsValue(
-            "median_brightness", "Calculate median brightness of pixel for current segmentation", None, False, False),
-        "Mean pixel brightness": SettingsValue(
-            "mean_brightness", "Calculate median brightness of pixel for current segmentation", None, False, False),
-        "Standard deviation of pixel brightness": SettingsValue(
-            "std_brightness", "Calculate  standard deviation of pixel brightness for current segmentation", None,
-            False, False),
-        "Standard deviation of Noise": SettingsValue(
-            "std_noise", "Calculate standard deviation of pixel brightness outside current segmentation", None,
-            False, False),
-        "Moment of inertia": SettingsValue("moment_of_inertia", "Calculate moment of inertia for segmented structure."
-                                           "Has one parameter thr (threshold). Only values above it are used "
-                                           "in calculation", None, False, False),
-        "Border Mass": SettingsValue("border_mass", "Calculate mass for elements in radius (in physical units)"
+class AreaType(Enum):
+    Segmentation = 1
+    Mask = 2
+    Mask_without_segmentation = 3
+
+    def __str__(self):
+        return self.name.replace("_", " ")
+
+
+class Leaf(NamedTuple):
+    name: str
+    dict: Dict = dict()
+    power: float = 1.0
+    area: Optional[AreaType] = None
+
+    def __str__(self):
+        resp = self.name
+        if self.area is not None:
+            resp = str(self.area) + " " + resp
+        if len(self.dict) != 0:
+            resp += "["
+            for k, v in self.dict:
+                resp += f"{k}={v} "
+            else:
+                resp = resp[:-1]
+            resp += "]"
+        if self.power != 1.0:
+            resp += f"to the power {self.power}"
+        return resp
+
+
+class Node(NamedTuple):
+    left: Union['Node', Leaf]
+    op: str
+    right: Union['Node', Leaf]
+
+    def __str__(self):
+        left_text = "(" + str(self.left) + ")" if isinstance(self.left, Node) else str(self.left)
+        right_text = "(" + str(self.right) + ")" if isinstance(self.right, Node) else str(self.right)
+        return left_text + self.op + right_text
+
+
+STATISTIC_DICT: Dict[str, SettingsValue] = OrderedDict({
+    "Volume": SettingsValue("calculate_volume", "Calculate volume of current segmentation", None, False, False),
+    "Diameter": SettingsValue("segmentation_diameter", "Diameter of segmentation", None, False, False),
+
+    "Pixel Brightness Sum": SettingsValue("calculate_mass", "Sum of pixel brightness for current segmentation", None, False, False),
+    "Components Number": SettingsValue("number_of_components", "Calculate number of connected components "
+                                                               "on segmentation", None, False, False),
+    "Volume per component": SettingsValue("calculate_component_volume", "Calculate volume of each component "
+                                          "of current segmentation", None, False, True),
+    "Pixel Brightness Sum per component": SettingsValue("calculate_component_mass", "Sum of pixel brightness of each component of"
+                                        "segmentation", None, False, True),
+    "Maximum pixel brightness": SettingsValue(
+        "maximum_brightness", "Calculate maximum brightness of pixel for current segmentation", None, False, False),
+    "Minimum pixel brightness": SettingsValue(
+        "minimum_brightness", "Calculate minimum brightness of pixel for current segmentation", None, False, False),
+    "Median pixel brightness": SettingsValue(
+        "median_brightness", "Calculate median brightness of pixel for current segmentation", None, False, False),
+    "Mean pixel brightness": SettingsValue(
+        "mean_brightness", "Calculate median brightness of pixel for current segmentation", None, False, False),
+    "Standard deviation of pixel brightness": SettingsValue(
+        "std_brightness", "Calculate  standard deviation of pixel brightness for current segmentation", None,
+        False, False),
+    "Moment of inertia": SettingsValue("moment_of_inertia", "Calculate moment of inertia for segmented structure."
+                                       "Has one parameter thr (threshold). Only values above it are used "
+                                       "in calculation", None, False, False),
+    "Rim Pixel Brightness Sum": SettingsValue("border_mass", "Calculate mass for components located within rim (in physical units)"
+                                                " from mask", {"radius": int}, False, False),
+    "Rim Volume": SettingsValue("border_volume", "Calculate volumes for elements in radius (in physical units)"
                                                     " from mask", {"radius": int}, False, False),
-        "Border Volume": SettingsValue("border_volume", "Calculate volumes for elements in radius (in physical units)"
-                                                        " from mask", {"radius": int}, False, False),
-        "Components Number": SettingsValue("number_of_components", "Calculate number of connected components "
-                                                                   "on segmentation", None, False, False),
-        "Mask Volume": SettingsValue("mask_volume", "Volume of mask", None, True, False),
-        "Mask Diameter": SettingsValue("mask_diameter", "Diameter of mask", None, True, False),
-        "Segmentation Diameter": SettingsValue("segmentation_diameter", "Diameter of segmentation", None, False, False),
-        "Segmentation component Diameter":
-            SettingsValue("component_diameter", "Diameter of each segmentation component", None, False, False),
-        "Segmentation first main axis length":
-            SettingsValue("calculate_first_main_axis_length",
-                          "Length of first main axis of segmentation", None, False, False),
-        "Segmentation second main axis length":
-            SettingsValue("calculate_second_main_axis_length",
-                          "Length of second main axis of segmentation", None, False, False),
-        "Segmentation third main axis length":
-            SettingsValue("calculate_third_main_axis_length",
-                          "Length of third main axis of segmentation", None, False, False),
-        "Compactness":
-            SettingsValue("calculate_compactness",
-                          "Calculate compactness off segmentation (Border surface^1.5/volume)", None, False, False),
-        "Sphericity": SettingsValue("calculate_sphericity", "volume/(diameter**3/8)", None, False, False)
-
-    }
+    "Components Diameter":
+        SettingsValue("component_diameter", "Diameter of each component", None, False, False),
+    "Longest main axis length":
+        SettingsValue("calculate_first_main_axis_length",
+                      "Length of first main axis", None, False, False),
+    "Middle main axis length":
+        SettingsValue("calculate_second_main_axis_length",
+                      "Length of second main axis", None, False, False),
+    "Shortest main axis length":
+        SettingsValue("calculate_third_main_axis_length",
+                      "Length of third main axis", None, False, False),
+    "Compactness":
+        SettingsValue("calculate_compactness",
+                      "Calculate compactness off segmentation (Surface^1.5/volume)", None, False, False),
+    "Sphericity": SettingsValue("calculate_sphericity", "volume/(diameter**3/8)", None, False, False),
+    "Surface": SettingsValue("calculate_border_surface",
+                                    "Calculating surface of current segmentation", None, False, False)
+    })
 
 class StatisticProfile(object):
 
@@ -131,7 +173,7 @@ class StatisticProfile(object):
         if len(l) == 2:
             return Leaf(*l)
         else:
-            return Node(self.rebuild_tree(l[0]), l[1], self.rebuild_tree(l[2]))
+            return Node(left=self.rebuild_tree(l[0]), op=l[1], right=self.rebuild_tree(l[2]))
 
     def flat_tree(self, t):
         if isinstance(t, Leaf):

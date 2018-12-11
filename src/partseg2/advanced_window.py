@@ -1,19 +1,22 @@
 import logging
 import os
 import sys
+from copy import deepcopy
 
 import numpy as np
+from typing import Union, Optional
 from PyQt5.QtCore import QByteArray, Qt, QEvent
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushButton, QCheckBox, QLineEdit, QVBoxLayout, \
     QLabel, QHBoxLayout, QListWidgetItem, QDialog, QDoubleSpinBox, QSpinBox, QGridLayout, QApplication, QMessageBox, \
     QFileDialog, QComboBox, QTableWidget, QTableWidgetItem, QAbstractSpinBox, QInputDialog, QPlainTextEdit, QFrame
 
+from common_gui.algorithms_description import EnumComboBox
 from common_gui.colors_choose import ColorSelector
 from common_gui.lock_checkbox import LockCheckBox
 from partseg2.partseg_settings import PartSettings, MASK_COLORS
 from partseg2.profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer
-from partseg2.statistics_calculation import StatisticProfile, STATISTIC_DICT
+from partseg2.statistics_calculation import StatisticProfile, STATISTIC_DICT, Node, Leaf, AreaType
 from partseg_utils.global_settings import static_file_folder
 from partseg_utils.universal_const import UNITS_DICT, UNIT_SCALE, UNITS_LIST
 from common_gui.dim_combobox import DimComboBox
@@ -29,7 +32,6 @@ class AdvancedSettings(QWidget):
     def __init__(self, settings: PartSettings):
         super().__init__()
         self._settings = settings
-        self.read_spacing_chk = QCheckBox("Read voxel size from file")
         self.export_btn = QPushButton("Export profile")
         self.export_btn.clicked.connect(self.export_profile)
         self.import_btn = QPushButton("Import profile")
@@ -40,7 +42,6 @@ class AdvancedSettings(QWidget):
         self.rename_btn = QPushButton("Rename Profile")
         self.rename_btn.clicked.connect(self.rename_profile)
         self.rename_btn.setDisabled(True)
-        self.use_physical_unit_chk = QCheckBox()
         self.voxel_size_label = QLabel()
         self.info_label = QPlainTextEdit()
         self.info_label.setReadOnly(True)
@@ -85,13 +86,10 @@ class AdvancedSettings(QWidget):
             spacing_layout.addWidget(QLabel(txt+":"))
             spacing_layout.addWidget(el)
         spacing_layout.addWidget(self.units)
-        spacing_layout.addWidget(self.read_spacing_chk)
         spacing_layout.addStretch(1)
         voxel_size_layout = QHBoxLayout()
         voxel_size_layout.addWidget(self.voxel_size_label)
         voxel_size_layout.addSpacing(30)
-        voxel_size_layout.addWidget(QLabel("Use physical units in minimum size:"))
-        voxel_size_layout.addWidget(self.use_physical_unit_chk)
         mask_layout = QHBoxLayout()
         mask_layout.addWidget(QLabel("Mask mark color"))
         mask_layout.addWidget(self.mask_color)
@@ -260,6 +258,12 @@ class AdvancedSettings(QWidget):
             self.update_profile_list()
 
 
+class StatisticListWidgetItem(QListWidgetItem):
+    def __init__(self, stat: Union[Node, Leaf], *args, **kwargs):
+        super().__init__(str(stat), *args, **kwargs)
+        self.stat = stat
+
+
 
 class StatisticsSettings(QWidget):
     """
@@ -267,16 +271,19 @@ class StatisticsSettings(QWidget):
     """
     def __init__(self, settings: PartSettings):
         super(StatisticsSettings, self).__init__()
-        self.chosen_element = None
+        self.chosen_element: Optional[StatisticListWidgetItem] = None
+        self.chosen_element_area: Optional[AreaType] = None
         self.settings = settings
         self.profile_list = QListWidget(self)
         self.profile_description = QTextEdit(self)
         self.profile_description.setReadOnly(True)
         self.profile_options = QListWidget()
         self.profile_options_chosen = QListWidget()
+        self.statistic_area_choose = EnumComboBox(AreaType)
+        # self.statistic_object_choose.addItems(["Mask", "Segmentation", "Mask without segmentation"])
         self.choose_butt = QPushButton(u"→", self)
         self.discard_butt = QPushButton(u"←", self)
-        self.proportion_butt = QPushButton(u"∺", self)
+        self.proportion_butt = QPushButton(u"Ratio", self)
         self.proportion_butt.setToolTip("Create proportion from two statistics")
         self.move_up = QPushButton(u"↑", self)
         self.move_down = QPushButton(u"↓", self)
@@ -302,7 +309,7 @@ class StatisticsSettings(QWidget):
         self.discard_butt.setDisabled(True)
         self.discard_butt.clicked.connect(self.discard_option)
         self.proportion_butt.setDisabled(True)
-        self.proportion_butt.clicked.connect(self.choose_element)
+        self.proportion_butt.clicked.connect(self.proportion_action)
         self.save_butt.setDisabled(True)
         self.save_butt.clicked.connect(self.save_action)
         self.save_butt_with_name.setDisabled(True)
@@ -347,6 +354,7 @@ class StatisticsSettings(QWidget):
         name_layout.addWidget(QLabel("Profile name:"))
         name_layout.addWidget(self.profile_name)
         name_layout.addStretch()
+        name_layout.addWidget(self.statistic_area_choose)
         """name_layout.addWidget(self.reversed_brightness)
         name_layout.addWidget(QLabel("Gauss image:"))
         name_layout.addWidget(self.gauss_img)
@@ -382,9 +390,9 @@ class StatisticsSettings(QWidget):
         layout.addLayout(save_butt_layout)
         self.setLayout(layout)
 
-        for name, profile in sorted(STATISTIC_DICT.items()):
+        for name, profile in STATISTIC_DICT.items():
             help_text = profile.help_message
-            lw = QListWidgetItem(name)
+            lw = StatisticListWidgetItem(Leaf(name))
             lw.setToolTip(help_text)
             self.profile_options.addItem(lw)
         self.profile_list.addItems(list(sorted(self.settings.statistic_profiles.keys())))
@@ -415,22 +423,21 @@ class StatisticsSettings(QWidget):
         self.choose_butt.setEnabled(True)
         self.proportion_butt.setEnabled(True)
 
-    def choose_element(self):
+    def proportion_action(self):
         if self.chosen_element is None:
             item = self.profile_options.currentItem()
             item.setIcon(QIcon(os.path.join(static_file_folder, "icons", "task-accepted.png")))
             self.chosen_element = item
+            self.chosen_element_area = self.statistic_area_choose.get_value()
         elif self.profile_options.currentItem() == self.chosen_element:
             self.chosen_element.setIcon(QIcon())
             self.chosen_element = None
         else:
-            text1 = self.chosen_element.text()
-            if "/" in text1:
-                text1 = "({})".format(text1)
-            text2 = self.profile_options.currentItem().text()
-            if "/" in text2:
-                text2 = "({})".format(text2)
-            lw = QListWidgetItem("{}/{}".format(text1, text2))
+            item : StatisticListWidgetItem = self.profile_options.currentItem()
+
+            lw = StatisticListWidgetItem(
+                Node(op="/", left=self.get_parameters(deepcopy(self.chosen_element.stat), self.chosen_element_area),
+                     right=self.get_parameters(deepcopy(item.stat), self.statistic_area_choose.get_value())))
             lw.setToolTip("User defined")
             self.profile_options_chosen.addItem(lw)
             self.chosen_element.setIcon(QIcon())
@@ -479,27 +486,29 @@ class StatisticsSettings(QWidget):
             self.save_butt.setDisabled(True)
             self.save_butt_with_name.setDisabled(True)
 
+    def get_parameters(self, node: Union[Node, Leaf], area: AreaType):
+        if isinstance(node, Node):
+            return node
+        if node.area is not None:
+            node = node._replace(area=area)
+        arguments = STATISTIC_DICT[node.name].arguments
+        if arguments is not None and len(node.dict) == 0:
+            val_dialog = MultipleInput("Set parameters:",
+                                      STATISTIC_DICT[node.name].help_message,
+                                      list(arguments.items()))
+            if val_dialog.exec_():
+                node = node._replace(dict=val_dialog.get_response.items())
+            else:
+                return None
+        return node
+
     def choose_option(self):
         selected_item = self.profile_options.currentItem()
         # selected_row = self.profile_options.currentRow()
-        if str(selected_item.text()) in STATISTIC_DICT:
-            arguments = STATISTIC_DICT[str(selected_item.text())].arguments
-        else:
-            arguments = None
-        if arguments is not None:
-            val_dialog = MultipleInput("Set parameters:",
-                                       STATISTIC_DICT[str(selected_item.text())].help_message,
-                                       list(arguments.items()))
-            if val_dialog.exec_():
-                res = ""
-                for name, val in val_dialog.get_response.items():
-                    res += "{}={},".format(name, val)
-                lw = QListWidgetItem(selected_item.text() + "[{}]".format(res[:-1]))
-            else:
-                return
-        else:
-            lw = QListWidgetItem(selected_item.text())
-            # self.profile_options.takeItem(selected_row)
+        assert isinstance(selected_item, StatisticListWidgetItem)
+        node = deepcopy(selected_item.stat)
+        node = self.get_parameters(node, self.statistic_area_choose.get_value())
+        lw = StatisticListWidgetItem(node)
         for i in range(self.profile_options_chosen.count()):
             if lw.text() == self.profile_options_chosen.item(i).text():
                 return
@@ -512,9 +521,9 @@ class StatisticsSettings(QWidget):
             self.choose_butt.setDisabled(True)
 
     def discard_option(self):
-        selected_item = self.profile_options_chosen.currentItem()
+        selected_item: StatisticListWidgetItem = self.profile_options_chosen.currentItem()
         selected_row = self.profile_options_chosen.currentRow()
-        lw = QListWidgetItem(selected_item.text())
+        lw = StatisticListWidgetItem(deepcopy(selected_item.stat))
         lw.setToolTip(selected_item.toolTip())
         self.profile_options_chosen.takeItem(selected_row)
         if self.profile_options_chosen.count() == 0:
@@ -597,7 +606,7 @@ class StatisticsSettings(QWidget):
         self.proportion_butt.setDisabled(True)
         self.choose_butt.setDisabled(True)
         self.discard_butt.setDisabled(True)
-        self.profile_options.addItems(list(sorted(STATISTIC_DICT.keys())))
+        self.profile_options.addItems(list(STATISTIC_DICT.keys()))
 
     def soft_reset(self):
         shift = 0
@@ -660,8 +669,8 @@ class AdvancedWindow(QTabWidget):
         self.statistics_settings = StatisticsSettings(settings)
         self.addTab(self.advanced_settings, "Settings")
         self.addTab(self.colormap_settings, "Color maps")
+        self.addTab(self.statistics_settings, "Statistic profiles")
         self.addTab(self.statistics, "Statistics")
-        self.addTab(self.statistics_settings, "Statistic settings")
         """if settings.advanced_menu_geometry is not None:
             self.restoreGeometry(settings.advanced_menu_geometry)"""
         try:

@@ -26,6 +26,7 @@ class EnumComboBox(QComboBox):
     def __init__(self, enum: type(Enum), parent=None):
         super().__init__(parent=parent)
         self.enum = enum
+        self.addItems(list(map(str,  enum.__members__.values())))
 
     def get_value(self):
         return list(self.enum.__members__.values())[self.currentIndex()]
@@ -111,7 +112,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         elif issubclass(self.value_type, Enum):
             res = EnumComboBox(self.value_type)
             # noinspection PyUnresolvedReference,PyUnresolvedReferences
-            res.addItems(self.value_type.__members__.keys())
+            # res.addItems(self.value_type.__members__.keys())
             # noinspection PyUnresolvedReferences
             res.set_value(self.default_value)
         elif issubclass(self.value_type, list):
