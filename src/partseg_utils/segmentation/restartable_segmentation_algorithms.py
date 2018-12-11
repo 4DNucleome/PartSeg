@@ -1,15 +1,16 @@
+import operator
 from abc import ABC
 from collections import defaultdict
 from enum import Enum
 
+import SimpleITK as sitk
+import numpy as np
+
+from partseg_utils import bisect
 from partseg_utils.channel_class import Channel
+from partseg_utils.distance_in_structure.find_split import distance_sprawl, path_minimum_sprawl, path_maximum_sprawl
 from partseg_utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
 from partseg_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
-from partseg_utils.distance_in_structure.find_split import distance_sprawl, path_minimum_sprawl, path_maximum_sprawl
-import numpy as np
-import SimpleITK as sitk
-from partseg_utils import bisect
-import operator
 from partseg_utils.segmentation.noise_removing import noise_removal_dict
 from partseg_utils.segmentation.threshold import threshold_dict, BaseThreshold, double_threshold_dict
 
@@ -79,7 +80,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             restarted = True
         if restarted or self.parameters["noise_removal"] != self.new_parameters["noise_removal"]:
             noise_removal_parameters = self.new_parameters["noise_removal"]
-            self.cleaned_image = noise_removal_dict[noise_removal_parameters["name"]].\
+            self.cleaned_image = noise_removal_dict[noise_removal_parameters["name"]]. \
                 noise_remove(self.channel, self.image.spacing, noise_removal_parameters["values"])
             restarted = True
         if restarted or self.new_parameters["threshold"] != self.parameters["threshold"]:
@@ -104,7 +105,6 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             return SegmentationResult(finally_segment, self.segmentation, self.cleaned_image)
 
     def _clean(self):
-        print(f"clean {self.__class__}")
         super()._clean()
         self.parameters = defaultdict(lambda: None)
         self.cleaned_image = None
@@ -176,14 +176,14 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty("threshold", "Threshold", next(iter(double_threshold_dict.keys())),
-                                  possible_values=double_threshold_dict, property_type=AlgorithmDescribeBase)]\
-                + super().get_fields()
+                                  possible_values=double_threshold_dict, property_type=AlgorithmDescribeBase)] \
+               + super().get_fields()
 
     def path_sprawl(self, base_image, object_image) -> np.ndarray:
         raise NotImplementedError()
 
     def get_info_text(self):
-        return f"Threshold: " + ", ".join(map(str, self.threshold_info))+\
+        return f"Threshold: " + ", ".join(map(str, self.threshold_info)) + \
                "\nMid sizes: " + ", ".join(map(str, self._sizes_array[1:self.components_num + 1])) + \
                "\nFinal sizes: " + ", ".join(map(str, self.final_sizes[1:]))
 
@@ -222,7 +222,6 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
             self.finally_segment = segment_data.segmentation
             finally_segment = segment_data.segmentation
             restarted = True
-
 
         if restarted or self.old_threshold_info[1] != self.threshold_info[1]:
             if self.threshold_operator(self.threshold_info[1], self.threshold_info[0]):
@@ -385,7 +384,7 @@ class OtsuSegment(RestartableAlgorithm):
                 AlgorithmProperty("components", "Number of Components", 2, (0, 100)),
                 AlgorithmProperty("mask", "Use mask in calculation", True),
                 AlgorithmProperty("valley", "Valley emphasis", True),
-                AlgorithmProperty("hist_num", "Number of histogram bins", 128, (8, 2**16))]
+                AlgorithmProperty("hist_num", "Number of histogram bins", 128, (8, 2 ** 16))]
 
     def __init__(self):
         super().__init__()
@@ -411,7 +410,7 @@ class OtsuSegment(RestartableAlgorithm):
         res = sitk.GetArrayFromImage(res)
         self._sizes_array = np.bincount(res.flat)[1:]
         self.threshold_info = []
-        for i in range(1, self.new_parameters["components"]+1):
+        for i in range(1, self.new_parameters["components"] + 1):
             val = cleaned_image[res == i]
             if val.size:
                 self.threshold_info.append(np.min(val))

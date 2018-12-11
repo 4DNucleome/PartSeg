@@ -552,7 +552,6 @@ class MyScrollArea(QScrollArea):
 
     def vertical_range_changed(self, min_val, max_val):
         if self.y_mid is not None and self.sender().isVisible():
-            print("aaaa", max_val, self.y_mid)
             diff = self.widget().size().height() - (max_val - min_val)
             self.sender().setValue(self.y_mid - diff / 2)
             self.y_mid = None
@@ -601,22 +600,6 @@ class MyScrollArea(QScrollArea):
         self.x_mid = (point1.x() + point2.x()) / 2 * scale_ratio
         self.pixmap.resize(final_size)
         self.zoom_changed.emit()
-
-        """img_h = self.pixmap.size().height()
-        view_h = self.size().height() - 2
-        
-        print("aaaa2", self.verticalScrollBar().maximum())
-        v_min = self.verticalScrollBar().minimum()
-        v_max = self.verticalScrollBar().maximum()
-        v_set = v_min + (v_max - v_min) * ((y_mid - view_h/2) / (img_h-view_h))
-        self.verticalScrollBar().setValue(int(v_set))
-        img_w = self.pixmap.size().width()
-        view_w = self.size().width() - 2
-        
-        v_min = self.horizontalScrollBar().minimum()
-        v_max = self.horizontalScrollBar().maximum()
-        v_set = v_min + (v_max - v_min) * ((x_mid - view_w / 2) / (img_w - view_w))
-        self.horizontalScrollBar().setValue(int(v_set))"""
 
     @property
     def image_ratio(self):

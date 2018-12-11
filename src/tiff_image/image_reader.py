@@ -44,7 +44,6 @@ class ImageReader(object):
         :param mask_path:
         :return: Image
         """
-        # print(image_path)
         self.spacing, self.colors, self.labels, self.ranges, order = self.default_spacing, None, None, None, None
         self.image_file = TiffFile(image_path)
         total_pages_num = len(self.image_file.series[0])
@@ -83,8 +82,6 @@ class ImageReader(object):
             mask_data = self.update_array_shape(mask_data, self.mask_file.series[0].axes)[..., 0]
         else:
             mask_data = None
-        print(self.spacing, shape, image_data.shape, axes, None if self.mask_file is None else mask_data.shape)
-
         self.image_file.close()
         if self.mask_file is not None:
             self.mask_file.close()

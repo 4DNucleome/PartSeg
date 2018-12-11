@@ -126,8 +126,6 @@ def add_labels(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[label_types, ndim=2
             circle_shift = np.array([[0,0]]).astype(np.int8)
         circle_shift += border_thick
         circle_len = circle_shift.shape[0]
-        #print(circle_shift)
-        #print(circle_shift + border_thick)
         local_labels = np.zeros((labels.shape[0] + 2*border_thick, labels.shape[1] + 2*border_thick), dtype=labels.dtype)
         for x in range(1,x_max-1):
             for y in range(1,y_max-1):

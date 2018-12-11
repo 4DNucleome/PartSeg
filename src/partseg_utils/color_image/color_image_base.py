@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 from partseg_utils.global_settings import static_file_folder
 from os import path
@@ -47,8 +49,8 @@ def color_image(image: np.ndarray, colors: typing.List[str], min_max: typing.Lis
         try:
             result_images.append([color_grayscale(cmap, image[..., i], min_val, max_val)])
         except TypeError as e:
-            print(image.dtype)
-            print(e)
+            print(image.dtype, file=sys.stderr)
+            print(e, file=sys.stderr)
         except IndexError as e:
             raise e
     if len(result_images) > 0:
