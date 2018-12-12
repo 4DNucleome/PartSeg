@@ -36,6 +36,14 @@ class ImageReader(object):
             raise ValueError(f"wrong spacing {spacing}")
         self.default_spacing = spacing
 
+
+    @classmethod
+    def read_image(cls, callback_function: typing.Callable,
+                   image_path: typing.Union[str, BytesIO], mask_path=None) -> Image:
+        instance = cls(callback_function)
+        return instance.read(image_path, mask_path)
+
+
     def read(self, image_path: typing.Union[str, BytesIO], mask_path=None) -> Image:
         """
         Read tiff image from tiff_file
