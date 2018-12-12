@@ -13,6 +13,7 @@ from partseg_utils.segmentation.algorithm_base import SegmentationAlgorithm, Seg
 from partseg_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
 from partseg_utils.segmentation.noise_removing import noise_removal_dict
 from partseg_utils.segmentation.threshold import threshold_dict, BaseThreshold, double_threshold_dict
+from partseg_utils.universal_const import UNITS_LIST, UNIT_SCALE
 
 
 def blank_operator(_x, _y):
@@ -39,6 +40,43 @@ class RestartableAlgorithm(SegmentationAlgorithm, ABC):
         return "No info [Report this ass error]"
 
 
+class BorderRim(RestartableAlgorithm):
+    @classmethod
+    def get_name(cls):
+        return "Border Rim"
+
+    def __init__(self):
+        super().__init__()
+        self.radius = 0
+        self.units = ""
+
+    @classmethod
+    def get_fields(cls):
+        return ["Need mask",
+                AlgorithmProperty("distance", "Distance", 700.0, options_range=(0, 100000), property_type=float),
+                AlgorithmProperty("units", "Units", "nm", possible_values=UNITS_LIST)]
+
+    def set_parameters(self, distance, units):
+        self.radius = distance
+        self.units = units
+
+    def get_info_text(self):
+        if self.mask is None:
+            return "Need mask"
+        else:
+            return ""
+
+    def calculation_run(self, _report_fun) -> SegmentationResult:
+        if self.mask is not None:
+            voxel_size = self.image.spacing
+            units_scalar = UNIT_SCALE[UNITS_LIST.index(self.units)]
+            final_radius = [int((self.radius / units_scalar) / x) for x in voxel_size]
+            mask = np.array(self.mask > 0).astype(np.uint8)
+            eroded = sitk.GetArrayFromImage(sitk.BinaryErode(sitk.GetImageFromArray(mask), final_radius))
+            mask[eroded > 0] = 0
+            return SegmentationResult(mask, mask, None)
+
+
 class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
     """
     :type segmentation: np.ndarray
@@ -51,7 +89,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         # TODO coś z noise removal zrobić
         return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
                 AlgorithmProperty("minimum_size", "Minimum size (pix)", 8000, (0, 10 ** 6), 1000),
-                AlgorithmProperty("noise_removal", "Noise Removal", next(iter(noise_removal_dict.keys())),
+                AlgorithmProperty("noise_removal", "Filtering", next(iter(noise_removal_dict.keys())),
                                   possible_values=noise_removal_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("side_connection", "Connect only sides", False, (True, False))]
 
@@ -93,7 +131,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
                 restarted = True
         if restarted or self.new_parameters["side_connection"] != self.parameters["side_connection"]:
             connect = sitk.ConnectedComponent(sitk.GetImageFromArray(self.threshold_image),
-                                              self.new_parameters["side_connection"])
+                                              not self.new_parameters["side_connection"])
             self.segmentation = sitk.GetArrayFromImage(sitk.RelabelComponent(connect))
             self._sizes_array = np.bincount(self.segmentation.flat)
             restarted = True
@@ -430,4 +468,4 @@ final_algorithm_list = [LowerThresholdAlgorithm, UpperThresholdAlgorithm, RangeT
                         LowerThresholdDistanceFlowAlgorithm, UpperThresholdDistanceFlowAlgorithm,
                         LowerThresholdPathFlowAlgorithm, UpperThresholdPathFlowAlgorithm,
                         LowerThresholdPathDistanceFlowAlgorithm, UpperThresholdPathDistanceFlowAlgorithm,
-                        OtsuSegment]
+                        OtsuSegment, BorderRim]

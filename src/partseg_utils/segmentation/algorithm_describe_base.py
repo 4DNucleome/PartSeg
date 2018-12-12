@@ -46,7 +46,7 @@ class AlgorithmDescribeBase:
 
 
 class Register(OrderedDict):
-    def __init__(self, class_methods=None, methods=None, **kwargs):
+    def __init__(self, *args, class_methods=None, methods=None, **kwargs):
         """
         :param class_methods: list of method which should be class method
         :param methods: list of method which should be instance method
@@ -55,15 +55,20 @@ class Register(OrderedDict):
         super().__init__(**kwargs)
         self.class_methods = list(class_methods) if class_methods else []
         self.methods = list(methods) if methods else []
+        for el in args:
+            self.register(el)
 
     def __getitem__(self, item):
         return super().__getitem__(item)
 
     def register(self, value: typing.Type[AlgorithmDescribeBase], replace=False):
         self.check_function(value, "get_name", True)
-        name = value.get_name()
+        try:
+            name = value.get_name()
+        except NotImplementedError:
+            raise ValueError(f"Class {value} need to implement get_name class method")
         if name in self and not replace:
-            raise ValueError("Object with this name already exist and register is not in replace mode")
+            raise ValueError(f"Object with this name: {name} already exist and register is not in replace mode")
         if not isinstance(name, str):
             raise ValueError(f"Function get_name of class {value} need return string not {type(name)}")
         self[name] = value
