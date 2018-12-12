@@ -189,7 +189,7 @@ class CalculationProcess(object):
                 raise ValueError(f"Unknown units: '{node.operation.units}'")
 
             statistics = \
-                node.operation.statistic_profile.calculate(image_channel, image_channel,
+                node.operation.statistic_profile.calculate(image_channel,
                                                            self.segmentation, self.full_segmentation,
                                                            self.mask, [x * scalar for x in self.image.spacing])
             self.statistics.append(statistics)

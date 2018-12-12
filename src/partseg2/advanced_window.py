@@ -2,9 +2,9 @@ import logging
 import os
 import sys
 from copy import deepcopy
+from typing import Union, Optional, Tuple
 
 import numpy as np
-from typing import Union, Optional, Tuple
 from PyQt5.QtCore import QByteArray, Qt, QEvent
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushButton, QCheckBox, QLineEdit, QVBoxLayout, \
@@ -13,13 +13,16 @@ from PyQt5.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushBu
 
 from common_gui.algorithms_description import EnumComboBox
 from common_gui.colors_choose import ColorSelector
+from common_gui.custom_save import FormDialog
+from common_gui.dim_combobox import DimComboBox
 from common_gui.lock_checkbox import LockCheckBox
 from partseg2.partseg_settings import PartSettings, MASK_COLORS
 from partseg2.profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer
-from partseg2.statistics_calculation import StatisticProfile, STATISTIC_DICT, Node, Leaf, AreaType
+from partseg2.statistics_calculation import StatisticProfile, STATISTIC_DICT, Node, Leaf, AreaType, PerComponent, \
+    StatisticEntry
 from partseg_utils.global_settings import static_file_folder
 from partseg_utils.universal_const import UNITS_DICT, UNIT_SCALE, UNITS_LIST
-from common_gui.dim_combobox import DimComboBox
+
 
 def h_line():
     toto = QFrame()
@@ -53,16 +56,19 @@ class AdvancedSettings(QWidget):
         self.lock_spacing = LockCheckBox()
         self.lock_spacing.stateChanged.connect(self.spacing[1].setDisabled)
         self.lock_spacing.stateChanged.connect(self.synchronize_spacing)
+        # noinspection PyUnresolvedReferences
         self.spacing[2].valueChanged.connect(self.synchronize_spacing)
         units_index = self._settings.get("units_index", 2)
         for i, el in enumerate(self.spacing):
             el.setAlignment(Qt.AlignRight)
             el.setButtonSymbols(QAbstractSpinBox.NoButtons)
             el.setRange(0, 1000000)
+            # noinspection PyUnresolvedReferences
             el.valueChanged.connect(self.image_spacing_change)
         self.units = QComboBox()
         self.units.addItems(UNITS_LIST)
         self.units.setCurrentIndex(units_index)
+        # noinspection PyUnresolvedReferences
         self.units.currentIndexChanged.connect(self.update_spacing)
 
         color, opacity = self._settings.get_from_profile("mask_presentation", (list(MASK_COLORS.keys())[0], 1))
@@ -77,13 +83,15 @@ class AdvancedSettings(QWidget):
             index = 0
         self.mask_color.setCurrentIndex(index)
         self.mask_opacity.setValue(opacity)
+        # noinspection PyUnresolvedReferences
         self.mask_opacity.valueChanged.connect(self.mask_prop_changed)
+        # noinspection PyUnresolvedReferences
         self.mask_color.currentIndexChanged.connect(self.mask_prop_changed)
 
         spacing_layout = QHBoxLayout()
         spacing_layout.addWidget(self.lock_spacing)
         for txt, el in zip(["x", "y", "z"], self.spacing[::-1]):
-            spacing_layout.addWidget(QLabel(txt+":"))
+            spacing_layout.addWidget(QLabel(txt + ":"))
             spacing_layout.addWidget(el)
         spacing_layout.addWidget(self.units)
         spacing_layout.addStretch(1)
@@ -157,7 +165,6 @@ class AdvancedSettings(QWidget):
         self.voxel_size_label.setText(f"Voxel_size: {voxel_size} {UNITS_LIST[self.units.currentIndex()]}"
                                       f"<sup>{len(self._settings.image_spacing)}</sup>")
 
-
     def update_spacing(self, index=None):
         voxel_size = 1
         if index is not None:
@@ -206,7 +213,7 @@ class AdvancedSettings(QWidget):
             self.update_profile_list()
 
     def export_profile(self):
-        exp = ExportDialog( self._settings.get(f"segmentation_profiles", dict()), ProfileDictViewer)
+        exp = ExportDialog(self._settings.get(f"segmentation_profiles", dict()), ProfileDictViewer)
         if not exp.exec_():
             return
         dial = QFileDialog(self, "Export profile segment")
@@ -264,11 +271,11 @@ class StatisticListWidgetItem(QListWidgetItem):
         self.stat = stat
 
 
-
 class StatisticsSettings(QWidget):
     """
     :type settings: Settings
     """
+
     def __init__(self, settings: PartSettings):
         super(StatisticsSettings, self).__init__()
         self.chosen_element: Optional[StatisticListWidgetItem] = None
@@ -280,6 +287,7 @@ class StatisticsSettings(QWidget):
         self.profile_options = QListWidget()
         self.profile_options_chosen = QListWidget()
         self.statistic_area_choose = EnumComboBox(AreaType)
+        self.per_component = EnumComboBox(PerComponent)
         self.power_num = QDoubleSpinBox()
         self.power_num.setDecimals(3)
         self.power_num.setRange(-100, 100)
@@ -301,7 +309,7 @@ class StatisticsSettings(QWidget):
         self.reversed_brightness = QCheckBox("Reversed image", self)
         self.reversed_brightness.setToolTip("This is option usefull for electrom microscope images")
         self.gauss_img = DimComboBox(self)
-        self.gauss_radius = QDoubleSpinBox(self)# QCheckBox("2d gauss image", self)
+        self.gauss_radius = QDoubleSpinBox(self)  # QCheckBox("2d gauss image", self)
         self.delete_profile_butt = QPushButton("Delete profile")
         self.restore_builtin_profiles = QPushButton("Restore builtin profiles")
         self.export_profiles_butt = QPushButton("Export profiles")
@@ -358,6 +366,8 @@ class StatisticsSettings(QWidget):
         name_layout.addWidget(QLabel("Profile name:"))
         name_layout.addWidget(self.profile_name)
         name_layout.addStretch()
+        name_layout.addWidget(QLabel("Per component:"))
+        name_layout.addWidget(self.per_component)
         name_layout.addWidget(QLabel("Area:"))
         name_layout.addWidget(self.statistic_area_choose)
         name_layout.addWidget(QLabel("to power:"))
@@ -398,8 +408,8 @@ class StatisticsSettings(QWidget):
         self.setLayout(layout)
 
         for name, profile in STATISTIC_DICT.items():
-            help_text = profile.help_message
-            lw = StatisticListWidgetItem(Leaf(name))
+            help_text = profile.get_description()
+            lw = StatisticListWidgetItem(profile.get_starting_leaf())
             lw.setToolTip(help_text)
             self.profile_options.addItem(lw)
         self.profile_list.addItems(list(sorted(self.settings.statistic_profiles.keys())))
@@ -435,18 +445,18 @@ class StatisticsSettings(QWidget):
             item = self.profile_options.currentItem()
             item.setIcon(QIcon(os.path.join(static_file_folder, "icons", "task-accepted.png")))
             self.chosen_element = item
-            self.chosen_element_area = self.statistic_area_choose.get_value(), self.power_num.value()
+            self.chosen_element_area = self.statistic_area_choose.get_value(), self.per_component.get_value(), \
+                                         self.power_num.value()
         elif self.profile_options.currentItem() == self.chosen_element:
             self.chosen_element.setIcon(QIcon())
             self.chosen_element = None
         else:
-            item : StatisticListWidgetItem = self.profile_options.currentItem()
+            item: StatisticListWidgetItem = self.profile_options.currentItem()
 
             lw = StatisticListWidgetItem(
-                Node(op="/", left=self.get_parameters(deepcopy(self.chosen_element.stat), self.chosen_element_area[0],
-                                                      self.chosen_element_area[1]),
+                Node(op="/", left=self.get_parameters(deepcopy(self.chosen_element.stat), *self.chosen_element_area),
                      right=self.get_parameters(deepcopy(item.stat), self.statistic_area_choose.get_value(),
-                                               self.power_num.value())))
+                                               self.per_component.get_value(), self.power_num.value())))
             lw.setToolTip("User defined")
             self.profile_options_chosen.addItem(lw)
             self.chosen_element.setIcon(QIcon())
@@ -495,20 +505,20 @@ class StatisticsSettings(QWidget):
             self.save_butt.setDisabled(True)
             self.save_butt_with_name.setDisabled(True)
 
-    def get_parameters(self, node: Union[Node, Leaf], area: AreaType, power: float):
+    @staticmethod
+    def get_parameters(node: Union[Node, Leaf], area: AreaType, component: PerComponent, power: float):
         if isinstance(node, Node):
             return node
+        node = node.replace_(power=power)
         if node.area is None:
-            node = node._replace(area=area, power=power)
-        arguments = STATISTIC_DICT[node.name].arguments
-        if arguments is not None and len(node.dict) == 0:
-            val_dialog = MultipleInput("Set parameters:",
-                                      STATISTIC_DICT[node.name].help_message,
-                                      list(arguments.items()))
-            if val_dialog.exec_():
-                node = node._replace(dict=val_dialog.get_response.items())
-            else:
-                return None
+            node = node.replace_(area=area)
+        if node.per_component is None:
+            node = node.replace_(per_component=component)
+        arguments = STATISTIC_DICT[node.name].get_fields()
+        if len(arguments) > 0 and len(node.dict) == 0:
+            dial = FormDialog(arguments)
+            if dial.exec():
+                node = node._replace(dict=dial.get_values())
         return node
 
     def choose_option(self):
@@ -516,7 +526,8 @@ class StatisticsSettings(QWidget):
         # selected_row = self.profile_options.currentRow()
         assert isinstance(selected_item, StatisticListWidgetItem)
         node = deepcopy(selected_item.stat)
-        node = self.get_parameters(node, self.statistic_area_choose.get_value(), self.power_num.value())
+        node = self.get_parameters(node, self.statistic_area_choose.get_value(), self.per_component.get_value(),
+                                   self.power_num.value())
         lw = StatisticListWidgetItem(node)
         for i in range(self.profile_options_chosen.count()):
             if lw.text() == self.profile_options_chosen.item(i).text():
@@ -553,9 +564,8 @@ class StatisticsSettings(QWidget):
         self.profile_options_chosen.clear()
         self.profile_name.setText(item.text())
         for ch in profile.chosen_fields:
-            self.profile_options_chosen.addItem(profile.flat_tree(ch[0]))
+            self.profile_options_chosen.addItem(StatisticListWidgetItem(ch.calculation_tree))
         # self.gauss_img.setChecked(profile.use_gauss_image)
-        self.reversed_brightness.setChecked(profile.reversed_brightness)
         self.save_butt.setEnabled(True)
         self.save_butt_with_name.setEnabled(True)
 
@@ -568,11 +578,9 @@ class StatisticsSettings(QWidget):
                     return
         selected_values = []
         for i in range(self.profile_options_chosen.count()):
-            txt = str(self.profile_options_chosen.item(i).text())
-            selected_values.append((txt, txt))
-        stat_prof = StatisticProfile(str(self.profile_name.text()), selected_values,
-                                     self.reversed_brightness.isChecked(),
-                                     False)
+            element: StatisticListWidgetItem = self.profile_options_chosen.item(i)
+            selected_values.append(StatisticEntry(element.text(), element.stat))
+        stat_prof = StatisticProfile(self.profile_name.text(), selected_values)
         if stat_prof.name not in self.settings.statistic_profiles:
             self.profile_list.addItem(stat_prof.name)
         self.settings.statistic_profiles[stat_prof.name] = stat_prof
@@ -594,11 +602,9 @@ class StatisticsSettings(QWidget):
         if val_dialog.exec_():
             selected_values = []
             for i in range(self.profile_options_chosen.count()):
-                txt = str(self.profile_options_chosen.item(i).text())
-                selected_values.append((txt, val_dialog.result[txt]))
-            stat_prof = StatisticProfile(str(self.profile_name.text()), selected_values,
-                                         self.reversed_brightness.isChecked(),
-                                         (self.gauss_img.value() ,self.gauss_radius.value()))
+                element: StatisticListWidgetItem = self.profile_options_chosen.item(i)
+                selected_values.append(StatisticEntry(val_dialog.result[element.text()], element.stat))
+            stat_prof = StatisticProfile(self.profile_name.text(), selected_values)
             if stat_prof.name not in self.settings.statistic_profiles:
                 self.profile_list.addItem(stat_prof.name)
             self.self.settings.statistic_profiles[stat_prof.name] = stat_prof
@@ -615,7 +621,11 @@ class StatisticsSettings(QWidget):
         self.proportion_butt.setDisabled(True)
         self.choose_butt.setDisabled(True)
         self.discard_butt.setDisabled(True)
-        self.profile_options.addItems(list(STATISTIC_DICT.keys()))
+        for name, profile in STATISTIC_DICT.items():
+            help_text = profile.get_description()
+            lw = StatisticListWidgetItem(profile.get_starting_leaf())
+            lw.setToolTip(help_text)
+            self.profile_options.addItem(lw)
 
     def soft_reset(self):
         shift = 0
@@ -663,11 +673,11 @@ class StatisticsSettings(QWidget):
             self.settings.dump()
 
 
-
 class AdvancedWindow(QTabWidget):
     """
     :type settings: Settings
     """
+
     def __init__(self, settings, parent=None):
         super(AdvancedWindow, self).__init__(parent)
         self.settings = settings
@@ -782,11 +792,13 @@ class MultipleInput(QDialog):
     def get_response(self):
         return self.result
 
+
 class StatisticsWindow(QWidget):
     """
     :type settings: Settings
     :type segment: Segment
     """
+
     def __init__(self, settings: PartSettings, segment=None):
         super(StatisticsWindow, self).__init__()
         self.settings = settings
@@ -804,6 +816,7 @@ class StatisticsWindow(QWidget):
         self.copy_button.clicked.connect(self.copy_to_clipboard)
         self.statistic_type = QComboBox(self)
         # self.statistic_type.addItem("Emish statistics (oryginal)")
+        # noinspection PyUnresolvedReferences
         self.statistic_type.currentIndexChanged[str].connect(self.statistic_selection_changed)
         self.statistic_type.addItem("<none>")
         self.statistic_type.addItems(list(sorted(self.settings.statistic_profiles.keys())))
@@ -814,9 +827,9 @@ class StatisticsWindow(QWidget):
         self.units_choose = QComboBox()
         self.units_choose.addItems(UNITS_LIST)
         self.units_choose.setCurrentIndex(self.settings.get("units_index", 2))
-        #self.noise_removal_method = QComboBox()
-        #self.noise_removal_method.addItem("Like segmentation")
-        #self.noise_removal_method.addItems(noise_removal_dict.keys())
+        # self.noise_removal_method = QComboBox()
+        # self.noise_removal_method.addItem("Like segmentation")
+        # self.noise_removal_method.addItems(noise_removal_dict.keys())
         self.info_field = QTableWidget(self)
         self.info_field.setColumnCount(3)
         self.info_field.setHorizontalHeaderLabels(["Name", "Value", "Units"])
@@ -919,7 +932,7 @@ class StatisticsWindow(QWidget):
         self.info_field.setVerticalHeaderLabels(hor_headers)
         for x in range(rows):
             for y in range(columns):
-                self.info_field.setItem(y, x,  QTableWidgetItem(ob_array[x, y]))
+                self.info_field.setItem(y, x, QTableWidgetItem(ob_array[x, y]))
 
     def append_statistics(self):
         try:
@@ -928,7 +941,6 @@ class StatisticsWindow(QWidget):
             QMessageBox.warning(self, "Statistic profile not found",
                                 f"Statistic profile '{self.statistic_type.currentText()}' not found'")
             return
-        gauss_image = self.settings.noise_remove_image_part
         image = self.settings.image.get_channel(self.channels_chose.currentIndex())
         segmentation = self.settings.segmentation
         full_mask = self.settings.full_segmentation
@@ -936,8 +948,8 @@ class StatisticsWindow(QWidget):
         units_scalar = UNIT_SCALE[self.units_choose.currentIndex()]
         units_name = UNITS_LIST[self.units_choose.currentIndex()]
         try:
-            stat = compute_class.calculate(image, gauss_image, segmentation,
-                                           full_mask, base_mask, [x * units_scalar for x in self.settings.image_spacing])
+            stat = compute_class.calculate(image, segmentation,
+                                           full_mask, base_mask, self.settings.image.spacing, units_name)
         except ValueError as e:
             logging.error(e)
             return
@@ -951,7 +963,7 @@ class StatisticsWindow(QWidget):
             ver_headers = [self.info_field.verticalHeaderItem(x).text() for x in range(self.info_field.rowCount())]
             self.info_field.setRowCount(3 + header_grow)
             self.info_field.setColumnCount(max(len(stat), self.info_field.columnCount()))
-            if not self.no_header.isChecked()  and (self.previous_profile != compute_class.name):
+            if not self.no_header.isChecked() and (self.previous_profile != compute_class.name):
                 ver_headers.append("Name")
             ver_headers.extend(["Value"])
             if not self.no_units.isChecked():
@@ -968,7 +980,7 @@ class StatisticsWindow(QWidget):
                         self.info_field.setItem(self.statistic_shift + 2, i,
                                                 QTableWidgetItem(UNITS_DICT[key].format(units_name)))
                     except KeyError as k:
-                        logging.warning(k.message)
+                        print(k, sys.stderr)
         else:
             hor_headers = [self.info_field.horizontalHeaderItem(x).text() for x in range(self.info_field.columnCount())]
             self.info_field.setRowCount(max(len(stat), self.info_field.rowCount()))
