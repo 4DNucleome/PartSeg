@@ -48,7 +48,7 @@ class MainMenu(QWidget):
         self.settings = settings
         self.segmentation_cache = None
         self.read_thread = None
-        self.load_image_btn = QPushButton("Load image (also from segmentation)")
+        self.load_image_btn = QPushButton("Load image")
         self.load_image_btn.clicked.connect(self.load_image)
         self.load_segmentation_btn = QPushButton("Load segmentation")
         self.load_segmentation_btn.clicked.connect(self.load_segmentation)
@@ -67,6 +67,7 @@ class MainMenu(QWidget):
         self.setLayout(layout)
 
     def load_image(self):
+        #TODO move segmentation with image load to load_segmentaion
         try:
             dial = QFileDialog()
             dial.setFileMode(QFileDialog.ExistingFile)
@@ -159,7 +160,7 @@ class MainMenu(QWidget):
                 else:
                     raise exception
 
-            dial = WaitingDialog(execute_thread, "Save segmentation", exception_hook=exception_hook)
+            dial = WaitingDialog(execute_thread, "Load segmentation", exception_hook=exception_hook)
             dial.exec()
         except Exception as e:
             QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
@@ -614,7 +615,9 @@ class Options(QTabWidget):
         self.addTab(self.image_properties, "Image")
         self.addTab(self.algorithm_options, "Segmentation")
         self.addTab(self.colormap_choose, "Colormap filter")
+        self.setMinimumWidth(340)
         self.setCurrentIndex(1)
+
 
     def get_chosen_components(self):
         return self.algorithm_options.get_chosen_components()
