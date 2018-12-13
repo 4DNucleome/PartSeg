@@ -676,6 +676,7 @@ class MainWindow(BaseMainWindow):
         self.files_num = 2
         self.setWindowTitle(title)
         self.title = title
+        self.title_base = title
         self.setMinimumWidth(600)
         self.settings = PartSettings(os.path.join(config_folder, "settings.json"))
         if os.path.exists(os.path.join(config_folder, "settings.json")):
@@ -732,7 +733,7 @@ class MainWindow(BaseMainWindow):
         self.result_image.set_image()
         self.result_image.reset_image_size()
         self.options_panel.interactive_algorithm_execute()
-        self.setWindowTitle(f"PartSeg: {self.settings.image_path}")
+        self.setWindowTitle(f"{self.title_base}: {self.settings.image_path}")
 
     def read_drop(self, paths):
         read_thread = ImageReaderThread(parent=self)

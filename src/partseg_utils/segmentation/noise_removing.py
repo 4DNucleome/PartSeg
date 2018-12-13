@@ -11,6 +11,9 @@ class GaussType(Enum):
     layer = 1
     stack = 2
 
+    def __str__(self):
+        return self.name.replace("_", " ")
+
 enum_register.register_class(GaussType)
 
 class NoiseRemovalBase(AlgorithmDescribeBase, ABC):

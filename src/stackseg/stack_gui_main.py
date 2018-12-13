@@ -259,9 +259,9 @@ class ChosenComponents(QWidget):
         super(ChosenComponents, self).__init__()
         # self.setLayout(FlowLayout())
         self.check_box = dict()
-        self.check_all_btn = QPushButton("Check all")
+        self.check_all_btn = QPushButton("Select all")
         self.check_all_btn.clicked.connect(self.check_all)
-        self.un_check_all_btn = QPushButton("Un check all")
+        self.un_check_all_btn = QPushButton("Unselect all")
         self.un_check_all_btn.clicked.connect(self.un_check_all)
         main_layout = QVBoxLayout()
         btn_layout = QHBoxLayout()
@@ -625,8 +625,10 @@ class Options(QTabWidget):
 
 class MainWindow(BaseMainWindow):
     def __init__(self, title, signal_fun=None):
+        print("title", title)
         super().__init__(signal_fun)
         self.setWindowTitle(title)
+        self.title_base = title
         self.settings = StackSettings(os.path.join(config_folder, "settings.json"))
         if os.path.exists(os.path.join(config_folder, "settings.json")):
             self.settings.load()
@@ -673,7 +675,7 @@ class MainWindow(BaseMainWindow):
     def image_read(self):
         self.image_view.set_image()
         self.image_view.reset_image_size()
-        self.setWindowTitle(f"StackSeg: {self.settings.image_path}")
+        self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
 
     def closeEvent(self, e):
         # print(self.settings.dump_view_profiles())

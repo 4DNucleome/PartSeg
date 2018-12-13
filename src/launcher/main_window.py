@@ -44,7 +44,6 @@ class MainWindow(QMainWindow):
         self.close()
 
     def launch(self, cls, title):
-        print(self.parent())
         wind = cls(title, self.window_shown)
         wind.show()
         self.wind = wind
