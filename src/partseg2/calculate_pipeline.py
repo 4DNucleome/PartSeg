@@ -9,7 +9,7 @@ from tiff_image import Image
 import numpy as np
 
 
-def _empty_fun(*_args, **_kwargs):
+def _empty_fun(_a1, _a2):
     pass
 
 
@@ -25,7 +25,7 @@ def calculate_pipeline(image: Image, mask: typing.Optional[np.ndarray], pipeline
     history = []
     report_fun("max", 2 * len(pipeline.mask_history) + 1)
     for i, el in enumerate(pipeline.mask_history):
-        algorithm: RestartableAlgorithm = part_algorithm_dict[el.segmentation.algorithm][1]()
+        algorithm: RestartableAlgorithm = part_algorithm_dict[el.segmentation.algorithm]()
         algorithm.set_image(image)
         algorithm.set_mask(mask)
         algorithm.set_parameters(**el.segmentation.values)
@@ -38,7 +38,7 @@ def calculate_pipeline(image: Image, mask: typing.Optional[np.ndarray], pipeline
         )
         report_fun("step", 2 * i + 2)
         mask = new_mask
-    algorithm: RestartableAlgorithm = part_algorithm_dict[pipeline.segmentation.algorithm][1]()
+    algorithm: RestartableAlgorithm = part_algorithm_dict[pipeline.segmentation.algorithm]()
     algorithm.set_image(image)
     algorithm.set_mask(mask)
     algorithm.set_parameters(**pipeline.segmentation.values)
