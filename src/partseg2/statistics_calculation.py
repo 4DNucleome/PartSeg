@@ -96,7 +96,7 @@ class MethodBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def get_name(cls):
-        return cls.text_info[0]
+        return str(cls.get_starting_leaf())
 
     @classmethod
     def get_description(cls):
@@ -116,7 +116,7 @@ class MethodBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(cls.get_name())
+        return Leaf(cls.text_info[0])
 
 
 def empty_fun(_a0=None, _a1=None):
@@ -374,7 +374,7 @@ class ComponentsNumber(MethodBase):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(cls.get_name(), per_component=PerComponent.No)
+        return Leaf(cls.text_info[0], per_component=PerComponent.No)
 
 
 class MaximumPixelBrightness(MethodBase):
@@ -522,7 +522,7 @@ class RimVolume(MethodBase):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(name=cls.get_name(), area=AreaType.Segmentation, per_component=PerComponent.No)
+        return Leaf(name=cls.text_info[0], area=AreaType.Mask, per_component=PerComponent.No)
 
     @staticmethod
     def calculate_property(segmentation, voxel_size, result_scalar, **kwargs):
@@ -544,7 +544,7 @@ class RimPixelBrightnessSum(MethodBase):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(name=cls.get_name(), area=AreaType.Segmentation, per_component=PerComponent.No)
+        return Leaf(name=cls.text_info[0], area=AreaType.Mask, per_component=PerComponent.No)
 
     @staticmethod
     def calculate_property(image, segmentation, **kwargs):
