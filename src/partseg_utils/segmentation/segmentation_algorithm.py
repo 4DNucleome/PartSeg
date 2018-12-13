@@ -86,13 +86,15 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
                 AlgorithmProperty("threshold", "Threshold", next(iter(threshold_dict.keys())),
                                   possible_values=threshold_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10 ** 6), 1000),
-                AlgorithmProperty("close_holes", "Close small holes", True, (True, False)),
-                AlgorithmProperty("close_holes_size", "Small holes size", 200, (0, 10 ** 3), 10),
+                AlgorithmProperty("close_holes", "Close holes", True, (True, False)),
+                AlgorithmProperty("close_holes_size", "Holes size (px)", 200, (0, 10 ** 3), 10),
                 AlgorithmProperty("smooth_border", "Smooth borders", True, (True, False)),
                 AlgorithmProperty("smooth_border_radius", "Smooth borders radius", 2, (0, 20), 1),
-                AlgorithmProperty("noise_removal", "Noise Removal", next(iter(noise_removal_dict.keys())),
+                AlgorithmProperty("noise_removal", "Filter", next(iter(noise_removal_dict.keys())),
                                   possible_values=noise_removal_dict, property_type=AlgorithmDescribeBase),
-                AlgorithmProperty("side_connection", "Connect only sides", False, (True, False)),
+                AlgorithmProperty("side_connection", "Side by Side connections", False, (True, False),
+                                  tool_tip="During calculation of connected components includes"
+                                           " only side by side connected pixels"),
                 AlgorithmProperty("use_convex", "Use convex_hull", False, (True, False))]
 
     def __init__(self):

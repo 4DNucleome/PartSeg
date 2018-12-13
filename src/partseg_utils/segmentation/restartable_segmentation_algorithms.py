@@ -85,10 +85,12 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
     def get_fields(cls):
         # TODO coś z noise removal zrobić
         return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
-                AlgorithmProperty("minimum_size", "Minimum size (pix)", 8000, (0, 10 ** 6), 1000),
-                AlgorithmProperty("noise_removal", "Filtering", next(iter(noise_removal_dict.keys())),
+                AlgorithmProperty("minimum_size", "Minimum size (px)", 8000, (0, 10 ** 6), 1000),
+                AlgorithmProperty("noise_removal", "Filter", next(iter(noise_removal_dict.keys())),
                                   possible_values=noise_removal_dict, property_type=AlgorithmDescribeBase),
-                AlgorithmProperty("side_connection", "Connect only sides", False, (True, False))]
+                AlgorithmProperty("side_connection", "Connect only sides", False, (True, False),
+                                  tool_tip="During calculation of connected components includes"
+                                           " only side by side connected pixels")]
 
     def __init__(self, **kwargs):
         super(ThresholdBaseAlgorithm, self).__init__()
