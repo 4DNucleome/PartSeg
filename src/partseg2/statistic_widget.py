@@ -228,6 +228,7 @@ class StatisticsWidget(QWidget):
             self.statistic_shift -= 1
         self.statistic_shift += 3
         self.previous_profile = compute_class.name
+        self.info_field.resizeColumnsToContents()
 
     def keyPressEvent(self, e):
         if e.modifiers() & Qt.ControlModifier:
