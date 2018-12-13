@@ -297,6 +297,7 @@ class StatisticsSettings(QWidget):
         self.proportion_butt.setToolTip("Create proportion from two statistics")
         self.move_up = QPushButton(u"↑", self)
         self.move_down = QPushButton(u"↓", self)
+        self.remove_button = QPushButton("Remove")
         self.save_butt = QPushButton("Save statistic profile")
         self.save_butt.setToolTip("Set name for profile and choose at least one statistic")
         self.save_butt_with_name = QPushButton("Save statistic profile with name")
@@ -326,6 +327,8 @@ class StatisticsSettings(QWidget):
         self.move_down.clicked.connect(self.move_down_fun)
         self.move_up.setDisabled(True)
         self.move_up.clicked.connect(self.move_up_fun)
+        self.remove_button.setDisabled(True)
+        self.remove_button.clicked.connect(self.remove_element)
         self.reset_butt.clicked.connect(self.reset_action)
         self.soft_reset_butt.clicked.connect(self.soft_reset)
         self.delete_profile_butt.setDisabled(True)
@@ -388,6 +391,7 @@ class StatisticsSettings(QWidget):
         butt_move_layout.addStretch()
         butt_move_layout.addWidget(self.move_up)
         butt_move_layout.addWidget(self.move_down)
+        butt_move_layout.addWidget(self.remove_button)
         butt_move_layout.addStretch()
         create_layout.addLayout(butt_move_layout)
         layout.addLayout(create_layout)
@@ -407,6 +411,19 @@ class StatisticsSettings(QWidget):
         self.profile_list.addItems(list(sorted(self.settings.statistic_profiles.keys())))
         if self.profile_list.count() == 0:
             self.export_profiles_butt.setDisabled(True)
+
+    def remove_element(self):
+        elem = self.profile_options_chosen.currentItem()
+        if elem is None:
+            return
+        index = self.profile_options_chosen.currentRow()
+        self.profile_options_chosen.takeItem(index)
+        if self.profile_options_chosen.count() == 0:
+            self.move_down.setDisabled(True)
+            self.move_up.setDisabled(True)
+            self.remove_button.setDisabled(True)
+            self.discard_butt.setDisabled(True)
+        pass
 
     def delete_profile(self):
         row = self.profile_list.currentRow()
@@ -456,9 +473,11 @@ class StatisticsSettings(QWidget):
 
     def create_selection_chosen_changed(self):
         # print(self.profile_options_chosen.count())
+        self.remove_button.setEnabled(True)
         if self.profile_options_chosen.count() == 0:
             self.move_down.setDisabled(True)
             self.move_up.setDisabled(True)
+            self.remove_button.setDisabled(True)
             return
         self.discard_butt.setEnabled(True)
         if self.profile_options_chosen.currentRow() != 0:
@@ -620,6 +639,7 @@ class StatisticsSettings(QWidget):
             self.profile_options.addItem(lw)
 
     def soft_reset(self):
+        # TODO rim should not be removed
         shift = 0
         for i in range(self.profile_options.count()):
             item = self.profile_options.item(i - shift)
