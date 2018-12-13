@@ -79,7 +79,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
         """
         if isinstance(ob, AlgorithmProperty):
             return cls(name=ob.name, user_name=ob.user_name, default_value=ob.default_value, options_range=ob.range,
-                       single_steep=ob.single_step, property_type=ob.value_type, possible_values=ob.possible_values)
+                       single_steep=ob.single_step, property_type=ob.value_type, possible_values=ob.possible_values,
+                       tool_tip=ob.tool_tip)
         elif isinstance(ob, str):
             return QLabel(ob)
         raise ValueError(f"unknown parameter type {type(ob)} of {ob}")
@@ -121,6 +122,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
             res.setCurrentIndex(self.possible_values.index(self.default_value))
         else:
             raise ValueError(f"Unknown class: {self.value_type}")
+        if self.tool_tip:
+            res.setToolTip(self.tool_tip)
         return res
 
     @staticmethod
@@ -171,13 +174,19 @@ class FormWidget(QWidget):
             if isinstance(el, QLabel):
                 layout.addRow(el)
             elif isinstance(el.get_field(), SubAlgorithmWidget):
-                layout.addRow(QLabel(el.user_name), el.get_field().choose)
+                label = QLabel(el.user_name)
+                if el.tool_tip:
+                    label.setToolTip(el.tool_tip)
+                layout.addRow(label, el.get_field().choose)
                 layout.addRow(el.get_field())
                 self.widgets_dict[el.name] = el
                 el.change_fun.connect(self.value_changed.emit)
             else:
                 self.widgets_dict[el.name] = el
-                layout.addRow(QLabel(el.user_name), el.get_field())
+                label = QLabel(el.user_name)
+                if el.tool_tip:
+                    label.setToolTip(el.tool_tip)
+                layout.addRow(label, el.get_field())
                 # noinspection PyUnresolvedReferences
                 el.change_fun.connect(self.value_changed.emit)
                 if issubclass(el.value_type, Channel):
