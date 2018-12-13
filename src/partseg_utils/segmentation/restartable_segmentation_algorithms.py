@@ -7,13 +7,14 @@ import SimpleITK as sitk
 import numpy as np
 
 from partseg_utils import bisect
+from partseg_utils.border_rim import border_mask
 from partseg_utils.channel_class import Channel
 from partseg_utils.distance_in_structure.find_split import distance_sprawl, path_minimum_sprawl, path_maximum_sprawl
 from partseg_utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
 from partseg_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
 from partseg_utils.segmentation.noise_removing import noise_removal_dict
 from partseg_utils.segmentation.threshold import threshold_dict, BaseThreshold, double_threshold_dict
-from partseg_utils.universal_const import UNITS_LIST, UNIT_SCALE
+from partseg_utils.universal_const import UNITS_LIST
 
 
 def blank_operator(_x, _y):
@@ -47,7 +48,7 @@ class BorderRim(RestartableAlgorithm):
 
     def __init__(self):
         super().__init__()
-        self.radius = 0
+        self.distance = 0
         self.units = ""
 
     @classmethod
@@ -57,7 +58,7 @@ class BorderRim(RestartableAlgorithm):
                 AlgorithmProperty("units", "Units", "nm", possible_values=UNITS_LIST)]
 
     def set_parameters(self, distance, units):
-        self.radius = distance
+        self.distance = distance
         self.units = units
 
     def get_info_text(self):
@@ -68,13 +69,9 @@ class BorderRim(RestartableAlgorithm):
 
     def calculation_run(self, _report_fun) -> SegmentationResult:
         if self.mask is not None:
-            voxel_size = self.image.spacing
-            units_scalar = UNIT_SCALE[UNITS_LIST.index(self.units)]
-            final_radius = [int((self.radius / units_scalar) / x) for x in voxel_size]
-            mask = np.array(self.mask > 0).astype(np.uint8)
-            eroded = sitk.GetArrayFromImage(sitk.BinaryErode(sitk.GetImageFromArray(mask), final_radius))
-            mask[eroded > 0] = 0
-            return SegmentationResult(mask, mask, None)
+            result =\
+                border_mask(mask=self.mask, distance=self.distance, units=self.units, voxel_size=self.image.spacing)
+            return SegmentationResult(result, result, None)
 
 
 class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):

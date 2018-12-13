@@ -22,7 +22,7 @@ from partseg_utils.universal_const import UNITS_LIST, UNIT_SCALE
 from project_utils_qt.error_dialog import ErrorDialog
 from project_utils_qt.image_read_thread import ImageReaderThread
 from project_utils_qt.main_window import BaseMainWindow
-from stackseg.execute_function_thread import ExecuteFunctionThread
+from project_utils_qt.execute_function_thread import ExecuteFunctionThread
 from stackseg.stack_algorithm.algorithm_description import stack_algorithm_dict
 from stackseg.stack_settings import StackSettings
 from tiff_image import ImageReader, Image

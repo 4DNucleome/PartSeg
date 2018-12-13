@@ -7,21 +7,23 @@ from typing import Union, Optional, Tuple
 import numpy as np
 from PyQt5.QtCore import QByteArray, Qt, QEvent
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushButton, QCheckBox, QLineEdit, QVBoxLayout, \
-    QLabel, QHBoxLayout, QListWidgetItem, QDialog, QDoubleSpinBox, QSpinBox, QGridLayout, QApplication, QMessageBox, \
-    QFileDialog, QComboBox, QTableWidget, QTableWidgetItem, QAbstractSpinBox, QInputDialog, QPlainTextEdit, QFrame
+from PyQt5.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushButton, QCheckBox, QLineEdit, \
+    QVBoxLayout, QLabel, QHBoxLayout, QListWidgetItem, QDialog, QDoubleSpinBox, QSpinBox, QGridLayout, QApplication, \
+    QMessageBox, QFileDialog, QComboBox, QTableWidget, QTableWidgetItem, QAbstractSpinBox, QInputDialog, \
+    QPlainTextEdit, QFrame
 
 from common_gui.algorithms_description import EnumComboBox
 from common_gui.colors_choose import ColorSelector
 from common_gui.custom_save import FormDialog
-from common_gui.dim_combobox import DimComboBox
 from common_gui.lock_checkbox import LockCheckBox
+from common_gui.waiting_dialog import WaitingDialog
 from partseg2.partseg_settings import PartSettings, MASK_COLORS
 from partseg2.profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer
 from partseg2.statistics_calculation import StatisticProfile, STATISTIC_DICT, Node, Leaf, AreaType, PerComponent, \
     StatisticEntry
 from partseg_utils.global_settings import static_file_folder
 from partseg_utils.universal_const import UNITS_DICT, UNIT_SCALE, UNITS_LIST
+from project_utils_qt.execute_function_thread import ExecuteFunctionThread
 
 
 def h_line():
@@ -306,10 +308,7 @@ class StatisticsSettings(QWidget):
         self.reset_butt = QPushButton("Clear")
         self.soft_reset_butt = QPushButton("Remove user statistics")
         self.profile_name = QLineEdit(self)
-        self.reversed_brightness = QCheckBox("Reversed image", self)
-        self.reversed_brightness.setToolTip("This is option usefull for electrom microscope images")
-        self.gauss_img = DimComboBox(self)
-        self.gauss_radius = QDoubleSpinBox(self)  # QCheckBox("2d gauss image", self)
+
         self.delete_profile_butt = QPushButton("Delete profile")
         self.restore_builtin_profiles = QPushButton("Restore builtin profiles")
         self.export_profiles_butt = QPushButton("Export profiles")
@@ -377,9 +376,6 @@ class StatisticsSettings(QWidget):
         name_layout.addWidget(self.gauss_img)
         name_layout.addWidget(QLabel("Gauss radius (pix):"))
         name_layout.addWidget(self.gauss_radius)"""
-        self.gauss_radius.setHidden(True)
-        self.gauss_img.setHidden(True)
-        self.reversed_brightness.setHidden(True)
         layout.addLayout(name_layout)
         create_layout = QHBoxLayout()
         create_layout.addWidget(self.profile_options)
@@ -445,8 +441,8 @@ class StatisticsSettings(QWidget):
             item = self.profile_options.currentItem()
             item.setIcon(QIcon(os.path.join(static_file_folder, "icons", "task-accepted.png")))
             self.chosen_element = item
-            self.chosen_element_area = self.statistic_area_choose.get_value(), self.per_component.get_value(), \
-                                         self.power_num.value()
+            self.chosen_element_area = \
+                self.statistic_area_choose.get_value(), self.per_component.get_value(), self.power_num.value()
         elif self.profile_options.currentItem() == self.chosen_element:
             self.chosen_element.setIcon(QIcon())
             self.chosen_element = None
@@ -943,15 +939,21 @@ class StatisticsWindow(QWidget):
             return
         image = self.settings.image.get_channel(self.channels_chose.currentIndex())
         segmentation = self.settings.segmentation
+        if segmentation is None:
+            return
         full_mask = self.settings.full_segmentation
         base_mask = self.settings.mask
-        units_scalar = UNIT_SCALE[self.units_choose.currentIndex()]
         units_name = UNITS_LIST[self.units_choose.currentIndex()]
-        try:
-            stat = compute_class.calculate(image, segmentation,
-                                           full_mask, base_mask, self.settings.image.spacing, units_name)
-        except ValueError as e:
-            logging.error(e)
+
+        def exception_hook(exception):
+            QMessageBox.warning(self, "Calculation error", f"Error during calculation: {exception}")
+
+        thread = ExecuteFunctionThread(compute_class.calculate, [image, segmentation, full_mask, base_mask,
+                                                                 self.settings.image.spacing, units_name])
+        dial = WaitingDialog(thread, "Statistic calculation", exception_hook=exception_hook)
+        dial.exec()
+        stat = thread.result
+        if stat is None:
             return
         if self.no_header.isChecked() or self.previous_profile == compute_class.name:
             self.statistic_shift -= 1

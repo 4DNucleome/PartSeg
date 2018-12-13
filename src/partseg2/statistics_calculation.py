@@ -14,6 +14,7 @@ import SimpleITK as sitk
 import numpy as np
 
 from partseg_utils import class_to_dict, autofit as af
+from partseg_utils.border_rim import border_mask
 from partseg_utils.class_generator import BaseReadonlyClass
 from partseg_utils.class_generator import enum_register
 from partseg_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, Register, AlgorithmProperty
@@ -116,6 +117,10 @@ class MethodBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def get_starting_leaf(cls):
         return Leaf(cls.get_name())
+
+
+def empty_fun(_a0=None, _a1=None):
+    pass
 
 
 class StatisticProfile(object):
@@ -265,7 +270,11 @@ class StatisticProfile(object):
         return 1
 
     def calculate(self, image: np.ndarray, segmentation: np.ndarray, full_mask: np.ndarray, mask: np.ndarray,
-                  voxel_size, result_units):
+                  voxel_size, result_units, range_changed=None, step_changed=None):
+        if range_changed is None:
+            range_changed = empty_fun
+        if step_changed is None:
+            step_changed = empty_fun
         if self._need_mask and mask is None:
             raise ValueError("Statistics need mask")
         result = OrderedDict()
@@ -280,7 +289,9 @@ class StatisticProfile(object):
                 mm[segmentation > 0] = 0
                 kw["mask_without_segmentation"] = mm
                 break
-        for el in self.chosen_fields:
+        range_changed(0, len(self.chosen_fields))
+        for i, el in enumerate(self.chosen_fields):
+            step_changed(i)
             tree, user_name = el.calculation_tree, el.name
             try:
                 result[self.name_prefix + user_name] = self.calculate_tree(tree, help_dict, kw)
@@ -317,98 +328,7 @@ def get_main_axis_length(index: int, area_array: np.ndarray, image: np.ndarray, 
     hash_name = hash_fun_call_name(calculate_main_axis, {}, _area)
     if hash_name not in help_dict:
         help_dict[hash_name] = calculate_main_axis(area_array, image, [x * result_scalar for x in voxel_size])
-        print("get_main_axis_length", help_dict[hash_name], voxel_size, image.shape)
     return help_dict[hash_name][index]
-
-
-def calculate_first_main_axis_length(**kwargs):
-    return get_main_axis_length(0, **kwargs)
-
-
-def calculate_second_main_axis_length(**kwargs):
-    return get_main_axis_length(1, **kwargs)
-
-
-def calculate_third_main_axis_length(**kwargs):
-    return get_main_axis_length(2, **kwargs)
-
-
-def diameter(area_array, voxel_size, **_):
-    return calc_diam(get_border(area_array), voxel_size)
-
-
-def component_diameter(segmentation, voxel_size, **_):
-    unique = np.unique(segmentation[segmentation > 0])
-    return np.array([calc_diam(get_border(segmentation == i), voxel_size) for i in unique], dtype=np.float)
-
-
-def calculate_compactness(**kwargs):
-    help_dict = kwargs["help_dict"]
-    border_hash_str = hash_fun_call_name(calculate_border_surface, {}, kwargs["_area"])
-    if border_hash_str not in help_dict:
-        border_surface = calculate_border_surface(**kwargs)
-        help_dict[border_hash_str] = border_surface
-    else:
-        border_surface = help_dict[border_hash_str]
-
-    volume_hash_str = hash_fun_call_name(calculate_volume, {}, kwargs["_area"])
-
-    if volume_hash_str not in help_dict:
-        volume = calculate_volume(**kwargs)
-        help_dict[volume_hash_str] = volume
-    else:
-        volume = help_dict[volume_hash_str]
-    return border_surface ** 1.5 / volume
-
-
-def calculate_sphericity(**kwargs):
-    help_dict = kwargs["help_dict"]
-
-    volume_hash_str = hash_fun_call_name(calculate_volume, {}, kwargs["_area"])
-    if volume_hash_str not in help_dict:
-        volume = calculate_volume(**kwargs)
-        help_dict[volume_hash_str] = volume
-    else:
-        volume = help_dict[volume_hash_str]
-
-    diameter_hash_str = hash_fun_call_name(diameter, {}, kwargs["_area"])
-    if diameter_hash_str not in help_dict:
-        diameter_val = diameter(**kwargs)
-        help_dict[volume_hash_str] = diameter_val
-    else:
-        diameter_val = help_dict[volume_hash_str]
-    radius = diameter_val / 2
-    return volume / radius ** 3
-
-
-def border_volume(segmentation, voxel_size, result_scalar, **kwargs):
-    border_mask_array = border_mask(**kwargs)
-    if border_mask_array is None:
-        return None
-    final_mask = np.array((border_mask_array > 0) * (segmentation > 0))
-    return np.count_nonzero(final_mask) * pixel_volume(voxel_size, result_scalar)
-
-
-def border_mass(image, segmentation, **kwargs):
-    border_mask_array = border_mask(**kwargs)
-    if border_mask_array is None:
-        return None
-    final_mask = np.array((border_mask_array > 0) * (segmentation > 0))
-    if np.any(final_mask):
-        return np.sum(image[final_mask])
-    return 0
-
-
-def number_of_components(area_array, **_):
-    return np.unique(area_array).size - 1
-
-
-def moment_of_inertia(image, segmentation, voxel_size, **_):
-    if image.ndim != 3:
-        return None
-    img = np.copy(image)
-    img[segmentation == 0] = 0
-    return af.calculate_density_momentum(img, voxel_size, )
 
 
 def hash_fun_call_name(fun: Callable, arguments: Dict, area: AreaType):
@@ -432,7 +352,7 @@ class Diameter(MethodBase):
 
     @staticmethod
     def calculate_property(area_array, voxel_size, result_scalar, **_):
-        return np.bincount(area_array.flat)[1:] * pixel_volume(voxel_size, result_scalar)
+        return calc_diam(get_border(area_array), [x * result_scalar for x in voxel_size])
 
 
 class PixelBrightnessSum(MethodBase):
@@ -577,9 +497,9 @@ class Sphericity(MethodBase):
         diameter_hash_str = hash_fun_call_name(Diameter, {}, kwargs["_area"])
         if diameter_hash_str not in help_dict:
             diameter_val = Diameter.calculate_property(**kwargs)
-            help_dict[volume_hash_str] = diameter_val
+            help_dict[diameter_hash_str] = diameter_val
         else:
-            diameter_val = help_dict[volume_hash_str]
+            diameter_val = help_dict[diameter_hash_str]
         radius = diameter_val / 2
         return volume / radius ** 3
 
@@ -590,18 +510,6 @@ class Surface(MethodBase):
     @staticmethod
     def calculate_property(area_array, voxel_size, result_scalar, **_):
         return calculate_volume_surface(area_array, [x * result_scalar for x in voxel_size])
-
-
-def border_mask(mask, distance, units, voxel_size, **_):
-    if mask is None:
-        return None
-    units_scalar = UNIT_SCALE[UNITS_LIST.index(units)]
-    final_radius = [int((distance / units_scalar) / x) for x in voxel_size]
-    mask = np.array(mask > 0)
-    mask = mask.astype(np.uint8)
-    eroded = sitk.GetArrayFromImage(sitk.BinaryErode(sitk.GetImageFromArray(mask), final_radius))
-    mask[eroded > 0] = 0
-    return mask
 
 
 class RimVolume(MethodBase):
@@ -649,64 +557,6 @@ class RimPixelBrightnessSum(MethodBase):
         return 0
 
 
-def mean_brightness(area_array, image, **_):
-    if np.any(area_array):
-        return np.mean(image[area_array > 0])
-    else:
-        return None
-
-
-def std_brightness(area_array, image, **_):
-    if np.any(area_array):
-        return np.std(image[area_array > 0])
-    else:
-        return None
-
-
-def median_brightness(area_array, image, **_):
-    if np.any(area_array):
-        return np.median(image[area_array > 0])
-    else:
-        return None
-
-
-def minimum_brightness(area_array, image, **_):
-    if np.any(area_array):
-        return np.min(image[area_array > 0])
-    else:
-        return None
-
-
-def maximum_brightness(area_array, image, **_):
-    if np.any(area_array):
-        return np.max(image[area_array > 0])
-    else:
-        return None
-
-
-def calculate_border_surface(area_array, voxel_size, **_):
-    return calculate_volume_surface(area_array, voxel_size)
-
-
-def calculate_component_mass(area_array, image, **_):
-    res = []
-    for i in range(1, area_array.max() + 1):
-        res.append(np.sum(image[area_array == i]))
-    return res
-
-
-def calculate_mask_mass(base_mask, image, **_):
-    if np.any(base_mask):
-        return np.sum(image[base_mask > 0])
-    return 0
-
-
-def calculate_mass(segmentation, image, **_):
-    if np.any(segmentation):
-        return np.sum(image[segmentation > 0])
-    return 0
-
-
 def pixel_volume(spacing, result_scalar):
     return reduce((lambda x, y: x * y), [x * result_scalar for x in spacing])
 
@@ -730,7 +580,7 @@ def get_border(array):
 
 def calc_diam(array, voxel_size):
     pos = np.transpose(np.nonzero(array)).astype(np.float)
-    for i, val in enumerate(reversed(voxel_size)):
+    for i, val in enumerate(voxel_size):
         pos[:, i] *= val
     diam = 0
     for i, p in enumerate(zip(pos[:-1])):
@@ -739,65 +589,7 @@ def calc_diam(array, voxel_size):
     return np.sqrt(diam)
 
 
-def calculate_volume(area_array, voxel_size, result_scalar, **_):
-    return np.count_nonzero(area_array) * pixel_volume(voxel_size, result_scalar)
-
-
-def calculate_component_volume(area_array, voxel_size, result_scalar, **_):
-    return np.bincount(area_array.flat)[1:] * pixel_volume(voxel_size, result_scalar)
-
-
 STATISTIC_DICT = Register(Volume, Diameter, PixelBrightnessSum, ComponentsNumber, MaximumPixelBrightness,
                           MinimumPixelBrightness, MeanPixelBrightness, StandardDeviationOfPixelBrightness,
                           MomentOfInertia, LongestMainAxisLength, MiddleMainAxisLength, ShortestMainAxisLength,
                           Compactness, Sphericity, Surface, RimVolume, RimPixelBrightnessSum)
-
-STATISTIC_DICT2: Dict[str, SettingsValue] = OrderedDict({
-    "Volume": SettingsValue(calculate_volume, "Calculate volume of current segmentation", None, False),
-    "Diameter": SettingsValue(diameter, "Diameter of area", None, False),
-
-    "Pixel Brightness Sum": SettingsValue(calculate_mass, "Sum of pixel brightness for current segmentation", None,
-                                          False),
-    "Components Number": SettingsValue(number_of_components, "Calculate number of connected components "
-                                                             "on segmentation", None, False),
-    "Volume per component": SettingsValue(calculate_component_volume, "Calculate volume of each component "
-                                                                      "of current segmentation", None, True),
-    "Pixel Brightness Sum per component": SettingsValue(calculate_component_mass,
-                                                        "Sum of pixel brightness of each component of"
-                                                        "segmentation", None, True),
-    "Maximum pixel brightness": SettingsValue(
-        maximum_brightness, "Calculate maximum brightness of pixel for current segmentation", None, False),
-    "Minimum pixel brightness": SettingsValue(
-        minimum_brightness, "Calculate minimum brightness of pixel for current segmentation", None, False),
-    "Median pixel brightness": SettingsValue(
-        median_brightness, "Calculate median brightness of pixel for current segmentation", None, False),
-    "Mean pixel brightness": SettingsValue(
-        mean_brightness, "Calculate median brightness of pixel for current segmentation", None, False),
-    "Standard deviation of pixel brightness": SettingsValue(
-        std_brightness, "Calculate  standard deviation of pixel brightness for current segmentation", None, False),
-    "Moment of inertia":
-        SettingsValue(moment_of_inertia, "Calculate moment of inertia for segmented structure. Has one parameter thr "
-                                         "(threshold). Only values above it are used in calculation", None, False),
-    "Rim Pixel Brightness Sum": SettingsValue(border_mass,
-                                              "Calculate mass for components located within rim (in physical units)"
-                                              " from mask", {"radius": int}, False),
-    "Rim Volume": SettingsValue(border_volume, "Calculate volumes for elements in radius (in physical units)"
-                                               " from mask", {"radius": int}, False),
-    "Components Diameter":
-        SettingsValue(component_diameter, "Diameter of each component", None, False),
-    "Longest main axis length":
-        SettingsValue(calculate_first_main_axis_length,
-                      "Length of first main axis", None, False),
-    "Middle main axis length":
-        SettingsValue(calculate_second_main_axis_length,
-                      "Length of second main axis", None, False),
-    "Shortest main axis length":
-        SettingsValue(calculate_third_main_axis_length,
-                      "Length of third main axis", None, False),
-    "Compactness":
-        SettingsValue(calculate_compactness,
-                      "Calculate compactness off segmentation (Surface^1.5/volume)", None, False),
-    "Sphericity": SettingsValue(calculate_sphericity, "volume/(diameter**3/8)", None, False),
-    "Surface": SettingsValue(calculate_border_surface,
-                             "Calculating surface of current segmentation", None, False)
-})
