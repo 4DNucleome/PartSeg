@@ -15,12 +15,12 @@ class MainWindow(QMainWindow):
         self.partseg_button = QToolButton(self)
         self.partseg_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.partseg_button.setIcon(analysis_icon)
-        self.partseg_button.setText("Analysis GUI")
+        self.partseg_button.setText("Segmentation\nAnalysis")
         self.partseg_button.setIconSize(QSize(100, 100))
         self.stackseg_button = QToolButton(self)
         self.stackseg_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.stackseg_button.setIcon(stack_icon)
-        self.stackseg_button.setText("Segmentation GUI")
+        self.stackseg_button.setText("Mask\nSegmentation")
         self.stackseg_button.setIconSize(QSize(100, 100))
         self.partseg_button.clicked.connect(self.launch_partseg)
         self.stackseg_button.clicked.connect(self.launch_stackseg)
@@ -34,11 +34,11 @@ class MainWindow(QMainWindow):
 
     def launch_partseg(self):
         from partseg2.main_window import MainWindow
-        self.launch(MainWindow, "PartSeg")
+        self.launch(MainWindow, "PartSeg Segmentation Analysis")
 
     def launch_stackseg(self):
         from stackseg.stack_gui_main import MainWindow
-        self.launch(MainWindow, "StackSeg")
+        self.launch(MainWindow, "PartSeg Mask Segmentation")
 
     def window_shown(self):
         self.close()
