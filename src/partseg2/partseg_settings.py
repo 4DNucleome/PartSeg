@@ -11,7 +11,7 @@ from .io_functions import save_project, save_cmap, load_project, ProjectTuple
 from project_utils_qt.settings import BaseSettings
 import numpy as np
 
-MASK_COLORS = {"black": np.array((0, 0, 0)), "white": np.array((255, 255, 255)), "red": np.array((255, 0, 0)),
+MASK_COLORS = {"white": np.array((255, 255, 255)), "black": np.array((0, 0, 0)), "red": np.array((255, 0, 0)),
                "green": np.array((0, 255, 0)), "blue": np.array((0, 0, 255))}
 
 
