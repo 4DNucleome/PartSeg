@@ -450,22 +450,29 @@ class StatisticsSettings(QWidget):
         self.proportion_butt.setEnabled(True)
 
     def proportion_action(self):
+        #TODO use get_parameters
         if self.chosen_element is None:
             item = self.profile_options.currentItem()
-            item.setIcon(QIcon(os.path.join(static_file_folder, "icons", "task-accepted.png")))
-            self.chosen_element = item
             self.chosen_element_area = \
-                self.statistic_area_choose.get_value(), self.per_component.get_value(), self.power_num.value()
+                self.get_parameters(deepcopy(item.stat), self.statistic_area_choose.get_value(), self.per_component.get_value(),
+                                   self.power_num.value())
+            if self.chosen_element_area is None:
+                return
+            self.chosen_element = item
+            item.setIcon(QIcon(os.path.join(static_file_folder, "icons", "task-accepted.png")))
+                # self.statistic_area_choose.get_value(), self.per_component.get_value(), self.power_num.value()
         elif self.profile_options.currentItem() == self.chosen_element:
             self.chosen_element.setIcon(QIcon())
             self.chosen_element = None
         else:
             item: StatisticListWidgetItem = self.profile_options.currentItem()
-
+            leaf = self.get_parameters(deepcopy(item.stat), self.statistic_area_choose.get_value(),
+                                self.per_component.get_value(), self.power_num.value())
+            if leaf is None:
+                return 
             lw = StatisticListWidgetItem(
-                Node(op="/", left=self.get_parameters(deepcopy(self.chosen_element.stat), *self.chosen_element_area),
-                     right=self.get_parameters(deepcopy(item.stat), self.statistic_area_choose.get_value(),
-                                               self.per_component.get_value(), self.power_num.value())))
+                Node(op="/", left=self.chosen_element_area,
+                     right=leaf))
             lw.setToolTip("User defined")
             self.profile_options_chosen.addItem(lw)
             self.chosen_element.setIcon(QIcon())
@@ -525,11 +532,16 @@ class StatisticsSettings(QWidget):
             node = node.replace_(area=area)
         if node.per_component is None:
             node = node.replace_(per_component=component)
-        arguments = STATISTIC_DICT[node.name].get_fields()
-        if len(arguments) > 0 and len(node.dict) == 0:
-            dial = FormDialog(arguments)
-            if dial.exec():
-                node = node._replace(dict=dial.get_values())
+        try:
+            arguments = STATISTIC_DICT[str(node)].get_fields()
+            if len(arguments) > 0 and len(node.dict) == 0:
+                dial = FormDialog(arguments)
+                if dial.exec():
+                    node = node._replace(dict=dial.get_values())
+                else:
+                    return
+        except KeyError:
+            pass
         return node
 
     def choose_option(self):
@@ -539,6 +551,8 @@ class StatisticsSettings(QWidget):
         node = deepcopy(selected_item.stat)
         node = self.get_parameters(node, self.statistic_area_choose.get_value(), self.per_component.get_value(),
                                    self.power_num.value())
+        if node is None:
+            return
         lw = StatisticListWidgetItem(node)
         for i in range(self.profile_options_chosen.count()):
             if lw.text() == self.profile_options_chosen.item(i).text():

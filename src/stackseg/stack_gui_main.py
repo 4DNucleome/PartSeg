@@ -420,7 +420,7 @@ class AlgorithmOptions(QWidget):
         main_layout.addWidget(self.progress_bar)
         main_layout.addWidget(self.progress_info_lab)
         main_layout.addWidget(self.algorithm_choose)
-        main_layout.addLayout(self.stack_layout)
+        main_layout.addLayout(self.stack_layout, 1)
         main_layout.addWidget(self.choose_components)
         main_layout.addStretch()
         main_layout.setContentsMargins(0, 0, 0, 0)
