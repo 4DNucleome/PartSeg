@@ -5,7 +5,7 @@ from copy import copy, deepcopy
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QDialog, QCompleter, QLineEdit, QPushButton, QGridLayout, QWidget, QCheckBox, QComboBox, \
     QListWidget, QSpinBox, QTextEdit, QVBoxLayout, QGroupBox, QLabel, QHBoxLayout, QInputDialog, QMessageBox, \
-    QTreeWidget, QTreeWidgetItem, QFileDialog, QSplitter
+    QTreeWidget, QTreeWidgetItem, QFileDialog, QSplitter, QStackedWidget, QTabWidget, QListWidgetItem
 
 from common_gui.custom_save import FormDialog
 from common_gui.mask_widget import MaskWidget
@@ -97,6 +97,10 @@ class CreatePlan(QWidget):
         self.director_save_chk.setToolTip("Create directory using file name an put result file inside this directory")
         self.save_btn = QPushButton("Save")
         self.segment_profile = QListWidget()
+        self.pipeline_profile = QListWidget()
+        self.segment_stack = QTabWidget()
+        self.segment_stack.addTab(self.segment_profile, "Profile")
+        self.segment_stack.addTab(self.pipeline_profile, "Pipeline")
         self.generate_mask_btn = QPushButton("Generate mask")
         self.generate_mask_btn.setToolTip("Mask need to have unique name")
         self.mask_name = QLineEdit()
@@ -251,7 +255,7 @@ class CreatePlan(QWidget):
         segment_box.setStyleSheet(group_sheet)
         lay = QVBoxLayout()
         lay.setSpacing(0)
-        lay.addWidget(self.segment_profile)
+        lay.addWidget(self.segment_stack)
         lay.addWidget(self.chose_profile_btn)
         lay.addWidget(self.get_big_btn)
         lay.addWidget(self.add_new_segmentation_btn)
@@ -672,35 +676,34 @@ class CreatePlan(QWidget):
                 self.plan_created.emit()
                 break
 
-    def showEvent(self, _):
-        new_statistics = list(sorted(self.settings.get("statistic_profiles", dict()).keys()))
-        new_segment = list(sorted(self.settings.get("segmentation_profiles", dict()).keys()))
-        if self.statistic_list.currentItem() is not None:
-            text = str(self.statistic_list.currentItem().text())
-            try:
-                statistic_index = new_statistics.index(text)
-            except ValueError:
-                statistic_index = -1
-        else:
-            statistic_index = -1
-        if self.segment_profile.currentItem() is not None:
-            text = str(self.segment_profile.currentItem().text())
-            try:
-                segment_index = new_segment.index(text)
-            except ValueError:
-                segment_index = -1
-        else:
-            segment_index = -1
-        self.protect = True
-        self.statistic_list.clear()
-        self.statistic_list.addItems(new_statistics)
-        if statistic_index != -1:
-            self.statistic_list.setCurrentRow(statistic_index)
+    @staticmethod
+    def get_index(item: QListWidgetItem, new_values: typing.List[str]) -> int:
+        if item is None:
+            return -1
+        text = item.text()
+        try:
+            return new_values.index(text)
+        except IndexError:
+            return -1
 
-        self.segment_profile.clear()
-        self.segment_profile.addItems(new_segment)
-        if segment_index != -1:
-            self.segment_profile.setCurrentRow(segment_index)
+    @staticmethod
+    def refresh_profiles(list_widget: QListWidget, new_values: typing.List[str], index: int):
+        list_widget.clear()
+        list_widget.addItems(new_values)
+        if index != -1:
+            list_widget.setCurrentRow(index)
+
+    def showEvent(self, event):
+        new_statistics = list(sorted(self.settings.statistic_profiles.keys()))
+        new_segment = list(sorted(self.settings.segmentation_profiles.keys()))
+        new_pipelines = list(sorted(self.settings.segmentation_pipelines.keys()))
+        statistic_index = self.get_index(self.statistic_list.currentItem(), new_statistics)
+        segment_index = self.get_index(self.segment_profile.currentItem(), new_segment)
+        pipeline_index = self.get_index(self.pipeline_profile.currentItem(), new_pipelines)
+        self.protect = True
+        self.refresh_profiles(self.statistic_list, new_statistics, statistic_index)
+        self.refresh_profiles(self.segment_profile, new_segment, segment_index)
+        self.refresh_profiles(self.pipeline_profile, new_pipelines, pipeline_index)
         self.protect = False
 
     def show_statistics_info(self, text=None):

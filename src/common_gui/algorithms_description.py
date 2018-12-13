@@ -472,8 +472,13 @@ class AlgorithmChoose(QWidget):
         self.algorithm_changed.emit(name)
 
     def image_changed(self):
-        current_widget = self.stack_layout.currentWidget()
+        current_widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.currentWidget()
         current_widget.image_changed(self.settings.image)
+        if hasattr(self.settings, "mask") and hasattr(current_widget, "change_mask"):
+            current_widget.change_mask()
+
+    def mask_changed(self):
+        current_widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.currentWidget()
         if hasattr(self.settings, "mask") and hasattr(current_widget, "change_mask"):
             current_widget.change_mask()
 

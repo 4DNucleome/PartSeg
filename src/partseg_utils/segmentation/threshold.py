@@ -26,6 +26,7 @@ class ManualThreshold(BaseThreshold):
     @classmethod
     def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict, operator):
         result = np.array(operator(data, arguments["threshold"])).astype(np.uint8)
+        result[mask == 0] = 0
         return result, arguments["threshold"]
 
 

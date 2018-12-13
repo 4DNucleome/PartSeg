@@ -77,6 +77,7 @@ class Options(QWidget):
         self.algorithm_choose_widget.finished.connect(self.calculation_finished)
         self.algorithm_choose_widget.value_changed.connect(self.interactive_algorithm_execute)
         self.algorithm_choose_widget.algorithm_changed.connect(self.interactive_algorithm_execute)
+        # settings.mask_changed.connect(self.algorithm_choose_widget.mask_changed)
         """widgets_list = []
         for name, val in part_algorithm_dict.items():
             self.algorithm_choose.addItem(name)
@@ -557,7 +558,7 @@ class MainMenu(QWidget):
 
 class MaskWindow(QDialog):
     def __init__(self, settings:PartSettings):
-        super(MaskWindow, self).__init__()
+        super().__init__()
         self.setWindowTitle("Mask manager")
         self.settings = settings
         main_layout = QVBoxLayout()
