@@ -671,9 +671,6 @@ class MyScrollArea(QScrollArea):
     def resizeEvent(self, event):
         # super(MyScrollArea, self).resizeEvent(event)
         self.pixmap.point = None
-        size_diff = self.size() - event.oldSize()
-        if abs(size_diff.width()) < 10 and abs(size_diff.height()) < 10:
-            return
         if self.x_mid is None:
             self.x_mid = - self.widget().pos().x() + (self.get_width(event.oldSize().width())) / 2
         if self.y_mid is None:
@@ -683,10 +680,16 @@ class MyScrollArea(QScrollArea):
         scalar = new_ratio / old_ratio
         self.x_mid *= scalar
         self.y_mid *= scalar
-        if self.timer_id:
+        if self.size().width() - 2 > self.pixmap.width() and self.size().height() - 2 > self.pixmap.height():
+            # print("B")
+            self.reset_image()
+        else:
+            # print("C", self.pixmap.size())
+            self.resize_pixmap()
+        """if self.timer_id:
             self.killTimer(self.timer_id)
             self.timer_id = 0
-        self.timer_id = self.startTimer(0)
+        self.timer_id = self.startTimer(0)"""
 
     def timerEvent(self, a0: 'QTimerEvent'):
         # Some try to reduce number of repaint event
