@@ -13,3 +13,4 @@ class VerticalScrollArea(QScrollArea):
     def resizeEvent(self, a0: QtGui.QResizeEvent):
         if self.widget() and self.width() > 0:
             self.widget().setMinimumWidth(self.width() - self.verticalScrollBar().width())
+        super().resizeEvent(a0)
