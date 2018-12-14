@@ -181,14 +181,13 @@ class MainMenu(QWidget):
         file_path = str(dial.selectedFiles()[0])
         self.settings.set("io.save_segmentation_directory", os.path.dirname(str(file_path)))
         # self.settings.save_directory = os.path.dirname(str(file_path))
-        try:
-            execute_thread = ExecuteFunctionThread(self.settings.save_segmentation, [file_path])
-            dial = WaitingDialog(execute_thread, "Save segmentation")
-            dial.exec()
-        except IOError as e:
-            QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {e}", QMessageBox.Ok)
-        except Exception as e:
-            ErrorDialog(e, "Image read").exec()
+        def exception_hook(exception):
+            QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.Ok)
+
+        execute_thread = ExecuteFunctionThread(self.settings.save_segmentation, [file_path])
+        dial = WaitingDialog(execute_thread, "Save segmentation", exception_hook=exception_hook)
+        dial.exec()
+
 
     def save_result(self):
         if self.settings.image_path is not None and \
@@ -222,14 +221,12 @@ class MainMenu(QWidget):
                 return
 
         self.settings.set("io.save_components_directory", os.path.dirname(str(dir_path)))
-        try:
-            execute_thread = ExecuteFunctionThread(self.settings.save_components, [dir_path])
-            dial = WaitingDialog(execute_thread, "Save components")
-            dial.exec()
-        except IOError as e:
-            QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {e}", QMessageBox.Ok)
-        except Exception as e:
-            ErrorDialog(e, "Save error").exec()
+        def exception_hook(exception):
+            QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.Ok)
+
+        execute_thread = ExecuteFunctionThread(self.settings.save_components, [dir_path])
+        dial = WaitingDialog(execute_thread, "Save components", exception_hook=exception_hook)
+        dial.exec()
 
 
 class ComponentCheckBox(QCheckBox):
