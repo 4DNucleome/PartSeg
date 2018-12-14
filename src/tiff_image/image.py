@@ -34,6 +34,9 @@ class Image(object):
         else:
             self._mask_array = self.fit_array_to_image(mask)
 
+    def get_data(self):
+        return self._image_array
+
     @property
     def mask(self):
         return self._mask_array

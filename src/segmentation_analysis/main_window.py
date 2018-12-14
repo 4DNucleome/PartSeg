@@ -27,7 +27,7 @@ from segmentation_analysis.batch_window import BatchWindow
 from segmentation_analysis.calculation_pipeline_thread import CalculatePipelineThread
 from segmentation_analysis.interpolate_dialog import InterpolateDialog
 from segmentation_analysis.interpolate_thread import InterpolateThread
-from tiff_image import ImageReader
+from tiff_image import ImageReader, Image
 from .algorithm_description import part_algorithm_dict, SegmentationProfile
 from .analysis_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
@@ -330,7 +330,7 @@ class MainMenu(QWidget):
         self.open_btn = QPushButton("Open")
         self.save_btn = QPushButton("Save")
         self.advanced_btn = QPushButton("Advanced")
-        self.interpolate_btn = QPushButton("Interpolate")
+        self.interpolate_btn = QPushButton("Image adjustments")
         self.mask_manager_btn = QPushButton("Mask Manager")
         self.batch_processing_btn = QPushButton("Batch Processing")
         self.main_window: MainWindow = main_window
@@ -389,7 +389,7 @@ class MainMenu(QWidget):
             print(scale_factor)
             interp_ob = InterpolateThread()
             dial = WaitingDialog(interp_ob)
-            args = [self._settings.image]
+            args = [self._settings.image.get_data()]
             if self._settings.mask is not None:
                 mask = self._settings.mask.astype(np.uint8)
                 mask[mask > 0] = 255
@@ -397,10 +397,13 @@ class MainMenu(QWidget):
             interp_ob.set_arrays(args)
             interp_ob.set_scaling(scale_factor)
             if dial.exec():
-                self._settings.image = interp_ob.result[0], self._settings.image_path
-                if len(interp_ob.result) == 2:
-                    self._settings.mask = interp_ob.result[1] > 128
-                self._settings.image_spacing = [x / y for x, y in zip(self._settings.image_spacing, scale_factor)]
+                image = Image(interp_ob.result[0], [x / y for x, y in zip(self._settings.image_spacing, scale_factor)],
+                              self._settings.image.file_path,
+                              None if len(interp_ob.result) == 1 else interp_ob.result[2],
+                              self._settings.image.default_coloring, self._settings.image.ranges,
+                              self._settings.image.labels)
+                print(interp_ob.result[0].shape)
+                self._settings.image = image
             else:
                 if interp_ob.isRunning():
                     interp_ob.terminate()
