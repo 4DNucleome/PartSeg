@@ -6,18 +6,19 @@ from PyQt5.QtCore import pyqtSignal
 class BaseMainWindow(QMainWindow):
     show_signal = pyqtSignal()
 
-    def __init__(self, signal_fun=None):
+    def __init__(self, title="PartSeg", signal_fun=None):
         super().__init__()
         if signal_fun is not None:
             self.show_signal.connect(signal_fun)
         self.files_num = 1
         self.setAcceptDrops(True)
+        self.setWindowTitle(title)
+        self.title_base = title
 
     def showEvent(self, a0: QShowEvent):
         self.show_signal.emit()
 
     def dragEnterEvent(self, event: QDragEnterEvent):
-        print("Ala")
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
 

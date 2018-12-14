@@ -1,38 +1,37 @@
 import json
 import logging
 import os
-import re
 from pathlib import Path
-import tifffile as tif
-import numpy as np
-import SimpleITK as sitk
+
 import appdirs
+import numpy as np
+import tifffile as tif
 from PyQt5.QtCore import Qt, QByteArray, QEvent
 from PyQt5.QtGui import QIcon, QKeyEvent, QKeySequence
 from PyQt5.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
     QFileDialog, QMessageBox, QCheckBox, QComboBox, QInputDialog, QDialog
 
+from common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, AlgorithmChoose
 from common_gui.channel_control import ChannelControl
 from common_gui.mask_widget import MaskWidget
 from common_gui.stack_image_view import ColorBar
 from common_gui.waiting_dialog import WaitingDialog
+from partseg_utils.global_settings import static_file_folder
+from partseg_utils.mask_create import calculate_mask, MaskProperty
+from partseg_utils.segmentation.algorithm_base import SegmentationResult
+from project_utils_qt.error_dialog import ErrorDialog
+from project_utils_qt.image_read_thread import ImageReaderThread
+from project_utils_qt.main_window import BaseMainWindow
 from segmentation_analysis.advanced_window import AdvancedWindow
 from segmentation_analysis.batch_window import BatchWindow
 from segmentation_analysis.calculation_pipeline_thread import CalculatePipelineThread
 from segmentation_analysis.interpolate_dialog import InterpolateDialog
 from segmentation_analysis.interpolate_thread import InterpolateThread
-from common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, AlgorithmChoose
-from project_utils_qt.error_dialog import ErrorDialog
-from partseg_utils.global_settings import static_file_folder
-from project_utils_qt.image_read_thread import ImageReaderThread
-from project_utils_qt.main_window import BaseMainWindow
-from partseg_utils.mask_create import calculate_mask, MaskProperty
-from partseg_utils.segmentation.algorithm_base import SegmentationResult
-from .partseg_settings import PartSettings, save_labeled_image
+from tiff_image import ImageReader
+from .algorithm_description import part_algorithm_dict, SegmentationProfile
 from .analysis_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
-from .algorithm_description import part_algorithm_dict, SegmentationProfile
-from tiff_image import ImageReader
+from .partseg_settings import PartSettings
 
 app_name = "PartSeg2"
 app_lab = "LFSG"
@@ -46,6 +45,7 @@ class Options(QWidget):
         self._settings = settings
         self.left_panel = left_panel
         self._ch_control2 = channel_control2
+        self.synchronize_val = False
         self.hide_left_panel_chk = QCheckBox("Hide left panel")
         self.hide_left_panel_chk.stateChanged.connect(self.hide_left_panel)
         self.synchronize_checkbox = QCheckBox("Synchronize view")
@@ -112,8 +112,8 @@ class Options(QWidget):
         layout.addLayout(layout5)
         layout.addLayout(layout4)
         layout.addLayout(layout3)
-        layout.addWidget(self.algorithm_choose_widget,1)
-        #layout.addLayout(self.stack_layout)
+        layout.addWidget(self.algorithm_choose_widget, 1)
+        # layout.addLayout(self.stack_layout)
         layout.addWidget(self.label)
         # layout.addStretch(1)
         layout2.addWidget(self.hide_left_panel_chk)
@@ -172,7 +172,7 @@ class Options(QWidget):
             break
 
     def choose_pipeline(self, text):
-        if text =="<none>":
+        if text == "<none>":
             return
         pipeline = self._settings.segmentation_pipelines[text]
         process_thread = CalculatePipelineThread(self._settings.image, self._settings.mask, pipeline, self)
@@ -337,7 +337,7 @@ class MainMenu(QWidget):
 
         layout = QHBoxLayout()
         layout.setSpacing(0)
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.open_btn)
         layout.addWidget(self.save_btn)
         layout.addWidget(self.advanced_btn)
@@ -400,11 +400,11 @@ class MainMenu(QWidget):
                 self._settings.image = interp_ob.result[0], self._settings.image_path
                 if len(interp_ob.result) == 2:
                     self._settings.mask = interp_ob.result[1] > 128
-                self._settings.image_spacing = [x/y for x,y in zip(self._settings.image_spacing, scale_factor)]
+                self._settings.image_spacing = [x / y for x, y in zip(self._settings.image_spacing, scale_factor)]
             else:
                 if interp_ob.isRunning():
                     interp_ob.terminate()
-            #self.settings.rescale_image(dialog.get_zoom_factor())
+            # self.settings.rescale_image(dialog.get_zoom_factor())
 
     def mask_manager(self):
         if self._settings.segmentation is None:
@@ -437,7 +437,7 @@ class MainMenu(QWidget):
                     read_thread.set_path(file_path)
                     dial.exec()
                     self._settings.image = read_thread.image
-                    #self._settings.image_spacing = list(np.array([70, 70 ,210]) * 0.1**9)
+                    # self._settings.image_spacing = list(np.array([70, 70 ,210]) * 0.1**9)
                 elif selected_filter == "mask to image (*.tiff *.tif *.lsm)":
                     im = tif.imread(file_path)
                     self._settings.mask = im
@@ -459,7 +459,7 @@ class MainMenu(QWidget):
                             dial.exec()
                             self._settings.image = read_thread.image
                 elif selected_filter == "saved project (*.tgz *.tbz2 *.gz *.bz2)":
-                    #TODO chnage to load dialog
+                    # TODO chnage to load dialog
                     self._settings.load_project(file_path)
                     # self.segment.threshold_updated()
                 elif selected_filter == "Profiles (*.json)":
@@ -473,7 +473,6 @@ class MainMenu(QWidget):
         except Exception as e:
             ErrorDialog(e, "Image read").exec()
 
-
     def batch_window(self):
         if self.main_window.batch_window is not None:
             if self.main_window.batch_window.isVisible():
@@ -484,71 +483,6 @@ class MainMenu(QWidget):
             self.main_window.batch_window = BatchWindow(self._settings)
             self.main_window.batch_window.show()
 
-    def _save_file(self):
-        try:
-            dial = QFileDialog(self, "Save data")
-            dial.setDirectory(self._settings.get("io.save_directory", self._settings.get("io.open_directory", str(Path.home()))))
-            dial.setFileMode(QFileDialog.AnyFile)
-            filters = ["Project (*.tgz *.tbz2 *.gz *.bz2)", "Labeled image (*.tif)", "Mask in tiff (*.tif)",
-                       "Mask for itk-snap (*.img)", "Data for chimera (*.cmap)", "Image (*.tiff)", "Profiles (*.json)",
-                       "Segmented data in xyz (*.xyz)"]
-            dial.setAcceptMode(QFileDialog.AcceptSave)
-            dial.setNameFilters(filters)
-            default_name = os.path.splitext(os.path.basename(self._settings.image.file_path))[0]
-            dial.selectFile(default_name)
-            dial.selectNameFilter(self._settings.get("io.save_filter", ""))
-            if dial.exec_():
-                file_path = str(dial.selectedFiles()[0])
-                selected_filter = str(dial.selectedNameFilter())
-                self._settings.set("io.save_filter", selected_filter)
-                self._settings.set("io.save_directory", os.path.dirname(file_path))
-                if os.path.splitext(file_path)[1] == '':
-                    ext = re.search(r'\(\*(\.\w+)', selected_filter).group(1)
-                    file_path += ext
-                    if os.path.exists(file_path):
-                        # noinspection PyCallByClass
-                        ret = QMessageBox.warning(self, "File exist", os.path.basename(file_path) +
-                                                  " already exists.\nDo you want to replace it?",
-                                                  QMessageBox.No | QMessageBox.Yes)
-                        if ret == QMessageBox.No:
-                            self.save_file()
-                            return
-
-                if selected_filter == "Project (*.tgz *.tbz2 *.gz *.bz2)":
-                    if self._settings.segmentation is None:
-                        QMessageBox.warning(self, "No segmentation", "Cannot save project with no segmentation",
-                                            QMessageBox.Ok)
-                        return
-                    self._settings.save_project(file_path)
-                elif selected_filter == "Labeled image (*.tif)":
-                    save_labeled_image(file_path, self._settings)
-
-                elif selected_filter == "Mask in tiff (*.tif)":
-                    segmentation = self._settings.segmentation
-                    segmentation = np.array(segmentation > 0).astype(np.uint8)
-                    tif.imsave(file_path, segmentation)
-                elif selected_filter == "Mask for itk-snap (*.img)":
-                    segmentation = sitk.GetImageFromArray(self.segment.get_segmentation())
-                    sitk.WriteImage(segmentation, file_path)
-                elif selected_filter == "Data for chimera (*.cmap)":
-                    if not np.any(self.segment.get_segmentation()):
-                        QMessageBox.warning(self, "No object", "There is no component to export to cmap")
-                        return
-                    ob = CmapSave(file_path, self.settings, self.segment)
-                    ob.exec_()
-                elif selected_filter == "Image (*.tiff)":
-                    image = self.settings.image
-                    tif.imsave(file_path, image)
-                elif selected_filter == "Profiles (*.json)":
-                    self.settings.dump_profiles(file_path)
-                elif selected_filter == "Segmented data in xyz (*.xyz)":
-                    save_to_xyz(file_path, self.settings, self.segment)
-                else:
-                    # noinspection PyCallByClass
-                    _ = QMessageBox.critical(self, "Save error", "Option unknown")
-        except IOError as e:
-            QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
-
     def advanced_window_show(self):
         if self.main_window.advanced_window.isVisible():
             self.main_window.advanced_window.activateWindow()
@@ -557,7 +491,7 @@ class MainMenu(QWidget):
 
 
 class MaskWindow(QDialog):
-    def __init__(self, settings:PartSettings):
+    def __init__(self, settings: PartSettings):
         super().__init__()
         self.setWindowTitle("Mask manager")
         self.settings = settings
@@ -634,7 +568,7 @@ class MaskWindow(QDialog):
         mask_property = self.mask_widget.get_mask_property()
         self.settings.set("mask_manager.mask_property", mask_property)
         mask = calculate_mask(mask_property, segmentation,
-                       self.settings.mask, self.settings.image_spacing)
+                              self.settings.mask, self.settings.image_spacing)
         self.settings.segmentation_history.append(
             HistoryElement.create(segmentation, self.settings.full_segmentation, self.settings.mask, algorithm_name,
                                   algorithm_values, mask_property)
@@ -672,11 +606,8 @@ class MaskWindow(QDialog):
 
 class MainWindow(BaseMainWindow):
     def __init__(self, title, signal_fun=None):
-        super().__init__(signal_fun)
+        super().__init__(title, signal_fun)
         self.files_num = 2
-        self.setWindowTitle(title)
-        self.title = title
-        self.title_base = title
         self.setMinimumWidth(600)
         self.settings = PartSettings(os.path.join(config_folder, "settings.json"))
         if os.path.exists(os.path.join(config_folder, "settings.json")):
@@ -698,9 +629,9 @@ class MainWindow(BaseMainWindow):
         # self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
         self.advanced_window = AdvancedWindow(self.settings)
-        self.batch_window = None # BatchWindow(self.settings)
+        self.batch_window = None  # BatchWindow(self.settings)
 
-        reader =ImageReader()
+        reader = ImageReader()
         im = reader.read(os.path.join(static_file_folder, 'initial_images', "clean_segment.tiff"))
         im.file_path = ""
         self.settings.image = im
@@ -749,7 +680,7 @@ class MainWindow(BaseMainWindow):
             elif ext in [".tgz", ".tbz2", ".gz", ".bz2"]:
                 self.settings.load_project(file_path)
         elif len(paths) == 2:
-            name1, name2  = [os.path.basename(os.path.splitext(x)[0]) for x in paths]
+            name1, name2 = [os.path.basename(os.path.splitext(x)[0]) for x in paths]
             if name1.endswith("_mask"):
                 read_thread.set_path(paths[1], paths[0])
             elif name2.endswith("_mask"):

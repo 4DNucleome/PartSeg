@@ -67,7 +67,7 @@ class MainMenu(QWidget):
         self.setLayout(layout)
 
     def load_image(self):
-        #TODO move segmentation with image load to load_segmentaion
+        # TODO move segmentation with image load to load_segmentaion
         try:
             dial = QFileDialog()
             dial.setFileMode(QFileDialog.ExistingFile)
@@ -618,17 +618,13 @@ class Options(QTabWidget):
         self.setMinimumWidth(340)
         self.setCurrentIndex(1)
 
-
     def get_chosen_components(self):
         return self.algorithm_options.get_chosen_components()
 
 
 class MainWindow(BaseMainWindow):
     def __init__(self, title, signal_fun=None):
-        print("title", title)
-        super().__init__(signal_fun)
-        self.setWindowTitle(title)
-        self.title_base = title
+        super().__init__(title, signal_fun)
         self.settings = StackSettings(os.path.join(config_folder, "settings.json"))
         if os.path.exists(os.path.join(config_folder, "settings.json")):
             self.settings.load()

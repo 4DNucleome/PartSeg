@@ -11,7 +11,6 @@ import multiprocessing
 multiprocessing.freeze_support()
 
 sys.excepthook = my_excepthook
-print("buka")
 def main():
     parser = CustomParser("PartSeg")
     parser.add_argument("--multiprocessing-fork", dest="mf", action="store_true",
