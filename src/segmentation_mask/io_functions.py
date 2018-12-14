@@ -93,7 +93,7 @@ def save_components(image: Image, components: list, segmentation: np.ndarray, di
     range_changed(0, 2 * len(components))
     for i in components:
         im = image.cut_image(segmentation == i, replace_mask=True)
-        print(f"[run] {im}")
+        # print(f"[run] {im}")
         ImageWriter.save(im, os.path.join(dir_path, f"{file_name}_component{i}.tif"))
         step_changed(2 * i + 1)
         ImageWriter.save_mask(im, os.path.join(dir_path, f"{file_name}_component{i}_mask.tif"))

@@ -22,7 +22,6 @@ class ImageWriter(object):
         spacing = image.get_um_spacing()
 
         metadata = {"mode": "color",}
-        print(spacing)
         if len(spacing) == 3:
             metadata.update({"spacing":spacing[0], "unit": "\\u00B5m"})
         resolution = [1/x for x in spacing[-2:]]
