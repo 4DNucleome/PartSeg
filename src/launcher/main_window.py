@@ -58,7 +58,7 @@ class MainWindow(QMainWindow):
         self.progress.setRange(0, 0)
         self.analysis_button.setDisabled(True)
         self.mask_button.setDisabled(True)
-        self.lib_path = "stackseg.stack_gui_main"
+        self.lib_path = "segmentation_mask.stack_gui_main"
         self.final_title = "PartSeg Mask Segmentation"
         self.startTimer(0)
 

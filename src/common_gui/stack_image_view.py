@@ -19,8 +19,7 @@ from partseg_utils.color_image import color_image, add_labels
 from partseg_utils.color_image.color_image_base import color_maps
 from partseg_utils.colors import default_colors
 from partseg_utils.global_settings import static_file_folder
-from project_utils_qt.settings import ViewSettings
-from stackseg.stack_settings import StackSettings
+from project_utils_qt.settings import ViewSettings, BaseSettings
 from tiff_image import Image
 from .channel_control import ChannelControl
 
@@ -281,7 +280,7 @@ class ImageView(QWidget):
     def __init__(self, settings, channel_control: ChannelControl):
         """:type settings: ViewSettings"""
         super(ImageView, self).__init__()
-        self._settings: StackSettings = settings
+        self._settings: BaseSettings = settings
         self.channel_control = channel_control
         self.exclude_btn_list = []
         self.image_state = ImageState(settings)

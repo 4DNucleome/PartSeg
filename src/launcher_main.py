@@ -34,7 +34,7 @@ def main():
         from segmentation_analysis.main_window import MainWindow
         title = "PartSeg Segmentation Analysis"
     elif args.gui == "segmentation":
-        from stackseg.stack_gui_main import MainWindow
+        from segmentation_mask.stack_gui_main import MainWindow
         title = "PartSeg Mask Segmentation"
     else:
         from launcher.main_window import MainWindow

@@ -21,7 +21,7 @@ def main():
     myApp = QApplication(sys.argv)
     from partseg_utils.base_argparser import CustomParser
     CustomParser("PartSeg").parse_args()
-    from stackseg.stack_gui_main import MainWindow
+    from segmentation_mask.stack_gui_main import MainWindow
     wind = MainWindow("StackSeg")
     wind.show()
     myApp.exec_()

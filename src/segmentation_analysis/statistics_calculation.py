@@ -242,7 +242,7 @@ class StatisticProfile(object):
                 kw['help_dict'] = help_dict
                 kw['_area'] = node.area
                 if node.area == AreaType.Mask:
-                    kw["area_array"] = kw["base_mask"]
+                    kw["area_array"] = kw["mask"]
                 elif node.area == AreaType.Mask_without_segmentation:
                     kw["area_array"] = kw["mask_without_segmentation"]
                 elif node.area == AreaType.Segmentation:

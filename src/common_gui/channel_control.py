@@ -6,9 +6,10 @@ from common_gui.collapse_checkbox import CollapseCheckbox
 from common_gui.universal_gui_part import CustomSpinBox
 from partseg_utils.color_image import color_image
 import typing
-
-from stackseg.stack_settings import default_colors
 from project_utils_qt.settings import ViewSettings
+
+
+default_colors = ['BlackRed', 'BlackGreen', 'BlackBlue', 'BlackMagenta']
 
 
 class ColorPreview(QWidget):
