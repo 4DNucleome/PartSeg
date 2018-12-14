@@ -32,6 +32,8 @@ from .algorithm_description import part_algorithm_dict, SegmentationProfile
 from .analysis_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
 from .partseg_settings import PartSettings
+from common_gui.custom_save import SaveDialog
+from .io_functions import save_register
 
 app_name = "PartSeg2"
 app_lab = "LFSG"
@@ -363,8 +365,6 @@ class MainMenu(QWidget):
         super().keyPressEvent(event)
 
     def save_file(self):
-        from common_gui.custom_save import SaveDialog
-        from .io_functions import save_register
         base_values = self._settings.get("save_parameters", dict())
         dial = SaveDialog(save_register, system_widget=False, base_values=base_values)
         dial.selectFile(os.path.splitext(os.path.basename(self._settings.image_path))[0])

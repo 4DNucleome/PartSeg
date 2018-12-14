@@ -7,7 +7,9 @@ from project_utils_qt.settings import BaseSettings
 from partseg_utils.segmentation.segment import cut_with_mask, save_catted_list
 from deprecation import deprecated
 
-from segmentation_mask.io_functions import save_stack_segmentation, load_stack_segmentation, save_components
+from segmentation_mask.io_functions import save_stack_segmentation, load_stack_segmentation, save_components, \
+    SegmentationTuple
+
 
 class StackSettings(BaseSettings):
     components_change_list = pyqtSignal([int, list])
@@ -85,3 +87,6 @@ class StackSettings(BaseSettings):
             return self.chosen_components_widget.get_mask()
         else:
             raise RuntimeError("chosen_components_widget do not initialized")
+
+    def get_segmentation_info(self) -> SegmentationTuple:
+        return SegmentationTuple(self.image, self.segmentation, self.chosen_components())

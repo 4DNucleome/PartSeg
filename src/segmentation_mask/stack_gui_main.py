@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMes
 from common_gui.algorithms_description import AlgorithmSettingsWidget
 from common_gui.channel_control import ChannelControl
 from common_gui.colors_choose import ColorSelector
+from common_gui.custom_save import SaveDialog
 from common_gui.flow_layout import FlowLayout
 from common_gui.select_multiple_files import AddFiles
 from common_gui.stack_image_view import ColorBar
@@ -28,7 +29,7 @@ from segmentation_mask.stack_settings import StackSettings
 from tiff_image import ImageReader, Image
 from .batch_proceed import BatchProceed
 from .image_view import StackImageView
-from .io_functions import load_stack_segmentation
+from .io_functions import load_stack_segmentation, SaveSegmentation
 
 app_name = "StackSeg"
 app_lab = "LFSG"
@@ -96,8 +97,13 @@ class MainMenu(QWidget):
                 segmentation, metadata = load_stack_segmentation(file_path)
                 if "base_file" not in metadata:
                     QMessageBox.warning(self, "Open error", "No information about base file")
+                    return
                 if not os.path.exists(metadata["base_file"]):
-                    QMessageBox.warning(self, "Open error", "Base file not found")
+                    full_path = os.path.join(os.path.dirname(file_path), metadata["base_file"])
+                    if not os.path.exists(full_path):
+                        QMessageBox.warning(self, "Open error", "Base file not found")
+                        return
+                    metadata["base_file"] = full_path
                 read_thread.set_path(metadata["base_file"])
                 dial = WaitingDialog(read_thread, "Load image", exception_hook=exception_hook)
                 dial.exec()
@@ -119,6 +125,8 @@ class MainMenu(QWidget):
         # self.image_loaded.emit()
 
     def set_image(self, image: Image) -> bool:
+        if image is None:
+            return
         if image.is_time:
             if image.is_stack:
                 QMessageBox.warning(
@@ -169,23 +177,20 @@ class MainMenu(QWidget):
         if self.settings.segmentation is None:
             QMessageBox.warning(self, "No segmentation", "No segmentation to save")
             return
-        dial = QFileDialog()
-        dial.setFileMode(QFileDialog.AnyFile)
+        dial = SaveDialog({"segmentation": SaveSegmentation}, False)
         dial.setDirectory(self.settings.get("io.save_segmentation_directory", ""))
-        dial.setAcceptMode(QFileDialog.AcceptSave)
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0] + ".seg")
-        filters = ["segmentation (*.seg *.tgz)"]
-        dial.setNameFilters(filters)
         if not dial.exec_():
             return
-        file_path = str(dial.selectedFiles()[0])
-        self.settings.set("io.save_segmentation_directory", os.path.dirname(str(file_path)))
+        save_location, selected_filter, save_class, values = dial.get_result()
+        self.settings.set("io.save_segmentation_directory", os.path.dirname(str(save_location)))
         # self.settings.save_directory = os.path.dirname(str(file_path))
         def exception_hook(exception):
             QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.Ok)
 
-        execute_thread = ExecuteFunctionThread(self.settings.save_segmentation, [file_path])
-        dial = WaitingDialog(execute_thread, "Save segmentation", exception_hook=exception_hook)
+        execute_thread = \
+            ExecuteFunctionThread(save_class.save, [save_location, self.settings.get_segmentation_info(), values])
+        dial = WaitingDialog(execute_thread, "Save segmentation") # , exception_hook=exception_hook)
         dial.exec()
 
 
