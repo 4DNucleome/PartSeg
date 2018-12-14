@@ -33,7 +33,7 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(analysis_icon)
 
     def launch_partseg(self):
-        from partseg2.main_window import MainWindow
+        from segmentation_analysis.main_window import MainWindow
         self.launch(MainWindow, "PartSeg Segmentation Analysis")
 
     def launch_stackseg(self):

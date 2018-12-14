@@ -16,11 +16,11 @@ from common_gui.channel_control import ChannelControl
 from common_gui.mask_widget import MaskWidget
 from common_gui.stack_image_view import ColorBar
 from common_gui.waiting_dialog import WaitingDialog
-from partseg2.advanced_window import AdvancedWindow
-from partseg2.batch_window import BatchWindow
-from partseg2.calculation_pipeline_thread import CalculatePipelineThread
-from partseg2.interpolate_dialog import InterpolateDialog
-from partseg2.interpolate_thread import InterpolateThread
+from segmentation_analysis.advanced_window import AdvancedWindow
+from segmentation_analysis.batch_window import BatchWindow
+from segmentation_analysis.calculation_pipeline_thread import CalculatePipelineThread
+from segmentation_analysis.interpolate_dialog import InterpolateDialog
+from segmentation_analysis.interpolate_thread import InterpolateThread
 from common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, AlgorithmChoose
 from project_utils_qt.error_dialog import ErrorDialog
 from partseg_utils.global_settings import static_file_folder

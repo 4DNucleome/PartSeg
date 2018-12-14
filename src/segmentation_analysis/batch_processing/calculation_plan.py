@@ -9,9 +9,9 @@ from enum import Enum
 from deprecation import deprecated
 from six import add_metaclass
 
-from partseg2.save_register import save_register
-from partseg2.statistics_calculation import StatisticProfile
-from partseg2.algorithm_description import SegmentationProfile
+from segmentation_analysis.save_register import save_register
+from segmentation_analysis.statistics_calculation import StatisticProfile
+from segmentation_analysis.algorithm_description import SegmentationProfile
 from partseg_utils.mask_create import MaskProperty
 from partseg_utils.class_generator import BaseReadonlyClass
 

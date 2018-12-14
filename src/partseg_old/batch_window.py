@@ -5,13 +5,13 @@ from glob import glob
 
 import numpy as np
 
-from partseg.backend import Settings
-from partseg.batch_processing.batch_backend import CalculationManager
-from partseg.batch_processing.calculation_plan import CalculationPlan, MaskFile, MaskMapper, Calculation
-from partseg.prepare_plan_widget import CalculatePlaner
+from partseg_old.backend import Settings
+from partseg_old.batch_processing.batch_backend import CalculationManager
+from partseg_old.batch_processing.calculation_plan import CalculationPlan, MaskFile, MaskMapper, Calculation
+from partseg_old.prepare_plan_widget import CalculatePlaner
 from partseg_utils.global_settings import static_file_folder
 from partseg_utils.universal_const import UNITS_LIST
-from qt_import import *
+from partseg_old.qt_import import *
 from common_gui.universal_gui_part import Spacing, right_label
 
 __author__ = "Grzegorz Bokota"

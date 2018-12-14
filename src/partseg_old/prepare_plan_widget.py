@@ -3,15 +3,15 @@ from copy import copy, deepcopy
 
 from common_gui.universal_gui_part import right_label
 
-from partseg.batch_processing.calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, \
+from partseg_old.batch_processing.calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, CmapProfile, \
     MaskSuffix, MaskSub, \
     MaskFile, ProjectSave, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, MaskSave, ImageSave, \
     XYZSave
-from partseg.io_functions import GaussUse
-from partseg.profile_export import ExportDialog, ImportDialog
-from partseg.segment import SegmentationProfile
-from partseg.statistics_calculation import StatisticProfile
-from qt_import import QWidget, QSplitter, QTreeWidget, QTreeWidgetItem, pyqtSignal, QPushButton, QCheckBox, \
+from partseg_old.io_functions import GaussUse
+from partseg_old.profile_export import ExportDialog, ImportDialog
+from partseg_old.segment import SegmentationProfile
+from partseg_old.statistics_calculation import StatisticProfile
+from partseg_old.qt_import import QWidget, QSplitter, QTreeWidget, QTreeWidgetItem, pyqtSignal, QPushButton, QCheckBox, \
     QListWidget, QLineEdit, QSpinBox, QTextEdit, QGroupBox, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, \
     QInputDialog, QMessageBox, QFileDialog, QDialog, QComboBox, str_type, QCompleter, Qt
 

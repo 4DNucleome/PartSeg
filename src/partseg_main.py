@@ -31,7 +31,7 @@ if __name__ == '__main__':
         matplotlib.use("Qt5Agg")
     set_develop(args.develop)
     from PyQt5.QtWidgets import QApplication
-    from partseg.main_window import MainWindow
+    from partseg_old.main_window import MainWindow
     import sys
     myApp = QApplication(sys.argv)
     wind = MainWindow("PartSeg", args.file)

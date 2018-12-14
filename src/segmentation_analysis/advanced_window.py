@@ -13,10 +13,10 @@ from common_gui.algorithms_description import EnumComboBox
 from common_gui.colors_choose import ColorSelector
 from common_gui.custom_save import FormDialog
 from common_gui.lock_checkbox import LockCheckBox
-from partseg2.partseg_settings import PartSettings, MASK_COLORS
-from partseg2.profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer
-from partseg2.statistic_widget import StatisticsWidget
-from partseg2.statistics_calculation import StatisticProfile, STATISTIC_DICT, Node, Leaf, AreaType, PerComponent, \
+from segmentation_analysis.partseg_settings import PartSettings, MASK_COLORS
+from segmentation_analysis.profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer
+from segmentation_analysis.statistic_widget import StatisticsWidget
+from segmentation_analysis.statistics_calculation import StatisticProfile, STATISTIC_DICT, Node, Leaf, AreaType, PerComponent, \
     StatisticEntry
 from partseg_utils.global_settings import static_file_folder
 from partseg_utils.universal_const import UNIT_SCALE, UNITS_LIST

@@ -62,7 +62,7 @@ if __name__ == '__main__':
     import glob
     import os
     import sys
-    from partseg import backend, io_functions
+    from partseg_old import backend, io_functions
     import numpy as np
     mpr = MorphParser()
     parser = argparse.ArgumentParser("Convert project to chimera cmap")

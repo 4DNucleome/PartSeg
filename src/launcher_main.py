@@ -17,10 +17,10 @@ def main():
     parser.add_argument("--multiprocessing-fork", dest="mf", action="store_true",
                         help=argparse.SUPPRESS) # Windows bugfix
     sp = parser.add_subparsers()
-    sp_a = sp.add_parser("analysis", help="Starts GUI for analysis")
+    sp_a = sp.add_parser("segmentation_analysis", help="Starts GUI for segmentation analysis")
     sp_s = sp.add_parser("segmentation", help="Starts GUI for segmentation")
     parser.set_defaults(gui="launcher")
-    sp_a.set_defaults(gui="analysis")
+    sp_a.set_defaults(gui="segmentation_analysis")
     sp_s.set_defaults(gui="segmentation")
     argv = [x for x in sys.argv[1:] if not (x.startswith("parent") or x.startswith("pipe"))]
     args = parser.parse_args(argv)
@@ -28,15 +28,15 @@ def main():
 
     logging.basicConfig(level=logging.INFO)
     myApp = QApplication(sys.argv)
-    if args.gui == "analysis" or args.mf:
-        from partseg2.main_window import MainWindow
-        title = "PartSeg"
+    if args.gui == "segmentation_analysis" or args.mf:
+        from segmentation_analysis.main_window import MainWindow
+        title = "PartSeg Segmentation Analysis"
     elif args.gui == "segmentation":
         from stackseg.stack_gui_main import MainWindow
-        title = "StackSeg"
+        title = "PartSeg Mask Segmentation"
     else:
         from launcher.main_window import MainWindow
-        title = "Launcher"
+        title = "PartSeg Launcher"
     wind = MainWindow(title)
     wind.show()
     myApp.exec_()

@@ -1,7 +1,6 @@
-from qt_import import QDialog, QListWidget, QListWidgetItem, Qt, QPushButton, QHBoxLayout, QVBoxLayout, QTreeWidget, \
+from partseg_old.qt_import import QDialog, QListWidget, QListWidgetItem, Qt, QPushButton, QHBoxLayout, QVBoxLayout, QTreeWidget, \
     QTreeWidgetItem, QLabel, QRadioButton, QButtonGroup, QLineEdit, QTextEdit
 import numpy as np
-from collections import namedtuple
 import re
 
 class ExportDialog(QDialog):

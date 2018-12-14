@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from partseg2.analysis_utils import HistoryElement
+from segmentation_analysis.analysis_utils import HistoryElement
 from partseg_utils.channel_class import Channel
 from partseg_utils.segmentation.algorithm_base import calculate_operation_radius
 from partseg_utils.cmap_utils import CmapProfile

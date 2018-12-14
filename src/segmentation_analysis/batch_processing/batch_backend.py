@@ -1,7 +1,7 @@
 import logging
 import threading
+import typing
 from collections import OrderedDict, defaultdict
-from copy import copy
 from enum import Enum
 from os import path
 from queue import Queue
@@ -10,15 +10,17 @@ import numpy as np
 import pandas as pd
 import tifffile
 
-from partseg.backend import Settings, MaskChange
-from partseg.batch_processing.calculation_plan import CalculationTree, MaskMapper, MaskUse, MaskCreate, ProjectSave, \
-    ImageSave, XYZSave, \
-    CmapProfile, Operations, ChooseChanel, FileCalculation, MaskIntersection, MaskSum, MaskSave, get_save_path
-from partseg.batch_processing.parallel_backed import BatchManager
-from partseg.io_functions import load_project, save_to_project, save_to_cmap, save_to_xyz
-from partseg.segment import Segment, SegmentationProfile
-from partseg.statistics_calculation import StatisticProfile
-from partseg_utils import dict_set_class
+from segmentation_analysis.algorithm_description import SegmentationProfile, part_algorithm_dict
+from segmentation_analysis.batch_processing.calculation_plan import CalculationTree, MaskMapper, MaskUse, MaskCreate, Save, \
+    Operations, FileCalculation, MaskIntersection, MaskSum, get_save_path, StatisticCalculate, Calculation
+from segmentation_analysis.batch_processing.parallel_backed import BatchManager
+from segmentation_analysis.io_functions import load_project, ProjectTuple
+from segmentation_analysis.analysis_utils import HistoryElement
+from segmentation_analysis.save_register import save_register
+from partseg_utils.mask_create import calculate_mask
+from partseg_utils.segmentation.algorithm_base import report_empty_fun
+from partseg_utils.universal_const import UNITS_LIST, UNIT_SCALE
+from tiff_image import ImageReader, Image
 
 
 def do_calculation(file_path, calculation):
@@ -34,12 +36,17 @@ def do_calculation(file_path, calculation):
 
 class CalculationProcess(object):
     def __init__(self):
-        self.settings = Settings(None)
-        self.segment = Segment(self.settings, callback=False)
         self.reused_mask = set()
         self.mask_dict = dict()
         self.calculation = None
         self.statistics = []
+        self.image: Image = None
+        self.segmentation: typing.Optional[np.ndarray] = None
+        self.full_segmentation: typing.Optional[np.ndarray] = None
+        self.mask: typing.Optional[np.ndarray] = None
+        self.history: typing.List[HistoryElement] = []
+        self.algorithm_parameters: dict = {}
+        self.cleaned_channel: typing.Optional[np.ndarray] = None
 
     def do_calculation(self, calculation):
         """
@@ -51,16 +58,20 @@ class CalculationProcess(object):
         self.reused_mask = calculation.calculation_plan.get_reused_mask()
         self.mask_dict = {}
         self.statistics = []
-        self.settings.voxel_size = calculation.voxel_size
         ext = path.splitext(calculation.file_path)[1]
         if ext in [".tiff", ".tif", ".lsm"]:
-            image = tifffile.imread(calculation.file_path)
-            self.settings.image = image
-            self.settings.file_path = calculation.file_path
+            reader = ImageReader()
+            self.image = reader.read(calculation.file_path)
         elif ext in [".tgz", ".gz", ".tbz2", ".bz2"]:
-            load_project(calculation.file_path, self.settings, self.segment)
+            project_tuple = load_project(calculation.file_path)
+            self.image = project_tuple.image
+            self.segmentation = project_tuple.segmentation
+            self.full_segmentation = project_tuple.full_segmentation
+            self.mask = project_tuple.mask
+            self.history = project_tuple.history
+            self.algorithm_parameters = project_tuple.algorithm_parameters
         else:
-            raise ValueError("Unknown file type: {} {}". format(ext, calculation.file_path))
+            raise ValueError("Unknown file type: {} {}".format(ext, calculation.file_path))
         self.iterate_over(calculation.calculation_plan.execution_tree)
         return path.relpath(calculation.file_path, calculation.base_prefix), self.statistics
 
@@ -82,84 +93,108 @@ class CalculationProcess(object):
         if isinstance(node.operation, MaskMapper):
             mask = tifffile.imread(node.operation.get_mask_path(self.calculation.file_path))
             mask = (mask > 0).astype(np.uint8)
-            self.settings.mask = mask
+            try:
+                mask = self.image.fit_array_to_image(mask)
+            except ValueError:
+                raise ValueError("Mask do not fit to given image")
+            old_mask = self.mask
+            self.mask = mask
             self.iterate_over(node)
+            self.mask = old_mask
         elif isinstance(node.operation, SegmentationProfile):
-            old_segment = copy(self.segment)
-            current_profile = SegmentationProfile("curr", **self.settings.get_profile_dict())
-            dict_set_class(self.settings,  node.operation.get_parameters(),
-                           *SegmentationProfile.SEGMENTATION_PARAMETERS)
-            self.segment.recalculate()
+            segmentation_class = part_algorithm_dict.get(node.operation.algorithm, None)
+            if segmentation_class is None:
+                raise ValueError(f"Segmentation class {node.operation.algorithm} do not found")
+            segmentation_algorithm = segmentation_class()
+            segmentation_algorithm.set_image(self.image)
+            segmentation_algorithm.set_mask(self.mask)
+            segmentation_algorithm.set_parameters(**node.operation.values)
+            result = segmentation_algorithm.calculation_run(report_empty_fun)
+            backup_data = self.segmentation, self.full_segmentation, self.cleaned_channel, self.algorithm_parameters
+            self.segmentation = result.segmentation
+            self.full_segmentation = result.full_segmentation
+            self.cleaned_channel = result.cleaned_channel
+            self.algorithm_parameters = {"name": node.operation.algorithm, "values": node.operation.values}
             self.iterate_over(node)
-            dict_set_class(self.settings, current_profile.get_parameters(),
-                           *SegmentationProfile.SEGMENTATION_PARAMETERS)
-            self.segment = old_segment
+            self.segmentation, self.full_segmentation, self.cleaned_channel, self.algorithm_parameters = backup_data
         elif isinstance(node.operation, MaskUse):
-            old_mask = self.settings.mask
+            old_mask = self.mask
             mask = self.mask_dict[node.operation.name]
-            self.settings.mask = mask
+            self.mask = mask
             self.iterate_over(node)
-            self.settings.mask = old_mask
+            self.mask = old_mask
         elif isinstance(node.operation, MaskSum):
-            old_mask = self.settings.mask
+            old_mask = self.mask
             mask1 = self.mask_dict[node.operation.mask1]
             mask2 = self.mask_dict[node.operation.mask2]
             mask = np.logical_or(mask1, mask2).astype(np.uint8)
-            self.settings.mask = mask
+            self.mask = mask
             self.iterate_over(node)
-            self.settings.mask = old_mask
+            self.mask = old_mask
         elif isinstance(node.operation, MaskIntersection):
-            old_mask = self.settings.mask
+            old_mask = self.mask
             mask1 = self.mask_dict[node.operation.mask1]
             mask2 = self.mask_dict[node.operation.mask2]
             mask = np.logical_and(mask1, mask2).astype(np.uint8)
-            self.settings.mask = mask
+            self.mask = mask
             self.iterate_over(node)
-            self.settings.mask = old_mask
-        elif isinstance(node.operation, MaskSave):
-            if self.settings.mask is None:
-                return
-            file_path = get_save_path(node.operation, self.calculation)
-            tifffile.imsave(file_path, self.settings.mask)
-        elif isinstance(node.operation, ImageSave):
-            file_path = get_save_path(node.operation, self.calculation)
-            tifffile.imsave(file_path, self.settings.image)
-        elif isinstance(node.operation, XYZSave):
-            file_path = get_save_path(node.operation, self.calculation)
-            save_to_xyz(file_path, self.settings, self.segment)
+            self.mask = old_mask
+        elif isinstance(node.operation, Save):
+            save_class = save_register[node.operation.algorithm]
+            project_tuple = ProjectTuple(file_path="", image=self.image, segmentation=self.segmentation,
+                                         full_segmentation=self.full_segmentation, mask=self.mask,
+                                         history=self.history, algorithm_parameters=self.algorithm_parameters)
+            save_path = get_save_path(node.operation, self.calculation)
+            save_class.save(save_path, project_tuple, node.operation.values)
         elif isinstance(node.operation, MaskCreate):
+            mask = calculate_mask(node.operation.mask_property, self.segmentation,
+                                  self.mask, self.image.spacing)
             if node.operation.name in self.reused_mask:
-                mask = self.segment.get_segmentation()
                 self.mask_dict[node.operation.name] = mask
-            self.settings.mask_dilate_radius = node.operation.radius
-            self.settings.change_segmentation_mask(self.segment, MaskChange.next_seg, False)
+            history_element = \
+                HistoryElement.create(self.segmentation, self.full_segmentation, self.mask,
+                                      self.algorithm_parameters["name"], self.algorithm_parameters["values"],
+                                      node.operation.mask_property)
+            backup = self.mask, self.history
+            self.mask = mask
+            self.history.append(history_element)
             self.iterate_over(node)
-            self.settings.change_segmentation_mask(self.segment, MaskChange.prev_seg, False)
-        elif isinstance(node.operation, ProjectSave):
-            file_path = get_save_path(node.operation, self.calculation)
-            save_to_project(file_path, self.settings, self.segment)
-        elif isinstance(node.operation, CmapProfile):
-            file_path = get_save_path(node.operation, self.calculation)
-            save_to_cmap(file_path, self.settings, self.segment, node.operation.gauss_type, False,
-                         node.operation.center_data, rotate=node.operation.rotation_axis,
-                         with_cutting=node.operation.cut_obsolete_area)
+            self.mask, self.history = backup
         elif isinstance(node.operation, Operations):
-            if node.operation == Operations.segment_from_project:
-                load_project(self.settings.file_path, self.settings, self.segment)
-                self.iterate_over(node)
-        elif isinstance(node.operation, ChooseChanel):
-            image = self.settings.image
-            new_image = image.take(node.operation.chanel_num, axis=node.operation.chanel_position)
-            self.settings.add_image(new_image, self.calculation.file_path)
-            self.iterate_over(node)
-            self.settings.add_image(image, self.calculation.file_path)
-        elif isinstance(node.operation, StatisticProfile):
-            statistics = node.operation.calculate(self.settings.image, self.settings.gauss_image,
-                                                  self.segment.get_segmentation(), self.segment.get_full_segmentation(),
-                                                  self.settings.mask, self.settings.voxel_size)
+            if node.operation == Operations.reset_to_base:
+                if len(self.history) > 0:
+                    backup = self.history, self.mask, self.segmentation, self.full_segmentation, self.cleaned_channel
+                    history_element: HistoryElement = self.history[0]
+                    history_element.arrays.seek(0)
+                    seg = np.load(history_element.arrays)
+                    history_element.arrays.seek(0)
+                    if "mask" in seg:
+                        self.mask = seg["mask"]
+                    else:
+                        self.mask = None
+                    self.history, self.segmentation, self.full_segmentation, self.cleaned_channel = [], None, None, None
+                    self.iterate_over(node)
+                    self.history, self.mask, self.segmentation, self.full_segmentation, self.cleaned_channel = backup
+                else:
+                    self.iterate_over(node)
+        elif isinstance(node.operation, StatisticCalculate):
+            channel = node.operation.channel
+            if channel == -1:
+                channel = self.algorithm_parameters["values"]["channel"]
+
+            image_channel = self.image.get_channel(channel)
+            try:
+                scalar = UNIT_SCALE[UNITS_LIST.index(node.operation.units)]
+            except IndexError:
+                raise ValueError(f"Unknown units: '{node.operation.units}'")
+
+            statistics = \
+                node.operation.statistic_profile.calculate(image_channel,
+                                                           self.segmentation, self.full_segmentation,
+                                                           self.mask, [x * scalar for x in self.image.spacing])
             self.statistics.append(statistics)
         else:
-            logging.error("Unknown operation {} {}".format(type(node.operation), node.operation))
+            raise ValueError("Unknown operation {} {}".format(type(node.operation), node.operation))
 
 
 class CalculationManager(object):
@@ -286,7 +321,7 @@ class FileData(object):
             return False, "Sheet name {} already in use".format(name)
         return True, True
 
-    def add_data_part(self, calculation):
+    def add_data_part(self, calculation: Calculation):
         """
         :type calculation: Calculation
         :param calculation:
@@ -298,7 +333,7 @@ class FileData(object):
         if calculation.sheet_name in self.sheet_set:
             raise ValueError("[FileData] sheet name {} already in use".format(calculation.sheet_name))
         statistics = calculation.calculation_plan.get_statistics()
-        component_information = [x.get_component_info() for x in statistics]
+        component_information = [x.statistic_profile.get_component_info() for x in statistics]
         num = 1
         sheet_list = []
         header_list = []
@@ -307,7 +342,7 @@ class FileData(object):
             local_header = []
             if any([x[1] for x in el]):
                 sheet_list.append("{}{}{} - {}".format(calculation.sheet_name, FileData.component_str, num,
-                                                       statistics[i].name_prefix+statistics[i].name))
+                                                       statistics[i].name_prefix + statistics[i].name))
                 num += 1
             else:
                 sheet_list.append(None)

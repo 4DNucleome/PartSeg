@@ -3,7 +3,7 @@ import time
 from collections import namedtuple
 from uuid import uuid4
 
-from partseg.batch_processing.parallel_backed import BatchManager
+from partseg_old.batch_processing.parallel_backed import BatchManager
 
 Test = namedtuple("Test", ["x", "y", "z"])
 

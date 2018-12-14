@@ -1,8 +1,8 @@
 import typing
 from PyQt5.QtCore import pyqtSignal
 
-from partseg2.batch_processing.calculation_plan import CalculationPlan
-from partseg2.statistics_calculation import StatisticProfile
+from segmentation_analysis.batch_processing.calculation_plan import CalculationPlan
+from segmentation_analysis.statistics_calculation import StatisticProfile
 from partseg_utils.cmap_utils import CmapProfile
 from .algorithm_description import SegmentationProfile
 from .analysis_utils import HistoryElement, SegmentationPipeline

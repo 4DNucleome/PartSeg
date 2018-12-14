@@ -12,7 +12,7 @@ import h5py
 import numpy as np
 import pandas as pd
 
-from partseg.backend import Settings, Segment, class_to_dict, calculate_statistic_from_image, get_segmented_data, \
+from partseg_old.backend import Settings, Segment, class_to_dict, calculate_statistic_from_image, get_segmented_data, \
     SegmentationProfile, SegmentationSettings
 from partseg_utils.autofit import find_density_orientation, get_rotation_parameters, density_mass_center
 

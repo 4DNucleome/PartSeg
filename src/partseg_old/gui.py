@@ -14,15 +14,13 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QKeyEvent
 from matplotlib import pyplot
 
-from partseg.advanced_window import AdvancedWindow
-from partseg.backend import Settings, Segment, UPPER, MaskChange
-from partseg.batch_window import BatchWindow
-from partseg.image_view import MyCanvas, MyDrawCanvas
-from partseg.interpolate_dialog import InterpolateDialog
-from partseg.io_functions import save_to_cmap, save_to_project, load_project, GaussUse, save_to_xyz
+from partseg_old.advanced_window import AdvancedWindow
+from partseg_old.backend import Settings, Segment, UPPER, MaskChange
+from partseg_old.image_view import MyCanvas
+from partseg_old.interpolate_dialog import InterpolateDialog
+from partseg_old.io_functions import save_to_cmap, save_to_project, load_project, GaussUse, save_to_xyz
 from partseg_utils.global_settings import static_file_folder, config_folder
-from qt_import import *
-from scipy.ndimage.interpolation import zoom
+from partseg_old.qt_import import *
 
 __author__ = "Grzegorz Bokota"
 
