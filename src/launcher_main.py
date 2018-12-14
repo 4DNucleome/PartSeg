@@ -8,13 +8,16 @@ from partseg_utils.base_argparser import CustomParser
 from project_utils_qt.except_hook import my_excepthook
 
 import multiprocessing
+
 multiprocessing.freeze_support()
 
 sys.excepthook = my_excepthook
+
+
 def main():
     parser = CustomParser("PartSeg")
     parser.add_argument("--multiprocessing-fork", dest="mf", action="store_true",
-                        help=argparse.SUPPRESS) # Windows bugfix
+                        help=argparse.SUPPRESS)  # Windows bug fix
     sp = parser.add_subparsers()
     sp_a = sp.add_parser("segmentation_analysis", help="Starts GUI for segmentation analysis")
     sp_s = sp.add_parser("segmentation", help="Starts GUI for segmentation")
@@ -26,7 +29,7 @@ def main():
     print(args)
 
     logging.basicConfig(level=logging.INFO)
-    myApp = QApplication(sys.argv)
+    my_app = QApplication(sys.argv)
     if args.gui == "segmentation_analysis" or args.mf:
         from segmentation_analysis.main_window import MainWindow
         title = "PartSeg Segmentation Analysis"
@@ -38,8 +41,9 @@ def main():
         title = "PartSeg Launcher"
     wind = MainWindow(title)
     wind.show()
-    myApp.exec_()
+    my_app.exec_()
     sys.exit()
+
 
 if __name__ == '__main__':
     main()
