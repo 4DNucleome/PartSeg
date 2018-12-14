@@ -668,7 +668,9 @@ class MainWindow(BaseMainWindow):
 
     def read_drop(self, paths):
         read_thread = ImageReaderThread(parent=self)
-        dial = WaitingDialog(read_thread)
+        def exception_hook(exception):
+            QMessageBox.warning(self, "Read error", f"Error during image read: {exception}")
+        dial = WaitingDialog(read_thread, exception_hook=exception_hook)
         if len(paths) == 1:
             file_path = paths[0]
             ext = os.path.splitext(file_path)[1]
