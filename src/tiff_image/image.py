@@ -144,7 +144,7 @@ class Image(object):
             lower_bound = np.min(points, axis=1)
             upper_bound = np.max(points, axis=1)
             new_cut = tuple([slice(x, y + 1) for x, y in zip(lower_bound, upper_bound)])
-            new_image = self._image_array[new_cut]
+            new_image = np.copy(self._image_array[new_cut])
             catted_cut_area = cut_area[new_cut]
             new_image[catted_cut_area == 0] = 0
             if replace_mask:
