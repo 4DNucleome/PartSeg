@@ -15,9 +15,9 @@ Dataset for this tutorial can be downloaded from [here](http://nucleus3d.cent.uw
 #### Segmentation of nuclear volume and creation of masks
 
 1. Open PartSeg
-2. Select "Mask Segmentation"
+2. Select "Mask Segmentation"  
     ![launcher GUI](./images/launcher.png)
-3. Load image
+3. Load image  
     ![mask segmentation](./images/mask_segmentation.png)
 4. Ensure that threshold segmentation method is selected
 5. Choose threshold parameters:
@@ -45,16 +45,17 @@ Images containing all channels of the original picture are saved under the initi
 #### Segmentation of chromosome 1 territories
 
 1. Open PartSeg
-2. Select "Segmentation Analysis"
+2. Select "Segmentation Analysis"  
     ![launcher GUI](./images/launcher.png)
 3. Load data:
     1. Select **Open** button or press **ctrl+O** (cmd+O on mac)
-    2. Select `image with mask`
+    2. Select `image with mask`  
     ![open dialog](images/open_file.png)
     3. Select image to load: "stack1_component5.tif"
     4. Select matching mask file in the next step: "stack1_component5_mask.tif"
 You can also simply drag and drop both files on the main window.
-4. Enable "Synchronise view" option
+4. Enable "Synchronise view" option  
+![main window for segmentation](images/main_window_segmentation.png)
 5. Disable channel 1 (DNA staining) on both windows
 6. Enable "Mask" option on the left pannel
 7. Select lower threshold option
@@ -64,9 +65,9 @@ You can also simply drag and drop both files on the main window.
 Threshold was adjusted to cover whole chromosome paint staining. Some background signal is always present in FISH, however specyfic signal is much brighter. As an example nucleus with two separate chromosome 1 territories is shown, nevertheless chromosomes can reside in close proximity and segment as one component.
 
 #### Measurements settings
-1. Open "Advanced" option
+1. Open "Advanced" option  
     ![PartSeg GUI](images/main_window.png)
-2. Select "Measurements settings"
+2. Select "Measurements settings"  
     ![Advanced window](images/advanced.png)
 3. Prepare profile of parameters for chromosome 1 territories analysis.
 In this example we show how to measure volume, diameter and surface of a whole nucleus (calculated based on created mask) and volume, diameter and surface of chromosome 1 territories (these parameters are calculated based on a set threshold). In addition we calculated ratio of chromosome 1 to nucleus volume to show how big is chromosome 1 in relation to the whole nucleus.
