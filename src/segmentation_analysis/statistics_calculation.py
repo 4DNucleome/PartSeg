@@ -291,6 +291,7 @@ class StatisticProfile(object):
                 break
         range_changed(0, len(self.chosen_fields))
         for i, el in enumerate(self.chosen_fields):
+            print(el, i)
             step_changed(i)
             tree, user_name = el.calculation_tree, el.name
             try:
@@ -348,11 +349,35 @@ class Volume(MethodBase):
 
 
 class Diameter(MethodBase):
-    text_info = "Diameter", "Diameter of area (Very slow)"
+    text_info = "Diameter", "Diameter of area"
+
+    @staticmethod
+    def calculate_property(area_array, voxel_size, result_scalar, **_):
+        pos = np.transpose(np.nonzero(get_border(area_array))).astype(np.float)
+        for i, val in enumerate([x * result_scalar for x in voxel_size]):
+            pos[:, i] *= val
+        p1 = 0
+        blocked_set = {p1}
+        diam = 0
+        while True:
+            dist_array = np.sum(np.array((pos - pos[p1]) ** 2), 1)
+            p2 = np.argmax(dist_array)
+            diam = max(dist_array[p2], diam)
+            mid_point = (pos[p1] + pos[p2])/2
+            dist_array = np.sum(np.array((pos - mid_point) ** 2), 1)
+            p1  = np.argmax(dist_array)
+            if dist_array[p1] <= diam / 4 + 1 or p1 in blocked_set:
+                return np.sqrt(diam)
+            blocked_set.add(p1)
+            print("step", np.sqrt(diam))
+
+class DiameterOld(MethodBase):
+    text_info = "Diameter old", "Diameter of area (Very slow)"
 
     @staticmethod
     def calculate_property(area_array, voxel_size, result_scalar, **_):
         return calc_diam(get_border(area_array), [x * result_scalar for x in voxel_size])
+
 
 
 class PixelBrightnessSum(MethodBase):
