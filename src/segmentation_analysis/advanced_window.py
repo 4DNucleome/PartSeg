@@ -707,14 +707,14 @@ class AdvancedWindow(QTabWidget):
     def __init__(self, settings, parent=None):
         super(AdvancedWindow, self).__init__(parent)
         self.settings = settings
-        self.setWindowTitle("Settings and statistics")
+        self.setWindowTitle("Settings and Measurement")
         self.advanced_settings = AdvancedSettings(settings)
         self.colormap_settings = ColorSelector(settings, ["result_control"])
         self.statistics = StatisticsWidget(settings)
         self.statistics_settings = StatisticsSettings(settings)
-        self.addTab(self.advanced_settings, "Settings")
+        self.addTab(self.advanced_settings, "Properties")
         self.addTab(self.colormap_settings, "Color maps")
-        self.addTab(self.statistics_settings, "Statistic profiles")
+        self.addTab(self.statistics_settings, "Measurements settings")
         self.addTab(self.statistics, "Statistics")
         """if settings.advanced_menu_geometry is not None:
             self.restoreGeometry(settings.advanced_menu_geometry)"""

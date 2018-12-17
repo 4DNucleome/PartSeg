@@ -6,9 +6,9 @@
 ### Use case
 This tutorial shows how to segment nuclei from 3D confocal images and later how to analyse several parameters of chromosomal territories of chromosome 1 ausing PartSeg.
 Rat postmitotic neurons were fixed and subjected to fluorescent in situ hybridization (FISH)
-with chromosome paint probes specyfic to chromosome 1. Nuclei were counterstained with Hoechest, which binds specyfically to DNA. Next 3D images were acquired in 16-bit using confocal microscope. As postmitotic neurons have always exactly 2 copies of each chromosome, cells with more than 2 copies are excluded from the analysis.
+with chromosome paint probes specific to chromosome 1. Nuclei were counterstained with Hoechest, which binds specifically to DNA. Next 3D images were acquired in 16-bit using confocal microscope. As postmitotic neurons have always exactly 2 copies of each chromosome, cells with more than 2 copies are excluded from the analysis.
 
-Dataset for this tutorial can be downloaded from [here](http://nucleus3d.cent.uw.edu.pl/PartSeg/Downloads/A_deconv_elements.zip). It contains 5 z-stacks with marked chromosome 1 territory. Voxel size is 77x77x210 nm. Data contains 2 channels: channel 1 represents DNA staining and channel 2- chromosome paint probe. Information from channel 1 was used for the segmentation of nuclei and masks generation. Based on created masks nuclear volume, diameter and surface were calculated in later analysis. In order to segment chromosomal territories treshold on channel 1 was adjusted to cover whole chromosome paint staining. Later several parameters of segmented components like: volume, number and surface etc. were calculated.
+Dataset for this tutorial can be downloaded from [here](http://nucleus3d.cent.uw.edu.pl/PartSeg/Downloads/A_deconv_elements.zip). It contains 5 z-stacks with marked chromosome 1 territory. Voxel size is 77x77x210 nm. Data contains 2 channels: channel 1 represents DNA staining and channel 2- chromosome paint probe. Information from channel 1 was used for the segmentation of nuclei and masks generation. Based on created masks nuclear volume, diameter and surface were calculated in later analysis. In order to segment chromosomal territories threshold on channel 1 was adjusted to cover whole chromosome paint staining. Later several parameters of segmented components like: volume, number and surface etc. were calculated.
 
 ## Analysis steps
 
@@ -57,12 +57,15 @@ You can also simply drag and drop both files on the main window.
 4. Enable "Synchronise view" option  
 ![main window for segmentation](images/main_window_segmentation.png)
 5. Disable channel 1 (DNA staining) on both windows
-6. Enable "Mask" option on the left pannel
+6. Enable "Mask" option on the left panel
 7. Select lower threshold option
 8. Set Threshold to Manual
 9. Set Threshold to 13500
-10. Excecute segmentation
-Threshold was adjusted to cover whole chromosome paint staining. Some background signal is always present in FISH, however specyfic signal is much brighter. As an example nucleus with two separate chromosome 1 territories is shown, nevertheless chromosomes can reside in close proximity and segment as one component.
+10. Execute segmentation
+Threshold was adjusted to cover whole chromosome paint staining. 
+Some background signal is always present in FISH, however specific signal is much brighter. 
+As an example nucleus with two separate chromosome 1 territories is shown, 
+nevertheless chromosomes can reside in close proximity and segment as one component.
 
 #### Measurements settings
 1. Open "Advanced" option  
@@ -70,22 +73,35 @@ Threshold was adjusted to cover whole chromosome paint staining. Some background
 2. Select "Measurements settings"  
     ![Advanced window](images/advanced.png)
 3. Prepare profile of parameters for chromosome 1 territories analysis.
-In this example we show how to measure volume, diameter and surface of a whole nucleus (calculated based on created mask) and volume, diameter and surface of chromosome 1 territories (these parameters are calculated based on a set threshold). In addition we calculated ratio of chromosome 1 to nucleus volume to show how big is chromosome 1 in relation to the whole nucleus.
-  A. First introduce name "test_case" for created profile.
-  B. Next select parameters calculated for the whole nucleus, which are based on mask: Therefore select "Mask" for option "Area" and "No", for option "Components". From the list of parameters in the left pannel select: Volume, Diameter and Surface. Confirm each parameter by adding it to created profile shown in the right pannel (use button with symbol "→" to confirm).
-  C. Next select parameters calculated for chromosome 1 territory: Select "Segmentation" for option "Area" and "No", for option "Components" and again from the list of parameters on the left select: Volume, Diameter and Surface.
-
-# (tu nie mam pewności, rozumiem, że opcja "yes" mierzy dla kazdego komponentu oddzielnie?)
-
-  D. At the end, create ratio of volume of chromosome 1 to the whole nucleus volume. Select "volume" parameter for segmentation like in C, next click on the button with symbol ∺ (number x on the attached image) and select "volume" parameter for mask like in B. Confirm by adding newly created ratio to the profile. Note that newly created ratio can be added as a new parameter to the list in the left pannel and use in future analyses. Select new parameter from created profile and transfer it to the list on the left side by using button with symbol "←".
-  E. At the end save your profile with a specyfic name (test_case in our example).
-  The parameter profiles can be exported to `.json` file as a backup and future import.
+In this example we show how to measure volume, diameter and surface of a whole nucleus 
+(calculated based on created mask) and volume, diameter and surface of chromosome 1 territories 
+(these parameters are calculated based on a set threshold). 
+In addition we calculated ratio of chromosome 1 to nucleus volume to show how big is chromosome 1 in relation to the whole nucleus.
+    1. First introduce name "test_case" for created profile.
+    2. Next select parameters calculated for the whole nucleus, which are based on mask: Therefore select "Mask" for option "Area" and "No", for option "Components". 
+    From the list of parameters in the left panel select: Volume, Diameter and Surface. Confirm each parameter by adding 
+    it to created profile shown in the right panel (use button with symbol "→" to confirm).
+    3. Next select parameters calculated for chromosome 1 territory:
+    Select "Segmentation" for option "Area" and "No", for option "Components" and again from the list 
+    of parameters on the left select: Volume, Diameter and Surface.
+    4. At the end, create ratio of volume of chromosome 1 to the whole nucleus volume.
+     Select "volume" parameter for segmentation like in C, next click on the button with word 'ratio' (number x on the attached image) 
+     and select "volume" parameter for mask like in B. Confirm by adding newly created ratio to the profile. 
+     Note that newly created ratio can be added as a new parameter to the list in the left panel and use in future analyses. 
+     Select new parameter from created profile and transfer it to the list on the left side by using button with symbol "←".
+    5. At the end save your profile with a specific name (test_case in our example).
+    The parameter profiles can be exported to `.json` file as a backup and future import.
 
 #### Measurements
-1. In "Advanced" menu check for "Properties". The pixel size and an voxel depth should be the same as the orginal image. The rest of measurements depends on these properties, so make sure they are correct.
-2. Next select "Results" to get a preview on actual measurements (number 1)
-![PartSeg GUI](images/main_window_analysis.png)
-Select channel 1 and profile "test_case" created in the last paragraph. Enable Horizontal view and "no units" option. Select "calculte and append results". Resulting table can be copied to any text or spreadsheed file using "copy to clipboard" option. 2. Next, open file "stack1_component1.tif" and load mask file "stack1_component1_mask.tif. Without changing any parameters select "Calculate and append results" once more. Second line of results shows the same set of measurements for second nucleus.
+1. In "Advanced" menu check for "Properties". The pixel size and an voxel depth should be the same as the original image. 
+The rest of measurements depends on these properties, so make sure they are correct.
+2. Next select "Results" to get a preview on actual measurements (number 1)  
+![PartSeg GUI](images/main_window_analysis.png)  
+Select channel 1 and profile "test_case" created in the last paragraph. Enable Horizontal view and "no units" option. Select "calculate and append results".
+ Resulting table can be copied to any text or spreadsheet file using "copy to clipboard" option. 
+ 2. Next, open file "stack1_component1.tif" and load mask file "stack1_component1_mask.tif. 
+ Without changing any parameters select "Execute" in main window  and select "Calculate and append results" once more.
+  Second line of results shows the same set of measurements for second nucleus.
 
 
 
