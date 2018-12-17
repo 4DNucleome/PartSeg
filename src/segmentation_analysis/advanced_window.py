@@ -69,7 +69,7 @@ class AdvancedSettings(QWidget):
         # noinspection PyUnresolvedReferences
         self.units.currentIndexChanged.connect(self.update_spacing)
 
-        color, opacity = self._settings.get_from_profile("mask_presentation", (list(MASK_COLORS.keys())[0], 1))
+        color, opacity = self._settings.get_from_profile("mask_presentation", (list(MASK_COLORS.keys())[0], 0.6))
         self.mask_color = QComboBox()
         self.mask_color.addItems(MASK_COLORS.keys())
         self.mask_opacity = QDoubleSpinBox()

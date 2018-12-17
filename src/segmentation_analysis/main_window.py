@@ -667,7 +667,7 @@ class MainWindow(BaseMainWindow):
         self.result_image.set_image()
         self.result_image.reset_image_size()
         self.options_panel.interactive_algorithm_execute()
-        self.setWindowTitle(f"{self.title_base}: {self.settings.image_path}")
+        self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
 
     def read_drop(self, paths):
         read_thread = ImageReaderThread(parent=self)
