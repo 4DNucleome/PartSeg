@@ -86,8 +86,8 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
                 AlgorithmProperty("threshold", "Threshold", next(iter(threshold_dict.keys())),
                                   possible_values=threshold_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10 ** 6), 1000),
-                AlgorithmProperty("close_holes", "Close holes", True, (True, False)),
-                AlgorithmProperty("close_holes_size", "maximum holes size (px)", 200, (0, 10 ** 3), 10),
+                AlgorithmProperty("close_holes", "Fill holes", True, (True, False)),
+                AlgorithmProperty("close_holes_size", "Maximum holes size (px)", 200, (0, 10 ** 3), 10),
                 AlgorithmProperty("smooth_border", "Smooth borders", True, (True, False)),
                 AlgorithmProperty("smooth_border_radius", "Smooth borders radius", 2, (0, 20), 1),
                 AlgorithmProperty("noise_removal", "Filter", next(iter(noise_removal_dict.keys())),
@@ -124,7 +124,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
                                                                             self.noise_removal["values"])
         mask = self._threshold_and_exclude(image, report_fun)
         if self.close_holes:
-            report_fun("Holes closing", 3)
+            report_fun("Filing holes", 3)
             mask = close_small_holes(mask, self.close_holes_size)
         report_fun("Components calculating", 4)
         self.segmentation = sitk.GetArrayFromImage(

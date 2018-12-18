@@ -342,7 +342,7 @@ class StatisticsSettings(QWidget):
         self.profile_options_chosen.itemSelectionChanged.connect(self.create_selection_chosen_changed)
 
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("Defined statistics profiles list:"))
+        layout.addWidget(QLabel("Defined profiles list:"))
         profile_layout = QHBoxLayout()
         profile_layout.addWidget(self.profile_list)
         profile_layout.addWidget(self.profile_description)
@@ -456,6 +456,7 @@ class StatisticsSettings(QWidget):
             self.chosen_element_area = \
                 self.get_parameters(deepcopy(item.stat), self.statistic_area_choose.get_value(), self.per_component.get_value(),
                                    self.power_num.value())
+            print("aa", self.chosen_element_area)
             if self.chosen_element_area is None:
                 return
             self.chosen_element = item
@@ -470,6 +471,7 @@ class StatisticsSettings(QWidget):
             item: StatisticListWidgetItem = self.profile_options.currentItem()
             leaf = self.get_parameters(deepcopy(item.stat), self.statistic_area_choose.get_value(),
                                 self.per_component.get_value(), self.power_num.value())
+            print("aa", leaf)
             if leaf is None:
                 return 
             lw = StatisticListWidgetItem(
@@ -479,6 +481,7 @@ class StatisticsSettings(QWidget):
             self.profile_options_chosen.addItem(lw)
             self.chosen_element.setIcon(QIcon())
             self.chosen_element = None
+            self.chosen_element_area = None
 
     def create_selection_chosen_changed(self):
         # print(self.profile_options_chosen.count())
@@ -572,11 +575,6 @@ class StatisticsSettings(QWidget):
         selected_row = self.profile_options_chosen.currentRow()
         lw = StatisticListWidgetItem(deepcopy(selected_item.stat))
         lw.setToolTip(selected_item.toolTip())
-        self.profile_options_chosen.takeItem(selected_row)
-        if self.profile_options_chosen.count() == 0:
-            self.save_butt.setDisabled(True)
-            self.save_butt_with_name.setDisabled(True)
-            self.discard_butt.setDisabled(True)
         self.create_selection_chosen_changed()
         for i in range(self.profile_options.count()):
             if lw.text() == self.profile_options.item(i).text():

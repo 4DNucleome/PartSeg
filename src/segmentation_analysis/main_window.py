@@ -331,7 +331,7 @@ class MainMenu(QWidget):
         self._settings = settings
         self.open_btn = QPushButton("Open")
         self.save_btn = QPushButton("Save")
-        self.advanced_btn = QPushButton("Advanced")
+        self.advanced_btn = QPushButton("Settings and Measurement")
         self.interpolate_btn = QPushButton("Image adjustments")
         self.mask_manager_btn = QPushButton("Mask Manager")
         self.batch_processing_btn = QPushButton("Batch Processing")
