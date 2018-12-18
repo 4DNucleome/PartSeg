@@ -4,15 +4,15 @@ This application is designed to help biologist with segmentation
 based on threshold and connected components 
 
 ## Run from code
-* PartSeg - `python src/partseg_main.py`
-* StackSeg - `python src/stackseg_main.py`
+* PartSeg - `python src/launcher_.py`
+
 
 ## Non standard python libraries dependencies
 * tifffile
 * SimpleITK
 * Matplotlib
 * Numpy
-* PyQt in version 4 or 5
+* PyQt5
 * appdirs
 * h5py
 
@@ -27,10 +27,12 @@ images/mask are saved as *.npy (numpy array format)
 
 
 ## Interface
-![interface](images/gui.jpg)
-![batch_interface](images/batch.jpg)
-![batch_interface](images/batch_plan.jpg)
-![statistics](images/statistics.jpg)
+![launcher](images/launcher.png)
+![interface](images/analysis_gui.png)
+![interface](images/analysis_gui2.png)
+![statistics](images/statisitcs.png)
+![statistics](images/statisitcs.png)
+![mask interface](images/mask_gui.png)
 
 
 
