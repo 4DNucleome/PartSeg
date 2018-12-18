@@ -98,7 +98,7 @@ class RawImageView(ImageViewWithMask):
     def __init__(self, settings, channel_control: ChannelControl):
         channel_chose = ChannelChoose(settings, channel_control)
         super().__init__(settings, channel_chose)
-        self.statistic_image_view_btn = create_tool_button("Statistic calculation", None)
+        self.statistic_image_view_btn = create_tool_button("Measurements", None)
         self.btn_layout.addWidget(channel_chose, 2)
         self.btn_layout.addWidget(self.statistic_image_view_btn)
 

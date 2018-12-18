@@ -6,6 +6,7 @@ from PyQt5.QtCore import Qt, QEvent
 from PyQt5.QtWidgets import QWidget, QPushButton, QCheckBox, QComboBox, QTableWidget, QVBoxLayout, QHBoxLayout,\
     QLabel, QApplication, QTableWidgetItem, QMessageBox
 
+from common_gui.algorithms_description import ChannelComboBox
 from common_gui.waiting_dialog import WaitingDialog
 from segmentation_analysis.partseg_settings import PartSettings
 from partseg_utils.universal_const import UNITS_LIST, UNITS_DICT
@@ -40,8 +41,7 @@ class StatisticsWidget(QWidget):
         self.statistic_type.addItems(list(sorted(self.settings.statistic_profiles.keys())))
         self.statistic_type.setToolTip(
             "You can create new statistic profile in advanced window, in tab \"Statistic settings\"")
-        self.channels_chose = QComboBox()
-        self.channels_chose.addItems(map(str, range(self.settings.channels)))
+        self.channels_chose = ChannelComboBox()
         self.units_choose = QComboBox()
         self.units_choose.addItems(UNITS_LIST)
         self.units_choose.setCurrentIndex(self.settings.get("units_index", 2))
@@ -86,12 +86,7 @@ class StatisticsWidget(QWidget):
         # self.update_statistics()
 
     def image_changed(self, channels_num):
-        ind = self.channels_chose.currentIndex()
-        self.channels_chose.clear()
-        self.channels_chose.addItems(map(str, range(channels_num)))
-        if ind < 0 or ind > channels_num:
-            ind = 0
-        self.channels_chose.setCurrentIndex(ind)
+        self.channels_chose.change_channels_num(channels_num)
 
     def statistic_selection_changed(self, text):
         text = str(text)

@@ -461,7 +461,9 @@ class StatisticsSettings(QWidget):
             self.chosen_element = item
             item.setIcon(QIcon(os.path.join(static_file_folder, "icons", "task-accepted.png")))
                 # self.statistic_area_choose.get_value(), self.per_component.get_value(), self.power_num.value()
-        elif self.profile_options.currentItem() == self.chosen_element:
+        elif self.profile_options.currentItem() == self.chosen_element and \
+                self.statistic_area_choose.get_value() == self.chosen_element_area.area and \
+                self.per_component.get_value() == self.chosen_element_area.per_component:
             self.chosen_element.setIcon(QIcon())
             self.chosen_element = None
         else:
@@ -715,7 +717,7 @@ class AdvancedWindow(QTabWidget):
         self.addTab(self.advanced_settings, "Properties")
         self.addTab(self.colormap_settings, "Color maps")
         self.addTab(self.statistics_settings, "Measurements settings")
-        self.addTab(self.statistics, "Statistics")
+        self.addTab(self.statistics, "Measurements")
         """if settings.advanced_menu_geometry is not None:
             self.restoreGeometry(settings.advanced_menu_geometry)"""
         try:
