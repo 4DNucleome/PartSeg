@@ -12,7 +12,7 @@ from typing import NamedTuple, Optional, Union, Dict, Callable, List
 
 import SimpleITK as sitk
 import numpy as np
-
+from sympy import symbols
 from partseg_utils import class_to_dict, autofit as af
 from partseg_utils.border_rim import border_mask
 from partseg_utils.class_generator import BaseReadonlyClass
@@ -118,6 +118,10 @@ class MethodBase(AlgorithmDescribeBase, ABC):
     def get_starting_leaf(cls):
         return Leaf(cls.text_info[0])
 
+    @classmethod
+    def get_units(cls, ndim):
+        raise NotImplementedError()
+
 
 def empty_fun(_a0=None, _a1=None):
     pass
@@ -170,48 +174,6 @@ class StatisticProfile(object):
     def get_parameters(self):
         return class_to_dict(self, *self.PARAMETERS)
 
-    def rebuild_tree(self, l):
-        if len(l) == 2:
-            return Leaf(*l)
-        else:
-            return Node(left=self.rebuild_tree(l[0]), op=l[1], right=self.rebuild_tree(l[2]))
-
-    def flat_tree(self, t):
-        if isinstance(t, Leaf):
-            res = ""
-            if t.dict is not None and len(t.dict) > 0:
-                for name, val in t.dict.items():
-                    res += "{}={},".format(name, val)
-                return "{}[{}]".format(t.name, res[:-1])
-            return t.name
-        elif isinstance(t, Node):
-            if isinstance(t.left, Node):
-                beg = "({})"
-            else:
-                beg = "{}"
-            if isinstance(t.right, Node):
-                end = "({})"
-            else:
-                end = "{}"
-            return (beg + "{}" + end).format(self.flat_tree(t.left), t.op, self.flat_tree(t.right))
-
-    @staticmethod
-    def tokenize(text):
-        special = ["(", ")", "[", "]", "/", "+", ","]
-        res = []
-        temp_str = ""
-        for l in text:
-            if l in special:
-                if temp_str != "":
-                    res.append(temp_str)
-                    temp_str = ""
-                res.append(l)
-            else:
-                temp_str += l
-        if temp_str != "":
-            res.append(temp_str)
-        return res
-
     def is_any_mask_statistic(self):
         for el in self.chosen_fields:
             if self.need_mask(el.calculation_tree):
@@ -258,14 +220,15 @@ class StatisticProfile(object):
                 else:
                     val = method.calculate_property(**kw)
                 help_dict[hash_str] = val
+            unit = method.get_units(3)
             if node.power != 1:
-                return pow(val, node.power)
-            return val
+                return pow(val, node.power), pow(unit, node.power)
+            return val, unit
         elif isinstance(node, Node):
-            left_res = self.calculate_tree(node.left, help_dict, kwargs)
-            right_res = self.calculate_tree(node.right, help_dict, kwargs)
+            left_res, left_unit = self.calculate_tree(node.left, help_dict, kwargs)
+            right_res, right_unit  = self.calculate_tree(node.right, help_dict, kwargs)
             if node.op == "/":
-                return left_res / right_res
+                return left_res / right_res, left_unit/right_unit
         logging.error("Wrong statistics: {}".format(node))
         return 1
 
@@ -291,20 +254,19 @@ class StatisticProfile(object):
                 break
         range_changed(0, len(self.chosen_fields))
         for i, el in enumerate(self.chosen_fields):
-            print(el, i)
             step_changed(i)
             tree, user_name = el.calculation_tree, el.name
             try:
                 result[self.name_prefix + user_name] = self.calculate_tree(tree, help_dict, kw)
             except ZeroDivisionError:
-                result[self.name_prefix + user_name] = "Div by zero"
+                result[self.name_prefix + user_name] = "Div by zero", ""
             except TypeError as e:
                 print(e, file=sys.stderr)
                 print(traceback.print_exc(), file=sys.stderr)
-                result[self.name_prefix + user_name] = "None div"
+                result[self.name_prefix + user_name] = "None div", ""
             except AttributeError as e:
                 print(e, file=sys.stderr)
-                result[self.name_prefix + user_name] = "No attribute"
+                result[self.name_prefix + user_name] = "No attribute", ""
         return result
 
 
@@ -312,7 +274,6 @@ def calculate_main_axis(area_array: np.ndarray, image: np.ndarray, voxel_size):
     # TODO check if it produces good values
     cut_img = np.copy(image)
     cut_img[area_array == 0] = 0
-    # cut_img = np.swapaxes(cut_img, 0, 2)
     orientation_matrix, _ = af.find_density_orientation(cut_img, voxel_size, 1)
     center_of_mass = af.density_mass_center(cut_img, voxel_size)
     positions = np.array(np.nonzero(cut_img), dtype=np.float64)
@@ -347,6 +308,10 @@ class Volume(MethodBase):
     def calculate_property(area_array, voxel_size, result_scalar, **_):
         return np.count_nonzero(area_array) * pixel_volume(voxel_size, result_scalar)
 
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("{}") ** ndim
+
 
 class Diameter(MethodBase):
     text_info = "Diameter", "Diameter of area"
@@ -365,11 +330,16 @@ class Diameter(MethodBase):
             diam = max(dist_array[p2], diam)
             mid_point = (pos[p1] + pos[p2])/2
             dist_array = np.sum(np.array((pos - mid_point) ** 2), 1)
-            p1  = np.argmax(dist_array)
+            p1 = np.argmax(dist_array)
             if dist_array[p1] <= diam / 4 + 1 or p1 in blocked_set:
                 return np.sqrt(diam)
             blocked_set.add(p1)
             print("step", np.sqrt(diam))
+
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("{}")
+
 
 class DiameterOld(MethodBase):
     text_info = "Diameter old", "Diameter of area (Very slow)"
@@ -378,6 +348,9 @@ class DiameterOld(MethodBase):
     def calculate_property(area_array, voxel_size, result_scalar, **_):
         return calc_diam(get_border(area_array), [x * result_scalar for x in voxel_size])
 
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("{}")
 
 
 class PixelBrightnessSum(MethodBase):
@@ -388,6 +361,10 @@ class PixelBrightnessSum(MethodBase):
         if np.any(area_array):
             return np.sum(image[area_array > 0])
         return 0
+
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("Pixel_brightness")
 
 
 class ComponentsNumber(MethodBase):
@@ -401,6 +378,10 @@ class ComponentsNumber(MethodBase):
     def get_starting_leaf(cls):
         return Leaf(cls.text_info[0], per_component=PerComponent.No)
 
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("count")
+
 
 class MaximumPixelBrightness(MethodBase):
     text_info = "Maximum pixel brightness", "Calculate maximum pixel brightness for current area"
@@ -411,6 +392,10 @@ class MaximumPixelBrightness(MethodBase):
             return np.max(image[area_array > 0])
         else:
             return None
+
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("Pixel_brightness")
 
 
 class MinimumPixelBrightness(MethodBase):
@@ -423,6 +408,10 @@ class MinimumPixelBrightness(MethodBase):
         else:
             return None
 
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("Pixel_brightness")
+
 
 class MeanPixelBrightness(MethodBase):
     text_info = "Mean pixel brightness", "Calculate mean pixel brightness  for current area"
@@ -433,6 +422,10 @@ class MeanPixelBrightness(MethodBase):
             return np.mean(image[area_array > 0])
         else:
             return None
+
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("Pixel_brightness")
 
 
 class StandardDeviationOfPixelBrightness(MethodBase):
@@ -446,6 +439,10 @@ class StandardDeviationOfPixelBrightness(MethodBase):
         else:
             return None
 
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("Pixel_brightness")
+
 
 class MomentOfInertia(MethodBase):
     text_info = "Moment of inertia", "Calculate moment of inertia for segmented structure"
@@ -458,6 +455,10 @@ class MomentOfInertia(MethodBase):
         img[area_array == 0] = 0
         return af.calculate_density_momentum(img, voxel_size)
 
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("{}") ** 2 * symbols("Pixel_brightness")
+
 
 class LongestMainAxisLength(MethodBase):
     text_info = "Longest main axis length", "Length of first main axis"
@@ -465,6 +466,10 @@ class LongestMainAxisLength(MethodBase):
     @staticmethod
     def calculate_property(**kwargs):
         return get_main_axis_length(0, **kwargs)
+
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("{}")
 
 
 class MiddleMainAxisLength(MethodBase):
@@ -474,6 +479,10 @@ class MiddleMainAxisLength(MethodBase):
     def calculate_property(**kwargs):
         return get_main_axis_length(1, **kwargs)
 
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("{}")
+
 
 class ShortestMainAxisLength(MethodBase):
     text_info = "Shortest main axis length", "Length of third main axis"
@@ -481,6 +490,10 @@ class ShortestMainAxisLength(MethodBase):
     @staticmethod
     def calculate_property(**kwargs):
         return get_main_axis_length(2, **kwargs)
+
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("{}")
 
 
 class Compactness(MethodBase):
@@ -505,6 +518,10 @@ class Compactness(MethodBase):
             volume = help_dict[volume_hash_str]
         return border_surface ** 1.5 / volume
 
+    @classmethod
+    def get_units(cls, ndim):
+        return Surface.get_units(ndim)/Volume.get_units(ndim)
+
 
 class Sphericity(MethodBase):
     text_info = "Sphericity", "volume/(diameter**3/8)"
@@ -528,6 +545,10 @@ class Sphericity(MethodBase):
         radius = diameter_val / 2
         return volume / radius ** 3
 
+    @classmethod
+    def get_units(cls, ndim):
+        return Volume.get_units(ndim) / Diameter.get_units(ndim)**3
+
 
 class Surface(MethodBase):
     text_info = "Surface", "Calculating surface of current segmentation"
@@ -535,6 +556,10 @@ class Surface(MethodBase):
     @staticmethod
     def calculate_property(area_array, voxel_size, result_scalar, **_):
         return calculate_volume_surface(area_array, [x * result_scalar for x in voxel_size])
+
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("{}")**2
 
 
 class RimVolume(MethodBase):
@@ -556,6 +581,10 @@ class RimVolume(MethodBase):
             return None
         final_mask = np.array((border_mask_array > 0) * (segmentation > 0))
         return np.count_nonzero(final_mask) * pixel_volume(voxel_size, result_scalar)
+
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("{}")**3
 
 
 class RimPixelBrightnessSum(MethodBase):
@@ -580,6 +609,10 @@ class RimPixelBrightnessSum(MethodBase):
         if np.any(final_mask):
             return np.sum(image[final_mask])
         return 0
+
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("Pixel_brightness")
 
 
 def pixel_volume(spacing, result_scalar):

@@ -186,15 +186,14 @@ class StatisticsWidget(QWidget):
                 ver_headers.append("Units")
             self.info_field.setVerticalHeaderLabels(ver_headers)
             self.info_field.setHorizontalHeaderLabels([str(x) for x in range(len(stat))])
-            for i, (key, val) in enumerate(stat.items()):
-                print(i, key, val)
+            for i, (key, val, unit) in enumerate(stat.items()):
                 if not self.no_header.isChecked() and (self.previous_profile != compute_class.name):
                     self.info_field.setItem(self.statistic_shift + 0, i, QTableWidgetItem(key))
                 self.info_field.setItem(self.statistic_shift + 1, i, QTableWidgetItem(str(val)))
                 if not self.no_units.isChecked():
                     try:
                         self.info_field.setItem(self.statistic_shift + 2, i,
-                                                QTableWidgetItem(UNITS_DICT[key].format(units_name)))
+                                                QTableWidgetItem(str(unit).format(units_name)))
                     except KeyError as k:
                         print(k, sys.stderr)
         else:
@@ -208,7 +207,7 @@ class StatisticsWidget(QWidget):
             if not self.no_units.isChecked():
                 hor_headers.append("Units")
             self.info_field.setHorizontalHeaderLabels(hor_headers)
-            for i, (key, val) in enumerate(stat.items()):
+            for i, (key, (val, unit)) in enumerate(stat.items()):
                 # print(i, key, val)
                 if not self.no_header.isChecked() and (self.previous_profile != compute_class.name):
                     self.info_field.setItem(i, self.statistic_shift + 0, QTableWidgetItem(key))
@@ -216,7 +215,7 @@ class StatisticsWidget(QWidget):
                 if not self.no_units.isChecked():
                     try:
                         self.info_field.setItem(i, self.statistic_shift + 2,
-                                                QTableWidgetItem(UNITS_DICT[key].format(units_name)))
+                                                QTableWidgetItem(str(unit).format(units_name)))
                     except KeyError as k:
                         print(k, file=sys.stderr)
         if self.no_units.isChecked():
