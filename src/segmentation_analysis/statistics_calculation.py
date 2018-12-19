@@ -226,7 +226,7 @@ class StatisticProfile(object):
             return val, unit
         elif isinstance(node, Node):
             left_res, left_unit = self.calculate_tree(node.left, help_dict, kwargs)
-            right_res, right_unit  = self.calculate_tree(node.right, help_dict, kwargs)
+            right_res, right_unit = self.calculate_tree(node.right, help_dict, kwargs)
             if node.op == "/":
                 return left_res / right_res, left_unit/right_unit
         logging.error("Wrong statistics: {}".format(node))

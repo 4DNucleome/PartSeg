@@ -125,6 +125,10 @@ class Image(object):
     def spacing(self):
         return self._image_spacing
 
+    def set_spacing(self, value):
+        assert len(value) == len(self._image_spacing)
+        self._image_spacing = value
+
     def cut_image(self, cut_area: typing.Union[np.ndarray, typing.List[slice]], replace_mask=False):
         """
         Create new image base on mask or list of slices

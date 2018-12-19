@@ -51,9 +51,9 @@ class ImageSettings(QObject):
     def image_spacing(self, value):
         assert (len(value) in [2, 3])
         if len(value) == 2:
-            self._image_spacing = [self._image_spacing[0]] + list(value)
+            self._image.set_spacing([self._image.spacing[0]] + list(value))
         else:
-            self._image_spacing = value
+            self._image.set_spacing(value)
 
     def load_image(self, file_path):
         reader = ImageReader()
@@ -299,7 +299,7 @@ class BaseSettings(ViewSettings):
             except AttributeError:
                 logging.error('error in load "segment_profile"')
             try:
-                self.image_spacing = data["image_spacing"]
+                self._image_spacing = data["image_spacing"]
             except KeyError:
                 logging.error('error in load "image_spacing"')
         except json.decoder.JSONDecodeError:
