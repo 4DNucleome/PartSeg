@@ -279,10 +279,6 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
             return SegmentationResult(new_segment, self.sprawl_area, self.cleaned_image)
 
 
-class BaseThresholdSprawlAlgorithm(BaseThresholdFlowAlgorithm, ABC):
-    pass
-
-
 class LowerThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
     threshold_operator = operator.gt
 
@@ -310,7 +306,7 @@ class OtsuSegment(RestartableAlgorithm):
                 AlgorithmProperty("noise_removal", "Noise Removal", next(iter(noise_removal_dict.keys())),
                                   possible_values=noise_removal_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("components", "Number of Components", 2, (0, 100)),
-                AlgorithmProperty("mask", "Use mask in calculation", True),
+                # AlgorithmProperty("mask", "Use mask in calculation", True),
                 AlgorithmProperty("valley", "Valley emphasis", True),
                 AlgorithmProperty("hist_num", "Number of histogram bins", 128, (8, 2 ** 16))]
 
@@ -319,9 +315,9 @@ class OtsuSegment(RestartableAlgorithm):
         self._sizes_array = []
         self.threshold_info = []
 
-    def set_parameters(self, channel, noise_removal, components, mask, valley, hist_num):
+    def set_parameters(self, channel, noise_removal, components, valley, hist_num): # mask
         self.new_parameters["components"] = components
-        self.new_parameters["mask"] = mask
+        # self.new_parameters["mask"] = mask
         self.new_parameters["hist_num"] = hist_num
         self.new_parameters["channel"] = channel
         self.new_parameters["valley"] = valley

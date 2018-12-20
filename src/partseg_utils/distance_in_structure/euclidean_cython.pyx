@@ -81,7 +81,7 @@ def calculate_euclidean(np.ndarray[np.uint8_t, ndim=3] object_area, np.ndarray[n
                     p1.y = y
                     p1.x = x
                     current_points.push(p1)
-    print("totlal_steps: " +str(count))
+    # print("totlal_steps: " +str(count))
     return result
 
 

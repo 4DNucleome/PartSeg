@@ -245,6 +245,32 @@ class DoubleThreshold(BaseThreshold):
         return mask2, (thr_val1, thr_val2)
 
 
+class DoubleOtsu(BaseThreshold):
+    @classmethod
+    def get_name(cls):
+        return "Double Otsu"
+
+    @classmethod
+    def get_fields(cls):
+        return [ # AlgorithmProperty("mask", "Use mask in calculation", True),
+                AlgorithmProperty("valley", "Valley emphasis", True),
+                AlgorithmProperty("hist_num", "Number of histogram bins", 128, (8, 2 ** 16))]
+
+    @classmethod
+    def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict,
+                       operator: typing.Callable[[object, object], bool]):
+        cleaned_image_sitk = sitk.GetImageFromArray(data)
+        res = sitk.OtsuMultipleThresholds(cleaned_image_sitk,  2, 0,
+                                          arguments["hist_num"], arguments["valley"])
+        res = sitk.GetArrayFromImage(res)
+        thr1 = data[res == 2].min()
+        thr2 = data[res == 1].min()
+        return res, (thr1, thr2)
+
+
 double_threshold_dict = Register()
 
 double_threshold_dict.register(DoubleThreshold)
+double_threshold_dict.register(DoubleOtsu)
+
+print(double_threshold_dict)
