@@ -8,7 +8,7 @@ from .algorithm_description import SegmentationProfile
 from .analysis_utils import HistoryElement, SegmentationPipeline
 from .save_hooks import PartEncoder, part_hook
 from .io_functions import save_project, save_cmap, load_project, ProjectTuple
-from project_utils_qt.settings import BaseSettings
+from project_utils_qt.settings import BaseSettings, SaveSettingsDescription, ProfileDict
 import numpy as np
 
 MASK_COLORS = {"white": np.array((255, 255, 255)), "black": np.array((0, 0, 0)), "red": np.array((255, 0, 0)),
@@ -31,6 +31,10 @@ class PartSettings(BaseSettings):
         self.segmentation_history: typing.List[HistoryElement] = []
         self.undo_segmentation_history: typing.List[HistoryElement] = []
         self.last_executed_algorithm = ""
+        self.segmentation_pipelines_dict = ProfileDict()
+        self.segmentation_profiles_dict = ProfileDict()
+        self.batch_plans_dict = ProfileDict()
+        self.statistic_profiles_dict = ProfileDict()
 
     @property
     def use_physical_unit(self):
@@ -98,21 +102,30 @@ class PartSettings(BaseSettings):
     def save_cmap(self, file_path: str, cmap_profile: CmapProfile):
         save_cmap(file_path, self.image, cmap_profile)
 
+    def get_save_list(self) -> typing.List[SaveSettingsDescription]:
+        return super().get_save_list() + [
+            SaveSettingsDescription("segmentation_pipeline_save.json", self.segmentation_pipelines_dict),
+            SaveSettingsDescription("segmentation_profiles_save.json", self.segmentation_profiles_dict),
+            SaveSettingsDescription("statistic_profiles_save.json", self.statistic_profiles_dict),
+            SaveSettingsDescription("batch_plans_save.json", self.batch_plans_dict),
+        ]
+
+
     @property
     def segmentation_pipelines(self) -> typing.Dict[str, SegmentationPipeline]:
-        return self.get("segmentation_pipelines", dict())
+        return self.segmentation_pipelines_dict.get(self.current_segmentation_dict, dict())
 
     @property
     def segmentation_profiles(self) -> typing.Dict[str, SegmentationProfile]:
-        return self.get("segmentation_profiles", dict())
+        return self.segmentation_profiles_dict.get(self.current_segmentation_dict, dict())
 
     @property
     def batch_plans(self) -> typing.Dict[str, CalculationPlan]:
-        return self.get("batch_plans", dict())
+        return self.batch_plans_dict.get(self.current_segmentation_dict, dict())
 
     @property
     def statistic_profiles(self) -> typing.Dict[str, StatisticProfile]:
-        return self.get("statistic_profiles", dict())
+        return self.statistic_profiles_dict.get(self.current_segmentation_dict, dict())
 
 def save_labeled_image(file_path, settings):
     pass

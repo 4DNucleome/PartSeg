@@ -1,5 +1,4 @@
 import json
-import logging
 import sys
 import typing
 
@@ -11,7 +10,8 @@ import copy
 import numpy as np
 from os import path, makedirs
 from partseg_utils.class_generator import ReadonlyClassEncoder, readonly_hook
-from tiff_image import Image, ImageReader
+from tiff_image import Image
+from datetime import datetime
 
 
 class ImageSettings(QObject):
@@ -25,7 +25,7 @@ class ImageSettings(QObject):
 
     def __init__(self):
         super(ImageSettings, self).__init__()
-        self._image :Image = None
+        self._image: Image = None
         self._image_path = ""
         self._image_spacing = 210, 70, 70
         self._segmentation = None
@@ -54,11 +54,6 @@ class ImageSettings(QObject):
             self._image.set_spacing([self._image.spacing[0]] + list(value))
         else:
             self._image.set_spacing(value)
-
-    def load_image(self, file_path):
-        reader = ImageReader()
-        im = reader.read(file_path)
-        self.image = im, file_path
 
     @property
     def segmentation(self) -> np.ndarray:
@@ -129,6 +124,15 @@ class ProfileDict(object):
     def __init__(self):
         self.my_dict = dict()
 
+    def update(self, ob=None, *args, **kwargs):
+        if isinstance(ob, ProfileDict):
+            self.my_dict.update(ob.my_dict)
+            self.my_dict.update(*args, **kwargs)
+        elif ob is None:
+            self.my_dict.update(**kwargs)
+        else:
+            self.my_dict.update(ob, **kwargs)
+
     def set(self, key_path: typing.Union[list, str], value):
         if isinstance(key_path, str):
             key_path = key_path.split(".")
@@ -189,13 +193,12 @@ class ViewSettings(ImageSettings):
         super().__init__()
         self.color_map = []
         self.border_val = []
-        # self.chosen_colormap = pyplot.colormaps()
         self.current_profile_dict = "default"
-        self.profile_dict: typing.Dict[str, ProfileDict] = {self.current_profile_dict: ProfileDict()}
+        self.view_settings_dict: typing.Dict[str, ProfileDict] = {self.current_profile_dict: ProfileDict()}
 
     @property
     def chosen_colormap(self):
-        return self.get_from_profile("colormaps", list(color_maps.keys()))
+        return self.get_from_profile("colormaps", ["BlackBlue", "BlackGreen", "BlackMagenta", "BlackRed", "gray"])
 
     @chosen_colormap.setter
     def chosen_colormap(self, val):
@@ -212,30 +215,41 @@ class ViewSettings(ImageSettings):
 
     def change_profile(self, name):
         self.current_profile_dict = name
-        if self.current_profile_dict not in self.profile_dict:
-            self.profile_dict = {self.current_profile_dict: ProfileDict()}
+        if self.current_profile_dict not in self.view_settings_dict:
+            self.view_settings_dict = {self.current_profile_dict: ProfileDict()}
 
     def set_in_profile(self, key_path, value):
         """function for saving information used in visualization"""
-        self.profile_dict[self.current_profile_dict].set(key_path, value)
+        self.view_settings_dict[self.current_profile_dict].set(key_path, value)
 
     def get_from_profile(self, key_path, default=None):
         """function for getting information used in visualization"""
-        return self.profile_dict[self.current_profile_dict].get(key_path, default)
+        return self.view_settings_dict[self.current_profile_dict].get(key_path, default)
 
     def dump_view_profiles(self):
         # return json.dumps(self.profile_dict, cls=ProfileEncoder)
-        return self.profile_dict
+        return self.view_settings_dict
 
     def load_view_profiles(self, dicts):
         for k, v in dicts.items():
-            self.profile_dict[k] = v  # ProfileDict()
+            self.view_settings_dict[k] = v  # ProfileDict()
             # self.profile_dict[k].my_dict = v
+
+
+class SaveSettingsDescription(typing.NamedTuple):
+    file_name: str
+    values: typing.Union[dict, ProfileDict]
 
 
 class BaseSettings(ViewSettings):
     json_encoder_class = ProfileEncoder
     decode_hook = profile_hook
+    segmentation_settings_save_file = "segmentation_settings.json"
+    view_settings_save_file = "view_settings.json"
+
+    def get_save_list(self) -> typing.List[SaveSettingsDescription]:
+        return [SaveSettingsDescription("segmentation_settings.json", self.segmentation_dict),
+                SaveSettingsDescription("view_settings.json", self.view_settings_dict)]
 
     def __init__(self, json_path):
         super().__init__()
@@ -263,46 +277,41 @@ class BaseSettings(ViewSettings):
         with open(file_path, 'r') as ff:
             return json.load(ff, object_hook=self.decode_hook)
 
-    def dump(self, file_path=None):
-        if file_path is None:
-            file_path = self.json_path
-        if not path.exists(path.dirname(file_path)):
-            makedirs(path.dirname(file_path))
-        dump_view = self.dump_view_profiles()
-        data_dump = json.dumps(
-            {"view_profiles": dump_view,
-             "segment_profile": self.segmentation_dict,
-             "image_spacing": self._image_spacing
-             },
-            cls=self.json_encoder_class, indent=2)
-        with open(file_path, 'w') as ff:
-            ff.write(data_dump)
+    def dump(self, folder_path=None):
+        if folder_path is None:
+            folder_path = self.json_path
+        if not path.exists(folder_path):
+            makedirs(folder_path)
+        errors_list = []
+        for el in self.get_save_list():
+            try:
+                dump_string = json.dumps(el.values, cls=self.json_encoder_class, indent=2)
+                with open(path.join(folder_path, el.file_name), 'w') as ff:
+                    ff.write(dump_string)
+            except Exception as e:
+                errors_list.append((e, path.join(folder_path, el.file_name)))
+        if errors_list:
+            print(errors_list, file=sys.stderr)
+        return errors_list
 
-    def load(self, file_path=None):
-        if file_path is None:
-            file_path = self.json_path
-        try:
-            with open(file_path, 'r') as ff:
-                data = json.load(ff, object_hook=self.decode_hook)
+    def load(self, folder_path=None):
+        if folder_path is None:
+            folder_path = self.json_path
+        errors_list = []
+        for el in self.get_save_list():
+            file_path = path.join(folder_path, el.file_name)
+            if not path.exists(file_path):
+                continue
             try:
-                self.load_view_profiles(data["view_profiles"])
-            except KeyError:
-                logging.error('error in load "view_profiles"')
-            except AttributeError:
-                logging.error('error in load "view_profiles"')
-            try:
-                for k, v in data["segment_profile"].items():
-                    self.segmentation_dict[k] = v  # ProfileDict()
-                    # self.segmentation_dict[k].my_dict = v
-            except KeyError:
-                logging.error('error in load "segment_profile"')
-            except AttributeError:
-                logging.error('error in load "segment_profile"')
-            try:
-                self._image_spacing = data["image_spacing"]
-            except KeyError:
-                logging.error('error in load "image_spacing"')
-        except json.decoder.JSONDecodeError:
-            pass
-        except KeyError as e:
-            logging.error(e)
+                with open(file_path, 'r') as ff:
+                    data = json.load(ff, object_hook=self.decode_hook)
+                el.values.update(data)
+            except Exception as e:
+                timestamp = datetime.today().strftime('%Y-%m-%d_%H_%M_%S')
+                base_path, ext = path.splitext(file_path)
+                import os
+                os.rename(file_path, base_path + "_" + timestamp + ext)
+                errors_list.append(e)
+        if errors_list:
+            print(errors_list, file=sys.stderr)
+        return errors_list

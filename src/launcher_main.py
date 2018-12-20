@@ -42,6 +42,8 @@ def main():
     wind = MainWindow(title)
     wind.show()
     my_app.exec_()
+    del wind
+    del my_app
     sys.exit()
 
 

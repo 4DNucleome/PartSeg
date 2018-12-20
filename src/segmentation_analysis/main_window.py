@@ -35,9 +35,9 @@ from .partseg_settings import PartSettings
 from common_gui.custom_save import SaveDialog
 from .io_functions import save_register
 
-app_name = "PartSeg2"
+app_name = "PartSeg"
 app_lab = "LFSG"
-config_folder = appdirs.user_data_dir(app_name, app_lab)
+config_folder = os.path.join(appdirs.user_data_dir(app_name, app_lab), "analysis")
 
 
 class Options(QWidget):
@@ -258,7 +258,7 @@ class Options(QWidget):
                         QMessageBox.Yes | QMessageBox.No, QMessageBox.No):
                     continue
             resp = SegmentationProfile(text, widget.name, widget.get_values())
-            self._settings.set(f"segmentation_profiles.{text}", resp)
+            self._settings.segmentation_profiles[text] = resp
             self._settings.dump()
             self.choose_profile.addItem(text)
             self.update_tooltips()
@@ -612,8 +612,8 @@ class MainWindow(BaseMainWindow):
         super().__init__(title, signal_fun)
         self.files_num = 2
         self.setMinimumWidth(600)
-        self.settings = PartSettings(os.path.join(config_folder, "settings.json"))
-        if os.path.exists(os.path.join(config_folder, "settings.json")):
+        self.settings = PartSettings(os.path.join(config_folder))
+        if os.path.exists(config_folder):
             self.settings.load()
         self.main_menu = MainMenu(self.settings, self)
         # self.channel_control1 = ChannelControl(self.settings, name="raw_control", text="Left panel:")

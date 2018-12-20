@@ -31,10 +31,9 @@ from .batch_proceed import BatchProceed
 from .image_view import StackImageView
 from .io_functions import load_stack_segmentation, SaveSegmentation
 
-app_name = "StackSeg"
+app_name = "PartSeg"
 app_lab = "LFSG"
-
-config_folder = appdirs.user_data_dir(app_name, app_lab)
+config_folder = os.path.join(appdirs.user_data_dir(app_name, app_lab), "mask")
 
 
 class MainMenu(QWidget):
@@ -126,7 +125,7 @@ class MainMenu(QWidget):
 
     def set_image(self, image: Image) -> bool:
         if image is None:
-            return
+            return False
         if image.is_time:
             if image.is_stack:
                 QMessageBox.warning(
@@ -185,14 +184,14 @@ class MainMenu(QWidget):
         save_location, selected_filter, save_class, values = dial.get_result()
         self.settings.set("io.save_segmentation_directory", os.path.dirname(str(save_location)))
         # self.settings.save_directory = os.path.dirname(str(file_path))
+
         def exception_hook(exception):
             QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.Ok)
 
         execute_thread = \
             ExecuteFunctionThread(save_class.save, [save_location, self.settings.get_segmentation_info(), values])
-        dial = WaitingDialog(execute_thread, "Save segmentation") # , exception_hook=exception_hook)
+        dial = WaitingDialog(execute_thread, "Save segmentation", exception_hook=exception_hook)
         dial.exec()
-
 
     def save_result(self):
         if self.settings.image_path is not None and \
@@ -226,6 +225,7 @@ class MainMenu(QWidget):
                 return
 
         self.settings.set("io.save_components_directory", os.path.dirname(str(dir_path)))
+
         def exception_hook(exception):
             QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.Ok)
 
@@ -627,8 +627,8 @@ class Options(QTabWidget):
 class MainWindow(BaseMainWindow):
     def __init__(self, title, signal_fun=None):
         super().__init__(title, signal_fun)
-        self.settings = StackSettings(os.path.join(config_folder, "settings.json"))
-        if os.path.exists(os.path.join(config_folder, "settings.json")):
+        self.settings = StackSettings(config_folder)
+        if os.path.exists(config_folder):
             self.settings.load()
         self.main_menu = MainMenu(self.settings)
         self.channel_control = ChannelControl(self.settings, name="channelcontrol")
