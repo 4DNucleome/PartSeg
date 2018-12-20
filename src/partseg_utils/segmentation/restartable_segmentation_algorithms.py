@@ -13,6 +13,7 @@ from partseg_utils.distance_in_structure.find_split import distance_sprawl, path
 from partseg_utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
 from partseg_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
 from partseg_utils.segmentation.noise_removing import noise_removal_dict
+from partseg_utils.segmentation.sprawl import sprawl_dict, BaseSprawl
 from partseg_utils.segmentation.threshold import threshold_dict, BaseThreshold, double_threshold_dict
 from partseg_utils.universal_const import UNITS_LIST
 
@@ -214,11 +215,10 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty("threshold", "Threshold", next(iter(double_threshold_dict.keys())),
-                                  possible_values=double_threshold_dict, property_type=AlgorithmDescribeBase)] \
+                                  possible_values=double_threshold_dict, property_type=AlgorithmDescribeBase),
+                AlgorithmProperty("flow_type", "Flow type", next(iter(sprawl_dict.keys())), possible_values=sprawl_dict,
+                                  property_type=AlgorithmDescribeBase)] \
                + super().get_fields()
-
-    def path_sprawl(self, base_image, object_image) -> np.ndarray:
-        raise NotImplementedError()
 
     def get_info_text(self):
         return f"Threshold: " + ", ".join(map(str, self.threshold_info)) + \
@@ -230,6 +230,12 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
         self.finally_segment = None
         self.final_sizes = []
         self.threshold_info = [None, None]
+        self.sprawl_area = None
+
+    def _clean(self):
+        self.sprawl_area = None
+        super()._clean()
+
 
     def _threshold(self, image, thr=None):
         if thr is None:
@@ -240,7 +246,8 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
         self.sprawl_area = (mask >= 1).astype(np.uint8)
         return (mask == 2).astype(np.uint8)
 
-    def set_parameters(self, *args, **kwargs):
+    def set_parameters(self, flow_type, *args, **kwargs):
+        self.new_parameters["flow_type"] = flow_type
         self._set_parameters(*args, **kwargs)
 
     def set_image(self, image):
@@ -261,31 +268,38 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
             finally_segment = segment_data.segmentation
             restarted = True
 
-        if restarted or self.old_threshold_info[1] != self.threshold_info[1]:
+        if restarted or self.old_threshold_info[1] != self.threshold_info[1] or \
+                self.new_parameters["flow_type"] != self.parameters["flow_type"]:
             if self.threshold_operator(self.threshold_info[1], self.threshold_info[0]):
                 self.final_sizes = np.bincount(finally_segment.flat)
                 return SegmentationResult(self.finally_segment, self.segmentation, self.cleaned_image)
-            new_segment = self.path_sprawl(self.sprawl_area, finally_segment)
+            path_sprawl: BaseSprawl = sprawl_dict[self.new_parameters["flow_type"]["name"]]
+            self.parameters["flow_type"] = self.new_parameters["flow_type"]
+            new_segment = path_sprawl.sprawl(self.sprawl_area, finally_segment, self.channel, self.components_num,
+                                             self.image.spacing, self.new_parameters["side_connection"],
+                                             self.threshold_operator, self.new_parameters["flow_type"]["values"])
             self.final_sizes = np.bincount(new_segment.flat)
             return SegmentationResult(new_segment, self.sprawl_area, self.cleaned_image)
 
 
 class BaseThresholdSprawlAlgorithm(BaseThresholdFlowAlgorithm, ABC):
-    def __init__(self):
-        super().__init__()
-        self.sprawl_area = None
-
-    def _clean(self):
-        self.sprawl_area = None
-        super()._clean()
+    pass
 
 
-class LowerThresholdFlowAlgorithm(BaseThresholdSprawlAlgorithm, ABC):
+class LowerThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
     threshold_operator = operator.gt
 
+    @classmethod
+    def get_name(cls):
+        return "Lower threshold flow"
 
-class UpperThresholdFlowAlgorithm(BaseThresholdSprawlAlgorithm, ABC):
+
+class UpperThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
     threshold_operator = operator.lt
+
+    @classmethod
+    def get_name(cls):
+        return "Upper threshold flow"
 
 
 class LowerThresholdDistanceFlowAlgorithm(LowerThresholdFlowAlgorithm):
@@ -464,7 +478,5 @@ class OtsuSegment(RestartableAlgorithm):
 
 
 final_algorithm_list = [LowerThresholdAlgorithm, UpperThresholdAlgorithm, RangeThresholdAlgorithm,
-                        LowerThresholdDistanceFlowAlgorithm, UpperThresholdDistanceFlowAlgorithm,
-                        LowerThresholdPathFlowAlgorithm, UpperThresholdPathFlowAlgorithm,
-                        LowerThresholdPathDistanceFlowAlgorithm, UpperThresholdPathDistanceFlowAlgorithm,
+                        LowerThresholdFlowAlgorithm, UpperThresholdFlowAlgorithm,
                         OtsuSegment, BorderRim]

@@ -14,7 +14,7 @@ class BaseSprawl(AlgorithmDescribeBase, ABC):
         return []
 
     @classmethod
-    def sprawl(cls, sprawl_area: np.ndarray, core_objects: np.ndarray, data: np.ndarray,  components_num: int, spacing,
+    def sprawl(cls, sprawl_area: np.ndarray, core_objects: np.ndarray, data: np.ndarray, components_num: int, spacing,
                side_connection: bool, operator: Callable[[Any, Any], bool], arguments: dict):
         raise NotImplementedError()
 
@@ -25,9 +25,9 @@ class PathSprawl(BaseSprawl):
         return "Path sprawl"
 
     @classmethod
-    def sprawl(cls, sprawl_area: np.ndarray, core_objects: np.ndarray, data: np.ndarray,  components_num: int, spacing,
+    def sprawl(cls, sprawl_area: np.ndarray, core_objects: np.ndarray, data: np.ndarray, components_num: int, spacing,
                side_connection: bool, operator: Callable[[Any, Any], bool], arguments: dict):
-        if operator(1,0):
+        if operator(1, 0):
             path_sprawl = path_maximum_sprawl
         else:
             path_sprawl = path_minimum_sprawl
@@ -57,13 +57,13 @@ class PathDistanceSprawl(BaseSprawl):
         return "Path euclidean sprawl"
 
     @classmethod
-    def sprawl(cls, sprawl_area: np.ndarray, core_objects: np.ndarray, data: np.ndarray,  components_num: int, spacing,
+    def sprawl(cls, sprawl_area: np.ndarray, core_objects: np.ndarray, data: np.ndarray, components_num: int, spacing,
                side_connection: bool, operator: Callable[[Any, Any], bool], arguments: dict):
         mid = PathSprawl.sprawl(sprawl_area, core_objects, data, components_num, spacing, side_connection, operator,
                                 arguments)
         return DistanceSprawl.sprawl(sprawl_area, mid, data, components_num, spacing, side_connection, operator,
-                                arguments)
-    
+                                     arguments)
+
 
 sprawl_dict = Register(PathSprawl, DistanceSprawl, PathDistanceSprawl)
 
