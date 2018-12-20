@@ -39,7 +39,7 @@ def main():
     else:
         from launcher.main_window import MainWindow
         title = "PartSeg Launcher"
-    wind = MainWindow(title)
+    wind = MainWindow(title=title)
     wind.show()
     my_app.exec_()
     del wind

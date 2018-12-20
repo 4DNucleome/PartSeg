@@ -2,14 +2,26 @@ from PyQt5.QtGui import QShowEvent, QDragEnterEvent, QDropEvent
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
 from PyQt5.QtCore import pyqtSignal
 
+from project_utils_qt.settings import BaseSettings
+
 
 class BaseMainWindow(QMainWindow):
     show_signal = pyqtSignal()
 
-    def __init__(self, title="PartSeg", signal_fun=None):
+    settings_class = BaseSettings
+
+    def __init__(self, config_folder=None, title="PartSeg", settings=None, signal_fun=None):
+
         super().__init__()
         if signal_fun is not None:
             self.show_signal.connect(signal_fun)
+        if settings is None:
+            if config_folder is None:
+                raise ValueError("wrong config folder")
+            self.settings = self.settings_class(config_folder)
+            self.settings.load()
+        else:
+            self.settings = settings
         self.files_num = 1
         self.setAcceptDrops(True)
         self.setWindowTitle(title)

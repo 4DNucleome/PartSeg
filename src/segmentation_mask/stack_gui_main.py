@@ -33,7 +33,7 @@ from .io_functions import load_stack_segmentation, SaveSegmentation
 
 app_name = "PartSeg"
 app_lab = "LFSG"
-config_folder = os.path.join(appdirs.user_data_dir(app_name, app_lab), "mask")
+CONFIG_FOLDER = os.path.join(appdirs.user_data_dir(app_name, app_lab), "mask")
 
 
 class MainMenu(QWidget):
@@ -625,11 +625,12 @@ class Options(QTabWidget):
 
 
 class MainWindow(BaseMainWindow):
-    def __init__(self, title, signal_fun=None):
-        super().__init__(title, signal_fun)
-        self.settings = StackSettings(config_folder)
-        if os.path.exists(config_folder):
-            self.settings.load()
+    settings_class = StackSettings
+    initial_image_path = os.path.join(static_file_folder, 'initial_images', "stack.tif")
+
+    def __init__(self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None,
+                 initial_image=None):
+        super().__init__(config_folder, title, settings, signal_fun)
         self.main_menu = MainMenu(self.settings)
         self.channel_control = ChannelControl(self.settings, name="channelcontrol")
         self.image_view = StackImageView(self.settings, self.channel_control)
@@ -662,8 +663,13 @@ class MainWindow(BaseMainWindow):
         self.widget = QWidget()
         self.widget.setLayout(layout)
         self.setCentralWidget(self.widget)
-        reader = ImageReader()
-        self.settings.image = reader.read(os.path.join(static_file_folder, 'initial_images', "stack.tif"))
+        if initial_image is None:
+            reader = ImageReader()
+            im = reader.read(self.initial_image_path)
+            im.file_path = ""
+            self.settings.image = im
+        else:
+            self.settings.image = initial_image
         try:
             geometry = self.settings.get_from_profile("main_window_geometry")
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, 'ascii')))

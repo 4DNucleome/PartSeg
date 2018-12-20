@@ -244,8 +244,6 @@ class SaveSettingsDescription(typing.NamedTuple):
 class BaseSettings(ViewSettings):
     json_encoder_class = ProfileEncoder
     decode_hook = profile_hook
-    segmentation_settings_save_file = "segmentation_settings.json"
-    view_settings_save_file = "view_settings.json"
 
     def get_save_list(self) -> typing.List[SaveSettingsDescription]:
         return [SaveSettingsDescription("segmentation_settings.json", self.segmentation_dict),
@@ -255,7 +253,7 @@ class BaseSettings(ViewSettings):
         super().__init__()
         self.current_segmentation_dict = "default"
         self.segmentation_dict: typing.Dict[str, ProfileDict] = {self.current_segmentation_dict: ProfileDict()}
-        self.json_path = json_path
+        self.json_folder_path = json_path
         self.last_executed_algorithm = ""
 
     def set(self, key_path, value):
@@ -279,7 +277,7 @@ class BaseSettings(ViewSettings):
 
     def dump(self, folder_path=None):
         if folder_path is None:
-            folder_path = self.json_path
+            folder_path = self.json_folder_path
         if not path.exists(folder_path):
             makedirs(folder_path)
         errors_list = []
@@ -296,7 +294,7 @@ class BaseSettings(ViewSettings):
 
     def load(self, folder_path=None):
         if folder_path is None:
-            folder_path = self.json_path
+            folder_path = self.json_folder_path
         errors_list = []
         for el in self.get_save_list():
             file_path = path.join(folder_path, el.file_name)

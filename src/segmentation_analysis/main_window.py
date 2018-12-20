@@ -37,7 +37,7 @@ from .io_functions import save_register
 
 app_name = "PartSeg"
 app_lab = "LFSG"
-config_folder = os.path.join(appdirs.user_data_dir(app_name, app_lab), "analysis")
+CONFIG_FOLDER = os.path.join(appdirs.user_data_dir(app_name, app_lab), "analysis")
 
 
 class Options(QWidget):
@@ -608,13 +608,14 @@ class MaskWindow(QDialog):
 
 
 class MainWindow(BaseMainWindow):
-    def __init__(self, title, signal_fun=None):
-        super().__init__(title, signal_fun)
+    settings_class = PartSettings
+    initial_image_path = os.path.join(static_file_folder, 'initial_images', "clean_segment.tiff")
+
+    def __init__(self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None,
+                 initial_image=None):
+        super().__init__(config_folder, title, settings, signal_fun)
         self.files_num = 2
         self.setMinimumWidth(600)
-        self.settings = PartSettings(os.path.join(config_folder))
-        if os.path.exists(config_folder):
-            self.settings.load()
         self.main_menu = MainMenu(self.settings, self)
         # self.channel_control1 = ChannelControl(self.settings, name="raw_control", text="Left panel:")
         self.channel_control2 = ChannelControl(self.settings, name="result_control")
@@ -634,10 +635,14 @@ class MainWindow(BaseMainWindow):
         self.advanced_window = AdvancedWindow(self.settings)
         self.batch_window = None  # BatchWindow(self.settings)
 
-        reader = ImageReader()
-        im = reader.read(os.path.join(static_file_folder, 'initial_images', "clean_segment.tiff"))
-        im.file_path = ""
-        self.settings.image = im
+
+        if initial_image is None:
+            reader = ImageReader()
+            im = reader.read(self.initial_image_path)
+            im.file_path = ""
+            self.settings.image = im
+        else:
+            self.settings.image = initial_image
 
         icon = QIcon(os.path.join(static_file_folder, 'icons', "icon.png"))
         self.setWindowIcon(icon)
@@ -671,6 +676,7 @@ class MainWindow(BaseMainWindow):
 
     def read_drop(self, paths):
         read_thread = ImageReaderThread(parent=self)
+
         def exception_hook(exception):
             QMessageBox.warning(self, "Read error", f"Error during image read: {exception}")
         dial = WaitingDialog(read_thread, exception_hook=exception_hook)

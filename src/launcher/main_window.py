@@ -1,11 +1,31 @@
 import os
 import importlib
-from PyQt5.QtCore import QSize, Qt, QTimerEvent
+from functools import partial
+from PyQt5.QtCore import QSize, Qt, QThread
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QToolButton, QGridLayout, QWidget, QProgressBar
 from partseg_utils.global_settings import static_file_folder
+from tiff_image import ImageReader
 
-import time
+
+class Prepare(QThread):
+    def __init__(self, module):
+        super().__init__()
+        self.module = module
+        self.result = None
+
+    def run(self):
+        if self.module != "":
+            main_window_module = importlib.import_module(self.module)
+            main_window = main_window_module.MainWindow
+            settings = main_window.settings_class(main_window_module.CONFIG_FOLDER)
+            settings.load()
+            reader = ImageReader()
+            im = reader.read(main_window.initial_image_path)
+            im.file_path = ""
+            self.result = partial(main_window, settings=settings, initial_image=im)
+
+
 class MainWindow(QMainWindow):
     def __init__(self, title):
         super().__init__()
@@ -36,6 +56,8 @@ class MainWindow(QMainWindow):
         widget.setLayout(layout)
         self.setCentralWidget(widget)
         self.setWindowIcon(analysis_icon)
+        self.prepare = None
+        self.wind = None
 
     def launch_analysis(self):
         self.progress.setVisible(True)
@@ -44,14 +66,9 @@ class MainWindow(QMainWindow):
         self.mask_button.setDisabled(True)
         self.lib_path = "segmentation_analysis.main_window"
         self.final_title = "PartSeg Segmentation Analysis"
-        self.startTimer(0)
-
-    def timerEvent(self, a0: 'QTimerEvent'):
-        self.killTimer(a0.timerId())
-        if self.lib_path != "":
-            main_window_module = importlib.import_module(self.lib_path)
-            self.launch(main_window_module.MainWindow, self.final_title)
-
+        self.prepare = Prepare(self.lib_path)
+        self.prepare.finished.connect(self.launch)
+        self.prepare.start()
 
     def launch_mask(self):
         self.progress.setVisible(True)
@@ -60,12 +77,14 @@ class MainWindow(QMainWindow):
         self.mask_button.setDisabled(True)
         self.lib_path = "segmentation_mask.stack_gui_main"
         self.final_title = "PartSeg Mask Segmentation"
-        self.startTimer(0)
+        self.prepare = Prepare(self.lib_path)
+        self.prepare.finished.connect(self.launch)
+        self.prepare.start()
 
     def window_shown(self):
         self.close()
 
-    def launch(self, cls, title):
-        wind = cls(title, self.window_shown)
+    def launch(self):
+        wind = self.prepare.result(title=self.final_title, signal_fun=self.window_shown)
         wind.show()
         self.wind = wind
