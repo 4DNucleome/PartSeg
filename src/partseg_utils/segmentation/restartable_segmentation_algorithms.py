@@ -315,7 +315,7 @@ class OtsuSegment(RestartableAlgorithm):
         self._sizes_array = []
         self.threshold_info = []
 
-    def set_parameters(self, channel, noise_removal, components, valley, hist_num): # mask
+    def set_parameters(self, channel, noise_removal, components, valley, hist_num):  # mask
         self.new_parameters["components"] = components
         # self.new_parameters["mask"] = mask
         self.new_parameters["hist_num"] = hist_num

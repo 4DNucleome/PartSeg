@@ -272,5 +272,3 @@ double_threshold_dict = Register()
 
 double_threshold_dict.register(DoubleThreshold)
 double_threshold_dict.register(DoubleOtsu)
-
-print(double_threshold_dict)
