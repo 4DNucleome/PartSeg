@@ -3,6 +3,8 @@ from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 from enum import Enum
 from typing import List, Type, Dict
+import collections
+
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QHideEvent, QPainter, QPaintEvent
@@ -21,6 +23,13 @@ from project_utils_qt.segmentation_thread import SegmentationThread
 from project_utils_qt.settings import ImageSettings, BaseSettings
 from tiff_image import Image
 
+def update(d, u):
+    for k, v in u.items():
+        if isinstance(v, collections.Mapping):
+            d[k] = update(d.get(k, {}), v)
+        else:
+            d[k] = v
+    return d
 
 class EnumComboBox(QComboBox):
     def __init__(self, enum: type(Enum), parent=None):
@@ -63,6 +72,13 @@ class QtAlgorithmProperty(AlgorithmProperty):
 
     def get_value(self):
         return self._getter(self._widget)
+
+    def recursive_get_values(self):
+        if isinstance(self._widget, SubAlgorithmWidget):
+            return self._widget.recursive_get_values()
+        else:
+            return self.get_value()
+
 
     def set_value(self, val):
         return self._setter(self._widget, val)
@@ -112,8 +128,6 @@ class QtAlgorithmProperty(AlgorithmProperty):
             res.setText(str(self.default_value))
         elif issubclass(self.value_type, Enum):
             res = EnumComboBox(self.value_type)
-            # noinspection PyUnresolvedReference,PyUnresolvedReferences
-            # res.addItems(self.value_type.__members__.keys())
             # noinspection PyUnresolvedReferences
             res.set_value(self.default_value)
         elif issubclass(self.value_type, list):
@@ -164,8 +178,10 @@ class QtAlgorithmProperty(AlgorithmProperty):
 class FormWidget(QWidget):
     value_changed = pyqtSignal()
 
-    def __init__(self, fields: typing.List[AlgorithmProperty]):
+    def __init__(self, fields: typing.List[AlgorithmProperty], start_values=None):
         super().__init__()
+        if start_values is None:
+            start_values = {}
         self.widgets_dict: typing.Dict[str, QtAlgorithmProperty] = dict()
         self.channels_chose: typing.List[typing.Union[ChannelComboBox, SubAlgorithmWidget]] = []
         layout = QFormLayout()
@@ -180,6 +196,8 @@ class FormWidget(QWidget):
                 layout.addRow(label, el.get_field().choose)
                 layout.addRow(el.get_field())
                 self.widgets_dict[el.name] = el
+                if el.name in start_values:
+                    el.get_field().set_starting(start_values[el.name])
                 el.change_fun.connect(self.value_changed.emit)
             else:
                 self.widgets_dict[el.name] = el
@@ -188,10 +206,15 @@ class FormWidget(QWidget):
                     label.setToolTip(el.tool_tip)
                 layout.addRow(label, el.get_field())
                 # noinspection PyUnresolvedReferences
-                el.change_fun.connect(self.value_changed.emit)
                 if issubclass(el.value_type, Channel):
                     # noinspection PyTypeChecker
                     self.channels_chose.append(el.get_field())
+                if el.name in start_values:
+                    try:
+                        el.set_value(start_values[el.name])
+                    except:
+                        pass
+                el.change_fun.connect(self.value_changed.emit)
         self.setLayout(layout)
 
     def has_elements(self):
@@ -199,6 +222,9 @@ class FormWidget(QWidget):
 
     def get_values(self):
         return dict(((name, el.get_value()) for name, el in self.widgets_dict.items()))
+
+    def recursive_get_values(self):
+        return dict(((name, el.recursive_get_values()) for name, el in self.widgets_dict.items()))
 
     def set_values(self, values: dict):
         for name, value in values.items():
@@ -222,14 +248,15 @@ class SubAlgorithmWidget(QWidget):
         super().__init__()
         assert isinstance(algorithm_property.possible_values, dict)
         assert isinstance(algorithm_property.default_value, str)
+        self.starting_values = {}
         self.property = algorithm_property
-        self.widget_dict: typing.Dict[str, FormWidget] = {}
+        self.widgets_dict: typing.Dict[str, FormWidget] = {}
         # TODO protect for recursion
         widget = FormWidget(algorithm_property.possible_values[algorithm_property.default_value].get_fields())
         widget.layout().setContentsMargins(0, 0, 0, 0)
         widget.value_changed.connect(self.values_changed)
 
-        self.widget_dict[algorithm_property.default_value] = widget
+        self.widgets_dict[algorithm_property.default_value] = widget
         self.choose = QComboBox(self)
         self.choose.addItems(algorithm_property.possible_values.keys())
         self.setContentsMargins(0, 0, 0, 0)
@@ -258,17 +285,23 @@ class SubAlgorithmWidget(QWidget):
         layout.addRow(self.current_widget)
         self.current_layout = layout"""
 
+    def set_starting(self, starting_values):
+        self.starting_values = starting_values
+
     def set_values(self, val: dict):
         if not isinstance(val, dict):
             return
         self.choose.setCurrentText(val["name"])
-        if val["name"] not in self.widget_dict:
+        if val["name"] not in self.widgets_dict:
             self.algorithm_choose(val["name"])
-        self.widget_dict[val["name"]].set_values(val["values"])
+        self.widgets_dict[val["name"]].set_values(val["values"])
+
+    def recursive_get_values(self):
+        return dict(((name, el.recursive_get_values()) for name, el in self.widgets_dict.items()))
 
     def get_values(self):
         name = self.choose.currentText()
-        values = self.widget_dict[name].get_values()
+        values = self.widgets_dict[name].get_values()
         return {"name": name, "values": values}
 
     def change_channels_num(self, image: Image):
@@ -278,12 +311,14 @@ class SubAlgorithmWidget(QWidget):
                 el.widget().image_changed(image)
 
     def algorithm_choose(self, name):
-        if name not in self.widget_dict:
-            self.widget_dict[name] = FormWidget(self.property.possible_values[name].get_fields())
-            self.widget_dict[name].layout().setContentsMargins(0, 0, 0, 0)
-            self.layout().addWidget(self.widget_dict[name])
-            self.widget_dict[name].value_changed.connect(self.values_changed)
-        widget = self.widget_dict[name]
+        if name not in self.widgets_dict:
+            start_dict = {} if name not in self.starting_values else self.starting_values[name]
+            self.widgets_dict[name] = FormWidget(self.property.possible_values[name].get_fields(),
+                                                 start_values=start_dict)
+            self.widgets_dict[name].layout().setContentsMargins(0, 0, 0, 0)
+            self.layout().addWidget(self.widgets_dict[name])
+            self.widgets_dict[name].value_changed.connect(self.values_changed)
+        widget = self.widgets_dict[name]
         for i in range(self.layout().count()):
             lay_elem = self.layout().itemAt(i)
             if lay_elem.widget():
@@ -297,7 +332,7 @@ class SubAlgorithmWidget(QWidget):
 
     def paintEvent(self, event: QPaintEvent):
         name = self.choose.currentText()
-        if self.widget_dict[name].has_elements() and event.rect().top()  == 0 and event.rect().left() == 0:
+        if self.widgets_dict[name].has_elements() and event.rect().top()  == 0 and event.rect().left() == 0:
             painter = QPainter(self)
             painter.drawRect(event.rect())
 
@@ -327,6 +362,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
         :param settings:
         """
         super().__init__()
+        self.settings = settings
         self.widget_list = []
         self.name = name
         self.algorithm = algorithm
@@ -334,11 +370,11 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
         self.info_label = QLabel()
         self.info_label.setHidden(True)
         main_layout.addWidget(self.info_label)
-        self.form_widget = FormWidget(algorithm.get_fields())
+        start_values = settings.get(f"algorithm_widget_state.{name}", dict)
+        self.form_widget = FormWidget(algorithm.get_fields(), start_values=start_values)
         self.form_widget.value_changed.connect(self.values_changed.emit)
         self.form_widget.setMinimumHeight(1500)
         self.setWidget(self.form_widget)
-        self.settings = settings
         value_dict = self.settings.get(f"algorithms.{self.name}", {})
         self.set_values(value_dict)
         # self.settings.image_changed[Image].connect(self.image_changed)
@@ -378,6 +414,9 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
 
     def hideEvent(self, a0: QHideEvent):
         self.algorithm_thread.clean()
+
+    def recursive_get_values(self):
+        return self.form_widget.recursive_get_values()
 
 
 class AlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
@@ -432,7 +471,7 @@ class AlgorithmChoose(QWidget):
         self.settings = settings
         self.stack_layout = QStackedLayout()
         self.algorithm_choose = QComboBox()
-        self.algorithm_dict = {}
+        self.algorithm_dict: typing.Dict[str, BaseAlgorithmSettingsWidget] = {}
         widgets_list = []
         for name, val in algorithms.items():
             self.algorithm_choose.addItem(name)
@@ -462,6 +501,13 @@ class AlgorithmChoose(QWidget):
         layout.addLayout(self.stack_layout)
         self.setLayout(layout)
 
+    def recursive_get_values(self):
+        result = {}
+        for key, widget in self.algorithm_dict.items():
+            result[key] = widget.recursive_get_values()
+        self.settings.set("algorithm_widget_state", update(self.settings.get("algorithm_widget_state", dict), result))
+        return result
+
     def change_algorithm(self, name, values: dict = None):
         self.settings.set("current_algorithm", name)
         widget = self.stack_layout.currentWidget()
@@ -480,6 +526,7 @@ class AlgorithmChoose(QWidget):
         self.algorithm_choose.setCurrentText(name)
         self.blockSignals(False)
         self.algorithm_changed.emit(name)
+
 
     def image_changed(self):
         current_widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.currentWidget()

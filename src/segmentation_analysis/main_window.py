@@ -635,7 +635,6 @@ class MainWindow(BaseMainWindow):
         self.advanced_window = AdvancedWindow(self.settings)
         self.batch_window = None  # BatchWindow(self.settings)
 
-
         if initial_image is None:
             reader = ImageReader()
             im = reader.read(self.initial_image_path)
@@ -706,6 +705,7 @@ class MainWindow(BaseMainWindow):
         # print(self.settings.dump_view_profiles())
         # print(self.settings.segmentation_dict["default"].my_dict)
         self.settings.set_in_profile("main_window_geometry", bytes(self.saveGeometry().toHex()).decode('ascii'))
+        self.options_panel.algorithm_choose_widget.recursive_get_values()
         if self.batch_window is not None:
             if self.batch_window.is_working():
                 ret = QMessageBox.warning(self, "Batch work", "Batch work is not finished. "
