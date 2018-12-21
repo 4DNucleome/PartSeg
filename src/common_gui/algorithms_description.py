@@ -370,7 +370,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
         self.info_label = QLabel()
         self.info_label.setHidden(True)
         main_layout.addWidget(self.info_label)
-        start_values = settings.get(f"algorithm_widget_state.{name}", dict)
+        start_values = settings.get(f"algorithm_widget_state.{name}", dict())
         self.form_widget = FormWidget(algorithm.get_fields(), start_values=start_values)
         self.form_widget.value_changed.connect(self.values_changed.emit)
         self.form_widget.setMinimumHeight(1500)
