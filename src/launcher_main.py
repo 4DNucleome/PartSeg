@@ -31,9 +31,13 @@ def main():
     logging.basicConfig(level=logging.INFO)
     my_app = QApplication(sys.argv)
     if args.gui == "segmentation_analysis" or args.mf:
+        import plugins
+        plugins.register()
         from segmentation_analysis.main_window import MainWindow
         title = "PartSeg Segmentation Analysis"
     elif args.gui == "segmentation":
+        import plugins
+        plugins.register()
         from segmentation_mask.stack_gui_main import MainWindow
         title = "PartSeg Mask Segmentation"
     else:

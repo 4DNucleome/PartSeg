@@ -16,6 +16,8 @@ class Prepare(QThread):
 
     def run(self):
         if self.module != "":
+            import plugins
+            plugins.register()
             main_window_module = importlib.import_module(self.module)
             main_window = main_window_module.MainWindow
             settings = main_window.settings_class(main_window_module.CONFIG_FOLDER)
