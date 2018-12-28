@@ -1,40 +1,20 @@
 # distutils: language = c++
 # cython: boundscheck=False, wraparound=False, nonecheck=False, cdivision=True
-# cython: profile=True
 # cython: language_level=3
 
-from libcpp cimport bool
-import numpy as np
-cimport numpy as np
+from numpy cimport float64_t, int8_t, uint8_t
 
-ctypedef np.int16_t Size
+from .distance_utils cimport Point
+include "put_borders_in_queue.pyx"
 
-cdef extern from 'my_queue.h':
-    cdef cppclass my_queue[T]:
-        my_queue() except +
-        T front()
-        void pop()
-        void push(T& v)
-        bool empty()
-        size_t get_size()
 
-cdef extern from "global_consts.h":
-    const signed char neighbourhood[26][3]
-    const char neigh_level[]
-    const float distance[]
-
-cdef struct Point:
-    Size x
-    Size y
-    Size z
-
-def calculate_maximum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[np.uint8_t, ndim=3] base_object,
-                      np.ndarray[np.int8_t, ndim=2] neighbourhood, result=None):
+def calculate_maximum(np.ndarray[float64_t, ndim=3] object_area, np.ndarray[uint8_t, ndim=3] base_object,
+                      np.ndarray[int8_t, ndim=2] neighbourhood, result=None):
     """
     Calculate maximum path from source
     :param object_area: data with removed other components
     :param base_object: area of component
-    :param level: type of neighbourhood (1,2,3)
+    :param neighbourhood: array with relative coordinates of neighbours
     :param result:
     :return:
     """
@@ -43,8 +23,9 @@ def calculate_maximum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[n
     res, c = _calculate_maximum(object_area, base_object, neighbourhood, result)
     return res
 
-def _calculate_maximum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[np.uint8_t, ndim=3] base_object,
-                       np.ndarray[np.int8_t, ndim=2] neighbourhood, np.ndarray[np.float64_t, ndim=3] result):
+
+cdef _calculate_maximum(np.ndarray[float64_t, ndim=3] object_area, np.ndarray[uint8_t, ndim=3] base_object,
+                       np.ndarray[int8_t, ndim=2] neighbourhood, np.ndarray[float64_t, ndim=3] result):
     # cdef np.ndarray[np.uint8_t, ndim=3] consumed_area = np.copy(base_object)
     # cdef np.ndarray[np.float64_t, ndim=3] result
     cdef Size x_size, y_size, z_size, array_pos, x, y, z, xx, yy, zz
@@ -62,22 +43,7 @@ def _calculate_maximum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[
     result[base_object > 0] = object_area[base_object > 0]
 
     # Find border of component
-    for z in range(1, z_size-1):
-        for y in range(1, y_size-1):
-            for x in range (1, x_size-1):
-                if base_object[z,y,x] > 0:
-                    for neigh_it in range(neigh_length):
-                        zz = z+neighbourhood[neigh_it, 0]
-                        yy = y+neighbourhood[neigh_it, 1]
-                        xx = x+neighbourhood[neigh_it, 2]
-                        if xx == -1 or xx == x_size or xx == -1 or yy == y_size or zz == -1 or zz == z_size:
-                            continue
-                        if base_object[zz, yy, zz] == 0:
-                            p.z = z
-                            p.y = y
-                            p.x = x
-                            current_points.push(p)
-                            break
+    put_borders_in_queue(object_area, current_points, base_object, neighbourhood)
     while not current_points.empty():
         count+=1
         p = current_points.front()
@@ -107,13 +73,14 @@ def _calculate_maximum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[
                     base_object[z, y, x] = 1
     return result, count
 
-def calculate_minimum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[np.uint8_t, ndim=3] base_object,
-                      np.ndarray[np.int8_t, ndim=2] neighbourhood, float maximum, result=None):
+def calculate_minimum(np.ndarray[float64_t, ndim=3] object_area, np.ndarray[uint8_t, ndim=3] base_object,
+                      np.ndarray[int8_t, ndim=2] neighbourhood, float maximum, result=None):
     """
     Calculate maximum path from source
+    :param maximum: maximum possible value on path
     :param object_area: data with removed other components
     :param base_object: area of component
-    :param level: type of neighbourhood (1,2,3)
+    :param neighbourhood: array with relative coordinates of neighbours
     :param result:
     :return:
     """
@@ -123,8 +90,8 @@ def calculate_minimum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[n
     res, c = _calculate_minimum(object_area, base_object, neighbourhood, result)
     return res
 
-def _calculate_minimum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[np.uint8_t, ndim=3] base_object,
-                       np.ndarray[np.int8_t, ndim=2] neighbourhood, np.ndarray[np.float64_t, ndim=3] result):
+cdef _calculate_minimum(np.ndarray[float64_t, ndim=3] object_area, np.ndarray[uint8_t, ndim=3] base_object,
+                       np.ndarray[int8_t, ndim=2] neighbourhood, np.ndarray[float64_t, ndim=3] result):
     # cdef np.ndarray[np.uint8_t, ndim=3] consumed_area = np.copy(base_object)
     # cdef np.ndarray[np.float64_t, ndim=3] result
     cdef Size x_size, y_size, z_size, array_pos, x, y, z, xx, yy, zz
@@ -140,24 +107,7 @@ def _calculate_minimum(np.ndarray[np.float64_t, ndim=3] object_area, np.ndarray[
     print("_calculate_minimum")
 
     result[base_object > 0] = object_area[base_object > 0]
-
-    # Find border of component
-    for z in range(0, z_size):
-        for y in range(0, y_size):
-            for x in range (0, x_size):
-                if base_object[z,y,x] > 0:
-                    for neigh_it in range(neigh_length):
-                        zz = z+neighbourhood[neigh_it, 0]
-                        yy = y+neighbourhood[neigh_it, 1]
-                        xx = x+neighbourhood[neigh_it, 2]
-                        if xx == -1 or xx == x_size or xx == -1 or yy == y_size or zz == -1 or zz == z_size:
-                            continue
-                        if base_object[zz, yy, zz] == 0:
-                            p.z = z
-                            p.y = y
-                            p.x = x
-                            current_points.push(p)
-                            break
+    put_borders_in_queue(object_area, current_points, base_object, neighbourhood)
     while not current_points.empty():
         count+=1
         p = current_points.front()
