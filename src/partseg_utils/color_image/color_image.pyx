@@ -30,7 +30,7 @@ ctypedef fused label_types:
     np.uint32_t
 
 
-label_colors_gloabal = np.array([[0, 205, 0],
+label_colors_global = np.array([[0, 205, 0],
                    [0, 0, 255],
                    [0, 255, 255],
                    [255, 0, 255],
@@ -111,7 +111,7 @@ def add_labels(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[label_types, ndim=2
 
     cdef np.ndarray[label_types, ndim=2] local_labels
 
-    cdef np.uint8_t [:,:] label_colors = label_colors_gloabal
+    cdef np.uint8_t [:,:] label_colors = label_colors_global
 
     if only_border:
         circle_list = []
