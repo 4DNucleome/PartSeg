@@ -1,3 +1,4 @@
+import json
 import os
 
 import appdirs
@@ -366,6 +367,7 @@ class AlgorithmOptions(QWidget):
         self.borders_thick.setValue(control_view.borders_thick)
         # noinspection PyUnresolvedReferences
         self.borders_thick.valueChanged.connect(self.border_value_check)
+        self.save_segmentation_properties_button = QPushButton("Save segmentation parameters")
         self.execute_btn = QPushButton("Execute")
         self.execute_all_btn = QPushButton("Execute all")
         self.execute_all_btn.setDisabled(True)
@@ -414,6 +416,7 @@ class AlgorithmOptions(QWidget):
         opt_layout2.addWidget(right_label("Border thick:"))
         opt_layout2.addWidget(self.borders_thick)
         main_layout.addLayout(opt_layout2)
+        main_layout.addWidget(self.save_segmentation_properties_button)
         btn_layout = QHBoxLayout()
         btn_layout.setContentsMargins(0, 0, 0, 0)
         btn_layout.addWidget(self.execute_btn)
@@ -431,6 +434,7 @@ class AlgorithmOptions(QWidget):
 
         # noinspection PyUnresolvedReferences
         self.algorithm_choose.currentIndexChanged.connect(self.stack_layout.setCurrentIndex)
+        self.save_segmentation_properties_button.clicked.connect(self.save_segmentation_properties_function)
         self.execute_btn.clicked.connect(self.execute_action)
         self.execute_all_btn.clicked.connect(self.execute_all_action)
         # noinspection PyUnresolvedReferences
@@ -444,6 +448,20 @@ class AlgorithmOptions(QWidget):
         settings.chosen_components_widget = self.choose_components
         settings.components_change_list.connect(self.choose_components.new_choose)
         settings.image_changed.connect(self.choose_components.remove_components)
+
+    def save_segmentation_properties_function(self):
+        widget: AlgorithmSettingsWidget = self.stack_layout.currentWidget()
+        values = widget.get_values()
+        dial = QFileDialog()
+        dial.setFileMode(QFileDialog.AnyFile)
+        dial.setAcceptMode(QFileDialog.AcceptSave)
+        dial.setDefaultSuffix(".json")
+        if dial.exec():
+            file_path = dial.selectedFiles()[0]
+            json_string = json.dumps(values, cls=self.settings.json_encoder_class)
+            print(json_string, file_path)
+            with open(file_path, 'w') as ff:
+                ff.write(json_string)
 
     def border_value_check(self, value):
         if value % 2 == 0:

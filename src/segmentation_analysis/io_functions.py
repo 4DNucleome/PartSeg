@@ -104,11 +104,11 @@ def load_project(
     else:
         mask = None
     algorithm_str = tar_file.extractfile("algorithm.json").read()
-    algorithm_dict = json.loads(algorithm_str, object_hook=partial(part_hook, None))
+    algorithm_dict = json.loads(algorithm_str, object_hook=part_hook)
     history = []
     try:
         history_buff = tar_file.extractfile(tar_file.getmember("history/history.json"))
-        history_json = json.load(history_buff, object_hook=partial(part_hook, None))
+        history_json = json.load(history_buff, object_hook=part_hook)
         for el in history_json:
             history_buffer = BytesIO()
             history_buffer.write(tar_file.extractfile(f"history/arrays_{el['index']}.npz").read())

@@ -1,7 +1,7 @@
 import numpy as np
 from PyQt5.QtCore import QThread, pyqtSignal
 
-from .io_functions import load_stack_segmentation, save_stack_segmentation
+from .io_functions import load_stack_segmentation, SaveSegmentation, SegmentationTuple
 from partseg_utils.segmentation.algorithm_base import SegmentationAlgorithm
 from project_utils_qt.settings import ImageSettings
 from tiff_image import ImageReader
@@ -69,8 +69,10 @@ class BatchProceed(QThread):
                 segmentation = self.algorithm.calculation_run(self.progress_info)
                 name = path.basename(file_path)
                 name = path.splitext(name)[0] + ".seg"
-                save_stack_segmentation(path.join(self.result_dir, name), segmentation.segmentation,
-                                        list(range(1, len(self.components) + 1)), self.base_file)
+                SaveSegmentation.save(path.join(self.result_dir, name),
+                                      SegmentationTuple(temp_settings.image, segmentation.segmentation,
+                                                        list(range(1, len(self.components) + 1))),
+                                      parameters=SaveSegmentation.get_default_values())
 
             except Exception as e:
                 self.error_signal.emit("Exception occurred during proceed {}. Exception info {}".format(file_path, e))

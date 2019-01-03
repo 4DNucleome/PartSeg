@@ -17,7 +17,7 @@ class PartEncoder(ProfileEncoder):
         return super().default(o)
 
 
-def part_hook(_, dkt):
+def part_hook(dkt):
     if "__StatisticProfile__" in dkt:
         del dkt["__StatisticProfile__"]
         res = StatisticProfile(**dkt)
@@ -31,4 +31,4 @@ def part_hook(_, dkt):
         return CalculationPlan(**dkt)
     if "__CalculationTree__" in dkt:
         return CalculationTree(operation=dkt["operation"], children=dkt["children"])
-    return profile_hook(_, dkt)
+    return profile_hook(dkt)

@@ -58,11 +58,6 @@ class StackSettings(BaseSettings):
         save_components(self.image, self.chosen_components_widget.get_chosen(), self.segmentation, dir_path,
                         range_changed=range_changed, step_changed=step_changed)
 
-    def save_segmentation(self, file_path: str, range_changed=None, step_changed=None):
-        print("[save_segmentation]", self.chosen_components())
-        save_stack_segmentation(file_path, self.segmentation, self.chosen_components(), self.image.file_path,
-                                range_changed=range_changed, step_changed=step_changed)
-
     def load_segmentation(self, file_path: str, range_changed=None, step_changed=None):
         self.segmentation, metadata = load_stack_segmentation(file_path,
                                                               range_changed=range_changed, step_changed=step_changed)

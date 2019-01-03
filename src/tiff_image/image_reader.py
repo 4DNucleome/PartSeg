@@ -38,8 +38,8 @@ class ImageReader(object):
 
 
     @classmethod
-    def read_image(cls, callback_function: typing.Callable,
-                   image_path: typing.Union[str, BytesIO], mask_path=None) -> Image:
+    def read_image(cls, image_path: typing.Union[str, BytesIO], mask_path=None,
+                   callback_function: typing.Optional[typing.Callable]=None) -> Image:
         instance = cls(callback_function)
         return instance.read(image_path, mask_path)
 

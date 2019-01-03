@@ -349,10 +349,6 @@ class ImageView(QWidget):
 
         settings.segmentation_changed.connect(self.set_labels)
 
-    @property
-    def border_val(self):
-        return self._settings.border_val
-
     """"@border_val.setter
     def border_val(self, val):
         self._settings.border_val = val"""
@@ -438,7 +434,7 @@ class ImageView(QWidget):
             return
         img = np.copy(self.get_layer())
         color_maps = self.channel_control.current_colors
-        borders = self.border_val[:]
+        borders = self._settings.border_val[:]
         for i, p in enumerate(self.channel_control.get_limits()):
             if p is not None:
                 borders[i] = p

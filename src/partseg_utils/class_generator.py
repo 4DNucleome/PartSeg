@@ -266,7 +266,7 @@ class ReadonlyClassEncoder(json.JSONEncoder):
         return super().default(o)
 
 
-def readonly_hook(_, dkt: dict):
+def readonly_hook(dkt: dict):
     if "__ReadOnly__" in dkt:
         del dkt["__ReadOnly__"]
         cls = base_readonly_register.get_class(dkt["__subtype__"])

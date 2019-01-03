@@ -112,6 +112,8 @@ def add_labels(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[label_types, ndim=2
     cdef np.ndarray[label_types, ndim=2] local_labels
 
     cdef np.uint8_t [:,:] label_colors = label_colors_global
+    # prevent from usage background
+    use_labels[0] = 0
 
     if only_border:
         circle_list = []

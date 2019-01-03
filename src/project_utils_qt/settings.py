@@ -175,7 +175,7 @@ class ProfileEncoder(ReadonlyClassEncoder):
         return super().default(o)
 
 
-def profile_hook(_, dkt):
+def profile_hook(dkt):
     if "__ProfileDict__" in dkt:
         del dkt["__ProfileDict__"]
         res = ProfileDict()
@@ -183,7 +183,7 @@ def profile_hook(_, dkt):
         return res
     if "__RadiusType__" in dkt:
         return RadiusType(dkt["value"])
-    return readonly_hook(_, dkt)
+    return readonly_hook(dkt)
 
 
 class ViewSettings(ImageSettings):
@@ -243,7 +243,7 @@ class SaveSettingsDescription(typing.NamedTuple):
 
 class BaseSettings(ViewSettings):
     json_encoder_class = ProfileEncoder
-    decode_hook = profile_hook
+    decode_hook = staticmethod(profile_hook)
 
     def get_save_list(self) -> typing.List[SaveSettingsDescription]:
         return [SaveSettingsDescription("segmentation_settings.json", self.segmentation_dict),

@@ -44,6 +44,14 @@ class AlgorithmDescribeBase:
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
         raise NotImplementedError()
 
+    @classmethod
+    def get_default_values(cls):
+        result = {}
+        for el in cls.get_fields():
+            if isinstance(el, AlgorithmProperty):
+                result[el.name] = el.default_value
+        return result
+
 
 class Register(OrderedDict):
     def __init__(self, *args, class_methods=None, methods=None, **kwargs):

@@ -21,7 +21,7 @@ class PartSettings(BaseSettings):
     """
     mask_changed = pyqtSignal()
     json_encoder_class = PartEncoder
-    decode_hook = part_hook
+    decode_hook = staticmethod(part_hook)
     last_executed_algorithm: str
 
     def __init__(self, json_path):

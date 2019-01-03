@@ -10,7 +10,7 @@ from partseg_utils.border_rim import border_mask
 from partseg_utils.channel_class import Channel
 from partseg_utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
 from partseg_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
-from partseg_utils.segmentation.noise_removing import noise_removal_dict
+from partseg_utils.segmentation.noise_filtering import noise_removal_dict
 from partseg_utils.segmentation.sprawl import sprawl_dict, BaseSprawl
 from partseg_utils.segmentation.threshold import threshold_dict, BaseThreshold, double_threshold_dict
 from partseg_utils.universal_const import UNITS_LIST

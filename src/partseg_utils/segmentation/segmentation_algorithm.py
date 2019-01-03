@@ -10,7 +10,7 @@ from partseg_utils.segmentation.algorithm_base import SegmentationAlgorithm, Seg
 from partseg_utils.convex_fill import convex_fill
 from partseg_utils.image_operations import RadiusType
 from partseg_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
-from partseg_utils.segmentation.noise_removing import noise_removal_dict
+from partseg_utils.segmentation.noise_filtering import noise_removal_dict
 from partseg_utils.segmentation.threshold import threshold_dict, BaseThreshold
 from partseg_utils.segmentation.segment import close_small_holes, opening
 
@@ -175,7 +175,6 @@ class ThresholdAlgorithm(BaseThresholdAlgorithm):
         return "Threshold"
 
     def _threshold_image(self, image: np.ndarray) -> np.ndarray:
-
         return None
 
     def _threshold_and_exclude(self, image, report_fun):
