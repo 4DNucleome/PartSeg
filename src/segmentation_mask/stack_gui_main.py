@@ -452,13 +452,14 @@ class AlgorithmOptions(QWidget):
     def save_segmentation_properties_function(self):
         widget: AlgorithmSettingsWidget = self.stack_layout.currentWidget()
         values = widget.get_values()
+        result = {"algorithm": widget.name, "values": values}
         dial = QFileDialog()
         dial.setFileMode(QFileDialog.AnyFile)
         dial.setAcceptMode(QFileDialog.AcceptSave)
         dial.setDefaultSuffix(".json")
         if dial.exec():
             file_path = dial.selectedFiles()[0]
-            json_string = json.dumps(values, cls=self.settings.json_encoder_class)
+            json_string = json.dumps(result, cls=self.settings.json_encoder_class)
             print(json_string, file_path)
             with open(file_path, 'w') as ff:
                 ff.write(json_string)
