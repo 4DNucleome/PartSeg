@@ -450,7 +450,12 @@ Session.vim
 tags
 
 src/partseg_utils/color_image/color_image\.c
-notebooks
+
+!notebooks/
+notebooks/*
+!notebooks/Neuron_types_example.ipynb
+
+
 *.cpp
 *.html
 !help/*.html
