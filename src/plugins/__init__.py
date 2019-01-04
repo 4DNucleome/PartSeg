@@ -1,11 +1,12 @@
-import os
 import importlib
+import pkgutil
+
+def get_plugins():
+    packages = pkgutil.iter_modules(__path__)
+    return list(packages)
+
 
 def register():
-    self_dir = os.path.dirname(__file__)
-    packages = [x for x in os.listdir(self_dir) if os.path.isdir(os.path.join(self_dir, x)) and
-                os.path.exists(os.path.join(self_dir, x, "__init__.py"))]
-
-    for el in packages:
-        importlib.import_module("."+el, __package__).register()
-
+    print("plugins load", get_plugins())
+    for el in get_plugins():
+        importlib.import_module("." + el.name, __package__).register()
