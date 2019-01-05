@@ -1,3 +1,4 @@
+import json
 import os
 from copy import deepcopy
 from typing import Union, Optional, Tuple
@@ -211,7 +212,7 @@ class AdvancedSettings(QWidget):
             self.update_profile_list()
 
     def export_profile(self):
-        exp = ExportDialog(self._settings.get(f"segmentation_profiles", dict()), ProfileDictViewer)
+        exp = ExportDialog(self._settings.segmentation_profiles, ProfileDictViewer)
         if not exp.exec_():
             return
         dial = QFileDialog(self, "Export profile segment")
@@ -223,7 +224,9 @@ class AdvancedSettings(QWidget):
         dial.selectFile("segment_profile.json")
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
-            self._settings.dump_part(file_path, "segmentation_profiles", exp.get_export_list())
+            data = dict([(x, self._settings.segmentation_profiles[x]) for x in exp.get_export_list()])
+            with open(file_path, 'w') as ff:
+                json.dump(data, ff, cls=self._settings.json_encoder_class, indent=2)
             self._settings.set("io.save_directory", os.path.dirname(file_path))
 
     def import_profiles(self):
@@ -236,7 +239,7 @@ class AdvancedSettings(QWidget):
             file_path = dial.selectedFiles()[0]
             self._settings.set("io.save_directory", os.path.dirname(file_path))
             profs = self._settings.load_part(file_path)
-            profiles_dict = self._settings.get(f"segmentation_profiles", dict())
+            profiles_dict = self._settings.segmentation_profiles
             imp = ImportDialog(profs, profiles_dict, ProfileDictViewer)
             if not imp.exec_():
                 return
@@ -250,7 +253,7 @@ class AdvancedSettings(QWidget):
         text, ok = QInputDialog.getText(self, "New profile name", f"New name for {profile_name}", text=profile_name)
         if ok:
             text = text.strip()
-            profiles_dict = self._settings.get(f"segmentation_profiles", dict())
+            profiles_dict = self._settings.segmentation_profiles
             if text in profiles_dict.keys():
                 res = QMessageBox.warning(self, "Already exist",
                                           f"Profile with name {text} already exist. Would you like to overwrite?",
@@ -677,7 +680,10 @@ class StatisticsSettings(QWidget):
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
             self.settings.set("io.export_directory", file_path)
-            self.settings.dump_part(file_path, "statistic_profiles", exp.get_export_list())
+            data = dict([(x, self.settings.statistic_profiles[x]) for x in exp.get_export_list()])
+            with open(file_path, 'w') as ff:
+                json.dump(data, ff, cls=self.settings.json_encoder_class, indent=2)
+            self._settings.set("io.save_directory", os.path.dirname(file_path))
 
     def import_statistic_profiles(self):
         dial = QFileDialog(self, "Import settings profiles")
