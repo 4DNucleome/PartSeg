@@ -6,7 +6,7 @@ This tutorial shows how to segment nuclei from 3D confocal images and later how 
 Rat postmitotic neurons were fixed and subjected to fluorescent in situ hybridization (FISH)
 with chromosome paint probes specific to chromosome 1. Nuclei were counterstained with Hoechest, which binds specifically to DNA. Next 3D images were acquired in 16-bit using confocal microscope.
 
-Dataset for this tutorial can be downloaded from [here](http://nucleus3d.cent.uw.edu.pl/PartSeg/Downloads/PartSeg_samples.zip).
+Dataset for this tutorial can be downloaded from [here](http://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg_samples.zip).
 It contains original 3D confocal image (stack1.lsm), segmentation of aforementioned image (stack1.seg), and folder containing tiffs of single nuclei and mask files (stack1_components).
 Data contains 2 channels: channel 1 represents DNA staining and channel 2- chromosome paint probe. Voxel size of the whole data set is 77.52x77.52x210 nm.
 Information from channel 1 is used for the segmentation of nuclei and masks generation.
@@ -126,11 +126,11 @@ Select channel 1 and profile "test_case" created in the last paragraph. Enable *
 
 ### Chromosome 1 dataset
 Data set contains 5 original 3D confocal images of chromosome 1 FISH. Data contains 2 channels: channel 1 represents DNA staining and channel 2- chromosome paint probe. Voxel size of the whole data set is 77.52x77.52x210 nm.
-[download link](http://nucleus3d.cent.uw.edu.pl/PartSeg/Downloads/chromosome_1_stacks.zip) (713MB).
+[download link](http://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/chromosome_1_stacks.zip) (713MB).
 
 ### Chromosome 16 dataset
 Data set contains 5 original 3D confocal images of chromosome 1 FISH. Data contains 2 channels: channel 2 represents DNA staining and channel 1- chromosome paint probe. Voxel size of the whole data set is 77.52x77.52x210 nm.
-[download link](http://nucleus3d.cent.uw.edu.pl/PartSeg/Downloads/chromosome_16_stacks.zip) (1.3GB).
+[download link](http://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/chromosome_16_stacks.zip) (1.3GB).
 
 
 ### FAQ
