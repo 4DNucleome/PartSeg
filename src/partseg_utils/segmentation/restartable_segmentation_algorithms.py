@@ -272,9 +272,9 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
                 return SegmentationResult(self.finally_segment, self.segmentation, self.cleaned_image)
             path_sprawl: BaseSprawl = sprawl_dict[self.new_parameters["flow_type"]["name"]]
             self.parameters["flow_type"] = self.new_parameters["flow_type"]
-            new_segment = path_sprawl.sprawl(self.sprawl_area, finally_segment, self.channel, self.components_num,
-                                             self.image.spacing, self.new_parameters["side_connection"],
-                                             self.threshold_operator, self.new_parameters["flow_type"]["values"])
+            new_segment = path_sprawl.sprawl(self.sprawl_area, finally_segment, self.channel, self.components_num, self.image.spacing,
+                          self.new_parameters["side_connection"], self.threshold_operator,
+                          self.new_parameters["flow_type"]["values"], self.threshold_info[1], self.threshold_info[0])
             self.final_sizes = np.bincount(new_segment.flat)
             return SegmentationResult(new_segment, self.sprawl_area, self.cleaned_image)
 

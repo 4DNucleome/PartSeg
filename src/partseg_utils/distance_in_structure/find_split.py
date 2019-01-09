@@ -1,6 +1,9 @@
+from functools import partial
+
 import numpy as np
 from .euclidean_cython import calculate_euclidean
 from .path_sprawl_cython import calculate_maximum, calculate_minimum
+from .fuzzy_distance import fuzzy_distance
 import typing
 
 import logging
@@ -69,13 +72,28 @@ def path_minimum_sprawl(data_f, components, components_count, neighbourhood, dis
     return components
 
 
-def distance_sprawl(data_m: np.ndarray, components: np.ndarray, components_count: int, neigh_arr, dist_arr,
+def euclidean_sprawl(data_m: np.ndarray, components: np.ndarray, components_count: int, neigh_arr, dist_arr,
+                     distance_cache=None, data_cache=None):
+    return distance_sprawl(calculate_euclidean, data_m, components, components_count, neigh_arr, dist_arr,
+                           distance_cache,
+                           data_cache)
+
+
+def fdt_sprawl(data_m: np.ndarray, components: np.ndarray, components_count: int, neigh_arr, dist_arr, lower_bound,
+               upper_bound, distance_cache=None, data_cache=None):
+    return distance_sprawl(partial(fuzzy_distance, lower_bound=lower_bound, upper_bound=upper_bound),
+                           data_m, components, components_count, neigh_arr, dist_arr, distance_cache,
+                           data_cache)
+
+
+def distance_sprawl(calculate_operator, data_m: np.ndarray, components: np.ndarray, components_count: int, neigh_arr,
+                    dist_arr,
                     distance_cache=None, data_cache=None):
     if data_cache is None:
         data_cache = np.zeros(data_m.shape, data_m.dtype)
     if components_count == 1:
         np.copyto(data_cache, data_m)
-        tmp = calculate_euclidean(data_cache, (components == 1).astype(np.uint8), neigh_arr, dist_arr)
+        tmp = calculate_operator(data_cache, (components == 1).astype(np.uint8), neigh_arr, dist_arr)
         components[tmp < 2 ** 17] = 1
         return components
     if distance_cache is None:
@@ -83,8 +101,8 @@ def distance_sprawl(data_m: np.ndarray, components: np.ndarray, components_count
     for component in range(1, components_count + 1):
         np.copyto(data_cache, data_m)
         data_cache[(components > 0) * (components != component)] = 0
-        distance_cache[component - 1] = calculate_euclidean(data_cache, (components == component).astype(np.uint8),
-                                                            neigh_arr, dist_arr)
+        distance_cache[component - 1] = calculate_operator(data_cache, (components == component).astype(np.uint8),
+                                                           neigh_arr, dist_arr)
     else:
         components = get_closest_component(components, (data_m > 0).astype(np.uint8), distance_cache[:components_count],
                                            components_count)

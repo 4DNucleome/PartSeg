@@ -4,7 +4,8 @@ from typing import Callable, Any
 
 import numpy as np
 
-from partseg_utils.distance_in_structure.find_split import path_maximum_sprawl, path_minimum_sprawl, distance_sprawl
+from partseg_utils.distance_in_structure.find_split import path_maximum_sprawl, path_minimum_sprawl, euclidean_sprawl, \
+    fdt_sprawl
 from partseg_utils.segmentation.algorithm_describe_base import Register, AlgorithmDescribeBase
 
 
@@ -15,7 +16,7 @@ class BaseSprawl(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def sprawl(cls, sprawl_area: np.ndarray, core_objects: np.ndarray, data: np.ndarray, components_num: int, spacing,
-               side_connection: bool, operator: Callable[[Any, Any], bool], arguments: dict):
+               side_connection: bool, operator: Callable[[Any, Any], bool], arguments: dict, lower_bound, upper_bound):
         raise NotImplementedError()
 
 
@@ -26,7 +27,7 @@ class PathSprawl(BaseSprawl):
 
     @classmethod
     def sprawl(cls, sprawl_area: np.ndarray, core_objects: np.ndarray, data: np.ndarray, components_num: int, spacing,
-               side_connection: bool, operator: Callable[[Any, Any], bool], arguments: dict):
+               side_connection: bool, operator: Callable[[Any, Any], bool], arguments: dict, lower_bound, upper_bound):
         if operator(1, 0):
             path_sprawl = path_maximum_sprawl
         else:
@@ -46,9 +47,26 @@ class DistanceSprawl(BaseSprawl):
 
     @classmethod
     def sprawl(cls, sprawl_area: np.ndarray, core_objects: np.ndarray, data: np.ndarray, components_num: int, spacing,
-               side_connection: bool, operator: Callable[[Any, Any], bool], arguments: dict):
+               side_connection: bool, operator: Callable[[Any, Any], bool], arguments: dict, lower_bound, upper_bound):
         neigh, dist = calculate_distances_array(spacing, get_neigh(side_connection))
-        return distance_sprawl(sprawl_area, core_objects, components_num, neigh, dist)
+        return euclidean_sprawl(sprawl_area, core_objects, components_num, neigh, dist)
+
+
+class FDTSprawl(BaseSprawl):
+    @classmethod
+    def get_name(cls):
+        return "Fuzzy distance sprawl"
+
+    @classmethod
+    def sprawl(cls, sprawl_area: np.ndarray, core_objects: np.ndarray, data: np.ndarray, components_num: int, spacing,
+               side_connection: bool, operator: Callable[[Any, Any], bool], arguments: dict, lower_bound, upper_bound):
+        print(f"l {lower_bound}, {upper_bound}")
+        image = data.astype(np.float64)
+        image[sprawl_area == 0] = 0
+        if lower_bound > upper_bound:
+            image = -image
+        neigh, dist = calculate_distances_array(spacing, get_neigh(side_connection))
+        return fdt_sprawl(image, core_objects, components_num, neigh, dist, lower_bound, upper_bound)
 
 
 class PathDistanceSprawl(BaseSprawl):
@@ -58,14 +76,14 @@ class PathDistanceSprawl(BaseSprawl):
 
     @classmethod
     def sprawl(cls, sprawl_area: np.ndarray, core_objects: np.ndarray, data: np.ndarray, components_num: int, spacing,
-               side_connection: bool, operator: Callable[[Any, Any], bool], arguments: dict):
+               side_connection: bool, operator: Callable[[Any, Any], bool], arguments: dict, lower_bound, upper_bound):
         mid = PathSprawl.sprawl(sprawl_area, core_objects, data, components_num, spacing, side_connection, operator,
-                                arguments)
+                                arguments, lower_bound, upper_bound)
         return DistanceSprawl.sprawl(sprawl_area, mid, data, components_num, spacing, side_connection, operator,
-                                     arguments)
+                                     arguments, lower_bound, upper_bound)
 
 
-sprawl_dict = Register(PathSprawl, DistanceSprawl, PathDistanceSprawl)
+sprawl_dict = Register(PathSprawl, DistanceSprawl, PathDistanceSprawl, FDTSprawl)
 
 
 def get_neigh(sides):
