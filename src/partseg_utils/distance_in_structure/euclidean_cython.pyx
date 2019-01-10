@@ -23,7 +23,7 @@ def calculate_euclidean(np.ndarray[uint8_t, ndim=3] object_area, np.ndarray[uint
     y_size = object_area.shape[1]
     x_size = object_area.shape[2]
     result = np.zeros((z_size, y_size, x_size), dtype=np.float64)
-    result[base_object == 0] = 2**17
+    result[base_object == 0] = np.inf
     put_borders_in_queue(object_area, current_points, base_object, neighbourhood)
     while not current_points.empty():
         p = current_points.front()

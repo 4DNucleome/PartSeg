@@ -60,13 +60,12 @@ class FDTSprawl(BaseSprawl):
     @classmethod
     def sprawl(cls, sprawl_area: np.ndarray, core_objects: np.ndarray, data: np.ndarray, components_num: int, spacing,
                side_connection: bool, operator: Callable[[Any, Any], bool], arguments: dict, lower_bound, upper_bound):
-        print(f"l {lower_bound}, {upper_bound}")
         image = data.astype(np.float64)
         image[sprawl_area == 0] = 0
         if lower_bound > upper_bound:
             image = -image
-        neigh, dist = calculate_distances_array(spacing, get_neigh(side_connection))
-        return fdt_sprawl(image, core_objects, components_num, neigh, dist, lower_bound, upper_bound)
+        neigh = get_neighbourhood(spacing, get_neigh(side_connection))
+        return fdt_sprawl(image, core_objects, components_num, neigh, lower_bound, upper_bound)
 
 
 class PathDistanceSprawl(BaseSprawl):

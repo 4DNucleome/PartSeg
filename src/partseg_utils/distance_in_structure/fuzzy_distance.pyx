@@ -46,9 +46,7 @@ cdef inline double calculate_mu(float64_t pixel_val, float64_t lower_bound, floa
 
 
 def fuzzy_distance(np.ndarray[float64_t, ndim=3] object_area, np.ndarray[uint8_t, ndim=3] base_object,
-                   np.ndarray[int8_t, ndim=2] neighbourhood, np.ndarray[float64_t, ndim=1] distance,
-                   float64_t lower_bound, float64_t upper_bound):
-    print("Lower " + str(lower_bound) + ", upper " + str(upper_bound))
+                   np.ndarray[int8_t, ndim=2] neighbourhood, float64_t lower_bound, float64_t upper_bound):
     cdef np.ndarray[uint8_t, ndim=3] consumed_area = np.copy(base_object)
     cdef np.ndarray[float64_t, ndim=3] result
     cdef Size x_size, y_size, z_size, array_pos, x, y, z, xx, yy, zz
@@ -85,8 +83,6 @@ def fuzzy_distance(np.ndarray[float64_t, ndim=3] object_area, np.ndarray[uint8_t
             object_neighbourhood_value = object_area[z, y, x]
             neigh_mu = calculate_mu(object_neighbourhood_value, lower_bound, upper_bound, SegmentType.reflection_mu)
             mu_diff = (point_mu + neigh_mu) * abs(object_value - object_neighbourhood_value)
-            if result[p.z, p.y, p.x] + mu_diff > np.inf:
-                count2 += 1
             if result[z, y, x] > result[p.z, p.y, p.x] + mu_diff:
                 result[z, y, x] = result[p.z, p.y, p.x] + mu_diff
                 if consumed_area[z, y, x] == 0:
