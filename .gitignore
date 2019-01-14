@@ -4,7 +4,7 @@ t_file.py
 help/html
 data/
 *.xcf
-src/static_files/icons/32x32
+package/PartSeg/static_files/icons/32x32
 
 ### PyCharm ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and Webstorm
@@ -449,7 +449,7 @@ Session.vim
 # auto-generated tag files
 tags
 
-src/partseg_utils/color_image/color_image\.c
+package/PartSeg/partseg_utils/color_image/color_image\.c
 
 !notebooks/
 notebooks/*
@@ -460,4 +460,4 @@ notebooks/*
 *.html
 !help/*.html
 test_data/
-!src/launcher.spec
+!package/PartSeg/launcher.spec
