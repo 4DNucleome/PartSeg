@@ -64,8 +64,8 @@ class FDTSprawl(BaseSprawl):
         image[sprawl_area == 0] = 0
         if lower_bound > upper_bound:
             image = -image
-        neigh = get_neighbourhood(spacing, get_neigh(side_connection))
-        return fdt_sprawl(image, core_objects, components_num, neigh, lower_bound, upper_bound)
+        neigh, dist = calculate_distances_array(spacing, get_neigh(side_connection))
+        return fdt_sprawl(image, core_objects, components_num, neigh, dist, lower_bound, upper_bound)
 
 
 class PathDistanceSprawl(BaseSprawl):
