@@ -2,7 +2,7 @@ import argparse
 import sys
 import logging
 
-from PyQt5.QtWidgets import QApplication
+from custom_application import CustomApplication
 
 from partseg_utils.base_argparser import CustomParser
 from project_utils_qt.except_hook import my_excepthook
@@ -29,7 +29,7 @@ def main():
     print(args)
 
     logging.basicConfig(level=logging.INFO)
-    my_app = QApplication(sys.argv)
+    my_app = CustomApplication(sys.argv)
     if args.gui == "segmentation_analysis" or args.mf:
         import plugins
         plugins.register()

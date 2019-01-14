@@ -2,17 +2,18 @@ import sys
 import partseg_utils.report_utils as report_utils
 
 
+
 def my_excepthook(type_, value, trace_back):
     # log the exception here
     if report_utils.report_errors:
         try:
             # noinspection PyUnresolvedReferences
-            from PyQt5.QtWidgets import QApplication
+            from qtpy.QtWidgets import QApplication
             if QApplication.instance():
-                # noinspection PyUnresolvedReferences
-                from project_utils_qt.error_dialog import ErrorDialog
-                dial = ErrorDialog(value, "Exception during program run")
-                dial.exec()
+                from qtpy.QtCore import Qt
+                from qtpy.QtCore import QMetaObject
+                QApplication.instance().value = value
+                QMetaObject.invokeMethod(QApplication.instance(), "show_error",  Qt.QueuedConnection)
         except ImportError:
             pass
     # then call the default handler
