@@ -11,28 +11,28 @@ from PyQt5.QtGui import QIcon, QKeyEvent, QKeySequence
 from PyQt5.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
     QFileDialog, QMessageBox, QCheckBox, QComboBox, QInputDialog, QDialog
 
-from common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, AlgorithmChoose
-from common_gui.channel_control import ChannelControl
-from common_gui.mask_widget import MaskWidget
-from common_gui.stack_image_view import ColorBar
-from common_gui.waiting_dialog import WaitingDialog
-from partseg_utils.global_settings import static_file_folder
-from partseg_utils.mask_create import calculate_mask, MaskProperty
-from partseg_utils.segmentation.algorithm_base import SegmentationResult
-from project_utils_qt.error_dialog import ErrorDialog
-from project_utils_qt.image_read_thread import ImageReaderThread
-from project_utils_qt.main_window import BaseMainWindow
-from segmentation_analysis.advanced_window import AdvancedWindow
-from segmentation_analysis.batch_window import BatchWindow
-from segmentation_analysis.calculation_pipeline_thread import CalculatePipelineThread
-from segmentation_analysis.interpolate_dialog import InterpolateDialog
-from segmentation_analysis.interpolate_thread import InterpolateThread
-from tiff_image import ImageReader, Image
+from ..common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, AlgorithmChoose
+from ..common_gui.channel_control import ChannelControl
+from ..common_gui.mask_widget import MaskWidget
+from ..common_gui.stack_image_view import ColorBar
+from ..common_gui.waiting_dialog import WaitingDialog
+from ..partseg_utils.global_settings import static_file_folder
+from ..partseg_utils.mask_create import calculate_mask, MaskProperty
+from ..partseg_utils.segmentation.algorithm_base import SegmentationResult
+from ..project_utils_qt.error_dialog import ErrorDialog
+from ..project_utils_qt.image_read_thread import ImageReaderThread
+from ..project_utils_qt.main_window import BaseMainWindow
+from .advanced_window import AdvancedWindow
+from .batch_window import BatchWindow
+from .calculation_pipeline_thread import CalculatePipelineThread
+from .interpolate_dialog import InterpolateDialog
+from .interpolate_thread import InterpolateThread
+from PartSeg.tiff_image import ImageReader, Image
 from .algorithm_description import part_algorithm_dict, SegmentationProfile
 from .analysis_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
 from .partseg_settings import PartSettings
-from common_gui.custom_save import SaveDialog
+from ..common_gui.custom_save import SaveDialog
 from .io_functions import save_register
 
 app_name = "PartSeg"
@@ -462,7 +462,7 @@ class MainMenu(QWidget):
                             dial.exec()
                             self._settings.image = read_thread.image
                 elif selected_filter == "saved project (*.tgz *.tbz2 *.gz *.bz2)":
-                    # TODO chnage to load dialog
+                    # TODO chanage to load dialog
                     self._settings.load_project(file_path)
                     # self.segment.threshold_updated()
                 elif selected_filter == "Profiles (*.json)":

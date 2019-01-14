@@ -3,31 +3,31 @@ import os
 
 import appdirs
 import numpy as np
-from PyQt5.QtCore import pyqtSignal, Qt, QByteArray
-from PyQt5.QtGui import QGuiApplication, QIcon
-from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox, QVBoxLayout, QCheckBox, \
+from qtpy.QtCore import Signal, Qt, QByteArray
+from qtpy.QtGui import QGuiApplication, QIcon
+from qtpy.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox, QVBoxLayout, QCheckBox, \
     QComboBox, QDoubleSpinBox, QSpinBox, QStackedLayout, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
     QTabWidget, QSizePolicy
 
-from common_gui.algorithms_description import AlgorithmSettingsWidget
-from common_gui.channel_control import ChannelControl
-from common_gui.colors_choose import ColorSelector
-from common_gui.custom_save import SaveDialog
-from common_gui.flow_layout import FlowLayout
-from common_gui.select_multiple_files import AddFiles
-from common_gui.stack_image_view import ColorBar
-from common_gui.universal_gui_part import right_label
-from common_gui.waiting_dialog import WaitingDialog
-from partseg_utils.global_settings import static_file_folder
-from partseg_utils.segmentation.algorithm_base import SegmentationResult
-from partseg_utils.universal_const import UNITS_LIST, UNIT_SCALE
-from project_utils_qt.error_dialog import ErrorDialog
-from project_utils_qt.image_read_thread import ImageReaderThread
-from project_utils_qt.main_window import BaseMainWindow
-from project_utils_qt.execute_function_thread import ExecuteFunctionThread
-from segmentation_mask.stack_algorithm.algorithm_description import stack_algorithm_dict
-from segmentation_mask.stack_settings import StackSettings
-from tiff_image import ImageReader, Image
+from ..common_gui.algorithms_description import AlgorithmSettingsWidget
+from ..common_gui.channel_control import ChannelControl
+from ..common_gui.colors_choose import ColorSelector
+from ..common_gui.custom_save import SaveDialog
+from ..common_gui.flow_layout import FlowLayout
+from ..common_gui.select_multiple_files import AddFiles
+from ..common_gui.stack_image_view import ColorBar
+from ..common_gui.universal_gui_part import right_label
+from ..common_gui.waiting_dialog import WaitingDialog
+from ..partseg_utils.global_settings import static_file_folder
+from ..partseg_utils.segmentation.algorithm_base import SegmentationResult
+from ..partseg_utils.universal_const import UNITS_LIST, UNIT_SCALE
+from ..project_utils_qt.error_dialog import ErrorDialog
+from ..project_utils_qt.image_read_thread import ImageReaderThread
+from ..project_utils_qt.main_window import BaseMainWindow
+from ..project_utils_qt.execute_function_thread import ExecuteFunctionThread
+from .stack_algorithm.algorithm_description import stack_algorithm_dict
+from .stack_settings import StackSettings
+from PartSeg.tiff_image import ImageReader, Image
 from .batch_proceed import BatchProceed
 from .image_view import StackImageView
 from .io_functions import load_stack_segmentation, SaveSegmentation
@@ -38,7 +38,7 @@ CONFIG_FOLDER = os.path.join(appdirs.user_data_dir(app_name, app_lab), "mask")
 
 
 class MainMenu(QWidget):
-    image_loaded = pyqtSignal()
+    image_loaded = Signal()
 
     def __init__(self, settings):
         """
@@ -236,8 +236,8 @@ class MainMenu(QWidget):
 
 
 class ComponentCheckBox(QCheckBox):
-    mouse_enter = pyqtSignal(int)
-    mouse_leave = pyqtSignal(int)
+    mouse_enter = Signal(int)
+    mouse_leave = Signal(int)
 
     def __init__(self, number: int, parent=None):
         super().__init__(str(number), parent)
@@ -254,9 +254,9 @@ class ChosenComponents(QWidget):
     """
     :type check_box: dict[int, QCheckBox]
     """
-    check_change_signal = pyqtSignal()
-    mouse_enter = pyqtSignal(int)
-    mouse_leave = pyqtSignal(int)
+    check_change_signal = Signal()
+    mouse_enter = Signal(int)
+    mouse_leave = Signal(int)
 
     def __init__(self):
         super(ChosenComponents, self).__init__()

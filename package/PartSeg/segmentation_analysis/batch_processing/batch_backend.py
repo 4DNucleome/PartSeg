@@ -10,17 +10,17 @@ import numpy as np
 import pandas as pd
 import tifffile
 
-from segmentation_analysis.algorithm_description import SegmentationProfile, part_algorithm_dict
-from segmentation_analysis.batch_processing.calculation_plan import CalculationTree, MaskMapper, MaskUse, MaskCreate, Save, \
+from ..algorithm_description import SegmentationProfile, part_algorithm_dict
+from ..batch_processing.calculation_plan import CalculationTree, MaskMapper, MaskUse, MaskCreate, Save, \
     Operations, FileCalculation, MaskIntersection, MaskSum, get_save_path, StatisticCalculate, Calculation
-from segmentation_analysis.batch_processing.parallel_backed import BatchManager
-from segmentation_analysis.io_functions import load_project, ProjectTuple
-from segmentation_analysis.analysis_utils import HistoryElement
-from segmentation_analysis.save_register import save_register
-from partseg_utils.mask_create import calculate_mask
-from partseg_utils.segmentation.algorithm_base import report_empty_fun
-from partseg_utils.universal_const import UNITS_LIST, UNIT_SCALE
-from tiff_image import ImageReader, Image
+from ..batch_processing.parallel_backed import BatchManager
+from ..io_functions import load_project, ProjectTuple
+from ..analysis_utils import HistoryElement
+from ..save_register import save_register
+from ...partseg_utils.mask_create import calculate_mask
+from ...partseg_utils.segmentation.algorithm_base import report_empty_fun
+from ...partseg_utils.universal_const import UNITS_LIST, UNIT_SCALE
+from PartSeg.tiff_image import ImageReader, Image
 
 
 def do_calculation(file_path, calculation):
@@ -191,7 +191,8 @@ class CalculationProcess(object):
             statistics = \
                 node.operation.statistic_profile.calculate(image_channel,
                                                            self.segmentation, self.full_segmentation,
-                                                           self.mask, [x * scalar for x in self.image.spacing])
+                                                           self.mask, [x * scalar for x in self.image.spacing],
+                                                           node.operation.units)
             self.statistics.append(statistics)
         else:
             raise ValueError("Unknown operation {} {}".format(type(node.operation), node.operation))

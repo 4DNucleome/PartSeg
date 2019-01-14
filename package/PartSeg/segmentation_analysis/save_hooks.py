@@ -1,7 +1,7 @@
-from segmentation_analysis.algorithm_description import SegmentationProfile
+from .algorithm_description import SegmentationProfile
 from .statistics_calculation import StatisticProfile
-from project_utils_qt.settings import ProfileEncoder, profile_hook
-from segmentation_analysis.batch_processing.calculation_plan import CalculationPlan, CalculationTree
+from ..project_utils_qt.settings import ProfileEncoder, profile_hook
+from .batch_processing.calculation_plan import CalculationPlan, CalculationTree
 
 
 class PartEncoder(ProfileEncoder):

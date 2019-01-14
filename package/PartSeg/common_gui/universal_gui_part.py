@@ -4,7 +4,7 @@ from sys import platform
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFontMetrics
 
-from common_gui.flow_layout import FlowLayout
+from .flow_layout import FlowLayout
 from PyQt5.QtWidgets import QWidget, QLabel, QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QComboBox, QSlider,\
     QLineEdit
 

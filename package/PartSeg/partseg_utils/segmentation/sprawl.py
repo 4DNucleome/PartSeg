@@ -4,9 +4,9 @@ from typing import Callable, Any
 
 import numpy as np
 
-from partseg_utils.distance_in_structure.find_split import path_maximum_sprawl, path_minimum_sprawl, euclidean_sprawl, \
+from ..distance_in_structure.find_split import path_maximum_sprawl, path_minimum_sprawl, euclidean_sprawl, \
     fdt_sprawl
-from partseg_utils.segmentation.algorithm_describe_base import Register, AlgorithmDescribeBase
+from ..segmentation.algorithm_describe_base import Register, AlgorithmDescribeBase
 
 
 class BaseSprawl(AlgorithmDescribeBase, ABC):

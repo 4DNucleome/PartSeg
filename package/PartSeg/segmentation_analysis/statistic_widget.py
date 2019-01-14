@@ -2,15 +2,15 @@ import logging
 import sys
 
 import numpy as np
-from PyQt5.QtCore import Qt, QEvent
-from PyQt5.QtWidgets import QWidget, QPushButton, QCheckBox, QComboBox, QTableWidget, QVBoxLayout, QHBoxLayout,\
+from qtpy.QtCore import Qt, QEvent
+from qtpy.QtWidgets import QWidget, QPushButton, QCheckBox, QComboBox, QTableWidget, QVBoxLayout, QHBoxLayout,\
     QLabel, QApplication, QTableWidgetItem, QMessageBox
 
-from common_gui.algorithms_description import ChannelComboBox
-from common_gui.waiting_dialog import WaitingDialog
-from segmentation_analysis.partseg_settings import PartSettings
-from partseg_utils.universal_const import UNITS_LIST, UNITS_DICT
-from project_utils_qt.execute_function_thread import ExecuteFunctionThread
+from ..common_gui.algorithms_description import ChannelComboBox
+from ..common_gui.waiting_dialog import WaitingDialog
+from .partseg_settings import PartSettings
+from ..partseg_utils.universal_const import UNITS_LIST, UNITS_DICT
+from ..project_utils_qt.execute_function_thread import ExecuteFunctionThread
 
 
 class StatisticsWidget(QWidget):

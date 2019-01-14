@@ -1,13 +1,13 @@
-from tiff_image import ImageReader, Image
-from project_utils_qt.progress_thread import ProgressTread
-from PyQt5.QtCore import pyqtSignal
+from PartSeg.tiff_image import ImageReader, Image
+from .progress_thread import ProgressTread
+from qtpy.QtCore import Signal
 
 
 class ImageReaderThread(ProgressTread):
     """
     thread for reading files. Useful for reading from disc
     """
-    image_read_finish = pyqtSignal(Image)
+    image_read_finish = Signal(Image)
 
     def __init__(self, file_path=None, mask_path=None, parent=None):
         super().__init__(parent)

@@ -3,24 +3,24 @@ import os
 from copy import deepcopy
 from typing import Union, Optional, Tuple
 
-from PyQt5.QtCore import QByteArray, Qt, QEvent
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushButton, QLineEdit, \
+from qtpy.QtCore import QByteArray, Qt, QEvent
+from qtpy.QtGui import QIcon
+from qtpy.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushButton, QLineEdit, \
     QVBoxLayout, QLabel, QHBoxLayout, QListWidgetItem, QDialog, QDoubleSpinBox, QSpinBox, QGridLayout, QApplication, \
     QMessageBox, QFileDialog, QComboBox, QAbstractSpinBox, QInputDialog, \
     QPlainTextEdit, QFrame
 
-from common_gui.algorithms_description import EnumComboBox
-from common_gui.colors_choose import ColorSelector
-from common_gui.custom_save import FormDialog
-from common_gui.lock_checkbox import LockCheckBox
-from segmentation_analysis.partseg_settings import PartSettings, MASK_COLORS
-from segmentation_analysis.profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer
-from segmentation_analysis.statistic_widget import StatisticsWidget
-from segmentation_analysis.statistics_calculation import StatisticProfile, STATISTIC_DICT, Node, Leaf, AreaType, PerComponent, \
+from ..common_gui.algorithms_description import EnumComboBox
+from ..common_gui.colors_choose import ColorSelector
+from ..common_gui.custom_save import FormDialog
+from ..common_gui.lock_checkbox import LockCheckBox
+from .partseg_settings import PartSettings, MASK_COLORS
+from .profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer
+from .statistic_widget import StatisticsWidget
+from .statistics_calculation import StatisticProfile, STATISTIC_DICT, Node, Leaf, AreaType, PerComponent, \
     StatisticEntry
-from partseg_utils.global_settings import static_file_folder
-from partseg_utils.universal_const import UNIT_SCALE, UNITS_LIST
+from ..partseg_utils.global_settings import static_file_folder
+from ..partseg_utils.universal_const import UNIT_SCALE, UNITS_LIST
 
 
 def h_line():
@@ -453,18 +453,18 @@ class StatisticsSettings(QWidget):
         self.proportion_butt.setEnabled(True)
 
     def proportion_action(self):
-        #TODO use get_parameters
+        # TODO use get_parameters
         if self.chosen_element is None:
             item = self.profile_options.currentItem()
             self.chosen_element_area = \
-                self.get_parameters(deepcopy(item.stat), self.statistic_area_choose.get_value(), self.per_component.get_value(),
-                                   self.power_num.value())
+                self.get_parameters(deepcopy(item.stat), self.statistic_area_choose.get_value(),
+                                    self.per_component.get_value(), self.power_num.value())
             print("aa", self.chosen_element_area)
             if self.chosen_element_area is None:
                 return
             self.chosen_element = item
             item.setIcon(QIcon(os.path.join(static_file_folder, "icons", "task-accepted.png")))
-                # self.statistic_area_choose.get_value(), self.per_component.get_value(), self.power_num.value()
+            # self.statistic_area_choose.get_value(), self.per_component.get_value(), self.power_num.value()
         elif self.profile_options.currentItem() == self.chosen_element and \
                 self.statistic_area_choose.get_value() == self.chosen_element_area.area and \
                 self.per_component.get_value() == self.chosen_element_area.per_component:
@@ -473,7 +473,7 @@ class StatisticsSettings(QWidget):
         else:
             item: StatisticListWidgetItem = self.profile_options.currentItem()
             leaf = self.get_parameters(deepcopy(item.stat), self.statistic_area_choose.get_value(),
-                                self.per_component.get_value(), self.power_num.value())
+                                       self.per_component.get_value(), self.power_num.value())
             print("aa", leaf)
             if leaf is None:
                 return 
@@ -575,7 +575,7 @@ class StatisticsSettings(QWidget):
 
     def discard_option(self):
         selected_item: StatisticListWidgetItem = self.profile_options_chosen.currentItem()
-        selected_row = self.profile_options_chosen.currentRow()
+        #  selected_row = self.profile_options_chosen.currentRow()
         lw = StatisticListWidgetItem(deepcopy(selected_item.stat))
         lw.setToolTip(selected_item.toolTip())
         self.create_selection_chosen_changed()

@@ -2,8 +2,8 @@ import typing
 from io import BytesIO
 from textwrap import indent
 import numpy as np
-from partseg_utils.class_generator import BaseReadonlyClass
-from partseg_utils.mask_create import MaskProperty
+from ..partseg_utils.class_generator import BaseReadonlyClass
+from ..partseg_utils.mask_create import MaskProperty
 from .algorithm_description import SegmentationProfile
 
 
@@ -24,6 +24,7 @@ class HistoryElement(BaseReadonlyClass):
         arrays.seek(0)
         return HistoryElement(algorithm_name=algorithm_name, algorithm_values=algorithm_values,
                               mask_property=mask_property, arrays=arrays)
+
 
 class SegmentationPipelineElement(BaseReadonlyClass):
     segmentation: SegmentationProfile

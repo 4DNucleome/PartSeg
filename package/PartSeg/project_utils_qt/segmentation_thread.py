@@ -2,16 +2,15 @@ import sys
 
 from PyQt5.QtCore import QMutex
 
-from partseg_utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
-from PyQt5.QtCore import QThread, pyqtSignal
-import numpy as np
+from ..partseg_utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
+from qtpy.QtCore import QThread, Signal
 
 
 class SegmentationThread(QThread):
-    execution_done = pyqtSignal(SegmentationResult)
-    progress_signal = pyqtSignal(str, int)
-    info_signal = pyqtSignal(str)
-    exception_occurred = pyqtSignal(Exception)
+    execution_done = Signal(SegmentationResult)
+    progress_signal = Signal(str, int)
+    info_signal = Signal(str)
+    exception_occurred = Signal(Exception)
 
     def __init__(self, algorithm: SegmentationAlgorithm):
         super().__init__()

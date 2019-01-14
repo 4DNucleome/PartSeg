@@ -6,21 +6,21 @@ from math import log
 from typing import Type
 
 import numpy as np
-from PyQt5 import QtGui
-from PyQt5.QtCore import QRect, QTimerEvent, QSize, QObject, pyqtSignal, QPoint, Qt, QEvent
-from PyQt5.QtGui import QShowEvent, QWheelEvent, QPainter, QPen, QColor, QPalette, QPixmap, QImage, QIcon
-from PyQt5.QtWidgets import QScrollBar, QLabel, QGridLayout
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
+from qtpy import QtGui
+from qtpy.QtCore import QRect, QTimerEvent, QSize, QObject, Signal, QPoint, Qt, QEvent
+from qtpy.QtGui import QShowEvent, QWheelEvent, QPainter, QPen, QColor, QPalette, QPixmap, QImage, QIcon
+from qtpy.QtWidgets import QScrollBar, QLabel, QGridLayout
+from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
     QScrollArea, QSizePolicy, QToolButton, QAction, QApplication, \
     QSlider, QCheckBox, QComboBox
 from scipy.ndimage import gaussian_filter
 
-from partseg_utils.color_image import color_image, add_labels
-from partseg_utils.color_image.color_image_base import color_maps
-from partseg_utils.colors import default_colors
-from partseg_utils.global_settings import static_file_folder
-from project_utils_qt.settings import ViewSettings, BaseSettings
-from tiff_image import Image
+from ..partseg_utils.color_image import color_image, add_labels
+from ..partseg_utils.color_image.color_image_base import color_maps
+from ..partseg_utils.colors import default_colors
+from ..partseg_utils.global_settings import static_file_folder
+from ..project_utils_qt.settings import ViewSettings, BaseSettings
+from PartSeg.tiff_image import Image
 from .channel_control import ChannelControl
 
 canvas_icon_size = QSize(20, 20)
@@ -29,9 +29,9 @@ max_step = log(1.2, step)
 
 
 class ImageState(QObject):
-    parameter_changed = pyqtSignal()
-    opacity_changed = pyqtSignal(float)
-    show_label_changed = pyqtSignal(bool)
+    parameter_changed = Signal()
+    opacity_changed = Signal(float)
+    show_label_changed = Signal(bool)
 
     def __init__(self, settings: ViewSettings):
         super(ImageState, self).__init__()
@@ -80,10 +80,10 @@ class ImageState(QObject):
 
 
 class ImageCanvas(QLabel):
-    zoom_mark = pyqtSignal(QPoint, QPoint)
-    position_signal = pyqtSignal(QPoint, QSize)
-    click_signal = pyqtSignal(QPoint, QSize)
-    leave_signal = pyqtSignal()
+    zoom_mark = Signal(QPoint, QPoint)
+    position_signal = Signal(QPoint, QSize)
+    click_signal = Signal(QPoint, QSize)
+    leave_signal = Signal()
 
     def __init__(self, local_settings):
         """
@@ -269,13 +269,13 @@ class ChanelColor(QWidget):
 
 
 class ImageView(QWidget):
-    position_changed = pyqtSignal([int, int, int], [int, int])
-    component_clicked = pyqtSignal(int)
-    text_info_change = pyqtSignal(str)
+    position_changed = Signal([int, int, int], [int, int])
+    component_clicked = Signal(int)
+    text_info_change = Signal(str)
 
     image_canvas = ImageCanvas
 
-    # zoom_changed = pyqtSignal(float, float, float)
+    # zoom_changed = Signal(float, float, float)
 
     def __init__(self, settings, channel_control: ChannelControl):
         """:type settings: ViewSettings"""
@@ -500,9 +500,9 @@ class MyScrollArea(QScrollArea):
     :type zoom_scale: float
     :param zoom_scale: zoom scale
     """
-    # resize_area = pyqtSignal(QSize)
+    # resize_area = Signal(QSize)
 
-    zoom_changed = pyqtSignal()
+    zoom_changed = Signal()
 
     def __init__(self, local_settings, image_canvas: Type[ImageCanvas], *args, **kwargs):
         """

@@ -94,7 +94,7 @@ var/
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
-*.spec
+# *.spec
 # I modified this file
 !main.spec
 !main-nonpack.spec
@@ -460,4 +460,4 @@ notebooks/*
 *.html
 !help/*.html
 test_data/
-!package/PartSeg/launcher.spec
+!launcher.spec

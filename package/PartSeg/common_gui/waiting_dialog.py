@@ -1,6 +1,6 @@
 from PyQt5.QtCore import QThread
 from PyQt5.QtWidgets import QDialog, QProgressBar, QPushButton, QHBoxLayout, QLabel
-from project_utils_qt.progress_thread import ProgressTread
+from ..project_utils_qt.progress_thread import ProgressTread
 
 
 class WaitingDialog(QDialog):

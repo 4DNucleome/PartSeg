@@ -1,12 +1,12 @@
-from PyQt5.QtWidgets import QWidget, QCheckBox, QGridLayout, QLabel, QHBoxLayout, QComboBox, QDoubleSpinBox
-from PyQt5.QtGui import QImage, QShowEvent, QPaintEvent, QPainter, QPen, QMouseEvent
-from PyQt5.QtCore import pyqtSignal
+from qtpy.QtWidgets import QWidget, QCheckBox, QGridLayout, QLabel, QHBoxLayout, QComboBox, QDoubleSpinBox
+from qtpy.QtGui import QImage, QShowEvent, QPaintEvent, QPainter, QPen, QMouseEvent
+from qtpy.QtCore import Signal
 import numpy as np
-from common_gui.collapse_checkbox import CollapseCheckbox
-from common_gui.universal_gui_part import CustomSpinBox
-from partseg_utils.color_image import color_image
 import typing
-from project_utils_qt.settings import ViewSettings
+from .collapse_checkbox import CollapseCheckbox
+from .universal_gui_part import CustomSpinBox
+from ..partseg_utils.color_image import color_image
+from ..project_utils_qt.settings import ViewSettings
 
 
 default_colors = ['BlackRed', 'BlackGreen', 'BlackBlue', 'BlackMagenta']
@@ -24,7 +24,7 @@ class ColorPreview(QWidget):
 
 
 class ChannelWidget(QWidget):
-    clicked = pyqtSignal(int)
+    clicked = Signal(int)
 
     def __init__(self, chanel_id: int, color: str, tight=False):
         super().__init__()
@@ -107,7 +107,7 @@ class ChannelWidget(QWidget):
 
 
 class MyComboBox(QComboBox):
-    hide_popup = pyqtSignal()
+    hide_popup = Signal()
 
     def hidePopup(self):
         super().hidePopup()
@@ -115,8 +115,8 @@ class MyComboBox(QComboBox):
 
 
 class ChannelChooseBase(QWidget):
-    coloring_update = pyqtSignal(bool)  # gave info if it is new image
-    channel_change = pyqtSignal(int)
+    coloring_update = Signal(bool)  # gave info if it is new image
+    channel_change = Signal(int)
 
     def __init__(self, settings: ViewSettings, parent=None, name="channelcontrol", text=""):
         super().__init__(parent)
@@ -160,7 +160,7 @@ class ChannelControl(ChannelChooseBase):
     :type channels_widgets: typing.List[ChannelWidget]
     """
 
-    parameters_changed = pyqtSignal()
+    parameters_changed = Signal()
 
     # noinspection PyUnresolvedReferences
     def __init__(self, settings: ViewSettings, parent=None, name="channelcontrol", text=""):

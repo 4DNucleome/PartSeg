@@ -2,7 +2,7 @@ from PyQt5.QtCore import QEvent, Qt, QRect
 from PyQt5.QtGui import QHelpEvent, QPainter, QPen, QColor
 from PyQt5.QtWidgets import QToolTip
 
-from common_gui.stack_image_view import ImageView, ImageCanvas
+from ..common_gui.stack_image_view import ImageView, ImageCanvas
 import numpy as np
 
 

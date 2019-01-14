@@ -1,7 +1,7 @@
 import SimpleITK as sitk
 import numpy as np
 
-from partseg_utils.universal_const import UNIT_SCALE, UNITS_LIST
+from .universal_const import UNIT_SCALE, UNITS_LIST
 
 
 def border_mask(mask, distance, units, voxel_size, **_):

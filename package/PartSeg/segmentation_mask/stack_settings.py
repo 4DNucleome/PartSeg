@@ -3,11 +3,8 @@ import numpy as np
 from os import path
 from PyQt5.QtCore import pyqtSignal
 
-from project_utils_qt.settings import BaseSettings
-from partseg_utils.segmentation.segment import cut_with_mask, save_catted_list
-from deprecation import deprecated
-
-from segmentation_mask.io_functions import save_stack_segmentation, load_stack_segmentation, save_components, \
+from ..project_utils_qt.settings import BaseSettings
+from .io_functions import load_stack_segmentation, save_components, \
     SegmentationTuple
 
 
@@ -43,16 +40,6 @@ class StackSettings(BaseSettings):
         num = segmentation.max()
         self.chosen_components_widget.set_chose(range(1, num + 1), metadata["components"])
         self.segmentation = segmentation
-
-    @deprecated()
-    def save_result(self, dir_path: str):
-        # TODO remove
-        res_img = cut_with_mask(self.segmentation, self._image, only=self.chosen_components())
-        res_mask = cut_with_mask(self.segmentation, self.segmentation, only=self.chosen_components())
-        res_mask = [(int(n), np.array((v > 0).astype(np.uint8))) for n,v in res_mask]
-        file_name = self.file_save_name()
-        save_catted_list(res_img, dir_path, prefix=f"{file_name}_component")
-        save_catted_list(res_mask, dir_path, prefix=f"{file_name}_component", suffix="_mask")
 
     def save_components(self, dir_path, range_changed=None, step_changed=None):
         save_components(self.image, self.chosen_components_widget.get_chosen(), self.segmentation, dir_path,

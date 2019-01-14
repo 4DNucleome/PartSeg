@@ -1,7 +1,7 @@
-from PyQt5.QtWidgets import QFileDialog, QDialog, QPushButton, QGridLayout, QStackedWidget
+from qtpy.QtWidgets import QFileDialog, QDialog, QPushButton, QGridLayout, QStackedWidget
 import typing
-from common_gui.algorithms_description import FormWidget
-from partseg_utils.io_utils import SaveBase
+from .algorithms_description import FormWidget
+from ..partseg_utils.io_utils import SaveBase
 
 
 class SaveProperty(typing.NamedTuple):
@@ -75,14 +75,14 @@ class SaveDialog(QFileDialog):
         except ValueError:
             pass
 
-    def selectNameFilter(self, filter: str):
+    def selectNameFilter(self, filter_name: str):
         try:
-            self.change_parameters(filter)
+            self.change_parameters(filter_name)
         except IndexError:
             pass
-        super().selectNameFilter(filter)
+        super().selectNameFilter(filter_name)
         try:
-            ext = self.save_register[filter].get_default_extension()
+            ext = self.save_register[filter_name].get_default_extension()
             self.setDefaultSuffix(ext)
         except Exception:
             pass

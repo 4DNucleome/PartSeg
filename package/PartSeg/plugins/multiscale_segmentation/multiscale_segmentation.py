@@ -1,0 +1,1 @@
+from partseg_utils.segmentation.algorithm_describe_base import AlgorithmProperty

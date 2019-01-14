@@ -1,6 +1,6 @@
 import argparse
 from typing import Optional, Sequence, Text
-import partseg_utils.report_utils as report_utils
+from . import report_utils
 
 
 class CustomParser(argparse.ArgumentParser):
@@ -13,4 +13,3 @@ class CustomParser(argparse.ArgumentParser):
         args = super().parse_args(args, namespace)
         report_utils.report_errors = args.no_report
         return args
-

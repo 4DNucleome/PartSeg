@@ -12,16 +12,16 @@ from PyQt5.QtWidgets import QComboBox, QCheckBox, QWidget, QVBoxLayout, QLabel, 
     QScrollArea, QLineEdit, QStackedLayout
 from six import with_metaclass
 
-from common_gui.dim_combobox import DimComboBox
-from common_gui.universal_gui_part import CustomSpinBox, CustomDoubleSpinBox
-from partseg_utils.channel_class import Channel
-from project_utils_qt.error_dialog import ErrorDialog
-from partseg_utils.image_operations import RadiusType
-from partseg_utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
-from partseg_utils.segmentation.algorithm_describe_base import AlgorithmProperty, AlgorithmDescribeBase
-from project_utils_qt.segmentation_thread import SegmentationThread
-from project_utils_qt.settings import ImageSettings, BaseSettings
-from tiff_image import Image
+from .dim_combobox import DimComboBox
+from .universal_gui_part import CustomSpinBox, CustomDoubleSpinBox
+from ..partseg_utils.channel_class import Channel
+from ..project_utils_qt.error_dialog import ErrorDialog
+from ..partseg_utils.image_operations import RadiusType
+from ..partseg_utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
+from ..partseg_utils.segmentation.algorithm_describe_base import AlgorithmProperty, AlgorithmDescribeBase
+from ..project_utils_qt.segmentation_thread import SegmentationThread
+from ..project_utils_qt.settings import ImageSettings, BaseSettings
+from PartSeg.tiff_image import Image
 
 def update(d, u):
     for k, v in u.items():

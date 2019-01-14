@@ -1,8 +1,8 @@
 import sys
 
-from PyQt5.QtWidgets import QDialog, QPushButton, QTextEdit, QHBoxLayout, QVBoxLayout, QLabel
+from qtpy.QtWidgets import QDialog, QPushButton, QTextEdit, QHBoxLayout, QVBoxLayout, QLabel, QLineEdit
 import traceback
-import partseg_utils.report_utils as report_utils
+from ..partseg_utils import report_utils
 import sentry_sdk
 
 
@@ -19,6 +19,7 @@ class ErrorDialog(QDialog):
         self.error_description.append(str(exception))
         self.error_description.setReadOnly(True)
         self.additional_info = QTextEdit()
+        self.contact_info = QLineEdit()
 
         self.cancel_btn.clicked.connect(self.reject)
         self.send_report_btn.clicked.connect(self.send_information)
@@ -28,6 +29,8 @@ class ErrorDialog(QDialog):
         self.desc.setWordWrap(True)
         layout.addWidget(self.desc)
         layout.addWidget(self.error_description)
+        layout.addWidget(QLabel("Contact information"))
+        layout.addWidget(self.contact_info)
         layout.addWidget(QLabel("Additional information from user:"))
         layout.addWidget(self.additional_info)
         btn_layout = QHBoxLayout()
@@ -48,6 +51,8 @@ class ErrorDialog(QDialog):
             text += "Additional notes: " + self.additional_notes + "\n"
         text += self.error_description.toPlainText() + "\n\n"
         if len(self.additional_info.toPlainText()) > 0:
-            text += "User information:\n" + self.additional_info.toPlainText()
+            text += "\nUser information:\n" + self.additional_info.toPlainText()
+        if len(self.contact_info.text()) > 0:
+            text += "\nContact: " + self.contact_info.text()
         sentry_sdk.capture_message(text)
         self.accept()

@@ -1,6 +1,6 @@
-from partseg_utils.channel_class import Channel
-from partseg_utils.class_generator import BaseReadonlyClass
-from partseg_utils.image_operations import RadiusType
+from .channel_class import Channel
+from .class_generator import BaseReadonlyClass
+from .image_operations import RadiusType
 
 
 class CmapProfileBase:

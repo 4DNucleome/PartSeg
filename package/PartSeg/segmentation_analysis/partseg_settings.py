@@ -1,14 +1,13 @@
 import typing
-from PyQt5.QtCore import pyqtSignal
+from qtpy.QtCore import Signal
 
-from segmentation_analysis.batch_processing.calculation_plan import CalculationPlan
-from segmentation_analysis.statistics_calculation import StatisticProfile
-from partseg_utils.cmap_utils import CmapProfile
+from .batch_processing.calculation_plan import CalculationPlan
+from .statistics_calculation import StatisticProfile
 from .algorithm_description import SegmentationProfile
 from .analysis_utils import HistoryElement, SegmentationPipeline
 from .save_hooks import PartEncoder, part_hook
-from .io_functions import save_project, save_cmap, load_project, ProjectTuple
-from project_utils_qt.settings import BaseSettings, SaveSettingsDescription, ProfileDict
+from .io_functions import save_project, load_project, ProjectTuple
+from ..project_utils_qt.settings import BaseSettings, SaveSettingsDescription, ProfileDict
 import numpy as np
 
 MASK_COLORS = {"white": np.array((255, 255, 255)), "black": np.array((0, 0, 0)), "red": np.array((255, 0, 0)),
@@ -19,7 +18,7 @@ class PartSettings(BaseSettings):
     """
     last_executed_algorithm - parameter for caring last used algorithm
     """
-    mask_changed = pyqtSignal()
+    mask_changed = Signal()
     json_encoder_class = PartEncoder
     decode_hook = staticmethod(part_hook)
     last_executed_algorithm: str
@@ -98,9 +97,6 @@ class PartSettings(BaseSettings):
         algorithm_name = project_tuple.algorithm_parameters["name"]
         self.last_executed_algorithm = algorithm_name
         self.set(f"algorithms.{algorithm_name}", project_tuple.algorithm_parameters["values"])
-
-    def save_cmap(self, file_path: str, cmap_profile: CmapProfile):
-        save_cmap(file_path, self.image, cmap_profile)
 
     def get_save_list(self) -> typing.List[SaveSettingsDescription]:
         return super().get_save_list() + [

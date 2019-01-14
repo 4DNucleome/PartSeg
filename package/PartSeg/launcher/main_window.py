@@ -4,8 +4,8 @@ from functools import partial
 from PyQt5.QtCore import QSize, Qt, QThread
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QToolButton, QGridLayout, QWidget, QProgressBar
-from partseg_utils.global_settings import static_file_folder
-from tiff_image import ImageReader
+from ..partseg_utils.global_settings import static_file_folder
+from PartSeg.tiff_image import ImageReader
 
 
 class Prepare(QThread):
@@ -16,7 +16,7 @@ class Prepare(QThread):
 
     def run(self):
         if self.module != "":
-            import plugins
+            from .. import plugins
             plugins.register()
             main_window_module = importlib.import_module(self.module)
             main_window = main_window_module.MainWindow
@@ -66,7 +66,7 @@ class MainWindow(QMainWindow):
         self.progress.setRange(0, 0)
         self.analysis_button.setDisabled(True)
         self.mask_button.setDisabled(True)
-        self.lib_path = "segmentation_analysis.main_window"
+        self.lib_path = "PartSeg.segmentation_analysis.main_window"
         self.final_title = "PartSeg Segmentation Analysis"
         self.prepare = Prepare(self.lib_path)
         self.prepare.finished.connect(self.launch)
@@ -77,7 +77,7 @@ class MainWindow(QMainWindow):
         self.progress.setRange(0, 0)
         self.analysis_button.setDisabled(True)
         self.mask_button.setDisabled(True)
-        self.lib_path = "segmentation_mask.stack_gui_main"
+        self.lib_path = "PartSeg.segmentation_mask.stack_gui_main"
         self.final_title = "PartSeg Mask Segmentation"
         self.prepare = Prepare(self.lib_path)
         self.prepare.finished.connect(self.launch)
@@ -87,6 +87,9 @@ class MainWindow(QMainWindow):
         self.close()
 
     def launch(self):
+        if self.prepare.result is None:
+            self.close()
+            return
         wind = self.prepare.result(title=self.final_title, signal_fun=self.window_shown)
         wind.show()
         self.wind = wind

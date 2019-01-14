@@ -1,12 +1,12 @@
-from PyQt5.QtGui import QShowEvent, QDragEnterEvent, QDropEvent
-from PyQt5.QtWidgets import QMainWindow, QMessageBox
-from PyQt5.QtCore import pyqtSignal
+from qtpy.QtGui import QShowEvent, QDragEnterEvent, QDropEvent
+from qtpy.QtWidgets import QMainWindow, QMessageBox
+from qtpy.QtCore import Signal
 
-from project_utils_qt.settings import BaseSettings
+from .settings import BaseSettings
 
 
 class BaseMainWindow(QMainWindow):
-    show_signal = pyqtSignal()
+    show_signal = Signal()
 
     settings_class = BaseSettings
 

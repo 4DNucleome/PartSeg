@@ -1,9 +1,9 @@
-from project_utils_qt.progress_thread import ProgressTread
+from .progress_thread import ProgressTread
 from typing import Union
 
 
 class ExecuteFunctionThread(ProgressTread):
-    def __init__(self, fun, args: Union[list, tuple]=None, kwargs: dict=None):
+    def __init__(self, fun, args: Union[list, tuple] = None, kwargs: dict = None):
         super().__init__()
         self.args = args if args else []
         self.kwargs = kwargs if kwargs else {}

@@ -2,10 +2,10 @@ import argparse
 import sys
 import logging
 
-from custom_application import CustomApplication
+from .custom_application import CustomApplication
 
-from partseg_utils.base_argparser import CustomParser
-from project_utils_qt.except_hook import my_excepthook
+from .partseg_utils.base_argparser import CustomParser
+from .project_utils_qt.except_hook import my_excepthook
 
 import multiprocessing
 
@@ -31,17 +31,17 @@ def main():
     logging.basicConfig(level=logging.INFO)
     my_app = CustomApplication(sys.argv)
     if args.gui == "segmentation_analysis" or args.mf:
-        import plugins
+        from . import plugins
         plugins.register()
-        from segmentation_analysis.main_window import MainWindow
+        from .segmentation_analysis.main_window import MainWindow
         title = "PartSeg Segmentation Analysis"
     elif args.gui == "segmentation":
-        import plugins
+        from . import plugins
         plugins.register()
-        from segmentation_mask.stack_gui_main import MainWindow
+        from .segmentation_mask.stack_gui_main import MainWindow
         title = "PartSeg Mask Segmentation"
     else:
-        from launcher.main_window import MainWindow
+        from .launcher.main_window import MainWindow
         title = "PartSeg Launcher"
     wind = MainWindow(title=title)
     wind.show()

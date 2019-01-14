@@ -10,7 +10,7 @@ class CustomApplication(QApplication):
     def show_error(self):
         if self.value is None:
             return
-        from project_utils_qt.error_dialog import ErrorDialog
+        from ..project_utils_qt.error_dialog import ErrorDialog
         dial = ErrorDialog(self.value, "Exception during program run")
         dial.moveToThread(QApplication.instance().thread())
         dial.exec()

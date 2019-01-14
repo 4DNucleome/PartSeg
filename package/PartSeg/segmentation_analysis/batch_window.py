@@ -2,24 +2,23 @@
 import logging
 import multiprocessing
 import os
-from glob import glob
 from pathlib import Path
 
 import numpy as np
-from PyQt5.QtCore import pyqtSignal, Qt, QTimer, QByteArray
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QPushButton, QListWidget, QAbstractItemView, QVBoxLayout, QHBoxLayout, QLineEdit, \
-    QListWidgetItem, QFileDialog, QWidget, QDialog, QLabel, QMessageBox, QProgressBar, QSpinBox, QGridLayout, QComboBox, \
+from qtpy.QtCore import Qt, QTimer, QByteArray
+from qtpy.QtGui import QIcon
+from qtpy.QtWidgets import QPushButton, QListWidget, QVBoxLayout, QHBoxLayout, QLineEdit, \
+    QFileDialog, QWidget, QDialog, QLabel, QMessageBox, QProgressBar, QSpinBox, QGridLayout, QComboBox, \
     QTabWidget, QTreeWidget, QTreeWidgetItem
 
-from common_gui.select_multiple_files import AddFiles
-from segmentation_analysis.partseg_settings import PartSettings
-from segmentation_analysis.batch_processing.batch_backend import CalculationManager
-from segmentation_analysis.batch_processing.calculation_plan import CalculationPlan, MaskFile, MaskMapper, Calculation
-from segmentation_analysis.prepare_plan_widget import CalculatePlaner
-from partseg_utils.global_settings import static_file_folder
-from partseg_utils.universal_const import UNITS_LIST
-from common_gui.universal_gui_part import Spacing, right_label
+from ..common_gui.select_multiple_files import AddFiles
+from .partseg_settings import PartSettings
+from .batch_processing.batch_backend import CalculationManager
+from .batch_processing.calculation_plan import CalculationPlan, MaskFile, MaskMapper, Calculation
+from .prepare_plan_widget import CalculatePlaner
+from ..partseg_utils.global_settings import static_file_folder
+from ..partseg_utils.universal_const import UNITS_LIST
+from ..common_gui.universal_gui_part import Spacing, right_label
 
 __author__ = "Grzegorz Bokota"
 

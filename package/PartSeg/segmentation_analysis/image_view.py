@@ -4,13 +4,11 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import QObject, QEvent
 from PyQt5.QtGui import QHideEvent, QShowEvent
 from PyQt5.QtWidgets import QPushButton, QStackedWidget, QCheckBox, QDoubleSpinBox, QLabel
-from scipy.ndimage import gaussian_filter
 
-from common_gui.channel_control import ChannelControl, ChannelChoose
-from common_gui.stack_image_view import ImageView, create_tool_button
-from segmentation_analysis.statistic_widget import StatisticsWidget
-from segmentation_analysis.partseg_settings import MASK_COLORS, PartSettings
-from partseg_utils.color_image import color_image
+from ..common_gui.channel_control import ChannelControl, ChannelChoose
+from ..common_gui.stack_image_view import ImageView, create_tool_button
+from .statistic_widget import StatisticsWidget
+from .partseg_settings import MASK_COLORS, PartSettings
 import numpy as np
 
 class RawImageStack(QStackedWidget):
