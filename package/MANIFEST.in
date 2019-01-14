@@ -1,0 +1,2 @@
+include PartSeg/static_files/*
+include PartSeg/static_files/*/*
