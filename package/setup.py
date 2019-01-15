@@ -35,13 +35,22 @@ extensions = [
 setuptools.setup(
     ext_modules=cythonize(extensions),
     name="PartSeg",
-    version="0.9",
+    version="0.8",
     author="Grzegorz Bokota",
     author_email="g.bokota@cent.uw.edu.pl",
     description="PartSeg is python GUI for bio imaging analysis",
     url="https://4dnucleome.cent.uw.edu.pl/PartSeg/",
     packages=setuptools.find_packages(),
     include_package_data=True,
-    requires=['numpy', 'matplotlib', 'tifffile', 'appdirs', 'SimpleITK', 'PyQt5', 'scipy',
-                                     'qtawesome', 'six', 'h5py', 'pandas', 'sympy', 'Cython']
+    scripts=["scripts/PartSeg"],
+    install_requires=['numpy', 'tifffile>=0.15,<1', 'appdirs', 'SimpleITK', 'PyQt5', 'scipy', 'QtPy', 'sentry_sdk',
+                      'deprecation', 'qtawesome', 'six', 'h5py', 'pandas', 'sympy', 'Cython'],
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: Implementation :: CPython",
+        "Topic :: Scientific/Engineering :: Bio-Informatics",
+        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+        "Operating System :: OS Independent",
+        "Development Status :: 3 - Alpha"
+    ],
 )
