@@ -1,2 +1,5 @@
 include PartSeg/static_files/*
 include PartSeg/static_files/*/*
+global-include *.pyx
+global-include *.pxd
+include PartSeg/partseg_utils/distance_in_structure/*.h

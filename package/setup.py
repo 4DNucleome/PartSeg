@@ -35,7 +35,7 @@ extensions = [
 setuptools.setup(
     ext_modules=cythonize(extensions),
     name="PartSeg",
-    version="0.8",
+    version="0.8.2",
     author="Grzegorz Bokota",
     author_email="g.bokota@cent.uw.edu.pl",
     description="PartSeg is python GUI for bio imaging analysis",
