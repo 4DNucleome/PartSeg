@@ -312,6 +312,46 @@ class Volume(MethodBase):
     def get_units(cls, ndim):
         return symbols("{}") ** ndim
 
+# From Malandain, G., & Boissonnat, J. (2002). Computing the diameter of a point set,
+# 12(6), 489–509. https://doi.org/10.1142/S0218195902001006
+
+def double_normal(point_index, point_positions, points_array):
+    delta = 0
+    dn = 0, 0
+    while True:
+        new_delta = delta
+        points_array[point_index] = 0
+        dist_array = np.sum(np.array((point_positions - point_positions[point_index]) ** 2), 1)
+        dist_array[points_array==0] = 0
+        point2_index = np.argmax(dist_array)
+        if dist_array[point2_index] > new_delta:
+            delta = dist_array[point2_index]
+            dn = point_index, point2_index
+            point_index = point2_index
+        if new_delta == delta:
+            return dn, delta
+
+def iterative_double_normal(point_positions):
+    delta = 0
+    dn = 0, 0
+    point_index = 0
+    points_array = np.ones(point_positions.shape[0], dtype=np.bool)
+    while True:
+        dn_r, delta_r = double_normal(point_index, point_positions, points_array)
+        if delta_r > delta:
+            delta = delta_r
+            dn = dn_r
+            mid_point = (point_positions[dn[0]] + point_positions[dn[1]]) / 2
+            dist_array = np.sum(np.array((point_positions - mid_point) ** 2), 1)
+            if np.any(dist_array >= delta/4):
+                point_index = np.argmax(dist_array)
+            else:
+                break
+
+        else:
+            break
+    return delta, dn
+
 
 class Diameter(MethodBase):
     text_info = "Diameter", "Diameter of area"
@@ -322,19 +362,8 @@ class Diameter(MethodBase):
         for i, val in enumerate([x * result_scalar for x in voxel_size]):
             pos[:, i] *= val
         p1 = 0
-        blocked_set = {p1}
-        diam = 0
-        while True:
-            dist_array = np.sum(np.array((pos - pos[p1]) ** 2), 1)
-            p2 = np.argmax(dist_array)
-            diam = max(dist_array[p2], diam)
-            mid_point = (pos[p1] + pos[p2])/2
-            dist_array = np.sum(np.array((pos - mid_point) ** 2), 1)
-            p1 = np.argmax(dist_array)
-            if dist_array[p1] <= diam / 4 + 1 or p1 in blocked_set:
-                return np.sqrt(diam)
-            blocked_set.add(p1)
-            print("step", np.sqrt(diam))
+        diam_sq, cords = iterative_double_normal(pos)
+        return np.sqrt(diam_sq)
 
     @classmethod
     def get_units(cls, ndim):
