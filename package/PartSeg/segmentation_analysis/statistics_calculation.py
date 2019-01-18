@@ -343,6 +343,7 @@ def iterative_double_normal(point_positions):
             dn = dn_r
             mid_point = (point_positions[dn[0]] + point_positions[dn[1]]) / 2
             dist_array = np.sum(np.array((point_positions - mid_point) ** 2), 1)
+            dist_array[~points_array] = 0
             if np.any(dist_array >= delta/4):
                 point_index = np.argmax(dist_array)
             else:
