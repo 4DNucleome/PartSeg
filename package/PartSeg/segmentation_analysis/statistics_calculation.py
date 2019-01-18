@@ -91,7 +91,11 @@ class StatisticEntry(BaseReadonlyClass):
     calculation_tree: Union[Node, Leaf]
 
 
-class MethodBase(AlgorithmDescribeBase, ABC):
+class StatisticMethodBase(AlgorithmDescribeBase, ABC):
+    """
+    This is base class For all statistic calculation classes
+    based on text_info[0] the Statistic name wil be generated, based_on text_info[1] the description is generated
+    """
     text_info = "", ""
 
     @classmethod
@@ -104,22 +108,27 @@ class MethodBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def is_component(cls):
+        """Return information if Need information about components"""
         return False
 
     @classmethod
     def get_fields(cls):
+        """Additional fields needed by algorithm. like radius of dilation"""
         return []
 
     @staticmethod
     def calculate_property(**kwargs):
+        """Main function for calculating statistic"""
         raise NotImplementedError()
 
     @classmethod
     def get_starting_leaf(cls):
+        """This leaf is putted on default list"""
         return Leaf(cls.text_info[0])
 
     @classmethod
     def get_units(cls, ndim):
+        """Return units for statistic. They are shown to user"""
         raise NotImplementedError()
 
 
@@ -301,7 +310,7 @@ def hash_fun_call_name(fun: Callable, arguments: Dict, area: AreaType):
     return "{}: {} # {}".format(fun_name, arguments, area)
 
 
-class Volume(MethodBase):
+class Volume(StatisticMethodBase):
     text_info = "Volume", "Calculate volume of current segmentation"
 
     @staticmethod
@@ -354,7 +363,7 @@ def iterative_double_normal(point_positions):
     return delta, dn
 
 
-class Diameter(MethodBase):
+class Diameter(StatisticMethodBase):
     text_info = "Diameter", "Diameter of area"
 
     @staticmethod
@@ -371,7 +380,7 @@ class Diameter(MethodBase):
         return symbols("{}")
 
 
-class DiameterOld(MethodBase):
+class DiameterOld(StatisticMethodBase):
     text_info = "Diameter old", "Diameter of area (Very slow)"
 
     @staticmethod
@@ -383,7 +392,7 @@ class DiameterOld(MethodBase):
         return symbols("{}")
 
 
-class PixelBrightnessSum(MethodBase):
+class PixelBrightnessSum(StatisticMethodBase):
     text_info = "Pixel Brightness Sum", "Sum of pixel brightness for current segmentation"
 
     @staticmethod
@@ -397,7 +406,7 @@ class PixelBrightnessSum(MethodBase):
         return symbols("Pixel_brightness")
 
 
-class ComponentsNumber(MethodBase):
+class ComponentsNumber(StatisticMethodBase):
     text_info = "Components Number", "Calculate number of connected components on segmentation"
 
     @staticmethod
@@ -413,7 +422,7 @@ class ComponentsNumber(MethodBase):
         return symbols("count")
 
 
-class MaximumPixelBrightness(MethodBase):
+class MaximumPixelBrightness(StatisticMethodBase):
     text_info = "Maximum pixel brightness", "Calculate maximum pixel brightness for current area"
 
     @staticmethod
@@ -428,7 +437,7 @@ class MaximumPixelBrightness(MethodBase):
         return symbols("Pixel_brightness")
 
 
-class MinimumPixelBrightness(MethodBase):
+class MinimumPixelBrightness(StatisticMethodBase):
     text_info = "Minimum pixel brightness", "Calculate minimum pixel brightness for current area"
 
     @staticmethod
@@ -443,7 +452,7 @@ class MinimumPixelBrightness(MethodBase):
         return symbols("Pixel_brightness")
 
 
-class MeanPixelBrightness(MethodBase):
+class MeanPixelBrightness(StatisticMethodBase):
     text_info = "Mean pixel brightness", "Calculate mean pixel brightness  for current area"
 
     @staticmethod
@@ -458,7 +467,7 @@ class MeanPixelBrightness(MethodBase):
         return symbols("Pixel_brightness")
 
 
-class StandardDeviationOfPixelBrightness(MethodBase):
+class StandardDeviationOfPixelBrightness(StatisticMethodBase):
     text_info = "Standard deviation of pixel brightness", \
                 "Calculate standard deviation of pixel brightness for current area"
 
@@ -474,7 +483,7 @@ class StandardDeviationOfPixelBrightness(MethodBase):
         return symbols("Pixel_brightness")
 
 
-class MomentOfInertia(MethodBase):
+class MomentOfInertia(StatisticMethodBase):
     text_info = "Moment of inertia", "Calculate moment of inertia for segmented structure"
 
     @staticmethod
@@ -490,7 +499,7 @@ class MomentOfInertia(MethodBase):
         return symbols("{}") ** 2 * symbols("Pixel_brightness")
 
 
-class LongestMainAxisLength(MethodBase):
+class LongestMainAxisLength(StatisticMethodBase):
     text_info = "Longest main axis length", "Length of first main axis"
 
     @staticmethod
@@ -502,7 +511,7 @@ class LongestMainAxisLength(MethodBase):
         return symbols("{}")
 
 
-class MiddleMainAxisLength(MethodBase):
+class MiddleMainAxisLength(StatisticMethodBase):
     text_info = "Middle main axis length", "Length of second main axis"
 
     @staticmethod
@@ -514,7 +523,7 @@ class MiddleMainAxisLength(MethodBase):
         return symbols("{}")
 
 
-class ShortestMainAxisLength(MethodBase):
+class ShortestMainAxisLength(StatisticMethodBase):
     text_info = "Shortest main axis length", "Length of third main axis"
 
     @staticmethod
@@ -526,7 +535,7 @@ class ShortestMainAxisLength(MethodBase):
         return symbols("{}")
 
 
-class Compactness(MethodBase):
+class Compactness(StatisticMethodBase):
     text_info = "Compactness", "Calculate compactness off segmentation (Surface^1.5/volume)"
 
     @staticmethod
@@ -553,7 +562,7 @@ class Compactness(MethodBase):
         return Surface.get_units(ndim)/Volume.get_units(ndim)
 
 
-class Sphericity(MethodBase):
+class Sphericity(StatisticMethodBase):
     text_info = "Sphericity", "volume/(diameter**3/8)"
 
     @staticmethod
@@ -580,7 +589,7 @@ class Sphericity(MethodBase):
         return Volume.get_units(ndim) / Diameter.get_units(ndim)**3
 
 
-class Surface(MethodBase):
+class Surface(StatisticMethodBase):
     text_info = "Surface", "Calculating surface of current segmentation"
 
     @staticmethod
@@ -592,7 +601,7 @@ class Surface(MethodBase):
         return symbols("{}")**2
 
 
-class RimVolume(MethodBase):
+class RimVolume(StatisticMethodBase):
     text_info = "Rim Volume", "Calculate volumes for elements in radius (in physical units) from mask"
 
     @classmethod
@@ -617,7 +626,7 @@ class RimVolume(MethodBase):
         return symbols("{}")**3
 
 
-class RimPixelBrightnessSum(MethodBase):
+class RimPixelBrightnessSum(StatisticMethodBase):
     text_info = "Rim Pixel Brightness Sum", \
                 "Calculate mass for components located within rim (in physical units) from mask"
 
