@@ -1,7 +1,7 @@
 import numpy as np
 import typing
 from .class_generator import BaseReadonlyClass
-from ..partseg_utils.image_operations import dilate, erode, RadiusType
+from ..utils.image_operations import dilate, erode, RadiusType
 import SimpleITK as sitk
 
 """MaskProperty = namedtuple("MaskProperty",

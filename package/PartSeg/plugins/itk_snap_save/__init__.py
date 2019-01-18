@@ -2,7 +2,7 @@ import typing
 from io import BytesIO
 from pathlib import Path
 import SimpleITK as sitk
-from PartSeg.partseg_utils.io_utils import SaveBase
+from PartSeg.utils.io_utils import SaveBase
 from PartSeg.segmentation_analysis.io_functions import ProjectTuple
 
 

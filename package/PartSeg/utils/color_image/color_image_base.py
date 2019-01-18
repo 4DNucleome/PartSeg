@@ -1,7 +1,7 @@
 import sys
 
 import numpy as np
-from ...partseg_utils.global_settings import static_file_folder
+from ...utils.global_settings import static_file_folder
 from os import path
 import typing
 from .color_image import color_grayscale

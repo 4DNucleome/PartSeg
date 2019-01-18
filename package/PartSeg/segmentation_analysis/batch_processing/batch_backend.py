@@ -17,9 +17,9 @@ from ..batch_processing.parallel_backed import BatchManager
 from ..io_functions import load_project, ProjectTuple
 from ..analysis_utils import HistoryElement
 from ..save_register import save_register
-from ...partseg_utils.mask_create import calculate_mask
-from ...partseg_utils.segmentation.algorithm_base import report_empty_fun
-from ...partseg_utils.universal_const import UNITS_LIST, UNIT_SCALE
+from ...utils.mask_create import calculate_mask
+from ...utils.segmentation.algorithm_base import report_empty_fun
+from ...utils.universal_const import UNITS_LIST, UNIT_SCALE
 from PartSeg.tiff_image import ImageReader, Image
 
 

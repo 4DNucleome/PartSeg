@@ -16,9 +16,9 @@ from ..common_gui.channel_control import ChannelControl
 from ..common_gui.mask_widget import MaskWidget
 from ..common_gui.stack_image_view import ColorBar
 from ..common_gui.waiting_dialog import WaitingDialog
-from ..partseg_utils.global_settings import static_file_folder
-from ..partseg_utils.mask_create import calculate_mask, MaskProperty
-from ..partseg_utils.segmentation.algorithm_base import SegmentationResult
+from ..utils.global_settings import static_file_folder
+from ..utils.mask_create import calculate_mask, MaskProperty
+from ..utils.segmentation.algorithm_base import SegmentationResult
 from ..project_utils_qt.error_dialog import ErrorDialog
 from ..project_utils_qt.image_read_thread import ImageReaderThread
 from ..project_utils_qt.main_window import BaseMainWindow

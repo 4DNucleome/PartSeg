@@ -5,7 +5,7 @@ import numpy as np
 import typing
 from .collapse_checkbox import CollapseCheckbox
 from .universal_gui_part import CustomSpinBox
-from ..partseg_utils.color_image import color_image
+from ..utils.color_image import color_image
 from ..project_utils_qt.settings import ViewSettings
 
 

@@ -9,7 +9,7 @@ from qtpy.QtWidgets import QWidget, QPushButton, QCheckBox, QComboBox, QTableWid
 from ..common_gui.algorithms_description import ChannelComboBox
 from ..common_gui.waiting_dialog import WaitingDialog
 from .partseg_settings import PartSettings
-from ..partseg_utils.universal_const import UNITS_LIST, UNITS_DICT
+from ..utils.universal_const import UNITS_LIST, UNITS_DICT
 from ..project_utils_qt.execute_function_thread import ExecuteFunctionThread
 
 

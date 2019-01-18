@@ -2,7 +2,7 @@ import sys
 
 from qtpy.QtWidgets import QDialog, QPushButton, QTextEdit, QHBoxLayout, QVBoxLayout, QLabel, QLineEdit
 import traceback
-from ..partseg_utils import report_utils
+from ..utils import report_utils
 import sentry_sdk
 
 

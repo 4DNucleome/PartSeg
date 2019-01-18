@@ -3,10 +3,10 @@ from functools import partial
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QWidget, QAbstractSpinBox, QCheckBox, QLabel, QHBoxLayout, QSpinBox, QVBoxLayout
 from .dim_combobox import DimComboBox
-from ..partseg_utils.segmentation.algorithm_base import calculate_operation_radius
-from ..partseg_utils.image_operations import RadiusType
+from ..utils.segmentation.algorithm_base import calculate_operation_radius
+from ..utils.image_operations import RadiusType
 from ..project_utils_qt.settings import ImageSettings
-from ..partseg_utils.mask_create import MaskProperty
+from ..utils.mask_create import MaskProperty
 
 
 def off_widget(widget: QWidget, combo_box: DimComboBox):

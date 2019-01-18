@@ -14,11 +14,11 @@ from six import with_metaclass
 
 from .dim_combobox import DimComboBox
 from .universal_gui_part import CustomSpinBox, CustomDoubleSpinBox
-from ..partseg_utils.channel_class import Channel
+from ..utils.channel_class import Channel
 from ..project_utils_qt.error_dialog import ErrorDialog
-from ..partseg_utils.image_operations import RadiusType
-from ..partseg_utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
-from ..partseg_utils.segmentation.algorithm_describe_base import AlgorithmProperty, AlgorithmDescribeBase
+from ..utils.image_operations import RadiusType
+from ..utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
+from ..utils.segmentation.algorithm_describe_base import AlgorithmProperty, AlgorithmDescribeBase
 from ..project_utils_qt.segmentation_thread import SegmentationThread
 from ..project_utils_qt.settings import ImageSettings, BaseSettings
 from PartSeg.tiff_image import Image

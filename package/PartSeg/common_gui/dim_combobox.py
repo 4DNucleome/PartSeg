@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QComboBox
 
-from ..partseg_utils.image_operations import RadiusType
+from ..utils.image_operations import RadiusType
 
 
 class DimComboBox(QComboBox):

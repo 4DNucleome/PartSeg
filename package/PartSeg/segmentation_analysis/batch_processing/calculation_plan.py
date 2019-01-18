@@ -12,8 +12,8 @@ from six import add_metaclass
 from ..save_register import save_register
 from ..statistics_calculation import StatisticProfile
 from ..algorithm_description import SegmentationProfile
-from ...partseg_utils.mask_create import MaskProperty
-from ...partseg_utils.class_generator import BaseReadonlyClass
+from ...utils.mask_create import MaskProperty
+from ...utils.class_generator import BaseReadonlyClass
 
 
 class MaskBase:

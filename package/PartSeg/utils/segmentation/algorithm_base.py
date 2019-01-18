@@ -1,7 +1,7 @@
 from abc import ABC
 
-from ...partseg_utils.image_operations import gaussian, RadiusType
-from ...partseg_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase
+from ...utils.image_operations import gaussian, RadiusType
+from ...utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase
 from PartSeg.tiff_image import Image
 from typing import NamedTuple, Union, Callable
 import numpy as np

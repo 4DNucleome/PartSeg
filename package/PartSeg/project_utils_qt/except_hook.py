@@ -1,5 +1,5 @@
 import sys
-from ..partseg_utils import report_utils
+from ..utils import report_utils
 
 
 def my_excepthook(type_, value, trace_back):

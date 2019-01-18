@@ -4,12 +4,12 @@ import typing
 
 from PyQt5.QtCore import QObject, pyqtSignal
 
-from ..partseg_utils.color_image.color_image_base import color_maps
-from ..partseg_utils.image_operations import RadiusType
+from ..utils.color_image.color_image_base import color_maps
+from ..utils.image_operations import RadiusType
 import copy
 import numpy as np
 from os import path, makedirs
-from ..partseg_utils.class_generator import ReadonlyClassEncoder, readonly_hook
+from ..utils.class_generator import ReadonlyClassEncoder, readonly_hook
 from PartSeg.tiff_image import Image
 from datetime import datetime
 

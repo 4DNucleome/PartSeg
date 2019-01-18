@@ -4,7 +4,7 @@ import logging
 
 from .custom_application import CustomApplication
 
-from .partseg_utils.base_argparser import CustomParser
+from .utils.base_argparser import CustomParser
 from .project_utils_qt.except_hook import my_excepthook
 
 import multiprocessing

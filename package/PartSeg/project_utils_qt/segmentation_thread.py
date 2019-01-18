@@ -2,7 +2,7 @@ import sys
 
 from PyQt5.QtCore import QMutex
 
-from ..partseg_utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
+from ..utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
 from qtpy.QtCore import QThread, Signal
 
 

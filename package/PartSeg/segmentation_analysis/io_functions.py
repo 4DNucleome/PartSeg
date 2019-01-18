@@ -1,12 +1,12 @@
 from pathlib import Path
 
 from ..segmentation_analysis.analysis_utils import HistoryElement
-from ..partseg_utils.channel_class import Channel
-from ..partseg_utils.segmentation.algorithm_base import calculate_operation_radius
-from ..partseg_utils.cmap_utils import CmapProfile
-from ..partseg_utils.image_operations import RadiusType, gaussian
-from ..partseg_utils.segmentation.algorithm_describe_base import Register, AlgorithmProperty
-from ..partseg_utils.universal_const import UNITS_LIST, UNIT_SCALE
+from ..utils.channel_class import Channel
+from ..utils.segmentation.algorithm_base import calculate_operation_radius
+from ..utils.cmap_utils import CmapProfile
+from ..utils.image_operations import RadiusType, gaussian
+from ..utils.segmentation.algorithm_describe_base import Register, AlgorithmProperty
+from ..utils.universal_const import UNITS_LIST, UNIT_SCALE
 from .save_hooks import PartEncoder, part_hook
 import numpy as np
 from PartSeg.tiff_image import Image, ImageWriter, ImageReader
@@ -17,7 +17,7 @@ import typing
 import os.path
 import json
 from functools import partial
-from ..partseg_utils.io_utils import get_tarinfo, SaveBase
+from ..utils.io_utils import get_tarinfo, SaveBase
 from .save_register import save_register
 
 

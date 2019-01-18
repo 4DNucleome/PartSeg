@@ -12,9 +12,9 @@ from ..common_gui.mask_widget import MaskWidget
 from ..common_gui.universal_gui_part import right_label
 from .algorithm_description import SegmentationProfile
 from .io_functions import save_register
-from ..partseg_utils.io_utils import SaveBase
-from ..partseg_utils.segmentation.algorithm_describe_base import AlgorithmProperty
-from ..partseg_utils.universal_const import UNITS_LIST
+from ..utils.io_utils import SaveBase
+from ..utils.segmentation.algorithm_describe_base import AlgorithmProperty
+from ..utils.universal_const import UNITS_LIST
 
 from .batch_processing.calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, \
     MaskSuffix, MaskSub, MaskFile, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, \

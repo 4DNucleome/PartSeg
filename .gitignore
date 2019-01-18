@@ -449,7 +449,7 @@ Session.vim
 # auto-generated tag files
 tags
 
-package/PartSeg/partseg_utils/color_image/color_image\.c
+package/PartSeg/utils/color_image/color_image\.c
 
 !notebooks/
 notebooks/*

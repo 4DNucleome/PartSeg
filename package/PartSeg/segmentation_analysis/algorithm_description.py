@@ -1,6 +1,6 @@
 from enum import Enum
-from ..partseg_utils.segmentation.algorithm_describe_base import Register
-from ..partseg_utils.segmentation.restartable_segmentation_algorithms import final_algorithm_list
+from ..utils.segmentation.algorithm_describe_base import Register
+from ..utils.segmentation.restartable_segmentation_algorithms import final_algorithm_list
 
 part_algorithm_dict = Register()
 

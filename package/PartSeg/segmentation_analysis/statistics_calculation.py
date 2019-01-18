@@ -13,12 +13,12 @@ from typing import NamedTuple, Optional, Union, Dict, Callable, List
 import SimpleITK as sitk
 import numpy as np
 from sympy import symbols
-from ..partseg_utils import class_to_dict, autofit as af
-from ..partseg_utils.border_rim import border_mask
-from ..partseg_utils.class_generator import BaseReadonlyClass
-from ..partseg_utils.class_generator import enum_register
-from ..partseg_utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, Register, AlgorithmProperty
-from ..partseg_utils.universal_const import UNITS_LIST, UNIT_SCALE
+from ..utils import class_to_dict, autofit as af
+from ..utils.border_rim import border_mask
+from ..utils.class_generator import BaseReadonlyClass
+from ..utils.class_generator import enum_register
+from ..utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, Register, AlgorithmProperty
+from ..utils.universal_const import UNITS_LIST, UNIT_SCALE
 
 
 class AreaType(Enum):

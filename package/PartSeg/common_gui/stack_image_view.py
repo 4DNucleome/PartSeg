@@ -15,10 +15,10 @@ from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
     QSlider, QCheckBox, QComboBox
 from scipy.ndimage import gaussian_filter
 
-from ..partseg_utils.color_image import color_image, add_labels
-from ..partseg_utils.color_image.color_image_base import color_maps
-from ..partseg_utils.colors import default_colors
-from ..partseg_utils.global_settings import static_file_folder
+from ..utils.color_image import color_image, add_labels
+from ..utils.color_image.color_image_base import color_maps
+from ..utils.colors import default_colors
+from ..utils.global_settings import static_file_folder
 from ..project_utils_qt.settings import ViewSettings, BaseSettings
 from PartSeg.tiff_image import Image
 from .channel_control import ChannelControl

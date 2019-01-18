@@ -7,8 +7,8 @@ import numpy as np
 import json
 from typing import Union
 from io import BytesIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
-from ..partseg_utils.io_utils import get_tarinfo, SaveBase
-from ..partseg_utils.segmentation.algorithm_describe_base import AlgorithmProperty
+from ..utils.io_utils import get_tarinfo, SaveBase
+from ..utils.segmentation.algorithm_describe_base import AlgorithmProperty
 from PartSeg.tiff_image import Image, ImageWriter
 
 
