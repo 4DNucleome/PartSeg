@@ -38,6 +38,6 @@ images/mask are saved as *.npy (numpy array format)
 
 ## Laboratory
 Laboratory of functional and structural genomics
-http://nucleus3d.cent.uw.edu.pl/
+http://4dnucleome.cent.uw.edu.pl/
 
 
