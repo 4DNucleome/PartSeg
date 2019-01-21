@@ -7,11 +7,11 @@ from PyQt5.QtWidgets import QDialog, QCompleter, QLineEdit, QPushButton, QGridLa
     QListWidget, QSpinBox, QTextEdit, QVBoxLayout, QGroupBox, QLabel, QHBoxLayout, QInputDialog, QMessageBox, \
     QTreeWidget, QTreeWidgetItem, QFileDialog, QSplitter, QTabWidget, QListWidgetItem
 
-from ..common_gui.custom_save import FormDialog
+from ..common_gui.custom_save_dialog import FormDialog
 from ..common_gui.mask_widget import MaskWidget
 from ..common_gui.universal_gui_part import right_label
 from PartSeg.utils.analysis.algorithm_description import SegmentationProfile
-from PartSeg.utils.analysis.io_functions import save_register
+from PartSeg.utils.analysis.save_functions import save_register
 from ..utils.io_utils import SaveBase
 from ..utils.segmentation.algorithm_describe_base import AlgorithmProperty
 from ..utils.universal_const import UNITS_LIST

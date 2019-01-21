@@ -1,10 +1,11 @@
-import typing
 import re
+import typing
 from abc import ABC
+from datetime import datetime
+from io import BytesIO, StringIO
 from pathlib import Path
 from tarfile import TarInfo
-from io import BytesIO, StringIO
-from datetime import datetime
+
 from ..utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase
 
 
@@ -43,3 +44,30 @@ class SaveBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def need_mask(cls):
         return False
+
+
+class LoadBase(AlgorithmDescribeBase, ABC):
+    @classmethod
+    def get_short_name(cls):
+        raise NotImplementedError()
+
+    @classmethod
+    def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+             callback_function: typing.Optional[typing.Callable] = None):
+        raise NotImplementedError()
+
+    @classmethod
+    def get_name_with_suffix(cls):
+        return cls.get_name()
+
+    @classmethod
+    def get_fields(cls):
+        return []
+
+    @classmethod
+    def number_of_files(cls):
+        return 1
+
+    @classmethod
+    def get_next_file(cls, file_paths: typing.List[str]):
+        return file_paths[0]

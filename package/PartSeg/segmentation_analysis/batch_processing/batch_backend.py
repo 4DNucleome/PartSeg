@@ -10,11 +10,12 @@ import numpy as np
 import pandas as pd
 import tifffile
 
-from PartSeg.utils.analysis.algorithm_description import SegmentationProfile, part_algorithm_dict
+from PartSeg.utils.analysis.algorithm_description import SegmentationProfile, analysis_algorithm_dict
 from PartSeg.utils.analysis.calculation_plan import CalculationTree, MaskMapper, MaskUse, MaskCreate, Save, \
     Operations, FileCalculation, MaskIntersection, MaskSum, get_save_path, StatisticCalculate, Calculation
 from ..batch_processing.parallel_backed import BatchManager
-from PartSeg.utils.analysis.io_functions import load_project, ProjectTuple
+from PartSeg.utils.analysis.io_utils import ProjectTuple
+from PartSeg.utils.analysis.load_functions import load_project
 from PartSeg.utils.analysis.analysis_utils import HistoryElement
 from PartSeg.utils.analysis.save_register import save_register
 from ...utils.mask_create import calculate_mask
@@ -102,7 +103,7 @@ class CalculationProcess(object):
             self.iterate_over(node)
             self.mask = old_mask
         elif isinstance(node.operation, SegmentationProfile):
-            segmentation_class = part_algorithm_dict.get(node.operation.algorithm, None)
+            segmentation_class = analysis_algorithm_dict.get(node.operation.algorithm, None)
             if segmentation_class is None:
                 raise ValueError(f"Segmentation class {node.operation.algorithm} do not found")
             segmentation_algorithm = segmentation_class()

@@ -5,15 +5,15 @@ from collections import defaultdict
 import SimpleITK as sitk
 import numpy as np
 
-from ...utils import bisect
-from ...utils.border_rim import border_mask
-from ...utils.channel_class import Channel
-from ...utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
-from ...utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
-from ...utils.segmentation.noise_filtering import noise_removal_dict
-from ...utils.segmentation.sprawl import sprawl_dict, BaseSprawl
-from ...utils.segmentation.threshold import threshold_dict, BaseThreshold, double_threshold_dict
-from ...utils.universal_const import UNITS_LIST
+from ..border_rim import border_mask
+from ..channel_class import Channel
+from ..segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
+from ..segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
+from ..segmentation.noise_filtering import noise_removal_dict
+from ..segmentation.sprawl import sprawl_dict, BaseSprawl
+from ..segmentation.threshold import threshold_dict, BaseThreshold, double_threshold_dict
+from ..universal_const import UNITS_LIST
+from ..utils import bisect
 
 
 def blank_operator(_x, _y):
@@ -68,7 +68,7 @@ class BorderRim(RestartableAlgorithm):
 
     def calculation_run(self, _report_fun) -> SegmentationResult:
         if self.mask is not None:
-            result =\
+            result = \
                 border_mask(mask=self.mask, distance=self.distance, units=self.units, voxel_size=self.image.spacing)
             return SegmentationResult(result, result, None)
 
@@ -272,9 +272,11 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
                 return SegmentationResult(self.finally_segment, self.segmentation, self.cleaned_image)
             path_sprawl: BaseSprawl = sprawl_dict[self.new_parameters["flow_type"]["name"]]
             self.parameters["flow_type"] = self.new_parameters["flow_type"]
-            new_segment = path_sprawl.sprawl(self.sprawl_area, finally_segment, self.channel, self.components_num, self.image.spacing,
-                          self.new_parameters["side_connection"], self.threshold_operator,
-                          self.new_parameters["flow_type"]["values"], self.threshold_info[1], self.threshold_info[0])
+            new_segment = path_sprawl.sprawl(self.sprawl_area, finally_segment, self.channel, self.components_num,
+                                             self.image.spacing,
+                                             self.new_parameters["side_connection"], self.threshold_operator,
+                                             self.new_parameters["flow_type"]["values"], self.threshold_info[1],
+                                             self.threshold_info[0])
             self.final_sizes = np.bincount(new_segment.flat)
             return SegmentationResult(new_segment, self.sprawl_area, self.cleaned_image)
 

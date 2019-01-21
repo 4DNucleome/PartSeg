@@ -3,7 +3,7 @@ import typing
 from ..utils.class_generator import BaseReadonlyClass
 from ..utils.segmentation.restartable_segmentation_algorithms import RestartableAlgorithm
 from PartSeg.utils.analysis.analysis_utils import SegmentationPipeline, HistoryElement
-from PartSeg.utils.analysis.algorithm_description import part_algorithm_dict
+from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
 from ..utils.mask_create import calculate_mask
 from PartSeg.tiff_image import Image
 import numpy as np
@@ -25,7 +25,7 @@ def calculate_pipeline(image: Image, mask: typing.Optional[np.ndarray], pipeline
     history = []
     report_fun("max", 2 * len(pipeline.mask_history) + 1)
     for i, el in enumerate(pipeline.mask_history):
-        algorithm: RestartableAlgorithm = part_algorithm_dict[el.segmentation.algorithm]()
+        algorithm: RestartableAlgorithm = analysis_algorithm_dict[el.segmentation.algorithm]()
         algorithm.set_image(image)
         algorithm.set_mask(mask)
         algorithm.set_parameters(**el.segmentation.values)
@@ -38,7 +38,7 @@ def calculate_pipeline(image: Image, mask: typing.Optional[np.ndarray], pipeline
         )
         report_fun("step", 2 * i + 2)
         mask = new_mask
-    algorithm: RestartableAlgorithm = part_algorithm_dict[pipeline.segmentation.algorithm]()
+    algorithm: RestartableAlgorithm = analysis_algorithm_dict[pipeline.segmentation.algorithm]()
     algorithm.set_image(image)
     algorithm.set_mask(mask)
     algorithm.set_parameters(**pipeline.segmentation.values)

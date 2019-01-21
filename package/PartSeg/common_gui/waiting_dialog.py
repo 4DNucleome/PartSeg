@@ -1,5 +1,7 @@
 from PyQt5.QtCore import QThread
 from PyQt5.QtWidgets import QDialog, QProgressBar, QPushButton, QHBoxLayout, QLabel
+
+from PartSeg.project_utils_qt.execute_function_thread import ExecuteFunctionThread
 from ..project_utils_qt.progress_thread import ProgressTread
 
 
@@ -37,3 +39,12 @@ class WaitingDialog(QDialog):
         self.thread_to_wait.start()
         ret = super().exec()
         return ret
+
+
+class ExecuteFunctionDialog(WaitingDialog):
+    def __init__(self, fun, args, kwargs, text = "", parent = None, exception_hook = None):
+        thread = ExecuteFunctionThread(fun, args, kwargs)
+        super().__init__(thread, text=text, parent=parent, exception_hook=exception_hook)
+
+    def get_result(self):
+        return self.thread_to_wait.result

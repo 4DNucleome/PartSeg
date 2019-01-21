@@ -13,7 +13,8 @@ from typing import NamedTuple, Optional, Union, Dict, Callable, List
 import SimpleITK as sitk
 import numpy as np
 from sympy import symbols
-from .. import class_to_dict, autofit as af
+from ..utils import class_to_dict
+from .. import autofit as af
 from ..border_rim import border_mask
 from ..class_generator import BaseReadonlyClass
 from ..class_generator import enum_register
@@ -324,6 +325,7 @@ class Volume(StatisticMethodBase):
 # From Malandain, G., & Boissonnat, J. (2002). Computing the diameter of a point set,
 # 12(6), 489–509. https://doi.org/10.1142/S0218195902001006
 
+
 def double_normal(point_index, point_positions, points_array):
     delta = 0
     dn = 0, 0
@@ -331,7 +333,7 @@ def double_normal(point_index, point_positions, points_array):
         new_delta = delta
         points_array[point_index] = 0
         dist_array = np.sum(np.array((point_positions - point_positions[point_index]) ** 2), 1)
-        dist_array[points_array==0] = 0
+        dist_array[points_array == 0] = 0
         point2_index = np.argmax(dist_array)
         if dist_array[point2_index] > new_delta:
             delta = dist_array[point2_index]
@@ -339,6 +341,7 @@ def double_normal(point_index, point_positions, points_array):
             point_index = point2_index
         if new_delta == delta:
             return dn, delta
+
 
 def iterative_double_normal(point_positions):
     delta = 0
@@ -371,7 +374,6 @@ class Diameter(StatisticMethodBase):
         pos = np.transpose(np.nonzero(get_border(area_array))).astype(np.float)
         for i, val in enumerate([x * result_scalar for x in voxel_size]):
             pos[:, i] *= val
-        p1 = 0
         diam_sq, cords = iterative_double_normal(pos)
         return np.sqrt(diam_sq)
 

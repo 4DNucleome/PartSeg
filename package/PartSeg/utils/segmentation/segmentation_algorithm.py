@@ -2,9 +2,9 @@ from abc import ABC
 
 import SimpleITK as sitk
 import numpy as np
-
+from typing import Optional
 import operator
-from .. import bisect
+from ..utils import bisect
 from ..channel_class import Channel
 from ..segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
 from ..convex_fill import convex_fill
@@ -82,7 +82,6 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
-                #AlgorithmProperty("threshold", "Threshold", 10000, (0, 10 ** 6), 100),
                 AlgorithmProperty("threshold", "Threshold", next(iter(threshold_dict.keys())),
                                   possible_values=threshold_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10 ** 6), 1000),
@@ -174,7 +173,7 @@ class ThresholdAlgorithm(BaseThresholdAlgorithm):
     def get_name(cls):
         return "Threshold"
 
-    def _threshold_image(self, image: np.ndarray) -> np.ndarray:
+    def _threshold_image(self, image: np.ndarray) -> Optional[np.ndarray]:
         return None
 
     def _threshold_and_exclude(self, image, report_fun):
@@ -187,7 +186,6 @@ class ThresholdAlgorithm(BaseThresholdAlgorithm):
         mask, thr_val = threshold_algorithm.calculate_mask(image, mask, self.threshold["values"], operator.ge)
         report_fun("Threshold calculated", 2)
         return mask
-
 
     def set_parameters(self, *args, **kwargs):
         super()._set_parameters(*args, **kwargs)

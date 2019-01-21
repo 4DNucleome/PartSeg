@@ -111,8 +111,8 @@ class SaveSegmentation(SaveBase):
         return [AlgorithmProperty("relative_path", "Relative Path\nin segmentation", False)]
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], segmentation_info: SegmentationTuple,
-             parameters: dict, range_changed=None, step_changed=None):
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: SegmentationTuple, parameters: dict,
+             callback_function):
         save_stack_segmentation(save_location, segmentation_info, parameters,
                                 range_changed=range_changed, step_changed=step_changed)
 

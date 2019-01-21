@@ -12,7 +12,7 @@ from qtpy.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMess
 from ..common_gui.algorithms_description import AlgorithmSettingsWidget
 from ..common_gui.channel_control import ChannelControl
 from ..common_gui.colors_choose import ColorSelector
-from ..common_gui.custom_save import SaveDialog
+from ..common_gui.custom_save_dialog import SaveDialog
 from ..common_gui.flow_layout import FlowLayout
 from ..common_gui.select_multiple_files import AddFiles
 from ..common_gui.stack_image_view import ColorBar
@@ -25,7 +25,7 @@ from ..project_utils_qt.error_dialog import ErrorDialog
 from ..project_utils_qt.image_read_thread import ImageReaderThread
 from ..project_utils_qt.main_window import BaseMainWindow
 from ..project_utils_qt.execute_function_thread import ExecuteFunctionThread
-from .stack_algorithm.algorithm_description import stack_algorithm_dict
+from PartSeg.utils.mask.algorithm_description import mask_algorithm_dict
 from .stack_settings import StackSettings
 from PartSeg.tiff_image import ImageReader, Image
 from .batch_proceed import BatchProceed
@@ -379,7 +379,7 @@ class AlgorithmOptions(QWidget):
         self.choose_components.mouse_enter.connect(image_view.component_mark)
         widgets_list = []
         # TODO restore refresh channels num
-        for name, val in stack_algorithm_dict.items():
+        for name, val in mask_algorithm_dict.items():
             self.algorithm_choose.addItem(name)
             widget = AlgorithmSettingsWidget(settings, name, val)
             widgets_list.append(widget)

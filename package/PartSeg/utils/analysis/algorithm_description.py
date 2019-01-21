@@ -2,12 +2,12 @@ from enum import Enum
 from ..segmentation.algorithm_describe_base import Register
 from ..segmentation.restartable_segmentation_algorithms import final_algorithm_list
 
-part_algorithm_dict = Register()
+analysis_algorithm_dict = Register()
 
-assert hasattr(part_algorithm_dict, "register")
+assert hasattr(analysis_algorithm_dict, "register")
 
 for el in final_algorithm_list:
-    part_algorithm_dict.register(el)
+    analysis_algorithm_dict.register(el)
 
 
 class SegmentationProfile(object):

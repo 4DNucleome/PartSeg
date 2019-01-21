@@ -12,7 +12,7 @@ from qtpy.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushBut
 
 from ..common_gui.algorithms_description import EnumComboBox
 from ..common_gui.colors_choose import ColorSelector
-from ..common_gui.custom_save import FormDialog
+from ..common_gui.custom_save_dialog import FormDialog
 from ..common_gui.lock_checkbox import LockCheckBox
 from .partseg_settings import PartSettings, MASK_COLORS
 from .profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer

@@ -3,7 +3,7 @@ from io import BytesIO
 from pathlib import Path
 import SimpleITK as sitk
 from PartSeg.utils.io_utils import SaveBase
-from PartSeg.utils.analysis.io_functions import ProjectTuple
+from PartSeg.utils.analysis.save_functions import ProjectTuple
 
 
 class SaveITKSnap(SaveBase):

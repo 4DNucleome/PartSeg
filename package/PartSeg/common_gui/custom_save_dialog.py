@@ -64,6 +64,7 @@ class SaveDialog(QFileDialog):
             layout = self.layout()
             if isinstance(layout, QGridLayout):
                 print(layout.columnCount(), layout.rowCount())
+                # noinspection PyArgumentList
                 layout.addWidget(widget, 0, layout.columnCount(), layout.rowCount(), 1)
                 self.stack_widget = widget
 

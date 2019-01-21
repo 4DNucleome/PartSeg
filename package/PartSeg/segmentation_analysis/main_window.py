@@ -11,11 +11,13 @@ from PyQt5.QtGui import QIcon, QKeyEvent, QKeySequence
 from PyQt5.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
     QFileDialog, QMessageBox, QCheckBox, QComboBox, QInputDialog, QDialog
 
+from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
+from PartSeg.utils.analysis.load_functions import load_dict
 from ..common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, AlgorithmChoose
 from ..common_gui.channel_control import ChannelControl
 from ..common_gui.mask_widget import MaskWidget
 from ..common_gui.stack_image_view import ColorBar
-from ..common_gui.waiting_dialog import WaitingDialog
+from ..common_gui.waiting_dialog import WaitingDialog, ExecuteFunctionDialog
 from ..utils.global_settings import static_file_folder
 from ..utils.mask_create import calculate_mask, MaskProperty
 from ..utils.segmentation.algorithm_base import SegmentationResult
@@ -28,12 +30,12 @@ from .calculation_pipeline_thread import CalculatePipelineThread
 from .interpolate_dialog import InterpolateDialog
 from .interpolate_thread import InterpolateThread
 from PartSeg.tiff_image import ImageReader, Image
-from PartSeg.utils.analysis.algorithm_description import part_algorithm_dict, SegmentationProfile
+from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict, SegmentationProfile
 from PartSeg.utils.analysis.analysis_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
 from .partseg_settings import PartSettings
-from ..common_gui.custom_save import SaveDialog
-from PartSeg.utils.analysis.io_functions import save_register
+from ..common_gui.custom_save_dialog import SaveDialog
+from PartSeg.utils.analysis.save_functions import save_register
 
 app_name = "PartSeg"
 app_lab = "LFSG"
@@ -74,7 +76,7 @@ class Options(QWidget):
         self.choose_profile.currentTextChanged.connect(self.change_profile)
         self.interactive_use.stateChanged.connect(self.execute_btn.setDisabled)
         self.interactive_use.stateChanged.connect(self.interactive_change)
-        self.algorithm_choose_widget = AlgorithmChoose(settings, part_algorithm_dict)
+        self.algorithm_choose_widget = AlgorithmChoose(settings, analysis_algorithm_dict)
         self.algorithm_choose_widget.result.connect(self.execution_done)
         self.algorithm_choose_widget.finished.connect(self.calculation_finished)
         self.algorithm_choose_widget.value_changed.connect(self.interactive_algorithm_execute)
@@ -348,7 +350,7 @@ class MainMenu(QWidget):
         layout.addWidget(self.batch_processing_btn)
         self.setLayout(layout)
 
-        self.open_btn.clicked.connect(self.load_data)
+        self.open_btn.clicked.connect(self.load_data2)
         self.save_btn.clicked.connect(self.save_file)
         self.advanced_btn.clicked.connect(self.advanced_window_show)
         self.mask_manager_btn.clicked.connect(self.mask_manager)
@@ -415,6 +417,21 @@ class MainMenu(QWidget):
             return
         dial = MaskWindow(self._settings)
         dial.exec_()
+
+    def load_data2(self):
+        try:
+            dial = CustomLoadDialog(load_dict)
+            dial.setDirectory(self._settings.get("io.open_directory", str(Path.home())))
+            dial.selectNameFilter(self._settings.get("io.open_filter", next(iter(load_dict.keys()))))
+            if dial.exec_():
+                result = dial.get_result()
+                self._settings.set("io.open_filter", result.selected_filter)
+                dial2 = ExecuteFunctionDialog(result.load_class.load, result.load_location)
+                print(dial.get_result())
+        except (IOError, MemoryError) as e:
+            QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
+        except Exception as e:
+            ErrorDialog(e, "Image read").exec()
 
     def load_data(self):
         try:
