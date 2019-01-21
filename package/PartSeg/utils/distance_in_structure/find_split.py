@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import numpy as np
 from .euclidean_cython import calculate_euclidean
 from .path_sprawl_cython import calculate_maximum, calculate_minimum
-from .fuzzy_distance import fuzzy_distance
+from .fuzzy_distance import fuzzy_distance, calculate_mu_array, MuType
 import typing
 import os
 import logging
@@ -80,7 +80,8 @@ def euclidean_sprawl(data_m: np.ndarray, components: np.ndarray, components_coun
 
 def fdt_sprawl(data_m: np.ndarray, components: np.ndarray, components_count: int, neigh_arr, dist_arr, lower_bound,
                upper_bound, distance_cache=None, data_cache=None):
-    return distance_sprawl(partial(fuzzy_distance, lower_bound=lower_bound, upper_bound=upper_bound),
+    mu_array = calculate_mu_array(data_m, lower_bound, upper_bound, MuType.reflection_mu)
+    return distance_sprawl(partial(fuzzy_distance, mu_array=mu_array),
                            data_m, components, components_count, neigh_arr, dist_arr, distance_cache,
                            data_cache)
 
