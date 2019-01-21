@@ -2,9 +2,9 @@ import typing
 from io import BytesIO
 from textwrap import indent
 import numpy as np
-from ..utils.class_generator import BaseReadonlyClass
-from ..utils.mask_create import MaskProperty
-from .algorithm_description import SegmentationProfile
+from ..class_generator import BaseReadonlyClass
+from ..mask_create import MaskProperty
+from ..analysis.algorithm_description import SegmentationProfile
 
 
 class HistoryElement(BaseReadonlyClass):

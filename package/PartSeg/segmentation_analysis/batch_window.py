@@ -14,7 +14,7 @@ from qtpy.QtWidgets import QPushButton, QListWidget, QVBoxLayout, QHBoxLayout, Q
 from ..common_gui.select_multiple_files import AddFiles
 from .partseg_settings import PartSettings
 from .batch_processing.batch_backend import CalculationManager
-from .batch_processing.calculation_plan import CalculationPlan, MaskFile, MaskMapper, Calculation
+from PartSeg.utils.analysis.calculation_plan import CalculationPlan, MaskFile, MaskMapper, Calculation
 from .prepare_plan_widget import CalculatePlaner
 from ..utils.global_settings import static_file_folder
 from ..utils.universal_const import UNITS_LIST

@@ -30,7 +30,7 @@ from .stack_settings import StackSettings
 from PartSeg.tiff_image import ImageReader, Image
 from .batch_proceed import BatchProceed
 from .image_view import StackImageView
-from .io_functions import load_stack_segmentation, SaveSegmentation
+from PartSeg.utils.mask.io_functions import load_stack_segmentation, SaveSegmentation
 
 app_name = "PartSeg"
 app_lab = "LFSG"

@@ -17,7 +17,7 @@ from ..common_gui.lock_checkbox import LockCheckBox
 from .partseg_settings import PartSettings, MASK_COLORS
 from .profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer
 from .statistic_widget import StatisticsWidget
-from .statistics_calculation import StatisticProfile, STATISTIC_DICT, Node, Leaf, AreaType, PerComponent, \
+from PartSeg.utils.analysis.statistics_calculation import StatisticProfile, STATISTIC_DICT, Node, Leaf, AreaType, PerComponent, \
     StatisticEntry
 from ..utils.global_settings import static_file_folder
 from ..utils.universal_const import UNIT_SCALE, UNITS_LIST

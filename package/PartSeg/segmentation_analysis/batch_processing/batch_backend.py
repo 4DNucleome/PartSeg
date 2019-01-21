@@ -10,13 +10,13 @@ import numpy as np
 import pandas as pd
 import tifffile
 
-from ..algorithm_description import SegmentationProfile, part_algorithm_dict
-from ..batch_processing.calculation_plan import CalculationTree, MaskMapper, MaskUse, MaskCreate, Save, \
+from PartSeg.utils.analysis.algorithm_description import SegmentationProfile, part_algorithm_dict
+from PartSeg.utils.analysis.calculation_plan import CalculationTree, MaskMapper, MaskUse, MaskCreate, Save, \
     Operations, FileCalculation, MaskIntersection, MaskSum, get_save_path, StatisticCalculate, Calculation
 from ..batch_processing.parallel_backed import BatchManager
-from ..io_functions import load_project, ProjectTuple
-from ..analysis_utils import HistoryElement
-from ..save_register import save_register
+from PartSeg.utils.analysis.io_functions import load_project, ProjectTuple
+from PartSeg.utils.analysis.analysis_utils import HistoryElement
+from PartSeg.utils.analysis.save_register import save_register
 from ...utils.mask_create import calculate_mask
 from ...utils.segmentation.algorithm_base import report_empty_fun
 from ...utils.universal_const import UNITS_LIST, UNIT_SCALE

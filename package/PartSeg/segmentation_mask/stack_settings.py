@@ -4,7 +4,7 @@ from os import path
 from PyQt5.QtCore import pyqtSignal
 
 from ..project_utils_qt.settings import BaseSettings
-from .io_functions import load_stack_segmentation, save_components, \
+from PartSeg.utils.mask.io_functions import load_stack_segmentation, save_components, \
     SegmentationTuple
 
 

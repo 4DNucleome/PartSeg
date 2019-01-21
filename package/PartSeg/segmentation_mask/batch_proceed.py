@@ -1,7 +1,7 @@
 import numpy as np
 from PyQt5.QtCore import QThread, pyqtSignal
 
-from .io_functions import load_stack_segmentation, SaveSegmentation, SegmentationTuple
+from PartSeg.utils.mask.io_functions import load_stack_segmentation, SaveSegmentation, SegmentationTuple
 from ..utils.segmentation.algorithm_base import SegmentationAlgorithm
 from ..project_utils_qt.settings import ImageSettings
 from PartSeg.tiff_image import ImageReader

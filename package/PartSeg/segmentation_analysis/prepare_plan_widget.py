@@ -5,23 +5,23 @@ from copy import copy, deepcopy
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QDialog, QCompleter, QLineEdit, QPushButton, QGridLayout, QWidget, QCheckBox, QComboBox, \
     QListWidget, QSpinBox, QTextEdit, QVBoxLayout, QGroupBox, QLabel, QHBoxLayout, QInputDialog, QMessageBox, \
-    QTreeWidget, QTreeWidgetItem, QFileDialog, QSplitter, QStackedWidget, QTabWidget, QListWidgetItem
+    QTreeWidget, QTreeWidgetItem, QFileDialog, QSplitter, QTabWidget, QListWidgetItem
 
 from ..common_gui.custom_save import FormDialog
 from ..common_gui.mask_widget import MaskWidget
 from ..common_gui.universal_gui_part import right_label
-from .algorithm_description import SegmentationProfile
-from .io_functions import save_register
+from PartSeg.utils.analysis.algorithm_description import SegmentationProfile
+from PartSeg.utils.analysis.io_functions import save_register
 from ..utils.io_utils import SaveBase
 from ..utils.segmentation.algorithm_describe_base import AlgorithmProperty
 from ..utils.universal_const import UNITS_LIST
 
-from .batch_processing.calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, \
+from PartSeg.utils.analysis.calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, \
     MaskSuffix, MaskSub, MaskFile, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, \
     StatisticCalculate, Save
 from .partseg_settings import PartSettings
 from .profile_export import ExportDialog, ImportDialog
-from .statistics_calculation import StatisticProfile
+from PartSeg.utils.analysis.statistics_calculation import StatisticProfile
 
 group_sheet = "QGroupBox {border: 1px solid gray; border-radius: 9px; margin-top: 0.5em;} " \
               "QGroupBox::title {subcontrol-origin: margin; left: 10px; padding: 0 3px 0 3px;}"

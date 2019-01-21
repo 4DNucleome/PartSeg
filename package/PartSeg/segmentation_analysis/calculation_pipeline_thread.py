@@ -1,4 +1,4 @@
-from .analysis_utils import SegmentationPipeline
+from PartSeg.utils.analysis.analysis_utils import SegmentationPipeline
 from .calculate_pipeline import calculate_pipeline, PipelineResult
 from ..project_utils_qt.progress_thread import ProgressTread
 from PartSeg.tiff_image import Image

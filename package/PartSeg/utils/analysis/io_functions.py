@@ -1,13 +1,10 @@
 from pathlib import Path
 
-from ..segmentation_analysis.analysis_utils import HistoryElement
-from ..utils.channel_class import Channel
-from ..utils.segmentation.algorithm_base import calculate_operation_radius
-from ..utils.cmap_utils import CmapProfile
-from ..utils.image_operations import RadiusType, gaussian
-from ..utils.segmentation.algorithm_describe_base import Register, AlgorithmProperty
-from ..utils.universal_const import UNITS_LIST, UNIT_SCALE
-from .save_hooks import PartEncoder, part_hook
+from ..analysis.analysis_utils import HistoryElement
+from ..channel_class import Channel
+from ..segmentation.algorithm_describe_base import AlgorithmProperty
+from ..universal_const import UNITS_LIST, UNIT_SCALE
+from ..analysis.save_hooks import PartEncoder, part_hook
 import numpy as np
 from PartSeg.tiff_image import Image, ImageWriter, ImageReader
 import tarfile
@@ -16,9 +13,8 @@ import h5py
 import typing
 import os.path
 import json
-from functools import partial
-from ..utils.io_utils import get_tarinfo, SaveBase
-from .save_register import save_register
+from ..io_utils import get_tarinfo, SaveBase
+from ..analysis.save_register import save_register
 
 
 # TODO add progress function to io

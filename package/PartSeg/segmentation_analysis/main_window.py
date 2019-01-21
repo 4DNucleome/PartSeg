@@ -28,12 +28,12 @@ from .calculation_pipeline_thread import CalculatePipelineThread
 from .interpolate_dialog import InterpolateDialog
 from .interpolate_thread import InterpolateThread
 from PartSeg.tiff_image import ImageReader, Image
-from .algorithm_description import part_algorithm_dict, SegmentationProfile
-from .analysis_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
+from PartSeg.utils.analysis.algorithm_description import part_algorithm_dict, SegmentationProfile
+from PartSeg.utils.analysis.analysis_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
 from .partseg_settings import PartSettings
 from ..common_gui.custom_save import SaveDialog
-from .io_functions import save_register
+from PartSeg.utils.analysis.io_functions import save_register
 
 app_name = "PartSeg"
 app_lab = "LFSG"
