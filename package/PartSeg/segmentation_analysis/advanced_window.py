@@ -426,6 +426,8 @@ class StatisticsSettings(QWidget):
             self.move_up.setDisabled(True)
             self.remove_button.setDisabled(True)
             self.discard_butt.setDisabled(True)
+            self.save_butt.setDisabled(True)
+            self.save_butt_with_name.setDisabled(True)
         pass
 
     def delete_profile(self):
@@ -474,7 +476,6 @@ class StatisticsSettings(QWidget):
             item: StatisticListWidgetItem = self.profile_options.currentItem()
             leaf = self.get_parameters(deepcopy(item.stat), self.statistic_area_choose.get_value(),
                                        self.per_component.get_value(), self.power_num.value())
-            print("aa", leaf)
             if leaf is None:
                 return 
             lw = StatisticListWidgetItem(
@@ -485,6 +486,11 @@ class StatisticsSettings(QWidget):
             self.chosen_element.setIcon(QIcon())
             self.chosen_element = None
             self.chosen_element_area = None
+            if self.good_name():
+                self.save_butt.setEnabled(True)
+                self.save_butt_with_name.setEnabled(True)
+            if self.profile_options.count() == 0:
+                self.choose_butt.setDisabled(True)
 
     def create_selection_chosen_changed(self):
         # print(self.profile_options_chosen.count())

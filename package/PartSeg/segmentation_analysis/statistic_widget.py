@@ -186,7 +186,7 @@ class StatisticsWidget(QWidget):
                 ver_headers.append("Units")
             self.info_field.setVerticalHeaderLabels(ver_headers)
             self.info_field.setHorizontalHeaderLabels([str(x) for x in range(len(stat))])
-            for i, (key, val, unit) in enumerate(stat.items()):
+            for i, (key, (val, unit)) in enumerate(stat.items()):
                 if not self.no_header.isChecked() and (self.previous_profile != compute_class.name):
                     self.info_field.setItem(self.statistic_shift + 0, i, QTableWidgetItem(key))
                 self.info_field.setItem(self.statistic_shift + 1, i, QTableWidgetItem(str(val)))
