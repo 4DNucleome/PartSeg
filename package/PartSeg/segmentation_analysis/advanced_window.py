@@ -635,7 +635,7 @@ class StatisticsSettings(QWidget):
             stat_prof = StatisticProfile(self.profile_name.text(), selected_values)
             if stat_prof.name not in self.settings.statistic_profiles:
                 self.profile_list.addItem(stat_prof.name)
-            self.self.settings.statistic_profiles[stat_prof.name] = stat_prof
+            self.settings.statistic_profiles[stat_prof.name] = stat_prof
             self.export_profiles_butt.setEnabled(True)
 
     def reset_action(self):
