@@ -181,7 +181,7 @@ def _make_class(typename, types, defaults_dict, base_classes):
         raise e
     except NameError as e:
         for i, el in enumerate(class_definition.split("\n"), 1):
-            print(f"{i}: {el}")
+            print(f"{i}: {el}", file=sys.stderr)
         raise e
 
     result = namespace[typename]

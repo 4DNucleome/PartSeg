@@ -26,7 +26,7 @@ def main():
     sp_s.set_defaults(gui="segmentation")
     argv = [x for x in sys.argv[1:] if not (x.startswith("parent") or x.startswith("pipe"))]
     args = parser.parse_args(argv)
-    print(args)
+    # print(args)
 
     logging.basicConfig(level=logging.INFO)
     my_app = CustomApplication(sys.argv)

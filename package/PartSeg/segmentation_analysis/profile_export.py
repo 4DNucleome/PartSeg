@@ -121,7 +121,7 @@ class ImportDialog(QDialog):
         self.import_dict = import_dict
         self.local_dict = local_dict
         conflicts = set(local_dict.keys()) & set(import_dict.keys())
-        print(conflicts)
+        # print(conflicts)
 
         self.list_view = QTreeWidget()
         self.list_view.setColumnCount(4)

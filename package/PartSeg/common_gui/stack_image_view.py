@@ -585,7 +585,7 @@ class MyScrollArea(QScrollArea):
             self.zoom_scale = self.max_zoom
         else:
             self.zoom_scale *= scale_ratio
-        print(f"Zoom scale: {self.zoom_scale}")
+        # print(f"Zoom scale: {self.zoom_scale}")
         if scale_ratio == 1:
             return
         ratio = self.get_ratio_factor()

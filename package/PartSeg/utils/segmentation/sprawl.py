@@ -32,7 +32,7 @@ class PathSprawl(BaseSprawl):
             path_sprawl = path_maximum_sprawl
         else:
             path_sprawl = path_minimum_sprawl
-        print(path_sprawl)
+        # print(path_sprawl)
         image = data.astype(np.float64)
         image[sprawl_area == 0] = 0
         neigh = get_neighbourhood(spacing, get_neigh(side_connection))

@@ -63,7 +63,7 @@ class SaveDialog(QFileDialog):
 
             layout = self.layout()
             if isinstance(layout, QGridLayout):
-                print(layout.columnCount(), layout.rowCount())
+                # print(layout.columnCount(), layout.rowCount())
                 # noinspection PyArgumentList
                 layout.addWidget(widget, 0, layout.columnCount(), layout.rowCount(), 1)
                 self.stack_widget = widget
@@ -100,7 +100,7 @@ class SaveDialog(QFileDialog):
             return
         save_class = self.save_register[self.selectedNameFilter()]
         fields = save_class.get_fields()
-        print(fields, len(fields))
+        # print(fields, len(fields))
         if len(fields) == 0:
             super().accept()
             return

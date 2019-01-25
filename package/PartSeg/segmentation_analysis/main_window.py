@@ -388,7 +388,7 @@ class MainMenu(QWidget):
         dialog = InterpolateDialog(self._settings.image_spacing)
         if dialog.exec():
             scale_factor = dialog.get_zoom_factor()
-            print(scale_factor)
+            # print(scale_factor)
             interp_ob = InterpolateThread()
             dial = WaitingDialog(interp_ob)
             args = [self._settings.image.get_data()]
@@ -404,7 +404,7 @@ class MainMenu(QWidget):
                               None if len(interp_ob.result) == 1 else interp_ob.result[2],
                               self._settings.image.default_coloring, self._settings.image.ranges,
                               self._settings.image.labels)
-                print(interp_ob.result[0].shape)
+                # print(interp_ob.result[0].shape)
                 self._settings.image = image
             else:
                 if interp_ob.isRunning():
