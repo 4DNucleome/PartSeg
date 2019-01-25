@@ -1,5 +1,6 @@
 from .progress_thread import ProgressTread
 from typing import Union
+import inspect
 
 
 class ExecuteFunctionThread(ProgressTread):
@@ -12,7 +13,14 @@ class ExecuteFunctionThread(ProgressTread):
 
     def run(self):
         try:
-            self.result = self.function(*self.args, **self.kwargs, range_changed=self.range_changed.emit,
-                                        step_changed=self.step_changed.emit)
+            if "callback_function" in inspect.signature(self.function).parameters:
+                self.result = self.function(*self.args, **self.kwargs, callback_function=self.info_function)
+            elif "range_changed" in inspect.signature(self.function).parameters and \
+                    "step_changed" in inspect.signature(self.function).parameters:
+                self.result = self.function(*self.args, **self.kwargs, range_changed=self.range_changed.emit,
+                                            step_changed=self.step_changed.emit)
+            else:
+                self.result = self.function(*self.args, **self.kwargs)
+
         except Exception as e:
             self.error_signal.emit(e)
