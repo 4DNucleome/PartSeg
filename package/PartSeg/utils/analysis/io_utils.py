@@ -13,3 +13,8 @@ class ProjectTuple(typing.NamedTuple):
     mask: typing.Optional[np.ndarray] = None
     history: typing.List[HistoryElement] = []
     algorithm_parameters: dict = {}
+
+
+class MaskInfo(typing.NamedTuple):
+    file_path: str
+    mask_array: np.ndarray

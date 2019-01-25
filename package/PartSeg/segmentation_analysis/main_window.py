@@ -1,15 +1,12 @@
-import json
-import logging
 import os
 from pathlib import Path
 
 import appdirs
 import numpy as np
-import tifffile as tif
 from PyQt5.QtCore import Qt, QByteArray, QEvent
 from PyQt5.QtGui import QIcon, QKeyEvent, QKeySequence
 from PyQt5.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
-    QFileDialog, QMessageBox, QCheckBox, QComboBox, QInputDialog, QDialog
+    QMessageBox, QCheckBox, QComboBox, QInputDialog, QDialog
 
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.utils.analysis.load_functions import load_dict
@@ -21,7 +18,6 @@ from ..common_gui.waiting_dialog import WaitingDialog, ExecuteFunctionDialog
 from ..utils.global_settings import static_file_folder
 from ..utils.mask_create import calculate_mask, MaskProperty
 from ..utils.segmentation.algorithm_base import SegmentationResult
-from ..project_utils_qt.error_dialog import ErrorDialog
 from ..project_utils_qt.image_read_thread import ImageReaderThread
 from ..project_utils_qt.main_window import BaseMainWindow
 from .advanced_window import AdvancedWindow
@@ -350,7 +346,7 @@ class MainMenu(QWidget):
         layout.addWidget(self.batch_processing_btn)
         self.setLayout(layout)
 
-        self.open_btn.clicked.connect(self.load_data2)
+        self.open_btn.clicked.connect(self.load_data)
         self.save_btn.clicked.connect(self.save_file)
         self.advanced_btn.clicked.connect(self.advanced_window_show)
         self.mask_manager_btn.clicked.connect(self.mask_manager)
@@ -418,7 +414,20 @@ class MainMenu(QWidget):
         dial = MaskWindow(self._settings)
         dial.exec_()
 
-    def load_data2(self):
+    def load_data(self):
+        def exception_hook(exception):
+            from qtpy.QtWidgets import QApplication
+            from qtpy.QtCore import QMetaObject
+            instance = QApplication.instance()
+            if isinstance(exception, MemoryError):
+                instance.warning = "Open error", "Not enough memory to read this image"
+                QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
+            elif isinstance(exception, IOError):
+                instance.warning = "Open error", "Some problem with reading from disc"
+                QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
+            else:
+                raise exception
+
         try:
             dial = CustomLoadDialog(load_dict)
             dial.setDirectory(self._settings.get("io.open_directory", str(Path.home())))
@@ -426,72 +435,12 @@ class MainMenu(QWidget):
             if dial.exec_():
                 result = dial.get_result()
                 self._settings.set("io.open_filter", result.selected_filter)
-                dial2 = ExecuteFunctionDialog(result.load_class.load, result.load_location)
-                print(dial.get_result())
-        except (IOError, MemoryError) as e:
-            QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
-        except Exception as e:
-            ErrorDialog(e, "Image read").exec()
-
-    def load_data(self):
-        try:
-            dial = QFileDialog(self, "Load data")
-            dial.setDirectory(self._settings.get("io.open_directory", str(Path.home())))
-            dial.setFileMode(QFileDialog.ExistingFile)
-            filters = ["raw image (*.tiff *.tif *.lsm)", "image with mask (*.tiff *.tif *.lsm)",
-                       "mask to image (*.tiff *.tif *.lsm)",
-                       "saved project (*.tgz *.tbz2 *.gz *.bz2)", "Profiles (*.json)"]
-            # dial.setFilters(filters)
-            dial.setNameFilters(filters)
-            dial.selectNameFilter(self._settings.get("io.open_filter", filters[0]))
-            if dial.exec_():
-                file_path = str(dial.selectedFiles()[0])
-                self._settings.set("io.open_directory", os.path.dirname(str(file_path)))
-                selected_filter = str(dial.selectedNameFilter())
-                self._settings.set("io.open_filter", selected_filter)
-                logging.debug("open file: {}, filter {}".format(file_path, selected_filter))
-                # TODO maybe something better. Now main window have to be parent
-                read_thread = ImageReaderThread(parent=self)
-                dial = WaitingDialog(read_thread)
-                if selected_filter == "raw image (*.tiff *.tif *.lsm)":
-                    read_thread.set_path(file_path)
-                    dial.exec()
-                    self._settings.image = read_thread.image
-                    # self._settings.image_spacing = list(np.array([70, 70 ,210]) * 0.1**9)
-                elif selected_filter == "mask to image (*.tiff *.tif *.lsm)":
-                    im = tif.imread(file_path)
-                    self._settings.mask = im
-                elif selected_filter == "image with mask (*.tiff *.tif *.lsm)":
-                    extension = os.path.splitext(file_path)
-                    if extension == ".json":
-                        with open(file_path) as ff:
-                            info_dict = json.load(ff)
-                        read_thread.set_path(info_dict["image"], info_dict["mask"])
-                        dial.exec()
-                        self._settings.image = read_thread.image
-                    else:
-                        org_name = os.path.basename(file_path)
-                        mask_dial = QFileDialog(self, "Load mask for {}".format(org_name))
-                        filters = ["mask (*.tiff *.tif *.lsm)"]
-                        mask_dial.setNameFilters(filters)
-                        if mask_dial.exec_():
-                            read_thread.set_path(file_path, mask_dial.selectedFiles()[0])
-                            dial.exec()
-                            self._settings.image = read_thread.image
-                elif selected_filter == "saved project (*.tgz *.tbz2 *.gz *.bz2)":
-                    # TODO chanage to load dialog
-                    self._settings.load_project(file_path)
-                    # self.segment.threshold_updated()
-                elif selected_filter == "Profiles (*.json)":
-                    self._settings.load_profiles(file_path)
-                else:
-                    # noinspection PyCallByClass
-                    _ = QMessageBox.warning(self, "Load error", "Function do not implemented yet")
-                    return
-        except (IOError, MemoryError) as e:
-            QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
-        except Exception as e:
-            ErrorDialog(e, "Image read").exec()
+                dial2 = ExecuteFunctionDialog(result.load_class.load, [result.load_location],
+                                              exception_hook=exception_hook)
+                if dial2.exec():
+                    self._settings.set_project_data(dial2.get_result())
+        except ValueError as e:
+            QMessageBox.warning(self, "Open error", "{}".format(e))
 
     def batch_window(self):
         if self.main_window.batch_window is not None:
@@ -695,6 +644,7 @@ class MainWindow(BaseMainWindow):
 
         def exception_hook(exception):
             QMessageBox.warning(self, "Read error", f"Error during image read: {exception}")
+
         dial = WaitingDialog(read_thread, exception_hook=exception_hook)
         if len(paths) == 1:
             file_path = paths[0]

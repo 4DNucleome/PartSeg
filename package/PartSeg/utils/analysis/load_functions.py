@@ -4,13 +4,14 @@ import tarfile
 import typing
 from io import TextIOBase, BufferedIOBase, RawIOBase, IOBase, BytesIO
 from pathlib import Path
-
+from threading import Lock
 import numpy as np
+from tifffile import TiffFile
 
 from PartSeg.tiff_image import ImageReader
 from PartSeg.utils.segmentation.algorithm_describe_base import Register
 from .analysis_utils import HistoryElement
-from .io_utils import ProjectTuple
+from .io_utils import ProjectTuple, MaskInfo
 from .save_hooks import part_hook
 from ..io_utils import LoadBase
 
@@ -91,8 +92,7 @@ class LoadImage(LoadBase):
 
     @classmethod
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             range_changed: typing.Optional[typing.Callable] = None,
-             step_changed: typing.Optional[typing.Callable] = None):
+             callback_function: typing.Optional[typing.Callable] = None):
         image = ImageReader.read_image(load_locations[0], callback_function=callback_function)
         return ProjectTuple(load_locations[0], image)
 
@@ -112,8 +112,7 @@ class LoadImageMask(LoadBase):
 
     @classmethod
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             range_changed: typing.Optional[typing.Callable] = None,
-             step_changed: typing.Optional[typing.Callable] = None):
+             callback_function: typing.Optional[typing.Callable] = None):
         image = ImageReader.read_image(load_locations[0], load_locations[1], callback_function=callback_function)
         return ProjectTuple(load_locations[0], image)
 
@@ -123,5 +122,32 @@ class LoadImageMask(LoadBase):
         return base + "_mask" + ext
 
 
-load_dict = Register(LoadImage, LoadImageMask, LoadProject)
+class LoadMask(LoadBase):
+    @classmethod
+    def get_name(cls):
+        return "mask to image (*.tif *.tiff)"
 
+    @classmethod
+    def get_short_name(cls):
+        return "mask_to_name"
+
+    @classmethod
+    def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+             callback_function: typing.Optional[typing.Callable] = None):
+        image_file = TiffFile(load_locations[0])
+        count_pages = [0]
+        mutex = Lock()
+
+        def report_func():
+            mutex.acquire()
+            count_pages[0] += 1
+            callback_function("step", count_pages[0])
+            mutex.release()
+
+        callback_function("max", len(image_file.series[0]))
+        image_file.report_func = report_func
+        mask_data = image_file.asarray()
+        return MaskInfo(load_locations[0], mask_data)
+
+
+load_dict = Register(LoadImage, LoadImageMask, LoadProject, LoadMask)

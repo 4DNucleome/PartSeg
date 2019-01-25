@@ -2,7 +2,7 @@ import typing
 from qtpy.QtCore import Signal
 
 from PartSeg.utils.analysis.calculation_plan import CalculationPlan
-from PartSeg.utils.analysis.io_utils import ProjectTuple
+from PartSeg.utils.analysis.io_utils import ProjectTuple, MaskInfo
 from PartSeg.utils.analysis.statistics_calculation import StatisticProfile
 from PartSeg.utils.analysis.algorithm_description import SegmentationProfile
 from PartSeg.utils.analysis.analysis_utils import HistoryElement, SegmentationPipeline
@@ -75,6 +75,18 @@ class PartSettings(BaseSettings):
             algorithm_val = {}
         return ProjectTuple(self.image.file_path, self.image, self.segmentation, self.full_segmentation,
                             self.mask, self.segmentation_history, algorithm_val)
+
+    def set_project_data(self, data: typing.Union[ProjectTuple, MaskInfo]):
+        if isinstance(data, ProjectTuple):
+            self.image = data.image
+            self.segmentation = data.segmentation
+            self.full_segmentation = data.full_segmentation
+            self.segmentation_history = data.history
+            if data.algorithm_parameters:
+                self.last_executed_algorithm = data.algorithm_parameters["name"]
+                self.set(f"algorithms.{self.last_executed_algorithm}", data.algorithm_parameters["values"])
+        if isinstance(data, MaskInfo):
+            self.mask = data.mask_array
 
     def save_project(self, file_path):
         dkt = dict()

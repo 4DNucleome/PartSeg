@@ -59,6 +59,8 @@ class ImageSettings(QObject):
 
     @segmentation.setter
     def segmentation(self, val: np.ndarray):
+        if val is None:
+            return
         try:
             self.image.fit_array_to_image(val)
         except ValueError:
