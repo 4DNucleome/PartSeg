@@ -11,7 +11,7 @@ def my_excepthook(type_, value, trace_back):
             if QApplication.instance():
                 from qtpy.QtCore import Qt
                 from qtpy.QtCore import QMetaObject
-                QApplication.instance().value = value
+                QApplication.instance().error = value
                 QMetaObject.invokeMethod(QApplication.instance(), "show_error",  Qt.QueuedConnection)
         except ImportError:
             pass
