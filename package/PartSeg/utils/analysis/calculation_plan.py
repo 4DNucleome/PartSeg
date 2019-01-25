@@ -9,7 +9,7 @@ from enum import Enum
 from deprecation import deprecated
 from six import add_metaclass
 
-from ..analysis.save_register import save_register
+from ..analysis.save_register import save_dict
 from ..analysis.statistics_calculation import StatisticProfile
 from ..analysis.algorithm_description import SegmentationProfile
 from ..mask_create import MaskProperty
@@ -87,7 +87,7 @@ def get_save_path(op: Save, calculation):
     :param calculation: information about calculation
     :return: str
     """
-    extension = save_register[op.algorithm].get_default_extension()
+    extension = save_dict[op.algorithm].get_default_extension()
     rel_path = os.path.relpath(calculation.file_path, calculation.base_prefix)
     rel_path, ext = os.path.splitext(rel_path)
     if op.directory:

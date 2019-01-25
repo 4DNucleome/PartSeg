@@ -11,7 +11,7 @@ from ..common_gui.custom_save_dialog import FormDialog
 from ..common_gui.mask_widget import MaskWidget
 from ..common_gui.universal_gui_part import right_label
 from PartSeg.utils.analysis.algorithm_description import SegmentationProfile
-from PartSeg.utils.analysis.save_functions import save_register
+from PartSeg.utils.analysis.save_functions import save_dict
 from ..utils.io_utils import SaveBase
 from ..utils.segmentation.algorithm_describe_base import AlgorithmProperty
 from ..utils.universal_const import UNITS_LIST
@@ -83,7 +83,7 @@ class CreatePlan(QWidget):
     def __init__(self, settings: PartSettings):
         super(CreatePlan, self).__init__()
         self.settings = settings
-        self.save_translate_dict: typing.Dict[str, SaveBase] = dict((x.get_short_name(), x) for x in save_register.values())
+        self.save_translate_dict: typing.Dict[str, SaveBase] = dict((x.get_short_name(), x) for x in save_dict.values())
         self.plan = PlanPreview(self)
         self.save_plan_btn = QPushButton("Save plan")
         self.clean_plan_btn = QPushButton("Clean plan")

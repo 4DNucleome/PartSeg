@@ -17,7 +17,7 @@ from ..batch_processing.parallel_backed import BatchManager
 from PartSeg.utils.analysis.io_utils import ProjectTuple
 from PartSeg.utils.analysis.load_functions import load_project
 from PartSeg.utils.analysis.analysis_utils import HistoryElement
-from PartSeg.utils.analysis.save_register import save_register
+from PartSeg.utils.analysis.save_register import save_dict
 from ...utils.mask_create import calculate_mask
 from ...utils.segmentation.algorithm_base import report_empty_fun
 from ...utils.universal_const import UNITS_LIST, UNIT_SCALE
@@ -141,7 +141,7 @@ class CalculationProcess(object):
             self.iterate_over(node)
             self.mask = old_mask
         elif isinstance(node.operation, Save):
-            save_class = save_register[node.operation.algorithm]
+            save_class = save_dict[node.operation.algorithm]
             project_tuple = ProjectTuple(file_path="", image=self.image, segmentation=self.segmentation,
                                          full_segmentation=self.full_segmentation, mask=self.mask,
                                          history=self.history, algorithm_parameters=self.algorithm_parameters)

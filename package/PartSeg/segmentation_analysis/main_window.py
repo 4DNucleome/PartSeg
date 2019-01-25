@@ -31,7 +31,7 @@ from PartSeg.utils.analysis.analysis_utils import HistoryElement, SegmentationPi
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
 from .partseg_settings import PartSettings
 from ..common_gui.custom_save_dialog import SaveDialog
-from PartSeg.utils.analysis.save_functions import save_register
+from PartSeg.utils.analysis.save_functions import save_dict
 
 app_name = "PartSeg"
 app_lab = "LFSG"
@@ -364,7 +364,7 @@ class MainMenu(QWidget):
 
     def save_file(self):
         base_values = self._settings.get("save_parameters", dict())
-        dial = SaveDialog(save_register, system_widget=False, base_values=base_values)
+        dial = SaveDialog(save_dict, system_widget=False, base_values=base_values)
         dial.selectFile(os.path.splitext(os.path.basename(self._settings.image_path))[0])
         dial.setDirectory(self._settings.get("io.save_directory", self._settings.get("io.open_directory",
                                                                                      str(Path.home()))))

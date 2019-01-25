@@ -15,7 +15,7 @@ import typing
 import os.path
 import json
 from ..io_utils import get_tarinfo, SaveBase
-from ..analysis.save_register import save_register
+from ..analysis.save_register import save_dict
 
 
 # TODO add progress function to io
@@ -214,6 +214,6 @@ class SaveXYZ(SaveBase):
                     cls._save(new_save_location, channel_image, segmentation_mask, shift)
 
 
-save_register.register(SaveProject)
-save_register.register(SaveCmap)
-save_register.register(SaveXYZ)
+save_dict.register(SaveProject)
+save_dict.register(SaveCmap)
+save_dict.register(SaveXYZ)

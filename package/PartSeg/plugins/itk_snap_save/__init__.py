@@ -26,5 +26,5 @@ class SaveITKSnap(SaveBase):
 
 
 def register():
-    from PartSeg.utils.analysis.save_register import save_register
-    save_register.register(SaveITKSnap)
+    from PartSeg.utils.register import register, RegisterEnum
+    register(SaveITKSnap, RegisterEnum.analysis_save)
