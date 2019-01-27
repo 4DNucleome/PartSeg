@@ -4,7 +4,7 @@ from ..utils import report_utils
 
 def my_excepthook(type_, value, trace_back):
     # log the exception here
-    if report_utils.report_errors:
+    if report_utils.show_error_dialog:
         try:
             # noinspection PyUnresolvedReferences
             from qtpy.QtWidgets import QApplication
