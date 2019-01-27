@@ -1,3 +1,0 @@
-[submodule "cpp_extensions/fuzzy_segment"]
-	path = cpp_extensions/fuzzy_segment
-	url = git@bitbucket.org:grzegorz_bokota/fuzzy_segment.git
