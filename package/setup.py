@@ -8,6 +8,14 @@ from Cython.Build import cythonize
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
+try:
+    import tifffile
+    import imagecodecs
+    import imagecodecs._imagecodecs
+    tifffile_string = "tifffile>=0.15"
+except ImportError:
+    tifffile_string = 'tifffile>=0.15,<1'
+
 extensions = [
     Extension('PartSeg.utils.distance_in_structure.euclidean_cython',
               sources=["PartSeg/utils/distance_in_structure/euclidean_cython.pyx"],
@@ -43,7 +51,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     include_package_data=True,
     scripts=["scripts/PartSeg"],
-    install_requires=['numpy', 'tifffile>=0.15,<1', 'appdirs', 'SimpleITK', 'PyQt5', 'scipy', 'QtPy', 'sentry_sdk',
+    install_requires=['numpy', 'tifffile_string', 'appdirs', 'SimpleITK', 'PyQt5', 'scipy', 'QtPy', 'sentry_sdk',
                       'deprecation', 'qtawesome', 'six', 'h5py', 'pandas', 'sympy', 'Cython'],
     classifiers=[
         "Programming Language :: Python :: 3",
