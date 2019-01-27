@@ -13,33 +13,8 @@ if getattr(sys, 'frozen', False):
         os.environ["FONTCONFIG_FILE"] = "/etc/fonts/fonts.conf"
         os.environ["QT_XKB_CONFIG_ROOT"]="/usr/share/X11/xkb"
 
-if sys.version_info.major == 2:
-    import pkgutil
-    loader = pkgutil.find_loader("PyQt5")
-    if loader is not None:
-        use_qt5 = True
-    else:
-        use_qt5 = False
-else:
-    import importlib
-    spam_spec = importlib.find_loader("PyQt5")
-    if spam_spec is not None:
-        use_qt5 = True
-    else:
-        use_qt5 = False
 
 develop = False
-
-
-def set_qt4():
-    global use_qt5
-    use_qt5 = False
-
-
-def set_qt5():
-    global use_qt5
-    use_qt5 = True
-
 
 def set_develop(value):
     global develop

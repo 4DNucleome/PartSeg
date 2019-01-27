@@ -2,15 +2,19 @@ language: python
 python:
 - 3.6
 - 3.7
-install: pip install pyinstaller cython numpy pip install ./package
-script: 
+install:
+  - pip install pyinstaller cython numpy
+  - pip install ./package
+
+script: pytest package/tests
+
 deploy:
   provider: pypi
   user: Massad
   password:
     secure: uZ0spm2vnh2Q5j30kpRDHrVWde+a9e8ABq473RSLmyxJmDoud/YlG6qCuPIzMBH+6H9Xq/ENKzb/smbqE/uHYCOzVBoSzZWNAqypOU8a+QdVRrXTpWxYoLRIHiInbb96uLeGY4VLcMXCyWNt0OpOp6w1lU30dEXi1tap3O7vDDBMINO+s5/Ro9XJj5smBXArFE4xkownJA0xWbtuby1TIysjzNf7aEysA/plMaRgUZY+DdOwht1yZatZK7CK0xdWQCDZWi2bDLbbBTPLLEdZdPG1mHp+z9xytnvp5dtFlIUI5Wud264odhO1VCz4uzLlgx7ne6OrzfPOaw4Z7pPVfzKx9Us06kZgcpb6djIAxtayfT4sZQgP08rZZ+8GRSv8KQ5HAO8BjfKxHz9vDVzff1oz8nK7VYEUKHMnDFn5nleRqnlws2YVGcHXdz2aYEmX8zC1IZfvN+UljNEZVL/MzV3dk5BUYB2BJox3bj8hAWgHLidmGi034lBqgNLUkz0RvYRNUGuaJFfzxsXZWQ48RYnODCyVbAHHw9PQDWsttDrApX1z7cqeTu29DLrbtvpMZ1WMnB7qIvDGDjYj3skkKBtz6ybojKxf80cChKLkfBldFRe8DWklOknJ2TggtgLHzmyX/86zPM/vcxANNlVBKhJxT5eKeltHylKcsOb8qd4=
   on:
-    branch: production
+    branch: master
     tags: true
   distributions: "sdist bdist_wheel"
   skip_existing: true
