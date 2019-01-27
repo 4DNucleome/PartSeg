@@ -1,5 +1,6 @@
 # PartSeg
- 
+![travis status](https://travis-ci.com/Czaki/PartSeg.svg?token=qt6JVrYstUBNKsomFCaa&branch=master)
+
 PartSeg is gui and library for segmentation algorithms.
 
 This application is designed to help biologist with segmentation 
