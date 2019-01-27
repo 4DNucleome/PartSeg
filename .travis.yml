@@ -19,7 +19,9 @@ deploy:
   distributions: "sdist bdist_wheel"
   skip_existing: true
 
+dist: xenial
+
 os:
-  - windows
   - linux
-  - osx
+  # - osx
+  # - windows
