@@ -51,7 +51,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     include_package_data=True,
     scripts=["scripts/PartSeg"],
-    install_requires=['numpy', 'tifffile_string', 'appdirs', 'SimpleITK', 'PyQt5', 'scipy', 'QtPy', 'sentry_sdk',
+    install_requires=['numpy', tifffile_string, 'appdirs', 'SimpleITK', 'PyQt5', 'scipy', 'QtPy', 'sentry_sdk',
                       'deprecation', 'qtawesome', 'six', 'h5py', 'pandas', 'sympy', 'Cython'],
     classifiers=[
         "Programming Language :: Python :: 3",
