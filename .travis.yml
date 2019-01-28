@@ -35,7 +35,7 @@ matrix:
       env: TOXENV=py37
 
 install:
-  - ./.travis/install.sh
+  - . ./.travis/install.sh
 
 dist: xenial
 os:

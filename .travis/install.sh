@@ -4,7 +4,6 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
     # Install some custom requirements on macOS
     # e.g. brew install pyenv-virtualenv
-    brew update
     brew upgrade pyenv
 
     case "${TOXENV}" in
@@ -19,6 +18,9 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
             # Install some custom Python 3.7 requirements on macOS
             ;;
     esac
+    export PYENV_ROOT="$HOME/.pyenv"
+    export PATH="$PYENV_ROOT/shims:$PATH"
+
     pip install pytest
 else
     echo "linux"
