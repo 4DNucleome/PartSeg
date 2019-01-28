@@ -1,6 +1,11 @@
 language: python
 script: pytest package/tests
 
+branches:
+  only:
+  - master
+  - develop
+
 deploy:
   provider: pypi
   user: Massad
@@ -22,11 +27,11 @@ matrix:
       python: 3.6
     - os: osx
       language: generic
-      osx_image: xcode7.3
+      osx_image: xcode8.3
       env: TOXENV=py36
     - os: osx
       language: generic
-      osx_image: xcode7.3
+      osx_image: xcode8.3
       env: TOXENV=py37
 
 install:

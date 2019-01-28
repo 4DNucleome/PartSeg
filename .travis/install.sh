@@ -5,7 +5,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     # Install some custom requirements on macOS
     # e.g. brew install pyenv-virtualenv
     brew update
-    brew install pyenv
+    brew upgrade pyenv
 
     case "${TOXENV}" in
         py36)
@@ -25,5 +25,6 @@ else
     # Install some custom requirements on Linux
 fi
 
+pip install pip==18.1
 pip install pyinstaller cython numpy
 pip install ./package
