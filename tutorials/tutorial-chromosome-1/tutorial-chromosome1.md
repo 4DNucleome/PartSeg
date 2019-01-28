@@ -79,4 +79,7 @@ The original deconvoluted stack is available under this [link]([link](http://nuc
 
 You can try to improve segmentation by hand. To do it with PartSeg tool on laucher screen choose button "Segmentation GUI". The workflow is similar.
 
+## Additional information
+Data collection was carried out with the use of CePT infrastructure financed by the European Union - The European Regional Development Fund within the Operational Programme “Innovative economy” for 2007-2013.
+ 
 [comment]: <> (pandoc -t html -s -o tutorial-chromosome1.html --css pandoc.css -M pagetitle:"Chromosome 1 territory analysis"  tutorial-chromosome1.md)
