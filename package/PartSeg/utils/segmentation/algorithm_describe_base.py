@@ -49,7 +49,11 @@ class AlgorithmDescribeBase:
         result = {}
         for el in cls.get_fields():
             if isinstance(el, AlgorithmProperty):
-                result[el.name] = el.default_value
+                if issubclass(el.value_type, AlgorithmDescribeBase):
+                    result[el.name] = {"name": el.default_value,
+                                       "values": el.possible_values[el.default_value].get_default_values()}
+                else:
+                    result[el.name] = el.default_value
         return result
 
 

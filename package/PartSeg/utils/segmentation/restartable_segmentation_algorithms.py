@@ -29,7 +29,6 @@ class RestartableAlgorithm(SegmentationAlgorithm, ABC):
 
     def set_image(self, image):
         super().set_image(image)
-        self.parameters.clear()
 
     def set_mask(self, mask):
         super().set_mask(mask)
@@ -112,7 +111,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         """main calculation function.  return segmentation, full_segmentation"""
         self.old_threshold_info = self.threshold_info
         restarted = False
-        if self.parameters["channel"] != self.new_parameters["channel"]:
+        if self.channel is None or self.parameters["channel"] != self.new_parameters["channel"]:
             self.channel = self.get_channel(self.new_parameters["channel"])
             restarted = True
         if restarted or self.parameters["noise_removal"] != self.new_parameters["noise_removal"]:
@@ -214,7 +213,8 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
     def get_fields(cls):
         return [AlgorithmProperty("threshold", "Threshold", next(iter(double_threshold_dict.keys())),
                                   possible_values=double_threshold_dict, property_type=AlgorithmDescribeBase),
-                AlgorithmProperty("flow_type", "Flow type", next(iter(sprawl_dict.keys())), possible_values=sprawl_dict,
+                AlgorithmProperty("sprawl_type", "Flow type", next(iter(sprawl_dict.keys())),
+                                  possible_values=sprawl_dict,
                                   property_type=AlgorithmDescribeBase)] \
                + super().get_fields()
 
@@ -243,8 +243,8 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
         self.sprawl_area = (mask >= 1).astype(np.uint8)
         return (mask == 2).astype(np.uint8)
 
-    def set_parameters(self, flow_type, *args, **kwargs):
-        self.new_parameters["flow_type"] = flow_type
+    def set_parameters(self, sprawl_type, *args, **kwargs):
+        self.new_parameters["sprawl_type"] = sprawl_type
         self._set_parameters(*args, **kwargs)
 
     def set_image(self, image):
@@ -266,16 +266,16 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
             restarted = True
 
         if restarted or self.old_threshold_info[1] != self.threshold_info[1] or \
-                self.new_parameters["flow_type"] != self.parameters["flow_type"]:
+                self.new_parameters["sprawl_type"] != self.parameters["sprawl_type"]:
             if self.threshold_operator(self.threshold_info[1], self.threshold_info[0]):
                 self.final_sizes = np.bincount(finally_segment.flat)
                 return SegmentationResult(self.finally_segment, self.segmentation, self.cleaned_image)
-            path_sprawl: BaseSprawl = sprawl_dict[self.new_parameters["flow_type"]["name"]]
-            self.parameters["flow_type"] = self.new_parameters["flow_type"]
+            path_sprawl: BaseSprawl = sprawl_dict[self.new_parameters["sprawl_type"]["name"]]
+            self.parameters["sprawl_type"] = self.new_parameters["sprawl_type"]
             new_segment = path_sprawl.sprawl(self.sprawl_area, finally_segment, self.channel, self.components_num,
                                              self.image.spacing,
                                              self.new_parameters["side_connection"], self.threshold_operator,
-                                             self.new_parameters["flow_type"]["values"], self.threshold_info[1],
+                                             self.new_parameters["sprawl_type"]["values"], self.threshold_info[1],
                                              self.threshold_info[0])
             self.final_sizes = np.bincount(new_segment.flat)
             return SegmentationResult(new_segment, self.sprawl_area, self.cleaned_image)

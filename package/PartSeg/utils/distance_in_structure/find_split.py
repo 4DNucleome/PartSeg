@@ -57,7 +57,7 @@ def path_minimum_sprawl(data_f, components, components_count, neighbourhood, dis
         data_cache = np.zeros(data_f.shape, data_f.dtype)
     if components_count == 1:
         np.copyto(data_cache, data_f)
-        tmp = calculate_minimum(data_cache, (components == 1).astype(np.uint8), neighbourhood, maximum)
+        tmp = calculate_minimum(data_cache, (components == 1).astype(np.uint8), neighbourhood)
         components[tmp < maximum] = 1
         return components
     if distance_cache is None:
@@ -66,7 +66,7 @@ def path_minimum_sprawl(data_f, components, components_count, neighbourhood, dis
         np.copyto(data_cache, data_f)
         data_cache[(components > 0) * (components != component)] = 0
         distance_cache[component - 1] = calculate_minimum(data_cache, (components == component).astype(np.uint8),
-                                                          neighbourhood, maximum)
+                                                          neighbourhood)
     components = get_minimum_component(components, (data_f > 0).astype(np.uint8), distance_cache[:components_count],
                                        components_count)
     return components
@@ -92,7 +92,7 @@ def sprawl_component(data_m, components,  component_number, neigh_arr, dist_arra
                                  neigh_arr, dist_array)
 
 def distance_sprawl(calculate_operator, data_m: np.ndarray, components: np.ndarray, components_count: int, neigh_arr,
-                    dist_array, distance_cache=None, data_cache=None, parallel=True):
+                    dist_array, distance_cache=None, data_cache=None, parallel=False):
     if data_cache is None:
         data_cache = np.zeros(data_m.shape, data_m.dtype)
     if components_count == 1:

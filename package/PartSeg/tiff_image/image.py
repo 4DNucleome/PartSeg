@@ -12,6 +12,17 @@ class Image(object):
 
     def __init__(self, data: np.ndarray, image_spacing, file_path=None, mask: typing.Union[None, np.ndarray] = None,
                  default_coloring=None, ranges=None, labels=None):
+        """
+        Base class for Images used in PartSeg
+        :param data: 5-dim array with order: time, z, y, x, channel
+        :param image_spacing: spacing for z, y, x (TODO add time distance)
+        :param file_path: path to image on disc
+        :param mask: mask array in shape z,y,x
+        :param default_coloring: default colormap - not used yet
+        :param ranges: default ranges for channels
+        :param labels: labels for channels
+        """
+        assert len(data.shape) == 5
         self._image_array = data
         self._mask_array = mask
         self._image_spacing = image_spacing

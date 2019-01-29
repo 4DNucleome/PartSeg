@@ -19,7 +19,7 @@ def calculate_maximum(np.ndarray[float64_t, ndim=3] object_area, np.ndarray[uint
     :return:
     """
     if result is None:
-        result = np.zeros((object_area.shape[0], object_area.shape[1], object_area.shape[2]), dtype=np.float64)
+        result = np.full((object_area.shape[0], object_area.shape[1], object_area.shape[2]), -np.inf, dtype=np.float64)
     res, c = _calculate_maximum(object_area, base_object, neighbourhood, result)
     return res
 
@@ -74,7 +74,7 @@ cdef _calculate_maximum(np.ndarray[float64_t, ndim=3] object_area, np.ndarray[ui
     return result, count
 
 def calculate_minimum(np.ndarray[float64_t, ndim=3] object_area, np.ndarray[uint8_t, ndim=3] base_object,
-                      np.ndarray[int8_t, ndim=2] neighbourhood, float maximum, result=None):
+                      np.ndarray[int8_t, ndim=2] neighbourhood, result=None):
     """
     Calculate maximum path from source
     :param maximum: maximum possible value on path
@@ -85,8 +85,7 @@ def calculate_minimum(np.ndarray[float64_t, ndim=3] object_area, np.ndarray[uint
     :return:
     """
     if result is None:
-        result = np.zeros((object_area.shape[0], object_area.shape[1], object_area.shape[2]), dtype=np.float64)
-        result[:] = maximum
+        result = np.full((object_area.shape[0], object_area.shape[1], object_area.shape[2]), np.inf, dtype=np.float64)
     res, c = _calculate_minimum(object_area, base_object, neighbourhood, result)
     return res
 
@@ -104,7 +103,6 @@ cdef _calculate_minimum(np.ndarray[float64_t, ndim=3] object_area, np.ndarray[ui
     z_size = object_area.shape[0]
     y_size = object_area.shape[1]
     x_size = object_area.shape[2]
-    print("_calculate_minimum")
 
     result[base_object > 0] = object_area[base_object > 0]
     put_borders_in_queue(object_area, current_points, base_object, neighbourhood)
