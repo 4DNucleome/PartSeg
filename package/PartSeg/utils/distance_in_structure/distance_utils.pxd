@@ -27,3 +27,8 @@ cdef extern from "global_consts.h":
     const signed char neighbourhood[26][3]
     const char neigh_level[]
     const float distance[]
+
+ctypedef fused component_types:
+    cnp.uint16_t
+    cnp.uint8_t
+
