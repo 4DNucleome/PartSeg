@@ -4,7 +4,7 @@
 
 
 from numpy cimport float64_t, int8_t, uint8_t
-
+from cpython.mem cimport PyMem_Free
 from .distance_utils cimport Point, component_types
 include "put_borders_in_queue.pyx"
 
@@ -17,14 +17,14 @@ def calculate_euclidean(np.ndarray[uint8_t, ndim=3] object_area, np.ndarray[uint
     cdef Py_ssize_t count = 0
     cdef char neigh_length = neighbourhood.shape[0]
     cdef int neigh_it
-    cdef my_queue[Point] current_points, new_points
+    cdef my_queue[Point] current_points
     cdef Point p, p1
     z_size = object_area.shape[0]
     y_size = object_area.shape[1]
     x_size = object_area.shape[2]
     result = np.zeros((z_size, y_size, x_size), dtype=np.float64)
     result[base_object == 0] = np.inf
-    put_borders_in_queue(object_area, current_points, base_object, neighbourhood)
+    put_borders_in_queue(current_points, base_object, neighbourhood)
     while not current_points.empty():
         p = current_points.front()
         current_points.pop()
@@ -51,6 +51,7 @@ def calculate_euclidean(np.ndarray[uint8_t, ndim=3] object_area, np.ndarray[uint
     # print("total_steps: " +str(count))
     return result
 
+
 def calculate_euclidean_iterative(
         np.ndarray[uint8_t, ndim=3] object_area, np.ndarray[component_types, ndim=3] base_object,
         np.ndarray[int8_t, ndim=2] neighbourhood, np.ndarray[float64_t, ndim=1] distance):
@@ -62,7 +63,7 @@ def calculate_euclidean_iterative(
     cdef Py_ssize_t count = 0
     cdef char neigh_length = neighbourhood.shape[0]
     cdef int neigh_it
-    cdef my_queue[Point] current_points, new_points
+    cdef my_queue[Point] * current_points_array
     cdef Point p, p1
     z_size = object_area.shape[0]
     y_size = object_area.shape[1]
@@ -70,8 +71,9 @@ def calculate_euclidean_iterative(
     distance_cache = np.zeros((z_size, y_size, x_size), dtype=np.float64)
     distance_cache[base_object == 0] = np.inf
     components_num = base_object.max()
+    current_points_array = create_borders_queues(base_object, neighbourhood, components_num)
     for i in range(components_num):
-        put_borders_in_queue_indexed(object_area, current_points, base_object, neighbourhood, i)
+        cdef my_queue[Point] & current_points = current_points_array[i]
         while not current_points.empty():
             p = current_points.front()
             current_points.pop()
@@ -96,6 +98,7 @@ def calculate_euclidean_iterative(
                         p1.y = y
                         p1.x = x
                         current_points.push(p1)
+    PyMem_Free(current_points_array)
     # print("total_steps: " +str(count))
     return result
 

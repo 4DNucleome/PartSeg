@@ -43,7 +43,7 @@ cdef _calculate_maximum(np.ndarray[float64_t, ndim=3] object_area, np.ndarray[ui
     result[base_object > 0] = object_area[base_object > 0]
 
     # Find border of component
-    put_borders_in_queue(object_area, current_points, base_object, neighbourhood)
+    put_borders_in_queue(current_points, base_object, neighbourhood)
     while not current_points.empty():
         count+=1
         p = current_points.front()
@@ -105,7 +105,7 @@ cdef _calculate_minimum(np.ndarray[float64_t, ndim=3] object_area, np.ndarray[ui
     x_size = object_area.shape[2]
 
     result[base_object > 0] = object_area[base_object > 0]
-    put_borders_in_queue(object_area, current_points, base_object, neighbourhood)
+    put_borders_in_queue(current_points, base_object, neighbourhood)
     while not current_points.empty():
         count+=1
         p = current_points.front()
