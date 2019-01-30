@@ -26,14 +26,14 @@ def get_two_parts_reversed():
 
 def get_two_parts_side():
     data = get_two_parts_array()
-    data[0, 25, 40:45, 50] = 50
-    data[0, 25, 45:50, 51] = 50
+    data[0, 25, 40:45, 50] = 49
+    data[0, 25, 45:50, 51] = 49
     return Image(data, (100, 50, 50), "")
 
 def get_two_parts_side_reversed():
     data = get_two_parts_array()
-    data[0, 25, 40:45, 50] = 50
-    data[0, 25, 45:50, 51] = 50
+    data[0, 25, 40:45, 50] = 49
+    data[0, 25, 45:50, 51] = 49
     data = 100 - data
     return Image(data, (100, 50, 50), "")
 
@@ -163,9 +163,15 @@ class BaseFlowThreshold(BaseThreshold):
             alg.set_parameters(**parameters)
             result = alg.calculation_run(empty)
             assert result.segmentation.max() == 2
-            if not np.all(np.bincount(result.segmentation.flat)[1:] == np.array([96000, 72000])):
-                print("aaa", key, np.bincount(result.segmentation.flat)[1:])
             assert np.all(np.bincount(result.segmentation.flat)[1:] == np.array([96000, 72000]))  # 30*40*80, 30*30*80
+        parameters["threshold"]["values"]["base_threshold"]['values']["threshold"] += self.get_shift()
+        for key in  sprawl_dict.keys():
+            parameters["sprawl_type"] = {'name': key, 'values': {}}
+            alg.set_parameters(**parameters)
+            result = alg.calculation_run(empty)
+            assert result.segmentation.max() == 2
+            print(np.bincount(result.segmentation.flat)[1:], key)
+            assert np.all(np.bincount(result.segmentation.flat)[1:] >= np.array([96000, 72000]))  # 30*40*80, 30*30*80
 
 
     def test_side_connection(self):
@@ -174,10 +180,12 @@ class BaseFlowThreshold(BaseThreshold):
         parameters = self.get_parameters()
         parameters['side_connection'] = True
         alg.set_image(image)
-        alg.set_parameters(**parameters)
-        result = alg.calculation_run(empty)
-        assert result.segmentation.max() == 2
-        assert np.all(np.bincount(result.segmentation.flat)[1:] == np.array([96000 + 5, 72000 + 5]))
+        for key in  sprawl_dict.keys():
+            parameters["sprawl_type"] = {'name': key, 'values': {}}
+            alg.set_parameters(**parameters)
+            result = alg.calculation_run(empty)
+            assert result.segmentation.max() == 2
+            assert np.all(np.bincount(result.segmentation.flat)[1:] == np.array([96000 + 5, 72000 + 5]))
 
 
 class TestLowerThresholdFlow(BaseFlowThreshold):
@@ -188,7 +196,7 @@ class TestLowerThresholdFlow(BaseFlowThreshold):
                                     'base_threshold': {'name': 'Manual', 'values': {'threshold': 45}}}},
                   'noise_removal': {'name': 'None', 'values': {}}, 'side_connection': False,
                   'sprawl_type': {'name': 'Euclidean sprawl', 'values': {}}}
-    shift = 6
+    shift = -6
     get_base_object = staticmethod(get_two_parts)
     get_side_object = staticmethod(get_two_parts_side)
     algorithm_class = sa.LowerThresholdFlowAlgorithm

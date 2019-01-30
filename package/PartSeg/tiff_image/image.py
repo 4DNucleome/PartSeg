@@ -24,7 +24,7 @@ class Image(object):
         """
         assert len(data.shape) == 5
         self._image_array = data
-        self._mask_array = mask
+
         self._image_spacing = image_spacing
         self.file_path = file_path
         self.default_coloring = default_coloring
@@ -38,6 +38,7 @@ class Image(object):
                 zip(np.min(self._image_array, axis=(0, 1, 2, 3)), np.max(self._image_array, axis=(0, 1, 2, 3))))
         else:
             self.ranges = ranges
+        self._mask_array = self.fit_array_to_image(mask) if mask is not None else None
 
     def set_mask(self, mask: np.ndarray):
         if mask is None:
@@ -59,6 +60,8 @@ class Image(object):
                 shape.insert(i, 1)
             elif el != shape[i]:
                 raise ValueError("Wrong array shape")
+        if len(shape) != len(self._image_array.shape[:-1]):
+            raise ValueError("Wrong array shape")
         return np.reshape(array, shape)
 
     def get_image_for_save(self):
