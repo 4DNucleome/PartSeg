@@ -461,3 +461,5 @@ notebooks/*
 !help/*.html
 test_data/
 !launcher.spec
+/test_data_all/
+/test_data.tbz2 

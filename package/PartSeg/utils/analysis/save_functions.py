@@ -214,6 +214,69 @@ class SaveXYZ(SaveBase):
                     cls._save(new_save_location, channel_image, segmentation_mask, shift)
 
 
+class SaveAsTiff(SaveBase):
+    @classmethod
+    def get_name(cls):
+        return "Image (*.tiff *.tif)"
+
+    @classmethod
+    def get_short_name(cls):
+        return "tiff"
+
+    @classmethod
+    def get_fields(cls):
+        return []
+
+    @classmethod
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict):
+        ImageWriter.save(project_info.image, save_location)
+
+
+class SaveAsNumpy(SaveBase):
+    @classmethod
+    def get_name(cls):
+        return "Numpy Image (*.npy)"
+
+    @classmethod
+    def get_short_name(cls):
+        return "numpy_image"
+
+    @classmethod
+    def get_fields(cls):
+        return [AlgorithmProperty("squeeze", "Squeeze  array", False,
+                                  tool_tip="Remove single-dimensional entries from the shape of an array")]
+
+    @classmethod
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict):
+        data = project_info.image.get_data()
+        if parameters["squeeze"]:
+            data = np.squeeze(data)
+        np.save(save_location, data)
+
+
+
+
+class SaveMaskAsTiff(SaveBase):
+    @classmethod
+    def get_name(cls):
+        return "Mask (*.tiff *.tif)"
+
+    @classmethod
+    def get_short_name(cls):
+        return "mask_tiff"
+
+    @classmethod
+    def get_fields(cls):
+        return []
+
+    @classmethod
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict):
+        ImageWriter.save_mask(project_info.image, save_location)
+
+
 save_dict.register(SaveProject)
 save_dict.register(SaveCmap)
 save_dict.register(SaveXYZ)
+save_dict.register(SaveAsTiff)
+save_dict.register(SaveMaskAsTiff)
+save_dict.register(SaveAsNumpy)

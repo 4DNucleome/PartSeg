@@ -7,6 +7,7 @@ import numpy as np
 class ImageWriter(object):
     @classmethod
     def save(cls, image: Image, save_path: typing.Union[str, BytesIO]):
+        """Save image as tiff to path or buffer"""
         # print(f"[save] {save_path}")
         data = image.get_image_for_save()
         imagej_kwargs = {}
@@ -29,6 +30,7 @@ class ImageWriter(object):
 
     @classmethod
     def save_mask(cls, image: Image, save_path: str):
+        """Save mask connected to image as tiff to path or buffer"""
         mask = image.get_mask_for_save()
         if mask is None:
             return
