@@ -398,7 +398,12 @@ class PixelBrightnessSum(StatisticMethodBase):
     text_info = "Pixel Brightness Sum", "Sum of pixel brightness for current segmentation"
 
     @staticmethod
-    def calculate_property(area_array, image, **_):
+    def calculate_property(area_array: np.ndarray, image: np.ndarray, **_):
+        """
+        :param area_array: mask for area
+        :param image: data. same shape like area_type
+        :return: Pixels brightness sum on given area
+        """
         if np.any(area_array):
             return np.sum(image[area_array > 0])
         return 0
