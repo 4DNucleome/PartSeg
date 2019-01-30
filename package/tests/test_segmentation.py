@@ -158,7 +158,7 @@ class BaseFlowThreshold(BaseThreshold):
         alg = self.algorithm_class()
         parameters = self.get_parameters()
         alg.set_image(image)
-        for key in ["Euclidean sprawl"]: #  ["Fuzzy distance sprawl"]: # sprawl_dict.keys():
+        for key in  sprawl_dict.keys():
             parameters["sprawl_type"] = {'name': key, 'values': {}}
             alg.set_parameters(**parameters)
             result = alg.calculation_run(empty)

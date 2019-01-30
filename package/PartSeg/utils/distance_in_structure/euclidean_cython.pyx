@@ -73,10 +73,9 @@ def calculate_euclidean_iterative(
     components_num = base_object.max()
     current_points_array = create_borders_queues(base_object, neighbourhood, components_num)
     for i in range(components_num):
-        cdef my_queue[Point] & current_points = current_points_array[i]
-        while not current_points.empty():
-            p = current_points.front()
-            current_points.pop()
+        while not current_points_array[i].empty():
+            p = current_points_array[i].front()
+            current_points_array[i].pop()
             count += 1
             """if consumed_area[p.z, p.y, p.x] > 0:
                 continue"""
@@ -97,9 +96,24 @@ def calculate_euclidean_iterative(
                         p1.z = z
                         p1.y = y
                         p1.x = x
-                        current_points.push(p1)
+                        current_points_array[i].push(p1)
     PyMem_Free(current_points_array)
     # print("total_steps: " +str(count))
     return result
 
+
+def show_border(np.ndarray[component_types, ndim=3] base_object, np.ndarray[int8_t, ndim=2] neighbourhood):
+    cdef my_queue[Point] current_points
+    cdef Point p, p1
+    cdef np.ndarray[uint8_t, ndim=3] result
+    z_size = base_object.shape[0]
+    y_size = base_object.shape[1]
+    x_size = base_object.shape[2]
+    result = np.zeros((z_size, y_size, x_size), dtype=np.uint8)
+    put_borders_in_queue(current_points, base_object, neighbourhood)
+    while not current_points.empty():
+        p = current_points.front()
+        current_points.pop()
+        result[p.z, p.y, p.x] = 1
+    return result
 

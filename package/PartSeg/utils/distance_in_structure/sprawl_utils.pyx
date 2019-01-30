@@ -75,12 +75,14 @@ def _get_minimum_component(np.ndarray[np.uint32_t] components, np.ndarray[np.uin
                 components[x] = component_index
     return components
 
+
 def get_closest_component(components, data_mask, distances, num_of_components=None):
     if num_of_components is None:
         num_of_components = len(distances)
     new_distances = distances.reshape((num_of_components, components.size))
     _get_closest_component(components.ravel(), data_mask.ravel(), new_distances, num_of_components)
     return components
+
 
 def _get_closest_component(np.ndarray[np.uint32_t] components, np.ndarray[np.uint8_t] data_mask, np.ndarray[image_types, ndim=2] paths, int num_of_components):
     cdef Py_ssize_t x, y, size, component_index
