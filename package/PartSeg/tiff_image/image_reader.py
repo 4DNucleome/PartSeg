@@ -158,8 +158,11 @@ class ImageReader(object):
 
     def read_ome_metadata(self):
         meta_data = self.image_file.ome_metadata['Image']["Pixels"]
-        self.spacing = \
-            [meta_data[f"PhysicalSize{x}"] * name_to_scalar[meta_data[f"PhysicalSize{x}Unit"]] for x in ["Z", "Y", "X"]]
+        try:
+            self.spacing = [meta_data[f"PhysicalSize{x}"] *
+                            name_to_scalar[meta_data[f"PhysicalSize{x}Unit"]] for x in ["Z", "Y", "X"]]
+        except KeyError:
+            pass
         if "Channel" in meta_data and isinstance(meta_data["Channel"], (list, tuple)):
             try:
                 self.labels = [ch["Name"] for ch in meta_data["Channel"]]

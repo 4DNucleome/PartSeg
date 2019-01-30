@@ -13,13 +13,14 @@ from typing import NamedTuple, Optional, Union, Dict, Callable, List
 import SimpleITK as sitk
 import numpy as np
 from sympy import symbols
-from ..utils import class_to_dict
+
 from .. import autofit as af
 from ..border_rim import border_mask
 from ..class_generator import BaseReadonlyClass
 from ..class_generator import enum_register
 from ..segmentation.algorithm_describe_base import AlgorithmDescribeBase, Register, AlgorithmProperty
 from ..universal_const import UNITS_LIST, UNIT_SCALE
+from ..utils import class_to_dict
 
 
 class AreaType(Enum):
@@ -238,7 +239,7 @@ class StatisticProfile(object):
             left_res, left_unit = self.calculate_tree(node.left, help_dict, kwargs)
             right_res, right_unit = self.calculate_tree(node.right, help_dict, kwargs)
             if node.op == "/":
-                return left_res / right_res, left_unit/right_unit
+                return left_res / right_res, left_unit / right_unit
         logging.error("Wrong statistics: {}".format(node))
         return 1
 
@@ -322,6 +323,7 @@ class Volume(StatisticMethodBase):
     def get_units(cls, ndim):
         return symbols("{}") ** ndim
 
+
 # From Malandain, G., & Boissonnat, J. (2002). Computing the diameter of a point set,
 # 12(6), 489–509. https://doi.org/10.1142/S0218195902001006
 
@@ -356,7 +358,7 @@ def iterative_double_normal(point_positions):
             mid_point = (point_positions[dn[0]] + point_positions[dn[1]]) / 2
             dist_array = np.sum(np.array((point_positions - mid_point) ** 2), 1)
             dist_array[~points_array] = 0
-            if np.any(dist_array >= delta/4):
+            if np.any(dist_array >= delta / 4):
                 point_index = np.argmax(dist_array)
             else:
                 break
@@ -460,12 +462,27 @@ class MinimumPixelBrightness(StatisticMethodBase):
 
 
 class MeanPixelBrightness(StatisticMethodBase):
-    text_info = "Mean pixel brightness", "Calculate mean pixel brightness  for current area"
+    text_info = "Mean pixel brightness", "Calculate mean pixel brightness for current area"
 
     @staticmethod
     def calculate_property(area_array, image, **_):
         if np.any(area_array):
             return np.mean(image[area_array > 0])
+        else:
+            return None
+
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("Pixel_brightness")
+
+
+class MedianPixelBrightness(StatisticMethodBase):
+    text_info = "Median pixel brightness", "Calculate median pixel brightness for current area"
+
+    @staticmethod
+    def calculate_property(area_array, image, **_):
+        if np.any(area_array):
+            return np.median(image[area_array > 0])
         else:
             return None
 
@@ -494,7 +511,7 @@ class MomentOfInertia(StatisticMethodBase):
     text_info = "Moment of inertia", "Calculate moment of inertia for segmented structure"
 
     @staticmethod
-    def calculate_property(image, area_array, voxel_size, **_):
+    def calculate_property(area_array, image, voxel_size, **_):
         if image.ndim != 3:
             return None
         img = np.copy(image)
@@ -566,7 +583,7 @@ class Compactness(StatisticMethodBase):
 
     @classmethod
     def get_units(cls, ndim):
-        return Surface.get_units(ndim)/Volume.get_units(ndim)
+        return Surface.get_units(ndim) / Volume.get_units(ndim)
 
 
 class Sphericity(StatisticMethodBase):
@@ -593,7 +610,7 @@ class Sphericity(StatisticMethodBase):
 
     @classmethod
     def get_units(cls, ndim):
-        return Volume.get_units(ndim) / Diameter.get_units(ndim)**3
+        return Volume.get_units(ndim) / Diameter.get_units(ndim) ** 3
 
 
 class Surface(StatisticMethodBase):
@@ -605,7 +622,7 @@ class Surface(StatisticMethodBase):
 
     @classmethod
     def get_units(cls, ndim):
-        return symbols("{}")**2
+        return symbols("{}") ** 2
 
 
 class RimVolume(StatisticMethodBase):
@@ -630,7 +647,7 @@ class RimVolume(StatisticMethodBase):
 
     @classmethod
     def get_units(cls, ndim):
-        return symbols("{}")**3
+        return symbols("{}") ** 3
 
 
 class RimPixelBrightnessSum(StatisticMethodBase):
@@ -694,6 +711,7 @@ def calc_diam(array, voxel_size):
 
 
 STATISTIC_DICT = Register(Volume, Diameter, PixelBrightnessSum, ComponentsNumber, MaximumPixelBrightness,
-                          MinimumPixelBrightness, MeanPixelBrightness, StandardDeviationOfPixelBrightness,
-                          MomentOfInertia, LongestMainAxisLength, MiddleMainAxisLength, ShortestMainAxisLength,
-                          Compactness, Sphericity, Surface, RimVolume, RimPixelBrightnessSum)
+                          MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness,
+                          StandardDeviationOfPixelBrightness, MomentOfInertia, LongestMainAxisLength,
+                          MiddleMainAxisLength, ShortestMainAxisLength, Compactness, Sphericity, Surface, RimVolume,
+                          RimPixelBrightnessSum)
