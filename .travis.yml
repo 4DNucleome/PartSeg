@@ -1,6 +1,8 @@
 language: python
 script: pytest package/tests
 
+cache: pip
+
 branches:
   only:
   - master
@@ -26,10 +28,12 @@ matrix:
       dist: xenial
       python: 3.6
     - os: osx
+      if: branch = master
       language: generic
       osx_image: xcode8.3
       env: TOXENV=py36
     - os: osx
+      if: branch = master
       language: generic
       osx_image: xcode8.3
       env: TOXENV=py37
@@ -37,9 +41,6 @@ matrix:
 install:
   - . ./.travis/install.sh
 
-dist: xenial
-os:
-- linux
 notifications:
   slack:
     secure: HY0tbV+iXJKJ0KLh/4o/ySbG/E0NXEXzZkOWbUjlq+8I95pSeyAzSjuNErHbh8QMrFYZVaZcb5QWPUF8RPuG3LieLy5HAZwywwKmDj5EBbEC0HebtGnsM6ciOLC/WkTWTpooUHSRTfs2YYHwwVdQTKn6juQZUsJNtxkWR0M5qZHMPXNLAlfA0yaKzXkktxfGHRnUOngk9SUxL6tCpRaoVmD3R3foRn00LjQ8bDs76KclcaByUAtyWKP5y+8dgHniuERdbLfF1EKOB5KHGah43EHD2nFF3/qoGhPPFavGhUiOIlS6lU2S61zhAJbBjhzBU0RatV5DOOkjZyG5oux2j1y0EWq5r+VuzgWSws+IgNb57VMdPSgXDeMXrihX3+4+nFNNFRf5+ejLRJAtJRlDhXJwNNYkVB6y41SRD6A28hk2NL1oaW6F79Uw2yDFkLOpI/j/KStkCPjmcQVb8BqFX6MdowoeLsYqPdnFLsC6EWpEqEYS1tk5mpdPdOLQnsZAYoepiFH8VN83U6jM4S7eoprY7cAqKQpBh8L6/ar6x0/PyyZQCIPLm6b3adNZZ3BiPKpbs9BtDV3JLFsdhPbR1gHh3BHb2fzRr+omWZvU9023UtUBMcOsQ4UfxbNhTHPZ3DJadIfl2uhlEB1Ls0o70vC0TaBA0FNWzo5zLGOhfpI=
