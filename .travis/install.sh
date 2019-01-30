@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-wget https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/test_data.tbz2
+mkdir -p ~/cache/
+wget -N https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/test_data.tbz2 -P ~/cache/
 
-tar -jxf test_data.tbz2
+tar -jxf ~/cache/test_data.tbz2 -C .
 
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 

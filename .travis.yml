@@ -1,7 +1,10 @@
 language: python
 script: pytest package/tests
 
-cache: pip
+cache:
+  - pip
+  - directories:
+      - ~/cache
 
 branches:
   only:
