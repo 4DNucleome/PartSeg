@@ -14,6 +14,7 @@ class CustomLoadDialog(QFileDialog):
     def __init__(self, load_register: typing.Dict[str, type(LoadBase)], parent=None):
         super().__init__(parent)
         self.load_register = dict((x.get_name_with_suffix(), x) for x in load_register.values())
+        self.setOption(QFileDialog.DontUseNativeDialog, True)
         self.setFileMode(QFileDialog.ExistingFile)
         self.setAcceptMode(QFileDialog.AcceptOpen)
         self.setNameFilters(self.load_register.keys())
