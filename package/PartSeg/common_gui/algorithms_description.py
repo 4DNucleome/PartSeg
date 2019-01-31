@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import QComboBox, QCheckBox, QWidget, QVBoxLayout, QLabel, 
 from six import with_metaclass
 
 from .dim_combobox import DimComboBox
-from .universal_gui_part import CustomSpinBox, CustomDoubleSpinBox
+from .universal_gui_part import CustomSpinBox, CustomDoubleSpinBox, EnumComboBox, ChannelComboBox
 from ..utils.channel_class import Channel
 from ..project_utils_qt.error_dialog import ErrorDialog
 from ..utils.image_operations import RadiusType
@@ -30,34 +30,6 @@ def update(d, u):
         else:
             d[k] = v
     return d
-
-class EnumComboBox(QComboBox):
-    def __init__(self, enum: type(Enum), parent=None):
-        super().__init__(parent=parent)
-        self.enum = enum
-        self.addItems(list(map(str,  enum.__members__.values())))
-
-    def get_value(self):
-        return list(self.enum.__members__.values())[self.currentIndex()]
-
-    def set_value(self, value: Enum):
-        self.setCurrentText(value.name)
-
-
-class ChannelComboBox(QComboBox):
-    def get_value(self):
-        return self.currentIndex()
-
-    def set_value(self, val):
-        self.setCurrentIndex(int(val))
-
-    def change_channels_num(self, num):
-        index = self.currentIndex()
-        self.clear()
-        self.addItems(map(str, range(1, num + 1)))
-        if index < 0 or index > num:
-            index = 0
-        self.setCurrentIndex(index)
 
 
 class QtAlgorithmProperty(AlgorithmProperty):

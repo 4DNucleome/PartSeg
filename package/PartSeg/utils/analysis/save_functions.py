@@ -4,7 +4,7 @@ from .io_utils import ProjectTuple
 from ..analysis.analysis_utils import HistoryElement
 from ..channel_class import Channel
 from ..segmentation.algorithm_describe_base import AlgorithmProperty
-from ..universal_const import UNITS_LIST, UNIT_SCALE
+from ..universal_const import UNIT_SCALE, Units
 from ..analysis.save_hooks import PartEncoder
 import numpy as np
 from PartSeg.tiff_image import Image, ImageWriter
@@ -108,7 +108,7 @@ def save_cmap(file: typing.Union[str, h5py.File], image: Image, segmentation: np
     grp.attrs['TITLE'] = np.string_('')
     grp.attrs['VERSION'] = np.string_('1.0')
     grp.attrs['step'] = np.array(image._image_spacing, dtype=np.float32)[::-1] * \
-                        UNIT_SCALE[UNITS_LIST.index(cmap_profile["units"])]
+                        UNIT_SCALE[cmap_profile["units"].value]
 
     if isinstance(file, str):
         cmap_file.close()
@@ -148,7 +148,7 @@ class SaveCmap(SaveBase):
         return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
                 AlgorithmProperty("separated_objects", "Separate Objects", False),
                 AlgorithmProperty("clip", "Clip area", False),
-                AlgorithmProperty("units", "Units", UNITS_LIST[2], possible_values=UNITS_LIST, property_type=list)]
+                AlgorithmProperty("units", "Units", Units.nm, property_type=Units)]
 
     @classmethod
     def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict):

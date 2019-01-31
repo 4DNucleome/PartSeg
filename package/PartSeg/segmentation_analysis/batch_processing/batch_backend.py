@@ -20,7 +20,7 @@ from PartSeg.utils.analysis.analysis_utils import HistoryElement
 from PartSeg.utils.analysis.save_register import save_dict
 from ...utils.mask_create import calculate_mask
 from ...utils.segmentation.algorithm_base import report_empty_fun
-from ...utils.universal_const import UNITS_LIST, UNIT_SCALE
+from ...utils.universal_const import UNIT_SCALE
 from PartSeg.tiff_image import ImageReader, Image
 
 
@@ -185,7 +185,7 @@ class CalculationProcess(object):
 
             image_channel = self.image.get_channel(channel)
             try:
-                scalar = UNIT_SCALE[UNITS_LIST.index(node.operation.units)]
+                scalar = UNIT_SCALE[node.operation.units.value]
             except IndexError:
                 raise ValueError(f"Unknown units: '{node.operation.units}'")
 

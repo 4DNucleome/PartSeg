@@ -12,7 +12,7 @@ from ..segmentation.algorithm_describe_base import AlgorithmDescribeBase, Algori
 from ..segmentation.noise_filtering import noise_removal_dict
 from ..segmentation.sprawl import sprawl_dict, BaseSprawl
 from ..segmentation.threshold import threshold_dict, BaseThreshold, double_threshold_dict
-from ..universal_const import UNITS_LIST
+from ..universal_const import Units
 from ..utils import bisect
 
 
@@ -47,15 +47,15 @@ class BorderRim(RestartableAlgorithm):
     def __init__(self):
         super().__init__()
         self.distance = 0
-        self.units = ""
+        self.units = Units.nm
 
     @classmethod
     def get_fields(cls):
         return ["Need mask",
                 AlgorithmProperty("distance", "Distance", 700.0, options_range=(0, 100000), property_type=float),
-                AlgorithmProperty("units", "Units", "nm", possible_values=UNITS_LIST)]
+                AlgorithmProperty("units", "Units", Units.nm, property_type=Units)]
 
-    def set_parameters(self, distance, units):
+    def set_parameters(self, distance:float, units:Units):
         self.distance = distance
         self.units = units
 

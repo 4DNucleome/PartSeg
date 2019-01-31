@@ -17,7 +17,7 @@ from .batch_processing.batch_backend import CalculationManager
 from PartSeg.utils.analysis.calculation_plan import CalculationPlan, MaskFile, MaskMapper, Calculation
 from .prepare_plan_widget import CalculatePlaner
 from ..utils.global_settings import static_file_folder
-from ..utils.universal_const import UNITS_LIST
+from ..utils.universal_const import Units
 from ..common_gui.universal_gui_part import Spacing, right_label
 
 __author__ = "Grzegorz Bokota"
@@ -261,8 +261,7 @@ class CalculationPrepare(QDialog):
         self.batch_manager = batch_manager
         self.info_label = QLabel("information, <i><font color='blue'>warnings</font></i>, "
                                  "<b><font color='red'>errors</font><b>")
-        self.voxel_size = Spacing("Voxel size", list(zip(['x:', 'y:', 'z:'], settings.image.spacing)), self,
-                                  units=UNITS_LIST, units_index=self.settings.get("units_index", 2))
+        self.voxel_size = Spacing("Voxel size", list(zip(['x:', 'y:', 'z:'], settings.image.spacing)), settings.get("units_value", Units.nm))
         all_prefix = os.path.commonprefix(file_list)
         if not os.path.exists(all_prefix):
             all_prefix = os.path.dirname(all_prefix)

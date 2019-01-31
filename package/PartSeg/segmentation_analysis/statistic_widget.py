@@ -6,10 +6,10 @@ from qtpy.QtCore import Qt, QEvent
 from qtpy.QtWidgets import QWidget, QPushButton, QCheckBox, QComboBox, QTableWidget, QVBoxLayout, QHBoxLayout,\
     QLabel, QApplication, QTableWidgetItem, QMessageBox
 
-from ..common_gui.algorithms_description import ChannelComboBox
+from ..common_gui.universal_gui_part import ChannelComboBox, EnumComboBox
 from ..common_gui.waiting_dialog import WaitingDialog
 from .partseg_settings import PartSettings
-from ..utils.universal_const import UNITS_LIST, UNITS_DICT
+from ..utils.universal_const import Units
 from ..project_utils_qt.execute_function_thread import ExecuteFunctionThread
 
 
@@ -42,9 +42,8 @@ class StatisticsWidget(QWidget):
         self.statistic_type.setToolTip(
             "You can create new statistic profile in advanced window, in tab \"Statistic settings\"")
         self.channels_chose = ChannelComboBox()
-        self.units_choose = QComboBox()
-        self.units_choose.addItems(UNITS_LIST)
-        self.units_choose.setCurrentIndex(self.settings.get("units_index", 2))
+        self.units_choose = EnumComboBox(Units)
+        self.units_choose.set_value(self.settings.get("units_value", Units.nm))
         self.info_field = QTableWidget(self)
         self.info_field.setColumnCount(3)
         self.info_field.setHorizontalHeaderLabels(["Name", "Value", "Units"])
@@ -157,13 +156,14 @@ class StatisticsWidget(QWidget):
             return
         full_mask = self.settings.full_segmentation
         base_mask = self.settings.mask
-        units_name = UNITS_LIST[self.units_choose.currentIndex()]
+        units = self.units_choose.get_value()
+        units_name = str(units)
 
         def exception_hook(exception):
             QMessageBox.warning(self, "Calculation error", f"Error during calculation: {exception}")
 
         thread = ExecuteFunctionThread(compute_class.calculate, [image, segmentation, full_mask, base_mask,
-                                                                 self.settings.image.spacing, units_name])
+                                                                 self.settings.image.spacing, units])
         dial = WaitingDialog(thread, "Statistic calculation", exception_hook=exception_hook)
         dial.exec()
         stat = thread.result

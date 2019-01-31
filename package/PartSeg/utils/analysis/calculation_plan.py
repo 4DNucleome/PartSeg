@@ -9,6 +9,7 @@ from enum import Enum
 from deprecation import deprecated
 from six import add_metaclass
 
+from PartSeg.utils.universal_const import Units
 from ..analysis.save_register import save_dict
 from ..analysis.statistics_calculation import StatisticProfile
 from ..analysis.algorithm_description import SegmentationProfile
@@ -52,7 +53,7 @@ class Save(BaseReadonlyClass):
 
 class StatisticCalculate(BaseReadonlyClass):
     channel: int
-    units: str
+    units: Units
     statistic_profile: StatisticProfile
     name_prefix: str
 

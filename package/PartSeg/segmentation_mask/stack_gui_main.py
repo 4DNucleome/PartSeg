@@ -9,7 +9,7 @@ from qtpy.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMess
     QComboBox, QDoubleSpinBox, QSpinBox, QStackedLayout, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
     QTabWidget, QSizePolicy
 
-from ..common_gui.algorithms_description import AlgorithmSettingsWidget
+from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox
 from ..common_gui.channel_control import ChannelControl
 from ..common_gui.colors_choose import ColorSelector
 from ..common_gui.custom_save_dialog import SaveDialog
@@ -20,7 +20,7 @@ from ..common_gui.universal_gui_part import right_label
 from ..common_gui.waiting_dialog import WaitingDialog
 from ..utils.global_settings import static_file_folder
 from ..utils.segmentation.algorithm_base import SegmentationResult
-from ..utils.universal_const import UNITS_LIST, UNIT_SCALE
+from ..utils.universal_const import UNIT_SCALE, Units
 from ..project_utils_qt.error_dialog import ErrorDialog
 from ..project_utils_qt.image_read_thread import ImageReaderThread
 from ..project_utils_qt.main_window import BaseMainWindow
@@ -573,16 +573,15 @@ class ImageInformation(QWidget):
         self.path = QLabel("<b>Path:</b> example image")
         self.path.setWordWrap(True)
         self.spacing = [QDoubleSpinBox() for _ in range(3)]
-        units_index = self._settings.get("units_index", 2)
+        units_value = self._settings.get("units_value", Units.nm)
         for el in self.spacing:
             el.setAlignment(Qt.AlignRight)
             el.setButtonSymbols(QAbstractSpinBox.NoButtons)
             el.setRange(0, 100000)
             # noinspection PyUnresolvedReferences
             el.valueChanged.connect(self.image_spacing_change)
-        self.units = QComboBox()
-        self.units.addItems(UNITS_LIST)
-        self.units.setCurrentIndex(units_index)
+        self.units = EnumComboBox(Units)
+        self.units.set_value(units_value)
         # noinspection PyUnresolvedReferences
         self.units.currentIndexChanged.connect(self.update_spacing)
 
@@ -604,12 +603,18 @@ class ImageInformation(QWidget):
         self._settings.image_changed[str].connect(self.set_image_path)
 
     def update_spacing(self, index=None):
+        units_value = self.units.get_value()
         if index is not None:
-            self._settings.set("units_index", index)
+            self._settings.set("units_value", units_value)
         for el, val in zip(self.spacing, self._settings.image_spacing[::-1]):
             el.blockSignals(True)
-            el.setValue(val * UNIT_SCALE[self.units.currentIndex()])
+            el.setValue(val * UNIT_SCALE[units_value.value])
             el.blockSignals(False)
+        if self._settings.is_image_2d():
+            self.spacing[2].setValue(0)
+            self.spacing[2].setDisabled(True)
+        else:
+            self.spacing[2].setDisabled(False)
 
     def set_image_path(self, value):
         self.path.setText("<b>Path:</b> {}".format(value))
@@ -620,9 +625,15 @@ class ImageInformation(QWidget):
                                         enumerate(self.spacing[::-1])]
 
     def showEvent(self, _a0):
-        units_index = self._settings.get("units_index", 2)
+        units_value = self._settings.get("units_value", Units.nm)
         for el, val in zip(self.spacing, self._settings.image_spacing[::-1]):
-            el.setValue(val * UNIT_SCALE[units_index])
+            el.setValue(val * UNIT_SCALE[units_value.value])
+        if self._settings.is_image_2d():
+            self.spacing[2].setValue(0)
+            self.spacing[2].setDisabled(True)
+        else:
+            self.spacing[2].setDisabled(False)
+
 
 
 class Options(QTabWidget):

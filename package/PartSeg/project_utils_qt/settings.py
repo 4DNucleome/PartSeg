@@ -45,6 +45,9 @@ class ImageSettings(QObject):
     def image_spacing(self):
         return self._image.spacing
 
+    def is_image_2d(self):
+        return self._image is None or self._image.is_2d
+
     @image_spacing.setter
     def image_spacing(self, value):
         assert (len(value) in [2, 3])

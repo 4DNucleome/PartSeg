@@ -2,11 +2,12 @@ import logging
 import typing
 from copy import copy, deepcopy
 
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QDialog, QCompleter, QLineEdit, QPushButton, QGridLayout, QWidget, QCheckBox, QComboBox, \
+from qtpy.QtCore import Qt, Signal
+from qtpy.QtWidgets import QDialog, QCompleter, QLineEdit, QPushButton, QGridLayout, QWidget, QCheckBox, QComboBox, \
     QListWidget, QSpinBox, QTextEdit, QVBoxLayout, QGroupBox, QLabel, QHBoxLayout, QInputDialog, QMessageBox, \
     QTreeWidget, QTreeWidgetItem, QFileDialog, QSplitter, QTabWidget, QListWidgetItem
 
+from PartSeg.common_gui.universal_gui_part import EnumComboBox
 from ..common_gui.custom_save_dialog import FormDialog
 from ..common_gui.mask_widget import MaskWidget
 from ..common_gui.universal_gui_part import right_label
@@ -14,7 +15,7 @@ from PartSeg.utils.analysis.algorithm_description import SegmentationProfile
 from PartSeg.utils.analysis.save_functions import save_dict
 from ..utils.io_utils import SaveBase
 from ..utils.segmentation.algorithm_describe_base import AlgorithmProperty
-from ..utils.universal_const import UNITS_LIST
+from ..utils.universal_const import Units
 
 from PartSeg.utils.analysis.calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, \
     MaskSuffix, MaskSub, MaskFile, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, \
@@ -77,8 +78,8 @@ class TwoMaskDialog(QDialog):
 
 class CreatePlan(QWidget):
 
-    plan_created = pyqtSignal()
-    plan_node_changed = pyqtSignal()
+    plan_created = Signal()
+    plan_node_changed = Signal()
 
     def __init__(self, settings: PartSettings):
         super(CreatePlan, self).__init__()
@@ -116,9 +117,8 @@ class CreatePlan(QWidget):
         self.chanel_num = QSpinBox()
         self.channel_statistic_choose = QComboBox()
         self.channel_statistic_choose.addItems(["Same as segmentation"] + [str(x) for x in range(MAX_CHANNEL_NUM)])
-        self.units_choose = QComboBox()
-        self.units_choose.addItems(UNITS_LIST)
-        self.units_choose.setCurrentIndex(self.settings.get("units_index", 2))
+        self.units_choose = EnumComboBox(Units)
+        self.units_choose.set_value(self.settings.get("units_value", Units.nm))
         self.chanel_num.setRange(0, 10)
         self.expected_node_type = None
         self.save_constructor = None
@@ -570,7 +570,7 @@ class CreatePlan(QWidget):
                 return
 
         text = str(self.segment_profile.currentItem().text())
-        profile = self.settings.get(f"segmentation_profiles.{text}")
+        profile = self.settings.segmentation_profiles[text]
         if self.update_element_btn.isChecked():
             self.calculation_plan.replace_step(profile)
         else:
@@ -585,7 +585,7 @@ class CreatePlan(QWidget):
         channel = self.channel_statistic_choose.currentIndex() - 1
         statistics_copy.name_prefix = prefix
         statistic_calculate = StatisticCalculate(channel=channel, statistic_profile=statistics_copy, name_prefix=prefix,
-                                                 units=self.units_choose.currentText())
+                                                 units=self.units_choose.get_value())
         if self.update_element_btn.isChecked():
             self.calculation_plan.replace_step(statistic_calculate)
         else:
@@ -714,7 +714,7 @@ class CreatePlan(QWidget):
                 text = str(self.statistic_list.currentItem().text())
             else:
                 return
-        profile = self.settings.get(f"statistic_profiles.{text}")
+        profile = self.settings.statistic_profiles[text]
         self.information.setText(str(profile))
 
     def show_statistics(self):
@@ -737,7 +737,7 @@ class CreatePlan(QWidget):
                 text = str(self.segment_profile.currentItem().text())
             else:
                 return
-        self.information.setText(str(self.settings.get(f"segmentation_profiles.{text}")))
+        self.information.setText(str(self.settings.segmentation_profiles[text]))
 
     def show_segment(self):
         if self.update_element_btn.isChecked():
@@ -773,7 +773,7 @@ class PlanPreview(QTreeWidget):
     """
     :type calculation_plan: CalculationPlan
     """
-    changed_node = pyqtSignal()
+    changed_node = Signal()
 
     def __init__(self, parent=None, calculation_plan=None):
         super(PlanPreview, self).__init__(parent)
@@ -892,7 +892,7 @@ class CalculateInfo(QWidget):
     """
     :type settings: Settings
     """
-    plan_to_edit_signal = pyqtSignal()
+    plan_to_edit_signal = Signal()
 
     def __init__(self, settings: PartSettings):
         super(CalculateInfo, self).__init__()

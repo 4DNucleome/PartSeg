@@ -1,20 +1,51 @@
 # coding=utf-8
 from sys import platform
+from enum import Enum
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QFontMetrics
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFontMetrics
-
+from PartSeg.utils.universal_const import Units
 from .flow_layout import FlowLayout
-from PyQt5.QtWidgets import QWidget, QLabel, QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QComboBox, QSlider,\
+from qtpy.QtWidgets import QWidget, QLabel, QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QComboBox, QSlider,\
     QLineEdit
+
+
+class ChannelComboBox(QComboBox):
+    def get_value(self):
+        return self.currentIndex()
+
+    def set_value(self, val):
+        self.setCurrentIndex(int(val))
+
+    def change_channels_num(self, num):
+        index = self.currentIndex()
+        self.clear()
+        self.addItems(map(str, range(1, num + 1)))
+        if index < 0 or index > num:
+            index = 0
+        self.setCurrentIndex(index)
+
+
+class EnumComboBox(QComboBox):
+    def __init__(self, enum: type(Enum), parent=None):
+        super().__init__(parent=parent)
+        self.enum = enum
+        self.addItems(list(map(str,  enum.__members__.values())))
+
+    def get_value(self) -> Enum:
+        return list(self.enum.__members__.values())[self.currentIndex()]
+
+    def set_value(self, value: Enum):
+        self.setCurrentText(value.name)
+
 
 
 class Spacing(QWidget):
     """
     :type elements: list[QDoubleSpinBox | QSpinBox]
     """
-    def __init__(self, title, data_sequence, parent=None, input_type=QDoubleSpinBox, decimals=2, data_range=(0, 1000),
-                 single_step=1, units=None, units_index=0):
+    def __init__(self, title, data_sequence, unit: Units, parent=None, input_type=QDoubleSpinBox, decimals=2, data_range=(0, 1000),
+                 single_step=1):
         """
         :type data_sequence: list[(str, float)]
         :param data_sequence:
@@ -24,10 +55,8 @@ class Spacing(QWidget):
         :type data_range: (float, float)
         :type single_step: float
         :type title: str
-        :type units: None|list[str]
-        :type units_index: int
         """
-        super(Spacing, self).__init__(parent)
+        super().__init__(parent)
         layout = FlowLayout()
         layout.addWidget(QLabel("<strong>{}</strong>".format(title)))
         self.elements = []
@@ -49,14 +78,10 @@ class Spacing(QWidget):
             val.setFixedWidth(val_len)
             layout.addWidget(val)
             self.elements.append(val)
-        if units is not None:
-            self.units = QComboBox()
-            self.units.addItems(units)
-            self.units.setCurrentIndex(units_index)
-            layout.addWidget(self.units)
-            self.has_units = True
-        else:
-            self.has_units = False
+        self.units = EnumComboBox(Units)
+        self.units.set_value(unit)
+        layout.addWidget(self.units)
+        self.has_units = True
         #layout.addStretch()
         self.setLayout(layout)
 

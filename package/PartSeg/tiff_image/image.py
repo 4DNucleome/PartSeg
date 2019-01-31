@@ -138,7 +138,7 @@ class Image(object):
     @property
     def spacing(self):
         if self.is_2d:
-            return (1,) + tuple(self._image_spacing[1:])
+            return tuple(self._image_spacing[1:])
         return self._image_spacing
 
     @property

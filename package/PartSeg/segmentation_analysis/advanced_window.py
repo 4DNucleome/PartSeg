@@ -10,7 +10,7 @@ from qtpy.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushBut
     QMessageBox, QFileDialog, QComboBox, QAbstractSpinBox, QInputDialog, \
     QPlainTextEdit, QFrame
 
-from ..common_gui.algorithms_description import EnumComboBox
+from ..common_gui.universal_gui_part import EnumComboBox
 from ..common_gui.colors_choose import ColorSelector
 from ..common_gui.custom_save_dialog import FormDialog
 from ..common_gui.lock_checkbox import LockCheckBox
@@ -20,7 +20,7 @@ from .statistic_widget import StatisticsWidget
 from PartSeg.utils.analysis.statistics_calculation import StatisticProfile, STATISTIC_DICT, Node, Leaf, AreaType, PerComponent, \
     StatisticEntry
 from ..utils.global_settings import static_file_folder
-from ..utils.universal_const import UNIT_SCALE, UNITS_LIST
+from ..utils.universal_const import UNIT_SCALE, Units
 
 
 def h_line():
@@ -57,16 +57,15 @@ class AdvancedSettings(QWidget):
         self.lock_spacing.stateChanged.connect(self.synchronize_spacing)
         # noinspection PyUnresolvedReferences
         self.spacing[2].valueChanged.connect(self.synchronize_spacing)
-        units_index = self._settings.get("units_index", 2)
+        units_value = self._settings.get("units_value", Units.nm)
         for i, el in enumerate(self.spacing):
             el.setAlignment(Qt.AlignRight)
             el.setButtonSymbols(QAbstractSpinBox.NoButtons)
             el.setRange(0, 1000000)
             # noinspection PyUnresolvedReferences
             el.valueChanged.connect(self.image_spacing_change)
-        self.units = QComboBox()
-        self.units.addItems(UNITS_LIST)
-        self.units.setCurrentIndex(units_index)
+        self.units = EnumComboBox(Units)
+        self.units.set_value(units_value)
         # noinspection PyUnresolvedReferences
         self.units.currentIndexChanged.connect(self.update_spacing)
 
@@ -161,13 +160,14 @@ class AdvancedSettings(QWidget):
         voxel_size = 1
         for el in self._settings.image_spacing:
             voxel_size *= el * UNIT_SCALE[self.units.currentIndex()]
-        self.voxel_size_label.setText(f"Voxel_size: {voxel_size} {UNITS_LIST[self.units.currentIndex()]}"
+        self.voxel_size_label.setText(f"Voxel_size: {voxel_size} {self.units.get_value().name}"
                                       f"<sup>{len(self._settings.image_spacing)}</sup>")
 
     def update_spacing(self, index=None):
         voxel_size = 1
+        value = self.units.get_value()
         if index is not None:
-            self._settings.set("units_index", index)
+            self._settings.set("units_value", value)
         for i, (el, sp) in enumerate(zip(self.spacing[::-1], self._settings.image_spacing[::-1])):
             el.blockSignals(True)
             current_size = sp * UNIT_SCALE[self.units.currentIndex()]
@@ -175,7 +175,7 @@ class AdvancedSettings(QWidget):
             el.setValue(current_size)
             el.blockSignals(False)
         self.spacing[0].setDisabled(len(self._settings.image_spacing) == 2)
-        self.voxel_size_label.setText(f"Voxel_size: {voxel_size} {UNITS_LIST[self.units.currentIndex()]}"
+        self.voxel_size_label.setText(f"Voxel_size: {voxel_size} {value.name}"
                                       f"<sup>{len(self._settings.image_spacing)}</sup>")
 
     def update_profile_list(self):

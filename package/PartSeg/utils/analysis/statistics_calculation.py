@@ -1,5 +1,5 @@
 from __future__ import division
-
+import itertools
 import logging
 import sys
 import traceback
@@ -19,7 +19,7 @@ from ..border_rim import border_mask
 from ..class_generator import BaseReadonlyClass
 from ..class_generator import enum_register
 from ..segmentation.algorithm_describe_base import AlgorithmDescribeBase, Register, AlgorithmProperty
-from ..universal_const import UNITS_LIST, UNIT_SCALE
+from ..universal_const import UNIT_SCALE, Units
 from ..utils import class_to_dict
 
 
@@ -244,7 +244,7 @@ class StatisticProfile(object):
         return 1
 
     def calculate(self, image: np.ndarray, segmentation: np.ndarray, full_mask: np.ndarray, mask: np.ndarray,
-                  voxel_size, result_units, range_changed=None, step_changed=None):
+                  voxel_size, result_units: Units, range_changed=None, step_changed=None):
         if range_changed is None:
             range_changed = empty_fun
         if step_changed is None:
@@ -254,7 +254,7 @@ class StatisticProfile(object):
         result = OrderedDict()
         image = image.astype(np.float)
         help_dict = dict()
-        result_scalar = UNIT_SCALE[UNITS_LIST.index(result_units)]
+        result_scalar = UNIT_SCALE[result_units.value]
         kw = {"image": image, "segmentation": segmentation, "mask": mask, "full_segmentation": full_mask,
               "voxel_size": voxel_size, "result_scalar": result_scalar}
         for el in self.chosen_fields:
@@ -328,7 +328,13 @@ class Volume(StatisticMethodBase):
 # 12(6), 489–509. https://doi.org/10.1142/S0218195902001006
 
 
-def double_normal(point_index, point_positions, points_array):
+def double_normal(point_index: int, point_positions: np.ndarray, points_array: np.ndarray):
+    """
+    :param point_index: index of starting points
+    :param point_positions: points array of size (points_num, number of dimensions)
+    :param points_array: bool matrix with information about which points are in set
+    :return:
+    """
     delta = 0
     dn = 0, 0
     while True:
@@ -345,18 +351,22 @@ def double_normal(point_index, point_positions, points_array):
             return dn, delta
 
 
-def iterative_double_normal(point_positions):
+def iterative_double_normal(points_positions: np.ndarray):
+    """
+    :param points_positions: points array of size (points_num, number of dimensions)
+    :return: square power of diameter, 2-tuple of points index gave information which points ar chosen
+    """
     delta = 0
     dn = 0, 0
     point_index = 0
-    points_array = np.ones(point_positions.shape[0], dtype=np.bool)
+    points_array = np.ones(points_positions.shape[0], dtype=np.bool)
     while True:
-        dn_r, delta_r = double_normal(point_index, point_positions, points_array)
+        dn_r, delta_r = double_normal(point_index, points_positions, points_array)
         if delta_r > delta:
             delta = delta_r
             dn = dn_r
-            mid_point = (point_positions[dn[0]] + point_positions[dn[1]]) / 2
-            dist_array = np.sum(np.array((point_positions - mid_point) ** 2), 1)
+            mid_point = (points_positions[dn[0]] + points_positions[dn[1]]) / 2
+            dist_array = np.sum(np.array((points_positions - mid_point) ** 2), 1)
             dist_array[~points_array] = 0
             if np.any(dist_array >= delta / 4):
                 point_index = np.argmax(dist_array)
@@ -631,7 +641,7 @@ class RimVolume(StatisticMethodBase):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty("distance", "Distance", 0.0, options_range=(0, 1000), property_type=float),
-                AlgorithmProperty("units", "Units", "nm", possible_values=UNITS_LIST)]
+                AlgorithmProperty("units", "Units", Units.nm, property_type=Units)]
 
     @classmethod
     def get_starting_leaf(cls):
@@ -657,7 +667,7 @@ class RimPixelBrightnessSum(StatisticMethodBase):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty("distance", "Distance", 0.0, options_range=(0, 1000), property_type=float),
-                AlgorithmProperty("units", "Units", "nm", possible_values=UNITS_LIST)]
+                AlgorithmProperty("units", "Units", Units.nm, property_type=Units)]
 
     @classmethod
     def get_starting_leaf(cls):
@@ -684,12 +694,13 @@ def pixel_volume(spacing, result_scalar):
 
 def calculate_volume_surface(volume_mask, voxel_size):
     border_surface = 0
-    surf_im = np.array(volume_mask).astype(np.uint8)
-    border_surface += np.count_nonzero(np.logical_xor(surf_im[1:], surf_im[:-1])) * voxel_size[1] * voxel_size[2]
-    border_surface += np.count_nonzero(np.logical_xor(surf_im[:, 1:], surf_im[:, :-1])) * voxel_size[0] * voxel_size[2]
-    if len(surf_im.shape) == 3:
-        border_surface += np.count_nonzero(np.logical_xor(surf_im[:, :, 1:], surf_im[:, :, :-1])) * voxel_size[0] * \
-                          voxel_size[1]
+    surf_im: np.ndarray = np.array(volume_mask).astype(np.uint8).squeeze()
+    for ax in range(surf_im.ndim):
+        border_surface += \
+            np.count_nonzero(
+                np.logical_xor(surf_im.take(np.arange(surf_im.shape[ax]-1), axis=ax),
+                               surf_im.take(np.arange(surf_im.shape[ax]-1)+1, axis=ax)
+            )) * reduce(lambda x, y: x*y, [voxel_size[x] for x in range(surf_im.ndim) if x != ax])
     return border_surface
 
 
