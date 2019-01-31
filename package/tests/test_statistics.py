@@ -2,8 +2,9 @@ import numpy as np
 from math import isclose
 from PartSeg.tiff_image import Image
 from PartSeg.utils.analysis.statistics_calculation import Diameter, PixelBrightnessSum, Volume, ComponentsNumber, \
-    MaximumPixelBrightness, MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness, \
-    StandardDeviationOfPixelBrightness, MomentOfInertia
+    MaximumPixelBrightness, MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness, AreaType,\
+    StandardDeviationOfPixelBrightness, MomentOfInertia, LongestMainAxisLength, MiddleMainAxisLength, \
+    ShortestMainAxisLength, Surface
 
 
 def get_cube_array():
@@ -51,7 +52,6 @@ class TestPixelBrightnessSum(object):
         assert PixelBrightnessSum.calculate_property(mask1, image.get_channel(0)) == 60 * 60 * 50 + 40 * 40 * 20
         assert PixelBrightnessSum.calculate_property(mask2, image.get_channel(0)) == 40 * 40 * 70
         assert PixelBrightnessSum.calculate_property(mask3, image.get_channel(0)) == (60 * 60 - 40 * 40) * 50
-
 
 
 class TestVolume(object):
@@ -171,7 +171,7 @@ class TestMeanPixelBrightness:
         mask2 = image.get_channel(0) > 60
         mask3 = image.get_channel(0) >= 0
         assert MeanPixelBrightness.calculate_property(mask1, image.get_channel(0)) == \
-               (60 * 60 * 50 + 40 * 40 * 20) / (60 * 60)
+            (60 * 60 * 50 + 40 * 40 * 20) / (60 * 60)
         assert MeanPixelBrightness.calculate_property(mask2, image.get_channel(0)) == 70
         assert MeanPixelBrightness.calculate_property(mask3, image.get_channel(0)) == \
             (60 * 60 * 50 + 40 * 40 * 20) / (100 * 100)
@@ -191,8 +191,8 @@ class TestStandardDeviationOfPixelBrightness:
         assert StandardDeviationOfPixelBrightness.calculate_property(mask2, image.get_channel(0)) == 0
         mean = (30 * 60 * 60 * 50 + 20 * 40 * 40 * 20) / (50 * 100 * 100)
         assert isclose(StandardDeviationOfPixelBrightness.calculate_property(mask3, image.get_channel(0)),
-            np.sqrt(((30 * 60 * 60 - 20 * 40 * 40) * (50 - mean) ** 2 + ((20 * 40 * 40) * (70 - mean) ** 2) +
-                    (50 * 100 * 100 - 30 * 60 * 60) * mean ** 2) / (50 * 100 * 100)))
+                       np.sqrt(((30 * 60 * 60 - 20 * 40 * 40) * (50 - mean) ** 2 + ((20 * 40 * 40) * (70 - mean) ** 2) +
+                                (50 * 100 * 100 - 30 * 60 * 60) * mean ** 2) / (50 * 100 * 100)))
 
     def test_square(self):
         image = get_square_image()
@@ -206,8 +206,9 @@ class TestStandardDeviationOfPixelBrightness:
         assert StandardDeviationOfPixelBrightness.calculate_property(mask2, image.get_channel(0)) == 0
         mean = (60 * 60 * 50 + 40 * 40 * 20) / (100 * 100)
         assert isclose(StandardDeviationOfPixelBrightness.calculate_property(mask3, image.get_channel(0)),
-            np.sqrt(((60 * 60 - 40 * 40) * (50 - mean) ** 2 + ((40 * 40) * (70 - mean) ** 2) +
-                    (100 * 100 - 60 * 60) * mean ** 2) / (100 * 100)))
+                       np.sqrt(((60 * 60 - 40 * 40) * (50 - mean) ** 2 + ((40 * 40) * (70 - mean) ** 2) +
+                                (100 * 100 - 60 * 60) * mean ** 2) / (100 * 100)))
+
 
 class TestMomentOfInertia:
     def test_cube(self):
@@ -231,3 +232,85 @@ class TestMomentOfInertia:
         in3 = MomentOfInertia.calculate_property(mask3, image.get_channel(0), image.spacing)
         assert in1 == in3
         assert in1 > in2
+
+
+class TestMainAxis:
+    def test_cube(self):
+        array = get_cube_array()
+        image = Image(array, (10, 10, 20))
+        mask1 = image.get_channel(0) > 40
+        mask2 = image.get_channel(0) > 60
+        assert LongestMainAxisLength.calculate_property(
+            area_array=mask1, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            _area=AreaType.Mask
+        ) == 20 * 59
+        assert MiddleMainAxisLength.calculate_property(
+            area_array=mask1, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            _area=AreaType.Mask
+        ) == 10 * 59
+        assert ShortestMainAxisLength.calculate_property(
+            area_array=mask1, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            _area=AreaType.Mask
+        ) == 10 * 29
+        assert LongestMainAxisLength.calculate_property(
+            area_array=mask2, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            _area=AreaType.Mask
+        ) == 20 * 39
+        assert MiddleMainAxisLength.calculate_property(
+            area_array=mask2, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            _area=AreaType.Mask
+        ) == 10 * 39
+        assert ShortestMainAxisLength.calculate_property(
+            area_array=mask2, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            _area=AreaType.Mask
+        ) == 10 * 19
+
+    def test_square(self):
+        array = get_cube_array()
+        image = Image(array[:, 25:26], (10, 10, 20))
+        mask1 = image.get_channel(0) > 40
+        mask2 = image.get_channel(0) > 60
+        assert LongestMainAxisLength.calculate_property(
+            area_array=mask1, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            _area=AreaType.Mask
+        ) == 20 * 59
+        assert MiddleMainAxisLength.calculate_property(
+            area_array=mask1, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            _area=AreaType.Mask
+        ) == 10 * 59
+        assert ShortestMainAxisLength.calculate_property(
+            area_array=mask1, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            _area=AreaType.Mask
+        ) == 0
+        assert LongestMainAxisLength.calculate_property(
+            area_array=mask2, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            _area=AreaType.Mask
+        ) == 20 * 39
+        assert MiddleMainAxisLength.calculate_property(
+            area_array=mask2, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            _area=AreaType.Mask
+        ) == 10 * 39
+        assert ShortestMainAxisLength.calculate_property(
+            area_array=mask2, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            _area=AreaType.Mask
+        ) == 0
+
+
+class TestSurface:
+    def test_cube(self):
+        image = get_cube_image()
+        mask1 = image.get_channel(0) > 40
+        mask2 = image.get_channel(0) > 60
+        mask3 = mask1 * ~mask2
+        assert Surface.calculate_property(mask1, image.spacing, 1) == 6 * (60 * 50) ** 2
+        assert Surface.calculate_property(mask2, image.spacing, 1) == 6 * (40 * 50) ** 2
+        assert Surface.calculate_property(mask3, image.spacing, 1) == 6 * (60 * 50) ** 2 + 6 * (40 * 50) ** 2
+
+    def test_square(self):
+        image = get_square_image()
+        mask1 = image.get_channel(0) > 40
+        mask2 = image.get_channel(0) > 60
+        mask3 = mask1 * ~mask2
+        assert Surface.calculate_property(mask1, image.spacing, 1) == 4 * (60 * 50)
+        assert Surface.calculate_property(mask2, image.spacing, 1) == 4 * (40 * 50)
+        assert Surface.calculate_property(mask3, image.spacing, 1) == 4 * (60 * 50) + 4 * (40 * 50)

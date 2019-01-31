@@ -288,9 +288,9 @@ def calculate_main_axis(area_array: np.ndarray, image: np.ndarray, voxel_size):
     orientation_matrix, _ = af.find_density_orientation(cut_img, voxel_size, 1)
     center_of_mass = af.density_mass_center(cut_img, voxel_size)
     positions = np.array(np.nonzero(cut_img), dtype=np.float64)
-    for i, v in enumerate(voxel_size):
-        positions[i] *= v
-        positions[i] -= center_of_mass[i]
+    for i, v in enumerate(reversed(voxel_size), start=1):
+        positions[-i] *= v
+        positions[-i] -= center_of_mass[i-1]
     centered = np.dot(orientation_matrix.T, positions)
     size = np.max(centered, axis=1) - np.min(centered, axis=1)
     return size

@@ -20,9 +20,10 @@ def find_density_orientation(img, voxel_size, cutoff=1):
     points_l = np.nonzero(np.array(img > cutoff))
     weights = img[points_l]
     points_l = np.transpose(points_l).astype(np.float64)
-    points_l[:, 0] *= voxel_size[0]
-    points_l[:, 1] *= voxel_size[1]
-    points_l[:, 2] *= voxel_size[2]
+    if len(voxel_size) >= 3:
+        points_l[:, 0] *= voxel_size[-3]
+    points_l[:, 1] *= voxel_size[-2]
+    points_l[:, 2] *= voxel_size[-1]
     points = points_l.astype(np.float64)
     punkty_wazone = np.empty(points.shape)
     for i in range(3):
@@ -96,7 +97,7 @@ def calculate_density_momentum(image: np.ndarray, voxel_size=np.array([1., 1., 1
     if not mass_center:
         mass_center = density_mass_center(image, voxel_size)
     mass_center = np.array(mass_center)
-    points = np.transpose(np.nonzero(np.zeros(image.squeeze().shape, dtype=np.uint8)+1))
+    points = np.transpose(np.nonzero(np.zeros(image.shape, dtype=np.uint8)+1))
     points = points * voxel_size
     weights = np.squeeze(sp.cdist(points, np.array([mass_center]))**2)
     momentum = float(np.sum(weights * image.flatten()))
