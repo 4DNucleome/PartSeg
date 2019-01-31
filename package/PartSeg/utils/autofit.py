@@ -77,20 +77,26 @@ def density_mass_center(image, voxel_size=(1.0, 1.0, 1.0)):
         :return np.ndarray
 
     """
-    x_size, y_size, z_size = image.shape
+    import itertools
+    single_dim = tuple([i for i, x in enumerate(image.shape) if x == 1])
+    iter_dim = [i for i, x in enumerate(image.shape) if x > 1]
+    elements = image.ndim - len(single_dim)
+    res = []
     denominator = float(np.sum(image))
-    m_x = np.sum(np.sum(image, axis=(1, 2)) * np.arange(x_size))
-    m_y = np.sum(np.sum(image, axis=(0, 2)) * np.arange(y_size))
-    m_z = np.sum(np.sum(image, axis=(0, 1)) * np.arange(z_size))
-    return np.array([m_x/denominator, m_y/denominator, m_z/denominator]) * voxel_size
+    for ax in itertools.combinations(iter_dim, elements):
+        item = ax[0]
+        ax = single_dim + ax[1:]
+        m = np.sum(np.sum(image, axis=ax) * np.arange(image.shape[item]))
+        res.append(m/denominator)
+    return np.array(res) * voxel_size
 
 
-def calculate_density_momentum(image, voxel_size=np.array([1., 1., 1.]), mass_center=None):
+def calculate_density_momentum(image: np.ndarray, voxel_size=np.array([1., 1., 1.]), mass_center=None):
     """Calculates image momentum."""
     if not mass_center:
         mass_center = density_mass_center(image, voxel_size)
     mass_center = np.array(mass_center)
-    points = np.transpose(np.nonzero(np.zeros(image.shape, dtype=np.uint8)+1))
+    points = np.transpose(np.nonzero(np.zeros(image.squeeze().shape, dtype=np.uint8)+1))
     points = points * voxel_size
     weights = np.squeeze(sp.cdist(points, np.array([mass_center]))**2)
     momentum = float(np.sum(weights * image.flatten()))

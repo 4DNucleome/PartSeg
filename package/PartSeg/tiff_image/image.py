@@ -133,10 +133,12 @@ class Image(object):
 
     @property
     def is_2d(self):
-        return False
+        return self._image_array.shape[1] == 1
 
     @property
     def spacing(self):
+        if self.is_2d:
+            return self._image_spacing[1:]
         return self._image_spacing
 
     def set_spacing(self, value):
