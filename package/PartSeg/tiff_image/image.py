@@ -25,7 +25,7 @@ class Image(object):
         assert len(data.shape) == 5
         self._image_array = data
 
-        self._image_spacing = image_spacing
+        self._image_spacing = tuple(image_spacing)
         self.file_path = file_path
         self.default_coloring = default_coloring
         if self.default_coloring is not None:
@@ -138,12 +138,16 @@ class Image(object):
     @property
     def spacing(self):
         if self.is_2d:
-            return (1,) + self._image_spacing[1:]
+            return (1,) + tuple(self._image_spacing[1:])
         return self._image_spacing
+
+    @property
+    def voxel_size(self):
+        return self.spacing
 
     def set_spacing(self, value):
         assert len(value) == len(self._image_spacing)
-        self._image_spacing = value
+        self._image_spacing = tuple(value)
 
     def cut_image(self, cut_area: typing.Union[np.ndarray, typing.List[slice]], replace_mask=False):
         """
