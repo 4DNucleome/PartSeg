@@ -436,6 +436,7 @@ class MainMenu(QWidget):
             if dial.exec_():
                 result = dial.get_result()
                 self._settings.set("io.open_filter", result.selected_filter)
+                self._settings.set("io.open_directory", os.path.dirname(result.load_location[0]))
                 dial2 = ExecuteFunctionDialog(result.load_class.load, [result.load_location],
                                               exception_hook=exception_hook)
                 if dial2.exec():

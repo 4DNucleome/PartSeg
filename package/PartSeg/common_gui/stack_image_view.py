@@ -817,6 +817,11 @@ class ColorBar(QLabel):
         new_font.setPointSizeF(new_font.pointSizeF() / 1.1)
         painter.setFont(new_font)
         painter.drawImage(image_rect, self.image)
+        if self.range[1] == self.range[0]:
+            painter.drawText(bar_width + 5, 20, f"{self.range[1]}")
+            painter.drawText(bar_width + 5, rect.size().height(), f"{self.range[1]}")
+            painter.setFont(old_font)
+            return
         start_prop = 1 - (self.round_range[0] - self.range[0]) / (self.range[1] - self.range[0])
         end_prop = 1 - (self.round_range[1] - self.range[0]) / (self.range[1] - self.range[0])
         for pos, val in zip(np.linspace(10 + end_prop * rect.size().height(), start_prop * rect.size().height(),
