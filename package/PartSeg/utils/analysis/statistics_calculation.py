@@ -384,8 +384,8 @@ class Diameter(StatisticMethodBase):
     @staticmethod
     def calculate_property(area_array, voxel_size, result_scalar, **_):
         pos = np.transpose(np.nonzero(get_border(area_array))).astype(np.float)
-        for i, val in enumerate([x * result_scalar for x in voxel_size]):
-            pos[:, i] *= val
+        for i, val in enumerate([x * result_scalar for x in reversed(voxel_size)], start=1):
+            pos[:, -i] *= val
         diam_sq, cords = iterative_double_normal(pos)
         return np.sqrt(diam_sq)
 

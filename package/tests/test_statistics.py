@@ -32,6 +32,24 @@ class TestDiameter(object):
         assert Diameter.calculate_property(mask2, image.spacing, 1) == np.sqrt(2 * (50 * 39) ** 2 + (100 * 19) ** 2)
         assert Diameter.calculate_property(mask3, image.spacing, 1) == np.sqrt(2 * (50 * 59) ** 2 + (100 * 29) ** 2)
 
+    def test_square(self):
+        image = get_square_image()
+        mask1 = image.get_channel(0) > 40
+        mask2 = image.get_channel(0) > 60
+        mask3 = mask1 * ~mask2
+        assert Diameter.calculate_property(mask1, image.spacing, 1) == np.sqrt(2 * (50 * 59) ** 2)
+        assert Diameter.calculate_property(mask2, image.spacing, 1) == np.sqrt(2 * (50 * 39) ** 2)
+        assert Diameter.calculate_property(mask3, image.spacing, 1) == np.sqrt(2 * (50 * 59) ** 2)
+
+    def test_scale(self):
+        image = get_cube_image()
+        mask1 = image.get_channel(0) > 40
+        assert isclose(Diameter.calculate_property(mask1, image.spacing, 2),
+                       2 * np.sqrt(2 * (50 * 59) ** 2 + (100 * 29) ** 2))
+        image = get_square_image()
+        mask1 = image.get_channel(0) > 40
+        assert isclose(Diameter.calculate_property(mask1, image.spacing, 2), 2 * np.sqrt(2 * (50 * 59) ** 2))
+
 
 class TestPixelBrightnessSum(object):
     def test_cube(self):
@@ -73,6 +91,15 @@ class TestVolume(object):
         assert Volume.calculate_property(mask1, image.spacing, 1) == (50 * 60) * (50 * 60)
         assert Volume.calculate_property(mask2, image.spacing, 1) == (50 * 40) * (50 * 40)
         assert Volume.calculate_property(mask3, image.spacing, 1) == (50 * 60) * (50 * 60) - (50 * 40) * (50 * 40)
+
+    def test_scale(self):
+        image = get_cube_image()
+        mask1 = image.get_channel(0) > 40
+        assert Volume.calculate_property(mask1, image.spacing, 2) == 2**3 * (100 * 30) * (50 * 60) * (50 * 60)
+
+        image = get_square_image()
+        mask1 = image.get_channel(0) > 40
+        assert Volume.calculate_property(mask1, image.spacing, 2) == 2**2 * (50 * 60) * (50 * 60)
 
 
 class TestComponentsNumber(object):
@@ -295,6 +322,23 @@ class TestMainAxis:
             _area=AreaType.Mask
         ) == 0
 
+    def test_scale(self):
+        array = get_cube_array()
+        image = Image(array, (10, 10, 20))
+        mask1 = image.get_channel(0) > 40
+        assert LongestMainAxisLength.calculate_property(
+            area_array=mask1, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=2,
+            _area=AreaType.Mask
+        ) == 2 * 20 * 59
+
+        array = get_cube_array()
+        image = Image(array[:, 25:26], (10, 10, 20))
+        mask1 = image.get_channel(0) > 40
+        assert LongestMainAxisLength.calculate_property(
+            area_array=mask1, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=2,
+            _area=AreaType.Mask
+        ) == 2 * 20 * 59
+
 
 class TestSurface:
     def test_cube(self):
@@ -314,3 +358,12 @@ class TestSurface:
         assert Surface.calculate_property(mask1, image.spacing, 1) == 4 * (60 * 50)
         assert Surface.calculate_property(mask2, image.spacing, 1) == 4 * (40 * 50)
         assert Surface.calculate_property(mask3, image.spacing, 1) == 4 * (60 * 50) + 4 * (40 * 50)
+
+    def test_scale(self):
+        image = get_cube_image()
+        mask1 = image.get_channel(0) > 40
+        assert Surface.calculate_property(mask1, image.spacing, 3) == 3 ** 2 * 6 * (60 * 50) ** 2
+
+        image = get_square_image()
+        mask1 = image.get_channel(0) > 40
+        assert Surface.calculate_property(mask1, image.spacing, 3) == 3 * 4 * (60 * 50)
