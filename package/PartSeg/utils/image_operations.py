@@ -22,6 +22,8 @@ def _generic_image_operation(image, radius, fun, layer):
         layer = False
     if image.dtype == np.bool:
         image = image.astype(np.uint8)
+    if isinstance(radius, (list, tuple)):
+        radius = list(reversed(radius))
     if not layer:
         return sitk.GetArrayFromImage(fun(sitk.GetImageFromArray(image), radius))
     else:

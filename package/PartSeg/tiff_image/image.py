@@ -146,6 +146,8 @@ class Image(object):
         return self.spacing
 
     def set_spacing(self, value):
+        if self.is_2d and len(value) + 1 == len(self._image_spacing):
+            value = (1,) + tuple(value)
         assert len(value) == len(self._image_spacing)
         self._image_spacing = tuple(value)
 

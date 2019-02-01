@@ -35,6 +35,8 @@ def opening(image, radius, minsize):
     if isinstance(image, np.ndarray):
         rtype = "ndarray"
         image = sitk.GetImageFromArray(image)
+    if isinstance(radius, (list, tuple)):
+        radius = list(reversed(radius))
     eroded = sitk.GrayscaleErode(image, radius)
     conn = sitk.RelabelComponent(sitk.ConnectedComponent(eroded), 20)
     dilated = sitk.RelabelComponent(sitk.GrayscaleDilate(conn, radius), minsize)
