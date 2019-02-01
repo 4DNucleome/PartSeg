@@ -1,5 +1,4 @@
 from __future__ import division
-import itertools
 import logging
 import sys
 import traceback
@@ -699,8 +698,8 @@ def calculate_volume_surface(volume_mask, voxel_size):
         border_surface += \
             np.count_nonzero(
                 np.logical_xor(surf_im.take(np.arange(surf_im.shape[ax]-1), axis=ax),
-                               surf_im.take(np.arange(surf_im.shape[ax]-1)+1, axis=ax)
-            )) * reduce(lambda x, y: x*y, [voxel_size[x] for x in range(surf_im.ndim) if x != ax])
+                               surf_im.take(np.arange(surf_im.shape[ax]-1)+1, axis=ax))
+            ) * reduce(lambda x, y: x*y, [voxel_size[x] for x in range(surf_im.ndim) if x != ax])
     return border_surface
 
 

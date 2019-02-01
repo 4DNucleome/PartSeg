@@ -1,10 +1,14 @@
-import numpy as np
+from functools import reduce
 from math import isclose
+
+import numpy as np
+
 from PartSeg.tiff_image import Image
 from PartSeg.utils.analysis.statistics_calculation import Diameter, PixelBrightnessSum, Volume, ComponentsNumber, \
-    MaximumPixelBrightness, MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness, AreaType,\
+    MaximumPixelBrightness, MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness, AreaType, \
     StandardDeviationOfPixelBrightness, MomentOfInertia, LongestMainAxisLength, MiddleMainAxisLength, \
-    ShortestMainAxisLength, Surface
+    ShortestMainAxisLength, Surface, RimVolume, RimPixelBrightnessSum
+from PartSeg.utils.universal_const import UNIT_SCALE, Units
 
 
 def get_cube_array():
@@ -95,11 +99,11 @@ class TestVolume(object):
     def test_scale(self):
         image = get_cube_image()
         mask1 = image.get_channel(0) > 40
-        assert Volume.calculate_property(mask1, image.spacing, 2) == 2**3 * (100 * 30) * (50 * 60) * (50 * 60)
+        assert Volume.calculate_property(mask1, image.spacing, 2) == 2 ** 3 * (100 * 30) * (50 * 60) * (50 * 60)
 
         image = get_square_image()
         mask1 = image.get_channel(0) > 40
-        assert Volume.calculate_property(mask1, image.spacing, 2) == 2**2 * (50 * 60) * (50 * 60)
+        assert Volume.calculate_property(mask1, image.spacing, 2) == 2 ** 2 * (50 * 60) * (50 * 60)
 
 
 class TestComponentsNumber(object):
@@ -213,7 +217,7 @@ class TestStandardDeviationOfPixelBrightness:
         mean = (30 * 60 * 60 * 50 + 20 * 40 * 40 * 20) / (30 * 60 * 60)
         assert StandardDeviationOfPixelBrightness.calculate_property(mask1, image.get_channel(0)) == \
             np.sqrt(((30 * 60 * 60 - 20 * 40 * 40) * (50 - mean) ** 2 + ((20 * 40 * 40) * (70 - mean) ** 2)) / (
-                    30 * 60 * 60))
+                       30 * 60 * 60))
 
         assert StandardDeviationOfPixelBrightness.calculate_property(mask2, image.get_channel(0)) == 0
         mean = (30 * 60 * 60 * 50 + 20 * 40 * 40 * 20) / (50 * 100 * 100)
@@ -367,3 +371,88 @@ class TestSurface:
         image = get_square_image()
         mask1 = image.get_channel(0) > 40
         assert Surface.calculate_property(mask1, image.spacing, 3) == 3 * 4 * (60 * 50)
+
+
+class TestRimVolume:
+    def test_cube(self):
+        image = get_cube_image()
+        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        mask1 = image.get_channel(0) > 40
+        mask2 = image.get_channel(0) > 60
+        mask3 = mask1 * ~mask2
+        result_scale = reduce(lambda x, y: x * y, image.voxel_size)
+
+        assert RimVolume.calculate_property(segmentation=mask1, mask=mask1, voxel_size=image.voxel_size,
+                                            result_scalar=1, distance=10 * 50, units=Units.nm) == \
+            np.count_nonzero(mask3) * result_scale
+        assert RimVolume.calculate_property(segmentation=mask2, mask=mask1, voxel_size=image.voxel_size,
+                                            result_scalar=1, distance=10 * 50, units=Units.nm) == 0
+
+    def test_square(self):
+        image = get_square_image()
+        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        mask1 = image.get_channel(0) > 40
+        mask2 = image.get_channel(0) > 60
+        mask3 = mask1 * ~mask2
+        result_scale = reduce(lambda x, y: x * y, image.voxel_size)
+
+        assert RimVolume.calculate_property(segmentation=mask1, mask=mask1, voxel_size=image.voxel_size,
+                                            result_scalar=1, distance=10 * 50, units=Units.nm) == \
+            np.count_nonzero(mask3) * result_scale
+        assert RimVolume.calculate_property(segmentation=mask2, mask=mask1, voxel_size=image.voxel_size,
+                                            result_scalar=1, distance=10 * 50, units=Units.nm) == 0
+
+    def test_scale(self):
+        image = get_cube_image()
+        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        mask1 = image.get_channel(0) > 40
+        mask2 = image.get_channel(0) > 60
+        mask3 = mask1 * ~mask2
+        result_scale = reduce(lambda x, y: x * y, image.voxel_size)
+        assert RimVolume.calculate_property(segmentation=mask1, mask=mask1, voxel_size=image.voxel_size,
+                                            result_scalar=1, distance=10 * 50, units=Units.nm) == \
+            np.count_nonzero(mask3) * result_scale
+        assert RimVolume.calculate_property(segmentation=mask1, mask=mask1, voxel_size=image.voxel_size,
+                                            result_scalar=UNIT_SCALE[Units.nm.value], distance=10 * 50,
+                                            units=Units.nm) == np.count_nonzero(mask3) * 100 * 50 ** 2
+
+        image = get_square_image()
+        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        mask1 = image.get_channel(0) > 40
+        mask2 = image.get_channel(0) > 60
+        mask3 = mask1 * ~mask2
+        result_scale = reduce(lambda x, y: x * y, image.voxel_size)
+        assert RimVolume.calculate_property(segmentation=mask1, mask=mask1, voxel_size=image.voxel_size,
+                                            result_scalar=1, distance=10 * 50, units=Units.nm) == \
+            np.count_nonzero(mask3) * result_scale
+        assert RimVolume.calculate_property(segmentation=mask1, mask=mask1, voxel_size=image.voxel_size,
+                                            result_scalar=UNIT_SCALE[Units.nm.value], distance=10 * 50,
+                                            units=Units.nm) == np.count_nonzero(mask3) * 50 ** 2
+
+
+class TestRimPixelBrightnessSum:
+    def test_cube(self):
+        image = get_cube_image()
+        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        mask1 = image.get_channel(0) > 40
+        mask2 = image.get_channel(0) > 60
+        mask3 = mask1 * ~mask2
+        assert RimPixelBrightnessSum.calculate_property(segmentation=mask1, mask=mask1, voxel_size=image.voxel_size,
+                                                        distance=10 * 50, units=Units.nm, image=image.get_channel(0)
+                                                        ) == np.count_nonzero(mask3) * 50
+        assert RimPixelBrightnessSum.calculate_property(segmentation=mask2, mask=mask1, voxel_size=image.voxel_size,
+                                                        distance=10 * 50, units=Units.nm,
+                                                        image=image.get_channel(0)) == 0
+
+    def test_square(self):
+        image = get_square_image()
+        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        mask1 = image.get_channel(0) > 40
+        mask2 = image.get_channel(0) > 60
+        mask3 = mask1 * ~mask2
+        assert RimPixelBrightnessSum.calculate_property(segmentation=mask1, mask=mask1, voxel_size=image.voxel_size,
+                                                        distance=10 * 50, units=Units.nm, image=image.get_channel(0)
+                                                        ) == np.count_nonzero(mask3) * 50
+        assert RimPixelBrightnessSum.calculate_property(segmentation=mask2, mask=mask1, voxel_size=image.voxel_size,
+                                                        distance=10 * 50, units=Units.nm,
+                                                        image=image.get_channel(0)) == 0
