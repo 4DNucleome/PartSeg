@@ -6,6 +6,7 @@ from qtpy.QtCore import Qt, QEvent
 from qtpy.QtWidgets import QWidget, QPushButton, QCheckBox, QComboBox, QTableWidget, QVBoxLayout, QHBoxLayout,\
     QLabel, QApplication, QTableWidgetItem, QMessageBox
 
+from PartSeg.utils.analysis.statistics_calculation import StatisticProfile
 from ..common_gui.universal_gui_part import ChannelComboBox, EnumComboBox
 from ..common_gui.waiting_dialog import WaitingDialog
 from .partseg_settings import PartSettings
@@ -36,7 +37,7 @@ class StatisticsWidget(QWidget):
         self.copy_button.clicked.connect(self.copy_to_clipboard)
         self.statistic_type = QComboBox(self)
         # noinspection PyUnresolvedReferences
-        self.statistic_type.currentIndexChanged[str].connect(self.statistic_selection_changed)
+        self.statistic_type.currentTextChanged.connect(self.statistic_selection_changed)
         self.statistic_type.addItem("<none>")
         self.statistic_type.addItems(list(sorted(self.settings.statistic_profiles.keys())))
         self.statistic_type.setToolTip(
@@ -84,11 +85,28 @@ class StatisticsWidget(QWidget):
         self.previous_profile = None
         # self.update_statistics()
 
+    def check_statistics(self, name):
+        if name == "<none>":
+            return "<none>"
+        profile: StatisticProfile = self.settings.statistic_profiles.get(name)
+        if profile.is_any_mask_statistic() and self.settings.mask is None:
+            QMessageBox.information(self, "Need mask",
+                                    "To use this measurement set please use data with mask loaded", QMessageBox.Ok)
+            self.statistic_type.setCurrentIndex(0)
+            return "<none>"
+        if self.settings.segmentation is None:
+            QMessageBox.information(self, "Need segmentation",
+                                    "Before calculating please create segmentation (\"Execute\" button)",
+                                    QMessageBox.Ok)
+            self.statistic_type.setCurrentIndex(0)
+            return "<none>"
+        return name
+
     def image_changed(self, channels_num):
         self.channels_chose.change_channels_num(channels_num)
 
     def statistic_selection_changed(self, text):
-        text = str(text)
+        text = self.check_statistics(text)
         try:
             stat = self.settings.statistic_profiles[text]
             is_mask = stat.is_any_mask_statistic()

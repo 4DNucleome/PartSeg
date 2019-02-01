@@ -53,6 +53,7 @@ class Options(QWidget):
         self.interactive_use = QCheckBox("Interactive use")
         self.execute_btn = QPushButton("Execute")
         self.execute_btn.clicked.connect(self.execute_algorithm)
+        self.execute_btn.setStyleSheet("QPushButton{font-weight: bold;}")
         self.save_pipe_btn = QPushButton("Save pipeline")
         self.save_pipe_btn.clicked.connect(self.save_pipeline)
         self.save_pipe_btn.setToolTip("Save current pipeline. Last element is last executed algorithm")
