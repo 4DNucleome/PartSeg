@@ -7,7 +7,8 @@ from PartSeg.tiff_image import Image
 from PartSeg.utils.analysis.statistics_calculation import Diameter, PixelBrightnessSum, Volume, ComponentsNumber, \
     MaximumPixelBrightness, MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness, AreaType, \
     StandardDeviationOfPixelBrightness, MomentOfInertia, LongestMainAxisLength, MiddleMainAxisLength, \
-    ShortestMainAxisLength, Surface, RimVolume, RimPixelBrightnessSum
+    ShortestMainAxisLength, Surface, RimVolume, RimPixelBrightnessSum, StatisticProfile, StatisticEntry, PerComponent, \
+    Node
 from PartSeg.utils.universal_const import UNIT_SCALE, Units
 
 
@@ -456,3 +457,164 @@ class TestRimPixelBrightnessSum:
         assert RimPixelBrightnessSum.calculate_property(segmentation=mask2, mask=mask1, voxel_size=image.voxel_size,
                                                         distance=10 * 50, units=Units.nm,
                                                         image=image.get_channel(0)) == 0
+
+
+class TestStatisticProfile:
+    def test_cube_volume_area_type(self):
+        image = get_cube_image()
+        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        mask = (image.get_channel(0) > 40).astype(np.uint8)
+        segmentation = (image.get_channel(0) > 60).astype(np.uint8)
+
+        statistics = [
+            StatisticEntry("Mask Volume",
+                           Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)),
+            StatisticEntry("Segmentation Volume",
+                           Volume.get_starting_leaf().replace_(area=AreaType.Segmentation,
+                                                               per_component=PerComponent.No)),
+            StatisticEntry("Mask without segmentation Volume",
+                           Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
+                                                               per_component=PerComponent.No))
+        ]
+        profile = StatisticProfile("statistic", statistics)
+        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
+                                   voxel_size=image.voxel_size, result_units=Units.µm)
+        tot_vol, seg_vol, rim_vol = list(result.values())
+        print(result)
+        assert isclose(tot_vol[0], seg_vol[0] + rim_vol[0])
+
+    def test_cube_pixel_sum_area_type(self):
+        image = get_cube_image()
+        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        mask = (image.get_channel(0) > 40).astype(np.uint8)
+        segmentation = (image.get_channel(0) > 60).astype(np.uint8)
+
+        statistics = [
+            StatisticEntry("Mask PixelBrightnessSum",
+                           PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask,
+                                                                           per_component=PerComponent.No)),
+            StatisticEntry("Segmentation PixelBrightnessSum",
+                           PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Segmentation,
+                                                                           per_component=PerComponent.No)),
+            StatisticEntry("Mask without segmentation PixelBrightnessSum",
+                           PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
+                                                                           per_component=PerComponent.No))
+        ]
+        profile = StatisticProfile("statistic", statistics)
+        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
+                                   voxel_size=image.voxel_size, result_units=Units.µm)
+        tot_vol, seg_vol, rim_vol = list(result.values())
+        print(result)
+        assert isclose(tot_vol[0], seg_vol[0] + rim_vol[0])
+
+    def test_cube_surface_area_type(self):
+        image = get_cube_image()
+        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        mask = (image.get_channel(0) > 40).astype(np.uint8)
+        segmentation = (image.get_channel(0) > 60).astype(np.uint8)
+
+        statistics = [
+            StatisticEntry("Mask Surface",
+                           Surface.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)),
+            StatisticEntry("Segmentation Surface",
+                           Surface.get_starting_leaf().replace_(area=AreaType.Segmentation,
+                                                                per_component=PerComponent.No)),
+            StatisticEntry("Mask without segmentation Surface",
+                           Surface.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
+                                                                per_component=PerComponent.No))
+        ]
+        profile = StatisticProfile("statistic", statistics)
+        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
+                                   voxel_size=image.voxel_size, result_units=Units.µm)
+        tot_vol, seg_vol, rim_vol = list(result.values())
+        print(result)
+        assert isclose(tot_vol[0] + seg_vol[0], rim_vol[0])
+
+    def test_cube_density(self):
+        image = get_cube_image()
+        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        mask = (image.get_channel(0) > 40).astype(np.uint8)
+        segmentation = (image.get_channel(0) > 60).astype(np.uint8)
+
+        statistics = [
+            StatisticEntry("Mask Volume",
+                           Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)),
+            StatisticEntry("Segmentation Volume",
+                           Volume.get_starting_leaf().replace_(area=AreaType.Segmentation,
+                                                               per_component=PerComponent.No)),
+            StatisticEntry("Mask without segmentation Volume",
+                           Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
+                                                               per_component=PerComponent.No)),
+            StatisticEntry("Mask PixelBrightnessSum",
+                           PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask,
+                                                                           per_component=PerComponent.No)),
+            StatisticEntry("Segmentation PixelBrightnessSum",
+                           PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Segmentation,
+                                                                           per_component=PerComponent.No)),
+            StatisticEntry("Mask without segmentation PixelBrightnessSum",
+                           PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
+                                                                           per_component=PerComponent.No)),
+            StatisticEntry("Mask Volume/PixelBrightnessSum",
+                           Node(
+                               Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
+                               "/",
+                               PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask,
+                                                                               per_component=PerComponent.No)
+                           )),
+            StatisticEntry("Segmentation Volume/PixelBrightnessSum",
+                           Node(
+                               Volume.get_starting_leaf().replace_(area=AreaType.Segmentation,
+                                                                   per_component=PerComponent.No),
+                               "/",
+                               PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Segmentation,
+                                                                               per_component=PerComponent.No)
+                           )),
+            StatisticEntry("Mask without segmentation Volume/PixelBrightnessSum",
+                           Node(
+                               Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
+                                                                   per_component=PerComponent.No),
+                               "/",
+                               PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
+                                                                               per_component=PerComponent.No)
+                           )),
+
+        ]
+        profile = StatisticProfile("statistic", statistics)
+        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
+                                   voxel_size=image.voxel_size, result_units=Units.µm)
+        values = list(result.values())
+        for i in range(3):
+            volume, brightness, density = values[i::3]
+            assert isclose(volume[0]/brightness[0], density[0])
+
+    def test_cube_volume_power(self):
+        image = get_cube_image()
+        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        mask = (image.get_channel(0) > 40).astype(np.uint8)
+        segmentation = (image.get_channel(0) > 60).astype(np.uint8)
+
+        statistics = [
+            StatisticEntry("Mask Volume",
+                           Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)),
+            StatisticEntry("Mask Volume power 2",
+                           Volume.get_starting_leaf().replace_(area=AreaType.Mask,
+                                                               per_component=PerComponent.No, power=2)),
+            StatisticEntry("Mask Volume 2",
+                           Node(
+                               Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No,
+                                                                   power=2),
+                               "/",
+                               Volume.get_starting_leaf().replace_(area=AreaType.Mask,
+                                                                   per_component=PerComponent.No)
+                           )),
+            StatisticEntry("Mask Volume power -1",
+                           Volume.get_starting_leaf().replace_(area=AreaType.Mask,
+                                                               per_component=PerComponent.No, power=-1)),
+        ]
+        profile = StatisticProfile("statistic", statistics)
+        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
+                                   voxel_size=image.voxel_size, result_units=Units.µm)
+        vol1, vol2, vol3, vol4 = list(result.values())
+        assert isclose(vol1[0], vol3[0])
+        assert isclose(vol1[0]**2, vol2[0])
+        assert isclose(vol1[0] * vol4[0], 1)

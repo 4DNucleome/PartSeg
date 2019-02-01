@@ -6,7 +6,7 @@ from abc import ABC
 from collections import OrderedDict
 from enum import Enum
 from functools import reduce
-from math import pow
+# from math import pow
 from typing import NamedTuple, Optional, Union, Dict, Callable, List
 
 import SimpleITK as sitk
