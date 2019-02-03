@@ -10,6 +10,14 @@ import SimpleITK as sitk
 
 
 class MaskProperty(BaseReadonlyClass):
+    """
+    :parm dilate: RadiusType ,if need to dilate
+    :parm dilate_radius: int,  radius o f dilation calculate with respect of image spacing
+    :parm fill_holes: RadiusType
+    :parm max_holes_size: int
+    :parm save_components: bool
+    :parm clip_to_mask: bool
+    """
     dilate: RadiusType
     dilate_radius: int
     fill_holes: RadiusType
@@ -50,7 +58,7 @@ def calculate_mask(mask_description: MaskProperty, segmentation: np.ndarray, old
     """
     spacing_min = min(spacing)
     spacing = [x / spacing_min for x in spacing]
-    dilate_radius = [abs(int(mask_description.dilate_radius / x + 0.5)) for x in spacing]
+    dilate_radius = [int(abs(mask_description.dilate_radius / x) + 0.5) for x in spacing]
     if mask_description.dilate == RadiusType.R2D:
         dilate_radius = dilate_radius[-2:]
     if mask_description.save_components:
@@ -84,7 +92,7 @@ def cut_components(mask: np.ndarray, image: np.ndarray, borders: int = 0) -> \
             new_size = [y - x + 1 + 2*borders for x, y in zip(lower_bound, upper_bound)]
             if borders > 0:
                 res = np.zeros(new_size, dtype=image.dtype)
-                res_cut = [slice(borders, x-borders) for x in res.shape]
+                res_cut = tuple([slice(borders, x-borders) for x in res.shape])
                 tmp_res = image[new_cut]
                 tmp_res[mask[new_cut] != i] = 0
                 res[res_cut] = tmp_res
@@ -127,7 +135,7 @@ def fill_holes_in_mask(mask, volume):
     for num in border_set:
         component_mask[component_mask == num] = components_num + 1
     if volume > 0:
-        sizes = np.bincount(component_mask)
+        sizes = np.bincount(component_mask.flat)
         for i, v in enumerate(sizes[1:], 1):
             if v < volume and i < components_num + 1:
                 component_mask[component_mask == i] = 0
