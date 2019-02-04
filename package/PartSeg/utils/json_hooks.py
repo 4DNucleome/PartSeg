@@ -70,3 +70,14 @@ def profile_hook(dkt):
     if "__RadiusType__" in dkt:
         return RadiusType(dkt["value"])
     return readonly_hook(dkt)
+
+
+def check_loaded_dict(dkt):
+    if not isinstance(dkt, dict):
+        return True
+    if "__error__" in dkt:
+        return False
+    for val in dkt.values():
+        if not check_loaded_dict(val):
+            return False
+    return True

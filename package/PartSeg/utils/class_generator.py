@@ -273,9 +273,13 @@ class ReadonlyClassEncoder(json.JSONEncoder):
 
 def readonly_hook(dkt: dict):
     if "__ReadOnly__" in dkt:
-        del dkt["__ReadOnly__"]
-        cls = base_readonly_register.get_class(dkt["__subtype__"])
+        try:
+            cls = base_readonly_register.get_class(dkt["__subtype__"])
+        except ValueError:
+            dkt["__error__"] = True
+            return dkt
         del dkt["__subtype__"]
+        del dkt["__ReadOnly__"]
         if isinstance(cls, collections.Iterator):
             keys = set(dkt.keys())
             for el in cls:
@@ -287,8 +291,12 @@ def readonly_hook(dkt: dict):
                 raise ValueError(f"cannot decode {dkt}")
         return cls(**dkt)
     if "__Enum__" in dkt:
+        try:
+            cls = enum_register.get_class(dkt["__subtype__"])
+        except ValueError:
+            dkt["__error__"] = True
+            return dkt
         del dkt["__Enum__"]
-        cls = enum_register.get_class(dkt["__subtype__"])
         del dkt["__subtype__"]
         if isinstance(cls, collections.Iterator):
             raise ValueError("Two enum with same name")

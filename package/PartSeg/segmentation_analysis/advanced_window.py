@@ -681,7 +681,7 @@ class StatisticsSettings(QWidget):
         dial.setAcceptMode(QFileDialog.AcceptSave)
         dial.setNameFilter("statistic profile (*.json)")
         dial.setDefaultSuffix("json")
-        dial.selectFile("statistic_profile.json")
+        dial.selectFile("measurements_profile.json")
 
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
