@@ -40,7 +40,7 @@ class TestImageClass:
         assert np.all(image2.get_data() == data)
         assert np.all(image1.get_data() == image2.get_data())
 
-    def _test_ome_read(self):  # error in tifffile
+    def test_ome_read(self):  # error in tifffile
         test_dir = self.get_test_dir()
         image1 = ImageReader.read_image(os.path.join(test_dir, "test_lsm2.tif"))
         image2 = ImageReader.read_image(os.path.join(test_dir, "test_lsm.tif"))
