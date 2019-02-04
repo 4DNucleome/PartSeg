@@ -330,7 +330,7 @@ class TestMaskCreate:
         new_mask = calculate_mask(prop2, mask_base_array, None, (1, 1, 1))
         assert np.all(new_mask == res_array2)
 
-    def test_dilate_spacing(self):
+    def test_dilate_spacing_negative(self):
         mask_base_array = np.zeros((30, 30, 30), dtype=np.uint8)
         mask_base_array[10:20, 5:25, 5:25] = 1
         prop1 = MaskProperty(dilate=RadiusType.R3D, dilate_radius=-1, fill_holes=RadiusType.NO, max_holes_size=70,
@@ -349,6 +349,35 @@ class TestMaskCreate:
         assert np.all(new_mask == res_array2)
         res_array3 = np.zeros((30, 30, 30), dtype=np.uint8)
         res_array3[11:19, 8:22, 8:22] = 1
+        new_mask = calculate_mask(prop3, mask_base_array, None, (3, 1, 1))
+        assert np.all(new_mask == res_array3)
+
+    def test_dilate_spacing_positive(self):
+        mask_base_array = np.zeros((30, 30, 30), dtype=np.uint8)
+        mask_base_array[10:20, 10:20, 10:20] = 1
+        prop1 = MaskProperty(dilate=RadiusType.R3D, dilate_radius=1, fill_holes=RadiusType.NO, max_holes_size=70,
+                             save_components=False, clip_to_mask=False)
+        prop2 = MaskProperty(dilate=RadiusType.R3D, dilate_radius=2, fill_holes=RadiusType.NO, max_holes_size=70,
+                             save_components=False, clip_to_mask=False)
+        prop3 = MaskProperty(dilate=RadiusType.R3D, dilate_radius=3, fill_holes=RadiusType.NO, max_holes_size=70,
+                             save_components=False, clip_to_mask=False)
+        res_array1 = np.zeros((30, 30, 30), dtype=np.uint8)
+        res_array1[10:20, 9:21, 9:21] = 1
+        new_mask = calculate_mask(prop1, mask_base_array, None, (3, 1, 1))
+        assert np.all(new_mask == res_array1)
+        res_array2 = np.zeros((30, 30, 30), dtype=np.uint8)
+        res_array2[10:20, 8:22, 8:22] = 1
+        res_array2[(9, 20), 9:21, 9:21] = 1
+        res_array2[:, (8, 21, 8, 21), (8, 8, 21, 21)] = 0
+        new_mask = calculate_mask(prop2, mask_base_array, None, (3, 1, 1))
+        assert np.all(new_mask == res_array2)
+        res_array3 = np.zeros((30, 30, 30), dtype=np.uint8)
+        res_array3[(9, 20), 8:22, 9:21] = 1
+        res_array3[(9, 9, 20, 20), 9:21, (8, 21, 8, 21)] = 1
+
+        res_array3[10:20, 7:23, 9:21] = 1
+        res_array3[10:20, 8:22, (8, 21)] = 1
+        res_array3[10:20, 9:21, (7, 22)] = 1
         new_mask = calculate_mask(prop3, mask_base_array, None, (3, 1, 1))
         assert np.all(new_mask == res_array3)
 
