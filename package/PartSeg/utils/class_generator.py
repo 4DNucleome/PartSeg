@@ -1,7 +1,7 @@
 import json
 import sys
 import collections
-import typing
+import importlib
 import pprint
 import inspect
 from enum import Enum
@@ -100,6 +100,11 @@ class RegisterClass:
             return self.exact_class_register[path]
         else:
             name = path[path.rfind(".")+1:]
+            if name not in self.predict_class_register:
+                try:
+                    importlib.import_module(path[:path.rfind(".")])
+                except ImportError:
+                    pass
             if name in self.predict_class_register:
                 if len(self.predict_class_register[name]) == 1:
                     return self.predict_class_register[name][0]
