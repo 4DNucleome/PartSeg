@@ -1,5 +1,5 @@
 import numpy as np
-from PyQt5.QtCore import QThread, pyqtSignal
+from qtpy.QtCore import QThread, Signal
 
 from PartSeg.utils.mask.io_functions import load_stack_segmentation, SaveSegmentation, SegmentationTuple
 from ..utils.segmentation.algorithm_base import SegmentationAlgorithm
@@ -10,9 +10,9 @@ from os import path
 
 
 class BatchProceed(QThread):
-    error_signal = pyqtSignal(str)
-    progress_signal = pyqtSignal(str, int)
-    execution_done = pyqtSignal()
+    error_signal = Signal(str)
+    progress_signal = Signal(str, int)
+    execution_done = Signal()
     algorithm: SegmentationAlgorithm
 
     def __init__(self):

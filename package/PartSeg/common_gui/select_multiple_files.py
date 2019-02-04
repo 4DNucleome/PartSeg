@@ -2,8 +2,8 @@ from glob import glob
 import os
 from pathlib import Path
 
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QListWidget, QLineEdit, QListWidgetItem, \
+from qtpy.QtCore import Signal, Qt
+from qtpy.QtWidgets import QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QListWidget, QLineEdit, QListWidgetItem, \
     QMessageBox, QDialog, QAbstractItemView, QLabel, QFileDialog
 from ..project_utils_qt.settings import BaseSettings
 
@@ -47,7 +47,7 @@ class AcceptFiles(QDialog):
 class AddFiles(QWidget):
     """Docstring for AddFiles. """
 
-    file_list_changed = pyqtSignal(set)
+    file_list_changed = Signal(set)
 
     def __init__(self, settings: BaseSettings, parent=None, btn_layout=QHBoxLayout):
         """TODO: to be defined1. """

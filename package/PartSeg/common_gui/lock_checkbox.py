@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QCheckBox
-from PyQt5.QtGui import QPaintEvent, QPainter
+from qtpy.QtWidgets import QCheckBox
+from qtpy.QtGui import QPaintEvent, QPainter
 import qtawesome as qta
 
 lock_close = u"\U0001F512"

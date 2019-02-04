@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QDialog, QDoubleSpinBox, QGridLayout, QLabel, QPushButton
+from qtpy.QtWidgets import QDialog, QDoubleSpinBox, QGridLayout, QLabel, QPushButton
 
 
 class InterpolateDialog(QDialog):

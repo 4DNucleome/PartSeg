@@ -1,6 +1,6 @@
-from PyQt5 import QtGui
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QScrollArea
+from qtpy import QtGui
+from qtpy.QtCore import Qt
+from qtpy.QtWidgets import QScrollArea
 
 
 class VerticalScrollArea(QScrollArea):

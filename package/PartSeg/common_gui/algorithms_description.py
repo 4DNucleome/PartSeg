@@ -6,9 +6,9 @@ from typing import List, Type, Dict
 import collections
 
 
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QHideEvent, QPainter, QPaintEvent
-from PyQt5.QtWidgets import QComboBox, QCheckBox, QWidget, QVBoxLayout, QLabel, QFormLayout, \
+from qtpy.QtCore import Signal
+from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent
+from qtpy.QtWidgets import QComboBox, QCheckBox, QWidget, QVBoxLayout, QLabel, QFormLayout, \
     QScrollArea, QLineEdit, QStackedLayout
 from six import with_metaclass
 
@@ -148,7 +148,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
 
 
 class FormWidget(QWidget):
-    value_changed = pyqtSignal()
+    value_changed = Signal()
 
     def __init__(self, fields: typing.List[AlgorithmProperty], start_values=None):
         super().__init__()
@@ -214,7 +214,7 @@ class FormWidget(QWidget):
 
 
 class SubAlgorithmWidget(QWidget):
-    values_changed = pyqtSignal()
+    values_changed = Signal()
 
     def __init__(self, algorithm_property: AlgorithmProperty):
         super().__init__()
@@ -322,7 +322,7 @@ class AbstractAlgorithmSettingsWidget(with_metaclass(ABCMeta, object)):
 
 
 class BaseAlgorithmSettingsWidget(QScrollArea):
-    values_changed = pyqtSignal()
+    values_changed = Signal()
     algorithm_thread: SegmentationThread
     gauss_radius_name = "gauss_radius"
     use_gauss_name = "use_gauss"
@@ -431,11 +431,11 @@ class InteractiveAlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
 
 
 class AlgorithmChoose(QWidget):
-    finished = pyqtSignal()
-    started = pyqtSignal()
-    result = pyqtSignal(SegmentationResult)
-    value_changed = pyqtSignal()
-    algorithm_changed = pyqtSignal(str)
+    finished = Signal()
+    started = Signal()
+    result = Signal(SegmentationResult)
+    value_changed = Signal()
+    algorithm_changed = Signal(str)
 
     def __init__(self, settings: BaseSettings, algorithms: Dict[str, Type[SegmentationAlgorithm]],
                  parent=None):

@@ -1,6 +1,6 @@
 import logging
 
-from PyQt5.QtWidgets import QComboBox
+from qtpy.QtWidgets import QComboBox
 
 __author__ = "Grzegorz Bokota"
 

@@ -1,8 +1,8 @@
 import numpy as np
 import re
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QDialog, QListWidget, QListWidgetItem, QPushButton, QHBoxLayout, QVBoxLayout, QTreeWidget, \
+from qtpy.QtCore import Qt
+from qtpy.QtWidgets import QDialog, QListWidget, QListWidgetItem, QPushButton, QHBoxLayout, QVBoxLayout, QTreeWidget, \
     QTreeWidgetItem, QLabel, QRadioButton, QButtonGroup, QLineEdit, QTextEdit
 
 

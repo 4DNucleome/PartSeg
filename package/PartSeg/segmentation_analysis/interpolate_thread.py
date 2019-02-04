@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QThread
+from qtpy.QtCore import QThread
 import numpy as np
 from scipy.ndimage import zoom
 

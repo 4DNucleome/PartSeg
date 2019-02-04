@@ -1,7 +1,7 @@
 from typing import List
 import numpy as np
 from os import path
-from PyQt5.QtCore import pyqtSignal
+from qtpy.QtCore import Signal
 
 from ..project_utils_qt.settings import BaseSettings
 from PartSeg.utils.mask.io_functions import load_stack_segmentation, save_components, \
@@ -9,7 +9,7 @@ from PartSeg.utils.mask.io_functions import load_stack_segmentation, save_compon
 
 
 class StackSettings(BaseSettings):
-    components_change_list = pyqtSignal([int, list])
+    components_change_list = Signal([int, list])
 
     def __init__(self, json_path):
         super().__init__(json_path)

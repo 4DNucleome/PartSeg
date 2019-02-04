@@ -2,7 +2,7 @@ import json
 import sys
 import typing
 
-from PyQt5.QtCore import QObject, pyqtSignal
+from qtpy.QtCore import QObject, Signal
 
 from PartSeg.utils.json_hooks import ProfileDict, ProfileEncoder, profile_hook
 from ..utils.color_image.color_image_base import color_maps
@@ -17,9 +17,9 @@ class ImageSettings(QObject):
     :type _image: Image
     noise_removed - for image cleaned by algorithm
     """
-    image_changed = pyqtSignal([Image], [int], [str])
-    segmentation_changed = pyqtSignal(np.ndarray)
-    noise_remove_image_part_changed = pyqtSignal()
+    image_changed = Signal([Image], [int], [str])
+    segmentation_changed = Signal(np.ndarray)
+    noise_remove_image_part_changed = Signal()
 
     def __init__(self):
         super(ImageSettings, self).__init__()
@@ -124,7 +124,7 @@ class ImageSettings(QObject):
 
 
 class ViewSettings(ImageSettings):
-    colormap_changes = pyqtSignal()
+    colormap_changes = Signal()
 
     def __init__(self):
         super().__init__()

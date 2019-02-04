@@ -1,9 +1,9 @@
 from math import sqrt
 
-from PyQt5 import QtGui
-from PyQt5.QtCore import QPointF, Qt, QLineF
-from PyQt5.QtGui import QPolygonF, QPainter
-from PyQt5.QtWidgets import QCheckBox, QWidget
+from qtpy import QtGui
+from qtpy.QtCore import QPointF, Qt, QLineF
+from qtpy.QtGui import QPolygonF, QPainter
+from qtpy.QtWidgets import QCheckBox, QWidget
 
 
 

@@ -1,9 +1,9 @@
 import os
 import importlib
 from functools import partial
-from PyQt5.QtCore import QSize, Qt, QThread
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QToolButton, QGridLayout, QWidget, QProgressBar
+from qtpy.QtCore import QSize, Qt, QThread
+from qtpy.QtGui import QIcon
+from qtpy.QtWidgets import QMainWindow, QToolButton, QGridLayout, QWidget, QProgressBar
 from ..utils.global_settings import static_file_folder
 from PartSeg.tiff_image import ImageReader
 

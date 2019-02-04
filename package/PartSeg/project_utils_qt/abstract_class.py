@@ -1,6 +1,6 @@
 import abc
 
-from PyQt5.QtCore import QObject
+from qtpy.QtCore import QObject
 
 
 class QtMeta(type(QObject), abc.ABCMeta):

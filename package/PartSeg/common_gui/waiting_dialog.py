@@ -1,5 +1,5 @@
-from PyQt5.QtCore import QThread
-from PyQt5.QtWidgets import QDialog, QProgressBar, QPushButton, QHBoxLayout, QLabel
+from qtpy.QtCore import QThread
+from qtpy.QtWidgets import QDialog, QProgressBar, QPushButton, QHBoxLayout, QLabel
 
 from PartSeg.project_utils_qt.execute_function_thread import ExecuteFunctionThread
 from ..project_utils_qt.progress_thread import ProgressTread

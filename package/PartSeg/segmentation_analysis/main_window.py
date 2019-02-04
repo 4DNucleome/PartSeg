@@ -3,9 +3,9 @@ from pathlib import Path
 
 import appdirs
 import numpy as np
-from PyQt5.QtCore import Qt, QByteArray, QEvent
-from PyQt5.QtGui import QIcon, QKeyEvent, QKeySequence
-from PyQt5.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
+from qtpy.QtCore import Qt, QByteArray, QEvent
+from qtpy.QtGui import QIcon, QKeyEvent, QKeySequence
+from qtpy.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
     QMessageBox, QCheckBox, QComboBox, QInputDialog, QDialog
 
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog

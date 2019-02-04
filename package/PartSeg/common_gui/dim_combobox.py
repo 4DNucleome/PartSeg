@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QComboBox
+from qtpy.QtWidgets import QComboBox
 
 from ..utils.image_operations import RadiusType
 

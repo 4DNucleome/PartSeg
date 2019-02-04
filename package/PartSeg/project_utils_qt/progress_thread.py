@@ -1,10 +1,10 @@
-from PyQt5.QtCore import QThread, pyqtSignal
+from qtpy.QtCore import QThread, Signal
 
 
 class ProgressTread(QThread):
-    range_changed = pyqtSignal(int, int)
-    step_changed = pyqtSignal(int)
-    error_signal = pyqtSignal(Exception)
+    range_changed = Signal(int, int)
+    step_changed = Signal(int)
+    error_signal = Signal(Exception)
 
     def info_function(self, label: str, val: int):
         if label == "max":

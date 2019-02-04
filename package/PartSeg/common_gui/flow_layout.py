@@ -41,8 +41,8 @@
 ##
 #############################################################################
 
-from PyQt5.QtCore import QPoint, QRect, QSize, Qt
-from PyQt5.QtWidgets import QApplication, QLayout, QPushButton, QSizePolicy, QWidget, QLabel
+from qtpy.QtCore import QPoint, QRect, QSize, Qt
+from qtpy.QtWidgets import QApplication, QLayout, QPushButton, QSizePolicy, QWidget, QLabel
 
 # from qt_import import QPoint, QRect, QSize, Qt, QApplication, QLayout, QPushButton, QSizePolicy, QWidget, QLabel
 
