@@ -1,8 +1,16 @@
-from PartSeg.tiff_image import ImageReader, Image
-from PartSeg.utils.global_settings import static_file_folder
+from enum import Enum
 import os.path
 import numpy as np
 import pytest
+import json
+import re
+
+from PartSeg.tiff_image import ImageReader, Image
+from PartSeg.utils.global_settings import static_file_folder
+from PartSeg.utils.analysis.save_hooks import PartEncoder, part_hook
+from PartSeg.utils.json_hooks import check_loaded_dict
+from PartSeg.utils.segmentation.noise_filtering import GaussType
+from PartSeg.utils.class_generator import enum_register
 
 
 class TestImageClass:
@@ -48,3 +56,52 @@ class TestImageClass:
         assert np.all(image1.get_data() == data)
         assert np.all(image2.get_data() == data)
         assert np.all(image1.get_data() == image2.get_data())
+
+
+class TestJsonLoad:
+    @staticmethod
+    def get_test_dir():
+        return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "test_data")
+
+    def test_profile_load(self):
+        profile_path = os.path.join(self.get_test_dir(), "segment_profile_test.json")
+        # noinspection PyBroadException
+        try:
+            with open(profile_path, 'r') as ff:
+                data = json.load(ff, object_hook=part_hook)
+            assert check_loaded_dict(data)
+        except Exception:
+            pytest.fail("Fail in loading profile")
+
+    def test_measure_load(self):
+        profile_path = os.path.join(self.get_test_dir(), "measurements_profile_test.json")
+        # noinspection PyBroadException
+        try:
+            with open(profile_path, 'r') as ff:
+                data = json.load(ff, object_hook=part_hook)
+            assert check_loaded_dict(data)
+        except Exception:
+            pytest.fail("Fail in loading profile")
+
+    def test_json_dump(self):
+        with pytest.raises(TypeError):
+            json.dumps(GaussType.Layer)
+        data_string = json.dumps(GaussType.Layer, cls=PartEncoder)
+        print(data_string)
+        assert re.search('"__Enum__":[^,}]+[,}]', data_string) is not None
+        assert re.search('"__subtype__":[^,}]+[,}]', data_string) is not None
+        assert re.search('"value":[^,}]+[,}]', data_string) is not None
+
+    def test_json_load(self):
+
+        class Test(Enum):
+            test0 = 0
+            test1 = 1
+            test2 = 2
+
+        test_json = json.dumps(Test.test0, cls=PartEncoder)
+
+        assert not check_loaded_dict(json.loads(test_json, object_hook=part_hook))
+
+        enum_register.register_class(Test)
+        assert isinstance(json.loads(test_json, object_hook=part_hook), Test)

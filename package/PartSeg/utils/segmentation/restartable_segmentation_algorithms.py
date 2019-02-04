@@ -55,7 +55,7 @@ class BorderRim(RestartableAlgorithm):
                 AlgorithmProperty("distance", "Distance", 700.0, options_range=(0, 100000), property_type=float),
                 AlgorithmProperty("units", "Units", Units.nm, property_type=Units)]
 
-    def set_parameters(self, distance:float, units:Units):
+    def set_parameters(self, distance: float, units: Units):
         self.distance = distance
         self.units = units
 
