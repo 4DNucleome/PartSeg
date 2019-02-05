@@ -3,6 +3,9 @@ from abc import ABC
 import numpy as np
 from copy import deepcopy
 from PartSeg.tiff_image import Image
+from PartSeg.utils.analysis.algorithm_description import SegmentationProfile
+from PartSeg.utils.analysis.analysis_utils import SegmentationPipelineElement, SegmentationPipeline
+from PartSeg.utils.calculate_pipeline import calculate_pipeline
 from PartSeg.utils.image_operations import RadiusType
 from PartSeg.utils.mask_create import calculate_mask, MaskProperty
 from PartSeg.utils.segmentation import restartable_segmentation_algorithms as sa
@@ -386,7 +389,7 @@ class TestMaskCreate:
         mask_base_array[10:20, 10:20, 10:20] = 1
         mask2_array = np.copy(mask_base_array)
         mask2_array[13:17, 13:17, 13:17] = 0
-        prop1 = MaskProperty(dilate=RadiusType.NO, dilate_radius=-0, fill_holes=RadiusType.NO, max_holes_size=70,
+        prop1 = MaskProperty(dilate=RadiusType.NO, dilate_radius=-0, fill_holes=RadiusType.NO, max_holes_size=0,
                              save_components=False, clip_to_mask=False)
         prop2 = MaskProperty(dilate=RadiusType.NO, dilate_radius=-0, fill_holes=RadiusType.NO, max_holes_size=70,
                              save_components=False, clip_to_mask=True)
@@ -394,3 +397,30 @@ class TestMaskCreate:
         new_mask2 = calculate_mask(prop2, mask_base_array, mask2_array, (1, 1, 1))
         assert np.all(new_mask1 == mask_base_array)
         assert np.all(new_mask2 == mask2_array)
+
+
+class TestPipeline:
+    @staticmethod
+    def get_image():
+        data = np.zeros((1, 50, 100, 100, 2), dtype=np.uint16)
+        data[0, 10:40, 20:80, 20:60, 0] = 10
+        data[0, 10:40, 20:80, 40:80, 1] = 10
+        return Image(data, (100, 50, 50), "")
+
+    def test_pipeline_simple(self):
+        image = self.get_image()
+        prop1 = MaskProperty(dilate=RadiusType.NO, dilate_radius=-0, fill_holes=RadiusType.NO, max_holes_size=0,
+                             save_components=False, clip_to_mask=False)
+        parameters1 = {"channel": 0, "minimum_size": 30, 'threshold': {'name': 'Manual', 'values': {'threshold': 5}},
+                       'noise_removal': {'name': 'None', 'values': {}}, 'side_connection': False}
+        parameters2 = {"channel": 1, "minimum_size": 30, 'threshold': {'name': 'Manual', 'values': {'threshold': 5}},
+                       'noise_removal': {'name': 'None', 'values': {}}, 'side_connection': False}
+        seg_profile1 = SegmentationProfile(name="Unknown", algorithm="Lower threshold", values=parameters1)
+        pipeline_element = SegmentationPipelineElement(mask_property=prop1, segmentation=seg_profile1)
+        seg_profile2 = SegmentationProfile(name="Unknown", algorithm="Lower threshold", values=parameters2)
+
+        pipeline = SegmentationPipeline(name="test", segmentation=seg_profile2, mask_history=[pipeline_element])
+        result = calculate_pipeline(image=image, mask=None, pipeline=pipeline, report_fun=empty)
+        result_segmentation = np.zeros((50, 100, 100), dtype=np.uint8)
+        result_segmentation[10:40, 20:80, 40:60] = 1
+        assert np.all(result.segmentation == result_segmentation)
