@@ -1,6 +1,6 @@
 import numpy as np
 import typing
-from .class_generator import BaseReadonlyClass
+from .class_generator import BaseSerializableClass
 from ..utils.image_operations import dilate, erode, RadiusType
 import SimpleITK as sitk
 
@@ -9,7 +9,7 @@ import SimpleITK as sitk
                            "clip_to_mask"])"""
 
 
-class MaskProperty(BaseReadonlyClass):
+class MaskProperty(BaseSerializableClass):
     """
     :parm dilate: RadiusType ,if need to dilate
     :parm dilate_radius: int,  radius o f dilation calculate with respect of image spacing

@@ -15,7 +15,7 @@ from sympy import symbols
 
 from .. import autofit as af
 from ..border_rim import border_mask
-from ..class_generator import BaseReadonlyClass
+from ..class_generator import BaseSerializableClass
 from ..class_generator import enum_register
 from ..segmentation.algorithm_describe_base import AlgorithmDescribeBase, Register, AlgorithmProperty
 from ..universal_const import UNIT_SCALE, Units
@@ -51,7 +51,7 @@ class SettingsValue(NamedTuple):
     default_area: Optional[AreaType] = None
 
 
-class Leaf(BaseReadonlyClass):
+class Leaf(BaseSerializableClass):
     name: str
     dict: Dict = dict()
     power: float = 1.0
@@ -76,7 +76,7 @@ class Leaf(BaseReadonlyClass):
         return resp
 
 
-class Node(BaseReadonlyClass):
+class Node(BaseSerializableClass):
     left: Union['Node', Leaf]
     op: str
     right: Union['Node', Leaf]
@@ -87,7 +87,7 @@ class Node(BaseReadonlyClass):
         return left_text + self.op + right_text
 
 
-class StatisticEntry(BaseReadonlyClass):
+class StatisticEntry(BaseSerializableClass):
     name: str
     calculation_tree: Union[Node, Leaf]
 

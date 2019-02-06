@@ -14,7 +14,7 @@ from ..analysis.save_register import save_dict
 from ..analysis.statistics_calculation import StatisticProfile
 from ..analysis.algorithm_description import SegmentationProfile
 from ..mask_create import MaskProperty
-from ..class_generator import BaseReadonlyClass
+from ..class_generator import BaseSerializableClass
 
 
 class MaskBase:
@@ -22,20 +22,20 @@ class MaskBase:
 
 # MaskCreate = namedtuple("MaskCreate", ['name', 'radius'])
 
-class MaskCreate(MaskBase, BaseReadonlyClass):
+class MaskCreate(MaskBase, BaseSerializableClass):
     mask_property: MaskProperty
 
     def __str__(self):
         return f"Mask create: {self.name}\n" + str(self.mask_property).split("\n", 1)[1]
 
-class MaskUse(MaskBase, BaseReadonlyClass):
+class MaskUse(MaskBase, BaseSerializableClass):
     pass
 
-class MaskSum(MaskBase, BaseReadonlyClass):
+class MaskSum(MaskBase, BaseSerializableClass):
     mask1: str
     mask2: str
 
-class MaskIntersection(MaskBase, BaseReadonlyClass):
+class MaskIntersection(MaskBase, BaseSerializableClass):
     mask1: str
     mask2: str
 
@@ -43,7 +43,7 @@ class SaveBase:
     suffix: str
     directory: str
 
-class Save(BaseReadonlyClass):
+class Save(BaseSerializableClass):
     suffix: str
     directory: str
     algorithm: str
@@ -51,7 +51,7 @@ class Save(BaseReadonlyClass):
     values: dict
 
 
-class StatisticCalculate(BaseReadonlyClass):
+class StatisticCalculate(BaseSerializableClass):
     channel: int
     units: Units
     statistic_profile: StatisticProfile
@@ -98,11 +98,8 @@ def get_save_path(op: Save, calculation):
     return file_path
 
 
-@add_metaclass(ABCMeta)
-class MaskMapper(object):
-    def __init__(self, name):
-        self.name = name
-
+class MaskMapper:
+    name: str
     @abstractmethod
     def get_mask_path(self, file_path):
         pass
@@ -115,10 +112,8 @@ class MaskMapper(object):
         return True
 
 
-class MaskSuffix(MaskMapper):
-    def __init__(self, name, suffix):
-        super(MaskSuffix, self).__init__(name)
-        self.suffix = suffix
+class MaskSuffix(MaskMapper, BaseSerializableClass):
+    suffix: str
 
     def get_mask_path(self, file_path):
         base, ext = os.path.splitext(file_path)
@@ -128,11 +123,9 @@ class MaskSuffix(MaskMapper):
         return {"name": self.name, "suffix": self.suffix}
 
 
-class MaskSub(MaskMapper):
-    def __init__(self, name, base, rep):
-        super(MaskSub, self).__init__(name)
-        self.base = base
-        self.rep = rep
+class MaskSub(MaskMapper, BaseSerializableClass):
+    base: str
+    rep: str
 
     def get_mask_path(self, file_path):
         dir_name, filename = os.path.split(file_path)
@@ -143,8 +136,9 @@ class MaskSub(MaskMapper):
         return {"name": self.name, "base": self.base, "rep": self.rep}
 
 
-class MaskFile(MaskMapper):
-    def __init__(self, name, path_to_file):
+class MaskFile(MaskMapper, BaseSerializableClass):
+
+    def __post_init__(self, name, path_to_file):
         super(MaskFile, self).__init__(name)
         self.path_to_file = path_to_file
         self.name_dict = None
@@ -202,7 +196,7 @@ class PlanChanges(Enum):
 
 
 class CalculationTree:
-    def __init__(self, operation: typing.Union[BaseReadonlyClass, SegmentationProfile, StatisticCalculate, str],
+    def __init__(self, operation: typing.Union[BaseSerializableClass, SegmentationProfile, StatisticCalculate, str],
                  children: typing.List['CalculationTree']):
         self.operation = operation
         self.children = children

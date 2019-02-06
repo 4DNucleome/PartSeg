@@ -4,11 +4,11 @@ from qtpy.QtWidgets import QDialog, QWidget, QHBoxLayout, QLabel, QPushButton, Q
     QDoubleSpinBox, QCheckBox, QLineEdit, QComboBox
 
 from PartSeg.utils.channel_class import Channel
-from PartSeg.utils.class_generator import BaseReadonlyClass
+from PartSeg.utils.class_generator import BaseSerializableClass
 
 
 class GetPropertyWidget(QWidget):
-    def get_values(self) -> BaseReadonlyClass:
+    def get_values(self) -> BaseSerializableClass:
         raise NotImplementedError
 
 
@@ -35,7 +35,7 @@ class SavePropertyDialog(QDialog):
 
 
 class GenericGetPropertyWidget(GetPropertyWidget):
-    def __init__(self, properties: BaseReadonlyClass, parent=None):
+    def __init__(self, properties: BaseSerializableClass, parent=None):
         super().__init__(parent)
         self.properties = properties
         self.widget_list = []

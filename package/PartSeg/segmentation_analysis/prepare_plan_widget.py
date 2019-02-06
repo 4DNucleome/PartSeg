@@ -29,6 +29,7 @@ group_sheet = "QGroupBox {border: 1px solid gray; border-radius: 9px; margin-top
 
 MAX_CHANNEL_NUM = 10
 
+
 class TwoMaskDialog(QDialog):
     def __init__(self, mask_names):
         """
@@ -144,12 +145,12 @@ class CreatePlan(QWidget):
         self.plan.set_plan(self.calculation_plan)
         self.dilate_mask = MaskWidget(settings)
 
-        self.save_choose.currentIndexChanged[str].connect(self.save_changed)
+        self.save_choose.currentTextChanged.connect(self.save_changed)
         self.statistic_list.currentTextChanged.connect(self.show_statistics)
         self.segment_profile.currentTextChanged.connect(self.show_segment)
-        self.statistic_list.currentTextChanged[str].connect(self.show_statistics_info)
-        self.segment_profile.currentTextChanged[str].connect(self.show_segment_info)
-        self.mask_name.textChanged[str].connect(self.mask_name_changed)
+        self.statistic_list.currentTextChanged.connect(self.show_statistics_info)
+        self.segment_profile.currentTextChanged.connect(self.show_segment_info)
+        self.mask_name.textChanged.connect(self.mask_name_changed)
         self.generate_mask_btn.clicked.connect(self.create_mask)
         self.reuse_mask_btn.clicked.connect(self.use_mask)
         self.clean_plan_btn.clicked.connect(self.clean_plan)
@@ -193,10 +194,10 @@ class CreatePlan(QWidget):
         other_box.setContentsMargins(0, 0, 0, 0)
         bt_lay = QGridLayout()
         bt_lay.setSpacing(0)
-        #bt_lay.setContentsMargins(0, 0, 0, 0)
-        #bt_lay.addWidget(right_label("Chanel num:"), 1, 0)
-        #bt_lay.addWidget(self.chanel_num, 1, 1)
-        #bt_lay.addWidget(self.choose_channel_btn, 4, 0, 1, 2)
+        # bt_lay.setContentsMargins(0, 0, 0, 0)
+        # bt_lay.addWidget(right_label("Chanel num:"), 1, 0)
+        # bt_lay.addWidget(self.chanel_num, 1, 1)
+        # bt_lay.addWidget(self.choose_channel_btn, 4, 0, 1, 2)
         # bt_lay.addWidget(self.forgot_mask_btn, 1, 0)
         bt_lay.addWidget(self.save_choose, 5, 0, 1, 2)
         bt_lay.addWidget(self.director_save_chk, 6, 0, 1, 2)
@@ -230,9 +231,9 @@ class CreatePlan(QWidget):
         lay.addWidget(self.generate_mask_btn)
         # lay.addWidget(right_label("Mask name:"), 0, 0)
         # lay.addWidget(self.mask_name, 0, 1, 1, 2)
-        #lay.addWidget(right_label("Dilate radius"), 1, 0)
-        #lay.addWidget(self.dilate_radius_spin, 1, 1)
-        #lay.addWidget(self.generate_mask, 1, 2)
+        # lay.addWidget(right_label("Dilate radius"), 1, 0)
+        # lay.addWidget(self.dilate_radius_spin, 1, 1)
+        # lay.addWidget(self.generate_mask, 1, 2)
         segmentation_mask_box.setLayout(lay)
 
         mask_box = QGroupBox("Mask:")
@@ -439,7 +440,7 @@ class CreatePlan(QWidget):
 
     def set_mask_name(self):
         name = str(self.mask_name.text()).strip()
-        if  name != "" and name in self.mask_set:
+        if name != "" and name in self.mask_set:
             QMessageBox.information(self, "Exists", "mask with this name already exists")
             return
         conflict_mask, used_mask = self.calculation_plan.get_file_mask_names()
@@ -455,7 +456,7 @@ class CreatePlan(QWidget):
         if save_class is None:
             QMessageBox.warning(self, "Save problem", "Not found save class")
         dial = FormDialog(
-            [AlgorithmProperty("suffix", "File suffix", ""),  AlgorithmProperty("directory", "Sub directory", "")] + \
+            [AlgorithmProperty("suffix", "File suffix", ""),  AlgorithmProperty("directory", "Sub directory", "")] +
             save_class.get_fields())
         if dial.exec():
             values = dial.get_values()
@@ -563,9 +564,9 @@ class CreatePlan(QWidget):
     def add_segmentation(self):
         if self.channels_used and self.node_type == NodeType.root:
             ret = QMessageBox.question(self, "Segmentation from root",
-                                        "You use channel choose in your plan. Are you sure "
-                                        "to choose segmentation on root", QMessageBox.Cancel | QMessageBox.Ok,
-                                        QMessageBox.Cancel)
+                                       "You use channel choose in your plan. Are you sure "
+                                       "to choose segmentation on root", QMessageBox.Cancel | QMessageBox.Ok,
+                                       QMessageBox.Cancel)
             if ret == QMessageBox.Cancel:
                 return
 
@@ -659,22 +660,31 @@ class CreatePlan(QWidget):
             if self.node_type == NodeType.file_mask and name in self.mask_set:
                 self.reuse_mask_btn.setEnabled(True)
 
-    def add_calculation_plan(self, used_text=None):
-        while True:
-            if used_text is None or isinstance(used_text, bool):
-                text, ok = QInputDialog.getText(self, "Plan title", "Set plan title")
-            else:
-                text, ok = QInputDialog.getText(self, "Plan title", "Set plan title. Previous ({}) "
-                                                                    "is already in use".format(used_text))
-            if ok:
-                text = str(text)
-                if text in self.settings.batch_plans:
-                    continue
-                plan = copy(self.calculation_plan)
-                plan.set_name(text)
-                self.settings.batch_plans[text] = plan
-                self.plan_created.emit()
-                break
+    def add_calculation_plan(self, text=None):
+        if text is None or isinstance(text, bool):
+            text, ok = QInputDialog.getText(self, "Plan title", "Set plan title")
+        else:
+            text, ok = QInputDialog.getText(self, "Plan title",
+                                            "Set plan title. Previous ({}) is already in use".format(text),
+                                            text=text)
+        text = text.strip()
+        if ok:
+            if text == "":
+                QMessageBox.information(self, "Name cannot be empty", "Name cannot be empty, Please set correct name",
+                                        QMessageBox.Ok)
+                self.add_calculation_plan()
+                return
+            if text in self.settings.batch_plans:
+                res = QMessageBox.information(self, "Name already in use",
+                                              "Name already in use. Would like to overwrite?",
+                                              QMessageBox.Yes | QMessageBox.No)
+                if res == QMessageBox.No:
+                    self.add_calculation_plan(text)
+                    return
+            plan = copy(self.calculation_plan)
+            plan.set_name(text)
+            self.settings.batch_plans[text] = plan
+            self.plan_created.emit()
 
     @staticmethod
     def get_index(item: QListWidgetItem, new_values: typing.List[str]) -> int:
@@ -890,6 +900,7 @@ class PlanPreview(QTreeWidget):
 
 class CalculateInfo(QWidget):
     """
+    "widget to show information about plans and allow to se plan details
     :type settings: Settings
     """
     plan_to_edit_signal = Signal()
@@ -906,7 +917,7 @@ class CalculateInfo(QWidget):
         info_layout = QVBoxLayout()
         info_butt_layout = QGridLayout()
         info_butt_layout.setSpacing(0)
-        info_butt_layout.addWidget(self.delete_plan_btn, 0 ,0)
+        info_butt_layout.addWidget(self.delete_plan_btn, 0, 0)
         info_butt_layout.addWidget(self.edit_plan_btn, 0, 1)
         info_butt_layout.addWidget(self.export_plans_btn, 1, 0)
         info_butt_layout.addWidget(self.import_plans_btn, 1, 1)
@@ -919,7 +930,7 @@ class CalculateInfo(QWidget):
         info_chose_layout.addWidget(self.plan_view)
         info_layout.addLayout(info_chose_layout)
         self.setLayout(info_layout)
-        self.calculate_plans.addItems(list(sorted(self.settings.get("batch_plans", dict()).keys())))
+        self.calculate_plans.addItems(list(sorted(self.settings.batch_plans.keys())))
         self.protect = False
         self.plan_to_edit = None
 
@@ -1026,4 +1037,3 @@ class CalculatePlaner(QSplitter):
         self.create_plan.plan_created.connect(self.info_widget.update_plan_list)
         self.info_widget.plan_to_edit_signal.connect(self.create_plan.edit_plan)
         self.addWidget(self.create_plan)
-

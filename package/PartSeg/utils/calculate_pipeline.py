@@ -1,6 +1,6 @@
 import typing
 
-from PartSeg.utils.class_generator import BaseReadonlyClass
+from PartSeg.utils.class_generator import BaseSerializableClass
 from PartSeg.utils.segmentation.restartable_segmentation_algorithms import RestartableAlgorithm
 from PartSeg.utils.analysis.analysis_utils import SegmentationPipeline, HistoryElement
 from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
@@ -13,7 +13,7 @@ def _empty_fun(_a1, _a2):
     pass
 
 
-class PipelineResult(BaseReadonlyClass):
+class PipelineResult(BaseSerializableClass):
     segmentation: np.ndarray
     full_segmentation: np.ndarray
     mask: np.ndarray

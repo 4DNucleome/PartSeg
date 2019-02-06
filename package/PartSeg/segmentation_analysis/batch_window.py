@@ -13,7 +13,7 @@ from qtpy.QtWidgets import QPushButton, QListWidget, QVBoxLayout, QHBoxLayout, Q
 
 from ..common_gui.select_multiple_files import AddFiles
 from .partseg_settings import PartSettings
-from .batch_processing.batch_backend import CalculationManager
+from PartSeg.utils.analysis.batch_processing.batch_backend import CalculationManager
 from PartSeg.utils.analysis.calculation_plan import CalculationPlan, MaskFile, MaskMapper, Calculation
 from .prepare_plan_widget import CalculatePlaner
 from ..utils.global_settings import static_file_folder
@@ -162,7 +162,7 @@ class FileChoose(QWidget):
 
     def showEvent(self, _):
         current_calc = str(self.calculation_choose.currentText())
-        new_list = ["<no calculation>"] + list(sorted(self.settings.get("batch_plans", dict()).keys()))
+        new_list = ["<no calculation>"] + list(sorted(self.settings.batch_plans.keys()))
         try:
             index = new_list.index(current_calc)
         except ValueError:

@@ -4,9 +4,10 @@ import collections
 import importlib
 import pprint
 import inspect
+import itertools
+import typing
 from enum import Enum
 
-from .class_generate_base import BaseReadonlyClass as BaseReadonlyClass_
 _PY36 = sys.version_info[:2] >= (3, 6)
 
 # TODO read about dataclsss and maybe apply
@@ -15,24 +16,24 @@ _class_template = """\
 from builtins import property as _property, tuple as _tuple
 from operator import attrgetter as _attrgetter
 from collections import OrderedDict
-from {module} import BaseReadonlyClass
+import typing
 \"\"\"
 {imports}
 \"\"\"
 
-class {typename}(BaseReadonlyClass):
+class {typename}({base_classes}):
     "{typename}({signature})"
-
     __slots__ = {slots!r}
 
     _fields = {field_names!r}
+    _root = True
     
     #def __new__(cls, {signature}):
     #    ob = super().__new__(cls)
     #    cls.__init__(ob, {arg_list})
     #    return ob
 
-    def __init__(self, {signature_without_types}):
+    def __init__(self, {signature}):
         'Create new instance of {typename}({arg_list})'
         {init_fields}
 
@@ -80,6 +81,7 @@ _field_template = '''\
     {name} = _property(_attrgetter("_{name}"), doc='getter for field _{name}')
 '''
 
+
 class RegisterClass:
     def __init__(self):
         self.exact_class_register = dict()
@@ -111,9 +113,21 @@ class RegisterClass:
                 return iter(self.predict_class_register[name])
             raise ValueError(f"unregistered class {path}")
 
+    def clear(self):  # for testing purpose
+        self.exact_class_register.clear()
+        self.predict_class_register.clear()
 
-base_readonly_register = RegisterClass()
+
+base_serialize_register = RegisterClass()
 enum_register = RegisterClass()
+
+
+def extract_type_name(type_):
+    if not hasattr(type_, "__name__"):
+        if hasattr(type_, "__module__") and type_.__module__ == "typing" and hasattr(type_, "__origin__"):
+            return type_.__origin__
+        return str(type_)
+    return type_.__name__
 
 
 def extract_type_info(type_):
@@ -135,6 +149,33 @@ _prohibited = ('__new__', '__init__', '__slots__', '__getnewargs__',
 _special = ('__module__', '__name__', '__qualname__', '__annotations__')
 
 
+def add_classes(types_list, translate_dict, global_state):
+    for type_ in types_list:
+        if type_ in translate_dict:
+            continue
+        if hasattr(type_, "__module__") and type_.__module__ == "typing":
+            if hasattr(type_, "__args__") and isinstance(type_.__args__, collections.Iterable) \
+                    and len(type_.__args__) > 0:
+                add_classes(type_.__args__, translate_dict, global_state)
+                if hasattr(type_, "__origin__"):
+                    type_str = \
+                        str(type_.__origin__) + "[" + ", ".join([translate_dict[x] for x in type_.__args__]) + "]"
+                    translate_dict[type_] = type_str
+                    continue
+            if isinstance(type_, typing._ForwardRef):
+                translate_dict[type_] = f"'{type_.__forward_arg__}'"
+                continue
+            translate_dict[type_] = str(type_)
+            continue
+
+        name = extract_type_name(type_)
+        while name in global_state:
+            name += "a"
+        translate_dict[type_] = name
+
+        global_state[name] = type_
+
+
 def _make_class(typename, types, defaults_dict, base_classes):
     if base_classes:
         # TODO add function inheritance
@@ -152,12 +193,15 @@ def _make_class(typename, types, defaults_dict, base_classes):
         type_dict[name_] = type_str
         if module:
             import_set.add("import " + module)
-    signature = ", ".join(["{}: {} = {}".format(name_, type_dict[name_], pprint.pformat(
-        defaults_dict[name_])) if name_ in defaults_dict else "{}: {}".format(name_, type_dict[name_]) for name_ in
-                           types.keys()])
-    signature_without_types = ", ".join(["{} = {}".format(name_, pprint.pformat(defaults_dict[name_]))
-                                         if name_ in defaults_dict else "{}".format(name_) for name_ in
-                                         types.keys()])
+    translate_dict = {type(None): "None"}
+    global_state = {typename: "a", "typing": typing}
+    add_classes(itertools.chain(types.values(), base_classes), translate_dict, global_state)
+
+    del global_state[typename]
+
+    signature = ", ".join(["{}: {} = {}".format(name_, translate_dict[type_], pprint.pformat(
+        defaults_dict[name_])) if name_ in defaults_dict else "{}: {}".format(name_, translate_dict[type_])
+                           for name_, type_ in types.items()])
     init_sig = ["self._{name} = {name}".format(name=name_) for name_ in type_dict.keys()]
     tuple_list = ["self._{name}".format(name=name_) for name_ in type_dict.keys()]
     class_definition = _class_template.format(
@@ -166,21 +210,19 @@ def _make_class(typename, types, defaults_dict, base_classes):
         init_fields="\n        ".join(init_sig),
         tuple_fields=", ".join(tuple_list),
         signature=signature,
-        module=BaseReadonlyClass_.__module__,
         field_names=tuple(field_names),
-        signature_without_types=signature_without_types,
         slots=tuple(["_" + x for x in field_names]),
         num_fields=len(field_names),
         arg_list=repr(tuple(field_names)).replace("'", "")[1:-1],
         repr_fmt=', '.join(_repr_template.format(name=name)
                            for name in field_names),
         field_definitions='\n'.join(_field_template.format(name=name)
-                                    for index, name in enumerate(field_names))
+                                    for index, name in enumerate(field_names)),
+        base_classes=", ".join([translate_dict[x] for x in base_classes])
     )
-
-    namespace = dict(__name__='namedtuple_%s' % typename)
+    global_state["__name__"] = 'serialize_%s' % typename
     try:
-        exec(class_definition, namespace)
+        exec(class_definition, global_state)
     except AttributeError as e:
         print(class_definition, file=sys.stderr)
         raise e
@@ -189,7 +231,7 @@ def _make_class(typename, types, defaults_dict, base_classes):
             print(f"{i}: {el}", file=sys.stderr)
         raise e
 
-    result = namespace[typename]
+    result = global_state[typename]
     result._source = class_definition
     result._field_defaults = defaults_dict
     result.__annotations__ = types
@@ -218,7 +260,7 @@ class BaseMeta(type):
                                 "follow default field(s) {default_names}"
                                 .format(field_name=field_name,
                                         default_names=', '.join(defaults_dict.keys())))
-        result = _make_class(name, types, defaults_dict, [x for x in bases if x != BaseReadonlyClass])
+        result = _make_class(name, types, defaults_dict, [x for x in bases])
         # nm_tpl.__new__.__annotations__ = collections.OrderedDict(types)
         # nm_tpl.__new__.__defaults__ = tuple(defaults)
         # nm_tpl._field_defaults = defaults_dict
@@ -236,13 +278,14 @@ class BaseMeta(type):
                 raise AttributeError("Cannot overwrite NamedTuple attribute " + key)
             elif key not in _special and key not in result._fields:
                 setattr(result, key, attrs[key])
-        base_readonly_register.register_class(result)
+        base_serialize_register.register_class(result)
         return result
 
 
-class BaseReadonlyClass(metaclass=BaseMeta):
+class BaseSerializableClass(metaclass=BaseMeta):
     _root = True
-    __signature__ = ()
+    # __signature__ = ()
+    __readonly__ = True
 
     def __init__(self, *args, **kwargs):
         pass
@@ -262,24 +305,28 @@ class BaseReadonlyClass(metaclass=BaseMeta):
         pass"""
 
 
-class ReadonlyClassEncoder(json.JSONEncoder):
+class SerializeClassEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, Enum):
             return {"__Enum__": True, "__subtype__": extract_type_info(o.__class__)[0], "value": o.value}
-        if isinstance(o, BaseReadonlyClass_):
-            return {"__ReadOnly__": True, "__subtype__": extract_type_info(o.__class__)[0],  **o.asdict()}
+        if isinstance(o, BaseSerializableClass):
+            return {"__Serializable__": True, "__subtype__": extract_type_info(o.__class__)[0],  **o.asdict()}
         return super().default(o)
 
 
-def readonly_hook(dkt: dict):
-    if "__ReadOnly__" in dkt:
+def serialize_hook(dkt: dict):
+    if "__ReadOnly__" in dkt or "__Serializable__" in dkt:
+        # Backward compatibility"
         try:
-            cls = base_readonly_register.get_class(dkt["__subtype__"])
+            cls = base_serialize_register.get_class(dkt["__subtype__"])
         except ValueError:
             dkt["__error__"] = True
             return dkt
         del dkt["__subtype__"]
-        del dkt["__ReadOnly__"]
+        if "__Serializable__" in dkt:
+            del dkt["__Serializable__"]
+        else:
+            del dkt["__ReadOnly__"]
         if isinstance(cls, collections.Iterator):
             keys = set(dkt.keys())
             for el in cls:

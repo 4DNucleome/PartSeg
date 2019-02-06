@@ -2,12 +2,12 @@ import typing
 from io import BytesIO
 from textwrap import indent
 import numpy as np
-from ..class_generator import BaseReadonlyClass
+from ..class_generator import BaseSerializableClass
 from ..mask_create import MaskProperty
 from ..analysis.algorithm_description import SegmentationProfile
 
 
-class HistoryElement(BaseReadonlyClass):
+class HistoryElement(BaseSerializableClass):
     algorithm_name: str
     algorithm_values: typing.Dict[str, typing.Any]
     mask_property: MaskProperty
@@ -26,7 +26,7 @@ class HistoryElement(BaseReadonlyClass):
                               mask_property=mask_property, arrays=arrays)
 
 
-class SegmentationPipelineElement(BaseReadonlyClass):
+class SegmentationPipelineElement(BaseSerializableClass):
     segmentation: SegmentationProfile
     mask_property: MaskProperty
 
@@ -34,7 +34,7 @@ class SegmentationPipelineElement(BaseReadonlyClass):
         return indent(str(self.segmentation), '    ') + "\n\n" + indent(str(self.mask_property), '    ')
 
 
-class SegmentationPipeline(BaseReadonlyClass):
+class SegmentationPipeline(BaseSerializableClass):
     name: str
     segmentation: SegmentationProfile
     mask_history: typing.List[SegmentationPipelineElement]

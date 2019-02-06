@@ -2,7 +2,7 @@ import copy
 import sys
 import typing
 
-from .class_generator import ReadonlyClassEncoder, readonly_hook
+from .class_generator import SerializeClassEncoder, serialize_hook
 from .image_operations import RadiusType
 
 
@@ -52,7 +52,7 @@ class ProfileDict(object):
         return curr_dict
 
 
-class ProfileEncoder(ReadonlyClassEncoder):
+class ProfileEncoder(SerializeClassEncoder):
     def default(self, o):
         if isinstance(o, ProfileDict):
             return {"__ProfileDict__": True, **o.my_dict}
@@ -69,7 +69,7 @@ def profile_hook(dkt):
         return res
     if "__RadiusType__" in dkt:
         return RadiusType(dkt["value"])
-    return readonly_hook(dkt)
+    return serialize_hook(dkt)
 
 
 def check_loaded_dict(dkt):

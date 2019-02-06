@@ -1,5 +1,5 @@
 from .channel_class import Channel
-from .class_generator import BaseReadonlyClass
+from .class_generator import BaseSerializableClass
 from .image_operations import RadiusType
 
 
@@ -12,5 +12,5 @@ class CmapProfileBase:
     cut_obsolete_area: bool
 
 
-class CmapProfile(CmapProfileBase, BaseReadonlyClass):
+class CmapProfile(CmapProfileBase, BaseSerializableClass):
     pass
