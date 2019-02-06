@@ -35,14 +35,20 @@ class {typename}({base_classes}):
 
     def __init__(self, {signature}):
         'Create new instance of {typename}({arg_list})'
-        {init_fields}
+        {init_content}
 
     @classmethod
     def _make(cls, iterable):
         'Make a new {typename} object from a sequence or iterable'
-        result = new(cls, iterable)
-        if len(result) != {num_fields:d}:
-            raise TypeError('Expected {num_fields:d} arguments, got %d' % len(result))
+        return cls.make_(iterable)
+        
+    @classmethod
+    def make_(cls, iterable):
+        'Make a new {typename} object from a sequence or iterable'
+        if isinstance(iterable, dict):
+            result = cls(**iterable)
+        else:
+            result = cls(*iterable)
         return result
 
     def replace_(self, **kwargs):
@@ -71,6 +77,9 @@ class {typename}({base_classes}):
     def __getnewargs__(self):
         'Return self as a plain tuple.  Used by copy and pickle.'
         return tuple(_attrgetter(*self.__slots__)(self))
+    
+    #def __setattr__(self, name, value):
+    #    raise AttributeError('can\\\'t set attribute')
 
 {field_definitions}
 """
@@ -144,7 +153,7 @@ def extract_type_info(type_):
 
 _prohibited = ('__new__', '__init__', '__slots__', '__getnewargs__',
                '_fields', '_field_defaults', '_field_types',
-               '_make', 'replace_', 'asdict', '_source', 'asdict')
+               '_make', 'replace_', 'asdict', '_source', 'asdict', "__setattr__")
 
 _special = ('__module__', '__name__', '__qualname__', '__annotations__')
 
@@ -176,7 +185,7 @@ def add_classes(types_list, translate_dict, global_state):
         global_state[name] = type_
 
 
-def _make_class(typename, types, defaults_dict, base_classes):
+def _make_class(typename, types, defaults_dict, base_classes, readonly):
     if base_classes:
         # TODO add function inheritance
         types_ = types
@@ -202,22 +211,30 @@ def _make_class(typename, types, defaults_dict, base_classes):
     signature = ", ".join(["{}: {} = {}".format(name_, translate_dict[type_], pprint.pformat(
         defaults_dict[name_])) if name_ in defaults_dict else "{}: {}".format(name_, translate_dict[type_])
                            for name_, type_ in types.items()])
-    init_sig = ["self._{name} = {name}".format(name=name_) for name_ in type_dict.keys()]
-    tuple_list = ["self._{name}".format(name=name_) for name_ in type_dict.keys()]
+    if readonly:
+        slots = tuple(["_" + x for x in field_names])
+        field_definitions = '\n'.join(_field_template.format(name=name)
+                                      for index, name in enumerate(field_names))
+    else:
+        slots = tuple(field_names)
+        field_definitions = ""
+    init_sig = [f"self.{f_name} = {v_name}" for f_name, v_name in zip(slots, type_dict.keys())]
+    tuple_list = ["self.{name}".format(name=name_) for name_ in slots]
+    init_content = "\n        ".join(init_sig)
+    init_content += "\n        self.__post_init__()"
     class_definition = _class_template.format(
         imports="\n".join(import_set),
         typename=typename,
-        init_fields="\n        ".join(init_sig),
+        init_content=init_content,
         tuple_fields=", ".join(tuple_list),
         signature=signature,
         field_names=tuple(field_names),
-        slots=tuple(["_" + x for x in field_names]),
+        slots=slots,
         num_fields=len(field_names),
         arg_list=repr(tuple(field_names)).replace("'", "")[1:-1],
         repr_fmt=', '.join(_repr_template.format(name=name)
                            for name in field_names),
-        field_definitions='\n'.join(_field_template.format(name=name)
-                                    for index, name in enumerate(field_names)),
+        field_definitions=field_definitions,
         base_classes=", ".join([translate_dict[x] for x in base_classes])
     )
     global_state["__name__"] = 'serialize_%s' % typename
@@ -260,7 +277,17 @@ class BaseMeta(type):
                                 "follow default field(s) {default_names}"
                                 .format(field_name=field_name,
                                         default_names=', '.join(defaults_dict.keys())))
-        result = _make_class(name, types, defaults_dict, [x for x in bases])
+        if "__readonly__" in attrs:
+            readonly = attrs["__readonly__"]
+        else:
+            for el in bases:
+                if hasattr(el, "__readonly__"):
+                    readonly = el.__readonly__
+                    break
+            else:
+                readonly = False
+
+        result = _make_class(name, types, defaults_dict, [x for x in bases], readonly)
         # nm_tpl.__new__.__annotations__ = collections.OrderedDict(types)
         # nm_tpl.__new__.__defaults__ = tuple(defaults)
         # nm_tpl._field_defaults = defaults_dict
@@ -290,11 +317,21 @@ class BaseSerializableClass(metaclass=BaseMeta):
     def __init__(self, *args, **kwargs):
         pass
 
+    def __post_init__(self):
+        pass
+
     def asdict(self) -> collections.OrderedDict:
         pass
 
     def replace_(self, **_kwargs):
         return self
+
+    def as_tuple(self) -> typing.Tuple:
+        pass
+
+    @classmethod
+    def make_(self, iterable):
+        pass
 
     """def __new__(cls, *fields, **kwargs):
         ob = super().__new__(cls)

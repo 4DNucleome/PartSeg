@@ -1,7 +1,24 @@
 import pytest
 import typing
-from enum import Enum
+from collections import OrderedDict
 from PartSeg.utils.class_generator import BaseSerializableClass, base_serialize_register
+
+def setup_module():
+    from PartSeg.utils import class_generator
+    from copy import deepcopy
+    """ setup any state specific to the execution of the given module."""
+    global copy_register
+    copy_register = deepcopy(class_generator.base_serialize_register)
+
+def teardown_module():
+    """ teardown any state that was previously setup with a setup_module
+    method.
+    """
+    from PartSeg.utils import class_generator
+    class_generator.base_serialize_register = copy_register
+
+def empty(*_):
+    pass
 
 
 def test_readonly():
@@ -58,6 +75,7 @@ def test_functions_save():
     class Test3(BaseSerializableClass):
         field1: str
         field2: int
+
         def __str__(self):
             return f"Test3({self.field1}, {self.field2})"
 
@@ -74,12 +92,13 @@ def test_name_collision():
 
     class Test4(BaseSerializableClass):
         field1: str
-
+    empty(Test4)
     with pytest.raises(ValueError):
         class Test4(BaseSerializableClass):
             field1: str
             field2: str
     base_serialize_register.clear()
+    empty(Test4)
 
 
 def test_subclasses():
@@ -92,6 +111,7 @@ def test_subclasses():
 
     assert issubclass(Test5, BaseSerializableClass)
     val0 = Test4("c")
+    empty(val0)
     val = Test5("a", "b")
     assert val.field1 == "a"
     assert val.field2 == "b"
@@ -99,20 +119,19 @@ def test_subclasses():
     assert issubclass(Test5, Test4)
     base_serialize_register.clear()
 
+
 def test_typing():
-    a = typing.Optional[int]
-    b = typing.List[str]
     class Test(BaseSerializableClass):
         field1: typing.Union[str, float]
         field2: typing.Any
         field3: typing.Optional[int]
         field4: typing.List[str]
 
-    val =  Test("a", [1, 2, 3], 5, ["a", "b"])
+    val = Test("a", [1, 2, 3], 5, ["a", "b"])
     assert val.field1 == "a"
     assert val.field2 == [1, 2, 3]
     assert val.field3 == 5
-    assert val.field4 ==  ["a", "b"]
+    assert val.field4 == ["a", "b"]
 
     class MyClass:
         def __init__(self, f=1, k=2):
@@ -127,7 +146,84 @@ def test_typing():
         field5: typing.Optional[MyClass]
 
     Test2("aa", 1, None, ["b", "c"], MyClass())
+    base_serialize_register.clear()
 
 
 def test_statistic_type():
     from PartSeg.utils.analysis.statistics_calculation import Leaf, Node
+    empty(Leaf, Node)
+    base_serialize_register.clear()
+
+
+def test_post_init():
+
+    class Test1(BaseSerializableClass):
+        field1: str
+        field2: int
+        field3: str = None
+
+        def __post_init__(self):
+            self.field3 = self.field1 * self.field2
+
+        def __str__(self):
+            return f"{self.field1}, {self.field2}, {self.field3}"
+
+    with pytest.raises(AttributeError):
+        Test1("a", 3)
+
+    class Test2(BaseSerializableClass):
+        __readonly__ = False
+        field1: str
+        field2: int
+        field3: str = None
+
+        def __post_init__(self):
+            self.field3 = self.field1 * self.field2
+
+        def __str__(self):
+            return f"{self.field1}, {self.field2}, {self.field3}"
+
+    val = Test2("a", 3)
+    assert val.field3 == "aaa"
+    base_serialize_register.clear()
+
+
+def test_functions():
+    class Test1(BaseSerializableClass):
+        field1: str
+        field2: int
+        field3: float
+
+    class Test2(BaseSerializableClass):
+        __readonly__ = False
+        field1: str
+        field2: int
+        field3: float
+
+    val1 = Test1("a", 1, 0.7)
+    val2 = Test2("b", 2, 0.9)
+    assert val1.as_tuple() == ("a", 1, 0.7)
+    assert val2.as_tuple() == ("b", 2, 0.9)
+    val2.field1 = "c"
+    assert val2.as_tuple() == ("c", 2, 0.9)
+    val3 = val1.replace_(field1="d")
+    assert val1.as_tuple() == ("a", 1, 0.7)
+    assert val3.as_tuple() == ("d", 1, 0.7)
+    val4 = Test1("d", 1, 0.7)
+    val5 = Test2("d", 1, 0.7)
+    # __eq__ test
+    assert val4 != val5
+    assert val3 != val5
+    assert val3 == val4
+
+    assert OrderedDict([('field1', 'd'), ('field2', 1), ('field3', 0.7)]) == val5.asdict()
+    assert val4.asdict() == val5.asdict()
+
+    val6 = Test1.make_(("a", 1, 0.7))
+    assert isinstance(val6, Test1)
+    assert val6 == val1
+
+    val6 = Test1.make_({"field1": "a", "field2":1, "field3": 0.7})
+    assert isinstance(val6, Test1)
+    assert val6 == val1
+    base_serialize_register.clear()

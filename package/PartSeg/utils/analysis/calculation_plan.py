@@ -137,11 +137,8 @@ class MaskSub(MaskMapper, BaseSerializableClass):
 
 
 class MaskFile(MaskMapper, BaseSerializableClass):
-
-    def __post_init__(self, name, path_to_file):
-        super(MaskFile, self).__init__(name)
-        self.path_to_file = path_to_file
-        self.name_dict = None
+    path_to_file: str
+    name_dict: typing.Optional[dict] = None
 
     def is_ready(self):
         return os.path.exists(self.path_to_file)
