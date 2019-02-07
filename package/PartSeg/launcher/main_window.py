@@ -6,7 +6,7 @@ from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QMainWindow, QToolButton, QGridLayout, QWidget, QProgressBar
 from ..utils.global_settings import static_file_folder
 from PartSeg.tiff_image import ImageReader
-
+from PartSeg.utils import register
 
 class Prepare(QThread):
     def __init__(self, module):
