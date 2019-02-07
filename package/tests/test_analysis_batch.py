@@ -8,7 +8,7 @@ from PartSeg.tiff_image import ImageReader
 from PartSeg.utils.analysis.algorithm_description import SegmentationProfile
 from PartSeg.utils.analysis.batch_processing.batch_backend import CalculationProcess, CalculationManager
 from PartSeg.utils.analysis.calculation_plan import CalculationPlan, CalculationTree, MaskSuffix, StatisticCalculate, \
-    Calculation, FileCalculation
+    Calculation
 from PartSeg.utils.analysis.statistics_calculation import StatisticProfile, StatisticEntry, Leaf, AreaType, \
     PerComponent, Node
 from PartSeg.utils.segmentation.noise_filtering import GaussType
@@ -23,7 +23,7 @@ class MocksCalculation:
 
 class TestCalculationProcess:
     def create_calculation_plan(self):
-        parameters = {"channel": 1, "minimum_size": 30,
+        parameters = {"channel": 1, "minimum_size": 200,
                       'threshold': {'name': 'Double Choose',
                                     'values': {
                                         'core_threshold': {'name': 'Manual', 'values': {'threshold': 30000}},
@@ -45,7 +45,7 @@ class TestCalculationProcess:
                                         calculation_tree=Leaf("Components Number", area=AreaType.Segmentation,
                                                               per_component=PerComponent.No))]
         statistic = StatisticProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
-        statistic_calculate = StatisticCalculate(channel=0, units=Units.mm, statistic_profile=statistic, name_prefix="")
+        statistic_calculate = StatisticCalculate(channel=0, units=Units.µm, statistic_profile=statistic, name_prefix="")
         tree = CalculationTree("root",
                                [CalculationTree(mask_suffix,
                                                 [CalculationTree(segmentation,
@@ -87,8 +87,7 @@ class TestCalculationProcess:
             errors, total, parts = manager.get_results()
         time.sleep(0.3)
         assert os.path.exists(os.path.join(self.get_test_dir(), "test.xlsx"))
-        df = pd.read_excel(os.path.join(self.get_test_dir(), "test.xlsx"), index_col=0)
-        print(df, file=sys.stderr)
+        df = pd.read_excel(os.path.join(self.get_test_dir(), "test.xlsx"), index_col=0, header=[0,1])
         assert df.shape == (8,4)
 
 

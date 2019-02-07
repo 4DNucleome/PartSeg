@@ -80,6 +80,12 @@ class Leaf(BaseSerializableClass):
             resp += f" to the power {self.power}"
         return resp
 
+    def get_unit(self, ndim):
+        method = STATISTIC_DICT[self.name]
+        if self.power != 1:
+            return method.get_units(ndim)**self.power
+        return method.get_units(ndim)
+
 
 class Node(BaseSerializableClass):
     left: Union['Node', Leaf]
@@ -95,6 +101,12 @@ class Node(BaseSerializableClass):
         right_text = "(" + str(self.right) + ")" if isinstance(self.right, Node) else str(self.right)
         return left_text + self.op + right_text
 
+    def get_unit(self, ndim):
+        if self.op == "/":
+            return self.left.get_unit(ndim) / self.right.get_unit(ndim)
+        raise ValueError(f"Unknown operator '{self.op}'")
+
+
 
 class StatisticEntry(BaseSerializableClass):
     # noinspection PyUnusedLocal
@@ -103,6 +115,10 @@ class StatisticEntry(BaseSerializableClass):
 
     name: str
     calculation_tree: Union[Node, Leaf]
+
+    def get_unit(self, unit: Units, ndim):
+        return str(self.calculation_tree.get_unit(ndim)).format(str(unit))
+
 
 
 class StatisticMethodBase(AlgorithmDescribeBase, ABC):
@@ -185,13 +201,15 @@ class StatisticProfile(object):
             text += "{}\n".format(el.name)
         return text
 
-    def get_component_info(self):
+    def get_component_info(self, unit: Units):
         """
-        :return: list[(str, bool)]
+        :return: list[((str, str), bool)]
         """
         res = []
+        # Fixme remove binding to 3 dimensions
         for el in self.chosen_fields:
-            res.append((self.name_prefix + el.name, self._is_component_statistic(el.calculation_tree)))
+            res.append(((self.name_prefix + el.name, el.get_unit(unit, 3)),
+                        self._is_component_statistic(el.calculation_tree)))
         return res
 
     def get_parameters(self):

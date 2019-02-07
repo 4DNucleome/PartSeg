@@ -20,7 +20,6 @@ from PartSeg.utils.analysis.analysis_utils import HistoryElement
 from PartSeg.utils.analysis.save_register import save_dict
 from PartSeg.utils.mask_create import calculate_mask
 from PartSeg.utils.segmentation.algorithm_base import report_empty_fun
-from PartSeg.utils.universal_const import UNIT_SCALE
 from PartSeg.tiff_image import ImageReader, Image
 
 
@@ -185,19 +184,15 @@ class CalculationProcess(object):
                 channel = self.algorithm_parameters["values"]["channel"]
 
             image_channel = self.image.get_channel(channel)
-            try:
-                scalar = UNIT_SCALE[node.operation.units.value]
-            except IndexError:
-                raise ValueError(f"Unknown units: '{node.operation.units}'")
-
             statistics = \
                 node.operation.statistic_profile.calculate(image_channel,
                                                            self.segmentation, self.full_segmentation,
-                                                           self.mask, [x * scalar for x in self.image.spacing],
+                                                           self.mask, self.image.spacing,
                                                            node.operation.units)
             self.statistics.append(statistics)
         else:
             raise ValueError("Unknown operation {} {}".format(type(node.operation), node.operation))
+
 
 class ResponseData(typing.NamedTuple):
     path_to_file: str
@@ -273,7 +268,7 @@ class FileType(Enum):
 class SheetData(object):
     def __init__(self, name, columns):
         self.name = name
-        self.columns = ["name"] + columns
+        self.columns = pd.MultiIndex.from_tuples([("name", "units")] + columns)
         self.data_frame = pd.DataFrame([], columns=self.columns)
         self.row_list = []
 
@@ -339,7 +334,7 @@ class FileData(object):
         if calculation.sheet_name in self.sheet_set:
             raise ValueError("[FileData] sheet name {} already in use".format(calculation.sheet_name))
         statistics = calculation.calculation_plan.get_statistics()
-        component_information = [x.statistic_profile.get_component_info() for x in statistics]
+        component_information = [x.statistic_profile.get_component_info(x.units) for x in statistics]
         num = 1
         sheet_list = []
         header_list = []
