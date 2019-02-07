@@ -53,7 +53,7 @@ class LoadBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             callback_function: typing.Optional[typing.Callable] = None):
+             callback_function: typing.Optional[typing.Callable] = None, default_spacing: typing.List[int]=None):
         raise NotImplementedError()
 
     @classmethod

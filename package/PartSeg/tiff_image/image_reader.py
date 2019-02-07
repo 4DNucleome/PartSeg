@@ -32,6 +32,8 @@ class ImageReader(object):
 
     def set_default_spacing(self, spacing):
         spacing = tuple(spacing)
+        if len(spacing) == 2:
+            spacing = (1,) + spacing
         if len(spacing) != 3:
             raise ValueError(f"wrong spacing {spacing}")
         self.default_spacing = spacing
@@ -39,8 +41,11 @@ class ImageReader(object):
 
     @classmethod
     def read_image(cls, image_path: typing.Union[str, BytesIO], mask_path=None,
-                   callback_function: typing.Optional[typing.Callable]=None) -> Image:
+                   callback_function: typing.Optional[typing.Callable]=None,
+                   default_spacing: typing.List[int]=None) -> Image:
         instance = cls(callback_function)
+        if default_spacing is not None:
+            instance.set_default_spacing(default_spacing)
         return instance.read(image_path, mask_path)
 
 

@@ -77,7 +77,7 @@ class LoadProject(LoadBase):
 
     @classmethod
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             callback_function: typing.Optional[typing.Callable] = None):
+             callback_function: typing.Optional[typing.Callable] = None, default_spacing: typing.List[int]=None):
         return load_project(load_locations[0])
 
 
@@ -92,8 +92,9 @@ class LoadImage(LoadBase):
 
     @classmethod
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             callback_function: typing.Optional[typing.Callable] = None):
-        image = ImageReader.read_image(load_locations[0], callback_function=callback_function)
+             callback_function: typing.Optional[typing.Callable] = None, default_spacing: typing.List[int]=None):
+        image = ImageReader.read_image(load_locations[0], callback_function=callback_function,
+                                       default_spacing=default_spacing)
         return ProjectTuple(load_locations[0], image)
 
 
@@ -112,8 +113,9 @@ class LoadImageMask(LoadBase):
 
     @classmethod
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             callback_function: typing.Optional[typing.Callable] = None):
-        image = ImageReader.read_image(load_locations[0], load_locations[1], callback_function=callback_function)
+             callback_function: typing.Optional[typing.Callable] = None, default_spacing: typing.List[int]=None):
+        image = ImageReader.read_image(load_locations[0], load_locations[1], callback_function=callback_function,
+                                       default_spacing=default_spacing)
         return ProjectTuple(load_locations[0], image)
 
     @classmethod
@@ -133,7 +135,7 @@ class LoadMask(LoadBase):
 
     @classmethod
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             callback_function: typing.Optional[typing.Callable] = None):
+             callback_function: typing.Optional[typing.Callable] = None, default_spacing: typing.List[int]=None):
         image_file = TiffFile(load_locations[0])
         count_pages = [0]
         mutex = Lock()
