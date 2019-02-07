@@ -325,6 +325,9 @@ class ChosenComponents(QWidget):
         self.check_box[num].setChecked(val)
 
     def get_state(self, num: int) -> bool:
+        # TODO Check what situation create report of id ID: af9b57f074264169b4353aa1e61d8bc2
+        if num >= len(self.check_box):
+            return False
         return self.check_box[num].isChecked()
 
     def get_chosen(self):
