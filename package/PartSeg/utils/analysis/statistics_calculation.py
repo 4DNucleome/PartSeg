@@ -280,7 +280,8 @@ class StatisticProfile(object):
             step_changed(i)
             tree, user_name = el.calculation_tree, el.name
             try:
-                result[self.name_prefix + user_name] = self.calculate_tree(tree, help_dict, kw)
+                val, unit = self.calculate_tree(tree, help_dict, kw)
+                result[self.name_prefix + user_name] = val, str(unit).format(str(result_units))
             except ZeroDivisionError:
                 result[self.name_prefix + user_name] = "Div by zero", ""
             except TypeError as e:

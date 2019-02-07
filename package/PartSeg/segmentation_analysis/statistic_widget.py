@@ -211,7 +211,7 @@ class StatisticsWidget(QWidget):
                 if not self.no_units.isChecked():
                     try:
                         self.info_field.setItem(self.statistic_shift + 2, i,
-                                                QTableWidgetItem(str(unit).format(units_name)))
+                                                QTableWidgetItem(str(unit)))
                     except KeyError as k:
                         print(k, sys.stderr)
         else:
@@ -233,7 +233,7 @@ class StatisticsWidget(QWidget):
                 if not self.no_units.isChecked():
                     try:
                         self.info_field.setItem(i, self.statistic_shift + 2,
-                                                QTableWidgetItem(str(unit).format(units_name)))
+                                                QTableWidgetItem(str(unit)))
                     except KeyError as k:
                         print(k, file=sys.stderr)
         if self.no_units.isChecked():

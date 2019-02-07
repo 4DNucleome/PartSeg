@@ -387,7 +387,7 @@ def serialize_hook(dkt: dict):
             del dkt["__Serializable__"]
         else:
             del dkt["__ReadOnly__"]
-        if isinstance(cls, collections.Iterator):
+        if isinstance(cls, collections.abc.Iterator):
             keys = set(dkt.keys())
             for el in cls:
                 el_keys = set(inspect.signature(el).parameters.keys())
