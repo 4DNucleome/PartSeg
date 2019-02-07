@@ -173,7 +173,7 @@ def add_classes(types_list, translate_dict, global_state):
         if isinstance(type_, omit_list):
             continue
         if hasattr(type_, "__module__") and type_.__module__ == "typing":
-            if hasattr(type_, "__args__") and isinstance(type_.__args__, collections.Iterable):
+            if hasattr(type_, "__args__") and isinstance(type_.__args__, collections.abc.Iterable):
                 sub_types = [x for x in type_.__args__ if not isinstance(x, omit_list)]
                 if len(sub_types) > 0:
                     add_classes(sub_types, translate_dict, global_state)
@@ -405,7 +405,7 @@ def serialize_hook(dkt: dict):
             return dkt
         del dkt["__Enum__"]
         del dkt["__subtype__"]
-        if isinstance(cls, collections.Iterator):
+        if isinstance(cls, collections.abc.Iterator):
             raise ValueError("Two enum with same name")
         return cls(dkt["value"])
     return dkt

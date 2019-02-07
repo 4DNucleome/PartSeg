@@ -95,7 +95,8 @@ class CalculationProcess(object):
             mask = tifffile.imread(node.operation.get_mask_path(self.calculation.file_path))
             mask = (mask > 0).astype(np.uint8)
             try:
-                mask = self.image.fit_array_to_image(mask)
+                mask = self.image.fit_array_to_image(mask)[0]
+                # TODO fix this time bugfix
             except ValueError:
                 raise ValueError("Mask do not fit to given image")
             old_mask = self.mask
@@ -198,10 +199,12 @@ class CalculationProcess(object):
         else:
             raise ValueError("Unknown operation {} {}".format(type(node.operation), node.operation))
 
+class ResponseData(typing.NamedTuple):
+    path_to_file: str
+    values: typing.List
 
-class CalculationManager(object):
+class CalculationManager:
     def __init__(self):
-        super(CalculationManager, self).__init__()
         self.batch_manager = BatchManager()
         self.calculation_queue = Queue()
         self.calculation_dict = OrderedDict()
@@ -250,7 +253,8 @@ class CalculationManager(object):
                 self.errors_list.append(el)
                 new_errors.append(el)
             else:
-                errors = self.writer.add_result(el, calculation)
+                data = ResponseData._make(el)
+                errors = self.writer.add_result(data, calculation)
                 for err in errors:
                     new_errors.append(err)
             if self.counter_dict[uuid] == len(calculation.file_list):
@@ -360,18 +364,18 @@ class FileData(object):
             [SheetData(name, header_list[i]) if name is not None else None for i, name in enumerate(sheet_list)],
             component_information)
 
-    def wrote_data(self, uuid, data):
+    def wrote_data(self, uuid, data: ResponseData):
         self.new_count += 1
         main_sheet, component_sheets, component_information = self.sheet_dict[uuid]
-        name = data[0]
+        name = data.path_to_file
         data_list = [name]
-        for el, comp_sheet, comp_info in zip(data[1], component_sheets, component_information):
+        for el, comp_sheet, comp_info in zip(data.values, component_sheets, component_information):
             comp_list = []
             for val, info in zip(el.values(), comp_info):
                 if info[1]:
-                    comp_list.append(val)
+                    comp_list.append(val[0])
                 else:
-                    data_list.append(val)
+                    data_list.append(val[0])
             if len(comp_list) > 0:
                 comp_list.insert(0, ["{}_comp_{}".format(name, i) for i in range(len(comp_list[0]))])
                 comp_list = zip(*comp_list)
@@ -440,7 +444,7 @@ class DataWriter(object):
         else:
             self.file_dict[calculation.statistic_file_path] = FileData(calculation)
 
-    def add_result(self, data, calculation):
+    def add_result(self, data: ResponseData, calculation: Calculation):
         if calculation.statistic_file_path not in self.file_dict:
             raise ValueError("Unknown statistic file")
         file_writer = self.file_dict[calculation.statistic_file_path]
