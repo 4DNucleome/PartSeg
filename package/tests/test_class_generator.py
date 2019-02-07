@@ -149,11 +149,27 @@ def test_typing():
     base_serialize_register.clear()
 
 
-def test_statistic_type():
-    from PartSeg.utils.analysis.statistics_calculation import Leaf, Node
-    empty(Leaf, Node)
+def test_forward_ref():
+    class Test(BaseSerializableClass):
+        val: int
+        child: typing.Optional['Test'] = None
+
     base_serialize_register.clear()
 
+
+def test_generic_types():
+    class Test1(BaseSerializableClass):
+        list1: typing.Optional[int]
+        list2: typing.Union[str, int]
+
+    class Test2(BaseSerializableClass):
+        list1: typing.List[int]
+        list2: typing.List
+        dict1: typing.Dict[str, int]
+        dict2: typing.Dict
+
+    empty(Test1, Test2)
+    base_serialize_register.clear()
 
 def test_post_init():
 
@@ -226,4 +242,10 @@ def test_functions():
     val6 = Test1.make_({"field1": "a", "field2":1, "field3": 0.7})
     assert isinstance(val6, Test1)
     assert val6 == val1
+    base_serialize_register.clear()
+
+
+def test_statistic_type():
+    from PartSeg.utils.analysis.statistics_calculation import Leaf, Node
+    empty(Leaf, Node)
     base_serialize_register.clear()

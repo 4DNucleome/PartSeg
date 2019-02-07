@@ -10,6 +10,11 @@ from enum import Enum
 
 _PY36 = sys.version_info[:2] >= (3, 6)
 
+if sys.version_info[:2] == (3, 6):
+    ForwardRef = typing._ForwardRef
+else:
+    ForwardRef = typing.ForwardRef
+
 # TODO read about dataclsss and maybe apply
 
 _class_template = """\
@@ -157,21 +162,37 @@ _prohibited = ('__new__', '__init__', '__slots__', '__getnewargs__',
 
 _special = ('__module__', '__name__', '__qualname__', '__annotations__')
 
+omit_list = (typing.TypeVar)
 
 def add_classes(types_list, translate_dict, global_state):
-    for type_ in types_list:
+    ll = list(types_list)
+    for type_ in ll:
         if type_ in translate_dict:
             continue
+        if isinstance(type_, omit_list):
+            continue
         if hasattr(type_, "__module__") and type_.__module__ == "typing":
-            if hasattr(type_, "__args__") and isinstance(type_.__args__, collections.Iterable) \
-                    and len(type_.__args__) > 0:
-                add_classes(type_.__args__, translate_dict, global_state)
-                if hasattr(type_, "__origin__"):
-                    type_str = \
-                        str(type_.__origin__) + "[" + ", ".join([translate_dict[x] for x in type_.__args__]) + "]"
-                    translate_dict[type_] = type_str
-                    continue
-            if isinstance(type_, typing._ForwardRef):
+            if hasattr(type_, "__args__") and isinstance(type_.__args__, collections.Iterable):
+                sub_types = [x for x in type_.__args__ if not isinstance(x, omit_list)]
+                if len(sub_types) > 0:
+                    add_classes(sub_types, translate_dict, global_state)
+                    if sys.version_info[:2] == (3, 6):
+                        if hasattr(type_, "__origin__"):
+                            type_str = \
+                                str(type_.__origin__) + "[" + ", ".join([translate_dict[x] for x in sub_types]) + "]"
+                            translate_dict[type_] = type_str
+                            continue
+                    else:  # for python 3.7
+                        if type_._name is None:
+                            type_str = str(type_.__origin__)
+                        else:
+                            type_str = "typing." + str(type_._name)
+                        type_str += "[" + ", ".join([translate_dict[x] for x in sub_types]) + "]"
+                        translate_dict[type_] = type_str
+                        continue
+
+
+            if isinstance(type_, ForwardRef):
                 translate_dict[type_] = f"'{type_.__forward_arg__}'"
                 continue
             translate_dict[type_] = str(type_)
