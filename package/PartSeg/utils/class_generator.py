@@ -323,6 +323,8 @@ class BaseMeta(type):
 
         for key in attrs:
             if key in _prohibited:
+                if key == "__init__":
+                    continue
                 raise AttributeError("Cannot overwrite NamedTuple attribute " + key)
             elif key not in _special and key not in result._fields:
                 setattr(result, key, attrs[key])
