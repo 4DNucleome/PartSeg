@@ -162,7 +162,8 @@ _prohibited = ('__new__', '__init__', '__slots__', '__getnewargs__',
 
 _special = ('__module__', '__name__', '__qualname__', '__annotations__')
 
-omit_list = (typing.TypeVar)
+omit_list = (typing.TypeVar, )
+
 
 def add_classes(types_list, translate_dict, global_state):
     ll = list(types_list)
@@ -190,7 +191,6 @@ def add_classes(types_list, translate_dict, global_state):
                         type_str += "[" + ", ".join([translate_dict[x] for x in sub_types]) + "]"
                         translate_dict[type_] = type_str
                         continue
-
 
             if isinstance(type_, ForwardRef):
                 translate_dict[type_] = f"'{type_.__forward_arg__}'"
@@ -351,7 +351,7 @@ class BaseSerializableClass(metaclass=BaseMeta):
         pass
 
     @classmethod
-    def make_(self, iterable):
+    def make_(cls, iterable):
         pass
 
     """def __new__(cls, *fields, **kwargs):
