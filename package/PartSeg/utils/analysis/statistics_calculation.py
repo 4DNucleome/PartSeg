@@ -52,6 +52,11 @@ class SettingsValue(NamedTuple):
 
 
 class Leaf(BaseSerializableClass):
+    # noinspection PyUnusedLocal
+    # noinspection PyMissingConstructor
+    def __init__(self, name: str, dict: Dict = {}, power: float = 1.0, area: Optional[AreaType] = None,
+                 per_component: Optional[PerComponent] = None):...
+
     name: str
     dict: Dict = dict()
     power: float = 1.0
@@ -81,6 +86,10 @@ class Node(BaseSerializableClass):
     op: str
     right: Union['Node', Leaf]
 
+    # noinspection PyUnusedLocal
+    # noinspection PyMissingConstructor
+    def __init__(self, left: Union['Node', Leaf], op: str, right: Union['Node', Leaf]):...
+
     def __str__(self):
         left_text = "(" + str(self.left) + ")" if isinstance(self.left, Node) else str(self.left)
         right_text = "(" + str(self.right) + ")" if isinstance(self.right, Node) else str(self.right)
@@ -88,6 +97,10 @@ class Node(BaseSerializableClass):
 
 
 class StatisticEntry(BaseSerializableClass):
+    # noinspection PyUnusedLocal
+    # noinspection PyMissingConstructor
+    def __init__(self, name:str, calculation_tree: Union[Node, Leaf]): ...
+
     name: str
     calculation_tree: Union[Node, Leaf]
 
