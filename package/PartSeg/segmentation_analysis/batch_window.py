@@ -252,16 +252,16 @@ class CalculationPrepare(QDialog):
         :type settings: PartSettings
         :type batch_manager: CalculationManager
         """
-        super(CalculationPrepare, self).__init__()
+        super().__init__()
         self.setWindowTitle("Calculation start")
         self.file_list = file_list
         self.calculation_plan = calculation_plan
         self.statistic_file_path = statistic_file_path
         self.settings = settings
         self.batch_manager = batch_manager
-        self.info_label = QLabel("information, <i><font color='blue'>warnings</font></i>, "
+        self.info_label = QLabel("Information, <i><font color='blue'>warnings</font></i>, "
                                  "<b><font color='red'>errors</font><b>")
-        self.voxel_size = Spacing("Voxel size", list(zip(['x:', 'y:', 'z:'], settings.image.spacing)), settings.get("units_value", Units.nm))
+        self.voxel_size = Spacing("Voxel size", settings.image.spacing, settings.get("units_value", Units.nm))
         all_prefix = os.path.commonprefix(file_list)
         if not os.path.exists(all_prefix):
             all_prefix = os.path.dirname(all_prefix)
@@ -311,8 +311,8 @@ class CalculationPrepare(QDialog):
         self.cancel_btn.clicked.connect(self.close)
 
         layout = QGridLayout()
-        layout.addWidget(self.info_label, 0, 0, 1, 0)
-        layout.addWidget(self.voxel_size, 1, 0, 1, 3)
+        layout.addWidget(self.info_label, 0, 0, 1, 5)
+        layout.addWidget(self.voxel_size, 1, 0, 1, 5)
         layout.addWidget(right_label("Statistics sheet name:"), 3, 3)
         layout.addWidget(self.sheet_name, 3, 4)
         layout.addWidget(right_label("Statistics file path:"), 2, 3)
@@ -378,7 +378,8 @@ class CalculationPrepare(QDialog):
 
     def verify_data(self):
         self.execute_btn.setEnabled(True)
-        text = "information, <i><font color='blue'>warnings</font></i>, <b><font color='red'>errors</font><b><br>"
+        text = "information, <i><font color='blue'>warnings</font></i>, <b><font color='red'>errors</font></b><br>" \
+               "The voxel size is for file in which metadata do not contains this information<br>"
         if not self.batch_manager.is_valid_sheet_name(str(self.statistic_file_path_view.text()),
                                                       str(self.sheet_name.text())):
             text += "<i><font color='blue'>Sheet name already in use</i></font><br>"
@@ -396,7 +397,7 @@ class CalculationPrepare(QDialog):
         self.info_label.setText(text)
 
     def showEvent(self, event):
-        super(CalculationPrepare, self).showEvent(event)
+        super().showEvent(event)
         ok_icon = QIcon(os.path.join(static_file_folder, "icons", "task-accepted.png"))
         bad_icon = QIcon(os.path.join(static_file_folder, "icons", "task-reject.png"))
         warn_icon = QIcon(os.path.join(static_file_folder, "icons", "task-attempt.png"))

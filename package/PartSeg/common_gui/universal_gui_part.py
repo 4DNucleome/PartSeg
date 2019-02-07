@@ -4,10 +4,10 @@ from enum import Enum
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QFontMetrics
 
-from PartSeg.utils.universal_const import Units
+from PartSeg.utils.universal_const import Units, UNIT_SCALE
 from .flow_layout import FlowLayout
 from qtpy.QtWidgets import QWidget, QLabel, QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QComboBox, QSlider,\
-    QLineEdit
+    QLineEdit, QHBoxLayout
 
 
 class ChannelComboBox(QComboBox):
@@ -44,10 +44,10 @@ class Spacing(QWidget):
     """
     :type elements: list[QDoubleSpinBox | QSpinBox]
     """
-    def __init__(self, title, data_sequence, unit: Units, parent=None, input_type=QDoubleSpinBox, decimals=2, data_range=(0, 1000),
+    def __init__(self, title, data_sequence, unit: Units, parent=None, input_type=QDoubleSpinBox, decimals=2, data_range=(0, 100000),
                  single_step=1):
         """
-        :type data_sequence: list[(str, float)]
+        :type data_sequence: list[(float)]
         :param data_sequence:
         :type input_type: () -> (QDoubleSpinBox | QSpinBox)
         :param parent:
@@ -57,19 +57,20 @@ class Spacing(QWidget):
         :type title: str
         """
         super().__init__(parent)
-        layout = FlowLayout()
+        layout = QHBoxLayout()
         layout.addWidget(QLabel("<strong>{}</strong>".format(title)))
         self.elements = []
-        print(data_sequence)
-        for name, value in data_sequence:
-            lab = right_label(name)
+        if len(data_sequence) == 2:
+            data_sequence = (1,) + tuple(data_sequence)
+        for name, value in zip(["z", "y", "x"], data_sequence):
+            lab = QLabel(name+":")
             layout.addWidget(lab)
             val = input_type()
             val.setButtonSymbols(QAbstractSpinBox.NoButtons)
             if isinstance(val, QDoubleSpinBox):
                 val.setDecimals(decimals)
             val.setRange(*data_range)
-            val.setValue(value)
+            val.setValue(value * UNIT_SCALE[unit.value])
             val.setAlignment(Qt.AlignRight)
             val.setSingleStep(single_step)
             font = val.font()
@@ -83,10 +84,11 @@ class Spacing(QWidget):
         layout.addWidget(self.units)
         self.has_units = True
         #layout.addStretch()
+        layout.addStretch(1)
         self.setLayout(layout)
 
     def get_values(self):
-        return [x.value() for x in self.elements]
+        return [x.value() / UNIT_SCALE[self.units.get_value().value] for x in self.elements]
 
     def set_values(self, value_list):
         for val, wid in zip(value_list, self.elements):
