@@ -4,7 +4,7 @@ from pathlib import Path
 import appdirs
 import numpy as np
 from qtpy.QtCore import Qt, QByteArray, QEvent
-from qtpy.QtGui import QIcon, QKeyEvent, QKeySequence
+from qtpy.QtGui import QIcon, QKeyEvent, QKeySequence, QResizeEvent
 from qtpy.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
     QMessageBox, QCheckBox, QComboBox, QInputDialog, QDialog
 
@@ -332,7 +332,7 @@ class MainMenu(QWidget):
         self.save_btn = QPushButton("Save")
         self.advanced_btn = QPushButton("Settings and Measurement")
         self.interpolate_btn = QPushButton("Image adjustments")
-        self.mask_manager_btn = QPushButton("Mask Manager")
+        self.mask_manager_btn = QPushButton("Mask manager")
         self.batch_processing_btn = QPushButton("Batch Processing")
         self.main_window: MainWindow = main_window
 
@@ -355,6 +355,12 @@ class MainMenu(QWidget):
         self.batch_processing_btn.clicked.connect(self.batch_window)
         self.setFocusPolicy(Qt.StrongFocus)
         # self.test_btn.clicked.connect(self.test_fun)
+
+    def resizeEvent(self, event: QResizeEvent):
+        if event.size().width() < 800:
+            self.batch_processing_btn.hide()
+        else:
+            self.batch_processing_btn.show()
 
     def keyPressEvent(self, event: QKeyEvent):
         if event.matches(QKeySequence.Save):
@@ -614,6 +620,18 @@ class MainWindow(BaseMainWindow):
 
         icon = QIcon(os.path.join(static_file_folder, 'icons', "icon.png"))
         self.setWindowIcon(icon)
+
+        menu_bar = self.menuBar()
+        file_menu = menu_bar.addMenu("File")
+        file_menu.addAction("&Open").triggered.connect(self.main_menu.load_data)
+        file_menu.addAction("&Save").triggered.connect(self.main_menu.save_file)
+        file_menu.addAction("Batch processing").triggered.connect(self.main_menu.batch_window)
+        image_menu = menu_bar.addMenu("Image operations")
+        image_menu.addAction("Image adjustment").triggered.connect(self.main_menu.interpolate_exec)
+        image_menu.addAction("Mask manager").triggered.connect(self.main_menu.mask_manager)
+        help_menu = menu_bar.addMenu("Help")
+        help_menu.addAction("About")
+
 
         layout = QGridLayout()
         layout.setSpacing(0)
