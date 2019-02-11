@@ -121,7 +121,7 @@ class Image(object):
             li = slice(None)
         else:
             li = 0
-        return self._image_array[li][..., num]
+        return self._image_array[li, ..., num]
 
     def get_layer(self, time, stack) -> np.ndarray:
         return self._image_array[time, stack]

@@ -7,13 +7,13 @@ import numpy as np
 import json
 from typing import Union
 from io import BytesIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
-from PartSeg.utils.io_utils import get_tarinfo, SaveBase
+from PartSeg.utils.io_utils import get_tarinfo, SaveBase, LoadBase
 from PartSeg.utils.segmentation.algorithm_describe_base import AlgorithmProperty
 from PartSeg.tiff_image import Image, ImageWriter
 
 
 class SegmentationTuple(typing.NamedTuple):
-    image: Image
+    image: Union[Image, str, None]
     segmentation: np.ndarray
     list_of_components: typing.List[int]
 
@@ -50,11 +50,17 @@ def save_stack_segmentation(file: Union[tarfile.TarFile, str, TextIOBase, Buffer
     tar_file.addfile(segmentation_tar, fileobj=segmentation_buff)
     step_changed(3)
     metadata = {"components": segmentation_info.list_of_components, "shape": segmentation_info.segmentation.shape}
-    if segmentation_info.image.file_path != "":
+    if isinstance(segmentation_info.image, Image):
+        file_path = segmentation_info.image.file_path
+    elif isinstance(segmentation_info.image, str):
+        file_path = segmentation_info.image
+    else:
+        file_path = ""
+    if file_path != "":
         if parameters["relative_path"] and isinstance(file, str):
-            metadata["base_file"] = os.path.relpath(segmentation_info.image.file_path, os.path.dirname(file))
+            metadata["base_file"] = os.path.relpath(file_path, os.path.dirname(file))
         else:
-            metadata["base_file"] = segmentation_info.image.file_path
+            metadata["base_file"] = file_path
     metadata_buff = BytesIO(json.dumps(metadata).encode('utf-8'))
     metadata_tar = get_tarinfo("metadata.json", metadata_buff)
     tar_file.addfile(metadata_tar, metadata_buff)
@@ -64,7 +70,7 @@ def save_stack_segmentation(file: Union[tarfile.TarFile, str, TextIOBase, Buffer
     step_changed(5)
 
 
-def load_stack_segmentation(file, range_changed=None, step_changed=None):
+def load_stack_segmentation(file: str, range_changed=None, step_changed=None):
     if range_changed is None:
         range_changed = empty_fun
     if step_changed is None:
@@ -97,6 +103,25 @@ def empty_fun(_a0=None, _a1=None):
     pass
 
 
+class LoadSegmentation(LoadBase):
+    @classmethod
+    def get_name(cls):
+        return "Segmentation (*.seg *.tgz)"
+
+    @classmethod
+    def get_short_name(cls):
+        return "seg"
+
+    @classmethod
+    def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+             range_changed: typing.Callable[[int, int], typing.Any] = None,
+             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
+        segmentation, metadata = load_stack_segmentation(load_locations[0], range_changed=range_changed,
+                                                         step_changed=step_changed)
+        return SegmentationTuple(metadata["base_file"] if "base_file" in metadata else None, segmentation,
+                                 metadata["components"])
+
+
 class SaveSegmentation(SaveBase):
     @classmethod
     def get_name(cls):
@@ -111,7 +136,8 @@ class SaveSegmentation(SaveBase):
         return [AlgorithmProperty("relative_path", "Relative Path\nin segmentation", False)]
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: SegmentationTuple, parameters: dict):
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: SegmentationTuple, parameters: dict,
+             range_changed=None, step_changed=None):
         save_stack_segmentation(save_location, project_info, parameters)
 
 

@@ -2,6 +2,7 @@ import json
 import os
 import tarfile
 import typing
+from functools import partial
 from io import TextIOBase, BufferedIOBase, RawIOBase, IOBase, BytesIO
 from pathlib import Path
 from threading import Lock
@@ -13,7 +14,7 @@ from PartSeg.utils.segmentation.algorithm_describe_base import Register
 from .analysis_utils import HistoryElement
 from .io_utils import ProjectTuple, MaskInfo
 from .save_hooks import part_hook
-from ..io_utils import LoadBase
+from ..io_utils import LoadBase, proxy_callback
 
 
 def load_project(
@@ -77,7 +78,8 @@ class LoadProject(LoadBase):
 
     @classmethod
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             callback_function: typing.Optional[typing.Callable] = None, default_spacing: typing.List[int]=None):
+             range_changed: typing.Callable[[int, int], typing.Any] = None,
+             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
         return load_project(load_locations[0])
 
 
@@ -92,9 +94,11 @@ class LoadImage(LoadBase):
 
     @classmethod
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             callback_function: typing.Optional[typing.Callable] = None, default_spacing: typing.List[int]=None):
-        image = ImageReader.read_image(load_locations[0], callback_function=callback_function,
-                                       default_spacing=default_spacing)
+             range_changed: typing.Callable[[int, int], typing.Any] = None,
+             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
+        image = ImageReader.read_image(
+            load_locations[0], callback_function=partial(proxy_callback, range_changed, step_changed),
+            default_spacing=metadata["default_spacing"])
         return ProjectTuple(load_locations[0], image)
 
 
@@ -113,9 +117,12 @@ class LoadImageMask(LoadBase):
 
     @classmethod
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             callback_function: typing.Optional[typing.Callable] = None, default_spacing: typing.List[int]=None):
-        image = ImageReader.read_image(load_locations[0], load_locations[1], callback_function=callback_function,
-                                       default_spacing=default_spacing)
+             range_changed: typing.Callable[[int, int], typing.Any] = None,
+             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
+        image = ImageReader.read_image(
+            load_locations[0], load_locations[1],
+            callback_function=partial(proxy_callback, range_changed, step_changed),
+            default_spacing=metadata["default_spacing"])
         return ProjectTuple(load_locations[0], image)
 
     @classmethod
@@ -135,7 +142,8 @@ class LoadMask(LoadBase):
 
     @classmethod
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             callback_function: typing.Optional[typing.Callable] = None, default_spacing: typing.List[int]=None):
+             range_changed: typing.Callable[[int, int], typing.Any] = None,
+             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
         image_file = TiffFile(load_locations[0])
         count_pages = [0]
         mutex = Lock()
@@ -143,10 +151,10 @@ class LoadMask(LoadBase):
         def report_func():
             mutex.acquire()
             count_pages[0] += 1
-            callback_function("step", count_pages[0])
+            step_changed(count_pages[0])
             mutex.release()
 
-        callback_function("max", len(image_file.series[0]))
+        range_changed(0, len(image_file.series[0]))
         image_file.report_func = report_func
         mask_data = image_file.asarray()
         return MaskInfo(load_locations[0], mask_data)

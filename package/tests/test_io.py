@@ -11,6 +11,7 @@ from PartSeg.utils.analysis.save_hooks import PartEncoder, part_hook
 from PartSeg.utils.json_hooks import check_loaded_dict
 from PartSeg.utils.segmentation.noise_filtering import GaussType
 from PartSeg.utils.class_generator import enum_register
+from PartSeg.utils.mask.io_functions import LoadSegmentation, SaveSegmentation
 
 
 class TestImageClass:
@@ -105,3 +106,16 @@ class TestJsonLoad:
 
         enum_register.register_class(Test)
         assert isinstance(json.loads(test_json, object_hook=part_hook), Test)
+
+
+class TestSegmentationMask():
+    @staticmethod
+    def get_test_dir():
+        return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "test_data")
+
+    def test_load_seg(self):
+        test_dir = self.get_test_dir()
+        seg = LoadSegmentation.load([os.path.join(test_dir, "test_nucleus.seg")])
+        assert isinstance(seg.image, str)
+        assert seg.list_of_components == [1, 3]
+        assert os.path.exists(os.path.join(test_dir, seg.image))

@@ -444,7 +444,7 @@ class MainMenu(QWidget):
                 self._settings.set("io.open_filter", result.selected_filter)
                 self._settings.set("io.open_directory", os.path.dirname(result.load_location[0]))
                 dial2 = ExecuteFunctionDialog(result.load_class.load, [result.load_location],
-                                              {"default_spacing": self._settings.image_spacing},
+                                              {"metadata": {"default_spacing": self._settings.image_spacing}},
                                               exception_hook=exception_hook)
                 if dial2.exec():
                     self._settings.set_project_data(dial2.get_result())

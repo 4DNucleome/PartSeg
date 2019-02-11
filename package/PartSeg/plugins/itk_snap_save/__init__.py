@@ -20,7 +20,8 @@ class SaveITKSnap(SaveBase):
         return []
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict):
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict,
+             range_changed=None, step_changed=None):
         mask = sitk.GetImageFromArray(project_info.segmentation)
         sitk.WriteImage(save_location, mask)
 

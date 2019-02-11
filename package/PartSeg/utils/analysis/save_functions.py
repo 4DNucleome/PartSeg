@@ -129,7 +129,8 @@ class SaveProject(SaveBase):
         return []
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict):
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict,
+             range_changed=None, step_changed=None):
         save_project(save_location, project_info.image, project_info.segmentation, project_info.full_segmentation,
                      project_info.mask, project_info.history, project_info.algorithm_parameters)
 
@@ -151,7 +152,8 @@ class SaveCmap(SaveBase):
                 AlgorithmProperty("units", "Units", Units.nm, property_type=Units)]
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict):
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict,
+             range_changed=None, step_changed=None):
         save_cmap(save_location, project_info.image, project_info.segmentation, parameters)
 
 
@@ -186,7 +188,8 @@ class SaveXYZ(SaveBase):
         np.savetxt(save_location, data, fmt=['%d'] * channel_image.ndim + [fm], delimiter=" ")
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict):
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict,
+             range_changed=None, step_changed=None):
         print(f"[save]", save_location)
         if project_info.segmentation is None:
             raise ValueError("Not segmentation")
@@ -228,7 +231,8 @@ class SaveAsTiff(SaveBase):
         return []
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict):
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict,
+             range_changed=None, step_changed=None):
         ImageWriter.save(project_info.image, save_location)
 
 
@@ -247,7 +251,8 @@ class SaveAsNumpy(SaveBase):
                                   tool_tip="Remove single-dimensional entries from the shape of an array")]
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict):
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict,
+             range_changed=None, step_changed=None):
         data = project_info.image.get_data()
         if parameters["squeeze"]:
             data = np.squeeze(data)
@@ -270,7 +275,8 @@ class SaveMaskAsTiff(SaveBase):
         return []
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict):
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict,
+             range_changed=None, step_changed=None):
         ImageWriter.save_mask(project_info.image, save_location)
 
 

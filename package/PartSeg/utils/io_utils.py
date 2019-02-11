@@ -26,7 +26,8 @@ class SaveBase(AlgorithmDescribeBase, ABC):
         raise NotImplementedError()
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict):
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict,
+             range_changed=None, step_changed=None):
         raise NotImplementedError()
 
     @classmethod
@@ -53,7 +54,8 @@ class LoadBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             callback_function: typing.Optional[typing.Callable] = None, default_spacing: typing.List[int]=None):
+             range_changed: typing.Callable[[int, int], typing.Any] = None,
+             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
         raise NotImplementedError()
 
     @classmethod
@@ -71,3 +73,11 @@ class LoadBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def get_next_file(cls, file_paths: typing.List[str]):
         return file_paths[0]
+
+
+def proxy_callback(range_changed: typing.Callable[[int, int], typing.Any],
+                   step_changed: typing.Callable[[int], typing.Any], text: str, val):
+    if text == "max" and range_changed is not None:
+        range_changed(0, val)
+    if text == "step" and step_changed is not None:
+        step_changed(val)
