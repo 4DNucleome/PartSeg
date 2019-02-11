@@ -130,7 +130,7 @@ class StatisticMethodBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def get_name(cls):
-        return str(cls.get_starting_leaf())
+        return str(cls.get_starting_leaf().name)
 
     @classmethod
     def get_description(cls):
@@ -671,7 +671,7 @@ class RimVolume(StatisticMethodBase):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("distance", "Distance", 0.0, options_range=(0, 1000), property_type=float),
+        return [AlgorithmProperty("distance", "Distance", 0.0, options_range=(0, 10000), property_type=float),
                 AlgorithmProperty("units", "Units", Units.nm, property_type=Units)]
 
     @classmethod
@@ -697,7 +697,7 @@ class RimPixelBrightnessSum(StatisticMethodBase):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("distance", "Distance", 0.0, options_range=(0, 1000), property_type=float),
+        return [AlgorithmProperty("distance", "Distance", 0.0, options_range=(0, 10000), property_type=float),
                 AlgorithmProperty("units", "Units", Units.nm, property_type=Units)]
 
     @classmethod

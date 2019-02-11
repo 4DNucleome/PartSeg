@@ -547,7 +547,7 @@ class StatisticsSettings(QWidget):
         if node.per_component is None:
             node = node.replace_(per_component=component)
         try:
-            arguments = STATISTIC_DICT[str(node)].get_fields()
+            arguments = STATISTIC_DICT[str(node.name)].get_fields()
             if len(arguments) > 0 and len(node.dict) == 0:
                 dial = FormDialog(arguments)
                 if dial.exec():
