@@ -331,7 +331,7 @@ class MainMenu(QWidget):
         self.open_btn = QPushButton("Open")
         self.save_btn = QPushButton("Save")
         self.advanced_btn = QPushButton("Settings and Measurement")
-        self.interpolate_btn = QPushButton("Image adjustments")
+        self.image_adjust_btn = QPushButton("Image adjustments")
         self.mask_manager_btn = QPushButton("Mask manager")
         self.batch_processing_btn = QPushButton("Batch Processing")
         self.main_window: MainWindow = main_window
@@ -342,7 +342,7 @@ class MainMenu(QWidget):
         layout.addWidget(self.open_btn)
         layout.addWidget(self.save_btn)
         layout.addWidget(self.advanced_btn)
-        layout.addWidget(self.interpolate_btn)
+        layout.addWidget(self.image_adjust_btn)
         layout.addWidget(self.mask_manager_btn)
         layout.addWidget(self.batch_processing_btn)
         self.setLayout(layout)
@@ -351,7 +351,7 @@ class MainMenu(QWidget):
         self.save_btn.clicked.connect(self.save_file)
         self.advanced_btn.clicked.connect(self.advanced_window_show)
         self.mask_manager_btn.clicked.connect(self.mask_manager)
-        self.interpolate_btn.clicked.connect(self.interpolate_exec)
+        self.image_adjust_btn.clicked.connect(self.image_adjust_exec)
         self.batch_processing_btn.clicked.connect(self.batch_window)
         self.setFocusPolicy(Qt.StrongFocus)
         # self.test_btn.clicked.connect(self.test_fun)
@@ -387,7 +387,7 @@ class MainMenu(QWidget):
             except ValueError as e:
                 QMessageBox.warning(self, "Save error", f"Error during saving\n{e.args[0]}")
 
-    def interpolate_exec(self):
+    def image_adjust_exec(self):
         dialog = InterpolateDialog(self._settings.image_spacing)
         if dialog.exec():
             scale_factor = dialog.get_zoom_factor()
@@ -627,7 +627,7 @@ class MainWindow(BaseMainWindow):
         file_menu.addAction("&Save").triggered.connect(self.main_menu.save_file)
         file_menu.addAction("Batch processing").triggered.connect(self.main_menu.batch_window)
         image_menu = menu_bar.addMenu("Image operations")
-        image_menu.addAction("Image adjustment").triggered.connect(self.main_menu.interpolate_exec)
+        image_menu.addAction("Image adjustment").triggered.connect(self.main_menu.image_adjust_exec)
         image_menu.addAction("Mask manager").triggered.connect(self.main_menu.mask_manager)
         help_menu = menu_bar.addMenu("Help")
         help_menu.addAction("About")
