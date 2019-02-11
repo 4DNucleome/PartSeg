@@ -1,5 +1,6 @@
 import pytest
 
+
 def test_analysis_import():
     try:
         import PartSeg.segmentation_analysis.main_window

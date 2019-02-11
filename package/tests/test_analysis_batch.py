@@ -1,5 +1,4 @@
 import os
-import sys
 from glob import glob
 import time
 import pandas as pd
@@ -20,9 +19,9 @@ class MocksCalculation:
         self.file_path = file_path
 
 
-
 class TestCalculationProcess:
-    def create_calculation_plan(self):
+    @staticmethod
+    def create_calculation_plan():
         parameters = {"channel": 1, "minimum_size": 200,
                       'threshold': {'name': 'Double Choose',
                                     'values': {
@@ -39,7 +38,8 @@ class TestCalculationProcess:
                          StatisticEntry(
                              name="Segmentation Volume/Mask Volume",
                              calculation_tree=Node(
-                                 left=Leaf(name="Volume", area=AreaType.Segmentation, per_component=PerComponent.No), op="/",
+                                 left=Leaf(name="Volume", area=AreaType.Segmentation, per_component=PerComponent.No),
+                                 op="/",
                                  right=Leaf(name="Volume", area=AreaType.Mask, per_component=PerComponent.No))),
                          StatisticEntry("Segmentation Components Number",
                                         calculation_tree=Leaf("Components Number", area=AreaType.Segmentation,
@@ -65,18 +65,15 @@ class TestCalculationProcess:
         process.image = ImageReader.read_image(file_path)
         process.iterate_over(plan.execution_tree)
         print(process.statistics)
-        assert(len(process.statistics[0]) == 3)
-
+        assert (len(process.statistics[0]) == 3)
 
     def test_full_pipeline(self):
         plan = self.create_calculation_plan()
-        process = CalculationProcess()
         file_pattern = os.path.join(self.get_test_dir(), "stack1_components", "stack1_component*[0-9].tif")
         file_paths = glob(file_pattern)
         calc = Calculation(file_paths, base_prefix=self.get_test_dir(), result_prefix=self.get_test_dir(),
-                           statistic_file_path=
-                           os.path.join(self.get_test_dir(), "test.xlsx"), sheet_name="Sheet1", calculation_plan=plan,
-                           voxel_size=(1,1,1))
+                           statistic_file_path=os.path.join(self.get_test_dir(), "test.xlsx"), sheet_name="Sheet1",
+                           calculation_plan=plan, voxel_size=(1, 1, 1))
 
         manager = CalculationManager()
         manager.set_number_of_workers(2)
@@ -84,10 +81,8 @@ class TestCalculationProcess:
 
         while manager.has_work:
             time.sleep(0.1)
-            errors, total, parts = manager.get_results()
+            __ = manager.get_results()
         time.sleep(0.3)
         assert os.path.exists(os.path.join(self.get_test_dir(), "test.xlsx"))
-        df = pd.read_excel(os.path.join(self.get_test_dir(), "test.xlsx"), index_col=0, header=[0,1])
-        assert df.shape == (8,4)
-
-
+        df = pd.read_excel(os.path.join(self.get_test_dir(), "test.xlsx"), index_col=0, header=[0, 1])
+        assert df.shape == (8, 4)

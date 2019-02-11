@@ -3,6 +3,7 @@ import typing
 from collections import OrderedDict
 from PartSeg.utils.class_generator import BaseSerializableClass, base_serialize_register
 
+
 def setup_module():
     from PartSeg.utils import class_generator
     from copy import deepcopy
@@ -10,12 +11,14 @@ def setup_module():
     global copy_register
     copy_register = deepcopy(class_generator.base_serialize_register)
 
+
 def teardown_module():
     """ teardown any state that was previously setup with a setup_module
     method.
     """
     from PartSeg.utils import class_generator
     class_generator.base_serialize_register = copy_register
+
 
 def empty(*_):
     pass
@@ -171,6 +174,7 @@ def test_generic_types():
     empty(Test1, Test2)
     base_serialize_register.clear()
 
+
 def test_post_init():
 
     class Test1(BaseSerializableClass):
@@ -239,7 +243,7 @@ def test_functions():
     assert isinstance(val6, Test1)
     assert val6 == val1
 
-    val6 = Test1.make_({"field1": "a", "field2":1, "field3": 0.7})
+    val6 = Test1.make_({"field1": "a", "field2": 1, "field3": 0.7})
     assert isinstance(val6, Test1)
     assert val6 == val1
     base_serialize_register.clear()
