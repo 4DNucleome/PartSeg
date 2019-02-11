@@ -16,7 +16,7 @@ from PartSeg.utils.segmentation.noise_filtering import GaussType
 from PartSeg.utils.class_generator import enum_register
 from PartSeg.utils.mask.io_functions import LoadSegmentation, SaveSegmentation, LoadSegmentationImage, save_components
 
-from .help_fun import get_test_dir
+from help_fun import get_test_dir
 
 tmp_dir = ""
 

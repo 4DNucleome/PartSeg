@@ -13,7 +13,8 @@ from PartSeg.utils.analysis.statistics_calculation import StatisticProfile, Stat
 from PartSeg.utils.segmentation.noise_filtering import GaussType
 from PartSeg.utils.universal_const import Units
 
-from .help_fun import get_test_dir
+from help_fun import get_test_dir
+
 
 class MocksCalculation:
     def __init__(self, file_path):

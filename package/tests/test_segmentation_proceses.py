@@ -8,7 +8,8 @@ from PartSeg.utils.analysis.save_hooks import part_hook
 from PartSeg.utils.json_hooks import check_loaded_dict
 from PartSeg.utils.segmentation.algorithm_base import SegmentationAlgorithm
 
-from .help_fun import get_test_dir
+from help_fun import get_test_dir
+
 
 def empty(_a, _b):
     pass
