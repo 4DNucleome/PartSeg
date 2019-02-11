@@ -103,7 +103,8 @@ class MainMenu(QWidget):
                     self.settings.set_segmentation(result.segmentation, result.list_of_components)
         except (MemoryError, IOError) as e:
             QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
-
+        except ValueError as e:
+            QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
         except Exception as e:
             ErrorDialog(e, "Image read").exec()
 

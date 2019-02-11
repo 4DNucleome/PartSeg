@@ -39,6 +39,7 @@ class StackSettings(BaseSettings):
     def set_segmentation(self, segmentation, components):
         num = segmentation.max()
         self.chosen_components_widget.set_chose(range(1, num + 1), components)
+        self.image.fit_array_to_image(segmentation)
         self.segmentation = segmentation
 
     def save_components(self, dir_path, range_changed=None, step_changed=None):

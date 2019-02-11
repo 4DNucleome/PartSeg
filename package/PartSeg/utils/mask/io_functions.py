@@ -152,6 +152,7 @@ class LoadSegmentationImage(LoadBase):
             default_spacing=metadata["default_spacing"])
         return SegmentationTuple(image, segmentation, components)
 
+
 class LoadImage(LoadBase):
     @classmethod
     def get_name(cls):
@@ -206,6 +207,9 @@ def save_components(image: Image, components: list, segmentation: np.ndarray, di
         step_changed(2 * i + 1)
         ImageWriter.save_mask(im, os.path.join(dir_path, f"{file_name}_component{i}_mask.tif"))
         step_changed(2 * i + 2)
+
+# TODO create SaveComponents class
+# class SaveComponents(SaveBase):
 
 
 load_dict = Register(LoadImage, LoadSegmentationImage)
