@@ -316,6 +316,8 @@ def calculate_main_axis(area_array: np.ndarray, image: np.ndarray, voxel_size):
     # TODO check if it produces good values
     cut_img = np.copy(image)
     cut_img[area_array == 0] = 0
+    if np.all(cut_img == 0):
+        return (0,) * len(voxel_size)
     orientation_matrix, _ = af.find_density_orientation(cut_img, voxel_size, 1)
     center_of_mass = af.density_mass_center(cut_img, voxel_size)
     positions = np.array(np.nonzero(cut_img), dtype=np.float64)
@@ -415,6 +417,8 @@ class Diameter(StatisticMethodBase):
     @staticmethod
     def calculate_property(area_array, voxel_size, result_scalar, **_):
         pos = np.transpose(np.nonzero(get_border(area_array))).astype(np.float)
+        if pos.size == 0:
+            return 0
         for i, val in enumerate([x * result_scalar for x in reversed(voxel_size)], start=1):
             pos[:, -i] *= val
         diam_sq, cords = iterative_double_normal(pos)
@@ -480,7 +484,7 @@ class MaximumPixelBrightness(StatisticMethodBase):
         if np.any(area_array):
             return np.max(image[area_array > 0])
         else:
-            return None
+            return 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -495,7 +499,7 @@ class MinimumPixelBrightness(StatisticMethodBase):
         if np.any(area_array):
             return np.min(image[area_array > 0])
         else:
-            return None
+            return 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -510,7 +514,7 @@ class MeanPixelBrightness(StatisticMethodBase):
         if np.any(area_array):
             return np.mean(image[area_array > 0])
         else:
-            return None
+            return 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -525,7 +529,7 @@ class MedianPixelBrightness(StatisticMethodBase):
         if np.any(area_array):
             return np.median(image[area_array > 0])
         else:
-            return None
+            return 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -541,7 +545,7 @@ class StandardDeviationOfPixelBrightness(StatisticMethodBase):
         if np.any(area_array):
             return np.std(image[area_array > 0])
         else:
-            return None
+            return 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -557,6 +561,8 @@ class MomentOfInertia(StatisticMethodBase):
             return None
         img = np.copy(image)
         img[area_array == 0] = 0
+        if np.all(img == 0):
+            return 0
         return af.calculate_density_momentum(img, voxel_size)
 
     @classmethod

@@ -55,6 +55,11 @@ class TestDiameter(object):
         mask1 = image.get_channel(0) > 40
         assert isclose(Diameter.calculate_property(mask1, image.spacing, 2), 2 * np.sqrt(2 * (50 * 59) ** 2))
 
+    def test_empty(self):
+        image = get_cube_image()
+        mask = image.get_channel(0) > 80
+        assert Diameter.calculate_property(mask, image.spacing, 1) == 0
+
 
 class TestPixelBrightnessSum(object):
     def test_cube(self):
@@ -75,6 +80,11 @@ class TestPixelBrightnessSum(object):
         assert PixelBrightnessSum.calculate_property(mask1, image.get_channel(0)) == 60 * 60 * 50 + 40 * 40 * 20
         assert PixelBrightnessSum.calculate_property(mask2, image.get_channel(0)) == 40 * 40 * 70
         assert PixelBrightnessSum.calculate_property(mask3, image.get_channel(0)) == (60 * 60 - 40 * 40) * 50
+
+    def test_empty(self):
+        image = get_cube_image()
+        mask = image.get_channel(0) > 80
+        assert PixelBrightnessSum.calculate_property(mask, image.get_channel(0)) == 0
 
 
 class TestVolume(object):
@@ -106,6 +116,11 @@ class TestVolume(object):
         mask1 = image.get_channel(0) > 40
         assert Volume.calculate_property(mask1, image.spacing, 2) == 2 ** 2 * (50 * 60) * (50 * 60)
 
+    def test_empty(self):
+        image = get_cube_image()
+        mask = image.get_channel(0) > 80
+        assert Volume.calculate_property(mask, image.spacing, 1) == 0
+
 
 class TestComponentsNumber(object):
     def test_cube(self):
@@ -123,6 +138,11 @@ class TestComponentsNumber(object):
         assert ComponentsNumber.calculate_property(mask1) == 1
         assert ComponentsNumber.calculate_property(mask2) == 1
         assert ComponentsNumber.calculate_property(image.get_channel(0)) == 2
+
+    def test_empty(self):
+        image = get_cube_image()
+        mask = image.get_channel(0) > 80
+        assert ComponentsNumber.calculate_property(mask) == 0
 
 
 class TestMaximumPixelBrightness:
@@ -144,6 +164,11 @@ class TestMaximumPixelBrightness:
         assert MaximumPixelBrightness.calculate_property(mask2, image.get_channel(0)) == 70
         assert MaximumPixelBrightness.calculate_property(mask3, image.get_channel(0)) == 50
 
+    def test_empty(self):
+        image = get_cube_image()
+        mask = image.get_channel(0) > 80
+        assert MaximumPixelBrightness.calculate_property(mask, image.get_channel(0)) == 0
+
 
 class TestMinimumPixelBrightness:
     def test_cube(self):
@@ -164,6 +189,11 @@ class TestMinimumPixelBrightness:
         assert MinimumPixelBrightness.calculate_property(mask2, image.get_channel(0)) == 70
         assert MinimumPixelBrightness.calculate_property(mask3, image.get_channel(0)) == 0
 
+    def test_empty(self):
+        image = get_cube_image()
+        mask = image.get_channel(0) > 80
+        assert MinimumPixelBrightness.calculate_property(mask, image.get_channel(0)) == 0
+
 
 class TestMedianPixelBrightness:
     def test_cube(self):
@@ -183,6 +213,11 @@ class TestMedianPixelBrightness:
         assert MedianPixelBrightness.calculate_property(mask1, image.get_channel(0)) == 50
         assert MedianPixelBrightness.calculate_property(mask2, image.get_channel(0)) == 70
         assert MedianPixelBrightness.calculate_property(mask3, image.get_channel(0)) == 0
+
+    def test_empty(self):
+        image = get_cube_image()
+        mask = image.get_channel(0) > 80
+        assert MedianPixelBrightness.calculate_property(mask, image.get_channel(0)) == 0
 
 
 class TestMeanPixelBrightness:
@@ -207,6 +242,11 @@ class TestMeanPixelBrightness:
         assert MeanPixelBrightness.calculate_property(mask2, image.get_channel(0)) == 70
         assert MeanPixelBrightness.calculate_property(mask3, image.get_channel(0)) == \
             (60 * 60 * 50 + 40 * 40 * 20) / (100 * 100)
+
+    def test_empty(self):
+        image = get_cube_image()
+        mask = image.get_channel(0) > 80
+        assert MeanPixelBrightness.calculate_property(mask, image.get_channel(0)) == 0
 
 
 class TestStandardDeviationOfPixelBrightness:
@@ -241,6 +281,11 @@ class TestStandardDeviationOfPixelBrightness:
                        np.sqrt(((60 * 60 - 40 * 40) * (50 - mean) ** 2 + ((40 * 40) * (70 - mean) ** 2) +
                                 (100 * 100 - 60 * 60) * mean ** 2) / (100 * 100)))
 
+    def test_empty(self):
+        image = get_cube_image()
+        mask = image.get_channel(0) > 80
+        assert StandardDeviationOfPixelBrightness.calculate_property(mask, image.get_channel(0)) == 0
+
 
 class TestMomentOfInertia:
     def test_cube(self):
@@ -264,6 +309,11 @@ class TestMomentOfInertia:
         in3 = MomentOfInertia.calculate_property(mask3, image.get_channel(0), image.spacing)
         assert in1 == in3
         assert in1 > in2
+
+    def test_empty(self):
+        image = get_cube_image()
+        mask = image.get_channel(0) > 80
+        assert MomentOfInertia.calculate_property(mask, image.get_channel(0), image.spacing) == 0
 
 
 class TestMainAxis:
@@ -344,6 +394,13 @@ class TestMainAxis:
             _area=AreaType.Mask
         ) == 2 * 20 * 59
 
+    def test_empty(self):
+        image = get_cube_image()
+        mask = image.get_channel(0) > 80
+        assert ShortestMainAxisLength.calculate_property(area_array=mask, image=image.get_channel(0), help_dict={},
+                                                         voxel_size=image.spacing, result_scalar=1,
+                                                         _area=AreaType.Segmentation) == 0
+
 
 class TestSurface:
     def test_cube(self):
@@ -372,6 +429,11 @@ class TestSurface:
         image = get_square_image()
         mask1 = image.get_channel(0) > 40
         assert Surface.calculate_property(mask1, image.spacing, 3) == 3 * 4 * (60 * 50)
+
+    def test_empty(self):
+        image = get_cube_image()
+        mask = image.get_channel(0) > 80
+        assert Surface.calculate_property(mask, image.spacing, 1) == 0
 
 
 class TestRimVolume:
@@ -430,6 +492,20 @@ class TestRimVolume:
                                             result_scalar=UNIT_SCALE[Units.nm.value], distance=10 * 50,
                                             units=Units.nm) == np.count_nonzero(mask3) * 50 ** 2
 
+    def test_empty(self):
+        image = get_cube_image()
+        mask = image.get_channel(0) > 80
+        mask1 = image.get_channel(0) > 40
+        assert RimVolume.calculate_property(segmentation=mask1, mask=mask, voxel_size=image.voxel_size,
+                                            result_scalar=UNIT_SCALE[Units.nm.value], distance=10 * 50,
+                                            units=Units.nm) == 0
+        assert RimVolume.calculate_property(segmentation=mask, mask=mask1, voxel_size=image.voxel_size,
+                                            result_scalar=UNIT_SCALE[Units.nm.value], distance=10 * 50,
+                                            units=Units.nm) == 0
+        assert RimVolume.calculate_property(segmentation=mask, mask=mask, voxel_size=image.voxel_size,
+                                            result_scalar=UNIT_SCALE[Units.nm.value], distance=10 * 50,
+                                            units=Units.nm) == 0
+
 
 class TestRimPixelBrightnessSum:
     def test_cube(self):
@@ -457,6 +533,20 @@ class TestRimPixelBrightnessSum:
         assert RimPixelBrightnessSum.calculate_property(segmentation=mask2, mask=mask1, voxel_size=image.voxel_size,
                                                         distance=10 * 50, units=Units.nm,
                                                         image=image.get_channel(0)) == 0
+
+    def test_empty(self):
+        image = get_cube_image()
+        mask = image.get_channel(0) > 80
+        mask1 = image.get_channel(0) > 40
+        assert RimPixelBrightnessSum.calculate_property(segmentation=mask1, mask=mask, voxel_size=image.voxel_size,
+                                                        distance=10 * 50, image=image.get_channel(0),
+                                                        units=Units.nm) == 0
+        assert RimPixelBrightnessSum.calculate_property(segmentation=mask, mask=mask1, voxel_size=image.voxel_size,
+                                                        distance=10 * 50, image=image.get_channel(0),
+                                                        units=Units.nm) == 0
+        assert RimPixelBrightnessSum.calculate_property(segmentation=mask, mask=mask, voxel_size=image.voxel_size,
+                                                        distance=10 * 50, image=image.get_channel(0),
+                                                        units=Units.nm) == 0
 
 
 class TestStatisticProfile:

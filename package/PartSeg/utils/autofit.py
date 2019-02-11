@@ -98,7 +98,7 @@ def calculate_density_momentum(image: np.ndarray, voxel_size=np.array([1., 1., 1
     if not mass_center:
         mass_center = density_mass_center(image, voxel_size)
     mass_center = np.array(mass_center)
-    points = np.transpose(np.nonzero(np.zeros(image.shape, dtype=np.uint8)+1))
+    points = np.transpose(np.nonzero(np.ones(image.shape, dtype=np.uint8)))
     for i, v in enumerate(reversed(voxel_size), start=1):
         points[:, -i] *= v
     weights = np.squeeze(sp.cdist(points, np.array([mass_center]))**2)
