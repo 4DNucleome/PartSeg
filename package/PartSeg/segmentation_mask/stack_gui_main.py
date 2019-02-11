@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 
 import appdirs
 import numpy as np
@@ -178,7 +179,7 @@ class MainMenu(QWidget):
             QMessageBox.warning(self, "No segmentation", "No segmentation to save")
             return
         dial = SaveDialog({"segmentation": SaveSegmentation}, False)
-        dial.setDirectory(self.settings.get("io.save_segmentation_directory", ""))
+        dial.setDirectory(self.settings.get("io.save_segmentation_directory", str(Path.home())))
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0] + ".seg")
         if not dial.exec_():
             return
