@@ -13,6 +13,7 @@ from PartSeg.utils.analysis.statistics_calculation import StatisticProfile, Stat
 from PartSeg.utils.segmentation.noise_filtering import GaussType
 from PartSeg.utils.universal_const import Units
 
+from .help_fun import get_test_dir
 
 class MocksCalculation:
     def __init__(self, file_path):
@@ -52,14 +53,10 @@ class TestCalculationProcess:
                                                                  [CalculationTree(statistic_calculate, [])])])])
         return CalculationPlan(tree=tree, name="test")
 
-    @staticmethod
-    def get_test_dir():
-        return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "test_data")
-
     def test_one_file(self):
         plan = self.create_calculation_plan()
         process = CalculationProcess()
-        file_path = os.path.join(self.get_test_dir(), "stack1_components", "stack1_component5.tif")
+        file_path = os.path.join(get_test_dir(), "stack1_components", "stack1_component5.tif")
         calc = MocksCalculation(file_path)
         process.calculation = calc
         process.image = ImageReader.read_image(file_path)
@@ -69,10 +66,10 @@ class TestCalculationProcess:
 
     def test_full_pipeline(self):
         plan = self.create_calculation_plan()
-        file_pattern = os.path.join(self.get_test_dir(), "stack1_components", "stack1_component*[0-9].tif")
+        file_pattern = os.path.join(get_test_dir(), "stack1_components", "stack1_component*[0-9].tif")
         file_paths = glob(file_pattern)
-        calc = Calculation(file_paths, base_prefix=self.get_test_dir(), result_prefix=self.get_test_dir(),
-                           statistic_file_path=os.path.join(self.get_test_dir(), "test.xlsx"), sheet_name="Sheet1",
+        calc = Calculation(file_paths, base_prefix=get_test_dir(), result_prefix=get_test_dir(),
+                           statistic_file_path=os.path.join(get_test_dir(), "test.xlsx"), sheet_name="Sheet1",
                            calculation_plan=plan, voxel_size=(1, 1, 1))
 
         manager = CalculationManager()
@@ -83,6 +80,6 @@ class TestCalculationProcess:
             time.sleep(0.1)
             __ = manager.get_results()
         time.sleep(0.3)
-        assert os.path.exists(os.path.join(self.get_test_dir(), "test.xlsx"))
-        df = pd.read_excel(os.path.join(self.get_test_dir(), "test.xlsx"), index_col=0, header=[0, 1])
+        assert os.path.exists(os.path.join(get_test_dir(), "test.xlsx"))
+        df = pd.read_excel(os.path.join(get_test_dir(), "test.xlsx"), index_col=0, header=[0, 1])
         assert df.shape == (8, 4)
