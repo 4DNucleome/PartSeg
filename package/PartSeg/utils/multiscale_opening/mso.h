@@ -1,6 +1,8 @@
 #include <cstdint>
 #include <cstdlib>
 #include <vector>
+#include <stdexcept>
+	
 #include "my_queue.h"
 
 typedef double mu_type;
@@ -10,30 +12,50 @@ struct Point {
   uint16_t x, y, z;
 };
 
-template <typename T, typename K>
+template <typename T>
 class MSO {
 private:
+  std::vector<int8_t> neighbourhood;
+  std::vector<double> distances;
   mu_type *mu_array;
-  const size_t z_size, y_size, x_size;
-  K *components;
-  K background_component = 1;
-  int8_t *neighbourhood;
-  double * distances;
-  size_t neighbourhood_length;
+  size_t z_size, y_size, x_size;
+  T * components;
+  T background_component = 1;
+  
 
 public:
   MSO(size_t z_size_, size_t y_size_, size_t x_size_, mu_type *mu_array_,
-      K *components_)
+      T *components_)
       : z_size{z_size_}, y_size{y_size_}, x_size{x_size_}, mu_array{mu_array_},
         components{components_} {};
 
-  ~MSO() {
-    free(this->mu_array);
-    free(this->components);
-    free(this->neighbourhood);
+  MSO(){
+    this->mu_array = nullptr;
+    this->components = nullptr;
+  };
+
+  void erase_data(){
+    /* clean pointers, do not free the memory */
+    this->mu_array = nullptr;
+    this->components = nullptr;
   }
 
-  void compute_FDT(double *array) {
+  void set_data(mu_type * mu_array, T* components);
+
+  void set_neighbourhood(std::vector<int8_t> neighbourhood, std::vector<double> distances){
+    if (neighbourhood.size() != distances.size()){
+      throw std::length_error("Size of neighbouthood need to be 3* Size of distances");
+    }
+    this->neighbourhood = neighbourhood;
+    this->distances = distances;
+  }
+
+  void set_neighbourhood(int8_t * neighbourhood, double * distances, size_t neigh_size){
+    this->neighbourhood = std::vector<int8_t>(neighbourhood, neighbourhood + 3*neigh_size);
+    this->distances = std::vector<double>(distances, distances+neigh_size);
+  }
+
+  void compute_FDT(double *array) const {
     const size_t layer_size = this->y_size * this->x_size;
     const size_t row_size = this.x_size;
     size_t xx, yy, zz, x, y, z, neigh_coordinate, coordinate;
@@ -48,7 +70,7 @@ public:
           array[z * layer_size + y * row_size + x] = 0;
           if (components[z * layer_size + y * row_size + x] ==
               this->background_component) {
-            for (size_t i = 0; i < 3*this->neighbourhood_length; i += 3) {
+            for (size_t i = 0; i < 3*this->distances.size(); i += 3) {
               zz = z + this->neighbourhood[i];
               yy = y + this->neighbourhood[i + 1];
               xx = x + this->neighbourhood[i + 2];
@@ -72,7 +94,7 @@ public:
       coordinate = p.z * layer_size + p.y * row_size + p.x;
       mu_value = this->mu_array[coordinate];
       fdt_value = this->array[coordinate];
-      for (size_t i = 0; i < this->neighbourhood_length; i++) {
+      for (size_t i = 0; i < this->distances.size(); i++) {
         z = p.z + this->neighbourhood[3*i];
         y = p.y + this->neighbourhood[3*i + 1];
         x = p.x + this->neighbourhood[3*i + 2];
@@ -98,7 +120,7 @@ public:
     }
   };
 
-  void set_background_component(K val) { this->background_component = val; };
+  void set_background_component(T val) { this->background_component = val; };
 };
 
 void inline shrink(mu_type &val) {
