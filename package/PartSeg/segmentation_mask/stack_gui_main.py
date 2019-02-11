@@ -19,7 +19,7 @@ from ..common_gui.flow_layout import FlowLayout
 from ..common_gui.select_multiple_files import AddFiles
 from ..common_gui.stack_image_view import ColorBar
 from ..common_gui.universal_gui_part import right_label
-from ..common_gui.waiting_dialog import WaitingDialog
+from ..common_gui.waiting_dialog import WaitingDialog, ExecuteFunctionDialog
 from ..utils.global_settings import static_file_folder
 from ..utils.segmentation.algorithm_base import SegmentationResult
 from ..utils.universal_const import UNIT_SCALE, Units
@@ -32,7 +32,7 @@ from .stack_settings import StackSettings
 from PartSeg.tiff_image import ImageReader, Image
 from .batch_proceed import BatchProceed
 from .image_view import StackImageView
-from PartSeg.utils.mask.io_functions import load_stack_segmentation, SaveSegmentation, LoadSegmentation
+from PartSeg.utils.mask.io_functions import load_stack_segmentation, SaveSegmentation, LoadSegmentation, load_dict
 
 app_name = "PartSeg"
 app_lab = "LFSG"
@@ -72,18 +72,14 @@ class MainMenu(QWidget):
     def load_image(self):
         # TODO move segmentation with image load to load_segmentaion
         try:
-            dial = QFileDialog()
-            dial.setFileMode(QFileDialog.ExistingFile)
-            dial.setDirectory(self.settings.get("io.load_image_directory", ""))
-            filters = ["raw image (*.tiff *.tif *.lsm)", "image from mask (*.seg *.tgz)"]
-            dial.setNameFilters(filters)
-            dial.selectNameFilter(self.settings.get("io.load_image_filter", filters[0]))
+            dial = CustomLoadDialog(load_dict)
+            dial.setDirectory(self.settings.get("io.load_image_directory", str(Path.home())))
+            dial.selectNameFilter(self.settings.get("io.load_data_filter", next(iter(load_dict.keys()))))
             if not dial.exec_():
                 return
-            file_path = str(dial.selectedFiles()[0])
-            self.settings.set("io.load_image_directory", os.path.dirname(str(file_path)))
-            self.settings.set("io.load_image_filter", dial.selectedNameFilter())
-            read_thread = ImageReaderThread(parent=self)
+            load_property = dial.get_result()
+            self.settings.set("io.load_image_directory", os.path.dirname(load_property.load_location[0]))
+            self.settings.set("io.load_data_filter", load_property.selected_filter)
 
             def exception_hook(exception):
                 if isinstance(exception, ValueError) and exception.args[0] == "not a TIFF file":
@@ -95,29 +91,16 @@ class MainMenu(QWidget):
                 else:
                     raise exception
 
-            if dial.selectedNameFilter() == filters[1]:
-                segmentation, metadata = load_stack_segmentation(file_path)
-                if "base_file" not in metadata:
-                    QMessageBox.warning(self, "Open error", "No information about base file")
-                    return
-                if not os.path.exists(metadata["base_file"]):
-                    full_path = os.path.join(os.path.dirname(file_path), metadata["base_file"])
-                    if not os.path.exists(full_path):
-                        QMessageBox.warning(self, "Open error", "Base file not found")
-                        return
-                    metadata["base_file"] = full_path
-                read_thread.set_path(metadata["base_file"])
-                dial = WaitingDialog(read_thread, "Load image", exception_hook=exception_hook)
-                dial.exec()
-                self.set_image(read_thread.image)
-                self.settings.set_segmentation(segmentation, metadata["components"])
-            else:
-                read_thread.set_path(file_path)
-                dial = WaitingDialog(read_thread, "Load image", exception_hook=exception_hook)
-                dial.exec()
-                if read_thread.image:
-                    self.set_image(read_thread.image)
-
+            execute_dialog = ExecuteFunctionDialog(
+                load_property.load_class.load, [load_property.load_location],
+                {"metadata": {"default_spacing": self.settings.image.spacing}}, text="Load data",
+                exception_hook=exception_hook)
+            if execute_dialog.exec():
+                result = execute_dialog.get_result()
+                if isinstance(result.image, Image):
+                    self.set_image(result.image)
+                if result.segmentation is not None:
+                    self.settings.set_segmentation(result.segmentation, result.list_of_components)
         except (MemoryError, IOError) as e:
             QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
 
@@ -151,6 +134,7 @@ class MainMenu(QWidget):
         try:
 
             dial = CustomLoadDialog({"segmentation (*.seg *.tgz)": LoadSegmentation})
+            dial.setDirectory(self.settings.get("io.open_segmentation_directory", str(Path.home())))
             if not dial.exec_():
                 return
             load_property = dial.get_result()

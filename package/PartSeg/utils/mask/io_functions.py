@@ -1,20 +1,21 @@
 import os
 import tarfile
 import typing
+from functools import partial
 from pathlib import Path
 
 import numpy as np
 import json
 from typing import Union
 from io import BytesIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
-from PartSeg.utils.io_utils import get_tarinfo, SaveBase, LoadBase
-from PartSeg.utils.segmentation.algorithm_describe_base import AlgorithmProperty
-from PartSeg.tiff_image import Image, ImageWriter
+from PartSeg.utils.io_utils import get_tarinfo, SaveBase, LoadBase, proxy_callback
+from PartSeg.utils.segmentation.algorithm_describe_base import AlgorithmProperty, Register
+from PartSeg.tiff_image import Image, ImageWriter, ImageReader
 
 
 class SegmentationTuple(typing.NamedTuple):
     image: Union[Image, str, None]
-    segmentation: np.ndarray
+    segmentation: typing.Optional[np.ndarray]
     list_of_components: typing.List[int]
 
 
@@ -106,7 +107,7 @@ def empty_fun(_a0=None, _a1=None):
 class LoadSegmentation(LoadBase):
     @classmethod
     def get_name(cls):
-        return "Segmentation (*.seg *.tgz)"
+        return "Segmentation to image (*.seg *.tgz)"
 
     @classmethod
     def get_short_name(cls):
@@ -120,6 +121,54 @@ class LoadSegmentation(LoadBase):
                                                          step_changed=step_changed)
         return SegmentationTuple(metadata["base_file"] if "base_file" in metadata else None, segmentation,
                                  metadata["components"])
+
+
+class LoadSegmentationImage(LoadBase):
+    @classmethod
+    def get_name(cls):
+        return "Segmentation with image (*.seg *.tgz)"
+
+    @classmethod
+    def get_short_name(cls):
+        return "seg_img"
+
+    @classmethod
+    def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+             range_changed: typing.Callable[[int, int], typing.Any] = None,
+             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
+        base_file, segmentation, components = LoadSegmentation.load(load_locations)
+        if base_file is None:
+            raise IOError(f"base file for segmentation not defined")
+        if os.path.isabs(base_file):
+            file_path = base_file
+        else:
+            if not isinstance(load_locations[0], str):
+                raise IOError(f"Cannot use relative path {base_file} for non path argument")
+            file_path = os.path.join(os.path.dirname(load_locations[0]), base_file)
+        if not os.path.exists(file_path):
+            raise IOError(f"Base file for segmentation do not exists: {base_file} -> {file_path}")
+        image = ImageReader.read_image(
+            file_path, callback_function=partial(proxy_callback, range_changed, step_changed),
+            default_spacing=metadata["default_spacing"])
+        return SegmentationTuple(image, segmentation, components)
+
+class LoadImage(LoadBase):
+    @classmethod
+    def get_name(cls):
+        return "Image(*.tif *.tiff *.lsm)"
+
+    @classmethod
+    def get_short_name(cls):
+        return "img"
+
+    @classmethod
+    def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+             range_changed: typing.Callable[[int, int], typing.Any] = None,
+             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
+        image = ImageReader.read_image(
+            load_locations[0], callback_function=partial(proxy_callback, range_changed, step_changed),
+            default_spacing=metadata["default_spacing"])
+        return SegmentationTuple(image, None, [])
 
 
 class SaveSegmentation(SaveBase):
@@ -157,3 +206,6 @@ def save_components(image: Image, components: list, segmentation: np.ndarray, di
         step_changed(2 * i + 1)
         ImageWriter.save_mask(im, os.path.join(dir_path, f"{file_name}_component{i}_mask.tif"))
         step_changed(2 * i + 2)
+
+
+load_dict = Register(LoadImage, LoadSegmentationImage)
