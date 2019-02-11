@@ -21,5 +21,5 @@ class CustomApplication(QApplication):
     def show_warning(self):
         if not isinstance(self.warning, (list, tuple)) or self.warning[0] is None:
             return
-        message = QMessageBox(QMessageBox.Warning, self.error[0], self.error[1], QMessageBox.Ok)
+        message = QMessageBox(QMessageBox.Warning, self.warning[0], self.warning[1], QMessageBox.Ok)
         message.exec()

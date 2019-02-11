@@ -269,7 +269,7 @@ class Options(QWidget):
             return
         interactive = self.interactive_use.isChecked()
         self.interactive_use.setChecked(False)
-        profile = self._settings.get(f"segmentation_profiles.{val}")
+        profile = self._settings.segmentation_profiles[val]
         self.algorithm_choose_widget.change_algorithm(profile.algorithm, profile.values)
         self.choose_profile.blockSignals(True)
         self.choose_profile.setCurrentIndex(0)
