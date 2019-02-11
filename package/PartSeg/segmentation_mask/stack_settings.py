@@ -36,9 +36,9 @@ class StackSettings(BaseSettings):
             res.append(path.join(dir_path, f"{file_name}_component{i}_mask.tif"))
         return res
 
-    def set_segmentation(self, segmentation, metadata):
+    def set_segmentation(self, segmentation, components):
         num = segmentation.max()
-        self.chosen_components_widget.set_chose(range(1, num + 1), metadata["components"])
+        self.chosen_components_widget.set_chose(range(1, num + 1), components)
         self.segmentation = segmentation
 
     def save_components(self, dir_path, range_changed=None, step_changed=None):

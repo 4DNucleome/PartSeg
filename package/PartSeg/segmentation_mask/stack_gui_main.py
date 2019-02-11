@@ -14,6 +14,7 @@ from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumCom
 from ..common_gui.channel_control import ChannelControl
 from ..common_gui.colors_choose import ColorSelector
 from ..common_gui.custom_save_dialog import SaveDialog
+from ..common_gui.custom_load_dialog import CustomLoadDialog
 from ..common_gui.flow_layout import FlowLayout
 from ..common_gui.select_multiple_files import AddFiles
 from ..common_gui.stack_image_view import ColorBar
@@ -31,7 +32,7 @@ from .stack_settings import StackSettings
 from PartSeg.tiff_image import ImageReader, Image
 from .batch_proceed import BatchProceed
 from .image_view import StackImageView
-from PartSeg.utils.mask.io_functions import load_stack_segmentation, SaveSegmentation
+from PartSeg.utils.mask.io_functions import load_stack_segmentation, SaveSegmentation, LoadSegmentation
 
 app_name = "PartSeg"
 app_lab = "LFSG"
@@ -109,7 +110,7 @@ class MainMenu(QWidget):
                 dial = WaitingDialog(read_thread, "Load image", exception_hook=exception_hook)
                 dial.exec()
                 self.set_image(read_thread.image)
-                self.settings.set_segmentation(segmentation, metadata)
+                self.settings.set_segmentation(segmentation, metadata["components"])
             else:
                 read_thread.set_path(file_path)
                 dial = WaitingDialog(read_thread, "Load image", exception_hook=exception_hook)
@@ -148,16 +149,13 @@ class MainMenu(QWidget):
 
     def load_segmentation(self):
         try:
-            dial = QFileDialog()
-            dial.setFileMode(QFileDialog.ExistingFile)
-            dial.setDirectory(self.settings.get("io.open_segmentation_directory", ""))
-            filters = ["segmentation (*.seg *.tgz)"]
-            dial.setNameFilters(filters)
+
+            dial = CustomLoadDialog({"segmentation (*.seg *.tgz)": LoadSegmentation})
             if not dial.exec_():
                 return
-            file_path = str(dial.selectedFiles()[0])
-            self.settings.set("io.open_segmentation_directory", os.path.dirname(str(file_path)))
-            execute_thread = ExecuteFunctionThread(self.settings.load_segmentation, [file_path])
+            load_property = dial.get_result()
+            self.settings.set("io.open_segmentation_directory", os.path.dirname(load_property.load_location[0]))
+            execute_thread = ExecuteFunctionThread(load_property.load_class.load, [load_property.load_location])
 
             def exception_hook(exception):
                 if isinstance(exception, ValueError) and exception.args[0] == "Segmentation do not fit to image":
@@ -171,6 +169,7 @@ class MainMenu(QWidget):
 
             dial = WaitingDialog(execute_thread, "Load segmentation", exception_hook=exception_hook)
             dial.exec()
+            self.settings.set_segmentation(execute_thread.result.segmentation, execute_thread.result.list_of_components)
         except Exception as e:
             QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
 
