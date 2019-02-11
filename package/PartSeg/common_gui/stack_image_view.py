@@ -663,6 +663,12 @@ class MyScrollArea(QScrollArea):
         else:
             self.pixmap.resize(final_size)
 
+    def center_pixmap(self):
+        print()
+        x_cord = (self.width() - 2 - self.pixmap.width()) // 2
+        y_cord = (self.height() - 2 - self.pixmap.height()) // 2
+        self.pixmap.move(x_cord, y_cord)
+
     def resizeEvent(self, event):
         # super(MyScrollArea, self).resizeEvent(event)
         self.pixmap.point = None
@@ -676,15 +682,11 @@ class MyScrollArea(QScrollArea):
         self.x_mid *= scalar
         self.y_mid *= scalar
         if self.size().width() - 2 > self.pixmap.width() and self.size().height() - 2 > self.pixmap.height():
-            # print("B")
             self.reset_image()
+        elif not (self.size().width() - 2 < self.pixmap.width() or self.size().height() - 2 < self.pixmap.height()):
+            self.center_pixmap()
         else:
-            # print("C", self.pixmap.size())
             self.resize_pixmap()
-        """if self.timer_id:
-            self.killTimer(self.timer_id)
-            self.timer_id = 0
-        self.timer_id = self.startTimer(0)"""
 
     def timerEvent(self, a0: 'QTimerEvent'):
         # Some try to reduce number of repaint event
