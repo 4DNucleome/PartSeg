@@ -198,6 +198,7 @@ class ResponseData(typing.NamedTuple):
     path_to_file: str
     values: typing.List
 
+
 class CalculationManager:
     def __init__(self):
         self.batch_manager = BatchManager()
@@ -244,7 +245,7 @@ class CalculationManager:
             self.calculation_done += 1
             self.counter_dict[uuid] += 1
             calculation = self.calculation_dict[uuid][0]
-            if isinstance(el, Exception):
+            if isinstance(el, tuple) and isinstance(el[0], Exception):
                 self.errors_list.append(el)
                 new_errors.append(el)
             else:

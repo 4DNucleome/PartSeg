@@ -5,9 +5,11 @@ import traceback
 from ..utils import report_utils
 import sentry_sdk
 
+from PartSeg import __version__
+
 
 class ErrorDialog(QDialog):
-    def __init__(self, exception: Exception, description: str, additional_notes: str = ""):
+    def __init__(self, exception: Exception, description: str, additional_notes: str = "", traceback_summary=None):
         super().__init__()
         self.exception = exception
         self.additional_notes = additional_notes
@@ -15,8 +17,11 @@ class ErrorDialog(QDialog):
         self.send_report_btn.setDisabled(not report_utils.report_errors)
         self.cancel_btn = QPushButton("Cancel")
         self.error_description = QTextEdit()
-        self.error_description.setText("".join(
-            traceback.format_exception(type(exception), exception, exception.__traceback__)))
+        if traceback_summary is None:
+            self.error_description.setText("".join(
+                traceback.format_exception(type(exception), exception, exception.__traceback__)))
+        elif isinstance(traceback_summary, traceback.StackSummary):
+            self.error_description.setText("".join(traceback_summary.format()))
         self.error_description.append(str(exception))
         self.error_description.setReadOnly(True)
         self.additional_info = QTextEdit()
@@ -51,7 +56,7 @@ class ErrorDialog(QDialog):
         super().exec()
 
     def send_information(self):
-        text = self.desc.text() + "\n"
+        text = self.desc.text() + "\n\nVersion: " + __version__ + "\n"
         if len(self.additional_notes) > 0:
             text += "Additional notes: " + self.additional_notes + "\n"
         text += self.error_description.toPlainText() + "\n\n"

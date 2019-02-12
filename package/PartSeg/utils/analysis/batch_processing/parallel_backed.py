@@ -162,7 +162,7 @@ class BatchWorker(object):
             exc_type, exc_obj, exc_tb = sys.exc_info()
             f_name = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print(exc_type, f_name, exc_tb.tb_lineno)
-            self.result_queue.put((task_uuid, e))
+            self.result_queue.put((task_uuid, (e, traceback.extract_tb(e.__traceback__))))
 
     def run(self):
         logging.debug("Process started {}".format(os.getpid()))

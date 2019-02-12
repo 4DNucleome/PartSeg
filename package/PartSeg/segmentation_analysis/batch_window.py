@@ -11,6 +11,7 @@ from qtpy.QtWidgets import QPushButton, QListWidget, QVBoxLayout, QHBoxLayout, Q
     QFileDialog, QWidget, QDialog, QLabel, QMessageBox, QProgressBar, QSpinBox, QGridLayout, QComboBox, \
     QTabWidget, QTreeWidget, QTreeWidgetItem
 
+from PartSeg.project_utils_qt.list_item_widget_for_exception import ExceptionList, ExceptionListItem
 from ..common_gui.select_multiple_files import AddFiles
 from .partseg_settings import PartSettings
 from PartSeg.utils.analysis.batch_processing.batch_backend import CalculationManager
@@ -41,7 +42,7 @@ class ProgressView(QWidget):
         self.part_progress.setFormat("%v of %m")
         self.whole_label = QLabel("Whole progress:", self)
         self.part_label = QLabel("Part progress:", self)
-        self.logs = QListWidget(self)
+        self.logs = ExceptionList(self)
         self.logs.setToolTip("Logs")
         self.task_que = QListWidget()
         self.process_num_timer = QTimer()
@@ -79,7 +80,8 @@ class ProgressView(QWidget):
 
     def update_info(self):
         errors, total, parts = self.batch_manager.get_results()
-        self.logs.addItems(list(map(lambda x: "{}: {}".format(type(x), str(x)), errors)))
+        for el in errors:
+            ExceptionListItem(el, self.logs)
         self.whole_progress.setValue(total)
         working_search = True
         for i, (progress, total) in enumerate(parts):
