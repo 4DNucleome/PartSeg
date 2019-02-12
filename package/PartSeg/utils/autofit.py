@@ -1,7 +1,5 @@
 import numpy as np
-import logging
 from math import acos, sqrt, pi
-import scipy.spatial.distance as sp
 
 
 def find_density_orientation(img, voxel_size, cutoff=1):
@@ -78,18 +76,27 @@ def density_mass_center(image, voxel_size=(1.0, 1.0, 1.0)):
         :return np.ndarray
 
     """
-    import itertools
     single_dim = tuple([i for i, x in enumerate(image.shape) if x == 1])
     iter_dim = [i for i, x in enumerate(image.shape) if x > 1]
-    elements = image.ndim - len(single_dim)
-    res = []
+    res = [0] * image.ndim
+
+    if len(voxel_size) != image.ndim:
+        if len(voxel_size) != len(iter_dim):
+            raise ValueError("Cannot fit voxel size to array")
+        else:
+            voxel_size_array = [0] * image.ndim
+            for i, item in enumerate(iter_dim):
+                voxel_size_array[item] = voxel_size[i]
+    else:
+        voxel_size_array = voxel_size
+
     denominator = float(np.sum(image))
-    for ax in itertools.combinations(iter_dim, elements):
-        item = ax[0]
-        ax = single_dim + ax[1:]
+    for i, item in enumerate(iter_dim):
+        ax = single_dim + tuple(iter_dim[:i] + iter_dim[i+1:])
         m = np.sum(np.sum(image, axis=ax) * np.arange(image.shape[item]))
-        res.append(m/denominator)
-    return np.array(res) * voxel_size
+        res[item] = m/denominator
+
+    return np.array(res) * voxel_size_array
 
 
 def calculate_density_momentum(image: np.ndarray, voxel_size=np.array([1., 1., 1.]), mass_center=None):
@@ -101,6 +108,6 @@ def calculate_density_momentum(image: np.ndarray, voxel_size=np.array([1., 1., 1
     points = np.transpose(np.nonzero(np.ones(image.shape, dtype=np.uint8)))
     for i, v in enumerate(reversed(voxel_size), start=1):
         points[:, -i] *= v
-    weights = np.squeeze(sp.cdist(points, np.array([mass_center]))**2)
+    weights = np.sum((points - mass_center)**2, axis=1)
     momentum = float(np.sum(weights * image.flatten()))
     return momentum

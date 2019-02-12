@@ -9,6 +9,7 @@ from PartSeg.utils.analysis.statistics_calculation import Diameter, PixelBrightn
     StandardDeviationOfPixelBrightness, MomentOfInertia, LongestMainAxisLength, MiddleMainAxisLength, \
     ShortestMainAxisLength, Surface, RimVolume, RimPixelBrightnessSum, StatisticProfile, StatisticEntry, PerComponent, \
     Node
+from PartSeg.utils.autofit import density_mass_center
 from PartSeg.utils.universal_const import UNIT_SCALE, Units
 
 
@@ -315,6 +316,47 @@ class TestMomentOfInertia:
         mask = image.get_channel(0) > 80
         assert MomentOfInertia.calculate_property(mask, image.get_channel(0), image.spacing) == 0
 
+    def test_values(self):
+        spacing = (10, 6, 6)
+        image_array = np.zeros((10, 16, 16))
+        mask = np.ones(image_array.shape)
+        image_array[5, 8, 8] = 1
+        assert MomentOfInertia.calculate_property(mask, image_array, spacing) == 0
+        image_array[5, 8, 9] = 1
+        assert MomentOfInertia.calculate_property(mask, image_array, spacing) == (0.5 * 6)**2 * 2
+        image_array = np.zeros((10, 16, 16))
+        image_array[5, 8, 8] = 1
+        image_array[5, 10, 8] = 3
+        assert MomentOfInertia.calculate_property(mask, image_array, spacing) == 9 ** 2 + 3 ** 2 * 3
+        image_array = np.zeros((10, 16, 16))
+        image_array[5, 6, 8] = 3
+        image_array[5, 10, 8] = 3
+        assert MomentOfInertia.calculate_property(mask, image_array, spacing) == 3 * 2 * 12**2
+
+    def test_density_mass_center(self):
+        spacing = (10, 6, 6)
+        image_array = np.zeros((10, 16, 16))
+        image_array[5, 8, 8] = 1
+        assert np.all(np.array(density_mass_center(image_array, spacing)) == np.array((50, 48, 48)))
+        image_array[5, 9, 8] = 1
+        assert np.all(np.array(density_mass_center(image_array, spacing)) == np.array((50, 51, 48)))
+        image_array[5, 8:10, 9] = 1
+        assert np.all(np.array(density_mass_center(image_array, spacing)) == np.array((50, 51, 51)))
+        image_array = np.zeros((10, 16, 16))
+        image_array[2, 5, 5] = 1
+        image_array[8, 5, 5] = 1
+        assert np.all(np.array(density_mass_center(image_array, spacing)) == np.array((50, 30, 30)))
+        image_array = np.zeros((10, 16, 16))
+        image_array[3:8, 4:13, 4:13] = 1
+        assert np.all(np.array(density_mass_center(image_array, spacing)) == np.array((50, 48, 48)))
+        image_array = np.zeros((10, 16, 16))
+        image_array[5, 8, 8] = 1
+        image_array[5, 10, 8] = 3
+        assert np.all(np.array(density_mass_center(image_array, spacing)) == np.array((50, 57, 48)))
+        assert np.all(np.array(density_mass_center(image_array[5], spacing[1:])) == np.array((57, 48)))
+        assert np.all(np.array(density_mass_center(image_array[5:6], spacing)) == np.array((0, 57, 48)))
+
+
 
 class TestMainAxis:
     def test_cube(self):
@@ -570,7 +612,6 @@ class TestStatisticProfile:
         result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
                                    voxel_size=image.voxel_size, result_units=Units.µm)
         tot_vol, seg_vol, rim_vol = list(result.values())
-        print(result)
         assert isclose(tot_vol[0], seg_vol[0] + rim_vol[0])
 
     def test_cube_pixel_sum_area_type(self):
@@ -594,7 +635,6 @@ class TestStatisticProfile:
         result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
                                    voxel_size=image.voxel_size, result_units=Units.µm)
         tot_vol, seg_vol, rim_vol = list(result.values())
-        print(result)
         assert isclose(tot_vol[0], seg_vol[0] + rim_vol[0])
 
     def test_cube_surface_area_type(self):
@@ -617,7 +657,6 @@ class TestStatisticProfile:
         result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
                                    voxel_size=image.voxel_size, result_units=Units.µm)
         tot_vol, seg_vol, rim_vol = list(result.values())
-        print(result)
         assert isclose(tot_vol[0] + seg_vol[0], rim_vol[0])
 
     def test_cube_density(self):
