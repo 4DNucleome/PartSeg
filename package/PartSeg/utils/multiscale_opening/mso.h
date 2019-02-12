@@ -55,7 +55,7 @@ public:
     this->distances = std::vector<double>(distances, distances+neigh_size);
   }
 
-  void compute_FDT(double *array) const {
+  void compute_FDT(std::vector<double> array) const {
     const size_t layer_size = this->y_size * this->x_size;
     const size_t row_size = this.x_size;
     size_t xx, yy, zz, x, y, z, neigh_coordinate, coordinate;
@@ -131,12 +131,12 @@ void inline shrink(mu_type &val) {
 }
 
 template <typename T>
-mu_type *calculate_mu_array(T *array, size_t length, T lower_bound,
+std::vector<mu_type> calculate_mu_array(T *array, size_t length, T lower_bound,
                             T upper_bound) {
-  mu_type *result = calloc(sizeof(mu_type), length);
+  std::vector<mu_type> result(length, 0);
   mu_type mu;
   for (size_t i = 0; i < length; i++) {
-    mu = (array[i] - lower_bound) / (upper_bound - lower_bound);
+    mu = (mu_type) (array[i] - lower_bound) / (upper_bound - lower_bound);
     shrink(mu);
     result[i] = mu;
   }
@@ -144,12 +144,12 @@ mu_type *calculate_mu_array(T *array, size_t length, T lower_bound,
 }
 
 template <typename T>
-mu_type *calculate_reflection_mu_array(T *array, size_t length, T lower_bound,
+std::vector<mu_type> calculate_reflection_mu_array(T *array, size_t length, T lower_bound,
                                        T upper_bound) {
-  mu_type *result = calloc(sizeof(mu_type), length);
+  std::vector<mu_type> result(length, 0);
   mu_type mu;
   for (size_t i = 0; i < length; i++) {
-    mu = (array[i] - lower_bound) / (upper_bound - lower_bound);
+    mu = (mu_type) (array[i] - lower_bound) / (upper_bound - lower_bound);
     shrink(mu);
     if (mu < 0.5)
       mu = 1 - mu;
@@ -158,21 +158,21 @@ mu_type *calculate_reflection_mu_array(T *array, size_t length, T lower_bound,
   return result;
 }
 template <typename T>
-mu_type *calculate_two_object_mu(T *array, size_t length, T lower_bound,
+std::vector<mu_type> calculate_two_object_mu(T *array, size_t length, T lower_bound,
                                  T upper_bound, T lower_mid_bound,
                                  T upper_mid_bound) {
-  mu_type *result = calloc(sizeof(mu_type), length);
+  std::vector<mu_type> result(length, 0);
   mu_type mu;
   T pixel_val;
-  for (size_t i; i < length; i++) {
+  for (size_t i=0; i < length; i++) {
     pixel_val = array[i];
-    mu = (pixel_val - lower_bound) / (upper_bound - lower_bound);
+    mu = (mu_type) (pixel_val - lower_bound) / (upper_bound - lower_bound);
     if (((lower_bound - lower_mid_bound) > 0) &&
         (pixel_val >= lower_mid_bound) && (pixel_val <= lower_bound))
-      mu = (pixel_val - lower_mid_bound) / (lower_bound - lower_mid_bound);
+      mu = (mu_type) (pixel_val - lower_mid_bound) / (lower_bound - lower_mid_bound);
     else if (((upper_bound - lower_bound) > 0) && (lower_bound < pixel_val) &&
              (pixel_val <= upper_bound))
-      mu = (upper_bound - pixel_val) / (upper_bound - lower_bound);
+      mu = (mu_type) (upper_bound - pixel_val) / (upper_bound - lower_bound);
     shrink(mu);
     result[i] = mu;
   }
@@ -180,14 +180,14 @@ mu_type *calculate_two_object_mu(T *array, size_t length, T lower_bound,
 }
 
 template <typename T>
-mu_type *calculate_mu_array_masked(T *array, size_t length, T lower_bound,
+std::vector<mu_type> calculate_mu_array_masked(T *array, size_t length, T lower_bound,
                                    T upper_bound, uint8_t *mask) {
-  mu_type *result = calloc(sizeof(mu_type), length);
+  std::vector<mu_type> result(length, 0);
   mu_type mu;
   for (size_t i = 0; i < length; i++) {
     if (mask[i] == 0)
       continue;
-    mu = (array[i] - lower_bound) / (upper_bound - lower_bound);
+    mu = (mu_type) (array[i] - lower_bound) / (upper_bound - lower_bound);
     shrink(mu);
     result[i] = mu;
   }
@@ -195,15 +195,15 @@ mu_type *calculate_mu_array_masked(T *array, size_t length, T lower_bound,
 }
 
 template <typename T>
-mu_type *calculate_reflection_mu_array_masked(T *array, size_t length,
+std::vector<mu_type> calculate_reflection_mu_array_masked(T *array, size_t length,
                                               T lower_bound, T upper_bound,
                                               uint8_t *mask) {
-  mu_type *result = calloc(sizeof(mu_type), length);
+  std::vector<mu_type> result(length, 0);
   mu_type mu;
   for (size_t i = 0; i < length; i++) {
     if (mask[i] == 0)
       continue;
-    mu = (array[i] - lower_bound) / (upper_bound - lower_bound);
+    mu = (mu_type) (array[i] - lower_bound) / (upper_bound - lower_bound);
     shrink(mu);
     if (mu < 0.5)
       mu = 1 - mu;
@@ -212,23 +212,23 @@ mu_type *calculate_reflection_mu_array_masked(T *array, size_t length,
   return result;
 }
 template <typename T>
-mu_type *calculate_two_object_mu_masked(T *array, size_t length, T lower_bound,
+std::vector<mu_type> calculate_two_object_mu_masked(T *array, size_t length, T lower_bound,
                                         T upper_bound, T lower_mid_bound,
                                         T upper_mid_bound, uint8_t *mask) {
-  mu_type *result = calloc(sizeof(mu_type), length);
+  std::vector<mu_type> result(length, 0);
   mu_type mu;
   T pixel_val;
-  for (size_t i; i < length; i++) {
+  for (size_t i=0; i < length; i++) {
     if (mask[i] == 0)
       continue;
     pixel_val = array[i];
-    mu = (pixel_val - lower_bound) / (upper_bound - lower_bound);
+    mu = (mu_type) (pixel_val - lower_bound) / (upper_bound - lower_bound);
     if (((lower_bound - lower_mid_bound) > 0) &&
         (pixel_val >= lower_mid_bound) && (pixel_val <= lower_bound))
-      mu = (pixel_val - lower_mid_bound) / (lower_bound - lower_mid_bound);
+      mu = (mu_type) (pixel_val - lower_mid_bound) / (lower_bound - lower_mid_bound);
     else if (((upper_bound - lower_bound) > 0) && (lower_bound < pixel_val) &&
              (pixel_val <= upper_bound))
-      mu = (upper_bound - pixel_val) / (upper_bound - lower_bound);
+      mu = (mu_type) (upper_bound - pixel_val) / (upper_bound - lower_bound);
     shrink(mu);
     result[i] = mu;
   }
