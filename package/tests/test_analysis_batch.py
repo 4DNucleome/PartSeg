@@ -80,7 +80,7 @@ class TestCalculationProcess:
         while manager.has_work:
             time.sleep(0.1)
             __ = manager.get_results()
-        time.sleep(0.3)
+        time.sleep(0.4)
         assert os.path.exists(os.path.join(get_test_dir(), "test.xlsx"))
         df = pd.read_excel(os.path.join(get_test_dir(), "test.xlsx"), index_col=0, header=[0, 1])
         assert df.shape == (8, 4)

@@ -463,3 +463,5 @@ test_data/
 !launcher.spec
 /test_data_all/
 /test_data.tbz2
+
+package/PartSeg/utils/multiscale_opening/\.vscode/

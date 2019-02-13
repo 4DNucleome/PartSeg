@@ -5,6 +5,8 @@ cache:
   - pip
   - directories:
       - ~/cache
+      - $HOME/.pyenv/cache
+      - Library/Caches/Homebrew
 
 branches:
   only:

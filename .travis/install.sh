@@ -9,6 +9,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     # Install some custom requirements on macOS
     # e.g. brew install pyenv-virtualenv
     brew upgrade pyenv
+    brew install zlib
 
     case "${TOXENV}" in
         py36)
