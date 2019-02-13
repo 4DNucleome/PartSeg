@@ -2,11 +2,13 @@
 # cython: language_level=3
 
 from libcpp.vector cimport vector
-from numpy cimport uint8_t, uint16_t, uint32_t, float32_t, float64_t, int8_t, bool
+from numpy cimport uint8_t, uint16_t, uint32_t, float32_t, float64_t, int8_t, bool, int16_t
 import numpy
 cimport numpy 
 
 ctypedef fused image_types:
+    int8_t
+    int16_t
     uint8_t
     uint16_t
     uint32_t
@@ -83,9 +85,9 @@ cdef vector[mu_type] calculate_mu_vector(numpy.ndarray[image_types, ndim=3] imag
     return result
 
 def calculate_mu(numpy.ndarray[image_types, ndim=3] image, image_types lower_bound,
-                 image_types upper_bound, MuType type_, mask=None):
+                 image_types upper_bound, MuType type_, mask=None, lower_mid_bound=0, upper_mid_bound=0):
     cdef vector[mu_type] tmp;
-    tmp = calculate_mu_vector(image, lower_bound, upper_bound, type_, mask)
+    tmp = calculate_mu_vector(image, lower_bound, upper_bound, type_, mask, lower_bound, upper_mid_bound)
     result = numpy.array(tmp)
     return result.reshape((image.shape[0], image.shape[1], image.shape[2]))
 
