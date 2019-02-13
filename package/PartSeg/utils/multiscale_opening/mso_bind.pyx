@@ -80,12 +80,13 @@ cdef vector[mu_type] calculate_mu_vector(numpy.ndarray[image_types, ndim=3] imag
                 result[x] = 1 - result[x]
         else:
             for x in range(length):
-                if mask[x]:
+                if mask_array.data[x]:
                     result[x] = 1 - result[x]
     return result
 
 def calculate_mu(numpy.ndarray[image_types, ndim=3] image, image_types lower_bound,
-                 image_types upper_bound, MuType type_, mask=None, lower_mid_bound=0, upper_mid_bound=0):
+                 image_types upper_bound, MuType type_, mask=None, image_types lower_mid_bound=0,
+                 image_types upper_mid_bound=0):
     cdef vector[mu_type] tmp;
     tmp = calculate_mu_vector(image, lower_bound, upper_bound, type_, mask, lower_bound, upper_mid_bound)
     result = numpy.array(tmp)

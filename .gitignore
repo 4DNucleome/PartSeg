@@ -465,3 +465,4 @@ test_data/
 /test_data.tbz2
 !/package/PartSeg/utils/segmentation/multiscale_opening/*.cpp
 /package/PartSeg/utils/segmentation/multiscale_opening/*.gch
+package/PartSeg/utils/multiscale_opening/\.vscode/
