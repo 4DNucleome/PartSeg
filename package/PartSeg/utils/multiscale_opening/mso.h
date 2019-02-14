@@ -2,128 +2,227 @@
 #include <cstdlib>
 #include <vector>
 #include <stdexcept>
-	
+#include <array>
 #include "my_queue.h"
 
 typedef double mu_type;
+typedef uint16_t coord_type;
 
-namespace MSO {
-struct Point {
-  uint16_t x, y, z;
-};
+const size_t ndim = 3;
 
+namespace
+{
+template <typename T, size_t K>
+size_t inline calculate_position(std::array<T, K> coordinate, std::array<size_t, K> dimension_size)
+{
+  size_t pos = 0;
+  for (size_t i = 0; i < K; i++)
+  {
+    pos += coordinate[i] * dimension_size[i];
+  }
+  return pos;
+}
+template <typename T, size_t K>
+bool inline outside_bounds(std::array<T, K> coordinate, std::array<T, K> lower_bound, std::array<T, K> upper_bound)
+{
+  size_t pos = 0;
+  for (size_t i = 0; i < K; i++)
+  {
+    if ((lower_bound[i] < coordinate[i]) || (upper_bound >= coordinate[i]))
+      return true;
+  }
+  return false;
+}
+} // namespace
+
+namespace MSO
+{
 template <typename T>
-class MSO {
+/* K is number of dimensions */
+class MSO
+{
 private:
+  typedef std::array<coord_type, ndim> Point;
+
   std::vector<int8_t> neighbourhood;
-  std::vector<double> distances;
-  mu_type *mu_array;
-  size_t z_size, y_size, x_size;
-  T * components;
+  std::vector<mu_type> distances;
+  std::vector<mu_type> mu_array;
+  std::array<coord_type, ndim> size;
+  std::array<coord_type, ndim> lower_bound;
+  std::array<coord_type, ndim> upper_bound;
+  T *components;
   T background_component = 1;
-  
 
 public:
-  MSO(size_t z_size_, size_t y_size_, size_t x_size_, mu_type *mu_array_,
-      T *components_)
-      : z_size{z_size_}, y_size{y_size_}, x_size{x_size_}, mu_array{mu_array_},
-        components{components_} {};
-
-  MSO(){
-    this->mu_array = nullptr;
+  MSO()
+  {
     this->components = nullptr;
+    this->size = {0};
   };
 
-  void erase_data(){
+  void erase_data()
+  {
     /* clean pointers, do not free the memory */
-    this->mu_array = nullptr;
     this->components = nullptr;
+    this->size.fill(0);
   }
 
-  void set_data(mu_type * mu_array, T* components);
+  inline size_t get_length() const
+  {
+    size_t res = 1;
+    for (size_t i = 0; i < ndim; i++)
+      res *= this->size[i];
+    return res;
+  }
 
-  void set_neighbourhood(std::vector<int8_t> neighbourhood, std::vector<double> distances){
-    if (neighbourhood.size() != distances.size()){
+  inline std::array<size_t, ndim> dimension_size() const
+  {
+    std::array<size_t, ndim> res = {1};
+    for (size_t i = ndim - 1; i > 0; i--)
+    {
+      res[i - 1] = res[i] * this->size[i];
+    }
+    return res;
+  }
+
+  template <typename W>
+  void set_data(T *components, W size, T background_component = 1)
+  {
+    this->components = components;
+    for (size_t i = 0; i < ndim; i++)
+    {
+      this->size[i] = size[i];
+      this->upper_bound[i] = size[i];
+      this->lower_bound[i] = 0;
+    }
+    this->background_component = background_component;
+    if (this->get_length() != this->mu_array.size())
+      this->mu_array.clear();
+  }
+
+  template <typename W>
+  void set_bounding_box(W lower_bound, W upper_bound)
+  {
+    for (size_t i = 0; i < ndim; i++)
+    {
+      this->lower_bound[i] = lower_bound[i];
+      this->upper_bound[i] = upper_bound[i];
+    }
+  }
+
+  void set_mu_copy(const std::vector<mu_type> &mu)
+  {
+    if (mu.size() != this->get_length())
+      throw std::length_error("Size of mu array need to be equal to size of components (z_size * y_size * x_size)");
+    this->mu_array = mu;
+  }
+  void set_mu_copy(mu_type *mu, size_t length)
+  {
+    if (length != this->get_length())
+      throw std::length_error("Size of mu array need to be equal to size of components (z_size * y_size * x_size)");
+    this->mu_array = std::vector<mu_type>(mu, mu + length);
+  }
+
+  void set_mu_swap(std::vector<mu_type> &mu)
+  {
+    if (mu.size() != this->get_length())
+      throw std::length_error("Size of mu array need to be equal to size of components (z_size * y_size * x_size)");
+    this->mu_array.swap(mu);
+  }
+
+  void set_neighbourhood(std::vector<int8_t> neighbourhood, std::vector<mu_type> distances)
+  {
+    if (neighbourhood.size() != ndim * distances.size())
+    {
       throw std::length_error("Size of neighbouthood need to be 3* Size of distances");
     }
     this->neighbourhood = neighbourhood;
     this->distances = distances;
   }
 
-  void set_neighbourhood(int8_t * neighbourhood, double * distances, size_t neigh_size){
-    this->neighbourhood = std::vector<int8_t>(neighbourhood, neighbourhood + 3*neigh_size);
-    this->distances = std::vector<double>(distances, distances+neigh_size);
+  void set_neighbourhood(int8_t *neighbourhood, mu_type *distances, size_t neigh_size)
+  {
+    this->neighbourhood = std::vector<int8_t>(neighbourhood, neighbourhood + 3 * neigh_size);
+    this->distances = std::vector<double>(distances, distances + neigh_size);
   }
 
-  void compute_FDT(std::vector<double> array) const {
-    const size_t layer_size = this->y_size * this->x_size;
-    const size_t row_size = this.x_size;
-    size_t xx, yy, zz, x, y, z, neigh_coordinate, coordinate;
+  void compute_FDT(std::vector<mu_type> &array) const
+  {
+    if (this->z_size * this->y_size * this->x_size == 0)
+      throw std::runtime_error("call FDT calculation befor set coordinates data");
+    if (this->mu_array.size() == 0)
+      throw std::runtime_error("call FDT calculation befor set mu array");
+
+    const std::array<size_t, ndim> dimension_size = this->dimension_size();
+    coord_type xx, yy, zz, x, y, z;
+    std::array<coord_type, ndim> coord, coord2;
+    size_t position, neigh_position;
     my_queue<Point> queue;
     Point p;
     double val, mu_value, fdt_value;
     std::vector<bool> visited_array(this->z_size * this->y_size * this->x_size, false);
 
-    for (z = 0; z < this->z_size; z++) {
-      for (y = 0; z < this->y_size; y++) {
-        for (x = 0; z < this->x_size; x++) {
-          array[z * layer_size + y * row_size + x] = 0;
-          if (components[z * layer_size + y * row_size + x] ==
-              this->background_component) {
-            for (size_t i = 0; i < 3*this->distances.size(); i += 3) {
-              zz = z + this->neighbourhood[i];
-              yy = y + this->neighbourhood[i + 1];
-              xx = x + this->neighbourhood[i + 2];
-              if ((zz >= this->z_size) || (yy > this->y_size) ||
-                  (xx > this->x_size))
+    for (coord[0] = this->lower_bound[0]; coord[0] < this->upper_bound[0]; coord[0]++)
+    {
+      for (coord[1] = this->lower_bound[1]; coord[1] < this->upper_bound[1]; coord[1]++)
+      {
+        for (coord[2] = this->lower_bound[2]; coord[2] < this->upper_bound[2]; coord[2]++)
+        {
+          position = calculate_position(coord, dimension_size);
+          array[position] = 0;
+          if (components[position] == this->background_component)
+          {
+            for (size_t i = 0; i < 3 * this->distances.size(); i += 3)
+            {
+              for (size_t j = 0; j < ndim; j++)
+                coord2[j] = coord[j] + this->neighbourhood[i + j];
+              if (outside_bounds(coord2, lower_bound, upper_bound))
                 continue;
-              if (components[zz * layer_size + yy * row_size + xx] == 0) {
-                p.x = (uint16_t)x;
-                p.y = (uint16_t)y;
-                p.z = (uint16_t)z;
-                queue.push(p);
+              if (components[calculate_position(coord2, dimension_size)] == 0)
+              {
+                queue.push(coord2);
               }
             }
           }
         }
       }
     }
-    while (!queue.empty()){
-      p = queue.front();
+    while (!queue.empty())
+    {
+      coord = queue.front();
       queue.pop();
-      coordinate = p.z * layer_size + p.y * row_size + p.x;
-      mu_value = this->mu_array[coordinate];
-      fdt_value = this->array[coordinate];
-      for (size_t i = 0; i < this->distances.size(); i++) {
-        z = p.z + this->neighbourhood[3*i];
-        y = p.y + this->neighbourhood[3*i + 1];
-        x = p.x + this->neighbourhood[3*i + 2];
-        if ((z >= this->x_size) || (y > this->y_size) ||
-            (x > this->x_size))
+      position = calculate_position(p, dimension_size);
+      mu_value = this->mu_array[position];
+      fdt_value = this->array[position];
+      for (size_t i = 0; i < this->distances.size(); i++)
+      {
+        for (size_t j = 0; j < ndim; j++)
+          coord2[j] = p[j] + this->neighbourhood[i + j];
+        if (outside_bounds(coord2, lower_bound, upper_bound))
           continue;
-        neigh_coordinate = z * layer_size + y * row_size + x;
-        if (components[neigh_coordinate] != 0)
+        neigh_position = calculate_position(coord2, dimension_size);
+        if (components[neigh_position] != 0)
           continue;
-        val = (this->mu_array[neigh_coordinate] + mu_value) * distances[i] / 2;
-        if (array[neigh_coordinate] > val + fdt_value){
-          array[neigh_coordinate] = val + fdt_value;
-          if (!visited_array[neigh_coordinate]){
-            visited_array[neigh_coordinate] = true;
-            p.x = (uint16_t)x;
-            p.y = (uint16_t)y;
-            p.z = (uint16_t)z;
-            queue.push(p);
+        val = (this->mu_array[neigh_position] + mu_value) * distances[i] / 2;
+        if (array[neigh_position] > val + fdt_value)
+        {
+          array[neigh_position] = val + fdt_value;
+          if (!visited_array[neigh_position])
+          {
+            visited_array[neigh_position] = true;
+            queue.push(coord);
           }
         }
       }
-      visited_array[coordinate] = false;
+      visited_array[position] = false;
     }
   };
 
   void set_background_component(T val) { this->background_component = val; };
 };
 
-void inline shrink(mu_type &val) {
+void inline shrink(mu_type &val)
+{
   if (val > 1)
     val = 1;
   else if (val < 0)
@@ -132,11 +231,13 @@ void inline shrink(mu_type &val) {
 
 template <typename T>
 std::vector<mu_type> calculate_mu_array(T *array, size_t length, T lower_bound,
-                            T upper_bound) {
+                                        T upper_bound)
+{
   std::vector<mu_type> result(length, 0);
   mu_type mu;
-  for (size_t i = 0; i < length; i++) {
-    mu = (mu_type) (array[i] - lower_bound) / (upper_bound - lower_bound);
+  for (size_t i = 0; i < length; i++)
+  {
+    mu = (mu_type)(array[i] - lower_bound) / (upper_bound - lower_bound);
     shrink(mu);
     result[i] = mu;
   }
@@ -145,11 +246,13 @@ std::vector<mu_type> calculate_mu_array(T *array, size_t length, T lower_bound,
 
 template <typename T>
 std::vector<mu_type> calculate_reflection_mu_array(T *array, size_t length, T lower_bound,
-                                       T upper_bound) {
+                                                   T upper_bound)
+{
   std::vector<mu_type> result(length, 0);
   mu_type mu;
-  for (size_t i = 0; i < length; i++) {
-    mu = (mu_type) (array[i] - lower_bound) / (upper_bound - lower_bound);
+  for (size_t i = 0; i < length; i++)
+  {
+    mu = (mu_type)(array[i] - lower_bound) / (upper_bound - lower_bound);
     shrink(mu);
     if (mu < 0.5)
       mu = 1 - mu;
@@ -159,20 +262,22 @@ std::vector<mu_type> calculate_reflection_mu_array(T *array, size_t length, T lo
 }
 template <typename T>
 std::vector<mu_type> calculate_two_object_mu(T *array, size_t length, T lower_bound,
-                                 T upper_bound, T lower_mid_bound,
-                                 T upper_mid_bound) {
+                                             T upper_bound, T lower_mid_bound,
+                                             T upper_mid_bound)
+{
   std::vector<mu_type> result(length, 0);
   mu_type mu;
   T pixel_val;
-  for (size_t i=0; i < length; i++) {
+  for (size_t i = 0; i < length; i++)
+  {
     pixel_val = array[i];
-    mu = (mu_type) (pixel_val - lower_bound) / (upper_bound - lower_bound);
+    mu = (mu_type)(pixel_val - lower_bound) / (upper_bound - lower_bound);
     if (((lower_bound - lower_mid_bound) > 0) &&
         (pixel_val >= lower_mid_bound) && (pixel_val <= lower_bound))
-      mu = (mu_type) (pixel_val - lower_mid_bound) / (lower_bound - lower_mid_bound);
+      mu = (mu_type)(pixel_val - lower_mid_bound) / (lower_bound - lower_mid_bound);
     else if (((upper_bound - lower_bound) > 0) && (lower_bound < pixel_val) &&
              (pixel_val <= upper_bound))
-      mu = (mu_type) (upper_bound - pixel_val) / (upper_bound - lower_bound);
+      mu = (mu_type)(upper_bound - pixel_val) / (upper_bound - lower_bound);
     shrink(mu);
     result[i] = mu;
   }
@@ -181,13 +286,15 @@ std::vector<mu_type> calculate_two_object_mu(T *array, size_t length, T lower_bo
 
 template <typename T>
 std::vector<mu_type> calculate_mu_array_masked(T *array, size_t length, T lower_bound,
-                                   T upper_bound, uint8_t *mask) {
+                                               T upper_bound, uint8_t *mask)
+{
   std::vector<mu_type> result(length, 0);
   mu_type mu;
-  for (size_t i = 0; i < length; i++) {
+  for (size_t i = 0; i < length; i++)
+  {
     if (mask[i] == 0)
       continue;
-    mu = (mu_type) (array[i] - lower_bound) / (upper_bound - lower_bound);
+    mu = (mu_type)(array[i] - lower_bound) / (upper_bound - lower_bound);
     shrink(mu);
     result[i] = mu;
   }
@@ -196,14 +303,16 @@ std::vector<mu_type> calculate_mu_array_masked(T *array, size_t length, T lower_
 
 template <typename T>
 std::vector<mu_type> calculate_reflection_mu_array_masked(T *array, size_t length,
-                                              T lower_bound, T upper_bound,
-                                              uint8_t *mask) {
+                                                          T lower_bound, T upper_bound,
+                                                          uint8_t *mask)
+{
   std::vector<mu_type> result(length, 0);
   mu_type mu;
-  for (size_t i = 0; i < length; i++) {
+  for (size_t i = 0; i < length; i++)
+  {
     if (mask[i] == 0)
       continue;
-    mu = (mu_type) (array[i] - lower_bound) / (upper_bound - lower_bound);
+    mu = (mu_type)(array[i] - lower_bound) / (upper_bound - lower_bound);
     shrink(mu);
     if (mu < 0.5)
       mu = 1 - mu;
@@ -213,22 +322,24 @@ std::vector<mu_type> calculate_reflection_mu_array_masked(T *array, size_t lengt
 }
 template <typename T>
 std::vector<mu_type> calculate_two_object_mu_masked(T *array, size_t length, T lower_bound,
-                                        T upper_bound, T lower_mid_bound,
-                                        T upper_mid_bound, uint8_t *mask) {
+                                                    T upper_bound, T lower_mid_bound,
+                                                    T upper_mid_bound, uint8_t *mask)
+{
   std::vector<mu_type> result(length, 0);
   mu_type mu;
   T pixel_val;
-  for (size_t i=0; i < length; i++) {
+  for (size_t i = 0; i < length; i++)
+  {
     if (mask[i] == 0)
       continue;
     pixel_val = array[i];
-    mu = (mu_type) (pixel_val - lower_bound) / (upper_bound - lower_bound);
+    mu = (mu_type)(pixel_val - lower_bound) / (upper_bound - lower_bound);
     if (((lower_bound - lower_mid_bound) > 0) &&
         (pixel_val >= lower_mid_bound) && (pixel_val <= lower_bound))
-      mu = (mu_type) (pixel_val - lower_mid_bound) / (lower_bound - lower_mid_bound);
+      mu = (mu_type)(pixel_val - lower_mid_bound) / (lower_bound - lower_mid_bound);
     else if (((upper_bound - lower_bound) > 0) && (lower_bound < pixel_val) &&
              (pixel_val <= upper_bound))
-      mu = (mu_type) (upper_bound - pixel_val) / (upper_bound - lower_bound);
+      mu = (mu_type)(upper_bound - pixel_val) / (upper_bound - lower_bound);
     shrink(mu);
     result[i] = mu;
   }

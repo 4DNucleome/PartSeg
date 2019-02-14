@@ -43,7 +43,7 @@ extensions = [
               ),
     Extension("PartSeg.utils.multiscale_opening.mso_bind", ["PartSeg/utils/multiscale_opening/mso_bind.pyx"],
               include_dirs=[np.get_include()],
-              extra_compile_args=['-std=c++11'],
+              extra_compile_args=['-std=c++11', '-Wall'],
               language='c++',
               )
 ]
