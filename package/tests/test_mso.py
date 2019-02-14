@@ -119,6 +119,23 @@ class TestFDT:
         res = mso.calculate_FDT()
         print(res)
 
+    def test_fdt_simple(self):
+        mso = PyMSO()
+        neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
+        components = np.zeros((3, 3, 3), dtype=np.uint8)
+        components[1, 1, 1] = 1
+        mso.set_neighbourhood(neigh, dist)
+        mso.set_components(components)
+        mso.set_mu_array(np.ones(components.shape))
+        arr = np.zeros(components.shape)
+        arr[(0, 0, 0, 0, 2, 2, 2, 2), (0, 0, 2, 2, 0, 0, 2, 2), (0, 2, 0, 2, 0, 2, 0, 2)] = np.sqrt(3)
+        arr[(0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2), (0, 1, 1, 2, 0, 0, 2, 2, 0, 1, 1, 2),
+            (1, 0, 2, 1, 0, 2, 0, 2, 1, 0, 2, 1)] = np.sqrt(2)
+        arr[(0, 1, 1, 1, 1, 2), (1, 0, 1, 1, 2, 1), (1, 1, 0, 2, 1, 1)] = 1
+        res = mso.calculate_FDT()
+        assert np.all(res == arr)
+
+
 class TestExceptions:
     def test_fdt(self):
         mso = PyMSO()

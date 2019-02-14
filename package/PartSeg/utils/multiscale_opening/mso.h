@@ -4,6 +4,7 @@
 #include <limits>
 #include <stdexcept>
 #include <array>
+#include <ostream>
 #include "my_queue.h"
 
 typedef double mu_type;
@@ -28,12 +29,57 @@ bool inline outside_bounds(std::array<T, K> coordinate, std::array<T, K> lower_b
 {
   for (size_t i = 0; i < K; i++)
   {
-    if ((lower_bound[i] < coordinate[i]) || (upper_bound[i] >= coordinate[i]))
+    if ((lower_bound[i] > coordinate[i]) || (upper_bound[i] <= coordinate[i]))
       return true;
   }
   return false;
 }
+template<typename T, size_t K>
+std::ostream & operator<<(std::ostream & stream, const std::array<T, K> & array){
+  stream << "array(";
+  for (size_t i=0; i<K-1; i++)
+    stream << array[i] << ", ";
+  stream << array[K-1] << ")";
+  return stream;
+}
+
+template<size_t K>
+std::ostream & operator<<(std::ostream & stream, const std::array<char, K> & array){
+  stream << "array(";
+  for (size_t i=0; i<K-1; i++)
+    stream << (int) array[i] << ", ";
+  stream << (int) array[K-1] << ")";
+  return stream;
+}
+
+template<typename T>
+std::ostream & operator<<(std::ostream & stream, const std::vector<T> & array){
+  stream << "vector(";
+  for (size_t i=0; i<array.size() - 1; i++)
+    stream << array[i] << ", ";
+  stream << array.back() << ")";
+  return stream;
+}
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+template<>
+std::ostream & operator<<(std::ostream & stream, const std::vector<unsigned char> & array){
+  stream << "vector(";
+  for (size_t i=0; i<array.size(); i++)
+    stream << (int) array[i] << ", ";
+  stream << (int) array.back() << ")";
+  return stream;
+}
+std::ostream & operator<<(std::ostream & stream, const std::vector<signed char> & array){
+  stream << "vector(";
+  for (size_t i=0; i<array.size(); i++)
+    stream << (int) array[i] << ", ";
+  stream << (int) array.back() << ")";
+  return stream;
+}
+#pragma GCC diagnostic pop
 } // namespace
+
 
 namespace MSO
 {
@@ -160,6 +206,7 @@ public:
     my_queue<Point> queue;
     double val, mu_value, fdt_value;
     std::vector<bool> visited_array(this->get_length(), false);
+    //std::cout << "Neighbourhood: " << this->neighbourhood << std::endl << "Distances: " << this->distances << std::endl; 
     for (coord[0] = this->lower_bound[0]; coord[0] < this->upper_bound[0]; coord[0]++)
     {
       for (coord[1] = this->lower_bound[1]; coord[1] < this->upper_bound[1]; coord[1]++)
@@ -168,16 +215,17 @@ public:
         {
           position = calculate_position(coord, dimension_size);
           array[position] = std::numeric_limits<mu_type>::infinity();
-          if (components[position] == this->background_component)
+          if (this->components[position] == this->background_component)
           {
+            array[position] = 0;
             for (size_t i = 0; i < 3 * this->distances.size(); i += 3)
             {
               for (size_t j = 0; j < ndim; j++)
                 coord2[j] = coord[j] + this->neighbourhood[i + j];
               if (outside_bounds(coord2, lower_bound, upper_bound)){
-                // continue;
-                queue.push(coord);
-                break;
+                continue;
+                //queue.push(coord);
+                //break;
               }
               if (components[calculate_position(coord2, dimension_size)] == 0)
               {
@@ -189,7 +237,7 @@ public:
         }
       }
     }
-    std::cout << std::endl << "Queue size " << queue.get_size() << std::endl; 
+    //std::cout << std::endl << "Queue size " << queue.get_size() << std::endl; 
     size_t count = 0;
     while (!queue.empty())
     {
@@ -202,11 +250,11 @@ public:
       for (size_t i = 0; i < this->distances.size(); i++)
       {
         for (size_t j = 0; j < ndim; j++)
-          coord2[j] = coord[j] + this->neighbourhood[i + j];
+          coord2[j] = coord[j] + this->neighbourhood[3*i + j];
         if (outside_bounds(coord2, lower_bound, upper_bound))
           continue;
         neigh_position = calculate_position(coord2, dimension_size);
-        if (components[neigh_position] != 0)
+        if (this->components[neigh_position] != 0)
           continue;
         val = (this->mu_array[neigh_position] + mu_value) * distances[i] / 2;
         if (array[neigh_position] > val + fdt_value)
@@ -221,7 +269,7 @@ public:
       }
       visited_array[position] = false;
     }
-    std::cout << "Count " << count << std::endl;
+    //std::cout << "Count " << count << std::endl;
   };
 
   void set_background_component(T val) { this->background_component = val; };
