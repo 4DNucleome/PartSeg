@@ -30,7 +30,8 @@ cdef extern from 'mso.h' namespace 'MSO':
         void set_mu_copy(mu_type * mu, size_t length) except +
         void set_mu_swap(vector[mu_type] & mu) except +
         void set_neighbourhood(vector[int8_t] neighbourhood, vector[mu_type] distances)
-        void compute_FDT(vector[mu_type] & array)
+        void set_neighbourhood(int8_t * neighbourhood, mu_type * distances, size_t neigh_size)
+        void compute_FDT(vector[mu_type] & array) except +
         size_t get_length()
         void set_data[W](T * components, W size, T background_component)
         void set_data[W](T * components, W size)
@@ -103,6 +104,7 @@ def calculate_mu(numpy.ndarray[image_types, ndim=3] image, image_types lower_bou
 
 cdef class PyMSO:
     cdef MSO[uint8_t] mso
+    cdef numpy.ndarray components
 
     def set_image(self, numpy.ndarray[image_types, ndim=3] image, image_types lower_bound,
                   image_types upper_bound, MuType type_, mask=None,
@@ -115,16 +117,20 @@ cdef class PyMSO:
         self.mso.set_mu_copy(<mu_type *> mu.data, mu.size)
 
     def set_components(self, numpy.ndarray[uint8_t, ndim=3] components):
-        cdef vector[uint16_t] size = vector[uint16_t](3, 0)
-        size[0] =  components.size[0]
-        size[1] = components.size[1]
-        size[2] = components.size[2]
-        self.mso.set_data(<uint8_t *> components.data, size)
+        cdef vector[uint16_t] shape = vector[uint16_t](3, 0)
+        shape[0] = components.shape[0]
+        shape[1] = components.shape[1]
+        shape[2] = components.shape[2]
+        self.mso.set_data(<uint8_t *> components.data, shape)
+        self.components = components
 
+    def set_neighbourhood(self, numpy.ndarray[int8_t, ndim=2] neighbourhood, numpy.ndarray[mu_type] distances):
+        self.mso.set_neighbourhood(<int8_t *> neighbourhood.data, <mu_type *> distances.data, distances.size)
 
     def calculate_FDT(self):
         cdef vector[mu_type] fdt = vector[mu_type](self.mso.get_length(), 0)
-        return numpy.array(fdt)
+        self.mso.compute_FDT(fdt)
+        return numpy.array(fdt).reshape(self.components.shape[0], self.components.shape[1], self.components.shape[2])
 
 
 
