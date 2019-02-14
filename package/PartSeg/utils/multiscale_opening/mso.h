@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <vector>
+#include <limits>
 #include <stdexcept>
 #include <array>
 #include "my_queue.h"
@@ -25,10 +26,9 @@ size_t inline calculate_position(std::array<T, K> coordinate, std::array<size_t,
 template <typename T, size_t K>
 bool inline outside_bounds(std::array<T, K> coordinate, std::array<T, K> lower_bound, std::array<T, K> upper_bound)
 {
-  size_t pos = 0;
   for (size_t i = 0; i < K; i++)
   {
-    if ((lower_bound[i] < coordinate[i]) || (upper_bound >= coordinate[i]))
+    if ((lower_bound[i] < coordinate[i]) || (upper_bound[i] >= coordinate[i]))
       return true;
   }
   return false;
@@ -77,7 +77,8 @@ public:
 
   inline std::array<size_t, ndim> dimension_size() const
   {
-    std::array<size_t, ndim> res = {1};
+    std::array<size_t, ndim> res;
+    res[ndim-1] = 1;
     for (size_t i = ndim - 1; i > 0; i--)
     {
       res[i - 1] = res[i] * this->size[i];
@@ -148,20 +149,17 @@ public:
 
   void compute_FDT(std::vector<mu_type> &array) const
   {
-    if (this->z_size * this->y_size * this->x_size == 0)
+    if (this->get_length() == 0)
       throw std::runtime_error("call FDT calculation befor set coordinates data");
     if (this->mu_array.size() == 0)
       throw std::runtime_error("call FDT calculation befor set mu array");
 
     const std::array<size_t, ndim> dimension_size = this->dimension_size();
-    coord_type xx, yy, zz, x, y, z;
-    std::array<coord_type, ndim> coord, coord2;
+    Point coord, coord2;
     size_t position, neigh_position;
     my_queue<Point> queue;
-    Point p;
     double val, mu_value, fdt_value;
-    std::vector<bool> visited_array(this->z_size * this->y_size * this->x_size, false);
-
+    std::vector<bool> visited_array(this->get_length(), false);
     for (coord[0] = this->lower_bound[0]; coord[0] < this->upper_bound[0]; coord[0]++)
     {
       for (coord[1] = this->lower_bound[1]; coord[1] < this->upper_bound[1]; coord[1]++)
@@ -169,35 +167,42 @@ public:
         for (coord[2] = this->lower_bound[2]; coord[2] < this->upper_bound[2]; coord[2]++)
         {
           position = calculate_position(coord, dimension_size);
-          array[position] = 0;
+          array[position] = std::numeric_limits<mu_type>::infinity();
           if (components[position] == this->background_component)
           {
             for (size_t i = 0; i < 3 * this->distances.size(); i += 3)
             {
               for (size_t j = 0; j < ndim; j++)
                 coord2[j] = coord[j] + this->neighbourhood[i + j];
-              if (outside_bounds(coord2, lower_bound, upper_bound))
-                continue;
+              if (outside_bounds(coord2, lower_bound, upper_bound)){
+                // continue;
+                queue.push(coord);
+                break;
+              }
               if (components[calculate_position(coord2, dimension_size)] == 0)
               {
-                queue.push(coord2);
+                queue.push(coord);
+                break;
               }
             }
           }
         }
       }
     }
+    std::cout << std::endl << "Queue size " << queue.get_size() << std::endl; 
+    size_t count = 0;
     while (!queue.empty())
     {
+      count += 1;
       coord = queue.front();
       queue.pop();
-      position = calculate_position(p, dimension_size);
+      position = calculate_position(coord, dimension_size);
       mu_value = this->mu_array[position];
-      fdt_value = this->array[position];
+      fdt_value = array[position];
       for (size_t i = 0; i < this->distances.size(); i++)
       {
         for (size_t j = 0; j < ndim; j++)
-          coord2[j] = p[j] + this->neighbourhood[i + j];
+          coord2[j] = coord[j] + this->neighbourhood[i + j];
         if (outside_bounds(coord2, lower_bound, upper_bound))
           continue;
         neigh_position = calculate_position(coord2, dimension_size);
@@ -210,12 +215,13 @@ public:
           if (!visited_array[neigh_position])
           {
             visited_array[neigh_position] = true;
-            queue.push(coord);
+            queue.push(coord2);
           }
         }
       }
       visited_array[position] = false;
     }
+    std::cout << "Count " << count << std::endl;
   };
 
   void set_background_component(T val) { this->background_component = val; };

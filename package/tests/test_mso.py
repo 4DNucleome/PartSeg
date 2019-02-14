@@ -1,9 +1,9 @@
+import pytest
+
 from PartSeg.utils.multiscale_opening import PyMSO, calculate_mu, MuType
 import numpy as np
 
-
-def test_mso_construct():
-    data = PyMSO()
+from PartSeg.utils.segmentation.sprawl import NeighType, calculate_distances_array
 
 
 class TestMu:
@@ -99,5 +99,37 @@ class TestMu:
         assert np.all(res == (np.ones(image.shape, dtype=np.float64) - (image == 10) * 0.5) * mask)
 
     def test_two_object_mu(self):
-        #TODO
+        # TODO
         image = np.zeros((10, 10, 10), dtype=np.uint8)
+
+
+def test_mso_construct():
+    data = PyMSO()
+
+
+class TestFDT:
+    def test_fdt_base(self):
+        mso = PyMSO()
+        neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
+        components = np.zeros((10, 10, 10), dtype=np.uint8)
+        components[3:7, 3:7, 3:7] = 1
+        mso.set_neighbourhood(neigh, dist)
+        mso.set_components(components)
+        mso.set_mu_array(np.ones(components.shape))
+        res = mso.calculate_FDT()
+        print(res)
+
+class TestExceptions:
+    def test_fdt(self):
+        mso = PyMSO()
+        neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
+        components = np.zeros((10, 10, 10), dtype=np.uint8)
+        components[3:7, 3:7, 3:7] = 1
+        mso.set_neighbourhood(neigh, dist)
+        with pytest.raises(RuntimeError):
+            mso.calculate_FDT()
+        mso.set_components(components)
+        with pytest.raises(RuntimeError):
+            mso.calculate_FDT()
+
+

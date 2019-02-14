@@ -99,6 +99,11 @@ class NeighType(Enum):
 
 
 def calculate_distances_array(spacing, neigh_type: NeighType):
+    """
+    :param spacing:
+    :param neigh_type:
+    :return: neighbourhood array, distance array
+    """
     min_dist = min(spacing)
     normalized_spacing = [x / min_dist for x in spacing]
     if len(normalized_spacing) == 2:
