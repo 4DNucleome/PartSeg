@@ -2,6 +2,8 @@
 # cython: language_level=3
 
 from libcpp.vector cimport vector
+from libcpp.utility cimport pair
+from libcpp cimport bool
 from numpy cimport uint8_t, uint16_t, uint32_t, float32_t, float64_t, int8_t, int16_t
 import numpy
 cimport numpy 
@@ -16,11 +18,17 @@ ctypedef fused image_types:
     float64_t
 
 ctypedef double mu_type
+ctypedef uint8_t component_type
 
 cpdef enum MuType:
     base_mu = 1
     reflection_mu = 2
     two_object_mu = 3
+
+cpdef enum SegmentType:
+    separate_objects = 1
+    separate_from_background = 2
+
 
 cdef extern from 'mso.h' namespace 'MSO':
     cdef cppclass MSO[T]:
@@ -32,6 +40,7 @@ cdef extern from 'mso.h' namespace 'MSO':
         void set_neighbourhood(vector[int8_t] neighbourhood, vector[mu_type] distances)
         void set_neighbourhood(int8_t * neighbourhood, mu_type * distances, size_t neigh_size)
         void compute_FDT(vector[mu_type] & array) except +
+        void set_use_background(bool val)
         size_t get_length()
         void set_data[W](T * components, W size, T background_component)
         void set_data[W](T * components, W size)
@@ -103,8 +112,9 @@ def calculate_mu(numpy.ndarray[image_types, ndim=3] image, image_types lower_bou
 
 
 cdef class PyMSO:
-    cdef MSO[uint8_t] mso
+    cdef MSO[component_type] mso
     cdef numpy.ndarray components
+    cdef component_type components_num
 
     def set_image(self, numpy.ndarray[image_types, ndim=3] image, image_types lower_bound,
                   image_types upper_bound, MuType type_, mask=None,
@@ -116,12 +126,12 @@ cdef class PyMSO:
     def set_mu_array(self, numpy.ndarray[mu_type, ndim=3] mu):
         self.mso.set_mu_copy(<mu_type *> mu.data, mu.size)
 
-    def set_components(self, numpy.ndarray[uint8_t, ndim=3] components):
+    def set_components(self, numpy.ndarray[component_type, ndim=3] components):
         cdef vector[uint16_t] shape = vector[uint16_t](3, 0)
         shape[0] = components.shape[0]
         shape[1] = components.shape[1]
         shape[2] = components.shape[2]
-        self.mso.set_data(<uint8_t *> components.data, shape)
+        self.mso.set_data(<component_type *> components.data, shape)
         self.components = components
 
     def set_neighbourhood(self, numpy.ndarray[int8_t, ndim=2] neighbourhood, numpy.ndarray[mu_type] distances):
@@ -131,6 +141,11 @@ cdef class PyMSO:
         cdef vector[mu_type] fdt = vector[mu_type](self.mso.get_length(), 0)
         self.mso.compute_FDT(fdt)
         return numpy.array(fdt).reshape(self.components.shape[0], self.components.shape[1], self.components.shape[2])
+
+
+
+
+
 
 
 

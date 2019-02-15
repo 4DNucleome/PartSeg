@@ -3,6 +3,7 @@
 #include <vector>
 #include <limits>
 #include <stdexcept>
+#include <utility>
 #include <array>
 #include <ostream>
 #include "my_queue.h"
@@ -34,52 +35,160 @@ bool inline outside_bounds(std::array<T, K> coordinate, std::array<T, K> lower_b
   }
   return false;
 }
-template<typename T, size_t K>
-std::ostream & operator<<(std::ostream & stream, const std::array<T, K> & array){
+template <typename T, size_t K>
+std::ostream &operator<<(std::ostream &stream, const std::array<T, K> &array)
+{
   stream << "array(";
-  for (size_t i=0; i<K-1; i++)
+  for (size_t i = 0; i < K - 1; i++)
     stream << array[i] << ", ";
-  stream << array[K-1] << ")";
+  stream << array[K - 1] << ")";
   return stream;
 }
 
-template<size_t K>
-std::ostream & operator<<(std::ostream & stream, const std::array<char, K> & array){
+template <size_t K>
+std::ostream &operator<<(std::ostream &stream, const std::array<char, K> &array)
+{
   stream << "array(";
-  for (size_t i=0; i<K-1; i++)
-    stream << (int) array[i] << ", ";
-  stream << (int) array[K-1] << ")";
+  for (size_t i = 0; i < K - 1; i++)
+    stream << (int)array[i] << ", ";
+  stream << (int)array[K - 1] << ")";
   return stream;
 }
 
-template<typename T>
-std::ostream & operator<<(std::ostream & stream, const std::vector<T> & array){
+template <typename T>
+std::ostream &operator<<(std::ostream &stream, const std::vector<T> &array)
+{
   stream << "vector(";
-  for (size_t i=0; i<array.size() - 1; i++)
+  for (size_t i = 0; i < array.size() - 1; i++)
     stream << array[i] << ", ";
   stream << array.back() << ")";
   return stream;
 }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
-template<>
-std::ostream & operator<<(std::ostream & stream, const std::vector<unsigned char> & array){
+template <>
+std::ostream &operator<<(std::ostream &stream, const std::vector<unsigned char> &array)
+{
   stream << "vector(";
-  for (size_t i=0; i<array.size(); i++)
-    stream << (int) array[i] << ", ";
-  stream << (int) array.back() << ")";
+  for (size_t i = 0; i < array.size(); i++)
+    stream << (int)array[i] << ", ";
+  stream << (int)array.back() << ")";
   return stream;
 }
-std::ostream & operator<<(std::ostream & stream, const std::vector<signed char> & array){
+std::ostream &operator<<(std::ostream &stream, const std::vector<signed char> &array)
+{
   stream << "vector(";
-  for (size_t i=0; i<array.size(); i++)
-    stream << (int) array[i] << ", ";
-  stream << (int) array.back() << ")";
+  for (size_t i = 0; i < array.size(); i++)
+    stream << (int)array[i] << ", ";
+  stream << (int)array.back() << ")";
   return stream;
 }
 #pragma GCC diagnostic pop
-} // namespace
 
+template <typename T, size_t K>
+class ArrayLimits
+{
+  std::array<T, K> lower_bound;
+  std::array<T, K> upper_bound;
+
+public:
+  ArrayLimits()
+  {
+    this->lower_bound.fill(0);
+    this->upper_bound.fill(1);
+  };
+  ArrayLimits(std::array<T, K> lower_bound_, std::array<T, K> upper_bound_) : lower_bound(lower_bound_), upper_bound(upper_bound_){};
+  void set_bounds(std::array<T, K> lower_bound, std::array<T, K> upper_bound)
+  {
+    this->lower_bound = lower_bound;
+    this->upper_bound = upper_bound;
+  };
+
+  class iterator
+  {
+  private:
+    std::array<T, K> lower_bound;
+    std::array<T, K> upper_bound;
+    std::array<T, K> state;
+
+  public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = std::array<T, K>;
+    using difference_type = int;
+    using pointer = std::array<T, K> *;
+    using reference = std::array<T, K> &;
+
+    iterator(std::array<T, K> lower_bound, std::array<T, K> upper_bound)
+    {
+      this->lower_bound = lower_bound;
+      this->upper_bound = upper_bound;
+      this->upper_bound[0] += 1;
+      this->state = lower_bound;
+    }
+    iterator(std::array<T, K> lower_bound, std::array<T, K> upper_bound, std::array<T, K> state)
+    {
+      this->lower_bound = lower_bound;
+      this->upper_bound = upper_bound;
+      this->upper_bound[0] += 1;
+      this->state = state;
+    }
+    std::array<T, K> operator++()
+    {
+      for (size_t i = K - 1; i >= 0; i--)
+      {
+        this->state[i]++;
+        if (this->state[i] >= this->upper_bound[i])
+          this->state[i] = this->lower_bound[i];
+        else
+          break;
+      }
+      return this->state;
+    }
+    std::array<T, K> operator++(int)
+    {
+      const auto res = this->state;
+      ++this;
+      return res;
+    }
+    std::array<T, K> operator--()
+    {
+      for (size_t i = K - 1; i >= 0; i--)
+      {
+        if (this->state[i] > this->lower_bound[i])
+        {
+          this->state[i]--;
+          break;
+        }
+        else
+        {
+          this->state[i] = this->upper_bound[i] - 1;
+        }
+      }
+      return this->state;
+    }
+    std::array<T, K> operator--(int)
+    {
+      const auto res = this->state;
+      --this;
+      return res;
+    }
+    std::array<T, K> operator*() { return this->state; };
+    pointer operator->() { return &(this->state); };
+    bool operator==(const iterator &other) const { return this->state == other.state; }
+    bool operator!=(const iterator &other) const { return this->state != other.state; }
+  };
+
+  iterator begin() { return iterator(this->lower_bound, this->upper_bound); };
+  iterator end()
+  {
+    std::array<T, K> state;
+    state.fill(0);
+    state[0] = this->upper_bound[0];
+    return iterator(this->lower_bound, this->upper_bound, state);
+  };
+};
+
+} // namespace
 
 namespace MSO
 {
@@ -96,8 +205,11 @@ private:
   std::array<coord_type, ndim> size;
   std::array<coord_type, ndim> lower_bound;
   std::array<coord_type, ndim> upper_bound;
+  std::vector<mu_type> fdt_array;
+  T components_num;
+  bool use_background = false;
   T *components;
-  T background_component = 1;
+  const T background_component = 1;
 
 public:
   MSO()
@@ -105,6 +217,11 @@ public:
     this->components = nullptr;
     this->size = {0};
   };
+
+  void set_use_background(bool val)
+  {
+    this->use_background = val;
+  }
 
   void erase_data()
   {
@@ -124,7 +241,7 @@ public:
   inline std::array<size_t, ndim> dimension_size() const
   {
     std::array<size_t, ndim> res;
-    res[ndim-1] = 1;
+    res[ndim - 1] = 1;
     for (size_t i = ndim - 1; i > 0; i--)
     {
       res[i - 1] = res[i] * this->size[i];
@@ -133,7 +250,7 @@ public:
   }
 
   template <typename W>
-  void set_data(T *components, W size, T background_component = 1)
+  void set_data(T *components, W size)
   {
     this->components = components;
     for (size_t i = 0; i < ndim; i++)
@@ -142,7 +259,6 @@ public:
       this->upper_bound[i] = size[i];
       this->lower_bound[i] = 0;
     }
-    this->background_component = background_component;
     if (this->get_length() != this->mu_array.size())
       this->mu_array.clear();
   }
@@ -206,38 +322,34 @@ public:
     my_queue<Point> queue;
     double val, mu_value, fdt_value;
     std::vector<bool> visited_array(this->get_length(), false);
-    //std::cout << "Neighbourhood: " << this->neighbourhood << std::endl << "Distances: " << this->distances << std::endl; 
-    for (coord[0] = this->lower_bound[0]; coord[0] < this->upper_bound[0]; coord[0]++)
+    //std::cout << "Neighbourhood: " << this->neighbourhood << std::endl << "Distances: " << this->distances << std::endl;
+    auto bounds = ArrayLimits<Point::value_type, ndim>(this->lower_bound, this->upper_bound);
+    for (auto coord : bounds)
     {
-      for (coord[1] = this->lower_bound[1]; coord[1] < this->upper_bound[1]; coord[1]++)
+      position = calculate_position(coord, dimension_size);
+      array[position] = std::numeric_limits<mu_type>::infinity();
+      if (this->components[position] == this->background_component)
       {
-        for (coord[2] = this->lower_bound[2]; coord[2] < this->upper_bound[2]; coord[2]++)
+        array[position] = 0;
+        for (size_t i = 0; i < 3 * this->distances.size(); i += 3)
         {
-          position = calculate_position(coord, dimension_size);
-          array[position] = std::numeric_limits<mu_type>::infinity();
-          if (this->components[position] == this->background_component)
+          for (size_t j = 0; j < ndim; j++)
+            coord2[j] = coord[j] + this->neighbourhood[i + j];
+          if (outside_bounds(coord2, lower_bound, upper_bound))
           {
-            array[position] = 0;
-            for (size_t i = 0; i < 3 * this->distances.size(); i += 3)
-            {
-              for (size_t j = 0; j < ndim; j++)
-                coord2[j] = coord[j] + this->neighbourhood[i + j];
-              if (outside_bounds(coord2, lower_bound, upper_bound)){
-                continue;
-                //queue.push(coord);
-                //break;
-              }
-              if (components[calculate_position(coord2, dimension_size)] == 0)
-              {
-                queue.push(coord);
-                break;
-              }
-            }
+            continue;
+            //queue.push(coord);
+            //break;
+          }
+          if (components[calculate_position(coord2, dimension_size)] == 0)
+          {
+            queue.push(coord);
+            break;
           }
         }
       }
     }
-    //std::cout << std::endl << "Queue size " << queue.get_size() << std::endl; 
+    //std::cout << std::endl << "Queue size " << queue.get_size() << std::endl;
     size_t count = 0;
     while (!queue.empty())
     {
@@ -250,7 +362,7 @@ public:
       for (size_t i = 0; i < this->distances.size(); i++)
       {
         for (size_t j = 0; j < ndim; j++)
-          coord2[j] = coord[j] + this->neighbourhood[3*i + j];
+          coord2[j] = coord[j] + this->neighbourhood[3 * i + j];
         if (outside_bounds(coord2, lower_bound, upper_bound))
           continue;
         neigh_position = calculate_position(coord2, dimension_size);
@@ -272,7 +384,71 @@ public:
     //std::cout << "Count " << count << std::endl;
   };
 
-  void set_background_component(T val) { this->background_component = val; };
+  void max_path_calculate(std::vector<mu_type> &fdt_array, std::vector<T> &components_arr)
+  {
+    Point coord, coord2;
+    size_t position, neigh_position;
+    mu_type val, val2;
+    std::vector<mu_type> distances(fdt_array.size(), std::numeric_limits<mu_type>::infinity());
+    std::vector<my_queue<Point>> queues(this->components_num);
+    std::vector<bool> visited_array(this->get_length(), false);
+    auto bounds = ArrayLimits<Point::value_type, ndim>(this->lower_bound, this->upper_bound);
+
+    for (auto coord : bounds)
+    {
+      position = calculate_position(coord, dimension_size);
+      if (components_arr[position] != 0)
+      {
+        distances[position] = 0;
+        for (size_t i = 0; i < 3 * this->distances.size(); i += 3)
+        {
+          for (size_t j = 0; j < ndim; j++)
+            coord2[j] = coord[j] + this->neighbourhood[i + j];
+          if (outside_bounds(coord2, lower_bound, upper_bound))
+            continue;
+          if (components_arr[calculate_position(coord2, dimension_size)] == 0)
+          {
+            queues[components_arr[position]].push(coord);
+            break;
+          }
+        }
+      }
+    }
+    for (auto &queue : queues)
+    {
+      while (!queue.empty())
+      {
+        coord = queue.front();
+        queue.pop();
+        position = calculate_position(coord, dimension_size);
+        val = distances[position];
+        for (size_t i = 0; i < this->distances.size(); i++)
+        {
+          for (size_t j = 0; j < ndim; j++)
+            coord2[j] = coord[j] + this->neighbourhood[3 * i + j];
+          if (outside_bounds(coord2, lower_bound, upper_bound))
+            continue;
+          neigh_position = calculate_position(coord2, dimension_size);
+          val2 = std::max(val, fdt_array[neigh_position]);
+          if (val2 < distances[neigh_position])
+          {
+            distances[neigh_position] = val2;
+            components_arr[neigh_position] = components_arr[position];
+            if (!visited_array[neigh_position])
+            {
+              visited_array[neigh_position] = true;
+              queue.push(coord2);
+            }
+          }
+          else if (val2 == distances[neigh_position])
+          {
+            components_arr[neigh_position] = 0;
+          }
+        }
+        visited_array[neigh_position] = false;
+      }
+    }
+  };
 };
 
 void inline shrink(mu_type &val)
