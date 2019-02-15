@@ -1,4 +1,7 @@
+import itertools
+
 import pytest
+from PartSeg.utils.distance_in_structure.euclidean_cython import calculate_euclidean
 
 from PartSeg.utils.multiscale_opening import PyMSO, calculate_mu, MuType
 import numpy as np
@@ -117,7 +120,34 @@ class TestFDT:
         mso.set_components(components)
         mso.set_mu_array(np.ones(components.shape))
         res = mso.calculate_FDT()
-        print(res)
+        arr = calculate_euclidean((components == 0).astype(np.uint8), components, neigh, dist)
+        assert np.all(res == arr)
+        mso.set_mu_array(np.ones(components.shape) * 0.5)
+        res = mso.calculate_FDT()
+        assert np.all(res == arr*0.5)
+        mu = np.ones(components.shape) * 0.5
+        mu[components > 0] = 1
+        mso.set_mu_array(mu)
+        arr *= 0.5
+        arr[arr > 0] += 0.25
+        arr[3:7, (0, 1, 2, 0, 1, 2, 9, 8, 7, 9, 8, 7), (0, 1, 2, 9 ,8 ,7 , 0, 1, 2, 9, 8, 7)] += np.sqrt(2)/4 - 0.25
+        for i in range(3):
+            lb = i
+            ub = 9-i
+            arr[lb, lb+1:ub, (lb, ub)] += np.sqrt(2)/4 - 0.25
+            arr[lb, (lb, ub), lb+1:ub] += np.sqrt(2) / 4 - 0.25
+            arr[ub, lb + 1:ub, (lb, ub)] += np.sqrt(2) / 4 - 0.25
+            arr[ub, (lb, ub), lb + 1:ub] += np.sqrt(2) / 4 - 0.25
+            for el in itertools.product([lb, ub], repeat=3):
+                arr[el]+= np.sqrt(3) / 4 - 0.25
+        for z, (y,x) in itertools.product([2, 7], itertools.product([0, 9], repeat=2)):
+            arr[z, y, x] += np.sqrt(2) / 4 - 0.25
+        for z, (y,x) in itertools.product([2, 7], itertools.product([1, 8], repeat=2)):
+            arr[z, y, x] += np.sqrt(2) / 4 - 0.25
+        for z, (y,x) in itertools.product([1, 8], itertools.product([0, 9], repeat=2)):
+            arr[z, y, x] += np.sqrt(2) / 4 - 0.25
+        res2 = mso.calculate_FDT()
+        assert np.allclose(res2, arr)
 
     def test_fdt_simple(self):
         mso = PyMSO()
