@@ -384,12 +384,12 @@ public:
     //std::cout << "Count " << count << std::endl;
   };
 
-  void max_path_calculate(std::vector<mu_type> &fdt_array, std::vector<T> &components_arr)
+  void max_path_calculate(std::vector<mu_type> &fdt_array, std::vector<T> &components_arr, std::vector<bool> sprawl_area)
   {
     Point coord, coord2;
     size_t position, neigh_position;
     mu_type val, val2;
-    std::vector<mu_type> distances(fdt_array.size(), std::numeric_limits<mu_type>::infinity());
+    std::vector<mu_type> distances(fdt_array.size(), 0);
     std::vector<my_queue<Point>> queues(this->components_num);
     std::vector<bool> visited_array(this->get_length(), false);
     auto bounds = ArrayLimits<Point::value_type, ndim>(this->lower_bound, this->upper_bound);
@@ -399,7 +399,7 @@ public:
       position = calculate_position(coord, dimension_size);
       if (components_arr[position] != 0)
       {
-        distances[position] = 0;
+        distances[position] = fdt_array[position];
         for (size_t i = 0; i < 3 * this->distances.size(); i += 3)
         {
           for (size_t j = 0; j < ndim; j++)
@@ -429,8 +429,8 @@ public:
           if (outside_bounds(coord2, lower_bound, upper_bound))
             continue;
           neigh_position = calculate_position(coord2, dimension_size);
-          val2 = std::max(val, fdt_array[neigh_position]);
-          if (val2 < distances[neigh_position])
+          val2 = std::min(val, fdt_array[neigh_position]);
+          if (val2 > distances[neigh_position])
           {
             distances[neigh_position] = val2;
             components_arr[neigh_position] = components_arr[position];
