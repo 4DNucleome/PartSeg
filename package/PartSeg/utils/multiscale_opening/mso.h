@@ -8,10 +8,7 @@
 #include <ostream>
 #include "my_queue.h"
 
-typedef double mu_type;
 typedef uint16_t coord_type;
-
-const size_t ndim = 3;
 
 namespace
 {
@@ -192,13 +189,16 @@ public:
 
 namespace MSO
 {
-template <typename T>
+template <typename T, typename M = double, size_t N=3>
 /* K is number of dimensions */
 class MSO
 {
+public:
+  static const size_t ndim = N;
+  typedef std::array<coord_type, N> Point;
+  typedef M mu_type;
 private:
-  typedef std::array<coord_type, ndim> Point;
-
+  
   std::vector<int8_t> neighbourhood;
   std::vector<mu_type> distances;
   std::vector<mu_type> mu_array;
@@ -323,7 +323,7 @@ public:
     double val, mu_value, fdt_value;
     std::vector<bool> visited_array(this->get_length(), false);
     //std::cout << "Neighbourhood: " << this->neighbourhood << std::endl << "Distances: " << this->distances << std::endl;
-    auto bounds = ArrayLimits<Point::value_type, ndim>(this->lower_bound, this->upper_bound);
+    auto bounds = ArrayLimits<coord_type, ndim>(this->lower_bound, this->upper_bound);
     for (auto coord : bounds)
     {
       position = calculate_position(coord, dimension_size);
@@ -392,7 +392,8 @@ public:
     std::vector<mu_type> distances(fdt_array.size(), 0);
     std::vector<my_queue<Point>> queues(this->components_num);
     std::vector<bool> visited_array(this->get_length(), false);
-    auto bounds = ArrayLimits<Point::value_type, ndim>(this->lower_bound, this->upper_bound);
+    auto bounds = ArrayLimits<coord_type, ndim>(this->lower_bound, this->upper_bound);
+    const std::array<size_t, ndim> dimension_size = this->dimension_size();
 
     for (auto coord : bounds)
     {
@@ -406,7 +407,7 @@ public:
             coord2[j] = coord[j] + this->neighbourhood[i + j];
           if (outside_bounds(coord2, lower_bound, upper_bound))
             continue;
-          if (components_arr[calculate_position(coord2, dimension_size)] == 0)
+          if (sprawl_area[calculate_position(coord2, dimension_size)] == true)
           {
             queues[components_arr[position]].push(coord);
             break;
@@ -429,6 +430,8 @@ public:
           if (outside_bounds(coord2, lower_bound, upper_bound))
             continue;
           neigh_position = calculate_position(coord2, dimension_size);
+          if (sprawl_area[neigh_position] == false)
+            continue;
           val2 = std::min(val, fdt_array[neigh_position]);
           if (val2 > distances[neigh_position])
           {
@@ -451,7 +454,8 @@ public:
   };
 };
 
-void inline shrink(mu_type &val)
+template <typename R>
+void inline shrink(R &val)
 {
   if (val > 1)
     val = 1;
@@ -459,120 +463,120 @@ void inline shrink(mu_type &val)
     val = 0;
 }
 
-template <typename T>
-std::vector<mu_type> calculate_mu_array(T *array, size_t length, T lower_bound,
-                                        T upper_bound)
-{
-  std::vector<mu_type> result(length, 0);
-  mu_type mu;
-  for (size_t i = 0; i < length; i++)
-  {
-    mu = (mu_type)(array[i] - lower_bound) / (upper_bound - lower_bound);
-    shrink(mu);
-    result[i] = mu;
-  }
-  return result;
-}
+template <typename R, typename T>
+class MuCalc{
+  public:
 
-template <typename T>
-std::vector<mu_type> calculate_reflection_mu_array(T *array, size_t length, T lower_bound,
-                                                   T upper_bound)
-{
-  std::vector<mu_type> result(length, 0);
-  mu_type mu;
-  for (size_t i = 0; i < length; i++)
+  static std::vector<R> calculate_mu_array(T *array, size_t length, T lower_bound,
+                                          T upper_bound)
   {
-    mu = (mu_type)(array[i] - lower_bound) / (upper_bound - lower_bound);
-    shrink(mu);
-    if (mu < 0.5)
-      mu = 1 - mu;
-    result[i] = mu;
+    std::vector<R> result(length, 0);
+    R mu;
+    for (size_t i = 0; i < length; i++)
+    {
+      mu = (R)(array[i] - lower_bound) / (upper_bound - lower_bound);
+      shrink(mu);
+      result[i] = mu;
+    }
+    return result;
   }
-  return result;
-}
-template <typename T>
-std::vector<mu_type> calculate_two_object_mu(T *array, size_t length, T lower_bound,
-                                             T upper_bound, T lower_mid_bound,
-                                             T upper_mid_bound)
-{
-  std::vector<mu_type> result(length, 0);
-  mu_type mu;
-  T pixel_val;
-  for (size_t i = 0; i < length; i++)
-  {
-    pixel_val = array[i];
-    mu = (mu_type)(pixel_val - lower_bound) / (upper_bound - lower_bound);
-    if (((lower_bound - lower_mid_bound) > 0) &&
-        (pixel_val >= lower_mid_bound) && (pixel_val <= lower_bound))
-      mu = (mu_type)(pixel_val - lower_mid_bound) / (lower_bound - lower_mid_bound);
-    else if (((upper_bound - lower_bound) > 0) && (lower_bound < pixel_val) &&
-             (pixel_val <= upper_bound))
-      mu = (mu_type)(upper_bound - pixel_val) / (upper_bound - lower_bound);
-    shrink(mu);
-    result[i] = mu;
-  }
-  return result;
-}
 
-template <typename T>
-std::vector<mu_type> calculate_mu_array_masked(T *array, size_t length, T lower_bound,
-                                               T upper_bound, uint8_t *mask)
-{
-  std::vector<mu_type> result(length, 0);
-  mu_type mu;
-  for (size_t i = 0; i < length; i++)
+  static std::vector<R>  calculate_reflection_mu_array(T *array, size_t length, T lower_bound,
+                                                    T upper_bound)
   {
-    if (mask[i] == 0)
-      continue;
-    mu = (mu_type)(array[i] - lower_bound) / (upper_bound - lower_bound);
-    shrink(mu);
-    result[i] = mu;
+    std::vector<R> result(length, 0);
+    R mu;
+    for (size_t i = 0; i < length; i++)
+    {
+      mu = (R)(array[i] - lower_bound) / (upper_bound - lower_bound);
+      shrink(mu);
+      if (mu < 0.5)
+        mu = 1 - mu;
+      result[i] = mu;
+    }
+    return result;
   }
-  return result;
-}
 
-template <typename T>
-std::vector<mu_type> calculate_reflection_mu_array_masked(T *array, size_t length,
-                                                          T lower_bound, T upper_bound,
-                                                          uint8_t *mask)
-{
-  std::vector<mu_type> result(length, 0);
-  mu_type mu;
-  for (size_t i = 0; i < length; i++)
+  static std::vector<R>  calculate_two_object_mu(T *array, size_t length, T lower_bound,
+                                              T upper_bound, T lower_mid_bound,
+                                              T upper_mid_bound)
   {
-    if (mask[i] == 0)
-      continue;
-    mu = (mu_type)(array[i] - lower_bound) / (upper_bound - lower_bound);
-    shrink(mu);
-    if (mu < 0.5)
-      mu = 1 - mu;
-    result[i] = mu;
+    std::vector<R> result(length, 0);
+    R mu;
+    T pixel_val;
+    for (size_t i = 0; i < length; i++)
+    {
+      pixel_val = array[i];
+      mu = (R)(pixel_val - lower_bound) / (upper_bound - lower_bound);
+      if (((lower_bound - lower_mid_bound) > 0) &&
+          (pixel_val >= lower_mid_bound) && (pixel_val <= lower_bound))
+        mu = (R)(pixel_val - lower_mid_bound) / (lower_bound - lower_mid_bound);
+      else if (((upper_bound - lower_bound) > 0) && (lower_bound < pixel_val) &&
+              (pixel_val <= upper_bound))
+        mu = (R)(upper_bound - pixel_val) / (upper_bound - lower_bound);
+      shrink(mu);
+      result[i] = mu;
+    }
+    return result;
   }
-  return result;
-}
-template <typename T>
-std::vector<mu_type> calculate_two_object_mu_masked(T *array, size_t length, T lower_bound,
-                                                    T upper_bound, T lower_mid_bound,
-                                                    T upper_mid_bound, uint8_t *mask)
-{
-  std::vector<mu_type> result(length, 0);
-  mu_type mu;
-  T pixel_val;
-  for (size_t i = 0; i < length; i++)
+
+  static std::vector<R>  calculate_mu_array_masked(T *array, size_t length, T lower_bound,
+                                                T upper_bound, uint8_t *mask)
   {
-    if (mask[i] == 0)
-      continue;
-    pixel_val = array[i];
-    mu = (mu_type)(pixel_val - lower_bound) / (upper_bound - lower_bound);
-    if (((lower_bound - lower_mid_bound) > 0) &&
-        (pixel_val >= lower_mid_bound) && (pixel_val <= lower_bound))
-      mu = (mu_type)(pixel_val - lower_mid_bound) / (lower_bound - lower_mid_bound);
-    else if (((upper_bound - lower_bound) > 0) && (lower_bound < pixel_val) &&
-             (pixel_val <= upper_bound))
-      mu = (mu_type)(upper_bound - pixel_val) / (upper_bound - lower_bound);
-    shrink(mu);
-    result[i] = mu;
+    std::vector<R> result(length, 0);
+    R mu;
+    for (size_t i = 0; i < length; i++)
+    {
+      if (mask[i] == 0)
+        continue;
+      mu = (R)(array[i] - lower_bound) / (upper_bound - lower_bound);
+      shrink(mu);
+      result[i] = mu;
+    }
+    return result;
   }
-  return result;
+
+  static std::vector<R>  calculate_reflection_mu_array_masked(T *array, size_t length,
+                                                            T lower_bound, T upper_bound,
+                                                            uint8_t *mask)
+  {
+    std::vector<R> result(length, 0);
+    R mu;
+    for (size_t i = 0; i < length; i++)
+    {
+      if (mask[i] == 0)
+        continue;
+      mu = (R)(array[i] - lower_bound) / (upper_bound - lower_bound);
+      shrink(mu);
+      if (mu < 0.5)
+        mu = 1 - mu;
+      result[i] = mu;
+    }
+    return result;
+  }
+  static std::vector<R>  calculate_two_object_mu_masked(T *array, size_t length, T lower_bound,
+                                                      T upper_bound, T lower_mid_bound,
+                                                      T upper_mid_bound, uint8_t *mask)
+  {
+    std::vector<R> result(length, 0);
+    R mu;
+    T pixel_val;
+    for (size_t i = 0; i < length; i++)
+    {
+      if (mask[i] == 0)
+        continue;
+      pixel_val = array[i];
+      mu = (R)(pixel_val - lower_bound) / (upper_bound - lower_bound);
+      if (((lower_bound - lower_mid_bound) > 0) &&
+          (pixel_val >= lower_mid_bound) && (pixel_val <= lower_bound))
+        mu = (R)(pixel_val - lower_mid_bound) / (lower_bound - lower_mid_bound);
+      else if (((upper_bound - lower_bound) > 0) && (lower_bound < pixel_val) &&
+              (pixel_val <= upper_bound))
+        mu = (R)(upper_bound - pixel_val) / (upper_bound - lower_bound);
+      shrink(mu);
+      result[i] = mu;
+    }
+    return result;
 }
+};
 } // namespace MSO
