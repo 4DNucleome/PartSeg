@@ -109,6 +109,33 @@ class TestMu:
 def test_mso_construct():
     data = PyMSO()
 
+def test_optimum_erosion_calculate():
+    components = np.zeros((10, 10, 20), dtype=np.uint8)
+    components[4:6, 4:6, 4:6] = 1
+    components[4:6, 4:6, 14:16] = 2
+    sprawl_area = np.zeros(components.shape, dtype=np.uint8)
+    sprawl_area[2:8, 2:8, 2:18] = True
+    sprawl_area[components > 0] = False
+    fdt = np.zeros(components.shape, dtype=np.float64)
+    mso = PyMSO()
+    neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
+    mso.set_neighbourhood(neigh, dist)
+    mso.set_components(components)
+    res = mso.optimum_erosion_calculate(fdt, components, sprawl_area)
+    assert np.all(res == components)
+
+    fdt[:] = 1
+    fdt[:, :, 10] = 0
+    components2 = np.zeros(components.shape, dtype=np.uint8)
+    components2[2:8, 2:8, 2:10] = 1
+    components2[2:8, 2:8, 11:18] = 2
+    res = mso.optimum_erosion_calculate(fdt, components, sprawl_area)
+    assert np.all(res == components2)
+    fdt[5,5, 10] = 1
+    res = mso.optimum_erosion_calculate(fdt, components, sprawl_area)
+    assert np.all(res == components)
+
+
 
 class TestFDT:
     def test_fdt_base(self):

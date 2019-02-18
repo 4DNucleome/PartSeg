@@ -223,6 +223,10 @@ public:
     this->use_background = val;
   }
 
+  void set_components_num(T components_num){
+    this->components_num = components_num;
+  }
+
   void erase_data()
   {
     /* clean pointers, do not free the memory */
@@ -384,17 +388,16 @@ public:
     //std::cout << "Count " << count << std::endl;
   };
 
-  void max_path_calculate(std::vector<mu_type> &fdt_array, std::vector<T> &components_arr, std::vector<bool> sprawl_area)
+  void optimum_erosion_calculate(std::vector<mu_type> &fdt_array, std::vector<T> &components_arr, std::vector<bool> sprawl_area)
   {
     Point coord, coord2;
     size_t position, neigh_position;
     mu_type val, val2;
     std::vector<mu_type> distances(fdt_array.size(), 0);
-    std::vector<my_queue<Point>> queues(this->components_num);
+    std::vector<my_queue<Point>> queues(this->components_num + 1);
     std::vector<bool> visited_array(this->get_length(), false);
     auto bounds = ArrayLimits<coord_type, ndim>(this->lower_bound, this->upper_bound);
     const std::array<size_t, ndim> dimension_size = this->dimension_size();
-
     for (auto coord : bounds)
     {
       position = calculate_position(coord, dimension_size);
@@ -433,23 +436,32 @@ public:
           if (sprawl_area[neigh_position] == false)
             continue;
           val2 = std::min(val, fdt_array[neigh_position]);
+          if (val2 < distances[neigh_position])
+            continue;
+          if ((val2 == distances[neigh_position]) && ((components_arr[neigh_position] == components_arr[position]) || (components_arr[neigh_position] == std::numeric_limits<T>::max())))
+            continue;
           if (val2 > distances[neigh_position])
           {
             distances[neigh_position] = val2;
             components_arr[neigh_position] = components_arr[position];
-            if (!visited_array[neigh_position])
-            {
-              visited_array[neigh_position] = true;
-              queue.push(coord2);
-            }
+          } else {
+            components_arr[neigh_position] = std::numeric_limits<T>::max();
           }
-          else if (val2 == distances[neigh_position])
+          if (!visited_array[neigh_position])
           {
-            components_arr[neigh_position] = 0;
+            visited_array[neigh_position] = true;
+            queue.push(coord2);
           }
         }
         visited_array[neigh_position] = false;
       }
+    }
+    std::vector<size_t> count(this->components_num + 1, 0);
+    for (auto & el: components_arr){
+      if (el == std::numeric_limits<T>::max()){
+        el = 0;
+      }
+      count[el]++;
     }
   };
 };
