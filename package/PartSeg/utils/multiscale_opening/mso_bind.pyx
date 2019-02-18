@@ -10,13 +10,11 @@ cimport numpy
 ctypedef fused image_types:
     int8_t
     int16_t
-
-"""
     uint8_t
     uint16_t
     uint32_t
     float32_t
-    float64_t"""
+    float64_t
 
 ctypedef double mu_type
 ctypedef uint8_t component_type
