@@ -109,32 +109,123 @@ class TestMu:
 def test_mso_construct():
     data = PyMSO()
 
-def test_optimum_erosion_calculate():
-    components = np.zeros((10, 10, 20), dtype=np.uint8)
-    components[4:6, 4:6, 4:6] = 1
-    components[4:6, 4:6, 14:16] = 2
-    sprawl_area = np.zeros(components.shape, dtype=np.uint8)
-    sprawl_area[2:8, 2:8, 2:18] = True
-    sprawl_area[components > 0] = False
-    fdt = np.zeros(components.shape, dtype=np.float64)
-    mso = PyMSO()
-    neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
-    mso.set_neighbourhood(neigh, dist)
-    mso.set_components(components)
-    res = mso.optimum_erosion_calculate(fdt, components, sprawl_area)
-    assert np.all(res == components)
 
-    fdt[:] = 1
-    fdt[:, :, 10] = 0
-    components2 = np.zeros(components.shape, dtype=np.uint8)
-    components2[2:8, 2:8, 2:10] = 1
-    components2[2:8, 2:8, 11:18] = 2
-    res = mso.optimum_erosion_calculate(fdt, components, sprawl_area)
-    assert np.all(res == components2)
-    fdt[5,5, 10] = 1
-    res = mso.optimum_erosion_calculate(fdt, components, sprawl_area)
-    assert np.all(res == components)
+class TestOptimumErosionCalculate:
+    def test_two_components(self):
+        components = np.zeros((10, 10, 20), dtype=np.uint8)
+        components[4:6, 4:6, 4:6] = 1
+        components[4:6, 4:6, 14:16] = 2
+        sprawl_area = np.zeros(components.shape, dtype=np.uint8)
+        sprawl_area[2:8, 2:8, 2:18] = True
+        sprawl_area[components > 0] = False
+        fdt = np.zeros(components.shape, dtype=np.float64)
+        mso = PyMSO()
+        neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
+        mso.set_neighbourhood(neigh, dist)
+        mso.set_components(components)
+        res = mso.optimum_erosion_calculate(fdt, components, sprawl_area)
+        assert np.all(res == components)
 
+        fdt[:] = 2
+        fdt[:, :, 10] = 1
+        components2 = np.zeros(components.shape, dtype=np.uint8)
+        components2[2:8, 2:8, 2:10] = 1
+        components2[2:8, 2:8, 11:18] = 2
+        res = mso.optimum_erosion_calculate(fdt, components, sprawl_area)
+        assert np.all(res == components2)
+        fdt[5, 5, 10] = 2
+        res = mso.optimum_erosion_calculate(fdt, components, sprawl_area)
+        assert np.all(res == components)
+
+    def test_chain_component_base(self):
+        for i in range(2, 10):
+            components = np.zeros((4, 5, i * 5), dtype=np.uint8)
+            for j in range(i):
+                components[2, 2, 5 * j + 2] = j+1
+            fdt = np.ones(components.shape, dtype=np.float64) * 2
+            for j in range(i-1):
+                fdt[:, :, j*5+4] = 1
+            sprawl_area = np.ones(components.shape, dtype=np.uint8)
+            sprawl_area[components > 0] = False
+            components2 = np.zeros(components.shape, dtype=np.uint8)
+            for j in range(i):
+                components2[:, :, (j * 5):(j*5)+4] = j+1
+            components2[:, :, -1] = i
+            neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
+            mso = PyMSO()
+            mso.set_neighbourhood(neigh, dist)
+            mso.set_components(components)
+            res = mso.optimum_erosion_calculate(fdt, components, sprawl_area)
+            assert np.all(res == components2)
+
+    def test_chain_component(self):
+        for i in range(3, 10):
+            components = np.zeros((10, 10, i * 10), dtype=np.uint8)
+            for j in range(i):
+                components[4:6, 4:6, (10*j + 4):(10 * j + 6)] = j+1
+            fdt = np.ones(components.shape, dtype=np.float64) * 2
+            for j in range(i-1):
+                fdt[:, :, (j+1) * 10] = 1
+            sprawl_area = np.zeros(components.shape, dtype=np.uint8)
+            sprawl_area[2:8, 2:8, 2:(10 * i) - 2] = True
+            sprawl_area[components > 0] = False
+            components2 = np.zeros(components.shape, dtype=np.uint8)
+            for j in range(i):
+                components2[2:8, 2:8, (j * 10 + 1):(j+1)*10] = j+1
+            components2[:, :, :2] = 0
+            components2[:, :, -2:] = 0
+            neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
+            mso = PyMSO()
+            mso.set_neighbourhood(neigh, dist)
+            mso.set_components(components)
+            res = mso.optimum_erosion_calculate(fdt, components, sprawl_area)
+            assert np.all(res == components2)
+
+    def test_bridges(self):
+        components = np.zeros((10, 20, 30), dtype=np.uint8)
+        components[4:6, 4:6, 4:6] = 1
+        components[4:6, 4:6, 24:26] = 2
+        components[4:6, 14:16, 14:16] = 3
+        sprawl_area = np.zeros(components.shape, dtype=np.uint8)
+        sprawl_area[2:9, 2:10, 2:28] = True
+        sprawl_area[2:9, 10:18, 11:20] = True
+        sprawl_area[components > 0] = False
+        fdt = np.ones(components.shape, dtype=np.float64) * 2
+        fdt[:, 10, :] = 1
+        fdt[:, :, 10] = 1
+        fdt[:, :, 20] = 1
+
+        comp = np.copy(components)
+        comp[2:9, 2:10, 2:10] = 1
+        comp[2:9, 2:10, 21:28] = 2
+        comp[2:9, 11:18, 11:20] = 3
+        neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
+        mso = PyMSO()
+        mso.set_neighbourhood(neigh, dist)
+        mso.set_components(components)
+        res = mso.optimum_erosion_calculate(fdt, components, sprawl_area)
+        assert np.all(res == comp)
+        fdt2 = np.copy(fdt)
+        fdt2[5, 5, 10] = 2
+        comp2 = np.copy(comp)
+        comp2[5, 5, 10] = 1
+        comp2[2:9, 2:10, 11:20] = 1
+        res = mso.optimum_erosion_calculate(fdt2, components, sprawl_area)
+        assert np.all(res == comp2)
+        fdt2 = np.copy(fdt)
+        fdt2[5, 5, 20] = 2
+        comp2 = np.copy(comp)
+        comp2[5, 5, 20] = 2
+        comp2[2:9, 2:10, 11:20] = 2
+        res = mso.optimum_erosion_calculate(fdt2, components, sprawl_area)
+        assert np.all(res == comp2)
+        fdt2 = np.copy(fdt)
+        fdt2[5, 10, 15] = 2
+        comp2 = np.copy(comp)
+        comp2[5, 10, 15] = 3
+        comp2[2:9, 2:10, 11:20] = 3
+        res = mso.optimum_erosion_calculate(fdt2, components, sprawl_area)
+        assert np.all(res == comp2)
 
 
 class TestFDT:

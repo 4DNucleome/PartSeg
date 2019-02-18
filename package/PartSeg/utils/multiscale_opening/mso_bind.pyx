@@ -166,7 +166,7 @@ cdef class PyMSO:
 
         self.mso.set_components_num(components_arr.max())
 
-        res = self.mso.optimum_erosion_calculate(fdt, components, sprawl_vec)
+        count = self.mso.optimum_erosion_calculate(fdt, components, sprawl_vec)
         res = numpy.array(components, dtype=np_component_type)
         res = res.reshape([components_arr.shape[i] for i in range(components_arr.ndim)])
         return res

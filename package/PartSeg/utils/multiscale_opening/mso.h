@@ -446,11 +446,16 @@ public:
         }
       }
     }
+    //size_t k = 0; 
     for (auto &queue : queues)
     {
+      //std::cerr << "Queue " << k << " size " << queue.get_size() << std::endl;
       while (!queue.empty())
       {
         coord = queue.front();
+        /*if (k==3){
+          std::cerr << "Coord " << coord << std::endl;
+        }*/
         queue.pop();
         position = calculate_position(coord, dimension_size);
         val = distances[position];
@@ -458,9 +463,19 @@ public:
         {
           for (size_t j = 0; j < ndim; j++)
             coord2[j] = coord[j] + this->neighbourhood[3 * i + j];
+          /*if (k==3){
+          std::cerr << "coord " << coord << " coord2 " << coord2 << " out " << outside_bounds(coord2, lower_bound, upper_bound);
+          if (outside_bounds(coord2, lower_bound, upper_bound))
+            std::cerr << std::endl; 
+          }*/
           if (outside_bounds(coord2, lower_bound, upper_bound))
             continue;
           neigh_position = calculate_position(coord2, dimension_size);
+          /*if (k==3){
+            std::cerr << " sprawl " << sprawl_area[neigh_position] 
+            << " fdt " << fdt_array[neigh_position] << " val " << val << " distances " << distances[neigh_position] 
+            << " comp " << (int) components_arr[neigh_position] << std::endl;
+          }*/
           if (sprawl_area[neigh_position] == false)
             continue;
           val2 = std::min(val, fdt_array[neigh_position]);
@@ -481,8 +496,9 @@ public:
             queue.push(coord2);
           }
         }
-        visited_array[neigh_position] = false;
+        visited_array[position] = false;
       }
+      //k++;
     }
     size_t count = 0;
     for (auto & el: components_arr){
