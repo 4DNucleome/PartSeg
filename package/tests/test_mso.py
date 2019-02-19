@@ -110,6 +110,23 @@ def test_mso_construct():
     data = PyMSO()
 
 
+class TestConstrainedDilation:
+    def test_two_components(self):
+        components = np.zeros((10, 10, 20), dtype=np.uint8)
+        components[4:6, 4:6, 4:6] = 1
+        components[4:6, 4:6, 14:16] = 2
+        sprawl_area = np.zeros(components.shape, dtype=np.uint8)
+        sprawl_area[2:8, 2:8, 2:18] = True
+        sprawl_area[components > 0] = False
+        fdt = np.zeros(components.shape, dtype=np.float64)
+        mso = PyMSO()
+        neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
+        mso.set_neighbourhood(neigh, dist)
+        mso.set_components(components)
+        res = mso.constrained_dilation(fdt, components, sprawl_area)
+        # assert np.all(res == components)
+
+
 class TestOptimumErosionCalculate:
     def test_two_components(self):
         components = np.zeros((10, 10, 20), dtype=np.uint8)

@@ -98,6 +98,17 @@ std::array<T, K> operator+(const std::array<T, K> & v1, const std::array<T, K> &
   return res;
 }
 
+template<typename T, size_t K>
+std::array<size_t, K> calculate_dimension_size(const std::array<T, K> & size){
+   std::array<size_t, K> res;
+    res[K - 1] = 1;
+    for (size_t i = K - 1; i > 0; i--)
+    {
+      res[i - 1] = res[i] * size[i];
+    }
+    return res;
+};
+
 template <typename T, size_t K>
 class ArrayLimits
 {
@@ -271,13 +282,7 @@ public:
 
   inline std::array<size_t, ndim> dimension_size() const
   {
-    std::array<size_t, ndim> res;
-    res[ndim - 1] = 1;
-    for (size_t i = ndim - 1; i > 0; i--)
-    {
-      res[i - 1] = res[i] * this->size[i];
-    }
-    return res;
+    return calculate_dimension_size(this->size);
   }
 
   template <typename W>
@@ -352,14 +357,14 @@ public:
     size_t position, neigh_position, array_position, array_neigh_position;
     my_queue<Point> queue;
     double val, mu_value, fdt_value;
-    std::vector<bool> visited_array(this->get_length(), false);
+    std::vector<bool> coord_in_queue(this->get_length(), false);
     //std::cout << "Neighbourhood: " << this->neighbourhood << std::endl << "Distances: " << this->distances << std::endl;
     auto bounds = ArrayLimits<coord_type, ndim>(this->lower_bound, this->upper_bound);
     for (auto coord : bounds)
     {
       position = calculate_position(coord, dimension_size);
       array_position = calculate_position(coord - this->lower_bound, dimension_size);
-      array[array_position] = std::numeric_limits<mu_type>::infinity();
+      array[array_position] = std::numeric_limits<mu_type>::max();
       if (this->components[position] == this->background_component)
       {
         array[position] = 0;
@@ -374,6 +379,7 @@ public:
           if (components[calculate_position(coord2, dimension_size)] == 0)
           {
             queue.push(coord);
+            coord_in_queue[calculate_position(coord, dimension_size)] = true;
             break;
           }
         }
@@ -400,38 +406,38 @@ public:
         array_neigh_position = calculate_position(coord2 - this->lower_bound, dimension_size);
         if (this->components[neigh_position] != 0)
           continue;
-        val = (this->mu_array[neigh_position] + mu_value) * distances[i] / 2;
+        val = (this->mu_array[neigh_position] + mu_value) * this->distances[i] / 2;
         if (array[array_neigh_position] > val + fdt_value)
         {
           array[array_neigh_position] = val + fdt_value;
-          if (!visited_array[neigh_position])
+          if (!coord_in_queue[neigh_position])
           {
-            visited_array[neigh_position] = true;
+            coord_in_queue[neigh_position] = true;
             queue.push(coord2);
           }
         }
       }
-      visited_array[position] = false;
+      coord_in_queue[position] = false;
     }
     //std::cout << "Count " << count << std::endl;
   };
 
-  size_t optimum_erosion_calculate(std::vector<mu_type> &fdt_array, std::vector<T> &components_arr, std::vector<bool> sprawl_area)
+  size_t optimum_erosion_calculate(const std::vector<mu_type> &fdt_array, std::vector<T> &components_arr, std::vector<bool> & sprawl_area)
   {
     Point coord, coord2;
     size_t position, neigh_position;
     mu_type val, val2;
-    std::vector<mu_type> distances(fdt_array.size(), 0);
+    std::vector<mu_type> distances_from_components(fdt_array.size(), 0);
     std::vector<my_queue<Point>> queues(this->components_num + 1);
-    std::vector<bool> visited_array(this->get_length(), false);
+    std::vector<bool> coord_in_queue(this->get_length(), false);
     auto bounds = ArrayLimits<coord_type, ndim>(this->upper_bound - this->lower_bound);
-    const std::array<size_t, ndim> dimension_size = this->dimension_size();
+    const std::array<size_t, ndim> dimension_size = calculate_dimension_size(this->upper_bound - this->lower_bound);
     for (auto coord : bounds)
     {
       position = calculate_position(coord, dimension_size);
       if (components_arr[position] != 0)
       {
-        distances[position] = fdt_array[position];
+        distances_from_components[position] = fdt_array[position];
         for (size_t i = 0; i < 3 * this->distances.size(); i += 3)
         {
           for (size_t j = 0; j < ndim; j++)
@@ -441,6 +447,7 @@ public:
           if (sprawl_area[calculate_position(coord2, dimension_size)] == true)
           {
             queues[components_arr[position]].push(coord);
+            coord_in_queue[calculate_position(coord, dimension_size)] = true;
             break;
           }
         }
@@ -458,7 +465,7 @@ public:
         }*/
         queue.pop();
         position = calculate_position(coord, dimension_size);
-        val = distances[position];
+        val = distances_from_components[position];
         for (size_t i = 0; i < this->distances.size(); i++)
         {
           for (size_t j = 0; j < ndim; j++)
@@ -479,24 +486,24 @@ public:
           if (sprawl_area[neigh_position] == false)
             continue;
           val2 = std::min(val, fdt_array[neigh_position]);
-          if (val2 < distances[neigh_position])
+          if (val2 < distances_from_components[neigh_position])
             continue;
-          if ((val2 == distances[neigh_position]) && ((components_arr[neigh_position] == components_arr[position]) || (components_arr[neigh_position] == std::numeric_limits<T>::max())))
+          if ((val2 == distances_from_components[neigh_position]) && ((components_arr[neigh_position] == components_arr[position]) || (components_arr[neigh_position] == std::numeric_limits<T>::max())))
             continue;
-          if (val2 > distances[neigh_position])
+          if (val2 > distances_from_components[neigh_position])
           {
-            distances[neigh_position] = val2;
+            distances_from_components[neigh_position] = val2;
             components_arr[neigh_position] = components_arr[position];
           } else {
             components_arr[neigh_position] = std::numeric_limits<T>::max();
           }
-          if (!visited_array[neigh_position])
+          if (!coord_in_queue[neigh_position])
           {
-            visited_array[neigh_position] = true;
+            coord_in_queue[neigh_position] = true;
             queue.push(coord2);
           }
         }
-        visited_array[position] = false;
+        coord_in_queue[position] = false;
       }
       //k++;
     }
@@ -514,6 +521,125 @@ public:
     }
     return count;
   };
+
+  size_t constrained_dilation(const std::vector<mu_type> &fdt_array, std::vector<T> &components_arr, std::vector<bool> & sprawl_area) const{
+    Point coord, coord2;
+    size_t position, neigh_position;
+    mu_type val, val2, dist_val;
+    std::vector<mu_type> distances_from_components(fdt_array.size(), std::numeric_limits<mu_type>::max());
+    std::vector<my_queue<Point>> queues(this->components_num + 1);
+    my_queue<Point> queue_copy;
+    std::vector<bool> coord_in_queue(this->get_length(), false);
+    auto bounds = ArrayLimits<coord_type, ndim>(this->upper_bound - this->lower_bound);
+    std::vector<T> morphological_neighbourhood = components_arr;
+    const std::array<size_t, ndim> dimension_size = calculate_dimension_size(this->upper_bound - this->lower_bound);
+    const std::array<size_t, ndim> global_dimension_size = this->dimension_size();
+    for (auto coord : bounds)
+    {
+      position = calculate_position(coord, dimension_size);
+      if (components_arr[position] != 0)
+      {
+        for (size_t i = 0; i < 3 * this->distances.size(); i += 3)
+        {
+          for (size_t j = 0; j < ndim; j++)
+            coord2[j] = coord[j] + this->neighbourhood[i + j];
+          if (outside_bounds(coord2, lower_bound, upper_bound))
+            continue;
+          if (sprawl_area[calculate_position(coord2, dimension_size)] == true)
+          {
+            queues[components_arr[position]].push(coord);
+            distances_from_components[position] = 0; //this->mu_array[calculate_position(coord + this->lower_bound, global_dimension_size)];
+            coord_in_queue[position] = true;
+            break;
+          }
+        }
+      }
+    }
+    T comp_num = 0;
+    for (auto &queue : queues)
+    {
+      //std::cerr << "Queue " << k << " size " << queue.get_size() << std::endl;
+      queue_copy = queue; 
+      std::cerr << "# Queue1 " << queue.get_size() << " Queue2 " << queue_copy.get_size() << std::endl;
+      while (!queue.empty())
+      {
+        coord = queue.front();
+        queue.pop();
+        position = calculate_position(coord, dimension_size);
+        val = fdt_array[position];
+        for (size_t i = 0; i < this->distances.size(); i++)
+        {
+          for (size_t j = 0; j < ndim; j++)
+            coord2[j] = coord[j] + this->neighbourhood[3 * i + j];
+          if (outside_bounds(coord2, lower_bound, upper_bound))
+            continue;
+          neigh_position = calculate_position(coord2, dimension_size);
+          if (sprawl_area[neigh_position] == false)
+            continue;
+          if (fdt_array[neigh_position] < val && morphological_neighbourhood[neigh_position] != comp_num){
+            coord_in_queue[neigh_position] = true;
+            queue.push(coord2);
+          }
+        }
+      }
+      std::cerr << "Queue1 " << queue.get_size() << " Queue2 " << queue_copy.get_size() << std::endl;
+      while (!queue_copy.empty())
+      {
+        coord = queue_copy.front();
+        queue_copy.pop();
+        position = calculate_position(coord, dimension_size);
+        dist_val = distances_from_components[position];
+        val = this->mu_array[calculate_position(coord + this->lower_bound, global_dimension_size)];
+        for (size_t i = 0; i < this->distances.size(); i++)
+        {
+          for (size_t j = 0; j < ndim; j++)
+            coord2[j] = coord[j] + this->neighbourhood[3 * i + j];
+          if (outside_bounds(coord2, lower_bound, upper_bound))
+            continue;
+          neigh_position = calculate_position(coord2, dimension_size);
+          if (sprawl_area[neigh_position] == false || morphological_neighbourhood[neigh_position] != comp_num)
+            continue;
+          val2 = (this->mu_array[calculate_position(coord + this->lower_bound, global_dimension_size)] + val) * this->distances[i]/2;
+          val2 = dist_val + val2;
+          if (val2 >= fdt_array[neigh_position])
+            continue;
+          if (distances_from_components[neigh_position] < val2)
+            continue;
+          if (val2 == fdt_array[neigh_position]){
+            // continue; // FIXME 
+            components_arr[neigh_position] = std::numeric_limits<T>::max();
+          }
+          if (val2 < fdt_array[neigh_position])
+            components_arr[neigh_position] = components_arr[position];
+          
+          if (!coord_in_queue[neigh_position])
+          {
+            queue_copy.push(coord2);
+            coord_in_queue[neigh_position] = true;
+          }                    
+        }
+
+        coord_in_queue[position] = false;
+        // distances[position] = this->mu_array[calculate_position(coord + this->lower_bound, global_dimension_size)]
+      }
+      std::cerr << "Queue1 " << queue.get_size() << " Queue2 " << queue_copy.get_size() << std::endl;
+      comp_num++;
+    }
+    size_t count = 0;
+    for (auto & el: components_arr){
+      if (el == std::numeric_limits<T>::max()){
+        el = 0;
+      }
+    }
+    for (size_t i=0; i < bounds.size(); i++){
+      if (sprawl_area[i] && components_arr[i] > 0){
+        sprawl_area[i] = false;
+        count++;
+      }
+    }
+    return count;
+  };
+
 };
 
 template <typename R>
