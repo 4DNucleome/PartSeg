@@ -396,7 +396,7 @@ class TestFDT:
         mso.set_mu_array(mu)
         arr *= 0.5
         arr[arr > 0] += 0.25
-        arr[3:7, (0, 1, 2, 0, 1, 2, 9, 8, 7, 9, 8, 7), (0, 1, 2, 9 ,8 ,7 , 0, 1, 2, 9, 8, 7)] += np.sqrt(2)/4 - 0.25
+        arr[3:7, (0, 1, 2, 0, 1, 2, 9, 8, 7, 9, 8, 7), (0, 1, 2, 9, 8, 7, 0, 1, 2, 9, 8, 7)] += np.sqrt(2)/4 - 0.25
         for i in range(3):
             lb = i
             ub = 9-i
@@ -446,3 +446,26 @@ class TestExceptions:
             mso.calculate_FDT()
 
 
+class TestMSO:
+    def test_two_components(self):
+        components = np.zeros((10, 10, 20), dtype=np.uint8)
+        components[:] = 1
+        components[2:8, 2:8, 2:18] = 0
+        components[4:6, 4:6, 4:6] = 2
+        components[4:6, 4:6, 14:16] = 3
+        mu_arr = np.zeros(components.shape, dtype=np.float64)
+        mu_arr[components == 0] = 0.5
+        mu_arr[components > 1] = 1
+
+        mso = PyMSO()
+        neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
+        mso.set_neighbourhood(neigh, dist)
+        mso.set_components(components)
+        mso.set_mu_array(mu_arr)
+        mso.set_components_num(3)
+
+        changes = mso.run_MSO(10)
+        steps = mso.steps_done()
+        print(changes, steps)
+        res = mso.get_result_catted()
+        print(res)

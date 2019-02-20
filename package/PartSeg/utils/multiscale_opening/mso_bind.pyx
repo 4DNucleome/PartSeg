@@ -50,6 +50,8 @@ cdef extern from 'mso.h' namespace 'MSO':
         size_t run_MSO(size_t steps_limits)
         void set_data[W](T * components, W size, T background_component)
         void set_data[W](T * components, W size)
+        size_t steps_done()
+        vector[T] get_result_catted()
 
     cdef cppclass MuCalc[R, T]:
         vector[R] calculate_mu_array(T *array, size_t length, T lower_bound, T upper_bound)
@@ -198,7 +200,20 @@ cdef class PyMSO:
         return res
 
     def run_MSO(self, step_limits=1):
-        self.mso.run_MSO(step_limits)
+        return self.mso.run_MSO(step_limits)
+
+    def steps_done(self):
+        return self.mso.steps_done()
+
+    def set_components_num(self, num):
+        self.mso.set_components_num(num)
+
+    def get_result_catted(self):
+        cdef vector[component_type] res = self.mso.get_result_catted()
+        res_arr = numpy.array(res, dtype=np_component_type)
+        res_arr = res_arr.reshape([self.components.shape[i] for i in range(self.components.ndim)])
+        return res_arr
+
 
 
 

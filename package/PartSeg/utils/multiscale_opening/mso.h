@@ -315,6 +315,7 @@ public:
     }
     if (this->get_length() != this->mu_array.size())
       this->mu_array.clear();
+    this->steps = 0;
   }
 
   template <typename W>
@@ -333,6 +334,7 @@ public:
       throw std::length_error("Size of mu array (" + std::to_string(mu.size()) +
        ") need to be equal to size of components array (" + std::to_string(this->get_length()) +")");
     this->mu_array = mu;
+    this->steps = 0;
   }
   void set_mu_copy(mu_type *mu, size_t length)
   {
@@ -340,6 +342,7 @@ public:
       throw std::length_error("Size of mu array (" + std::to_string(length) +
        ") need to be equal to size of components array (" + std::to_string(this->get_length()) +")");
     this->mu_array = std::vector<mu_type>(mu, mu + length);
+    this->steps = 0;
   }
 
   void set_mu_swap(std::vector<mu_type> &mu)
@@ -348,6 +351,7 @@ public:
       throw std::length_error("Size of mu array (" + std::to_string(mu.size()) +
        ") need to be equal to size of components array (" + std::to_string(this->get_length()) +")");
     this->mu_array.swap(mu);
+    this->steps = 0;
   }
 
   void set_neighbourhood(std::vector<int8_t> neighbourhood, std::vector<mu_type> distances)
@@ -358,12 +362,14 @@ public:
     }
     this->neighbourhood = neighbourhood;
     this->distances = distances;
+    this->steps = 0;
   }
 
   void set_neighbourhood(int8_t *neighbourhood, mu_type *distances, size_t neigh_size)
   {
     this->neighbourhood = std::vector<int8_t>(neighbourhood, neighbourhood + 3 * neigh_size);
     this->distances = std::vector<double>(distances, distances + neigh_size);
+    this->steps = 0;
   }
 
   void compute_FDT(std::vector<mu_type> &array) const
@@ -612,7 +618,8 @@ public:
           neigh_position = calculate_position(coord2, dimension_size);
           if (sprawl_area[neigh_position] == false)
             continue;
-          if (fdt_array[neigh_position] <= val && morphological_neighbourhood[neigh_position] != comp_num){
+          if (fdt_array[neigh_position] <= val && morphological_neighbourhood[neigh_position] != comp_num 
+            && morphological_neighbourhood[neigh_position] != std::numeric_limits<T>::max()){
             coord_in_queue[neigh_position] = true;
             morphological_neighbourhood[neigh_position] = comp_num;
             queue.push(coord2);
@@ -716,6 +723,8 @@ public:
   }
 
   size_t run_MSO(size_t steps_limits=1){
+    if (this->components_num == 0)
+      throw BadInitialization("Wrong number of components seted");
     size_t total_changes = 0;
     if (steps_limits == 0)
       steps_limits = 1;
@@ -737,6 +746,14 @@ public:
       this->steps++;
     }
     return total_changes;
+  }
+
+  size_t steps_done(){
+    return this->steps;
+  }
+
+  std::vector<T> get_result_catted() const{
+    return this->res_components_array;
   }
 
 };
