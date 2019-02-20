@@ -227,6 +227,15 @@ public:
 
 namespace MSO
 {
+struct BadInitialization: public std::runtime_error{
+  BadInitialization(char const* const message): std::runtime_error(message){};
+  BadInitialization(const std::string & message): std::runtime_error(message){};
+};
+struct BadArgumentSize: public std::runtime_error{
+  BadArgumentSize(char const* const message): std::runtime_error(message){};
+  BadArgumentSize(const std::string & message): std::runtime_error(message){};
+};
+
 template <typename T, typename M = double, size_t N=3>
 /* K is number of dimensions */
 class MSO
@@ -523,8 +532,13 @@ public:
   };
 
   size_t constrained_dilation(const std::vector<mu_type> &fdt_array, std::vector<T> &components_arr, std::vector<bool> & sprawl_area) const{
+    if (this->get_length() == 0)
+      throw BadInitialization("Zero sized array");
+    if (this->mu_array.size() != this->get_length())
+      throw BadInitialization("mu array size (" + std::to_string(this->mu_array.size()) +
+          ") do not fit to size of data (" + std::to_string(this->get_length()) + ")");
     Point coord, coord2;
-    size_t position, neigh_position;
+    size_t position, neigh_position, position_global;
     mu_type val, val2, dist_val;
     std::vector<mu_type> distances_from_components(fdt_array.size(), std::numeric_limits<mu_type>::max());
     std::vector<my_queue<Point>> queues(this->components_num + 1);
@@ -534,6 +548,8 @@ public:
     std::vector<T> morphological_neighbourhood = components_arr;
     const std::array<size_t, ndim> dimension_size = calculate_dimension_size(this->upper_bound - this->lower_bound);
     const std::array<size_t, ndim> global_dimension_size = this->dimension_size();
+
+    // Put borders of components to queue 
     for (auto coord : bounds)
     {
       position = calculate_position(coord, dimension_size);
@@ -560,7 +576,8 @@ public:
     {
       //std::cerr << "Queue " << k << " size " << queue.get_size() << std::endl;
       queue_copy = queue; 
-      std::cerr << "# Queue1 " << queue.get_size() << " Queue2 " << queue_copy.get_size() << std::endl;
+      //std::cerr << "# Queue1 " << queue.get_size() << " Queue2 " << queue_copy.get_size() << std::endl;
+      // Calculate area which can be reached by monoticall path (firs part of Morphological neighborhood)
       while (!queue.empty())
       {
         coord = queue.front();
@@ -576,20 +593,24 @@ public:
           neigh_position = calculate_position(coord2, dimension_size);
           if (sprawl_area[neigh_position] == false)
             continue;
-          if (fdt_array[neigh_position] < val && morphological_neighbourhood[neigh_position] != comp_num){
+          if (fdt_array[neigh_position] <= val && morphological_neighbourhood[neigh_position] != comp_num){
             coord_in_queue[neigh_position] = true;
+            morphological_neighbourhood[neigh_position] = comp_num;
             queue.push(coord2);
           }
         }
+        coord_in_queue[position] = false;
       }
-      std::cerr << "Queue1 " << queue.get_size() << " Queue2 " << queue_copy.get_size() << std::endl;
+      //std::cerr << "Queue1 " << queue.get_size() << " Queue2 " << queue_copy.get_size() << std::endl;
+      // calculate constrained dilation 
       while (!queue_copy.empty())
       {
         coord = queue_copy.front();
         queue_copy.pop();
         position = calculate_position(coord, dimension_size);
         dist_val = distances_from_components[position];
-        val = this->mu_array[calculate_position(coord + this->lower_bound, global_dimension_size)];
+        position_global = calculate_position(coord + this->lower_bound, global_dimension_size);
+        val = this->mu_array[position_global];
         for (size_t i = 0; i < this->distances.size(); i++)
         {
           for (size_t j = 0; j < ndim; j++)
@@ -606,12 +627,12 @@ public:
           if (distances_from_components[neigh_position] < val2)
             continue;
           if (val2 == fdt_array[neigh_position]){
-            // continue; // FIXME 
             components_arr[neigh_position] = std::numeric_limits<T>::max();
           }
-          if (val2 < fdt_array[neigh_position])
+          if (val2 < fdt_array[neigh_position]){
             components_arr[neigh_position] = components_arr[position];
-          
+            distances_from_components[neigh_position] = val2;
+          }          
           if (!coord_in_queue[neigh_position])
           {
             queue_copy.push(coord2);
@@ -622,7 +643,7 @@ public:
         coord_in_queue[position] = false;
         // distances[position] = this->mu_array[calculate_position(coord + this->lower_bound, global_dimension_size)]
       }
-      std::cerr << "Queue1 " << queue.get_size() << " Queue2 " << queue_copy.get_size() << std::endl;
+      //std::cerr << "Queue1 " << queue.get_size() << " Queue2 " << queue_copy.get_size() << std::endl;
       comp_num++;
     }
     size_t count = 0;

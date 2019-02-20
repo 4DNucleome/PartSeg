@@ -123,8 +123,20 @@ class TestConstrainedDilation:
         neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
         mso.set_neighbourhood(neigh, dist)
         mso.set_components(components)
+        mso.set_mu_array(np.ones(components.shape))
         res = mso.constrained_dilation(fdt, components, sprawl_area)
-        # assert np.all(res == components)
+        assert np.all(res == components)
+
+        fdt[:] = 20
+        # fdt[:, :, 10] = 1
+        components2 = np.zeros(components.shape, dtype=np.uint8)
+        components2[2:8, 2:8, 2:10] = 1
+        components2[2:8, 2:8, 10:18] = 2
+        res = mso.constrained_dilation(fdt, components, sprawl_area)
+        assert np.all(res == components2)
+        """fdt[5, 5, 10] = 2
+        res = mso.constrained_dilation(fdt, components, sprawl_area)
+        assert np.all(res == components)"""
 
 
 class TestOptimumErosionCalculate:
