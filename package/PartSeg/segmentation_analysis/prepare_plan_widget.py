@@ -1,6 +1,7 @@
 import logging
 import typing
 from copy import copy, deepcopy
+from pathlib import Path
 
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QDialog, QCompleter, QLineEdit, QPushButton, QGridLayout, QWidget, QCheckBox, QComboBox, \
@@ -968,8 +969,7 @@ class CalculateInfo(QWidget):
         dial = QFileDialog(self, "Export calculation plans")
         dial.setFileMode(QFileDialog.AnyFile)
         dial.setAcceptMode(QFileDialog.AcceptSave)
-        if self.settings.save_directory is not None:
-            dial.setDirectory(self.settings.save_directory)
+        dial.setDirectory(dial.setDirectory(self.settings.get("io.save_directory", str(Path.home()))))
         dial.setNameFilter("Calculation plans (*.json)")
         dial.setDefaultSuffix("json")
         dial.selectFile("calculation_plans.json")
@@ -981,8 +981,7 @@ class CalculateInfo(QWidget):
         dial = QFileDialog(self, "Export calculation plans")
         dial.setFileMode(QFileDialog.ExistingFile)
         dial.setAcceptMode(QFileDialog.AcceptOpen)
-        if self.settings.open_directory is not None:
-            dial.setDirectory(self.settings.save_directory)
+        dial.setDirectory(self.settings.get("io.open_directory", str(Path.home())))
         dial.setNameFilter("Calculation plans (*.json)")
         dial.setDefaultSuffix("json")
         if dial.exec_():

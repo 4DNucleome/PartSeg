@@ -689,7 +689,7 @@ class StatisticsSettings(QWidget):
             data = dict([(x, self.settings.statistic_profiles[x]) for x in exp.get_export_list()])
             with open(file_path, 'w') as ff:
                 json.dump(data, ff, cls=self.settings.json_encoder_class, indent=2)
-            self._settings.set("io.save_directory", os.path.dirname(file_path))
+            self.settings.set("io.save_directory", os.path.dirname(file_path))
 
     def import_statistic_profiles(self):
         dial = QFileDialog(self, "Import settings profiles")
