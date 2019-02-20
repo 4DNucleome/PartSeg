@@ -109,6 +109,15 @@ std::array<size_t, K> calculate_dimension_size(const std::array<T, K> & size){
     return res;
 };
 
+template<typename T, size_t K>
+size_t calculate_area_size(const std::array<T, K> & size){
+  size_t res = 1;
+  for (size_t i = 0 ; i <  K; i++)
+    res *= size[i];
+  return res;
+};
+
+
 template <typename T, size_t K>
 class ArrayLimits
 {
@@ -249,6 +258,8 @@ private:
   std::vector<int8_t> neighbourhood;
   std::vector<mu_type> distances;
   std::vector<mu_type> mu_array;
+  std::vector<T> res_components_array;
+  std::vector<bool> sprawl_area_array;
   std::array<coord_type, ndim> size;
   Point lower_bound;
   Point upper_bound;
@@ -257,6 +268,7 @@ private:
   bool use_background = false;
   T *components;
   const T background_component = 1;
+  size_t steps = 0;
 
 public:
   MSO()
@@ -283,10 +295,7 @@ public:
 
   inline size_t get_length() const
   {
-    size_t res = 1;
-    for (size_t i = 0; i < ndim; i++)
-      res *= this->size[i];
-    return res;
+    return calculate_area_size(this->size);
   }
 
   inline std::array<size_t, ndim> dimension_size() const
@@ -321,20 +330,23 @@ public:
   void set_mu_copy(const std::vector<mu_type> &mu)
   {
     if (mu.size() != this->get_length())
-      throw std::length_error("Size of mu array need to be equal to size of components (z_size * y_size * x_size)");
+      throw std::length_error("Size of mu array (" + std::to_string(mu.size()) +
+       ") need to be equal to size of components array (" + std::to_string(this->get_length()) +")");
     this->mu_array = mu;
   }
   void set_mu_copy(mu_type *mu, size_t length)
   {
     if (length != this->get_length())
-      throw std::length_error("Size of mu array need to be equal to size of components (z_size * y_size * x_size)");
+      throw std::length_error("Size of mu array (" + std::to_string(length) +
+       ") need to be equal to size of components array (" + std::to_string(this->get_length()) +")");
     this->mu_array = std::vector<mu_type>(mu, mu + length);
   }
 
   void set_mu_swap(std::vector<mu_type> &mu)
   {
     if (mu.size() != this->get_length())
-      throw std::length_error("Size of mu array need to be equal to size of components (z_size * y_size * x_size)");
+      throw std::length_error("Size of mu array (" + std::to_string(mu.size()) +
+       ") need to be equal to size of components array (" + std::to_string(this->get_length()) +")");
     this->mu_array.swap(mu);
   }
 
@@ -357,11 +369,18 @@ public:
   void compute_FDT(std::vector<mu_type> &array) const
   {
     if (this->get_length() == 0)
-      throw std::runtime_error("call FDT calculation befor set coordinates data");
+      throw BadInitialization("call FDT calculation before set coordinates data");
     if (this->mu_array.size() == 0)
-      throw std::runtime_error("call FDT calculation befor set mu array");
+      throw BadInitialization("call FDT calculation before set mu array");
+    if (this->mu_array.size() != this->get_length())
+      throw BadInitialization("call FDT calculation with mu_array of different size (" +
+        std::to_string(this->mu_array.size()) + ") than image size (" + std::to_string(this->get_length()) + ")");
+    if (array.size() != calculate_area_size(this->upper_bound - this->lower_bound))
+      throw BadArgumentSize("call FDT calculation with array of different size (" + std::to_string(array.size()) + 
+        ") than expected (" + std::to_string(calculate_area_size(this->upper_bound - this->lower_bound)) + ")");
 
-    const std::array<size_t, ndim> dimension_size = this->dimension_size();
+    const std::array<size_t, ndim> dimension_size = calculate_dimension_size(this->upper_bound - this->lower_bound);
+    const std::array<size_t, ndim> global_dimension_size = this->dimension_size();
     Point coord, coord2;
     size_t position, neigh_position, array_position, array_neigh_position;
     my_queue<Point> queue;
@@ -371,8 +390,8 @@ public:
     auto bounds = ArrayLimits<coord_type, ndim>(this->lower_bound, this->upper_bound);
     for (auto coord : bounds)
     {
-      position = calculate_position(coord, dimension_size);
-      array_position = calculate_position(coord - this->lower_bound, dimension_size);
+      position = calculate_position(coord, global_dimension_size);
+      array_position = calculate_position(coord - this->lower_bound, global_dimension_size);
       array[array_position] = std::numeric_limits<mu_type>::max();
       if (this->components[position] == this->background_component)
       {
@@ -385,10 +404,10 @@ public:
           {
             continue;
           }
-          if (components[calculate_position(coord2, dimension_size)] == 0)
+          if (components[calculate_position(coord2, global_dimension_size)] == 0)
           {
             queue.push(coord);
-            coord_in_queue[calculate_position(coord, dimension_size)] = true;
+            coord_in_queue[calculate_position(coord, global_dimension_size)] = true;
             break;
           }
         }
@@ -401,7 +420,7 @@ public:
       count += 1;
       coord = queue.front();
       queue.pop();
-      position = calculate_position(coord, dimension_size);
+      position = calculate_position(coord, global_dimension_size);
       array_position = calculate_position(coord - this->lower_bound, dimension_size);
       mu_value = this->mu_array[position];
       fdt_value = array[array_position];
@@ -411,7 +430,7 @@ public:
           coord2[j] = coord[j] + this->neighbourhood[3 * i + j];
         if (outside_bounds(coord2, lower_bound, upper_bound))
           continue;
-        neigh_position = calculate_position(coord2, dimension_size);
+        neigh_position = calculate_position(coord2, global_dimension_size);
         array_neigh_position = calculate_position(coord2 - this->lower_bound, dimension_size);
         if (this->components[neigh_position] != 0)
           continue;
@@ -660,6 +679,65 @@ public:
     }
     return count;
   };
+
+  std::vector<T> cut_components(){
+    auto bounds = ArrayLimits<coord_type, ndim>(this->lower_bound, this->upper_bound);
+    std::vector<T> res(bounds.size());
+    T val;
+    const std::array<size_t, ndim> dimension_size = calculate_dimension_size(this->upper_bound - this->lower_bound);
+    const std::array<size_t, ndim> global_dimension_size = this->dimension_size();
+    if (this->use_background){
+      for (auto coord: bounds){
+        res[calculate_position(coord, dimension_size)] = 
+        this->components[calculate_position(coord, global_dimension_size)];
+      }
+    } else {
+      for (auto coord: bounds){
+        val = this->components[calculate_position(coord, global_dimension_size)];
+        if (val == 1)
+          val = 0;
+        res[calculate_position(coord, dimension_size)] = val; 
+      }
+    }
+    return res;
+  }
+
+  std::vector<bool> get_sprawl_area(){
+    auto bounds = ArrayLimits<coord_type, ndim>(this->lower_bound, this->upper_bound);
+    std::vector<bool> res(bounds.size());
+    const std::array<size_t, ndim> dimension_size = calculate_dimension_size(this->upper_bound - this->lower_bound);
+    const std::array<size_t, ndim> global_dimension_size = this->dimension_size();
+    for (auto coord: bounds){
+      res[calculate_position(coord, dimension_size)] = 
+      this->components[calculate_position(coord, global_dimension_size)] == 0; 
+    }
+    
+    return res;
+  }
+
+  size_t run_MSO(size_t steps_limits=1){
+    size_t total_changes = 0;
+    if (steps_limits == 0)
+      steps_limits = 1;
+    if (steps_limits < this->steps)
+      this->steps = 0;
+    size_t count_changes = 1;
+    if (this->steps == 0){
+      this->fdt_array.resize(calculate_area_size(this->upper_bound - this->lower_bound));
+      std::fill(this->fdt_array.begin(), this->fdt_array.end(), 0);
+      this->compute_FDT(this->fdt_array);
+      this->res_components_array = this->cut_components();
+      this->sprawl_area_array = this->get_sprawl_area();
+    }
+    while (this->steps < steps_limits && count_changes > 0){
+      count_changes = 0;
+      count_changes += optimum_erosion_calculate(this->fdt_array, this->res_components_array, this->sprawl_area_array);
+      count_changes += constrained_dilation(this->fdt_array, this->res_components_array, this->sprawl_area_array);
+      total_changes += count_changes;
+      this->steps++;
+    }
+    return total_changes;
+  }
 
 };
 
