@@ -111,7 +111,7 @@ def test_mso_construct():
 
 
 class TestConstrainedDilation:
-    def test_two_components(self):
+    def test_two_components_base(self):
         components = np.zeros((10, 10, 20), dtype=np.uint8)
         components[4:6, 4:6, 4:6] = 1
         components[4:6, 4:6, 14:16] = 2
@@ -134,9 +134,128 @@ class TestConstrainedDilation:
         components2[2:8, 2:8, 10:18] = 2
         res = mso.constrained_dilation(fdt, components, sprawl_area)
         assert np.all(res == components2)
-        """fdt[5, 5, 10] = 2
-        res = mso.constrained_dilation(fdt, components, sprawl_area)
-        assert np.all(res == components)"""
+
+    def test_low_fdt_two_components(self):
+        components = np.zeros((10, 10, 20), dtype=np.uint8)
+        components[4:6, 4:6, 4:6] = 1
+        components[4:6, 4:6, 14:16] = 2
+        sprawl_area = np.zeros(components.shape, dtype=np.uint8)
+        sprawl_area[2:8, 2:8, 2:18] = True
+        sprawl_area[components > 0] = False
+        fdt = np.ones(components.shape, dtype=np.float64) * 20
+        mso = PyMSO()
+        neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
+        mso.set_neighbourhood(neigh, dist)
+        mso.set_components(components)
+        mso.set_mu_array(np.ones(components.shape))
+        components2 = np.zeros(components.shape, dtype=np.uint8)
+        components2[2:8, 2:8, 2:10] = 1
+        components2[2:8, 2:8, 10:18] = 2
+        fdt2 = np.copy(fdt)
+        fdt2[:, :, 7] = 2
+        components3 = np.copy(components2)
+        components3[2:8, 2:8, 8:18] = 2
+        components3[2:8, 2:8, 7] = 0
+        res = mso.constrained_dilation(fdt2, components, sprawl_area)
+        assert np.all(res == components3)
+        fdt2 = np.copy(fdt)
+        fdt2[:, :, 12] = 2
+        components3 = np.copy(components2)
+        components3[2:8, 2:8, 2:12] = 1
+        components3[2:8, 2:8, 12] = 0
+        res = mso.constrained_dilation(fdt2, components, sprawl_area)
+        assert np.all(res == components3)
+        fdt2 = np.copy(fdt)
+        fdt2[:, :, 12] = 2
+        fdt2[:, :, 7] = 2
+        components3 = np.copy(components2)
+        components3[2:8, 2:8, 7:13] = 0
+        res = mso.constrained_dilation(fdt2, components, sprawl_area)
+        assert np.all(res == components3)
+
+    def test_high_fdt_two_components(self):
+        components = np.zeros((10, 10, 20), dtype=np.uint8)
+        components[4:6, 4:6, 4:6] = 1
+        components[4:6, 4:6, 14:16] = 2
+        sprawl_area = np.zeros(components.shape, dtype=np.uint8)
+        sprawl_area[2:8, 2:8, 2:18] = True
+        sprawl_area[components > 0] = False
+        fdt = np.ones(components.shape, dtype=np.float64) * 20
+        mso = PyMSO()
+        neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
+        mso.set_neighbourhood(neigh, dist)
+        mso.set_components(components)
+        mso.set_mu_array(np.ones(components.shape))
+        components2 = np.zeros(components.shape, dtype=np.uint8)
+        components2[2:8, 2:8, 2:10] = 1
+        components2[2:8, 2:8, 10:18] = 2
+        fdt2 = np.copy(fdt)
+        fdt2[:, :, 7] = 25
+        components3 = np.copy(components2)
+        components3[2:8, 2:8, 8:18] = 2
+        components3[2:8, 2:8, 7] = 0
+        res = mso.constrained_dilation(fdt2, components, sprawl_area)
+        assert np.all(res == components3)
+        fdt2 = np.copy(fdt)
+        fdt2[:, :, 12] = 25
+        components3 = np.copy(components2)
+        components3[2:8, 2:8, 2:12] = 1
+        components3[2:8, 2:8, 12] = 0
+        res = mso.constrained_dilation(fdt2, components, sprawl_area)
+        assert np.all(res == components3)
+        fdt2 = np.copy(fdt)
+        fdt2[:, :, 12] = 25
+        fdt2[:, :, 7] = 25
+        components3 = np.copy(components2)
+        components3[2:8, 2:8, 7:13] = 0
+        res = mso.constrained_dilation(fdt2, components, sprawl_area)
+        assert np.all(res == components3)
+
+    def test_chain_component(self):
+        for i in range(2, 10):
+            components = np.zeros((10, 10, i * 10), dtype=np.uint8)
+            for j in range(i):
+                components[4:6, 4:6, (10*j + 4):(10 * j + 6)] = j+1
+            fdt = np.ones(components.shape, dtype=np.float64) * i * 10
+            sprawl_area = np.zeros(components.shape, dtype=np.uint8)
+            sprawl_area[2:8, 2:8, 2:(10 * i) - 2] = True
+            sprawl_area[components > 0] = False
+            components2 = np.zeros(components.shape, dtype=np.uint8)
+            for j in range(i):
+                components2[2:8, 2:8, (j * 10):(j+1)*10] = j+1
+            components2[:, :, :2] = 0
+            components2[:, :, -2:] = 0
+            mso = PyMSO()
+            neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
+            mso.set_neighbourhood(neigh, dist)
+            mso.set_components(components)
+            mso.set_mu_array(np.ones(components.shape))
+            res = mso.constrained_dilation(fdt, components, sprawl_area)
+            assert np.all(res == components2)
+
+    def test_chain_component_with_wall(self):
+        for i in range(2, 10):
+            components = np.zeros((10, 10, i * 10), dtype=np.uint8)
+            for j in range(i):
+                components[4:6, 4:6, (10*j + 4):(10 * j + 6)] = j+1
+            fdt = np.ones(components.shape, dtype=np.float64) * i * 10
+            sprawl_area = np.zeros(components.shape, dtype=np.uint8)
+            sprawl_area[2:8, 2:8, 2:(10 * i) - 2] = True
+            sprawl_area[components > 0] = False
+            components2 = np.zeros(components.shape, dtype=np.uint8)
+            for j in range(i):
+                components2[2:8, 2:8, (j * 10+1):(j+1)*10] = j+1
+                fdt[:, :, j*10] = i*10 + 2
+            components2[:, :, :2] = 0
+            components2[:, :, -2:] = 0
+            mso = PyMSO()
+            neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
+            mso.set_neighbourhood(neigh, dist)
+            mso.set_components(components)
+            mso.set_mu_array(np.ones(components.shape))
+            res = mso.constrained_dilation(fdt, components, sprawl_area)
+            assert np.all(res == components2)
+
 
 
 class TestOptimumErosionCalculate:
@@ -188,7 +307,7 @@ class TestOptimumErosionCalculate:
             assert np.all(res == components2)
 
     def test_chain_component(self):
-        for i in range(3, 10):
+        for i in range(2, 10):
             components = np.zeros((10, 10, i * 10), dtype=np.uint8)
             for j in range(i):
                 components[4:6, 4:6, (10*j + 4):(10 * j + 6)] = j+1
