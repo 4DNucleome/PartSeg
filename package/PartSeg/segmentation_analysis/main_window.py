@@ -632,7 +632,7 @@ class MainWindow(BaseMainWindow):
         image_menu.addAction("Image adjustment").triggered.connect(self.main_menu.image_adjust_exec)
         image_menu.addAction("Mask manager").triggered.connect(self.main_menu.mask_manager)
         help_menu = menu_bar.addMenu("Help")
-        help_menu.addAction("Settings directory").triggered.connect(self.show_settings_directory)
+        help_menu.addAction("State directory").triggered.connect(self.show_settings_directory)
         help_menu.addAction("About").triggered.connect(self.show_about_dialog)
 
         layout = QGridLayout()
@@ -655,7 +655,7 @@ class MainWindow(BaseMainWindow):
             pass
 
     def show_settings_directory(self):
-        DirectoryDialog(self.settings.json_folder_path).exec()
+        DirectoryDialog(self.settings.json_folder_path, "Path to place where PartSeg store the data between runs").exec()
 
     def show_about_dialog(self):
         AboutDialog().exec()
