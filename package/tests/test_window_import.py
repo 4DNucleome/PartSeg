@@ -1,4 +1,6 @@
 import pytest
+import PartSeg
+import packaging.version
 
 
 def test_analysis_import():
@@ -20,3 +22,6 @@ def test_segmentation_import():
         import PartSeg.segmentation_mask.stack_gui_main
     except ImportError:
         pytest.fail("Error in importing mask segmentation ui")
+
+def test_version_string():
+    assert isinstance(packaging.version.parse(PartSeg.__version__), packaging.version.Version)

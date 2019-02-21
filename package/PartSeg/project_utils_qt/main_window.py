@@ -1,5 +1,6 @@
 import shutil
 from glob import glob
+import packaging.version
 
 from qtpy.QtGui import QShowEvent, QDragEnterEvent, QDropEvent
 from qtpy.QtWidgets import QMainWindow, QMessageBox
@@ -25,21 +26,23 @@ class BaseMainWindow(QMainWindow):
                 raise ValueError("wrong config folder")
             self.settings = self.settings_class(config_folder)
             if not os.path.exists(config_folder):
-                version_tuple = __version__.split(".")
+                version = packaging.version.parse(__version__)
                 base_folder = os.path.dirname(os.path.dirname(config_folder))
                 possible_folders = glob(os.path.join(base_folder, "*"))
                 versions = list(
-                    sorted([x for x in [os.path.basename(y).split(".") for y in possible_folders] if len(x) >= 3],
+                    sorted([x for x in
+                            [packaging.version.parse(os.path.basename(y)) for y in possible_folders]
+                            if isinstance(x, packaging.version.Version)],
                            reverse=True))
                 before_version = None
                 for x in versions:
-                    if x < version_tuple:
+                    if x < version:
                         before_version = x
                         break
                 if before_version is not None:
-                    before_name = ".".join(before_version)
+                    before_name = str(before_version)
                     resp = QMessageBox.question(self, "Import from old version",
-                                              "There is no configuration folder for this version of PartSeg"
+                                              "There is no configuration folder for this version of PartSeg\n"
                                               "Would you like to import it from " + before_name + " version of PartSeg",
                                               QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
                     if resp == QMessageBox.Yes:
