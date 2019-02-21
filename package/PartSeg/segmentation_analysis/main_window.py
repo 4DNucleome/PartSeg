@@ -9,6 +9,7 @@ from qtpy.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayou
     QMessageBox, QCheckBox, QComboBox, QInputDialog, QDialog
 
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
+from PartSeg.common_gui.show_directory_dialog import DirectoryDialog
 from PartSeg.utils.analysis.load_functions import load_dict
 from ..common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, AlgorithmChoose
 from ..common_gui.channel_control import ChannelControl
@@ -630,8 +631,8 @@ class MainWindow(BaseMainWindow):
         image_menu.addAction("Image adjustment").triggered.connect(self.main_menu.image_adjust_exec)
         image_menu.addAction("Mask manager").triggered.connect(self.main_menu.mask_manager)
         help_menu = menu_bar.addMenu("Help")
+        help_menu.addAction("Settings directory").triggered.connect(self.show_settings_directory)
         help_menu.addAction("About")
-
 
         layout = QGridLayout()
         layout.setSpacing(0)
@@ -651,6 +652,10 @@ class MainWindow(BaseMainWindow):
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, 'ascii')))
         except KeyError:
             pass
+
+    def show_settings_directory(self):
+        DirectoryDialog(self.settings.json_folder_path).exec()
+
 
     def image_read(self):
         self.raw_image.raw_image.set_image()
