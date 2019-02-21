@@ -51,6 +51,18 @@ class ProfileDict(object):
                     raise e
         return curr_dict
 
+    def verify_data(self):
+        return check_loaded_dict(self.my_dict)
+
+    def filter_data(self):
+        error_list = []
+        for group, up_dkt in list(self.my_dict.items()):
+            for key, dkt in list(up_dkt.items()):
+                if not check_loaded_dict(dkt):
+                    error_list.append(f"{group}.{key}")
+                    del up_dkt[key]
+        return error_list
+
 
 class ProfileEncoder(SerializeClassEncoder):
     def default(self, o):

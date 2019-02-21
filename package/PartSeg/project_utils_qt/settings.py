@@ -131,7 +131,7 @@ class ViewSettings(ImageSettings):
         self.color_map = []
         self.border_val = []
         self.current_profile_dict = "default"
-        self.view_settings_dict: typing.Dict[str, ProfileDict] = {self.current_profile_dict: ProfileDict()}
+        self.view_settings_dict = ProfileDict()
 
     @property
     def chosen_colormap(self):
@@ -157,20 +157,15 @@ class ViewSettings(ImageSettings):
 
     def set_in_profile(self, key_path, value):
         """function for saving information used in visualization"""
-        self.view_settings_dict[self.current_profile_dict].set(key_path, value)
+        self.view_settings_dict.set(f"{self.current_profile_dict}.{key_path}", value)
 
     def get_from_profile(self, key_path, default=None):
         """function for getting information used in visualization"""
-        return self.view_settings_dict[self.current_profile_dict].get(key_path, default)
+        return self.view_settings_dict.get(f"{self.current_profile_dict}.{key_path}", default)
 
     def dump_view_profiles(self):
         # return json.dumps(self.profile_dict, cls=ProfileEncoder)
         return self.view_settings_dict
-
-    def load_view_profiles(self, dicts):
-        for k, v in dicts.items():
-            self.view_settings_dict[k] = v  # ProfileDict()
-            # self.profile_dict[k].my_dict = v
 
 
 class SaveSettingsDescription(typing.NamedTuple):
@@ -189,17 +184,17 @@ class BaseSettings(ViewSettings):
     def __init__(self, json_path):
         super().__init__()
         self.current_segmentation_dict = "default"
-        self.segmentation_dict: typing.Dict[str, ProfileDict] = {self.current_segmentation_dict: ProfileDict()}
+        self.segmentation_dict = ProfileDict()
         self.json_folder_path = json_path
         self.last_executed_algorithm = ""
 
     def set(self, key_path, value):
         """function for saving general state (not visualization) """
-        self.segmentation_dict[self.current_segmentation_dict].set(key_path, value)
+        self.segmentation_dict.set(f"{self.current_segmentation_dict}.{key_path}", value)
 
     def get(self, key_path, default=None):
         """function for getting general state (not visualization) """
-        return self.segmentation_dict[self.current_segmentation_dict].get(key_path, default)
+        return self.segmentation_dict.get(f"{self.current_segmentation_dict}.{key_path}", default)
 
     def dump_part(self, file_path, path_in_dict, names=None):
         data = self.get(path_in_dict)
@@ -237,16 +232,24 @@ class BaseSettings(ViewSettings):
             file_path = path.join(folder_path, el.file_name)
             if not path.exists(file_path):
                 continue
+            error = False
             try:
                 with open(file_path, 'r') as ff:
-                    data = json.load(ff, object_hook=self.decode_hook)
+                    data: ProfileDict = json.load(ff, object_hook=self.decode_hook)
+                    if not data.verify_data():
+                        errors_list.append((file_path, data.filter_data()))
+                        error = True
                 el.values.update(data)
             except Exception as e:
-                timestamp = datetime.today().strftime('%Y-%m-%d_%H_%M_%S')
-                base_path, ext = path.splitext(file_path)
-                import os
-                os.rename(file_path, base_path + "_" + timestamp + ext)
-                errors_list.append(e)
+                error = True
+                errors_list.append((file_path, e))
+            finally:
+                if error:
+                    timestamp = datetime.today().strftime('%Y-%m-%d_%H_%M_%S')
+                    base_path, ext = path.splitext(file_path)
+                    import os
+                    os.rename(file_path, base_path + "_" + timestamp + ext)
+
         if errors_list:
             print(errors_list, file=sys.stderr)
         return errors_list

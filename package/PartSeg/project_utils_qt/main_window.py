@@ -1,8 +1,13 @@
+import shutil
+from glob import glob
+
 from qtpy.QtGui import QShowEvent, QDragEnterEvent, QDropEvent
 from qtpy.QtWidgets import QMainWindow, QMessageBox
 from qtpy.QtCore import Signal
+import os
 
 from .settings import BaseSettings
+from .. import __version__
 
 
 class BaseMainWindow(QMainWindow):
@@ -19,7 +24,36 @@ class BaseMainWindow(QMainWindow):
             if config_folder is None:
                 raise ValueError("wrong config folder")
             self.settings = self.settings_class(config_folder)
-            self.settings.load()
+            if not os.path.exists(config_folder):
+                version_tuple = __version__.split(".")
+                base_folder = os.path.dirname(os.path.dirname(config_folder))
+                possible_folders = glob(os.path.join(base_folder, "*"))
+                versions = list(
+                    sorted([x for x in [os.path.basename(y).split(".") for y in possible_folders] if len(x) >= 3],
+                           reverse=True))
+                before_version = None
+                for x in versions:
+                    if x < version_tuple:
+                        before_version = x
+                        break
+                if before_version is not None:
+                    before_name = ".".join(before_version)
+                    resp = QMessageBox.question(self, "Import from old version",
+                                              "There is no configuration folder for this version of PartSeg"
+                                              "Would you like to import it from " + before_name + " version of PartSeg",
+                                              QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+                    if resp == QMessageBox.Yes:
+                        shutil.copytree(os.path.join(base_folder, before_name), os.path.join(base_folder, __version__))
+            errors = self.settings.load()
+            if errors:
+                errors_message = QMessageBox()
+                errors_message.setText("There are errors during start")
+                errors_message.setInformativeText("During load saved state some of data could not be load properly\n"
+                                                  "The files has prepared backup copies in  state directory (Help > State directory)")
+                errors_message.setStandardButtons(QMessageBox.Ok)
+                text = "\n".join(["File: " + x[0] + "\n" + str(x[1]) for x in errors])
+                errors_message.setDetailedText(text)
+                errors_message.exec()
         else:
             self.settings = settings
         self.files_num = 1

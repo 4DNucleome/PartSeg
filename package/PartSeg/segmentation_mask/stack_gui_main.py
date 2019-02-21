@@ -32,11 +32,12 @@ from .stack_settings import StackSettings
 from PartSeg.tiff_image import ImageReader, Image
 from .batch_proceed import BatchProceed
 from .image_view import StackImageView
-from PartSeg.utils.mask.io_functions import load_stack_segmentation, SaveSegmentation, LoadSegmentation, load_dict
+from PartSeg.utils.mask.io_functions import SaveSegmentation, LoadSegmentation, load_dict
+from .. import __version__
 
 app_name = "PartSeg"
 app_lab = "LFSG"
-CONFIG_FOLDER = os.path.join(appdirs.user_data_dir(app_name, app_lab), "mask")
+CONFIG_FOLDER = os.path.join(appdirs.user_data_dir(app_name, app_lab), str(__version__), "mask")
 
 
 class MainMenu(QWidget):

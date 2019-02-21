@@ -34,10 +34,11 @@ from .image_view import RawImageView, ResultImageView, RawImageStack, Synchroniz
 from .partseg_settings import PartSettings
 from ..common_gui.custom_save_dialog import SaveDialog
 from PartSeg.utils.analysis.save_functions import save_dict
+from .. import __version__
 
 app_name = "PartSeg"
 app_lab = "LFSG"
-CONFIG_FOLDER = os.path.join(appdirs.user_data_dir(app_name, app_lab), "analysis")
+CONFIG_FOLDER = os.path.join(appdirs.user_data_dir(app_name, app_lab), str(__version__), "analysis")
 
 
 class Options(QWidget):
