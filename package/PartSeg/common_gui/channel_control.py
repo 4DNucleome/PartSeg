@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from qtpy.QtWidgets import QWidget, QCheckBox, QGridLayout, QLabel, QHBoxLayout, QComboBox, QDoubleSpinBox
 from qtpy.QtGui import QImage, QShowEvent, QPaintEvent, QPainter, QPen, QMouseEvent
 from qtpy.QtCore import Signal
@@ -314,12 +316,15 @@ class ChannelControl(ChannelChooseBase):
         self.send_info()
 
     def update_channels_list(self):
+        """update list of channels on image change"""
         channels_num = self._settings.channels
-        """for i in range(len(self.current_bounds), channels_num):
-            self.current_bounds.append([0, 65000])"""
-        # self._settings.set_in_profile(f"{self._name}.bounds", self.current_bounds)
-        for el in self.channels_widgets:
+        index = 0
+        is_checked = defaultdict(lambda: True)
+        for i, el in enumerate(self.channels_widgets):
             self.channels_layout.removeWidget(el)
+            if el.active:
+                index = i
+            is_checked[i] = el.chosen.isChecked()
             el.clicked.disconnect()
             el.chosen.stateChanged.disconnect()
             el.deleteLater()
@@ -328,16 +333,19 @@ class ChannelControl(ChannelChooseBase):
             self.channels_widgets.append(ChannelWidget(i, self._settings.get_from_profile(f"{self._name}.cmap{i}",
                                                                                           default_colors[i % len(
                                                                                               default_colors)])))
+            self.channels_widgets[-1].chosen.setChecked(is_checked[i])
             self.channels_layout.addWidget(self.channels_widgets[-1])
             self.channels_widgets[-1].clicked.connect(self.change_chanel)
             self.channels_widgets[-1].chosen.stateChanged.connect(self.send_info_wrap)
-        self.channels_widgets[0].set_active()
+        if index >= len(self.channels_widgets):
+            index = 0
+        self.channels_widgets[index].set_active()
         self.minimum_value.blockSignals(True)
-        self.minimum_value.setValue(self._settings.get_from_profile(f"{self._name}.range_0", (0, 65000))[0])
+        self.minimum_value.setValue(self._settings.get_from_profile(f"{self._name}.range_{index}", (0, 65000))[0])
         self.minimum_value.blockSignals(False)
-        self.maximum_value.setValue(self._settings.get_from_profile(f"{self._name}.range_0", (0, 65000))[1])
-        self.use_gauss.setChecked(self._settings.get_from_profile(f"{self._name}.use_gauss_0", False))
-        self.gauss_radius.setValue(self._settings.get_from_profile(f"{self._name}.gauss_radius_0", 1))
+        self.maximum_value.setValue(self._settings.get_from_profile(f"{self._name}.range_{index}", (0, 65000))[1])
+        self.use_gauss.setChecked(self._settings.get_from_profile(f"{self._name}.use_gauss_{index}", False))
+        self.gauss_radius.setValue(self._settings.get_from_profile(f"{self._name}.gauss_radius_{index}", 1))
         self.current_channel = 0
         self.image = self.channels_widgets[0].image
         self.colormap_chose.setCurrentText(self.channels_widgets[0].color)
@@ -437,11 +445,10 @@ class ChannelChoose(ChannelChooseBase):
 
     def update_channels_list(self):
         channels_num = self._settings.channels
-        """for i in range(len(self.current_bounds), channels_num):
-            self.current_bounds.append([0, 65000])"""
-        # self._settings.set_in_profile(f"{self._name}.bounds", self.current_bounds)
-        for el in self.channels_widgets:
+        is_checked = defaultdict(lambda: True)
+        for i, el in enumerate(self.channels_widgets):
             self.channels_layout.removeWidget(el)
+            is_checked[i] = el.chosen.isChecked()
             el.clicked.disconnect()
             el.chosen.stateChanged.disconnect()
             el.deleteLater()
@@ -450,6 +457,7 @@ class ChannelChoose(ChannelChooseBase):
             self.channels_widgets.append(ChannelWidget(
                 i, self._settings.get_from_profile(f"{self.main_channel_control.name}.cmap{i}",
                                                    default_colors[i % len(default_colors)]), True))
+            self.channels_widgets[-1].chosen.setChecked(is_checked[i])
             self.channels_layout.addWidget(self.channels_widgets[-1])
             self.channels_widgets[-1].clicked.connect(self.change_chanel)
             self.channels_widgets[-1].chosen.stateChanged.connect(self.send_info_wrap)
