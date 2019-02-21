@@ -685,6 +685,7 @@ class CreatePlan(QWidget):
             plan = copy(self.calculation_plan)
             plan.set_name(text)
             self.settings.batch_plans[text] = plan
+            self.setrings.dump()
             self.plan_created.emit()
 
     @staticmethod
