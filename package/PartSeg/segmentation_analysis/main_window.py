@@ -8,6 +8,7 @@ from qtpy.QtGui import QIcon, QKeyEvent, QKeySequence, QResizeEvent
 from qtpy.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
     QMessageBox, QCheckBox, QComboBox, QInputDialog, QDialog
 
+from PartSeg.common_gui.about_dialog import AboutDialog
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.show_directory_dialog import DirectoryDialog
 from PartSeg.utils.analysis.load_functions import load_dict
@@ -632,7 +633,7 @@ class MainWindow(BaseMainWindow):
         image_menu.addAction("Mask manager").triggered.connect(self.main_menu.mask_manager)
         help_menu = menu_bar.addMenu("Help")
         help_menu.addAction("Settings directory").triggered.connect(self.show_settings_directory)
-        help_menu.addAction("About")
+        help_menu.addAction("About").triggered.connect(self.show_about_dialog)
 
         layout = QGridLayout()
         layout.setSpacing(0)
@@ -656,6 +657,8 @@ class MainWindow(BaseMainWindow):
     def show_settings_directory(self):
         DirectoryDialog(self.settings.json_folder_path).exec()
 
+    def show_about_dialog(self):
+        AboutDialog().exec()
 
     def image_read(self):
         self.raw_image.raw_image.set_image()
