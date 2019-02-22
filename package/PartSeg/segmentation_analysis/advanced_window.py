@@ -38,6 +38,10 @@ class AdvancedSettings(QWidget):
         self.export_btn.clicked.connect(self.export_profile)
         self.import_btn = QPushButton("Import profile")
         self.import_btn.clicked.connect(self.import_profiles)
+        self.export_pipeline_btn = QPushButton("Export pipeline")
+        self.export_pipeline_btn.clicked.connect(self.export_pipeline)
+        self.import_pipeline_btn = QPushButton("Import pipeline")
+        self.import_pipeline_btn.clicked.connect(self.import_pipeline)
         self.delete_btn = QPushButton("Delete profile")
         self.delete_btn.setDisabled(True)
         self.delete_btn.clicked.connect(self.delete_profile)
@@ -107,12 +111,14 @@ class AdvancedSettings(QWidget):
         profile_layout.addWidget(QLabel("Profiles:"), 0, 0)
         profile_layout.addWidget(self.profile_list, 1, 0)
         profile_layout.addWidget(QLabel("Pipelines:"), 2, 0)
-        profile_layout.addWidget(self.pipeline_list, 3, 0, 3, 1)
+        profile_layout.addWidget(self.pipeline_list, 3, 0, 4, 1)
         profile_layout.addWidget(self.info_label, 1, 1, 3, 2)
         profile_layout.addWidget(self.export_btn, 4, 1)
         profile_layout.addWidget(self.import_btn, 4, 2)
-        profile_layout.addWidget(self.delete_btn, 5, 1)
-        profile_layout.addWidget(self.rename_btn, 5, 2)
+        profile_layout.addWidget(self.export_pipeline_btn, 5, 1)
+        profile_layout.addWidget(self.import_pipeline_btn, 5, 2)
+        profile_layout.addWidget(self.delete_btn, 6, 1)
+        profile_layout.addWidget(self.rename_btn, 6, 2)
         layout = QVBoxLayout()
         layout.addLayout(spacing_layout)
         layout.addLayout(voxel_size_layout)
@@ -248,12 +254,56 @@ class AdvancedSettings(QWidget):
             self._settings.dump()
             self.update_profile_list()
 
+    def export_pipeline(self):
+        exp = ExportDialog(self._settings.segmentation_pipelines, ProfileDictViewer)
+        if not exp.exec_():
+            return
+        dial = QFileDialog(self, "Export pipeline segment")
+        dial.setFileMode(QFileDialog.AnyFile)
+        dial.setAcceptMode(QFileDialog.AcceptSave)
+        dial.setDirectory(self._settings.get("io.save_directory", ""))
+        dial.setNameFilter("Segment pipeline (*.json)")
+        dial.setDefaultSuffix("json")
+        dial.selectFile("segment_pipeline.json")
+        if dial.exec_():
+            file_path = dial.selectedFiles()[0]
+            data = dict([(x, self._settings.segmentation_pipelines[x]) for x in exp.get_export_list()])
+            with open(file_path, 'w') as ff:
+                json.dump(data, ff, cls=self._settings.json_encoder_class, indent=2)
+            self._settings.set("io.save_directory", os.path.dirname(file_path))
+
+    def import_pipeline(self):
+        dial = QFileDialog(self, "Import pipeline segment")
+        dial.setFileMode(QFileDialog.ExistingFile)
+        dial.setAcceptMode(QFileDialog.AcceptOpen)
+        dial.setDirectory(self._settings.get("io.save_directory", ""))
+        dial.setNameFilter("Segment pipeline (*.json)")
+        if dial.exec_():
+            file_path = dial.selectedFiles()[0]
+            self._settings.set("io.save_directory", os.path.dirname(file_path))
+            profs = self._settings.load_part(file_path)
+            profiles_dict = self._settings.segmentation_pipelines
+            imp = ImportDialog(profs, profiles_dict, ProfileDictViewer)
+            if not imp.exec_():
+                return
+            for original_name, final_name in imp.get_import_list():
+                profiles_dict[final_name] = profs[original_name]
+            self._settings.dump()
+            self.update_profile_list()
+
     def rename_profile(self):
-        profile_name = self.profile_list.currentItem().text()
+        profile_name, profiles_dict = "", {}
+        if self.profile_list.selectedItems():
+            profile_name = self.profile_list.selectedItems()[0].text()
+            profiles_dict = self._settings.segmentation_profiles
+        elif self.pipeline_list.selectedItems():
+            profile_name = self.pipeline_list.selectedItems()[0].text()
+            profiles_dict = self._settings.segmentation_pipelines
+        if profile_name == "":
+            return
         text, ok = QInputDialog.getText(self, "New profile name", f"New name for {profile_name}", text=profile_name)
         if ok:
             text = text.strip()
-            profiles_dict = self._settings.segmentation_profiles
             if text in profiles_dict.keys():
                 res = QMessageBox.warning(self, "Already exist",
                                           f"Profile with name {text} already exist. Would you like to overwrite?",
