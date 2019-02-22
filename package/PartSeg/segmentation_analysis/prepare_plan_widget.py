@@ -1,4 +1,6 @@
+import json
 import logging
+import os
 import typing
 from copy import copy, deepcopy
 from pathlib import Path
@@ -685,7 +687,7 @@ class CreatePlan(QWidget):
             plan = copy(self.calculation_plan)
             plan.set_name(text)
             self.settings.batch_plans[text] = plan
-            self.setrings.dump()
+            self.settings.dump()
             self.plan_created.emit()
 
     @staticmethod
@@ -975,11 +977,15 @@ class CalculateInfo(QWidget):
         dial.setDefaultSuffix("json")
         dial.selectFile("calculation_plans.json")
         if dial.exec_():
-            file_path = dial.selectedFiles()[0]
-            self.settings.dump_calculation_plans(file_path, choose.get_checked())
+            file_path = str(dial.selectedFiles()[0])
+            self.settings.set("io.export_directory", file_path)
+            data = dict([(x, self.settings.batch_plans[x]) for x in choose.get_export_list()])
+            with open(file_path, 'w') as ff:
+                json.dump(data, ff, cls=self.settings.json_encoder_class, indent=2)
+            self.settings.set("io.save_directory", os.path.dirname(file_path))
 
     def import_plans(self):
-        dial = QFileDialog(self, "Export calculation plans")
+        dial = QFileDialog(self, "Import calculation plans")
         dial.setFileMode(QFileDialog.ExistingFile)
         dial.setAcceptMode(QFileDialog.AcceptOpen)
         dial.setDirectory(self.settings.get("io.open_directory", str(Path.home())))
@@ -987,10 +993,11 @@ class CalculateInfo(QWidget):
         dial.setDefaultSuffix("json")
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
-            plans = self.settings.load_calculation_plans(file_path)
+            plans = self.settings.load_part(file_path)
             choose = ImportDialog(plans, self.settings.batch_plans, PlanPreview)
             if choose.exec_():
-                self.settings.add_calculation_plans(plans, choose.get_import_list())
+                for original_name, final_name in choose.get_import_list():
+                    self.settings.batch_plans[final_name] = plans[original_name]
                 self.update_plan_list()
 
     def delete_plan(self):
