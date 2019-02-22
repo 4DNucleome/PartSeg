@@ -993,7 +993,9 @@ class CalculateInfo(QWidget):
         dial.setDefaultSuffix("json")
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
-            plans = self.settings.load_part(file_path)
+            plans, err = self.settings.load_part(file_path)
+            if err:
+                QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
             choose = ImportDialog(plans, self.settings.batch_plans, PlanPreview)
             if choose.exec_():
                 for original_name, final_name in choose.get_import_list():

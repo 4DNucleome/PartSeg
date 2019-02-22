@@ -244,7 +244,9 @@ class AdvancedSettings(QWidget):
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
             self._settings.set("io.save_directory", os.path.dirname(file_path))
-            profs = self._settings.load_part(file_path)
+            profs,err = self._settings.load_part(file_path)
+            if err:
+                QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
             profiles_dict = self._settings.segmentation_profiles
             imp = ImportDialog(profs, profiles_dict, ProfileDictViewer)
             if not imp.exec_():
@@ -281,7 +283,9 @@ class AdvancedSettings(QWidget):
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
             self._settings.set("io.save_directory", os.path.dirname(file_path))
-            profs = self._settings.load_part(file_path)
+            profs, err = self._settings.load_part(file_path)
+            if err:
+                QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
             profiles_dict = self._settings.segmentation_pipelines
             imp = ImportDialog(profs, profiles_dict, ProfileDictViewer)
             if not imp.exec_():
@@ -749,7 +753,9 @@ class StatisticsSettings(QWidget):
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
             self.settings.set("io.export_directory", file_path)
-            stat = self.settings.load_part(file_path)
+            stat, err = self.settings.load_part(file_path)
+            if err:
+                QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
             statistic_dict = self.settings.statistic_profiles
             imp = ImportDialog(stat, statistic_dict, StringViewer)
             if not imp.exec_():

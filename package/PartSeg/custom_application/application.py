@@ -14,6 +14,7 @@ class CustomApplication(QApplication):
             return
         from ..project_utils_qt.error_dialog import ErrorDialog
         dial = ErrorDialog(self.error, "Exception during program run")
+        # TODO check
         dial.moveToThread(QApplication.instance().thread())
         dial.exec()
 

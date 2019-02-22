@@ -4,7 +4,7 @@ import typing
 
 from qtpy.QtCore import QObject, Signal
 
-from PartSeg.utils.json_hooks import ProfileDict, ProfileEncoder, profile_hook
+from PartSeg.utils.json_hooks import ProfileDict, ProfileEncoder, profile_hook, check_loaded_dict
 from ..utils.color_image.color_image_base import color_maps
 import numpy as np
 from os import path, makedirs
@@ -205,7 +205,19 @@ class BaseSettings(ViewSettings):
 
     def load_part(self, file_path):
         with open(file_path, 'r') as ff:
-            return json.load(ff, object_hook=self.decode_hook)
+            data = json.load(ff, object_hook=self.decode_hook)
+        bad_key = []
+        if isinstance(data, dict):
+            if not check_loaded_dict(data):
+                for k, v in data.items():
+                    if not check_loaded_dict(v):
+                        bad_key.append(k)
+                for el in bad_key:
+                    del data[el]
+        elif isinstance(data, ProfileDict):
+            if not data.verify_data():
+                bad_key = data.filter_data()
+        return data, bad_key
 
     def dump(self, folder_path=None):
         if folder_path is None:
