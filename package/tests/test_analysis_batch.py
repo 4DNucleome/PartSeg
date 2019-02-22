@@ -2,7 +2,7 @@ import os
 from glob import glob
 import time
 import pandas as pd
-
+import sys
 from PartSeg.tiff_image import ImageReader
 from PartSeg.utils.analysis.algorithm_description import SegmentationProfile
 from PartSeg.utils.analysis.batch_processing.batch_backend import CalculationProcess, CalculationManager
@@ -80,7 +80,10 @@ class TestCalculationProcess:
         while manager.has_work:
             time.sleep(0.1)
             __ = manager.get_results()
-        time.sleep(0.4)
+        if sys.platform == "darwin":
+            time.sleep(2)
+        else:
+            time.sleep(0.4)
         assert os.path.exists(os.path.join(get_test_dir(), "test.xlsx"))
         df = pd.read_excel(os.path.join(get_test_dir(), "test.xlsx"), index_col=0, header=[0, 1])
         assert df.shape == (8, 4)
