@@ -130,6 +130,8 @@ def fill_holes_in_mask(mask, volume):
     border_set = set()
     for dim_num in range(component_mask.ndim):
         border_set.update(np.unique(np.take(component_mask, [0, -1], axis=dim_num)))
+    if 0 in border_set:
+        border_set.remove(0)
     components_num = component_mask.max()
     assert component_mask.dtype.type(components_num) < component_mask.dtype.type(components_num+1)
     for num in border_set:
