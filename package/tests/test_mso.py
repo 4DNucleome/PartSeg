@@ -467,5 +467,54 @@ class TestMSO:
         changes = mso.run_MSO(10)
         steps = mso.steps_done()
         print(changes, steps)
+        # res = mso.get_result_catted()
+        arr = np.copy(components)
+        arr[arr == 1] = 0
+        arr[3:7, 3:7, 3:10] = 2
+        arr[3:7, 3:7, 10:17] = 3
+        # assert np.all(arr == res)
+
+        mu_arr[2:8, 2:8, 10] = 0.08
+        mso.set_mu_array(mu_arr)
+        mso.run_MSO(10)
+        # res = mso.get_result_catted()
+        arr[2:8, 2:8,2:10] = 2
+        arr[2:8, 2:8, 11:18] = 3
+        arr[3:7, 3:7, 10] = 0
+        # assert np.all(arr == res)
+        mu_arr[2:8, 2:8, 9] = 0.08
+        mso.set_mu_array(mu_arr)
+        arr[2:8, 2:8, 2:9] = 2
+        arr[2:8, 2:8, 9] = 0
+        arr[2:8, 2:8, 11:18] = 3
+        mso.run_MSO(10)
+        fdt = mso.get_fdt()
         res = mso.get_result_catted()
-        print(res)
+        assert np.all(arr == res)
+        print(res.max(), fdt.max())
+
+    def test_two_components_bridge(self):
+        components = np.zeros((10, 10, 20), dtype=np.uint8)
+        components[:] = 1
+        components[2:8, 2:8, 2:18] = 0
+        components[4:6, 4:6, 4:6] = 2
+        components[4:6, 4:6, 14:16] = 3
+        mu_arr = np.zeros(components.shape, dtype=np.float64)
+        mu_arr[components == 0] = 0.5
+        mu_arr[components > 1] = 1
+        mu_arr[2:8, 2:8, (9,10)] = 0.1
+        mso = PyMSO()
+        neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
+        mso.set_neighbourhood(neigh, dist)
+        mso.set_components(components)
+        mso.set_mu_array(mu_arr)
+        mso.set_components_num(3)
+        mso.run_MSO(10)
+        fdt = mso.get_fdt()
+        res = mso.get_result_catted()
+        assert(mso.steps_done() == 2)
+        arr = np.copy(components)
+        arr[arr == 1] = 0
+        arr[2:8, 2:8, 2:9] = 2
+        arr[2:8, 2:8, 11:18] = 3
+        assert np.all(res == arr)

@@ -51,6 +51,7 @@ cdef extern from 'mso.h' namespace 'MSO':
         void set_data[W](T * components, W size, T background_component)
         void set_data[W](T * components, W size)
         size_t steps_done()
+        vector[mu_type] get_fdt()
         vector[T] get_result_catted()
 
     cdef cppclass MuCalc[R, T]:
@@ -211,6 +212,12 @@ cdef class PyMSO:
     def get_result_catted(self):
         cdef vector[component_type] res = self.mso.get_result_catted()
         res_arr = numpy.array(res, dtype=np_component_type)
+        res_arr = res_arr.reshape([self.components.shape[i] for i in range(self.components.ndim)])
+        return res_arr
+
+    def get_fdt(self):
+        cdef vector[mu_type] res = self.mso.get_fdt()
+        res_arr = numpy.array(res, dtype=numpy.float64)
         res_arr = res_arr.reshape([self.components.shape[i] for i in range(self.components.ndim)])
         return res_arr
 
