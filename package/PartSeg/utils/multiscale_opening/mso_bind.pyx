@@ -38,16 +38,16 @@ cdef extern from 'mso.h' namespace 'MSO':
         void set_mu_copy(const vector[M] & mu) except +
         void set_mu_copy(M * mu, size_t length) except +
         void set_mu_swap(vector[M] & mu) except +
-        void set_neighbourhood(vector[int8_t] neighbourhood, vector[mu_type] distances)
-        void set_neighbourhood(int8_t * neighbourhood, M * distances, size_t neigh_size)
+        void set_neighbourhood(vector[int8_t] neighbourhood, vector[mu_type] distances) except +
+        void set_neighbourhood(int8_t * neighbourhood, M * distances, size_t neigh_size) except +
         void set_components_num(T components_num)
         void compute_FDT(vector[M] & array) except +
         void set_use_background(bool val)
         size_t optimum_erosion_calculate(vector[M] &fdt_array, vector[T] &components_arr, vector[bool] & sprawl_area) except +
         size_t constrained_dilation(vector[M] &fdt_array, vector[T] &components_arr, vector[bool] & sprawl_area) except +
         size_t get_length()
-        size_t run_MSO()
-        size_t run_MSO(size_t steps_limits)
+        size_t run_MSO() except +
+        size_t run_MSO(size_t steps_limits) except +
         void set_data[W](T * components, W size, T background_component)
         void set_data[W](T * components, W size)
         size_t steps_done()
@@ -138,12 +138,16 @@ cdef class PyMSO:
     def set_mu_array(self, numpy.ndarray[mu_type, ndim=3] mu):
         self.mso.set_mu_copy(<mu_type *> mu.data, mu.size)
 
-    def set_components(self, numpy.ndarray[component_type, ndim=3] components):
+    def set_components(self, numpy.ndarray[component_type, ndim=3] components, component_num=None):
         cdef vector[uint16_t] shape = vector[uint16_t](3, 0)
         shape[0] = components.shape[0]
         shape[1] = components.shape[1]
         shape[2] = components.shape[2]
         self.mso.set_data(<component_type *> components.data, shape)
+        if component_num is not None:
+            self.mso.set_components_num(component_num)
+        else:
+            self.mso.set_components_num(components.max())
         self.components = components
 
     def set_neighbourhood(self, numpy.ndarray[int8_t, ndim=2] neighbourhood, numpy.ndarray[mu_type] distances):
@@ -220,6 +224,9 @@ cdef class PyMSO:
         res_arr = numpy.array(res, dtype=numpy.float64)
         res_arr = res_arr.reshape([self.components.shape[i] for i in range(self.components.ndim)])
         return res_arr
+
+    def set_use_background(self, use):
+        self.mso.set_use_background(use)
 
 
 

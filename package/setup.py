@@ -43,10 +43,10 @@ extensions = [
               ),
     Extension("PartSeg.utils.multiscale_opening.mso_bind", ["PartSeg/utils/multiscale_opening/mso_bind.pyx"],
               include_dirs=[np.get_include()],
-              extra_compile_args=['-std=c++11', '-Wall', '-g', '-O0'],
+              extra_compile_args=['-std=c++11', '-Wall'],
               language='c++',
-              undef_macros=["NDEBUG"],
-              define_macros=[("DEBUG", None)]
+              # undef_macros=["NDEBUG"],
+              # define_macros=[("DEBUG", None)]
               )
 ]
 

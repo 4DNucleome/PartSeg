@@ -1,12 +1,14 @@
+import sys
 from abc import ABC
 from enum import Enum
 from typing import Callable, Any
 
 import numpy as np
 
+from PartSeg.utils.multiscale_opening import PyMSO, calculate_mu, MuType
 from ..distance_in_structure.find_split import path_maximum_sprawl, path_minimum_sprawl, euclidean_sprawl, \
     fdt_sprawl
-from ..segmentation.algorithm_describe_base import Register, AlgorithmDescribeBase
+from ..segmentation.algorithm_describe_base import Register, AlgorithmDescribeBase, AlgorithmProperty
 
 
 class BaseSprawl(AlgorithmDescribeBase, ABC):
@@ -81,8 +83,37 @@ class PathDistanceSprawl(BaseSprawl):
         return DistanceSprawl.sprawl(sprawl_area, mid, data, components_num, spacing, side_connection, operator,
                                      arguments, lower_bound, upper_bound)
 
+class MSOSprawl(BaseSprawl):
+    @classmethod
+    def get_name(cls):
+        return "MultiScale Opening sprawl"
 
-sprawl_dict = Register(PathSprawl, DistanceSprawl, PathDistanceSprawl, FDTSprawl)
+    @classmethod
+    def get_fields(cls):
+        return [AlgorithmProperty("step_limits", "Limits of Steps", 100, options_range=(1, 1000), property_type=int)]
+
+    @classmethod
+    def sprawl(cls, sprawl_area: np.ndarray, core_objects: np.ndarray, data: np.ndarray, components_num: int, spacing,
+               side_connection: bool, operator: Callable[[Any, Any], bool], arguments: dict, lower_bound, upper_bound):
+        assert components_num < 255
+        mso = PyMSO()
+        neigh, dist = calculate_distances_array(spacing, get_neigh(side_connection))
+        components_arr = np.copy(core_objects).astype(np.uint8)
+        components_arr[components_arr > 0] += 1
+        components_arr[sprawl_area == 0] = 1
+        mso.set_neighbourhood(neigh, dist)
+        mso.set_components(components_arr, components_num+1)
+        mso.set_use_background(False)
+        mu_array = calculate_mu(data.copy('C'), lower_bound, upper_bound, MuType.base_mu)
+        mso.set_mu_array(mu_array)
+        mso.run_MSO(arguments["step_limits"])
+        print("Steps: ", mso.steps_done(), file=sys.stderr)
+        result = mso.get_result_catted()
+        result[result > 0] -= 1
+        return result
+
+
+sprawl_dict = Register(PathSprawl, DistanceSprawl, PathDistanceSprawl, FDTSprawl, MSOSprawl)
 
 
 def get_neigh(sides):

@@ -105,6 +105,12 @@ class TestMu:
         # TODO
         image = np.zeros((10, 10, 10), dtype=np.uint8)
 
+    def test_reshape(self):
+        image = np.zeros((40, 150, 120), dtype=np.uint16)
+        image[2:-2, 2:-2, 2:-2] = 30
+        res = calculate_mu(image, 20, 40, MuType.base_mu)
+        assert np.all(res == (image > 0)*0.5)
+
 
 def test_mso_construct():
     data = PyMSO()
@@ -257,7 +263,6 @@ class TestConstrainedDilation:
             assert np.all(res == components2)
 
 
-
 class TestOptimumErosionCalculate:
     def test_two_components(self):
         components = np.zeros((10, 10, 20), dtype=np.uint8)
@@ -405,12 +410,12 @@ class TestFDT:
             arr[ub, lb + 1:ub, (lb, ub)] += np.sqrt(2) / 4 - 0.25
             arr[ub, (lb, ub), lb + 1:ub] += np.sqrt(2) / 4 - 0.25
             for el in itertools.product([lb, ub], repeat=3):
-                arr[el]+= np.sqrt(3) / 4 - 0.25
-        for z, (y,x) in itertools.product([2, 7], itertools.product([0, 9], repeat=2)):
+                arr[el] += np.sqrt(3) / 4 - 0.25
+        for z, (y, x) in itertools.product([2, 7], itertools.product([0, 9], repeat=2)):
             arr[z, y, x] += np.sqrt(2) / 4 - 0.25
-        for z, (y,x) in itertools.product([2, 7], itertools.product([1, 8], repeat=2)):
+        for z, (y, x) in itertools.product([2, 7], itertools.product([1, 8], repeat=2)):
             arr[z, y, x] += np.sqrt(2) / 4 - 0.25
-        for z, (y,x) in itertools.product([1, 8], itertools.product([0, 9], repeat=2)):
+        for z, (y, x) in itertools.product([1, 8], itertools.product([0, 9], repeat=2)):
             arr[z, y, x] += np.sqrt(2) / 4 - 0.25
         res2 = mso.calculate_FDT()
         assert np.allclose(res2, arr)
@@ -478,7 +483,7 @@ class TestMSO:
         mso.set_mu_array(mu_arr)
         mso.run_MSO(10)
         # res = mso.get_result_catted()
-        arr[2:8, 2:8,2:10] = 2
+        arr[2:8, 2:8, 2:10] = 2
         arr[2:8, 2:8, 11:18] = 3
         arr[3:7, 3:7, 10] = 0
         # assert np.all(arr == res)
@@ -488,10 +493,8 @@ class TestMSO:
         arr[2:8, 2:8, 9] = 0
         arr[2:8, 2:8, 11:18] = 3
         mso.run_MSO(10)
-        fdt = mso.get_fdt()
         res = mso.get_result_catted()
         assert np.all(arr == res)
-        print(res.max(), fdt.max())
 
     def test_two_components_bridge(self):
         components = np.zeros((10, 10, 20), dtype=np.uint8)
@@ -502,15 +505,14 @@ class TestMSO:
         mu_arr = np.zeros(components.shape, dtype=np.float64)
         mu_arr[components == 0] = 0.5
         mu_arr[components > 1] = 1
-        mu_arr[2:8, 2:8, (9,10)] = 0.1
+        mu_arr[2:8, 2:8, (9, 10)] = 0.1
         mso = PyMSO()
         neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
         mso.set_neighbourhood(neigh, dist)
-        mso.set_components(components)
+        mso.set_components(components, 3)
         mso.set_mu_array(mu_arr)
         mso.set_components_num(3)
         mso.run_MSO(10)
-        fdt = mso.get_fdt()
         res = mso.get_result_catted()
         assert(mso.steps_done() == 2)
         arr = np.copy(components)
