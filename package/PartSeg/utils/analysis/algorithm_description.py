@@ -17,13 +17,16 @@ class SegmentationProfile(object):
         self.values = values
 
     @classmethod
-    def print_dict(cls, dkt, indent=0):
+    def print_dict(cls, dkt, indent=0, name: str = ""):
         if isinstance(dkt, Enum):
             return dkt.name
         if not isinstance(dkt, dict):
+            # FIXME update in future method of proper printing channel number
+            if name.startswith("channel") and isinstance(dkt, int):
+                return dkt + 1
             return dkt
         return "\n" + "\n".join(
-            [" " * indent + f"{k.replace('_', ' ')}: {cls.print_dict(v, indent + 2)}"
+            [" " * indent + f"{k.replace('_', ' ')}: {cls.print_dict(v, indent + 2, k)}"
              for k, v in dkt.items()])
 
     def __str__(self):
