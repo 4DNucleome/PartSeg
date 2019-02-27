@@ -10,6 +10,7 @@ from qtpy.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushBut
     QMessageBox, QFileDialog, QComboBox, QAbstractSpinBox, QInputDialog, \
     QPlainTextEdit, QFrame
 
+from PartSeg.utils.analysis.algorithm_description import SegmentationProfile, analysis_algorithm_dict
 from ..common_gui.universal_gui_part import EnumComboBox
 from ..common_gui.colors_choose import ColorSelector
 from ..common_gui.custom_save_dialog import FormDialog
@@ -149,7 +150,7 @@ class AdvancedSettings(QWidget):
             return
 
         # TODO update with knowledge from profile dict
-        self.info_label.setPlainText(str(profile))
+        self.info_label.setPlainText(profile.pretty_print(analysis_algorithm_dict))
         self.delete_btn.setEnabled(True)
         self.rename_btn.setEnabled(True)
 

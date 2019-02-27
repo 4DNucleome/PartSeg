@@ -45,6 +45,10 @@ class AlgorithmDescribeBase:
         raise NotImplementedError()
 
     @classmethod
+    def get_fields_dict(cls):
+        return dict([(v.name, v) for v in cls.get_fields()])
+
+    @classmethod
     def get_default_values(cls):
         result = {}
         for el in cls.get_fields():

@@ -1,6 +1,10 @@
+import sys
 from enum import Enum
-from ..segmentation.algorithm_describe_base import Register
+
+from PartSeg.utils.channel_class import Channel
+from ..segmentation.algorithm_describe_base import Register, AlgorithmProperty, AlgorithmDescribeBase
 from ..segmentation.restartable_segmentation_algorithms import final_algorithm_list
+from typing import Dict
 
 analysis_algorithm_dict = Register()
 
@@ -15,6 +19,36 @@ class SegmentationProfile(object):
         self.name = name
         self.algorithm = algorithm
         self.values = values
+
+    def pretty_print(self, algorithm_dict):
+        try:
+            algorithm = algorithm_dict[self.algorithm]
+        except KeyError:
+            return str(self)
+        return "Segmentation profile name: " + self.name + "\nAlgorithm: " + \
+               self.algorithm + "\n" + self._pretty_print(self.values, algorithm.get_fields_dict())
+
+    @classmethod
+    def _pretty_print(cls, values: dict, translate_dict: Dict[str, AlgorithmProperty], indent=0):
+        res = ""
+        for k, v in values.items():
+            if k in translate_dict:
+                desc = translate_dict[k]
+                res += " " * indent + desc.user_name + ": "
+                if issubclass(desc.value_type, Channel):
+                    res += str(Channel(v))
+                elif issubclass(desc.value_type, AlgorithmDescribeBase):
+                    res += desc.possible_values[v["name"]].get_name()
+                    if v['values']:
+                        res += "\n"
+                        res += cls._pretty_print(v["values"], desc.possible_values[v["name"]].get_fields_dict(), indent+2)
+                else:
+                    res += str(v)
+            else:
+                raise ValueError("wrong argument")
+            res += "\n"
+        return res[:-1]
+
 
     @classmethod
     def print_dict(cls, dkt, indent=0, name: str = ""):
