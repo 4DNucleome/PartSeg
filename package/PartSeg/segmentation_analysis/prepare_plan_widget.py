@@ -14,7 +14,7 @@ from PartSeg.common_gui.universal_gui_part import EnumComboBox
 from ..common_gui.custom_save_dialog import FormDialog
 from ..common_gui.mask_widget import MaskWidget
 from ..common_gui.universal_gui_part import right_label
-from PartSeg.utils.analysis.algorithm_description import SegmentationProfile
+from PartSeg.utils.analysis.algorithm_description import SegmentationProfile, analysis_algorithm_dict
 from PartSeg.utils.analysis.save_functions import save_dict
 from ..utils.io_utils import SaveBase
 from ..utils.segmentation.algorithm_describe_base import AlgorithmProperty
@@ -751,7 +751,7 @@ class CreatePlan(QWidget):
                 text = str(self.segment_profile.currentItem().text())
             else:
                 return
-        self.information.setText(str(self.settings.segmentation_profiles[text]))
+        self.information.setText(self.settings.segmentation_profiles[text].pretty_print(analysis_algorithm_dict))
 
     def show_segment(self):
         if self.update_element_btn.isChecked():
@@ -846,7 +846,11 @@ class PlanPreview(QTreeWidget):
         if isinstance(node_plan.operation, (StatisticCalculate, SegmentationProfile, MaskCreate)):
             desc = QTreeWidgetItem(widget)
             desc.setText(0, "Description")
-            for line in str(node_plan.operation).split("\n")[1:]:
+            if isinstance(node_plan.operation, SegmentationProfile):
+                txt = node_plan.operation.pretty_print(analysis_algorithm_dict)
+            else:
+                txt = str(node_plan.operation)
+            for line in txt.split("\n")[1:]:
                 QTreeWidgetItem(desc, [line])
         if deep:
             for el in node_plan.children:
@@ -892,7 +896,11 @@ class PlanPreview(QTreeWidget):
                 if isinstance(el.operation, (StatisticProfile, SegmentationProfile, MaskCreate)):
                     child = node.child(0)
                     child.takeChildren()
-                    for line in str(el.operation).split("\n")[1:]:
+                    if isinstance(el.operation, SegmentationProfile):
+                        txt = el.operation.pretty_print(analysis_algorithm_dict)
+                    else:
+                        txt = str(el.operation)
+                    for line in txt.split("\n")[1:]:
                         QTreeWidgetItem(child, [line])
 
             else:
