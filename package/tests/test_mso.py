@@ -522,6 +522,29 @@ class TestMSO:
         arr[2:8, 2:8, 11:18] = 3
         assert np.all(res == arr)
 
+    def test_background_simple(self):
+        components = np.ones((20, 20, 20), dtype=np.uint8)
+        components[1:-1, 1:-1, 1:-1] = 0
+        components[9:11, 9:11, 9:11] = 2
+
+        mu_array = np.zeros(components.shape)
+        mu_array[1:-1, 1:-1, 1:-1] = 0.7
+        mu_array[3:-3, 3:-3, 3:-3] = 0.6
+        mu_array[5:-5, 5:-5, 5:-5] = 0.4
+        mu_array[6:-6, 6:-6, 6:-6] = 0.6
+        mu_array[8:-8, 8:-8, 8:-8] = 0.7
+        mu_array[components > 0] = 1.0
+        mso = PyMSO()
+        neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
+        mso.set_neighbourhood(neigh, dist)
+        mso.set_use_background(True)
+        mso.set_components(components, 3)
+        mso.set_mu_array(mu_array)
+        mso.set_components_num(3)
+        mso.run_MSO(10)
+        res = mso.get_result_catted()
+        print(res.max())
+
 
 class TestMuMid:
     def test_simple(self):
