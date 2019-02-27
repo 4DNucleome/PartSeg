@@ -463,5 +463,8 @@ test_data/
 !launcher.spec
 /test_data_all/
 /test_data.tbz2
+!/package/PartSeg/utils/segmentation/multiscale_opening/*.cpp
+/package/PartSeg/utils/segmentation/multiscale_opening/*.gch
+package/PartSeg/utils/multiscale_opening/\.vscode/
 
 package/PartSeg/utils/multiscale_opening/\.vscode/

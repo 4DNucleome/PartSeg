@@ -167,15 +167,15 @@ class BaseFlowThreshold(BaseThreshold, ABC):
         alg = self.algorithm_class()
         parameters = self.get_parameters()
         alg.set_image(image)
-        for key in sprawl_dict.keys():
-            parameters["sprawl_type"] = {'name': key, 'values': {}}
+        for key, val in sprawl_dict.items():
+            parameters["sprawl_type"] = {'name': key, 'values': val.get_default_values()}
             alg.set_parameters(**parameters)
             result = alg.calculation_run(empty)
             assert result.segmentation.max() == 2
             assert np.all(np.bincount(result.segmentation.flat)[1:] == np.array([96000, 72000]))  # 30*40*80, 30*30*80
         parameters["threshold"]["values"]["base_threshold"]['values']["threshold"] += self.get_shift()
-        for key in sprawl_dict.keys():
-            parameters["sprawl_type"] = {'name': key, 'values': {}}
+        for key, val in sprawl_dict.items():
+            parameters["sprawl_type"] = {'name': key, 'values': val.get_default_values()}
             alg.set_parameters(**parameters)
             result = alg.calculation_run(empty)
             assert result.segmentation.max() == 2
@@ -188,8 +188,8 @@ class BaseFlowThreshold(BaseThreshold, ABC):
         parameters = self.get_parameters()
         parameters['side_connection'] = True
         alg.set_image(image)
-        for key in sprawl_dict.keys():
-            parameters["sprawl_type"] = {'name': key, 'values': {}}
+        for key, val in sprawl_dict.items():
+            parameters["sprawl_type"] = {'name': key, 'values': val.get_default_values()}
             alg.set_parameters(**parameters)
             result = alg.calculation_run(empty)
             assert result.segmentation.max() == 2
