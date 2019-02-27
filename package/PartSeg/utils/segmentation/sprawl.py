@@ -83,6 +83,7 @@ class PathDistanceSprawl(BaseSprawl):
         return DistanceSprawl.sprawl(sprawl_area, mid, data, components_num, spacing, side_connection, operator,
                                      arguments, lower_bound, upper_bound)
 
+
 class MSOSprawl(BaseSprawl):
     @classmethod
     def get_name(cls):
@@ -90,7 +91,8 @@ class MSOSprawl(BaseSprawl):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("step_limits", "Limits of Steps", 100, options_range=(1, 1000), property_type=int)]
+        return [AlgorithmProperty("step_limits", "Limits of Steps", 100, options_range=(1, 1000), property_type=int),
+                AlgorithmProperty("reflective", "Reflective", False, property_type=bool)]
 
     @classmethod
     def sprawl(cls, sprawl_area: np.ndarray, core_objects: np.ndarray, data: np.ndarray, components_num: int, spacing,
@@ -105,6 +107,8 @@ class MSOSprawl(BaseSprawl):
         mso.set_components(components_arr, components_num+1)
         mso.set_use_background(False)
         mu_array = calculate_mu(data.copy('C'), lower_bound, upper_bound, MuType.base_mu)
+        if arguments["reflective"]:
+            mu_array[mu_array < 0.5] = 1 - mu_array[mu_array < 0.5]
         mso.set_mu_array(mu_array)
         mso.run_MSO(arguments["step_limits"])
         print("Steps: ", mso.steps_done(), file=sys.stderr)

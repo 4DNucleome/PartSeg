@@ -522,7 +522,7 @@ class TestMSO:
         arr[2:8, 2:8, 11:18] = 3
         assert np.all(res == arr)
 
-    def test_background_simple(self):
+    def _test_background_simple(self):
         components = np.ones((20, 20, 20), dtype=np.uint8)
         components[1:-1, 1:-1, 1:-1] = 0
         components[9:11, 9:11, 9:11] = 2
@@ -556,7 +556,7 @@ class TestMuMid:
         res = calculate_mu_mid(data, 5, 10, 20)
         assert np.all(ones == res)
         res = calculate_mu_mid(data, 5, 20, 30)
-        assert np.all(res == (data==0).astype(np.float))
+        assert np.all(res == (data == 0).astype(np.float))
         data[2:-2, 2:-2, 2:-2] = 30
         res = calculate_mu_mid(data, 5, 25, 30)
         assert np.all(res == (data != 20).astype(np.float) + (data == 20) * 0.25)

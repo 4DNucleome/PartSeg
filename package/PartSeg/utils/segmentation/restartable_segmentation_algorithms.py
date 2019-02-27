@@ -1,7 +1,7 @@
 import operator
 from abc import ABC
 from collections import defaultdict
-
+from copy import deepcopy
 import SimpleITK as sitk
 import numpy as np
 
@@ -119,16 +119,16 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             self.channel = self.get_channel(self.new_parameters["channel"])
             restarted = True
         if restarted or self.parameters["noise_removal"] != self.new_parameters["noise_removal"]:
-            self.parameters["noise_removal"] = self.new_parameters["noise_removal"]
+            self.parameters["noise_removal"] = deepcopy(self.new_parameters["noise_removal"])
             noise_removal_parameters = self.new_parameters["noise_removal"]
             self.cleaned_image = noise_removal_dict[noise_removal_parameters["name"]]. \
                 noise_remove(self.channel, self.image.spacing, noise_removal_parameters["values"])
             restarted = True
         if restarted or self.new_parameters["threshold"] != self.parameters["threshold"]:
-            self.parameters["threshold"] = self.new_parameters["threshold"]
+            self.parameters["threshold"] = deepcopy(self.new_parameters["threshold"])
             self.threshold_image = self._threshold(self.cleaned_image)
             if isinstance(self.threshold_info, (list, tuple)):
-                if self.old_threshold_info[0] != self.threshold_info[0]:
+                if self.old_threshold_info is None or self.old_threshold_info[0] != self.threshold_info[0]:
                     restarted = True
             elif self.old_threshold_info != self.threshold_info:
                 restarted = True
@@ -202,6 +202,7 @@ class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
         self._set_parameters(threshold=(lower_threshold, upper_threshold), *args, **kwargs)
 
     def _threshold(self, image, thr=None):
+        self.threshold_info = self.new_parameters["threshold"]
         return ((image > self.new_parameters["threshold"][0]) *
                 np.array(image < self.new_parameters["threshold"][1])).astype(np.uint8)
 
@@ -359,7 +360,7 @@ class OtsuSegment(RestartableAlgorithm):
                "\nSizes: " + ", ".join(map(str, self._sizes_array))
 
 
-class BaseMultiScaleOpening(ThresholdBaseAlgorithm):
+class BaseMultiScaleOpening(ThresholdBaseAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty("threshold", "Threshold", next(iter(double_threshold_dict.keys())),
@@ -475,6 +476,6 @@ class UpperThresholdMultiScaleOpening(BaseMultiScaleOpening):
 
 
 final_algorithm_list = [LowerThresholdAlgorithm, UpperThresholdAlgorithm, RangeThresholdAlgorithm,
-                        LowerThresholdFlowAlgorithm, UpperThresholdFlowAlgorithm, LowerThresholdMultiScaleOpening,
-                        UpperThresholdMultiScaleOpening,
+                        LowerThresholdFlowAlgorithm, UpperThresholdFlowAlgorithm, # LowerThresholdMultiScaleOpening,
+                        # UpperThresholdMultiScaleOpening,
                         OtsuSegment, BorderRim]
