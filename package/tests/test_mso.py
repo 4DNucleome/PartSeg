@@ -6,6 +6,7 @@ from PartSeg.utils.distance_in_structure.euclidean_cython import calculate_eucli
 from PartSeg.utils.multiscale_opening import PyMSO, calculate_mu, MuType
 import numpy as np
 
+from PartSeg.utils.multiscale_opening.mso_bind import calculate_mu_mid
 from PartSeg.utils.segmentation.sprawl import NeighType, calculate_distances_array
 
 
@@ -520,3 +521,21 @@ class TestMSO:
         arr[2:8, 2:8, 2:9] = 2
         arr[2:8, 2:8, 11:18] = 3
         assert np.all(res == arr)
+
+
+class TestMuMid:
+    def test_simple(self):
+        data = np.zeros((10, 10, 10))
+        data[1:-1, 1:-1, 1:-1] = 20
+        ones = np.ones(data.shape)
+        res = calculate_mu_mid(data, 5, 10, 15)
+        assert np.all(ones == res)
+        res = calculate_mu_mid(data, 5, 10, 20)
+        assert np.all(ones == res)
+        res = calculate_mu_mid(data, 5, 20, 30)
+        assert np.all(res == (data==0).astype(np.float))
+        data[2:-2, 2:-2, 2:-2] = 30
+        res = calculate_mu_mid(data, 5, 25, 30)
+        assert np.all(res == (data != 20).astype(np.float) + (data == 20) * 0.25)
+        res = calculate_mu_mid(data, 5, 25, 35)
+        assert np.all(res == (data == 0).astype(np.float) + (data == 20) * 0.25 + + (data == 30) * 0.5)

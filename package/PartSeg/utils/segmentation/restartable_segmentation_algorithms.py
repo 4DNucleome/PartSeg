@@ -5,15 +5,18 @@ from collections import defaultdict
 import SimpleITK as sitk
 import numpy as np
 
+from PartSeg.utils.multiscale_opening import PyMSO
+from PartSeg.utils.multiscale_opening.mso_bind import calculate_mu_mid
 from ..border_rim import border_mask
 from ..channel_class import Channel
-from ..segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
-from ..segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
-from ..segmentation.noise_filtering import noise_removal_dict
-from ..segmentation.sprawl import sprawl_dict, BaseSprawl
-from ..segmentation.threshold import threshold_dict, BaseThreshold, double_threshold_dict
+from .algorithm_base import SegmentationAlgorithm, SegmentationResult
+from .algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
+from .noise_filtering import noise_removal_dict
+from .sprawl import sprawl_dict, BaseSprawl, calculate_distances_array, get_neigh
+from .threshold import threshold_dict, BaseThreshold, double_threshold_dict
 from ..universal_const import Units
 from ..utils import bisect
+from .mu_mid_point import mu_mid_dict, BaseMuMid
 
 
 def blank_operator(_x, _y):
@@ -112,14 +115,17 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         self.old_threshold_info = self.threshold_info
         restarted = False
         if self.channel is None or self.parameters["channel"] != self.new_parameters["channel"]:
+            self.parameters["channel"] = self.new_parameters["channel"]
             self.channel = self.get_channel(self.new_parameters["channel"])
             restarted = True
         if restarted or self.parameters["noise_removal"] != self.new_parameters["noise_removal"]:
+            self.parameters["noise_removal"] = self.new_parameters["noise_removal"]
             noise_removal_parameters = self.new_parameters["noise_removal"]
             self.cleaned_image = noise_removal_dict[noise_removal_parameters["name"]]. \
                 noise_remove(self.channel, self.image.spacing, noise_removal_parameters["values"])
             restarted = True
         if restarted or self.new_parameters["threshold"] != self.parameters["threshold"]:
+            self.parameters["threshold"] = self.new_parameters["threshold"]
             self.threshold_image = self._threshold(self.cleaned_image)
             if isinstance(self.threshold_info, (list, tuple)):
                 if self.old_threshold_info[0] != self.threshold_info[0]:
@@ -127,12 +133,14 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             elif self.old_threshold_info != self.threshold_info:
                 restarted = True
         if restarted or self.new_parameters["side_connection"] != self.parameters["side_connection"]:
+            self.parameters["side_connection"] = self.new_parameters["side_connection"]
             connect = sitk.ConnectedComponent(sitk.GetImageFromArray(self.threshold_image),
                                               not self.new_parameters["side_connection"])
             self.segmentation = sitk.GetArrayFromImage(sitk.RelabelComponent(connect))
             self._sizes_array = np.bincount(self.segmentation.flat)
             restarted = True
         if restarted or self.new_parameters["minimum_size"] != self.parameters["minimum_size"]:
+            self.parameters["minimum_size"] = self.new_parameters["minimum_size"]
             minimum_size = self.new_parameters["minimum_size"]
             ind = bisect(self._sizes_array[1:], minimum_size, lambda x, y: x > y)
             finally_segment = np.copy(self.segmentation)
@@ -351,6 +359,122 @@ class OtsuSegment(RestartableAlgorithm):
                "\nSizes: " + ", ".join(map(str, self._sizes_array))
 
 
+class BaseMultiScaleOpening(ThresholdBaseAlgorithm):
+    @classmethod
+    def get_fields(cls):
+        return [AlgorithmProperty("threshold", "Threshold", next(iter(double_threshold_dict.keys())),
+                                  possible_values=double_threshold_dict, property_type=AlgorithmDescribeBase),
+                AlgorithmProperty("mu_mid", "Mu mid value", next(iter(mu_mid_dict.keys())),
+                                  possible_values=mu_mid_dict,
+                                  property_type=AlgorithmDescribeBase),
+                AlgorithmProperty("step_limits", "Limits of Steps", 100, options_range=(1, 1000), property_type=int)] \
+               + super().get_fields()
+
+    def get_info_text(self):
+        return f"Threshold: " + ", ".join(map(str, self.threshold_info)) + \
+               "\nMid sizes: " + ", ".join(map(str, self._sizes_array[1:self.components_num + 1])) + \
+               "\nFinal sizes: " + ", ".join(map(str, self.final_sizes[1:])) + \
+               f"\nsteps: {self.steps}"
+
+    def __init__(self):
+        super().__init__()
+        self.finally_segment = None
+        self.final_sizes = []
+        self.threshold_info = [None, None]
+        self.sprawl_area = None
+        self.steps = 0
+        self.mso = PyMSO()
+        self.mso.set_use_background(True)
+
+    def _clean(self):
+        self.sprawl_area = None
+        self.mso = PyMSO()
+        self.mso.set_use_background(True)
+        super()._clean()
+
+    def _threshold(self, image, thr=None):
+        if thr is None:
+            thr: BaseThreshold = double_threshold_dict[self.new_parameters["threshold"]["name"]]
+        mask, thr_val = thr.calculate_mask(image, self.mask, self.new_parameters["threshold"]["values"],
+                                           self.threshold_operator)
+        self.threshold_info = thr_val
+        self.sprawl_area = (mask >= 1).astype(np.uint8)
+        return (mask == 2).astype(np.uint8)
+
+    def set_parameters(self, mu_mid, step_limits, *args, **kwargs):
+        self.new_parameters["mu_mid"] = mu_mid
+        self.new_parameters["step_limits"] = step_limits
+        self._set_parameters(*args, **kwargs)
+
+    def set_image(self, image):
+        super().set_image(image)
+        self.threshold_info = [None, None]
+
+    def calculation_run(self, report_fun) -> SegmentationResult:
+        if self.new_parameters["side_connection"] != self.parameters["side_connection"]:
+            neigh, dist = calculate_distances_array(self.image.spacing, get_neigh(self.new_parameters["side_connection"]))
+            self.mso.set_neighbourhood(neigh, dist)
+        segment_data = super().calculation_run(report_fun)
+        if segment_data is not None and self.components_num == 0:
+            self.final_sizes = []
+            return segment_data
+
+        if segment_data is None:
+            restarted = False
+            finally_segment = np.copy(self.finally_segment)
+        else:
+            self.finally_segment = segment_data.segmentation
+            finally_segment = segment_data.segmentation
+            assert finally_segment.max() < 250
+            components = finally_segment.astype(np.uint8)
+            components[components > 0] += 1
+            components[self.sprawl_area == 0] = 1
+            self.mso.set_components(components, self.components_num)
+            restarted = True
+
+        if restarted or self.old_threshold_info[1] != self.threshold_info[1] or \
+                self.new_parameters["mu_mid"] != self.parameters["mu_mid"]:
+            if self.threshold_operator(self.threshold_info[1], self.threshold_info[0]):
+                self.final_sizes = np.bincount(finally_segment.flat)
+                return SegmentationResult(self.finally_segment, self.segmentation, self.cleaned_image)
+            mu_calc: BaseMuMid = mu_mid_dict[self.new_parameters["mu_mid"]["name"]]
+            self.parameters["mu_mid"] = self.new_parameters["mu_mid"]
+            sprawl_area = (self.sprawl_area > 0).astype(np.uint8)
+            sprawl_area[finally_segment > 0] = 0
+            mid_val = mu_calc.value(sprawl_area, self.channel, self.threshold_info[0], self.threshold_info[1],
+                                    self.new_parameters["mu_mid"]["values"])
+            print("mid", mid_val)
+            mu_array = calculate_mu_mid(self.channel, self.threshold_info[0], mid_val, self.threshold_info[1])
+            self.mso.set_mu_array(mu_array)
+            restarted = True
+
+        if restarted or self.new_parameters["step_limits"] != self.parameters["step_limits"]:
+            self.parameters["step_limits"] = self.new_parameters["step_limits"]
+            self.mso.run_MSO(self.new_parameters["step_limits"])
+            self.steps = self.mso.steps_done()
+            new_segment = self.mso.get_result_catted()
+            new_segment[new_segment > 0] -= 1
+            self.final_sizes = np.bincount(new_segment.flat)
+            return SegmentationResult(new_segment, self.sprawl_area, self.cleaned_image)
+
+
+class LowerThresholdMultiScaleOpening(BaseMultiScaleOpening):
+    threshold_operator = operator.gt
+
+    @classmethod
+    def get_name(cls):
+        return "Lower threshold MultiScale Opening"
+
+
+class UpperThresholdMultiScaleOpening(BaseMultiScaleOpening):
+    threshold_operator = operator.lt
+
+    @classmethod
+    def get_name(cls):
+        return "Upper threshold MultiScale Opening"
+
+
 final_algorithm_list = [LowerThresholdAlgorithm, UpperThresholdAlgorithm, RangeThresholdAlgorithm,
-                        LowerThresholdFlowAlgorithm, UpperThresholdFlowAlgorithm,
+                        LowerThresholdFlowAlgorithm, UpperThresholdFlowAlgorithm, LowerThresholdMultiScaleOpening,
+                        UpperThresholdMultiScaleOpening,
                         OtsuSegment, BorderRim]

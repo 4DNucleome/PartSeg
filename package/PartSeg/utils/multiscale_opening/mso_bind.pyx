@@ -6,6 +6,8 @@ from libcpp cimport bool
 from numpy cimport uint8_t, uint16_t, uint32_t, float32_t, float64_t, int8_t, int16_t
 import numpy
 cimport numpy 
+import cython
+
 
 ctypedef fused image_types:
     int8_t
@@ -145,9 +147,9 @@ cdef class PyMSO:
         shape[2] = components.shape[2]
         self.mso.set_data(<component_type *> components.data, shape)
         if component_num is not None:
-            self.mso.set_components_num(component_num)
+            self.mso.set_components_num(component_num+2)
         else:
-            self.mso.set_components_num(components.max())
+            self.mso.set_components_num(components.max()+2)
         self.components = components
 
     def set_neighbourhood(self, numpy.ndarray[int8_t, ndim=2] neighbourhood, numpy.ndarray[mu_type] distances):
@@ -211,7 +213,7 @@ cdef class PyMSO:
         return self.mso.steps_done()
 
     def set_components_num(self, num):
-        self.mso.set_components_num(num)
+        self.mso.set_components_num(num+2)
 
     def get_result_catted(self):
         cdef vector[component_type] res = self.mso.get_result_catted()
@@ -228,6 +230,36 @@ cdef class PyMSO:
     def set_use_background(self, use):
         self.mso.set_use_background(use)
 
+
+@cython.boundscheck(False)
+def calculate_mu_mid(numpy.ndarray[image_types, ndim=3] image, image_types lower_bound, image_types mid_point,
+                 image_types upper_bound):
+    cdef int16_t x_size, y_size, z_size, x, y, z
+    cdef mu_type res_val
+    cdef image_types point_val
+    x_size = image.shape[2]
+    y_size = image.shape[1]
+    z_size = image.shape[0]
+    cdef numpy.ndarray[mu_type, ndim=3] res = numpy.empty((z_size, y_size, x_size), dtype=numpy.float64)
+    if upper_bound < lower_bound:
+        tmp = lower_bound
+        lower_bound = upper_bound
+        upper_bound = tmp
+
+    for z in range(z_size):
+        for y in range(y_size):
+            for x in range(x_size):
+                point_val = image[z, y, x]
+                if point_val < mid_point:
+                    res_val = (mid_point - point_val)/(mid_point - lower_bound)
+                else:
+                    res_val = (point_val - mid_point)/(upper_bound - mid_point)
+                if res_val > 1:
+                    res_val = 1
+                elif res_val < 0:
+                    res_val = 0
+                res[z, y, x] = res_val
+    return res
 
 
 
