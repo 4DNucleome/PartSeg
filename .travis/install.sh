@@ -34,4 +34,4 @@ fi
 
 pip install pip==18.1
 pip install pyinstaller cython numpy
-pip install ./package
+pip install .

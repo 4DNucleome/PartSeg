@@ -1,0 +1,5 @@
+include package/PartSeg/static_files/*
+include package/PartSeg/static_files/*/*
+global-include *.pyx
+global-include *.pxd
+include package/PartSeg/partseg_utils/distance_in_structure/*.h
