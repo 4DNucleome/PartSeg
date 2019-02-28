@@ -33,11 +33,9 @@ from PartSeg.tiff_image import ImageReader, Image
 from .batch_proceed import BatchProceed
 from .image_view import StackImageView
 from PartSeg.utils.mask.io_functions import SaveSegmentation, LoadSegmentation, load_dict
-from .. import __version__
+from .. import CONFIG_FOLDER as CONFIG_FOLDER_BASE
 
-app_name = "PartSeg"
-app_lab = "LFSG"
-CONFIG_FOLDER = os.path.join(appdirs.user_data_dir(app_name, app_lab), str(__version__), "mask")
+CONFIG_FOLDER = os.path.join(CONFIG_FOLDER_BASE, "mask")
 
 
 class MainMenu(QWidget):

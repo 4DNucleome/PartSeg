@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 
-import appdirs
 import numpy as np
 from qtpy.QtCore import Qt, QByteArray, QEvent
 from qtpy.QtGui import QIcon, QKeyEvent, QKeySequence, QResizeEvent
@@ -34,11 +33,9 @@ from .image_view import RawImageView, ResultImageView, RawImageStack, Synchroniz
 from .partseg_settings import PartSettings
 from ..common_gui.custom_save_dialog import SaveDialog
 from PartSeg.utils.analysis.save_functions import save_dict
-from .. import __version__
+from .. import CONFIG_FOLDER as CONFIG_FOLDER_BASE
 
-app_name = "PartSeg"
-app_lab = "LFSG"
-CONFIG_FOLDER = os.path.join(appdirs.user_data_dir(app_name, app_lab), str(__version__), "analysis")
+CONFIG_FOLDER = os.path.join(CONFIG_FOLDER_BASE, "analysis")
 
 
 class Options(QWidget):

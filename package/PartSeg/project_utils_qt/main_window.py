@@ -1,14 +1,10 @@
-import shutil
-from glob import glob
-import packaging.version
-
 from qtpy.QtGui import QShowEvent, QDragEnterEvent, QDropEvent
 from qtpy.QtWidgets import QMainWindow, QMessageBox
 from qtpy.QtCore import Signal
 import os
 
+from PartSeg.project_utils_qt.load_backup import import_config
 from .settings import BaseSettings
-from .. import __version__
 
 
 class BaseMainWindow(QMainWindow):
@@ -17,7 +13,6 @@ class BaseMainWindow(QMainWindow):
     settings_class = BaseSettings
 
     def __init__(self, config_folder=None, title="PartSeg", settings=None, signal_fun=None):
-
         super().__init__()
         if signal_fun is not None:
             self.show_signal.connect(signal_fun)
@@ -26,27 +21,7 @@ class BaseMainWindow(QMainWindow):
                 raise ValueError("wrong config folder")
             self.settings = self.settings_class(config_folder)
             if not os.path.exists(config_folder):
-                version = packaging.version.parse(__version__)
-                base_folder = os.path.dirname(os.path.dirname(config_folder))
-                possible_folders = glob(os.path.join(base_folder, "*"))
-                versions = list(
-                    sorted([x for x in
-                            [packaging.version.parse(os.path.basename(y)) for y in possible_folders]
-                            if isinstance(x, packaging.version.Version)],
-                           reverse=True))
-                before_version = None
-                for x in versions:
-                    if x < version:
-                        before_version = x
-                        break
-                if before_version is not None:
-                    before_name = str(before_version)
-                    resp = QMessageBox.question(self, "Import from old version",
-                                              "There is no configuration folder for this version of PartSeg\n"
-                                              "Would you like to import it from " + before_name + " version of PartSeg",
-                                              QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-                    if resp == QMessageBox.Yes:
-                        shutil.copytree(os.path.join(base_folder, before_name), os.path.join(base_folder, __version__))
+                import_config()
             errors = self.settings.load()
             if errors:
                 errors_message = QMessageBox()

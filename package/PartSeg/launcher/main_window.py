@@ -3,7 +3,9 @@ import importlib
 from functools import partial
 from qtpy.QtCore import QSize, Qt, QThread
 from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QMainWindow, QToolButton, QGridLayout, QWidget, QProgressBar
+from qtpy.QtWidgets import QMainWindow, QToolButton, QGridLayout, QWidget, QProgressBar, QMessageBox
+
+from PartSeg.project_utils_qt.load_backup import import_config
 from ..utils.global_settings import static_file_folder
 from PartSeg.tiff_image import ImageReader
 
@@ -13,6 +15,7 @@ class Prepare(QThread):
         super().__init__()
         self.module = module
         self.result = None
+        self.errors = []
 
     def run(self):
         if self.module != "":
@@ -21,7 +24,7 @@ class Prepare(QThread):
             main_window_module = importlib.import_module(self.module)
             main_window = main_window_module.MainWindow
             settings = main_window.settings_class(main_window_module.CONFIG_FOLDER)
-            settings.load()
+            self.errors = settings.load()
             reader = ImageReader()
             im = reader.read(main_window.initial_image_path)
             im.file_path = ""
@@ -66,6 +69,7 @@ class MainWindow(QMainWindow):
         self.progress.setRange(0, 0)
         self.analysis_button.setDisabled(True)
         self.mask_button.setDisabled(True)
+        import_config()
         self.lib_path = "PartSeg.segmentation_analysis.main_window"
         self.final_title = "PartSeg Segmentation Analysis"
         self.prepare = Prepare(self.lib_path)
@@ -77,6 +81,7 @@ class MainWindow(QMainWindow):
         self.progress.setRange(0, 0)
         self.analysis_button.setDisabled(True)
         self.mask_button.setDisabled(True)
+        import_config()
         self.lib_path = "PartSeg.segmentation_mask.stack_gui_main"
         self.final_title = "PartSeg Mask Segmentation"
         self.prepare = Prepare(self.lib_path)
@@ -90,6 +95,15 @@ class MainWindow(QMainWindow):
         if self.prepare.result is None:
             self.close()
             return
+        if self.prepare.errors:
+            errors_message = QMessageBox()
+            errors_message.setText("There are errors during start")
+            errors_message.setInformativeText("During load saved state some of data could not be load properly\n"
+                                              "The files has prepared backup copies in  state directory (Help > State directory)")
+            errors_message.setStandardButtons(QMessageBox.Ok)
+            text = "\n".join(["File: " + x[0] + "\n" + str(x[1]) for x in self.prepare.errors])
+            errors_message.setDetailedText(text)
+            errors_message.exec()
         wind = self.prepare.result(title=self.final_title, signal_fun=self.window_shown)
         wind.show()
         self.wind = wind
