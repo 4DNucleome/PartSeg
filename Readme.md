@@ -1,5 +1,5 @@
 # PartSeg
-[![Build Status](https://travis-ci.org/4DNucleome/PartSeg.svg?branch=master)](https://travis-ci.org/4DNucleome/PartSeg)
+[![Build Status](https://travis-ci.org/4DNucleome/PartSeg.svg?branch=master)](https://travis-ci.org/4DNucleome/PartSeg)  
 PartSeg is gui and library for segmentation algorithms.
 
 This application is designed to help biologist with segmentation 
@@ -51,16 +51,16 @@ images/mask are saved as *.npy (numpy array format)
 
 
 ## Interface
-Launcher. Chose program that you will launch:   
-![launcher](images/launcher.png)
-Main window of Segmentation Analysis:
-![interface](images/analysis_gui.png)
+Launcher. Chose program that you will launch:     
+![launcher](images/launcher.png)  
+Main window of Segmentation Analysis:  
+![interface](images/analysis_gui.png)  
 Main window of Segmentation Analysis with view on measurement result:  
-![interface](images/analysis_gui2.png)
-Window for creating set of measurements: 
-![statistics](images/statisitcs.png)
+![interface](images/analysis_gui2.png)  
+Window for creating set of measurements:   
+![statistics](images/statisitcs.png)  
 Main window of Mask Segmentation:  
-![mask interface](images/mask_gui.png)
+![mask interface](images/mask_gui.png)  
 
 
 

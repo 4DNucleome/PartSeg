@@ -66,6 +66,13 @@ def find_version(*file_paths):
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
 
+def readme():
+    this_directory = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
+    reg = re.compile(r'(!\[[^]]*\])\((images/[^)]*)\)')
+    with open(os.path.join(this_directory, 'Readme.md')) as f:
+        text = f.read()
+        text = reg.sub(r'\1(https://raw.githubusercontent.com/4DNucleome/PartSeg/master/\2)', text)
+        return text
 
 setuptools.setup(
     ext_modules=cythonize(extensions),
@@ -77,6 +84,8 @@ setuptools.setup(
     url="https://4dnucleome.cent.uw.edu.pl/PartSeg/",
     packages=setuptools.find_packages(),
     include_package_data=True,
+    long_description=readme(),
+    long_description_content_type='text/markdown',
     scripts=["scripts/PartSeg"],
     install_requires=['numpy', tifffile_string, 'appdirs', 'SimpleITK', 'PyQt5', 'scipy', 'QtPy', 'sentry_sdk',
                       'deprecation', 'qtawesome', 'six', 'h5py', 'pandas', 'sympy', 'Cython', 'openpyxl', 'xlrd'],
