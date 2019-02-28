@@ -3,15 +3,10 @@ import sys
 import logging
 
 from .custom_application import CustomApplication
-
 from .utils.base_argparser import CustomParser
-from .project_utils_qt.except_hook import my_excepthook
-
 import multiprocessing
 
 multiprocessing.freeze_support()
-
-sys.excepthook = my_excepthook
 
 
 def main():
