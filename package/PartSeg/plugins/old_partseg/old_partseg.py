@@ -55,8 +55,7 @@ class LoadPartSegOld(LoadBase):
         values = {"channel": 0, "minimum_size": algorithm_dict["minimum_size"],
                   'threshold': {'name': 'Manual', 'values': {'threshold': algorithm_dict["threshold"]}},
                   'noise_removal': {'name': 'Gauss', 'values': {"gauss_type": GaussType.Layer, "radius": 1.0}}
-                      if algorithm_dict["use_gauss"] else {'name': 'None', 'values': {}}
-            , 'side_connection': True}
+                  if algorithm_dict["use_gauss"] else {'name': 'None', 'values': {}}, 'side_connection': True}
 
         algorithm_parameters = {
             "name": "Upper threshold" if algorithm_dict["threshold_type"] == "Upper" else "Lower threshold",

@@ -2,7 +2,7 @@ import sys
 
 from qtpy.QtWidgets import QDialog, QPushButton, QTextEdit, QHBoxLayout, QVBoxLayout, QLabel, QLineEdit
 import traceback
-from ..utils import report_utils
+from ..utils import state_store
 import sentry_sdk
 
 from PartSeg import __version__
@@ -14,7 +14,7 @@ class ErrorDialog(QDialog):
         self.exception = exception
         self.additional_notes = additional_notes
         self.send_report_btn = QPushButton("Send information")
-        self.send_report_btn.setDisabled(not report_utils.report_errors)
+        self.send_report_btn.setDisabled(not state_store.report_errors)
         self.cancel_btn = QPushButton("Cancel")
         self.error_description = QTextEdit()
         if traceback_summary is None:
@@ -39,7 +39,7 @@ class ErrorDialog(QDialog):
         layout.addWidget(self.contact_info)
         layout.addWidget(QLabel("Additional information from user:"))
         layout.addWidget(self.additional_info)
-        if not report_utils.report_errors:
+        if not state_store.report_errors:
             layout.addWidget(QLabel("Sending reports was disabled by runtime flag. "
                                     "You can report it manually by creating report on"
                                     "https://github.com/4DNucleome/PartSeg/issues"))
@@ -50,7 +50,7 @@ class ErrorDialog(QDialog):
         self.setLayout(layout)
 
     def exec(self):
-        if not report_utils.show_error_dialog:
+        if not state_store.show_error_dialog:
             sys.__excepthook__(type(self.exception), self.exception, self.exception.__traceback__)
             return False
         super().exec()

@@ -3,7 +3,7 @@ import sys
 import logging
 
 from .custom_application import CustomApplication
-from .utils.base_argparser import CustomParser
+from PartSeg.project_utils_qt.base_argparser import CustomParser
 import multiprocessing
 
 multiprocessing.freeze_support()

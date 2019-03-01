@@ -1,10 +1,10 @@
 import sys
-from ..utils import report_utils
+from ..utils import state_store
 
 
 def my_excepthook(type_, value, trace_back):
     # log the exception here
-    if report_utils.show_error_dialog:
+    if state_store.show_error_dialog:
         try:
             # noinspection PyUnresolvedReferences
             from qtpy.QtWidgets import QApplication
