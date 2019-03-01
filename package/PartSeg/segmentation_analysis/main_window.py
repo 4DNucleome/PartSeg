@@ -402,7 +402,8 @@ class MainMenu(QWidget):
             interp_ob.set_arrays(args)
             interp_ob.set_scaling(scale_factor)
             if dial.exec():
-                image = Image(interp_ob.result[0], [x / y for x, y in zip(self._settings.image_spacing, scale_factor)],
+                # WARNING time !!!!!
+                image = Image(interp_ob.result[0], [x / y for x, y in zip(self._settings.image_spacing, scale_factor[1:])],
                               self._settings.image.file_path,
                               None if len(interp_ob.result) == 1 else interp_ob.result[2],
                               self._settings.image.default_coloring, self._settings.image.ranges,
