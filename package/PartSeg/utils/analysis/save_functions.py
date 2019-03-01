@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import tifffile
+
 from .io_utils import ProjectTuple
 from ..analysis.analysis_utils import HistoryElement
 from ..channel_class import Channel
@@ -287,9 +289,48 @@ class SaveMaskAsTiff(SaveBase):
         ImageWriter.save_mask(project_info.image, save_location)
 
 
+class SaveSegmentationAsTIFF(SaveBase):
+    @classmethod
+    def get_name(cls):
+        return "Segmentation (*.tiff *.tif)"
+
+    @classmethod
+    def get_short_name(cls):
+        return "segmentation_tiff"
+
+    @classmethod
+    def get_fields(cls):
+        return []
+
+    @classmethod
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict,
+             range_changed=None, step_changed=None):
+        tifffile.imsave(save_location, project_info.segmentation)
+
+class SaveSegmentationAsNumpy(SaveBase):
+    @classmethod
+    def get_name(cls):
+        return "Segmentation (*.npy)"
+
+    @classmethod
+    def get_short_name(cls):
+        return "segmentation_numpy"
+
+    @classmethod
+    def get_fields(cls):
+        return []
+
+    @classmethod
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict,
+             range_changed=None, step_changed=None):
+        np.save(save_location, project_info.segmentation)
+
+
 save_dict.register(SaveProject)
 save_dict.register(SaveCmap)
 save_dict.register(SaveXYZ)
 save_dict.register(SaveAsTiff)
 save_dict.register(SaveMaskAsTiff)
 save_dict.register(SaveAsNumpy)
+save_dict.register(SaveSegmentationAsTIFF)
+save_dict.register(SaveSegmentationAsNumpy)
