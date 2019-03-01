@@ -61,8 +61,8 @@ def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_se
             tar.addfile(tar_algorithm, hist_buff)
 
 
-def save_cmap(file: typing.Union[str, h5py.File], image: Image, segmentation: np.ndarray, cmap_profile: dict,
-              metadata: typing.Optional[dict] = None):
+def save_cmap(file: typing.Union[str, h5py.File], image: Image, segmentation: np.ndarray, full_segmentation: np.ndarray,
+              cmap_profile: dict, metadata: typing.Optional[dict] = None):
     if segmentation is None or segmentation.max() == 0:
         raise ValueError("No segmentation")
     if isinstance(file, (str, BytesIO)):
@@ -79,13 +79,20 @@ def save_cmap(file: typing.Union[str, h5py.File], image: Image, segmentation: np
         layer = cmap_profile.gauss_type == RadiusType.R2D
         data = gaussian(data, gauss_radius, layer=layer)"""
 
+    if cmap_profile["reverse"]:
+        if full_segmentation is None:
+            full_segmentation = segmentation
+        mean_val = np.mean(data[full_segmentation == 0])
+        data = mean_val - data
+        data[data < 0] = 0
+
     data[segmentation == 0] = 0
     grp = cmap_file.create_group('Chimera/image1')
     if cmap_profile["clip"]:
         points = np.nonzero(segmentation)
         lower_bound = np.min(points, axis=1)
         upper_bound = np.max(points, axis=1)
-        cut_img = np.zeros(upper_bound - lower_bound + [7, 7, 7], dtype=data.dtype)
+        cut_img = np.zeros(upper_bound - lower_bound + np.array([6, 6, 6]), dtype=data.dtype)
         coord = tuple([slice(x, y) for x, y in zip(lower_bound, upper_bound)])
         cut_img[3:-3, 3:-3, 3:-3] = data[coord]
         data = cut_img
@@ -107,8 +114,7 @@ def save_cmap(file: typing.Union[str, h5py.File], image: Image, segmentation: np
     grp.attrs['CLASS'] = np.string_('GROUP')
     grp.attrs['TITLE'] = np.string_('')
     grp.attrs['VERSION'] = np.string_('1.0')
-    grp.attrs['step'] = np.array(image._image_spacing, dtype=np.float32)[::-1] * \
-                        UNIT_SCALE[cmap_profile["units"].value]
+    grp.attrs['step'] = np.array(image._image_spacing, dtype=np.float32)[::-1] * UNIT_SCALE[cmap_profile["units"].value]
 
     if isinstance(file, str):
         cmap_file.close()
@@ -149,12 +155,15 @@ class SaveCmap(SaveBase):
         return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
                 AlgorithmProperty("separated_objects", "Separate Objects", False),
                 AlgorithmProperty("clip", "Clip area", False),
-                AlgorithmProperty("units", "Units", Units.nm, property_type=Units)]
+                AlgorithmProperty("units", "Units", Units.nm, property_type=Units),
+                AlgorithmProperty('reverse', 'Reverse', False,
+                                  tool_tip="Reverse brightness off image (for electron microscopy)")]
 
     @classmethod
     def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict,
              range_changed=None, step_changed=None):
-        save_cmap(save_location, project_info.image, project_info.segmentation, parameters)
+        save_cmap(save_location, project_info.image, project_info.segmentation, project_info.full_segmentation,
+                  parameters)
 
 
 class SaveXYZ(SaveBase):
@@ -257,8 +266,6 @@ class SaveAsNumpy(SaveBase):
         if parameters["squeeze"]:
             data = np.squeeze(data)
         np.save(save_location, data)
-
-
 
 
 class SaveMaskAsTiff(SaveBase):
