@@ -85,6 +85,7 @@ class PartSettings(BaseSettings):
             if data.algorithm_parameters:
                 self.last_executed_algorithm = data.algorithm_parameters["name"]
                 self.set(f"algorithms.{self.last_executed_algorithm}", data.algorithm_parameters["values"])
+                self.algorithm_changed.emit()
         if isinstance(data, MaskInfo):
             self.mask = data.mask_array
 

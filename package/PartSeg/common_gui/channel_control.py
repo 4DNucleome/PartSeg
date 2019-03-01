@@ -118,7 +118,7 @@ class MyComboBox(QComboBox):
 
 class ChannelChooseBase(QWidget):
     coloring_update = Signal(bool)  # gave info if it is new image
-    channel_change = Signal(int)
+    channel_change = Signal(int, bool) # TODO something better for remove error during load different z-sizes images
 
     def __init__(self, settings: ViewSettings, parent=None, name="channelcontrol", text=""):
         super().__init__(parent)
@@ -350,7 +350,7 @@ class ChannelControl(ChannelChooseBase):
         self.image = self.channels_widgets[0].image
         self.colormap_chose.setCurrentText(self.channels_widgets[0].color)
         self.send_info(True)
-        self.channel_change.emit(self.current_channel)
+        self.channel_change.emit(self.current_channel, True)
 
     def get_current_colors(self):
         channels_num = len(self.channels_widgets)
@@ -415,15 +415,15 @@ class ChannelChoose(ChannelChooseBase):
     def coloring_update_resend(self, val):
         self.coloring_update.emit(val)
 
-    def color_change(self, val):
+    def color_change(self, val, new=False):
         if val >= len(self.channels_widgets):
             return
         colormap = self._settings.get_from_profile(f"{self.main_channel_control.name}.cmap{val}")
         self.channels_widgets[val].set_color(colormap)
         value = self._settings.get_from_profile(f"{self.name}.lock_{val}")
         self.channels_widgets[val].set_locked(value)
-        self.send_info()
-        self.channel_change.emit(val)
+        self.send_info(new)
+        self.channel_change.emit(val, False)
 
     def get_limits(self):
         return self.main_channel_control.get_limits()
@@ -466,7 +466,7 @@ class ChannelChoose(ChannelChooseBase):
 
         self.current_channel = 0
         self.send_info(True)
-        self.channel_change.emit(self.current_channel)
+        self.channel_change.emit(self.current_channel, True)
 
     def change_chanel(self, chanel_id):
         if chanel_id == self.current_channel:
@@ -475,7 +475,7 @@ class ChannelChoose(ChannelChooseBase):
         self.current_channel = chanel_id
         self.channels_widgets[chanel_id].set_active()
         self.image = self.channels_widgets[chanel_id].image
-        self.channel_change.emit(chanel_id)
+        self.channel_change.emit(chanel_id, False)
 
 
     def active_channel(self, index):

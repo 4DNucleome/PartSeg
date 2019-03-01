@@ -176,6 +176,7 @@ class SaveSettingsDescription(typing.NamedTuple):
 class BaseSettings(ViewSettings):
     json_encoder_class = ProfileEncoder
     decode_hook = staticmethod(profile_hook)
+    algorithm_changed = Signal()
 
     def get_save_list(self) -> typing.List[SaveSettingsDescription]:
         return [SaveSettingsDescription("segmentation_settings.json", self.segmentation_dict),

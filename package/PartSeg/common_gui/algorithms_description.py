@@ -441,6 +441,7 @@ class AlgorithmChoose(QWidget):
                  parent=None):
         super().__init__(parent)
         self.settings = settings
+        settings.algorithm_changed.connect(self.updated_algorithm)
         self.stack_layout = QStackedLayout()
         self.algorithm_choose = QComboBox()
         self.algorithm_dict: typing.Dict[str, BaseAlgorithmSettingsWidget] = {}
@@ -472,6 +473,10 @@ class AlgorithmChoose(QWidget):
         layout.addWidget(self.algorithm_choose)
         layout.addLayout(self.stack_layout)
         self.setLayout(layout)
+
+    def updated_algorithm(self):
+        self.change_algorithm(self.settings.last_executed_algorithm,
+                              self.settings.get(f"algorithms.{self.settings.last_executed_algorithm}"))
 
     def recursive_get_values(self):
         result = {}
