@@ -18,7 +18,7 @@ Later several parameters of segmented components like: volume, number and surfac
 
 #### Segmentation of nuclear volume and creation of masks
 
-Firstly segmentation of nuclei is be performed based on the DNA signal. Segmented nuclei are cut from the original picture and mask files with segmentation parameters are created.
+Firstly segmentation of nuclei is performed based on the DNA signal. Segmented nuclei are cut from the original picture and mask files with segmentation parameters are created.
 
 1. Open PartSeg
 2. Select "Mask Segmentation"  
@@ -38,7 +38,8 @@ Firstly segmentation of nuclei is be performed based on the DNA signal. Segmente
     9. Filter: Gauss
     10. Gauss type: Layer
     11. Gauss radius: 1
-    12. Enable: Use convex_hull
+    12. Enable: Use convex hull 
+    This option allows to calculate convex hull for each of segmented components. It enables to include in segmentation structures with low signal intensity like nucleoli, located close to the nuclear border.
 6. Execute segmentation
 7. Select nuclei that were segmented correctly (where mask includes whole volume of a single nucleus) by selecting one by one on the picture.
 If all nuclei are segmented properly use **Select all** option. The borders of segmentation are visible after enabling "show results" option (7a).
@@ -69,14 +70,22 @@ You can also simply drag and drop both files on the main window.
 ![main window for segmentation](images/main_window_segmentation.png)
 5. Disable channel 1 (DNA staining) on both windows
 6. Enable **Mask** option on the left panel
-7. Select lower threshold option
-8. Set Threshold to Manual
-9. Set Threshold to 13500
-10. Execute segmentation
+7. Set algorithm parameters to:
+    7. Use Lower Threshold Flow
+    8. Threshold type: Base/Core 
+    9. Core Threshold: Manual, threshold value: 19500
+    10. Base Threshold: Manual, threshold value: 11500
+    11. Flow type: MultiScale Opening Sprawl
+    12. Channel: 2
+    13. Minimum size (px): 800
+    14. Filter: Gauss with type Layer and radius 1    
+12. Execute segmentation
+
+     
 
 Some background signal is always present in FISH, however specific signal is much brighter.
 As an example nucleus with two separate chromosome 1 territories is shown,
-nevertheless chromosomes can reside in close proximity and segment as one component.
+nevertheless chromosomes can reside in close proximity. 3D-Multiscale opening algorithm enables separation of conjoined structures.
 
 #### Measurements settings
 
