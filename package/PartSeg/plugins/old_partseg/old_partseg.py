@@ -59,7 +59,8 @@ class LoadPartSegOld(LoadBase):
 
         algorithm_parameters = {
             "name": "Upper threshold" if algorithm_dict["threshold_type"] == "Upper" else "Lower threshold",
-            "values": values
+            "values": values,
+            "threshold_list": algorithm_dict["threshold_list"]
         }
 
         return ProjectTuple(file_path, image, seg_array, algorithm_parameters=algorithm_parameters)
