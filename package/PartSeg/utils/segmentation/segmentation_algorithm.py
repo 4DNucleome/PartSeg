@@ -94,7 +94,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
                 AlgorithmProperty("side_connection", "Side by Side connections", False, (True, False),
                                   tool_tip="During calculation of connected components includes"
                                            " only side by side connected pixels"),
-                AlgorithmProperty("use_convex", "Use convex_hull", False, (True, False))]
+                AlgorithmProperty("use_convex", "Use convex hull", False, (True, False))]
 
     def __init__(self):
         super().__init__()

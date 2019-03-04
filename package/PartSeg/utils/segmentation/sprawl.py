@@ -117,7 +117,7 @@ class MSOSprawl(BaseSprawl):
         return result
 
 
-sprawl_dict = Register(PathSprawl, DistanceSprawl, PathDistanceSprawl, FDTSprawl, MSOSprawl)
+sprawl_dict = Register(MSOSprawl, PathSprawl, DistanceSprawl, PathDistanceSprawl, FDTSprawl)
 
 
 def get_neigh(sides):
