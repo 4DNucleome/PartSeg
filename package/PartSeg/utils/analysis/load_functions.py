@@ -37,6 +37,7 @@ def load_project(
     image_buffer.seek(0)
     reader = ImageReader()
     image = reader.read(image_buffer)
+    image.file_path = file_path
     seg_tar = tar_file.extractfile(tar_file.getmember("segmentation.npz"))
     seg_buffer = BytesIO()
     seg_buffer.write(seg_tar.read())
