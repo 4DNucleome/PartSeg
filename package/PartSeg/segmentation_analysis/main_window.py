@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -428,11 +429,15 @@ class MainMenu(QWidget):
             from qtpy.QtCore import QMetaObject
             instance = QApplication.instance()
             if isinstance(exception, MemoryError):
-                instance.warning = "Open error", "Not enough memory to read this image"
+                instance.warning = "Open error", f"Not enough memory to read this image: {exception}"
                 QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
             elif isinstance(exception, IOError):
-                instance.warning = "Open error", "Some problem with reading from disc"
+                instance.warning = "Open error", f"Some problem with reading from disc: {exception}"
                 QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
+            elif isinstance(exception, KeyError):
+                instance.warning = "Open error", f"Some problem project file: {exception}"
+                QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
+                print(exception, file=sys.stderr)
             else:
                 raise exception
 
