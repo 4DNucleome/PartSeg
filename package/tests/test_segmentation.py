@@ -198,7 +198,7 @@ class BaseFlowThreshold(BaseThreshold, ABC):
 
 class TestLowerThresholdFlow(BaseFlowThreshold):
     parameters = {"channel": 0, "minimum_size": 30,
-                  'threshold': {'name': 'Double Choose',
+                  'threshold': {'name': 'Base/Core',
                                 'values': {
                                     'core_threshold': {'name': 'Manual', 'values': {'threshold': 55}},
                                     'base_threshold': {'name': 'Manual', 'values': {'threshold': 45}}}},
@@ -212,7 +212,7 @@ class TestLowerThresholdFlow(BaseFlowThreshold):
 
 class TestUpperThresholdFlow(BaseFlowThreshold):
     parameters = {"channel": 0, "minimum_size": 30,
-                  'threshold': {'name': 'Double Choose',
+                  'threshold': {'name': 'Base/Core',
                                 'values': {
                                     'core_threshold': {'name': 'Manual', 'values': {'threshold': 45}},
                                     'base_threshold': {'name': 'Manual', 'values': {'threshold': 55}}}},

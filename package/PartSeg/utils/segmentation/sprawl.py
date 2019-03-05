@@ -111,7 +111,7 @@ class MSOSprawl(BaseSprawl):
             mu_array[mu_array < 0.5] = 1 - mu_array[mu_array < 0.5]
         mso.set_mu_array(mu_array)
         mso.run_MSO(arguments["step_limits"])
-        print("Steps: ", mso.steps_done(), file=sys.stderr)
+        # print("Steps: ", mso.steps_done(), file=sys.stderr)
         result = mso.get_result_catted()
         result[result > 0] -= 1
         return result

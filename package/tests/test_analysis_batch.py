@@ -25,7 +25,7 @@ class TestCalculationProcess:
     @staticmethod
     def create_calculation_plan():
         parameters = {"channel": 1, "minimum_size": 200,
-                      'threshold': {'name': 'Double Choose',
+                      'threshold': {'name': 'Base/Core',
                                     'values': {
                                         'core_threshold': {'name': 'Manual', 'values': {'threshold': 30000}},
                                         'base_threshold': {'name': 'Manual', 'values': {'threshold': 13000}}}},
