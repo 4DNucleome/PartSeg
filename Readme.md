@@ -22,7 +22,7 @@ based on threshold and connected components
     * From repository: 
       * `git clone git@github.com:4DNucleome/PartSeg.git`
       * `cd PartSeg/` 
-      * `pip install -e package` 
+      * `pip install -e .` 
  
 
 ## Running 
