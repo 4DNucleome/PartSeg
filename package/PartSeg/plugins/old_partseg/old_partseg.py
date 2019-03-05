@@ -42,12 +42,15 @@ class LoadPartSegOld(LoadBase):
         image_tar = tar_file.extractfile(tar_file.getmember("image.npy"))
         image_buffer.write(image_tar.read())
         image_buffer.seek(0)
-        res_buffer = BytesIO()
-        res_tar = tar_file.extractfile(tar_file.getmember("res_mask.npy"))
-        res_buffer.write(res_tar.read())
-        res_buffer.seek(0)
         image_arr = np.load(image_buffer)
-        seg_array = np.load(res_buffer)
+        try:
+            res_buffer = BytesIO()
+            res_tar = tar_file.extractfile(tar_file.getmember("res_mask.npy"))
+            res_buffer.write(res_tar.read())
+            res_buffer.seek(0)
+            seg_array = np.load(res_buffer)
+        except KeyError:
+           seg_array = None
         algorithm_str = tar_file.extractfile("data.json").read()
         algorithm_dict = json.loads(algorithm_str)
         spacing = np.array(algorithm_dict["spacing"][::-1]) / UNIT_SCALE[Units.nm.value]
