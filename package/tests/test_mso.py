@@ -561,4 +561,4 @@ class TestMuMid:
         res = calculate_mu_mid(data, 5, 25, 30)
         assert np.all(res == (data != 20).astype(np.float) + (data == 20) * 0.25)
         res = calculate_mu_mid(data, 5, 25, 35)
-        assert np.all(res == (data == 0).astype(np.float) + (data == 20) * 0.25 + + (data == 30) * 0.5)
+        assert np.all(res == (data == 0).astype(np.float) + (data == 20) * 0.25 + (data == 30) * 0.5)
