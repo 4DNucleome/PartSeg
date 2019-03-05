@@ -297,7 +297,7 @@ class ChannelControl(ChannelChooseBase):
         self.image = self.channels_widgets[chanel_id].image
         self.colormap_chose.setCurrentText(self.channels_widgets[chanel_id].color)
         self.channel_preview_widget.repaint()
-        self.channel_change.emit(chanel_id)
+        self.channel_change.emit(chanel_id, False)
 
     def change_closed(self):
         text = self.colormap_chose.currentText()
