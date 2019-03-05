@@ -54,7 +54,7 @@ class SettingsValue(NamedTuple):
 class Leaf(BaseSerializableClass):
     # noinspection PyUnusedLocal
     # noinspection PyMissingConstructor
-    def __init__(self, name: str, dict: Dict = {}, power: float = 1.0, area: Optional[AreaType] = None,
+    def __init__(self, name: str, dict: Dict = None, power: float = 1.0, area: Optional[AreaType] = None,
                  per_component: Optional[PerComponent] = None):...
 
     name: str
@@ -107,7 +107,6 @@ class Node(BaseSerializableClass):
         raise ValueError(f"Unknown operator '{self.op}'")
 
 
-
 class StatisticEntry(BaseSerializableClass):
     # noinspection PyUnusedLocal
     # noinspection PyMissingConstructor
@@ -118,7 +117,6 @@ class StatisticEntry(BaseSerializableClass):
 
     def get_unit(self, unit: Units, ndim):
         return str(self.calculation_tree.get_unit(ndim)).format(str(unit))
-
 
 
 class StatisticMethodBase(AlgorithmDescribeBase, ABC):
@@ -238,12 +236,14 @@ class StatisticProfile(object):
             method = STATISTIC_DICT[node.name]
             kw = dict(kwargs)
             kw.update(node.dict)
-            hash_str = hash_fun_call_name(method, node.dict, node.area)
+            hash_str = hash_fun_call_name(method, node.dict, node.area, node.per_component)
             if hash_str in help_dict:
                 val = help_dict[hash_str]
             else:
                 kw['help_dict'] = help_dict
                 kw['_area'] = node.area
+                kw['_per_component'] = node.per_component
+                kw['_cache'] = True
                 if node.area == AreaType.Mask:
                     kw["area_array"] = kw["mask"]
                 elif node.area == AreaType.Mask_without_segmentation:
@@ -253,6 +253,7 @@ class StatisticProfile(object):
                 else:
                     raise ValueError(f"Unknown area type {node.area}")
                 if node.per_component == PerComponent.Yes:
+                    kw['_cache'] = False
                     val = []
                     area_array = kw["area_array"]
                     for i in np.unique(area_array)[1:]:
@@ -330,19 +331,23 @@ def calculate_main_axis(area_array: np.ndarray, image: np.ndarray, voxel_size):
 
 
 def get_main_axis_length(index: int, area_array: np.ndarray, image: np.ndarray, help_dict: Dict, voxel_size,
-                         result_scalar, _area: AreaType, **_):
-    hash_name = hash_fun_call_name(calculate_main_axis, {}, _area)
-    if hash_name not in help_dict:
-        help_dict[hash_name] = calculate_main_axis(area_array, image, [x * result_scalar for x in voxel_size])
-    return help_dict[hash_name][index]
+                         result_scalar, _area: AreaType, _per_conponent: PerComponent = PerComponent.No,
+                         _cache=False, **_):
+    if _cache:
+        hash_name = hash_fun_call_name(calculate_main_axis, {}, _area, _per_conponent)
+        if hash_name not in help_dict:
+            help_dict[hash_name] = calculate_main_axis(area_array, image, [x * result_scalar for x in voxel_size])
+        return help_dict[hash_name][index]
+    else:
+        return calculate_main_axis(area_array, image, [x * result_scalar for x in voxel_size])[index]
 
 
-def hash_fun_call_name(fun: Callable, arguments: Dict, area: AreaType):
+def hash_fun_call_name(fun: Callable, arguments: Dict, area: AreaType, per_component: PerComponent):
     if hasattr(fun, "__module__"):
         fun_name = f"{fun.__module__}.{fun.__name__}"
     else:
         fun_name = fun.__name__
-    return "{}: {} # {}".format(fun_name, arguments, area)
+    return "{}: {} # {} & {}".format(fun_name, arguments, area, per_component)
 
 
 class Volume(StatisticMethodBase):
@@ -611,21 +616,29 @@ class Compactness(StatisticMethodBase):
 
     @staticmethod
     def calculate_property(**kwargs):
-        help_dict = kwargs["help_dict"]
-        border_hash_str = hash_fun_call_name(Surface, {}, kwargs["_area"])
-        if border_hash_str not in help_dict:
+        cache = kwargs["_cache"] if "_cache" in kwargs else False
+        cache = cache and "help_dict" in kwargs
+        cache = cache and "_area" in kwargs
+        cache = cache and "_per_component" in kwargs
+        if cache:
+            help_dict = kwargs["help_dict"]
+            border_hash_str = hash_fun_call_name(Surface, {}, kwargs["_area"], kwargs["_per_component"])
+            if border_hash_str not in help_dict:
+                border_surface = Surface.calculate_property(**kwargs)
+                help_dict[border_hash_str] = border_surface
+            else:
+                border_surface = help_dict[border_hash_str]
+
+            volume_hash_str = hash_fun_call_name(Volume, {}, kwargs["_area"], kwargs["_per_component"])
+
+            if volume_hash_str not in help_dict:
+                volume = Volume.calculate_property(**kwargs)
+                help_dict[volume_hash_str] = volume
+            else:
+                volume = help_dict[volume_hash_str]
+        else:
             border_surface = Surface.calculate_property(**kwargs)
-            help_dict[border_hash_str] = border_surface
-        else:
-            border_surface = help_dict[border_hash_str]
-
-        volume_hash_str = hash_fun_call_name(Volume, {}, kwargs["_area"])
-
-        if volume_hash_str not in help_dict:
             volume = Volume.calculate_property(**kwargs)
-            help_dict[volume_hash_str] = volume
-        else:
-            volume = help_dict[volume_hash_str]
         return border_surface ** 1.5 / volume
 
     @classmethod
