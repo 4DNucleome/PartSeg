@@ -48,8 +48,8 @@ cdef extern from 'mso.h' namespace 'MSO':
         size_t optimum_erosion_calculate(vector[M] &fdt_array, vector[T] &components_arr, vector[bool] & sprawl_area) except +
         size_t constrained_dilation(vector[M] &fdt_array, vector[T] &components_arr, vector[bool] & sprawl_area) except +
         size_t get_length()
-        size_t run_MSO() except +
-        size_t run_MSO(size_t steps_limits) except +
+        size_t run_MSO() nogil except +
+        size_t run_MSO(size_t steps_limits) nogil except +
         void set_data[W](T * components, W size, T background_component)
         void set_data[W](T * components, W size)
         size_t steps_done()
@@ -206,8 +206,11 @@ cdef class PyMSO:
         res = res.reshape([components_arr.shape[i] for i in range(components_arr.ndim)])
         return res
 
-    def run_MSO(self, step_limits=1):
-        return self.mso.run_MSO(step_limits)
+    def run_MSO(self, size_t step_limits=1):
+        cdef size_t val
+        with nogil:
+            val = self.mso.run_MSO(step_limits)
+        return val
 
     def steps_done(self):
         return self.mso.steps_done()

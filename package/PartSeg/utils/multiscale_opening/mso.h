@@ -440,6 +440,8 @@ class MSO {
         ArrayLimits<coord_type, ndim>(this->upper_bound - this->lower_bound);
     const std::array<size_t, ndim> dimension_size =
         calculate_dimension_size(this->upper_bound - this->lower_bound);
+    const size_t area_size = bounds.size();
+
     for (auto coord : bounds) {
       position = calculate_position(coord, dimension_size);
       if (components_arr[position] != 0) {
@@ -460,6 +462,7 @@ class MSO {
     for (auto &queue : queues) {
       // std::cerr << "Queue " << k << " size " << queue.get_size() <<
       // std::endl;
+      size_t count_steps = 0;
       while (!queue.empty()) {
         coord = queue.front();
         /*if (k==3){
@@ -494,7 +497,11 @@ class MSO {
           if (!coord_in_queue[neigh_position]) {
             coord_in_queue[neigh_position] = true;
             queue.push(coord2);
+            count_steps++;
           }
+        }
+        if (count_steps > 3 * area_size){
+          throw std::runtime_error("two many steps: constrained dilation");
         }
         coord_in_queue[position] = false;
       }
@@ -540,6 +547,8 @@ class MSO {
     const std::array<size_t, ndim> global_dimension_size =
         this->dimension_size();
 
+    const size_t area_size = bounds.size();
+
     // Put borders of components to queue
     for (auto coord : bounds) {
       position = calculate_position(coord, dimension_size);
@@ -559,10 +568,11 @@ class MSO {
         }
       }
     }
+    // std::cerr << "start dilation\n";
     T comp_num = 0;
     for (auto &queue : queues) {
-      // std::cerr << "Queue " << k << " size " << queue.get_size() <<
-      // std::endl;
+      //std::cerr << "Queue " << (int) comp_num << " size " << queue.get_size() <<
+      //std::endl;
       queue_copy = queue;
       // std::cerr << "# Queue1 " << queue.get_size() << " Queue2 " <<
       // queue_copy.get_size() << std::endl;
@@ -588,9 +598,11 @@ class MSO {
           }
         }
       }
+      //std::cerr << "start constrainde dilation step " << (int) comp_num << std::endl;
       // std::cerr << "Queue1 " << queue.get_size() << " Queue2 " <<
       // queue_copy.get_size() << std::endl;
       // calculate constrained dilation
+      size_t count_steps = 0;
       while (!queue_copy.empty()) {
         coord = queue_copy.front();
         queue_copy.pop();
@@ -613,35 +625,42 @@ class MSO {
                   val) *
                  this->distances[i] / 2;
           val2 = dist_val + val2;
-          if (val2 >= fdt_array[neigh_position]) {
+          if (val2 + std::numeric_limits<mu_type>::epsilon() >= fdt_array[neigh_position]) {
             // std::cerr << "    coord(fdt) " << coord2 << " " << val2 << " - "
             // << fdt_array[neigh_position] << std::endl;
             continue;
           }
-          if (distances_from_components[neigh_position] < val2) {
+          if (distances_from_components[neigh_position] < val2 + std::numeric_limits<mu_type>::epsilon()) {
             // std::cerr << "    coord(dist) " << coord2 << " " << val2 << " - "
             // << distances_from_components[neigh_position] << std::endl;
             continue;
           }
-          if (val2 == fdt_array[neigh_position]) {
-            components_arr[neigh_position] = std::numeric_limits<T>::max();
-            // count3++;
+          if (fabs(val2 - fdt_array[neigh_position]) < std::numeric_limits<mu_type>::epsilon()) {
+            if (components_arr[neigh_position] == std::numeric_limits<T>::max())
+                continue;
+            else
+                components_arr[neigh_position] = std::numeric_limits<T>::max();
           }
           if (val2 < fdt_array[neigh_position]) {
             components_arr[neigh_position] = components_arr[position];
-            // count3++;
             distances_from_components[neigh_position] = val2;
           }
           if (!coord_in_queue[neigh_position]) {
+            count_steps++;
             queue_copy.push(coord2);
             coord_in_queue[neigh_position] = true;
           }
         }
+        if (count_steps > 3 * area_size){
+          throw std::runtime_error("two many steps: constrained dilation");
+        }
+
 
         coord_in_queue[position] = false;
         // distances[position] = this->mu_array[calculate_position(coord +
         // this->lower_bound, global_dimension_size)]
       }
+      // std::cerr << "end constrainde dilation step " << (int) comp_num << std::endl;
       // std::cerr << " component change " << count3 << " ";
       // std::cerr << "Queue1 " << queue.get_size() << " Queue2 " <<
       // queue_copy.get_size() << std::endl;
@@ -720,14 +739,18 @@ class MSO {
       this->sprawl_area_array = this->get_sprawl_area();
     }
     while (this->steps < steps_limits && count_changes > 0) {
+      //std::cerr << "loop " << count_changes << std::endl;
       count_changes = 0;
       count_changes += optimum_erosion_calculate(
           this->fdt_array, this->res_components_array, this->sprawl_area_array);
+      //std::cerr << "loop2\n";
       count_changes += constrained_dilation(
           this->fdt_array, this->res_components_array, this->sprawl_area_array);
       total_changes += count_changes;
+      //std::cerr << "loop3\n";
       this->steps++;
     }
+    //std::cerr << "end\n";
     if (count_changes == 0) {
       this->steps--;
     }
