@@ -266,7 +266,8 @@ class SubAlgorithmWidget(QWidget):
         self.choose.setCurrentText(val["name"])
         if val["name"] not in self.widgets_dict:
             self.algorithm_choose(val["name"])
-        self.widgets_dict[val["name"]].set_values(val["values"])
+        if val["name"] in self.widgets_dict:
+            self.widgets_dict[val["name"]].set_values(val["values"])
 
     def recursive_get_values(self):
         return dict(((name, el.recursive_get_values()) for name, el in self.widgets_dict.items()))
@@ -284,9 +285,14 @@ class SubAlgorithmWidget(QWidget):
 
     def algorithm_choose(self, name):
         if name not in self.widgets_dict:
+            if name not in self.property.possible_values:
+                return
             start_dict = {} if name not in self.starting_values else self.starting_values[name]
-            self.widgets_dict[name] = FormWidget(self.property.possible_values[name].get_fields(),
-                                                 start_values=start_dict)
+            try:
+                self.widgets_dict[name] = FormWidget(self.property.possible_values[name].get_fields(),
+                                                     start_values=start_dict)
+            except KeyError as e:
+                raise  e
             self.widgets_dict[name].layout().setContentsMargins(0, 0, 0, 0)
             self.layout().addWidget(self.widgets_dict[name])
             self.widgets_dict[name].value_changed.connect(self.values_changed)

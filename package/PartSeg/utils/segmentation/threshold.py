@@ -221,7 +221,8 @@ threshold_dict.register(MaximumEntropyThreshold)
 class DoubleThreshold(BaseThreshold):
     @classmethod
     def get_name(cls):
-        return "Double Choose"
+        # return "Double Choose"
+        return "Base/Core"
 
     @classmethod
     def get_fields(cls):
