@@ -151,7 +151,7 @@ class Image(object):
         assert len(value) == len(self._image_spacing)
         self._image_spacing = tuple(value)
 
-    def cut_image(self, cut_area: typing.Union[np.ndarray, typing.List[slice]], replace_mask=False):
+    def cut_image(self, cut_area: typing.Union[np.ndarray, typing.List[slice], typing.Tuple[slice]], replace_mask=False):
         """
         Create new image base on mask or list of slices
         :param replace_mask: if cut area is represented by mask array,
@@ -160,7 +160,7 @@ class Image(object):
         :return: Image
         """
         new_mask = None
-        if isinstance(cut_area, list):
+        if isinstance(cut_area, (list,tuple)):
             new_image = self._image_array[cut_area]
             if self._mask_array is not None:
                 new_mask = self._mask_array[cut_area]
