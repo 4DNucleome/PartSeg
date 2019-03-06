@@ -1,5 +1,5 @@
 from functools import reduce
-from math import isclose
+from math import isclose, pi
 
 import numpy as np
 
@@ -8,7 +8,7 @@ from PartSeg.utils.analysis.statistics_calculation import Diameter, PixelBrightn
     MaximumPixelBrightness, MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness, AreaType, \
     StandardDeviationOfPixelBrightness, MomentOfInertia, LongestMainAxisLength, MiddleMainAxisLength, \
     ShortestMainAxisLength, Surface, RimVolume, RimPixelBrightnessSum, StatisticProfile, StatisticEntry, PerComponent, \
-    Node
+    Node, Sphericity
 from PartSeg.utils.autofit import density_mass_center
 from PartSeg.utils.universal_const import UNIT_SCALE, Units
 
@@ -26,6 +26,11 @@ def get_cube_image():
 
 def get_square_image():
     return Image(get_cube_array()[:, 25:26], (100, 50, 50), "")
+
+def get_two_components_array():
+    data = np.zeros((1, 20, 20, 60), dtype=np.uint16)
+    data[3:-3, 2:-2, 2:19] = 1
+    data[3:-3, 2:-2, 22:-2] = 2
 
 
 class TestDiameter(object):
@@ -357,7 +362,6 @@ class TestMomentOfInertia:
         assert np.all(np.array(density_mass_center(image_array[5:6], spacing)) == np.array((0, 57, 48)))
 
 
-
 class TestMainAxis:
     def test_cube(self):
         array = get_cube_array()
@@ -442,6 +446,23 @@ class TestMainAxis:
         assert ShortestMainAxisLength.calculate_property(area_array=mask, image=image.get_channel(0), help_dict={},
                                                          voxel_size=image.spacing, result_scalar=1,
                                                          _area=AreaType.Segmentation) == 0
+
+    def test_without_help_dict(self):
+        array = get_cube_array()
+        image = Image(array, (10, 10, 20))
+        mask1 = image.get_channel(0) > 40
+        assert LongestMainAxisLength.calculate_property(
+            area_array=mask1, image=image.get_channel(0), voxel_size=image.spacing, result_scalar=1,
+            _area=AreaType.Mask
+        ) == 20 * 59
+        assert MiddleMainAxisLength.calculate_property(
+            area_array=mask1, image=image.get_channel(0), voxel_size=image.spacing, result_scalar=1,
+            _area=AreaType.Mask
+        ) == 10 * 59
+        assert ShortestMainAxisLength.calculate_property(
+            area_array=mask1, image=image.get_channel(0), voxel_size=image.spacing, result_scalar=1,
+            _area=AreaType.Mask
+        ) == 10 * 29
 
 
 class TestSurface:
@@ -589,6 +610,49 @@ class TestRimPixelBrightnessSum:
         assert RimPixelBrightnessSum.calculate_property(segmentation=mask, mask=mask, voxel_size=image.voxel_size,
                                                         distance=10 * 50, image=image.get_channel(0),
                                                         units=Units.nm) == 0
+
+
+class TestSphericity:
+    def test_cube(self):
+        image = get_cube_image()
+        mask1 = image.get_channel(0) > 40
+        mask2 = image.get_channel(0) > 60
+        mask3 = mask1 * ~mask2
+        mask1_radius = np.sqrt(2 * (50 * 59) ** 2 + (100 * 29) ** 2)/2
+        mask1_volume = np.count_nonzero(mask1) * reduce(lambda x,y: x*y, image.voxel_size)
+        assert isclose(Sphericity.calculate_property(area_array=mask1, voxel_size=image.voxel_size, result_scalar=1),
+                       mask1_volume / (4/3 * pi *(mask1_radius)**3))
+
+        mask2_radius = np.sqrt(2 * (50 * 39) ** 2 + (100 * 19)**2) / 2
+        mask2_volume = np.count_nonzero(mask2) * reduce(lambda x, y: x * y, image.voxel_size)
+        assert isclose(Sphericity.calculate_property(area_array=mask2, voxel_size=image.voxel_size, result_scalar=1),
+                       mask2_volume / (4 / 3 * pi * (mask2_radius) ** 3))
+
+        mask3_radius = mask1_radius
+        mask3_volume = np.count_nonzero(mask3) * reduce(lambda x, y: x * y, image.voxel_size)
+        assert isclose(Sphericity.calculate_property(area_array=mask3, voxel_size=image.voxel_size, result_scalar=1),
+                       mask3_volume / (4 / 3 * pi * (mask3_radius) ** 3))
+
+    def test_square(self):
+        image = get_square_image()
+        mask1 = image.get_channel(0) > 40
+        mask2 = image.get_channel(0) > 60
+        mask3 = mask1 * ~mask2
+        mask1_radius = np.sqrt(2 * (50 * 59) ** 2) / 2
+        mask1_volume = np.count_nonzero(mask1) * reduce(lambda x, y: x * y, image.voxel_size)
+        assert isclose(Sphericity.calculate_property(area_array=mask1, voxel_size=image.voxel_size, result_scalar=1),
+                       mask1_volume / (pi * (mask1_radius) ** 2))
+
+        mask2_radius = np.sqrt(2 * (50 * 39) ** 2) / 2
+        mask2_volume = np.count_nonzero(mask2) * reduce(lambda x, y: x * y, image.voxel_size)
+        assert isclose(Sphericity.calculate_property(area_array=mask2, voxel_size=image.voxel_size, result_scalar=1),
+                       mask2_volume / (pi * (mask2_radius) ** 2))
+
+        mask3_radius = mask1_radius
+        mask3_volume = np.count_nonzero(mask3) * reduce(lambda x, y: x * y, image.voxel_size)
+        assert isclose(Sphericity.calculate_property(area_array=mask3, voxel_size=image.voxel_size, result_scalar=1),
+                       mask3_volume / (pi * (mask3_radius) ** 2))
+
 
 
 class TestStatisticProfile:

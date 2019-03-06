@@ -12,6 +12,7 @@ from typing import NamedTuple, Optional, Union, Dict, Callable, List
 import SimpleITK as sitk
 import numpy as np
 from sympy import symbols
+from math import pi
 
 from .. import autofit as af
 from ..border_rim import border_mask
@@ -262,7 +263,7 @@ class StatisticProfile(object):
                 else:
                     val = method.calculate_property(**kw)
                 help_dict[hash_str] = val
-            unit = method.get_units(3)
+            unit = method.get_units(3) if kw["image"].shape[0] > 1 else method.get_units(3)
             if node.power != 1:
                 return pow(val, node.power), pow(unit, node.power)
             return val, unit
@@ -330,11 +331,15 @@ def calculate_main_axis(area_array: np.ndarray, image: np.ndarray, voxel_size):
     return size
 
 
-def get_main_axis_length(index: int, area_array: np.ndarray, image: np.ndarray, help_dict: Dict, voxel_size,
-                         result_scalar, _area: AreaType, _per_conponent: PerComponent = PerComponent.No,
-                         _cache=False, **_):
+def get_main_axis_length(index: int, area_array: np.ndarray, image: np.ndarray, voxel_size,
+                         result_scalar,
+                         _cache=False, **kwargs):
+    _cache = _cache and "_area" in kwargs and "_per_component" in kwargs
     if _cache:
-        hash_name = hash_fun_call_name(calculate_main_axis, {}, _area, _per_conponent)
+        help_dict: Dict = kwargs["help_dict"]
+        _area: AreaType = kwargs["_area"]
+        _per_component: PerComponent = kwargs["_per_component"]
+        hash_name = hash_fun_call_name(calculate_main_axis, {}, _area, _per_component)
         if hash_name not in help_dict:
             help_dict[hash_name] = calculate_main_axis(area_array, image, [x * result_scalar for x in voxel_size])
         return help_dict[hash_name][index]
@@ -647,26 +652,34 @@ class Compactness(StatisticMethodBase):
 
 
 class Sphericity(StatisticMethodBase):
-    text_info = "Sphericity", "volume/(diameter**3/8)"
+    text_info = "Sphericity", "volume/((4/3 * π * radius **3) for 3d data and volume/((π * radius **2) for 2d data"
 
     @staticmethod
     def calculate_property(**kwargs):
-        help_dict = kwargs["help_dict"]
-        volume_hash_str = hash_fun_call_name(Volume, {}, kwargs["_area"])
+        if all(key in kwargs for key in ["help_dict", "_area", "_per_component"])\
+                and ("_cache" not in kwargs or kwargs["_cache"]):
+            help_dict = kwargs["help_dict"]
+        else:
+            help_dict = {}
+            kwargs.update({"_area": AreaType.Segmentation, "_per_component": PerComponent.No})
+        volume_hash_str = hash_fun_call_name(Volume, {}, kwargs["_area"], kwargs["_per_component"])
         if volume_hash_str not in help_dict:
             volume = Volume.calculate_property(**kwargs)
             help_dict[volume_hash_str] = volume
         else:
             volume = help_dict[volume_hash_str]
 
-        diameter_hash_str = hash_fun_call_name(Diameter, {}, kwargs["_area"])
+        diameter_hash_str = hash_fun_call_name(Diameter, {}, kwargs["_area"], kwargs["_per_component"])
         if diameter_hash_str not in help_dict:
             diameter_val = Diameter.calculate_property(**kwargs)
             help_dict[diameter_hash_str] = diameter_val
         else:
             diameter_val = help_dict[diameter_hash_str]
         radius = diameter_val / 2
-        return volume / radius ** 3
+        if kwargs["area_array"].shape[0] > 1:
+            return volume / (4/3 * pi * (radius ** 3))
+        else:
+            return volume / (pi * (radius **2))
 
     @classmethod
     def get_units(cls, ndim):
