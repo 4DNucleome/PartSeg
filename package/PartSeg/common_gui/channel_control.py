@@ -137,7 +137,7 @@ class ChannelChooseBase(QWidget):
         self.channels_widgets[self.current_channel].set_locked(value)
         self._settings.set_in_profile(f"{self._name}.lock_{self.current_channel}", value)
         self.coloring_update.emit(False)
-        self.channel_change.emit(self.current_channel)
+        self.channel_change.emit(self.current_channel, False)
 
     def send_info_wrap(self):
         self.send_info()
@@ -269,7 +269,7 @@ class ChannelControl(ChannelChooseBase):
         # self._settings.set_in_profile(f"{self._name}.bounds", self.current_bounds)
         if self.fixed.isChecked():
             self.coloring_update.emit(False)
-            self.channel_change.emit(self.current_channel)
+            self.channel_change.emit(self.current_channel, False)
 
     def gauss_radius_changed(self):
         self._settings.set_in_profile(f"{self._name}.gauss_radius_{self.current_channel}", self.gauss_radius.value())
@@ -312,7 +312,7 @@ class ChannelControl(ChannelChooseBase):
         self.channels_widgets[self.current_channel].set_color(value)
         self.change_color_preview(value)
         self._settings.set_in_profile(f"{self._name}.cmap{self.current_channel}", str(value))
-        self.channel_change.emit(self.current_channel)
+        self.channel_change.emit(self.current_channel, False)
         self.send_info()
 
     def update_channels_list(self):
