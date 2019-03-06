@@ -29,9 +29,20 @@ def get_square_image():
 
 
 def get_two_components_array():
-    data = np.zeros((1, 20, 20, 60), dtype=np.uint16)
-    data[3:-3, 2:-2, 2:19] = 1
-    data[3:-3, 2:-2, 22:-2] = 2
+    data = np.zeros((1, 20, 30, 60, 1), dtype=np.uint16)
+    data[0, 3:-3, 2:-2, 2:19] = 60
+    data[0, 3:-3, 2:-2, 22:-2] = 50
+    return data
+
+
+def get_two_components_image():
+    return Image(get_two_components_array(), (100, 50, 50), "")
+
+
+def get_two_component_mask():
+    mask = np.zeros(get_two_components_image().get_channel(0).shape, dtype=np.uint8)
+    mask[3:-3, 2:-2, 2:-2] = 1
+    return mask
 
 
 class TestDiameter(object):
@@ -811,3 +822,49 @@ class TestStatisticProfile:
         assert isclose(vol1[0], vol3[0])
         assert isclose(vol1[0] ** 2, vol2[0])
         assert isclose(vol1[0] * vol4[0], 1)
+
+    def test_per_component_cache_collision(self):
+        image = get_two_components_image()
+        mask = get_two_component_mask()
+        segmentation = np.zeros(mask.shape, dtype=np.uint8)
+        segmentation[image.get_channel(0) == 50] = 1
+        segmentation[image.get_channel(0) == 60] = 2
+        statistics = [
+            StatisticEntry("Volume", Volume.get_starting_leaf().replace_(
+                area=AreaType.Segmentation, per_component=PerComponent.No)),
+            StatisticEntry("Volume per component", Volume.get_starting_leaf().replace_(
+                area=AreaType.Segmentation, per_component=PerComponent.Yes)),
+            StatisticEntry("Diameter", Diameter.get_starting_leaf().replace_(
+                area=AreaType.Segmentation, per_component=PerComponent.No)),
+            StatisticEntry("Diameter per component", Diameter.get_starting_leaf().replace_(
+                area=AreaType.Segmentation, per_component=PerComponent.Yes)),
+            StatisticEntry("MaximumPixelBrightness", MaximumPixelBrightness.get_starting_leaf().replace_(
+                area=AreaType.Segmentation, per_component=PerComponent.No)),
+            StatisticEntry("MaximumPixelBrightness per component", MaximumPixelBrightness.get_starting_leaf().replace_(
+                area=AreaType.Segmentation, per_component=PerComponent.Yes)),
+            StatisticEntry("Sphericity", Sphericity.get_starting_leaf().replace_(
+                area=AreaType.Segmentation, per_component=PerComponent.No)),
+            StatisticEntry("Sphericity per component", Sphericity.get_starting_leaf().replace_(
+                area=AreaType.Segmentation, per_component=PerComponent.Yes)),
+            StatisticEntry("LongestMainAxisLength", LongestMainAxisLength.get_starting_leaf().replace_(
+                area=AreaType.Segmentation, per_component=PerComponent.No)),
+            StatisticEntry("LongestMainAxisLength per component", LongestMainAxisLength.get_starting_leaf().replace_(
+                area=AreaType.Segmentation, per_component=PerComponent.Yes)),
+        ]
+
+        profile = StatisticProfile("statistic", statistics)
+        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
+                                   voxel_size=image.voxel_size, result_units=Units.nm)
+        assert result["Volume"][0] == result["Volume per component"][0][0] + result["Volume per component"][0][1]
+        assert len(result["Diameter per component"][0]) == 2
+        assert result["MaximumPixelBrightness"][0] == 60
+        assert result["MaximumPixelBrightness per component"][0] == [50, 60]
+        assert result["Sphericity per component"][0] == [
+            Sphericity.calculate_property(area_array=segmentation == 1, voxel_size=image.voxel_size,
+                                          result_scalar=UNIT_SCALE[Units.nm.value]),
+            Sphericity.calculate_property(area_array=segmentation == 2, voxel_size=image.voxel_size,
+                                          result_scalar=UNIT_SCALE[Units.nm.value])
+        ]
+        assert result["LongestMainAxisLength"][0] == 55 * 50 * UNIT_SCALE[Units.nm.value]
+        assert result["LongestMainAxisLength per component"][0][0] == 35 * 50 * UNIT_SCALE[Units.nm.value]
+        assert result["LongestMainAxisLength per component"][0][1] == 26 * 50 * UNIT_SCALE[Units.nm.value]
