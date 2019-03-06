@@ -10,6 +10,8 @@ from PartSeg.utils.mask.io_functions import load_stack_segmentation, save_compon
 
 class StackSettings(BaseSettings):
     components_change_list = Signal([int, list])
+    save_locations_keys = ["save_batch", "save_components_directory", "save_segmentation_directory",
+                           "open_segmentation_directory", "load_image_directory", "batch_directory"]
 
     def __init__(self, json_path):
         super().__init__(json_path)

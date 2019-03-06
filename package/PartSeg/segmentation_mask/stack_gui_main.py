@@ -74,11 +74,13 @@ class MainMenu(QWidget):
             dial = CustomLoadDialog(load_dict)
             dial.setDirectory(self.settings.get("io.load_image_directory", str(Path.home())))
             dial.selectNameFilter(self.settings.get("io.load_data_filter", next(iter(load_dict.keys()))))
+            dial.setHistory(dial.history() + self.settings.get_path_history())
             if not dial.exec_():
                 return
             load_property = dial.get_result()
             self.settings.set("io.load_image_directory", os.path.dirname(load_property.load_location[0]))
             self.settings.set("io.load_data_filter", load_property.selected_filter)
+            self.settings.add_path_history(os.path.dirname(load_property.load_location[0]))
 
             def exception_hook(exception):
                 if isinstance(exception, ValueError) and exception.args[0] == "not a TIFF file":
@@ -86,7 +88,7 @@ class MainMenu(QWidget):
                 elif isinstance(exception, MemoryError):
                     QMessageBox.warning(self, "Open error", "Not enough memory to read this image")
                 elif isinstance(exception, IOError):
-                    QMessageBox.warning(self, "Open error", "Some problem with reading from disc")
+                    QMessageBox.warning(self, "Open error", f"Some problem with reading from disc: {exception}")
                 else:
                     raise exception
 
@@ -96,6 +98,8 @@ class MainMenu(QWidget):
                 exception_hook=exception_hook)
             if execute_dialog.exec():
                 result = execute_dialog.get_result()
+                if result is None:
+                    return
                 if isinstance(result.image, Image):
                     self.set_image(result.image)
                 if result.segmentation is not None:
@@ -135,10 +139,12 @@ class MainMenu(QWidget):
 
             dial = CustomLoadDialog({"segmentation (*.seg *.tgz)": LoadSegmentation})
             dial.setDirectory(self.settings.get("io.open_segmentation_directory", str(Path.home())))
+            dial.setHistory(dial.history() + self.settings.get_path_history())
             if not dial.exec_():
                 return
             load_property = dial.get_result()
             self.settings.set("io.open_segmentation_directory", os.path.dirname(load_property.load_location[0]))
+            self.settings.add_path_history(os.path.dirname(load_property.load_location[0]))
             execute_thread = ExecuteFunctionThread(load_property.load_class.load, [load_property.load_location])
 
             def exception_hook(exception):
@@ -164,10 +170,12 @@ class MainMenu(QWidget):
         dial = SaveDialog({"segmentation": SaveSegmentation}, False)
         dial.setDirectory(self.settings.get("io.save_segmentation_directory", str(Path.home())))
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0] + ".seg")
+        dial.setHistory(dial.history() + self.settings.get_path_history())
         if not dial.exec_():
             return
         save_location, selected_filter, save_class, values = dial.get_result()
         self.settings.set("io.save_segmentation_directory", os.path.dirname(str(save_location)))
+        self.settings.add_path_history(os.path.dirname(str(save_location)))
         # self.settings.save_directory = os.path.dirname(str(file_path))
 
         def exception_hook(exception):
@@ -190,8 +198,9 @@ class MainMenu(QWidget):
             return
         dial = QFileDialog()
         dial.setFileMode(QFileDialog.Directory)
-        dial.setDirectory(self.settings.get("io.save_components_directory", ""))
+        dial.setDirectory(self.settings.get("io.save_components_directory", str(Path.home())))
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0])
+        dial.setHistory(dial.history() + self.settings.get_path_history())
         if not dial.exec_():
             return
         dir_path = str(dial.selectedFiles()[0])
@@ -210,6 +219,7 @@ class MainMenu(QWidget):
                 return
 
         self.settings.set("io.save_components_directory", os.path.dirname(str(dir_path)))
+        self.settings.add_path_history(os.path.dirname(str(dir_path)))
 
         def exception_hook(exception):
             QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.Ok)
@@ -444,6 +454,7 @@ class AlgorithmOptions(QWidget):
         dial.setFileMode(QFileDialog.AnyFile)
         dial.setAcceptMode(QFileDialog.AcceptSave)
         dial.setDefaultSuffix(".json")
+        dial.setHistory(dial.history() + self.settings.get_path_history())
         if dial.exec():
             file_path = dial.selectedFiles()[0]
             json_string = json.dumps(result, cls=self.settings.json_encoder_class)
@@ -481,6 +492,7 @@ class AlgorithmOptions(QWidget):
     def execute_all_action(self):
         dial = QFileDialog()
         dial.setFileMode(QFileDialog.Directory)
+        dial.setHistory(dial.history() + self.settings.get_path_history())
         dial.setDirectory(self.settings.get("io.save_batch", self.settings.get("io.save_segmentation_directory", "")))
         if not dial.exec_():
             return

@@ -372,7 +372,8 @@ class MainMenu(QWidget):
 
     def save_file(self):
         base_values = self._settings.get("save_parameters", dict())
-        dial = SaveDialog(save_dict, system_widget=False, base_values=base_values)
+        dial = SaveDialog(save_dict, system_widget=False, base_values=base_values,
+                          history=self._settings.get_path_history())
         dial.selectFile(os.path.splitext(os.path.basename(self._settings.image_path))[0])
         dial.setDirectory(self._settings.get("io.save_directory", self._settings.get("io.open_directory",
                                                                                      str(Path.home()))))
@@ -381,12 +382,15 @@ class MainMenu(QWidget):
             save_location, selected_filter, save_class, values = dial.get_result()
             project_info = self._settings.get_project_info()
             self._settings.set("io.save_filter", selected_filter)
-            self._settings.set("io.save_directory", os.path.dirname(save_location))
+            save_dir = os.path.dirname(save_location)
+            self._settings.set("io.save_directory", save_dir)
+            self._settings.add_path_history(save_dir)
             base_values[selected_filter] = values
             try:
                 save_class.save(save_location, project_info, values)
             except ValueError as e:
                 QMessageBox.warning(self, "Save error", f"Error during saving\n{e.args[0]}")
+
 
     def image_adjust_exec(self):
         dialog = InterpolateDialog(self._settings.image_spacing)
@@ -442,13 +446,15 @@ class MainMenu(QWidget):
                 raise exception
 
         try:
-            dial = CustomLoadDialog(load_dict)
+            dial = CustomLoadDialog(load_dict, history=self._settings.get_path_history())
             dial.setDirectory(self._settings.get("io.open_directory", str(Path.home())))
             dial.selectNameFilter(self._settings.get("io.open_filter", next(iter(load_dict.keys()))))
             if dial.exec_():
                 result = dial.get_result()
                 self._settings.set("io.open_filter", result.selected_filter)
-                self._settings.set("io.open_directory", os.path.dirname(result.load_location[0]))
+                load_dir = os.path.dirname(result.load_location[0])
+                self._settings.set("io.open_directory", load_dir)
+                self._settings.add_path_history(load_dir)
                 dial2 = ExecuteFunctionDialog(result.load_class.load, [result.load_location],
                                               {"metadata": {"default_spacing": self._settings.image_spacing}},
                                               exception_hook=exception_hook)

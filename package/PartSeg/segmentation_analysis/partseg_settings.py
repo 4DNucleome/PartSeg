@@ -25,6 +25,7 @@ class PartSettings(BaseSettings):
     json_encoder_class = PartEncoder
     decode_hook = staticmethod(part_hook)
     last_executed_algorithm: str
+    save_locations_keys = ["open_directory", "save_directory", "export_directory", "batch_plan_directory"]
 
     def __init__(self, json_path):
         super().__init__(json_path)

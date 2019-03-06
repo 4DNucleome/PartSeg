@@ -38,7 +38,8 @@ class FormDialog(QDialog):
 
 class SaveDialog(QFileDialog):
     def __init__(self, save_register: typing.Dict[str, type(SaveBase)], system_widget=True,
-                 base_values: typing.Optional[dict] = None, parent=None):
+                 base_values: typing.Optional[dict] = None, parent=None,
+                 history :typing.Optional[typing.List[str]]=None):
         super().__init__(parent)
         self.save_register = dict((x.get_name_with_suffix(), x) for x in save_register.values())
         self.setOption(QFileDialog.DontUseNativeDialog, not system_widget)
@@ -49,6 +50,9 @@ class SaveDialog(QFileDialog):
         self.accepted_native = False
         self.values = {}
         self.names = []
+        if history is not None:
+            history = self.history() + history
+            self.setHistory(history)
         self.base_values = base_values if base_values is not None else {}
         if not system_widget:
             widget = QStackedWidget()

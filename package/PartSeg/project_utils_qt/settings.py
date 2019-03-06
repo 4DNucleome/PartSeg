@@ -1,6 +1,7 @@
 import json
 import sys
 import typing
+from pathlib import Path
 
 from qtpy.QtCore import QObject, Signal
 
@@ -177,6 +178,7 @@ class BaseSettings(ViewSettings):
     json_encoder_class = ProfileEncoder
     decode_hook = staticmethod(profile_hook)
     algorithm_changed = Signal()
+    save_locations_keys = []
 
     def get_save_list(self) -> typing.List[SaveSettingsDescription]:
         return [SaveSettingsDescription("segmentation_settings.json", self.segmentation_dict),
@@ -188,6 +190,19 @@ class BaseSettings(ViewSettings):
         self.segmentation_dict = ProfileDict()
         self.json_folder_path = json_path
         self.last_executed_algorithm = ""
+
+    def get_path_history(self) -> typing.List[str]:
+        res = self.get("io.history", [])
+        for name in self.save_locations_keys:
+            val = self.get("io." + name,  str(Path.home()))
+            if val not in res:
+                res = res + [val]
+        return res
+
+    def add_path_history(self, dir_path: str):
+        history = self.get("io.history", [])
+        if dir_path not in history:
+            self.set("io.history", history[-9:] + [dir_path])
 
     def set(self, key_path, value):
         """function for saving general state (not visualization) """

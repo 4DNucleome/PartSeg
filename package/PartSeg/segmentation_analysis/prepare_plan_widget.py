@@ -980,17 +980,18 @@ class CalculateInfo(QWidget):
         dial = QFileDialog(self, "Export calculation plans")
         dial.setFileMode(QFileDialog.AnyFile)
         dial.setAcceptMode(QFileDialog.AcceptSave)
-        dial.setDirectory(dial.setDirectory(self.settings.get("io.save_directory", str(Path.home()))))
+        dial.setDirectory(dial.setDirectory(self.settings.get("io.batch_plan_directory", str(Path.home()))))
         dial.setNameFilter("Calculation plans (*.json)")
         dial.setDefaultSuffix("json")
         dial.selectFile("calculation_plans.json")
+        dial.setHistory(dial.history() + self.settings.get_path_history())
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
-            self.settings.set("io.export_directory", file_path)
+            self.settings.set("io.batch_plan_directory", os.path.dirname(file_path))
+            self.settings.add_path_history(os.path.dirname(file_path))
             data = dict([(x, self.settings.batch_plans[x]) for x in choose.get_export_list()])
             with open(file_path, 'w') as ff:
                 json.dump(data, ff, cls=self.settings.json_encoder_class, indent=2)
-            self.settings.set("io.save_directory", os.path.dirname(file_path))
 
     def import_plans(self):
         dial = QFileDialog(self, "Import calculation plans")
@@ -999,9 +1000,12 @@ class CalculateInfo(QWidget):
         dial.setDirectory(self.settings.get("io.open_directory", str(Path.home())))
         dial.setNameFilter("Calculation plans (*.json)")
         dial.setDefaultSuffix("json")
+        dial.setHistory(dial.history() + self.settings.get_path_history())
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
             plans, err = self.settings.load_part(file_path)
+            self.settings.set("io.batch_plan_directory", os.path.dirname(file_path))
+            self.settings.add_path_history(os.path.dirname(file_path))
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
             choose = ImportDialog(plans, self.settings.batch_plans, PlanPreview)

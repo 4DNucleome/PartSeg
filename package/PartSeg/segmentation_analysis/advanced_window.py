@@ -1,6 +1,7 @@
 import json
 import os
 from copy import deepcopy
+from pathlib import Path
 from typing import Union, Optional, Tuple
 
 from qtpy.QtCore import QByteArray, Qt, QEvent
@@ -225,26 +226,31 @@ class AdvancedSettings(QWidget):
         dial = QFileDialog(self, "Export profile segment")
         dial.setFileMode(QFileDialog.AnyFile)
         dial.setAcceptMode(QFileDialog.AcceptSave)
-        dial.setDirectory(self._settings.get("io.save_directory", ""))
+        dial.setDirectory(self._settings.get("io.save_directory", str(Path.home())))
         dial.setNameFilter("Segment profile (*.json)")
         dial.setDefaultSuffix("json")
         dial.selectFile("segment_profile.json")
+        dial.setHistory(dial.history() + self._settings.get_path_history())
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
+            self._settings.set("io.save_directory", os.path.dirname(file_path))
+            self._settings.add_path_history(os.path.dirname(file_path))
             data = dict([(x, self._settings.segmentation_profiles[x]) for x in exp.get_export_list()])
             with open(file_path, 'w') as ff:
                 json.dump(data, ff, cls=self._settings.json_encoder_class, indent=2)
-            self._settings.set("io.save_directory", os.path.dirname(file_path))
 
     def import_profiles(self):
         dial = QFileDialog(self, "Import profile segment")
         dial.setFileMode(QFileDialog.ExistingFile)
         dial.setAcceptMode(QFileDialog.AcceptOpen)
-        dial.setDirectory(self._settings.get("io.save_directory", ""))
+        dial.setDirectory(self._settings.get("io.save_directory", str(Path.home())))
         dial.setNameFilter("Segment profile (*.json)")
+        dial.setHistory(dial.history() + self._settings.get_path_history())
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
-            self._settings.set("io.save_directory", os.path.dirname(file_path))
+            save_dir = os.path.dirname(file_path)
+            self._settings.set("io.save_directory", save_dir)
+            self._settings.add_path_history(save_dir)
             profs,err = self._settings.load_part(file_path)
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
@@ -268,12 +274,14 @@ class AdvancedSettings(QWidget):
         dial.setNameFilter("Segment pipeline (*.json)")
         dial.setDefaultSuffix("json")
         dial.selectFile("segment_pipeline.json")
+        dial.setHistory(dial.history() + self._settings.get_path_history())
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
             data = dict([(x, self._settings.segmentation_pipelines[x]) for x in exp.get_export_list()])
             with open(file_path, 'w') as ff:
                 json.dump(data, ff, cls=self._settings.json_encoder_class, indent=2)
             self._settings.set("io.save_directory", os.path.dirname(file_path))
+            self._settings.add_path_history(os.path.dirname(file_path))
 
     def import_pipeline(self):
         dial = QFileDialog(self, "Import pipeline segment")
@@ -281,9 +289,11 @@ class AdvancedSettings(QWidget):
         dial.setAcceptMode(QFileDialog.AcceptOpen)
         dial.setDirectory(self._settings.get("io.save_directory", ""))
         dial.setNameFilter("Segment pipeline (*.json)")
+        dial.setHistory(dial.history() + self._settings.get_path_history())
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
             self._settings.set("io.save_directory", os.path.dirname(file_path))
+            self._settings.add_path_history(os.path.dirname(file_path))
             profs, err = self._settings.load_part(file_path)
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")

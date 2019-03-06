@@ -342,6 +342,7 @@ class CalculationPrepare(QDialog):
         dial.setAcceptMode(QFileDialog.AcceptOpen)
         dial.setFileMode(QFileDialog.Directory)
         dial.setDirectory(self.base_prefix.text())
+        dial.setHistory(dial.history() + self.settings.get_path_history())
         if dial.exec_():
             dir_path = str(dial.selectedFiles()[0])
             self.base_prefix.setText(dir_path)
@@ -351,6 +352,7 @@ class CalculationPrepare(QDialog):
         dial.setAcceptMode(QFileDialog.AcceptOpen)
         dial.setFileMode(QFileDialog.Directory)
         dial.setDirectory(self.result_prefix.text())
+        dial.setHistory(dial.history() + self.settings.get_path_history())
         if dial.exec_():
             dir_path = str(dial.selectedFiles()[0])
             self.result_prefix.setText(dir_path)
@@ -358,6 +360,7 @@ class CalculationPrepare(QDialog):
     def set_mapping_mask(self, i, pos):
         def mapping_dialog():
             dial = QFileDialog(self, "Select file")
+            dial.setHistory(dial.history() + self.settings.get_path_history())
             base_path = str(self.base_prefix.text()).strip()
             if base_path != "":
                 dial.setDirectory(base_path)
