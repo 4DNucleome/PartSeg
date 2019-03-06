@@ -27,6 +27,7 @@ def get_cube_image():
 def get_square_image():
     return Image(get_cube_array()[:, 25:26], (100, 50, 50), "")
 
+
 def get_two_components_array():
     data = np.zeros((1, 20, 20, 60), dtype=np.uint16)
     data[3:-3, 2:-2, 2:19] = 1
@@ -101,8 +102,8 @@ class TestVolume(object):
         mask3 = mask1 * ~mask2
         assert Volume.calculate_property(mask1, image.spacing, 1) == (100 * 30) * (50 * 60) * (50 * 60)
         assert Volume.calculate_property(mask2, image.spacing, 1) == (100 * 20) * (50 * 40) * (50 * 40)
-        assert Volume.calculate_property(mask3, image.spacing, 1) == \
-            (100 * 30) * (50 * 60) * (50 * 60) - (100 * 20) * (50 * 40) * (50 * 40)
+        assert Volume.calculate_property(mask3, image.spacing, 1) == (100 * 30) * (50 * 60) * (50 * 60) -\
+                                                                     (100 * 20) * (50 * 40) * (50 * 40)
 
     def test_square(self):
         image = get_square_image()
@@ -328,7 +329,7 @@ class TestMomentOfInertia:
         image_array[5, 8, 8] = 1
         assert MomentOfInertia.calculate_property(mask, image_array, spacing) == 0
         image_array[5, 8, 9] = 1
-        assert MomentOfInertia.calculate_property(mask, image_array, spacing) == (0.5 * 6)**2 * 2
+        assert MomentOfInertia.calculate_property(mask, image_array, spacing) == (0.5 * 6) ** 2 * 2
         image_array = np.zeros((10, 16, 16))
         image_array[5, 8, 8] = 1
         image_array[5, 10, 8] = 3
@@ -336,7 +337,7 @@ class TestMomentOfInertia:
         image_array = np.zeros((10, 16, 16))
         image_array[5, 6, 8] = 3
         image_array[5, 10, 8] = 3
-        assert MomentOfInertia.calculate_property(mask, image_array, spacing) == 3 * 2 * 12**2
+        assert MomentOfInertia.calculate_property(mask, image_array, spacing) == 3 * 2 * 12 ** 2
 
     def test_density_mass_center(self):
         spacing = (10, 6, 6)
@@ -618,20 +619,20 @@ class TestSphericity:
         mask1 = image.get_channel(0) > 40
         mask2 = image.get_channel(0) > 60
         mask3 = mask1 * ~mask2
-        mask1_radius = np.sqrt(2 * (50 * 59) ** 2 + (100 * 29) ** 2)/2
-        mask1_volume = np.count_nonzero(mask1) * reduce(lambda x,y: x*y, image.voxel_size)
+        mask1_radius = np.sqrt(2 * (50 * 59) ** 2 + (100 * 29) ** 2) / 2
+        mask1_volume = np.count_nonzero(mask1) * reduce(lambda x, y: x * y, image.voxel_size)
         assert isclose(Sphericity.calculate_property(area_array=mask1, voxel_size=image.voxel_size, result_scalar=1),
-                       mask1_volume / (4/3 * pi *(mask1_radius)**3))
+                       mask1_volume / (4 / 3 * pi * mask1_radius ** 3))
 
-        mask2_radius = np.sqrt(2 * (50 * 39) ** 2 + (100 * 19)**2) / 2
+        mask2_radius = np.sqrt(2 * (50 * 39) ** 2 + (100 * 19) ** 2) / 2
         mask2_volume = np.count_nonzero(mask2) * reduce(lambda x, y: x * y, image.voxel_size)
         assert isclose(Sphericity.calculate_property(area_array=mask2, voxel_size=image.voxel_size, result_scalar=1),
-                       mask2_volume / (4 / 3 * pi * (mask2_radius) ** 3))
+                       mask2_volume / (4 / 3 * pi * mask2_radius ** 3))
 
         mask3_radius = mask1_radius
         mask3_volume = np.count_nonzero(mask3) * reduce(lambda x, y: x * y, image.voxel_size)
         assert isclose(Sphericity.calculate_property(area_array=mask3, voxel_size=image.voxel_size, result_scalar=1),
-                       mask3_volume / (4 / 3 * pi * (mask3_radius) ** 3))
+                       mask3_volume / (4 / 3 * pi * mask3_radius ** 3))
 
     def test_square(self):
         image = get_square_image()
@@ -641,18 +642,17 @@ class TestSphericity:
         mask1_radius = np.sqrt(2 * (50 * 59) ** 2) / 2
         mask1_volume = np.count_nonzero(mask1) * reduce(lambda x, y: x * y, image.voxel_size)
         assert isclose(Sphericity.calculate_property(area_array=mask1, voxel_size=image.voxel_size, result_scalar=1),
-                       mask1_volume / (pi * (mask1_radius) ** 2))
+                       mask1_volume / (pi * mask1_radius ** 2))
 
         mask2_radius = np.sqrt(2 * (50 * 39) ** 2) / 2
         mask2_volume = np.count_nonzero(mask2) * reduce(lambda x, y: x * y, image.voxel_size)
         assert isclose(Sphericity.calculate_property(area_array=mask2, voxel_size=image.voxel_size, result_scalar=1),
-                       mask2_volume / (pi * (mask2_radius) ** 2))
+                       mask2_volume / (pi * mask2_radius ** 2))
 
         mask3_radius = mask1_radius
         mask3_volume = np.count_nonzero(mask3) * reduce(lambda x, y: x * y, image.voxel_size)
         assert isclose(Sphericity.calculate_property(area_array=mask3, voxel_size=image.voxel_size, result_scalar=1),
-                       mask3_volume / (pi * (mask3_radius) ** 2))
-
+                       mask3_volume / (pi * mask3_radius ** 2))
 
 
 class TestStatisticProfile:
@@ -778,7 +778,7 @@ class TestStatisticProfile:
         values = list(result.values())
         for i in range(3):
             volume, brightness, density = values[i::3]
-            assert isclose(volume[0]/brightness[0], density[0])
+            assert isclose(volume[0] / brightness[0], density[0])
 
     def test_cube_volume_power(self):
         image = get_cube_image()
@@ -809,5 +809,5 @@ class TestStatisticProfile:
                                    voxel_size=image.voxel_size, result_units=Units.µm)
         vol1, vol2, vol3, vol4 = list(result.values())
         assert isclose(vol1[0], vol3[0])
-        assert isclose(vol1[0]**2, vol2[0])
+        assert isclose(vol1[0] ** 2, vol2[0])
         assert isclose(vol1[0] * vol4[0], 1)
