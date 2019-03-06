@@ -3,6 +3,7 @@
 
 ### Use case
 This tutorial shows how to segment nuclei from 3D confocal images and later how to analyse several parameters of chromosomal territories of chromosome 1 using PartSeg.
+
 Rat postmitotic neurons were fixed and subjected to fluorescent in situ hybridization (FISH)
 with chromosome paint probes specific to chromosome 1. Nuclei were counterstained with Hoechest, which binds specifically to DNA. Next 3D images were acquired in 16-bit using confocal microscope.
 
@@ -38,7 +39,7 @@ Firstly segmentation of nuclei is performed based on the DNA signal. Segmented n
     9. Filter: Gauss
     10. Gauss type: Layer
     11. Gauss radius: 1
-    12. Enable: Use convex hull 
+    12. Enable: Use convex hull  
     This option allows to calculate convex hull for each of segmented components. It enables to include in segmentation structures with low signal intensity like nucleoli, located close to the nuclear border.
 6. Execute segmentation
 7. Select nuclei that were segmented correctly (where mask includes whole volume of a single nucleus) by selecting one by one on the picture.
@@ -54,7 +55,7 @@ Mask files are saved with the same name with extended suffix:_mask.
 
 #### Segmentation of chromosome 1 territories
 
-In order to quntify features of chromosome 1 territory segmentation of FISH specyfic signal is carried off. Threshold for segmentation is adjusted to cover whole chromosome paint staining.
+In order to qauntify features of chromosome 1 territory segmentation of FISH specyfic signal is carried off. Threshold for segmentation is adjusted to cover whole chromosome paint staining.
 
 1. Open PartSeg
 2. Select **Segmentation Analysis**  
@@ -71,14 +72,18 @@ You can also simply drag and drop both files on the main window.
 5. Disable channel 1 (DNA staining) on both windows
 6. Enable **Mask** option on the left panel
 7. Set algorithm parameters to:
-    7. Use Lower Threshold Flow
-    8. Threshold type: Base/Core 
-    9. Core Threshold: Manual, threshold value: 19500
-    10. Base Threshold: Manual, threshold value: 11500
-    11. Flow type: MultiScale Opening Sprawl
-    12. Channel: 2
-    13. Minimum size (px): 800
-    14. Filter: Gauss with type Layer and radius 1    
+    1. Use Lower Threshold Flow
+    2. Threshold type: Base/Core 
+    3. Core Threshold: Manual, threshold value: 19500
+    4. Base Threshold: Manual, threshold value: 11500
+    5. Flow type: MultiScale Opening Sprawl
+    6. Channel: 2
+    7. Minimum size (px): 800
+    8. Filter: Gauss with type Layer and radius 1
+    9. Connect only sides: Not checked  
+    This option limits segmentation to pixels connected side by side.
+Chromosomal territories are irregular structures and disabling this
+option reduce a risk of losing small bumps and protrusions.
 12. Execute segmentation
 
      
