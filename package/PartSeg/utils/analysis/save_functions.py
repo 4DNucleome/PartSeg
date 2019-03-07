@@ -201,7 +201,6 @@ class SaveXYZ(SaveBase):
     @classmethod
     def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict,
              range_changed=None, step_changed=None):
-        print(f"[save]", save_location)
         if project_info.segmentation is None:
             raise ValueError("Not segmentation")
         if isinstance(save_location, (str, Path)):

@@ -526,7 +526,6 @@ class StatisticsSettings(QWidget):
             self.chosen_element_area = \
                 self.get_parameters(deepcopy(item.stat), self.statistic_area_choose.get_value(),
                                     self.per_component.get_value(), self.power_num.value())
-            print("aa", self.chosen_element_area)
             if self.chosen_element_area is None:
                 return
             self.chosen_element = item

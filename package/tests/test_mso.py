@@ -472,7 +472,6 @@ class TestMSO:
 
         changes = mso.run_MSO(10)
         steps = mso.steps_done()
-        print(changes, steps)
         # res = mso.get_result_catted()
         arr = np.copy(components)
         arr[arr == 1] = 0
@@ -543,7 +542,6 @@ class TestMSO:
         mso.set_components_num(3)
         mso.run_MSO(10)
         res = mso.get_result_catted()
-        print(res.max())
 
 
 class TestMuMid:

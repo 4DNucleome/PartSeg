@@ -119,7 +119,6 @@ def component_update(label_image, image, minsize):
     if isinstance(label_image, sitk.Image):
         label_image = sitk.GetArrayFromImage(label_image)
     counter = label_image.max()+1
-    print("Counter:", counter)
     values = range(1, counter)
     for num in values:
         # noinspection PyUnresolvedReferences
@@ -131,10 +130,6 @@ def component_update(label_image, image, minsize):
         bord = get_border(part)
         positions = np.transpose(np.nonzero(bord))
         positions[:, 0] = positions[:, 0] * 3
-        # diam = cdist(positions, positions).max()
-        # try:
-        #    diam = pdist(positions).max()
-        # except MemoryError:
         diam = calc_max(positions)
 
         if diam > 3 * expected_diam:
@@ -150,10 +145,7 @@ def component_update(label_image, image, minsize):
                         counter += 1
                 part[part > 1] = 0
             else:
-                print("Split fail")
                 part = old_part
-
-        print("Jadro", num)
         # TODO zrobić podział za dużych
         part = add_frame(part, 15).astype(np.uint8)
         # part = sitk.GetArrayFromImage(sitk.BinaryMorphologicalClosing(sitk.GetImageFromArray(part), 3))
@@ -245,18 +237,14 @@ def simply_segment2(image, min_thresh, max_thresh, last_step=True):
     thr = sitk.DoubleThreshold(image,min_thresh, max_thresh,  stat.GetMaximum(), stat.GetMaximum()) # ThresholdMaximumConnectedComponents(image, min_size)
     if DEBUG:
         test = sitk.GetArrayFromImage(sitk.Mask(image, thr))
-        print("Threshold:", test[test > 0].min())
     n_thr = close_small_holes(sitk.GetArrayFromImage(thr), 1000)
     sitk.WriteImage(sitk.GetImageFromArray(n_thr), "tmp/tmp2.tif")
     fill1 = sitk.GetImageFromArray(n_thr)
     vot = sitk.VotingBinaryIterativeHoleFilling(fill1)
     conn = sitk.ConnectedComponent(vot)
     n_conn = sitk.GetArrayFromImage(sitk.RelabelComponent(conn, min_size))
-    if DEBUG:
-        print("Sizes:", np.bincount(n_conn.flat))
     counter = n_conn.max()+1
     if not last_step:
-        print("Not all closed")
         return sitk.RelabelComponent(conn, min_size)
     for num in range(1, n_conn.max()+1):
         # noinspection PyUnresolvedReferences

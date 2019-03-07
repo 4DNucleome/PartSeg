@@ -26,7 +26,6 @@ class ExceptionList(QListWidget):
 
     @staticmethod
     def item_double_clicked(el: QListWidgetItem):
-        print("www")
         if isinstance(el, ExceptionListItem):
             dial = ErrorDialog(el.exception, "Error during batch processing", traceback_summary=el.traceback_summary)
             dial.exec()

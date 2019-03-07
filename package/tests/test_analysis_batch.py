@@ -62,7 +62,6 @@ class TestCalculationProcess:
         process.calculation = calc
         process.image = ImageReader.read_image(file_path)
         process.iterate_over(plan.execution_tree)
-        print(process.statistics)
         assert (len(process.statistics[0]) == 3)
 
     def test_full_pipeline(self):

@@ -97,7 +97,6 @@ class TestJsonLoad:
         with pytest.raises(TypeError):
             json.dumps(GaussType.Layer)
         data_string = json.dumps(GaussType.Layer, cls=PartEncoder)
-        print(data_string)
         assert re.search('"__Enum__":[^,}]+[,}]', data_string) is not None
         assert re.search('"__subtype__":[^,}]+[,}]', data_string) is not None
         assert re.search('"value":[^,}]+[,}]', data_string) is not None

@@ -205,7 +205,6 @@ class MainMenu(QWidget):
             return
         dir_path = str(dial.selectedFiles()[0])
         potential_names = self.settings.get_file_names_for_save_result(dir_path)
-        print("\n".join(potential_names))
         conflict = []
         for el in potential_names:
             if os.path.exists(el):
@@ -458,7 +457,6 @@ class AlgorithmOptions(QWidget):
         if dial.exec():
             file_path = dial.selectedFiles()[0]
             json_string = json.dumps(result, cls=self.settings.json_encoder_class)
-            print(json_string, file_path)
             with open(file_path, 'w') as ff:
                 ff.write(json_string)
 
@@ -467,7 +465,6 @@ class AlgorithmOptions(QWidget):
             self.borders_thick.setValue(value + 1)
 
     def file_list_change(self, val):
-        print("FF:", val)
         self.file_list = val
         if len(self.file_list) > 0 and not self.block_execute_all_btn:
             self.execute_all_btn.setEnabled(True)

@@ -650,7 +650,6 @@ class MyScrollArea(QScrollArea):
 
     def calculate_shift(self, pixmap_len, self_len, pix_ratio, cursor_ratio, scroll_bar: QScrollBar):
         if pixmap_len - self_len > 0:
-            print("calculate_shift", self.__class__, pixmap_len, pixmap_len - self_len, scroll_bar.maximum())
             scroll_bar.setValue(pixmap_len * pix_ratio - self_len * cursor_ratio)
 
     def resize_pixmap(self):
@@ -664,7 +663,6 @@ class MyScrollArea(QScrollArea):
             self.pixmap.resize(final_size)
 
     def center_pixmap(self):
-        print()
         x_cord = (self.width() - 2 - self.pixmap.width()) // 2
         y_cord = (self.height() - 2 - self.pixmap.height()) // 2
         self.pixmap.move(x_cord, y_cord)

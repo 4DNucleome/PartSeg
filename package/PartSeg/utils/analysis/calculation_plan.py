@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 import typing
 import uuid
 from abc import ABCMeta, abstractmethod
@@ -454,7 +455,6 @@ class CalculationPlan(object):
         return False
 
     def remove_step(self):
-        print("[remove_step]", self.current_pos)
         path = copy(self.current_pos)
         pos = path[-1]
         parent_node = self.get_node(path[:-1])
@@ -572,7 +572,7 @@ class CalculationPlan(object):
         :return: str
         """
         if el.__class__.__name__ not in CalculationPlan.correct_name.keys():
-            print(el)
+            print(el, file=sys.stderr)
             raise ValueError("Unknown type {}".format(el.__class__.__name__))
         if isinstance(el, Operations):
             if el == Operations.reset_to_base:

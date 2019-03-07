@@ -444,7 +444,6 @@ class BaseMultiScaleOpening(ThresholdBaseAlgorithm, ABC):
             sprawl_area[finally_segment > 0] = 0
             mid_val = mu_calc.value(sprawl_area, self.channel, self.threshold_info[0], self.threshold_info[1],
                                     self.new_parameters["mu_mid"]["values"])
-            print("mid", mid_val)
             mu_array = calculate_mu_mid(self.channel, self.threshold_info[0], mid_val, self.threshold_info[1])
             self.mso.set_mu_array(mu_array)
             restarted = True

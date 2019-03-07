@@ -179,7 +179,6 @@ class BaseFlowThreshold(BaseThreshold, ABC):
             alg.set_parameters(**parameters)
             result = alg.calculation_run(empty)
             assert result.segmentation.max() == 2
-            print(np.bincount(result.segmentation.flat)[1:], key)
             assert np.all(np.bincount(result.segmentation.flat)[1:] >= np.array([96000, 72000]))  # 30*40*80, 30*30*80
 
     def test_side_connection(self):

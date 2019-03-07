@@ -246,17 +246,6 @@ class SubAlgorithmWidget(QWidget):
         self.tmp_widget = tmp_widget
         self.setLayout(layout)
 
-    """def add_to_layout(self, layout: QFormLayout):
-        print("[add_to_layout]")
-        lay1 = self.layout().takeAt(0).layout()
-        label = lay1.takeAt(0).widget()
-        lay1.removeWidget(label)
-        lay1.removeWidget(self.choose)
-        self.layout().removeWidget(self.current_widget)
-        layout.addRow(label.text(), self.choose)
-        layout.addRow(self.current_widget)
-        self.current_layout = layout"""
-
     def set_starting(self, starting_values):
         self.starting_values = starting_values
 
