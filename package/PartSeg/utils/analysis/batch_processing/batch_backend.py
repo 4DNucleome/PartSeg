@@ -60,8 +60,7 @@ class CalculationProcess(object):
         self.statistics = []
         ext = path.splitext(calculation.file_path)[1]
         if ext in [".tiff", ".tif", ".lsm"]:
-            reader = ImageReader()
-            self.image = reader.read(calculation.file_path)
+            self.image = ImageReader.read_image(calculation.file_path, default_spacing=calculation.voxel_size)
         elif ext in [".tgz", ".gz", ".tbz2", ".bz2"]:
             project_tuple = load_project(calculation.file_path)
             self.image = project_tuple.image

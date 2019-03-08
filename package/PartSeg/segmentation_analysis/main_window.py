@@ -11,6 +11,7 @@ from qtpy.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayou
 from PartSeg.common_gui.about_dialog import AboutDialog
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.show_directory_dialog import DirectoryDialog
+from PartSeg.utils.analysis import ProjectTuple
 from PartSeg.utils.analysis.load_functions import load_dict
 from ..common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, AlgorithmChoose
 from ..common_gui.channel_control import ChannelControl
@@ -460,7 +461,7 @@ class MainMenu(QWidget):
                                               exception_hook=exception_hook)
                 if dial2.exec():
                     result = dial2.get_result()
-                    if result.image.is_time and not result.image.is_stack:
+                    if isinstance(result, ProjectTuple) and result.image.is_time and not result.image.is_stack:
                         result.image.swap_time_and_stack()
                     self._settings.set_project_data(result)
         except ValueError as e:
