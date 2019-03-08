@@ -116,7 +116,7 @@ class Image(object):
         li = tuple(li)
         return self._image_array[li][item]
 
-    def get_channel(self, num):
+    def get_channel(self, num) -> np.ndarray:
         if self.is_time:
             li = slice(None)
         else:

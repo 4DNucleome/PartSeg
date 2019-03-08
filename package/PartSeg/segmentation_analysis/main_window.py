@@ -459,7 +459,10 @@ class MainMenu(QWidget):
                                               {"metadata": {"default_spacing": self._settings.image_spacing}},
                                               exception_hook=exception_hook)
                 if dial2.exec():
-                    self._settings.set_project_data(dial2.get_result())
+                    result = dial2.get_result()
+                    if result.image.is_time and not result.image.is_stack:
+                        result.image.swap_time_and_stack()
+                    self._settings.set_project_data(result)
         except ValueError as e:
             QMessageBox.warning(self, "Open error", "{}".format(e))
 
