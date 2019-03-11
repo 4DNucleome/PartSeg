@@ -11,7 +11,7 @@ class AlgorithmProperty(object):
     """
 
     def __init__(self, name: str, user_name: str, default_value, options_range=None, single_steep=None,
-                 possible_values=None, property_type=None, tool_tip=""):
+                 possible_values=None, property_type=None, tool_tip="", per_dimension=False):
         self.name = name
         self.user_name = user_name
         if type(possible_values) is list:
@@ -25,6 +25,7 @@ class AlgorithmProperty(object):
         self.possible_values = possible_values
         self.single_step = single_steep
         self.tool_tip = tool_tip
+        self.per_dimension = per_dimension
         if self.value_type is list:
             assert default_value in possible_values
 

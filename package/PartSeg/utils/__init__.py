@@ -1,2 +1,2 @@
 from . import register
-from .universal_const import Units
+from .universal_const import Units, UNIT_SCALE

@@ -9,7 +9,7 @@ from PartSeg.utils.analysis.io_utils import ProjectTuple
 from PartSeg.utils.analysis.save_functions import SaveCmap, SaveSegmentationAsTIFF, SaveSegmentationAsNumpy
 from PartSeg.utils.channel_class import Channel
 from PartSeg.utils.io_utils import SaveBase
-from PartSeg.utils.segmentation.algorithm_describe_base import AlgorithmProperty
+from PartSeg.utils.algorithm_describe_base import AlgorithmProperty
 from PartSeg.utils.universal_const import Units
 
 

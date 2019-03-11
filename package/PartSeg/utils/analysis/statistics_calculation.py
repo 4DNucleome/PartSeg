@@ -18,7 +18,7 @@ from .. import autofit as af
 from ..border_rim import border_mask
 from ..class_generator import BaseSerializableClass
 from ..class_generator import enum_register
-from ..segmentation.algorithm_describe_base import AlgorithmDescribeBase, Register, AlgorithmProperty
+from ..algorithm_describe_base import AlgorithmDescribeBase, Register, AlgorithmProperty
 from ..universal_const import UNIT_SCALE, Units
 from ..utils import class_to_dict
 

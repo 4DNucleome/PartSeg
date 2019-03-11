@@ -6,7 +6,7 @@ from io import BytesIO, StringIO
 from pathlib import Path
 from tarfile import TarInfo
 
-from ..utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase
+from .algorithm_describe_base import AlgorithmDescribeBase
 
 
 def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):

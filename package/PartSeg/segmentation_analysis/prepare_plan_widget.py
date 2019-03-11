@@ -17,7 +17,7 @@ from ..common_gui.universal_gui_part import right_label
 from PartSeg.utils.analysis.algorithm_description import SegmentationProfile, analysis_algorithm_dict
 from PartSeg.utils.analysis.save_functions import save_dict
 from ..utils.io_utils import SaveBase
-from ..utils.segmentation.algorithm_describe_base import AlgorithmProperty
+from PartSeg.utils.algorithm_describe_base import AlgorithmProperty
 from ..utils.universal_const import Units
 
 from PartSeg.utils.analysis.calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, \

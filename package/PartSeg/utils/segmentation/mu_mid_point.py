@@ -1,7 +1,7 @@
 from abc import ABC
 
 import numpy as np
-from PartSeg.utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
 
 
 class BaseMuMid(AlgorithmDescribeBase, ABC):

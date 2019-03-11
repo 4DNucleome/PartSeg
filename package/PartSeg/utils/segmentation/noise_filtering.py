@@ -3,9 +3,9 @@ from abc import ABC
 from enum import Enum
 import numpy as np
 
-from ...utils.image_operations import gaussian
-from ...utils.segmentation.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
-from ...utils.class_generator import enum_register
+from ..image_operations import gaussian
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
+from ..class_generator import enum_register
 
 class GaussType(Enum):
     Layer = 1

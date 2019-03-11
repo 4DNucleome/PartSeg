@@ -9,7 +9,7 @@ from ..channel_class import Channel
 from ..segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
 from ..convex_fill import convex_fill
 from ..image_operations import RadiusType
-from .algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
 from .noise_filtering import noise_removal_dict
 from .threshold import threshold_dict, BaseThreshold
 from .segment import close_small_holes, opening

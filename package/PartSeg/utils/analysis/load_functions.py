@@ -10,7 +10,7 @@ import numpy as np
 from tifffile import TiffFile
 
 from PartSeg.tiff_image import ImageReader
-from PartSeg.utils.segmentation.algorithm_describe_base import Register
+from ..algorithm_describe_base import Register
 from .analysis_utils import HistoryElement
 from .io_utils import ProjectTuple, MaskInfo
 from .save_hooks import part_hook

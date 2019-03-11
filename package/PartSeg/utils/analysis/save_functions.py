@@ -5,7 +5,7 @@ import tifffile
 from .io_utils import ProjectTuple
 from ..analysis.analysis_utils import HistoryElement
 from ..channel_class import Channel
-from ..segmentation.algorithm_describe_base import AlgorithmProperty
+from ..algorithm_describe_base import AlgorithmProperty
 from ..universal_const import UNIT_SCALE, Units
 from ..analysis.save_hooks import PartEncoder
 import numpy as np

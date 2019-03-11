@@ -18,7 +18,7 @@ from ..utils.channel_class import Channel
 from ..project_utils_qt.error_dialog import ErrorDialog
 from ..utils.image_operations import RadiusType
 from ..utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
-from ..utils.segmentation.algorithm_describe_base import AlgorithmProperty, AlgorithmDescribeBase
+from PartSeg.utils.algorithm_describe_base import AlgorithmProperty, AlgorithmDescribeBase
 from ..project_utils_qt.segmentation_thread import SegmentationThread
 from ..project_utils_qt.settings import ImageSettings, BaseSettings
 from PartSeg.tiff_image import Image
@@ -68,7 +68,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         if isinstance(ob, AlgorithmProperty):
             return cls(name=ob.name, user_name=ob.user_name, default_value=ob.default_value, options_range=ob.range,
                        single_steep=ob.single_step, property_type=ob.value_type, possible_values=ob.possible_values,
-                       tool_tip=ob.tool_tip)
+                       tool_tip=ob.tool_tip, per_dimension=ob.per_dimension)
         elif isinstance(ob, str):
             return QLabel(ob)
         raise ValueError(f"unknown parameter type {type(ob)} of {ob}")

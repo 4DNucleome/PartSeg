@@ -5,12 +5,12 @@ from copy import deepcopy
 import SimpleITK as sitk
 import numpy as np
 
-from PartSeg.utils.multiscale_opening import PyMSO
-from PartSeg.utils.multiscale_opening.mso_bind import calculate_mu_mid
+from ..multiscale_opening import PyMSO
+from ..multiscale_opening.mso_bind import calculate_mu_mid
 from ..border_rim import border_mask
 from ..channel_class import Channel
 from .algorithm_base import SegmentationAlgorithm, SegmentationResult
-from .algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
 from .noise_filtering import noise_removal_dict
 from .sprawl import sprawl_dict, BaseSprawl, calculate_distances_array, get_neigh
 from .threshold import threshold_dict, BaseThreshold, double_threshold_dict

@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import Type
-from .segmentation.algorithm_describe_base import AlgorithmDescribeBase
+from .algorithm_describe_base import AlgorithmDescribeBase
 from .segmentation.sprawl import sprawl_dict
 from .segmentation.threshold import threshold_dict
 from .segmentation.noise_filtering import noise_removal_dict

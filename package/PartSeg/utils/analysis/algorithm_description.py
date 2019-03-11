@@ -1,8 +1,7 @@
-import sys
 from enum import Enum
 
-from PartSeg.utils.channel_class import Channel
-from ..segmentation.algorithm_describe_base import Register, AlgorithmProperty, AlgorithmDescribeBase
+from ..channel_class import Channel
+from ..algorithm_describe_base import Register, AlgorithmProperty, AlgorithmDescribeBase
 from ..segmentation.restartable_segmentation_algorithms import final_algorithm_list
 from typing import Dict
 

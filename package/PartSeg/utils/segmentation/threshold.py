@@ -4,7 +4,7 @@ from abc import ABC
 import SimpleITK as sitk
 import numpy as np
 
-from .algorithm_describe_base import Register, AlgorithmDescribeBase, AlgorithmProperty
+from ..algorithm_describe_base import Register, AlgorithmDescribeBase, AlgorithmProperty
 
 
 class BaseThreshold(AlgorithmDescribeBase, ABC):

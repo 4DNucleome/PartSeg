@@ -1,14 +1,13 @@
-import sys
 from abc import ABC
 from enum import Enum
 from typing import Callable, Any
 
 import numpy as np
 
-from PartSeg.utils.multiscale_opening import PyMSO, calculate_mu, MuType
+from ..multiscale_opening import PyMSO, calculate_mu, MuType
 from ..distance_in_structure.find_split import path_maximum_sprawl, path_minimum_sprawl, euclidean_sprawl, \
     fdt_sprawl
-from ..segmentation.algorithm_describe_base import Register, AlgorithmDescribeBase, AlgorithmProperty
+from ..algorithm_describe_base import Register, AlgorithmDescribeBase, AlgorithmProperty
 
 
 class BaseSprawl(AlgorithmDescribeBase, ABC):
