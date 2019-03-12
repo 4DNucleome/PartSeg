@@ -8,7 +8,7 @@ class Image(object):
     default order is T, Z, Y, X, C
 
     """
-    return_order = "TZCYX"
+    return_order = "TZYXC"
 
     def __init__(self, data: np.ndarray, image_spacing, file_path=None, mask: typing.Union[None, np.ndarray] = None,
                  default_coloring=None, ranges=None, labels=None):
@@ -24,8 +24,7 @@ class Image(object):
         """
         assert len(data.shape) == 5
         self._image_array = data
-
-        self._image_spacing = tuple(image_spacing)
+        self._image_spacing = tuple([1] * (3 - len(image_spacing)) + list(image_spacing))
         self.file_path = file_path
         self.default_coloring = default_coloring
         if self.default_coloring is not None:
@@ -39,6 +38,27 @@ class Image(object):
         else:
             self.ranges = ranges
         self._mask_array = self.fit_array_to_image(mask) if mask is not None else None
+
+    def get_dimension_number(self):
+        return np.squeeze(self._image_spacing).ndim
+
+    def get_dimension_letters(self):
+        return [key for val, key in zip(self._image_array.shape, "tzyx") if val > 1]
+
+
+
+    def substitute(self, data=None, image_spacing=None, file_path=None, mask=None, default_coloring=None, ranges=None,
+                   labels=None):
+        """Create copy of image with substitution of not None elements"""
+        data = self._image_array if data is None else data
+        image_spacing = self._image_spacing if image_spacing is None else image_spacing
+        file_path = self.file_path if file_path is None else file_path
+        mask = self._mask_array if mask is None else mask
+        default_coloring = self.default_coloring if default_coloring is None else default_coloring
+        ranges = self.ranges if ranges is None else ranges
+        labels = self.labels if labels is None else labels
+        return self.__class__(data=data, image_spacing=image_spacing, file_path=file_path, mask=mask,
+                              default_coloring=default_coloring, ranges=ranges, labels=labels)
 
     def set_mask(self, mask: np.ndarray):
         if mask is None:
@@ -133,7 +153,7 @@ class Image(object):
 
     @property
     def is_2d(self):
-        return self._image_array.shape[1] == 1
+        return self._image_array.shape[1] == 1 and self._image_array.shape[0] == 1
 
     @property
     def spacing(self):

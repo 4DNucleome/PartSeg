@@ -41,6 +41,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         self._widget = self._get_field()
         self.change_fun = self.get_change_signal(self._widget)
         self._getter, self._setter = self.get_setter_and_getter_function(self._widget)
+        self._setter(self._widget, self.default_value)
 
     def get_value(self):
         return self._getter(self._widget)
@@ -74,7 +75,12 @@ class QtAlgorithmProperty(AlgorithmProperty):
         raise ValueError(f"unknown parameter type {type(ob)} of {ob}")
 
     def _get_field(self) -> QWidget:
-        if issubclass(self.value_type, Channel):
+        if  self.per_dimension:
+            self.per_dimension = False
+            prop = self.from_algorithm_property(self)
+            self.per_dimension = True
+            res = ListInput(prop, 3)
+        elif issubclass(self.value_type, Channel):
             res = ChannelComboBox()
             res.change_channels_num(10)
             return res
@@ -82,30 +88,24 @@ class QtAlgorithmProperty(AlgorithmProperty):
             res = SubAlgorithmWidget(self)
         elif issubclass(self.value_type, bool):
             res = QCheckBox()
-            res.setChecked(bool(self.default_value))
         elif issubclass(self.value_type, int):
             res = CustomSpinBox()
             assert isinstance(self.default_value, int)
             if self.range is not None:
                 res.setRange(*self.range)
-            res.setValue(self.default_value)
         elif issubclass(self.value_type, float):
             res = CustomDoubleSpinBox()
             assert isinstance(self.default_value, float)
             if self.range is not None:
                 res.setRange(*self.range)
-            res.setValue(self.default_value)
         elif issubclass(self.value_type, str):
             res = QLineEdit()
-            res.setText(str(self.default_value))
         elif issubclass(self.value_type, Enum):
             res = EnumComboBox(self.value_type)
             # noinspection PyUnresolvedReferences
-            res.set_value(self.default_value)
         elif issubclass(self.value_type, list):
             res = QComboBox()
             res.addItems(list(map(str, self.possible_values)))
-            res.setCurrentIndex(self.possible_values.index(self.default_value))
         else:
             raise ValueError(f"Unknown class: {self.value_type}")
         if self.tool_tip:
@@ -124,6 +124,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
             return widget.textChanged
         elif isinstance(widget, SubAlgorithmWidget):
             return widget.values_changed
+        elif isinstance(widget, ListInput):
+            return widget.change_signal
         raise ValueError(f"Unsupported type: {type(widget)}")
 
     @staticmethod
@@ -144,13 +146,37 @@ class QtAlgorithmProperty(AlgorithmProperty):
             return widget.__class__.text, widget.__class__.setText
         elif isinstance(widget, SubAlgorithmWidget):
             return widget.__class__.get_values, widget.__class__.set_values
+        elif isinstance(widget, ListInput):
+            return widget.__class__.get_value, widget.__class__.set_value
         raise ValueError(f"Unsupported type: {type(widget)}")
+
+
+class ListInput(QWidget):
+    change_signal = Signal()
+
+    def __init__(self, property: QtAlgorithmProperty, length):
+        super().__init__()
+        self.input_list = [property.from_algorithm_property(property) for _ in range(length)]
+        layout = QVBoxLayout()
+        for el in self.input_list:
+            el.change_fun.connect(self.change_signal.emit)
+            layout.addWidget(el.get_field())
+        self.setLayout(layout)
+
+    def get_value(self):
+        return [x.get_value() for x in self.input_list]
+
+    def set_value(self, value):
+        if not isinstance(value, (list, tuple)):
+            value = [value for _ in range(len(self.input_list))]
+        for f, val in zip(self.input_list, value):
+            f.set_value(val)
 
 
 class FormWidget(QWidget):
     value_changed = Signal()
 
-    def __init__(self, fields: typing.List[AlgorithmProperty], start_values=None):
+    def __init__(self, fields: typing.List[AlgorithmProperty], start_values=None, dimension_num=1):
         super().__init__()
         if start_values is None:
             start_values = {}

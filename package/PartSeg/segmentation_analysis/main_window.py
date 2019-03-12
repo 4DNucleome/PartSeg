@@ -10,6 +10,7 @@ from qtpy.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayou
 
 from PartSeg.common_gui.about_dialog import AboutDialog
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
+from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
 from PartSeg.common_gui.show_directory_dialog import DirectoryDialog
 from PartSeg.utils.analysis import ProjectTuple
 from PartSeg.utils.analysis.load_functions import load_dict
@@ -394,32 +395,16 @@ class MainMenu(QWidget):
 
 
     def image_adjust_exec(self):
-        dialog = InterpolateDialog(self._settings.image_spacing)
-        if dialog.exec():
-            scale_factor = dialog.get_zoom_factor()
-            # print(scale_factor)
-            interp_ob = InterpolateThread()
-            dial = WaitingDialog(interp_ob)
-            args = [self._settings.image.get_data()]
-            if self._settings.mask is not None:
-                mask = self._settings.mask.astype(np.uint8)
-                mask[mask > 0] = 255
-                args.append(mask)
-            interp_ob.set_arrays(args)
-            interp_ob.set_scaling(scale_factor)
-            if dial.exec():
-                # WARNING time !!!!!
-                image = Image(interp_ob.result[0], [x / y for x, y in zip(self._settings.image_spacing, scale_factor[1:])],
-                              self._settings.image.file_path,
-                              None if len(interp_ob.result) == 1 else interp_ob.result[2],
-                              self._settings.image.default_coloring, self._settings.image.ranges,
-                              self._settings.image.labels)
-                # print(interp_ob.result[0].shape)
-                self._settings.image = image
-            else:
-                if interp_ob.isRunning():
-                    interp_ob.terminate()
-            # self.settings.rescale_image(dialog.get_zoom_factor())
+        dial = ImageAdjustmentDialog(self._settings.image)
+        if dial.exec():
+            algorithm = dial.result_val.algorithm
+            dial2 = ExecuteFunctionDialog(algorithm.transform, [],
+                                          {"image": self._settings.image, "arguments": dial.result_val.values}
+                                          )
+            if dial2.exec():
+                result: Image = dial2.get_result()
+                self._settings.set_project_data(ProjectTuple(result.file_path, result))
+        return
 
     def mask_manager(self):
         if self._settings.segmentation is None:

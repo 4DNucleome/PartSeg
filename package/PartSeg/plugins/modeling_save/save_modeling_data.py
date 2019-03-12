@@ -63,6 +63,9 @@ class SaveModeling(SaveBase):
         parameters.update({"separated_objects": False})
         SaveCmap.save(os.path.join(save_location, "density.cmap"), project_info, parameters, range_changed,
                       step_changed)
+        parameters.update({"separated_objects": True})
+        SaveCmap.save(os.path.join(save_location, "density.cmap"), project_info, parameters, range_changed,
+                      step_changed)
         SaveSegmentationAsTIFF.save(os.path.join(save_location, "segmentation.tiff"), project_info, {},
                                      range_changed, step_changed)
         SaveSegmentationAsNumpy.save(os.path.join(save_location, "segmentation.npy"), project_info, {},

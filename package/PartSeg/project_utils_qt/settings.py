@@ -82,6 +82,8 @@ class ImageSettings(QObject):
 
     @image.setter
     def image(self, value: Image):
+        if value is None:
+            return
         self._image = value
         if value.file_path is not None:
             self.image_changed[str].emit(value.file_path)

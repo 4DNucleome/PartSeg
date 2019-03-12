@@ -63,7 +63,7 @@ def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_se
             tar.addfile(tar_algorithm, hist_buff)
 
 
-def save_cmap(file: typing.Union[str, h5py.File], image: Image, segmentation: np.ndarray, full_segmentation: np.ndarray,
+def save_cmap(file: typing.Union[str, h5py.File, BytesIO], image: Image, segmentation: np.ndarray, full_segmentation: np.ndarray,
               cmap_profile: dict, metadata: typing.Optional[dict] = None):
     if segmentation is None or segmentation.max() == 0:
         raise ValueError("No segmentation")
@@ -76,10 +76,6 @@ def save_cmap(file: typing.Union[str, h5py.File], image: Image, segmentation: np
     else:
         raise ValueError(f"Wrong type of file argument, type: {type(file)}")
     data = image.get_channel(cmap_profile["channel"])
-    """if cmap_profile.gauss_radius > 0 and cmap_profile.gauss_type != RadiusType.NO:
-        gauss_radius = calculate_operation_radius(cmap_profile.gauss_radius, image.spacing, cmap_profile.gauss_radius)
-        layer = cmap_profile.gauss_type == RadiusType.R2D
-        data = gaussian(data, gauss_radius, layer=layer)"""
 
     if cmap_profile["reverse"]:
         if full_segmentation is None:
@@ -164,8 +160,18 @@ class SaveCmap(SaveBase):
     @classmethod
     def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict,
              range_changed=None, step_changed=None):
-        save_cmap(save_location, project_info.image, project_info.segmentation, project_info.full_segmentation,
-                  parameters)
+        if parameters["separated_objects"] and isinstance(save_location, (str, Path)):
+            for i in range(1, project_info.segmentation.max()+1):
+                seg = (project_info.segmentation == i).astype(np.uint8)
+                if np.any(seg):
+                    base, ext = os.path.splitext(save_location)
+                    save_loc = base + f"_comp{i}" + ext
+                    save_cmap(save_loc, project_info.image, seg,
+                              project_info.full_segmentation,
+                              parameters)
+        else:
+            save_cmap(save_location, project_info.image, project_info.segmentation, project_info.full_segmentation,
+                      parameters)
 
 
 class SaveXYZ(SaveBase):
