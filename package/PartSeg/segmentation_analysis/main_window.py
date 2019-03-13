@@ -612,7 +612,7 @@ class MainWindow(BaseMainWindow):
         self.batch_window = None  # BatchWindow(self.settings)
 
         self.multiple_files = MultipleFileWidget(self.settings.get_project_info, self.settings.set_project_data,
-                                                 load_dict)
+                                                 self.settings.get_path_history, load_dict)
 
         if initial_image is None:
             reader = ImageReader()

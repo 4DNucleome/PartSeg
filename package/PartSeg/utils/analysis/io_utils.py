@@ -2,10 +2,11 @@ import typing
 import numpy as np
 
 from PartSeg.tiff_image import Image
+from PartSeg.utils.io_utils import ProjectInfoBase
 from .analysis_utils import HistoryElement
 
 
-class ProjectTuple(typing.NamedTuple):
+class ProjectTuple(ProjectInfoBase, typing.NamedTuple):
     file_path: str
     image: Image
     segmentation: typing.Optional[np.ndarray] = None
