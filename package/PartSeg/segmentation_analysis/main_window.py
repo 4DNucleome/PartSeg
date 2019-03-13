@@ -701,6 +701,11 @@ class MainWindow(BaseMainWindow):
             if read_thread.image:
                 self.settings.image = read_thread.image
 
+    def event(self, event: QEvent):
+        if event.type() == QEvent.WindowActivate:
+            self.multiple_files.setVisible(self.settings.get("multiple_files", False))
+        return super().event(event)
+
     def closeEvent(self, event):
         # print(self.settings.dump_view_profiles())
         # print(self.settings.segmentation_dict["default"].my_dict)
