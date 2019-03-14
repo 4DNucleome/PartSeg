@@ -12,7 +12,7 @@ class LoadProperty(typing.NamedTuple):
 
 class CustomLoadDialog(QFileDialog):
     def __init__(self, load_register: typing.Dict[str, type(LoadBase)], parent=None,
-                 history :typing.Optional[typing.List[str]]=None):
+                 history: typing.Optional[typing.List[str]] = None):
         super().__init__(parent)
         self.load_register = dict((x.get_name_with_suffix(), x) for x in load_register.values())
         self.setOption(QFileDialog.DontUseNativeDialog, True)

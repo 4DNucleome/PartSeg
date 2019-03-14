@@ -447,7 +447,7 @@ class MainMenu(QWidget):
                 if dial2.exec():
                     result = dial2.get_result()
                     if isinstance(result, ProjectTuple) and result.image.is_time and not result.image.is_stack:
-                        result.image.swap_time_and_stack()
+                        result = result._replace(image = result.image.swap_time_and_stack())
                     self._settings.set_project_data(result)
         except ValueError as e:
             QMessageBox.warning(self, "Open error", "{}".format(e))

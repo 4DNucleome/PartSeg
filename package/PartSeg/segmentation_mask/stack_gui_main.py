@@ -128,7 +128,7 @@ class MainMenu(QWidget):
                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
                 if res == QMessageBox.Yes:
-                    image.swap_time_and_stack()
+                    image = image.swap_time_and_stack()
                 else:
                     return False
         self.settings.image = image
