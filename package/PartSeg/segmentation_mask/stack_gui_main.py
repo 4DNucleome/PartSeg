@@ -103,7 +103,13 @@ class MainMenu(QWidget):
                 if result is None:
                     return
                 if isinstance(result.image, Image):
-                    self.set_image(result.image)
+                    image = self.settings.verify_image(result.image, False)
+                    if not image:
+                        return
+                    if isinstance(image, Image):
+                        self.settings.image = image
+                    else:
+                        self.settings.image = result.image
                 if result.segmentation is not None:
                     self.settings.set_segmentation(result.segmentation, result.list_of_components)
         except (MemoryError, IOError) as e:

@@ -446,9 +446,14 @@ class MainMenu(QWidget):
                                               exception_hook=exception_hook)
                 if dial2.exec():
                     result = dial2.get_result()
-                    if isinstance(result, ProjectTuple) and result.image.is_time and not result.image.is_stack:
-                        result.image.swap_time_and_stack()
-                    self._settings.set_project_info(result)
+                    if isinstance(result, ProjectTuple):
+                        image = self._settings.verify_image(result.image, False)
+                        if image:
+                            if isinstance(image, Image):
+                                result = result._replace(image=image)
+                        else:
+                            return
+                self._settings.set_project_info(result)
         except ValueError as e:
             QMessageBox.warning(self, "Open error", "{}".format(e))
 

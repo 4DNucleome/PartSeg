@@ -290,3 +290,7 @@ class BaseSettings(ViewSettings):
 
     def set_project_info(self, data: ProjectInfoBase):
         raise NotImplementedError
+
+    @staticmethod
+    def verify_image(image: Image, silent=True) -> typing.Union[Image, bool]:
+        raise NotImplementedError

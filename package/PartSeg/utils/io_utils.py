@@ -25,6 +25,10 @@ class ProjectInfoBase:
     file_path: str
     image: Image
 
+    def _replace(self, file_path=None, image=None):
+        pass
+
+
 class SaveBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def get_short_name(cls):

@@ -11,6 +11,7 @@ from typing import Dict
 from collections import defaultdict, Counter
 
 from PartSeg.project_utils_qt.settings import BaseSettings
+from PartSeg.tiff_image import Image
 from PartSeg.utils.io_utils import LoadBase, ProjectInfoBase
 from .custom_load_dialog import CustomLoadDialog, LoadProperty
 from .waiting_dialog import ExecuteFunctionDialog
@@ -113,7 +114,13 @@ class MultipleFileWidget(QWidget):
         else:
             file_name = self.file_list[self.file_view.indexOfTopLevelItem(item.parent())]
             state_name = item.text(0)
-            self.settings.set_project_info(self.state_dict[file_name][state_name])
+            project_info = self.state_dict[file_name][state_name]
+            image = self.settings.verify_image(project_info.image, False)
+            if isinstance(image, Image):
+                project_info = project_info._replace(image=image)
+                self.state_dict[file_name][state_name] = project_info
+            if image:
+                self.settings.set_project_info(project_info)
 
     def save_state(self):
         state: ProjectInfoBase = self.settings.get_project_info()

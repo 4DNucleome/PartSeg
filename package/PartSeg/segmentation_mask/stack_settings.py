@@ -1,8 +1,12 @@
+import typing
 from typing import List
 import numpy as np
 from os import path
+
+from qtpy.QtWidgets import QMessageBox, QWidget
 from qtpy.QtCore import Signal
 
+from PartSeg.tiff_image import Image
 from ..project_utils_qt.settings import BaseSettings
 from PartSeg.utils.mask.io_functions import load_stack_segmentation, save_components, \
     SegmentationTuple
@@ -91,4 +95,26 @@ class StackSettings(BaseSettings):
             self.image.fit_array_to_image(data.segmentation)
             self.segmentation = data.segmentation
 
+    @staticmethod
+    def verify_image(image: Image, silent=True) -> typing.Union[Image, bool]:
+        if image.is_time:
+            if image.is_stack:
+                if silent:
+                    raise ValueError("Do not support time and stack image")
+                else:
+                    wid = QWidget()
+                    QMessageBox.warning(wid, "image error", "Do not support time and stack image")
+                    return False
+            if silent:
+                return image.swap_time_and_stack()
+            else:
+                wid = QWidget()
+                res = QMessageBox.question(wid,
+                                           "Not supported",
+                                           "Time data are currently not supported. Maybe You would like to treat time as z-stack",
+                                           QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
+                if res == QMessageBox.Yes:
+                    return image.swap_time_and_stack()
+                return False
+        return True

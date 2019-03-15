@@ -137,7 +137,7 @@ class LoadSegmentationImage(LoadBase):
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
              range_changed: typing.Callable[[int, int], typing.Any] = None,
              step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
-        base_file, segmentation, components = LoadSegmentation.load(load_locations)
+        file_path, base_file, segmentation, components = LoadSegmentation.load(load_locations)
         if base_file is None:
             raise IOError(f"base file for segmentation not defined")
         if os.path.isabs(base_file):
