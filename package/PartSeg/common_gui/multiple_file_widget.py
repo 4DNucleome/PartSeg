@@ -1,8 +1,8 @@
 import os
 import sys
 from qtpy.QtWidgets import QWidget, QPushButton, QTreeWidget, QGridLayout, QFileDialog, QCheckBox, QInputDialog, \
-    QTreeWidgetItem, QMessageBox
-from qtpy.QtGui import QFontMetrics, QResizeEvent
+    QTreeWidgetItem, QMessageBox, QApplication
+from qtpy.QtGui import QFontMetrics, QResizeEvent, QMouseEvent
 
 from qtpy.QtCore import Qt
 from typing import Callable, Any, Dict
@@ -12,6 +12,10 @@ from collections import defaultdict, Counter
 from PartSeg.utils.io_utils import LoadBase, ProjectInfoBase
 from .custom_load_dialog import CustomLoadDialog, LoadProperty
 from .waiting_dialog import ExecuteFunctionDialog
+
+class CustomTreeWidget(QTreeWidget):
+    def mouseMoveEvent(self, QMouseEvent):
+        QApplication.setOverrideCursor(Qt.ArrowCursor)
 
 class MultipleFileWidget(QWidget):
     def __init__(self, get_state: Callable[[], Any], set_state: Callable[[Any], Any], get_history, load_dict: Dict[str, LoadBase]):
@@ -23,7 +27,7 @@ class MultipleFileWidget(QWidget):
         self.state_dict_count = Counter()
         self.file_list = []
         self.load_register = load_dict
-        self.file_view = QTreeWidget()
+        self.file_view = CustomTreeWidget()
         self.file_view.header().close()
         self.save_state_btn = QPushButton("Save state")
         self.save_state_btn.setStyleSheet("QPushButton{font-weight: bold;}")
@@ -34,6 +38,7 @@ class MultipleFileWidget(QWidget):
         self.forget_btn.clicked.connect(self.forget)
         self.load_files_btn.clicked.connect(self.load_files)
         self.file_view.itemDoubleClicked.connect(self.load_state)
+        self.last_point = None
 
         self.custom_names_chk = QCheckBox("Custom names")
 
@@ -45,6 +50,8 @@ class MultipleFileWidget(QWidget):
         layout.addWidget(self.custom_names_chk, 3, 0)
 
         self.setLayout(layout)
+        self.setMouseTracking(True)
+        self.file_view.setMouseTracking(True)
         self.error_list = []
 
     def execute_load_files(self, load_data: LoadProperty, range_changed, step_changed):
@@ -127,7 +134,7 @@ class MultipleFileWidget(QWidget):
                 break
         else:
             metric = QFontMetrics(self.file_view.font())
-            width = self.file_view.width() - 40
+            width = self.file_view.width() - 45
             clipped_text = metric.elidedText(state.file_path, Qt.ElideLeft, width)
             item = QTreeWidgetItem(self.file_view, [clipped_text])
             item.setToolTip(0, state.file_path)
@@ -142,8 +149,15 @@ class MultipleFileWidget(QWidget):
         if item is None:
             return
         if isinstance(item.parent(), QTreeWidgetItem):
-            del self.state_dict[item.parent().text(0)][item.text(0)]
-            item.parent().removeChild(item)
+            index = self.file_view.indexOfTopLevelItem(item.parent())
+            text = self.file_list[index]
+            del self.state_dict[text][item.text(0)]
+            parent = item.parent()
+            parent.removeChild(item)
+            if parent.childCount() == 0:
+                self.file_view.takeTopLevelItem(index)
+                self.file_list.remove(text)
+
         else:
             index = self.file_view.indexOfTopLevelItem(item)
             text = self.file_list[index]
@@ -154,11 +168,33 @@ class MultipleFileWidget(QWidget):
 
     def resizeEvent(self, event: QResizeEvent):
         metric = QFontMetrics(self.file_view.font())
-        width = event.size().width() - 40
+        width = self.file_view.width() - 45
         for i, text in enumerate(self.file_list):
             clipped_text = metric.elidedText(text, Qt.ElideLeft, width)
             item: QTreeWidgetItem = self.file_view.topLevelItem(i)
             item.setText(0, clipped_text)
+
+    def mousePressEvent(self, event: QMouseEvent):
+        if event.x() > self.width() - 20:
+            self.last_point = event.pos()
+
+    def mouseMoveEvent(self, event: QMouseEvent):
+        if event.x() > self.width() - 20:
+            QApplication.setOverrideCursor(Qt.SplitHCursor)
+        else:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+        if self.last_point is None or not (event.buttons() & Qt.LeftButton):
+            return
+        new_width = event.x() + 10
+        new_width = max(new_width, 200)
+        new_width = min(new_width, 600)
+        self.setMinimumWidth(new_width)
+
+    def leaveEvent(self, _):
+        QApplication.setOverrideCursor(Qt.ArrowCursor)
+
+    def mouseReleaseEvent(self, event: QMouseEvent):
+        self.last_point = None
 
 
 
