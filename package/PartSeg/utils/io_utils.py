@@ -83,6 +83,11 @@ class LoadBase(AlgorithmDescribeBase, ABC):
     def get_next_file(cls, file_paths: typing.List[str]):
         return file_paths[0]
 
+    @classmethod
+    def partial(cls):
+        """Inform that this class load complete data"""
+        return False
+
 
 def proxy_callback(range_changed: typing.Callable[[int, int], typing.Any],
                    step_changed: typing.Callable[[int], typing.Any], text: str, val):
