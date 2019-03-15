@@ -178,6 +178,7 @@ class StatisticsWidget(QWidget):
         units_name = str(units)
 
         def exception_hook(exception):
+            raise exception
             QMessageBox.warning(self, "Calculation error", f"Error during calculation: {exception}")
 
         thread = ExecuteFunctionThread(compute_class.calculate, [image, segmentation, full_mask, base_mask,

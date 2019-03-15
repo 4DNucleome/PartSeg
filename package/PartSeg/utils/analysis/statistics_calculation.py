@@ -11,6 +11,7 @@ from typing import NamedTuple, Optional, Union, Dict, Callable, List
 
 import SimpleITK as sitk
 import numpy as np
+from scipy.spatial.distance import cdist
 from sympy import symbols
 from math import pi
 
@@ -71,11 +72,12 @@ class Leaf(BaseSerializableClass):
         if self.per_component is not None and self.per_component == PerComponent.Yes:
             resp += " per component "
         if len(self.dict) != 0:
+
             resp += "["
+            arr =[]
             for k, v in self.dict.items():
-                resp += f"{k}={v} "
-            else:
-                resp = resp[:-1]
+                arr.append(f"{k.replace('_', ' ')}={v}")
+            resp += ", ".join(arr)
             resp += "]"
         if self.power != 1.0:
             resp += f" to the power {self.power}"
@@ -679,7 +681,7 @@ class Sphericity(StatisticMethodBase):
         if kwargs["area_array"].shape[0] > 1:
             return volume / (4/3 * pi * (radius ** 3))
         else:
-            return volume / (pi * (radius **2))
+            return volume / (pi * (radius ** 2))
 
     @classmethod
     def get_units(cls, ndim):
@@ -751,6 +753,64 @@ class RimPixelBrightnessSum(StatisticMethodBase):
         return symbols("Pixel_brightness")
 
 
+class DistancePoint(Enum):
+    Border = 1
+    Mass_center = 2
+    Geometrical_center = 3
+
+    def __str__(self):
+        return self.name.replace("_", " ")
+
+
+enum_register.register_class(DistancePoint)
+
+
+class DistanceMaskSegmentation(StatisticMethodBase):
+    text_info = "segmentation distance", "Calculate distance between segmentation and mask"
+
+    @classmethod
+    def get_fields(cls):
+        return [AlgorithmProperty("distance_from_mask", "Distance from mask", DistancePoint.Border),
+                AlgorithmProperty("distance_to_segmentation", "Distance to segmentation", DistancePoint.Border)]
+
+    @staticmethod
+    def calculate_points(image, area_array, voxel_size, result_scalar, point_type: DistancePoint) -> np.ndarray:
+        if point_type == DistancePoint.Border:
+            area_pos = np.transpose(np.nonzero(get_border(area_array))).astype(np.float)
+            for i, val in enumerate([x * result_scalar for x in reversed(voxel_size)], start=1):
+                area_pos[:, -i] *= val
+        elif point_type == DistancePoint.Mass_center:
+            im = np.copy(image)
+            im[area_array == 0] = 0
+            area_pos = np.array([af.density_mass_center(im, voxel_size) * result_scalar])
+        else:
+            area_pos = np.array([af.density_mass_center(area_array, voxel_size) * result_scalar])
+        return area_pos
+
+    @classmethod
+    def calculate_property(cls, image, segmentation, mask, voxel_size, result_scalar, distance_from_mask: DistancePoint,
+                           distance_to_segmentation: DistancePoint, **kwargs):
+        if not (np.any(mask) and np.any(segmentation)):
+            return 0
+        mask_pos = cls.calculate_points(image, mask, voxel_size, result_scalar, distance_from_mask)
+        seg_pos = cls.calculate_points(image, segmentation, voxel_size, result_scalar, distance_to_segmentation)
+        if mask_pos.shape[0] == 1 or seg_pos.shape[0] == 1:
+            return cdist(mask_pos,seg_pos).min()
+        else:
+            min_val = np.inf
+            for i in range(seg_pos.shape[0]):
+                min_val = min(min_val, cdist(mask_pos, np.array([seg_pos[i]])).min())
+            return min_val
+
+    @classmethod
+    def get_starting_leaf(cls):
+        return Leaf(name=cls.text_info[0], area=AreaType.Mask)
+
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("{}")
+
+
 def pixel_volume(spacing, result_scalar):
     return reduce((lambda x, y: x * y), [x * result_scalar for x in spacing])
 
@@ -788,4 +848,4 @@ STATISTIC_DICT = Register(Volume, Diameter, PixelBrightnessSum, ComponentsNumber
                           MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness,
                           StandardDeviationOfPixelBrightness, MomentOfInertia, LongestMainAxisLength,
                           MiddleMainAxisLength, ShortestMainAxisLength, Compactness, Sphericity, Surface, RimVolume,
-                          RimPixelBrightnessSum)
+                          RimPixelBrightnessSum, DistanceMaskSegmentation)
