@@ -97,6 +97,8 @@ class LoadImage(LoadBase):
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
              range_changed: typing.Callable[[int, int], typing.Any] = None,
              step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
+        if metadata is None:
+            metadata = {"default_spacing": [1,1,1]}
         image = ImageReader.read_image(
             load_locations[0], callback_function=partial(proxy_callback, range_changed, step_changed),
             default_spacing=metadata["default_spacing"])

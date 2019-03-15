@@ -1,6 +1,9 @@
 import os
+import sys
 from qtpy.QtWidgets import QWidget, QPushButton, QTreeWidget, QGridLayout, QFileDialog, QCheckBox, QInputDialog, \
     QTreeWidgetItem, QMessageBox
+from qtpy.QtGui import QFontMetrics, QResizeEvent
+
 from qtpy.QtCore import Qt
 from typing import Callable, Any, Dict
 from collections import defaultdict, Counter
@@ -18,8 +21,10 @@ class MultipleFileWidget(QWidget):
         self.get_history = get_history
         self.state_dict = defaultdict(dict)
         self.state_dict_count = Counter()
+        self.file_list = []
         self.load_register = load_dict
         self.file_view = QTreeWidget()
+        self.file_view.header().close()
         self.save_state_btn = QPushButton("Save state")
         self.save_state_btn.setStyleSheet("QPushButton{font-weight: bold;}")
         self.load_files_btn = QPushButton("Load Files")
@@ -53,21 +58,8 @@ class MultipleFileWidget(QWidget):
                     step_changed(i)
                     continue
             state: ProjectInfoBase = load_data.load_class.load(load_list)
-            sub_dict = self.state_dict[state.file_path]
-            name = f"state {self.state_dict_count[state.file_path] + 1}"
-            for i in range(self.file_view.topLevelItemCount()):
-                item: QTreeWidgetItem = self.file_view.topLevelItem(i)
-                if item.text(0) == state.file_path:
-                    break
-            else:
-                item = QTreeWidgetItem(self.file_view, [state.file_path])
-            item.setExpanded(True)
-            QTreeWidgetItem(item, [name])
-            sub_dict[name] = state
-            self.state_dict_count[state.file_path] += 1
+            self.save_state_action(state, False)
             step_changed(i)
-
-
 
     def load_files(self):
         def exception_hook(exception):
@@ -101,25 +93,26 @@ class MultipleFileWidget(QWidget):
                 errors_message.setDetailedText(text)
                 errors_message.exec()
 
-
-
-
-
     def load_state(self, item, _column):
         if item.parent() is None:
             return
         else:
-            file_name = item.parent().text(0)
+            file_name = self.file_list[self.file_view.indexOfTopLevelItem(item.parent())]
             state_name = item.text(0)
             self.set_state(self.state_dict[file_name][state_name])
 
     def save_state(self):
-        #TODO left elipsis
         state: ProjectInfoBase = self.get_state()
+        custom_name = self.custom_names_chk.isChecked()
+        self.save_state_action(state, custom_name)
+
+
+    def save_state_action(self, state: ProjectInfoBase, custom_name):
+        #TODO left elipsis
+        # state: ProjectInfoBase = self.get_state()
         sub_dict = self.state_dict[state.file_path]
         name = f"state {self.state_dict_count[state.file_path]+1}"
-
-        if self.custom_names_chk.isChecked():
+        if custom_name:
             name, ok = QInputDialog.getText(self, "Save name", "Save name:", text=name)
             if not ok:
                 return
@@ -128,14 +121,17 @@ class MultipleFileWidget(QWidget):
                 if not ok:
                     return
 
-        for i in range(self.file_view.topLevelItemCount()):
-            item: QTreeWidgetItem = self.file_view.topLevelItem(i)
-            if item.text(0) == state.file_path:
+        for i, text in enumerate(self.file_list):
+            if text == state.file_path:
+                item = self.file_view.topLevelItem(i)
                 break
         else:
-            item = QTreeWidgetItem(self.file_view, [state.file_path])
+            metric = QFontMetrics(self.file_view.font())
+            width = self.file_view.width() - 40
+            clipped_text = metric.elidedText(state.file_path, Qt.ElideLeft, width)
+            item = QTreeWidgetItem(self.file_view, [clipped_text])
             item.setToolTip(0, state.file_path)
-            item.setTextAlignment(0, Qt.AlignRight)
+            self.file_list.append(state.file_path)
         item.setExpanded(True)
         QTreeWidgetItem(item, [name])
         sub_dict[name] = state
@@ -149,10 +145,21 @@ class MultipleFileWidget(QWidget):
             del self.state_dict[item.parent().text(0)][item.text(0)]
             item.parent().removeChild(item)
         else:
-            del self.state_dict[item.text(0)]
-            del self.state_dict_count[item.text(0)]
             index = self.file_view.indexOfTopLevelItem(item)
+            text = self.file_list[index]
+            del self.state_dict[text]
+            del self.state_dict_count[text]
+            self.file_list.remove(text)
             self.file_view.takeTopLevelItem(index)
+
+    def resizeEvent(self, event: QResizeEvent):
+        metric = QFontMetrics(self.file_view.font())
+        width = event.size().width() - 40
+        for i, text in enumerate(self.file_list):
+            clipped_text = metric.elidedText(text, Qt.ElideLeft, width)
+            item: QTreeWidgetItem = self.file_view.topLevelItem(i)
+            item.setText(0, clipped_text)
+
 
 
 class MultipleLoadDialog(CustomLoadDialog):
