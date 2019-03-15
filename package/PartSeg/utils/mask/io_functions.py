@@ -123,6 +123,10 @@ class LoadSegmentation(LoadBase):
         return SegmentationTuple(load_locations[0], metadata["base_file"] if "base_file" in metadata else None,
                                  segmentation, metadata["components"])
 
+    @classmethod
+    def partial(cls):
+        return False
+
 
 class LoadSegmentationImage(LoadBase):
     @classmethod

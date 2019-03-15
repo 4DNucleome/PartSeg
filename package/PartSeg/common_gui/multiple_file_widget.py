@@ -214,6 +214,7 @@ class MultipleFileWidget(QWidget):
 
 class MultipleLoadDialog(CustomLoadDialog):
     def __init__(self, load_register, history=None):
+        load_register = dict([(key, val) for key, val in load_register.items() if not val.partial()])
         super().__init__(load_register=load_register, history=history)
         self.setFileMode(QFileDialog.ExistingFiles)
 

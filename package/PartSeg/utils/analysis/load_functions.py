@@ -162,5 +162,9 @@ class LoadMask(LoadBase):
         mask_data = image_file.asarray()
         return MaskInfo(load_locations[0], mask_data)
 
+    @classmethod
+    def partial(cls):
+        return True
+
 
 load_dict = Register(LoadImage, LoadImageMask, LoadProject, LoadMask)
