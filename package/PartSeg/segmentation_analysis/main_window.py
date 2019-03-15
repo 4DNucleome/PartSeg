@@ -403,7 +403,7 @@ class MainMenu(QWidget):
                                           )
             if dial2.exec():
                 result: Image = dial2.get_result()
-                self._settings.set_project_data(ProjectTuple(result.file_path, result))
+                self._settings.set_project_info(ProjectTuple(result.file_path, result))
         return
 
     def mask_manager(self):
@@ -448,7 +448,7 @@ class MainMenu(QWidget):
                     result = dial2.get_result()
                     if isinstance(result, ProjectTuple) and result.image.is_time and not result.image.is_stack:
                         result.image.swap_time_and_stack()
-                    self._settings.set_project_data(result)
+                    self._settings.set_project_info(result)
         except ValueError as e:
             QMessageBox.warning(self, "Open error", "{}".format(e))
 
@@ -611,8 +611,7 @@ class MainWindow(BaseMainWindow):
         self.advanced_window = AdvancedWindow(self.settings)
         self.batch_window = None  # BatchWindow(self.settings)
 
-        self.multiple_files = MultipleFileWidget(self.settings.get_project_info, self.settings.set_project_data,
-                                                 self.settings.get_path_history, load_dict)
+        self.multiple_files = MultipleFileWidget(self.settings, load_dict)
 
         if initial_image is None:
             reader = ImageReader()

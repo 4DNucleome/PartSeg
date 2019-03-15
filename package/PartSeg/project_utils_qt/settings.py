@@ -5,6 +5,7 @@ from pathlib import Path
 
 from qtpy.QtCore import QObject, Signal
 
+from PartSeg.utils.io_utils import ProjectInfoBase
 from PartSeg.utils.json_hooks import ProfileDict, ProfileEncoder, profile_hook, check_loaded_dict
 from ..utils.color_image.color_image_base import color_maps
 import numpy as np
@@ -283,3 +284,9 @@ class BaseSettings(ViewSettings):
         if errors_list:
             print(errors_list, file=sys.stderr)
         return errors_list
+
+    def get_project_info(self) -> ProjectInfoBase:
+        raise NotImplementedError
+
+    def set_project_info(self, data: ProjectInfoBase):
+        raise NotImplementedError

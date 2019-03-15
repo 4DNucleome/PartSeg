@@ -1,14 +1,16 @@
 import os
 import sys
+from pathlib import Path
+
 from qtpy.QtWidgets import QWidget, QPushButton, QTreeWidget, QGridLayout, QFileDialog, QCheckBox, QInputDialog, \
     QTreeWidgetItem, QMessageBox, QApplication
 from qtpy.QtGui import QFontMetrics, QResizeEvent, QMouseEvent
 
 from qtpy.QtCore import Qt
-from typing import Callable, Any, Dict
+from typing import Dict
 from collections import defaultdict, Counter
 
-
+from PartSeg.project_utils_qt.settings import BaseSettings
 from PartSeg.utils.io_utils import LoadBase, ProjectInfoBase
 from .custom_load_dialog import CustomLoadDialog, LoadProperty
 from .waiting_dialog import ExecuteFunctionDialog
@@ -18,12 +20,10 @@ class CustomTreeWidget(QTreeWidget):
         QApplication.setOverrideCursor(Qt.ArrowCursor)
 
 class MultipleFileWidget(QWidget):
-    def __init__(self, get_state: Callable[[], Any], set_state: Callable[[Any], Any], get_history, load_dict: Dict[str, LoadBase]):
+    def __init__(self, settings: BaseSettings, load_dict: Dict[str, LoadBase]):
         super().__init__()
-        self.get_state = get_state
-        self.set_state = set_state
-        self.get_history = get_history
-        self.state_dict = defaultdict(dict)
+        self.settings = settings
+        self.state_dict: Dict[str, Dict[str, ProjectInfoBase]] = defaultdict(dict)
         self.state_dict_count = Counter()
         self.file_list = []
         self.load_register = load_dict
@@ -85,10 +85,17 @@ class MultipleFileWidget(QWidget):
                 print(exception, file=sys.stderr)
             else:
                 raise exception
-        dial = MultipleLoadDialog(self.load_register, self.get_history())
+        dial = MultipleLoadDialog(self.load_register, self.settings.get_path_history())
+        dial.setDirectory(self.settings.get("io.multiple_open_directory", str(Path.home())))
+        dial.selectNameFilter(self.settings.get("io.multiple_open_filter", next(iter(self.load_register.keys()))))
         self.error_list = []
         if dial.exec():
             result = dial.get_result()
+            load_dir = os.path.dirname(result.load_location[0])
+            self.settings.set("io.multiple_open_directory", load_dir)
+            self.settings.add_path_history(load_dir)
+            self.settings.set("io.multiple_open_filter", result.selected_filter)
+
             dial_fun = ExecuteFunctionDialog(self.execute_load_files, [result], exception_hook=exception_hook)
             dial_fun.exec()
             if self.error_list:
@@ -106,10 +113,10 @@ class MultipleFileWidget(QWidget):
         else:
             file_name = self.file_list[self.file_view.indexOfTopLevelItem(item.parent())]
             state_name = item.text(0)
-            self.set_state(self.state_dict[file_name][state_name])
+            self.settings.set_project_info(self.state_dict[file_name][state_name])
 
     def save_state(self):
-        state: ProjectInfoBase = self.get_state()
+        state: ProjectInfoBase = self.settings.get_project_info()
         custom_name = self.custom_names_chk.isChecked()
         self.save_state_action(state, custom_name)
 

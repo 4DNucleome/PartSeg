@@ -70,7 +70,8 @@ class BatchProceed(QThread):
                 name = path.basename(file_path)
                 name = path.splitext(name)[0] + ".seg"
                 SaveSegmentation.save(path.join(self.result_dir, name),
-                                      SegmentationTuple(temp_settings.image, segmentation.segmentation,
+                                      SegmentationTuple(temp_settings.image.file_path, temp_settings.image,
+                                                        segmentation.segmentation,
                                                         list(range(1, len(self.components) + 1))),
                                       parameters=SaveSegmentation.get_default_values())
 

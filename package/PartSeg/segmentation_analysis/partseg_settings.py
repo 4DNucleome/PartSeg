@@ -25,7 +25,8 @@ class PartSettings(BaseSettings):
     json_encoder_class = PartEncoder
     decode_hook = staticmethod(part_hook)
     last_executed_algorithm: str
-    save_locations_keys = ["open_directory", "save_directory", "export_directory", "batch_plan_directory"]
+    save_locations_keys = ["open_directory", "save_directory", "export_directory", "batch_plan_directory",
+                           "multiple_open_directory"]
 
     def __init__(self, json_path):
         super().__init__(json_path)
@@ -77,7 +78,7 @@ class PartSettings(BaseSettings):
         return ProjectTuple(self.image.file_path, self.image, self.segmentation, self.full_segmentation,
                             self.mask, self.segmentation_history, algorithm_val)
 
-    def set_project_data(self, data: typing.Union[ProjectTuple, MaskInfo]):
+    def set_project_info(self, data: typing.Union[ProjectTuple, MaskInfo]):
         if isinstance(data, ProjectTuple):
             self.image = data.image
             self.segmentation = data.segmentation

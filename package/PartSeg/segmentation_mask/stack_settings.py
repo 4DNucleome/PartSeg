@@ -11,7 +11,8 @@ from PartSeg.utils.mask.io_functions import load_stack_segmentation, save_compon
 class StackSettings(BaseSettings):
     components_change_list = Signal([int, list])
     save_locations_keys = ["save_batch", "save_components_directory", "save_segmentation_directory",
-                           "open_segmentation_directory", "load_image_directory", "batch_directory"]
+                           "open_segmentation_directory", "load_image_directory", "batch_directory",
+                           "multiple_open_directory"]
 
     def __init__(self, json_path):
         super().__init__(json_path)
@@ -73,5 +74,20 @@ class StackSettings(BaseSettings):
         else:
             raise RuntimeError("chosen_components_widget do not initialized")
 
-    def get_segmentation_info(self) -> SegmentationTuple:
-        return SegmentationTuple(self.image, self.segmentation, self.chosen_components())
+    def get_project_info(self) -> SegmentationTuple:
+        return SegmentationTuple(self.image.file_path, self.image, self.segmentation, self.chosen_components())
+
+    def set_project_info(self, data: SegmentationTuple):
+        signals = self.signalsBlocked()
+        if data.segmentation is not None:
+            self.blockSignals(True)
+        if data.image is not None:
+            self.image = data.image
+        self.blockSignals(signals)
+        if data.segmentation is not None:
+            num = data.segmentation.max()
+            self.chosen_components_widget.set_chose(range(1, num + 1), data.list_of_components)
+            self.image.fit_array_to_image(data.segmentation)
+            self.segmentation = data.segmentation
+
+
