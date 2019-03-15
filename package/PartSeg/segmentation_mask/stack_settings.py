@@ -75,7 +75,8 @@ class StackSettings(BaseSettings):
             raise RuntimeError("chosen_components_widget do not initialized")
 
     def get_project_info(self) -> SegmentationTuple:
-        return SegmentationTuple(self.image.file_path, self.image, self.segmentation, self.chosen_components())
+        return SegmentationTuple(self.image.file_path, self.image.substitute(), self.segmentation,
+                                 self.chosen_components())
 
     def set_project_info(self, data: SegmentationTuple):
         signals = self.signalsBlocked()

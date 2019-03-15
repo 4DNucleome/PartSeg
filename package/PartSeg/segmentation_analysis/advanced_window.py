@@ -48,7 +48,7 @@ class AdvancedSettings(QWidget):
         self.delete_btn = QPushButton("Delete profile")
         self.delete_btn.setDisabled(True)
         self.delete_btn.clicked.connect(self.delete_profile)
-        self.multiple_files_chk = QCheckBox("Multiple files")
+        self.multiple_files_chk = QCheckBox("Show multiple files widget")
         self.multiple_files_chk.setChecked(self._settings.get("multiple_files", False))
         self.multiple_files_chk.stateChanged.connect(partial(self._settings.set, "multiple_files"))
         self.rename_btn = QPushButton("Rename Profile")
