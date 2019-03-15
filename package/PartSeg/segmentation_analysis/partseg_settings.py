@@ -1,4 +1,5 @@
 import typing
+from copy import deepcopy
 from qtpy.QtCore import Signal
 
 from PartSeg.utils.analysis.calculation_plan import CalculationPlan
@@ -72,21 +73,21 @@ class PartSettings(BaseSettings):
     def get_project_info(self) -> ProjectTuple:
         algorithm_name = self.last_executed_algorithm
         if algorithm_name:
-            algorithm_val = {"name": algorithm_name, "values": self.get(f"algorithms.{algorithm_name}")}
+            algorithm_val = {"name": algorithm_name, "values": deepcopy(self.get(f"algorithms.{algorithm_name}"))}
         else:
             algorithm_val = {}
-        return ProjectTuple(self.image.file_path, self.image, self.segmentation, self.full_segmentation,
-                            self.mask, self.segmentation_history, algorithm_val)
+        return ProjectTuple(self.image.file_path, self.image.image.substitute(), self.segmentation, self.full_segmentation,
+                            self.mask, self.segmentation_history[:], algorithm_val)
 
     def set_project_info(self, data: typing.Union[ProjectTuple, MaskInfo]):
         if isinstance(data, ProjectTuple):
-            self.image = data.image
+            self.image = data.image.substitute()
             self.segmentation = data.segmentation
             self.full_segmentation = data.full_segmentation
-            self.segmentation_history = data.history
+            self.segmentation_history = data.history[:]
             if data.algorithm_parameters:
                 self.last_executed_algorithm = data.algorithm_parameters["name"]
-                self.set(f"algorithms.{self.last_executed_algorithm}", data.algorithm_parameters["values"])
+                self.set(f"algorithms.{self.last_executed_algorithm}", deepcopy(data.algorithm_parameters["values"]))
                 self.algorithm_changed.emit()
         if isinstance(data, MaskInfo):
             self.mask = data.mask_array

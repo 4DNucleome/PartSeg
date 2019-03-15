@@ -122,7 +122,8 @@ class Image(object):
         return self._image_array.shape[2:4]
 
     def swap_time_and_stack(self):
-        self._image_array = np.swapaxes(self._image_array, 0, 1)
+        image_array = np.swapaxes(self._image_array, 0, 1)
+        return self.substitute(data=image_array)
 
     def __getitem__(self, item):
         # TODO not good solution, improve it
