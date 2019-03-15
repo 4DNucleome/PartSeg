@@ -1,8 +1,12 @@
+import typing
 from typing import List
 import numpy as np
 from os import path
+
+from qtpy.QtWidgets import QMessageBox, QWidget
 from qtpy.QtCore import Signal
 
+from PartSeg.tiff_image import Image
 from ..project_utils_qt.settings import BaseSettings
 from PartSeg.utils.mask.io_functions import load_stack_segmentation, save_components, \
     SegmentationTuple
@@ -11,7 +15,8 @@ from PartSeg.utils.mask.io_functions import load_stack_segmentation, save_compon
 class StackSettings(BaseSettings):
     components_change_list = Signal([int, list])
     save_locations_keys = ["save_batch", "save_components_directory", "save_segmentation_directory",
-                           "open_segmentation_directory", "load_image_directory", "batch_directory"]
+                           "open_segmentation_directory", "load_image_directory", "batch_directory",
+                           "multiple_open_directory"]
 
     def __init__(self, json_path):
         super().__init__(json_path)
@@ -73,5 +78,43 @@ class StackSettings(BaseSettings):
         else:
             raise RuntimeError("chosen_components_widget do not initialized")
 
-    def get_segmentation_info(self) -> SegmentationTuple:
-        return SegmentationTuple(self.image, self.segmentation, self.chosen_components())
+    def get_project_info(self) -> SegmentationTuple:
+        return SegmentationTuple(self.image.file_path, self.image.substitute(), self.segmentation,
+                                 self.chosen_components())
+
+    def set_project_info(self, data: SegmentationTuple):
+        signals = self.signalsBlocked()
+        if data.segmentation is not None:
+            self.blockSignals(True)
+        if data.image is not None:
+            self.image = data.image
+        self.blockSignals(signals)
+        if data.segmentation is not None:
+            num = data.segmentation.max()
+            self.chosen_components_widget.set_chose(range(1, num + 1), data.list_of_components)
+            self.image.fit_array_to_image(data.segmentation)
+            self.segmentation = data.segmentation
+
+    @staticmethod
+    def verify_image(image: Image, silent=True) -> typing.Union[Image, bool]:
+        if image.is_time:
+            if image.is_stack:
+                if silent:
+                    raise ValueError("Do not support time and stack image")
+                else:
+                    wid = QWidget()
+                    QMessageBox.warning(wid, "image error", "Do not support time and stack image")
+                    return False
+            if silent:
+                return image.swap_time_and_stack()
+            else:
+                wid = QWidget()
+                res = QMessageBox.question(wid,
+                                           "Not supported",
+                                           "Time data are currently not supported. Maybe You would like to treat time as z-stack",
+                                           QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+                if res == QMessageBox.Yes:
+                    return image.swap_time_and_stack()
+                return False
+        return True

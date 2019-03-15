@@ -19,6 +19,7 @@ from ..common_gui.channel_control import ChannelControl
 from ..common_gui.mask_widget import MaskWidget
 from ..common_gui.stack_image_view import ColorBar
 from ..common_gui.waiting_dialog import WaitingDialog, ExecuteFunctionDialog
+from ..common_gui.multiple_file_widget import MultipleFileWidget
 from ..utils.global_settings import static_file_folder
 from ..utils.mask_create import calculate_mask, MaskProperty
 from ..utils.segmentation.algorithm_base import SegmentationResult
@@ -393,7 +394,6 @@ class MainMenu(QWidget):
             except ValueError as e:
                 QMessageBox.warning(self, "Save error", f"Error during saving\n{e.args[0]}")
 
-
     def image_adjust_exec(self):
         dial = ImageAdjustmentDialog(self._settings.image)
         if dial.exec():
@@ -403,7 +403,7 @@ class MainMenu(QWidget):
                                           )
             if dial2.exec():
                 result: Image = dial2.get_result()
-                self._settings.set_project_data(ProjectTuple(result.file_path, result))
+                self._settings.set_project_info(ProjectTuple(result.file_path, result))
         return
 
     def mask_manager(self):
@@ -446,9 +446,14 @@ class MainMenu(QWidget):
                                               exception_hook=exception_hook)
                 if dial2.exec():
                     result = dial2.get_result()
-                    if isinstance(result, ProjectTuple) and result.image.is_time and not result.image.is_stack:
-                        result = result._replace(image = result.image.swap_time_and_stack())
-                    self._settings.set_project_data(result)
+                    if isinstance(result, ProjectTuple):
+                        image = self._settings.verify_image(result.image, False)
+                        if image:
+                            if isinstance(image, Image):
+                                result = result._replace(image=image)
+                        else:
+                            return
+                self._settings.set_project_info(result)
         except ValueError as e:
             QMessageBox.warning(self, "Open error", "{}".format(e))
 
@@ -611,6 +616,8 @@ class MainWindow(BaseMainWindow):
         self.advanced_window = AdvancedWindow(self.settings)
         self.batch_window = None  # BatchWindow(self.settings)
 
+        self.multiple_files = MultipleFileWidget(self.settings, load_dict)
+
         if initial_image is None:
             reader = ImageReader()
             im = reader.read(self.initial_image_path)
@@ -636,16 +643,18 @@ class MainWindow(BaseMainWindow):
 
         layout = QGridLayout()
         layout.setSpacing(0)
-        layout.addWidget(self.main_menu, 0, 0, 1, 3)
-        layout.addWidget(self.info_text, 1, 0, 1, 3, Qt.AlignHCenter)  # , 0, 4)
-        layout.addWidget(self.color_bar, 2, 0)
-        layout.addWidget(self.raw_image, 2, 1)  # , 0, 0)
-        layout.addWidget(self.result_image, 2, 2)  # , 0, 0)
-        layout.addWidget(self.options_panel, 0, 3, 3, 1)
-        layout.setColumnStretch(1, 1)
+        layout.addWidget(self.main_menu, 0, 0, 1, 4)
+        layout.addWidget(self.info_text, 1, 0, 1, 4, Qt.AlignHCenter)  # , 0, 4)
+        layout.addWidget(self.multiple_files, 2, 0)
+        layout.addWidget(self.color_bar, 2, 1)
+        layout.addWidget(self.raw_image, 2, 2)  # , 0, 0)
+        layout.addWidget(self.result_image, 2, 3)  # , 0, 0)
+        layout.addWidget(self.options_panel, 0, 4, 3, 1)
         layout.setColumnStretch(2, 1)
+        layout.setColumnStretch(3, 1)
         widget = QWidget()
         widget.setLayout(layout)
+        # self.multiple_files.setHidden(True)
         self.setCentralWidget(widget)
         try:
             geometry = self.settings.get_from_profile("main_window_geometry")
@@ -695,6 +704,11 @@ class MainWindow(BaseMainWindow):
             dial.exec()
             if read_thread.image:
                 self.settings.image = read_thread.image
+
+    def event(self, event: QEvent):
+        if event.type() == QEvent.WindowActivate:
+            self.multiple_files.setVisible(self.settings.get("multiple_files", False))
+        return super().event(event)
 
     def closeEvent(self, event):
         # print(self.settings.dump_view_profiles())

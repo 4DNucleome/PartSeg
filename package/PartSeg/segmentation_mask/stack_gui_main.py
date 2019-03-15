@@ -1,5 +1,6 @@
 import json
 import os
+from functools import partial
 from pathlib import Path
 
 import appdirs
@@ -10,6 +11,7 @@ from qtpy.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMess
     QComboBox, QDoubleSpinBox, QSpinBox, QStackedLayout, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
     QTabWidget, QSizePolicy
 
+from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
 from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox
 from ..common_gui.channel_control import ChannelControl
 from ..common_gui.colors_choose import ColorSelector
@@ -101,7 +103,13 @@ class MainMenu(QWidget):
                 if result is None:
                     return
                 if isinstance(result.image, Image):
-                    self.set_image(result.image)
+                    image = self.settings.verify_image(result.image, False)
+                    if not image:
+                        return
+                    if isinstance(image, Image):
+                        self.settings.image = image
+                    else:
+                        self.settings.image = result.image
                 if result.segmentation is not None:
                     self.settings.set_segmentation(result.segmentation, result.list_of_components)
         except (MemoryError, IOError) as e:
@@ -569,6 +577,9 @@ class ImageInformation(QWidget):
         self.path = QLabel("<b>Path:</b> example image")
         self.path.setWordWrap(True)
         self.spacing = [QDoubleSpinBox() for _ in range(3)]
+        self.multiple_files = QCheckBox("Show multiple files widget")
+        self.multiple_files.setChecked(settings.get("multiple_files_widget", True))
+        self.multiple_files.stateChanged.connect(partial(settings.set, "multiple_files_widget"))
         units_value = self._settings.get("units_value", Units.nm)
         for el in self.spacing:
             el.setAlignment(Qt.AlignRight)
@@ -595,6 +606,7 @@ class ImageInformation(QWidget):
         layout.addLayout(spacing_layout)
         layout.addWidget(self.add_files)
         layout.addStretch()
+        layout.addWidget(self.multiple_files)
         self.setLayout(layout)
         self._settings.image_changed[str].connect(self.set_image_path)
 
@@ -668,6 +680,9 @@ class MainWindow(BaseMainWindow):
         self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
         self.color_bar = ColorBar(self.settings, self.channel_control)
+        self.multiple_file = MultipleFileWidget(self.settings, load_dict)
+        self.multiple_file.setVisible(self.options_panel.image_properties.multiple_files.isChecked())
+        self.options_panel.image_properties.multiple_files.stateChanged.connect(self.multiple_file.setVisible)
 
         icon = QIcon(os.path.join(static_file_folder, 'icons', "icon_stack.png"))
         self.setWindowIcon(icon)
@@ -677,6 +692,7 @@ class MainWindow(BaseMainWindow):
         sub_layout = QHBoxLayout()
         sub2_layout = QVBoxLayout()
         sub3_layout = QVBoxLayout()
+        sub_layout.addWidget(self.multiple_file)
         sub_layout.addWidget(self.color_bar, 0)
         sub3_layout.addWidget(self.image_view, 1)
         sub3_layout.addWidget(self.info_text, 0)

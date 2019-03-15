@@ -6,6 +6,7 @@ from io import BytesIO, StringIO
 from pathlib import Path
 from tarfile import TarInfo
 
+from PartSeg.tiff_image import Image
 from .algorithm_describe_base import AlgorithmDescribeBase
 
 
@@ -18,6 +19,14 @@ def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
         tar_info.size = len(buffer.getvalue())
     tar_info.mtime = datetime.now().timestamp()
     return tar_info
+
+
+class ProjectInfoBase:
+    file_path: str
+    image: Image
+
+    def _replace(self, file_path=None, image=None):
+        pass
 
 
 class SaveBase(AlgorithmDescribeBase, ABC):

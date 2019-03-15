@@ -3,13 +3,14 @@ import collections
 from PyQt5 import QtCore
 from PyQt5.QtCore import QObject, QEvent
 from PyQt5.QtGui import QHideEvent, QShowEvent
-from PyQt5.QtWidgets import QPushButton, QStackedWidget, QCheckBox, QDoubleSpinBox, QLabel
+from PyQt5.QtWidgets import QPushButton, QStackedWidget, QCheckBox, QDoubleSpinBox, QLabel, QGridLayout
 
 from ..common_gui.channel_control import ChannelControl, ChannelChoose
 from ..common_gui.stack_image_view import ImageView, create_tool_button
 from .statistic_widget import StatisticsWidget
 from .partseg_settings import MASK_COLORS, PartSettings
 import numpy as np
+
 
 class RawImageStack(QStackedWidget):
     def __init__(self, settings, channel_control:ChannelControl):
@@ -20,10 +21,17 @@ class RawImageStack(QStackedWidget):
         self.addWidget(self.statistic_calculate)
 
     def hideEvent(self, a0: QHideEvent):
-        self.parent().layout().setColumnStretch(1, 0)
+        if not isinstance(self.parent().layout(), QGridLayout):
+            return
+        index = self.parent().layout().indexOf(self)
+        self.parent().layout().setColumnStretch(self.parent().layout().getItemPosition(index)[1], 0)
 
     def showEvent(self, event: QShowEvent):
-        self.parent().layout().setColumnStretch(1, 1)
+        if not isinstance(self.parent().layout(), QGridLayout):
+            return
+        index = self.parent().layout().indexOf(self)
+        self.parent().layout().setColumnStretch(self.parent().layout().getItemPosition(index)[1], 1)
+
 
 class StatisticsWindowForRaw(StatisticsWidget):
     def __init__(self, settings):
@@ -53,7 +61,6 @@ class ImageViewWithMask(ImageView):
         self.mask_label.setDisabled(True)
         settings.mask_changed.connect(self.mask_changed)
         self.mask_show.stateChanged.connect(self.change_image)
-
 
     def event(self, event: QtCore.QEvent):
         if event.type() == QEvent.WindowActivate:
@@ -88,8 +95,6 @@ class ImageViewWithMask(ImageView):
         super().set_image()
         if self.image.mask is not None:
             self.mask_changed()
-
-
 
 
 class RawImageView(ImageViewWithMask):
@@ -128,6 +133,7 @@ class RawImageView(ImageViewWithMask):
 
         self.text_info_change.emit("Position: {}, Brightness: {}".format(tuple(pos2), brightness))
 
+
 class ResultImageView(ImageViewWithMask):
     def __init__(self, settings, channel_control: ChannelControl):
         super().__init__(settings, channel_control)
@@ -164,7 +170,6 @@ class SynchronizeView(QObject):
         self.image_view2.image_area.horizontalScrollBar().valueChanged.connect(self.synchronize_shift)
         self.image_view1.image_area.verticalScrollBar().valueChanged.connect(self.synchronize_shift)
         self.image_view2.image_area.verticalScrollBar().valueChanged.connect(self.synchronize_shift)
-
 
     def set_synchronize(self, val: bool):
         self.synchronize = val

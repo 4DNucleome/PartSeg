@@ -1,7 +1,9 @@
 import typing
 from copy import deepcopy
+from qtpy.QtWidgets import QMessageBox, QWidget
 from qtpy.QtCore import Signal
 
+from PartSeg.tiff_image import Image
 from PartSeg.utils.analysis.calculation_plan import CalculationPlan
 from PartSeg.utils.analysis.io_utils import ProjectTuple, MaskInfo
 from PartSeg.utils.analysis.statistics_calculation import StatisticProfile
@@ -26,7 +28,8 @@ class PartSettings(BaseSettings):
     json_encoder_class = PartEncoder
     decode_hook = staticmethod(part_hook)
     last_executed_algorithm: str
-    save_locations_keys = ["open_directory", "save_directory", "export_directory", "batch_plan_directory"]
+    save_locations_keys = ["open_directory", "save_directory", "export_directory", "batch_plan_directory",
+                           "multiple_open_directory"]
 
     def __init__(self, json_path):
         super().__init__(json_path)
@@ -78,7 +81,7 @@ class PartSettings(BaseSettings):
         return ProjectTuple(self.image.file_path, self.image.image.substitute(), self.segmentation, self.full_segmentation,
                             self.mask, self.segmentation_history[:], algorithm_val)
 
-    def set_project_data(self, data: typing.Union[ProjectTuple, MaskInfo]):
+    def set_project_info(self, data: typing.Union[ProjectTuple, MaskInfo]):
         if isinstance(data, ProjectTuple):
             self.image = data.image.substitute()
             self.segmentation = data.segmentation
@@ -124,6 +127,29 @@ class PartSettings(BaseSettings):
             SaveSettingsDescription("batch_plans_save.json", self.batch_plans_dict),
         ]
 
+    @staticmethod
+    def verify_image(image: Image, silent=True) -> typing.Union[Image, bool]:
+        if image.is_time:
+            if image.is_stack:
+                if silent:
+                    raise ValueError("Do not support time and stack image")
+                else:
+                    wid = QWidget()
+                    QMessageBox.warning(wid, "image error", "Do not support time and stack image")
+                    return False
+            if silent:
+                return image.swap_time_and_stack()
+            else:
+                wid = QWidget()
+                res = QMessageBox.question(wid,
+                    "Not supported",
+                    "Time data are currently not supported. Maybe You would like to treat time as z-stack",
+                    QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+                if res == QMessageBox.Yes:
+                    return image.swap_time_and_stack()
+                return False
+        return True
 
     @property
     def segmentation_pipelines(self) -> typing.Dict[str, SegmentationPipeline]:
@@ -140,6 +166,3 @@ class PartSettings(BaseSettings):
     @property
     def statistic_profiles(self) -> typing.Dict[str, StatisticProfile]:
         return self.statistic_profiles_dict.get(self.current_segmentation_dict, dict())
-
-def save_labeled_image(file_path, settings):
-    pass

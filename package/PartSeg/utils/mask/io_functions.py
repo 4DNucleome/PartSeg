@@ -8,12 +8,13 @@ import numpy as np
 import json
 from typing import Union
 from io import BytesIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
-from ..io_utils import get_tarinfo, SaveBase, LoadBase, proxy_callback
+from ..io_utils import get_tarinfo, SaveBase, LoadBase, proxy_callback, ProjectInfoBase
 from ..algorithm_describe_base import AlgorithmProperty, Register
 from PartSeg.tiff_image import Image, ImageWriter, ImageReader
 
 
-class SegmentationTuple(typing.NamedTuple):
+class SegmentationTuple(ProjectInfoBase, typing.NamedTuple):
+    file_path: str
     image: Union[Image, str, None]
     segmentation: typing.Optional[np.ndarray]
     list_of_components: typing.List[int]
@@ -119,8 +120,8 @@ class LoadSegmentation(LoadBase):
              step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
         segmentation, metadata = load_stack_segmentation(load_locations[0], range_changed=range_changed,
                                                          step_changed=step_changed)
-        return SegmentationTuple(metadata["base_file"] if "base_file" in metadata else None, segmentation,
-                                 metadata["components"])
+        return SegmentationTuple(load_locations[0], metadata["base_file"] if "base_file" in metadata else None,
+                                 segmentation, metadata["components"])
 
 
 class LoadSegmentationImage(LoadBase):
@@ -136,7 +137,7 @@ class LoadSegmentationImage(LoadBase):
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
              range_changed: typing.Callable[[int, int], typing.Any] = None,
              step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
-        base_file, segmentation, components = LoadSegmentation.load(load_locations)
+        file_path, base_file, segmentation, components = LoadSegmentation.load(load_locations)
         if base_file is None:
             raise IOError(f"base file for segmentation not defined")
         if os.path.isabs(base_file):
@@ -150,7 +151,7 @@ class LoadSegmentationImage(LoadBase):
         image = ImageReader.read_image(
             file_path, callback_function=partial(proxy_callback, range_changed, step_changed),
             default_spacing=metadata["default_spacing"])
-        return SegmentationTuple(image, segmentation, components)
+        return SegmentationTuple(image.file_path, image, segmentation, components)
 
 
 class LoadImage(LoadBase):
@@ -166,10 +167,12 @@ class LoadImage(LoadBase):
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
              range_changed: typing.Callable[[int, int], typing.Any] = None,
              step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
+        if metadata is None:
+            metadata = {"default_spacing": [1,1,1]}
         image = ImageReader.read_image(
             load_locations[0], callback_function=partial(proxy_callback, range_changed, step_changed),
             default_spacing=metadata["default_spacing"])
-        return SegmentationTuple(image, None, [])
+        return SegmentationTuple(image.file_path, image, None, [])
 
 
 class SaveSegmentation(SaveBase):

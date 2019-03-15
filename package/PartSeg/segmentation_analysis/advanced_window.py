@@ -1,6 +1,7 @@
 import json
 import os
 from copy import deepcopy
+from functools import partial
 from pathlib import Path
 from typing import Union, Optional, Tuple
 
@@ -9,7 +10,7 @@ from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushButton, QLineEdit, \
     QVBoxLayout, QLabel, QHBoxLayout, QListWidgetItem, QDialog, QDoubleSpinBox, QSpinBox, QGridLayout, QApplication, \
     QMessageBox, QFileDialog, QComboBox, QAbstractSpinBox, QInputDialog, \
-    QPlainTextEdit, QFrame
+    QPlainTextEdit, QFrame, QCheckBox
 
 from PartSeg.utils.analysis.algorithm_description import SegmentationProfile, analysis_algorithm_dict
 from ..common_gui.universal_gui_part import EnumComboBox
@@ -47,6 +48,9 @@ class AdvancedSettings(QWidget):
         self.delete_btn = QPushButton("Delete profile")
         self.delete_btn.setDisabled(True)
         self.delete_btn.clicked.connect(self.delete_profile)
+        self.multiple_files_chk = QCheckBox("Show multiple files widget")
+        self.multiple_files_chk.setChecked(self._settings.get("multiple_files", False))
+        self.multiple_files_chk.stateChanged.connect(partial(self._settings.set, "multiple_files"))
         self.rename_btn = QPushButton("Rename Profile")
         self.rename_btn.clicked.connect(self.rename_profile)
         self.rename_btn.setDisabled(True)
@@ -125,6 +129,7 @@ class AdvancedSettings(QWidget):
         layout.addLayout(spacing_layout)
         layout.addLayout(voxel_size_layout)
         layout.addLayout(mask_layout)
+        layout.addWidget(self.multiple_files_chk)
 
         layout.addLayout(profile_layout, 1)
         self.setLayout(layout)
