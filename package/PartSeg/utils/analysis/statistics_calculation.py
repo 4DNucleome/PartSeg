@@ -784,7 +784,7 @@ class DistanceMaskSegmentation(StatisticMethodBase):
             im[area_array == 0] = 0
             area_pos = np.array([af.density_mass_center(im, voxel_size) * result_scalar])
         else:
-            area_pos = np.array([af.density_mass_center(area_array, voxel_size) * result_scalar])
+            area_pos = np.array([af.density_mass_center(area_array>0, voxel_size) * result_scalar])
         return area_pos
 
     @classmethod

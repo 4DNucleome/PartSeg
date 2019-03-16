@@ -8,7 +8,7 @@ from PartSeg.utils.analysis.statistics_calculation import Diameter, PixelBrightn
     MaximumPixelBrightness, MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness, AreaType, \
     StandardDeviationOfPixelBrightness, MomentOfInertia, LongestMainAxisLength, MiddleMainAxisLength, \
     ShortestMainAxisLength, Surface, RimVolume, RimPixelBrightnessSum, StatisticProfile, StatisticEntry, PerComponent, \
-    Node, Sphericity
+    Node, Sphericity, DistanceMaskSegmentation, DistancePoint
 from PartSeg.utils.autofit import density_mass_center
 from PartSeg.utils.universal_const import UNIT_SCALE, Units
 
@@ -664,6 +664,78 @@ class TestSphericity:
         mask3_volume = np.count_nonzero(mask3) * reduce(lambda x, y: x * y, image.voxel_size)
         assert isclose(Sphericity.calculate_property(area_array=mask3, voxel_size=image.voxel_size, result_scalar=1),
                        mask3_volume / (pi * mask3_radius ** 2))
+
+
+class TestDistanceMaskSegmentation:
+    def test_cube(self):
+        image = get_cube_image()
+        mask1 = image.get_channel(0) > 40
+        mask2 = image.get_channel(0) > 60
+        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), mask2, mask1, image.voxel_size, 1,
+                                                           DistancePoint.Geometrical_center,
+                                                           DistancePoint.Geometrical_center) == 0
+        mask3 = mask2.astype(np.uint8)
+        mask3[25:] = 2
+        mask3[mask2 == 0] = 0
+
+        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), mask2, mask1, image.voxel_size, 1,
+                                                           DistancePoint.Geometrical_center,
+                                                           DistancePoint.Geometrical_center) == 0
+
+        assert DistanceMaskSegmentation.calculate_property(mask3, mask3 == 1, mask1, image.voxel_size, 1,
+                                                           DistancePoint.Geometrical_center,
+                                                           DistancePoint.Geometrical_center) == 500
+
+        assert DistanceMaskSegmentation.calculate_property(mask3, mask3 == 2, mask1, image.voxel_size, 1,
+                                                           DistancePoint.Geometrical_center,
+                                                           DistancePoint.Geometrical_center) == 500
+
+        assert DistanceMaskSegmentation.calculate_property(mask3, mask3 == 1, mask1, image.voxel_size, 1,
+                                                           DistancePoint.Geometrical_center,
+                                                           DistancePoint.Mass_center) == 500
+
+        assert DistanceMaskSegmentation.calculate_property(mask3, mask3 == 2, mask1, image.voxel_size, 1,
+                                                           DistancePoint.Geometrical_center,
+                                                           DistancePoint.Mass_center) == 500
+
+        assert isclose(DistanceMaskSegmentation.calculate_property(mask3, mask2, mask1, image.voxel_size, 1,
+                                                                   DistancePoint.Geometrical_center,
+                                                                   DistancePoint.Mass_center), 1000 * 2 / 3 - 500)
+
+    def test_square(self):
+        image = get_square_image()
+        mask1 = image.get_channel(0) > 40
+        mask2 = image.get_channel(0) > 60
+        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), mask2, mask1, image.voxel_size, 1,
+                                                           DistancePoint.Geometrical_center,
+                                                           DistancePoint.Geometrical_center) == 0
+        mask3 = mask2.astype(np.uint8)
+        mask3[:, 50:] = 2
+        mask3[mask2 == 0] = 0
+
+        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), mask2, mask1, image.voxel_size, 1,
+                                                           DistancePoint.Geometrical_center,
+                                                           DistancePoint.Geometrical_center) == 0
+
+        assert DistanceMaskSegmentation.calculate_property(mask3, mask3 == 1, mask1, image.voxel_size, 1,
+                                                           DistancePoint.Geometrical_center,
+                                                           DistancePoint.Geometrical_center) == 500
+
+        assert DistanceMaskSegmentation.calculate_property(mask3, mask3 == 2, mask1, image.voxel_size, 1,
+                                                           DistancePoint.Geometrical_center,
+                                                           DistancePoint.Geometrical_center) == 500
+
+        assert DistanceMaskSegmentation.calculate_property(mask3, mask3 == 1, mask1, image.voxel_size, 1,
+                                                           DistancePoint.Geometrical_center,
+                                                           DistancePoint.Mass_center) == 500
+
+        assert DistanceMaskSegmentation.calculate_property(mask3, mask3 == 2, mask1, image.voxel_size, 1,
+                                                           DistancePoint.Geometrical_center,
+                                                           DistancePoint.Mass_center) == 500
+
+        assert isclose(DistanceMaskSegmentation.calculate_property(mask3, mask2, mask1, image.voxel_size, 1,
+                                                                   DistancePoint.Geometrical_center,
+                                                                   DistancePoint.Mass_center), 1000 * 2 / 3 - 500)
 
 
 class TestStatisticProfile:
