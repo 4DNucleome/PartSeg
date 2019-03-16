@@ -702,6 +702,66 @@ class TestDistanceMaskSegmentation:
                                                                    DistancePoint.Geometrical_center,
                                                                    DistancePoint.Mass_center), 1000 * 2 / 3 - 500)
 
+    def test_two_components(self):
+        data = np.zeros((1, 30, 30, 60, 1), dtype=np.uint16)
+        data[0, 5:-5, 5:-5, 5:29] = 60
+        data[0, 5:-5, 5:-5, 31:-5] = 50
+        image = Image(data, (100, 100 ,50), "")
+        mask = np.zeros(data.shape[1:-1], dtype=np.uint8)
+        mask[2:-2, 2:-2, 2:-2] = 1
+        #TODO rethink if this value is proper or maybe implementation needs update
+
+        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0), mask,
+                                                           image.voxel_size, 1,
+                                                           DistancePoint.Geometrical_center,
+                                                           DistancePoint.Geometrical_center) == 0
+
+        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0) == 50, mask,
+                                                           image.voxel_size, 1,
+                                                           DistancePoint.Geometrical_center,
+                                                           DistancePoint.Geometrical_center) == 650
+
+        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0) == 60, mask,
+                                                       image.voxel_size, 1,
+                                                       DistancePoint.Geometrical_center,
+                                                       DistancePoint.Geometrical_center) == 650
+
+        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0) == 50, mask,
+                                                           image.voxel_size, 1,
+                                                           DistancePoint.Geometrical_center,
+                                                           DistancePoint.Mass_center) == 650
+
+        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0) == 60, mask,
+                                                           image.voxel_size, 1,
+                                                           DistancePoint.Geometrical_center,
+                                                           DistancePoint.Mass_center) == 650
+
+        assert isclose(
+            DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0), mask,
+                                                        image.voxel_size, 1, DistancePoint.Geometrical_center,
+                                                        DistancePoint.Mass_center), 1300 * 6 / 11 - 650)
+
+        assert isclose(
+            DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0), mask,
+                                                        image.voxel_size, 1, DistancePoint.Mass_center,
+                                                        DistancePoint.Geometrical_center), 1300 * 6 / 11 - 650)
+
+        assert isclose(
+            DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0), mask,
+                                                        image.voxel_size, 1, DistancePoint.Geometrical_center,
+                                                        DistancePoint.Geometrical_center), 0)
+        assert isclose(
+            DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0), mask,
+                                                        image.voxel_size, 1, DistancePoint.Border,
+                                                        DistancePoint.Geometrical_center),
+            np.sqrt(1250**2 + 50**2 +25**2))
+
+        assert isclose(
+            DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0), mask,
+                                                        image.voxel_size, 1, DistancePoint.Geometrical_center,
+                                                        DistancePoint.Border),
+            np.sqrt(100 ** 2 + 25 ** 2))
+
     def test_square(self):
         image = get_square_image()
         mask1 = image.get_channel(0) > 40
