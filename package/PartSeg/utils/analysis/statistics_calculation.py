@@ -74,7 +74,7 @@ class Leaf(BaseSerializableClass):
         if len(self.dict) != 0:
 
             resp += "["
-            arr =[]
+            arr = []
             for k, v in self.dict.items():
                 arr.append(f"{k.replace('_', ' ')}={v}")
             resp += ", ".join(arr)
@@ -97,7 +97,7 @@ class Node(BaseSerializableClass):
 
     # noinspection PyUnusedLocal
     # noinspection PyMissingConstructor
-    def __init__(self, left: Union['Node', Leaf], op: str, right: Union['Node', Leaf]):...
+    def __init__(self, left: Union['Node', Leaf], op: str, right: Union['Node', Leaf]): ...
 
     def __str__(self):
         left_text = "(" + str(self.left) + ")" if isinstance(self.left, Node) else str(self.left)
@@ -113,7 +113,7 @@ class Node(BaseSerializableClass):
 class StatisticEntry(BaseSerializableClass):
     # noinspection PyUnusedLocal
     # noinspection PyMissingConstructor
-    def __init__(self, name:str, calculation_tree: Union[Node, Leaf]): ...
+    def __init__(self, name: str, calculation_tree: Union[Node, Leaf]): ...
 
     name: str
     calculation_tree: Union[Node, Leaf]
@@ -777,6 +777,7 @@ class DistanceMaskSegmentation(StatisticMethodBase):
     def calculate_points(image, area_array, voxel_size, result_scalar, point_type: DistancePoint) -> np.ndarray:
         if point_type == DistancePoint.Border:
             area_pos = np.transpose(np.nonzero(get_border(area_array))).astype(np.float)
+            area_pos += 0.5
             for i, val in enumerate([x * result_scalar for x in reversed(voxel_size)], start=1):
                 area_pos[:, -i] *= val
         elif point_type == DistancePoint.Mass_center:
@@ -784,7 +785,7 @@ class DistanceMaskSegmentation(StatisticMethodBase):
             im[area_array == 0] = 0
             area_pos = np.array([af.density_mass_center(im, voxel_size) * result_scalar])
         else:
-            area_pos = np.array([af.density_mass_center(area_array>0, voxel_size) * result_scalar])
+            area_pos = np.array([af.density_mass_center(area_array > 0, voxel_size) * result_scalar])
         return area_pos
 
     @classmethod
@@ -795,7 +796,7 @@ class DistanceMaskSegmentation(StatisticMethodBase):
         mask_pos = cls.calculate_points(image, mask, voxel_size, result_scalar, distance_from_mask)
         seg_pos = cls.calculate_points(image, segmentation, voxel_size, result_scalar, distance_to_segmentation)
         if mask_pos.shape[0] == 1 or seg_pos.shape[0] == 1:
-            return cdist(mask_pos,seg_pos).min()
+            return cdist(mask_pos, seg_pos).min()
         else:
             min_val = np.inf
             for i in range(seg_pos.shape[0]):
