@@ -133,6 +133,7 @@ class CreatePlan(QWidget):
 
         self.chose_profile_btn = QPushButton("Segment Profile")
         self.get_big_btn = QPushButton("Leave the biggest")
+        self.get_big_btn.hide()
         self.add_new_segmentation_btn = QPushButton("Add new segmantation")
         self.get_big_btn.setDisabled(True)
         self.add_new_segmentation_btn.setDisabled(True)
@@ -153,6 +154,8 @@ class CreatePlan(QWidget):
         self.segment_profile.currentTextChanged.connect(self.show_segment)
         self.statistic_list.currentTextChanged.connect(self.show_statistics_info)
         self.segment_profile.currentTextChanged.connect(self.show_segment_info)
+        self.pipeline_profile.currentTextChanged.connect(self.show_segment_info)
+        self.pipeline_profile.currentTextChanged.connect(self.show_segment)
         self.mask_name.textChanged.connect(self.mask_name_changed)
         self.generate_mask_btn.clicked.connect(self.create_mask)
         self.reuse_mask_btn.clicked.connect(self.use_mask)
@@ -179,6 +182,7 @@ class CreatePlan(QWidget):
         self.intersect_mask_btn.clicked.connect(self.mask_intersect)
         self.set_mask_name_btn.clicked.connect(self.set_mask_name)
         self.sum_mask_btn.clicked.connect(self.mask_sum)
+        self.segment_stack.currentChanged.connect(self.change_segmentation_table)
 
         plan_box = QGroupBox("Calculate plan:")
         lay = QVBoxLayout()
@@ -319,6 +323,13 @@ class CreatePlan(QWidget):
         self.plan_node_changed.connect(self.show_segment)
         self.plan_node_changed.connect(self.show_statistics)
         self.node_type_changed()
+
+    def change_segmentation_table(self):
+        index = self.segment_stack.currentIndex()
+        text = self.segment_stack.tabText(index)
+        self.chose_profile_btn.setText("Segement "+ text)
+        self.segment_profile.setCurrentItem(None)
+        self.pipeline_profile.setCurrentItem(None)
 
     def save_changed(self, text):
         text = str(text)
@@ -573,13 +584,33 @@ class CreatePlan(QWidget):
             if ret == QMessageBox.Cancel:
                 return
 
-        text = str(self.segment_profile.currentItem().text())
-        profile = self.settings.segmentation_profiles[text]
-        if self.update_element_btn.isChecked():
-            self.calculation_plan.replace_step(profile)
-        else:
-            self.calculation_plan.add_step(profile)
-        self.plan.update_view()
+        if self.segment_stack.currentIndex() == 0:
+            text = str(self.segment_profile.currentItem().text())
+            profile = self.settings.segmentation_profiles[text]
+            if self.update_element_btn.isChecked():
+                self.calculation_plan.replace_step(profile)
+            else:
+                self.calculation_plan.add_step(profile)
+            self.plan.update_view()
+        else: # self.segment_stack.currentIndex() == 1
+            text = self.pipeline_profile.currentItem().text()
+            segmentation_pipeline = self.settings.segmentation_pipelines[text]
+            pos = self.calculation_plan.current_pos[:]
+            old_pos = self.calculation_plan.current_pos[:]
+            for el in segmentation_pipeline.mask_history:
+                self.calculation_plan.add_step(el.segmentation)
+                self.plan.update_view()
+                pos.append(0)
+                self.calculation_plan.set_position(pos)
+                self.calculation_plan.add_step(MaskCreate("", el.mask_property))
+                self.plan.update_view()
+                pos.append(0)
+                self.calculation_plan.set_position(pos)
+            self.calculation_plan.add_step(segmentation_pipeline.segmentation)
+            self.calculation_plan.set_position(old_pos)
+            self.plan.update_view()
+
+
 
     def add_statistics(self):
         text = str(self.statistic_list.currentItem().text())
@@ -746,15 +777,26 @@ class CreatePlan(QWidget):
     def show_segment_info(self, text=None):
         if self.protect:
             return
-        if text is None:
-            if self.segment_profile.currentItem() is not None:
-                text = str(self.segment_profile.currentItem().text())
-            else:
-                return
-        self.information.setText(self.settings.segmentation_profiles[text].pretty_print(analysis_algorithm_dict))
+        if text == "":
+            return
+        if self.segment_stack.currentIndex() == 0:
+            if text is None:
+                if self.segment_profile.currentItem() is not None:
+                    text = str(self.segment_profile.currentItem().text())
+                else:
+                    return
+            profile = self.settings.segmentation_profiles[text]
+        else:
+            if text is None:
+                if self.pipeline_profile.currentItem() is not None:
+                    text = str(self.pipeline_profile.currentItem().text())
+                else:
+                    return
+            profile = self.settings.segmentation_pipelines[text]
+        self.information.setText(profile.pretty_print(analysis_algorithm_dict))
 
     def show_segment(self):
-        if self.update_element_btn.isChecked():
+        if self.update_element_btn.isChecked() and self.segment_stack.currentIndex() == 0:
             self.get_big_btn.setDisabled(True)
             if self.node_type == NodeType.segment:
                 self.chose_profile_btn.setEnabled(True)
@@ -765,10 +807,17 @@ class CreatePlan(QWidget):
                 self.get_big_btn.setEnabled(True)
             else:
                 self.get_big_btn.setDisabled(True)
-            if self.segment_profile.currentItem() is not None:
-                self.chose_profile_btn.setEnabled(self.segment_allow)
+            if self.segment_stack.currentIndex() == 0:
+                if self.segment_profile.currentItem() is not None:
+                    self.chose_profile_btn.setEnabled(self.segment_allow)
+                else:
+                    self.chose_profile_btn.setDisabled(True)
             else:
-                self.chose_profile_btn.setDisabled(True)
+                if self.pipeline_profile.currentItem() is not None:
+                    self.chose_profile_btn.setEnabled(self.segment_allow)
+                else:
+                    self.chose_profile_btn.setDisabled(True)
+
 
     def edit_plan(self):
         plan = self.sender().plan_to_edit  # type: CalculationPlan

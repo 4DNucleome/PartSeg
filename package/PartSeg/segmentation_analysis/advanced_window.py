@@ -156,9 +156,10 @@ class AdvancedSettings(QWidget):
             return
 
         # TODO update with knowledge from profile dict
-        self.info_label.setPlainText(profile.pretty_print(analysis_algorithm_dict))
         self.delete_btn.setEnabled(True)
         self.rename_btn.setEnabled(True)
+        self.info_label.setPlainText(profile.pretty_print(analysis_algorithm_dict))
+
 
     def synchronize_spacing(self):
         if self.lock_spacing.isChecked():
