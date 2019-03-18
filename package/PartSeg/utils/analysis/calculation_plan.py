@@ -396,10 +396,10 @@ class CalculationPlan(object):
                 used_mask |= self._get_reused_mask(el)
         return used_mask
 
-    def get_reused_mask(self):
+    def get_reused_mask(self) -> set:
         return self._get_reused_mask(self.execution_tree)
 
-    def get_node_type(self):
+    def get_node_type(self)-> NodeType:
         if self.current_pos is None:
             return NodeType.none
         if not self.current_pos:
@@ -600,7 +600,7 @@ class CalculationPlan(object):
         if isinstance(el, MaskSub):
             return "File mask: {} substitution {} on {}".format(el.name, el.base, el.rep)
         if isinstance(el, MaskFile):
-            return "File mapping mask: {}".format(el.name)
+            return "File mapping mask: {}, {}".format(el.name, el.path_to_file)
         if isinstance(el, Save):
             base = el.short_name
             if el.directory:

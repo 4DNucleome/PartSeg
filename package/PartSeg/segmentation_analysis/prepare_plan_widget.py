@@ -5,6 +5,7 @@ import typing
 from copy import copy, deepcopy
 from pathlib import Path
 
+from PyQt5.QtGui import QPaintEvent
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QDialog, QCompleter, QLineEdit, QPushButton, QGridLayout, QWidget, QCheckBox, QComboBox, \
     QListWidget, QSpinBox, QTextEdit, QVBoxLayout, QGroupBox, QLabel, QHBoxLayout, QInputDialog, QMessageBox, \
@@ -33,13 +34,50 @@ group_sheet = "QGroupBox {border: 1px solid gray; border-radius: 9px; margin-top
 MAX_CHANNEL_NUM = 10
 
 
+class MaskDialog(QDialog):
+    def __init__(self, mask_names):
+        super().__init__()
+        self.mask_names = mask_names
+        completer = QCompleter(list(mask_names))
+        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.setWindowTitle("Masks name choose")
+        self.mask1_name = QLineEdit()
+        self.cancel_btn = QPushButton("Cancel")
+        self.ok_btn = QPushButton("Ok")
+
+        self.mask1_name.setCompleter(completer)
+        self.mask1_name.textChanged.connect(self.text_changed)
+        self.cancel_btn.clicked.connect(self.close)
+        self.ok_btn.clicked.connect(self.accept)
+        self.ok_btn.setDisabled(True)
+
+        layout = QGridLayout()
+        layout.addWidget(right_label("Mask 1 name:"), 0, 0)
+        layout.addWidget(self.mask1_name, 0, 1)
+        layout.addWidget(self.cancel_btn, 2, 0)
+        layout.addWidget(self.ok_btn, 2, 1)
+        self.setLayout(layout)
+
+    def text_changed(self):
+        text1 = self.get_result()[0]
+        if text1 == "" or text1 not in self.mask_names:
+            self.ok_btn.setDisabled(True)
+            return
+        else:
+            self.ok_btn.setDisabled(False)
+
+    def get_result(self):
+        text1 = str(self.mask1_name.text()).strip()
+        return text1,
+
+
 class TwoMaskDialog(QDialog):
     def __init__(self, mask_names):
         """
         :type mask_names: set
         :param mask_names: iterable collection of all available mask names
         """
-        super(TwoMaskDialog, self).__init__()
+        super().__init__()
         self.mask_names = mask_names
         completer = QCompleter(list(mask_names))
         completer.setCaseSensitivity(Qt.CaseInsensitive)
@@ -80,10 +118,107 @@ class TwoMaskDialog(QDialog):
         return text1, text2
 
 
+def stretch_widget(widget):
+    base_widget = QWidget()
+    base_widget.setContentsMargins(0, 0, 0, 0)
+    lay = QVBoxLayout()
+    lay.addWidget(widget)
+    lay.addStretch(3)
+    base_widget.setLayout(lay)
+    return base_widget
+
+
+class FileMask(QWidget):
+    value_changed = Signal()
+
+    def __init__(self):
+        super().__init__()
+        self.select_type = QComboBox()
+        self.select_type.addItems(["Suffix", "Replace", "Mapping file"])
+        self.values = ["", ("",""), ""]
+        self.first_text = QLineEdit()
+        self.second_text = QLineEdit()
+        self.first_label = QLabel("Suffix:")
+        self.second_label = QLabel("Replace:")
+        self.select_file_btn = QPushButton("Select file")
+        self.state = 0
+
+        layout = QGridLayout()
+        layout.addWidget(self.select_type, 0, 0, 1, 2)
+        layout.addWidget(self.first_label, 1, 0)
+        layout.addWidget(self.second_label, 1, 1)
+        layout.addWidget(self.first_text, 2, 0)
+        layout.addWidget(self.second_text, 2, 1)
+        layout.addWidget(self.select_file_btn, 3, 0, 1, 2)
+        layout.setColumnStretch(0, 1)
+        self.setLayout(layout)
+
+        self.second_text.setHidden(True)
+        self.second_label.setHidden(True)
+        self.select_file_btn.setHidden(True)
+
+        self.first_text.textChanged.connect(self.value_changed.emit)
+        self.second_text.textChanged.connect(self.value_changed.emit)
+        self.select_type.currentIndexChanged.connect(self.value_changed.emit)
+        self.select_type.currentIndexChanged.connect(self.change_type)
+        self.select_file_btn.clicked.connect(self.select_file)
+
+    def change_type(self, index):
+        if self.state == index:
+            return
+        if self.state == 1:
+            self.values[1] == self.first_text.text(), self.second_text.text()
+        else:
+            self.values[self.state] = self.first_text.text()
+        if index == 1:
+            self.second_text.setHidden(False)
+            self.second_label.setHidden(False)
+            self.layout().setColumnStretch(1, 1)
+            self.first_text.setText(self.values[1][0])
+            self.second_text.setText(self.values[1][1])
+            self.first_label.setText("Base")
+            self.select_file_btn.setHidden(True)
+        else:
+            self.second_text.setHidden(True)
+            self.second_label.setHidden(True)
+            self.layout().setColumnStretch(1, 0)
+            self.first_label.setText(["Suffix:", "", "Path:"][index])
+            self.first_text.setText(self.values[index])
+            self.select_file_btn.setHidden(index == 0)
+        self.state = index
+
+    def select_file(self):
+        dial = QFileDialog()
+        dial.setFileMode(QFileDialog.ExistingFile)
+        dial.setAcceptMode(QFileDialog.AcceptOpen)
+
+        if dial.exec():
+            self.first_text.setText(dial.selectedFiles()[0])
+
+    def is_valid(self):
+        if self.select_type.currentIndex() == 0:
+            return self.first_text.text().strip() != ""
+        if self.select_type.currentIndex() == 1:
+            return self.first_text.text().strip() != "" and self.second_text.text().strip() != ""
+        else:
+            text =self.first_text.text().strip()
+            return text != "" and os.path.exists(text) and os.path.isfile(text)
+
+    def get_value(self, name=""):
+        mask_type = self.select_type.currentIndex()
+        if mask_type == 0:
+            return MaskSuffix(name, self.first_text.text().strip())
+        elif mask_type == 1:
+            return MaskSub(name, self.first_text.text().strip(), self.second_text.text().strip())
+        else:
+            return MaskFile(name, self.first_text.text().strip())
+
+
 class CreatePlan(QWidget):
 
     plan_created = Signal()
     plan_node_changed = Signal()
+    mask_operation_names = ["Reuse mask", "Mask intersection", "Mask sum"]
 
     def __init__(self, settings: PartSettings):
         super(CreatePlan, self).__init__()
@@ -94,7 +229,7 @@ class CreatePlan(QWidget):
         self.clean_plan_btn = QPushButton("Clean plan")
         self.remove_btn = QPushButton("Remove")
         self.choose_channel_btn = QPushButton("Choose channel")
-        self.update_element_btn = QCheckBox("Update element")
+        self.update_element_chk = QCheckBox("Update element")
         self.save_choose = QComboBox()
         self.save_choose.addItem("<none>")
         self.save_choose.addItems(self.save_translate_dict.keys())
@@ -106,18 +241,12 @@ class CreatePlan(QWidget):
         self.segment_stack = QTabWidget()
         self.segment_stack.addTab(self.segment_profile, "Profile")
         self.segment_stack.addTab(self.pipeline_profile, "Pipeline")
-        self.generate_mask_btn = QPushButton("Generate mask")
+        self.generate_mask_btn = QPushButton("Add mask")
         self.generate_mask_btn.setToolTip("Mask need to have unique name")
         self.mask_name = QLineEdit()
-        self.base_mask_name = QLineEdit()
-        self.swap_mask_name = QLineEdit()
-        self.mapping_file_button = QPushButton("Mask mapping file")
-        self.swap_mask_name_button = QPushButton("Name Substitution")
-        self.suffix_mask_name_button = QPushButton("Name suffix")
-        self.reuse_mask_btn = QPushButton("Reuse mask")
-        self.set_mask_name_btn = QPushButton("Set mask name")
-        self.intersect_mask_btn = QPushButton("Mask intersection")
-        self.sum_mask_btn = QPushButton("Mask sum")
+        self.mask_operation = QComboBox()
+        self.mask_operation.addItems(self.mask_operation_names)
+
         self.chanel_num = QSpinBox()
         self.channel_statistic_choose = QComboBox()
         self.channel_statistic_choose.addItems(["Same as segmentation"] + [str(x) for x in range(MAX_CHANNEL_NUM)])
@@ -134,7 +263,7 @@ class CreatePlan(QWidget):
         self.chose_profile_btn = QPushButton("Segment Profile")
         self.get_big_btn = QPushButton("Leave the biggest")
         self.get_big_btn.hide()
-        self.add_new_segmentation_btn = QPushButton("Add new segmantation")
+        self.add_new_segmentation_btn = QPushButton("Add new segmentation")
         self.get_big_btn.setDisabled(True)
         self.add_new_segmentation_btn.setDisabled(True)
         self.statistic_list = QListWidget(self)
@@ -148,6 +277,7 @@ class CreatePlan(QWidget):
         self.calculation_plan = CalculationPlan()
         self.plan.set_plan(self.calculation_plan)
         self.dilate_mask = MaskWidget(settings)
+        self.file_mask = FileMask()
 
         self.save_choose.currentTextChanged.connect(self.save_changed)
         self.statistic_list.currentTextChanged.connect(self.show_statistics)
@@ -158,11 +288,8 @@ class CreatePlan(QWidget):
         self.pipeline_profile.currentTextChanged.connect(self.show_segment)
         self.mask_name.textChanged.connect(self.mask_name_changed)
         self.generate_mask_btn.clicked.connect(self.create_mask)
-        self.reuse_mask_btn.clicked.connect(self.use_mask)
         self.clean_plan_btn.clicked.connect(self.clean_plan)
         self.remove_btn.clicked.connect(self.remove_element)
-        self.base_mask_name.textChanged.connect(self.mask_text_changed)
-        self.swap_mask_name.textChanged.connect(self.mask_text_changed)
         self.mask_name.textChanged.connect(self.mask_text_changed)
         self.chose_profile_btn.clicked.connect(self.add_segmentation)
         self.get_big_btn.clicked.connect(self.add_leave_biggest)
@@ -170,18 +297,12 @@ class CreatePlan(QWidget):
         self.save_plan_btn.clicked.connect(self.add_calculation_plan)
         # self.forgot_mask_btn.clicked.connect(self.forgot_mask)
         # self.cmap_save_btn.clicked.connect(self.save_to_cmap)
-        self.swap_mask_name_button.clicked.connect(self.mask_by_substitution)
-        self.suffix_mask_name_button.clicked.connect(self.mask_by_suffix)
-        self.mapping_file_button.clicked.connect(self.mask_by_mapping)
         self.save_btn.clicked.connect(self.add_save_to_project)
-        self.update_element_btn.stateChanged.connect(self.mask_text_changed)
-        self.update_element_btn.stateChanged.connect(self.show_statistics)
-        self.update_element_btn.stateChanged.connect(self.show_segment)
-        self.update_element_btn.stateChanged.connect(self.update_names)
+        self.update_element_chk.stateChanged.connect(self.mask_text_changed)
+        self.update_element_chk.stateChanged.connect(self.show_statistics)
+        self.update_element_chk.stateChanged.connect(self.show_segment)
+        self.update_element_chk.stateChanged.connect(self.update_names)
         self.choose_channel_btn.clicked.connect(self.choose_channel)
-        self.intersect_mask_btn.clicked.connect(self.mask_intersect)
-        self.set_mask_name_btn.clicked.connect(self.set_mask_name)
-        self.sum_mask_btn.clicked.connect(self.mask_sum)
         self.segment_stack.currentChanged.connect(self.change_segmentation_table)
 
         plan_box = QGroupBox("Calculate plan:")
@@ -192,7 +313,7 @@ class CreatePlan(QWidget):
         bt_lay.addWidget(self.save_plan_btn, 0, 0)
         bt_lay.addWidget(self.clean_plan_btn, 0, 1)
         bt_lay.addWidget(self.remove_btn, 1, 0)
-        bt_lay.addWidget(self.update_element_btn, 1, 1)
+        bt_lay.addWidget(self.update_element_chk, 1, 1)
         lay.addLayout(bt_lay)
         plan_box.setLayout(lay)
         plan_box.setStyleSheet(group_sheet)
@@ -213,50 +334,20 @@ class CreatePlan(QWidget):
         other_box.setLayout(bt_lay)
         other_box.setStyleSheet(group_sheet)
 
-        file_mask_box = QGroupBox("Mask from file")
-        file_mask_box.setStyleSheet(group_sheet)
-        file_mask_box.setCheckable(True)
-        lay = QGridLayout()
-        lay.setSpacing(0)
-        # lay.addWidget(QLabel("Mask name:"), 0, 0)
-        # lay.addWidget(self.file_mask_name, 0, 1, 1, 2)
-        lay.addWidget(self.mapping_file_button, 2, 0, 1, 2)
-        lay.addWidget(QLabel("Suffix/Sub string:"), 3, 1)
-        lay.addWidget(QLabel("Replace:"), 3, 0)
-        lay.addWidget(self.base_mask_name, 4, 1)
-        lay.addWidget(self.swap_mask_name, 4, 0)
-        lay.addWidget(self.suffix_mask_name_button, 5, 0)
-        lay.addWidget(self.swap_mask_name_button, 5, 1)
-        file_mask_box.setLayout(lay)
-
-        segmentation_mask_box = QGroupBox("Mask from segmentation")
-        segmentation_mask_box.setStyleSheet(group_sheet)
-        lay = QGridLayout()
-        lay.setSpacing(0)
-        lay.setContentsMargins(0, 0, 0, 0)
-        lay.addWidget(self.dilate_mask)
-        lay.addWidget(self.generate_mask_btn)
-        # lay.addWidget(right_label("Mask name:"), 0, 0)
-        # lay.addWidget(self.mask_name, 0, 1, 1, 2)
-        # lay.addWidget(right_label("Dilate radius"), 1, 0)
-        # lay.addWidget(self.dilate_radius_spin, 1, 1)
-        # lay.addWidget(self.generate_mask, 1, 2)
-        segmentation_mask_box.setLayout(lay)
-
-        mask_box = QGroupBox("Mask:")
+        mask_box = QGroupBox("Mask from:")
         mask_box.setStyleSheet(group_sheet)
+        self.mask_stack = QTabWidget()
+
+        self.mask_stack.addTab(stretch_widget(self.mask_operation), "existing mask")
+        self.mask_stack.addTab(stretch_widget(self.dilate_mask), "segmentation")
+        self.mask_stack.addTab(stretch_widget(self.file_mask), "file")
+
         lay = QGridLayout()
         lay.setSpacing(0)
-        name_lay = QHBoxLayout()
-        name_lay.addWidget(right_label("Mask name:"))
-        name_lay.addWidget(self.mask_name)
-        lay.addLayout(name_lay, 0, 0, 1, 2)
-        lay.addWidget(self.set_mask_name_btn, 1, 0)
-        lay.addWidget(self.reuse_mask_btn, 1, 1)
-        lay.addWidget(self.intersect_mask_btn, 2, 0)
-        lay.addWidget(self.sum_mask_btn, 2, 1)
-        lay.addWidget(file_mask_box, 4, 0, 1, 2)
-        lay.addWidget(segmentation_mask_box, 3, 0, 1, 2)
+        lay.addWidget(QLabel("Mask name:"), 0, 0)
+        lay.addWidget(self.mask_name, 0, 1)
+        lay.addWidget(self.mask_stack, 1, 0, 1, 2)
+        lay.addWidget(self.generate_mask_btn, 2, 0, 1, 2)
         mask_box.setLayout(lay)
 
         segment_box = QGroupBox("Segmentation:")
@@ -293,9 +384,9 @@ class CreatePlan(QWidget):
 
         layout = QGridLayout()
         fst_col = QVBoxLayout()
-        fst_col.addWidget(plan_box)
+        fst_col.addWidget(plan_box, 1)
         fst_col.addWidget(mask_box)
-        layout.addLayout(fst_col, 0, 0, 0, 1)
+        layout.addLayout(fst_col, 0, 0, 4, 1)
         # layout.addWidget(plan_box, 0, 0, 3, 1)
         # layout.addWidget(mask_box, 3, 0, 2, 1)
         # layout.addWidget(segmentation_mask_box, 1, 1)
@@ -305,13 +396,9 @@ class CreatePlan(QWidget):
         layout.addWidget(info_box, 3, 1, 1, 2)
         self.setLayout(layout)
 
-        self.reuse_mask_btn.setDisabled(True)
         self.generate_mask_btn.setDisabled(True)
         self.chose_profile_btn.setDisabled(True)
         self.add_calculation_btn.setDisabled(True)
-        self.swap_mask_name_button.setDisabled(True)
-        self.suffix_mask_name_button.setDisabled(True)
-        self.mapping_file_button.setDisabled(True)
 
         self.mask_allow = False
         self.segment_allow = False
@@ -322,6 +409,10 @@ class CreatePlan(QWidget):
         self.plan.changed_node.connect(self.node_type_changed)
         self.plan_node_changed.connect(self.show_segment)
         self.plan_node_changed.connect(self.show_statistics)
+        self.plan_node_changed.connect(self.mask_stack_change)
+        self.mask_stack.currentChanged.connect(self.mask_stack_change)
+        self.file_mask.value_changed.connect(self.mask_stack_change)
+        self.mask_name.textChanged.connect(self.mask_stack_change)
         self.node_type_changed()
 
     def change_segmentation_table(self):
@@ -367,7 +458,7 @@ class CreatePlan(QWidget):
         self.plan.update_view()
 
     def update_names(self):
-        if self.update_element_btn.isChecked():
+        if self.update_element_chk.isChecked():
             self.chose_profile_btn.setText("Replace Segment Profile")
             self.add_calculation_btn.setText("Replace statistic calculation")
             self.generate_mask_btn.setText("Replace mask")
@@ -421,48 +512,13 @@ class CreatePlan(QWidget):
         self.save_activate()
         self.plan_node_changed.emit()
 
-    def mask_intersect(self):
-        dial = TwoMaskDialog(self.mask_set)
-        if dial.exec_():
-            mask_name = str(self.mask_name.text()).strip()
-            name1, name2 = dial.get_result()
-            if self.update_element_btn.isChecked():
-                self.calculation_plan.replace_step(MaskIntersection(mask_name, name1, name2))
-            else:
-                self.calculation_plan.add_step(MaskIntersection(mask_name, name1, name2))
-            self.plan.update_view()
-
-    def mask_sum(self):
-        dial = TwoMaskDialog(self.mask_set)
-        if dial.exec_():
-            mask_name = str(self.mask_name.text()).strip()
-            name1, name2 = dial.get_result()
-            if self.update_element_btn.isChecked():
-                self.calculation_plan.replace_step(MaskSum(mask_name, name1, name2))
-            else:
-                self.calculation_plan.add_step(MaskSum(mask_name, name1, name2))
-            self.plan.update_view()
-
     def choose_channel(self):
         chanel_num = self.chanel_num.value()
         self.channels_used = True
-        if self.update_element_btn.isChecked():
+        if self.update_element_chk.isChecked():
             self.calculation_plan.replace_step(ChooseChanel(chanel_num))
         else:
             self.calculation_plan.add_step(ChooseChanel(chanel_num))
-        self.plan.update_view()
-
-    def set_mask_name(self):
-        name = str(self.mask_name.text()).strip()
-        if name != "" and name in self.mask_set:
-            QMessageBox.information(self, "Exists", "mask with this name already exists")
-            return
-        conflict_mask, used_mask = self.calculation_plan.get_file_mask_names()
-        if len(conflict_mask) > 0:
-            logging.info("Mask in use")
-            QMessageBox.warning(self, "In use", "Masks {} are used in other places".format(", ".join(conflict_mask)))
-            return
-        self.calculation_plan.replace_name(name)
         self.plan.update_view()
 
     def add_save_to_project(self):
@@ -479,95 +535,87 @@ class CreatePlan(QWidget):
             del values["suffix"]
             del values["directory"]
             save_elem = Save(suffix, directory, save_class.get_name(), save_class.get_short_name(), values)
-            if self.update_element_btn.isChecked():
+            if self.update_element_chk.isChecked():
                 self.calculation_plan.replace_step(save_elem)
             else:
                 self.calculation_plan.add_step(save_elem)
             self.plan.update_view()
 
-    def mask_by_mapping(self):
-        name = str(self.mask_name.text()).strip()
-        if self.update_element_btn.isChecked():
-            node = self.calculation_plan.get_node()
-            old_name = node.operation.name
-            self.mask_set.remove(old_name)
-            self.calculation_plan.replace_step(MaskFile(name, ""))
-        else:
-            self.calculation_plan.add_step(MaskFile(name, ""))
-        self.plan.update_view()
-        self.mask_set.add(name)
-        self.mask_text_changed()
-        self.mask_name_changed(self.mask_name.text)
-
-    def mask_by_suffix(self):
-        name = str(self.mask_name.text()).strip()
-        suffix = str(self.base_mask_name.text()).strip()
-        if self.update_element_btn.isChecked():
-            node = self.calculation_plan.get_node()
-            old_name = node.operation.name
-            self.mask_set.remove(old_name)
-            self.calculation_plan.replace_step(MaskSuffix(name, suffix))
-        else:
-            self.calculation_plan.add_step(MaskSuffix(name, suffix))
-        self.plan.update_view()
-        self.mask_set.add(name)
-        self.mask_text_changed()
-        self.mask_name_changed(self.mask_name.text)
-
-    def mask_by_substitution(self):
-        name = str(self.mask_name.text()).strip()
-        base = str(self.base_mask_name.text()).strip()
-        repl = str(self.swap_mask_name.text()).strip()
-        if self.update_element_btn.isChecked():
-            node = self.calculation_plan.get_node()
-            old_name = node.operation.name
-            self.mask_set.remove(old_name)
-            self.calculation_plan.replace_step(MaskSub(name, base, repl))
-        else:
-            self.calculation_plan.add_step(MaskSub(name, base, repl))
-        self.plan.update_view()
-        self.mask_set.add(name)
-        self.mask_text_changed()
-        self.mask_name_changed(self.mask_name.text)
-
-    def forgot_mask(self):
-        self.calculation_plan.add_step(Operations.clean_mask)
-        self.plan.update_view()
-
     def create_mask(self):
         text = str(self.mask_name.text()).strip()
-        mask_property = self.dilate_mask.get_mask_property()
+
         if text != "" and text in self.mask_set:
             QMessageBox.warning(self, "Already exists", "Mask with this name already exists", QMessageBox.Ok)
             return
-        if self.update_element_btn.isChecked():
+        if self.mask_stack.currentIndex() == 0:  # existing mask
+            if self.mask_operation.currentIndex() == 0: # Reuse Mask:
+                mask_dialog = MaskDialog
+                MaskConstruct = lambda x,y: MaskUse(y)
+            else:
+                mask_dialog = TwoMaskDialog
+                if self.mask_operation.currentIndex() == 1:  # Mask intersection
+                    MaskConstruct = MaskIntersection
+                else:
+                    MaskConstruct = MaskSum
+            dial = mask_dialog(self.mask_set)
+            if not dial.exec():
+                return
+            names = dial.get_result()
+
+            mask_ob = MaskConstruct(text, *names)
+        elif self.mask_stack.currentIndex() == 1:  # segmentation
+            mask_ob = MaskCreate(text, self.dilate_mask.get_mask_property())
+        else: # file
+            mask_ob = self.file_mask.get_value(text)
+
+        if self.update_element_chk.isChecked():
             node = self.calculation_plan.get_node()
             name = node.operation.name
+            if name in self.calculation_plan.get_reused_mask() and name != text:
+                QMessageBox.warning(self, "Cannot remove",
+                                    f"Cannot remove mask '{name}' from plan because it is used in other elements")
+                return
+
             self.mask_set.remove(name)
-            self.mask_set.add(text)
-            self.calculation_plan.replace_step(MaskCreate(text, mask_property))
+            self.mask_set.add(mask_ob.name)
+            self.calculation_plan.replace_step(mask_ob)
             pass
         else:
-            self.mask_set.add(text)
-            self.calculation_plan.add_step(MaskCreate(text, mask_property))
+            self.mask_set.add(mask_ob.name)
+            self.calculation_plan.add_step(mask_ob)
         self.plan.update_view()
         self.mask_text_changed()
 
-    def use_mask(self):
-        text = str(self.mask_name.text())
-        if text not in self.mask_set:
-            QMessageBox.warning(self, "Don`t exists", "Mask with this name do not exists", QMessageBox.Ok)
-            return
-        self.calculation_plan.add_step(MaskUse(text))
-        self.plan.update_view()
+    def mask_stack_change(self):
+        node_type = self.calculation_plan.get_node_type()
+        if self.update_element_chk.isChecked() and node_type not in [NodeType.mask, NodeType.file_mask]:
+            self.generate_mask_btn.setDisabled(True)
+        text = self.mask_name.text()
+        update = self.update_element_chk.isChecked()
+        if not update and self.calculation_plan.get_node().operation.name == text:
+            self.generate_mask_btn.setDisabled(True)
+        if self.mask_stack.currentIndex() == 0:
+            if len(self.mask_set) > 0 and \
+                    ((not update and node_type == NodeType.root) or(update and node_type == NodeType.file_mask)):
+                self.generate_mask_btn.setEnabled(True)
+            else:
+                self.generate_mask_btn.setEnabled(False)
+        elif self.mask_stack.currentIndex() == 1:
+            if (not update and node_type == NodeType.segment) or (update and node_type == NodeType.mask):
+                self.generate_mask_btn.setEnabled(True)
+            else:
+                self.generate_mask_btn.setEnabled(False)
+        else:
+            if (not update and node_type == NodeType.root) or (update and node_type == NodeType.file_mask):
+                self.generate_mask_btn.setEnabled(self.file_mask.is_valid())
+            else:
+                self.generate_mask_btn.setEnabled(False)
 
     def mask_name_changed(self, text):
         if str(text) in self.mask_set:
             self.generate_mask_btn.setDisabled(True)
-            self.reuse_mask_btn.setDisabled(False)
         else:
             self.generate_mask_btn.setDisabled(False)
-            self.reuse_mask_btn.setDisabled(True)
 
     def add_leave_biggest(self):
         profile = self.calculation_plan.get_node().operation
@@ -587,7 +635,7 @@ class CreatePlan(QWidget):
         if self.segment_stack.currentIndex() == 0:
             text = str(self.segment_profile.currentItem().text())
             profile = self.settings.segmentation_profiles[text]
-            if self.update_element_btn.isChecked():
+            if self.update_element_chk.isChecked():
                 self.calculation_plan.replace_step(profile)
             else:
                 self.calculation_plan.add_step(profile)
@@ -610,8 +658,6 @@ class CreatePlan(QWidget):
             self.calculation_plan.set_position(old_pos)
             self.plan.update_view()
 
-
-
     def add_statistics(self):
         text = str(self.statistic_list.currentItem().text())
         statistics = self.settings.statistic_profiles[text]
@@ -619,9 +665,10 @@ class CreatePlan(QWidget):
         prefix = str(self.statistic_name_prefix.text()).strip()
         channel = self.channel_statistic_choose.currentIndex() - 1
         statistics_copy.name_prefix = prefix
+        # noinspection PyTypeChecker
         statistic_calculate = StatisticCalculate(channel=channel, statistic_profile=statistics_copy, name_prefix=prefix,
                                                  units=self.units_choose.get_value())
-        if self.update_element_btn.isChecked():
+        if self.update_element_chk.isChecked():
             self.calculation_plan.replace_step(statistic_calculate)
         else:
             self.calculation_plan.add_step(statistic_calculate)
@@ -646,53 +693,18 @@ class CreatePlan(QWidget):
 
     def mask_text_changed(self):
         name = str(self.mask_name.text()).strip()
-        self.suffix_mask_name_button.setDisabled(True)
-        self.swap_mask_name_button.setDisabled(True)
-        self.mapping_file_button.setDisabled(True)
         self.generate_mask_btn.setDisabled(True)
-        self.reuse_mask_btn.setDisabled(True)
-        self.set_mask_name_btn.setDisabled(True)
-        self.intersect_mask_btn.setDisabled(True)
-        self.sum_mask_btn.setDisabled(True)
         # load mask from file
-        if not self.update_element_btn.isChecked():
-            self.set_mask_name_btn.setDisabled(True)
-            if self.file_mask_allow and (name == "" or name not in self.mask_set):
-                base_text = str(self.base_mask_name.text()).strip()
-                rep_text = str(self.swap_mask_name.text()).strip()
-                self.suffix_mask_name_button.setEnabled(base_text != "")
-                self.swap_mask_name_button.setEnabled((base_text != "") and (rep_text != ""))
-                self.mapping_file_button.setEnabled(True)
-                self.intersect_mask_btn.setEnabled(len(self.mask_set) > 1)
-                self.sum_mask_btn.setEnabled(len(self.mask_set) > 1)
+        if not self.update_element_chk.isChecked():
             # generate mask from segmentation
             if self.mask_allow and (name == "" or name not in self.mask_set):
                 self.generate_mask_btn.setEnabled(True)
-            # reuse mask
-            if self.file_mask_allow and name in self.mask_set:
-                self.reuse_mask_btn.setEnabled(True)
-        # edit mask
         else:
             if self.node_type != NodeType.file_mask and self.node_type != NodeType.mask:
                 return
-            # change mask name
-            if name not in self.mask_set and name != "":
-                self.set_mask_name_btn.setEnabled(True)
-            if self.node_type == NodeType.file_mask and \
-                    (name == "" or name == self.node_name or name not in self.mask_set):
-                base_text = str(self.base_mask_name.text()).strip()
-                rep_text = str(self.swap_mask_name.text()).strip()
-                self.suffix_mask_name_button.setEnabled(base_text != "")
-                self.swap_mask_name_button.setEnabled((base_text != "") and (rep_text != ""))
-                self.mapping_file_button.setEnabled(True)
-                self.intersect_mask_btn.setEnabled(len(self.mask_set) > 1)
-                self.sum_mask_btn.setEnabled(len(self.mask_set) > 1)
             # generate mask from segmentation
             if self.node_type == NodeType.mask and (name == "" or name == self.node_name or name not in self.mask_set):
                 self.generate_mask_btn.setEnabled(True)
-            # reuse mask
-            if self.node_type == NodeType.file_mask and name in self.mask_set:
-                self.reuse_mask_btn.setEnabled(True)
 
     def add_calculation_plan(self, text=None):
         if text is None or isinstance(text, bool):
@@ -763,7 +775,7 @@ class CreatePlan(QWidget):
         self.information.setText(str(profile))
 
     def show_statistics(self):
-        if self.update_element_btn.isChecked():
+        if self.update_element_chk.isChecked():
             if self.node_type == NodeType.statics:
                 self.add_calculation_btn.setEnabled(True)
             else:
@@ -796,7 +808,7 @@ class CreatePlan(QWidget):
         self.information.setText(profile.pretty_print(analysis_algorithm_dict))
 
     def show_segment(self):
-        if self.update_element_btn.isChecked() and self.segment_stack.currentIndex() == 0:
+        if self.update_element_chk.isChecked() and self.segment_stack.currentIndex() == 0:
             self.get_big_btn.setDisabled(True)
             if self.node_type == NodeType.segment:
                 self.chose_profile_btn.setEnabled(True)
