@@ -16,9 +16,11 @@ from PartSeg.utils.io_utils import LoadBase, ProjectInfoBase
 from .custom_load_dialog import CustomLoadDialog, LoadProperty
 from .waiting_dialog import ExecuteFunctionDialog
 
+
 class CustomTreeWidget(QTreeWidget):
     def mouseMoveEvent(self, QMouseEvent):
         QApplication.setOverrideCursor(Qt.ArrowCursor)
+
 
 class MultipleFileWidget(QWidget):
     def __init__(self, settings: BaseSettings, load_dict: Dict[str, LoadBase]):
@@ -137,7 +139,7 @@ class MultipleFileWidget(QWidget):
             name, ok = QInputDialog.getText(self, "Save name", "Save name:", text=name)
             if not ok:
                 return
-            while name in sub_dict:
+            while name in sub_dict or name == "raw image":
                 name, ok = QInputDialog.getText(self, "Save name", "Save name (previous in use):", text=name)
                 if not ok:
                     return
@@ -153,6 +155,9 @@ class MultipleFileWidget(QWidget):
             item = QTreeWidgetItem(self.file_view, [clipped_text])
             item.setToolTip(0, state.file_path)
             self.file_list.append(state.file_path)
+            if not state.is_raw():
+                QTreeWidgetItem(item, ["raw image"])
+                sub_dict["raw image"] = state.get_raw_copy()
         item.setExpanded(True)
         QTreeWidgetItem(item, [name])
         sub_dict[name] = state

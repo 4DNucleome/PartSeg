@@ -15,6 +15,12 @@ class ProjectTuple(ProjectInfoBase, typing.NamedTuple):
     history: typing.List[HistoryElement] = []
     algorithm_parameters: dict = {}
 
+    def get_raw_copy(self):
+        return ProjectTuple(self.file_path, self.image.substitute())
+
+    def is_raw(self):
+        return self.segmentation is None
+
 
 class MaskInfo(typing.NamedTuple):
     file_path: str

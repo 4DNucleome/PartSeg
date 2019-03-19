@@ -28,6 +28,12 @@ class ProjectInfoBase:
     def _replace(self, file_path=None, image=None):
         pass
 
+    def get_raw_copy(self):
+        raise NotImplementedError
+
+    def is_raw(self):
+        raise NotImplementedError
+
 
 class SaveBase(AlgorithmDescribeBase, ABC):
     @classmethod

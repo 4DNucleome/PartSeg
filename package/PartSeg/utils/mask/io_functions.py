@@ -16,8 +16,14 @@ from PartSeg.tiff_image import Image, ImageWriter, ImageReader
 class SegmentationTuple(ProjectInfoBase, typing.NamedTuple):
     file_path: str
     image: Union[Image, str, None]
-    segmentation: typing.Optional[np.ndarray]
-    list_of_components: typing.List[int]
+    segmentation: typing.Optional[np.ndarray] = None
+    list_of_components: typing.List[int] = []
+
+    def get_raw_copy(self):
+        return SegmentationTuple(self.file_path, self.image.substitute())
+
+    def is_raw(self):
+        return self.segmentation is None
 
 
 def save_stack_segmentation(file: Union[tarfile.TarFile, str, TextIOBase, BufferedIOBase, RawIOBase, IOBase],
