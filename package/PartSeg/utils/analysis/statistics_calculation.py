@@ -15,14 +15,17 @@ from scipy.spatial.distance import cdist
 from sympy import symbols
 from math import pi
 
+from PartSeg.utils.channel_class import Channel
 from .. import autofit as af
 from ..border_rim import border_mask
 from ..class_generator import BaseSerializableClass
 from ..class_generator import enum_register
-from ..algorithm_describe_base import AlgorithmDescribeBase, Register, AlgorithmProperty
+from ..algorithm_describe_base import AlgorithmDescribeBase, Register, AlgorithmProperty, AlgorithmDescribeNotFound
 from ..universal_const import UNIT_SCALE, Units
 from ..utils import class_to_dict
 
+
+# TODO change image to channel in signature of measurment calculate_property
 
 class AreaType(Enum):
     Segmentation = 1
@@ -55,15 +58,55 @@ class SettingsValue(NamedTuple):
 
 class Leaf(BaseSerializableClass):
     # noinspection PyUnusedLocal
-    # noinspection PyMissingConstructor
+    # noinspection PyMissingConstructor,PyShadowingBuiltins
     def __init__(self, name: str, dict: Dict = None, power: float = 1.0, area: Optional[AreaType] = None,
-                 per_component: Optional[PerComponent] = None):...
+                 per_component: Optional[PerComponent] = None, channel: Optional[Channel] = None): ...
 
     name: str
     dict: Dict = dict()
     power: float = 1.0
     area: Optional[AreaType] = None
     per_component: Optional[PerComponent] = None
+    channel: Optional[Channel] = None
+
+    def get_channel_num(self, statistic_dict: Dict[str, 'StatisticMethodBase']):
+        resp = set()
+        if self.channel is not None and self.channel >= 0:
+            resp.add(self.channel)
+        try:
+            statistic_method = statistic_dict[self.name]
+            for el in statistic_method.get_fields():
+                if issubclass(el.value_type, Channel):
+                    if el.name in self.dict:
+                        resp.add(self.dict[el.name])
+        except:
+            raise AlgorithmDescribeNotFound(self.name)
+        return resp
+
+    def pretty_print(self,  statistic_dict: Dict[str, 'StatisticMethodBase']):
+        resp = self.name
+        if self.area is not None:
+            resp = str(self.area) + " " + resp
+        if self.per_component is not None and self.per_component == PerComponent.Yes:
+            resp += " per component "
+        if len(self.dict) != 0 or self.channel is not None:
+            resp += "["
+            arr = []
+            if self.channel is not None and self.channel >= 0:
+                arr.append(f"channel={self.channel+1}")
+            if len(self.dict) > 0:
+                try:
+                    statistic_method = statistic_dict[self.name]
+                    fields_dict = statistic_method.get_fields_dict()
+                    for k, v in self.dict.items():
+                        arr.append(f"{fields_dict[k].user_name}={v}")
+                except KeyError:
+                    arr.append("class not found")
+            resp += ", ".join(arr)
+            resp += "]"
+        if self.power != 1.0:
+            resp += f" to the power {self.power}"
+        return resp
 
     def __str__(self):
         resp = self.name
@@ -71,10 +114,11 @@ class Leaf(BaseSerializableClass):
             resp = str(self.area) + " " + resp
         if self.per_component is not None and self.per_component == PerComponent.Yes:
             resp += " per component "
-        if len(self.dict) != 0:
-
+        if len(self.dict) != 0 or self.channel is not None:
             resp += "["
             arr = []
+            if self.channel is not None and self.channel >= 0:
+                arr.append(f"channel={self.channel}")
             for k, v in self.dict.items():
                 arr.append(f"{k.replace('_', ' ')}={v}")
             resp += ", ".join(arr)
@@ -99,9 +143,19 @@ class Node(BaseSerializableClass):
     # noinspection PyMissingConstructor
     def __init__(self, left: Union['Node', Leaf], op: str, right: Union['Node', Leaf]): ...
 
+    def get_channel_num(self, statistic_dict: Dict[str, 'StatisticMethodBase']):
+        return self.left.get_channel_num(statistic_dict) | self.right.get_channel_num(statistic_dict)
+
     def __str__(self):
         left_text = "(" + str(self.left) + ")" if isinstance(self.left, Node) else str(self.left)
         right_text = "(" + str(self.right) + ")" if isinstance(self.right, Node) else str(self.right)
+        return left_text + self.op + right_text
+
+    def pretty_print(self, statistic_dict: Dict[str, 'StatisticMethodBase']):
+        left_text = "(" + self.left.pretty_print(statistic_dict) + ")" if isinstance(self.left, Node) \
+            else self.left.pretty_print(statistic_dict)
+        right_text = "(" + self.right.pretty_print(statistic_dict) + ")" if isinstance(self.right, Node) \
+            else self.right.pretty_print(statistic_dict)
         return left_text + self.op + right_text
 
     def get_unit(self, ndim):
@@ -120,6 +174,9 @@ class StatisticEntry(BaseSerializableClass):
 
     def get_unit(self, unit: Units, ndim):
         return str(self.calculation_tree.get_unit(ndim)).format(str(unit))
+
+    def get_channel_num(self, statistic_dict: Dict[str, 'StatisticMethodBase']):
+        return self.calculation_tree.get_channel_num(statistic_dict)
 
 
 class StatisticMethodBase(AlgorithmDescribeBase, ABC):
@@ -162,6 +219,9 @@ class StatisticMethodBase(AlgorithmDescribeBase, ABC):
         """Return units for statistic. They are shown to user"""
         raise NotImplementedError()
 
+    def need_channel(self):
+        return False
+
 
 def empty_fun(_a0=None, _a1=None):
     pass
@@ -192,6 +252,12 @@ class StatisticProfile(object):
             return tree.area == AreaType.Mask_without_segmentation
         else:
             return self.need_mask(tree.left) or self.need_mask(tree.right)
+
+    def get_channels_num(self):
+        resp = set()
+        for el in self.chosen_fields:
+            resp.update(el.get_channel_num(STATISTIC_DICT))
+        return resp
 
     def __str__(self):
         text = "Profile name: {}\n".format(self.name)
@@ -239,10 +305,15 @@ class StatisticProfile(object):
             method = STATISTIC_DICT[node.name]
             kw = dict(kwargs)
             kw.update(node.dict)
-            hash_str = hash_fun_call_name(method, node.dict, node.area, node.per_component)
+            hash_str = hash_fun_call_name(method, node.dict, node.area, node.per_component, node.channel)
             if hash_str in help_dict:
                 val = help_dict[hash_str]
             else:
+                if node.channel is not None:
+                    kw['channel'] = kw[f"chanel_{node.channel}"]
+                    kw['channel_num'] = node.channel
+                else:
+                    kw['channel_num'] = -1
                 kw['help_dict'] = help_dict
                 kw['_area'] = node.area
                 kw['_per_component'] = node.per_component
@@ -265,7 +336,7 @@ class StatisticProfile(object):
                 else:
                     val = method.calculate_property(**kw)
                 help_dict[hash_str] = val
-            unit = method.get_units(3) if kw["image"].shape[0] > 1 else method.get_units(3)
+            unit = method.get_units(3) if kw["channel"].shape[0] > 1 else method.get_units(3)
             if node.power != 1:
                 return pow(val, node.power), pow(unit, node.power)
             return val, unit
@@ -277,8 +348,8 @@ class StatisticProfile(object):
         logging.error("Wrong statistics: {}".format(node))
         return 1
 
-    def calculate(self, image: np.ndarray, segmentation: np.ndarray, full_mask: np.ndarray, mask: np.ndarray,
-                  voxel_size, result_units: Units, range_changed=None, step_changed=None):
+    def calculate(self, channel: np.ndarray, segmentation: np.ndarray, full_mask: np.ndarray, mask: np.ndarray,
+                  voxel_size, result_units: Units, range_changed=None, step_changed=None, **kwargs):
         if range_changed is None:
             range_changed = empty_fun
         if step_changed is None:
@@ -286,11 +357,18 @@ class StatisticProfile(object):
         if self._need_mask and mask is None:
             raise ValueError("Statistics need mask")
         result = OrderedDict()
-        image = image.astype(np.float)
+        channel = channel.astype(np.float)
         help_dict = dict()
         result_scalar = UNIT_SCALE[result_units.value]
-        kw = {"image": image, "segmentation": segmentation, "mask": mask, "full_segmentation": full_mask,
+        kw = {"channel": channel, "segmentation": segmentation, "mask": mask, "full_segmentation": full_mask,
               "voxel_size": voxel_size, "result_scalar": result_scalar}
+        for el in kwargs.keys():
+            if not el.startswith("channel_"):
+                raise ValueError(f"unknown parameter {el} of calculate function")
+        for num in self.get_channels_num():
+            if f"channel_{num}" not in kwargs:
+                raise ValueError(f"channel_{num} need to be passed as argument of calculate function" )
+        kw.update(kwargs)
         for el in self.chosen_fields:
             if self._need_mask_without_segmentation(el.calculation_tree):
                 mm = mask.copy()
@@ -316,9 +394,9 @@ class StatisticProfile(object):
         return result
 
 
-def calculate_main_axis(area_array: np.ndarray, image: np.ndarray, voxel_size):
+def calculate_main_axis(area_array: np.ndarray, channel: np.ndarray, voxel_size):
     # TODO check if it produces good values
-    cut_img = np.copy(image)
+    cut_img = np.copy(channel)
     cut_img[area_array == 0] = 0
     if np.all(cut_img == 0):
         return (0,) * len(voxel_size)
@@ -333,7 +411,7 @@ def calculate_main_axis(area_array: np.ndarray, image: np.ndarray, voxel_size):
     return size
 
 
-def get_main_axis_length(index: int, area_array: np.ndarray, image: np.ndarray, voxel_size,
+def get_main_axis_length(index: int, area_array: np.ndarray, channel: np.ndarray, voxel_size,
                          result_scalar,
                          _cache=False, **kwargs):
     _cache = _cache and "_area" in kwargs and "_per_component" in kwargs
@@ -341,20 +419,20 @@ def get_main_axis_length(index: int, area_array: np.ndarray, image: np.ndarray, 
         help_dict: Dict = kwargs["help_dict"]
         _area: AreaType = kwargs["_area"]
         _per_component: PerComponent = kwargs["_per_component"]
-        hash_name = hash_fun_call_name(calculate_main_axis, {}, _area, _per_component)
+        hash_name = hash_fun_call_name(calculate_main_axis, {}, _area, _per_component, kwargs["channel_num"])
         if hash_name not in help_dict:
-            help_dict[hash_name] = calculate_main_axis(area_array, image, [x * result_scalar for x in voxel_size])
+            help_dict[hash_name] = calculate_main_axis(area_array, channel, [x * result_scalar for x in voxel_size])
         return help_dict[hash_name][index]
     else:
-        return calculate_main_axis(area_array, image, [x * result_scalar for x in voxel_size])[index]
+        return calculate_main_axis(area_array, channel, [x * result_scalar for x in voxel_size])[index]
 
 
-def hash_fun_call_name(fun: Callable, arguments: Dict, area: AreaType, per_component: PerComponent):
+def hash_fun_call_name(fun: Callable, arguments: Dict, area: AreaType, per_component: PerComponent, channel: Channel):
     if hasattr(fun, "__module__"):
         fun_name = f"{fun.__module__}.{fun.__name__}"
     else:
         fun_name = fun.__name__
-    return "{}: {} # {} & {}".format(fun_name, arguments, area, per_component)
+    return "{}: {} # {} & {} * {}".format(fun_name, arguments, area, per_component, channel)
 
 
 class Volume(StatisticMethodBase):
@@ -457,19 +535,22 @@ class PixelBrightnessSum(StatisticMethodBase):
     text_info = "Pixel Brightness Sum", "Sum of pixel brightness for current segmentation"
 
     @staticmethod
-    def calculate_property(area_array: np.ndarray, image: np.ndarray, **_):
+    def calculate_property(area_array: np.ndarray, channel: np.ndarray, **_):
         """
         :param area_array: mask for area
-        :param image: data. same shape like area_type
+        :param channel: data. same shape like area_type
         :return: Pixels brightness sum on given area
         """
         if np.any(area_array):
-            return np.sum(image[area_array > 0])
+            return np.sum(channel[area_array > 0])
         return 0
 
     @classmethod
     def get_units(cls, ndim):
         return symbols("Pixel_brightness")
+
+    def need_channel(self):
+        return True
 
 
 class ComponentsNumber(StatisticMethodBase):
@@ -492,60 +573,72 @@ class MaximumPixelBrightness(StatisticMethodBase):
     text_info = "Maximum pixel brightness", "Calculate maximum pixel brightness for current area"
 
     @staticmethod
-    def calculate_property(area_array, image, **_):
+    def calculate_property(area_array, channel, **_):
         if np.any(area_array):
-            return np.max(image[area_array > 0])
+            return np.max(channel[area_array > 0])
         else:
             return 0
 
     @classmethod
     def get_units(cls, ndim):
         return symbols("Pixel_brightness")
+
+    def need_channel(self):
+        return True
 
 
 class MinimumPixelBrightness(StatisticMethodBase):
     text_info = "Minimum pixel brightness", "Calculate minimum pixel brightness for current area"
 
     @staticmethod
-    def calculate_property(area_array, image, **_):
+    def calculate_property(area_array, channel, **_):
         if np.any(area_array):
-            return np.min(image[area_array > 0])
+            return np.min(channel[area_array > 0])
         else:
             return 0
 
     @classmethod
     def get_units(cls, ndim):
         return symbols("Pixel_brightness")
+
+    def need_channel(self):
+        return True
 
 
 class MeanPixelBrightness(StatisticMethodBase):
     text_info = "Mean pixel brightness", "Calculate mean pixel brightness for current area"
 
     @staticmethod
-    def calculate_property(area_array, image, **_):
+    def calculate_property(area_array, channel, **_):
         if np.any(area_array):
-            return np.mean(image[area_array > 0])
+            return np.mean(channel[area_array > 0])
         else:
             return 0
 
     @classmethod
     def get_units(cls, ndim):
         return symbols("Pixel_brightness")
+
+    def need_channel(self):
+        return True
 
 
 class MedianPixelBrightness(StatisticMethodBase):
     text_info = "Median pixel brightness", "Calculate median pixel brightness for current area"
 
     @staticmethod
-    def calculate_property(area_array, image, **_):
+    def calculate_property(area_array, channel, **_):
         if np.any(area_array):
-            return np.median(image[area_array > 0])
+            return np.median(channel[area_array > 0])
         else:
             return 0
 
     @classmethod
     def get_units(cls, ndim):
         return symbols("Pixel_brightness")
+
+    def need_channel(self):
+        return True
 
 
 class StandardDeviationOfPixelBrightness(StatisticMethodBase):
@@ -553,9 +646,9 @@ class StandardDeviationOfPixelBrightness(StatisticMethodBase):
                 "Calculate standard deviation of pixel brightness for current area"
 
     @staticmethod
-    def calculate_property(area_array, image, **_):
+    def calculate_property(area_array, channel, **_):
         if np.any(area_array):
-            return np.std(image[area_array > 0])
+            return np.std(channel[area_array > 0])
         else:
             return 0
 
@@ -563,15 +656,18 @@ class StandardDeviationOfPixelBrightness(StatisticMethodBase):
     def get_units(cls, ndim):
         return symbols("Pixel_brightness")
 
+    def need_channel(self):
+        return True
+
 
 class MomentOfInertia(StatisticMethodBase):
     text_info = "Moment of inertia", "Calculate moment of inertia for segmented structure"
 
     @staticmethod
-    def calculate_property(area_array, image, voxel_size, **_):
-        if image.ndim != 3:
+    def calculate_property(area_array, channel, voxel_size, **_):
+        if channel.ndim != 3:
             return None
-        img = np.copy(image)
+        img = np.copy(channel)
         img[area_array == 0] = 0
         if np.all(img == 0):
             return 0
@@ -580,6 +676,9 @@ class MomentOfInertia(StatisticMethodBase):
     @classmethod
     def get_units(cls, ndim):
         return symbols("{}") ** 2 * symbols("Pixel_brightness")
+
+    def need_channel(self):
+        return True
 
 
 class LongestMainAxisLength(StatisticMethodBase):
@@ -593,6 +692,9 @@ class LongestMainAxisLength(StatisticMethodBase):
     def get_units(cls, ndim):
         return symbols("{}")
 
+    def need_channel(self):
+        return True
+
 
 class MiddleMainAxisLength(StatisticMethodBase):
     text_info = "Middle main axis length", "Length of second main axis"
@@ -605,6 +707,8 @@ class MiddleMainAxisLength(StatisticMethodBase):
     def get_units(cls, ndim):
         return symbols("{}")
 
+    def need_channel(self):
+        return True
 
 class ShortestMainAxisLength(StatisticMethodBase):
     text_info = "Shortest main axis length", "Length of third main axis"
@@ -616,6 +720,9 @@ class ShortestMainAxisLength(StatisticMethodBase):
     @classmethod
     def get_units(cls, ndim):
         return symbols("{}")
+
+    def need_channel(self):
+        return True
 
 
 class Compactness(StatisticMethodBase):
@@ -629,14 +736,14 @@ class Compactness(StatisticMethodBase):
         cache = cache and "_per_component" in kwargs
         if cache:
             help_dict = kwargs["help_dict"]
-            border_hash_str = hash_fun_call_name(Surface, {}, kwargs["_area"], kwargs["_per_component"])
+            border_hash_str = hash_fun_call_name(Surface, {}, kwargs["_area"], kwargs["_per_component"], Channel(-1))
             if border_hash_str not in help_dict:
                 border_surface = Surface.calculate_property(**kwargs)
                 help_dict[border_hash_str] = border_surface
             else:
                 border_surface = help_dict[border_hash_str]
 
-            volume_hash_str = hash_fun_call_name(Volume, {}, kwargs["_area"], kwargs["_per_component"])
+            volume_hash_str = hash_fun_call_name(Volume, {}, kwargs["_area"], kwargs["_per_component"], Channel(-1))
 
             if volume_hash_str not in help_dict:
                 volume = Volume.calculate_property(**kwargs)
@@ -664,14 +771,14 @@ class Sphericity(StatisticMethodBase):
         else:
             help_dict = {}
             kwargs.update({"_area": AreaType.Segmentation, "_per_component": PerComponent.No})
-        volume_hash_str = hash_fun_call_name(Volume, {}, kwargs["_area"], kwargs["_per_component"])
+        volume_hash_str = hash_fun_call_name(Volume, {}, kwargs["_area"], kwargs["_per_component"], Channel(-1))
         if volume_hash_str not in help_dict:
             volume = Volume.calculate_property(**kwargs)
             help_dict[volume_hash_str] = volume
         else:
             volume = help_dict[volume_hash_str]
 
-        diameter_hash_str = hash_fun_call_name(Diameter, {}, kwargs["_area"], kwargs["_per_component"])
+        diameter_hash_str = hash_fun_call_name(Diameter, {}, kwargs["_area"], kwargs["_per_component"], Channel(-1))
         if diameter_hash_str not in help_dict:
             diameter_val = Diameter.calculate_property(**kwargs)
             help_dict[diameter_hash_str] = diameter_val
@@ -739,18 +846,21 @@ class RimPixelBrightnessSum(StatisticMethodBase):
         return Leaf(name=cls.text_info[0], area=AreaType.Mask, per_component=PerComponent.No)
 
     @staticmethod
-    def calculate_property(image, segmentation, **kwargs):
+    def calculate_property(channel, segmentation, **kwargs):
         border_mask_array = border_mask(**kwargs)
         if border_mask_array is None:
             return None
         final_mask = np.array((border_mask_array > 0) * (segmentation > 0))
         if np.any(final_mask):
-            return np.sum(image[final_mask])
+            return np.sum(channel[final_mask])
         return 0
 
     @classmethod
     def get_units(cls, ndim):
         return symbols("Pixel_brightness")
+
+    def need_channel(self):
+        return True
 
 
 class DistancePoint(Enum):
@@ -774,14 +884,14 @@ class DistanceMaskSegmentation(StatisticMethodBase):
                 AlgorithmProperty("distance_to_segmentation", "Distance to segmentation", DistancePoint.Border)]
 
     @staticmethod
-    def calculate_points(image, area_array, voxel_size, result_scalar, point_type: DistancePoint) -> np.ndarray:
+    def calculate_points(channel, area_array, voxel_size, result_scalar, point_type: DistancePoint) -> np.ndarray:
         if point_type == DistancePoint.Border:
             area_pos = np.transpose(np.nonzero(get_border(area_array))).astype(np.float)
             area_pos += 0.5
             for i, val in enumerate([x * result_scalar for x in reversed(voxel_size)], start=1):
                 area_pos[:, -i] *= val
         elif point_type == DistancePoint.Mass_center:
-            im = np.copy(image)
+            im = np.copy(channel)
             im[area_array == 0] = 0
             area_pos = np.array([af.density_mass_center(im, voxel_size) * result_scalar])
         else:
@@ -789,12 +899,12 @@ class DistanceMaskSegmentation(StatisticMethodBase):
         return area_pos
 
     @classmethod
-    def calculate_property(cls, image, segmentation, mask, voxel_size, result_scalar, distance_from_mask: DistancePoint,
+    def calculate_property(cls, channel, segmentation, mask, voxel_size, result_scalar, distance_from_mask: DistancePoint,
                            distance_to_segmentation: DistancePoint, **kwargs):
         if not (np.any(mask) and np.any(segmentation)):
             return 0
-        mask_pos = cls.calculate_points(image, mask, voxel_size, result_scalar, distance_from_mask)
-        seg_pos = cls.calculate_points(image, segmentation, voxel_size, result_scalar, distance_to_segmentation)
+        mask_pos = cls.calculate_points(channel, mask, voxel_size, result_scalar, distance_from_mask)
+        seg_pos = cls.calculate_points(channel, segmentation, voxel_size, result_scalar, distance_to_segmentation)
         if mask_pos.shape[0] == 1 or seg_pos.shape[0] == 1:
             return cdist(mask_pos, seg_pos).min()
         else:
@@ -810,6 +920,9 @@ class DistanceMaskSegmentation(StatisticMethodBase):
     @classmethod
     def get_units(cls, ndim):
         return symbols("{}")
+
+    def need_channel(self):
+        return True
 
 
 def pixel_volume(spacing, result_scalar):

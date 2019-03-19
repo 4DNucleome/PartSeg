@@ -339,7 +339,7 @@ class AdvancedSettings(QWidget):
 
 class StatisticListWidgetItem(QListWidgetItem):
     def __init__(self, stat: Union[Node, Leaf], *args, **kwargs):
-        super().__init__(str(stat), *args, **kwargs)
+        super().__init__(stat.pretty_print(STATISTIC_DICT), *args, **kwargs)
         self.stat = stat
 
 
@@ -633,6 +633,7 @@ class StatisticsSettings(QWidget):
         # selected_row = self.profile_options.currentRow()
         assert isinstance(selected_item, StatisticListWidgetItem)
         node = deepcopy(selected_item.stat)
+        # noinspection PyTypeChecker
         node = self.get_parameters(node, self.statistic_area_choose.get_value(), self.per_component.get_value(),
                                    self.power_num.value())
         if node is None:

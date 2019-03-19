@@ -168,7 +168,7 @@ class StatisticsWidget(QWidget):
             QMessageBox.warning(self, "Statistic profile not found",
                                 f"Statistic profile '{self.statistic_type.currentText()}' not found'")
             return
-        image = self.settings.image.get_channel(self.channels_chose.currentIndex())
+        channel = self.settings.image.get_channel(self.channels_chose.currentIndex())
         segmentation = self.settings.segmentation
         if segmentation is None:
             return
@@ -178,11 +178,19 @@ class StatisticsWidget(QWidget):
         units_name = str(units)
 
         def exception_hook(exception):
-            raise exception
             QMessageBox.warning(self, "Calculation error", f"Error during calculation: {exception}")
 
-        thread = ExecuteFunctionThread(compute_class.calculate, [image, segmentation, full_mask, base_mask,
-                                                                 self.settings.image.spacing, units])
+        kwargs = {}
+        for num in compute_class.get_channels_num():
+            if num >= self.settings.image.channels:
+                QMessageBox.warning(self, "Measurement error", "Cannot calculate this statistics because "
+                                                               f"image do not have channel {num+1}")
+                return
+            kwargs[f"channel+{num}"] = self.settings.image.get_channel(num)
+
+
+        thread = ExecuteFunctionThread(compute_class.calculate, [channel, segmentation, full_mask, base_mask,
+                                                                 self.settings.image.spacing, units], kwargs)
         dial = WaitingDialog(thread, "Statistic calculation", exception_hook=exception_hook)
         dial.exec()
         stat = thread.result

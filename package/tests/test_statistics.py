@@ -381,27 +381,27 @@ class TestMainAxis:
         mask1 = image.get_channel(0) > 40
         mask2 = image.get_channel(0) > 60
         assert LongestMainAxisLength.calculate_property(
-            area_array=mask1, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            area_array=mask1, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
             _area=AreaType.Mask
         ) == 20 * 59
         assert MiddleMainAxisLength.calculate_property(
-            area_array=mask1, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            area_array=mask1, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
             _area=AreaType.Mask
         ) == 10 * 59
         assert ShortestMainAxisLength.calculate_property(
-            area_array=mask1, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            area_array=mask1, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
             _area=AreaType.Mask
         ) == 10 * 29
         assert LongestMainAxisLength.calculate_property(
-            area_array=mask2, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            area_array=mask2, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
             _area=AreaType.Mask
         ) == 20 * 39
         assert MiddleMainAxisLength.calculate_property(
-            area_array=mask2, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            area_array=mask2, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
             _area=AreaType.Mask
         ) == 10 * 39
         assert ShortestMainAxisLength.calculate_property(
-            area_array=mask2, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            area_array=mask2, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
             _area=AreaType.Mask
         ) == 10 * 19
 
@@ -411,27 +411,27 @@ class TestMainAxis:
         mask1 = image.get_channel(0) > 40
         mask2 = image.get_channel(0) > 60
         assert LongestMainAxisLength.calculate_property(
-            area_array=mask1, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            area_array=mask1, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
             _area=AreaType.Mask
         ) == 20 * 59
         assert MiddleMainAxisLength.calculate_property(
-            area_array=mask1, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            area_array=mask1, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
             _area=AreaType.Mask
         ) == 10 * 59
         assert ShortestMainAxisLength.calculate_property(
-            area_array=mask1, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            area_array=mask1, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
             _area=AreaType.Mask
         ) == 0
         assert LongestMainAxisLength.calculate_property(
-            area_array=mask2, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            area_array=mask2, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
             _area=AreaType.Mask
         ) == 20 * 39
         assert MiddleMainAxisLength.calculate_property(
-            area_array=mask2, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            area_array=mask2, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
             _area=AreaType.Mask
         ) == 10 * 39
         assert ShortestMainAxisLength.calculate_property(
-            area_array=mask2, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
+            area_array=mask2, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
             _area=AreaType.Mask
         ) == 0
 
@@ -440,7 +440,7 @@ class TestMainAxis:
         image = Image(array, (10, 10, 20))
         mask1 = image.get_channel(0) > 40
         assert LongestMainAxisLength.calculate_property(
-            area_array=mask1, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=2,
+            area_array=mask1, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=2,
             _area=AreaType.Mask
         ) == 2 * 20 * 59
 
@@ -448,14 +448,14 @@ class TestMainAxis:
         image = Image(array[:, 25:26], (10, 10, 20))
         mask1 = image.get_channel(0) > 40
         assert LongestMainAxisLength.calculate_property(
-            area_array=mask1, image=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=2,
+            area_array=mask1, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=2,
             _area=AreaType.Mask
         ) == 2 * 20 * 59
 
     def test_empty(self):
         image = get_cube_image()
         mask = image.get_channel(0) > 80
-        assert ShortestMainAxisLength.calculate_property(area_array=mask, image=image.get_channel(0), help_dict={},
+        assert ShortestMainAxisLength.calculate_property(area_array=mask, channel=image.get_channel(0), help_dict={},
                                                          voxel_size=image.spacing, result_scalar=1,
                                                          _area=AreaType.Segmentation) == 0
 
@@ -464,15 +464,15 @@ class TestMainAxis:
         image = Image(array, (10, 10, 20))
         mask1 = image.get_channel(0) > 40
         assert LongestMainAxisLength.calculate_property(
-            area_array=mask1, image=image.get_channel(0), voxel_size=image.spacing, result_scalar=1,
+            area_array=mask1, channel=image.get_channel(0), voxel_size=image.spacing, result_scalar=1,
             _area=AreaType.Mask
         ) == 20 * 59
         assert MiddleMainAxisLength.calculate_property(
-            area_array=mask1, image=image.get_channel(0), voxel_size=image.spacing, result_scalar=1,
+            area_array=mask1, channel=image.get_channel(0), voxel_size=image.spacing, result_scalar=1,
             _area=AreaType.Mask
         ) == 10 * 59
         assert ShortestMainAxisLength.calculate_property(
-            area_array=mask1, image=image.get_channel(0), voxel_size=image.spacing, result_scalar=1,
+            area_array=mask1, channel=image.get_channel(0), voxel_size=image.spacing, result_scalar=1,
             _area=AreaType.Mask
         ) == 10 * 29
 
@@ -590,11 +590,11 @@ class TestRimPixelBrightnessSum:
         mask2 = image.get_channel(0) > 60
         mask3 = mask1 * ~mask2
         assert RimPixelBrightnessSum.calculate_property(segmentation=mask1, mask=mask1, voxel_size=image.voxel_size,
-                                                        distance=10 * 50, units=Units.nm, image=image.get_channel(0)
+                                                        distance=10 * 50, units=Units.nm, channel=image.get_channel(0)
                                                         ) == np.count_nonzero(mask3) * 50
         assert RimPixelBrightnessSum.calculate_property(segmentation=mask2, mask=mask1, voxel_size=image.voxel_size,
                                                         distance=10 * 50, units=Units.nm,
-                                                        image=image.get_channel(0)) == 0
+                                                        channel=image.get_channel(0)) == 0
 
     def test_square(self):
         image = get_square_image()
@@ -603,24 +603,24 @@ class TestRimPixelBrightnessSum:
         mask2 = image.get_channel(0) > 60
         mask3 = mask1 * ~mask2
         assert RimPixelBrightnessSum.calculate_property(segmentation=mask1, mask=mask1, voxel_size=image.voxel_size,
-                                                        distance=10 * 50, units=Units.nm, image=image.get_channel(0)
+                                                        distance=10 * 50, units=Units.nm, channel=image.get_channel(0)
                                                         ) == np.count_nonzero(mask3) * 50
         assert RimPixelBrightnessSum.calculate_property(segmentation=mask2, mask=mask1, voxel_size=image.voxel_size,
                                                         distance=10 * 50, units=Units.nm,
-                                                        image=image.get_channel(0)) == 0
+                                                        channel=image.get_channel(0)) == 0
 
     def test_empty(self):
         image = get_cube_image()
         mask = image.get_channel(0) > 80
         mask1 = image.get_channel(0) > 40
         assert RimPixelBrightnessSum.calculate_property(segmentation=mask1, mask=mask, voxel_size=image.voxel_size,
-                                                        distance=10 * 50, image=image.get_channel(0),
+                                                        distance=10 * 50, channel=image.get_channel(0),
                                                         units=Units.nm) == 0
         assert RimPixelBrightnessSum.calculate_property(segmentation=mask, mask=mask1, voxel_size=image.voxel_size,
-                                                        distance=10 * 50, image=image.get_channel(0),
+                                                        distance=10 * 50, channel=image.get_channel(0),
                                                         units=Units.nm) == 0
         assert RimPixelBrightnessSum.calculate_property(segmentation=mask, mask=mask, voxel_size=image.voxel_size,
-                                                        distance=10 * 50, image=image.get_channel(0),
+                                                        distance=10 * 50, channel=image.get_channel(0),
                                                         units=Units.nm) == 0
 
 

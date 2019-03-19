@@ -3,6 +3,9 @@ import inspect
 from collections import OrderedDict
 
 
+class AlgorithmDescribeNotFound(Exception):
+    pass
+
 class AlgorithmProperty(object):
     """
     :type name: str
@@ -46,7 +49,7 @@ class AlgorithmDescribeBase:
         raise NotImplementedError()
 
     @classmethod
-    def get_fields_dict(cls):
+    def get_fields_dict(cls) -> typing.Dict[str, AlgorithmProperty]:
         return dict([(v.name, v) for v in cls.get_fields()])
 
     @classmethod
