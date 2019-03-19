@@ -222,6 +222,10 @@ class StatisticMethodBase(AlgorithmDescribeBase, ABC):
     def need_channel(self):
         return False
 
+    @staticmethod
+    def area_type(area: AreaType):
+        return area
+
 
 def empty_fun(_a0=None, _a1=None):
     pass
@@ -318,11 +322,12 @@ class StatisticProfile(object):
                 kw['_area'] = node.area
                 kw['_per_component'] = node.per_component
                 kw['_cache'] = True
-                if node.area == AreaType.Mask:
+                area_type = method.area_type(node.area)
+                if area_type == AreaType.Mask:
                     kw["area_array"] = kw["mask"]
-                elif node.area == AreaType.Mask_without_segmentation:
+                elif area_type == AreaType.Mask_without_segmentation:
                     kw["area_array"] = kw["mask_without_segmentation"]
-                elif node.area == AreaType.Segmentation:
+                elif area_type == AreaType.Segmentation:
                     kw["area_array"] = kw["segmentation"]
                 else:
                     raise ValueError(f"Unknown area type {node.area}")
@@ -899,12 +904,12 @@ class DistanceMaskSegmentation(StatisticMethodBase):
         return area_pos
 
     @classmethod
-    def calculate_property(cls, channel, segmentation, mask, voxel_size, result_scalar, distance_from_mask: DistancePoint,
+    def calculate_property(cls, channel, area_array, mask, voxel_size, result_scalar, distance_from_mask: DistancePoint,
                            distance_to_segmentation: DistancePoint, **kwargs):
-        if not (np.any(mask) and np.any(segmentation)):
+        if not (np.any(mask) and np.any(area_array)):
             return 0
         mask_pos = cls.calculate_points(channel, mask, voxel_size, result_scalar, distance_from_mask)
-        seg_pos = cls.calculate_points(channel, segmentation, voxel_size, result_scalar, distance_to_segmentation)
+        seg_pos = cls.calculate_points(channel, area_array, voxel_size, result_scalar, distance_to_segmentation)
         if mask_pos.shape[0] == 1 or seg_pos.shape[0] == 1:
             return cdist(mask_pos, seg_pos).min()
         else:
@@ -923,6 +928,10 @@ class DistanceMaskSegmentation(StatisticMethodBase):
 
     def need_channel(self):
         return True
+
+    @staticmethod
+    def area_type(area: AreaType):
+        return AreaType.Segmentation
 
 
 def pixel_volume(spacing, result_scalar):

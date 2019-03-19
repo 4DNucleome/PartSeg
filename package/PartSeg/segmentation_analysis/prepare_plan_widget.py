@@ -340,7 +340,8 @@ class CreatePlan(QWidget):
 
         self.mask_stack.addTab(stretch_widget(self.file_mask), "file")
         self.mask_stack.addTab(stretch_widget(self.dilate_mask), "segmentation profile")
-        self.mask_stack.addTab(stretch_widget(self.mask_operation), "existing mask")
+        self.mask_stack.addTab(stretch_widget(self.mask_operation), "created mask")
+        self.mask_stack.setTabToolTip(2, "Allows to create mask which is based on masks previously added to plan.")
 
 
         lay = QGridLayout()
