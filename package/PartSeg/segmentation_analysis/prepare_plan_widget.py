@@ -592,7 +592,8 @@ class CreatePlan(QWidget):
             self.generate_mask_btn.setDisabled(True)
         text = self.mask_name.text()
         update = self.update_element_chk.isChecked()
-        if not update and self.calculation_plan.get_node().operation.name == text:
+        if not update and self.calculation_plan.get_node().operation != "root" and\
+                self.calculation_plan.get_node().operation.name == text:
             self.generate_mask_btn.setDisabled(True)
         if self.mask_stack.currentIndex() == 0:
             if len(self.mask_set) > 0 and \
