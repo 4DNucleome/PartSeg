@@ -78,7 +78,7 @@ class PartSettings(BaseSettings):
             algorithm_val = {"name": algorithm_name, "values": deepcopy(self.get(f"algorithms.{algorithm_name}"))}
         else:
             algorithm_val = {}
-        return ProjectTuple(self.image.file_path, self.image.image.substitute(), self.segmentation, self.full_segmentation,
+        return ProjectTuple(self.image.file_path, self.image.substitute(), self.segmentation, self.full_segmentation,
                             self.mask, self.segmentation_history[:], algorithm_val)
 
     def set_project_info(self, data: typing.Union[ProjectTuple, MaskInfo]):

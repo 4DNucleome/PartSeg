@@ -338,15 +338,16 @@ class CreatePlan(QWidget):
         mask_box.setStyleSheet(group_sheet)
         self.mask_stack = QTabWidget()
 
-        self.mask_stack.addTab(stretch_widget(self.mask_operation), "existing mask")
-        self.mask_stack.addTab(stretch_widget(self.dilate_mask), "segmentation")
         self.mask_stack.addTab(stretch_widget(self.file_mask), "file")
+        self.mask_stack.addTab(stretch_widget(self.dilate_mask), "segmentation profile")
+        self.mask_stack.addTab(stretch_widget(self.mask_operation), "existing mask")
+
 
         lay = QGridLayout()
         lay.setSpacing(0)
-        lay.addWidget(QLabel("Mask name:"), 0, 0)
-        lay.addWidget(self.mask_name, 0, 1)
-        lay.addWidget(self.mask_stack, 1, 0, 1, 2)
+        lay.addWidget(self.mask_stack, 0, 0, 1, 2)
+        lay.addWidget(QLabel("Mask name:"), 1, 0)
+        lay.addWidget(self.mask_name, 1, 1)
         lay.addWidget(self.generate_mask_btn, 2, 0, 1, 2)
         mask_box.setLayout(lay)
 
@@ -547,7 +548,7 @@ class CreatePlan(QWidget):
         if text != "" and text in self.mask_set:
             QMessageBox.warning(self, "Already exists", "Mask with this name already exists", QMessageBox.Ok)
             return
-        if self.mask_stack.currentIndex() == 0:  # existing mask
+        if self.mask_stack.currentIndex() == 2:  # existing mask
             if self.mask_operation.currentIndex() == 0: # Reuse Mask:
                 mask_dialog = MaskDialog
                 MaskConstruct = lambda x,y: MaskUse(y)
@@ -592,10 +593,14 @@ class CreatePlan(QWidget):
             self.generate_mask_btn.setDisabled(True)
         text = self.mask_name.text()
         update = self.update_element_chk.isChecked()
+        if self.node_type == NodeType.none:
+            self.generate_mask_btn.setDisabled(True)
+            return
         if not update and self.calculation_plan.get_node().operation != "root" and\
                 self.calculation_plan.get_node().operation.name == text:
             self.generate_mask_btn.setDisabled(True)
-        if self.mask_stack.currentIndex() == 0:
+            return
+        if self.mask_stack.currentIndex() == 2:
             if len(self.mask_set) > 0 and \
                     ((not update and node_type == NodeType.root) or(update and node_type == NodeType.file_mask)):
                 self.generate_mask_btn.setEnabled(True)
@@ -649,7 +654,8 @@ class CreatePlan(QWidget):
             for el in segmentation_pipeline.mask_history:
                 self.calculation_plan.add_step(el.segmentation)
                 self.plan.update_view()
-                pos.append(0)
+                node = self.calculation_plan.get_node(pos)
+                pos.append(len(node.children) - 1)
                 self.calculation_plan.set_position(pos)
                 self.calculation_plan.add_step(MaskCreate("", el.mask_property))
                 self.plan.update_view()
