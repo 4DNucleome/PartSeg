@@ -32,7 +32,7 @@ If you install from repository or from pip you cat run it with `PartSeg` command
 First option do not work on Windows. 
 
 PartSeg export few commandline options: 
-- `--no_report` – disable reporting errors to authors
+- `--no_report` - disable reporting errors to authors
 - `--no_dialog` - disable reporting errors to authors and showing error dialog. Use only when running from terminal.
 - `segmentation_analysis` - skip launcher and start analysis gui
 - `segmentation` - skip launcher and start segmentation gui 
