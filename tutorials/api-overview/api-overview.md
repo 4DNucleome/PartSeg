@@ -38,3 +38,22 @@ the function which is called to run segmentation. It is done is separated thread
 * 
     
 
+## Creating Plugins
+In current stage PartSeg support plugin only for segmentation methods.
+The plugins are loaded before creating objects, so it is possibly to modify its parts with plugins is possible, 
+but can brake after change of version.
+
+For binary executable version plugins should be putted in `plugins` folder (like `itk_snap_save`). 
+This plugins must export `register()` method. 
+To use plugins with PartSeg as python package you need to write custom launcher (base on `Partseg.launcher_main.py`) 
+which will register it. There is plan for change it. 
+
+For creating your own plugin most important is module is `PartSeg.utils.register`. Its define `RegisterEnum` and 
+function `register(target: Type[AlgorithmDescribeBase], place: RegisterEnum, replace=False)` which should be used 
+for registering your plugins in PartSeg. 
+
+All algorithm in PartSeg are class base on `PartSeg.algorthm_describe_base.AlgorithmDescribeBase`, 
+but each category has own subclass which extends interface.
+
+Proper class can be obtained form `base_class_dict` from `PartSeg.utils.register` module. Keys in this module are 
+values of `RegisterEnum`.

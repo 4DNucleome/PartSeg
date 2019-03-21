@@ -16,13 +16,13 @@ class GaussType(Enum):
 
 enum_register.register_class(GaussType)
 
-class NoiseRemovalBase(AlgorithmDescribeBase, ABC):
+class NoiseFilteringBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def noise_remove(cls, chanel: np.ndarray, spacing: typing.Iterable[float], arguments: dict) -> np.ndarray:
         raise NotImplementedError()
 
 
-class NoneNoiseRemoval(NoiseRemovalBase):
+class NoneNoiseFiltering(NoiseFilteringBase):
     @classmethod
     def get_name(cls):
         return "None"
@@ -36,7 +36,7 @@ class NoneNoiseRemoval(NoiseRemovalBase):
         return chanel
 
 
-class GaussNoiseRemoval(NoiseRemovalBase):
+class GaussNoiseFiltering(NoiseFilteringBase):
     @classmethod
     def get_name(cls):
         return "Gauss"
@@ -64,6 +64,6 @@ def calculate_operation_radius(radius, spacing, gauss_type):
     return radius
 
 noise_removal_dict = Register(class_methods=["noise_remove"])
-noise_removal_dict.register(NoneNoiseRemoval)
-noise_removal_dict.register(GaussNoiseRemoval)
+noise_removal_dict.register(NoneNoiseFiltering)
+noise_removal_dict.register(GaussNoiseFiltering)
 
