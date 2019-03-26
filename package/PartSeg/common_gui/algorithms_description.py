@@ -108,8 +108,11 @@ class QtAlgorithmProperty(AlgorithmProperty):
             res.addItems(list(map(str, self.possible_values)))
         else:
             raise ValueError(f"Unknown class: {self.value_type}")
+        tool_tip_text = ""
         if self.tool_tip:
-            res.setToolTip(self.tool_tip)
+            tool_tip_text = self.tool_tip
+        tool_tip_text += f" default value: {str(self.default_value)}"
+        res.setToolTip(tool_tip_text)
         return res
 
     @staticmethod
