@@ -144,21 +144,22 @@ class MultipleFileWidget(QWidget):
                 if not ok:
                     return
 
-        for i, text in enumerate(self.file_list):
-            if text == state.file_path:
-                item = self.file_view.topLevelItem(i)
-                break
-        else:
+        try:
+
+            index = self.file_list.index(state.file_path)
+            item = self.file_view.topLevelItem(index)
+        except:
             metric = QFontMetrics(self.file_view.font())
             width = self.file_view.width() - 45
             clipped_text = metric.elidedText(state.file_path, Qt.ElideLeft, width)
             item = QTreeWidgetItem(self.file_view, [clipped_text])
             item.setToolTip(0, state.file_path)
             self.file_list.append(state.file_path)
-            if not state.is_raw():
-                QTreeWidgetItem(item, ["raw image"])
-                sub_dict["raw image"] = state.get_raw_copy()
+            QTreeWidgetItem(item, ["raw image"])
+            sub_dict["raw image"] = state.get_raw_copy()
         item.setExpanded(True)
+        if state.is_raw():
+            return
         QTreeWidgetItem(item, [name])
         sub_dict[name] = state
         self.state_dict_count[state.file_path] += 1
