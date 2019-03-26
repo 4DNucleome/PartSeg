@@ -87,8 +87,11 @@ class PartSettings(BaseSettings):
                 if data.segmentation is not None:
                     try:
                         self.image.fit_array_to_image(data.segmentation)
+                        self.mask = data.mask
                     except:
                         self.image = data.image.substitute()
+                else:
+                    self.mask = data.mask
             else:
                 self.image = data.image.substitute()
             self.segmentation = data.segmentation
