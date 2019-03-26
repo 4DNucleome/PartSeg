@@ -4,7 +4,7 @@ import numpy as np
 from os import path
 
 from qtpy.QtWidgets import QMessageBox, QWidget
-from qtpy.QtCore import Signal
+from qtpy.QtCore import Signal, Slot
 
 from PartSeg.tiff_image import Image
 from ..project_utils_qt.settings import BaseSettings
@@ -21,15 +21,11 @@ class StackSettings(BaseSettings):
     def __init__(self, json_path):
         super().__init__(json_path)
         self.chosen_components_widget = None
+        self.keep_chosen_components = False
 
-    """@property
-    def batch_directory(self):
-        # TODO update batch widget to use new style settings
-        return self.get("io.batch_directory", self.get("io.load_image_directory", ""))
-
-    @batch_directory.setter
-    def batch_directory(self, val):
-        self.set("io.batch_directory", val)"""
+    @Slot(int)
+    def set_keep_chosen_components(self, val: bool):
+        self.keep_chosen_components = val
 
     def file_save_name(self):
         return path.splitext(path.basename(self.image.file_path))[0]
@@ -90,14 +86,39 @@ class StackSettings(BaseSettings):
                 (self.image.file_path != data.image.file_path or self.image.shape != data.image.shape):
             self.image = data.image
         self.blockSignals(signals)
-        if data.segmentation is not None:
-            num = data.segmentation.max()
-            self.chosen_components_widget.set_chose(range(1, num + 1), data.list_of_components)
-            self.image.fit_array_to_image(data.segmentation)
-            self.segmentation = data.segmentation
+        if self.keep_chosen_components and self.segmentation is not None:
+            segmentation = np.zeros(self.segmentation.shape, dtype=self.segmentation.dtype)
+            for i, val in enumerate(sorted(self.chosen_components_widget.get_chosen()), 1):
+                segmentation[self.segmentation == val] = i
+            base_chose = list(range(1, len(self.chosen_components_widget.get_chosen())+1))
         else:
-            self.chosen_components_widget.set_chose([], [])
-            self.segmentation = data.segmentation
+            segmentation = None
+            base_chose = []
+        if data.segmentation is not None:
+            self.image.fit_array_to_image(data.segmentation)
+            num = data.segmentation.max()
+            if segmentation is not None:
+                new_segmentation = np.copy(data.segmentation)
+                new_segmentation[segmentation > 0] = 0
+                components_size = np.bincount(new_segmentation.flat)
+                base_index = len(base_chose) + 1
+                chosen_components = base_chose[:]
+                components_list = base_chose[:]
+                for i, val in enumerate(components_size[1:], 1):
+                    if val > 0:
+                        segmentation[data.segmentation == i] = base_index
+                        if i in data.list_of_components:
+                            chosen_components.append(base_index)
+                        components_list.append(base_index)
+                        base_index += 1
+                self.chosen_components_widget.set_chose(components_list, chosen_components)
+                self.segmentation = segmentation
+            else:
+                self.chosen_components_widget.set_chose(range(1, num + 1), data.list_of_components)
+                self.segmentation = data.segmentation
+        else:
+            self.chosen_components_widget.set_chose(base_chose, base_chose)
+            self.segmentation = segmentation
 
     @staticmethod
     def verify_image(image: Image, silent=True) -> typing.Union[Image, bool]:

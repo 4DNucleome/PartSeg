@@ -377,6 +377,11 @@ class AlgorithmOptions(QWidget):
         self.execute_all_btn.setDisabled(True)
         self.block_execute_all_btn = False
         self.stack_layout = QStackedLayout()
+        self.keep_chosen_components_chk = QCheckBox("Save chosen components")
+        self.keep_chosen_components_chk.setToolTip("Save chosen components when loading segmentation form file\n"
+                                                   "or from multiple file widget.")
+        self.keep_chosen_components_chk.stateChanged.connect(self.settings.set_keep_chosen_components)
+        self.keep_chosen_components_chk.setChecked(settings.keep_chosen_components)
         self.choose_components = ChosenComponents()
         self.choose_components.check_change_signal.connect(control_view.components_change)
         self.choose_components.mouse_leave.connect(image_view.component_unmark)
@@ -431,6 +436,7 @@ class AlgorithmOptions(QWidget):
         main_layout.addWidget(self.algorithm_choose)
         main_layout.addLayout(self.stack_layout, 1)
         main_layout.addWidget(self.choose_components)
+        main_layout.addWidget(self.keep_chosen_components_chk)
         main_layout.addStretch()
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
