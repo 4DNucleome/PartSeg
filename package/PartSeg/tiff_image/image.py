@@ -121,6 +121,10 @@ class Image(object):
     def plane_shape(self):
         return self._image_array.shape[2:4]
 
+    @property
+    def shape(self):
+        return self._image_array.shape
+
     def swap_time_and_stack(self):
         image_array = np.swapaxes(self._image_array, 0, 1)
         return self.substitute(data=image_array)

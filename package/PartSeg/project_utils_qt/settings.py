@@ -21,6 +21,7 @@ class ImageSettings(QObject):
     """
     image_changed = Signal([Image], [int], [str])
     segmentation_changed = Signal(np.ndarray)
+    segmentation_clean = Signal()
     noise_remove_image_part_changed = Signal()
 
     def __init__(self):
@@ -64,18 +65,18 @@ class ImageSettings(QObject):
 
     @segmentation.setter
     def segmentation(self, val: np.ndarray):
-        if val is None:
-            return
-        try:
-            self.image.fit_array_to_image(val)
-        except ValueError:
-            raise ValueError("Segmentation do not fit to image")
+        if val is not None:
+            try:
+                self.image.fit_array_to_image(val)
+            except ValueError:
+                raise ValueError("Segmentation do not fit to image")
         self._segmentation = val
         if val is not None:
             self.sizes = np.bincount(val.flat)
             self.segmentation_changed.emit(val)
         else:
             self.sizes = []
+            self.segmentation_clean.emit()
 
     @property
     def image(self):

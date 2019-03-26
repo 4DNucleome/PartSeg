@@ -23,13 +23,17 @@ else:
 a = Analysis(['launch_partseg.py'],
              # pathex=['C:\\Users\\Grzegorz\\Documents\\segmentation-gui\\PartSeg'],
              binaries=[],
-             datas= [(os.path.join(base_path, x), y) for x,y in  [("static_files/icons/*", "PartSeg/static_files/icons"), ("static_files/initial_images/*", "PartSeg/static_files/initial_images"), ("static_files/colors.npz", "PartSeg/static_files/")]] +
+             datas= [(os.path.join(base_path, x), y) for x,y in  [
+                 ("static_files/icons/*", "PartSeg/static_files/icons"),
+                 ("static_files/initial_images/*", "PartSeg/static_files/initial_images"),
+                 ("static_files/colors.npz", "PartSeg/static_files/")]] +
                     [(os.path.join(base_path, "plugins/itk_snap_save/__init__.py"),"PartSeg/plugins/itk_snap_save")],
              hiddenimports=hiddenimports + ['numpy.core._dtype_ctypes', 'sentry_sdk.integrations.logging',
                                             'sentry_sdk.integrations.stdlib', 'sentry_sdk.integrations.excepthook',
                                             'sentry_sdk.integrations.dedupe', 'sentry_sdk.integrations.atexit',
                                             'sentry_sdk.integrations.modules', 'sentry_sdk.integrations.argv',
-                                            'sentry_sdk.integrations.threading'], # + ["plugins." + x.name for x in plugins.get_plugins()],
+                                            'sentry_sdk.integrations.threading'],
+             # + ["plugins." + x.name for x in plugins.get_plugins()],
              hookspath=[],
              runtime_hooks=[],
              excludes=[],

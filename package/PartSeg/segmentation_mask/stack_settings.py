@@ -86,13 +86,17 @@ class StackSettings(BaseSettings):
         signals = self.signalsBlocked()
         if data.segmentation is not None:
             self.blockSignals(True)
-        if data.image is not None:
+        if data.image is not None and \
+                (self.image.file_path != data.image.file_path or self.image.shape != data.image.shape):
             self.image = data.image
         self.blockSignals(signals)
         if data.segmentation is not None:
             num = data.segmentation.max()
             self.chosen_components_widget.set_chose(range(1, num + 1), data.list_of_components)
             self.image.fit_array_to_image(data.segmentation)
+            self.segmentation = data.segmentation
+        else:
+            self.chosen_components_widget.set_chose([], [])
             self.segmentation = data.segmentation
 
     @staticmethod

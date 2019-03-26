@@ -83,7 +83,14 @@ class PartSettings(BaseSettings):
 
     def set_project_info(self, data: typing.Union[ProjectTuple, MaskInfo]):
         if isinstance(data, ProjectTuple):
-            self.image = data.image.substitute()
+            if self.image.file_path == data.image.file_path and self.image.shape == data.image.shape:
+                if data.segmentation is not None:
+                    try:
+                        self.image.fit_array_to_image(data.segmentation)
+                    except:
+                        self.image = data.image.substitute()
+            else:
+                self.image = data.image.substitute()
             self.segmentation = data.segmentation
             self.full_segmentation = data.full_segmentation
             self.segmentation_history = data.history[:]

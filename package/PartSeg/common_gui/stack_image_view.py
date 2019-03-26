@@ -7,7 +7,7 @@ from typing import Type
 
 import numpy as np
 from qtpy import QtGui
-from qtpy.QtCore import QRect, QTimerEvent, QSize, QObject, Signal, QPoint, Qt, QEvent
+from qtpy.QtCore import QRect, QTimerEvent, QSize, QObject, Signal, QPoint, Qt, QEvent, Slot
 from qtpy.QtGui import QShowEvent, QWheelEvent, QPainter, QPen, QColor, QPalette, QPixmap, QImage, QIcon
 from qtpy.QtWidgets import QScrollBar, QLabel, QGridLayout
 from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
@@ -114,7 +114,7 @@ class ImageCanvas(QLabel):
         im = self.image
         width, height = self.image_size.width(), self.image_size.height()
         im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 3, QImage.Format_RGB888)
-        self.my_pixmap = QPixmap.fromImage(im2)# .scaled(self.width(), self.height(), Qt.KeepAspectRatio))
+        self.my_pixmap = QPixmap.fromImage(im2) # .scaled(self.width(), self.height(), Qt.KeepAspectRatio))
         self.repaint()
 
     def leaveEvent(self, a0: QEvent):
@@ -348,15 +348,7 @@ class ImageView(QWidget):
         self.channel_control.coloring_update.connect(self.update_channels_coloring)
 
         settings.segmentation_changed.connect(self.set_labels)
-
-    """"@border_val.setter
-    def border_val(self, val):
-        self._settings.border_val = val"""
-
-    def showEvent(self, event: QShowEvent):
-        pass
-        # self.btn_layout.addStretch(1)
-        # self.repaint()
+        settings.segmentation_clean.connect(self.set_labels)
 
     def update_channels_coloring(self, new_image: bool):
         if not new_image:
@@ -488,7 +480,9 @@ class ImageView(QWidget):
         self.time_layer_info.setHidden(self.image.times == 1)
         # self.image_area.set_image(image)
 
-    def set_labels(self, labels):
+    @Slot()
+    @Slot(np.ndarray)
+    def set_labels(self, labels=None):
         self.labels_layer = labels
         self.change_image()
 
