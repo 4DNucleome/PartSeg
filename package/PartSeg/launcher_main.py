@@ -30,6 +30,7 @@ def main():
 
     logging.basicConfig(level=logging.INFO)
     my_app = CustomApplication(sys.argv)
+    my_app.check_release()
     if args.gui == "segmentation_analysis" or args.mf:
         from . import plugins
         plugins.register()
