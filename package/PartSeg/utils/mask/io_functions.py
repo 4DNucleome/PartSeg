@@ -17,7 +17,7 @@ class SegmentationTuple(ProjectInfoBase, typing.NamedTuple):
     file_path: str
     image: Union[Image, str, None]
     segmentation: typing.Optional[np.ndarray] = None
-    list_of_components: typing.List[int] = []
+    list_of_components: typing.Dict[int, typing.Optional[typing.Dict]] = {}
 
     def get_raw_copy(self):
         return SegmentationTuple(self.file_path, self.image.substitute())
@@ -126,8 +126,11 @@ class LoadSegmentation(LoadBase):
              step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
         segmentation, metadata = load_stack_segmentation(load_locations[0], range_changed=range_changed,
                                                          step_changed=step_changed)
+        components = metadata["components"]
+        if isinstance(components, list):
+            components = dict(map(lambda x: (x, None), components))
         return SegmentationTuple(load_locations[0], metadata["base_file"] if "base_file" in metadata else None,
-                                 segmentation, metadata["components"])
+                                 segmentation, components)
 
     @classmethod
     def partial(cls):

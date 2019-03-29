@@ -22,6 +22,7 @@ class StackSettings(BaseSettings):
         super().__init__(json_path)
         self.chosen_components_widget = None
         self.keep_chosen_components = False
+        self.components_parameters_dict = {}
 
     @Slot(int)
     def set_keep_chosen_components(self, val: bool):
@@ -39,7 +40,7 @@ class StackSettings(BaseSettings):
             res.append(path.join(dir_path, f"{file_name}_component{i}_mask.tif"))
         return res
 
-    def set_segmentation(self, segmentation, components):
+    def set_segmentation_old(self, segmentation, components):
         num = segmentation.max()
         self.chosen_components_widget.set_chose(range(1, num + 1), components)
         self.image.fit_array_to_image(segmentation)
@@ -75,8 +76,9 @@ class StackSettings(BaseSettings):
             raise RuntimeError("chosen_components_widget do not initialized")
 
     def get_project_info(self) -> SegmentationTuple:
+        components_info = dict([(x, self.components_parameters_dict[x]) for x in self.chosen_components()])
         return SegmentationTuple(self.image.file_path, self.image.substitute(), self.segmentation,
-                                 self.chosen_components())
+                                 components_info)
 
     def set_project_info(self, data: SegmentationTuple):
         signals = self.signalsBlocked()
@@ -116,6 +118,43 @@ class StackSettings(BaseSettings):
             else:
                 self.chosen_components_widget.set_chose(range(1, num + 1), data.list_of_components)
                 self.segmentation = data.segmentation
+        else:
+            self.chosen_components_widget.set_chose(base_chose, base_chose)
+            self.segmentation = segmentation
+
+    def set_segmentation(self, new_segmentation_data, save_chosen=True, list_of_components=None):
+        if list_of_components is None:
+            list_of_components = []
+        if save_chosen and self.segmentation is not None:
+            segmentation = np.zeros(self.segmentation.shape, dtype=self.segmentation.dtype)
+            for i, val in enumerate(sorted(self.chosen_components_widget.get_chosen()), 1):
+                segmentation[self.segmentation == val] = i
+            base_chose = list(range(1, len(self.chosen_components_widget.get_chosen()) + 1))
+        else:
+            segmentation = None
+            base_chose = []
+        if new_segmentation_data is not None:
+            self.image.fit_array_to_image(new_segmentation_data)
+            num = new_segmentation_data.max()
+            if segmentation is not None:
+                new_segmentation = np.copy(new_segmentation_data)
+                new_segmentation[segmentation > 0] = 0
+                components_size = np.bincount(new_segmentation.flat)
+                base_index = len(base_chose) + 1
+                chosen_components = base_chose[:]
+                components_list = base_chose[:]
+                for i, val in enumerate(components_size[1:], 1):
+                    if val > 0:
+                        segmentation[new_segmentation_data == i] = base_index
+                        if i in list_of_components:
+                            chosen_components.append(base_index)
+                        components_list.append(base_index)
+                        base_index += 1
+                self.chosen_components_widget.set_chose(components_list, chosen_components)
+                self.segmentation = segmentation
+            else:
+                self.chosen_components_widget.set_chose(range(1, num + 1), list_of_components)
+                self.segmentation = new_segmentation_data
         else:
             self.chosen_components_widget.set_chose(base_chose, base_chose)
             self.segmentation = segmentation

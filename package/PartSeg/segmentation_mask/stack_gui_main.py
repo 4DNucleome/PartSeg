@@ -111,7 +111,7 @@ class MainMenu(QWidget):
                     else:
                         self.settings.image = result.image
                 if result.segmentation is not None:
-                    self.settings.set_segmentation(result.segmentation, result.list_of_components)
+                    self.settings.set_segmentation(result.segmentation, False, result.list_of_components)
         except (MemoryError, IOError) as e:
             QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
         except ValueError as e:
@@ -167,7 +167,8 @@ class MainMenu(QWidget):
 
             dial = WaitingDialog(execute_thread, "Load segmentation", exception_hook=exception_hook)
             dial.exec()
-            self.settings.set_segmentation(execute_thread.result.segmentation, execute_thread.result.list_of_components)
+            self.settings.set_segmentation(execute_thread.result.segmentation, self.settings.keep_chosen_components,
+                                           execute_thread.result.list_of_components)
         except Exception as e:
             QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
 
@@ -382,6 +383,8 @@ class AlgorithmOptions(QWidget):
                                                    "or from multiple file widget.")
         self.keep_chosen_components_chk.stateChanged.connect(self.settings.set_keep_chosen_components)
         self.keep_chosen_components_chk.setChecked(settings.keep_chosen_components)
+        self.show_parameters = QPushButton("Show parameters")
+        self.show_parameters.setToolTip("Show parameters of segmentation for each components")
         self.choose_components = ChosenComponents()
         self.choose_components.check_change_signal.connect(control_view.components_change)
         self.choose_components.mouse_leave.connect(image_view.component_unmark)
@@ -436,7 +439,10 @@ class AlgorithmOptions(QWidget):
         main_layout.addWidget(self.algorithm_choose)
         main_layout.addLayout(self.stack_layout, 1)
         main_layout.addWidget(self.choose_components)
-        main_layout.addWidget(self.keep_chosen_components_chk)
+        down_layout = QHBoxLayout()
+        down_layout.addWidget(self.keep_chosen_components_chk)
+        down_layout.addWidget(self.show_parameters)
+        main_layout.addLayout(down_layout)
         main_layout.addStretch()
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
@@ -647,7 +653,6 @@ class ImageInformation(QWidget):
             self.spacing[2].setDisabled(True)
         else:
             self.spacing[2].setDisabled(False)
-
 
 
 class Options(QTabWidget):
