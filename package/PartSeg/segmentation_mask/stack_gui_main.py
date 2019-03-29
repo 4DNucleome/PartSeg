@@ -1,9 +1,10 @@
 import json
 import os
+from collections import defaultdict
 from functools import partial
 from pathlib import Path
 
-import appdirs
+from copy import deepcopy
 import numpy as np
 from qtpy.QtCore import Signal, Qt, QByteArray
 from qtpy.QtGui import QGuiApplication, QIcon
@@ -12,6 +13,8 @@ from qtpy.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMess
     QTabWidget, QSizePolicy
 
 from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
+from PartSeg.segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
+from PartSeg.utils.algorithm_describe_base import AlgorithmProperty, SegmentationProfile
 from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox
 from ..common_gui.channel_control import ChannelControl
 from ..common_gui.colors_choose import ColorSelector
@@ -29,6 +32,7 @@ from ..project_utils_qt.error_dialog import ErrorDialog
 from ..project_utils_qt.image_read_thread import ImageReaderThread
 from ..project_utils_qt.main_window import BaseMainWindow
 from ..project_utils_qt.execute_function_thread import ExecuteFunctionThread
+from ..project_utils_qt.segmentation_thread import SegmentationThread
 from PartSeg.utils.mask.algorithm_description import mask_algorithm_dict
 from .stack_settings import StackSettings
 from PartSeg.tiff_image import ImageReader, Image
@@ -354,7 +358,7 @@ class AlgorithmOptions(QWidget):
         :param settings:
         """
         control_view = image_view.get_control_view()
-        super(AlgorithmOptions, self).__init__()
+        super().__init__()
         self.settings = settings
         self.algorithm_choose = QComboBox()
         self.show_result = QComboBox()  # QCheckBox("Show result")
@@ -385,6 +389,8 @@ class AlgorithmOptions(QWidget):
         self.keep_chosen_components_chk.setChecked(settings.keep_chosen_components)
         self.show_parameters = QPushButton("Show parameters")
         self.show_parameters.setToolTip("Show parameters of segmentation for each components")
+        self.show_parameters_widget = SegmentationInfoDialog(self.settings)
+        self.show_parameters.clicked.connect(self.show_parameters_widget.show)
         self.choose_components = ChosenComponents()
         self.choose_components.check_change_signal.connect(control_view.components_change)
         self.choose_components.mouse_leave.connect(image_view.component_unmark)
@@ -546,6 +552,7 @@ class AlgorithmOptions(QWidget):
         self.block_execute_all_btn = True
         self.is_batch_process = False
         self.progress_bar.setRange(0, 0)
+        self.choose_components.setDisabled(True)
         chosen = sorted(self.choose_components.get_chosen())
         if len(chosen) == 0:
             blank = None
@@ -574,11 +581,17 @@ class AlgorithmOptions(QWidget):
             self.execute_all_btn.setEnabled(True)
         self.progress_bar.setHidden(True)
         self.progress_info_lab.setHidden(True)
+        self.choose_components.setDisabled(False)
 
     def execution_done(self, segmentation: SegmentationResult):
-        self.choose_components.set_chose(range(1, segmentation.segmentation.max() + 1),
-                                         np.arange(len(self.chosen_list)) + 1)
-        self.settings.segmentation = segmentation.segmentation
+        sender: SegmentationThread = self.sender()
+        if sender is not None:
+            algorithm_name = sender.algorithm.get_name()
+            algorithm_values = deepcopy(self.settings.get(f"algorithms.{algorithm_name}"))
+            parameters_dict = defaultdict(lambda: SegmentationProfile("", algorithm_name, algorithm_values))
+        else:
+            parameters_dict = defaultdict(lambda: None)
+        self.settings.set_segmentation(segmentation.segmentation, True, [], parameters_dict)
 
 
 class ImageInformation(QWidget):

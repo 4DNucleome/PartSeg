@@ -12,7 +12,8 @@ from qtpy.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushBut
     QMessageBox, QFileDialog, QComboBox, QAbstractSpinBox, QInputDialog, \
     QPlainTextEdit, QFrame, QCheckBox
 
-from PartSeg.utils.analysis.algorithm_description import SegmentationProfile, analysis_algorithm_dict
+from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
+from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from ..common_gui.universal_gui_part import EnumComboBox
 from ..common_gui.colors_choose import ColorSelector
 from ..common_gui.custom_save_dialog import FormDialog

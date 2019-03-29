@@ -69,6 +69,7 @@ class BatchProceed(QThread):
                 segmentation = self.algorithm.calculation_run(self.progress_info)
                 name = path.basename(file_path)
                 name = path.splitext(name)[0] + ".seg"
+                # FIXME
                 SaveSegmentation.save(path.join(self.result_dir, name),
                                       SegmentationTuple(temp_settings.image.file_path, temp_settings.image,
                                                         segmentation.segmentation,

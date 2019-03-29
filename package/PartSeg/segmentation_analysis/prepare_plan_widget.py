@@ -15,10 +15,10 @@ from PartSeg.common_gui.universal_gui_part import EnumComboBox
 from ..common_gui.custom_save_dialog import FormDialog
 from ..common_gui.mask_widget import MaskWidget
 from ..common_gui.universal_gui_part import right_label
-from PartSeg.utils.analysis.algorithm_description import SegmentationProfile, analysis_algorithm_dict
+from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
 from PartSeg.utils.analysis.save_functions import save_dict
 from ..utils.io_utils import SaveBase
-from PartSeg.utils.algorithm_describe_base import AlgorithmProperty
+from PartSeg.utils.algorithm_describe_base import AlgorithmProperty, SegmentationProfile
 from ..utils.universal_const import Units
 
 from PartSeg.utils.analysis.calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, \

@@ -31,7 +31,8 @@ from .calculation_pipeline_thread import CalculatePipelineThread
 from .interpolate_dialog import InterpolateDialog
 from .interpolate_thread import InterpolateThread
 from PartSeg.tiff_image import ImageReader, Image
-from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict, SegmentationProfile
+from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
+from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from PartSeg.utils.analysis.analysis_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
 from .partseg_settings import PartSettings

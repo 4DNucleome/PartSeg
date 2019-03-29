@@ -1,6 +1,7 @@
 import os
 import tarfile
 import typing
+from collections import defaultdict
 from functools import partial
 from pathlib import Path
 
@@ -9,7 +10,7 @@ import json
 from typing import Union
 from io import BytesIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
 from ..io_utils import get_tarinfo, SaveBase, LoadBase, proxy_callback, ProjectInfoBase
-from ..algorithm_describe_base import AlgorithmProperty, Register
+from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationProfile
 from PartSeg.tiff_image import Image, ImageWriter, ImageReader
 
 
@@ -17,7 +18,8 @@ class SegmentationTuple(ProjectInfoBase, typing.NamedTuple):
     file_path: str
     image: Union[Image, str, None]
     segmentation: typing.Optional[np.ndarray] = None
-    list_of_components: typing.Dict[int, typing.Optional[typing.Dict]] = {}
+    chosen_components: typing.List = []
+    segmentation_parameters: typing.Dict[int, typing.Optional[SegmentationProfile]] = {}
 
     def get_raw_copy(self):
         return SegmentationTuple(self.file_path, self.image.substitute())
@@ -57,7 +59,8 @@ def save_stack_segmentation(file: Union[tarfile.TarFile, str, TextIOBase, Buffer
     segmentation_tar = get_tarinfo("segmentation.npy", segmentation_buff)
     tar_file.addfile(segmentation_tar, fileobj=segmentation_buff)
     step_changed(3)
-    metadata = {"components": segmentation_info.list_of_components, "shape": segmentation_info.segmentation.shape}
+    metadata = {"components": segmentation_info.chosen_components,
+                "parameters": segmentation_info.segmentation_parameters, "shape": segmentation_info.segmentation.shape}
     if isinstance(segmentation_info.image, Image):
         file_path = segmentation_info.image.file_path
     elif isinstance(segmentation_info.image, str):
@@ -126,11 +129,11 @@ class LoadSegmentation(LoadBase):
              step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
         segmentation, metadata = load_stack_segmentation(load_locations[0], range_changed=range_changed,
                                                          step_changed=step_changed)
-        components = metadata["components"]
-        if isinstance(components, list):
-            components = dict(map(lambda x: (x, None), components))
+
+        if "parameters" not in metadata:
+            metadata["parameters"] = defaultdict(lambda: None)
         return SegmentationTuple(load_locations[0], metadata["base_file"] if "base_file" in metadata else None,
-                                 segmentation, components)
+                                 segmentation, metadata["components"], metadata["parameters"])
 
     @classmethod
     def partial(cls):

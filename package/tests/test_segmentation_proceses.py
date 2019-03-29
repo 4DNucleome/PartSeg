@@ -3,7 +3,8 @@ import json
 import pytest
 
 from PartSeg.tiff_image import ImageReader
-from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict, SegmentationProfile
+from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
+from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from PartSeg.utils.analysis.save_hooks import part_hook
 from PartSeg.utils.json_hooks import check_loaded_dict
 from PartSeg.utils.segmentation.algorithm_base import SegmentationAlgorithm

@@ -8,6 +8,7 @@ class SegmentationInfoDialog(QWidget):
         super().__init__()
         self.settings = settings
         self.components = QListWidget()
+        self.components.currentItemChanged.connect(self.change_component_info)
         self.description = QPlainTextEdit()
         self.description.setReadOnly(True)
         self.close_btn = QPushButton("Close")
@@ -23,14 +24,16 @@ class SegmentationInfoDialog(QWidget):
         self.setLayout(layout)
 
     def change_component_info(self):
+        if self.components.currentItem() is None:
+            return
         text = self.components.currentItem().text()
-        parameters = self.settings.components_parameters_dict[text]
+        parameters = self.settings.components_parameters_dict[int(text)]
         self.description.setPlainText(f"Component {text}\n" + str(parameters))
 
     def event(self, event: QEvent):
         if event.type() == QEvent.WindowActivate:
             index = self.components.currentRow()
             self.components.clear()
-            self.components.addItems(self.settings.components_parameters_dict.keys())
+            self.components.addItems(list(map(str, self.settings.components_parameters_dict.keys())))
             self.components.setCurrentRow(index)
         return super().event(event)

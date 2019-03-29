@@ -3,7 +3,7 @@ from abc import ABC
 import numpy as np
 from copy import deepcopy
 from PartSeg.tiff_image import Image
-from PartSeg.utils.analysis.algorithm_description import SegmentationProfile
+from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from PartSeg.utils.analysis.analysis_utils import SegmentationPipelineElement, SegmentationPipeline
 from PartSeg.utils.calculate_pipeline import calculate_pipeline
 from PartSeg.utils.image_operations import RadiusType

@@ -13,7 +13,7 @@ from six import add_metaclass
 from PartSeg.utils.universal_const import Units
 from ..analysis.save_register import save_dict
 from ..analysis.statistics_calculation import StatisticProfile
-from ..analysis.algorithm_description import SegmentationProfile
+from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from ..mask_create import MaskProperty
 from ..class_generator import BaseSerializableClass
 

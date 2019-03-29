@@ -10,7 +10,8 @@ import numpy as np
 import pandas as pd
 import tifffile
 
-from PartSeg.utils.analysis.algorithm_description import SegmentationProfile, analysis_algorithm_dict
+from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
+from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from PartSeg.utils.analysis.calculation_plan import CalculationTree, MaskMapper, MaskUse, MaskCreate, Save, \
     Operations, FileCalculation, MaskIntersection, MaskSum, get_save_path, StatisticCalculate, Calculation
 from ..batch_processing.parallel_backed import BatchManager

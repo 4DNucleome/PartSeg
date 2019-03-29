@@ -4,7 +4,7 @@ from textwrap import indent
 import numpy as np
 from ..class_generator import BaseSerializableClass
 from ..mask_create import MaskProperty
-from ..analysis.algorithm_description import SegmentationProfile
+from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 
 
 class HistoryElement(BaseSerializableClass):

@@ -1,4 +1,4 @@
-from ..analysis.algorithm_description import SegmentationProfile
+from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from ..analysis.statistics_calculation import StatisticProfile
 from ..json_hooks import ProfileEncoder, profile_hook
 from ..analysis.calculation_plan import CalculationPlan, CalculationTree

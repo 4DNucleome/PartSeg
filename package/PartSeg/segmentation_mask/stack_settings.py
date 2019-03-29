@@ -1,4 +1,6 @@
 import typing
+from collections import defaultdict
+from copy import copy
 from typing import List
 import numpy as np
 from os import path
@@ -76,9 +78,8 @@ class StackSettings(BaseSettings):
             raise RuntimeError("chosen_components_widget do not initialized")
 
     def get_project_info(self) -> SegmentationTuple:
-        components_info = dict([(x, self.components_parameters_dict[x]) for x in self.chosen_components()])
         return SegmentationTuple(self.image.file_path, self.image.substitute(), self.segmentation,
-                                 components_info)
+                                 self.chosen_components(), copy(self.components_parameters_dict))
 
     def set_project_info(self, data: SegmentationTuple):
         signals = self.signalsBlocked()
@@ -88,51 +89,27 @@ class StackSettings(BaseSettings):
                 (self.image.file_path != data.image.file_path or self.image.shape != data.image.shape):
             self.image = data.image
         self.blockSignals(signals)
-        if self.keep_chosen_components and self.segmentation is not None:
-            segmentation = np.zeros(self.segmentation.shape, dtype=self.segmentation.dtype)
-            for i, val in enumerate(sorted(self.chosen_components_widget.get_chosen()), 1):
-                segmentation[self.segmentation == val] = i
-            base_chose = list(range(1, len(self.chosen_components_widget.get_chosen())+1))
-        else:
-            segmentation = None
-            base_chose = []
-        if data.segmentation is not None:
-            self.image.fit_array_to_image(data.segmentation)
-            num = data.segmentation.max()
-            if segmentation is not None:
-                new_segmentation = np.copy(data.segmentation)
-                new_segmentation[segmentation > 0] = 0
-                components_size = np.bincount(new_segmentation.flat)
-                base_index = len(base_chose) + 1
-                chosen_components = base_chose[:]
-                components_list = base_chose[:]
-                for i, val in enumerate(components_size[1:], 1):
-                    if val > 0:
-                        segmentation[data.segmentation == i] = base_index
-                        if i in data.list_of_components:
-                            chosen_components.append(base_index)
-                        components_list.append(base_index)
-                        base_index += 1
-                self.chosen_components_widget.set_chose(components_list, chosen_components)
-                self.segmentation = segmentation
-            else:
-                self.chosen_components_widget.set_chose(range(1, num + 1), data.list_of_components)
-                self.segmentation = data.segmentation
-        else:
-            self.chosen_components_widget.set_chose(base_chose, base_chose)
-            self.segmentation = segmentation
+        self.set_segmentation(data.segmentation, self.keep_chosen_components, data.chosen_components,
+                              data.segmentation_parameters)
 
-    def set_segmentation(self, new_segmentation_data, save_chosen=True, list_of_components=None):
+    def set_segmentation(self, new_segmentation_data, save_chosen=True, list_of_components=None,
+                         segmentation_parameters=None):
         if list_of_components is None:
             list_of_components = []
+        if segmentation_parameters is None:
+            segmentation_parameters = defaultdict(lambda: None)
         if save_chosen and self.segmentation is not None:
             segmentation = np.zeros(self.segmentation.shape, dtype=self.segmentation.dtype)
+            components_parameters_dict = {}
             for i, val in enumerate(sorted(self.chosen_components_widget.get_chosen()), 1):
                 segmentation[self.segmentation == val] = i
+                components_parameters_dict[i] = self.components_parameters_dict[val]
             base_chose = list(range(1, len(self.chosen_components_widget.get_chosen()) + 1))
+            self.components_parameters_dict = components_parameters_dict
         else:
             segmentation = None
             base_chose = []
+            self.components_parameters_dict = {}
         if new_segmentation_data is not None:
             self.image.fit_array_to_image(new_segmentation_data)
             num = new_segmentation_data.max()
@@ -149,12 +126,15 @@ class StackSettings(BaseSettings):
                         if i in list_of_components:
                             chosen_components.append(base_index)
                         components_list.append(base_index)
+                        self.components_parameters_dict[base_index] = segmentation_parameters[i]
                         base_index += 1
                 self.chosen_components_widget.set_chose(components_list, chosen_components)
                 self.segmentation = segmentation
             else:
                 self.chosen_components_widget.set_chose(range(1, num + 1), list_of_components)
                 self.segmentation = new_segmentation_data
+                for i in range(1, num+1):
+                    self.components_parameters_dict[i] = segmentation_parameters[i]
         else:
             self.chosen_components_widget.set_chose(base_chose, base_chose)
             self.segmentation = segmentation
