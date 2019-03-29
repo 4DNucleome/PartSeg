@@ -153,7 +153,8 @@ class LoadSegmentationImage(LoadBase):
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
              range_changed: typing.Callable[[int, int], typing.Any] = None,
              step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
-        file_path, base_file, segmentation, components = LoadSegmentation.load(load_locations)
+        seg = LoadSegmentation.load(load_locations)
+        base_file = seg.image
         if base_file is None:
             raise IOError(f"base file for segmentation not defined")
         if os.path.isabs(base_file):
@@ -167,7 +168,7 @@ class LoadSegmentationImage(LoadBase):
         image = ImageReader.read_image(
             file_path, callback_function=partial(proxy_callback, range_changed, step_changed),
             default_spacing=metadata["default_spacing"])
-        return SegmentationTuple(image.file_path, image, segmentation, components)
+        return seg._replace(file_path=image.file_path, image=image)
 
 
 class LoadImage(LoadBase):

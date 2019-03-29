@@ -121,7 +121,7 @@ class TestSegmentationMask:
         test_dir = get_test_dir()
         seg = LoadSegmentation.load([os.path.join(test_dir, "test_nucleus.seg")])
         assert isinstance(seg.image, str)
-        assert seg.list_of_components == [1, 3]
+        assert seg.chosen_components == [1, 3]
         assert os.path.exists(os.path.join(test_dir, seg.image))
 
     def test_load_seg_with_image(self):
@@ -129,7 +129,7 @@ class TestSegmentationMask:
         seg = LoadSegmentationImage.load([os.path.join(test_dir, "test_nucleus.seg")],
                                          metadata={"default_spacing": (1, 1, 1)})
         assert isinstance(seg.image, Image)
-        assert seg.list_of_components == [1, 3]
+        assert seg.chosen_components == [1, 3]
         assert isinstance(seg.segmentation, np.ndarray)
         seg.image.fit_array_to_image(seg.segmentation)
 
@@ -141,6 +141,6 @@ class TestSegmentationMask:
         SaveSegmentation.save(os.path.join(tmp_dir, "segmentation.seg"), seg, {"relative_path": False})
         assert os.path.exists(os.path.join(tmp_dir, "segmentation.seg"))
         os.makedirs(os.path.join(tmp_dir, "seg_save"))
-        save_components(seg.image, seg.list_of_components, seg.segmentation, os.path.join(tmp_dir, "seg_save"))
+        save_components(seg.image, seg.chosen_components, seg.segmentation, os.path.join(tmp_dir, "seg_save"))
         assert os.path.isdir(os.path.join(tmp_dir, "seg_save"))
         assert len(glob(os.path.join(tmp_dir, "seg_save", "*"))) == 4
