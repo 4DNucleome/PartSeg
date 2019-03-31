@@ -28,8 +28,6 @@ from ..project_utils_qt.main_window import BaseMainWindow
 from .advanced_window import AdvancedWindow
 from .batch_window import BatchWindow
 from .calculation_pipeline_thread import CalculatePipelineThread
-from .interpolate_dialog import InterpolateDialog
-from .interpolate_thread import InterpolateThread
 from PartSeg.tiff_image import ImageReader, Image
 from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
 from PartSeg.utils.algorithm_describe_base import SegmentationProfile

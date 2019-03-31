@@ -14,8 +14,8 @@ from qtpy.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMess
 
 from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
 from PartSeg.segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
-from PartSeg.utils.algorithm_describe_base import AlgorithmProperty, SegmentationProfile
-from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox
+from PartSeg.utils.algorithm_describe_base import SegmentationProfile
+from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox, AlgorithmChoose
 from ..common_gui.channel_control import ChannelControl
 from ..common_gui.colors_choose import ColorSelector
 from ..common_gui.custom_save_dialog import SaveDialog
@@ -381,6 +381,11 @@ class AlgorithmOptions(QWidget):
         self.execute_all_btn = QPushButton("Execute all")
         self.execute_all_btn.setDisabled(True)
         self.block_execute_all_btn = False
+        self.algorithm_choose_widget = AlgorithmChoose(settings, mask_algorithm_dict)
+        self.algorithm_choose_widget.result.connect(self.execution_done)
+        self.algorithm_choose_widget.finished.connect(self.execution_finished)
+        self.algorithm_choose_widget.progress_signal.connect(self.progress_info)
+
         self.stack_layout = QStackedLayout()
         self.keep_chosen_components_chk = QCheckBox("Save chosen components")
         self.keep_chosen_components_chk.setToolTip("Save chosen components when loading segmentation form file\n"
@@ -389,7 +394,7 @@ class AlgorithmOptions(QWidget):
         self.keep_chosen_components_chk.setChecked(settings.keep_chosen_components)
         self.show_parameters = QPushButton("Show parameters")
         self.show_parameters.setToolTip("Show parameters of segmentation for each components")
-        self.show_parameters_widget = SegmentationInfoDialog(self.settings)
+        self.show_parameters_widget = SegmentationInfoDialog(self.settings, lambda x, y: None)
         self.show_parameters.clicked.connect(self.show_parameters_widget.show)
         self.choose_components = ChosenComponents()
         self.choose_components.check_change_signal.connect(control_view.components_change)
@@ -442,8 +447,9 @@ class AlgorithmOptions(QWidget):
         main_layout.addLayout(btn_layout)
         main_layout.addWidget(self.progress_bar)
         main_layout.addWidget(self.progress_info_lab)
-        main_layout.addWidget(self.algorithm_choose)
-        main_layout.addLayout(self.stack_layout, 1)
+        main_layout.addWidget(self.algorithm_choose_widget, 1)
+        # main_layout.addWidget(self.algorithm_choose)
+        # main_layout.addLayout(self.stack_layout, 1)
         main_layout.addWidget(self.choose_components)
         down_layout = QHBoxLayout()
         down_layout.addWidget(self.keep_chosen_components_chk)
@@ -564,7 +570,7 @@ class AlgorithmOptions(QWidget):
             for i, v in enumerate(chosen):
                 blank[self.segmentation == v] = i + 1
         self.progress_bar.setHidden(False)
-        widget: AlgorithmSettingsWidget = self.stack_layout.currentWidget()
+        widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
         widget.execute(blank)
         self.chosen_list = chosen
 
@@ -585,7 +591,7 @@ class AlgorithmOptions(QWidget):
 
     def execution_done(self, segmentation: SegmentationResult):
         sender: SegmentationThread = self.sender()
-        if sender is not None:
+        if sender is not None and False:
             algorithm_name = sender.algorithm.get_name()
             algorithm_values = deepcopy(self.settings.get(f"algorithms.{algorithm_name}"))
             parameters_dict = defaultdict(lambda: SegmentationProfile("", algorithm_name, algorithm_values))

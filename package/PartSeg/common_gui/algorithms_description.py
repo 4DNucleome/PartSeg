@@ -433,7 +433,8 @@ class InteractiveAlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
         self.algorithm_thread.started.connect(self.disable_selector)
         # self.form_widget.value_changed.connect(self.value_updated)
         # noinspection PyUnresolvedReferences
-        settings.mask_changed.connect(self.change_mask)
+        if hasattr(settings, "mask_changed"):
+            settings.mask_changed.connect(self.change_mask)
 
     def value_updated(self):
         if not self.parent().interactive:
@@ -459,6 +460,7 @@ class AlgorithmChoose(QWidget):
     started = Signal()
     result = Signal(SegmentationResult)
     value_changed = Signal()
+    progress_signal = Signal(str, int)
     algorithm_changed = Signal(str)
 
     def __init__(self, settings: BaseSettings, algorithms: Dict[str, Type[SegmentationAlgorithm]],
@@ -478,6 +480,7 @@ class AlgorithmChoose(QWidget):
             widget.algorithm_thread.execution_done.connect(self.result.emit)
             widget.algorithm_thread.finished.connect(self.finished.emit)
             widget.algorithm_thread.started.connect(self.started.emit)
+            widget.algorithm_thread.progress_signal.connect(self.progress_signal.emit)
             widget.values_changed.connect(self.value_changed.emit)
             # widget.setMinimumHeight(5000)
             # widget.algorithm.progress_signal.connect(self.progress_info)

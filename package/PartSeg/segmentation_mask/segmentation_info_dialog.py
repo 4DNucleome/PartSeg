@@ -1,12 +1,16 @@
 from qtpy.QtWidgets import QWidget, QGridLayout, QListWidget, QPlainTextEdit, QLabel, QPushButton
 from qtpy.QtCore import QEvent
+
+from PartSeg.utils.mask.algorithm_description import mask_algorithm_dict
 from .stack_settings import StackSettings
+from typing import Callable
 
 
 class SegmentationInfoDialog(QWidget):
-    def __init__(self, settings: StackSettings):
+    def __init__(self, settings: StackSettings, set_parameters: Callable[[str, dict], None]):
         super().__init__()
         self.settings = settings
+        self.set_parameters = set_parameters
         self.components = QListWidget()
         self.components.currentItemChanged.connect(self.change_component_info)
         self.description = QPlainTextEdit()
@@ -28,7 +32,16 @@ class SegmentationInfoDialog(QWidget):
             return
         text = self.components.currentItem().text()
         parameters = self.settings.components_parameters_dict[int(text)]
-        self.description.setPlainText(f"Component {text}\n" + str(parameters))
+        self.description.setPlainText(f"Component {text}\n" + parameters.pretty_print(mask_algorithm_dict))
+
+    def set_parameter_action(self):
+        if self.components.currentItem() is None:
+            return
+        text = self.components.currentItem().text()
+        parameters = self.settings.components_parameters_dict[int(text)]
+        self.set_parameters(parameters.algorithm, parameters.values)
+
+
 
     def event(self, event: QEvent):
         if event.type() == QEvent.WindowActivate:

@@ -9,6 +9,7 @@ from qtpy.QtWidgets import QMessageBox, QWidget
 from qtpy.QtCore import Signal, Slot
 
 from PartSeg.tiff_image import Image
+from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from ..project_utils_qt.settings import BaseSettings
 from PartSeg.utils.mask.io_functions import load_stack_segmentation, save_components, \
     SegmentationTuple
@@ -24,7 +25,7 @@ class StackSettings(BaseSettings):
         super().__init__(json_path)
         self.chosen_components_widget = None
         self.keep_chosen_components = False
-        self.components_parameters_dict = {}
+        self.components_parameters_dict: typing.Dict[int, SegmentationProfile] = {}
 
     @Slot(int)
     def set_keep_chosen_components(self, val: bool):
@@ -155,7 +156,8 @@ class StackSettings(BaseSettings):
                 wid = QWidget()
                 res = QMessageBox.question(wid,
                                            "Not supported",
-                                           "Time data are currently not supported. Maybe You would like to treat time as z-stack",
+                                           "Time data are currently not supported. "
+                                           "Maybe You would like to treat time as z-stack",
                                            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
                 if res == QMessageBox.Yes:
