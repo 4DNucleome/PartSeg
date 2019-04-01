@@ -6,11 +6,11 @@ import SimpleITK as sitk
 import numpy as np
 
 from ..multiscale_opening import PyMSO
-from ..multiscale_opening.mso_bind import calculate_mu_mid
+from ..multiscale_opening import calculate_mu_mid
 from ..border_rim import border_mask
 from ..channel_class import Channel
 from .algorithm_base import SegmentationAlgorithm, SegmentationResult
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
 from .noise_filtering import noise_removal_dict
 from .sprawl import sprawl_dict, BaseSprawl, calculate_distances_array, get_neigh
 from .threshold import threshold_dict, BaseThreshold, double_threshold_dict
@@ -41,6 +41,9 @@ class RestartableAlgorithm(SegmentationAlgorithm, ABC):
     def get_info_text(self):
         return "No info [Report this ass error]"
 
+    def get_segmentation_profile(self) -> SegmentationProfile:
+        return SegmentationProfile("", self.get_name(), deepcopy(self.new_parameters))
+
 
 class BorderRim(RestartableAlgorithm):
     @classmethod
@@ -61,6 +64,9 @@ class BorderRim(RestartableAlgorithm):
     def set_parameters(self, distance: float, units: Units):
         self.distance = distance
         self.units = units
+
+    def get_segmentation_profile(self) -> SegmentationProfile:
+        return SegmentationProfile("", self.get_name(), {"distance": self.distance, "units":self.units})
 
     def get_info_text(self):
         if self.mask is None:
@@ -146,7 +152,8 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             finally_segment = np.copy(self.segmentation)
             finally_segment[finally_segment > ind] = 0
             self.components_num = ind
-            return SegmentationResult(finally_segment, self.segmentation, self.cleaned_image)
+            return SegmentationResult(finally_segment, self.get_segmentation_profile(),
+                                      self.segmentation, self.cleaned_image)
 
     def _clean(self):
         super()._clean()
@@ -200,6 +207,14 @@ class UpperThresholdAlgorithm(OneThresholdAlgorithm):
 class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
     def set_parameters(self, lower_threshold, upper_threshold, *args, **kwargs):
         self._set_parameters(threshold=(lower_threshold, upper_threshold), *args, **kwargs)
+
+    def get_segmentation_profile(self) -> SegmentationProfile:
+        resp = super().get_segmentation_profile()
+        low, upp = resp.values["threshold"]
+        del resp.values["threshold"]
+        resp.values["lower_threshold"] = low
+        resp.values["upper_threshold"] = upp
+        return resp
 
     def _threshold(self, image, thr=None):
         self.threshold_info = self.new_parameters["threshold"]
@@ -287,7 +302,7 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
                                              self.new_parameters["sprawl_type"]["values"], self.threshold_info[1],
                                              self.threshold_info[0])
             self.final_sizes = np.bincount(new_segment.flat)
-            return SegmentationResult(new_segment, self.sprawl_area, self.cleaned_image)
+            return SegmentationResult(new_segment, self.get_segmentation_profile(), self.sprawl_area, self.cleaned_image)
 
 
 class LowerThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):

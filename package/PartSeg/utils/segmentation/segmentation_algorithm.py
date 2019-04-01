@@ -9,7 +9,7 @@ from ..channel_class import Channel
 from ..segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
 from ..convex_fill import convex_fill
 from ..image_operations import RadiusType
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
 from .noise_filtering import noise_removal_dict
 from .threshold import threshold_dict, BaseThreshold
 from .segment import close_small_holes, opening
@@ -51,7 +51,7 @@ class ThresholdPreview(StackAlgorithm):
             res[self.mask == 0] = 0
         self.image = None
         self.channel = None
-        return SegmentationResult(res, res, cleaned_channel=self.channel)
+        return SegmentationResult(res, self.get_segmentation_profile(), res, cleaned_channel=self.channel)
 
     def set_parameters(self, channel, threshold, noise_removal):
         self.channel_num = channel
@@ -60,6 +60,10 @@ class ThresholdPreview(StackAlgorithm):
 
     def get_info_text(self):
         return ""
+
+    def get_segmentation_profile(self) -> SegmentationProfile:
+        return SegmentationProfile("", self.get_name(), {'channel': self.channel_num, "threshold": self.threshold,
+                                                         'noise_removal': self.noise_removal})
 
 
 class BaseThresholdAlgorithm(StackAlgorithm, ABC):
@@ -130,7 +134,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
         if self.use_convex:
             resp = convex_fill(resp)
         report_fun("Calculation done", 6)
-        return SegmentationResult(resp, self.segmentation, image)
+        return SegmentationResult(resp, self.get_segmentation_profile(), self.segmentation, image)
 
     def _set_parameters(self, channel, threshold, minimum_size, close_holes, smooth_border, noise_removal,
                         close_holes_size, smooth_border_radius, side_connection, use_convex):
@@ -144,6 +148,14 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
         self.smooth_border_radius = smooth_border_radius
         self.edge_connection = not side_connection
         self.use_convex = use_convex
+
+    def get_segmentation_profile(self) -> SegmentationProfile:
+        return SegmentationProfile("", self.get_name(), {
+            "channel": self.channel_num, "threshold": self.threshold, "minimum_size": self.minimum_size,
+            "close_holes": self.close_holes, "smooth_border": self.smooth_border, "noise_removal": self.noise_removal,
+            "close_holes_size": self.close_holes_size, "smooth_border_radius": self.smooth_border_radius,
+            "side_connection": not self.edge_connection, "use_convex": self.use_convex
+        })
 
 
 class ThresholdAlgorithm(BaseThresholdAlgorithm):
@@ -219,6 +231,11 @@ class AutoThresholdAlgorithm(BaseThresholdAlgorithm):
 
     def get_info_text(self):
         return ""
+
+    def get_segmentation_profile(self):
+        resp = super().get_segmentation_profile()
+        resp.values["suggested_size"] = self.suggested_size
+        return resp
 
 
 final_algorithm_list = [ThresholdAlgorithm, ThresholdPreview, AutoThresholdAlgorithm]

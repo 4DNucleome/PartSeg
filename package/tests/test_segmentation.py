@@ -2,13 +2,15 @@ from abc import ABC
 
 import numpy as np
 from copy import deepcopy
+from typing import Type
 from PartSeg.tiff_image import Image
 from PartSeg.utils.algorithm_describe_base import SegmentationProfile
+from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
 from PartSeg.utils.analysis.analysis_utils import SegmentationPipelineElement, SegmentationPipeline
 from PartSeg.utils.calculate_pipeline import calculate_pipeline
 from PartSeg.utils.image_operations import RadiusType
 from PartSeg.utils.mask_create import calculate_mask, MaskProperty
-from PartSeg.utils.segmentation import restartable_segmentation_algorithms as sa
+from PartSeg.utils.segmentation import restartable_segmentation_algorithms as sa, SegmentationAlgorithm
 from PartSeg.utils.segmentation.sprawl import sprawl_dict
 
 
@@ -47,8 +49,20 @@ def get_two_parts_side_reversed():
     return Image(data, (100, 50, 50), "")
 
 
-def empty(*_):
+def empty(_s: str, _i: int):
     pass
+
+
+def test_base_parameters():
+    for key, val in analysis_algorithm_dict.items():
+        assert val.get_name() == key
+        val: Type[SegmentationAlgorithm]
+        obj = val()
+        values = val.get_default_values()
+        obj.set_parameters(**values)
+        parameters = obj.get_segmentation_profile()
+        assert parameters.algorithm == key
+        assert parameters.values == values
 
 
 class BaseThreshold(object):
@@ -74,23 +88,27 @@ class BaseThreshold(object):
 class BaseOneThreshold(BaseThreshold, ABC):
     def test_simple(self):
         image = self.get_base_object()
-        alg = self.algorithm_class()
+        alg: SegmentationAlgorithm = self.algorithm_class()
         parameters = self.get_parameters()
         alg.set_image(image)
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
         assert result.segmentation.max() == 2
         assert np.all(np.bincount(result.segmentation.flat)[1:] == np.array([96000, 72000]))  # 30*40*80, 30*30*80
+        assert result.parameters.values == parameters
+        assert result.parameters.algorithm == alg.get_name()
 
         parameters['threshold']["values"]["threshold"] += self.get_shift()
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
         assert result.segmentation.max() == 1
         assert np.bincount(result.segmentation.flat)[1] == 192000  # 30*80*80
+        assert result.parameters.values == parameters
+        assert result.parameters.algorithm == alg.get_name()
 
     def test_side_connection(self):
         image = self.get_side_object()
-        alg = self.algorithm_class()
+        alg: SegmentationAlgorithm = self.algorithm_class()
         parameters = self.get_parameters()
         parameters['side_connection'] = True
         alg.set_image(image)
@@ -98,12 +116,16 @@ class BaseOneThreshold(BaseThreshold, ABC):
         result = alg.calculation_run(empty)
         assert result.segmentation.max() == 2
         assert np.all(np.bincount(result.segmentation.flat)[1:] == np.array([96000 + 5, 72000 + 5]))
+        assert result.parameters.values == parameters
+        assert result.parameters.algorithm == alg.get_name()
 
         parameters['side_connection'] = False
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
         assert result.segmentation.max() == 1
         assert np.bincount(result.segmentation.flat)[1] == 96000 + 5 + 72000 + 5
+        assert result.parameters.values == parameters
+        assert result.parameters.algorithm == alg.get_name()
 
 
 class TestLowerThreshold(BaseOneThreshold):
@@ -136,12 +158,16 @@ class TestRangeThresholdAlgorithm(object):
         assert result.segmentation.max() == 2
         assert np.all(np.bincount(result.segmentation.flat)[1:] == np.array(
             [30 * 40 * 80 - 20 * 30 * 70, 30 * 30 * 80 - 20 * 20 * 70]))
+        assert result.parameters.values == parameters
+        assert result.parameters.algorithm == alg.get_name()
 
         parameters['lower_threshold'] -= 6
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
         assert result.segmentation.max() == 1
         assert np.bincount(result.segmentation.flat)[1] == 30*80*80 - 20 * 50 * 70
+        assert result.parameters.values == parameters
+        assert result.parameters.algorithm == alg.get_name()
 
     def test_side_connection(self):
         image = get_two_parts_side()
@@ -154,11 +180,16 @@ class TestRangeThresholdAlgorithm(object):
         assert result.segmentation.max() == 2
         assert np.all(np.bincount(result.segmentation.flat)[1:] == np.array(
             [30 * 40 * 80 - 20 * 30 * 70 + 5, 30 * 30 * 80 - 20 * 20 * 70 + 5]))
+        assert result.parameters.values == parameters
+        assert result.parameters.algorithm == alg.get_name()
+
         parameters['side_connection'] = False
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
         assert result.segmentation.max() == 1
         assert np.bincount(result.segmentation.flat)[1] == 30 * 70 * 80 - 20 * 50 * 70 + 10
+        assert result.parameters.values == parameters
+        assert result.parameters.algorithm == alg.get_name()
 
 
 class BaseFlowThreshold(BaseThreshold, ABC):
@@ -173,6 +204,8 @@ class BaseFlowThreshold(BaseThreshold, ABC):
             result = alg.calculation_run(empty)
             assert result.segmentation.max() == 2
             assert np.all(np.bincount(result.segmentation.flat)[1:] == np.array([96000, 72000]))  # 30*40*80, 30*30*80
+            assert result.parameters.values == parameters
+            assert result.parameters.algorithm == alg.get_name()
         parameters["threshold"]["values"]["base_threshold"]['values']["threshold"] += self.get_shift()
         for key, val in sprawl_dict.items():
             parameters["sprawl_type"] = {'name': key, 'values': val.get_default_values()}
@@ -180,6 +213,8 @@ class BaseFlowThreshold(BaseThreshold, ABC):
             result = alg.calculation_run(empty)
             assert result.segmentation.max() == 2
             assert np.all(np.bincount(result.segmentation.flat)[1:] >= np.array([96000, 72000]))  # 30*40*80, 30*30*80
+            assert result.parameters.values == parameters
+            assert result.parameters.algorithm == alg.get_name()
 
     def test_side_connection(self):
         image = self.get_side_object()
@@ -193,6 +228,8 @@ class BaseFlowThreshold(BaseThreshold, ABC):
             result = alg.calculation_run(empty)
             assert result.segmentation.max() == 2
             assert np.all(np.bincount(result.segmentation.flat)[1:] == np.array([96000 + 5, 72000 + 5]))
+            assert result.parameters.values == parameters
+            assert result.parameters.algorithm == alg.get_name()
 
 
 class TestLowerThresholdFlow(BaseFlowThreshold):
@@ -396,6 +433,9 @@ class TestMaskCreate:
         new_mask2 = calculate_mask(prop2, mask_base_array, mask2_array, (1, 1, 1))
         assert np.all(new_mask1 == mask_base_array)
         assert np.all(new_mask2 == mask2_array)
+
+
+# TODO add Border rim and multiple otsu tests
 
 
 class TestPipeline:

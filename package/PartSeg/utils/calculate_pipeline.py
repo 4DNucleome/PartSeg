@@ -29,7 +29,9 @@ def calculate_pipeline(image: Image, mask: typing.Optional[np.ndarray], pipeline
         algorithm.set_image(image)
         algorithm.set_mask(mask)
         algorithm.set_parameters(**el.segmentation.values)
-        segmentation, full_segmentation, _ = algorithm.calculation_run(_empty_fun)
+        result = algorithm.calculation_run(_empty_fun)
+        segmentation = result.segmentation
+        full_segmentation = result.full_segmentation
         report_fun("step", 2 * i + 1)
         new_mask = calculate_mask(el.mask_property, segmentation, mask, image.spacing)
         history.append(
@@ -42,6 +44,8 @@ def calculate_pipeline(image: Image, mask: typing.Optional[np.ndarray], pipeline
     algorithm.set_image(image)
     algorithm.set_mask(mask)
     algorithm.set_parameters(**pipeline.segmentation.values)
-    segmentation, full_segmentation, _ = algorithm.calculation_run(_empty_fun)
+    result = algorithm.calculation_run(_empty_fun)
+    segmentation = result.segmentation
+    full_segmentation = result.full_segmentation
     report_fun("step", 2 * len(pipeline.mask_history) + 1)
     return PipelineResult(segmentation, full_segmentation, mask, history, algorithm.get_info_text())

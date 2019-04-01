@@ -1,7 +1,7 @@
 from abc import ABC
 
 from ..image_operations import gaussian, RadiusType
-from ..algorithm_describe_base import AlgorithmDescribeBase
+from ..algorithm_describe_base import AlgorithmDescribeBase, SegmentationProfile
 from PartSeg.tiff_image import Image
 from typing import NamedTuple, Union, Callable, Optional
 import numpy as np
@@ -20,6 +20,7 @@ def calculate_operation_radius(radius, spacing, gauss_type):
 
 class SegmentationResult(NamedTuple):
     segmentation: np.ndarray
+    parameters: SegmentationProfile
     full_segmentation: Union[np.ndarray, None] = None
     cleaned_channel: Union[np.ndarray, None] = None
 
@@ -76,4 +77,7 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         pass
 
     def set_parameters(self, *args, **kwargs):
+        raise NotImplementedError()
+
+    def get_segmentation_profile(self) -> SegmentationProfile:
         raise NotImplementedError()
