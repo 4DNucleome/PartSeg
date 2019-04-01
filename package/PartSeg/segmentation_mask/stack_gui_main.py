@@ -393,7 +393,7 @@ class AlgorithmOptions(QWidget):
         self.keep_chosen_components_chk.setChecked(settings.keep_chosen_components)
         self.show_parameters = QPushButton("Show parameters")
         self.show_parameters.setToolTip("Show parameters of segmentation for each components")
-        self.show_parameters_widget = SegmentationInfoDialog(self.settings, lambda x, y: None)
+        self.show_parameters_widget = SegmentationInfoDialog(self.settings, self.algorithm_choose_widget.change_algorithm)
         self.show_parameters.clicked.connect(self.show_parameters_widget.show)
         self.choose_components = ChosenComponents()
         self.choose_components.check_change_signal.connect(control_view.components_change)
@@ -466,7 +466,7 @@ class AlgorithmOptions(QWidget):
         settings.image_changed.connect(self.choose_components.remove_components)
 
     def save_segmentation_properties_function(self):
-        widget: AlgorithmSettingsWidget = self.stack_layout.currentWidget()
+        widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
         values = widget.get_values()
         result = {"algorithm": widget.name, "values": values}
         dial = QFileDialog()
@@ -577,12 +577,7 @@ class AlgorithmOptions(QWidget):
 
     def execution_done(self, segmentation: SegmentationResult):
         sender: SegmentationThread = self.sender()
-        if sender is not None and False:
-            algorithm_name = sender.algorithm.get_name()
-            algorithm_values = deepcopy(self.settings.get(f"algorithms.{algorithm_name}"))
-            parameters_dict = defaultdict(lambda: SegmentationProfile("", algorithm_name, algorithm_values))
-        else:
-            parameters_dict = defaultdict(lambda: None)
+        parameters_dict = defaultdict(lambda: deepcopy(segmentation.parameters))
         self.settings.set_segmentation(segmentation.segmentation, True, [], parameters_dict)
 
 

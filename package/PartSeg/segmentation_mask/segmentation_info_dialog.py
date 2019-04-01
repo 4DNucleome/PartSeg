@@ -18,6 +18,7 @@ class SegmentationInfoDialog(QWidget):
         self.close_btn = QPushButton("Close")
         self.close_btn.clicked.connect(self.close)
         self.set_parameters_btn = QPushButton("Set parameters")
+        self.set_parameters_btn.clicked.connect(self.set_parameter_action)
         layout = QGridLayout()
         layout.addWidget(QLabel("Compenents:"), 0, 0)
         layout.addWidget(QLabel("segmentation parameters:"), 0, 1)
@@ -26,13 +27,17 @@ class SegmentationInfoDialog(QWidget):
         layout.addWidget(self.close_btn, 2, 0)
         layout.addWidget(self.set_parameters_btn, 2, 1)
         self.setLayout(layout)
+        self.setWindowTitle("Parameters preview")
 
     def change_component_info(self):
         if self.components.currentItem() is None:
             return
         text = self.components.currentItem().text()
         parameters = self.settings.components_parameters_dict[int(text)]
-        self.description.setPlainText(f"Component {text}\n" + parameters.pretty_print(mask_algorithm_dict))
+        if parameters is None:
+            self.description.setPlainText("None")
+        else:
+            self.description.setPlainText(f"Component {text}\n" + parameters.pretty_print(mask_algorithm_dict))
 
     def set_parameter_action(self):
         if self.components.currentItem() is None:
