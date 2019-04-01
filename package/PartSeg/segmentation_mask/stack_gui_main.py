@@ -360,7 +360,6 @@ class AlgorithmOptions(QWidget):
         control_view = image_view.get_control_view()
         super().__init__()
         self.settings = settings
-        self.algorithm_choose = QComboBox()
         self.show_result = QComboBox()  # QCheckBox("Show result")
         self.show_result.addItems(["Not show", "Show results", "Show choosen"])
         self.show_result.setCurrentIndex(control_view.show_label)
@@ -386,7 +385,7 @@ class AlgorithmOptions(QWidget):
         self.algorithm_choose_widget.finished.connect(self.execution_finished)
         self.algorithm_choose_widget.progress_signal.connect(self.progress_info)
 
-        self.stack_layout = QStackedLayout()
+        # self.stack_layout = QStackedLayout()
         self.keep_chosen_components_chk = QCheckBox("Save chosen components")
         self.keep_chosen_components_chk.setToolTip("Save chosen components when loading segmentation form file\n"
                                                    "or from multiple file widget.")
@@ -400,16 +399,6 @@ class AlgorithmOptions(QWidget):
         self.choose_components.check_change_signal.connect(control_view.components_change)
         self.choose_components.mouse_leave.connect(image_view.component_unmark)
         self.choose_components.mouse_enter.connect(image_view.component_mark)
-        widgets_list = []
-        # TODO restore refresh channels num
-        for name, val in mask_algorithm_dict.items():
-            self.algorithm_choose.addItem(name)
-            widget = AlgorithmSettingsWidget(settings, name, val)
-            widgets_list.append(widget)
-            widget.algorithm_thread.execution_done.connect(self.execution_done)
-            widget.algorithm_thread.progress_signal.connect(self.progress_info)
-            widget.algorithm_thread.finished.connect(self.execution_finished)
-            self.stack_layout.addWidget(widget)
         # WARNING works only with one channels algorithms
         # SynchronizeValues.add_synchronization("channels_chose", widgets_list)
         self.chosen_list = []
@@ -461,7 +450,6 @@ class AlgorithmOptions(QWidget):
         self.setLayout(main_layout)
 
         # noinspection PyUnresolvedReferences
-        self.algorithm_choose.currentIndexChanged.connect(self.stack_layout.setCurrentIndex)
         self.save_segmentation_properties_button.clicked.connect(self.save_segmentation_properties_function)
         self.execute_btn.clicked.connect(self.execute_action)
         self.execute_all_btn.clicked.connect(self.execute_all_action)
@@ -563,15 +551,13 @@ class AlgorithmOptions(QWidget):
         if len(chosen) == 0:
             blank = None
         else:
-            if len(chosen) > 250:
-                blank = np.zeros(self.segmentation.shape, dtype=np.uint16)
-            else:
-                blank = np.zeros(self.segmentation.shape, dtype=np.uint8)
+            blank = np.ones(self.segmentation.shape, dtype=np.uint8)
             for i, v in enumerate(chosen):
-                blank[self.segmentation == v] = i + 1
+                blank[self.segmentation == v] = 0
         self.progress_bar.setHidden(False)
         widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
-        widget.execute(blank)
+        widget.set_mask(blank)
+        widget.execute()
         self.chosen_list = chosen
 
     def progress_info(self, text, num):

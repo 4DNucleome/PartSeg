@@ -18,15 +18,10 @@ from .segment import close_small_holes, opening
 class StackAlgorithm(SegmentationAlgorithm, ABC):
     def __init__(self):
         super().__init__()
-        self.exclude_mask = None
         self.channel_num = 0
 
     def _clean(self):
         super()._clean()
-        self.exclude_mask = None
-
-    def set_exclude_mask(self, exclude_mask):
-        self.exclude_mask = exclude_mask
 
 
 class ThresholdPreview(StackAlgorithm):
@@ -51,22 +46,11 @@ class ThresholdPreview(StackAlgorithm):
         self.channel = self.get_channel(self.channel_num)
         image = noise_removal_dict[self.noise_removal["name"]].noise_remove(self.channel, self.image.spacing,
                                                                             self.noise_removal["values"])
-        if self.exclude_mask is None:
-            res = (image > self.threshold).astype(np.uint8)
-        else:
-            mask = self.exclude_mask > 0
-            if self.exclude_mask is not None:
-                result_data_type = self.exclude_mask.dtype
-            else:
-                result_data_type = np.uint8
-            res = (image > self.threshold).astype(result_data_type)
-            res[mask] = 0
-            if self.exclude_mask is not None:
-                res[res > 0] = self.exclude_mask.max() + 1
-            res[mask] = self.exclude_mask[mask]
+        res = (image > self.threshold).astype(np.uint8)
+        if self.mask is not None:
+            res[self.mask == 0] = 0
         self.image = None
         self.channel = None
-        self.exclude_mask = None
         return SegmentationResult(res, res, cleaned_channel=self.channel)
 
     def set_parameters(self, channel, threshold, noise_removal):
@@ -145,10 +129,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
         resp[resp > ind] = 0
         if self.use_convex:
             resp = convex_fill(resp)
-        if self.exclude_mask is not None:
-            resp[resp > 0] += self.exclude_mask.max()
-            resp[self.exclude_mask > 0] = self.exclude_mask[self.exclude_mask > 0]
-            report_fun("Calculation done", 6)
+        report_fun("Calculation done", 6)
         return SegmentationResult(resp, self.segmentation, image)
 
     def _set_parameters(self, channel, threshold, minimum_size, close_holes, smooth_border, noise_removal,
@@ -178,12 +159,8 @@ class ThresholdAlgorithm(BaseThresholdAlgorithm):
 
     def _threshold_and_exclude(self, image, report_fun):
         report_fun("Threshold calculation", 1)
-        if self.exclude_mask is not None:
-            mask = (self.exclude_mask == 0).astype(np.uint8)
-        else:
-            mask = None
         threshold_algorithm: BaseThreshold = threshold_dict[self.threshold["name"]]
-        mask, thr_val = threshold_algorithm.calculate_mask(image, mask, self.threshold["values"], operator.ge)
+        mask, thr_val = threshold_algorithm.calculate_mask(image, self.mask, self.threshold["values"], operator.ge)
         report_fun("Threshold calculated", 2)
         return mask
 
@@ -229,9 +206,9 @@ class AutoThresholdAlgorithm(BaseThresholdAlgorithm):
             return mask2
 
     def _threshold_and_exclude(self, image, report_fun):
-        if self.exclude_mask is not None:
+        if self.mask is not None:
             report_fun("Components exclusion apply", 1)
-            image[self.exclude_mask > 0] = 0
+            image[self.mask == 0] = 0
         report_fun("Threshold calculation", 2)
         mask = self._threshold_image(image)
         return mask

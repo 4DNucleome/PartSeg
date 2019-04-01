@@ -123,7 +123,7 @@ class StackSettings(BaseSettings):
                 components_list = base_chose[:]
                 for i, val in enumerate(components_size[1:], 1):
                     if val > 0:
-                        segmentation[new_segmentation_data == i] = base_index
+                        segmentation[new_segmentation == i] = base_index
                         if i in list_of_components:
                             chosen_components.append(base_index)
                         components_list.append(base_index)

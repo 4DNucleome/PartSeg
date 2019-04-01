@@ -417,7 +417,6 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
 
 class AlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
     def execute(self, exclude_mask=None):
-        self.algorithm_thread.algorithm.set_exclude_mask(exclude_mask)
         self.algorithm_thread.algorithm.set_image(self.settings.image)
         super().execute(exclude_mask)
 

@@ -3,7 +3,7 @@ from abc import ABC
 from ..image_operations import gaussian, RadiusType
 from ..algorithm_describe_base import AlgorithmDescribeBase
 from PartSeg.tiff_image import Image
-from typing import NamedTuple, Union, Callable
+from typing import NamedTuple, Union, Callable, Optional
 import numpy as np
 
 
@@ -29,7 +29,7 @@ def report_empty_fun(_x, _y):
 
 
 class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
-    channel: np.ndarray
+    channel: Optional[np.ndarray]
 
     def __init__(self):
         super().__init__()
