@@ -203,7 +203,7 @@ class SaveSegmentation(SaveBase):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("relative_path", "Relative Path\nin segmentation", True)]
+        return [AlgorithmProperty("relative_path", "Relative Path\nin segmentation", False)]
 
     @classmethod
     def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: SegmentationTuple, parameters: dict,

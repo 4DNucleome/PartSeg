@@ -28,12 +28,11 @@ class BatchProceed(QThread):
         self.result_dir = ""
         self.channel_num = 0
 
-    def set_parameters(self, algorithm: Type[SegmentationAlgorithm], parameters, channel_num, file_list, result_dir):
+    def set_parameters(self, algorithm: Type[SegmentationAlgorithm], parameters, file_list, result_dir):
         self.algorithm = algorithm()
         self.parameters = parameters
         self.file_list = list(sorted(file_list))
         self.result_dir = result_dir
-        self.channel_num = channel_num
         # self.algorithm.execution_done.connect(self.calc_one_finished)
         # self.algorithm.progress_signal.connect(self.progress_info)
 
@@ -51,7 +50,7 @@ class BatchProceed(QThread):
                 else:
                     project_tuple = LoadImage.load(file_path)
                 blank = get_mask(project_tuple.segmentation, project_tuple.chosen_components)
-                self.algorithm.set_parameters(image=project_tuple.image.get_channel(self.channel_num),
+                self.algorithm.set_parameters(image=project_tuple.image,
                                               exclude_mask=blank, **self.parameters)
                 segmentation = self.algorithm.calculation_run(self.progress_info)
                 state2 = StackSettings.transform_state(project_tuple, segmentation.segmentation,

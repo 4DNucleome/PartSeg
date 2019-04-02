@@ -522,9 +522,9 @@ class AlgorithmOptions(QWidget):
         self.progress_bar.setRange(0, len(self.file_list))
         self.progress_bar.setValue(0)
 
-        widget = self.stack_layout.currentWidget()
+        widget = self.algorithm_choose_widget.currentWidget()
         parameters = widget.get_values()
-        self.batch_process.set_parameters(widget.algorithm, parameters, widget.channel_num(),
+        self.batch_process.set_parameters(widget.algorithm, parameters,
                                           self.file_list, folder_path)
         self.batch_process.start()
 
@@ -573,6 +573,11 @@ class AlgorithmOptions(QWidget):
         sender: SegmentationThread = self.sender()
         parameters_dict = defaultdict(lambda: deepcopy(segmentation.parameters))
         self.settings.set_segmentation(segmentation.segmentation, True, [], parameters_dict)
+
+    def showEvent(self, _):
+        widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
+        widget.image_changed(self.settings.image)
+
 
 
 class ImageInformation(QWidget):
