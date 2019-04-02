@@ -506,9 +506,9 @@ class AlgorithmOptions(QWidget):
         self.choose_components.set_chose([], [])
 
     def execute_all_action(self):
-        dial = QFileDialog()
+        dial = SaveDialog({SaveSegmentation.get_name(): SaveSegmentation}, history=self.settings.get_path_history(),
+                          system_widget=False)
         dial.setFileMode(QFileDialog.Directory)
-        dial.setHistory(dial.history() + self.settings.get_path_history())
         dial.setDirectory(self.settings.get("io.save_batch", self.settings.get("io.save_segmentation_directory", "")))
         if not dial.exec_():
             return
@@ -522,10 +522,11 @@ class AlgorithmOptions(QWidget):
         self.progress_bar.setRange(0, len(self.file_list))
         self.progress_bar.setValue(0)
 
-        widget = self.algorithm_choose_widget.currentWidget()
+        widget = self.algorithm_choose_widget.current_widget()
         parameters = widget.get_values()
+        save_parameters = dial.values
         self.batch_process.set_parameters(widget.algorithm, parameters,
-                                          self.file_list, folder_path)
+                                          self.file_list, folder_path, save_parameters)
         self.batch_process.start()
 
     def execution_all_error(self, text):

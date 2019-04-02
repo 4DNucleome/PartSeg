@@ -28,11 +28,12 @@ class BatchProceed(QThread):
         self.result_dir = ""
         self.channel_num = 0
 
-    def set_parameters(self, algorithm: Type[SegmentationAlgorithm], parameters, file_list, result_dir):
+    def set_parameters(self, algorithm: Type[SegmentationAlgorithm], parameters, file_list, result_dir, save_parameters):
         self.algorithm = algorithm()
         self.parameters = parameters
         self.file_list = list(sorted(file_list))
         self.result_dir = result_dir
+        self.save_parameters = save_parameters
         # self.algorithm.execution_done.connect(self.calc_one_finished)
         # self.algorithm.progress_signal.connect(self.progress_info)
 
@@ -46,12 +47,13 @@ class BatchProceed(QThread):
             file_path = self.file_list[self.index]
             try:
                 if path.splitext(file_path)[1] == ".seg":
-                    project_tuple = LoadSegmentationImage.load(file_path)
+                    project_tuple = LoadSegmentationImage.load([file_path])
                 else:
-                    project_tuple = LoadImage.load(file_path)
+                    project_tuple = LoadImage.load([file_path])
                 blank = get_mask(project_tuple.segmentation, project_tuple.chosen_components)
-                self.algorithm.set_parameters(image=project_tuple.image,
-                                              exclude_mask=blank, **self.parameters)
+                self.algorithm.set_image(project_tuple.image)
+                self.algorithm.set_mask(blank)
+                self.algorithm.set_parameters(**self.parameters)
                 segmentation = self.algorithm.calculation_run(self.progress_info)
                 state2 = StackSettings.transform_state(project_tuple, segmentation.segmentation,
                                                        defaultdict(lambda: segmentation.parameters), [])
@@ -67,7 +69,7 @@ class BatchProceed(QThread):
 
                 # FIXME
                 SaveSegmentation.save(path.join(self.result_dir, name), state2,
-                                      parameters=SaveSegmentation.get_default_values())
+                                      parameters=self.save_parameters)
 
             except Exception as e:
                 self.error_signal.emit("Exception occurred during proceed {}. Exception info {}".format(file_path, e))

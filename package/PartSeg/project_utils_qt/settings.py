@@ -152,8 +152,8 @@ class ViewSettings(ImageSettings):
         return list(color_maps.keys())
 
     def _image_changed(self):
-        super()._image_changed()
         self.border_val = self.image.get_ranges()
+        super()._image_changed()
 
     def change_profile(self, name):
         self.current_profile_dict = name

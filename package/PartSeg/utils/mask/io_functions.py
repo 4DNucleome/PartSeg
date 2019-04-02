@@ -9,6 +9,8 @@ import numpy as np
 import json
 from typing import Union
 from io import BytesIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
+
+from PartSeg.utils.analysis.save_hooks import PartEncoder, part_hook
 from ..io_utils import get_tarinfo, SaveBase, LoadBase, proxy_callback, ProjectInfoBase
 from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationProfile
 from PartSeg.tiff_image import Image, ImageWriter, ImageReader
@@ -72,7 +74,7 @@ def save_stack_segmentation(file: Union[tarfile.TarFile, str, TextIOBase, Buffer
             metadata["base_file"] = os.path.relpath(file_path, os.path.dirname(file))
         else:
             metadata["base_file"] = file_path
-    metadata_buff = BytesIO(json.dumps(metadata).encode('utf-8'))
+    metadata_buff = BytesIO(json.dumps(metadata, cls=PartEncoder).encode('utf-8'))
     metadata_tar = get_tarinfo("metadata.json", metadata_buff)
     tar_file.addfile(metadata_tar, metadata_buff)
     step_changed(4)
@@ -103,7 +105,7 @@ def load_stack_segmentation(file: str, range_changed=None, step_changed=None):
     segmentation_buff.seek(0)
     segmentation = np.load(segmentation_buff)
     step_changed(3)
-    metadata = json.loads(tar_file.extractfile("metadata.json").read().decode("utf8"))
+    metadata = json.loads(tar_file.extractfile("metadata.json").read().decode("utf8"), object_hook=part_hook)
     step_changed(4)
     if isinstance(file, str):
         tar_file.close()
@@ -165,6 +167,8 @@ class LoadSegmentationImage(LoadBase):
             file_path = os.path.join(os.path.dirname(load_locations[0]), base_file)
         if not os.path.exists(file_path):
             raise IOError(f"Base file for segmentation do not exists: {base_file} -> {file_path}")
+        if metadata is None:
+            metadata = {"default_spacing": [1, 1, 1]}
         image = ImageReader.read_image(
             file_path, callback_function=partial(proxy_callback, range_changed, step_changed),
             default_spacing=metadata["default_spacing"])

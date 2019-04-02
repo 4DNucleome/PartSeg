@@ -84,13 +84,13 @@ class StackSettings(BaseSettings):
                                  self.chosen_components(), copy(self.components_parameters_dict))
 
     def set_project_info(self, data: SegmentationTuple):
-        signals = self.signalsBlocked()
+        """signals = self.signalsBlocked()
         if data.segmentation is not None:
-            self.blockSignals(True)
+            self.blockSignals(True)"""
         if data.image is not None and \
                 (self.image.file_path != data.image.file_path or self.image.shape != data.image.shape):
             self.image = data.image
-        self.blockSignals(signals)
+        # self.blockSignals(signals)
         state = self.get_project_info()
         # TODO Remove reperition this and set_segmentation code
         if self.keep_chosen_components:
