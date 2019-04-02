@@ -1,12 +1,14 @@
-import numpy as np
+from collections import defaultdict
+
 from qtpy.QtCore import QThread, Signal
 
-from PartSeg.utils.mask.io_functions import load_stack_segmentation, SaveSegmentation, SegmentationTuple
+from PartSeg.segmentation_mask.stack_settings import get_mask, StackSettings
+from PartSeg.utils.mask.io_functions import SaveSegmentation, SegmentationTuple, \
+    LoadSegmentationImage, LoadImage
 from ..utils.segmentation.algorithm_base import SegmentationAlgorithm
-from ..project_utils_qt.settings import ImageSettings
-from PartSeg.tiff_image import ImageReader
-from typing import Type
+from typing import Type, Optional
 from os import path
+import re
 
 
 class BatchProceed(QThread):
@@ -17,7 +19,7 @@ class BatchProceed(QThread):
 
     def __init__(self):
         super(BatchProceed, self).__init__()
-        self.algorithm = None
+        self.algorithm = Optional[None]
         self.parameters = None
         self.file_list = []
         self.base_file = ""
@@ -40,40 +42,32 @@ class BatchProceed(QThread):
         self.progress_signal.emit("file {} ({}): {}".format(self.index+1, name, text), self.index)
 
     def run_calculation(self):
-        temp_settings = ImageSettings()
-        reader = ImageReader()
+
         while self.index < len(self.file_list):
             file_path = self.file_list[self.index]
             try:
                 if path.splitext(file_path)[1] == ".seg":
-                    segmentation, metadata = load_stack_segmentation(file_path)
-                    if "base_file" not in metadata or not path.exists(metadata["base_file"]):
-                        self.index += 1
-                        self.error_signal.emit("not found base file for {}".format(file_path))
-                        continue
-                    self.base_file = metadata["base_file"]
-                    self.components = metadata["components"]
-                    if len(self.components) > 250:
-                        blank = np.zeros(segmentation.shape, dtype=np.uint16)
-                    else:
-                        blank = np.zeros(segmentation.shape, dtype=np.uint8)
-                    for i, v in enumerate(self.components):
-                        blank[segmentation == v] = i + 1
+                    project_tuple = LoadSegmentationImage.load(file_path)
                 else:
-                    self.base_file = file_path
-                    self.components = []
-                    blank = None
-                temp_settings.image = reader.read(self.base_file)
-                self.algorithm.set_parameters(image=temp_settings.image.get_channel(self.channel_num),
+                    project_tuple = LoadImage.load(file_path)
+                blank = get_mask(project_tuple.segmentation, project_tuple.chosen_components)
+                self.algorithm.set_parameters(image=project_tuple.image.get_channel(self.channel_num),
                                               exclude_mask=blank, **self.parameters)
                 segmentation = self.algorithm.calculation_run(self.progress_info)
-                name = path.basename(file_path)
-                name = path.splitext(name)[0] + ".seg"
+                state2 = StackSettings.transform_state(project_tuple, segmentation.segmentation,
+                                                       defaultdict(lambda: segmentation.parameters), [])
+                name = path.splitext(path.basename(file_path))[0] + ".seg"
+                re_end = re.compile(r"(.*_version)(\d+)\.seg$")
+                while path.exists(name):
+                    match = re_end.match(name)
+                    if match:
+                        num = int(match.group(2))+1
+                        name = match.group(1) + str(num) + ".seg"
+                    else:
+                        name = path.splitext(path.basename(file_path))[0] + "_version1.seg"
+
                 # FIXME
-                SaveSegmentation.save(path.join(self.result_dir, name),
-                                      SegmentationTuple(temp_settings.image.file_path, temp_settings.image,
-                                                        segmentation.segmentation,
-                                                        list(range(1, len(self.components) + 1))),
+                SaveSegmentation.save(path.join(self.result_dir, name), state2,
                                       parameters=SaveSegmentation.get_default_values())
 
             except Exception as e:

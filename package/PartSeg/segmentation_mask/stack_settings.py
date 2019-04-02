@@ -176,7 +176,6 @@ class StackSettings(BaseSettings):
             self.segmentation = new_segmentation_data
             self.components_parameters_dict = segmentation_parameters
 
-
     @staticmethod
     def verify_image(image: Image, silent=True) -> typing.Union[Image, bool]:
         if image.is_time:
@@ -201,3 +200,12 @@ class StackSettings(BaseSettings):
                     return image.swap_time_and_stack()
                 return False
         return True
+
+
+def get_mask(segmentation: typing.Optional[np.ndarray], chosen: List[int]):
+    if segmentation is None or len(chosen) == 0:
+        return None
+    resp = np.ones(segmentation.shape, dtype=np.uint8)
+    for i in chosen:
+        resp[segmentation == i] = 0
+    return resp

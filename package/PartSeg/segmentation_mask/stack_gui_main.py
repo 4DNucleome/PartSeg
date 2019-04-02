@@ -9,12 +9,11 @@ import numpy as np
 from qtpy.QtCore import Signal, Qt, QByteArray
 from qtpy.QtGui import QGuiApplication, QIcon
 from qtpy.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox, QVBoxLayout, QCheckBox, \
-    QComboBox, QDoubleSpinBox, QSpinBox, QStackedLayout, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
+    QComboBox, QDoubleSpinBox, QSpinBox, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
     QTabWidget, QSizePolicy
 
 from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
 from PartSeg.segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
-from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox, AlgorithmChoose
 from ..common_gui.channel_control import ChannelControl
 from ..common_gui.colors_choose import ColorSelector
@@ -34,7 +33,7 @@ from ..project_utils_qt.main_window import BaseMainWindow
 from ..project_utils_qt.execute_function_thread import ExecuteFunctionThread
 from ..project_utils_qt.segmentation_thread import SegmentationThread
 from PartSeg.utils.mask.algorithm_description import mask_algorithm_dict
-from .stack_settings import StackSettings
+from .stack_settings import StackSettings, get_mask
 from PartSeg.tiff_image import ImageReader, Image
 from .batch_proceed import BatchProceed
 from .image_view import StackImageView
@@ -548,12 +547,7 @@ class AlgorithmOptions(QWidget):
         self.progress_bar.setRange(0, 0)
         self.choose_components.setDisabled(True)
         chosen = sorted(self.choose_components.get_chosen())
-        if len(chosen) == 0:
-            blank = None
-        else:
-            blank = np.ones(self.segmentation.shape, dtype=np.uint8)
-            for i, v in enumerate(chosen):
-                blank[self.segmentation == v] = 0
+        blank = get_mask(self.settings.segmentation, chosen)
         self.progress_bar.setHidden(False)
         widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
         widget.set_mask(blank)
