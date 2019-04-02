@@ -374,9 +374,13 @@ class AlgorithmOptions(QWidget):
         self.borders_thick.setValue(control_view.borders_thick)
         # noinspection PyUnresolvedReferences
         self.borders_thick.valueChanged.connect(self.border_value_check)
-        self.save_segmentation_properties_button = QPushButton("Save segmentation parameters")
+        self.execute_in_background = QPushButton("Execute in background")
+        self.execute_in_background.setToolTip("Run calculation in background. Put result in multiple files widget")
         self.execute_btn = QPushButton("Execute")
+        self.execute_btn.setStyleSheet("QPushButton{font-weight: bold;}")
         self.execute_all_btn = QPushButton("Execute all")
+        self.execute_all_btn.setToolTip("Execute in batch mode segmentation with current parameter. "
+                                        "File list need to be specified in image tab.")
         self.execute_all_btn.setDisabled(True)
         self.block_execute_all_btn = False
         self.algorithm_choose_widget = AlgorithmChoose(settings, mask_algorithm_dict)
@@ -427,10 +431,10 @@ class AlgorithmOptions(QWidget):
         opt_layout2.addWidget(right_label("Border thick:"))
         opt_layout2.addWidget(self.borders_thick)
         main_layout.addLayout(opt_layout2)
-        main_layout.addWidget(self.save_segmentation_properties_button)
+        main_layout.addWidget(self.execute_btn)
         btn_layout = QHBoxLayout()
         btn_layout.setContentsMargins(0, 0, 0, 0)
-        btn_layout.addWidget(self.execute_btn)
+        btn_layout.addWidget(self.execute_in_background)
         btn_layout.addWidget(self.execute_all_btn)
         main_layout.addLayout(btn_layout)
         main_layout.addWidget(self.progress_bar)
@@ -449,7 +453,7 @@ class AlgorithmOptions(QWidget):
         self.setLayout(main_layout)
 
         # noinspection PyUnresolvedReferences
-        self.save_segmentation_properties_button.clicked.connect(self.save_segmentation_properties_function)
+        self.execute_in_background.clicked.connect(self.execute_in_background)
         self.execute_btn.clicked.connect(self.execute_action)
         self.execute_all_btn.clicked.connect(self.execute_all_action)
         # noinspection PyUnresolvedReferences
@@ -464,7 +468,7 @@ class AlgorithmOptions(QWidget):
         settings.components_change_list.connect(self.choose_components.new_choose)
         settings.image_changed.connect(self.choose_components.remove_components)
 
-    def save_segmentation_properties_function(self):
+    def execute_in_background(self):
         widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
         values = widget.get_values()
         result = {"algorithm": widget.name, "values": values}
