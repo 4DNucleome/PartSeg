@@ -3,7 +3,11 @@
 ## 0.9.2
 - add pypi base check for update 
 - remove resetting image state when change state in same image
-- in stack segmentation add options to picking components from segmentation's      
+- in stack segmentation add options to picking components from segmentation's
+- in mask segmentation add:
+    - preview of segmentation parameters per component, 
+    - save segmentation parameters in save file
+    - new implementation of batch mode. 
 
 ## 0.9.1
 - Add multiple files widget 
