@@ -1,3 +1,4 @@
+import sys
 from qtpy.QtCore import Slot, QThread
 from qtpy.QtWidgets import QApplication, QMessageBox
 import packaging.version
@@ -53,10 +54,17 @@ class CustomApplication(QApplication):
         my_version = packaging.version.parse(__version__)
         remote_version = packaging.version.parse(self.release_check.release)
         if remote_version > my_version:
-            message = QMessageBox(
-                QMessageBox.Information, "New release",
-                f"You use outdated version of PartSeg. Your version is {my_version} and current is {remote_version}. "
-                "You can download next release form https://4dnucleome.cent.uw.edu.pl/PartSeg/", QMessageBox.Ok)
+            if getattr(sys, 'frozen', False):
+                message = QMessageBox(
+                    QMessageBox.Information, "New release",
+                    f"You use outdated version of PartSeg. Your version is {my_version} and current is {remote_version}. "
+                    "You can download next release form https://4dnucleome.cent.uw.edu.pl/PartSeg/", QMessageBox.Ok)
+            else:
+                message = QMessageBox(
+                    QMessageBox.Information, "New release",
+                    f"You use outdated version of PartSeg. Your version is {my_version} and current is {remote_version}. "
+                    "You can update it from pypi (pip install -U PartSeg)", QMessageBox.Ok)
+
             message.exec()
 
 
