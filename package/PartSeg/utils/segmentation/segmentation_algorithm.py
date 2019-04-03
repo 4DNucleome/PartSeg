@@ -42,7 +42,7 @@ class ThresholdPreview(StackAlgorithm):
         self.noise_removal = None
         self.threshold = 0
 
-    def calculation_run(self, _report_fun) -> SegmentationResult:
+    def calculation_run(self, report_fun) -> SegmentationResult:
         self.channel = self.get_channel(self.channel_num)
         image = noise_removal_dict[self.noise_removal["name"]].noise_remove(self.channel, self.image.spacing,
                                                                             self.noise_removal["values"])
@@ -98,6 +98,10 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
         self.edge_connection = True
         self.use_convex = False
 
+    @staticmethod
+    def get_steps_num():
+        return 7
+
     def _threshold_image(self, image: np.ndarray) -> np.ndarray:
         raise NotImplementedError()
 
@@ -105,7 +109,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
         raise NotImplementedError()
 
     def calculation_run(self, report_fun):
-        report_fun("Gauss", 0)
+        report_fun("Noise removal", 0)
         self.channel = self.get_channel(self.channel_num)
         image = noise_removal_dict[self.noise_removal["name"]].noise_remove(self.channel, self.image.spacing,
                                                                             self.noise_removal["values"])
@@ -132,8 +136,9 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
         resp = np.copy(self.segmentation)
         resp[resp > ind] = 0
         if self.use_convex:
+            report_fun("convex hull", 6)
             resp = convex_fill(resp)
-        report_fun("Calculation done", 6)
+        report_fun("Calculation done", 7)
         return SegmentationResult(resp, self.get_segmentation_profile(), self.segmentation, image)
 
     def _set_parameters(self, channel, threshold, minimum_size, close_holes, smooth_border, noise_removal,

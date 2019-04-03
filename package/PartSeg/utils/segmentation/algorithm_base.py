@@ -81,3 +81,7 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
 
     def get_segmentation_profile(self) -> SegmentationProfile:
         raise NotImplementedError()
+
+    @staticmethod
+    def get_steps_num():
+        return 0

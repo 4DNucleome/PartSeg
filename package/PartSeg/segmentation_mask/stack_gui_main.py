@@ -14,6 +14,7 @@ from qtpy.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMess
 
 from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
 from PartSeg.segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
+from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox, AlgorithmChoose
 from ..common_gui.channel_control import ChannelControl
 from ..common_gui.colors_choose import ColorSelector
@@ -35,7 +36,7 @@ from ..project_utils_qt.segmentation_thread import SegmentationThread
 from PartSeg.utils.mask.algorithm_description import mask_algorithm_dict
 from .stack_settings import StackSettings, get_mask
 from PartSeg.tiff_image import ImageReader, Image
-from .batch_proceed import BatchProceed
+from .batch_proceed import BatchProceed, BatchTask
 from .image_view import StackImageView
 from PartSeg.utils.mask.io_functions import SaveSegmentation, LoadSegmentation, load_dict
 from .. import CONFIG_FOLDER as CONFIG_FOLDER_BASE
@@ -374,8 +375,8 @@ class AlgorithmOptions(QWidget):
         self.borders_thick.setValue(control_view.borders_thick)
         # noinspection PyUnresolvedReferences
         self.borders_thick.valueChanged.connect(self.border_value_check)
-        self.execute_in_background = QPushButton("Execute in background")
-        self.execute_in_background.setToolTip("Run calculation in background. Put result in multiple files widget")
+        self.execute_in_background_btn = QPushButton("Execute in background")
+        self.execute_in_background_btn.setToolTip("Run calculation in background. Put result in multiple files widget")
         self.execute_btn = QPushButton("Execute")
         self.execute_btn.setStyleSheet("QPushButton{font-weight: bold;}")
         self.execute_all_btn = QPushButton("Execute all")
@@ -405,6 +406,8 @@ class AlgorithmOptions(QWidget):
         # WARNING works only with one channels algorithms
         # SynchronizeValues.add_synchronization("channels_chose", widgets_list)
         self.chosen_list = []
+        self.progress_bar2 = QProgressBar()
+        self.progress_bar2.setHidden(True)
         self.progress_bar = QProgressBar()
         self.progress_bar.setHidden(True)
         self.progress_info_lab = QLabel()
@@ -414,6 +417,7 @@ class AlgorithmOptions(QWidget):
         self.batch_process.progress_signal.connect(self.progress_info)
         self.batch_process.error_signal.connect(self.execution_all_error)
         self.batch_process.execution_done.connect(self.execution_all_done)
+        self.batch_process.range_signal.connect(self.progress_bar.setRange)
         self.is_batch_process = False
 
         self.setContentsMargins(0, 0, 0, 0)
@@ -434,9 +438,10 @@ class AlgorithmOptions(QWidget):
         main_layout.addWidget(self.execute_btn)
         btn_layout = QHBoxLayout()
         btn_layout.setContentsMargins(0, 0, 0, 0)
-        btn_layout.addWidget(self.execute_in_background)
+        btn_layout.addWidget(self.execute_in_background_btn)
         btn_layout.addWidget(self.execute_all_btn)
         main_layout.addLayout(btn_layout)
+        main_layout.addWidget(self.progress_bar2)
         main_layout.addWidget(self.progress_bar)
         main_layout.addWidget(self.progress_info_lab)
         main_layout.addWidget(self.algorithm_choose_widget, 1)
@@ -453,7 +458,7 @@ class AlgorithmOptions(QWidget):
         self.setLayout(main_layout)
 
         # noinspection PyUnresolvedReferences
-        self.execute_in_background.clicked.connect(self.execute_in_background)
+        self.execute_in_background_btn.clicked.connect(self.execute_in_background)
         self.execute_btn.clicked.connect(self.execute_action)
         self.execute_all_btn.clicked.connect(self.execute_all_action)
         # noinspection PyUnresolvedReferences
@@ -467,21 +472,6 @@ class AlgorithmOptions(QWidget):
         settings.chosen_components_widget = self.choose_components
         settings.components_change_list.connect(self.choose_components.new_choose)
         settings.image_changed.connect(self.choose_components.remove_components)
-
-    def execute_in_background(self):
-        widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
-        values = widget.get_values()
-        result = {"algorithm": widget.name, "values": values}
-        dial = QFileDialog()
-        dial.setFileMode(QFileDialog.AnyFile)
-        dial.setAcceptMode(QFileDialog.AcceptSave)
-        dial.setDefaultSuffix(".json")
-        dial.setHistory(dial.history() + self.settings.get_path_history())
-        if dial.exec():
-            file_path = dial.selectedFiles()[0]
-            json_string = json.dumps(result, cls=self.settings.json_encoder_class)
-            with open(file_path, 'w') as ff:
-                ff.write(json_string)
 
     def border_value_check(self, value):
         if value % 2 == 0:
@@ -509,6 +499,25 @@ class AlgorithmOptions(QWidget):
         self.settings.segmentation = None
         self.choose_components.set_chose([], [])
 
+    def _execute_in_background_init(self):
+        if self.batch_process.isRunning():
+            return
+        self.progress_bar2.setVisible(True)
+        self.progress_bar2.setRange(0, self.batch_process.queue.qsize())
+        self.progress_bar2.setValue(self.batch_process.index)
+        self.progress_bar.setVisible(True)
+        self.progress_bar.setValue(0)
+        self.execute_btn.setDisabled(True)
+        self.batch_process.start()
+
+    def execute_in_background(self):
+        widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
+        segmentation_profile = widget.get_segmentation_profile()
+        task = BatchTask(self.settings.get_project_info(), segmentation_profile, None)
+        self.batch_process.add_task(task)
+        self.progress_bar2.setRange(0, self.progress_bar2.maximum() + 1)
+        self._execute_in_background_init()
+
     def execute_all_action(self):
         dial = SaveDialog({SaveSegmentation.get_name(): SaveSegmentation}, history=self.settings.get_path_history(),
                           system_widget=False)
@@ -518,30 +527,30 @@ class AlgorithmOptions(QWidget):
             return
         folder_path = str(dial.selectedFiles()[0])
         self.settings.set("io.save_batch", folder_path)
-        self.execute_all_btn.setDisabled(True)
-        self.block_execute_all_btn = True
-        self.is_batch_process = True
-        self.execute_btn.setDisabled(True)
-        self.progress_bar.setHidden(False)
-        self.progress_bar.setRange(0, len(self.file_list))
-        self.progress_bar.setValue(0)
 
         widget = self.algorithm_choose_widget.current_widget()
-        parameters = widget.get_values()
+
         save_parameters = dial.values
-        self.batch_process.set_parameters(widget.algorithm, parameters,
-                                          self.file_list, folder_path, save_parameters)
-        self.batch_process.start()
+        segmentation_profile = widget.get_segmentation_profile()
+        for file_path in self.file_list:
+            task = BatchTask(file_path, segmentation_profile, (folder_path, save_parameters))
+            self.batch_process.add_task(task)
+        self.progress_bar2.setRange(0, self.progress_bar2.maximum()+len(self.file_list))
+        self._execute_in_background_init()
 
     def execution_all_error(self, text):
         QMessageBox.warning(self, "Proceed error", text)
 
     def execution_all_done(self):
+        if not self.batch_process.queue.empty():
+            self._execute_in_background_init()
+            return
         self.execute_btn.setEnabled(True)
         self.block_execute_all_btn = False
         if len(self.file_list) > 0:
             self.execute_all_btn.setEnabled(True)
         self.progress_bar.setHidden(True)
+        self.progress_bar2.setHidden(True)
         self.progress_info_lab.setHidden(True)
 
     def execute_action(self):
@@ -556,14 +565,18 @@ class AlgorithmOptions(QWidget):
         self.progress_bar.setHidden(False)
         widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
         widget.set_mask(blank)
+        self.progress_bar.setRange(0, widget.algorithm.get_steps_num())
         widget.execute()
         self.chosen_list = chosen
 
-    def progress_info(self, text, num):
+    def progress_info(self, text, num, file_name="", file_num=0):
         self.progress_info_lab.setVisible(True)
-        self.progress_info_lab.setText(text)
-        if self.is_batch_process:
-            self.progress_bar.setValue(num)
+        if file_name != "":
+            self.progress_info_lab.setText(file_name + "\n" + text)
+        else:
+            self.progress_info_lab.setText(text)
+        self.progress_bar.setValue(num)
+        self.progress_bar2.setValue(file_num)
 
     def execution_finished(self):
         self.execute_btn.setEnabled(True)
@@ -667,6 +680,9 @@ class Options(QTabWidget):
         self.image_properties = ImageInformation(settings, parent)
         self.image_properties.add_files.file_list_changed.connect(self.algorithm_options.file_list_change)
         self.colormap_choose = ColorSelector(settings, ["channelcontrol"])
+        self.algorithm_options.batch_process.multiple_result.connect(
+            partial(self.image_properties.multiple_files.setChecked, True)
+        )
         self.addTab(self.image_properties, "Image")
         self.addTab(self.algorithm_options, "Segmentation")
         self.addTab(self.colormap_choose, "Colormap filter")
@@ -697,6 +713,9 @@ class MainWindow(BaseMainWindow):
         self.color_bar = ColorBar(self.settings, self.channel_control)
         self.multiple_file = MultipleFileWidget(self.settings, load_dict)
         self.multiple_file.setVisible(self.options_panel.image_properties.multiple_files.isChecked())
+        self.options_panel.algorithm_options.batch_process.multiple_result.connect(
+            partial(self.multiple_file.save_state_action, custom_name=False)
+        )
         self.options_panel.image_properties.multiple_files.stateChanged.connect(self.multiple_file.setVisible)
 
         icon = QIcon(os.path.join(static_file_folder, 'icons', "icon_stack.png"))

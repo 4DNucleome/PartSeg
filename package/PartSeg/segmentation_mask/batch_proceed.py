@@ -22,7 +22,8 @@ class BatchTask(NamedTuple):
 
 class BatchProceed(QThread):
     error_signal = Signal(str)
-    progress_signal = Signal(str, int)
+    progress_signal = Signal(str, int,  str, int)
+    range_signal = Signal(int, int)
     execution_done = Signal()
     multiple_result = Signal(SegmentationTuple)
     algorithm: SegmentationAlgorithm
@@ -44,8 +45,8 @@ class BatchProceed(QThread):
         else:
             self.queue.put(task)
 
-    def progress_info(self, name, text, _num):
-        self.progress_signal.emit("file {} ({}): {}".format(self.index + 1, name, text), self.index)
+    def progress_info(self, name, text, num):
+        self.progress_signal.emit(text, num, name, self.index)
 
     def run_calculation(self):
         while not self.queue.empty():
@@ -68,13 +69,18 @@ class BatchProceed(QThread):
                 algorithm.set_image(project_tuple.image)
                 algorithm.set_mask(blank)
                 algorithm.set_parameters(**task.parameters.values)
+                if isinstance(task.save_prefix, tuple):
+                    self.range_signal.emit(0, algorithm.get_steps_num() + 1)
+                else:
+                    self.range_signal.emit(0, algorithm.get_steps_num())
                 segmentation = algorithm.calculation_run(partial(self.progress_info, name))
                 state2 = StackSettings.transform_state(project_tuple, segmentation.segmentation,
                                                        defaultdict(lambda: segmentation.parameters), [])
                 if isinstance(task.save_prefix, tuple):
+                    self.progress_info(name, "saving", algorithm.get_steps_num())
                     name = path.splitext(path.basename(file_path))[0] + ".seg"
                     re_end = re.compile(r"(.*_version)(\d+)\.seg$")
-                    while path.exists(name):
+                    while path.exists(path.join(task.save_prefix[0], name)):
                         match = re_end.match(name)
                         if match:
                             num = int(match.group(2)) + 1
@@ -88,6 +94,7 @@ class BatchProceed(QThread):
             except Exception as e:
                 self.error_signal.emit("Exception occurred during proceed {}. Exception info {}".format(file_path, e))
             self.index += 1
+        self.index = 0
         self.execution_done.emit()
 
     def run(self):

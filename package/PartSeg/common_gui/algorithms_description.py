@@ -18,7 +18,7 @@ from ..utils.channel_class import Channel
 from ..project_utils_qt.error_dialog import ErrorDialog
 from ..utils.image_operations import RadiusType
 from ..utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
-from PartSeg.utils.algorithm_describe_base import AlgorithmProperty, AlgorithmDescribeBase
+from PartSeg.utils.algorithm_describe_base import AlgorithmProperty, AlgorithmDescribeBase, SegmentationProfile
 from ..project_utils_qt.segmentation_thread import SegmentationThread
 from ..project_utils_qt.settings import ImageSettings, BaseSettings
 from PartSeg.tiff_image import Image
@@ -452,6 +452,9 @@ class InteractiveAlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
     def enable_selector(self):
         for el in self.selector:
             el.setEnabled(True)
+
+    def get_segmentation_profile(self) -> SegmentationProfile:
+        return SegmentationProfile("", self.algorithm.get_name(), self.get_values())
 
 
 class AlgorithmChoose(QWidget):
