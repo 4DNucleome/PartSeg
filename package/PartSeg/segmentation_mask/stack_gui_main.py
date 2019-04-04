@@ -14,7 +14,6 @@ from qtpy.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMess
 
 from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
 from PartSeg.segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
-from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox, AlgorithmChoose
 from ..common_gui.channel_control import ChannelControl
 from ..common_gui.colors_choose import ColorSelector
@@ -32,7 +31,6 @@ from ..project_utils_qt.error_dialog import ErrorDialog
 from ..project_utils_qt.image_read_thread import ImageReaderThread
 from ..project_utils_qt.main_window import BaseMainWindow
 from ..project_utils_qt.execute_function_thread import ExecuteFunctionThread
-from ..project_utils_qt.segmentation_thread import SegmentationThread
 from PartSeg.utils.mask.algorithm_description import mask_algorithm_dict
 from .stack_settings import StackSettings, get_mask
 from PartSeg.tiff_image import ImageReader, Image
@@ -115,7 +113,8 @@ class MainMenu(QWidget):
                     else:
                         self.settings.image = result.image
                 if result.segmentation is not None:
-                    self.settings.set_segmentation(result.segmentation, False, result.list_of_components)
+                    self.settings.set_segmentation(result.segmentation, False, result.chosen_components,
+                                                   result.segmentation_parameters)
         except (MemoryError, IOError) as e:
             QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
         except ValueError as e:
@@ -172,7 +171,8 @@ class MainMenu(QWidget):
             dial = WaitingDialog(execute_thread, "Load segmentation", exception_hook=exception_hook)
             dial.exec()
             self.settings.set_segmentation(execute_thread.result.segmentation, self.settings.keep_chosen_components,
-                                           execute_thread.result.list_of_components)
+                                           execute_thread.result.chosen_components,
+                                           execute_thread.result.segmentation_parameters)
         except Exception as e:
             QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
 
@@ -195,7 +195,7 @@ class MainMenu(QWidget):
             QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.Ok)
 
         execute_thread = \
-            ExecuteFunctionThread(save_class.save, [save_location, self.settings.get_segmentation_info(), values])
+            ExecuteFunctionThread(save_class.save, [save_location, self.settings.get_project_info(), values])
         dial = WaitingDialog(execute_thread, "Save segmentation", exception_hook=exception_hook)
         dial.exec()
 

@@ -133,9 +133,12 @@ class LoadSegmentation(LoadBase):
                                                          step_changed=step_changed)
 
         if "parameters" not in metadata:
-            metadata["parameters"] = defaultdict(lambda: None)
+            parameters = defaultdict(lambda: None)
+        else:
+            parameters = dict([(int(k), v) for k, v in metadata["parameters"].items()])
+
         return SegmentationTuple(load_locations[0], metadata["base_file"] if "base_file" in metadata else None,
-                                 segmentation, metadata["components"], metadata["parameters"])
+                                 segmentation, metadata["components"], parameters)
 
     @classmethod
     def partial(cls):
