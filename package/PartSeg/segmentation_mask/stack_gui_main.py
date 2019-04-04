@@ -588,7 +588,9 @@ class AlgorithmOptions(QWidget):
         self.choose_components.setDisabled(False)
 
     def execution_done(self, segmentation: SegmentationResult):
-        sender: SegmentationThread = self.sender()
+        if segmentation.segmentation.max() == 0:
+            QMessageBox.information(self, "No result", "Segmentation contains no component, check parameters, "
+                                                       "especially chosen channel.")
         parameters_dict = defaultdict(lambda: deepcopy(segmentation.parameters))
         self.settings.set_segmentation(segmentation.segmentation, True, [], parameters_dict)
 
