@@ -14,8 +14,4 @@ export LD_LIBRARY_PATH=/opt/python/lib:${LD_LIBRARY_PATH}
 pip3 install numpy cython pyinstaller
 pip3 install .
 
-pyinstaller -y launcher.spec
-
-cd dist
-
-zip -r PartSeg-0.9.1-linux.zip PartSeg
+python3 /tmp/create_build.py /tmp/PartSeg

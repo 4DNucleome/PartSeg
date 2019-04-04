@@ -14,8 +14,10 @@ RUN update-locale
 
 COPY python_install.sh /tmp
 COPY build_partseg.sh /tmp
+COPY create_build.py /tmp
 
 RUN bash /tmp/python_install.sh
+
 
 ENV LC_ALL en_US.UTF-8
 ENV LANG en_US.UTF-8

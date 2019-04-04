@@ -4,8 +4,13 @@ import os
 import zipfile
 import platform
 import re
+import sys
 
-base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if len(sys.argv) == 2:
+    base_path = os.path.abspath(sys.argv[1])
+else:
+    base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 os.chdir(base_path)
 
 subprocess.call(["pyinstaller", "-y", "launcher.spec"])
