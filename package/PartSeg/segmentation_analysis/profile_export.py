@@ -5,6 +5,9 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QDialog, QListWidget, QListWidgetItem, QPushButton, QHBoxLayout, QVBoxLayout, QTreeWidget, \
     QTreeWidgetItem, QLabel, QRadioButton, QButtonGroup, QLineEdit, QTextEdit
 
+from PartSeg.utils.algorithm_describe_base import SegmentationProfile
+from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
+
 
 class ExportDialog(QDialog):
     def __init__(self, export_dict, viewer):
@@ -285,7 +288,6 @@ class ProfileDictViewer(QTextEdit):
     def __init__(self):
         super().__init__()
 
-    def preview_object(self, profile):
-        text = profile["algorithm"] + "\n" + "\n".join(
-            [f"{k.replace('_', ' ')}: {v}" for k, v in profile["values"].items()])
+    def preview_object(self, profile: SegmentationProfile):
+        text = profile.pretty_print(analysis_algorithm_dict)
         self.setText(text)
