@@ -53,6 +53,8 @@ class SitkThreshold(BaseThreshold, ABC):
         else:
             calculated = cls.calculate_threshold(image_sitk, ob, bg, arguments["bins"])
         result = sitk.GetArrayFromImage(calculated)
+        if mask is not None:
+            result[mask == 0] = 0
         threshold = th_op(data[result > 0])
         return result, threshold
 
