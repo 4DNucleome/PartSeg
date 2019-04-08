@@ -255,7 +255,7 @@ class DoubleOtsu(BaseThreshold):
 
     @classmethod
     def get_fields(cls):
-        return [ # AlgorithmProperty("mask", "Use mask in calculation", True),
+        return [  # AlgorithmProperty("mask", "Use mask in calculation", True),
                 AlgorithmProperty("valley", "Valley emphasis", True),
                 AlgorithmProperty("hist_num", "Number of histogram bins", 128, (8, 2 ** 16))]
 

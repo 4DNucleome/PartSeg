@@ -25,7 +25,7 @@ class RegisterEnum(Enum):
     analysis_save = 5
     analysis_load = 6
     mask_load = 7
-    image_transform= 8
+    image_transform = 8
 
 
 register_dict = {RegisterEnum.sprawl: sprawl_dict, RegisterEnum.threshold: threshold_dict,

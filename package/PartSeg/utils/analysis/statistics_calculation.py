@@ -79,7 +79,7 @@ class Leaf(BaseSerializableClass):
                 if issubclass(el.value_type, Channel):
                     if el.name in self.dict:
                         resp.add(self.dict[el.name])
-        except:
+        except KeyError:
             raise AlgorithmDescribeNotFound(self.name)
         return resp
 
@@ -372,7 +372,7 @@ class StatisticProfile(object):
                 raise ValueError(f"unknown parameter {el} of calculate function")
         for num in self.get_channels_num():
             if f"channel_{num}" not in kwargs:
-                raise ValueError(f"channel_{num} need to be passed as argument of calculate function" )
+                raise ValueError(f"channel_{num} need to be passed as argument of calculate function")
         kw.update(kwargs)
         for el in self.chosen_fields:
             if self._need_mask_without_segmentation(el.calculation_tree):
@@ -714,6 +714,7 @@ class MiddleMainAxisLength(StatisticMethodBase):
 
     def need_channel(self):
         return True
+
 
 class ShortestMainAxisLength(StatisticMethodBase):
     text_info = "Shortest main axis length", "Length of third main axis"

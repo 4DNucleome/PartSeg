@@ -3,12 +3,10 @@ import os
 import sys
 import typing
 import uuid
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 from collections import namedtuple
 from copy import copy, deepcopy
 from enum import Enum
-from deprecation import deprecated
-from six import add_metaclass
 
 from PartSeg.utils.universal_const import Units
 from ..analysis.save_register import save_dict
@@ -23,26 +21,32 @@ class MaskBase:
 
 # MaskCreate = namedtuple("MaskCreate", ['name', 'radius'])
 
+
 class MaskCreate(MaskBase, BaseSerializableClass):
     mask_property: MaskProperty
 
     def __str__(self):
         return f"Mask create: {self.name}\n" + str(self.mask_property).split("\n", 1)[1]
 
+
 class MaskUse(MaskBase, BaseSerializableClass):
     pass
+
 
 class MaskSum(MaskBase, BaseSerializableClass):
     mask1: str
     mask2: str
 
+
 class MaskIntersection(MaskBase, BaseSerializableClass):
     mask1: str
     mask2: str
 
+
 class SaveBase:
     suffix: str
     directory: str
+
 
 class Save(BaseSerializableClass):
     suffix: str
@@ -69,11 +73,7 @@ class StatisticCalculate(BaseSerializableClass):
     def __str__(self):
         channel = "Like segmentation" if self.channel == -1 else str(self.channel)
         desc = str(self.statistic_profile).split('\n', 1)[1]
-        return  f"{self.__class__.name}\nChannel: {channel}\nUnits: {self.units}\n{desc}\n"
-
-
-
-
+        return f"{self.__class__.name}\nChannel: {channel}\nUnits: {self.units}\n{desc}\n"
 
 
 ChooseChanel = namedtuple("ChooseChanel", ["chanel_num"])
@@ -292,7 +292,7 @@ class CalculationPlan(object):
                     Operations.__name__: Operations, ChooseChanel.__name__: ChooseChanel,
                     MaskIntersection.__name__: MaskIntersection, MaskSum.__name__: MaskSum}
 
-    def __init__(self, tree: typing.Optional[CalculationTree] = None, name:str = ""):
+    def __init__(self, tree: typing.Optional[CalculationTree] = None, name: str = ""):
         if tree is None:
             self.execution_tree = CalculationTree("root", [])
         else:
@@ -399,7 +399,7 @@ class CalculationPlan(object):
     def get_reused_mask(self) -> set:
         return self._get_reused_mask(self.execution_tree)
 
-    def get_node_type(self)-> NodeType:
+    def get_node_type(self) -> NodeType:
         if self.current_pos is None:
             return NodeType.none
         if not self.current_pos:
@@ -468,9 +468,6 @@ class CalculationPlan(object):
     def set_name(self, text):
         self.name = text
 
-    def get_parameters(self):
-        return self.dict_dump()
-
     def get_execution_tree(self):
         return self.execution_tree
 
@@ -508,46 +505,6 @@ class CalculationPlan(object):
                 return el.operation
             if isinstance(el.operation, MaskFile):
                 num -= 1
-
-    @deprecated
-    def recursive_dump(self, node, pos):
-        """
-        :type node: CalculationTree
-        :type pos: list[int]
-        :param node:
-        :param pos:
-        :return: list[(list[int], object, PlanChanges)]
-        """
-        sub_dict = dict()
-        el = node.operation
-        sub_dict["type"] = el.__class__.__name__
-        if issubclass(el.__class__, tuple):
-            # noinspection PyProtectedMember
-            sub_dict["values"] = el._asdict()
-        elif isinstance(el, StatisticProfile):
-            sub_dict["values"] = el.get_parameters()
-        elif isinstance(el, SegmentationProfile):
-            sub_dict["values"] = el.get_parameters()
-        elif isinstance(el, MaskMapper):
-            sub_dict["values"] = el.get_parameters()
-        elif isinstance(el, Operations):
-            sub_dict["values"] = {"value": el.value}
-        else:
-            raise ValueError("Not supported type {}".format(el))
-        res = [(pos, sub_dict, PlanChanges.add_node.value)]
-        for i, el in enumerate(node.children):
-            res.extend(self.recursive_dump(el, pos + [i]))
-        return res
-
-    @deprecated
-    def dict_dump(self):
-        res = dict()
-        res["name"] = self.name
-        flat_tree = []
-        for i, x in enumerate(self.execution_tree.children):
-            flat_tree.extend(self.recursive_dump(x, [i]))
-        res["execution_tree"] = flat_tree
-        return res
 
     @classmethod
     def dict_load(cls, data_dict):

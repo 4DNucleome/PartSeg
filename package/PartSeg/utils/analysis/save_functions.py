@@ -63,7 +63,8 @@ def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_se
             tar.addfile(tar_algorithm, hist_buff)
 
 
-def save_cmap(file: typing.Union[str, h5py.File, BytesIO], image: Image, segmentation: np.ndarray, full_segmentation: np.ndarray,
+def save_cmap(file: typing.Union[str, h5py.File, BytesIO], image: Image, segmentation: np.ndarray,
+              full_segmentation: np.ndarray,
               cmap_profile: dict, metadata: typing.Optional[dict] = None):
     if segmentation is None or segmentation.max() == 0:
         raise ValueError("No segmentation")
@@ -311,6 +312,7 @@ class SaveSegmentationAsTIFF(SaveBase):
     def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict,
              range_changed=None, step_changed=None):
         tifffile.imsave(save_location, project_info.segmentation)
+
 
 class SaveSegmentationAsNumpy(SaveBase):
     @classmethod
