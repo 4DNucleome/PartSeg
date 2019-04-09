@@ -4,6 +4,8 @@ import SimpleITK as sitk
 import numpy as np
 from typing import Optional
 import operator
+
+from PartSeg.utils.segmentation.border_smoothing import smooth_dict
 from ..utils import bisect
 from ..channel_class import Channel
 from ..segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
@@ -12,7 +14,7 @@ from ..image_operations import RadiusType
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
 from .noise_filtering import noise_removal_dict
 from .threshold import threshold_dict, BaseThreshold
-from .segment import close_small_holes, opening
+from .segment import close_small_holes
 
 
 class StackAlgorithm(SegmentationAlgorithm, ABC):
@@ -75,8 +77,8 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
                 AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10 ** 6), 1000),
                 AlgorithmProperty("close_holes", "Fill holes", True, (True, False)),
                 AlgorithmProperty("close_holes_size", "Maximum holes size (px)", 200, (0, 10 ** 3), 10),
-                AlgorithmProperty("smooth_border", "Smooth borders", True, (True, False)),
-                AlgorithmProperty("smooth_border_radius", "Smooth borders radius", 2, (0, 20), 1),
+                AlgorithmProperty("smooth_border", "Smooth borders", next(iter(smooth_dict.keys())),
+                                  possible_values=smooth_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("noise_removal", "Filter", next(iter(noise_removal_dict.keys())),
                                   possible_values=noise_removal_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("side_connection", "Side by Side connections", False, (True, False),
@@ -92,8 +94,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
         self.noise_removal = None
         self.close_holes = False
         self.close_holes_size = 0
-        self.smooth_border = False
-        self.smooth_border_radius = 0
+        self.smooth_border = dict()
         self.gauss_2d = False
         self.edge_connection = True
         self.use_convex = False
@@ -117,17 +118,18 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
         if self.close_holes:
             report_fun("Filing holes", 3)
             mask = close_small_holes(mask, self.close_holes_size)
-        report_fun("Components calculating", 4)
+        report_fun("Smooth border", 4)
+        self.segmentation = smooth_dict[self.smooth_border["name"]]. \
+            smooth(mask, self.smooth_border["values"])
+
+        report_fun("Components calculating", 5)
         self.segmentation = sitk.GetArrayFromImage(
             sitk.RelabelComponent(
                 sitk.ConnectedComponent(
-                    sitk.GetImageFromArray(mask), self.edge_connection
+                    sitk.GetImageFromArray(self.segmentation), self.edge_connection
                 ), 20
             )
         )
-        if self.smooth_border:
-            report_fun("Smoothing borders", 5)
-            self.segmentation = opening(self.segmentation, self.smooth_border_radius, 20)
 
         self.sizes = np.bincount(self.segmentation.flat)
         ind = bisect(self.sizes[1:], self.minimum_size, lambda x, y: x > y)
@@ -142,7 +144,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
         return SegmentationResult(resp, self.get_segmentation_profile(), self.segmentation, image)
 
     def _set_parameters(self, channel, threshold, minimum_size, close_holes, smooth_border, noise_removal,
-                        close_holes_size, smooth_border_radius, side_connection, use_convex):
+                        close_holes_size, side_connection, use_convex):
         self.channel_num = channel
         self.threshold = threshold
         self.minimum_size = minimum_size
@@ -150,7 +152,6 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
         self.smooth_border = smooth_border
         self.noise_removal = noise_removal
         self.close_holes_size = close_holes_size
-        self.smooth_border_radius = smooth_border_radius
         self.edge_connection = not side_connection
         self.use_convex = use_convex
 
@@ -158,7 +159,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
         return SegmentationProfile("", self.get_name(), {
             "channel": self.channel_num, "threshold": self.threshold, "minimum_size": self.minimum_size,
             "close_holes": self.close_holes, "smooth_border": self.smooth_border, "noise_removal": self.noise_removal,
-            "close_holes_size": self.close_holes_size, "smooth_border_radius": self.smooth_border_radius,
+            "close_holes_size": self.close_holes_size,
             "side_connection": not self.edge_connection, "use_convex": self.use_convex
         })
 

@@ -4,6 +4,7 @@ from typing import Callable, Any
 
 import numpy as np
 
+from PartSeg.utils.class_generator import enum_register
 from ..multiscale_opening import PyMSO, calculate_mu, MuType
 from ..distance_in_structure.find_split import path_maximum_sprawl, path_minimum_sprawl, euclidean_sprawl, \
     fdt_sprawl
@@ -130,6 +131,12 @@ class NeighType(Enum):
     sides = 6
     edges = 18
     vertex = 26
+
+    def __str__(self):
+        return self.name
+
+
+enum_register.register_class(NeighType)
 
 
 def calculate_distances_array(spacing, neigh_type: NeighType):
