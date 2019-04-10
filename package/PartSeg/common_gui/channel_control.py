@@ -28,7 +28,7 @@ class ColorPreview(QWidget):
 class ChannelWidget(QWidget):
     clicked = Signal(int)
 
-    def __init__(self, chanel_id: int, color: str, tight=False):
+    def __init__(self, chanel_id: int, color: str, tight=False, locked=False):
         super().__init__()
         self.id = chanel_id
         self.active = False
@@ -37,7 +37,7 @@ class ChannelWidget(QWidget):
         self.chosen.setChecked(True)
         self.chosen.setMinimumHeight(20)
         self.info_label = QLabel("<small>\U0001F512</small>")
-        self.info_label.setHidden(True)
+        self.info_label.setVisible(locked)
         self.info_label.setStyleSheet("QLabel {background-color: white; border-radius: 3px; margin: 0px; padding: 0px} ")
         self.info_label.setMargin(0)
         layout = QHBoxLayout()
@@ -330,9 +330,10 @@ class ChannelControl(ChannelChooseBase):
             el.deleteLater()
         self.channels_widgets = []
         for i in range(channels_num):
-            self.channels_widgets.append(ChannelWidget(i, self._settings.get_from_profile(f"{self._name}.cmap{i}",
-                                                                                          default_colors[i % len(
-                                                                                              default_colors)])))
+            self.channels_widgets.append(
+                ChannelWidget(i, self._settings.get_from_profile(
+                              f"{self._name}.cmap{i}",default_colors[i % len(default_colors)]),
+                              locked=self._settings.get_from_profile(f"{self._name}.lock_{i}", False)))
             self.channels_widgets[-1].chosen.setChecked(is_checked[i])
             self.channels_layout.addWidget(self.channels_widgets[-1])
             self.channels_widgets[-1].clicked.connect(self.change_chanel)
@@ -346,6 +347,7 @@ class ChannelControl(ChannelChooseBase):
         self.maximum_value.setValue(self._settings.get_from_profile(f"{self._name}.range_{index}", (0, 65000))[1])
         self.use_gauss.setChecked(self._settings.get_from_profile(f"{self._name}.use_gauss_{index}", False))
         self.gauss_radius.setValue(self._settings.get_from_profile(f"{self._name}.gauss_radius_{index}", 1))
+        self.fixed.setChecked(self._settings.get_from_profile(f"{self._name}.lock_{index}", False))
         self.current_channel = 0
         self.image = self.channels_widgets[0].image
         self.colormap_chose.setCurrentText(self.channels_widgets[0].color)

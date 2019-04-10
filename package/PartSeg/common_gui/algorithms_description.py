@@ -499,7 +499,7 @@ class AlgorithmChoose(QWidget):
 
         self.algorithm_choose.currentTextChanged.connect(self.change_algorithm)
         self.settings.image_changed.connect(self.image_changed)
-        self.setMinimumWidth(370)
+        # self.setMinimumWidth(370)
 
         name = self.settings.get("current_algorithm", "")
         if name:
