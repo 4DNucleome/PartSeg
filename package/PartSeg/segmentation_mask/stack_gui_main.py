@@ -1,4 +1,3 @@
-import json
 import os
 from collections import defaultdict
 from functools import partial
@@ -50,7 +49,7 @@ class MainMenu(QWidget):
         :type settings: StackSettings
         :param settings:
         """
-        super(MainMenu, self).__init__()
+        super().__init__()
         self.settings = settings
         self.segmentation_cache = None
         self.read_thread = None

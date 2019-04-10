@@ -62,8 +62,8 @@ class StatisticCalculate(BaseSerializableClass):
     statistic_profile: StatisticProfile
     name_prefix: str
 
-    # noinspection PyUnusedLocal
-    # noinspection PyMissingConstructor
+    # noinspection PyOverloads,PyMissingConstructor
+    @typing.overload
     def __init__(self, channel: int, units: Units, statistic_profile: StatisticProfile, name_prefix: str): ...
 
     @property
@@ -120,8 +120,8 @@ class MaskMapper:
 class MaskSuffix(MaskMapper, BaseSerializableClass):
     suffix: str
 
-    # noinspection PyUnusedLocal
-    # noinspection PyMissingConstructor
+    # noinspection PyMissingConstructor,PyOverloads
+    @typing.overload
     def __init__(self, name: str, suffix: str): ...
 
     def get_mask_path(self, file_path):
@@ -136,8 +136,8 @@ class MaskSub(MaskMapper, BaseSerializableClass):
     base: str
     rep: str
 
-    # noinspection PyUnusedLocal
-    # noinspection PyMissingConstructor
+    # noinspection PyMissingConstructor,PyOverloads
+    @typing.overload
     def __init__(self, name: str, base: str, rep: str): ...
 
     def get_mask_path(self, file_path):
@@ -153,10 +153,9 @@ class MaskFile(MaskMapper, BaseSerializableClass):
     path_to_file: str
     name_dict: typing.Optional[dict] = None
 
-    # noinspection PyUnusedLocal
-    # noinspection PyMissingConstructor
-    def __init__(self, name: str, path_to_file: str, name_dict: typing.Optional[dict] = None):
-        ...
+    # noinspection PyMissingConstructor,PyOverloads
+    @typing.overload
+    def __init__(self, name: str, path_to_file: str, name_dict: typing.Optional[dict] = None):  ...
 
     def is_ready(self):
         return os.path.exists(self.path_to_file)
