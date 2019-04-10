@@ -186,6 +186,8 @@ class FormWidget(QWidget):
         self.widgets_dict: typing.Dict[str, QtAlgorithmProperty] = dict()
         self.channels_chose: typing.List[typing.Union[ChannelComboBox, SubAlgorithmWidget]] = []
         layout = QFormLayout()
+        layout.setContentsMargins(10, 0, 10, 0)
+        # layout.setVerticalSpacing(0)
         element_list = map(QtAlgorithmProperty.from_algorithm_property, fields)
         for el in element_list:
             if isinstance(el, QLabel):
@@ -269,6 +271,9 @@ class SubAlgorithmWidget(QWidget):
         layout = QVBoxLayout()
         layout.setContentsMargins(4, 4, 4, 4)
         layout.addWidget(widget)
+        if not widget.has_elements():
+            widget.hide()
+            self.hide()
         tmp_widget = QWidget(self)
         # tmp_widget.setMinimumHeight(5000)
         layout.addWidget(tmp_widget)
@@ -319,7 +324,11 @@ class SubAlgorithmWidget(QWidget):
             lay_elem = self.layout().itemAt(i)
             if lay_elem.widget():
                 lay_elem.widget().hide()
-        widget.show()
+        if widget.has_elements():
+            self.show()
+            widget.show()
+        else:
+            self.hide()
         self.values_changed.emit()
 
     def showEvent(self, _event):
@@ -490,7 +499,7 @@ class AlgorithmChoose(QWidget):
 
         self.algorithm_choose.currentTextChanged.connect(self.change_algorithm)
         self.settings.image_changed.connect(self.image_changed)
-        self.setMinimumWidth(320)
+        self.setMinimumWidth(370)
 
         name = self.settings.get("current_algorithm", "")
         if name:
