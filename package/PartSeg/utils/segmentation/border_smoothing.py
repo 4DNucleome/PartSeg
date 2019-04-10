@@ -96,7 +96,6 @@ class IterativeVoteSmoothing(BaseSmoothing):
             segmentation_bin[count_array < arguments["support_level"]] = 0
             count_point2 = np.count_nonzero(segmentation_bin)
             if count_point2 == count_point:
-                print("break", i)
                 break
             count_point = count_point2
             count_array[:] = 0
