@@ -248,10 +248,10 @@ class ComponentCheckBox(QCheckBox):
         super().__init__(str(number), parent)
         self.number = number
 
-    def enterEvent(self, event):
+    def enterEvent(self, _event):
         self.mouse_enter.emit(self.number)
 
-    def leaveEvent(self, event):
+    def leaveEvent(self, _event):
         self.mouse_leave.emit(self.number)
 
 
@@ -396,7 +396,8 @@ class AlgorithmOptions(QWidget):
         self.keep_chosen_components_chk.setChecked(settings.keep_chosen_components)
         self.show_parameters = QPushButton("Show parameters")
         self.show_parameters.setToolTip("Show parameters of segmentation for each components")
-        self.show_parameters_widget = SegmentationInfoDialog(self.settings, self.algorithm_choose_widget.change_algorithm)
+        self.show_parameters_widget = SegmentationInfoDialog(self.settings,
+                                                             self.algorithm_choose_widget.change_algorithm)
         self.show_parameters.clicked.connect(self.show_parameters_widget.show)
         self.choose_components = ChosenComponents()
         self.choose_components.check_change_signal.connect(control_view.components_change)
@@ -598,7 +599,6 @@ class AlgorithmOptions(QWidget):
         widget.image_changed(self.settings.image)
 
 
-
 class ImageInformation(QWidget):
     def __init__(self, settings: StackSettings, parent=None):
         """:type settings: ImageSettings"""
@@ -768,7 +768,7 @@ class MainWindow(BaseMainWindow):
     def read_drop(self, paths):
         assert len(paths) == 1
         ext = os.path.splitext(paths[0])[1]
-        read_thread = ImageReaderThread(parent=self)
+        read_thread = ImageReaderThread()
         if ext in [".tif", ".tiff", ".lsm"]:
             read_thread.set_path(paths[0])
             dial = WaitingDialog(read_thread)

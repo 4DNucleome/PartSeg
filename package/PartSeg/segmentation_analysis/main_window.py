@@ -179,7 +179,7 @@ class Options(QWidget):
         if text == "<none>":
             return
         pipeline = self._settings.segmentation_pipelines[text]
-        process_thread = CalculatePipelineThread(self._settings.image, self._settings.mask, pipeline, self)
+        process_thread = CalculatePipelineThread(self._settings.image, self._settings.mask, pipeline)
         dial = WaitingDialog(process_thread)
 
         if dial.exec() and process_thread.result:
@@ -676,7 +676,7 @@ class MainWindow(BaseMainWindow):
         self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
 
     def read_drop(self, paths):
-        read_thread = ImageReaderThread(parent=self)
+        read_thread = ImageReaderThread()
 
         def exception_hook(exception):
             QMessageBox.warning(self, "Read error", f"Error during image read: {exception}")

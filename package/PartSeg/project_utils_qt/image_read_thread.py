@@ -9,8 +9,8 @@ class ImageReaderThread(ProgressTread):
     """
     image_read_finish = Signal(Image)
 
-    def __init__(self, file_path=None, mask_path=None, parent=None):
-        super().__init__(parent)
+    def __init__(self, file_path=None, mask_path=None):
+        super().__init__()
         self.reader = ImageReader(self.info_function)
         self.file_path = file_path
         self.mask_path = mask_path
