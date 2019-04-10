@@ -31,7 +31,7 @@ class ThresholdPreview(StackAlgorithm):
     def get_fields(cls):
         return [
                 AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
-                AlgorithmProperty("noise_removal", "Noise Removal", next(iter(noise_removal_dict.keys())),
+                AlgorithmProperty("noise_removal", "Filter", next(iter(noise_removal_dict.keys())),
                                   possible_values=noise_removal_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("threshold", "Threshold", 1000, (0, 10 ** 6), 100)]
 
@@ -72,9 +72,11 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
+                AlgorithmProperty("noise_removal", "Filter", next(iter(noise_removal_dict.keys())),
+                                  possible_values=noise_removal_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("threshold", "Threshold", next(iter(threshold_dict.keys())),
                                   possible_values=threshold_dict, property_type=AlgorithmDescribeBase),
-                AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10 ** 6), 1000),
+
                 AlgorithmProperty("close_holes", "Fill holes", True, (True, False)),
                 AlgorithmProperty("close_holes_size", "Maximum holes size (px)", 200, (0, 10 ** 3), 10),
                 AlgorithmProperty("smooth_border", "Smooth borders", next(iter(smooth_dict.keys())),
@@ -84,6 +86,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
                 AlgorithmProperty("side_connection", "Side by Side connections", False, (True, False),
                                   tool_tip="During calculation of connected components includes"
                                            " only side by side connected pixels"),
+                AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10 ** 6), 1000),
                 AlgorithmProperty("use_convex", "Use convex hull", False, (True, False))]
 
     def __init__(self):
@@ -193,7 +196,7 @@ class AutoThresholdAlgorithm(BaseThresholdAlgorithm):
     @classmethod
     def get_fields(cls):
         res = super().get_fields()
-        res.insert(1, AlgorithmProperty("suggested_size", "Suggested size", 200000, (0, 10 ** 6), 1000))
+        res.insert(-1, AlgorithmProperty("suggested_size", "Suggested size", 200000, (0, 10 ** 6), 1000))
         return res
 
     @classmethod

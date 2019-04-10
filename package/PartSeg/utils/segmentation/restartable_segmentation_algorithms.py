@@ -92,9 +92,9 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
     def get_fields(cls):
         # TODO coś z noise removal zrobić
         return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
-                AlgorithmProperty("minimum_size", "Minimum size (px)", 8000, (0, 10 ** 6), 1000),
                 AlgorithmProperty("noise_removal", "Filter", next(iter(noise_removal_dict.keys())),
                                   possible_values=noise_removal_dict, property_type=AlgorithmDescribeBase),
+                AlgorithmProperty("minimum_size", "Minimum size (px)", 8000, (0, 10 ** 6), 1000),
                 AlgorithmProperty("side_connection", "Connect only sides", False, (True, False),
                                   tool_tip="During calculation of connected components includes"
                                            " only side by side connected pixels")]
@@ -183,9 +183,10 @@ class OneThresholdAlgorithm(ThresholdBaseAlgorithm, ABC):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("threshold", "Threshold", next(iter(threshold_dict.keys())),
-                                  possible_values=threshold_dict, property_type=AlgorithmDescribeBase)] \
-               + super().get_fields()
+        fields = super().get_fields()
+        fields.insert(2, AlgorithmProperty("threshold", "Threshold", next(iter(threshold_dict.keys())),
+                                  possible_values=threshold_dict, property_type=AlgorithmDescribeBase))
+        return fields
 
 
 class LowerThresholdAlgorithm(OneThresholdAlgorithm):
@@ -223,9 +224,10 @@ class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("lower_threshold", "Lower threshold", 10000, (0, 10 ** 6), 100),
-                AlgorithmProperty("upper_threshold", "Upper threshold", 10000, (0, 10 ** 6), 100)] + \
-               super().get_fields()
+        fields = super().get_fields()
+        fields.insert(2, AlgorithmProperty("lower_threshold", "Lower threshold", 10000, (0, 10 ** 6), 100))
+        fields.insert(3, AlgorithmProperty("upper_threshold", "Upper threshold", 10000, (0, 10 ** 6), 100))
+        return fields
 
     @classmethod
     def get_name(cls):
@@ -235,12 +237,12 @@ class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
 class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("threshold", "Threshold", next(iter(double_threshold_dict.keys())),
-                                  possible_values=double_threshold_dict, property_type=AlgorithmDescribeBase),
-                AlgorithmProperty("sprawl_type", "Flow type", next(iter(sprawl_dict.keys())),
-                                  possible_values=sprawl_dict,
-                                  property_type=AlgorithmDescribeBase)] \
-               + super().get_fields()
+        fields = super().get_fields()
+        fields.insert(2, AlgorithmProperty("threshold", "Threshold", next(iter(double_threshold_dict.keys())),
+                                           possible_values=double_threshold_dict, property_type=AlgorithmDescribeBase))
+        fields.insert(3, AlgorithmProperty("sprawl_type", "Flow type", next(iter(sprawl_dict.keys())),
+                                           possible_values=sprawl_dict, property_type=AlgorithmDescribeBase))
+        return fields
 
     def get_info_text(self):
         return f"Threshold: " + ", ".join(map(str, self.threshold_info)) + \
