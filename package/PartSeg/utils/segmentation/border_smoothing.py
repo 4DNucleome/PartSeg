@@ -33,7 +33,7 @@ class OpeningSmoothing(BaseSmoothing):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("smooth_border_radius", "Smooth borders radius", 2, (0, 20), 1)]
+        return [AlgorithmProperty("smooth_border_radius", "Smooth borders radius", 2, (1, 20), 1)]
 
     @classmethod
     def smooth(cls, segmentation: np.ndarray, arguments: dict) -> np.ndarray:

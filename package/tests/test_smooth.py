@@ -2,7 +2,7 @@ import itertools
 
 import numpy as np
 
-from PartSeg.utils.segmentation.border_smoothing import VoteSmoothing, IterativeVoteSmoothing
+from PartSeg.utils.segmentation.border_smoothing import VoteSmoothing, IterativeVoteSmoothing, OpeningSmoothing
 from PartSeg.utils.segmentation.sprawl import NeighType
 
 
@@ -455,3 +455,31 @@ class TestIterativeVoteSmoothing:
             p = slice(shift, -shift)
             res2[:, p, p] = 1
             assert np.all(res2 == res)
+
+
+class TestOpeningSmooth:
+    def test_cube(self):
+        data = np.zeros((50, 50, 50), dtype=np.uint8)
+        data[2:-2, 2:-2, 2:-2] = 1
+        res = OpeningSmoothing.smooth(data, {"smooth_border_radius": 1})
+        res2 = np.copy(data)
+        for pos in itertools.product([2, -3], repeat=3):
+            res2[pos] = 0
+        assert np.all(res2 == res)
+
+        res = OpeningSmoothing.smooth(data, {"smooth_border_radius": 2})
+        res2 = np.copy(data)
+        for pos in itertools.permutations([2, 2, -3, -3, slice(2, -2)], 3):
+            res2[pos] = 0
+        assert np.all(res2 == res)
+
+    def test_sides(self):
+        data = np.zeros((1, 50, 50), dtype=np.uint8)
+        data[:, 2:-2, 2:-2] = 1
+        res = OpeningSmoothing.smooth(data, {"smooth_border_radius": 1})
+        assert np.all(data == res)
+        res = OpeningSmoothing.smooth(data, {"smooth_border_radius": 2})
+        res2 = np.copy(data)
+        for pos in itertools.product([2, -3], repeat=2):
+            res2[(0,) + pos] = 0
+        assert np.all(res2 == res)
