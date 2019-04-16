@@ -3,7 +3,7 @@ import packaging.version
 import shutil
 from glob import glob
 
-from PyQt5.QtWidgets import QMessageBox, QWidget
+from qtpy.QtWidgets import QMessageBox, QWidget
 
 from .. import CONFIG_FOLDER, __version__
 

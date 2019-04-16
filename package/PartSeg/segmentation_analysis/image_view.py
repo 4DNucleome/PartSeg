@@ -1,9 +1,9 @@
 import collections
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import QObject, QEvent
-from PyQt5.QtGui import QHideEvent, QShowEvent
-from PyQt5.QtWidgets import QPushButton, QStackedWidget, QCheckBox, QDoubleSpinBox, QLabel, QGridLayout
+from qtpy import QtCore
+from qtpy.QtCore import QObject, QEvent
+from qtpy.QtGui import QHideEvent, QShowEvent
+from qtpy.QtWidgets import QPushButton, QStackedWidget, QCheckBox, QDoubleSpinBox, QLabel, QGridLayout
 
 from ..common_gui.channel_control import ChannelControl, ChannelChoose
 from ..common_gui.stack_image_view import ImageView, create_tool_button

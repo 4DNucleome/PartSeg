@@ -273,7 +273,10 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
     result._source = class_definition
     result._field_defaults = defaults_dict
     result.__annotations__ = types
-    result.__signature__ = inspect.signature(result)
+    try:
+        result.__signature__ = inspect.signature(result)
+    except AttributeError:
+        pass
     result._field_types = collections.OrderedDict(types)
     return result
 

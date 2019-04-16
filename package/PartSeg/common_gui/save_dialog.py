@@ -82,7 +82,7 @@ class GenericGetPropertyWidget(GetPropertyWidget):
             return QLineEdit()
         if issubclass(type_, Enum):
             res = QComboBox()
-            res.addItems(type_.__members__.keys())
+            res.addItems(list(type_.__members__.keys()))
             return res
 
 

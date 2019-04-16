@@ -82,7 +82,7 @@ class AdvancedSettings(QWidget):
 
         color, opacity = self._settings.get_from_profile("mask_presentation", (list(MASK_COLORS.keys())[0], 0.6))
         self.mask_color = QComboBox()
-        self.mask_color.addItems(MASK_COLORS.keys())
+        self.mask_color.addItems(list(MASK_COLORS.keys()))
         self.mask_opacity = QDoubleSpinBox()
         self.mask_opacity.setRange(0, 1)
         self.mask_opacity.setSingleStep(0.1)

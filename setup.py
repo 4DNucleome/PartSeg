@@ -72,6 +72,13 @@ def readme():
         text = reg.sub(r'\1(https://raw.githubusercontent.com/4DNucleome/PartSeg/master/\2)', text)
         return text
 
+try:
+    import PySide2
+    qt_string = "PySide2"
+except ImportError:
+    qt_string = "PyQt5"
+
+
 setuptools.setup(
     ext_modules=cythonize(extensions),
     name="PartSeg",
@@ -86,7 +93,7 @@ setuptools.setup(
     long_description=readme(),
     long_description_content_type='text/markdown',
     scripts=[os.path.join("package","scripts", "PartSeg")],
-    install_requires=['numpy', tifffile_string, 'appdirs', 'SimpleITK', 'PyQt5', 'scipy', 'QtPy', 'sentry_sdk',
+    install_requires=['numpy', tifffile_string, 'appdirs', 'SimpleITK', 'scipy', 'QtPy', 'sentry_sdk', qt_string,
                       'deprecation', 'qtawesome', 'six', 'h5py', 'pandas', 'sympy', 'Cython', 'openpyxl', 'xlrd',
                       'PartSegData'],
     classifiers=[

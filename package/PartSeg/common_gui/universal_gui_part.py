@@ -20,7 +20,7 @@ class ChannelComboBox(QComboBox):
     def change_channels_num(self, num):
         index = self.currentIndex()
         self.clear()
-        self.addItems(map(str, range(1, num + 1)))
+        self.addItems(list(map(str, range(1, num + 1))))
         if index < 0 or index > num:
             index = 0
         self.setCurrentIndex(index)

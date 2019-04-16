@@ -5,7 +5,7 @@ import typing
 from copy import copy, deepcopy
 from pathlib import Path
 
-from PyQt5.QtGui import QPaintEvent
+from qtpy.QtGui import QPaintEvent
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QDialog, QCompleter, QLineEdit, QPushButton, QGridLayout, QWidget, QCheckBox, QComboBox, \
     QListWidget, QSpinBox, QTextEdit, QVBoxLayout, QGroupBox, QLabel, QHBoxLayout, QInputDialog, QMessageBox, \
@@ -232,7 +232,7 @@ class CreatePlan(QWidget):
         self.update_element_chk = QCheckBox("Update element")
         self.save_choose = QComboBox()
         self.save_choose.addItem("<none>")
-        self.save_choose.addItems(self.save_translate_dict.keys())
+        self.save_choose.addItems(list(self.save_translate_dict.keys()))
         self.director_save_chk = QCheckBox("Save in directory")
         self.director_save_chk.setToolTip("Create directory using file name an put result file inside this directory")
         self.save_btn = QPushButton("Save")
@@ -1119,7 +1119,7 @@ class CalculatePlaner(QSplitter):
     :type settings: Settings
     """
     def __init__(self, settings, parent):
-        QWidget.__init__(self, parent)
+        super().__init__(parent)
         self.settings = settings
         self.info_widget = CalculateInfo(settings)
         self.addWidget(self.info_widget)

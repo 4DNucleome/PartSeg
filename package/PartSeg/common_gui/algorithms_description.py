@@ -175,6 +175,10 @@ class ListInput(QWidget):
         for f, val in zip(self.input_list, value):
             f.set_value(val)
 
+def any_arguments(fun):
+    def any(*_):
+        fun()
+    return any
 
 class FormWidget(QWidget):
     value_changed = Signal()
@@ -201,7 +205,7 @@ class FormWidget(QWidget):
                 self.widgets_dict[el.name] = el
                 if el.name in start_values:
                     el.get_field().set_starting(start_values[el.name])
-                el.change_fun.connect(self.value_changed.emit)
+                el.change_fun.connect(any_arguments(self.value_changed.emit))
             else:
                 self.widgets_dict[el.name] = el
                 label = QLabel(el.user_name)
@@ -217,7 +221,7 @@ class FormWidget(QWidget):
                         el.set_value(start_values[el.name])
                     except:
                         pass
-                el.change_fun.connect(self.value_changed.emit)
+                el.change_fun.connect(any_arguments(self.value_changed.emit))
         self.setLayout(layout)
 
     def has_elements(self):
@@ -261,7 +265,7 @@ class SubAlgorithmWidget(QWidget):
 
         self.widgets_dict[algorithm_property.default_value] = widget
         self.choose = QComboBox(self)
-        self.choose.addItems(algorithm_property.possible_values.keys())
+        self.choose.addItems(list(algorithm_property.possible_values.keys()))
         self.setContentsMargins(0, 0, 0, 0)
 
         self.choose.setCurrentText(algorithm_property.default_value)

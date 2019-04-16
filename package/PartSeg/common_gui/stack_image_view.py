@@ -219,7 +219,7 @@ class ChanelColor(QWidget):
         self.num = num
         self.check_box = QCheckBox(self)
         self.color_list = QComboBox(self)
-        self.color_list.addItems(color_maps.keys())
+        self.color_list.addItems(list(color_maps.keys()))
         num2 = num % len(default_colors)
         pos = list(color_maps.keys()).index(default_colors[num2])
         self.color_list.setCurrentIndex(pos)
@@ -262,7 +262,7 @@ class ChanelColor(QWidget):
         if index != -1:
             self.color_list.blockSignals(True)
         self.color_list.clear()
-        self.color_list.addItems(text)
+        self.color_list.addItems(list(text))
         if index != -1:
             self.color_list.setCurrentIndex(index)
             self.blockSignals(False)

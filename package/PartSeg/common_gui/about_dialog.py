@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QDialog, QLabel, QPushButton, QGridLayout
-from PyQt5.QtCore import Qt
+from qtpy.QtWidgets import QDialog, QLabel, QPushButton, QGridLayout
+from qtpy.QtCore import Qt
 from .. import  __version__
 
 class AboutDialog(QDialog):

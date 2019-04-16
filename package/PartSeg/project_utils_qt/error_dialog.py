@@ -53,7 +53,7 @@ class ErrorDialog(QDialog):
         if not state_store.show_error_dialog:
             sys.__excepthook__(type(self.exception), self.exception, self.exception.__traceback__)
             return False
-        super().exec()
+        super().exec_()
 
     def send_information(self):
         text = self.desc.text() + "\n\nVersion: " + __version__ + "\n"
