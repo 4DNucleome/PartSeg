@@ -157,10 +157,6 @@ def generate_neighbour_edge(dist, ndim):
     return filter(sub_filter, itertools.product(range(dist+1), repeat=ndim))
 
 
-def generate_neighbour_vertex(dist, ndim):
-    return filter(lambda x: np.max(x) <= dist, itertools.product(range(dist+1), repeat=ndim))
-
-
 class TestIterativeVoteSmoothing:
     def test_cube_sides_base(self):
         data = np.zeros((50, 50, 50), dtype=np.uint8)
@@ -202,7 +198,24 @@ class TestIterativeVoteSmoothing:
                 sign = np.sign(pos)
                 for shift in generate_neighbour_sides(i-1, 3):
                     res2[calc_cord(pos, sign, shift)] = 0
-            assert np.all(res2 == res)
+            assert np.all(res2 == res), f"Fail  on step {i}"
+
+        for i in range(2, 8):
+            res = IterativeVoteSmoothing.smooth(data,
+                                                {"neighbourhood_type": NeighType.sides, "support_level": 5,
+                                                 "max_steps": i})
+            res2 = np.copy(data)
+            for pos in itertools.permutations([2, 2, -3, -3, slice(2, -2)], 3):
+                res2[pos] = 0
+            for ind in [0, 1, 2]:
+                for pos in itertools.product([2, -3], repeat=2):
+                    sign = np.sign(pos)
+                    for shift in generate_neighbour_sides(i-1, 2):
+                        pos2 = list(calc_cord(pos, sign, shift))
+                        pos2.insert(ind, slice(2, -2))
+                        res2[tuple(pos2)] = 0
+            assert np.all(res2 == res), f"Fail  on step {i}"
+
         for i in range(2, 8):
             res = IterativeVoteSmoothing.smooth(data,
                                                 {"neighbourhood_type": NeighType.sides, "support_level": 6,
@@ -211,7 +224,7 @@ class TestIterativeVoteSmoothing:
             shift = 2 + i
             p = slice(shift, -shift)
             res2[p, p, p] = 1
-            assert np.all(res2 == res)
+            assert np.all(res2 == res), f"Fail  on step {i}"
 
     def test_cube_edges_base(self):
         data = np.zeros((50, 50, 50), dtype=np.uint8)
@@ -247,30 +260,27 @@ class TestIterativeVoteSmoothing:
         assert np.all(res2 == res)
 
     def test_cube_edge_iter(self):
-        return 
+        # This test can fail if IterativeVoting do not work correctly.
         data = np.zeros((50, 50, 50), dtype=np.uint8)
         data[2:-2, 2:-2, 2:-2] = 1
+        res2 = np.copy(data)
+        for pos in itertools.product([2, -3], repeat=3):
+            res2[pos] = 0
 
-        for i in range(2, 8):
-            print(i)
+        for i in range(2, 4):
             res = IterativeVoteSmoothing.smooth(data,
-                                                {"neighbourhood_type": NeighType.edges, "support_level": 9,
+                                                {"neighbourhood_type": NeighType.edges, "support_level": 7,
                                                  "max_steps": i})
-            res2 = np.copy(data)
-            for pos in itertools.product([2, -3], repeat=3):
-                sign = np.sign(pos)
-                for shift in generate_neighbour_edge(i-1, 3):
-                    res2[calc_cord(pos, sign, shift)] = 0
-            assert np.all(res2 == res)
-        for i in range(2, 8):
-            res = IterativeVoteSmoothing.smooth(data,
-                                                {"neighbourhood_type": NeighType.edges, "support_level": 14,
-                                                 "max_steps": i})
-            res2 = np.zeros(data.shape, dtype=data.dtype)
-            shift = 2 + i
-            p = slice(shift, -shift)
-            res2[p, p, p] = 1
-            assert np.all(res2 == res)
+            assert np.all(res2 == res), f"Fail  on step {i}"
+        for support_level in [8, 9, 10, 11, 12]:
+            res2 = VoteSmoothing.smooth(data, {"neighbourhood_type": NeighType.edges, "support_level": support_level})
+            for i in range(2, 8):
+                res = IterativeVoteSmoothing.smooth(data,
+                                                    {"neighbourhood_type": NeighType.edges,
+                                                     "support_level": support_level, "max_steps": i})
+                res2 = VoteSmoothing.smooth(res2, {"neighbourhood_type": NeighType.edges,
+                                                   "support_level": support_level})
+                assert np.all(res2 == res), f"Fail  on step {i} for support level {support_level}"
 
     def test_cube_vertex_base(self):
         data = np.zeros((50, 50, 50), dtype=np.uint8)
@@ -304,6 +314,26 @@ class TestIterativeVoteSmoothing:
         res2 = np.zeros(data.shape, dtype=data.dtype)
         res2[3:-3, 3:-3, 3:-3] = 1
         assert np.all(res2 == res)
+
+    def test_cube_vertex_iter(self):
+        # This test can fail if IterativeVoting do not work correctly.
+        data = np.zeros((50, 50, 50), dtype=np.uint8)
+        data[2:-2, 2:-2, 2:-2] = 1
+
+        for i in range(2, 4):
+            res = IterativeVoteSmoothing.smooth(data,
+                                                {"neighbourhood_type": NeighType.vertex, "support_level": 7,
+                                                 "max_steps": i})
+            assert np.all(data == res), f"Fail  on step {i}"
+        for support_level in range(8, 19):
+            res2 = VoteSmoothing.smooth(data, {"neighbourhood_type": NeighType.vertex, "support_level": support_level})
+            for i in range(2, 8):
+                res = IterativeVoteSmoothing.smooth(data,
+                                                    {"neighbourhood_type": NeighType.vertex,
+                                                     "support_level": support_level, "max_steps": i})
+                res2 = VoteSmoothing.smooth(res2, {"neighbourhood_type": NeighType.vertex,
+                                                   "support_level": support_level})
+                assert np.all(res2 == res), f"Fail  on step {i} for support level {support_level}"
 
     def test_square_sides_base(self):
         data = np.zeros((1, 50, 50), dtype=np.uint8)
