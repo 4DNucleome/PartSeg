@@ -14,9 +14,9 @@ based on threshold and connected components
 
 ## Installing
 * From binaries:
-  * [Windows](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg_alpha-windows.zip) (build on Windows 10)
-  * [Linux](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg_alpha-linux.zip) (build on Ubuntu 18.04)
-  * [MacOS](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg_alpha-macos.zip) (build on MacOS Mojave) 
+  * [Windows](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-windows.zip) (build on Windows 10)
+  * [Linux](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-linux.zip) (build on Ubuntu 18.04)
+  * [MacOS](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-macos.zip) (build on MacOS Mojave) 
 * With pip (on linux you need to install `numpy` and `cython` earlier) 
     * From pypi: `pip install PartSeg`
     * From repository: 
