@@ -1,12 +1,11 @@
 import sys
+import PartSegData
 
 import numpy as np
-from ...utils.global_settings import static_file_folder
-from os import path
 import typing
 from .color_image import color_grayscale
 
-color_maps = np.load(path.join(static_file_folder, "colors.npz"))
+color_maps = np.load(PartSegData.colors_file)
 
 def color_chanel(cmap, chanel, max_val, min_val):
     cmap0 = cmap[:, 0]

@@ -2,6 +2,7 @@ import os
 import sys
 from pathlib import Path
 
+import PartSegData
 import numpy as np
 from qtpy.QtCore import Qt, QByteArray, QEvent
 from qtpy.QtGui import QIcon, QKeyEvent, QKeySequence, QResizeEvent
@@ -20,7 +21,6 @@ from ..common_gui.mask_widget import MaskWidget
 from ..common_gui.stack_image_view import ColorBar
 from ..common_gui.waiting_dialog import WaitingDialog, ExecuteFunctionDialog
 from ..common_gui.multiple_file_widget import MultipleFileWidget
-from ..utils.global_settings import static_file_folder
 from ..utils.mask_create import calculate_mask, MaskProperty
 from ..utils.segmentation.algorithm_base import SegmentationResult
 from ..project_utils_qt.image_read_thread import ImageReaderThread
@@ -589,7 +589,7 @@ class MaskWindow(QDialog):
 
 class MainWindow(BaseMainWindow):
     settings_class = PartSettings
-    initial_image_path = os.path.join(static_file_folder, 'initial_images', "clean_segment.tiff")
+    initial_image_path = PartSegData.segmentation_analysis_default_image
 
     def __init__(self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None,
                  initial_image=None):
@@ -625,7 +625,7 @@ class MainWindow(BaseMainWindow):
         else:
             self.settings.image = initial_image
 
-        icon = QIcon(os.path.join(static_file_folder, 'icons', "icon.png"))
+        icon = QIcon(os.path.join(PartSegData.icons_dir, "icon.png"))
         self.setWindowIcon(icon)
 
         menu_bar = self.menuBar()

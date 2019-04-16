@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 import numpy as np
+from PartSegData import icons_dir
 from qtpy.QtCore import Qt, QTimer, QByteArray
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QPushButton, QListWidget, QVBoxLayout, QHBoxLayout, QLineEdit, \
@@ -17,7 +18,6 @@ from .partseg_settings import PartSettings
 from PartSeg.utils.analysis.batch_processing.batch_backend import CalculationManager
 from PartSeg.utils.analysis.calculation_plan import CalculationPlan, MaskFile, MaskMapper, Calculation
 from .prepare_plan_widget import CalculatePlaner
-from ..utils.global_settings import static_file_folder
 from ..utils.universal_const import Units
 from ..common_gui.universal_gui_part import Spacing, right_label
 
@@ -403,9 +403,9 @@ class CalculationPrepare(QDialog):
 
     def showEvent(self, event):
         super().showEvent(event)
-        ok_icon = QIcon(os.path.join(static_file_folder, "icons", "task-accepted.png"))
-        bad_icon = QIcon(os.path.join(static_file_folder, "icons", "task-reject.png"))
-        warn_icon = QIcon(os.path.join(static_file_folder, "icons", "task-attempt.png"))
+        ok_icon = QIcon(os.path.join(icons_dir, "task-accepted.png"))
+        bad_icon = QIcon(os.path.join(icons_dir, "task-reject.png"))
+        warn_icon = QIcon(os.path.join(icons_dir, "task-attempt.png"))
         all_prefix = os.path.commonprefix(self.file_list)
         if not os.path.exists(all_prefix):
             all_prefix = os.path.dirname(all_prefix)

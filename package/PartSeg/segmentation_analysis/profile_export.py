@@ -132,7 +132,7 @@ class ImportDialog(QDialog):
         self.checked_num = len(import_dict)
 
         def rename_func(ob_name, new_name_field, rename_radio):
-            end_reg = re.compile("(.*) \((\d+)\)$")
+            end_reg = re.compile(r"(.*) \((\d+)\)$")
 
             def in_func():
                 if rename_radio.isChecked() and str(new_name_field.text()).strip() == "":

@@ -5,6 +5,7 @@ from functools import partial
 from pathlib import Path
 from typing import Union, Optional, Tuple
 
+from PartSegData import icons_dir
 from qtpy.QtCore import QByteArray, Qt, QEvent
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushButton, QLineEdit, \
@@ -23,7 +24,6 @@ from .profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDic
 from .statistic_widget import StatisticsWidget
 from PartSeg.utils.analysis.statistics_calculation import StatisticProfile, STATISTIC_DICT, Node, Leaf, AreaType, PerComponent, \
     StatisticEntry
-from ..utils.global_settings import static_file_folder
 from ..utils.universal_const import UNIT_SCALE, Units
 
 
@@ -536,7 +536,7 @@ class StatisticsSettings(QWidget):
             if self.chosen_element_area is None:
                 return
             self.chosen_element = item
-            item.setIcon(QIcon(os.path.join(static_file_folder, "icons", "task-accepted.png")))
+            item.setIcon(QIcon(os.path.join(icons_dir, "task-accepted.png")))
             # self.statistic_area_choose.get_value(), self.per_component.get_value(), self.power_num.value()
         elif self.profile_options.currentItem() == self.chosen_element and \
                 self.statistic_area_choose.get_value() == self.chosen_element_area.area and \

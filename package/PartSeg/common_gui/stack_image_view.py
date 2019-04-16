@@ -4,11 +4,12 @@ import collections
 import os
 from math import log
 from typing import Type
+from PartSegData import icons_dir
 
 import numpy as np
 from qtpy import QtGui
 from qtpy.QtCore import QRect, QTimerEvent, QSize, QObject, Signal, QPoint, Qt, QEvent, Slot
-from qtpy.QtGui import QShowEvent, QWheelEvent, QPainter, QPen, QColor, QPalette, QPixmap, QImage, QIcon
+from qtpy.QtGui import QWheelEvent, QPainter, QPen, QColor, QPalette, QPixmap, QImage, QIcon
 from qtpy.QtWidgets import QScrollBar, QLabel, QGridLayout
 from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
     QScrollArea, QSizePolicy, QToolButton, QAction, QApplication, \
@@ -18,7 +19,6 @@ from scipy.ndimage import gaussian_filter
 from ..utils.color_image import color_image, add_labels
 from ..utils.color_image.color_image_base import color_maps
 from ..utils.colors import default_colors
-from ..utils.global_settings import static_file_folder
 from ..project_utils_qt.settings import ViewSettings, BaseSettings
 from PartSeg.tiff_image import Image
 from .channel_control import ChannelControl
@@ -207,7 +207,7 @@ def create_tool_button(text, icon):
     else:
         res.setToolTip(text)
         if isinstance(icon, str):
-            res.setIcon(QIcon(os.path.join(static_file_folder, "icons", icon)))
+            res.setIcon(QIcon(os.path.join(icons_dir, icon)))
         else:
             res.setIcon(icon)
     return res

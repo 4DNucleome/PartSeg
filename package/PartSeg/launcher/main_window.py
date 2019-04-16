@@ -6,9 +6,8 @@ from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QMainWindow, QToolButton, QGridLayout, QWidget, QProgressBar, QMessageBox
 
 from PartSeg.project_utils_qt.load_backup import import_config
-from ..utils.global_settings import static_file_folder
 from PartSeg.tiff_image import ImageReader
-
+from PartSegData import icons_dir
 
 class Prepare(QThread):
     def __init__(self, module):
@@ -37,8 +36,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(title)
         self.lib_path = ""
         self.final_title = ""
-        analysis_icon = QIcon(os.path.join(static_file_folder, 'icons', "icon.png"))
-        stack_icon = QIcon(os.path.join(static_file_folder, 'icons', "icon_stack.png"))
+        analysis_icon = QIcon(os.path.join(icons_dir, "icon.png"))
+        stack_icon = QIcon(os.path.join(icons_dir, "icon_stack.png"))
         self.analysis_button = QToolButton(self)
         self.analysis_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.analysis_button.setIcon(analysis_icon)

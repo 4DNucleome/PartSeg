@@ -7,9 +7,9 @@ import pytest
 import json
 import re
 from glob import glob
+import PartSegData
 
 from PartSeg.tiff_image import ImageReader, Image
-from PartSeg.utils.global_settings import static_file_folder
 from PartSeg.utils.analysis.save_hooks import PartEncoder, part_hook
 from PartSeg.utils.json_hooks import check_loaded_dict
 from PartSeg.utils.segmentation.noise_filtering import GaussType
@@ -33,7 +33,7 @@ def teardown_module():
 
 class TestImageClass:
     def test_image_read(self):
-        image = ImageReader.read_image(os.path.join(static_file_folder, "initial_images", "stack.tif"))
+        image = ImageReader.read_image(PartSegData.segmentation_mask_default_image)
         assert isinstance(image, Image)
 
     def test_image_mask(self):

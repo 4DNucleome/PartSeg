@@ -87,7 +87,8 @@ setuptools.setup(
     long_description_content_type='text/markdown',
     scripts=[os.path.join("package","scripts", "PartSeg")],
     install_requires=['numpy', tifffile_string, 'appdirs', 'SimpleITK', 'PyQt5', 'scipy', 'QtPy', 'sentry_sdk',
-                      'deprecation', 'qtawesome', 'six', 'h5py', 'pandas', 'sympy', 'Cython', 'openpyxl', 'xlrd'],
+                      'deprecation', 'qtawesome', 'six', 'h5py', 'pandas', 'sympy', 'Cython', 'openpyxl', 'xlrd',
+                      'PartSegData'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: Implementation :: CPython",

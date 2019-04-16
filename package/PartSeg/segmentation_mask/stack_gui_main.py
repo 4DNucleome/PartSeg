@@ -23,7 +23,6 @@ from ..common_gui.select_multiple_files import AddFiles
 from ..common_gui.stack_image_view import ColorBar
 from ..common_gui.universal_gui_part import right_label
 from ..common_gui.waiting_dialog import WaitingDialog, ExecuteFunctionDialog
-from ..utils.global_settings import static_file_folder
 from ..utils.segmentation.algorithm_base import SegmentationResult
 from ..utils.universal_const import UNIT_SCALE, Units
 from ..project_utils_qt.error_dialog import ErrorDialog
@@ -37,6 +36,7 @@ from .batch_proceed import BatchProceed, BatchTask
 from .image_view import StackImageView
 from PartSeg.utils.mask.io_functions import SaveSegmentation, LoadSegmentation, load_dict
 from .. import CONFIG_FOLDER as CONFIG_FOLDER_BASE
+import PartSegData
 
 CONFIG_FOLDER = os.path.join(CONFIG_FOLDER_BASE, "mask")
 
@@ -696,7 +696,7 @@ class Options(QTabWidget):
 
 class MainWindow(BaseMainWindow):
     settings_class = StackSettings
-    initial_image_path = os.path.join(static_file_folder, 'initial_images', "stack.tif")
+    initial_image_path = PartSegData.segmentation_mask_default_image
 
     def __init__(self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None,
                  initial_image=None):
@@ -719,7 +719,7 @@ class MainWindow(BaseMainWindow):
         )
         self.options_panel.image_properties.multiple_files.stateChanged.connect(self.multiple_file.setVisible)
 
-        icon = QIcon(os.path.join(static_file_folder, 'icons', "icon_stack.png"))
+        icon = QIcon(os.path.join(PartSegData.icons_dir, "icon_stack.png"))
         self.setWindowIcon(icon)
 
         layout = QVBoxLayout()
