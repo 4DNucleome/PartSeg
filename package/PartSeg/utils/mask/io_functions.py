@@ -11,7 +11,8 @@ from typing import Union
 from io import BytesIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
 
 from PartSeg.utils.analysis.save_hooks import PartEncoder, part_hook
-from ..io_utils import get_tarinfo, SaveBase, LoadBase, proxy_callback, ProjectInfoBase
+from ..io_utils import get_tarinfo, SaveBase, LoadBase, proxy_callback, ProjectInfoBase, check_segmentation_type, \
+    SegmentationType, WrongFileTypeException
 from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationProfile
 from PartSeg.tiff_image import Image, ImageWriter, ImageReader
 
@@ -97,6 +98,8 @@ def load_stack_segmentation(file: str, range_changed=None, step_changed=None):
         tar_file = tarfile.open(fileobj=file)
     else:
         raise ValueError(f"wrong type of file_ argument: {type(file)}")
+    if check_segmentation_type(tar_file) != SegmentationType.mask:
+        raise WrongFileTypeException()
     step_changed(1)
     segmentation_buff = BytesIO()
     segmentation_tar = tar_file.extractfile(tar_file.getmember("segmentation.npy"))

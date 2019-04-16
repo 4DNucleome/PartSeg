@@ -2,12 +2,31 @@ import re
 import typing
 from abc import ABC
 from datetime import datetime
+from enum import Enum
 from io import BytesIO, StringIO
 from pathlib import Path
-from tarfile import TarInfo
+from tarfile import TarInfo, TarFile
 
 from PartSeg.tiff_image import Image
 from .algorithm_describe_base import AlgorithmDescribeBase
+
+
+class SegmentationType(Enum):
+    analysis = 1
+    mask = 2
+
+
+class WrongFileTypeException(Exception):
+    pass
+
+
+def check_segmentation_type(tar_file: TarFile) -> SegmentationType:
+    names = [x.name for x in tar_file.getmembers()]
+    if "algorithm.json" in names:
+        return SegmentationType.analysis
+    elif "metadata.json" in names:
+        return SegmentationType.mask
+    raise WrongFileTypeException()
 
 
 def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):

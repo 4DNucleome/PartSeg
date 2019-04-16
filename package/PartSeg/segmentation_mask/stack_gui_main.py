@@ -13,6 +13,7 @@ from qtpy.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMess
 
 from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
 from PartSeg.segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
+from PartSeg.utils.io_utils import WrongFileTypeException
 from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox, AlgorithmChoose
 from ..common_gui.channel_control import ChannelControl
 from ..common_gui.colors_choose import ColorSelector
@@ -92,6 +93,9 @@ class MainMenu(QWidget):
                     QMessageBox.warning(self, "Open error", "Not enough memory to read this image")
                 elif isinstance(exception, IOError):
                     QMessageBox.warning(self, "Open error", f"Some problem with reading from disc: {exception}")
+                elif isinstance(exception, WrongFileTypeException):
+                    QMessageBox.warning(self, "Open error", f"No needed files inside archive. "
+                                        "Most probably you choose file from segmentation analysis")
                 else:
                     raise exception
 
@@ -164,6 +168,9 @@ class MainMenu(QWidget):
                     QMessageBox.warning(self, "Open error", "Not enough memory to read this image")
                 elif isinstance(exception, IOError):
                     QMessageBox.warning(self, "Open error", "Some problem with reading from disc")
+                elif isinstance(exception, WrongFileTypeException):
+                    QMessageBox.warning(self, "Open error", f"No needed files inside archive. "
+                                        "Most probably you choose file from segmentation analysis")
                 else:
                     raise exception
 

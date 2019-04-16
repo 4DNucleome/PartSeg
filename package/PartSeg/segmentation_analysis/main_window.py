@@ -15,6 +15,7 @@ from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
 from PartSeg.common_gui.show_directory_dialog import DirectoryDialog
 from PartSeg.utils.analysis import ProjectTuple
 from PartSeg.utils.analysis.load_functions import load_dict
+from PartSeg.utils.io_utils import WrongFileTypeException
 from ..common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, AlgorithmChoose
 from ..common_gui.channel_control import ChannelControl
 from ..common_gui.mask_widget import MaskWidget
@@ -427,6 +428,10 @@ class MainMenu(QWidget):
                 instance.warning = "Open error", f"Some problem project file: {exception}"
                 QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
                 print(exception, file=sys.stderr)
+            elif isinstance(exception, WrongFileTypeException):
+                instance.warning = "Open error", f"No needed files inside archive. " \
+                    f"Most probably you choose file from segmentation mask"
+                QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
             else:
                 raise exception
 

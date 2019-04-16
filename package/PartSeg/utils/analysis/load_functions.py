@@ -14,7 +14,7 @@ from ..algorithm_describe_base import Register
 from .analysis_utils import HistoryElement
 from .io_utils import ProjectTuple, MaskInfo
 from .save_hooks import part_hook
-from ..io_utils import LoadBase, proxy_callback
+from ..io_utils import LoadBase, proxy_callback, check_segmentation_type, SegmentationType, WrongFileTypeException
 
 
 def load_project(
@@ -31,6 +31,8 @@ def load_project(
         file_path = ""
     else:
         raise ValueError(f"wrong type of file_ argument: {type(file)}")
+    if check_segmentation_type(tar_file) != SegmentationType.analysis:
+        raise WrongFileTypeException()
     image_buffer = BytesIO()
     image_tar = tar_file.extractfile(tar_file.getmember("image.tif"))
     image_buffer.write(image_tar.read())
