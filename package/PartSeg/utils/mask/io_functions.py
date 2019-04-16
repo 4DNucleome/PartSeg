@@ -125,6 +125,18 @@ class LoadSegmentation(LoadBase):
     def get_short_name(cls):
         return "seg"
 
+    @staticmethod
+    def fix_parameters(profile: SegmentationProfile):
+        if profile.algorithm == "Threshold" or profile.algorithm == "Auto Threshold":
+            if isinstance(profile.values["smooth_border"], bool):
+                if profile.values["smooth_border"]:
+                    profile.values["smooth_border"] = \
+                        {"name": "Opening", "values": {"smooth_border_radius": profile.values["smooth_border_radius"]}}
+                else:
+                    profile.values["smooth_border"] = {"name": "None", "values": {}}
+            del profile.values["smooth_border_radius"]
+        return profile
+
     @classmethod
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
              range_changed: typing.Callable[[int, int], typing.Any] = None,
@@ -135,7 +147,7 @@ class LoadSegmentation(LoadBase):
         if "parameters" not in metadata:
             parameters = defaultdict(lambda: None)
         else:
-            parameters = dict([(int(k), v) for k, v in metadata["parameters"].items()])
+            parameters = dict([(int(k), cls.fix_parameters(v)) for k, v in metadata["parameters"].items()])
 
         return SegmentationTuple(load_locations[0], metadata["base_file"] if "base_file" in metadata else None,
                                  segmentation, metadata["components"], parameters)
