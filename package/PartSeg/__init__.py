@@ -1,7 +1,7 @@
 import os
 import appdirs
 
-__version__ = "0.9.2"
+__version__ = "0.9.2.1"
 
 app_name = "PartSeg"
 app_lab = "LFSG"

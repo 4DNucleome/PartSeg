@@ -1,5 +1,8 @@
 # Changelog 
 
+## 0.9.2.1
+ - add VoteSmooth and add choosing of smooth algorithm
+
 ## 0.9.2
 - add pypi base check for update 
 - remove resetting image state when change state in same image
