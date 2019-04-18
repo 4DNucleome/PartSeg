@@ -1,8 +1,9 @@
 from collections import defaultdict
+import math
 
 from qtpy.QtWidgets import QWidget, QCheckBox, QGridLayout, QLabel, QHBoxLayout, QComboBox, QDoubleSpinBox
 from qtpy.QtGui import QImage, QShowEvent, QPaintEvent, QPainter, QPen, QMouseEvent
-from qtpy.QtCore import Signal
+from qtpy.QtCore import Signal, Qt, QRect, QRectF, QPointF
 import numpy as np
 import typing
 from .collapse_checkbox import CollapseCheckbox
@@ -25,10 +26,78 @@ class ColorPreview(QWidget):
             painter.drawImage(rect, self.parent().image)
 
 
+class LockedInfoWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setFixedWidth(25)
+        self.setFixedHeight(25)
+
+    def paintEvent(self, a0: QPaintEvent) -> None:
+        margin = 2
+
+        super().paintEvent(a0)
+        painter = QPainter(self)
+        painter.save()
+        pen2 = QPen()
+
+        rect = QRectF(margin, self.height()/2, self.width()-margin*2, self.height()/2 - margin)
+        rect2 = QRectF(3*margin, 2*margin, self.width() - margin * 6, self.height())
+
+        pen2.setWidth(6)
+        painter.setPen(pen2)
+        painter.drawArc(rect2, 0, 180 * 16)
+        pen2.setWidth(3)
+        pen2.setColor(Qt.white)
+        painter.setPen(pen2)
+        painter.drawArc(rect2, 0, 180 * 16)
+
+        painter.fillRect(rect, Qt.white)
+        pen2.setWidth(2)
+        pen2.setColor(Qt.black)
+        painter.setPen(pen2)
+        painter
+        painter.drawRect(rect)
+
+        painter.restore()
+
+
+class BlurInfoWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setFixedWidth(25)
+        self.setFixedHeight(25)
+
+    def paintEvent(self, a0: QPaintEvent) -> None:
+        margin = 2
+
+        super().paintEvent(a0)
+        painter = QPainter(self)
+        painter.save()
+
+
+        rect = QRectF(margin, margin, self.width()-margin*2, self.height() -  2*margin)
+        painter.setBrush(Qt.white)
+        painter.setPen(Qt.white)
+        painter.drawEllipse(rect)
+
+        painter.restore()
+        painter.save()
+        pen = QPen()
+        pen.setWidth(2)
+        painter.setPen(pen)
+        mid_point = QPointF(a0.rect().width()/2, a0.rect().height()/2)
+        radius = min(a0.rect().height(), a0.rect().width()) / 3
+        rays_num = 10
+        for i in range(rays_num):
+            point = QPointF(math.sin(math.pi / (rays_num/2) * i) * radius, math.cos(math.pi / (rays_num/2) * i) * radius)
+            painter.drawLine(mid_point+(point*0.4), mid_point + point)
+        painter.restore()
+
+
 class ChannelWidget(QWidget):
     clicked = Signal(int)
 
-    def __init__(self, chanel_id: int, color: str, tight=False, locked=False):
+    def __init__(self, chanel_id: int, color: str, tight=False, locked=False, gauss=False):
         super().__init__()
         self.id = chanel_id
         self.active = False
@@ -36,13 +105,14 @@ class ChannelWidget(QWidget):
         self.chosen = QCheckBox(self)
         self.chosen.setChecked(True)
         self.chosen.setMinimumHeight(20)
-        self.info_label = QLabel("<small>\U0001F512</small>")
-        self.info_label.setVisible(locked)
-        self.info_label.setStyleSheet("QLabel {background-color: white; border-radius: 3px; margin: 0px; padding: 0px} ")
-        self.info_label.setMargin(0)
+        self.locked_info = LockedInfoWidget()
+        self.locked_info.setVisible(locked)
+        self.gauss_info = BlurInfoWidget()
+        self.gauss_info.setVisible(gauss)
         layout = QHBoxLayout()
         layout.addWidget(self.chosen, 0)
-        layout.addWidget(self.info_label, 0)
+        layout.addWidget(self.locked_info, 0)
+        layout.addWidget(self.gauss_info, 0)
         layout.addStretch(1)
         if tight:
             layout.setContentsMargins(5,0,0,0)
@@ -84,14 +154,26 @@ class ChannelWidget(QWidget):
 
     @property
     def locked(self):
-        return self.info_label.isVisible()
+        return self.locked_info.isVisible()
 
     def set_locked(self, val=True):
         if val:
-            self.info_label.setVisible(True)
+            self.locked_info.setVisible(True)
         else:
-            self.info_label.setHidden(True)
+            self.locked_info.setHidden(True)
         self.repaint()
+
+    @property
+    def gauss(self):
+        return self.gauss_info.isVisible()
+
+    def set_gauss(self, val=True):
+        if val:
+            self.gauss_info.setVisible(True)
+        else:
+            self.gauss_info.setHidden(True)
+        self.repaint()
+
 
     def set_inactive(self, val=True):
         self.active = not val
@@ -278,6 +360,7 @@ class ChannelControl(ChannelChooseBase):
 
     def gauss_use_changed(self):
         self._settings.set_in_profile(f"{self._name}.use_gauss_{self.current_channel}", self.use_gauss.isChecked())
+        self.channels_widgets[self.current_channel].set_gauss(self.use_gauss.isChecked())
         self.coloring_update.emit(False)
 
     def change_chanel(self, chanel_id):
@@ -333,7 +416,8 @@ class ChannelControl(ChannelChooseBase):
             self.channels_widgets.append(
                 ChannelWidget(i, self._settings.get_from_profile(
                               f"{self._name}.cmap{i}",default_colors[i % len(default_colors)]),
-                              locked=self._settings.get_from_profile(f"{self._name}.lock_{i}", False)))
+                              locked=self._settings.get_from_profile(f"{self._name}.lock_{i}", False),
+                              gauss=self._settings.get_from_profile(f"{self._name}.use_gauss_{i}", False)))
             self.channels_widgets[-1].chosen.setChecked(is_checked[i])
             self.channels_layout.addWidget(self.channels_widgets[-1])
             self.channels_widgets[-1].clicked.connect(self.change_chanel)
