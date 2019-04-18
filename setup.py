@@ -67,9 +67,11 @@ def find_version(*file_paths):
 def readme():
     this_directory = os.path.abspath(os.path.dirname(__file__))
     reg = re.compile(r'(!\[[^]]*\])\((images/[^)]*)\)')
+    reg2 = re.compile(r'PartSeg-lastest')
     with open(os.path.join(this_directory, 'Readme.md')) as f:
         text = f.read()
         text = reg.sub(r'\1(https://raw.githubusercontent.com/4DNucleome/PartSeg/master/\2)', text)
+        text = reg2.sub(f"PartSeg-{find_version('package', 'PartSeg', '__init__.py')}", text)
         return text
 
 try:
