@@ -81,8 +81,6 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
                 AlgorithmProperty("close_holes_size", "Maximum holes size (px)", 200, (0, 10 ** 3), 10),
                 AlgorithmProperty("smooth_border", "Smooth borders", next(iter(smooth_dict.keys())),
                                   possible_values=smooth_dict, property_type=AlgorithmDescribeBase),
-                AlgorithmProperty("noise_removal", "Filter", next(iter(noise_removal_dict.keys())),
-                                  possible_values=noise_removal_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("side_connection", "Side by Side connections", False, (True, False),
                                   tool_tip="During calculation of connected components includes"
                                            " only side by side connected pixels"),
