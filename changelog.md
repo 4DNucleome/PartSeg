@@ -1,5 +1,9 @@
 # Changelog 
 
+## 0.9.2.2
+ - extract static data to separated package
+ - update marker of fix range and add mark of gauus in channel control 
+  
 ## 0.9.2.1
  - add VoteSmooth and add choosing of smooth algorithm
 

@@ -9,7 +9,9 @@ sys.path.append(os.path.dirname('__file__'))
 import tifffile
 # import plugins
 import PartSeg.__main__
+import PartSegData.__init__
 base_path = os.path.dirname(PartSeg.__main__.__file__)
+data_path = os.path.dirname(PartSegData.__init__.__file__)
 
 num = tifffile.__version__.split(".")[0]
 
@@ -23,10 +25,10 @@ else:
 a = Analysis(['launch_partseg.py'],
              # pathex=['C:\\Users\\Grzegorz\\Documents\\segmentation-gui\\PartSeg'],
              binaries=[],
-             datas= [(os.path.join(base_path, x), y) for x,y in  [
-                 ("static_files/icons/*", "PartSeg/static_files/icons"),
-                 ("static_files/initial_images/*", "PartSeg/static_files/initial_images"),
-                 ("static_files/colors.npz", "PartSeg/static_files/")]] +
+             datas= [(os.path.join(data_path, x), y) for x,y in  [
+                 ("static_files/icons/*", "PartSegData/static_files/icons"),
+                 ("static_files/initial_images/*", "PartSegData/static_files/initial_images"),
+                 ("static_files/colors.npz", "PartSegData/static_files/")]] +
                     [(os.path.join(base_path, "plugins/itk_snap_save/__init__.py"),"PartSeg/plugins/itk_snap_save")],
              hiddenimports=hiddenimports + ['numpy.core._dtype_ctypes', 'sentry_sdk.integrations.logging',
                                             'sentry_sdk.integrations.stdlib', 'sentry_sdk.integrations.excepthook',
@@ -61,3 +63,6 @@ coll = COLLECT(exe,
                strip=False,
                upx=True,
                name='PartSeg')
+
+
+""""""
