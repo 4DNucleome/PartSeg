@@ -9,7 +9,7 @@ from qtpy.QtCore import Signal, Qt, QByteArray
 from qtpy.QtGui import QGuiApplication, QIcon
 from qtpy.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox, QVBoxLayout, QCheckBox, \
     QComboBox, QDoubleSpinBox, QSpinBox, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
-    QTabWidget, QSizePolicy
+    QTabWidget, QSizePolicy, QGridLayout
 
 from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
 from PartSeg.segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
@@ -35,7 +35,7 @@ from .stack_settings import StackSettings, get_mask
 from PartSeg.tiff_image import ImageReader, Image
 from .batch_proceed import BatchProceed, BatchTask
 from .image_view import StackImageView
-from PartSeg.utils.mask.io_functions import SaveSegmentation, LoadSegmentation, load_dict
+from PartSeg.utils.mask.io_functions import SaveSegmentation, LoadSegmentation, load_dict, save_parameters_dict
 from .. import CONFIG_FOLDER as CONFIG_FOLDER_BASE
 import PartSegData
 
@@ -149,47 +149,44 @@ class MainMenu(QWidget):
         return True
 
     def load_segmentation(self):
-        try:
+        dial = CustomLoadDialog({"segmentation (*.seg *.tgz)": LoadSegmentation})
+        dial.setDirectory(self.settings.get("io.open_segmentation_directory", str(Path.home())))
+        dial.setHistory(dial.history() + self.settings.get_path_history())
+        if not dial.exec_():
+            return
+        load_property = dial.get_result()
+        self.settings.set("io.open_segmentation_directory", os.path.dirname(load_property.load_location[0]))
+        self.settings.add_path_history(os.path.dirname(load_property.load_location[0]))
+        execute_thread = ExecuteFunctionThread(load_property.load_class.load, [load_property.load_location])
 
-            dial = CustomLoadDialog({"segmentation (*.seg *.tgz)": LoadSegmentation})
-            dial.setDirectory(self.settings.get("io.open_segmentation_directory", str(Path.home())))
-            dial.setHistory(dial.history() + self.settings.get_path_history())
-            if not dial.exec_():
-                return
-            load_property = dial.get_result()
-            self.settings.set("io.open_segmentation_directory", os.path.dirname(load_property.load_location[0]))
-            self.settings.add_path_history(os.path.dirname(load_property.load_location[0]))
-            execute_thread = ExecuteFunctionThread(load_property.load_class.load, [load_property.load_location])
+        def exception_hook(exception):
+            mess = QMessageBox(self)
+            if isinstance(exception, ValueError) and exception.args[0] == "Segmentation do not fit to image":
+                mess.warning("Open error", "Segmentation do not fit to image")
+            elif isinstance(exception, MemoryError):
+                mess.warning("Open error", "Not enough memory to read this image")
+            elif isinstance(exception, IOError):
+                mess.warning("Open error", "Some problem with reading from disc")
+            elif isinstance(exception, WrongFileTypeException):
+                mess.warning("Open error", f"No needed files inside archive. "
+                             "Most probably you choose file from segmentation analysis")
+            else:
+                raise exception
 
-            def exception_hook(exception):
-                if isinstance(exception, ValueError) and exception.args[0] == "Segmentation do not fit to image":
-                    QMessageBox.warning(self, "Open error", "Segmentation do not fit to image")
-                elif isinstance(exception, MemoryError):
-                    QMessageBox.warning(self, "Open error", "Not enough memory to read this image")
-                elif isinstance(exception, IOError):
-                    QMessageBox.warning(self, "Open error", "Some problem with reading from disc")
-                elif isinstance(exception, WrongFileTypeException):
-                    QMessageBox.warning(self, "Open error", f"No needed files inside archive. "
-                                        "Most probably you choose file from segmentation analysis")
-                else:
-                    raise exception
-
-            dial = WaitingDialog(execute_thread, "Load segmentation", exception_hook=exception_hook)
-            dial.exec()
-            self.settings.set_segmentation(execute_thread.result.segmentation, self.settings.keep_chosen_components,
-                                           execute_thread.result.chosen_components,
-                                           execute_thread.result.segmentation_parameters)
-        except Exception as e:
-            QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
+        dial = WaitingDialog(execute_thread, "Load segmentation", exception_hook=exception_hook)
+        dial.exec()
+        self.settings.set_segmentation(execute_thread.result.segmentation, self.settings.keep_chosen_components,
+                                       execute_thread.result.chosen_components,
+                                       execute_thread.result.segmentation_parameters)
 
     def save_segmentation(self):
         if self.settings.segmentation is None:
             QMessageBox.warning(self, "No segmentation", "No segmentation to save")
             return
-        dial = SaveDialog({"segmentation": SaveSegmentation}, False)
+        dial = SaveDialog({"segmentation": SaveSegmentation}, False,
+                          history=self.settings.get_path_history())
         dial.setDirectory(self.settings.get("io.save_segmentation_directory", str(Path.home())))
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0] + ".seg")
-        dial.setHistory(dial.history() + self.settings.get_path_history())
         if not dial.exec_():
             return
         save_location, selected_filter, save_class, values = dial.get_result()
@@ -389,6 +386,7 @@ class AlgorithmOptions(QWidget):
         self.execute_all_btn.setToolTip("Execute in batch mode segmentation with current parameter. "
                                         "File list need to be specified in image tab.")
         self.execute_all_btn.setDisabled(True)
+        self.save_parameters_btn = QPushButton("Save parameters")
         self.block_execute_all_btn = False
         self.algorithm_choose_widget = AlgorithmChoose(settings, mask_algorithm_dict)
         self.algorithm_choose_widget.result.connect(self.execution_done)
@@ -442,11 +440,12 @@ class AlgorithmOptions(QWidget):
         opt_layout2.addWidget(right_label("Border thick:"))
         opt_layout2.addWidget(self.borders_thick)
         main_layout.addLayout(opt_layout2)
-        main_layout.addWidget(self.execute_btn)
-        btn_layout = QHBoxLayout()
+        btn_layout = QGridLayout()
         btn_layout.setContentsMargins(0, 0, 0, 0)
-        btn_layout.addWidget(self.execute_in_background_btn)
-        btn_layout.addWidget(self.execute_all_btn)
+        btn_layout.addWidget(self.execute_btn, 0, 0)
+        btn_layout.addWidget(self.execute_in_background_btn, 0, 1)
+        btn_layout.addWidget(self.execute_all_btn, 1, 0)
+        btn_layout.addWidget(self.save_parameters_btn, 1, 1)
         main_layout.addLayout(btn_layout)
         main_layout.addWidget(self.progress_bar2)
         main_layout.addWidget(self.progress_bar)
@@ -468,6 +467,7 @@ class AlgorithmOptions(QWidget):
         self.execute_in_background_btn.clicked.connect(self.execute_in_background)
         self.execute_btn.clicked.connect(self.execute_action)
         self.execute_all_btn.clicked.connect(self.execute_all_action)
+        self.save_parameters_btn.clicked.connect(self.save_parameters)
         # noinspection PyUnresolvedReferences
         self.opacity.valueChanged.connect(control_view.set_opacity)
         # noinspection PyUnresolvedReferences
@@ -479,6 +479,14 @@ class AlgorithmOptions(QWidget):
         settings.chosen_components_widget = self.choose_components
         settings.components_change_list.connect(self.choose_components.new_choose)
         settings.image_changed.connect(self.choose_components.remove_components)
+
+    def save_parameters(self):
+        dial = SaveDialog(save_parameters_dict, False, history=self.settings.get_path_history())
+        if not dial.exec_():
+            return
+        res = dial.get_result()
+        self.settings.add_path_history(os.path.dirname(str(res.save_destination)))
+        res.save_class.save(res.save_destination, self.algorithm_choose_widget.current_parameters())
 
     def border_value_check(self, value):
         if value % 2 == 0:

@@ -546,7 +546,6 @@ class AlgorithmChoose(QWidget):
         self.blockSignals(False)
         self.algorithm_changed.emit(name)
 
-
     def image_changed(self):
         current_widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.currentWidget()
         current_widget.image_changed(self.settings.image)
@@ -558,8 +557,12 @@ class AlgorithmChoose(QWidget):
         if hasattr(self.settings, "mask") and hasattr(current_widget, "change_mask"):
             current_widget.change_mask()
 
-    def current_widget(self):
+    def current_widget(self) -> InteractiveAlgorithmSettingsWidget:
         return self.stack_layout.currentWidget()
+
+    def current_parameters(self) -> SegmentationProfile:
+        widget = self.current_widget()
+        return SegmentationProfile("", widget.name, widget.get_values())
 
     def get_info_text(self):
         return self.current_widget().algorithm_thread.get_info_text()

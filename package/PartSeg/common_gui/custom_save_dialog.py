@@ -39,7 +39,7 @@ class FormDialog(QDialog):
 class SaveDialog(QFileDialog):
     def __init__(self, save_register: typing.Dict[str, type(SaveBase)], system_widget=True,
                  base_values: typing.Optional[dict] = None, parent=None,
-                 history :typing.Optional[typing.List[str]]=None):
+                 history: typing.Optional[typing.List[str]] = None):
         super().__init__(parent)
         self.save_register = dict((x.get_name_with_suffix(), x) for x in save_register.values())
         self.setOption(QFileDialog.DontUseNativeDialog, not system_widget)
@@ -71,12 +71,20 @@ class SaveDialog(QFileDialog):
                 # noinspection PyArgumentList
                 layout.addWidget(widget, 0, layout.columnCount(), layout.rowCount(), 1)
                 self.stack_widget = widget
+            else:
+                layout.addWidget(widget)
+                self.stack_widget = widget
+            self.selectNameFilter(self.names[0])
 
     def change_parameters(self, text):
         if not hasattr(self, "stack_widget"):
             return
         try:
             self.stack_widget.setCurrentIndex(self.names.index(text))
+            if not self.save_register[text].get_fields():
+                self.stack_widget.hide()
+            else:
+                self.stack_widget.show()
         except ValueError:
             pass
 

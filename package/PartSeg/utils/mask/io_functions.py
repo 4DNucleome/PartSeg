@@ -32,7 +32,6 @@ class SegmentationTuple(ProjectInfoBase, typing.NamedTuple):
 
 
 def save_stack_segmentation(file: Union[tarfile.TarFile, str, TextIOBase, BufferedIOBase, RawIOBase, IOBase],
-                            # segmentation: np.ndarray, list_of_components, base_file: Optional[str]=None,
                             segmentation_info: SegmentationTuple, parameters: dict,
                             range_changed=None, step_changed=None):
     if range_changed is None:
@@ -254,4 +253,33 @@ def save_components(image: Image, components: list, segmentation: np.ndarray, di
 # class SaveComponents(SaveBase):
 
 
+class SaveParametersJSON(SaveBase):
+    @classmethod
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict = None,
+             range_changed=None, step_changed=None):
+        """
+        :param save_location: path to save
+        :param project_info: data to save in json file
+        :param parameters: Not used, keep for satisfy interface
+        :param range_changed: Not used, keep for satisfy interface
+        :param step_changed: Not used, keep for satisfy interface
+        :return:
+        """
+        with open(save_location, 'w') as ff:
+            json.dump(project_info, ff, cls=PartEncoder)
+
+    @classmethod
+    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+        return []
+
+    @classmethod
+    def get_short_name(cls):
+        return "json"
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Parameters (*.json)"
+
+
 load_dict = Register(LoadImage, LoadSegmentationImage)
+save_parameters_dict = Register(SaveParametersJSON)
