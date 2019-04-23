@@ -249,8 +249,25 @@ def save_components(image: Image, components: list, segmentation: np.ndarray, di
         ImageWriter.save_mask(im, os.path.join(dir_path, f"{file_name}_component{i}_mask.tif"))
         step_changed(2 * i + 2)
 
-# TODO create SaveComponents class
-# class SaveComponents(SaveBase):
+
+class SaveComponents(SaveBase):
+    @classmethod
+    def get_short_name(cls):
+        return "comp"
+
+    @classmethod
+    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: SegmentationTuple, parameters: dict,
+             range_changed=None, step_changed=None):
+        save_components(project_info.image, project_info.chosen_components, project_info.segmentation, save_location,
+                        range_changed, step_changed)
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Components"
+
+    @classmethod
+    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+        return []
 
 
 class SaveParametersJSON(SaveBase):
@@ -283,3 +300,4 @@ class SaveParametersJSON(SaveBase):
 
 load_dict = Register(LoadImage, LoadSegmentationImage)
 save_parameters_dict = Register(SaveParametersJSON)
+save_components_dict = Register(SaveComponents)

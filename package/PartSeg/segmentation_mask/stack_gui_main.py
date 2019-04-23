@@ -35,7 +35,8 @@ from .stack_settings import StackSettings, get_mask
 from PartSeg.tiff_image import ImageReader, Image
 from .batch_proceed import BatchProceed, BatchTask
 from .image_view import StackImageView
-from PartSeg.utils.mask.io_functions import SaveSegmentation, LoadSegmentation, load_dict, save_parameters_dict
+from PartSeg.utils.mask.io_functions import SaveSegmentation, LoadSegmentation, load_dict, save_parameters_dict, \
+    save_components_dict
 from .. import CONFIG_FOLDER as CONFIG_FOLDER_BASE
 import PartSegData
 
@@ -197,9 +198,8 @@ class MainMenu(QWidget):
         def exception_hook(exception):
             QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.Ok)
 
-        execute_thread = \
-            ExecuteFunctionThread(save_class.save, [save_location, self.settings.get_project_info(), values])
-        dial = WaitingDialog(execute_thread, "Save segmentation", exception_hook=exception_hook)
+        dial = ExecuteFunctionDialog(save_class.save, [save_location, self.settings.get_project_info(), values],
+                                     text="Save segmentation", exception_hook=exception_hook)
         dial.exec()
 
     def save_result(self):
@@ -212,15 +212,14 @@ class MainMenu(QWidget):
         if self.settings.segmentation is None:
             QMessageBox.warning(self, "No components", "No components to save")
             return
-        dial = QFileDialog()
-        dial.setFileMode(QFileDialog.Directory)
+        dial = SaveDialog(save_components_dict, False, history=self.settings.get_path_history(),
+                          file_mode=QFileDialog.Directory)
         dial.setDirectory(self.settings.get("io.save_components_directory", str(Path.home())))
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0])
-        dial.setHistory(dial.history() + self.settings.get_path_history())
         if not dial.exec_():
             return
-        dir_path = str(dial.selectedFiles()[0])
-        potential_names = self.settings.get_file_names_for_save_result(dir_path)
+        res = dial.get_result()
+        potential_names = self.settings.get_file_names_for_save_result(res.save_destination)
         conflict = []
         for el in potential_names:
             if os.path.exists(el):
@@ -233,14 +232,15 @@ class MainMenu(QWidget):
                 self.save_result()
                 return
 
-        self.settings.set("io.save_components_directory", os.path.dirname(str(dir_path)))
-        self.settings.add_path_history(os.path.dirname(str(dir_path)))
+        self.settings.set("io.save_components_directory", os.path.dirname(str(res.save_destination)))
+        self.settings.add_path_history(os.path.dirname(str(res.save_destination)))
 
         def exception_hook(exception):
             QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.Ok)
 
-        execute_thread = ExecuteFunctionThread(self.settings.save_components, [dir_path])
-        dial = WaitingDialog(execute_thread, "Save components", exception_hook=exception_hook)
+        dial = ExecuteFunctionDialog(
+            res.save_class.save, [res.save_destination, self.settings.get_project_info(), res.parameters],
+            text="Save components", exception_hook=exception_hook)
         dial.exec()
 
 

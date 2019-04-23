@@ -42,7 +42,7 @@ class WaitingDialog(QDialog):
 
 
 class ExecuteFunctionDialog(WaitingDialog):
-    def __init__(self, fun, args=None, kwargs=None, text = "", parent = None, exception_hook = None):
+    def __init__(self, fun, args=None, kwargs=None, text="", parent=None, exception_hook=None):
         thread = ExecuteFunctionThread(fun, args, kwargs)
         super().__init__(thread, text=text, parent=parent, exception_hook=exception_hook)
 

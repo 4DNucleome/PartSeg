@@ -70,7 +70,11 @@ class SaveBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def get_default_extension(cls):
-        return re.search(r'\(\*(\.\w+)', cls.get_name_with_suffix()).group(1)
+        match = re.search(r'\(\*(\.\w+)', cls.get_name_with_suffix())
+        if match:
+            return match.group(1)
+        else:
+            return ""
 
     @classmethod
     def need_segmentation(cls):
