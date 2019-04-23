@@ -301,3 +301,4 @@ class SaveParametersJSON(SaveBase):
 load_dict = Register(LoadImage, LoadSegmentationImage)
 save_parameters_dict = Register(SaveParametersJSON)
 save_components_dict = Register(SaveComponents)
+save_segmentation_dict = Register(SaveSegmentation)

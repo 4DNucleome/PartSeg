@@ -36,7 +36,7 @@ from PartSeg.tiff_image import ImageReader, Image
 from .batch_proceed import BatchProceed, BatchTask
 from .image_view import StackImageView
 from PartSeg.utils.mask.io_functions import SaveSegmentation, LoadSegmentation, load_dict, save_parameters_dict, \
-    save_components_dict
+    save_components_dict, save_segmentation_dict
 from .. import CONFIG_FOLDER as CONFIG_FOLDER_BASE
 import PartSegData
 
@@ -184,7 +184,7 @@ class MainMenu(QWidget):
         if self.settings.segmentation is None:
             QMessageBox.warning(self, "No segmentation", "No segmentation to save")
             return
-        dial = SaveDialog({"segmentation": SaveSegmentation}, False,
+        dial = SaveDialog(save_segmentation_dict, False,
                           history=self.settings.get_path_history())
         dial.setDirectory(self.settings.get("io.save_segmentation_directory", str(Path.home())))
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0] + ".seg")

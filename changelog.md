@@ -1,5 +1,8 @@
 # Changelog 
 
+## 0.9.2.3
+ - refactor code to make easier create plugin for mask segmentation 
+
 ## 0.9.2.2
  - extract static data to separated package
  - update marker of fix range and add mark of gauus in channel control 
