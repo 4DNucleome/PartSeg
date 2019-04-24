@@ -2,6 +2,7 @@ import os
 import tarfile
 import typing
 from collections import defaultdict
+from enum import Enum
 from functools import partial
 from pathlib import Path
 
@@ -12,7 +13,7 @@ from io import BytesIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
 
 from PartSeg.utils.analysis.save_hooks import PartEncoder, part_hook
 from ..io_utils import get_tarinfo, SaveBase, LoadBase, proxy_callback, ProjectInfoBase, check_segmentation_type, \
-    SegmentationType, WrongFileTypeException
+    SegmentationType, WrongFileTypeException, UpdateLoadedMetadataBase
 from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationProfile
 from PartSeg.tiff_image import Image, ImageWriter, ImageReader
 
@@ -107,7 +108,7 @@ def load_stack_segmentation(file: str, range_changed=None, step_changed=None):
     segmentation_buff.seek(0)
     segmentation = np.load(segmentation_buff)
     step_changed(3)
-    metadata = json.loads(tar_file.extractfile("metadata.json").read().decode("utf8"), object_hook=part_hook)
+    metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
     step_changed(4)
     if isinstance(file, str):
         tar_file.close()
@@ -136,7 +137,7 @@ class LoadSegmentation(LoadBase):
                         {"name": "Opening", "values": {"smooth_border_radius": profile.values["smooth_border_radius"]}}
                 else:
                     profile.values["smooth_border"] = {"name": "None", "values": {}}
-            del profile.values["smooth_border_radius"]
+                del profile.values["smooth_border_radius"]
         return profile
 
     @classmethod
@@ -296,6 +297,25 @@ class SaveParametersJSON(SaveBase):
     @classmethod
     def get_name(cls) -> str:
         return "Parameters (*.json)"
+
+
+def load_metadata(data: typing.Union[str, Path]):
+    return UpdateLoadedMetadata.load_json_data(data)
+
+
+class UpdateLoadedMetadata(UpdateLoadedMetadataBase):
+    @classmethod
+    def update_segmentation_profile(cls, profile_data: SegmentationProfile) -> SegmentationProfile:
+        profile_data = super().update_segmentation_profile(profile_data)
+        if profile_data.algorithm == "Threshold" or profile_data.algorithm == "Auto Threshold":
+            if isinstance(profile_data.values["smooth_border"], bool):
+                if profile_data.values["smooth_border"]:
+                    profile_data.values["smooth_border"] = \
+                        {"name": "Opening", "values": {"smooth_border_radius": profile_data.values["smooth_border_radius"]}}
+                else:
+                    profile_data.values["smooth_border"] = {"name": "None", "values": {}}
+            del profile_data.values["smooth_border_radius"]
+        return profile_data
 
 
 load_dict = Register(LoadImage, LoadSegmentationImage)

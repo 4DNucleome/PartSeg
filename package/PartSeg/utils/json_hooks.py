@@ -2,6 +2,7 @@ import copy
 import sys
 import typing
 
+from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from .class_generator import SerializeClassEncoder, serialize_hook
 from .image_operations import RadiusType
 
@@ -70,6 +71,8 @@ class ProfileEncoder(SerializeClassEncoder):
             return {"__ProfileDict__": True, **o.my_dict}
         if isinstance(o, RadiusType):
             return {"__RadiusType__": True, "value": o.value}
+        if isinstance(o, SegmentationProfile):
+            return {"__SegmentationProfile__": True, "name": o.name, "algorithm": o.algorithm, "values": o.values}
         return super().default(o)
 
 
@@ -81,6 +84,14 @@ def profile_hook(dkt):
         return res
     if "__RadiusType__" in dkt:
         return RadiusType(dkt["value"])
+    if "__SegmentationProperty__" in dkt:
+        del dkt["__SegmentationProperty__"]
+        res = SegmentationProfile(**dkt)
+        return res
+    if "__SegmentationProfile__" in dkt:
+        del dkt["__SegmentationProfile__"]
+        res = SegmentationProfile(**dkt)
+        return res
     return serialize_hook(dkt)
 
 

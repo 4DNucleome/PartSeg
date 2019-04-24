@@ -14,7 +14,8 @@ from ..algorithm_describe_base import Register
 from .analysis_utils import HistoryElement
 from .io_utils import ProjectTuple, MaskInfo
 from .save_hooks import part_hook
-from ..io_utils import LoadBase, proxy_callback, check_segmentation_type, SegmentationType, WrongFileTypeException
+from ..io_utils import LoadBase, proxy_callback, check_segmentation_type, SegmentationType, WrongFileTypeException, \
+    UpdateLoadedMetadataBase
 
 
 def load_project(
@@ -167,6 +168,9 @@ class LoadMask(LoadBase):
     @classmethod
     def partial(cls):
         return True
+
+def load_metadata(data: typing.Union[str, Path]):
+    return UpdateLoadedMetadataBase.load_json_data(data)
 
 
 load_dict = Register(LoadImage, LoadImageMask, LoadProject, LoadMask)

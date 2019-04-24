@@ -1,5 +1,6 @@
 # PartSeg
-[![Build Status](https://travis-ci.org/4DNucleome/PartSeg.svg?branch=master)](https://travis-ci.org/4DNucleome/PartSeg)  
+[![Build Status](https://travis-ci.org/4DNucleome/PartSeg.svg?branch=master)](https://travis-ci.org/4DNucleome/PartSeg) 
+[![PyPI version](https://badge.fury.io/py/PartSeg.svg)](https://badge.fury.io/py/PartSeg)  
 PartSeg is gui and library for segmentation algorithms.
 
 This application is designed to help biologist with segmentation 

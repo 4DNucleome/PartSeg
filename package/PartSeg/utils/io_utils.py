@@ -1,3 +1,5 @@
+import json
+import os
 import re
 import typing
 from abc import ABC
@@ -8,7 +10,8 @@ from pathlib import Path
 from tarfile import TarInfo, TarFile
 
 from PartSeg.tiff_image import Image
-from .algorithm_describe_base import AlgorithmDescribeBase
+from PartSeg.utils.json_hooks import profile_hook
+from .algorithm_describe_base import AlgorithmDescribeBase, SegmentationProfile
 
 
 class SegmentationType(Enum):
@@ -116,6 +119,55 @@ class LoadBase(AlgorithmDescribeBase, ABC):
     def partial(cls):
         """Inform that this class load complete data"""
         return False
+
+
+class UpdateLoadedMetadataBase:
+    json_hook = staticmethod(profile_hook)
+    @classmethod
+    def load_json_data(cls, data: typing.Union[str, Path, typing.TextIO]):
+        if isinstance(data, typing.TextIO):
+            decoded_data = json.load(data, object_hook=cls.json_hook)
+        elif os.path.exists(data):
+            with open(data, "r") as ff:
+                decoded_data = json.load(ff, object_hook=cls.json_hook)
+        else:
+            decoded_data = json.loads(data, object_hook=cls.json_hook)
+        return cls.recursive_update(decoded_data)
+
+    @classmethod
+    def recursive_update(cls, data):
+        if isinstance(data, (tuple, list)):
+            return type(data)([cls.recursive_update(x) for x in data])
+        if isinstance(data, SegmentationProfile):
+            return cls.update_segmentation_profile(data)
+        if isinstance(data, Enum):
+            return  cls.update_enum(data)
+        return data
+
+    @classmethod
+    def update_enum(cls, enum_data: Enum):
+        return enum_data
+
+    # noinspection PyUnusedLocal
+    @classmethod
+    def update_segmentation_sub_dict(cls, name: str, dkt: dict) -> dict:
+        for key in dkt["values"].keys():
+            item = dkt["values"][key]
+            if isinstance(item, Enum):
+                dkt["values"][key] = cls.update_enum(item)
+            elif isinstance(item, dict):
+                dkt["values"][key] = cls.update_segmentation_sub_dict(key, item)
+        return dkt
+
+    @classmethod
+    def update_segmentation_profile(cls, profile_data: SegmentationProfile) -> SegmentationProfile:
+        for key in profile_data.values.keys():
+            item = profile_data.values[key]
+            if isinstance(item, Enum):
+                profile_data.values[key] = cls.update_enum(item)
+            elif isinstance(item, dict):
+                profile_data.values[key] = cls.update_segmentation_sub_dict(key, item)
+        return profile_data
 
 
 def proxy_callback(range_changed: typing.Callable[[int, int], typing.Any],
