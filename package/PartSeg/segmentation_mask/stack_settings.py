@@ -1,6 +1,6 @@
 import typing
 from collections import defaultdict
-from copy import copy, deepcopy
+from copy import copy
 from typing import List
 import numpy as np
 from os import path
@@ -10,13 +10,13 @@ from qtpy.QtCore import Signal, Slot
 
 from PartSeg.tiff_image import Image
 from PartSeg.utils.algorithm_describe_base import SegmentationProfile
-from PartSeg.utils.segmentation.algorithm_base import SegmentationResult
 from ..project_utils_qt.settings import BaseSettings
 from PartSeg.utils.mask.io_functions import load_stack_segmentation, save_components, \
-    SegmentationTuple
+    SegmentationTuple, load_metadata
 
 
 class StackSettings(BaseSettings):
+    load_metadata = staticmethod(load_metadata)
     components_change_list = Signal([int, list])
     save_locations_keys = ["save_batch", "save_components_directory", "save_segmentation_directory",
                            "open_segmentation_directory", "load_image_directory", "batch_directory",
@@ -92,10 +92,10 @@ class StackSettings(BaseSettings):
             self.image = data.image
         # self.blockSignals(signals)
         state = self.get_project_info()
-        # TODO Remove reperition this and set_segmentation code
+        # TODO Remove repetition this and set_segmentation code
         if self.keep_chosen_components:
-            state2 = self.transform_state(state, data.segmentation, data.segmentation_parameters, data.chosen_components,
-                                          self.keep_chosen_components)
+            state2 = self.transform_state(state, data.segmentation, data.segmentation_parameters,
+                                          data.chosen_components, self.keep_chosen_components)
             self.chosen_components_widget.set_chose(list(sorted(state2.segmentation_parameters.keys())),
                                                     state2.chosen_components)
             self.segmentation = state2.segmentation
@@ -107,9 +107,9 @@ class StackSettings(BaseSettings):
             self.components_parameters_dict = data.segmentation_parameters
 
     @staticmethod
-    def transform_state(state: SegmentationTuple, new_segmentation_data: np.ndarray, segmentation_parameters: typing.Dict,
-                        list_of_components: List[int],
-                        save_chosen: bool=True) -> SegmentationTuple:
+    def transform_state(state: SegmentationTuple, new_segmentation_data: np.ndarray,
+                        segmentation_parameters: typing.Dict, list_of_components: List[int],
+                        save_chosen: bool = True) -> SegmentationTuple:
 
         if list_of_components is None:
             list_of_components = []

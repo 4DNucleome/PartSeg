@@ -141,7 +141,7 @@ class UpdateLoadedMetadataBase:
         if isinstance(data, SegmentationProfile):
             return cls.update_segmentation_profile(data)
         if isinstance(data, Enum):
-            return  cls.update_enum(data)
+            return cls.update_enum(data)
         return data
 
     @classmethod
@@ -168,6 +168,10 @@ class UpdateLoadedMetadataBase:
             elif isinstance(item, dict):
                 profile_data.values[key] = cls.update_segmentation_sub_dict(key, item)
         return profile_data
+
+
+def load_metadata_base(data: typing.Union[str, Path]):
+    return UpdateLoadedMetadataBase.load_json_data(data)
 
 
 def proxy_callback(range_changed: typing.Callable[[int, int], typing.Any],

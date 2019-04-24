@@ -11,7 +11,7 @@ from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from PartSeg.utils.analysis.analysis_utils import HistoryElement, SegmentationPipeline
 from PartSeg.utils.analysis.save_hooks import PartEncoder, part_hook
 from PartSeg.utils.analysis.save_functions import save_project
-from PartSeg.utils.analysis.load_functions import load_project
+from PartSeg.utils.analysis.load_functions import load_project, load_metadata
 from ..project_utils_qt.settings import BaseSettings, SaveSettingsDescription
 from PartSeg.utils.json_hooks import ProfileDict
 import numpy as np
@@ -27,6 +27,7 @@ class PartSettings(BaseSettings):
     mask_changed = Signal()
     json_encoder_class = PartEncoder
     decode_hook = staticmethod(part_hook)
+    load_metadata = staticmethod(load_metadata)
     last_executed_algorithm: str
     save_locations_keys = ["open_directory", "save_directory", "export_directory", "batch_plan_directory",
                            "multiple_open_directory"]

@@ -1,4 +1,3 @@
-import json
 import os
 import tarfile
 import typing
@@ -51,11 +50,11 @@ def load_project(
     else:
         mask = None
     algorithm_str = tar_file.extractfile("algorithm.json").read()
-    algorithm_dict = json.loads(algorithm_str, object_hook=part_hook)
+    algorithm_dict = load_metadata(algorithm_str)
     history = []
     try:
         history_buff = tar_file.extractfile(tar_file.getmember("history/history.json"))
-        history_json = json.load(history_buff, object_hook=part_hook)
+        history_json = load_metadata(history_buff)
         for el in history_json:
             history_buffer = BytesIO()
             history_buffer.write(tar_file.extractfile(f"history/arrays_{el['index']}.npz").read())
@@ -169,8 +168,13 @@ class LoadMask(LoadBase):
     def partial(cls):
         return True
 
+
+class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
+    json_hook = part_hook
+
+
 def load_metadata(data: typing.Union[str, Path]):
-    return UpdateLoadedMetadataBase.load_json_data(data)
+    return UpdateLoadedMetadataAnalysis.load_json_data(data)
 
 
 load_dict = Register(LoadImage, LoadImageMask, LoadProject, LoadMask)

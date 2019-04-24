@@ -300,10 +300,10 @@ class SaveParametersJSON(SaveBase):
 
 
 def load_metadata(data: typing.Union[str, Path]):
-    return UpdateLoadedMetadata.load_json_data(data)
+    return UpdateLoadedMetadataMask.load_json_data(data)
 
 
-class UpdateLoadedMetadata(UpdateLoadedMetadataBase):
+class UpdateLoadedMetadataMask(UpdateLoadedMetadataBase):
     @classmethod
     def update_segmentation_profile(cls, profile_data: SegmentationProfile) -> SegmentationProfile:
         profile_data = super().update_segmentation_profile(profile_data)

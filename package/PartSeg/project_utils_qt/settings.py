@@ -5,7 +5,7 @@ from pathlib import Path
 
 from qtpy.QtCore import QObject, Signal
 
-from PartSeg.utils.io_utils import ProjectInfoBase
+from PartSeg.utils.io_utils import ProjectInfoBase, load_metadata_base
 from PartSeg.utils.json_hooks import ProfileDict, ProfileEncoder, profile_hook, check_loaded_dict
 from ..utils.color_image.color_image_base import color_maps
 import numpy as np
@@ -181,6 +181,7 @@ class SaveSettingsDescription(typing.NamedTuple):
 class BaseSettings(ViewSettings):
     json_encoder_class = ProfileEncoder
     decode_hook = staticmethod(profile_hook)
+    load_metadata = staticmethod(load_metadata_base)
     algorithm_changed = Signal()
     save_locations_keys = []
 
@@ -224,8 +225,7 @@ class BaseSettings(ViewSettings):
             json.dump(data, ff, cls=self.json_encoder_class, indent=2)
 
     def load_part(self, file_path):
-        with open(file_path, 'r') as ff:
-            data = json.load(ff, object_hook=self.decode_hook)
+        data = self.load_metadata(file_path)
         bad_key = []
         if isinstance(data, dict):
             if not check_loaded_dict(data):
@@ -266,11 +266,10 @@ class BaseSettings(ViewSettings):
                 continue
             error = False
             try:
-                with open(file_path, 'r') as ff:
-                    data: ProfileDict = json.load(ff, object_hook=self.decode_hook)
-                    if not data.verify_data():
-                        errors_list.append((file_path, data.filter_data()))
-                        error = True
+                data: ProfileDict = self.load_metadata(file_path)
+                if not data.verify_data():
+                    errors_list.append((file_path, data.filter_data()))
+                    error = True
                 el.values.update(data)
             except Exception as e:
                 error = True
