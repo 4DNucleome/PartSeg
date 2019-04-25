@@ -97,7 +97,7 @@ class SaveDialog(QFileDialog):
         try:
             ext = self.save_register[filter_name].get_default_extension()
             self.setDefaultSuffix(ext)
-        except Exception:
+        except KeyError:
             pass
 
     def change_filter(self, current_filter):

@@ -93,8 +93,7 @@ class ImageViewWithMask(ImageView):
 
     def set_image(self):
         super().set_image()
-        if self.image.mask is not None:
-            self.mask_changed()
+        self.mask_changed()
 
 
 class RawImageView(ImageViewWithMask):

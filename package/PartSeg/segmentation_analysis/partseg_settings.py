@@ -98,7 +98,7 @@ class PartSettings(BaseSettings):
                 self.last_executed_algorithm = data.algorithm_parameters["name"]
                 self.set(f"algorithms.{self.last_executed_algorithm}", deepcopy(data.algorithm_parameters["values"]))
                 self.algorithm_changed.emit()
-        if isinstance(data, MaskInfo):
+        elif isinstance(data, MaskInfo):
             self.mask = data.mask_array
 
     def get_save_list(self) -> typing.List[SaveSettingsDescription]:

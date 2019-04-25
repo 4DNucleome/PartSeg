@@ -138,7 +138,7 @@ class LoadImageMask(LoadBase):
             load_locations[0], load_locations[1],
             callback_function=partial(proxy_callback, range_changed, step_changed),
             default_spacing=metadata["default_spacing"])
-        return ProjectTuple(load_locations[0], image)
+        return ProjectTuple(load_locations[0], image, mask=image.mask)
 
     @classmethod
     def get_next_file(cls, file_paths: typing.List[str]):
