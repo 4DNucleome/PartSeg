@@ -174,6 +174,11 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
 
 
 def load_metadata(data: typing.Union[str, Path]):
+    """
+    Load metadata saved in json format for segmentation mask
+    :param data: path to json file, string with json, or opened file
+    :return: restored structures
+    """
     return UpdateLoadedMetadataAnalysis.load_json_data(data)
 
 

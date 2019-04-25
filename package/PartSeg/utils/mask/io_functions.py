@@ -299,7 +299,12 @@ class SaveParametersJSON(SaveBase):
         return "Parameters (*.json)"
 
 
-def load_metadata(data: typing.Union[str, Path]):
+def load_metadata(data: typing.Union[str, Path, typing.TextIO]):
+    """
+    Load metadata saved in json format for segmentation mask
+    :param data: path to json file, string with json, or opened file
+    :return: restored structures
+    """
     return UpdateLoadedMetadataMask.load_json_data(data)
 
 
