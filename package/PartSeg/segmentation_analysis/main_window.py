@@ -687,27 +687,18 @@ class MainWindow(BaseMainWindow):
             QMessageBox.warning(self, "Read error", f"Error during image read: {exception}")
 
         dial = WaitingDialog(read_thread, exception_hook=exception_hook)
-        if len(paths) == 1:
-            file_path = paths[0]
-            ext = os.path.splitext(file_path)[1]
-            if ext in [".tif", ".tiff", ".lsm"]:
-                read_thread.set_path(file_path)
-                dial.exec()
-                if read_thread.image:
-                    self.settings.image = read_thread.image
-            elif ext in [".tgz", ".tbz2", ".gz", ".bz2"]:
-                self.settings.load_project(file_path)
-        elif len(paths) == 2:
-            name1, name2 = [os.path.basename(os.path.splitext(x)[0]) for x in paths]
-            if name1.endswith("_mask"):
-                read_thread.set_path(paths[1], paths[0])
-            elif name2.endswith("_mask"):
-                read_thread.set_path(paths[0], paths[1])
-            else:
+
+        ext_set = set([os.path.splitext(x)[1] for x in paths])
+        for load_class in load_dict.values():
+            if load_class.partial() or load_class.number_of_files() != len(paths):
+                continue
+            if ext_set.issubset(load_class.get_extensions()):
+                dial = ExecuteFunctionDialog(load_class.load, [paths])
+                if dial.exec():
+                    res: ProjectTuple = dial.get_result()
+                    self.settings.set_project_info(res)
                 return
-            dial.exec()
-            if read_thread.image:
-                self.settings.image = read_thread.image
+        QMessageBox.information(self, "No method", f"No  methods for load files: " + ",".join(paths))
 
     def event(self, event: QEvent):
         if event.type() == QEvent.WindowActivate:

@@ -121,9 +121,19 @@ class LoadImageMask(LoadBase):
         return 2
 
     @classmethod
+    def correct_files_order(cls, paths):
+        name1, name2 = [os.path.basename(os.path.splitext(x)[0]) for x in paths]
+        if name2.endswith("_mask"):
+            return [name1, name2]
+        else:
+            return paths
+
+    @classmethod
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
              range_changed: typing.Callable[[int, int], typing.Any] = None,
              step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
+        if metadata is None:
+            metadata = {"default_spacing": [1, 1, 1]}
         image = ImageReader.read_image(
             load_locations[0], load_locations[1],
             callback_function=partial(proxy_callback, range_changed, step_changed),

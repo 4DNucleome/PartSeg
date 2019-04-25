@@ -10,8 +10,7 @@ from PartSeg.utils.analysis.statistics_calculation import StatisticProfile
 from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from PartSeg.utils.analysis.analysis_utils import HistoryElement, SegmentationPipeline
 from PartSeg.utils.analysis.save_hooks import PartEncoder, part_hook
-from PartSeg.utils.analysis.save_functions import save_project
-from PartSeg.utils.analysis.load_functions import load_project, load_metadata
+from PartSeg.utils.analysis.load_functions import load_metadata
 from ..project_utils_qt.settings import BaseSettings, SaveSettingsDescription
 from PartSeg.utils.json_hooks import ProfileDict
 import numpy as np
@@ -70,9 +69,6 @@ class PartSettings(BaseSettings):
         self._mask = None
         self.full_segmentation = None
 
-    def load_profiles(self, file_path):
-        pass
-
     def get_project_info(self) -> ProjectTuple:
         algorithm_name = self.last_executed_algorithm
         if algorithm_name:
@@ -89,7 +85,7 @@ class PartSettings(BaseSettings):
                     try:
                         self.image.fit_array_to_image(data.segmentation)
                         self.mask = data.mask
-                    except:
+                    except ValueError:
                         self.image = data.image.substitute()
                 else:
                     self.mask = data.mask
@@ -104,31 +100,6 @@ class PartSettings(BaseSettings):
                 self.algorithm_changed.emit()
         if isinstance(data, MaskInfo):
             self.mask = data.mask_array
-
-    def save_project(self, file_path):
-        dkt = dict()
-        dkt["segmentation"] = self.segmentation
-        algorithm_name = self.last_executed_algorithm
-        dkt["algorithm_parameters"] = {"name": algorithm_name, "values": self.get(f"algorithms.{algorithm_name}")}
-        dkt["mask"] = self.mask
-        dkt["full_segmentation"] = self.full_segmentation
-        dkt["history"] = self.segmentation_history
-        dkt["image"] = self.image
-        save_project(file_path, **dkt)
-
-    def load_project(self, file_path):
-        project_tuple = load_project(file_path)
-        im = project_tuple.image
-        im.file_path = file_path
-        self.image = im
-        self.mask = project_tuple.mask
-        self.segmentation = project_tuple.segmentation
-        self.full_segmentation = project_tuple.full_segmentation
-        self.segmentation_history = project_tuple.history
-        self.undo_segmentation_history = []
-        algorithm_name = project_tuple.algorithm_parameters["name"]
-        self.last_executed_algorithm = algorithm_name
-        self.set(f"algorithms.{algorithm_name}", project_tuple.algorithm_parameters["values"])
 
     def get_save_list(self) -> typing.List[SaveSettingsDescription]:
         return super().get_save_list() + [
@@ -152,10 +123,9 @@ class PartSettings(BaseSettings):
                 return image.swap_time_and_stack()
             else:
                 wid = QWidget()
-                res = QMessageBox.question(wid,
-                    "Not supported",
-                    "Time data are currently not supported. Maybe You would like to treat time as z-stack",
-                    QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                res = QMessageBox.question(wid, "Not supported", "Time data are currently not supported."
+                                                                 " Maybe You would like to treat time as z-stack",
+                                           QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
                 if res == QMessageBox.Yes:
                     return image.swap_time_and_stack()

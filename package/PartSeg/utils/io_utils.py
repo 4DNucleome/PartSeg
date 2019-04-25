@@ -108,8 +108,20 @@ class LoadBase(AlgorithmDescribeBase, ABC):
         return []
 
     @classmethod
+    def get_extensions(cls) -> typing.List:
+        match = re.match(r'.*\((.*)\)', cls.get_name())
+        if match:
+            return [x[1:] for x in match.group(1).split(' ') if len(x) > 3]
+        else:
+            return []
+
+    @classmethod
     def number_of_files(cls):
         return 1
+
+    @classmethod
+    def correct_files_order(cls, paths):
+        return paths
 
     @classmethod
     def get_next_file(cls, file_paths: typing.List[str]):
