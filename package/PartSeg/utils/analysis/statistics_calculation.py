@@ -401,6 +401,10 @@ class StatisticProfile(object):
 
 def calculate_main_axis(area_array: np.ndarray, channel: np.ndarray, voxel_size):
     # TODO check if it produces good values
+    if len(channel.shape) == 4:
+        if channel.shape[0] != 1:
+            raise ValueError("This measurements do not support time data")
+        channel = channel[0]
     cut_img = np.copy(channel)
     cut_img[area_array == 0] = 0
     if np.all(cut_img == 0):
@@ -546,6 +550,11 @@ class PixelBrightnessSum(StatisticMethodBase):
         :param channel: data. same shape like area_type
         :return: Pixels brightness sum on given area
         """
+        if area_array.shape != channel.shape:
+            if area_array.size == channel.size:
+                channel = channel.reshape(area_array.shape)
+            else:
+                raise ValueError("channel and mask do not fit each other")
         if np.any(area_array):
             return np.sum(channel[area_array > 0])
         return 0
@@ -579,6 +588,11 @@ class MaximumPixelBrightness(StatisticMethodBase):
 
     @staticmethod
     def calculate_property(area_array, channel, **_):
+        if area_array.shape != channel.shape:
+            if area_array.size == channel.size:
+                channel = channel.reshape(area_array.shape)
+            else:
+                raise ValueError("channel and mask do not fit each other")
         if np.any(area_array):
             return np.max(channel[area_array > 0])
         else:
@@ -597,6 +611,11 @@ class MinimumPixelBrightness(StatisticMethodBase):
 
     @staticmethod
     def calculate_property(area_array, channel, **_):
+        if area_array.shape != channel.shape:
+            if area_array.size == channel.size:
+                channel = channel.reshape(area_array.shape)
+            else:
+                raise ValueError("channel and mask do not fit each other")
         if np.any(area_array):
             return np.min(channel[area_array > 0])
         else:
@@ -615,6 +634,11 @@ class MeanPixelBrightness(StatisticMethodBase):
 
     @staticmethod
     def calculate_property(area_array, channel, **_):
+        if area_array.shape != channel.shape:
+            if area_array.size == channel.size:
+                channel = channel.reshape(area_array.shape)
+            else:
+                raise ValueError("channel and mask do not fit each other")
         if np.any(area_array):
             return np.mean(channel[area_array > 0])
         else:
@@ -633,6 +657,11 @@ class MedianPixelBrightness(StatisticMethodBase):
 
     @staticmethod
     def calculate_property(area_array, channel, **_):
+        if area_array.shape != channel.shape:
+            if area_array.size == channel.size:
+                channel = channel.reshape(area_array.shape)
+            else:
+                raise ValueError("channel and mask do not fit each other")
         if np.any(area_array):
             return np.median(channel[area_array > 0])
         else:
@@ -652,6 +681,11 @@ class StandardDeviationOfPixelBrightness(StatisticMethodBase):
 
     @staticmethod
     def calculate_property(area_array, channel, **_):
+        if area_array.shape != channel.shape:
+            if area_array.size == channel.size:
+                channel = channel.reshape(area_array.shape)
+            else:
+                raise ValueError("channel and mask do not fit each other")
         if np.any(area_array):
             return np.std(channel[area_array > 0])
         else:
@@ -670,6 +704,10 @@ class MomentOfInertia(StatisticMethodBase):
 
     @staticmethod
     def calculate_property(area_array, channel, voxel_size, **_):
+        if len(channel.shape) == 4:
+            if channel.shape[0] != 1:
+                raise ValueError("This measurements do not support time data")
+            channel = channel[0]
         if channel.ndim != 3:
             return None
         img = np.copy(channel)
@@ -853,6 +891,10 @@ class RimPixelBrightnessSum(StatisticMethodBase):
 
     @staticmethod
     def calculate_property(channel, segmentation, **kwargs):
+        if len(channel.shape) == 4:
+            if channel.shape[0] != 1:
+                raise ValueError("This measurements do not support time data")
+            channel = channel[0]
         border_mask_array = border_mask(**kwargs)
         if border_mask_array is None:
             return None
@@ -907,6 +949,10 @@ class DistanceMaskSegmentation(StatisticMethodBase):
     @classmethod
     def calculate_property(cls, channel, area_array, mask, voxel_size, result_scalar, distance_from_mask: DistancePoint,
                            distance_to_segmentation: DistancePoint, **kwargs):
+        if len(channel.shape) == 4:
+            if channel.shape[0] != 1:
+                raise ValueError("This measurements do not support time data")
+            channel = channel[0]
         if not (np.any(mask) and np.any(area_array)):
             return 0
         mask_pos = cls.calculate_points(channel, mask, voxel_size, result_scalar, distance_from_mask)

@@ -16,7 +16,7 @@ import h5py
 import typing
 import os.path
 import json
-from ..io_utils import get_tarinfo, SaveBase
+from ..io_utils import get_tarinfo, SaveBase, NotSupportedImage
 from ..analysis.save_register import save_dict
 
 
@@ -77,6 +77,9 @@ def save_cmap(file: typing.Union[str, h5py.File, BytesIO], image: Image, segment
     else:
         raise ValueError(f"Wrong type of file argument, type: {type(file)}")
     data = image.get_channel(cmap_profile["channel"])
+    if data.shape[0] != 1:
+        raise NotSupportedImage("This save method o not support time data")
+    data.reshape(data.shape[1:])
 
     if cmap_profile["reverse"]:
         if full_segmentation is None:
@@ -216,6 +219,9 @@ class SaveXYZ(SaveBase):
         if parameters.get("separated_objects", False) and not isinstance(save_location, (str, Path)):
             raise ValueError("Saving components to buffer not supported")
         channel_image = project_info.image.get_channel(parameters["channel"])
+        if channel_image.shape[0] != 1:
+            raise NotSupportedImage("This save method o not support time data")
+        channel_image.reshape(channel_image.shape[1:])
         segmentation_mask = np.array(project_info.segmentation > 0)
         if parameters.get("clip", False):
             positions = np.transpose(np.nonzero(segmentation_mask))

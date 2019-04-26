@@ -118,9 +118,6 @@ class ImageSettings(QObject):
             return 0
         return self._image.channels
 
-    def get_chanel(self, chanel_num):
-        return self._image.get_channel(chanel_num)
-
     def get_information(self, *pos):
         return self._image[pos]
 

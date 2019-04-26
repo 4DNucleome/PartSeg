@@ -1,0 +1,1445 @@
+{
+  "all_statistic": {
+    "__StatisticProfile__": true,
+    "name": "all_statistic",
+    "chosen_fields": [
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Segmentation Volume",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Volume",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Segmentation Diameter",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Diameter",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Segmentation Pixel Brightness Sum",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Pixel Brightness Sum",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Segmentation Components Number",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Components Number",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Segmentation Maximum pixel brightness",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Maximum pixel brightness",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Segmentation Minimum pixel brightness",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Minimum pixel brightness",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Segmentation Mean pixel brightness",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Mean pixel brightness",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Segmentation Median pixel brightness",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Median pixel brightness",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Segmentation Standard deviation of pixel brightness",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Standard deviation of pixel brightness",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Segmentation Moment of inertia",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Moment of inertia",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Segmentation Longest main axis length",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Longest main axis length",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Segmentation Middle main axis length",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Middle main axis length",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Segmentation Shortest main axis length",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Shortest main axis length",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Segmentation Compactness",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Compactness",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Segmentation Sphericity",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Sphericity",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Segmentation Surface",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Surface",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 1
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask Rim Volume[Distance=300.0, Units=nm]",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Rim Volume",
+          "dict": {
+            "distance": 300.0,
+            "units": {
+              "__Enum__": true,
+              "__subtype__": "PartSeg.utils.universal_const.Units",
+              "value": 2
+            }
+          },
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask Rim Pixel Brightness Sum[Distance=300.0, Units=nm]",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Rim Pixel Brightness Sum",
+          "dict": {
+            "distance": 300.0,
+            "units": {
+              "__Enum__": true,
+              "__subtype__": "PartSeg.utils.universal_const.Units",
+              "value": 2
+            }
+          },
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask Volume",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Volume",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask Diameter",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Diameter",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask Pixel Brightness Sum",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Pixel Brightness Sum",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask Components Number",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Components Number",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask Maximum pixel brightness",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Maximum pixel brightness",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask Minimum pixel brightness",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Minimum pixel brightness",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask Mean pixel brightness",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Mean pixel brightness",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask Median pixel brightness",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Median pixel brightness",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask Standard deviation of pixel brightness",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Standard deviation of pixel brightness",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask Moment of inertia",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Moment of inertia",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask Longest main axis length",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Longest main axis length",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask Middle main axis length",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Middle main axis length",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask Shortest main axis length",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Shortest main axis length",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask Compactness",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Compactness",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask Sphericity",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Sphericity",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask Surface",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Surface",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask without segmentation Volume",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Volume",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 3
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask without segmentation Diameter",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Diameter",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 3
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask without segmentation Pixel Brightness Sum",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Pixel Brightness Sum",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 3
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask without segmentation Components Number",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Components Number",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 3
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask without segmentation Maximum pixel brightness",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Maximum pixel brightness",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 3
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask without segmentation Minimum pixel brightness",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Minimum pixel brightness",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 3
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask without segmentation Mean pixel brightness",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Mean pixel brightness",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 3
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask without segmentation Median pixel brightness",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Median pixel brightness",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 3
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask without segmentation Standard deviation of pixel brightness",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Standard deviation of pixel brightness",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 3
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask without segmentation Moment of inertia",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Moment of inertia",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 3
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask without segmentation Longest main axis length",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Longest main axis length",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 3
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask without segmentation Middle main axis length",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Middle main axis length",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 3
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask without segmentation Shortest main axis length",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Shortest main axis length",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 3
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask without segmentation Compactness",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Compactness",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 3
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask without segmentation Sphericity",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Sphericity",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 3
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask without segmentation Surface",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "Surface",
+          "dict": {},
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 3
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask segmentation distance[Distance from mask=Border, Distance to segmentation=Border]",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "segmentation distance",
+          "dict": {
+            "distance_from_mask": {
+              "__Enum__": true,
+              "__subtype__": "PartSeg.utils.analysis.statistics_calculation.DistancePoint",
+              "value": 1
+            },
+            "distance_to_segmentation": {
+              "__Enum__": true,
+              "__subtype__": "PartSeg.utils.analysis.statistics_calculation.DistancePoint",
+              "value": 1
+            }
+          },
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask segmentation distance[Distance from mask=Mass center, Distance to segmentation=Border]",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "segmentation distance",
+          "dict": {
+            "distance_from_mask": {
+              "__Enum__": true,
+              "__subtype__": "PartSeg.utils.analysis.statistics_calculation.DistancePoint",
+              "value": 2
+            },
+            "distance_to_segmentation": {
+              "__Enum__": true,
+              "__subtype__": "PartSeg.utils.analysis.statistics_calculation.DistancePoint",
+              "value": 1
+            }
+          },
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask segmentation distance[Distance from mask=Geometrical center, Distance to segmentation=Border]",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "segmentation distance",
+          "dict": {
+            "distance_from_mask": {
+              "__Enum__": true,
+              "__subtype__": "PartSeg.utils.analysis.statistics_calculation.DistancePoint",
+              "value": 3
+            },
+            "distance_to_segmentation": {
+              "__Enum__": true,
+              "__subtype__": "PartSeg.utils.analysis.statistics_calculation.DistancePoint",
+              "value": 1
+            }
+          },
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask segmentation distance[Distance from mask=Border, Distance to segmentation=Mass center]",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "segmentation distance",
+          "dict": {
+            "distance_from_mask": {
+              "__Enum__": true,
+              "__subtype__": "PartSeg.utils.analysis.statistics_calculation.DistancePoint",
+              "value": 1
+            },
+            "distance_to_segmentation": {
+              "__Enum__": true,
+              "__subtype__": "PartSeg.utils.analysis.statistics_calculation.DistancePoint",
+              "value": 2
+            }
+          },
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask segmentation distance[Distance from mask=Border, Distance to segmentation=Geometrical center]",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "segmentation distance",
+          "dict": {
+            "distance_from_mask": {
+              "__Enum__": true,
+              "__subtype__": "PartSeg.utils.analysis.statistics_calculation.DistancePoint",
+              "value": 1
+            },
+            "distance_to_segmentation": {
+              "__Enum__": true,
+              "__subtype__": "PartSeg.utils.analysis.statistics_calculation.DistancePoint",
+              "value": 3
+            }
+          },
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask segmentation distance[Distance from mask=Mass center, Distance to segmentation=Geometrical center]",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "segmentation distance",
+          "dict": {
+            "distance_from_mask": {
+              "__Enum__": true,
+              "__subtype__": "PartSeg.utils.analysis.statistics_calculation.DistancePoint",
+              "value": 2
+            },
+            "distance_to_segmentation": {
+              "__Enum__": true,
+              "__subtype__": "PartSeg.utils.analysis.statistics_calculation.DistancePoint",
+              "value": 3
+            }
+          },
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask segmentation distance[Distance from mask=Mass center, Distance to segmentation=Mass center]",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "segmentation distance",
+          "dict": {
+            "distance_from_mask": {
+              "__Enum__": true,
+              "__subtype__": "PartSeg.utils.analysis.statistics_calculation.DistancePoint",
+              "value": 2
+            },
+            "distance_to_segmentation": {
+              "__Enum__": true,
+              "__subtype__": "PartSeg.utils.analysis.statistics_calculation.DistancePoint",
+              "value": 2
+            }
+          },
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSeg.utils.analysis.statistics_calculation.StatisticEntry",
+        "name": "Mask segmentation distance[Distance from mask=Geometrical center, Distance to segmentation=Geometrical center]",
+        "calculation_tree": {
+          "__Serializable__": true,
+          "__subtype__": "PartSeg.utils.analysis.statistics_calculation.Leaf",
+          "name": "segmentation distance",
+          "dict": {
+            "distance_from_mask": {
+              "__Enum__": true,
+              "__subtype__": "PartSeg.utils.analysis.statistics_calculation.DistancePoint",
+              "value": 3
+            },
+            "distance_to_segmentation": {
+              "__Enum__": true,
+              "__subtype__": "PartSeg.utils.analysis.statistics_calculation.DistancePoint",
+              "value": 3
+            }
+          },
+          "power": 1.0,
+          "area": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.AreaType",
+            "value": 2
+          },
+          "per_component": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.analysis.statistics_calculation.PerComponent",
+            "value": 1
+          },
+          "channel": null
+        }
+      }
+    ],
+    "name_prefix": ""
+  }
+}

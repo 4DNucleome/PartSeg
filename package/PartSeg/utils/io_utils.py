@@ -23,6 +23,10 @@ class WrongFileTypeException(Exception):
     pass
 
 
+class NotSupportedImage(Exception):
+    pass
+
+
 def check_segmentation_type(tar_file: TarFile) -> SegmentationType:
     names = [x.name for x in tar_file.getmembers()]
     if "algorithm.json" in names:

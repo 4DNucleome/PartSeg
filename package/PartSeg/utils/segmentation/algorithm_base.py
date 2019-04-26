@@ -34,7 +34,7 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
 
     def __init__(self):
         super().__init__()
-        self.image: Image = None
+        self.image: Optional[Image] = None
         self.channel = None
         self.segmentation = None
         self.mask = None
@@ -45,7 +45,8 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         self.channel = None
         self.mask = None
 
-    def single_channel(self):
+    @staticmethod
+    def single_channel():
         return True
 
     def set_mask(self, mask):
@@ -58,7 +59,10 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         raise NotImplementedError()
 
     def get_channel(self, channel_idx):
-        return self.image.get_channel(channel_idx)
+        channel = self.image.get_channel(channel_idx)
+        if channel.shape[0] != 1:
+            raise ValueError("This algorithm do not support time data")
+        return channel[0]
 
     def get_gauss(self, gauss_type, gauss_radius):
         if gauss_type == RadiusType.NO:

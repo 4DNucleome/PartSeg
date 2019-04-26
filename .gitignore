@@ -460,6 +460,7 @@ notebooks/*
 *.html
 !help/*.html
 test_data/
+!package/tests/test_data/
 !launcher.spec
 /test_data_all/
 /test_data.tbz2
@@ -469,3 +470,4 @@ package/PartSeg/utils/multiscale_opening/\.vscode/
 
 package/PartSeg/utils/multiscale_opening/\.vscode/
 /tutorials/tutorial-chromosome-1/tutorial-chromosome1.pdf
+!/package/tests/test_data/measurements_profile.json

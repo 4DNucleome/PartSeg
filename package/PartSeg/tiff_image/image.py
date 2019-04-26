@@ -27,6 +27,7 @@ class Image(object):
         self._image_spacing = tuple([1] * (3 - len(image_spacing)) + list(image_spacing))
         self.file_path = file_path
         self.default_coloring = default_coloring
+        self.additional_channels = []
         if self.default_coloring is not None:
             self.default_coloring = [np.array(x) for x in default_coloring]
         self.labels = labels
@@ -44,8 +45,6 @@ class Image(object):
 
     def get_dimension_letters(self):
         return [key for val, key in zip(self._image_array.shape, "tzyx") if val > 1]
-
-
 
     def substitute(self, data=None, image_spacing=None, file_path=None, mask=None, default_coloring=None, ranges=None,
                    labels=None):
@@ -142,14 +141,19 @@ class Image(object):
         return self._image_array[li][item]
 
     def get_channel(self, num) -> np.ndarray:
-        if self.is_time:
-            li = slice(None)
-        else:
-            li = 0
-        return self._image_array[li, ..., num]
+        return self._image_array[..., num]
 
     def get_layer(self, time, stack) -> np.ndarray:
         return self._image_array[time, stack]
+
+    def get_layer_with_add(self, time, stack):
+        return [self._image_array[time, stack]] + [x[time, stack] for x in self.additional_channels]
+
+    def add_additional(self, *args):
+        self.additional_channels.extend(args)
+
+    def set_additional(self, *args):
+        self.additional_channels = [args]
 
     def get_mask_layer(self, num) -> np.ndarray:
         if self._mask_array is None:
@@ -176,7 +180,8 @@ class Image(object):
         assert len(value) == len(self._image_spacing)
         self._image_spacing = tuple(value)
 
-    def cut_image(self, cut_area: typing.Union[np.ndarray, typing.List[slice], typing.Tuple[slice]], replace_mask=False):
+    def cut_image(self, cut_area: typing.Union[np.ndarray, typing.List[slice], typing.Tuple[slice]],
+                  replace_mask=False):
         """
         Create new image base on mask or list of slices
         :param replace_mask: if cut area is represented by mask array,
@@ -185,7 +190,7 @@ class Image(object):
         :return: Image
         """
         new_mask = None
-        if isinstance(cut_area, (list,tuple)):
+        if isinstance(cut_area, (list, tuple)):
             new_image = self._image_array[cut_area]
             if self._mask_array is not None:
                 new_mask = self._mask_array[cut_area]
