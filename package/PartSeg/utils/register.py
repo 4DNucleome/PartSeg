@@ -1,3 +1,17 @@
+"""
+This module is designed to provide more stable api for PartSeg plugins.
+All operations ar class based. If, in base object, some function is @classmethod, the it can be called
+without creating class instance. So also plugins need to satisfy it.
+
+RegisterEnum: used as key in all other members. Elements are described in its docstring
+
+base_class_dict: Dict in which information about base class for given operation is stored.
+The inheritance is not checked, but api must be implemented.
+
+register: function for registering operation in inner structures.
+
+register_dict: holds information where register given operation type. Strongly suggest to use register function instead.
+"""
 from enum import Enum
 from typing import Type
 
@@ -21,6 +35,21 @@ from .segmentation.threshold import threshold_dict, BaseThreshold
 
 
 class RegisterEnum(Enum):
+    """
+    Given types of operation are supported as plugins:
+    sprawl: algorithm for calculation sprawl from core object to borders. For spiting touching objects
+    threshold: threshold algorithms. From greyscale array to binary array
+    noise_filtering: filter noise
+    image_transform = 8
+    analysis_algorithm: algorithm for creating segmentation in analysis PartSeg part
+    mask_algorithm: algorithm for creating segmentation in mask PartSeg part
+    analysis_save: save functions for analysis part
+    analysis_load: load functions for analysis part
+    mask_load: load functions for mask part
+    mask_save_parameters = save metadata for mask part (currently creating json file)
+    mask_save_components = save each segmentation component in separate file. Save location is directory
+    mask_save_segmentation = save project (to one file) in mask part
+    """
     sprawl = 0
     threshold = 1
     noise_filtering = 2
@@ -55,5 +84,12 @@ base_class_dict = {
 }
 
 
-def register(target: Type[AlgorithmDescribeBase], place: RegisterEnum, replace=False):
-    register_dict[place].register(target, replace=replace)
+def register(target: Type[AlgorithmDescribeBase], target_type: RegisterEnum, replace=False):
+    """
+    Function for registering new operations in PartSeg inner structures.
+    :param target: operation to register in PartSeg inner structures
+    :param target_type: Which type of operation.
+    :param replace: force to replace operation if same name is defined. Dangerous.
+    :return:
+    """
+    register_dict[target_type].register(target, replace=replace)

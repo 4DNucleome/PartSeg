@@ -50,7 +50,7 @@ class LoadPartSegOld(LoadBase):
             res_buffer.seek(0)
             seg_array = np.load(res_buffer)
         except KeyError:
-           seg_array = None
+            seg_array = None
         algorithm_str = tar_file.extractfile("data.json").read()
         algorithm_dict = json.loads(algorithm_str)
         spacing = np.array(algorithm_dict["spacing"][::-1]) / UNIT_SCALE[Units.nm.value]
