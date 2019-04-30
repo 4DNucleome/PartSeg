@@ -63,6 +63,7 @@ def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_se
             tar.addfile(tar_algorithm, hist_buff)
 
 
+# TODO add tests
 def save_cmap(file: typing.Union[str, h5py.File, BytesIO], image: Image, segmentation: np.ndarray,
               full_segmentation: np.ndarray,
               cmap_profile: dict, metadata: typing.Optional[dict] = None):
@@ -79,7 +80,7 @@ def save_cmap(file: typing.Union[str, h5py.File, BytesIO], image: Image, segment
     data = image.get_channel(cmap_profile["channel"])
     if data.shape[0] != 1:
         raise NotSupportedImage("This save method o not support time data")
-    data.reshape(data.shape[1:])
+    data = data[0]
 
     if cmap_profile["reverse"]:
         if full_segmentation is None:
