@@ -1,15 +1,22 @@
 import shutil
 import tempfile
+import tifffile
 from enum import Enum
 import os.path
 import numpy as np
+import pandas as pd
 import pytest
 import json
 import re
 from glob import glob
+import h5py
 import PartSegData
 
 from PartSeg.tiff_image import ImageReader, Image
+from PartSeg.utils import Units, UNIT_SCALE
+from PartSeg.utils.analysis import ProjectTuple
+from PartSeg.utils.analysis.save_functions import SaveCmap, SaveXYZ, SaveProject, SaveAsTiff, SaveAsNumpy, \
+    SaveSegmentationAsNumpy
 from PartSeg.utils.analysis.save_hooks import PartEncoder, part_hook
 from PartSeg.utils.json_hooks import check_loaded_dict
 from PartSeg.utils.segmentation.noise_filtering import GaussType
@@ -29,6 +36,39 @@ def setup_module():
 def teardown_module():
     global tmp_dir
     shutil.rmtree(tmp_dir)
+
+
+@pytest.fixture(scope="module")
+def analysis_project():
+    data = np.zeros((1, 50, 100, 100, 1), dtype=np.uint16)
+    data[0, 10:40, 10:40, 10:90] = 50
+    data[0, 10:40, 50:90, 10:90] = 50
+    data[0, 15:35, 15:35, 15:85] = 70
+    data[0, 15:35, 55:85, 15:85] = 60
+    data[0, 10:40, 40:50, 10:90] = 40
+    image = Image(data, (10/UNIT_SCALE[Units.nm], 5/UNIT_SCALE[Units.nm], 5/UNIT_SCALE[Units.nm]), "")
+    mask = data[0] > 0
+    segmentation = np.zeros(data.shape, dtype=np.uint8)
+    segmentation[data == 70] = 1
+    segmentation[data == 60] = 2
+    return ProjectTuple("test_data.tiff", image, segmentation[0, ..., 0], segmentation[0, ..., 0], mask)
+
+
+@pytest.fixture(scope="module")
+def analysis_project_reversed():
+    data = np.zeros((1, 50, 100, 100, 1), dtype=np.uint16)
+    data[0, 10:40, 10:40, 10:90] = 50
+    data[0, 10:40, 50:90, 10:90] = 50
+    data[0, 15:35, 15:35, 15:85] = 70
+    data[0, 15:35, 55:85, 15:85] = 60
+    data[0, 10:40, 40:50, 10:90] = 40
+    mask = data[0] > 0
+    segmentation = np.zeros(data.shape, dtype=np.uint8)
+    segmentation[data == 70] = 1
+    segmentation[data == 60] = 2
+    data = 100 - data
+    image = Image(data, (10/UNIT_SCALE[Units.nm], 5/UNIT_SCALE[Units.nm], 5/UNIT_SCALE[Units.nm]), "")
+    return ProjectTuple("test_data.tiff", image, segmentation[0, ..., 0], segmentation[0, ..., 0], mask)
 
 
 class TestImageClass:
@@ -144,3 +184,147 @@ class TestSegmentationMask:
         save_components(seg.image, seg.chosen_components, seg.segmentation, os.path.join(tmp_dir, "seg_save"))
         assert os.path.isdir(os.path.join(tmp_dir, "seg_save"))
         assert len(glob(os.path.join(tmp_dir, "seg_save", "*"))) == 4
+
+
+class TestSaveFunctions:
+    @staticmethod
+    def read_cmap(file_path):
+        with h5py.File(file_path, 'r') as fp:
+            arr = np.array(fp.get("Chimera/image1/data_zyx"))
+            steps = tuple(map(lambda x: int(x+0.5), fp.get("Chimera/image1").attrs["step"]))
+            return arr, steps
+
+    def test_save_cmap(self, tmpdir, analysis_project):
+        parameters = {"channel": 0, "separated_objects": False, "clip": False, "units": Units.nm, "reverse": False}
+        SaveCmap.save(os.path.join(tmpdir, "test1.cmap"), analysis_project, parameters)
+        arr, steps = self.read_cmap(os.path.join(tmpdir, "test1.cmap"))
+        points = np.nonzero(arr)
+        assert tuple(np.min(points, axis=1)) == (15, 15, 15)
+        assert tuple(np.max(points, axis=1)) == (34, 84, 84)
+        assert arr.shape == analysis_project.segmentation.shape
+        assert steps == (5, 5, 10)
+
+        parameters = {"channel": 0, "separated_objects": True, "clip": False, "units": Units.nm, "reverse": False}
+        SaveCmap.save(os.path.join(tmpdir, "test2.cmap"), analysis_project, parameters)
+        arr, steps = self.read_cmap(os.path.join(tmpdir, "test2_comp1.cmap"))
+        points = np.nonzero(arr)
+        assert tuple(np.min(points, axis=1)) == (15, 15, 15)
+        assert tuple(np.max(points, axis=1)) == (34, 34, 84)
+        assert arr.shape == analysis_project.segmentation.shape
+        assert steps == (5, 5, 10)
+        arr, steps = self.read_cmap(os.path.join(tmpdir, "test2_comp2.cmap"))
+        points = np.nonzero(arr)
+        assert tuple(np.min(points, axis=1)) == (15, 55, 15)
+        assert tuple(np.max(points, axis=1)) == (34, 84, 84)
+        assert arr.shape == analysis_project.segmentation.shape
+        assert steps == (5, 5, 10)
+
+        parameters = {"channel": 0, "separated_objects": False, "clip": True, "units": Units.nm, "reverse": False}
+        SaveCmap.save(os.path.join(tmpdir, "test3.cmap"), analysis_project, parameters)
+        arr, steps = self.read_cmap(os.path.join(tmpdir, "test3.cmap"))
+        points = np.nonzero(arr)
+        assert tuple(np.min(points, axis=1)) == (0, 0, 0)
+        assert tuple(np.max(points, axis=1)) == (19, 69, 69)
+        assert arr.shape == (20, 70, 70)
+        assert steps == (5, 5, 10)
+
+        parameters = {"channel": 0, "separated_objects": True, "clip": True, "units": Units.nm, "reverse": False}
+        SaveCmap.save(os.path.join(tmpdir, "test4.cmap"), analysis_project, parameters)
+        arr, steps = self.read_cmap(os.path.join(tmpdir, "test4_comp1.cmap"))
+        points = np.nonzero(arr)
+        assert tuple(np.min(points, axis=1)) == (0, 0, 0)
+        assert tuple(np.max(points, axis=1)) == (19, 19, 69)
+        assert arr.shape == (20, 70, 70)
+        assert steps == (5, 5, 10)
+        arr, steps = self.read_cmap(os.path.join(tmpdir, "test4_comp2.cmap"))
+        points = np.nonzero(arr)
+        assert tuple(np.min(points, axis=1)) == (0, 40, 0)
+        assert tuple(np.max(points, axis=1)) == (19, 69, 69)
+        assert arr.shape == (20, 70, 70)
+        assert steps == (5, 5, 10)
+
+    def test_save_cmap_reversed(self, tmpdir, analysis_project_reversed):
+        parameters = {"channel": 0, "separated_objects": False, "clip": False, "units": Units.nm, "reverse": True}
+        SaveCmap.save(os.path.join(tmpdir, "test1.cmap"), analysis_project_reversed, parameters)
+        arr, steps = self.read_cmap(os.path.join(tmpdir, "test1.cmap"))
+        points = np.nonzero(arr)
+        assert tuple(np.min(points, axis=1)) == (15, 15, 15)
+        assert tuple(np.max(points, axis=1)) == (34, 84, 84)
+        assert arr.shape == analysis_project_reversed.segmentation.shape
+        assert steps == (5, 5, 10)
+
+        parameters = {"channel": 0, "separated_objects": True, "clip": True, "units": Units.nm, "reverse": True}
+        SaveCmap.save(os.path.join(tmpdir, "test2.cmap"), analysis_project_reversed, parameters)
+        arr, steps = self.read_cmap(os.path.join(tmpdir, "test2_comp1.cmap"))
+        points = np.nonzero(arr)
+        assert tuple(np.min(points, axis=1)) == (0, 0, 0)
+        assert tuple(np.max(points, axis=1)) == (19, 19, 69)
+        assert arr.shape == (20, 70, 70)
+        assert steps == (5, 5, 10)
+        arr, steps = self.read_cmap(os.path.join(tmpdir, "test2_comp2.cmap"))
+        points = np.nonzero(arr)
+        assert tuple(np.min(points, axis=1)) == (0, 40, 0)
+        assert tuple(np.max(points, axis=1)) == (19, 69, 69)
+        assert arr.shape == (20, 70, 70)
+        assert steps == (5, 5, 10)
+
+    def test_save_xyz(self, tmpdir, analysis_project):
+        parameters = {"channel": 0, "separated_objects": False, "clip": False}
+        SaveXYZ.save(os.path.join(tmpdir, "test1.xyz"), analysis_project, parameters)
+        array = pd.read_csv(os.path.join(tmpdir, "test1.xyz"), dtype=np.uint16, sep=" ")
+        assert tuple(np.min(array, axis=0)) == (15, 15, 15, 60)
+        assert tuple(np.max(array, axis=0)) == (84, 84, 34, 70)
+        parameters = {"channel": 0, "separated_objects": False, "clip": True}
+        SaveXYZ.save(os.path.join(tmpdir, "test2.xyz"), analysis_project, parameters)
+        array = pd.read_csv(os.path.join(tmpdir, "test2.xyz"), dtype=np.uint16, sep=" ")
+        assert tuple(np.min(array, axis=0)) == (0, 0, 0, 60)
+        assert tuple(np.max(array, axis=0)) == (69, 69, 19, 70)
+        parameters = {"channel": 0, "separated_objects": True, "clip": True}
+        SaveXYZ.save(os.path.join(tmpdir, "test3.xyz"), analysis_project, parameters)
+        array = pd.read_csv(os.path.join(tmpdir, "test3.xyz"), dtype=np.uint16, sep=" ")
+        assert tuple(np.min(array, axis=0)) == (0, 0, 0, 60)
+        assert tuple(np.max(array, axis=0)) == (69, 69, 19, 70)
+        array = pd.read_csv(os.path.join(tmpdir, "test3_part1.xyz"), dtype=np.uint16, sep=" ")
+        assert tuple(np.min(array, axis=0)) == (0, 0, 0, 70)
+        assert tuple(np.max(array, axis=0)) == (69, 19, 19, 70)
+        array = pd.read_csv(os.path.join(tmpdir, "test3_part2.xyz"), dtype=np.uint16, sep=" ")
+        assert tuple(np.min(array, axis=0)) == (0, 40, 0, 60)
+        assert tuple(np.max(array, axis=0)) == (69, 69, 19, 60)
+        parameters = {"channel": 0, "separated_objects": True, "clip": False}
+        SaveXYZ.save(os.path.join(tmpdir, "test4.xyz"), analysis_project, parameters)
+        array = pd.read_csv(os.path.join(tmpdir, "test4.xyz"), dtype=np.uint16, sep=" ")
+        assert tuple(np.min(array, axis=0)) == (15, 15, 15, 60)
+        assert tuple(np.max(array, axis=0)) == (84, 84, 34, 70)
+        array = pd.read_csv(os.path.join(tmpdir, "test4_part1.xyz"), dtype=np.uint16, sep=" ")
+        assert tuple(np.min(array, axis=0)) == (15, 15, 15, 70)
+        assert tuple(np.max(array, axis=0)) == (84, 34, 34, 70)
+        array = pd.read_csv(os.path.join(tmpdir, "test4_part2.xyz"), dtype=np.uint16, sep=" ")
+        assert tuple(np.min(array, axis=0)) == (15, 55, 15, 60)
+        assert tuple(np.max(array, axis=0)) == (84, 84, 34, 60)
+
+    def test_save_project(self, tmpdir, analysis_project):
+        SaveProject.save(os.path.join(tmpdir, "test1.tgz"), analysis_project)
+        assert os.path.exists(os.path.join(tmpdir, "test1.tgz"))
+        # TODO add more
+
+    def test_save_tiff(self, tmpdir, analysis_project):
+        SaveAsTiff.save(os.path.join(tmpdir, "test1.tiff"), analysis_project)
+        array = tifffile.imread(os.path.join(tmpdir, "test1.tiff"))
+        assert analysis_project.segmentation.shape == array.shape
+
+    def test_save_numpy(self, tmpdir, analysis_project):
+        parameters = {"squeeze": False}
+        SaveAsNumpy.save(os.path.join(tmpdir, "test1.npy"), analysis_project, parameters)
+        array = np.load(os.path.join(tmpdir, "test1.npy"))
+        assert array.shape == analysis_project.image.shape
+        assert np.all(array == analysis_project.image.get_data())
+        parameters = {"squeeze": True}
+        SaveAsNumpy.save(os.path.join(tmpdir, "test2.npy"), analysis_project, parameters)
+        array = np.load(os.path.join(tmpdir, "test2.npy"))
+        assert array.shape == analysis_project.segmentation.shape
+        assert np.all(array == analysis_project.image.get_data().squeeze())
+
+    def test_save_segmentation_numpy(self, tmpdir, analysis_project):
+        SaveSegmentationAsNumpy.save(os.path.join(tmpdir, "test1.npy"), analysis_project)
+        array = np.load(os.path.join(tmpdir, "test1.npy"))
+        assert np.all(array == analysis_project.segmentation)

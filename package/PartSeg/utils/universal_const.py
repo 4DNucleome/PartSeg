@@ -1,11 +1,11 @@
 # coding=utf-8
-from enum import Enum
+from enum import IntEnum
 
 from PartSeg.utils.class_generator import enum_register
 
 
 # noinspection NonAsciiCharacters
-class Units(Enum):
+class Units(IntEnum):
     mm = 0
     µm = 1
     nm = 2
