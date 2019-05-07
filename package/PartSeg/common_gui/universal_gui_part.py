@@ -36,6 +36,8 @@ class EnumComboBox(QComboBox):
         return list(self.enum.__members__.values())[self.currentIndex()]
 
     def set_value(self, value: Enum):
+        if not isinstance(value, Enum):
+            return
         self.setCurrentText(value.name)
 
 

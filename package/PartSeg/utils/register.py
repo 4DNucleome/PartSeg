@@ -18,7 +18,7 @@ from typing import Type
 from .algorithm_describe_base import AlgorithmDescribeBase
 from .analysis.algorithm_description import analysis_algorithm_dict
 from .analysis.load_functions import load_dict as analysis_load_dict
-from .analysis.save_functions import save_dict as analysis_save_dict
+from PartSeg.utils.analysis.save_functions import save_dict as analysis_save_dict
 from .image_transforming import image_transform_dict, TransformBase
 from .io_utils import SaveBase, LoadBase
 from .mask.algorithm_description import mask_algorithm_dict

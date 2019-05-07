@@ -16,6 +16,8 @@ from .save_hooks import part_hook
 from ..io_utils import LoadBase, proxy_callback, check_segmentation_type, SegmentationType, WrongFileTypeException, \
     UpdateLoadedMetadataBase
 
+__all__ = ["LoadImage", "LoadImageMask", "LoadProject", "LoadMask"]
+
 
 def load_project(
         file: typing.Union[str, tarfile.TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase]) -> ProjectTuple:
@@ -192,4 +194,4 @@ def load_metadata(data: typing.Union[str, Path]):
     return UpdateLoadedMetadataAnalysis.load_json_data(data)
 
 
-load_dict = Register(LoadImage, LoadImageMask, LoadProject, LoadMask)
+load_dict = Register(LoadImage, LoadImageMask, LoadProject, class_methods=LoadBase.need_functions)

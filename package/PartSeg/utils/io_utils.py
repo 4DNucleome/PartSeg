@@ -62,6 +62,8 @@ class ProjectInfoBase:
 
 
 class SaveBase(AlgorithmDescribeBase, ABC):
+    need_functions = ["save", "get_short_name", "get_name_with_suffix", "get_default_extension",
+                      "need_segmentation", "need_mask"]
     @classmethod
     def get_short_name(cls):
         raise NotImplementedError()
@@ -93,6 +95,9 @@ class SaveBase(AlgorithmDescribeBase, ABC):
 
 
 class LoadBase(AlgorithmDescribeBase, ABC):
+    need_functions = ["load", "get_short_name", "get_name_with_suffix", "number_of_files", "correct_files_order",
+                      "get_next_file", "partial"]
+
     @classmethod
     def get_short_name(cls):
         raise NotImplementedError()

@@ -18,7 +18,7 @@ from ..batch_processing.parallel_backed import BatchManager
 from PartSeg.utils.analysis.io_utils import ProjectTuple
 from PartSeg.utils.analysis.load_functions import load_project
 from PartSeg.utils.analysis.analysis_utils import HistoryElement
-from PartSeg.utils.analysis.save_register import save_dict
+from PartSeg.utils.analysis.save_functions import save_dict
 from PartSeg.utils.mask_create import calculate_mask
 from PartSeg.utils.segmentation.algorithm_base import report_empty_fun
 from PartSeg.tiff_image import ImageReader, Image

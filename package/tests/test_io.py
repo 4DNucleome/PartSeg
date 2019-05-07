@@ -46,7 +46,8 @@ def analysis_project():
     data[0, 15:35, 15:35, 15:85] = 70
     data[0, 15:35, 55:85, 15:85] = 60
     data[0, 10:40, 40:50, 10:90] = 40
-    image = Image(data, (10/UNIT_SCALE[Units.nm], 5/UNIT_SCALE[Units.nm], 5/UNIT_SCALE[Units.nm]), "")
+    image =\
+        Image(data, (10/UNIT_SCALE[Units.nm.value], 5/UNIT_SCALE[Units.nm.value], 5/UNIT_SCALE[Units.nm.value]), "")
     mask = data[0] > 0
     segmentation = np.zeros(data.shape, dtype=np.uint8)
     segmentation[data == 70] = 1
@@ -67,7 +68,8 @@ def analysis_project_reversed():
     segmentation[data == 70] = 1
     segmentation[data == 60] = 2
     data = 100 - data
-    image = Image(data, (10/UNIT_SCALE[Units.nm], 5/UNIT_SCALE[Units.nm], 5/UNIT_SCALE[Units.nm]), "")
+    image = \
+        Image(data, (10/UNIT_SCALE[Units.nm.value], 5/UNIT_SCALE[Units.nm.value], 5/UNIT_SCALE[Units.nm.value]), "")
     return ProjectTuple("test_data.tiff", image, segmentation[0, ..., 0], segmentation[0, ..., 0], mask)
 
 

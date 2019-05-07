@@ -2,6 +2,7 @@ from pathlib import Path
 
 import tifffile
 
+from PartSeg.utils.algorithm_describe_base import Register
 from .io_utils import ProjectTuple
 from ..analysis.analysis_utils import HistoryElement
 from ..channel_class import Channel
@@ -17,12 +18,12 @@ import typing
 import os.path
 import json
 from ..io_utils import get_tarinfo, SaveBase, NotSupportedImage
-from ..analysis.save_register import save_dict
+
+__all__ = ["SaveProject", "SaveCmap", "SaveXYZ", "SaveAsTiff", "SaveMaskAsTiff", "SaveAsNumpy",
+           "SaveSegmentationAsTIFF", "SaveSegmentationAsNumpy"]
 
 
 # TODO add progress function to io
-
-
 def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_segmentation: np.ndarray,
                  mask: typing.Optional[np.ndarray], history: typing.List[HistoryElement],
                  algorithm_parameters: dict):
@@ -63,7 +64,6 @@ def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_se
             tar.addfile(tar_algorithm, hist_buff)
 
 
-# TODO add tests
 def save_cmap(file: typing.Union[str, h5py.File, BytesIO], data: np.ndarray, spacing, segmentation: np.ndarray,
               reverse_base: float,
               cmap_profile: dict, metadata: typing.Optional[dict] = None):
@@ -340,11 +340,5 @@ class SaveSegmentationAsNumpy(SaveBase):
         np.save(save_location, project_info.segmentation)
 
 
-save_dict.register(SaveProject)
-save_dict.register(SaveCmap)
-save_dict.register(SaveXYZ)
-save_dict.register(SaveAsTiff)
-save_dict.register(SaveMaskAsTiff)
-save_dict.register(SaveAsNumpy)
-save_dict.register(SaveSegmentationAsTIFF)
-save_dict.register(SaveSegmentationAsNumpy)
+save_dict = Register(SaveProject, SaveCmap, SaveXYZ, SaveAsTiff, SaveMaskAsTiff, SaveAsNumpy, SaveSegmentationAsTIFF,
+                     SaveSegmentationAsNumpy, class_methods=SaveBase.need_functions)

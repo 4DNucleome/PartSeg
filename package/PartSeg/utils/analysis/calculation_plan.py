@@ -9,7 +9,6 @@ from copy import copy, deepcopy
 from enum import Enum
 
 from PartSeg.utils.universal_const import Units
-from ..analysis.save_register import save_dict
 from ..analysis.statistics_calculation import StatisticProfile
 from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from ..mask_create import MaskProperty
@@ -93,6 +92,7 @@ def get_save_path(op: Save, calculation):
     :param calculation: information about calculation
     :return: str
     """
+    from PartSeg.utils.analysis.save_functions import save_dict
     extension = save_dict[op.algorithm].get_default_extension()
     rel_path = os.path.relpath(calculation.file_path, calculation.base_prefix)
     rel_path, ext = os.path.splitext(rel_path)

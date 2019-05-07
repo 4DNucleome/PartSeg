@@ -2,7 +2,6 @@ import os
 import tarfile
 import typing
 from collections import defaultdict
-from enum import Enum
 from functools import partial
 from pathlib import Path
 
@@ -11,7 +10,7 @@ import json
 from typing import Union
 from io import BytesIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
 
-from PartSeg.utils.analysis.save_hooks import PartEncoder, part_hook
+from PartSeg.utils.analysis.save_hooks import PartEncoder
 from ..io_utils import get_tarinfo, SaveBase, LoadBase, proxy_callback, ProjectInfoBase, check_segmentation_type, \
     SegmentationType, WrongFileTypeException, UpdateLoadedMetadataBase
 from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationProfile
@@ -316,14 +315,15 @@ class UpdateLoadedMetadataMask(UpdateLoadedMetadataBase):
             if isinstance(profile_data.values["smooth_border"], bool):
                 if profile_data.values["smooth_border"]:
                     profile_data.values["smooth_border"] = \
-                        {"name": "Opening", "values": {"smooth_border_radius": profile_data.values["smooth_border_radius"]}}
+                        {"name": "Opening", "values":
+                            {"smooth_border_radius": profile_data.values["smooth_border_radius"]}}
                 else:
                     profile_data.values["smooth_border"] = {"name": "None", "values": {}}
             del profile_data.values["smooth_border_radius"]
         return profile_data
 
 
-load_dict = Register(LoadImage, LoadSegmentationImage)
-save_parameters_dict = Register(SaveParametersJSON)
-save_components_dict = Register(SaveComponents)
-save_segmentation_dict = Register(SaveSegmentation)
+load_dict = Register(LoadImage, LoadSegmentationImage, class_methods=LoadBase.need_functions)
+save_parameters_dict = Register(SaveParametersJSON, class_methods=SaveBase.need_functions)
+save_components_dict = Register(SaveComponents, class_methods=SaveBase.need_functions)
+save_segmentation_dict = Register(SaveSegmentation, class_methods=SaveBase.need_functions)
