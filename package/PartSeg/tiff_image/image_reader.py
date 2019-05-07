@@ -11,6 +11,10 @@ import numpy as np
 import os.path
 
 
+class TiffFileException(Exception):
+    pass
+
+
 class ImageReader(object):
     """
     image_file: TiffFile
@@ -19,7 +23,7 @@ class ImageReader(object):
 
     def __init__(self, callback_function=None):
         self.image_file = None
-        self.mask_file: TiffFile = None
+        self.mask_file: typing.Optional[TiffFile] = None
         self.default_spacing = 10**-6, 10**-6, 10**-6
         self.spacing = self.default_spacing
         self.colors = None
@@ -38,16 +42,14 @@ class ImageReader(object):
             raise ValueError(f"wrong spacing {spacing}")
         self.default_spacing = spacing
 
-
     @classmethod
     def read_image(cls, image_path: typing.Union[str, BytesIO], mask_path=None,
-                   callback_function: typing.Optional[typing.Callable]=None,
-                   default_spacing: typing.List[int]=None) -> Image:
+                   callback_function: typing.Optional[typing.Callable] = None,
+                   default_spacing: typing.List[int] = None) -> Image:
         instance = cls(callback_function)
         if default_spacing is not None:
             instance.set_default_spacing(default_spacing)
         return instance.read(image_path, mask_path)
-
 
     def read(self, image_path: typing.Union[str, BytesIO], mask_path=None) -> Image:
         """
@@ -67,7 +69,7 @@ class ImageReader(object):
         else:
             self.mask_file = None
 
-        shape = self.image_file.series[0].shape
+        # shape = self.image_file.series[0].shape
         axes = self.image_file.series[0].axes
         self.callback_function("max", total_pages_num)
 
@@ -87,7 +89,10 @@ class ImageReader(object):
             mutex.release()
 
         self.image_file.report_func = report_func
-        image_data = self.image_file.asarray()
+        try:
+            image_data = self.image_file.asarray()
+        except ValueError as e:
+            raise TiffFileException(*e.args)
         image_data = self.update_array_shape(image_data, axes)
         if self.mask_file is not None:
             self.mask_file.report_func = report_func
@@ -217,6 +222,7 @@ if tifffile.__version__ == '0.15.1':
     import numpy
     from tifffile import product, squeeze_axes
     from tifffile.tifffile import TIFF, TiffPageSeries
+
     def _ome_series(self):
         """Return image series in OME-TIFF file(s)."""
         from xml.etree import cElementTree as etree  # delayed import
@@ -226,6 +232,7 @@ if tifffile.__version__ == '0.15.1':
         except etree.ParseError as e:
             # TODO: test badly encoded OME-XML
             warnings.warn('ome-xml: %s' % e)
+            # noinspection PyBroadException
             try:
                 # might work on Python 2
                 omexml = omexml.decode('utf-8', 'ignore').encode('utf-8')
@@ -259,6 +266,7 @@ if tifffile.__version__ == '0.15.1':
                                     continue
                                 axis = along.tag[-1]
                                 newaxis = along.attrib.get('Type', 'other')
+                                # noinspection PyUnresolvedReferences
                                 newaxis = TIFF.AXES_LABELS[newaxis]
                                 if 'Start' in along.attrib:
                                     step = float(along.attrib.get('Step', 1))
@@ -280,7 +288,7 @@ if tifffile.__version__ == '0.15.1':
                 if not pixels.tag.endswith('Pixels'):
                     continue
                 attr = pixels.attrib
-                dtype = attr.get('PixelType', None)
+                # dtype = attr.get('PixelType', None)
                 axes = ''.join(reversed(attr['DimensionOrder']))
                 shape = idxshape = list(int(attr['Size' + ax]) for ax in axes)
                 size = product(shape[:-2])

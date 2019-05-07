@@ -4,6 +4,7 @@ from qtpy.QtWidgets import QApplication, QMessageBox
 import packaging.version
 from xmlrpc import client
 
+from PartSeg.tiff_image.image_reader import TiffFileException
 from .. import __version__
 from ..utils import state_store
 
@@ -34,6 +35,13 @@ class CustomApplication(QApplication):
         if self.error is None:
             return
         from ..project_utils_qt.error_dialog import ErrorDialog
+        if isinstance(self.error, TiffFileException):
+            mess = QMessageBox()
+            mess.setIcon(QMessageBox.Critical)
+            mess.setText("During read file there is an error: " + self.error.args[0])
+            mess.setWindowTitle("Tiff error")
+            mess.exec()
+            return
         dial = ErrorDialog(self.error, "Exception during program run")
         # TODO check
         # dial.moveToThread(QApplication.instance().thread())
