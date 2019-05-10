@@ -318,7 +318,13 @@ class SaveSegmentationAsTIFF(SaveBase):
     @classmethod
     def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict,
              range_changed=None, step_changed=None):
-        tifffile.imsave(save_location, project_info.segmentation)
+        segmentation = project_info.segmentation
+        segmentation_max = segmentation.max()
+        if segmentation_max < 2**8 - 1:
+            segmentation = segmentation.astype(np.uint8)
+        elif segmentation_max < 2**16 - 1:
+            segmentation = segmentation.astype(np.uint16)
+        tifffile.imsave(save_location, segmentation)
 
 
 class SaveSegmentationAsNumpy(SaveBase):
@@ -337,7 +343,13 @@ class SaveSegmentationAsNumpy(SaveBase):
     @classmethod
     def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict = None,
              range_changed=None, step_changed=None):
-        np.save(save_location, project_info.segmentation)
+        segmentation = project_info.segmentation
+        segmentation_max = segmentation.max()
+        if segmentation_max < 2 ** 8 - 1:
+            segmentation = segmentation.astype(np.uint8)
+        elif segmentation_max < 2 ** 16 - 1:
+            segmentation = segmentation.astype(np.uint16)
+        np.save(save_location, segmentation)
 
 
 save_dict = Register(SaveProject, SaveCmap, SaveXYZ, SaveAsTiff, SaveMaskAsTiff, SaveAsNumpy, SaveSegmentationAsTIFF,

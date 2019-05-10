@@ -34,8 +34,13 @@ class ImageWriter(object):
         mask = image.get_mask_for_save()
         if mask is None:
             return
+        mask_max = mask.max()
         if mask.dtype == np.bool:
             mask = mask.astype(np.uint8)
+        elif mask_max < 255:
+            mask = mask.astype(np.uint8)
+        elif mask_max < 2**16 - 1:
+            mask = mask.astype(np.uint16)
         # print(f"[save_mask] {save_path}")
         cls._save(mask, save_path)
 
