@@ -295,7 +295,8 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
                 self.new_parameters["sprawl_type"] != self.parameters["sprawl_type"]:
             if self.threshold_operator(self.threshold_info[1], self.threshold_info[0]):
                 self.final_sizes = np.bincount(finally_segment.flat)
-                return SegmentationResult(self.finally_segment, self.segmentation, self.cleaned_image)
+                return SegmentationResult(self.finally_segment, self.get_segmentation_profile(), self.segmentation,
+                                          self.cleaned_image)
             path_sprawl: BaseSprawl = sprawl_dict[self.new_parameters["sprawl_type"]["name"]]
             self.parameters["sprawl_type"] = self.new_parameters["sprawl_type"]
             new_segment = path_sprawl.sprawl(self.sprawl_area, finally_segment, self.channel, self.components_num,
@@ -304,7 +305,8 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
                                              self.new_parameters["sprawl_type"]["values"], self.threshold_info[1],
                                              self.threshold_info[0])
             self.final_sizes = np.bincount(new_segment.flat)
-            return SegmentationResult(new_segment, self.get_segmentation_profile(), self.sprawl_area, self.cleaned_image)
+            return SegmentationResult(new_segment, self.get_segmentation_profile(),
+                                      self.sprawl_area, self.cleaned_image)
 
 
 class LowerThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
@@ -430,7 +432,8 @@ class BaseMultiScaleOpening(ThresholdBaseAlgorithm, ABC):
 
     def calculation_run(self, report_fun) -> SegmentationResult:
         if self.new_parameters["side_connection"] != self.parameters["side_connection"]:
-            neigh, dist = calculate_distances_array(self.image.spacing, get_neigh(self.new_parameters["side_connection"]))
+            neigh, dist = calculate_distances_array(
+                self.image.spacing, get_neigh(self.new_parameters["side_connection"]))
             self.mso.set_neighbourhood(neigh, dist)
         segment_data = super().calculation_run(report_fun)
         if segment_data is not None and self.components_num == 0:
@@ -454,7 +457,8 @@ class BaseMultiScaleOpening(ThresholdBaseAlgorithm, ABC):
                 self.new_parameters["mu_mid"] != self.parameters["mu_mid"]:
             if self.threshold_operator(self.threshold_info[1], self.threshold_info[0]):
                 self.final_sizes = np.bincount(finally_segment.flat)
-                return SegmentationResult(self.finally_segment, self.segmentation, self.cleaned_image)
+                return SegmentationResult(self.finally_segment, self.get_segmentation_profile(),
+                                          self.segmentation, self.cleaned_image)
             mu_calc: BaseMuMid = mu_mid_dict[self.new_parameters["mu_mid"]["name"]]
             self.parameters["mu_mid"] = self.new_parameters["mu_mid"]
             sprawl_area = (self.sprawl_area > 0).astype(np.uint8)

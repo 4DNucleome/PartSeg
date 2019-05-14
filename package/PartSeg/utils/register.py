@@ -15,7 +15,6 @@ register_dict: holds information where register given operation type. Strongly s
 from enum import Enum
 from typing import Type
 
-import PartSeg.utils.analysis.measurement_base
 from .algorithm_describe_base import AlgorithmDescribeBase
 from PartSeg.utils.analysis import save_functions, load_functions, \
     algorithm_description as analysis_algorithm_description, statistics_calculation, measurement_base
@@ -87,10 +86,9 @@ base_class_dict = {
 }
 
 reload_module_list = \
-    [threshold, sprawl, segmentation_algorithm, restartable_segmentation_algorithms,noise_filtering, io_functions,
-     mask_algorithm_description, analysis_algorithm_description, statistics_calculation]
-
-print(register_dict[RegisterEnum.analysis_save])
+    [threshold, sprawl, segmentation_algorithm, restartable_segmentation_algorithms, noise_filtering, io_functions,
+     mask_algorithm_description, analysis_algorithm_description, statistics_calculation, save_functions, load_functions,
+     ]
 
 
 def register(target: Type[AlgorithmDescribeBase], target_type: RegisterEnum, replace=False):

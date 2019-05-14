@@ -482,32 +482,16 @@ class AlgorithmChoose(QWidget):
                  parent=None):
         super().__init__(parent)
         self.settings = settings
+        self.algorithms = algorithms
         settings.algorithm_changed.connect(self.updated_algorithm)
         self.stack_layout = QStackedLayout()
         self.algorithm_choose = QComboBox()
         self.algorithm_dict: typing.Dict[str, BaseAlgorithmSettingsWidget] = {}
-        widgets_list = []
-        for name, val in algorithms.items():
-            self.algorithm_choose.addItem(name)
-            widget = InteractiveAlgorithmSettingsWidget(settings, name, val, [])
-            self.algorithm_dict[name] = widget
-            widgets_list.append(widget)
-            widget.algorithm_thread.execution_done.connect(self.result.emit)
-            widget.algorithm_thread.finished.connect(self.finished.emit)
-            widget.algorithm_thread.started.connect(self.started.emit)
-            widget.algorithm_thread.progress_signal.connect(self.progress_signal.emit)
-            widget.values_changed.connect(self.value_changed.emit)
-            # widget.setMinimumHeight(5000)
-            # widget.algorithm.progress_signal.connect(self.progress_info)
-            self.stack_layout.addWidget(widget)
+        self.add_widgets_to_algorithm()
 
         self.algorithm_choose.currentTextChanged.connect(self.change_algorithm)
         self.settings.image_changed.connect(self.image_changed)
         # self.setMinimumWidth(370)
-
-        name = self.settings.get("current_algorithm", "")
-        if name:
-            self.algorithm_choose.setCurrentText(name)
 
         self.setContentsMargins(0, 0, 0, 0)
         layout = QVBoxLayout()
@@ -515,6 +499,39 @@ class AlgorithmChoose(QWidget):
         layout.addWidget(self.algorithm_choose)
         layout.addLayout(self.stack_layout)
         self.setLayout(layout)
+
+    def add_widgets_to_algorithm(self):
+        self.algorithm_choose.blockSignals(True)
+        self.algorithm_choose.clear()
+        for name, val in self.algorithms.items():
+            self.algorithm_choose.addItem(name)
+            widget = InteractiveAlgorithmSettingsWidget(self.settings, name, val, [])
+            self.algorithm_dict[name] = widget
+            widget.algorithm_thread.execution_done.connect(self.result.emit)
+            widget.algorithm_thread.finished.connect(self.finished.emit)
+            widget.algorithm_thread.started.connect(self.started.emit)
+            widget.algorithm_thread.progress_signal.connect(self.progress_signal.emit)
+            widget.values_changed.connect(self.value_changed.emit)
+            self.stack_layout.addWidget(widget)
+        name = self.settings.get("current_algorithm", "")
+        self.algorithm_choose.blockSignals(False)
+        if name:
+            self.algorithm_choose.setCurrentText(name)
+
+    def reload(self, algorithms=None):
+        if algorithms is not None:
+            self.algorithms = algorithms
+        for i in range(self.stack_layout.count()):
+            widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.takeAt(0).widget()
+            widget.algorithm_thread.execution_done.disconnect()
+            widget.algorithm_thread.finished.disconnect()
+            widget.algorithm_thread.started.disconnect()
+            widget.algorithm_thread.progress_signal.disconnect()
+            widget.values_changed.disconnect()
+        self.algorithm_dict = {}
+        self.add_widgets_to_algorithm()
+
+        print(self.algorithms)
 
     def updated_algorithm(self):
         self.change_algorithm(self.settings.last_executed_algorithm,

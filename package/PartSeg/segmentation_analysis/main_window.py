@@ -13,8 +13,7 @@ from PartSeg.common_gui.about_dialog import AboutDialog
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
 from PartSeg.common_gui.show_directory_dialog import DirectoryDialog
-from PartSeg.utils.analysis import ProjectTuple
-from PartSeg.utils.analysis.load_functions import load_dict
+from PartSeg.utils.analysis import ProjectTuple, algorithm_description, load_functions
 from PartSeg.utils.io_utils import WrongFileTypeException
 from ..common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, AlgorithmChoose
 from ..common_gui.channel_control import ChannelControl
@@ -24,13 +23,11 @@ from ..common_gui.waiting_dialog import WaitingDialog, ExecuteFunctionDialog
 from ..common_gui.multiple_file_widget import MultipleFileWidget
 from ..utils.mask_create import calculate_mask, MaskProperty
 from ..utils.segmentation.algorithm_base import SegmentationResult
-from ..project_utils_qt.image_read_thread import ImageReaderThread
 from ..project_utils_qt.main_window import BaseMainWindow
 from .advanced_window import AdvancedWindow
 from .batch_window import BatchWindow
 from .calculation_pipeline_thread import CalculatePipelineThread
 from PartSeg.tiff_image import ImageReader, Image
-from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
 from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from PartSeg.utils.analysis.analysis_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
 from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
@@ -77,7 +74,7 @@ class Options(QWidget):
         self.choose_profile.currentTextChanged.connect(self.change_profile)
         self.interactive_use.stateChanged.connect(self.execute_btn.setDisabled)
         self.interactive_use.stateChanged.connect(self.interactive_change)
-        self.algorithm_choose_widget = AlgorithmChoose(settings, analysis_algorithm_dict)
+        self.algorithm_choose_widget = AlgorithmChoose(settings, algorithm_description.analysis_algorithm_dict)
         self.algorithm_choose_widget.result.connect(self.execution_done)
         self.algorithm_choose_widget.finished.connect(self.calculation_finished)
         self.algorithm_choose_widget.value_changed.connect(self.interactive_algorithm_execute)
@@ -436,9 +433,9 @@ class MainMenu(QWidget):
                 raise exception
 
         try:
-            dial = CustomLoadDialog(load_dict, history=self._settings.get_path_history())
+            dial = CustomLoadDialog(load_functions.load_dict, history=self._settings.get_path_history())
             dial.setDirectory(self._settings.get("io.open_directory", str(Path.home())))
-            dial.selectNameFilter(self._settings.get("io.open_filter", next(iter(load_dict.keys()))))
+            dial.selectNameFilter(self._settings.get("io.open_filter", next(iter(load_functions.load_dict.keys()))))
             if dial.exec_():
                 result = dial.get_result()
                 self._settings.set("io.open_filter", result.selected_filter)
@@ -617,10 +614,10 @@ class MainWindow(BaseMainWindow):
                                      self.synchronize_tool)
         # self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
-        self.advanced_window = AdvancedWindow(self.settings)
+        self.advanced_window = AdvancedWindow(self.settings, reload_list=[self.reload])
         self.batch_window = None  # BatchWindow(self.settings)
 
-        self.multiple_files = MultipleFileWidget(self.settings, load_dict)
+        self.multiple_files = MultipleFileWidget(self.settings, load_functions.load_dict)
 
         if initial_image is None:
             reader = ImageReader()
@@ -681,15 +678,8 @@ class MainWindow(BaseMainWindow):
         self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
 
     def read_drop(self, paths):
-        read_thread = ImageReaderThread()
-
-        def exception_hook(exception):
-            QMessageBox.warning(self, "Read error", f"Error during image read: {exception}")
-
-        dial = WaitingDialog(read_thread, exception_hook=exception_hook)
-
         ext_set = set([os.path.splitext(x)[1] for x in paths])
-        for load_class in load_dict.values():
+        for load_class in load_functions.load_dict.values():
             if load_class.partial() or load_class.number_of_files() != len(paths):
                 continue
             if ext_set.issubset(load_class.get_extensions()):
@@ -699,6 +689,9 @@ class MainWindow(BaseMainWindow):
                     self.settings.set_project_info(res)
                 return
         QMessageBox.information(self, "No method", f"No  methods for load files: " + ",".join(paths))
+
+    def reload(self):
+        self.options_panel.algorithm_choose_widget.reload(algorithm_description.analysis_algorithm_dict)
 
     def event(self, event: QEvent):
         if event.type() == QEvent.WindowActivate:

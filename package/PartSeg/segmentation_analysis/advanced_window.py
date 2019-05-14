@@ -807,17 +807,22 @@ class DevelopTab(QWidget):
             importlib.reload(el)
         importlib.reload(register)
         importlib.reload(plugins)
-        # plugins.register()
+        #plugins.register()
+        for el in self.parent().parent().reload_list:
+            el()
 
 
 class AdvancedWindow(QTabWidget):
     """
     :type settings: Settings
     """
-
-    def __init__(self, settings, parent=None):
+    def __init__(self, settings, parent=None, reload_list=None):
         super().__init__(parent)
         self.settings = settings
+        if reload_list is not None:
+            self.reload_list = reload_list
+        else:
+            self.reload_list = []
         self.setWindowTitle("Settings and Measurement")
         self.advanced_settings = AdvancedSettings(settings)
         self.colormap_settings = ColorSelector(settings, ["result_control"])
@@ -830,8 +835,6 @@ class AdvancedWindow(QTabWidget):
         self.addTab(self.statistics, "Measurements")
         if state_store.develop:
             self.addTab(self.develop, "Develop")
-        """if settings.advanced_menu_geometry is not None:
-            self.restoreGeometry(settings.advanced_menu_geometry)"""
         try:
             geometry = self.settings.get_from_profile("advanced_window_geometry")
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, 'ascii')))
