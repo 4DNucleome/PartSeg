@@ -7,10 +7,10 @@ import numpy as np
 from PartSeg.tiff_image import Image
 from PartSeg.utils.analysis import load_metadata
 from PartSeg.utils.analysis.statistics_calculation import Diameter, PixelBrightnessSum, Volume, ComponentsNumber, \
-    MaximumPixelBrightness, MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness, AreaType, \
+    MaximumPixelBrightness, MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness, \
     StandardDeviationOfPixelBrightness, MomentOfInertia, LongestMainAxisLength, MiddleMainAxisLength, \
-    ShortestMainAxisLength, Surface, RimVolume, RimPixelBrightnessSum, StatisticProfile, StatisticEntry, PerComponent, \
-    Node, Sphericity, DistanceMaskSegmentation, DistancePoint
+    ShortestMainAxisLength, Surface, RimVolume, RimPixelBrightnessSum, StatisticProfile, Sphericity, DistanceMaskSegmentation, DistancePoint
+from PartSeg.utils.analysis.measurement_base import Node, StatisticEntry, PerComponent, AreaType
 from PartSeg.utils.autofit import density_mass_center
 from PartSeg.utils.universal_const import UNIT_SCALE, Units
 

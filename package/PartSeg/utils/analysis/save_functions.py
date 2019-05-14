@@ -20,7 +20,7 @@ import json
 from ..io_utils import get_tarinfo, SaveBase, NotSupportedImage
 
 __all__ = ["SaveProject", "SaveCmap", "SaveXYZ", "SaveAsTiff", "SaveMaskAsTiff", "SaveAsNumpy",
-           "SaveSegmentationAsTIFF", "SaveSegmentationAsNumpy"]
+           "SaveSegmentationAsTIFF", "SaveSegmentationAsNumpy", 'save_dict']
 
 
 # TODO add progress function to io

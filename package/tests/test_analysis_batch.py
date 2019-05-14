@@ -8,8 +8,8 @@ from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from PartSeg.utils.analysis.batch_processing.batch_backend import CalculationProcess, CalculationManager
 from PartSeg.utils.analysis.calculation_plan import CalculationPlan, CalculationTree, MaskSuffix, StatisticCalculate, \
     Calculation
-from PartSeg.utils.analysis.statistics_calculation import StatisticProfile, StatisticEntry, Leaf, AreaType, \
-    PerComponent, Node
+from PartSeg.utils.analysis.statistics_calculation import StatisticProfile
+from PartSeg.utils.analysis.measurement_base import Leaf, Node, StatisticEntry, PerComponent, AreaType
 from PartSeg.utils.segmentation.noise_filtering import GaussType
 from PartSeg.utils.universal_const import Units
 

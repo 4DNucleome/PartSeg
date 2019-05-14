@@ -136,7 +136,12 @@ class NeighType(Enum):
         return self.name
 
 
-enum_register.register_class(NeighType)
+try:
+    # noinspection PyUnresolvedReferences,PyUnboundLocalVariable
+    reloading
+except NameError:
+    reloading = False  # means the module is being imported
+    enum_register.register_class(NeighType)
 
 
 def calculate_distances_array(spacing, neigh_type: NeighType):

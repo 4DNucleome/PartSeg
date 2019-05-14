@@ -16,7 +16,7 @@ from .save_hooks import part_hook
 from ..io_utils import LoadBase, proxy_callback, check_segmentation_type, SegmentationType, WrongFileTypeException, \
     UpdateLoadedMetadataBase
 
-__all__ = ["LoadImage", "LoadImageMask", "LoadProject", "LoadMask"]
+__all__ = ["LoadImage", "LoadImageMask", "LoadProject", "LoadMask", "load_dict"]
 
 
 def load_project(

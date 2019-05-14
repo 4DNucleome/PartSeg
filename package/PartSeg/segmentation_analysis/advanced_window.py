@@ -1,9 +1,11 @@
 import json
 import os
+import sys
 from copy import deepcopy
 from functools import partial
 from pathlib import Path
 from typing import Union, Optional, Tuple
+import importlib
 
 from PartSegData import icons_dir
 from qtpy.QtCore import QByteArray, Qt, QEvent
@@ -13,8 +15,8 @@ from qtpy.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushBut
     QMessageBox, QFileDialog, QComboBox, QAbstractSpinBox, QInputDialog, \
     QPlainTextEdit, QFrame, QCheckBox
 
+from PartSeg import plugins
 from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
-from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from ..common_gui.universal_gui_part import EnumComboBox
 from ..common_gui.colors_choose import ColorSelector
 from ..common_gui.custom_save_dialog import FormDialog
@@ -22,9 +24,10 @@ from ..common_gui.lock_checkbox import LockCheckBox
 from .partseg_settings import PartSettings, MASK_COLORS
 from .profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer
 from .statistic_widget import StatisticsWidget
-from PartSeg.utils.analysis.statistics_calculation import StatisticProfile, STATISTIC_DICT, Node, Leaf, AreaType, PerComponent, \
-    StatisticEntry
+from PartSeg.utils.analysis.statistics_calculation import StatisticProfile, STATISTIC_DICT
+from PartSeg.utils.analysis.measurement_base import Leaf, Node, StatisticEntry, PerComponent, AreaType
 from ..utils.universal_const import UNIT_SCALE, Units
+from ..utils import state_store, register
 
 
 def h_line():
@@ -160,7 +163,6 @@ class AdvancedSettings(QWidget):
         self.delete_btn.setEnabled(True)
         self.rename_btn.setEnabled(True)
         self.info_label.setPlainText(profile.pretty_print(analysis_algorithm_dict))
-
 
     def synchronize_spacing(self):
         if self.lock_spacing.isChecked():
@@ -785,23 +787,49 @@ class StatisticsSettings(QWidget):
             self.settings.dump()
 
 
+class DevelopTab(QWidget):
+    def __init__(self, settings):
+        super().__init__()
+        self.settings = settings
+
+        self.reload_btm = QPushButton("Reload algorithms", clicked=self.reload_algorithm_action)
+        layout = QGridLayout()
+        layout.addWidget(self.reload_btm, 0, 0)
+        layout.setColumnStretch(1, 1)
+        layout.setRowStretch(1, 1)
+        self.setLayout(layout)
+
+    def reload_algorithm_action(self):
+        for val in register.reload_module_list:
+            print(val, file=sys.stderr)
+            importlib.reload(val)
+        for el in plugins.get_plugins():
+            importlib.reload(el)
+        importlib.reload(register)
+        importlib.reload(plugins)
+        # plugins.register()
+
+
 class AdvancedWindow(QTabWidget):
     """
     :type settings: Settings
     """
 
     def __init__(self, settings, parent=None):
-        super(AdvancedWindow, self).__init__(parent)
+        super().__init__(parent)
         self.settings = settings
         self.setWindowTitle("Settings and Measurement")
         self.advanced_settings = AdvancedSettings(settings)
         self.colormap_settings = ColorSelector(settings, ["result_control"])
         self.statistics = StatisticsWidget(settings)
         self.statistics_settings = StatisticsSettings(settings)
+        self.develop = DevelopTab(settings)
         self.addTab(self.advanced_settings, "Properties")
         self.addTab(self.colormap_settings, "Color maps")
         self.addTab(self.statistics_settings, "Measurements settings")
         self.addTab(self.statistics, "Measurements")
+        if state_store.develop:
+            self.addTab(self.develop, "Develop")
         """if settings.advanced_menu_geometry is not None:
             self.restoreGeometry(settings.advanced_menu_geometry)"""
         try:

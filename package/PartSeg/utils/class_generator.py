@@ -160,7 +160,7 @@ _prohibited = ('__new__', '__init__', '__slots__', '__getnewargs__',
                '_fields', '_field_defaults', '_field_types',
                '_make', 'replace_', 'asdict', '_source', 'asdict', "__setattr__")
 
-_special = ('__module__', '__name__', '__qualname__', '__annotations__')
+_special = ('__module__', '__name__', '__qualname__', '__annotations__', "_reloading")
 
 omit_list = (typing.TypeVar, )
 
@@ -331,7 +331,8 @@ class BaseMeta(type):
                 raise AttributeError("Cannot overwrite NamedTuple attribute " + key)
             elif key not in _special and key not in result._fields:
                 setattr(result, key, attrs[key])
-        base_serialize_register.register_class(result)
+        if "_reloading" not in attrs or not attrs["_reloading"]:
+            base_serialize_register.register_class(result)
         return result
 
 

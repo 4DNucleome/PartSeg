@@ -15,20 +15,15 @@ register_dict: holds information where register given operation type. Strongly s
 from enum import Enum
 from typing import Type
 
+import PartSeg.utils.analysis.measurement_base
 from .algorithm_describe_base import AlgorithmDescribeBase
-from .analysis.algorithm_description import analysis_algorithm_dict
-from .analysis.load_functions import load_dict as analysis_load_dict
-from PartSeg.utils.analysis.save_functions import save_dict as analysis_save_dict
+from PartSeg.utils.analysis import save_functions, load_functions, \
+    algorithm_description as analysis_algorithm_description, statistics_calculation, measurement_base
 from .image_transforming import image_transform_dict, TransformBase
-from .io_utils import SaveBase, LoadBase
-from .mask.algorithm_description import mask_algorithm_dict
-from .mask.io_functions import load_dict as mask_load_dict, save_parameters_dict as mask_save_parameters_dict, \
-    save_components_dict as mask_save_components_dict, save_segmentation_dict as mask_save_segmentation_dict
-from .segmentation.noise_filtering import noise_removal_dict, NoiseFilteringBase
-from .segmentation.restartable_segmentation_algorithms import RestartableAlgorithm
-from .segmentation.segmentation_algorithm import SegmentationAlgorithm
-from .segmentation.sprawl import sprawl_dict, BaseSprawl
-from .segmentation.threshold import threshold_dict, BaseThreshold
+from . import io_utils
+from .segmentation import threshold, sprawl, segmentation_algorithm, restartable_segmentation_algorithms, \
+    noise_filtering
+from .mask import io_functions, algorithm_description as mask_algorithm_description
 
 
 # from .mask.io_functions import
@@ -62,26 +57,40 @@ class RegisterEnum(Enum):
     mask_save_parameters = 9
     mask_save_components = 10
     mask_save_segmentation = 11
+    analysis_measurement = 12
 
 
 register_dict = {
-    RegisterEnum.sprawl: sprawl_dict, RegisterEnum.threshold: threshold_dict,
-    RegisterEnum.noise_filtering: noise_removal_dict, RegisterEnum.analysis_algorithm: analysis_algorithm_dict,
-    RegisterEnum.mask_algorithm: mask_algorithm_dict, RegisterEnum.analysis_save: analysis_save_dict,
-    RegisterEnum.analysis_load: analysis_load_dict, RegisterEnum.mask_load: mask_load_dict,
-    RegisterEnum.image_transform: image_transform_dict, RegisterEnum.mask_save_parameters: mask_save_parameters_dict,
-    RegisterEnum.mask_save_components: mask_save_components_dict,
-    RegisterEnum.mask_save_segmentation: mask_save_segmentation_dict
+    RegisterEnum.sprawl: sprawl.sprawl_dict, RegisterEnum.threshold: threshold.threshold_dict,
+    RegisterEnum.noise_filtering: noise_filtering.noise_removal_dict,
+    RegisterEnum.analysis_algorithm: analysis_algorithm_description.analysis_algorithm_dict,
+    RegisterEnum.mask_algorithm: mask_algorithm_description.mask_algorithm_dict,
+    RegisterEnum.analysis_save: save_functions.save_dict,
+    RegisterEnum.analysis_load: load_functions.load_dict, RegisterEnum.mask_load: io_functions.load_dict,
+    RegisterEnum.image_transform: image_transform_dict,
+    RegisterEnum.mask_save_parameters: io_functions.save_parameters_dict,
+    RegisterEnum.mask_save_components: io_functions.save_components_dict,
+    RegisterEnum.mask_save_segmentation: io_functions.save_segmentation_dict,
+    RegisterEnum.analysis_measurement: statistics_calculation.STATISTIC_DICT
 }
 
 base_class_dict = {
-    RegisterEnum.sprawl: BaseSprawl, RegisterEnum.threshold: BaseThreshold,
-    RegisterEnum.noise_filtering: NoiseFilteringBase, RegisterEnum.analysis_algorithm: RestartableAlgorithm,
-    RegisterEnum.mask_algorithm: SegmentationAlgorithm, RegisterEnum.analysis_save: SaveBase,
-    RegisterEnum.analysis_load: LoadBase, RegisterEnum.mask_load: LoadBase,
-    RegisterEnum.image_transform: TransformBase,  RegisterEnum.mask_save_parameters: SaveBase,
-    RegisterEnum.mask_save_components: SaveBase, RegisterEnum.mask_save_segmentation: SaveBase
+    RegisterEnum.sprawl: sprawl.BaseSprawl, RegisterEnum.threshold: threshold.BaseThreshold,
+    RegisterEnum.noise_filtering: noise_filtering.NoiseFilteringBase,
+    RegisterEnum.analysis_algorithm: restartable_segmentation_algorithms.RestartableAlgorithm,
+    RegisterEnum.mask_algorithm: segmentation_algorithm.SegmentationAlgorithm,
+    RegisterEnum.analysis_save: io_utils.SaveBase,
+    RegisterEnum.analysis_load: io_utils.LoadBase, RegisterEnum.mask_load: io_utils.LoadBase,
+    RegisterEnum.image_transform: TransformBase,  RegisterEnum.mask_save_parameters: io_utils.SaveBase,
+    RegisterEnum.mask_save_components: io_utils.SaveBase, RegisterEnum.mask_save_segmentation: io_utils.SaveBase,
+    RegisterEnum.analysis_measurement: measurement_base.StatisticMethodBase
 }
+
+reload_module_list = \
+    [threshold, sprawl, segmentation_algorithm, restartable_segmentation_algorithms,noise_filtering, io_functions,
+     mask_algorithm_description, analysis_algorithm_description, statistics_calculation]
+
+print(register_dict[RegisterEnum.analysis_save])
 
 
 def register(target: Type[AlgorithmDescribeBase], target_type: RegisterEnum, replace=False):

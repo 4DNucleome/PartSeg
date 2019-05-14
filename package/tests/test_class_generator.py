@@ -250,6 +250,7 @@ def test_functions():
 
 
 def test_statistic_type():
-    from PartSeg.utils.analysis.statistics_calculation import Leaf, Node
+    from PartSeg.utils.analysis.measurement_base import Node
+    from PartSeg.utils.analysis.measurement_base import Leaf
     empty(Leaf, Node)
     base_serialize_register.clear()

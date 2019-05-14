@@ -7,6 +7,7 @@ from ..image_operations import gaussian
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
 from ..class_generator import enum_register
 
+
 class GaussType(Enum):
     Layer = 1
     Stack = 2
@@ -14,7 +15,14 @@ class GaussType(Enum):
     def __str__(self):
         return self.name.replace("_", " ")
 
-enum_register.register_class(GaussType)
+
+try:
+    # noinspection PyUnresolvedReferences,PyUnboundLocalVariable
+    reloading
+except NameError:
+    reloading = False  # means the module is being imported
+    enum_register.register_class(GaussType)
+
 
 class NoiseFilteringBase(AlgorithmDescribeBase, ABC):
     @classmethod
@@ -63,7 +71,5 @@ def calculate_operation_radius(radius, spacing, gauss_type):
         return [radius / r for r in ratio]
     return radius
 
-noise_removal_dict = Register(class_methods=["noise_remove"])
-noise_removal_dict.register(NoneNoiseFiltering)
-noise_removal_dict.register(GaussNoiseFiltering)
 
+noise_removal_dict = Register(NoneNoiseFiltering, GaussNoiseFiltering, class_methods=["noise_remove"])
