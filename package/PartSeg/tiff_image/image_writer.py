@@ -22,9 +22,9 @@ class ImageWriter(object):
         imagej_kwargs["Ranges"] = ranges
         spacing = image.get_um_spacing()
 
-        metadata = {"mode": "color",}
+        metadata = {"mode": "color", "unit": "\\u00B5m"}
         if len(spacing) == 3:
-            metadata.update({"spacing":spacing[0], "unit": "\\u00B5m"})
+            metadata.update({"spacing":spacing[0]})
         resolution = [1/x for x in spacing[-2:]]
         cls._save(data, save_path, resolution, metadata, imagej_kwargs)
 
