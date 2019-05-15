@@ -2,15 +2,17 @@ import os
 import packaging.version
 import shutil
 from glob import glob
+from PartSeg.utils import state_store
 
 from qtpy.QtWidgets import QMessageBox, QWidget
 
-from .. import CONFIG_FOLDER, __version__
+from .. import __version__
+
 
 def import_config():
-    if not os.path.exists(CONFIG_FOLDER):
+    if not os.path.exists(state_store.save_folder):
         version = packaging.version.parse(__version__)
-        base_folder = os.path.dirname(CONFIG_FOLDER)
+        base_folder = os.path.dirname(state_store.save_folder)
         possible_folders = glob(os.path.join(base_folder, "*"))
         versions = list(
             sorted([x for x in

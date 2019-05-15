@@ -6,6 +6,7 @@ from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QMainWindow, QToolButton, QGridLayout, QWidget, QProgressBar, QMessageBox
 
 from PartSeg.project_utils_qt.load_backup import import_config
+from PartSeg.project_utils_qt.settings import BaseSettings
 from PartSeg.tiff_image import ImageReader
 from PartSegData import icons_dir
 
@@ -22,7 +23,7 @@ class Prepare(QThread):
             plugins.register()
             main_window_module = importlib.import_module(self.module)
             main_window = main_window_module.MainWindow
-            settings = main_window.settings_class(main_window_module.CONFIG_FOLDER)
+            settings: BaseSettings = main_window.settings_class(main_window_module.CONFIG_FOLDER)
             self.errors = settings.load()
             reader = ImageReader()
             im = reader.read(main_window.initial_image_path)

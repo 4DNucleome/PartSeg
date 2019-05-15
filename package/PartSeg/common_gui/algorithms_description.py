@@ -487,9 +487,9 @@ class AlgorithmChoose(QWidget):
         self.stack_layout = QStackedLayout()
         self.algorithm_choose = QComboBox()
         self.algorithm_dict: typing.Dict[str, BaseAlgorithmSettingsWidget] = {}
+        self.algorithm_choose.currentTextChanged.connect(self.change_algorithm)
         self.add_widgets_to_algorithm()
 
-        self.algorithm_choose.currentTextChanged.connect(self.change_algorithm)
         self.settings.image_changed.connect(self.image_changed)
         # self.setMinimumWidth(370)
 

@@ -37,10 +37,10 @@ from .batch_proceed import BatchProceed, BatchTask
 from .image_view import StackImageView
 from PartSeg.utils.mask.io_functions import SaveSegmentation, LoadSegmentation, load_dict, save_parameters_dict, \
     save_components_dict, save_segmentation_dict
-from .. import CONFIG_FOLDER as CONFIG_FOLDER_BASE
+from PartSeg.utils import state_store
 import PartSegData
 
-CONFIG_FOLDER = os.path.join(CONFIG_FOLDER_BASE, "mask")
+CONFIG_FOLDER = os.path.join(state_store.save_folder, "mask")
 
 
 class MainMenu(QWidget):
