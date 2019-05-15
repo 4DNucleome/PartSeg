@@ -131,7 +131,7 @@ class LoadSegmentation(LoadBase):
     def fix_parameters(profile: SegmentationProfile):
         if profile.algorithm == "Threshold" or profile.algorithm == "Auto Threshold":
             if isinstance(profile.values["smooth_border"], bool):
-                if profile.values["smooth_border"]:
+                if profile.values["smooth_border"] and "smooth_border_radius" in profile.values:
                     profile.values["smooth_border"] = \
                         {"name": "Opening", "values": {"smooth_border_radius": profile.values["smooth_border_radius"]}}
                 else:
