@@ -9,6 +9,7 @@ import numpy as np
 from tifffile import TiffFile
 
 from PartSeg.tiff_image import ImageReader
+from PartSeg.utils.universal_const import Units, UNIT_SCALE
 from ..algorithm_describe_base import Register
 from .analysis_utils import HistoryElement
 from .io_utils import ProjectTuple, MaskInfo
@@ -102,7 +103,7 @@ class LoadImage(LoadBase):
              range_changed: typing.Callable[[int, int], typing.Any] = None,
              step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
         if metadata is None:
-            metadata = {"default_spacing": [1, 1, 1]}
+            metadata = {"default_spacing": [1 / UNIT_SCALE[Units.nm.value] for _ in range(3)]}
         image = ImageReader.read_image(
             load_locations[0], callback_function=partial(proxy_callback, range_changed, step_changed),
             default_spacing=metadata["default_spacing"])
