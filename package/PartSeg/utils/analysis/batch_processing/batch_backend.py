@@ -20,7 +20,7 @@ from PartSeg.utils.analysis.load_functions import load_project
 from PartSeg.utils.analysis.analysis_utils import HistoryElement
 from PartSeg.utils.analysis.save_functions import save_dict
 from PartSeg.utils.mask_create import calculate_mask
-from PartSeg.utils.segmentation.algorithm_base import report_empty_fun
+from PartSeg.utils.segmentation.algorithm_base import report_empty_fun, SegmentationAlgorithm
 from PartSeg.tiff_image import ImageReader, Image
 
 
@@ -41,7 +41,7 @@ class CalculationProcess(object):
         self.mask_dict = dict()
         self.calculation = None
         self.statistics = []
-        self.image: Image = None
+        self.image: typing.Optional[Image] = None
         self.segmentation: typing.Optional[np.ndarray] = None
         self.full_segmentation: typing.Optional[np.ndarray] = None
         self.mask: typing.Optional[np.ndarray] = None
@@ -181,7 +181,11 @@ class CalculationProcess(object):
         elif isinstance(node.operation, StatisticCalculate):
             channel = node.operation.channel
             if channel == -1:
-                channel = self.algorithm_parameters["values"]["channel"]
+                segmentation_class: typing.Type[SegmentationAlgorithm] =\
+                    analysis_algorithm_dict.get(self.algorithm_parameters["name"], None)
+                if segmentation_class is None:
+                    raise ValueError(f"Segmentation class {self.algorithm_parameters['name']} do not found")
+                channel = self.algorithm_parameters["values"][segmentation_class.get_channel_parameter_name()]
 
             image_channel = self.image.get_channel(channel)
             statistics = \

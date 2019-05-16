@@ -46,7 +46,6 @@ class CustomParser(argparse.ArgumentParser):
         state_store.develop = args.develop
         state_store.save_suffix = args.save_suffix[0]
         state_store.save_folder = args.save_directory[0]
-        print(state_store.save_folder, state_store.save_suffix)
         if args.no_report and args.no_dialog:
             sentry_sdk.init("https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302")
         sys.excepthook = my_excepthook

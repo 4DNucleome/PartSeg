@@ -13,8 +13,6 @@ plugins_loaded = set()
 
 
 def register():
-    # print("plugins load", get_plugins())
-    print(plugins_loaded)
     for el in get_plugins():
         if hasattr(el, "register") and el.__name__ not in plugins_loaded:
             el.register()

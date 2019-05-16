@@ -1,5 +1,6 @@
 from abc import ABC
 
+from PartSeg.utils.channel_class import Channel
 from ..image_operations import gaussian, RadiusType
 from ..algorithm_describe_base import AlgorithmDescribeBase, SegmentationProfile
 from PartSeg.tiff_image import Image
@@ -76,10 +77,6 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         self.image = image
         self.channel = None
 
-    def set_exclude_mask(self, exclude_mask):
-        """For Stack Seg - designed for mask part of image - maybe use standardize it to mask"""
-        pass
-
     def set_parameters(self, *args, **kwargs):
         raise NotImplementedError()
 
@@ -89,3 +86,10 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
     @staticmethod
     def get_steps_num():
         return 0
+
+    @classmethod
+    def get_channel_parameter_name(cls):
+        for el in cls.get_fields():
+            if el.value_type == Channel:
+                return el.name
+        raise ValueError("No channel defined")
