@@ -167,7 +167,13 @@ class ImageReader(object):
             self.ranges = list(zip(ranges[::2], ranges[1::2]))
 
     def read_ome_metadata(self):
-        meta_data = self.image_file.ome_metadata['Image']["Pixels"]
+        if isinstance(self.image_file.ome_metadata, str):
+            if hasattr(tifffile, "xml2dict"):
+                meta_data = tifffile.xml2dict(self.image_file.ome_metadata)["OME"]['Image']["Pixels"]
+            else:
+                return
+        else:
+            meta_data = self.image_file.ome_metadata['Image']["Pixels"]
         try:
             self.spacing = [meta_data[f"PhysicalSize{x}"] *
                             name_to_scalar[meta_data[f"PhysicalSize{x}Unit"]] for x in ["Z", "Y", "X"]]

@@ -1,6 +1,6 @@
 from qtpy.QtWidgets import QFileDialog
 import typing
-from os.path import basename
+from os.path import basename, isfile, isdir
 from PartSeg.utils.io_utils import LoadBase
 
 
@@ -26,7 +26,12 @@ class CustomLoadDialog(QFileDialog):
             self.setHistory(history)
 
     def accept(self):
-        self.files_list.extend(self.selectedFiles())
+        selected_files = self.selectedFiles()
+        if len(selected_files) == 1 and self.fileMode != QFileDialog.Directory and isdir(selected_files[0]):
+            super().accept()
+            return
+
+        self.files_list.extend([x for x in self.selectedFiles()if self.fileMode == QFileDialog.Directory or isfile(x)])
         chosen_class: LoadBase = self.load_register[self.selectedNameFilter()]
         if len(self.files_list) < chosen_class.number_of_files():
             self.setNameFilters([chosen_class.get_name()])
