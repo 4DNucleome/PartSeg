@@ -134,9 +134,9 @@ class LoadSegmentation(LoadBase):
                 if profile.values["smooth_border"] and "smooth_border_radius" in profile.values:
                     profile.values["smooth_border"] = \
                         {"name": "Opening", "values": {"smooth_border_radius": profile.values["smooth_border_radius"]}}
+                    del profile.values["smooth_border_radius"]
                 else:
                     profile.values["smooth_border"] = {"name": "None", "values": {}}
-                del profile.values["smooth_border_radius"]
         return profile
 
     @classmethod

@@ -51,6 +51,14 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
     def single_channel():
         return True
 
+    @classmethod
+    def support_time(cls):
+        raise NotImplementedError()
+
+    @classmethod
+    def support_z(cls):
+        raise NotImplementedError()
+
     def set_mask(self, mask):
         self.mask = mask
 

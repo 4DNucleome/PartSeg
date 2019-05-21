@@ -44,6 +44,14 @@ class RestartableAlgorithm(SegmentationAlgorithm, ABC):
     def get_segmentation_profile(self) -> SegmentationProfile:
         return SegmentationProfile("", self.get_name(), deepcopy(self.new_parameters))
 
+    @classmethod
+    def support_time(cls):
+        return False
+
+    @classmethod
+    def support_z(cls):
+        return True
+
 
 class BorderRim(RestartableAlgorithm):
     @classmethod
@@ -66,7 +74,7 @@ class BorderRim(RestartableAlgorithm):
         self.units = units
 
     def get_segmentation_profile(self) -> SegmentationProfile:
-        return SegmentationProfile("", self.get_name(), {"distance": self.distance, "units":self.units})
+        return SegmentationProfile("", self.get_name(), {"distance": self.distance, "units": self.units})
 
     def get_info_text(self):
         if self.mask is None:
@@ -202,7 +210,7 @@ class OneThresholdAlgorithm(ThresholdBaseAlgorithm, ABC):
     def get_fields(cls):
         fields = super().get_fields()
         fields.insert(2, AlgorithmProperty("threshold", "Threshold", next(iter(threshold_dict.keys())),
-                                  possible_values=threshold_dict, property_type=AlgorithmDescribeBase))
+                                           possible_values=threshold_dict, property_type=AlgorithmDescribeBase))
         return fields
 
 
@@ -513,6 +521,6 @@ class UpperThresholdMultiScaleOpening(BaseMultiScaleOpening):
 
 
 final_algorithm_list = [LowerThresholdAlgorithm, UpperThresholdAlgorithm, RangeThresholdAlgorithm,
-                        LowerThresholdFlowAlgorithm, UpperThresholdFlowAlgorithm, # LowerThresholdMultiScaleOpening,
+                        LowerThresholdFlowAlgorithm, UpperThresholdFlowAlgorithm,  # LowerThresholdMultiScaleOpening,
                         # UpperThresholdMultiScaleOpening,
                         OtsuSegment, BorderRim]

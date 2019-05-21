@@ -25,6 +25,14 @@ class StackAlgorithm(SegmentationAlgorithm, ABC):
     def _clean(self):
         super()._clean()
 
+    @classmethod
+    def support_time(cls):
+        return False
+
+    @classmethod
+    def support_z(cls):
+        return True
+
 
 class ThresholdPreview(StackAlgorithm):
     @classmethod

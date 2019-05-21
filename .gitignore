@@ -471,3 +471,8 @@ package/PartSeg/utils/multiscale_opening/\.vscode/
 package/PartSeg/utils/multiscale_opening/\.vscode/
 /tutorials/tutorial-chromosome-1/tutorial-chromosome1.pdf
 !/package/tests/test_data/measurements_profile.json
+
+# eric6
+*.e4p
+*.e4q
+*.e6t
