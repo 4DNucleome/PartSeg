@@ -24,6 +24,7 @@ class SegmentationResult(NamedTuple):
     parameters: SegmentationProfile
     full_segmentation: Union[np.ndarray, None] = None
     cleaned_channel: Union[np.ndarray, None] = None
+    info_text: str = ""
 
 
 def report_empty_fun(_x, _y):

@@ -316,6 +316,8 @@ class Options(QWidget):
         widget.execute()
 
     def execution_done(self, segmentation: SegmentationResult):
+        if segmentation.info_text != "":
+            QMessageBox.information(self, "Algorithm info", segmentation.info_text)
         self._settings.segmentation = segmentation.segmentation
         self._settings.noise_remove_image_part = segmentation.cleaned_channel
         self._settings.full_segmentation = segmentation.full_segmentation

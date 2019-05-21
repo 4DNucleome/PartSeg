@@ -138,11 +138,23 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
                     restarted = True
             elif self.old_threshold_info != self.threshold_info:
                 restarted = True
+            if self.threshold_image.max() == 0:
+                return SegmentationResult(self.threshold_image.astype(np.uint8), self.get_segmentation_profile(),
+                                          self.segmentation, self.cleaned_image,
+                                          "Something wrong with chosen threshold. Please check it. "
+                                          "May be to low or to high. The channel bright range is "
+                                          f"{self.cleaned_image.min()}-{self.cleaned_image.max()} "
+                                          f"and chosen threshold is {self.threshold_info}")
         if restarted or self.new_parameters["side_connection"] != self.parameters["side_connection"]:
             self.parameters["side_connection"] = self.new_parameters["side_connection"]
             connect = sitk.ConnectedComponent(sitk.GetImageFromArray(self.threshold_image),
                                               not self.new_parameters["side_connection"])
             self.segmentation = sitk.GetArrayFromImage(sitk.RelabelComponent(connect))
+            seg_max = self.segmentation.max()
+            if seg_max < 2**8 - 5:
+                self.segmentation = self.segmentation.astype(np.uint8)
+            elif seg_max < 2**16 - 5:
+                self.segmentation = self.segmentation.astype(np.uint16)
             self._sizes_array = np.bincount(self.segmentation.flat)
             restarted = True
         if restarted or self.new_parameters["minimum_size"] != self.parameters["minimum_size"]:
@@ -152,6 +164,11 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             finally_segment = np.copy(self.segmentation)
             finally_segment[finally_segment > ind] = 0
             self.components_num = ind
+            if ind == 0:
+                return SegmentationResult(finally_segment, self.get_segmentation_profile(),
+                                          self.segmentation, self.cleaned_image,
+                                          "Please check the minimum size parameter. "
+                                          f"The biggest element has size {self._sizes_array[1]}")
             return SegmentationResult(finally_segment, self.get_segmentation_profile(),
                                       self.segmentation, self.cleaned_image)
 

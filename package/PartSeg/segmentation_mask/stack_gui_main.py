@@ -606,6 +606,8 @@ class AlgorithmOptions(QWidget):
         if segmentation.segmentation.max() == 0:
             QMessageBox.information(self, "No result", "Segmentation contains no component, check parameters, "
                                                        "especially chosen channel.")
+        if segmentation.info_text != "":
+            QMessageBox.information(self, "Algorithm info", segmentation.info_text)
         parameters_dict = defaultdict(lambda: deepcopy(segmentation.parameters))
         self.settings.set_segmentation(segmentation.segmentation, True, [], parameters_dict)
 
