@@ -1,9 +1,10 @@
 # Changelog 
 
-## In Develop
+## 0.9.2.3
  - refactor code to make easier create plugin for mask segmentation 
  - create class base updater for update outdated algorithm description
  - fix save functions
+ - fix different bugs 
 
 ## 0.9.2.2
  - extract static data to separated package
