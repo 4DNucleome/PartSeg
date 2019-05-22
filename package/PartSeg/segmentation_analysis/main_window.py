@@ -9,10 +9,8 @@ from qtpy.QtGui import QIcon, QKeyEvent, QKeySequence, QResizeEvent
 from qtpy.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
     QMessageBox, QCheckBox, QComboBox, QInputDialog, QDialog
 
-from PartSeg.common_gui.about_dialog import AboutDialog
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
-from PartSeg.common_gui.show_directory_dialog import DirectoryDialog
 from PartSeg.utils.analysis import ProjectTuple, algorithm_description, load_functions
 from PartSeg.utils.io_utils import WrongFileTypeException
 from ..common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, AlgorithmChoose
@@ -672,12 +670,6 @@ class MainWindow(BaseMainWindow):
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, 'ascii')))
         except KeyError:
             pass
-
-    def show_settings_directory(self):
-        DirectoryDialog(self.settings.json_folder_path, "Path to place where PartSeg store the data between runs").exec()
-
-    def show_about_dialog(self):
-        AboutDialog().exec()
 
     def image_read(self):
         self.raw_image.raw_image.set_image()

@@ -3,6 +3,8 @@ from qtpy.QtWidgets import QMainWindow, QMessageBox
 from qtpy.QtCore import Signal
 import os
 
+from PartSeg.common_gui.about_dialog import AboutDialog
+from PartSeg.common_gui.show_directory_dialog import DirectoryDialog
 from PartSeg.project_utils_qt.load_backup import import_config
 from .settings import BaseSettings
 
@@ -56,3 +58,9 @@ class BaseMainWindow(QMainWindow):
             QMessageBox.information(self, "To many files", "currently support only drag and drop one file")
             return
         self.read_drop(paths)
+
+    def show_settings_directory(self):
+        DirectoryDialog(self.settings.json_folder_path, "Path to place where PartSeg store the data between runs").exec()
+
+    def show_about_dialog(self):
+        AboutDialog().exec()

@@ -11,8 +11,10 @@ from qtpy.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMess
     QComboBox, QDoubleSpinBox, QSpinBox, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
     QTabWidget, QSizePolicy, QGridLayout
 
+from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
 from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
 from PartSeg.segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
+from PartSeg.utils.analysis import ProjectTuple
 from PartSeg.utils.io_utils import WrongFileTypeException
 from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox, AlgorithmChoose
 from ..common_gui.channel_control import ChannelControl
@@ -36,7 +38,7 @@ from PartSeg.tiff_image import ImageReader, Image
 from .batch_proceed import BatchProceed, BatchTask
 from .image_view import StackImageView
 from PartSeg.utils.mask.io_functions import SaveSegmentation, LoadSegmentation, load_dict, save_parameters_dict, \
-    save_components_dict, save_segmentation_dict
+    save_components_dict, save_segmentation_dict, SegmentationTuple
 from PartSeg.utils import state_store
 import PartSegData
 
@@ -739,6 +741,17 @@ class MainWindow(BaseMainWindow):
         icon = QIcon(os.path.join(PartSegData.icons_dir, "icon_stack.png"))
         self.setWindowIcon(icon)
 
+        menu_bar = self.menuBar()
+        file_menu = menu_bar.addMenu("File")
+        file_menu.addAction("&Open").triggered.connect(self.main_menu.load_image)
+        file_menu.addAction("&Save segmentation").triggered.connect(self.main_menu.save_segmentation)
+        file_menu.addAction("&Save components").triggered.connect(self.main_menu.save_result)
+        image_menu = menu_bar.addMenu("Image operations")
+        image_menu.addAction("Image adjustment").triggered.connect(self.image_adjust_exec)
+        help_menu = menu_bar.addMenu("Help")
+        help_menu.addAction("State directory").triggered.connect(self.show_settings_directory)
+        help_menu.addAction("About").triggered.connect(self.show_about_dialog)
+
         layout = QVBoxLayout()
         layout.addWidget(self.main_menu)
         sub_layout = QHBoxLayout()
@@ -792,3 +805,15 @@ class MainWindow(BaseMainWindow):
             dial.exec()
             if read_thread.image:
                 self.main_menu.set_image(read_thread.image)
+
+    def image_adjust_exec(self):
+        dial = ImageAdjustmentDialog(self.settings.image)
+        if dial.exec():
+            algorithm = dial.result_val.algorithm
+            dial2 = ExecuteFunctionDialog(algorithm.transform, [],
+                                          {"image": self.settings.image, "arguments": dial.result_val.values}
+                                          )
+            if dial2.exec():
+                result: Image = dial2.get_result()
+                self.settings.set_project_info(SegmentationTuple(result.file_path, result))
+        return
