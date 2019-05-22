@@ -158,11 +158,11 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             connect = sitk.ConnectedComponent(sitk.GetImageFromArray(self.threshold_image),
                                               not self.new_parameters["side_connection"])
             self.segmentation = sitk.GetArrayFromImage(sitk.RelabelComponent(connect))
-            seg_max = self.segmentation.max()
+            """seg_max = self.segmentation.max()
             if seg_max < 2**8 - 5:
                 self.segmentation = self.segmentation.astype(np.uint8)
             elif seg_max < 2**16 - 5:
-                self.segmentation = self.segmentation.astype(np.uint16)
+                self.segmentation = self.segmentation.astype(np.uint16)"""
             self._sizes_array = np.bincount(self.segmentation.flat)
             restarted = True
         if restarted or self.new_parameters["minimum_size"] != self.parameters["minimum_size"]:

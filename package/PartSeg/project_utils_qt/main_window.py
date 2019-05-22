@@ -51,7 +51,7 @@ class BaseMainWindow(QMainWindow):
 
     def dropEvent(self, event: QDropEvent):
         assert all([x.isLocalFile() for x in event.mimeData().urls()])
-        paths = [x.path() for x in event.mimeData().urls()]
+        paths = [x.toLocalFile() for x in event.mimeData().urls()]
         if self.files_num != -1 and len(paths) > self.files_num:
             QMessageBox.information(self, "To many files", "currently support only drag and drop one file")
             return
