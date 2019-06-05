@@ -24,7 +24,7 @@ def _generic_image_operation(image, radius, fun, layer):
         image = image.astype(np.uint8)
     if isinstance(radius, (list, tuple)):
         radius = list(reversed(radius))
-    if not layer:
+    if not layer or image.ndim == 2:
         return sitk.GetArrayFromImage(fun(sitk.GetImageFromArray(image), radius))
     else:
         res = np.copy(image)

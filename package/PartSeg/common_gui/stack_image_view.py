@@ -16,6 +16,7 @@ from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
     QSlider, QCheckBox, QComboBox
 from scipy.ndimage import gaussian_filter
 
+from PartSeg.utils.image_operations import gaussian
 from ..utils.color_image import color_image, add_labels
 from ..utils.color_image.color_image_base import color_maps
 from ..utils.colors import default_colors
@@ -432,7 +433,7 @@ class ImageView(QWidget):
                 borders[i] = p
         for i, (use, radius) in enumerate(self.channel_control.get_gauss()):
             if use and color_maps[i] is not None and radius > 0:
-                img[..., i] = gaussian_filter(img[..., i], radius)
+                img[..., i] = gaussian(img[..., i], radius)
         im = color_image(img, color_maps, borders)
         self.add_labels(im)
         self.add_mask(im)
