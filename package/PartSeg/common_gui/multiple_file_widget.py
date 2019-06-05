@@ -6,7 +6,7 @@ from qtpy.QtWidgets import QWidget, QPushButton, QTreeWidget, QGridLayout, QFile
     QTreeWidgetItem, QMessageBox, QApplication
 from qtpy.QtGui import QFontMetrics, QResizeEvent, QMouseEvent
 
-from qtpy.QtCore import Qt
+from qtpy.QtCore import Qt, QTimer, Slot
 from typing import Dict
 from collections import defaultdict, Counter
 
@@ -165,6 +165,9 @@ class MultipleFileWidget(QWidget):
         self.state_dict_count[state.file_path] += 1
 
     def forget(self):
+        if not self.forget_btn.isEnabled():
+            return 
+        self.forget_btn.setDisabled(True)
         item: QTreeWidgetItem = self.file_view.currentItem()
         if item is None:
             return
@@ -185,6 +188,11 @@ class MultipleFileWidget(QWidget):
             del self.state_dict_count[text]
             self.file_list.remove(text)
             self.file_view.takeTopLevelItem(index)
+        QTimer().singleShot(500, self.enable_forget)
+
+    @Slot()
+    def enable_forget(self):
+        self.forget_btn.setEnabled(True)
 
     def resizeEvent(self, event: QResizeEvent):
         metric = QFontMetrics(self.file_view.font())
