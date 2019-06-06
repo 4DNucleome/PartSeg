@@ -1,18 +1,165 @@
-from collections import defaultdict
 import math
-
-from qtpy.QtWidgets import QWidget, QCheckBox, QGridLayout, QLabel, QHBoxLayout, QComboBox, QDoubleSpinBox
-from qtpy.QtGui import QImage, QShowEvent, QPaintEvent, QPainter, QPen, QMouseEvent
-from qtpy.QtCore import Signal, Qt, QRect, QRectF, QPointF
-import numpy as np
 import typing
+from collections import defaultdict
+
+import numpy as np
+from qtpy.QtCore import Signal, Qt, QRect, QRectF, QPointF, QSize, QModelIndex, QEvent, QPoint
+from qtpy.QtGui import QImage, QShowEvent, QPaintEvent, QPainter, QPen, QMouseEvent, QColor, QPolygonF, \
+    QMoveEvent
+from qtpy.QtWidgets import QWidget, QCheckBox, QGridLayout, QLabel, QHBoxLayout, QComboBox, QDoubleSpinBox, QListView, \
+    QStyledItemDelegate, QStyleOptionViewItem, QStyle
+
 from .collapse_checkbox import CollapseCheckbox
 from .universal_gui_part import CustomSpinBox
-from ..utils.color_image import color_image
 from ..project_utils_qt.settings import ViewSettings
-
+from ..utils.color_image import color_image
 
 default_colors = ['BlackRed', 'BlackGreen', 'BlackBlue', 'BlackMagenta']
+
+image_dict = {}
+
+
+class ColorStyledDelegate(QStyledItemDelegate):
+    def __init__(self, base_height, **kwargs):
+        super().__init__(**kwargs)
+        self.base_height = base_height
+
+    def paint(self, painter: QPainter, style: QStyleOptionViewItem, model: QModelIndex):
+        if model.data() not in image_dict:
+            img = color_image(np.arange(0, 256).reshape((1, 256, 1)), [model.data()], [(0, 256)])
+            image_dict[model.data()] = QImage(img.data, 256, 1, img.dtype.itemsize * 256 * 3, QImage.Format_RGB888)
+        rect = QRect(style.rect.x(), style.rect.y() + 2, style.rect.width(), style.rect.height() - 4)
+        painter.drawImage(rect, image_dict[model.data()])
+        if int(style.state & QStyle.State_HasFocus):
+            painter.save()
+            pen = QPen()
+            pen.setWidth(5)
+            painter.setPen(pen)
+            painter.drawRect(rect)
+            painter.restore()
+
+    def sizeHint(self, style: QStyleOptionViewItem, model: QModelIndex):
+        res = super().sizeHint(style, model)
+        # print(res)
+        res.setHeight(self.base_height)
+        res.setWidth(max(500, res.width()))
+        return res
+
+
+class ColorComboBox(QComboBox):
+    triangle_width = 20
+
+    clicked = Signal()
+
+    def __init__(self, colors: typing.Dict[str, np.ndarray], color: str = "", base_height=50, lock=False, blur=False):
+        super().__init__()
+        self.check_box = QCheckBox()  # ColorCheckBox(parent=self)
+        self.lock = LockedInfoWidget(base_height - 10)
+        self.lock.setVisible(lock)
+        self.blur = BlurInfoWidget(base_height - 10)
+        self.blur.setVisible(blur)
+        self.colors = colors
+        self.addItems(list(self.colors.keys()))
+        if color:
+            self.color = color
+        else:
+            self.color = self.itemText(0)
+        self.setCurrentText(self.color)
+        self.currentTextChanged.connect(self.changeImage)
+        self.base_height = base_height
+        self.show_arrow = False
+        self.show_frame = False
+        view = QListView()
+        view.setMinimumWidth(200)
+        view.setItemDelegate(ColorStyledDelegate(self.base_height))
+        self.setView(view)
+
+        img = color_image(np.arange(0, 256).reshape((1, 256, 1)), [self.color], [(0, 256)])
+        self.image = QImage(img.data, 256, 1, img.dtype.itemsize * 256 * 3, QImage.Format_RGB888)
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(5, 0, 0, 0)
+        layout.addWidget(self.check_box)
+        layout.addWidget(self.lock)
+        layout.addWidget(self.blur)
+        layout.addStretch(1)
+
+        self.setLayout(layout)
+
+    def changeImage(self):
+        self.color = self.currentText()
+        if self.color not in image_dict:
+            img = color_image(np.arange(0, 256).reshape((1, 256, 1)), [self.color], [(0, 256)])
+            image_dict[self.color] = QImage(img.data, 256, 1, img.dtype.itemsize * 256 * 3, QImage.Format_RGB888)
+        self.image = image_dict[self.color]
+        self.show_arrow = False
+
+    def enterEvent(self, event: QEvent):
+        self.show_arrow = True
+
+    def moveEvent(self, event: QMoveEvent):
+        self.show_arrow = True
+
+    def leaveEvent(self, event: QEvent):
+        self.show_arrow = False
+
+    def paintEvent(self, event: QPaintEvent):
+        painter = QPainter(self)
+        painter.drawImage(self.rect(), self.image)
+        if self.show_frame:
+            painter.save()
+            pen = QPen()
+            pen.setWidth(7)
+            painter.setPen(pen)
+            painter.drawRect(self.rect())
+            painter.restore()
+        if self.show_arrow:
+            painter.save()
+            triangle = QPolygonF()
+            dist = 4
+            point1 = QPoint(self.width() - self.triangle_width, 0)
+            size = QSize(20, self.height() // 2)
+            rect = QRect(point1, size)
+            painter.fillRect(rect, QColor("white"))
+            triangle.append(point1 + QPoint(dist, dist))
+            triangle.append(point1 + QPoint(size.width() - dist, dist))
+            triangle.append(point1 + QPoint(size.width() // 2, size.height() - dist))
+            painter.setBrush(Qt.black)
+            painter.drawPolygon(triangle, Qt.WindingFill)
+            painter.restore()
+        # super().paintEvent(event)
+
+    def mousePressEvent(self, event: QMouseEvent):
+        if event.x() > self.width() - self.triangle_width:
+            super().mousePressEvent(event)
+        else:
+            self.clicked.emit()
+
+    def minimumSizeHint(self):
+        size: QSize = super().minimumSizeHint()
+        return QSize(size.width(), max(size.height(), self.base_height))
+
+    def is_checked(self):
+        return self.check_box.isChecked()
+
+    @property
+    def state_changed(self):
+        return self.check_box.stateChanged
+
+    @property
+    def set_lock(self):
+        return self.lock.setVisible
+
+    @property
+    def set_blur(self):
+        return self.blur.setVisible
+
+    def set_selection(self, val: bool):
+        self.show_frame = val
+        self.repaint()
+
+    def set_color(self, val: str):
+        self.setCurrentText(val)
 
 
 class ColorPreview(QWidget):
@@ -27,21 +174,20 @@ class ColorPreview(QWidget):
 
 
 class LockedInfoWidget(QWidget):
-    def __init__(self):
+    def __init__(self, size=25, margin=2):
         super().__init__()
-        self.setFixedWidth(25)
-        self.setFixedHeight(25)
+        self.margin = margin
+        self.setFixedWidth(size)
+        self.setFixedHeight(size)
 
     def paintEvent(self, a0: QPaintEvent) -> None:
-        margin = 2
-
         super().paintEvent(a0)
         painter = QPainter(self)
         painter.save()
         pen2 = QPen()
 
-        rect = QRectF(margin, self.height()/2, self.width()-margin*2, self.height()/2 - margin)
-        rect2 = QRectF(3*margin, 2*margin, self.width() - margin * 6, self.height())
+        rect = QRectF(self.margin, self.height() / 2, self.width() - self.margin * 2, self.height() / 2 - self.margin)
+        rect2 = QRectF(3 * self.margin, 2 * self.margin, self.width() - self.margin * 6, self.height())
 
         pen2.setWidth(6)
         painter.setPen(pen2)
@@ -55,27 +201,26 @@ class LockedInfoWidget(QWidget):
         pen2.setWidth(2)
         pen2.setColor(Qt.black)
         painter.setPen(pen2)
-        painter
         painter.drawRect(rect)
 
         painter.restore()
 
 
 class BlurInfoWidget(QWidget):
-    def __init__(self):
+    def __init__(self, size=25, margin=2):
         super().__init__()
-        self.setFixedWidth(25)
-        self.setFixedHeight(25)
+        self.margin = margin
+        self.setFixedWidth(size)
+        self.setFixedHeight(size)
 
     def paintEvent(self, a0: QPaintEvent) -> None:
-        margin = 2
+        self.margin = 2
 
         super().paintEvent(a0)
         painter = QPainter(self)
         painter.save()
 
-
-        rect = QRectF(margin, margin, self.width()-margin*2, self.height() -  2*margin)
+        rect = QRectF(self.margin, self.margin, self.width() - self.margin * 2, self.height() - 2 * self.margin)
         painter.setBrush(Qt.white)
         painter.setPen(Qt.white)
         painter.drawEllipse(rect)
@@ -85,12 +230,13 @@ class BlurInfoWidget(QWidget):
         pen = QPen()
         pen.setWidth(2)
         painter.setPen(pen)
-        mid_point = QPointF(a0.rect().width()/2, a0.rect().height()/2)
+        mid_point = QPointF(a0.rect().width() / 2, a0.rect().height() / 2)
         radius = min(a0.rect().height(), a0.rect().width()) / 3
         rays_num = 10
         for i in range(rays_num):
-            point = QPointF(math.sin(math.pi / (rays_num/2) * i) * radius, math.cos(math.pi / (rays_num/2) * i) * radius)
-            painter.drawLine(mid_point+(point*0.4), mid_point + point)
+            point = QPointF(math.sin(math.pi / (rays_num / 2) * i) * radius,
+                            math.cos(math.pi / (rays_num / 2) * i) * radius)
+            painter.drawLine(mid_point + (point * 0.4), mid_point + point)
         painter.restore()
 
 
@@ -115,18 +261,17 @@ class ChannelWidget(QWidget):
         layout.addWidget(self.gauss_info, 0)
         layout.addStretch(1)
         if tight:
-            layout.setContentsMargins(5,0,0,0)
+            layout.setContentsMargins(5, 0, 0, 0)
         else:
-            layout.setContentsMargins(5,1, 1, 1)
+            layout.setContentsMargins(5, 1, 1, 1)
             self.setMinimumHeight(30)
-        # layout.addWidget(QLabel("aa"), 1)
         img = color_image(np.arange(0, 256).reshape((1, 256, 1)), [self.color], [(0, 256)])
         self.image = QImage(img.data, 256, 1, img.dtype.itemsize * 256 * 3, QImage.Format_RGB888)
         self.setLayout(layout)
 
     def paintEvent(self, event: QPaintEvent):
         painter = QPainter(self)
-        if event.rect().top()  == 0 and event.rect().left() == 0:
+        if event.rect().top() == 0 and event.rect().left() == 0:
             rect = event.rect()
 
             painter.drawImage(rect, self.image)
@@ -141,7 +286,7 @@ class ChannelWidget(QWidget):
         else:
             length = self.rect().width()
             image_length = self.image.width()
-            scalar = image_length/length
+            scalar = image_length / length
             begin = int(event.rect().x() * scalar)
             width = int(event.rect().width() * scalar)
             image_cut = self.image.copy(begin, 0, width, 1)
@@ -174,7 +319,6 @@ class ChannelWidget(QWidget):
             self.gauss_info.setHidden(True)
         self.repaint()
 
-
     def set_inactive(self, val=True):
         self.active = not val
         self.repaint()
@@ -187,7 +331,6 @@ class ChannelWidget(QWidget):
 
     def mousePressEvent(self, a0: QMouseEvent):
         self.clicked.emit(self.id)
-        #print(self.color)
 
 
 class MyComboBox(QComboBox):
@@ -200,7 +343,7 @@ class MyComboBox(QComboBox):
 
 class ChannelChooseBase(QWidget):
     coloring_update = Signal(bool)  # gave info if it is new image
-    channel_change = Signal(int, bool) # TODO something better for remove error during load different z-sizes images
+    channel_change = Signal(int, bool)  # TODO something better for remove error during load different z-sizes images
 
     def __init__(self, settings: ViewSettings, parent=None, name="channelcontrol", text=""):
         super().__init__(parent)
@@ -210,10 +353,9 @@ class ChannelChooseBase(QWidget):
         self.text = text
         self.image = None
 
-
         self.channels_widgets = []
         self.channels_layout = QHBoxLayout()
-        self.channels_layout.setContentsMargins(0,0,0,0)
+        self.channels_layout.setContentsMargins(0, 0, 0, 0)
 
     def lock_channel(self, value):
         self.channels_widgets[self.current_channel].set_locked(value)
@@ -415,7 +557,7 @@ class ChannelControl(ChannelChooseBase):
         for i in range(channels_num):
             self.channels_widgets.append(
                 ChannelWidget(i, self._settings.get_from_profile(
-                              f"{self._name}.cmap{i}",default_colors[i % len(default_colors)]),
+                    f"{self._name}.cmap{i}", default_colors[i % len(default_colors)]),
                               locked=self._settings.get_from_profile(f"{self._name}.lock_{i}", False),
                               gauss=self._settings.get_from_profile(f"{self._name}.use_gauss_{i}", False)))
             self.channels_widgets[-1].chosen.setChecked(is_checked[i])
@@ -482,13 +624,14 @@ class ChannelControl(ChannelChooseBase):
         self.coloring_update.emit(False)
 
     def showEvent(self, event: QShowEvent):
-        pass # self.update_channels_list()
+        pass  # self.update_channels_list()
 
 
 class ChannelChoose(ChannelChooseBase):
     """
     Only chose which channels are visible
     """
+
     def __init__(self, settings: ViewSettings, main_channel_control: ChannelControl, parent=None,
                  name="channelchoose", text=""):
         super().__init__(settings, parent, name, text)
@@ -562,7 +705,6 @@ class ChannelChoose(ChannelChooseBase):
         self.channels_widgets[chanel_id].set_active()
         self.image = self.channels_widgets[chanel_id].image
         self.channel_change.emit(chanel_id, False)
-
 
     def active_channel(self, index):
         return self.channels_widgets[index].chosen.isChecked()

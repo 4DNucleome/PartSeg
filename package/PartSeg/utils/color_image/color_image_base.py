@@ -1,11 +1,13 @@
 import sys
-import PartSegData
-
-import numpy as np
 import typing
+
+import PartSegData
+import numpy as np
+
 from .color_image import color_grayscale
 
 color_maps = np.load(PartSegData.colors_file)
+
 
 def color_chanel(cmap, chanel, max_val, min_val):
     cmap0 = cmap[:, 0]
@@ -13,7 +15,7 @@ def color_chanel(cmap, chanel, max_val, min_val):
     cmap2 = cmap[:, 2]
     range_val = max_val - min_val
     norm_factor = range_val / 255.0
-    temp_image = np.zeros(chanel.shape+(3,), dtype=np.uint8)
+    temp_image = np.zeros(chanel.shape + (3,), dtype=np.uint8)
 
     def _norm_array0(x):
         return cmap0[x]
@@ -35,16 +37,17 @@ def color_chanel(cmap, chanel, max_val, min_val):
 
 
 def color_image(image: np.ndarray, colors: typing.List[str], min_max: typing.List[typing.Tuple]) -> np.ndarray:
-    color_maps_local = [color_maps[x] if x is not None else None for x in colors]
+    color_maps_local = [color_maps[x] if isinstance(x, str) else x for x in colors]
     new_shape = image.shape[:-1] + (3,)
 
-    result_images = [] # = np.zeros(new_shape, dtype=np.uint8)
+    result_images = []  # = np.zeros(new_shape, dtype=np.uint8)
     for i, cmap in enumerate(color_maps_local):
         if cmap is None:
             continue
-        min_val, max_val = min_max[i] # min_max_calc_int(image[..., i])
-        #chanel = (image[..., i] - min_val) / ((max_val - min_val) / 255)
-        #chanel = chanel.astype(np.uint8)
+        assert isinstance(cmap, np.ndarray) and cmap.shape == (1024, 3)
+        min_val, max_val = min_max[i]  # min_max_calc_int(image[..., i])
+        # chanel = (image[..., i] - min_val) / ((max_val - min_val) / 255)
+        # chanel = chanel.astype(np.uint8)
         try:
             result_images.append([color_grayscale(cmap, image[..., i], min_val, max_val)])
         except TypeError as e:
@@ -59,4 +62,4 @@ def color_image(image: np.ndarray, colors: typing.List[str], min_max: typing.Lis
 
             return np.vstack(result_images).max(axis=0)
     else:
-         return np.zeros(new_shape, dtype=np.uint8)
+        return np.zeros(new_shape, dtype=np.uint8)

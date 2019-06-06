@@ -6,8 +6,6 @@ from qtpy.QtGui import QPolygonF, QPainter
 from qtpy.QtWidgets import QCheckBox, QWidget
 
 
-
-
 class CollapseCheckbox(QCheckBox):
     """
     :type hide_list: typing.List[QWidget]
@@ -35,7 +33,7 @@ class CollapseCheckbox(QCheckBox):
         rect = event.rect()
         mid = rect.y() + rect.height()/2
         line_begin = QPointF(rect.height() + 5, mid)
-        line_end = QPointF(rect.width() + rect.x() -5, mid)
+        line_end = QPointF(rect.width() + rect.x() - 5, mid)
         triangle = QPolygonF()
         side_length = rect.height() - 2 * border_distance
         triangle_height = side_length * sqrt(3) / 2
