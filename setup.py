@@ -64,6 +64,7 @@ def find_version(*file_paths):
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
 
+
 def readme():
     this_directory = os.path.abspath(os.path.dirname(__file__))
     reg = re.compile(r'(!\[[^]]*\])\((images/[^)]*)\)')
@@ -73,6 +74,7 @@ def readme():
         text = reg.sub(r'\1(https://raw.githubusercontent.com/4DNucleome/PartSeg/master/\2)', text)
         text = reg2.sub(f"PartSeg-{find_version('package', 'PartSeg', '__init__.py')}", text)
         return text
+
 
 try:
     import PySide2
@@ -90,7 +92,7 @@ setuptools.setup(
     description="PartSeg is python GUI for bio imaging analysis",
     url="https://4dnucleome.cent.uw.edu.pl/PartSeg/",
     packages=setuptools.find_packages('./package'),
-    package_dir = {'': 'package'},
+    package_dir={'': 'package'},
     include_package_data=True,
     long_description=readme(),
     long_description_content_type='text/markdown',
@@ -98,6 +100,7 @@ setuptools.setup(
     install_requires=['numpy', tifffile_string, 'appdirs', 'SimpleITK', 'scipy', 'QtPy', 'sentry_sdk', qt_string,
                       'deprecation', 'qtawesome', 'six', 'h5py', 'pandas', 'sympy', 'Cython', 'openpyxl', 'xlrd',
                       'PartSegData'],
+    tests_require=["pytest", "pytest-qt"],
     entry_points={
         'console_scripts': [
             'PartSeg = PartSeg.launcher_main:main',

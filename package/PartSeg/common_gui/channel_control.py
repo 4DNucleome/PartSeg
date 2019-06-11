@@ -1,6 +1,7 @@
 import math
 import typing
 from collections import defaultdict
+from functools import partial
 
 import numpy as np
 from qtpy.QtCore import Signal, Qt, QRect, QRectF, QPointF, QSize, QModelIndex, QEvent, QPoint
@@ -49,17 +50,19 @@ class ColorStyledDelegate(QStyledItemDelegate):
 class ColorComboBox(QComboBox):
     triangle_width = 20
 
-    clicked = Signal()
+    clicked = Signal(int)
+    channel_visible_changed = Signal(int, bool)
 
-    def __init__(self, colors: typing.Dict[str, np.ndarray], color: str = "", base_height=50, lock=False, blur=False):
+    def __init__(self, id: int, colors: typing.List[str], color: str = "", base_height=50, lock=False, blur=False):
         super().__init__()
+        self.id = id
         self.check_box = QCheckBox()  # ColorCheckBox(parent=self)
         self.lock = LockedInfoWidget(base_height - 10)
         self.lock.setVisible(lock)
         self.blur = BlurInfoWidget(base_height - 10)
         self.blur.setVisible(blur)
         self.colors = colors
-        self.addItems(list(self.colors.keys()))
+        self.addItems(self.colors)
         if color:
             self.color = color
         else:
@@ -85,6 +88,7 @@ class ColorComboBox(QComboBox):
         layout.addStretch(1)
 
         self.setLayout(layout)
+        self.check_box.stateChanged.connect(partial(self.channel_visible_changed.emit, self.id))
 
     def changeImage(self):
         self.color = self.currentText()
@@ -96,11 +100,16 @@ class ColorComboBox(QComboBox):
 
     def enterEvent(self, event: QEvent):
         self.show_arrow = True
+        self.repaint()
 
     def moveEvent(self, event: QMoveEvent):
         self.show_arrow = True
 
     def leaveEvent(self, event: QEvent):
+        self.show_arrow = False
+        self.repaint()
+
+    def showEvent(self, _event: QShowEvent):
         self.show_arrow = False
 
     def paintEvent(self, event: QPaintEvent):
@@ -133,7 +142,7 @@ class ColorComboBox(QComboBox):
         if event.x() > self.width() - self.triangle_width:
             super().mousePressEvent(event)
         else:
-            self.clicked.emit()
+            self.clicked.emit(self.id)
 
     def minimumSizeHint(self):
         size: QSize = super().minimumSizeHint()
@@ -143,10 +152,6 @@ class ColorComboBox(QComboBox):
         return self.check_box.isChecked()
 
     @property
-    def state_changed(self):
-        return self.check_box.stateChanged
-
-    @property
     def set_lock(self):
         return self.lock.setVisible
 
@@ -154,12 +159,67 @@ class ColorComboBox(QComboBox):
     def set_blur(self):
         return self.blur.setVisible
 
+    @property
+    def colormap_changed(self):
+        return self.currentTextChanged
+
     def set_selection(self, val: bool):
         self.show_frame = val
         self.repaint()
 
     def set_color(self, val: str):
         self.setCurrentText(val)
+
+
+class ColorComboBoxGroup(QWidget):
+    def __init__(self, settings: ViewSettings, name: str, height=40):
+        super().__init__()
+        self.name = name
+        self.height = height
+        self.settings = settings
+        self.active_box = 0
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+
+    def update_channels(self):
+        self.set_channels(self.settings.channels)
+
+    def test(self):
+        pass
+
+    def set_channels(self, num):
+        if num >= self.layout().count():
+            for i in range(self.layout().count(), num):
+                el = ColorComboBox(i, self.settings.chosen_colormap,
+                                   self.settings.get_from_profile(
+                                       f"{self.name}.cmap{i}", default_colors[i % len(default_colors)]),
+                                   base_height=self.height,
+                                   lock=self.settings.get_from_profile(f"{self.name}.lock_{i}", False),
+                                   blur=self.settings.get_from_profile(f"{self.name}.use_gauss_{i}", False)
+                                   )
+                el.clicked.connect(self.set_active)
+                el.channel_visible_changed.connect(self.test)
+                self.layout().addWidget(el)
+        else:
+            for i in range(self.layout().count() - num):
+                el = self.layout().takeAt(num).widget()
+                el.colormap_changed.disconnect()
+                el.clicked.disconnect()
+                el.channel_visible_changed.disconnect()
+        if num <= self.active_box:
+            self.set_active(num - 1)
+
+    def set_active(self, pos: int):
+        self.active_box = pos
+        for i in range(self.layout().count()):
+            el = self.layout().itemAt(i).widget()
+            if i == self.active_box:
+                el.show_frame = True
+            else:
+                el.show_frame = False
+        self.repaint()
+
 
 
 class ColorPreview(QWidget):
