@@ -41,6 +41,15 @@ def gaussian(image, radius, layer=True):
     return _generic_image_operation(image, radius, sitk.DiscreteGaussian, layer)
 
 
+def median(image, radius, layer=True):
+    """
+    :param image: image to apply gaussian filter
+    :param radius: radius for gaussian kernel
+    :return:
+    """
+    return _generic_image_operation(image, radius, sitk.Median, layer)
+
+
 def dilate(image, radius, layer=True):
     """
     :param image: image to apply gaussian filter

@@ -3,7 +3,7 @@ from abc import ABC
 from enum import Enum
 import numpy as np
 
-from ..image_operations import gaussian
+from ..image_operations import gaussian, median
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
 from ..class_generator import enum_register
 
@@ -72,4 +72,22 @@ def calculate_operation_radius(radius, spacing, gauss_type):
     return radius
 
 
-noise_removal_dict = Register(NoneNoiseFiltering, GaussNoiseFiltering, class_methods=["noise_remove"])
+class MedianNoiseFiltering(NoiseFilteringBase):
+    @classmethod
+    def get_name(cls):
+        return "Median"
+
+    @classmethod
+    def get_fields(cls):
+        return [AlgorithmProperty("dimension_type", "Median type", GaussType.Layer),
+                AlgorithmProperty("radius", "Median radius", 1.0, property_type=float)]
+
+    @classmethod
+    def noise_remove(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: dict):
+        gauss_radius = calculate_operation_radius(arguments["radius"], spacing, arguments["apply_type"])
+        layer = arguments["apply_type"] == GaussType.Layer
+        return median(channel, gauss_radius, layer=layer)
+
+
+noise_removal_dict = Register(NoneNoiseFiltering, GaussNoiseFiltering, MedianNoiseFiltering,
+                              class_methods=["noise_remove"])
