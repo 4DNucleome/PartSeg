@@ -215,6 +215,9 @@ class CalculationTree:
         self.operation = operation
         self.children = children
 
+    def __str__(self):
+        return  f"{self.operation}:\n[{'n'.join([str(x) for x in self.children])}]"
+
 
 class NodeType(Enum):
     segment = 1
@@ -301,6 +304,9 @@ class CalculationPlan(object):
         self.current_pos = []
         self.changes = []
         self.current_node = None
+
+    def __str__(self):
+        return f"CalculationPlan<{self.name}>\n{self.execution_tree}"
 
     def get_statistics(self, node=None):
         """

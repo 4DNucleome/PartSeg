@@ -9,6 +9,7 @@ import numpy as np
 from tifffile import TiffFile
 
 from PartSeg.tiff_image import ImageReader
+from PartSeg.utils.analysis.calculation_plan import CalculationPlan, CalculationTree
 from PartSeg.utils.universal_const import Units, UNIT_SCALE
 from ..algorithm_describe_base import Register
 from .analysis_utils import HistoryElement
@@ -185,6 +186,24 @@ class LoadMask(LoadBase):
 class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
     json_hook = part_hook
 
+    @classmethod
+    def update_calculation_tree(cls, data: CalculationTree):
+        data.operation = cls.recursive_update(data.operation)
+        data.children = [cls.update_calculation_tree(x) for x in data.children]
+        return data
+
+    @classmethod
+    def update_calculation_plan(cls, data: CalculationPlan):
+        data.execution_tree = cls.update_calculation_tree(data.execution_tree)
+        return data
+
+    @classmethod
+    def recursive_update(cls, data):
+        if isinstance(data, CalculationPlan):
+            return cls.update_calculation_plan(data)
+        if isinstance(data, CalculationTree):
+            return cls.update_calculation_tree(data)
+        return super().recursive_update(data)
 
 def load_metadata(data: typing.Union[str, Path]):
     """

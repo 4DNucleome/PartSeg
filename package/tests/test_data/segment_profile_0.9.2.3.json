@@ -1,0 +1,47 @@
+{
+  "test_0.9.2.3": {
+    "__SegmentationProfile__": true,
+    "name": "test_0.9.2.3",
+    "algorithm": "Lower threshold flow",
+    "values": {
+      "channel": 1,
+      "noise_removal": {
+        "name": "Gauss",
+        "values": {
+          "gauss_type": {
+            "__Enum__": true,
+            "__subtype__": "PartSeg.utils.segmentation.noise_filtering.GaussType",
+            "value": 1
+          },
+          "radius": 1.0
+        }
+      },
+      "threshold": {
+        "name": "Base/Core",
+        "values": {
+          "core_threshold": {
+            "name": "Manual",
+            "values": {
+              "threshold": 19500
+            }
+          },
+          "base_threshold": {
+            "name": "Manual",
+            "values": {
+              "threshold": 11500
+            }
+          }
+        }
+      },
+      "sprawl_type": {
+        "name": "MultiScale Opening sprawl",
+        "values": {
+          "step_limits": 100,
+          "reflective": false
+        }
+      },
+      "minimum_size": 800,
+      "side_connection": false
+    }
+  }
+}

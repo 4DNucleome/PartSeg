@@ -8,7 +8,7 @@ from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, 
 from ..class_generator import enum_register
 
 
-class GaussType(Enum):
+class DimensionType(Enum):
     Layer = 1
     Stack = 2
 
@@ -21,12 +21,12 @@ try:
     reloading
 except NameError:
     reloading = False  # means the module is being imported
-    enum_register.register_class(GaussType)
+    enum_register.register_class(DimensionType, old_name="GaussType")
 
 
 class NoiseFilteringBase(AlgorithmDescribeBase, ABC):
     @classmethod
-    def noise_remove(cls, chanel: np.ndarray, spacing: typing.Iterable[float], arguments: dict) -> np.ndarray:
+    def noise_filter(cls, chanel: np.ndarray, spacing: typing.Iterable[float], arguments: dict) -> np.ndarray:
         raise NotImplementedError()
 
 
@@ -40,7 +40,7 @@ class NoneNoiseFiltering(NoiseFilteringBase):
         return []
 
     @classmethod
-    def noise_remove(cls, chanel: np.ndarray, spacing: typing.Iterable[float], arguments: dict):
+    def noise_filter(cls, chanel: np.ndarray, spacing: typing.Iterable[float], arguments: dict):
         return chanel
 
 
@@ -51,18 +51,18 @@ class GaussNoiseFiltering(NoiseFilteringBase):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("gauss_type", "Gauss type", GaussType.Layer),
+        return [AlgorithmProperty("dimension_type", "Gauss type", DimensionType.Layer),
                 AlgorithmProperty("radius", "Gauss radius", 1.0, property_type=float)]
 
     @classmethod
-    def noise_remove(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: dict):
-        gauss_radius = calculate_operation_radius(arguments["radius"], spacing, arguments["gauss_type"])
-        layer = arguments["gauss_type"] == GaussType.Layer
+    def noise_filter(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: dict):
+        gauss_radius = calculate_operation_radius(arguments["radius"], spacing, arguments["dimension_type"])
+        layer = arguments["dimension_type"] == DimensionType.Layer
         return gaussian(channel, gauss_radius, layer=layer)
 
 
 def calculate_operation_radius(radius, spacing, gauss_type):
-    if gauss_type == GaussType.Layer:
+    if gauss_type == DimensionType.Layer:
         if len(spacing) == 3:
             spacing = spacing[1:]
     base = min(spacing)
@@ -79,15 +79,15 @@ class MedianNoiseFiltering(NoiseFilteringBase):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("dimension_type", "Median type", GaussType.Layer),
+        return [AlgorithmProperty("dimension_type", "Median type", DimensionType.Layer),
                 AlgorithmProperty("radius", "Median radius", 1.0, property_type=float)]
 
     @classmethod
-    def noise_remove(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: dict):
-        gauss_radius = calculate_operation_radius(arguments["radius"], spacing, arguments["apply_type"])
-        layer = arguments["apply_type"] == GaussType.Layer
+    def noise_filter(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: dict):
+        gauss_radius = calculate_operation_radius(arguments["radius"], spacing, arguments["dimension_type"])
+        layer = arguments["dimension_type"] == DimensionType.Layer
         return median(channel, gauss_radius, layer=layer)
 
 
-noise_removal_dict = Register(NoneNoiseFiltering, GaussNoiseFiltering, MedianNoiseFiltering,
-                              class_methods=["noise_remove"])
+noise_filtering_dict = Register(NoneNoiseFiltering, GaussNoiseFiltering, MedianNoiseFiltering,
+                                class_methods=["noise_filter"])

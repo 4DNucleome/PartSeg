@@ -15,11 +15,13 @@ import PartSegData
 from PartSeg.tiff_image import ImageReader, Image
 from PartSeg.utils import Units, UNIT_SCALE
 from PartSeg.utils.analysis import ProjectTuple
+from PartSeg.utils.analysis.load_functions import UpdateLoadedMetadataAnalysis
 from PartSeg.utils.analysis.save_functions import SaveCmap, SaveXYZ, SaveProject, SaveAsTiff, SaveAsNumpy, \
     SaveSegmentationAsNumpy
 from PartSeg.utils.analysis.save_hooks import PartEncoder, part_hook
+from PartSeg.utils.io_utils import UpdateLoadedMetadataBase
 from PartSeg.utils.json_hooks import check_loaded_dict
-from PartSeg.utils.segmentation.noise_filtering import GaussType
+from PartSeg.utils.segmentation.noise_filtering import DimensionType
 from PartSeg.utils.class_generator import enum_register
 from PartSeg.utils.mask.io_functions import LoadSegmentation, SaveSegmentation, LoadSegmentationImage, save_components
 
@@ -137,8 +139,8 @@ class TestJsonLoad:
 
     def test_json_dump(self):
         with pytest.raises(TypeError):
-            json.dumps(GaussType.Layer)
-        data_string = json.dumps(GaussType.Layer, cls=PartEncoder)
+            json.dumps(DimensionType.Layer)
+        data_string = json.dumps(DimensionType.Layer, cls=PartEncoder)
         assert re.search('"__Enum__":[^,}]+[,}]', data_string) is not None
         assert re.search('"__subtype__":[^,}]+[,}]', data_string) is not None
         assert re.search('"value":[^,}]+[,}]', data_string) is not None
@@ -156,6 +158,16 @@ class TestJsonLoad:
 
         enum_register.register_class(Test)
         assert isinstance(json.loads(test_json, object_hook=part_hook), Test)
+
+    def test_modernize_0_9_2_3(self):
+        file_path = os.path.join(os.path.dirname(__file__), "test_data", "segment_profile_0.9.2.3.json")
+        data = UpdateLoadedMetadataBase.load_json_data(file_path)
+        assert "noise_filtering" in data["test_0.9.2.3"].values
+        assert "dimension_type" in data["test_0.9.2.3"].values["noise_filtering"]["values"]
+        file_path = os.path.join(os.path.dirname(__file__), "test_data", "calculation_plan_0.9.2.3.json")
+        data = UpdateLoadedMetadataAnalysis.load_json_data(file_path)
+        print(data["test_0.9.2.3"])
+
 
 
 class TestSegmentationMask:

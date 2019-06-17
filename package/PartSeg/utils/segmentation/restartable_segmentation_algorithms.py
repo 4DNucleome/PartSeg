@@ -11,7 +11,7 @@ from ..border_rim import border_mask
 from ..channel_class import Channel
 from .algorithm_base import SegmentationAlgorithm, SegmentationResult
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
-from .noise_filtering import noise_removal_dict
+from .noise_filtering import noise_filtering_dict
 from .sprawl import sprawl_dict, BaseSprawl, calculate_distances_array, get_neigh
 from .threshold import threshold_dict, BaseThreshold, double_threshold_dict
 from ..universal_const import Units
@@ -100,8 +100,8 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
     def get_fields(cls):
         # TODO coś z noise removal zrobić
         return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
-                AlgorithmProperty("noise_removal", "Filter", next(iter(noise_removal_dict.keys())),
-                                  possible_values=noise_removal_dict, property_type=AlgorithmDescribeBase),
+                AlgorithmProperty("noise_filtering", "Filter", next(iter(noise_filtering_dict.keys())),
+                                  possible_values=noise_filtering_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("minimum_size", "Minimum size (px)", 8000, (0, 10 ** 6), 1000),
                 AlgorithmProperty("side_connection", "Connect only sides", False, (True, False),
                                   tool_tip="During calculation of connected components includes"
@@ -132,11 +132,11 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             self.parameters["channel"] = self.new_parameters["channel"]
             self.channel = self.get_channel(self.new_parameters["channel"])
             restarted = True
-        if restarted or self.parameters["noise_removal"] != self.new_parameters["noise_removal"]:
-            self.parameters["noise_removal"] = deepcopy(self.new_parameters["noise_removal"])
-            noise_removal_parameters = self.new_parameters["noise_removal"]
-            self.cleaned_image = noise_removal_dict[noise_removal_parameters["name"]]. \
-                noise_remove(self.channel, self.image.spacing, noise_removal_parameters["values"])
+        if restarted or self.parameters["noise_filtering"] != self.new_parameters["noise_filtering"]:
+            self.parameters["noise_filtering"] = deepcopy(self.new_parameters["noise_filtering"])
+            noise_filtering_parameters = self.new_parameters["noise_filtering"]
+            self.cleaned_image = noise_filtering_dict[noise_filtering_parameters["name"]]. \
+                noise_filter(self.channel, self.image.spacing, noise_filtering_parameters["values"])
             restarted = True
         if restarted or self.new_parameters["threshold"] != self.parameters["threshold"]:
             self.parameters["threshold"] = deepcopy(self.new_parameters["threshold"])
@@ -194,11 +194,11 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         self.threshold_info = thr_val
         return mask
 
-    def _set_parameters(self, channel, threshold, minimum_size, noise_removal, side_connection):
+    def _set_parameters(self, channel, threshold, minimum_size, noise_filtering, side_connection):
         self.new_parameters["channel"] = channel
         self.new_parameters["threshold"] = threshold
         self.new_parameters["minimum_size"] = minimum_size
-        self.new_parameters["noise_removal"] = noise_removal
+        self.new_parameters["noise_filtering"] = noise_filtering
         self.new_parameters["side_connection"] = side_connection
 
 
@@ -358,8 +358,8 @@ class OtsuSegment(RestartableAlgorithm):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
-                AlgorithmProperty("noise_removal", "Noise Removal", next(iter(noise_removal_dict.keys())),
-                                  possible_values=noise_removal_dict, property_type=AlgorithmDescribeBase),
+                AlgorithmProperty("noise_filtering", "Noise Removal", next(iter(noise_filtering_dict.keys())),
+                                  possible_values=noise_filtering_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("components", "Number of Components", 2, (0, 100)),
                 # AlgorithmProperty("mask", "Use mask in calculation", True),
                 AlgorithmProperty("valley", "Valley emphasis", True),
@@ -370,19 +370,19 @@ class OtsuSegment(RestartableAlgorithm):
         self._sizes_array = []
         self.threshold_info = []
 
-    def set_parameters(self, channel, noise_removal, components, valley, hist_num):  # mask
+    def set_parameters(self, channel, noise_filtering, components, valley, hist_num):  # mask
         self.new_parameters["components"] = components
         # self.new_parameters["mask"] = mask
         self.new_parameters["hist_num"] = hist_num
         self.new_parameters["channel"] = channel
         self.new_parameters["valley"] = valley
-        self.new_parameters["noise_removal"] = noise_removal
+        self.new_parameters["noise_filtering"] = noise_filtering
 
     def calculation_run(self, report_fun):
         channel = self.get_channel(self.new_parameters["channel"])
-        noise_removal_parameters = self.new_parameters["noise_removal"]
-        cleaned_image = noise_removal_dict[noise_removal_parameters["name"]]. \
-            noise_remove(channel, self.image.spacing, noise_removal_parameters["values"])
+        noise_filtering_parameters = self.new_parameters["noise_filtering"]
+        cleaned_image = noise_filtering_dict[noise_filtering_parameters["name"]]. \
+            noise_filter(channel, self.image.spacing, noise_filtering_parameters["values"])
         cleaned_image_sitk = sitk.GetImageFromArray(cleaned_image)
         res = sitk.OtsuMultipleThresholds(cleaned_image_sitk, self.new_parameters["components"], 0,
                                           self.new_parameters["hist_num"], self.new_parameters["valley"])

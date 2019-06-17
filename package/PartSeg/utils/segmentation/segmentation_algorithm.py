@@ -12,7 +12,7 @@ from ..segmentation.algorithm_base import SegmentationAlgorithm, SegmentationRes
 from ..convex_fill import convex_fill
 from ..image_operations import RadiusType
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
-from .noise_filtering import noise_removal_dict
+from .noise_filtering import noise_filtering_dict
 from .threshold import threshold_dict, BaseThreshold
 from .segment import close_small_holes
 
@@ -39,8 +39,8 @@ class ThresholdPreview(StackAlgorithm):
     def get_fields(cls):
         return [
                 AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
-                AlgorithmProperty("noise_removal", "Filter", next(iter(noise_removal_dict.keys())),
-                                  possible_values=noise_removal_dict, property_type=AlgorithmDescribeBase),
+                AlgorithmProperty("noise_filtering", "Filter", next(iter(noise_filtering_dict.keys())),
+                                  possible_values=noise_filtering_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("threshold", "Threshold", 1000, (0, 10 ** 6), 100)]
 
     @classmethod
@@ -49,13 +49,13 @@ class ThresholdPreview(StackAlgorithm):
 
     def __init__(self):
         super(ThresholdPreview, self).__init__()
-        self.noise_removal = None
+        self.noise_filtering = None
         self.threshold = 0
 
     def calculation_run(self, report_fun) -> SegmentationResult:
         self.channel = self.get_channel(self.channel_num)
-        image = noise_removal_dict[self.noise_removal["name"]].noise_remove(self.channel, self.image.spacing,
-                                                                            self.noise_removal["values"])
+        image = noise_filtering_dict[self.noise_filtering["name"]].noise_filter(self.channel, self.image.spacing,
+                                                                                self.noise_filtering["values"])
         res = (image > self.threshold).astype(np.uint8)
         if self.mask is not None:
             res[self.mask == 0] = 0
@@ -63,25 +63,25 @@ class ThresholdPreview(StackAlgorithm):
         self.channel = None
         return SegmentationResult(res, self.get_segmentation_profile(), res, cleaned_channel=self.channel)
 
-    def set_parameters(self, channel, threshold, noise_removal):
+    def set_parameters(self, channel, threshold, noise_filtering):
         self.channel_num = channel
         self.threshold = threshold
-        self.noise_removal = noise_removal
+        self.noise_filtering = noise_filtering
 
     def get_info_text(self):
         return ""
 
     def get_segmentation_profile(self) -> SegmentationProfile:
         return SegmentationProfile("", self.get_name(), {'channel': self.channel_num, "threshold": self.threshold,
-                                                         'noise_removal': self.noise_removal})
+                                                         'noise_filtering': self.noise_filtering})
 
 
 class BaseThresholdAlgorithm(StackAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
-                AlgorithmProperty("noise_removal", "Filter", next(iter(noise_removal_dict.keys())),
-                                  possible_values=noise_removal_dict, property_type=AlgorithmDescribeBase),
+                AlgorithmProperty("noise_filtering", "Filter", next(iter(noise_filtering_dict.keys())),
+                                  possible_values=noise_filtering_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("threshold", "Threshold", next(iter(threshold_dict.keys())),
                                   possible_values=threshold_dict, property_type=AlgorithmDescribeBase),
 
@@ -100,7 +100,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
         self.threshold = None
         self.minimum_size = None
         self.sizes = None
-        self.noise_removal = None
+        self.noise_filtering = None
         self.close_holes = False
         self.close_holes_size = 0
         self.smooth_border = dict()
@@ -121,8 +121,8 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
     def calculation_run(self, report_fun):
         report_fun("Noise removal", 0)
         self.channel = self.get_channel(self.channel_num)
-        image = noise_removal_dict[self.noise_removal["name"]].noise_remove(self.channel, self.image.spacing,
-                                                                            self.noise_removal["values"])
+        image = noise_filtering_dict[self.noise_filtering["name"]].noise_filter(self.channel, self.image.spacing,
+                                                                                self.noise_filtering["values"])
         mask = self._threshold_and_exclude(image, report_fun)
         if self.close_holes:
             report_fun("Filing holes", 3)
@@ -152,14 +152,14 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
         report_fun("Calculation done", 7)
         return SegmentationResult(resp, self.get_segmentation_profile(), self.segmentation, image)
 
-    def _set_parameters(self, channel, threshold, minimum_size, close_holes, smooth_border, noise_removal,
+    def _set_parameters(self, channel, threshold, minimum_size, close_holes, smooth_border, noise_filtering,
                         close_holes_size, side_connection, use_convex):
         self.channel_num = channel
         self.threshold = threshold
         self.minimum_size = minimum_size
         self.close_holes = close_holes
         self.smooth_border = smooth_border
-        self.noise_removal = noise_removal
+        self.noise_filtering = noise_filtering
         self.close_holes_size = close_holes_size
         self.edge_connection = not side_connection
         self.use_convex = use_convex
@@ -167,7 +167,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
     def get_segmentation_profile(self) -> SegmentationProfile:
         return SegmentationProfile("", self.get_name(), {
             "channel": self.channel_num, "threshold": self.threshold, "minimum_size": self.minimum_size,
-            "close_holes": self.close_holes, "smooth_border": self.smooth_border, "noise_removal": self.noise_removal,
+            "close_holes": self.close_holes, "smooth_border": self.smooth_border, "noise_filtering": self.noise_filtering,
             "close_holes_size": self.close_holes_size,
             "side_connection": not self.edge_connection, "use_convex": self.use_convex
         })

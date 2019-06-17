@@ -163,6 +163,9 @@ class UpdateLoadedMetadataBase:
             return cls.update_segmentation_profile(data)
         if isinstance(data, Enum):
             return cls.update_enum(data)
+        if isinstance(data, dict):
+            for key in data.keys():
+                data[key] = cls.recursive_update(data[key])
         return data
 
     @classmethod
@@ -187,6 +190,12 @@ class UpdateLoadedMetadataBase:
             if isinstance(item, Enum):
                 profile_data.values[key] = cls.update_enum(item)
             elif isinstance(item, dict):
+                if key == "noise_removal":
+                    del profile_data.values[key]
+                    key = "noise_filtering"
+                if "gauss_type" in item["values"]:
+                    item["values"]["dimension_type"] = item["values"]["gauss_type"]
+                    del item["values"]["gauss_type"]
                 profile_data.values[key] = cls.update_segmentation_sub_dict(key, item)
         return profile_data
 

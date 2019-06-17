@@ -109,7 +109,12 @@ class RegisterClass:
         self.exact_class_register[path] = cls
         self.predict_class_register[name].append(cls)
         if old_name is not None:
-            self.predict_class_register[old_name].append(cls)
+            if isinstance(old_name, str):
+                self.predict_class_register[old_name].append(cls)
+            elif isinstance(old_name, typing.Iterable):
+                for ol in old_name:
+                    self.predict_class_register[ol].append(cls)
+
 
     def get_class(self, path: str):
         if path in self.exact_class_register:

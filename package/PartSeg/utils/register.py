@@ -61,7 +61,7 @@ class RegisterEnum(Enum):
 
 register_dict = {
     RegisterEnum.sprawl: sprawl.sprawl_dict, RegisterEnum.threshold: threshold.threshold_dict,
-    RegisterEnum.noise_filtering: noise_filtering.noise_removal_dict,
+    RegisterEnum.noise_filtering: noise_filtering.noise_filtering_dict,
     RegisterEnum.analysis_algorithm: analysis_algorithm_description.analysis_algorithm_dict,
     RegisterEnum.mask_algorithm: mask_algorithm_description.mask_algorithm_dict,
     RegisterEnum.analysis_save: save_functions.save_dict,

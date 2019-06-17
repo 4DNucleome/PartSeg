@@ -10,7 +10,7 @@ from PartSeg.utils.analysis.calculation_plan import CalculationPlan, Calculation
     Calculation
 from PartSeg.utils.analysis.statistics_calculation import StatisticProfile
 from PartSeg.utils.analysis.measurement_base import Leaf, Node, StatisticEntry, PerComponent, AreaType
-from PartSeg.utils.segmentation.noise_filtering import GaussType
+from PartSeg.utils.segmentation.noise_filtering import DimensionType
 from PartSeg.utils.universal_const import Units
 
 from help_fun import get_test_dir
@@ -29,7 +29,7 @@ class TestCalculationProcess:
                                     'values': {
                                         'core_threshold': {'name': 'Manual', 'values': {'threshold': 30000}},
                                         'base_threshold': {'name': 'Manual', 'values': {'threshold': 13000}}}},
-                      'noise_removal': {'name': 'Gauss', 'values': {'gauss_type': GaussType.Layer, "radius": 1.0}},
+                      'noise_filtering': {'name': 'Gauss', 'values': {'dimension_type': DimensionType.Layer, "radius": 1.0}},
                       'side_connection': False,
                       'sprawl_type': {'name': 'Euclidean sprawl', 'values': {}}}
 

@@ -130,7 +130,7 @@ class BaseOneThreshold(BaseThreshold, ABC):
 
 class TestLowerThreshold(BaseOneThreshold):
     parameters = {"channel": 0, "minimum_size": 30000, 'threshold': {'name': 'Manual', 'values': {'threshold': 45}},
-                  'noise_removal': {'name': 'None', 'values': {}}, 'side_connection': False}
+                  'noise_filtering': {'name': 'None', 'values': {}}, 'side_connection': False}
     shift = -6
     get_base_object = staticmethod(get_two_parts)
     get_side_object = staticmethod(get_two_parts_side)
@@ -139,7 +139,7 @@ class TestLowerThreshold(BaseOneThreshold):
 
 class TestUpperThreshold(BaseOneThreshold):
     parameters = {"channel": 0, "minimum_size": 30000, 'threshold': {'name': 'Manual', 'values': {'threshold': 55}},
-                  'noise_removal': {'name': 'None', 'values': {}}, 'side_connection': False}
+                  'noise_filtering': {'name': 'None', 'values': {}}, 'side_connection': False}
     shift = 6
     get_base_object = staticmethod(get_two_parts_reversed)
     get_side_object = staticmethod(get_two_parts_side_reversed)
@@ -151,7 +151,7 @@ class TestRangeThresholdAlgorithm(object):
         image = get_two_parts()
         alg = sa.RangeThresholdAlgorithm()
         parameters = {'lower_threshold': 45, 'upper_threshold': 60, 'channel': 0, 'minimum_size': 8000,
-                      'noise_removal': {'name': 'None', 'values': {}}, 'side_connection': False}
+                      'noise_filtering': {'name': 'None', 'values': {}}, 'side_connection': False}
         alg.set_parameters(**parameters)
         alg.set_image(image)
         result = alg.calculation_run(empty)
@@ -173,7 +173,7 @@ class TestRangeThresholdAlgorithm(object):
         image = get_two_parts_side()
         alg = sa.RangeThresholdAlgorithm()
         parameters = {'lower_threshold': 45, 'upper_threshold': 60, 'channel': 0, 'minimum_size': 8000,
-                      'noise_removal': {'name': 'None', 'values': {}}, 'side_connection': True}
+                      'noise_filtering': {'name': 'None', 'values': {}}, 'side_connection': True}
         alg.set_parameters(**parameters)
         alg.set_image(image)
         result = alg.calculation_run(empty)
@@ -238,7 +238,7 @@ class TestLowerThresholdFlow(BaseFlowThreshold):
                                 'values': {
                                     'core_threshold': {'name': 'Manual', 'values': {'threshold': 55}},
                                     'base_threshold': {'name': 'Manual', 'values': {'threshold': 45}}}},
-                  'noise_removal': {'name': 'None', 'values': {}}, 'side_connection': False,
+                  'noise_filtering': {'name': 'None', 'values': {}}, 'side_connection': False,
                   'sprawl_type': {'name': 'Euclidean sprawl', 'values': {}}}
     shift = -6
     get_base_object = staticmethod(get_two_parts)
@@ -252,7 +252,7 @@ class TestUpperThresholdFlow(BaseFlowThreshold):
                                 'values': {
                                     'core_threshold': {'name': 'Manual', 'values': {'threshold': 45}},
                                     'base_threshold': {'name': 'Manual', 'values': {'threshold': 55}}}},
-                  'noise_removal': {'name': 'None', 'values': {}}, 'side_connection': False,
+                  'noise_filtering': {'name': 'None', 'values': {}}, 'side_connection': False,
                   'sprawl_type': {'name': 'Euclidean sprawl', 'values': {}}}
     shift = 6
     get_base_object = staticmethod(get_two_parts_reversed)
@@ -451,9 +451,9 @@ class TestPipeline:
         prop1 = MaskProperty(dilate=RadiusType.NO, dilate_radius=-0, fill_holes=RadiusType.NO, max_holes_size=0,
                              save_components=False, clip_to_mask=False)
         parameters1 = {"channel": 0, "minimum_size": 30, 'threshold': {'name': 'Manual', 'values': {'threshold': 5}},
-                       'noise_removal': {'name': 'None', 'values': {}}, 'side_connection': False}
+                       'noise_filtering': {'name': 'None', 'values': {}}, 'side_connection': False}
         parameters2 = {"channel": 1, "minimum_size": 30, 'threshold': {'name': 'Manual', 'values': {'threshold': 5}},
-                       'noise_removal': {'name': 'None', 'values': {}}, 'side_connection': False}
+                       'noise_filtering': {'name': 'None', 'values': {}}, 'side_connection': False}
         seg_profile1 = SegmentationProfile(name="Unknown", algorithm="Lower threshold", values=parameters1)
         pipeline_element = SegmentationPipelineElement(mask_property=prop1, segmentation=seg_profile1)
         seg_profile2 = SegmentationProfile(name="Unknown", algorithm="Lower threshold", values=parameters2)

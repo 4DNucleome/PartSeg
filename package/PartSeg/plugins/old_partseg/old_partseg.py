@@ -8,7 +8,7 @@ import json
 from PartSeg.tiff_image import Image
 from PartSeg.utils.analysis.io_utils import ProjectTuple
 from PartSeg.utils.io_utils import LoadBase
-from PartSeg.utils.segmentation.noise_filtering import GaussType
+from PartSeg.utils.segmentation.noise_filtering import DimensionType
 from PartSeg.utils.universal_const import Units, UNIT_SCALE
 
 
@@ -57,7 +57,7 @@ class LoadPartSegOld(LoadBase):
         image = Image(image_arr.reshape((1,) + image_arr.shape + (1,)), spacing, file_path)
         values = {"channel": 0, "minimum_size": algorithm_dict["minimum_size"],
                   'threshold': {'name': 'Manual', 'values': {'threshold': algorithm_dict["threshold"]}},
-                  'noise_removal': {'name': 'Gauss', 'values': {"gauss_type": GaussType.Layer, "radius": 1.0}}
+                  'noise_removal': {'name': 'Gauss', 'values': {"gauss_type": DimensionType.Layer, "radius": 1.0}}
                   if algorithm_dict["use_gauss"] else {'name': 'None', 'values': {}}, 'side_connection': True}
 
         algorithm_parameters = {
