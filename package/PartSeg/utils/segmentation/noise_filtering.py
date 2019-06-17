@@ -69,7 +69,7 @@ def calculate_operation_radius(radius, spacing, gauss_type):
     if base != max(spacing):
         ratio = [x / base for x in spacing]
         return [radius / r for r in ratio]
-    return radius
+    return [radius for _ in spacing]
 
 
 class MedianNoiseFiltering(NoiseFilteringBase):
@@ -80,12 +80,13 @@ class MedianNoiseFiltering(NoiseFilteringBase):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty("dimension_type", "Median type", DimensionType.Layer),
-                AlgorithmProperty("radius", "Median radius", 1.0, property_type=float)]
+                AlgorithmProperty("radius", "Median radius", 1, property_type=int)]
 
     @classmethod
     def noise_filter(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: dict):
         gauss_radius = calculate_operation_radius(arguments["radius"], spacing, arguments["dimension_type"])
         layer = arguments["dimension_type"] == DimensionType.Layer
+        gauss_radius = [int(x) for x in gauss_radius]
         return median(channel, gauss_radius, layer=layer)
 
 

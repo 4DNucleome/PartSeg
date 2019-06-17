@@ -11,6 +11,7 @@ from PartSeg.utils.calculate_pipeline import calculate_pipeline
 from PartSeg.utils.image_operations import RadiusType
 from PartSeg.utils.mask_create import calculate_mask, MaskProperty
 from PartSeg.utils.segmentation import restartable_segmentation_algorithms as sa, SegmentationAlgorithm
+from PartSeg.utils.segmentation.noise_filtering import noise_filtering_dict
 from PartSeg.utils.segmentation.sprawl import sprawl_dict
 
 
@@ -463,3 +464,10 @@ class TestPipeline:
         result_segmentation = np.zeros((50, 100, 100), dtype=np.uint8)
         result_segmentation[10:40, 20:80, 40:60] = 1
         assert np.all(result.segmentation == result_segmentation)
+
+
+class TestNoiseFiltering:
+    def test_base(self):
+        for el in noise_filtering_dict.values():
+            data = get_two_parts_array()[0, ..., 0]
+            el.noise_filter(data, (1, 1, 1), el.get_default_values())
