@@ -1,3 +1,5 @@
 global-include *.pyx
 global-include *.pxd
-include package/PartSeg/partseg_utils/distance_in_structure/*.h
+include package/PartSeg/utils/distance_in_structure/*.h
+include package/PartSeg/utils/multiscale_opening/*.h
+include Readme.md
