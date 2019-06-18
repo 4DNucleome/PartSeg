@@ -72,7 +72,7 @@ class PartSettings(BaseSettings):
     def get_project_info(self) -> ProjectTuple:
         algorithm_name = self.last_executed_algorithm
         if algorithm_name:
-            algorithm_val = {"name": algorithm_name, "values": deepcopy(self.get(f"algorithms.{algorithm_name}"))}
+            algorithm_val = {"algorithm_name": algorithm_name, "values": deepcopy(self.get(f"algorithms.{algorithm_name}"))}
         else:
             algorithm_val = {}
         return ProjectTuple(self.image.file_path, self.image.substitute(), self.segmentation, self.full_segmentation,
@@ -95,7 +95,7 @@ class PartSettings(BaseSettings):
             self.full_segmentation = data.full_segmentation
             self.segmentation_history = data.history[:]
             if data.algorithm_parameters:
-                self.last_executed_algorithm = data.algorithm_parameters["name"]
+                self.last_executed_algorithm = data.algorithm_parameters["algorithm_name"]
                 self.set(f"algorithms.{self.last_executed_algorithm}", deepcopy(data.algorithm_parameters["values"]))
                 self.algorithm_changed.emit()
         elif isinstance(data, MaskInfo):

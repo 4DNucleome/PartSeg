@@ -11,7 +11,7 @@ from tifffile import TiffFile
 from PartSeg.tiff_image import ImageReader
 from PartSeg.utils.analysis.calculation_plan import CalculationPlan, CalculationTree
 from PartSeg.utils.universal_const import Units, UNIT_SCALE
-from ..algorithm_describe_base import Register
+from ..algorithm_describe_base import Register, SegmentationProfile
 from .analysis_utils import HistoryElement
 from .io_utils import ProjectTuple, MaskInfo
 from .save_hooks import part_hook
@@ -55,6 +55,7 @@ def load_project(
         mask = None
     algorithm_str = tar_file.extractfile("algorithm.json").read()
     algorithm_dict = load_metadata(algorithm_str)
+    algorithm_dict = update_algorithm_dict(algorithm_dict)
     history = []
     try:
         history_buff = tar_file.extractfile(tar_file.getmember("history/history.json"))
@@ -63,6 +64,7 @@ def load_project(
             history_buffer = BytesIO()
             history_buffer.write(tar_file.extractfile(f"history/arrays_{el['index']}.npz").read())
             history_buffer.seek(0)
+            el = update_algorithm_dict(el)
             history.append(HistoryElement(algorithm_name=el["algorithm_name"], algorithm_values=el["values"],
                                           mask_property=el["mask_property"], arrays=history_buffer))
 
@@ -212,6 +214,16 @@ def load_metadata(data: typing.Union[str, Path]):
     :return: restored structures
     """
     return UpdateLoadedMetadataAnalysis.load_json_data(data)
+
+def update_algorithm_dict(dkt):
+    if "name" in dkt:
+        profile = SegmentationProfile("", dkt["name"], dkt["values"])
+    else:
+        profile = SegmentationProfile("", dkt["algorithm_name"], dkt["values"])
+    profile = UpdateLoadedMetadataAnalysis.recursive_update(profile)
+    res = dict(dkt)
+    res.update({"algorithm_name": profile.algorithm, "values": profile.values})
+    return res
 
 
 load_dict = Register(LoadImage, LoadImageMask, LoadProject, class_methods=LoadBase.need_functions)
