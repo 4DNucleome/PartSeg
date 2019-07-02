@@ -160,7 +160,8 @@ class MultipleFileWidget(QWidget):
         item.setExpanded(True)
         if state.is_raw():
             return
-        QTreeWidgetItem(item, [name])
+        it = QTreeWidgetItem(item, [name])
+        self.file_view.setCurrentItem(it)
         sub_dict[name] = state
         self.state_dict_count[state.file_path] += 1
 
