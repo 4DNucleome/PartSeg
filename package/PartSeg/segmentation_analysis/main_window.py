@@ -394,10 +394,21 @@ class MainMenu(QWidget):
             self._settings.set("io.save_directory", save_dir)
             self._settings.add_path_history(save_dir)
             base_values[selected_filter] = values
-            try:
-                save_class.save(save_location, project_info, values)
-            except ValueError as e:
-                QMessageBox.warning(self, "Save error", f"Error during saving\n{e.args[0]}")
+
+            def exception_hook(exception):
+                from qtpy.QtWidgets import QApplication
+                from qtpy.QtCore import QMetaObject
+                instance = QApplication.instance()
+                if isinstance(exception, ValueError):
+                    instance.warning = "Save error", f"Error during saving\n{exception}"
+                    QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
+                else:
+                    raise exception
+
+            dial2 = ExecuteFunctionDialog(save_class.save, [save_location, project_info, values],
+                                          exception_hook=exception_hook)
+            dial2.exec()
+
 
     def image_adjust_exec(self):
         dial = ImageAdjustmentDialog(self._settings.image)
