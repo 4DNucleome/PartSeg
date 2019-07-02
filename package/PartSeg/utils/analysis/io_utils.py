@@ -1,9 +1,12 @@
 import typing
 import numpy as np
+import packaging.version
 
 from PartSeg.tiff_image import Image
 from PartSeg.utils.io_utils import ProjectInfoBase
 from .analysis_utils import HistoryElement
+
+project_version_info = packaging.version.Version("1.0")
 
 
 class ProjectTuple(ProjectInfoBase, typing.NamedTuple):
@@ -14,6 +17,7 @@ class ProjectTuple(ProjectInfoBase, typing.NamedTuple):
     mask: typing.Optional[np.ndarray] = None
     history: typing.List[HistoryElement] = []
     algorithm_parameters: dict = {}
+    errors: str = ""
 
     def get_raw_copy(self):
         return ProjectTuple(self.file_path, self.image.substitute())

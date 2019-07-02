@@ -23,6 +23,7 @@ class SegmentationTuple(ProjectInfoBase, typing.NamedTuple):
     segmentation: typing.Optional[np.ndarray] = None
     chosen_components: typing.List = []
     segmentation_parameters: typing.Dict[int, typing.Optional[SegmentationProfile]] = {}
+    errors: str = ""
 
     def get_raw_copy(self):
         return SegmentationTuple(self.file_path, self.image.substitute())

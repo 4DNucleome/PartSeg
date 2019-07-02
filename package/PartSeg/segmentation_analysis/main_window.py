@@ -455,16 +455,27 @@ class MainMenu(QWidget):
                                               exception_hook=exception_hook)
                 if dial2.exec():
                     result = dial2.get_result()
-                    if isinstance(result, ProjectTuple):
-                        image = self._settings.verify_image(result.image, False)
-                        if image:
-                            if isinstance(image, Image):
-                                result = result._replace(image=image)
-                        else:
-                            return
-                self._settings.set_project_info(result)
+                    self.set_data(result)
+
         except ValueError as e:
             QMessageBox.warning(self, "Open error", "{}".format(e))
+
+    def set_data(self, data):
+        if isinstance(data, ProjectTuple):
+            if data.errors != "":
+                resp = QMessageBox.question(self, "Load problem", f"During load data "
+                f"some problems occur: {data.errors}."
+                "Do you would like to try load it anyway?",
+                                            QMessageBox.Yes | QMessageBox.No)
+                if resp == QMessageBox.No:
+                    return
+            image = self._settings.verify_image(data.image, False)
+            if image:
+                if isinstance(image, Image):
+                    data = data._replace(image=image)
+            else:
+                return
+        self._settings.set_project_info(data)
 
     def batch_window(self):
         if self.main_window.batch_window is not None:
@@ -687,8 +698,7 @@ class MainWindow(BaseMainWindow):
             if ext_set.issubset(load_class.get_extensions()):
                 dial = ExecuteFunctionDialog(load_class.load, [paths])
                 if dial.exec():
-                    res: ProjectTuple = dial.get_result()
-                    self.settings.set_project_info(res)
+                    self.main_menu.set_data(dial.get_result())
                 return
         QMessageBox.information(self, "No method", f"No  methods for load files: " + ",".join(paths))
 

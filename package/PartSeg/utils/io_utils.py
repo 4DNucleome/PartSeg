@@ -50,6 +50,7 @@ def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
 class ProjectInfoBase:
     file_path: str
     image: Image
+    errors: str = ""
 
     def _replace(self, file_path=None, image=None):
         pass

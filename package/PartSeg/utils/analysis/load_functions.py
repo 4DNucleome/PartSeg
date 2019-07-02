@@ -6,14 +6,16 @@ from io import TextIOBase, BufferedIOBase, RawIOBase, IOBase, BytesIO
 from pathlib import Path
 from threading import Lock
 import numpy as np
+import json
 from tifffile import TiffFile
+import packaging.version
 
 from PartSeg.tiff_image import ImageReader
 from PartSeg.utils.analysis.calculation_plan import CalculationPlan, CalculationTree
 from PartSeg.utils.universal_const import Units, UNIT_SCALE
 from ..algorithm_describe_base import Register, SegmentationProfile
 from .analysis_utils import HistoryElement
-from .io_utils import ProjectTuple, MaskInfo
+from .io_utils import ProjectTuple, MaskInfo, project_version_info
 from .save_hooks import part_hook
 from ..io_utils import LoadBase, proxy_callback, check_segmentation_type, SegmentationType, WrongFileTypeException, \
     UpdateLoadedMetadataBase
@@ -56,6 +58,11 @@ def load_project(
     algorithm_str = tar_file.extractfile("algorithm.json").read()
     algorithm_dict = load_metadata(algorithm_str)
     algorithm_dict = update_algorithm_dict(algorithm_dict)
+    algorithm_dict.get("project_file_version")
+    try:
+        version = packaging.version.parse(json.loads(tar_file.extractfile("metadata.json").read()))
+    except KeyError:
+        version = packaging.version.Version("1.0")
     history = []
     try:
         history_buff = tar_file.extractfile(tar_file.getmember("history/history.json"))
@@ -72,8 +79,13 @@ def load_project(
         pass
     if isinstance(file, str):
         tar_file.close()
-    return ProjectTuple(file_path, image, seg_dict["segmentation"], seg_dict["full_segmentation"], mask, history,
-                        algorithm_dict)
+    if version >= project_version_info:
+        return ProjectTuple(file_path, image, seg_dict["segmentation"], seg_dict["full_segmentation"], mask, history,
+                            algorithm_dict)
+    else:
+        print(version, project_version_info)
+        return ProjectTuple(file_path, image, seg_dict["segmentation"], seg_dict["full_segmentation"], mask, history,
+                            algorithm_dict, "This project is from new version of PartSeg. It may load incorrect.")
 
 
 class LoadProject(LoadBase):
@@ -207,6 +219,7 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
             return cls.update_calculation_tree(data)
         return super().recursive_update(data)
 
+
 def load_metadata(data: typing.Union[str, Path]):
     """
     Load metadata saved in json format for segmentation mask
@@ -214,6 +227,7 @@ def load_metadata(data: typing.Union[str, Path]):
     :return: restored structures
     """
     return UpdateLoadedMetadataAnalysis.load_json_data(data)
+
 
 def update_algorithm_dict(dkt):
     if "name" in dkt:

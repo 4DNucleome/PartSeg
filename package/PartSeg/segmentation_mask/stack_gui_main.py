@@ -14,7 +14,6 @@ from qtpy.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMess
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
 from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
 from PartSeg.segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
-from PartSeg.utils.analysis import ProjectTuple
 from PartSeg.utils.io_utils import WrongFileTypeException
 from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox, AlgorithmChoose
 from ..common_gui.channel_control import ChannelControl
@@ -25,11 +24,9 @@ from ..common_gui.flow_layout import FlowLayout
 from ..common_gui.select_multiple_files import AddFiles
 from ..common_gui.stack_image_view import ColorBar
 from ..common_gui.universal_gui_part import right_label
-from ..common_gui.waiting_dialog import WaitingDialog, ExecuteFunctionDialog
+from ..common_gui.waiting_dialog import ExecuteFunctionDialog
 from ..utils.segmentation.algorithm_base import SegmentationResult
 from ..utils.universal_const import UNIT_SCALE, Units
-from ..project_utils_qt.error_dialog import ErrorDialog
-from ..project_utils_qt.image_read_thread import ImageReaderThread
 from ..project_utils_qt.main_window import BaseMainWindow
 from ..project_utils_qt.execute_function_thread import ExecuteFunctionThread
 from PartSeg.utils.mask.algorithm_description import mask_algorithm_dict
@@ -37,8 +34,8 @@ from .stack_settings import StackSettings, get_mask
 from PartSeg.tiff_image import ImageReader, Image
 from .batch_proceed import BatchProceed, BatchTask
 from .image_view import StackImageView
-from PartSeg.utils.mask.io_functions import SaveSegmentation, LoadSegmentation, load_dict, save_parameters_dict, \
-    save_components_dict, save_segmentation_dict, SegmentationTuple
+from PartSeg.utils.mask.io_functions import SaveSegmentation, LoadSegmentation, SegmentationTuple
+from PartSeg.utils.mask import io_functions
 from PartSeg.utils import state_store
 import PartSegData
 
@@ -77,58 +74,64 @@ class MainMenu(QWidget):
 
     def load_image(self):
         # TODO move segmentation with image load to load_segmentaion
-        try:
-            dial = CustomLoadDialog(load_dict)
-            dial.setDirectory(self.settings.get("io.load_image_directory", str(Path.home())))
-            dial.selectNameFilter(self.settings.get("io.load_data_filter", next(iter(load_dict.keys()))))
-            dial.setHistory(dial.history() + self.settings.get_path_history())
-            if not dial.exec_():
+        dial = CustomLoadDialog(io_functions.load_dict)
+        dial.setDirectory(self.settings.get("io.load_image_directory", str(Path.home())))
+        dial.selectNameFilter(self.settings.get("io.load_data_filter", next(iter(io_functions.load_dict.keys()))))
+        dial.setHistory(dial.history() + self.settings.get_path_history())
+        if not dial.exec_():
+            return
+        load_property = dial.get_result()
+        self.settings.set("io.load_image_directory", os.path.dirname(load_property.load_location[0]))
+        self.settings.set("io.load_data_filter", load_property.selected_filter)
+        self.settings.add_path_history(os.path.dirname(load_property.load_location[0]))
+
+        def exception_hook(exception):
+            if isinstance(exception, ValueError) and exception.args[0] == "not a TIFF file":
+                QMessageBox.warning(self, "Open error", "Image is not proper tiff/lsm image")
+            elif isinstance(exception, MemoryError):
+                QMessageBox.warning(self, "Open error", "Not enough memory to read this image")
+            elif isinstance(exception, IOError):
+                QMessageBox.warning(self, "Open error", f"Some problem with reading from disc: {exception}")
+            elif isinstance(exception, WrongFileTypeException):
+                QMessageBox.warning(self, "Open error", f"No needed files inside archive. "
+                                    "Most probably you choose file from segmentation analysis")
+            else:
+                raise exception
+
+        execute_dialog = ExecuteFunctionDialog(
+            load_property.load_class.load, [load_property.load_location],
+            {"metadata": {"default_spacing": self.settings.image.spacing}}, text="Load data",
+            exception_hook=exception_hook)
+        if execute_dialog.exec():
+            result = execute_dialog.get_result()
+            self.set_data(result)
+
+    def set_data(self, result):
+        if result is None:
+            return
+        if isinstance(result.image, Image):
+            image = self.settings.verify_image(result.image, False)
+            if not image:
                 return
-            load_property = dial.get_result()
-            self.settings.set("io.load_image_directory", os.path.dirname(load_property.load_location[0]))
-            self.settings.set("io.load_data_filter", load_property.selected_filter)
-            self.settings.add_path_history(os.path.dirname(load_property.load_location[0]))
-
-            def exception_hook(exception):
-                if isinstance(exception, ValueError) and exception.args[0] == "not a TIFF file":
-                    QMessageBox.warning(self, "Open error", "Image is not proper tiff/lsm image")
-                elif isinstance(exception, MemoryError):
-                    QMessageBox.warning(self, "Open error", "Not enough memory to read this image")
-                elif isinstance(exception, IOError):
-                    QMessageBox.warning(self, "Open error", f"Some problem with reading from disc: {exception}")
-                elif isinstance(exception, WrongFileTypeException):
-                    QMessageBox.warning(self, "Open error", f"No needed files inside archive. "
-                                        "Most probably you choose file from segmentation analysis")
-                else:
-                    raise exception
-
-            execute_dialog = ExecuteFunctionDialog(
-                load_property.load_class.load, [load_property.load_location],
-                {"metadata": {"default_spacing": self.settings.image.spacing}}, text="Load data",
-                exception_hook=exception_hook)
-            if execute_dialog.exec():
-                result = execute_dialog.get_result()
-                if result is None:
+            if not isinstance(image, Image):
+                image = result.image
+            if image.is_time:
+                if image.is_stack:
+                    QMessageBox.warning(
+                        self, "Not supported", "Data that are time data are currently not supported")
                     return
-                if isinstance(result.image, Image):
-                    image = self.settings.verify_image(result.image, False)
-                    if not image:
-                        return
-                    if isinstance(image, Image):
-                        self.settings.image = image
-                    else:
-                        self.settings.image = result.image
-                if result.segmentation is not None:
-                    self.settings.set_segmentation(result.segmentation, False, result.chosen_components,
-                                                   result.segmentation_parameters)
-        except (MemoryError, IOError) as e:
-            QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
-        except ValueError as e:
-            QMessageBox.warning(self, "Open error", "Exception occurred {}".format(e))
-        except Exception as e:
-            ErrorDialog(e, "Image read").exec()
+                else:
+                    res = QMessageBox.question(
+                        self, "Not supported",
+                        "Time data are currently not supported. Maybe You would like to treat time as z-stack",
+                        QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
-        # self.image_loaded.emit()
+                    if res == QMessageBox.Yes:
+                        image = image.swap_time_and_stack()
+                    else:
+                        return
+            result = result._replace(image=image)
+        self.settings.set_project_data(result, False)
 
     def set_image(self, image: Image) -> bool:
         if image is None:
@@ -176,17 +179,16 @@ class MainMenu(QWidget):
             else:
                 raise exception
 
-        dial = WaitingDialog(execute_thread, "Load segmentation", exception_hook=exception_hook)
-        dial.exec()
-        self.settings.set_segmentation(execute_thread.result.segmentation, self.settings.keep_chosen_components,
-                                       execute_thread.result.chosen_components,
-                                       execute_thread.result.segmentation_parameters)
+        dial = ExecuteFunctionDialog(load_property.load_class.load, [load_property.load_location],
+                                     text="Load segmentation", exception_hook=exception_hook)
+        if dial.exec():
+            self.settings.set_project_data(dial.get_result(), self.settings.keep_chosen_components)
 
     def save_segmentation(self):
         if self.settings.segmentation is None:
             QMessageBox.warning(self, "No segmentation", "No segmentation to save")
             return
-        dial = SaveDialog(save_segmentation_dict, False,
+        dial = SaveDialog(io_functions.save_segmentation_dict, False,
                           history=self.settings.get_path_history())
         dial.setDirectory(self.settings.get("io.save_segmentation_directory", str(Path.home())))
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0] + ".seg")
@@ -214,7 +216,7 @@ class MainMenu(QWidget):
         if self.settings.segmentation is None:
             QMessageBox.warning(self, "No components", "No components to save")
             return
-        dial = SaveDialog(save_components_dict, False, history=self.settings.get_path_history(),
+        dial = SaveDialog(io_functions.save_components_dict, False, history=self.settings.get_path_history(),
                           file_mode=QFileDialog.Directory)
         dial.setDirectory(self.settings.get("io.save_components_directory", str(Path.home())))
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0])
@@ -483,7 +485,7 @@ class AlgorithmOptions(QWidget):
         settings.image_changed.connect(self.choose_components.remove_components)
 
     def save_parameters(self):
-        dial = SaveDialog(save_parameters_dict, False, history=self.settings.get_path_history())
+        dial = SaveDialog(io_functions.save_parameters_dict, False, history=self.settings.get_path_history())
         if not dial.exec_():
             return
         res = dial.get_result()
@@ -731,7 +733,7 @@ class MainWindow(BaseMainWindow):
         self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
         self.color_bar = ColorBar(self.settings, self.channel_control)
-        self.multiple_file = MultipleFileWidget(self.settings, load_dict)
+        self.multiple_file = MultipleFileWidget(self.settings, io_functions.load_dict)
         self.multiple_file.setVisible(self.options_panel.image_properties.multiple_files.isChecked())
         self.options_panel.algorithm_options.batch_process.multiple_result.connect(
             partial(self.multiple_file.save_state_action, custom_name=False)
@@ -796,15 +798,16 @@ class MainWindow(BaseMainWindow):
         self.settings.dump()
 
     def read_drop(self, paths):
-        assert len(paths) == 1
-        ext = os.path.splitext(paths[0])[1]
-        read_thread = ImageReaderThread()
-        if ext in [".tif", ".tiff", ".lsm"]:
-            read_thread.set_path(paths[0])
-            dial = WaitingDialog(read_thread)
-            dial.exec()
-            if read_thread.image:
-                self.main_menu.set_image(read_thread.image)
+        ext_set = set([os.path.splitext(x)[1] for x in paths])
+        for load_class in io_functions.load_dict.values():
+            if load_class.partial() or load_class.number_of_files() != len(paths):
+                continue
+            if ext_set.issubset(load_class.get_extensions()):
+                dial = ExecuteFunctionDialog(load_class.load, [paths])
+                if dial.exec():
+                    self.main_menu.set_data(dial.get_result())
+                return
+        QMessageBox.information(self, "No method", f"No  methods for load files: " + ",".join(paths))
 
     def image_adjust_exec(self):
         dial = ImageAdjustmentDialog(self.settings.image)

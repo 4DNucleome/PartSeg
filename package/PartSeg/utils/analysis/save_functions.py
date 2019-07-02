@@ -3,7 +3,7 @@ from pathlib import Path
 import tifffile
 
 from PartSeg.utils.algorithm_describe_base import Register
-from .io_utils import ProjectTuple
+from .io_utils import ProjectTuple, project_version_info
 from ..analysis.analysis_utils import HistoryElement
 from ..channel_class import Channel
 from ..algorithm_describe_base import AlgorithmProperty
@@ -49,6 +49,10 @@ def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_se
         parameters_buff = BytesIO(para_str.encode('utf-8'))
         tar_algorithm = get_tarinfo("algorithm.json", parameters_buff)
         tar.addfile(tar_algorithm, parameters_buff)
+        meta_str = json.dumps({"project_version_info": str(project_version_info)}, cls=PartEncoder)
+        meta_buff = BytesIO(meta_str.encode('utf-8'))
+        tar_meta = get_tarinfo("metadata.json", meta_buff)
+        tar.addfile(tar_meta, meta_buff)
         el_info = []
         for i, el in enumerate(history):
             el_info.append({"index": i, "algorithm_name": el.algorithm_name, "values": el.algorithm_values,

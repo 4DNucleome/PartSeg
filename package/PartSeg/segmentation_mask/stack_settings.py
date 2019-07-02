@@ -155,6 +155,12 @@ class StackSettings(BaseSettings):
             return state._replace(segmentation=segmentation, chosen_components=base_chose,
                                   segmentation_parameters=components_parameters_dict)
 
+    def set_project_data(self, data: SegmentationTuple, save_chosen=True):
+        if isinstance(data.image, Image):
+            self.image = data.image
+        if data.segmentation is not None:
+            self.set_segmentation(data.segmentation, save_chosen, data.chosen_components, data.segmentation_parameters)
+
     def set_segmentation(self, new_segmentation_data, save_chosen=True, list_of_components=None,
                          segmentation_parameters=None):
         if list_of_components is None:
