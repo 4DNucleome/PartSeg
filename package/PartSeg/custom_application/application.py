@@ -15,6 +15,7 @@ class CheckVersionThread(QThread):
         self.release = __version__
 
     def run(self):
+        # noinspection PyBroadException
         try:
             proxy = client.ServerProxy('http://pypi.python.org/pypi')
             self.release = proxy.package_releases("PartSeg")[0]
@@ -65,17 +66,14 @@ class CustomApplication(QApplication):
             if getattr(sys, 'frozen', False):
                 message = QMessageBox(
                     QMessageBox.Information, "New release",
-                    f"You use outdated version of PartSeg. Your version is {my_version} and current is {remote_version}. "
+                    f"You use outdated version of PartSeg. "
+                    f"Your version is {my_version} and current is {remote_version}. "
                     "You can download next release form https://4dnucleome.cent.uw.edu.pl/PartSeg/", QMessageBox.Ok)
             else:
                 message = QMessageBox(
                     QMessageBox.Information, "New release",
-                    f"You use outdated version of PartSeg. Your version is {my_version} and current is {remote_version}. "
+                    f"You use outdated version of PartSeg. "
+                    f"Your version is {my_version} and current is {remote_version}. "
                     "You can update it from pypi (pip install -U PartSeg)", QMessageBox.Ok)
 
             message.exec()
-
-
-
-
-
