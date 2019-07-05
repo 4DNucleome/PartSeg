@@ -16,7 +16,7 @@ from PartSeg.utils.universal_const import Units
 class SaveModeling(SaveBase):
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
-        return  [
+        return [
             AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
             AlgorithmProperty("clip", "Clip area", False),
             AlgorithmProperty('reverse', 'Reverse', False,
@@ -39,6 +39,15 @@ class SaveModeling(SaveBase):
     @classmethod
     def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict,
              range_changed=None, step_changed=None):
+        """
+        
+        :param save_location: 
+        :param project_info: 
+        :param parameters:
+        :param range_changed: 
+        :param step_changed: 
+        :return: 
+        """
         if not os.path.exists(save_location):
             os.makedirs(save_location)
         if not os.path.isdir(save_location):
@@ -49,12 +58,13 @@ class SaveModeling(SaveBase):
             lower_bound = np.min(points, axis=1)
             lower_bound = np.max([lower_bound - 3, [0, 0, 0]], axis=0)
             upper_bound = np.max(points, axis=1)
-            upper_bound = np.max([upper_bound + 3, np.array(project_info.segmentation.shape)-1], axis=0)
-            cut_area = tuple([slice(x,y) for x,  y in zip(lower_bound, upper_bound)])
+            upper_bound = np.max([upper_bound + 3, np.array(project_info.segmentation.shape) - 1], axis=0)
+            cut_area = tuple([slice(x, y) for x, y in zip(lower_bound, upper_bound)])
             # WARNING time
             image = project_info.image.cut_image((slice(None),) + cut_area)
             segmentation = project_info.segmentation[cut_area]
-            full_segmentation = project_info.full_segmentation[cut_area] if project_info.full_segmentation is not None else None
+            full_segmentation = project_info.full_segmentation[
+                cut_area] if project_info.full_segmentation is not None else None
             mask = project_info.mask[cut_area] if project_info.mask else None
             project_info = project_info._replace(image=image, segmentation=segmentation,
                                                  full_segmentation=full_segmentation, mask=mask)
@@ -67,6 +77,6 @@ class SaveModeling(SaveBase):
         SaveCmap.save(os.path.join(save_location, "density.cmap"), project_info, parameters, range_changed,
                       step_changed)
         SaveSegmentationAsTIFF.save(os.path.join(save_location, "segmentation.tiff"), project_info, {},
-                                     range_changed, step_changed)
+                                    range_changed, step_changed)
         SaveSegmentationAsNumpy.save(os.path.join(save_location, "segmentation.npy"), project_info, {},
                                      range_changed, step_changed)

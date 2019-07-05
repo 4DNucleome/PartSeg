@@ -476,3 +476,5 @@ package/PartSeg/utils/multiscale_opening/\.vscode/
 *.e4p
 *.e4q
 *.e6t
+
+!docs/Makefile

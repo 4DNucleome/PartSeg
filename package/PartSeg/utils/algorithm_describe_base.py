@@ -8,12 +8,18 @@ from PartSeg.utils.channel_class import Channel
 
 
 class AlgorithmDescribeNotFound(Exception):
+    """
+    When algorithm description not found
+    """
     pass
 
 
 class AlgorithmProperty(object):
     """
+    :param name: name of parameter used in code
+    :param user_name: name presented to user in interface
     :type name: str
+    :type user_name: str
     :type value_type: type
     :type default_value: typing.Union[object, str, int, float]
     """
@@ -45,12 +51,31 @@ class AlgorithmProperty(object):
 
 
 class AlgorithmDescribeBase:
+    """
+    This is abstract class for all algorithm exported to user interface.
+    Based on get_name and get_fields methods the interface will be generated
+    For each group of algorithm base abstract class will add additional methods
+    """
+    @classmethod
+    def get_doc_from_fields(cls):
+        resp = "{\n"
+        for el in cls.get_fields():
+            if isinstance(el, AlgorithmProperty):
+                resp += f"  {el.name}: {el.value_type} - "
+                if el.tool_tip:
+                    resp += el.tool_tip
+                resp += f"(default values: {el.default_value})\n"
+        resp += "}\n"
+        return resp
+
     @classmethod
     def get_name(cls) -> str:
+        """Return algorithm name. It will be used during interface generating"""
         raise NotImplementedError()
 
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+        """Return list of algorithm parameters which should be exported to gui for user """
         raise NotImplementedError()
 
     @classmethod
@@ -71,6 +96,13 @@ class AlgorithmDescribeBase:
 
 
 class Register(OrderedDict):
+    """
+    Dict used for register :class:`.AlgorithmDescribeBase` classes.
+    All registers from `PartSeg.utils.register` are this
+    :param class_methods: list of method which should be implemented as class method it will be checked during add
+    as args or with :meth:`.Register.register`  method
+    :param methods: list of method which should be instance method
+    """
     def __init__(self, *args, class_methods=None, methods=None, **kwargs):
         """
         :param class_methods: list of method which should be class method
@@ -87,6 +119,11 @@ class Register(OrderedDict):
         return super().__getitem__(item)
 
     def register(self, value: typing.Type[AlgorithmDescribeBase], replace=False):
+        """
+        Function for registering :class:`.AlgorithmDescribeBase` based algorithms
+        :param value: algorithm to register
+        :param replace: replace existing algorithm, be patient with this
+        """
         self.check_function(value, "get_name", True)
         try:
             name = value.get_name()

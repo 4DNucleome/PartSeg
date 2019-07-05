@@ -30,33 +30,21 @@ from .mask import io_functions, algorithm_description as mask_algorithm_descript
 
 class RegisterEnum(Enum):
     """
-    Given types of operation are supported as plugins:
-    sprawl: algorithm for calculation sprawl from core object to borders. For spiting touching objects
-    threshold: threshold algorithms. From greyscale array to binary array
-    noise_filtering: filter noise
-    image_transform = 8
-    analysis_algorithm: algorithm for creating segmentation in analysis PartSeg part
-    mask_algorithm: algorithm for creating segmentation in mask PartSeg part
-    analysis_save: save functions for analysis part
-    analysis_load: load functions for analysis part
-    mask_load: load functions for mask part
-    mask_save_parameters = save metadata for mask part (currently creating json file)
-    mask_save_components = save each segmentation component in separate file. Save location is directory
-    mask_save_segmentation = save project (to one file) in mask part
+    Given types of operation are supported as plugins
     """
-    sprawl = 0
-    threshold = 1
-    noise_filtering = 2
-    analysis_algorithm = 3
-    mask_algorithm = 4
-    analysis_save = 5
-    analysis_load = 6
-    mask_load = 7
-    image_transform = 8
-    mask_save_parameters = 9
-    mask_save_components = 10
-    mask_save_segmentation = 11
-    analysis_measurement = 12
+    sprawl = 0  #: algorithm for calculation sprawl from core object to borders. For spiting touching objects
+    threshold = 1  #: threshold algorithms. From greyscale array to binary array
+    noise_filtering = 2  #: filter noise from image
+    analysis_algorithm = 3  #: algorithm for creating segmentation in analysis PartSeg part
+    mask_algorithm = 4  #: algorithm for creating segmentation in mask PartSeg part
+    analysis_save = 5  #: save functions for analysis part
+    analysis_load = 6  #: load functions for analysis part
+    mask_load = 7  #: load functions for mask part
+    image_transform = 8  #: transform image, like interpolation
+    mask_save_parameters = 9  #: save metadata for mask part (currently creating json file)
+    mask_save_components = 10  #: save each segmentation component in separate file. Save location is directory
+    mask_save_segmentation = 11  #: save project (to one file) in mask part
+    analysis_measurement = 12  #: measurements algorithms (analysis mode)
 
 
 register_dict = {
@@ -94,9 +82,9 @@ reload_module_list = \
 def register(target: Type[AlgorithmDescribeBase], target_type: RegisterEnum, replace=False):
     """
     Function for registering new operations in PartSeg inner structures.
+
     :param target: operation to register in PartSeg inner structures
     :param target_type: Which type of operation.
     :param replace: force to replace operation if same name is defined. Dangerous.
-    :return:
     """
     register_dict[target_type].register(target, replace=replace)
