@@ -2,6 +2,7 @@ from qtpy.QtCore import QEvent, Qt, QRect
 from qtpy.QtGui import QHelpEvent, QPainter, QPen, QColor
 from qtpy.QtWidgets import QToolTip
 
+from PartSeg.common_gui.channel_control import ChannelProperty
 from ..common_gui.stack_image_view import ImageView, ImageCanvas
 import numpy as np
 
@@ -29,8 +30,8 @@ class StackImageCanvas(ImageCanvas):
 class StackImageView(ImageView):
     image_canvas = StackImageCanvas
 
-    def __init__(self, settings, channel_control):
-        super().__init__(settings, channel_control)
+    def __init__(self, settings, channel_property: ChannelProperty, name: str):
+        super().__init__(settings, channel_property, name)
         self.image_area.pixmap.click_signal.connect(self.component_click)
 
     def component_unmark(self, _num):

@@ -33,5 +33,5 @@ else
 fi
 
 pip install pip==18.1
-pip install pyinstaller cython numpy
+pip install pyinstaller cython numpy pytest-qt
 pip install .

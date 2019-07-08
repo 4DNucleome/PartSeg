@@ -80,6 +80,12 @@ class ColorSelector(QWidget):
         self.settings.chosen_colormap = res
 
     def reset(self):
+        chosen_colormap = set(self.settings.chosen_colormap)
+        for el in self.color_widget_list:
+            el.setChecked(el.text() in chosen_colormap)
+        self.reset_block()
+
+    def reset_block(self):
         blocked = []
         for el in self.control_names:
             data = self.settings.get_from_profile(el)
@@ -89,11 +95,9 @@ class ColorSelector(QWidget):
                 else:
                     break
         blocked = set(blocked)
-        chosen_colormap = set(self.settings.chosen_colormap)
-
         for el in self.color_widget_list:
-            el.setChecked(el.text() in chosen_colormap)
             el.setDisabled(el.text() in blocked)
+            el.setChecked(el.text() in blocked or el.isChecked())
 
     def _set_colormaps(self):
         colormap_list = self.settings.available_colormaps
@@ -109,6 +113,9 @@ class ColorSelector(QWidget):
             img = color_image(np.arange(0, 256).reshape((1, 256, 1)), [val], [(0, 256)])
             self.image = QImage(img.data, 256, 1, img.dtype.itemsize * 256 * 3, QImage.Format_RGB888)
             self.preview.repaint()
+            
+    def enterEvent(self, _):
+        self.reset_block()
 
     def showEvent(self, _):
         self.reset()

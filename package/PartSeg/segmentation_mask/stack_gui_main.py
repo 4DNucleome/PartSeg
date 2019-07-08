@@ -16,7 +16,7 @@ from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
 from PartSeg.segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
 from PartSeg.utils.io_utils import WrongFileTypeException
 from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox, AlgorithmChoose
-from ..common_gui.channel_control import ChannelControl
+from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.colors_choose import ColorSelector
 from ..common_gui.custom_save_dialog import SaveDialog
 from ..common_gui.custom_load_dialog import CustomLoadDialog
@@ -355,12 +355,7 @@ class ChosenComponents(QWidget):
 
 
 class AlgorithmOptions(QWidget):
-    def __init__(self, settings, image_view, component_checker):
-        """
-        :type image_view: StackImageView
-        :type settings: StackSettings
-        :param settings:
-        """
+    def __init__(self, settings: StackSettings, image_view: StackImageView, component_checker):
         control_view = image_view.get_control_view()
         super().__init__()
         self.settings = settings
@@ -720,8 +715,8 @@ class MainWindow(BaseMainWindow):
                  initial_image=None):
         super().__init__(config_folder, title, settings, signal_fun)
         self.main_menu = MainMenu(self.settings)
-        self.channel_control = ChannelControl(self.settings, name="channelcontrol")
-        self.image_view = StackImageView(self.settings, self.channel_control)
+        self.channel_control = ChannelProperty(self.settings, start_name="channelcontrol")
+        self.image_view = StackImageView(self.settings, self.channel_control, name="channelcontrol")
         self.image_view.setMinimumWidth(450)
         self.info_text = QLabel()
         self.info_text.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
@@ -729,7 +724,7 @@ class MainWindow(BaseMainWindow):
         self.options_panel = Options(self.settings, self.image_view, self.image_view)
         self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
-        self.color_bar = ColorBar(self.settings, self.channel_control)
+        self.color_bar = ColorBar(self.settings, self.image_view)
         self.multiple_file = MultipleFileWidget(self.settings, load_dict)
         self.multiple_file.setVisible(self.options_panel.image_properties.multiple_files.isChecked())
         self.options_panel.algorithm_options.batch_process.multiple_result.connect(

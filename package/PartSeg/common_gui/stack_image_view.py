@@ -3,13 +3,13 @@ from __future__ import division, print_function
 import collections
 import os
 from math import log
-from typing import Type
+from typing import Type, List, Union
 from PartSegData import icons_dir
 
 import numpy as np
 from qtpy import QtGui
 from qtpy.QtCore import QRect, QTimerEvent, QSize, QObject, Signal, QPoint, Qt, QEvent, Slot
-from qtpy.QtGui import QWheelEvent, QPainter, QPen, QColor, QPalette, QPixmap, QImage, QIcon
+from qtpy.QtGui import QWheelEvent, QPainter, QPen, QColor, QPalette, QPixmap, QImage, QIcon, QResizeEvent
 from qtpy.QtWidgets import QScrollBar, QLabel, QGridLayout
 from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
     QScrollArea, QSizePolicy, QToolButton, QAction, QApplication, \
@@ -21,7 +21,7 @@ from ..utils.color_image.color_image_base import color_maps
 from ..utils.colors import default_colors
 from ..project_utils_qt.settings import ViewSettings, BaseSettings
 from PartSeg.tiff_image import Image
-from .channel_control import ChannelControl
+from .channel_control import ChannelControl, ColorComboBoxGroup, ChannelProperty
 
 canvas_icon_size = QSize(20, 20)
 step = 1.01
@@ -80,12 +80,13 @@ class ImageState(QObject):
 
 
 class ImageCanvas(QLabel):
+    """Canvas for painting image"""
     zoom_mark = Signal(QPoint, QPoint)
     position_signal = Signal(QPoint, QSize)
     click_signal = Signal(QPoint, QSize)
     leave_signal = Signal()
 
-    def __init__(self, local_settings):
+    def __init__(self, local_settings: ImageState):
         """
         :type local_settings: ImageState
         :param local_settings:
@@ -215,7 +216,7 @@ def create_tool_button(text, icon):
 
 class ChanelColor(QWidget):
     def __init__(self, num, *args, **kwargs):
-        super(ChanelColor, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.num = num
         self.check_box = QCheckBox(self)
         self.color_list = QComboBox(self)
@@ -234,18 +235,13 @@ class ChanelColor(QWidget):
     def colormap_name(self):
         return str(self.color_list.currentText())
 
-    """def colormap(self, vmin, vmax):
-        cmap = get_cmap(str(self.color_list.currentText()))
-        norm = PowerNorm(1, vmin=vmin, vmax=vmax)
-        return lambda x: cmap(norm(x))"""
-
     def register(self, fun):
         # noinspection PyUnresolvedReferences
         self.color_list.currentIndexChanged.connect(fun)
         self.check_box.stateChanged.connect(fun)
 
     def setVisible(self, val):
-        super(ChanelColor, self).setVisible(val)
+        super().setVisible(val)
         self.check_box.setChecked(val)
 
     def set_list(self, colormap_list):
@@ -277,13 +273,15 @@ class ImageView(QWidget):
 
     # zoom_changed = Signal(float, float, float)
 
-    def __init__(self, settings, channel_control: ChannelControl):
+    def __init__(self, settings: ViewSettings, channel_property: ChannelProperty, name: str):
         """:type settings: ViewSettings"""
-        super(ImageView, self).__init__()
-        self._settings: BaseSettings = settings
-        self.channel_control = channel_control
+        super().__init__()
+        self._settings: ViewSettings = settings
+        self.channel_property = channel_property
         self.exclude_btn_list = []
         self.image_state = ImageState(settings)
+        self.channel_control = ColorComboBoxGroup(settings, name, channel_property, height=30)
+        self._channel_control_top = True
         self.image_area = MyScrollArea(self.image_state, self.image_canvas)
         self.reset_button = create_tool_button("Reset zoom", "zoom-original.png")
         self.reset_button.clicked.connect(self.reset_image_size)
@@ -298,17 +296,21 @@ class ImageView(QWidget):
         self.move_button = create_tool_button("Move", "transform-move.png")
         self.move_button.toggled.connect(self.image_state.set_move)
         self.move_button.setCheckable(True)
+
         self.btn_layout = QHBoxLayout()
+        self.btn_layout.setSpacing(0)
+        self.btn_layout.setContentsMargins(0, 0, 0, 0)
         self.btn_layout.addWidget(self.reset_button)
         self.btn_layout.addWidget(self.zoom_button)
         self.btn_layout.addWidget(self.move_button)
-        self.btn_layout.addStretch(1)
+        self.btn_layout.addWidget(self.channel_control, 1)
+        self.btn_layout2 = QHBoxLayout()
 
         self.stack_slider = QSlider(Qt.Horizontal)
-        self.stack_slider.valueChanged.connect(self.change_image)
+        self.stack_slider.valueChanged.connect(self.paint_layer)
         self.stack_slider.valueChanged.connect(self.change_layer)
         self.time_slider = QSlider(Qt.Vertical)
-        self.time_slider.valueChanged.connect(self.change_image)
+        self.time_slider.valueChanged.connect(self.paint_layer)
         self.time_slider.valueChanged.connect(self.change_time)
         self.stack_layer_info = QLabel()
         self.time_layer_info = QLabel()
@@ -323,36 +325,49 @@ class ImageView(QWidget):
         # main_layout.setContentsMargins(0, 0, 0, 0)
         self.setContentsMargins(0, 0, 0, 0)
         main_layout.addLayout(self.btn_layout, 0, 1)
+        main_layout.addLayout(self.btn_layout2, 1, 1)
         time_slider_layout = QVBoxLayout()
         time_slider_layout.setContentsMargins(0, 0, 0, 0)
         time_slider_layout.addWidget(self.time_layer_info)
         time_slider_layout.addWidget(self.time_slider)
-        main_layout.addLayout(time_slider_layout, 1, 0)
-        main_layout.addWidget(self.image_area, 1, 1)
+        main_layout.addLayout(time_slider_layout, 2, 0)
+        main_layout.addWidget(self.image_area, 2, 1)
         stack_slider_layout = QHBoxLayout()
         stack_slider_layout.setContentsMargins(0, 0, 0, 0)
         stack_slider_layout.addWidget(self.stack_slider)
         stack_slider_layout.addWidget(self.stack_layer_info)
-        main_layout.addLayout(stack_slider_layout, 2, 1)
+        main_layout.addLayout(stack_slider_layout, 3, 1)
 
         self.setLayout(main_layout)
         self.exclude_btn_list.extend([self.zoom_button, self.move_button])
         self.zoom_button.clicked.connect(self.exclude_btn_fun)
         self.move_button.clicked.connect(self.exclude_btn_fun)
 
-        self.image_state.parameter_changed.connect(self.change_image)
+        self.image_state.parameter_changed.connect(self.paint_layer)
         self.image_area.pixmap.position_signal.connect(self.position_info)
         self.image_area.pixmap.leave_signal.connect(self.clean_text)
         self.position_changed[int, int, int].connect(self.info_text_pos)
         self.position_changed[int, int].connect(self.info_text_pos)
-        self.channel_control.coloring_update.connect(self.update_channels_coloring)
-
         settings.segmentation_changed.connect(self.set_labels)
         settings.segmentation_clean.connect(self.set_labels)
+        settings.image_changed.connect(self.set_image)
+        self.channel_control.coloring_update.connect(self.paint_layer)
+
+    def resizeEvent(self, event: QResizeEvent):
+        if event.size().width() > 500 and not self._channel_control_top:
+            w = self.btn_layout2.takeAt(0).widget()
+            self.btn_layout.takeAt(3)
+            self.btn_layout.insertWidget(3, w)
+            self._channel_control_top = True
+        elif event.size().width() <= 500 and self._channel_control_top:
+            w = self.btn_layout.takeAt(3).widget()
+            self.btn_layout.insertStretch(3, 1)
+            self.btn_layout2.insertWidget(0, w)
+            self._channel_control_top = False
 
     def update_channels_coloring(self, new_image: bool):
         if not new_image:
-            self.change_image()
+            self.paint_layer()
 
     def exclude_btn_fun(self):
         sender = self.sender()
@@ -377,9 +392,7 @@ class ImageView(QWidget):
             for i, b in enumerate(brightness):
                 if self.channel_control.active_channel(i):
                     res_brightness.append(b)
-            brightness = res_brightness
-            if len(brightness) == 1:
-                brightness = brightness[0]
+            brightness = ", ".join(map(str, res_brightness))
         if self.labels_layer is not None:
             comp = self.labels_layer[pos]
             self.component = comp
@@ -421,19 +434,23 @@ class ImageView(QWidget):
         """ Function to overwrite if need create viewer in other dimensions"""
         return self.image.get_layer(self.time_slider.value(), self.stack_slider.value())
 
-    def change_image(self):
+    def paint_layer(self):
         if self.image is None:
             return
-        img = np.copy(self.get_layer())
-        color_maps = self.channel_control.current_colors
+        try:
+            img = np.copy(self.get_layer())
+        except IndexError:
+            print(self.sender())
+            raise
+        color_list = self.channel_control.current_colors
         borders = self._settings.border_val[:]
         for i, p in enumerate(self.channel_control.get_limits()):
             if p is not None:
                 borders[i] = p
         for i, (use, radius) in enumerate(self.channel_control.get_gauss()):
-            if use and color_maps[i] is not None and radius > 0:
+            if use and color_list[i] is not None and radius > 0:
                 img[..., i] = gaussian_filter(img[..., i], radius)
-        im = color_image(img, color_maps, borders)
+        im = color_image(img, color_list, borders)
         self.add_labels(im)
         self.add_mask(im)
         self.image_area.set_image(im, True)
@@ -471,9 +488,10 @@ class ImageView(QWidget):
         self.time_slider.setRange(0, self.image.times - 1)
         self.time_slider.setValue(self.image.times // 2)
         self.time_slider.blockSignals(False)
-        self.change_image()
         self.change_layer(self.image.layers // 2)
         self.change_time(self.image.times // 2)
+        self.channel_control.set_channels(self.image.channels)
+        self.paint_layer()
         self.stack_slider.setHidden(self.image.layers == 1)
         self.stack_layer_info.setHidden(self.image.layers == 1)
         self.time_slider.setHidden(self.image.times == 1)
@@ -484,7 +502,7 @@ class ImageView(QWidget):
     @Slot(np.ndarray)
     def set_labels(self, labels=None):
         self.labels_layer = labels
-        self.change_image()
+        self.paint_layer()
 
 
 class MyScrollArea(QScrollArea):
@@ -739,32 +757,34 @@ class MyScrollArea(QScrollArea):
         if self.timer_id:
             self.killTimer(self.timer_id)
             self.timer_id = 0
+
         self.timer_id = self.startTimer(50)
         self.zoom_changed.emit()
         event.accept()
 
 
 class ColorBar(QLabel):
-    def __init__(self, settings: ViewSettings, channel_control: ChannelControl):
+    def __init__(self, settings: ViewSettings, image_view: Union[List[ImageView], ImageView]):
         super().__init__()
-        self.channel_control = channel_control
+        self.image_view = image_view
         self._settings = settings
         self.image = None
-        self.channel_control.channel_change.connect(self.update_colormap)
+        if isinstance(image_view, list):
+            for el in image_view:
+                el.channel_control.change_channel.connect(self.update_colormap)
+        else:
+            image_view.channel_control.change_channel.connect(self.update_colormap)
         self.range = None
         self.round_range = None
         self.setFixedWidth(80)
-        # layout = QHBoxLayout()
-        # layout.addWidget(QLabel("aaa"))
-        # self.setLayout(layout)
 
-    def update_colormap(self, channel_id):
-        fixed_range = self._settings.get_from_profile(f"{self.channel_control.name}.lock_{channel_id}", False)
+    def update_colormap(self, name, channel_id):
+        fixed_range = self._settings.get_from_profile(f"{name}.lock_{channel_id}", False)
         if fixed_range:
-            self.range = self._settings.get_from_profile(f"{self.channel_control.name}.range_{channel_id}")
+            self.range = self._settings.get_from_profile(f"{name}.range_{channel_id}")
         else:
             self.range = self._settings.border_val[channel_id]
-        cmap = self._settings.get_from_profile(f"{self.channel_control.name}.cmap{channel_id}")
+        cmap = self._settings.get_from_profile(f"{name}.cmap{channel_id}")
         round_factor = self.round_base(self.range[1])
         self.round_range = (int(round(self.range[0] / round_factor) * round_factor),
                             int(round(self.range[1] / round_factor) * round_factor))
@@ -802,7 +822,7 @@ class ColorBar(QLabel):
         if self.image is None:
             return
 
-        rect = event.rect()
+        rect = self.rect()
         number_of_marks = self.number_of_marks(rect.height())
         image_rect = QRect(rect.topLeft(), QSize(bar_width, rect.size().height()))
         painter = QPainter(self)
