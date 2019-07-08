@@ -7,14 +7,16 @@ import numpy as np
 from qtpy.QtCore import Qt, QByteArray, QEvent
 from qtpy.QtGui import QIcon, QKeyEvent, QKeySequence, QResizeEvent
 from qtpy.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
-    QMessageBox, QCheckBox, QComboBox, QInputDialog, QDialog
+    QMessageBox, QCheckBox, QComboBox, QInputDialog, QDialog, QDoubleSpinBox
 
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
+from PartSeg.common_gui.stacked_widget_with_selector import StackedWidgetWithSelector
+from PartSeg.segmentation_analysis.statistic_widget import StatisticsWidget
 from PartSeg.utils.analysis import ProjectTuple, algorithm_description, load_functions
 from PartSeg.utils.io_utils import WrongFileTypeException
 from ..common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, AlgorithmChoose
-from ..common_gui.channel_control import ChannelControl
+from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.mask_widget import MaskWidget
 from ..common_gui.stack_image_view import ColorBar
 from ..common_gui.waiting_dialog import WaitingDialog, ExecuteFunctionDialog
@@ -28,7 +30,7 @@ from .calculation_pipeline_thread import CalculatePipelineThread
 from PartSeg.tiff_image import ImageReader, Image
 from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from PartSeg.utils.analysis.analysis_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
-from .image_view import RawImageView, ResultImageView, RawImageStack, SynchronizeView
+from .image_view import ResultImageView, SynchronizeView, ImageViewWithMask, RawImageView
 from .partseg_settings import PartSettings
 from ..common_gui.custom_save_dialog import SaveDialog
 from PartSeg.utils.analysis.save_functions import save_dict
@@ -38,8 +40,8 @@ CONFIG_FOLDER = os.path.join(state_store.save_folder, "analysis")
 
 
 class Options(QWidget):
-    def __init__(self, settings: PartSettings, channel_control2: ChannelControl,
-                 left_panel: RawImageView, synchronize: SynchronizeView):
+    def __init__(self, settings: PartSettings, channel_control2: ChannelProperty,
+                 left_panel: StackedWidgetWithSelector, main_image: ImageViewWithMask, synchronize: SynchronizeView):
         super().__init__()
         self._settings = settings
         self.left_panel = left_panel
@@ -68,6 +70,17 @@ class Options(QWidget):
         self.choose_profile.addItem("<none>")
         self.choose_profile.addItems(list(self._settings.segmentation_profiles.keys()))
         self.choose_profile.setToolTip("Select profile to restore its settings. Execute if interactive is checked")
+        # image state
+        self.only_border = QCheckBox("")
+        main_image.image_state.only_borders = False
+        self.only_border.setChecked(main_image.image_state.only_borders)
+        self.only_border.stateChanged.connect(main_image.image_state.set_borders)
+        self.opacity = QDoubleSpinBox()
+        self.opacity.setRange(0, 1)
+        self.opacity.setValue(main_image.image_state.opacity)
+        self.opacity.setSingleStep(0.1)
+        self.opacity.valueChanged.connect(main_image.image_state.set_opacity)
+
         self.update_tooltips()
         self.choose_profile.currentTextChanged.connect(self.change_profile)
         self.interactive_use.stateChanged.connect(self.execute_btn.setDisabled)
@@ -93,6 +106,14 @@ class Options(QWidget):
         self.label.setWordWrap(True)
         self.label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         layout = QVBoxLayout()
+        layout1 = QHBoxLayout()
+        layout1.setSpacing(5)
+        layout1.addWidget(QLabel("Borders:"))
+        layout1.addWidget(self.only_border)
+        layout1.addSpacing(10)
+        layout1.addWidget(QLabel("Opacity:"))
+        layout1.addWidget(self.opacity)
+        layout1.addStretch(1)
         layout2 = QHBoxLayout()
         layout2.setSpacing(1)
         layout2.setContentsMargins(0, 0, 0, 0)
@@ -111,6 +132,7 @@ class Options(QWidget):
         layout3.addWidget(self.execute_btn)
         layout.addLayout(layout5)
         layout.addLayout(layout4)
+        layout.addLayout(layout1)
         layout.addLayout(layout3)
         layout.addWidget(self.algorithm_choose_widget, 1)
         # layout.addLayout(self.stack_layout)
@@ -630,17 +652,21 @@ class MainWindow(BaseMainWindow):
         self.setMinimumWidth(600)
         self.main_menu = MainMenu(self.settings, self)
         # self.channel_control1 = ChannelControl(self.settings, name="raw_control", text="Left panel:")
-        self.channel_control2 = ChannelControl(self.settings, name="result_control")
-        self.raw_image = RawImageStack(self.settings,
-                                       self.channel_control2)  # RawImageView(self.settings, self.channel_control1)
-        self.result_image = ResultImageView(self.settings, self.channel_control2)
-        self.color_bar = ColorBar(self.settings, self.raw_image.raw_image.channel_control)
+        self.channel_control2 = ChannelProperty(self.settings, start_name="result_control")
+        self.raw_image = RawImageView(self.settings,
+                                       self.channel_control2, "raw_image")
+        self.measurements = StatisticsWidget(self.settings)
+        self.left_stack = StackedWidgetWithSelector()
+        self.left_stack.addWidget(self.raw_image, "Image")
+        self.left_stack.addWidget(self.measurements, "Measurements")
+        self.result_image = ImageViewWithMask(self.settings, self.channel_control2, "result_image")
+        self.color_bar = ColorBar(self.settings, [self.raw_image, self.result_image])
         self.info_text = QLabel()
-        self.raw_image.raw_image.text_info_change.connect(self.info_text.setText)
+        self.raw_image.text_info_change.connect(self.info_text.setText)
         self.result_image.text_info_change.connect(self.info_text.setText)
-        self.synchronize_tool = SynchronizeView(self.raw_image.raw_image, self.result_image, self)
+        self.synchronize_tool = SynchronizeView(self.raw_image, self.result_image, self)
         # image_view_control = self.image_view.get_control_view()
-        self.options_panel = Options(self.settings, self.channel_control2, self.raw_image.raw_image,
+        self.options_panel = Options(self.settings, self.channel_control2, self.raw_image, self.result_image,
                                      self.synchronize_tool)
         # self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
@@ -673,13 +699,18 @@ class MainWindow(BaseMainWindow):
         help_menu.addAction("About").triggered.connect(self.show_about_dialog)
 
         layout = QGridLayout()
+        # layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        info_layout = QHBoxLayout()
+        info_layout.addWidget(self.left_stack.selector)
+        info_layout.addWidget(self.info_text, 1, Qt.AlignHCenter)
         layout.setSpacing(0)
         layout.addWidget(self.main_menu, 0, 0, 1, 4)
-        layout.addWidget(self.info_text, 1, 0, 1, 4, Qt.AlignHCenter)  # , 0, 4)
+        layout.addLayout(info_layout, 1, 1, 1, 3)
         layout.addWidget(self.multiple_files, 2, 0)
         layout.addWidget(self.color_bar, 2, 1)
-        layout.addWidget(self.raw_image, 2, 2)  # , 0, 0)
-        layout.addWidget(self.result_image, 2, 3)  # , 0, 0)
+        layout.addWidget(self.left_stack, 2, 2)
+        layout.addWidget(self.result_image, 2, 3)
         layout.addWidget(self.options_panel, 0, 4, 3, 1)
         layout.setColumnStretch(2, 1)
         layout.setColumnStretch(3, 1)
@@ -694,8 +725,8 @@ class MainWindow(BaseMainWindow):
             pass
 
     def image_read(self):
-        self.raw_image.raw_image.set_image()
-        self.raw_image.raw_image.reset_image_size()
+        self.raw_image.set_image()
+        self.raw_image.reset_image_size()
         self.result_image.set_image()
         self.result_image.reset_image_size()
         self.options_panel.interactive_algorithm_execute()

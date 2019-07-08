@@ -2,20 +2,22 @@ from math import sqrt
 
 from qtpy import QtGui
 from qtpy.QtCore import QPointF, Qt, QLineF
-from qtpy.QtGui import QPolygonF, QPainter
+from qtpy.QtGui import QPolygonF, QPainter, QFontMetrics, QFont
 from qtpy.QtWidgets import QCheckBox, QWidget
-
-
 
 
 class CollapseCheckbox(QCheckBox):
     """
     :type hide_list: typing.List[QWidget]
     """
-    def __init__(self, parent: QWidget = None):
-        super().__init__("aaa", parent)
-        self.hide_list =[]
+    def __init__(self, info_text="", parent: QWidget = None):
+        super().__init__(info_text if info_text else "-", parent)
+        self.hide_list = []
         self.stateChanged.connect(self.hide_element)
+
+        metrics = QFontMetrics(QFont())
+        self.text_size = metrics.size(Qt.TextSingleLine, info_text)
+        self.info_text = info_text
 
     def add_hide_element(self, val):
         self.hide_list.append(val)
@@ -32,10 +34,10 @@ class CollapseCheckbox(QCheckBox):
 
     def paintEvent(self, event: QtGui.QPaintEvent):
         border_distance = 5
-        rect = event.rect()
+        rect = self.rect()
         mid = rect.y() + rect.height()/2
-        line_begin = QPointF(rect.height() + 5, mid)
-        line_end = QPointF(rect.width() + rect.x() -5, mid)
+        line_begin = QPointF(rect.height() + 10 + self.text_size.width(), mid)
+        line_end = QPointF(rect.width() + rect.x() - 5, mid)
         triangle = QPolygonF()
         side_length = rect.height() - 2 * border_distance
         triangle_height = side_length * sqrt(3) / 2
@@ -52,6 +54,7 @@ class CollapseCheckbox(QCheckBox):
         painter = QPainter(self)
 
         painter.setBrush(Qt.black)
-
+        top = rect.height() - (self.text_size.height() / 2)
+        painter.drawText(rect.height() + 5, top, self.info_text)
         painter.drawPolygon(triangle, Qt.WindingFill)
-        painter.drawLine(QLineF(line_begin, line_end) )
+        painter.drawLine(QLineF(line_begin, line_end))
