@@ -18,8 +18,8 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
             # Install some custom Python 3.6 requirements on macOS
             ;;
         py37)
-            pyenv install 3.7.2
-            pyenv global 3.7.2
+            pyenv install 3.7.3
+            pyenv global 3.7.3
             # Install some custom Python 3.7 requirements on macOS
             ;;
     esac
@@ -27,11 +27,5 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     export PATH="$PYENV_ROOT/shims:$PATH"
 
     pip install pytest
-else
-    echo "linux"
-    # Install some custom requirements on Linux
 fi
 
-pip install pip==18.1
-pip install pyinstaller cython numpy pytest-qt
-pip install .
