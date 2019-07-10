@@ -4,7 +4,7 @@ from qtpy.QtCore import Qt, QPoint
 from qtpy.QtGui import QImage
 
 from PartSeg.common_gui.channel_control import ColorComboBox, ColorComboBoxGroup, ChannelProperty
-from PartSeg.common_gui.stack_image_view import ImageView
+from PartSeg.common_gui.stack_image_view import ImageView, ImageCanvas
 from PartSeg.project_utils_qt.settings import ViewSettings
 from PartSeg.tiff_image import ImageReader
 from PartSeg.utils.color_image import color_image
@@ -121,3 +121,86 @@ class TestColorComboBoxGroup:
 
         assert image_view.stack_slider.isVisible() is False
         assert image_view.time_slider.isVisible() is False
+        image_canvas: ImageCanvas = image_view.image_area.widget()
+
+        image1 = image_canvas.image
+        image_view.channel_control.set_active(1)
+        ch_property.minimum_value.setValue(100)
+        ch_property.maximum_value.setValue(10000)
+        ch_property.gauss_radius.setValue(0.5)
+        image2 = image_canvas.image
+
+        assert np.all(image1 == image2)
+
+        def check_parameters(name, index):
+            return name == "test" and index == 1
+        # Test fixed range
+        with qtbot.waitSignal(image_view.channel_control.coloring_update), \
+                qtbot.waitSignal(image_view.channel_control.change_channel, check_params_cb=check_parameters):
+            ch_property.fixed.setChecked(True)
+
+        image1 = image_canvas.image
+        with qtbot.waitSignal(image_view.channel_control.coloring_update), \
+                qtbot.waitSignal(image_view.channel_control.change_channel, check_params_cb=check_parameters):
+            ch_property.minimum_value.setValue(10)
+        image2 = image_canvas.image
+        assert np.any(image1 != image2)
+
+        with qtbot.waitSignal(image_view.channel_control.coloring_update), \
+                qtbot.waitSignal(image_view.channel_control.change_channel, check_params_cb=check_parameters):
+            ch_property.maximum_value.setValue(11000)
+        image3 = image_canvas.image
+        assert np.any(image2 != image3)
+        assert np.any(image1 != image3)
+
+        with qtbot.waitSignal(image_view.channel_control.coloring_update), \
+                qtbot.waitSignal(image_view.channel_control.change_channel, check_params_cb=check_parameters):
+            ch_property.fixed.setChecked(False)
+
+        image1 = image_canvas.image
+        assert np.any(image1 != image2)
+        assert np.any(image1 != image3)
+        # Test gauss
+        with qtbot.waitSignal(image_view.channel_control.coloring_update), \
+                qtbot.waitSignal(image_view.channel_control.change_channel, check_params_cb=check_parameters):
+            ch_property.use_gauss.setChecked(True)
+        image4 = image_canvas.image
+        assert np.any(image1 != image4)
+        assert np.any(image2 != image4)
+        assert np.any(image3 != image4)
+        with qtbot.waitSignal(image_view.channel_control.coloring_update), \
+                qtbot.waitSignal(image_view.channel_control.change_channel, check_params_cb=check_parameters):
+            ch_property.gauss_radius.setValue(1)
+        image5 = image_canvas.image
+        assert np.any(image1 != image5)
+        assert np.any(image2 != image5)
+        assert np.any(image3 != image5)
+        assert np.any(image4 != image5)
+        # Test gauss and fixed range
+        ch_property.minimum_value.setValue(100)
+        ch_property.maximum_value.setValue(10000)
+        with qtbot.waitSignal(image_view.channel_control.coloring_update), \
+                qtbot.waitSignal(image_view.channel_control.change_channel, check_params_cb=check_parameters):
+            ch_property.fixed.setChecked(True)
+
+        image1 = image_canvas.image
+        with qtbot.waitSignal(image_view.channel_control.coloring_update), \
+                qtbot.waitSignal(image_view.channel_control.change_channel, check_params_cb=check_parameters):
+            ch_property.minimum_value.setValue(10)
+        image2 = image_canvas.image
+        assert np.any(image1 != image2)
+
+        with qtbot.waitSignal(image_view.channel_control.coloring_update), \
+                qtbot.waitSignal(image_view.channel_control.change_channel, check_params_cb=check_parameters):
+            ch_property.maximum_value.setValue(11000)
+        image3 = image_canvas.image
+        assert np.any(image2 != image3)
+        assert np.any(image1 != image3)
+
+        with qtbot.waitSignal(image_view.channel_control.coloring_update), \
+                qtbot.waitSignal(image_view.channel_control.change_channel, check_params_cb=check_parameters):
+            ch_property.fixed.setChecked(False)
+
+        image1 = image_canvas.image
+        assert np.any(image1 != image2)
+        assert np.any(image1 != image3)

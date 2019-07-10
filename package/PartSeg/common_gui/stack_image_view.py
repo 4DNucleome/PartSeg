@@ -270,7 +270,7 @@ class ImageView(QWidget):
     component_clicked = Signal(int)
     text_info_change = Signal(str)
 
-    image_canvas = ImageCanvas
+    image_canvas = ImageCanvas # can be used to customize canvas. eg. add more signals
 
     # zoom_changed = Signal(float, float, float)
 
@@ -449,7 +449,7 @@ class ImageView(QWidget):
             if p is not None:
                 borders[i] = p
         for i, (use, radius) in enumerate(self.channel_control.get_gauss()):
-            if use and color_maps[i] is not None and radius > 0:
+            if use and color_list[i] is not None and radius > 0:
                 img[..., i] = gaussian(img[..., i], radius)
         im = color_image(img, color_list, borders)
         self.add_labels(im)
