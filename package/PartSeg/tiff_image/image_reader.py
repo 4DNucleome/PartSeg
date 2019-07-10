@@ -1,4 +1,5 @@
 import typing
+import re
 from io import BytesIO
 from threading import Lock
 
@@ -218,6 +219,24 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSeg.tiff_image.image_reader":
             res = TiffPage.asarray(self, *args, **kwargs)
             self.parent.report_func()
             return res
+
+        @property
+        def is_ome2(self):
+            """Page contains OME-XML in ImageDescription tag."""
+            if self.index > 1 or not self.description:
+                return False
+            d = self.description
+            return (d[:14] == '<?xml version=' or d[:15] == '<?xml version =') and \
+                   (d[-6:] == '</OME>' or d[-10:] == "</OME:OME>")
+
+        @property
+        def is_ome(self):
+            """Page contains OME-XML in ImageDescription tag."""
+            if self.index > 1 or not self.description:
+                return False
+            d = self.description
+            return re.match(r"<\?xml version *=", d[:20]) is not None and \
+                re.match(r".*</(OME:)?OME>[ \n]*$", d[-20:], re.DOTALL) is not None
 
     TiffFile.report_func = lambda x: 0
     tifffile.tifffile.TiffPage = MyTiffPage
