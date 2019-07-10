@@ -1,44 +1,63 @@
 # coding=utf-8
 from sys import platform
 from enum import Enum
+from typing import Union
+
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QFontMetrics
 
 from PartSeg.utils.universal_const import Units, UNIT_SCALE
-from .flow_layout import FlowLayout
 from qtpy.QtWidgets import QWidget, QLabel, QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QComboBox, QSlider,\
     QLineEdit, QHBoxLayout
+from qtpy.QtCore import Signal
 
 
 class ChannelComboBox(QComboBox):
-    def get_value(self):
+    """Combobox for selecting channel index. Channel numeration starts from 1 for user and from 0 for developer"""
+    def get_value(self) -> int:
+        """Return current channel. Starting from 1"""
         return self.currentIndex()
 
-    def set_value(self, val):
+    def set_value(self, val: int):
+        """Set current channel"""
         self.setCurrentIndex(int(val))
 
-    def change_channels_num(self, num):
+    def change_channels_num(self, num: int):
+        """Change number of channels"""
+        block = self.blockSignals(True)
         index = self.currentIndex()
         self.clear()
         self.addItems(list(map(str, range(1, num + 1))))
         if index < 0 or index > num:
             index = 0
+        self.blockSignals(block)
         self.setCurrentIndex(index)
 
 
 class EnumComboBox(QComboBox):
+    """Combobox for choose Enum values"""
+    current_choose = Signal(Enum)  # Emitted when currentIndexChanged is emitted. Argument is selected value
     def __init__(self, enum: type(Enum), parent=None):
         super().__init__(parent=parent)
         self.enum = enum
         self.addItems(list(map(str,  enum.__members__.values())))
+        self.currentIndexChanged.connect(self._emit_signal)
 
     def get_value(self) -> Enum:
+        """current value as Enum member"""
         return list(self.enum.__members__.values())[self.currentIndex()]
 
-    def set_value(self, value: Enum):
-        if not isinstance(value, Enum):
+    def _emit_signal(self):
+        self.current_choose.emit(self.get_value())
+
+    def set_value(self, value: Union[Enum, int]):
+        """Set value with Eunum or int"""
+        if not isinstance(value, (Enum, int)):
             return
-        self.setCurrentText(value.name)
+        if isinstance(value, Enum):
+            self.setCurrentText(str(value))
+        else:
+            self.setCurrentIndex(value)
 
 
 

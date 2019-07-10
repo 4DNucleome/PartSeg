@@ -2,48 +2,62 @@ from __future__ import division, print_function
 
 import collections
 import os
+from enum import Enum
 from math import log
-from typing import Type, List, Union
+from typing import Type, List, Union, Callable
 from PartSegData import icons_dir
 
 import numpy as np
 from qtpy import QtGui
 from qtpy.QtCore import QRect, QTimerEvent, QSize, QObject, Signal, QPoint, Qt, QEvent, Slot
-from qtpy.QtGui import QWheelEvent, QPainter, QPen, QColor, QPalette, QPixmap, QImage, QIcon, QResizeEvent
+from qtpy.QtGui import QWheelEvent, QPainter, QPen, QColor, QPalette, QPixmap, QImage, QIcon, QResizeEvent, QMouseEvent
 from qtpy.QtWidgets import QScrollBar, QLabel, QGridLayout
 from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
     QScrollArea, QSizePolicy, QToolButton, QAction, QApplication, \
     QSlider, QCheckBox, QComboBox
-from scipy.ndimage import gaussian_filter
 
+from PartSeg.utils.class_generator import enum_register
 from PartSeg.utils.image_operations import gaussian
 from ..utils.color_image import color_image, add_labels
 from ..utils.color_image.color_image_base import color_maps
 from ..utils.colors import default_colors
-from ..project_utils_qt.settings import ViewSettings, BaseSettings
+from ..project_utils_qt.settings import ViewSettings
 from PartSeg.tiff_image import Image
-from .channel_control import ChannelControl, ColorComboBoxGroup, ChannelProperty
+from .channel_control import ColorComboBoxGroup, ChannelProperty
 
 canvas_icon_size = QSize(20, 20)
 step = 1.01
 max_step = log(1.2, step)
 
 
-class ImageState(QObject):
-    parameter_changed = Signal()
-    opacity_changed = Signal(float)
-    show_label_changed = Signal(bool)
+class LabelEnum(Enum):
+    Not_show = 0
+    Show_results = 1
+    Show_chosen = 2
 
-    def __init__(self, settings: ViewSettings):
-        super(ImageState, self).__init__()
+    def __str__(self):
+        return self.name.replace("_", " ")
+
+
+enum_register.register_class(LabelEnum)
+
+
+class ImageShowState(QObject):
+    """Object for storing state used when presenting it in :class:`.ImageView`"""
+    parameter_changed = Signal()  # signal informing that some of image presenting parameters
+    # changed and image need to be refreshed
+
+    def __init__(self, settings: ViewSettings, name: str):
+        assert len(name) > 0
+        super().__init__()
+        self.name = name
         self.settings = settings
         self.zoom = False
         self.move = False
-        self.opacity = settings.get_from_profile("image_state.opacity", 1)
-        self.show_label = settings.get_from_profile("image_state.show_label", 1)
-        # 0 - no show, 1 - show all, 2 - show chosen
-        self.only_borders = settings.get_from_profile("image_state.only_border", True)
-        self.borders_thick = settings.get_from_profile("image_state.border_thick", 1)
+        self.opacity = settings.get_from_profile(f"{name}.image_state.opacity", 1.0)
+        self.show_label = settings.get_from_profile(f"{name}.image_state.show_label", LabelEnum.Show_results)
+        self.only_borders = settings.get_from_profile(f"{name}.image_state.only_border", True)
+        self.borders_thick = settings.get_from_profile(f"{name}.image_state.border_thick", 1)
 
     def set_zoom(self, val):
         self.zoom = val
@@ -51,45 +65,49 @@ class ImageState(QObject):
     def set_move(self, val):
         self.move = val
 
-    def set_borders(self, val):
+    def set_borders(self, val: bool):
+        """decide if draw only component 2D borders, or whole area"""
         if self.only_borders != val:
-            self.settings.set_in_profile("image_state.only_border", val)
+            self.settings.set_in_profile(f"{self.name}.image_state.only_border", val)
             self.only_borders = val
             self.parameter_changed.emit()
 
-    def set_borders_thick(self, val):
+    def set_borders_thick(self, val: int):
+        """If draw only 2D borders of component then set thickness of line used for it"""
         if val != self.borders_thick:
-            self.settings.set_in_profile("image_state.border_thick", val)
+            self.settings.set_in_profile(f"{self.name}.image_state.border_thick", val)
             self.borders_thick = val
             self.parameter_changed.emit()
 
-    def set_opacity(self, val):
+    def set_opacity(self, val: float):
+        """Set opacity of component labels"""
         if self.opacity != val:
-            self.settings.set_in_profile("image_state.opacity", val)
+            self.settings.set_in_profile(f"{self.name}.image_state.opacity", val)
             self.opacity = val
             self.parameter_changed.emit()
 
     def components_change(self):
-        if self.show_label == 2:
+        if self.show_label == LabelEnum.Show_chosen:
             self.parameter_changed.emit()
 
-    def set_show_label(self, val):
+    def set_show_label(self, val: LabelEnum):
         if self.show_label != val:
-            self.settings.set_in_profile("image_state.show_label", val)
+            self.settings.set_in_profile(f"{self.name}.image_state.show_label", val)
             self.show_label = val
             self.parameter_changed.emit()
 
 
 class ImageCanvas(QLabel):
     """Canvas for painting image"""
-    zoom_mark = Signal(QPoint, QPoint)
-    position_signal = Signal(QPoint, QSize)
-    click_signal = Signal(QPoint, QSize)
-    leave_signal = Signal()
+    zoom_mark = Signal(QPoint, QPoint, QSize)  # Signal emitted on end of marking zoom area.
+    # Contains two oposit corners of rectangle and current size of canvas
+    position_signal = Signal([QPoint, QSize], [QPoint])
+    click_signal = Signal([QPoint, QSize], [QPoint])
+    leave_signal = Signal()  # mouse left Canvas area
 
-    def __init__(self, local_settings: ImageState):
+    def __init__(self, local_settings: ImageShowState):
         """
-        :type local_settings: ImageState
+        :type local_settings: ImageShowState
         :param local_settings:
         """
         super().__init__()
@@ -103,7 +121,9 @@ class ImageCanvas(QLabel):
         self.setMouseTracking(True)
         self.my_pixmap = None
 
-    def set_image(self, im, paint):
+    def set_image(self, im: np.ndarray):
+        """set image which will be shown. This function is called from
+         :class: `ImageView` when changing image or layer"""
         self.image = im
         height, width, _ = im.shape
         self.image_size = QSize(width, height)
@@ -116,7 +136,7 @@ class ImageCanvas(QLabel):
         im = self.image
         width, height = self.image_size.width(), self.image_size.height()
         im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 3, QImage.Format_RGB888)
-        self.my_pixmap = QPixmap.fromImage(im2) # .scaled(self.width(), self.height(), Qt.KeepAspectRatio))
+        self.my_pixmap = QPixmap.fromImage(im2)
         self.repaint()
 
     def leaveEvent(self, a0: QEvent):
@@ -124,31 +144,33 @@ class ImageCanvas(QLabel):
         self.point2 = None
         self.leave_signal.emit()
 
-    def mousePressEvent(self, event):
-        """
-        :type event: QMouseEvent
-        :param event:
-        :return:
-        """
+    def _calculate_real_position(self, pos: QPoint):
+        x = int(pos.x() / (self.width() / self.image_size.width()))
+        y = int(pos.y() / (self.height() / self.image_size.height()))
+        return QPoint(x, y)
+
+    def mousePressEvent(self, event: QMouseEvent):
         super().mousePressEvent(event)
         if self.local_settings.zoom:
             self.point = event.pos()
         elif not self.local_settings.move:
             self.click_signal.emit(event.pos(), self.size())
+            self.click_signal[QPoint].emit(self._calculate_real_position(event.pos()))
 
-    def mouseMoveEvent(self, event):
+    def mouseMoveEvent(self, event: QMouseEvent):
         super().mouseMoveEvent(event)
         if self.local_settings.zoom and self.point is not None:
             self.point2 = event.pos()
             self.update()
         self.position_signal.emit(event.pos(), self.size())
+        self.position_signal[QPoint].emit(self._calculate_real_position(event.pos()))
 
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
         if self.local_settings.zoom and self.point is not None and self.point2 is not None:
             diff = self.point2 - self.point
             if abs(diff.x()) and abs(diff.y()):
-                self.zoom_mark.emit(self.point, self.point2)
+                self.zoom_mark.emit(self.point, self.point2, self.size())
             self.point2 = None
             self.point = None
             self.update()
@@ -172,33 +194,6 @@ class ImageCanvas(QLabel):
         pen.setDashOffset(3)
         painter.setPen(pen)
         painter.drawRect(self.point.x(), self.point.y(), diff.x(), diff.y())
-
-    def resizeEvent(self, event: QtGui.QResizeEvent):
-        pass
-        # print("[resize]", self.size(), self.parent().size(), event.oldSize(), event.size())
-        # self.paint_image()
-
-
-def get_scroll_bar_proportion(scroll_bar):
-    """
-    :type scroll_bar: QScrollBar
-    :param scroll_bar:
-    :return: float
-    """
-    dist = (scroll_bar.maximum() - scroll_bar.minimum())
-    if dist == 0:
-        return 0.5
-    else:
-        return float(scroll_bar.value()) / dist
-
-
-def set_scroll_bar_proportion(scroll_bar, proportion):
-    """
-    :type scroll_bar: QScrollBar
-    :type proportion: float
-    :param scroll_bar:
-    """
-    scroll_bar.setValue(int((scroll_bar.maximum() - scroll_bar.minimum()) * proportion))
 
 
 def create_tool_button(text, icon):
@@ -226,7 +221,9 @@ class ChanelColor(QWidget):
         pos = list(color_maps.keys()).index(default_colors[num2])
         self.color_list.setCurrentIndex(pos)
         layout = QHBoxLayout()
+        # noinspection PyArgumentList
         layout.addWidget(self.check_box)
+        # noinspection PyArgumentList
         layout.addWidget(self.color_list)
         self.setLayout(layout)
 
@@ -236,7 +233,7 @@ class ChanelColor(QWidget):
     def colormap_name(self):
         return str(self.color_list.currentText())
 
-    def register(self, fun):
+    def register(self, fun: Callable):
         # noinspection PyUnresolvedReferences
         self.color_list.currentIndexChanged.connect(fun)
         self.check_box.stateChanged.connect(fun)
@@ -270,17 +267,18 @@ class ImageView(QWidget):
     component_clicked = Signal(int)
     text_info_change = Signal(str)
 
-    image_canvas = ImageCanvas # can be used to customize canvas. eg. add more signals
+    image_canvas = ImageCanvas  # can be used to customize canvas. eg. add more signals
 
     # zoom_changed = Signal(float, float, float)
 
     def __init__(self, settings: ViewSettings, channel_property: ChannelProperty, name: str):
         """:type settings: ViewSettings"""
+        # noinspection PyArgumentList
         super().__init__()
         self._settings: ViewSettings = settings
         self.channel_property = channel_property
         self.exclude_btn_list = []
-        self.image_state = ImageState(settings)
+        self.image_state = ImageShowState(settings, name)
         self.channel_control = ColorComboBoxGroup(settings, name, channel_property, height=30)
         self._channel_control_top = True
         self.image_area = MyScrollArea(self.image_state, self.image_canvas)
@@ -301,9 +299,13 @@ class ImageView(QWidget):
         self.btn_layout = QHBoxLayout()
         self.btn_layout.setSpacing(0)
         self.btn_layout.setContentsMargins(0, 0, 0, 0)
+        # noinspection PyArgumentList
         self.btn_layout.addWidget(self.reset_button)
+        # noinspection PyArgumentList
         self.btn_layout.addWidget(self.zoom_button)
+        # noinspection PyArgumentList
         self.btn_layout.addWidget(self.move_button)
+        # noinspection PyArgumentList
         self.btn_layout.addWidget(self.channel_control, 1)
         self.btn_layout2 = QHBoxLayout()
 
@@ -329,13 +331,18 @@ class ImageView(QWidget):
         main_layout.addLayout(self.btn_layout2, 1, 1)
         time_slider_layout = QVBoxLayout()
         time_slider_layout.setContentsMargins(0, 0, 0, 0)
+        # noinspection PyArgumentList
         time_slider_layout.addWidget(self.time_layer_info)
+        # noinspection PyArgumentList
         time_slider_layout.addWidget(self.time_slider)
         main_layout.addLayout(time_slider_layout, 2, 0)
+        # noinspection PyArgumentList
         main_layout.addWidget(self.image_area, 2, 1)
         stack_slider_layout = QHBoxLayout()
         stack_slider_layout.setContentsMargins(0, 0, 0, 0)
+        # noinspection PyArgumentList
         stack_slider_layout.addWidget(self.stack_slider)
+        # noinspection PyArgumentList
         stack_slider_layout.addWidget(self.stack_layer_info)
         main_layout.addLayout(stack_slider_layout, 3, 1)
 
@@ -358,11 +365,13 @@ class ImageView(QWidget):
         if event.size().width() > 500 and not self._channel_control_top:
             w = self.btn_layout2.takeAt(0).widget()
             self.btn_layout.takeAt(3)
+            # noinspection PyArgumentList
             self.btn_layout.insertWidget(3, w)
             self._channel_control_top = True
         elif event.size().width() <= 500 and self._channel_control_top:
             w = self.btn_layout.takeAt(3).widget()
             self.btn_layout.insertStretch(3, 1)
+            # noinspection PyArgumentList
             self.btn_layout2.insertWidget(0, w)
             self._channel_control_top = False
 
@@ -419,7 +428,7 @@ class ImageView(QWidget):
         self.position_changed[int, int, int].emit(self.stack_slider.value(), y, x)
 
     def get_control_view(self):
-        # type: () -> ImageState
+        # type: () -> ImageShowState
         return self.image_state
 
     def reset_image_size(self):
@@ -461,11 +470,11 @@ class ImageView(QWidget):
         pass
 
     def add_labels(self, im):
-        if self.labels_layer is not None and self.image_state.show_label:
+        if self.labels_layer is not None and self.image_state.show_label != LabelEnum.Not_show:
             # TODO fix to support time
             layers = self.labels_layer[self.stack_slider.value()]
             components_mask = self._settings.components_mask()
-            if self.image_state.show_label == 1:
+            if self.image_state.show_label == LabelEnum.Show_results:
                 components_mask[1:] = 1
             add_labels(im, layers, self.image_state.opacity, self.image_state.only_borders,
                        int((self.image_state.borders_thick - 1) / 2), components_mask)
@@ -519,7 +528,7 @@ class MyScrollArea(QScrollArea):
 
     def __init__(self, local_settings, image_canvas: Type[ImageCanvas], *args, **kwargs):
         """
-        :type local_settings: ImageState
+        :type local_settings: ImageShowState
         :param local_settings:
         :param args:
         :param kwargs:
@@ -529,7 +538,7 @@ class MyScrollArea(QScrollArea):
         self.setAlignment(Qt.AlignCenter)
         self.clicked = False
         self.prev_pos = None
-        self.pixmap = image_canvas(local_settings)
+        self.pixmap: ImageCanvas = image_canvas(local_settings)
         self.pixmap.setScaledContents(True)
         self.pixmap.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
         self.pixmap.setBackgroundRole(QPalette.Base)
@@ -627,7 +636,7 @@ class MyScrollArea(QScrollArea):
         self.zoom_changed.emit()
 
     def set_image(self, im, keep_size=False):
-        self.widget().set_image(im, keep_size)
+        self.widget().set_image(im)
         if not keep_size:
             self.reset_image()
             # self.widget().adjustSize()
@@ -661,7 +670,8 @@ class MyScrollArea(QScrollArea):
             n_val = (scroll_bar.minimum() + scroll_bar.maximum()) // 2
             scroll_bar.setValue(n_val)
 
-    def calculate_shift(self, pixmap_len, self_len, pix_ratio, cursor_ratio, scroll_bar: QScrollBar):
+    @staticmethod
+    def calculate_shift(pixmap_len, self_len, pix_ratio, cursor_ratio, scroll_bar: QScrollBar):
         if pixmap_len - self_len > 0:
             scroll_bar.setValue(pixmap_len * pix_ratio - self_len * cursor_ratio)
 

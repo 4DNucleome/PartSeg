@@ -22,7 +22,7 @@ from ..common_gui.custom_save_dialog import SaveDialog
 from ..common_gui.custom_load_dialog import CustomLoadDialog
 from ..common_gui.flow_layout import FlowLayout
 from ..common_gui.select_multiple_files import AddFiles
-from ..common_gui.stack_image_view import ColorBar
+from ..common_gui.stack_image_view import ColorBar, LabelEnum
 from ..common_gui.universal_gui_part import right_label
 from ..common_gui.waiting_dialog import ExecuteFunctionDialog
 from ..utils.segmentation.algorithm_base import SegmentationResult
@@ -362,9 +362,8 @@ class AlgorithmOptions(QWidget):
         control_view = image_view.get_control_view()
         super().__init__()
         self.settings = settings
-        self.show_result = QComboBox()  # QCheckBox("Show result")
-        self.show_result.addItems(["Not show", "Show results", "Show choosen"])
-        self.show_result.setCurrentIndex(control_view.show_label)
+        self.show_result = EnumComboBox(LabelEnum)  # QCheckBox("Show result")
+        self.show_result.set_value(control_view.show_label)
         self.opacity = QDoubleSpinBox()
         self.opacity.setRange(0, 1)
         self.opacity.setSingleStep(0.1)
@@ -470,7 +469,7 @@ class AlgorithmOptions(QWidget):
         # noinspection PyUnresolvedReferences
         self.opacity.valueChanged.connect(control_view.set_opacity)
         # noinspection PyUnresolvedReferences
-        self.show_result.currentIndexChanged.connect(control_view.set_show_label)
+        self.show_result.current_choose.connect(control_view.set_show_label)
         self.only_borders.stateChanged.connect(control_view.set_borders)
         # noinspection PyUnresolvedReferences
         self.borders_thick.valueChanged.connect(control_view.set_borders_thick)
