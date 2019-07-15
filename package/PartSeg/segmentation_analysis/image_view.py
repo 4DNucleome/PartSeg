@@ -1,7 +1,8 @@
-import collections
+from typing import Optional
 
+from qtpy.QtGui import QResizeEvent
 from qtpy import QtCore
-from qtpy.QtCore import QObject, QEvent
+from qtpy.QtCore import QObject, QEvent, Slot
 from qtpy.QtWidgets import QCheckBox, QDoubleSpinBox, QLabel
 
 from ..common_gui.channel_control import ChannelProperty
@@ -26,6 +27,49 @@ class ImageViewWithMask(ImageView):
         self.mask_label.setDisabled(True)
         settings.mask_changed.connect(self.mask_changed)
         self.mask_show.stateChanged.connect(self.paint_layer)
+        self.only_border = QCheckBox("")
+        self.image_state.only_borders = False
+        self.only_border.setChecked(self.image_state.only_borders)
+        self.only_border.stateChanged.connect(self.image_state.set_borders)
+        self.opacity = QDoubleSpinBox()
+        self.opacity.setRange(0, 1)
+        self.opacity.setValue(self.image_state.opacity)
+        self.opacity.setSingleStep(0.1)
+        self.opacity.valueChanged.connect(self.image_state.set_opacity)
+        self.label1 = QLabel("Borders:")
+        self.label2 = QLabel("Opacity:")
+        self.btn_layout.insertWidget(4, self.label1)
+        self.btn_layout.insertWidget(5, self.only_border)
+        self.btn_layout.insertWidget(6, self.label2)
+        self.btn_layout.insertWidget(7, self.opacity)
+        self.label1.setVisible(False)
+        self.label2.setVisible(False)
+        self.opacity.setVisible(False)
+        self.only_border.setVisible(False)
+
+    @Slot()
+    @Slot(np.ndarray)
+    def set_labels(self, labels: Optional[np.ndarray] = None):
+        super().set_labels(labels)
+        show = self.labels_layer is not None
+        self.label1.setVisible(show)
+        self.label2.setVisible(show)
+        self.opacity.setVisible(show)
+        self.only_border.setVisible(show)
+
+    def resizeEvent(self, event: QResizeEvent):
+        if event.size().width() > 700 and not self._channel_control_top:
+            w = self.btn_layout2.takeAt(0).widget()
+            self.btn_layout.takeAt(3)
+            # noinspection PyArgumentList
+            self.btn_layout.insertWidget(3, w)
+            self._channel_control_top = True
+        elif event.size().width() <= 700 and self._channel_control_top:
+            w = self.btn_layout.takeAt(3).widget()
+            self.btn_layout.insertStretch(3, 1)
+            # noinspection PyArgumentList
+            self.btn_layout2.insertWidget(0, w)
+            self._channel_control_top = False
 
     def event(self, event: QtCore.QEvent):
         if event.type() == QEvent.WindowActivate:
@@ -61,9 +105,12 @@ class ImageViewWithMask(ImageView):
         self.mask_changed()
 
 
-class RawImageView(ImageViewWithMask):
-    def add_labels(self, im):
-        return im
+class CompareImageView(ImageViewWithMask):
+    def __init__(self, settings: PartSettings, channel_property: ChannelProperty, name: str):
+        super().__init__(settings, channel_property, name)
+        settings.segmentation_changed.disconnect(self.set_labels)
+        settings.segmentation_clean.disconnect(self.set_labels)
+        settings.compare_segmentation_change.connect(self.set_labels)
 
 
 class ResultImageView(ImageViewWithMask):

@@ -30,7 +30,7 @@ from .calculation_pipeline_thread import CalculatePipelineThread
 from PartSeg.tiff_image import ImageReader, Image
 from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from PartSeg.utils.analysis.analysis_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
-from .image_view import ResultImageView, SynchronizeView, ImageViewWithMask, RawImageView
+from .image_view import ResultImageView, SynchronizeView, ImageViewWithMask, CompareImageView
 from .partseg_settings import PartSettings
 from ..common_gui.custom_save_dialog import SaveDialog
 from PartSeg.utils.analysis.save_functions import save_dict
@@ -41,10 +41,10 @@ CONFIG_FOLDER = os.path.join(state_store.save_folder, "analysis")
 
 class Options(QWidget):
     def __init__(self, settings: PartSettings, channel_control2: ChannelProperty,
-                 left_panel: StackedWidgetWithSelector, main_image: ImageViewWithMask, synchronize: SynchronizeView):
+                 left_image: ImageViewWithMask, main_image: ImageViewWithMask, synchronize: SynchronizeView):
         super().__init__()
         self._settings = settings
-        self.left_panel = left_panel
+        self.left_panel = left_image
         self._ch_control2 = channel_control2
         self.synchronize_val = False
         self.hide_left_panel_chk = QCheckBox("Hide left panel")
@@ -71,15 +71,10 @@ class Options(QWidget):
         self.choose_profile.addItems(list(self._settings.segmentation_profiles.keys()))
         self.choose_profile.setToolTip("Select profile to restore its settings. Execute if interactive is checked")
         # image state
-        self.only_border = QCheckBox("")
-        main_image.image_state.only_borders = False
-        self.only_border.setChecked(main_image.image_state.only_borders)
-        self.only_border.stateChanged.connect(main_image.image_state.set_borders)
-        self.opacity = QDoubleSpinBox()
-        self.opacity.setRange(0, 1)
-        self.opacity.setValue(main_image.image_state.opacity)
-        self.opacity.setSingleStep(0.1)
-        self.opacity.valueChanged.connect(main_image.image_state.set_opacity)
+        self.compare_btn = QPushButton("Compare")
+        self.compare_btn.setDisabled(True)
+        self.compare_btn.clicked.connect(self.compare_action)
+        left_image.hide_signal.connect(self.compare_btn.setHidden)
 
         self.update_tooltips()
         self.choose_profile.currentTextChanged.connect(self.change_profile)
@@ -90,30 +85,14 @@ class Options(QWidget):
         self.algorithm_choose_widget.finished.connect(self.calculation_finished)
         self.algorithm_choose_widget.value_changed.connect(self.interactive_algorithm_execute)
         self.algorithm_choose_widget.algorithm_changed.connect(self.interactive_algorithm_execute)
-        # settings.mask_changed.connect(self.algorithm_choose_widget.mask_changed)
-        """widgets_list = []
-        for name, val in part_algorithm_dict.items():
-            self.algorithm_choose.addItem(name)
-            widget = InteractiveAlgorithmSettingsWidget(settings, name, val,
-                                                        selector=[self.algorithm_choose, self.choose_profile])
-            widgets_list.append(widget)
-            widget.algorithm_thread.execution_done.connect(self.execution_done)
-            widget.algorithm_thread.finished.connect(partial(self.execute_btn.setEnabled, True))
-            # widget.algorithm.progress_signal.connect(self.progress_info)
-            self.stack_layout.addWidget(widget)"""
 
         self.label = QLabel()
         self.label.setWordWrap(True)
         self.label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         layout = QVBoxLayout()
         layout1 = QHBoxLayout()
-        layout1.setSpacing(5)
-        layout1.addWidget(QLabel("Borders:"))
-        layout1.addWidget(self.only_border)
-        layout1.addSpacing(10)
-        layout1.addWidget(QLabel("Opacity:"))
-        layout1.addWidget(self.opacity)
         layout1.addStretch(1)
+        layout1.addWidget(self.compare_btn, 3)
         layout2 = QHBoxLayout()
         layout2.setSpacing(1)
         layout2.setContentsMargins(0, 0, 0, 0)
@@ -144,13 +123,15 @@ class Options(QWidget):
         layout.addWidget(self._ch_control2)
         layout.setSpacing(0)
         self.setLayout(layout)
-        # self.algorithm_choose.currentIndexChanged.connect(self.stack_layout.setCurrentIndex)
-        # self.algorithm_choose.currentTextChanged.connect(self.algorithm_change)
-        # current_algorithm = self._settings.get("current_algorithm", self.algorithm_choose.currentText())
-        # for i, el in enumerate(widgets_list):
-        #     if el.name == current_algorithm:
-        #        self.algorithm_choose.setCurrentIndex(i)
-        #        break
+
+    def compare_action(self):
+        if self.compare_btn.text() == "Compare":
+            self._settings.set_segmentation_to_compare(self._settings.segmentation)
+            self.compare_btn.setText("Remove")
+        else:
+            self._settings.set_segmentation_to_compare(None)
+            self.compare_btn.setText("Compare")
+
 
     def calculation_finished(self):
         self.execute_btn.setDisabled(self.interactive_use.isChecked())
@@ -347,6 +328,8 @@ class Options(QWidget):
         if segmentation.info_text != "":
             QMessageBox.information(self, "Algorithm info", segmentation.info_text)
         self._settings.segmentation = segmentation.segmentation
+        self.compare_btn.setEnabled(
+            isinstance(segmentation.segmentation, np.ndarray) and np.any(segmentation.segmentation))
         self._settings.noise_remove_image_part = segmentation.cleaned_channel
         self._settings.full_segmentation = segmentation.full_segmentation
         self.label.setText(self.sender().get_info_text())
@@ -653,8 +636,8 @@ class MainWindow(BaseMainWindow):
         self.main_menu = MainMenu(self.settings, self)
         # self.channel_control1 = ChannelControl(self.settings, name="raw_control", text="Left panel:")
         self.channel_control2 = ChannelProperty(self.settings, start_name="result_control")
-        self.raw_image = RawImageView(self.settings,
-                                       self.channel_control2, "raw_image")
+        self.raw_image = CompareImageView(self.settings,
+                                          self.channel_control2, "raw_image")
         self.measurements = StatisticsWidget(self.settings)
         self.left_stack = StackedWidgetWithSelector()
         self.left_stack.addWidget(self.raw_image, "Image")
@@ -673,7 +656,7 @@ class MainWindow(BaseMainWindow):
         self.advanced_window = AdvancedWindow(self.settings, reload_list=[self.reload])
         self.batch_window = None  # BatchWindow(self.settings)
 
-        self.multiple_files = MultipleFileWidget(self.settings, load_functions.load_dict)
+        self.multiple_files = MultipleFileWidget(self.settings, load_functions.load_dict, True)
 
         if initial_image is None:
             reader = ImageReader()

@@ -24,6 +24,7 @@ class PartSettings(BaseSettings):
     last_executed_algorithm - parameter for caring last used algorithm
     """
     mask_changed = Signal()
+    compare_segmentation_change = Signal(np.ndarray)
     json_encoder_class = PartEncoder
     decode_hook = staticmethod(part_hook)
     load_metadata = staticmethod(load_metadata)
@@ -35,6 +36,7 @@ class PartSettings(BaseSettings):
         super().__init__(json_path)
         self._mask = None
         self.full_segmentation = None
+        self.compare_segmentation = None
         self.segmentation_history: typing.List[HistoryElement] = []
         self.undo_segmentation_history: typing.List[HistoryElement] = []
         self.last_executed_algorithm = ""
@@ -42,6 +44,13 @@ class PartSettings(BaseSettings):
         self.segmentation_profiles_dict = ProfileDict()
         self.batch_plans_dict = ProfileDict()
         self.statistic_profiles_dict = ProfileDict()
+
+    def set_segmentation_to_compare(self, segmentation):
+        self.compare_segmentation = segmentation
+        if segmentation is None:
+            self.compare_segmentation_change.emit(np.array([]))
+        else:
+            self.compare_segmentation_change.emit(segmentation)
 
     @property
     def use_physical_unit(self):
@@ -72,7 +81,8 @@ class PartSettings(BaseSettings):
     def get_project_info(self) -> ProjectTuple:
         algorithm_name = self.last_executed_algorithm
         if algorithm_name:
-            algorithm_val = {"algorithm_name": algorithm_name, "values": deepcopy(self.get(f"algorithms.{algorithm_name}"))}
+            algorithm_val = {"algorithm_name": algorithm_name, "values":
+                             deepcopy(self.get(f"algorithms.{algorithm_name}"))}
         else:
             algorithm_val = {}
         return ProjectTuple(self.image.file_path, self.image.substitute(), self.segmentation, self.full_segmentation,

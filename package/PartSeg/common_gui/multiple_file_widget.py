@@ -1,13 +1,14 @@
 import os
 import sys
 from pathlib import Path
+from functools import partial
+from typing import Dict
 
 from qtpy.QtWidgets import QWidget, QPushButton, QTreeWidget, QGridLayout, QFileDialog, QCheckBox, QInputDialog, \
-    QTreeWidgetItem, QMessageBox, QApplication
+    QTreeWidgetItem, QMessageBox, QApplication, QMenu, QAction
 from qtpy.QtGui import QFontMetrics, QResizeEvent, QMouseEvent
 
-from qtpy.QtCore import Qt, QTimer, Slot
-from typing import Dict
+from qtpy.QtCore import Qt, QTimer, Slot, Signal
 from collections import defaultdict, Counter
 
 from PartSeg.project_utils_qt.settings import BaseSettings
@@ -18,19 +19,50 @@ from .waiting_dialog import ExecuteFunctionDialog
 
 
 class CustomTreeWidget(QTreeWidget):
+    context_load = Signal(QTreeWidgetItem)
+    context_compare = Signal(QTreeWidgetItem)
+    context_forget = Signal(QTreeWidgetItem)
+
+    def __init__(self, compare, parent=None):
+        super().__init__(parent)
+        self.compare = compare
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.showContextMenu)
+
+    def showContextMenu(self, point):
+        item = self.itemAt(point)
+        if item is None:
+            return
+        menu = QMenu()
+        if item.parent() is not None:
+            action1 = QAction("Load")
+            action1.triggered.connect(partial(self.context_load.emit, item))
+            menu.addAction(action1)
+            if self.compare:
+                action2 = QAction("Compare")
+                action2.triggered.connect(partial(self.context_compare.emit, item))
+                menu.addAction(action2)
+        action = QAction("Forget")
+        action.triggered.connect(partial(self.context_forget.emit, item))
+        menu.addAction(action)
+        menu.exec(self.mapToGlobal(point))
+
+    def set_show_compare(self, compare: bool):
+        self.compare = compare
+
     def mouseMoveEvent(self, QMouseEvent):
         QApplication.setOverrideCursor(Qt.ArrowCursor)
 
 
 class MultipleFileWidget(QWidget):
-    def __init__(self, settings: BaseSettings, load_dict: Dict[str, LoadBase]):
+    def __init__(self, settings: BaseSettings, load_dict: Dict[str, LoadBase], compare_in_context_menu=False):
         super().__init__()
         self.settings = settings
         self.state_dict: Dict[str, Dict[str, ProjectInfoBase]] = defaultdict(dict)
         self.state_dict_count = Counter()
         self.file_list = []
         self.load_register = load_dict
-        self.file_view = CustomTreeWidget()
+        self.file_view = CustomTreeWidget(compare_in_context_menu)
         self.file_view.header().close()
         self.save_state_btn = QPushButton("Save state")
         self.save_state_btn.setStyleSheet("QPushButton{font-weight: bold;}")
@@ -41,6 +73,7 @@ class MultipleFileWidget(QWidget):
         self.forget_btn.clicked.connect(self.forget)
         self.load_files_btn.clicked.connect(self.load_files)
         self.file_view.itemDoubleClicked.connect(self.load_state)
+        self.file_view.context_load.connect(self.load_state)
         self.last_point = None
 
         self.custom_names_chk = QCheckBox("Custom names")
@@ -55,6 +88,9 @@ class MultipleFileWidget(QWidget):
         self.setLayout(layout)
         self.setMouseTracking(True)
         self.file_view.setMouseTracking(True)
+        self.file_view.context_load.connect(self.load_state)
+        self.file_view.context_compare.connect(self.load_compare)
+        self.file_view.context_forget.connect(self.forget_action)
         self.error_list = []
 
     def execute_load_files(self, load_data: LoadProperty, range_changed, step_changed):
@@ -110,25 +146,35 @@ class MultipleFileWidget(QWidget):
                 errors_message.setDetailedText(text)
                 errors_message.exec()
 
-    def load_state(self, item, _column):
+    def load_state(self, item, _column=1):
         if item.parent() is None:
             return
-        else:
-            file_name = self.file_list[self.file_view.indexOfTopLevelItem(item.parent())]
-            state_name = item.text(0)
-            project_info = self.state_dict[file_name][state_name]
-            image = self.settings.verify_image(project_info.image, False)
-            if isinstance(image, Image):
-                project_info = project_info._replace(image=image)
-                self.state_dict[file_name][state_name] = project_info
-            if image:
-                self.settings.set_project_info(project_info)
+        file_name = self.file_list[self.file_view.indexOfTopLevelItem(item.parent())]
+        state_name = item.text(0)
+        project_info = self.state_dict[file_name][state_name]
+        image = self.settings.verify_image(project_info.image, False)
+        if isinstance(image, Image):
+            project_info = project_info._replace(image=image)
+            self.state_dict[file_name][state_name] = project_info
+        if image:
+            self.settings.set_project_info(project_info)
+
+    def load_compare(self, item):
+        if item.parent() is None:
+            return
+        file_name = self.file_list[self.file_view.indexOfTopLevelItem(item.parent())]
+        if self.settings.image.file_path != file_name:
+            QMessageBox.information(self, "Wrong file", "Please select same file as main")
+            return
+        state_name = item.text(0)
+        project_info = self.state_dict[file_name][state_name]
+        if hasattr(self.settings, "set_segmentation_to_compare"):
+            self.settings.set_segmentation_to_compare(project_info.segmentation)
 
     def save_state(self):
         state: ProjectInfoBase = self.settings.get_project_info()
         custom_name = self.custom_names_chk.isChecked()
         self.save_state_action(state, custom_name)
-
 
     def save_state_action(self, state: ProjectInfoBase, custom_name):
         #TODO left elipsis
@@ -170,6 +216,9 @@ class MultipleFileWidget(QWidget):
             return 
         self.forget_btn.setDisabled(True)
         item: QTreeWidgetItem = self.file_view.currentItem()
+        self.forget_action(item)
+
+    def forget_action(self, item):
         if item is None:
             return
         if isinstance(item.parent(), QTreeWidgetItem):
@@ -224,6 +273,9 @@ class MultipleFileWidget(QWidget):
 
     def mouseReleaseEvent(self, event: QMouseEvent):
         self.last_point = None
+
+    def set_compare_in_context_menu(self, compare: bool):
+        self.file_view.set_show_compare(compare)
 
 
 

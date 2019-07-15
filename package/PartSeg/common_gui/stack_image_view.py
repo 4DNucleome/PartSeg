@@ -4,7 +4,7 @@ import collections
 import os
 from enum import Enum
 from math import log
-from typing import Type, List, Union, Callable
+from typing import Type, List, Union, Callable,  Optional
 from PartSegData import icons_dir
 
 import numpy as np
@@ -268,6 +268,7 @@ class ImageView(QWidget):
     text_info_change = Signal(str)
 
     image_canvas = ImageCanvas  # can be used to customize canvas. eg. add more signals
+    hide_signal = Signal(bool)
 
     # zoom_changed = Signal(float, float, float)
 
@@ -510,9 +511,17 @@ class ImageView(QWidget):
 
     @Slot()
     @Slot(np.ndarray)
-    def set_labels(self, labels=None):
+    def set_labels(self, labels: Optional[np.ndarray] = None):
+        if isinstance(labels, np.ndarray) and labels.size == 0:
+            labels = None
         self.labels_layer = labels
         self.paint_layer()
+
+    def hideEvent(self, a0: QtGui.QHideEvent) -> None:
+        self.hide_signal.emit(True)
+
+    def showEvent(self, a0: QtGui.QShowEvent) -> None:
+        self.hide_signal.emit(False)
 
 
 class MyScrollArea(QScrollArea):

@@ -2,6 +2,7 @@ import json
 import os
 import re
 import typing
+import numpy as np
 from abc import ABC
 from datetime import datetime
 from enum import Enum
@@ -50,6 +51,7 @@ def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
 class ProjectInfoBase:
     file_path: str
     image: Image
+    segmentation: np.ndarray
     errors: str = ""
 
     def _replace(self, file_path=None, image=None):
