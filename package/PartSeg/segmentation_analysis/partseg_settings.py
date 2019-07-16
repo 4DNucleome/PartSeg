@@ -43,7 +43,7 @@ class PartSettings(BaseSettings):
         self.segmentation_pipelines_dict = ProfileDict()
         self.segmentation_profiles_dict = ProfileDict()
         self.batch_plans_dict = ProfileDict()
-        self.statistic_profiles_dict = ProfileDict()
+        self.measurement_profiles_dict = ProfileDict()
 
     def set_segmentation_to_compare(self, segmentation):
         self.compare_segmentation = segmentation
@@ -115,7 +115,7 @@ class PartSettings(BaseSettings):
         return super().get_save_list() + [
             SaveSettingsDescription("segmentation_pipeline_save.json", self.segmentation_pipelines_dict),
             SaveSettingsDescription("segmentation_profiles_save.json", self.segmentation_profiles_dict),
-            SaveSettingsDescription("statistic_profiles_save.json", self.statistic_profiles_dict),
+            SaveSettingsDescription("statistic_profiles_save.json", self.measurement_profiles_dict),
             SaveSettingsDescription("batch_plans_save.json", self.batch_plans_dict),
         ]
 
@@ -156,4 +156,4 @@ class PartSettings(BaseSettings):
 
     @property
     def measurement_profiles(self) -> typing.Dict[str, MeasurementProfile]:
-        return self.statistic_profiles_dict.get(self.current_segmentation_dict, dict())
+        return self.measurement_profiles_dict.get(self.current_segmentation_dict, dict())

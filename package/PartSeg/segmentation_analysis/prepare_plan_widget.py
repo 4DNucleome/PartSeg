@@ -248,8 +248,8 @@ class CreatePlan(QWidget):
         self.mask_operation.addItems(self.mask_operation_names)
 
         self.chanel_num = QSpinBox()
-        self.channel_statistic_choose = QComboBox()
-        self.channel_statistic_choose.addItems(["Same as segmentation"] + [str(x) for x in range(MAX_CHANNEL_NUM)])
+        self.choose_channel_for_measurements = QComboBox()
+        self.choose_channel_for_measurements.addItems(["Same as segmentation"] + [str(x) for x in range(MAX_CHANNEL_NUM)])
         self.units_choose = EnumComboBox(Units)
         self.units_choose.set_value(self.settings.get("units_value", Units.nm))
         self.chanel_num.setRange(0, 10)
@@ -266,8 +266,8 @@ class CreatePlan(QWidget):
         self.add_new_segmentation_btn = QPushButton("Add new segmentation")
         self.get_big_btn.setDisabled(True)
         self.add_new_segmentation_btn.setDisabled(True)
-        self.statistic_list = QListWidget(self)
-        self.statistic_name_prefix = QLineEdit(self)
+        self.measurements_list = QListWidget(self)
+        self.measurement_name_prefix = QLineEdit(self)
         self.add_calculation_btn = QPushButton("Add measurement calculation")
         self.information = QTextEdit()
         self.information.setReadOnly(True)
@@ -280,9 +280,9 @@ class CreatePlan(QWidget):
         self.file_mask = FileMask()
 
         self.save_choose.currentTextChanged.connect(self.save_changed)
-        self.statistic_list.currentTextChanged.connect(self.show_statistics)
+        self.measurements_list.currentTextChanged.connect(self.show_measurement)
         self.segment_profile.currentTextChanged.connect(self.show_segment)
-        self.statistic_list.currentTextChanged.connect(self.show_statistics_info)
+        self.measurements_list.currentTextChanged.connect(self.show_measurement_info)
         self.segment_profile.currentTextChanged.connect(self.show_segment_info)
         self.pipeline_profile.currentTextChanged.connect(self.show_segment_info)
         self.pipeline_profile.currentTextChanged.connect(self.show_segment)
@@ -293,13 +293,13 @@ class CreatePlan(QWidget):
         self.mask_name.textChanged.connect(self.mask_text_changed)
         self.chose_profile_btn.clicked.connect(self.add_segmentation)
         self.get_big_btn.clicked.connect(self.add_leave_biggest)
-        self.add_calculation_btn.clicked.connect(self.add_statistics)
+        self.add_calculation_btn.clicked.connect(self.add_measurement)
         self.save_plan_btn.clicked.connect(self.add_calculation_plan)
         # self.forgot_mask_btn.clicked.connect(self.forgot_mask)
         # self.cmap_save_btn.clicked.connect(self.save_to_cmap)
         self.save_btn.clicked.connect(self.add_save_to_project)
         self.update_element_chk.stateChanged.connect(self.mask_text_changed)
-        self.update_element_chk.stateChanged.connect(self.show_statistics)
+        self.update_element_chk.stateChanged.connect(self.show_measurement)
         self.update_element_chk.stateChanged.connect(self.show_segment)
         self.update_element_chk.stateChanged.connect(self.update_names)
         self.choose_channel_btn.clicked.connect(self.choose_channel)
@@ -369,13 +369,13 @@ class CreatePlan(QWidget):
         measurement_box.setStyleSheet(group_sheet)
         lay = QGridLayout()
         lay.setSpacing(0)
-        lay.addWidget(self.statistic_list, 0, 0, 1, 2)
+        lay.addWidget(self.measurements_list, 0, 0, 1, 2)
         lab = QLabel("Name prefix:")
         lab.setToolTip("Prefix added before each column name")
         lay.addWidget(lab, 1, 0)
-        lay.addWidget(self.statistic_name_prefix, 1, 1)
+        lay.addWidget(self.measurement_name_prefix, 1, 1)
         lay.addWidget(QLabel("Channel:"), 2, 0)
-        lay.addWidget(self.channel_statistic_choose, 2, 1)
+        lay.addWidget(self.choose_channel_for_measurements, 2, 1)
         lay.addWidget(QLabel("Units:"))
         lay.addWidget(self.units_choose, 3, 1)
         lay.addWidget(self.add_calculation_btn, 4, 0, 1, 2)
@@ -414,7 +414,7 @@ class CreatePlan(QWidget):
         self.plan_node_changed.connect(self.mask_text_changed)
         self.plan.changed_node.connect(self.node_type_changed)
         self.plan_node_changed.connect(self.show_segment)
-        self.plan_node_changed.connect(self.show_statistics)
+        self.plan_node_changed.connect(self.show_measurement)
         self.plan_node_changed.connect(self.mask_stack_change)
         self.mask_stack.currentChanged.connect(self.mask_stack_change)
         self.file_mask.value_changed.connect(self.mask_stack_change)
@@ -466,11 +466,11 @@ class CreatePlan(QWidget):
     def update_names(self):
         if self.update_element_chk.isChecked():
             self.chose_profile_btn.setText("Replace Segment Profile")
-            self.add_calculation_btn.setText("Replace statistic calculation")
+            self.add_calculation_btn.setText("Replace measurement calculation")
             self.generate_mask_btn.setText("Replace mask")
         else:
             self.chose_profile_btn.setText("Segment Profile")
-            self.add_calculation_btn.setText("Add statistic calculation")
+            self.add_calculation_btn.setText("Add measurement calculation")
             self.generate_mask_btn.setText("Generate mask")
 
     def node_type_changed(self):
@@ -670,20 +670,19 @@ class CreatePlan(QWidget):
             self.calculation_plan.set_position(old_pos)
             self.plan.update_view()
 
-    def add_statistics(self):
-        text = str(self.statistic_list.currentItem().text())
-        statistics = self.settings.measurement_profiles[text]
-        statistics_copy = deepcopy(statistics)
-        prefix = str(self.statistic_name_prefix.text()).strip()
-        channel = self.channel_statistic_choose.currentIndex() - 1
-        statistics_copy.name_prefix = prefix
+    def add_measurement(self):
+        text = str(self.measurements_list.currentItem().text())
+        measurement_copy = deepcopy(self.settings.measurement_profiles[text])
+        prefix = str(self.measurement_name_prefix.text()).strip()
+        channel = self.choose_channel_for_measurements.currentIndex() - 1
+        measurement_copy.name_prefix = prefix
         # noinspection PyTypeChecker
-        statistic_calculate = MeasurementCalculate(channel=channel, statistic_profile=statistics_copy, name_prefix=prefix,
+        measurement_calculate = MeasurementCalculate(channel=channel, statistic_profile=measurement_copy, name_prefix=prefix,
                                                    units=self.units_choose.get_value())
         if self.update_element_chk.isChecked():
-            self.calculation_plan.replace_step(statistic_calculate)
+            self.calculation_plan.replace_step(measurement_calculate)
         else:
-            self.calculation_plan.add_step(statistic_calculate)
+            self.calculation_plan.add_step(measurement_calculate)
         self.plan.update_view()
 
     def remove_element(self):
@@ -763,37 +762,37 @@ class CreatePlan(QWidget):
             list_widget.setCurrentRow(index)
 
     def showEvent(self, event):
-        new_statistics = list(sorted(self.settings.measurement_profiles.keys()))
+        new_measurements = list(sorted(self.settings.measurement_profiles.keys()))
         new_segment = list(sorted(self.settings.segmentation_profiles.keys()))
         new_pipelines = list(sorted(self.settings.segmentation_pipelines.keys()))
-        statistic_index = self.get_index(self.statistic_list.currentItem(), new_statistics)
+        measurement_index = self.get_index(self.measurements_list.currentItem(), new_measurements)
         segment_index = self.get_index(self.segment_profile.currentItem(), new_segment)
         pipeline_index = self.get_index(self.pipeline_profile.currentItem(), new_pipelines)
         self.protect = True
-        self.refresh_profiles(self.statistic_list, new_statistics, statistic_index)
+        self.refresh_profiles(self.measurements_list, new_measurements, measurement_index)
         self.refresh_profiles(self.segment_profile, new_segment, segment_index)
         self.refresh_profiles(self.pipeline_profile, new_pipelines, pipeline_index)
         self.protect = False
 
-    def show_statistics_info(self, text=None):
+    def show_measurement_info(self, text=None):
         if self.protect:
             return
         if text is None:
-            if self.statistic_list.currentItem() is not None:
-                text = str(self.statistic_list.currentItem().text())
+            if self.measurements_list.currentItem() is not None:
+                text = str(self.measurements_list.currentItem().text())
             else:
                 return
         profile = self.settings.measurement_profiles[text]
         self.information.setText(str(profile))
 
-    def show_statistics(self):
+    def show_measurement(self):
         if self.update_element_chk.isChecked():
             if self.node_type == NodeType.statics:
                 self.add_calculation_btn.setEnabled(True)
             else:
                 self.add_calculation_btn.setDisabled(True)
         else:
-            if self.statistic_list.currentItem() is not None:
+            if self.measurements_list.currentItem() is not None:
                 self.add_calculation_btn.setEnabled(self.mask_allow)
             else:
                 self.add_calculation_btn.setDisabled(True)

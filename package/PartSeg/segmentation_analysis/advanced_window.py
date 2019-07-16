@@ -340,7 +340,7 @@ class AdvancedSettings(QWidget):
             self.update_profile_list()
 
 
-class StatisticListWidgetItem(QListWidgetItem):
+class MeasurementListWidgetItem(QListWidgetItem):
     def __init__(self, stat: Union[Node, Leaf], *args, **kwargs):
         super().__init__(stat.pretty_print(MEASUREMENT_DICT), *args, **kwargs)
         self.stat = stat
@@ -353,7 +353,7 @@ class MeasurementSettings(QWidget):
 
     def __init__(self, settings: PartSettings):
         super(MeasurementSettings, self).__init__()
-        self.chosen_element: Optional[StatisticListWidgetItem] = None
+        self.chosen_element: Optional[MeasurementListWidgetItem] = None
         self.chosen_element_area: Optional[Tuple[AreaType, float]] = None
         self.settings = settings
         self.profile_list = QListWidget(self)
@@ -361,17 +361,16 @@ class MeasurementSettings(QWidget):
         self.profile_description.setReadOnly(True)
         self.profile_options = QListWidget()
         self.profile_options_chosen = QListWidget()
-        self.statistic_area_choose = EnumComboBox(AreaType)
+        self.measurement_area_choose = EnumComboBox(AreaType)
         self.per_component = EnumComboBox(PerComponent)
         self.power_num = QDoubleSpinBox()
         self.power_num.setDecimals(3)
         self.power_num.setRange(-100, 100)
         self.power_num.setValue(1)
-        # self.statistic_object_choose.addItems(["Mask", "Segmentation", "Mask without segmentation"])
         self.choose_butt = QPushButton(u"→", self)
         self.discard_butt = QPushButton(u"←", self)
         self.proportion_butt = QPushButton(u"Ratio", self)
-        self.proportion_butt.setToolTip("Create proportion from two statistics")
+        self.proportion_butt.setToolTip("Create proportion from two parameter")
         self.move_up = QPushButton(u"↑", self)
         self.move_down = QPushButton(u"↓", self)
         self.remove_button = QPushButton("Remove")
@@ -409,8 +408,8 @@ class MeasurementSettings(QWidget):
         self.soft_reset_butt.clicked.connect(self.soft_reset)
         self.delete_profile_butt.setDisabled(True)
         self.delete_profile_butt.clicked.connect(self.delete_profile)
-        self.export_profiles_butt.clicked.connect(self.export_statistic_profiles)
-        self.import_profiles_butt.clicked.connect(self.import_statistic_profiles)
+        self.export_profiles_butt.clicked.connect(self.export_measurement_profiles)
+        self.import_profiles_butt.clicked.connect(self.import_measurement_profiles)
         self.edit_profile_butt.clicked.connect(self.edit_profile)
 
         self.profile_list.itemSelectionChanged.connect(self.profile_chosen)
@@ -441,7 +440,7 @@ class MeasurementSettings(QWidget):
         name_layout.addWidget(QLabel("Per component:"))
         name_layout.addWidget(self.per_component)
         name_layout.addWidget(QLabel("Area:"))
-        name_layout.addWidget(self.statistic_area_choose)
+        name_layout.addWidget(self.measurement_area_choose)
         name_layout.addWidget(QLabel("to power:"))
         name_layout.addWidget(self.power_num)
         """name_layout.addWidget(self.reversed_brightness)
@@ -479,7 +478,7 @@ class MeasurementSettings(QWidget):
 
         for name, profile in MEASUREMENT_DICT.items():
             help_text = profile.get_description()
-            lw = StatisticListWidgetItem(profile.get_starting_leaf())
+            lw = MeasurementListWidgetItem(profile.get_starting_leaf())
             lw.setToolTip(help_text)
             self.profile_options.addItem(lw)
         self.profile_list.addItems(list(sorted(self.settings.measurement_profiles.keys())))
@@ -530,25 +529,24 @@ class MeasurementSettings(QWidget):
         if self.chosen_element is None:
             item = self.profile_options.currentItem()
             self.chosen_element_area = \
-                self.get_parameters(deepcopy(item.stat), self.statistic_area_choose.get_value(),
+                self.get_parameters(deepcopy(item.stat), self.measurement_area_choose.get_value(),
                                     self.per_component.get_value(), self.power_num.value())
             if self.chosen_element_area is None:
                 return
             self.chosen_element = item
             item.setIcon(QIcon(os.path.join(icons_dir, "task-accepted.png")))
-            # self.statistic_area_choose.get_value(), self.per_component.get_value(), self.power_num.value()
         elif self.profile_options.currentItem() == self.chosen_element and \
-                self.statistic_area_choose.get_value() == self.chosen_element_area.area and \
+                self.measurement_area_choose.get_value() == self.chosen_element_area.area and \
                 self.per_component.get_value() == self.chosen_element_area.per_component:
             self.chosen_element.setIcon(QIcon())
             self.chosen_element = None
         else:
-            item: StatisticListWidgetItem = self.profile_options.currentItem()
-            leaf = self.get_parameters(deepcopy(item.stat), self.statistic_area_choose.get_value(),
+            item: MeasurementListWidgetItem = self.profile_options.currentItem()
+            leaf = self.get_parameters(deepcopy(item.stat), self.measurement_area_choose.get_value(),
                                        self.per_component.get_value(), self.power_num.value())
             if leaf is None:
                 return 
-            lw = StatisticListWidgetItem(
+            lw = MeasurementListWidgetItem(
                 Node(op="/", left=self.chosen_element_area,
                      right=leaf))
             lw.setToolTip("User defined")
@@ -631,14 +629,14 @@ class MeasurementSettings(QWidget):
     def choose_option(self):
         selected_item = self.profile_options.currentItem()
         # selected_row = self.profile_options.currentRow()
-        assert isinstance(selected_item, StatisticListWidgetItem)
+        assert isinstance(selected_item, MeasurementListWidgetItem)
         node = deepcopy(selected_item.stat)
         # noinspection PyTypeChecker
-        node = self.get_parameters(node, self.statistic_area_choose.get_value(), self.per_component.get_value(),
+        node = self.get_parameters(node, self.measurement_area_choose.get_value(), self.per_component.get_value(),
                                    self.power_num.value())
         if node is None:
             return
-        lw = StatisticListWidgetItem(node)
+        lw = MeasurementListWidgetItem(node)
         for i in range(self.profile_options_chosen.count()):
             if lw.text() == self.profile_options_chosen.item(i).text():
                 return
@@ -651,9 +649,9 @@ class MeasurementSettings(QWidget):
             self.choose_butt.setDisabled(True)
 
     def discard_option(self):
-        selected_item: StatisticListWidgetItem = self.profile_options_chosen.currentItem()
+        selected_item: MeasurementListWidgetItem = self.profile_options_chosen.currentItem()
         #  selected_row = self.profile_options_chosen.currentRow()
-        lw = StatisticListWidgetItem(deepcopy(selected_item.stat))
+        lw = MeasurementListWidgetItem(deepcopy(selected_item.stat))
         lw.setToolTip(selected_item.toolTip())
         self.create_selection_chosen_changed()
         for i in range(self.profile_options.count()):
@@ -669,7 +667,7 @@ class MeasurementSettings(QWidget):
         self.profile_options_chosen.clear()
         self.profile_name.setText(item.text())
         for ch in profile.chosen_fields:
-            self.profile_options_chosen.addItem(StatisticListWidgetItem(ch.calculation_tree))
+            self.profile_options_chosen.addItem(MeasurementListWidgetItem(ch.calculation_tree))
         # self.gauss_img.setChecked(profile.use_gauss_image)
         self.save_butt.setEnabled(True)
         self.save_butt_with_name.setEnabled(True)
@@ -683,7 +681,7 @@ class MeasurementSettings(QWidget):
                     return
         selected_values = []
         for i in range(self.profile_options_chosen.count()):
-            element: StatisticListWidgetItem = self.profile_options_chosen.item(i)
+            element: MeasurementListWidgetItem = self.profile_options_chosen.item(i)
             selected_values.append(MeasurementEntry(element.text(), element.stat))
         stat_prof = MeasurementProfile(self.profile_name.text(), selected_values)
         if stat_prof.name not in self.settings.measurement_profiles:
@@ -707,7 +705,7 @@ class MeasurementSettings(QWidget):
         if val_dialog.exec_():
             selected_values = []
             for i in range(self.profile_options_chosen.count()):
-                element: StatisticListWidgetItem = self.profile_options_chosen.item(i)
+                element: MeasurementListWidgetItem = self.profile_options_chosen.item(i)
                 selected_values.append(MeasurementEntry(val_dialog.result[element.text()], element.stat))
             stat_prof = MeasurementProfile(self.profile_name.text(), selected_values)
             if stat_prof.name not in self.settings.measurement_profiles:
@@ -728,7 +726,7 @@ class MeasurementSettings(QWidget):
         self.discard_butt.setDisabled(True)
         for name, profile in MEASUREMENT_DICT.items():
             help_text = profile.get_description()
-            lw = StatisticListWidgetItem(profile.get_starting_leaf())
+            lw = MeasurementListWidgetItem(profile.get_starting_leaf())
             lw.setToolTip(help_text)
             self.profile_options.addItem(lw)
 
@@ -742,7 +740,7 @@ class MeasurementSettings(QWidget):
                 shift += 1
         self.create_selection_changed()
 
-    def export_statistic_profiles(self):
+    def export_measurement_profiles(self):
         exp = ExportDialog(self.settings.measurement_profiles, StringViewer)
         if not exp.exec_():
             return
@@ -750,7 +748,7 @@ class MeasurementSettings(QWidget):
         dial.setDirectory(self.settings.get("io.export_directory", ""))
         dial.setFileMode(QFileDialog.AnyFile)
         dial.setAcceptMode(QFileDialog.AcceptSave)
-        dial.setNameFilter("statistic profile (*.json)")
+        dial.setNameFilter("measurement profile (*.json)")
         dial.setDefaultSuffix("json")
         dial.selectFile("measurements_profile.json")
 
@@ -762,25 +760,25 @@ class MeasurementSettings(QWidget):
                 json.dump(data, ff, cls=self.settings.json_encoder_class, indent=2)
             self.settings.set("io.save_directory", os.path.dirname(file_path))
 
-    def import_statistic_profiles(self):
+    def import_measurement_profiles(self):
         dial = QFileDialog(self, "Import settings profiles")
         dial.setDirectory(self.settings.get("io.export_directory", ""))
         dial.setFileMode(QFileDialog.ExistingFile)
-        dial.setNameFilter("statistic profile (*.json)")
+        dial.setNameFilter("measurement profile (*.json)")
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
             self.settings.set("io.export_directory", file_path)
             stat, err = self.settings.load_part(file_path)
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
-            statistic_dict = self.settings.measurement_profiles
-            imp = ImportDialog(stat, statistic_dict, StringViewer)
+            measurement_dict = self.settings.measurement_profiles
+            imp = ImportDialog(stat, measurement_dict, StringViewer)
             if not imp.exec_():
                 return
             for original_name, final_name in imp.get_import_list():
-                statistic_dict[final_name] = stat[original_name]
+                measurement_dict[final_name] = stat[original_name]
             self.profile_list.clear()
-            self.profile_list.addItems(list(sorted(statistic_dict.keys())))
+            self.profile_list.addItems(list(sorted(measurement_dict.keys())))
             self.settings.dump()
 
 

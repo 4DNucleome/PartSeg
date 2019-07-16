@@ -241,15 +241,15 @@ class CalculationPrepare(QDialog):
     :type mask_path_list: list[QLineEdit]
     :type mask_mapper_list: list[MaskMapper]
     """
-    def __init__(self, file_list, calculation_plan, statistic_file_path, settings, batch_manager):
+    def __init__(self, file_list, calculation_plan, measurement_file_path, settings, batch_manager):
         """
 
         :param file_list: list of files to proceed
         :type file_list: list[str]
         :param calculation_plan: calculation plan for this run
         :type calculation_plan: CalculationPlan
-        :param statistic_file_path: path to statistic file
-        :type statistic_file_path: str
+        :param measurement_file_path: path to measurement result file
+        :type measurement_file_path: str
         :param settings: settings object
         :type settings: PartSettings
         :type batch_manager: CalculationManager
@@ -258,7 +258,7 @@ class CalculationPrepare(QDialog):
         self.setWindowTitle("Calculation start")
         self.file_list = file_list
         self.calculation_plan = calculation_plan
-        self.statistic_file_path = statistic_file_path
+        self.measurement_file_path = measurement_file_path
         self.settings = settings
         self.batch_manager = batch_manager
         self.info_label = QLabel("Information, <i><font color='blue'>warnings</font></i>, "
@@ -279,8 +279,8 @@ class CalculationPrepare(QDialog):
         self.result_prefix_btn.clicked.connect(self.choose_result_prefix)
         self.sheet_name = QLineEdit("Sheet1")
         self.sheet_name.textChanged.connect(self.verify_data)
-        self.statistic_file_path_view = QLineEdit(statistic_file_path)
-        self.statistic_file_path_view.setReadOnly(True)
+        self.measurement_file_path_view = QLineEdit(measurement_file_path)
+        self.measurement_file_path_view.setReadOnly(True)
 
         self.mask_path_list = []
         self.mask_mapper_list = self.calculation_plan.get_list_file_mask()
@@ -315,10 +315,10 @@ class CalculationPrepare(QDialog):
         layout = QGridLayout()
         layout.addWidget(self.info_label, 0, 0, 1, 5)
         layout.addWidget(self.voxel_size, 1, 0, 1, 5)
-        layout.addWidget(right_label("Statistics sheet name:"), 3, 3)
+        layout.addWidget(right_label("Measurement sheet name:"), 3, 3)
         layout.addWidget(self.sheet_name, 3, 4)
-        layout.addWidget(right_label("Statistics file path:"), 2, 3)
-        layout.addWidget(self.statistic_file_path_view, 2, 4)
+        layout.addWidget(right_label("Measurement file path:"), 2, 3)
+        layout.addWidget(self.measurement_file_path_view, 2, 4)
 
         layout.addWidget(right_label("Data prefix:"), 2, 0)
         layout.addWidget(self.base_prefix, 2, 1)
@@ -376,7 +376,7 @@ class CalculationPrepare(QDialog):
     def get_data(self):
         res = {"file_list": self.file_list, "base_prefix": str(self.base_prefix.text()),
                "result_prefix": str(self.result_prefix.text()),
-               "statistic_file_path": str(self.statistic_file_path_view.text()),
+               "statistic_file_path": str(self.measurement_file_path_view.text()),
                "sheet_name": str(self.sheet_name.text()), "calculation_plan": self.calculation_plan,
                "voxel_size": self.voxel_size.get_values()}
         return Calculation(**res)
@@ -385,7 +385,7 @@ class CalculationPrepare(QDialog):
         self.execute_btn.setEnabled(True)
         text = "information, <i><font color='blue'>warnings</font></i>, <b><font color='red'>errors</font></b><br>" \
                "The voxel size is for file in which metadata do not contains this information<br>"
-        if not self.batch_manager.is_valid_sheet_name(str(self.statistic_file_path_view.text()),
+        if not self.batch_manager.is_valid_sheet_name(str(self.measurement_file_path_view.text()),
                                                       str(self.sheet_name.text())):
             text += "<i><font color='blue'>Sheet name already in use</i></font><br>"
             self.execute_btn.setDisabled(True)
