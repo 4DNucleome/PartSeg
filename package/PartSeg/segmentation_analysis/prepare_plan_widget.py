@@ -3,6 +3,7 @@ import logging
 import os
 import typing
 from copy import copy, deepcopy
+from enum import Enum
 from pathlib import Path
 
 from qtpy.QtGui import QPaintEvent
@@ -214,14 +215,25 @@ class FileMask(QWidget):
             return MaskFile(name, self.first_text.text().strip())
 
 
+class MaskOperation(Enum):
+    mask_intersection = 0
+    mask_sum = 1
+
+    def __str__(self):
+        return self.name.replace("_", " ").capitalize()
+
+
+def _check_widget(tab_widget, type_):
+    return isinstance(tab_widget.currentWidget(), type_) or tab_widget.currentWidget().findChildren(type_)
+
+
 class CreatePlan(QWidget):
 
     plan_created = Signal()
     plan_node_changed = Signal()
-    mask_operation_names = ["Reuse mask", "Mask intersection", "Mask sum"]
 
     def __init__(self, settings: PartSettings):
-        super(CreatePlan, self).__init__()
+        super().__init__()
         self.settings = settings
         self.save_translate_dict: typing.Dict[str, SaveBase] = dict((x.get_short_name(), x) for x in save_dict.values())
         self.plan = PlanPreview(self)
@@ -244,8 +256,7 @@ class CreatePlan(QWidget):
         self.generate_mask_btn = QPushButton("Add mask")
         self.generate_mask_btn.setToolTip("Mask need to have unique name")
         self.mask_name = QLineEdit()
-        self.mask_operation = QComboBox()
-        self.mask_operation.addItems(self.mask_operation_names)
+        self.mask_operation = EnumComboBox(MaskOperation)
 
         self.chanel_num = QSpinBox()
         self.choose_channel_for_measurements = QComboBox()
@@ -276,7 +287,7 @@ class CreatePlan(QWidget):
         self.mask_set = set()
         self.calculation_plan = CalculationPlan()
         self.plan.set_plan(self.calculation_plan)
-        self.dilate_mask = MaskWidget(settings)
+        self.segmentation_mask = MaskWidget(settings)
         self.file_mask = FileMask()
 
         self.save_choose.currentTextChanged.connect(self.save_changed)
@@ -339,7 +350,7 @@ class CreatePlan(QWidget):
         self.mask_stack = QTabWidget()
 
         self.mask_stack.addTab(stretch_widget(self.file_mask), "File")
-        self.mask_stack.addTab(stretch_widget(self.dilate_mask), "Current segmentation")
+        self.mask_stack.addTab(stretch_widget(self.segmentation_mask), "Current segmentation")
         self.mask_stack.addTab(stretch_widget(self.mask_operation), "Operations on masks")
         self.mask_stack.setTabToolTip(2, "Allows to create mask which is based on masks previously added to plan.")
 
@@ -553,26 +564,24 @@ class CreatePlan(QWidget):
         if text != "" and text in self.mask_set:
             QMessageBox.warning(self, "Already exists", "Mask with this name already exists", QMessageBox.Ok)
             return
-        if self.mask_stack.currentIndex() == 2:  # existing mask
-            if self.mask_operation.currentIndex() == 0: # Reuse Mask:
-                mask_dialog = MaskDialog
-                MaskConstruct = lambda x,y: MaskUse(y)
+        if _check_widget(self.mask_stack, EnumComboBox):  # existing mask
+            mask_dialog = TwoMaskDialog
+            if self.mask_operation.get_value() == MaskOperation.mask_intersection:  # Mask intersection
+                MaskConstruct = MaskIntersection
             else:
-                mask_dialog = TwoMaskDialog
-                if self.mask_operation.currentIndex() == 1:  # Mask intersection
-                    MaskConstruct = MaskIntersection
-                else:
-                    MaskConstruct = MaskSum
+                MaskConstruct = MaskSum
             dial = mask_dialog(self.mask_set)
             if not dial.exec():
                 return
             names = dial.get_result()
 
             mask_ob = MaskConstruct(text, *names)
-        elif self.mask_stack.currentIndex() == 1:  # segmentation
-            mask_ob = MaskCreate(text, self.dilate_mask.get_mask_property())
-        else: # file
+        elif _check_widget(self.mask_stack, MaskWidget):
+            mask_ob = MaskCreate(text, self.segmentation_mask.get_mask_property())
+        elif _check_widget(self.mask_stack, FileMask):
             mask_ob = self.file_mask.get_value(text)
+        else:
+            raise ValueError("Unknowsn widget")
 
         if self.update_element_chk.isChecked():
             node = self.calculation_plan.get_node()
@@ -605,22 +614,27 @@ class CreatePlan(QWidget):
                 self.calculation_plan.get_node().operation.name == text:
             self.generate_mask_btn.setDisabled(True)
             return
-        if self.mask_stack.currentIndex() == 2:
-            if len(self.mask_set) > 0 and \
-                    ((not update and node_type == NodeType.root) or(update and node_type == NodeType.file_mask)):
+        if _check_widget(self.mask_stack, EnumComboBox):  # reuse mask
+            if len(self.mask_set) > 1 and \
+                    ((not update and node_type == NodeType.root) or (update and node_type == NodeType.file_mask)):
                 self.generate_mask_btn.setEnabled(True)
             else:
                 self.generate_mask_btn.setEnabled(False)
-        elif self.mask_stack.currentIndex() == 1:
+            self.generate_mask_btn.setToolTip("Need at least two named mask and root selected")
+            print(self.mask_set)
+        elif _check_widget(self.mask_stack, MaskWidget):  # mask from segmentation
             if (not update and node_type == NodeType.segment) or (update and node_type == NodeType.mask):
                 self.generate_mask_btn.setEnabled(True)
             else:
                 self.generate_mask_btn.setEnabled(False)
+            self.generate_mask_btn.setToolTip("Select segmentation")
         else:
             if (not update and node_type == NodeType.root) or (update and node_type == NodeType.file_mask):
                 self.generate_mask_btn.setEnabled(self.file_mask.is_valid())
             else:
                 self.generate_mask_btn.setEnabled(False)
+            self.generate_mask_btn.setToolTip("Need root selected")
+
 
     def mask_name_changed(self, text):
         if str(text) in self.mask_set:

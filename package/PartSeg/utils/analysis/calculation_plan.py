@@ -376,7 +376,7 @@ class CalculationPlan(object):
         node = self.get_node()
         used_mask = self.get_reused_mask()
         tree_mask_names = self.get_mask_names(node)
-        return used_mask & tree_mask_names, used_mask
+        return used_mask & tree_mask_names, tree_mask_names
 
     def _get_reused_mask(self, node):
         """
