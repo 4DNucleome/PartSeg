@@ -48,7 +48,7 @@ class ProfileDict(object):
                     self.set(key_path, val)
                     return val
                 else:
-                    print(f"{key_path}: {curr_dict.items()}", file=sys.stderr)
+                    # print(f"{key_path}: {curr_dict.items()}", file=sys.stderr)
                     raise e
         return curr_dict
 
