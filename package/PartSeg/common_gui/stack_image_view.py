@@ -411,7 +411,12 @@ class ImageView(QWidget):
                 comp = "none"
                 self.component = None
             else:
-                comp = "{} (size: {})".format(comp, self._settings.sizes[comp])
+                try:
+                    comp = "{} (size: {})".format(comp, self._settings.sizes[comp])
+                except IndexError:
+                    self.labels_layer = None
+                    self.paint_layer()
+                    return
             self.text_info_change.emit("Position: {}, Brightness: {}, component {}".format(
                 tuple(pos2), brightness, comp))
         else:

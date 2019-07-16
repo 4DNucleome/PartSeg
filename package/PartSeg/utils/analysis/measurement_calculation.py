@@ -73,10 +73,10 @@ class MeasurementProfile(object):
         return resp
 
     def __str__(self):
-        text = "Profile name: {}\n".format(self.name)
+        text = "Set name: {}\n".format(self.name)
         if self.name_prefix != "":
             text += "Name prefix: {}\n".format(self.name_prefix)
-        text += "measurement list:\n"
+        text += "Measurements list:\n"
         for el in self.chosen_fields:
             text += "{}\n".format(el.name)
         return text

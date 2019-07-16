@@ -206,7 +206,7 @@ class SegmentationProfile(object):
                 else:
                     res += str(v)
             else:
-                raise ValueError("wrong argument")
+                raise ValueError(f"wrong argument {k}")
             res += "\n"
         return res[:-1]
 
