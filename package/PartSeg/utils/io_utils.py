@@ -11,7 +11,7 @@ from pathlib import Path
 from tarfile import TarInfo, TarFile
 
 from PartSeg.tiff_image import Image
-from PartSeg.utils.json_hooks import profile_hook
+from PartSeg.utils.json_hooks import profile_hook, ProfileDict
 from .algorithm_describe_base import AlgorithmDescribeBase, SegmentationProfile
 
 
@@ -169,6 +169,8 @@ class UpdateLoadedMetadataBase:
         if isinstance(data, dict):
             for key in data.keys():
                 data[key] = cls.recursive_update(data[key])
+        if isinstance(data, ProfileDict):
+            data.my_dict = cls.recursive_update(data.my_dict)
         return data
 
     @classmethod

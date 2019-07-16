@@ -14,7 +14,7 @@ from PartSeg.tiff_image import ImageReader
 from PartSeg.utils.analysis.calculation_plan import CalculationPlan, CalculationTree
 from PartSeg.utils.universal_const import Units, UNIT_SCALE
 from ..algorithm_describe_base import Register, SegmentationProfile
-from .analysis_utils import HistoryElement
+from .analysis_utils import HistoryElement, SegmentationPipeline, SegmentationPipelineElement
 from .io_utils import ProjectTuple, MaskInfo, project_version_info
 from .save_hooks import part_hook
 from ..io_utils import LoadBase, proxy_callback, check_segmentation_type, SegmentationType, WrongFileTypeException, \
@@ -212,11 +212,26 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
         return data
 
     @classmethod
+    def update_segmentation_pipeline_element(cls, data: SegmentationPipelineElement):
+        return SegmentationPipelineElement(cls.update_segmentation_profile(data.segmentation),
+                                           data.mask_property)
+
+    @classmethod
+    def update_segmentation_pipeline(cls, data: SegmentationPipeline):
+        return SegmentationPipeline(
+            data.name, cls.update_segmentation_profile(data.segmentation),
+            [cls.update_segmentation_pipeline_element(x) for x in data.mask_history]
+        )
+
+    @classmethod
     def recursive_update(cls, data):
         if isinstance(data, CalculationPlan):
             return cls.update_calculation_plan(data)
         if isinstance(data, CalculationTree):
             return cls.update_calculation_tree(data)
+        if isinstance(data, SegmentationPipeline):
+            return cls.update_segmentation_pipeline(data)
+
         return super().recursive_update(data)
 
 
