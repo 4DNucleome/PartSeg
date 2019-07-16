@@ -9,7 +9,7 @@ from copy import copy, deepcopy
 from enum import Enum
 
 from PartSeg.utils.universal_const import Units
-from ..analysis.statistics_calculation import StatisticProfile
+from ..analysis.measurement_calculation import MeasurementProfile
 from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from ..mask_create import MaskProperty
 from ..class_generator import BaseSerializableClass
@@ -55,15 +55,16 @@ class Save(BaseSerializableClass):
     values: dict
 
 
-class StatisticCalculate(BaseSerializableClass):
+class MeasurementCalculate(BaseSerializableClass):
+    __old_names__ = "StatisticCalculate"
     channel: int
     units: Units
-    statistic_profile: StatisticProfile
+    statistic_profile: MeasurementProfile
     name_prefix: str
 
     # noinspection PyOverloads,PyMissingConstructor
     @typing.overload
-    def __init__(self, channel: int, units: Units, statistic_profile: StatisticProfile, name_prefix: str): ...
+    def __init__(self, channel: int, units: Units, statistic_profile: MeasurementProfile, name_prefix: str): ...
 
     @property
     def name(self):
@@ -210,13 +211,13 @@ class PlanChanges(Enum):
 
 
 class CalculationTree:
-    def __init__(self, operation: typing.Union[BaseSerializableClass, SegmentationProfile, StatisticCalculate, str],
+    def __init__(self, operation: typing.Union[BaseSerializableClass, SegmentationProfile, MeasurementCalculate, str],
                  children: typing.List['CalculationTree']):
         self.operation = operation
         self.children = children
 
     def __str__(self):
-        return  f"{self.operation}:\n[{'n'.join([str(x) for x in self.children])}]"
+        return f"{self.operation}:\n[{'n'.join([str(x) for x in self.children])}]"
 
 
 class NodeType(Enum):
@@ -245,7 +246,7 @@ class Calculation(object):
         self.file_list = file_list
         self.base_prefix = base_prefix
         self.result_prefix = result_prefix
-        self.statistic_file_path = statistic_file_path
+        self.measurement_file_path = statistic_file_path
         self.sheet_name = sheet_name
         self.calculation_plan = calculation_plan
         self.uuid = uuid.uuid4()
@@ -289,7 +290,8 @@ class CalculationPlan(object):
     :type segmentation_count: int
     """
     correct_name = {MaskCreate.__name__: MaskCreate, MaskUse.__name__: MaskUse, Save.__name__: Save,
-                    StatisticCalculate.__name__: StatisticCalculate, SegmentationProfile.__name__: SegmentationProfile,
+                    MeasurementCalculate.__name__: MeasurementCalculate,
+                    SegmentationProfile.__name__: SegmentationProfile,
                     MaskSuffix.__name__: MaskSuffix, MaskSub.__name__: MaskSub, MaskFile.__name__: MaskFile,
                     Operations.__name__: Operations, ChooseChanel.__name__: ChooseChanel,
                     MaskIntersection.__name__: MaskIntersection, MaskSum.__name__: MaskSum}
@@ -308,20 +310,15 @@ class CalculationPlan(object):
     def __str__(self):
         return f"CalculationPlan<{self.name}>\n{self.execution_tree}"
 
-    def get_statistics(self, node=None):
-        """
-        :type node: CalculationTree
-        :param node:
-        :return: list[StatisticCalculate]
-        """
+    def get_measurements(self, node: typing.Optional[CalculationTree] = None) -> typing.List[MeasurementCalculate]:
         if node is None:
             node = self.execution_tree
-        if isinstance(node.operation, StatisticCalculate):
+        if isinstance(node.operation, MeasurementCalculate):
             return [node.operation]
         else:
             res = []
             for el in node.children:
-                res.extend(self.get_statistics(el))
+                res.extend(self.get_measurements(el))
             return res
 
     def get_changes(self):
@@ -415,7 +412,7 @@ class CalculationPlan(object):
             return NodeType.file_mask
         if isinstance(node.operation, MaskCreate):
             return NodeType.mask
-        if isinstance(node.operation, StatisticCalculate):
+        if isinstance(node.operation, MeasurementCalculate):
             return NodeType.statics
         if isinstance(node.operation, SegmentationProfile):
             return NodeType.segment
@@ -545,11 +542,11 @@ class CalculationPlan(object):
             """if el.leave_biggest:
                 return "Segmentation: {} (only biggest)".format(el.name)"""
             return "Segmentation: {}".format(el.name)
-        if isinstance(el, StatisticCalculate):
+        if isinstance(el, MeasurementCalculate):
             if el.name_prefix == "":
-                return "Statistics: {}".format(el.name)
+                return "Measurement: {}".format(el.name)
             else:
-                return "Statistics: {} with prefix: {}".format(el.name, el.name_prefix)
+                return "Measurement: {} with prefix: {}".format(el.name, el.name_prefix)
         if isinstance(el, MaskCreate):
             if el.name != "":
                 return "Create mask: {}".format(el.name)

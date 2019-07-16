@@ -13,7 +13,7 @@ import tifffile
 from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
 from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from PartSeg.utils.analysis.calculation_plan import CalculationTree, MaskMapper, MaskUse, MaskCreate, Save, \
-    Operations, FileCalculation, MaskIntersection, MaskSum, get_save_path, StatisticCalculate, Calculation
+    Operations, FileCalculation, MaskIntersection, MaskSum, get_save_path, MeasurementCalculate, Calculation
 from ..batch_processing.parallel_backed import BatchManager
 from PartSeg.utils.analysis.io_utils import ProjectTuple
 from PartSeg.utils.analysis.load_functions import load_project
@@ -40,7 +40,7 @@ class CalculationProcess(object):
         self.reused_mask = set()
         self.mask_dict = dict()
         self.calculation = None
-        self.statistics = []
+        self.measurement = []
         self.image: typing.Optional[Image] = None
         self.segmentation: typing.Optional[np.ndarray] = None
         self.full_segmentation: typing.Optional[np.ndarray] = None
@@ -58,7 +58,7 @@ class CalculationProcess(object):
         self.calculation = calculation
         self.reused_mask = calculation.calculation_plan.get_reused_mask()
         self.mask_dict = {}
-        self.statistics = []
+        self.measurement = []
         ext = path.splitext(calculation.file_path)[1]
         if ext in [".tiff", ".tif", ".lsm"]:
             self.image = ImageReader.read_image(calculation.file_path, default_spacing=calculation.voxel_size)
@@ -73,7 +73,7 @@ class CalculationProcess(object):
         else:
             raise ValueError("Unknown file type: {} {}".format(ext, calculation.file_path))
         self.iterate_over(calculation.calculation_plan.execution_tree)
-        return path.relpath(calculation.file_path, calculation.base_prefix), self.statistics
+        return path.relpath(calculation.file_path, calculation.base_prefix), self.measurement
 
     def iterate_over(self, node):
         """
@@ -178,7 +178,7 @@ class CalculationProcess(object):
                     self.history, self.mask, self.segmentation, self.full_segmentation, self.cleaned_channel = backup
                 else:
                     self.iterate_over(node)
-        elif isinstance(node.operation, StatisticCalculate):
+        elif isinstance(node.operation, MeasurementCalculate):
             channel = node.operation.channel
             if channel == -1:
                 segmentation_class: typing.Type[SegmentationAlgorithm] =\
@@ -188,12 +188,12 @@ class CalculationProcess(object):
                 channel = self.algorithm_parameters["values"][segmentation_class.get_channel_parameter_name()]
 
             image_channel = self.image.get_channel(channel)
-            statistics = \
+            measurement = \
                 node.operation.statistic_profile.calculate(image_channel,
                                                            self.segmentation, self.full_segmentation,
                                                            self.mask, self.image.spacing,
                                                            node.operation.units)
-            self.statistics.append(statistics)
+            self.measurement.append(measurement)
         else:
             raise ValueError("Unknown operation {} {}".format(type(node.operation), node.operation))
 
@@ -219,14 +219,13 @@ class CalculationManager:
     def is_valid_sheet_name(self, excel_path, sheet_name):
         return sheet_name not in self.sheet_name[excel_path]
 
-    def add_calculation(self, calculation):
+    def add_calculation(self, calculation: Calculation):
         """
-        :type calculation: Calculation
         :param calculation: calculation
         :return:
         """
-        self.sheet_name[calculation.statistic_file_path].add(calculation.sheet_name)
-        self.calculation_dict[calculation.uuid] = calculation, calculation.calculation_plan.get_statistics()
+        self.sheet_name[calculation.measurement_file_path].add(calculation.sheet_name)
+        self.calculation_dict[calculation.uuid] = calculation, calculation.calculation_plan.get_measurements()
         self.counter_dict[calculation.uuid] = 0
         size = len(calculation.file_list)
         self.calculation_sizes.append(size)
@@ -299,8 +298,8 @@ class FileData(object):
         :type calculation: Calculation
         :param calculation:
         """
-        self.file_path = calculation.statistic_file_path
-        ext = path.splitext(calculation.statistic_file_path)[1]
+        self.file_path = calculation.measurement_file_path
+        ext = path.splitext(calculation.measurement_file_path)[1]
         if ext == ".xlsx":
             self.file_type = FileType.excel_xlsx_file
         elif ext == ".xls":
@@ -333,13 +332,13 @@ class FileData(object):
         :param calculation:
         :return:
         """
-        if calculation.statistic_file_path != self.file_path:
-            raise ValueError("[FileData] different file path {} vs {}".format(calculation.statistic_file_path,
+        if calculation.measurement_file_path != self.file_path:
+            raise ValueError("[FileData] different file path {} vs {}".format(calculation.measurement_file_path,
                                                                               self.file_path))
         if calculation.sheet_name in self.sheet_set:
             raise ValueError("[FileData] sheet name {} already in use".format(calculation.sheet_name))
-        statistics = calculation.calculation_plan.get_statistics()
-        component_information = [x.statistic_profile.get_component_info(x.units) for x in statistics]
+        measurement = calculation.calculation_plan.get_measurements()
+        component_information = [x.statistic_profile.get_component_info(x.units) for x in measurement]
         num = 1
         sheet_list = []
         header_list = []
@@ -348,7 +347,7 @@ class FileData(object):
             local_header = []
             if any([x[1] for x in el]):
                 sheet_list.append("{}{}{} - {}".format(calculation.sheet_name, FileData.component_str, num,
-                                                       statistics[i].name_prefix + statistics[i].name))
+                                                       measurement[i].name_prefix + measurement[i].name))
                 num += 1
             else:
                 sheet_list.append(None)
@@ -438,16 +437,16 @@ class DataWriter(object):
             return True
         return self.file_dict[file_path].is_empty_sheet(sheet_name)
 
-    def add_data_part(self, calculation):
-        if calculation.statistic_file_path in self.file_dict:
-            self.file_dict[calculation.statistic_file_path].add_data_part(calculation)
+    def add_data_part(self, calculation: Calculation):
+        if calculation.measurement_file_path in self.file_dict:
+            self.file_dict[calculation.measurement_file_path].add_data_part(calculation)
         else:
-            self.file_dict[calculation.statistic_file_path] = FileData(calculation)
+            self.file_dict[calculation.measurement_file_path] = FileData(calculation)
 
     def add_result(self, data: ResponseData, calculation: Calculation):
-        if calculation.statistic_file_path not in self.file_dict:
-            raise ValueError("Unknown statistic file")
-        file_writer = self.file_dict[calculation.statistic_file_path]
+        if calculation.measurement_file_path not in self.file_dict:
+            raise ValueError("Unknown measurement file")
+        file_writer = self.file_dict[calculation.measurement_file_path]
         file_writer.wrote_data(calculation.uuid, data)
         return file_writer.get_errors()
 
@@ -456,7 +455,7 @@ class DataWriter(object):
             file_data.finish()
 
     def calculation_finished(self, calculation):
-        if calculation.statistic_file_path not in self.file_dict:
-            raise ValueError("Unknown statistic file")
-        self.file_dict[calculation.statistic_file_path].dump_data()
-        return self.file_dict[calculation.statistic_file_path].get_errors()
+        if calculation.measurement_file_path not in self.file_dict:
+            raise ValueError("Unknown measurement file")
+        self.file_dict[calculation.measurement_file_path].dump_data()
+        return self.file_dict[calculation.measurement_file_path].get_errors()

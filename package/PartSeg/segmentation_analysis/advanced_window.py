@@ -23,9 +23,9 @@ from ..common_gui.custom_save_dialog import FormDialog
 from ..common_gui.lock_checkbox import LockCheckBox
 from .partseg_settings import PartSettings, MASK_COLORS
 from .profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer
-from .statistic_widget import StatisticsWidget
-from PartSeg.utils.analysis.statistics_calculation import StatisticProfile, STATISTIC_DICT
-from PartSeg.utils.analysis.measurement_base import Leaf, Node, StatisticEntry, PerComponent, AreaType
+from .measurement_widget import MeasurementWidget
+from PartSeg.utils.analysis.measurement_calculation import MeasurementProfile, MEASUREMENT_DICT
+from PartSeg.utils.analysis.measurement_base import Leaf, Node, MeasurementEntry, PerComponent, AreaType
 from ..utils.universal_const import UNIT_SCALE, Units
 from ..utils import state_store, register
 
@@ -342,17 +342,17 @@ class AdvancedSettings(QWidget):
 
 class StatisticListWidgetItem(QListWidgetItem):
     def __init__(self, stat: Union[Node, Leaf], *args, **kwargs):
-        super().__init__(stat.pretty_print(STATISTIC_DICT), *args, **kwargs)
+        super().__init__(stat.pretty_print(MEASUREMENT_DICT), *args, **kwargs)
         self.stat = stat
 
 
-class StatisticsSettings(QWidget):
+class MeasurementSettings(QWidget):
     """
     :type settings: Settings
     """
 
     def __init__(self, settings: PartSettings):
-        super(StatisticsSettings, self).__init__()
+        super(MeasurementSettings, self).__init__()
         self.chosen_element: Optional[StatisticListWidgetItem] = None
         self.chosen_element_area: Optional[Tuple[AreaType, float]] = None
         self.settings = settings
@@ -480,12 +480,12 @@ class StatisticsSettings(QWidget):
         layout.addLayout(save_butt_layout)
         self.setLayout(layout)
 
-        for name, profile in STATISTIC_DICT.items():
+        for name, profile in MEASUREMENT_DICT.items():
             help_text = profile.get_description()
             lw = StatisticListWidgetItem(profile.get_starting_leaf())
             lw.setToolTip(help_text)
             self.profile_options.addItem(lw)
-        self.profile_list.addItems(list(sorted(self.settings.statistic_profiles.keys())))
+        self.profile_list.addItems(list(sorted(self.settings.measurement_profiles.keys())))
         if self.profile_list.count() == 0:
             self.export_profiles_butt.setDisabled(True)
 
@@ -507,7 +507,7 @@ class StatisticsSettings(QWidget):
     def delete_profile(self):
         row = self.profile_list.currentRow()
         item = self.profile_list.currentItem()
-        del self.settings.statistic_profiles[str(item.text())]
+        del self.settings.measurement_profiles[str(item.text())]
         self.profile_list.takeItem(row)
         if self.profile_list.count() == 0:
             self.delete_profile_butt.setDisabled(True)
@@ -521,7 +521,7 @@ class StatisticsSettings(QWidget):
         if item is None:
             self.profile_description.setText("")
             return
-        profile = self.settings.statistic_profiles[item.text()]
+        profile = self.settings.measurement_profiles[item.text()]
         self.profile_description.setText(str(profile))
 
     def create_selection_changed(self):
@@ -620,7 +620,7 @@ class StatisticsSettings(QWidget):
         if node.per_component is None:
             node = node.replace_(per_component=component)
         try:
-            arguments = STATISTIC_DICT[str(node.name)].get_fields()
+            arguments = MEASUREMENT_DICT[str(node.name)].get_fields()
             if len(arguments) > 0 and len(node.dict) == 0:
                 dial = FormDialog(arguments)
                 if dial.exec():
@@ -668,7 +668,7 @@ class StatisticsSettings(QWidget):
         item = self.profile_list.currentItem()
         if item is None:
             return
-        profile = self.settings.statistic_profiles[str(item.text())]
+        profile = self.settings.measurement_profiles[str(item.text())]
         self.profile_options_chosen.clear()
         self.profile_name.setText(item.text())
         for ch in profile.chosen_fields:
@@ -687,11 +687,11 @@ class StatisticsSettings(QWidget):
         selected_values = []
         for i in range(self.profile_options_chosen.count()):
             element: StatisticListWidgetItem = self.profile_options_chosen.item(i)
-            selected_values.append(StatisticEntry(element.text(), element.stat))
-        stat_prof = StatisticProfile(self.profile_name.text(), selected_values)
-        if stat_prof.name not in self.settings.statistic_profiles:
+            selected_values.append(MeasurementEntry(element.text(), element.stat))
+        stat_prof = MeasurementProfile(self.profile_name.text(), selected_values)
+        if stat_prof.name not in self.settings.measurement_profiles:
             self.profile_list.addItem(stat_prof.name)
-        self.settings.statistic_profiles[stat_prof.name] = stat_prof
+        self.settings.measurement_profiles[stat_prof.name] = stat_prof
         self.settings.dump()
         self.export_profiles_butt.setEnabled(True)
 
@@ -711,11 +711,11 @@ class StatisticsSettings(QWidget):
             selected_values = []
             for i in range(self.profile_options_chosen.count()):
                 element: StatisticListWidgetItem = self.profile_options_chosen.item(i)
-                selected_values.append(StatisticEntry(val_dialog.result[element.text()], element.stat))
-            stat_prof = StatisticProfile(self.profile_name.text(), selected_values)
-            if stat_prof.name not in self.settings.statistic_profiles:
+                selected_values.append(MeasurementEntry(val_dialog.result[element.text()], element.stat))
+            stat_prof = MeasurementProfile(self.profile_name.text(), selected_values)
+            if stat_prof.name not in self.settings.measurement_profiles:
                 self.profile_list.addItem(stat_prof.name)
-            self.settings.statistic_profiles[stat_prof.name] = stat_prof
+            self.settings.measurement_profiles[stat_prof.name] = stat_prof
             self.export_profiles_butt.setEnabled(True)
 
     def reset_action(self):
@@ -729,7 +729,7 @@ class StatisticsSettings(QWidget):
         self.proportion_butt.setDisabled(True)
         self.choose_butt.setDisabled(True)
         self.discard_butt.setDisabled(True)
-        for name, profile in STATISTIC_DICT.items():
+        for name, profile in MEASUREMENT_DICT.items():
             help_text = profile.get_description()
             lw = StatisticListWidgetItem(profile.get_starting_leaf())
             lw.setToolTip(help_text)
@@ -740,13 +740,13 @@ class StatisticsSettings(QWidget):
         shift = 0
         for i in range(self.profile_options.count()):
             item = self.profile_options.item(i - shift)
-            if str(item.text()) not in STATISTIC_DICT:
+            if str(item.text()) not in MEASUREMENT_DICT:
                 self.profile_options.takeItem(i - shift)
                 shift += 1
         self.create_selection_changed()
 
     def export_statistic_profiles(self):
-        exp = ExportDialog(self.settings.statistic_profiles, StringViewer)
+        exp = ExportDialog(self.settings.measurement_profiles, StringViewer)
         if not exp.exec_():
             return
         dial = QFileDialog(self, "Export settings profiles")
@@ -760,7 +760,7 @@ class StatisticsSettings(QWidget):
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
             self.settings.set("io.export_directory", file_path)
-            data = dict([(x, self.settings.statistic_profiles[x]) for x in exp.get_export_list()])
+            data = dict([(x, self.settings.measurement_profiles[x]) for x in exp.get_export_list()])
             with open(file_path, 'w') as ff:
                 json.dump(data, ff, cls=self.settings.json_encoder_class, indent=2)
             self.settings.set("io.save_directory", os.path.dirname(file_path))
@@ -776,7 +776,7 @@ class StatisticsSettings(QWidget):
             stat, err = self.settings.load_part(file_path)
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
-            statistic_dict = self.settings.statistic_profiles
+            statistic_dict = self.settings.measurement_profiles
             imp = ImportDialog(stat, statistic_dict, StringViewer)
             if not imp.exec_():
                 return
@@ -826,13 +826,13 @@ class AdvancedWindow(QTabWidget):
         self.setWindowTitle("Settings and Measurement")
         self.advanced_settings = AdvancedSettings(settings)
         self.colormap_settings = ColorSelector(settings, ["result_control"])
-        self.statistics = StatisticsWidget(settings)
-        self.statistics_settings = StatisticsSettings(settings)
+        self.measurement = MeasurementWidget(settings)
+        self.measurement_settings = MeasurementSettings(settings)
         self.develop = DevelopTab(settings)
         self.addTab(self.advanced_settings, "Properties")
         self.addTab(self.colormap_settings, "Color maps")
-        self.addTab(self.statistics_settings, "Measurements settings")
-        self.addTab(self.statistics, "Measurements")
+        self.addTab(self.measurement_settings, "Measurements settings")
+        self.addTab(self.measurement, "Measurements")
         if state_store.develop:
             self.addTab(self.develop, "Develop")
         try:

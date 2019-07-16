@@ -6,10 +6,10 @@ import sys
 from PartSeg.tiff_image import ImageReader
 from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from PartSeg.utils.analysis.batch_processing.batch_backend import CalculationProcess, CalculationManager
-from PartSeg.utils.analysis.calculation_plan import CalculationPlan, CalculationTree, MaskSuffix, StatisticCalculate, \
+from PartSeg.utils.analysis.calculation_plan import CalculationPlan, CalculationTree, MaskSuffix, MeasurementCalculate, \
     Calculation
-from PartSeg.utils.analysis.statistics_calculation import StatisticProfile
-from PartSeg.utils.analysis.measurement_base import Leaf, Node, StatisticEntry, PerComponent, AreaType
+from PartSeg.utils.analysis.measurement_calculation import MeasurementProfile
+from PartSeg.utils.analysis.measurement_base import Leaf, Node, MeasurementEntry, PerComponent, AreaType
 from PartSeg.utils.segmentation.noise_filtering import DimensionType
 from PartSeg.utils.universal_const import Units
 
@@ -35,19 +35,19 @@ class TestCalculationProcess:
 
         segmentation = SegmentationProfile(name="test", algorithm="Lower threshold flow", values=parameters)
         mask_suffix = MaskSuffix(name="", suffix="_mask")
-        chosen_fields = [StatisticEntry(name="Segmentation Volume", calculation_tree=Leaf(
+        chosen_fields = [MeasurementEntry(name="Segmentation Volume", calculation_tree=Leaf(
             name="Volume", area=AreaType.Segmentation, per_component=PerComponent.No)),
-                         StatisticEntry(
+                         MeasurementEntry(
                              name="Segmentation Volume/Mask Volume",
                              calculation_tree=Node(
                                  left=Leaf(name="Volume", area=AreaType.Segmentation, per_component=PerComponent.No),
                                  op="/",
                                  right=Leaf(name="Volume", area=AreaType.Mask, per_component=PerComponent.No))),
-                         StatisticEntry("Segmentation Components Number",
-                                        calculation_tree=Leaf("Components Number", area=AreaType.Segmentation,
+                         MeasurementEntry("Segmentation Components Number",
+                                          calculation_tree=Leaf("Components Number", area=AreaType.Segmentation,
                                                               per_component=PerComponent.No))]
-        statistic = StatisticProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
-        statistic_calculate = StatisticCalculate(channel=0, units=Units.µm, statistic_profile=statistic, name_prefix="")
+        statistic = MeasurementProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
+        statistic_calculate = MeasurementCalculate(channel=0, units=Units.µm, statistic_profile=statistic, name_prefix="")
         tree = CalculationTree("root",
                                [CalculationTree(mask_suffix,
                                                 [CalculationTree(segmentation,
@@ -62,7 +62,7 @@ class TestCalculationProcess:
         process.calculation = calc
         process.image = ImageReader.read_image(file_path)
         process.iterate_over(plan.execution_tree)
-        assert (len(process.statistics[0]) == 3)
+        assert (len(process.measurement[0]) == 3)
 
     def test_full_pipeline(self):
         plan = self.create_calculation_plan()

@@ -315,6 +315,11 @@ class BaseMeta(type):
                     break
             else:
                 readonly = False
+        if "__old_names__" in attrs:
+            old_names = attrs["__old_names__"]
+            del attrs["__old_names__"]
+        else:
+            old_names = ()
 
         result = _make_class(name, types, defaults_dict, [x for x in bases], readonly)
         # nm_tpl.__new__.__annotations__ = collections.OrderedDict(types)
@@ -337,7 +342,7 @@ class BaseMeta(type):
             elif key not in _special and key not in result._fields:
                 setattr(result, key, attrs[key])
         if "_reloading" not in attrs or not attrs["_reloading"]:
-            base_serialize_register.register_class(result)
+            base_serialize_register.register_class(result, old_names)
         return result
 
 
@@ -345,6 +350,7 @@ class BaseSerializableClass(metaclass=BaseMeta):
     _root = True
     # __signature__ = ()
     __readonly__ = True
+    __old_names__ = ()
 
     def __init__(self, *args, **kwargs):
         pass

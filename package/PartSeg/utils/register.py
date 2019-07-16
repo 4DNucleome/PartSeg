@@ -17,7 +17,7 @@ from typing import Type
 
 from .algorithm_describe_base import AlgorithmDescribeBase
 from PartSeg.utils.analysis import save_functions, load_functions, \
-    algorithm_description as analysis_algorithm_description, statistics_calculation, measurement_base
+    algorithm_description as analysis_algorithm_description, measurement_calculation, measurement_base
 from .image_transforming import image_transform_dict, TransformBase
 from . import io_utils
 from .segmentation import threshold, sprawl, segmentation_algorithm, restartable_segmentation_algorithms, \
@@ -58,7 +58,7 @@ register_dict = {
     RegisterEnum.mask_save_parameters: io_functions.save_parameters_dict,
     RegisterEnum.mask_save_components: io_functions.save_components_dict,
     RegisterEnum.mask_save_segmentation: io_functions.save_segmentation_dict,
-    RegisterEnum.analysis_measurement: statistics_calculation.STATISTIC_DICT
+    RegisterEnum.analysis_measurement: measurement_calculation.MEASUREMENT_DICT
 }
 
 base_class_dict = {
@@ -70,12 +70,12 @@ base_class_dict = {
     RegisterEnum.analysis_load: io_utils.LoadBase, RegisterEnum.mask_load: io_utils.LoadBase,
     RegisterEnum.image_transform: TransformBase,  RegisterEnum.mask_save_parameters: io_utils.SaveBase,
     RegisterEnum.mask_save_components: io_utils.SaveBase, RegisterEnum.mask_save_segmentation: io_utils.SaveBase,
-    RegisterEnum.analysis_measurement: measurement_base.StatisticMethodBase
+    RegisterEnum.analysis_measurement: measurement_base.MeasurementMethodBase
 }
 
 reload_module_list = \
     [threshold, sprawl, segmentation_algorithm, restartable_segmentation_algorithms, noise_filtering, io_functions,
-     mask_algorithm_description, analysis_algorithm_description, statistics_calculation, save_functions, load_functions,
+     mask_algorithm_description, analysis_algorithm_description, measurement_calculation, save_functions, load_functions,
      ]
 
 

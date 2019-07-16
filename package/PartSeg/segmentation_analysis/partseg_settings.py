@@ -6,7 +6,7 @@ from qtpy.QtCore import Signal
 from PartSeg.tiff_image import Image
 from PartSeg.utils.analysis.calculation_plan import CalculationPlan
 from PartSeg.utils.analysis.io_utils import ProjectTuple, MaskInfo
-from PartSeg.utils.analysis.statistics_calculation import StatisticProfile
+from PartSeg.utils.analysis.measurement_calculation import MeasurementProfile
 from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from PartSeg.utils.analysis.analysis_utils import HistoryElement, SegmentationPipeline
 from PartSeg.utils.analysis.save_hooks import PartEncoder, part_hook
@@ -155,5 +155,5 @@ class PartSettings(BaseSettings):
         return self.batch_plans_dict.get(self.current_segmentation_dict, dict())
 
     @property
-    def statistic_profiles(self) -> typing.Dict[str, StatisticProfile]:
+    def measurement_profiles(self) -> typing.Dict[str, MeasurementProfile]:
         return self.statistic_profiles_dict.get(self.current_segmentation_dict, dict())

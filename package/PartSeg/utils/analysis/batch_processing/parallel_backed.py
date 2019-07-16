@@ -23,7 +23,7 @@ class Work(object):
 
 class BatchManager(object):
     """
-    :type statistic_place_dict: dict[str,set[str]]
+    :type measurement_place_dict: dict[str,set[str]]
     :type task_queue: Queue
     :type order_queue: Queue
     :type result_queue: Queue
@@ -32,7 +32,7 @@ class BatchManager(object):
 
     """
     def __init__(self):
-        self.statistic_place_dict = dict()
+        self.measurement_place_dict = dict()
         self.manager = multiprocessing.Manager()
         self.task_queue = self.manager.Queue()
         self.order_queue = self.manager.Queue()
@@ -101,9 +101,9 @@ class BatchManager(object):
             self.join_all()
 
     def is_sheet_name_use(self, file_path, name):
-        if file_path not in self.statistic_place_dict:
+        if file_path not in self.measurement_place_dict:
             return False
-        if name not in self.statistic_place_dict:
+        if name not in self.measurement_place_dict:
             return False
         return True
 

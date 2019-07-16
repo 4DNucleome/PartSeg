@@ -6,11 +6,11 @@ import numpy as np
 
 from PartSeg.tiff_image import Image
 from PartSeg.utils.analysis import load_metadata
-from PartSeg.utils.analysis.statistics_calculation import Diameter, PixelBrightnessSum, Volume, ComponentsNumber, \
+from PartSeg.utils.analysis.measurement_calculation import Diameter, PixelBrightnessSum, Volume, ComponentsNumber, \
     MaximumPixelBrightness, MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness, \
     StandardDeviationOfPixelBrightness, MomentOfInertia, LongestMainAxisLength, MiddleMainAxisLength, \
-    ShortestMainAxisLength, Surface, RimVolume, RimPixelBrightnessSum, StatisticProfile, Sphericity, DistanceMaskSegmentation, DistancePoint
-from PartSeg.utils.analysis.measurement_base import Node, StatisticEntry, PerComponent, AreaType
+    ShortestMainAxisLength, Surface, RimVolume, RimPixelBrightnessSum, MeasurementProfile, Sphericity, DistanceMaskSegmentation, DistancePoint
+from PartSeg.utils.analysis.measurement_base import Node, MeasurementEntry, PerComponent, AreaType
 from PartSeg.utils.autofit import density_mass_center
 from PartSeg.utils.universal_const import UNIT_SCALE, Units
 
@@ -808,16 +808,16 @@ class TestStatisticProfile:
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
         statistics = [
-            StatisticEntry("Mask Volume",
-                           Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)),
-            StatisticEntry("Segmentation Volume",
-                           Volume.get_starting_leaf().replace_(area=AreaType.Segmentation,
+            MeasurementEntry("Mask Volume",
+                             Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)),
+            MeasurementEntry("Segmentation Volume",
+                             Volume.get_starting_leaf().replace_(area=AreaType.Segmentation,
                                                                per_component=PerComponent.No)),
-            StatisticEntry("Mask without segmentation Volume",
-                           Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
+            MeasurementEntry("Mask without segmentation Volume",
+                             Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
                                                                per_component=PerComponent.No))
         ]
-        profile = StatisticProfile("statistic", statistics)
+        profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
                                    voxel_size=image.voxel_size, result_units=Units.µm)
         tot_vol, seg_vol, rim_vol = list(result.values())
@@ -830,17 +830,17 @@ class TestStatisticProfile:
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
         statistics = [
-            StatisticEntry("Mask PixelBrightnessSum",
-                           PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask,
+            MeasurementEntry("Mask PixelBrightnessSum",
+                             PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask,
                                                                            per_component=PerComponent.No)),
-            StatisticEntry("Segmentation PixelBrightnessSum",
-                           PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Segmentation,
+            MeasurementEntry("Segmentation PixelBrightnessSum",
+                             PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Segmentation,
                                                                            per_component=PerComponent.No)),
-            StatisticEntry("Mask without segmentation PixelBrightnessSum",
-                           PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
+            MeasurementEntry("Mask without segmentation PixelBrightnessSum",
+                             PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
                                                                            per_component=PerComponent.No))
         ]
-        profile = StatisticProfile("statistic", statistics)
+        profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
                                    voxel_size=image.voxel_size, result_units=Units.µm)
         tot_vol, seg_vol, rim_vol = list(result.values())
@@ -853,16 +853,16 @@ class TestStatisticProfile:
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
         statistics = [
-            StatisticEntry("Mask Surface",
-                           Surface.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)),
-            StatisticEntry("Segmentation Surface",
-                           Surface.get_starting_leaf().replace_(area=AreaType.Segmentation,
+            MeasurementEntry("Mask Surface",
+                             Surface.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)),
+            MeasurementEntry("Segmentation Surface",
+                             Surface.get_starting_leaf().replace_(area=AreaType.Segmentation,
                                                                 per_component=PerComponent.No)),
-            StatisticEntry("Mask without segmentation Surface",
-                           Surface.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
+            MeasurementEntry("Mask without segmentation Surface",
+                             Surface.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
                                                                 per_component=PerComponent.No))
         ]
-        profile = StatisticProfile("statistic", statistics)
+        profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
                                    voxel_size=image.voxel_size, result_units=Units.µm)
         tot_vol, seg_vol, rim_vol = list(result.values())
@@ -875,40 +875,40 @@ class TestStatisticProfile:
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
         statistics = [
-            StatisticEntry("Mask Volume",
-                           Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)),
-            StatisticEntry("Segmentation Volume",
-                           Volume.get_starting_leaf().replace_(area=AreaType.Segmentation,
+            MeasurementEntry("Mask Volume",
+                             Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)),
+            MeasurementEntry("Segmentation Volume",
+                             Volume.get_starting_leaf().replace_(area=AreaType.Segmentation,
                                                                per_component=PerComponent.No)),
-            StatisticEntry("Mask without segmentation Volume",
-                           Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
+            MeasurementEntry("Mask without segmentation Volume",
+                             Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
                                                                per_component=PerComponent.No)),
-            StatisticEntry("Mask PixelBrightnessSum",
-                           PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask,
+            MeasurementEntry("Mask PixelBrightnessSum",
+                             PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask,
                                                                            per_component=PerComponent.No)),
-            StatisticEntry("Segmentation PixelBrightnessSum",
-                           PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Segmentation,
+            MeasurementEntry("Segmentation PixelBrightnessSum",
+                             PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Segmentation,
                                                                            per_component=PerComponent.No)),
-            StatisticEntry("Mask without segmentation PixelBrightnessSum",
-                           PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
+            MeasurementEntry("Mask without segmentation PixelBrightnessSum",
+                             PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
                                                                            per_component=PerComponent.No)),
-            StatisticEntry("Mask Volume/PixelBrightnessSum",
-                           Node(
+            MeasurementEntry("Mask Volume/PixelBrightnessSum",
+                             Node(
                                Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
                                "/",
                                PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask,
                                                                                per_component=PerComponent.No)
                            )),
-            StatisticEntry("Segmentation Volume/PixelBrightnessSum",
-                           Node(
+            MeasurementEntry("Segmentation Volume/PixelBrightnessSum",
+                             Node(
                                Volume.get_starting_leaf().replace_(area=AreaType.Segmentation,
                                                                    per_component=PerComponent.No),
                                "/",
                                PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Segmentation,
                                                                                per_component=PerComponent.No)
                            )),
-            StatisticEntry("Mask without segmentation Volume/PixelBrightnessSum",
-                           Node(
+            MeasurementEntry("Mask without segmentation Volume/PixelBrightnessSum",
+                             Node(
                                Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
                                                                    per_component=PerComponent.No),
                                "/",
@@ -917,7 +917,7 @@ class TestStatisticProfile:
                            )),
 
         ]
-        profile = StatisticProfile("statistic", statistics)
+        profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
                                    voxel_size=image.voxel_size, result_units=Units.µm)
         values = list(result.values())
@@ -932,24 +932,24 @@ class TestStatisticProfile:
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
         statistics = [
-            StatisticEntry("Mask Volume",
-                           Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)),
-            StatisticEntry("Mask Volume power 2",
-                           Volume.get_starting_leaf().replace_(area=AreaType.Mask,
+            MeasurementEntry("Mask Volume",
+                             Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)),
+            MeasurementEntry("Mask Volume power 2",
+                             Volume.get_starting_leaf().replace_(area=AreaType.Mask,
                                                                per_component=PerComponent.No, power=2)),
-            StatisticEntry("Mask Volume 2",
-                           Node(
+            MeasurementEntry("Mask Volume 2",
+                             Node(
                                Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No,
                                                                    power=2),
                                "/",
                                Volume.get_starting_leaf().replace_(area=AreaType.Mask,
                                                                    per_component=PerComponent.No)
                            )),
-            StatisticEntry("Mask Volume power -1",
-                           Volume.get_starting_leaf().replace_(area=AreaType.Mask,
+            MeasurementEntry("Mask Volume power -1",
+                             Volume.get_starting_leaf().replace_(area=AreaType.Mask,
                                                                per_component=PerComponent.No, power=-1)),
         ]
-        profile = StatisticProfile("statistic", statistics)
+        profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
                                    voxel_size=image.voxel_size, result_units=Units.µm)
         vol1, vol2, vol3, vol4 = list(result.values())
@@ -964,29 +964,29 @@ class TestStatisticProfile:
         segmentation[image.get_channel(0)[0] == 50] = 1
         segmentation[image.get_channel(0)[0] == 60] = 2
         statistics = [
-            StatisticEntry("Volume", Volume.get_starting_leaf().replace_(
+            MeasurementEntry("Volume", Volume.get_starting_leaf().replace_(
                 area=AreaType.Segmentation, per_component=PerComponent.No)),
-            StatisticEntry("Volume per component", Volume.get_starting_leaf().replace_(
+            MeasurementEntry("Volume per component", Volume.get_starting_leaf().replace_(
                 area=AreaType.Segmentation, per_component=PerComponent.Yes)),
-            StatisticEntry("Diameter", Diameter.get_starting_leaf().replace_(
+            MeasurementEntry("Diameter", Diameter.get_starting_leaf().replace_(
                 area=AreaType.Segmentation, per_component=PerComponent.No)),
-            StatisticEntry("Diameter per component", Diameter.get_starting_leaf().replace_(
+            MeasurementEntry("Diameter per component", Diameter.get_starting_leaf().replace_(
                 area=AreaType.Segmentation, per_component=PerComponent.Yes)),
-            StatisticEntry("MaximumPixelBrightness", MaximumPixelBrightness.get_starting_leaf().replace_(
+            MeasurementEntry("MaximumPixelBrightness", MaximumPixelBrightness.get_starting_leaf().replace_(
                 area=AreaType.Segmentation, per_component=PerComponent.No)),
-            StatisticEntry("MaximumPixelBrightness per component", MaximumPixelBrightness.get_starting_leaf().replace_(
+            MeasurementEntry("MaximumPixelBrightness per component", MaximumPixelBrightness.get_starting_leaf().replace_(
                 area=AreaType.Segmentation, per_component=PerComponent.Yes)),
-            StatisticEntry("Sphericity", Sphericity.get_starting_leaf().replace_(
+            MeasurementEntry("Sphericity", Sphericity.get_starting_leaf().replace_(
                 area=AreaType.Segmentation, per_component=PerComponent.No)),
-            StatisticEntry("Sphericity per component", Sphericity.get_starting_leaf().replace_(
+            MeasurementEntry("Sphericity per component", Sphericity.get_starting_leaf().replace_(
                 area=AreaType.Segmentation, per_component=PerComponent.Yes)),
-            StatisticEntry("LongestMainAxisLength", LongestMainAxisLength.get_starting_leaf().replace_(
+            MeasurementEntry("LongestMainAxisLength", LongestMainAxisLength.get_starting_leaf().replace_(
                 area=AreaType.Segmentation, per_component=PerComponent.No)),
-            StatisticEntry("LongestMainAxisLength per component", LongestMainAxisLength.get_starting_leaf().replace_(
+            MeasurementEntry("LongestMainAxisLength per component", LongestMainAxisLength.get_starting_leaf().replace_(
                 area=AreaType.Segmentation, per_component=PerComponent.Yes)),
         ]
 
-        profile = StatisticProfile("statistic", statistics)
+        profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
                                    voxel_size=image.voxel_size, result_units=Units.nm)
         assert result["Volume"][0] == result["Volume per component"][0][0] + result["Volume per component"][0][1]

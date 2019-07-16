@@ -14,7 +14,7 @@ from scipy.spatial.distance import cdist
 from sympy import symbols
 from math import pi
 
-from PartSeg.utils.analysis.measurement_base import Leaf, Node, StatisticEntry, StatisticMethodBase, PerComponent, \
+from PartSeg.utils.analysis.measurement_base import Leaf, Node, MeasurementEntry, MeasurementMethodBase, PerComponent, \
     AreaType
 from PartSeg.utils.channel_class import Channel
 from .. import autofit as af
@@ -40,12 +40,12 @@ def empty_fun(_a0=None, _a1=None):
     pass
 
 
-class StatisticProfile(object):
+class MeasurementProfile(object):
     PARAMETERS = ["name", "chosen_fields", "reversed_brightness", "use_gauss_image", "name_prefix"]
 
-    def __init__(self, name, chosen_fields: List[StatisticEntry], name_prefix=""):
+    def __init__(self, name, chosen_fields: List[MeasurementEntry], name_prefix=""):
         self.name = name
-        self.chosen_fields: List[StatisticEntry] = chosen_fields
+        self.chosen_fields: List[MeasurementEntry] = chosen_fields
         self._need_mask = False
         for cf_val in chosen_fields:
             self._need_mask = self._need_mask or self.need_mask(cf_val.calculation_tree)
@@ -69,14 +69,14 @@ class StatisticProfile(object):
     def get_channels_num(self):
         resp = set()
         for el in self.chosen_fields:
-            resp.update(el.get_channel_num(STATISTIC_DICT))
+            resp.update(el.get_channel_num(MEASUREMENT_DICT))
         return resp
 
     def __str__(self):
         text = "Profile name: {}\n".format(self.name)
         if self.name_prefix != "":
             text += "Name prefix: {}\n".format(self.name_prefix)
-        text += "statistics list:\n"
+        text += "measurement list:\n"
         for el in self.chosen_fields:
             text += "{}\n".format(el.name)
         return text
@@ -89,23 +89,23 @@ class StatisticProfile(object):
         # Fixme remove binding to 3 dimensions
         for el in self.chosen_fields:
             res.append(((self.name_prefix + el.name, el.get_unit(unit, 3)),
-                        self._is_component_statistic(el.calculation_tree)))
+                        self._is_component_measurement(el.calculation_tree)))
         return res
 
     def get_parameters(self):
         return class_to_dict(self, *self.PARAMETERS)
 
-    def is_any_mask_statistic(self):
+    def is_any_mask_measurement(self):
         for el in self.chosen_fields:
             if self.need_mask(el.calculation_tree):
                 return True
         return False
 
-    def _is_component_statistic(self, node):
+    def _is_component_measurement(self, node):
         if isinstance(node, Leaf):
             return node.per_component == PerComponent.Yes
         else:
-            return self._is_component_statistic(node.left) or self._is_component_statistic(node.right)
+            return self._is_component_measurement(node.left) or self._is_component_measurement(node.right)
 
     def calculate_tree(self, node, help_dict, kwargs):
         """
@@ -115,7 +115,7 @@ class StatisticProfile(object):
         :return: float
         """
         if isinstance(node, Leaf):
-            method = STATISTIC_DICT[node.name]
+            method = MEASUREMENT_DICT[node.name]
             kw = dict(kwargs)
             kw.update(node.dict)
             hash_str = hash_fun_call_name(method, node.dict, node.area, node.per_component, node.channel)
@@ -159,7 +159,7 @@ class StatisticProfile(object):
             right_res, right_unit = self.calculate_tree(node.right, help_dict, kwargs)
             if node.op == "/":
                 return left_res / right_res, left_unit / right_unit
-        logging.error("Wrong statistics: {}".format(node))
+        logging.error("Wrong measurement: {}".format(node))
         return 1
 
     def calculate(self, channel: np.ndarray, segmentation: np.ndarray, full_mask: np.ndarray, mask: np.ndarray,
@@ -169,7 +169,7 @@ class StatisticProfile(object):
         if step_changed is None:
             step_changed = empty_fun
         if self._need_mask and mask is None:
-            raise ValueError("Statistics need mask")
+            raise ValueError("measurement need mask")
         result = OrderedDict()
         channel = channel.astype(np.float)
         help_dict = dict()
@@ -253,7 +253,7 @@ def hash_fun_call_name(fun: Callable, arguments: Dict, area: AreaType, per_compo
     return "{}: {} # {} & {} * {}".format(fun_name, arguments, area, per_component, channel)
 
 
-class Volume(StatisticMethodBase):
+class Volume(MeasurementMethodBase):
     text_info = "Volume", "Calculate volume of current segmentation"
 
     @staticmethod
@@ -319,7 +319,7 @@ def iterative_double_normal(points_positions: np.ndarray):
     return delta, dn
 
 
-class Diameter(StatisticMethodBase):
+class Diameter(MeasurementMethodBase):
     text_info = "Diameter", "Diameter of area"
 
     @staticmethod
@@ -337,7 +337,7 @@ class Diameter(StatisticMethodBase):
         return symbols("{}")
 
 
-class DiameterOld(StatisticMethodBase):
+class DiameterOld(MeasurementMethodBase):
     text_info = "Diameter old", "Diameter of area (Very slow)"
 
     @staticmethod
@@ -349,7 +349,7 @@ class DiameterOld(StatisticMethodBase):
         return symbols("{}")
 
 
-class PixelBrightnessSum(StatisticMethodBase):
+class PixelBrightnessSum(MeasurementMethodBase):
     text_info = "Pixel Brightness Sum", "Sum of pixel brightness for current segmentation"
 
     @staticmethod
@@ -376,7 +376,7 @@ class PixelBrightnessSum(StatisticMethodBase):
         return True
 
 
-class ComponentsNumber(StatisticMethodBase):
+class ComponentsNumber(MeasurementMethodBase):
     text_info = "Components Number", "Calculate number of connected components on segmentation"
 
     @staticmethod
@@ -392,7 +392,7 @@ class ComponentsNumber(StatisticMethodBase):
         return symbols("count")
 
 
-class MaximumPixelBrightness(StatisticMethodBase):
+class MaximumPixelBrightness(MeasurementMethodBase):
     text_info = "Maximum pixel brightness", "Calculate maximum pixel brightness for current area"
 
     @staticmethod
@@ -415,7 +415,7 @@ class MaximumPixelBrightness(StatisticMethodBase):
         return True
 
 
-class MinimumPixelBrightness(StatisticMethodBase):
+class MinimumPixelBrightness(MeasurementMethodBase):
     text_info = "Minimum pixel brightness", "Calculate minimum pixel brightness for current area"
 
     @staticmethod
@@ -438,7 +438,7 @@ class MinimumPixelBrightness(StatisticMethodBase):
         return True
 
 
-class MeanPixelBrightness(StatisticMethodBase):
+class MeanPixelBrightness(MeasurementMethodBase):
     text_info = "Mean pixel brightness", "Calculate mean pixel brightness for current area"
 
     @staticmethod
@@ -461,7 +461,7 @@ class MeanPixelBrightness(StatisticMethodBase):
         return True
 
 
-class MedianPixelBrightness(StatisticMethodBase):
+class MedianPixelBrightness(MeasurementMethodBase):
     text_info = "Median pixel brightness", "Calculate median pixel brightness for current area"
 
     @staticmethod
@@ -484,7 +484,7 @@ class MedianPixelBrightness(StatisticMethodBase):
         return True
 
 
-class StandardDeviationOfPixelBrightness(StatisticMethodBase):
+class StandardDeviationOfPixelBrightness(MeasurementMethodBase):
     text_info = "Standard deviation of pixel brightness", \
                 "Calculate standard deviation of pixel brightness for current area"
 
@@ -508,7 +508,7 @@ class StandardDeviationOfPixelBrightness(StatisticMethodBase):
         return True
 
 
-class MomentOfInertia(StatisticMethodBase):
+class MomentOfInertia(MeasurementMethodBase):
     text_info = "Moment of inertia", "Calculate moment of inertia for segmented structure"
 
     @staticmethod
@@ -533,7 +533,7 @@ class MomentOfInertia(StatisticMethodBase):
         return True
 
 
-class LongestMainAxisLength(StatisticMethodBase):
+class LongestMainAxisLength(MeasurementMethodBase):
     text_info = "Longest main axis length", "Length of first main axis"
 
     @staticmethod
@@ -548,7 +548,7 @@ class LongestMainAxisLength(StatisticMethodBase):
         return True
 
 
-class MiddleMainAxisLength(StatisticMethodBase):
+class MiddleMainAxisLength(MeasurementMethodBase):
     text_info = "Middle main axis length", "Length of second main axis"
 
     @staticmethod
@@ -563,7 +563,7 @@ class MiddleMainAxisLength(StatisticMethodBase):
         return True
 
 
-class ShortestMainAxisLength(StatisticMethodBase):
+class ShortestMainAxisLength(MeasurementMethodBase):
     text_info = "Shortest main axis length", "Length of third main axis"
 
     @staticmethod
@@ -578,7 +578,7 @@ class ShortestMainAxisLength(StatisticMethodBase):
         return True
 
 
-class Compactness(StatisticMethodBase):
+class Compactness(MeasurementMethodBase):
     text_info = "Compactness", "Calculate compactness off segmentation (Surface^1.5/volume)"
 
     @staticmethod
@@ -613,7 +613,7 @@ class Compactness(StatisticMethodBase):
         return Surface.get_units(ndim) / Volume.get_units(ndim)
 
 
-class Sphericity(StatisticMethodBase):
+class Sphericity(MeasurementMethodBase):
     text_info = "Sphericity", "volume/((4/3 * π * radius **3) for 3d data and volume/((π * radius **2) for 2d data"
 
     @staticmethod
@@ -648,7 +648,7 @@ class Sphericity(StatisticMethodBase):
         return Volume.get_units(ndim) / Diameter.get_units(ndim) ** 3
 
 
-class Surface(StatisticMethodBase):
+class Surface(MeasurementMethodBase):
     text_info = "Surface", "Calculating surface of current segmentation"
 
     @staticmethod
@@ -660,7 +660,7 @@ class Surface(StatisticMethodBase):
         return symbols("{}") ** 2
 
 
-class RimVolume(StatisticMethodBase):
+class RimVolume(MeasurementMethodBase):
     text_info = "Rim Volume", "Calculate volumes for elements in radius (in physical units) from mask"
 
     @classmethod
@@ -685,7 +685,7 @@ class RimVolume(StatisticMethodBase):
         return symbols("{}") ** 3
 
 
-class RimPixelBrightnessSum(StatisticMethodBase):
+class RimPixelBrightnessSum(MeasurementMethodBase):
     text_info = "Rim Pixel Brightness Sum", \
                 "Calculate mass for components located within rim (in physical units) from mask"
 
@@ -737,7 +737,7 @@ except NameError:
     enum_register.register_class(DistancePoint)
 
 
-class DistanceMaskSegmentation(StatisticMethodBase):
+class DistanceMaskSegmentation(MeasurementMethodBase):
     text_info = "segmentation distance", "Calculate distance between segmentation and mask"
 
     @classmethod
@@ -828,8 +828,8 @@ def calc_diam(array, voxel_size):
     return np.sqrt(diam)
 
 
-STATISTIC_DICT = Register(Volume, Diameter, PixelBrightnessSum, ComponentsNumber, MaximumPixelBrightness,
-                          MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness,
-                          StandardDeviationOfPixelBrightness, MomentOfInertia, LongestMainAxisLength,
-                          MiddleMainAxisLength, ShortestMainAxisLength, Compactness, Sphericity, Surface, RimVolume,
-                          RimPixelBrightnessSum, DistanceMaskSegmentation)
+MEASUREMENT_DICT = Register(Volume, Diameter, PixelBrightnessSum, ComponentsNumber, MaximumPixelBrightness,
+                            MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness,
+                            StandardDeviationOfPixelBrightness, MomentOfInertia, LongestMainAxisLength,
+                            MiddleMainAxisLength, ShortestMainAxisLength, Compactness, Sphericity, Surface, RimVolume,
+                            RimPixelBrightnessSum, DistanceMaskSegmentation)

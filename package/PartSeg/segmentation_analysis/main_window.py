@@ -12,7 +12,7 @@ from qtpy.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayou
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
 from PartSeg.common_gui.stacked_widget_with_selector import StackedWidgetWithSelector
-from PartSeg.segmentation_analysis.statistic_widget import StatisticsWidget
+from PartSeg.segmentation_analysis.measurement_widget import MeasurementWidget
 from PartSeg.utils.analysis import ProjectTuple, algorithm_description, load_functions
 from PartSeg.utils.io_utils import WrongFileTypeException
 from ..common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, AlgorithmChoose
@@ -638,7 +638,7 @@ class MainWindow(BaseMainWindow):
         self.channel_control2 = ChannelProperty(self.settings, start_name="result_control")
         self.raw_image = CompareImageView(self.settings,
                                           self.channel_control2, "raw_image")
-        self.measurements = StatisticsWidget(self.settings)
+        self.measurements = MeasurementWidget(self.settings)
         self.left_stack = StackedWidgetWithSelector()
         self.left_stack.addWidget(self.raw_image, "Image")
         self.left_stack.addWidget(self.measurements, "Measurements")

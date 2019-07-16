@@ -23,10 +23,10 @@ from ..utils.universal_const import Units
 
 from PartSeg.utils.analysis.calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, \
     MaskSuffix, MaskSub, MaskFile, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, \
-    StatisticCalculate, Save
+    MeasurementCalculate, Save
 from .partseg_settings import PartSettings
 from .profile_export import ExportDialog, ImportDialog
-from PartSeg.utils.analysis.statistics_calculation import StatisticProfile
+from PartSeg.utils.analysis.measurement_calculation import MeasurementProfile
 
 group_sheet = "QGroupBox {border: 1px solid gray; border-radius: 9px; margin-top: 0.5em;} " \
               "QGroupBox::title {subcontrol-origin: margin; left: 10px; padding: 0 3px 0 3px;}"
@@ -668,14 +668,14 @@ class CreatePlan(QWidget):
 
     def add_statistics(self):
         text = str(self.statistic_list.currentItem().text())
-        statistics = self.settings.statistic_profiles[text]
+        statistics = self.settings.measurement_profiles[text]
         statistics_copy = deepcopy(statistics)
         prefix = str(self.statistic_name_prefix.text()).strip()
         channel = self.channel_statistic_choose.currentIndex() - 1
         statistics_copy.name_prefix = prefix
         # noinspection PyTypeChecker
-        statistic_calculate = StatisticCalculate(channel=channel, statistic_profile=statistics_copy, name_prefix=prefix,
-                                                 units=self.units_choose.get_value())
+        statistic_calculate = MeasurementCalculate(channel=channel, statistic_profile=statistics_copy, name_prefix=prefix,
+                                                   units=self.units_choose.get_value())
         if self.update_element_chk.isChecked():
             self.calculation_plan.replace_step(statistic_calculate)
         else:
@@ -759,7 +759,7 @@ class CreatePlan(QWidget):
             list_widget.setCurrentRow(index)
 
     def showEvent(self, event):
-        new_statistics = list(sorted(self.settings.statistic_profiles.keys()))
+        new_statistics = list(sorted(self.settings.measurement_profiles.keys()))
         new_segment = list(sorted(self.settings.segmentation_profiles.keys()))
         new_pipelines = list(sorted(self.settings.segmentation_pipelines.keys()))
         statistic_index = self.get_index(self.statistic_list.currentItem(), new_statistics)
@@ -779,7 +779,7 @@ class CreatePlan(QWidget):
                 text = str(self.statistic_list.currentItem().text())
             else:
                 return
-        profile = self.settings.statistic_profiles[text]
+        profile = self.settings.measurement_profiles[text]
         self.information.setText(str(profile))
 
     def show_statistics(self):
@@ -912,7 +912,7 @@ class PlanPreview(QTreeWidget):
         widget = QTreeWidgetItem(up_widget)
         widget.setText(0, CalculationPlan.get_el_name(node_plan.operation))
         self.setCurrentItem(widget)
-        if isinstance(node_plan.operation, (StatisticCalculate, SegmentationProfile, MaskCreate)):
+        if isinstance(node_plan.operation, (MeasurementCalculate, SegmentationProfile, MaskCreate)):
             desc = QTreeWidgetItem(widget)
             desc.setText(0, "Description")
             if isinstance(node_plan.operation, SegmentationProfile):
@@ -962,7 +962,7 @@ class PlanPreview(QTreeWidget):
             elif op_type == PlanChanges.replace_node:
                 node = self.get_node(path)
                 node.setText(0, CalculationPlan.get_el_name(el.operation))
-                if isinstance(el.operation, (StatisticProfile, SegmentationProfile, MaskCreate)):
+                if isinstance(el.operation, (MeasurementProfile, SegmentationProfile, MaskCreate)):
                     child = node.child(0)
                     child.takeChildren()
                     if isinstance(el.operation, SegmentationProfile):

@@ -42,13 +42,13 @@ class Leaf(BaseSerializableClass):
     per_component: Optional[PerComponent] = None
     channel: Optional[Channel] = None
 
-    def get_channel_num(self, statistic_dict: Dict[str, 'StatisticMethodBase']):
+    def get_channel_num(self, measurement_dict: Dict[str, 'MeasurementMethodBase']):
         resp = set()
         if self.channel is not None and self.channel >= 0:
             resp.add(self.channel)
         try:
-            statistic_method = statistic_dict[self.name]
-            for el in statistic_method.get_fields():
+            measurement_method = measurement_dict[self.name]
+            for el in measurement_method.get_fields():
                 if issubclass(el.value_type, Channel):
                     if el.name in self.dict:
                         resp.add(self.dict[el.name])
@@ -56,7 +56,7 @@ class Leaf(BaseSerializableClass):
             raise AlgorithmDescribeNotFound(self.name)
         return resp
 
-    def pretty_print(self,  statistic_dict: Dict[str, 'StatisticMethodBase']):
+    def pretty_print(self, measurement_dict: Dict[str, 'MeasurementMethodBase']):
         resp = self.name
         if self.area is not None:
             resp = str(self.area) + " " + resp
@@ -69,8 +69,8 @@ class Leaf(BaseSerializableClass):
                 arr.append(f"channel={self.channel+1}")
             if len(self.dict) > 0:
                 try:
-                    statistic_method = statistic_dict[self.name]
-                    fields_dict = statistic_method.get_fields_dict()
+                    measurement_method = measurement_dict[self.name]
+                    fields_dict = measurement_method.get_fields_dict()
                     for k, v in self.dict.items():
                         arr.append(f"{fields_dict[k].user_name}={v}")
                 except KeyError:
@@ -101,8 +101,8 @@ class Leaf(BaseSerializableClass):
         return resp
 
     def get_unit(self, ndim):
-        from PartSeg.utils.analysis import STATISTIC_DICT
-        method = STATISTIC_DICT[self.name]
+        from PartSeg.utils.analysis import MEASUREMENT_DICT
+        method = MEASUREMENT_DICT[self.name]
         if self.power != 1:
             return method.get_units(ndim)**self.power
         return method.get_units(ndim)
@@ -117,19 +117,19 @@ class Node(BaseSerializableClass):
     # noinspection PyMissingConstructor
     def __init__(self, left: Union['Node', Leaf], op: str, right: Union['Node', Leaf]): ...
 
-    def get_channel_num(self, statistic_dict: Dict[str, 'StatisticMethodBase']):
-        return self.left.get_channel_num(statistic_dict) | self.right.get_channel_num(statistic_dict)
+    def get_channel_num(self, measurement_dict: Dict[str, 'MeasurementMethodBase']):
+        return self.left.get_channel_num(measurement_dict) | self.right.get_channel_num(measurement_dict)
 
     def __str__(self):
         left_text = "(" + str(self.left) + ")" if isinstance(self.left, Node) else str(self.left)
         right_text = "(" + str(self.right) + ")" if isinstance(self.right, Node) else str(self.right)
         return left_text + self.op + right_text
 
-    def pretty_print(self, statistic_dict: Dict[str, 'StatisticMethodBase']):
-        left_text = "(" + self.left.pretty_print(statistic_dict) + ")" if isinstance(self.left, Node) \
-            else self.left.pretty_print(statistic_dict)
-        right_text = "(" + self.right.pretty_print(statistic_dict) + ")" if isinstance(self.right, Node) \
-            else self.right.pretty_print(statistic_dict)
+    def pretty_print(self, measurement_dict: Dict[str, 'MeasurementMethodBase']):
+        left_text = "(" + self.left.pretty_print(measurement_dict) + ")" if isinstance(self.left, Node) \
+            else self.left.pretty_print(measurement_dict)
+        right_text = "(" + self.right.pretty_print(measurement_dict) + ")" if isinstance(self.right, Node) \
+            else self.right.pretty_print(measurement_dict)
         return left_text + self.op + right_text
 
     def get_unit(self, ndim):
@@ -138,9 +138,12 @@ class Node(BaseSerializableClass):
         raise ValueError(f"Unknown operator '{self.op}'")
 
 
-class StatisticEntry(BaseSerializableClass):
+class MeasurementEntry(BaseSerializableClass):
     # noinspection PyUnusedLocal
     # noinspection PyMissingConstructor
+    __old_names__ = "StatisticEntry"
+
+    # noinspection PyMissingConstructor,PyUnusedLocal
     def __init__(self, name: str, calculation_tree: Union[Node, Leaf]): ...
 
     name: str
@@ -149,14 +152,14 @@ class StatisticEntry(BaseSerializableClass):
     def get_unit(self, unit: Units, ndim):
         return str(self.calculation_tree.get_unit(ndim)).format(str(unit))
 
-    def get_channel_num(self, statistic_dict: Dict[str, 'StatisticMethodBase']):
-        return self.calculation_tree.get_channel_num(statistic_dict)
+    def get_channel_num(self, measurement_dict: Dict[str, 'MeasurementMethodBase']):
+        return self.calculation_tree.get_channel_num(measurement_dict)
 
 
-class StatisticMethodBase(AlgorithmDescribeBase, ABC):
+class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     """
-    This is base class For all statistic calculation classes
-    based on text_info[0] the Statistic name wil be generated, based_on text_info[1] the description is generated
+    This is base class For all measurement calculation classes
+    based on text_info[0] the measurement name wil be generated, based_on text_info[1] the description is generated
     """
     text_info = "", ""
 
@@ -180,7 +183,7 @@ class StatisticMethodBase(AlgorithmDescribeBase, ABC):
 
     @staticmethod
     def calculate_property(**kwargs):
-        """Main function for calculating statistic"""
+        """Main function for calculating measurement"""
         raise NotImplementedError()
 
     @classmethod
@@ -190,7 +193,7 @@ class StatisticMethodBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def get_units(cls, ndim):
-        """Return units for statistic. They are shown to user"""
+        """Return units for measurement. They are shown to user"""
         raise NotImplementedError()
 
     def need_channel(self):
