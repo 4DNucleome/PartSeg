@@ -4,6 +4,7 @@
 
 import numpy as np
 cimport numpy as np
+from cython.parallel import prange
 
 
 cdef extern from "<algorithm>" namespace "std" nogil:
@@ -77,7 +78,7 @@ def min_max_calc_int(np.ndarray arr):
                 max = val
     return min, max
 
-cdef inline long scale_factor(numpy_types value, double min_val, double factor):
+cdef inline long scale_factor(numpy_types value, double min_val, double factor) nogil:
     return max[long](0, min[long](1023,  <long>((value - min_val) * factor)))
 
 
@@ -87,12 +88,13 @@ def color_grayscale(np.ndarray[DTYPE_t, ndim=2] cmap, np.ndarray[numpy_types, nd
     cdef int val, x, y
     cdef double factor =  1/ ((max_val - min_val) / 1023)
     cdef np.ndarray[DTYPE_t, ndim=3] result_array = np.zeros((x_max, y_max, 3), dtype=DTYPE)
-    for x in range(x_max):
-        for y in range(y_max):
-            val = scale_factor(image[x, y], min_val, factor)
-            result_array[x, y, 0] = cmap[val, 0]
-            result_array[x, y, 1] = cmap[val, 1]
-            result_array[x, y, 2] = cmap[val, 2]
+    with nogil:
+        for x in prange(x_max):
+            for y in range(y_max):
+                val = scale_factor(image[x, y], min_val, factor)
+                result_array[x, y, 0] = cmap[val, 0]
+                result_array[x, y, 1] = cmap[val, 1]
+                result_array[x, y, 2] = cmap[val, 2]
 
     return result_array
 
@@ -145,7 +147,7 @@ def add_labels(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[label_types, ndim=2
                 local_labels[local_labels == i] = 0
     cdef float part1, part2
     cdef label_types col_num
-    for x in range(x_max):
+    for x in prange(x_max, nogil=True):
         for y in range(y_max):
             if local_labels[x,y] > 0:
                 col_num = local_labels[x,y] % 30 # TODO move to global variable

@@ -1,10 +1,10 @@
-import sys
 import typing
 
 import PartSegData
 import numpy as np
 
 from .color_image import color_grayscale
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 color_maps = np.load(PartSegData.colors_file)
 
@@ -41,25 +41,22 @@ def color_image(image: np.ndarray, colors: typing.List[str], min_max: typing.Lis
     new_shape = image.shape[:-1] + (3,)
 
     result_images = []  # = np.zeros(new_shape, dtype=np.uint8)
-    for i, cmap in enumerate(color_maps_local):
-        if cmap is None:
-            continue
-        assert isinstance(cmap, np.ndarray) and cmap.shape == (1024, 3)
-        min_val, max_val = min_max[i]  # min_max_calc_int(image[..., i])
-        # chanel = (image[..., i] - min_val) / ((max_val - min_val) / 255)
-        # chanel = chanel.astype(np.uint8)
-        try:
-            result_images.append([color_grayscale(cmap, image[..., i], min_val, max_val)])
-        except TypeError as e:
-            print(image.dtype, file=sys.stderr)
-            print(e, file=sys.stderr)
-        except IndexError as e:
-            raise e
+    colored_channels = {}
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        for i, cmap in enumerate(color_maps_local):
+            if cmap is None:
+                continue
+            assert isinstance(cmap, np.ndarray) and cmap.shape == (1024, 3)
+            min_val, max_val = min_max[i]
+
+            colored_channels[executor.submit(color_grayscale, cmap, image[..., i], min_val, max_val)] = i
+    for res in as_completed(colored_channels):
+        result_images.append(res.result())
     if len(result_images) > 0:
         if len(result_images) == 1:
-            return result_images[0][0]
+            return result_images[0]
         else:
 
-            return np.vstack(result_images).max(axis=0)
+            return np.max(result_images, axis=0)
     else:
         return np.zeros(new_shape, dtype=np.uint8)
