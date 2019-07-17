@@ -71,7 +71,7 @@ base_class_dict = {
     RegisterEnum.image_transform: TransformBase,  RegisterEnum.mask_save_parameters: io_utils.SaveBase,
     RegisterEnum.mask_save_components: io_utils.SaveBase, RegisterEnum.mask_save_segmentation: io_utils.SaveBase,
     RegisterEnum.analysis_measurement: measurement_base.MeasurementMethodBase
-}
+} # dict with base class for given type of algorithm, kes are :py:class:`RegisterEnum`
 
 reload_module_list = \
     [threshold, sprawl, segmentation_algorithm, restartable_segmentation_algorithms, noise_filtering, io_functions,

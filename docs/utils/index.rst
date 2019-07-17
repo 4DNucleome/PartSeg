@@ -11,3 +11,7 @@ PartSeg.utils base
 ---------
 .. automodule:: PartSeg.utils.register
    :members:
+
+.. data:: base_class_dict
+
+   dict with base class for given type of algorithm, kes are :py:class:`RegisterEnum` members

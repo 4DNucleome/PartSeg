@@ -11,6 +11,7 @@ Welcome to PartSeg's documentation!
    :caption: Contents:
 
    utils/index
+   utils/segmentation
 
 
 Indices and tables

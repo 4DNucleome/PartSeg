@@ -25,8 +25,16 @@ except NameError:
 
 
 class NoiseFilteringBase(AlgorithmDescribeBase, ABC):
+    """Base class for noise filtering operations"""
     @classmethod
     def noise_filter(cls, chanel: np.ndarray, spacing: typing.Iterable[float], arguments: dict) -> np.ndarray:
+        """
+        This function need be overloaded in implementation
+
+        :param channel: single channel ad 2d or 3d array
+        :param spacing: image spacing
+        :return: channel array with removed noise
+        """
         raise NotImplementedError()
 
 

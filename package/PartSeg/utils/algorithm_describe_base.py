@@ -70,12 +70,21 @@ class AlgorithmDescribeBase:
 
     @classmethod
     def get_name(cls) -> str:
-        """Return algorithm name. It will be used during interface generating"""
+        """
+        Algorithm name. It will be used during interface generating and in registering
+        to proper :py:class:`PartSeg.utils.algorithm_describe_base.Register`.
+
+        :return: name of algorithm
+        """
         raise NotImplementedError()
 
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
-        """Return list of algorithm parameters which should be exported to gui for user """
+        """
+        This function return list of parameters needed by algorithm. It is used for generate form in User Interface
+
+        :return: list of algorithm parameters and comments
+        """
         raise NotImplementedError()
 
     @classmethod
