@@ -34,7 +34,7 @@ class CollapseCheckbox(QCheckBox):
 
     def remove_hide_element(self, val: QWidget):
         """
-        Stop contolling widget visibility by CollapseCheckbox
+        Stop controlling widget visibility by CollapseCheckbox
         """
         try:
             self.hide_list.remove(val)
