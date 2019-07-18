@@ -1,5 +1,6 @@
 from math import sqrt
 
+import typing
 from qtpy import QtGui
 from qtpy.QtCore import QPointF, Qt, QLineF
 from qtpy.QtGui import QPolygonF, QPainter, QFontMetrics, QFont
@@ -8,9 +9,15 @@ from qtpy.QtWidgets import QCheckBox, QWidget
 
 class CollapseCheckbox(QCheckBox):
     """
-    :type hide_list: typing.List[QWidget]
+    Check box for hide widgets. It is painted as:
+    ▶, {info_text}, line
+
+    If triangle is ▶ then widgets are hidden
+    If triangle is ▼ then widgets are shown
+
+    :param info_text: optional text to be show
     """
-    def __init__(self, info_text="", parent: QWidget = None):
+    def __init__(self, info_text: str="", parent: typing.Optional[QWidget] = None):
         super().__init__(info_text if info_text else "-", parent)
         self.hide_list = []
         self.stateChanged.connect(self.hide_element)
@@ -19,10 +26,16 @@ class CollapseCheckbox(QCheckBox):
         self.text_size = metrics.size(Qt.TextSingleLine, info_text)
         self.info_text = info_text
 
-    def add_hide_element(self, val):
+    def add_hide_element(self, val: QWidget):
+        """
+        Add widget which visibility should be controlled by CollapseCheckbox
+        """
         self.hide_list.append(val)
 
-    def remove_hide_element(self, val):
+    def remove_hide_element(self, val: QWidget):
+        """
+        Stop contolling widget visibility by CollapseCheckbox
+        """
         try:
             self.hide_list.remove(val)
         except ValueError:

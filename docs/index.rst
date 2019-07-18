@@ -12,6 +12,7 @@ Welcome to PartSeg's documentation!
 
    utils/index
    utils/segmentation
+   common_gui/index
 
 
 Indices and tables

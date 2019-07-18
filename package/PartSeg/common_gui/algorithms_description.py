@@ -443,7 +443,6 @@ class InteractiveAlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
         self.selector = selector
         self.algorithm_thread.finished.connect(self.enable_selector)
         self.algorithm_thread.started.connect(self.disable_selector)
-        # self.form_widget.value_changed.connect(self.value_updated)
         # noinspection PyUnresolvedReferences
         if hasattr(settings, "mask_changed"):
             settings.mask_changed.connect(self.change_mask)
