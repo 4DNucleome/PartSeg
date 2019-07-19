@@ -80,6 +80,9 @@ class ImageReader(object):
             self.read_imagej_metadata()
         elif self.image_file.is_ome:
             self.read_ome_metadata()
+        else:
+            x_spac, y_spac = self.read_resolution_from_tags()
+            self.spacing = self.default_spacing[0], y_spac, x_spac
         mutex = Lock()
         count_pages = [0]
 
@@ -145,6 +148,27 @@ class ImageReader(object):
     def decode_int(val: int):
         return [(val >> x) & 255 for x in [24, 16, 8, 0]]
 
+    def read_resolution_from_tags(self):
+        tags = self.image_file.pages[0].tags
+        try:
+
+            if self.image_file.is_imagej:
+                scalar = name_to_scalar[self.image_file.imagej_metadata["unit"]]
+            else:
+                unit = tags["ResolutionUnit"].value
+                if unit == 3:
+                    scalar = name_to_scalar["centimeter"]
+                elif unit == 2:
+                    scalar = name_to_scalar["cal"]
+                else:
+                    KeyError("wrong scalar")
+
+            x_spacing = tags["XResolution"].value[1] / tags["XResolution"].value[0] * scalar
+            y_spacing = tags["YResolution"].value[1] / tags["YResolution"].value[0] * scalar
+        except (KeyError, ZeroDivisionError):
+            x_spacing, y_spacing = self.default_spacing[2], self.default_spacing[1]
+        return x_spacing, y_spacing
+
     def read_imagej_metadata(self):
         assert self.image_file.is_imagej
         try:
@@ -152,15 +176,8 @@ class ImageReader(object):
                 self.image_file.imagej_metadata["spacing"] * name_to_scalar[self.image_file.imagej_metadata["unit"]]
         except KeyError:
             z_spacing = 1
-        tags = self.image_file.pages[0].tags
-        try:
-            x_spacing = tags["XResolution"].value[1] / tags["XResolution"].value[0] \
-                * name_to_scalar[self.image_file.imagej_metadata["unit"]]
-            y_spacing = tags["YResolution"].value[1] / tags["YResolution"].value[0] \
-                * name_to_scalar[self.image_file.imagej_metadata["unit"]]
-        except (KeyError, ZeroDivisionError):
-            x_spacing, y_spacing = 10**-6, 10**-6
-        self.spacing = z_spacing, x_spacing, y_spacing
+        x_spacing, y_spacing = self.read_resolution_from_tags()
+        self.spacing = z_spacing, y_spacing, x_spacing
         self.colors = self.image_file.imagej_metadata.get("LUTs")
         self.labels = self.image_file.imagej_metadata.get("Labels")
         if "Ranges" in self.image_file.imagej_metadata:
@@ -208,7 +225,9 @@ def increment_dict(dkt: dict):
 name_to_scalar = {
     "micron": 10 ** -6,
     "µm": 10 ** -6,
-    "\\u00B5m": 10 ** -6
+    "\\u00B5m": 10 ** -6,
+    "centimeter": 10 ** -2,
+    "cal": 2.54 * 10 ** -2
 }
 
 
