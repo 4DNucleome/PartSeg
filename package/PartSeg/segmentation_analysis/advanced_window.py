@@ -802,7 +802,7 @@ class DevelopTab(QWidget):
             importlib.reload(el)
         importlib.reload(register)
         importlib.reload(plugins)
-        #plugins.register()
+        plugins.register()
         for el in self.parent().parent().reload_list:
             el()
 
