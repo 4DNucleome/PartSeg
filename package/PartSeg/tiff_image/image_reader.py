@@ -13,11 +13,17 @@ import os.path
 
 
 class TiffFileException(Exception):
+    """
+    exception raised if reading tiff file fails. Created for distinguish exceptions which should
+    reported as warning message (not for report)
+    """
     pass
 
 
 class ImageReader(object):
     """
+    TIFF/LSM files reader. Base reading with :py:meth:`.read_image`
+
     image_file: TiffFile
     mask_file: TiffFile
     """
@@ -47,6 +53,17 @@ class ImageReader(object):
     def read_image(cls, image_path: typing.Union[str, BytesIO], mask_path=None,
                    callback_function: typing.Optional[typing.Callable] = None,
                    default_spacing: typing.List[int] = None) -> Image:
+        """
+        read tiff/lsm file with optional mask file
+
+        :param image_path: path or opened file contains image
+        :param mask_path:
+        :param callback_function: function for provide information about progress in reading file (for progressbar)
+        :param default_spacing: used if file do not contains information about spacing
+            (or metadata format is not supported)
+        :return: image
+        """
+        # TODO add genric description of callback function
         instance = cls(callback_function)
         if default_spacing is not None:
             instance.set_default_spacing(default_spacing)
@@ -128,6 +145,10 @@ class ImageReader(object):
         return array
 
     def verify_mask(self):
+        """
+        verify if mask fit to image. Raise ValueError exception on error
+        :return:
+        """
         if self.mask_file is None:
             return
         image_series = self.image_file.pages[0]
@@ -217,23 +238,31 @@ class ImageReader(object):
                 self.labels = self.image_file.lsm_metadata["ChannelColors"]["ColorNames"]
 
 
-def increment_dict(dkt: dict):
-    for el in dkt:
-        dkt[el] += 1
-
-
 name_to_scalar = {
     "micron": 10 ** -6,
     "µm": 10 ** -6,
+    "nm": 10 ** -9,
+    "mm": 10 ** -3,
+    "millimeter": 10 ** -3,
+    "pm": 10 ** -12,
+    "picometer": 100 ** -12,
+    "nanometer": 10 ** -9,
     "\\u00B5m": 10 ** -6,
     "centimeter": 10 ** -2,
+    "cm": 10 ** -2,
     "cal": 2.54 * 10 ** -2
-}
+}  #: dict with known names of scalar to scalar value. May be some missed
 
 
 if tifffile.tifffile.TiffPage.__module__ != "PartSeg.tiff_image.image_reader":
     class MyTiffPage(TiffPage):
+        """Modification of :py:class:`TiffPage` from `tifffile` package to provide progress information"""
         def asarray(self, *args, **kwargs):
+            """
+            Modified for progress info. call original implementation and send info that page is read by
+            call parameter less function `report_func` of parent.
+            sample of usage in :py:meth:`ImageRead.read`
+            """
             # Because of TiffFrame usage
             res = TiffPage.asarray(self, *args, **kwargs)
             self.parent.report_func()

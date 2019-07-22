@@ -1,30 +1,35 @@
 import numpy as np
 import typing
 
+Spacing = typing.Tuple[typing.Union[float, int], ...]
+
 
 class Image(object):
     """
-    Base object for storing image.
-    default order is T, Z, Y, X, C
+    Base class for Images used in PartSeg
 
+    :param data: 5-dim array with order: time, z, y, x, channel
+    :param image_spacing: spacing for z, y, x
+    :param file_path: path to image on disc
+    :param mask: mask array in shape z,y,x
+    :param default_coloring: default colormap - not used yet
+    :param ranges: default ranges for channels
+    :param labels: labels for channels
     """
+    _image_spacing: Spacing
     return_order = "TZYXC"
+    """internal order of axes"""
 
-    def __init__(self, data: np.ndarray, image_spacing, file_path=None, mask: typing.Union[None, np.ndarray] = None,
+    def __init__(self, data: np.ndarray, image_spacing: Spacing, file_path=None,
+                 mask: typing.Union[None, np.ndarray] = None,
                  default_coloring=None, ranges=None, labels=None):
         """
-        Base class for Images used in PartSeg
-        :param data: 5-dim array with order: time, z, y, x, channel
-        :param image_spacing: spacing for z, y, x (TODO add time distance)
-        :param file_path: path to image on disc
-        :param mask: mask array in shape z,y,x
-        :param default_coloring: default colormap - not used yet
-        :param ranges: default ranges for channels
-        :param labels: labels for channels
+
         """
+        # TODO add time distance to image spacing
         assert len(data.shape) == 5
         self._image_array = data
-        self._image_spacing = tuple([1] * (3 - len(image_spacing)) + list(image_spacing))
+        self._image_spacing = (1.0, ) * (3-len(image_spacing)) + image_spacing
         self.file_path = file_path
         self.default_coloring = default_coloring
         self.additional_channels = []
@@ -59,7 +64,13 @@ class Image(object):
         return self.__class__(data=data, image_spacing=image_spacing, file_path=file_path, mask=mask,
                               default_coloring=default_coloring, ranges=ranges, labels=labels)
 
-    def set_mask(self, mask: np.ndarray):
+    def set_mask(self, mask: typing.Optional[np.ndarray]):
+        """
+        Set mask for image, check if it has proper shape.
+
+        :param mask: mask in same shape like image. May not contains 1 dim axes.
+        :raise ValueError: on wrong shape
+        """
         if mask is None:
             self._mask_array = None
         else:
@@ -70,9 +81,10 @@ class Image(object):
 
     @property
     def mask(self):
+
         return self._mask_array
 
-    def fit_array_to_image(self, array: np.ndarray):
+    def fit_array_to_image(self, array: np.ndarray) -> np.ndarray:
         shape = list(array.shape)
         for i, el in enumerate(self._image_array.shape[:-1]):
             if el == 1 and el != shape[i]:
@@ -83,48 +95,66 @@ class Image(object):
             raise ValueError("Wrong array shape")
         return np.reshape(array, shape)
 
-    def get_image_for_save(self):
+    def get_image_for_save(self) -> np.ndarray:
+        """
+        :return: numpy array in proper ordered axes
+        """
         array = np.moveaxis(self._image_array, 4, 2)
         return np.reshape(array, array.shape)
 
-    def get_mask_for_save(self):
+    def get_mask_for_save(self) -> typing.Optional[np.ndarray]:
+        """
+        :return: if image has mask then return mask with axes in proper order
+        """
         if not self.has_mask:
             return None
         return np.reshape(self._mask_array, self._mask_array.shape[:2] + (1,) + self._mask_array.shape[2:])
 
     @property
-    def has_mask(self):
+    def has_mask(self) -> bool:
+        """check if image is masked"""
         return self._mask_array is not None
 
     @property
-    def is_time(self):
+    def is_time(self) -> bool:
+        """check if image contains time data"""
         return self._image_array.shape[0] > 1
 
     @property
-    def is_stack(self):
+    def is_stack(self) -> bool:
+        """check if image contain 3d data"""
         return self._image_array.shape[1] > 1
 
     @property
-    def channels(self):
+    def channels(self) -> int:
+        """number of image channels"""
         return self._image_array.shape[-1]
 
     @property
-    def layers(self):
+    def layers(self) -> int:
+        """z-dim of image"""
         return self._image_array.shape[1]
 
     @property
-    def times(self):
+    def times(self) -> int:
+        """number of time frames"""
         return self._image_array.shape[0]
 
     @property
-    def plane_shape(self):
+    def plane_shape(self) -> (int, int):
+        """y,x size of image"""
         return self._image_array.shape[2:4]
 
     @property
     def shape(self):
+        """Whole image shape. order of axes my change. Current order is in :py:attr:`return_order`"""
         return self._image_array.shape
 
     def swap_time_and_stack(self):
+        """
+        Swap time and data axes.
+        For example my be used to convert time image in 3d image.
+        """
         image_array = np.swapaxes(self._image_array, 0, 1)
         return self.substitute(data=image_array)
 
@@ -141,9 +171,17 @@ class Image(object):
         return self._image_array[li][item]
 
     def get_channel(self, num) -> np.ndarray:
+        """"""
         return self._image_array[..., num]
 
-    def get_layer(self, time, stack) -> np.ndarray:
+    def get_layer(self, time: int, stack: int) -> np.ndarray:
+        """
+        return single layer contains data for all channel
+
+        :param time: time coordinate. For images with not time use 0.
+        :param stack: "z coordinate. For time data use 0.
+        :return:
+        """
         return self._image_array[time, stack]
 
     def get_layer_with_add(self, time, stack):
@@ -161,22 +199,30 @@ class Image(object):
         return self._mask_array[0, num]
 
     @property
-    def is_2d(self):
-        return self._image_array.shape[1] == 1 and self._image_array.shape[0] == 1
+    def is_2d(self) -> bool:
+        """
+        Check if image z and time dimension are equal to 1.
+        Equivalent to:
+        `image.layers == 1 and image.times == 1`
+        """
+        return self.layers == 1 and self.times == 1
 
     @property
-    def spacing(self):
+    def spacing(self) -> Spacing:
+        """image spacing"""
         if self.is_2d:
             return tuple(self._image_spacing[1:])
         return self._image_spacing
 
     @property
-    def voxel_size(self):
+    def voxel_size(self) -> Spacing:
+        """alias for spacing"""
         return self.spacing
 
-    def set_spacing(self, value):
+    def set_spacing(self, value: Spacing):
+        """set image spacing"""
         if self.is_2d and len(value) + 1 == len(self._image_spacing):
-            value = (1,) + tuple(value)
+            value = (1.0,) + tuple(value)
         assert len(value) == len(self._image_spacing)
         self._image_spacing = tuple(value)
 
@@ -212,6 +258,7 @@ class Image(object):
                               self.default_coloring, self.ranges, self.labels)
 
     def get_imagej_colors(self):
+        # TODO review
         if self.default_coloring is None:
             return None
         try:
@@ -233,6 +280,7 @@ class Image(object):
         return res
 
     def get_colors(self):
+        # TODO review
         if self.default_coloring is None:
             return None
         res = []
@@ -243,10 +291,12 @@ class Image(object):
                 res.append(list(color))
         return res
 
-    def get_um_spacing(self):
-        return [x * 10 ** 6 for x in self.spacing]
+    def get_um_spacing(self) -> Spacing:
+        """image spacing in micrometers"""
+        return tuple([float(x * 10 ** 6) for x in self.spacing])
 
-    def get_ranges(self):
+    def get_ranges(self) -> typing.Iterable[typing.Union[int, float]]:
+        """image brightness ranges for each channel"""
         return self.ranges
 
     def __str__(self):

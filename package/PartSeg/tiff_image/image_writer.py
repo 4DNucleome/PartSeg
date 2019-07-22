@@ -1,13 +1,20 @@
 import typing
 from io import BytesIO
-from .image import Image
+from . import Image
 from tifffile import imsave
 import numpy as np
 
+
 class ImageWriter(object):
+    """class for saving TIFF images"""
     @classmethod
     def save(cls, image: Image, save_path: typing.Union[str, BytesIO]):
-        """Save image as tiff to path or buffer"""
+        """
+        Save image as tiff to path or buffer
+
+        :param image: image for save
+        :param save_path: save location
+        """
         # print(f"[save] {save_path}")
         data = image.get_image_for_save()
         imagej_kwargs = {}
@@ -30,7 +37,12 @@ class ImageWriter(object):
 
     @classmethod
     def save_mask(cls, image: Image, save_path: str):
-        """Save mask connected to image as tiff to path or buffer"""
+        """
+        Save mask connected to image as tiff to path or buffer
+
+        :param image: mast is obtain with :py:meth:`.Image.get_mask_for_save`
+        :param save_path: save location
+        """
         mask = image.get_mask_for_save()
         if mask is None:
             return

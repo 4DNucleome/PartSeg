@@ -14,4 +14,4 @@ PartSeg.utils base
 
 .. data:: base_class_dict
 
-   dict with base class for given type of algorithm, kes are :py:class:`RegisterEnum` members
+   dict with base class for given type of algorithm, keys are :py:class:`RegisterEnum` members
