@@ -86,7 +86,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
                                   possible_values=threshold_dict, property_type=AlgorithmDescribeBase),
 
                 AlgorithmProperty("close_holes", "Fill holes", True, (True, False)),
-                AlgorithmProperty("close_holes_size", "Maximum holes size (px)", 200, (0, 10 ** 3), 10),
+                AlgorithmProperty("close_holes_size", "Maximum holes size (px)", 200, (0, 10 ** 5), 10),
                 AlgorithmProperty("smooth_border", "Smooth borders", next(iter(smooth_dict.keys())),
                                   possible_values=smooth_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("side_connection", "Side by Side connections", False, (True, False),

@@ -837,7 +837,7 @@ class AdvancedWindow(QTabWidget):
             pass
 
     def closeEvent(self, *args, **kwargs):
-        self.settings.set_in_profile("advanced_window_geometry", bytes(self.saveGeometry().toHex()).decode('ascii'))
+        self.settings.set_in_profile("advanced_window_geometry", self.saveGeometry().toHex().data().decode('ascii'))
         super(AdvancedWindow, self).closeEvent(*args, **kwargs)
 
 

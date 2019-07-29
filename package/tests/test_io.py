@@ -81,12 +81,12 @@ class TestImageClass:
         assert isinstance(image, Image)
 
     def test_image_mask(self):
-        Image(np.zeros((1, 10, 50, 50, 4)), [5, 5, 5], mask=np.zeros((10, 50, 50)))
-        Image(np.zeros((1, 10, 50, 50, 4)), [5, 5, 5], mask=np.zeros((1, 10, 50, 50)))
+        Image(np.zeros((1, 10, 50, 50, 4)), (5, 5, 5), mask=np.zeros((10, 50, 50)))
+        Image(np.zeros((1, 10, 50, 50, 4)), (5, 5, 5), mask=np.zeros((1, 10, 50, 50)))
         with pytest.raises(ValueError):
-            Image(np.zeros((1, 10, 50, 50, 4)), [5, 5, 5], mask=np.zeros((1, 10, 50, 40)))
+            Image(np.zeros((1, 10, 50, 50, 4)), (5, 5, 5), mask=np.zeros((1, 10, 50, 40)))
         with pytest.raises(ValueError):
-            Image(np.zeros((1, 10, 50, 50, 4)), [5, 5, 5], mask=np.zeros((1, 10, 50, 50, 4)))
+            Image(np.zeros((1, 10, 50, 50, 4)), (5, 5, 5), mask=np.zeros((1, 10, 50, 50, 4)))
 
     def test_read_with_mask(self):
         test_dir = get_test_dir()
@@ -167,7 +167,6 @@ class TestJsonLoad:
         file_path = os.path.join(os.path.dirname(__file__), "test_data", "calculation_plan_0.9.2.3.json")
         data = UpdateLoadedMetadataAnalysis.load_json_data(file_path)
         print(data["test_0.9.2.3"])
-
 
 
 class TestSegmentationMask:

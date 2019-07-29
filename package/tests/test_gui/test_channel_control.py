@@ -1,5 +1,6 @@
 import PartSegData
 import numpy as np
+from qtpy import PYQT5
 from qtpy.QtCore import Qt, QPoint
 from qtpy.QtGui import QImage
 
@@ -10,9 +11,15 @@ from PartSeg.tiff_image import ImageReader
 from PartSeg.utils.color_image import color_image
 
 
-def array_from_image(image: QImage):
-    size = image.size().width() * image.size().height()
-    return np.frombuffer(image.bits().asstring(size * 3), dtype=np.uint8)
+if PYQT5:
+    def array_from_image(image: QImage):
+        size = image.size().width() * image.size().height()
+        return np.frombuffer(image.bits().asstring(size * 3), dtype=np.uint8)
+else:
+    def array_from_image(image: QImage):
+        size = image.size().width() * image.size().height()
+        return np.frombuffer(image.bits(), dtype=np.uint8, count=size * 3)
+
 
 
 def test_color_combo_box(qtbot):

@@ -1,4 +1,5 @@
 # coding=utf-8
+import sys
 from sys import platform
 from enum import Enum
 from typing import Union
@@ -11,6 +12,12 @@ from PartSeg.utils.universal_const import Units, UNIT_SCALE
 from qtpy.QtWidgets import QWidget, QLabel, QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QComboBox, QSlider,\
     QLineEdit, QHBoxLayout
 from qtpy.QtCore import Signal
+from qtpy import PYQT5
+
+if PYQT5:
+    enum_type = Enum
+else:
+    enum_type = object
 
 
 class ChannelComboBox(QComboBox):
@@ -42,7 +49,7 @@ class EnumComboBox(QComboBox):
     :param enum: Enum on which base combo box should be created.
         For proper showing labels overload the ``__str__`` function of given :py:class:`enum.Enum`
     """
-    current_choose = Signal(Enum)
+    current_choose = Signal(enum_type)
     """:py:class:`Signal` emitted when currentIndexChanged is emitted.
     Argument is selected value"""
 

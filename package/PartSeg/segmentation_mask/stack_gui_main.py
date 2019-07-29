@@ -787,7 +787,7 @@ class MainWindow(BaseMainWindow):
     def closeEvent(self, e):
         # print(self.settings.dump_view_profiles())
         # print(self.settings.segmentation_dict["default"].my_dict)
-        self.settings.set_in_profile("main_window_geometry", bytes(self.saveGeometry().toHex()).decode('ascii'))
+        self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode('ascii'))
         self.options_panel.algorithm_options.algorithm_choose_widget.recursive_get_values()
         self.settings.dump()
 

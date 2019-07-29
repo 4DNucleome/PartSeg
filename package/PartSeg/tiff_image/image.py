@@ -28,6 +28,8 @@ class Image(object):
         """
         # TODO add time distance to image spacing
         assert len(data.shape) == 5
+        if not isinstance(image_spacing, tuple):
+            image_spacing = tuple(image_spacing)
         self._image_array = data
         self._image_spacing = (1.0, ) * (3-len(image_spacing)) + image_spacing
         self.file_path = file_path
