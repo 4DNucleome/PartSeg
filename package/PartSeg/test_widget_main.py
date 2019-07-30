@@ -1,12 +1,12 @@
-from qtpy.QtWidgets import QApplication, QWidget, QVBoxLayout
+from qtpy.QtWidgets import QApplication, QWidget, QVBoxLayout, QScrollArea
 import sys
 import PartSegData
 import numpy as np
 
-from PartSeg.common_gui.channel_control import ColorComboBoxGroup, ChannelProperty
-from PartSeg.common_gui.stack_image_view import ImageView
-from PartSeg.project_utils_qt.settings import ViewSettings
-from PartSeg.tiff_image import ImageReader
+from PartSeg.common_gui.channel_control import ColorComboBoxGroup
+from PartSeg.common_gui.colormap_creator import PColormapCreator, PColormapList, ChannelPreview
+from PartSeg.project_utils_qt.settings import ViewSettings, ColormapDict
+from PartSeg.utils.color_image.base_colors import default_colormap_dict
 
 color_maps = np.load(PartSegData.colors_file)
 
@@ -14,27 +14,17 @@ color_maps = np.load(PartSegData.colors_file)
 class TestWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.settings = ViewSettings()
-        self.group = ColorComboBoxGroup(self.settings, "test", height=30)
-        self.group.set_channels(3)
-        self.channel_property = ChannelProperty(self.settings, "test2")
-        self.image_view = ImageView(self.settings, self.channel_property, "test2")
-
-        image = ImageReader.read_image(PartSegData.segmentation_analysis_default_image)
-        self.settings.image = image
-
+        settings = ViewSettings()
+        self.colormap_selector = PColormapCreator(settings)
+        self.color_preview = PColormapList(settings)
+        self.color_preview.edit_signal.connect(self.colormap_selector.set_colormap)
+        self.test = ColorComboBoxGroup(settings, "aa")
+        self.test.set_channels(4)
         layout = QVBoxLayout()
-        layout.addWidget(self.group)
-        layout.addWidget(self.image_view)
-        layout.addWidget(self.channel_property)
-
+        layout.addWidget(self.test)
+        layout.addWidget(self.colormap_selector)
+        layout.addWidget(self.color_preview)
         self.setLayout(layout)
-
-    def show_info(self):
-        print("aaaa", self.color_box1.is_checked())
-
-    def show_info2(self):
-        print("bbbb", self.color_box1.is_checked())
 
 
 def main():

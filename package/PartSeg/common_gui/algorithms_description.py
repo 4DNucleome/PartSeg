@@ -52,7 +52,6 @@ class QtAlgorithmProperty(AlgorithmProperty):
         else:
             return self.get_value()
 
-
     def set_value(self, val):
         return self._setter(self._widget, val)
 

@@ -458,7 +458,7 @@ class ImageView(QWidget):
         except IndexError:
             print(self.sender())
             raise
-        color_list = self.channel_control.current_colors
+        color_list = self.channel_control.current_colormaps
         borders = self._settings.border_val[:]
         for i, p in enumerate(self.channel_control.get_limits()):
             if p is not None:
@@ -809,7 +809,8 @@ class ColorBar(QLabel):
             self.range = self._settings.get_from_profile(f"{name}.range_{channel_id}")
         else:
             self.range = self._settings.border_val[channel_id]
-        cmap = self._settings.get_from_profile(f"{name}.cmap{channel_id}")
+        cmap = self._settings.colormap_dict[self._settings.get_from_profile(f"{name}.cmap{channel_id}")][0]
+
         round_factor = self.round_base(self.range[1])
         self.round_range = (int(round(self.range[0] / round_factor) * round_factor),
                             int(round(self.range[1] / round_factor) * round_factor))

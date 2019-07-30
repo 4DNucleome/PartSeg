@@ -11,3 +11,11 @@ PartSeg.utils base
 ---------
 .. automodule:: PartSeg.utils.register
    :members:
+
+
+
+.json_hooks
+-----------
+.. automodule:: PartSeg.utils.json_hooks
+   :members:
+   :show-inheritance:

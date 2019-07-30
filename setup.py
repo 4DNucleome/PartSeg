@@ -99,7 +99,7 @@ setuptools.setup(
     #  scripts=[os.path.join("package", "scripts", "PartSeg")],
     install_requires=['numpy', tifffile_string, 'appdirs', 'SimpleITK', 'scipy', 'QtPy', 'sentry_sdk', qt_string,
                       'deprecation', 'qtawesome', 'six', 'h5py', 'pandas', 'sympy', 'Cython', 'openpyxl', 'xlrd',
-                      'PartSegData'],
+                      'PartSegData==0.9'],
     tests_require=["pytest", "pytest-qt"],
     entry_points={
         'console_scripts': [

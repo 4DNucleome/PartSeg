@@ -5,9 +5,10 @@ from qtpy.QtGui import QImage
 
 from PartSeg.common_gui.channel_control import ColorComboBox, ColorComboBoxGroup, ChannelProperty
 from PartSeg.common_gui.stack_image_view import ImageView, ImageCanvas
-from PartSeg.project_utils_qt.settings import ViewSettings
+from PartSeg.project_utils_qt.settings import ViewSettings, ColormapDict
 from PartSeg.tiff_image import ImageReader
 from PartSeg.utils.color_image import color_image
+from PartSeg.utils.color_image.base_colors import starting_colors
 
 
 def array_from_image(image: QImage):
@@ -16,7 +17,8 @@ def array_from_image(image: QImage):
 
 
 def test_color_combo_box(qtbot):
-    box = ColorComboBox(0, ["BlackBlue", "BlackGreen", "BlackMagenta", "BlackRed", "gray"])
+    dkt = ColormapDict({})
+    box = ColorComboBox(0, starting_colors, dkt)
     box.show()
     qtbot.add_widget(box)
     with qtbot.waitSignal(box.channel_visible_changed):
@@ -26,9 +28,9 @@ def test_color_combo_box(qtbot):
         qtbot.mouseClick(box, Qt.LeftButton, pos=QPoint(5, 5))
     with qtbot.waitSignal(box.clicked):
         qtbot.mouseClick(box, Qt.LeftButton, pos=QPoint(box.width() - 5, 5))
-
-    box.set_color("BlackMagenta")
-    img = color_image(np.arange(0, 256).reshape((1, 256, 1)), ["BlackMagenta"], [(0, 256)])
+    index = 3
+    box.set_color(starting_colors[index])
+    img = color_image(np.arange(0, 256).reshape((1, 256, 1)), [dkt[starting_colors[index]][0]], [(0, 256)])
     assert np.all(array_from_image(box.image) == img.flatten())
 
 
@@ -142,7 +144,7 @@ class TestColorComboBoxGroup:
         image1 = image_canvas.image
         with qtbot.waitSignal(image_view.channel_control.coloring_update), \
                 qtbot.waitSignal(image_view.channel_control.change_channel, check_params_cb=check_parameters):
-            ch_property.minimum_value.setValue(10)
+            ch_property.minimum_value.setValue(20)
         image2 = image_canvas.image
         assert np.any(image1 != image2)
 

@@ -1,10 +1,16 @@
 import json
 import sys
 import typing
+from abc import ABCMeta
 from pathlib import Path
+from typing import Iterator, Optional, Tuple
+import itertools
+from collections import MutableMapping
 
 from qtpy.QtCore import QObject, Signal
 
+from PartSeg.utils.color_image import ColorMap, default_colormap_dict
+from PartSeg.utils.color_image.base_colors import starting_colors
 from PartSeg.utils.io_utils import ProjectInfoBase, load_metadata_base
 from PartSeg.utils.json_hooks import ProfileDict, ProfileEncoder, profile_hook, check_loaded_dict
 from ..utils.color_image.color_image_base import color_maps
@@ -16,7 +22,6 @@ from datetime import datetime
 
 class ImageSettings(QObject):
     """
-    :type _image: Image
     noise_removed - for image cleaned by algorithm
     """
     image_changed = Signal([Image], [int], [str])
@@ -26,7 +31,7 @@ class ImageSettings(QObject):
 
     def __init__(self):
         super(ImageSettings, self).__init__()
-        self._image: Image = None
+        self._image: Optional[Image] = None
         self._image_path = ""
         self._image_spacing = 210, 70, 70
         self._segmentation = None
@@ -125,6 +130,56 @@ class ImageSettings(QObject):
         return np.array([0] + [1] * self.segmentation.max(), dtype=np.uint8)
 
 
+ColormapInfo = Tuple[ColorMap, bool]
+
+
+class MetaDict(type(QObject), type(MutableMapping)):
+    pass
+
+
+class ColormapDict(QObject, MutableMapping, metaclass=MetaDict):
+    """
+    custom dict to merge user defined colormaps with base colormaps
+    """
+
+    colormap_added = Signal(ColorMap)
+    colormap_removed = Signal(ColorMap)
+
+    def __setitem__(self, key: str, v: typing.Union[ColormapInfo, ColorMap]) -> None:
+        if key.startswith("base_color_"):
+            raise ValueError("Cannot write base color")
+        if isinstance(v, tuple):
+            self.editable_colormap[key] = v[0]
+        else:
+            self.editable_colormap[key] = v
+        self.colormap_added.emit(self.editable_colormap[key])
+
+    def __init__(self, editable_colormap: typing.Dict[str, ColorMap]):
+        super().__init__()
+        self.editable_colormap = editable_colormap
+
+    def __len__(self) -> int:
+        return len(self.editable_colormap) + len(default_colormap_dict)
+
+    def __iter__(self) -> Iterator[str]:
+        return itertools.chain(default_colormap_dict, self.editable_colormap)
+
+    def __getitem__(self, key: str) -> ColormapInfo:
+        try:
+            if not key.startswith("custom_"):
+                return default_colormap_dict[key], False
+            return self.editable_colormap[key], True
+        except KeyError:
+            raise KeyError(f"Colormap {key} not found")
+
+    def __delitem__(self, key: str):
+        if key.startswith("base_color_"):
+            raise ValueError(f"cannot delete base color {key}")
+        c_map = self.editable_colormap[key]
+        del self.editable_colormap[key]
+        self.colormap_removed.emit(c_map)
+
+
 class ViewSettings(ImageSettings):
     colormap_changes = Signal()
 
@@ -134,19 +189,37 @@ class ViewSettings(ImageSettings):
         self.border_val = []
         self.current_profile_dict = "default"
         self.view_settings_dict = ProfileDict()
+        self.colormap_dict = ColormapDict(self.get_from_profile("custom_colormap", {}))
 
     @property
     def chosen_colormap(self):
-        return self.get_from_profile("colormaps", ["BlackBlue", "BlackGreen", "BlackMagenta", "BlackRed", "gray"])
+        data = self.get_from_profile("colormaps", starting_colors[:])
+        res = [x for x in data if x in self.colormap_dict]
+        if len(res) != data:
+            if len(res) == 0:
+                res = starting_colors[:]
+            self.set_in_profile("colormaps", res)
+        return res
 
     @chosen_colormap.setter
     def chosen_colormap(self, val):
         self.set_in_profile("colormaps", val)
         self.colormap_changes.emit()
 
+    def chosen_colormap_change(self, name, visibility):
+        colormaps = set(self.chosen_colormap)
+        if visibility:
+            colormaps.add(name)
+        else:
+            try:
+                colormaps.remove(name)
+            except KeyError:
+                pass
+        self.chosen_colormap = list(sorted(colormaps))
+
     @property
     def available_colormaps(self):
-        return list(color_maps.keys())
+        return list(self.colormap_dict.keys())
 
     def _image_changed(self):
         self.border_val = self.image.get_ranges()
