@@ -16,6 +16,7 @@ from qtpy.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushBut
     QPlainTextEdit, QFrame, QCheckBox
 
 from PartSeg import plugins
+from PartSeg.common_gui.colormap_creator import PColormapList, PColormapCreator
 from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
 from ..common_gui.universal_gui_part import EnumComboBox
 from ..common_gui.colors_choose import ColorSelector
@@ -820,12 +821,18 @@ class AdvancedWindow(QTabWidget):
             self.reload_list = []
         self.setWindowTitle("Settings and Measurement")
         self.advanced_settings = AdvancedSettings(settings)
-        self.colormap_settings = ColorSelector(settings, ["result_control"])
+        # self.colormap_settings = ColorSelector(settings, ["result_control"])
+        self.colormap_selector = PColormapCreator(settings)
+        self.color_preview = PColormapList(settings, ["result_image", "raw_image"])
+        self.color_preview.edit_signal.connect(self.colormap_selector.set_colormap)
+        self.color_preview.edit_signal.connect(partial(self.setCurrentWidget, self.colormap_selector))
         self.measurement = MeasurementWidget(settings)
         self.measurement_settings = MeasurementSettings(settings)
         self.develop = DevelopTab(settings)
         self.addTab(self.advanced_settings, "Properties")
-        self.addTab(self.colormap_settings, "Color maps")
+        # self.addTab(self.colormap_settings, "Color maps")
+        self.addTab(self.color_preview, "Color maps")
+        self.addTab(self.colormap_selector, "Color Map creator")
         self.addTab(self.measurement_settings, "Measurements settings")
         self.addTab(self.measurement, "Measurements")
         if state_store.develop:

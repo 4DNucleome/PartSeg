@@ -1,5 +1,4 @@
 import copy
-import sys
 import typing
 
 from PartSeg.utils.algorithm_describe_base import SegmentationProfile
@@ -7,20 +6,65 @@ from .class_generator import SerializeClassEncoder, serialize_hook
 from .image_operations import RadiusType
 
 
-class ProfileDict(object):
+def recursive_update_dict(main_dict: dict, other_dict: dict):
+    """
+    recursive update main_dict with elements of other_dict
+
+    :param main_dict: dict to be updated recursively
+    :param other_dict: source dict
+
+    >>> dkt1 = {"test": {"test": 1, "test2": {"test4": 1}}}
+    >>> dkt2 = {"test": {"test": 4, "test2": {"test2": 1}}}
+    >>> recursive_update_dict(dkt1, dkt2)
+    >>> dkt1
+        {"test": {"test": 1, "test2": {"test4": 1, "test2": 1}}}
+    """
+    for key, val in other_dict.items():
+        if key in main_dict and isinstance(main_dict[key], dict) and isinstance(val, dict):
+            recursive_update_dict(main_dict[key], val)
+        else:
+            main_dict[key] = val
+
+
+class ProfileDict:
+    """
+    Dict for storing recursive data. The path are dot separated.
+
+    >>> dkt = ProfileDict()
+    >>> dkt.set(["aa", "bb", "c1"], 7)
+    >>> dkt.get(["aa", "bb", "c1"])
+        7
+    >>> dkt.get("aa.bb.c2", 8)
+        8
+    >>> dkt.get("aa.bb")
+        {'c1': 7, 'c2': 8}
+    """
     def __init__(self):
         self.my_dict = dict()
 
-    def update(self, ob=None, *args, **kwargs):
+    def update(self, ob: typing.Union['ProfileDict', dict, None] = None, **kwargs):
+        """
+        Update dict recursively. Use :py:func:`~.recursive_update_dict`
+
+        :param ob: data source
+        :param kwargs: data source, as keywords
+        """
         if isinstance(ob, ProfileDict):
-            self.my_dict.update(ob.my_dict)
-            self.my_dict.update(*args, **kwargs)
+            recursive_update_dict(self.my_dict, ob.my_dict)
+            recursive_update_dict(self.my_dict, kwargs)
+        elif isinstance(ob, dict):
+            recursive_update_dict(self.my_dict, ob)
+            recursive_update_dict(self.my_dict, kwargs)
         elif ob is None:
-            self.my_dict.update(**kwargs)
-        else:
-            self.my_dict.update(ob, **kwargs)
+            recursive_update_dict(self.my_dict, kwargs)
 
     def set(self, key_path: typing.Union[list, str], value):
+        """
+        Set value from dict
+
+        :param key_path: Path to element. If is string then will be split on '.' (`key_path.split('.')`)
+        :param value: Value to set.
+        """
         if isinstance(key_path, str):
             key_path = key_path.split(".")
         curr_dict = self.my_dict
@@ -35,7 +79,15 @@ class ProfileDict(object):
                     break
         curr_dict[key_path[-1]] = value
 
-    def get(self, key_path: typing.Union[list, str], default):
+    def get(self, key_path: typing.Union[list, str], default=None):
+        """
+        Get value from dict.
+
+        :param key_path: Path to element. If is string then will be split on . (`key_path.split('.')`).
+        :param default: default value if element missed in dict.
+        :raise KeyError: on missed element if default is not provided.
+        :return: requested value
+        """
         if isinstance(key_path, str):
             key_path = key_path.split(".")
         curr_dict = self.my_dict
@@ -48,11 +100,13 @@ class ProfileDict(object):
                     self.set(key_path, val)
                     return val
                 else:
-                    # print(f"{key_path}: {curr_dict.items()}", file=sys.stderr)
                     raise e
         return curr_dict
 
-    def verify_data(self):
+    def verify_data(self) -> bool:
+        """
+        Call :py:func:`~.check_loaded_dict` on inner structures
+        """
         return check_loaded_dict(self.my_dict)
 
     def filter_data(self):
@@ -66,7 +120,18 @@ class ProfileDict(object):
 
 
 class ProfileEncoder(SerializeClassEncoder):
+    """
+    Json encoder for :py:class:`ProfileDict`, :py:class:`RadiusType`,
+     :py:class:`.SegmentationProfile` classes
+
+    >>> import json
+    >>> data = ProfileDict()
+    >>> data.set("aa.bb.cc", 7)
+    >>> with open("some_file", 'w') as fp:
+    >>>     json.dump(data, fp, cls=ProfileEncoder)
+    """
     def default(self, o):
+        """encoder implementation"""
         if isinstance(o, ProfileDict):
             return {"__ProfileDict__": True, **o.my_dict}
         if isinstance(o, RadiusType):
@@ -77,6 +142,13 @@ class ProfileEncoder(SerializeClassEncoder):
 
 
 def profile_hook(dkt):
+    """
+    hook for json loading
+
+    >>> import json
+    >>> with open("some_file", 'r') as fp:
+    >>>     data = json.load(fp, object_hook=profile_hook)
+    """
     if "__ProfileDict__" in dkt:
         del dkt["__ProfileDict__"]
         res = ProfileDict()
@@ -95,7 +167,12 @@ def profile_hook(dkt):
     return serialize_hook(dkt)
 
 
-def check_loaded_dict(dkt):
+def check_loaded_dict(dkt) -> bool:
+    """
+    Recursive check if dict `dkt` or any sub dict contains '__error__' key.
+
+    :param dkt: dict to check
+    """
     if not isinstance(dkt, dict):
         return True
     if "__error__" in dkt:

@@ -11,6 +11,7 @@ from qtpy.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMess
     QComboBox, QDoubleSpinBox, QSpinBox, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
     QTabWidget, QSizePolicy, QGridLayout
 
+from PartSeg.common_gui.colormap_creator import PColormapList
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
 from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
 from PartSeg.segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
@@ -695,7 +696,7 @@ class Options(QTabWidget):
         self.algorithm_options = AlgorithmOptions(settings, image_view, component_checker)
         self.image_properties = ImageInformation(settings, parent)
         self.image_properties.add_files.file_list_changed.connect(self.algorithm_options.file_list_change)
-        self.colormap_choose = ColorSelector(settings, ["channelcontrol"])
+        self.colormap_choose = PColormapList(settings, ["channelcontrol"]) #  ColorSelector(settings, ["channelcontrol"])
         self.algorithm_options.batch_process.multiple_result.connect(
             partial(self.image_properties.multiple_files.setChecked, True)
         )

@@ -181,7 +181,13 @@ class Register(OrderedDict):
 
 
 class SegmentationProfile(object):
-    def __init__(self, name, algorithm, values):
+    """
+
+    :ivar name: name for segmentation profile
+    :ivar algorithm: Name of algorithm
+    :ivar values: algorithm parameters
+    """
+    def __init__(self, name: str, algorithm: str, values: dict):
         self.name = name
         self.algorithm = algorithm
         self.values = values
