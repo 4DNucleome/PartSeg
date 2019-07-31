@@ -4,7 +4,7 @@ from qtpy.QtWidgets import QApplication, QMessageBox
 import packaging.version
 from xmlrpc import client
 
-from PartSeg.tiff_image.image_reader import TiffFileException
+from PartSegImage import TiffFileException
 from .. import __version__
 from ..utils import state_store
 

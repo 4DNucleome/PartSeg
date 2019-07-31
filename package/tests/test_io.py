@@ -12,7 +12,7 @@ from glob import glob
 import h5py
 import PartSegData
 
-from PartSeg.tiff_image import ImageReader, Image
+from PartSegImage import ImageReader, Image
 from PartSeg.utils import Units, UNIT_SCALE
 from PartSeg.utils.analysis import ProjectTuple
 from PartSeg.utils.analysis.load_functions import UpdateLoadedMetadataAnalysis

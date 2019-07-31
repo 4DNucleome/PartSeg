@@ -6,6 +6,8 @@
 Welcome to PartSeg's documentation!
 ===================================
 
+The documentation is incomplete. Many utilities are undocumented.
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:

@@ -7,7 +7,7 @@ import numpy as np
 from qtpy.QtCore import Qt, QByteArray, QEvent
 from qtpy.QtGui import QIcon, QKeyEvent, QKeySequence, QResizeEvent
 from qtpy.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
-    QMessageBox, QCheckBox, QComboBox, QInputDialog, QDialog, QDoubleSpinBox
+    QMessageBox, QCheckBox, QComboBox, QInputDialog, QDialog
 
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
@@ -27,10 +27,10 @@ from ..project_utils_qt.main_window import BaseMainWindow
 from .advanced_window import AdvancedWindow
 from .batch_window import BatchWindow
 from .calculation_pipeline_thread import CalculatePipelineThread
-from PartSeg.tiff_image import ImageReader, Image
+from PartSegImage import ImageReader, Image
 from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from PartSeg.utils.analysis.analysis_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
-from .image_view import ResultImageView, SynchronizeView, ImageViewWithMask, CompareImageView
+from .image_view import SynchronizeView, ImageViewWithMask, CompareImageView
 from .partseg_settings import PartSettings
 from ..common_gui.custom_save_dialog import SaveDialog
 from PartSeg.utils.analysis.save_functions import save_dict

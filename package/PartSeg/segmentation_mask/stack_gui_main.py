@@ -8,7 +8,7 @@ import numpy as np
 from qtpy.QtCore import Signal, Qt, QByteArray
 from qtpy.QtGui import QGuiApplication, QIcon
 from qtpy.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox, QVBoxLayout, QCheckBox, \
-    QComboBox, QDoubleSpinBox, QSpinBox, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
+    QDoubleSpinBox, QSpinBox, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
     QTabWidget, QSizePolicy, QGridLayout
 
 from PartSeg.common_gui.colormap_creator import PColormapList
@@ -18,7 +18,6 @@ from PartSeg.segmentation_mask.segmentation_info_dialog import SegmentationInfoD
 from PartSeg.utils.io_utils import WrongFileTypeException
 from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox, AlgorithmChoose
 from ..common_gui.channel_control import ChannelProperty
-from ..common_gui.colors_choose import ColorSelector
 from ..common_gui.custom_save_dialog import SaveDialog
 from ..common_gui.custom_load_dialog import CustomLoadDialog
 from ..common_gui.flow_layout import FlowLayout
@@ -32,7 +31,7 @@ from ..project_utils_qt.main_window import BaseMainWindow
 from ..project_utils_qt.execute_function_thread import ExecuteFunctionThread
 from PartSeg.utils.mask.algorithm_description import mask_algorithm_dict
 from .stack_settings import StackSettings, get_mask
-from PartSeg.tiff_image import ImageReader, Image
+from PartSegImage import ImageReader, Image
 from .batch_proceed import BatchProceed, BatchTask
 from .image_view import StackImageView
 from PartSeg.utils.mask.io_functions import SaveSegmentation, LoadSegmentation, SegmentationTuple

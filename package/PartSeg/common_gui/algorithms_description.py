@@ -21,7 +21,7 @@ from ..utils.segmentation.algorithm_base import SegmentationAlgorithm, Segmentat
 from PartSeg.utils.algorithm_describe_base import AlgorithmProperty, AlgorithmDescribeBase, SegmentationProfile
 from ..project_utils_qt.segmentation_thread import SegmentationThread
 from ..project_utils_qt.settings import ImageSettings, BaseSettings
-from PartSeg.tiff_image import Image
+from PartSegImage import Image
 
 def update(d, u):
     for k, v in u.items():
@@ -40,7 +40,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         super().__init__(*args, **kwargs)
         self._widget = self._get_field()
         self.change_fun = self.get_change_signal(self._widget)
-        self._getter, self._setter = self.get_setter_and_getter_function(self._widget)
+        self._getter, self._setter = self.get_getter_and_setter_function(self._widget)
         self._setter(self._widget, self.default_value)
 
     def get_value(self):
@@ -53,14 +53,22 @@ class QtAlgorithmProperty(AlgorithmProperty):
             return self.get_value()
 
     def set_value(self, val):
+        """set value of widget """
         return self._setter(self._widget, val)
 
-    def get_field(self):
+    def get_field(self)-> QWidget:
+        """
+        Get representing widget
+        :return:
+        :rtype:
+        """
         return self._widget
 
     @classmethod
     def from_algorithm_property(cls, ob):
         """
+        Create class instance base on :py:class:`.AlgorithmProperty` instance
+
         :type ob: AlgorithmProperty | str
         :param ob: AlgorithmProperty object or label
         :return: QtAlgorithmProperty | QLabel
@@ -74,6 +82,9 @@ class QtAlgorithmProperty(AlgorithmProperty):
         raise ValueError(f"unknown parameter type {type(ob)} of {ob}")
 
     def _get_field(self) -> QWidget:
+        """
+        Get proper widget for given field type. Overwrite if would like to support new data types.
+        """
         if  self.per_dimension:
             self.per_dimension = False
             prop = self.from_algorithm_property(self)
@@ -131,7 +142,13 @@ class QtAlgorithmProperty(AlgorithmProperty):
         raise ValueError(f"Unsupported type: {type(widget)}")
 
     @staticmethod
-    def get_setter_and_getter_function(widget: QWidget):
+    def get_getter_and_setter_function(widget: QWidget) -> typing.Tuple[typing.Callable[[QWidget, ], typing.Any],
+                                                                        typing.Callable[[QWidget, typing.Any], None]]:
+        """
+        For each widget type return proper functions. This functions need instance as first argument
+
+        :return: (getter, setter)
+        """
         if isinstance(widget, ChannelComboBox):
             return widget.__class__.get_value, widget.__class__.set_value
         if isinstance(widget, EnumComboBox):

@@ -14,18 +14,19 @@ from typing import List, Optional, Dict, Tuple, Iterable, Set
 import numpy as np
 import bisect
 
+from PartSeg.common_gui.numpy_qimage import convert_colormap_to_image
 from PartSeg.project_utils_qt.settings import ViewSettings
 from PartSeg.utils.color_image.color_image_base import color_image, create_color_map
 from PartSeg.utils.color_image import Color, ColorPosition, ColorMap, BaseColormap
 
 
 def color_from_qcolor(color: QColor) -> Color:
-    """Convert QColor to Color"""
+    """Convert :py:class:`.QColor` to :py:class:`.Color`"""
     return Color(color.red(), color.green(), color.blue())
 
 
 def qcolor_from_color(color: Color) -> QColor:
-    """Convert Color to QColor"""
+    """Convert :py:class:`.Color` to :py:class:`.QColor`"""
     return QColor(color.red, color.green, color.blue)
 
 
@@ -38,16 +39,16 @@ class ColormapEdit(QWidget):
 
     @staticmethod
     def array_to_image(array: np.ndarray):
-        img = color_image(np.linspace(0, 255, 512).reshape((1, 512, 1)), [array], [(0, 256)])
-        return QImage(img.data, img.shape[1], 1, img.dtype.itemsize * img.shape[1] * 3, QImage.Format_RGB888)
+        img = color_image(np.linspace((0, 0, 0), (255, 255, 255), 512).T.reshape((3, 512, 1)), [array], [(0, 255)])
+        return QImage(img.data, img.shape[1], img.shape[0], img.dtype.itemsize * img.shape[1] * 3, QImage.Format_RGB888)
 
     def __init__(self):
         super().__init__()
         self.color_list: List[Color] = []
         self.position_list: List[float] = []
         self.move_ind = None
-        self.image = self.array_to_image(create_color_map(ColorMap((ColorPosition(0, Color(0, 0, 0)),
-                                                                    ColorPosition(1, Color(255, 255, 255))))))
+        self.image = convert_colormap_to_image(ColorMap((ColorPosition(0, Color(0, 0, 0)),
+                                                         ColorPosition(1, Color(255, 255, 255)))))
         self.setMinimumHeight(60)
 
     def paintEvent(self, a0: QPaintEvent) -> None:
@@ -70,7 +71,7 @@ class ColormapEdit(QWidget):
 
     def refresh(self):
         """Recreate presented image and force repaint event """
-        self.image = self.array_to_image(create_color_map(self.colormap))
+        self.image = convert_colormap_to_image(self.colormap)
         self.repaint()
 
     def _get_color_ind(self, ratio) -> Optional[int]:
@@ -153,8 +154,8 @@ class ColormapEdit(QWidget):
         """
         self.color_list = []
         self.position_list = []
-        self.image = self.array_to_image(create_color_map(ColorMap((ColorPosition(0, Color(0, 0, 0)),
-                                                                    ColorPosition(1, Color(255, 255, 255))))))
+        self.image = convert_colormap_to_image(ColorMap((ColorPosition(0, Color(0, 0, 0)),
+                                                         ColorPosition(1, Color(255, 255, 255)))))
         self.repaint()
 
     def distribute_evenly(self):
@@ -167,10 +168,12 @@ class ColormapEdit(QWidget):
 
     @property
     def colormap(self) -> ColorMap:
+        """colormap getter"""
         return ColorMap(tuple([ColorPosition(x, y) for x, y in zip(self.position_list, self.color_list)]))
 
     @colormap.setter
     def colormap(self, val: ColorMap):
+        """colormap setter"""
         self.position_list = [x.color_position for x in val]
         self.color_list = [x.color for x in val]
 
@@ -301,7 +304,7 @@ class ChannelPreview(QWidget):
 
     def __init__(self, colormap: BaseColormap, accepted: bool, name: str, removable: bool = False, used: bool = False):
         super().__init__()
-        self.image = ColormapEdit.array_to_image(create_color_map(colormap))
+        self.image = convert_colormap_to_image(colormap)
         self.name = name
         self.removable = removable
         self.checked = QCheckBox()
@@ -336,7 +339,7 @@ class ChannelPreview(QWidget):
         self.remove_btn.clicked.connect(partial(self.remove_request.emit, name))
         self.setMinimumHeight(max(metrics.height(), self.edit_btn.minimumHeight(), self.checked.minimumHeight())+20)
 
-    def _selection_changed(self, name):
+    def _selection_changed(self, name, _=None):
         self.selection_changed.emit(name, self.checked.isChecked())
 
     def set_blocked(self, block):

@@ -16,13 +16,14 @@ from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
     QScrollArea, QSizePolicy, QToolButton, QAction, QApplication, \
     QSlider, QCheckBox, QComboBox
 
+from PartSeg.common_gui.numpy_qimage import NumpyQImage
 from PartSeg.utils.class_generator import enum_register
 from PartSeg.utils.image_operations import gaussian
 from ..utils.color_image import color_image, add_labels
 from ..utils.color_image.color_image_base import color_maps
 from ..utils.colors import default_colors
 from ..project_utils_qt.settings import ViewSettings
-from PartSeg.tiff_image import Image
+from PartSegImage import Image
 from .channel_control import ColorComboBoxGroup, ChannelProperty
 
 canvas_icon_size = QSize(20, 20)
@@ -809,7 +810,7 @@ class ColorBar(QLabel):
             self.range = self._settings.get_from_profile(f"{name}.range_{channel_id}")
         else:
             self.range = self._settings.border_val[channel_id]
-        cmap = self._settings.colormap_dict[self._settings.get_from_profile(f"{name}.cmap{channel_id}")][0]
+        cmap = self._settings.colormap_dict[self._settings.get_channel_info(name, channel_id)][0]
 
         round_factor = self.round_base(self.range[1])
         self.round_range = (int(round(self.range[0] / round_factor) * round_factor),
@@ -819,9 +820,8 @@ class ColorBar(QLabel):
         if self.round_range[1] > self.range[1]:
             self.round_range = self.round_range[0], self.round_range[1] - round_factor
         # print(self.range, self.round_range)
-
         img = color_image(np.linspace(0, 256, 512).reshape((1, 512, 1))[:, ::-1], [cmap], [(0, 256)])
-        self.image = QImage(img.data, 1, 512, img.dtype.itemsize * 3, QImage.Format_RGB888)
+        self.image = NumpyQImage(np.swapaxes(img, 0 ,1))
         self.repaint()
 
     @staticmethod

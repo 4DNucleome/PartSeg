@@ -1,6 +1,6 @@
 from abc import ABC
 from typing import List, Callable, Optional
-from PartSeg.tiff_image import Image
+from PartSegImage import Image
 from PartSeg.utils.algorithm_describe_base import AlgorithmDescribeBase
 
 

@@ -10,7 +10,7 @@ import json
 from tifffile import TiffFile
 import packaging.version
 
-from PartSeg.tiff_image import ImageReader
+from PartSegImage import ImageReader
 from PartSeg.utils.analysis.calculation_plan import CalculationPlan, CalculationTree
 from PartSeg.utils.universal_const import Units, UNIT_SCALE
 from ..algorithm_describe_base import Register, SegmentationProfile

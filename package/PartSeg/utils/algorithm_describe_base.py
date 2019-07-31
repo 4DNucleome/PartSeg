@@ -14,10 +14,14 @@ class AlgorithmDescribeNotFound(Exception):
     pass
 
 
-class AlgorithmProperty(object):
+class AlgorithmProperty:
     """
+    This class is used to verbose describe algorithm parameters
+
     :param name: name of parameter used in code
     :param user_name: name presented to user in interface
+    :param default_value: initial value which be used during interface generation
+    :param tool_tip: toll tip presented to user when keep mouse over widget
     :type name: str
     :type user_name: str
     :type value_type: type

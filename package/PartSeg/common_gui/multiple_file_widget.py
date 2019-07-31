@@ -12,7 +12,7 @@ from qtpy.QtCore import Qt, QTimer, Slot, Signal
 from collections import defaultdict, Counter
 
 from PartSeg.project_utils_qt.settings import BaseSettings
-from PartSeg.tiff_image import Image
+from PartSegImage import Image
 from PartSeg.utils.io_utils import LoadBase, ProjectInfoBase
 from .custom_load_dialog import CustomLoadDialog, LoadProperty
 from .waiting_dialog import ExecuteFunctionDialog

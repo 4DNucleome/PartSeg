@@ -5,7 +5,7 @@ import tarfile
 import numpy as np
 import json
 
-from PartSeg.tiff_image import Image
+from PartSegImage import Image
 from PartSeg.utils.analysis.io_utils import ProjectTuple
 from PartSeg.utils.io_utils import LoadBase
 from PartSeg.utils.segmentation.noise_filtering import DimensionType

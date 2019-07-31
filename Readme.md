@@ -1,7 +1,7 @@
 # PartSeg
 [![Build Status](https://travis-ci.org/4DNucleome/PartSeg.svg?branch=master)](https://travis-ci.org/4DNucleome/PartSeg) 
 [![PyPI version](https://badge.fury.io/py/PartSeg.svg)](https://badge.fury.io/py/PartSeg)
-[![ReadTheDocs](https://readthedocs.org/projects/pip/badge/?version=latest&style=plastic)](https://partseg.readthedocs.io/en/latest/)  
+[![Documentation Status](https://readthedocs.org/projects/partseg/badge/?version=latest)](https://partseg.readthedocs.io/en/latest/?badge=latest)  
 PartSeg is gui and library for segmentation algorithms.
 
 This application is designed to help biologist with segmentation 
@@ -21,11 +21,8 @@ based on threshold and connected components
   * [MacOS](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-macos.zip) (build on MacOS Mojave) 
 * With pip (on linux you need to install `numpy` and `cython` earlier) 
     * From pypi: `pip install PartSeg`
-    * From repository: 
-      * `git clone git@github.com:4DNucleome/PartSeg.git`
-      * `cd PartSeg/` 
-      * `pip install -e .` 
- 
+    * From repository: `pip install git+https://github.com/4DNucleome/PartSeg.git`
+  
 
 ## Running 
 If you download binaries look for `PartSeg_exec` file inside the `PartSeg` folder 

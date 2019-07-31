@@ -3,7 +3,7 @@ from copy import deepcopy
 from qtpy.QtWidgets import QMessageBox, QWidget
 from qtpy.QtCore import Signal
 
-from PartSeg.tiff_image import Image
+from PartSegImage import Image
 from PartSeg.utils.analysis.calculation_plan import CalculationPlan
 from PartSeg.utils.analysis.io_utils import ProjectTuple, MaskInfo
 from PartSeg.utils.analysis.measurement_calculation import MeasurementProfile

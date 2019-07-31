@@ -1,6 +1,6 @@
 import numpy as np
 from PartSeg.utils.image_transforming import InterpolateImage
-from PartSeg.tiff_image import Image
+from PartSegImage import Image
 
 
 def get_flat_image():

@@ -1,7 +1,6 @@
 import json
 import sys
 import typing
-from abc import ABCMeta
 from pathlib import Path
 from typing import Iterator, Optional, Tuple
 import itertools
@@ -13,10 +12,9 @@ from PartSeg.utils.color_image import ColorMap, default_colormap_dict
 from PartSeg.utils.color_image.base_colors import starting_colors
 from PartSeg.utils.io_utils import ProjectInfoBase, load_metadata_base
 from PartSeg.utils.json_hooks import ProfileDict, ProfileEncoder, profile_hook, check_loaded_dict
-from ..utils.color_image.color_image_base import color_maps
 import numpy as np
 from os import path, makedirs
-from PartSeg.tiff_image import Image
+from PartSegImage import Image
 from datetime import datetime
 
 
@@ -60,7 +58,7 @@ class ImageSettings(QObject):
     def image_spacing(self, value):
         assert (len(value) in [2, 3])
         if len(value) == 2:
-            self._image.set_spacing([self._image.spacing[0]] + list(value))
+            self._image.set_spacing(tuple([self._image.spacing[0]] + list(value)))
         else:
             self._image.set_spacing(value)
 
@@ -216,6 +214,17 @@ class ViewSettings(ImageSettings):
             except KeyError:
                 pass
         self.chosen_colormap = list(sorted(colormaps))
+
+    def get_channel_info(self, view: str, num: int, default: Optional[str] = None):
+        resp = self.get_from_profile(f"{view}.cmap{num}", default)
+        if resp not in self.colormap_dict:
+            cm = self.chosen_colormap
+            resp = cm[num % len(cm)]
+            self.set_in_profile(f"{view}.cmap{num}", resp)
+        return resp
+
+    def set_channel_info(self, view: str, num, value: str):
+        self.set_in_profile(f"{view}.cmap{num}", value)
 
     @property
     def available_colormaps(self):

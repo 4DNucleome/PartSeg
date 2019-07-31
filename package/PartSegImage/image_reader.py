@@ -254,7 +254,7 @@ name_to_scalar = {
 }  #: dict with known names of scalar to scalar value. May be some missed
 
 
-if tifffile.tifffile.TiffPage.__module__ != "PartSeg.tiff_image.image_reader":
+if tifffile.tifffile.TiffPage.__module__ != "PartSeg.PartSegImage.image_reader":
     class MyTiffPage(TiffPage):
         """Modification of :py:class:`TiffPage` from `tifffile` package to provide progress information"""
         def asarray(self, *args, **kwargs):

@@ -3,7 +3,7 @@ import sys
 import logging
 from functools import partial
 
-from PartSeg.tiff_image import ImageReader
+from PartSegImage import ImageReader
 from .custom_application import CustomApplication
 from PartSeg.project_utils_qt.base_argparser import CustomParser
 import multiprocessing

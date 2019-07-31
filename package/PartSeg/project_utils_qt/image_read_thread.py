@@ -1,4 +1,4 @@
-from PartSeg.tiff_image import ImageReader, Image
+from PartSegImage import ImageReader, Image
 from .progress_thread import ProgressTread
 from qtpy.QtCore import Signal
 

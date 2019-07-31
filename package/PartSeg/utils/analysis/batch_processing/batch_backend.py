@@ -21,7 +21,7 @@ from PartSeg.utils.analysis.analysis_utils import HistoryElement
 from PartSeg.utils.analysis.save_functions import save_dict
 from PartSeg.utils.mask_create import calculate_mask
 from PartSeg.utils.segmentation.algorithm_base import report_empty_fun, SegmentationAlgorithm
-from PartSeg.tiff_image import ImageReader, Image
+from PartSegImage import ImageReader, Image
 
 
 def do_calculation(file_path, calculation):

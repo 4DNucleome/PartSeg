@@ -5,7 +5,7 @@ from PartSeg.utils.segmentation.restartable_segmentation_algorithms import Resta
 from PartSeg.utils.analysis.analysis_utils import SegmentationPipeline, HistoryElement
 from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
 from PartSeg.utils.mask_create import calculate_mask
-from PartSeg.tiff_image import Image
+from PartSegImage import Image
 import numpy as np
 
 

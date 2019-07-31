@@ -3,7 +3,7 @@ from abc import ABC
 from PartSeg.utils.channel_class import Channel
 from ..image_operations import gaussian, RadiusType
 from ..algorithm_describe_base import AlgorithmDescribeBase, SegmentationProfile
-from PartSeg.tiff_image import Image
+from PartSegImage import Image
 from typing import NamedTuple, Union, Callable, Optional
 import numpy as np
 

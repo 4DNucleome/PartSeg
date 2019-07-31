@@ -1,5 +1,11 @@
 # Changelog 
 
+## 0.9.3
+ - start building documentation
+ - change color map backend and allow for user to create custom color map. 
+ 
+
+
 ## 0.9.2.3
  - refactor code to make easier create plugin for mask segmentation 
  - create class base updater for update outdated algorithm description

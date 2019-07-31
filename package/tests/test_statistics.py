@@ -4,7 +4,7 @@ from math import isclose, pi
 
 import numpy as np
 
-from PartSeg.tiff_image import Image
+from PartSegImage import Image
 from PartSeg.utils.analysis import load_metadata
 from PartSeg.utils.analysis.measurement_calculation import Diameter, PixelBrightnessSum, Volume, ComponentsNumber, \
     MaximumPixelBrightness, MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness, \

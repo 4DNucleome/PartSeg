@@ -10,7 +10,7 @@ from io import BytesIO, StringIO
 from pathlib import Path
 from tarfile import TarInfo, TarFile
 
-from PartSeg.tiff_image import Image
+from PartSegImage import Image
 from PartSeg.utils.json_hooks import profile_hook, ProfileDict
 from .algorithm_describe_base import AlgorithmDescribeBase, SegmentationProfile
 

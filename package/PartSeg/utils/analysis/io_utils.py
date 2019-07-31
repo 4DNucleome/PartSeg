@@ -2,7 +2,7 @@ import typing
 import numpy as np
 import packaging.version
 
-from PartSeg.tiff_image import Image
+from PartSegImage import Image
 from PartSeg.utils.io_utils import ProjectInfoBase
 from .analysis_utils import HistoryElement
 

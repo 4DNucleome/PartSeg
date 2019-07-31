@@ -7,7 +7,7 @@ from qtpy.QtWidgets import QMainWindow, QToolButton, QGridLayout, QWidget, QProg
 
 from PartSeg.project_utils_qt.load_backup import import_config
 from PartSeg.project_utils_qt.settings import BaseSettings
-from PartSeg.tiff_image import ImageReader
+from PartSegImage import ImageReader
 from PartSegData import icons_dir
 
 class Prepare(QThread):

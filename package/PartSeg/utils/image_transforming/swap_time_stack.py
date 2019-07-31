@@ -1,7 +1,7 @@
 import typing
 from typing import List, Optional, Callable
 
-from PartSeg.tiff_image import Image
+from PartSegImage import Image
 from PartSeg.utils.algorithm_describe_base import AlgorithmProperty
 from .transform_base import TransformBase
 

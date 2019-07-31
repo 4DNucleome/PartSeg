@@ -9,6 +9,7 @@ from qtpy.QtGui import QImage, QShowEvent, QPaintEvent, QPainter, QPen, QMouseEv
 from qtpy.QtWidgets import QWidget, QCheckBox, QGridLayout, QLabel, QHBoxLayout, QComboBox, QDoubleSpinBox, QListView, \
     QStyledItemDelegate, QStyleOptionViewItem, QStyle
 
+from PartSeg.common_gui.numpy_qimage import create_colormap_image
 from PartSeg.utils.color_image import ColorMap, create_color_map
 from PartSeg.utils.color_image.base_colors import starting_colors
 from .collapse_checkbox import CollapseCheckbox
@@ -21,16 +22,9 @@ image_dict = {}  # dict to store QImages generated from colormap
 ColorMapDict = typing.MutableMapping[str, typing.Tuple[ColorMap, bool]]
 
 
-def create_array(name: str, color_dict: ColorMapDict):
-    """create coloring array base on colormap name"""
-    color_array = create_color_map(color_dict[name][0])
-    img = color_image(np.arange(0, 256).reshape((1, 256, 1)), [color_array], [(0, 256)])
-    return QImage(img.data, 256, 1, img.dtype.itemsize * 256 * 3, QImage.Format_RGB888)
-
-
 class ColorStyledDelegate(QStyledItemDelegate):
     """
-    Class for paint :py:class:`~.ColorComboBox` elements when list trgered
+    Class for paint :py:class:`~.ColorComboBox` elements when list trigger
 
     :param base_height: height of single list element
     :param color_dict: Dict mapping name to colors
@@ -42,7 +36,7 @@ class ColorStyledDelegate(QStyledItemDelegate):
 
     def paint(self, painter: QPainter, style: QStyleOptionViewItem, model: QModelIndex):
         if model.data() not in image_dict:
-            image_dict[model.data()] = create_array(model.data(), self.color_dict)
+            image_dict[model.data()] = create_colormap_image(model.data(), self.color_dict)
         rect = QRect(style.rect.x(), style.rect.y() + 2, style.rect.width(), style.rect.height() - 4)
         painter.drawImage(rect, image_dict[model.data()])
         if int(style.state & QStyle.State_HasFocus):
@@ -64,6 +58,14 @@ class ColorStyledDelegate(QStyledItemDelegate):
 class ColorComboBox(QComboBox):
     """
     Combobox showing colormap instead of text
+
+    :param id_num: id which be emit in signals. Designed to inform which channel information is changed
+    :param colors: list of colors which should be able to chose. All needs to be keys in `color_dict`
+    :param color_dict: dict from name to colormap definition
+    :param colormap: initial colormap
+    :param base_height: initial height of widgethow information that
+    :param lock: show lock padlock to inform that fixed range is used
+    :param blur: show info about blur selected
     """
     triangle_width = 20
 
@@ -74,7 +76,7 @@ class ColorComboBox(QComboBox):
     channel_colormap_changed = Signal(int, str)
     """Signal with information about colormap change. (ch_num, name_of_colorma)"""
 
-    def __init__(self, id_num: int, colors: typing.List[str], color_dict: ColorMapDict, color: str = "",
+    def __init__(self, id_num: int, colors: typing.List[str], color_dict: ColorMapDict, colormap: str = "",
                  base_height=50, lock=False, blur=False):
         super().__init__()
         self.id = id_num
@@ -87,12 +89,12 @@ class ColorComboBox(QComboBox):
         self.color_dict = color_dict
         self.colors = colors
         self.addItems(self.colors)
-        if color:
-            self.color = color
+        if colormap:
+            self.color = colormap
         else:
             self.color = self.itemText(0)
         self.setCurrentText(self.color)
-        self.currentTextChanged.connect(self.change_image)
+        self.currentTextChanged.connect(self._update_image)
         self.base_height = base_height
         self.show_arrow = False
         self.show_frame = False
@@ -112,7 +114,7 @@ class ColorComboBox(QComboBox):
         self.setLayout(layout)
         self.check_box.stateChanged.connect(partial(self.channel_visible_changed.emit, self.id))
         self.currentTextChanged.connect(partial(self.channel_colormap_changed.emit, self.id))
-        self.change_image()
+        self._update_image()
 
     def change_colors(self, colors: typing.List[str]):
         """change list of colormaps to choose"""
@@ -131,13 +133,13 @@ class ColorComboBox(QComboBox):
             self.setCurrentIndex(index)
             self.blockSignals(prev)
         else:
-            self.change_image()
+            self._update_image()
             self.repaint()
 
-    def change_image(self):
+    def _update_image(self):
         self.color = self.currentText()
         if self.color not in image_dict:
-            image_dict[self.color] = create_array(self.color, self.color_dict)
+            image_dict[self.color] = create_colormap_image(self.color, self.color_dict)
         self.image = image_dict[self.color]
         self.show_arrow = False
 
@@ -196,6 +198,7 @@ class ColorComboBox(QComboBox):
         return QSize(size.width(), max(size.height(), self.base_height))
 
     def is_checked(self):
+        """check if checkbox on widget is checked"""
         return self.check_box.isChecked()
 
     @property
@@ -238,6 +241,7 @@ class ChannelProperty(QWidget):
     For manipulate chanel properties.
         1. Apply gaussian blur to channel
         2. Fixed range for coloring
+
     In future should be extended
 
     :param settings: for storing internal state. allow keep state between sessions
@@ -292,6 +296,7 @@ class ChannelProperty(QWidget):
         self.collapse_widget.add_hide_element(label2)
 
     def send_info(self):
+        """send info to """
         widget = self.widget_dict[self.current_name]
         widget.parameters_changed(self.current_channel)
 
@@ -405,7 +410,7 @@ class ColorComboBoxGroup(QWidget):
         return resp
 
     def change_selected_color(self, index, color):
-        self.settings.set_in_profile(f"{self.name}.cmap{index}", str(color))
+        self.settings.set_channel_info(self.name, index, str(color))
         self.coloring_update.emit()
         self.change_channel.emit(self.name, index)
 
@@ -418,8 +423,8 @@ class ColorComboBoxGroup(QWidget):
             for i in range(self.layout().count(), num):
                 el = ColorComboBox(i, self.settings.chosen_colormap,
                                    self.settings.colormap_dict,
-                                   self.settings.get_from_profile(
-                                       f"{self.name}.cmap{i}", starting_colors[i % len(starting_colors)]),
+                                   self.settings.get_channel_info(self.name, i,
+                                                                  starting_colors[i % len(starting_colors)]),
                                    base_height=self.height,
                                    lock=self.settings.get_from_profile(f"{self.name}.lock_{i}", False),
                                    blur=self.settings.get_from_profile(f"{self.name}.use_gauss_{i}", False)
@@ -494,6 +499,9 @@ class ColorPreview(QWidget):
 
 
 class LockedInfoWidget(QWidget):
+    """
+    Widget used to present info about lock selection in class :py:class:`~.ColorComboBox`.
+    """
     def __init__(self, size=25, margin=2):
         super().__init__()
         self.margin = margin
@@ -527,6 +535,9 @@ class LockedInfoWidget(QWidget):
 
 
 class BlurInfoWidget(QWidget):
+    """
+    Widget used to present info about blur selection in class :py:class:`~.ColorComboBox`.
+    """
     def __init__(self, size=25, margin=2):
         super().__init__()
         self.margin = margin
@@ -855,7 +866,7 @@ class ChannelControl(ChannelChooseBase):
     def change_color(self, value):
         self.channels_widgets[self.current_channel].set_color(value)
         self.change_color_preview(value)
-        self._settings.set_in_profile(f"{self._name}.cmap{self.current_channel}", str(value))
+        self._settings.set_channel_info(self.name, self.current_channel, str(value))
         self.channel_change.emit(self.current_channel, False)
         self.send_info()
 
@@ -875,8 +886,8 @@ class ChannelControl(ChannelChooseBase):
         self.channels_widgets = []
         for i in range(channels_num):
             self.channels_widgets.append(
-                ChannelWidget(i, self._settings.get_from_profile(
-                    f"{self._name}.cmap{i}", starting_colors[i % len(starting_colors)]),
+                ChannelWidget(i, self._settings.get_channel_info(
+                              self.name, i, starting_colors[i % len(starting_colors)]),
                               locked=self._settings.get_from_profile(f"{self._name}.lock_{i}", False),
                               gauss=self._settings.get_from_profile(f"{self._name}.use_gauss_{i}", False)))
             self.channels_widgets[-1].chosen.setChecked(is_checked[i])
@@ -903,7 +914,7 @@ class ChannelControl(ChannelChooseBase):
         channels_num = len(self.channels_widgets)
         resp = []
         for i in range(channels_num):
-            resp.append(self._settings.get_from_profile(f"{self._name}.cmap{i}", self.channels_widgets[i].color))
+            resp.append(self._settings.get_channel_info(self.name, i,  self.channels_widgets[i].color))
         return resp
 
     @property

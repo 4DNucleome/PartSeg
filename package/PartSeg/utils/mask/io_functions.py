@@ -14,7 +14,7 @@ from PartSeg.utils.analysis.save_hooks import PartEncoder
 from ..io_utils import get_tarinfo, SaveBase, LoadBase, proxy_callback, ProjectInfoBase, check_segmentation_type, \
     SegmentationType, WrongFileTypeException, UpdateLoadedMetadataBase
 from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationProfile
-from PartSeg.tiff_image import Image, ImageWriter, ImageReader
+from PartSegImage import Image, ImageWriter, ImageReader
 
 
 class SegmentationTuple(ProjectInfoBase, typing.NamedTuple):

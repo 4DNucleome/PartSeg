@@ -1,7 +1,7 @@
 PartSegImage
 ============
 
-.. automodule:: PartSeg.tiff_image
+.. automodule:: PartSegImage
    :members:
    :inherited-members:
    :show-inheritance:
@@ -9,10 +9,10 @@ PartSegImage
 
 PartSegImage.image_reader
 -------------------------
-.. autoclass:: PartSeg.tiff_image.image_reader.MyTiffPage
+.. autoclass:: PartSegImage.image_reader.MyTiffPage
     :members: asarray
 
-.. automodule:: PartSeg.tiff_image.image_reader
+.. automodule:: PartSegImage.image_reader
    :members:
    :exclude-members: ImageReader, MyTiffPage
    :show-inheritance:

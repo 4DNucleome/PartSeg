@@ -3,7 +3,7 @@ from glob import glob
 import time
 import pandas as pd
 import sys
-from PartSeg.tiff_image import ImageReader
+from PartSegImage import ImageReader
 from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from PartSeg.utils.analysis.batch_processing.batch_backend import CalculationProcess, CalculationManager
 from PartSeg.utils.analysis.calculation_plan import CalculationPlan, CalculationTree, MaskSuffix, MeasurementCalculate, \

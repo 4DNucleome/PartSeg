@@ -7,7 +7,7 @@ from qtpy.QtGui import QImage
 from PartSeg.common_gui.channel_control import ColorComboBox, ColorComboBoxGroup, ChannelProperty
 from PartSeg.common_gui.stack_image_view import ImageView, ImageCanvas
 from PartSeg.project_utils_qt.settings import ViewSettings, ColormapDict
-from PartSeg.tiff_image import ImageReader
+from PartSegImage import ImageReader
 from PartSeg.utils.color_image import color_image
 from PartSeg.utils.color_image.base_colors import starting_colors
 
@@ -36,8 +36,9 @@ def test_color_combo_box(qtbot):
     with qtbot.waitSignal(box.clicked):
         qtbot.mouseClick(box, Qt.LeftButton, pos=QPoint(box.width() - 5, 5))
     index = 3
-    box.set_color(starting_colors[index])
-    img = color_image(np.arange(0, 256).reshape((1, 256, 1)), [dkt[starting_colors[index]][0]], [(0, 256)])
+    with qtbot.waitSignal(box.currentTextChanged):
+        box.set_color(starting_colors[index])
+    img = color_image(np.linspace(0, 256, 512, endpoint=False).reshape((1, 512, 1)), [dkt[starting_colors[index]][0]], [(0, 255)])
     assert np.all(array_from_image(box.image) == img.flatten())
 
 

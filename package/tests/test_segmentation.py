@@ -3,7 +3,7 @@ from abc import ABC
 import numpy as np
 from copy import deepcopy
 from typing import Type
-from PartSeg.tiff_image import Image
+from PartSegImage import Image
 from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
 from PartSeg.utils.analysis.analysis_utils import SegmentationPipelineElement, SegmentationPipeline

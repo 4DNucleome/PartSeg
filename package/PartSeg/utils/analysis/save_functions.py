@@ -10,7 +10,7 @@ from ..algorithm_describe_base import AlgorithmProperty
 from ..universal_const import UNIT_SCALE, Units
 from ..analysis.save_hooks import PartEncoder
 import numpy as np
-from PartSeg.tiff_image import Image, ImageWriter
+from PartSegImage import Image, ImageWriter
 import tarfile
 from io import BytesIO
 import h5py

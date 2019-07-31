@@ -1,7 +1,7 @@
 from typing import List, Callable, Optional
 from scipy.ndimage import zoom
 
-from PartSeg.tiff_image import Image
+from PartSegImage import Image
 from PartSeg.utils.algorithm_describe_base import AlgorithmProperty
 from .transform_base import TransformBase
 

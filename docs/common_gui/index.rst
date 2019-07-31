@@ -7,5 +7,9 @@ This module contains custom Qt based widgets. You may also use it in your projec
     :maxdepth: 2
     :caption: Contents:
 
-    universal_gui_part
+    algorithms_description
+    channel_control
     collapse_checkbox
+    colormap_creator
+    numpy_qimage
+    universal_gui_part
