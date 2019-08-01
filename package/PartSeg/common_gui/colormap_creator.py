@@ -6,7 +6,7 @@ from math import ceil
 
 from PartSegData import icons_dir
 from qtpy.QtCore import Qt, QRect, QPointF, Signal
-from qtpy.QtGui import QImage, QPaintEvent, QPainter, QMouseEvent, QBrush, QColor, QHideEvent, QFontMetrics, QFont, \
+from qtpy.QtGui import  QPaintEvent, QPainter, QMouseEvent, QBrush, QColor, QHideEvent, QFontMetrics, QFont, \
     QShowEvent, QIcon, QResizeEvent
 from qtpy.QtWidgets import QWidget, QColorDialog, QVBoxLayout, QHBoxLayout, QPushButton, QCheckBox, \
     QToolButton, QScrollArea, QGridLayout
@@ -16,8 +16,8 @@ import bisect
 
 from PartSeg.common_gui.numpy_qimage import convert_colormap_to_image
 from PartSeg.common_gui.stack_image_view import ImageView
+from PartSeg.common_gui.universal_gui_part import InfoLabel
 from PartSeg.project_utils_qt.settings import ViewSettings
-from PartSeg.utils.color_image.color_image_base import color_image, create_color_map
 from PartSeg.utils.color_image import Color, ColorPosition, ColorMap, BaseColormap
 
 
@@ -37,11 +37,6 @@ class ColormapEdit(QWidget):
     """
 
     double_clicked = Signal(float)  # On double click emit signal with current position factor.
-
-    @staticmethod
-    def array_to_image(array: np.ndarray):
-        img = color_image(np.linspace((0, 0, 0), (255, 255, 255), 512).T.reshape((3, 512, 1)), [array], [(0, 255)])
-        return QImage(img.data, img.shape[1], img.shape[0], img.dtype.itemsize * img.shape[1] * 3, QImage.Format_RGB888)
 
     def __init__(self):
         super().__init__()
@@ -197,8 +192,14 @@ class ColormapCreator(QWidget):
         self.clear_btn = QPushButton("Clear")
         self.save_btn = QPushButton("Save")
         self.distribute_btn = QPushButton("Distribute evenly")
+        self.info_label = InfoLabel(
+            ["<strong>Tip:</strong> Select color and double click on below color bar. "
+             "Then repeat to add another colors.",
+             "<strong>Tip:</strong> Double click on marker to remove it.",
+             "<strong>Tip:</strong>  Press and hold mouse left button on marker to move it on color bar."], delay=10000)
         layout = QVBoxLayout()
         layout.addWidget(self.color_picker)
+        layout.addWidget(self.info_label)
         layout.addWidget(self.show_colormap)
         btn_layout = QHBoxLayout()
         btn_layout.addStretch(1)

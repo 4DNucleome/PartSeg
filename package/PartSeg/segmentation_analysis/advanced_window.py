@@ -801,6 +801,7 @@ class SegAdvancedWindow(AdvancedWindow):
         # self.addTab(self.colormap_settings, "Color maps")
         self.addTab(self.measurement_settings, "Measurements settings")
         self.addTab(self.measurement, "Measurements")
+        self.setCurrentWidget(self.advanced_settings)
 
 
 class MultipleInput(QDialog):

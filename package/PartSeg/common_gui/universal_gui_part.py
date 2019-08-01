@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Union
 
 import typing
-from qtpy.QtCore import Qt
+from qtpy.QtCore import Qt, QTimer
 from qtpy.QtGui import QFontMetrics
 
 from PartSeg.utils.universal_const import Units, UNIT_SCALE
@@ -170,7 +170,6 @@ def _verify_bounds(bounds):
                 raise ValueError(f"Wrong bounds format for bounds: {bounds}")
     except TypeError:
         raise ValueError(f"Wrong bounds format for bounds: {bounds}")
-        
 
 
 class CustomSpinBox(QSpinBox):
@@ -230,3 +229,50 @@ class CustomDoubleSpinBox(QDoubleSpinBox):
                 break
         else:
             self.setSingleStep(self.bounds[1])
+
+
+class InfoLabel(QLabel):
+    """
+    Label for cyclic showing text from list
+
+    :param text_list: texts to be in cyclic use
+    :param delay: time in milliseconds between changes
+    :param parent: passed to :py:class:`QLabel` constructor
+    """
+    def __init__(self, text_list: typing.List[str], delay: int = 10000, parent=None):
+        assert len(text_list) > 0
+        super().__init__(parent)
+        self.text_list = text_list
+        self.index = 0
+        self.delay = delay
+        self.timer = QTimer()
+        self.timer.setSingleShot(False)
+        self.timer.timeout.connect(self.change_text)
+        self.timer.setInterval(delay)
+        self.change_text()
+        self.setToolTip("Double click for change suggestion. Hold mouse over for stop changes.")
+
+    def mouseDoubleClickEvent(self, _):
+        """Force change text"""
+        self.change_text()
+
+    def enterEvent(self, _):
+        """stop timer"""
+        self.timer.stop()
+
+    def leaveEvent(self, _):
+        """Start timer"""
+        self.timer.start()
+
+    def showEvent(self, _):
+        """Start timer"""
+        self.timer.start()
+
+    def hideEvent(self, _):
+        """Stop timer"""
+        self.timer.stop()
+
+    def change_text(self):
+        """Change text in cyclic mode"""
+        self.setText(self.text_list[self.index])
+        self.index = (self.index + 1) % len(self.text_list)
