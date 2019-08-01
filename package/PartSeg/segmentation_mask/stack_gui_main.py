@@ -11,6 +11,7 @@ from qtpy.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMess
     QDoubleSpinBox, QSpinBox, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
     QTabWidget, QSizePolicy, QGridLayout
 
+from PartSeg.common_gui.advanced_tabs import AdvancedWindow
 from PartSeg.common_gui.colormap_creator import PColormapList
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
 from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
@@ -54,6 +55,7 @@ class MainMenu(QWidget):
         self.settings = settings
         self.segmentation_cache = None
         self.read_thread = None
+        self.advanced_window = None
         self.load_image_btn = QPushButton("Load image")
         self.load_image_btn.clicked.connect(self.load_image)
         self.load_segmentation_btn = QPushButton("Load segmentation")
@@ -62,6 +64,9 @@ class MainMenu(QWidget):
         self.save_segmentation_btn.clicked.connect(self.save_segmentation)
         self.save_catted_parts = QPushButton("Save components")
         self.save_catted_parts.clicked.connect(self.save_result)
+        self.advanced_window_btn = QPushButton("Advanced settings")
+        self.advanced_window_btn.clicked.connect(self.show_advanced_window)
+
         self.setContentsMargins(0, 0, 0, 0)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -70,7 +75,13 @@ class MainMenu(QWidget):
         layout.addWidget(self.load_segmentation_btn)
         layout.addWidget(self.save_catted_parts)
         layout.addWidget(self.save_segmentation_btn)
+        layout.addWidget(self.advanced_window_btn)
         self.setLayout(layout)
+
+    def show_advanced_window(self):
+        if self.advanced_window is None:
+            self.advanced_window = AdvancedWindow(self.settings, ["channelcontrol"])
+        self.advanced_window.show()
 
     def load_image(self):
         # TODO move segmentation with image load to load_segmentaion
@@ -695,13 +706,11 @@ class Options(QTabWidget):
         self.algorithm_options = AlgorithmOptions(settings, image_view, component_checker)
         self.image_properties = ImageInformation(settings, parent)
         self.image_properties.add_files.file_list_changed.connect(self.algorithm_options.file_list_change)
-        self.colormap_choose = PColormapList(settings, ["channelcontrol"]) #  ColorSelector(settings, ["channelcontrol"])
         self.algorithm_options.batch_process.multiple_result.connect(
             partial(self.image_properties.multiple_files.setChecked, True)
         )
         self.addTab(self.image_properties, "Image")
         self.addTab(self.algorithm_options, "Segmentation")
-        self.addTab(self.colormap_choose, "Colormap filter")
         self.setMinimumWidth(370)
         self.setCurrentIndex(1)
 

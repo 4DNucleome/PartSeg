@@ -180,7 +180,7 @@ class ArrayColorMap(BaseColormap):
 
 def reverse_colormap(colormap: ColorMap) -> ColorMap:
     """reverse colormap"""
-    return ColorMap([ColorPosition(1 - c.color_position, c.color) for c in reversed(colormap)])
+    return ColorMap(tuple([ColorPosition(1 - c.color_position, c.color) for c in reversed(colormap)]))
 
 
 _black = Color(0, 0, 0)
@@ -198,9 +198,9 @@ viridis_r = ArrayColorMap(reversed(viridis_data), 255)
 
 base_colors = [("Red", Color(255, 0, 0)), ("Green", Color(0, 255, 0)), ("Blue", Color(0, 0, 255)), ("Magenta", Color(255, 0, 144))]
 
-colormap_list = [("Black" + name, ColorMap([ColorPosition(0, _black), ColorPosition(1, col)]))
-                  for name, col in base_colors] + \
-                [("Grayscale", ColorMap([ColorPosition(0, _black), ColorPosition(1, _white)]))]
+colormap_list = [("Black" + name, ColorMap((ColorPosition(0, _black), ColorPosition(1, col))))
+                 for name, col in base_colors] + \
+                [("Grayscale", ColorMap((ColorPosition(0, _black), ColorPosition(1, _white))))]
 
 colormap_list_r = [(x[0] + "_reversed", reverse_colormap(x[1])) for x in colormap_list]
 

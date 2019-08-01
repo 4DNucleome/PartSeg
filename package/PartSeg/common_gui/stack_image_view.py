@@ -274,7 +274,6 @@ class ImageView(QWidget):
     # zoom_changed = Signal(float, float, float)
 
     def __init__(self, settings: ViewSettings, channel_property: ChannelProperty, name: str):
-        """:type settings: ViewSettings"""
         # noinspection PyArgumentList
         super().__init__()
         self._settings: ViewSettings = settings

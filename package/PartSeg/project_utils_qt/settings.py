@@ -213,12 +213,15 @@ class ViewSettings(ImageSettings):
                 colormaps.remove(name)
             except KeyError:
                 pass
+        # TODO update sorting rule
         self.chosen_colormap = list(sorted(colormaps))
 
     def get_channel_info(self, view: str, num: int, default: Optional[str] = None):
+        cm = self.chosen_colormap
+        if default is None:
+            default = cm[num % len(cm)]
         resp = self.get_from_profile(f"{view}.cmap{num}", default)
         if resp not in self.colormap_dict:
-            cm = self.chosen_colormap
             resp = cm[num % len(cm)]
             self.set_in_profile(f"{view}.cmap{num}", resp)
         return resp

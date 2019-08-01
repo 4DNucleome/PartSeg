@@ -24,7 +24,7 @@ from ..common_gui.multiple_file_widget import MultipleFileWidget
 from ..utils.mask_create import calculate_mask, MaskProperty
 from ..utils.segmentation.algorithm_base import SegmentationResult
 from ..project_utils_qt.main_window import BaseMainWindow
-from .advanced_window import AdvancedWindow
+from .advanced_window import SegAdvancedWindow
 from .batch_window import BatchWindow
 from .calculation_pipeline_thread import CalculatePipelineThread
 from PartSegImage import ImageReader, Image
@@ -649,7 +649,7 @@ class MainWindow(BaseMainWindow):
                                      self.synchronize_tool)
         # self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
-        self.advanced_window = AdvancedWindow(self.settings, reload_list=[self.reload])
+        self.advanced_window = SegAdvancedWindow(self.settings, reload_list=[self.reload])
         self.batch_window = None  # BatchWindow(self.settings)
 
         self.multiple_files = MultipleFileWidget(self.settings, load_functions.load_dict, True)

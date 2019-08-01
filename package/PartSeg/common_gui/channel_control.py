@@ -419,12 +419,12 @@ class ColorComboBoxGroup(QWidget):
 
     def set_channels(self, num: int):
         """Set number of channels to display"""
+        self.settings.set_in_profile(f"{self.name}.channels_count", num)
         if num >= self.layout().count():
             for i in range(self.layout().count(), num):
                 el = ColorComboBox(i, self.settings.chosen_colormap,
                                    self.settings.colormap_dict,
-                                   self.settings.get_channel_info(self.name, i,
-                                                                  starting_colors[i % len(starting_colors)]),
+                                   self.settings.get_channel_info(self.name, i),
                                    base_height=self.height,
                                    lock=self.settings.get_from_profile(f"{self.name}.lock_{i}", False),
                                    blur=self.settings.get_from_profile(f"{self.name}.use_gauss_{i}", False)

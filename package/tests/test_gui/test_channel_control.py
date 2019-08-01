@@ -22,7 +22,6 @@ else:
         return np.frombuffer(image.bits(), dtype=np.uint8, count=size * 3)
 
 
-
 def test_color_combo_box(qtbot):
     dkt = ColormapDict({})
     box = ColorComboBox(0, starting_colors, dkt)

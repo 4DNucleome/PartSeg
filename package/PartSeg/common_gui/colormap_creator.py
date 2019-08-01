@@ -15,6 +15,7 @@ import numpy as np
 import bisect
 
 from PartSeg.common_gui.numpy_qimage import convert_colormap_to_image
+from PartSeg.common_gui.stack_image_view import ImageView
 from PartSeg.project_utils_qt.settings import ViewSettings
 from PartSeg.utils.color_image.color_image_base import color_image, create_color_map
 from PartSeg.utils.color_image import Color, ColorPosition, ColorMap, BaseColormap
@@ -259,9 +260,7 @@ class PColormapCreator(ColormapCreator):
                 raise RuntimeError("Cannot add colormap")
             self.prohibited_names.add(rand_name)
             self.settings.colormap_dict[rand_name] = self.show_colormap.colormap
-            el = self.settings.chosen_colormap
-            el.append(rand_name)
-            self.settings.chosen_colormap = el
+            self.settings.chosen_colormap_change(rand_name, True)
             self.colormap_selected.emit(self.show_colormap.colormap)
 
 
@@ -317,18 +316,18 @@ class ChannelPreview(QWidget):
         layout.addStretch(1)
         self.remove_btn = QToolButton()
         self.remove_btn.setIcon(_icon_selector.close_icon)
-        if removable and not used:
+        if removable:
             self.remove_btn.setToolTip("Remove colormap")
         else:
             self.remove_btn.setToolTip("This colormap is protected")
-            self.remove_btn.setDisabled(True)
+        self.remove_btn.setEnabled(not accepted and self.removable)
 
         self.edit_btn = QToolButton()
         self.edit_btn.setIcon(_icon_selector.edit_icon)
         layout.addWidget(self.remove_btn)
         layout.addWidget(self.edit_btn)
         self.setLayout(layout)
-        self.checked.stateChanged.connect(partial(self._selection_changed, name))
+        self.checked.stateChanged.connect(self._selection_changed)
         self.edit_btn.clicked.connect(partial(self.edit_request.emit, name))
         if isinstance(colormap, ColorMap):
             self.edit_btn.clicked.connect(partial(self.edit_request[ColorMap].emit, colormap))
@@ -339,8 +338,10 @@ class ChannelPreview(QWidget):
         self.remove_btn.clicked.connect(partial(self.remove_request.emit, name))
         self.setMinimumHeight(max(metrics.height(), self.edit_btn.minimumHeight(), self.checked.minimumHeight())+20)
 
-    def _selection_changed(self, name, _=None):
-        self.selection_changed.emit(name, self.checked.isChecked())
+    def _selection_changed(self, _=None):
+        chk = self.checked.isChecked()
+        self.selection_changed.emit(self.name, chk)
+        self.remove_btn.setEnabled(not chk and self.removable)
 
     def set_blocked(self, block):
         """Set if block possibility of remove or uncheck """
@@ -360,6 +361,10 @@ class ChannelPreview(QWidget):
     def is_checked(self):
         """If colormap is selected"""
         return self.checked.isChecked()
+
+    def set_chosen(self, state: bool):
+        """Set selection of check box."""
+        self.checked.setChecked(state)
 
     def paintEvent(self, event: QPaintEvent):
         painter = QPainter(self)
@@ -394,6 +399,7 @@ class ColormapList(QWidget):
         self._blocked = set()
         self.current_columns = 1
         self.colormap_map = colormap_map
+        self._widget_dict: Dict[str, ChannelPreview] = {}
         self.scroll_area = QScrollArea()
         self.central_widget = QWidget()
         layout2 = QVBoxLayout()
@@ -418,6 +424,13 @@ class ColormapList(QWidget):
         """Already selected colormaps"""
         return set(self._selected)
 
+    def change_selection(self, name, selected):
+        if selected:
+            self._selected.add(name)
+        else:
+            self._selected.remove(name)
+        self.visibility_colormap_change.emit(name, selected)
+
     def blocked(self) -> Set[str]:
         """Channels that cannot be turn of and remove"""
         return self._blocked
@@ -433,6 +446,7 @@ class ColormapList(QWidget):
     def refresh(self):
         layout: QGridLayout = self.grid_layout
         cache_dict: Dict[str, ChannelPreview] = {}
+        self._widget_dict = {}
         for _ in range(layout.count()):
             el: ChannelPreview = layout.takeAt(0).widget()
             if el.name in self.colormap_map:
@@ -448,17 +462,40 @@ class ColormapList(QWidget):
         for i, (name, (colormap, removable)) in enumerate(self.colormap_map.items()):
             if name in cache_dict:
                 widget = cache_dict[name]
-                widget.set_blocked(name in selected)
+                widget.set_blocked(name in blocked)
+                widget.set_chosen(name in selected)
             else:
                 widget = ChannelPreview(colormap, name in selected, name, removable=removable, used=name in blocked)
                 widget.edit_request[ColorMap].connect(self.edit_signal)
                 widget.remove_request.connect(self._remove_request)
-                widget.selection_changed.connect(self.visibility_colormap_change)
+                widget.selection_changed.connect(self.change_selection)
             layout.addWidget(widget, i // columns, i % columns)
+            self._widget_dict[name] = widget
         widget: QWidget = layout.itemAt(0).widget()
         height = widget.minimumHeight()
         self.current_columns = columns
         self.central_widget.setMinimumHeight((height + 10) * ceil(len(self.colormap_map) / columns))
+
+    def check_state(self, name: str) -> bool:
+        """
+        Check state of widget representing given colormap
+
+        :param name: name of colormap which representing widget should be checked
+        """
+        return self._widget_dict[name].is_checked
+
+    def set_state(self, name: str, state: bool) -> None:
+        """
+        Set if given colormap is selected
+
+        :param name: name of colormap
+        :param state: state to be set
+        """
+        self._widget_dict[name].set_chosen(state)
+
+    def get_colormap_widget(self, name) -> ChannelPreview:
+        """Access to widget showing colormap. Created for testing purpose."""
+        return self._widget_dict[name]
 
     def _remove_request(self, name):
         _, removable = self.colormap_map[name]
@@ -472,29 +509,32 @@ class ColormapList(QWidget):
 class PColormapList(ColormapList):
     """
         Show list of colormaps. Integrated with :py:class:`.ViewSettings`
+
+        :param settings: used for store state
+        :param control_names: list of names of :py:class:`.ImageView` for protect used channels from uncheck or remove
     """
     def __init__(self, settings: ViewSettings, control_names: List[str]):
         super().__init__(settings.colormap_dict)
         settings.colormap_dict.colormap_removed.connect(self.refresh)
         settings.colormap_dict.colormap_added.connect(self.refresh)
-        self.visibility_colormap_change.connect(settings.chosen_colormap_change)
+        settings.colormap_changes.connect(self.refresh)
         self.settings = settings
         self.color_names = control_names
 
     def get_selected(self) -> Set[str]:
         return set(self.settings.chosen_colormap)
 
+    def change_selection(self, name, selected):
+        self.visibility_colormap_change.emit(name, selected)
+        self.settings.chosen_colormap_change(name, selected)
+
     def blocked(self) -> Set[str]:
+        # TODO check only currently presented channels
         blocked = set()
         for el in self.color_names:
-            data = self.settings.get_from_profile(el, {})
-            i = 0
-            while True:
-                key = f"cmap{i}"
-                if key not in data:
-                    break
-                blocked.add(data[key])
-                i += 1
+            num = self.settings.get_from_profile(f"{el}.channels_count", 0)
+            for i in range(num):
+                blocked.add(self.settings.get_channel_info(el, i))
         return blocked
 
     def _change_colormap_visibility(self, name, visible):

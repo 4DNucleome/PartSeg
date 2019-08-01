@@ -15,11 +15,10 @@ from qtpy.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushBut
     QMessageBox, QFileDialog, QComboBox, QAbstractSpinBox, QInputDialog, \
     QPlainTextEdit, QFrame, QCheckBox
 
-from PartSeg import plugins
+from PartSeg.common_gui.advanced_tabs import AdvancedWindow
 from PartSeg.common_gui.colormap_creator import PColormapList, PColormapCreator
 from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
 from ..common_gui.universal_gui_part import EnumComboBox
-from ..common_gui.colors_choose import ColorSelector
 from ..common_gui.custom_save_dialog import FormDialog
 from ..common_gui.lock_checkbox import LockCheckBox
 from .partseg_settings import PartSettings, MASK_COLORS
@@ -28,7 +27,6 @@ from .measurement_widget import MeasurementWidget
 from PartSeg.utils.analysis.measurement_calculation import MeasurementProfile, MEASUREMENT_DICT
 from PartSeg.utils.analysis.measurement_base import Leaf, Node, MeasurementEntry, PerComponent, AreaType
 from ..utils.universal_const import UNIT_SCALE, Units
-from ..utils import state_store, register
 
 
 def h_line():
@@ -783,37 +781,12 @@ class MeasurementSettings(QWidget):
             self.settings.dump()
 
 
-class DevelopTab(QWidget):
-    def __init__(self, settings):
-        super().__init__()
-        self.settings = settings
-
-        self.reload_btm = QPushButton("Reload algorithms", clicked=self.reload_algorithm_action)
-        layout = QGridLayout()
-        layout.addWidget(self.reload_btm, 0, 0)
-        layout.setColumnStretch(1, 1)
-        layout.setRowStretch(1, 1)
-        self.setLayout(layout)
-
-    def reload_algorithm_action(self):
-        for val in register.reload_module_list:
-            print(val, file=sys.stderr)
-            importlib.reload(val)
-        for el in plugins.get_plugins():
-            importlib.reload(el)
-        importlib.reload(register)
-        importlib.reload(plugins)
-        plugins.register()
-        for el in self.parent().parent().reload_list:
-            el()
-
-
-class AdvancedWindow(QTabWidget):
+class SegAdvancedWindow(AdvancedWindow):
     """
     :type settings: Settings
     """
     def __init__(self, settings, parent=None, reload_list=None):
-        super().__init__(parent)
+        super().__init__(settings, ["result_image", "raw_image"], parent)
         self.settings = settings
         if reload_list is not None:
             self.reload_list = reload_list
@@ -822,30 +795,12 @@ class AdvancedWindow(QTabWidget):
         self.setWindowTitle("Settings and Measurement")
         self.advanced_settings = AdvancedSettings(settings)
         # self.colormap_settings = ColorSelector(settings, ["result_control"])
-        self.colormap_selector = PColormapCreator(settings)
-        self.color_preview = PColormapList(settings, ["result_image", "raw_image"])
-        self.color_preview.edit_signal.connect(self.colormap_selector.set_colormap)
-        self.color_preview.edit_signal.connect(partial(self.setCurrentWidget, self.colormap_selector))
         self.measurement = MeasurementWidget(settings)
         self.measurement_settings = MeasurementSettings(settings)
-        self.develop = DevelopTab(settings)
-        self.addTab(self.advanced_settings, "Properties")
+        self.insertTab(0, self.advanced_settings, "Properties")
         # self.addTab(self.colormap_settings, "Color maps")
-        self.addTab(self.color_preview, "Color maps")
-        self.addTab(self.colormap_selector, "Color Map creator")
         self.addTab(self.measurement_settings, "Measurements settings")
         self.addTab(self.measurement, "Measurements")
-        if state_store.develop:
-            self.addTab(self.develop, "Develop")
-        try:
-            geometry = self.settings.get_from_profile("advanced_window_geometry")
-            self.restoreGeometry(QByteArray.fromHex(bytes(geometry, 'ascii')))
-        except KeyError:
-            pass
-
-    def closeEvent(self, *args, **kwargs):
-        self.settings.set_in_profile("advanced_window_geometry", self.saveGeometry().toHex().data().decode('ascii'))
-        super(AdvancedWindow, self).closeEvent(*args, **kwargs)
 
 
 class MultipleInput(QDialog):
