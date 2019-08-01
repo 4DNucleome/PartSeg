@@ -1,3 +1,7 @@
+trigger:
+- master
+- develop
+
 jobs:
 - job: linux
   pool: {vmImage: 'Ubuntu-16.04'}
@@ -18,9 +22,9 @@ jobs:
       displayName: "install libs"
     - script: bash .travis/install2.sh
       displayName: "download data"
-    - script: pip install tox cython numpy
+    - script: pip install tox cython numpy pytest-azurepipelines
       displayName: "Install deps"
-    - script: tox
+    - script: tox -c tox-azure.ini
       displayName: "Run Tox"
 - job: macos
   pool: {vmImage: 'macOS-10.13'}
@@ -39,9 +43,9 @@ jobs:
         versionSpec: '$(python.version)'
     - script: bash .travis/install2.sh
       displayName: "download data"
-    - script: pip install tox cython numpy
+    - script: pip install tox cython numpy pytest-azurepipelines
       displayName: "Install deps"
-    - script: tox
+    - script: tox -c tox-azure.ini
       displayName: "Run Tox"
 #- job: windows
 #  pool: {vmImage: 'vs2017-win2016'}
