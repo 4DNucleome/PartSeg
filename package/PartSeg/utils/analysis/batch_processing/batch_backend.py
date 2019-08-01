@@ -235,7 +235,7 @@ class CalculationManager:
 
     @property
     def has_work(self):
-        return self.batch_manager.has_work
+        return self.batch_manager.has_work and not self.writer.writing_finished()
 
     def set_number_of_workers(self, val):
         logging.debug("Number off process {}".format(val))
@@ -291,7 +291,7 @@ class SheetData(object):
 
 
 class FileData(object):
-    component_str = "_components_"
+    component_str = "_comp_"
 
     def __init__(self, calculation):
         """
@@ -306,6 +306,7 @@ class FileData(object):
             self.file_type = FileType.excel_xls_file
         else:
             self.file_type = FileType.text_file
+        self.writing = False
         self.sheet_dict = dict()
         self.sheet_set = set()
         self.new_count = 0
@@ -316,6 +317,10 @@ class FileData(object):
         self.write_thread.daemon = True
         self.write_thread.start()
         self.add_data_part(calculation)
+
+    def finished(self):
+        """check if any data wait on write to disc"""
+        return not self.writing and self.wrote_queue.empty()
 
     def good_sheet_name(self, name):
         if self.file_type == FileType.text_file:
@@ -397,6 +402,7 @@ class FileData(object):
     def wrote_data_to_file(self):
         while True:
             data = self.wrote_queue.get()
+            self.writing = True
             if data == "finish":
                 break
             try:
@@ -412,6 +418,8 @@ class FileData(object):
             except Exception as e:
                 logging.error(e)
                 self.error_queue.put(e)
+            finally:
+                self.writing = False
 
     def get_errors(self):
         res = []
@@ -428,7 +436,7 @@ class FileData(object):
 
 class DataWriter(object):
     def __init__(self):
-        self.file_dict = dict()
+        self.file_dict: typing.Dict[str, FileData] = dict()
 
     def is_empty_sheet(self, file_path, sheet_name):
         if FileData.component_str in sheet_name:
@@ -450,8 +458,12 @@ class DataWriter(object):
         file_writer.wrote_data(calculation.uuid, data)
         return file_writer.get_errors()
 
+    def writing_finished(self) -> bool:
+        """check if all data are written to disc"""
+        return all([x.finished() for x in self.file_dict.values()])
+
     def finish(self):
-        for file_data in self.file_dict.keys():
+        for file_data in self.file_dict.values():
             file_data.finish()
 
     def calculation_finished(self, calculation):
