@@ -13,7 +13,7 @@ else:
 
 os.chdir(base_path)
 
-subprocess.call(["pyinstaller", "-y", "launcher.spec"])
+subprocess.call(["pyinstaller", "-y", "--debug=all", "launcher.spec"])
 
 def read(*parts):
     with codecs.open(os.path.join(base_path, *parts), 'r') as fp:
