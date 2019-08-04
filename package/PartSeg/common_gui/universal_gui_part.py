@@ -1,12 +1,17 @@
 # coding=utf-8
-import sys
+"""
+This module contains simple, useful widgets which implementation is to short to create separated files for them
+"""
+
+import math
+
 from sys import platform
 from enum import Enum
 from typing import Union
 
 import typing
-from qtpy.QtCore import Qt, QTimer
-from qtpy.QtGui import QFontMetrics
+from qtpy.QtCore import Qt, QTimer, QRect, QPointF
+from qtpy.QtGui import QFontMetrics, QPaintEvent, QPainter, QColor
 
 from PartSeg.utils.universal_const import Units, UNIT_SCALE
 from qtpy.QtWidgets import QWidget, QLabel, QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QComboBox, QSlider,\
@@ -231,13 +236,69 @@ class CustomDoubleSpinBox(QDoubleSpinBox):
             self.setSingleStep(self.bounds[1])
 
 
-class InfoLabel(QLabel):
+class ProgressCircle(QWidget):
     """
-    Label for cyclic showing text from list
+    This is widget for generating circuital progress bar
+    
+    :param background: color of background circle, need to be acceptable by :py:class:`~.QColor` constructor.
+    :param main_color: color of progress marking, need to be acceptable by :py:class:`~.QColor` constructor.
+
+    .. warning::
+      This widget currently have no minimum size. You need to specify it in your code
+    """
+    def __init__(self, background: QColor = "white", main_color: QColor = "darkCyan", parent=None):
+        super().__init__(parent)
+        self.nominator = 1
+        self.denominator = 1
+        self.background_color = QColor(background)
+        self.main_color = QColor(main_color)
+
+    def paintEvent(self, event: QPaintEvent):
+        painter = QPainter(self)
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
+        size = min(self.width(), self.height())
+        rect = QRect(0, 0, size, size)
+        painter.setBrush(self.background_color)
+        painter.setPen(self.background_color)
+        painter.drawEllipse(rect)
+        painter.setBrush(self.main_color)
+        painter.setPen(self.main_color)
+        factor = self.nominator / self.denominator
+        radius = size / 2
+        if factor > 0.5:
+            painter.drawChord(rect, 0, 16 * 360 * 0.5)
+            painter.drawChord(rect, 16*180, 16 * 360 * (factor-0.5))
+            zero_point = QPointF(0, radius)
+        else:
+            painter.drawChord(rect, 0, 16 * 360 * factor)
+            zero_point = QPointF(size, radius)
+        mid_point = QPointF(radius, radius)
+        point = mid_point + QPointF(math.cos(math.pi * (factor * 2)) * radius,
+                                    -math.sin(math.pi * (factor * 2)) * radius)
+        painter.drawPolygon(mid_point, zero_point, point)
+        painter.restore()
+
+    def set_fraction(self, nominator, denominator=1):
+        """
+        Set fraction.
+
+        :param nominator: of fraction if denominator is set to 1 then nominator should be from range [0, 1]
+        :param denominator: as name
+        """
+        self.nominator = nominator
+        self.denominator = denominator
+        self.repaint()
+
+
+class InfoLabel(QWidget):
+    """
+    Label for cyclic showing text from list. It uses :py:class:`~.ProgressCircle`
+    to inform user abu time to change text.
 
     :param text_list: texts to be in cyclic use
     :param delay: time in milliseconds between changes
-    :param parent: passed to :py:class:`QLabel` constructor
+    :param parent: passed to :py:class:`QWidget` constructor
     """
     def __init__(self, text_list: typing.List[str], delay: int = 10000, parent=None):
         assert len(text_list) > 0
@@ -245,16 +306,28 @@ class InfoLabel(QLabel):
         self.text_list = text_list
         self.index = 0
         self.delay = delay
+        self.time = 0
+        self.time_step = 100
         self.timer = QTimer()
         self.timer.setSingleShot(False)
-        self.timer.timeout.connect(self.change_text)
-        self.timer.setInterval(delay)
-        self.change_text()
+        self.timer.timeout.connect(self.one_step)
+        self.timer.setInterval(self.time_step)
         self.setToolTip("Double click for change suggestion. Hold mouse over for stop changes.")
+        self.label = QLabel()
+        self.progress = ProgressCircle()
+        self.progress.setFixedHeight(25)
+        self.progress.setFixedWidth(25)
+        layout = QHBoxLayout()
+        layout.addWidget(self.progress)
+        layout.addWidget(self.label)
+        self.setLayout(layout)
+        self.change_text()
 
     def mouseDoubleClickEvent(self, _):
         """Force change text"""
         self.change_text()
+        self.time = 0
+        self.progress.set_fraction(self.time, self.delay)
 
     def enterEvent(self, _):
         """stop timer"""
@@ -272,7 +345,14 @@ class InfoLabel(QLabel):
         """Stop timer"""
         self.timer.stop()
 
+    def one_step(self):
+        self.time += self.time_step
+        if self.time > self.delay:
+            self.time = 0
+            self.change_text()
+        self.progress.set_fraction(self.time, self.delay)
+
     def change_text(self):
         """Change text in cyclic mode"""
-        self.setText(self.text_list[self.index])
+        self.label.setText(self.text_list[self.index])
         self.index = (self.index + 1) % len(self.text_list)

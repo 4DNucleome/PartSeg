@@ -512,6 +512,7 @@ class LockedInfoWidget(QWidget):
         super().paintEvent(a0)
         painter = QPainter(self)
         painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
         pen2 = QPen()
 
         rect = QRectF(self.margin, self.height() / 2, self.width() - self.margin * 2, self.height() / 2 - self.margin)
@@ -550,7 +551,7 @@ class BlurInfoWidget(QWidget):
         super().paintEvent(a0)
         painter = QPainter(self)
         painter.save()
-
+        painter.setRenderHint(QPainter.Antialiasing)
         rect = QRectF(self.margin, self.margin, self.width() - self.margin * 2, self.height() - 2 * self.margin)
         painter.setBrush(Qt.white)
         painter.setPen(Qt.white)
@@ -558,6 +559,7 @@ class BlurInfoWidget(QWidget):
 
         painter.restore()
         painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
         pen = QPen()
         pen.setWidth(2)
         painter.setPen(pen)

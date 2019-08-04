@@ -5,6 +5,7 @@ import numpy as np
 
 from PartSeg.common_gui.channel_control import ColorComboBoxGroup
 from PartSeg.common_gui.colormap_creator import PColormapCreator, PColormapList, ChannelPreview
+from PartSeg.common_gui.universal_gui_part import ProgressCircle
 from PartSeg.project_utils_qt.settings import ViewSettings, ColormapDict
 from PartSeg.utils.color_image.base_colors import default_colormap_dict, starting_colors
 
@@ -20,6 +21,7 @@ class TestWidget(QWidget):
         self.color_preview.edit_signal.connect(self.colormap_selector.set_colormap)
         self.test = ColorComboBoxGroup(settings, "aa")
         self.test.set_channels(4)
+
         layout = QVBoxLayout()
         layout.addWidget(self.test)
         layout.addWidget(self.colormap_selector)
