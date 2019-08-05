@@ -35,7 +35,7 @@ class CustomApplication(QApplication):
     usage can bee seen in :py:func:`PartSeg.common_backend.except_hook.my_excepthook`
 
     :ivar error: :py:class:`Exception` to be show in error dialog
-    :ivar warning: Pair of strings. First is set as title, second as content of :py:class:`QMessageBox`
+    :ivar warning: Pair of strings. First is set as title, second as content of :py:class:`PyQt5.QtWidgets.QMessageBox`
     """
     def __init__(self, argv):
         super().__init__(argv)
@@ -64,7 +64,7 @@ class CustomApplication(QApplication):
 
     @Slot()
     def show_warning(self):
-        """show warning :py:class:`QMessageBox`"""
+        """show warning :py:class:`PyQt5.QtWidgets.QMessageBox`"""
         if not isinstance(self.warning, (list, tuple)) or self.warning[0] is None:
             return
         message = QMessageBox(QMessageBox.Warning, self.warning[0], self.warning[1], QMessageBox.Ok)

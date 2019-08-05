@@ -240,8 +240,8 @@ class ProgressCircle(QWidget):
     """
     This is widget for generating circuital progress bar
     
-    :param background: color of background circle, need to be acceptable by :py:class:`~.QColor` constructor.
-    :param main_color: color of progress marking, need to be acceptable by :py:class:`~.QColor` constructor.
+    :param background: color of background circle, need to be acceptable by :py:class:`PyQt5.QtGui.QColor` constructor.
+    :param main_color: color of progress marking, need to be acceptable by :py:class:`PyQt5.QtGui.QColor` constructor.
 
     .. warning::
       This widget currently have no minimum size. You need to specify it in your code
@@ -298,7 +298,7 @@ class InfoLabel(QWidget):
 
     :param text_list: texts to be in cyclic use
     :param delay: time in milliseconds between changes
-    :param parent: passed to :py:class:`QWidget` constructor
+    :param parent: passed to :py:class:`PyQt5.QtWidgets.QWidget` constructor
     """
     def __init__(self, text_list: typing.List[str], delay: int = 10000, parent=None):
         assert len(text_list) > 0

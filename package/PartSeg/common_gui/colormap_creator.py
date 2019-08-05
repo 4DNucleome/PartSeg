@@ -21,12 +21,12 @@ from PartSeg.utils.color_image import Color, ColorPosition, ColorMap, BaseColorm
 
 
 def color_from_qcolor(color: QColor) -> Color:
-    """Convert :py:class:`.QColor` to :py:class:`.Color`"""
+    """Convert :py:class:`PyQt5.QtGui.QColor` to :py:class:`.Color`"""
     return Color(color.red(), color.green(), color.blue())
 
 
 def qcolor_from_color(color: Color) -> QColor:
-    """Convert :py:class:`.Color` to :py:class:`.QColor`"""
+    """Convert :py:class:`.Color` to :py:class:`PyQt5.QtGui.QColor`"""
     return QColor(color.red, color.green, color.blue)
 
 

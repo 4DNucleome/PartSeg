@@ -32,7 +32,7 @@ release = PartSeg.__version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc',  #, "sphinx_autodoc_annotation"
-              'sphinx.ext.intersphinx'
+              'sphinx.ext.intersphinx', "PartSeg.utils.sphinx_utils"
 ]
 
 # Add any paths that contain templates here, relative to this directory.
