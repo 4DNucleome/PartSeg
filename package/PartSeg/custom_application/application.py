@@ -10,11 +10,17 @@ from ..utils import state_store
 
 
 class CheckVersionThread(QThread):
+    """Therad to check if there is new PartSeg release. Checks base on newest version available on pypi_
+
+     .. _PYPI: https://pypi.org/project/PartSeg/
+     """
     def __init__(self):
         super().__init__()
         self.release = __version__
 
     def run(self):
+        """This function perform check"""
+
         # noinspection PyBroadException
         try:
             proxy = client.ServerProxy('http://pypi.python.org/pypi')
@@ -24,15 +30,23 @@ class CheckVersionThread(QThread):
 
 
 class CustomApplication(QApplication):
+    """
+    This class is created because Qt do not allows to create GUI elements outside main thread.
+    usage can bee seen in :py:func:`PartSeg.common_backend.except_hook.my_excepthook`
+
+    :ivar error: :py:class:`Exception` to be show in error dialog
+    :ivar warning: Pair of strings. First is set as title, second as content of :py:class:`QMessageBox`
+    """
     def __init__(self, argv):
         super().__init__(argv)
         self.error = None
-        self.warning = None, None
+        self.warning = "", ""
         self.release_check = CheckVersionThread()
         self.release_check.finished.connect(self._check_release)
 
     @Slot()
     def show_error(self):
+        """This class create error dialog and show it"""
         if self.error is None:
             return
         from ..common_backend.error_dialog import ErrorDialog
@@ -50,6 +64,7 @@ class CustomApplication(QApplication):
 
     @Slot()
     def show_warning(self):
+        """show warning :py:class:`QMessageBox`"""
         if not isinstance(self.warning, (list, tuple)) or self.warning[0] is None:
             return
         message = QMessageBox(QMessageBox.Warning, self.warning[0], self.warning[1], QMessageBox.Ok)

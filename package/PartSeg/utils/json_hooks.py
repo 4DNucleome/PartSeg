@@ -147,7 +147,8 @@ def profile_hook(dkt):
 
     >>> import json
     >>> with open("some_file", 'r') as fp:
-    >>>     data = json.load(fp, object_hook=profile_hook)
+    ...     data = json.load(fp, object_hook=profile_hook)
+
     """
     if "__ProfileDict__" in dkt:
         del dkt["__ProfileDict__"]

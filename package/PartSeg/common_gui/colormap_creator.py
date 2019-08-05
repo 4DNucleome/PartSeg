@@ -16,7 +16,7 @@ import bisect
 
 from PartSeg.common_gui.numpy_qimage import convert_colormap_to_image
 from PartSeg.common_gui.universal_gui_part import InfoLabel
-from PartSeg.common_backend.settings import ViewSettings
+from PartSeg.common_backend.base_settings import ViewSettings
 from PartSeg.utils.color_image import Color, ColorPosition, ColorMap, BaseColormap
 
 
@@ -520,7 +520,7 @@ class PColormapList(ColormapList):
 
         :param settings: used for store state
         :param control_names: list of names of :py:class:`PartSeg.common_gui.stack_image_view.ImageView`
-        for protect used channels from uncheck or remove
+            for protect used channels from uncheck or remove
     """
     def __init__(self, settings: ViewSettings, control_names: List[str]):
         super().__init__(settings.colormap_dict)

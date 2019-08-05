@@ -22,8 +22,8 @@ class StackAlgorithm(SegmentationAlgorithm, ABC):
         super().__init__()
         self.channel_num = 0
 
-    def _clean(self):
-        super()._clean()
+    def clean(self):
+        super().clean()
 
     @classmethod
     def support_time(cls):

@@ -9,6 +9,9 @@ from PartSeg import __version__
 
 
 class ErrorDialog(QDialog):
+    """
+    Dialog to present user the exception information. User can send error report (possible to add custom information)
+    """
     def __init__(self, exception: Exception, description: str, additional_notes: str = "", traceback_summary=None):
         super().__init__()
         self.exception = exception
@@ -50,12 +53,20 @@ class ErrorDialog(QDialog):
         self.setLayout(layout)
 
     def exec(self):
+        """
+        Check if dialog should be shown  base on :py:data:`state_store.show_error_dialog`.
+        If yes then show dialog. Otherwise print exception traceback on stderr.
+        """
+        # TODO check if this check is needed
         if not state_store.show_error_dialog:
             sys.__excepthook__(type(self.exception), self.exception, self.exception.__traceback__)
             return False
         super().exec_()
 
     def send_information(self):
+        """
+        Function with construct final error message and send it using sentry.
+        """
         text = self.desc.text() + "\n\nVersion: " + __version__ + "\n"
         if len(self.additional_notes) > 0:
             text += "Additional notes: " + self.additional_notes + "\n"

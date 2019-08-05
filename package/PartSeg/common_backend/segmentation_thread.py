@@ -7,10 +7,22 @@ from qtpy.QtCore import QThread, Signal
 
 
 class SegmentationThread(QThread):
+    """
+    Method to run calculation task in separated Thread. This allows to not freeze main window.
+    To get info if calculation is done connect to :py:meth:`~.QThread.finished`.
+    """
     execution_done = Signal(SegmentationResult)
+    """
+    Signal contains result of segmentation algorithm. Emitted if calculation ends without exception and
+    :py:meth:`SegmentationAlgorithm.calculation_run` return not None result.  
+    """
     progress_signal = Signal(str, int)
+    """Signal with information about progress. This is proxy for :py:meth:`SegmentationAlgorithm.calculation_run` 
+    `report_fun` parameter` 
+    """
     info_signal = Signal(str)
     exception_occurred = Signal(Exception)
+    """Signal emitted when some exception occur during calculation. """
 
     def __init__(self, algorithm: SegmentationAlgorithm):
         super().__init__()
@@ -22,12 +34,14 @@ class SegmentationThread(QThread):
         self.rerun = False, QThread.InheritPriority
 
     def get_info_text(self):
+        """Proxy for :py:meth:`.SegmentationAlgorithm.get_info_text`."""
         return self.algorithm.get_info_text()
 
     def send_info(self, text, num):
         self.progress_signal.emit(text, num)
 
     def run(self):
+        """the calculation are done here"""
         if self.algorithm.image is None:
             # assertion for running algorithm without image
             print(f"No image in class {self.algorithm.__class__}", file=sys.stderr)
@@ -42,6 +56,10 @@ class SegmentationThread(QThread):
         self.execution_done.emit(segment_data)
 
     def finished_task(self):
+        """
+        Called on calculation finished. Check if cache is not empty.
+        In such case start calculation again with new parameters.
+        """
         self.mutex.lock()
         if self.cache is not None:
             args, kwargs = self.cache
@@ -52,19 +70,26 @@ class SegmentationThread(QThread):
             self.rerun = False, QThread.InheritPriority
             super().start(self.rerun[1])
         elif self.clean_later:
-            self.algorithm._clean()
+            self.algorithm.clean()
             self.clean_later = False
         self.mutex.unlock()
 
     def clean(self):
+        """
+        clean cache if thread is running. Call :py:meth:`SegmentationAlgorithm.clean` otherwise. :
+        """
         self.mutex.lock()
         if self.isRunning():
             self.clean_later = True
         else:
-            self.algorithm._clean()
+            self.algorithm.clean()
         self.mutex.unlock()
 
     def set_parameters(self, *args, **kwargs):
+        """
+        check if calculation is running.
+        If yes then cache parameters until it finish, otherwise call :py:meth:`.SegmentationAlgorithm.set_parameters`
+        """
         self.mutex.lock()
         if self.isRunning():
             self.cache = args, kwargs
@@ -74,6 +99,11 @@ class SegmentationThread(QThread):
         self.mutex.unlock()
 
     def start(self, priority: 'QThread.Priority' = QThread.InheritPriority):
+        """
+        If calculation is running remember to restart it with new parameters.
+
+        Otherwise start immediately.
+        """
         self.mutex.lock()
         if self.isRunning():
             self.clean_later = False

@@ -20,7 +20,7 @@ from ..utils.image_operations import RadiusType
 from ..utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
 from PartSeg.utils.algorithm_describe_base import AlgorithmProperty, AlgorithmDescribeBase, SegmentationProfile
 from ..common_backend.segmentation_thread import SegmentationThread
-from ..common_backend.settings import ImageSettings, BaseSettings
+from ..common_backend.base_settings import ImageSettings, BaseSettings
 from PartSegImage import Image
 
 def update(d, u):

@@ -4,6 +4,8 @@ from functools import partial
 from pathlib import Path
 
 from copy import deepcopy
+from typing import Type
+
 import numpy as np
 from qtpy.QtCore import Signal, Qt, QByteArray
 from qtpy.QtGui import QGuiApplication, QIcon
@@ -29,7 +31,7 @@ from ..common_gui.waiting_dialog import ExecuteFunctionDialog
 from ..utils.segmentation.algorithm_base import SegmentationResult
 from ..utils.universal_const import UNIT_SCALE, Units
 from ..common_backend.main_window import BaseMainWindow
-from ..common_backend.execute_function_thread import ExecuteFunctionThread
+from PartSeg.common_backend.progress_thread import ExecuteFunctionThread
 from PartSeg.utils.mask.algorithm_description import mask_algorithm_dict
 from .stack_settings import StackSettings, get_mask
 from PartSegImage import ImageReader, Image
@@ -719,7 +721,11 @@ class Options(QTabWidget):
 
 
 class MainWindow(BaseMainWindow):
-    settings_class = StackSettings
+
+    @classmethod
+    def get_setting_class(cls) -> Type[StackSettings]:
+        return StackSettings
+
     initial_image_path = PartSegData.segmentation_mask_default_image
 
     def __init__(self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None,

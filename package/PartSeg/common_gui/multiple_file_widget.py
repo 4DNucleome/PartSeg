@@ -11,7 +11,7 @@ from qtpy.QtGui import QFontMetrics, QResizeEvent, QMouseEvent
 from qtpy.QtCore import Qt, QTimer, Slot, Signal
 from collections import defaultdict, Counter
 
-from PartSeg.common_backend.settings import BaseSettings
+from PartSeg.common_backend.base_settings import BaseSettings
 from PartSegImage import Image
 from PartSeg.utils.io_utils import LoadBase, ProjectInfoBase
 from .custom_load_dialog import CustomLoadDialog, LoadProperty

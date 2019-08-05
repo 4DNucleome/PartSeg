@@ -22,7 +22,7 @@ from PartSeg.utils.image_operations import gaussian
 from ..utils.color_image import color_image, add_labels
 from ..utils.color_image.color_image_base import color_maps
 from ..utils.colors import default_colors
-from ..common_backend.settings import ViewSettings
+from ..common_backend.base_settings import ViewSettings
 from PartSegImage import Image
 from .channel_control import ColorComboBoxGroup, ChannelProperty
 

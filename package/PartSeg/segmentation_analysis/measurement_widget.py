@@ -11,7 +11,7 @@ from ..common_gui.universal_gui_part import ChannelComboBox, EnumComboBox
 from ..common_gui.waiting_dialog import WaitingDialog
 from .partseg_settings import PartSettings
 from ..utils.universal_const import Units
-from ..common_backend.execute_function_thread import ExecuteFunctionThread
+from PartSeg.common_backend.progress_thread import ExecuteFunctionThread
 
 
 class MeasurementWidget(QWidget):

@@ -6,7 +6,7 @@ from qtpy.QtGui import QImage
 
 from PartSeg.common_gui.channel_control import ColorComboBox, ColorComboBoxGroup, ChannelProperty
 from PartSeg.common_gui.stack_image_view import ImageView, ImageCanvas
-from PartSeg.common_backend.settings import ViewSettings, ColormapDict
+from PartSeg.common_backend.base_settings import ViewSettings, ColormapDict
 from PartSegImage import ImageReader
 from PartSeg.utils.color_image import color_image
 from PartSeg.utils.color_image.base_colors import starting_colors

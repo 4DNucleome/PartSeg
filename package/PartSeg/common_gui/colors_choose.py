@@ -11,7 +11,7 @@ from .channel_control import ColorPreview
 from .flow_layout import FlowLayout
 from .vetical_scroll_area import VerticalScrollArea
 from ..utils.color_image import color_image
-from ..common_backend.settings import ViewSettings
+from ..common_backend.base_settings import ViewSettings
 
 
 class CheckBoxWithMouseSignal(QCheckBox):

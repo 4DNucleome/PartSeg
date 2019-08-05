@@ -8,12 +8,22 @@ from PartSeg.common_backend.except_hook import my_excepthook
 
 
 def proper_suffix(val: str):
+    """
+    check if val contains only alphanumeric characters
+
+    :raise argparse.ArgumentTypeError: on validation error
+    """
     if len(val) > 0 and not val.isalnum():
         raise argparse.ArgumentTypeError(f"suffix '{val}' need to contains only alpha numeric characters")
     return val
 
 
 def proper_path(val: str):
+    """
+    Check if `val` is proper path in current system
+
+    :raise argparse.ArgumentTypeError: on validation error
+    """
     if os.path.exists(val) and os.path.isdir(val):
         return val
     try:
@@ -24,6 +34,26 @@ def proper_path(val: str):
 
 
 class CustomParser(argparse.ArgumentParser):
+    """
+    Argument parser with set of predefined flags:
+
+    #. ``--no_report`` - disable error reporting, still showing dialog with information.
+       Set :py:data:`.state_store.report_errors`.
+    #. ``--no_dialog`` - disable error reporting and showing dialog. Exceptions will be printed on stderr.
+       Set :py:data:`.state_store.show_error_dialog`.
+    #. ``--no_update`` - disable check for updates on application startup
+        Set :py:data:`.state_store.check_for_updates`.
+    #. ``--save_suffix`` - add special suffix to directory contains saved state. designed to allow separate projects.
+        Set :py:data:`.state_store.save_suffix`.
+    #. ``--save_directory`` - set custom save directory. default can be previewed in `Help > State directory`
+         from PartSeg main menu, Set :py:data:`.state_store.save_folder`.
+    #. ``--inner_plugins`` - designed to hide part plugin from default start.
+         Set :py:data:`.state_store.custom_plugin_load`.
+    #. ``--develop`` -- for developer purpose. Allow to reload part of Program without restarting. May be unstable.
+         Set :py:data:`.state_store.develop`. Base on this :py:class:`PartSeg.common_gui.advanced_tabs.AdvancedWindow`
+         constructor add developer tab..
+
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_argument("--no_report", action="store_false", help="disable error reporting")
@@ -34,10 +64,13 @@ class CustomParser(argparse.ArgumentParser):
         self.add_argument("--save_directory", "--sdir", type=proper_path, default=[state_store.save_folder],
                           help="path to custom configuration folder", nargs=1, metavar="path")
         self.add_argument("--inner_plugins", action="store_true", help=argparse.SUPPRESS)
-        self.add_argument("--develop", action="store_true")
+        self.add_argument("--develop", action="store_true", help=argparse.SUPPRESS)
 
     def parse_args(self, args: Optional[Sequence[Text]] = None,
                    namespace: Optional[argparse.Namespace] = None):
+        """
+        overload of :py:meth:`argparse.ArgumentParser.parse_args`. Set flags like described in class documentation.
+        """
         args = super().parse_args(args, namespace)
         state_store.report_errors = args.no_report
         state_store.show_error_dialog = args.no_dialog

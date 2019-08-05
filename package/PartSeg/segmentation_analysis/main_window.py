@@ -1,6 +1,7 @@
 import os
 import sys
 from pathlib import Path
+from typing import Type
 
 import PartSegData
 import numpy as np
@@ -621,7 +622,10 @@ class MaskWindow(QDialog):
 
 
 class MainWindow(BaseMainWindow):
-    settings_class = PartSettings
+    @classmethod
+    def get_setting_class(cls) -> Type[PartSettings]:
+        return PartSettings
+
     initial_image_path = PartSegData.segmentation_analysis_default_image
 
     def __init__(self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None,

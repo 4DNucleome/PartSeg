@@ -41,7 +41,7 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         self.segmentation = None
         self.mask = None
 
-    def _clean(self):
+    def clean(self):
         self.image = None
         self.segmentation = None
         self.channel = None

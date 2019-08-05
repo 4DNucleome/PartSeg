@@ -180,8 +180,8 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             return SegmentationResult(finally_segment, self.get_segmentation_profile(),
                                       self.segmentation, self.cleaned_image)
 
-    def _clean(self):
-        super()._clean()
+    def clean(self):
+        super().clean()
         self.parameters = defaultdict(lambda: None)
         self.cleaned_image = None
         self.mask = None
@@ -281,9 +281,9 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
         self.threshold_info = [None, None]
         self.sprawl_area = None
 
-    def _clean(self):
+    def clean(self):
         self.sprawl_area = None
-        super()._clean()
+        super().clean()
 
     def _threshold(self, image, thr=None):
         if thr is None:
@@ -431,11 +431,11 @@ class BaseMultiScaleOpening(ThresholdBaseAlgorithm, ABC):
         self.mso = PyMSO()
         self.mso.set_use_background(True)
 
-    def _clean(self):
+    def clean(self):
         self.sprawl_area = None
         self.mso = PyMSO()
         self.mso.set_use_background(True)
-        super()._clean()
+        super().clean()
 
     def _threshold(self, image, thr=None):
         if thr is None:

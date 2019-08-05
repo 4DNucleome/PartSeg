@@ -8,6 +8,7 @@ from collections import MutableMapping
 
 from qtpy.QtCore import QObject, Signal
 
+from PartSeg.common_backend.abstract_class import QtMeta
 from PartSeg.utils.color_image import ColorMap, default_colormap_dict
 from PartSeg.utils.color_image.base_colors import starting_colors
 from PartSeg.utils.io_utils import ProjectInfoBase, load_metadata_base
@@ -20,23 +21,24 @@ from datetime import datetime
 
 class ImageSettings(QObject):
     """
-    noise_removed - for image cleaned by algorithm
+    Base class for all PartSeg settings. Keeps information about current Image.
     """
     image_changed = Signal([Image], [int], [str])
+    """:py:class:`Signal` ``([Image], [int], [str])`` emitted when image has changed"""
     segmentation_changed = Signal(np.ndarray)
+    """Signal emitted when segmentation has changed"""
     segmentation_clean = Signal()
     noise_remove_image_part_changed = Signal()
 
     def __init__(self):
-        super(ImageSettings, self).__init__()
+        super().__init__()
         self._image: Optional[Image] = None
         self._image_path = ""
         self._image_spacing = 210, 70, 70
         self._segmentation = None
         self._noise_removed = None
         self.sizes = []
-        self.gauss_3d = True
-        # self.fixed_range = 0, 255
+
 
     @property
     def noise_remove_image_part(self):
@@ -49,9 +51,11 @@ class ImageSettings(QObject):
 
     @property
     def image_spacing(self):
+        """:py:meth:`Image.spacing` proxy"""
         return self._image.spacing
 
     def is_image_2d(self):
+        """:py:meth:`Image.is_2d` proxy"""
         return self._image is None or self._image.is_2d
 
     @image_spacing.setter
@@ -64,6 +68,7 @@ class ImageSettings(QObject):
 
     @property
     def segmentation(self) -> np.ndarray:
+        """current segmentation"""
         return self._segmentation
 
     @segmentation.setter
@@ -131,17 +136,15 @@ class ImageSettings(QObject):
 ColormapInfo = Tuple[ColorMap, bool]
 
 
-class MetaDict(type(QObject), type(MutableMapping)):
-    pass
-
-
-class ColormapDict(QObject, MutableMapping, metaclass=MetaDict):
+class ColormapDict(QObject, MutableMapping, metaclass=QtMeta):
     """
     custom dict to merge user defined colormaps with base colormaps
     """
 
     colormap_added = Signal(ColorMap)
+    """colormap added to dict"""
     colormap_removed = Signal(ColorMap)
+    """colormap removed from dict"""
 
     def __init__(self, editable_colormap: typing.Dict[str, ColorMap]):
         super().__init__()
@@ -182,7 +185,12 @@ class ColormapDict(QObject, MutableMapping, metaclass=MetaDict):
         del self.editable_colormap[key]
         self.colormap_removed.emit(c_map)
 
-    def get_position(self, key: str):
+    def get_position(self, key: str) -> int:
+        """
+        Get item position as unique int. For soring purpose
+
+        :raise KeyError: if element not in dict
+        """
         try:
             return self._order_dict[key]
         except KeyError:
@@ -258,11 +266,22 @@ class ViewSettings(ImageSettings):
             self.view_settings_dict = {self.current_profile_dict: ProfileDict()}
 
     def set_in_profile(self, key_path, value):
-        """function for saving information used in visualization"""
+        """
+        Function for saving information used in visualization. This is accessor to
+        :py:meth:`~.ProfileDict.set` of inner variable.
+
+        :param key_path: dot separated path
+        :param value: value to store. The value need to be json serializable. """
         self.view_settings_dict.set(f"{self.current_profile_dict}.{key_path}", value)
 
     def get_from_profile(self, key_path, default=None):
-        """function for getting information used in visualization"""
+        """
+        Function for getting information used in visualization. This is accessor to
+        :py:meth:`~.ProfileDict.get` of inner variable.
+
+        :param key_path: dot separated path
+        :param default: default value if key is missed
+        """
         return self.view_settings_dict.get(f"{self.current_profile_dict}.{key_path}", default)
 
     def dump_view_profiles(self):
@@ -276,13 +295,22 @@ class SaveSettingsDescription(typing.NamedTuple):
 
 
 class BaseSettings(ViewSettings):
+    """
+
+    :ivar json_folder_path: default location for saving/loading settings data
+    :ivar last_executed_algorithm: name of last executed algorithm.
+    :cvar save_locations_keys: list of names of distinct save location.
+        location are stored in "io"
+
+    """
     json_encoder_class = ProfileEncoder
-    decode_hook = staticmethod(profile_hook)
     load_metadata = staticmethod(load_metadata_base)
     algorithm_changed = Signal()
+    """:py:class:`~.Signal` emitted when current algorithm should be changed"""
     save_locations_keys = []
 
     def get_save_list(self) -> typing.List[SaveSettingsDescription]:
+        """List of files in which program save the state."""
         return [SaveSettingsDescription("segmentation_settings.json", self.segmentation_dict),
                 SaveSettingsDescription("view_settings.json", self.view_settings_dict)]
 
@@ -294,6 +322,10 @@ class BaseSettings(ViewSettings):
         self.last_executed_algorithm = ""
 
     def get_path_history(self) -> typing.List[str]:
+        """
+        return list containing last 10 elements added with :py:meth:`.add_path_history` and
+        last opened in each category form :py:attr:`save_location_keys`
+        """
         res = self.get("io.history", [])
         for name in self.save_locations_keys:
             val = self.get("io." + name,  str(Path.home()))
@@ -302,16 +334,29 @@ class BaseSettings(ViewSettings):
         return res
 
     def add_path_history(self, dir_path: str):
+        """Save path in history of visited directories. Store only 10 last"""
         history = self.get("io.history", [])
         if dir_path not in history:
             self.set("io.history", history[-9:] + [dir_path])
 
-    def set(self, key_path, value):
-        """function for saving general state (not visualization) """
+    def set(self, key_path: str, value):
+        """
+        function for saving general state (not visualization). This is accessor to
+        :py:meth:`~.ProfileDict.set` of inner variable.
+
+        :param key_path: dot separated path
+        :param value: value to store. The value need to be json serializable.
+         """
         self.segmentation_dict.set(f"{self.current_segmentation_dict}.{key_path}", value)
 
-    def get(self, key_path, default=None):
-        """function for getting general state (not visualization) """
+    def get(self, key_path: str, default=None):
+        """
+        Function for getting general state (not visualization). This is accessor to
+        :py:meth:`~.ProfileDict.get` of inner variable.
+
+        :param key_path: dot separated path
+        :param default: default value if key is missed
+        """
         return self.segmentation_dict.get(f"{self.current_segmentation_dict}.{key_path}", default)
 
     def dump_part(self, file_path, path_in_dict, names=None):
@@ -336,7 +381,13 @@ class BaseSettings(ViewSettings):
                 bad_key = data.filter_data()
         return data, bad_key
 
-    def dump(self, folder_path=None):
+    def dump(self, folder_path: typing.Optional[str] = None):
+        """
+        Save current application settings to disc.
+
+        :param folder_path: path to directory in which data should be saved.
+            If is None then use :py:attr:`.json_folder_path`
+        """
         if folder_path is None:
             folder_path = self.json_folder_path
         if not path.exists(folder_path):
@@ -353,7 +404,13 @@ class BaseSettings(ViewSettings):
             print(errors_list, file=sys.stderr)
         return errors_list
 
-    def load(self, folder_path=None):
+    def load(self, folder_path: typing.Optional[str] = None):
+        """
+        Load settings state from given directory
+
+        :param folder_path: path to directory in which data should be saved.
+            If is None then use :py:attr:`.json_folder_path`
+        """
         if folder_path is None:
             folder_path = self.json_folder_path
         errors_list = []
@@ -383,11 +440,14 @@ class BaseSettings(ViewSettings):
         return errors_list
 
     def get_project_info(self) -> ProjectInfoBase:
+        """Get all information needed to save project"""
         raise NotImplementedError
 
     def set_project_info(self, data: ProjectInfoBase):
+        """Set project info"""
         raise NotImplementedError
 
     @staticmethod
     def verify_image(image: Image, silent=True) -> typing.Union[Image, bool]:
+        """verify if image is correct (ex. program can not support time data)"""
         raise NotImplementedError

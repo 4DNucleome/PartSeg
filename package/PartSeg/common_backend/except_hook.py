@@ -3,6 +3,11 @@ from ..utils import state_store
 
 
 def my_excepthook(type_, value, trace_back):
+    """
+    Custom excepthook. base on base on :py:data:`state_store.show_error_dialog` decide if shown error dialog.
+
+    """
+
     # log the exception here
     if state_store.show_error_dialog:
         try:
