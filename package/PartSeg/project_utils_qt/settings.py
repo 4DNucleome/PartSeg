@@ -143,18 +143,23 @@ class ColormapDict(QObject, MutableMapping, metaclass=MetaDict):
     colormap_added = Signal(ColorMap)
     colormap_removed = Signal(ColorMap)
 
+    def __init__(self, editable_colormap: typing.Dict[str, ColorMap]):
+        super().__init__()
+        self.editable_colormap = editable_colormap
+        self._order_dict = {name: i for i, name in
+                            enumerate(itertools.chain(default_colormap_dict.keys(), editable_colormap.keys()))}
+        self._counter = len(self._order_dict)
+
     def __setitem__(self, key: str, v: typing.Union[ColormapInfo, ColorMap]) -> None:
-        if key.startswith("base_color_"):
+        if not key.startswith("custom_"):
             raise ValueError("Cannot write base color")
         if isinstance(v, tuple):
             self.editable_colormap[key] = v[0]
         else:
             self.editable_colormap[key] = v
+        self._order_dict[key] = self._counter
+        self._counter += 1
         self.colormap_added.emit(self.editable_colormap[key])
-
-    def __init__(self, editable_colormap: typing.Dict[str, ColorMap]):
-        super().__init__()
-        self.editable_colormap = editable_colormap
 
     def __len__(self) -> int:
         return len(self.editable_colormap) + len(default_colormap_dict)
@@ -176,6 +181,16 @@ class ColormapDict(QObject, MutableMapping, metaclass=MetaDict):
         c_map = self.editable_colormap[key]
         del self.editable_colormap[key]
         self.colormap_removed.emit(c_map)
+
+    def get_position(self, key: str):
+        try:
+            return self._order_dict[key]
+        except KeyError:
+            if key not in self:
+                raise
+            self._order_dict[key] = self._counter
+            self._counter += 1
+            return self._counter - 1
 
 
 class ViewSettings(ImageSettings):
@@ -214,7 +229,7 @@ class ViewSettings(ImageSettings):
             except KeyError:
                 pass
         # TODO update sorting rule
-        self.chosen_colormap = list(sorted(colormaps))
+        self.chosen_colormap = list(sorted(colormaps, key=self.colormap_dict.get_position))
 
     def get_channel_info(self, view: str, num: int, default: Optional[str] = None):
         cm = self.chosen_colormap
