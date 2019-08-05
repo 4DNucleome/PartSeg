@@ -10,7 +10,7 @@ from qtpy.QtCore import Signal, Slot
 
 from PartSegImage import Image
 from PartSeg.utils.algorithm_describe_base import SegmentationProfile
-from ..project_utils_qt.settings import BaseSettings
+from ..common_backend.settings import BaseSettings
 from PartSeg.utils.mask.io_functions import load_stack_segmentation, save_components, \
     SegmentationTuple, load_metadata
 

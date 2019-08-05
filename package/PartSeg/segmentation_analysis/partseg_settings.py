@@ -11,7 +11,7 @@ from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from PartSeg.utils.analysis.analysis_utils import HistoryElement, SegmentationPipeline
 from PartSeg.utils.analysis.save_hooks import PartEncoder, part_hook
 from PartSeg.utils.analysis.load_functions import load_metadata
-from ..project_utils_qt.settings import BaseSettings, SaveSettingsDescription
+from ..common_backend.settings import BaseSettings, SaveSettingsDescription
 from PartSeg.utils.json_hooks import ProfileDict
 import numpy as np
 

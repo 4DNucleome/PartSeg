@@ -1,8 +1,8 @@
 from qtpy.QtCore import QThread
 from qtpy.QtWidgets import QDialog, QProgressBar, QPushButton, QHBoxLayout, QLabel
 
-from PartSeg.project_utils_qt.execute_function_thread import ExecuteFunctionThread
-from ..project_utils_qt.progress_thread import ProgressTread
+from PartSeg.common_backend.execute_function_thread import ExecuteFunctionThread
+from ..common_backend.progress_thread import ProgressTread
 
 
 class WaitingDialog(QDialog):

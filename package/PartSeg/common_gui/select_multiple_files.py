@@ -5,7 +5,7 @@ from pathlib import Path
 from qtpy.QtCore import Signal, Qt
 from qtpy.QtWidgets import QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QListWidget, QLineEdit, QListWidgetItem, \
     QMessageBox, QDialog, QAbstractItemView, QLabel, QFileDialog
-from ..project_utils_qt.settings import BaseSettings
+from ..common_backend.settings import BaseSettings
 
 
 class AcceptFiles(QDialog):

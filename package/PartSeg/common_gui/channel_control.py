@@ -14,7 +14,7 @@ from PartSeg.utils.color_image import ColorMap, create_color_map
 from PartSeg.utils.color_image.base_colors import starting_colors
 from .collapse_checkbox import CollapseCheckbox
 from .universal_gui_part import CustomSpinBox
-from ..project_utils_qt.settings import ViewSettings
+from ..common_backend.settings import ViewSettings
 from ..utils.color_image import color_image
 
 image_dict = {}  # dict to store QImages generated from colormap

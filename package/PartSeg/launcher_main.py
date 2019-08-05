@@ -5,7 +5,7 @@ from functools import partial
 
 from PartSegImage import ImageReader
 from .custom_application import CustomApplication
-from PartSeg.project_utils_qt.base_argparser import CustomParser
+from PartSeg.common_backend.base_argparser import CustomParser
 import multiprocessing
 
 multiprocessing.freeze_support()

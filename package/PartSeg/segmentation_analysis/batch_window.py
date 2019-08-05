@@ -12,7 +12,7 @@ from qtpy.QtWidgets import QPushButton, QListWidget, QVBoxLayout, QHBoxLayout, Q
     QFileDialog, QWidget, QDialog, QLabel, QMessageBox, QProgressBar, QSpinBox, QGridLayout, QComboBox, \
     QTabWidget, QTreeWidget, QTreeWidgetItem
 
-from PartSeg.project_utils_qt.list_item_widget_for_exception import ExceptionList, ExceptionListItem
+from PartSeg.common_backend.list_item_widget_for_exception import ExceptionList, ExceptionListItem
 from ..common_gui.select_multiple_files import AddFiles
 from .partseg_settings import PartSettings
 from PartSeg.utils.analysis.batch_processing.batch_backend import CalculationManager

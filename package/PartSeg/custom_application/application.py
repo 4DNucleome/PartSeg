@@ -35,7 +35,7 @@ class CustomApplication(QApplication):
     def show_error(self):
         if self.error is None:
             return
-        from ..project_utils_qt.error_dialog import ErrorDialog
+        from ..common_backend.error_dialog import ErrorDialog
         if isinstance(self.error, TiffFileException):
             mess = QMessageBox()
             mess.setIcon(QMessageBox.Critical)

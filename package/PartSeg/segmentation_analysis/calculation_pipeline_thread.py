@@ -1,6 +1,6 @@
 from PartSeg.utils.analysis.analysis_utils import SegmentationPipeline
 from PartSeg.utils.calculate_pipeline import calculate_pipeline, PipelineResult
-from ..project_utils_qt.progress_thread import ProgressTread
+from ..common_backend.progress_thread import ProgressTread
 from PartSegImage import Image
 import numpy as np
 import typing

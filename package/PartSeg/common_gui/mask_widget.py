@@ -5,7 +5,7 @@ from qtpy.QtWidgets import QWidget, QAbstractSpinBox, QCheckBox, QLabel, QHBoxLa
 from .dim_combobox import DimComboBox
 from ..utils.segmentation.algorithm_base import calculate_operation_radius
 from ..utils.image_operations import RadiusType
-from ..project_utils_qt.settings import ImageSettings
+from ..common_backend.settings import ImageSettings
 from ..utils.mask_create import MaskProperty
 
 

@@ -5,7 +5,7 @@ import os
 
 from PartSeg.common_gui.about_dialog import AboutDialog
 from PartSeg.common_gui.show_directory_dialog import DirectoryDialog
-from PartSeg.project_utils_qt.load_backup import import_config
+from PartSeg.common_backend.load_backup import import_config
 from .settings import BaseSettings
 
 

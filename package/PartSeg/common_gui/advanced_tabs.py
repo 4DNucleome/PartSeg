@@ -9,7 +9,7 @@ from qtpy.QtWidgets import QTabWidget, QWidget, QPushButton, QGridLayout
 
 from PartSeg import plugins
 from PartSeg.common_gui.colormap_creator import PColormapCreator, PColormapList
-from PartSeg.project_utils_qt.settings import ViewSettings
+from PartSeg.common_backend.settings import ViewSettings
 from PartSeg.utils import register, state_store
 
 """

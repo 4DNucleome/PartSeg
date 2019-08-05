@@ -5,8 +5,8 @@ from qtpy.QtCore import QSize, Qt, QThread
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QMainWindow, QToolButton, QGridLayout, QWidget, QProgressBar, QMessageBox
 
-from PartSeg.project_utils_qt.load_backup import import_config
-from PartSeg.project_utils_qt.settings import BaseSettings
+from PartSeg.common_backend.load_backup import import_config
+from PartSeg.common_backend.settings import BaseSettings
 from PartSegImage import ImageReader
 from PartSegData import icons_dir
 

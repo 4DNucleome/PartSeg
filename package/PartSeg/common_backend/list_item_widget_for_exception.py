@@ -1,7 +1,7 @@
 import typing
 from qtpy.QtWidgets import QListWidgetItem, QListWidget
 
-from PartSeg.project_utils_qt.error_dialog import ErrorDialog
+from PartSeg.common_backend.error_dialog import ErrorDialog
 
 
 class ExceptionListItem(QListWidgetItem):

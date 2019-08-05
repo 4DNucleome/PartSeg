@@ -16,7 +16,7 @@ import bisect
 
 from PartSeg.common_gui.numpy_qimage import convert_colormap_to_image
 from PartSeg.common_gui.universal_gui_part import InfoLabel
-from PartSeg.project_utils_qt.settings import ViewSettings
+from PartSeg.common_backend.settings import ViewSettings
 from PartSeg.utils.color_image import Color, ColorPosition, ColorMap, BaseColormap
 
 

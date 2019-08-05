@@ -28,8 +28,8 @@ from ..common_gui.universal_gui_part import right_label
 from ..common_gui.waiting_dialog import ExecuteFunctionDialog
 from ..utils.segmentation.algorithm_base import SegmentationResult
 from ..utils.universal_const import UNIT_SCALE, Units
-from ..project_utils_qt.main_window import BaseMainWindow
-from ..project_utils_qt.execute_function_thread import ExecuteFunctionThread
+from ..common_backend.main_window import BaseMainWindow
+from ..common_backend.execute_function_thread import ExecuteFunctionThread
 from PartSeg.utils.mask.algorithm_description import mask_algorithm_dict
 from .stack_settings import StackSettings, get_mask
 from PartSegImage import ImageReader, Image

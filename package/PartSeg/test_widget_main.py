@@ -6,7 +6,7 @@ import numpy as np
 from PartSeg.common_gui.channel_control import ColorComboBoxGroup
 from PartSeg.common_gui.colormap_creator import PColormapCreator, PColormapList, ChannelPreview
 from PartSeg.common_gui.universal_gui_part import ProgressCircle
-from PartSeg.project_utils_qt.settings import ViewSettings, ColormapDict
+from PartSeg.common_backend.settings import ViewSettings, ColormapDict
 from PartSeg.utils.color_image.base_colors import default_colormap_dict, starting_colors
 
 color_maps = np.load(PartSegData.colors_file)
