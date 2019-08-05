@@ -6,7 +6,7 @@ from math import ceil
 
 from PartSegData import icons_dir
 from qtpy.QtCore import Qt, QRect, QPointF, Signal
-from qtpy.QtGui import  QPaintEvent, QPainter, QMouseEvent, QBrush, QColor, QHideEvent, QFontMetrics, QFont, \
+from qtpy.QtGui import QPaintEvent, QPainter, QMouseEvent, QBrush, QColor, QHideEvent, QFontMetrics, QFont, \
     QShowEvent, QIcon, QResizeEvent
 from qtpy.QtWidgets import QWidget, QColorDialog, QVBoxLayout, QHBoxLayout, QPushButton, QCheckBox, \
     QToolButton, QScrollArea, QGridLayout
@@ -15,7 +15,6 @@ import numpy as np
 import bisect
 
 from PartSeg.common_gui.numpy_qimage import convert_colormap_to_image
-from PartSeg.common_gui.stack_image_view import ImageView
 from PartSeg.common_gui.universal_gui_part import InfoLabel
 from PartSeg.project_utils_qt.settings import ViewSettings
 from PartSeg.utils.color_image import Color, ColorPosition, ColorMap, BaseColormap
@@ -172,6 +171,12 @@ class ColormapEdit(QWidget):
         """colormap setter"""
         self.position_list = [x.color_position for x in val]
         self.color_list = [x.color for x in val]
+        self.refresh()
+
+    def reverse(self):
+        self.position_list = [1 - x for x in reversed(self.position_list)]
+        self.color_list = list(reversed(self.color_list))
+        self.refresh()
 
 
 class ColormapCreator(QWidget):
@@ -192,6 +197,7 @@ class ColormapCreator(QWidget):
         self.clear_btn = QPushButton("Clear")
         self.save_btn = QPushButton("Save")
         self.distribute_btn = QPushButton("Distribute evenly")
+        self.reverse_btn = QPushButton("Reverse")
         self.info_label = InfoLabel(
             ["<strong>Tip:</strong> Select color and double click on below color bar. "
              "Then repeat to add another colors.",
@@ -203,6 +209,7 @@ class ColormapCreator(QWidget):
         layout.addWidget(self.show_colormap)
         btn_layout = QHBoxLayout()
         btn_layout.addStretch(1)
+        btn_layout.addWidget(self.reverse_btn)
         btn_layout.addWidget(self.distribute_btn)
         btn_layout.addWidget(self.clear_btn)
         btn_layout.addWidget(self.save_btn)
@@ -211,6 +218,7 @@ class ColormapCreator(QWidget):
         self.show_colormap.double_clicked.connect(self.add_color)
         self.clear_btn.clicked.connect(self.show_colormap.clear)
         self.save_btn.clicked.connect(self.save)
+        self.reverse_btn.clicked.connect(self.show_colormap.reverse)
         self.distribute_btn.clicked.connect(self.show_colormap.distribute_evenly)
 
     def add_color(self, pos):
@@ -293,7 +301,6 @@ class ChannelPreview(QWidget):
     :param colormap: colormap to show
     :param accepted: if checkbox should be checked
     :param name: name which will be emitted in all signals as firs argument
-    :param ind: number which will be emmited in all signals as second argument
     """
     selection_changed = Signal(str, bool)
     """checkbox selection changed (name)"""
@@ -512,7 +519,8 @@ class PColormapList(ColormapList):
         Show list of colormaps. Integrated with :py:class:`.ViewSettings`
 
         :param settings: used for store state
-        :param control_names: list of names of :py:class:`.ImageView` for protect used channels from uncheck or remove
+        :param control_names: list of names of :py:class:`PartSeg.common_gui.stack_image_view.ImageView`
+        for protect used channels from uncheck or remove
     """
     def __init__(self, settings: ViewSettings, control_names: List[str]):
         super().__init__(settings.colormap_dict)
