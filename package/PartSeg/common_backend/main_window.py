@@ -35,9 +35,6 @@ class BaseMainWindow(QMainWindow):
 
     def __init__(self, config_folder: Optional[str] = None, title="PartSeg", settings: Optional[BaseSettings] = None,
                  signal_fun=None):
-
-        if signal_fun is not None:
-            self.show_signal.connect(signal_fun)
         if settings is None:
             if config_folder is None:
                 raise ValueError("wrong config folder")
@@ -57,6 +54,8 @@ class BaseMainWindow(QMainWindow):
                 errors_message.exec()
 
         super().__init__()
+        if signal_fun is not None:
+            self.show_signal.connect(signal_fun)
         self.settings = settings
         self.files_num = 1
         self.setAcceptDrops(True)

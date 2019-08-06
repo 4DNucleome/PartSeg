@@ -1,8 +1,11 @@
 # Changelog 
 
 ## 0.9.3
- - start building documentation
+ - start automated build documentation
  - change color map backend and allow for user to create custom color map. 
+ - segmentation compare
+ - update test engines
+ - support of PySide2 
  
 
 
