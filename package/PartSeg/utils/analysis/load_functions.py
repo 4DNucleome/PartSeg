@@ -1,6 +1,7 @@
 import os
 import tarfile
 import typing
+from copy import copy
 from functools import partial
 from io import TextIOBase, BufferedIOBase, RawIOBase, IOBase, BytesIO
 from pathlib import Path
@@ -119,9 +120,19 @@ class LoadImage(LoadBase):
              step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
         if metadata is None:
             metadata = {"default_spacing": [1 / UNIT_SCALE[Units.nm.value] for _ in range(3)]}
+        if "recursion_limit" not in metadata:
+            metadata = copy(metadata)
+            metadata["recursion_limit"] = 3
         image = ImageReader.read_image(
             load_locations[0], callback_function=partial(proxy_callback, range_changed, step_changed),
             default_spacing=metadata["default_spacing"])
+        re_read = True
+        for el in image.get_ranges():
+            if el[0] != el[1]:
+                re_read = False
+        if re_read and metadata["recursion_limit"] > 0:
+            metadata["recursion_limit"] -= 1
+            cls.load(load_locations, range_changed, step_changed, metadata)
         return ProjectTuple(load_locations[0], image)
 
 
