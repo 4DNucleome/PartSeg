@@ -1,5 +1,7 @@
 import shutil
 import tempfile
+from copy import deepcopy
+
 import tifffile
 from enum import Enum
 import os.path
@@ -12,6 +14,7 @@ from glob import glob
 import h5py
 import PartSegData
 
+from PartSeg.utils.segmentation.segmentation_algorithm import ThresholdAlgorithm
 from PartSegImage import ImageReader, Image
 from PartSeg.utils import Units, UNIT_SCALE
 from PartSeg.utils.analysis import ProjectTuple
@@ -23,7 +26,8 @@ from PartSeg.utils.io_utils import UpdateLoadedMetadataBase
 from PartSeg.utils.json_hooks import check_loaded_dict
 from PartSeg.utils.segmentation.noise_filtering import DimensionType
 from PartSeg.utils.class_generator import enum_register
-from PartSeg.utils.mask.io_functions import LoadSegmentation, SaveSegmentation, LoadSegmentationImage, save_components
+from PartSeg.utils.mask.io_functions import LoadSegmentation, SaveSegmentation, LoadSegmentationImage, save_components, \
+    LoadImage, SegmentationTuple
 
 from help_fun import get_test_dir
 
@@ -197,6 +201,27 @@ class TestSegmentationMask:
         save_components(seg.image, seg.chosen_components, seg.segmentation, os.path.join(tmp_dir, "seg_save"))
         assert os.path.isdir(os.path.join(tmp_dir, "seg_save"))
         assert len(glob(os.path.join(tmp_dir, "seg_save", "*"))) == 4
+        seg2 = LoadSegmentation.load([os.path.join(tmp_dir, "segmentation.seg")])
+        assert seg2 is not None
+
+    def test_loading_new_segmentation(self):
+        test_dir = get_test_dir()
+        image_data = LoadImage.load([os.path.join(test_dir, "test_nucleus.tif")])
+        algorithm = ThresholdAlgorithm()
+        algorithm.set_image(image_data.image)
+        param = algorithm.get_default_values()
+        param["channel"] = 0
+        algorithm.set_parameters(**param)
+        res = algorithm.calculation_run(lambda x, y: None)
+        num = res.segmentation.max() + 1
+        data_dict = {str(i): deepcopy(res.parameters) for i in range(1, num)}
+
+        to_save = SegmentationTuple(image_data.image.file_path, image_data.image, res.segmentation,
+                                    list(range(1, num)), data_dict)
+
+        SaveSegmentation.save(os.path.join(tmp_dir, "segmentation2.seg"), to_save, {"relative_path": False})
+        seg2 = LoadSegmentation.load([os.path.join(tmp_dir, "segmentation2.seg")])
+        assert seg2 is not None
 
 
 class TestSaveFunctions:

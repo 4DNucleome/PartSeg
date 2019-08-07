@@ -195,6 +195,10 @@ class MainMenu(QWidget):
         dial = ExecuteFunctionDialog(load_property.load_class.load, [load_property.load_location],
                                      text="Load segmentation", exception_hook=exception_hook)
         if dial.exec():
+            result = dial.get_result()
+            if result is None:
+                QMessageBox.critical(self, "Data Load fail", "Fail of loading data")
+                return
             self.settings.set_project_data(dial.get_result(), self.settings.keep_chosen_components)
 
     def save_segmentation(self):

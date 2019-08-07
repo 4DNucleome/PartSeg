@@ -320,7 +320,8 @@ class UpdateLoadedMetadataMask(UpdateLoadedMetadataBase):
                             {"smooth_border_radius": profile_data.values["smooth_border_radius"]}}
                 else:
                     profile_data.values["smooth_border"] = {"name": "None", "values": {}}
-            del profile_data.values["smooth_border_radius"]
+                if "smooth_border_radius" in profile_data.values:
+                    del profile_data.values["smooth_border_radius"]
         return profile_data
 
 
