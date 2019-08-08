@@ -5,6 +5,7 @@ import os
 from typing import Optional, Sequence, Text
 from PartSeg.utils import state_store
 from PartSeg.common_backend.except_hook import my_excepthook
+import PartSeg
 
 
 def proper_suffix(val: str):
@@ -80,6 +81,7 @@ class CustomParser(argparse.ArgumentParser):
         state_store.save_suffix = args.save_suffix[0]
         state_store.save_folder = args.save_directory[0]
         if args.no_report and args.no_dialog:
-            sentry_sdk.init("https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302")
+            sentry_sdk.init("https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302",
+                            release="PartSeg@{}".format(PartSeg.__version__))
         sys.excepthook = my_excepthook
         return args

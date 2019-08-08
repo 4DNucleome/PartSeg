@@ -2,6 +2,9 @@ import sys
 
 from qtpy.QtWidgets import QDialog, QPushButton, QTextEdit, QHBoxLayout, QVBoxLayout, QLabel, QLineEdit
 import traceback
+
+from sentry_sdk.utils import exc_info_from_error, event_from_exception
+
 from ..utils import state_store
 import sentry_sdk
 
@@ -51,6 +54,8 @@ class ErrorDialog(QDialog):
         btn_layout.addWidget(self.send_report_btn)
         layout.addLayout(btn_layout)
         self.setLayout(layout)
+        exec_info = exc_info_from_error(exception)
+        self.exception_tuple = event_from_exception(exec_info)
 
     def exec(self):
         """
@@ -75,5 +80,8 @@ class ErrorDialog(QDialog):
             text += "\nUser information:\n" + self.additional_info.toPlainText()
         if len(self.contact_info.text()) > 0:
             text += "\nContact: " + self.contact_info.text()
-        sentry_sdk.capture_message(text, level='error')
+        event, hint = self.exception_tuple
+        event["message"] = text
+        sentry_sdk.capture_event(event, hint=hint)
+        # sentry_sdk.capture_event({"message": text, "level": "error", "exception": self.exception})
         self.accept()
