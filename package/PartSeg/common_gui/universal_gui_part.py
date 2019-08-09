@@ -298,7 +298,7 @@ class InfoLabel(QWidget):
 
     :param text_list: texts to be in cyclic use
     :param delay: time in milliseconds between changes
-    :param parent: passed to :py:class:`PyQt5.QtWidgets.QWidget` constructor
+    :param parent: passed to :py:class:`QWidget` constructor
     """
     def __init__(self, text_list: typing.List[str], delay: int = 10000, parent=None):
         assert len(text_list) > 0
