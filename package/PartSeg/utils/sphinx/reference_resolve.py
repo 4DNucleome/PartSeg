@@ -11,6 +11,7 @@ this extensio provides one configuration option:
 """
 import re
 from sphinx.application import Sphinx
+from sphinx.config import ENUM
 from sphinx.environment import BuildEnvironment
 from docutils.nodes import Element, TextElement
 from docutils import nodes
@@ -19,7 +20,10 @@ from sphinx.locale import _
 
 from sphinx.ext.intersphinx import InventoryAdapter
 
-from qtpy import QT_VERSION
+try:
+    from qtpy import QT_VERSION
+except ImportError:
+    QT_VERSION = None
 
 # TODO add response to
 #  https://stackoverflow.com/questions/47102004/how-to-properly-link-to-pyqt5-documentation-using-intersphinx
@@ -86,7 +90,7 @@ def missing_reference(app: Sphinx, env: BuildEnvironment, node: Element, contnod
         for target_name in target_list:
             if target_name in inventories.main_inventory[obj_type_name]:
                 proj, version, uri, dispname = inventories.named_inventory["PyQt"][obj_type_name][target_name]
-                print(node)  # print nodes with unresolved references
+                #  print(node)  # print nodes with unresolved references
                 break
         else:
             return None
@@ -111,10 +115,39 @@ def missing_reference(app: Sphinx, env: BuildEnvironment, node: Element, contnod
         newnode.append(contnode.__class__(dispname, dispname))
     return newnode
 
+from qtpy.QtCore import Signal
+import inspect
+import importlib
+
+def doctree_read(app: Sphinx, doctree):
+    print(doctree)
+
+re.compile(r' +algorithm_changed *= *Signal(\([^)]*\))')
+
+def autodoc_process_signature(app: Sphinx, what, name: str, obj, options, signature, return_annotation):
+    if isinstance(obj, Signal):
+        module_name, class_name, signal_name = name.rsplit(".", 2)
+        module = importlib.import_module(module_name)
+        class_ob = getattr(module, class_name)
+        reg = re.compile(r' +' + signal_name +  r' *= *Signal(\([^)]*\))')
+        match = reg.findall(inspect.getsource(class_ob))
+        if match:
+            return match[0], None
+
+        pos = len(name.rsplit(".", 1)[1])
+        return ", ".join([sig[pos:] for sig in obj.signatures]), None
 
 def setup(app: Sphinx) -> Dict[str, Any]:
+    app.setup_extension("sphinx.ext.intersphinx")
+    if hasattr(app.config, "intersphinx_mapping"):
+        if "PyQt" not in app.config.intersphinx_mapping:
+            app.config.intersphinx_mapping["PyQt"] =  ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None)
+    else:
+        app.config.intersphinx_mapping = {"PyQt": ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None)}
     app.connect('missing-reference', missing_reference)
-    app.add_config_value('qt_documentation', "Qt", True)
+    app.connect("autodoc-process-signature", autodoc_process_signature)
+    # app.connect('doctree-read', doctree_read)
+    app.add_config_value('qt_documentation', "Qt", True, ENUM("Qt", "PySide", "PyQt"))
     return {
         'version': "0.9",
         'env_version': 1,

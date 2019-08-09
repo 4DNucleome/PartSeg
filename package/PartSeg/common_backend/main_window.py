@@ -20,7 +20,7 @@ class BaseMainWindow(QMainWindow):
     :param config_folder: path to directory in which application save state. If `settings` parameter is note
         then settings object is created with passing this path to :py:attr:`.settings_class`.
         If this parameter and `settings`
-        are None then constructor fail with :py:exc: ValueError.
+        are None then constructor fail with :py:exc:`ValueError`.
     :param title: Window default title
     :param settings: object to store application state
     :param signal_fun: function which need to be called when window shown.
