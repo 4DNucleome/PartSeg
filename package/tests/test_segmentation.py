@@ -3,6 +3,8 @@ from abc import ABC
 import numpy as np
 from copy import deepcopy
 from typing import Type
+
+from PartSeg.utils.convex_fill import convex_fill
 from PartSegImage import Image
 from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
@@ -471,3 +473,57 @@ class TestNoiseFiltering:
         for el in noise_filtering_dict.values():
             data = get_two_parts_array()[0, ..., 0]
             el.noise_filter(data, (1, 1, 1), el.get_default_values())
+
+
+class TestConvexFill:
+    def test_simple(self):
+        arr = np.zeros((30, 30, 30), dtype=np.uint8)
+        arr[10:-10, 10:-10, 10:-10] = 1
+        res = convex_fill(arr)
+        assert np.all(res == arr)
+        arr = np.zeros((30, 60, 30), dtype=np.uint8)
+        arr[10:-10, 10:-40, 10:-10] = 1
+        arr[10:-10, -30:-10, 10:-10] = 2
+        res = convex_fill(arr)
+        assert np.all(res == arr)
+
+    def test_missing_value(self):
+        arr = np.zeros((30, 30, 30), dtype=np.uint8)
+        arr[10:-10, 10:-10, 10:-10] = 2
+        res = convex_fill(arr)
+        assert np.all(res == arr)
+        arr = np.zeros((30, 60, 30), dtype=np.uint8)
+        arr[10:-10, 10:-40, 10:-10] = 1
+        arr[10:-10, -30:-10, 10:-10] = 3
+        res = convex_fill(arr)
+        assert np.all(res == arr)
+
+    def test_fill(self):
+        arr = np.zeros((30, 30, 30), dtype=np.uint8)
+        arr[10:-10, 10:-10, 10:-10] = 1
+        arr2 = np.copy(arr)
+        arr2[15:-15, 15:-15, 15:-15] = 0
+        res = convex_fill(arr2)
+        assert np.all(res == arr)
+        arr2[15:-15, 15:-10, 15:-15] = 0
+        res = convex_fill(arr2)
+        assert np.all(res == arr)
+        arr = np.zeros((30, 60, 30), dtype=np.uint8)
+        arr[10:-10, 10:-40, 10:-10] = 1
+        arr[10:-10, -30:-10, 10:-10] = 2
+        arr2 = np.copy(arr)
+        arr2[15:-15, 15:-15, 20:-10] = 0
+        arr2[15:-15, -30:-10, 20:-10] = 0
+        res = convex_fill(arr2)
+        assert np.all(res == arr)
+
+    def test_removed_object(self):
+        arr = np.zeros((30, 30, 30), dtype=np.uint8)
+        arr[10:-10, 10:-10, 10:-10] = 1
+        arr2 = np.copy(arr)
+        arr2[15:-15, 15:-15, 15:-15] = 2
+        res = convex_fill(arr2)
+        assert np.all(res == arr)
+        arr2[15:-15, 15:-10, 15:-15] = 2
+        res = convex_fill(arr2)
+        assert np.all(res == arr)

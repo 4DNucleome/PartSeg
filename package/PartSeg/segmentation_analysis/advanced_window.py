@@ -736,6 +736,9 @@ class MeasurementSettings(QWidget):
             item = self.profile_options.item(i - shift)
             if str(item.text()) not in MEASUREMENT_DICT:
                 self.profile_options.takeItem(i - shift)
+                if item == self.chosen_element:
+                    self.chosen_element = None
+                del item
                 shift += 1
         self.create_selection_changed()
 

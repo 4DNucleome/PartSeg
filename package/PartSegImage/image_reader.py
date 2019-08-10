@@ -4,6 +4,7 @@ from io import BytesIO
 from threading import Lock
 
 from tifffile import TiffFile
+# noinspection PyProtectedMember
 from tifffile.tifffile import TiffPage
 import tifffile.tifffile
 
@@ -182,7 +183,7 @@ class ImageReader(object):
                 elif unit == 2:
                     scalar = name_to_scalar["cal"]
                 else:
-                    KeyError("wrong scalar")
+                    raise KeyError(f"wrong scalar {tags['ResolutionUnit']}, {tags['ResolutionUnit'].value}")
 
             x_spacing = tags["XResolution"].value[1] / tags["XResolution"].value[0] * scalar
             y_spacing = tags["YResolution"].value[1] / tags["YResolution"].value[0] * scalar
@@ -293,6 +294,7 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.image_reader":
         import warnings
         import numpy
         from tifffile import product, squeeze_axes
+        # noinspection PyProtectedMember
         from tifffile.tifffile import TIFF, TiffPageSeries
 
         def _ome_series(self):

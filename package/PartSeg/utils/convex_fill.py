@@ -65,6 +65,8 @@ def convex_fill(array: np.ndarray):
             continue
         component: np.ndarray = (array == i)
         points = np.nonzero(component)
+        if len(points) == 0:
+            continue
         lower_bound = np.min(points, axis=1)
         upper_bound = np.max(points, axis=1)
         cut_area = tuple([slice(x, y + 1) for x, y in zip(lower_bound, upper_bound)])
