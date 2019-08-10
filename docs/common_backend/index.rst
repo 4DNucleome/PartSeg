@@ -37,26 +37,10 @@ PartSeg.common\_backend.base_settings module
    :undoc-members:
    :show-inheritance:
 
-PartSeg.common\_backend.error\_dialog module
---------------------------------------------
-
-.. automodule:: PartSeg.common_backend.error_dialog
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 PartSeg.common\_backend.except\_hook module
 -------------------------------------------
 
 .. automodule:: PartSeg.common_backend.except_hook
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-PartSeg.common\_backend.list\_item\_widget\_for\_exception module
------------------------------------------------------------------
-
-.. automodule:: PartSeg.common_backend.list_item_widget_for_exception
    :members:
    :undoc-members:
    :show-inheritance:

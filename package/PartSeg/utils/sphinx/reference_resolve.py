@@ -46,8 +46,15 @@ slot_name = {
     "PyQt": "pyqtSlot"
 }
 
+type_translate_dict = {
+    "class": ["class"],
+    "meth": ["method", "signal"],
+    "mod": ["module"]
+}
+
 signal_pattern = re.compile(r'((\w+\d?\.QtCore\.)|(QtCore\.)|(\.)())?(pyqt)?Signal')
 slot_pattern = re.compile(r'((\w+\d?\.QtCore\.)|(QtCore\.)|(\.)())?(pyqt)?Slot')
+
 
 def missing_reference(app: Sphinx, env: BuildEnvironment, node: Element, contnode: TextElement
                       ) -> Optional[nodes.reference]:
@@ -73,11 +80,6 @@ def missing_reference(app: Sphinx, env: BuildEnvironment, node: Element, contnod
     if target.startswith("PySide2"):
         head, tail = target.split(".", 1)
         target = "PyQt5." + tail
-    obj_type_name = "sip:{}".format(node.get("reftype"))
-    if obj_type_name not in inventories.named_inventory["PyQt"]:
-        return None
-    target_list = [target, "PyQt5." + target]
-    target_list += [name + "." + target for name in inventories.named_inventory["PyQt"]["sip:module"].keys()]
     if signal_pattern.match(target):
         uri = signal_slot_uri[app.config.qt_documentation]
         dispname = signal_name[app.config.qt_documentation]
@@ -87,18 +89,37 @@ def missing_reference(app: Sphinx, env: BuildEnvironment, node: Element, contnod
         dispname = slot_name[app.config.qt_documentation]
         version = QT_VERSION
     else:
-        for target_name in target_list:
-            if target_name in inventories.main_inventory[obj_type_name]:
-                proj, version, uri, dispname = inventories.named_inventory["PyQt"][obj_type_name][target_name]
-                #  print(node)  # print nodes with unresolved references
-                break
+        target_list = [target, "PyQt5." + target]
+        target_list += [name + "." + target for name in inventories.named_inventory["PyQt"]["sip:module"].keys()]
+        if node.get("reftype") in type_translate_dict:
+            type_names = type_translate_dict[node.get("reftype")]
+        else:
+            type_names = [node.get("reftype")]
+        for name in type_names:
+            obj_type_name = "sip:{}".format(name)
+            if obj_type_name not in inventories.named_inventory["PyQt"]:
+                return None
+            for target_name in target_list:
+                if target_name in inventories.main_inventory[obj_type_name]:
+                    proj, version, uri, dispname = inventories.named_inventory["PyQt"][obj_type_name][target_name]
+                    uri = uri.replace("##", "#")
+                    #  print(node)  # print nodes with unresolved references
+                    break
+            else:
+                continue
+            break
         else:
             return None
         if app.config.qt_documentation == "Qt":
             html_name = uri.split("/")[-1]
             uri = "https://doc.qt.io/qt-5/" + html_name
         elif app.config.qt_documentation == "PySide":
-            html_name = "/".join(target.split(".")[1:]) + ".html"
+            if node.get('reftype') == "meth":
+                split_tup = target_name.split(".")[1:]
+                ref_name = ".".join(["PySide2", split_tup[0], "PySide2"] + split_tup)
+                html_name = "/".join(split_tup[:-1]) + ".html#" + ref_name
+            else:
+                html_name = "/".join(target_name.split(".")[1:]) + ".html"
             uri = "https://doc.qt.io/qtforpython/PySide2/" + html_name
 
     # remove this line if you would like straight to pyqt documentation
@@ -115,14 +136,18 @@ def missing_reference(app: Sphinx, env: BuildEnvironment, node: Element, contnod
         newnode.append(contnode.__class__(dispname, dispname))
     return newnode
 
+
 from qtpy.QtCore import Signal
 import inspect
 import importlib
 
+
 def doctree_read(app: Sphinx, doctree):
     print(doctree)
 
+
 re.compile(r' +algorithm_changed *= *Signal(\([^)]*\))')
+
 
 def autodoc_process_signature(app: Sphinx, what, name: str, obj, options, signature, return_annotation):
     if isinstance(obj, Signal):
@@ -137,11 +162,12 @@ def autodoc_process_signature(app: Sphinx, what, name: str, obj, options, signat
         pos = len(name.rsplit(".", 1)[1])
         return ", ".join([sig[pos:] for sig in obj.signatures]), None
 
+
 def setup(app: Sphinx) -> Dict[str, Any]:
     app.setup_extension("sphinx.ext.intersphinx")
     if hasattr(app.config, "intersphinx_mapping"):
         if "PyQt" not in app.config.intersphinx_mapping:
-            app.config.intersphinx_mapping["PyQt"] =  ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None)
+            app.config.intersphinx_mapping["PyQt"] = ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None)
     else:
         app.config.intersphinx_mapping = {"PyQt": ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None)}
     app.connect('missing-reference', missing_reference)
@@ -153,3 +179,7 @@ def setup(app: Sphinx) -> Dict[str, Any]:
         'env_version': 1,
         'parallel_read_safe': True
     }
+
+
+# https://doc.qt.io/qtforpython/PySide2/QtWidgets/QListWidget.html#PySide2.QtWidgets.QListWidget.itemDoubleClicked
+# https://doc.qt.io/qtforpython/PySide2/QtWidgets/QListWidget.html#PySide2.QtWidgets.PySide2.QtWidgets.QListWidget.itemDoubleClicked

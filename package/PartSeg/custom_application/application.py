@@ -49,7 +49,7 @@ class CustomApplication(QApplication):
         """This class create error dialog and show it"""
         if self.error is None:
             return
-        from ..common_backend.error_dialog import ErrorDialog
+        from PartSeg.common_gui.error_report import ErrorDialog
         if isinstance(self.error, TiffFileException):
             mess = QMessageBox()
             mess.setIcon(QMessageBox.Critical)

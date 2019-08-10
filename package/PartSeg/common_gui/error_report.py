@@ -1,11 +1,18 @@
-import sys
+"""
+THis module contains widgets used for error reporting. The report backed is sentry_.
 
-from qtpy.QtWidgets import QDialog, QPushButton, QTextEdit, QHBoxLayout, QVBoxLayout, QLabel, QLineEdit
+.. _sentry: https://sentry.io
+"""
+import sys
+import typing
+
+from qtpy.QtWidgets import QDialog, QPushButton, QTextEdit, QHBoxLayout, QVBoxLayout, QLabel, QLineEdit, \
+    QListWidgetItem, QListWidget
 import traceback
 
 from sentry_sdk.utils import exc_info_from_error, event_from_exception
 
-from ..utils import state_store
+from PartSeg.utils import state_store
 import sentry_sdk
 
 from PartSeg import __version__
@@ -85,3 +92,51 @@ class ErrorDialog(QDialog):
         sentry_sdk.capture_event(event, hint=hint)
         # sentry_sdk.capture_event({"message": text, "level": "error", "exception": self.exception})
         self.accept()
+
+
+class ExceptionListItem(QListWidgetItem):
+    """
+    Element storing exception and showing basic information about it
+
+    :param exception: exception or union of exception and traceback
+    """
+    # TODO Prevent from reporting disc error
+    def __init__(self, exception: typing.Union[Exception, typing.Tuple[Exception, typing.List]],
+                 parent: QListWidget = None):
+        if isinstance(exception, Exception):
+            super().__init__(f"{type(exception)}: {exception}", parent, QListWidgetItem.UserType)
+            self.exception = exception
+            self.traceback_summary = None
+        else:
+            super().__init__(f"{type(exception[0])}: {exception[0]}", parent, QListWidgetItem.UserType)
+            self.exception = exception[0]
+            self.traceback_summary = exception[1]
+
+        self.setToolTip("Double click for report")
+
+
+class ExceptionList(QListWidget):
+    """
+    List to store exceptions
+    """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.itemDoubleClicked.connect(self.item_double_clicked)
+
+    def add_exception(self, exc: Exception):
+        """
+        Add exception to list
+        """
+        ExceptionListItem(exc, self)
+
+    @staticmethod
+    def item_double_clicked(el: QListWidgetItem):
+        """
+        if element clicked is :py:class:`ExceptionListItem` then open
+        :py:class:`ErrorDialog` for reporting this error.
+
+        This function is connected to :py:meth:`QListWidget.itemDoubleClicked`
+        """
+        if isinstance(el, ExceptionListItem):
+            dial = ErrorDialog(el.exception, "Error during batch processing", traceback_summary=el.traceback_summary)
+            dial.exec()

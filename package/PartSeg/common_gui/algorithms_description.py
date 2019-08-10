@@ -15,13 +15,14 @@ from six import with_metaclass
 from .dim_combobox import DimComboBox
 from .universal_gui_part import CustomSpinBox, CustomDoubleSpinBox, EnumComboBox, ChannelComboBox
 from ..utils.channel_class import Channel
-from ..common_backend.error_dialog import ErrorDialog
+from PartSeg.common_gui.error_report import ErrorDialog
 from ..utils.image_operations import RadiusType
 from ..utils.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
 from PartSeg.utils.algorithm_describe_base import AlgorithmProperty, AlgorithmDescribeBase, SegmentationProfile
 from ..common_backend.segmentation_thread import SegmentationThread
 from ..common_backend.base_settings import ImageSettings, BaseSettings
 from PartSegImage import Image
+
 
 def update(d, u):
     for k, v in u.items():
@@ -191,10 +192,12 @@ class ListInput(QWidget):
         for f, val in zip(self.input_list, value):
             f.set_value(val)
 
+
 def any_arguments(fun):
     def any(*_):
         fun()
     return any
+
 
 class FormWidget(QWidget):
     value_changed = Signal()

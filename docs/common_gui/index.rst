@@ -14,3 +14,4 @@ This module contains custom Qt based widgets. You may also use it in your projec
     colormap_creator
     numpy_qimage
     universal_gui_part
+    error_report
