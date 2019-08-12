@@ -1,10 +1,13 @@
 import logging
-import sys
+import os
+from enum import Enum
+from typing import List, Tuple, Dict, Any
 
 import numpy as np
+from PyQt5.QtGui import QResizeEvent
 from qtpy.QtCore import Qt, QEvent
-from qtpy.QtWidgets import QWidget, QPushButton, QCheckBox, QComboBox, QTableWidget, QVBoxLayout, QHBoxLayout,\
-    QLabel, QApplication, QTableWidgetItem, QMessageBox
+from qtpy.QtWidgets import QWidget, QPushButton, QCheckBox, QComboBox, QTableWidget, QVBoxLayout, QHBoxLayout, \
+    QLabel, QApplication, QTableWidgetItem, QMessageBox, QBoxLayout
 
 from PartSeg.utils.analysis.measurement_calculation import MeasurementProfile
 from ..common_gui.universal_gui_part import ChannelComboBox, EnumComboBox
@@ -12,6 +15,112 @@ from ..common_gui.waiting_dialog import WaitingDialog
 from .partseg_settings import PartSettings
 from ..utils.universal_const import Units
 from PartSeg.common_backend.progress_thread import ExecuteFunctionThread
+
+
+class FileNamesEnum(Enum):
+    No = 1
+    Short = 2
+    Full = 3
+
+    def __str__(self):
+        return self.name
+
+
+class MeasurementsStorage:
+    """class for storage measurements result"""
+    def __init__(self):
+        self.header = []
+        self.max_rows = 0
+        self.content = []
+        self.measurements = []
+
+    def clear(self):
+        """clear storage"""
+        self.header = []
+        self.max_rows = 0
+        self.content = []
+        self.measurements = []
+
+    def get_size(self, save_orientation: bool):
+        if save_orientation:
+            return self.max_rows, len(self.header)
+        else:
+            return len(self.header), self.max_rows
+
+    def add_measurements(self, data: Dict[str, Tuple[Any, str]], add_names, add_units):
+        names = []
+        values = []
+        units = []
+        for key, (value, unit) in data.items():
+            names.append(key)
+            values.append(value)
+            units.append(unit)
+        self.max_rows = max(self.max_rows, len(data))
+        if add_names:
+            self.content.append(names)
+            self.header.append("Name")
+        self.content.append(values)
+        self.header.append("Value")
+        if add_units:
+            self.content.append(units)
+            self.header.append("Units")
+        self.measurements.append((data, add_names, add_units))
+
+    def get_val_as_str(self, x: int, y: int, save_orientation: bool) -> str:
+        """get value from given index"""
+        if not save_orientation:
+            x, y = y, x
+        if len(self.content) <= x:
+            return ""
+        sublist = self.content[x]
+        if len(sublist) <= y:
+            return ""
+        return str(sublist[y])
+
+    def get_copy(self, x: slice, y: slice, save_orientation: bool, expand_lists: bool) -> str:
+        if not save_orientation:
+            x, y = y, x
+        res = []
+        columns = self.content[x]
+        if not columns:
+            return ""
+        for sublist in columns:
+            data = sublist[y]
+            elements = set()
+            for el in data:
+                if isinstance(el, (list, tuple)):
+                    elements.add(len(el))
+            # FIXME case mask per component and segmentation per component
+            if len(elements) == 1 and expand_lists:
+                size = elements.pop()
+                sub_res = [[] for _ in range(size)]
+                for element in data:
+                    if isinstance(element, (list, tuple)):
+                        for i in range(size):
+                            sub_res[i].append(str(element[i]))
+                    else:
+                        for i in range(size):
+                            sub_res[i].append(str(element))
+                res.extend(sub_res)
+            else:
+                res.append([str(element) for element in data])
+        max_size = max([len(x) for x in res])
+        for el in res:
+            if len(el) < max_size:
+                el += ["" for _ in range(max_size - len(el))]
+        if save_orientation:
+            return "\n".join(["\t".join(el) for el in res])
+        else:
+            return "\n".join(["\t".join(el) for el in [*zip(*res)]])
+
+    def get_header(self, save_orientation: bool) -> List[str]:
+        if save_orientation:
+            return [str(i) for i in range(self.max_rows)]
+        else:
+            return self.header
+
+    def get_rows(self, save_orientation: bool) -> List[str]:
+        return self.get_header(not save_orientation)
 
 
 class MeasurementWidget(QWidget):
@@ -24,6 +133,7 @@ class MeasurementWidget(QWidget):
         super(MeasurementWidget, self).__init__()
         self.settings = settings
         self.segment = segment
+        self.measurements_storage = MeasurementsStorage()
         self.recalculate_button = QPushButton("Recalculate and\n replace measurement", self)
         self.recalculate_button.clicked.connect(self.replace_measurement_result)
         self.recalculate_append_button = QPushButton("Recalculate and\n append measurement", self)
@@ -33,7 +143,9 @@ class MeasurementWidget(QWidget):
         self.no_header = QCheckBox("No header", self)
         self.no_units = QCheckBox("No units", self)
         self.no_units.setChecked(True)
-        self.horizontal_measurement_present.stateChanged.connect(self.horizontal_changed)
+        self.file_names = EnumComboBox(FileNamesEnum)
+        self.file_names_label = QLabel("Add file name:")
+        self.horizontal_measurement_present.stateChanged.connect(self.refresh_view)
         self.copy_button.clicked.connect(self.copy_to_clipboard)
         self.measurement_type = QComboBox(self)
         # noinspection PyUnresolvedReferences
@@ -56,27 +168,31 @@ class MeasurementWidget(QWidget):
         self.up_butt_layout = QHBoxLayout()
         self.up_butt_layout.addWidget(self.recalculate_button)
         self.up_butt_layout.addWidget(self.recalculate_append_button)
-        butt_layout = QHBoxLayout()
-        # butt_layout.setMargin(0)
-        butt_layout.setSpacing(10)
-        butt_layout.addWidget(self.horizontal_measurement_present, 1)
-        butt_layout.addWidget(self.no_header, 1)
-        butt_layout.addWidget(self.no_units, 1)
-        butt_layout.addWidget(self.copy_button, 2)
-        butt_layout2 = QHBoxLayout()
-        butt_layout2.addWidget(QLabel("Channel:"))
-        butt_layout2.addWidget(self.channels_chose)
-        butt_layout2.addWidget(QLabel("Units:"))
-        butt_layout2.addWidget(self.units_choose)
-        # butt_layout2.addWidget(QLabel("Noise removal:"))
-        # butt_layout2.addWidget(self.noise_removal_method)
-        butt_layout2.addWidget(QLabel("Profile:"))
-        butt_layout2.addWidget(self.measurement_type, 2)
+        self.butt_layout = QHBoxLayout()
+        # self.butt_layout.setMargin(0)
+        # self.butt_layout.setSpacing(10)
+        self.butt_layout.addWidget(self.horizontal_measurement_present, 1)
+        self.butt_layout.addWidget(self.no_header, 1)
+        self.butt_layout.addWidget(self.no_units, 1)
+        self.butt_layout.addWidget(self.file_names_label)
+        self.butt_layout.addWidget(self.file_names, 1)
+        self.butt_layout.addWidget(self.copy_button, 2)
+        self.butt_layout2 = QHBoxLayout()
+        self.butt_layout3 = QHBoxLayout()
+        self.butt_layout3.addWidget(QLabel("Channel:"))
+        self.butt_layout3.addWidget(self.channels_chose)
+        self.butt_layout3.addWidget(QLabel("Units:"))
+        self.butt_layout3.addWidget(self.units_choose)
+        # self.butt_layout3.addWidget(QLabel("Noise removal:"))
+        # self.butt_layout3.addWidget(self.noise_removal_method)
+        self.butt_layout3.addWidget(QLabel("Profile:"))
+        self.butt_layout3.addWidget(self.measurement_type, 2)
         v_butt_layout.addLayout(self.up_butt_layout)
-        v_butt_layout.addLayout(butt_layout)
-        v_butt_layout.addLayout(butt_layout2)
+        v_butt_layout.addLayout(self.butt_layout)
+        v_butt_layout.addLayout(self.butt_layout2)
+        v_butt_layout.addLayout(self.butt_layout3)
         layout.addLayout(v_butt_layout)
-        # layout.addLayout(butt_layout)
+        # layout.addLayout(self.butt_layout)
         layout.addWidget(self.info_field)
         self.setLayout(layout)
         # noinspection PyArgumentList
@@ -116,12 +232,16 @@ class MeasurementWidget(QWidget):
         self.recalculate_append_button.setDisabled(disable)
         if disable:
             self.recalculate_button.setToolTip("Measurement profile contains mask measurements when mask is not loaded")
-            self.recalculate_append_button.setToolTip("Measurement profile contains mask measurements when mask is not loaded")
+            self.recalculate_append_button.setToolTip(
+                "Measurement profile contains mask measurements when mask is not loaded")
         else:
             self.recalculate_button.setToolTip("")
             self.recalculate_append_button.setToolTip("")
 
     def copy_to_clipboard(self):
+        self.clip.setText(self.measurements_storage.get_copy(
+            slice(None), slice(None), self.horizontal_measurement_present.isChecked(), True))
+        return
         s = ""
         for r in range(self.info_field.rowCount()):
             for c in range(self.info_field.columnCount()):
@@ -134,11 +254,22 @@ class MeasurementWidget(QWidget):
         self.clip.setText(s)
 
     def replace_measurement_result(self):
-        self.measurement_add_shift = 0
-        self.info_field.setRowCount(0)
-        self.info_field.setColumnCount(0)
-        self.previous_profile = None
+        self.measurements_storage.clear()
+        self.previous_profile = ""
         self.append_measurement_result()
+
+    def refresh_view(self):
+        self.info_field.clear()
+        save_orientation = self.horizontal_measurement_present.isChecked()
+        columns, rows = self.measurements_storage.get_size(save_orientation)
+        self.info_field.setColumnCount(columns)
+        self.info_field.setRowCount(rows)
+        self.info_field.setHorizontalHeaderLabels(self.measurements_storage.get_header(save_orientation))
+        self.info_field.setVerticalHeaderLabels(self.measurements_storage.get_rows(save_orientation))
+        for x in range(rows):
+            for y in range(columns):
+                self.info_field.setItem(
+                    x, y, QTableWidgetItem(self.measurements_storage.get_val_as_str(x, y, save_orientation)))
 
     def horizontal_changed(self):
         rows = self.info_field.rowCount()
@@ -174,7 +305,6 @@ class MeasurementWidget(QWidget):
         full_mask = self.settings.full_segmentation
         base_mask = self.settings.mask
         units = self.units_choose.get_value()
-        units_name = str(units)
 
         def exception_hook(exception):
             QMessageBox.warning(self, "Calculation error", f"Error during calculation: {exception}")
@@ -187,7 +317,6 @@ class MeasurementWidget(QWidget):
                 return
             kwargs[f"channel+{num}"] = self.settings.image.get_channel(num)
 
-
         thread = ExecuteFunctionThread(compute_class.calculate, [channel, segmentation, full_mask, base_mask,
                                                                  self.settings.image.spacing, units], kwargs)
         dial = WaitingDialog(thread, "Measurement calculation", exception_hook=exception_hook)
@@ -195,60 +324,15 @@ class MeasurementWidget(QWidget):
         stat = thread.result
         if stat is None:
             return
-        if self.no_header.isChecked() or self.previous_profile == compute_class.name:
-            self.measurement_add_shift -= 1
-        if self.no_units.isChecked():
-            header_grow = self.measurement_add_shift - 1
-        else:
-            header_grow = self.measurement_add_shift
-        if self.horizontal_measurement_present.isChecked():
-            ver_headers = [self.info_field.verticalHeaderItem(x).text() for x in range(self.info_field.rowCount())]
-            self.info_field.setRowCount(3 + header_grow)
-            self.info_field.setColumnCount(max(len(stat), self.info_field.columnCount()))
-            if not self.no_header.isChecked() and (self.previous_profile != compute_class.name):
-                ver_headers.append("Name")
-            ver_headers.extend(["Value"])
-            if not self.no_units.isChecked():
-                ver_headers.append("Units")
-            self.info_field.setVerticalHeaderLabels(ver_headers)
-            self.info_field.setHorizontalHeaderLabels([str(x) for x in range(len(stat))])
-            for i, (key, (val, unit)) in enumerate(stat.items()):
-                if not self.no_header.isChecked() and (self.previous_profile != compute_class.name):
-                    self.info_field.setItem(self.measurement_add_shift + 0, i, QTableWidgetItem(key))
-                self.info_field.setItem(self.measurement_add_shift + 1, i, QTableWidgetItem(str(val)))
-                if not self.no_units.isChecked():
-                    try:
-                        self.info_field.setItem(self.measurement_add_shift + 2, i,
-                                                QTableWidgetItem(str(unit)))
-                    except KeyError as k:
-                        print(k, sys.stderr)
-        else:
-            hor_headers = [self.info_field.horizontalHeaderItem(x).text() for x in range(self.info_field.columnCount())]
-            self.info_field.setRowCount(max(len(stat), self.info_field.rowCount()))
-            self.info_field.setColumnCount(3 + header_grow)
-            self.info_field.setVerticalHeaderLabels([str(x) for x in range(len(stat))])
-            if not self.no_header.isChecked() and (self.previous_profile != compute_class.name):
-                hor_headers.append("Name")
-            hor_headers.extend(["Value"])
-            if not self.no_units.isChecked():
-                hor_headers.append("Units")
-            self.info_field.setHorizontalHeaderLabels(hor_headers)
-            for i, (key, (val, unit)) in enumerate(stat.items()):
-                # print(i, key, val)
-                if not self.no_header.isChecked() and (self.previous_profile != compute_class.name):
-                    self.info_field.setItem(i, self.measurement_add_shift + 0, QTableWidgetItem(key))
-                self.info_field.setItem(i, self.measurement_add_shift + 1, QTableWidgetItem(str(val)))
-                if not self.no_units.isChecked():
-                    try:
-                        self.info_field.setItem(i, self.measurement_add_shift + 2,
-                                                QTableWidgetItem(str(unit)))
-                    except KeyError as k:
-                        print(k, file=sys.stderr)
-        if self.no_units.isChecked():
-            self.measurement_add_shift -= 1
-        self.measurement_add_shift += 3
+        if self.file_names.get_value() == FileNamesEnum.Short:
+            stat["File name"] = os.path.basename(self.settings.image_path), ""
+        elif self.file_names.get_value() == FileNamesEnum.Full:
+            stat["File name"] = self.settings.image_path, ""
+        self.measurements_storage.add_measurements(
+            stat, (not self.no_header.isChecked()) and (self.previous_profile != compute_class.name),
+            not self.no_units.isChecked())
         self.previous_profile = compute_class.name
-        self.info_field.resizeColumnsToContents()
+        self.refresh_view()
 
     def keyPressEvent(self, e):
         if e.modifiers() & Qt.ControlModifier:
@@ -269,15 +353,15 @@ class MeasurementWidget(QWidget):
 
     def update_measurement_list(self):
         self.measurement_type.blockSignals(True)
-        avali = list(sorted(self.settings.measurement_profiles.keys()))
+        available = list(sorted(self.settings.measurement_profiles.keys()))
         text = self.measurement_type.currentText()
         try:
-            index = avali.index(text) + 1
+            index = available.index(text) + 1
         except ValueError:
             index = 0
         self.measurement_type.clear()
         self.measurement_type.addItem("<none>")
-        self.measurement_type.addItems(avali)
+        self.measurement_type.addItems(available)
         self.measurement_type.setCurrentIndex(index)
         self.measurement_type.blockSignals(False)
 
@@ -288,3 +372,17 @@ class MeasurementWidget(QWidget):
         if event.type() == QEvent.WindowActivate:
             self.update_measurement_list()
         return super().event(event)
+
+    @staticmethod
+    def _move_widgets(widgets_list: List[Tuple[QWidget, int]], layout1: QBoxLayout, layout2: QBoxLayout):
+        for el in widgets_list:
+            layout1.removeWidget(el[0])
+            layout2.addWidget(el[0], el[1])
+
+    def resizeEvent(self, a0: QResizeEvent) -> None:
+        if self.width() < 700 and self.butt_layout2.count() == 0:
+            self._move_widgets([(self.file_names_label, 1), (self.file_names, 1), (self.copy_button, 2)],
+                               self.butt_layout, self.butt_layout2)
+        elif self.width() > 700 and self.butt_layout2.count() != 0:
+            self._move_widgets([(self.file_names_label, 1), (self.file_names, 1), (self.copy_button, 2)],
+                               self.butt_layout2, self.butt_layout)

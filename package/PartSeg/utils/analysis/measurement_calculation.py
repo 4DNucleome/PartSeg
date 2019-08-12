@@ -163,7 +163,7 @@ class MeasurementProfile(object):
         return 1
 
     def calculate(self, channel: np.ndarray, segmentation: np.ndarray, full_mask: np.ndarray, mask: np.ndarray,
-                  voxel_size, result_units: Units, range_changed=None, step_changed=None, **kwargs):
+                  voxel_size, result_units: Units, range_changed=None, step_changed=None, **kwargs) -> dict:
         if range_changed is None:
             range_changed = empty_fun
         if step_changed is None:
