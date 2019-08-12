@@ -3,8 +3,7 @@ import os
 from enum import Enum
 from typing import List, Tuple, Dict, Any
 
-import numpy as np
-from PyQt5.QtGui import QResizeEvent
+from qtpy.QtGui import QResizeEvent, QKeyEvent
 from qtpy.QtCore import Qt, QEvent
 from qtpy.QtWidgets import QWidget, QPushButton, QCheckBox, QComboBox, QTableWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QApplication, QTableWidgetItem, QMessageBox, QBoxLayout
@@ -139,6 +138,7 @@ class MeasurementWidget(QWidget):
         self.recalculate_append_button = QPushButton("Recalculate and\n append measurement", self)
         self.recalculate_append_button.clicked.connect(self.append_measurement_result)
         self.copy_button = QPushButton("Copy to clipboard", self)
+        self.copy_button.setToolTip("You cacn copy also with 'Ctrl+C'. To get raw copy copy with 'Ctrl+Shit+C'")
         self.horizontal_measurement_present = QCheckBox("Horizontal view", self)
         self.no_header = QCheckBox("No header", self)
         self.no_units = QCheckBox("No units", self)
@@ -242,16 +242,6 @@ class MeasurementWidget(QWidget):
         self.clip.setText(self.measurements_storage.get_copy(
             slice(None), slice(None), self.horizontal_measurement_present.isChecked(), True))
         return
-        s = ""
-        for r in range(self.info_field.rowCount()):
-            for c in range(self.info_field.columnCount()):
-                try:
-                    s += str(self.info_field.item(r, c).text()) + "\t"
-                except AttributeError:
-                    s += "\t"
-                    logging.info("Copy problem")
-            s = s[:-1] + "\n"  # eliminate last '\t'
-        self.clip.setText(s)
 
     def replace_measurement_result(self):
         self.measurements_storage.clear()
@@ -270,26 +260,6 @@ class MeasurementWidget(QWidget):
             for y in range(columns):
                 self.info_field.setItem(
                     x, y, QTableWidgetItem(self.measurements_storage.get_val_as_str(x, y, save_orientation)))
-
-    def horizontal_changed(self):
-        rows = self.info_field.rowCount()
-        columns = self.info_field.columnCount()
-        ob_array = np.zeros((rows, columns), dtype=object)
-        for x in range(rows):
-            for y in range(columns):
-                field = self.info_field.item(x, y)
-                if field is not None:
-                    ob_array[x, y] = field.text()
-
-        hor_headers = [self.info_field.horizontalHeaderItem(x).text() for x in range(columns)]
-        ver_headers = [self.info_field.verticalHeaderItem(x).text() for x in range(rows)]
-        self.info_field.setColumnCount(rows)
-        self.info_field.setRowCount(columns)
-        self.info_field.setHorizontalHeaderLabels(ver_headers)
-        self.info_field.setVerticalHeaderLabels(hor_headers)
-        for x in range(rows):
-            for y in range(columns):
-                self.info_field.setItem(y, x, QTableWidgetItem(ob_array[x, y]))
 
     def append_measurement_result(self):
         try:
@@ -334,22 +304,15 @@ class MeasurementWidget(QWidget):
         self.previous_profile = compute_class.name
         self.refresh_view()
 
-    def keyPressEvent(self, e):
+    def keyPressEvent(self, e: QKeyEvent):
         if e.modifiers() & Qt.ControlModifier:
             selected = self.info_field.selectedRanges()
 
             if e.key() == Qt.Key_C:  # copy
-                s = ""
-
-                for r in range(selected[0].topRow(), selected[0].bottomRow() + 1):
-                    for c in range(selected[0].leftColumn(), selected[0].rightColumn() + 1):
-                        try:
-                            s += str(self.info_field.item(r, c).text()) + "\t"
-                        except AttributeError:
-                            s += "\t"
-                            logging.info("Copy problem")
-                    s = s[:-1] + "\n"  # eliminate last '\t'
-                self.clip.setText(s)
+                self.clip.setText(self.measurements_storage.get_copy(
+                    slice(selected[0].topRow(), selected[0].bottomRow() + 1),
+                    slice(selected[0].leftColumn(), selected[0].rightColumn() + 1),
+                    self.horizontal_measurement_present.isChecked(), not (e.modifiers() & Qt.ShiftModifier)))
 
     def update_measurement_list(self):
         self.measurement_type.blockSignals(True)
