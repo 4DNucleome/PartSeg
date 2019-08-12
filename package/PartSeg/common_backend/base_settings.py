@@ -55,7 +55,9 @@ class ImageSettings(QObject):
     @property
     def image_spacing(self):
         """:py:meth:`Image.spacing` proxy"""
-        return self._image.spacing
+        if self._image is not None:
+            return self._image.spacing
+        return ()
 
     def is_image_2d(self):
         """:py:meth:`Image.is_2d` proxy"""
@@ -116,7 +118,15 @@ class ImageSettings(QObject):
 
     @property
     def image_path(self):
-        return self._image.file_path
+        if self.image is not None:
+            return self._image.file_path
+        return ""
+
+    @property
+    def image_shape(self):
+        if self.image is not None:
+            return self._image.shape
+        return ()
 
     @image_path.setter
     def image_path(self, value):
