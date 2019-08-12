@@ -72,6 +72,7 @@ class CalculationProcess(object):
             self.algorithm_parameters = project_tuple.algorithm_parameters
         else:
             raise ValueError("Unknown file type: {} {}".format(ext, calculation.file_path))
+        # TODO add support for loading mask project.
         self.iterate_over(calculation.calculation_plan.execution_tree)
         return path.relpath(calculation.file_path, calculation.base_prefix), self.measurement
 

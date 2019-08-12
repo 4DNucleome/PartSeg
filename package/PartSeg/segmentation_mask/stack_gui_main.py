@@ -30,7 +30,7 @@ from ..common_gui.universal_gui_part import right_label
 from ..common_gui.waiting_dialog import ExecuteFunctionDialog
 from ..utils.segmentation.algorithm_base import SegmentationResult
 from ..utils.universal_const import UNIT_SCALE, Units
-from ..common_backend.main_window import BaseMainWindow
+from ..common_backend.main_window import BaseMainWindow, BaseMainMenu
 from PartSeg.common_backend.progress_thread import ExecuteFunctionThread
 from PartSeg.utils.mask.algorithm_description import mask_algorithm_dict
 from .stack_settings import StackSettings, get_mask
@@ -45,16 +45,15 @@ import PartSegData
 CONFIG_FOLDER = os.path.join(state_store.save_folder, "mask")
 
 
-class MainMenu(QWidget):
+class MainMenu(BaseMainMenu):
     image_loaded = Signal()
 
-    def __init__(self, settings):
+    def __init__(self, settings, main_window):
         """
         :type settings: StackSettings
         :param settings:
         """
-        super().__init__()
-        self.settings = settings
+        super().__init__(settings, main_window)
         self.segmentation_cache = None
         self.read_thread = None
         self.advanced_window = None
@@ -118,33 +117,6 @@ class MainMenu(QWidget):
         if execute_dialog.exec():
             result = execute_dialog.get_result()
             self.set_data(result)
-
-    def set_data(self, result):
-        if result is None:
-            return
-        if isinstance(result.image, Image):
-            image = self.settings.verify_image(result.image, False)
-            if not image:
-                return
-            if not isinstance(image, Image):
-                image = result.image
-            if image.is_time:
-                if image.is_stack:
-                    QMessageBox.warning(
-                        self, "Not supported", "Data that are time data are currently not supported")
-                    return
-                else:
-                    res = QMessageBox.question(
-                        self, "Not supported",
-                        "Time data are currently not supported. Maybe You would like to treat time as z-stack",
-                        QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-
-                    if res == QMessageBox.Yes:
-                        image = image.swap_time_and_stack()
-                    else:
-                        return
-            result = result._replace(image=image)
-        self.settings.set_project_data(result, False)
 
     def set_image(self, image: Image) -> bool:
         if image is None:
@@ -525,7 +497,7 @@ class AlgorithmOptions(QWidget):
     def segmentation(self, val):
         self.settings.segmentation = val
 
-    def image_changed(self):
+    def _image_changed(self):
         self.settings.segmentation = None
         self.choose_components.set_chose([], [])
 
@@ -735,7 +707,7 @@ class MainWindow(BaseMainWindow):
     def __init__(self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None,
                  initial_image=None):
         super().__init__(config_folder, title, settings, signal_fun)
-        self.main_menu = MainMenu(self.settings)
+        self.main_menu = MainMenu(self.settings, self)
         self.channel_control = ChannelProperty(self.settings, start_name="channelcontrol")
         self.image_view = StackImageView(self.settings, self.channel_control, name="channelcontrol")
         self.image_view.setMinimumWidth(450)
@@ -811,16 +783,7 @@ class MainWindow(BaseMainWindow):
         self.settings.dump()
 
     def read_drop(self, paths):
-        ext_set = set([os.path.splitext(x)[1] for x in paths])
-        for load_class in io_functions.load_dict.values():
-            if load_class.partial() or load_class.number_of_files() != len(paths):
-                continue
-            if ext_set.issubset(load_class.get_extensions()):
-                dial = ExecuteFunctionDialog(load_class.load, [paths])
-                if dial.exec():
-                    self.main_menu.set_data(dial.get_result())
-                return
-        QMessageBox.information(self, "No method", f"No  methods for load files: " + ",".join(paths))
+        self._read_drop(paths, io_functions)
 
     def image_adjust_exec(self):
         dial = ImageAdjustmentDialog(self.settings.image)

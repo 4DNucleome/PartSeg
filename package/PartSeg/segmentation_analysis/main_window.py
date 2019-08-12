@@ -24,7 +24,7 @@ from ..common_gui.waiting_dialog import WaitingDialog, ExecuteFunctionDialog
 from ..common_gui.multiple_file_widget import MultipleFileWidget
 from ..utils.mask_create import calculate_mask, MaskProperty
 from ..utils.segmentation.algorithm_base import SegmentationResult
-from ..common_backend.main_window import BaseMainWindow
+from ..common_backend.main_window import BaseMainWindow, BaseMainMenu
 from .advanced_window import SegAdvancedWindow
 from .batch_window import BatchWindow
 from .calculation_pipeline_thread import CalculatePipelineThread
@@ -128,7 +128,6 @@ class Options(QWidget):
         else:
             self._settings.set_segmentation_to_compare(None)
             self.compare_btn.setText("Compare")
-
 
     def calculation_finished(self):
         self.execute_btn.setDisabled(self.interactive_use.isChecked())
@@ -335,17 +334,15 @@ class Options(QWidget):
         self.hide_left_panel_chk.setChecked(self._settings.get_from_profile("hide_left_panel", False))
 
 
-class MainMenu(QWidget):
+class MainMenu(BaseMainMenu):
     def __init__(self, settings: PartSettings, main_window):
-        super().__init__()
-        self._settings = settings
+        super().__init__(settings, main_window)
         self.open_btn = QPushButton("Open")
         self.save_btn = QPushButton("Save")
         self.advanced_btn = QPushButton("Settings and Measurement")
         self.image_adjust_btn = QPushButton("Image adjustments")
         self.mask_manager_btn = QPushButton("Mask manager")
         self.batch_processing_btn = QPushButton("Batch Processing")
-        self.main_window: MainWindow = main_window
 
         layout = QHBoxLayout()
         layout.setSpacing(0)
@@ -381,20 +378,20 @@ class MainMenu(QWidget):
         super().keyPressEvent(event)
 
     def save_file(self):
-        base_values = self._settings.get("save_parameters", dict())
+        base_values = self.settings.get("save_parameters", dict())
         dial = SaveDialog(save_dict, system_widget=False, base_values=base_values,
-                          history=self._settings.get_path_history())
-        dial.selectFile(os.path.splitext(os.path.basename(self._settings.image_path))[0])
-        dial.setDirectory(self._settings.get("io.save_directory", self._settings.get("io.open_directory",
-                                                                                     str(Path.home()))))
-        dial.selectNameFilter(self._settings.get("io.save_filter", ""))
+                          history=self.settings.get_path_history())
+        dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0])
+        dial.setDirectory(self.settings.get("io.save_directory", self.settings.get("io.open_directory",
+                                                                                   str(Path.home()))))
+        dial.selectNameFilter(self.settings.get("io.save_filter", ""))
         if dial.exec():
             save_location, selected_filter, save_class, values = dial.get_result()
-            project_info = self._settings.get_project_info()
-            self._settings.set("io.save_filter", selected_filter)
+            project_info = self.settings.get_project_info()
+            self.settings.set("io.save_filter", selected_filter)
             save_dir = os.path.dirname(save_location)
-            self._settings.set("io.save_directory", save_dir)
-            self._settings.add_path_history(save_dir)
+            self.settings.set("io.save_directory", save_dir)
+            self.settings.add_path_history(save_dir)
             base_values[selected_filter] = values
 
             def exception_hook(exception):
@@ -411,24 +408,23 @@ class MainMenu(QWidget):
                                           exception_hook=exception_hook)
             dial2.exec()
 
-
     def image_adjust_exec(self):
-        dial = ImageAdjustmentDialog(self._settings.image)
+        dial = ImageAdjustmentDialog(self.settings.image)
         if dial.exec():
             algorithm = dial.result_val.algorithm
             dial2 = ExecuteFunctionDialog(algorithm.transform, [],
-                                          {"image": self._settings.image, "arguments": dial.result_val.values}
+                                          {"image": self.settings.image, "arguments": dial.result_val.values}
                                           )
             if dial2.exec():
                 result: Image = dial2.get_result()
-                self._settings.set_project_info(ProjectTuple(result.file_path, result))
+                self.settings.set_project_info(ProjectTuple(result.file_path, result))
         return
 
     def mask_manager(self):
-        if self._settings.segmentation is None:
+        if self.settings.segmentation is None:
             QMessageBox.information(self, "No segmentation", "Cannot create mask without segmentation")
             return
-        dial = MaskWindow(self._settings)
+        dial = MaskWindow(self.settings)
         dial.exec_()
 
     def load_data(self):
@@ -454,17 +450,17 @@ class MainMenu(QWidget):
                 raise exception
 
         try:
-            dial = CustomLoadDialog(load_functions.load_dict, history=self._settings.get_path_history())
-            dial.setDirectory(self._settings.get("io.open_directory", str(Path.home())))
-            dial.selectNameFilter(self._settings.get("io.open_filter", next(iter(load_functions.load_dict.keys()))))
+            dial = CustomLoadDialog(load_functions.load_dict, history=self.settings.get_path_history())
+            dial.setDirectory(self.settings.get("io.open_directory", str(Path.home())))
+            dial.selectNameFilter(self.settings.get("io.open_filter", next(iter(load_functions.load_dict.keys()))))
             if dial.exec_():
                 result = dial.get_result()
-                self._settings.set("io.open_filter", result.selected_filter)
+                self.settings.set("io.open_filter", result.selected_filter)
                 load_dir = os.path.dirname(result.load_location[0])
-                self._settings.set("io.open_directory", load_dir)
-                self._settings.add_path_history(load_dir)
+                self.settings.set("io.open_directory", load_dir)
+                self.settings.add_path_history(load_dir)
                 dial2 = ExecuteFunctionDialog(result.load_class.load, [result.load_location],
-                                              {"metadata": {"default_spacing": self._settings.image_spacing}},
+                                              {"metadata": {"default_spacing": self.settings.image_spacing}},
                                               exception_hook=exception_hook)
                 if dial2.exec():
                     result = dial2.get_result()
@@ -473,23 +469,6 @@ class MainMenu(QWidget):
         except ValueError as e:
             QMessageBox.warning(self, "Open error", "{}".format(e))
 
-    def set_data(self, data):
-        if isinstance(data, ProjectTuple):
-            if data.errors != "":
-                resp = QMessageBox.question(self, "Load problem", f"During load data "
-                f"some problems occur: {data.errors}."
-                "Do you would like to try load it anyway?",
-                                            QMessageBox.Yes | QMessageBox.No)
-                if resp == QMessageBox.No:
-                    return
-            image = self._settings.verify_image(data.image, False)
-            if image:
-                if isinstance(image, Image):
-                    data = data._replace(image=image)
-            else:
-                return
-        self._settings.set_project_info(data)
-
     def batch_window(self):
         if self.main_window.batch_window is not None:
             if self.main_window.batch_window.isVisible():
@@ -497,7 +476,7 @@ class MainMenu(QWidget):
             else:
                 self.main_window.batch_window.show()
         else:
-            self.main_window.batch_window = BatchWindow(self._settings)
+            self.main_window.batch_window = BatchWindow(self.settings)
             self.main_window.batch_window.show()
 
     def advanced_window_show(self):
@@ -717,16 +696,7 @@ class MainWindow(BaseMainWindow):
         self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
 
     def read_drop(self, paths):
-        ext_set = set([os.path.splitext(x)[1] for x in paths])
-        for load_class in load_functions.load_dict.values():
-            if load_class.partial() or load_class.number_of_files() != len(paths):
-                continue
-            if ext_set.issubset(load_class.get_extensions()):
-                dial = ExecuteFunctionDialog(load_class.load, [paths])
-                if dial.exec():
-                    self.main_menu.set_data(dial.get_result())
-                return
-        QMessageBox.information(self, "No method", f"No  methods for load files: " + ",".join(paths))
+        self._read_drop(paths, load_functions)
 
     def reload(self):
         self.options_panel.algorithm_choose_widget.reload(algorithm_description.analysis_algorithm_dict)

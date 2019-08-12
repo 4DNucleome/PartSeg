@@ -93,6 +93,12 @@ class StackSettings(BaseSettings):
         # self.blockSignals(signals)
         state = self.get_project_info()
         # TODO Remove repetition this and set_segmentation code
+
+        components = np.unique(data.segmentation)
+        if components[0] == 0:
+            components = components[1:]
+        for i in components:
+            _skip = data.segmentation_parameters[i]
         if self.keep_chosen_components:
             state2 = self.transform_state(state, data.segmentation, data.segmentation_parameters,
                                           data.chosen_components, self.keep_chosen_components)

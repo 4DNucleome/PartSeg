@@ -1,14 +1,48 @@
 from typing import List, Optional, Type
 
 from qtpy.QtGui import QShowEvent, QDragEnterEvent, QDropEvent
-from qtpy.QtWidgets import QMainWindow, QMessageBox
+from qtpy.QtWidgets import QMainWindow, QMessageBox, QWidget
 from qtpy.QtCore import Signal
 import os
 
 from PartSeg.common_gui.about_dialog import AboutDialog
 from PartSeg.common_gui.show_directory_dialog import DirectoryDialog
 from PartSeg.common_backend.load_backup import import_config
+from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
+from PartSeg.utils.io_utils import ProjectInfoBase
+from PartSegImage import Image
 from .base_settings import BaseSettings
+
+
+class BaseMainMenu(QWidget):
+    def __init__(self, settings: BaseSettings, main_window):
+        super().__init__()
+        self.settings = settings
+        self.main_window = main_window
+
+    def set_data(self, data):
+        if isinstance(data, list):
+            if hasattr(self.main_window, "multiple_files"):
+                self.main_window.multiple_files.add_states(data)
+                self.main_window.multiple_files.setVisible(True)
+                self.settings.set("multiple_files", True)
+            data = data[0]
+        if isinstance(data, ProjectInfoBase):
+            if data.errors != "":
+                resp = QMessageBox.question(self, "Load problem", f"During load data "
+                                                                  f"some problems occur: {data.errors}."
+                                                                  "Do you would like to try load it anyway?",
+                                            QMessageBox.Yes | QMessageBox.No)
+                if resp == QMessageBox.No:
+                    return
+            image = self._settings.verify_image(data.image, False)
+            if image:
+                if isinstance(image, Image):
+                    # noinspection PyProtectedMember
+                    data = data._replace(image=image)
+            else:
+                return
+        self.settings.set_project_info(data)
 
 
 class BaseMainWindow(QMainWindow):
@@ -72,6 +106,18 @@ class BaseMainWindow(QMainWindow):
     def read_drop(self, paths: List[str]):
         """Function to process loading files by drag and drop."""
         raise NotImplementedError()
+
+    def _read_drop(self, paths, load_module):
+        ext_set = set([os.path.splitext(x)[1] for x in paths])
+        for load_class in load_module.load_dict.values():
+            if load_class.partial() or load_class.number_of_files() != len(paths):
+                continue
+            if ext_set.issubset(load_class.get_extensions()):
+                dial = ExecuteFunctionDialog(load_class.load, [paths])
+                if dial.exec():
+                    self.main_menu.set_data(dial.get_result())
+                return
+        QMessageBox.information(self, "No method", f"No  methods for load files: " + ",".join(paths))
 
     def dropEvent(self, event: QDropEvent):
         """

@@ -2,7 +2,7 @@ import os
 import sys
 from pathlib import Path
 from functools import partial
-from typing import Dict
+from typing import Dict, List
 
 from qtpy.QtWidgets import QWidget, QPushButton, QTreeWidget, QGridLayout, QFileDialog, QCheckBox, QInputDialog, \
     QTreeWidgetItem, QMessageBox, QApplication, QMenu, QAction
@@ -50,7 +50,7 @@ class CustomTreeWidget(QTreeWidget):
     def set_show_compare(self, compare: bool):
         self.compare = compare
 
-    def mouseMoveEvent(self, QMouseEvent):
+    def mouseMoveEvent(self, _):
         QApplication.setOverrideCursor(Qt.ArrowCursor)
 
 
@@ -177,7 +177,7 @@ class MultipleFileWidget(QWidget):
         self.save_state_action(state, custom_name)
 
     def save_state_action(self, state: ProjectInfoBase, custom_name):
-        #TODO left elipsis
+        # TODO left elipsis
         # state: ProjectInfoBase = self.get_state()
         sub_dict = self.state_dict[state.file_path]
         name = f"state {self.state_dict_count[state.file_path]+1}"
@@ -277,6 +277,10 @@ class MultipleFileWidget(QWidget):
     def set_compare_in_context_menu(self, compare: bool):
         self.file_view.set_show_compare(compare)
 
+    def add_states(self, states: List[ProjectInfoBase]):
+        """add multiple states to widget"""
+        for el in states:
+            self.save_state_action(el, False)
 
 
 class MultipleLoadDialog(CustomLoadDialog):

@@ -11,6 +11,7 @@ import json
 from tifffile import TiffFile
 import packaging.version
 
+from PartSeg.utils.mask.io_functions import LoadSegmentationImage
 from PartSegImage import ImageReader
 from PartSeg.utils.analysis.calculation_plan import CalculationPlan, CalculationTree
 from PartSeg.utils.universal_const import Units, UNIT_SCALE
@@ -21,7 +22,7 @@ from .save_hooks import part_hook
 from ..io_utils import LoadBase, proxy_callback, check_segmentation_type, SegmentationType, WrongFileTypeException, \
     UpdateLoadedMetadataBase
 
-__all__ = ["LoadImage", "LoadImageMask", "LoadProject", "LoadMask", "load_dict"]
+__all__ = ["LoadImage", "LoadImageMask", "LoadProject", "LoadMask", "load_dict", "load_metadata"]
 
 
 def load_project(
@@ -208,6 +209,37 @@ class LoadMask(LoadBase):
         return True
 
 
+class LoadMaskSegmentation(LoadBase):
+    @classmethod
+    def get_name(cls):
+        return "mask project (*.seg *.tgz)"
+
+    @classmethod
+    def get_short_name(cls):
+        return "mask_project"
+
+    @classmethod
+    def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+             range_changed: typing.Callable[[int, int], typing.Any] = None,
+             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None) -> \
+            typing.List[ProjectTuple]:
+        data = LoadSegmentationImage.load(load_locations, range_changed, step_changed, metadata)
+        image = data.image
+        segmentation = data.segmentation
+        components = data.chosen_components
+        res = []
+        base, ext = os.path.splitext(load_locations[0])
+        path_template = base + "_component{}"+ext
+        for i in components:
+            seg = segmentation == i
+            if not np.any(seg):
+                continue
+            im = image.cut_image(segmentation == i, replace_mask=True)
+            im.file_path = path_template.format(i)
+            res.append(ProjectTuple(im.file_path, im, mask=im.mask))
+        return res
+
+
 class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
     json_hook = part_hook
 
@@ -266,4 +298,4 @@ def update_algorithm_dict(dkt):
     return res
 
 
-load_dict = Register(LoadImage, LoadImageMask, LoadProject, class_methods=LoadBase.need_functions)
+load_dict = Register(LoadImage, LoadImageMask, LoadProject, LoadMaskSegmentation, class_methods=LoadBase.need_functions)

@@ -4,7 +4,7 @@ import typing
 from pathlib import Path
 from typing import Iterator, Optional, Tuple
 import itertools
-from collections import MutableMapping
+from collections.abc import MutableMapping
 
 from qtpy.QtCore import QObject, Signal
 

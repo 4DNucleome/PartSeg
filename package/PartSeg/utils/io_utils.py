@@ -2,7 +2,6 @@ import json
 import os
 import re
 import typing
-import numpy as np
 from abc import ABC
 from datetime import datetime
 from enum import Enum
@@ -10,8 +9,10 @@ from io import BytesIO, StringIO
 from pathlib import Path
 from tarfile import TarInfo, TarFile
 
-from PartSegImage import Image
+import numpy as np
+
 from PartSeg.utils.json_hooks import profile_hook, ProfileDict
+from PartSegImage import Image
 from .algorithm_describe_base import AlgorithmDescribeBase, SegmentationProfile
 
 
@@ -67,6 +68,7 @@ class ProjectInfoBase:
 class SaveBase(AlgorithmDescribeBase, ABC):
     need_functions = ["save", "get_short_name", "get_name_with_suffix", "get_default_extension",
                       "need_segmentation", "need_mask"]
+
     @classmethod
     def get_short_name(cls):
         raise NotImplementedError()
@@ -108,7 +110,8 @@ class LoadBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
              range_changed: typing.Callable[[int, int], typing.Any] = None,
-             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
+             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None) -> \
+            typing.Union[ProjectInfoBase, typing.List[ProjectInfoBase]]:
         raise NotImplementedError()
 
     @classmethod
@@ -147,6 +150,7 @@ class LoadBase(AlgorithmDescribeBase, ABC):
 
 class UpdateLoadedMetadataBase:
     json_hook = staticmethod(profile_hook)
+
     @classmethod
     def load_json_data(cls, data: typing.Union[str, Path, typing.TextIO]):
         if isinstance(data, typing.TextIO):
