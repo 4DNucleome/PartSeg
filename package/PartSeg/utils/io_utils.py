@@ -112,6 +112,15 @@ class LoadBase(AlgorithmDescribeBase, ABC):
              range_changed: typing.Callable[[int, int], typing.Any] = None,
              step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None) -> \
             typing.Union[ProjectInfoBase, typing.List[ProjectInfoBase]]:
+        """
+        Function for load data
+
+        :param load_locations: list of files to load
+        :param range_changed: callback function for inform about number of steps to be done
+        :param step_changed:  callback function for report that single step has been done
+        :param metadata: additional information needed by function. Like default spacing for load image
+        :return: Project info or list of project info
+        """
         raise NotImplementedError()
 
     @classmethod
@@ -132,6 +141,7 @@ class LoadBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def number_of_files(cls):
+        """Number of files required for load method"""
         return 1
 
     @classmethod

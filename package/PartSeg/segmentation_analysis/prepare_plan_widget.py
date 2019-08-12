@@ -136,8 +136,8 @@ class FileMask(QWidget):
         super().__init__()
         self.select_type = QComboBox()
         self.select_type.addItems(["Suffix", "Replace", "Mapping file"])
-        self.values = ["", ("",""), ""]
-        self.first_text = QLineEdit()
+        self.values = ["_mask", ("",""), ""]
+        self.first_text = QLineEdit(self.values[0])
         self.second_text = QLineEdit()
         self.first_label = QLabel("Use suffix:")
         self.second_label = QLabel("Replace:")
@@ -260,7 +260,7 @@ class CreatePlan(QWidget):
 
         self.chanel_num = QSpinBox()
         self.choose_channel_for_measurements = QComboBox()
-        self.choose_channel_for_measurements.addItems(["Same as segmentation"] + [str(x) for x in range(MAX_CHANNEL_NUM)])
+        self.choose_channel_for_measurements.addItems(["Same as segmentation"] + [str(x+1) for x in range(MAX_CHANNEL_NUM)])
         self.units_choose = EnumComboBox(Units)
         self.units_choose.set_value(self.settings.get("units_value", Units.nm))
         self.chanel_num.setRange(0, 10)

@@ -49,10 +49,11 @@ class CalculationProcess(object):
         self.algorithm_parameters: dict = {}
         self.cleaned_channel: typing.Optional[np.ndarray] = None
 
-    def do_calculation(self, calculation):
+    def do_calculation(self, calculation: FileCalculation):
         """
-        :type calculation: FileCalculation
-        :param calculation:
+        Main function for calculation process
+
+        :param calculation: calculation to do.
         :return:
         """
         self.calculation = calculation
@@ -125,19 +126,14 @@ class CalculationProcess(object):
             self.mask = mask
             self.iterate_over(node)
             self.mask = old_mask
-        elif isinstance(node.operation, MaskSum):
+        elif isinstance(node.operation, (MaskSum, MaskIntersection)):
             old_mask = self.mask
             mask1 = self.mask_dict[node.operation.mask1]
             mask2 = self.mask_dict[node.operation.mask2]
-            mask = np.logical_or(mask1, mask2).astype(np.uint8)
-            self.mask = mask
-            self.iterate_over(node)
-            self.mask = old_mask
-        elif isinstance(node.operation, MaskIntersection):
-            old_mask = self.mask
-            mask1 = self.mask_dict[node.operation.mask1]
-            mask2 = self.mask_dict[node.operation.mask2]
-            mask = np.logical_and(mask1, mask2).astype(np.uint8)
+            if isinstance(node.operation, MaskSum):
+                mask = np.logical_or(mask1, mask2).astype(np.uint8)
+            else:
+                mask = np.logical_and(mask1, mask2).astype(np.uint8)
             self.mask = mask
             self.iterate_over(node)
             self.mask = old_mask

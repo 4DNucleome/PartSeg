@@ -175,7 +175,10 @@ class LoadSegmentationImage(LoadBase):
              step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None) \
             -> SegmentationTuple:
         seg = LoadSegmentation.load(load_locations)
-        base_file = seg.image
+        if len(load_locations) > 1:
+            base_file = load_locations[1]
+        else:
+            base_file = seg.image
         if base_file is None:
             raise IOError(f"base file for segmentation not defined")
         if os.path.isabs(base_file):
@@ -192,6 +195,7 @@ class LoadSegmentationImage(LoadBase):
             file_path, callback_function=partial(proxy_callback, range_changed, step_changed),
             default_spacing=metadata["default_spacing"])
         # noinspection PyProtectedMember
+        image.file_path = load_locations[0]
         return seg._replace(file_path=image.file_path, image=image)
 
 
@@ -207,7 +211,8 @@ class LoadImage(LoadBase):
     @classmethod
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
              range_changed: typing.Callable[[int, int], typing.Any] = None,
-             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
+             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None) ->\
+            SegmentationTuple:
         if metadata is None:
             metadata = {"default_spacing": [1, 1, 1]}
         image = ImageReader.read_image(

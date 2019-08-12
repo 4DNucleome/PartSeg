@@ -267,6 +267,13 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
                                            possible_values=double_threshold_dict, property_type=AlgorithmDescribeBase))
         fields.insert(3, AlgorithmProperty("sprawl_type", "Flow type", next(iter(sprawl_dict.keys())),
                                            possible_values=sprawl_dict, property_type=AlgorithmDescribeBase))
+        for i, el in enumerate(fields):
+            if el.name == "minimum_size":
+                index = i
+                break
+        else:
+            raise ValueError("No minimum size field")
+        fields[index] = AlgorithmProperty("minimum_size", "Minimum core size (px)", 8000, (0, 10 ** 6), 1000)
         return fields
 
     def get_info_text(self):
