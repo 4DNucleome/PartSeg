@@ -2,6 +2,8 @@ from abc import ABC
 from enum import Enum
 from typing import Dict, Optional, Union
 
+from sympy import symbols
+
 from ..universal_const import Units
 from ..algorithm_describe_base import AlgorithmDescribeNotFound, AlgorithmDescribeBase
 from ..channel_class import Channel
@@ -107,14 +109,16 @@ class Leaf(BaseSerializableClass):
             return method.get_units(ndim)**self.power
         return method.get_units(ndim)
 
+    def is_per_component(self):
+        return self.per_component == PerComponent.Yes
+
 
 class Node(BaseSerializableClass):
     left: Union['Node', Leaf]
     op: str
     right: Union['Node', Leaf]
 
-    # noinspection PyUnusedLocal
-    # noinspection PyMissingConstructor
+    # noinspection PyMissingConstructor, PyUnusedLocal
     def __init__(self, left: Union['Node', Leaf], op: str, right: Union['Node', Leaf]): ...
 
     def get_channel_num(self, measurement_dict: Dict[str, 'MeasurementMethodBase']):
@@ -136,6 +140,9 @@ class Node(BaseSerializableClass):
         if self.op == "/":
             return self.left.get_unit(ndim) / self.right.get_unit(ndim)
         raise ValueError(f"Unknown operator '{self.op}'")
+
+    def is_per_component(self):
+        return self.left.is_per_component() or self.right.is_per_component()
 
 
 class MeasurementEntry(BaseSerializableClass):
@@ -192,7 +199,7 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
         return Leaf(cls.text_info[0])
 
     @classmethod
-    def get_units(cls, ndim):
+    def get_units(cls, ndim) -> symbols:
         """Return units for measurement. They are shown to user"""
         raise NotImplementedError()
 

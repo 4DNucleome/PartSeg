@@ -185,7 +185,8 @@ class CalculationProcess(object):
                 channel = self.algorithm_parameters["values"][segmentation_class.get_channel_parameter_name()]
 
             image_channel = self.image.get_channel(channel)
-            measurement = \
+            # FIXME use additional information
+            measurement, _ = \
                 node.operation.statistic_profile.calculate(image_channel,
                                                            self.segmentation, self.full_segmentation,
                                                            self.mask, self.image.spacing,

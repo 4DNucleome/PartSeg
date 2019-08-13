@@ -1,4 +1,3 @@
-import logging
 import os
 from enum import Enum
 from typing import List, Tuple, Dict, Any
@@ -8,7 +7,7 @@ from qtpy.QtCore import Qt, QEvent
 from qtpy.QtWidgets import QWidget, QPushButton, QCheckBox, QComboBox, QTableWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QApplication, QTableWidgetItem, QMessageBox, QBoxLayout
 
-from PartSeg.utils.analysis.measurement_calculation import MeasurementProfile
+from PartSeg.utils.analysis.measurement_calculation import MeasurementProfile, ComponentsInfo
 from ..common_gui.universal_gui_part import ChannelComboBox, EnumComboBox
 from ..common_gui.waiting_dialog import WaitingDialog
 from .partseg_settings import PartSettings
@@ -46,7 +45,7 @@ class MeasurementsStorage:
         else:
             return len(self.header), self.max_rows
 
-    def add_measurements(self, data: Dict[str, Tuple[Any, str]], add_names, add_units):
+    def add_measurements(self, data: Dict[str, Tuple[Any, str]], component_mapping: ComponentsInfo, add_names, add_units):
         names = []
         values = []
         units = []
@@ -63,7 +62,7 @@ class MeasurementsStorage:
         if add_units:
             self.content.append(units)
             self.header.append("Units")
-        self.measurements.append((data, add_names, add_units))
+        self.measurements.append((data, component_mapping, add_names, add_units))
 
     def get_val_as_str(self, x: int, y: int, save_orientation: bool) -> str:
         """get value from given index"""
@@ -291,7 +290,7 @@ class MeasurementWidget(QWidget):
                                                                  self.settings.image.spacing, units], kwargs)
         dial = WaitingDialog(thread, "Measurement calculation", exception_hook=exception_hook)
         dial.exec()
-        stat = thread.result
+        stat, component_mapping = thread.result
         if stat is None:
             return
         if self.file_names.get_value() == FileNamesEnum.Short:
@@ -299,7 +298,7 @@ class MeasurementWidget(QWidget):
         elif self.file_names.get_value() == FileNamesEnum.Full:
             stat["File name"] = self.settings.image_path, ""
         self.measurements_storage.add_measurements(
-            stat, (not self.no_header.isChecked()) and (self.previous_profile != compute_class.name),
+            stat, component_mapping, (not self.no_header.isChecked()) and (self.previous_profile != compute_class.name),
             not self.no_units.isChecked())
         self.previous_profile = compute_class.name
         self.refresh_view()

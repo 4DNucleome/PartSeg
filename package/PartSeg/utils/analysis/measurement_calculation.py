@@ -1,12 +1,10 @@
 from __future__ import division
-import logging
 import sys
 import traceback
 from collections import OrderedDict
 from enum import Enum
 from functools import reduce
-# from math import pow
-from typing import NamedTuple, Optional, Dict, Callable, List
+from typing import NamedTuple, Optional, Dict, Callable, List, Any, Union, Tuple
 
 import SimpleITK as sitk
 import numpy as np
@@ -28,12 +26,22 @@ from ..utils import class_to_dict
 # TODO change image to channel in signature of measurment calculate_property
 
 
+class ProhibitedDivision(Exception):
+    pass
+
+
 class SettingsValue(NamedTuple):
     function: Callable
     help_message: str
     arguments: Optional[dict]
     is_component: bool
     default_area: Optional[AreaType] = None
+
+
+class ComponentsInfo(NamedTuple):
+    segmentation_components: np.ndarray
+    mask_components: np.ndarray
+    components_translation: Dict[int, List[int]]
 
 
 def empty_fun(_a0=None, _a1=None):
@@ -107,12 +115,17 @@ class MeasurementProfile(object):
         else:
             return self._is_component_measurement(node.left) or self._is_component_measurement(node.right)
 
-    def calculate_tree(self, node, help_dict, kwargs):
+    def calculate_tree(self, node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo,
+                       help_dict: dict, kwargs: dict) \
+            -> Tuple[Union[float, np.ndarray], symbols, AreaType]:
         """
-        :type node: Leaf | Node
-        :type help_dict: dict
-        :type kwargs: dict
-        :return: float
+        Main function for calculation tree of measurements. It is executed recursively
+
+        :param node: measurement to calculate
+        :param segmentation_mask_map: map from mask segmentation components to mask components. Needed for division
+        :param help_dict: dict to cache calculation result. It reduce recalculations of same measurements.
+        :param kwargs: additional info needed by measurements
+        :return: measurement value
         """
         if isinstance(node, Leaf):
             method = MEASUREMENT_DICT[node.name]
@@ -144,26 +157,91 @@ class MeasurementProfile(object):
                     kw['_cache'] = False
                     val = []
                     area_array = kw["area_array"]
-                    for i in np.unique(area_array)[1:]:
+                    components = np.unique(area_array)
+                    if components[0] == 0 or components[0] is None:
+                        components = components[1:]
+                    for i in components:
                         kw["area_array"] = area_array == i
                         val.append(method.calculate_property(**kw))
+                    val = np.array(val)
                 else:
                     val = method.calculate_property(**kw)
                 help_dict[hash_str] = val
-            unit = method.get_units(3) if kw["channel"].shape[0] > 1 else method.get_units(3)
+            unit: symbols = method.get_units(3) if kw["channel"].shape[0] > 1 else method.get_units(2)
             if node.power != 1:
-                return pow(val, node.power), pow(unit, node.power)
-            return val, unit
+                return pow(val, node.power), pow(unit, node.power), node.area
+            return val, unit, node.area
         elif isinstance(node, Node):
-            left_res, left_unit = self.calculate_tree(node.left, help_dict, kwargs)
-            right_res, right_unit = self.calculate_tree(node.right, help_dict, kwargs)
+            left_res, left_unit, left_area = \
+                self.calculate_tree(node.left, segmentation_mask_map, help_dict, kwargs)
+            right_res, right_unit, right_area = \
+                self.calculate_tree(node.right, segmentation_mask_map, help_dict, kwargs)
             if node.op == "/":
-                return left_res / right_res, left_unit / right_unit
-        logging.error("Wrong measurement: {}".format(node))
-        return 1
+                if isinstance(left_res, np.ndarray) and isinstance(right_res, np.ndarray) and left_area != right_area:
+                    area_set = {left_area, right_area}
+                    if area_set == {AreaType.Segmentation, AreaType.Mask_without_segmentation}:
+                        raise ProhibitedDivision("This division is prohibited")
+                    if area_set == {AreaType.Segmentation, AreaType.Mask}:
+                        res = []
+                        for val, num in zip(left_res, segmentation_mask_map.segmentation_components):
+                            div_vals = segmentation_mask_map.components_translation[num]
+                            if len(div_vals) != 1:
+                                raise ProhibitedDivision("Cannot calculate when object do not belongs to one mask area")
+                            if left_area == AreaType.Segmentation:
+                                res.append(val/div_vals[0])
+                            else:
+                                res.append(div_vals[0]/val)
+                        return np.array(res), left_unit / right_unit, AreaType.Segmentation
+                    left_area = AreaType.Mask_without_segmentation
 
-    def calculate(self, channel: np.ndarray, segmentation: np.ndarray, full_mask: np.ndarray, mask: np.ndarray,
-                  voxel_size, result_units: Units, range_changed=None, step_changed=None, **kwargs) -> dict:
+                return left_res / right_res, left_unit / right_unit, left_area
+        raise ValueError("Wrong measurement: {}".format(node))
+
+    @staticmethod
+    def get_segmentation_to_mask_component(segmentation: np.ndarray, mask: Optional[np.ndarray]) \
+            -> ComponentsInfo:
+        """
+        Calculate map from segmentation component num to mask component num
+
+        :param segmentation: numpy array with segmentation labeled as positive integers
+        :param mask: numpy array with mask labeled as positive integer
+        :return: map
+        """
+        components = np.unique(segmentation)
+        if components[0] == 0 or components[0] is None:
+            components = components[1:]
+        mask_components = np.unique(mask)
+        if mask_components[0] == 0 or mask_components[0] is None:
+            mask_components = mask_components[1:]
+        res = OrderedDict()
+        if mask is None:
+            res = {i: [] for i in components}
+        elif mask.max() == 1:
+            res = {i: [1] for i in components}
+        else:
+            for num in components:
+                res[num] = list(np.unique(mask[segmentation == num]))
+        return ComponentsInfo(components, mask_components, res)
+
+    def calculate(self, channel: np.ndarray, segmentation: np.ndarray, full_mask: np.ndarray,
+                  mask: Optional[np.ndarray], voxel_size, result_units: Units,
+                  range_changed: Callable[[int, int], Any] = None,
+                  step_changed: Callable[[int], Any] = None, **kwargs) -> \
+            Tuple[Dict[str, Tuple[Union[float, list], str]], ComponentsInfo]:
+        """
+        Calculate measurements on given set of parameters
+
+        :param channel: main channel on which measurements should be calculated
+        :param segmentation: array with segmentation labeled as positive
+        :param full_mask:
+        :param mask:
+        :param voxel_size:
+        :param result_units:
+        :param range_changed: callback function to set information about steps range
+        :param step_changed: callback function fo set information about steps done
+        :param kwargs: additional data required by measurements. Ex additional channels
+        :return: measurements
+        """
         if range_changed is None:
             range_changed = empty_fun
         if step_changed is None:
@@ -173,6 +251,7 @@ class MeasurementProfile(object):
         result = OrderedDict()
         channel = channel.astype(np.float)
         help_dict = dict()
+        segmentation_mask_map = self.get_segmentation_to_mask_component(segmentation, mask)
         result_scalar = UNIT_SCALE[result_units.value]
         kw = {"channel": channel, "segmentation": segmentation, "mask": mask, "full_segmentation": full_mask,
               "voxel_size": voxel_size, "result_scalar": result_scalar}
@@ -194,18 +273,20 @@ class MeasurementProfile(object):
             step_changed(i)
             tree, user_name = el.calculation_tree, el.name
             try:
-                val, unit = self.calculate_tree(tree, help_dict, kw)
+                val, unit, _area = self.calculate_tree(tree, segmentation_mask_map, help_dict, kw)
+                if isinstance(val, np.ndarray):
+                    val = list(val)
                 result[self.name_prefix + user_name] = val, str(unit).format(str(result_units))
             except ZeroDivisionError:
                 result[self.name_prefix + user_name] = "Div by zero", ""
-            except TypeError as e:
-                print(e, file=sys.stderr)
+            except TypeError:
                 print(traceback.print_exc(), file=sys.stderr)
                 result[self.name_prefix + user_name] = "None div", ""
-            except AttributeError as e:
-                print(e, file=sys.stderr)
+            except AttributeError:
                 result[self.name_prefix + user_name] = "No attribute", ""
-        return result
+            except ProhibitedDivision as e:
+                result[self.name_prefix + user_name] = e.args[0], ""
+        return result, segmentation_mask_map
 
 
 def calculate_main_axis(area_array: np.ndarray, channel: np.ndarray, voxel_size):
