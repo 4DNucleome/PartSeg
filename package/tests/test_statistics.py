@@ -9,7 +9,8 @@ from PartSeg.utils.analysis import load_metadata
 from PartSeg.utils.analysis.measurement_calculation import Diameter, PixelBrightnessSum, Volume, ComponentsNumber, \
     MaximumPixelBrightness, MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness, \
     StandardDeviationOfPixelBrightness, MomentOfInertia, LongestMainAxisLength, MiddleMainAxisLength, \
-    ShortestMainAxisLength, Surface, RimVolume, RimPixelBrightnessSum, MeasurementProfile, Sphericity, DistanceMaskSegmentation, DistancePoint
+    ShortestMainAxisLength, Surface, RimVolume, RimPixelBrightnessSum, MeasurementProfile, Sphericity, \
+    DistanceMaskSegmentation, DistancePoint, ComponentsInfo, MeasurementResult
 from PartSeg.utils.analysis.measurement_base import Node, MeasurementEntry, PerComponent, AreaType
 from PartSeg.utils.autofit import density_mass_center
 from PartSeg.utils.universal_const import UNIT_SCALE, Units
@@ -516,7 +517,7 @@ class TestSurface:
 class TestRimVolume:
     def test_cube(self):
         image = get_cube_image()
-        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
@@ -530,7 +531,7 @@ class TestRimVolume:
 
     def test_square(self):
         image = get_square_image()
-        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
@@ -544,7 +545,7 @@ class TestRimVolume:
 
     def test_scale(self):
         image = get_cube_image()
-        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
@@ -557,7 +558,7 @@ class TestRimVolume:
                                             units=Units.nm) == np.count_nonzero(mask3) * 100 * 50 ** 2
 
         image = get_square_image()
-        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
@@ -587,7 +588,7 @@ class TestRimVolume:
 class TestRimPixelBrightnessSum:
     def test_cube(self):
         image = get_cube_image()
-        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
@@ -600,7 +601,7 @@ class TestRimPixelBrightnessSum:
 
     def test_square(self):
         image = get_square_image()
-        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
@@ -803,7 +804,7 @@ class TestDistanceMaskSegmentation:
 class TestStatisticProfile:
     def test_cube_volume_area_type(self):
         image = get_cube_image()
-        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
         mask = (image.get_channel(0)[0] > 40).astype(np.uint8)
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
@@ -818,14 +819,14 @@ class TestStatisticProfile:
                                                                per_component=PerComponent.No))
         ]
         profile = MeasurementProfile("statistic", statistics)
-        result, _ = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
+        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
                                    voxel_size=image.voxel_size, result_units=Units.µm)
         tot_vol, seg_vol, rim_vol = list(result.values())
         assert isclose(tot_vol[0], seg_vol[0] + rim_vol[0])
 
     def test_cube_pixel_sum_area_type(self):
         image = get_cube_image()
-        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
         mask = (image.get_channel(0)[0] > 40).astype(np.uint8)
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
@@ -841,14 +842,14 @@ class TestStatisticProfile:
                                                                            per_component=PerComponent.No))
         ]
         profile = MeasurementProfile("statistic", statistics)
-        result, _ = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
+        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
                                    voxel_size=image.voxel_size, result_units=Units.µm)
         tot_vol, seg_vol, rim_vol = list(result.values())
         assert isclose(tot_vol[0], seg_vol[0] + rim_vol[0])
 
     def test_cube_surface_area_type(self):
         image = get_cube_image()
-        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
         mask = (image.get_channel(0)[0] > 40).astype(np.uint8)
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
@@ -863,14 +864,14 @@ class TestStatisticProfile:
                                                                 per_component=PerComponent.No))
         ]
         profile = MeasurementProfile("statistic", statistics)
-        result, _ = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
+        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
                                    voxel_size=image.voxel_size, result_units=Units.µm)
         tot_vol, seg_vol, rim_vol = list(result.values())
         assert isclose(tot_vol[0] + seg_vol[0], rim_vol[0])
 
     def test_cube_density(self):
         image = get_cube_image()
-        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
         mask = (image.get_channel(0)[0] > 40).astype(np.uint8)
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
@@ -918,7 +919,7 @@ class TestStatisticProfile:
 
         ]
         profile = MeasurementProfile("statistic", statistics)
-        result, _ = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
+        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
                                    voxel_size=image.voxel_size, result_units=Units.µm)
         values = list(result.values())
         for i in range(3):
@@ -927,7 +928,7 @@ class TestStatisticProfile:
 
     def test_cube_volume_power(self):
         image = get_cube_image()
-        image.set_spacing([x / UNIT_SCALE[Units.nm.value] for x in image.spacing])
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
         mask = (image.get_channel(0)[0] > 40).astype(np.uint8)
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
@@ -936,7 +937,7 @@ class TestStatisticProfile:
                              Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)),
             MeasurementEntry("Mask Volume power 2",
                              Volume.get_starting_leaf().replace_(area=AreaType.Mask,
-                                                               per_component=PerComponent.No, power=2)),
+                                                                 per_component=PerComponent.No, power=2)),
             MeasurementEntry("Mask Volume 2",
                              Node(
                                Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No,
@@ -944,13 +945,13 @@ class TestStatisticProfile:
                                "/",
                                Volume.get_starting_leaf().replace_(area=AreaType.Mask,
                                                                    per_component=PerComponent.No)
-                           )),
+                              )),
             MeasurementEntry("Mask Volume power -1",
                              Volume.get_starting_leaf().replace_(area=AreaType.Mask,
-                                                               per_component=PerComponent.No, power=-1)),
+                                                                 per_component=PerComponent.No, power=-1)),
         ]
         profile = MeasurementProfile("statistic", statistics)
-        result, _ = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
+        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
                                    voxel_size=image.voxel_size, result_units=Units.µm)
         vol1, vol2, vol3, vol4 = list(result.values())
         assert isclose(vol1[0], vol3[0])
@@ -974,8 +975,8 @@ class TestStatisticProfile:
                 area=AreaType.Segmentation, per_component=PerComponent.Yes)),
             MeasurementEntry("MaximumPixelBrightness", MaximumPixelBrightness.get_starting_leaf().replace_(
                 area=AreaType.Segmentation, per_component=PerComponent.No)),
-            MeasurementEntry("MaximumPixelBrightness per component", MaximumPixelBrightness.get_starting_leaf().replace_(
-                area=AreaType.Segmentation, per_component=PerComponent.Yes)),
+            MeasurementEntry("MaximumPixelBrightness per component", MaximumPixelBrightness.get_starting_leaf().
+                             replace_(area=AreaType.Segmentation, per_component=PerComponent.Yes)),
             MeasurementEntry("Sphericity", Sphericity.get_starting_leaf().replace_(
                 area=AreaType.Segmentation, per_component=PerComponent.No)),
             MeasurementEntry("Sphericity per component", Sphericity.get_starting_leaf().replace_(
@@ -987,7 +988,7 @@ class TestStatisticProfile:
         ]
 
         profile = MeasurementProfile("statistic", statistics)
-        result, _ = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
+        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
                                    voxel_size=image.voxel_size, result_units=Units.nm)
         assert result["Volume"][0] == result["Volume per component"][0][0] + result["Volume per component"][0][1]
         assert len(result["Diameter per component"][0]) == 2
@@ -1004,7 +1005,7 @@ class TestStatisticProfile:
         assert result["LongestMainAxisLength per component"][0][1] == 26 * 50 * UNIT_SCALE[Units.nm.value]
 
     def test_all_variants(self):
-        " This test check if all calculations finished, not values"
+        """ This test check if all calculations finished, not values. """
         file_path = os.path.join(os.path.dirname(__file__), "test_data", "measurements_profile.json")
         profile = load_metadata(file_path)["all_statistic"]
         image = get_two_components_image()
@@ -1012,8 +1013,142 @@ class TestStatisticProfile:
         segmentation = np.zeros(mask.shape, dtype=np.uint8)
         segmentation[image.get_channel(0)[0] == 50] = 1
         segmentation[image.get_channel(0)[0] == 60] = 2
-        result, _ = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
+        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
                                    voxel_size=image.voxel_size, result_units=Units.nm)
         names = set([x.name for x in profile.chosen_fields])
         assert names == set(result.keys())
 
+
+# noinspection DuplicatedCode
+class TestMeasurementResult:
+    def test_simple(self):
+        info = ComponentsInfo(np.arange(0), np.arange(0), dict())
+        storage = MeasurementResult(info)
+        storage["aa"] = 1, "", (PerComponent.No, AreaType.Segmentation)
+        storage["bb"] = 5, "np", (PerComponent.No, AreaType.Segmentation)
+        assert list(storage.keys()) == ["aa", "bb"]
+        assert list(storage.values()) == [(1, ""), (5, "np")]
+        assert storage.get_separated() == [[1, 5]]
+        assert storage.get_labels() == ["aa", "bb"]
+        storage.set_filename("test.tif")
+        assert list(storage.keys()) == ["File name", "aa", "bb"]
+        assert list(storage.values()) == [("test.tif", ""), (1, ""), (5, "np")]
+        assert storage.get_separated() == [["test.tif", 1, 5]]
+        assert storage.get_labels() == ["File name", "aa", "bb"]
+
+    def test_simple2(self):
+        info = ComponentsInfo(np.arange(1, 5), np.arange(1, 5), {i: [i] for i in range(1, 5)})
+        storage = MeasurementResult(info)
+        storage["aa"] = 1, "", (PerComponent.No, AreaType.Segmentation)
+        storage["bb"] = 5, "np", (PerComponent.No, AreaType.Segmentation)
+        assert list(storage.keys()) == ["aa", "bb"]
+        assert list(storage.values()) == [(1, ""), (5, "np")]
+        assert storage.get_separated() == [[1, 5]]
+        assert storage.get_labels() == ["aa", "bb"]
+        storage.set_filename("test.tif")
+        assert list(storage.keys()) == ["File name", "aa", "bb"]
+        assert list(storage.values()) == [("test.tif", ""), (1, ""), (5, "np")]
+        assert storage.get_separated() == [["test.tif", 1, 5]]
+        assert storage.get_labels() == ["File name", "aa", "bb"]
+
+    def test_segmentation_components(self):
+        info = ComponentsInfo(np.arange(1, 3), np.arange(0), {1: [], 2: []})
+        storage = MeasurementResult(info)
+        storage["aa"] = 1, "", (PerComponent.No, AreaType.Segmentation)
+        storage["bb"] = [4, 5], "np", (PerComponent.Yes, AreaType.Segmentation)
+        assert list(storage.keys()) == ["aa", "bb"]
+        assert list(storage.values()) == [(1, ""), ([4, 5], "np")]
+        assert storage.get_separated() == [[1, 1, 4], [2, 1, 5]]
+        assert storage.get_labels() == ["Segmentation component", "aa", "bb"]
+        storage.set_filename("test.tif")
+        assert list(storage.keys()) == ["File name", "aa", "bb"]
+        assert list(storage.values()) == [("test.tif", ""), (1, ""), ([4, 5], "np")]
+        assert storage.get_separated() == [["test.tif", 1, 1, 4], ["test.tif", 2, 1, 5]]
+        assert storage.get_labels() == ["File name", "Segmentation component", "aa", "bb"]
+        storage["cc"] = [11, 3], "np", (PerComponent.Yes, AreaType.Segmentation)
+        assert list(storage.keys()) == ["File name", "aa", "bb", "cc"]
+        assert list(storage.values()) == [("test.tif", ""), (1, ""), ([4, 5], "np"), ([11, 3], "np")]
+        assert storage.get_separated() == [["test.tif", 1, 1, 4, 11], ["test.tif", 2, 1, 5, 3]]
+        assert storage.get_labels() == ["File name", "Segmentation component", "aa", "bb", "cc"]
+
+    def test_mask_components(self):
+        info = ComponentsInfo(np.arange(1, 2), np.arange(1, 3), {1: [], 2: []})
+        storage = MeasurementResult(info)
+        storage["aa"] = 1, "", (PerComponent.No, AreaType.Segmentation)
+        storage["bb"] = [4, 5], "np", (PerComponent.Yes, AreaType.Mask)
+        assert list(storage.keys()) == ["aa", "bb"]
+        assert list(storage.values()) == [(1, ""), ([4, 5], "np")]
+        assert storage.get_labels() == ["Mask component", "aa", "bb"]
+        assert storage.get_separated() == [[1, 1, 4], [2, 1, 5]]
+        storage.set_filename("test.tif")
+        assert list(storage.keys()) == ["File name", "aa", "bb"]
+        assert list(storage.values()) == [("test.tif", ""), (1, ""), ([4, 5], "np")]
+        assert storage.get_separated() == [["test.tif", 1, 1, 4], ["test.tif", 2, 1, 5]]
+        assert storage.get_labels() == ["File name", "Mask component", "aa", "bb"]
+        storage["cc"] = [11, 3], "np", (PerComponent.Yes, AreaType.Mask_without_segmentation)
+        assert list(storage.keys()) == ["File name", "aa", "bb", "cc"]
+        assert list(storage.values()) == [("test.tif", ""), (1, ""), ([4, 5], "np"), ([11, 3], "np")]
+        assert storage.get_separated() == [["test.tif", 1, 1, 4, 11], ["test.tif", 2, 1, 5, 3]]
+        assert storage.get_labels() == ["File name", "Mask component", "aa", "bb", "cc"]
+
+    def test_mask_segmentation_components(self):
+        info = ComponentsInfo(np.arange(1, 3), np.arange(1, 3), {1: [1], 2: [2]})
+        storage = MeasurementResult(info)
+        storage["aa"] = 1, "", (PerComponent.No, AreaType.Segmentation)
+        storage["bb"] = [4, 5], "np", (PerComponent.Yes, AreaType.Segmentation)
+        assert list(storage.keys()) == ["aa", "bb"]
+        assert list(storage.values()) == [(1, ""), ([4, 5], "np")]
+        assert storage.get_separated() == [[1, 1, 4], [2, 1, 5]]
+        assert storage.get_labels() == ["Segmentation component", "aa", "bb"]
+        storage.set_filename("test.tif")
+        assert list(storage.keys()) == ["File name", "aa", "bb"]
+        assert list(storage.values()) == [("test.tif", ""), (1, ""), ([4, 5], "np")]
+        assert storage.get_separated() == [["test.tif", 1, 1, 4], ["test.tif", 2, 1, 5]]
+        assert storage.get_labels() == ["File name", "Segmentation component", "aa", "bb"]
+        storage["cc"] = [11, 3], "np", (PerComponent.Yes, AreaType.Mask)
+        assert list(storage.keys()) == ["File name", "aa", "bb", "cc"]
+        assert list(storage.values()) == [("test.tif", ""), (1, ""), ([4, 5], "np"), ([11, 3], "np")]
+        assert storage.get_separated() == [["test.tif", 1, 1, 1, 4, 11], ["test.tif", 2, 2, 1, 5, 3]]
+        assert storage.get_labels() == ["File name", "Segmentation component", "Mask component", "aa", "bb", "cc"]
+
+    def test_mask_segmentation_components2(self):
+        info = ComponentsInfo(np.arange(1, 4), np.arange(1, 3), {1: [1], 2: [2], 3: [1]})
+        storage = MeasurementResult(info)
+        storage["aa"] = 1, "", (PerComponent.No, AreaType.Segmentation)
+        storage["bb"] = [4, 5, 6], "np", (PerComponent.Yes, AreaType.Segmentation)
+        assert list(storage.keys()) == ["aa", "bb"]
+        assert list(storage.values()) == [(1, ""), ([4, 5, 6], "np")]
+        assert storage.get_separated() == [[1, 1, 4], [2, 1, 5], [3, 1, 6]]
+        assert storage.get_labels() == ["Segmentation component", "aa", "bb"]
+        storage.set_filename("test.tif")
+        assert list(storage.keys()) == ["File name", "aa", "bb"]
+        assert list(storage.values()) == [("test.tif", ""), (1, ""), ([4, 5, 6], "np")]
+        assert storage.get_separated() == [["test.tif", 1, 1, 4], ["test.tif", 2, 1, 5], ["test.tif", 3, 1, 6]]
+        assert storage.get_labels() == ["File name", "Segmentation component", "aa", "bb"]
+        storage["cc"] = [11, 3], "np", (PerComponent.Yes, AreaType.Mask)
+        assert list(storage.keys()) == ["File name", "aa", "bb", "cc"]
+        assert list(storage.values()) == [("test.tif", ""), (1, ""), ([4, 5, 6], "np"), ([11, 3], "np")]
+        assert storage.get_separated() == [["test.tif", 1, 1, 1, 4, 11], ["test.tif", 2, 2, 1, 5, 3],
+                                           ["test.tif", 3, 1, 1, 6, 11]]
+        assert storage.get_labels() == ["File name", "Segmentation component", "Mask component", "aa", "bb", "cc"]
+
+    def test_mask_segmentation_components3(self):
+        info = ComponentsInfo(np.arange(1, 4), np.arange(1, 3), {1: [1], 2: [2], 3: [1, 2]})
+        storage = MeasurementResult(info)
+        storage["aa"] = 1, "", (PerComponent.No, AreaType.Segmentation)
+        storage["bb"] = [4, 5, 6], "np", (PerComponent.Yes, AreaType.Segmentation)
+        assert list(storage.keys()) == ["aa", "bb"]
+        assert list(storage.values()) == [(1, ""), ([4, 5, 6], "np")]
+        assert storage.get_separated() == [[1, 1, 4], [2, 1, 5], [3, 1, 6]]
+        assert storage.get_labels() == ["Segmentation component", "aa", "bb"]
+        storage.set_filename("test.tif")
+        assert list(storage.keys()) == ["File name", "aa", "bb"]
+        assert list(storage.values()) == [("test.tif", ""), (1, ""), ([4, 5, 6], "np")]
+        assert storage.get_separated() == [["test.tif", 1, 1, 4], ["test.tif", 2, 1, 5], ["test.tif", 3, 1, 6]]
+        assert storage.get_labels() == ["File name", "Segmentation component", "aa", "bb"]
+        storage["cc"] = [11, 3], "np", (PerComponent.Yes, AreaType.Mask)
+        assert list(storage.keys()) == ["File name", "aa", "bb", "cc"]
+        assert list(storage.values()) == [("test.tif", ""), (1, ""), ([4, 5, 6], "np"), ([11, 3], "np")]
+        assert storage.get_separated() == [["test.tif", 1, 1, 1, 4, 11], ["test.tif", 2, 2, 1, 5, 3],
+                                           ["test.tif", 3, 1, 1, 6, 11], ["test.tif", 3, 2, 1, 6, 3]]
+        assert storage.get_labels() == ["File name", "Segmentation component", "Mask component", "aa", "bb", "cc"]

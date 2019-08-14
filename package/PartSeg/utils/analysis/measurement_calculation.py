@@ -4,7 +4,7 @@ import traceback
 from collections import OrderedDict
 from enum import Enum
 from functools import reduce
-from typing import NamedTuple, Optional, Dict, Callable, List, Any, Union, Tuple
+from typing import NamedTuple, Optional, Dict, Callable, List, Any, Union, Tuple, MutableMapping, Iterator
 
 import SimpleITK as sitk
 import numpy as np
@@ -48,6 +48,120 @@ def empty_fun(_a0=None, _a1=None):
     pass
 
 
+MeasurementValueType = Union[float, List[float], str]
+MeasurementResultType = Tuple[MeasurementValueType, str]
+MeasurementResultInputType = Tuple[MeasurementValueType, str, Tuple[PerComponent, AreaType]]
+
+
+class MeasurementResult(MutableMapping[str, MeasurementResultType]):
+    """
+    Class for storage measurements info.
+    """
+    def __init__(self, components_info: ComponentsInfo):
+        self.components_info = components_info
+        self._data_dict = OrderedDict()
+        self._units_dict: Dict[str, str] = dict()
+        self._type_dict: Dict[str, Tuple[PerComponent, AreaType]] = dict()
+
+    def __setitem__(self, k: str, v: MeasurementResultInputType) -> None:
+
+        self._data_dict[k] = v[0]
+        self._units_dict[k] = v[1]
+        self._type_dict[k] = v[2]
+        if k == "File name":
+            self._data_dict.move_to_end("File name", False)
+
+    def __delitem__(self, v: str) -> None:
+        del self._data_dict[v]
+        del self._units_dict[v]
+        del self._type_dict[v]
+
+    def __getitem__(self, k: str) -> MeasurementResultType:
+        return self._data_dict[k], self._units_dict[k]
+
+    def __len__(self) -> int:
+        return len(self._data_dict)
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._data_dict)
+
+    def set_filename(self, path_fo_file: str):
+        """
+        Set name of file to be presented as first position.
+        """
+        self._data_dict["File name"] = path_fo_file
+        self._type_dict["File name"] = PerComponent.No, AreaType.Segmentation
+        self._units_dict["File name"] = ""
+        self._data_dict.move_to_end("File name", False)
+
+    def get_component_info(self) -> Tuple[bool, bool]:
+        """
+        Get information which type of components are in storage.
+
+        :return: has_mask_components, has_segmentation_components
+        """
+        has_mask_components = \
+            any([x == PerComponent.Yes and y != AreaType.Segmentation for x, y in self._type_dict.values()])
+        has_segmentation_components = \
+            any([x == PerComponent.Yes and y == AreaType.Segmentation for x, y in self._type_dict.values()])
+        return has_mask_components, has_segmentation_components
+
+    def get_labels(self) -> List[str]:
+        """Get labels for measurement. Base are keys of this storage.
+        If has mask components, or has segmentation_components then add this labels"""
+        has_mask_components, has_segmentation_components = self.get_component_info()
+        labels = list(self._data_dict.keys())
+        index = 1 if "File name" in self._data_dict else 0
+        if has_mask_components:
+            labels.insert(index, "Mask component")
+        if has_segmentation_components:
+            labels.insert(index, "Segmentation component")
+        return labels
+
+    def get_separated(self) -> List[List[MeasurementValueType]]:
+        has_mask_components, has_segmentation_components = self.get_component_info()
+        if not (has_mask_components or has_segmentation_components):
+            return [list(self._data_dict.values())]
+        if has_mask_components and has_segmentation_components:
+            translation = self.components_info.components_translation
+            component_info = [(x, y) for x in translation.keys() for y in translation[x]]
+        elif has_mask_components:
+            component_info = [(0, x) for x in self.components_info.mask_components]
+        else:
+            component_info = [(x, 0) for x in self.components_info.segmentation_components]
+        counts = len(component_info)
+        mask_to_pos = {val: i for i, val in enumerate(self.components_info.mask_components)}
+        segmentation_to_pos = {val: i for i, val in enumerate(self.components_info.segmentation_components)}
+        if "File name" in self._data_dict:
+            name = self._data_dict["File name"]
+            res = [[name] for _ in range(counts)]
+            iterator = iter(self._data_dict.keys())
+            next(iterator)
+        else:
+            res = [[] for _ in range(counts)]
+            iterator = iter(self._data_dict.keys())
+        if has_segmentation_components:
+            for i, num in enumerate(component_info):
+                res[i].append(num[0])
+        if has_mask_components:
+            for i, num in enumerate(component_info):
+                res[i].append(num[1])
+        for el in iterator:
+            per_comp, area_type = self._type_dict[el]
+            val = self._data_dict[el]
+            if per_comp == PerComponent.No:
+                for i in range(counts):
+                    res[i].append(val)
+            else:
+                if area_type == AreaType.Segmentation:
+                    for i, (seg, _mask) in enumerate(component_info):
+                        res[i].append(val[segmentation_to_pos[seg]])
+                else:
+                    for i, (_seg, mask) in enumerate(component_info):
+                        res[i].append(val[mask_to_pos[mask]])
+        return res
+
+
 class MeasurementProfile(object):
     PARAMETERS = ["name", "chosen_fields", "reversed_brightness", "use_gauss_image", "name_prefix"]
 
@@ -73,6 +187,25 @@ class MeasurementProfile(object):
             return tree.area == AreaType.Mask_without_segmentation
         else:
             return self.need_mask(tree.left) or self.need_mask(tree.right)
+
+    def _get_par_component_and_area_type(self, tree: Union[Node, Leaf]) -> Tuple[PerComponent, AreaType]:
+        if isinstance(tree, Leaf):
+            return tree.per_component, tree.area
+        else:
+            left_par, left_area = self._get_par_component_and_area_type(tree.left)
+            right_par, right_area = self._get_par_component_and_area_type(tree.left)
+            if PerComponent.Yes == left_par or PerComponent.Yes == right_par:
+                res_par = PerComponent.Yes
+            else:
+                res_par = PerComponent.No
+            area_set = {left_area, right_area}
+            if len(area_set) == 1:
+                res_area = area_set.pop()
+            elif AreaType.Segmentation in area_set:
+                res_area = AreaType.Segmentation
+            else:
+                res_area = AreaType.Mask_without_segmentation
+            return res_par, res_area
 
     def get_channels_num(self):
         resp = set()
@@ -157,9 +290,10 @@ class MeasurementProfile(object):
                     kw['_cache'] = False
                     val = []
                     area_array = kw["area_array"]
-                    components = np.unique(area_array)
-                    if components[0] == 0 or components[0] is None:
-                        components = components[1:]
+                    if area_type == AreaType.Segmentation:
+                        components = segmentation_mask_map.segmentation_components
+                    else:
+                        components = segmentation_mask_map.mask_components
                     for i in components:
                         kw["area_array"] = area_array == i
                         val.append(method.calculate_property(**kw))
@@ -226,8 +360,7 @@ class MeasurementProfile(object):
     def calculate(self, channel: np.ndarray, segmentation: np.ndarray, full_mask: np.ndarray,
                   mask: Optional[np.ndarray], voxel_size, result_units: Units,
                   range_changed: Callable[[int, int], Any] = None,
-                  step_changed: Callable[[int], Any] = None, **kwargs) -> \
-            Tuple[Dict[str, Tuple[Union[float, list], str]], ComponentsInfo]:
+                  step_changed: Callable[[int], Any] = None, **kwargs) -> MeasurementResult:
         """
         Calculate measurements on given set of parameters
 
@@ -248,10 +381,10 @@ class MeasurementProfile(object):
             step_changed = empty_fun
         if self._need_mask and mask is None:
             raise ValueError("measurement need mask")
-        result = OrderedDict()
         channel = channel.astype(np.float)
         help_dict = dict()
         segmentation_mask_map = self.get_segmentation_to_mask_component(segmentation, mask)
+        result = MeasurementResult(segmentation_mask_map)
         result_scalar = UNIT_SCALE[result_units.value]
         kw = {"channel": channel, "segmentation": segmentation, "mask": mask, "full_segmentation": full_mask,
               "voxel_size": voxel_size, "result_scalar": result_scalar}
@@ -272,21 +405,22 @@ class MeasurementProfile(object):
         for i, el in enumerate(self.chosen_fields):
             step_changed(i)
             tree, user_name = el.calculation_tree, el.name
+            component_and_area = self._get_par_component_and_area_type(tree)
             try:
                 val, unit, _area = self.calculate_tree(tree, segmentation_mask_map, help_dict, kw)
                 if isinstance(val, np.ndarray):
                     val = list(val)
-                result[self.name_prefix + user_name] = val, str(unit).format(str(result_units))
+                result[self.name_prefix + user_name] = val, str(unit).format(str(result_units)), component_and_area
             except ZeroDivisionError:
-                result[self.name_prefix + user_name] = "Div by zero", ""
+                result[self.name_prefix + user_name] = "Div by zero", "", component_and_area
             except TypeError:
                 print(traceback.print_exc(), file=sys.stderr)
-                result[self.name_prefix + user_name] = "None div", ""
+                result[self.name_prefix + user_name] = "None div", "", component_and_area
             except AttributeError:
-                result[self.name_prefix + user_name] = "No attribute", ""
+                result[self.name_prefix + user_name] = "No attribute", "", component_and_area
             except ProhibitedDivision as e:
-                result[self.name_prefix + user_name] = e.args[0], ""
-        return result, segmentation_mask_map
+                result[self.name_prefix + user_name] = e.args[0], "", component_and_area
+        return result
 
 
 def calculate_main_axis(area_array: np.ndarray, channel: np.ndarray, voxel_size):
