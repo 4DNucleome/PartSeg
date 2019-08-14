@@ -1,4 +1,5 @@
 import argparse
+import locale
 import sys
 import sentry_sdk
 import os
@@ -84,4 +85,5 @@ class CustomParser(argparse.ArgumentParser):
             sentry_sdk.init("https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302",
                             release="PartSeg@{}".format(PartSeg.__version__))
         sys.excepthook = my_excepthook
+        locale.setlocale(locale.LC_NUMERIC, '')
         return args

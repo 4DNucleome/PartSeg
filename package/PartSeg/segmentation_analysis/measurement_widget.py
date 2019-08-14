@@ -1,3 +1,4 @@
+import locale
 import os
 from enum import Enum
 from typing import List, Tuple
@@ -91,43 +92,10 @@ class MeasurementsStorage:
         sublist = self.content[x]
         if len(sublist) <= y:
             return ""
-        return str(sublist[y])
-
-    def get_copy(self, x: slice, y: slice, save_orientation: bool, expand_lists: bool) -> str:
-        if not save_orientation:
-            x, y = y, x
-        res = []
-        columns = self.content[x]
-        if not columns:
-            return ""
-        for sublist in columns:
-            data = sublist[y]
-            elements = set()
-            for el in data:
-                if isinstance(el, (list, tuple)):
-                    elements.add(len(el))
-            # FIXME case mask per component and segmentation per component
-            if len(elements) == 1 and expand_lists:
-                size = elements.pop()
-                sub_res = [[] for _ in range(size)]
-                for element in data:
-                    if isinstance(element, (list, tuple)):
-                        for i in range(size):
-                            sub_res[i].append(str(element[i]))
-                    else:
-                        for i in range(size):
-                            sub_res[i].append(str(element))
-                res.extend(sub_res)
-            else:
-                res.append([str(element) for element in data])
-        max_size = max([len(x) for x in res])
-        for el in res:
-            if len(el) < max_size:
-                el += ["" for _ in range(max_size - len(el))]
-        if save_orientation:
-            return "\n".join(["\t".join(el) for el in res])
-        else:
-            return "\n".join(["\t".join(el) for el in [*zip(*res)]])
+        val = sublist[y]
+        if isinstance(val, float):
+            return locale.str(val)
+        return str(val)
 
     def get_header(self, save_orientation: bool) -> List[str]:
         if save_orientation:
@@ -163,6 +131,7 @@ class MeasurementWidget(QWidget):
         self.expand_mode = QCheckBox("Expand", self)
         self.file_names = EnumComboBox(FileNamesEnum)
         self.file_names_label = QLabel("Add file name:")
+        self.file_names.currentIndexChanged.connect(self.refresh_view)
         self.horizontal_measurement_present.stateChanged.connect(self.refresh_view)
         self.expand_mode.stateChanged.connect(self.refresh_view)
         self.copy_button.clicked.connect(self.copy_to_clipboard)
@@ -259,9 +228,16 @@ class MeasurementWidget(QWidget):
             self.recalculate_append_button.setToolTip("")
 
     def copy_to_clipboard(self):
-        self.clip.setText(self.measurements_storage.get_copy(
-            slice(None), slice(None), self.horizontal_measurement_present.isChecked(), True))
-        return
+        s = ""
+        for r in range(self.info_field.rowCount()):
+            for c in range(self.info_field.columnCount()):
+                try:
+                    s += str(self.info_field.item(r, c).text()) + "\t"
+                except AttributeError:
+                    s += "\t"
+                    logging.info("Copy problem")
+            s = s[:-1] + "\n"  # eliminate last '\t'
+        self.clip.setText(s)
 
     def replace_measurement_result(self):
         self.measurements_storage.clear()
@@ -273,14 +249,27 @@ class MeasurementWidget(QWidget):
         self.info_field.clear()
         save_orientation = self.horizontal_measurement_present.isChecked()
         columns, rows = self.measurements_storage.get_size(save_orientation)
+        if self.file_names.get_value() == FileNamesEnum.No:
+            rows -= 1
+            shift = 1
+        else:
+            shift = 0
         self.info_field.setColumnCount(columns)
         self.info_field.setRowCount(rows)
         self.info_field.setHorizontalHeaderLabels(self.measurements_storage.get_header(save_orientation))
         self.info_field.setVerticalHeaderLabels(self.measurements_storage.get_rows(save_orientation))
-        for x in range(rows):
+        if self.file_names.get_value() == FileNamesEnum.Full:
             for y in range(columns):
                 self.info_field.setItem(
-                    x, y, QTableWidgetItem(self.measurements_storage.get_val_as_str(x, y, save_orientation)))
+                    0, y, QTableWidgetItem(self.measurements_storage.get_val_as_str(0, y, save_orientation)))
+        elif self.file_names.get_value() == FileNamesEnum.Short:
+            for y in range(columns):
+                self.info_field.setItem(0, y, QTableWidgetItem(
+                    os.path.basename(self.measurements_storage.get_val_as_str(0, y, save_orientation))))
+        for x in range(1, rows+shift):
+            for y in range(columns):
+                self.info_field.setItem(
+                    x-shift, y, QTableWidgetItem(self.measurements_storage.get_val_as_str(x, y, save_orientation)))
 
     def append_measurement_result(self):
         try:
@@ -315,10 +304,7 @@ class MeasurementWidget(QWidget):
         stat: MeasurementResult = thread.result
         if stat is None:
             return
-        if self.file_names.get_value() == FileNamesEnum.Short:
-            stat.set_filename(os.path.basename(self.settings.image_path))
-        elif self.file_names.get_value() == FileNamesEnum.Full:
-            stat.set_filename(self.settings.image_path)
+        stat.set_filename(self.settings.image_path)
         self.measurements_storage.add_measurements(
             stat, (not self.no_header.isChecked()) and (self.previous_profile != compute_class.name),
             not self.no_units.isChecked())
@@ -330,10 +316,17 @@ class MeasurementWidget(QWidget):
             selected = self.info_field.selectedRanges()
 
             if e.key() == Qt.Key_C:  # copy
-                self.clip.setText(self.measurements_storage.get_copy(
-                    slice(selected[0].topRow(), selected[0].bottomRow() + 1),
-                    slice(selected[0].leftColumn(), selected[0].rightColumn() + 1),
-                    self.horizontal_measurement_present.isChecked(), not (e.modifiers() & Qt.ShiftModifier)))
+                s = ""
+
+                for r in range(selected[0].topRow(), selected[0].bottomRow() + 1):
+                    for c in range(selected[0].leftColumn(), selected[0].rightColumn() + 1):
+                        try:
+                            s += str(self.info_field.item(r, c).text()) + "\t"
+                        except AttributeError:
+                            s += "\t"
+                            logging.info("Copy problem")
+                    s = s[:-1] + "\n"  # eliminate last '\t'
+                self.clip.setText(s)
 
     def update_measurement_list(self):
         self.measurement_type.blockSignals(True)
