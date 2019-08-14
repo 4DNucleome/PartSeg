@@ -97,7 +97,7 @@ setuptools.setup(
     long_description=readme(),
     long_description_content_type='text/markdown',
     #  scripts=[os.path.join("package", "scripts", "PartSeg")],
-    install_requires=['numpy', tifffile_string, 'appdirs', 'SimpleITK', 'scipy', 'QtPy', 'sentry_sdk==0.10.2',
+    install_requires=['numpy', tifffile_string, 'appdirs', 'SimpleITK', 'scipy', 'QtPy', 'sentry_sdk==0.11.0',
                       qt_string, 'deprecation', 'qtawesome', 'six', 'h5py', 'pandas', 'sympy', 'Cython', 'openpyxl',
                       'xlrd', 'PartSegData==0.9'],
     tests_require=["pytest", "pytest-qt"],
