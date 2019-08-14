@@ -62,6 +62,8 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         self._data_dict = OrderedDict()
         self._units_dict: Dict[str, str] = dict()
         self._type_dict: Dict[str, Tuple[PerComponent, AreaType]] = dict()
+        self._units_dict["Mask component"] = ""
+        self._units_dict["Segmentation component"] = ""
 
     def __setitem__(self, k: str, v: MeasurementResultInputType) -> None:
 
@@ -117,6 +119,9 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         if has_segmentation_components:
             labels.insert(index, "Segmentation component")
         return labels
+
+    def get_units(self) -> List[str]:
+        return [self._units_dict[x] for x in self.get_labels()]
 
     def get_separated(self) -> List[List[MeasurementValueType]]:
         has_mask_components, has_segmentation_components = self.get_component_info()

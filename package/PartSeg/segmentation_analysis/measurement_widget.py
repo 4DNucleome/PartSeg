@@ -30,13 +30,14 @@ class MeasurementsStorage:
         self.max_rows = 0
         self.content = []
         self.measurements = []
+        self.expand = False
 
     def clear(self):
         """clear storage"""
         self.header = []
         self.max_rows = 0
         self.content = []
-        self.measurements = []
+        self.measurements: List[MeasurementResult, bool , bool] = []
 
     def get_size(self, save_orientation: bool):
         if save_orientation:
@@ -44,24 +45,42 @@ class MeasurementsStorage:
         else:
             return len(self.header), self.max_rows
 
+    def change_expand(self, expand):
+        if self.expand != expand:
+            self.expand = expand
+            self.refresh()
+
+    def refresh(self):
+        self.header = []
+        self.content = []
+        self.max_rows = 0
+        for data, add_names, add_units in self.measurements:
+            if self.expand:
+                if add_names:
+                    self.content.append(data.get_labels())
+                    self.header.append("Name")
+                values = data.get_separated()
+                self.max_rows = max(self.max_rows, len(values[0]))
+                self.content.extend(values)
+                self.header.extend(["Value" for _ in range(len(values))])
+                if add_units:
+                    self.content.append(data.get_units())
+                    self.header.append("Units")
+            else:
+                if add_names:
+                    self.content.append(list(data.keys()))
+                    self.header.append("Name")
+                values, units =  zip(*list(data.values()))
+                self.max_rows = max(self.max_rows, len(values))
+                self.content.append(values)
+                self.header.append("Value")
+                if add_units:
+                    self.content.append(units)
+                    self.header.append("Units")
+
     def add_measurements(self, data: MeasurementResult, add_names, add_units):
-        names = []
-        values = []
-        units = []
-        for key, (value, unit) in data.items():
-            names.append(key)
-            values.append(value)
-            units.append(unit)
-        self.max_rows = max(self.max_rows, len(data))
-        if add_names:
-            self.content.append(names)
-            self.header.append("Name")
-        self.content.append(values)
-        self.header.append("Value")
-        if add_units:
-            self.content.append(units)
-            self.header.append("Units")
         self.measurements.append((data, add_names, add_units))
+        self.refresh()
 
     def get_val_as_str(self, x: int, y: int, save_orientation: bool) -> str:
         """get value from given index"""
@@ -141,9 +160,11 @@ class MeasurementWidget(QWidget):
         self.no_header = QCheckBox("No header", self)
         self.no_units = QCheckBox("No units", self)
         self.no_units.setChecked(True)
+        self.expand_mode = QCheckBox("Expand", self)
         self.file_names = EnumComboBox(FileNamesEnum)
         self.file_names_label = QLabel("Add file name:")
         self.horizontal_measurement_present.stateChanged.connect(self.refresh_view)
+        self.expand_mode.stateChanged.connect(self.refresh_view)
         self.copy_button.clicked.connect(self.copy_to_clipboard)
         self.measurement_type = QComboBox(self)
         # noinspection PyUnresolvedReferences
@@ -172,6 +193,7 @@ class MeasurementWidget(QWidget):
         self.butt_layout.addWidget(self.horizontal_measurement_present, 1)
         self.butt_layout.addWidget(self.no_header, 1)
         self.butt_layout.addWidget(self.no_units, 1)
+        self.butt_layout.addWidget(self.expand_mode, 1)
         self.butt_layout.addWidget(self.file_names_label)
         self.butt_layout.addWidget(self.file_names, 1)
         self.butt_layout.addWidget(self.copy_button, 2)
@@ -247,6 +269,7 @@ class MeasurementWidget(QWidget):
         self.append_measurement_result()
 
     def refresh_view(self):
+        self.measurements_storage.change_expand(self.expand_mode.isChecked())
         self.info_field.clear()
         save_orientation = self.horizontal_measurement_present.isChecked()
         columns, rows = self.measurements_storage.get_size(save_orientation)
@@ -341,9 +364,9 @@ class MeasurementWidget(QWidget):
             layout2.addWidget(el[0], el[1])
 
     def resizeEvent(self, a0: QResizeEvent) -> None:
-        if self.width() < 700 and self.butt_layout2.count() == 0:
+        if self.width() < 800 and self.butt_layout2.count() == 0:
             self._move_widgets([(self.file_names_label, 1), (self.file_names, 1), (self.copy_button, 2)],
                                self.butt_layout, self.butt_layout2)
-        elif self.width() > 700 and self.butt_layout2.count() != 0:
+        elif self.width() > 800 and self.butt_layout2.count() != 0:
             self._move_widgets([(self.file_names_label, 1), (self.file_names, 1), (self.copy_button, 2)],
                                self.butt_layout2, self.butt_layout)
