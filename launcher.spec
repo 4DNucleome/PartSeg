@@ -28,7 +28,8 @@ a = Analysis(['launch_partseg.py'],
              datas= [(os.path.join(data_path, x), y) for x,y in  [
                  ("static_files/icons/*", "PartSegData/static_files/icons"),
                  ("static_files/initial_images/*", "PartSegData/static_files/initial_images"),
-                 ("static_files/colors.npz", "PartSegData/static_files/")]] +
+                 ("static_files/colors.npz", "PartSegData/static_files/"),
+                 ("fonts/*", "PartSegData/fonts/")]] +
                     [(os.path.join(base_path, "plugins/itk_snap_save/__init__.py"),"PartSeg/plugins/itk_snap_save")],
              hiddenimports=hiddenimports + ['numpy.core._dtype_ctypes', 'sentry_sdk.integrations.logging',
                                             'sentry_sdk.integrations.stdlib', 'sentry_sdk.integrations.excepthook',

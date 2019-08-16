@@ -2,11 +2,14 @@ import argparse
 import sys
 import logging
 from functools import partial
+import os
+import multiprocessing
+from qtpy.QtGui import QFontDatabase
 
 from PartSegImage import ImageReader
+from PartSegData import font_dir
 from .custom_application import CustomApplication
 from PartSeg.common_backend.base_argparser import CustomParser
-import multiprocessing
 
 multiprocessing.freeze_support()
 
@@ -31,6 +34,7 @@ def main():
     logging.basicConfig(level=logging.INFO)
     my_app = CustomApplication(sys.argv)
     my_app.check_release()
+    id = QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf"))
     if args.gui == "segmentation_analysis" or args.mf:
         from . import plugins
         plugins.register()

@@ -12,7 +12,7 @@ openpyxl==2.6.2
 packaging==19.1
 pandas==0.25.0
 PartSeg==0.9.3.post2
-PartSegData==0.9
+PartSegData==0.9.4
 pyparsing==2.4.2
 PyQt5==5.13.0
 PyQt5-sip==4.19.18
