@@ -23,5 +23,13 @@ def test_segmentation_import():
     except ImportError:
         pytest.fail("Error in importing mask segmentation ui")
 
+
+def test_core_application():
+    try:
+        import PartSeg.custom_application.application
+    except ImportError:
+        pytest.fail("Error in importing custom application")
+
+
 def test_version_string():
     assert isinstance(packaging.version.parse(PartSeg.__version__), packaging.version.Version)

@@ -3,6 +3,7 @@
 block_cipher = None
 import sys
 import os
+import platform
 sys.setrecursionlimit(5000)
 sys.path.append(os.path.dirname('__file__'))
 
@@ -20,23 +21,30 @@ if num == '0':
 else:
     hiddenimports = ["imagecodecs._imagecodecs"]
 
+if platform.system() == "Windows":
+    import PyQt5
+    qt_path = os.path.dirname(PyQt5.__file__)
+    qt_data = [(os.path.join(qt_path, "Qt", "bin", "Qt5Core.dll"), os.path.join("PyQt5", "Qt", "bin"))]
+else:
+    qt_data = []
+
 # print(["plugins." + x.name for x in plugins.get_plugins()])
 
 a = Analysis(['launch_partseg.py'],
              # pathex=['C:\\Users\\Grzegorz\\Documents\\segmentation-gui\\PartSeg'],
              binaries=[],
-             datas= [(os.path.join(data_path, x), y) for x,y in  [
+             datas = [(os.path.join(data_path, x), y) for x, y in [
                  ("static_files/icons/*", "PartSegData/static_files/icons"),
                  ("static_files/initial_images/*", "PartSegData/static_files/initial_images"),
                  ("static_files/colors.npz", "PartSegData/static_files/"),
-                 ("fonts/*", "PartSegData/fonts/")]] +
-                    [(os.path.join(base_path, "plugins/itk_snap_save/__init__.py"),"PartSeg/plugins/itk_snap_save")],
-             hiddenimports=hiddenimports + ['numpy.core._dtype_ctypes', 'sentry_sdk.integrations.logging',
-                                            'sentry_sdk.integrations.stdlib', 'sentry_sdk.integrations.excepthook',
-                                            'sentry_sdk.integrations.dedupe', 'sentry_sdk.integrations.atexit',
-                                            'sentry_sdk.integrations.modules', 'sentry_sdk.integrations.argv',
-                                            'sentry_sdk.integrations.threading', 'numpy.random.common',
-                                            'numpy.random.bounded_integers', 'numpy.random.entropy'],
+                 ("fonts/*", "PartSegData/fonts/")]] + qt_data +
+                     [(os.path.join(base_path, "plugins/itk_snap_save/__init__.py"), "PartSeg/plugins/itk_snap_save")],
+             hiddenimports=hiddenimports + [
+                 'numpy.core._dtype_ctypes', 'sentry_sdk.integrations.logging', 'sentry_sdk.integrations.stdlib',
+                 'sentry_sdk.integrations.excepthook','sentry_sdk.integrations.dedupe', 'sentry_sdk.integrations.atexit'
+                 , 'sentry_sdk.integrations.modules', 'sentry_sdk.integrations.argv',
+                 'sentry_sdk.integrations.threading', 'numpy.random.common', 'numpy.random.bounded_integers',
+                 'numpy.random.entropy'],
              # + ["plugins." + x.name for x in plugins.get_plugins()],
              hookspath=[],
              runtime_hooks=[],
@@ -65,6 +73,3 @@ coll = COLLECT(exe,
                strip=False,
                upx=True,
                name='PartSeg')
-
-
-""""""

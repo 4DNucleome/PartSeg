@@ -4,7 +4,7 @@ import logging
 from functools import partial
 import os
 import multiprocessing
-from qtpy.QtGui import QFontDatabase
+from qtpy.QtGui import QFontDatabase, QGuiApplication
 
 from PartSegImage import ImageReader
 from PartSegData import font_dir
@@ -14,7 +14,20 @@ from PartSeg.common_backend.base_argparser import CustomParser
 multiprocessing.freeze_support()
 
 
+def _test_imports():
+    app = QGuiApplication([])
+    from .segmentation_analysis.main_window import MainWindow
+    from .segmentation_mask.stack_gui_main import MainWindow
+    from .launcher.main_window import MainWindow
+    from . import plugins
+    plugins.register()
+    assert QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf")) != -1
+
+
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "_test":
+        _test_imports()
+        return
     parser = CustomParser("PartSeg")
     parser.add_argument("--multiprocessing-fork", dest="mf", action="store_true",
                         help=argparse.SUPPRESS)  # Windows bug fix
@@ -34,7 +47,7 @@ def main():
     logging.basicConfig(level=logging.INFO)
     my_app = CustomApplication(sys.argv)
     my_app.check_release()
-    id = QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf"))
+    QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf"))
     if args.gui == "segmentation_analysis" or args.mf:
         from . import plugins
         plugins.register()
