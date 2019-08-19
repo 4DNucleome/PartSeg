@@ -235,7 +235,7 @@ class CalculationManager:
 
     @property
     def has_work(self):
-        return self.batch_manager.has_work and not self.writer.writing_finished()
+        return self.batch_manager.has_work or not self.writer.writing_finished()
 
     def set_number_of_workers(self, val):
         logging.debug("Number off process {}".format(val))
@@ -412,7 +412,15 @@ class FileData(object):
                         data_frame.to_csv(base_path + "_" + sheet_name + ext)
                 else:
                     writer = pd.ExcelWriter(self.file_path)
-                    for sheet_name, data_frame in data:
+                    new_sheet_names = []
+                    ind = 0
+                    for sheet_name, _ in data:
+                        if len(sheet_name) < 32:
+                            new_sheet_names.append(sheet_name)
+                        else:
+                            new_sheet_names.append(sheet_name[:27] + f"_{ind}_")
+                            ind += 1
+                    for sheet_name, (_, data_frame) in zip(new_sheet_names, data):
                         data_frame.to_excel(writer, sheet_name=sheet_name)
                     writer.save()
             except Exception as e:
