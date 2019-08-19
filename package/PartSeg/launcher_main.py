@@ -39,6 +39,7 @@ def main():
     sp_s.set_defaults(gui="segmentation")
     sp_a.add_argument("image", nargs="?", help="image to read on begin", default="")
     sp_a.add_argument("mask", nargs="?", help="mask to read on begin", default=None)
+    sp_a.add_argument("--batch", action="store_true", help=argparse.SUPPRESS)
     sp_s.add_argument("image", nargs="?", help="image to read on begin", default="")
     argv = [x for x in sys.argv[1:] if not (x.startswith("parent") or x.startswith("pipe"))]
     args = parser.parse_args(argv)
@@ -56,6 +57,9 @@ def main():
         if args.image:
             image = ImageReader.read_image(args.image, args.mask)
             MainWindow = partial(MainWindow, initial_image=image)
+        wind = MainWindow(title=title)
+        if args.batch:
+            wind.main_menu.batch_window()
     elif args.gui == "segmentation":
         from . import plugins
         plugins.register()
@@ -64,10 +68,12 @@ def main():
         if args.image:
             image = ImageReader.read_image(args.image)
             MainWindow = partial(MainWindow, initial_image=image)
+        wind = MainWindow(title=title)
     else:
         from .launcher.main_window import MainWindow
         title = "PartSeg Launcher"
-    wind = MainWindow(title=title)
+        wind = MainWindow(title=title)
+
     wind.show()
     my_app.exec_()
     del wind

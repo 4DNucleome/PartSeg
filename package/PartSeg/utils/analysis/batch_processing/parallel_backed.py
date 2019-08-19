@@ -122,8 +122,10 @@ class BatchManager(object):
                     self.process_list.remove(p)
                 self.number_off_alive_process -= len(to_remove)
                 logging.debug("Process list end {}".format(self.process_list))
-                if len(self.process_list) > self.number_off_process:
-                    logging.debug("Wait on process, time {}".format(time.time()))
+                # FIXME self.number_off_alive_process,  self.number_off_process negative values
+                if len(self.process_list) > self.number_off_process and len(self.process_list) > 0:
+                    logging.info("Wait on process, time {}, {}, {}, {}".format(time.time(), self.number_off_alive_process,
+                                                                           len(self.process_list), self.number_off_process))
                     Timer(1, self.join_all).start()
 
     @property
