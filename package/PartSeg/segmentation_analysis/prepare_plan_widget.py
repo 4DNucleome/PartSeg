@@ -6,10 +6,9 @@ from copy import copy, deepcopy
 from enum import Enum
 from pathlib import Path
 
-from qtpy.QtGui import QPaintEvent
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QDialog, QCompleter, QLineEdit, QPushButton, QGridLayout, QWidget, QCheckBox, QComboBox, \
-    QListWidget, QSpinBox, QTextEdit, QVBoxLayout, QGroupBox, QLabel, QHBoxLayout, QInputDialog, QMessageBox, \
+    QListWidget, QSpinBox, QTextEdit, QVBoxLayout, QGroupBox, QLabel, QInputDialog, QMessageBox, \
     QTreeWidget, QTreeWidgetItem, QFileDialog, QSplitter, QTabWidget, QListWidgetItem
 
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
@@ -22,9 +21,9 @@ from ..utils.io_utils import SaveBase
 from PartSeg.utils.algorithm_describe_base import AlgorithmProperty, SegmentationProfile
 from ..utils.universal_const import Units
 
-from PartSeg.utils.analysis.calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, \
+from PartSeg.utils.analysis.calculation_plan import CalculationPlan, MaskCreate, Operations, \
     MaskSuffix, MaskSub, MaskFile, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, \
-    MeasurementCalculate, Save
+    MeasurementCalculate, Save, RootType
 from .partseg_settings import PartSettings
 from .profile_export import ExportDialog, ImportDialog
 from PartSeg.utils.analysis.measurement_calculation import MeasurementProfile
@@ -242,6 +241,7 @@ class CreatePlan(QWidget):
         self.remove_btn = QPushButton("Remove")
         self.choose_channel_btn = QPushButton("Choose channel")
         self.update_element_chk = QCheckBox("Update element")
+        self.change_root = EnumComboBox(RootType)
         self.save_choose = QComboBox()
         self.save_choose.addItem("<none>")
         self.save_choose.addItems(list(self.save_translate_dict.keys()))
@@ -331,17 +331,21 @@ class CreatePlan(QWidget):
 
         other_box = QGroupBox("Other operations:")
         other_box.setContentsMargins(0, 0, 0, 0)
-        bt_lay = QGridLayout()
+        bt_lay = QVBoxLayout()
         bt_lay.setSpacing(0)
+        bt_lay.addWidget(QLabel("Root type:"))
+        bt_lay.addWidget(self.change_root)
+        bt_lay.addStretch(1)
+        bt_lay.addWidget(QLabel("Saving:"))
         # bt_lay.setContentsMargins(0, 0, 0, 0)
         # bt_lay.addWidget(right_label("Chanel num:"), 1, 0)
         # bt_lay.addWidget(self.chanel_num, 1, 1)
         # bt_lay.addWidget(self.choose_channel_btn, 4, 0, 1, 2)
         # bt_lay.addWidget(self.forgot_mask_btn, 1, 0)
-        bt_lay.addWidget(self.save_choose, 5, 0, 1, 2)
-        bt_lay.addWidget(self.director_save_chk, 6, 0, 1, 2)
-        bt_lay.addWidget(self.save_btn, 7, 0, 1, 2)
-        bt_lay.addWidget(self.project_segmentation, 8, 0, 1, 2)
+        bt_lay.addWidget(self.save_choose)
+        bt_lay.addWidget(self.director_save_chk)
+        bt_lay.addWidget(self.save_btn)
+        bt_lay.addWidget(self.project_segmentation)
         other_box.setLayout(bt_lay)
         other_box.setStyleSheet(group_sheet)
 
@@ -353,7 +357,6 @@ class CreatePlan(QWidget):
         self.mask_stack.addTab(stretch_widget(self.segmentation_mask), "Current segmentation")
         self.mask_stack.addTab(stretch_widget(self.mask_operation), "Operations on masks")
         self.mask_stack.setTabToolTip(2, "Allows to create mask which is based on masks previously added to plan.")
-
 
         lay = QGridLayout()
         lay.setSpacing(0)
@@ -408,8 +411,8 @@ class CreatePlan(QWidget):
         # layout.addWidget(segmentation_mask_box, 1, 1)
         layout.addWidget(mask_box, 0, 2, 1, 2)
         layout.addWidget(other_box, 0, 1)
-        layout.addWidget(measurement_box, 1, 1, 1, 2)
-        layout.addWidget(segment_box, 1, 3)
+        layout.addWidget(segment_box, 1, 1, 1, 2)
+        layout.addWidget(measurement_box, 1, 3)
         layout.addWidget(info_box, 3, 1, 1, 3)
         self.setLayout(layout)
 

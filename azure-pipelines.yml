@@ -17,6 +17,8 @@ stages:
           displayName: "download data"
         - publish: test_data
           artifact: TestData
+        - publish: changelog.md
+          artifact: ReleaseInfo
 
   - stage: Tests
     jobs:
@@ -173,12 +175,13 @@ stages:
               python  build_utils/create_build.py
           - script: sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0
             displayName: "install libs"
-          - script: xvfb-run dist/PartSeg/PartSeg_exec _test
-            displayName: TestBuild
+
           - task: PublishBuildArtifacts@1
             inputs:
               pathToPublish: dist2
               artifactName: execs
+          - script: xvfb-run dist/PartSeg/PartSeg_exec _test
+            displayName: TestBuild
 
       - job: macos_pyinstaller
         pool: {vmImage: 'macOS-10.13'}
@@ -189,12 +192,12 @@ stages:
               python -m pip install -r requirements_pyinstaller.txt
               python -m pip install .
               python  build_utils/create_build.py
-          - script: dist/PartSeg/PartSeg_exec _test
-            displayName: TestBuild
           - task: PublishBuildArtifacts@1
             inputs:
               pathToPublish: dist2
               artifactName: execs
+          - script: dist/PartSeg/PartSeg_exec _test
+            displayName: TestBuild
 
       - job: windows_pyinstaller
         pool: {vmImage: 'vs2017-win2016'}

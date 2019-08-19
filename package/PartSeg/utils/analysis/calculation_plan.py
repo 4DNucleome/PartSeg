@@ -12,13 +12,25 @@ from PartSeg.utils.universal_const import Units
 from ..analysis.measurement_calculation import MeasurementProfile
 from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from ..mask_create import MaskProperty
-from ..class_generator import BaseSerializableClass
+from ..class_generator import BaseSerializableClass, enum_register
 
 
 class MaskBase:
     name: str
 
 # MaskCreate = namedtuple("MaskCreate", ['name', 'radius'])
+
+
+class RootType(Enum):
+    Image = 0
+    Project = 1
+    Mask_project = 2
+
+    def __str__(self):
+        return self.name.replace("_", " ")
+
+
+enum_register.register_class(RootType)
 
 
 class MaskCreate(MaskBase, BaseSerializableClass):

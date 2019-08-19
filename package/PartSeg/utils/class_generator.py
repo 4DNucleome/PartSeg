@@ -6,7 +6,7 @@ import pprint
 import inspect
 import itertools
 import typing
-from enum import Enum
+from enum import Enum, EnumMeta
 
 _PY36 = sys.version_info[:2] >= (3, 6)
 
@@ -95,13 +95,15 @@ _field_template = '''\
     {name} = _property(_attrgetter("_{name}"), doc='getter for field _{name}')
 '''
 
+T = typing.TypeVar('T')
 
-class RegisterClass:
+
+class RegisterClass(typing.Generic[T]):
     def __init__(self):
         self.exact_class_register = dict()
         self.predict_class_register = collections.defaultdict(list)
 
-    def register_class(self, cls: type, old_name=None):
+    def register_class(self, cls: T, old_name=None):
         path = extract_type_info(cls)[0]
         name = cls.__name__
         if path in self.exact_class_register:
@@ -115,8 +117,7 @@ class RegisterClass:
                 for ol in old_name:
                     self.predict_class_register[ol].append(cls)
 
-
-    def get_class(self, path: str):
+    def get_class(self, path: str) -> T:
         if path in self.exact_class_register:
             return self.exact_class_register[path]
         else:
@@ -138,7 +139,7 @@ class RegisterClass:
 
 
 base_serialize_register = RegisterClass()
-enum_register = RegisterClass()
+enum_register: RegisterClass[EnumMeta] = RegisterClass()
 
 
 def extract_type_name(type_):

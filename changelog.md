@@ -1,5 +1,9 @@
 # Changelog 
 
+## 0.9.4
+ - read mask segmentation project 
+ - choose source type in batch
+
 ## 0.9.3
  - start automated build documentation
  - change color map backend and allow for user to create custom color map. 
