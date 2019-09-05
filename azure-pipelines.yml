@@ -17,6 +17,8 @@ stages:
           displayName: "download data"
         - publish: test_data
           artifact: TestData
+        - publish: changelog.md
+          artifact: ReleaseInfo
 
   - stage: Tests
     jobs:
