@@ -4,7 +4,7 @@ import numpy as np
 from copy import deepcopy
 from typing import Type
 
-from PartSeg.utils.convex_fill import convex_fill
+from PartSeg.utils.convex_fill import convex_fill, _convex_fill
 from PartSegImage import Image
 from PartSeg.utils.algorithm_describe_base import SegmentationProfile
 from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
@@ -527,3 +527,8 @@ class TestConvexFill:
         arr2[15:-15, 15:-10, 15:-15] = 2
         res = convex_fill(arr2)
         assert np.all(res == arr)
+
+    def test__convex_fill(self):
+        arr = np.zeros((20, 20), dtype=np.bool)
+        assert _convex_fill(arr) is None
+
