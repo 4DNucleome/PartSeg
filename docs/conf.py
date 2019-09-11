@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'PartSeg'
-copyright = '2019, Grzegorz Bokota (LFSG)'
+copyright = '2019, Laboratory of Functional and Structural Genomics'
 author = 'Grzegorz Bokota (LFSG)'
 
 # The full version, including alpha/beta/rc tags
