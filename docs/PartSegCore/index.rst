@@ -3,13 +3,13 @@ PartSeg.utils base
 
 .algorithm_describe_base
 ------------------------
-.. automodule:: PartSeg.utils.algorithm_describe_base
+.. automodule:: PartSegCore.algorithm_describe_base
    :members:
 
 
 .register
 ---------
-.. automodule:: PartSeg.utils.register
+.. automodule:: PartSegCore.register
    :members:
 
 .. data:: base_class_dict
@@ -21,6 +21,6 @@ PartSeg.utils base
 
 .json_hooks
 -----------
-.. automodule:: PartSeg.utils.json_hooks
+.. automodule:: PartSegCore.json_hooks
    :members:
    :show-inheritance:

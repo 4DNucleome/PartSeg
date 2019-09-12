@@ -4,7 +4,7 @@ Here we describe base classes for segmentation
 
 Base classes
 ------------------------
-.. automodule:: PartSeg.utils.segmentation
+.. automodule:: PartSegCore.segmentation
    :members:
    :inherited-members:
    :show-inheritance:
