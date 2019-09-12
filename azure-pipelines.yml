@@ -233,3 +233,17 @@ stages:
               pathToPublish: docs_result
               artifactName: docs
 
+      - job: Notebook_check
+        pool: {vmImage: 'Ubuntu-16.04'}
+        continueOnError: true
+        variables:
+          DATA_PATH: data
+        steps:
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.6', architecture: x64}}
+          - bash: |
+              python -m pip install -r requirements_pyinstaller.txt
+              python -m pip install .
+              python -m pip install jupyter[all]
+            displayName: InstallDeps
+          - bash: jupyter nbconvert --to notebook --execute tutorials/tutorial_neuron_types/Neuron_types_example.ipynb
+            displayName: BuildDocs
