@@ -213,3 +213,23 @@ stages:
               artifactName: execs
           - script: dist\PartSeg\PartSeg_exec _test
             displayName: TestBuild
+
+      - job: help
+        pool: {vmImage: 'Ubuntu-16.04'}
+        steps:
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.6', architecture: x64}}
+          - bash: |
+              python -m pip install -r requirements_pyinstaller.txt
+              python -m pip install .
+              python -m pip install sphinx
+            displayName: InstallDeps
+          - bash: make -C docs html
+            displayName: BuildDocs
+          - bash: |
+              mkdir docs_result
+              cd docs/_build; zip -r ../../docs_result/PartSeg_documentation_`python -c "import PartSeg; print(PartSeg.__version__)"`.zip html; cd ../..
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathToPublish: docs_result
+              artifactName: docs
+
