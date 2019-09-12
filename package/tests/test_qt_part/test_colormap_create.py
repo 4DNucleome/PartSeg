@@ -1,4 +1,3 @@
-from functools import partial
 from math import isclose
 
 import PartSegData
@@ -11,8 +10,8 @@ from PartSeg.common_gui.colormap_creator import color_from_qcolor, qcolor_from_c
     PColormapCreator, ColormapList, PColormapList
 from PartSeg.common_gui.stack_image_view import ImageView
 from PartSeg.common_backend.base_settings import ViewSettings, ColormapDict
-from PartSeg.utils.color_image import ColorPosition, Color
-from PartSeg.utils.color_image.base_colors import starting_colors
+from PartSegCore.color_image import ColorPosition, Color
+from PartSegCore.color_image.base_colors import starting_colors
 from PartSegImage import ImageReader
 
 

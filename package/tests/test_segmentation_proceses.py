@@ -2,11 +2,11 @@ import os.path
 import pytest
 
 from PartSegImage import ImageReader
-from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
-from PartSeg.utils.algorithm_describe_base import SegmentationProfile
-from PartSeg.utils.analysis.load_functions import UpdateLoadedMetadataAnalysis
-from PartSeg.utils.json_hooks import check_loaded_dict
-from PartSeg.utils.segmentation.algorithm_base import SegmentationAlgorithm
+from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.analysis.load_functions import UpdateLoadedMetadataAnalysis
+from PartSegCore.json_hooks import check_loaded_dict
+from PartSegCore.segmentation.algorithm_base import SegmentationAlgorithm
 
 from help_fun import get_test_dir
 

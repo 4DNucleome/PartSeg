@@ -9,10 +9,10 @@ from collections.abc import MutableMapping
 from qtpy.QtCore import QObject, Signal
 
 from PartSeg.common_backend.abstract_class import QtMeta
-from PartSeg.utils.color_image import ColorMap, default_colormap_dict
-from PartSeg.utils.color_image.base_colors import starting_colors
-from PartSeg.utils.io_utils import ProjectInfoBase, load_metadata_base
-from PartSeg.utils.json_hooks import ProfileDict, ProfileEncoder, profile_hook, check_loaded_dict
+from PartSegCore.color_image import ColorMap, default_colormap_dict
+from PartSegCore.color_image.base_colors import starting_colors
+from PartSegCore.io_utils import ProjectInfoBase, load_metadata_base
+from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, check_loaded_dict
 import numpy as np
 from os import path, makedirs
 from PartSegImage import Image

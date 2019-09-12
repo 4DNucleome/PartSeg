@@ -1,7 +1,7 @@
 from qtpy.QtWidgets import QWidget, QGridLayout, QListWidget, QPlainTextEdit, QLabel, QPushButton
 from qtpy.QtCore import QEvent
 
-from PartSeg.utils.mask.algorithm_description import mask_algorithm_dict
+from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 from .stack_settings import StackSettings
 from typing import Callable
 

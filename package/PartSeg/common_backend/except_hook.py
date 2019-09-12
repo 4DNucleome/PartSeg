@@ -1,5 +1,5 @@
 import sys
-from ..utils import state_store
+from PartSegCore import state_store
 
 
 def my_excepthook(type_, value, trace_back):

@@ -450,7 +450,7 @@ Session.vim
 # auto-generated tag files
 tags
 
-package/PartSeg/utils/color_image/color_image\.c
+package/PartSegCore/color_image/color_image\.c
 
 !notebooks/
 notebooks/*
@@ -465,11 +465,11 @@ test_data/
 !launcher.spec
 /test_data_all/
 /test_data.tbz2
-!/package/PartSeg/utils/segmentation/multiscale_opening/*.cpp
-/package/PartSeg/utils/segmentation/multiscale_opening/*.gch
-package/PartSeg/utils/multiscale_opening/\.vscode/
+!/PartSegCore/segmentation/multiscale_opening/*.cpp
+/PartSegCore/segmentation/multiscale_opening/*.gch
+package/PartSegCore/multiscale_opening/\.vscode/
 
-package/PartSeg/utils/multiscale_opening/\.vscode/
+package/PartSegCore/multiscale_opening/\.vscode/
 /tutorials/tutorial-chromosome-1/tutorial-chromosome1.pdf
 !/package/tests/test_data/measurements_profile.json
 

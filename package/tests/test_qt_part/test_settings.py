@@ -4,7 +4,7 @@ import typing
 
 from PartSeg.segmentation_mask.stack_gui_main import ChosenComponents
 from PartSeg.segmentation_mask.stack_settings import StackSettings
-from PartSeg.utils.mask.io_functions import LoadSegmentationImage, LoadImage
+from PartSegCore.mask.io_functions import LoadSegmentationImage, LoadImage
 from help_fun import get_test_dir
 
 

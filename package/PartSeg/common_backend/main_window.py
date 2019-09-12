@@ -9,7 +9,7 @@ from PartSeg.common_gui.about_dialog import AboutDialog
 from PartSeg.common_gui.show_directory_dialog import DirectoryDialog
 from PartSeg.common_backend.load_backup import import_config
 from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
-from PartSeg.utils.io_utils import ProjectInfoBase
+from PartSegCore.io_utils import ProjectInfoBase
 from PartSegImage import Image
 from .base_settings import BaseSettings
 

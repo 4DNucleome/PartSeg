@@ -15,18 +15,18 @@ from PartSeg.common_gui.universal_gui_part import EnumComboBox
 from ..common_gui.custom_save_dialog import FormDialog
 from ..common_gui.mask_widget import MaskWidget
 from ..common_gui.universal_gui_part import right_label
-from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
-from PartSeg.utils.analysis.save_functions import save_dict
-from ..utils.io_utils import SaveBase
-from PartSeg.utils.algorithm_describe_base import AlgorithmProperty, SegmentationProfile
-from ..utils.universal_const import Units
+from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.save_functions import save_dict
+from PartSegCore.io_utils import SaveBase
+from PartSegCore.algorithm_describe_base import AlgorithmProperty, SegmentationProfile
+from PartSegCore.universal_const import Units
 
-from PartSeg.utils.analysis.calculation_plan import CalculationPlan, MaskCreate, Operations, \
+from PartSegCore.analysis.calculation_plan import CalculationPlan, MaskCreate, Operations, \
     MaskSuffix, MaskSub, MaskFile, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, \
     MeasurementCalculate, Save, RootType
 from .partseg_settings import PartSettings
 from .profile_export import ExportDialog, ImportDialog
-from PartSeg.utils.analysis.measurement_calculation import MeasurementProfile
+from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 
 group_sheet = "QGroupBox {border: 1px solid gray; border-radius: 9px; margin-top: 0.5em;} " \
               "QGroupBox::title {subcontrol-origin: margin; left: 10px; padding: 0 3px 0 3px;}"

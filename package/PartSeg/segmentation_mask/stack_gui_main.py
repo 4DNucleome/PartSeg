@@ -14,11 +14,10 @@ from qtpy.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMess
     QTabWidget, QSizePolicy, QGridLayout
 
 from PartSeg.common_gui.advanced_tabs import AdvancedWindow
-from PartSeg.common_gui.colormap_creator import PColormapList
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
 from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
 from PartSeg.segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
-from PartSeg.utils.io_utils import WrongFileTypeException
+from PartSegCore.io_utils import WrongFileTypeException
 from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox, AlgorithmChoose
 from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.custom_save_dialog import SaveDialog
@@ -28,18 +27,18 @@ from ..common_gui.select_multiple_files import AddFiles
 from ..common_gui.stack_image_view import ColorBar, LabelEnum
 from ..common_gui.universal_gui_part import right_label
 from ..common_gui.waiting_dialog import ExecuteFunctionDialog
-from ..utils.segmentation.algorithm_base import SegmentationResult
-from ..utils.universal_const import UNIT_SCALE, Units
+from PartSegCore.segmentation.algorithm_base import SegmentationResult
+from PartSegCore.universal_const import UNIT_SCALE, Units
 from ..common_backend.main_window import BaseMainWindow, BaseMainMenu
 from PartSeg.common_backend.progress_thread import ExecuteFunctionThread
-from PartSeg.utils.mask.algorithm_description import mask_algorithm_dict
+from PartSegCore.mask.algorithm_description import mask_algorithm_dict
+from PartSegCore.mask import io_functions
 from .stack_settings import StackSettings, get_mask
 from PartSegImage import ImageReader, Image
 from .batch_proceed import BatchProceed, BatchTask
 from .image_view import StackImageView
-from PartSeg.utils.mask.io_functions import SaveSegmentation, LoadSegmentation, SegmentationTuple
-from PartSeg.utils.mask import io_functions
-from PartSeg.utils import state_store
+from PartSegCore.mask.io_functions import SaveSegmentation, LoadSegmentation, SegmentationTuple
+from PartSegCore import state_store
 import PartSegData
 
 CONFIG_FOLDER = os.path.join(state_store.save_folder, "mask")

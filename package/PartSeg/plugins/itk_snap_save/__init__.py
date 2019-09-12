@@ -2,8 +2,8 @@ import typing
 from io import BytesIO
 from pathlib import Path
 import SimpleITK as sitk
-from PartSeg.utils.io_utils import SaveBase
-from PartSeg.utils.analysis.save_functions import ProjectTuple
+from PartSegCore.io_utils import SaveBase
+from PartSegCore.analysis.save_functions import ProjectTuple
 
 
 class SaveITKSnap(SaveBase):
@@ -27,5 +27,5 @@ class SaveITKSnap(SaveBase):
 
 
 def register():
-    from PartSeg.utils.register import register, RegisterEnum
+    from PartSegCore.register import register, RegisterEnum
     register(SaveITKSnap, RegisterEnum.analysis_save)

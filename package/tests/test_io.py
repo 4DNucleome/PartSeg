@@ -14,19 +14,19 @@ from glob import glob
 import h5py
 import PartSegData
 
-from PartSeg.utils.segmentation.segmentation_algorithm import ThresholdAlgorithm
+from PartSegCore.segmentation.segmentation_algorithm import ThresholdAlgorithm
 from PartSegImage import ImageReader, Image
-from PartSeg.utils import Units, UNIT_SCALE
-from PartSeg.utils.analysis import ProjectTuple
-from PartSeg.utils.analysis.load_functions import UpdateLoadedMetadataAnalysis
-from PartSeg.utils.analysis.save_functions import SaveCmap, SaveXYZ, SaveProject, SaveAsTiff, SaveAsNumpy, \
+from PartSegCore import Units, UNIT_SCALE
+from PartSegCore.analysis import ProjectTuple
+from PartSegCore.analysis.load_functions import UpdateLoadedMetadataAnalysis
+from PartSegCore.analysis.save_functions import SaveCmap, SaveXYZ, SaveProject, SaveAsTiff, SaveAsNumpy, \
     SaveSegmentationAsNumpy
-from PartSeg.utils.analysis.save_hooks import PartEncoder, part_hook
-from PartSeg.utils.io_utils import UpdateLoadedMetadataBase
-from PartSeg.utils.json_hooks import check_loaded_dict
-from PartSeg.utils.segmentation.noise_filtering import DimensionType
-from PartSeg.utils.class_generator import enum_register
-from PartSeg.utils.mask.io_functions import LoadSegmentation, SaveSegmentation, LoadSegmentationImage, save_components, \
+from PartSegCore.analysis.save_hooks import PartEncoder, part_hook
+from PartSegCore.io_utils import UpdateLoadedMetadataBase
+from PartSegCore.json_hooks import check_loaded_dict
+from PartSegCore.segmentation.noise_filtering import DimensionType
+from PartSegCore.class_generator import enum_register
+from PartSegCore.mask.io_functions import LoadSegmentation, SaveSegmentation, LoadSegmentationImage, save_components, \
     LoadImage, SegmentationTuple
 
 from help_fun import get_test_dir

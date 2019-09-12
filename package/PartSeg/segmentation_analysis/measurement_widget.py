@@ -7,11 +7,11 @@ from qtpy.QtCore import Qt, QEvent
 from qtpy.QtWidgets import QWidget, QPushButton, QCheckBox, QComboBox, QTableWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QApplication, QTableWidgetItem, QMessageBox, QBoxLayout
 
-from PartSeg.utils.analysis.measurement_calculation import MeasurementProfile, MeasurementResult
+from PartSegCore.analysis.measurement_calculation import MeasurementProfile, MeasurementResult
 from ..common_gui.universal_gui_part import ChannelComboBox, EnumComboBox
 from ..common_gui.waiting_dialog import WaitingDialog
 from .partseg_settings import PartSettings
-from ..utils.universal_const import Units
+from PartSegCore.universal_const import Units
 from PartSeg.common_backend.progress_thread import ExecuteFunctionThread
 
 

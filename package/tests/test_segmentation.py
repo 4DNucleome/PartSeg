@@ -4,17 +4,17 @@ import numpy as np
 from copy import deepcopy
 from typing import Type
 
-from PartSeg.utils.convex_fill import convex_fill, _convex_fill
+from PartSegCore.convex_fill import convex_fill, _convex_fill
 from PartSegImage import Image
-from PartSeg.utils.algorithm_describe_base import SegmentationProfile
-from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
-from PartSeg.utils.analysis.analysis_utils import SegmentationPipelineElement, SegmentationPipeline
-from PartSeg.utils.calculate_pipeline import calculate_pipeline
-from PartSeg.utils.image_operations import RadiusType
-from PartSeg.utils.mask_create import calculate_mask, MaskProperty
-from PartSeg.utils.segmentation import restartable_segmentation_algorithms as sa, SegmentationAlgorithm
-from PartSeg.utils.segmentation.noise_filtering import noise_filtering_dict
-from PartSeg.utils.segmentation.sprawl import sprawl_dict
+from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.analysis_utils import SegmentationPipelineElement, SegmentationPipeline
+from PartSegCore.calculate_pipeline import calculate_pipeline
+from PartSegCore.image_operations import RadiusType
+from PartSegCore.mask_create import calculate_mask, MaskProperty
+from PartSegCore.segmentation import restartable_segmentation_algorithms as sa, SegmentationAlgorithm
+from PartSegCore.segmentation.noise_filtering import noise_filtering_dict
+from PartSegCore.segmentation.sprawl import sprawl_dict
 
 
 def get_two_parts_array():

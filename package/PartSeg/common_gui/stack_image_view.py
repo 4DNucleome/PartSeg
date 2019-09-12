@@ -17,11 +17,11 @@ from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
     QSlider, QCheckBox, QComboBox
 
 from PartSeg.common_gui.numpy_qimage import NumpyQImage
-from PartSeg.utils.class_generator import enum_register
-from PartSeg.utils.image_operations import gaussian
-from ..utils.color_image import color_image, add_labels
-from ..utils.color_image.color_image_base import color_maps
-from ..utils.colors import default_colors
+from PartSegCore.class_generator import enum_register
+from PartSegCore.image_operations import gaussian
+from PartSegCore.color_image import color_image, add_labels
+from PartSegCore.color_image.color_image_base import color_maps
+from PartSegCore.colors import default_colors
 from ..common_backend.base_settings import ViewSettings
 from PartSegImage import Image
 from .channel_control import ColorComboBoxGroup, ChannelProperty

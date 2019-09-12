@@ -4,7 +4,7 @@ import sys
 import sentry_sdk
 import os
 from typing import Optional, Sequence, Text
-from PartSeg.utils import state_store
+from PartSegCore import state_store
 from PartSeg.common_backend.except_hook import my_excepthook
 import PartSeg
 

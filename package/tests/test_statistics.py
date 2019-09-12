@@ -5,15 +5,15 @@ from math import isclose, pi
 import numpy as np
 
 from PartSegImage import Image
-from PartSeg.utils.analysis import load_metadata
-from PartSeg.utils.analysis.measurement_calculation import Diameter, PixelBrightnessSum, Volume, ComponentsNumber, \
+from PartSegCore.analysis import load_metadata
+from PartSegCore.analysis.measurement_calculation import Diameter, PixelBrightnessSum, Volume, ComponentsNumber, \
     MaximumPixelBrightness, MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness, \
     StandardDeviationOfPixelBrightness, MomentOfInertia, LongestMainAxisLength, MiddleMainAxisLength, \
     ShortestMainAxisLength, Surface, RimVolume, RimPixelBrightnessSum, MeasurementProfile, Sphericity, \
     DistanceMaskSegmentation, DistancePoint, ComponentsInfo, MeasurementResult
-from PartSeg.utils.analysis.measurement_base import Node, MeasurementEntry, PerComponent, AreaType
-from PartSeg.utils.autofit import density_mass_center
-from PartSeg.utils.universal_const import UNIT_SCALE, Units
+from PartSegCore.analysis.measurement_base import Node, MeasurementEntry, PerComponent, AreaType
+from PartSegCore.autofit import density_mass_center
+from PartSegCore.universal_const import UNIT_SCALE, Units
 
 
 def get_cube_array():

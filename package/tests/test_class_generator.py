@@ -1,11 +1,11 @@
 import pytest
 import typing
 from collections import OrderedDict
-from PartSeg.utils.class_generator import BaseSerializableClass, base_serialize_register
+from PartSegCore.class_generator import BaseSerializableClass, base_serialize_register
 
 
 def setup_module():
-    from PartSeg.utils import class_generator
+    from PartSegCore import class_generator
     from copy import deepcopy
     """ setup any state specific to the execution of the given module."""
     global copy_register
@@ -16,7 +16,7 @@ def teardown_module():
     """ teardown any state that was previously setup with a setup_module
     method.
     """
-    from PartSeg.utils import class_generator
+    from PartSegCore import class_generator
     class_generator.base_serialize_register = copy_register
 
 
@@ -250,7 +250,7 @@ def test_functions():
 
 
 def test_statistic_type():
-    from PartSeg.utils.analysis.measurement_base import Node
-    from PartSeg.utils.analysis.measurement_base import Leaf
+    from PartSegCore.analysis.measurement_base import Node
+    from PartSegCore.analysis.measurement_base import Leaf
     empty(Leaf, Node)
     base_serialize_register.clear()

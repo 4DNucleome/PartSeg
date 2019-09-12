@@ -13,7 +13,7 @@ import typing
 from qtpy.QtCore import Qt, QTimer, QRect, QPointF
 from qtpy.QtGui import QFontMetrics, QPaintEvent, QPainter, QColor
 
-from PartSeg.utils.universal_const import Units, UNIT_SCALE
+from PartSegCore.universal_const import Units, UNIT_SCALE
 from qtpy.QtWidgets import QWidget, QLabel, QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QComboBox, QSlider,\
     QLineEdit, QHBoxLayout
 from qtpy.QtCore import Signal

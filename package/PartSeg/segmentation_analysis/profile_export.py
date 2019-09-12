@@ -5,8 +5,8 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QDialog, QListWidget, QListWidgetItem, QPushButton, QHBoxLayout, QVBoxLayout, QTreeWidget, \
     QTreeWidgetItem, QLabel, QRadioButton, QButtonGroup, QLineEdit, QTextEdit
 
-from PartSeg.utils.algorithm_describe_base import SegmentationProfile
-from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 
 
 class ExportDialog(QDialog):

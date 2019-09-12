@@ -12,7 +12,7 @@ import traceback
 
 from sentry_sdk.utils import exc_info_from_error, event_from_exception
 
-from PartSeg.utils import state_store
+from PartSegCore import state_store
 import sentry_sdk
 
 from PartSeg import __version__

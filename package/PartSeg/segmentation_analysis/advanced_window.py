@@ -1,32 +1,29 @@
 import json
 import os
-import sys
 from copy import deepcopy
 from functools import partial
 from pathlib import Path
 from typing import Union, Optional, Tuple
-import importlib
 
 from PartSegData import icons_dir
-from qtpy.QtCore import QByteArray, Qt, QEvent
+from qtpy.QtCore import Qt, QEvent
 from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QTabWidget, QWidget, QListWidget, QTextEdit, QPushButton, QLineEdit, \
+from qtpy.QtWidgets import QWidget, QListWidget, QTextEdit, QPushButton, QLineEdit, \
     QVBoxLayout, QLabel, QHBoxLayout, QListWidgetItem, QDialog, QDoubleSpinBox, QSpinBox, QGridLayout, QApplication, \
     QMessageBox, QFileDialog, QComboBox, QAbstractSpinBox, QInputDialog, \
     QPlainTextEdit, QFrame, QCheckBox
 
 from PartSeg.common_gui.advanced_tabs import AdvancedWindow
-from PartSeg.common_gui.colormap_creator import PColormapList, PColormapCreator
-from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from ..common_gui.universal_gui_part import EnumComboBox
 from ..common_gui.custom_save_dialog import FormDialog
 from ..common_gui.lock_checkbox import LockCheckBox
 from .partseg_settings import PartSettings, MASK_COLORS
 from .profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer
 from .measurement_widget import MeasurementWidget
-from PartSeg.utils.analysis.measurement_calculation import MeasurementProfile, MEASUREMENT_DICT
-from PartSeg.utils.analysis.measurement_base import Leaf, Node, MeasurementEntry, PerComponent, AreaType
-from ..utils.universal_const import UNIT_SCALE, Units
+from PartSegCore.analysis.measurement_calculation import MeasurementProfile, MEASUREMENT_DICT
+from PartSegCore.analysis.measurement_base import Leaf, Node, MeasurementEntry, PerComponent, AreaType
+from PartSegCore.universal_const import UNIT_SCALE, Units
 
 
 def h_line():

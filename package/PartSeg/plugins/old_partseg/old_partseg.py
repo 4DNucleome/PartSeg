@@ -6,10 +6,10 @@ import numpy as np
 import json
 
 from PartSegImage import Image
-from PartSeg.utils.analysis.io_utils import ProjectTuple
-from PartSeg.utils.io_utils import LoadBase
-from PartSeg.utils.segmentation.noise_filtering import DimensionType
-from PartSeg.utils.universal_const import Units, UNIT_SCALE
+from PartSegCore.analysis.io_utils import ProjectTuple
+from PartSegCore.io_utils import LoadBase
+from PartSegCore.segmentation import DimensionType
+from PartSegCore.universal_const import Units, UNIT_SCALE
 
 
 class LoadPartSegOld(LoadBase):

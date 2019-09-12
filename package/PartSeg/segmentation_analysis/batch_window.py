@@ -15,10 +15,10 @@ from qtpy.QtWidgets import QPushButton, QListWidget, QVBoxLayout, QHBoxLayout, Q
 from PartSeg.common_gui.error_report import ExceptionListItem, ExceptionList
 from ..common_gui.select_multiple_files import AddFiles
 from .partseg_settings import PartSettings
-from PartSeg.utils.analysis.batch_processing.batch_backend import CalculationManager
-from PartSeg.utils.analysis.calculation_plan import CalculationPlan, MaskFile, MaskMapper, Calculation
+from PartSegCore.analysis.batch_processing.batch_backend import CalculationManager
+from PartSegCore.analysis.calculation_plan import MaskFile, Calculation
 from .prepare_plan_widget import CalculatePlaner
-from ..utils.universal_const import Units
+from PartSegCore.universal_const import Units
 from ..common_gui.universal_gui_part import Spacing, right_label
 
 __author__ = "Grzegorz Bokota"

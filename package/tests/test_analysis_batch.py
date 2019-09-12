@@ -4,14 +4,14 @@ import time
 import pandas as pd
 import sys
 from PartSegImage import ImageReader
-from PartSeg.utils.algorithm_describe_base import SegmentationProfile
-from PartSeg.utils.analysis.batch_processing.batch_backend import CalculationProcess, CalculationManager
-from PartSeg.utils.analysis.calculation_plan import CalculationPlan, CalculationTree, MaskSuffix, MeasurementCalculate, \
+from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.analysis.batch_processing.batch_backend import CalculationProcess, CalculationManager
+from PartSegCore.analysis.calculation_plan import CalculationPlan, CalculationTree, MaskSuffix, MeasurementCalculate, \
     Calculation
-from PartSeg.utils.analysis.measurement_calculation import MeasurementProfile
-from PartSeg.utils.analysis.measurement_base import Leaf, Node, MeasurementEntry, PerComponent, AreaType
-from PartSeg.utils.segmentation.noise_filtering import DimensionType
-from PartSeg.utils.universal_const import Units
+from PartSegCore.analysis.measurement_calculation import MeasurementProfile
+from PartSegCore.analysis.measurement_base import Leaf, Node, MeasurementEntry, PerComponent, AreaType
+from PartSegCore.segmentation.noise_filtering import DimensionType
+from PartSegCore.universal_const import Units
 
 from help_fun import get_test_dir
 

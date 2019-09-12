@@ -9,9 +9,9 @@ from qtpy.QtWidgets import QMessageBox, QWidget
 from qtpy.QtCore import Signal, Slot
 
 from PartSegImage import Image
-from PartSeg.utils.algorithm_describe_base import SegmentationProfile
+from PartSegCore.algorithm_describe_base import SegmentationProfile
 from ..common_backend.base_settings import BaseSettings
-from PartSeg.utils.mask.io_functions import load_stack_segmentation, save_components, \
+from PartSegCore.mask.io_functions import load_stack_segmentation, save_components, \
     SegmentationTuple, load_metadata
 
 

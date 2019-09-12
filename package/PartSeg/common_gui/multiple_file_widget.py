@@ -13,7 +13,7 @@ from collections import defaultdict, Counter
 
 from PartSeg.common_backend.base_settings import BaseSettings
 from PartSegImage import Image
-from PartSeg.utils.io_utils import LoadBase, ProjectInfoBase
+from PartSegCore.io_utils import LoadBase, ProjectInfoBase
 from .custom_load_dialog import CustomLoadDialog, LoadProperty
 from .waiting_dialog import ExecuteFunctionDialog
 

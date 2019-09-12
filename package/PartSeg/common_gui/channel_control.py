@@ -10,12 +10,12 @@ from qtpy.QtWidgets import QWidget, QCheckBox, QGridLayout, QLabel, QHBoxLayout,
     QStyledItemDelegate, QStyleOptionViewItem, QStyle
 
 from PartSeg.common_gui.numpy_qimage import create_colormap_image
-from PartSeg.utils.color_image import ColorMap, create_color_map
-from PartSeg.utils.color_image.base_colors import starting_colors
+from PartSegCore.color_image import ColorMap
+from PartSegCore.color_image.base_colors import starting_colors
 from .collapse_checkbox import CollapseCheckbox
 from .universal_gui_part import CustomSpinBox
 from ..common_backend.base_settings import ViewSettings
-from ..utils.color_image import color_image
+from PartSegCore.color_image import color_image
 
 image_dict = {}  # dict to store QImages generated from colormap
 

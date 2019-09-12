@@ -15,28 +15,29 @@ from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
 from PartSeg.common_gui.stacked_widget_with_selector import StackedWidgetWithSelector
 from PartSeg.segmentation_analysis.measurement_widget import MeasurementWidget
-from PartSeg.utils.analysis import ProjectTuple, algorithm_description, load_functions
-from PartSeg.utils.io_utils import WrongFileTypeException
+from PartSegCore.analysis import ProjectTuple
+from PartSegCore.analysis import algorithm_description, load_functions
+from PartSegCore.io_utils import WrongFileTypeException
 from ..common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, AlgorithmChoose
 from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.mask_widget import MaskWidget
 from ..common_gui.stack_image_view import ColorBar
 from ..common_gui.waiting_dialog import WaitingDialog, ExecuteFunctionDialog
 from ..common_gui.multiple_file_widget import MultipleFileWidget
-from ..utils.mask_create import calculate_mask, MaskProperty
-from ..utils.segmentation.algorithm_base import SegmentationResult
+from PartSegCore.mask_create import calculate_mask, MaskProperty
+from PartSegCore.segmentation.algorithm_base import SegmentationResult
 from ..common_backend.main_window import BaseMainWindow, BaseMainMenu
 from .advanced_window import SegAdvancedWindow
 from .batch_window import BatchWindow
 from .calculation_pipeline_thread import CalculatePipelineThread
 from PartSegImage import ImageReader, Image
-from PartSeg.utils.algorithm_describe_base import SegmentationProfile
-from PartSeg.utils.analysis.analysis_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
+from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.analysis.analysis_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
 from .image_view import SynchronizeView, ImageViewWithMask, CompareImageView
 from .partseg_settings import PartSettings
 from ..common_gui.custom_save_dialog import SaveDialog
-from PartSeg.utils.analysis.save_functions import save_dict
-from PartSeg.utils import state_store
+from PartSegCore.analysis.save_functions import save_dict
+from PartSegCore import state_store
 
 CONFIG_FOLDER = os.path.join(state_store.save_folder, "analysis")
 

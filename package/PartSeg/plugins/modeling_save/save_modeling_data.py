@@ -5,12 +5,12 @@ import typing
 import os
 import numpy as np
 
-from PartSeg.utils.analysis.io_utils import ProjectTuple
-from PartSeg.utils.analysis.save_functions import SaveCmap, SaveSegmentationAsTIFF, SaveSegmentationAsNumpy
-from PartSeg.utils.channel_class import Channel
-from PartSeg.utils.io_utils import SaveBase
-from PartSeg.utils.algorithm_describe_base import AlgorithmProperty
-from PartSeg.utils.universal_const import Units
+from PartSegCore.analysis.io_utils import ProjectTuple
+from PartSegCore.analysis.save_functions import SaveCmap, SaveSegmentationAsTIFF, SaveSegmentationAsNumpy
+from PartSegCore.channel_class import Channel
+from PartSegCore.io_utils import SaveBase
+from PartSegCore.algorithm_describe_base import AlgorithmProperty
+from PartSegCore.universal_const import Units
 
 
 class SaveModeling(SaveBase):

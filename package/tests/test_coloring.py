@@ -1,9 +1,7 @@
 import numpy as np
-import pytest
 
-from PartSeg.utils.color_image.base_colors import inferno
-from PartSeg.utils.color_image.color_image_base import create_color_map, color_image
-from PartSeg.utils.color_image import Color, ColorPosition, ColorMap
+from PartSegCore.color_image.base_colors import inferno
+from PartSegCore.color_image import Color, ColorPosition, ColorMap, create_color_map, color_image
 
 
 def arrays_are_close(arr1, arr2, num):

@@ -10,7 +10,7 @@ from qtpy.QtWidgets import QWidget, QVBoxLayout, QCheckBox, QPushButton, QHBoxLa
 from .channel_control import ColorPreview
 from .flow_layout import FlowLayout
 from .vetical_scroll_area import VerticalScrollArea
-from ..utils.color_image import color_image
+from PartSegCore.color_image import color_image
 from ..common_backend.base_settings import ViewSettings
 
 
