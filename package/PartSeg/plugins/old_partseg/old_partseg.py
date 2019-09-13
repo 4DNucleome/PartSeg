@@ -8,7 +8,7 @@ import json
 from PartSegImage import Image
 from PartSegCore.analysis.io_utils import ProjectTuple
 from PartSegCore.io_utils import LoadBase
-from PartSegCore.segmentation import DimensionType
+from PartSegCore.segmentation.noise_filtering import DimensionType
 from PartSegCore.universal_const import Units, UNIT_SCALE
 
 

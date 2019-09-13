@@ -329,6 +329,9 @@ class UpdateLoadedMetadataMask(UpdateLoadedMetadataBase):
                     profile_data.values["smooth_border"] = {"name": "None", "values": {}}
                 if "smooth_border_radius" in profile_data.values:
                     del profile_data.values["smooth_border_radius"]
+            if "noise_removal" in profile_data.values:
+                profile_data.values["noise_filtering"] = profile_data.values["noise_removal"]
+                del profile_data.values["noise_removal"]
         return profile_data
 
 

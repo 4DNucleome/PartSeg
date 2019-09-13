@@ -237,9 +237,12 @@ stages:
         pool: {vmImage: 'Ubuntu-16.04'}
         continueOnError: true
         variables:
-          DATA_PATH: data
+          DATA_PATH: typy_neuronow2
         steps:
           - {task: UsePythonVersion@0, inputs: {versionSpec: '3.6', architecture: x64}}
+          - bash: |
+              wget -N https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/typy_neuronow2.zip
+              unzip typy_neuronow2.zip
           - bash: |
               python -m pip install -r requirements_pyinstaller.txt
               python -m pip install .
