@@ -1,0 +1,36 @@
+ {
+  "creators": [
+    {
+      "affiliation": "Centre of New Technologies, University of Warsaw, Warsaw, Poland; Institute of Informatics, University of Warsaw, Warsaw, Poland",
+      "name": "Bokota, Grzegorz",
+      "orcid": "0000-0002-5470-1676"
+    },
+    {
+      "affiliation": "Nencki Institute of Experimental Biology, Polish Academy of Sciences, Warsaw, Poland",
+      "name": "Magalska, Adrianna",
+      "orcid": "0000-0002-0517-7134"
+    },
+    {
+      "affiliation": "Institute of Informatics, University of Warsaw, Warsaw, Poland",
+      "name": "Sroka, Jacek"
+    }
+  ],
+  "contributors": [
+    {
+      "affiliation": "Centre of New Technologies, University of Warsaw, Warsaw, Poland; Faculty of Mathematics and Information Science, Warsaw University of Technology, Warsaw, Poland",
+      "name": "Plewczyński, Dariusz",
+      "orcid": "0000-0002-3840-7610",
+      "type": "Supervisor"
+    }
+  ],
+  "license": {
+      "id": "GPL-3.0-only"
+  },
+  "title": "PartSeg -  segmentation and reconstruction tool for 3D microscopy images",
+  "keywords": [
+    "Python",
+    "Bioimaging"
+  ],
+  "upload_type": "software",
+  "access_right": "open"
+}

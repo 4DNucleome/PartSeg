@@ -108,7 +108,7 @@ stages:
         variables:
           CIBW_BUILD: cp36-manylinux1_x86_64 cp37-manylinux1_x86_64
           CIBW_TEST_REQUIRES: pytest
-          CIBW_TEST_COMMAND: pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part
+          CIBW_TEST_COMMAND: pytest {project}/package/tests --ignore={project}/package/tests/test_gui
         steps:
           - task: UsePythonVersion@0
           - task: DownloadPipelineArtifact@2
@@ -127,7 +127,7 @@ stages:
       - job: macos_wheel
         pool: {vmImage: 'macOS-10.13'}
         variables:
-          CIBW_BUILD: cp36-*10_9_intel cp37-*10_9_intel
+          CIBW_BUILD: cp36-*intel cp37-*intel
           CIBW_TEST_REQUIRES: pytest pytest-qt
           CIBW_TEST_COMMAND: pytest {project}/package/tests
         steps:
