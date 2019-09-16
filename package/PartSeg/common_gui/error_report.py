@@ -79,17 +79,18 @@ class ErrorDialog(QDialog):
         """
         Function with construct final error message and send it using sentry.
         """
-        text = self.desc.text() + "\n\nVersion: " + __version__ + "\n"
-        if len(self.additional_notes) > 0:
-            text += "Additional notes: " + self.additional_notes + "\n"
-        text += self.error_description.toPlainText() + "\n\n"
-        if len(self.additional_info.toPlainText()) > 0:
-            text += "\nUser information:\n" + self.additional_info.toPlainText()
-        if len(self.contact_info.text()) > 0:
-            text += "\nContact: " + self.contact_info.text()
-        event, hint = self.exception_tuple
-        event["message"] = text
-        sentry_sdk.capture_event(event, hint=hint)
+        with sentry_sdk.configure_scope() as scope:
+            text = self.desc.text() + "\n\nVersion: " + __version__ + "\n"
+            if len(self.additional_notes) > 0:
+                scope.set_extra("additional_notes", self.additional_notes)
+            if len(self.additional_info.toPlainText()) > 0:
+                scope.set_extra("user_information", self.additional_info.toPlainText())
+            if len(self.contact_info.text()) > 0:
+                scope.set_extra("contact", self.contact_info.text())
+            event, hint = self.exception_tuple
+
+            event["message"] = text
+            sentry_sdk.capture_event(event, hint=hint)
         # sentry_sdk.capture_event({"message": text, "level": "error", "exception": self.exception})
         self.accept()
 
