@@ -241,13 +241,15 @@ stages:
         steps:
           - {task: UsePythonVersion@0, inputs: {versionSpec: '3.6', architecture: x64}}
           - bash: |
-              wget -N https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/typy_neuronow2.zip
+              wget -q -N https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/typy_neuronow2.zip
               unzip typy_neuronow2.zip
+              ls typy_neuronow2
+            displayName: GetData
           - bash: |
               python -m pip install -r requirements_pyinstaller.txt
               python -m pip install .
               python -m pip install jupyter[all]
               python -m pip install matplotlib
             displayName: InstallDeps
-          - bash: jupyter nbconvert --to notebook --execute tutorials/tutorial_neuron_types/Neuron_types_example.ipynb
+          - bash: DATA_PATH=${PWD}/typy_neuronow2 jupyter nbconvert --to notebook --execute tutorials/tutorial_neuron_types/Neuron_types_example.ipynb
             displayName: BuildDocs
