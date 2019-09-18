@@ -76,7 +76,7 @@ def save_cmap(file: typing.Union[str, h5py.File, BytesIO], data: np.ndarray, spa
     if isinstance(file, (str, BytesIO)):
         if isinstance(file, str) and os.path.exists(file):
             os.remove(file)
-        cmap_file = h5py.File(file)
+        cmap_file = h5py.File(file, 'w')
     elif isinstance(file, h5py.File):
         cmap_file = file
     else:
