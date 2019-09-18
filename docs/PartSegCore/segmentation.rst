@@ -1,4 +1,4 @@
-PartSeg.utils.segmentation
+PartSegCore.segmentation
 ==========================
 Here we describe base classes for segmentation
 

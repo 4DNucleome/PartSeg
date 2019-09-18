@@ -1,26 +1,12 @@
-PartSeg.utils base
-==================
+PartSegCore
+===========
 
-.algorithm_describe_base
-------------------------
-.. automodule:: PartSegCore.algorithm_describe_base
-   :members:
+This package contains calculation backend of PartSeg
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
 
-.register
----------
-.. automodule:: PartSegCore.register
-   :members:
-
-.. data:: base_class_dict
-
-   dict with base class for given type of algorithm, keys are :py:class:`RegisterEnum` members
-
-
-
-
-.json_hooks
------------
-.. automodule:: PartSegCore.json_hooks
-   :members:
-   :show-inheritance:
+   base
+   color_image
+   segmentation

@@ -112,6 +112,17 @@ def color_grayscale(np.ndarray[DTYPE_t, ndim=2] cmap, np.ndarray[numpy_types, nd
 
 def add_labels(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[label_types, ndim=2] labels, float overlay, int only_border,
               int border_thick, np.ndarray[np.uint8_t, ndim=1] use_labels):
+    """
+    Add label to given RGB image. Ift modify original image.
+
+    :param image: RGB image on background
+    :param labels: labels, different label is different num
+    :param overlay: from 0 to 1
+    :param only_border: Draw only border of image
+    :param border_thick: if draw only border then thick of this border
+    :param use_labels: Which labels should be drawer
+    :return: changed image
+    """
     if labels is None:
         return image
     cdef Py_ssize_t x_max = image.shape[0]

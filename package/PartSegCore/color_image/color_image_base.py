@@ -15,7 +15,7 @@ color_array_dict: typing.Dict[ColorMap, np.ndarray] = {}
 
 def create_color_map(colormap_definition: BaseColormap, power: float=1.0) -> np.ndarray:
     """
-    Calculate array with approximation of colormap used by :py:func`.color_image` function.
+    Calculate array with approximation of colormap used by :py:func`.color_image_fun` function.
     If first or last color do not have position 0 or 1 respectively then begin or end will be filled with given color
 
     Greyscale colormap
@@ -57,21 +57,6 @@ def create_color_map(colormap_definition: BaseColormap, power: float=1.0) -> np.
         colormap[:, i] = np.interp(points, bounds, values[:, i])
     return colormap
 
-    """start_color = points_and_colors[0].color
-    start_point = int(1024 * points_and_colors[0].color_position)
-    colormap[:start_point] = start_color.as_tuple()
-    for el in points_and_colors[1:]:
-        end_point = int(1024 * el.color_position)
-        part_len = np.array((el.color - start_color).as_tuple())
-        part_len += np.sign(part_len)
-        part = np.linspace((0, 0, 0), part_len, end_point - start_point,
-                           endpoint=False, dtype=np.int16) + start_color.as_tuple()
-        colormap[start_point: end_point] = part
-        start_point = end_point
-        start_color = el.color
-    colormap[start_point:] = start_color.as_tuple()
-    return colormap"""
-
 
 def color_chanel(cmap, chanel, max_val, min_val):
     cmap0 = cmap[:, 0]
@@ -100,8 +85,8 @@ def color_chanel(cmap, chanel, max_val, min_val):
     return temp_image
 
 
-def color_image(image: np.ndarray, colors: typing.List[typing.Union[BaseColormap, np.ndarray]],
-                min_max: typing.List[typing.Tuple]) -> np.ndarray:
+def color_image_fun(image: np.ndarray, colors: typing.List[typing.Union[BaseColormap, np.ndarray]],
+                    min_max: typing.List[typing.Tuple[float, float]]) -> np.ndarray:
     """
     Color given image layer.
 

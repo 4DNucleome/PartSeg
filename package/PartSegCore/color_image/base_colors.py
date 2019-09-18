@@ -74,17 +74,23 @@ ColorInfoType = typing.Tuple[typing.Tuple[Num, Num, Num], ...]
 
 
 class BaseColormap:
+    """Base class for all colormap representations. Define interface."""
     def bounds(self) -> typing.List[float]:
         """
-        coordinates from scale 0-1. For each value there is corresponding color (RGB)
+        coordinates from scale [0-1]. For each value there is corresponding color (RGB)
         returned by :py:meth:`~.color_values`
         """
         raise NotImplementedError()
 
     def color_values(self) -> ColorInfoType:
+        """
+        RGB values for :py:meth:`bounds`
+        """
         raise NotImplementedError()
 
     def get_points(self) -> typing.Iterable[float]:
+        """return coordinates of interpolated points. Need have length 0, or
+        :py:data:`PartSegCore.color_image.color_image.resolution`. Values from range [0-1]"""
         raise NotImplementedError()
 
     def num_of_channels(self) -> int:
@@ -92,6 +98,7 @@ class BaseColormap:
         return len(self.non_zero_channels())
 
     def non_zero_channels(self) -> typing.List[int]:
+        """return list with indices of nonzero channels"""
         raise NotImplementedError()
 
     def __hash__(self):

@@ -13,7 +13,6 @@ The documentation is incomplete. Many utilities are undocumented.
    :caption: Contents:
 
    PartSegCore/index
-   PartSegCore/segmentation
    common_gui/index
    common_backend/index
    custom_application

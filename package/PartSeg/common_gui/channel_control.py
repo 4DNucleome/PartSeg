@@ -15,7 +15,7 @@ from PartSegCore.color_image.base_colors import starting_colors
 from .collapse_checkbox import CollapseCheckbox
 from .universal_gui_part import CustomSpinBox
 from ..common_backend.base_settings import ViewSettings
-from PartSegCore.color_image import color_image
+from PartSegCore.color_image import color_image_fun
 
 image_dict = {}  # dict to store QImages generated from colormap
 
@@ -598,7 +598,7 @@ class ChannelWidget(QWidget):
         else:
             layout.setContentsMargins(5, 1, 1, 1)
             self.setMinimumHeight(30)
-        img = color_image(np.arange(0, 256).reshape((1, 256, 1)), [self.color], [(0, 256)])
+        img = color_image_fun(np.arange(0, 256).reshape((1, 256, 1)), [self.color], [(0, 256)])
         self.image = QImage(img.data, 256, 1, img.dtype.itemsize * 256 * 3, QImage.Format_RGB888)
         self.setLayout(layout)
 
@@ -658,7 +658,7 @@ class ChannelWidget(QWidget):
 
     def set_color(self, color):
         self.color = color
-        img = color_image(np.arange(0, 256).reshape((1, 256, 1)), [self.color], [(0, 255)])
+        img = color_image_fun(np.arange(0, 256).reshape((1, 256, 1)), [self.color], [(0, 255)])
         self.image = QImage(img.data, 256, 1, img.dtype.itemsize * 256 * 3, QImage.Format_RGB888)
         self.repaint()
 
@@ -861,7 +861,7 @@ class ChannelControl(ChannelChooseBase):
         self.change_color_preview(text)
 
     def change_color_preview(self, value):
-        img = color_image(np.arange(0, 256).reshape((1, 256, 1)), [value], [(0, 256)])
+        img = color_image_fun(np.arange(0, 256).reshape((1, 256, 1)), [value], [(0, 256)])
         self.image = QImage(img.data, 256, 1, img.dtype.itemsize * 256 * 3, QImage.Format_RGB888)
         self.channel_preview_widget.repaint()
 
