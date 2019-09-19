@@ -1,6 +1,6 @@
-# cython: boundscheck=False, wraparound=False, nonecheck=False, cdivision=True
 # distutils: define_macros=CYTHON_TRACE_NOGIL=1
-# cython: language_level=3
+# cython: language_level=3, boundscheck=False, wraparound=False, nonecheck=False, cdivision=True, embedsignature=True
+
 
 import numpy as np
 cimport numpy as np

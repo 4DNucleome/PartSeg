@@ -12,10 +12,11 @@ def calculate_maximum(np.ndarray[float64_t, ndim=3] object_area, np.ndarray[uint
                       np.ndarray[int8_t, ndim=2] neighbourhood, result=None):
     """
     Calculate maximum path from source
+
     :param object_area: data with removed other components
     :param base_object: area of component
     :param neighbourhood: array with relative coordinates of neighbours
-    :param result:
+    :param result: cache array to store result. If calling function multiple times allows to skip memory allocation.
     :return:
     """
     if result is None:
@@ -77,6 +78,7 @@ def calculate_minimum(np.ndarray[float64_t, ndim=3] object_area, np.ndarray[uint
                       np.ndarray[int8_t, ndim=2] neighbourhood, result=None):
     """
     Calculate maximum path from source
+
     :param maximum: maximum possible value on path
     :param object_area: data with removed other components
     :param base_object: area of component

@@ -8,3 +8,11 @@ Base classes
    :members:
    :inherited-members:
    :show-inheritance:
+
+.sprawl
+-------
+
+.. automodule:: PartSegCore.segmentation.sprawl
+   :members:
+   :inherited-members:
+   :show-inheritance:

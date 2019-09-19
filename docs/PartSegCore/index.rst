@@ -9,4 +9,5 @@ This package contains calculation backend of PartSeg
 
    base
    color_image
+   distance_in_structure
    segmentation

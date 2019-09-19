@@ -89,8 +89,11 @@ class BaseColormap:
         raise NotImplementedError()
 
     def get_points(self) -> typing.Iterable[float]:
-        """return coordinates of interpolated points. Need have length 0, or
-        :py:data:`PartSegCore.color_image.color_image.resolution`. Values from range [0-1]"""
+        """
+        return coordinates of interpolated points. Need have length 0, or
+        :py:data:`PartSegCore.color_image.resolution`. Values from range [0-1].
+        It is for future changes
+        """
         raise NotImplementedError()
 
     def num_of_channels(self) -> int:
@@ -102,7 +105,6 @@ class BaseColormap:
         raise NotImplementedError()
 
     def __hash__(self):
-        # TODO (fixme to not need convert)
         raise NotImplementedError()
 
     def __eq__(self, other):

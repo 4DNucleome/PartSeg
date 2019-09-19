@@ -1,3 +1,6 @@
+"""
+This module contains PartSeg wrapers for function for :py:mod:`..distance_in_structure.find_split`.
+"""
 from abc import ABC
 from enum import Enum
 from typing import Callable, Any
@@ -12,6 +15,7 @@ from ..algorithm_describe_base import Register, AlgorithmDescribeBase, Algorithm
 
 
 class BaseSprawl(AlgorithmDescribeBase, ABC):
+    """base class for all sprawl interface"""
     @classmethod
     def get_fields(cls):
         return []
@@ -19,6 +23,21 @@ class BaseSprawl(AlgorithmDescribeBase, ABC):
     @classmethod
     def sprawl(cls, sprawl_area: np.ndarray, core_objects: np.ndarray, data: np.ndarray, components_num: int, spacing,
                side_connection: bool, operator: Callable[[Any, Any], bool], arguments: dict, lower_bound, upper_bound):
+        """
+        This method calculate sprawl
+
+        :param sprawl_area: Mask area to which sprawl should be limited
+        :param core_objects: Starting objects for sprawl
+        :param data: density information
+        :param components_num: numer of components in core_objects
+        :param spacing: Image spacing. Needed for sprawls which use metrics
+        :param side_connection:
+        :param operator:
+        :param arguments: dict with parameters reported by function :py:meth:`get_fields`
+        :param lower_bound: data value lower boud
+        :param upper_bound: data value upper boud
+        :return:
+        """
         raise NotImplementedError()
 
 
@@ -43,6 +62,7 @@ class PathSprawl(BaseSprawl):
 
 
 class DistanceSprawl(BaseSprawl):
+    """Calculate Euclidean sprawl (watersheed) with respect to image spacing"""
     @classmethod
     def get_name(cls):
         return "Euclidean sprawl"
@@ -140,14 +160,14 @@ try:
     # noinspection PyUnresolvedReferences,PyUnboundLocalVariable
     reloading
 except NameError:
-    reloading = False  # means the module is being imported
+    reloading = False  # means the module is being imported firs time
     enum_register.register_class(NeighType)
 
 
 def calculate_distances_array(spacing, neigh_type: NeighType):
     """
-    :param spacing:
-    :param neigh_type:
+    :param spacing: image spacing
+    :param neigh_type: neigbourhood type
     :return: neighbourhood array, distance array
     """
     min_dist = min(spacing)

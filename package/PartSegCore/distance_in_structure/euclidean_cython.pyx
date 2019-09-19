@@ -1,5 +1,5 @@
 # distutils: language = c++
-# cython: boundscheck=False, wraparound=False, nonecheck=False, cdivision=True
+# cython: boundscheck=False, wraparound=False, nonecheck=False, cdivision=True, embedsignature=True
 # cython: language_level=3
 
 
@@ -11,6 +11,16 @@ include "put_borders_in_queue.pyx"
 
 def calculate_euclidean(np.ndarray[uint8_t, ndim=3] object_area, np.ndarray[uint8_t, ndim=3] base_object,
                         np.ndarray[int8_t, ndim=2] neighbourhood, np.ndarray[float64_t, ndim=1] distance):
+    """
+    Calculate euclidean watersheed for one core object
+
+    :param object_area: Area in which euclidean watershhed sholud be calculated
+    :param base_object: Core object from which watersheed start
+    :param neighbourhood: negihbourhood defined as array of size (neigbourhood_size, 3)
+    :param distance: array for distances of negibours. Need have size (neighbourhood_szie).
+        Used for handling spacin in image.
+    :return: labeleing after watersheeed
+    """
     cdef np.ndarray[uint8_t, ndim=3] consumed_area = np.copy(base_object)
     cdef np.ndarray[float64_t, ndim=3] result
     cdef Size x_size, y_size, z_size, array_pos, x, y, z, xx, yy, zz
@@ -55,6 +65,16 @@ def calculate_euclidean(np.ndarray[uint8_t, ndim=3] object_area, np.ndarray[uint
 def calculate_euclidean_iterative(
         np.ndarray[uint8_t, ndim=3] object_area, np.ndarray[component_types, ndim=3] base_object,
         np.ndarray[int8_t, ndim=2] neighbourhood, np.ndarray[float64_t, ndim=1] distance):
+    """
+    Calculate euclidean watersheed for multiple core object
+
+    :param object_area: Area in which euclidean watershhed sholud be calculated
+    :param base_object: Core object from which watersheed start
+    :param neighbourhood: negihbourhood defined as array of size (neigbourhood_size, 3)
+    :param distance: array for distances of negibours. Need have size (neighbourhood_szie).
+        Used for handling spacin in image.
+    :return: labeleing after watersheeed
+    """
     cdef np.ndarray[component_types, ndim=3] consumed_area = np.copy(base_object)
     cdef np.ndarray[component_types, ndim=3] result = np.copy(base_object)
     cdef np.ndarray[float64_t, ndim=3] distance_cache

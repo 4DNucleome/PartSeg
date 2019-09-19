@@ -1,3 +1,6 @@
+"""
+This module contains function to perform multiple component sprawl (watershhed)
+"""
 from functools import partial
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import numpy as np
