@@ -23,7 +23,7 @@ from PartSegCore.universal_const import Units
 
 from PartSegCore.analysis.calculation_plan import CalculationPlan, MaskCreate, Operations, \
     MaskSuffix, MaskSub, MaskFile, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, \
-    MeasurementCalculate, Save, RootType
+    MeasurementCalculate, Save, RootType, MaskBase
 from .partseg_settings import PartSettings
 from .profile_export import ExportDialog, ImportDialog
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile
@@ -614,6 +614,7 @@ class CreatePlan(QWidget):
             self.generate_mask_btn.setDisabled(True)
             return
         if not update and self.calculation_plan.get_node().operation != "root" and\
+                isinstance(self.calculation_plan.get_node().operation, MaskBase) and\
                 self.calculation_plan.get_node().operation.name == text:
             self.generate_mask_btn.setDisabled(True)
             return
