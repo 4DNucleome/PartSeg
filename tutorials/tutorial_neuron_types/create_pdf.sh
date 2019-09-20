@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-cd $DIR
+cd $DIR || exit
 
 jupyter nbconvert --to latex Neuron_types_example.ipynb
 sed -r -i 's/documentclass\[11pt\]\{article\}/documentclass[8pt]{extarticle}/' Neuron_types_example.tex
