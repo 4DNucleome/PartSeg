@@ -14,7 +14,7 @@ from PartSegCore.analysis.save_hooks import PartEncoder
 from ..io_utils import get_tarinfo, SaveBase, LoadBase, proxy_callback, ProjectInfoBase, check_segmentation_type, \
     SegmentationType, WrongFileTypeException, UpdateLoadedMetadataBase
 from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationProfile
-from PartSegImage import Image, ImageWriter, ImageReader
+from PartSegImage import Image, ImageWriter, TiffImageReader, CziImageReader
 
 
 class SegmentationTuple(ProjectInfoBase, typing.NamedTuple):
@@ -191,7 +191,7 @@ class LoadSegmentationImage(LoadBase):
             raise IOError(f"Base file for segmentation do not exists: {base_file} -> {file_path}")
         if metadata is None:
             metadata = {"default_spacing": [1, 1, 1]}
-        image = ImageReader.read_image(
+        image = TiffImageReader.read_image(
             file_path, callback_function=partial(proxy_callback, range_changed, step_changed),
             default_spacing=metadata["default_spacing"])
         # noinspection PyProtectedMember
@@ -199,7 +199,7 @@ class LoadSegmentationImage(LoadBase):
         return seg._replace(file_path=image.file_path, image=image)
 
 
-class LoadImage(LoadBase):
+class LoadTiff(LoadBase):
     @classmethod
     def get_name(cls):
         return "Image(*.tif *.tiff *.lsm)"
@@ -215,7 +215,29 @@ class LoadImage(LoadBase):
             SegmentationTuple:
         if metadata is None:
             metadata = {"default_spacing": [1, 1, 1]}
-        image = ImageReader.read_image(
+        image = TiffImageReader.read_image(
+            load_locations[0], callback_function=partial(proxy_callback, range_changed, step_changed),
+            default_spacing=metadata["default_spacing"])
+        return SegmentationTuple(image.file_path, image, None, [])
+
+
+class LoadCzi(LoadBase):
+    @classmethod
+    def get_name(cls):
+        return "Czi Image(*.czi)"
+
+    @classmethod
+    def get_short_name(cls):
+        return "czi"
+
+    @classmethod
+    def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+             range_changed: typing.Callable[[int, int], typing.Any] = None,
+             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None) ->\
+            SegmentationTuple:
+        if metadata is None:
+            metadata = {"default_spacing": [1, 1, 1]}
+        image = CziImageReader.read_image(
             load_locations[0], callback_function=partial(proxy_callback, range_changed, step_changed),
             default_spacing=metadata["default_spacing"])
         return SegmentationTuple(image.file_path, image, None, [])
@@ -335,7 +357,7 @@ class UpdateLoadedMetadataMask(UpdateLoadedMetadataBase):
         return profile_data
 
 
-load_dict = Register(LoadImage, LoadSegmentationImage, class_methods=LoadBase.need_functions)
+load_dict = Register(LoadTiff, LoadCzi, LoadSegmentationImage, class_methods=LoadBase.need_functions)
 save_parameters_dict = Register(SaveParametersJSON, class_methods=SaveBase.need_functions)
 save_components_dict = Register(SaveComponents, class_methods=SaveBase.need_functions)
 save_segmentation_dict = Register(SaveSegmentation, class_methods=SaveBase.need_functions)

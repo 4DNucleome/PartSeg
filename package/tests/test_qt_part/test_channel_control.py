@@ -7,7 +7,7 @@ from qtpy.QtGui import QImage
 from PartSeg.common_gui.channel_control import ColorComboBox, ColorComboBoxGroup, ChannelProperty
 from PartSeg.common_gui.stack_image_view import ImageView, ImageCanvas
 from PartSeg.common_backend.base_settings import ViewSettings, ColormapDict
-from PartSegImage import ImageReader
+from PartSegImage import TiffImageReader
 from PartSegCore.color_image import color_image_fun
 from PartSegCore.color_image.base_colors import starting_colors
 
@@ -122,7 +122,7 @@ class TestColorComboBoxGroup:
         image_view = ImageView(settings, ch_property, "test")
         qtbot.addWidget(image_view)
         qtbot.addWidget(ch_property)
-        image = ImageReader.read_image(PartSegData.segmentation_analysis_default_image)
+        image = TiffImageReader.read_image(PartSegData.segmentation_analysis_default_image)
         with qtbot.waitSignal(settings.image_changed):
             settings.image = image
         channels_num = image.channels

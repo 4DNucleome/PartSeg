@@ -34,7 +34,7 @@ from PartSeg.common_backend.progress_thread import ExecuteFunctionThread
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 from PartSegCore.mask import io_functions
 from .stack_settings import StackSettings, get_mask
-from PartSegImage import ImageReader, Image
+from PartSegImage import TiffImageReader, Image
 from .batch_proceed import BatchProceed, BatchTask
 from .image_view import StackImageView
 from PartSegCore.mask.io_functions import SaveSegmentation, LoadSegmentation, SegmentationTuple
@@ -757,7 +757,7 @@ class MainWindow(BaseMainWindow):
         self.widget.setLayout(layout)
         self.setCentralWidget(self.widget)
         if initial_image is None:
-            reader = ImageReader()
+            reader = TiffImageReader()
             im = reader.read(self.initial_image_path)
             im.file_path = ""
             self.settings.image = im

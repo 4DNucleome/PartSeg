@@ -1,7 +1,7 @@
 import os.path
 import pytest
 
-from PartSegImage import ImageReader
+from PartSegImage import TiffImageReader
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.analysis.load_functions import UpdateLoadedMetadataAnalysis
@@ -25,7 +25,7 @@ class TestSegmentation:
         except Exception:
             pytest.fail("Fail in loading profile")
             return
-        image = ImageReader.read_image(
+        image = TiffImageReader.read_image(
             os.path.join(get_test_dir(), "stack1_components", "stack1_component5.tif"),
             os.path.join(get_test_dir(), "stack1_components", "stack1_component5_mask.tif")
         )

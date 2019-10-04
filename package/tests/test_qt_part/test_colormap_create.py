@@ -12,7 +12,7 @@ from PartSeg.common_gui.stack_image_view import ImageView
 from PartSeg.common_backend.base_settings import ViewSettings, ColormapDict
 from PartSegCore.color_image import ColorPosition, Color
 from PartSegCore.color_image.base_colors import starting_colors
-from PartSegImage import ImageReader
+from PartSegImage import TiffImageReader
 
 
 def test_color_conversion():
@@ -241,7 +241,7 @@ class TestColormapList:
         qtbot.addWidget(image_view)
         color_list = PColormapList(settings, ["test"])
         qtbot.addWidget(color_list)
-        image = ImageReader.read_image(PartSegData.segmentation_analysis_default_image)
+        image = TiffImageReader.read_image(PartSegData.segmentation_analysis_default_image)
         settings.image = image
         color_list.refresh()
         assert image_view.channel_control.channels_count == image.channels

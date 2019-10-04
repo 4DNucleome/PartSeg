@@ -30,7 +30,7 @@ from ..common_backend.main_window import BaseMainWindow, BaseMainMenu
 from .advanced_window import SegAdvancedWindow
 from .batch_window import BatchWindow
 from .calculation_pipeline_thread import CalculatePipelineThread
-from PartSegImage import ImageReader, Image
+from PartSegImage import TiffImageReader, Image
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.analysis.analysis_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
 from .image_view import SynchronizeView, ImageViewWithMask, CompareImageView
@@ -640,7 +640,7 @@ class MainWindow(BaseMainWindow):
         self.multiple_files = MultipleFileWidget(self.settings, load_functions.load_dict, True)
 
         if initial_image is None:
-            reader = ImageReader()
+            reader = TiffImageReader()
             im = reader.read(self.initial_image_path)
             im.file_path = ""
             self.settings.image = im

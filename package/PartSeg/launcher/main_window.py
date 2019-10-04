@@ -8,7 +8,7 @@ from qtpy.QtWidgets import QMainWindow, QToolButton, QGridLayout, QWidget, QProg
 from PartSeg.common_backend.load_backup import import_config
 from PartSeg.common_backend.main_window import BaseMainWindow
 from PartSeg.common_backend.base_settings import BaseSettings
-from PartSegImage import ImageReader
+from PartSegImage import TiffImageReader
 from PartSegData import icons_dir
 
 class Prepare(QThread):
@@ -26,7 +26,7 @@ class Prepare(QThread):
             main_window: BaseMainWindow = main_window_module.MainWindow
             settings: BaseSettings = main_window.get_setting_class()(main_window_module.CONFIG_FOLDER)
             self.errors = settings.load()
-            reader = ImageReader()
+            reader = TiffImageReader()
             im = reader.read(main_window.initial_image_path)
             im.file_path = ""
             self.result = partial(main_window, settings=settings, initial_image=im)

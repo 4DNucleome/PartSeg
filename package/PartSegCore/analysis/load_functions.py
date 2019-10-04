@@ -12,7 +12,7 @@ from tifffile import TiffFile
 import packaging.version
 
 from PartSegCore.mask.io_functions import LoadSegmentationImage
-from PartSegImage import ImageReader
+from PartSegImage import TiffImageReader
 from PartSegCore.analysis.calculation_plan import CalculationPlan, CalculationTree
 from PartSegCore.universal_const import Units, UNIT_SCALE
 from ..algorithm_describe_base import Register, SegmentationProfile
@@ -46,7 +46,7 @@ def load_project(
     image_tar = tar_file.extractfile(tar_file.getmember("image.tif"))
     image_buffer.write(image_tar.read())
     image_buffer.seek(0)
-    reader = ImageReader()
+    reader = TiffImageReader()
     image = reader.read(image_buffer)
     image.file_path = file_path
     seg_tar = tar_file.extractfile(tar_file.getmember("segmentation.npz"))
@@ -125,7 +125,7 @@ class LoadImage(LoadBase):
         if "recursion_limit" not in metadata:
             metadata = copy(metadata)
             metadata["recursion_limit"] = 3
-        image = ImageReader.read_image(
+        image = TiffImageReader.read_image(
             load_locations[0], callback_function=partial(proxy_callback, range_changed, step_changed),
             default_spacing=metadata["default_spacing"])
         re_read = True
@@ -165,7 +165,7 @@ class LoadImageMask(LoadBase):
              step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
         if metadata is None:
             metadata = {"default_spacing": [1, 1, 1]}
-        image = ImageReader.read_image(
+        image = TiffImageReader.read_image(
             load_locations[0], load_locations[1],
             callback_function=partial(proxy_callback, range_changed, step_changed),
             default_spacing=metadata["default_spacing"])

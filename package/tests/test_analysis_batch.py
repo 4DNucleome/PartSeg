@@ -3,7 +3,7 @@ from glob import glob
 import time
 import pandas as pd
 import sys
-from PartSegImage import ImageReader
+from PartSegImage import TiffImageReader
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.analysis.batch_processing.batch_backend import CalculationProcess, CalculationManager
 from PartSegCore.analysis.calculation_plan import CalculationPlan, CalculationTree, MaskSuffix, MeasurementCalculate, \
@@ -60,7 +60,7 @@ class TestCalculationProcess:
         file_path = os.path.join(get_test_dir(), "stack1_components", "stack1_component5.tif")
         calc = MocksCalculation(file_path)
         process.calculation = calc
-        process.image = ImageReader.read_image(file_path)
+        process.image = TiffImageReader.read_image(file_path)
         process.iterate_over(plan.execution_tree)
         assert (len(process.measurement[0]) == 3)
 

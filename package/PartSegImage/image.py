@@ -32,6 +32,7 @@ class Image(object):
             image_spacing = tuple(image_spacing)
         self._image_array = data
         self._image_spacing = (1.0, ) * (3-len(image_spacing)) + image_spacing
+        self._image_spacing = tuple([el if el > 0 else 10**-6 for el in self._image_spacing])
         self.file_path = file_path
         self.default_coloring = default_coloring
         self.additional_channels = []

@@ -1,6 +1,8 @@
 appdirs==1.4.3
 Cython==0.29.13
+czifile==2019.7.2
 h5py==2.9.0
+imagecodecs-lite==2019.4.20
 numpy==1.17.0
 openpyxl==2.6.2
 packaging==19.1
@@ -14,5 +16,5 @@ sentry-sdk==0.11.0
 SimpleITK==1.2.0
 six==1.12.0
 sympy==1.4
-tifffile==0.15.1
+tifffile==2019.7.26
 xlrd==1.2.0

@@ -1,16 +1,19 @@
-import typing
+import collections
+import os.path
 import re
+import typing
 from io import BytesIO
 from threading import Lock
 
+import numpy as np
+import tifffile.tifffile
 from tifffile import TiffFile
 # noinspection PyProtectedMember
 from tifffile.tifffile import TiffPage
-import tifffile.tifffile
+from czifile.czifile import CziFile
 
 from .image import Image
-import numpy as np
-import os.path
+import packaging.version
 
 
 class TiffFileException(Exception):
@@ -21,22 +24,14 @@ class TiffFileException(Exception):
     pass
 
 
-class ImageReader(object):
+class BaseImageReader:
     """
-    TIFF/LSM files reader. Base reading with :py:meth:`.read_image`
-
-    image_file: TiffFile
-    mask_file: TiffFile
+    Base class for reading image using Christhoper Gholike libraries
     """
-
     def __init__(self, callback_function=None):
-        self.image_file = None
-        self.mask_file: typing.Optional[TiffFile] = None
-        self.default_spacing = 10**-6, 10**-6, 10**-6
+        self.default_spacing = 10 ** -6, 10 ** -6, 10 ** -6
         self.spacing = self.default_spacing
-        self.colors = None
-        self.labels = None
-        self.ranges = None
+        self.image_file = None
         if callback_function is None:
             self.callback_function = lambda x, y: 0
         else:
@@ -50,12 +45,15 @@ class ImageReader(object):
             raise ValueError(f"wrong spacing {spacing}")
         self.default_spacing = spacing
 
+    def read(self, image_path: typing.Union[str, BytesIO], mask_path=None) -> Image:
+        raise NotImplementedError()
+
     @classmethod
     def read_image(cls, image_path: typing.Union[str, BytesIO], mask_path=None,
                    callback_function: typing.Optional[typing.Callable] = None,
                    default_spacing: typing.List[int] = None) -> Image:
         """
-        read tiff/lsm file with optional mask file
+        read image file with optional mask file
 
         :param image_path: path or opened file contains image
         :param mask_path:
@@ -64,11 +62,84 @@ class ImageReader(object):
             (or metadata format is not supported)
         :return: image
         """
-        # TODO add genric description of callback function
+        # TODO add generic description of callback function
         instance = cls(callback_function)
         if default_spacing is not None:
             instance.set_default_spacing(default_spacing)
         return instance.read(image_path, mask_path)
+
+    @staticmethod
+    def update_array_shape(array: np.ndarray, axes: str):
+        """
+        Rearrange order of array axes to get proper internal axes order
+
+        :param array: array to reorder
+        :param axes: current order of array axes as string like "TZYXC"
+        """
+        try:
+            final_mapping_dict = {"T": 0, "Z": 1, "Y": 2, "X": 3, "C": 4, "I": 1, "S": 4, "Q": 1}
+            final_mapping = [final_mapping_dict[letter] for letter in axes]
+        except KeyError:
+            raise NotImplementedError("Data type not supported. Please contact with author for update code")
+        if len(final_mapping) != len(set(final_mapping)):
+            raise NotImplementedError("Data type not supported. Please contact with author for update code")
+        if len(array.shape) < 5:
+            array = np.reshape(array, array.shape + (1,) * (5 - len(array.shape)))
+
+        array = np.moveaxis(array, list(range(len(axes))), final_mapping)
+        return array
+
+
+class CziImageReader(BaseImageReader):
+    """
+    This class is to read data from czi files. Masks will be treated as TIFF.
+    """
+    def read(self, image_path: typing.Union[str, BytesIO], mask_path=None) -> Image:
+        self.image_file = CziFile(image_path)
+        image_data = self.image_file.asarray()
+        image_data = self.update_array_shape(image_data, self.image_file.axes)
+        metadata = self.image_file.metadata(False)
+        try:
+            scaling = metadata['ImageDocument']['Metadata']['Scaling']['Items']['Distance']
+            scale_info = {}
+            for el in scaling:
+                scale_info[el["Id"]] = el["Value"]
+            self.spacing = scale_info.get("Z", self.default_spacing[0]), \
+                scale_info.get("Y", self.default_spacing[1]), \
+                scale_info.get("X", self.default_spacing[2]),
+        except KeyError:
+            pass
+        # TODO add mask reading
+        return Image(image_data, self.spacing, file_path=os.path.abspath(image_path))
+
+    def update_array_shape(self, array: np.ndarray, axes: str):
+        if "B" in axes:
+            index = axes.index("B")
+            if array.shape[index] != 1:
+                raise NotImplementedError("Non single dimension 'B' are not Supported by PartSeg")
+            array = array.take(0, axis=index)
+            axes = axes[:index] + axes[index+1:]
+        if axes[-1] == "0":
+            array = array[..., 0]
+            axes = axes[:-1]
+        return super().update_array_shape(array, axes)
+
+
+class TiffImageReader(BaseImageReader):
+    """
+    TIFF/LSM files reader. Base reading with :py:meth:`.read_image`
+
+    image_file: TiffFile
+    mask_file: TiffFile
+    """
+
+    def __init__(self, callback_function=None):
+        super().__init__(callback_function)
+        self.image_file = None
+        self.mask_file: typing.Optional[TiffFile] = None
+        self.colors = None
+        self.labels = None
+        self.ranges = None
 
     def read(self, image_path: typing.Union[str, BytesIO], mask_path=None) -> Image:
         """
@@ -130,21 +201,6 @@ class ImageReader(object):
         return Image(image_data, self.spacing, mask=mask_data, default_coloring=self.colors, labels=self.labels,
                      ranges=self.ranges, file_path=os.path.abspath(image_path))
 
-    @staticmethod
-    def update_array_shape(array: np.ndarray, axes: str):
-        try:
-            final_mapping_dict = {"T": 0, "Z": 1, "Y": 2, "X": 3, "C": 4, "I": 1, "S": 4, "Q": 1}
-            final_mapping = [final_mapping_dict[letter] for letter in axes]
-        except KeyError:
-            raise NotImplementedError("Data type not supported. Please contact with author for update code")
-        if len(final_mapping) != len(set(final_mapping)):
-            raise NotImplementedError("Data type not supported. Please contact with author for update code")
-        if len(array.shape) < 5:
-            array = np.reshape(array, array.shape + (1,) * (5 - len(array.shape)))
-
-        array = np.moveaxis(array, list(range(len(axes))), final_mapping)
-        return array
-
     def verify_mask(self):
         """
         verify if mask fit to image. Raise ValueError exception on error
@@ -168,6 +224,12 @@ class ImageReader(object):
 
     @staticmethod
     def decode_int(val: int):
+        """
+        This function split 32 bits int on 4 8-bits ints
+
+        :param val: value to decode
+        :return: list of four numbers with values from [0, 255]
+        """
         return [(val >> x) & 255 for x in [24, 16, 8, 0]]
 
     def read_resolution_from_tags(self):
@@ -289,6 +351,66 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.image_reader":
 
     TiffFile.report_func = lambda x: 0
     tifffile.tifffile.TiffPage = MyTiffPage
+
+    if packaging.version.parse(tifffile.__version__) <= packaging.version.parse("2019.7.26"):
+        from tifffile.tifffile import asbool
+
+        def _xml2dict(xml, sanitize=True, prefix=None):
+            """Return XML as dict.
+
+            >>> _xml2dict('<?xml version="1.0" ?><root attr="name"><key>1</key></root>')
+            {'root': {'key': 1, 'attr': 'name'}}
+
+            """
+            from xml.etree import cElementTree as etree  # delayed import
+
+            at = tx = ''
+            if prefix:
+                at, tx = prefix
+
+            def astype(value):
+                # return value as int, float, bool, or str
+                if not isinstance(value, str):
+                    return value
+
+                for t in (int, float, asbool):
+                    try:
+                        return t(value)
+                    except Exception:
+                        pass
+                return value
+
+            def etree2dict(t):
+                # adapted from https://stackoverflow.com/a/10077069/453463
+                key = t.tag
+                if sanitize:
+                    key = key.rsplit('}', 1)[-1]
+                d = {key: {} if t.attrib else None}
+                children = list(t)
+                if children:
+                    dd = collections.defaultdict(list)
+                    for dc in map(etree2dict, children):
+                        for k, v in dc.items():
+                            dd[k].append(astype(v))
+                    d = {key: {k: astype(v[0]) if len(v) == 1 else astype(v)
+                               for k, v in dd.items()}}
+                if t.attrib:
+                    d[key].update((at + k, astype(v)) for k, v in t.attrib.items())
+                if t.text:
+                    text = t.text.strip()
+                    if children or t.attrib:
+                        if text:
+                            d[key][tx + 'value'] = astype(text)
+                    else:
+                        d[key] = astype(text)
+                return d
+
+            return etree2dict(etree.fromstring(xml))
+
+        tifffile.xml2dict = _xml2dict
+        tifffile.tifffile.xml2dict = _xml2dict
+        import czifile
+        czifile.czifile.xml2dict = _xml2dict
 
     if tifffile.__version__ == '0.15.1':
         import warnings

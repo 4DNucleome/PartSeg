@@ -21,7 +21,7 @@ from PartSegCore.analysis.analysis_utils import HistoryElement
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.mask_create import calculate_mask
 from PartSegCore.segmentation.algorithm_base import report_empty_fun, SegmentationAlgorithm
-from PartSegImage import ImageReader, Image
+from PartSegImage import TiffImageReader, Image
 
 
 def do_calculation(file_path, calculation):
@@ -62,7 +62,7 @@ class CalculationProcess(object):
         self.measurement = []
         ext = path.splitext(calculation.file_path)[1]
         if ext in [".tiff", ".tif", ".lsm"]:
-            self.image = ImageReader.read_image(calculation.file_path, default_spacing=calculation.voxel_size)
+            self.image = TiffImageReader.read_image(calculation.file_path, default_spacing=calculation.voxel_size)
         elif ext in [".tgz", ".gz", ".tbz2", ".bz2"]:
             project_tuple = load_project(calculation.file_path)
             self.image = project_tuple.image

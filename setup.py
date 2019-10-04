@@ -13,12 +13,11 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 package_dir = os.path.join(current_dir, "package")
 print(current_dir)
 try:
-    import tifffile
     import imagecodecs
     import imagecodecs._imagecodecs
-    tifffile_string = "tifffile>=0.15"
+    imagecodecs_string = "imagecodecs"
 except ImportError:
-    tifffile_string = 'tifffile>=0.15,<1'
+    imagecodecs_string = 'imagecodecs-lite'
 
 extensions = [
     Extension('PartSegCore.distance_in_structure.euclidean_cython',
@@ -98,9 +97,9 @@ setuptools.setup(
     long_description=readme(),
     long_description_content_type='text/markdown',
     #  scripts=[os.path.join("package", "scripts", "PartSeg")],
-    install_requires=['numpy', tifffile_string, 'appdirs', 'SimpleITK', 'scipy', 'QtPy', 'sentry_sdk==0.11.0',
-                      qt_string, 'six', 'h5py', 'packaging', 'pandas', 'sympy', 'Cython', 'openpyxl',
-                      'xlrd', 'PartSegData==0.9.4'],
+    install_requires=['numpy', "tiffile>=1.0", "czifile", imagecodecs_string, 'appdirs', 'SimpleITK', 'scipy', 'QtPy',
+                      'sentry_sdk==0.11.0', qt_string, 'six', 'h5py', 'packaging', 'pandas', 'sympy', 'Cython',
+                      'openpyxl', 'xlrd', 'PartSegData==0.9.4'],
     tests_require=["pytest", "pytest-qt"],
     entry_points={
         'console_scripts': [
