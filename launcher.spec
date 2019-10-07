@@ -19,7 +19,13 @@ num = tifffile.__version__.split(".")[0]
 if num == '0':
     hiddenimports = ["tifffile._tifffile"]
 else:
-    hiddenimports = ["imagecodecs._imagecodecs"]
+    try:
+        import imagecodecs
+        hiddenimports = ["imagecodecs._imagecodecs", "imagecodecs._imagecodecs_lite", "imagecodecs._zpf",
+                         "imagecodecs._jpeg12"]
+    except ImportError:
+        hiddenimports = ["imagecodecs_lite._imagecodecs_lite"]
+
 
 if platform.system() == "Windows":
     import PyQt5
