@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
-import numpy as np
-import SimpleITK as sitk
 from os.path import isdir, join
 from os import makedirs
-from scipy.spatial.distance import cdist, pdist
-from math import pi
+from math import pi, sqrt
+
+import numpy as np
+import SimpleITK as sitk
 import tifffile
-from math import sqrt
+
+
 DEBUG = True
 
 

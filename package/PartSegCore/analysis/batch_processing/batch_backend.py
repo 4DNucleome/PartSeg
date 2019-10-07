@@ -10,18 +10,18 @@ import numpy as np
 import pandas as pd
 import tifffile
 
-from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.analysis_utils import HistoryElement
 from PartSegCore.analysis.calculation_plan import MaskMapper, MaskUse, MaskCreate, Save, \
     Operations, FileCalculation, MaskIntersection, MaskSum, get_save_path, MeasurementCalculate, Calculation
-from ..batch_processing.parallel_backed import BatchManager
 from PartSegCore.analysis.io_utils import ProjectTuple
 from PartSegCore.analysis.load_functions import load_project
-from PartSegCore.analysis.analysis_utils import HistoryElement
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.mask_create import calculate_mask
 from PartSegCore.segmentation.algorithm_base import report_empty_fun, SegmentationAlgorithm
 from PartSegImage import TiffImageReader, Image
+from ..batch_processing.parallel_backed import BatchManager
 
 
 def do_calculation(file_path, calculation):

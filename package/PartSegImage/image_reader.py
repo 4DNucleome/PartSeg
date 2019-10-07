@@ -6,6 +6,7 @@ from io import BytesIO
 from threading import Lock
 
 import numpy as np
+import packaging.version
 import tifffile.tifffile
 from tifffile import TiffFile
 # noinspection PyProtectedMember
@@ -13,7 +14,6 @@ from tifffile.tifffile import TiffPage
 from czifile.czifile import CziFile
 
 from .image import Image
-import packaging.version
 
 
 class TiffFileException(Exception):
@@ -127,7 +127,7 @@ class CziImageReader(BaseImageReader):
 
 class TiffImageReader(BaseImageReader):
     """
-    TIFF/LSM files reader. Base reading with :py:meth:`.read_image`
+    TIFF/LSM files reader. Base reading with :py:meth:`BaseImageReader.read_image`
 
     image_file: TiffFile
     mask_file: TiffFile

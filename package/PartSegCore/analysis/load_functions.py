@@ -1,3 +1,4 @@
+import json
 import os
 import tarfile
 import typing
@@ -6,19 +7,19 @@ from functools import partial
 from io import TextIOBase, BufferedIOBase, RawIOBase, IOBase, BytesIO
 from pathlib import Path
 from threading import Lock
-import numpy as np
-import json
-from tifffile import TiffFile
-import packaging.version
 
-from PartSegCore.mask.io_functions import LoadSegmentationImage
-from PartSegImage import TiffImageReader
+import numpy as np
+import packaging.version
+from tifffile import TiffFile
+
 from PartSegCore.analysis.calculation_plan import CalculationPlan, CalculationTree
+from PartSegCore.mask.io_functions import LoadSegmentationImage
 from PartSegCore.universal_const import Units, UNIT_SCALE
-from ..algorithm_describe_base import Register, SegmentationProfile
+from PartSegImage import TiffImageReader
 from .analysis_utils import HistoryElement, SegmentationPipeline, SegmentationPipelineElement
 from .io_utils import ProjectTuple, MaskInfo, project_version_info
 from .save_hooks import part_hook
+from ..algorithm_describe_base import Register, SegmentationProfile
 from ..io_utils import LoadBase, proxy_callback, check_segmentation_type, SegmentationType, WrongFileTypeException, \
     UpdateLoadedMetadataBase
 

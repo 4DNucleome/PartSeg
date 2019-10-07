@@ -1,6 +1,7 @@
 from abc import ABC
 
 import numpy as np
+
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
 
 

@@ -4,11 +4,11 @@ import typing
 from collections import defaultdict
 from functools import partial
 from pathlib import Path
+from typing import Union
+from io import BytesIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
 
 import numpy as np
 import json
-from typing import Union
-from io import BytesIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
 
 from PartSegCore.analysis.save_hooks import PartEncoder
 from ..io_utils import get_tarinfo, SaveBase, LoadBase, proxy_callback, ProjectInfoBase, check_segmentation_type, \

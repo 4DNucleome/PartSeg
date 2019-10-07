@@ -1,9 +1,10 @@
 import typing
 from io import BytesIO
-from . import Image
+
 from tifffile import imsave
 import numpy as np
 
+from . import Image
 
 class ImageWriter(object):
     """class for saving TIFF images"""

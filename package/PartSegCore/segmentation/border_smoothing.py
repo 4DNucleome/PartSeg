@@ -1,5 +1,6 @@
-import numpy as np
 from abc import ABC
+
+import numpy as np
 import SimpleITK as sitk
 
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register

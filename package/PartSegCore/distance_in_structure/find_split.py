@@ -1,40 +1,35 @@
 """
-This module contains function to perform multiple component sprawl (watershhed)
+This module contains function to perform multiple component sprawl (watershed like)
 """
-from functools import partial
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import numpy as np
-from .euclidean_cython import calculate_euclidean, show_border
-from .path_sprawl_cython import calculate_maximum, calculate_minimum
-from .fuzzy_distance import fuzzy_distance, calculate_mu_array, MuType
-import typing
-import os
 import logging
+import os
+import typing
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from functools import partial
 
+import numpy as np
+
+from .euclidean_cython import calculate_euclidean
+from .fuzzy_distance import fuzzy_distance, calculate_mu_array, MuType
+from .path_sprawl_cython import calculate_maximum, calculate_minimum
 from .sprawl_utils import get_maximum_component, get_closest_component, get_minimum_component
 
 
-def compare_maximum(index, matrix_list):
-    matrix = matrix_list[index]
-    result = np.ones(matrix.shape, dtype=np.bool)
-    for i, om in enumerate(matrix_list):
-        if i == index:
-            continue
-        result &= (matrix > om)
-    return result
+def path_maximum_sprawl(data_f: np.ndarray, components: np.ndarray, components_count: int,
+                        neighbourhood: np.ndarray, distance_cache=None, data_cache=None):
+    """
+    Calculate sprawl in respect to brightens. Distance between voxels is minimum brightness on
+    all paths connecting them.
 
-
-def compare_distance(index, matrix_list):
-    matrix = matrix_list[index]
-    result = np.ones(matrix.shape, dtype=np.bool)
-    for i, om in enumerate(matrix_list):
-        if i == index:
-            continue
-        result &= (matrix < om)
-    return result
-
-
-def path_maximum_sprawl(data_f, components, components_count, neighbourhood, distance_cache=None, data_cache=None):
+    :param data_f: array with brightness
+    :param components: core components as labeled array
+    :param components_count: number of components
+    :param neighbourhood: information about neighbourhood, shift array
+    :param distance_cache: cache array, for reduce memory allocation. Shape of data_m, dtype is np.float64
+    :param data_cache: cache array, for reduce memory allocation. Shape of data_m, dtype is data_m.dtype
+        (use np.uint8 instead of np.bool)
+    :return: array with updated labels
+    """
     if data_cache is None:
         data_cache = np.zeros(data_f.shape, data_f.dtype)
     if components_count == 1:
@@ -55,6 +50,19 @@ def path_maximum_sprawl(data_f, components, components_count, neighbourhood, dis
 
 
 def path_minimum_sprawl(data_f, components, components_count, neighbourhood, distance_cache=None, data_cache=None):
+    """
+    Calculate sprawl in respect to brightens. Distance between voxels is maximum brightness on
+    all paths connecting them.
+
+    :param data_f: array with brightness
+    :param components: core components as labeled array
+    :param components_count: number of components
+    :param neighbourhood: information about neighbourhood, shift array
+    :param distance_cache: cache array, for reduce memory allocation. Shape of data_m, dtype is np.float64
+    :param data_cache: cache array, for reduce memory allocation. Shape of data_m, dtype is data_m.dtype
+        (use np.uint8 instead of np.bool)
+    :return: a
+    """
     maximum = data_f.max()
     if data_cache is None:
         data_cache = np.zeros(data_f.shape, data_f.dtype)
@@ -77,12 +85,40 @@ def path_minimum_sprawl(data_f, components, components_count, neighbourhood, dis
 
 def euclidean_sprawl(data_m: np.ndarray, components: np.ndarray, components_count: int, neigh_arr, dist_arr,
                      distance_cache=None, data_cache=None):
+    """
+    Calculate euclidean sprawl (watershed)
+
+    :param data_m: area for sprawl
+    :param components: core components as labeled array
+    :param components_count: number of components
+    :param neigh_arr: information about neighbourhood, shift array
+    :param dist_arr: information about neighbourhood, distance array for shifted position
+    :param distance_cache: cache array, for reduce memory allocation. Shape of data_m, dtype is np.float64
+    :param data_cache: cache array, for reduce memory allocation. Shape of data_m, dtype is data_m.dtype
+        (use np.uint8 instead of np.bool)
+    :return: array with updated labels
+    """
     return distance_sprawl(calculate_euclidean, data_m, components, components_count,
                            neigh_arr, dist_arr, distance_cache, data_cache)
 
 
 def fdt_sprawl(data_m: np.ndarray, components: np.ndarray, components_count: int, neigh_arr, dist_arr, lower_bound,
                upper_bound, distance_cache=None, data_cache=None):
+    """
+    Function for calculate fdt sprawl
+
+    :param data_m: sprawl area
+    :param components: core components as labeled array
+    :param components_count: number of components
+    :param neigh_arr: information about neighbourhood, shift array
+    :param dist_arr: information about neighbourhood, distance array for shifted position
+    :param lower_bound: lower bound for calculate mu value
+    :param upper_bound: upper bound for calculate mu value
+    :param distance_cache: cache array, for reduce memory allocation. Shape of data_m, dtype is np.float64
+    :param data_cache: cache array, for reduce memory allocation. Shape of data_m, dtype is data_m.dtype
+        (use np.uint8 instead of np.bool)
+    :return:
+    """
     if lower_bound > upper_bound:
         mu_array = 1 - calculate_mu_array(data_m, upper_bound, lower_bound, MuType.reflection_mu)
     else:
@@ -91,14 +127,30 @@ def fdt_sprawl(data_m: np.ndarray, components: np.ndarray, components_count: int
                            data_m, components, components_count, neigh_arr, dist_arr, distance_cache,
                            data_cache)
 
-def sprawl_component(data_m, components,  component_number, neigh_arr, dist_array, calculate_operator):
+
+def sprawl_component(data_m: np.ndarray, components: np.ndarray, component_number: int,
+                     neigh_arr: np.ndarray, dist_arr: np.ndarray, calculate_operator: typing.Callable):
+    """
+    calculate sprawl for single component
+
+    :param data_m:
+    :param components: array of components
+    :param component_number: chosen component number
+    :param neigh_arr: information about neighbourhood, shift array
+    :param dist_arr: information about neighbourhood, distance array for shifted position
+    :param calculate_operator: function to be called for calculate sprawl
+    :return:
+    """
     data_cache = np.copy(data_m)
     data_cache[(components > 0) * (components != component_number)] = 0
-    return calculate_operator(data_cache, (components == component_number).astype(np.uint8),
-                                 neigh_arr, dist_array)
+    return calculate_operator(data_cache, np.array(components == component_number).astype(np.uint8),
+                              neigh_arr, dist_arr)
+
 
 def distance_sprawl(calculate_operator, data_m: np.ndarray, components: np.ndarray, components_count: int, neigh_arr,
-                    dist_array, distance_cache=None, data_cache=None, parallel=False):
+                    dist_array, distance_cache=None, data_cache=None, parallel=False) -> np.ndarray:
+    if data_m.dtype == np.bool:
+        data_m = data_m.astype(np.uint8)
     if data_cache is None:
         data_cache = np.zeros(data_m.shape, data_m.dtype)
     if components_count == 1:
@@ -127,19 +179,8 @@ def distance_sprawl(calculate_operator, data_m: np.ndarray, components: np.ndarr
             distance_cache[component - 1] = calculate_operator(data_cache, (components == component).astype(np.uint8),
                                                                neigh_arr, dist_array)
     components = get_closest_component(components, (data_m > 0).astype(np.uint8), distance_cache[:components_count],
-                                           components_count)
+                                       components_count)
     return components
-
-
-def sink_components(neighbourhood: dict):
-    one_connection = []
-    zero_connection = []
-    for k, v in neighbourhood.items():
-        if len(v) == 0:
-            zero_connection.append(k)
-        if len(v) == 1:
-            one_connection.append(k)
-    return one_connection, zero_connection
 
 
 def reverse_permutation(perm):

@@ -1,11 +1,13 @@
 from abc import ABC
+from typing import NamedTuple, Union, Callable, Optional
+
+import numpy as np
 
 from PartSegCore.channel_class import Channel
+from PartSegImage import Image
+
 from ..image_operations import gaussian, RadiusType
 from ..algorithm_describe_base import AlgorithmDescribeBase, SegmentationProfile
-from PartSegImage import Image
-from typing import NamedTuple, Union, Callable, Optional
-import numpy as np
 
 
 def calculate_operation_radius(radius, spacing, gauss_type):

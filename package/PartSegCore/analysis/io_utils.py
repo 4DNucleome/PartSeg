@@ -1,9 +1,10 @@
 import typing
+
 import numpy as np
 import packaging.version
 
-from PartSegImage import Image
 from PartSegCore.io_utils import ProjectInfoBase
+from PartSegImage import Image
 from .analysis_utils import HistoryElement
 
 project_version_info = packaging.version.Version("1.0")

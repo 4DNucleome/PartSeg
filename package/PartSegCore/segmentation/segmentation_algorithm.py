@@ -1,9 +1,9 @@
 from abc import ABC
+from typing import Optional
+import operator
 
 import SimpleITK as sitk
 import numpy as np
-from typing import Optional
-import operator
 
 from PartSegCore.segmentation.border_smoothing import smooth_dict
 from ..utils import bisect

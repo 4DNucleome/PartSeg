@@ -1,10 +1,12 @@
 import typing
 from io import BytesIO
 from textwrap import indent
+
 import numpy as np
+
+from PartSegCore.algorithm_describe_base import SegmentationProfile
 from ..class_generator import BaseSerializableClass
 from ..mask_create import MaskProperty
-from PartSegCore.algorithm_describe_base import SegmentationProfile
 
 
 class HistoryElement(BaseSerializableClass):

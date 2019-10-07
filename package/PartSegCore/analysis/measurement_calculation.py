@@ -1,24 +1,25 @@
 from __future__ import division
+
 import sys
 import traceback
 from collections import OrderedDict
 from enum import Enum
 from functools import reduce
+from math import pi
 from typing import NamedTuple, Optional, Dict, Callable, List, Any, Union, Tuple, MutableMapping, Iterator
 
 import SimpleITK as sitk
 import numpy as np
 from scipy.spatial.distance import cdist
 from sympy import symbols
-from math import pi
 
+from PartSegCore import autofit as af
 from PartSegCore.analysis.measurement_base import Leaf, Node, MeasurementEntry, MeasurementMethodBase, PerComponent, \
     AreaType
 from PartSegCore.channel_class import Channel
-from PartSegCore import autofit as af
+from ..algorithm_describe_base import Register, AlgorithmProperty
 from ..border_rim import border_mask
 from ..class_generator import enum_register
-from ..algorithm_describe_base import Register, AlgorithmProperty
 from ..universal_const import UNIT_SCALE, Units
 from ..utils import class_to_dict
 

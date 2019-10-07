@@ -1,23 +1,23 @@
+import json
+import os.path
+import tarfile
+import typing
+from io import BytesIO
 from pathlib import Path
 
+import h5py
+import numpy as np
 import tifffile
 
 from PartSegCore.algorithm_describe_base import Register
-from .io_utils import ProjectTuple, project_version_info
-from ..analysis.analysis_utils import HistoryElement
-from ..channel_class import Channel
-from ..algorithm_describe_base import AlgorithmProperty
-from ..universal_const import UNIT_SCALE, Units
-from ..analysis.save_hooks import PartEncoder
-import numpy as np
 from PartSegImage import Image, ImageWriter
-import tarfile
-from io import BytesIO
-import h5py
-import typing
-import os.path
-import json
+from .io_utils import ProjectTuple, project_version_info
+from ..algorithm_describe_base import AlgorithmProperty
+from ..analysis.analysis_utils import HistoryElement
+from ..analysis.save_hooks import PartEncoder
+from ..channel_class import Channel
 from ..io_utils import get_tarinfo, SaveBase, NotSupportedImage
+from ..universal_const import UNIT_SCALE, Units
 
 __all__ = ["SaveProject", "SaveCmap", "SaveXYZ", "SaveAsTiff", "SaveMaskAsTiff", "SaveAsNumpy",
            "SaveSegmentationAsTIFF", "SaveSegmentationAsNumpy", 'save_dict']

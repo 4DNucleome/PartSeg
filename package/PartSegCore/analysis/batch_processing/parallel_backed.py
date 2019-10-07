@@ -1,12 +1,12 @@
-import multiprocessing
-from enum import Enum
-from queue import Queue, Empty
 import logging
-import time
+import multiprocessing
 import os
 import sys
-from threading import Timer, RLock
+import time
 import traceback
+from enum import Enum
+from queue import Queue, Empty
+from threading import Timer, RLock
 
 __author__ = "Grzegorz Bokota"
 
@@ -124,8 +124,8 @@ class BatchManager(object):
                 logging.debug("Process list end {}".format(self.process_list))
                 # FIXME self.number_off_alive_process,  self.number_off_process negative values
                 if len(self.process_list) > self.number_off_process and len(self.process_list) > 0:
-                    logging.info("Wait on process, time {}, {}, {}, {}".format(time.time(), self.number_off_alive_process,
-                                                                           len(self.process_list), self.number_off_process))
+                    logging.info("Wait on process, time {}, {}, {}, {}".format(
+                        time.time(), self.number_off_alive_process, len(self.process_list), self.number_off_process))
                     Timer(1, self.join_all).start()
 
     @property

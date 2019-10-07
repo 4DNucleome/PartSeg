@@ -2,6 +2,7 @@ import operator
 from abc import ABC
 from collections import defaultdict
 from copy import deepcopy
+
 import SimpleITK as sitk
 import numpy as np
 

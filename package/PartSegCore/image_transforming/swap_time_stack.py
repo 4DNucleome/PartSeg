@@ -8,7 +8,7 @@ from .transform_base import TransformBase
 
 class SwapTimeStack(TransformBase):
     @classmethod
-    def transform(self, image: Image, arguments: dict,
+    def transform(cls, image: Image, arguments: dict,
                   callback_function: Optional[Callable[[str, int], None]] = None) -> Image:
         return image.swap_time_and_stack()
 

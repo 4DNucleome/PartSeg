@@ -14,6 +14,7 @@ from PartSeg.common_backend.base_argparser import CustomParser
 multiprocessing.freeze_support()
 
 
+# noinspection PyUnresolvedReferences,PyUnusedLocal
 def _test_imports():
     app = QGuiApplication([])
     from .segmentation_analysis.main_window import MainWindow

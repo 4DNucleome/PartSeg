@@ -1,6 +1,7 @@
 import typing
 from abc import ABC
 from enum import Enum
+
 import numpy as np
 
 from ..image_operations import gaussian, median
