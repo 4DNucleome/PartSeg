@@ -4,7 +4,6 @@ import sys
 import typing
 import uuid
 from abc import abstractmethod
-from collections import namedtuple
 from copy import copy, deepcopy
 from enum import Enum
 
@@ -19,7 +18,7 @@ class MaskBase:
     """
     Base class for mask in calculation plan.
 
-    :param name: name of mask
+    :ivar str ~.name: name of mask
     """
     name: str
 
@@ -43,8 +42,8 @@ class MaskCreate(MaskBase, BaseSerializableClass):
     """
     Description of mask creation in calculation plan.
     
-    :param name: name of mask
-    :param mask_property: instance of :py:class:`.MaskProperty`
+    :ivar str ~.name: name of mask
+    :ivar str ~.mask_property: instance of :py:class:`.MaskProperty`
     """
     mask_property: MaskProperty  
 
@@ -61,21 +60,39 @@ class MaskUse(MaskBase, BaseSerializableClass):
 
 
 class MaskSum(MaskBase, BaseSerializableClass):
+    """
+    Description of OR operation on mask
+
+    :ivar str ~.name: name of mask
+    :ivar str ~.mask1: first mask name
+    :ivar str ~.mask2: second mask name
+    """
     mask1: str
     mask2: str
 
 
 class MaskIntersection(MaskBase, BaseSerializableClass):
+    """
+    Description of AND operation on mask
+
+    :ivar str ~.name: name of mask
+    :ivar str ~.mask1: first mask name
+    :ivar str ~.mask2: second mask name
+    """
     mask1: str
     mask2: str
 
 
-class SaveBase:
-    suffix: str
-    directory: str
-
-
 class Save(BaseSerializableClass):
+    """
+    Save operation description
+
+    :ivar str ~.suffix: suffix for saved file
+    :ivar str ~.directory: name of subdirectory to save
+    :ivar str ~.algorithm: name of save method
+    :ivar str ~.short_name: short name of save method
+    :ivar dict ~.values: parameters specific for save method
+    """
     suffix: str
     directory: str
     algorithm: str
@@ -84,11 +101,20 @@ class Save(BaseSerializableClass):
 
 
 class MeasurementCalculate(BaseSerializableClass):
+    """
+    Measurement calculation description
+
+    :ivar int ~.channel: on which channel measurements should be calculated
+    :ivar Units ~.units: Type of units in which results of measurements should be represented
+    :ivar MeasurementProfile ~.statistic_profile: description of measurements
+    :ivar str name_prefix: prefix of column names
+    """
     __old_names__ = "StatisticCalculate"
     channel: int
     units: Units
     statistic_profile: MeasurementProfile
     name_prefix: str
+    # TODO rename statistic_profile to measurement_profile
 
     # noinspection PyOverloads,PyMissingConstructor
     @typing.overload
@@ -96,6 +122,7 @@ class MeasurementCalculate(BaseSerializableClass):
 
     @property
     def name(self):
+        """name of used MeasurementProfile"""
         return self.statistic_profile.name
 
     def __str__(self):
@@ -104,22 +131,14 @@ class MeasurementCalculate(BaseSerializableClass):
         return f"{self.__class__.name}\nChannel: {channel}\nUnits: {self.units}\n{desc}\n"
 
 
-ChooseChanel = namedtuple("ChooseChanel", ["chanel_num"])
-
-"""MaskCreate.__new__.__defaults__ = (0,)
-CmapProfile.__new__.__defaults__ = (False,)
-ProjectSave.__new__.__defaults__ = (False,)
-MaskSave.__new__.__defaults__ = (False,)
-XYZSave.__new__.__defaults__ = (False,)
-ImageSave.__new__.__defaults__ = (False,)"""
-
-
-def get_save_path(op: Save, calculation):
+def get_save_path(op: Save, calculation: 'FileCalculation') -> str:
     """
-    :type calculation: FileCalculation
+    Calculate save path base on proceeded file path and save operation parameters.
+    It assume that save algorithm is registered in :py:data:`PartSegCore.analysis.save_functions.save_dict`
+
     :param op: operation to do
     :param calculation: information about calculation
-    :return: str
+    :return: save path
     """
     from PartSegCore.analysis.save_functions import save_dict
     extension = save_dict[op.algorithm].get_default_extension()
@@ -133,27 +152,44 @@ def get_save_path(op: Save, calculation):
 
 
 class MaskMapper:
+    """
+    Base class for obtaining mask from computer disc
+
+    :ivar ~.name: mask name
+    """
     name: str
     @abstractmethod
-    def get_mask_path(self, file_path):
+    def get_mask_path(self, file_path: str) -> str:
+        """                                                                      
+        Calculate mask path based od file_path
+
+        :param file_path: path to proceeded file
+        """
         pass
 
     @abstractmethod
     def get_parameters(self):
         pass
 
-    def is_ready(self):
+    def is_ready(self) -> bool:
+        """Check if this mask mapper can be used"""
         return True
 
 
 class MaskSuffix(MaskMapper, BaseSerializableClass):
+    """
+    Description of mask form file obtained by adding suffix to image file path
+
+    :ivar str ~.name: mask name
+    :ivar str ~.suffix: mask file path suffix
+    """
     suffix: str
 
     # noinspection PyMissingConstructor,PyOverloads
     @typing.overload
     def __init__(self, name: str, suffix: str): ...
 
-    def get_mask_path(self, file_path):
+    def get_mask_path(self, file_path: str) -> str:
         base, ext = os.path.splitext(file_path)
         return base + self.suffix + ext
 
@@ -162,6 +198,13 @@ class MaskSuffix(MaskMapper, BaseSerializableClass):
 
 
 class MaskSub(MaskMapper, BaseSerializableClass):
+    """
+    Description of mask form file obtained by substitution
+
+    :ivar str ~.name: mask name
+    :ivar str ~.base: string to be searched
+    :ivar str ~.repr: string to be put instead of ``base``
+    """
     base: str
     rep: str
 
@@ -169,7 +212,7 @@ class MaskSub(MaskMapper, BaseSerializableClass):
     @typing.overload
     def __init__(self, name: str, base: str, rep: str): ...
 
-    def get_mask_path(self, file_path):
+    def get_mask_path(self, file_path: str) -> str:
         dir_name, filename = os.path.split(file_path)
         filename = filename.replace(self.base, self.rep)
         return os.path.join(dir_name, filename)
@@ -179,6 +222,7 @@ class MaskSub(MaskMapper, BaseSerializableClass):
 
 
 class MaskFile(MaskMapper, BaseSerializableClass):
+    # TODO Check implementation
     path_to_file: str
     name_dict: typing.Optional[dict] = None
 
@@ -186,18 +230,18 @@ class MaskFile(MaskMapper, BaseSerializableClass):
     @typing.overload
     def __init__(self, name: str, path_to_file: str, name_dict: typing.Optional[dict] = None):  ...
 
-    def is_ready(self):
+    def is_ready(self) -> bool:
         return os.path.exists(self.path_to_file)
 
-    def get_mask_path(self, file_path):
+    def get_mask_path(self, file_path: str) -> str:
         if self.name_dict is None:
             self.parse_map()
         try:
             return self.name_dict[os.path.normpath(file_path)]
         except KeyError:
-            return None
+            return ""
         except AttributeError:
-            return None
+            return ""
 
     def get_parameters(self):
         return {"name": self.name, "path_to_file": self.path_to_file}
@@ -228,18 +272,24 @@ class MaskFile(MaskMapper, BaseSerializableClass):
 
 
 class Operations(Enum):
+    """Global operations"""
     reset_to_base = 1
     # leave_the_biggest = 2
 
 
 class PlanChanges(Enum):
-    add_node = 1
-    remove_node = 2
-    replace_node = 3
+    """History elements"""
+    add_node = 1  #:
+    remove_node = 2  #:
+    replace_node = 3  #:
 
 
 class CalculationTree:
-    def __init__(self, operation: typing.Union[BaseSerializableClass, SegmentationProfile, MeasurementCalculate, str],
+    """
+    Structure for describe calculation structure
+    """
+    def __init__(self, operation: typing.Union[BaseSerializableClass, SegmentationProfile,
+                                               MeasurementCalculate, RootType],
                  children: typing.List['CalculationTree']):
         self.operation = operation
         self.children = children
@@ -249,23 +299,27 @@ class CalculationTree:
 
 
 class NodeType(Enum):
-    segment = 1
-    mask = 2
-    statics = 3
-    root = 4
-    save = 5
-    none = 6
-    file_mask = 7
-    channel_choose = 8
+    """Type of node in calculation"""
+    segment = 1  #: segmentation
+    mask = 2  #: mask creation
+    measurement = 3  #: measurement calculation
+    root = 4  #: root of calculation
+    save = 5  #: save operation
+    none = 6  #: other, like description
+    file_mask = 7  #: mask load
 
 
 class BaseCalculation:
     """
-    :type base_prefix: str
-    :type result_prefix: str
-    :type measurement_file_path: str
-    :type sheet_name: str
-    :type calculation_plan: CalculationPlan
+    Base description of calculation needed for single file
+
+    :ivar str base_prefix: path prefix which should be used to calculate relative path of processed files
+    :ivar str result_prefix: path prefix for saving structure
+    :ivar str measurement_file_path: path to file in which result of measurement should be saved
+    :ivar str sheet_name: name of sheet in excel file
+    :ivar CalculationPlan calculation_plan: plan of calculation
+    :ivar str uuid: uuid of whole calculation
+    :ivar voxel_size: default voxel size (for files which do not contains this information in metadata
     """
     def __init__(self, base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan,
                  voxel_size):
@@ -280,48 +334,68 @@ class BaseCalculation:
 
 class Calculation(BaseCalculation):
     """
-    :type file_list: list[str]
+    Description of whole calculation. Extended with list of all files to proceed
+
+    :ivar str base_prefix: path prefix which should be used to calculate relative path of processed files
+    :ivar str result_prefix: path prefix for saving structure
+    :ivar str measurement_file_path: path to file in which result of measurement should be saved
+    :ivar str sheet_name: name of sheet in excel file
+    :ivar CalculationPlan calculation_plan: plan of calculation
+    :ivar str uuid: uuid of whole calculation
+    :ivar voxel_size: default voxel size (for files which do not contains this information in metadata
+    :ivar typing.List[str] file_list: list of files to be proceed
     """
     def __init__(self, file_list, base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan,
                  voxel_size):
         super().__init__(base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan, voxel_size)
         self.file_list = file_list
         
-    def get_base_calculation(self):
+    def get_base_calculation(self) -> BaseCalculation:
+        """Extract py:class:`BaseCalculation` from instance."""
         base = BaseCalculation(self.base_prefix, self.result_prefix, self.measurement_file_path, self.sheet_name,
                                self.calculation_plan, self.voxel_size)
         base.uuid = self.uuid
         return base
 
 
-class FileCalculation(object):
+class FileCalculation:
+    """
+    Description of single file calculation
+    """
     def __init__(self, file_path: str, calculation: BaseCalculation):
         self.file_path = file_path
         self.calculation = calculation
 
     @property
     def base_prefix(self):
+        """path prefix which should be used to calculate relative path of processed files"""
         return self.calculation.base_prefix
 
     @property
     def result_prefix(self):
+        """path prefix for saving structure"""
         return self.calculation.result_prefix
 
     @property
     def calculation_plan(self):
+        """plan of calculation"""
         return self.calculation.calculation_plan
 
     @property
     def uuid(self):
+        """uuid of whole calculation"""
         return self.calculation.uuid
 
     @property
     def voxel_size(self):
+        """default voxel size (for files which do not contains this information in metadata"""
         return self.calculation.voxel_size
 
 
-class CalculationPlan(object):
+class CalculationPlan:
     """
+    Clean description Calculation plan.
+
     :type current_pos: list[int]
     :type name: str
     :type segmentation_count: int
@@ -330,12 +404,12 @@ class CalculationPlan(object):
                     MeasurementCalculate.__name__: MeasurementCalculate,
                     SegmentationProfile.__name__: SegmentationProfile,
                     MaskSuffix.__name__: MaskSuffix, MaskSub.__name__: MaskSub, MaskFile.__name__: MaskFile,
-                    Operations.__name__: Operations, ChooseChanel.__name__: ChooseChanel,
+                    Operations.__name__: Operations,
                     MaskIntersection.__name__: MaskIntersection, MaskSum.__name__: MaskSum}
 
     def __init__(self, tree: typing.Optional[CalculationTree] = None, name: str = ""):
         if tree is None:
-            self.execution_tree = CalculationTree("root", [])
+            self.execution_tree = CalculationTree(RootType.Image, [])
         else:
             self.execution_tree = tree
         self.segmentation_count = 0
@@ -348,6 +422,12 @@ class CalculationPlan(object):
         return f"CalculationPlan<{self.name}>\n{self.execution_tree}"
 
     def get_measurements(self, node: typing.Optional[CalculationTree] = None) -> typing.List[MeasurementCalculate]:
+        """
+        Get all measurement Calculation bellow given node
+
+        :param node: Node for start, if absent then start from plan root
+        :return: list of measurements
+        """
         if node is None:
             node = self.execution_tree
         if isinstance(node.operation, MeasurementCalculate):
@@ -371,7 +451,7 @@ class CalculationPlan(object):
         self.current_node = None
 
     def clean(self):
-        self.execution_tree = CalculationTree("root", [])
+        self.execution_tree = CalculationTree(RootType.Image, [])
         self.current_pos = []
 
     def __copy__(self):
@@ -403,7 +483,7 @@ class CalculationPlan(object):
         if node is None:
             node = self.get_node()
         res = set()
-        if isinstance(node.operation, MaskCreate) or isinstance(node.operation, MaskMapper):
+        if isinstance(node.operation, (MaskCreate, MaskMapper)):
             res.add(node.operation.name)
         for el in node.children:
             res |= self.get_mask_names(el)
@@ -415,7 +495,8 @@ class CalculationPlan(object):
         tree_mask_names = self.get_mask_names(node)
         return used_mask & tree_mask_names, tree_mask_names
 
-    def _get_reused_mask(self, node):
+    @staticmethod
+    def _get_reused_mask(node):
         """
         :type node: CalculationTree
         :param node:
@@ -431,8 +512,6 @@ class CalculationPlan(object):
             elif isinstance(el.operation, MaskIntersection):
                 used_mask.add(el.operation.mask1)
                 used_mask.add(el.operation.mask2)
-            elif isinstance(el.operation, ChooseChanel):
-                used_mask |= self._get_reused_mask(el)
         return used_mask
 
     def get_reused_mask(self) -> set:
@@ -450,13 +529,11 @@ class CalculationPlan(object):
         if isinstance(node.operation, MaskCreate):
             return NodeType.mask
         if isinstance(node.operation, MeasurementCalculate):
-            return NodeType.statics
+            return NodeType.measurement
         if isinstance(node.operation, SegmentationProfile):
             return NodeType.segment
         if isinstance(node.operation, Save):
             return NodeType.save
-        if isinstance(node.operation, ChooseChanel):
-            return NodeType.channel_choose
         if isinstance(node.operation, MaskUse):
             return NodeType.file_mask
         if isinstance(node.operation, Operations):
@@ -573,8 +650,6 @@ class CalculationPlan(object):
         if isinstance(el, Operations):
             if el == Operations.reset_to_base:
                 return "reset project to base image with mask"
-        if isinstance(el, ChooseChanel):
-            return "Chose chanel: chanel num {}".format(el.chanel_num)
         if isinstance(el, SegmentationProfile):
             """if el.leave_biggest:
                 return "Segmentation: {} (only biggest)".format(el.name)"""

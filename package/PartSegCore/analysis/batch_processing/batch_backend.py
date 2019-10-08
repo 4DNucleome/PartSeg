@@ -102,7 +102,10 @@ class CalculationProcess:
         :return:
         """
         if isinstance(node.operation, MaskMapper):
-            mask = tifffile.imread(node.operation.get_mask_path(self.calculation.file_path))
+            mask_path = node.operation.get_mask_path(self.calculation.file_path)
+            if mask_path == "":
+                raise ValueError("Empty path to mask.")
+            mask = tifffile.imread(mask_path)
             mask = (mask > 0).astype(np.uint8)
             try:
                 mask = self.image.fit_array_to_image(mask)[0]

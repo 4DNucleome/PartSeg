@@ -2,6 +2,17 @@
 This module contains utils for parallel batch calculation.
 Main class is :py:class:`BatchManager` which is used to manage
 parallel calculation
+
+Main workflow is to add work with :py:meth:`BatchManager.add_work`
+and consume results (:py:meth:`BatchManager.get_result`) until
+:py:attr:`BatchManager.has_work` is evaluating to true
+
+.. graphviz::
+
+   digraph foo {
+      "BatchManager" -> "BatchWorker"[arrowhead="crow"];
+   }
+
 """
 import logging
 import multiprocessing
@@ -107,7 +118,7 @@ class BatchManager:
 
     @property
     def has_work(self) -> bool:
-        """Check if Manager has pending or processed work"""
+        """Check if Manager has pending or processed work and if all results are consumed"""
         return self.work_task > 0 or (not self.result_queue.empty())
 
     def set_number_of_process(self, num: int):
