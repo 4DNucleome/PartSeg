@@ -16,15 +16,21 @@ from ..mask_create import MaskProperty
 
 
 class MaskBase:
+    """
+    Base class for mask in calculation plan.
+
+    :param name: name of mask
+    """
     name: str
 
 # MaskCreate = namedtuple("MaskCreate", ['name', 'radius'])
 
 
 class RootType(Enum):
-    Image = 0
-    Project = 1
-    Mask_project = 2
+    """Defines root type which changes of data available on begin of calculation"""
+    Image = 0  #: raw image
+    Project = 1  #: PartSeg project with defined segmentation
+    Mask_project = 2  #: Project from mask segmentation. It contains multiple elements.
 
     def __str__(self):
         return self.name.replace("_", " ")
@@ -34,13 +40,23 @@ enum_register.register_class(RootType)
 
 
 class MaskCreate(MaskBase, BaseSerializableClass):
-    mask_property: MaskProperty
+    """
+    Description of mask creation in calculation plan.
+    
+    :param name: name of mask
+    :param mask_property: instance of :py:class:`.MaskProperty`
+    """
+    mask_property: MaskProperty  
 
     def __str__(self):
         return f"Mask create: {self.name}\n" + str(self.mask_property).split("\n", 1)[1]
 
 
 class MaskUse(MaskBase, BaseSerializableClass):
+    """
+    Reuse of already defined mask
+    Will be deprecated in short time
+    """
     pass
 
 
@@ -243,34 +259,43 @@ class NodeType(Enum):
     channel_choose = 8
 
 
-class Calculation(object):
+class BaseCalculation:
     """
-    :type file_list: list[str]
     :type base_prefix: str
     :type result_prefix: str
-    :type statistic_file_path: str
+    :type measurement_file_path: str
     :type sheet_name: str
     :type calculation_plan: CalculationPlan
-
     """
-    def __init__(self, file_list, base_prefix, result_prefix, statistic_file_path, sheet_name, calculation_plan,
+    def __init__(self, base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan,
                  voxel_size):
-        self.file_list = file_list
         self.base_prefix = base_prefix
         self.result_prefix = result_prefix
-        self.measurement_file_path = statistic_file_path
+        self.measurement_file_path = measurement_file_path
         self.sheet_name = sheet_name
         self.calculation_plan = calculation_plan
         self.uuid = uuid.uuid4()
         self.voxel_size = voxel_size
 
 
+class Calculation(BaseCalculation):
+    """
+    :type file_list: list[str]
+    """
+    def __init__(self, file_list, base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan,
+                 voxel_size):
+        super().__init__(base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan, voxel_size)
+        self.file_list = file_list
+        
+    def get_base_calculation(self):
+        base = BaseCalculation(self.base_prefix, self.result_prefix, self.measurement_file_path, self.sheet_name,
+                               self.calculation_plan, self.voxel_size)
+        base.uuid = self.uuid
+        return base
+
+
 class FileCalculation(object):
-    """
-    :type file_path: st
-    :type calculation: Calculation
-    """
-    def __init__(self, file_path, calculation):
+    def __init__(self, file_path: str, calculation: BaseCalculation):
         self.file_path = file_path
         self.calculation = calculation
 

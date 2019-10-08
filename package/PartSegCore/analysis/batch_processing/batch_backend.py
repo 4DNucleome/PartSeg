@@ -1,3 +1,6 @@
+"""
+This module contains PartSeg function used for calculate in batch processing
+"""
 import logging
 import threading
 import typing
@@ -14,28 +17,34 @@ from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.analysis.analysis_utils import HistoryElement
 from PartSegCore.analysis.calculation_plan import MaskMapper, MaskUse, MaskCreate, Save, \
-    Operations, FileCalculation, MaskIntersection, MaskSum, get_save_path, MeasurementCalculate, Calculation
+    Operations, FileCalculation, MaskIntersection, MaskSum, get_save_path, MeasurementCalculate, BaseCalculation, \
+    Calculation
 from PartSegCore.analysis.io_utils import ProjectTuple
 from PartSegCore.analysis.load_functions import load_project
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.mask_create import calculate_mask
 from PartSegCore.segmentation.algorithm_base import report_empty_fun, SegmentationAlgorithm
 from PartSegImage import TiffImageReader, Image
-from ..batch_processing.parallel_backed import BatchManager
+from .parallel_backend import BatchManager
 
 
-def do_calculation(file_path, calculation):
+def do_calculation(file_path: str, calculation: BaseCalculation):
     """
-    :type file_path: str
-    :type calculation: Calculation
-    :param calculation:
-    :return:
+    Main function which will be used for run calculation.
+    It create :py:class:`.CalculationProcess` and call it method
+    :py:meth:`.CalculationProcess.do_calculation`
+
+    :param file_path: path to file which should be processed
+    :param calculation: calculation description
     """
     calc = CalculationProcess()
     return calc.do_calculation(FileCalculation(file_path, calculation))
 
 
-class CalculationProcess(object):
+class CalculationProcess:
+    """
+    Main class to calculate PartSeg calculation plan
+    """
     def __init__(self):
         self.reused_mask = set()
         self.mask_dict = dict()
@@ -97,7 +106,7 @@ class CalculationProcess(object):
             mask = (mask > 0).astype(np.uint8)
             try:
                 mask = self.image.fit_array_to_image(mask)[0]
-                # TODO fix this time bugfix
+                # TODO fix this time bug fix
             except ValueError:
                 raise ValueError("Mask do not fit to given image")
             old_mask = self.mask
@@ -228,7 +237,7 @@ class CalculationManager:
         size = len(calculation.file_list)
         self.calculation_sizes.append(size)
         self.calculation_size += size
-        self.batch_manager.add_work(calculation.file_list, calculation, do_calculation)
+        self.batch_manager.add_work(calculation.file_list, calculation.get_base_calculation(), do_calculation)
         self.writer.add_data_part(calculation)
 
     @property
@@ -237,7 +246,7 @@ class CalculationManager:
 
     def set_number_of_workers(self, val):
         logging.debug("Number off process {}".format(val))
-        self.batch_manager.set_number_off_process(val)
+        self.batch_manager.set_number_of_process(val)
 
     def get_results(self):
         responses = self.batch_manager.get_result()
@@ -291,9 +300,8 @@ class SheetData(object):
 class FileData(object):
     component_str = "_comp_"
 
-    def __init__(self, calculation):
+    def __init__(self, calculation: BaseCalculation):
         """
-        :type calculation: Calculation
         :param calculation:
         """
         self.file_path = calculation.measurement_file_path
@@ -329,7 +337,7 @@ class FileData(object):
             return False, "Sheet name {} already in use".format(name)
         return True, True
 
-    def add_data_part(self, calculation: Calculation):
+    def add_data_part(self, calculation: BaseCalculation):
         """
         :type calculation: Calculation
         :param calculation:
@@ -452,13 +460,13 @@ class DataWriter(object):
             return True
         return self.file_dict[file_path].is_empty_sheet(sheet_name)
 
-    def add_data_part(self, calculation: Calculation):
+    def add_data_part(self, calculation: BaseCalculation):
         if calculation.measurement_file_path in self.file_dict:
             self.file_dict[calculation.measurement_file_path].add_data_part(calculation)
         else:
             self.file_dict[calculation.measurement_file_path] = FileData(calculation)
 
-    def add_result(self, data: ResponseData, calculation: Calculation):
+    def add_result(self, data: ResponseData, calculation: BaseCalculation):
         if calculation.measurement_file_path not in self.file_dict:
             raise ValueError("Unknown measurement file")
         file_writer = self.file_dict[calculation.measurement_file_path]

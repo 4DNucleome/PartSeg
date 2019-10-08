@@ -92,7 +92,7 @@ class {typename}({base_classes}):
 _repr_template = '{name}=%r'
 
 _field_template = '''\
-    {name} = _property(_attrgetter("_{name}"), doc='getter for field _{name}')
+    {name} = _property(_attrgetter("_{name}"), doc='getter for attribute {name}')
 '''
 
 T = typing.TypeVar('T')

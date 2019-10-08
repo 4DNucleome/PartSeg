@@ -1,39 +1,46 @@
+"""
+This module contains utils for parallel batch calculation.
+Main class is :py:class:`BatchManager` which is used to manage
+parallel calculation
+"""
 import logging
 import multiprocessing
 import os
 import sys
 import time
 import traceback
+import uuid
 from enum import Enum
 from queue import Queue, Empty
 from threading import Timer, RLock
+from typing import Callable, List, Any, Tuple, Dict, Union
 
 __author__ = "Grzegorz Bokota"
 
 
 class SubprocessOrder(Enum):
+    """
+    Commands for process to put in queue
+    """
     kill = 1
     wait = 2
 
 
-class Work(object):
-    def __init__(self, task_list, ):
-        self.task_list = task_list
-
-
-class BatchManager(object):
+class BatchManager:
     """
+    This class is used for manage pending works.
+    It use :py:class:`.BatchWorker` for running calculation.
+
     :type measurement_place_dict: dict[str,set[str]]
     :type task_queue: Queue
     :type order_queue: Queue
     :type result_queue: Queue
     :type calculation_dict: dict
     :type process_list: list[multiprocessing.Process]
-
     """
     def __init__(self):
-        self.measurement_place_dict = dict()
         self.manager = multiprocessing.Manager()
+        self.measurement_place_dict = self.manager.dict()
         self.task_queue = self.manager.Queue()
         self.order_queue = self.manager.Queue()
         self.result_queue = self.manager.Queue()
@@ -47,7 +54,13 @@ class BatchManager(object):
         self.locker = RLock()
         pass
 
-    def get_result(self):
+    def get_result(self) -> List[Tuple[str, Union[Any, Tuple[Exception, Any]]]]:
+        """
+        Clean result queue and return it as list
+
+        :return: List of results as tuple where first element is uuid of job and second is
+            function result or tuple with exception as first argument and second is traceback
+        """
         res = []
         while not self.result_queue.empty():
             res.append(self.result_queue.get())
@@ -57,17 +70,33 @@ class BatchManager(object):
             Timer(0.1, self._change_process_num, args=[-self.number_off_available_process]).start()
         return res
 
-    def add_work(self, calc_settings, global_settings, fun):
-        self.calculation_dict[global_settings.uuid] = global_settings, fun
-        self.work_task += len(calc_settings)
-        for el in calc_settings:
-            self.task_queue.put((el, global_settings.uuid))
+    def add_work(self, individual_parameters_list: List, global_parameters, fun: Callable[[Any, Any], Any]) -> str:
+        """
+        This function add next works to internal structures.
+        Number of works is length of ``individual_parameters_list``
+
+        :param individual_parameters_list: list of individual parameters for fun.
+            For each element ``fun`` will be called with element as first argument
+        :param global_parameters: second argument of fun. If has field uuid then it is used as work uuid
+        :param fun: two argument function which will be used to run calculation.
+            First argument is task specific, second is const for whole work.
+        :return: work uuid
+        """
+        self.calculation_dict[global_parameters.uuid] = global_parameters, fun
+        self.work_task += len(individual_parameters_list)
+        if hasattr(global_parameters, "uuid"):
+            task_uuid = global_parameters.uuid
+        else:
+            task_uuid = uuid.uuid4()
+        for el in individual_parameters_list:
+            self.task_queue.put((el, task_uuid))
         if self.number_off_available_process > self.number_off_process:
             for i in range(self.number_off_available_process - self.number_off_process):
-                self.spawn_process()
+                self._spawn_process()
         self.in_work = True
+        return task_uuid
 
-    def spawn_process(self):
+    def _spawn_process(self):
         with self.locker:
             process = multiprocessing.Process(target=spawn_worker, args=(self.task_queue, self.order_queue,
                                                                          self.result_queue, self.calculation_dict))
@@ -77,12 +106,18 @@ class BatchManager(object):
             self.number_off_process += 1
 
     @property
-    def has_work(self):
+    def has_work(self) -> bool:
+        """Check if Manager has pending or processed work"""
         return self.work_task > 0 or (not self.result_queue.empty())
 
-    def set_number_off_process(self, num):
+    def set_number_of_process(self, num: int):
+        """
+        Change number of workers which should be used for calculation
+
+        :param num: target number of process
+        """
         process_diff = num - self.number_off_available_process
-        logging.debug("[set_number_off_process] process diff: {}".format(process_diff))
+        logging.debug("[set_number_of_process] process diff: {}".format(process_diff))
         self.number_off_available_process = num
         if not self.has_work:
             return
@@ -91,10 +126,10 @@ class BatchManager(object):
     def _change_process_num(self, process_diff):
         if process_diff > 0:
             for i in range(process_diff):
-                self.spawn_process()
+                self._spawn_process()
         else:
             for i in range(-process_diff):
-                logging.debug("[set_number_off_process] process kill")
+                logging.debug("[set_number_of_process] process kill")
                 self.order_queue.put(SubprocessOrder.kill)
             with self.locker:
                 self.number_off_process += process_diff
@@ -130,24 +165,22 @@ class BatchManager(object):
 
     @property
     def finished(self):
+        """Check if any process is running"""
         logging.debug(self.process_list)
         return len(self.process_list) == 0
 
-    def get_responses(self):
-        res = []
-        while not self.result_queue.empty():
-            res.append(self.result_queue.get())
-        return res
 
+class BatchWorker:
+    """
+    Worker spawned by :py:class:`BatchManager` instance
 
-class BatchWorker(object):
+    :param task_queue: Queue with task data
+    :param order_queue: Queue with additional orders (like kill)
+    :param result_queue: Queue to put result
+    :param calculation_dict: to store global parameters of task
     """
-    :type task_queue: Queue
-    :type order_queue: Queue
-    :type result_queue: Queue
-    :type calculation_dict: dict
-    """
-    def __init__(self, task_queue, order_queue, result_queue, calculation_dict):
+    def __init__(self, task_queue: Queue, order_queue: Queue, result_queue: Queue,
+                 calculation_dict: Dict[str, Tuple[Any, Callable[[Any, Any], Any]]]):
         self.task_queue = task_queue
         self.order_queue = order_queue
         self.result_queue = result_queue
@@ -155,6 +188,11 @@ class BatchWorker(object):
         pass
 
     def calculate_task(self, val):
+        """
+        Calculate single task.
+        ``val`` is tuple with two elements (task_data, uuid).
+        function and global parameters are obtained from :py:attr:`.calculation_dict`
+        """
         data, task_uuid = val
         global_data, fun = self.calculation_dict[task_uuid]
         try:
@@ -167,6 +205,7 @@ class BatchWorker(object):
             self.result_queue.put((task_uuid, (e, traceback.extract_tb(e.__traceback__))))
 
     def run(self):
+        """Worker main loop"""
         logging.debug("Process started {}".format(os.getpid()))
         while True:
             if not self.order_queue.empty():
@@ -196,7 +235,14 @@ class BatchWorker(object):
         logging.info("Process {} ended".format(os.getpid()))
 
 
-def spawn_worker(task_queue, order_queue, result_queue, calculation_dict):
+def spawn_worker(task_queue: Queue, order_queue: Queue, result_queue: Queue, calculation_dict: Dict[str, Any]):
+    """
+    Function for spawning worker. Designed as argument for :py:meth:`multiprocessing.Process`.
+
+    :param task_queue: Queue with tasks
+    :param order_queue: Queue with additional orders (like kill)
+    :param result_queue: Queue for calculation result
+    :param calculation_dict: dict with global parameters
+    """
     worker = BatchWorker(task_queue, order_queue, result_queue, calculation_dict)
     worker.run()
-    pass

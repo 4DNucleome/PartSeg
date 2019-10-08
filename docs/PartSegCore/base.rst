@@ -1,5 +1,5 @@
 PartSegCore base
-==================
+================
 
 On this page there are described base classes of PartSegCore module
 
@@ -7,6 +7,25 @@ On this page there are described base classes of PartSegCore module
 ------------------------
 .. automodule:: PartSegCore.algorithm_describe_base
    :members:
+
+.image_operations
+-----------------
+.. automodule:: PartSegCore.image_operations
+   :members:
+   :show-inheritance:
+
+.json_hooks
+-----------
+.. automodule:: PartSegCore.json_hooks
+   :members:
+   :show-inheritance:
+
+
+.mask_create
+------------
+.. automodule:: PartSegCore.mask_create
+   :members:
+   :show-inheritance:
 
 
 .register
@@ -21,8 +40,3 @@ On this page there are described base classes of PartSegCore module
 
 
 
-.json_hooks
------------
-.. automodule:: PartSegCore.json_hooks
-   :members:
-   :show-inheritance:

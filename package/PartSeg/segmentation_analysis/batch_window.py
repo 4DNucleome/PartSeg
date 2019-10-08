@@ -379,7 +379,7 @@ class CalculationPrepare(QDialog):
     def get_data(self):
         res = {"file_list": self.file_list, "base_prefix": str(self.base_prefix.text()),
                "result_prefix": str(self.result_prefix.text()),
-               "statistic_file_path": str(self.measurement_file_path_view.text()),
+               "measurement_file_path": str(self.measurement_file_path_view.text()),
                "sheet_name": str(self.sheet_name.text()), "calculation_plan": self.calculation_plan,
                "voxel_size": self.voxel_size.get_values()}
         return Calculation(**res)

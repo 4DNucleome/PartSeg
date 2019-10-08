@@ -1,22 +1,29 @@
-import numpy as np
 import typing
-from .class_generator import BaseSerializableClass
-from PartSegCore.image_operations import dilate, erode, RadiusType
+
+import numpy as np
 import SimpleITK as sitk
 
-"""MaskProperty = namedtuple("MaskProperty",
-                          ["dilate", "dilate_radius", "fill_holes", "max_holes_size", "save_components",
-                           "clip_to_mask"])"""
+from .class_generator import BaseSerializableClass
+from PartSegCore.image_operations import dilate, erode, RadiusType
 
 
+# noinspection PyUnresolvedReferences
 class MaskProperty(BaseSerializableClass):
     """
-    :parm dilate: RadiusType ,if need to dilate
-    :parm dilate_radius: int,  radius o f dilation calculate with respect of image spacing
-    :parm fill_holes: RadiusType
-    :parm max_holes_size: int
-    :parm save_components: bool
-    :parm clip_to_mask: bool
+    Description of creation mask from segmentation
+
+    :ivar ~.dilate: Select dilation mode.
+    :vartype ~.dilate: RadiusType
+    :ivar ~.dilate_radius: Radius of dilation calculate with respect of image spacing.
+    :vartype ~.dilate_radius: int
+    :ivar ~.fill_holes: Select if fill holes and if it should be done in 2d or 3d.
+    :vartype ~.fill_holes: RadiusType
+    :ivar ~.max_holes_size: Maximum holes size if positive. Otherwise fill all holes.
+    :vartype ~.max_holes_size: int
+    :ivar ~.save_components: If mask should save components of segmentation or set to 1.
+    :vartype ~.save_components: bool
+    :ivar ~.clip_to_mask: If resulted should be clipped to previous mask (if exist). Useful for positive dilate radius
+    :vartype ~.clip_to_mask: bool
     """
     dilate: RadiusType
     dilate_radius: int
@@ -32,12 +39,14 @@ class MaskProperty(BaseSerializableClass):
                (f"max holes size: {self.max_holes_size}\n" if self.fill_holes != RadiusType.NO else "") + \
                f"save components: {self.save_components}\nclip to mask: {self.clip_to_mask}"
 
+
 def mp_eq(self, other):
     return self.__class__ == other.__class__ and self.dilate == other.dilate and \
            self.fill_holes == other.fill_holes and self.save_components == other.save_components and \
            self.clip_to_mask == other.clip_to_mask and \
            (self.dilate == RadiusType.NO or (self.dilate_radius == other.dilate_radius)) and \
            (self.fill_holes == RadiusType.NO or (self.max_holes_size == other.max_holes_size))
+
 
 MaskProperty.__eq__ = mp_eq
 
@@ -52,7 +61,7 @@ def calculate_mask(mask_description: MaskProperty, segmentation: np.ndarray, old
     :param mask_description: information how calculate mask
     :param segmentation: array on which mask is calculated
     :param old_mask: if in mask_description there is set to crop and old_mask is not None
-    then final mask is clipped to this area
+        then final mask is clipped to this area
     :param spacing: spacing of image. Needed for calculating radius of dilate
     :return: new mask
     """
@@ -108,7 +117,7 @@ def _fill_holes(mask_description: MaskProperty, mask: np.ndarray) -> np.ndarray:
     if mask_description.save_components:
         border = 1
         res_slice = tuple([slice(border, -border) for _ in range(mask.ndim)])
-        mask_description_copy = mask_description._replace(save_components=False)
+        mask_description_copy = mask_description.replace_(save_components=False)
         for component, slice_arr, cmp_num in cut_components(mask, mask, border):
             new_component = _fill_holes(mask_description_copy, component)
             new_component = new_component[res_slice]
@@ -122,14 +131,20 @@ def _fill_holes(mask_description: MaskProperty, mask: np.ndarray) -> np.ndarray:
     return mask
 
 
-def fill_holes_in_mask(mask, volume):
-    """:rtype: np.ndarray"""
+def fill_holes_in_mask(mask: np.ndarray, volume: int) -> np.ndarray:
+    """
+    Fil holes in mask. If volume has positive Value then fill holes only smaller than this value
+
+    :param mask: mask to be modified
+    :param volume: maximum volume of holes which will be filled
+    :return: modified mask
+    """
     holes_mask = (mask == 0).astype(np.uint8)
     component_mask = sitk.GetArrayFromImage(
         sitk.RelabelComponent(sitk.ConnectedComponent(sitk.GetImageFromArray(holes_mask))))
-    border_set = set()
+    border_set: typing.Set[int] = set()
     for dim_num in range(component_mask.ndim):
-        border_set.update(np.unique(np.take(component_mask, [0, -1], axis=dim_num)))
+        border_set.update(list(np.unique(np.take(component_mask, [0, -1], axis=dim_num))))
     if 0 in border_set:
         border_set.remove(0)
     components_num = component_mask.max()
@@ -148,8 +163,11 @@ def fill_holes_in_mask(mask, volume):
 
 def fill_2d_holes_in_mask(mask: np.ndarray, volume: int) -> np.ndarray:
     """
+    fill holes in each 2d layer separately
+
     :param mask: mask to fill holes
     :param volume: minimum volume
+    :return: modified mask
     """
     mask = np.copy(mask)
     if mask.ndim == 2:

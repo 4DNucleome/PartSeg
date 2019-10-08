@@ -69,7 +69,7 @@ class TestCalculationProcess:
         file_pattern = os.path.join(get_test_dir(), "stack1_components", "stack1_component*[0-9].tif")
         file_paths = glob(file_pattern)
         calc = Calculation(file_paths, base_prefix=get_test_dir(), result_prefix=get_test_dir(),
-                           statistic_file_path=os.path.join(get_test_dir(), "test.xlsx"), sheet_name="Sheet1",
+                           measurement_file_path=os.path.join(get_test_dir(), "test.xlsx"), sheet_name="Sheet1",
                            calculation_plan=plan, voxel_size=(1, 1, 1))
 
         manager = CalculationManager()

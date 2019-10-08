@@ -187,9 +187,9 @@ class Register(OrderedDict):
 class SegmentationProfile(object):
     """
 
-    :ivar name: name for segmentation profile
-    :ivar algorithm: Name of algorithm
-    :ivar values: algorithm parameters
+    :ivar str ~.name: name for segmentation profile
+    :ivar str ~.algorithm: Name of algorithm
+    :ivar dict ~.values: algorithm parameters
     """
     def __init__(self, name: str, algorithm: str, values: dict):
         self.name = name
