@@ -26,6 +26,9 @@ class ProjectTuple(ProjectInfoBase, typing.NamedTuple):
     def is_raw(self):
         return self.segmentation is None
 
+    def replace_(self, *args, **kwargs):
+        return self._replace(*args, **kwargs)
+
 
 class MaskInfo(typing.NamedTuple):
     file_path: str

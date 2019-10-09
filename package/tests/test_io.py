@@ -28,7 +28,7 @@ from PartSegCore.json_hooks import check_loaded_dict
 from PartSegCore.segmentation.noise_filtering import DimensionType
 from PartSegCore.class_generator import enum_register
 from PartSegCore.mask.io_functions import LoadSegmentation, SaveSegmentation, LoadSegmentationImage, save_components, \
-    LoadTiff, SegmentationTuple
+    LoadStackImage, SegmentationTuple
 
 from help_fun import get_test_dir
 
@@ -215,7 +215,7 @@ class TestSegmentationMask:
 
     def test_loading_new_segmentation(self):
         test_dir = get_test_dir()
-        image_data = LoadTiff.load([os.path.join(test_dir, "test_nucleus.tif")])
+        image_data = LoadStackImage.load([os.path.join(test_dir, "test_nucleus.tif")])
         algorithm = ThresholdAlgorithm()
         algorithm.set_image(image_data.image)
         param = algorithm.get_default_values()

@@ -399,6 +399,7 @@ class CalculationPlan:
     :type current_pos: list[int]
     :type name: str
     :type segmentation_count: int
+    :type execution_tree: CalculationTree
     """
     correct_name = {MaskCreate.__name__: MaskCreate, MaskUse.__name__: MaskUse, Save.__name__: Save,
                     MeasurementCalculate.__name__: MeasurementCalculate,
@@ -417,6 +418,9 @@ class CalculationPlan:
         self.current_pos = []
         self.changes = []
         self.current_node = None
+
+    def get_root_type(self):
+        return self.execution_tree.operation
 
     def __str__(self):
         return f"CalculationPlan<{self.name}>\n{self.execution_tree}"

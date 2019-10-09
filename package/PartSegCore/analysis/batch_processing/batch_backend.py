@@ -1,5 +1,11 @@
 """
 This module contains PartSeg function used for calculate in batch processing
+
+.. graphviz::
+
+   digraph foo {
+      "BatchManager" -> "BatchWorker"[arrowhead="crow"];
+   }
 """
 import logging
 import threading
@@ -20,7 +26,7 @@ from PartSegCore.analysis.calculation_plan import MaskMapper, MaskUse, MaskCreat
     Operations, FileCalculation, MaskIntersection, MaskSum, get_save_path, MeasurementCalculate, BaseCalculation, \
     Calculation
 from PartSegCore.analysis.io_utils import ProjectTuple
-from PartSegCore.analysis.load_functions import load_project
+from PartSegCore.analysis.load_functions import load_project, LoadStackImage, LoadMaskSegmentation, LoadProject
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.mask_create import calculate_mask
 from PartSegCore.segmentation.algorithm_base import report_empty_fun, SegmentationAlgorithm
@@ -69,7 +75,9 @@ class CalculationProcess:
         self.reused_mask = calculation.calculation_plan.get_reused_mask()
         self.mask_dict = {}
         self.measurement = []
+        operation = calculation.calculation_plan.execution_tree.operation
         ext = path.splitext(calculation.file_path)[1]
+
         if ext in [".tiff", ".tif", ".lsm"]:
             self.image = TiffImageReader.read_image(calculation.file_path, default_spacing=calculation.voxel_size)
         elif ext in [".tgz", ".gz", ".tbz2", ".bz2"]:

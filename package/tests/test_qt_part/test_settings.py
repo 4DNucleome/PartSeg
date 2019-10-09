@@ -4,7 +4,7 @@ import typing
 
 from PartSeg.segmentation_mask.stack_gui_main import ChosenComponents
 from PartSeg.segmentation_mask.stack_settings import StackSettings
-from PartSegCore.mask.io_functions import LoadSegmentationImage, LoadTiff
+from PartSegCore.mask.io_functions import LoadSegmentationImage, LoadStackImage
 from help_fun import get_test_dir
 
 
@@ -20,7 +20,7 @@ class TestStackSettings:
         project1_res = settings.get_project_info()
         assert isinstance(project1_res.chosen_components, typing.Iterable) and len(project1_res.chosen_components) == 2
         assert project1_res.file_path == os.path.join(test_dir, "test_nucleus.seg")
-        project2 = LoadTiff.load([os.path.join(test_dir, "test_lsm.tif")])
+        project2 = LoadStackImage.load([os.path.join(test_dir, "test_lsm.tif")])
         settings.set_project_info(project2)
         project2_res = settings.get_project_info()
         assert project2_res.segmentation is None

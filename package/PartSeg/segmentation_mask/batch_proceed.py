@@ -10,7 +10,7 @@ from qtpy.QtCore import QThread, Signal
 from PartSeg.segmentation_mask.stack_settings import get_mask, StackSettings
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
-from PartSegCore.mask.io_functions import SaveSegmentation, LoadSegmentationImage, LoadTiff, SegmentationTuple
+from PartSegCore.mask.io_functions import SaveSegmentation, LoadSegmentationImage, LoadStackImage, SegmentationTuple
 from PartSegCore.segmentation.algorithm_base import SegmentationAlgorithm
 
 
@@ -56,7 +56,7 @@ class BatchProceed(QThread):
                 if path.splitext(task.data)[1] == ".seg":
                     project_tuple = LoadSegmentationImage.load([task.data])
                 else:
-                    project_tuple = LoadTiff.load([task.data])
+                    project_tuple = LoadStackImage.load([task.data])
             elif isinstance(task.data, SegmentationTuple):
                 project_tuple: SegmentationTuple = task.data
                 file_path = project_tuple.image.file_path

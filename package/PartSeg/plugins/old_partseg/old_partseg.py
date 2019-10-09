@@ -21,6 +21,7 @@ class LoadPartSegOld(LoadBase):
     def get_short_name(cls):
         return "project_old"
 
+    # noinspection DuplicatedCode
     @classmethod
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
              range_changed: typing.Callable[[int, int], typing.Any] = None,

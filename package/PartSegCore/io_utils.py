@@ -58,6 +58,9 @@ class ProjectInfoBase:
     def _replace(self, file_path=None, image=None):
         pass
 
+    def replace_(self, *args, **kwargs):
+        return self._replace(*args, **kwargs)
+
     def get_raw_copy(self):
         raise NotImplementedError
 

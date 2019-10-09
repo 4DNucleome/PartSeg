@@ -15,7 +15,7 @@ from tifffile import TiffFile
 from PartSegCore.analysis.calculation_plan import CalculationPlan, CalculationTree
 from PartSegCore.mask.io_functions import LoadSegmentationImage
 from PartSegCore.universal_const import Units, UNIT_SCALE
-from PartSegImage import TiffImageReader
+from PartSegImage import GenericImageReader
 from .analysis_utils import HistoryElement, SegmentationPipeline, SegmentationPipelineElement
 from .io_utils import ProjectTuple, MaskInfo, project_version_info
 from .save_hooks import part_hook
@@ -23,8 +23,8 @@ from ..algorithm_describe_base import Register, SegmentationProfile
 from ..io_utils import LoadBase, proxy_callback, check_segmentation_type, SegmentationType, WrongFileTypeException, \
     UpdateLoadedMetadataBase
 
-__all__ = ["LoadImage", "LoadImageMask", "LoadProject", "LoadMask", "load_dict", "load_metadata",
-           "UpdateLoadedMetadataAnalysis"]
+__all__ = ["LoadStackImage", "LoadImageMask", "LoadProject", "LoadMask", "load_dict", "load_metadata",
+           "UpdateLoadedMetadataAnalysis", "LoadMaskSegmentation"]
 
 
 def load_project(
@@ -47,8 +47,8 @@ def load_project(
     image_tar = tar_file.extractfile(tar_file.getmember("image.tif"))
     image_buffer.write(image_tar.read())
     image_buffer.seek(0)
-    reader = TiffImageReader()
-    image = reader.read(image_buffer)
+    reader = GenericImageReader()
+    image = reader.read(image_buffer, ext=".tif")
     image.file_path = file_path
     seg_tar = tar_file.extractfile(tar_file.getmember("segmentation.npz"))
     seg_buffer = BytesIO()
@@ -108,10 +108,10 @@ class LoadProject(LoadBase):
         return load_project(load_locations[0])
 
 
-class LoadImage(LoadBase):
+class LoadStackImage(LoadBase):
     @classmethod
     def get_name(cls):
-        return "Image (*.tif *.tiff *.lsm)"
+        return "Image (*.tif *.tiff *.lsm *.czi)"
 
     @classmethod
     def get_short_name(cls):
@@ -122,13 +122,13 @@ class LoadImage(LoadBase):
              range_changed: typing.Callable[[int, int], typing.Any] = None,
              step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
         if metadata is None:
-            metadata = {"default_spacing": [1 / UNIT_SCALE[Units.nm.value] for _ in range(3)]}
+            metadata = {"default_spacing": tuple([1 / UNIT_SCALE[Units.nm.value] for _ in range(3)])}
         if "recursion_limit" not in metadata:
             metadata = copy(metadata)
             metadata["recursion_limit"] = 3
-        image = TiffImageReader.read_image(
+        image = GenericImageReader.read_image(
             load_locations[0], callback_function=partial(proxy_callback, range_changed, step_changed),
-            default_spacing=metadata["default_spacing"])
+            default_spacing=tuple(metadata["default_spacing"]))
         re_read = True
         for el in image.get_ranges():
             if el[0] != el[1]:
@@ -165,11 +165,11 @@ class LoadImageMask(LoadBase):
              range_changed: typing.Callable[[int, int], typing.Any] = None,
              step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
         if metadata is None:
-            metadata = {"default_spacing": [1, 1, 1]}
-        image = TiffImageReader.read_image(
+            metadata = {"default_spacing": (10**-6, 10**-6, 10**-6)}
+        image = GenericImageReader.read_image(
             load_locations[0], load_locations[1],
             callback_function=partial(proxy_callback, range_changed, step_changed),
-            default_spacing=metadata["default_spacing"])
+            default_spacing=tuple(metadata["default_spacing"]))
         return ProjectTuple(load_locations[0], image, mask=image.mask)
 
     @classmethod
@@ -300,4 +300,5 @@ def update_algorithm_dict(dkt):
     return res
 
 
-load_dict = Register(LoadImage, LoadImageMask, LoadProject, LoadMaskSegmentation, class_methods=LoadBase.need_functions)
+load_dict = Register(LoadStackImage, LoadImageMask, LoadProject, LoadMaskSegmentation,
+                     class_methods=LoadBase.need_functions)
