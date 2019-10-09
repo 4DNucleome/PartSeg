@@ -133,6 +133,8 @@ class LoadSegmentation(LoadBase):
 
     @staticmethod
     def fix_parameters(profile: SegmentationProfile):
+        if profile is None:
+            return
         if profile.algorithm == "Threshold" or profile.algorithm == "Auto Threshold":
             if isinstance(profile.values["smooth_border"], bool):
                 if profile.values["smooth_border"] and "smooth_border_radius" in profile.values:
@@ -149,12 +151,11 @@ class LoadSegmentation(LoadBase):
              step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
         segmentation, metadata = load_stack_segmentation(load_locations[0], range_changed=range_changed,
                                                          step_changed=step_changed)
-
         if "parameters" not in metadata:
             parameters = defaultdict(lambda: None)
         else:
-            parameters = dict([(int(k), cls.fix_parameters(v)) for k, v in metadata["parameters"].items()])
-
+            parameters = defaultdict(lambda: None,
+                                     [(int(k), cls.fix_parameters(v)) for k, v in metadata["parameters"].items()])
         return SegmentationTuple(load_locations[0], metadata["base_file"] if "base_file" in metadata else None,
                                  segmentation, metadata["components"], parameters)
 

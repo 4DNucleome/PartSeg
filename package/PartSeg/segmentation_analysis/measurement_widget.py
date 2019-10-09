@@ -38,7 +38,7 @@ class MeasurementsStorage:
         self.header = []
         self.max_rows = 0
         self.content = []
-        self.measurements: List[MeasurementResult, bool , bool] = []
+        self.measurements: List[MeasurementResult, bool, bool] = []
 
     def get_size(self, save_orientation: bool):
         if save_orientation:
@@ -235,7 +235,6 @@ class MeasurementWidget(QWidget):
                     s += str(self.info_field.item(r, c).text()) + "\t"
                 except AttributeError:
                     s += "\t"
-                    logging.info("Copy problem")
             s = s[:-1] + "\n"  # eliminate last '\t'
         self.clip.setText(s)
 
@@ -324,7 +323,6 @@ class MeasurementWidget(QWidget):
                             s += str(self.info_field.item(r, c).text()) + "\t"
                         except AttributeError:
                             s += "\t"
-                            logging.info("Copy problem")
                     s = s[:-1] + "\n"  # eliminate last '\t'
                 self.clip.setText(s)
 

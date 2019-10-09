@@ -4,7 +4,7 @@ This module contains PartSeg function used for calculate in batch processing
 .. graphviz::
 
    digraph foo {
-      "BatchManager" -> "BatchWorker"[arrowhead="crow"];
+      "CalculationManager" -> "BatchManager" -> "BatchWorker"[arrowhead="crow"];
    }
 """
 import logging
@@ -24,13 +24,13 @@ from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.analysis.analysis_utils import HistoryElement
 from PartSegCore.analysis.calculation_plan import MaskMapper, MaskUse, MaskCreate, Save, \
     Operations, FileCalculation, MaskIntersection, MaskSum, get_save_path, MeasurementCalculate, BaseCalculation, \
-    Calculation
+    Calculation, RootType
 from PartSegCore.analysis.io_utils import ProjectTuple
-from PartSegCore.analysis.load_functions import load_project, LoadStackImage, LoadMaskSegmentation, LoadProject
+from PartSegCore.analysis.load_functions import LoadMaskSegmentation, LoadProject, load_dict
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.mask_create import calculate_mask
 from PartSegCore.segmentation.algorithm_base import report_empty_fun, SegmentationAlgorithm
-from PartSegImage import TiffImageReader, Image
+from PartSegImage import Image
 from .parallel_backend import BatchManager
 
 
@@ -63,6 +63,7 @@ class CalculationProcess:
         self.history: typing.List[HistoryElement] = []
         self.algorithm_parameters: dict = {}
         self.cleaned_channel: typing.Optional[np.ndarray] = None
+        self.results = []
 
     def do_calculation(self, calculation: FileCalculation):
         """
@@ -75,24 +76,42 @@ class CalculationProcess:
         self.reused_mask = calculation.calculation_plan.get_reused_mask()
         self.mask_dict = {}
         self.measurement = []
+        self.results = []
         operation = calculation.calculation_plan.execution_tree.operation
         ext = path.splitext(calculation.file_path)[1]
+        metadata = {"default_spacing": calculation.voxel_size}
+        if operation == RootType.Image:
+            for load_class in load_dict.values():
+                if load_class.partial() or load_class.number_of_files() != 1:
+                    continue
+                if ext in load_class.get_extensions():
+                    projects = load_class.load([calculation.file_path], metadata=metadata)
+                    break
+            else:
+                raise ValueError("File type not supported")
+        elif operation == RootType.Project:
+            projects = LoadProject.load([calculation.file_path], metadata=metadata)
+        else:  # operation == RootType.Mask_project
+            projects = LoadMaskSegmentation.load([calculation.file_path], metadata=metadata)
 
-        if ext in [".tiff", ".tif", ".lsm"]:
-            self.image = TiffImageReader.read_image(calculation.file_path, default_spacing=calculation.voxel_size)
-        elif ext in [".tgz", ".gz", ".tbz2", ".bz2"]:
-            project_tuple = load_project(calculation.file_path)
-            self.image = project_tuple.image
-            self.segmentation = project_tuple.segmentation
-            self.full_segmentation = project_tuple.full_segmentation
-            self.mask = project_tuple.mask
-            self.history = project_tuple.history
-            self.algorithm_parameters = project_tuple.algorithm_parameters
-        else:
-            raise ValueError("Unknown file type: {} {}".format(ext, calculation.file_path))
-        # TODO add support for loading mask project.
-        self.iterate_over(calculation.calculation_plan.execution_tree)
-        return path.relpath(calculation.file_path, calculation.base_prefix), self.measurement
+        if isinstance(projects, ProjectTuple):
+            projects = [projects]
+        for project in projects:
+            project: ProjectTuple
+            self.image = project.image
+            if operation == RootType.Mask_project:
+                self.mask = project.mask[0]
+            if operation == RootType.Project:
+                self.mask = project.mask[0]
+                self.segmentation = project.segmentation
+                self.full_segmentation = project.full_segmentation
+                self.history = project.history
+                self.algorithm_parameters = project.algorithm_parameters
+
+            self.iterate_over(calculation.calculation_plan.execution_tree)
+            self.results.append((path.relpath(calculation.file_path, project.image.file_path), self.measurement))
+            self.measurement = []
+        return self.results
 
     def iterate_over(self, node):
         """
@@ -222,6 +241,10 @@ class ResponseData(typing.NamedTuple):
 
 
 class CalculationManager:
+    """
+    This class manage batch processing in PartSeg.
+
+    """
     def __init__(self):
         self.batch_manager = BatchManager()
         self.calculation_queue = Queue()
@@ -239,7 +262,7 @@ class CalculationManager:
 
     def add_calculation(self, calculation: Calculation):
         """
-        :param calculation: calculation
+        :param calculation: alculation
         :return:
         """
         self.sheet_name[calculation.measurement_file_path].add(calculation.sheet_name)
@@ -262,22 +285,23 @@ class CalculationManager:
     def get_results(self):
         responses = self.batch_manager.get_result()
         new_errors = []
-        for uuid, el in responses:
+        for uuid, result_list in responses:
             self.calculation_done += 1
             self.counter_dict[uuid] += 1
             calculation = self.calculation_dict[uuid][0]
-            if isinstance(el, tuple) and isinstance(el[0], Exception):
-                self.errors_list.append(el)
-                new_errors.append(el)
-            else:
-                data = ResponseData._make(el)
-                errors = self.writer.add_result(data, calculation)
-                for err in errors:
-                    new_errors.append(err)
-            if self.counter_dict[uuid] == len(calculation.file_list):
-                errors = self.writer.calculation_finished(calculation)
-                for err in errors:
-                    new_errors.append(err)
+            for el in result_list:
+                if isinstance(el, tuple) and isinstance(el[0], Exception):
+                    self.errors_list.append(el)
+                    new_errors.append(el)
+                else:
+                    data = ResponseData._make(el)
+                    errors = self.writer.add_result(data, calculation)
+                    for err in errors:
+                        new_errors.append(err)
+                if self.counter_dict[uuid] == len(calculation.file_list):
+                    errors = self.writer.calculation_finished(calculation)
+                    for err in errors:
+                        new_errors.append(err)
         return new_errors, self.calculation_done, zip(self.counter_dict.values(), self.calculation_sizes)
 
 
@@ -421,7 +445,6 @@ class FileData(object):
             data = self.wrote_queue.get()
             self.writing = True
             if data == "finish":
-                print("aaaa")
                 break
             try:
                 if self.file_type == FileType.text_file:

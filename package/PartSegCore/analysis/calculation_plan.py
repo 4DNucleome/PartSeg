@@ -291,6 +291,8 @@ class CalculationTree:
     def __init__(self, operation: typing.Union[BaseSerializableClass, SegmentationProfile,
                                                MeasurementCalculate, RootType],
                  children: typing.List['CalculationTree']):
+        if operation == "root":
+            operation = RootType.Image
         self.operation = operation
         self.children = children
 

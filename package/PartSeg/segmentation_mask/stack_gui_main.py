@@ -152,13 +152,13 @@ class MainMenu(BaseMainMenu):
         def exception_hook(exception):
             mess = QMessageBox(self)
             if isinstance(exception, ValueError) and exception.args[0] == "Segmentation do not fit to image":
-                mess.warning("Open error", "Segmentation do not fit to image")
+                mess.warning(self, "Open error", "Segmentation do not fit to image")
             elif isinstance(exception, MemoryError):
-                mess.warning("Open error", "Not enough memory to read this image")
+                mess.warning(self, "Open error", "Not enough memory to read this image")
             elif isinstance(exception, IOError):
-                mess.warning("Open error", "Some problem with reading from disc")
+                mess.warning(self, "Open error", "Some problem with reading from disc")
             elif isinstance(exception, WrongFileTypeException):
-                mess.warning("Open error", f"No needed files inside archive. "
+                mess.warning(self, "Open error", f"No needed files inside archive. "
                              "Most probably you choose file from segmentation analysis")
             else:
                 raise exception
@@ -189,6 +189,7 @@ class MainMenu(BaseMainMenu):
 
         def exception_hook(exception):
             QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.Ok)
+            raise exception
 
         dial = ExecuteFunctionDialog(save_class.save, [save_location, self.settings.get_project_info(), values],
                                      text="Save segmentation", exception_hook=exception_hook)

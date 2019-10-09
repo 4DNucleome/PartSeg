@@ -42,7 +42,6 @@ class BatchManager:
     This class is used for manage pending works.
     It use :py:class:`.BatchWorker` for running calculation.
 
-    :type measurement_place_dict: dict[str,set[str]]
     :type task_queue: Queue
     :type order_queue: Queue
     :type result_queue: Queue
@@ -51,7 +50,6 @@ class BatchManager:
     """
     def __init__(self):
         self.manager = multiprocessing.Manager()
-        self.measurement_place_dict = self.manager.dict()
         self.task_queue = self.manager.Queue()
         self.order_queue = self.manager.Queue()
         self.result_queue = self.manager.Queue()
@@ -146,13 +144,6 @@ class BatchManager:
                 self.number_off_process += process_diff
             self.join_all()
 
-    def is_sheet_name_use(self, file_path, name):
-        if file_path not in self.measurement_place_dict:
-            return False
-        if name not in self.measurement_place_dict:
-            return False
-        return True
-
     def join_all(self):
         logging.debug("Join begin {} {}".format(len(self.process_list), self.number_off_process))
         with self.locker:
@@ -213,7 +204,7 @@ class BatchWorker:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             f_name = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print(exc_type, f_name, exc_tb.tb_lineno, file=sys.stderr)
-            self.result_queue.put((task_uuid, (e, traceback.extract_tb(e.__traceback__))))
+            self.result_queue.put((task_uuid, [(e, traceback.extract_tb(e.__traceback__))]))
 
     def run(self):
         """Worker main loop"""
