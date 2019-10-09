@@ -7,7 +7,7 @@ h5py==2.9.0
 imagecodecs-lite==2019.4.20
 jdcal==1.4.1
 mpmath==1.1.0
-numpy==1.17.0
+numpy==1.17.2
 oiffile==2019.1.1
 openpyxl==2.6.2
 packaging==19.1
@@ -19,7 +19,7 @@ python-dateutil==2.8.0
 pytz==2019.2
 QtPy==1.9.0
 scipy==1.3.1
-sentry-sdk==0.11.0
+sentry-sdk==0.12.3
 SimpleITK==1.2.0
 six==1.12.0
 sympy==1.4
