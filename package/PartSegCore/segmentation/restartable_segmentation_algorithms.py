@@ -8,7 +8,7 @@ import numpy as np
 
 from ..multiscale_opening import PyMSO
 from ..multiscale_opening import calculate_mu_mid
-from ..border_rim import border_mask
+from ..mask_partition_utils import BorderRim as BorderRimBase
 from ..channel_class import Channel
 from .algorithm_base import SegmentationAlgorithm, SegmentationResult
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
@@ -66,9 +66,7 @@ class BorderRim(RestartableAlgorithm):
 
     @classmethod
     def get_fields(cls):
-        return ["Need mask",
-                AlgorithmProperty("distance", "Distance", 700.0, options_range=(0, 100000), property_type=float),
-                AlgorithmProperty("units", "Units", Units.nm, property_type=Units)]
+        return ["Need mask"] + BorderRimBase.get_fields()
 
     def set_parameters(self, distance: float, units: Units):
         self.distance = distance
@@ -86,7 +84,7 @@ class BorderRim(RestartableAlgorithm):
     def calculation_run(self, _report_fun) -> SegmentationResult:
         if self.mask is not None:
             result = \
-                border_mask(mask=self.mask, distance=self.distance, units=self.units, voxel_size=self.image.spacing)
+                BorderRimBase.border_mask(mask=self.mask, distance=self.distance, units=self.units, voxel_size=self.image.spacing)
             return SegmentationResult(result, result, None)
 
 

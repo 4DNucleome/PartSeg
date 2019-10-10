@@ -16,7 +16,7 @@ import h5py
 import PartSegData
 
 from PartSegCore.segmentation.segmentation_algorithm import ThresholdAlgorithm
-from PartSegImage import TiffImageReader, Image, CziImageReader
+from PartSegImage import TiffImageReader, Image, CziImageReader, GenericImageReader
 from PartSegCore import Units, UNIT_SCALE
 from PartSegCore.analysis import ProjectTuple
 from PartSegCore.analysis.load_functions import UpdateLoadedMetadataAnalysis
@@ -127,6 +127,14 @@ class TestImageClass:
         assert np.all(image1.get_data() == data)
         assert np.all(image2.get_data() == data)
         assert np.all(image1.get_data() == image2.get_data())
+
+    def test_generic_reader(self):
+        test_dir = get_test_dir()
+        GenericImageReader.read_image(os.path.join(test_dir, "stack1_components", "stack1_component1.tif"),
+                                os.path.join(test_dir, "stack1_components", "stack1_component1_mask.tif"))
+        GenericImageReader.read_image(os.path.join(test_dir, "test_czi.czi"))
+        GenericImageReader.read_image(os.path.join(test_dir, "test_lsm2.tif"))
+        GenericImageReader.read_image(os.path.join(test_dir, "test_lsm.tif"))
 
 
 class TestJsonLoad:

@@ -100,7 +100,7 @@ class GenericImageReader(BaseImageReader):
     """This class try to decide which method use base on path """
 
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
-        if ext is not None:
+        if ext is None:
             if isinstance(image_path, str):
                 ext = os.path.splitext(image_path)[1]
             else:

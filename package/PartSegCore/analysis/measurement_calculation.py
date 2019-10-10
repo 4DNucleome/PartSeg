@@ -18,7 +18,7 @@ from PartSegCore.analysis.measurement_base import Leaf, Node, MeasurementEntry, 
     AreaType
 from PartSegCore.channel_class import Channel
 from ..algorithm_describe_base import Register, AlgorithmProperty
-from ..border_rim import border_mask
+from ..mask_partition_utils import BorderRim
 from ..class_generator import enum_register
 from ..universal_const import UNIT_SCALE, Units
 from ..utils import class_to_dict
@@ -886,8 +886,7 @@ class RimVolume(MeasurementMethodBase):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("distance", "Distance", 0.0, options_range=(0, 10000), property_type=float),
-                AlgorithmProperty("units", "Units", Units.nm, property_type=Units)]
+        return BorderRim.get_fields()
 
     @classmethod
     def get_starting_leaf(cls):
@@ -895,7 +894,7 @@ class RimVolume(MeasurementMethodBase):
 
     @staticmethod
     def calculate_property(segmentation, voxel_size, result_scalar, **kwargs):
-        border_mask_array = border_mask(voxel_size=voxel_size, result_scalar=result_scalar, **kwargs)
+        border_mask_array = BorderRim.border_mask(voxel_size=voxel_size, result_scalar=result_scalar, **kwargs)
         if border_mask_array is None:
             return None
         final_mask = np.array((border_mask_array > 0) * (segmentation > 0))
@@ -912,8 +911,7 @@ class RimPixelBrightnessSum(MeasurementMethodBase):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("distance", "Distance", 0.0, options_range=(0, 10000), property_type=float),
-                AlgorithmProperty("units", "Units", Units.nm, property_type=Units)]
+        return BorderRim.get_fields()
 
     @classmethod
     def get_starting_leaf(cls):
@@ -925,7 +923,7 @@ class RimPixelBrightnessSum(MeasurementMethodBase):
             if channel.shape[0] != 1:
                 raise ValueError("This measurements do not support time data")
             channel = channel[0]
-        border_mask_array = border_mask(**kwargs)
+        border_mask_array = BorderRim.border_mask(**kwargs)
         if border_mask_array is None:
             return None
         final_mask = np.array((border_mask_array > 0) * (segmentation > 0))
