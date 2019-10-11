@@ -1,14 +1,16 @@
 import operator
+import typing
 from abc import ABC
 from collections import defaultdict
 from copy import deepcopy
+from typing import Callable
 
 import SimpleITK as sitk
 import numpy as np
 
 from ..multiscale_opening import PyMSO
 from ..multiscale_opening import calculate_mu_mid
-from ..mask_partition_utils import BorderRim as BorderRimBase
+from ..mask_partition_utils import BorderRim as BorderRimBase, SplitMaskOnPart as SplitMaskOnPartBase
 from ..channel_class import Channel
 from .algorithm_base import SegmentationAlgorithm, SegmentationResult
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
@@ -83,9 +85,30 @@ class BorderRim(RestartableAlgorithm):
 
     def calculation_run(self, _report_fun) -> SegmentationResult:
         if self.mask is not None:
-            result = \
-                BorderRimBase.border_mask(mask=self.mask, distance=self.distance, units=self.units, voxel_size=self.image.spacing)
-            return SegmentationResult(result, result, None)
+            result = BorderRimBase.border_mask(
+                mask=self.mask, distance=self.distance, units=self.units, voxel_size=self.image.spacing)
+            return SegmentationResult(result, self.get_segmentation_profile(), result, None)
+
+
+class SplitMaskOnPart(RestartableAlgorithm):
+    def calculation_run(self, report_fun: Callable[[str, int], None]) -> SegmentationResult:
+        if self.mask is not None:
+            result = SplitMaskOnPartBase.split(mask=self.mask, voxel_size=self.image.voxel_size, **self.parameters)
+            return SegmentationResult(result, self.get_segmentation_profile(), result, None)
+
+    def get_segmentation_profile(self) -> SegmentationProfile:
+        return SegmentationProfile("", self.get_name(), deepcopy(self.parameters))
+
+    def set_parameters(self, **kwargs):
+        self.parameters = dict(kwargs)
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Split Mask o Part"
+
+    @classmethod
+    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+        return ["Need mask"] + SplitMaskOnPartBase.get_fields()
 
 
 class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
@@ -477,7 +500,7 @@ class BaseMultiScaleOpening(ThresholdBaseAlgorithm, ABC):
         else:
             self.finally_segment = segment_data.segmentation
             finally_segment = segment_data.segmentation
-            assert finally_segment.max() < 250
+            assert np.max(finally_segment) < 250
             components = finally_segment.astype(np.uint8)
             components[components > 0] += 1
             components[self.sprawl_area == 0] = 1
@@ -529,4 +552,4 @@ class UpperThresholdMultiScaleOpening(BaseMultiScaleOpening):
 final_algorithm_list = [LowerThresholdAlgorithm, UpperThresholdAlgorithm, RangeThresholdAlgorithm,
                         LowerThresholdFlowAlgorithm, UpperThresholdFlowAlgorithm,  # LowerThresholdMultiScaleOpening,
                         # UpperThresholdMultiScaleOpening,
-                        OtsuSegment, BorderRim]
+                        OtsuSegment, BorderRim, SplitMaskOnPart]

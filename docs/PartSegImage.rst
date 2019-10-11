@@ -9,12 +9,17 @@ PartSegImage
 
 PartSegImage.image_reader
 -------------------------
-.. autoclass:: PartSegImage.image_reader.MyTiffPage
-    :members: asarray
 
 .. automodule:: PartSegImage.image_reader
    :members:
    :exclude-members: ImageReader, MyTiffPage
    :show-inheritance:
+
+
+PartSegImage.tifffile_fixes
+---------------------------
+
+.. autoclass:: PartSegImage.tifffile_fixes.MyTiffPage
+    :members: asarray
 
 

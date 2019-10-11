@@ -315,13 +315,13 @@ class BaseCalculation:
     """
     Base description of calculation needed for single file
 
-    :ivar str base_prefix: path prefix which should be used to calculate relative path of processed files
-    :ivar str result_prefix: path prefix for saving structure
-    :ivar str measurement_file_path: path to file in which result of measurement should be saved
-    :ivar str sheet_name: name of sheet in excel file
-    :ivar CalculationPlan calculation_plan: plan of calculation
-    :ivar str uuid: uuid of whole calculation
-    :ivar voxel_size: default voxel size (for files which do not contains this information in metadata
+    :ivar str ~.base_prefix: path prefix which should be used to calculate relative path of processed files
+    :ivar str ~.result_prefix: path prefix for saving structure
+    :ivar str ~.measurement_file_path: path to file in which result of measurement should be saved
+    :ivar str ~.sheet_name: name of sheet in excel file
+    :ivar CalculationPlan ~.calculation_plan: plan of calculation
+    :ivar str uuid: ~.uuid of whole calculation
+    :ivar ~.voxel_size: default voxel size (for files which do not contains this information in metadata
     """
     def __init__(self, base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan,
                  voxel_size):
@@ -338,14 +338,14 @@ class Calculation(BaseCalculation):
     """
     Description of whole calculation. Extended with list of all files to proceed
 
-    :ivar str base_prefix: path prefix which should be used to calculate relative path of processed files
-    :ivar str result_prefix: path prefix for saving structure
-    :ivar str measurement_file_path: path to file in which result of measurement should be saved
-    :ivar str sheet_name: name of sheet in excel file
-    :ivar CalculationPlan calculation_plan: plan of calculation
-    :ivar str uuid: uuid of whole calculation
-    :ivar voxel_size: default voxel size (for files which do not contains this information in metadata
-    :ivar typing.List[str] file_list: list of files to be proceed
+    :ivar str ~.base_prefix: path prefix which should be used to calculate relative path of processed files
+    :ivar str ~.result_prefix: path prefix for saving structure
+    :ivar str ~.measurement_file_path: path to file in which result of measurement should be saved
+    :ivar str ~.sheet_name: name of sheet in excel file
+    :ivar CalculationPlan ~.calculation_plan: plan of calculation
+    :ivar str uuid: ~.uuid of whole calculation
+    :ivar ~.voxel_size: default voxel size (for files which do not contains this information in metadata
+    :ivar typing.List[str] ~.file_list: list of files to be proceed
     """
     def __init__(self, file_list, base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan,
                  voxel_size):

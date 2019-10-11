@@ -38,5 +38,9 @@ On this page there are described base classes of PartSegCore module
    dict with base class for given type of algorithm, keys are :py:class:`RegisterEnum` members
 
 
+.mask_partition_utils
+---------------------
 
-
+.. automodule:: PartSegCore.mask_partition_utils
+   :members:
+   :show-inheritance:
