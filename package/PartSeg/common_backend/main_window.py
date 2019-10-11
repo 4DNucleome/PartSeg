@@ -22,6 +22,9 @@ class BaseMainMenu(QWidget):
 
     def set_data(self, data):
         if isinstance(data, list):
+            if len(data) == 0:
+                QMessageBox.warning(self, "Empty list", "List of files to load is empty")
+                return
             if hasattr(self.main_window, "multiple_files"):
                 self.main_window.multiple_files.add_states(data)
                 self.main_window.multiple_files.setVisible(True)
