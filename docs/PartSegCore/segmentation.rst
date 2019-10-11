@@ -16,3 +16,10 @@ Base classes
    :members:
    :inherited-members:
    :show-inheritance:
+
+.restartable_segmentation_algorithms
+------------------------------------
+
+.. automodule:: PartSegCore.segmentation.restartable_segmentation_algorithms
+   :members:
+   :show-inheritance:

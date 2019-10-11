@@ -34,7 +34,14 @@ def report_empty_fun(_x, _y):
 
 
 class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
-    channel: Optional[np.ndarray]
+    """
+    Base class for all segmentation algorithm.
+
+    :ivar Image ~.image: Image to process
+    :ivar np.ndarray ~.channel: selected channel
+    :ivar np.ndarray ~.segmentation: final segmentation
+    :ivar np.ndarray ~.mask: mask limiting segmentation area
+    """
 
     def __init__(self):
         super().__init__()
@@ -62,6 +69,7 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         raise NotImplementedError()
 
     def set_mask(self, mask):
+        """Set mask which will limit segmentation area"""
         self.mask = mask
 
     def calculation_run(self, report_fun: Callable[[str, int], None]) -> SegmentationResult:
@@ -89,9 +97,11 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         self.channel = None
 
     def set_parameters(self, *args, **kwargs):
+        """Set parameters for next segmentation."""
         raise NotImplementedError()
 
     def get_segmentation_profile(self) -> SegmentationProfile:
+        """Get parameters seated by :py:meth:`set_parameters` method."""
         raise NotImplementedError()
 
     @staticmethod

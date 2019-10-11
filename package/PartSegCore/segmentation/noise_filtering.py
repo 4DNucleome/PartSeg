@@ -7,6 +7,7 @@ import numpy as np
 from ..image_operations import gaussian, median
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
 from ..class_generator import enum_register
+from .algorithm_base import calculate_operation_radius as _calculate_operation_radius
 
 
 class DimensionType(Enum):
@@ -28,12 +29,13 @@ except NameError:
 class NoiseFilteringBase(AlgorithmDescribeBase, ABC):
     """Base class for noise filtering operations"""
     @classmethod
-    def noise_filter(cls, chanel: np.ndarray, spacing: typing.Iterable[float], arguments: dict) -> np.ndarray:
+    def noise_filter(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: dict) -> np.ndarray:
         """
         This function need be overloaded in implementation
 
         :param channel: single channel ad 2d or 3d array
         :param spacing: image spacing
+        :param arguments: additional arguments defined by :py:meth:`get_fields`
         :return: channel array with removed noise
         """
         raise NotImplementedError()
@@ -49,8 +51,8 @@ class NoneNoiseFiltering(NoiseFilteringBase):
         return []
 
     @classmethod
-    def noise_filter(cls, chanel: np.ndarray, spacing: typing.Iterable[float], arguments: dict):
-        return chanel
+    def noise_filter(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: dict):
+        return channel
 
 
 class GaussNoiseFiltering(NoiseFilteringBase):
@@ -71,14 +73,10 @@ class GaussNoiseFiltering(NoiseFilteringBase):
 
 
 def calculate_operation_radius(radius, spacing, gauss_type):
-    if gauss_type == DimensionType.Layer:
-        if len(spacing) == 3:
-            spacing = spacing[1:]
-    base = min(spacing)
-    if base != max(spacing):
-        ratio = [x / base for x in spacing]
-        return [radius / r for r in ratio]
-    return [radius for _ in spacing]
+    res = _calculate_operation_radius(radius, spacing, gauss_type)
+    if res == radius:
+        return [radius for _ in spacing]
+    return res
 
 
 class MedianNoiseFiltering(NoiseFilteringBase):

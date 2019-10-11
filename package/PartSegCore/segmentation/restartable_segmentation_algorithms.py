@@ -27,13 +27,20 @@ def blank_operator(_x, _y):
 
 
 class RestartableAlgorithm(SegmentationAlgorithm, ABC):
+    """
+    Base class for restartable segmentation algorithm. The idea is to store two copies
+    of algorithm parameters and base on difference check from which point restart the calculation.
 
+    :ivar dict ~.parameters: variable for store last run parameters
+    :ivar dict ~.new_parameters: variable for store parameters for next run
+    """
     def __init__(self, **kwargs):
         super().__init__()
         self.parameters = defaultdict(lambda: None)
         self.new_parameters = {}
 
     def set_image(self, image):
+        self.parameters = defaultdict(lambda: None)
         super().set_image(image)
 
     def set_mask(self, mask):
@@ -91,6 +98,10 @@ class BorderRim(RestartableAlgorithm):
 
 
 class SplitMaskOnPart(RestartableAlgorithm):
+    """
+    This class wrap the :py:class:`PartSegCore.mask_partition_utils.SplitMaskOnPart`
+    class in segmentation algorithm interface.
+    """
     def calculation_run(self, report_fun: Callable[[str, int], None]) -> SegmentationResult:
         if self.mask is not None:
             result = SplitMaskOnPartBase.split(mask=self.mask, voxel_size=self.image.voxel_size, **self.parameters)
@@ -146,8 +157,12 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         return f"Threshold: {self.threshold_info}\nSizes: " + \
                ", ".join(map(str, self._sizes_array[1:self.components_num + 1]))
 
-    def calculation_run(self, _report_fun) -> SegmentationResult:
-        """main calculation function.  return segmentation, full_segmentation"""
+    def calculation_run(self, report_fun: typing.Callable[[str, int], typing.Any]) -> SegmentationResult:
+        """
+        main calculation function
+
+        :param report_fun: function used to trace progress
+        """
         self.old_threshold_info = self.threshold_info
         restarted = False
         if self.channel is None or self.parameters["channel"] != self.new_parameters["channel"]:
