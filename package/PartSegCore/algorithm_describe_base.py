@@ -1,5 +1,6 @@
 import typing
 import inspect
+from abc import ABC, abstractmethod
 from collections import OrderedDict
 from enum import Enum
 from typing import Dict
@@ -54,7 +55,7 @@ class AlgorithmProperty:
                f"possible_values={self.possible_values})"
 
 
-class AlgorithmDescribeBase:
+class AlgorithmDescribeBase(ABC):
     """
     This is abstract class for all algorithm exported to user interface.
     Based on get_name and get_fields methods the interface will be generated
@@ -73,6 +74,7 @@ class AlgorithmDescribeBase:
         return resp
 
     @classmethod
+    @abstractmethod
     def get_name(cls) -> str:
         """
         Algorithm name. It will be used during interface generating and in registering
@@ -83,6 +85,7 @@ class AlgorithmDescribeBase:
         raise NotImplementedError()
 
     @classmethod
+    @abstractmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
         """
         This function return list of parameters needed by algorithm. It is used for generate form in User Interface

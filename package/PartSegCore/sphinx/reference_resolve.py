@@ -9,16 +9,21 @@ this extensio provides one configuration option:
  * Qt - linking to Qt documentation on "https://doc.qt.io/qt-5/" (default)
  * PySide - linking to PySide documentation on  "https://doc.qt.io/qtforpython/PySide2/"
 """
+import importlib
+import inspect
 import re
+
 from sphinx.application import Sphinx
 from sphinx.config import ENUM
 from sphinx.environment import BuildEnvironment
 from docutils.nodes import Element, TextElement
 from docutils import nodes
 from typing import List, Optional, Dict, Any
-from sphinx.locale import _
-
+from sphinx.locale import get_translation
 from sphinx.ext.intersphinx import InventoryAdapter
+from qtpy.QtCore import Signal
+
+_ = get_translation("sphinx")
 
 try:
     from qtpy import QT_VERSION
@@ -52,10 +57,11 @@ type_translate_dict = {
     "mod": ["module"]
 }
 
-signal_pattern = re.compile(r'((\w+\d?\.QtCore\.)|(QtCore\.)|(\.)())?(pyqt)?Signal')
-slot_pattern = re.compile(r'((\w+\d?\.QtCore\.)|(QtCore\.)|(\.)())?(pyqt)?Slot')
+signal_pattern = re.compile(r'((\w+\d?\.QtCore\.)|(QtCore\.)|(\.))?(pyqt)?Signal')
+slot_pattern = re.compile(r'((\w+\d?\.QtCore\.)|(QtCore\.)|(\.))?(pyqt)?Slot')
 
 
+# noinspection PyUnusedLocal
 def missing_reference(app: Sphinx, env: BuildEnvironment, node: Element, contnode: TextElement
                       ) -> Optional[nodes.reference]:
     """Linking to Qt documentation."""
@@ -137,24 +143,16 @@ def missing_reference(app: Sphinx, env: BuildEnvironment, node: Element, contnod
     return newnode
 
 
-from qtpy.QtCore import Signal
-import inspect
-import importlib
-
-
-def doctree_read(app: Sphinx, doctree):
-    print(doctree)
-
-
 re.compile(r' +algorithm_changed *= *Signal(\([^)]*\))')
 
 
+# noinspection PyUnusedLocal
 def autodoc_process_signature(app: Sphinx, what, name: str, obj, options, signature, return_annotation):
     if isinstance(obj, Signal):
-        module_name, class_name, signal_name = name.rsplit(".", 2)
+        module_name, class_name, signal_name_local = name.rsplit(".", 2)
         module = importlib.import_module(module_name)
         class_ob = getattr(module, class_name)
-        reg = re.compile(r' +' + signal_name +  r' *= *Signal(\([^)]*\))')
+        reg = re.compile(r' +' + signal_name_local + r' *= *Signal(\([^)]*\))')
         match = reg.findall(inspect.getsource(class_ob))
         if match:
             return match[0], None
@@ -182,4 +180,5 @@ def setup(app: Sphinx) -> Dict[str, Any]:
 
 
 # https://doc.qt.io/qtforpython/PySide2/QtWidgets/QListWidget.html#PySide2.QtWidgets.QListWidget.itemDoubleClicked
-# https://doc.qt.io/qtforpython/PySide2/QtWidgets/QListWidget.html#PySide2.QtWidgets.PySide2.QtWidgets.QListWidget.itemDoubleClicked
+# https://doc.qt.io/qtforpython/PySide2/QtWidgets/QListWidget.html#
+# PySide2.QtWidgets.PySide2.QtWidgets.QListWidget.itemDoubleClicked

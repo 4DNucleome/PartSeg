@@ -137,7 +137,9 @@ class MSOSprawl(BaseSprawl):
         return result
 
 
-sprawl_dict = Register(MSOSprawl, PathSprawl, DistanceSprawl, PathDistanceSprawl, FDTSprawl)
+sprawl_dict = Register(MSOSprawl, PathSprawl, DistanceSprawl, PathDistanceSprawl, FDTSprawl,
+                       class_methods=["sprawl"])
+"""This register contains algorithms for sprawl area from core object."""
 
 
 def get_neigh(sides):

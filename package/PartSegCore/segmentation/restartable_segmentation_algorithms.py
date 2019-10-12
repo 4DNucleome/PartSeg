@@ -64,6 +64,10 @@ class RestartableAlgorithm(SegmentationAlgorithm, ABC):
 
 
 class BorderRim(RestartableAlgorithm):
+    """
+    This class wrap the :py:class:`PartSegCore.mask_partition_utils.BorderRim``
+    class in segmentation algorithm interface.
+    """
     @classmethod
     def get_name(cls):
         return "Border Rim"

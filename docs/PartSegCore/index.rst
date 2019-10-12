@@ -11,5 +11,6 @@ This package contains calculation backend of PartSeg
    color_image
    distance_in_structure
    segmentation
+   analysis/base
    analysis/batch_processing
    analysis/calculation_plan
