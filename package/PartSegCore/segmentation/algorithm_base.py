@@ -38,9 +38,9 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
     Base class for all segmentation algorithm.
 
     :ivar Image ~.image: Image to process
-    :ivar np.ndarray ~.channel: selected channel
-    :ivar np.ndarray ~.segmentation: final segmentation
-    :ivar np.ndarray ~.mask: mask limiting segmentation area
+    :ivar numpy.ndarray ~.channel: selected channel
+    :ivar numpy.ndarray ~.segmentation: final segmentation
+    :ivar numpy.ndarray ~.mask: mask limiting segmentation area
     """
 
     def __init__(self):

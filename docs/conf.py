@@ -59,6 +59,7 @@ html_static_path = ['_static']
 master_doc = 'index'
 
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
-                       "PyQt": ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None)}
+                       "PyQt": ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None),
+                       "Numpy": ('https://docs.scipy.org/doc/numpy/', None)}
 
 qt_documentation = "Qt"
