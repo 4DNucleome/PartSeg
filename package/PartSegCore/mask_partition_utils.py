@@ -84,7 +84,7 @@ class SplitMaskOnPart(AlgorithmDescribeBase):
         :param voxel_size: image voxel size
         :return: mask region labelled starting from 1 near border
         """
-        if len(voxel_size) == 2:
+        if len(voxel_size) == 2 and mask.ndim == 3:
             voxel_size = (1,) + voxel_size
         distance_arr = distance_transform_edt(mask, sampling=voxel_size)
         if equal_volume:
