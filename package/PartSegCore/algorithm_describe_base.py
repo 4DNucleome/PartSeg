@@ -111,6 +111,15 @@ class AlgorithmDescribeBase(ABC):
         return result
 
 
+def is_static(fun):
+    args = inspect.getfullargspec(fun).args
+    if len(args) == 0:
+        return True
+    if args[0] != "self":
+        return True
+    return False
+
+
 class Register(OrderedDict):
     """
     Dict used for register :class:`.AlgorithmDescribeBase` classes.
@@ -119,15 +128,18 @@ class Register(OrderedDict):
     as args or with :meth:`.Register.register`  method
     :param methods: list of method which should be instance method
     """
-    def __init__(self, *args, class_methods=None, methods=None, **kwargs):
+    def __init__(self, *args, class_methods=None, methods=None, suggested_base_class=None, **kwargs):
         """
         :param class_methods: list of method which should be class method
         :param methods: list of method which should be instance method
         :param kwargs: elements passed to OrderedDict constructor (may be initial elements). I suggest to not use this.
         """
         super().__init__(**kwargs)
-        self.class_methods = list(class_methods) if class_methods else []
-        self.methods = list(methods) if methods else []
+        self.suggested_base_class = suggested_base_class
+        self.class_methods = list(class_methods) if class_methods else \
+            getattr(suggested_base_class, "need_class_method", [])
+        self.methods = list(methods) if methods else \
+            getattr(suggested_base_class, "need_method", [])
         for el in args:
             self.register(el)
 
@@ -156,7 +168,7 @@ class Register(OrderedDict):
         fun = getattr(ob, function_name, None)
         if not is_class and not inspect.isfunction(fun):
             raise ValueError(f"Class {ob} need to define method {function_name}")
-        if is_class and not inspect.ismethod(fun):
+        if is_class and not (inspect.ismethod(fun) or is_static(fun)):
             raise ValueError(f"Class {ob} need to define classmethod {function_name}")
 
     def __setitem__(self, key, value):

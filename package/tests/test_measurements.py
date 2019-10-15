@@ -10,7 +10,8 @@ from PartSegCore.analysis.measurement_calculation import Diameter, PixelBrightne
     MaximumPixelBrightness, MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness, \
     StandardDeviationOfPixelBrightness, MomentOfInertia, LongestMainAxisLength, MiddleMainAxisLength, \
     ShortestMainAxisLength, Surface, RimVolume, RimPixelBrightnessSum, MeasurementProfile, Sphericity, \
-    DistanceMaskSegmentation, DistancePoint, ComponentsInfo, MeasurementResult
+    DistanceMaskSegmentation, DistancePoint, ComponentsInfo, MeasurementResult, SplitOnPartVolume, \
+    SplitOnPartPixelBrightnessSum
 from PartSegCore.analysis.measurement_base import Node, MeasurementEntry, PerComponent, AreaType
 from PartSegCore.autofit import density_mass_center
 from PartSegCore.universal_const import UNIT_SCALE, Units
@@ -800,6 +801,286 @@ class TestDistanceMaskSegmentation:
                                                                    DistancePoint.Geometrical_center,
                                                                    DistancePoint.Mass_center), 1000 * 2 / 3 - 500)
 
+
+class TestSplitOnPartVolume:
+    def test_cube_equal_radius(self):
+        image = get_cube_image()
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        mask1 = image.get_channel(0)[0] > 40
+        mask2 = image.get_channel(0)[0] > 60
+        result_scale = reduce(lambda x, y: x * y, image.voxel_size)
+
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=1, num_of_parts=3, equal_volume=False, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == (30*60*60 - 20*40*40)  * result_scale
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=2, num_of_parts=3, equal_volume=False, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == (20 * 40 * 40 - 10 * 20 * 20) * result_scale
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=3, num_of_parts=3, equal_volume=False, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == (10 * 20 * 20) * result_scale
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=4, num_of_parts=3, equal_volume=False, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == 0
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=1, num_of_parts=3, equal_volume=False, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == 0
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=2, num_of_parts=3, equal_volume=False, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == (20 * 40 * 40 - 10 * 20 * 20) * result_scale
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=3, num_of_parts=3, equal_volume=False, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == (10 * 20 * 20) * result_scale
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=4, num_of_parts=3, equal_volume=False, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == 0
+
+    def test_result_scalar(self):
+        image = get_cube_image()
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        mask1 = image.get_channel(0)[0] > 40
+        mask2 = image.get_channel(0)[0] > 60
+        result_scale = reduce(lambda x, y: x * y, image.voxel_size)
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=3, num_of_parts=3, equal_volume=False, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=2) == \
+               (10 * 20 * 20) * result_scale * 8
+
+    def test_cube_equal_volume(self):
+        data = np.zeros((1, 60, 100, 100, 1), dtype=np.uint16)
+        data[0, 10:50, 20:80, 20:80] = 50
+        data[0, 15:45, 30:70, 30:70] = 70
+        image = Image(data, (100, 50, 50), "")
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        mask1 = image.get_channel(0)[0] > 40
+        mask2 = image.get_channel(0)[0] > 60
+        result_scale = reduce(lambda x, y: x * y, image.voxel_size)
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=1, num_of_parts=3, equal_volume=True, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == (40*60*60 - 36 * 52 * 52) * result_scale
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=2, num_of_parts=3, equal_volume=True, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == (36 * 52 * 52 - 30 * 40 * 40) * result_scale
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=3, num_of_parts=3, equal_volume=True, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == (30 * 40 * 40) * result_scale
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=4, num_of_parts=3, equal_volume=True, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == 0
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=1, num_of_parts=3, equal_volume=True, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == 0
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=2, num_of_parts=3, equal_volume=True, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == 0
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=3, num_of_parts=3, equal_volume=True, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == (30 * 40 * 40) * result_scale
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=4, num_of_parts=3, equal_volume=False, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == 0
+
+    def test_square_equal_radius(self):
+        image = get_square_image()
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        mask1 = image.get_channel(0)[0] > 40
+        mask2 = image.get_channel(0)[0] > 60
+
+        result_scale = reduce(lambda x, y: x * y, image.voxel_size)
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=1, num_of_parts=3, equal_volume=False, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == (60 * 60 - 40 * 40) * result_scale
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=1, num_of_parts=2, equal_volume=False, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == (60 * 60 - 30 * 30) * result_scale
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=1, num_of_parts=3, equal_volume=False, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == 0
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=1, num_of_parts=2, equal_volume=False, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == (40 * 40 - 30 * 30) * result_scale
+
+    def test_square_equal_volume(self):
+        image = get_square_image()
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        mask1 = image.get_channel(0)[0] > 40
+        mask2 = image.get_channel(0)[0] > 60
+
+        result_scale = reduce(lambda x, y: x * y, image.voxel_size)
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=1, num_of_parts=3, equal_volume=True, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == (60 * 60 - 50 * 50) * result_scale
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=1, num_of_parts=2, equal_volume=True, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == (60 * 60 - 44 * 44) * result_scale
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=1, num_of_parts=3, equal_volume=True, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == 0
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=1, num_of_parts=2, equal_volume=True, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == 0
+
+        assert SplitOnPartVolume.calculate_property(
+            part_selection=2, num_of_parts=2, equal_volume=True, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, result_scalar=1) == (40 * 40 ) * result_scale
+
+
+class TestSplitOnPartPixelBrightnessSum:
+    def test_cube_equal_radius(self):
+        image = get_cube_image()
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        mask1 = image.get_channel(0)[0] > 40
+        mask2 = image.get_channel(0)[0] > 60
+
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=1, num_of_parts=3, equal_volume=False, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (30*60*60 - 20*40*40) * 50
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=2, num_of_parts=3, equal_volume=False, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (20 * 40 * 40 - 10 * 20 * 20) * 70
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=3, num_of_parts=3, equal_volume=False, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (10 * 20 * 20) * 70
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=4, num_of_parts=3, equal_volume=False, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == 0
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=1, num_of_parts=3, equal_volume=False, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == 0
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=2, num_of_parts=3, equal_volume=False, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == \
+               (20 * 40 * 40 - 10 * 20 * 20) * 70
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=3, num_of_parts=3, equal_volume=False, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (10 * 20 * 20) * 70
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=4, num_of_parts=3, equal_volume=False, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == 0
+
+    def test_cube_equal_volume(self):
+        data = np.zeros((1, 60, 100, 100, 1), dtype=np.uint16)
+        data[0, 10:50, 20:80, 20:80] = 50
+        data[0, 15:45, 30:70, 30:70] = 70
+        image = Image(data, (100, 50, 50), "")
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        mask1 = image.get_channel(0)[0] > 40
+        mask2 = image.get_channel(0)[0] > 60
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=1, num_of_parts=3, equal_volume=True, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size,  channel = image.get_channel(0)) == (40*60*60 - 36 * 52 * 52) * 50
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=2, num_of_parts=3, equal_volume=True, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (36 * 52 * 52 - 30 * 40 * 40) * 50
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=3, num_of_parts=3, equal_volume=True, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (30 * 40 * 40) * 70
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=4, num_of_parts=3, equal_volume=True, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == 0
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=1, num_of_parts=3, equal_volume=True, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == 0
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=2, num_of_parts=3, equal_volume=True, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == 0
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=3, num_of_parts=3, equal_volume=True, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == \
+               (30 * 40 * 40) * 70
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=4, num_of_parts=3, equal_volume=False, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == 0
+
+    def test_square_equal_radius(self):
+        image = get_square_image()
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        mask1 = image.get_channel(0)[0] > 40
+        mask2 = image.get_channel(0)[0] > 60
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=1, num_of_parts=3, equal_volume=False, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (60 * 60 - 40 * 40) * 50
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=1, num_of_parts=2, equal_volume=False, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == \
+               (60 * 60 - 40 * 40) * 50 + (40 * 40 - 30 * 30) * 70
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=1, num_of_parts=3, equal_volume=False, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == 0
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=1, num_of_parts=2, equal_volume=False, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (40 * 40 - 30 * 30) * 70
+
+    def test_square_equal_volume(self):
+        image = get_square_image()
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        mask1 = image.get_channel(0)[0] > 40
+        mask2 = image.get_channel(0)[0] > 60
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=1, num_of_parts=3, equal_volume=True, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (60 * 60 - 50 * 50) * 50
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=1, num_of_parts=2, equal_volume=True, segmentation=mask1, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (60 * 60 - 44 * 44) * 50
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=1, num_of_parts=3, equal_volume=True, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == 0
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=1, num_of_parts=2, equal_volume=True, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == 0
+
+        assert SplitOnPartPixelBrightnessSum.calculate_property(
+            part_selection=2, num_of_parts=2, equal_volume=True, segmentation=mask2, mask=mask1,
+            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (40 * 40 ) * 70
 
 class TestStatisticProfile:
     def test_cube_volume_area_type(self):

@@ -13,6 +13,7 @@ from ..class_generator import BaseSerializableClass, enum_register
 class PerComponent(Enum):
     No = 1
     Yes = 2
+    Mean = 3
 
     def __str__(self):
         return self.name.replace("_", " ")
@@ -64,6 +65,8 @@ class Leaf(BaseSerializableClass):
             resp = str(self.area) + " " + resp
         if self.per_component is not None and self.per_component == PerComponent.Yes:
             resp += " per component "
+        if self.per_component is not None and self.per_component == PerComponent.Mean:
+            resp += " mean component "
         if len(self.dict) != 0 or self.channel is not None:
             resp += "["
             arr = []
@@ -170,12 +173,16 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     """
     text_info = "", ""
 
+    need_class_method = ["get_description", "is_component", "calculate_property", "get_starting_leaf",
+                         "get_units", "need_channel"]
+
     @classmethod
     def get_name(cls):
         return str(cls.get_starting_leaf().name)
 
     @classmethod
     def get_description(cls):
+        """Measurement long description"""
         return cls.text_info[1]
 
     @classmethod
@@ -203,9 +210,15 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
         """Return units for measurement. They are shown to user"""
         raise NotImplementedError()
 
-    def need_channel(self):
+    @classmethod
+    def need_channel(cls):
+        """TBA"""
         return False
 
     @staticmethod
     def area_type(area: AreaType):
+        """Map chosen area type to proper area type. Allow to correct Area type."""
         return area
+
+    def test(self):
+        pass

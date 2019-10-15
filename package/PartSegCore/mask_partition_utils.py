@@ -70,11 +70,11 @@ class SplitMaskOnPart(AlgorithmDescribeBase):
 
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
-        return [AlgorithmProperty("num_of_parts", "Number of Part", 2, (1, 1024)),
+        return [AlgorithmProperty("num_of_parts", "Number of Parts", 2, (1, 1024)),
                 AlgorithmProperty("equal_volume", "Equal Volume", False)]
 
     @staticmethod
-    def split(mask: np.ndarray, num_of_parts: int, equal_volume: bool, voxel_size):
+    def split(mask: np.ndarray, num_of_parts: int, equal_volume: bool, voxel_size, **_):
         """
         This is function which implement calculation.
 
@@ -84,6 +84,8 @@ class SplitMaskOnPart(AlgorithmDescribeBase):
         :param voxel_size: image voxel size
         :return: mask region labelled starting from 1 near border
         """
+        if len(voxel_size) == 2:
+            voxel_size = (1,) + voxel_size
         distance_arr = distance_transform_edt(mask, sampling=voxel_size)
         if equal_volume:
             hist, bins = np.histogram(distance_arr[distance_arr > 0], bins=10*num_of_parts)

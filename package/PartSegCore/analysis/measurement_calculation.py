@@ -8,7 +8,7 @@ from functools import reduce
 from math import pi
 from typing import NamedTuple, Optional, Dict, Callable, List, Any, Union, Tuple, MutableMapping, Iterator
 
-import SimpleITK as sitk
+import SimpleITK
 import numpy as np
 from scipy.spatial.distance import cdist
 from sympy import symbols
@@ -18,7 +18,7 @@ from PartSegCore.analysis.measurement_base import Leaf, Node, MeasurementEntry, 
     AreaType
 from PartSegCore.channel_class import Channel
 from ..algorithm_describe_base import Register, AlgorithmProperty
-from ..mask_partition_utils import BorderRim
+from ..mask_partition_utils import BorderRim, SplitMaskOnPart
 from ..class_generator import enum_register
 from ..universal_const import UNIT_SCALE, Units
 from ..utils import class_to_dict
@@ -196,6 +196,8 @@ class MeasurementProfile(object):
 
     def _get_par_component_and_area_type(self, tree: Union[Node, Leaf]) -> Tuple[PerComponent, AreaType]:
         if isinstance(tree, Leaf):
+            if tree.per_component == PerComponent.Mean:
+                return PerComponent.No, tree.area
             return tree.per_component, tree.area
         else:
             left_par, left_area = self._get_par_component_and_area_type(tree.left)
@@ -292,7 +294,7 @@ class MeasurementProfile(object):
                     kw["area_array"] = kw["segmentation"]
                 else:
                     raise ValueError(f"Unknown area type {node.area}")
-                if node.per_component == PerComponent.Yes:
+                if node.per_component != PerComponent.No:
                     kw['_cache'] = False
                     val = []
                     area_array = kw["area_array"]
@@ -303,7 +305,10 @@ class MeasurementProfile(object):
                     for i in components:
                         kw["area_array"] = area_array == i
                         val.append(method.calculate_property(**kw))
-                    val = np.array(val)
+                    if node.per_component == PerComponent.Mean:
+                        val = np.mean(val)
+                    else:
+                        val = np.array(val)
                 else:
                     val = method.calculate_property(**kw)
                 help_dict[hash_str] = val
@@ -356,7 +361,7 @@ class MeasurementProfile(object):
         res = OrderedDict()
         if mask is None:
             res = {i: [] for i in components}
-        elif mask.max() == 1:
+        elif np.max(mask) == 1:
             res = {i: [1] for i in components}
         else:
             for num in components:
@@ -477,8 +482,8 @@ def hash_fun_call_name(fun: Callable, arguments: Dict, area: AreaType, per_compo
 class Volume(MeasurementMethodBase):
     text_info = "Volume", "Calculate volume of current segmentation"
 
-    @staticmethod
-    def calculate_property(area_array, voxel_size, result_scalar, **_):
+    @classmethod
+    def calculate_property(cls, area_array, voxel_size, result_scalar, **_):
         return np.count_nonzero(area_array) * pixel_volume(voxel_size, result_scalar)
 
     @classmethod
@@ -593,7 +598,8 @@ class PixelBrightnessSum(MeasurementMethodBase):
     def get_units(cls, ndim):
         return symbols("Pixel_brightness")
 
-    def need_channel(self):
+    @classmethod
+    def need_channel(cls):
         return True
 
 
@@ -632,7 +638,8 @@ class MaximumPixelBrightness(MeasurementMethodBase):
     def get_units(cls, ndim):
         return symbols("Pixel_brightness")
 
-    def need_channel(self):
+    @classmethod
+    def need_channel(cls):
         return True
 
 
@@ -655,7 +662,8 @@ class MinimumPixelBrightness(MeasurementMethodBase):
     def get_units(cls, ndim):
         return symbols("Pixel_brightness")
 
-    def need_channel(self):
+    @classmethod
+    def need_channel(cls):
         return True
 
 
@@ -678,7 +686,8 @@ class MeanPixelBrightness(MeasurementMethodBase):
     def get_units(cls, ndim):
         return symbols("Pixel_brightness")
 
-    def need_channel(self):
+    @classmethod
+    def need_channel(cls):
         return True
 
 
@@ -701,7 +710,8 @@ class MedianPixelBrightness(MeasurementMethodBase):
     def get_units(cls, ndim):
         return symbols("Pixel_brightness")
 
-    def need_channel(self):
+    @classmethod
+    def need_channel(cls):
         return True
 
 
@@ -725,7 +735,8 @@ class StandardDeviationOfPixelBrightness(MeasurementMethodBase):
     def get_units(cls, ndim):
         return symbols("Pixel_brightness")
 
-    def need_channel(self):
+    @classmethod
+    def need_channel(cls):
         return True
 
 
@@ -750,7 +761,8 @@ class MomentOfInertia(MeasurementMethodBase):
     def get_units(cls, ndim):
         return symbols("{}") ** 2 * symbols("Pixel_brightness")
 
-    def need_channel(self):
+    @classmethod
+    def need_channel(cls):
         return True
 
 
@@ -765,7 +777,8 @@ class LongestMainAxisLength(MeasurementMethodBase):
     def get_units(cls, ndim):
         return symbols("{}")
 
-    def need_channel(self):
+    @classmethod
+    def need_channel(cls):
         return True
 
 
@@ -780,7 +793,8 @@ class MiddleMainAxisLength(MeasurementMethodBase):
     def get_units(cls, ndim):
         return symbols("{}")
 
-    def need_channel(self):
+    @classmethod
+    def need_channel(cls):
         return True
 
 
@@ -795,7 +809,8 @@ class ShortestMainAxisLength(MeasurementMethodBase):
     def get_units(cls, ndim):
         return symbols("{}")
 
-    def need_channel(self):
+    @classmethod
+    def need_channel(cls):
         return True
 
 
@@ -832,7 +847,6 @@ class Compactness(MeasurementMethodBase):
     @classmethod
     def get_units(cls, ndim):
         return Surface.get_units(ndim) / Volume.get_units(ndim)
-
 
 class Sphericity(MeasurementMethodBase):
     text_info = "Sphericity", "volume/((4/3 * π * radius **3) for 3d data and volume/((π * radius **2) for 2d data"
@@ -935,7 +949,8 @@ class RimPixelBrightnessSum(MeasurementMethodBase):
     def get_units(cls, ndim):
         return symbols("Pixel_brightness")
 
-    def need_channel(self):
+    @classmethod
+    def need_channel(cls):
         return True
 
 
@@ -991,11 +1006,11 @@ class DistanceMaskSegmentation(MeasurementMethodBase):
         mask_pos = cls.calculate_points(channel, mask, voxel_size, result_scalar, distance_from_mask)
         seg_pos = cls.calculate_points(channel, area_array, voxel_size, result_scalar, distance_to_segmentation)
         if mask_pos.shape[0] == 1 or seg_pos.shape[0] == 1:
-            return cdist(mask_pos, seg_pos).min()
+            return np.min(cdist(mask_pos, seg_pos))
         else:
             min_val = np.inf
             for i in range(seg_pos.shape[0]):
-                min_val = min(min_val, cdist(mask_pos, np.array([seg_pos[i]])).min())
+                min_val = min(min_val, np.min(cdist(mask_pos, np.array([seg_pos[i]]))))
             return min_val
 
     @classmethod
@@ -1006,12 +1021,63 @@ class DistanceMaskSegmentation(MeasurementMethodBase):
     def get_units(cls, ndim):
         return symbols("{}")
 
-    def need_channel(self):
+    @classmethod
+    def need_channel(cls):
         return True
 
     @staticmethod
     def area_type(area: AreaType):
         return AreaType.Segmentation
+
+
+class SplitOnPartVolume(MeasurementMethodBase):
+    text_info = "split on part volume", "Split mask on parts and then calculate volume of cross " \
+                                        "of segmentation and mask part"
+
+    @classmethod
+    def get_fields(cls):
+        return SplitMaskOnPart.get_fields() + \
+               [AlgorithmProperty("part_selection", "Which part  (from border)", 2, (1, 1024))]
+
+    @staticmethod
+    def calculate_property(part_selection, segmentation, voxel_size, result_scalar, **kwargs):
+        masked = SplitMaskOnPart.split(voxel_size=voxel_size, **kwargs)
+        mask = masked == part_selection
+        return np.count_nonzero(mask * segmentation) * pixel_volume(voxel_size, result_scalar)
+
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("{}") ** 3
+
+    @classmethod
+    def get_starting_leaf(cls):
+        return Leaf(name=cls.text_info[0], area=AreaType.Mask, per_component=PerComponent.No)
+
+
+class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
+    text_info = "split on part pixel brightness sum", "Split mask on parts and then calculate pixel brightness sum" \
+                                                      " of cross of segmentation and mask part"
+
+    @classmethod
+    def get_fields(cls):
+        return SplitMaskOnPart.get_fields() + \
+               [AlgorithmProperty("part_selection", "Which part (from border)", 2, (1, 1024))]
+
+    @staticmethod
+    def calculate_property(part_selection, channel, segmentation, **kwargs):
+        masked = SplitMaskOnPart.split(**kwargs)
+        mask = np.array(masked == part_selection)
+        if channel.ndim  - mask.ndim == 1:
+            channel = channel[0]
+        return np.sum(channel[mask * segmentation > 0])
+
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("Pixel_brightness")
+
+    @classmethod
+    def get_starting_leaf(cls):
+        return Leaf(name=cls.text_info[0], area=AreaType.Mask, per_component=PerComponent.No)
 
 
 def pixel_volume(spacing, result_scalar):
@@ -1033,7 +1099,7 @@ def calculate_volume_surface(volume_mask, voxel_size):
 def get_border(array):
     if array.dtype == np.bool:
         array = array.astype(np.uint8)
-    return sitk.GetArrayFromImage(sitk.LabelContour(sitk.GetImageFromArray(array)))
+    return SimpleITK.GetArrayFromImage(SimpleITK.LabelContour(SimpleITK.GetImageFromArray(array)))
 
 
 def calc_diam(array, voxel_size):
@@ -1051,4 +1117,6 @@ MEASUREMENT_DICT = Register(Volume, Diameter, PixelBrightnessSum, ComponentsNumb
                             MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness,
                             StandardDeviationOfPixelBrightness, MomentOfInertia, LongestMainAxisLength,
                             MiddleMainAxisLength, ShortestMainAxisLength, Compactness, Sphericity, Surface, RimVolume,
-                            RimPixelBrightnessSum, DistanceMaskSegmentation)
+                            RimPixelBrightnessSum, DistanceMaskSegmentation, SplitOnPartVolume,
+                            SplitOnPartPixelBrightnessSum, suggested_base_class=MeasurementMethodBase)
+"""Register with all measurements algorithms"""
