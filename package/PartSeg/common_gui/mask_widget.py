@@ -49,6 +49,7 @@ class MaskWidget(QWidget):
 
         self.save_components = QCheckBox()
         self.clip_to_mask = QCheckBox()
+        self.reversed_check = QCheckBox()
 
         # noinspection PyUnresolvedReferences
         self.dilate_radius.valueChanged.connect(self.values_changed.emit)
@@ -60,6 +61,7 @@ class MaskWidget(QWidget):
         self.max_hole_size.valueChanged.connect(self.values_changed.emit)
         self.save_components.stateChanged.connect(self.values_changed.emit)
         self.clip_to_mask.stateChanged.connect(self.values_changed.emit)
+        self.reversed_check.stateChanged.connect(self.values_changed.emit)
 
         layout = QVBoxLayout()
         layout1 = QHBoxLayout()
@@ -87,6 +89,11 @@ class MaskWidget(QWidget):
         layout3.addWidget(clip_mask)
         layout3.addWidget(self.clip_to_mask)
         layout.addLayout(layout3)
+        layout4 = QHBoxLayout()
+        layout4.addWidget(QLabel("Reversed mask:"))
+        layout4.addWidget(self.reversed_check)
+        layout4.addStretch(1)
+        layout.addLayout(layout4)
         self.setLayout(layout)
         self.dilate_change()
 
@@ -113,13 +120,14 @@ class MaskWidget(QWidget):
                          dilate_radius=self.dilate_radius.value() if self.dilate_dim.value() != RadiusType.NO else 0,
                          fill_holes=self.fill_holes.value() if self.max_hole_size.value() != 0 else RadiusType.NO,
                          max_holes_size=self.max_hole_size.value() if self.fill_holes.value() != RadiusType.NO else 0,
-                         save_components=self.save_components.isChecked(),
-                         clip_to_mask=self.clip_to_mask.isChecked())
+                         save_components=self.save_components.isChecked(), clip_to_mask=self.clip_to_mask.isChecked(),
+                         reversed_mask=self.reversed_check.isChecked())
 
-    def set_mask_property(self, property: MaskProperty):
-        self.dilate_dim.setValue(property.dilate)
-        self.dilate_radius.setValue(property.dilate_radius)
-        self.fill_holes.setValue(property.fill_holes)
-        self.max_hole_size.setValue(property.max_holes_size)
-        self.save_components.setChecked(property.save_components)
-        self.clip_to_mask.setChecked(property.clip_to_mask)
+    def set_mask_property(self, prop: MaskProperty):
+        self.dilate_dim.setValue(prop.dilate)
+        self.dilate_radius.setValue(prop.dilate_radius)
+        self.fill_holes.setValue(prop.fill_holes)
+        self.max_hole_size.setValue(prop.max_holes_size)
+        self.save_components.setChecked(prop.save_components)
+        self.clip_to_mask.setChecked(prop.clip_to_mask)
+        self.reversed_check.setChecked(prop.reversed_mask)

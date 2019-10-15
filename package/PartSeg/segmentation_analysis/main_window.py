@@ -502,10 +502,6 @@ class MaskWindow(QDialog):
         except KeyError:
             pass
 
-        if len(settings.undo_segmentation_history) == 0:
-            self.save_draw = QCheckBox("Save draw", self)
-        else:
-            self.save_draw = QCheckBox("Add draw", self)
         self.reset_next_btn = QPushButton("Reset Next")
         self.reset_next_btn.clicked.connect(self.reset_next_fun)
         if len(settings.undo_segmentation_history) == 0:
@@ -525,7 +521,6 @@ class MaskWindow(QDialog):
         self.next_button.clicked.connect(self.next_mask)
         self.prev_button.clicked.connect(self.prev_mask)
         op_layout = QHBoxLayout()
-        op_layout.addWidget(self.save_draw)
         op_layout.addWidget(self.mask_widget.radius_information)
         main_layout.addLayout(op_layout)
         button_layout = QHBoxLayout()

@@ -12,18 +12,14 @@ class MaskProperty(BaseSerializableClass):
     """
     Description of creation mask from segmentation
 
-    :ivar ~.dilate: Select dilation mode.
-    :vartype ~.dilate: RadiusType
-    :ivar ~.dilate_radius: Radius of dilation calculate with respect of image spacing.
-    :vartype ~.dilate_radius: int
-    :ivar ~.fill_holes: Select if fill holes and if it should be done in 2d or 3d.
-    :vartype ~.fill_holes: RadiusType
-    :ivar ~.max_holes_size: Maximum holes size if positive. Otherwise fill all holes.
-    :vartype ~.max_holes_size: int
-    :ivar ~.save_components: If mask should save components of segmentation or set to 1.
-    :vartype ~.save_components: bool
-    :ivar ~.clip_to_mask: If resulted should be clipped to previous mask (if exist). Useful for positive dilate radius
-    :vartype ~.clip_to_mask: bool
+    :ivar RadiusType ~.dilate: Select dilation mode.
+    :ivar int ~.dilate_radius: Radius of dilation calculate with respect of image spacing.
+    :ivar RadiusType ~.fill_holes: Select if fill holes and if it should be done in 2d or 3d.
+    :ivar int ~.max_holes_size: Maximum holes size if positive. Otherwise fill all holes.
+    :ivar bool ~.save_components: If mask should save components of segmentation or set to 1.
+    :ivar bool ~.clip_to_mask: If resulted should be clipped to previous mask (if exist).
+        Useful for positive dilate radius
+    :ivar bool ~.reversed_mask: If mask should be reversed (region which are not part of segmentation)
     """
     dilate: RadiusType
     dilate_radius: int
@@ -31,13 +27,15 @@ class MaskProperty(BaseSerializableClass):
     max_holes_size: int
     save_components: bool
     clip_to_mask: bool
+    reversed_mask: bool = False
 
     def __str__(self):
         return f"Mask property\ndilate: {self.dilate}\n" + \
                (f"dilate radius {self.dilate_radius}\n" if self.dilate != RadiusType.NO else "") + \
                f"fill holes: {self.fill_holes}\n" + \
                (f"max holes size: {self.max_holes_size}\n" if self.fill_holes != RadiusType.NO else "") + \
-               f"save components: {self.save_components}\nclip to mask: {self.clip_to_mask}"
+               f"save components: {self.save_components}\nclip to mask: {self.clip_to_mask}\n" + \
+               f"reversed mask {self.reversed_mask}"
 
 
 def mp_eq(self, other):
@@ -45,7 +43,8 @@ def mp_eq(self, other):
            self.fill_holes == other.fill_holes and self.save_components == other.save_components and \
            self.clip_to_mask == other.clip_to_mask and \
            (self.dilate == RadiusType.NO or (self.dilate_radius == other.dilate_radius)) and \
-           (self.fill_holes == RadiusType.NO or (self.max_holes_size == other.max_holes_size))
+           (self.fill_holes == RadiusType.NO or (self.max_holes_size == other.max_holes_size)) and \
+           (self.rreversed_mask == other.reversed_mask)
 
 
 MaskProperty.__eq__ = mp_eq
@@ -84,6 +83,8 @@ def calculate_mask(mask_description: MaskProperty, segmentation: np.ndarray, old
             mask = erode(mask, dilate_radius, mask_description.dilate == RadiusType.R2D)
     elif mask_description.fill_holes != RadiusType.NO:
         mask = _fill_holes(mask_description, mask)
+    if mask_description.reversed_mask:
+        mask = np.array(mask == 0).astype(np.uint8)
     if mask_description.clip_to_mask and old_mask is not None:
         mask[old_mask == 0] = 0
     return mask

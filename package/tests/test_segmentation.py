@@ -437,6 +437,20 @@ class TestMaskCreate:
         assert np.all(new_mask1 == mask_base_array)
         assert np.all(new_mask2 == mask2_array)
 
+    def test_reversed_mask(self):
+        mask_base_array = np.zeros((30, 30, 30), dtype=np.uint8)
+        mask_base_array[10:20, 10:20, 10:20] = 1
+        mask2_array = np.copy(mask_base_array)
+        mask2_array[13:17, 13:17, 13:17] = 0
+        prop1 = MaskProperty(dilate=RadiusType.NO, dilate_radius=-0, fill_holes=RadiusType.NO, max_holes_size=0,
+                             save_components=False, clip_to_mask=False, reversed_mask=False)
+        prop2 = MaskProperty(dilate=RadiusType.NO, dilate_radius=-0, fill_holes=RadiusType.NO, max_holes_size=0,
+                             save_components=False, clip_to_mask=False, reversed_mask=True)
+        new_mask1 = calculate_mask(prop1, mask_base_array, mask2_array, (1, 1, 1))
+        new_mask2 = calculate_mask(prop2, mask_base_array, mask2_array, (1, 1, 1))
+        assert np.all(new_mask1 == mask_base_array)
+        assert np.all(new_mask2 == (mask_base_array == 0))
+
 
 # TODO add Border rim and multiple otsu tests
 
