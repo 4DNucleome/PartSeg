@@ -878,8 +878,9 @@ class PlanPreview(QTreeWidget):
 
     def set_plan(self, calculation_plan):
         self.calculation_plan = calculation_plan
-        self.update_view(True)
         self.setCurrentItem(self.topLevelItem(0))
+        self.update_view(True)
+
 
     def explore_tree(self, up_widget, node_plan, deep=True):
         """
