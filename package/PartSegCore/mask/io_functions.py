@@ -220,7 +220,7 @@ class LoadSegmentationImage(LoadBase):
 class LoadStackImage(LoadBase):
     @classmethod
     def get_name(cls):
-        return "Image(*.tif *.tiff *.lsm *.czi)"
+        return "Image(*.tif *.tiff *.lsm *.czi *.oib *.oif)"
 
     @classmethod
     def get_short_name(cls):

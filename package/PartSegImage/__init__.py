@@ -1,10 +1,10 @@
 import os
 import sys
 
-from .image import Image
-from .image_reader import TiffImageReader, TiffFileException, CziImageReader, GenericImageReader
-from .image_writer import ImageWriter
 from . import tifffile_fixes
+from .image import Image
+from .image_reader import TiffImageReader, TiffFileException, CziImageReader, GenericImageReader, OifImagReader
+from .image_writer import ImageWriter
 
 __all__ = ("Image", "TiffImageReader", "ImageWriter", "TiffFileException", "CziImageReader", "GenericImageReader")
 

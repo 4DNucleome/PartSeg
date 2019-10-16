@@ -119,6 +119,8 @@ class MainMenu(BaseMainMenu):
             exception_hook=exception_hook)
         if execute_dialog.exec():
             result = execute_dialog.get_result()
+            if result is None:
+                return
             self.set_data(result)
 
     def set_image(self, image: Image) -> bool:

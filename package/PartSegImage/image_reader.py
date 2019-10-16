@@ -8,6 +8,7 @@ import numpy as np
 import tifffile.tifffile
 from tifffile import TiffFile
 from czifile.czifile import CziFile
+from oiffile import OifFile
 
 from .image import Image
 
@@ -107,8 +108,41 @@ class GenericImageReader(BaseImageReader):
                 ext = ".tif"
         if ext == ".czi":
             return CziImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
+        if ext in [".oif", ".oib"]:
+            return OifImagReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         else:
             return TiffImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
+
+
+class OifImagReader(BaseImageReader):
+    def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
+        self.image_file = OifFile(image_path)
+        tiffs = self.image_file.tiffs
+        tif_file = TiffFile(self.image_file.open_file(tiffs.files[0]), name=tiffs.files[0])
+        axes = tiffs.axes + tif_file.series[0].axes
+        image_data = self.image_file.asarray()
+        image_data = self.update_array_shape(image_data, axes)
+        try:
+            flat_parm = self.image_file.mainfile['Reference Image Parameter']
+            x_scale = flat_parm['HeightConvertValue'] * name_to_scalar[flat_parm['HeightUnit']]
+            y_scale = flat_parm['WidthConvertValue'] * name_to_scalar[flat_parm['WidthUnit']]
+            i = 0
+            while True:
+                name = f'Axis {i} Parameters Common'
+                if name not in self.image_file.mainfile:
+                    z_scale = 1
+                    break
+                axis_info = self.image_file.mainfile[name]
+                if axis_info["AxisCode"] == "Z":
+                    z_scale =  axis_info["Interval"] * name_to_scalar[axis_info["UnitName"]]
+                    break
+                i += 1
+
+            self.spacing = z_scale ,x_scale, y_scale
+        except KeyError:
+            pass
+        # TODO add mask reading
+        return Image(image_data, self.spacing, file_path=os.path.abspath(image_path))
 
 
 class CziImageReader(BaseImageReader):
@@ -321,6 +355,7 @@ class TiffImageReader(BaseImageReader):
 name_to_scalar = {
     "micron": 10 ** -6,
     "µm": 10 ** -6,
+    "um": 10 ** -6,
     "nm": 10 ** -9,
     "mm": 10 ** -3,
     "millimeter": 10 ** -3,

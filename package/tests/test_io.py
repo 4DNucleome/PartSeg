@@ -16,7 +16,7 @@ import h5py
 import PartSegData
 
 from PartSegCore.segmentation.segmentation_algorithm import ThresholdAlgorithm
-from PartSegImage import TiffImageReader, Image, CziImageReader, GenericImageReader
+from PartSegImage import TiffImageReader, Image, CziImageReader, GenericImageReader, OifImagReader
 from PartSegCore import Units, UNIT_SCALE
 from PartSegCore.analysis import ProjectTuple
 from PartSegCore.analysis.load_functions import UpdateLoadedMetadataAnalysis
@@ -91,7 +91,15 @@ class TestImageClass:
         assert image.channels == 4
         assert image.layers == 1
 
-        assert image.spacing
+        assert np.all(np.isclose(image.spacing, (7.752248561753867e-08, )*2))
+
+    def test_oib_file_read(self):
+        test_dir = get_test_dir()
+        image = OifImagReader.read_image(os.path.join(test_dir, "N2A_H2BGFP_dapi_falloidin_cycling1.oib"))
+        assert image.channels == 3
+        assert image.layers == 6
+
+        assert np.all(np.isclose(image.spacing, (2.1e-07,) + (7.752248561753867e-08, )*2))
 
     def test_image_mask(self):
         Image(np.zeros((1, 10, 50, 50, 4)), (5, 5, 5), mask=np.zeros((10, 50, 50)))
