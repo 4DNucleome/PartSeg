@@ -99,12 +99,12 @@ class TestCalculationProcess:
         process.iterate_over(plan.execution_tree)
         assert (len(process.measurement[0]) == 3)
 
-    def test_full_pipeline(self):
+    def test_full_pipeline(self, tmpdir):
         plan = self.create_calculation_plan()
         file_pattern = os.path.join(get_test_dir(), "stack1_components", "stack1_component*[0-9].tif")
         file_paths = glob(file_pattern)
         calc = Calculation(file_paths, base_prefix=get_test_dir(), result_prefix=get_test_dir(),
-                           measurement_file_path=os.path.join(get_test_dir(), "test.xlsx"), sheet_name="Sheet1",
+                           measurement_file_path=os.path.join(tmpdir, "test.xlsx"), sheet_name="Sheet1",
                            calculation_plan=plan, voxel_size=(1, 1, 1))
 
         manager = CalculationManager()
@@ -118,16 +118,16 @@ class TestCalculationProcess:
             time.sleep(2)
         else:
             time.sleep(0.4)
-        assert os.path.exists(os.path.join(get_test_dir(), "test.xlsx"))
-        df = pd.read_excel(os.path.join(get_test_dir(), "test.xlsx"), index_col=0, header=[0, 1])
+        assert os.path.exists(os.path.join(tmpdir, "test.xlsx"))
+        df = pd.read_excel(os.path.join(tmpdir, "test.xlsx"), index_col=0, header=[0, 1])
         assert df.shape == (8, 4)
 
-    def test_full_pipeline_mask_project(self):
+    def test_full_pipeline_mask_project(self, tmpdir):
         plan = self.create_calculation_plan2()
         file_pattern = os.path.join(get_test_dir(), "*.seg")
         file_paths = glob(file_pattern)
         calc = Calculation(file_paths, base_prefix=get_test_dir(), result_prefix=get_test_dir(),
-                           measurement_file_path=os.path.join(get_test_dir(), "test2.xlsx"), sheet_name="Sheet1",
+                           measurement_file_path=os.path.join(tmpdir, "test2.xlsx"), sheet_name="Sheet1",
                            calculation_plan=plan, voxel_size=(1, 1, 1))
 
         manager = CalculationManager()
@@ -141,6 +141,6 @@ class TestCalculationProcess:
             time.sleep(2)
         else:
             time.sleep(0.4)
-        assert os.path.exists(os.path.join(get_test_dir(), "test2.xlsx"))
-        df = pd.read_excel(os.path.join(get_test_dir(), "test2.xlsx"), index_col=0, header=[0, 1])
+        assert os.path.exists(os.path.join(tmpdir, "test2.xlsx"))
+        df = pd.read_excel(os.path.join(tmpdir, "test2.xlsx"), index_col=0, header=[0, 1])
         assert df.shape == (2, 4)
