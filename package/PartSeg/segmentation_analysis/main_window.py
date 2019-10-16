@@ -708,8 +708,6 @@ class MainWindow(BaseMainWindow):
         # print(self.settings.segmentation_dict["default"].my_dict)
         self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode('ascii'))
         self.options_panel.algorithm_choose_widget.recursive_get_values()
-        threads = list(threading.enumerate())
-        print(threads)
         if self.batch_window is not None:
             if self.batch_window.is_working():
                 ret = QMessageBox.warning(self, "Batch work", "Batch work is not finished. "

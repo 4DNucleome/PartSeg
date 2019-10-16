@@ -798,6 +798,13 @@ class MainWindow(BaseMainWindow):
         self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode('ascii'))
         self.options_panel.algorithm_options.algorithm_choose_widget.recursive_get_values()
         self.settings.dump()
+        self.main_menu.segmentation_dialog.close()
+        self.options_panel.algorithm_options.show_parameters_widget.close()
+        if self.main_menu.advanced_window is not None:
+            self.main_menu.advanced_window.close()
+            del self.main_menu.advanced_window
+        del self.main_menu.segmentation_dialog
+        del self.options_panel.algorithm_options.show_parameters_widget
 
     def read_drop(self, paths):
         self._read_drop(paths, io_functions)

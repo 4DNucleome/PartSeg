@@ -76,10 +76,10 @@ def main():
         wind = MainWindow(title=title)
 
     wind.show()
-    my_app.exec_()
+    rc = my_app.exec_()
     del wind
     del my_app
-    sys.exit()
+    sys.exit(rc)
 
 
 if __name__ == '__main__':
