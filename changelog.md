@@ -6,6 +6,8 @@
  - add support to CZI file format
  - extract utils to PartSegCore module
  - add automated tests of example notebook
+ - reversed mask
+ - load segemtation parameters in mask segmentation
 
 ## 0.9.3
  - start automated build documentation

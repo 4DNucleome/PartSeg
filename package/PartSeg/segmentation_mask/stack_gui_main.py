@@ -37,7 +37,8 @@ from .stack_settings import StackSettings, get_mask
 from PartSegImage import TiffImageReader, Image
 from .batch_proceed import BatchProceed, BatchTask
 from .image_view import StackImageView
-from PartSegCore.mask.io_functions import SaveSegmentation, LoadSegmentation, SegmentationTuple
+from PartSegCore.mask.io_functions import SaveSegmentation, LoadSegmentation, SegmentationTuple, \
+    LoadSegmentationParameters
 from PartSegCore import state_store
 import PartSegData
 
@@ -66,6 +67,9 @@ class MainMenu(BaseMainMenu):
         self.save_catted_parts.clicked.connect(self.save_result)
         self.advanced_window_btn = QPushButton("Advanced settings")
         self.advanced_window_btn.clicked.connect(self.show_advanced_window)
+        self.segmentation_dialog = SegmentationInfoDialog(
+            self.main_window.settings,
+            self.main_window.options_panel.algorithm_options.algorithm_choose_widget.change_algorithm)
 
         self.setContentsMargins(0, 0, 0, 0)
         layout = QHBoxLayout()
@@ -139,7 +143,9 @@ class MainMenu(BaseMainMenu):
         return True
 
     def load_segmentation(self):
-        dial = CustomLoadDialog({"segmentation (*.seg *.tgz)": LoadSegmentation})
+        dial = CustomLoadDialog(
+            {LoadSegmentation.get_name(): LoadSegmentation,
+             LoadSegmentationParameters.get_name(): LoadSegmentationParameters})
         dial.setDirectory(self.settings.get("io.open_segmentation_directory", str(Path.home())))
         dial.setHistory(dial.history() + self.settings.get_path_history())
         if not dial.exec_():
@@ -147,7 +153,6 @@ class MainMenu(BaseMainMenu):
         load_property = dial.get_result()
         self.settings.set("io.open_segmentation_directory", os.path.dirname(load_property.load_location[0]))
         self.settings.add_path_history(os.path.dirname(load_property.load_location[0]))
-        execute_thread = ExecuteFunctionThread(load_property.load_class.load, [load_property.load_location])
 
         def exception_hook(exception):
             mess = QMessageBox(self)
@@ -170,7 +175,19 @@ class MainMenu(BaseMainMenu):
             if result is None:
                 QMessageBox.critical(self, "Data Load fail", "Fail of loading data")
                 return
-            self.settings.set_project_data(dial.get_result(), self.settings.keep_chosen_components)
+            if result.segmentation is not None:
+                try:
+                    self.settings.set_project_data(dial.get_result(), self.settings.keep_chosen_components)
+                    return
+                except ValueError as e:
+                    if e.args != ("Segmentation do not fit to image", ):
+                        raise
+                    self.segmentation_dialog.set_additional_text(
+                        "Segmentation do not fit to image, maybe you would lie to load parameters only.")
+            else:
+                self.segmentation_dialog.set_additional_text("")
+            self.segmentation_dialog.set_parameters_dict(result.segmentation_parameters)
+            self.segmentation_dialog.show()
 
     def save_segmentation(self):
         if self.settings.segmentation is None:
@@ -707,7 +724,6 @@ class MainWindow(BaseMainWindow):
     def __init__(self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None,
                  initial_image=None):
         super().__init__(config_folder, title, settings, signal_fun)
-        self.main_menu = MainMenu(self.settings, self)
         self.channel_control = ChannelProperty(self.settings, start_name="channelcontrol")
         self.image_view = StackImageView(self.settings, self.channel_control, name="channelcontrol")
         self.image_view.setMinimumWidth(450)
@@ -715,6 +731,7 @@ class MainWindow(BaseMainWindow):
         self.info_text.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         self.image_view.text_info_change.connect(self.info_text.setText)
         self.options_panel = Options(self.settings, self.image_view, self.image_view)
+        self.main_menu = MainMenu(self.settings, self)
         self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
         self.color_bar = ColorBar(self.settings, self.image_view)

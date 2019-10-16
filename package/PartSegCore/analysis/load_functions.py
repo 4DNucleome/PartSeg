@@ -21,7 +21,7 @@ from .io_utils import ProjectTuple, MaskInfo, project_version_info
 from .save_hooks import part_hook
 from ..algorithm_describe_base import Register, SegmentationProfile
 from ..io_utils import LoadBase, proxy_callback, check_segmentation_type, SegmentationType, WrongFileTypeException, \
-    UpdateLoadedMetadataBase
+    UpdateLoadedMetadataBase, open_tar_file
 
 __all__ = ["LoadStackImage", "LoadImageMask", "LoadProject", "LoadMask", "load_dict", "load_metadata",
            "UpdateLoadedMetadataAnalysis", "LoadMaskSegmentation"]
@@ -30,17 +30,7 @@ __all__ = ["LoadStackImage", "LoadImageMask", "LoadProject", "LoadMask", "load_d
 def load_project(
         file: typing.Union[str, tarfile.TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase]) -> ProjectTuple:
     """Load project from archive"""
-    if isinstance(file, tarfile.TarFile):
-        tar_file = file
-        file_path = ""
-    elif isinstance(file, str):
-        tar_file = tarfile.open(file)
-        file_path = file
-    elif isinstance(file, (TextIOBase, BufferedIOBase, RawIOBase, IOBase)):
-        tar_file = tarfile.open(fileobj=file)
-        file_path = ""
-    else:
-        raise ValueError(f"wrong type of file_ argument: {type(file)}")
+    tar_file, file_path = open_tar_file(file)
     if check_segmentation_type(tar_file) != SegmentationType.analysis:
         raise WrongFileTypeException()
     image_buffer = BytesIO()

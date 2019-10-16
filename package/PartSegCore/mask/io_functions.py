@@ -12,7 +12,7 @@ import json
 
 from PartSegCore.analysis.save_hooks import PartEncoder
 from ..io_utils import get_tarinfo, SaveBase, LoadBase, proxy_callback, ProjectInfoBase, check_segmentation_type, \
-    SegmentationType, WrongFileTypeException, UpdateLoadedMetadataBase
+    SegmentationType, WrongFileTypeException, UpdateLoadedMetadataBase, open_tar_file
 from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationProfile
 from PartSegImage import Image, ImageWriter, GenericImageReader
 
@@ -35,7 +35,7 @@ class SegmentationTuple(ProjectInfoBase, typing.NamedTuple):
         return self._replace(*args, **kwargs)
 
 
-def save_stack_segmentation(file: Union[tarfile.TarFile, str, TextIOBase, BufferedIOBase, RawIOBase, IOBase],
+def save_stack_segmentation(file_data: Union[tarfile.TarFile, str, TextIOBase, BufferedIOBase, RawIOBase, IOBase],
                             segmentation_info: SegmentationTuple, parameters: dict,
                             range_changed=None, step_changed=None):
     if range_changed is None:
@@ -43,21 +43,7 @@ def save_stack_segmentation(file: Union[tarfile.TarFile, str, TextIOBase, Buffer
     if step_changed is None:
         step_changed = empty_fun
     range_changed(0, 5)
-    if isinstance(file, tarfile.TarFile):
-        tar_file = file
-    elif isinstance(file, str):
-        if not os.path.exists(os.path.dirname(file)):
-            os.makedirs(os.path.dirname(file))
-        ext = os.path.splitext(file)[1]
-        if ext.lower() in ['.bz2', ".tbz2"]:
-            tar_mode = 'w:bz2'
-        else:
-            tar_mode = 'w:gz'
-        tar_file = tarfile.open(file, tar_mode)
-    elif isinstance(file, (TextIOBase, BufferedIOBase, RawIOBase, IOBase)):
-        tar_file = tarfile.open(fileobj=file, mode='w:gz')
-    else:
-        raise ValueError(f"wrong type of file_ argument: {type(file)}")
+    tar_file, file_path = open_tar_file(file_data, 'w')
     step_changed(1)
     segmentation_buff = BytesIO()
     # noinspection PyTypeChecker
@@ -74,33 +60,26 @@ def save_stack_segmentation(file: Union[tarfile.TarFile, str, TextIOBase, Buffer
     else:
         file_path = ""
     if file_path != "":
-        if parameters["relative_path"] and isinstance(file, str):
-            metadata["base_file"] = os.path.relpath(file_path, os.path.dirname(file))
+        if parameters["relative_path"] and isinstance(file_data, str):
+            metadata["base_file"] = os.path.relpath(file_path, os.path.dirname(file_data))
         else:
             metadata["base_file"] = file_path
     metadata_buff = BytesIO(json.dumps(metadata, cls=PartEncoder).encode('utf-8'))
     metadata_tar = get_tarinfo("metadata.json", metadata_buff)
     tar_file.addfile(metadata_tar, metadata_buff)
     step_changed(4)
-    if isinstance(file, str):
+    if isinstance(file_data, str):
         tar_file.close()
     step_changed(5)
 
 
-def load_stack_segmentation(file: str, range_changed=None, step_changed=None):
+def load_stack_segmentation(file_data: str, range_changed=None, step_changed=None):
     if range_changed is None:
         range_changed = empty_fun
     if step_changed is None:
         step_changed = empty_fun
     range_changed(0, 4)
-    if isinstance(file, tarfile.TarFile):
-        tar_file = file
-    elif isinstance(file, str):
-        tar_file = tarfile.open(file)
-    elif isinstance(file, (TextIOBase, BufferedIOBase, RawIOBase, IOBase)):
-        tar_file = tarfile.open(fileobj=file)
-    else:
-        raise ValueError(f"wrong type of file_ argument: {type(file)}")
+    tar_file, file_path = open_tar_file(file_data)
     if check_segmentation_type(tar_file) != SegmentationType.mask:
         raise WrongFileTypeException()
     step_changed(1)
@@ -113,7 +92,7 @@ def load_stack_segmentation(file: str, range_changed=None, step_changed=None):
     step_changed(3)
     metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
     step_changed(4)
-    if isinstance(file, str):
+    if isinstance(file_data, str):
         tar_file.close()
     return segmentation, metadata
 
@@ -162,6 +141,41 @@ class LoadSegmentation(LoadBase):
     @classmethod
     def partial(cls):
         return False
+
+
+class LoadSegmentationParameters(LoadBase):
+    @classmethod
+    def get_name(cls):
+        return "Segmentation parameters (*.json *.seg *.tgz)"
+
+    @classmethod
+    def get_short_name(cls):
+        return "seg_par"
+
+    @classmethod
+    def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+             range_changed: typing.Callable[[int, int], typing.Any] = None,
+             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None) -> \
+            SegmentationTuple:
+        file_data = load_locations[0]
+
+        if isinstance(file_data, (str, Path)):
+            ext = os.path.splitext(file_data)[1]
+            if ext == ".json":
+                metadata = load_metadata(file_data)
+                if isinstance(metadata, SegmentationProfile):
+                    parameters = {1: metadata}
+                else:
+                    parameters = defaultdict(
+                        lambda: None, [(int(k), LoadSegmentation.fix_parameters(v))
+                                       for k, v in metadata["parameters"].items()])
+                return SegmentationTuple(file_data, None, None, [], parameters)
+
+        tar_file, _ = open_tar_file(file_data)
+        metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
+        parameters = defaultdict(
+            lambda: None, [(int(k), LoadSegmentation.fix_parameters(v)) for k, v in metadata["parameters"].items()])
+        return SegmentationTuple(file_data, None, None, [], parameters)
 
 
 class LoadSegmentationImage(LoadBase):

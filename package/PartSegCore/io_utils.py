@@ -5,9 +5,9 @@ import typing
 from abc import ABC
 from datetime import datetime
 from enum import Enum
-from io import BytesIO, StringIO
+from io import BytesIO, StringIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
 from pathlib import Path
-from tarfile import TarInfo, TarFile
+from tarfile import TarInfo, TarFile, open as tar_open
 
 import numpy as np
 
@@ -232,3 +232,20 @@ def proxy_callback(range_changed: typing.Callable[[int, int], typing.Any],
         range_changed(0, val)
     if text == "step" and step_changed is not None:
         step_changed(val)
+
+
+def open_tar_file(file_data: typing.Union[str, TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase], mode='r') -> \
+        typing.Tuple[TarFile, str]:
+    """Create tar file from path or buffer. If passed :py:class:`TarFile` then return it."""
+    if isinstance(file_data, TarFile):
+        tar_file = file_data
+        file_data = ""
+    elif isinstance(file_data, str):
+        tar_file = TarFile.open(file_data, mode)
+        file_data = file_data
+    elif isinstance(file_data, (TextIOBase, BufferedIOBase, RawIOBase, IOBase)):
+        tar_file = TarFile.open(fileobj=file_data, mode='r')
+        file_data = ""
+    else:
+        raise ValueError(f"wrong type of file_ argument: {type(file_data)}")
+    return tar_file, file_data

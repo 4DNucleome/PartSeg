@@ -192,6 +192,10 @@ class StackSettings(BaseSettings):
         if segmentation_parameters is None:
             segmentation_parameters = defaultdict(lambda: None)
         state = self.get_project_info()
+        try:
+            self.image.fit_array_to_image(new_segmentation_data)
+        except ValueError:
+            raise ValueError("Segmentation do not fit to image")
         if save_chosen:
             state2 = self.transform_state(state, new_segmentation_data, segmentation_parameters,
                                           list_of_components,
