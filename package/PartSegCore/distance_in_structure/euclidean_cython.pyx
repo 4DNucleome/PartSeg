@@ -64,7 +64,8 @@ def calculate_euclidean(np.ndarray[uint8_t, ndim=3] object_area, np.ndarray[uint
 
 def calculate_euclidean_iterative(
         np.ndarray[uint8_t, ndim=3] object_area, np.ndarray[component_types, ndim=3] base_object,
-        np.ndarray[int8_t, ndim=2] neighbourhood, np.ndarray[float64_t, ndim=1] distance):
+        np.ndarray[int8_t, ndim=2] neighbourhood, np.ndarray[float64_t, ndim=1] distance,
+        component_types components_num = -1):
     """
     Calculate euclidean watersheed for multiple core object
 
@@ -79,18 +80,19 @@ def calculate_euclidean_iterative(
     cdef np.ndarray[component_types, ndim=3] result = np.copy(base_object)
     cdef np.ndarray[float64_t, ndim=3] distance_cache
     cdef Size x_size, y_size, z_size, array_pos, x, y, z, xx, yy, zz
-    cdef component_types i, components_num
+    cdef component_types i
     cdef Py_ssize_t count = 0
     cdef char neigh_length = neighbourhood.shape[0]
     cdef int neigh_it
-    cdef my_queue[Point] * current_points_array
+    cdef vector[my_queue[Point]] current_points_array
     cdef Point p, p1
     z_size = object_area.shape[0]
     y_size = object_area.shape[1]
     x_size = object_area.shape[2]
     distance_cache = np.zeros((z_size, y_size, x_size), dtype=np.float64)
     distance_cache[base_object == 0] = np.inf
-    components_num = base_object.max()
+    if components_num < 1:
+        components_num = base_object.max()
     current_points_array = create_borders_queues(base_object, neighbourhood, components_num)
     for i in range(components_num):
         while not current_points_array[i].empty():
@@ -117,8 +119,6 @@ def calculate_euclidean_iterative(
                         p1.y = y
                         p1.x = x
                         current_points_array[i].push(p1)
-    PyMem_Free(current_points_array)
-    # print("total_steps: " +str(count))
     return result
 
 

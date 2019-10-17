@@ -5,8 +5,8 @@
 import numpy as np
 cimport numpy as np
 from numpy cimport float64_t, int8_t, uint8_t
-from cpython.mem cimport PyMem_Malloc
 from .distance_utils cimport Point, my_queue, Size, component_types
+from libcpp.vector cimport vector
 
 ctypedef fused object_area_types:
     float64_t
@@ -40,15 +40,15 @@ cdef void put_borders_in_queue(my_queue[Point] & current_points,
                             break
 
 
-cdef my_queue[Point] * create_borders_queues(np.ndarray[component_types, ndim=3] base_object,
+cdef vector[my_queue[Point]] create_borders_queues(np.ndarray[component_types, ndim=3] base_object,
                                       np.ndarray[int8_t, ndim=2] neighbourhood, component_types components_num):
     cdef Size x_size, y_size, z_size, x, y, z, xx, yy, zz
     cdef Point p, p1
     cdef char neigh_length = neighbourhood.shape[0]
-    cdef my_queue[Point] * result = <my_queue[Point] *> PyMem_Malloc(components_num * sizeof(my_queue[Point]))
+    cdef size_t point_size = sizeof(my_queue[Point])
+    cdef vector[my_queue[Point]] result = vector[my_queue[Point]](components_num+1)
     cdef component_types index
-    for index in range(components_num):
-        result[index] = my_queue[Point]()
+    print(components_num, point_size)
     z_size = base_object.shape[0]
     y_size = base_object.shape[1]
     x_size = base_object.shape[2]
