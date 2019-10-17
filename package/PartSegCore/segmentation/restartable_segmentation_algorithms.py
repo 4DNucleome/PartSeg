@@ -5,7 +5,7 @@ from collections import defaultdict
 from copy import deepcopy
 from typing import Callable
 
-import SimpleITK as sitk
+import SimpleITK
 import numpy as np
 
 from ..multiscale_opening import PyMSO
@@ -135,7 +135,6 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
 
     @classmethod
     def get_fields(cls):
-        # TODO coś z noise removal zrobić
         return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
                 AlgorithmProperty("noise_filtering", "Filter", next(iter(noise_filtering_dict.keys())),
                                   possible_values=noise_filtering_dict, property_type=AlgorithmDescribeBase),
@@ -196,9 +195,9 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
                                           f"and chosen threshold is {self.threshold_info}")
         if restarted or self.new_parameters["side_connection"] != self.parameters["side_connection"]:
             self.parameters["side_connection"] = self.new_parameters["side_connection"]
-            connect = sitk.ConnectedComponent(sitk.GetImageFromArray(self.threshold_image),
-                                              not self.new_parameters["side_connection"])
-            self.segmentation = sitk.GetArrayFromImage(sitk.RelabelComponent(connect))
+            connect = SimpleITK.ConnectedComponent(SimpleITK.GetImageFromArray(self.threshold_image),
+                                                   not self.new_parameters["side_connection"])
+            self.segmentation = SimpleITK.GetArrayFromImage(SimpleITK.RelabelComponent(connect))
             """seg_max = self.segmentation.max()
             if seg_max < 2**8 - 5:
                 self.segmentation = self.segmentation.astype(np.uint8)
@@ -300,7 +299,18 @@ class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
         return "Range threshold"
 
 
-class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
+class RangeThresholdBaseAlgorithm(ThresholdBaseAlgorithm, ABC):
+    def _threshold(self, image, thr=None):
+        if thr is None:
+            thr: BaseThreshold = double_threshold_dict[self.new_parameters["threshold"]["name"]]
+        mask, thr_val = thr.calculate_mask(image, self.mask, self.new_parameters["threshold"]["values"],
+                                           self.threshold_operator)
+        self.threshold_info = thr_val
+        self.sprawl_area = (mask >= 1).astype(np.uint8)
+        return (mask == 2).astype(np.uint8)
+
+
+class BaseThresholdFlowAlgorithm(RangeThresholdBaseAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
         fields = super().get_fields()
@@ -332,15 +342,6 @@ class BaseThresholdFlowAlgorithm(ThresholdBaseAlgorithm, ABC):
     def clean(self):
         self.sprawl_area = None
         super().clean()
-
-    def _threshold(self, image, thr=None):
-        if thr is None:
-            thr: BaseThreshold = double_threshold_dict[self.new_parameters["threshold"]["name"]]
-        mask, thr_val = thr.calculate_mask(image, self.mask, self.new_parameters["threshold"]["values"],
-                                           self.threshold_operator)
-        self.threshold_info = thr_val
-        self.sprawl_area = (mask >= 1).astype(np.uint8)
-        return (mask == 2).astype(np.uint8)
 
     def set_parameters(self, sprawl_type, *args, **kwargs):
         self.new_parameters["sprawl_type"] = sprawl_type
@@ -431,10 +432,10 @@ class OtsuSegment(RestartableAlgorithm):
         noise_filtering_parameters = self.new_parameters["noise_filtering"]
         cleaned_image = noise_filtering_dict[noise_filtering_parameters["name"]]. \
             noise_filter(channel, self.image.spacing, noise_filtering_parameters["values"])
-        cleaned_image_sitk = sitk.GetImageFromArray(cleaned_image)
-        res = sitk.OtsuMultipleThresholds(cleaned_image_sitk, self.new_parameters["components"], 0,
-                                          self.new_parameters["hist_num"], self.new_parameters["valley"])
-        res = sitk.GetArrayFromImage(res)
+        cleaned_image_sitk = SimpleITK.GetImageFromArray(cleaned_image)
+        res = SimpleITK.OtsuMultipleThresholds(cleaned_image_sitk, self.new_parameters["components"], 0,
+                                               self.new_parameters["hist_num"], self.new_parameters["valley"])
+        res = SimpleITK.GetArrayFromImage(res)
         self._sizes_array = np.bincount(res.flat)[1:]
         self.threshold_info = []
         for i in range(1, self.new_parameters["components"] + 1):
@@ -452,7 +453,7 @@ class OtsuSegment(RestartableAlgorithm):
                "\nSizes: " + ", ".join(map(str, self._sizes_array))
 
 
-class BaseMultiScaleOpening(ThresholdBaseAlgorithm, ABC):
+class BaseMultiScaleOpening(RangeThresholdBaseAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty("threshold", "Threshold", next(iter(double_threshold_dict.keys())),
@@ -484,15 +485,6 @@ class BaseMultiScaleOpening(ThresholdBaseAlgorithm, ABC):
         self.mso = PyMSO()
         self.mso.set_use_background(True)
         super().clean()
-
-    def _threshold(self, image, thr=None):
-        if thr is None:
-            thr: BaseThreshold = double_threshold_dict[self.new_parameters["threshold"]["name"]]
-        mask, thr_val = thr.calculate_mask(image, self.mask, self.new_parameters["threshold"]["values"],
-                                           self.threshold_operator)
-        self.threshold_info = thr_val
-        self.sprawl_area = (mask >= 1).astype(np.uint8)
-        return (mask == 2).astype(np.uint8)
 
     def set_parameters(self, mu_mid, step_limits, *args, **kwargs):
         self.new_parameters["mu_mid"] = mu_mid
