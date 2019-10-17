@@ -13,6 +13,12 @@ ctypedef fused image_types:
     np.uint16_t
     np.uint32_t
 
+ctypedef fused component_types:
+    np.uint32_t
+    np.uint16_t
+    np.uint8_t
+
+
 def get_maximum_component(components, data_mask, paths, components_translation, num_of_components=None):
     if num_of_components is None:
         num_of_components = len(paths)
@@ -21,7 +27,7 @@ def get_maximum_component(components, data_mask, paths, components_translation, 
     return components
 
 
-def _get_maximum_component(np.ndarray[np.uint32_t] components, np.ndarray[np.uint8_t] data_mask,
+def _get_maximum_component(np.ndarray[component_types] components, np.ndarray[np.uint8_t] data_mask,
                            np.ndarray[image_types, ndim=2] paths, int num_of_components,
                            np.ndarray[np.uint32_t] components_translation):
     cdef Py_ssize_t x, y, size, component_index
@@ -55,7 +61,7 @@ def get_minimum_component(components, data_mask, paths, components_translation, 
     return components
 
 
-def _get_minimum_component(np.ndarray[np.uint32_t] components, np.ndarray[np.uint8_t] data_mask,
+def _get_minimum_component(np.ndarray[component_types] components, np.ndarray[np.uint8_t] data_mask,
                            np.ndarray[image_types, ndim=2] paths, int num_of_components,
                            np.ndarray[np.uint32_t] components_translation):
     cdef Py_ssize_t x, y, size, component_index
@@ -91,7 +97,7 @@ def get_closest_component(components, data_mask, distances, components_translati
     return components
 
 
-def _get_closest_component(np.ndarray[np.uint32_t] components, np.ndarray[np.uint8_t] data_mask,
+def _get_closest_component(np.ndarray[component_types] components, np.ndarray[np.uint8_t] data_mask,
                            np.ndarray[image_types, ndim=2] paths, int num_of_components,
                            np.ndarray[np.uint32_t] components_translation):
     cdef Py_ssize_t x, y, size, component_index
