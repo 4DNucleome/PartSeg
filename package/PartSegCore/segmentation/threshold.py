@@ -48,6 +48,8 @@ class SitkThreshold(BaseThreshold, ABC):
             ob, bg, th_op = 1, 0, np.max
         image_sitk = sitk.GetImageFromArray(data)
         if arguments["masked"] and mask is not None:
+            if mask.dtype != np.uint8:
+                mask = np.array(mask > 0).astype(np.uint8)
             mask_sitk = sitk.GetImageFromArray(mask)
             calculated = cls.calculate_threshold(image_sitk, mask_sitk, ob, bg, arguments["bins"], True, 1)
         else:
