@@ -2,8 +2,6 @@ import sys
 import os
 from importlib.abc import MetaPathFinder, Loader
 import importlib
-# noinspection PyUnresolvedReferences
-from PartSeg.utils import *
 
 
 class MyLoader(Loader):

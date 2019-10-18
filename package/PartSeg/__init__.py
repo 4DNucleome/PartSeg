@@ -1,4 +1,4 @@
-__version__ = "0.9.4a1"
+__version__ = "0.9.4b1"
 
 __author__ = "Grzegorz Bokota"
 

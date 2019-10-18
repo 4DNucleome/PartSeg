@@ -3,11 +3,11 @@
 ## 0.9.4
  - read mask segmentation projects 
  - choose source type in batch
- - add support to CZI file format
+ - add initial support to OIF and CZI file format
  - extract utils to PartSegCore module
  - add automated tests of example notebook
  - reversed mask
- - load segemtation parameters in mask segmentation
+ - load segmentation parameters in mask segmentation
 
 ## 0.9.3
  - start automated build documentation
