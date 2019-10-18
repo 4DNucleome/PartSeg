@@ -37,6 +37,23 @@ def get_two_parts_reversed():
     return Image(data, (100, 50, 50), "")
 
 
+def get_multiple_part_array(part_num):
+    data = np.zeros((1, 20, 40, 40*part_num, 1), dtype=np.uint8)
+    for i in range(part_num):
+        data[0, 5:15, 10:30, 40*i+10:40*i+30] = 50
+        data[0, 7:13, 15:25, 40 * i + 15:40 * i + 25] = 70
+    return data
+
+
+def get_multiple_part(part_num):
+    return Image(get_multiple_part_array(part_num), (100, 50, 50), "")
+
+
+def get_multiple_part_reversed(part_num):
+    data = 100 - get_multiple_part_array(part_num)
+    return Image(data, (100, 50, 50), "")
+
+
 def get_two_parts_side():
     data = get_two_parts_array()
     data[0, 25, 40:45, 50] = 49
@@ -84,6 +101,9 @@ class BaseThreshold(object):
 
     def get_side_object(self):
         raise NotImplementedError
+
+    def get_multiple_part(self, parts_num):
+        raise NotImplemented
 
     algorithm_class = None
 
@@ -205,19 +225,48 @@ class BaseFlowThreshold(BaseThreshold, ABC):
             parameters["sprawl_type"] = {'name': key, 'values': val.get_default_values()}
             alg.set_parameters(**parameters)
             result = alg.calculation_run(empty)
-            assert result.segmentation.max() == 2
-            assert np.all(np.bincount(result.segmentation.flat)[1:] == np.array([96000, 72000]))  # 30*40*80, 30*30*80
-            assert result.parameters.values == parameters
-            assert result.parameters.algorithm == alg.get_name()
+            assert result.segmentation.max() == 2, key
+            assert np.all(np.bincount(result.segmentation.flat)[1:] == np.array([96000, 72000])), key
+            assert result.parameters.values == parameters, key
+            assert result.parameters.algorithm == alg.get_name(), key
         parameters["threshold"]["values"]["base_threshold"]['values']["threshold"] += self.get_shift()
         for key, val in sprawl_dict.items():
             parameters["sprawl_type"] = {'name': key, 'values': val.get_default_values()}
             alg.set_parameters(**parameters)
             result = alg.calculation_run(empty)
-            assert result.segmentation.max() == 2
-            assert np.all(np.bincount(result.segmentation.flat)[1:] >= np.array([96000, 72000]))  # 30*40*80, 30*30*80
-            assert result.parameters.values == parameters
-            assert result.parameters.algorithm == alg.get_name()
+            assert result.segmentation.max() == 2, key
+            assert np.all(np.bincount(result.segmentation.flat)[1:] >= np.array([96000, 72000])), key
+            assert result.parameters.values == parameters, key
+            assert result.parameters.algorithm == alg.get_name(), key
+
+    def test_multiple(self):
+        alg = self.algorithm_class()
+        parameters = self.get_parameters()
+        for i in range(3, 15):
+            image = self.get_multiple_part(i)
+            alg.set_image(image)
+            for key, val in sprawl_dict.items():
+                parameters["sprawl_type"] = {'name': key, 'values': val.get_default_values()}
+                alg.set_parameters(**parameters)
+                result = alg.calculation_run(empty)
+                assert result.segmentation.max() == i, key
+                assert np.all(
+                    np.bincount(result.segmentation.flat)[1:] == np.array([4000]*i)), key
+                assert result.parameters.values == parameters, key
+                assert result.parameters.algorithm == alg.get_name(), key
+        parameters["threshold"]["values"]["base_threshold"]['values']["threshold"] += self.get_shift()
+        for i in range(3, 15):
+            image = self.get_multiple_part(i)
+            alg.set_image(image)
+            for key, val in sprawl_dict.items():
+                parameters["sprawl_type"] = {'name': key, 'values': val.get_default_values()}
+                alg.set_parameters(**parameters)
+                result = alg.calculation_run(empty)
+                assert result.segmentation.max() == i, key
+                assert np.all(
+                    np.bincount(result.segmentation.flat)[1:] >= np.array([4000] * i)), key
+                assert result.parameters.values == parameters, key
+                assert result.parameters.algorithm == alg.get_name(), key
 
     def test_side_connection(self):
         image = self.get_side_object()
@@ -246,6 +295,7 @@ class TestLowerThresholdFlow(BaseFlowThreshold):
     shift = -6
     get_base_object = staticmethod(get_two_parts)
     get_side_object = staticmethod(get_two_parts_side)
+    get_multiple_part = staticmethod(get_multiple_part)
     algorithm_class = sa.LowerThresholdFlowAlgorithm
 
 
@@ -260,6 +310,7 @@ class TestUpperThresholdFlow(BaseFlowThreshold):
     shift = 6
     get_base_object = staticmethod(get_two_parts_reversed)
     get_side_object = staticmethod(get_two_parts_side_reversed)
+    get_multiple_part = staticmethod(get_multiple_part_reversed)
     algorithm_class = sa.UpperThresholdFlowAlgorithm
 
 

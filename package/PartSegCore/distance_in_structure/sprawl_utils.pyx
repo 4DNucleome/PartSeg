@@ -1,5 +1,5 @@
 # distutils: language = c++
-# cython: boundscheck=False, wraparound=False, nonecheck=False, cdivision=True, embedsignature=True
+# cython: wraparound=False, nonecheck=False, cdivision=True, embedsignature=True, unraisable_tracebacks=True
 # cython: profile=True
 # cython: language_level=3
 
@@ -22,7 +22,7 @@ ctypedef fused component_types:
 def get_maximum_component(components, data_mask, paths, components_translation, num_of_components=None):
     if num_of_components is None:
         num_of_components = len(paths)
-    new_paths = paths.reshape((num_of_components, components.size))
+    new_paths = paths.reshape((paths.size//components.size, components.size))
     _get_maximum_component(components.ravel(), data_mask.ravel(), new_paths, num_of_components, components_translation)
     return components
 
@@ -38,7 +38,7 @@ def _get_maximum_component(np.ndarray[component_types] components, np.ndarray[np
         flag = False
         if components[x] == 0 and data_mask[x]:
             max_val = paths[0, x]
-            component_index = components_translation[0]
+            component_index = components[0]
             flag = True
             for y in range(1, num_of_components+1):
                 val = paths[y, x]
@@ -56,7 +56,7 @@ def _get_maximum_component(np.ndarray[component_types] components, np.ndarray[np
 def get_minimum_component(components, data_mask, paths, components_translation, num_of_components=None):
     if num_of_components is None:
         num_of_components = len(paths)
-    new_paths = paths.reshape((num_of_components, components.size))
+    new_paths = paths.reshape((paths.size//components.size, components.size))
     _get_minimum_component(components.ravel(), data_mask.ravel(), new_paths, num_of_components, components_translation)
     return components
 
@@ -72,7 +72,7 @@ def _get_minimum_component(np.ndarray[component_types] components, np.ndarray[np
         flag = False
         if components[x] == 0 and data_mask[x]:
             min_val = paths[0, x]
-            component_index = components_translation[0]
+            component_index = components[0]
             flag = True
             for y in range(1, num_of_components+1):
                 val = paths[y, x]
@@ -108,7 +108,7 @@ def _get_closest_component(np.ndarray[component_types] components, np.ndarray[np
         flag = False
         if components[x] == 0 and data_mask[x]:
             min_val = paths[0, x]
-            component_index = components_translation[0]
+            component_index = components[x]
             flag = True
             for y in range(1, num_of_components+1):
                 val = paths[y, x]

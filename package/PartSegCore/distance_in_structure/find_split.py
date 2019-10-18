@@ -20,8 +20,7 @@ def _allocate_cache(distance_cache: typing.Optional[np.ndarray], data_shape: tup
         cache_size = 5
         distance_cache = np.zeros((cache_size + 1,) + data_shape, dtype=np.float64)
     else:
-        cache_size = distance_cache.shape[0]
-    distance_cache[:] = -np.inf
+        cache_size = distance_cache.shape[0] - 1
     components_numbers_translate = np.zeros(cache_size + 1, dtype=np.uint32)
     return distance_cache, cache_size, components_numbers_translate
 
@@ -49,6 +48,7 @@ def path_maximum_sprawl(data_f: np.ndarray, components: np.ndarray, components_c
         components[tmp > 0] = 1
         return components
     distance_cache, cache_size, components_numbers_translate = _allocate_cache(distance_cache, data_f.shape)
+    distance_cache[:] = -np.inf
     current_in_cache = 0
     for component in range(1, components_count + 1):
         np.copyto(data_cache, data_f)
@@ -57,8 +57,13 @@ def path_maximum_sprawl(data_f: np.ndarray, components: np.ndarray, components_c
         distance_cache[current_in_cache] = calculate_maximum(data_cache, (components == component).astype(np.uint8),
                                                              neighbourhood)
         components_numbers_translate[current_in_cache] = component
-    components = get_maximum_component(components, (data_f > 0).astype(np.uint8), distance_cache[:components_count],
-                                       components_numbers_translate, components_count)
+        if current_in_cache == cache_size:
+            components = get_maximum_component(components, (data_f > 0).astype(np.uint8), distance_cache,
+                                               components_numbers_translate, current_in_cache)
+            current_in_cache = 0
+    if current_in_cache > 0:
+        components = get_maximum_component(components, (data_f > 0).astype(np.uint8), distance_cache,
+                                           components_numbers_translate, current_in_cache)
     return components
 
 
@@ -85,6 +90,7 @@ def path_minimum_sprawl(data_f, components, components_count, neighbourhood, dis
         components[tmp < maximum] = 1
         return components
     distance_cache, cache_size, components_numbers_translate = _allocate_cache(distance_cache, data_f.shape)
+    distance_cache[:] = np.inf
     current_in_cache = 0
     for component in range(1, components_count + 1):
         np.copyto(data_cache, data_f)
@@ -93,8 +99,13 @@ def path_minimum_sprawl(data_f, components, components_count, neighbourhood, dis
         distance_cache[current_in_cache] = calculate_minimum(data_cache, (components == component).astype(np.uint8),
                                                              neighbourhood)
         components_numbers_translate[current_in_cache] = component
-    components = get_minimum_component(components, (data_f > 0).astype(np.uint8), distance_cache[:components_count],
-                                       components_numbers_translate, components_count)
+        if current_in_cache == cache_size:
+            components = get_minimum_component(components, (data_f > 0).astype(np.uint8), distance_cache,
+                                               components_numbers_translate, current_in_cache)
+            current_in_cache = 0
+    if current_in_cache > 0:
+        components = get_minimum_component(components, (data_f > 0).astype(np.uint8), distance_cache,
+                                           components_numbers_translate, current_in_cache)
     return components
 
 
@@ -176,6 +187,7 @@ def distance_sprawl(calculate_operator, data_m: np.ndarray, components: np.ndarr
         return components
 
     distance_cache, cache_size, components_numbers_translate = _allocate_cache(distance_cache, data_m.shape)
+    distance_cache[:] = np.inf
     current_in_cache = 0
     if parallel:
         workers_num = os.cpu_count()
