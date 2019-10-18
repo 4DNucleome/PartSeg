@@ -1,5 +1,6 @@
 import shutil
 import tempfile
+import math
 from copy import deepcopy
 
 import tifffile
@@ -14,20 +15,20 @@ from glob import glob
 import h5py
 import PartSegData
 
-from PartSeg.utils.segmentation.segmentation_algorithm import ThresholdAlgorithm
-from PartSegImage import ImageReader, Image
-from PartSeg.utils import Units, UNIT_SCALE
-from PartSeg.utils.analysis import ProjectTuple
-from PartSeg.utils.analysis.load_functions import UpdateLoadedMetadataAnalysis
-from PartSeg.utils.analysis.save_functions import SaveCmap, SaveXYZ, SaveProject, SaveAsTiff, SaveAsNumpy, \
+from PartSegCore.segmentation.segmentation_algorithm import ThresholdAlgorithm
+from PartSegImage import TiffImageReader, Image, CziImageReader, GenericImageReader, OifImagReader
+from PartSegCore import Units, UNIT_SCALE
+from PartSegCore.analysis import ProjectTuple
+from PartSegCore.analysis.load_functions import UpdateLoadedMetadataAnalysis
+from PartSegCore.analysis.save_functions import SaveCmap, SaveXYZ, SaveProject, SaveAsTiff, SaveAsNumpy, \
     SaveSegmentationAsNumpy
-from PartSeg.utils.analysis.save_hooks import PartEncoder, part_hook
-from PartSeg.utils.io_utils import UpdateLoadedMetadataBase
-from PartSeg.utils.json_hooks import check_loaded_dict
-from PartSeg.utils.segmentation.noise_filtering import DimensionType
-from PartSeg.utils.class_generator import enum_register
-from PartSeg.utils.mask.io_functions import LoadSegmentation, SaveSegmentation, LoadSegmentationImage, save_components, \
-    LoadImage, SegmentationTuple
+from PartSegCore.analysis.save_hooks import PartEncoder, part_hook
+from PartSegCore.io_utils import UpdateLoadedMetadataBase
+from PartSegCore.json_hooks import check_loaded_dict
+from PartSegCore.segmentation.noise_filtering import DimensionType
+from PartSegCore.class_generator import enum_register
+from PartSegCore.mask.io_functions import LoadSegmentation, SaveSegmentation, LoadSegmentationImage, save_components, \
+    LoadStackImage, SegmentationTuple
 
 from help_fun import get_test_dir
 
@@ -80,9 +81,25 @@ def analysis_project_reversed():
 
 
 class TestImageClass:
-    def test_image_read(self):
-        image = ImageReader.read_image(PartSegData.segmentation_mask_default_image)
+    def test_tiff_image_read(self):
+        image = TiffImageReader.read_image(PartSegData.segmentation_mask_default_image)
         assert isinstance(image, Image)
+
+    def test_czi_file_read(self):
+        test_dir = get_test_dir()
+        image = CziImageReader.read_image(os.path.join(test_dir, "test_czi.czi"))
+        assert image.channels == 4
+        assert image.layers == 1
+
+        assert np.all(np.isclose(image.spacing, (7.752248561753867e-08, )*2))
+
+    def test_oib_file_read(self):
+        test_dir = get_test_dir()
+        image = OifImagReader.read_image(os.path.join(test_dir, "N2A_H2BGFP_dapi_falloidin_cycling1.oib"))
+        assert image.channels == 3
+        assert image.layers == 6
+
+        assert np.all(np.isclose(image.spacing, (2.1e-07,) + (7.752248561753867e-08, )*2))
 
     def test_image_mask(self):
         Image(np.zeros((1, 10, 50, 50, 4)), (5, 5, 5), mask=np.zeros((10, 50, 50)))
@@ -94,17 +111,17 @@ class TestImageClass:
 
     def test_read_with_mask(self):
         test_dir = get_test_dir()
-        image = ImageReader.read_image(os.path.join(test_dir, "stack1_components", "stack1_component1.tif"),
-                                       os.path.join(test_dir, "stack1_components", "stack1_component1_mask.tif"))
+        image = TiffImageReader.read_image(os.path.join(test_dir, "stack1_components", "stack1_component1.tif"),
+                                           os.path.join(test_dir, "stack1_components", "stack1_component1_mask.tif"))
         assert isinstance(image, Image)
         with pytest.raises(ValueError):
-            ImageReader.read_image(os.path.join(test_dir, "stack1_components", "stack1_component1.tif"),
-                                   os.path.join(test_dir, "stack1_components", "stack1_component2_mask.tif"))
+            TiffImageReader.read_image(os.path.join(test_dir, "stack1_components", "stack1_component1.tif"),
+                                       os.path.join(test_dir, "stack1_components", "stack1_component2_mask.tif"))
 
     def test_lsm_read(self):
         test_dir = get_test_dir()
-        image1 = ImageReader.read_image(os.path.join(test_dir, "test_lsm.lsm"))
-        image2 = ImageReader.read_image(os.path.join(test_dir, "test_lsm.tif"))
+        image1 = TiffImageReader.read_image(os.path.join(test_dir, "test_lsm.lsm"))
+        image2 = TiffImageReader.read_image(os.path.join(test_dir, "test_lsm.tif"))
         data = np.load(os.path.join(test_dir, "test_lsm.npy"))
         assert np.all(image1.get_data() == data)
         assert np.all(image2.get_data() == data)
@@ -112,12 +129,20 @@ class TestImageClass:
 
     def test_ome_read(self):  # error in tifffile
         test_dir = get_test_dir()
-        image1 = ImageReader.read_image(os.path.join(test_dir, "test_lsm2.tif"))
-        image2 = ImageReader.read_image(os.path.join(test_dir, "test_lsm.tif"))
+        image1 = TiffImageReader.read_image(os.path.join(test_dir, "test_lsm2.tif"))
+        image2 = TiffImageReader.read_image(os.path.join(test_dir, "test_lsm.tif"))
         data = np.load(os.path.join(test_dir, "test_lsm.npy"))
         assert np.all(image1.get_data() == data)
         assert np.all(image2.get_data() == data)
         assert np.all(image1.get_data() == image2.get_data())
+
+    def test_generic_reader(self):
+        test_dir = get_test_dir()
+        GenericImageReader.read_image(os.path.join(test_dir, "stack1_components", "stack1_component1.tif"),
+                                os.path.join(test_dir, "stack1_components", "stack1_component1_mask.tif"))
+        GenericImageReader.read_image(os.path.join(test_dir, "test_czi.czi"))
+        GenericImageReader.read_image(os.path.join(test_dir, "test_lsm2.tif"))
+        GenericImageReader.read_image(os.path.join(test_dir, "test_lsm.tif"))
 
 
 class TestJsonLoad:
@@ -206,7 +231,7 @@ class TestSegmentationMask:
 
     def test_loading_new_segmentation(self):
         test_dir = get_test_dir()
-        image_data = LoadImage.load([os.path.join(test_dir, "test_nucleus.tif")])
+        image_data = LoadStackImage.load([os.path.join(test_dir, "test_nucleus.tif")])
         algorithm = ThresholdAlgorithm()
         algorithm.set_image(image_data.image)
         param = algorithm.get_default_values()
@@ -366,3 +391,13 @@ class TestSaveFunctions:
         SaveSegmentationAsNumpy.save(os.path.join(tmpdir, "test1.npy"), analysis_project)
         array = np.load(os.path.join(tmpdir, "test1.npy"))
         assert np.all(array == analysis_project.segmentation)
+
+
+def test_xml2dict():
+    sample_text = """
+    <level1>
+        <level2>3.5322</level2>
+    </level1>
+    """
+    data = tifffile.xml2dict(sample_text)
+    assert math.isclose(data["level1"]["level2"], 3.5322)

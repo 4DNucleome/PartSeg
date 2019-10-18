@@ -17,11 +17,11 @@ from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
     QSlider, QCheckBox, QComboBox
 
 from PartSeg.common_gui.numpy_qimage import NumpyQImage
-from PartSeg.utils.class_generator import enum_register
-from PartSeg.utils.image_operations import gaussian
-from ..utils.color_image import color_image, add_labels
-from ..utils.color_image.color_image_base import color_maps
-from ..utils.colors import default_colors
+from PartSegCore.class_generator import enum_register
+from PartSegCore.image_operations import gaussian
+from PartSegCore.color_image import color_image_fun, add_labels
+from PartSegCore.color_image.color_image_base import color_maps
+from PartSegCore.colors import default_colors
 from ..common_backend.base_settings import ViewSettings
 from PartSegImage import Image
 from .channel_control import ColorComboBoxGroup, ChannelProperty
@@ -466,7 +466,7 @@ class ImageView(QWidget):
         for i, (use, radius) in enumerate(self.channel_control.get_gauss()):
             if use and color_list[i] is not None and radius > 0:
                 img[..., i] = gaussian(img[..., i], radius)
-        im = color_image(img, color_list, borders)
+        im = color_image_fun(img, color_list, borders)
         self.add_labels(im)
         self.add_mask(im)
         self.image_area.set_image(im, True)
@@ -819,7 +819,7 @@ class ColorBar(QLabel):
         if self.round_range[1] > self.range[1]:
             self.round_range = self.round_range[0], self.round_range[1] - round_factor
         # print(self.range, self.round_range)
-        img = color_image(np.linspace(0, 256, 512).reshape((1, 512, 1))[:, ::-1], [cmap], [(0, 256)])
+        img = color_image_fun(np.linspace(0, 256, 512).reshape((1, 512, 1))[:, ::-1], [cmap], [(0, 256)])
         self.image = NumpyQImage(np.swapaxes(img, 0 ,1))
         self.repaint()
 

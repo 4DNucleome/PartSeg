@@ -2,7 +2,7 @@ import os
 import packaging.version
 import shutil
 from glob import glob
-from PartSeg.utils import state_store
+from PartSegCore import state_store
 
 from qtpy.QtWidgets import QMessageBox, QWidget
 

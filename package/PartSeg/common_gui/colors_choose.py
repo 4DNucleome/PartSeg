@@ -10,7 +10,7 @@ from qtpy.QtWidgets import QWidget, QVBoxLayout, QCheckBox, QPushButton, QHBoxLa
 from .channel_control import ColorPreview
 from .flow_layout import FlowLayout
 from .vetical_scroll_area import VerticalScrollArea
-from ..utils.color_image import color_image
+from PartSegCore.color_image import color_image_fun
 from ..common_backend.base_settings import ViewSettings
 
 
@@ -110,7 +110,7 @@ class ColorSelector(QWidget):
     def mouse_on_map(self, val):
         if val != self.current_color:
             self.current_color = val
-            img = color_image(np.arange(0, 256).reshape((1, 256, 1)), [val], [(0, 256)])
+            img = color_image_fun(np.arange(0, 256).reshape((1, 256, 1)), [val], [(0, 256)])
             self.image = QImage(img.data, 256, 1, img.dtype.itemsize * 256 * 3, QImage.Format_RGB888)
             self.preview.repaint()
             

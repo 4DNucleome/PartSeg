@@ -1,7 +1,7 @@
 from qtpy.QtWidgets import QFileDialog
 import typing
 from os.path import basename, isfile, isdir
-from PartSeg.utils.io_utils import LoadBase
+from PartSegCore.io_utils import LoadBase
 
 
 class LoadProperty(typing.NamedTuple):

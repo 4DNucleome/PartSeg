@@ -181,7 +181,9 @@ class SynchronizeView(QObject):
     def set_synchronize(self, val: bool):
         self.synchronize = val
 
-    def synchronize_views(self):
+    @Slot(int)
+    @Slot()
+    def synchronize_views(self, val=None):
         if not self.synchronize or self.image_view1.isHidden() or self.image_view2.isHidden():
             return
         if self.sender().parent() == self.image_view1:
@@ -189,8 +191,15 @@ class SynchronizeView(QObject):
         else:
             origin, dest = self.image_view2, self.image_view1
         block = dest.blockSignals(True)
-        dest.stack_slider.setValue(origin.stack_slider.value())
-        dest.time_slider.setValue(origin.time_slider.value())
+        sender = self.sender()
+        if sender == origin.stack_slider:
+            dest.stack_slider.setValue(val)
+        else:
+            dest.stack_slider.setValue(origin.stack_slider.value())
+        if sender == origin.time_slider:
+            dest.time_slider.setValue(val)
+        else:
+            dest.time_slider.setValue(origin.time_slider.value())
         dest.image_area.zoom_scale = origin.image_area.zoom_scale
         dest.image_area.x_mid = origin.image_area.x_mid
         dest.image_area.y_mid = origin.image_area.y_mid

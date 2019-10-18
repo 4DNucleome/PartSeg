@@ -1,13 +1,12 @@
-from qtpy.QtWidgets import QApplication, QWidget, QVBoxLayout, QScrollArea
+from qtpy.QtWidgets import QApplication, QWidget, QVBoxLayout
 import sys
 import PartSegData
 import numpy as np
 
 from PartSeg.common_gui.channel_control import ColorComboBoxGroup
-from PartSeg.common_gui.colormap_creator import PColormapCreator, PColormapList, ChannelPreview
-from PartSeg.common_gui.universal_gui_part import ProgressCircle
-from PartSeg.common_backend.base_settings import ViewSettings, ColormapDict
-from PartSeg.utils.color_image.base_colors import default_colormap_dict, starting_colors
+from PartSeg.common_gui.colormap_creator import PColormapCreator, PColormapList
+from PartSeg.common_backend.base_settings import ViewSettings
+from PartSegCore.color_image import starting_colors
 
 color_maps = np.load(PartSegData.colors_file)
 

@@ -3,8 +3,8 @@ from enum import Enum
 from qtpy.QtWidgets import QDialog, QWidget, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QFormLayout, QSpinBox, \
     QDoubleSpinBox, QCheckBox, QLineEdit, QComboBox
 
-from PartSeg.utils.channel_class import Channel
-from PartSeg.utils.class_generator import BaseSerializableClass
+from PartSegCore.channel_class import Channel
+from PartSegCore.class_generator import BaseSerializableClass
 
 
 class GetPropertyWidget(QWidget):

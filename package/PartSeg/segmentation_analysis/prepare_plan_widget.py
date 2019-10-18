@@ -6,28 +6,26 @@ from copy import copy, deepcopy
 from enum import Enum
 from pathlib import Path
 
-from qtpy.QtGui import QPaintEvent
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QDialog, QCompleter, QLineEdit, QPushButton, QGridLayout, QWidget, QCheckBox, QComboBox, \
-    QListWidget, QSpinBox, QTextEdit, QVBoxLayout, QGroupBox, QLabel, QHBoxLayout, QInputDialog, QMessageBox, \
+    QListWidget, QSpinBox, QTextEdit, QVBoxLayout, QGroupBox, QLabel, QInputDialog, QMessageBox, \
     QTreeWidget, QTreeWidgetItem, QFileDialog, QSplitter, QTabWidget, QListWidgetItem
 
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
+from PartSegCore.algorithm_describe_base import AlgorithmProperty, SegmentationProfile
+from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.calculation_plan import CalculationPlan, MaskCreate, Operations, \
+    MaskSuffix, MaskSub, MaskFile, PlanChanges, NodeType, MaskIntersection, MaskSum, \
+    MeasurementCalculate, Save, RootType, MaskBase, MaskMapper
+from PartSegCore.analysis.measurement_calculation import MeasurementProfile
+from PartSegCore.analysis.save_functions import save_dict
+from PartSegCore.io_utils import SaveBase
+from PartSegCore.universal_const import Units
+from .partseg_settings import PartSettings
+from .profile_export import ExportDialog, ImportDialog
 from ..common_gui.custom_save_dialog import FormDialog
 from ..common_gui.mask_widget import MaskWidget
 from ..common_gui.universal_gui_part import right_label
-from PartSeg.utils.analysis.algorithm_description import analysis_algorithm_dict
-from PartSeg.utils.analysis.save_functions import save_dict
-from ..utils.io_utils import SaveBase
-from PartSeg.utils.algorithm_describe_base import AlgorithmProperty, SegmentationProfile
-from ..utils.universal_const import Units
-
-from PartSeg.utils.analysis.calculation_plan import CalculationPlan, MaskCreate, MaskUse, Operations, \
-    MaskSuffix, MaskSub, MaskFile, PlanChanges, NodeType, ChooseChanel, MaskIntersection, MaskSum, \
-    MeasurementCalculate, Save
-from .partseg_settings import PartSettings
-from .profile_export import ExportDialog, ImportDialog
-from PartSeg.utils.analysis.measurement_calculation import MeasurementProfile
 
 group_sheet = "QGroupBox {border: 1px solid gray; border-radius: 9px; margin-top: 0.5em;} " \
               "QGroupBox::title {subcontrol-origin: margin; left: 10px; padding: 0 3px 0 3px;}"
@@ -136,8 +134,8 @@ class FileMask(QWidget):
         super().__init__()
         self.select_type = QComboBox()
         self.select_type.addItems(["Suffix", "Replace", "Mapping file"])
-        self.values = ["", ("",""), ""]
-        self.first_text = QLineEdit()
+        self.values = ["_mask", ("",""), ""]
+        self.first_text = QLineEdit(self.values[0])
         self.second_text = QLineEdit()
         self.first_label = QLabel("Use suffix:")
         self.second_label = QLabel("Replace:")
@@ -240,13 +238,11 @@ class CreatePlan(QWidget):
         self.save_plan_btn = QPushButton("Save")
         self.clean_plan_btn = QPushButton("Remove all")
         self.remove_btn = QPushButton("Remove")
-        self.choose_channel_btn = QPushButton("Choose channel")
         self.update_element_chk = QCheckBox("Update element")
+        self.change_root = EnumComboBox(RootType)
         self.save_choose = QComboBox()
         self.save_choose.addItem("<none>")
         self.save_choose.addItems(list(self.save_translate_dict.keys()))
-        self.director_save_chk = QCheckBox("Save in directory")
-        self.director_save_chk.setToolTip("Create directory using file name an put result file inside this directory")
         self.save_btn = QPushButton("Save")
         self.segment_profile = QListWidget()
         self.pipeline_profile = QListWidget()
@@ -260,13 +256,12 @@ class CreatePlan(QWidget):
 
         self.chanel_num = QSpinBox()
         self.choose_channel_for_measurements = QComboBox()
-        self.choose_channel_for_measurements.addItems(["Same as segmentation"] + [str(x) for x in range(MAX_CHANNEL_NUM)])
+        self.choose_channel_for_measurements.addItems(["Same as segmentation"] + [str(x+1) for x in range(MAX_CHANNEL_NUM)])
         self.units_choose = EnumComboBox(Units)
         self.units_choose.set_value(self.settings.get("units_value", Units.nm))
         self.chanel_num.setRange(0, 10)
         self.expected_node_type = None
         self.save_constructor = None
-        self.channels_used = False
 
         self.project_segmentation = QPushButton("Reset project")
         self.project_segmentation.clicked.connect(self.segmentation_from_project)
@@ -313,7 +308,6 @@ class CreatePlan(QWidget):
         self.update_element_chk.stateChanged.connect(self.show_measurement)
         self.update_element_chk.stateChanged.connect(self.show_segment)
         self.update_element_chk.stateChanged.connect(self.update_names)
-        self.choose_channel_btn.clicked.connect(self.choose_channel)
         self.segment_stack.currentChanged.connect(self.change_segmentation_table)
 
         plan_box = QGroupBox("Prepare workflow:")
@@ -331,17 +325,15 @@ class CreatePlan(QWidget):
 
         other_box = QGroupBox("Other operations:")
         other_box.setContentsMargins(0, 0, 0, 0)
-        bt_lay = QGridLayout()
+        bt_lay = QVBoxLayout()
         bt_lay.setSpacing(0)
-        # bt_lay.setContentsMargins(0, 0, 0, 0)
-        # bt_lay.addWidget(right_label("Chanel num:"), 1, 0)
-        # bt_lay.addWidget(self.chanel_num, 1, 1)
-        # bt_lay.addWidget(self.choose_channel_btn, 4, 0, 1, 2)
-        # bt_lay.addWidget(self.forgot_mask_btn, 1, 0)
-        bt_lay.addWidget(self.save_choose, 5, 0, 1, 2)
-        bt_lay.addWidget(self.director_save_chk, 6, 0, 1, 2)
-        bt_lay.addWidget(self.save_btn, 7, 0, 1, 2)
-        bt_lay.addWidget(self.project_segmentation, 8, 0, 1, 2)
+        bt_lay.addWidget(QLabel("Root type:"))
+        bt_lay.addWidget(self.change_root)
+        bt_lay.addStretch(1)
+        bt_lay.addWidget(QLabel("Saving:"))
+        bt_lay.addWidget(self.save_choose)
+        bt_lay.addWidget(self.save_btn)
+        bt_lay.addWidget(self.project_segmentation)
         other_box.setLayout(bt_lay)
         other_box.setStyleSheet(group_sheet)
 
@@ -353,7 +345,6 @@ class CreatePlan(QWidget):
         self.mask_stack.addTab(stretch_widget(self.segmentation_mask), "Current segmentation")
         self.mask_stack.addTab(stretch_widget(self.mask_operation), "Operations on masks")
         self.mask_stack.setTabToolTip(2, "Allows to create mask which is based on masks previously added to plan.")
-
 
         lay = QGridLayout()
         lay.setSpacing(0)
@@ -408,8 +399,8 @@ class CreatePlan(QWidget):
         # layout.addWidget(segmentation_mask_box, 1, 1)
         layout.addWidget(mask_box, 0, 2, 1, 2)
         layout.addWidget(other_box, 0, 1)
-        layout.addWidget(measurement_box, 1, 1, 1, 2)
-        layout.addWidget(segment_box, 1, 3)
+        layout.addWidget(segment_box, 1, 1, 1, 2)
+        layout.addWidget(measurement_box, 1, 3)
         layout.addWidget(info_box, 3, 1, 1, 3)
         self.setLayout(layout)
 
@@ -467,8 +458,6 @@ class CreatePlan(QWidget):
         if self.node_type == self.expected_node_type:
             self.save_btn.setEnabled(True)
             return
-        if self.node_type == NodeType.channel_choose and self.expected_node_type == NodeType.root:
-            self.save_btn.setEnabled(True)
 
     def segmentation_from_project(self):
         self.calculation_plan.add_step(Operations.reset_to_base)
@@ -488,7 +477,6 @@ class CreatePlan(QWidget):
         # self.cmap_save_btn.setDisabled(True)
         self.save_btn.setDisabled(True)
         self.project_segmentation.setDisabled(True)
-        self.choose_channel_btn.setDisabled(True)
         self.node_name = ""
         if self.plan.currentItem() is None:
             self.mask_allow = False
@@ -500,8 +488,7 @@ class CreatePlan(QWidget):
             return
         node_type = self.calculation_plan.get_node_type()
         self.node_type = node_type
-        if node_type in [NodeType.file_mask, NodeType.mask, NodeType.segment, NodeType.statics, NodeType.save,
-                         NodeType.channel_choose]:
+        if node_type in [NodeType.file_mask, NodeType.mask, NodeType.segment, NodeType.measurement, NodeType.save]:
             self.remove_btn.setEnabled(True)
         else:
             self.remove_btn.setEnabled(False)
@@ -516,27 +503,17 @@ class CreatePlan(QWidget):
             self.file_mask_allow = False
             self.save_btn.setEnabled(True)
             # self.cmap_save_btn.setEnabled(True)
-        elif node_type == NodeType.root or node_type == NodeType.channel_choose:
+        elif node_type == NodeType.root:
             self.mask_allow = False
             self.segment_allow = True
             self.file_mask_allow = True
             self.project_segmentation.setEnabled(True)
-            self.choose_channel_btn.setEnabled(node_type == NodeType.root)
-        elif node_type == NodeType.none or node_type == NodeType.statics or node_type == NodeType.save:
+        elif node_type == NodeType.none or node_type == NodeType.measurement or node_type == NodeType.save:
             self.mask_allow = False
             self.segment_allow = False
             self.file_mask_allow = False
         self.save_activate()
         self.plan_node_changed.emit()
-
-    def choose_channel(self):
-        chanel_num = self.chanel_num.value()
-        self.channels_used = True
-        if self.update_element_chk.isChecked():
-            self.calculation_plan.replace_step(ChooseChanel(chanel_num))
-        else:
-            self.calculation_plan.add_step(ChooseChanel(chanel_num))
-        self.plan.update_view()
 
     def add_save_to_project(self):
         save_class = self.save_translate_dict.get(self.save_choose.currentText(), None)
@@ -610,7 +587,8 @@ class CreatePlan(QWidget):
         if self.node_type == NodeType.none:
             self.generate_mask_btn.setDisabled(True)
             return
-        if not update and self.calculation_plan.get_node().operation != "root" and\
+        operation = self.calculation_plan.get_node().operation
+        if not update and isinstance(operation, (MaskMapper, MaskBase)) and\
                 self.calculation_plan.get_node().operation.name == text:
             self.generate_mask_btn.setDisabled(True)
             return
@@ -635,7 +613,6 @@ class CreatePlan(QWidget):
                 self.generate_mask_btn.setEnabled(False)
             self.generate_mask_btn.setToolTip("Need root selected")
 
-
     def mask_name_changed(self, text):
         if str(text) in self.mask_set:
             self.generate_mask_btn.setDisabled(True)
@@ -649,14 +626,6 @@ class CreatePlan(QWidget):
         self.plan.update_view()
 
     def add_segmentation(self):
-        if self.channels_used and self.node_type == NodeType.root:
-            ret = QMessageBox.question(self, "Segmentation from root",
-                                       "You use channel choose in your plan. Are you sure "
-                                       "to choose segmentation on root", QMessageBox.Cancel | QMessageBox.Ok,
-                                       QMessageBox.Cancel)
-            if ret == QMessageBox.Cancel:
-                return
-
         if self.segment_stack.currentIndex() == 0:
             text = str(self.segment_profile.currentItem().text())
             profile = self.settings.segmentation_profiles[text]
@@ -665,7 +634,8 @@ class CreatePlan(QWidget):
             else:
                 self.calculation_plan.add_step(profile)
             self.plan.update_view()
-        else: # self.segment_stack.currentIndex() == 1
+
+        else:  # self.segment_stack.currentIndex() == 1
             text = self.pipeline_profile.currentItem().text()
             segmentation_pipeline = self.settings.segmentation_pipelines[text]
             pos = self.calculation_plan.current_pos[:]
@@ -710,7 +680,6 @@ class CreatePlan(QWidget):
         self.plan.update_view()
 
     def clean_plan(self):
-        self.channels_used = False
         self.calculation_plan = CalculationPlan()
         self.plan.set_plan(self.calculation_plan)
         self.node_type_changed()
@@ -801,7 +770,7 @@ class CreatePlan(QWidget):
 
     def show_measurement(self):
         if self.update_element_chk.isChecked():
-            if self.node_type == NodeType.statics:
+            if self.node_type == NodeType.measurement:
                 self.add_calculation_btn.setEnabled(True)
             else:
                 self.add_calculation_btn.setDisabled(True)
@@ -855,14 +824,9 @@ class CreatePlan(QWidget):
                 else:
                     self.chose_profile_btn.setDisabled(True)
 
-
     def edit_plan(self):
         plan = self.sender().plan_to_edit  # type: CalculationPlan
         self.calculation_plan = copy(plan)
-        self.channels_used = False
-        for el in plan.execution_tree.children:
-            if isinstance(el.operation, ChooseChanel):
-                self.channels_used = True
         self.plan.set_plan(self.calculation_plan)
         self.mask_set.clear()
         self.calculation_plan.set_position([])
@@ -914,8 +878,9 @@ class PlanPreview(QTreeWidget):
 
     def set_plan(self, calculation_plan):
         self.calculation_plan = calculation_plan
-        self.update_view(True)
         self.setCurrentItem(self.topLevelItem(0))
+        self.update_view(True)
+
 
     def explore_tree(self, up_widget, node_plan, deep=True):
         """
@@ -960,7 +925,7 @@ class PlanPreview(QTreeWidget):
         if reset:
             self.clear()
             root = QTreeWidgetItem(self)
-            root.setText(0, "Root")
+            root.setText(0, f"Root {self.calculation_plan.execution_tree.operation}")
             self.setCurrentItem(root)
             for el in self.calculation_plan.execution_tree.children:
                 self.explore_tree(root, el, True)

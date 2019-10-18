@@ -12,7 +12,7 @@ class MyLoader(Loader):
     def load_module(self, fullname):
         old_name = fullname
         names = fullname.split(".")
-        names[1] = "utils"
+        names[1] = "PartSegCore"
         fullname = ".".join(names)
         module = importlib.import_module(fullname)
         sys.modules[old_name] = module

@@ -1,13 +1,20 @@
 # Changelog 
 
+## 0.9.4
+ - read mask segmentation projects 
+ - choose source type in batch
+ - add support to CZI file format
+ - extract utils to PartSegCore module
+ - add automated tests of example notebook
+ - reversed mask
+ - load segemtation parameters in mask segmentation
+
 ## 0.9.3
  - start automated build documentation
  - change color map backend and allow for user to create custom color map. 
  - segmentation compare
  - update test engines
  - support of PySide2 
- 
-
 
 ## 0.9.2.3
  - refactor code to make easier create plugin for mask segmentation 
@@ -17,7 +24,7 @@
 
 ## 0.9.2.2
  - extract static data to separated package
- - update marker of fix range and add mark of gauus in channel control 
+ - update marker of fix range and add mark of gauss in channel control 
   
 ## 0.9.2.1
  - add VoteSmooth and add choosing of smooth algorithm

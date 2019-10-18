@@ -1,5 +1,5 @@
 import numpy as np
-from PartSeg.utils.image_transforming import InterpolateImage
+from PartSegCore.image_transforming import InterpolateImage
 from PartSegImage import Image
 
 

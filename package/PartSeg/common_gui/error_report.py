@@ -12,7 +12,7 @@ import traceback
 
 from sentry_sdk.utils import exc_info_from_error, event_from_exception
 
-from PartSeg.utils import state_store
+from PartSegCore import state_store
 import sentry_sdk
 
 from PartSeg import __version__
@@ -46,6 +46,10 @@ class ErrorDialog(QDialog):
         layout = QVBoxLayout()
         self.desc = QLabel(description)
         self.desc.setWordWrap(True)
+        info_text = QLabel("If you see these dialog it not means that you do something wrong. "
+                           "In such case you should see some message box not error report dialog.")
+        info_text.setWordWrap(True)
+        layout.addWidget(info_text)
         layout.addWidget(self.desc)
         layout.addWidget(self.error_description)
         layout.addWidget(QLabel("Contact information"))

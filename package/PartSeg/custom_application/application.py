@@ -6,7 +6,7 @@ from xmlrpc import client
 
 from PartSegImage import TiffFileException
 from .. import __version__
-from ..utils import state_store
+from PartSegCore import state_store
 
 
 class CheckVersionThread(QThread):

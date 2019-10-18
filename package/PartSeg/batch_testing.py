@@ -29,7 +29,7 @@ global_data = Tester("_aaa")
 global_data2 = Tester("_bbb")
 
 manager = BatchManager()
-manager.set_number_off_process(7)
+manager.set_number_of_process(7)
 manager.add_work(input_data, global_data, calc_fun)
 manager.add_work(input_data, global_data2, calc_fun)
 while manager.has_work:
@@ -40,11 +40,11 @@ while manager.has_work:
 print (manager.process_list)
 time.sleep(5)
 
-manager.set_number_off_process(1)
+manager.set_number_of_process(1)
 time.sleep(1)
 print("Buka")
 time.sleep(1)
-manager.set_number_off_process(0)
+manager.set_number_of_process(0)
 
 while not manager.finished:
     print("test")

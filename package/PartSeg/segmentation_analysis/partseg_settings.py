@@ -4,15 +4,15 @@ from qtpy.QtWidgets import QMessageBox, QWidget
 from qtpy.QtCore import Signal
 
 from PartSegImage import Image
-from PartSeg.utils.analysis.calculation_plan import CalculationPlan
-from PartSeg.utils.analysis.io_utils import ProjectTuple, MaskInfo
-from PartSeg.utils.analysis.measurement_calculation import MeasurementProfile
-from PartSeg.utils.algorithm_describe_base import SegmentationProfile
-from PartSeg.utils.analysis.analysis_utils import HistoryElement, SegmentationPipeline
-from PartSeg.utils.analysis.save_hooks import PartEncoder, part_hook
-from PartSeg.utils.analysis.load_functions import load_metadata
+from PartSegCore.analysis.calculation_plan import CalculationPlan
+from PartSegCore.analysis.io_utils import ProjectTuple, MaskInfo
+from PartSegCore.analysis.measurement_calculation import MeasurementProfile
+from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.analysis.analysis_utils import HistoryElement, SegmentationPipeline
+from PartSegCore.analysis.save_hooks import PartEncoder
+from PartSegCore.analysis.load_functions import load_metadata
 from ..common_backend.base_settings import BaseSettings, SaveSettingsDescription
-from PartSeg.utils.json_hooks import ProfileDict
+from PartSegCore.json_hooks import ProfileDict
 import numpy as np
 
 MASK_COLORS = {"white": np.array((255, 255, 255)), "black": np.array((0, 0, 0)), "red": np.array((255, 0, 0)),

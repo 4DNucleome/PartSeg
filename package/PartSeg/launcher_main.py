@@ -6,7 +6,7 @@ import os
 import multiprocessing
 from qtpy.QtGui import QFontDatabase, QGuiApplication
 
-from PartSegImage import ImageReader
+from PartSegImage import TiffImageReader
 from PartSegData import font_dir
 from .custom_application import CustomApplication
 from PartSeg.common_backend.base_argparser import CustomParser
@@ -14,6 +14,7 @@ from PartSeg.common_backend.base_argparser import CustomParser
 multiprocessing.freeze_support()
 
 
+# noinspection PyUnresolvedReferences,PyUnusedLocal
 def _test_imports():
     app = QGuiApplication([])
     from .segmentation_analysis.main_window import MainWindow
@@ -55,7 +56,7 @@ def main():
         from .segmentation_analysis.main_window import MainWindow
         title = "PartSeg Segmentation Analysis"
         if args.image:
-            image = ImageReader.read_image(args.image, args.mask)
+            image = TiffImageReader.read_image(args.image, args.mask)
             MainWindow = partial(MainWindow, initial_image=image)
         wind = MainWindow(title=title)
         if args.batch:
@@ -66,7 +67,7 @@ def main():
         from .segmentation_mask.stack_gui_main import MainWindow
         title = "PartSeg Mask Segmentation"
         if args.image:
-            image = ImageReader.read_image(args.image)
+            image = TiffImageReader.read_image(args.image)
             MainWindow = partial(MainWindow, initial_image=image)
         wind = MainWindow(title=title)
     else:
@@ -75,10 +76,10 @@ def main():
         wind = MainWindow(title=title)
 
     wind.show()
-    my_app.exec_()
+    rc = my_app.exec_()
     del wind
     del my_app
-    sys.exit()
+    sys.exit(rc)
 
 
 if __name__ == '__main__':

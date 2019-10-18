@@ -37,7 +37,7 @@ stages:
           displayName: 'Use Python $(python.version)'
           inputs:
             versionSpec: '$(python.version)'
-        - script: sudo apt-get update && sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0
+        - script: sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0
           displayName: "install libs"
         - task: DownloadPipelineArtifact@2
           inputs:
@@ -108,7 +108,7 @@ stages:
         variables:
           CIBW_BUILD: cp36-manylinux1_x86_64 cp37-manylinux1_x86_64
           CIBW_TEST_REQUIRES: pytest
-          CIBW_TEST_COMMAND: pytest {project}/package/tests --ignore={project}/package/tests/test_gui
+          CIBW_TEST_COMMAND: pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part
         steps:
           - task: UsePythonVersion@0
           - task: DownloadPipelineArtifact@2
@@ -127,7 +127,7 @@ stages:
       - job: macos_wheel
         pool: {vmImage: 'macOS-10.13'}
         variables:
-          CIBW_BUILD: cp36-*intel cp37-*intel
+          CIBW_BUILD: cp36-* cp37-*
           CIBW_TEST_REQUIRES: pytest pytest-qt
           CIBW_TEST_COMMAND: pytest {project}/package/tests
         steps:
@@ -173,14 +173,15 @@ stages:
               python -m pip install -r requirements_pyinstaller.txt
               python -m pip install .
               python  build_utils/create_build.py
-          - script: sudo apt-get update && sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0
+          - script: sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0
             displayName: "install libs"
-          - script: xvfb-run dist/PartSeg/PartSeg_exec _test
-            displayName: TestBuild
+
           - task: PublishBuildArtifacts@1
             inputs:
               pathToPublish: dist2
               artifactName: execs
+          - script: xvfb-run dist/PartSeg/PartSeg_exec _test
+            displayName: TestBuild
 
       - job: macos_pyinstaller
         pool: {vmImage: 'macOS-10.13'}
@@ -191,12 +192,12 @@ stages:
               python -m pip install -r requirements_pyinstaller.txt
               python -m pip install .
               python  build_utils/create_build.py
-          - script: dist/PartSeg/PartSeg_exec _test
-            displayName: TestBuild
           - task: PublishBuildArtifacts@1
             inputs:
               pathToPublish: dist2
               artifactName: execs
+          - script: dist/PartSeg/PartSeg_exec _test
+            displayName: TestBuild
 
       - job: windows_pyinstaller
         pool: {vmImage: 'vs2017-win2016'}
@@ -212,3 +213,43 @@ stages:
               artifactName: execs
           - script: dist\PartSeg\PartSeg_exec _test
             displayName: TestBuild
+
+      - job: help
+        pool: {vmImage: 'Ubuntu-16.04'}
+        steps:
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.6', architecture: x64}}
+          - bash: |
+              python -m pip install -r requirements_pyinstaller.txt
+              python -m pip install .
+              python -m pip install sphinx
+            displayName: InstallDeps
+          - bash: make -C docs html
+            displayName: BuildDocs
+          - bash: |
+              mkdir docs_result
+              cd docs/_build; zip -r ../../docs_result/PartSeg_documentation_`python -c "import PartSeg; print(PartSeg.__version__)"`.zip html; cd ../..
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathToPublish: docs_result
+              artifactName: docs
+
+      - job: Notebook_check
+        pool: {vmImage: 'Ubuntu-16.04'}
+        continueOnError: true
+        variables:
+          DATA_PATH: typy_neuronow2
+        steps:
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.6', architecture: x64}}
+          - bash: |
+              wget -q -N https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/typy_neuronow2.zip
+              unzip typy_neuronow2.zip
+              ls typy_neuronow2
+            displayName: GetData
+          - bash: |
+              python -m pip install -r requirements_pyinstaller.txt
+              python -m pip install .
+              python -m pip install jupyter[all]
+              python -m pip install matplotlib
+            displayName: InstallDeps
+          - bash: DATA_PATH=${PWD}/typy_neuronow2 jupyter nbconvert --to notebook --execute tutorials/tutorial_neuron_types/Neuron_types_example.ipynb
+            displayName: BuildDocs

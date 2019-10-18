@@ -32,6 +32,7 @@ class Image(object):
             image_spacing = tuple(image_spacing)
         self._image_array = data
         self._image_spacing = (1.0, ) * (3-len(image_spacing)) + image_spacing
+        self._image_spacing = tuple([el if el > 0 else 10**-6 for el in self._image_spacing])
         self.file_path = file_path
         self.default_coloring = default_coloring
         self.additional_channels = []
@@ -45,7 +46,7 @@ class Image(object):
                 zip(np.min(self._image_array, axis=(0, 1, 2, 3)), np.max(self._image_array, axis=(0, 1, 2, 3))))
         else:
             self.ranges = ranges
-        self._mask_array = self.fit_array_to_image(mask) if mask is not None else None
+        self._mask_array = self.fit_mask_to_image(mask) if mask is not None else None
 
     def get_dimension_number(self):
         return np.squeeze(self._image_spacing).ndim
@@ -76,17 +77,17 @@ class Image(object):
         if mask is None:
             self._mask_array = None
         else:
-            self._mask_array = self.fit_array_to_image(mask)
+            self._mask_array = self.fit_mask_to_image(mask)
 
     def get_data(self):
         return self._image_array
 
     @property
     def mask(self):
-
         return self._mask_array
 
     def fit_array_to_image(self, array: np.ndarray) -> np.ndarray:
+        """change shape of array with inserting singe dimensional entries"""
         shape = list(array.shape)
         for i, el in enumerate(self._image_array.shape[:-1]):
             if el == 1 and el != shape[i]:
@@ -96,6 +97,30 @@ class Image(object):
         if len(shape) != len(self._image_array.shape[:-1]):
             raise ValueError("Wrong array shape")
         return np.reshape(array, shape)
+
+    def fit_mask_to_image(self, array: np.ndarray) -> np.ndarray:
+        """call :py:meth:`fit_array_to_image` and then use minimal size type which save information"""
+        array = self.fit_array_to_image(array)
+        unique = np.unique(array)
+        if unique.size == 2 and unique[1] == 1:
+            return array.astype(np.uint8)
+        if unique.size == 1:
+            if unique[0] != 0:
+                return np.ones(array.shape, dtype=np.uint8)
+            return array.astype(np.uint8)
+        max_val = unique.max()
+        if max_val + 1 == unique.size:
+            if max_val < 250:
+                return array.astype(np.uint8)
+            else:
+                return array.astype(np.uint32)
+        masking_array = np.zeros(max_val, dtype=np.uint32)
+        for i, val in enumerate(unique, 0 if unique[0] == 0 else 1):
+            masking_array[val] = i
+        res = masking_array[array]
+        if len(unique) < 250:
+            return res.astype(np.uint8)
+        return res
 
     def get_image_for_save(self) -> np.ndarray:
         """

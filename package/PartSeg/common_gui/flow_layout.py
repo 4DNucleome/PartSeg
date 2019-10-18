@@ -77,7 +77,6 @@ class FlowLayout(QLayout):
         item = self.takeAt(0)
         while item:
             item = self.takeAt(0)
-        self.itemList.append(QLabel())
 
     def clear(self):
         item = self.takeAt(0)

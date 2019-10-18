@@ -9,9 +9,9 @@ from qtpy.QtWidgets import QMessageBox, QWidget
 from qtpy.QtCore import Signal, Slot
 
 from PartSegImage import Image
-from PartSeg.utils.algorithm_describe_base import SegmentationProfile
+from PartSegCore.algorithm_describe_base import SegmentationProfile
 from ..common_backend.base_settings import BaseSettings
-from PartSeg.utils.mask.io_functions import load_stack_segmentation, save_components, \
+from PartSegCore.mask.io_functions import load_stack_segmentation, save_components, \
     SegmentationTuple, load_metadata
 
 
@@ -62,18 +62,36 @@ class StackSettings(BaseSettings):
         # self.chosen_components_widget.set_chose(range(1, num + 1), metadata["components"])
 
     def chosen_components(self) -> List[int]:
+        """
+        Needs instance of :py:class:`PartSeg.segmentation_mask.stack_gui_main.ChosenComponents` on variable
+        Py:attr:`chosen_components_widget` (or something implementing its interface)
+
+        :return: list of chosen components
+        """
         if self.chosen_components_widget is not None:
             return sorted(self.chosen_components_widget.get_chosen())
         else:
             raise RuntimeError("chosen_components_widget do not initialized")
 
     def component_is_chosen(self, val: int) -> bool:
+        """
+        Needs instance of :py:class:`PartSeg.segmentation_mask.stack_gui_main.ChosenComponents` on variable
+        Py:attr:`chosen_components_widget` (or something implementing its interface)
+
+        :return: if given component is selected
+        """
         if self.chosen_components_widget is not None:
             return self.chosen_components_widget.get_state(val)
         else:
             raise RuntimeError("chosen_components_widget do not idealized")
 
     def components_mask(self) -> np.ndarray:
+        """
+        Needs instance of :py:class:`PartSeg.segmentation_mask.stack_gui_main.ChosenComponents` on variable
+        Py:attr:`chosen_components_widget` (or something implementing its interface)
+
+        :return: boolean mask if component is selected
+        """
         if self.chosen_components_widget is not None:
             return self.chosen_components_widget.get_mask()
         else:
@@ -88,11 +106,17 @@ class StackSettings(BaseSettings):
         if data.segmentation is not None:
             self.blockSignals(True)"""
         if data.image is not None and \
-                (self.image.file_path != data.image.file_path or self.image.shape != data.image.shape):
+                (self.image_path != data.image.file_path or self.image_shape != data.image.shape):
             self.image = data.image
         # self.blockSignals(signals)
         state = self.get_project_info()
         # TODO Remove repetition this and set_segmentation code
+
+        components = np.unique(data.segmentation)
+        if components[0] == 0 or components[0] is None:
+            components = components[1:]
+        for i in components:
+            _skip = data.segmentation_parameters[int(i)]
         if self.keep_chosen_components:
             state2 = self.transform_state(state, data.segmentation, data.segmentation_parameters,
                                           data.chosen_components, self.keep_chosen_components)
@@ -168,6 +192,10 @@ class StackSettings(BaseSettings):
         if segmentation_parameters is None:
             segmentation_parameters = defaultdict(lambda: None)
         state = self.get_project_info()
+        try:
+            self.image.fit_array_to_image(new_segmentation_data)
+        except ValueError:
+            raise ValueError("Segmentation do not fit to image")
         if save_chosen:
             state2 = self.transform_state(state, new_segmentation_data, segmentation_parameters,
                                           list_of_components,

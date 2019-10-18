@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'PartSeg'
-copyright = '2019, Grzegorz Bokota (LFSG)'
+copyright = '2019, Laboratory of Functional and Structural Genomics'
 author = 'Grzegorz Bokota (LFSG)'
 
 # The full version, including alpha/beta/rc tags
@@ -31,8 +31,8 @@ release = PartSeg.__version__
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc','sphinx.ext.intersphinx', "PartSeg.utils.sphinx.reference_resolve",
-              'sphinx.ext.viewcode'
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', "PartSegCore.sphinx.reference_resolve",
+              'sphinx.ext.viewcode', 'sphinx.ext.graphviz', "PartSegCore.sphinx.auto_parameters"
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -59,6 +59,7 @@ html_static_path = ['_static']
 master_doc = 'index'
 
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
-                       "PyQt": ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None)}
+                       "PyQt": ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None),
+                       "Numpy": ('https://docs.scipy.org/doc/numpy/', None)}
 
 qt_documentation = "Qt"

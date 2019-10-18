@@ -2,8 +2,8 @@ import itertools
 
 import numpy as np
 
-from PartSeg.utils.segmentation.border_smoothing import VoteSmoothing, IterativeVoteSmoothing, OpeningSmoothing
-from PartSeg.utils.segmentation.sprawl import NeighType
+from PartSegCore.segmentation.border_smoothing import VoteSmoothing, IterativeVoteSmoothing, OpeningSmoothing
+from PartSegCore.segmentation.sprawl import NeighType
 
 
 class TestVoteSmoothing:

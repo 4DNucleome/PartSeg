@@ -15,10 +15,10 @@ from qtpy.QtWidgets import QPushButton, QListWidget, QVBoxLayout, QHBoxLayout, Q
 from PartSeg.common_gui.error_report import ExceptionListItem, ExceptionList
 from ..common_gui.select_multiple_files import AddFiles
 from .partseg_settings import PartSettings
-from PartSeg.utils.analysis.batch_processing.batch_backend import CalculationManager
-from PartSeg.utils.analysis.calculation_plan import CalculationPlan, MaskFile, MaskMapper, Calculation
+from PartSegCore.analysis.batch_processing.batch_backend import CalculationManager
+from PartSegCore.analysis.calculation_plan import MaskFile, Calculation
 from .prepare_plan_widget import CalculatePlaner
-from ..utils.universal_const import Units
+from PartSegCore.universal_const import Units
 from ..common_gui.universal_gui_part import Spacing, right_label
 
 __author__ = "Grzegorz Bokota"
@@ -30,7 +30,7 @@ class ProgressView(QWidget):
     """
     def __init__(self, parent, batch_manager):
         QWidget.__init__(self, parent)
-        self.batch_manager = batch_manager
+        self.calculation_manager = batch_manager
         self.whole_progress = QProgressBar(self)
         self.whole_progress.setMinimum(0)
         self.whole_progress.setMaximum(1)
@@ -73,13 +73,13 @@ class ProgressView(QWidget):
         self.preview_timer.timeout.connect(self.update_info)
 
     def new_task(self):
-        self.whole_progress.setMaximum(self.batch_manager.calculation_size)
+        self.whole_progress.setMaximum(self.calculation_manager.calculation_size)
         if not self.preview_timer.isActive():
             self.update_info()
             self.preview_timer.start()
 
     def update_info(self):
-        errors, total, parts = self.batch_manager.get_results()
+        errors, total, parts = self.calculation_manager.get_results()
         for el in errors:
             ExceptionListItem(el, self.logs)
         self.whole_progress.setValue(total)
@@ -94,7 +94,9 @@ class ProgressView(QWidget):
                 item.setText("Task {} ({}/{})".format(i, progress, total))
             else:
                 self.task_que.addItem("Task {} ({}/{})".format(i, progress, total))
-        if not self.batch_manager.has_work:
+        if not self.calculation_manager.has_work:
+            print(self.calculation_manager.has_work, self.calculation_manager.batch_manager.has_work,
+                  self.calculation_manager.writer.writing_finished())
             self.part_progress.setValue(self.part_progress.maximum())
             self.preview_timer.stop()
             logging.info("Progress stop")
@@ -113,7 +115,7 @@ class ProgressView(QWidget):
         self.part_progress.setMaximum(size)
 
     def change_number_of_workers(self):
-        self.batch_manager.set_number_of_workers(self.number_of_process.value())
+        self.calculation_manager.set_number_of_workers(self.number_of_process.value())
 
 
 class FileChoose(QWidget):
@@ -222,6 +224,7 @@ class BatchWindow(QTabWidget):
         return self.working
 
     def terminate(self):
+        self.batch_manager.writer.finish()
         self.working = False
 
     def closeEvent(self, event):
@@ -376,7 +379,7 @@ class CalculationPrepare(QDialog):
     def get_data(self):
         res = {"file_list": self.file_list, "base_prefix": str(self.base_prefix.text()),
                "result_prefix": str(self.result_prefix.text()),
-               "statistic_file_path": str(self.measurement_file_path_view.text()),
+               "measurement_file_path": str(self.measurement_file_path_view.text()),
                "sheet_name": str(self.sheet_name.text()), "calculation_plan": self.calculation_plan,
                "voxel_size": self.voxel_size.get_values()}
         return Calculation(**res)

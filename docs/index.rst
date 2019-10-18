@@ -12,8 +12,7 @@ The documentation is incomplete. Many utilities are undocumented.
    :maxdepth: 2
    :caption: Contents:
 
-   utils/index
-   utils/segmentation
+   PartSegCore/index
    common_gui/index
    common_backend/index
    custom_application

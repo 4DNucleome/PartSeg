@@ -1,16 +1,16 @@
+import os.path
 import typing
-import re
 from io import BytesIO
+from pathlib import Path
 from threading import Lock
 
-from tifffile import TiffFile
-# noinspection PyProtectedMember
-from tifffile.tifffile import TiffPage
+import numpy as np
 import tifffile.tifffile
+from tifffile import TiffFile
+from czifile.czifile import CziFile
+from oiffile import OifFile
 
 from .image import Image
-import numpy as np
-import os.path
 
 
 class TiffFileException(Exception):
@@ -21,22 +21,14 @@ class TiffFileException(Exception):
     pass
 
 
-class ImageReader(object):
+class BaseImageReader:
     """
-    TIFF/LSM files reader. Base reading with :py:meth:`.read_image`
-
-    image_file: TiffFile
-    mask_file: TiffFile
+    Base class for reading image using Christopher Gholike libraries
     """
-
     def __init__(self, callback_function=None):
-        self.image_file = None
-        self.mask_file: typing.Optional[TiffFile] = None
-        self.default_spacing = 10**-6, 10**-6, 10**-6
+        self.default_spacing = 10 ** -6, 10 ** -6, 10 ** -6
         self.spacing = self.default_spacing
-        self.colors = None
-        self.labels = None
-        self.ranges = None
+        self.image_file = None
         if callback_function is None:
             self.callback_function = lambda x, y: 0
         else:
@@ -50,12 +42,25 @@ class ImageReader(object):
             raise ValueError(f"wrong spacing {spacing}")
         self.default_spacing = spacing
 
+    def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
+        """
+        Main function to read image. If ext is not set then it may be deduced from path to file.
+        If BytesIO is given and non default data file type is needed then ext need to be set
+
+        :param image_path: path to image or buffer
+        :param mask_path: path to mask or buffer
+        :param ext: extension if need to decide algorithm, if absent and image_path is path then
+            should be deduced from path
+        :return: image structure
+        """
+        raise NotImplementedError()
+
     @classmethod
     def read_image(cls, image_path: typing.Union[str, BytesIO], mask_path=None,
                    callback_function: typing.Optional[typing.Callable] = None,
-                   default_spacing: typing.List[int] = None) -> Image:
+                   default_spacing: typing.Tuple[float, float, float] = None) -> Image:
         """
-        read tiff/lsm file with optional mask file
+        read image file with optional mask file
 
         :param image_path: path or opened file contains image
         :param mask_path:
@@ -64,19 +69,136 @@ class ImageReader(object):
             (or metadata format is not supported)
         :return: image
         """
-        # TODO add genric description of callback function
+        # TODO add generic description of callback function
         instance = cls(callback_function)
         if default_spacing is not None:
             instance.set_default_spacing(default_spacing)
         return instance.read(image_path, mask_path)
 
-    def read(self, image_path: typing.Union[str, BytesIO], mask_path=None) -> Image:
+    @staticmethod
+    def update_array_shape(array: np.ndarray, axes: str):
+        """
+        Rearrange order of array axes to get proper internal axes order
+
+        :param array: array to reorder
+        :param axes: current order of array axes as string like "TZYXC"
+        """
+        try:
+            final_mapping_dict = {"T": 0, "Z": 1, "Y": 2, "X": 3, "C": 4, "I": 1, "S": 4, "Q": 1}
+            final_mapping = [final_mapping_dict[letter] for letter in axes]
+        except KeyError:
+            raise NotImplementedError("Data type not supported. Please contact with author for update code")
+        if len(final_mapping) != len(set(final_mapping)):
+            raise NotImplementedError("Data type not supported. Please contact with author for update code")
+        if len(array.shape) < 5:
+            array = np.reshape(array, array.shape + (1,) * (5 - len(array.shape)))
+
+        array = np.moveaxis(array, list(range(len(axes))), final_mapping)
+        return array
+
+
+class GenericImageReader(BaseImageReader):
+    """This class try to decide which method use base on path """
+
+    def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
+        if ext is None:
+            if isinstance(image_path, str):
+                ext = os.path.splitext(image_path)[1]
+            else:
+                ext = ".tif"
+        if ext == ".czi":
+            return CziImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
+        if ext in [".oif", ".oib"]:
+            return OifImagReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
+        else:
+            return TiffImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
+
+
+class OifImagReader(BaseImageReader):
+    def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
+        self.image_file = OifFile(image_path)
+        tiffs = self.image_file.tiffs
+        tif_file = TiffFile(self.image_file.open_file(tiffs.files[0]), name=tiffs.files[0])
+        axes = tiffs.axes + tif_file.series[0].axes
+        image_data = self.image_file.asarray()
+        image_data = self.update_array_shape(image_data, axes)
+        try:
+            flat_parm = self.image_file.mainfile['Reference Image Parameter']
+            x_scale = flat_parm['HeightConvertValue'] * name_to_scalar[flat_parm['HeightUnit']]
+            y_scale = flat_parm['WidthConvertValue'] * name_to_scalar[flat_parm['WidthUnit']]
+            i = 0
+            while True:
+                name = f'Axis {i} Parameters Common'
+                if name not in self.image_file.mainfile:
+                    z_scale = 1
+                    break
+                axis_info = self.image_file.mainfile[name]
+                if axis_info["AxisCode"] == "Z":
+                    z_scale =  axis_info["Interval"] * name_to_scalar[axis_info["UnitName"]]
+                    break
+                i += 1
+
+            self.spacing = z_scale ,x_scale, y_scale
+        except KeyError:
+            pass
+        # TODO add mask reading
+        return Image(image_data, self.spacing, file_path=os.path.abspath(image_path))
+
+
+class CziImageReader(BaseImageReader):
+    """
+    This class is to read data from czi files. Masks will be treated as TIFF.
+    """
+    def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
+        self.image_file = CziFile(image_path)
+        image_data = self.image_file.asarray()
+        image_data = self.update_array_shape(image_data, self.image_file.axes)
+        metadata = self.image_file.metadata(False)
+        try:
+            scaling = metadata['ImageDocument']['Metadata']['Scaling']['Items']['Distance']
+            scale_info = {}
+            for el in scaling:
+                scale_info[el["Id"]] = el["Value"]
+            self.spacing = scale_info.get("Z", self.default_spacing[0]), \
+                scale_info.get("Y", self.default_spacing[1]), \
+                scale_info.get("X", self.default_spacing[2]),
+        except KeyError:
+            pass
+        # TODO add mask reading
+        return Image(image_data, self.spacing, file_path=os.path.abspath(image_path))
+
+    def update_array_shape(self, array: np.ndarray, axes: str):
+        if "B" in axes:
+            index = axes.index("B")
+            if array.shape[index] != 1:
+                raise NotImplementedError("Non single dimension 'B' are not Supported by PartSeg")
+            array = array.take(0, axis=index)
+            axes = axes[:index] + axes[index+1:]
+        if axes[-1] == "0":
+            array = array[..., 0]
+            axes = axes[:-1]
+        return super().update_array_shape(array, axes)
+
+
+class TiffImageReader(BaseImageReader):
+    """
+    TIFF/LSM files reader. Base reading with :py:meth:`BaseImageReader.read_image`
+
+    image_file: TiffFile
+    mask_file: TiffFile
+    """
+
+    def __init__(self, callback_function=None):
+        super().__init__(callback_function)
+        self.image_file = None
+        self.mask_file: typing.Optional[TiffFile] = None
+        self.colors = None
+        self.labels = None
+        self.ranges = None
+
+    def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
         """
         Read tiff image from tiff_file
-
-        :param image_path:
-        :param mask_path:
-        :return: Image
         """
         self.spacing, self.colors, self.labels, self.ranges, order = self.default_spacing, None, None, None, None
         self.image_file = TiffFile(image_path)
@@ -130,21 +252,6 @@ class ImageReader(object):
         return Image(image_data, self.spacing, mask=mask_data, default_coloring=self.colors, labels=self.labels,
                      ranges=self.ranges, file_path=os.path.abspath(image_path))
 
-    @staticmethod
-    def update_array_shape(array: np.ndarray, axes: str):
-        try:
-            final_mapping_dict = {"T": 0, "Z": 1, "Y": 2, "X": 3, "C": 4, "I": 1, "S": 4, "Q": 1}
-            final_mapping = [final_mapping_dict[letter] for letter in axes]
-        except KeyError:
-            raise NotImplementedError("Data type not supported. Please contact with author for update code")
-        if len(final_mapping) != len(set(final_mapping)):
-            raise NotImplementedError("Data type not supported. Please contact with author for update code")
-        if len(array.shape) < 5:
-            array = np.reshape(array, array.shape + (1,) * (5 - len(array.shape)))
-
-        array = np.moveaxis(array, list(range(len(axes))), final_mapping)
-        return array
-
     def verify_mask(self):
         """
         verify if mask fit to image. Raise ValueError exception on error
@@ -168,6 +275,12 @@ class ImageReader(object):
 
     @staticmethod
     def decode_int(val: int):
+        """
+        This function split 32 bits int on 4 8-bits ints
+
+        :param val: value to decode
+        :return: list of four numbers with values from [0, 255]
+        """
         return [(val >> x) & 255 for x in [24, 16, 8, 0]]
 
     def read_resolution_from_tags(self):
@@ -242,6 +355,7 @@ class ImageReader(object):
 name_to_scalar = {
     "micron": 10 ** -6,
     "µm": 10 ** -6,
+    "um": 10 ** -6,
     "nm": 10 ** -9,
     "mm": 10 ** -3,
     "millimeter": 10 ** -3,
@@ -253,233 +367,3 @@ name_to_scalar = {
     "cm": 10 ** -2,
     "cal": 2.54 * 10 ** -2
 }  #: dict with known names of scalar to scalar value. May be some missed
-
-
-if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.image_reader":
-    class MyTiffPage(TiffPage):
-        """Modification of :py:class:`TiffPage` from `tifffile` package to provide progress information"""
-        def asarray(self, *args, **kwargs):
-            """
-            Modified for progress info. call original implementation and send info that page is read by
-            call parameter less function `report_func` of parent.
-            sample of usage in :py:meth:`ImageRead.read`
-            """
-            # Because of TiffFrame usage
-            res = TiffPage.asarray(self, *args, **kwargs)
-            self.parent.report_func()
-            return res
-
-        @property
-        def is_ome2(self):
-            """Page contains OME-XML in ImageDescription tag."""
-            if self.index > 1 or not self.description:
-                return False
-            d = self.description
-            return (d[:14] == '<?xml version=' or d[:15] == '<?xml version =') and \
-                   (d[-6:] == '</OME>' or d[-10:] == "</OME:OME>")
-
-        @property
-        def is_ome(self):
-            """Page contains OME-XML in ImageDescription tag."""
-            if self.index > 1 or not self.description:
-                return False
-            d = self.description
-            return re.match(r"<\?xml version *=", d[:20]) is not None and \
-                re.match(r".*</(OME:)?OME>[ \n]*$", d[-20:], re.DOTALL) is not None
-
-    TiffFile.report_func = lambda x: 0
-    tifffile.tifffile.TiffPage = MyTiffPage
-
-    if tifffile.__version__ == '0.15.1':
-        import warnings
-        import numpy
-        from tifffile import product, squeeze_axes
-        # noinspection PyProtectedMember
-        from tifffile.tifffile import TIFF, TiffPageSeries
-
-        def _ome_series(self):
-            """Return image series in OME-TIFF file(s)."""
-            from xml.etree import cElementTree as etree  # delayed import
-            omexml = self.pages[0].description
-            try:
-                root = etree.fromstring(omexml)
-            except etree.ParseError as e:
-                # TODO: test badly encoded OME-XML
-                warnings.warn('ome-xml: %s' % e)
-                # noinspection PyBroadException
-                try:
-                    # might work on Python 2
-                    omexml = omexml.decode('utf-8', 'ignore').encode('utf-8')
-                    root = etree.fromstring(omexml)
-                except Exception:
-                    return
-
-            self.pages.useframes = True
-            self.pages.keyframe = 0
-            self.pages.load()
-
-            uuid = root.attrib.get('UUID', None)
-            self._files = {uuid: self}
-            dirname = self._fh.dirname
-            modulo = {}
-            series = []
-            for element in root:
-                if element.tag.endswith('BinaryOnly'):
-                    # TODO: load OME-XML from master or companion file
-                    warnings.warn('ome-xml: not an ome-tiff master file')
-                    break
-                if element.tag.endswith('StructuredAnnotations'):
-                    for annot in element:
-                        if not annot.attrib.get('Namespace',
-                                                '').endswith('modulo'):
-                            continue
-                        for value in annot:
-                            for modul in value:
-                                for along in modul:
-                                    if not along.tag[:-1].endswith('Along'):
-                                        continue
-                                    axis = along.tag[-1]
-                                    newaxis = along.attrib.get('Type', 'other')
-                                    # noinspection PyUnresolvedReferences
-                                    newaxis = TIFF.AXES_LABELS[newaxis]
-                                    if 'Start' in along.attrib:
-                                        step = float(along.attrib.get('Step', 1))
-                                        start = float(along.attrib['Start'])
-                                        stop = float(along.attrib['End']) + step
-                                        labels = numpy.arange(start, stop, step)
-                                    else:
-                                        labels = [label.text for label in along
-                                                  if label.tag.endswith('Label')]
-                                    modulo[axis] = (newaxis, labels)
-
-                if not element.tag.endswith('Image'):
-                    continue
-
-                attr = element.attrib
-                name = attr.get('Name', None)
-
-                for pixels in element:
-                    if not pixels.tag.endswith('Pixels'):
-                        continue
-                    attr = pixels.attrib
-                    # dtype = attr.get('PixelType', None)
-                    axes = ''.join(reversed(attr['DimensionOrder']))
-                    shape = idxshape = list(int(attr['Size' + ax]) for ax in axes)
-                    size = product(shape[:-2])
-                    ifds = None
-                    spp = 1  # samples per pixel
-                    # FIXME: this implementation assumes the last two
-                    # dimensions are stored in tiff pages (shape[:-2]).
-                    # Apparently that is not always the case.
-                    for data in pixels:
-                        if data.tag.endswith('Channel'):
-                            attr = data.attrib
-                            if ifds is None:
-                                spp = int(attr.get('SamplesPerPixel', spp))
-                                ifds = [None] * (size // spp)
-                                if spp > 1:
-                                    # correct channel dimension for spp
-                                    idxshape = list((shape[i] // spp if ax == 'C'
-                                                     else shape[i])
-                                                    for i, ax in enumerate(axes))
-                            elif int(attr.get('SamplesPerPixel', 1)) != spp:
-                                raise ValueError(
-                                    "cannot handle differing SamplesPerPixel")
-                            continue
-                        if ifds is None:
-                            ifds = [None] * (size // spp)
-                        if not data.tag.endswith('TiffData'):
-                            continue
-                        attr = data.attrib
-                        ifd = int(attr.get('IFD', 0))
-                        num = int(attr.get('NumPlanes', 1 if 'IFD' in attr else 0))
-                        num = int(attr.get('PlaneCount', num))
-                        idx = [int(attr.get('First' + ax, 0)) for ax in axes[:-2]]
-                        try:
-                            idx = numpy.ravel_multi_index(idx, idxshape[:-2])
-                        except ValueError:
-                            # ImageJ produces invalid ome-xml when cropping
-                            warnings.warn('ome-xml: invalid TiffData index')
-                            continue
-                        for uuid in data:
-                            if not uuid.tag.endswith('UUID'):
-                                continue
-                            if uuid.text not in self._files:
-                                if not self._multifile:
-                                    # abort reading multifile OME series
-                                    # and fall back to generic series
-                                    return []
-                                fname = uuid.attrib['FileName']
-                                try:
-                                    tif = TiffFile(os.path.join(dirname, fname))
-                                    tif.pages.useframes = True
-                                    tif.pages.keyframe = 0
-                                    tif.pages.load()
-                                except (IOError, FileNotFoundError, ValueError):
-                                    warnings.warn(
-                                        "ome-xml: failed to read '%s'" % fname)
-                                    break
-                                self._files[uuid.text] = tif
-                                tif.close()
-                            pages = self._files[uuid.text].pages
-                            try:
-                                for i in range(num if num else len(pages)):
-                                    ifds[idx + i] = pages[ifd + i]
-                            except IndexError:
-                                warnings.warn('ome-xml: index out of range')
-                            # only process first UUID
-                            break
-                        else:
-                            pages = self.pages
-                            try:
-                                for i in range(num if num else len(pages)):
-                                    ifds[idx + i] = pages[ifd + i]
-                            except IndexError:
-                                warnings.warn('ome-xml: index out of range')
-
-                    if all(i is None for i in ifds):
-                        # skip images without data
-                        continue
-
-                    # set a keyframe on all IFDs
-                    keyframe = None
-                    for i in ifds:
-                        # try find a TiffPage
-                        if i and i == i.keyframe:
-                            keyframe = i
-                            break
-                    if not keyframe:
-                        # reload a TiffPage from file
-                        for i, keyframe in enumerate(ifds):
-                            if keyframe:
-                                keyframe.parent.pages.keyframe = keyframe.index
-                                keyframe = keyframe.parent.pages[keyframe.index]
-                                ifds[i] = keyframe
-                                break
-                    for i in ifds:
-                        if i is not None:
-                            i.keyframe = keyframe
-
-                    dtype = keyframe.dtype
-                    series.append(
-                        TiffPageSeries(ifds, shape, dtype, axes, parent=self,
-                                       name=name, stype='OME'))
-            for serie in series:
-                shape = list(serie.shape)
-                for axis, (newaxis, labels) in modulo.items():
-                    i = serie.axes.index(axis)
-                    size = len(labels)
-                    if shape[i] == size:
-                        serie.axes = serie.axes.replace(axis, newaxis, 1)
-                    else:
-                        shape[i] //= size
-                        shape.insert(i + 1, size)
-                        serie.axes = serie.axes.replace(axis, axis + newaxis, 1)
-                serie.shape = tuple(shape)
-            # squeeze dimensions
-            for serie in series:
-                serie.shape, serie.axes = squeeze_axes(serie.shape, serie.axes)
-            return series
-
-
-        tifffile.tifffile.TiffFile._ome_series = _ome_series

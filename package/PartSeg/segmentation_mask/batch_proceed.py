@@ -2,16 +2,16 @@ import re
 from collections import defaultdict
 from functools import partial
 from os import path
-from typing import Type, Optional, NamedTuple, Union, Tuple, List
+from typing import Optional, NamedTuple, Union, Tuple, List
 from queue import Queue
 
 from qtpy.QtCore import QThread, Signal
 
 from PartSeg.segmentation_mask.stack_settings import get_mask, StackSettings
-from PartSeg.utils.algorithm_describe_base import SegmentationProfile
-from PartSeg.utils.mask.algorithm_description import mask_algorithm_dict
-from PartSeg.utils.mask.io_functions import SaveSegmentation, LoadSegmentationImage, LoadImage, SegmentationTuple
-from ..utils.segmentation.algorithm_base import SegmentationAlgorithm
+from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.mask.algorithm_description import mask_algorithm_dict
+from PartSegCore.mask.io_functions import SaveSegmentation, LoadSegmentationImage, LoadStackImage, SegmentationTuple
+from PartSegCore.segmentation.algorithm_base import SegmentationAlgorithm
 
 
 class BatchTask(NamedTuple):
@@ -56,7 +56,7 @@ class BatchProceed(QThread):
                 if path.splitext(task.data)[1] == ".seg":
                     project_tuple = LoadSegmentationImage.load([task.data])
                 else:
-                    project_tuple = LoadImage.load([task.data])
+                    project_tuple = LoadStackImage.load([task.data])
             elif isinstance(task.data, SegmentationTuple):
                 project_tuple: SegmentationTuple = task.data
                 file_path = project_tuple.image.file_path

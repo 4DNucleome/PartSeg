@@ -1,13 +1,13 @@
 import itertools
 
 import pytest
-from PartSeg.utils.distance_in_structure.euclidean_cython import calculate_euclidean
+from PartSegCore.distance_in_structure.euclidean_cython import calculate_euclidean
 
-from PartSeg.utils.multiscale_opening import PyMSO, calculate_mu, MuType
+from PartSegCore.multiscale_opening import PyMSO, calculate_mu, MuType
 import numpy as np
 
-from PartSeg.utils.multiscale_opening.mso_bind import calculate_mu_mid
-from PartSeg.utils.segmentation.sprawl import NeighType, calculate_distances_array
+from PartSegCore.multiscale_opening import calculate_mu_mid
+from PartSegCore.segmentation.sprawl import NeighType, calculate_distances_array
 
 
 class TestMu:
