@@ -26,7 +26,6 @@ else:
     except ImportError:
         hiddenimports = ["imagecodecs_lite._imagecodecs_lite"]
 
-
 if platform.system() == "Windows":
     import PyQt5
     qt_path = os.path.dirname(PyQt5.__file__)
@@ -70,12 +69,24 @@ exe = EXE(pyz,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
-          console=True )
+          console=False)
 
-coll = COLLECT(exe,
-               a.binaries,
-               a.zipfiles,
-               a.datas,
-               strip=False,
-               upx=True,
-               name='PartSeg')
+if platform.system() == "Darwin":
+    app = BUNDLE(exe,
+                 a.binaries,
+                 a.zipfiles,
+                 a.datas,
+                 name="PartSeg.app",
+                 icon=os.path.join(PartSegData.__init__.icons_dir, "icon.icns"),
+                 bundle_identifier=None,
+                 info_plist={
+                     'NSHighResolutionCapable': 'True'
+                 })
+else:
+    coll = COLLECT(exe,
+                   a.binaries,
+                   a.zipfiles,
+                   a.datas,
+                   strip=False,
+                   upx=True,
+                   name='PartSeg')

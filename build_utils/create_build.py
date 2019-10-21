@@ -2,6 +2,7 @@ import codecs
 import subprocess
 import os
 import zipfile
+import tarfile
 import platform
 import re
 import sys
@@ -38,12 +39,21 @@ system_name = name_dict[platform.system()]
 
 os.makedirs(os.path.join(base_path, "dist2"), exist_ok=True)
 
-zip_file = zipfile.ZipFile(os.path.join(base_path, "dist2", f"PartSeg-{version}-{system_name}.zip"), 'w',
-                           zipfile.ZIP_DEFLATED)
+if platform.system() == "Darwin":
+    arch_file = tarfile.open(os.path.join(base_path, "dist2", f"PartSeg-{version}-{system_name}.tgz"), 'w:gz')
+    arch_file.write = arch_file.add
+else:
+    arch_file = zipfile.ZipFile(os.path.join(base_path, "dist2", f"PartSeg-{version}-{system_name}.zip"), 'w',
+                                zipfile.ZIP_DEFLATED)
 base_zip_path = os.path.join(base_path, "dist")
 
-for root, dirs, files in os.walk(os.path.join(base_path, "dist", "PartSeg"), topdown=False):
-    for file_name in files:
-        zip_file.write(os.path.join(root, file_name), os.path.relpath(os.path.join(root, file_name), base_zip_path))
+if platform.system() == "Darwin":
+    dir_name = "PartSeg.app"
+else:
+    dir_name = "PartSeg"
 
-zip_file.close()
+for root, dirs, files in os.walk(os.path.join(base_path, "dist", dir_name), topdown=False, followlinks=True):
+    for file_name in files:
+        arch_file.write(os.path.join(root, file_name), os.path.relpath(os.path.join(root, file_name), base_zip_path))
+
+arch_file.close()
