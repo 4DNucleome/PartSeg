@@ -109,7 +109,7 @@ class CalculationProcess:
                 self.algorithm_parameters = project.algorithm_parameters
 
             self.iterate_over(calculation.calculation_plan.execution_tree)
-            self.results.append((path.relpath(calculation.file_path, project.image.file_path), self.measurement))
+            self.results.append((path.relpath(project.image.file_path, calculation.base_prefix), self.measurement))
             self.measurement = []
         return self.results
 
