@@ -494,7 +494,6 @@ class MeasurementSettings(QWidget):
             self.discard_butt.setDisabled(True)
             self.save_butt.setDisabled(True)
             self.save_butt_with_name.setDisabled(True)
-        pass
 
     def delete_profile(self):
         row = self.profile_list.currentRow()

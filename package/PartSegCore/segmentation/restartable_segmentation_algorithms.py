@@ -3,7 +3,6 @@ import typing
 from abc import ABC
 from collections import defaultdict
 from copy import deepcopy
-from typing import Callable
 
 import SimpleITK
 import numpy as np
@@ -23,7 +22,7 @@ from .mu_mid_point import mu_mid_dict, BaseMuMid
 
 
 def blank_operator(_x, _y):
-    raise NotImplemented()
+    raise NotImplementedError()
 
 
 class RestartableAlgorithm(SegmentationAlgorithm, ABC):
@@ -106,7 +105,7 @@ class SplitMaskOnPart(RestartableAlgorithm):
     This class wrap the :py:class:`PartSegCore.mask_partition_utils.SplitMaskOnPart`
     class in segmentation algorithm interface.
     """
-    def calculation_run(self, report_fun: Callable[[str, int], None]) -> SegmentationResult:
+    def calculation_run(self, report_fun: typing.Callable[[str, int], None]) -> SegmentationResult:
         if self.mask is not None:
             result = SplitMaskOnPartBase.split(mask=self.mask, voxel_size=self.image.voxel_size, **self.parameters)
             return SegmentationResult(result, self.get_segmentation_profile(), result, None)
@@ -131,7 +130,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
     :type segmentation: np.ndarray
     """
 
-    threshold_operator = blank_operator
+    threshold_operator = staticmethod(blank_operator)
 
     @classmethod
     def get_fields(cls):
@@ -255,7 +254,7 @@ class OneThresholdAlgorithm(ThresholdBaseAlgorithm, ABC):
 
 
 class LowerThresholdAlgorithm(OneThresholdAlgorithm):
-    threshold_operator = operator.gt
+    threshold_operator = staticmethod(operator.gt)
 
     @classmethod
     def get_name(cls):
@@ -263,7 +262,7 @@ class LowerThresholdAlgorithm(OneThresholdAlgorithm):
 
 
 class UpperThresholdAlgorithm(OneThresholdAlgorithm):
-    threshold_operator = operator.lt
+    threshold_operator = staticmethod(operator.lt)
 
     @classmethod
     def get_name(cls):
@@ -384,7 +383,7 @@ class BaseThresholdFlowAlgorithm(RangeThresholdBaseAlgorithm, ABC):
 
 
 class LowerThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
-    threshold_operator = operator.gt
+    threshold_operator = staticmethod(operator.gt)
 
     @classmethod
     def get_name(cls):
@@ -392,7 +391,7 @@ class LowerThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
 
 
 class UpperThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
-    threshold_operator = operator.lt
+    threshold_operator = staticmethod(operator.lt)
 
     @classmethod
     def get_name(cls):
@@ -545,7 +544,7 @@ class BaseMultiScaleOpening(RangeThresholdBaseAlgorithm, ABC):
 
 
 class LowerThresholdMultiScaleOpening(BaseMultiScaleOpening):
-    threshold_operator = operator.gt
+    threshold_operator = staticmethod(operator.gt)
 
     @classmethod
     def get_name(cls):
@@ -553,7 +552,7 @@ class LowerThresholdMultiScaleOpening(BaseMultiScaleOpening):
 
 
 class UpperThresholdMultiScaleOpening(BaseMultiScaleOpening):
-    threshold_operator = operator.lt
+    threshold_operator = staticmethod(operator.lt)
 
     @classmethod
     def get_name(cls):

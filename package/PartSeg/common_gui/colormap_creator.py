@@ -199,7 +199,7 @@ class ColormapCreator(QWidget):
         self.distribute_btn = QPushButton("Distribute evenly")
         self.reverse_btn = QPushButton("Reverse")
         self.info_label = InfoLabel(
-            ["<strong>Tip:</strong> Select color and double click on below color bar. "
+            ["<strong>Tip:</strong> Select color and double click on below color bar. " +
              "Then repeat to add another colors.",
              "<strong>Tip:</strong> Double click on marker to remove it.",
              "<strong>Tip:</strong>  Press and hold mouse left button on marker to move it on color bar."], delay=10000)

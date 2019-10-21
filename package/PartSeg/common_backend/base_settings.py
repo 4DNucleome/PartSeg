@@ -1,11 +1,14 @@
-import json
-import sys
-import typing
-from pathlib import Path
-from typing import Iterator, Optional, Tuple
 import itertools
+import json
+import os
+import os.path
+import sys
 from collections.abc import MutableMapping
+from datetime import datetime
+from pathlib import Path
+from typing import Iterator, Optional, Tuple, Dict, Union, NamedTuple, List
 
+import numpy as np
 from qtpy.QtCore import QObject, Signal
 
 from PartSeg.common_backend.abstract_class import QtMeta
@@ -13,10 +16,7 @@ from PartSegCore.color_image import ColorMap, default_colormap_dict
 from PartSegCore.color_image.base_colors import starting_colors
 from PartSegCore.io_utils import ProjectInfoBase, load_metadata_base
 from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, check_loaded_dict
-import numpy as np
-from os import path, makedirs
 from PartSegImage import Image
-from datetime import datetime
 
 
 class ImageSettings(QObject):
@@ -41,7 +41,6 @@ class ImageSettings(QObject):
         self._segmentation = None
         self._noise_removed = None
         self.sizes = []
-
 
     @property
     def noise_remove_image_part(self):
@@ -143,7 +142,7 @@ class ImageSettings(QObject):
         return self._image[pos]
 
     def components_mask(self):
-        return np.array([0] + [1] * self.segmentation.max(), dtype=np.uint8)
+        return np.array([0] + [1] * np.max(self.segmentation), dtype=np.uint8)
 
 
 ColormapInfo = Tuple[ColorMap, bool]
@@ -159,14 +158,14 @@ class ColormapDict(QObject, MutableMapping, metaclass=QtMeta):
     colormap_removed = Signal(ColorMap)
     """colormap removed from dict"""
 
-    def __init__(self, editable_colormap: typing.Dict[str, ColorMap]):
+    def __init__(self, editable_colormap: Dict[str, ColorMap]):
         super().__init__()
         self.editable_colormap = editable_colormap
         self._order_dict = {name: i for i, name in
                             enumerate(itertools.chain(default_colormap_dict.keys(), editable_colormap.keys()))}
         self._counter = len(self._order_dict)
 
-    def __setitem__(self, key: str, v: typing.Union[ColormapInfo, ColorMap]) -> None:
+    def __setitem__(self, key: str, v: Union[ColormapInfo, ColorMap]) -> None:
         if not key.startswith("custom_"):
             raise ValueError("Cannot write base color")
         if isinstance(v, tuple):
@@ -302,9 +301,9 @@ class ViewSettings(ImageSettings):
         return self.view_settings_dict
 
 
-class SaveSettingsDescription(typing.NamedTuple):
+class SaveSettingsDescription(NamedTuple):
     file_name: str
-    values: typing.Union[dict, ProfileDict]
+    values: Union[dict, ProfileDict]
 
 
 class BaseSettings(ViewSettings):
@@ -322,7 +321,7 @@ class BaseSettings(ViewSettings):
     """:py:class:`~.Signal` emitted when current algorithm should be changed"""
     save_locations_keys = []
 
-    def get_save_list(self) -> typing.List[SaveSettingsDescription]:
+    def get_save_list(self) -> List[SaveSettingsDescription]:
         """List of files in which program save the state."""
         return [SaveSettingsDescription("segmentation_settings.json", self.segmentation_dict),
                 SaveSettingsDescription("view_settings.json", self.view_settings_dict)]
@@ -334,7 +333,7 @@ class BaseSettings(ViewSettings):
         self.json_folder_path = json_path
         self.last_executed_algorithm = ""
 
-    def get_path_history(self) -> typing.List[str]:
+    def get_path_history(self) -> List[str]:
         """
         return list containing last 10 elements added with :py:meth:`.add_path_history` and
         last opened in each category form :py:attr:`save_location_keys`
@@ -394,7 +393,7 @@ class BaseSettings(ViewSettings):
                 bad_key = data.filter_data()
         return data, bad_key
 
-    def dump(self, folder_path: typing.Optional[str] = None):
+    def dump(self, folder_path: Optional[str] = None):
         """
         Save current application settings to disc.
 
@@ -403,21 +402,21 @@ class BaseSettings(ViewSettings):
         """
         if folder_path is None:
             folder_path = self.json_folder_path
-        if not path.exists(folder_path):
-            makedirs(folder_path)
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
         errors_list = []
         for el in self.get_save_list():
             try:
                 dump_string = json.dumps(el.values, cls=self.json_encoder_class, indent=2)
-                with open(path.join(folder_path, el.file_name), 'w') as ff:
+                with open(os.path.join(folder_path, el.file_name), 'w') as ff:
                     ff.write(dump_string)
             except Exception as e:
-                errors_list.append((e, path.join(folder_path, el.file_name)))
+                errors_list.append((e, os.path.join(folder_path, el.file_name)))
         if errors_list:
             print(errors_list, file=sys.stderr)
         return errors_list
 
-    def load(self, folder_path: typing.Optional[str] = None):
+    def load(self, folder_path: Optional[str] = None):
         """
         Load settings state from given directory
 
@@ -428,8 +427,8 @@ class BaseSettings(ViewSettings):
             folder_path = self.json_folder_path
         errors_list = []
         for el in self.get_save_list():
-            file_path = path.join(folder_path, el.file_name)
-            if not path.exists(file_path):
+            file_path = os.path.join(folder_path, el.file_name)
+            if not os.path.exists(file_path):
                 continue
             error = False
             try:
@@ -444,8 +443,7 @@ class BaseSettings(ViewSettings):
             finally:
                 if error:
                     timestamp = datetime.today().strftime('%Y-%m-%d_%H_%M_%S')
-                    base_path, ext = path.splitext(file_path)
-                    import os
+                    base_path, ext = os.path.splitext(file_path)
                     os.rename(file_path, base_path + "_" + timestamp + ext)
 
         if errors_list:
@@ -461,6 +459,6 @@ class BaseSettings(ViewSettings):
         raise NotImplementedError
 
     @staticmethod
-    def verify_image(image: Image, silent=True) -> typing.Union[Image, bool]:
+    def verify_image(image: Image, silent=True) -> Union[Image, bool]:
         """verify if image is correct (ex. program can not support time data)"""
         raise NotImplementedError

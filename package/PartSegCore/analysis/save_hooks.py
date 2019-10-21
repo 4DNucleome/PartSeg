@@ -1,6 +1,6 @@
-from ..analysis.measurement_calculation import MeasurementProfile
 from ..json_hooks import ProfileEncoder, profile_hook
-from ..analysis.calculation_plan import CalculationPlan, CalculationTree
+from .calculation_plan import CalculationPlan, CalculationTree
+from .measurement_calculation import MeasurementProfile
 
 
 class PartEncoder(ProfileEncoder):

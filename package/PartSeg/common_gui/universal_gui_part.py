@@ -4,20 +4,18 @@ This module contains simple, useful widgets which implementation is to short to 
 """
 
 import math
-
-from sys import platform
-from enum import Enum
-from typing import Union
-
 import typing
+from enum import Enum
+from sys import platform
+
+from qtpy import PYQT5
 from qtpy.QtCore import Qt, QTimer, QRect, QPointF
+from qtpy.QtCore import Signal
 from qtpy.QtGui import QFontMetrics, QPaintEvent, QPainter, QColor
+from qtpy.QtWidgets import QWidget, QLabel, QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QComboBox, QSlider, \
+    QLineEdit, QHBoxLayout
 
 from PartSegCore.universal_const import Units, UNIT_SCALE
-from qtpy.QtWidgets import QWidget, QLabel, QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QComboBox, QSlider,\
-    QLineEdit, QHBoxLayout
-from qtpy.QtCore import Signal
-from qtpy import PYQT5
 
 if PYQT5:
     enum_type = Enum
@@ -71,7 +69,7 @@ class EnumComboBox(QComboBox):
     def _emit_signal(self):
         self.current_choose.emit(self.get_value())
 
-    def set_value(self, value: Union[Enum, int]):
+    def set_value(self, value: typing.Union[Enum, int]):
         """Set value with Eunum or int"""
         if not isinstance(value, (Enum, int)):
             return

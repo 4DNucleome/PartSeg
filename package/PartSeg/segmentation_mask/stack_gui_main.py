@@ -30,7 +30,6 @@ from ..common_gui.waiting_dialog import ExecuteFunctionDialog
 from PartSegCore.segmentation.algorithm_base import SegmentationResult
 from PartSegCore.universal_const import UNIT_SCALE, Units
 from ..common_backend.main_window import BaseMainWindow, BaseMainMenu
-from PartSeg.common_backend.progress_thread import ExecuteFunctionThread
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 from PartSegCore.mask import io_functions
 from .stack_settings import StackSettings, get_mask

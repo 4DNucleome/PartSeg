@@ -43,7 +43,7 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":
     tifffile.tifffile.TiffPage = MyTiffPage
 
     if packaging.version.parse(tifffile.__version__) <= packaging.version.parse("2019.7.26"):
-        from tifffile.tifffile import asbool
+        asbool = tifffile.tifffile.asbool
 
         def _xml2dict(xml, sanitize=True, prefix=None):
             """Return XML as dict.

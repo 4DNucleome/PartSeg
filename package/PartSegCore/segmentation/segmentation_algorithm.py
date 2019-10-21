@@ -145,8 +145,6 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
 
         self.sizes = np.bincount(self.segmentation.flat)
         ind = bisect(self.sizes[1:], self.minimum_size, lambda x, y: x > y)
-        self.threshold = self.threshold
-        self.minimum_size = self.minimum_size
         resp = np.copy(self.segmentation)
         resp[resp > ind] = 0
         if self.use_convex:

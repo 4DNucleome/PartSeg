@@ -200,7 +200,7 @@ class TiffImageReader(BaseImageReader):
         """
         Read tiff image from tiff_file
         """
-        self.spacing, self.colors, self.labels, self.ranges, order = self.default_spacing, None, None, None, None
+        self.spacing, self.colors, self.labels, self.ranges = self.default_spacing, None, None, None
         self.image_file = TiffFile(image_path)
         total_pages_num = len(self.image_file.series[0])
         if mask_path is not None:

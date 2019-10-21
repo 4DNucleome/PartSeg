@@ -1,6 +1,3 @@
-from __future__ import division
-
-import sys
 import traceback
 from collections import OrderedDict
 from enum import Enum
@@ -24,7 +21,7 @@ from ..universal_const import UNIT_SCALE, Units
 from ..utils import class_to_dict
 
 
-# TODO change image to channel in signature of measurment calculate_property
+# TODO change image to channel in signature of measurement calculate_property
 
 
 class ProhibitedDivision(Exception):
@@ -128,7 +125,6 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         """Get names for only parameters which are not 'PerComponent.Yes'"""
         labels = list(self._data_dict.keys())
         return [x for x in labels if self._type_dict[x] != PerComponent.Yes]
-
 
     def get_global_parameters(self):
         """Get only parameters which are not 'PerComponent.Yes'"""
@@ -457,7 +453,7 @@ class MeasurementProfile(object):
             except ZeroDivisionError:
                 result[self.name_prefix + user_name] = "Div by zero", "", component_and_area
             except TypeError:
-                print(traceback.print_exc(), file=sys.stderr)
+                traceback.print_exc()
                 result[self.name_prefix + user_name] = "None div", "", component_and_area
             except AttributeError:
                 result[self.name_prefix + user_name] = "No attribute", "", component_and_area

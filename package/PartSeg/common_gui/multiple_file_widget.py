@@ -191,10 +191,9 @@ class MultipleFileWidget(QWidget):
                     return
 
         try:
-
             index = self.file_list.index(state.file_path)
             item = self.file_view.topLevelItem(index)
-        except:
+        except ValueError:
             metric = QFontMetrics(self.file_view.font())
             width = self.file_view.width() - 45
             clipped_text = metric.elidedText(state.file_path, Qt.ElideLeft, width)

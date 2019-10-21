@@ -11,6 +11,7 @@ from PartSeg.common_backend.base_settings import BaseSettings
 from PartSegImage import TiffImageReader
 from PartSegData import icons_dir
 
+
 class Prepare(QThread):
     def __init__(self, module):
         super().__init__()
@@ -65,12 +66,15 @@ class MainWindow(QMainWindow):
         self.prepare = None
         self.wind = None
 
-    def launch_analysis(self):
+    def _launch_begin(self):
         self.progress.setVisible(True)
         self.progress.setRange(0, 0)
         self.analysis_button.setDisabled(True)
         self.mask_button.setDisabled(True)
         import_config()
+
+    def launch_analysis(self):
+        self._launch_begin()
         self.lib_path = "PartSeg.segmentation_analysis.main_window"
         self.final_title = "PartSeg Segmentation Analysis"
         self.prepare = Prepare(self.lib_path)
@@ -78,11 +82,7 @@ class MainWindow(QMainWindow):
         self.prepare.start()
 
     def launch_mask(self):
-        self.progress.setVisible(True)
-        self.progress.setRange(0, 0)
-        self.analysis_button.setDisabled(True)
-        self.mask_button.setDisabled(True)
-        import_config()
+        self._launch_begin()
         self.lib_path = "PartSeg.segmentation_mask.stack_gui_main"
         self.final_title = "PartSeg Mask Segmentation"
         self.prepare = Prepare(self.lib_path)

@@ -7,7 +7,7 @@ from datetime import datetime
 from enum import Enum
 from io import BytesIO, StringIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
 from pathlib import Path
-from tarfile import TarInfo, TarFile, open as tar_open
+from tarfile import TarInfo, TarFile
 
 import numpy as np
 
@@ -239,13 +239,13 @@ def open_tar_file(file_data: typing.Union[str, TarFile, TextIOBase, BufferedIOBa
     """Create tar file from path or buffer. If passed :py:class:`TarFile` then return it."""
     if isinstance(file_data, TarFile):
         tar_file = file_data
-        file_data = ""
+        file_path = ""
     elif isinstance(file_data, str):
         tar_file = TarFile.open(file_data, mode)
-        file_data = file_data
+        file_path = file_data
     elif isinstance(file_data, (TextIOBase, BufferedIOBase, RawIOBase, IOBase)):
         tar_file = TarFile.open(fileobj=file_data, mode='r')
-        file_data = ""
+        file_path = ""
     else:
         raise ValueError(f"wrong type of file_ argument: {type(file_data)}")
-    return tar_file, file_data
+    return tar_file, file_path

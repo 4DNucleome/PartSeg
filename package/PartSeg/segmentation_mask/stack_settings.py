@@ -1,18 +1,17 @@
 import typing
 from collections import defaultdict
 from copy import copy
-from typing import List
-import numpy as np
 from os import path
 
-from qtpy.QtWidgets import QMessageBox, QWidget
+import numpy as np
 from qtpy.QtCore import Signal, Slot
+from qtpy.QtWidgets import QMessageBox, QWidget
 
-from PartSegImage import Image
 from PartSegCore.algorithm_describe_base import SegmentationProfile
-from ..common_backend.base_settings import BaseSettings
 from PartSegCore.mask.io_functions import load_stack_segmentation, save_components, \
     SegmentationTuple, load_metadata
+from PartSegImage import Image
+from ..common_backend.base_settings import BaseSettings
 
 
 class StackSettings(BaseSettings):
@@ -61,7 +60,7 @@ class StackSettings(BaseSettings):
         self.components_change_list.emit(num, list(metadata["components"]))
         # self.chosen_components_widget.set_chose(range(1, num + 1), metadata["components"])
 
-    def chosen_components(self) -> List[int]:
+    def chosen_components(self) -> typing.List[int]:
         """
         Needs instance of :py:class:`PartSeg.segmentation_mask.stack_gui_main.ChosenComponents` on variable
         Py:attr:`chosen_components_widget` (or something implementing its interface)
@@ -132,7 +131,7 @@ class StackSettings(BaseSettings):
 
     @staticmethod
     def transform_state(state: SegmentationTuple, new_segmentation_data: np.ndarray,
-                        segmentation_parameters: typing.Dict, list_of_components: List[int],
+                        segmentation_parameters: typing.Dict, list_of_components: typing.List[int],
                         save_chosen: bool = True) -> SegmentationTuple:
 
         if list_of_components is None:
@@ -236,7 +235,7 @@ class StackSettings(BaseSettings):
         return True
 
 
-def get_mask(segmentation: typing.Optional[np.ndarray], chosen: List[int]):
+def get_mask(segmentation: typing.Optional[np.ndarray], chosen: typing.List[int]):
     if segmentation is None or len(chosen) == 0:
         return None
     resp = np.ones(segmentation.shape, dtype=np.uint8)

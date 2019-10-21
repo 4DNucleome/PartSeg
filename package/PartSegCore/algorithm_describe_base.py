@@ -3,7 +3,6 @@ import inspect
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from enum import Enum
-from typing import Dict
 
 from PartSegCore.channel_class import Channel
 
@@ -143,6 +142,10 @@ class Register(OrderedDict):
         for el in args:
             self.register(el)
 
+    def __eq__(self, other):
+        return super().__eq__(other) and isinstance(other, Register) and self.class_methods == other.class_methods and \
+               self.methods == other.methods and self.suggested_base_class == other.suggested_base_class
+
     def __getitem__(self, item):
         return super().__getitem__(item)
 
@@ -223,7 +226,7 @@ class SegmentationProfile(object):
                self.algorithm + "\n" + self._pretty_print(self.values, algorithm.get_fields_dict())
 
     @classmethod
-    def _pretty_print(cls, values: dict, translate_dict: Dict[str, AlgorithmProperty], indent=0):
+    def _pretty_print(cls, values: dict, translate_dict: typing.Dict[str, AlgorithmProperty], indent=0):
         res = ""
         for k, v in values.items():
             if k in translate_dict:

@@ -571,7 +571,6 @@ class CreatePlan(QWidget):
             self.mask_set.remove(name)
             self.mask_set.add(mask_ob.name)
             self.calculation_plan.replace_step(mask_ob)
-            pass
         else:
             self.mask_set.add(mask_ob.name)
             self.calculation_plan.add_step(mask_ob)

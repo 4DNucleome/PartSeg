@@ -1,10 +1,8 @@
+import collections
 import typing
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 from enum import Enum
-from typing import List, Type, Dict
-import collections
-
 
 from qtpy.QtCore import Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent
@@ -12,16 +10,16 @@ from qtpy.QtWidgets import QComboBox, QCheckBox, QWidget, QVBoxLayout, QLabel, Q
     QScrollArea, QLineEdit, QStackedLayout
 from six import with_metaclass
 
-from .dim_combobox import DimComboBox
-from .universal_gui_part import CustomSpinBox, CustomDoubleSpinBox, EnumComboBox, ChannelComboBox
-from PartSegCore.channel_class import Channel
 from PartSeg.common_gui.error_report import ErrorDialog
+from PartSegCore.algorithm_describe_base import AlgorithmProperty, AlgorithmDescribeBase, SegmentationProfile
+from PartSegCore.channel_class import Channel
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
-from PartSegCore.algorithm_describe_base import AlgorithmProperty, AlgorithmDescribeBase, SegmentationProfile
-from ..common_backend.segmentation_thread import SegmentationThread
-from ..common_backend.base_settings import ImageSettings, BaseSettings
 from PartSegImage import Image
+from .dim_combobox import DimComboBox
+from .universal_gui_part import CustomSpinBox, CustomDoubleSpinBox, EnumComboBox, ChannelComboBox
+from ..common_backend.base_settings import BaseSettings
+from ..common_backend.segmentation_thread import SegmentationThread
 
 
 def update(d, u):
@@ -383,11 +381,9 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
     gauss_radius_name = "gauss_radius"
     use_gauss_name = "use_gauss"
 
-    def __init__(self, settings: BaseSettings, name, algorithm: Type[SegmentationAlgorithm]):
+    def __init__(self, settings: BaseSettings, name, algorithm: typing.Type[SegmentationAlgorithm]):
         """
         For algorithm which works on one channel
-        :type settings: ImageSettings
-        :param settings:
         """
         super().__init__()
         self.settings = settings
@@ -456,8 +452,8 @@ class AlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
 class InteractiveAlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
     algorithm_thread: SegmentationThread
 
-    def __init__(self, settings, name, algorithm: Type[SegmentationAlgorithm],
-                 selector: List[QWidget]):
+    def __init__(self, settings, name, algorithm: typing.Type[SegmentationAlgorithm],
+                 selector: typing.List[QWidget]):
         super().__init__(settings, name, algorithm)
         self.selector = selector
         self.algorithm_thread.finished.connect(self.enable_selector)
@@ -496,7 +492,7 @@ class AlgorithmChoose(QWidget):
     progress_signal = Signal(str, int)
     algorithm_changed = Signal(str)
 
-    def __init__(self, settings: BaseSettings, algorithms: Dict[str, Type[SegmentationAlgorithm]],
+    def __init__(self, settings: BaseSettings, algorithms: typing.Dict[str, typing.Type[SegmentationAlgorithm]],
                  parent=None):
         super().__init__(parent)
         self.settings = settings

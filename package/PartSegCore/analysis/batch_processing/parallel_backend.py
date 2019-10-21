@@ -61,7 +61,6 @@ class BatchManager:
         self.in_work = False
         self.process_list = []
         self.locker = RLock()
-        pass
 
     def get_result(self) -> List[Tuple[str, Union[Any, Tuple[Exception, Any]]]]:
         """
@@ -187,7 +186,6 @@ class BatchWorker:
         self.order_queue = order_queue
         self.result_queue = result_queue
         self.calculation_dict = calculation_dict
-        pass
 
     def calculate_task(self, val):
         """

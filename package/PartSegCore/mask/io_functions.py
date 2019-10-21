@@ -4,7 +4,6 @@ import typing
 from collections import defaultdict
 from functools import partial
 from pathlib import Path
-from typing import Union
 from io import BytesIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
 
 import numpy as np
@@ -19,7 +18,7 @@ from PartSegImage import Image, ImageWriter, GenericImageReader
 
 class SegmentationTuple(ProjectInfoBase, typing.NamedTuple):
     file_path: str
-    image: Union[Image, str, None]
+    image: typing.Union[Image, str, None]
     segmentation: typing.Optional[np.ndarray] = None
     chosen_components: typing.List = []
     segmentation_parameters: typing.Dict[int, typing.Optional[SegmentationProfile]] = {}
@@ -35,9 +34,9 @@ class SegmentationTuple(ProjectInfoBase, typing.NamedTuple):
         return self._replace(*args, **kwargs)
 
 
-def save_stack_segmentation(file_data: Union[tarfile.TarFile, str, TextIOBase, BufferedIOBase, RawIOBase, IOBase],
-                            segmentation_info: SegmentationTuple, parameters: dict,
-                            range_changed=None, step_changed=None):
+def save_stack_segmentation(
+        file_data: typing.Union[tarfile.TarFile, str, TextIOBase, BufferedIOBase, RawIOBase, IOBase],
+        segmentation_info: SegmentationTuple, parameters: dict, range_changed=None, step_changed=None):
     if range_changed is None:
         range_changed = empty_fun
     if step_changed is None:

@@ -16,7 +16,7 @@ multiprocessing.freeze_support()
 
 # noinspection PyUnresolvedReferences,PyUnusedLocal
 def _test_imports():
-    app = QGuiApplication([])
+    _app = QGuiApplication([])
     from .segmentation_analysis.main_window import MainWindow
     from .segmentation_mask.stack_gui_main import MainWindow
     from .launcher.main_window import MainWindow

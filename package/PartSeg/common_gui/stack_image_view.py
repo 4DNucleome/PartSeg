@@ -723,7 +723,7 @@ class MyScrollArea(QScrollArea):
         else:
             self.resize_pixmap()
 
-    def timerEvent(self, a0: 'QTimerEvent'):
+    def timerEvent(self, a0: QTimerEvent):
         # Some try to reduce number of repaint event
         self.killTimer(self.timer_id)
         self.timer_id = 0

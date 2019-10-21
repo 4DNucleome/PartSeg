@@ -1,5 +1,4 @@
 import typing
-from typing import List, Optional, Callable
 
 from PartSegImage import Image
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
@@ -9,11 +8,11 @@ from .transform_base import TransformBase
 class SwapTimeStack(TransformBase):
     @classmethod
     def transform(cls, image: Image, arguments: dict,
-                  callback_function: Optional[Callable[[str, int], None]] = None) -> Image:
+                  callback_function: typing.Optional[typing.Callable[[str, int], None]] = None) -> Image:
         return image.swap_time_and_stack()
 
     @classmethod
-    def get_fields_per_dimension(cls, component_list: List[str]):
+    def get_fields_per_dimension(cls, component_list: typing.List[str]):
         return cls.get_fields()
 
     @classmethod

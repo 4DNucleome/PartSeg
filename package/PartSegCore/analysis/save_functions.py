@@ -13,8 +13,8 @@ from PartSegCore.algorithm_describe_base import Register
 from PartSegImage import Image, ImageWriter
 from .io_utils import ProjectTuple, project_version_info
 from ..algorithm_describe_base import AlgorithmProperty
-from ..analysis.analysis_utils import HistoryElement
-from ..analysis.save_hooks import PartEncoder
+from .analysis_utils import HistoryElement
+from .save_hooks import PartEncoder
 from ..channel_class import Channel
 from ..io_utils import get_tarinfo, SaveBase, NotSupportedImage
 from ..universal_const import UNIT_SCALE, Units
