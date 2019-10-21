@@ -27,6 +27,8 @@ from PartSegCore.analysis.calculation_plan import MaskMapper, MaskUse, MaskCreat
     Calculation, RootType
 from PartSegCore.analysis.io_utils import ProjectTuple
 from PartSegCore.analysis.load_functions import LoadMaskSegmentation, LoadProject, load_dict
+from PartSegCore.analysis.measurement_base import AreaType
+from PartSegCore.analysis.measurement_calculation import MeasurementResult
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.mask_create import calculate_mask
 from PartSegCore.segmentation.algorithm_base import report_empty_fun, SegmentationAlgorithm
@@ -109,6 +111,8 @@ class CalculationProcess:
                 self.algorithm_parameters = project.algorithm_parameters
 
             self.iterate_over(calculation.calculation_plan.execution_tree)
+            for el in self.measurement:
+                el.set_filename(path.relpath(project.image.file_path, calculation.base_prefix))
             self.results.append((path.relpath(project.image.file_path, calculation.base_prefix), self.measurement))
             self.measurement = []
         return self.results
@@ -237,7 +241,7 @@ class CalculationProcess:
 
 class ResponseData(typing.NamedTuple):
     path_to_file: str
-    values: typing.List
+    values: typing.List[MeasurementResult]
 
 
 class CalculationManager:
@@ -294,6 +298,7 @@ class CalculationManager:
                     self.errors_list.append(el)
                     new_errors.append(el)
                 else:
+                    assert isinstance(el, tuple)
                     data = ResponseData._make(el)
                     errors = self.writer.add_result(data, calculation)
                     for err in errors:
@@ -332,7 +337,7 @@ class SheetData(object):
         return self.name, self.data_frame
 
 
-class FileData(object):
+class FileData:
     component_str = "_comp_"
 
     def __init__(self, calculation: BaseCalculation):
@@ -391,6 +396,17 @@ class FileData(object):
         main_header = []
         for i, el in enumerate(component_information):
             local_header = []
+            component_seg = False
+            component_mask = False
+            for per_component, area in measurement[i].statistic_profile.get_component_and_area_info():
+                if per_component and area == AreaType.Segmentation:
+                    component_seg = True
+                if per_component and area != AreaType.Segmentation:
+                    component_mask = True
+            if component_seg:
+                local_header.append(("Segmentation component", "num"))
+            if component_mask:
+                local_header.append(("Mask component", "num"))
             if any([x[1] for x in el]):
                 sheet_list.append("{}{}{} - {}".format(calculation.sheet_name, FileData.component_str, num,
                                                        measurement[i].name_prefix + measurement[i].name))
@@ -398,9 +414,8 @@ class FileData(object):
             else:
                 sheet_list.append(None)
             for name, comp in el:
-                if comp:
-                    local_header.append(name)
-                else:
+                local_header.append(name)
+                if not comp:
                     main_header.append(name)
             header_list.append(local_header)
 
@@ -415,15 +430,8 @@ class FileData(object):
         name = data.path_to_file
         data_list = [name]
         for el, comp_sheet, comp_info in zip(data.values, component_sheets, component_information):
-            comp_list = []
-            for val, info in zip(el.values(), comp_info):
-                if info[1]:
-                    comp_list.append(val[0])
-                else:
-                    data_list.append(val[0])
-            if len(comp_list) > 0:
-                comp_list.insert(0, ["{}_comp_{}".format(name, i) for i in range(len(comp_list[0]))])
-                comp_list = zip(*comp_list)
+            data_list.extend(el.get_global_parameters()[1:])
+            comp_list = el.get_separated()
             if comp_sheet is not None:
                 comp_sheet.add_data_list(comp_list)
         main_sheet.add_data(data_list)
@@ -483,7 +491,7 @@ class FileData(object):
         return sheet_name not in self.sheet_set
 
 
-class DataWriter(object):
+class DataWriter:
     def __init__(self):
         self.file_dict: typing.Dict[str, FileData] = dict()
 

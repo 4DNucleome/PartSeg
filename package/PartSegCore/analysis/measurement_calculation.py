@@ -124,7 +124,31 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
     def get_units(self) -> List[str]:
         return [self._units_dict[x] for x in self.get_labels()]
 
+    def get_global_names(self):
+        """Get names for only parameters which are not 'PerComponent.Yes'"""
+        labels = list(self._data_dict.keys())
+        return [x for x in labels if self._type_dict[x] != PerComponent.Yes]
+
+
+    def get_global_parameters(self):
+        """Get only parameters which are not 'PerComponent.Yes'"""
+        if "File name" in self._data_dict:
+            name = self._data_dict["File name"]
+            res = [name]
+            iterator = iter(self._data_dict.keys())
+            next(iterator)
+        else:
+            res = []
+            iterator = iter(self._data_dict.keys())
+        for el in iterator:
+            per_comp, area_type = self._type_dict[el]
+            val = self._data_dict[el]
+            if per_comp != PerComponent.Yes:
+                res.append(val)
+        return res
+
     def get_separated(self) -> List[List[MeasurementValueType]]:
+        """Get measurements separated for each component"""
         has_mask_components, has_segmentation_components = self.get_component_info()
         if not (has_mask_components or has_segmentation_components):
             return [list(self._data_dict.values())]
@@ -155,7 +179,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         for el in iterator:
             per_comp, area_type = self._type_dict[el]
             val = self._data_dict[el]
-            if per_comp == PerComponent.No:
+            if per_comp != PerComponent.Yes:
                 for i in range(counts):
                     res[i].append(val)
             else:
@@ -367,6 +391,14 @@ class MeasurementProfile(object):
             for num in components:
                 res[num] = list(np.unique(mask[segmentation == num]))
         return ComponentsInfo(components, mask_components, res)
+
+    def get_component_and_area_info(self) -> List[Tuple[PerComponent, AreaType]]:
+        """For each measurement check if is per component and in which types """
+        res = []
+        for i, el in enumerate(self.chosen_fields):
+            tree, user_name = el.calculation_tree, el.name
+            res.append(self._get_par_component_and_area_type(tree))
+        return res
 
     def calculate(self, channel: np.ndarray, segmentation: np.ndarray, full_mask: np.ndarray,
                   mask: Optional[np.ndarray], voxel_size, result_units: Units,

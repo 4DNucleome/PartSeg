@@ -21,6 +21,8 @@ class MocksCalculation:
         self.file_path = file_path
 
 
+#TODO add check of per component measurements
+
 # noinspection DuplicatedCode
 class TestCalculationProcess:
     @staticmethod

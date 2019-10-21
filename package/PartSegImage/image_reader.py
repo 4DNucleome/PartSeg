@@ -134,7 +134,7 @@ class OifImagReader(BaseImageReader):
                     break
                 axis_info = self.image_file.mainfile[name]
                 if axis_info["AxisCode"] == "Z":
-                    z_scale =  axis_info["Interval"] * name_to_scalar[axis_info["UnitName"]]
+                    z_scale = axis_info["Interval"] * name_to_scalar[axis_info["UnitName"]]
                     break
                 i += 1
 
