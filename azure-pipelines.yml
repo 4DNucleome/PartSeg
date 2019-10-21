@@ -196,7 +196,7 @@ stages:
             inputs:
               pathToPublish: dist2
               artifactName: execs
-          - script: dist/PartSeg/PartSeg_exec _test
+          - script: dist/PartSeg.app/Contents/MacOS/PartSeg_exec _test
             displayName: TestBuild
 
       - job: windows_pyinstaller
