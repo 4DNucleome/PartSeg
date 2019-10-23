@@ -70,4 +70,4 @@ class StackImageView(ImageView):
             else:
                 text = "☐{}".format(self.component)
             QToolTip.showText(event.globalPos(), text)
-        return super(ImageView, self).event(event)
+        return super().event(event)

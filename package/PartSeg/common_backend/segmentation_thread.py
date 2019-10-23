@@ -17,8 +17,9 @@ class SegmentationThread(QThread):
     :py:meth:`SegmentationAlgorithm.calculation_run` return not None result.  
     """
     progress_signal = Signal(str, int)
-    """Signal with information about progress. This is proxy for :py:meth:`SegmentationAlgorithm.calculation_run` 
-    `report_fun` parameter` 
+    """
+    Signal with information about progress. This is proxy for :py:meth:`SegmentationAlgorithm.calculation_run`
+    `report_fun` parameter`
     """
     info_signal = Signal(str)
     exception_occurred = Signal(Exception)

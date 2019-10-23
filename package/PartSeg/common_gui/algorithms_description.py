@@ -535,7 +535,7 @@ class AlgorithmChoose(QWidget):
     def reload(self, algorithms=None):
         if algorithms is not None:
             self.algorithms = algorithms
-        for i in range(self.stack_layout.count()):
+        for _ in range(self.stack_layout.count()):
             widget: InteractiveAlgorithmSettingsWidget = self.stack_layout.takeAt(0).widget()
             widget.algorithm_thread.execution_done.disconnect()
             widget.algorithm_thread.finished.disconnect()
