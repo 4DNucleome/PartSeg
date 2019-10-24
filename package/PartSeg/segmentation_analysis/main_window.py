@@ -433,7 +433,11 @@ class MainMenu(BaseMainMenu):
             from qtpy.QtWidgets import QApplication
             from qtpy.QtCore import QMetaObject
             instance = QApplication.instance()
-            if isinstance(exception, MemoryError):
+            if isinstance(exception, ValueError) and exception.args[0] == "Incompatible shape of mask and image":
+                instance.warning = "Open error", "Most probably you try to load mask from other image. " \
+                                                 "Check selected files"
+                QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
+            elif isinstance(exception, MemoryError):
                 instance.warning = "Open error", f"Not enough memory to read this image: {exception}"
                 QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
             elif isinstance(exception, IOError):
