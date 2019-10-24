@@ -207,7 +207,7 @@ class UpdateLoadedMetadataBase:
 
     @classmethod
     def update_segmentation_profile(cls, profile_data: SegmentationProfile) -> SegmentationProfile:
-        for key in profile_data.values.keys():
+        for key in list(profile_data.values.keys()):
             item = profile_data.values[key]
             if isinstance(item, Enum):
                 profile_data.values[key] = cls.update_enum(item)
