@@ -98,8 +98,14 @@ class TestImageClass:
         image = OifImagReader.read_image(os.path.join(test_dir, "N2A_H2BGFP_dapi_falloidin_cycling1.oib"))
         assert image.channels == 3
         assert image.layers == 6
-
         assert np.all(np.isclose(image.spacing, (2.1e-07,) + (7.752248561753867e-08, )*2))
+
+    def test_oif_file_read(self):
+        test_dir = get_test_dir()
+        image = OifImagReader.read_image(os.path.join(test_dir, "Image0003_01.oif"))
+        assert image.channels == 1
+        assert image.layers == 49
+        assert np.all(np.isclose(image.spacing, (3.2e-07,) + (5.1e-08, )*2))
 
     def test_image_mask(self):
         Image(np.zeros((1, 10, 50, 50, 4)), (5, 5, 5), mask=np.zeros((10, 50, 50)))
