@@ -13,18 +13,6 @@ branches:
     - master
     - develop
 
-deploy:
-  provider: pypi
-  user: Massad
-  password:
-    secure: uZ0spm2vnh2Q5j30kpRDHrVWde+a9e8ABq473RSLmyxJmDoud/YlG6qCuPIzMBH+6H9Xq/ENKzb/smbqE/uHYCOzVBoSzZWNAqypOU8a+QdVRrXTpWxYoLRIHiInbb96uLeGY4VLcMXCyWNt0OpOp6w1lU30dEXi1tap3O7vDDBMINO+s5/Ro9XJj5smBXArFE4xkownJA0xWbtuby1TIysjzNf7aEysA/plMaRgUZY+DdOwht1yZatZK7CK0xdWQCDZWi2bDLbbBTPLLEdZdPG1mHp+z9xytnvp5dtFlIUI5Wud264odhO1VCz4uzLlgx7ne6OrzfPOaw4Z7pPVfzKx9Us06kZgcpb6djIAxtayfT4sZQgP08rZZ+8GRSv8KQ5HAO8BjfKxHz9vDVzff1oz8nK7VYEUKHMnDFn5nleRqnlws2YVGcHXdz2aYEmX8zC1IZfvN+UljNEZVL/MzV3dk5BUYB2BJox3bj8hAWgHLidmGi034lBqgNLUkz0RvYRNUGuaJFfzxsXZWQ48RYnODCyVbAHHw9PQDWsttDrApX1z7cqeTu29DLrbtvpMZ1WMnB7qIvDGDjYj3skkKBtz6ybojKxf80cChKLkfBldFRe8DWklOknJ2TggtgLHzmyX/86zPM/vcxANNlVBKhJxT5eKeltHylKcsOb8qd4=
-  on:
-    branch: master
-    tags: true
-  distributions: sdist bdist_wheel
-  skip_existing: true
-  skip_cleanup: true
-
 matrix:
   include:
     - name: "Python 3.6 on Xenial Linux"
@@ -35,6 +23,15 @@ matrix:
         - sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0
       services:
         - xvfb
+    - name: "Python 3.6 on Bionic Linux (pined version)"
+      python: 3.6
+      dist: bionic
+      before_install:
+        - sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0
+        - pip install -r requirements-minimal.txt
+      services:
+        - xvfb
+      script: tox -c tox-minimal.ini
     - name: "Python 3.7 on Xenial Linux"
       python: 3.7
       env: TOXENV=py37-PyQt5,py37-PySide2
