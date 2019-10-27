@@ -15,14 +15,14 @@ register_dict: holds information where register given operation type. Strongly s
 from enum import Enum
 from typing import Type
 
+from . import io_utils
+from .analysis import measurement_base, measurement_calculation, load_functions, save_functions, \
+    algorithm_description as analysis_algorithm_description
 from .algorithm_describe_base import AlgorithmDescribeBase
-from PartSegCore.analysis import measurement_base, measurement_calculation, \
-    algorithm_description as analysis_algorithm_description, load_functions, save_functions
 from .image_transforming import image_transform_dict, TransformBase
-from PartSegCore import io_utils
+from .mask import io_functions, algorithm_description as mask_algorithm_description
 from .segmentation import threshold, sprawl, segmentation_algorithm, restartable_segmentation_algorithms, \
     noise_filtering
-from .mask import io_functions, algorithm_description as mask_algorithm_description
 
 
 # from .mask.io_functions import
@@ -47,6 +47,7 @@ class RegisterEnum(Enum):
     analysis_measurement = 12  #: measurements algorithms (analysis mode)
 
 
+# noinspection DuplicatedCode
 register_dict = {
     RegisterEnum.sprawl: sprawl.sprawl_dict, RegisterEnum.threshold: threshold.threshold_dict,
     RegisterEnum.noise_filtering: noise_filtering.noise_filtering_dict,
@@ -61,6 +62,7 @@ register_dict = {
     RegisterEnum.analysis_measurement: measurement_calculation.MEASUREMENT_DICT
 }
 
+# noinspection DuplicatedCode
 base_class_dict = {
     RegisterEnum.sprawl: sprawl.BaseSprawl, RegisterEnum.threshold: threshold.BaseThreshold,
     RegisterEnum.noise_filtering: noise_filtering.NoiseFilteringBase,

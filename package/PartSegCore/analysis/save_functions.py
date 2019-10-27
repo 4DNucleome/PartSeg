@@ -9,10 +9,9 @@ import h5py
 import numpy as np
 import tifffile
 
-from PartSegCore.algorithm_describe_base import Register
 from PartSegImage import Image, ImageWriter
 from .io_utils import ProjectTuple, project_version_info
-from ..algorithm_describe_base import AlgorithmProperty
+from ..algorithm_describe_base import AlgorithmProperty, Register
 from .analysis_utils import HistoryElement
 from .save_hooks import PartEncoder
 from ..channel_class import Channel

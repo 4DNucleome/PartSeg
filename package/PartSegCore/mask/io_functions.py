@@ -9,7 +9,7 @@ from io import BytesIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
 import numpy as np
 import json
 
-from PartSegCore.analysis.save_hooks import PartEncoder
+from ..json_hooks import ProfileEncoder
 from ..io_utils import get_tarinfo, SaveBase, LoadBase, proxy_callback, ProjectInfoBase, check_segmentation_type, \
     SegmentationType, WrongFileTypeException, UpdateLoadedMetadataBase, open_tar_file
 from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationProfile
@@ -63,7 +63,7 @@ def save_stack_segmentation(
             metadata["base_file"] = os.path.relpath(file_path, os.path.dirname(file_data))
         else:
             metadata["base_file"] = file_path
-    metadata_buff = BytesIO(json.dumps(metadata, cls=PartEncoder).encode('utf-8'))
+    metadata_buff = BytesIO(json.dumps(metadata, cls=ProfileEncoder).encode('utf-8'))
     metadata_tar = get_tarinfo("metadata.json", metadata_buff)
     tar_file.addfile(metadata_tar, metadata_buff)
     step_changed(4)
@@ -309,7 +309,7 @@ class SaveParametersJSON(SaveBase):
         :return:
         """
         with open(save_location, 'w') as ff:
-            json.dump(project_info, ff, cls=PartEncoder)
+            json.dump(project_info, ff, cls=ProfileEncoder)
 
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:

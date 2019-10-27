@@ -12,16 +12,16 @@ import numpy as np
 import packaging.version
 from tifffile import TiffFile
 
-from PartSegCore.analysis.calculation_plan import CalculationPlan, CalculationTree
-from PartSegCore.mask.io_functions import LoadSegmentationImage
-from PartSegCore.universal_const import Units, UNIT_SCALE
 from PartSegImage import GenericImageReader
-from .analysis_utils import HistoryElement, SegmentationPipeline, SegmentationPipelineElement
-from .io_utils import ProjectTuple, MaskInfo, project_version_info
-from .save_hooks import part_hook
+from ..mask.io_functions import LoadSegmentationImage
+from ..universal_const import Units, UNIT_SCALE
 from ..algorithm_describe_base import Register, SegmentationProfile
 from ..io_utils import LoadBase, proxy_callback, check_segmentation_type, SegmentationType, WrongFileTypeException, \
     UpdateLoadedMetadataBase, open_tar_file
+from .analysis_utils import HistoryElement, SegmentationPipeline, SegmentationPipelineElement
+from .io_utils import ProjectTuple, MaskInfo, project_version_info
+from .calculation_plan import CalculationPlan, CalculationTree
+from .save_hooks import part_hook
 
 __all__ = ["LoadStackImage", "LoadImageMask", "LoadProject", "LoadMask", "load_dict", "load_metadata",
            "UpdateLoadedMetadataAnalysis", "LoadMaskSegmentation"]

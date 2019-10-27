@@ -7,11 +7,11 @@ from abc import abstractmethod
 from copy import copy, deepcopy
 from enum import Enum
 
-from PartSegCore.algorithm_describe_base import SegmentationProfile
-from PartSegCore.universal_const import Units
-from ..analysis.measurement_calculation import MeasurementProfile
+from ..algorithm_describe_base import SegmentationProfile
+from ..universal_const import Units
 from ..class_generator import BaseSerializableClass, enum_register
 from ..mask_create import MaskProperty
+from .measurement_calculation import MeasurementProfile
 
 
 class MaskBase:
