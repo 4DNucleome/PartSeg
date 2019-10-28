@@ -24,5 +24,5 @@ SimpleITK==1.2.0
 six==1.12.0
 sympy==1.4
 tifffile==2019.7.26
-urllib3==1.25.3
+urllib3==1.24.2
 xlrd==1.2.0
