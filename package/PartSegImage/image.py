@@ -27,7 +27,8 @@ class Image(object):
 
         """
         # TODO add time distance to image spacing
-        assert len(data.shape) == 5
+        if len(data.shape) != 5:
+            raise ValueError("Data should have 5 dimensions.")
         if not isinstance(image_spacing, tuple):
             image_spacing = tuple(image_spacing)
         self._image_array = data
@@ -250,7 +251,8 @@ class Image(object):
         """set image spacing"""
         if self.is_2d and len(value) + 1 == len(self._image_spacing):
             value = (1.0,) + tuple(value)
-        assert len(value) == len(self._image_spacing)
+        if len(value) != len(self._image_spacing):
+            raise ValueError("Correction of spacing fail.")
         self._image_spacing = tuple(value)
 
     def cut_image(self, cut_area: typing.Union[np.ndarray, typing.List[slice], typing.Tuple[slice]],

@@ -157,9 +157,10 @@ class ColorMap(BaseSerializableClass, BaseColormap):
 
 
 class ArrayColorMap(BaseColormap):
-    def __init__(self, array: typing.Iterable, scale: float=1):
+    def __init__(self, array: typing.Iterable, scale: float = 1):
         array = tuple([tuple([y * scale for y in x]) for x in array])
-        assert all(map(lambda x: len(x) == 3, array))
+        if not all(map(lambda x: len(x) == 3, array)):
+            raise ValueError("Colormaps should be defined as there channels (RGB)")
         self.array: ColorInfoType = array
 
     def bounds(self) -> typing.List[float]:

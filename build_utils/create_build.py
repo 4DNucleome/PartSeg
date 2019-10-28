@@ -14,7 +14,7 @@ else:
 
 os.chdir(base_path)
 
-subprocess.call(["python", "-m", "PyInstaller", "-y", "--debug=all", "launcher.spec"])
+subprocess.call([sys.executable, "-m", "PyInstaller", "-y", "--debug=all", "launcher.spec"])
 
 
 def read(*parts):

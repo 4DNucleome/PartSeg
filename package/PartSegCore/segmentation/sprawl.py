@@ -117,7 +117,8 @@ class MSOSprawl(BaseSprawl):
     @classmethod
     def sprawl(cls, sprawl_area: np.ndarray, core_objects: np.ndarray, data: np.ndarray, components_num: int, spacing,
                side_connection: bool, operator: Callable[[Any, Any], bool], arguments: dict, lower_bound, upper_bound):
-        assert components_num < 255
+        if components_num > 250:
+            raise ValueError("Current implementation of MSO do not support more than 250 components")
         mso = PyMSO()
         neigh, dist = calculate_distances_array(spacing, get_neigh(side_connection))
         components_arr = np.copy(core_objects).astype(np.uint8)

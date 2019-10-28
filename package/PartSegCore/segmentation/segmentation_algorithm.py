@@ -277,7 +277,9 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
 
     def set_parameters(self, **kwargs):
         fields = [x.name for x in self.get_fields() if not isinstance(x, str)]
-        assert set(fields) == set(kwargs.keys())
+        # TODO Maybe check inclusion
+        if set(fields) != set(kwargs.keys()):
+            raise ValueError("Not all fields has provided values")
         for name in fields:
             self.parameters[name] = kwargs[name]
 

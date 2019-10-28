@@ -22,7 +22,8 @@ def colormap_array_to_image(array: np.ndarray) -> NumpyQImage:
     """
     Convert colormap in array format (:py:data:`.resolution`, 3) to :py:class:`~.NumpyQImage` instance
     """
-    assert array.shape == (resolution, 3)
+    if array.shape != (resolution, 3):
+        raise ValueError(f"Wrong shape ({array.shape}) of colormap")
     img = color_image_fun(np.linspace(0, 256, 512, endpoint=False).reshape((1, 512, 1)), [array], [(0, 255)])
     return NumpyQImage(img)
 

@@ -3,17 +3,17 @@ import typing
 import PartSegData
 import numpy as np
 
-from PartSegCore.color_image.base_colors import BaseColormap, ColorMap
+from PartSegCore.color_image.base_colors import BaseColormap
 from .color_image import color_grayscale, resolution
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 color_maps = np.load(PartSegData.colors_file)
 
-color_array_dict: typing.Dict[ColorMap, np.ndarray] = {}
+color_array_dict: typing.Dict[BaseColormap, np.ndarray] = {}
 # TODO maybe replace with better cache structure
 
 
-def create_color_map(colormap_definition: BaseColormap, power: float=1.0) -> np.ndarray:
+def create_color_map(colormap_definition: BaseColormap, power: float = 1.0) -> np.ndarray:
     """
     Calculate array with approximation of colormap used by :py:func`.color_image_fun` function.
     If first or last color do not have position 0 or 1 respectively then begin or end will be filled with given color
@@ -108,8 +108,8 @@ def color_image_fun(image: np.ndarray, colors: typing.List[typing.Union[BaseColo
                 if colormap not in color_array_dict:
                     color_array_dict[colormap] = create_color_map(colormap)
                 colormap = color_array_dict[colormap]
-            assert isinstance(colormap, np.ndarray)
-            assert colormap.shape == (1024, 3)
+            if not isinstance(colormap, np.ndarray) or not colormap.shape == (resolution, 3):
+                raise ValueError(f"colormap should be passed as numpy array with shape ({resolution},3)")
             min_val, max_val = min_max[i]
 
             colored_channels[executor.submit(color_grayscale, colormap, image[..., i], min_val, max_val)] = i

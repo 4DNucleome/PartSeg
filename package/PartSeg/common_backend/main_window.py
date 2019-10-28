@@ -128,7 +128,8 @@ class BaseMainWindow(QMainWindow):
         At beginning it check number of files and if it greater than :py:attr:`.files_num` it refuse loading. Otherwise
         it call :py:meth:`.read_drop` method and this method should be overwritten in sub classes
         """
-        assert all([x.isLocalFile() for x in event.mimeData().urls()])
+        if not all([x.isLocalFile() for x in event.mimeData().urls()]):
+            QMessageBox().warning(self, "Load error", "Not all files are locally. Cannot load data.", QMessageBox.Ok)
         paths = [x.toLocalFile() for x in event.mimeData().urls()]
         if self.files_num != -1 and len(paths) > self.files_num:
             QMessageBox.information(self, "To many files", "currently support only drag and drop one file")

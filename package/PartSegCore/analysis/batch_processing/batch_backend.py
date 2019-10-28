@@ -298,7 +298,8 @@ class CalculationManager:
                     self.errors_list.append(el)
                     new_errors.append(el)
                 else:
-                    assert isinstance(el, tuple)
+                    if not isinstance(el, tuple):
+                        raise ValueError(f"el should be tuple. It is {type(el)}")
                     data = ResponseData._make(el)
                     errors = self.writer.add_result(data, calculation)
                     for err in errors:

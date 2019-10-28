@@ -624,7 +624,8 @@ class MeasurementSettings(QWidget):
     def choose_option(self):
         selected_item = self.profile_options.currentItem()
         # selected_row = self.profile_options.currentRow()
-        assert isinstance(selected_item, MeasurementListWidgetItem)
+        if not isinstance(selected_item, MeasurementListWidgetItem):
+            raise ValueError(f"Current item (type: {type(selected_item)} is not instance of MeasurementListWidgetItem")
         node = deepcopy(selected_item.stat)
         # noinspection PyTypeChecker
         node = self.get_parameters(node, self.measurement_area_choose.get_value(), self.per_component.get_value(),

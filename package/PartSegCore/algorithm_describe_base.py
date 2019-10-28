@@ -44,8 +44,8 @@ class AlgorithmProperty:
         self.single_step = single_steep
         self.tool_tip = tool_tip
         self.per_dimension = per_dimension
-        if self.value_type is list:
-            assert default_value in possible_values
+        if self.value_type is list and default_value not in possible_values:
+            raise ValueError(f"default_value ({default_value}) should be one of possible values ({possible_values}).")
 
     def __repr__(self):
         return f"{self.__class__.__module__}.{self.__class__.__name__}(name='{self.name}'," \

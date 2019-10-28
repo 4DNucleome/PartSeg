@@ -5,6 +5,7 @@ from qtpy.QtCore import Qt
 import os
 from sys import platform
 
+
 class DirectoryDialog(QDialog):
     def __init__(self, path_to_directory, additional_text=""):
         super().__init__()

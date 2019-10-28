@@ -22,7 +22,9 @@ def _test_imports():
     from .launcher.main_window import MainWindow
     from . import plugins
     plugins.register()
-    assert QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf")) != -1
+    if QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf")) == -1:
+        raise ValueError("Error with loading Symbola font")
+
 
 
 def main():

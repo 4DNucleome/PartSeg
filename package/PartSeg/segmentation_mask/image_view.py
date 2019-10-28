@@ -1,5 +1,5 @@
 from qtpy.QtCore import QEvent, Qt, QRect
-from qtpy.QtGui import QHelpEvent, QPainter, QPen, QColor
+from qtpy.QtGui import QPainter, QPen, QColor
 from qtpy.QtWidgets import QToolTip
 
 from PartSeg.common_gui.channel_control import ChannelProperty
@@ -64,7 +64,6 @@ class StackImageView(ImageView):
     def event(self, event: QEvent):
         if event.type() == QEvent.ToolTip and self.component is not None:
             # text = str(self.component)
-            assert(isinstance(event, QHelpEvent))
             if self._settings.component_is_chosen(self.component):
                 text = "☑{}".format(self.component)
             else:

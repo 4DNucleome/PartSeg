@@ -64,7 +64,8 @@ class ImageSettings(QObject):
 
     @image_spacing.setter
     def image_spacing(self, value):
-        assert (len(value) in [2, 3])
+        if len(value) not in [2, 3]:
+            raise ValueError(f"value parameter should have length 2 or 3. Current length is {len(value)}.")
         if len(value) == 2:
             self._image.set_spacing(tuple([self._image.spacing[0]] + list(value)))
         else:
