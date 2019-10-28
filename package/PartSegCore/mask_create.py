@@ -4,7 +4,7 @@ import numpy as np
 import SimpleITK as sitk
 
 from .class_generator import BaseSerializableClass
-from PartSegCore.image_operations import dilate, erode, RadiusType
+from .image_operations import dilate, erode, RadiusType
 
 
 # noinspection PyUnresolvedReferences
