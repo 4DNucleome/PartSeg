@@ -16,13 +16,14 @@ multiprocessing.freeze_support()
 
 # noinspection PyUnresolvedReferences,PyUnusedLocal
 def _test_imports():
-    _app = QGuiApplication([])
+    app = QGuiApplication([])
     from .segmentation_analysis.main_window import MainWindow
     from .segmentation_mask.stack_gui_main import MainWindow
     from .launcher.main_window import MainWindow
     from . import plugins
     plugins.register()
     assert QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf")) != -1
+    del app
 
 
 def main():

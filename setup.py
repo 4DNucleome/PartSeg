@@ -15,7 +15,7 @@ print(current_dir)
 try:
     import imagecodecs
     import imagecodecs._imagecodecs
-    imagecodecs_string = "imagecodecs"
+    imagecodecs_string = imagecodecs.__name__
 except ImportError:
     imagecodecs_string = 'imagecodecs-lite'
 
@@ -78,7 +78,7 @@ def readme():
 
 try:
     import PySide2
-    qt_string = "PySide2"
+    qt_string = PySide2.__name__
 except ImportError:
     qt_string = "PyQt5"
 
