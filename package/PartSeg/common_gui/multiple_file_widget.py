@@ -212,7 +212,7 @@ class MultipleFileWidget(QWidget):
 
     def forget(self):
         if not self.forget_btn.isEnabled():
-            return 
+            return
         self.forget_btn.setDisabled(True)
         item: QTreeWidgetItem = self.file_view.currentItem()
         self.forget_action(item)

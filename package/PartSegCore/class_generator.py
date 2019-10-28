@@ -292,8 +292,6 @@ class BaseMeta(type):
         # print("BaseMeta.__new__", mcs, name, bases, attrs)
         if attrs.get('_root', False):
             return super().__new__(mcs, name, bases, attrs)
-        """if name in class_register:
-            raise ValueError(f"Class {name} already exists")"""
         types = attrs.get("__annotations__", {})
         defaults = []
         defaults_dict = {}

@@ -78,7 +78,7 @@ def load_stack_segmentation(file_data: str, range_changed=None, step_changed=Non
     if step_changed is None:
         step_changed = empty_fun
     range_changed(0, 4)
-    tar_file, file_path = open_tar_file(file_data)
+    tar_file = open_tar_file(file_data)[0]
     if check_segmentation_type(tar_file) != SegmentationType.mask:
         raise WrongFileTypeException()
     step_changed(1)

@@ -91,7 +91,7 @@ class ProfileDict:
         if isinstance(key_path, str):
             key_path = key_path.split(".")
         curr_dict = self.my_dict
-        for i, key in enumerate(key_path):
+        for key in key_path:
             try:
                 curr_dict = curr_dict[key]
             except KeyError as e:

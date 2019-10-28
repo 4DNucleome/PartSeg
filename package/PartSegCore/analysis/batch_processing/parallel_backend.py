@@ -99,7 +99,7 @@ class BatchManager:
         for el in individual_parameters_list:
             self.task_queue.put((el, task_uuid))
         if self.number_off_available_process > self.number_off_process:
-            for i in range(self.number_off_available_process - self.number_off_process):
+            for _ in range(self.number_off_available_process - self.number_off_process):
                 self._spawn_process()
         self.in_work = True
         return task_uuid
@@ -133,7 +133,7 @@ class BatchManager:
 
     def _change_process_num(self, process_diff):
         if process_diff > 0:
-            for i in range(process_diff):
+            for _ in range(process_diff):
                 self._spawn_process()
         else:
             for i in range(-process_diff):
@@ -199,7 +199,7 @@ class BatchWorker:
             self.result_queue.put((task_uuid, fun(data, global_data)))
         except Exception as e:
             traceback.print_exc()
-            exc_type, exc_obj, exc_tb = sys.exc_info()
+            exc_type, _exc_obj, exc_tb = sys.exc_info()
             f_name = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print(exc_type, f_name, exc_tb.tb_lineno, file=sys.stderr)
             self.result_queue.put((task_uuid, [(e, traceback.extract_tb(e.__traceback__))]))

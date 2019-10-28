@@ -27,7 +27,7 @@ class ImageSettings(QObject):
     """:py:class:`Signal` ``([Image], [int], [str])`` emitted when image has changed"""
     segmentation_changed = Signal(np.ndarray)
     """
-    :py:class:`.Signal` 
+    :py:class:`.Signal`
     emitted when segmentation has changed
     """
     segmentation_clean = Signal()

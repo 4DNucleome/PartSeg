@@ -32,7 +32,7 @@ class AlgorithmProperty:
                  possible_values=None, property_type=None, tool_tip="", per_dimension=False):
         self.name = name
         self.user_name = user_name
-        if type(possible_values) is list:
+        if isinstance(possible_values, list):
             self.value_type = list
         elif property_type is not None:
             self.value_type = property_type

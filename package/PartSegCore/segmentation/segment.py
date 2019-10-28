@@ -13,9 +13,9 @@ DEBUG = True
 
 def calc_max(pos):
     maks = 0
-    for i, p in enumerate(pos):
+    for p in pos:
         tmp = (pos - p)**2
-        maks = max(maks, np.max(tmp[:,0] + tmp[:,1] + tmp[:,2]))
+        maks = max(maks, np.max(tmp[:, 0] + tmp[:, 1] + tmp[:, 2]))
     return sqrt(maks)
 
 
@@ -236,8 +236,6 @@ def simply_segment2(image, min_thresh, max_thresh, last_step=True):
     stat = sitk.MinimumMaximumImageFilter()
     stat.Execute(image)
     thr = sitk.DoubleThreshold(image,min_thresh, max_thresh,  stat.GetMaximum(), stat.GetMaximum()) # ThresholdMaximumConnectedComponents(image, min_size)
-    if DEBUG:
-        test = sitk.GetArrayFromImage(sitk.Mask(image, thr))
     n_thr = close_small_holes(sitk.GetArrayFromImage(thr), 1000)
     sitk.WriteImage(sitk.GetImageFromArray(n_thr), "tmp/tmp2.tif")
     fill1 = sitk.GetImageFromArray(n_thr)

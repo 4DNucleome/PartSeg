@@ -228,15 +228,6 @@ class Options(QWidget):
             # update combobox for pipeline
             self.update_combo_box(self.choose_pipe, self._settings.segmentation_pipelines)
             self.update_tooltips()
-            """algorithm_name =  self._settings.get("current_algorithm", self.algorithm_choose.currentText())
-            if algorithm_name != self.algorithm_choose.currentText():
-                interactive = self.interactive_use.isChecked()
-                self.interactive_use.setChecked(False)
-                try:
-                    self._change_profile(algorithm_name, self._settings.get(f"algorithms.{algorithm_name}"))
-                except KeyError:
-                    pass
-                self.interactive_use.setChecked(interactive)"""
         return super().event(event)
 
     def keyPressEvent(self, event: QKeyEvent):

@@ -68,7 +68,7 @@ class AdvancedSettings(QWidget):
         # noinspection PyUnresolvedReferences
         self.spacing[2].valueChanged.connect(self.synchronize_spacing)
         units_value = self._settings.get("units_value", Units.nm)
-        for i, el in enumerate(self.spacing):
+        for el in self.spacing:
             el.setAlignment(Qt.AlignRight)
             el.setButtonSymbols(QAbstractSpinBox.NoButtons)
             el.setRange(0, 1000000)
@@ -181,7 +181,7 @@ class AdvancedSettings(QWidget):
         value = self.units.get_value()
         if index is not None:
             self._settings.set("units_value", value)
-        for i, (el, sp) in enumerate(zip(self.spacing[::-1], self._settings.image_spacing[::-1])):
+        for el, sp in zip(self.spacing[::-1], self._settings.image_spacing[::-1]):
             el.blockSignals(True)
             current_size = sp * UNIT_SCALE[self.units.currentIndex()]
             voxel_size *= current_size
@@ -540,7 +540,7 @@ class MeasurementSettings(QWidget):
             leaf = self.get_parameters(deepcopy(item.stat), self.measurement_area_choose.get_value(),
                                        self.per_component.get_value(), self.power_num.value())
             if leaf is None:
-                return 
+                return
             lw = MeasurementListWidgetItem(
                 Node(op="/", left=self.chosen_element_area,
                      right=leaf))
@@ -720,7 +720,7 @@ class MeasurementSettings(QWidget):
         self.proportion_butt.setDisabled(True)
         self.choose_butt.setDisabled(True)
         self.discard_butt.setDisabled(True)
-        for name, profile in MEASUREMENT_DICT.items():
+        for profile in MEASUREMENT_DICT.values():
             help_text = profile.get_description()
             lw = MeasurementListWidgetItem(profile.get_starting_leaf())
             lw.setToolTip(help_text)

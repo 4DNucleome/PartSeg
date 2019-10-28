@@ -930,7 +930,7 @@ class PlanPreview(QTreeWidget):
                 self.explore_tree(root, el, True)
             return
         self.blockSignals(True)
-        for i, (path, el, op_type) in enumerate(self.calculation_plan.get_changes()):
+        for path, el, op_type in self.calculation_plan.get_changes():
             if op_type == PlanChanges.add_node:
                 node = self.get_node(path)
                 self.explore_tree(node, el, False)

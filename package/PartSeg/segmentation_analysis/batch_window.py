@@ -371,8 +371,7 @@ class CalculationPrepare(QDialog):
             if dial.exec_():
                 path = str(dial.selectedFiles())
                 self.mask_path_list[i].setText(path)
-                file_mapper = self.mask_mapper_list[pos]
-                """:type : MaskFile"""
+                file_mapper: MaskFile = self.mask_mapper_list[pos]
                 file_mapper.set_map_path(path)
         return mapping_dialog
 

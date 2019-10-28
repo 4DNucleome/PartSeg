@@ -196,9 +196,9 @@ class ListInput(QWidget):
 
 
 def any_arguments(fun):
-    def any(*_):
+    def _any(*_):
         fun()
-    return any
+    return _any
 
 
 class FormWidget(QWidget):

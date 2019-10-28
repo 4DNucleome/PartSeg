@@ -392,7 +392,7 @@ class MeasurementProfile(object):
         """For each measurement check if is per component and in which types """
         res = []
         for i, el in enumerate(self.chosen_fields):
-            tree, user_name = el.calculation_tree, el.name
+            tree = el.calculation_tree
             res.append(self._get_par_component_and_area_type(tree))
         return res
 
@@ -583,7 +583,7 @@ class Diameter(MeasurementMethodBase):
             return 0
         for i, val in enumerate([x * result_scalar for x in reversed(voxel_size)], start=1):
             pos[:, -i] *= val
-        diam_sq, cords = iterative_double_normal(pos)
+        diam_sq = iterative_double_normal(pos)[0]
         return np.sqrt(diam_sq)
 
     @classmethod

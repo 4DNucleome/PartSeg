@@ -185,7 +185,7 @@ class ColormapCreator(QWidget):
     """
     colormap_selected = Signal(ColorMap)
     """
-    emitted on save button click. Contains current colormap in format accepted by :py:func:`create_color_map` 
+    emitted on save button click. Contains current colormap in format accepted by :py:func:`create_color_map`
     """
 
     def __init__(self):
@@ -261,7 +261,7 @@ class PColormapCreator(ColormapCreator):
 
     def save(self):
         if self.show_colormap.colormap:
-            for i in range(1000):
+            for _ in range(1000):
                 rand_name = "custom_" + ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
                 if rand_name not in self.settings.colormap_dict and rand_name not in self.prohibited_names:
                     break

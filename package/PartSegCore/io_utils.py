@@ -79,6 +79,14 @@ class SaveBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict,
              range_changed=None, step_changed=None):
+        """
+
+        :param save_location: location to save, can be buffer
+        :param project_info: all project data
+        :param parameters: additional parameters for saving method
+        :param range_changed: report function for inform about steps num
+        :param step_changed: report function for progress
+        """
         raise NotImplementedError()
 
     @classmethod

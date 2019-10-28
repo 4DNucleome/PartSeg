@@ -26,8 +26,8 @@ class LoadPartSegOld(LoadBase):
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
              range_changed: typing.Callable[[int, int], typing.Any] = None,
              step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
+        """Load project from archive old format"""
         file_ob: typing.Union[str, tarfile.TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase] = load_locations[0]
-        """Load project from archive"""
         if isinstance(file_ob, tarfile.TarFile):
             tar_file = file_ob
             file_path = ""
