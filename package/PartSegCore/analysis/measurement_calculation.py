@@ -332,7 +332,7 @@ class MeasurementProfile(object):
                 else:
                     val = method.calculate_property(**kw)
                 help_dict[hash_str] = val
-            unit: symbols = method.get_units(3) if kw["channel"].shape[0] > 1 else method.get_units(2)
+            unit: symbols = method.get_units(3) if kw["channel"].shape[1] > 1 else method.get_units(2)
             if node.power != 1:
                 return pow(val, node.power), pow(unit, node.power), node.area
             return val, unit, node.area

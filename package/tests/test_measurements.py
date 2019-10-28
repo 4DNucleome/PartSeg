@@ -1104,6 +1104,30 @@ class TestStatisticProfile:
                                    voxel_size=image.voxel_size, result_units=Units.µm)
         tot_vol, seg_vol, rim_vol = list(result.values())
         assert isclose(tot_vol[0], seg_vol[0] + rim_vol[0])
+        assert result.get_units()[0] == "μm**3"
+
+    def test_square_volume_area_type(self):
+        image = get_square_image()
+        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        mask = (image.get_channel(0)[0] > 40).astype(np.uint8)
+        segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
+
+        statistics = [
+            MeasurementEntry("Mask Volume",
+                             Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)),
+            MeasurementEntry("Segmentation Volume",
+                             Volume.get_starting_leaf().replace_(area=AreaType.Segmentation,
+                                                               per_component=PerComponent.No)),
+            MeasurementEntry("Mask without segmentation Volume",
+                             Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
+                                                               per_component=PerComponent.No))
+        ]
+        profile = MeasurementProfile("statistic", statistics)
+        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
+                                   voxel_size=image.voxel_size, result_units=Units.µm)
+        tot_vol, seg_vol, rim_vol = list(result.values())
+        assert isclose(tot_vol[0], seg_vol[0] + rim_vol[0])
+        assert result.get_units()[0] == "μm**2"
 
     def test_cube_pixel_sum_area_type(self):
         image = get_cube_image()
