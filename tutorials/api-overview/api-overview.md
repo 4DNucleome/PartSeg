@@ -44,11 +44,9 @@ There are three classes
 *   `set_mask(self, mask):` - set new mask which limit area of segmentation
 
 *   `set_parameters(self, *args, **kwargs)` - set parameters from `get_fields`
- 
+
 *   `calculation_run(self, report_fun: Callable[[str, int], None]) -> SegmentationResult`- 
     the function which is called to run segmentation. It is done is separated thread. 
-
-    
 
 ## Creating Plugins
 In current stage PartSeg support plugin only for segmentation methods.
