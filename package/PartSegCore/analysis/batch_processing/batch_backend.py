@@ -27,7 +27,7 @@ from PartSegCore.analysis.calculation_plan import MaskMapper, MaskUse, MaskCreat
     Calculation, RootType
 from PartSegCore.analysis.io_utils import ProjectTuple
 from PartSegCore.analysis.load_functions import LoadMaskSegmentation, LoadProject, load_dict
-from PartSegCore.analysis.measurement_base import AreaType
+from PartSegCore.analysis.measurement_base import AreaType, PerComponent
 from PartSegCore.analysis.measurement_calculation import MeasurementResult
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.mask_create import calculate_mask
@@ -399,9 +399,9 @@ class FileData:
             component_seg = False
             component_mask = False
             for per_component, area in measurement[i].statistic_profile.get_component_and_area_info():
-                if per_component and area == AreaType.Segmentation:
+                if per_component == PerComponent.Yes and area == AreaType.Segmentation:
                     component_seg = True
-                if per_component and area != AreaType.Segmentation:
+                if per_component == PerComponent.Yes and area != AreaType.Segmentation:
                     component_mask = True
             if component_seg:
                 local_header.append(("Segmentation component", "num"))

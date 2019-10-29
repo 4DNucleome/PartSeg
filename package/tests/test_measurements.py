@@ -1082,6 +1082,7 @@ class TestSplitOnPartPixelBrightnessSum:
             part_selection=2, num_of_parts=2, equal_volume=True, area_array=mask2, mask=mask1,
             voxel_size=image.voxel_size, channel = image.get_channel(0)) == (40 * 40 ) * 70
 
+
 class TestStatisticProfile:
     def test_cube_volume_area_type(self):
         image = get_cube_image()
