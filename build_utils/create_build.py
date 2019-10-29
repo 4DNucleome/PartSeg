@@ -1,11 +1,12 @@
 import codecs
-import subprocess
 import os
-import zipfile
-import tarfile
 import platform
 import re
 import sys
+import tarfile
+import zipfile
+
+from PyInstaller.__main__ import run as pyinstaller_run
 
 if len(sys.argv) == 2:
     base_path = os.path.abspath(sys.argv[1])
@@ -14,7 +15,7 @@ else:
 
 os.chdir(base_path)
 
-subprocess.check_call([sys.executable, "-m", "PyInstaller", "-y", "--debug=all", "launcher.spec"])
+pyinstaller_run(["-y", "--debug=all", "launcher.spec"])
 
 
 def read(*parts):
