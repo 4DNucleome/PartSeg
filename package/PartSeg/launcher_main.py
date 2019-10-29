@@ -16,7 +16,7 @@ multiprocessing.freeze_support()
 
 # noinspection PyUnresolvedReferences,PyUnusedLocal
 def _test_imports():
-    _app = QGuiApplication([])
+    app = QGuiApplication([])
     from .segmentation_analysis.main_window import MainWindow
     from .segmentation_mask.stack_gui_main import MainWindow
     from .launcher.main_window import MainWindow
@@ -24,6 +24,7 @@ def _test_imports():
     plugins.register()
     if QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf")) == -1:
         raise ValueError("Error with loading Symbola font")
+    del app
 
 
 

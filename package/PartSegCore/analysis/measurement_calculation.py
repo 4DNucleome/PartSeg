@@ -10,15 +10,14 @@ import numpy as np
 from scipy.spatial.distance import cdist
 from sympy import symbols
 
-from PartSegCore import autofit as af
-from PartSegCore.analysis.measurement_base import Leaf, Node, MeasurementEntry, MeasurementMethodBase, PerComponent, \
-    AreaType
-from PartSegCore.channel_class import Channel
+from .. import autofit as af
+from ..channel_class import Channel
 from ..algorithm_describe_base import Register, AlgorithmProperty
 from ..mask_partition_utils import BorderRim, SplitMaskOnPart
 from ..class_generator import enum_register
 from ..universal_const import UNIT_SCALE, Units
 from ..utils import class_to_dict
+from .measurement_base import Leaf, Node, MeasurementEntry, MeasurementMethodBase, PerComponent, AreaType
 
 
 # TODO change image to channel in signature of measurement calculate_property
@@ -876,6 +875,7 @@ class Compactness(MeasurementMethodBase):
     def get_units(cls, ndim):
         return Surface.get_units(ndim) / Volume.get_units(ndim)
 
+
 class Sphericity(MeasurementMethodBase):
     text_info = "Sphericity", "volume/((4/3 * π * radius **3) for 3d data and volume/((π * radius **2) for 2d data"
 
@@ -1095,7 +1095,7 @@ class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
     def calculate_property(part_selection, channel, segmentation, **kwargs):
         masked = SplitMaskOnPart.split(**kwargs)
         mask = np.array(masked == part_selection)
-        if channel.ndim  - mask.ndim == 1:
+        if channel.ndim - mask.ndim == 1:
             channel = channel[0]
         return np.sum(channel[mask * segmentation > 0])
 
