@@ -62,6 +62,12 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         self._units_dict["Mask component"] = ""
         self._units_dict["Segmentation component"] = ""
 
+    def __str__(self):
+        text = ""
+        for key, val in self._data_dict.items():
+            text += f"{key}: {val}; type {self._type_dict[key]}, units {self._units_dict[key]}\n"
+        return text
+
     def __setitem__(self, k: str, v: MeasurementResultInputType) -> None:
 
         self._data_dict[k] = v[0]
@@ -215,9 +221,11 @@ class MeasurementProfile(object):
 
     def _get_par_component_and_area_type(self, tree: Union[Node, Leaf]) -> Tuple[PerComponent, AreaType]:
         if isinstance(tree, Leaf):
+            method = MEASUREMENT_DICT[tree.name]
+            area_type = method.area_type(tree.area)
             if tree.per_component == PerComponent.Mean:
-                return PerComponent.No, tree.area
-            return tree.per_component, tree.area
+                return PerComponent.No, area_type
+            return tree.per_component, area_type
         else:
             left_par, left_area = self._get_par_component_and_area_type(tree.left)
             right_par, right_area = self._get_par_component_and_area_type(tree.left)
@@ -292,6 +300,7 @@ class MeasurementProfile(object):
             kw = dict(kwargs)
             kw.update(node.dict)
             hash_str = hash_fun_call_name(method, node.dict, node.area, node.per_component, node.channel)
+            area_type = method.area_type(node.area)
             if hash_str in help_dict:
                 val = help_dict[hash_str]
             else:
@@ -304,7 +313,6 @@ class MeasurementProfile(object):
                 kw['_area'] = node.area
                 kw['_per_component'] = node.per_component
                 kw['_cache'] = True
-                area_type = method.area_type(node.area)
                 if area_type == AreaType.Mask:
                     kw["area_array"] = kw["mask"]
                 elif area_type == AreaType.Mask_without_segmentation:
@@ -333,8 +341,8 @@ class MeasurementProfile(object):
                 help_dict[hash_str] = val
             unit: symbols = method.get_units(3) if kw["channel"].shape[1] > 1 else method.get_units(2)
             if node.power != 1:
-                return pow(val, node.power), pow(unit, node.power), node.area
-            return val, unit, node.area
+                return pow(val, node.power), pow(unit, node.power), area_type
+            return val, unit, area_type
         elif isinstance(node, Node):
             left_res, left_unit, left_area = \
                 self.calculate_tree(node.left, segmentation_mask_map, help_dict, kwargs)
@@ -932,19 +940,23 @@ class RimVolume(MeasurementMethodBase):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(name=cls.text_info[0], area=AreaType.Mask, per_component=PerComponent.No)
+        return Leaf(name=cls.text_info[0], area=AreaType.Mask)
 
     @staticmethod
-    def calculate_property(segmentation, voxel_size, result_scalar, **kwargs):
+    def calculate_property(area_array, voxel_size, result_scalar, **kwargs):
         border_mask_array = BorderRim.border_mask(voxel_size=voxel_size, result_scalar=result_scalar, **kwargs)
         if border_mask_array is None:
             return None
-        final_mask = np.array((border_mask_array > 0) * (segmentation > 0))
+        final_mask = np.array((border_mask_array > 0) * (area_array > 0))
         return np.count_nonzero(final_mask) * pixel_volume(voxel_size, result_scalar)
 
     @classmethod
     def get_units(cls, ndim):
         return symbols("{}") ** 3
+
+    @staticmethod
+    def area_type(area: AreaType):
+        return AreaType.Segmentation
 
 
 class RimPixelBrightnessSum(MeasurementMethodBase):
@@ -957,10 +969,10 @@ class RimPixelBrightnessSum(MeasurementMethodBase):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(name=cls.text_info[0], area=AreaType.Mask, per_component=PerComponent.No)
+        return Leaf(name=cls.text_info[0], area=AreaType.Mask)
 
     @staticmethod
-    def calculate_property(channel, segmentation, **kwargs):
+    def calculate_property(channel, area_array, **kwargs):
         if len(channel.shape) == 4:
             if channel.shape[0] != 1:
                 raise ValueError("This measurements do not support time data")
@@ -968,7 +980,7 @@ class RimPixelBrightnessSum(MeasurementMethodBase):
         border_mask_array = BorderRim.border_mask(**kwargs)
         if border_mask_array is None:
             return None
-        final_mask = np.array((border_mask_array > 0) * (segmentation > 0))
+        final_mask = np.array((border_mask_array > 0) * (area_array > 0))
         if np.any(final_mask):
             return np.sum(channel[final_mask])
         return 0
@@ -980,6 +992,10 @@ class RimPixelBrightnessSum(MeasurementMethodBase):
     @classmethod
     def need_channel(cls):
         return True
+
+    @staticmethod
+    def area_type(area: AreaType):
+        return AreaType.Segmentation
 
 
 class DistancePoint(Enum):
@@ -1068,10 +1084,10 @@ class SplitOnPartVolume(MeasurementMethodBase):
                [AlgorithmProperty("part_selection", "Which part  (from border)", 2, (1, 1024))]
 
     @staticmethod
-    def calculate_property(part_selection, segmentation, voxel_size, result_scalar, **kwargs):
+    def calculate_property(part_selection, area_array, voxel_size, result_scalar, **kwargs):
         masked = SplitMaskOnPart.split(voxel_size=voxel_size, **kwargs)
         mask = masked == part_selection
-        return np.count_nonzero(mask * segmentation) * pixel_volume(voxel_size, result_scalar)
+        return np.count_nonzero(mask * area_array) * pixel_volume(voxel_size, result_scalar)
 
     @classmethod
     def get_units(cls, ndim):
@@ -1079,7 +1095,11 @@ class SplitOnPartVolume(MeasurementMethodBase):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(name=cls.text_info[0], area=AreaType.Mask, per_component=PerComponent.No)
+        return Leaf(name=cls.text_info[0], area=AreaType.Mask)
+
+    @staticmethod
+    def area_type(area: AreaType):
+        return AreaType.Segmentation
 
 
 class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
@@ -1092,12 +1112,12 @@ class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
                [AlgorithmProperty("part_selection", "Which part (from border)", 2, (1, 1024))]
 
     @staticmethod
-    def calculate_property(part_selection, channel, segmentation, **kwargs):
+    def calculate_property(part_selection, channel, area_array, **kwargs):
         masked = SplitMaskOnPart.split(**kwargs)
         mask = np.array(masked == part_selection)
         if channel.ndim - mask.ndim == 1:
             channel = channel[0]
-        return np.sum(channel[mask * segmentation > 0])
+        return np.sum(channel[mask * area_array > 0])
 
     @classmethod
     def get_units(cls, ndim):
@@ -1105,7 +1125,11 @@ class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(name=cls.text_info[0], area=AreaType.Mask, per_component=PerComponent.No)
+        return Leaf(name=cls.text_info[0], area=AreaType.Mask)
+
+    @staticmethod
+    def area_type(area: AreaType):
+        return AreaType.Segmentation
 
 
 def pixel_volume(spacing, result_scalar):
