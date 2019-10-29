@@ -45,6 +45,9 @@ class BaseMainMenu(QWidget):
                     data = data._replace(image=image)
             else:
                 return
+        if data is None:
+            QMessageBox().warning(self, "Data load fail", "Fail with loading data", QMessageBox.Ok)
+            return
         self.settings.set_project_info(data)
 
 
