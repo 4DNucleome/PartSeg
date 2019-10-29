@@ -36,15 +36,14 @@ If you install from repository or from pip you cat run it with `PartSeg` command
 First option do not work on Windows. 
 
 PartSeg export few commandline options: 
-- `--no_report` - disable reporting errors to authors
-- `--no_dialog` - disable reporting errors to authors and showing error dialog. Use only when running from terminal.
-- `segmentation_analysis` - skip launcher and start analysis gui
-- `segmentation` - skip launcher and start segmentation gui 
+  - `--no_report` - disable reporting errors to authors
+  - `--no_dialog` - disable reporting errors to authors and showing error dialog. Use only when running from terminal.
+  - `segmentation_analysis` - skip launcher and start analysis gui
+  - `segmentation` - skip launcher and start segmentation gui 
 
 
-## Additional remarks:
-Current version of PartSeg use `tifffile` package to read `*.tiff` files. Because newer version is easy to install
-only on Windows. If you install it manually with imagecodecs it should work.    
+## Additional remarks
+PartSeg use current `imagecodecs-lite` as backed for `tifffile`. You may install full version if `imagecodecs` manually.  
 
 
 ## Save Format
@@ -70,6 +69,6 @@ Main window of Mask Segmentation:
 
 ## Laboratory
 Laboratory of functional and structural genomics
-http://4dnucleome.cent.uw.edu.pl/
+[http://4dnucleome.cent.uw.edu.pl/](http://4dnucleome.cent.uw.edu.pl/)
 
 

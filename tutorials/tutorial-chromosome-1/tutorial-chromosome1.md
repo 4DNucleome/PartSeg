@@ -47,6 +47,7 @@ channel 1 - chromosome 1 telomere 3', channel 2 - chromosome 1 telomere 5', chan
     4. In next widow choose matching file with `_mask` suffix
     
     You can also drag and drop both files on main window
+
 2. Click the "Statistic calculation" to get preview on statistic (number 1)  
 ![PartSeg GUI](images/main_window_analysis.png) 
     * If you prefer to see booth panels and have place on screen you can preview statistic in 
