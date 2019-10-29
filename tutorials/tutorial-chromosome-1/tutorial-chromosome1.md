@@ -40,7 +40,6 @@ channel 1 - chromosome 1 telomere 3', channel 2 - chromosome 1 telomere 5', chan
     6.  Click button "Save statistic profile" (number 6)
     7.  (optionally) You can repeat steps 1-6 for statistics "Volume" and "Mask Volume" to get more information
 
-
 ### Data process
 1.  Load data:
     1.  Click **Open** button or press **ctrl+O** (cmd+O on mac)

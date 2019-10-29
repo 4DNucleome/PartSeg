@@ -92,20 +92,28 @@ In order to qauntify features of chromosome 1 territory segmentation of FISH spe
 
 7.  Set algorithm parameters to:
     1.  Use Lower Threshold Flow
-    2.  Threshold type: Base/Core 
+
+    2.  Threshold type: Base/Core
+
     3.  Core Threshold: Manual, threshold value: 19500
+
     4.  Base Threshold: Manual, threshold value: 11500
+
     5.  Flow type: MultiScale Opening Sprawl
+
     6.  Channel: 2
+
     7.  Minimum size (px): 800
+
     8.  Filter: Gauss with type Layer and radius 1
+
     9.  Connect only sides: Not checked  
         This option limits segmentation to pixels connected side by side.
 
     Chromosomal territories are irregular structures and disabling this
     option reduce a risk of losing small bumps and protrusions.
 
-12. Execute segmentation
+8. Execute segmentation
 
 Some background signal is always present in FISH, however specific signal is much brighter.
 As an example nucleus with two separate chromosome 1 territories is shown,
@@ -158,7 +166,7 @@ At the end established settings profile is used to measure features of nuclei an
     Select channel 1 and profile "test_case" created in the last paragraph. Enable **Horizontal view** and select units of choice. Execute the analysis with **Calculate and append results** button.
     Resulting table can be copied to any text, or spreadsheet file using **copy to clipboard** option.
 
-2.  Next, open file `stack1_component1.tif` and load mask file `stack1_component1_mask.tif` from `stack1_components` folder.
+3.  Next, open file `stack1_component1.tif` and load mask file `stack1_component1_mask.tif` from `stack1_components` folder.
     Without changing any parameters select **Execute** in main window and **Calculate and append results** once more.
     Second line of results shows the same set of measurements for the second nucleus. Measurements are shown in selected units.  
     ![PartSeg GUI](images/main_window_analysis2.png)
@@ -173,10 +181,10 @@ Data set contains 5 original 3D confocal images of chromosome 1 FISH. Data conta
 Data set contains 5 original 3D confocal images of chromosome 1 FISH. Data contains 2 channels: channel 2 represents DNA staining and channel 1- chromosome paint probe. Voxel size of the whole data set is 77.52x77.52x210 nm.
 [download link](http://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/chromosome_16_stacks.zip) (1.3GB).
 
-
 ### FAQ
 1.  _Cannot enable **Mask**_
     Check if you load mask. You can add it with **mask to image** file type in open dialog
+
 2.  _Enable **Mask** do not change anything_
     In **Settings and Measurements** in tab **Properties** check **Mask mark color** and **Mask mark opacity**. Mask marking can blend in background.
 
