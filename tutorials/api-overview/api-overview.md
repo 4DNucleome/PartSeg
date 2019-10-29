@@ -38,7 +38,7 @@ There are three classes
 *   Segmentation algorithms. - base class for this group is defined in `partseg_utils.segmentation.algorithm_base`
     All method from interface need to be object method.
     To get ability of restarting segmentation without calculating every step the interface contains 5 functions:
-    
+
 *   `set_image(self, image: Image)` - set new image for algorithm
 
 *   `set_mask(self, mask):` - set new mask which limit area of segmentation
