@@ -166,12 +166,15 @@ class UpdateLoadedMetadataBase:
 
     @classmethod
     def load_json_data(cls, data: typing.Union[str, Path, typing.TextIO]):
-        if isinstance(data, typing.TextIO):
-            decoded_data = json.load(data, object_hook=cls.json_hook)
-        elif os.path.exists(data):
-            with open(data, "r") as ff:
-                decoded_data = json.load(ff, object_hook=cls.json_hook)
-        else:
+        try:
+            if isinstance(data, typing.TextIO):
+                decoded_data = json.load(data, object_hook=cls.json_hook)
+            elif os.path.exists(data):
+                with open(data, "r") as ff:
+                    decoded_data = json.load(ff, object_hook=cls.json_hook)
+            else:
+                decoded_data = json.loads(data, object_hook=cls.json_hook)
+        except ValueError:
             decoded_data = json.loads(data, object_hook=cls.json_hook)
         return cls.recursive_update(decoded_data)
 
