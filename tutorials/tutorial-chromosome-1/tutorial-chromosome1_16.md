@@ -113,7 +113,7 @@ In order to qauntify features of chromosome 1 territory segmentation of FISH spe
     Chromosomal territories are irregular structures and disabling this
     option reduce a risk of losing small bumps and protrusions.
 
-8. Execute segmentation
+8.  Execute segmentation
 
 Some background signal is always present in FISH, however specific signal is much brighter.
 As an example nucleus with two separate chromosome 1 territories is shown,
