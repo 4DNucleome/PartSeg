@@ -39,6 +39,7 @@ def get_two_parts_reversed():
 
 def get_multiple_part_array(part_num):
     data = np.zeros((1, 20, 40, 40*part_num, 1), dtype=np.uint8)
+    data[0, 4:16, 8:32, 8:40*part_num-8] = 40
     for i in range(part_num):
         data[0, 5:15, 10:30, 40*i+10:40*i+30] = 50
         data[0, 7:13, 15:25, 40 * i + 15:40 * i + 25] = 70
@@ -264,7 +265,7 @@ class BaseFlowThreshold(BaseThreshold, ABC):
                 result = alg.calculation_run(empty)
                 assert result.segmentation.max() == i, key
                 assert np.all(
-                    np.bincount(result.segmentation.flat)[1:] >= np.array([4000] * i)), key
+                    np.bincount(result.segmentation.flat)[1:] >= np.array([4000] * i)), f"{key}, {i}"
                 assert result.parameters.values == parameters, key
                 assert result.parameters.algorithm == alg.get_name(), key
 
