@@ -115,11 +115,16 @@ class BaseMainWindow(QMainWindow):
 
     def _read_drop(self, paths, load_module):
         ext_set = set([os.path.splitext(x)[1] for x in paths])
+
+        def exception_hook(exception):
+            if isinstance(exception, OSError):
+                QMessageBox().warning(
+                    self, "IO Error", "Disc operation error: " + ", ".join(exception.args), QMessageBox.Ok)
         for load_class in load_module.load_dict.values():
             if load_class.partial() or load_class.number_of_files() != len(paths):
                 continue
             if ext_set.issubset(load_class.get_extensions()):
-                dial = ExecuteFunctionDialog(load_class.load, [paths])
+                dial = ExecuteFunctionDialog(load_class.load, [paths], exception_hook=exception_hook)
                 if dial.exec():
                     self.main_menu.set_data(dial.get_result())
                 return
