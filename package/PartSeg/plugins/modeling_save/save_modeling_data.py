@@ -39,15 +39,6 @@ class SaveModeling(SaveBase):
     @classmethod
     def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict,
              range_changed=None, step_changed=None):
-        """
-        
-        :param save_location: 
-        :param project_info: 
-        :param parameters:
-        :param range_changed: 
-        :param step_changed: 
-        :return: 
-        """
         if not os.path.exists(save_location):
             os.makedirs(save_location)
         if not os.path.isdir(save_location):

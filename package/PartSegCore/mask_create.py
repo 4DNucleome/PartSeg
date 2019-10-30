@@ -149,7 +149,8 @@ def fill_holes_in_mask(mask: np.ndarray, volume: int) -> np.ndarray:
     if 0 in border_set:
         border_set.remove(0)
     components_num = component_mask.max()
-    assert component_mask.dtype.type(components_num) < component_mask.dtype.type(components_num+1)
+    if component_mask.dtype.type(components_num) >= component_mask.dtype.type(components_num+1):
+        raise ValueError("overflow error")
     for num in border_set:
         component_mask[component_mask == num] = components_num + 1
     if volume > 0:

@@ -2,6 +2,7 @@ import numpy as np
 
 # this two functions are from
 # https://stackoverflow.com/questions/37117878/generating-a-filled-polygon-inside-a-numpy-array/37123933#37123933
+
 from scipy.spatial.qhull import ConvexHull, QhullError
 
 
@@ -45,7 +46,8 @@ def create_polygon(shape, vertices):
 
 
 def _convex_fill(array: np.ndarray):
-    assert array.ndim == 2
+    if array.ndim != 2:
+        raise ValueError("Convex fill need to be called on 2d array.")
     points = np.transpose(np.nonzero(array))
     try:
         convex = ConvexHull(points)
@@ -57,7 +59,8 @@ def _convex_fill(array: np.ndarray):
 
 
 def convex_fill(array: np.ndarray):
-    assert array.ndim in [2, 3]
+    if array.ndim not in [2, 3]:
+        raise ValueError("Convex hull support only 2 and 3 dimension images")
     #  res = np.zeros(array.shape, array.dtype)
     components = np.bincount(array.flat)
     for i in range(1, components.size):

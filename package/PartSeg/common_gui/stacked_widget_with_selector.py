@@ -32,7 +32,7 @@ class StackedWidgetWithSelector(QStackedWidget):
             index = self.parent().layout().indexOf(self)
             self.parent().layout().setColumnStretch(self.parent().layout().getItemPosition(index)[1], 1)
         self.selector.show()
-        
+
     def hideEvent(self, _):
         if isinstance(self.parent().layout(), QGridLayout):
             self.selector.hide()

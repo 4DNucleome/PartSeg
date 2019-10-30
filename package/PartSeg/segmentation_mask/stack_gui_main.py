@@ -200,7 +200,7 @@ class MainMenu(BaseMainMenu):
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0] + ".seg")
         if not dial.exec_():
             return
-        save_location, selected_filter, save_class, values = dial.get_result()
+        save_location, _selected_filter, save_class, values = dial.get_result()
         self.settings.set("io.save_segmentation_directory", os.path.dirname(str(save_location)))
         self.settings.add_path_history(os.path.dirname(str(save_location)))
         # self.settings.save_directory = os.path.dirname(str(file_path))
@@ -310,7 +310,6 @@ class ChosenComponents(QWidget):
     def remove_components(self):
         self.check_layout.clear()
         for el in self.check_box.values():
-            """:type el: ComponentCheckBox"""
             el.deleteLater()
             el.stateChanged.disconnect()
             el.mouse_leave.disconnect()

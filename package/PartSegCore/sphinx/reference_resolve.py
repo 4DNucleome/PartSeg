@@ -67,7 +67,7 @@ def missing_reference(app: Sphinx, env: BuildEnvironment, node: Element, contnod
     """Linking to Qt documentation."""
     target: str = node['reftarget']
     inventories = InventoryAdapter(env)
-    objtypes = None  # type: Optional[List[str]]
+    objtypes: Optional[List[str]] = None
     if node['reftype'] == 'any':
         # we search anything!
         objtypes = ['%s:%s' % (domain.name, objtype)

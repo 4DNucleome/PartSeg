@@ -299,7 +299,8 @@ class InfoLabel(QWidget):
     :param parent: passed to :py:class:`QWidget` constructor
     """
     def __init__(self, text_list: typing.List[str], delay: int = 10000, parent=None):
-        assert len(text_list) > 0
+        if len(text_list) == 0:
+            raise ValueError("List of text to show should be non empty.")
         super().__init__(parent)
         self.text_list = text_list
         self.index = 0

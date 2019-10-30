@@ -45,7 +45,7 @@ class MaskCreate(MaskBase, BaseSerializableClass):
     :ivar str ~.name: name of mask
     :ivar str ~.mask_property: instance of :py:class:`.MaskProperty`
     """
-    mask_property: MaskProperty  
+    mask_property: MaskProperty
 
     def __str__(self):
         return f"Mask create: {self.name}\n" + str(self.mask_property).split("\n", 1)[1]
@@ -143,7 +143,7 @@ def get_save_path(op: Save, calculation: 'FileCalculation') -> str:
     from PartSegCore.analysis.save_functions import save_dict
     extension = save_dict[op.algorithm].get_default_extension()
     rel_path = os.path.relpath(calculation.file_path, calculation.base_prefix)
-    rel_path, ext = os.path.splitext(rel_path)
+    rel_path = os.path.splitext(rel_path)[1]
     if op.directory:
         file_path = os.path.join(calculation.result_prefix, rel_path, op.suffix + extension)
     else:
@@ -351,7 +351,7 @@ class Calculation(BaseCalculation):
                  voxel_size):
         super().__init__(base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan, voxel_size)
         self.file_list = file_list
-        
+
     def get_base_calculation(self) -> BaseCalculation:
         """Extract py:class:`BaseCalculation` from instance."""
         base = BaseCalculation(self.base_prefix, self.result_prefix, self.measurement_file_path, self.sheet_name,
@@ -463,7 +463,7 @@ class CalculationPlan:
     def __copy__(self):
         return CalculationPlan(name=self.name, tree=deepcopy(self.execution_tree))
 
-    def __deepcopy__(self):
+    def __deepcopy__(self, memo):
         return CalculationPlan(name=self.name, tree=deepcopy(self.execution_tree))
 
     def get_node(self, search_pos=None):
@@ -657,8 +657,6 @@ class CalculationPlan:
             if el == Operations.reset_to_base:
                 return "reset project to base image with mask"
         if isinstance(el, SegmentationProfile):
-            """if el.leave_biggest:
-                return "Segmentation: {} (only biggest)".format(el.name)"""
             return "Segmentation: {}".format(el.name)
         if isinstance(el, MeasurementCalculate):
             if el.name_prefix == "":

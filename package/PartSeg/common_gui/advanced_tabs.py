@@ -1,3 +1,7 @@
+"""
+This module contains base for advanced window for PartSeg.
+In this moment controlling colormaps tabs and developer PartSegCore
+"""
 import importlib
 import sys
 from functools import partial
@@ -11,11 +15,6 @@ from PartSeg import plugins
 from PartSeg.common_gui.colormap_creator import PColormapCreator, PColormapList
 from PartSeg.common_backend.base_settings import ViewSettings
 from PartSegCore import register, state_store
-
-"""
-This module contains base for advanced window for PartSeg. 
-In this moment controlling colormaps tabs and developer PartSegCore 
-"""
 
 
 class DevelopTab(QWidget):

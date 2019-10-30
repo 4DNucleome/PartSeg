@@ -99,12 +99,16 @@ class QtAlgorithmProperty(AlgorithmProperty):
             res = QCheckBox()
         elif issubclass(self.value_type, int):
             res = CustomSpinBox()
-            assert isinstance(self.default_value, int)
+            if not isinstance(self.default_value, int):
+                raise ValueError(
+                    f"Incompatible types. default_value should be type of int. Is {type(self.default_value)}")
             if self.range is not None:
                 res.setRange(*self.range)
         elif issubclass(self.value_type, float):
             res = CustomDoubleSpinBox()
-            assert isinstance(self.default_value, float)
+            if not isinstance(self.default_value, float):
+                raise ValueError(
+                    f"Incompatible types. default_value should be type of float. Is {type(self.default_value)}")
             if self.range is not None:
                 res.setRange(*self.range)
         elif issubclass(self.value_type, str):
@@ -192,9 +196,9 @@ class ListInput(QWidget):
 
 
 def any_arguments(fun):
-    def any(*_):
+    def _any(*_):
         fun()
-    return any
+    return _any
 
 
 class FormWidget(QWidget):
@@ -270,8 +274,12 @@ class SubAlgorithmWidget(QWidget):
 
     def __init__(self, algorithm_property: AlgorithmProperty):
         super().__init__()
-        assert isinstance(algorithm_property.possible_values, dict)
-        assert isinstance(algorithm_property.default_value, str)
+        if not isinstance(algorithm_property.possible_values, dict):
+            raise ValueError("algorithm_property.possible_values should be dict."
+                             f"It is {type(algorithm_property.possible_values)}")
+        if not isinstance(algorithm_property.default_value, str):
+            raise ValueError("algorithm_property.default_value should be str."
+                             f"It is {type(algorithm_property.default_value)}")
         self.starting_values = {}
         self.property = algorithm_property
         self.widgets_dict: typing.Dict[str, FormWidget] = {}

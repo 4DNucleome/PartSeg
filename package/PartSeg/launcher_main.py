@@ -4,7 +4,7 @@ import logging
 from functools import partial
 import os
 import multiprocessing
-from qtpy.QtGui import QFontDatabase, QGuiApplication
+from qtpy.QtGui import QFontDatabase
 
 from PartSegImage import TiffImageReader
 from PartSegData import font_dir
@@ -16,13 +16,21 @@ multiprocessing.freeze_support()
 
 # noinspection PyUnresolvedReferences,PyUnusedLocal
 def _test_imports():
-    app = QGuiApplication([])
-    from .segmentation_analysis.main_window import MainWindow
-    from .segmentation_mask.stack_gui_main import MainWindow
+    from qtpy.QtWidgets import QApplication
+    app = QApplication([])
+    from .segmentation_analysis.main_window import MainWindow as AnalysisMain
+    from .segmentation_mask.stack_gui_main import MainWindow as MaskMain
     from .launcher.main_window import MainWindow
     from . import plugins
     plugins.register()
-    assert QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf")) != -1
+    w1 = AnalysisMain("test")
+    w2 = MaskMain("test")
+    w3 = MainWindow("test")
+    if QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf")) == -1:
+        raise ValueError("Error with loading Symbola font")
+    del w1
+    del w2
+    del w3
     del app
 
 

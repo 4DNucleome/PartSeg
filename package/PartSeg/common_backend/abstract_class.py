@@ -16,4 +16,3 @@ class QtMeta(type(QObject), abc.ABCMeta):
     ...    pass
 
     """
-    pass

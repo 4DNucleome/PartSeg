@@ -250,7 +250,8 @@ class ChannelProperty(QWidget):
     """
     def __init__(self, settings: ViewSettings, start_name: str):
         super().__init__()
-        assert start_name != ""
+        if start_name == "":
+            raise ValueError("ChannelProperty should have non empty start_name")
         self.current_name = start_name
         self.current_channel = 0
         self._settings = settings
@@ -301,12 +302,14 @@ class ChannelProperty(QWidget):
         widget.parameters_changed(self.current_channel)
 
     def register_widget(self, widget: 'ColorComboBoxGroup'):
-        assert widget.name not in self.widget_dict
+        if widget.name in self.widget_dict:
+            raise ValueError(f"name {widget.name} already register")
         self.widget_dict[widget.name] = widget
         self.change_current(widget.name, 0)
 
     def change_current(self, name, channel):
-        assert name in self.widget_dict
+        if name not in self.widget_dict:
+            raise ValueError(f"name {name} not in register")
         self.current_name = name
         self.current_channel = channel
         block = self.blockSignals(True)

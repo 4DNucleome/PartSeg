@@ -1,3 +1,6 @@
+node_modules
+package-lock.json
+package.json
 wheelhouse
 settings.json
 # Created by https://www.gitignore.io/api/pycharm,python,ipythonnotebook,latex,macos,qt

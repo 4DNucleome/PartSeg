@@ -15,7 +15,6 @@ from ..image_operations import RadiusType
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
 from .noise_filtering import noise_filtering_dict
 from .threshold import threshold_dict, BaseThreshold, double_threshold_dict
-from .segment import close_small_holes
 
 
 class StackAlgorithm(SegmentationAlgorithm, ABC):
@@ -277,7 +276,9 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
 
     def set_parameters(self, **kwargs):
         fields = [x.name for x in self.get_fields() if not isinstance(x, str)]
-        assert set(fields) == set(kwargs.keys())
+        # TODO Maybe check inclusion
+        if set(fields) != set(kwargs.keys()):
+            raise ValueError("Not all fields has provided values")
         for name in fields:
             self.parameters[name] = kwargs[name]
 
@@ -341,3 +342,15 @@ class AutoThresholdAlgorithm(BaseSingleThresholdAlgorithm):
 
 
 final_algorithm_list = [ThresholdAlgorithm, ThresholdFlowAlgorithm, ThresholdPreview, AutoThresholdAlgorithm]
+
+
+def close_small_holes(image, max_hole_size):
+    if image.dtype == np.bool:
+        image = image.astype(np.uint8)
+    if len(image.shape) == 2:
+        rev_conn = sitk.ConnectedComponent(sitk.BinaryNot(sitk.GetImageFromArray(image)), True)
+        return sitk.GetArrayFromImage(sitk.BinaryNot(sitk.RelabelComponent(rev_conn, max_hole_size)))
+    for layer in image:
+        rev_conn = sitk.ConnectedComponent(sitk.BinaryNot(sitk.GetImageFromArray(layer)), True)
+        layer[...] = sitk.GetArrayFromImage(sitk.BinaryNot(sitk.RelabelComponent(rev_conn, max_hole_size)))
+    return image

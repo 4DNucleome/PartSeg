@@ -113,7 +113,7 @@ class ColorSelector(QWidget):
             img = color_image_fun(np.arange(0, 256).reshape((1, 256, 1)), [val], [(0, 256)])
             self.image = QImage(img.data, 256, 1, img.dtype.itemsize * 256 * 3, QImage.Format_RGB888)
             self.preview.repaint()
-            
+
     def enterEvent(self, _):
         self.reset_block()
 

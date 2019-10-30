@@ -1,5 +1,5 @@
 """
-This module contains some not fully intuitive algorithm for splitting masked area. 
+This module contains some not fully intuitive algorithm for splitting masked area.
 They are designed for measurements, but should be also available as segmentation algorithm to
 allow user to preview, for better intuition how it works and which parameters are good for their purpose.
 

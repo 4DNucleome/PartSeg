@@ -510,7 +510,8 @@ class BaseMultiScaleOpening(RangeThresholdBaseAlgorithm, ABC):
         else:
             self.finally_segment = segment_data.segmentation
             finally_segment = segment_data.segmentation
-            assert np.max(finally_segment) < 250
+            if np.max(finally_segment) > 250:
+                raise ValueError("Current implementation of MSO do not support more than 250 components")
             components = finally_segment.astype(np.uint8)
             components[components > 0] += 1
             components[self.sprawl_area == 0] = 1

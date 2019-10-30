@@ -298,7 +298,8 @@ class CalculationManager:
                     self.errors_list.append(el)
                     new_errors.append(el)
                 else:
-                    assert isinstance(el, tuple)
+                    if not isinstance(el, tuple):
+                        raise ValueError(f"el should be tuple. It is {type(el)}")
                     data = ResponseData._make(el)
                     errors = self.writer.add_result(data, calculation)
                     for err in errors:
@@ -429,7 +430,7 @@ class FileData:
         main_sheet, component_sheets, component_information = self.sheet_dict[uuid]
         name = data.path_to_file
         data_list = [name]
-        for el, comp_sheet, comp_info in zip(data.values, component_sheets, component_information):
+        for el, comp_sheet in zip(data.values, component_sheets):
             data_list.extend(el.get_global_parameters()[1:])
             comp_list = el.get_separated()
             if comp_sheet is not None:

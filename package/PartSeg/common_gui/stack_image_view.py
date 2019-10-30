@@ -49,7 +49,8 @@ class ImageShowState(QObject):
     # changed and image need to be refreshed
 
     def __init__(self, settings: ViewSettings, name: str):
-        assert len(name) > 0
+        if len(name) == 0:
+            raise ValueError("Name string should be not empty")
         super().__init__()
         self.name = name
         self.settings = settings

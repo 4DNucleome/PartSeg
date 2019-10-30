@@ -305,7 +305,6 @@ class TiffImageReader(BaseImageReader):
         return x_spacing, y_spacing
 
     def read_imagej_metadata(self):
-        assert self.image_file.is_imagej
         try:
             z_spacing = \
                 self.image_file.imagej_metadata["spacing"] * name_to_scalar[self.image_file.imagej_metadata["unit"]]

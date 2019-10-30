@@ -13,7 +13,6 @@ This is main ui for this application
 This part of interface is used to control how channels are visualized. 
 The main and all time visible part is marked with red frame and number 1.
 
-
 ### Algorithm settings widget
 
 ![algorithm properties](images/algorithm_control.png) 

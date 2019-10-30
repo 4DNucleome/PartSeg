@@ -14,7 +14,7 @@ class SegmentationThread(QThread):
     execution_done = Signal(SegmentationResult)
     """
     Signal contains result of segmentation algorithm. Emitted if calculation ends without exception and
-    :py:meth:`SegmentationAlgorithm.calculation_run` return not None result.  
+    :py:meth:`SegmentationAlgorithm.calculation_run` return not None result.
     """
     progress_signal = Signal(str, int)
     """

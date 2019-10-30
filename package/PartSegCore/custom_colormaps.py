@@ -54,5 +54,3 @@ plt.register_cmap(cmap=black_blue)
 
 black_magenta = LinearSegmentedColormap('BlackMagenta', magenta_dict)
 plt.register_cmap(cmap=black_magenta)
-
-
