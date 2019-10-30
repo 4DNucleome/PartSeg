@@ -6,6 +6,7 @@
 [![DOI](https://zenodo.org/badge/166421141.svg)](https://zenodo.org/badge/latestdoi/166421141)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/4DNucleome/PartSeg.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/4DNucleome/PartSeg/alerts/)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/4DNucleome/PartSeg.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/4DNucleome/PartSeg/context:python)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/6c6bef8ebb6a4785a7a1a2da88524661)](https://www.codacy.com/manual/Czaki/PartSeg?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=4DNucleome/PartSeg&amp;utm_campaign=Badge_Grade)
 
 PartSeg is gui and library for segmentation algorithms.
 
