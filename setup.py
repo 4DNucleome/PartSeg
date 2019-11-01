@@ -17,7 +17,7 @@ try:
     import imagecodecs._imagecodecs
     imagecodecs_string = imagecodecs.__name__
 except ImportError:
-    imagecodecs_string = 'imagecodecs-lite'
+    imagecodecs_string = 'imagecodecs-lite>=2019.4.20'
 
 extensions = [
     Extension('PartSegCore.distance_in_structure.euclidean_cython',
@@ -80,7 +80,7 @@ try:
     import PySide2
     qt_string = PySide2.__name__
 except ImportError:
-    qt_string = "PyQt5"
+    qt_string = "PyQt5>=5.10.1"
 
 
 setuptools.setup(
@@ -96,10 +96,11 @@ setuptools.setup(
     include_package_data=True,
     long_description=readme(),
     long_description_content_type='text/markdown',
-    #  scripts=[os.path.join("package", "scripts", "PartSeg")],
-    install_requires=['numpy', "tifffile>=1.0", "czifile", "oiffile", imagecodecs_string, 'appdirs', 'SimpleITK', 'scipy', 'QtPy',
-                      'sentry_sdk==0.12.3', qt_string, 'six', 'h5py', 'packaging', 'pandas', 'sympy', 'Cython',
-                      'openpyxl', 'xlrd', 'PartSegData==0.9.4'],
+    install_requires=['numpy>=1.16.0', "tifffile>=2019.7.26", "czifile>=2019.4.20", "oiffile>=2019.1.1",
+                      imagecodecs_string, 'appdirs>=1.4.3', 'SimpleITK>=1.1.0', 'scipy>=0.19.1', 'QtPy>=1.3.1',
+                      'sentry_sdk==0.12.3', qt_string, 'six>=1.11.0', 'h5py>=2.7.1', 'packaging>=17.1',
+                      'pandas>=0.22.0', 'sympy>=1.1.1', 'Cython>=0.29.13', 'openpyxl>=2.4.9', 'xlrd>=1.1.0',
+                      'PartSegData==0.9.4', "defusedxml>=0.6.0"],
     tests_require=["pytest", "pytest-qt"],
     entry_points={
         'console_scripts': [

@@ -176,9 +176,9 @@ class QtAlgorithmProperty(AlgorithmProperty):
 class ListInput(QWidget):
     change_signal = Signal()
 
-    def __init__(self, property: QtAlgorithmProperty, length):
+    def __init__(self, property_el: QtAlgorithmProperty, length):
         super().__init__()
-        self.input_list = [property.from_algorithm_property(property) for _ in range(length)]
+        self.input_list = [property_el.from_algorithm_property(property_el) for _ in range(length)]
         layout = QVBoxLayout()
         for el in self.input_list:
             el.change_fun.connect(self.change_signal.emit)
@@ -240,7 +240,7 @@ class FormWidget(QWidget):
                 if el.name in start_values:
                     try:
                         el.set_value(start_values[el.name])
-                    except:
+                    except (KeyError, ValueError, TypeError):
                         pass
                 el.change_fun.connect(any_arguments(self.value_changed.emit))
         self.setLayout(layout)

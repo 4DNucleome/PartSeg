@@ -33,8 +33,8 @@ enum_register.register_class(PerComponent)
 
 
 class Leaf(BaseSerializableClass):
-    # noinspection PyUnusedLocal
-    # noinspection PyMissingConstructor,PyShadowingBuiltins
+    # noinspection PyMissingConstructor,PyShadowingBuiltins, PyUnusedLocal
+    # pylint: disable=W0104,W0221
     def __init__(self, name: str, dict: Dict = None, power: float = 1.0, area: Optional[AreaType] = None,
                  per_component: Optional[PerComponent] = None, channel: Optional[Channel] = None): ...
 
@@ -122,6 +122,7 @@ class Node(BaseSerializableClass):
     right: Union['Node', Leaf]
 
     # noinspection PyMissingConstructor, PyUnusedLocal
+    # pylint: disable=W0104
     def __init__(self, left: Union['Node', Leaf], op: str, right: Union['Node', Leaf]): ...
 
     def get_channel_num(self, measurement_dict: Dict[str, 'MeasurementMethodBase']):
@@ -154,6 +155,7 @@ class MeasurementEntry(BaseSerializableClass):
     __old_names__ = "StatisticEntry"
 
     # noinspection PyMissingConstructor,PyUnusedLocal
+    # pylint: disable=W0104
     def __init__(self, name: str, calculation_tree: Union[Node, Leaf]): ...
 
     name: str

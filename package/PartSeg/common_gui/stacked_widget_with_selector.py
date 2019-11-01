@@ -26,7 +26,7 @@ class StackedWidgetWithSelector(QStackedWidget):
         index = self.indexOf(widget)
         self.selector.removeItem(index)
         super().removeWidget(widget)
-        
+
     def showEvent(self, _):
         if isinstance(self.parent().layout(), QGridLayout):
             index = self.parent().layout().indexOf(self)

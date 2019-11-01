@@ -109,7 +109,6 @@ class MultipleFileWidget(QWidget):
 
     def load_files(self):
         def exception_hook(exception):
-            from qtpy.QtWidgets import QApplication
             from qtpy.QtCore import QMetaObject
             instance = QApplication.instance()
             if isinstance(exception, MemoryError):

@@ -49,7 +49,7 @@ a = Analysis(['launch_partseg.py'],
                  'sentry_sdk.integrations.excepthook','sentry_sdk.integrations.dedupe', 'sentry_sdk.integrations.atexit'
                  , 'sentry_sdk.integrations.modules', 'sentry_sdk.integrations.argv',
                  'sentry_sdk.integrations.threading', 'numpy.random.common', 'numpy.random.bounded_integers',
-                 'numpy.random.entropy', "PartSegCore.register"],
+                 'numpy.random.entropy', "PartSegCore.register", "defusedxml.cElementTree"],
              # + ["plugins." + x.name for x in plugins.get_plugins()],
              hookspath=[],
              runtime_hooks=[],

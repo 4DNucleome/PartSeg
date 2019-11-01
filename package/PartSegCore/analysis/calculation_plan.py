@@ -41,7 +41,7 @@ enum_register.register_class(RootType)
 class MaskCreate(MaskBase, BaseSerializableClass):
     """
     Description of mask creation in calculation plan.
-    
+
     :ivar str ~.name: name of mask
     :ivar str ~.mask_property: instance of :py:class:`.MaskProperty`
     """
@@ -160,7 +160,7 @@ class MaskMapper:
     name: str
     @abstractmethod
     def get_mask_path(self, file_path: str) -> str:
-        """                                                                      
+        """
         Calculate mask path based od file_path
 
         :param file_path: path to proceeded file
@@ -171,7 +171,8 @@ class MaskMapper:
     def get_parameters(self):
         pass
 
-    def is_ready(self) -> bool:
+    @staticmethod
+    def is_ready() -> bool:
         """Check if this mask mapper can be used"""
         return True
 
@@ -186,6 +187,7 @@ class MaskSuffix(MaskMapper, BaseSerializableClass):
     suffix: str
 
     # noinspection PyMissingConstructor,PyOverloads
+    # pylint: disable=W0104
     @typing.overload
     def __init__(self, name: str, suffix: str): ...
 

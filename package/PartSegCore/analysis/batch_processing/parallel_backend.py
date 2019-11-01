@@ -136,7 +136,7 @@ class BatchManager:
             for _ in range(process_diff):
                 self._spawn_process()
         else:
-            for i in range(-process_diff):
+            for _ in range(-process_diff):
                 logging.debug("[set_number_of_process] process kill")
                 self.order_queue.put(SubprocessOrder.kill)
             with self.locker:

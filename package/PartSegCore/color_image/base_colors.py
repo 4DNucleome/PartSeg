@@ -16,9 +16,9 @@ class Color(BaseSerializableClass):
     """
 
     # noinspection PyOverloads,PyMissingConstructor
+    # pylint: disable=W0104
     @typing.overload
-    def __init__(self, red: Num, green: Num, blue: Num):
-        ...
+    def __init__(self, red: Num, green: Num, blue: Num): ...
 
     red: Num
     green: Num

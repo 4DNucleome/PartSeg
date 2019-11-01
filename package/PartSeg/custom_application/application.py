@@ -1,12 +1,15 @@
+import socket
 import sys
-from qtpy.QtCore import Slot, QThread
-from qtpy.QtWidgets import QApplication, QMessageBox
-import packaging.version
 from xmlrpc import client
 
+import packaging.version
+import sentry_sdk
+from qtpy.QtCore import Slot, QThread
+from qtpy.QtWidgets import QApplication, QMessageBox
+
+from PartSegCore import state_store
 from PartSegImage import TiffFileException
 from .. import __version__
-from PartSegCore import state_store
 
 
 class CheckVersionThread(QThread):
@@ -25,8 +28,10 @@ class CheckVersionThread(QThread):
         try:
             proxy = client.ServerProxy('http://pypi.python.org/pypi')
             self.release = proxy.package_releases("PartSeg")[0]
-        except:
+        except socket.gaierror:
             pass
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
 
 
 class CustomApplication(QApplication):

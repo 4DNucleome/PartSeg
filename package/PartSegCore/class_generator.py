@@ -266,7 +266,8 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
     )
     global_state["__name__"] = 'serialize_%s' % typename
     try:
-        exec(class_definition, global_state)
+        # pylint: disable=W0122
+        exec(class_definition, global_state)  # nosec
     except AttributeError as e:
         print(class_definition, file=sys.stderr)
         raise e
@@ -369,14 +370,6 @@ class BaseSerializableClass(metaclass=BaseMeta):
     @classmethod
     def make_(cls, iterable):
         pass
-
-    """def __new__(cls, *fields, **kwargs):
-        ob = super().__new__(cls)
-        cls.__init__(ob, *fields, **kwargs)
-        return ob
-
-    def __init__(self, *args, **kwargs):
-        pass"""
 
 
 class SerializeClassEncoder(json.JSONEncoder):

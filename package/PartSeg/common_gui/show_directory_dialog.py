@@ -30,11 +30,11 @@ class DirectoryDialog(QDialog):
 
     def open_folder(self):
         if platform == "linux" or platform == "linux2":
-            subprocess.Popen(["xdg-open", self.path_to_directory])
+            subprocess.Popen(["xdg-open", self.path_to_directory])  # nosec
         elif platform == "darwin":
-            subprocess.Popen(["open", self.path_to_directory])
+            subprocess.Popen(["open", self.path_to_directory])  # nosec
         elif platform == "win32":
-            os.startfile(self.path_to_directory)
+            os.startfile(self.path_to_directory)  # nosec
         self.accept()
 
 

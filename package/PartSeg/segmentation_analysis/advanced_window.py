@@ -472,7 +472,7 @@ class MeasurementSettings(QWidget):
         layout.addLayout(save_butt_layout)
         self.setLayout(layout)
 
-        for name, profile in MEASUREMENT_DICT.items():
+        for profile in MEASUREMENT_DICT.values():
             help_text = profile.get_description()
             lw = MeasurementListWidgetItem(profile.get_starting_leaf())
             lw.setToolTip(help_text)

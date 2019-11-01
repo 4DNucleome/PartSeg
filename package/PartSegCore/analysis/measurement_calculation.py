@@ -142,7 +142,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             res = []
             iterator = iter(self._data_dict.keys())
         for el in iterator:
-            per_comp, area_type = self._type_dict[el]
+            per_comp = self._type_dict[el][0]
             val = self._data_dict[el]
             if per_comp != PerComponent.Yes:
                 res.append(val)
@@ -398,7 +398,7 @@ class MeasurementProfile(object):
     def get_component_and_area_info(self) -> List[Tuple[PerComponent, AreaType]]:
         """For each measurement check if is per component and in which types """
         res = []
-        for i, el in enumerate(self.chosen_fields):
+        for el in self.chosen_fields:
             tree = el.calculation_tree
             res.append(self._get_par_component_and_area_type(tree))
         return res
