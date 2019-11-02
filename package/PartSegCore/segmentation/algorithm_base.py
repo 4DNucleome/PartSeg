@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import NamedTuple, Union, Callable, Optional
 
 import numpy as np
@@ -58,13 +58,16 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
 
     @staticmethod
     def single_channel():
+        """Check if algorithm run on single channel"""
         return True
 
     @classmethod
+    @abstractmethod
     def support_time(cls):
         raise NotImplementedError()
 
     @classmethod
+    @abstractmethod
     def support_z(cls):
         raise NotImplementedError()
 
@@ -72,9 +75,11 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         """Set mask which will limit segmentation area"""
         self.mask = mask
 
+    @abstractmethod
     def calculation_run(self, report_fun: Callable[[str, int], None]) -> SegmentationResult:
         raise NotImplementedError()
 
+    @abstractmethod
     def get_info_text(self):
         raise NotImplementedError()
 
@@ -95,16 +100,19 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         self.image = image
         self.channel = None
 
-    def set_parameters(self, *args, **kwargs):
+    @abstractmethod
+    def set_parameters(self, **kwargs):
         """Set parameters for next segmentation."""
         raise NotImplementedError()
 
+    @abstractmethod
     def get_segmentation_profile(self) -> SegmentationProfile:
         """Get parameters seated by :py:meth:`set_parameters` method."""
         raise NotImplementedError()
 
     @staticmethod
     def get_steps_num():
+        """Return number of algorithm steps if your algorithm report progress, else should return 0"""
         return 0
 
     @classmethod

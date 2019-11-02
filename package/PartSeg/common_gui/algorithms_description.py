@@ -75,7 +75,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         if isinstance(ob, AlgorithmProperty):
             return cls(name=ob.name, user_name=ob.user_name, default_value=ob.default_value, options_range=ob.range,
                        single_steep=ob.single_step, property_type=ob.value_type, possible_values=ob.possible_values,
-                       tool_tip=ob.tool_tip, per_dimension=ob.per_dimension)
+                       help_text=ob.help_text, per_dimension=ob.per_dimension)
         elif isinstance(ob, str):
             return QLabel(ob)
         raise ValueError(f"unknown parameter type {type(ob)} of {ob}")
@@ -122,8 +122,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
         else:
             raise ValueError(f"Unknown class: {self.value_type}")
         tool_tip_text = ""
-        if self.tool_tip:
-            tool_tip_text = self.tool_tip
+        if self.help_text:
+            tool_tip_text = self.help_text
         tool_tip_text += f" default value: {str(self.default_value)}"
         res.setToolTip(tool_tip_text)
         return res
@@ -219,8 +219,8 @@ class FormWidget(QWidget):
                 layout.addRow(el)
             elif isinstance(el.get_field(), SubAlgorithmWidget):
                 label = QLabel(el.user_name)
-                if el.tool_tip:
-                    label.setToolTip(el.tool_tip)
+                if el.help_text:
+                    label.setToolTip(el.help_text)
                 layout.addRow(label, el.get_field().choose)
                 layout.addRow(el.get_field())
                 self.widgets_dict[el.name] = el
@@ -230,8 +230,8 @@ class FormWidget(QWidget):
             else:
                 self.widgets_dict[el.name] = el
                 label = QLabel(el.user_name)
-                if el.tool_tip:
-                    label.setToolTip(el.tool_tip)
+                if el.help_text:
+                    label.setToolTip(el.help_text)
                 layout.addRow(label, el.get_field())
                 # noinspection PyUnresolvedReferences
                 if issubclass(el.value_type, Channel):

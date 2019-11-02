@@ -21,7 +21,7 @@ class AlgorithmProperty:
     :param name: name of parameter used in code
     :param user_name: name presented to user in interface
     :param default_value: initial value which be used during interface generation
-    :param tool_tip: toll tip presented to user when keep mouse over widget
+    :param help_text: toll tip presented to user when keep mouse over widget
     :type name: str
     :type user_name: str
     :type value_type: type
@@ -29,7 +29,7 @@ class AlgorithmProperty:
     """
 
     def __init__(self, name: str, user_name: str, default_value, options_range=None, single_steep=None,
-                 possible_values=None, property_type=None, tool_tip="", per_dimension=False):
+                 possible_values=None, property_type=None, help_text="", per_dimension=False):
         self.name = name
         self.user_name = user_name
         if isinstance(possible_values, list):
@@ -42,7 +42,7 @@ class AlgorithmProperty:
         self.range = options_range
         self.possible_values = possible_values
         self.single_step = single_steep
-        self.tool_tip = tool_tip
+        self.help_text = help_text
         self.per_dimension = per_dimension
         if self.value_type is list and default_value not in possible_values:
             raise ValueError(f"default_value ({default_value}) should be one of possible values ({possible_values}).")
@@ -66,8 +66,8 @@ class AlgorithmDescribeBase(ABC):
         for el in cls.get_fields():
             if isinstance(el, AlgorithmProperty):
                 resp += f"  {el.name}: {el.value_type} - "
-                if el.tool_tip:
-                    resp += el.tool_tip
+                if el.help_text:
+                    resp += el.help_text
                 resp += f"(default values: {el.default_value})\n"
         resp += "}\n"
         return resp

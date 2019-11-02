@@ -90,7 +90,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
                 AlgorithmProperty("smooth_border", "Smooth borders", next(iter(smooth_dict.keys())),
                                   possible_values=smooth_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("side_connection", "Side by Side connections", False, (True, False),
-                                  tool_tip="During calculation of connected components includes"
+                                  help_text="During calculation of connected components includes"
                                            " only side by side connected pixels"),
                 AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10 ** 6), 1000),
                 AlgorithmProperty("use_convex", "Use convex hull", False, (True, False))]
@@ -218,7 +218,7 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
                 AlgorithmProperty("smooth_border", "Smooth borders", next(iter(smooth_dict.keys())),
                                   possible_values=smooth_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("side_connection", "Side by Side connections", False, (True, False),
-                                  tool_tip="During calculation of connected components includes"
+                                  help_text="During calculation of connected components includes"
                                            " only side by side connected pixels"),
                 AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10 ** 6), 1000),
                 AlgorithmProperty("sprawl_type", "Flow type", next(iter(sprawl_dict.keys())),

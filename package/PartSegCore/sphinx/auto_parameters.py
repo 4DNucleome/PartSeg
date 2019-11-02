@@ -15,9 +15,9 @@ def algorithm_parameters_doc(app: Sphinx, what, name: str, obj, options, lines: 
         if len(fields) > 0:
             lines.extend(["", "This algorithm has following parameters:", ""])
         for el in fields:
-            if el.tool_tip:
+            if el.help_text:
                 lines.append("- **{}** ({})- {}, {}".format(el.name, extract_type_name(el.value_type),
-                                                            el.user_name, el.tool_tip))
+                                                            el.user_name, el.help_text))
             else:
                 lines.append("- **{}** ({})- {}". format(el.name, extract_type_name(el.value_type), el.user_name))
 

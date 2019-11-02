@@ -146,7 +146,7 @@ class SaveCmap(SaveBase):
                 AlgorithmProperty("clip", "Clip area", False),
                 AlgorithmProperty("units", "Units", Units.nm, property_type=Units),
                 AlgorithmProperty('reverse', 'Reverse', False,
-                                  tool_tip="Reverse brightness off image (for electron microscopy)")]
+                                  help_text="Reverse brightness off image (for electron microscopy)")]
 
     @classmethod
     def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict,
@@ -275,7 +275,7 @@ class SaveAsNumpy(SaveBase):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty("squeeze", "Squeeze  array", False,
-                                  tool_tip="Remove single-dimensional entries from the shape of an array")]
+                                  help_text="Remove single-dimensional entries from the shape of an array")]
 
     @classmethod
     def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict,

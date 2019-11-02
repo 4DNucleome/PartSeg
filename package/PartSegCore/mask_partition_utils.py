@@ -24,6 +24,11 @@ class BorderRim(AlgorithmDescribeBase):
     For given mask and image spacing it marks as 1 all pixels in given distance from mask border.
 
     https://en.wikipedia.org/wiki/Annulus_(mathematics)
+
+    The algorithm is:
+
+    1. For each image voxel calculate distance from background (0 labeled voxels in mask) with respect of voxel size
+    2. Select this voxels which are closer than gvien distance.
     """
     @classmethod
     def get_fields(cls):
@@ -63,6 +68,27 @@ class SplitMaskOnPart(AlgorithmDescribeBase):
     """
     This class contains implementation of splitting mask on parts based on distance from borders.
     Has two modes or working. It may split on parts with same thickness or same volume..
+
+    Flow chart of algorithm:
+
+    .. graphviz::
+
+       digraph model {
+          "Mask" -> "Voxel distance from background";
+          "Voxel distance from background" -> "maximum distance"[label=<Equal thickness>]
+          "maximum distance" -> "Bounds" -> "Split voxels in respect of bounds"
+          "Bounds"[label=<Bounds<br />
+          <FONT POINT-SIZE="10">[0, (maximum distance)/(Number of Parts),<br />
+          2*(maximum distance)/(Number of Parts)<br />, ... ,maximum distance]</FONT>>]
+          "Voxel distance from background" -> "Distance histogram"[label=<Equal volume>]
+          "Distance histogram" -> "Create bounds base on histogram" -> "Split voxels in respect of bounds"
+          "Create bounds base on histogram"[label=<Create bounds base on histogram<br />
+          <FONT POINT-SIZE="10">using histogram bins approximate equal number of voxels in each part</FONT>>]
+          "Distance histogram"[label=<Distance histogram<br /><font point-size="10">of voxels with positive distance
+          <br /> from background </font>>]
+
+       }
+
     """
     @classmethod
     def get_name(cls) -> str:
@@ -71,7 +97,8 @@ class SplitMaskOnPart(AlgorithmDescribeBase):
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
         return [AlgorithmProperty("num_of_parts", "Number of Parts", 2, (1, 1024)),
-                AlgorithmProperty("equal_volume", "Equal Volume", False)]
+                AlgorithmProperty("equal_volume", "Equal Volume", False,
+                                  help_text="If split should be done in respect of parts volume of parts thickness.")]
 
     @staticmethod
     def split(mask: np.ndarray, num_of_parts: int, equal_volume: bool, voxel_size, **_):
@@ -88,6 +115,7 @@ class SplitMaskOnPart(AlgorithmDescribeBase):
             voxel_size = (1,) + voxel_size
         distance_arr = distance_transform_edt(mask, sampling=voxel_size)
         if equal_volume:
+            # TODO add more bins, fix tests for more bins
             hist, bins = np.histogram(distance_arr[distance_arr > 0], bins=10*num_of_parts)
             total = np.sum(hist)
             levels, step = np.linspace(0, total, num_of_parts+1, True, retstep=True)

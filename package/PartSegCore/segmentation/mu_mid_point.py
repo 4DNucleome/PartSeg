@@ -33,7 +33,7 @@ class PercentBound(BaseMuMid):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty('percent', 'Percent', 50, options_range=(0, 100),
-                                  tool_tip="Calculate: lower_value + (upper_bound - lower_bound) * percent / 100")]
+                                  help_text="Calculate: lower_value + (upper_bound - lower_bound) * percent / 100")]
 
     @classmethod
     def value(cls, sprawl_area: np.ndarray, data: np.ndarray, lower_bound, upper_bound, arguments: dict):

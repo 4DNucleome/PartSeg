@@ -61,11 +61,19 @@ class RestartableAlgorithm(SegmentationAlgorithm, ABC):
     def support_z(cls):
         return True
 
+    def set_parameters(self, **kwargs):
+        base_names = [x.name for x in self.get_fields() if isinstance(x, AlgorithmProperty)]
+        if set(base_names) != set(kwargs.keys()):
+            missed_arguments = ", ".join(set(base_names).difference(set(kwargs.keys())))
+            additional_arguments = ", ".join(set(kwargs.keys()).difference(set(base_names)))
+            raise ValueError(f"Missed arguments {missed_arguments}; Additional arguments: {additional_arguments}")
+        self.new_parameters = dict(kwargs)
+
 
 class BorderRim(RestartableAlgorithm):
     """
     This class wrap the :py:class:`PartSegCore.mask_partition_utils.BorderRim``
-    class in segmentation algorithm interface.
+    class in segmentation algorithm interface. It allow user to check how rim look with given set of parameters
     """
     @classmethod
     def get_name(cls):
@@ -79,10 +87,6 @@ class BorderRim(RestartableAlgorithm):
     @classmethod
     def get_fields(cls):
         return ["Need mask"] + BorderRimBase.get_fields()
-
-    def set_parameters(self, distance: float, units: Units):
-        self.distance = distance
-        self.units = units
 
     def get_segmentation_profile(self) -> SegmentationProfile:
         return SegmentationProfile("", self.get_name(), {"distance": self.distance, "units": self.units})
@@ -103,18 +107,15 @@ class BorderRim(RestartableAlgorithm):
 class SplitMaskOnPart(RestartableAlgorithm):
     """
     This class wrap the :py:class:`PartSegCore.mask_partition_utils.SplitMaskOnPart`
-    class in segmentation algorithm interface.
+    class in segmentation algorithm interface. It allow user to check how split look with given set of parameters
     """
     def calculation_run(self, report_fun: typing.Callable[[str, int], None]) -> SegmentationResult:
         if self.mask is not None:
-            result = SplitMaskOnPartBase.split(mask=self.mask, voxel_size=self.image.voxel_size, **self.parameters)
+            result = SplitMaskOnPartBase.split(mask=self.mask, voxel_size=self.image.voxel_size, **self.new_parameters)
             return SegmentationResult(result, self.get_segmentation_profile(), result, None)
 
     def get_segmentation_profile(self) -> SegmentationProfile:
-        return SegmentationProfile("", self.get_name(), deepcopy(self.parameters))
-
-    def set_parameters(self, **kwargs):
-        self.parameters = dict(kwargs)
+        return SegmentationProfile("", self.get_name(), deepcopy(self.new_parameters))
 
     @classmethod
     def get_name(cls) -> str:
@@ -127,7 +128,8 @@ class SplitMaskOnPart(RestartableAlgorithm):
 
 class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
     """
-    :type segmentation: np.ndarray
+    Base class for most threshold Algorithm implemented in PartSeg analysis.
+    Created for reduce code repetition.
     """
 
     threshold_operator = staticmethod(blank_operator)
@@ -139,7 +141,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
                                   possible_values=noise_filtering_dict, property_type=AlgorithmDescribeBase),
                 AlgorithmProperty("minimum_size", "Minimum size (px)", 8000, (0, 10 ** 6), 1000),
                 AlgorithmProperty("side_connection", "Connect only sides", False, (True, False),
-                                  tool_tip="During calculation of connected components includes"
+                                  help_text="During calculation of connected components includes"
                                            " only side by side connected pixels")]
 
     def __init__(self, **kwargs):
@@ -233,18 +235,9 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         self.threshold_info = thr_val
         return mask
 
-    def _set_parameters(self, channel, threshold, minimum_size, noise_filtering, side_connection):
-        self.new_parameters["channel"] = channel
-        self.new_parameters["threshold"] = threshold
-        self.new_parameters["minimum_size"] = minimum_size
-        self.new_parameters["noise_filtering"] = noise_filtering
-        self.new_parameters["side_connection"] = side_connection
-
 
 class OneThresholdAlgorithm(ThresholdBaseAlgorithm, ABC):
-    def set_parameters(self, *args, **kwargs):
-        self._set_parameters(*args, **kwargs)
-
+    """Base class for PartSeg analysis algorithm which apply one threshold. Created for reduce code repetition."""
     @classmethod
     def get_fields(cls):
         fields = super().get_fields()
@@ -254,6 +247,11 @@ class OneThresholdAlgorithm(ThresholdBaseAlgorithm, ABC):
 
 
 class LowerThresholdAlgorithm(OneThresholdAlgorithm):
+    """
+    Implementation of lower threshold algorithm.
+    It has same flow like :py:class:`ThresholdBaseAlgorithm`.
+    The area of interest are voxels from filtered channel with value above the given threshold
+    """
     threshold_operator = staticmethod(operator.gt)
 
     @classmethod
@@ -262,6 +260,11 @@ class LowerThresholdAlgorithm(OneThresholdAlgorithm):
 
 
 class UpperThresholdAlgorithm(OneThresholdAlgorithm):
+    """
+    Implementation of upper threshold algorithm.
+    It has same flow like :py:class:`ThresholdBaseAlgorithm`.
+    The area of interest are voxels from filtered channel with value below the given threshold
+    """
     threshold_operator = staticmethod(operator.lt)
 
     @classmethod
@@ -270,8 +273,15 @@ class UpperThresholdAlgorithm(OneThresholdAlgorithm):
 
 
 class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
-    def set_parameters(self, lower_threshold, upper_threshold, *args, **kwargs):
-        self._set_parameters(threshold=(lower_threshold, upper_threshold), *args, **kwargs)
+    """
+    Implementation of upper threshold algorithm.
+    It has same flow like :py:class:`ThresholdBaseAlgorithm`.
+    The area of interest are voxels from filtered channel with value between the lower and upper threshold
+    """
+    def set_parameters(self, **kwargs):
+        super().set_parameters(**kwargs)
+        self.new_parameters["threshold"] = \
+            self.new_parameters["lower_threshold"], self.new_parameters["upper_threshold"]
 
     def get_segmentation_profile(self) -> SegmentationProfile:
         resp = super().get_segmentation_profile()
@@ -298,7 +308,7 @@ class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
         return "Range threshold"
 
 
-class RangeThresholdBaseAlgorithm(ThresholdBaseAlgorithm, ABC):
+class TwoLevelThresholdBaseAlgorithm(ThresholdBaseAlgorithm, ABC):
     def _threshold(self, image, thr=None):
         if thr is None:
             thr: BaseThreshold = double_threshold_dict[self.new_parameters["threshold"]["name"]]
@@ -309,7 +319,7 @@ class RangeThresholdBaseAlgorithm(ThresholdBaseAlgorithm, ABC):
         return (mask == 2).astype(np.uint8)
 
 
-class BaseThresholdFlowAlgorithm(RangeThresholdBaseAlgorithm, ABC):
+class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
         fields = super().get_fields()
@@ -341,10 +351,6 @@ class BaseThresholdFlowAlgorithm(RangeThresholdBaseAlgorithm, ABC):
     def clean(self):
         self.sprawl_area = None
         super().clean()
-
-    def set_parameters(self, sprawl_type, *args, **kwargs):
-        self.new_parameters["sprawl_type"] = sprawl_type
-        self._set_parameters(*args, **kwargs)
 
     def set_image(self, image):
         super().set_image(image)
@@ -418,14 +424,6 @@ class OtsuSegment(RestartableAlgorithm):
         self._sizes_array = []
         self.threshold_info = []
 
-    def set_parameters(self, channel, noise_filtering, components, valley, hist_num):  # mask
-        self.new_parameters["components"] = components
-        # self.new_parameters["mask"] = mask
-        self.new_parameters["hist_num"] = hist_num
-        self.new_parameters["channel"] = channel
-        self.new_parameters["valley"] = valley
-        self.new_parameters["noise_filtering"] = noise_filtering
-
     def calculation_run(self, report_fun):
         channel = self.get_channel(self.new_parameters["channel"])
         noise_filtering_parameters = self.new_parameters["noise_filtering"]
@@ -452,7 +450,7 @@ class OtsuSegment(RestartableAlgorithm):
                "\nSizes: " + ", ".join(map(str, self._sizes_array))
 
 
-class BaseMultiScaleOpening(RangeThresholdBaseAlgorithm, ABC):
+class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty("threshold", "Threshold", next(iter(double_threshold_dict.keys())),
@@ -484,11 +482,6 @@ class BaseMultiScaleOpening(RangeThresholdBaseAlgorithm, ABC):
         self.mso = PyMSO()
         self.mso.set_use_background(True)
         super().clean()
-
-    def set_parameters(self, mu_mid, step_limits, *args, **kwargs):
-        self.new_parameters["mu_mid"] = mu_mid
-        self.new_parameters["step_limits"] = step_limits
-        self._set_parameters(*args, **kwargs)
 
     def set_image(self, image):
         super().set_image(image)

@@ -50,9 +50,9 @@ class VoteSmoothing(BaseSmoothing):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty("neighbourhood_type", "Side Neighbourhood", NeighType.edges,
-                                  tool_tip="use 6, 18 or 26 neighbourhood (5, 8, 8 for 2d data)"),
+                                  help_text="use 6, 18 or 26 neighbourhood (5, 8, 8 for 2d data)"),
                 AlgorithmProperty("support_level", "Support level", 1, (1, 27), 1,
-                                  tool_tip="How many voxels in neighbourhood need to be labeled to preserve pixel")]
+                                  help_text="How many voxels in neighbourhood need to be labeled to preserve pixel")]
 
     @classmethod
     def smooth(cls, segmentation: np.ndarray, arguments: dict) -> np.ndarray:
@@ -76,11 +76,11 @@ class IterativeVoteSmoothing(BaseSmoothing):
     @classmethod
     def get_fields(cls):
         return [AlgorithmProperty("neighbourhood_type", "Side Neighbourhood", NeighType.edges,
-                                  tool_tip="use 6, 18 or 26 neighbourhood"),
+                                  help_text="use 6, 18 or 26 neighbourhood"),
                 AlgorithmProperty("support_level", "Support level", 1, (1, 26), 1,
-                                  tool_tip="How many voxels in neighbourhood need to be labeled to preserve pixel"),
+                                  help_text="How many voxels in neighbourhood need to be labeled to preserve pixel"),
                 AlgorithmProperty("max_steps", "Max steps", 1, (1, 100), 1,
-                                  tool_tip="How many voxels in neighbourhood need to be labeled to preserve pixel")
+                                  help_text="How many voxels in neighbourhood need to be labeled to preserve pixel")
                 ]
 
     @classmethod

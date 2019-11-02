@@ -82,7 +82,7 @@ def test_base_parameters():
         obj.set_parameters(**values)
         parameters = obj.get_segmentation_profile()
         assert parameters.algorithm == key
-        assert parameters.values == values
+        assert parameters.values == values, key
 
 
 class BaseThreshold(object):
