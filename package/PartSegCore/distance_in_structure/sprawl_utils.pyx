@@ -100,25 +100,29 @@ def get_closest_component(components, data_mask, distances, components_translati
 def _get_closest_component(np.ndarray[component_types] components, np.ndarray[np.uint8_t] data_mask,
                            np.ndarray[image_types, ndim=2] paths, int num_of_components,
                            np.ndarray[np.uint32_t] components_translation):
-    cdef Py_ssize_t x, y, size, component_index
+    cdef Py_ssize_t x, y, size, component_index, count1=0, count2=0, count3=0
     cdef image_types min_val, val
     cdef char flag
     size = components.size
     for x in range(size):
         flag = False
-        if components[x] == 0 and data_mask[x]:
+        if data_mask[x]:
             min_val = paths[0, x]
             component_index = components[x]
             flag = True
             for y in range(1, num_of_components+1):
+                count3 += 1
                 val = paths[y, x]
                 if val < min_val:
+                    count1 += 1
                     min_val = val
                     component_index = components_translation[y]
                     flag = True
                 elif val == min_val:
-                    flag = False
+                    flag = True
+                    component_index = 0
             if flag:
+                count2 += 1
                 components[x] = component_index
                 paths[0, x] = min_val
     return components, paths

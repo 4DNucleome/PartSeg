@@ -47,22 +47,24 @@ def path_maximum_sprawl(data_f: np.ndarray, components: np.ndarray, components_c
         tmp = calculate_maximum(data_cache, (components == 1).astype(np.uint8), neighbourhood)
         components[tmp > 0] = 1
         return components
+    base_components = np.copy(components)
+    masked_area = ((data_f > 0) * (base_components == 0)).astype(np.uint8)
     distance_cache, cache_size, components_numbers_translate = _allocate_cache(distance_cache, data_f.shape)
     distance_cache[:] = -np.inf
     current_in_cache = 0
     for component in range(1, components_count + 1):
         np.copyto(data_cache, data_f)
-        data_cache[(components > 0) * (components != component)] = 0
+        data_cache[(base_components > 0) * (base_components != component)] = 0
         current_in_cache += 1
         distance_cache[current_in_cache] = calculate_maximum(data_cache, (components == component).astype(np.uint8),
                                                              neighbourhood)
         components_numbers_translate[current_in_cache] = component
         if current_in_cache == cache_size:
-            components = get_maximum_component(components, (data_f > 0).astype(np.uint8), distance_cache,
+            components = get_maximum_component(components, masked_area, distance_cache,
                                                components_numbers_translate, current_in_cache)
             current_in_cache = 0
     if current_in_cache > 0:
-        components = get_maximum_component(components, (data_f > 0).astype(np.uint8), distance_cache,
+        components = get_maximum_component(components, masked_area, distance_cache,
                                            components_numbers_translate, current_in_cache)
     return components
 
@@ -89,22 +91,24 @@ def path_minimum_sprawl(data_f, components, components_count, neighbourhood, dis
         tmp = calculate_minimum(data_cache, (components == 1).astype(np.uint8), neighbourhood)
         components[tmp < maximum] = 1
         return components
+    base_components = np.copy(components)
+    masked_area = ((data_f > 0) * (base_components == 0)).astype(np.uint8)
     distance_cache, cache_size, components_numbers_translate = _allocate_cache(distance_cache, data_f.shape)
     distance_cache[:] = np.inf
     current_in_cache = 0
     for component in range(1, components_count + 1):
         np.copyto(data_cache, data_f)
-        data_cache[(components > 0) * (components != component)] = 0
+        data_cache[(base_components > 0) * (base_components != component)] = 0
         current_in_cache += 1
         distance_cache[current_in_cache] = calculate_minimum(data_cache, (components == component).astype(np.uint8),
                                                              neighbourhood)
         components_numbers_translate[current_in_cache] = component
         if current_in_cache == cache_size:
-            components = get_minimum_component(components, (data_f > 0).astype(np.uint8), distance_cache,
+            components = get_minimum_component(components, masked_area, distance_cache,
                                                components_numbers_translate, current_in_cache)
             current_in_cache = 0
     if current_in_cache > 0:
-        components = get_minimum_component(components, (data_f > 0).astype(np.uint8), distance_cache,
+        components = get_minimum_component(components, masked_area, distance_cache,
                                            components_numbers_translate, current_in_cache)
     return components
 
@@ -185,7 +189,8 @@ def distance_sprawl(calculate_operator, data_m: np.ndarray, components: np.ndarr
         tmp = calculate_operator(data_cache, (components == 1).astype(np.uint8), neigh_arr, dist_array)
         components[tmp < 2 ** 17] = 1
         return components
-
+    base_components = np.copy(components)
+    masked_area = ((data_m > 0) * (base_components == 0)).astype(np.uint8)
     distance_cache, cache_size, components_numbers_translate = _allocate_cache(distance_cache, data_m.shape)
     distance_cache[:] = np.inf
     current_in_cache = 0
@@ -195,7 +200,7 @@ def distance_sprawl(calculate_operator, data_m: np.ndarray, components: np.ndarr
             workers_num = 4
         with ThreadPoolExecutor(max_workers=workers_num) as executor:
             result_info = {executor.submit(
-                sprawl_component, data_m, components, component_number, neigh_arr, dist_array, calculate_operator):
+                sprawl_component, data_m, base_components, component_number, neigh_arr, dist_array, calculate_operator):
                                component_number for component_number in range(1, components_count + 1)}
             for result in as_completed(result_info):
                 component_number = result_info[result]
@@ -203,24 +208,24 @@ def distance_sprawl(calculate_operator, data_m: np.ndarray, components: np.ndarr
                 components_numbers_translate[current_in_cache] = component_number
                 distance_cache[current_in_cache] = result.result()
                 if current_in_cache == cache_size:
-                    components = get_closest_component(components, (data_m > 0).astype(np.uint8), distance_cache,
+                    components = get_closest_component(components, masked_area, distance_cache,
                                                        components_numbers_translate, current_in_cache)
                     current_in_cache = 0
 
     else:
         for component in range(1, components_count + 1):
             np.copyto(data_cache, data_m)
-            data_cache[(components > 0) * (components != component)] = 0
+            data_cache[(base_components > 0) * (base_components != component)] = 0
             current_in_cache += 1
             distance_cache[current_in_cache] = calculate_operator(
                 data_cache, (components == component).astype(np.uint8), neigh_arr, dist_array)
             components_numbers_translate[current_in_cache] = component
             if current_in_cache == cache_size:
-                components = get_closest_component(components, (data_m > 0).astype(np.uint8), distance_cache,
+                components = get_closest_component(components, masked_area, distance_cache,
                                                    components_numbers_translate, current_in_cache)
                 current_in_cache = 0
     if current_in_cache > 0:
-        components = get_closest_component(components, (data_m > 0).astype(np.uint8), distance_cache,
+        components = get_closest_component(components, masked_area, distance_cache,
                                            components_numbers_translate, current_in_cache)
     return components
 
