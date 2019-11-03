@@ -130,6 +130,7 @@ stages:
           CIBW_BUILD: cp36-* cp37-*
           CIBW_TEST_REQUIRES: pytest pytest-qt
           CIBW_TEST_COMMAND: pytest {project}/package/tests
+          MACOSX_DEPLOYMENT_TARGET: "10.10"
         steps:
           - task: UsePythonVersion@0
           - task: DownloadPipelineArtifact@2
