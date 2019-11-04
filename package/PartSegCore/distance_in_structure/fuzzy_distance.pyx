@@ -58,7 +58,7 @@ def calculate_mu_array(np.ndarray[float64_t, ndim=3] object_area, float64_t lowe
 
 def fuzzy_distance(np.ndarray[float64_t, ndim=3] object_area, np.ndarray[uint8_t, ndim=3] base_object,
                    np.ndarray[int8_t, ndim=2] neighbourhood, np.ndarray[float64_t, ndim=1] distance,
-                   np.ndarray[float64_t, ndim=3] mu_array):
+                   np.ndarray[float64_t, ndim=3] mu_array, distance_cache=None):
     cdef np.ndarray[uint8_t, ndim=3] consumed_area = np.copy(base_object)
     cdef np.ndarray[float64_t, ndim=3] result
     cdef Size x_size, y_size, z_size, array_pos, x, y, z, xx, yy, zz

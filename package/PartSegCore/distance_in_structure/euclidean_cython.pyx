@@ -10,7 +10,8 @@ include "put_borders_in_queue.pyx"
 
 
 def calculate_euclidean(np.ndarray[uint8_t, ndim=3] object_area, np.ndarray[uint8_t, ndim=3] base_object,
-                        np.ndarray[int8_t, ndim=2] neighbourhood, np.ndarray[float64_t, ndim=1] distance):
+                        np.ndarray[int8_t, ndim=2] neighbourhood, np.ndarray[float64_t, ndim=1] distance,
+                        distance_cache=None):
     """
     Calculate euclidean watersheed for one core object
 
@@ -32,8 +33,11 @@ def calculate_euclidean(np.ndarray[uint8_t, ndim=3] object_area, np.ndarray[uint
     z_size = object_area.shape[0]
     y_size = object_area.shape[1]
     x_size = object_area.shape[2]
-    result = np.zeros((z_size, y_size, x_size), dtype=np.float64)
-    result[base_object == 0] = np.inf
+    if distance_cache is None:
+        result = np.zeros((z_size, y_size, x_size), dtype=np.float64)
+        result[base_object == 0] = np.inf
+    else:
+        result = distance_cache
     put_borders_in_queue(current_points, base_object, neighbourhood)
     while not current_points.empty():
         p = current_points.front()
