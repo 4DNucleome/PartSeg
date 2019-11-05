@@ -12,6 +12,7 @@ from ..multiscale_opening import PyMSO, calculate_mu, MuType
 from ..distance_in_structure.find_split import path_maximum_sprawl, path_minimum_sprawl, euclidean_sprawl, \
     fdt_sprawl
 from ..algorithm_describe_base import Register, AlgorithmDescribeBase, AlgorithmProperty
+from .algorithm_base import SegmentationLimitException
 
 
 class BaseSprawl(AlgorithmDescribeBase, ABC):
@@ -116,7 +117,7 @@ class MSOSprawl(BaseSprawl):
     def sprawl(cls, sprawl_area: np.ndarray, core_objects: np.ndarray, data: np.ndarray, components_num: int, spacing,
                side_connection: bool, operator: Callable[[Any, Any], bool], arguments: dict, lower_bound, upper_bound):
         if components_num > 250:
-            raise ValueError("Current implementation of MSO do not support more than 250 components")
+            raise SegmentationLimitException("Current implementation of MSO do not support more than 250 components")
         mso = PyMSO()
         neigh, dist = calculate_distances_array(spacing, get_neigh(side_connection))
         components_arr = np.copy(core_objects).astype(np.uint8)

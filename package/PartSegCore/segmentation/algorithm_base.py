@@ -121,3 +121,7 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
             if el.value_type == Channel:
                 return el.name
         raise ValueError("No channel defined")
+
+
+class SegmentationLimitException(Exception):
+    pass

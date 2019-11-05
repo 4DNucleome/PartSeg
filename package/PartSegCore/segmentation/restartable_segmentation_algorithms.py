@@ -11,7 +11,7 @@ from ..multiscale_opening import PyMSO
 from ..multiscale_opening import calculate_mu_mid
 from ..mask_partition_utils import BorderRim as BorderRimBase, SplitMaskOnPart as SplitMaskOnPartBase
 from ..channel_class import Channel
-from .algorithm_base import SegmentationAlgorithm, SegmentationResult
+from .algorithm_base import SegmentationAlgorithm, SegmentationResult, SegmentationLimitException
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
 from .noise_filtering import noise_filtering_dict
 from .sprawl import sprawl_dict, BaseSprawl, calculate_distances_array, get_neigh
@@ -142,7 +142,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
                 AlgorithmProperty("minimum_size", "Minimum size (px)", 8000, (0, 10 ** 6), 1000),
                 AlgorithmProperty("side_connection", "Connect only sides", False, (True, False),
                                   help_text="During calculation of connected components includes"
-                                           " only side by side connected pixels")]
+                                            " only side by side connected pixels")]
 
     def __init__(self, **kwargs):
         super(ThresholdBaseAlgorithm, self).__init__()
@@ -504,7 +504,8 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):
             self.finally_segment = segment_data.segmentation
             finally_segment = segment_data.segmentation
             if np.max(finally_segment) > 250:
-                raise ValueError("Current implementation of MSO do not support more than 250 components")
+                raise SegmentationLimitException(
+                    "Current implementation of MSO do not support more than 250 components")
             components = finally_segment.astype(np.uint8)
             components[components > 0] += 1
             components[self.sprawl_area == 0] = 1

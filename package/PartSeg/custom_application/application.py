@@ -9,11 +9,12 @@ from qtpy.QtWidgets import QApplication, QMessageBox
 
 from PartSegCore import state_store
 from PartSegImage import TiffFileException
+from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from .. import __version__
 
 
 class CheckVersionThread(QThread):
-    """Therad to check if there is new PartSeg release. Checks base on newest version available on pypi_
+    """Thread to check if there is new PartSeg release. Checks base on newest version available on pypi_
 
      .. _PYPI: https://pypi.org/project/PartSeg/
      """
@@ -62,6 +63,12 @@ class CustomApplication(QApplication):
             mess.setWindowTitle("Tiff error")
             mess.exec()
             return
+        if isinstance(self.error, SegmentationLimitException):
+            mess = QMessageBox()
+            mess.setIcon(QMessageBox.Critical)
+            mess.setText("During segmentation process algorithm meet limitations:\n" + "\n".join(self.error.args))
+            mess.setWindowTitle("Segmentation limitations")
+            mess.exec()
         dial = ErrorDialog(self.error, "Exception during program run")
         # TODO check
         # dial.moveToThread(QApplication.instance().thread())
