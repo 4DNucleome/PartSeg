@@ -1,0 +1,14 @@
+version: 1.0
+requirements:
+  - requirements.txt
+  - requirements-ci.txt
+  - requirements_pyinstaller.txt
+  - docs/requirements.txt
+  - setup.py
+  - tox.ini
+  - path: dev_requirements.txt
+    parser: python/pip
+  - path: tox-azure.ini
+    parser: python/tox
+  - path: tox-minimal.ini
+    parser: python/tox
