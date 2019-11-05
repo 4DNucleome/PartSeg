@@ -1,4 +1,3 @@
-pytest
-nose
+pytest >= 5.0.0
 pytest-qt
-sphinx
+sphinx >= 2.0.0

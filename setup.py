@@ -98,7 +98,7 @@ setuptools.setup(
     long_description_content_type='text/markdown',
     install_requires=['numpy>=1.16.0', "tifffile>=2019.7.26", "czifile>=2019.4.20", "oiffile>=2019.1.1",
                       imagecodecs_string, 'appdirs>=1.4.3', 'SimpleITK>=1.1.0', 'scipy>=0.19.1', 'QtPy>=1.3.1',
-                      'sentry_sdk==0.12.3', qt_string, 'six>=1.11.0', 'h5py>=2.7.1', 'packaging>=17.1',
+                      'sentry_sdk==0.13.1', qt_string, 'six>=1.11.0', 'h5py>=2.7.1', 'packaging>=17.1',
                       'pandas>=0.22.0', 'sympy>=1.1.1', 'Cython>=0.29.13', 'openpyxl>=2.4.9', 'xlrd>=1.1.0',
                       'PartSegData==0.9.4', "defusedxml>=0.6.0"],
     tests_require=["pytest", "pytest-qt"],
