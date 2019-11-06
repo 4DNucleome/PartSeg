@@ -243,7 +243,7 @@ class BaseFlowThreshold(BaseThreshold, ABC):
     def test_multiple(self):
         alg = self.algorithm_class()
         parameters = self.get_parameters()
-        for i in range(3, 15):
+        for i in range(3, 15, 2):
             image = self.get_multiple_part(i)
             alg.set_image(image)
             for key, val in sprawl_dict.items():
@@ -252,11 +252,11 @@ class BaseFlowThreshold(BaseThreshold, ABC):
                 result = alg.calculation_run(empty)
                 assert result.segmentation.max() == i, key
                 assert np.all(
-                    np.bincount(result.segmentation.flat)[1:] == np.array([4000]*i)), key
+                    np.bincount(result.segmentation.flat)[1:] == np.array([4000]*i)), (key, i)
                 assert result.parameters.values == parameters, key
                 assert result.parameters.algorithm == alg.get_name(), key
         parameters["threshold"]["values"]["base_threshold"]['values']["threshold"] += self.get_shift()
-        for i in range(3, 15):
+        for i in range(3, 15, 2):
             image = self.get_multiple_part(i)
             alg.set_image(image)
             for key, val in sprawl_dict.items():
