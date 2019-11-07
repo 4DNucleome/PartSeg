@@ -193,8 +193,6 @@ def distance_sprawl(calculate_operator, data_m: np.ndarray, components: np.ndarr
     masked_area = ((data_m > 0) * (base_components == 0)).astype(np.uint8)
     distance_cache, cache_size, components_numbers_translate = _allocate_cache(distance_cache, data_m.shape)
     distance_cache[:] = np.inf
-    distance_cache2 = distance_cache[0].copy()
-    distance_cache2[base_components > 0] = 0
     current_in_cache = 0
     if parallel:
         workers_num = os.cpu_count()
@@ -221,7 +219,7 @@ def distance_sprawl(calculate_operator, data_m: np.ndarray, components: np.ndarr
             current_in_cache += 1
             distance_cache[current_in_cache] = calculate_operator(
                 data_cache, (components == component).astype(np.uint8), neigh_arr, dist_array,
-                distance_cache=distance_cache2)
+                distance_cache=distance_cache[0])
             components_numbers_translate[current_in_cache] = component
             if current_in_cache == cache_size:
                 components = get_closest_component(components, masked_area, distance_cache,

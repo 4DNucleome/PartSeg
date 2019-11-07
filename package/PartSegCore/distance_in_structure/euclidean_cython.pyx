@@ -23,7 +23,7 @@ def calculate_euclidean(np.ndarray[uint8_t, ndim=3] object_area, np.ndarray[uint
     :return: labeleing after watersheeed
     """
     cdef np.ndarray[uint8_t, ndim=3] consumed_area = np.copy(base_object)
-    cdef np.ndarray[float64_t, ndim=3] result, result2
+    cdef np.ndarray[float64_t, ndim=3] result, d_cache
     cdef Size x_size, y_size, z_size, array_pos, x, y, z, xx, yy, zz
     cdef Py_ssize_t count = 0
     cdef char neigh_length = neighbourhood.shape[0]
@@ -33,12 +33,12 @@ def calculate_euclidean(np.ndarray[uint8_t, ndim=3] object_area, np.ndarray[uint
     z_size = object_area.shape[0]
     y_size = object_area.shape[1]
     x_size = object_area.shape[2]
+    result = np.full((z_size, y_size, x_size), np.inf, dtype=np.float64)
+    result[base_object != 0] = 0
     if distance_cache is None:
-        result = np.zeros((z_size, y_size, x_size), dtype=np.float64)
-        result[base_object == 0] = np.inf
+        d_cache = result
     else:
-        result = distance_cache
-    result2 = np.full((z_size, y_size, x_size), np.inf, dtype=np.float64)
+        d_cache = distance_cache
     put_borders_in_queue(current_points, base_object, neighbourhood)
     while not current_points.empty():
         p = current_points.front()
@@ -55,16 +55,16 @@ def calculate_euclidean(np.ndarray[uint8_t, ndim=3] object_area, np.ndarray[uint
                 continue
             if object_area[z, y, x] == 0:
                 continue
-            if result[z, y, x] > result[p.z, p.y, p.x] + distance[neigh_it]:
-                result[z, y, x] = result[p.z, p.y, p.x] + distance[neigh_it]
-                result2[z, y, x] = result[p.z, p.y, p.x] + distance[neigh_it]
-                if consumed_area[z, y, x] == 0:
-                    consumed_area[z, y, x] = 1
-                    p1.z = z
-                    p1.y = y
-                    p1.x = x
-                    current_points.push(p1)
-    return result2
+            if d_cache[z, y, x] >= result[p.z, p.y, p.x] + distance[neigh_it]:
+                if result[z, y, x] > result[p.z, p.y, p.x] + distance[neigh_it]:
+                    result[z, y, x] = result[p.z, p.y, p.x] + distance[neigh_it]
+                    if consumed_area[z, y, x] == 0:
+                        consumed_area[z, y, x] = 1
+                        p1.z = z
+                        p1.y = y
+                        p1.x = x
+                        current_points.push(p1)
+    return result
 
 
 def calculate_euclidean_iterative(
