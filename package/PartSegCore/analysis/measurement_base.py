@@ -34,7 +34,7 @@ enum_register.register_class(PerComponent)
 
 class Leaf(BaseSerializableClass):
     # noinspection PyMissingConstructor,PyShadowingBuiltins, PyUnusedLocal
-    # pylint: disable=W0104,W0221
+    # pylint: disable=W0104,W0221,W0622
     def __init__(self, name: str, dict: Dict = None, power: float = 1.0, area: Optional[AreaType] = None,
                  per_component: Optional[PerComponent] = None, channel: Optional[Channel] = None): ...
 

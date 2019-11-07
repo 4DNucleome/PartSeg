@@ -212,9 +212,6 @@ class Image(object):
         """
         return self._image_array[time, stack]
 
-    def get_layer_with_add(self, time, stack):
-        return [self._image_array[time, stack]] + [x[time, stack] for x in self.additional_channels]
-
     def add_additional(self, *args):
         self.additional_channels.extend(args)
 

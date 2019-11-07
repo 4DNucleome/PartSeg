@@ -117,6 +117,7 @@ class MeasurementCalculate(BaseSerializableClass):
     # TODO rename statistic_profile to measurement_profile
 
     # noinspection PyOverloads,PyMissingConstructor
+    # pylint: disable=W0104
     @typing.overload
     def __init__(self, channel: int, units: Units, statistic_profile: MeasurementProfile, name_prefix: str): ...
 
@@ -165,7 +166,6 @@ class MaskMapper:
 
         :param file_path: path to proceeded file
         """
-        pass
 
     @abstractmethod
     def get_parameters(self):
@@ -211,6 +211,7 @@ class MaskSub(MaskMapper, BaseSerializableClass):
     rep: str
 
     # noinspection PyMissingConstructor,PyOverloads
+    # pylint: disable=W0104
     @typing.overload
     def __init__(self, name: str, base: str, rep: str): ...
 
@@ -229,6 +230,7 @@ class MaskFile(MaskMapper, BaseSerializableClass):
     name_dict: typing.Optional[dict] = None
 
     # noinspection PyMissingConstructor,PyOverloads
+    # pylint: disable=W0104
     @typing.overload
     def __init__(self, name: str, path_to_file: str, name_dict: typing.Optional[dict] = None):  ...
 

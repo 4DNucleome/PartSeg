@@ -130,6 +130,7 @@ class ProfileEncoder(SerializeClassEncoder):
     >>> with open("some_file", 'w') as fp:
     >>>     json.dump(data, fp, cls=ProfileEncoder)
     """
+    # pylint: disable=E0202
     def default(self, o):
         """encoder implementation"""
         if isinstance(o, ProfileDict):

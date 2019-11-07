@@ -4,6 +4,7 @@ from .measurement_calculation import MeasurementProfile
 
 
 class PartEncoder(ProfileEncoder):
+    # pylint: disable=E0202
     def default(self, o):
         if isinstance(o, MeasurementProfile):
             return {"__MeasurementProfile__": True, **o.to_dict()}

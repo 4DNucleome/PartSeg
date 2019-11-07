@@ -91,7 +91,7 @@ class IterativeVoteSmoothing(BaseSmoothing):
         segmentation = segmentation.copy()
         count_point = np.count_nonzero(segmentation)
         axis = tuple(range(len(segmentation_bin.shape)))
-        for i in range(arguments["max_steps"]):
+        for _ in range(arguments["max_steps"]):
             for shift in neighbourhood:
                 count_array += np.roll(segmentation_bin, shift, axis)
             segmentation_bin[count_array < arguments["support_level"]] = 0

@@ -237,7 +237,7 @@ class CustomDoubleSpinBox(QDoubleSpinBox):
 class ProgressCircle(QWidget):
     """
     This is widget for generating circuital progress bar
-    
+
     :param background: color of background circle, need to be acceptable by :py:class:`PyQt5.QtGui.QColor` constructor.
     :param main_color: color of progress marking, need to be acceptable by :py:class:`PyQt5.QtGui.QColor` constructor.
 

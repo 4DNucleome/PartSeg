@@ -11,7 +11,6 @@ class AlgorithmDescribeNotFound(Exception):
     """
     When algorithm description not found
     """
-    pass
 
 
 class AlgorithmProperty:

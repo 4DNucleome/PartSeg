@@ -18,7 +18,6 @@ class TiffFileException(Exception):
     exception raised if reading tiff file fails. Created for distinguish exceptions which should
     reported as warning message (not for report)
     """
-    pass
 
 
 class BaseImageReader:
