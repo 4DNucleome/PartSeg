@@ -1,7 +1,7 @@
 import itertools
 
 import pytest
-from PartSegCore.distance_in_structure.euclidean_cython import calculate_euclidean
+from PartSegCore.sprawl_utils.euclidean_cython import calculate_euclidean
 
 from PartSegCore.multiscale_opening import PyMSO, calculate_mu, MuType
 import numpy as np

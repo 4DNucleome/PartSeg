@@ -1,5 +1,5 @@
 """
-This module contains PartSeg wrapers for function for :py:mod:`..distance_in_structure.find_split`.
+This module contains PartSeg wrapers for function for :py:mod:`..sprawl_utils.find_split`.
 """
 from abc import ABC
 from enum import Enum
@@ -9,7 +9,7 @@ import numpy as np
 
 from PartSegCore.class_generator import enum_register
 from ..multiscale_opening import PyMSO, calculate_mu, MuType
-from ..distance_in_structure.find_split import path_maximum_sprawl, path_minimum_sprawl, euclidean_sprawl, \
+from ..sprawl_utils.find_split import path_maximum_sprawl, path_minimum_sprawl, euclidean_sprawl, \
     fdt_sprawl
 from ..algorithm_describe_base import Register, AlgorithmDescribeBase, AlgorithmProperty
 from .algorithm_base import SegmentationLimitException
