@@ -8,6 +8,9 @@
 -   add automated tests of example notebook
 -   reversed mask
 -   load segmentation parameters in mask segmentation
+-   allow use sprawl in segmentation tool
+-   add radial split of mask for measurement
+-   add all measurement results in batch, per component sheet  
 
 ## 0.9.3
 -   start automated build documentation
