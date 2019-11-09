@@ -84,6 +84,16 @@ class BaseImageReader:
         """
         try:
             final_mapping_dict = {"T": 0, "Z": 1, "Y": 2, "X": 3, "C": 4, "I": 1, "S": 4, "Q": 1}
+            axes = list(axes)
+            i = 0
+            while i < len(axes):
+                name = axes[i]
+                if name not in final_mapping_dict and array.shape[i] == 1:
+                    array = array.take(0, i)
+                    axes.pop(i)
+                else:
+                    i += 1
+
             final_mapping = [final_mapping_dict[letter] for letter in axes]
         except KeyError:
             raise NotImplementedError("Data type not supported. Please contact with author for update code")
