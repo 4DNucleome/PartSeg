@@ -99,6 +99,7 @@ class Image(object):
             raise ValueError("Wrong array shape")
         return np.reshape(array, shape)
 
+    # noinspection DuplicatedCode
     def fit_mask_to_image(self, array: np.ndarray) -> np.ndarray:
         """call :py:meth:`fit_array_to_image` and then use minimal size type which save information"""
         array = self.fit_array_to_image(array)
@@ -113,9 +114,11 @@ class Image(object):
         if max_val + 1 == unique.size:
             if max_val < 250:
                 return array.astype(np.uint8)
+            elif max_val < 2**16 - 5:
+                return array.astype(np.uint16)
             else:
                 return array.astype(np.uint32)
-        masking_array = np.zeros(max_val, dtype=np.uint32)
+        masking_array = np.zeros(max_val+1, dtype=np.uint32)
         for i, val in enumerate(unique, 0 if unique[0] == 0 else 1):
             masking_array[val] = i
         res = masking_array[array]
