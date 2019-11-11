@@ -3,6 +3,7 @@ import typing
 from io import BytesIO
 from pathlib import Path
 from threading import Lock
+from abc import abstractmethod
 
 import numpy as np
 import tifffile.tifffile
@@ -24,6 +25,8 @@ class BaseImageReader:
     """
     Base class for reading image using Christopher Gholike libraries
     """
+    return_order = "TZYXC"
+
     def __init__(self, callback_function=None):
         self.default_spacing = 10 ** -6, 10 ** -6, 10 ** -6
         self.spacing = self.default_spacing
@@ -41,6 +44,7 @@ class BaseImageReader:
             raise ValueError(f"wrong spacing {spacing}")
         self.default_spacing = spacing
 
+    @abstractmethod
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
         """
         Main function to read image. If ext is not set then it may be deduced from path to file.
@@ -147,11 +151,11 @@ class OifImagReader(BaseImageReader):
                     break
                 i += 1
 
-            self.spacing = z_scale ,x_scale, y_scale
+            self.spacing = z_scale, x_scale, y_scale
         except KeyError:
             pass
         # TODO add mask reading
-        return Image(image_data, self.spacing, file_path=os.path.abspath(image_path))
+        return Image(image_data, self.spacing, file_path=os.path.abspath(image_path), axes_order=self.return_order)
 
 
 class CziImageReader(BaseImageReader):
@@ -174,13 +178,14 @@ class CziImageReader(BaseImageReader):
         except KeyError:
             pass
         # TODO add mask reading
-        return Image(image_data, self.spacing, file_path=os.path.abspath(image_path))
+        return Image(image_data, self.spacing, file_path=os.path.abspath(image_path), axes_order=self.return_order)
 
     def update_array_shape(self, array: np.ndarray, axes: str):
         if "B" in axes:
             index = axes.index("B")
             if array.shape[index] != 1:
-                raise NotImplementedError("Non single dimension 'B' are not Supported by PartSeg")
+                raise NotImplementedError("Czi file with B axes is not currently supported by PartSeg."
+                                          " Please contact with author for update code")
             array = array.take(0, axis=index)
             axes = axes[:index] + axes[index+1:]
         if axes[-1] == "0":
@@ -259,7 +264,7 @@ class TiffImageReader(BaseImageReader):
         if not isinstance(image_path, str):
             image_path = ""
         return Image(image_data, self.spacing, mask=mask_data, default_coloring=self.colors, labels=self.labels,
-                     ranges=self.ranges, file_path=os.path.abspath(image_path))
+                     ranges=self.ranges, file_path=os.path.abspath(image_path), axes_order=self.return_order)
 
     def verify_mask(self):
         """

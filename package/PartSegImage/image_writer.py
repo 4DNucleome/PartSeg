@@ -6,7 +6,8 @@ import numpy as np
 
 from . import Image
 
-class ImageWriter(object):
+
+class ImageWriter:
     """class for saving TIFF images"""
     @classmethod
     def save(cls, image: Image, save_path: typing.Union[str, BytesIO]):
@@ -32,7 +33,7 @@ class ImageWriter(object):
 
         metadata = {"mode": "color", "unit": "\\u00B5m"}
         if len(spacing) == 3:
-            metadata.update({"spacing":spacing[0]})
+            metadata.update({"spacing": spacing[0]})
         resolution = [1/x for x in spacing[-2:]]
         cls._save(data, save_path, resolution, metadata, imagej_kwargs)
 
@@ -47,7 +48,7 @@ class ImageWriter(object):
         mask = image.get_mask_for_save()
         if mask is None:
             return
-        mask_max = mask.max()
+        mask_max = np.max(mask)
         if mask.dtype == np.bool:
             mask = mask.astype(np.uint8)
         elif mask_max < 255:

@@ -53,7 +53,7 @@ class TestInterpolateImage:
     def test_default_interpolate(self):
         image = get_flat_image()
         image_res = InterpolateImage.transform(image, InterpolateImage.calculate_initial(image))
-        assert image_res.spacing == (5,5)
+        assert image_res.spacing == (5, 5)
         assert image_res.get_data().shape == (1, 1, 10, 10, 1)
         image = get_cube_image()
         image_res = InterpolateImage.transform(image, InterpolateImage.calculate_initial(image))
