@@ -24,8 +24,18 @@ class TiffFileException(Exception):
 class BaseImageReader:
     """
     Base class for reading image using Christopher Gholike libraries
+
+    :cvar typing.Type[Image] ~.image_class: image class to return
     """
-    return_order = "TZYXC"
+    image_class = Image
+
+    @classmethod
+    def return_order(cls) -> str:
+        """
+        Order to which image axes should be rearranged before pass to :py:attr:`image_class` constructor.
+        Default is :py:attr:`image_class.return_order`
+        """
+        return cls.image_class.return_order
 
     def __init__(self, callback_function=None):
         self.default_spacing = 10 ** -6, 10 ** -6, 10 ** -6
@@ -78,8 +88,8 @@ class BaseImageReader:
             instance.set_default_spacing(default_spacing)
         return instance.read(image_path, mask_path)
 
-    @staticmethod
-    def update_array_shape(array: np.ndarray, axes: str):
+    @classmethod
+    def update_array_shape(cls, array: np.ndarray, axes: str):
         """
         Rearrange order of array axes to get proper internal axes order
 
@@ -87,7 +97,13 @@ class BaseImageReader:
         :param axes: current order of array axes as string like "TZYXC"
         """
         try:
-            final_mapping_dict = {"T": 0, "Z": 1, "Y": 2, "X": 3, "C": 4, "I": 1, "S": 4, "Q": 1}
+            final_mapping_dict = {l: i for i, l in enumerate(cls.return_order())}
+            if "Z" in final_mapping_dict and "I" not in final_mapping_dict:
+                final_mapping_dict["I"] = final_mapping_dict["Z"]
+            if "Z" in final_mapping_dict and "Q" not in final_mapping_dict:
+                final_mapping_dict["Q"] = final_mapping_dict["Z"]
+            if "C" in final_mapping_dict and "S" not in final_mapping_dict:
+                final_mapping_dict["S"] = final_mapping_dict["C"]
             axes = list(axes)
             i = 0
             while i < len(axes):
@@ -99,12 +115,13 @@ class BaseImageReader:
                     i += 1
 
             final_mapping = [final_mapping_dict[letter] for letter in axes]
-        except KeyError:
-            raise NotImplementedError("Data type not supported. Please contact with author for update code")
+        except KeyError as e:
+            raise NotImplementedError(f"Data type not supported ({e.args[0]})."
+                                      f" Please contact with author for update code")
         if len(final_mapping) != len(set(final_mapping)):
             raise NotImplementedError("Data type not supported. Please contact with author for update code")
-        if len(array.shape) < 5:
-            array = np.reshape(array, array.shape + (1,) * (5 - len(array.shape)))
+        if len(array.shape) < len(cls.return_order()):
+            array = np.reshape(array, array.shape + (1,) * (len(cls.return_order()) - len(array.shape)))
 
         array = np.moveaxis(array, list(range(len(axes))), final_mapping)
         return array
@@ -155,7 +172,8 @@ class OifImagReader(BaseImageReader):
         except KeyError:
             pass
         # TODO add mask reading
-        return Image(image_data, self.spacing, file_path=os.path.abspath(image_path), axes_order=self.return_order)
+        return self.image_class(image_data, self.spacing, file_path=os.path.abspath(image_path),
+                                axes_order=self.return_order())
 
 
 class CziImageReader(BaseImageReader):
@@ -178,7 +196,8 @@ class CziImageReader(BaseImageReader):
         except KeyError:
             pass
         # TODO add mask reading
-        return Image(image_data, self.spacing, file_path=os.path.abspath(image_path), axes_order=self.return_order)
+        return self.image_class(image_data, self.spacing, file_path=os.path.abspath(image_path),
+                                axes_order=self.return_order())
 
     def update_array_shape(self, array: np.ndarray, axes: str):
         if "B" in axes:
@@ -263,8 +282,9 @@ class TiffImageReader(BaseImageReader):
             self.mask_file.close()
         if not isinstance(image_path, str):
             image_path = ""
-        return Image(image_data, self.spacing, mask=mask_data, default_coloring=self.colors, labels=self.labels,
-                     ranges=self.ranges, file_path=os.path.abspath(image_path), axes_order=self.return_order)
+        return self.image_class(image_data, self.spacing, mask=mask_data, default_coloring=self.colors,
+                                labels=self.labels, ranges=self.ranges, file_path=os.path.abspath(image_path),
+                                axes_order=self.return_order())
 
     def verify_mask(self):
         """

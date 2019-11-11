@@ -19,7 +19,13 @@ class Image:
     :param labels: labels for channels
     :param axes_order: allow to create Image object form data with different axes order, or missed axes
 
-    :cvar return_order: internal order of axes
+    :cvar str ~.return_order: internal order of axes
+
+    It is prepared for subclassing with changed internal order. Eg:
+
+    >>> class ImageJImage(Image):
+    >>>     return_order = "TZCYX"
+
     """
     _image_spacing: Spacing
     return_order = "TZYXC"
@@ -259,18 +265,6 @@ class Image:
         """
         image_array = np.swapaxes(self._image_array, self.time_pos, self.stack_pos)
         return self.substitute(data=image_array)
-
-    def __getitem__(self, item):
-        # TODO not good solution, improve it
-        li = []
-        if self.is_time:
-            li.append(slice(None))
-        else:
-            li.append(0)
-        if not self.is_stack:
-            li.append(0)
-        li = tuple(li)
-        return self._image_array[li][item]
 
     def get_channel(self, num) -> np.ndarray:
         """"""
