@@ -1,8 +1,10 @@
 from abc import ABC
+import operator
 
 import numpy as np
 from copy import deepcopy
 from typing import Type
+import pytest
 
 from PartSegCore.convex_fill import convex_fill, _convex_fill
 from PartSegImage import Image
@@ -74,19 +76,26 @@ def empty(_s: str, _i: int):
     pass
 
 
-def test_base_parameters():
-    for key, val in analysis_algorithm_dict.items():
-        assert val.get_name() == key
-        val: Type[SegmentationAlgorithm]
-        obj = val()
-        values = val.get_default_values()
-        obj.set_parameters(**values)
-        parameters = obj.get_segmentation_profile()
-        assert parameters.algorithm == key
-        assert parameters.values == values, key
+@pytest.mark.parametrize("algorithm_name", analysis_algorithm_dict.keys())
+def test_base_parameters(algorithm_name):
+    algorithm_class = analysis_algorithm_dict[algorithm_name]
+    assert algorithm_class.get_name() == algorithm_name
+    algorithm_class: Type[SegmentationAlgorithm]
+    obj = algorithm_class()
+    values = algorithm_class.get_default_values()
+    obj.set_parameters(**values)
+    parameters = obj.get_segmentation_profile()
+    assert parameters.algorithm == algorithm_name
+    assert parameters.values == values
 
 
 class BaseThreshold(object):
+    def check_result(self, result, sizes, op, parameters):
+        assert result.segmentation.max() == len(sizes)
+        assert np.all(op(np.bincount(result.segmentation.flat)[1:], np.array(sizes)))
+        assert result.parameters.values == parameters
+        assert result.parameters.algorithm == self.algorithm_class.get_name()
+
     def get_parameters(self):
         if hasattr(self, "parameters"):
             return deepcopy(self.parameters)
@@ -117,18 +126,12 @@ class BaseOneThreshold(BaseThreshold, ABC):
         alg.set_image(image)
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
-        assert result.segmentation.max() == 2
-        assert np.all(np.bincount(result.segmentation.flat)[1:] == np.array([96000, 72000]))  # 30*40*80, 30*30*80
-        assert result.parameters.values == parameters
-        assert result.parameters.algorithm == alg.get_name()
+        self.check_result(result, [96000, 72000], operator.eq, parameters)
 
         parameters['threshold']["values"]["threshold"] += self.get_shift()
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
-        assert result.segmentation.max() == 1
-        assert np.bincount(result.segmentation.flat)[1] == 192000  # 30*80*80
-        assert result.parameters.values == parameters
-        assert result.parameters.algorithm == alg.get_name()
+        self.check_result(result, [192000], operator.eq, parameters)
 
     def test_side_connection(self):
         image = self.get_side_object()
@@ -138,18 +141,12 @@ class BaseOneThreshold(BaseThreshold, ABC):
         alg.set_image(image)
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
-        assert result.segmentation.max() == 2
-        assert np.all(np.bincount(result.segmentation.flat)[1:] == np.array([96000 + 5, 72000 + 5]))
-        assert result.parameters.values == parameters
-        assert result.parameters.algorithm == alg.get_name()
+        self.check_result(result, [96000 + 5, 72000 + 5], operator.eq, parameters)
 
         parameters['side_connection'] = False
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
-        assert result.segmentation.max() == 1
-        assert np.bincount(result.segmentation.flat)[1] == 96000 + 5 + 72000 + 5
-        assert result.parameters.values == parameters
-        assert result.parameters.algorithm == alg.get_name()
+        self.check_result(result, [96000 + 5 + 72000 + 5], operator.eq, parameters)
 
 
 class TestLowerThreshold(BaseOneThreshold):
@@ -179,7 +176,7 @@ class TestRangeThresholdAlgorithm(object):
         alg.set_parameters(**parameters)
         alg.set_image(image)
         result = alg.calculation_run(empty)
-        assert result.segmentation.max() == 2
+        assert np.max(result.segmentation) == 2
         assert np.all(np.bincount(result.segmentation.flat)[1:] == np.array(
             [30 * 40 * 80 - 20 * 30 * 70, 30 * 30 * 80 - 20 * 20 * 70]))
         assert result.parameters.values == parameters
@@ -188,7 +185,7 @@ class TestRangeThresholdAlgorithm(object):
         parameters['lower_threshold'] -= 6
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
-        assert result.segmentation.max() == 1
+        assert np.max(result.segmentation) == 1
         assert np.bincount(result.segmentation.flat)[1] == 30*80*80 - 20 * 50 * 70
         assert result.parameters.values == parameters
         assert result.parameters.algorithm == alg.get_name()
@@ -201,7 +198,7 @@ class TestRangeThresholdAlgorithm(object):
         alg.set_parameters(**parameters)
         alg.set_image(image)
         result = alg.calculation_run(empty)
-        assert result.segmentation.max() == 2
+        assert np.max(result.segmentation) == 2
         assert np.all(np.bincount(result.segmentation.flat)[1:] == np.array(
             [30 * 40 * 80 - 20 * 30 * 70 + 5, 30 * 30 * 80 - 20 * 20 * 70 + 5]))
         assert result.parameters.values == parameters
@@ -210,79 +207,41 @@ class TestRangeThresholdAlgorithm(object):
         parameters['side_connection'] = False
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
-        assert result.segmentation.max() == 1
+        assert np.max(result.segmentation) == 1
         assert np.bincount(result.segmentation.flat)[1] == 30 * 70 * 80 - 20 * 50 * 70 + 10
         assert result.parameters.values == parameters
         assert result.parameters.algorithm == alg.get_name()
 
 
 class BaseFlowThreshold(BaseThreshold, ABC):
-    def test_simple(self):
-        image = self.get_base_object()
+    @pytest.mark.parametrize("sprawl_algorithm_name", sprawl_dict.keys())
+    @pytest.mark.parametrize("compare_op", [operator.eq, operator.ge])
+    @pytest.mark.parametrize("components", [2] + list(range(3, 15, 2)))
+    def test_multiple(self, sprawl_algorithm_name, compare_op, components):
         alg = self.algorithm_class()
         parameters = self.get_parameters()
+        image = self.get_multiple_part(components)
         alg.set_image(image)
-        for key, val in sprawl_dict.items():
-            parameters["sprawl_type"] = {'name': key, 'values': val.get_default_values()}
-            alg.set_parameters(**parameters)
-            result = alg.calculation_run(empty)
-            assert result.segmentation.max() == 2, key
-            assert np.all(np.bincount(result.segmentation.flat)[1:] == np.array([96000, 72000])), key
-            assert result.parameters.values == parameters, key
-            assert result.parameters.algorithm == alg.get_name(), key
-        parameters["threshold"]["values"]["base_threshold"]['values']["threshold"] += self.get_shift()
-        for key, val in sprawl_dict.items():
-            parameters["sprawl_type"] = {'name': key, 'values': val.get_default_values()}
-            alg.set_parameters(**parameters)
-            result = alg.calculation_run(empty)
-            assert result.segmentation.max() == 2, key
-            assert np.all(np.bincount(result.segmentation.flat)[1:] >= np.array([96000, 72000])), key
-            assert result.parameters.values == parameters, key
-            assert result.parameters.algorithm == alg.get_name(), key
+        sprawl_algorithm = sprawl_dict[sprawl_algorithm_name]
+        parameters["sprawl_type"] = {'name': sprawl_algorithm_name, 'values': sprawl_algorithm.get_default_values()}
+        if compare_op(1, 0):
+            parameters["threshold"]["values"]["base_threshold"]['values']["threshold"] += self.get_shift()
+        alg.set_parameters(**parameters)
+        result = alg.calculation_run(empty)
+        self.check_result(result, [4000]*components, compare_op, parameters)
 
-    def test_multiple(self):
-        alg = self.algorithm_class()
-        parameters = self.get_parameters()
-        for i in range(3, 15, 2):
-            image = self.get_multiple_part(i)
-            alg.set_image(image)
-            for key, val in sprawl_dict.items():
-                parameters["sprawl_type"] = {'name': key, 'values': val.get_default_values()}
-                alg.set_parameters(**parameters)
-                result = alg.calculation_run(empty)
-                assert result.segmentation.max() == i, key
-                assert np.all(
-                    np.bincount(result.segmentation.flat)[1:] == np.array([4000]*i)), (key, i)
-                assert result.parameters.values == parameters, key
-                assert result.parameters.algorithm == alg.get_name(), key
-        parameters["threshold"]["values"]["base_threshold"]['values']["threshold"] += self.get_shift()
-        for i in range(3, 15, 2):
-            image = self.get_multiple_part(i)
-            alg.set_image(image)
-            for key, val in sprawl_dict.items():
-                parameters["sprawl_type"] = {'name': key, 'values': val.get_default_values()}
-                alg.set_parameters(**parameters)
-                result = alg.calculation_run(empty)
-                assert result.segmentation.max() == i, key
-                assert np.all(
-                    np.bincount(result.segmentation.flat)[1:] >= np.array([4000] * i)), f"{key}, {i}"
-                assert result.parameters.values == parameters, key
-                assert result.parameters.algorithm == alg.get_name(), key
-
-    def test_side_connection(self):
+    @pytest.mark.parametrize("algorithm_name", sprawl_dict.keys())
+    def test_side_connection(self, algorithm_name):
         image = self.get_side_object()
         alg = self.algorithm_class()
         parameters = self.get_parameters()
         parameters['side_connection'] = True
         alg.set_image(image)
-        for key, val in sprawl_dict.items():
-            parameters["sprawl_type"] = {'name': key, 'values': val.get_default_values()}
-            alg.set_parameters(**parameters)
-            result = alg.calculation_run(empty)
-            assert result.segmentation.max() == 2
-            assert np.all(np.bincount(result.segmentation.flat)[1:] == np.array([96000 + 5, 72000 + 5]))
-            assert result.parameters.values == parameters
-            assert result.parameters.algorithm == alg.get_name()
+        val = sprawl_dict[algorithm_name]
+        parameters["sprawl_type"] = {'name': algorithm_name, 'values': val.get_default_values()}
+        alg.set_parameters(**parameters)
+        result = alg.calculation_run(empty)
+        self.check_result(result, [96000 + 5, 72000 + 5], operator.eq, parameters)
 
 
 class TestLowerThresholdFlow(BaseFlowThreshold):
@@ -535,10 +494,11 @@ class TestPipeline:
 
 
 class TestNoiseFiltering:
-    def test_base(self):
-        for el in noise_filtering_dict.values():
-            data = get_two_parts_array()[0, ..., 0]
-            el.noise_filter(data, (1, 1, 1), el.get_default_values())
+    @pytest.mark.parametrize("algorithm_name", noise_filtering_dict.keys())
+    def test_base(self, algorithm_name):
+        noise_remove_algorithm = noise_filtering_dict[algorithm_name]
+        data = get_two_parts_array()[0, ..., 0]
+        noise_remove_algorithm.noise_filter(data, (1, 1, 1), noise_remove_algorithm.get_default_values())
 
 
 class TestConvexFill:
