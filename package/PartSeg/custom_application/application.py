@@ -1,6 +1,6 @@
-import socket
+import json
 import sys
-from xmlrpc import client
+from urllib import request, error
 
 import packaging.version
 import sentry_sdk
@@ -21,15 +21,18 @@ class CheckVersionThread(QThread):
     def __init__(self):
         super().__init__()
         self.release = __version__
+        self.url = "https://4dnucleome.cent.uw.edu.pl/PartSeg/"
 
     def run(self):
         """This function perform check"""
 
         # noinspection PyBroadException
         try:
-            proxy = client.ServerProxy('http://pypi.python.org/pypi')
-            self.release = proxy.package_releases("PartSeg")[0]
-        except socket.gaierror:
+            r = request.urlopen("https://pypi.org/pypi/PartSeg/json")
+            data = json.load(r)
+            self.release = data["info"]["version"]
+            self.url = data["info"]["home_page"]
+        except (KeyError, error.URLError):
             pass
         except Exception as e:
             sentry_sdk.capture_exception(e)
@@ -95,7 +98,7 @@ class CustomApplication(QApplication):
                     QMessageBox.Information, "New release",
                     f"You use outdated version of PartSeg. "
                     f"Your version is {my_version} and current is {remote_version}. "
-                    "You can download next release form https://4dnucleome.cent.uw.edu.pl/PartSeg/", QMessageBox.Ok)
+                    f"You can download next release form {self.release_check.url}", QMessageBox.Ok)
             else:
                 message = QMessageBox(
                     QMessageBox.Information, "New release",
