@@ -1,9 +1,9 @@
 version: 1.0
 requirements:
-  - requirements.txt
+  - requirements_freezed.txt
   - requirements-ci.txt
   - requirements_pyinstaller.txt
-  - docs/requirements.txt
+  - docs/requirements_freezed.txt
   - setup.py
   - tox.ini
   - path: dev_requirements.txt

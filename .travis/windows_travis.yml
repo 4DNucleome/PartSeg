@@ -27,7 +27,7 @@ install:
   - $PY -m pip install --upgrade pip
   #- $PY -m ensurepip --upgrade
   - $PY -m pip --version
-  #- $PY -m pip install -r requirements.txt
+  #- $PY -m pip install -r requirements_freezed.txt
   #- choco install flake8 --source python  # Even choco can't find pip :-(
   - $PY -m pip install --no-warn-script-location flake8  # pytest  # add other testing frameworks later
 # before_script:
