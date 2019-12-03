@@ -1,12 +1,3 @@
-trigger:
-  branches:
-    include:
-    - master
-    - develop
-  tags:
-    include:
-    - v*
-
 stages:
   - stage: GetTestData
     jobs:
@@ -110,7 +101,7 @@ stages:
         variables:
           CIBW_BUILD: cp36*64 cp37*64 cp38*64
           CIBW_BEFORE_BUILD: pip install numpy cython; yum -y install hdf5-devel;
-          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_REQUIRES: pytest pytest-cov
           CIBW_TEST_COMMAND: pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part
           CIBW_BEFORE_TEST: pip install PyQt5==5.13.2
         steps:
@@ -160,12 +151,11 @@ stages:
           CIBW_TEST_COMMAND: pytest {project}/package/tests
         steps:
           - {task: UsePythonVersion@0, inputs: {versionSpec: '3.6', architecture: x64}}
-          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7', architecture: x64}}
           - task: DownloadPipelineArtifact@2
             inputs:
               artifact: TestData
               path: $(Build.SourcesDirectory)/test_data
-          - bash: python -m pip install cibuildwheel
+          - bash: python -m pip install git+https://github.com/czaki/cibuildwheel.git@fix_setup_cfg
             displayName: InstallDeps
           - bash: python -m cibuildwheel --output-dir wheelhouse
             displayName: BuildWheel
