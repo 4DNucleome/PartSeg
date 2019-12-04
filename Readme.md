@@ -1,8 +1,8 @@
 # PartSeg
-[![Build Status](https://travis-ci.org/4DNucleome/PartSeg.svg?branch=master)](https://travis-ci.org/4DNucleome/PartSeg) 
+[![Travis Build Status](https://travis-ci.com/4DNucleome/PartSeg.svg?branch=master)](https://travis-ci.com/4DNucleome/PartSeg) 
 [![PyPI version](https://badge.fury.io/py/PartSeg.svg)](https://badge.fury.io/py/PartSeg)
 [![Documentation Status](https://readthedocs.org/projects/partseg/badge/?version=latest)](https://partseg.readthedocs.io/en/latest/?badge=latest)
-[![Build Status](https://dev.azure.com/PartSeg/PartSeg/_apis/build/status/4DNucleome.PartSeg?branchName=master)](https://dev.azure.com/PartSeg/PartSeg/_build/latest?definitionId=1&branchName=master)
+[![Azure Pipelines Build Status](https://dev.azure.com/PartSeg/PartSeg/_apis/build/status/4DNucleome.PartSeg?branchName=master)](https://dev.azure.com/PartSeg/PartSeg/_build/latest?definitionId=1&branchName=master)
 [![DOI](https://zenodo.org/badge/166421141.svg)](https://zenodo.org/badge/latestdoi/166421141)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/4DNucleome/PartSeg.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/4DNucleome/PartSeg/alerts/)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/4DNucleome/PartSeg.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/4DNucleome/PartSeg/context:python)
