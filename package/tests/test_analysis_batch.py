@@ -4,6 +4,8 @@ import time
 import pandas as pd
 import sys
 
+import pytest
+
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask_create import MaskProperty
 from PartSegImage import TiffImageReader
@@ -182,6 +184,7 @@ class TestCalculationProcess:
         process.iterate_over(plan.execution_tree)
         assert (len(process.measurement[0]) == 3)
 
+    @pytest.mark.filterwarnings("ignore:This method will be removed")
     def test_full_pipeline(self, tmpdir):
         plan = self.create_calculation_plan()
         file_pattern = os.path.join(get_test_dir(), "stack1_components", "stack1_component*[0-9].tif")
@@ -205,6 +208,7 @@ class TestCalculationProcess:
         df = pd.read_excel(os.path.join(tmpdir, "test.xlsx"), index_col=0, header=[0, 1])
         assert df.shape == (8, 4)
 
+    @pytest.mark.filterwarnings("ignore:This method will be removed")
     def test_full_pipeline_mask_project(self, tmpdir):
         plan = self.create_calculation_plan2()
         file_pattern = os.path.join(get_test_dir(), "*.seg")
@@ -228,6 +232,7 @@ class TestCalculationProcess:
         df = pd.read_excel(os.path.join(tmpdir, "test2.xlsx"), index_col=0, header=[0, 1])
         assert df.shape == (2, 4)
 
+    @pytest.mark.filterwarnings("ignore:This method will be removed")
     def test_full_pipeline_component_split(self, tmpdir):
         plan = self.create_calculation_plan3()
         file_pattern = os.path.join(get_test_dir(), "stack1_components", "stack1_component*[0-9].tif")

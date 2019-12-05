@@ -128,7 +128,6 @@ class TestJsonLoad:
         assert "dimension_type" in data["test_0.9.2.3"].values["noise_filtering"]["values"]
         file_path = os.path.join(os.path.dirname(__file__), "test_data", "calculation_plan_0.9.2.3.json")
         data = UpdateLoadedMetadataAnalysis.load_json_data(file_path)
-        print(data["test_0.9.2.3"])
 
 
 class TestSegmentationMask:
