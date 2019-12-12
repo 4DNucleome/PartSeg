@@ -242,11 +242,6 @@ stages:
         steps:
           - {task: UsePythonVersion@0, inputs: {versionSpec: '3.6', architecture: x64}}
           - bash: |
-              wget -q -N https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/typy_neuronow2.zip
-              unzip typy_neuronow2.zip
-              ls typy_neuronow2
-            displayName: GetData
-          - bash: |
               python -m pip install -r requirements_pyinstaller.txt
               python -m pip install .
               python -m pip install jupyter[all]
