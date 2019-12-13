@@ -155,7 +155,7 @@ stages:
             inputs:
               artifact: TestData
               path: $(Build.SourcesDirectory)/test_data
-          - bash: python -m pip install git+https://github.com/czaki/cibuildwheel.git@fix_setup_cfg
+          - bash: python -m pip install cibuildwheel
             displayName: InstallDeps
           - bash: python -m cibuildwheel --output-dir wheelhouse
             displayName: BuildWheel
