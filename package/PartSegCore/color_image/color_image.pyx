@@ -33,37 +33,6 @@ ctypedef fused label_types:
     np.uint16_t
     np.uint32_t
 
-
-label_colors_global = np.array([[0, 205, 0],
-                   [0, 0, 255],
-                   [0, 255, 255],
-                   [255, 0, 255],
-                   [255, 127, 0],
-                   [0, 100, 0],
-                   [138, 43, 226],
-                   [139, 35, 35],
-                   [0, 0, 128],
-                   [139, 139, 0],
-                   [255, 62, 150],
-                   [139, 76, 57],
-                   [0, 134, 139],
-                   [205, 104, 57],
-                   [191, 62, 255],
-                   [0, 139, 69],
-                   [199, 21, 133],
-                   [205, 55, 0],
-                   [32, 178, 170],
-                   [106, 90, 205],
-                   [255, 20, 147],
-                   [69, 139, 116],
-                   [72, 118, 255],
-                   [205, 79, 57],
-                   [0, 0, 205],
-                   [139, 34, 82],
-                   [139, 0, 139],
-                   [238, 130, 238],
-                   [139, 0, 0]], dtype=np.uint8)
-
 def min_max_calc_int(np.ndarray arr):
     cdef Py_ssize_t i
     cdef int min, max, val
@@ -111,7 +80,7 @@ def color_grayscale(np.ndarray[DTYPE_t, ndim=2] cmap, np.ndarray[numpy_types, nd
     return result_array
 
 def add_labels(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[label_types, ndim=2] labels, float overlay, int only_border,
-              int border_thick, np.ndarray[np.uint8_t, ndim=1] use_labels):
+              int border_thick, np.ndarray[np.uint8_t, ndim=1] use_labels, np.ndarray[np.uint8_t, ndim=2] label_colors):
     """
     Add label to given RGB image. Ift modify original image.
 
@@ -130,13 +99,14 @@ def add_labels(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[label_types, ndim=2
     cdef Py_ssize_t x, y
     cdef Py_ssize_t comp_num = use_labels.size
     cdef int R, Y
-    cdef Py_ssize_t circle_len, circle_pos
+    cdef Py_ssize_t circle_len, circle_pos, labels_colors_num
     cdef np.ndarray[np.int8_t, ndim=2] circle_shift
     cdef label_types label_val
 
     cdef np.ndarray[label_types, ndim=2] local_labels
 
-    cdef np.uint8_t [:,:] label_colors = label_colors_global
+    # cdef np.uint8_t [:,:] label_colors = label_colors_global
+    labels_colors_num = label_colors.shape[0]
     # prevent from usage background
     use_labels[0] = 0
 
@@ -173,9 +143,10 @@ def add_labels(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[label_types, ndim=2
     for x in prange(x_max, nogil=True):
         for y in range(y_max):
             if local_labels[x,y] > 0:
-                col_num = local_labels[x,y] % 30 # TODO move to global variable
+                col_num = (local_labels[x,y] -1) % labels_colors_num
                 image[x, y, 0] = <DTYPE_t> (image[x, y, 0] * (1-overlay) + label_colors[col_num, 0] * overlay)
                 image[x, y, 1] = <DTYPE_t> (image[x, y, 1] * (1-overlay) + label_colors[col_num, 1] * overlay)
                 image[x, y, 2] = <DTYPE_t> (image[x, y, 2] * (1-overlay) + label_colors[col_num, 2] * overlay)
+    # local_labels = labels_color_map[labels]
     return image
 

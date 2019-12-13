@@ -484,7 +484,7 @@ class ImageView(QWidget):
             if self.image_state.show_label == LabelEnum.Show_results:
                 components_mask[1:] = 1
             add_labels(im, layers, self.image_state.opacity, self.image_state.only_borders,
-                       int((self.image_state.borders_thick - 1) / 2), components_mask)
+                       int((self.image_state.borders_thick - 1) / 2), components_mask, self._settings.label_colors)
         return im
 
     @property
