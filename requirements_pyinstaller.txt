@@ -3,7 +3,7 @@ Cython==0.29.14
 czifile==2019.7.2
 defusedxml==0.6.0
 h5py==2.10.0
-imagecodecs-lite==2019.12.2
+imagecodecs-lite==2019.12.3
 numpy==1.17.4
 oiffile==2019.1.1
 openpyxl==3.0.1  # rq.filter: !=3.0.2
@@ -14,10 +14,10 @@ PyInstaller==3.6
 PyQt5==5.13.2
 QtPy==1.9.0
 scipy==1.3.1
-sentry-sdk==0.13.4
+sentry-sdk==0.13.5
 SimpleITK==1.2.4
 six==1.13.0
-sympy==1.4
+sympy==1.5
 tifffile==2019.7.26.2
 xlrd==1.2.0
 

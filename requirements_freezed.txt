@@ -1,5 +1,5 @@
 altgraph==0.16.1
-certifi==2019.9.28
+certifi==2019.11.28
 et-xmlfile==1.0.1
 jdcal==1.4.1
 mpmath==1.1.0
