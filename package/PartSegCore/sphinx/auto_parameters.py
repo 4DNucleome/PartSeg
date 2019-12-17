@@ -1,3 +1,6 @@
+"""
+This module contain utilities to document Register class.
+"""
 import inspect
 from typing import Dict, Any, List
 

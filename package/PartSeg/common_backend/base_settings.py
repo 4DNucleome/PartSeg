@@ -1,19 +1,17 @@
-import itertools
 import json
 import os
 import os.path
 import sys
-from collections.abc import MutableMapping
 from datetime import datetime
 from pathlib import Path
-from typing import Iterator, Optional, Tuple, Dict, Union, NamedTuple, List
+from typing import Optional, Tuple, Union, NamedTuple, List
 
 import numpy as np
 from qtpy.QtCore import QObject, Signal
 
-from PartSeg.common_backend.abstract_class import QtMeta
-from PartSegCore.color_image import ColorMap, default_colormap_dict
-from PartSegCore.color_image.base_colors import starting_colors, default_labels
+from PartSeg.common_backend.partially_const_dict import PartiallyConstDict
+from PartSegCore.color_image import ColorMap, default_colormap_dict, default_label_dict
+from PartSegCore.color_image.base_colors import starting_colors
 from PartSegCore.io_utils import ProjectInfoBase, load_metadata_base
 from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, check_loaded_dict
 from PartSegImage import Image
@@ -146,72 +144,40 @@ class ImageSettings(QObject):
         return np.array([0] + [1] * np.max(self.segmentation), dtype=np.uint8)
 
 
-ColormapInfo = Tuple[ColorMap, bool]
-
-
-class ColormapDict(QObject, MutableMapping, metaclass=QtMeta):
+class ColormapDict(PartiallyConstDict[ColorMap]):
     """
-    custom dict to merge user defined colormaps with base colormaps
+    Dict for mixing custom colormap with predefined ones
+    """
+    const_item_dict = default_colormap_dict
+    """
+    Non removable items for this dict. Current value is :py:data:`default_colormap_dict`
     """
 
-    colormap_added = Signal(ColorMap)
-    """colormap added to dict"""
-    colormap_removed = Signal(ColorMap)
-    """colormap removed from dict"""
-
-    def __init__(self, editable_colormap: Dict[str, ColorMap]):
-        super().__init__()
-        self.editable_colormap = editable_colormap
-        self._order_dict = {name: i for i, name in
-                            enumerate(itertools.chain(default_colormap_dict.keys(), editable_colormap.keys()))}
-        self._counter = len(self._order_dict)
-
-    def __setitem__(self, key: str, v: Union[ColormapInfo, ColorMap]) -> None:
-        if not key.startswith("custom_"):
-            raise ValueError("Cannot write base color")
-        if isinstance(v, tuple):
-            self.editable_colormap[key] = v[0]
-        else:
-            self.editable_colormap[key] = v
-        self._order_dict[key] = self._counter
-        self._counter += 1
-        self.colormap_added.emit(self.editable_colormap[key])
-
-    def __len__(self) -> int:
-        return len(self.editable_colormap) + len(default_colormap_dict)
-
-    def __iter__(self) -> Iterator[str]:
-        return itertools.chain(default_colormap_dict, self.editable_colormap)
-
-    def __getitem__(self, key: str) -> ColormapInfo:
-        try:
-            if not key.startswith("custom_"):
-                return default_colormap_dict[key], False
-            return self.editable_colormap[key], True
-        except KeyError:
-            raise KeyError(f"Colormap {key} not found")
-
-    def __delitem__(self, key: str):
-        if key.startswith("base_color_"):
-            raise ValueError(f"cannot delete base color {key}")
-        c_map = self.editable_colormap[key]
-        del self.editable_colormap[key]
-        self.colormap_removed.emit(c_map)
-
-    def get_position(self, key: str) -> int:
+    @property
+    def colormap_removed(self):
         """
-        Get item position as unique int. For soring purpose
-
-        :raise KeyError: if element not in dict
+        Signal that colormap is removed form dict
         """
-        try:
-            return self._order_dict[key]
-        except KeyError:
-            if key not in self:
-                raise
-            self._order_dict[key] = self._counter
-            self._counter += 1
-            return self._counter - 1
+        return self.item_removed
+
+    @property
+    def colormap_added(self):
+        """
+        Signal that colormap is added to dict
+        """
+        return self.item_added
+
+
+class LabelColorDict(PartiallyConstDict[list]):
+    """
+    Dict for mixing custom label colors with predefined ones`
+    """
+    const_item_dict = default_label_dict
+    """Non removable items for this dict. Current value is :py:data:`default_label_dict`"""
+
+    def get_array(self, key: str) -> np.ndarray:
+        """Get labels as numpy array"""
+        return np.array(self[key][0], dtype=np.uint8)
 
 
 class ViewSettings(ImageSettings):
@@ -224,6 +190,8 @@ class ViewSettings(ImageSettings):
         self.current_profile_dict = "default"
         self.view_settings_dict = ProfileDict()
         self.colormap_dict = ColormapDict(self.get_from_profile("custom_colormap", {}))
+        self.label_color_dict = LabelColorDict(self.get_from_profile("custom_label_colors", {}))
+        self.cached_labels: Optional[Tuple[str, np.ndarray]] = None
 
     @property
     def chosen_colormap(self):
@@ -242,8 +210,14 @@ class ViewSettings(ImageSettings):
 
     @property
     def label_colors(self):
-        return default_labels
+        key = self.get_from_profile("labels_used", "default")
+        if key not in self.label_color_dict:
+            key = "default"
 
+        if not (self.cached_labels and key == self.cached_labels[0]):
+            self.cached_labels = key, self.label_color_dict.get_array(key)
+
+        return self.cached_labels[1]
 
     def chosen_colormap_change(self, name, visibility):
         colormaps = set(self.chosen_colormap)
@@ -314,7 +288,6 @@ class SaveSettingsDescription(NamedTuple):
 
 class BaseSettings(ViewSettings):
     """
-
     :ivar json_folder_path: default location for saving/loading settings data
     :ivar last_executed_algorithm: name of last executed algorithm.
     :cvar save_locations_keys: list of names of distinct save location.

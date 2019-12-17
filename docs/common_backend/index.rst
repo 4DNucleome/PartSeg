@@ -60,6 +60,13 @@ PartSeg.common\_backend.main\_window module
    :members:
    :show-inheritance:
 
+PartSeg.common\_backend.partially\_const\_dict module
+-----------------------------------------------------
+
+.. automodule:: PartSeg.common_backend.partially_const_dict
+   :members:
+
+
 PartSeg.common\_backend.progress\_thread module
 -----------------------------------------------
 
