@@ -14,6 +14,7 @@ from qtpy.QtWidgets import QTabWidget, QWidget, QPushButton, QGridLayout
 from PartSeg import plugins
 from PartSeg.common_gui.colormap_creator import PColormapCreator, PColormapList
 from PartSeg.common_backend.base_settings import ViewSettings
+from PartSeg.common_gui.label_create import LabelEditor, LabelChoose
 from PartSegCore import register, state_store
 
 
@@ -56,6 +57,27 @@ class DevelopTab(QWidget):
             el()
 
 
+class ColorControl(QTabWidget):
+    """
+    Class for storage all settings for labels and colormaps.
+    """
+
+    def __init__(self, settings: ViewSettings, image_view_names: List[str]):
+        super().__init__()
+        self.colormap_selector = PColormapCreator(settings)
+        self.color_preview = PColormapList(settings, image_view_names)
+        self.color_preview.edit_signal.connect(self.colormap_selector.set_colormap)
+        self.color_preview.edit_signal.connect(partial(self.setCurrentWidget, self.colormap_selector))
+        self.label_editor = LabelEditor(settings)
+        self.label_view = LabelChoose(settings)
+        self.label_view.edit_signal.connect(partial(self.setCurrentWidget, self.label_editor))
+        self.label_view.edit_signal[list].connect(self.label_editor.set_colors)
+        self.addTab(self.color_preview, "Color maps")
+        self.addTab(self.label_view, "Choose labels")
+        self.addTab(self.colormap_selector, "Color Map creator")
+        self.addTab(self.label_editor, "Create labels")
+
+
 class AdvancedWindow(QTabWidget):
     """
     Base class for advanced windows.
@@ -67,14 +89,11 @@ class AdvancedWindow(QTabWidget):
     """
     def __init__(self, settings: ViewSettings, image_view_names: List[str], parent=None):
         super().__init__(parent)
+        self.color_control = ColorControl(settings, image_view_names)
         self.settings = settings
-        self.colormap_selector = PColormapCreator(settings)
-        self.color_preview = PColormapList(settings, image_view_names)
-        self.color_preview.edit_signal.connect(self.colormap_selector.set_colormap)
-        self.color_preview.edit_signal.connect(partial(self.setCurrentWidget, self.colormap_selector))
+
         self.develop = DevelopTab()
-        self.addTab(self.color_preview, "Color maps")
-        self.addTab(self.colormap_selector, "Color Map creator")
+        self.addTab(self.color_control, "Color control")
         if state_store.develop:
             self.addTab(self.develop, "Develop")
         if self.window() == self:

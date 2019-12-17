@@ -246,4 +246,4 @@ stages:
               python -m pip install matplotlib
             displayName: InstallDeps
           - bash: DATA_PATH=${PWD}/typy_neuronow2 jupyter nbconvert --to notebook --execute tutorials/tutorial_neuron_types/Neuron_types_example.ipynb
-            displayName: BuildDocs
+            displayName: "Run Notebook"

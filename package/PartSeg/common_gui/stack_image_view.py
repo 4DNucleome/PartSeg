@@ -361,6 +361,7 @@ class ImageView(QWidget):
         settings.segmentation_changed.connect(self.set_labels)
         settings.segmentation_clean.connect(self.set_labels)
         settings.image_changed.connect(self.set_image)
+        settings.labels_changed.connect(self.paint_layer)
         self.channel_control.coloring_update.connect(self.paint_layer)
 
     def resizeEvent(self, event: QResizeEvent):

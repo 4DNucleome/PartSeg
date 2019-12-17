@@ -182,6 +182,7 @@ class LabelColorDict(PartiallyConstDict[list]):
 
 class ViewSettings(ImageSettings):
     colormap_changes = Signal()
+    labels_changed = Signal()
 
     def __init__(self):
         super().__init__()
@@ -209,8 +210,19 @@ class ViewSettings(ImageSettings):
         self.colormap_changes.emit()
 
     @property
+    def current_labels(self):
+        return self.get_from_profile("labels_used", "default")
+
+    @current_labels.setter
+    def current_labels(self, val):
+        if val not in self.label_color_dict:
+            raise ValueError(f"Unknown label scheme name '{val}'")
+        self.set_in_profile("labels_used", val)
+        self.labels_changed.emit()
+
+    @property
     def label_colors(self):
-        key = self.get_from_profile("labels_used", "default")
+        key = self.current_labels
         if key not in self.label_color_dict:
             key = "default"
 

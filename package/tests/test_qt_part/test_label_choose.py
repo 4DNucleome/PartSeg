@@ -1,7 +1,9 @@
 import numpy as np
 import pytest
+from qtpy.QtGui import QColor
 
-from PartSeg.common_backend.base_settings import LabelColorDict
+from PartSeg.common_backend.base_settings import LabelColorDict, ViewSettings
+from PartSeg.common_gui.label_create import LabelEditor
 
 
 class TestLabelColorDict:
@@ -32,3 +34,30 @@ class TestLabelColorDict:
         assert dkt.get_array("custom_test").dtype == np.uint8
         del dkt["custom_test"]
         assert "custom_test" not in dkt
+
+
+class TestLabelEditor:
+    def test_init(self, qtbot):
+        settings = ViewSettings()
+        widget = LabelEditor(settings)
+        qtbot.addWidget(widget)
+        assert len(widget.get_colors()) == 0
+
+    def test_add(self, qtbot):
+        settings = ViewSettings()
+        widget = LabelEditor(settings)
+        qtbot.addWidget(widget)
+        base_count = len(settings.label_color_dict)
+        widget.save()
+        assert len(settings.label_color_dict) == base_count
+        widget.add_color()
+        widget.save()
+        assert len(settings.label_color_dict) == base_count + 1
+
+    def test_color(self, qtbot):
+        settings = ViewSettings()
+        widget = LabelEditor(settings)
+        qtbot.addWidget(widget)
+        widget.color_picker.setCurrentColor(QColor(100, 200, 0))
+        widget.add_color()
+        assert widget.get_colors() == [[100, 200, 0]]

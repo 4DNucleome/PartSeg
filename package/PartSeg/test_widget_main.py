@@ -3,10 +3,8 @@ import sys
 import PartSegData
 import numpy as np
 
-from PartSeg.common_gui.channel_control import ColorComboBoxGroup
-from PartSeg.common_gui.colormap_creator import PColormapCreator, PColormapList
 from PartSeg.common_backend.base_settings import ViewSettings
-from PartSegCore.color_image import starting_colors
+from PartSeg.common_gui.label_create import LabelEditor, LabelShow, ColorShow
 
 color_maps = np.load(PartSegData.colors_file)
 
@@ -15,16 +13,15 @@ class TestWidget(QWidget):
     def __init__(self):
         super().__init__()
         settings = ViewSettings()
-        self.colormap_selector = PColormapCreator(settings)
-        self.color_preview = PColormapList(settings, starting_colors)
-        self.color_preview.edit_signal.connect(self.colormap_selector.set_colormap)
-        self.test = ColorComboBoxGroup(settings, "aa")
-        self.test.set_channels(4)
-
+        self.colormap_selector = LabelEditor(settings)
+        self.show_ = LabelShow("a", settings.label_colors, False)
+        self.show_.setMinimumHeight(50)
+        self.show_.setMinimumWidth(50)
+        self.color_show = ColorShow([255, 10, 203])
         layout = QVBoxLayout()
-        layout.addWidget(self.test)
         layout.addWidget(self.colormap_selector)
-        layout.addWidget(self.color_preview)
+        layout.addWidget(self.show_)
+        layout.addWidget(self.color_show)
         self.setLayout(layout)
 
 

@@ -1,23 +1,21 @@
-import os
-import random
-import string
+import bisect
 from functools import partial
 from math import ceil
+from typing import List, Optional, Dict, Tuple, Iterable, Set
 
-from PartSegData import icons_dir
+import numpy as np
 from qtpy.QtCore import Qt, QRect, QPointF, Signal
 from qtpy.QtGui import QPaintEvent, QPainter, QMouseEvent, QBrush, QColor, QHideEvent, QFontMetrics, QFont, \
-    QShowEvent, QIcon, QResizeEvent
+    QShowEvent, QResizeEvent
 from qtpy.QtWidgets import QWidget, QColorDialog, QVBoxLayout, QHBoxLayout, QPushButton, QCheckBox, \
     QToolButton, QScrollArea, QGridLayout
-from typing import List, Optional, Dict, Tuple, Iterable, Set
-import numpy as np
-import bisect
 
+from PartSeg.common_backend.base_settings import ViewSettings
+from PartSeg.common_gui.icon_selector import IconSelector
 from PartSeg.common_gui.numpy_qimage import convert_colormap_to_image
 from PartSeg.common_gui.universal_gui_part import InfoLabel
-from PartSeg.common_backend.base_settings import ViewSettings
 from PartSegCore.color_image import Color, ColorPosition, ColorMap, BaseColormap
+from PartSegCore.custom_name_generate import custom_name_generate
 
 
 def color_from_qcolor(color: QColor) -> Color:
@@ -61,6 +59,7 @@ class ColormapEdit(QWidget):
             painter.drawEllipse(point, 5, 5)
             painter.setBrush(QBrush(Qt.white))
             painter.drawEllipse(point, 3, 3)
+
 
         painter.restore()
 
@@ -261,38 +260,14 @@ class PColormapCreator(ColormapCreator):
 
     def save(self):
         if self.show_colormap.colormap:
-            for _ in range(1000):
-                rand_name = "custom_" + ''.join(
-                    random.choice(string.ascii_letters + string.digits) for _ in range(10))  # nosec
-                if rand_name not in self.settings.colormap_dict and rand_name not in self.prohibited_names:
-                    break
-            else:
-                raise RuntimeError("Cannot add colormap")
+            rand_name = custom_name_generate(self.prohibited_names, self.settings.colormap_dict)
             self.prohibited_names.add(rand_name)
             self.settings.colormap_dict[rand_name] = self.show_colormap.colormap
             self.settings.chosen_colormap_change(rand_name, True)
             self.colormap_selected.emit(self.show_colormap.colormap)
 
 
-class _IconSelector:
-    def __init__(self):
-        self._close_icon = None
-        self._edit_icon = None
-
-    @property
-    def close_icon(self) -> QIcon:
-        if self._close_icon is None:
-            self._close_icon = QIcon(os.path.join(icons_dir, "task-reject.png"))
-        return self._close_icon
-
-    @property
-    def edit_icon(self):
-        if self._edit_icon is None:
-            self._edit_icon = QIcon(os.path.join(icons_dir, "configure.png"))
-        return self._edit_icon
-
-
-_icon_selector = _IconSelector()
+_icon_selector = IconSelector()
 
 
 class ChannelPreview(QWidget):
