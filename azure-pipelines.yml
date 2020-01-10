@@ -15,9 +15,15 @@ stages:
       steps:
         - script: bash .travis/install2.sh
           displayName: "download data"
+        - task: UsePythonVersion@0
+          inputs:
+            versionSpec: '3.6'
+          displayName: 'Use Python $(python.version)'
+        - script: python build_utils/cut_changelog.py changelog_cut.md
+          displayName: "Cut changelog"
         - publish: test_data
           artifact: TestData
-        - publish: changelog.md
+        - publish: changelog_cut.md
           artifact: ReleaseInfo
 
   - stage: Tests
@@ -106,19 +112,24 @@ stages:
       - job: linux_wheel
         pool: {vmImage: 'Ubuntu-16.04'}
         variables:
-          CIBW_BUILD: cp36-manylinux1_x86_64 cp37-manylinux1_x86_64
+          CIBW_BUILD: cp3[6-8]-*x86_64
+          CIBW_BEFORE_BUILD: pip install --upgrade pip; pip install numpy cython; pip install PyQt5==5.13.2
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part
+          CIBW_BEFORE_TEST: pip install PyQt5==5.13.2
         steps:
           - task: UsePythonVersion@0
           - task: DownloadPipelineArtifact@2
             inputs:
               artifact: TestData
               path: $(Build.SourcesDirectory)/test_data
-          - bash: |
-              python -m pip install cibuildwheel cython numpy
-              python -m cibuildwheel
-              python setup.py sdist -d wheelhouse
+          - bash: python -m pip install  git+https://github.com/Czaki/cibuildwheel.git@before_test cython numpy
+            displayName: "install dependencies"
+
+          - bash: python setup.py sdist -d wheelhouse
+            displayName: "build sdist"
+          - bash: python -m cibuildwheel
+            displayName: "build wheel" 
           - task: PublishBuildArtifacts@1
             inputs:
               pathToPublish: wheelhouse
@@ -127,7 +138,7 @@ stages:
       - job: macos_wheel
         pool: {vmImage: 'macOS-10.13'}
         variables:
-          CIBW_BUILD: cp36-* cp37-*
+          CIBW_BUILD: cp3[6-8]-*
           CIBW_TEST_REQUIRES: pytest pytest-qt
           CIBW_TEST_COMMAND: pytest {project}/package/tests
           MACOSX_DEPLOYMENT_TARGET: "10.10"
@@ -148,7 +159,7 @@ stages:
       - job: windows_wheel
         pool: {vmImage: 'vs2017-win2016'}
         variables:
-          CIBW_BUILD: cp36-*64 cp37-*64
+          CIBW_BUILD: cp3[6-8]-*64
           CIBW_TEST_REQUIRES: pytest pytest-qt
           CIBW_TEST_COMMAND: pytest {project}/package/tests
         steps:

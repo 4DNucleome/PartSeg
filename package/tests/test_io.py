@@ -19,7 +19,7 @@ from PartSegCore.segmentation.segmentation_algorithm import ThresholdAlgorithm
 from PartSegImage import TiffImageReader, Image, CziImageReader, GenericImageReader, OifImagReader
 from PartSegCore import Units, UNIT_SCALE
 from PartSegCore.analysis import ProjectTuple
-from PartSegCore.analysis.load_functions import UpdateLoadedMetadataAnalysis
+from PartSegCore.analysis.load_functions import UpdateLoadedMetadataAnalysis, LoadProject
 from PartSegCore.analysis.save_functions import SaveCmap, SaveXYZ, SaveProject, SaveAsTiff, SaveAsNumpy, \
     SaveSegmentationAsNumpy
 from PartSegCore.analysis.save_hooks import PartEncoder, part_hook
@@ -374,6 +374,7 @@ class TestSaveFunctions:
     def test_save_project(self, tmpdir, analysis_project):
         SaveProject.save(os.path.join(tmpdir, "test1.tgz"), analysis_project)
         assert os.path.exists(os.path.join(tmpdir, "test1.tgz"))
+        LoadProject.load([os.path.join(tmpdir, "test1.tgz")])
         # TODO add more
 
     def test_save_tiff(self, tmpdir, analysis_project):

@@ -1,5 +1,8 @@
 # Changelog 
 
+## 0.9.5
+-   fix bug in loading project in "Segmentation analysis"
+
 ## 0.9.4
 -   read mask segmentation projects 
 -   choose source type in batch

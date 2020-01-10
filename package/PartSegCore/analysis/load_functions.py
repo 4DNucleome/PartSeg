@@ -54,7 +54,8 @@ def load_project(
     algorithm_dict = update_algorithm_dict(algorithm_dict)
     algorithm_dict.get("project_file_version")
     try:
-        version = packaging.version.parse(json.loads(tar_file.extractfile("metadata.json").read()))
+        version = \
+            packaging.version.parse(json.loads(tar_file.extractfile("metadata.json").read())["project_version_info"])
     except KeyError:
         version = packaging.version.Version("1.0")
     history = []
@@ -283,8 +284,10 @@ def load_metadata(data: typing.Union[str, Path]):
 def update_algorithm_dict(dkt):
     if "name" in dkt:
         profile = SegmentationProfile("", dkt["name"], dkt["values"])
-    else:
+    elif "algorithm_name" in dkt:
         profile = SegmentationProfile("", dkt["algorithm_name"], dkt["values"])
+    else:
+        return dkt
     profile = UpdateLoadedMetadataAnalysis.recursive_update(profile)
     res = dict(dkt)
     res.update({"algorithm_name": profile.algorithm, "values": profile.values})
