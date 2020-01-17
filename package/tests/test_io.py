@@ -55,7 +55,7 @@ def analysis_project():
     data[0, 10:40, 40:50, 10:90] = 40
     image =\
         Image(data, (10/UNIT_SCALE[Units.nm.value], 5/UNIT_SCALE[Units.nm.value], 5/UNIT_SCALE[Units.nm.value]), "")
-    mask = data[0] > 0
+    mask = data[0, ..., 0] > 0
     segmentation = np.zeros(data.shape, dtype=np.uint8)
     segmentation[data == 70] = 1
     segmentation[data == 60] = 2

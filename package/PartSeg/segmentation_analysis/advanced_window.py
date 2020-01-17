@@ -1,12 +1,11 @@
 import json
 import os
 from copy import deepcopy
-from functools import partial
 from pathlib import Path
 from typing import Union, Optional, Tuple
 
 from PartSegData import icons_dir
-from qtpy.QtCore import Qt, QEvent
+from qtpy.QtCore import Qt, QEvent, Slot
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QWidget, QListWidget, QTextEdit, QPushButton, QLineEdit, \
     QVBoxLayout, QLabel, QHBoxLayout, QListWidgetItem, QDialog, QDoubleSpinBox, QSpinBox, QGridLayout, QApplication, \
@@ -50,7 +49,7 @@ class AdvancedSettings(QWidget):
         self.delete_btn.clicked.connect(self.delete_profile)
         self.multiple_files_chk = QCheckBox("Show multiple files widget")
         self.multiple_files_chk.setChecked(self._settings.get("multiple_files", False))
-        self.multiple_files_chk.stateChanged.connect(partial(self._settings.set, "multiple_files"))
+        self.multiple_files_chk.stateChanged.connect(self.multiple_files_visibility)
         self.rename_btn = QPushButton("Rename Profile")
         self.rename_btn.clicked.connect(self.rename_profile)
         self.rename_btn.setDisabled(True)
@@ -134,9 +133,15 @@ class AdvancedSettings(QWidget):
         layout.addLayout(profile_layout, 1)
         self.setLayout(layout)
 
+    @Slot(int)
+    def multiple_files_visibility(self, val: int):
+        self._settings.set("multiple_files", val)
+
+    @Slot()
     def mask_prop_changed(self):
         self._settings.set_in_profile("mask_presentation", (self.mask_color.currentText(), self.mask_opacity.value()))
 
+    @Slot(str)
     def profile_chosen(self, text):
         if text == "":
             self.delete_btn.setEnabled(False)

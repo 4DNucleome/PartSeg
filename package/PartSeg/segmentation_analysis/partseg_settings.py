@@ -99,7 +99,7 @@ class PartSettings(BaseSettings):
                 else:
                     self.mask = data.mask
             else:
-                self.image = data.image.substitute()
+                self.image = data.image.substitute(mask=data.mask)
             self.segmentation = data.segmentation
             self.full_segmentation = data.full_segmentation
             self.segmentation_history = data.history[:]

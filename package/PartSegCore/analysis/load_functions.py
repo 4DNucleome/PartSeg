@@ -74,6 +74,7 @@ def load_project(
         pass
     if isinstance(file, str):
         tar_file.close()
+    image.set_mask(mask)
     if version >= project_version_info:
         return ProjectTuple(file_path, image, seg_dict["segmentation"], seg_dict["full_segmentation"], mask, history,
                             algorithm_dict)
