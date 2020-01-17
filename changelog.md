@@ -1,5 +1,9 @@
 # Changelog 
 
+## 0.9.6 
+-   fix bug in loading project with mask
+-   upgrade PyInstaller version (bug  GHSA-7fcj-pq9j-wh2r) 
+
 ## 0.9.5
 -   fix bug in loading project in "Segmentation analysis"
 
