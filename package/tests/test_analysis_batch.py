@@ -18,8 +18,6 @@ from PartSegCore.analysis.measurement_base import Leaf, Node, MeasurementEntry, 
 from PartSegCore.segmentation.noise_filtering import DimensionType
 from PartSegCore.universal_const import Units
 
-from help_fun import get_test_dir
-
 
 class MocksCalculation:
     def __init__(self, file_path):
@@ -174,10 +172,10 @@ class TestCalculationProcess:
                         ])])])])
         return CalculationPlan(tree=tree, name="test")
 
-    def test_one_file(self):
+    def test_one_file(self, data_test_dir):
         plan = self.create_calculation_plan()
         process = CalculationProcess()
-        file_path = os.path.join(get_test_dir(), "stack1_components", "stack1_component5.tif")
+        file_path = os.path.join(data_test_dir, "stack1_components", "stack1_component5.tif")
         calc = MocksCalculation(file_path)
         process.calculation = calc
         process.image = TiffImageReader.read_image(file_path)
@@ -185,11 +183,11 @@ class TestCalculationProcess:
         assert (len(process.measurement[0]) == 3)
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
-    def test_full_pipeline(self, tmpdir):
+    def test_full_pipeline(self, tmpdir, data_test_dir):
         plan = self.create_calculation_plan()
-        file_pattern = os.path.join(get_test_dir(), "stack1_components", "stack1_component*[0-9].tif")
+        file_pattern = os.path.join(data_test_dir, "stack1_components", "stack1_component*[0-9].tif")
         file_paths = glob(file_pattern)
-        calc = Calculation(file_paths, base_prefix=get_test_dir(), result_prefix=get_test_dir(),
+        calc = Calculation(file_paths, base_prefix=data_test_dir, result_prefix=data_test_dir,
                            measurement_file_path=os.path.join(tmpdir, "test.xlsx"), sheet_name="Sheet1",
                            calculation_plan=plan, voxel_size=(1, 1, 1))
 
@@ -209,11 +207,11 @@ class TestCalculationProcess:
         assert df.shape == (8, 4)
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
-    def test_full_pipeline_mask_project(self, tmpdir):
+    def test_full_pipeline_mask_project(self, tmpdir, data_test_dir):
         plan = self.create_calculation_plan2()
-        file_pattern = os.path.join(get_test_dir(), "*nucleus.seg")
+        file_pattern = os.path.join(data_test_dir, "*nucleus.seg")
         file_paths = glob(file_pattern)
-        calc = Calculation(file_paths, base_prefix=get_test_dir(), result_prefix=get_test_dir(),
+        calc = Calculation(file_paths, base_prefix=data_test_dir, result_prefix=data_test_dir,
                            measurement_file_path=os.path.join(tmpdir, "test2.xlsx"), sheet_name="Sheet1",
                            calculation_plan=plan, voxel_size=(1, 1, 1))
 
@@ -233,11 +231,11 @@ class TestCalculationProcess:
         assert df.shape == (2, 4)
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
-    def test_full_pipeline_component_split(self, tmpdir):
+    def test_full_pipeline_component_split(self, tmpdir, data_test_dir):
         plan = self.create_calculation_plan3()
-        file_pattern = os.path.join(get_test_dir(), "stack1_components", "stack1_component*[0-9].tif")
+        file_pattern = os.path.join(data_test_dir, "stack1_components", "stack1_component*[0-9].tif")
         file_paths = glob(file_pattern)
-        calc = Calculation(file_paths, base_prefix=get_test_dir(), result_prefix=get_test_dir(),
+        calc = Calculation(file_paths, base_prefix=data_test_dir, result_prefix=data_test_dir,
                            measurement_file_path=os.path.join(tmpdir, "test3.xlsx"), sheet_name="Sheet1",
                            calculation_plan=plan, voxel_size=(1, 1, 1))
 

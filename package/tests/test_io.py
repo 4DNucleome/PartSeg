@@ -26,20 +26,6 @@ from PartSegCore.class_generator import enum_register
 from PartSegCore.mask.io_functions import LoadSegmentation, SaveSegmentation, LoadSegmentationImage, save_components, \
     LoadStackImage, SegmentationTuple
 
-from help_fun import get_test_dir
-
-tmp_dir = ""
-
-
-def setup_module():
-    global tmp_dir
-    tmp_dir = tempfile.mkdtemp()
-
-
-def teardown_module():
-    global tmp_dir
-    shutil.rmtree(tmp_dir)
-
 
 @pytest.fixture(scope="module")
 def analysis_project():
@@ -77,8 +63,8 @@ def analysis_project_reversed():
 
 
 class TestJsonLoad:
-    def test_profile_load(self):
-        profile_path = os.path.join(get_test_dir(), "segment_profile_test.json")
+    def test_profile_load(self, data_test_dir):
+        profile_path = os.path.join(data_test_dir, "segment_profile_test.json")
         # noinspection PyBroadException
         try:
             with open(profile_path, 'r') as ff:
@@ -87,8 +73,8 @@ class TestJsonLoad:
         except Exception:
             pytest.fail("Fail in loading profile")
 
-    def test_measure_load(self):
-        profile_path = os.path.join(get_test_dir(), "measurements_profile_test.json")
+    def test_measure_load(self, data_test_dir):
+        profile_path = os.path.join(data_test_dir, "measurements_profile_test.json")
         # noinspection PyBroadException
         try:
             with open(profile_path, 'r') as ff:
@@ -129,58 +115,51 @@ class TestJsonLoad:
 
 
 class TestSegmentationMask:
-    def test_load_seg(self):
-        test_dir = get_test_dir()
-        seg = LoadSegmentation.load([os.path.join(test_dir, "test_nucleus.seg")])
+    def test_load_seg(self, data_test_dir):
+        seg = LoadSegmentation.load([os.path.join(data_test_dir, "test_nucleus.seg")])
         assert isinstance(seg.image, str)
         assert seg.chosen_components == [1, 3]
-        assert os.path.exists(os.path.join(test_dir, seg.image))
+        assert os.path.exists(os.path.join(data_test_dir, seg.image))
 
-    def test_load_old_seg(self):
+    def test_load_old_seg(self, data_test_dir):
         """
         For PartSeg 0.9.4 and older
         """
-        test_dir = get_test_dir()
-        seg = LoadSegmentation.load([os.path.join(test_dir, "test_nucleus_old.seg")])
+        seg = LoadSegmentation.load([os.path.join(data_test_dir, "test_nucleus_old.seg")])
         assert isinstance(seg.image, str)
         assert seg.chosen_components == [1, 3]
-        assert os.path.exists(os.path.join(test_dir, seg.image))
+        assert os.path.exists(os.path.join(data_test_dir, seg.image))
 
-    def test_load_old_seg_with_image(self):
-        test_dir = get_test_dir()
-        seg = LoadSegmentationImage.load([os.path.join(test_dir, "test_nucleus_old.seg")],
+    def test_load_old_seg_with_image(self, data_test_dir):
+        seg = LoadSegmentationImage.load([os.path.join(data_test_dir, "test_nucleus_old.seg")],
                                          metadata={"default_spacing": (1, 1, 1)})
         assert isinstance(seg.image, Image)
         assert seg.chosen_components == [1, 3]
         assert isinstance(seg.segmentation, np.ndarray)
         seg.image.fit_array_to_image(seg.segmentation)
 
-    def test_load_seg_with_image(self):
-        test_dir = get_test_dir()
-        seg = LoadSegmentationImage.load([os.path.join(test_dir, "test_nucleus.seg")],
+    def test_load_seg_with_image(self, data_test_dir):
+        seg = LoadSegmentationImage.load([os.path.join(data_test_dir, "test_nucleus.seg")],
                                          metadata={"default_spacing": (1, 1, 1)})
         assert isinstance(seg.image, Image)
         assert seg.chosen_components == [1, 3]
         assert isinstance(seg.segmentation, np.ndarray)
         seg.image.fit_array_to_image(seg.segmentation)
 
-    def test_save_segmentation(self):
-        test_dir = get_test_dir()
-        seg = LoadSegmentationImage.load([os.path.join(test_dir, "test_nucleus.seg")],
+    def test_save_segmentation(self, tmpdir, data_test_dir):
+        seg = LoadSegmentationImage.load([os.path.join(data_test_dir, "test_nucleus.seg")],
                                          metadata={"default_spacing": (1, 1, 1)})
-        assert tmp_dir != ""
-        SaveSegmentation.save(os.path.join(tmp_dir, "segmentation.seg"), seg, {"relative_path": False})
-        assert os.path.exists(os.path.join(tmp_dir, "segmentation.seg"))
-        os.makedirs(os.path.join(tmp_dir, "seg_save"))
-        save_components(seg.image, seg.chosen_components, seg.segmentation, os.path.join(tmp_dir, "seg_save"))
-        assert os.path.isdir(os.path.join(tmp_dir, "seg_save"))
-        assert len(glob(os.path.join(tmp_dir, "seg_save", "*"))) == 4
-        seg2 = LoadSegmentation.load([os.path.join(tmp_dir, "segmentation.seg")])
+        SaveSegmentation.save(os.path.join(tmpdir, "segmentation.seg"), seg, {"relative_path": False})
+        assert os.path.exists(os.path.join(tmpdir, "segmentation.seg"))
+        os.makedirs(os.path.join(tmpdir, "seg_save"))
+        save_components(seg.image, seg.chosen_components, seg.segmentation, os.path.join(tmpdir, "seg_save"))
+        assert os.path.isdir(os.path.join(tmpdir, "seg_save"))
+        assert len(glob(os.path.join(tmpdir, "seg_save", "*"))) == 4
+        seg2 = LoadSegmentation.load([os.path.join(tmpdir, "segmentation.seg")])
         assert seg2 is not None
 
-    def test_loading_new_segmentation(self):
-        test_dir = get_test_dir()
-        image_data = LoadStackImage.load([os.path.join(test_dir, "test_nucleus.tif")])
+    def test_loading_new_segmentation(self, tmpdir, data_test_dir):
+        image_data = LoadStackImage.load([os.path.join(data_test_dir, "test_nucleus.tif")])
         algorithm = ThresholdAlgorithm()
         algorithm.set_image(image_data.image)
         param = algorithm.get_default_values()
@@ -193,8 +172,8 @@ class TestSegmentationMask:
         to_save = SegmentationTuple(image_data.image.file_path, image_data.image, res.segmentation,
                                     list(range(1, num)), data_dict)
 
-        SaveSegmentation.save(os.path.join(tmp_dir, "segmentation2.seg"), to_save, {"relative_path": False})
-        seg2 = LoadSegmentation.load([os.path.join(tmp_dir, "segmentation2.seg")])
+        SaveSegmentation.save(os.path.join(tmpdir, "segmentation2.seg"), to_save, {"relative_path": False})
+        seg2 = LoadSegmentation.load([os.path.join(tmpdir, "segmentation2.seg")])
         assert seg2 is not None
 
 

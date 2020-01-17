@@ -8,16 +8,14 @@ from PartSegCore.analysis.load_functions import UpdateLoadedMetadataAnalysis
 from PartSegCore.json_hooks import check_loaded_dict
 from PartSegCore.segmentation.algorithm_base import SegmentationAlgorithm
 
-from help_fun import get_test_dir
-
 
 def empty(_a, _b):
     pass
 
 
 class TestSegmentation:
-    def test_profile_execute(self):
-        profile_path = os.path.join(get_test_dir(), "segment_profile_test.json")
+    def test_profile_execute(self, data_test_dir):
+        profile_path = os.path.join(data_test_dir, "segment_profile_test.json")
         # noinspection PyBroadException
         try:
             data = UpdateLoadedMetadataAnalysis.load_json_data(profile_path)
@@ -26,8 +24,8 @@ class TestSegmentation:
             pytest.fail("Fail in loading profile")
             return
         image = TiffImageReader.read_image(
-            os.path.join(get_test_dir(), "stack1_components", "stack1_component5.tif"),
-            os.path.join(get_test_dir(), "stack1_components", "stack1_component5_mask.tif")
+            os.path.join(data_test_dir, "stack1_components", "stack1_component5.tif"),
+            os.path.join(data_test_dir, "stack1_components", "stack1_component5_mask.tif")
         )
 
         val: SegmentationProfile

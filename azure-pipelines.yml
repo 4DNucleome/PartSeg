@@ -1,3 +1,6 @@
+variables:
+  TOX_PARALLEL_NO_SPINNER: 1
+
 stages:
   - stage: GetTestData
     jobs:
@@ -21,19 +24,10 @@ stages:
     jobs:
     - job: linux
       pool: {vmImage: 'Ubuntu-16.04'}
-      strategy:
-        matrix:
-          Python36:
-            python.version: '3.6'
-            TOXENV: py36-PyQt5,py36-PySide2
-          Python37:
-            python.version: '3.7'
-            TOXENV: py37-PyQt5,py37-PySide2
       steps:
-        - task: UsePythonVersion@0
-          displayName: 'Use Python $(python.version)'
-          inputs:
-            versionSpec: '$(python.version)'
+        - {task: UsePythonVersion@0, inputs: {versionSpec: '3.6'}}
+        - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7'}}
+        - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8'}}
         - script: sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0
           displayName: "install libs"
         - task: DownloadPipelineArtifact@2
@@ -46,49 +40,31 @@ stages:
           displayName: "Run Tox"
     - job: macos
       pool: {vmImage: 'macOS-10.13'}
-      strategy:
-        matrix:
-          Python36:
-            python.version: '3.6'
-            TOXENV: py36-PyQt5,py36-PySide2
-          Python37:
-            python.version: '3.7'
-            TOXENV: py37-PyQt5,py37-PySide2
       steps:
-        - task: UsePythonVersion@0
-          displayName: 'Use Python $(python.version)'
-          inputs:
-            versionSpec: '$(python.version)'
+        - {task: UsePythonVersion@0, inputs: {versionSpec: '3.6'}}
+        - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7'}}
+        - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8'}}
         - task: DownloadPipelineArtifact@2
           inputs:
             artifact: TestData
             path: $(Build.SourcesDirectory)/test_data
         - script: pip install tox cython numpy pytest-azurepipelines
           displayName: "Install deps"
-        - script: tox -c tox-azure.ini
+        - script: tox -c tox-azure.ini 
           displayName: "Run Tox"
     - job: windows
       pool: {vmImage: 'vs2017-win2016'}
-      strategy:
-        matrix:
-          Python36:
-            python.version: '3.6'
-            TOXENV: py36-PyQt5,py36-PySide2
-          Python37:
-            python.version: '3.7'
-            TOXENV: py37-PyQt5,py37-PySide2
       steps:
-        - task: UsePythonVersion@0
-          displayName: 'Use Python $(python.version)'
-          inputs:
-            versionSpec: '$(python.version)'
+        - {task: UsePythonVersion@0, inputs: {versionSpec: '3.6'}}
+        - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7'}}
+        - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8'}}
         - task: DownloadPipelineArtifact@2
           inputs:
             artifact: TestData
             path: $(Build.SourcesDirectory)/test_data
         - script: pip install tox cython numpy pytest-azurepipelines
           displayName: "Install deps"
-        - script: tox -c tox-azure.ini
+        - script: tox -c tox-azure.ini -p 2
           displayName: "Run Tox"
 
   - stage: Builds
@@ -99,7 +75,7 @@ stages:
       - job: linux_wheel
         pool: {vmImage: 'Ubuntu-16.04'}
         variables:
-          CIBW_BUILD: cp36*64 cp37*64 cp38*64
+          CIBW_BUILD: cp3[6-8]*64
           CIBW_BEFORE_BUILD: pip install numpy cython; yum -y install hdf5-devel;
           CIBW_TEST_REQUIRES: pytest pytest-cov
           CIBW_TEST_COMMAND: pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part
@@ -110,7 +86,7 @@ stages:
             inputs:
               artifact: TestData
               path: $(Build.SourcesDirectory)/test_data
-          - bash: python -m pip install cibuildwheel cython numpy
+          - bash: python -m pip install git+https://github.com/Czaki/cibuildwheel.git@before_test cython numpy
             displayName: InstallDeps
           - bash: python -m cibuildwheel
             displayName: BuildWheel
@@ -121,13 +97,58 @@ stages:
               pathToPublish: wheelhouse
               artifactName: wheels
 
+      - job: linux_wheel_manylinux2014
+        pool: {vmImage: 'Ubuntu-16.04'}
+        variables:
+          CIBW_BUILD: cp3[6-8]*64
+          CIBW_BEFORE_BUILD: pip install numpy cython; yum -y install hdf5-devel;
+          CIBW_TEST_EXTRAS: test
+          CIBW_TEST_COMMAND: pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+        steps:
+          - task: UsePythonVersion@0
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact: TestData
+              path: $(Build.SourcesDirectory)/test_data
+          - bash: python -m pip install cibuildwheel cython numpy
+            displayName: InstallDeps
+          - bash: python -m cibuildwheel
+            displayName: BuildWheel
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathToPublish: wheelhouse
+              artifactName: wheels
+
       - job: macos_wheel
         pool: {vmImage: 'macOS-10.13'}
         variables:
           CIBW_BUILD: cp3[6-8]-*
-          CIBW_TEST_REQUIRES: pytest pytest-qt
+          CIBW_TEST_REQUIRES: -r requirements_test.txt
           CIBW_TEST_COMMAND: pytest {project}/package/tests
           MACOSX_DEPLOYMENT_TARGET: "10.10"
+        steps:
+          - task: UsePythonVersion@0
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact: TestData
+              path: $(Build.SourcesDirectory)/test_data
+          - bash: |
+              python -m pip install git+https://github.com/Czaki/cibuildwheel
+              python -m cibuildwheel --output-dir wheelhouse
+            displayName: BuildWheel
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathToPublish: wheelhouse
+              artifactName: wheels
+
+      - job: macos_wheel_10_14
+        pool: {vmImage: 'macOS-10.14'}
+        variables:
+          CIBW_BUILD: cp3[6-8]-*
+          CIBW_TEST_REQUIRES: -r requirements_test.txt
+          CIBW_TEST_COMMAND: pytest {project}/package/tests
+          MACOSX_DEPLOYMENT_TARGET: "10.14"
         steps:
           - task: UsePythonVersion@0
           - task: DownloadPipelineArtifact@2
@@ -146,8 +167,8 @@ stages:
       - job: windows_wheel
         pool: {vmImage: 'vs2017-win2016'}
         variables:
-          CIBW_BUILD: cp3[6-8]-*64
-          CIBW_TEST_REQUIRES: pytest pytest-qt
+          CIBW_BUILD: cp3[6-8]*64
+          CIBW_TEST_REQUIRES: -r requirements_test.txt
           CIBW_TEST_COMMAND: pytest {project}/package/tests
         steps:
           - {task: UsePythonVersion@0, inputs: {versionSpec: '3.6', architecture: x64}}
