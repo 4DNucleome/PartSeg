@@ -9,7 +9,8 @@ from pathlib import Path
 from threading import Lock
 
 import numpy as np
-import packaging.version
+import tifffile
+from packaging.version import Version, parse as parse_version
 from tifffile import TiffFile
 
 from PartSegImage import GenericImageReader
@@ -27,6 +28,14 @@ __all__ = ["LoadStackImage", "LoadImageMask", "LoadProject", "LoadMask", "load_d
            "UpdateLoadedMetadataAnalysis", "LoadMaskSegmentation"]
 
 
+def _tar_to_buff(tar_file, member_name):
+    tar_value = tar_file.extractfile(tar_file.getmember(member_name))
+    buffer = BytesIO()
+    buffer.write(tar_value.read())
+    buffer.seek(0)
+    return buffer
+
+
 def load_project(
         file: typing.Union[str, tarfile.TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase]) -> ProjectTuple:
     """Load project from archive"""
@@ -40,24 +49,29 @@ def load_project(
     reader = GenericImageReader()
     image = reader.read(image_buffer, ext=".tif")
     image.file_path = file_path
-    seg_tar = tar_file.extractfile(tar_file.getmember("segmentation.npz"))
-    seg_buffer = BytesIO()
-    seg_buffer.write(seg_tar.read())
-    seg_buffer.seek(0)
-    seg_dict = np.load(seg_buffer)
-    if "mask" in seg_dict:
-        mask = seg_dict["mask"]
-    else:
-        mask = None
+
     algorithm_str = tar_file.extractfile("algorithm.json").read()
     algorithm_dict = load_metadata(algorithm_str)
     algorithm_dict = update_algorithm_dict(algorithm_dict)
     algorithm_dict.get("project_file_version")
     try:
-        version = \
-            packaging.version.parse(json.loads(tar_file.extractfile("metadata.json").read())["project_version_info"])
+        version = parse_version(json.loads(tar_file.extractfile("metadata.json").read())["project_version_info"])
     except KeyError:
-        version = packaging.version.Version("1.0")
+        version = Version("1.0")
+    if version == Version("1.0"):
+        seg_dict = np.load(_tar_to_buff(tar_file, "segmentation.npz"))
+        mask = seg_dict["mask"] if "mask" in seg_dict else None
+        segmentation, full_segmentation = seg_dict["segmentation"], seg_dict["full_segmentation"]
+    else:
+        segmentation = tifffile.imread(_tar_to_buff(tar_file, "segmentation.tif"))
+        full_segmentation = tifffile.imread(_tar_to_buff(tar_file, "full_segmentation.tif"))
+        if "mask.tif" in tar_file.getnames():
+            mask = tifffile.imread(_tar_to_buff(tar_file, "mask.tif"))
+            if np.max(mask) == 1:
+                mask = mask.astype(np.bool)
+        else:
+            mask = None
+
     history = []
     try:
         history_buff = tar_file.extractfile(tar_file.getmember("history/history.json"))
@@ -75,12 +89,12 @@ def load_project(
     if isinstance(file, str):
         tar_file.close()
     image.set_mask(mask)
-    if version >= project_version_info:
-        return ProjectTuple(file_path, image, seg_dict["segmentation"], seg_dict["full_segmentation"], mask, history,
+    if version <= project_version_info:
+        return ProjectTuple(file_path, image, segmentation, full_segmentation, mask, history,
                             algorithm_dict)
     else:
         print(version, project_version_info)
-        return ProjectTuple(file_path, image, seg_dict["segmentation"], seg_dict["full_segmentation"], mask, history,
+        return ProjectTuple(file_path, image, segmentation, full_segmentation, mask, history,
                             algorithm_dict, "This project is from new version of PartSeg. It may load incorrect.")
 
 

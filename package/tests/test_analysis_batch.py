@@ -211,7 +211,7 @@ class TestCalculationProcess:
     @pytest.mark.filterwarnings("ignore:This method will be removed")
     def test_full_pipeline_mask_project(self, tmpdir):
         plan = self.create_calculation_plan2()
-        file_pattern = os.path.join(get_test_dir(), "*.seg")
+        file_pattern = os.path.join(get_test_dir(), "*nucleus.seg")
         file_paths = glob(file_pattern)
         calc = Calculation(file_paths, base_prefix=get_test_dir(), result_prefix=get_test_dir(),
                            measurement_file_path=os.path.join(tmpdir, "test2.xlsx"), sheet_name="Sheet1",

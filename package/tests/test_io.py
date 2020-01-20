@@ -1,5 +1,3 @@
-import shutil
-import tempfile
 from copy import deepcopy
 
 import tifffile
@@ -138,6 +136,25 @@ class TestSegmentationMask:
         assert seg.chosen_components == [1, 3]
         assert os.path.exists(os.path.join(test_dir, seg.image))
 
+    def test_load_old_seg(self):
+        """
+        For PartSeg 0.9.4 and older
+        """
+        test_dir = get_test_dir()
+        seg = LoadSegmentation.load([os.path.join(test_dir, "test_nucleus_old.seg")])
+        assert isinstance(seg.image, str)
+        assert seg.chosen_components == [1, 3]
+        assert os.path.exists(os.path.join(test_dir, seg.image))
+
+    def test_load_old_seg_with_image(self):
+        test_dir = get_test_dir()
+        seg = LoadSegmentationImage.load([os.path.join(test_dir, "test_nucleus_old.seg")],
+                                         metadata={"default_spacing": (1, 1, 1)})
+        assert isinstance(seg.image, Image)
+        assert seg.chosen_components == [1, 3]
+        assert isinstance(seg.segmentation, np.ndarray)
+        seg.image.fit_array_to_image(seg.segmentation)
+
     def test_load_seg_with_image(self):
         test_dir = get_test_dir()
         seg = LoadSegmentationImage.load([os.path.join(test_dir, "test_nucleus.seg")],
@@ -170,7 +187,7 @@ class TestSegmentationMask:
         param["channel"] = 0
         algorithm.set_parameters(**param)
         res = algorithm.calculation_run(lambda x, y: None)
-        num = res.segmentation.max() + 1
+        num = np.max(res.segmentation) + 1
         data_dict = {str(i): deepcopy(res.parameters) for i in range(1, num)}
 
         to_save = SegmentationTuple(image_data.image.file_path, image_data.image, res.segmentation,
@@ -297,10 +314,20 @@ class TestSaveFunctions:
         assert tuple(np.min(array, axis=0)) == (15, 55, 15, 60)
         assert tuple(np.max(array, axis=0)) == (84, 84, 34, 60)
 
+    def test_load_old_project(self, data_test_dir):
+        load_data = LoadProject.load([os.path.join(data_test_dir, "stack1_component1.tgz")])
+        assert np.max(load_data.segmentation) == 2
+        # TODO add more checks
+
+    def test_load_project(self, data_test_dir):
+        load_data = LoadProject.load([os.path.join(data_test_dir, "stack1_component1_1.tgz")])
+        assert np.max(load_data.segmentation) == 2
+        # TODO add more checks
+
     def test_save_project(self, tmpdir, analysis_project):
         SaveProject.save(os.path.join(tmpdir, "test1.tgz"), analysis_project)
         assert os.path.exists(os.path.join(tmpdir, "test1.tgz"))
-        LoadProject.load([os.path.join(tmpdir, "test1.tgz")])
+        load_data = LoadProject.load([os.path.join(tmpdir, "test1.tgz")])
         # TODO add more
 
     def test_save_tiff(self, tmpdir, analysis_project):

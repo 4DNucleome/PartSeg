@@ -33,13 +33,31 @@ def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_se
     else:
         tar_mod = 'w:gz'
     with tarfile.open(file_path, tar_mod) as tar:
-        sek_dkt = {"segmentation": segmentation, "full_segmentation": full_segmentation}
+        """sek_dkt = {"segmentation": segmentation, "full_segmentation": full_segmentation}
         if mask is not None:
             sek_dkt["mask"] = mask
         seg_buff = BytesIO()
         np.savez(seg_buff, **sek_dkt)
         tar_numpy = get_tarinfo("segmentation.npz", seg_buff)
-        tar.addfile(tarinfo=tar_numpy, fileobj=seg_buff)
+        tar.addfile(tarinfo=tar_numpy, fileobj=seg_buff)"""
+        segmentation_buff = BytesIO()
+        # noinspection PyTypeChecker
+        tifffile.imwrite(segmentation_buff, segmentation, compress=9)
+        segmentation_tar = get_tarinfo("segmentation.tif", segmentation_buff)
+        tar.addfile(segmentation_tar, fileobj=segmentation_buff)
+        segmentation_buff = BytesIO()
+        # noinspection PyTypeChecker
+        tifffile.imwrite(segmentation_buff, full_segmentation, compress=9)
+        segmentation_tar = get_tarinfo("full_segmentation.tif", segmentation_buff)
+        tar.addfile(segmentation_tar, fileobj=segmentation_buff)
+        if mask is not None:
+            if mask.dtype == np.bool:
+                mask = mask.astype(np.uint8)
+            segmentation_buff = BytesIO()
+            # noinspection PyTypeChecker
+            tifffile.imwrite(segmentation_buff, mask, compress=9)
+            segmentation_tar = get_tarinfo("mask.tif", segmentation_buff)
+            tar.addfile(segmentation_tar, fileobj=segmentation_buff)
         image_buff = BytesIO()
         ImageWriter.save(image, image_buff)
         tar_image = get_tarinfo("image.tif", image_buff)
@@ -70,7 +88,7 @@ def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_se
 def save_cmap(file: typing.Union[str, h5py.File, BytesIO], data: np.ndarray, spacing, segmentation: np.ndarray,
               reverse_base: float,
               cmap_profile: dict, metadata: typing.Optional[dict] = None):
-    if segmentation is None or segmentation.max() == 0:
+    if segmentation is None or np.max(segmentation) == 0:
         raise ValueError("No segmentation")
     if isinstance(file, (str, BytesIO)):
         if isinstance(file, str) and os.path.exists(file):
@@ -170,7 +188,7 @@ class SaveCmap(SaveBase):
             segmentation = segmentation[clip]
 
         if parameters["separated_objects"] and isinstance(save_location, (str, Path)):
-            for i in range(1, segmentation.max()+1):
+            for i in range(1, np.max(segmentation)+1):
                 seg = (segmentation == i).astype(np.uint8)
                 if np.any(seg):
                     base, ext = os.path.splitext(save_location)

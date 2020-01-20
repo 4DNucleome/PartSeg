@@ -9,6 +9,8 @@ from io import BytesIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
 import numpy as np
 import json
 
+import tifffile
+
 from ..json_hooks import ProfileEncoder
 from ..io_utils import get_tarinfo, SaveBase, LoadBase, proxy_callback, ProjectInfoBase, check_segmentation_type, \
     SegmentationType, WrongFileTypeException, UpdateLoadedMetadataBase, open_tar_file
@@ -46,8 +48,8 @@ def save_stack_segmentation(
     step_changed(1)
     segmentation_buff = BytesIO()
     # noinspection PyTypeChecker
-    np.save(segmentation_buff, segmentation_info.segmentation)
-    segmentation_tar = get_tarinfo("segmentation.npy", segmentation_buff)
+    tifffile.imwrite(segmentation_buff, segmentation_info.segmentation, compress=9)
+    segmentation_tar = get_tarinfo("segmentation.tif", segmentation_buff)
     tar_file.addfile(segmentation_tar, fileobj=segmentation_buff)
     step_changed(3)
     metadata = {"components": segmentation_info.chosen_components,
@@ -79,15 +81,23 @@ def load_stack_segmentation(file_data: str, range_changed=None, step_changed=Non
         step_changed = empty_fun
     range_changed(0, 4)
     tar_file = open_tar_file(file_data)[0]
+
     if check_segmentation_type(tar_file) != SegmentationType.mask:
         raise WrongFileTypeException()
+    files = tar_file.getnames()
     step_changed(1)
+    if "segmentation.npy" in files:
+        segmentation_file_name = "segmentation.npy"
+        segmentation_load_fun = np.load
+    else:
+        segmentation_file_name = "segmentation.tif"
+        segmentation_load_fun = tifffile.imread
     segmentation_buff = BytesIO()
-    segmentation_tar = tar_file.extractfile(tar_file.getmember("segmentation.npy"))
+    segmentation_tar = tar_file.extractfile(tar_file.getmember(segmentation_file_name))
     segmentation_buff.write(segmentation_tar.read())
     step_changed(2)
     segmentation_buff.seek(0)
-    segmentation = np.load(segmentation_buff)
+    segmentation = segmentation_load_fun(segmentation_buff)
     step_changed(3)
     metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
     step_changed(4)
@@ -126,7 +136,8 @@ class LoadSegmentation(LoadBase):
     @classmethod
     def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
              range_changed: typing.Callable[[int, int], typing.Any] = None,
-             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
+             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None) \
+            -> SegmentationTuple:
         segmentation, metadata = load_stack_segmentation(load_locations[0], range_changed=range_changed,
                                                          step_changed=step_changed)
         if "parameters" not in metadata:
