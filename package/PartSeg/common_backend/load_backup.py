@@ -2,10 +2,10 @@ import os
 import packaging.version
 import shutil
 from glob import glob
-from PartSegCore import state_store
 
 from qtpy.QtWidgets import QMessageBox, QWidget
 
+from PartSegCore import state_store
 from .. import __version__
 
 
@@ -32,4 +32,4 @@ def import_config():
                                         "Would you like to import it from " + before_name + " version of PartSeg",
                                         QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
             if resp == QMessageBox.Yes:
-                shutil.copytree(os.path.join(base_folder, before_name), os.path.join(base_folder, __version__))
+                shutil.copytree(os.path.join(base_folder, before_name), state_store.save_folder)
