@@ -306,11 +306,27 @@ class BaseSettings(ViewSettings):
         location are stored in "io"
 
     """
+    mask_changed = Signal()
+    """:py:class:`~.Signal` mask changed signal"""
     json_encoder_class = ProfileEncoder
     load_metadata = staticmethod(load_metadata_base)
     algorithm_changed = Signal()
     """:py:class:`~.Signal` emitted when current algorithm should be changed"""
     save_locations_keys = []
+
+    @property
+    def mask(self):
+        if self._image.mask is not None:
+            return self._image.mask[0]
+        return None
+
+    @mask.setter
+    def mask(self, value):
+        try:
+            self._image.set_mask(value)
+            self.mask_changed.emit()
+        except ValueError:
+            raise ValueError("mask do not fit to image")
 
     def get_save_list(self) -> List[SaveSettingsDescription]:
         """List of files in which program save the state."""

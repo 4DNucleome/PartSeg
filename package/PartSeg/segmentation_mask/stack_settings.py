@@ -11,6 +11,7 @@ from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.mask.io_functions import load_stack_segmentation, save_components, \
     SegmentationTuple, load_metadata
 from PartSegImage import Image
+from PartSegImage.image import reduce_array, minimal_dtype
 from ..common_backend.base_settings import BaseSettings
 
 
@@ -134,15 +135,19 @@ class StackSettings(BaseSettings):
                         segmentation_parameters: typing.Dict, list_of_components: typing.List[int],
                         save_chosen: bool = True) -> SegmentationTuple:
 
+        # TODO check why components are keep even if save chosen is not selected  
+
         if list_of_components is None:
             list_of_components = []
         if segmentation_parameters is None:
             segmentation_parameters = defaultdict(lambda: None)
+        segmentation_count = 0 if state.segmentation is None else len(np.unique(state.segmentation.flat))
+        new_segmentation_count = 0 if new_segmentation_data is None else len(np.unique(new_segmentation_data.flat))
+        segmentation_dtype = minimal_dtype(segmentation_count + new_segmentation_count)
         if save_chosen and state.segmentation is not None:
-            segmentation = np.zeros(state.segmentation.shape, dtype=state.segmentation.dtype)
+            segmentation = reduce_array(state.segmentation, state.chosen_components, dtype=segmentation_dtype)
             components_parameters_dict = {}
             for i, val in enumerate(sorted(state.chosen_components), 1):
-                segmentation[state.segmentation == val] = i
                 components_parameters_dict[i] = state.segmentation_parameters[val]
             base_chose = list(range(1, len(state.chosen_components) + 1))
         else:
@@ -155,13 +160,16 @@ class StackSettings(BaseSettings):
             if segmentation is not None:
                 new_segmentation = np.copy(new_segmentation_data)
                 new_segmentation[segmentation > 0] = 0
+                new_segmentation = reduce_array(new_segmentation, dtype=segmentation_dtype)
+                segmentation[new_segmentation > 0] = new_segmentation[new_segmentation > 0] + len(base_chose)
+
                 components_size = np.bincount(new_segmentation.flat)
+
                 base_index = len(base_chose) + 1
                 chosen_components = base_chose[:]
                 components_list = base_chose[:]
                 for i, val in enumerate(components_size[1:], 1):
                     if val > 0:
-                        segmentation[new_segmentation == i] = base_index
                         if i in list_of_components:
                             chosen_components.append(base_index)
                         components_list.append(base_index)

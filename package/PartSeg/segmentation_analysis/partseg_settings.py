@@ -23,7 +23,6 @@ class PartSettings(BaseSettings):
     """
     last_executed_algorithm - parameter for caring last used algorithm
     """
-    mask_changed = Signal()
     compare_segmentation_change = Signal(np.ndarray)
     json_encoder_class = PartEncoder
     load_metadata = staticmethod(load_metadata)
@@ -57,20 +56,6 @@ class PartSettings(BaseSettings):
 
     def set_use_physical_unit(self, value):
         self.set("use_physical_unit", value)
-
-    @property
-    def mask(self):
-        if self._image.mask is not None:
-            return self._image.mask[0]
-        return None
-
-    @mask.setter
-    def mask(self, value):
-        try:
-            self._image.set_mask(value)
-            self.mask_changed.emit()
-        except ValueError:
-            raise ValueError("mask do not fit to image")
 
     def _image_changed(self):
         super()._image_changed()

@@ -6,6 +6,49 @@ from tifffile import lazyattr
 Spacing = typing.Tuple[typing.Union[float, int], ...]
 
 
+def minimal_dtype(val: int):
+    """
+    Calculate minimal type to handle value in array
+
+    :param val:
+    :return: minimal dtype to handle given value
+    :rtype:
+    """
+    if val < 250:
+        return np.uint8
+    elif val < 2 ** 16 - 5:
+        return np.uint16
+    else:
+        return np.uint32
+
+
+def reduce_array(array: np.ndarray, components: typing.Optional[typing.Iterable[int]] = None,
+                 max_val: typing.Optional[int] = None, dtype=None) -> np.ndarray:
+    """
+    Relabel components from 1 to components_num with keeping order
+
+    :param array: array to relabel, deed to be integer type 
+    :param components: components to be keep, if None then all will be keep
+    :param max_val: number of maximum component in array, if absent then will be calculated
+        (to reduce whole array processing)
+    :param dtype: type of returned array if no then minimal type is calculated
+    :return: relabeled array in minimum type 
+    """
+    if components is None:
+        components = np.unique(array.flat)
+        if max_val is None:
+            max_val = np.max(components)
+    
+    if max_val is None:
+        max_val = np.max(array)
+        
+    translate = np.zeros(max_val + 1, dtype=dtype if dtype else minimal_dtype(len(components) + 1))
+    for i, val in enumerate(sorted(components), start=0 if 0 in components else 1):
+        translate[val] = i
+    
+    return translate[array]
+
+
 class Image:
     """
     Base class for Images used in PartSeg
@@ -169,12 +212,7 @@ class Image:
 
     @staticmethod
     def _change_array_type_to_minimal(array, max_val):
-        if max_val < 250:
-            return array.astype(np.uint8)
-        elif max_val < 2 ** 16 - 5:
-            return array.astype(np.uint16)
-        else:
-            return array.astype(np.uint32)
+        return array.astype(minimal_dtype(max_val))
 
     # noinspection DuplicatedCode
     def fit_mask_to_image(self, array: np.ndarray) -> np.ndarray:
@@ -192,13 +230,7 @@ class Image:
                 return np.ones(array.shape, dtype=np.uint8)
             return array.astype(np.uint8)
         max_val = np.max(unique)
-        if max_val + 1 == unique.size:
-            return self._change_array_type_to_minimal(array, max_val)
-        masking_array = np.zeros(max_val+1, dtype=np.uint32)
-        for i, val in enumerate(unique, 0 if unique[0] == 0 else 1):
-            masking_array[val] = i
-        res = masking_array[array]
-        return self._change_array_type_to_minimal(res, len(unique))
+        return reduce_array(array, unique, max_val)
 
     def get_image_for_save(self) -> np.ndarray:
         """
