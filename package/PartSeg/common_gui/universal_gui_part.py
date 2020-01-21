@@ -8,12 +8,12 @@ import typing
 from enum import Enum
 from sys import platform
 
+
 from qtpy import PYQT5
-from qtpy.QtCore import Qt, QTimer, QRect, QPointF
-from qtpy.QtCore import Signal
-from qtpy.QtGui import QFontMetrics, QPaintEvent, QPainter, QColor
+from qtpy.QtCore import Qt, QTimer, QRect, QPointF, Signal
+from qtpy.QtGui import QPaintEvent, QPainter, QColor, QPalette, QFontMetrics
 from qtpy.QtWidgets import QWidget, QLabel, QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QComboBox, QSlider, \
-    QLineEdit, QHBoxLayout
+    QLineEdit, QHBoxLayout, QTextEdit
 
 from PartSegCore.universal_const import Units, UNIT_SCALE
 
@@ -355,3 +355,33 @@ class InfoLabel(QWidget):
         """Change text in cyclic mode"""
         self.label.setText(self.text_list[self.index])
         self.index = (self.index + 1) % len(self.text_list)
+
+
+class TextShow(QTextEdit):
+    """
+    Show text with word wrap and scroll if needed.
+    Limit to show first :py:attr:`lines` without scroll bar.
+    """
+    def __init__(self, lines=5, text="", parent=None):
+        super().__init__(text, parent)
+        self.lines = lines
+        self.setReadOnly(True)
+        # self.setTextBackgroundColor()
+        p: QPalette = self.palette()
+        print(p.color(self.backgroundRole()).getRgb())
+        p.setColor(QPalette.Base, p.color(self.backgroundRole()))
+        print(p.color(self.backgroundRole()).getRgb())
+        self.setPalette(p)
+
+    def height(self):
+        print("a")
+        metrics = QFontMetrics(self.currentFont())
+        height = metrics.height()
+        return height * 5
+
+    def sizeHint(self):
+        s = super().sizeHint()
+        metrics = QFontMetrics(self.currentFont())
+        height = metrics.height()
+        s.setHeight(height * (self.lines + 0.5))
+        return s

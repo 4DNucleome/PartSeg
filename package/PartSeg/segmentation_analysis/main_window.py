@@ -21,6 +21,7 @@ from ..common_gui.algorithms_description import InteractiveAlgorithmSettingsWidg
 from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.mask_widget import MaskWidget
 from ..common_gui.stack_image_view import ColorBar
+from ..common_gui.universal_gui_part import TextShow
 from ..common_gui.waiting_dialog import WaitingDialog, ExecuteFunctionDialog
 from ..common_gui.multiple_file_widget import MultipleFileWidget
 from PartSegCore.mask_create import calculate_mask, MaskProperty
@@ -88,9 +89,10 @@ class Options(QWidget):
         self.algorithm_choose_widget.value_changed.connect(self.interactive_algorithm_execute)
         self.algorithm_choose_widget.algorithm_changed.connect(self.interactive_algorithm_execute)
 
-        self.label = QLabel()
-        self.label.setWordWrap(True)
-        self.label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.label = TextShow()
+
+        #self.label.setWordWrap(True)
+        #self.label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         layout = QVBoxLayout()
         layout2 = QHBoxLayout()
         layout2.setSpacing(1)
