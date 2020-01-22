@@ -212,7 +212,12 @@ class StackSettings(BaseSettings):
             self.segmentation = state2.segmentation
             self.components_parameters_dict = state2.segmentation_parameters
         else:
-            self.chosen_components_widget.set_chose(list(sorted(segmentation_parameters.keys())),
+            unique = np.unique(new_segmentation_data.flat)
+            if unique[0] == 0:
+                unique = unique[1:]
+            selected_parameters = {i: segmentation_parameters[i] for i in unique}
+
+            self.chosen_components_widget.set_chose(list(sorted(selected_parameters.keys())),
                                                     list_of_components)
             self.segmentation = new_segmentation_data
             self.components_parameters_dict = segmentation_parameters
@@ -246,7 +251,7 @@ class StackSettings(BaseSettings):
 def get_mask(segmentation: typing.Optional[np.ndarray], chosen: typing.List[int]):
     if segmentation is None or len(chosen) == 0:
         return None
+    segmentation = reduce_array(segmentation, chosen)
     resp = np.ones(segmentation.shape, dtype=np.uint8)
-    for i in chosen:
-        resp[segmentation == i] = 0
+    resp[segmentation > 0] = 0
     return resp

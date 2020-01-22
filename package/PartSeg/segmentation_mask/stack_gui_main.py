@@ -7,7 +7,7 @@ from copy import deepcopy
 from typing import Type
 
 import numpy as np
-from qtpy.QtCore import Signal, Qt, QByteArray
+from qtpy.QtCore import Signal, Qt, QByteArray, Slot
 from qtpy.QtGui import QGuiApplication, QIcon
 from qtpy.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox, QVBoxLayout, QCheckBox, \
     QDoubleSpinBox, QSpinBox, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
@@ -62,7 +62,6 @@ class MaskWindow(QDialog):
         except KeyError:
             pass
 
-
         self.cancel = QPushButton("Cancel", self)
         self.cancel.clicked.connect(self.close)
 
@@ -71,7 +70,6 @@ class MaskWindow(QDialog):
 
         self.next_button = QPushButton(f"Pop mask", self)
         self.next_button.clicked.connect(self.pop_mask)
-
 
         op_layout = QHBoxLayout()
         op_layout.addWidget(self.mask_widget.radius_information)
@@ -508,7 +506,7 @@ class AlgorithmOptions(QWidget):
         self.keep_chosen_components_chk = QCheckBox("Save chosen components")
         self.keep_chosen_components_chk.setToolTip("Save chosen components when loading segmentation form file\n"
                                                    "or from multiple file widget.")
-        self.keep_chosen_components_chk.stateChanged.connect(self.settings.set_keep_chosen_components)
+        self.keep_chosen_components_chk.stateChanged.connect(self.set_keep_chosen_components)
         self.keep_chosen_components_chk.setChecked(settings.keep_chosen_components)
         self.show_parameters = QPushButton("Show parameters")
         self.show_parameters.setToolTip("Show parameters of segmentation for each components")
@@ -590,6 +588,10 @@ class AlgorithmOptions(QWidget):
         settings.chosen_components_widget = self.choose_components
         settings.components_change_list.connect(self.choose_components.new_choose)
         settings.image_changed.connect(self.choose_components.remove_components)
+
+    @Slot(int)
+    def set_keep_chosen_components(self, val):
+        self.settings.set_keep_chosen_components(val)
 
     def save_parameters(self):
         dial = SaveDialog(io_functions.save_parameters_dict, False, history=self.settings.get_path_history())
@@ -687,7 +689,7 @@ class AlgorithmOptions(QWidget):
         self.progress_bar.setRange(0, 0)
         self.choose_components.setDisabled(True)
         chosen = sorted(self.choose_components.get_chosen())
-        blank = get_mask(self.settings.segmentation, chosen)
+        blank = get_mask(self.settings.segmentation, chosen) if self.settings.keep_chosen_components else None
         self.progress_bar.setHidden(False)
         widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
         widget.set_mask(blank)
@@ -720,7 +722,8 @@ class AlgorithmOptions(QWidget):
         if segmentation.info_text != "":
             QMessageBox.information(self, "Algorithm info", segmentation.info_text)
         parameters_dict = defaultdict(lambda: deepcopy(segmentation.parameters))
-        self.settings.set_segmentation(segmentation.segmentation, True, [], parameters_dict)
+        self.settings.set_segmentation(segmentation.segmentation,
+                                       self.settings.keep_chosen_components, [], parameters_dict)
 
     def showEvent(self, _):
         widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
@@ -737,7 +740,7 @@ class ImageInformation(QWidget):
         self.spacing = [QDoubleSpinBox() for _ in range(3)]
         self.multiple_files = QCheckBox("Show multiple files widget")
         self.multiple_files.setChecked(settings.get("multiple_files_widget", True))
-        self.multiple_files.stateChanged.connect(partial(settings.set, "multiple_files_widget"))
+        self.multiple_files.stateChanged.connect(self.set_multiple_files)
         units_value = self._settings.get("units_value", Units.nm)
         for el in self.spacing:
             el.setAlignment(Qt.AlignRight)
@@ -767,6 +770,10 @@ class ImageInformation(QWidget):
         layout.addWidget(self.multiple_files)
         self.setLayout(layout)
         self._settings.image_changed[str].connect(self.set_image_path)
+
+    @Slot(int)
+    def set_multiple_files(self, val):
+        self._settings.set("multiple_files_widget", val)
 
     def update_spacing(self, index=None):
         units_value = self.units.get_value()

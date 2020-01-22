@@ -52,8 +52,9 @@ def save_stack_segmentation(
     segmentation_tar = get_tarinfo("segmentation.tif", segmentation_buff)
     tar_file.addfile(segmentation_tar, fileobj=segmentation_buff)
     step_changed(3)
-    metadata = {"components": segmentation_info.chosen_components,
-                "parameters": segmentation_info.segmentation_parameters, "shape": segmentation_info.segmentation.shape}
+    metadata = {"components": [int(x) for x in segmentation_info.chosen_components],
+                "parameters": {str(k): v for k, v in segmentation_info.segmentation_parameters.items()},
+                "shape": segmentation_info.segmentation.shape}
     if isinstance(segmentation_info.image, Image):
         file_path = segmentation_info.image.file_path
     elif isinstance(segmentation_info.image, str):
@@ -223,7 +224,7 @@ class LoadSegmentationImage(LoadBase):
             file_path, callback_function=partial(proxy_callback, range_changed, step_changed),
             default_spacing=metadata["default_spacing"])
         # noinspection PyProtectedMember
-        image.file_path = load_locations[0]
+        # image.file_path = load_locations[0]
         return seg.replace_(file_path=image.file_path, image=image)
 
 

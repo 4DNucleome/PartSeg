@@ -3,6 +3,7 @@
 ## develop 
 -   Add creating custom label coloring.
 -   Change execs interpreter to python 3.7   
+-   Add masking operation in Segmentation Mask 
 
 ## 0.9.6 
 -   fix bug in loading project with mask

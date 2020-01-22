@@ -120,6 +120,8 @@ class TestSegmentationMask:
         assert isinstance(seg.image, str)
         assert seg.chosen_components == [1, 3]
         assert os.path.exists(os.path.join(data_test_dir, seg.image))
+        assert len(seg.segmentation_parameters) == 4
+        assert os.path.basename(seg.image) == "test_nucleus.tif"
 
     def test_load_old_seg(self, data_test_dir):
         """
@@ -129,6 +131,7 @@ class TestSegmentationMask:
         assert isinstance(seg.image, str)
         assert seg.chosen_components == [1, 3]
         assert os.path.exists(os.path.join(data_test_dir, seg.image))
+        assert os.path.basename(seg.image) == "test_nucleus.tif"
 
     def test_load_old_seg_with_image(self, data_test_dir):
         seg = LoadSegmentationImage.load([os.path.join(data_test_dir, "test_nucleus_old.seg")],
@@ -137,6 +140,7 @@ class TestSegmentationMask:
         assert seg.chosen_components == [1, 3]
         assert isinstance(seg.segmentation, np.ndarray)
         seg.image.fit_array_to_image(seg.segmentation)
+        assert os.path.basename(seg.image.file_path) == "test_nucleus.tif"
 
     def test_load_seg_with_image(self, data_test_dir):
         seg = LoadSegmentationImage.load([os.path.join(data_test_dir, "test_nucleus.seg")],
@@ -145,6 +149,7 @@ class TestSegmentationMask:
         assert seg.chosen_components == [1, 3]
         assert isinstance(seg.segmentation, np.ndarray)
         seg.image.fit_array_to_image(seg.segmentation)
+        assert os.path.basename(seg.image.file_path) == "test_nucleus.tif"
 
     def test_save_segmentation(self, tmpdir, data_test_dir):
         seg = LoadSegmentationImage.load([os.path.join(data_test_dir, "test_nucleus.seg")],

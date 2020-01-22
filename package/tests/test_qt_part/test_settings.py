@@ -17,7 +17,7 @@ class TestStackSettings:
         settings.set_project_info(project1)
         project1_res = settings.get_project_info()
         assert isinstance(project1_res.chosen_components, typing.Iterable) and len(project1_res.chosen_components) == 2
-        assert project1_res.file_path == os.path.join(data_test_dir, "test_nucleus.seg")
+        assert project1_res.file_path == os.path.join(data_test_dir, "test_nucleus.tif")
         project2 = LoadStackImage.load([os.path.join(data_test_dir, "test_lsm.tif")])
         settings.set_project_info(project2)
         project2_res = settings.get_project_info()

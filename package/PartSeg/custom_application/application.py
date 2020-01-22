@@ -1,9 +1,12 @@
 import json
+import os
 import sys
 from urllib import request, error
 
+import PartSegData
 import packaging.version
 import sentry_sdk
+from qtpy.QtGui import QIcon
 from qtpy.QtCore import Slot, QThread
 from qtpy.QtWidgets import QApplication, QMessageBox
 
@@ -52,6 +55,8 @@ class CustomApplication(QApplication):
         self.warning = "", ""
         self.release_check = CheckVersionThread()
         self.release_check.finished.connect(self._check_release)
+        icon = QIcon(os.path.join(PartSegData.icons_dir, "icon.png"))
+        self.setWindowIcon(icon)
 
     @Slot()
     def show_error(self):
