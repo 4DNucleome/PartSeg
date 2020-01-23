@@ -20,13 +20,16 @@ class MaskBase:
 
     :ivar str ~.name: name of mask
     """
+
     name: str
+
 
 # MaskCreate = namedtuple("MaskCreate", ['name', 'radius'])
 
 
 class RootType(Enum):
     """Defines root type which changes of data available on begin of calculation"""
+
     Image = 0  #: raw image
     Project = 1  #: PartSeg project with defined segmentation
     Mask_project = 2  #: Project from mask segmentation. It contains multiple elements.
@@ -45,6 +48,7 @@ class MaskCreate(MaskBase, BaseSerializableClass):
     :ivar str ~.name: name of mask
     :ivar str ~.mask_property: instance of :py:class:`.MaskProperty`
     """
+
     mask_property: MaskProperty
 
     def __str__(self):
@@ -56,6 +60,7 @@ class MaskUse(MaskBase, BaseSerializableClass):
     Reuse of already defined mask
     Will be deprecated in short time
     """
+
     pass
 
 
@@ -67,6 +72,7 @@ class MaskSum(MaskBase, BaseSerializableClass):
     :ivar str ~.mask1: first mask name
     :ivar str ~.mask2: second mask name
     """
+
     mask1: str
     mask2: str
 
@@ -79,6 +85,7 @@ class MaskIntersection(MaskBase, BaseSerializableClass):
     :ivar str ~.mask1: first mask name
     :ivar str ~.mask2: second mask name
     """
+
     mask1: str
     mask2: str
 
@@ -93,6 +100,7 @@ class Save(BaseSerializableClass):
     :ivar str ~.short_name: short name of save method
     :ivar dict ~.values: parameters specific for save method
     """
+
     suffix: str
     directory: str
     algorithm: str
@@ -109,6 +117,7 @@ class MeasurementCalculate(BaseSerializableClass):
     :ivar MeasurementProfile ~.statistic_profile: description of measurements
     :ivar str name_prefix: prefix of column names
     """
+
     __old_names__ = "StatisticCalculate"
     channel: int
     units: Units
@@ -119,7 +128,8 @@ class MeasurementCalculate(BaseSerializableClass):
     # noinspection PyOverloads,PyMissingConstructor
     # pylint: disable=W0104
     @typing.overload
-    def __init__(self, channel: int, units: Units, statistic_profile: MeasurementProfile, name_prefix: str): ...
+    def __init__(self, channel: int, units: Units, statistic_profile: MeasurementProfile, name_prefix: str):
+        ...
 
     @property
     def name(self):
@@ -128,11 +138,11 @@ class MeasurementCalculate(BaseSerializableClass):
 
     def __str__(self):
         channel = "Like segmentation" if self.channel == -1 else str(self.channel)
-        desc = str(self.statistic_profile).split('\n', 1)[1]
+        desc = str(self.statistic_profile).split("\n", 1)[1]
         return f"{self.__class__.name}\nChannel: {channel}\nUnits: {self.units}\n{desc}\n"
 
 
-def get_save_path(op: Save, calculation: 'FileCalculation') -> str:
+def get_save_path(op: Save, calculation: "FileCalculation") -> str:
     """
     Calculate save path base on proceeded file path and save operation parameters.
     It assume that save algorithm is registered in :py:data:`PartSegCore.analysis.save_functions.save_dict`
@@ -142,6 +152,7 @@ def get_save_path(op: Save, calculation: 'FileCalculation') -> str:
     :return: save path
     """
     from PartSegCore.analysis.save_functions import save_dict
+
     extension = save_dict[op.algorithm].get_default_extension()
     rel_path = os.path.relpath(calculation.file_path, calculation.base_prefix)
     rel_path = os.path.splitext(rel_path)[1]
@@ -158,7 +169,9 @@ class MaskMapper:
 
     :ivar ~.name: mask name
     """
+
     name: str
+
     @abstractmethod
     def get_mask_path(self, file_path: str) -> str:
         """
@@ -184,12 +197,14 @@ class MaskSuffix(MaskMapper, BaseSerializableClass):
     :ivar str ~.name: mask name
     :ivar str ~.suffix: mask file path suffix
     """
+
     suffix: str
 
     # noinspection PyMissingConstructor,PyOverloads
     # pylint: disable=W0104
     @typing.overload
-    def __init__(self, name: str, suffix: str): ...
+    def __init__(self, name: str, suffix: str):
+        ...
 
     def get_mask_path(self, file_path: str) -> str:
         base, ext = os.path.splitext(file_path)
@@ -207,13 +222,15 @@ class MaskSub(MaskMapper, BaseSerializableClass):
     :ivar str ~.base: string to be searched
     :ivar str ~.repr: string to be put instead of ``base``
     """
+
     base: str
     rep: str
 
     # noinspection PyMissingConstructor,PyOverloads
     # pylint: disable=W0104
     @typing.overload
-    def __init__(self, name: str, base: str, rep: str): ...
+    def __init__(self, name: str, base: str, rep: str):
+        ...
 
     def get_mask_path(self, file_path: str) -> str:
         dir_name, filename = os.path.split(file_path)
@@ -232,7 +249,8 @@ class MaskFile(MaskMapper, BaseSerializableClass):
     # noinspection PyMissingConstructor,PyOverloads
     # pylint: disable=W0104
     @typing.overload
-    def __init__(self, name: str, path_to_file: str, name_dict: typing.Optional[dict] = None):  ...
+    def __init__(self, name: str, path_to_file: str, name_dict: typing.Optional[dict] = None):
+        ...
 
     def is_ready(self) -> bool:
         return os.path.exists(self.path_to_file)
@@ -264,7 +282,8 @@ class MaskFile(MaskMapper, BaseSerializableClass):
                     file_name, mask_name = line.split(sep)
                 except ValueError:
                     logging.error(
-                        "Error in parsing map file\nline {}\n{}\nfrom file{}".format(i, line, self.path_to_file))
+                        "Error in parsing map file\nline {}\n{}\nfrom file{}".format(i, line, self.path_to_file)
+                    )
                     continue
                 file_name = file_name.strip()
                 mask_name = mask_name.strip()
@@ -277,12 +296,14 @@ class MaskFile(MaskMapper, BaseSerializableClass):
 
 class Operations(Enum):
     """Global operations"""
+
     reset_to_base = 1
     # leave_the_biggest = 2
 
 
 class PlanChanges(Enum):
     """History elements"""
+
     add_node = 1  #:
     remove_node = 2  #:
     replace_node = 3  #:
@@ -292,9 +313,12 @@ class CalculationTree:
     """
     Structure for describe calculation structure
     """
-    def __init__(self, operation: typing.Union[BaseSerializableClass, SegmentationProfile,
-                                               MeasurementCalculate, RootType],
-                 children: typing.List['CalculationTree']):
+
+    def __init__(
+        self,
+        operation: typing.Union[BaseSerializableClass, SegmentationProfile, MeasurementCalculate, RootType],
+        children: typing.List["CalculationTree"],
+    ):
         if operation == "root":
             operation = RootType.Image
         self.operation = operation
@@ -306,6 +330,7 @@ class CalculationTree:
 
 class NodeType(Enum):
     """Type of node in calculation"""
+
     segment = 1  #: segmentation
     mask = 2  #: mask creation
     measurement = 3  #: measurement calculation
@@ -327,8 +352,8 @@ class BaseCalculation:
     :ivar str uuid: ~.uuid of whole calculation
     :ivar ~.voxel_size: default voxel size (for files which do not contains this information in metadata
     """
-    def __init__(self, base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan,
-                 voxel_size):
+
+    def __init__(self, base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan, voxel_size):
         self.base_prefix = base_prefix
         self.result_prefix = result_prefix
         self.measurement_file_path = measurement_file_path
@@ -351,15 +376,23 @@ class Calculation(BaseCalculation):
     :ivar ~.voxel_size: default voxel size (for files which do not contains this information in metadata
     :ivar typing.List[str] ~.file_list: list of files to be proceed
     """
-    def __init__(self, file_list, base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan,
-                 voxel_size):
+
+    def __init__(
+        self, file_list, base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan, voxel_size
+    ):
         super().__init__(base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan, voxel_size)
         self.file_list = file_list
 
     def get_base_calculation(self) -> BaseCalculation:
         """Extract py:class:`BaseCalculation` from instance."""
-        base = BaseCalculation(self.base_prefix, self.result_prefix, self.measurement_file_path, self.sheet_name,
-                               self.calculation_plan, self.voxel_size)
+        base = BaseCalculation(
+            self.base_prefix,
+            self.result_prefix,
+            self.measurement_file_path,
+            self.sheet_name,
+            self.calculation_plan,
+            self.voxel_size,
+        )
         base.uuid = self.uuid
         return base
 
@@ -368,6 +401,7 @@ class FileCalculation:
     """
     Description of single file calculation
     """
+
     def __init__(self, file_path: str, calculation: BaseCalculation):
         self.file_path = file_path
         self.calculation = calculation
@@ -407,12 +441,20 @@ class CalculationPlan:
     :type segmentation_count: int
     :type execution_tree: CalculationTree
     """
-    correct_name = {MaskCreate.__name__: MaskCreate, MaskUse.__name__: MaskUse, Save.__name__: Save,
-                    MeasurementCalculate.__name__: MeasurementCalculate,
-                    SegmentationProfile.__name__: SegmentationProfile,
-                    MaskSuffix.__name__: MaskSuffix, MaskSub.__name__: MaskSub, MaskFile.__name__: MaskFile,
-                    Operations.__name__: Operations,
-                    MaskIntersection.__name__: MaskIntersection, MaskSum.__name__: MaskSum}
+
+    correct_name = {
+        MaskCreate.__name__: MaskCreate,
+        MaskUse.__name__: MaskUse,
+        Save.__name__: Save,
+        MeasurementCalculate.__name__: MeasurementCalculate,
+        SegmentationProfile.__name__: SegmentationProfile,
+        MaskSuffix.__name__: MaskSuffix,
+        MaskSub.__name__: MaskSub,
+        MaskFile.__name__: MaskFile,
+        Operations.__name__: Operations,
+        MaskIntersection.__name__: MaskIntersection,
+        MaskSum.__name__: MaskSum,
+    }
 
     def __init__(self, tree: typing.Optional[CalculationTree] = None, name: str = ""):
         if tree is None:

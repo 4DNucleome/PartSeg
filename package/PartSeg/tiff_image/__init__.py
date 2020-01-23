@@ -27,8 +27,10 @@ class MyImport(MetaPathFinder):
 
 sys.meta_path.append(MyImport())
 
-print("[Warning] PartSeg.tiff_image module name is deprecated. It is renamed to PartSegImage"
-      "To fail this import set environment variable 'NO_DEPRECATED' to 1")
+print(
+    "[Warning] PartSeg.tiff_image module name is deprecated. It is renamed to PartSegImage"
+    "To fail this import set environment variable 'NO_DEPRECATED' to 1"
+)
 
-if 'NO_DEPRECATED' in os.environ and os.environ['NO_DEPRECATED'] == '1':
+if "NO_DEPRECATED" in os.environ and os.environ["NO_DEPRECATED"] == "1":
     raise ImportError("PartSeg.tiff_image is deprecated and 'NO_DEPRECATED' is set to 1")

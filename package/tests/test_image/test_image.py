@@ -71,12 +71,12 @@ class TestImageBase:
         initial_shape = self.prepare_image_initial_shape([1, 30, 50, 50], 1)
         data = np.zeros(initial_shape, np.uint8)
         image = self.image_class(data, (1, 1, 1), "")
-        mask_base = np.zeros(30*50*50, dtype=np.uint32)
+        mask_base = np.zeros(30 * 50 * 50, dtype=np.uint32)
         mask_base[:50] = np.arange(50, dtype=np.uint32)
         image.set_mask(np.reshape(mask_base, (1, 30, 50, 50)))
         assert image.mask.dtype == np.uint8
 
-        mask_base[:50] = np.arange(50, dtype=np.uint32)+5
+        mask_base[:50] = np.arange(50, dtype=np.uint32) + 5
         image.set_mask(np.reshape(mask_base, (1, 30, 50, 50)))
         assert image.mask.dtype == np.uint8
 
@@ -84,15 +84,15 @@ class TestImageBase:
         image.set_mask(np.reshape(mask_base, (1, 30, 50, 50)))
         assert image.mask.dtype == np.uint16
 
-        mask_base[:350] = np.arange(350, dtype=np.uint32)+5
+        mask_base[:350] = np.arange(350, dtype=np.uint32) + 5
         image.set_mask(np.reshape(mask_base, (1, 30, 50, 50)))
         assert image.mask.dtype == np.uint16
 
-        mask_base[:2**16+5] = np.arange(2**16+5, dtype=np.uint32)
+        mask_base[: 2 ** 16 + 5] = np.arange(2 ** 16 + 5, dtype=np.uint32)
         image.set_mask(np.reshape(mask_base, (1, 30, 50, 50)))
         assert image.mask.dtype == np.uint32
 
-        mask_base[:2 ** 16 + 5] = np.arange(2 ** 16 + 5, dtype=np.uint32)+5
+        mask_base[: 2 ** 16 + 5] = np.arange(2 ** 16 + 5, dtype=np.uint32) + 5
         image.set_mask(np.reshape(mask_base, (1, 30, 50, 50)))
         assert image.mask.dtype == np.uint32
 
@@ -134,38 +134,62 @@ class TestImageBase:
         assert image.channel_pos == image.return_order.index("C")
 
     def test_get_dimension_number(self):
-        assert self.image_class(np.zeros((1, 10, 20, 20, 1), np.uint8),
-                                (1, 1, 1), "", axes_order="TZYXC").get_dimension_number() == 3
-        assert self.image_class(np.zeros((1, 1, 20, 20, 1), np.uint8),
-                                (1, 1, 1), "", axes_order="TZYXC").get_dimension_number() == 2
-        assert self.image_class(np.zeros((10, 1, 20, 20, 1), np.uint8),
-                                (1, 1, 1), "", axes_order="TZYXC").get_dimension_number() == 3
-        assert self.image_class(np.zeros((1, 1, 20, 20, 3), np.uint8),
-                                (1, 1, 1), "", axes_order="TZYXC").get_dimension_number() == 3
-        assert self.image_class(np.zeros((10, 1, 20, 20, 3), np.uint8),
-                                (1, 1, 1), "", axes_order="TZYXC").get_dimension_number() == 4
-        assert self.image_class(np.zeros((10, 3, 20, 20, 3), np.uint8),
-                                (1, 1, 1), "", axes_order="TZYXC").get_dimension_number() == 5
+        assert (
+            self.image_class(
+                np.zeros((1, 10, 20, 20, 1), np.uint8), (1, 1, 1), "", axes_order="TZYXC"
+            ).get_dimension_number()
+            == 3
+        )
+        assert (
+            self.image_class(
+                np.zeros((1, 1, 20, 20, 1), np.uint8), (1, 1, 1), "", axes_order="TZYXC"
+            ).get_dimension_number()
+            == 2
+        )
+        assert (
+            self.image_class(
+                np.zeros((10, 1, 20, 20, 1), np.uint8), (1, 1, 1), "", axes_order="TZYXC"
+            ).get_dimension_number()
+            == 3
+        )
+        assert (
+            self.image_class(
+                np.zeros((1, 1, 20, 20, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC"
+            ).get_dimension_number()
+            == 3
+        )
+        assert (
+            self.image_class(
+                np.zeros((10, 1, 20, 20, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC"
+            ).get_dimension_number()
+            == 4
+        )
+        assert (
+            self.image_class(
+                np.zeros((10, 3, 20, 20, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC"
+            ).get_dimension_number()
+            == 5
+        )
 
     def test_get_dimension_letters(self):
         assert self.image_class(
-            np.zeros((1, 10, 20, 20, 1), np.uint8),(1, 1, 1), "", axes_order="TZYXC").get_dimension_letters() == \
-               self.reorder_axes_letter("ZYX")
+            np.zeros((1, 10, 20, 20, 1), np.uint8), (1, 1, 1), "", axes_order="TZYXC"
+        ).get_dimension_letters() == self.reorder_axes_letter("ZYX")
         assert self.image_class(
-            np.zeros((1, 1, 20, 20, 1), np.uint8), (1, 1, 1), "", axes_order="TZYXC").get_dimension_letters() == \
-               self.reorder_axes_letter("YX")
+            np.zeros((1, 1, 20, 20, 1), np.uint8), (1, 1, 1), "", axes_order="TZYXC"
+        ).get_dimension_letters() == self.reorder_axes_letter("YX")
         assert self.image_class(
-            np.zeros((10, 1, 20, 20, 1), np.uint8), (1, 1, 1), "", axes_order="TZYXC").get_dimension_letters() ==\
-               self.reorder_axes_letter("TYX")
+            np.zeros((10, 1, 20, 20, 1), np.uint8), (1, 1, 1), "", axes_order="TZYXC"
+        ).get_dimension_letters() == self.reorder_axes_letter("TYX")
         assert self.image_class(
-            np.zeros((1, 1, 20, 20, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC").get_dimension_letters() ==\
-               self.reorder_axes_letter("YXC")
+            np.zeros((1, 1, 20, 20, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC"
+        ).get_dimension_letters() == self.reorder_axes_letter("YXC")
         assert self.image_class(
-            np.zeros((10, 1, 20, 20, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC").get_dimension_letters() ==\
-               self.reorder_axes_letter("TYXC")
+            np.zeros((10, 1, 20, 20, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC"
+        ).get_dimension_letters() == self.reorder_axes_letter("TYXC")
         assert self.image_class(
-            np.zeros((10, 3, 20, 20, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC").get_dimension_letters() ==\
-               self.reorder_axes_letter("TZYXC")
+            np.zeros((10, 3, 20, 20, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC"
+        ).get_dimension_letters() == self.reorder_axes_letter("TZYXC")
 
     def test_set_mask(self):
         initial_shape = self.prepare_image_initial_shape([1, 10, 20, 30], 1)
@@ -183,7 +207,7 @@ class TestImageBase:
         mask[0, 0, 0] = 1
         image.set_mask(mask)
         assert image.mask.shape == tuple(self.prepare_mask_shape((1, 10, 20, 30)))
-        assert np.all(np.bincount(image.mask.flat) == (0, 1, 10*20*30-1))
+        assert np.all(np.bincount(image.mask.flat) == (0, 1, 10 * 20 * 30 - 1))
         image.set_mask(None)
         assert image.mask is None
 
@@ -282,10 +306,12 @@ class TestImageBase:
 
     def test_get_um_spacing(self):
         image = self.image_class(
-            np.zeros((1, 10, 20, 30, 3), np.uint8), (10**-6, 10**-6, 10**-6), "", axes_order="TZYXC")
+            np.zeros((1, 10, 20, 30, 3), np.uint8), (10 ** -6, 10 ** -6, 10 ** -6), "", axes_order="TZYXC"
+        )
         assert image.get_um_spacing() == (1, 1, 1)
         image = self.image_class(
-            np.zeros((1, 1, 20, 30, 3), np.uint8), (10 ** -6, 10 ** -6, 10 ** -6), "", axes_order="TZYXC")
+            np.zeros((1, 1, 20, 30, 3), np.uint8), (10 ** -6, 10 ** -6, 10 ** -6), "", axes_order="TZYXC"
+        )
         assert image.get_um_spacing() == (1, 1)
 
     def test_save(self, tmp_path):
@@ -293,14 +319,15 @@ class TestImageBase:
         data[..., :10, 0] = 2
         data[..., :10, 1] = 20
         data[..., :10, 2] = 9
-        image = self.image_class(data, (10**-6, 10**-6, 10**-6), "", axes_order="TZYXC")
+        image = self.image_class(data, (10 ** -6, 10 ** -6, 10 ** -6), "", axes_order="TZYXC")
         mask = np.zeros((10, 20, 30), np.uint8)
         mask[..., 2:12] = 1
         image.set_mask(mask, "ZYX")
         ImageWriter.save(image, os.path.join(tmp_path, "img.tif"))
         ImageWriter.save_mask(image, os.path.join(tmp_path, "img_mask.tif"))
-        read_image: Image = TiffImageReader.read_image(os.path.join(tmp_path, "img.tif"),
-                                                       os.path.join(tmp_path, "img_mask.tif"))
+        read_image: Image = TiffImageReader.read_image(
+            os.path.join(tmp_path, "img.tif"), os.path.join(tmp_path, "img_mask.tif")
+        )
         assert read_image.get_um_spacing() == (1, 1, 1)
         assert len(read_image.get_ranges()) == 3
         assert read_image.get_ranges() == [(0, 2), (0, 20), (0, 9)]

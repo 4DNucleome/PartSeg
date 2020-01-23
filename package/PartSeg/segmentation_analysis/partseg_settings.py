@@ -15,20 +15,31 @@ from ..common_backend.base_settings import BaseSettings, SaveSettingsDescription
 from PartSegCore.json_hooks import ProfileDict
 import numpy as np
 
-MASK_COLORS = {"white": np.array((255, 255, 255)), "black": np.array((0, 0, 0)), "red": np.array((255, 0, 0)),
-               "green": np.array((0, 255, 0)), "blue": np.array((0, 0, 255))}
+MASK_COLORS = {
+    "white": np.array((255, 255, 255)),
+    "black": np.array((0, 0, 0)),
+    "red": np.array((255, 0, 0)),
+    "green": np.array((0, 255, 0)),
+    "blue": np.array((0, 0, 255)),
+}
 
 
 class PartSettings(BaseSettings):
     """
     last_executed_algorithm - parameter for caring last used algorithm
     """
+
     compare_segmentation_change = Signal(np.ndarray)
     json_encoder_class = PartEncoder
     load_metadata = staticmethod(load_metadata)
     last_executed_algorithm: str
-    save_locations_keys = ["open_directory", "save_directory", "export_directory", "batch_plan_directory",
-                           "multiple_open_directory"]
+    save_locations_keys = [
+        "open_directory",
+        "save_directory",
+        "export_directory",
+        "batch_plan_directory",
+        "multiple_open_directory",
+    ]
 
     def __init__(self, json_path):
         super().__init__(json_path)
@@ -65,12 +76,21 @@ class PartSettings(BaseSettings):
     def get_project_info(self) -> ProjectTuple:
         algorithm_name = self.last_executed_algorithm
         if algorithm_name:
-            algorithm_val = {"algorithm_name": algorithm_name, "values":
-                             deepcopy(self.get(f"algorithms.{algorithm_name}"))}
+            algorithm_val = {
+                "algorithm_name": algorithm_name,
+                "values": deepcopy(self.get(f"algorithms.{algorithm_name}")),
+            }
         else:
             algorithm_val = {}
-        return ProjectTuple(self.image.file_path, self.image.substitute(), self.segmentation, self.full_segmentation,
-                            self.mask, self.segmentation_history[:], algorithm_val)
+        return ProjectTuple(
+            self.image.file_path,
+            self.image.substitute(),
+            self.segmentation,
+            self.full_segmentation,
+            self.mask,
+            self.segmentation_history[:],
+            algorithm_val,
+        )
 
     def set_project_info(self, data: typing.Union[ProjectTuple, MaskInfo]):
         if isinstance(data, ProjectTuple):
@@ -117,9 +137,13 @@ class PartSettings(BaseSettings):
                 return image.swap_time_and_stack()
             else:
                 wid = QWidget()
-                res = QMessageBox.question(wid, "Not supported", "Time data are currently not supported."
-                                                                 " Maybe You would like to treat time as z-stack",
-                                           QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                res = QMessageBox.question(
+                    wid,
+                    "Not supported",
+                    "Time data are currently not supported." " Maybe You would like to treat time as z-stack",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No,
+                )
 
                 if res == QMessageBox.Yes:
                     return image.swap_time_and_stack()

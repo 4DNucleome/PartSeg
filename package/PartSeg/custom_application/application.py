@@ -21,6 +21,7 @@ class CheckVersionThread(QThread):
 
      .. _PYPI: https://pypi.org/project/PartSeg/
      """
+
     def __init__(self):
         super().__init__()
         self.release = __version__
@@ -49,6 +50,7 @@ class CustomApplication(QApplication):
     :ivar error: :py:class:`Exception` to be show in error dialog
     :ivar warning: Pair of strings. First is set as title, second as content of :py:class:`PyQt5.QtWidgets.QMessageBox`
     """
+
     def __init__(self, argv):
         super().__init__(argv)
         self.error = None
@@ -64,6 +66,7 @@ class CustomApplication(QApplication):
         if self.error is None:
             return
         from PartSeg.common_gui.error_report import ErrorDialog
+
         if isinstance(self.error, TiffFileException):
             mess = QMessageBox()
             mess.setIcon(QMessageBox.Critical)
@@ -98,17 +101,23 @@ class CustomApplication(QApplication):
         my_version = packaging.version.parse(__version__)
         remote_version = packaging.version.parse(self.release_check.release)
         if remote_version > my_version:
-            if getattr(sys, 'frozen', False):
+            if getattr(sys, "frozen", False):
                 message = QMessageBox(
-                    QMessageBox.Information, "New release",
+                    QMessageBox.Information,
+                    "New release",
                     f"You use outdated version of PartSeg. "
                     f"Your version is {my_version} and current is {remote_version}. "
-                    f"You can download next release form {self.release_check.url}", QMessageBox.Ok)
+                    f"You can download next release form {self.release_check.url}",
+                    QMessageBox.Ok,
+                )
             else:
                 message = QMessageBox(
-                    QMessageBox.Information, "New release",
+                    QMessageBox.Information,
+                    "New release",
                     f"You use outdated version of PartSeg. "
                     f"Your version is {my_version} and current is {remote_version}. "
-                    "You can update it from pypi (pip install -U PartSeg)", QMessageBox.Ok)
+                    "You can update it from pypi (pip install -U PartSeg)",
+                    QMessageBox.Ok,
+                )
 
             message.exec()

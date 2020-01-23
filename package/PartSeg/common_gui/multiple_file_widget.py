@@ -4,8 +4,20 @@ from pathlib import Path
 from functools import partial
 from typing import Dict, List
 
-from qtpy.QtWidgets import QWidget, QPushButton, QTreeWidget, QGridLayout, QFileDialog, QCheckBox, QInputDialog, \
-    QTreeWidgetItem, QMessageBox, QApplication, QMenu, QAction
+from qtpy.QtWidgets import (
+    QWidget,
+    QPushButton,
+    QTreeWidget,
+    QGridLayout,
+    QFileDialog,
+    QCheckBox,
+    QInputDialog,
+    QTreeWidgetItem,
+    QMessageBox,
+    QApplication,
+    QMenu,
+    QAction,
+)
 from qtpy.QtGui import QFontMetrics, QResizeEvent, QMouseEvent
 
 from qtpy.QtCore import Qt, QTimer, Slot, Signal
@@ -110,6 +122,7 @@ class MultipleFileWidget(QWidget):
     def load_files(self):
         def exception_hook(exception):
             from qtpy.QtCore import QMetaObject
+
             instance = QApplication.instance()
             if isinstance(exception, MemoryError):
                 instance.warning = "Open error", f"Not enough memory to read this image: {exception}"
@@ -123,6 +136,7 @@ class MultipleFileWidget(QWidget):
                 print(exception, file=sys.stderr)
             else:
                 raise exception
+
         dial = MultipleLoadDialog(self.load_register, self.settings.get_path_history())
         dial.setDirectory(self.settings.get("io.multiple_open_directory", str(Path.home())))
         dial.selectNameFilter(self.settings.get("io.multiple_open_filter", next(iter(self.load_register.keys()))))

@@ -11,8 +11,12 @@ class LoadProperty(typing.NamedTuple):
 
 
 class CustomLoadDialog(QFileDialog):
-    def __init__(self, load_register: typing.Dict[str, type(LoadBase)], parent=None,
-                 history: typing.Optional[typing.List[str]] = None):
+    def __init__(
+        self,
+        load_register: typing.Dict[str, type(LoadBase)],
+        parent=None,
+        history: typing.Optional[typing.List[str]] = None,
+    ):
         super().__init__(parent)
         self.load_register = dict((x.get_name_with_suffix(), x) for x in load_register.values())
         self.setOption(QFileDialog.DontUseNativeDialog, True)
@@ -31,7 +35,7 @@ class CustomLoadDialog(QFileDialog):
             super().accept()
             return
 
-        self.files_list.extend([x for x in self.selectedFiles()if self.fileMode == QFileDialog.Directory or isfile(x)])
+        self.files_list.extend([x for x in self.selectedFiles() if self.fileMode == QFileDialog.Directory or isfile(x)])
         chosen_class: LoadBase = self.load_register[self.selectedNameFilter()]
         if len(self.files_list) < chosen_class.number_of_files():
             self.setNameFilters([chosen_class.get_name()])

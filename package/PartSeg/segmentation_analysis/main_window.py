@@ -7,8 +7,19 @@ import PartSegData
 import numpy as np
 from qtpy.QtCore import Qt, QByteArray, QEvent
 from qtpy.QtGui import QIcon, QKeyEvent, QKeySequence, QResizeEvent
-from qtpy.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QGridLayout, \
-    QMessageBox, QCheckBox, QComboBox, QInputDialog, QDialog
+from qtpy.QtWidgets import (
+    QLabel,
+    QWidget,
+    QPushButton,
+    QHBoxLayout,
+    QVBoxLayout,
+    QGridLayout,
+    QMessageBox,
+    QCheckBox,
+    QComboBox,
+    QInputDialog,
+    QDialog,
+)
 
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
@@ -43,8 +54,14 @@ CONFIG_FOLDER = os.path.join(state_store.save_folder, "analysis")
 
 
 class Options(QWidget):
-    def __init__(self, settings: PartSettings, channel_control2: ChannelProperty,
-                 left_image: ImageViewWithMask, main_image: ImageViewWithMask, synchronize: SynchronizeView):
+    def __init__(
+        self,
+        settings: PartSettings,
+        channel_control2: ChannelProperty,
+        left_image: ImageViewWithMask,
+        main_image: ImageViewWithMask,
+        synchronize: SynchronizeView,
+    ):
         super().__init__()
         self._settings = settings
         self.left_panel = left_image
@@ -91,8 +108,8 @@ class Options(QWidget):
 
         self.label = TextShow()
 
-        #self.label.setWordWrap(True)
-        #self.label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        # self.label.setWordWrap(True)
+        # self.label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         layout = QVBoxLayout()
         layout2 = QHBoxLayout()
         layout2.setSpacing(1)
@@ -163,9 +180,12 @@ class Options(QWidget):
                 return
             if text in self._settings.segmentation_pipelines:
                 if QMessageBox.No == QMessageBox.warning(
-                        self, "Already exists",
-                        "Profile with this name already exist. Overwrite?",
-                        QMessageBox.Yes | QMessageBox.No, QMessageBox.No):
+                    self,
+                    "Already exists",
+                    "Profile with this name already exist. Overwrite?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No,
+                ):
                     continue
             profile = SegmentationPipeline(name=text, segmentation=current_segmentation, mask_history=mask_history)
             self._settings.segmentation_pipelines[text] = profile
@@ -244,9 +264,12 @@ class Options(QWidget):
                 return
             if text in self._settings.segmentation_profiles:
                 if QMessageBox.No == QMessageBox.warning(
-                        self, "Already exists",
-                        "Profile with this name already exist. Overwrite?",
-                        QMessageBox.Yes | QMessageBox.No, QMessageBox.No):
+                    self,
+                    "Already exists",
+                    "Profile with this name already exist. Overwrite?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No,
+                ):
                     continue
             resp = SegmentationProfile(text, widget.name, widget.get_values())
             self._settings.segmentation_profiles[text] = resp
@@ -302,12 +325,14 @@ class Options(QWidget):
     def execute_algorithm(self):
         widget: InteractiveAlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
         if self._settings.image.is_time and not widget.algorithm.support_time():
-            QMessageBox.information(self, "Not supported", "This algorithm do not support time data. "
-                                                           "You can convert it in image adjust")
+            QMessageBox.information(
+                self, "Not supported", "This algorithm do not support time data. " "You can convert it in image adjust"
+            )
             return
         if self._settings.image.is_stack and not widget.algorithm.support_z():
-            QMessageBox.information(self, "Not supported", "This algorithm do not support stack data. "
-                                                           "You can convert it in image adjust")
+            QMessageBox.information(
+                self, "Not supported", "This algorithm do not support stack data. " "You can convert it in image adjust"
+            )
             return
         self._settings.last_executed_algorithm = widget.name
         self.execute_btn.setDisabled(True)
@@ -319,7 +344,8 @@ class Options(QWidget):
             QMessageBox.information(self, "Algorithm info", segmentation.info_text)
         self._settings.segmentation = segmentation.segmentation
         self.compare_btn.setEnabled(
-            isinstance(segmentation.segmentation, np.ndarray) and np.any(segmentation.segmentation))
+            isinstance(segmentation.segmentation, np.ndarray) and np.any(segmentation.segmentation)
+        )
         self._settings.noise_remove_image_part = segmentation.cleaned_channel
         self._settings.full_segmentation = segmentation.full_segmentation
         self.label.setText(self.sender().get_info_text())
@@ -373,11 +399,13 @@ class MainMenu(BaseMainMenu):
 
     def save_file(self):
         base_values = self.settings.get("save_parameters", dict())
-        dial = SaveDialog(save_dict, system_widget=False, base_values=base_values,
-                          history=self.settings.get_path_history())
+        dial = SaveDialog(
+            save_dict, system_widget=False, base_values=base_values, history=self.settings.get_path_history()
+        )
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0])
-        dial.setDirectory(self.settings.get("io.save_directory", self.settings.get("io.open_directory",
-                                                                                   str(Path.home()))))
+        dial.setDirectory(
+            self.settings.get("io.save_directory", self.settings.get("io.open_directory", str(Path.home())))
+        )
         dial.selectNameFilter(self.settings.get("io.save_filter", ""))
         if dial.exec():
             save_location, selected_filter, save_class, values = dial.get_result()
@@ -391,6 +419,7 @@ class MainMenu(BaseMainMenu):
             def exception_hook(exception):
                 from qtpy.QtWidgets import QApplication
                 from qtpy.QtCore import QMetaObject
+
                 instance = QApplication.instance()
                 if isinstance(exception, ValueError):
                     instance.warning = "Save error", f"Error during saving\n{exception}"
@@ -398,17 +427,18 @@ class MainMenu(BaseMainMenu):
                 else:
                     raise exception
 
-            dial2 = ExecuteFunctionDialog(save_class.save, [save_location, project_info, values],
-                                          exception_hook=exception_hook)
+            dial2 = ExecuteFunctionDialog(
+                save_class.save, [save_location, project_info, values], exception_hook=exception_hook
+            )
             dial2.exec()
 
     def image_adjust_exec(self):
         dial = ImageAdjustmentDialog(self.settings.image)
         if dial.exec():
             algorithm = dial.result_val.algorithm
-            dial2 = ExecuteFunctionDialog(algorithm.transform, [],
-                                          {"image": self.settings.image, "arguments": dial.result_val.values}
-                                          )
+            dial2 = ExecuteFunctionDialog(
+                algorithm.transform, [], {"image": self.settings.image, "arguments": dial.result_val.values}
+            )
             if dial2.exec():
                 result: Image = dial2.get_result()
                 self.settings.set_project_info(ProjectTuple(result.file_path, result))
@@ -425,10 +455,13 @@ class MainMenu(BaseMainMenu):
         def exception_hook(exception):
             from qtpy.QtWidgets import QApplication
             from qtpy.QtCore import QMetaObject
+
             instance = QApplication.instance()
             if isinstance(exception, ValueError) and exception.args[0] == "Incompatible shape of mask and image":
-                instance.warning = "Open error", "Most probably you try to load mask from other image. " \
-                                                 "Check selected files"
+                instance.warning = (
+                    "Open error",
+                    "Most probably you try to load mask from other image. " "Check selected files",
+                )
                 QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
             elif isinstance(exception, MemoryError):
                 instance.warning = "Open error", f"Not enough memory to read this image: {exception}"
@@ -441,8 +474,10 @@ class MainMenu(BaseMainMenu):
                 QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
                 print(exception, file=sys.stderr)
             elif isinstance(exception, WrongFileTypeException):
-                instance.warning = "Open error", f"No needed files inside archive. " \
-                    f"Most probably you choose file from segmentation mask"
+                instance.warning = (
+                    "Open error",
+                    f"No needed files inside archive. " f"Most probably you choose file from segmentation mask",
+                )
                 QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
             else:
                 raise exception
@@ -457,9 +492,12 @@ class MainMenu(BaseMainMenu):
                 load_dir = os.path.dirname(result.load_location[0])
                 self.settings.set("io.open_directory", load_dir)
                 self.settings.add_path_history(load_dir)
-                dial2 = ExecuteFunctionDialog(result.load_class.load, [result.load_location],
-                                              {"metadata": {"default_spacing": self.settings.image_spacing}},
-                                              exception_hook=exception_hook)
+                dial2 = ExecuteFunctionDialog(
+                    result.load_class.load,
+                    [result.load_location],
+                    {"metadata": {"default_spacing": self.settings.image_spacing}},
+                    exception_hook=exception_hook,
+                )
                 if dial2.exec():
                     result = dial2.get_result()
                     self.set_data(result)
@@ -539,8 +577,10 @@ class MaskWindow(QDialog):
             self.mask_widget.set_mask_property(self.settings.undo_segmentation_history[-1].mask_property)
 
     def values_changed(self):
-        if self.settings.undo_segmentation_history and \
-                self.mask_widget.get_mask_property() == self.settings.undo_segmentation_history[-1].mask_property:
+        if (
+            self.settings.undo_segmentation_history
+            and self.mask_widget.get_mask_property() == self.settings.undo_segmentation_history[-1].mask_property
+        ):
             self.next_button.setText(f"Next mask ({len(self.settings.undo_segmentation_history)})")
         else:
             self.next_button.setText("Next mask (new)")
@@ -556,15 +596,22 @@ class MaskWindow(QDialog):
         segmentation = self.settings.segmentation
         mask_property = self.mask_widget.get_mask_property()
         self.settings.set("mask_manager.mask_property", mask_property)
-        mask = calculate_mask(mask_property, segmentation,
-                              self.settings.mask, self.settings.image_spacing)
+        mask = calculate_mask(mask_property, segmentation, self.settings.mask, self.settings.image_spacing)
         self.settings.segmentation_history.append(
-            HistoryElement.create(segmentation, self.settings.full_segmentation, self.settings.mask, algorithm_name,
-                                  algorithm_values, mask_property)
+            HistoryElement.create(
+                segmentation,
+                self.settings.full_segmentation,
+                self.settings.mask,
+                algorithm_name,
+                algorithm_values,
+                mask_property,
+            )
         )
-        if self.settings.undo_segmentation_history and \
-                self.settings.undo_segmentation_history[-1].mask_property == \
-                self.settings.segmentation_history[-1].mask_property:
+        if (
+            self.settings.undo_segmentation_history
+            and self.settings.undo_segmentation_history[-1].mask_property
+            == self.settings.segmentation_history[-1].mask_property
+        ):
             history = self.settings.undo_segmentation_history.pop()
             self.settings.set("current_algorithm", history.algorithm_name)
             self.settings.set(f"algorithm.{history.algorithm_name}", history.algorithm_values)
@@ -600,16 +647,16 @@ class MainWindow(BaseMainWindow):
 
     initial_image_path = PartSegData.segmentation_analysis_default_image
 
-    def __init__(self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None,
-                 initial_image=None):
+    def __init__(
+        self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None, initial_image=None
+    ):
         super().__init__(config_folder, title, settings, signal_fun)
         self.files_num = 2
         self.setMinimumWidth(600)
         self.main_menu = MainMenu(self.settings, self)
         # self.channel_control1 = ChannelControl(self.settings, name="raw_control", text="Left panel:")
         self.channel_control2 = ChannelProperty(self.settings, start_name="result_control")
-        self.raw_image = CompareImageView(self.settings,
-                                          self.channel_control2, "raw_image")
+        self.raw_image = CompareImageView(self.settings, self.channel_control2, "raw_image")
         self.measurements = MeasurementWidget(self.settings)
         self.left_stack = StackedWidgetWithSelector()
         self.left_stack.addWidget(self.raw_image, "Image")
@@ -621,8 +668,9 @@ class MainWindow(BaseMainWindow):
         self.result_image.text_info_change.connect(self.info_text.setText)
         self.synchronize_tool = SynchronizeView(self.raw_image, self.result_image, self)
         # image_view_control = self.image_view.get_control_view()
-        self.options_panel = Options(self.settings, self.channel_control2, self.raw_image, self.result_image,
-                                     self.synchronize_tool)
+        self.options_panel = Options(
+            self.settings, self.channel_control2, self.raw_image, self.result_image, self.synchronize_tool
+        )
         # self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
         self.advanced_window = SegAdvancedWindow(self.settings, reload_list=[self.reload])
@@ -676,7 +724,7 @@ class MainWindow(BaseMainWindow):
         self.setCentralWidget(widget)
         try:
             geometry = self.settings.get_from_profile("main_window_geometry")
-            self.restoreGeometry(QByteArray.fromHex(bytes(geometry, 'ascii')))
+            self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
         except KeyError:
             pass
 
@@ -702,13 +750,16 @@ class MainWindow(BaseMainWindow):
     def closeEvent(self, event):
         # print(self.settings.dump_view_profiles())
         # print(self.settings.segmentation_dict["default"].my_dict)
-        self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode('ascii'))
+        self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
         self.options_panel.algorithm_choose_widget.recursive_get_values()
         if self.batch_window is not None:
             if self.batch_window.is_working():
-                ret = QMessageBox.warning(self, "Batch work", "Batch work is not finished. "
-                                                              "Would you like to terminate it?",
-                                          QMessageBox.No | QMessageBox.Yes)
+                ret = QMessageBox.warning(
+                    self,
+                    "Batch work",
+                    "Batch work is not finished. " "Would you like to terminate it?",
+                    QMessageBox.No | QMessageBox.Yes,
+                )
                 if ret == QMessageBox.Yes:
                     self.batch_window.terminate()
                 else:

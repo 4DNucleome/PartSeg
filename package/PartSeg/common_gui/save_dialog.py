@@ -1,7 +1,19 @@
 from enum import Enum
 
-from qtpy.QtWidgets import QDialog, QWidget, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QFormLayout, QSpinBox, \
-    QDoubleSpinBox, QCheckBox, QLineEdit, QComboBox
+from qtpy.QtWidgets import (
+    QDialog,
+    QWidget,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QFormLayout,
+    QSpinBox,
+    QDoubleSpinBox,
+    QCheckBox,
+    QLineEdit,
+    QComboBox,
+)
 
 from PartSegCore.channel_class import Channel
 from PartSegCore.class_generator import BaseSerializableClass
@@ -84,9 +96,3 @@ class GenericGetPropertyWidget(GetPropertyWidget):
             res = QComboBox()
             res.addItems(list(type_.__members__.keys()))
             return res
-
-
-
-
-
-

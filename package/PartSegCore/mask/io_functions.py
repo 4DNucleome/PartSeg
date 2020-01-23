@@ -12,8 +12,18 @@ import json
 import tifffile
 
 from ..json_hooks import ProfileEncoder
-from ..io_utils import get_tarinfo, SaveBase, LoadBase, proxy_callback, ProjectInfoBase, check_segmentation_type, \
-    SegmentationType, WrongFileTypeException, UpdateLoadedMetadataBase, open_tar_file
+from ..io_utils import (
+    get_tarinfo,
+    SaveBase,
+    LoadBase,
+    proxy_callback,
+    ProjectInfoBase,
+    check_segmentation_type,
+    SegmentationType,
+    WrongFileTypeException,
+    UpdateLoadedMetadataBase,
+    open_tar_file,
+)
 from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationProfile
 from PartSegImage import Image, ImageWriter, GenericImageReader
 
@@ -37,14 +47,18 @@ class SegmentationTuple(ProjectInfoBase, typing.NamedTuple):
 
 
 def save_stack_segmentation(
-        file_data: typing.Union[tarfile.TarFile, str, TextIOBase, BufferedIOBase, RawIOBase, IOBase],
-        segmentation_info: SegmentationTuple, parameters: dict, range_changed=None, step_changed=None):
+    file_data: typing.Union[tarfile.TarFile, str, TextIOBase, BufferedIOBase, RawIOBase, IOBase],
+    segmentation_info: SegmentationTuple,
+    parameters: dict,
+    range_changed=None,
+    step_changed=None,
+):
     if range_changed is None:
         range_changed = empty_fun
     if step_changed is None:
         step_changed = empty_fun
     range_changed(0, 5)
-    tar_file, file_path = open_tar_file(file_data, 'w')
+    tar_file, file_path = open_tar_file(file_data, "w")
     step_changed(1)
     segmentation_buff = BytesIO()
     # noinspection PyTypeChecker
@@ -52,9 +66,11 @@ def save_stack_segmentation(
     segmentation_tar = get_tarinfo("segmentation.tif", segmentation_buff)
     tar_file.addfile(segmentation_tar, fileobj=segmentation_buff)
     step_changed(3)
-    metadata = {"components": [int(x) for x in segmentation_info.chosen_components],
-                "parameters": {str(k): v for k, v in segmentation_info.segmentation_parameters.items()},
-                "shape": segmentation_info.segmentation.shape}
+    metadata = {
+        "components": [int(x) for x in segmentation_info.chosen_components],
+        "parameters": {str(k): v for k, v in segmentation_info.segmentation_parameters.items()},
+        "shape": segmentation_info.segmentation.shape,
+    }
     if isinstance(segmentation_info.image, Image):
         file_path = segmentation_info.image.file_path
     elif isinstance(segmentation_info.image, str):
@@ -66,7 +82,7 @@ def save_stack_segmentation(
             metadata["base_file"] = os.path.relpath(file_path, os.path.dirname(file_data))
         else:
             metadata["base_file"] = file_path
-    metadata_buff = BytesIO(json.dumps(metadata, cls=ProfileEncoder).encode('utf-8'))
+    metadata_buff = BytesIO(json.dumps(metadata, cls=ProfileEncoder).encode("utf-8"))
     metadata_tar = get_tarinfo("metadata.json", metadata_buff)
     tar_file.addfile(metadata_tar, metadata_buff)
     step_changed(4)
@@ -127,27 +143,39 @@ class LoadSegmentation(LoadBase):
         if profile.algorithm == "Threshold" or profile.algorithm == "Auto Threshold":
             if isinstance(profile.values["smooth_border"], bool):
                 if profile.values["smooth_border"] and "smooth_border_radius" in profile.values:
-                    profile.values["smooth_border"] = \
-                        {"name": "Opening", "values": {"smooth_border_radius": profile.values["smooth_border_radius"]}}
+                    profile.values["smooth_border"] = {
+                        "name": "Opening",
+                        "values": {"smooth_border_radius": profile.values["smooth_border_radius"]},
+                    }
                     del profile.values["smooth_border_radius"]
                 else:
                     profile.values["smooth_border"] = {"name": "None", "values": {}}
         return profile
 
     @classmethod
-    def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             range_changed: typing.Callable[[int, int], typing.Any] = None,
-             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None) \
-            -> SegmentationTuple:
-        segmentation, metadata = load_stack_segmentation(load_locations[0], range_changed=range_changed,
-                                                         step_changed=step_changed)
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ) -> SegmentationTuple:
+        segmentation, metadata = load_stack_segmentation(
+            load_locations[0], range_changed=range_changed, step_changed=step_changed
+        )
         if "parameters" not in metadata:
             parameters = defaultdict(lambda: None)
         else:
-            parameters = defaultdict(lambda: None,
-                                     [(int(k), cls.fix_parameters(v)) for k, v in metadata["parameters"].items()])
-        return SegmentationTuple(load_locations[0], metadata["base_file"] if "base_file" in metadata else None,
-                                 segmentation, metadata["components"], parameters)
+            parameters = defaultdict(
+                lambda: None, [(int(k), cls.fix_parameters(v)) for k, v in metadata["parameters"].items()]
+            )
+        return SegmentationTuple(
+            load_locations[0],
+            metadata["base_file"] if "base_file" in metadata else None,
+            segmentation,
+            metadata["components"],
+            parameters,
+        )
 
     @classmethod
     def partial(cls):
@@ -164,10 +192,13 @@ class LoadSegmentationParameters(LoadBase):
         return "seg_par"
 
     @classmethod
-    def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             range_changed: typing.Callable[[int, int], typing.Any] = None,
-             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None) -> \
-            SegmentationTuple:
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ) -> SegmentationTuple:
         file_data = load_locations[0]
 
         if isinstance(file_data, (str, Path)):
@@ -178,14 +209,16 @@ class LoadSegmentationParameters(LoadBase):
                     parameters = {1: metadata}
                 else:
                     parameters = defaultdict(
-                        lambda: None, [(int(k), LoadSegmentation.fix_parameters(v))
-                                       for k, v in metadata["parameters"].items()])
+                        lambda: None,
+                        [(int(k), LoadSegmentation.fix_parameters(v)) for k, v in metadata["parameters"].items()],
+                    )
                 return SegmentationTuple(file_data, None, None, [], parameters)
 
         tar_file, _ = open_tar_file(file_data)
         metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
         parameters = defaultdict(
-            lambda: None, [(int(k), LoadSegmentation.fix_parameters(v)) for k, v in metadata["parameters"].items()])
+            lambda: None, [(int(k), LoadSegmentation.fix_parameters(v)) for k, v in metadata["parameters"].items()]
+        )
         return SegmentationTuple(file_data, None, None, [], parameters)
 
 
@@ -199,10 +232,13 @@ class LoadSegmentationImage(LoadBase):
         return "seg_img"
 
     @classmethod
-    def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             range_changed: typing.Callable[[int, int], typing.Any] = None,
-             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None) \
-            -> SegmentationTuple:
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ) -> SegmentationTuple:
         seg = LoadSegmentation.load(load_locations)
         if len(load_locations) > 1:
             base_file = load_locations[1]
@@ -219,10 +255,12 @@ class LoadSegmentationImage(LoadBase):
         if not os.path.exists(file_path):
             raise IOError(f"Base file for segmentation do not exists: {base_file} -> {file_path}")
         if metadata is None:
-            metadata = {"default_spacing": (10**-6, 10**-6, 10**-6)}
+            metadata = {"default_spacing": (10 ** -6, 10 ** -6, 10 ** -6)}
         image = GenericImageReader.read_image(
-            file_path, callback_function=partial(proxy_callback, range_changed, step_changed),
-            default_spacing=metadata["default_spacing"])
+            file_path,
+            callback_function=partial(proxy_callback, range_changed, step_changed),
+            default_spacing=metadata["default_spacing"],
+        )
         # noinspection PyProtectedMember
         # image.file_path = load_locations[0]
         return seg.replace_(file_path=image.file_path, image=image)
@@ -238,15 +276,20 @@ class LoadStackImage(LoadBase):
         return "img"
 
     @classmethod
-    def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             range_changed: typing.Callable[[int, int], typing.Any] = None,
-             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None) ->\
-            SegmentationTuple:
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ) -> SegmentationTuple:
         if metadata is None:
-            metadata = {"default_spacing": (10**-6, 10**-6, 10**-6)}
+            metadata = {"default_spacing": (10 ** -6, 10 ** -6, 10 ** -6)}
         image = GenericImageReader.read_image(
-            load_locations[0], callback_function=partial(proxy_callback, range_changed, step_changed),
-            default_spacing=metadata["default_spacing"])
+            load_locations[0],
+            callback_function=partial(proxy_callback, range_changed, step_changed),
+            default_spacing=metadata["default_spacing"],
+        )
 
         return SegmentationTuple(image.file_path, image, None, [])
 
@@ -265,13 +308,20 @@ class SaveSegmentation(SaveBase):
         return [AlgorithmProperty("relative_path", "Relative Path\nin segmentation", False)]
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: SegmentationTuple, parameters: dict,
-             range_changed=None, step_changed=None):
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info: SegmentationTuple,
+        parameters: dict,
+        range_changed=None,
+        step_changed=None,
+    ):
         save_stack_segmentation(save_location, project_info, parameters)
 
 
-def save_components(image: Image, components: list, segmentation: np.ndarray, dir_path: str,
-                    range_changed=None, step_changed=None):
+def save_components(
+    image: Image, components: list, segmentation: np.ndarray, dir_path: str, range_changed=None, step_changed=None
+):
     if range_changed is None:
         range_changed = empty_fun
     if step_changed is None:
@@ -294,10 +344,22 @@ class SaveComponents(SaveBase):
         return "comp"
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: SegmentationTuple, parameters: dict,
-             range_changed=None, step_changed=None):
-        save_components(project_info.image, project_info.chosen_components, project_info.segmentation, save_location,
-                        range_changed, step_changed)
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info: SegmentationTuple,
+        parameters: dict,
+        range_changed=None,
+        step_changed=None,
+    ):
+        save_components(
+            project_info.image,
+            project_info.chosen_components,
+            project_info.segmentation,
+            save_location,
+            range_changed,
+            step_changed,
+        )
 
     @classmethod
     def get_name(cls) -> str:
@@ -310,8 +372,14 @@ class SaveComponents(SaveBase):
 
 class SaveParametersJSON(SaveBase):
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict = None,
-             range_changed=None, step_changed=None):
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info,
+        parameters: dict = None,
+        range_changed=None,
+        step_changed=None,
+    ):
         """
         :param save_location: path to save
         :param project_info: data to save in json file
@@ -320,7 +388,7 @@ class SaveParametersJSON(SaveBase):
         :param step_changed: Not used, keep for satisfy interface
         :return:
         """
-        with open(save_location, 'w') as ff:
+        with open(save_location, "w") as ff:
             json.dump(project_info, ff, cls=ProfileEncoder)
 
     @classmethod
@@ -352,9 +420,10 @@ class UpdateLoadedMetadataMask(UpdateLoadedMetadataBase):
         if profile_data.algorithm == "Threshold" or profile_data.algorithm == "Auto Threshold":
             if isinstance(profile_data.values["smooth_border"], bool):
                 if profile_data.values["smooth_border"]:
-                    profile_data.values["smooth_border"] = \
-                        {"name": "Opening", "values":
-                            {"smooth_border_radius": profile_data.values["smooth_border_radius"]}}
+                    profile_data.values["smooth_border"] = {
+                        "name": "Opening",
+                        "values": {"smooth_border_radius": profile_data.values["smooth_border_radius"]},
+                    }
                 else:
                     profile_data.values["smooth_border"] = {"name": "None", "values": {}}
                 if "smooth_border_radius" in profile_data.values:

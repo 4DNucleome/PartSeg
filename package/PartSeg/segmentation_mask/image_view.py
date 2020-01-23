@@ -43,7 +43,7 @@ class StackImageView(ImageView):
             component = np.array(layers == num)
             if np.any(component):
                 points = np.nonzero(component)
-                scalar = self.image_area.pixmap.height()/component.shape[0]
+                scalar = self.image_area.pixmap.height() / component.shape[0]
                 lower = np.min(points, 1) * scalar
                 upper = np.max(points, 1) * scalar
                 box_size = upper - lower

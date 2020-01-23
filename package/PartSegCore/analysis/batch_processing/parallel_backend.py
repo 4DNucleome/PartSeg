@@ -33,6 +33,7 @@ class SubprocessOrder(Enum):
     """
     Commands for process to put in queue
     """
+
     kill = 1
     wait = 2
 
@@ -48,6 +49,7 @@ class BatchManager:
     :type calculation_dict: dict
     :type process_list: list[multiprocessing.Process]
     """
+
     def __init__(self):
         self.manager = multiprocessing.Manager()
         self.task_queue = self.manager.Queue()
@@ -106,8 +108,9 @@ class BatchManager:
 
     def _spawn_process(self):
         with self.locker:
-            process = multiprocessing.Process(target=spawn_worker, args=(self.task_queue, self.order_queue,
-                                                                         self.result_queue, self.calculation_dict))
+            process = multiprocessing.Process(
+                target=spawn_worker, args=(self.task_queue, self.order_queue, self.result_queue, self.calculation_dict)
+            )
             process.start()
             self.process_list.append(process)
             self.number_off_alive_process += 1
@@ -160,8 +163,11 @@ class BatchManager:
                 logging.debug("Process list end {}".format(self.process_list))
                 # FIXME self.number_off_alive_process,  self.number_off_process negative values
                 if len(self.process_list) > self.number_off_process and len(self.process_list) > 0:
-                    logging.info("Wait on process, time {}, {}, {}, {}".format(
-                        time.time(), self.number_off_alive_process, len(self.process_list), self.number_off_process))
+                    logging.info(
+                        "Wait on process, time {}, {}, {}, {}".format(
+                            time.time(), self.number_off_alive_process, len(self.process_list), self.number_off_process
+                        )
+                    )
                     Timer(1, self.join_all).start()
 
     @property
@@ -180,8 +186,14 @@ class BatchWorker:
     :param result_queue: Queue to put result
     :param calculation_dict: to store global parameters of task
     """
-    def __init__(self, task_queue: Queue, order_queue: Queue, result_queue: Queue,
-                 calculation_dict: Dict[str, Tuple[Any, Callable[[Any, Any], Any]]]):
+
+    def __init__(
+        self,
+        task_queue: Queue,
+        order_queue: Queue,
+        result_queue: Queue,
+        calculation_dict: Dict[str, Tuple[Any, Callable[[Any, Any], Any]]],
+    ):
         self.task_queue = task_queue
         self.order_queue = order_queue
         self.result_queue = result_queue

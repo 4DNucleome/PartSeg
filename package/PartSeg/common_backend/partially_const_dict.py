@@ -7,16 +7,16 @@ from qtpy.QtCore import QObject, Signal
 
 from PartSeg.common_backend.abstract_class import QtMeta
 
-T = TypeVar('T')
+T = TypeVar("T")
 RemovableInfo = Tuple[T, bool]
 
 if sys.version_info.major == 3 and sys.version_info.minor == 6:
-    class CustomGeneric:
-        def __class_getitem__(cls, item):
-            return cls
 
+    class CustomGeneric:
         def __getitem__(self, item):
             return self
+
+
 else:
     CustomGeneric = Generic[T]
 
@@ -26,6 +26,7 @@ class PartiallyConstDict(QObject, MutableMapping, CustomGeneric, metaclass=QtMet
     """
     Base class for creating dict to mixin predefined and user defined variables.
     """
+
     item_added = Signal(object)
     """Signal with item added to dict"""
     item_removed = Signal(object)
@@ -36,8 +37,9 @@ class PartiallyConstDict(QObject, MutableMapping, CustomGeneric, metaclass=QtMet
     def __init__(self, editable_items):
         super().__init__()
         self.editable_items = editable_items
-        self._order_dict = {name: i for i, name in
-                            enumerate(itertools.chain(self.const_item_dict.keys(), editable_items.keys()))}
+        self._order_dict = {
+            name: i for i, name in enumerate(itertools.chain(self.const_item_dict.keys(), editable_items.keys()))
+        }
         self._counter = len(self._order_dict)
 
     def __setitem__(self, key: str, value: Union[T, RemovableInfo]) -> None:

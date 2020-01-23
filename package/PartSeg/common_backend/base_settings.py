@@ -21,6 +21,7 @@ class ImageSettings(QObject):
     """
     Base class for all PartSeg settings. Keeps information about current Image.
     """
+
     image_changed = Signal([Image], [int], [str])
     """:py:class:`Signal` ``([Image], [int], [str])`` emitted when image has changed"""
     segmentation_changed = Signal(np.ndarray)
@@ -148,6 +149,7 @@ class ColormapDict(PartiallyConstDict[ColorMap]):
     """
     Dict for mixing custom colormap with predefined ones
     """
+
     const_item_dict = default_colormap_dict
     """
     Non removable items for this dict. Current value is :py:data:`default_colormap_dict`
@@ -172,6 +174,7 @@ class LabelColorDict(PartiallyConstDict[list]):
     """
     Dict for mixing custom label colors with predefined ones`
     """
+
     const_item_dict = default_label_dict
     """Non removable items for this dict. Current value is :py:data:`default_label_dict`"""
 
@@ -306,6 +309,7 @@ class BaseSettings(ViewSettings):
         location are stored in "io"
 
     """
+
     mask_changed = Signal()
     """:py:class:`~.Signal` mask changed signal"""
     json_encoder_class = ProfileEncoder
@@ -330,8 +334,10 @@ class BaseSettings(ViewSettings):
 
     def get_save_list(self) -> List[SaveSettingsDescription]:
         """List of files in which program save the state."""
-        return [SaveSettingsDescription("segmentation_settings.json", self.segmentation_dict),
-                SaveSettingsDescription("view_settings.json", self.view_settings_dict)]
+        return [
+            SaveSettingsDescription("segmentation_settings.json", self.segmentation_dict),
+            SaveSettingsDescription("view_settings.json", self.view_settings_dict),
+        ]
 
     def __init__(self, json_path):
         super().__init__()
@@ -347,7 +353,7 @@ class BaseSettings(ViewSettings):
         """
         res = self.get("io.history", [])
         for name in self.save_locations_keys:
-            val = self.get("io." + name,  str(Path.home()))
+            val = self.get("io." + name, str(Path.home()))
             if val not in res:
                 res = res + [val]
         return res
@@ -382,7 +388,7 @@ class BaseSettings(ViewSettings):
         data = self.get(path_in_dict)
         if names is not None:
             data = dict([(name, data[name]) for name in names])
-        with open(file_path, 'w') as ff:
+        with open(file_path, "w") as ff:
             json.dump(data, ff, cls=self.json_encoder_class, indent=2)
 
     def load_part(self, file_path):
@@ -415,7 +421,7 @@ class BaseSettings(ViewSettings):
         for el in self.get_save_list():
             try:
                 dump_string = json.dumps(el.values, cls=self.json_encoder_class, indent=2)
-                with open(os.path.join(folder_path, el.file_name), 'w') as ff:
+                with open(os.path.join(folder_path, el.file_name), "w") as ff:
                     ff.write(dump_string)
             except Exception as e:
                 errors_list.append((e, os.path.join(folder_path, el.file_name)))
@@ -449,7 +455,7 @@ class BaseSettings(ViewSettings):
                 errors_list.append((file_path, e))
             finally:
                 if error:
-                    timestamp = datetime.today().strftime('%Y-%m-%d_%H_%M_%S')
+                    timestamp = datetime.today().strftime("%Y-%m-%d_%H_%M_%S")
                     base_path, ext = os.path.splitext(file_path)
                     os.rename(file_path, base_path + "_" + timestamp + ext)
 

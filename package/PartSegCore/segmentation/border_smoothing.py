@@ -38,8 +38,9 @@ class OpeningSmoothing(BaseSmoothing):
 
     @classmethod
     def smooth(cls, segmentation: np.ndarray, arguments: dict) -> np.ndarray:
-        return sitk.GetArrayFromImage(sitk.BinaryMorphologicalOpening(sitk.GetImageFromArray(segmentation),
-                                                                      arguments["smooth_border_radius"]))
+        return sitk.GetArrayFromImage(
+            sitk.BinaryMorphologicalOpening(sitk.GetImageFromArray(segmentation), arguments["smooth_border_radius"])
+        )
 
 
 class VoteSmoothing(BaseSmoothing):
@@ -49,10 +50,22 @@ class VoteSmoothing(BaseSmoothing):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("neighbourhood_type", "Side Neighbourhood", NeighType.edges,
-                                  help_text="use 6, 18 or 26 neighbourhood (5, 8, 8 for 2d data)"),
-                AlgorithmProperty("support_level", "Support level", 1, (1, 27), 1,
-                                  help_text="How many voxels in neighbourhood need to be labeled to preserve pixel")]
+        return [
+            AlgorithmProperty(
+                "neighbourhood_type",
+                "Side Neighbourhood",
+                NeighType.edges,
+                help_text="use 6, 18 or 26 neighbourhood (5, 8, 8 for 2d data)",
+            ),
+            AlgorithmProperty(
+                "support_level",
+                "Support level",
+                1,
+                (1, 27),
+                1,
+                help_text="How many voxels in neighbourhood need to be labeled to preserve pixel",
+            ),
+        ]
 
     @classmethod
     def smooth(cls, segmentation: np.ndarray, arguments: dict) -> np.ndarray:
@@ -75,13 +88,27 @@ class IterativeVoteSmoothing(BaseSmoothing):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("neighbourhood_type", "Side Neighbourhood", NeighType.edges,
-                                  help_text="use 6, 18 or 26 neighbourhood"),
-                AlgorithmProperty("support_level", "Support level", 1, (1, 26), 1,
-                                  help_text="How many voxels in neighbourhood need to be labeled to preserve pixel"),
-                AlgorithmProperty("max_steps", "Max steps", 1, (1, 100), 1,
-                                  help_text="How many voxels in neighbourhood need to be labeled to preserve pixel")
-                ]
+        return [
+            AlgorithmProperty(
+                "neighbourhood_type", "Side Neighbourhood", NeighType.edges, help_text="use 6, 18 or 26 neighbourhood"
+            ),
+            AlgorithmProperty(
+                "support_level",
+                "Support level",
+                1,
+                (1, 26),
+                1,
+                help_text="How many voxels in neighbourhood need to be labeled to preserve pixel",
+            ),
+            AlgorithmProperty(
+                "max_steps",
+                "Max steps",
+                1,
+                (1, 100),
+                1,
+                help_text="How many voxels in neighbourhood need to be labeled to preserve pixel",
+            ),
+        ]
 
     @classmethod
     def smooth(cls, segmentation: np.ndarray, arguments: dict) -> np.ndarray:

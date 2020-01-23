@@ -10,6 +10,7 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":
 
     class MyTiffPage(TiffPage):
         """Modification of :py:class:`TiffPage` from `tifffile` package to provide progress information"""
+
         def asarray(self, *args, **kwargs):
             """
             Modified for progress info. call original implementation and send info that page is read by
@@ -27,8 +28,9 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":
             if self.index > 1 or not self.description:
                 return False
             d = self.description
-            return (d[:14] == '<?xml version=' or d[:15] == '<?xml version =') and \
-                   (d[-6:] == '</OME>' or d[-10:] == "</OME:OME>")
+            return (d[:14] == "<?xml version=" or d[:15] == "<?xml version =") and (
+                d[-6:] == "</OME>" or d[-10:] == "</OME:OME>"
+            )
 
         @property
         def is_ome(self):
@@ -36,8 +38,10 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":
             if self.index > 1 or not self.description:
                 return False
             d = self.description
-            return re.match(r"<\?xml version *=", d[:20]) is not None and \
-                re.match(r".*</(OME:)?OME>[ \n]*$", d[-20:], re.DOTALL) is not None
+            return (
+                re.match(r"<\?xml version *=", d[:20]) is not None
+                and re.match(r".*</(OME:)?OME>[ \n]*$", d[-20:], re.DOTALL) is not None
+            )
 
     TiffFile.report_func = lambda x: 0
     tifffile.tifffile.TiffPage = MyTiffPage
@@ -54,7 +58,7 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":
             """
             from defusedxml import cElementTree as etree  # delayed import
 
-            at = tx = ''
+            at = tx = ""
             if prefix:
                 at, tx = prefix
 
@@ -74,7 +78,7 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":
                 # adapted from https://stackoverflow.com/a/10077069/453463
                 key = t.tag
                 if sanitize:
-                    key = key.rsplit('}', 1)[-1]
+                    key = key.rsplit("}", 1)[-1]
                 d = {key: {} if t.attrib else None}
                 children = list(t)
                 if children:
@@ -82,15 +86,14 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":
                     for dc in map(etree2dict, children):
                         for k, v in dc.items():
                             dd[k].append(astype(v))
-                    d = {key: {k: astype(v[0]) if len(v) == 1 else astype(v)
-                               for k, v in dd.items()}}
+                    d = {key: {k: astype(v[0]) if len(v) == 1 else astype(v) for k, v in dd.items()}}
                 if t.attrib:
                     d[key].update((at + k, astype(v)) for k, v in t.attrib.items())
                 if t.text:
                     text = t.text.strip()
                     if children or t.attrib:
                         if text:
-                            d[key][tx + 'value'] = astype(text)
+                            d[key][tx + "value"] = astype(text)
                     else:
                         d[key] = astype(text)
                 return d
@@ -100,4 +103,5 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":
         tifffile.xml2dict = _xml2dict
         tifffile.tifffile.xml2dict = _xml2dict
         import czifile
+
         czifile.czifile.xml2dict = _xml2dict

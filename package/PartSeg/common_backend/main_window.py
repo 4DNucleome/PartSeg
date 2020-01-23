@@ -32,10 +32,14 @@ class BaseMainMenu(QWidget):
             data = data[0]
         if isinstance(data, ProjectInfoBase):
             if data.errors != "":
-                resp = QMessageBox.question(self, "Load problem", f"During load data "
-                                                                  f"some problems occur: {data.errors}."
-                                                                  "Do you would like to try load it anyway?",
-                                            QMessageBox.Yes | QMessageBox.No)
+                resp = QMessageBox.question(
+                    self,
+                    "Load problem",
+                    f"During load data "
+                    f"some problems occur: {data.errors}."
+                    "Do you would like to try load it anyway?",
+                    QMessageBox.Yes | QMessageBox.No,
+                )
                 if resp == QMessageBox.No:
                     return
             image = self._settings.verify_image(data.image, False)
@@ -65,6 +69,7 @@ class BaseMainWindow(QMainWindow):
     :param settings: object to store application state
     :param signal_fun: function which need to be called when window shown.
     """
+
     show_signal = Signal()
     """Signal emitted when window has shown. Used to hide Launcher."""
 
@@ -73,8 +78,13 @@ class BaseMainWindow(QMainWindow):
         """Get constructor for :py:attr:`settings`"""
         return BaseSettings
 
-    def __init__(self, config_folder: Optional[str] = None, title="PartSeg", settings: Optional[BaseSettings] = None,
-                 signal_fun=None):
+    def __init__(
+        self,
+        config_folder: Optional[str] = None,
+        title="PartSeg",
+        settings: Optional[BaseSettings] = None,
+        signal_fun=None,
+    ):
         if settings is None:
             if config_folder is None:
                 raise ValueError("wrong config folder")
@@ -85,9 +95,11 @@ class BaseMainWindow(QMainWindow):
             if errors:
                 errors_message = QMessageBox()
                 errors_message.setText("There are errors during start")
-                errors_message.setInformativeText("During load saved state some of data could not be load properly\n"
-                                                  "The files has prepared backup copies in "
-                                                  " state directory (Help > State directory)")
+                errors_message.setInformativeText(
+                    "During load saved state some of data could not be load properly\n"
+                    "The files has prepared backup copies in "
+                    " state directory (Help > State directory)"
+                )
                 errors_message.setStandardButtons(QMessageBox.Ok)
                 text = "\n".join(["File: " + x[0] + "\n" + str(x[1]) for x in errors])
                 errors_message.setDetailedText(text)
@@ -119,7 +131,9 @@ class BaseMainWindow(QMainWindow):
         def exception_hook(exception):
             if isinstance(exception, OSError):
                 QMessageBox().warning(
-                    self, "IO Error", "Disc operation error: " + ", ".join(exception.args), QMessageBox.Ok)
+                    self, "IO Error", "Disc operation error: " + ", ".join(exception.args), QMessageBox.Ok
+                )
+
         for load_class in load_module.load_dict.values():
             if load_class.partial() or load_class.number_of_files() != len(paths):
                 continue
@@ -146,7 +160,8 @@ class BaseMainWindow(QMainWindow):
 
     def show_settings_directory(self):
         DirectoryDialog(
-            self.settings.json_folder_path, "Path to place where PartSeg store the data between runs").exec()
+            self.settings.json_folder_path, "Path to place where PartSeg store the data between runs"
+        ).exec()
 
     @staticmethod
     def show_about_dialog():

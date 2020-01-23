@@ -6,8 +6,17 @@ from enum import Enum
 
 from qtpy.QtCore import Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent
-from qtpy.QtWidgets import QComboBox, QCheckBox, QWidget, QVBoxLayout, QLabel, QFormLayout, \
-    QScrollArea, QLineEdit, QStackedLayout
+from qtpy.QtWidgets import (
+    QComboBox,
+    QCheckBox,
+    QWidget,
+    QVBoxLayout,
+    QLabel,
+    QFormLayout,
+    QScrollArea,
+    QLineEdit,
+    QStackedLayout,
+)
 from six import with_metaclass
 
 from PartSeg.common_gui.error_report import ErrorDialog
@@ -32,8 +41,13 @@ def update(d, u):
 
 
 class QtAlgorithmProperty(AlgorithmProperty):
-    qt_class_dict = {int: CustomSpinBox, float: CustomDoubleSpinBox, list: QComboBox, bool: QCheckBox,
-                     RadiusType: DimComboBox}
+    qt_class_dict = {
+        int: CustomSpinBox,
+        float: CustomDoubleSpinBox,
+        list: QComboBox,
+        bool: QCheckBox,
+        RadiusType: DimComboBox,
+    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -55,7 +69,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         """set value of widget """
         return self._setter(self._widget, val)
 
-    def get_field(self)-> QWidget:
+    def get_field(self) -> QWidget:
         """
         Get representing widget
         :return:
@@ -73,9 +87,17 @@ class QtAlgorithmProperty(AlgorithmProperty):
         :return: QtAlgorithmProperty | QLabel
         """
         if isinstance(ob, AlgorithmProperty):
-            return cls(name=ob.name, user_name=ob.user_name, default_value=ob.default_value, options_range=ob.range,
-                       single_steep=ob.single_step, property_type=ob.value_type, possible_values=ob.possible_values,
-                       help_text=ob.help_text, per_dimension=ob.per_dimension)
+            return cls(
+                name=ob.name,
+                user_name=ob.user_name,
+                default_value=ob.default_value,
+                options_range=ob.range,
+                single_steep=ob.single_step,
+                property_type=ob.value_type,
+                possible_values=ob.possible_values,
+                help_text=ob.help_text,
+                per_dimension=ob.per_dimension,
+            )
         elif isinstance(ob, str):
             return QLabel(ob)
         raise ValueError(f"unknown parameter type {type(ob)} of {ob}")
@@ -84,7 +106,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         """
         Get proper widget for given field type. Overwrite if would like to support new data types.
         """
-        if  self.per_dimension:
+        if self.per_dimension:
             self.per_dimension = False
             prop = self.from_algorithm_property(self)
             self.per_dimension = True
@@ -101,14 +123,16 @@ class QtAlgorithmProperty(AlgorithmProperty):
             res = CustomSpinBox()
             if not isinstance(self.default_value, int):
                 raise ValueError(
-                    f"Incompatible types. default_value should be type of int. Is {type(self.default_value)}")
+                    f"Incompatible types. default_value should be type of int. Is {type(self.default_value)}"
+                )
             if self.range is not None:
                 res.setRange(*self.range)
         elif issubclass(self.value_type, float):
             res = CustomDoubleSpinBox()
             if not isinstance(self.default_value, float):
                 raise ValueError(
-                    f"Incompatible types. default_value should be type of float. Is {type(self.default_value)}")
+                    f"Incompatible types. default_value should be type of float. Is {type(self.default_value)}"
+                )
             if self.range is not None:
                 res.setRange(*self.range)
         elif issubclass(self.value_type, str):
@@ -145,8 +169,9 @@ class QtAlgorithmProperty(AlgorithmProperty):
         raise ValueError(f"Unsupported type: {type(widget)}")
 
     @staticmethod
-    def get_getter_and_setter_function(widget: QWidget) -> typing.Tuple[typing.Callable[[QWidget, ], typing.Any],
-                                                                        typing.Callable[[QWidget, typing.Any], None]]:
+    def get_getter_and_setter_function(
+        widget: QWidget,
+    ) -> typing.Tuple[typing.Callable[[QWidget,], typing.Any], typing.Callable[[QWidget, typing.Any], None]]:
         """
         For each widget type return proper functions. This functions need instance as first argument
 
@@ -198,6 +223,7 @@ class ListInput(QWidget):
 def any_arguments(fun):
     def _any(*_):
         fun()
+
     return _any
 
 
@@ -275,11 +301,13 @@ class SubAlgorithmWidget(QWidget):
     def __init__(self, algorithm_property: AlgorithmProperty):
         super().__init__()
         if not isinstance(algorithm_property.possible_values, dict):
-            raise ValueError("algorithm_property.possible_values should be dict."
-                             f"It is {type(algorithm_property.possible_values)}")
+            raise ValueError(
+                "algorithm_property.possible_values should be dict." f"It is {type(algorithm_property.possible_values)}"
+            )
         if not isinstance(algorithm_property.default_value, str):
-            raise ValueError("algorithm_property.default_value should be str."
-                             f"It is {type(algorithm_property.default_value)}")
+            raise ValueError(
+                "algorithm_property.default_value should be str." f"It is {type(algorithm_property.default_value)}"
+            )
         self.starting_values = {}
         self.property = algorithm_property
         self.widgets_dict: typing.Dict[str, FormWidget] = {}
@@ -341,10 +369,11 @@ class SubAlgorithmWidget(QWidget):
                 return
             start_dict = {} if name not in self.starting_values else self.starting_values[name]
             try:
-                self.widgets_dict[name] = FormWidget(self.property.possible_values[name].get_fields(),
-                                                     start_values=start_dict)
+                self.widgets_dict[name] = FormWidget(
+                    self.property.possible_values[name].get_fields(), start_values=start_dict
+                )
             except KeyError as e:
-                raise  e
+                raise e
             self.widgets_dict[name].layout().setContentsMargins(0, 0, 0, 0)
             self.layout().addWidget(self.widgets_dict[name])
             self.widgets_dict[name].value_changed.connect(self.values_changed)
@@ -366,7 +395,7 @@ class SubAlgorithmWidget(QWidget):
 
     def paintEvent(self, event: QPaintEvent):
         name = self.choose.currentText()
-        if self.widgets_dict[name].has_elements() and event.rect().top()  == 0 and event.rect().left() == 0:
+        if self.widgets_dict[name].has_elements() and event.rect().top() == 0 and event.rect().left() == 0:
             painter = QPainter(self)
             painter.drawRect(event.rect())
 
@@ -460,8 +489,7 @@ class AlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
 class InteractiveAlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
     algorithm_thread: SegmentationThread
 
-    def __init__(self, settings, name, algorithm: typing.Type[SegmentationAlgorithm],
-                 selector: typing.List[QWidget]):
+    def __init__(self, settings, name, algorithm: typing.Type[SegmentationAlgorithm], selector: typing.List[QWidget]):
         super().__init__(settings, name, algorithm)
         self.selector = selector
         self.algorithm_thread.finished.connect(self.enable_selector)
@@ -500,8 +528,9 @@ class AlgorithmChoose(QWidget):
     progress_signal = Signal(str, int)
     algorithm_changed = Signal(str)
 
-    def __init__(self, settings: BaseSettings, algorithms: typing.Dict[str, typing.Type[SegmentationAlgorithm]],
-                 parent=None):
+    def __init__(
+        self, settings: BaseSettings, algorithms: typing.Dict[str, typing.Type[SegmentationAlgorithm]], parent=None
+    ):
         super().__init__(parent)
         self.settings = settings
         self.algorithms = algorithms
@@ -556,8 +585,10 @@ class AlgorithmChoose(QWidget):
         print(self.algorithms)
 
     def updated_algorithm(self):
-        self.change_algorithm(self.settings.last_executed_algorithm,
-                              self.settings.get(f"algorithms.{self.settings.last_executed_algorithm}"))
+        self.change_algorithm(
+            self.settings.last_executed_algorithm,
+            self.settings.get(f"algorithms.{self.settings.last_executed_algorithm}"),
+        )
 
     def recursive_get_values(self):
         result = {}

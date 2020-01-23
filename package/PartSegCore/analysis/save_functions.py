@@ -18,20 +18,35 @@ from ..channel_class import Channel
 from ..io_utils import get_tarinfo, SaveBase, NotSupportedImage
 from ..universal_const import UNIT_SCALE, Units
 
-__all__ = ["SaveProject", "SaveCmap", "SaveXYZ", "SaveAsTiff", "SaveMaskAsTiff", "SaveAsNumpy",
-           "SaveSegmentationAsTIFF", "SaveSegmentationAsNumpy", 'save_dict']
+__all__ = [
+    "SaveProject",
+    "SaveCmap",
+    "SaveXYZ",
+    "SaveAsTiff",
+    "SaveMaskAsTiff",
+    "SaveAsNumpy",
+    "SaveSegmentationAsTIFF",
+    "SaveSegmentationAsNumpy",
+    "save_dict",
+]
 
 
 # TODO add progress function to io
-def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_segmentation: np.ndarray,
-                 mask: typing.Optional[np.ndarray], history: typing.List[HistoryElement],
-                 algorithm_parameters: dict):
+def save_project(
+    file_path: str,
+    image: Image,
+    segmentation: np.ndarray,
+    full_segmentation: np.ndarray,
+    mask: typing.Optional[np.ndarray],
+    history: typing.List[HistoryElement],
+    algorithm_parameters: dict,
+):
     # TODO add support for binary objects
     ext = os.path.splitext(file_path)[1]
-    if ext.lower() in ['.bz2', ".tbz2"]:
-        tar_mod = 'w:bz2'
+    if ext.lower() in [".bz2", ".tbz2"]:
+        tar_mod = "w:bz2"
     else:
-        tar_mod = 'w:gz'
+        tar_mod = "w:gz"
     with tarfile.open(file_path, tar_mod) as tar:
         """sek_dkt = {"segmentation": segmentation, "full_segmentation": full_segmentation}
         if mask is not None:
@@ -63,37 +78,49 @@ def save_project(file_path: str, image: Image, segmentation: np.ndarray, full_se
         tar_image = get_tarinfo("image.tif", image_buff)
         tar.addfile(tarinfo=tar_image, fileobj=image_buff)
         para_str = json.dumps(algorithm_parameters, cls=PartEncoder)
-        parameters_buff = BytesIO(para_str.encode('utf-8'))
+        parameters_buff = BytesIO(para_str.encode("utf-8"))
         tar_algorithm = get_tarinfo("algorithm.json", parameters_buff)
         tar.addfile(tar_algorithm, parameters_buff)
         meta_str = json.dumps({"project_version_info": str(project_version_info)}, cls=PartEncoder)
-        meta_buff = BytesIO(meta_str.encode('utf-8'))
+        meta_buff = BytesIO(meta_str.encode("utf-8"))
         tar_meta = get_tarinfo("metadata.json", meta_buff)
         tar.addfile(tar_meta, meta_buff)
         el_info = []
         for i, el in enumerate(history):
-            el_info.append({"index": i, "algorithm_name": el.algorithm_name, "values": el.algorithm_values,
-                            "mask_property": el.mask_property})
+            el_info.append(
+                {
+                    "index": i,
+                    "algorithm_name": el.algorithm_name,
+                    "values": el.algorithm_values,
+                    "mask_property": el.mask_property,
+                }
+            )
             el.arrays.seek(0)
             hist_info = get_tarinfo(f"history/arrays_{i}.npz", el.arrays)
             el.arrays.seek(0)
             tar.addfile(hist_info, el.arrays)
         if len(el_info) > 0:
             hist_str = json.dumps(el_info, cls=PartEncoder)
-            hist_buff = BytesIO(hist_str.encode('utf-8'))
+            hist_buff = BytesIO(hist_str.encode("utf-8"))
             tar_algorithm = get_tarinfo("history/history.json", hist_buff)
             tar.addfile(tar_algorithm, hist_buff)
 
 
-def save_cmap(file: typing.Union[str, h5py.File, BytesIO], data: np.ndarray, spacing, segmentation: np.ndarray,
-              reverse_base: float,
-              cmap_profile: dict, metadata: typing.Optional[dict] = None):
+def save_cmap(
+    file: typing.Union[str, h5py.File, BytesIO],
+    data: np.ndarray,
+    spacing,
+    segmentation: np.ndarray,
+    reverse_base: float,
+    cmap_profile: dict,
+    metadata: typing.Optional[dict] = None,
+):
     if segmentation is None or np.max(segmentation) == 0:
         raise ValueError("No segmentation")
     if isinstance(file, (str, BytesIO)):
         if isinstance(file, str) and os.path.exists(file):
             os.remove(file)
-        cmap_file = h5py.File(file, 'w')
+        cmap_file = h5py.File(file, "w")
     elif isinstance(file, h5py.File):
         cmap_file = file
     else:
@@ -103,26 +130,26 @@ def save_cmap(file: typing.Union[str, h5py.File, BytesIO], data: np.ndarray, spa
         data[data < 0] = 0
     data = np.copy(data)
     data[segmentation == 0] = 0
-    grp = cmap_file.create_group('Chimera/image1')
+    grp = cmap_file.create_group("Chimera/image1")
     z, y, x = data.shape
-    data_set = grp.create_dataset("data_zyx", (z, y, x), dtype='f', compression="gzip")
+    data_set = grp.create_dataset("data_zyx", (z, y, x), dtype="f", compression="gzip")
     data_set[...] = data
 
     if metadata:
-        meta_group = cmap_file.create_group('Chimera/image1/Statistics')
+        meta_group = cmap_file.create_group("Chimera/image1/Statistics")
         for key, val in metadata.items():
             meta_group.attrs[key] = val
 
-    grp = cmap_file['Chimera']
-    grp.attrs['CLASS'] = np.string_('GROUP')
-    grp.attrs['TITLE'] = np.string_('')
-    grp.attrs['VERSION'] = np.string_('1.0')
+    grp = cmap_file["Chimera"]
+    grp.attrs["CLASS"] = np.string_("GROUP")
+    grp.attrs["TITLE"] = np.string_("")
+    grp.attrs["VERSION"] = np.string_("1.0")
 
-    grp = cmap_file['Chimera/image1']
-    grp.attrs['CLASS'] = np.string_('GROUP')
-    grp.attrs['TITLE'] = np.string_('')
-    grp.attrs['VERSION'] = np.string_('1.0')
-    grp.attrs['step'] = np.array(spacing, dtype=np.float32)[::-1] * UNIT_SCALE[cmap_profile["units"].value]
+    grp = cmap_file["Chimera/image1"]
+    grp.attrs["CLASS"] = np.string_("GROUP")
+    grp.attrs["TITLE"] = np.string_("")
+    grp.attrs["VERSION"] = np.string_("1.0")
+    grp.attrs["step"] = np.array(spacing, dtype=np.float32)[::-1] * UNIT_SCALE[cmap_profile["units"].value]
 
     if isinstance(file, str):
         cmap_file.close()
@@ -142,10 +169,23 @@ class SaveProject(SaveBase):
         return []
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict = None,
-             range_changed=None, step_changed=None):
-        save_project(save_location, project_info.image, project_info.segmentation, project_info.full_segmentation,
-                     project_info.mask, project_info.history, project_info.algorithm_parameters)
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info: ProjectTuple,
+        parameters: dict = None,
+        range_changed=None,
+        step_changed=None,
+    ):
+        save_project(
+            save_location,
+            project_info.image,
+            project_info.segmentation,
+            project_info.full_segmentation,
+            project_info.mask,
+            project_info.history,
+            project_info.algorithm_parameters,
+        )
 
 
 class SaveCmap(SaveBase):
@@ -159,16 +199,25 @@ class SaveCmap(SaveBase):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
-                AlgorithmProperty("separated_objects", "Separate Objects", False),
-                AlgorithmProperty("clip", "Clip area", False),
-                AlgorithmProperty("units", "Units", Units.nm, property_type=Units),
-                AlgorithmProperty('reverse', 'Reverse', False,
-                                  help_text="Reverse brightness off image (for electron microscopy)")]
+        return [
+            AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
+            AlgorithmProperty("separated_objects", "Separate Objects", False),
+            AlgorithmProperty("clip", "Clip area", False),
+            AlgorithmProperty("units", "Units", Units.nm, property_type=Units),
+            AlgorithmProperty(
+                "reverse", "Reverse", False, help_text="Reverse brightness off image (for electron microscopy)"
+            ),
+        ]
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict,
-             range_changed=None, step_changed=None):
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info: ProjectTuple,
+        parameters: dict,
+        range_changed=None,
+        step_changed=None,
+    ):
         data = project_info.image.get_channel(parameters["channel"])
         if data.shape[0] != 1:
             raise NotSupportedImage("This save method o not support time data")
@@ -183,19 +232,17 @@ class SaveCmap(SaveBase):
             positions = np.transpose(np.nonzero(segmentation))
             clip_down = np.min(positions, 0)
             clip_up = np.max(positions, 0)
-            clip = tuple([slice(x, y+1) for x, y in zip(clip_down, clip_up)])
+            clip = tuple([slice(x, y + 1) for x, y in zip(clip_down, clip_up)])
             data = data[clip]
             segmentation = segmentation[clip]
 
         if parameters["separated_objects"] and isinstance(save_location, (str, Path)):
-            for i in range(1, np.max(segmentation)+1):
+            for i in range(1, np.max(segmentation) + 1):
                 seg = (segmentation == i).astype(np.uint8)
                 if np.any(seg):
                     base, ext = os.path.splitext(save_location)
                     save_loc = base + f"_comp{i}" + ext
-                    save_cmap(save_loc, data, spacing, seg,
-                              reverse_base,
-                              parameters)
+                    save_cmap(save_loc, data, spacing, seg, reverse_base, parameters)
         else:
             save_cmap(save_location, data, spacing, segmentation, reverse_base, parameters)
 
@@ -211,9 +258,11 @@ class SaveXYZ(SaveBase):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
-                AlgorithmProperty("separated_objects", "Separate Objects", False),
-                AlgorithmProperty("clip", "Clip area", False)]
+        return [
+            AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
+            AlgorithmProperty("separated_objects", "Separate Objects", False),
+            AlgorithmProperty("clip", "Clip area", False),
+        ]
 
     @classmethod
     def _save(cls, save_location, channel_image, segmentation_mask, shift):
@@ -228,11 +277,17 @@ class SaveXYZ(SaveBase):
         else:
             fm = "%f"
         # noinspection PyTypeChecker
-        np.savetxt(save_location, data, fmt=['%d'] * channel_image.ndim + [fm], delimiter=" ")
+        np.savetxt(save_location, data, fmt=["%d"] * channel_image.ndim + [fm], delimiter=" ")
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info: ProjectTuple, parameters: dict,
-             range_changed=None, step_changed=None):
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info: ProjectTuple,
+        parameters: dict,
+        range_changed=None,
+        step_changed=None,
+    ):
         if project_info.segmentation is None:
             raise ValueError("Not segmentation")
         if isinstance(save_location, (str, Path)):
@@ -276,8 +331,14 @@ class SaveAsTiff(SaveBase):
         return []
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict = None,
-             range_changed=None, step_changed=None):
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info,
+        parameters: dict = None,
+        range_changed=None,
+        step_changed=None,
+    ):
         ImageWriter.save(project_info.image, save_location)
 
 
@@ -292,12 +353,24 @@ class SaveAsNumpy(SaveBase):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("squeeze", "Squeeze  array", False,
-                                  help_text="Remove single-dimensional entries from the shape of an array")]
+        return [
+            AlgorithmProperty(
+                "squeeze",
+                "Squeeze  array",
+                False,
+                help_text="Remove single-dimensional entries from the shape of an array",
+            )
+        ]
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict,
-             range_changed=None, step_changed=None):
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info,
+        parameters: dict,
+        range_changed=None,
+        step_changed=None,
+    ):
         data = project_info.image.get_data()
         if parameters["squeeze"]:
             data = np.squeeze(data)
@@ -318,8 +391,14 @@ class SaveMaskAsTiff(SaveBase):
         return []
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict,
-             range_changed=None, step_changed=None):
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info,
+        parameters: dict,
+        range_changed=None,
+        step_changed=None,
+    ):
         ImageWriter.save_mask(project_info.image, save_location)
 
 
@@ -337,13 +416,19 @@ class SaveSegmentationAsTIFF(SaveBase):
         return []
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict,
-             range_changed=None, step_changed=None):
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info,
+        parameters: dict,
+        range_changed=None,
+        step_changed=None,
+    ):
         segmentation = project_info.segmentation
         segmentation_max = segmentation.max()
-        if segmentation_max < 2**8 - 1:
+        if segmentation_max < 2 ** 8 - 1:
             segmentation = segmentation.astype(np.uint8)
-        elif segmentation_max < 2**16 - 1:
+        elif segmentation_max < 2 ** 16 - 1:
             segmentation = segmentation.astype(np.uint16)
         tifffile.imsave(save_location, segmentation)
 
@@ -362,8 +447,14 @@ class SaveSegmentationAsNumpy(SaveBase):
         return []
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict = None,
-             range_changed=None, step_changed=None):
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info,
+        parameters: dict = None,
+        range_changed=None,
+        step_changed=None,
+    ):
         segmentation = project_info.segmentation
         segmentation_max = segmentation.max()
         if segmentation_max < 2 ** 8 - 1:
@@ -373,5 +464,14 @@ class SaveSegmentationAsNumpy(SaveBase):
         np.save(save_location, segmentation)
 
 
-save_dict = Register(SaveProject, SaveCmap, SaveXYZ, SaveAsTiff, SaveMaskAsTiff, SaveAsNumpy, SaveSegmentationAsTIFF,
-                     SaveSegmentationAsNumpy, class_methods=SaveBase.need_functions)
+save_dict = Register(
+    SaveProject,
+    SaveCmap,
+    SaveXYZ,
+    SaveAsTiff,
+    SaveMaskAsTiff,
+    SaveAsNumpy,
+    SaveSegmentationAsTIFF,
+    SaveSegmentationAsNumpy,
+    class_methods=SaveBase.need_functions,
+)

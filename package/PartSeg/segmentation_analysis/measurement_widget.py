@@ -4,8 +4,20 @@ from enum import Enum
 from typing import List, Tuple
 from qtpy.QtGui import QResizeEvent, QKeyEvent
 from qtpy.QtCore import Qt, QEvent
-from qtpy.QtWidgets import QWidget, QPushButton, QCheckBox, QComboBox, QTableWidget, QVBoxLayout, QHBoxLayout, \
-    QLabel, QApplication, QTableWidgetItem, QMessageBox, QBoxLayout
+from qtpy.QtWidgets import (
+    QWidget,
+    QPushButton,
+    QCheckBox,
+    QComboBox,
+    QTableWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QApplication,
+    QTableWidgetItem,
+    QMessageBox,
+    QBoxLayout,
+)
 
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile, MeasurementResult
 from ..common_gui.universal_gui_part import ChannelComboBox, EnumComboBox
@@ -26,6 +38,7 @@ class FileNamesEnum(Enum):
 
 class MeasurementsStorage:
     """class for storage measurements result"""
+
     def __init__(self):
         self.header = []
         self.max_rows = 0
@@ -71,7 +84,7 @@ class MeasurementsStorage:
                 if add_names:
                     self.content.append(list(data.keys()))
                     self.header.append("Name")
-                values, units =  zip(*list(data.values()))
+                values, units = zip(*list(data.values()))
                 self.max_rows = max(self.max_rows, len(values))
                 self.content.append(values)
                 self.header.append("Value")
@@ -141,7 +154,8 @@ class MeasurementWidget(QWidget):
         self.measurement_type.addItem("<none>")
         self.measurement_type.addItems(list(sorted(self.settings.measurement_profiles.keys())))
         self.measurement_type.setToolTip(
-            "You can create new measurement profile in advanced window, in tab \"Measurement settings\"")
+            'You can create new measurement profile in advanced window, in tab "Measurement settings"'
+        )
         self.channels_chose = ChannelComboBox()
         self.units_choose = EnumComboBox(Units)
         self.units_choose.set_value(self.settings.get("units_value", Units.nm))
@@ -194,14 +208,18 @@ class MeasurementWidget(QWidget):
             return "<none>"
         profile: MeasurementProfile = self.settings.measurement_profiles.get(name)
         if profile.is_any_mask_measurement() and self.settings.mask is None:
-            QMessageBox.information(self, "Need mask",
-                                    "To use this measurement set please use data with mask loaded", QMessageBox.Ok)
+            QMessageBox.information(
+                self, "Need mask", "To use this measurement set please use data with mask loaded", QMessageBox.Ok
+            )
             self.measurement_type.setCurrentIndex(0)
             return "<none>"
         if self.settings.segmentation is None:
-            QMessageBox.information(self, "Need segmentation",
-                                    "Before calculating please create segmentation (\"Execute\" button)",
-                                    QMessageBox.Ok)
+            QMessageBox.information(
+                self,
+                "Need segmentation",
+                'Before calculating please create segmentation ("Execute" button)',
+                QMessageBox.Ok,
+            )
             self.measurement_type.setCurrentIndex(0)
             return "<none>"
         return name
@@ -222,7 +240,8 @@ class MeasurementWidget(QWidget):
         if disable:
             self.recalculate_button.setToolTip("Measurement profile contains mask measurements when mask is not loaded")
             self.recalculate_append_button.setToolTip(
-                "Measurement profile contains mask measurements when mask is not loaded")
+                "Measurement profile contains mask measurements when mask is not loaded"
+            )
         else:
             self.recalculate_button.setToolTip("")
             self.recalculate_append_button.setToolTip("")
@@ -260,22 +279,32 @@ class MeasurementWidget(QWidget):
         if self.file_names.get_value() == FileNamesEnum.Full:
             for y in range(columns):
                 self.info_field.setItem(
-                    0, y, QTableWidgetItem(self.measurements_storage.get_val_as_str(0, y, save_orientation)))
+                    0, y, QTableWidgetItem(self.measurements_storage.get_val_as_str(0, y, save_orientation))
+                )
         elif self.file_names.get_value() == FileNamesEnum.Short:
             for y in range(columns):
-                self.info_field.setItem(0, y, QTableWidgetItem(
-                    os.path.basename(self.measurements_storage.get_val_as_str(0, y, save_orientation))))
-        for x in range(1, rows+shift):
+                self.info_field.setItem(
+                    0,
+                    y,
+                    QTableWidgetItem(
+                        os.path.basename(self.measurements_storage.get_val_as_str(0, y, save_orientation))
+                    ),
+                )
+        for x in range(1, rows + shift):
             for y in range(columns):
                 self.info_field.setItem(
-                    x-shift, y, QTableWidgetItem(self.measurements_storage.get_val_as_str(x, y, save_orientation)))
+                    x - shift, y, QTableWidgetItem(self.measurements_storage.get_val_as_str(x, y, save_orientation))
+                )
 
     def append_measurement_result(self):
         try:
             compute_class = self.settings.measurement_profiles[self.measurement_type.currentText()]
         except KeyError:
-            QMessageBox.warning(self, "Measurement profile not found",
-                                f"Measurement profile '{self.measurement_type.currentText()}' not found'")
+            QMessageBox.warning(
+                self,
+                "Measurement profile not found",
+                f"Measurement profile '{self.measurement_type.currentText()}' not found'",
+            )
             return
         channel = self.settings.image.get_channel(self.channels_chose.currentIndex())
         segmentation = self.settings.segmentation
@@ -291,13 +320,19 @@ class MeasurementWidget(QWidget):
         kwargs = {}
         for num in compute_class.get_channels_num():
             if num >= self.settings.image.channels:
-                QMessageBox.warning(self, "Measurement error", "Cannot calculate this measurement because "
-                                                               f"image do not have channel {num+1}")
+                QMessageBox.warning(
+                    self,
+                    "Measurement error",
+                    "Cannot calculate this measurement because " f"image do not have channel {num+1}",
+                )
                 return
             kwargs[f"channel+{num}"] = self.settings.image.get_channel(num)
 
-        thread = ExecuteFunctionThread(compute_class.calculate, [channel, segmentation, full_mask, base_mask,
-                                                                 self.settings.image.spacing, units], kwargs)
+        thread = ExecuteFunctionThread(
+            compute_class.calculate,
+            [channel, segmentation, full_mask, base_mask, self.settings.image.spacing, units],
+            kwargs,
+        )
         dial = WaitingDialog(thread, "Measurement calculation", exception_hook=exception_hook)
         dial.exec()
         stat: MeasurementResult = thread.result
@@ -305,8 +340,10 @@ class MeasurementWidget(QWidget):
             return
         stat.set_filename(self.settings.image_path)
         self.measurements_storage.add_measurements(
-            stat, (not self.no_header.isChecked()) and (self.previous_profile != compute_class.name),
-            not self.no_units.isChecked())
+            stat,
+            (not self.no_header.isChecked()) and (self.previous_profile != compute_class.name),
+            not self.no_units.isChecked(),
+        )
         self.previous_profile = compute_class.name
         self.refresh_view()
 
@@ -356,8 +393,14 @@ class MeasurementWidget(QWidget):
 
     def resizeEvent(self, a0: QResizeEvent) -> None:
         if self.width() < 800 and self.butt_layout2.count() == 0:
-            self._move_widgets([(self.file_names_label, 1), (self.file_names, 1), (self.copy_button, 2)],
-                               self.butt_layout, self.butt_layout2)
+            self._move_widgets(
+                [(self.file_names_label, 1), (self.file_names, 1), (self.copy_button, 2)],
+                self.butt_layout,
+                self.butt_layout2,
+            )
         elif self.width() > 800 and self.butt_layout2.count() != 0:
-            self._move_widgets([(self.file_names_label, 1), (self.file_names, 1), (self.copy_button, 2)],
-                               self.butt_layout2, self.butt_layout)
+            self._move_widgets(
+                [(self.file_names_label, 1), (self.file_names, 1), (self.copy_button, 2)],
+                self.butt_layout2,
+                self.butt_layout,
+            )

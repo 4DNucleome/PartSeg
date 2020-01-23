@@ -27,8 +27,18 @@ class AlgorithmProperty:
     :type default_value: typing.Union[object, str, int, float]
     """
 
-    def __init__(self, name: str, user_name: str, default_value, options_range=None, single_steep=None,
-                 possible_values=None, property_type=None, help_text="", per_dimension=False):
+    def __init__(
+        self,
+        name: str,
+        user_name: str,
+        default_value,
+        options_range=None,
+        single_steep=None,
+        possible_values=None,
+        property_type=None,
+        help_text="",
+        per_dimension=False,
+    ):
         self.name = name
         self.user_name = user_name
         if isinstance(possible_values, list):
@@ -47,10 +57,12 @@ class AlgorithmProperty:
             raise ValueError(f"default_value ({default_value}) should be one of possible values ({possible_values}).")
 
     def __repr__(self):
-        return f"{self.__class__.__module__}.{self.__class__.__name__}(name='{self.name}'," \
-               f" user_name='{self.user_name}', " + \
-               f"default_value={self.default_value}, type={self.value_type}, range={self.range}," \
-               f"possible_values={self.possible_values})"
+        return (
+            f"{self.__class__.__module__}.{self.__class__.__name__}(name='{self.name}',"
+            f" user_name='{self.user_name}', "
+            + f"default_value={self.default_value}, type={self.value_type}, range={self.range},"
+            f"possible_values={self.possible_values})"
+        )
 
 
 class AlgorithmDescribeBase(ABC):
@@ -59,6 +71,7 @@ class AlgorithmDescribeBase(ABC):
     Based on get_name and get_fields methods the interface will be generated
     For each group of algorithm base abstract class will add additional methods
     """
+
     @classmethod
     def get_doc_from_fields(cls):
         resp = "{\n"
@@ -102,8 +115,10 @@ class AlgorithmDescribeBase(ABC):
         for el in cls.get_fields():
             if isinstance(el, AlgorithmProperty):
                 if issubclass(el.value_type, AlgorithmDescribeBase):
-                    result[el.name] = {"name": el.default_value,
-                                       "values": el.possible_values[el.default_value].get_default_values()}
+                    result[el.name] = {
+                        "name": el.default_value,
+                        "values": el.possible_values[el.default_value].get_default_values(),
+                    }
                 else:
                     result[el.name] = el.default_value
         return result
@@ -126,6 +141,7 @@ class Register(OrderedDict):
     as args or with :meth:`.Register.register`  method
     :param methods: list of method which should be instance method
     """
+
     def __init__(self, *args, class_methods=None, methods=None, suggested_base_class=None, **kwargs):
         """
         :param class_methods: list of method which should be class method
@@ -134,16 +150,21 @@ class Register(OrderedDict):
         """
         super().__init__(**kwargs)
         self.suggested_base_class = suggested_base_class
-        self.class_methods = list(class_methods) if class_methods else \
-            getattr(suggested_base_class, "need_class_method", [])
-        self.methods = list(methods) if methods else \
-            getattr(suggested_base_class, "need_method", [])
+        self.class_methods = (
+            list(class_methods) if class_methods else getattr(suggested_base_class, "need_class_method", [])
+        )
+        self.methods = list(methods) if methods else getattr(suggested_base_class, "need_method", [])
         for el in args:
             self.register(el)
 
     def __eq__(self, other):
-        return super().__eq__(other) and isinstance(other, Register) and self.class_methods == other.class_methods and \
-               self.methods == other.methods and self.suggested_base_class == other.suggested_base_class
+        return (
+            super().__eq__(other)
+            and isinstance(other, Register)
+            and self.class_methods == other.class_methods
+            and self.methods == other.methods
+            and self.suggested_base_class == other.suggested_base_class
+        )
 
     def __getitem__(self, item):
         return super().__getitem__(item)
@@ -175,8 +196,9 @@ class Register(OrderedDict):
 
     def __setitem__(self, key, value):
         if not issubclass(value, AlgorithmDescribeBase):
-            raise ValueError(f"Class {value} need to inherit from "
-                             f"{AlgorithmDescribeBase.__module__}.AlgorithmDescribeBase")
+            raise ValueError(
+                f"Class {value} need to inherit from " f"{AlgorithmDescribeBase.__module__}.AlgorithmDescribeBase"
+            )
         self.check_function(value, "get_name", True)
         self.check_function(value, "get_fields", True)
         try:
@@ -208,6 +230,7 @@ class SegmentationProfile(object):
     :ivar str ~.algorithm: Name of algorithm
     :ivar dict ~.values: algorithm parameters
     """
+
     def __init__(self, name: str, algorithm: str, values: dict):
         self.name = name
         self.algorithm = algorithm
@@ -219,10 +242,20 @@ class SegmentationProfile(object):
         except KeyError:
             return str(self)
         if self.name == "" or self.name == "Unknown":
-            return "Segmentation profile\nAlgorithm: " + \
-                   self.algorithm + "\n" + self._pretty_print(self.values, algorithm.get_fields_dict())
-        return "Segmentation profile name: " + self.name + "\nAlgorithm: " + \
-               self.algorithm + "\n" + self._pretty_print(self.values, algorithm.get_fields_dict())
+            return (
+                "Segmentation profile\nAlgorithm: "
+                + self.algorithm
+                + "\n"
+                + self._pretty_print(self.values, algorithm.get_fields_dict())
+            )
+        return (
+            "Segmentation profile name: "
+            + self.name
+            + "\nAlgorithm: "
+            + self.algorithm
+            + "\n"
+            + self._pretty_print(self.values, algorithm.get_fields_dict())
+        )
 
     @classmethod
     def _pretty_print(cls, values: dict, translate_dict: typing.Dict[str, AlgorithmProperty], indent=0):
@@ -235,10 +268,11 @@ class SegmentationProfile(object):
                     res += str(Channel(v))
                 elif issubclass(desc.value_type, AlgorithmDescribeBase):
                     res += desc.possible_values[v["name"]].get_name()
-                    if v['values']:
+                    if v["values"]:
                         res += "\n"
-                        res += cls._pretty_print(v["values"],
-                                                 desc.possible_values[v["name"]].get_fields_dict(), indent + 2)
+                        res += cls._pretty_print(
+                            v["values"], desc.possible_values[v["name"]].get_fields_dict(), indent + 2
+                        )
                 else:
                     res += str(v)
             else:
@@ -256,12 +290,13 @@ class SegmentationProfile(object):
                 return dkt + 1
             return dkt
         return "\n" + "\n".join(
-            [" " * indent + f"{k.replace('_', ' ')}: {cls.print_dict(v, indent + 2, k)}"
-             for k, v in dkt.items()])
+            [" " * indent + f"{k.replace('_', ' ')}: {cls.print_dict(v, indent + 2, k)}" for k, v in dkt.items()]
+        )
 
     def __str__(self):
-        return "Segmentation profile name: " + self.name + "\nAlgorithm: " + \
-               self.algorithm + self.print_dict(self.values)
+        return (
+            "Segmentation profile name: " + self.name + "\nAlgorithm: " + self.algorithm + self.print_dict(self.values)
+        )
 
     def __repr__(self):
         return f"SegmentationProfile(name={self.name}, algorithm={self.algorithm}, values={self.values})"

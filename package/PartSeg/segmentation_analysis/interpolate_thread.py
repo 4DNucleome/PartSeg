@@ -23,7 +23,7 @@ class InterpolateThread(QThread):
                 cache = zoom(el, self.scaling, mode="mirror")
 
             else:
-                shape = [round(x * y) for x, y in zip(self.scaling, el.shape)] + list(el.shape[len(self.scaling):])
+                shape = [round(x * y) for x, y in zip(self.scaling, el.shape)] + list(el.shape[len(self.scaling) :])
                 cache = np.zeros(shape, dtype=el.dtype)
                 for i in range(el.shape[-1]):
                     cache[..., i] = zoom(el[..., i], self.scaling, mode="mirror")

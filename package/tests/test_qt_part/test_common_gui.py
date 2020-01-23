@@ -8,6 +8,7 @@ class Enum1(Enum):
     test2 = 2
     test3 = 3
 
+
 class Enum2(Enum):
     test1 = 1
     test2 = 2

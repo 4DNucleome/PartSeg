@@ -37,9 +37,15 @@ class FormDialog(QDialog):
 
 
 class SaveDialog(QFileDialog):
-    def __init__(self, save_register: typing.Dict[str, type(SaveBase)], system_widget=True,
-                 base_values: typing.Optional[dict] = None, parent=None,
-                 history: typing.Optional[typing.List[str]] = None, file_mode=QFileDialog.AnyFile):
+    def __init__(
+        self,
+        save_register: typing.Dict[str, type(SaveBase)],
+        system_widget=True,
+        base_values: typing.Optional[dict] = None,
+        parent=None,
+        history: typing.Optional[typing.List[str]] = None,
+        file_mode=QFileDialog.AnyFile,
+    ):
         super().__init__(parent)
         self.setFileMode(file_mode)
         self.save_register = dict((x.get_name_with_suffix(), x) for x in save_register.values())
@@ -129,5 +135,9 @@ class SaveDialog(QFileDialog):
 
     def get_result(self) -> SaveProperty:
         files = self.selectedFiles()
-        return SaveProperty(files[0] if len(files) == 1 else files, self.selectedNameFilter(),
-                            self.save_register[self.selectedNameFilter()], self.values)
+        return SaveProperty(
+            files[0] if len(files) == 1 else files,
+            self.selectedNameFilter(),
+            self.save_register[self.selectedNameFilter()],
+            self.values,
+        )

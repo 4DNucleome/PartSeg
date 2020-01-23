@@ -7,6 +7,7 @@ from PartSegCore.class_generator import BaseSerializableClass, base_serialize_re
 def setup_module():
     from PartSegCore import class_generator
     from copy import deepcopy
+
     """ setup any state specific to the execution of the given module."""
     global copy_register
     copy_register = deepcopy(class_generator.base_serialize_register)
@@ -17,6 +18,7 @@ def teardown_module():
     method.
     """
     from PartSegCore import class_generator
+
     class_generator.base_serialize_register = copy_register
 
 
@@ -25,7 +27,6 @@ def empty(*_):
 
 
 def test_readonly():
-
     class Test1(BaseSerializableClass):
         field1: str
         field2: int
@@ -45,7 +46,6 @@ def test_readonly():
 
 
 def test_default_values():
-
     class Test2(BaseSerializableClass):
         field1: str
         field2: int = 3
@@ -74,7 +74,6 @@ def test_default_values():
 
 
 def test_functions_save():
-
     class Test3(BaseSerializableClass):
         field1: str
         field2: int
@@ -92,20 +91,21 @@ def test_functions_save():
 
 
 def test_name_collision():
-
     class Test4(BaseSerializableClass):
         field1: str
+
     empty(Test4)
     with pytest.raises(ValueError):
+
         class Test4(BaseSerializableClass):
             field1: str
             field2: str
+
     base_serialize_register.clear()
     empty(Test4)
 
 
 def test_subclasses():
-
     class Test4(BaseSerializableClass):
         field1: str
 
@@ -155,7 +155,7 @@ def test_typing():
 def test_forward_ref():
     class Test(BaseSerializableClass):
         val: int
-        child: typing.Optional['Test'] = None
+        child: typing.Optional["Test"] = None
 
     base_serialize_register.clear()
 
@@ -176,7 +176,6 @@ def test_generic_types():
 
 
 def test_post_init():
-
     class Test1(BaseSerializableClass):
         field1: str
         field2: int
@@ -236,7 +235,7 @@ def test_functions():
     assert val3 != val5
     assert val3 == val4
 
-    assert OrderedDict([('field1', 'd'), ('field2', 1), ('field3', 0.7)]) == val5.asdict()
+    assert OrderedDict([("field1", "d"), ("field2", 1), ("field3", 0.7)]) == val5.asdict()
     assert val4.asdict() == val5.asdict()
 
     val6 = Test1.make_(("a", 1, 0.7))
@@ -252,5 +251,6 @@ def test_functions():
 def test_statistic_type():
     from PartSegCore.analysis.measurement_base import Node
     from PartSegCore.analysis.measurement_base import Leaf
+
     empty(Leaf, Node)
     base_serialize_register.clear()

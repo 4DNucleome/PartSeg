@@ -55,10 +55,10 @@ class InterpolateDialog(QDialog):
 
     def get_new_spacing(self):
         if len(self.start_value) == 3:
-            return [self.spacing[0] / self.x_spacing.value(),
-                    self.spacing[1] / self.y_spacing.value(),
-                    self.spacing[2] / self.z_spacing.value()]
+            return [
+                self.spacing[0] / self.x_spacing.value(),
+                self.spacing[1] / self.y_spacing.value(),
+                self.spacing[2] / self.z_spacing.value(),
+            ]
         else:
-            return [self.spacing[0] / self.x_spacing.value(),
-                    self.spacing[1] / self.y_spacing.value(),
-                    1]
+            return [self.spacing[0] / self.x_spacing.value(), self.spacing[1] / self.y_spacing.value(), 1]

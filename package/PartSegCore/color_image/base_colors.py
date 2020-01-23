@@ -20,7 +20,8 @@ class Color(BaseSerializableClass):
     # noinspection PyOverloads,PyMissingConstructor
     # pylint: disable=W0104
     @typing.overload
-    def __init__(self, red: Num, green: Num, blue: Num): ...
+    def __init__(self, red: Num, green: Num, blue: Num):
+        ...
 
     red: Num
     green: Num
@@ -30,8 +31,12 @@ class Color(BaseSerializableClass):
         return hash(("Color", self.red, self.green, self.blue))
 
     def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.red == other.red and self.green == other.green and \
-               self.blue == other.blue
+        return (
+            isinstance(other, self.__class__)
+            and self.red == other.red
+            and self.green == other.green
+            and self.blue == other.blue
+        )
 
     def __add__(self, other):
         if isinstance(other, (float, int)):
@@ -59,7 +64,8 @@ class ColorPosition(BaseSerializableClass):
 
     # noinspection PyOverloads,PyMissingConstructor
     @typing.overload
-    def __init__(self, color_position: float, color: Color): ...
+    def __init__(self, color_position: float, color: Color):
+        ...
 
     color_position: float  # point in which this color is started to be used. value from range [0, 1]
     color: Color  # As name suggest. Color as RGB
@@ -68,8 +74,11 @@ class ColorPosition(BaseSerializableClass):
         return hash(("ColorPosition", self.color_position)) ^ hash(self.color)
 
     def __eq__(self, other):
-        return isinstance(other, self.__class__) and other.color_position == self.color_position and \
-               other.color == self.color
+        return (
+            isinstance(other, self.__class__)
+            and other.color_position == self.color_position
+            and other.color == self.color
+        )
 
 
 ColorInfoType = typing.Tuple[typing.Tuple[Num, Num, Num], ...]
@@ -77,6 +86,7 @@ ColorInfoType = typing.Tuple[typing.Tuple[Num, Num, Num], ...]
 
 class BaseColormap:
     """Base class for all colormap representations. Define interface."""
+
     def bounds(self) -> typing.List[float]:
         """
         coordinates from scale [0-1]. For each value there is corresponding color (RGB)
@@ -208,19 +218,28 @@ viridis = ArrayColorMap(viridis_data, 255)
 viridis_r = ArrayColorMap(reversed(viridis_data), 255)
 
 
-base_colors = [("Red", Color(255, 0, 0)), ("Green", Color(0, 255, 0)), ("Blue", Color(0, 0, 255)), ("Magenta", Color(255, 0, 144))]
+base_colors = [
+    ("Red", Color(255, 0, 0)),
+    ("Green", Color(0, 255, 0)),
+    ("Blue", Color(0, 0, 255)),
+    ("Magenta", Color(255, 0, 144)),
+]
 
-colormap_list = [("Black" + name, ColorMap((ColorPosition(0, _black), ColorPosition(1, col))))
-                 for name, col in base_colors] + \
-                [("Grayscale", ColorMap((ColorPosition(0, _black), ColorPosition(1, _white))))]
+colormap_list = [
+    ("Black" + name, ColorMap((ColorPosition(0, _black), ColorPosition(1, col)))) for name, col in base_colors
+] + [("Grayscale", ColorMap((ColorPosition(0, _black), ColorPosition(1, _white))))]
 
 colormap_list_r = [(x[0] + "_reversed", reverse_colormap(x[1])) for x in colormap_list]
 
 colormap_list += [("inferno", inferno), ("magma", magma), ("plasma", plasma), ("viridis", viridis)]
 colormap_list += colormap_list_r
 
-colormap_list += [("inferno_reversed", inferno_r), ("magma_reversed", magma_r),
-                  ("plasma_reversed", plasma_r), ("viridis_reversed", viridis_r)]
+colormap_list += [
+    ("inferno_reversed", inferno_r),
+    ("magma_reversed", magma_r),
+    ("plasma_reversed", plasma_r),
+    ("viridis_reversed", viridis_r),
+]
 # If changing this check ViewSettings.chosen_colormap
 
 default_colormap_dict = {x[0]: x[1] for x in colormap_list}

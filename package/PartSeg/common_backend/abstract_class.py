@@ -21,6 +21,7 @@ class QtMeta(type(QObject), abc.ABCMeta):
 
 
 if sys.version_info.major == 3 and sys.version_info.minor == 6:
+
     def get_item(self, _item):
         return self
 

@@ -35,8 +35,16 @@ enum_register.register_class(PerComponent)
 class Leaf(BaseSerializableClass):
     # noinspection PyMissingConstructor,PyShadowingBuiltins, PyUnusedLocal
     # pylint: disable=W0104,W0221,W0622
-    def __init__(self, name: str, dict: Dict = None, power: float = 1.0, area: Optional[AreaType] = None,
-                 per_component: Optional[PerComponent] = None, channel: Optional[Channel] = None): ...
+    def __init__(
+        self,
+        name: str,
+        dict: Dict = None,
+        power: float = 1.0,
+        area: Optional[AreaType] = None,
+        per_component: Optional[PerComponent] = None,
+        channel: Optional[Channel] = None,
+    ):
+        ...
 
     name: str
     dict: Dict = dict()
@@ -45,7 +53,7 @@ class Leaf(BaseSerializableClass):
     per_component: Optional[PerComponent] = None
     channel: Optional[Channel] = None
 
-    def get_channel_num(self, measurement_dict: Dict[str, 'MeasurementMethodBase']):
+    def get_channel_num(self, measurement_dict: Dict[str, "MeasurementMethodBase"]):
         resp = set()
         if self.channel is not None and self.channel >= 0:
             resp.add(self.channel)
@@ -59,7 +67,7 @@ class Leaf(BaseSerializableClass):
             raise AlgorithmDescribeNotFound(self.name)
         return resp
 
-    def pretty_print(self, measurement_dict: Dict[str, 'MeasurementMethodBase']):
+    def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]):
         resp = self.name
         if self.area is not None:
             resp = str(self.area) + " " + resp
@@ -107,9 +115,10 @@ class Leaf(BaseSerializableClass):
 
     def get_unit(self, ndim):
         from PartSegCore.analysis import MEASUREMENT_DICT
+
         method = MEASUREMENT_DICT[self.name]
         if self.power != 1:
-            return method.get_units(ndim)**self.power
+            return method.get_units(ndim) ** self.power
         return method.get_units(ndim)
 
     def is_per_component(self):
@@ -117,15 +126,16 @@ class Leaf(BaseSerializableClass):
 
 
 class Node(BaseSerializableClass):
-    left: Union['Node', Leaf]
+    left: Union["Node", Leaf]
     op: str
-    right: Union['Node', Leaf]
+    right: Union["Node", Leaf]
 
     # noinspection PyMissingConstructor, PyUnusedLocal
     # pylint: disable=W0104
-    def __init__(self, left: Union['Node', Leaf], op: str, right: Union['Node', Leaf]): ...
+    def __init__(self, left: Union["Node", Leaf], op: str, right: Union["Node", Leaf]):
+        ...
 
-    def get_channel_num(self, measurement_dict: Dict[str, 'MeasurementMethodBase']):
+    def get_channel_num(self, measurement_dict: Dict[str, "MeasurementMethodBase"]):
         return self.left.get_channel_num(measurement_dict) | self.right.get_channel_num(measurement_dict)
 
     def __str__(self):
@@ -133,11 +143,17 @@ class Node(BaseSerializableClass):
         right_text = "(" + str(self.right) + ")" if isinstance(self.right, Node) else str(self.right)
         return left_text + self.op + right_text
 
-    def pretty_print(self, measurement_dict: Dict[str, 'MeasurementMethodBase']):
-        left_text = "(" + self.left.pretty_print(measurement_dict) + ")" if isinstance(self.left, Node) \
+    def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]):
+        left_text = (
+            "(" + self.left.pretty_print(measurement_dict) + ")"
+            if isinstance(self.left, Node)
             else self.left.pretty_print(measurement_dict)
-        right_text = "(" + self.right.pretty_print(measurement_dict) + ")" if isinstance(self.right, Node) \
+        )
+        right_text = (
+            "(" + self.right.pretty_print(measurement_dict) + ")"
+            if isinstance(self.right, Node)
             else self.right.pretty_print(measurement_dict)
+        )
         return left_text + self.op + right_text
 
     def get_unit(self, ndim):
@@ -156,7 +172,8 @@ class MeasurementEntry(BaseSerializableClass):
 
     # noinspection PyMissingConstructor,PyUnusedLocal
     # pylint: disable=W0104
-    def __init__(self, name: str, calculation_tree: Union[Node, Leaf]): ...
+    def __init__(self, name: str, calculation_tree: Union[Node, Leaf]):
+        ...
 
     name: str
     calculation_tree: Union[Node, Leaf]
@@ -164,7 +181,7 @@ class MeasurementEntry(BaseSerializableClass):
     def get_unit(self, unit: Units, ndim):
         return str(self.calculation_tree.get_unit(ndim)).format(str(unit))
 
-    def get_channel_num(self, measurement_dict: Dict[str, 'MeasurementMethodBase']):
+    def get_channel_num(self, measurement_dict: Dict[str, "MeasurementMethodBase"]):
         return self.calculation_tree.get_channel_num(measurement_dict)
 
 
@@ -173,10 +190,17 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     This is base class For all measurement calculation classes
     based on text_info[0] the measurement name wil be generated, based_on text_info[1] the description is generated
     """
+
     text_info = "", ""
 
-    need_class_method = ["get_description", "is_component", "calculate_property", "get_starting_leaf",
-                         "get_units", "need_channel"]
+    need_class_method = [
+        "get_description",
+        "is_component",
+        "calculate_property",
+        "get_starting_leaf",
+        "get_units",
+        "need_channel",
+    ]
 
     @classmethod
     def get_name(cls):

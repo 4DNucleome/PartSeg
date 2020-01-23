@@ -36,6 +36,3 @@ class DirectoryDialog(QDialog):
         elif platform == "win32":
             os.startfile(self.path_to_directory)  # nosec
         self.accept()
-
-
-

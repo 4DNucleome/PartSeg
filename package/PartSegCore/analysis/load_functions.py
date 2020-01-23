@@ -17,15 +17,30 @@ from PartSegImage import GenericImageReader
 from ..mask.io_functions import LoadSegmentationImage
 from ..universal_const import Units, UNIT_SCALE
 from ..algorithm_describe_base import Register, SegmentationProfile
-from ..io_utils import LoadBase, proxy_callback, check_segmentation_type, SegmentationType, WrongFileTypeException, \
-    UpdateLoadedMetadataBase, open_tar_file
+from ..io_utils import (
+    LoadBase,
+    proxy_callback,
+    check_segmentation_type,
+    SegmentationType,
+    WrongFileTypeException,
+    UpdateLoadedMetadataBase,
+    open_tar_file,
+)
 from .analysis_utils import HistoryElement, SegmentationPipeline, SegmentationPipelineElement
 from .io_utils import ProjectTuple, MaskInfo, project_version_info
 from .calculation_plan import CalculationPlan, CalculationTree
 from .save_hooks import part_hook
 
-__all__ = ["LoadStackImage", "LoadImageMask", "LoadProject", "LoadMask", "load_dict", "load_metadata",
-           "UpdateLoadedMetadataAnalysis", "LoadMaskSegmentation"]
+__all__ = [
+    "LoadStackImage",
+    "LoadImageMask",
+    "LoadProject",
+    "LoadMask",
+    "load_dict",
+    "load_metadata",
+    "UpdateLoadedMetadataAnalysis",
+    "LoadMaskSegmentation",
+]
 
 
 def _tar_to_buff(tar_file, member_name):
@@ -37,7 +52,8 @@ def _tar_to_buff(tar_file, member_name):
 
 
 def load_project(
-        file: typing.Union[str, tarfile.TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase]) -> ProjectTuple:
+    file: typing.Union[str, tarfile.TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase]
+) -> ProjectTuple:
     """Load project from archive"""
     tar_file, file_path = open_tar_file(file)
     if check_segmentation_type(tar_file) != SegmentationType.analysis:
@@ -81,8 +97,14 @@ def load_project(
             history_buffer.write(tar_file.extractfile(f"history/arrays_{el['index']}.npz").read())
             history_buffer.seek(0)
             el = update_algorithm_dict(el)
-            history.append(HistoryElement(algorithm_name=el["algorithm_name"], algorithm_values=el["values"],
-                                          mask_property=el["mask_property"], arrays=history_buffer))
+            history.append(
+                HistoryElement(
+                    algorithm_name=el["algorithm_name"],
+                    algorithm_values=el["values"],
+                    mask_property=el["mask_property"],
+                    arrays=history_buffer,
+                )
+            )
 
     except KeyError:
         pass
@@ -90,12 +112,19 @@ def load_project(
         tar_file.close()
     image.set_mask(mask)
     if version <= project_version_info:
-        return ProjectTuple(file_path, image, segmentation, full_segmentation, mask, history,
-                            algorithm_dict)
+        return ProjectTuple(file_path, image, segmentation, full_segmentation, mask, history, algorithm_dict)
     else:
         print(version, project_version_info)
-        return ProjectTuple(file_path, image, segmentation, full_segmentation, mask, history,
-                            algorithm_dict, "This project is from new version of PartSeg. It may load incorrect.")
+        return ProjectTuple(
+            file_path,
+            image,
+            segmentation,
+            full_segmentation,
+            mask,
+            history,
+            algorithm_dict,
+            "This project is from new version of PartSeg. It may load incorrect.",
+        )
 
 
 class LoadProject(LoadBase):
@@ -108,10 +137,13 @@ class LoadProject(LoadBase):
         return "project"
 
     @classmethod
-    def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             range_changed: typing.Callable[[int, int], typing.Any] = None,
-             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None) \
-            -> ProjectTuple:
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ) -> ProjectTuple:
         return load_project(load_locations[0])
 
 
@@ -125,17 +157,23 @@ class LoadStackImage(LoadBase):
         return "tiff_image"
 
     @classmethod
-    def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             range_changed: typing.Callable[[int, int], typing.Any] = None,
-             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ):
         if metadata is None:
             metadata = {"default_spacing": tuple([1 / UNIT_SCALE[Units.nm.value] for _ in range(3)])}
         if "recursion_limit" not in metadata:
             metadata = copy(metadata)
             metadata["recursion_limit"] = 3
         image = GenericImageReader.read_image(
-            load_locations[0], callback_function=partial(proxy_callback, range_changed, step_changed),
-            default_spacing=tuple(metadata["default_spacing"]))
+            load_locations[0],
+            callback_function=partial(proxy_callback, range_changed, step_changed),
+            default_spacing=tuple(metadata["default_spacing"]),
+        )
         re_read = True
         for el in image.get_ranges():
             if el[0] != el[1]:
@@ -168,15 +206,21 @@ class LoadImageMask(LoadBase):
             return paths
 
     @classmethod
-    def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             range_changed: typing.Callable[[int, int], typing.Any] = None,
-             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ):
         if metadata is None:
-            metadata = {"default_spacing": (10**-6, 10**-6, 10**-6)}
+            metadata = {"default_spacing": (10 ** -6, 10 ** -6, 10 ** -6)}
         image = GenericImageReader.read_image(
-            load_locations[0], load_locations[1],
+            load_locations[0],
+            load_locations[1],
             callback_function=partial(proxy_callback, range_changed, step_changed),
-            default_spacing=tuple(metadata["default_spacing"]))
+            default_spacing=tuple(metadata["default_spacing"]),
+        )
         return ProjectTuple(load_locations[0], image, mask=image.mask)
 
     @classmethod
@@ -195,9 +239,13 @@ class LoadMask(LoadBase):
         return "mask_to_name"
 
     @classmethod
-    def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             range_changed: typing.Callable[[int, int], typing.Any] = None,
-             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None):
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ):
         image_file = TiffFile(load_locations[0])
         count_pages = [0]
         mutex = Lock()
@@ -228,17 +276,20 @@ class LoadMaskSegmentation(LoadBase):
         return "mask_project"
 
     @classmethod
-    def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             range_changed: typing.Callable[[int, int], typing.Any] = None,
-             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None) -> \
-            typing.List[ProjectTuple]:
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ) -> typing.List[ProjectTuple]:
         data = LoadSegmentationImage.load(load_locations, range_changed, step_changed, metadata)
         image = data.image
         segmentation = data.segmentation
         components = data.chosen_components
         res = []
         base, ext = os.path.splitext(load_locations[0])
-        path_template = base + "_component{}"+ext
+        path_template = base + "_component{}" + ext
         for i in components:
             seg = segmentation == i
             if not np.any(seg):
@@ -265,14 +316,14 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
 
     @classmethod
     def update_segmentation_pipeline_element(cls, data: SegmentationPipelineElement):
-        return SegmentationPipelineElement(cls.update_segmentation_profile(data.segmentation),
-                                           data.mask_property)
+        return SegmentationPipelineElement(cls.update_segmentation_profile(data.segmentation), data.mask_property)
 
     @classmethod
     def update_segmentation_pipeline(cls, data: SegmentationPipeline):
         return SegmentationPipeline(
-            data.name, cls.update_segmentation_profile(data.segmentation),
-            [cls.update_segmentation_pipeline_element(x) for x in data.mask_history]
+            data.name,
+            cls.update_segmentation_profile(data.segmentation),
+            [cls.update_segmentation_pipeline_element(x) for x in data.mask_history],
         )
 
     @classmethod
@@ -309,5 +360,6 @@ def update_algorithm_dict(dkt):
     return res
 
 
-load_dict = Register(LoadStackImage, LoadImageMask, LoadProject, LoadMaskSegmentation,
-                     class_methods=LoadBase.need_functions)
+load_dict = Register(
+    LoadStackImage, LoadImageMask, LoadProject, LoadMaskSegmentation, class_methods=LoadBase.need_functions
+)

@@ -36,6 +36,7 @@ def dict_set_class(obj, dic, *args):
         except AttributeError as ae:
             logging.warning(ae)
 
+
 def bisect(arr, val, comp):
     l = -1
     r = len(arr)

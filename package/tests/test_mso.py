@@ -39,10 +39,10 @@ class TestMu:
         res = calculate_mu(image, 8, 2, MuType.base_mu)
         assert np.all(res == (image == 0).astype(np.float64))
         res = calculate_mu(image, 15, 5, MuType.base_mu)
-        assert np.all(res == ((20 - image)/20).astype(np.float64))
+        assert np.all(res == ((20 - image) / 20).astype(np.float64))
         image[4:6, 4:6, 4:6] = 20
         res = calculate_mu(image, 15, 5, MuType.base_mu)
-        assert np.all(res == (20 - image)/20)
+        assert np.all(res == (20 - image) / 20)
 
     def test_reversed_base_mu_masked(self):
         image = np.zeros((10, 10, 10), dtype=np.uint8)
@@ -110,7 +110,7 @@ class TestMu:
         image = np.zeros((40, 150, 120), dtype=np.uint16)
         image[2:-2, 2:-2, 2:-2] = 30
         res = calculate_mu(image, 20, 40, MuType.base_mu)
-        assert np.all(res == (image > 0)*0.5)
+        assert np.all(res == (image > 0) * 0.5)
 
 
 def test_mso_construct():
@@ -222,14 +222,14 @@ class TestConstrainedDilation:
         for i in range(2, 10):
             components = np.zeros((10, 10, i * 10), dtype=np.uint8)
             for j in range(i):
-                components[4:6, 4:6, (10*j + 4):(10 * j + 6)] = j+1
+                components[4:6, 4:6, (10 * j + 4) : (10 * j + 6)] = j + 1
             fdt = np.ones(components.shape, dtype=np.float64) * i * 10
             sprawl_area = np.zeros(components.shape, dtype=np.uint8)
-            sprawl_area[2:8, 2:8, 2:(10 * i) - 2] = True
+            sprawl_area[2:8, 2:8, 2 : (10 * i) - 2] = True
             sprawl_area[components > 0] = False
             components2 = np.zeros(components.shape, dtype=np.uint8)
             for j in range(i):
-                components2[2:8, 2:8, (j * 10):(j+1)*10] = j+1
+                components2[2:8, 2:8, (j * 10) : (j + 1) * 10] = j + 1
             components2[:, :, :2] = 0
             components2[:, :, -2:] = 0
             mso = PyMSO()
@@ -244,15 +244,15 @@ class TestConstrainedDilation:
         for i in range(2, 10):
             components = np.zeros((10, 10, i * 10), dtype=np.uint8)
             for j in range(i):
-                components[4:6, 4:6, (10*j + 4):(10 * j + 6)] = j+1
+                components[4:6, 4:6, (10 * j + 4) : (10 * j + 6)] = j + 1
             fdt = np.ones(components.shape, dtype=np.float64) * i * 10
             sprawl_area = np.zeros(components.shape, dtype=np.uint8)
-            sprawl_area[2:8, 2:8, 2:(10 * i) - 2] = True
+            sprawl_area[2:8, 2:8, 2 : (10 * i) - 2] = True
             sprawl_area[components > 0] = False
             components2 = np.zeros(components.shape, dtype=np.uint8)
             for j in range(i):
-                components2[2:8, 2:8, (j * 10+1):(j+1)*10] = j+1
-                fdt[:, :, j*10] = i*10 + 2
+                components2[2:8, 2:8, (j * 10 + 1) : (j + 1) * 10] = j + 1
+                fdt[:, :, j * 10] = i * 10 + 2
             components2[:, :, :2] = 0
             components2[:, :, -2:] = 0
             mso = PyMSO()
@@ -295,15 +295,15 @@ class TestOptimumErosionCalculate:
         for i in range(2, 10):
             components = np.zeros((4, 5, i * 5), dtype=np.uint8)
             for j in range(i):
-                components[2, 2, 5 * j + 2] = j+1
+                components[2, 2, 5 * j + 2] = j + 1
             fdt = np.ones(components.shape, dtype=np.float64) * 2
-            for j in range(i-1):
-                fdt[:, :, j*5+4] = 1
+            for j in range(i - 1):
+                fdt[:, :, j * 5 + 4] = 1
             sprawl_area = np.ones(components.shape, dtype=np.uint8)
             sprawl_area[components > 0] = False
             components2 = np.zeros(components.shape, dtype=np.uint8)
             for j in range(i):
-                components2[:, :, (j * 5):(j*5)+4] = j+1
+                components2[:, :, (j * 5) : (j * 5) + 4] = j + 1
             components2[:, :, -1] = i
             neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
             mso = PyMSO()
@@ -316,16 +316,16 @@ class TestOptimumErosionCalculate:
         for i in range(2, 10):
             components = np.zeros((10, 10, i * 10), dtype=np.uint8)
             for j in range(i):
-                components[4:6, 4:6, (10*j + 4):(10 * j + 6)] = j+1
+                components[4:6, 4:6, (10 * j + 4) : (10 * j + 6)] = j + 1
             fdt = np.ones(components.shape, dtype=np.float64) * 2
-            for j in range(i-1):
-                fdt[:, :, (j+1) * 10] = 1
+            for j in range(i - 1):
+                fdt[:, :, (j + 1) * 10] = 1
             sprawl_area = np.zeros(components.shape, dtype=np.uint8)
-            sprawl_area[2:8, 2:8, 2:(10 * i) - 2] = True
+            sprawl_area[2:8, 2:8, 2 : (10 * i) - 2] = True
             sprawl_area[components > 0] = False
             components2 = np.zeros(components.shape, dtype=np.uint8)
             for j in range(i):
-                components2[2:8, 2:8, (j * 10 + 1):(j+1)*10] = j+1
+                components2[2:8, 2:8, (j * 10 + 1) : (j + 1) * 10] = j + 1
             components2[:, :, :2] = 0
             components2[:, :, -2:] = 0
             neigh, dist = calculate_distances_array((1, 1, 1), NeighType.vertex)
@@ -396,20 +396,20 @@ class TestFDT:
         assert np.all(res == arr)
         mso.set_mu_array(np.ones(components.shape) * 0.5)
         res = mso.calculate_FDT()
-        assert np.all(res == arr*0.5)
+        assert np.all(res == arr * 0.5)
         mu = np.ones(components.shape) * 0.5
         mu[components > 0] = 1
         mso.set_mu_array(mu)
         arr *= 0.5
         arr[arr > 0] += 0.25
-        arr[3:7, (0, 1, 2, 0, 1, 2, 9, 8, 7, 9, 8, 7), (0, 1, 2, 9, 8, 7, 0, 1, 2, 9, 8, 7)] += np.sqrt(2)/4 - 0.25
+        arr[3:7, (0, 1, 2, 0, 1, 2, 9, 8, 7, 9, 8, 7), (0, 1, 2, 9, 8, 7, 0, 1, 2, 9, 8, 7)] += np.sqrt(2) / 4 - 0.25
         for i in range(3):
             lb = i
-            ub = 9-i
-            arr[lb, lb+1:ub, (lb, ub)] += np.sqrt(2)/4 - 0.25
-            arr[lb, (lb, ub), lb+1:ub] += np.sqrt(2) / 4 - 0.25
-            arr[ub, lb + 1:ub, (lb, ub)] += np.sqrt(2) / 4 - 0.25
-            arr[ub, (lb, ub), lb + 1:ub] += np.sqrt(2) / 4 - 0.25
+            ub = 9 - i
+            arr[lb, lb + 1 : ub, (lb, ub)] += np.sqrt(2) / 4 - 0.25
+            arr[lb, (lb, ub), lb + 1 : ub] += np.sqrt(2) / 4 - 0.25
+            arr[ub, lb + 1 : ub, (lb, ub)] += np.sqrt(2) / 4 - 0.25
+            arr[ub, (lb, ub), lb + 1 : ub] += np.sqrt(2) / 4 - 0.25
             for el in itertools.product([lb, ub], repeat=3):
                 arr[el] += np.sqrt(3) / 4 - 0.25
         for z, (y, x) in itertools.product([2, 7], itertools.product([0, 9], repeat=2)):
@@ -431,8 +431,11 @@ class TestFDT:
         mso.set_mu_array(np.ones(components.shape))
         arr = np.zeros(components.shape)
         arr[(0, 0, 0, 0, 2, 2, 2, 2), (0, 0, 2, 2, 0, 0, 2, 2), (0, 2, 0, 2, 0, 2, 0, 2)] = np.sqrt(3)
-        arr[(0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2), (0, 1, 1, 2, 0, 0, 2, 2, 0, 1, 1, 2),
-            (1, 0, 2, 1, 0, 2, 0, 2, 1, 0, 2, 1)] = np.sqrt(2)
+        arr[
+            (0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2),
+            (0, 1, 1, 2, 0, 0, 2, 2, 0, 1, 1, 2),
+            (1, 0, 2, 1, 0, 2, 0, 2, 1, 0, 2, 1),
+        ] = np.sqrt(2)
         arr[(0, 1, 1, 1, 1, 2), (1, 0, 1, 1, 2, 1), (1, 1, 0, 2, 1, 1)] = 1
         res = mso.calculate_FDT()
         assert np.all(res == arr)
@@ -514,7 +517,7 @@ class TestMSO:
         mso.set_components_num(3)
         mso.run_MSO(10)
         res = mso.get_result_catted()
-        assert(mso.steps_done() == 2)
+        assert mso.steps_done() == 2
         arr = np.copy(components)
         arr[arr == 1] = 0
         arr[2:8, 2:8, 2:9] = 2

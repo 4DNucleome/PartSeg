@@ -6,8 +6,19 @@ from functools import partial
 import numpy as np
 from qtpy.QtCore import Signal, Qt, QRect, QRectF, QPointF, QSize, QModelIndex, QEvent, QPoint
 from qtpy.QtGui import QImage, QShowEvent, QPaintEvent, QPainter, QPen, QMouseEvent, QColor, QPolygonF
-from qtpy.QtWidgets import QWidget, QCheckBox, QGridLayout, QLabel, QHBoxLayout, QComboBox, QDoubleSpinBox, QListView, \
-    QStyledItemDelegate, QStyleOptionViewItem, QStyle
+from qtpy.QtWidgets import (
+    QWidget,
+    QCheckBox,
+    QGridLayout,
+    QLabel,
+    QHBoxLayout,
+    QComboBox,
+    QDoubleSpinBox,
+    QListView,
+    QStyledItemDelegate,
+    QStyleOptionViewItem,
+    QStyle,
+)
 
 from PartSeg.common_gui.numpy_qimage import create_colormap_image
 from PartSegCore.color_image import ColorMap
@@ -29,7 +40,8 @@ class ColorStyledDelegate(QStyledItemDelegate):
     :param base_height: height of single list element
     :param color_dict: Dict mapping name to colors
     """
-    def __init__(self, base_height: int, color_dict: ColorMapDict,  **kwargs):
+
+    def __init__(self, base_height: int, color_dict: ColorMapDict, **kwargs):
         super().__init__(**kwargs)
         self.base_height = base_height
         self.color_dict = color_dict
@@ -67,6 +79,7 @@ class ColorComboBox(QComboBox):
     :param lock: show lock padlock to inform that fixed range is used
     :param blur: show info about blur selected
     """
+
     triangle_width = 20
 
     clicked = Signal(int)
@@ -76,8 +89,16 @@ class ColorComboBox(QComboBox):
     channel_colormap_changed = Signal(int, str)
     """Signal with information about colormap change. (ch_num, name_of_colorma)"""
 
-    def __init__(self, id_num: int, colors: typing.List[str], color_dict: ColorMapDict, colormap: str = "",
-                 base_height=50, lock=False, blur=False):
+    def __init__(
+        self,
+        id_num: int,
+        colors: typing.List[str],
+        color_dict: ColorMapDict,
+        colormap: str = "",
+        base_height=50,
+        lock=False,
+        blur=False,
+    ):
         super().__init__()
         self.id = id_num
         self.check_box = QCheckBox()  # ColorCheckBox(parent=self)
@@ -166,7 +187,7 @@ class ColorComboBox(QComboBox):
             pen.setWidth(2)
             pen.setColor(QColor("black"))
             painter.setPen(pen)
-            rect = QRect(1, 1, self.width()-2, self.height()-2)
+            rect = QRect(1, 1, self.width() - 2, self.height() - 2)
             painter.drawRect(rect)
             pen.setColor(QColor("white"))
             painter.setPen(pen)
@@ -248,6 +269,7 @@ class ChannelProperty(QWidget):
     :param start_name: name used to select proper information from settings object.
         Introduced for case with multiple image view.
     """
+
     def __init__(self, settings: ViewSettings, start_name: str):
         super().__init__()
         if start_name == "":
@@ -258,10 +280,10 @@ class ChannelProperty(QWidget):
         self.widget_dict: typing.Dict[str, ColorComboBoxGroup] = {}
 
         self.minimum_value = CustomSpinBox(self)
-        self.minimum_value.setRange(-10 ** 6, 10 ** 6)
+        self.minimum_value.setRange(-(10 ** 6), 10 ** 6)
         self.minimum_value.valueChanged.connect(self.range_changed)
         self.maximum_value = CustomSpinBox(self)
-        self.maximum_value.setRange(-10 ** 6, 10 ** 6)
+        self.maximum_value.setRange(-(10 ** 6), 10 ** 6)
         self.maximum_value.valueChanged.connect(self.range_changed)
         self.fixed = QCheckBox("Fix range")
         self.fixed.stateChanged.connect(self.lock_channel)
@@ -301,7 +323,7 @@ class ChannelProperty(QWidget):
         widget = self.widget_dict[self.current_name]
         widget.parameters_changed(self.current_channel)
 
-    def register_widget(self, widget: 'ColorComboBoxGroup'):
+    def register_widget(self, widget: "ColorComboBoxGroup"):
         if widget.name in self.widget_dict:
             raise ValueError(f"name {widget.name} already register")
         self.widget_dict[widget.name] = widget
@@ -315,27 +337,34 @@ class ChannelProperty(QWidget):
         block = self.blockSignals(True)
         self.minimum_value.blockSignals(True)
         self.minimum_value.setValue(
-            self._settings.get_from_profile(f"{self.current_name}.range_{self.current_channel}", (0, 65000))[0])
+            self._settings.get_from_profile(f"{self.current_name}.range_{self.current_channel}", (0, 65000))[0]
+        )
         self.minimum_value.blockSignals(False)
         self.maximum_value.setValue(
-            self._settings.get_from_profile(f"{self.current_name}.range_{self.current_channel}", (0, 65000))[1])
+            self._settings.get_from_profile(f"{self.current_name}.range_{self.current_channel}", (0, 65000))[1]
+        )
         self.use_gauss.setChecked(
-            self._settings.get_from_profile(f"{self.current_name}.use_gauss_{self.current_channel}", False))
+            self._settings.get_from_profile(f"{self.current_name}.use_gauss_{self.current_channel}", False)
+        )
         self.gauss_radius.setValue(
-            self._settings.get_from_profile(f"{self.current_name}.gauss_radius_{self.current_channel}", 1))
+            self._settings.get_from_profile(f"{self.current_name}.gauss_radius_{self.current_channel}", 1)
+        )
         self.fixed.setChecked(
-            self._settings.get_from_profile(f"{self.current_name}.lock_{self.current_channel}", False))
+            self._settings.get_from_profile(f"{self.current_name}.lock_{self.current_channel}", False)
+        )
         self.blockSignals(block)
 
     def gauss_radius_changed(self):
         self._settings.set_in_profile(
-            f"{self.current_name}.gauss_radius_{self.current_channel}", self.gauss_radius.value())
+            f"{self.current_name}.gauss_radius_{self.current_channel}", self.gauss_radius.value()
+        )
         if self.use_gauss.isChecked():
             self.send_info()
 
     def gauss_use_changed(self):
         self._settings.set_in_profile(
-            f"{self.current_name}.use_gauss_{self.current_channel}", self.use_gauss.isChecked())
+            f"{self.current_name}.use_gauss_{self.current_channel}", self.use_gauss.isChecked()
+        )
         self.send_info()
 
     def lock_channel(self, value):
@@ -343,8 +372,10 @@ class ChannelProperty(QWidget):
         self.send_info()
 
     def range_changed(self):
-        self._settings.set_in_profile(f"{self.current_name}.range_{self.current_channel}",
-                                      (self.minimum_value.value(), self.maximum_value.value()))
+        self._settings.set_in_profile(
+            f"{self.current_name}.range_{self.current_channel}",
+            (self.minimum_value.value(), self.maximum_value.value()),
+        )
         if self.fixed.isChecked():
             self.send_info()
 
@@ -353,13 +384,19 @@ class ColorComboBoxGroup(QWidget):
     """
     Group of :class:`.ColorComboBox` for control visibility and chose colormap for channels.
     """
+
     coloring_update = Signal()
     """information about global change of coloring"""
     change_channel = Signal([str, int])
     """information which channel change"""
 
-    def __init__(self, settings: ViewSettings, name: str, channel_property: typing.Optional[ChannelProperty] = None,
-                 height: int = 40):
+    def __init__(
+        self,
+        settings: ViewSettings,
+        name: str,
+        channel_property: typing.Optional[ChannelProperty] = None,
+        height: int = 40,
+    ):
         super().__init__()
         self.name = name
         self.height = height
@@ -425,13 +462,15 @@ class ColorComboBoxGroup(QWidget):
         self.settings.set_in_profile(f"{self.name}.channels_count", num)
         if num >= self.layout().count():
             for i in range(self.layout().count(), num):
-                el = ColorComboBox(i, self.settings.chosen_colormap,
-                                   self.settings.colormap_dict,
-                                   self.settings.get_channel_info(self.name, i),
-                                   base_height=self.height,
-                                   lock=self.settings.get_from_profile(f"{self.name}.lock_{i}", False),
-                                   blur=self.settings.get_from_profile(f"{self.name}.use_gauss_{i}", False)
-                                   )
+                el = ColorComboBox(
+                    i,
+                    self.settings.chosen_colormap,
+                    self.settings.colormap_dict,
+                    self.settings.get_channel_info(self.name, i),
+                    base_height=self.height,
+                    lock=self.settings.get_from_profile(f"{self.name}.lock_{i}", False),
+                    blur=self.settings.get_from_profile(f"{self.name}.use_gauss_{i}", False),
+                )
                 el.clicked.connect(self.set_active)
                 el.channel_visible_changed.connect(self.coloring_update)
                 el.channel_colormap_changed.connect(self.change_selected_color)
@@ -462,10 +501,12 @@ class ColorComboBoxGroup(QWidget):
     def get_gauss(self):
         resp = []
         for i in range(self.layout().count()):
-            resp.append((
-                self.settings.get_from_profile(f"{self.name}.use_gauss_{i}", False),
-                self.settings.get_from_profile(f"{self.name}.gauss_radius_{i}", 1)
-            ))
+            resp.append(
+                (
+                    self.settings.get_from_profile(f"{self.name}.use_gauss_{i}", False),
+                    self.settings.get_from_profile(f"{self.name}.gauss_radius_{i}", 1),
+                )
+            )
         return resp
 
     def get_limits(self):
@@ -505,6 +546,7 @@ class LockedInfoWidget(QWidget):
     """
     Widget used to present info about lock selection in class :py:class:`~.ColorComboBox`.
     """
+
     def __init__(self, size=25, margin=2):
         super().__init__()
         self.margin = margin
@@ -542,6 +584,7 @@ class BlurInfoWidget(QWidget):
     """
     Widget used to present info about blur selection in class :py:class:`~.ColorComboBox`.
     """
+
     def __init__(self, size=25, margin=2):
         super().__init__()
         self.margin = margin
@@ -570,8 +613,9 @@ class BlurInfoWidget(QWidget):
         radius = min(a0.rect().height(), a0.rect().width()) / 3
         rays_num = 10
         for i in range(rays_num):
-            point = QPointF(math.sin(math.pi / (rays_num / 2) * i) * radius,
-                            math.cos(math.pi / (rays_num / 2) * i) * radius)
+            point = QPointF(
+                math.sin(math.pi / (rays_num / 2) * i) * radius, math.cos(math.pi / (rays_num / 2) * i) * radius
+            )
             painter.drawLine(mid_point + (point * 0.4), mid_point + point)
         painter.restore()
 
@@ -740,10 +784,10 @@ class ChannelControl(ChannelChooseBase):
         self.colormap_chose.activated[str].connect(self.change_color)
         self.channel_preview_widget = ColorPreview(self)
         self.minimum_value = CustomSpinBox(self)
-        self.minimum_value.setRange(-10 ** 6, 10 ** 6)
+        self.minimum_value.setRange(-(10 ** 6), 10 ** 6)
         self.minimum_value.valueChanged.connect(self.range_changed)
         self.maximum_value = CustomSpinBox(self)
-        self.maximum_value.setRange(-10 ** 6, 10 ** 6)
+        self.maximum_value.setRange(-(10 ** 6), 10 ** 6)
         self.maximum_value.valueChanged.connect(self.range_changed)
         self.fixed = QCheckBox("Fix range")
         self.fixed.stateChanged.connect(self.lock_channel)
@@ -822,8 +866,9 @@ class ChannelControl(ChannelChooseBase):
         self.coloring_update.emit(False)
 
     def range_changed(self):
-        self._settings.set_in_profile(f"{self._name}.range_{self.current_channel}",
-                                      (self.minimum_value.value(), self.maximum_value.value()))
+        self._settings.set_in_profile(
+            f"{self._name}.range_{self.current_channel}", (self.minimum_value.value(), self.maximum_value.value())
+        )
         # self.current_bounds[self.current_channel] = self.minimum_value.value(), self.maximum_value.value()
         # self._settings.set_in_profile(f"{self._name}.bounds", self.current_bounds)
         if self.fixed.isChecked():
@@ -891,10 +936,13 @@ class ChannelControl(ChannelChooseBase):
         self.channels_widgets = []
         for i in range(channels_num):
             self.channels_widgets.append(
-                ChannelWidget(i, self._settings.get_channel_info(
-                              self.name, i, starting_colors[i % len(starting_colors)]),
-                              locked=self._settings.get_from_profile(f"{self._name}.lock_{i}", False),
-                              gauss=self._settings.get_from_profile(f"{self._name}.use_gauss_{i}", False)))
+                ChannelWidget(
+                    i,
+                    self._settings.get_channel_info(self.name, i, starting_colors[i % len(starting_colors)]),
+                    locked=self._settings.get_from_profile(f"{self._name}.lock_{i}", False),
+                    gauss=self._settings.get_from_profile(f"{self._name}.use_gauss_{i}", False),
+                )
+            )
             self.channels_widgets[-1].chosen.setChecked(is_checked[i])
             self.channels_layout.addWidget(self.channels_widgets[-1])
             self.channels_widgets[-1].clicked.connect(self.change_chanel)
@@ -919,7 +967,7 @@ class ChannelControl(ChannelChooseBase):
         channels_num = len(self.channels_widgets)
         resp = []
         for i in range(channels_num):
-            resp.append(self._settings.get_channel_info(self.name, i,  self.channels_widgets[i].color))
+            resp.append(self._settings.get_channel_info(self.name, i, self.channels_widgets[i].color))
         return resp
 
     @property
@@ -945,10 +993,12 @@ class ChannelControl(ChannelChooseBase):
         channels_num = len(self.channels_widgets)
         resp = []
         for i in range(channels_num):
-            resp.append((
-                self._settings.get_from_profile(f"{self._name}.use_gauss_{i}", False),
-                self._settings.get_from_profile(f"{self._name}.gauss_radius_{i}", 1)
-            ))
+            resp.append(
+                (
+                    self._settings.get_from_profile(f"{self._name}.use_gauss_{i}", False),
+                    self._settings.get_from_profile(f"{self._name}.gauss_radius_{i}", 1),
+                )
+            )
         return resp
 
     def active_channel(self, index):

@@ -2,8 +2,8 @@ from qtpy.QtCore import QPoint
 from qtpy.QtWidgets import QCheckBox
 from qtpy.QtGui import QPaintEvent, QPainter, QFont
 
-lock_close = u"\U0001F512"
-lock_open = u"\U0001F513"
+lock_close = "\U0001F512"
+lock_open = "\U0001F513"
 
 
 class LockCheckBox(QCheckBox):

@@ -89,13 +89,13 @@ class {typename}({base_classes}):
 {field_definitions}
 """
 
-_repr_template = '{name}=%r'
+_repr_template = "{name}=%r"
 
-_field_template = '''\
+_field_template = """\
     {name} = _property(_attrgetter("_{name}"), doc='getter for attribute {name}')
-'''
+"""
 
-T = typing.TypeVar('T')
+T = typing.TypeVar("T")
 
 
 class RegisterClass(typing.Generic[T]):
@@ -121,10 +121,10 @@ class RegisterClass(typing.Generic[T]):
         if path in self.exact_class_register:
             return self.exact_class_register[path]
         else:
-            name = path[path.rfind(".")+1:]
+            name = path[path.rfind(".") + 1 :]
             if name not in self.predict_class_register:
                 try:
-                    importlib.import_module(path[:path.rfind(".")])
+                    importlib.import_module(path[: path.rfind(".")])
                 except ImportError:
                     pass
             if name in self.predict_class_register:
@@ -162,13 +162,25 @@ def extract_type_info(type_):
         return type_.__name__, None
 
 
-_prohibited = ('__new__', '__init__', '__slots__', '__getnewargs__',
-               '_fields', '_field_defaults', '_field_types',
-               '_make', 'replace_', 'asdict', '_source', 'asdict', "__setattr__")
+_prohibited = (
+    "__new__",
+    "__init__",
+    "__slots__",
+    "__getnewargs__",
+    "_fields",
+    "_field_defaults",
+    "_field_types",
+    "_make",
+    "replace_",
+    "asdict",
+    "_source",
+    "asdict",
+    "__setattr__",
+)
 
-_special = ('__module__', '__name__', '__qualname__', '__annotations__', "_reloading")
+_special = ("__module__", "__name__", "__qualname__", "__annotations__", "_reloading")
 
-omit_list = (typing.TypeVar, )
+omit_list = (typing.TypeVar,)
 
 
 def add_classes(types_list, translate_dict, global_state):
@@ -185,8 +197,9 @@ def add_classes(types_list, translate_dict, global_state):
                     add_classes(sub_types, translate_dict, global_state)
                     if sys.version_info[:2] == (3, 6):
                         if hasattr(type_, "__origin__"):
-                            type_str = \
+                            type_str = (
                                 str(type_.__origin__) + "[" + ", ".join([translate_dict[x] for x in sub_types]) + "]"
+                            )
                             translate_dict[type_] = type_str
                             continue
                     else:  # for python 3.7
@@ -235,13 +248,17 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
 
     del global_state[typename]
 
-    signature = ", ".join(["{}: {} = {}".format(name_, translate_dict[type_], pprint.pformat(
-        defaults_dict[name_])) if name_ in defaults_dict else "{}: {}".format(name_, translate_dict[type_])
-                           for name_, type_ in types.items()])
+    signature = ", ".join(
+        [
+            "{}: {} = {}".format(name_, translate_dict[type_], pprint.pformat(defaults_dict[name_]))
+            if name_ in defaults_dict
+            else "{}: {}".format(name_, translate_dict[type_])
+            for name_, type_ in types.items()
+        ]
+    )
     if readonly:
         slots = tuple(["_" + x for x in field_names])
-        field_definitions = '\n'.join(_field_template.format(name=name)
-                                      for index, name in enumerate(field_names))
+        field_definitions = "\n".join(_field_template.format(name=name) for index, name in enumerate(field_names))
     else:
         slots = tuple(field_names)
         field_definitions = ""
@@ -259,12 +276,11 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
         slots=slots,
         num_fields=len(field_names),
         arg_list=repr(tuple(field_names)).replace("'", "")[1:-1],
-        repr_fmt=', '.join(_repr_template.format(name=name)
-                           for name in field_names),
+        repr_fmt=", ".join(_repr_template.format(name=name) for name in field_names),
         field_definitions=field_definitions,
-        base_classes=", ".join([translate_dict[x] for x in base_classes])
+        base_classes=", ".join([translate_dict[x] for x in base_classes]),
     )
-    global_state["__name__"] = 'serialize_%s' % typename
+    global_state["__name__"] = "serialize_%s" % typename
     try:
         # pylint: disable=W0122
         exec(class_definition, global_state)  # nosec
@@ -291,7 +307,7 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
 class BaseMeta(type):
     def __new__(mcs, name, bases, attrs):
         # print("BaseMeta.__new__", mcs, name, bases, attrs)
-        if attrs.get('_root', False):
+        if attrs.get("_root", False):
             return super().__new__(mcs, name, bases, attrs)
         types = attrs.get("__annotations__", {})
         defaults = []
@@ -302,10 +318,12 @@ class BaseMeta(type):
                 defaults.append(default_value)
                 defaults_dict[field_name] = default_value
             elif defaults:
-                raise TypeError("Non-default namedtuple field {field_name} cannot "
-                                "follow default field(s) {default_names}"
-                                .format(field_name=field_name,
-                                        default_names=', '.join(defaults_dict.keys())))
+                raise TypeError(
+                    "Non-default namedtuple field {field_name} cannot "
+                    "follow default field(s) {default_names}".format(
+                        field_name=field_name, default_names=", ".join(defaults_dict.keys())
+                    )
+                )
         if "__readonly__" in attrs:
             readonly = attrs["__readonly__"]
         else:
@@ -328,7 +346,7 @@ class BaseMeta(type):
         module = attrs.get("__module__", None)
         if module is None:
             try:
-                module = sys._getframe(1).f_globals.get('__name__', '__main__')
+                module = sys._getframe(1).f_globals.get("__name__", "__main__")
             except (AttributeError, ValueError):
                 pass
         if module is not None:
@@ -378,7 +396,7 @@ class SerializeClassEncoder(json.JSONEncoder):
         if isinstance(o, Enum):
             return {"__Enum__": True, "__subtype__": extract_type_info(o.__class__)[0], "value": o.value}
         if isinstance(o, BaseSerializableClass):
-            return {"__Serializable__": True, "__subtype__": extract_type_info(o.__class__)[0],  **o.asdict()}
+            return {"__Serializable__": True, "__subtype__": extract_type_info(o.__class__)[0], **o.asdict()}
         return super().default(o)
 
 

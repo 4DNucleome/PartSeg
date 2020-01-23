@@ -22,6 +22,7 @@ class Prepare(QThread):
     def run(self):
         if self.module != "":
             from .. import plugins
+
             plugins.register()
             main_window_module = importlib.import_module(self.module)
             main_window: BaseMainWindow = main_window_module.MainWindow
@@ -99,8 +100,10 @@ class MainWindow(QMainWindow):
         if self.prepare.errors:
             errors_message = QMessageBox()
             errors_message.setText("There are errors during start")
-            errors_message.setInformativeText("During load saved state some of data could not be load properly\n"
-                                              "The files has prepared backup copies in  state directory (Help > State directory)")
+            errors_message.setInformativeText(
+                "During load saved state some of data could not be load properly\n"
+                "The files has prepared backup copies in  state directory (Help > State directory)"
+            )
             errors_message.setStandardButtons(QMessageBox.Ok)
             text = "\n".join(["File: " + x[0] + "\n" + str(x[1]) for x in self.prepare.errors])
             errors_message.setDetailedText(text)

@@ -37,15 +37,15 @@ def create_color_map(colormap_definition: BaseColormap, power: float = 1.0) -> n
     if len(bounds) == 1:
         colormap[:] = values[0]
         return colormap
-    _bounds = [x**power * ((resolution-1)/resolution) for x in bounds]
+    _bounds = [x ** power * ((resolution - 1) / resolution) for x in bounds]
     bounds = [_bounds[0]]
     _values = values
     values = [_values[0]]
     if len(bounds) < 10:
         for i, (x, y) in enumerate(zip(_bounds, _bounds[1:]), start=1):
-            dist = (y-x) * resolution/256
+            dist = (y - x) * resolution / 256
             if dist > 1:
-                bounds.append(y - dist/resolution)
+                bounds.append(y - dist / resolution)
                 values.append(_values[i])
             bounds.append(y)
             values.append(_values[i])
@@ -85,8 +85,11 @@ def color_chanel(cmap, chanel, max_val, min_val):
     return temp_image
 
 
-def color_image_fun(image: np.ndarray, colors: typing.List[typing.Union[BaseColormap, np.ndarray]],
-                    min_max: typing.List[typing.Tuple[float, float]]) -> np.ndarray:
+def color_image_fun(
+    image: np.ndarray,
+    colors: typing.List[typing.Union[BaseColormap, np.ndarray]],
+    min_max: typing.List[typing.Tuple[float, float]],
+) -> np.ndarray:
     """
     Color given image layer.
 

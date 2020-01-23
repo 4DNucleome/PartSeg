@@ -78,8 +78,9 @@ class MaskWidget(QWidget):
         layout.addLayout(layout2)
         layout3 = QHBoxLayout()
         comp_lab = QLabel("Save components:")
-        comp_lab.setToolTip("save components information in mask. Dilation, "
-                            "holes filing will be done separately for each component")
+        comp_lab.setToolTip(
+            "save components information in mask. Dilation, " "holes filing will be done separately for each component"
+        )
         self.save_components.setToolTip(comp_lab.toolTip())
         layout3.addWidget(comp_lab)
         layout3.addWidget(self.save_components)
@@ -98,8 +99,9 @@ class MaskWidget(QWidget):
         self.dilate_change()
 
     def get_dilate_radius(self):
-        radius = calculate_operation_radius(self.dilate_radius.value(), self.settings.image_spacing,
-                                            self.dilate_dim.value())
+        radius = calculate_operation_radius(
+            self.dilate_radius.value(), self.settings.image_spacing, self.dilate_dim.value()
+        )
         if isinstance(radius, (list, tuple)):
             return [int(x + 0.5) for x in radius]
         return int(radius)
@@ -115,13 +117,15 @@ class MaskWidget(QWidget):
                 self.radius_information.setText(f"Real radius: {dilate_radius}")
 
     def get_mask_property(self):
-        return \
-            MaskProperty(dilate=self.dilate_dim.value() if self.dilate_radius.value() != 0 else RadiusType.NO,
-                         dilate_radius=self.dilate_radius.value() if self.dilate_dim.value() != RadiusType.NO else 0,
-                         fill_holes=self.fill_holes.value() if self.max_hole_size.value() != 0 else RadiusType.NO,
-                         max_holes_size=self.max_hole_size.value() if self.fill_holes.value() != RadiusType.NO else 0,
-                         save_components=self.save_components.isChecked(), clip_to_mask=self.clip_to_mask.isChecked(),
-                         reversed_mask=self.reversed_check.isChecked())
+        return MaskProperty(
+            dilate=self.dilate_dim.value() if self.dilate_radius.value() != 0 else RadiusType.NO,
+            dilate_radius=self.dilate_radius.value() if self.dilate_dim.value() != RadiusType.NO else 0,
+            fill_holes=self.fill_holes.value() if self.max_hole_size.value() != 0 else RadiusType.NO,
+            max_holes_size=self.max_hole_size.value() if self.fill_holes.value() != RadiusType.NO else 0,
+            save_components=self.save_components.isChecked(),
+            clip_to_mask=self.clip_to_mask.isChecked(),
+            reversed_mask=self.reversed_check.isChecked(),
+        )
 
     def set_mask_property(self, prop: MaskProperty):
         self.dilate_dim.setValue(prop.dilate)

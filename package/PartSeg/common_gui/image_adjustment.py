@@ -5,12 +5,14 @@ from PartSegImage import Image
 from PartSegCore.image_transforming import image_transform_dict, TransformBase
 from .algorithms_description import FormWidget
 
+
 class ImageAdjustTuple(NamedTuple):
     values: dict
     algorithm: TransformBase
 
+
 class ImageAdjustmentDialog(QDialog):
-    def __init__(self, image: Image, transform_dict: Dict[str, TransformBase]=None):
+    def __init__(self, image: Image, transform_dict: Dict[str, TransformBase] = None):
         super().__init__()
         if transform_dict is None:
             transform_dict = image_transform_dict
@@ -33,7 +35,7 @@ class ImageAdjustmentDialog(QDialog):
         self.result_val: ImageAdjustTuple = None
 
         layout = QGridLayout()
-        layout.addWidget(self.choose, 0, 0, 1 ,3)
+        layout.addWidget(self.choose, 0, 0, 1, 3)
         layout.addWidget(self.stacked, 1, 0, 1, 3)
         layout.addWidget(self.cancel_btn, 2, 0)
         layout.addWidget(self.process_btn, 2, 2)
@@ -45,4 +47,3 @@ class ImageAdjustmentDialog(QDialog):
         self.result_val = ImageAdjustTuple(values, algorithm)
 
         self.accept()
-

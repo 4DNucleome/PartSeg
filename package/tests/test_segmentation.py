@@ -40,11 +40,11 @@ def get_two_parts_reversed():
 
 
 def get_multiple_part_array(part_num):
-    data = np.zeros((1, 20, 40, 40*part_num, 1), dtype=np.uint8)
-    data[0, 4:16, 8:32, 8:40*part_num-8] = 40
+    data = np.zeros((1, 20, 40, 40 * part_num, 1), dtype=np.uint8)
+    data[0, 4:16, 8:32, 8 : 40 * part_num - 8] = 40
     for i in range(part_num):
-        data[0, 5:15, 10:30, 40*i+10:40*i+30] = 50
-        data[0, 7:13, 15:25, 40 * i + 15:40 * i + 25] = 70
+        data[0, 5:15, 10:30, 40 * i + 10 : 40 * i + 30] = 50
+        data[0, 7:13, 15:25, 40 * i + 15 : 40 * i + 25] = 70
     return data
 
 
@@ -128,7 +128,7 @@ class BaseOneThreshold(BaseThreshold, ABC):
         result = alg.calculation_run(empty)
         self.check_result(result, [96000, 72000], operator.eq, parameters)
 
-        parameters['threshold']["values"]["threshold"] += self.get_shift()
+        parameters["threshold"]["values"]["threshold"] += self.get_shift()
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
         self.check_result(result, [192000], operator.eq, parameters)
@@ -137,21 +137,26 @@ class BaseOneThreshold(BaseThreshold, ABC):
         image = self.get_side_object()
         alg: SegmentationAlgorithm = self.algorithm_class()
         parameters = self.get_parameters()
-        parameters['side_connection'] = True
+        parameters["side_connection"] = True
         alg.set_image(image)
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
         self.check_result(result, [96000 + 5, 72000 + 5], operator.eq, parameters)
 
-        parameters['side_connection'] = False
+        parameters["side_connection"] = False
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
         self.check_result(result, [96000 + 5 + 72000 + 5], operator.eq, parameters)
 
 
 class TestLowerThreshold(BaseOneThreshold):
-    parameters = {"channel": 0, "minimum_size": 30000, 'threshold': {'name': 'Manual', 'values': {'threshold': 45}},
-                  'noise_filtering': {'name': 'None', 'values': {}}, 'side_connection': False}
+    parameters = {
+        "channel": 0,
+        "minimum_size": 30000,
+        "threshold": {"name": "Manual", "values": {"threshold": 45}},
+        "noise_filtering": {"name": "None", "values": {}},
+        "side_connection": False,
+    }
     shift = -6
     get_base_object = staticmethod(get_two_parts)
     get_side_object = staticmethod(get_two_parts_side)
@@ -159,8 +164,13 @@ class TestLowerThreshold(BaseOneThreshold):
 
 
 class TestUpperThreshold(BaseOneThreshold):
-    parameters = {"channel": 0, "minimum_size": 30000, 'threshold': {'name': 'Manual', 'values': {'threshold': 55}},
-                  'noise_filtering': {'name': 'None', 'values': {}}, 'side_connection': False}
+    parameters = {
+        "channel": 0,
+        "minimum_size": 30000,
+        "threshold": {"name": "Manual", "values": {"threshold": 55}},
+        "noise_filtering": {"name": "None", "values": {}},
+        "side_connection": False,
+    }
     shift = 6
     get_base_object = staticmethod(get_two_parts_reversed)
     get_side_object = staticmethod(get_two_parts_side_reversed)
@@ -171,40 +181,56 @@ class TestRangeThresholdAlgorithm(object):
     def test_simple(self):
         image = get_two_parts()
         alg = sa.RangeThresholdAlgorithm()
-        parameters = {'lower_threshold': 45, 'upper_threshold': 60, 'channel': 0, 'minimum_size': 8000,
-                      'noise_filtering': {'name': 'None', 'values': {}}, 'side_connection': False}
+        parameters = {
+            "lower_threshold": 45,
+            "upper_threshold": 60,
+            "channel": 0,
+            "minimum_size": 8000,
+            "noise_filtering": {"name": "None", "values": {}},
+            "side_connection": False,
+        }
         alg.set_parameters(**parameters)
         alg.set_image(image)
         result = alg.calculation_run(empty)
         assert np.max(result.segmentation) == 2
-        assert np.all(np.bincount(result.segmentation.flat)[1:] == np.array(
-            [30 * 40 * 80 - 20 * 30 * 70, 30 * 30 * 80 - 20 * 20 * 70]))
+        assert np.all(
+            np.bincount(result.segmentation.flat)[1:]
+            == np.array([30 * 40 * 80 - 20 * 30 * 70, 30 * 30 * 80 - 20 * 20 * 70])
+        )
         assert result.parameters.values == parameters
         assert result.parameters.algorithm == alg.get_name()
 
-        parameters['lower_threshold'] -= 6
+        parameters["lower_threshold"] -= 6
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
         assert np.max(result.segmentation) == 1
-        assert np.bincount(result.segmentation.flat)[1] == 30*80*80 - 20 * 50 * 70
+        assert np.bincount(result.segmentation.flat)[1] == 30 * 80 * 80 - 20 * 50 * 70
         assert result.parameters.values == parameters
         assert result.parameters.algorithm == alg.get_name()
 
     def test_side_connection(self):
         image = get_two_parts_side()
         alg = sa.RangeThresholdAlgorithm()
-        parameters = {'lower_threshold': 45, 'upper_threshold': 60, 'channel': 0, 'minimum_size': 8000,
-                      'noise_filtering': {'name': 'None', 'values': {}}, 'side_connection': True}
+        parameters = {
+            "lower_threshold": 45,
+            "upper_threshold": 60,
+            "channel": 0,
+            "minimum_size": 8000,
+            "noise_filtering": {"name": "None", "values": {}},
+            "side_connection": True,
+        }
         alg.set_parameters(**parameters)
         alg.set_image(image)
         result = alg.calculation_run(empty)
         assert np.max(result.segmentation) == 2
-        assert np.all(np.bincount(result.segmentation.flat)[1:] == np.array(
-            [30 * 40 * 80 - 20 * 30 * 70 + 5, 30 * 30 * 80 - 20 * 20 * 70 + 5]))
+        assert np.all(
+            np.bincount(result.segmentation.flat)[1:]
+            == np.array([30 * 40 * 80 - 20 * 30 * 70 + 5, 30 * 30 * 80 - 20 * 20 * 70 + 5])
+        )
         assert result.parameters.values == parameters
         assert result.parameters.algorithm == alg.get_name()
 
-        parameters['side_connection'] = False
+        parameters["side_connection"] = False
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
         assert np.max(result.segmentation) == 1
@@ -223,35 +249,42 @@ class BaseFlowThreshold(BaseThreshold, ABC):
         image = self.get_multiple_part(components)
         alg.set_image(image)
         sprawl_algorithm = sprawl_dict[sprawl_algorithm_name]
-        parameters["sprawl_type"] = {'name': sprawl_algorithm_name, 'values': sprawl_algorithm.get_default_values()}
+        parameters["sprawl_type"] = {"name": sprawl_algorithm_name, "values": sprawl_algorithm.get_default_values()}
         if compare_op(1, 0):
-            parameters["threshold"]["values"]["base_threshold"]['values']["threshold"] += self.get_shift()
+            parameters["threshold"]["values"]["base_threshold"]["values"]["threshold"] += self.get_shift()
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
-        self.check_result(result, [4000]*components, compare_op, parameters)
+        self.check_result(result, [4000] * components, compare_op, parameters)
 
     @pytest.mark.parametrize("algorithm_name", sprawl_dict.keys())
     def test_side_connection(self, algorithm_name):
         image = self.get_side_object()
         alg = self.algorithm_class()
         parameters = self.get_parameters()
-        parameters['side_connection'] = True
+        parameters["side_connection"] = True
         alg.set_image(image)
         val = sprawl_dict[algorithm_name]
-        parameters["sprawl_type"] = {'name': algorithm_name, 'values': val.get_default_values()}
+        parameters["sprawl_type"] = {"name": algorithm_name, "values": val.get_default_values()}
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
         self.check_result(result, [96000 + 5, 72000 + 5], operator.eq, parameters)
 
 
 class TestLowerThresholdFlow(BaseFlowThreshold):
-    parameters = {"channel": 0, "minimum_size": 30,
-                  'threshold': {'name': 'Base/Core',
-                                'values': {
-                                    'core_threshold': {'name': 'Manual', 'values': {'threshold': 55}},
-                                    'base_threshold': {'name': 'Manual', 'values': {'threshold': 45}}}},
-                  'noise_filtering': {'name': 'None', 'values': {}}, 'side_connection': False,
-                  'sprawl_type': {'name': 'Euclidean sprawl', 'values': {}}}
+    parameters = {
+        "channel": 0,
+        "minimum_size": 30,
+        "threshold": {
+            "name": "Base/Core",
+            "values": {
+                "core_threshold": {"name": "Manual", "values": {"threshold": 55}},
+                "base_threshold": {"name": "Manual", "values": {"threshold": 45}},
+            },
+        },
+        "noise_filtering": {"name": "None", "values": {}},
+        "side_connection": False,
+        "sprawl_type": {"name": "Euclidean sprawl", "values": {}},
+    }
     shift = -6
     get_base_object = staticmethod(get_two_parts)
     get_side_object = staticmethod(get_two_parts_side)
@@ -260,13 +293,20 @@ class TestLowerThresholdFlow(BaseFlowThreshold):
 
 
 class TestUpperThresholdFlow(BaseFlowThreshold):
-    parameters = {"channel": 0, "minimum_size": 30,
-                  'threshold': {'name': 'Base/Core',
-                                'values': {
-                                    'core_threshold': {'name': 'Manual', 'values': {'threshold': 45}},
-                                    'base_threshold': {'name': 'Manual', 'values': {'threshold': 55}}}},
-                  'noise_filtering': {'name': 'None', 'values': {}}, 'side_connection': False,
-                  'sprawl_type': {'name': 'Euclidean sprawl', 'values': {}}}
+    parameters = {
+        "channel": 0,
+        "minimum_size": 30,
+        "threshold": {
+            "name": "Base/Core",
+            "values": {
+                "core_threshold": {"name": "Manual", "values": {"threshold": 45}},
+                "base_threshold": {"name": "Manual", "values": {"threshold": 55}},
+            },
+        },
+        "noise_filtering": {"name": "None", "values": {}},
+        "side_connection": False,
+        "sprawl_type": {"name": "Euclidean sprawl", "values": {}},
+    }
     shift = 6
     get_base_object = staticmethod(get_two_parts_reversed)
     get_side_object = staticmethod(get_two_parts_side_reversed)
@@ -278,16 +318,28 @@ class TestMaskCreate:
     def test_simple_mask(self):
         mask_array = np.zeros((10, 20, 20), dtype=np.uint8)
         mask_array[3:7, 6:14, 6:14] = 1
-        prop = MaskProperty(dilate=RadiusType.NO, dilate_radius=0, fill_holes=RadiusType.NO, max_holes_size=0,
-                            save_components=False, clip_to_mask=False)
+        prop = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.NO,
+            max_holes_size=0,
+            save_components=False,
+            clip_to_mask=False,
+        )
         new_mask = calculate_mask(prop, mask_array, None, (1, 1, 1))
         assert np.all(new_mask == mask_array)
         mask_array2 = np.copy(mask_array)
         mask_array2[4:6, 8:12, 8:12] = 2
         new_mask = calculate_mask(prop, mask_array2, None, (1, 1, 1))
         assert np.all(new_mask == mask_array)
-        prop2 = MaskProperty(dilate=RadiusType.NO, dilate_radius=0, fill_holes=RadiusType.NO, max_holes_size=0,
-                             save_components=True, clip_to_mask=False)
+        prop2 = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.NO,
+            max_holes_size=0,
+            save_components=True,
+            clip_to_mask=False,
+        )
         new_mask = calculate_mask(prop2, mask_array2, None, (1, 1, 1))
         assert np.all(new_mask == mask_array2)
 
@@ -296,13 +348,25 @@ class TestMaskCreate:
         mask_base_array[4:16, 8:22, 8:22] = 1
         mask1_array = np.copy(mask_base_array)
         mask1_array[4:16, 10:15, 10:15] = 0
-        prop = MaskProperty(dilate=RadiusType.NO, dilate_radius=0, fill_holes=RadiusType.R2D, max_holes_size=0,
-                            save_components=False, clip_to_mask=False)
+        prop = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.R2D,
+            max_holes_size=0,
+            save_components=False,
+            clip_to_mask=False,
+        )
         new_mask = calculate_mask(prop, mask1_array, None, (1, 1, 1))
         assert np.all(mask_base_array == new_mask)
 
-        prop = MaskProperty(dilate=RadiusType.NO, dilate_radius=0, fill_holes=RadiusType.R3D, max_holes_size=0,
-                            save_components=False, clip_to_mask=False)
+        prop = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.R3D,
+            max_holes_size=0,
+            save_components=False,
+            clip_to_mask=False,
+        )
         new_mask = calculate_mask(prop, mask1_array, None, (1, 1, 1))
         assert np.all(mask1_array == new_mask)
 
@@ -319,10 +383,22 @@ class TestMaskCreate:
         res_mask2 = np.copy(mask_base_array)
         mask_base_array[6:14, 8:12, 8:22] = 0
         mask_base_array[6:14, 18:22, 8:22] = 0
-        prop1 = MaskProperty(dilate=RadiusType.NO, dilate_radius=0, fill_holes=RadiusType.R3D, max_holes_size=0,
-                             save_components=False, clip_to_mask=False)
-        prop2 = MaskProperty(dilate=RadiusType.NO, dilate_radius=0, fill_holes=RadiusType.R3D, max_holes_size=0,
-                             save_components=True, clip_to_mask=False)
+        prop1 = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.R3D,
+            max_holes_size=0,
+            save_components=False,
+            clip_to_mask=False,
+        )
+        prop2 = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.R3D,
+            max_holes_size=0,
+            save_components=True,
+            clip_to_mask=False,
+        )
         new_mask = calculate_mask(prop1, mask_base_array, None, (1, 1, 1))
         assert np.all(new_mask == res_mask1)
         new_mask = calculate_mask(prop2, mask_base_array, None, (1, 1, 1))
@@ -342,10 +418,22 @@ class TestMaskCreate:
         mask1_array = np.copy(mask_base_array)
         mask1_array[6:14, 6:14, 24:32] = 0
 
-        prop1 = MaskProperty(dilate=RadiusType.NO, dilate_radius=0, fill_holes=RadiusType.R2D, max_holes_size=70,
-                             save_components=False, clip_to_mask=False)
-        prop2 = MaskProperty(dilate=RadiusType.NO, dilate_radius=0, fill_holes=RadiusType.R3D, max_holes_size=530,
-                             save_components=True, clip_to_mask=False)
+        prop1 = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.R2D,
+            max_holes_size=70,
+            save_components=False,
+            clip_to_mask=False,
+        )
+        prop2 = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.R3D,
+            max_holes_size=530,
+            save_components=True,
+            clip_to_mask=False,
+        )
 
         new_mask = calculate_mask(prop1, mask_base_array, None, (1, 1, 1))
         assert np.all(new_mask == mask_base_array)
@@ -355,10 +443,22 @@ class TestMaskCreate:
     def test_dilate(self):
         mask_base_array = np.zeros((30, 30, 30), dtype=np.uint8)
         mask_base_array[10:20, 10:20, 10:20] = 1
-        prop1 = MaskProperty(dilate=RadiusType.R2D, dilate_radius=-1, fill_holes=RadiusType.NO, max_holes_size=70,
-                             save_components=False, clip_to_mask=False)
-        prop2 = MaskProperty(dilate=RadiusType.R3D, dilate_radius=-1, fill_holes=RadiusType.NO, max_holes_size=70,
-                             save_components=False, clip_to_mask=False)
+        prop1 = MaskProperty(
+            dilate=RadiusType.R2D,
+            dilate_radius=-1,
+            fill_holes=RadiusType.NO,
+            max_holes_size=70,
+            save_components=False,
+            clip_to_mask=False,
+        )
+        prop2 = MaskProperty(
+            dilate=RadiusType.R3D,
+            dilate_radius=-1,
+            fill_holes=RadiusType.NO,
+            max_holes_size=70,
+            save_components=False,
+            clip_to_mask=False,
+        )
         res_array1 = np.zeros((30, 30, 30), dtype=np.uint8)
         res_array1[10:20, 11:19, 11:19] = 1
         new_mask = calculate_mask(prop1, mask_base_array, None, (1, 1, 1))
@@ -368,10 +468,22 @@ class TestMaskCreate:
         new_mask = calculate_mask(prop2, mask_base_array, None, (1, 1, 1))
         assert np.all(new_mask == res_array2)
 
-        prop1 = MaskProperty(dilate=RadiusType.R2D, dilate_radius=1, fill_holes=RadiusType.NO, max_holes_size=70,
-                             save_components=False, clip_to_mask=False)
-        prop2 = MaskProperty(dilate=RadiusType.R3D, dilate_radius=1, fill_holes=RadiusType.NO, max_holes_size=70,
-                             save_components=False, clip_to_mask=False)
+        prop1 = MaskProperty(
+            dilate=RadiusType.R2D,
+            dilate_radius=1,
+            fill_holes=RadiusType.NO,
+            max_holes_size=70,
+            save_components=False,
+            clip_to_mask=False,
+        )
+        prop2 = MaskProperty(
+            dilate=RadiusType.R3D,
+            dilate_radius=1,
+            fill_holes=RadiusType.NO,
+            max_holes_size=70,
+            save_components=False,
+            clip_to_mask=False,
+        )
         res_array1 = np.zeros((30, 30, 30), dtype=np.uint8)
         res_array1[10:20, 9:21, 9:21] = 1
         new_mask = calculate_mask(prop1, mask_base_array, None, (1, 1, 1))
@@ -386,12 +498,30 @@ class TestMaskCreate:
     def test_dilate_spacing_negative(self):
         mask_base_array = np.zeros((30, 30, 30), dtype=np.uint8)
         mask_base_array[10:20, 5:25, 5:25] = 1
-        prop1 = MaskProperty(dilate=RadiusType.R3D, dilate_radius=-1, fill_holes=RadiusType.NO, max_holes_size=70,
-                             save_components=False, clip_to_mask=False)
-        prop2 = MaskProperty(dilate=RadiusType.R3D, dilate_radius=-2, fill_holes=RadiusType.NO, max_holes_size=70,
-                             save_components=False, clip_to_mask=False)
-        prop3 = MaskProperty(dilate=RadiusType.R3D, dilate_radius=-3, fill_holes=RadiusType.NO, max_holes_size=70,
-                             save_components=False, clip_to_mask=False)
+        prop1 = MaskProperty(
+            dilate=RadiusType.R3D,
+            dilate_radius=-1,
+            fill_holes=RadiusType.NO,
+            max_holes_size=70,
+            save_components=False,
+            clip_to_mask=False,
+        )
+        prop2 = MaskProperty(
+            dilate=RadiusType.R3D,
+            dilate_radius=-2,
+            fill_holes=RadiusType.NO,
+            max_holes_size=70,
+            save_components=False,
+            clip_to_mask=False,
+        )
+        prop3 = MaskProperty(
+            dilate=RadiusType.R3D,
+            dilate_radius=-3,
+            fill_holes=RadiusType.NO,
+            max_holes_size=70,
+            save_components=False,
+            clip_to_mask=False,
+        )
         res_array1 = np.zeros((30, 30, 30), dtype=np.uint8)
         res_array1[10:20, 6:24, 6:24] = 1
         new_mask = calculate_mask(prop1, mask_base_array, None, (3, 1, 1))
@@ -408,12 +538,30 @@ class TestMaskCreate:
     def test_dilate_spacing_positive(self):
         mask_base_array = np.zeros((30, 30, 30), dtype=np.uint8)
         mask_base_array[10:20, 10:20, 10:20] = 1
-        prop1 = MaskProperty(dilate=RadiusType.R3D, dilate_radius=1, fill_holes=RadiusType.NO, max_holes_size=70,
-                             save_components=False, clip_to_mask=False)
-        prop2 = MaskProperty(dilate=RadiusType.R3D, dilate_radius=2, fill_holes=RadiusType.NO, max_holes_size=70,
-                             save_components=False, clip_to_mask=False)
-        prop3 = MaskProperty(dilate=RadiusType.R3D, dilate_radius=3, fill_holes=RadiusType.NO, max_holes_size=70,
-                             save_components=False, clip_to_mask=False)
+        prop1 = MaskProperty(
+            dilate=RadiusType.R3D,
+            dilate_radius=1,
+            fill_holes=RadiusType.NO,
+            max_holes_size=70,
+            save_components=False,
+            clip_to_mask=False,
+        )
+        prop2 = MaskProperty(
+            dilate=RadiusType.R3D,
+            dilate_radius=2,
+            fill_holes=RadiusType.NO,
+            max_holes_size=70,
+            save_components=False,
+            clip_to_mask=False,
+        )
+        prop3 = MaskProperty(
+            dilate=RadiusType.R3D,
+            dilate_radius=3,
+            fill_holes=RadiusType.NO,
+            max_holes_size=70,
+            save_components=False,
+            clip_to_mask=False,
+        )
         res_array1 = np.zeros((30, 30, 30), dtype=np.uint8)
         res_array1[10:20, 9:21, 9:21] = 1
         new_mask = calculate_mask(prop1, mask_base_array, None, (3, 1, 1))
@@ -439,10 +587,22 @@ class TestMaskCreate:
         mask_base_array[10:20, 10:20, 10:20] = 1
         mask2_array = np.copy(mask_base_array)
         mask2_array[13:17, 13:17, 13:17] = 0
-        prop1 = MaskProperty(dilate=RadiusType.NO, dilate_radius=-0, fill_holes=RadiusType.NO, max_holes_size=0,
-                             save_components=False, clip_to_mask=False)
-        prop2 = MaskProperty(dilate=RadiusType.NO, dilate_radius=-0, fill_holes=RadiusType.NO, max_holes_size=70,
-                             save_components=False, clip_to_mask=True)
+        prop1 = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=-0,
+            fill_holes=RadiusType.NO,
+            max_holes_size=0,
+            save_components=False,
+            clip_to_mask=False,
+        )
+        prop2 = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=-0,
+            fill_holes=RadiusType.NO,
+            max_holes_size=70,
+            save_components=False,
+            clip_to_mask=True,
+        )
         new_mask1 = calculate_mask(prop1, mask_base_array, mask2_array, (1, 1, 1))
         new_mask2 = calculate_mask(prop2, mask_base_array, mask2_array, (1, 1, 1))
         assert np.all(new_mask1 == mask_base_array)
@@ -453,10 +613,24 @@ class TestMaskCreate:
         mask_base_array[10:20, 10:20, 10:20] = 1
         mask2_array = np.copy(mask_base_array)
         mask2_array[13:17, 13:17, 13:17] = 0
-        prop1 = MaskProperty(dilate=RadiusType.NO, dilate_radius=-0, fill_holes=RadiusType.NO, max_holes_size=0,
-                             save_components=False, clip_to_mask=False, reversed_mask=False)
-        prop2 = MaskProperty(dilate=RadiusType.NO, dilate_radius=-0, fill_holes=RadiusType.NO, max_holes_size=0,
-                             save_components=False, clip_to_mask=False, reversed_mask=True)
+        prop1 = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=-0,
+            fill_holes=RadiusType.NO,
+            max_holes_size=0,
+            save_components=False,
+            clip_to_mask=False,
+            reversed_mask=False,
+        )
+        prop2 = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=-0,
+            fill_holes=RadiusType.NO,
+            max_holes_size=0,
+            save_components=False,
+            clip_to_mask=False,
+            reversed_mask=True,
+        )
         new_mask1 = calculate_mask(prop1, mask_base_array, mask2_array, (1, 1, 1))
         new_mask2 = calculate_mask(prop2, mask_base_array, mask2_array, (1, 1, 1))
         assert np.all(new_mask1 == mask_base_array)
@@ -476,12 +650,28 @@ class TestPipeline:
 
     def test_pipeline_simple(self):
         image = self.get_image()
-        prop1 = MaskProperty(dilate=RadiusType.NO, dilate_radius=-0, fill_holes=RadiusType.NO, max_holes_size=0,
-                             save_components=False, clip_to_mask=False)
-        parameters1 = {"channel": 0, "minimum_size": 30, 'threshold': {'name': 'Manual', 'values': {'threshold': 5}},
-                       'noise_filtering': {'name': 'None', 'values': {}}, 'side_connection': False}
-        parameters2 = {"channel": 1, "minimum_size": 30, 'threshold': {'name': 'Manual', 'values': {'threshold': 5}},
-                       'noise_filtering': {'name': 'None', 'values': {}}, 'side_connection': False}
+        prop1 = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=-0,
+            fill_holes=RadiusType.NO,
+            max_holes_size=0,
+            save_components=False,
+            clip_to_mask=False,
+        )
+        parameters1 = {
+            "channel": 0,
+            "minimum_size": 30,
+            "threshold": {"name": "Manual", "values": {"threshold": 5}},
+            "noise_filtering": {"name": "None", "values": {}},
+            "side_connection": False,
+        }
+        parameters2 = {
+            "channel": 1,
+            "minimum_size": 30,
+            "threshold": {"name": "Manual", "values": {"threshold": 5}},
+            "noise_filtering": {"name": "None", "values": {}},
+            "side_connection": False,
+        }
         seg_profile1 = SegmentationProfile(name="Unknown", algorithm="Lower threshold", values=parameters1)
         pipeline_element = SegmentationPipelineElement(mask_property=prop1, segmentation=seg_profile1)
         seg_profile2 = SegmentationProfile(name="Unknown", algorithm="Lower threshold", values=parameters2)
@@ -557,4 +747,3 @@ class TestConvexFill:
     def test__convex_fill(self):
         arr = np.zeros((20, 20), dtype=np.bool)
         assert _convex_fill(arr) is None
-

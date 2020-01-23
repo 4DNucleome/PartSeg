@@ -39,10 +39,11 @@ class ProfileDict:
     >>> dkt.get("aa.bb")
         {'c1': 7, 'c2': 8}
     """
+
     def __init__(self):
         self.my_dict = dict()
 
-    def update(self, ob: typing.Union['ProfileDict', dict, None] = None, **kwargs):
+    def update(self, ob: typing.Union["ProfileDict", dict, None] = None, **kwargs):
         """
         Update dict recursively. Use :py:func:`~.recursive_update_dict`
 
@@ -130,6 +131,7 @@ class ProfileEncoder(SerializeClassEncoder):
     >>> with open("some_file", 'w') as fp:
     >>>     json.dump(data, fp, cls=ProfileEncoder)
     """
+
     # pylint: disable=E0202
     def default(self, o):
         """encoder implementation"""

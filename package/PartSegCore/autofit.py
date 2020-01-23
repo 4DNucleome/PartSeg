@@ -26,12 +26,12 @@ def find_density_orientation(img, voxel_size, cutoff=1):
     punkty_wazone = np.empty(points.shape)
     for i in range(3):
         punkty_wazone[:, i] = points[:, i] * weights
-    mean = np.sum(punkty_wazone, axis=0)/np.sum(weights)
+    mean = np.sum(punkty_wazone, axis=0) / np.sum(weights)
     points_shifted = points - mean
     wheighted_points_shifted = np.copy(points_shifted)
     for i in range(3):
         wheighted_points_shifted[:, i] *= weights
-    cov = np.dot(wheighted_points_shifted.transpose(), points_shifted) * 1/(len(weights)-1)
+    cov = np.dot(wheighted_points_shifted.transpose(), points_shifted) * 1 / (len(weights) - 1)
     # cov variable is weighted covariance matrix
     values, vectors = np.linalg.eig(cov)
     # logging.info("Eigen values0\n %s", str(values))
@@ -92,14 +92,14 @@ def density_mass_center(image, voxel_size=(1.0, 1.0, 1.0)):
 
     denominator = float(np.sum(image))
     for i, item in enumerate(iter_dim):
-        ax = single_dim + tuple(iter_dim[:i] + iter_dim[i+1:])
+        ax = single_dim + tuple(iter_dim[:i] + iter_dim[i + 1 :])
         m = np.sum(np.sum(image, axis=ax) * np.arange(image.shape[item]))
-        res[item] = m/denominator
+        res[item] = m / denominator
 
     return np.array(res) * voxel_size_array
 
 
-def calculate_density_momentum(image: np.ndarray, voxel_size=np.array([1., 1., 1.]), mass_center=None):
+def calculate_density_momentum(image: np.ndarray, voxel_size=np.array([1.0, 1.0, 1.0]), mass_center=None):
     """Calculates image momentum."""
     image = image.squeeze()
     if not mass_center:
@@ -108,6 +108,6 @@ def calculate_density_momentum(image: np.ndarray, voxel_size=np.array([1., 1., 1
     points = np.transpose(np.nonzero(np.ones(image.shape, dtype=np.uint8))).astype(np.float64)
     for i, v in enumerate(reversed(voxel_size), start=1):
         points[:, -i] *= v
-    weights = np.sum((points - mass_center)**2, axis=1)
+    weights = np.sum((points - mass_center) ** 2, axis=1)
     momentum = float(np.sum(weights * image.flatten()))
     return momentum

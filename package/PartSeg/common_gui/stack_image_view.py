@@ -4,7 +4,7 @@ import collections
 import os
 from enum import Enum
 from math import log
-from typing import Type, List, Union, Callable,  Optional
+from typing import Type, List, Union, Callable, Optional
 from PartSegData import icons_dir
 
 import numpy as np
@@ -12,9 +12,19 @@ from qtpy import QtGui
 from qtpy.QtCore import QRect, QTimerEvent, QSize, QObject, Signal, QPoint, Qt, QEvent, Slot
 from qtpy.QtGui import QWheelEvent, QPainter, QPen, QColor, QPalette, QPixmap, QImage, QIcon, QResizeEvent, QMouseEvent
 from qtpy.QtWidgets import QScrollBar, QLabel, QGridLayout
-from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
-    QScrollArea, QSizePolicy, QToolButton, QAction, QApplication, \
-    QSlider, QCheckBox, QComboBox
+from qtpy.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QScrollArea,
+    QSizePolicy,
+    QToolButton,
+    QAction,
+    QApplication,
+    QSlider,
+    QCheckBox,
+    QComboBox,
+)
 
 from PartSeg.common_gui.numpy_qimage import NumpyQImage
 from PartSegCore.class_generator import enum_register
@@ -45,6 +55,7 @@ enum_register.register_class(LabelEnum)
 
 class ImageShowState(QObject):
     """Object for storing state used when presenting it in :class:`.ImageView`"""
+
     parameter_changed = Signal()  # signal informing that some of image presenting parameters
     # changed and image need to be refreshed
 
@@ -101,6 +112,7 @@ class ImageShowState(QObject):
 
 class ImageCanvas(QLabel):
     """Canvas for painting image"""
+
     zoom_mark = Signal(QPoint, QPoint, QSize)  # Signal emitted on end of marking zoom area.
     # Contains two oposit corners of rectangle and current size of canvas
     position_signal = Signal([QPoint, QSize], [QPoint])
@@ -419,8 +431,9 @@ class ImageView(QWidget):
                     self.labels_layer = None
                     self.paint_layer()
                     return
-            self.text_info_change.emit("Position: {}, Brightness: {}, component {}".format(
-                tuple(pos2), brightness, comp))
+            self.text_info_change.emit(
+                "Position: {}, Brightness: {}, component {}".format(tuple(pos2), brightness, comp)
+            )
         else:
             self.text_info_change.emit("Position: {}, Brightness: {}".format(tuple(pos2), brightness))
 
@@ -484,8 +497,15 @@ class ImageView(QWidget):
             components_mask = self._settings.components_mask()
             if self.image_state.show_label == LabelEnum.Show_results:
                 components_mask[1:] = 1
-            add_labels(im, layers, self.image_state.opacity, self.image_state.only_borders,
-                       int((self.image_state.borders_thick - 1) / 2), components_mask, self._settings.label_colors)
+            add_labels(
+                im,
+                layers,
+                self.image_state.opacity,
+                self.image_state.only_borders,
+                int((self.image_state.borders_thick - 1) / 2),
+                components_mask,
+                self._settings.label_colors,
+            )
         return im
 
     @property
@@ -538,6 +558,7 @@ class MyScrollArea(QScrollArea):
     :type zoom_scale: float
     :param zoom_scale: zoom scale
     """
+
     # resize_area = Signal(QSize)
 
     zoom_changed = Signal()
@@ -710,9 +731,9 @@ class MyScrollArea(QScrollArea):
         # super(MyScrollArea, self).resizeEvent(event)
         self.pixmap.point = None
         if self.x_mid is None:
-            self.x_mid = - self.widget().pos().x() + (self.get_width(event.oldSize().width())) / 2
+            self.x_mid = -self.widget().pos().x() + (self.get_width(event.oldSize().width())) / 2
         if self.y_mid is None:
-            self.y_mid = - self.widget().pos().y() + (self.get_height(event.oldSize().height())) / 2
+            self.y_mid = -self.widget().pos().y() + (self.get_height(event.oldSize().height())) / 2
         old_ratio = self.get_ratio_factor(event.oldSize())
         new_ratio = self.get_ratio_factor(event.size())
         scalar = new_ratio / old_ratio
@@ -759,7 +780,7 @@ class MyScrollArea(QScrollArea):
         delta = event.angleDelta().y()
         if abs(delta) > max_step:
             delta = max_step * (delta / abs(delta))
-        scale_mod = (step ** delta)
+        scale_mod = step ** delta
         if scale_mod == 1 or (scale_mod > 1 and self.zoom_scale == self.max_zoom):
             return
         if self.zoom_scale * scale_mod > self.max_zoom:
@@ -814,15 +835,17 @@ class ColorBar(QLabel):
         cmap = self._settings.colormap_dict[self._settings.get_channel_info(name, channel_id)][0]
 
         round_factor = self.round_base(self.range[1])
-        self.round_range = (int(round(self.range[0] / round_factor) * round_factor),
-                            int(round(self.range[1] / round_factor) * round_factor))
+        self.round_range = (
+            int(round(self.range[0] / round_factor) * round_factor),
+            int(round(self.range[1] / round_factor) * round_factor),
+        )
         if self.round_range[0] < self.range[0]:
             self.round_range = self.round_range[0] + round_factor, self.round_range[1]
         if self.round_range[1] > self.range[1]:
             self.round_range = self.round_range[0], self.round_range[1] - round_factor
         # print(self.range, self.round_range)
         img = color_image_fun(np.linspace(0, 256, 512).reshape((1, 512, 1))[:, ::-1], [cmap], [(0, 256)])
-        self.image = NumpyQImage(np.swapaxes(img, 0 ,1))
+        self.image = NumpyQImage(np.swapaxes(img, 0, 1))
         self.repaint()
 
     @staticmethod
@@ -865,9 +888,10 @@ class ColorBar(QLabel):
             return
         start_prop = 1 - (self.round_range[0] - self.range[0]) / (self.range[1] - self.range[0])
         end_prop = 1 - (self.round_range[1] - self.range[0]) / (self.range[1] - self.range[0])
-        for pos, val in zip(np.linspace(10 + end_prop * rect.size().height(), start_prop * rect.size().height(),
-                                        number_of_marks),
-                            np.linspace(self.round_range[1], self.round_range[0], number_of_marks, dtype=np.uint32)):
+        for pos, val in zip(
+            np.linspace(10 + end_prop * rect.size().height(), start_prop * rect.size().height(), number_of_marks),
+            np.linspace(self.round_range[1], self.round_range[0], number_of_marks, dtype=np.uint32),
+        ):
             painter.drawText(bar_width + 5, pos, f"{val}")
         painter.setFont(old_font)
         # print(self.image.shape)

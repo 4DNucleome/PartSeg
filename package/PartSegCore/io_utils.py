@@ -69,16 +69,28 @@ class ProjectInfoBase:
 
 
 class SaveBase(AlgorithmDescribeBase, ABC):
-    need_functions = ["save", "get_short_name", "get_name_with_suffix", "get_default_extension",
-                      "need_segmentation", "need_mask"]
+    need_functions = [
+        "save",
+        "get_short_name",
+        "get_name_with_suffix",
+        "get_default_extension",
+        "need_segmentation",
+        "need_mask",
+    ]
 
     @classmethod
     def get_short_name(cls):
         raise NotImplementedError()
 
     @classmethod
-    def save(cls, save_location: typing.Union[str, BytesIO, Path], project_info, parameters: dict,
-             range_changed=None, step_changed=None):
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info,
+        parameters: dict,
+        range_changed=None,
+        step_changed=None,
+    ):
         """
 
         :param save_location: location to save, can be buffer
@@ -95,7 +107,7 @@ class SaveBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def get_default_extension(cls):
-        match = re.search(r'\(\*(\.\w+)', cls.get_name_with_suffix())
+        match = re.search(r"\(\*(\.\w+)", cls.get_name_with_suffix())
         if match:
             return match.group(1)
         else:
@@ -111,18 +123,28 @@ class SaveBase(AlgorithmDescribeBase, ABC):
 
 
 class LoadBase(AlgorithmDescribeBase, ABC):
-    need_functions = ["load", "get_short_name", "get_name_with_suffix", "number_of_files", "correct_files_order",
-                      "get_next_file", "partial"]
+    need_functions = [
+        "load",
+        "get_short_name",
+        "get_name_with_suffix",
+        "number_of_files",
+        "correct_files_order",
+        "get_next_file",
+        "partial",
+    ]
 
     @classmethod
     def get_short_name(cls):
         raise NotImplementedError()
 
     @classmethod
-    def load(cls, load_locations: typing.List[typing.Union[str, BytesIO, Path]],
-             range_changed: typing.Callable[[int, int], typing.Any] = None,
-             step_changed: typing.Callable[[int], typing.Any] = None, metadata: typing.Optional[dict] = None) -> \
-            typing.Union[ProjectInfoBase, typing.List[ProjectInfoBase]]:
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ) -> typing.Union[ProjectInfoBase, typing.List[ProjectInfoBase]]:
         """
         Function for load data
 
@@ -144,9 +166,9 @@ class LoadBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def get_extensions(cls) -> typing.List:
-        match = re.match(r'.*\((.*)\)', cls.get_name())
+        match = re.match(r".*\((.*)\)", cls.get_name())
         if match:
-            return [x[1:] for x in match.group(1).split(' ') if len(x) > 3]
+            return [x[1:] for x in match.group(1).split(" ") if len(x) > 3]
         else:
             return []
 
@@ -237,16 +259,21 @@ def load_metadata_base(data: typing.Union[str, Path]):
     return UpdateLoadedMetadataBase.load_json_data(data)
 
 
-def proxy_callback(range_changed: typing.Callable[[int, int], typing.Any],
-                   step_changed: typing.Callable[[int], typing.Any], text: str, val):
+def proxy_callback(
+    range_changed: typing.Callable[[int, int], typing.Any],
+    step_changed: typing.Callable[[int], typing.Any],
+    text: str,
+    val,
+):
     if text == "max" and range_changed is not None:
         range_changed(0, val)
     if text == "step" and step_changed is not None:
         step_changed(val)
 
 
-def open_tar_file(file_data: typing.Union[str, TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase], mode='r') -> \
-        typing.Tuple[TarFile, str]:
+def open_tar_file(
+    file_data: typing.Union[str, TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase], mode="r"
+) -> typing.Tuple[TarFile, str]:
     """Create tar file from path or buffer. If passed :py:class:`TarFile` then return it."""
     if isinstance(file_data, TarFile):
         tar_file = file_data
@@ -255,7 +282,7 @@ def open_tar_file(file_data: typing.Union[str, TarFile, TextIOBase, BufferedIOBa
         tar_file = TarFile.open(file_data, mode)
         file_path = file_data
     elif isinstance(file_data, (TextIOBase, BufferedIOBase, RawIOBase, IOBase)):
-        tar_file = TarFile.open(fileobj=file_data, mode='r')
+        tar_file = TarFile.open(fileobj=file_data, mode="r")
         file_path = ""
     else:
         raise ValueError(f"wrong type of file_ argument: {type(file_data)}")

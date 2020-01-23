@@ -8,9 +8,25 @@ import numpy as np
 from PartSegData import icons_dir
 from qtpy.QtCore import Qt, QTimer, QByteArray
 from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QPushButton, QListWidget, QVBoxLayout, QHBoxLayout, QLineEdit, \
-    QFileDialog, QWidget, QDialog, QLabel, QMessageBox, QProgressBar, QSpinBox, QGridLayout, QComboBox, \
-    QTabWidget, QTreeWidget, QTreeWidgetItem
+from qtpy.QtWidgets import (
+    QPushButton,
+    QListWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLineEdit,
+    QFileDialog,
+    QWidget,
+    QDialog,
+    QLabel,
+    QMessageBox,
+    QProgressBar,
+    QSpinBox,
+    QGridLayout,
+    QComboBox,
+    QTabWidget,
+    QTreeWidget,
+    QTreeWidgetItem,
+)
 
 from PartSeg.common_gui.error_report import ExceptionListItem, ExceptionList
 from ..common_gui.select_multiple_files import AddFiles
@@ -28,6 +44,7 @@ class ProgressView(QWidget):
     """
     :type batch_manager: CalculationManager
     """
+
     def __init__(self, parent, batch_manager):
         QWidget.__init__(self, parent)
         self.calculation_manager = batch_manager
@@ -95,8 +112,11 @@ class ProgressView(QWidget):
             else:
                 self.task_que.addItem("Task {} ({}/{})".format(i, progress, total))
         if not self.calculation_manager.has_work:
-            print(self.calculation_manager.has_work, self.calculation_manager.batch_manager.has_work,
-                  self.calculation_manager.writer.writing_finished())
+            print(
+                self.calculation_manager.has_work,
+                self.calculation_manager.batch_manager.has_work,
+                self.calculation_manager.writer.writing_finished(),
+            )
             self.part_progress.setValue(self.part_progress.maximum())
             self.preview_timer.stop()
             logging.info("Progress stop")
@@ -122,6 +142,7 @@ class FileChoose(QWidget):
     """
     :type batch_manager: CalculationManager
     """
+
     def __init__(self, settings: PartSettings, batch_manager, parent=None):
         QWidget.__init__(self, parent)
         self.files_to_proceed = set()
@@ -158,8 +179,9 @@ class FileChoose(QWidget):
 
     def prepare_calculation(self):
         plan = self.settings.batch_plans[str(self.calculation_choose.currentText())]
-        dial = CalculationPrepare(self.files_widget.get_paths(), plan, str(self.result_file.text()), self.settings,
-                                  self.batch_manager)
+        dial = CalculationPrepare(
+            self.files_widget.get_paths(), plan, str(self.result_file.text()), self.settings, self.batch_manager
+        )
         if dial.exec_():
             self.batch_manager.add_calculation(dial.get_data())
             self.progress.new_task()
@@ -176,8 +198,11 @@ class FileChoose(QWidget):
         self.calculation_choose.setCurrentIndex(index)
 
     def change_situation(self):
-        if str(self.calculation_choose.currentText()) != "<no calculation>" and \
-                        len(self.files_widget.files_to_proceed) != 0 and str(self.result_file.text()) != "":
+        if (
+            str(self.calculation_choose.currentText()) != "<no calculation>"
+            and len(self.files_widget.files_to_proceed) != 0
+            and str(self.result_file.text()) != ""
+        ):
             self.run_button.setEnabled(True)
         else:
             self.run_button.setDisabled(True)
@@ -185,13 +210,14 @@ class FileChoose(QWidget):
     def chose_result_file(self):
         dial = QFileDialog(self, "Select result file")
         dial.setDirectory(
-            self.settings.get("io.save_directory", self.settings.get("io.open_directory", str(Path.home()))))
+            self.settings.get("io.save_directory", self.settings.get("io.open_directory", str(Path.home())))
+        )
         dial.setFileMode(QFileDialog.AnyFile)
         dial.setAcceptMode(QFileDialog.AcceptSave)
         dial.setNameFilter("Excel file (*.xlsx)")
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
-            if os.path.splitext(file_path)[1] == '':
+            if os.path.splitext(file_path)[1] == "":
                 file_path += ".xlsx"
             self.result_file.setText(file_path)
             self.change_situation()
@@ -201,6 +227,7 @@ class BatchWindow(QTabWidget):
     """
     :type settings: PartSettings
     """
+
     def __init__(self, settings, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Batch processing")
@@ -213,7 +240,7 @@ class BatchWindow(QTabWidget):
         self.working = False
         try:
             geometry = self.settings.get_from_profile("batch_window_geometry")
-            self.restoreGeometry(QByteArray.fromHex(bytes(geometry, 'ascii')))
+            self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
         except KeyError:
             pass
 
@@ -229,14 +256,17 @@ class BatchWindow(QTabWidget):
 
     def closeEvent(self, event):
         if self.is_working():
-            ret = QMessageBox.warning(self, "Batch work", "Batch work is not finished. "
-                                                          "Would you like to terminate it?",
-                                      QMessageBox.No | QMessageBox.Yes)
+            ret = QMessageBox.warning(
+                self,
+                "Batch work",
+                "Batch work is not finished. " "Would you like to terminate it?",
+                QMessageBox.No | QMessageBox.Yes,
+            )
             if ret == QMessageBox.Yes:
                 self.terminate()
             else:
                 event.ignore()
-        self.settings.set_in_profile("batch_window_geometry", self.saveGeometry().toHex().data().decode('ascii'))
+        self.settings.set_in_profile("batch_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
 
 
 class CalculationPrepare(QDialog):
@@ -244,6 +274,7 @@ class CalculationPrepare(QDialog):
     :type mask_path_list: list[QLineEdit]
     :type mask_mapper_list: list[MaskMapper]
     """
+
     def __init__(self, file_list, calculation_plan, measurement_file_path, settings, batch_manager):
         """
 
@@ -264,8 +295,9 @@ class CalculationPrepare(QDialog):
         self.measurement_file_path = measurement_file_path
         self.settings = settings
         self.batch_manager = batch_manager
-        self.info_label = QLabel("Information, <i><font color='blue'>warnings</font></i>, "
-                                 "<b><font color='red'>errors</font><b>")
+        self.info_label = QLabel(
+            "Information, <i><font color='blue'>warnings</font></i>, " "<b><font color='red'>errors</font><b>"
+        )
         self.voxel_size = Spacing("Voxel size", settings.image.spacing, settings.get("units_value", Units.nm))
         all_prefix = os.path.commonprefix(file_list)
         if not os.path.exists(all_prefix):
@@ -294,9 +326,11 @@ class CalculationPrepare(QDialog):
         mask_path_layout = QGridLayout()
         for i, (pos, mask_file) in enumerate(mask_file_list):
             if mask_file.name == "":
-                mask_path_layout.addWidget(right_label("Path to file {} with mask mapping".format(i+1)))
+                mask_path_layout.addWidget(right_label("Path to file {} with mask mapping".format(i + 1)))
             else:
-                mask_path_layout.addWidget(right_label("Path to file {} with mask mapping for name: {}".format(i + 1, mask_file.name)))
+                mask_path_layout.addWidget(
+                    right_label("Path to file {} with mask mapping for name: {}".format(i + 1, mask_file.name))
+                )
             mask_path = QLineEdit(self)
             mask_path.setReadOnly(True)
             self.mask_path_list.append(mask_path)
@@ -373,22 +407,30 @@ class CalculationPrepare(QDialog):
                 self.mask_path_list[i].setText(path)
                 file_mapper: MaskFile = self.mask_mapper_list[pos]
                 file_mapper.set_map_path(path)
+
         return mapping_dialog
 
     def get_data(self):
-        res = {"file_list": self.file_list, "base_prefix": str(self.base_prefix.text()),
-               "result_prefix": str(self.result_prefix.text()),
-               "measurement_file_path": str(self.measurement_file_path_view.text()),
-               "sheet_name": str(self.sheet_name.text()), "calculation_plan": self.calculation_plan,
-               "voxel_size": self.voxel_size.get_values()}
+        res = {
+            "file_list": self.file_list,
+            "base_prefix": str(self.base_prefix.text()),
+            "result_prefix": str(self.result_prefix.text()),
+            "measurement_file_path": str(self.measurement_file_path_view.text()),
+            "sheet_name": str(self.sheet_name.text()),
+            "calculation_plan": self.calculation_plan,
+            "voxel_size": self.voxel_size.get_values(),
+        }
         return Calculation(**res)
 
     def verify_data(self):
         self.execute_btn.setEnabled(True)
-        text = "information, <i><font color='blue'>warnings</font></i>, <b><font color='red'>errors</font></b><br>" \
-               "The voxel size is for file in which metadata do not contains this information<br>"
-        if not self.batch_manager.is_valid_sheet_name(str(self.measurement_file_path_view.text()),
-                                                      str(self.sheet_name.text())):
+        text = (
+            "information, <i><font color='blue'>warnings</font></i>, <b><font color='red'>errors</font></b><br>"
+            "The voxel size is for file in which metadata do not contains this information<br>"
+        )
+        if not self.batch_manager.is_valid_sheet_name(
+            str(self.measurement_file_path_view.text()), str(self.sheet_name.text())
+        ):
             text += "<i><font color='blue'>Sheet name already in use</i></font><br>"
             self.execute_btn.setDisabled(True)
         if self.state_list.size > 0:
@@ -431,8 +473,12 @@ class CalculationPrepare(QDialog):
                         self.state_list[file_num, mask_num] = 0
                     else:
                         sub_widget = QTreeWidgetItem(widget)
-                        sub_widget.setText(0, "Mask {} do not exists (path: {})".format(
-                            mask_mapper.name, os.path.relpath(mask_path, all_prefix)))
+                        sub_widget.setText(
+                            0,
+                            "Mask {} do not exists (path: {})".format(
+                                mask_mapper.name, os.path.relpath(mask_path, all_prefix)
+                            ),
+                        )
                         sub_widget.setIcon(0, bad_icon)
                         self.state_list[file_num, mask_num] = 2
                 else:
@@ -451,5 +497,3 @@ class CalculationPrepare(QDialog):
                 widget.setIcon(0, warn_icon)
             else:
                 widget.setIcon(0, bad_icon)
-
-

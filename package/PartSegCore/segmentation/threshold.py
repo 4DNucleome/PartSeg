@@ -9,8 +9,13 @@ from ..algorithm_describe_base import Register, AlgorithmDescribeBase, Algorithm
 
 class BaseThreshold(AlgorithmDescribeBase, ABC):
     @classmethod
-    def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict,
-                       operator: typing.Callable[[object, object], bool]):
+    def calculate_mask(
+        cls,
+        data: np.ndarray,
+        mask: typing.Optional[np.ndarray],
+        arguments: dict,
+        operator: typing.Callable[[object, object], bool],
+    ):
         raise NotImplementedError()
 
 
@@ -35,8 +40,10 @@ class SitkThreshold(BaseThreshold, ABC):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("masked", "Apply mask", True),
-                AlgorithmProperty("bins", f"histogram bins", cls.bins_num, (8, 2 ** 16))]
+        return [
+            AlgorithmProperty("masked", "Apply mask", True),
+            AlgorithmProperty("bins", f"histogram bins", cls.bins_num, (8, 2 ** 16)),
+        ]
 
     @classmethod
     def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict, operator):
@@ -230,21 +237,30 @@ class DoubleThreshold(BaseThreshold):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("core_threshold", "Core threshold", next(iter(threshold_dict.keys())),
-                                  possible_values=threshold_dict, property_type=AlgorithmDescribeBase),
-                AlgorithmProperty("base_threshold", "Base threshold", next(iter(threshold_dict.keys())),
-                                  possible_values=threshold_dict, property_type=AlgorithmDescribeBase)
-                ]
+        return [
+            AlgorithmProperty(
+                "core_threshold",
+                "Core threshold",
+                next(iter(threshold_dict.keys())),
+                possible_values=threshold_dict,
+                property_type=AlgorithmDescribeBase,
+            ),
+            AlgorithmProperty(
+                "base_threshold",
+                "Base threshold",
+                next(iter(threshold_dict.keys())),
+                possible_values=threshold_dict,
+                property_type=AlgorithmDescribeBase,
+            ),
+        ]
 
     @classmethod
     def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict, operator):
         thr: BaseThreshold = threshold_dict[arguments["core_threshold"]["name"]]
-        mask1, thr_val1 = thr.calculate_mask(data, mask, arguments["core_threshold"]["values"],
-                                             operator)
+        mask1, thr_val1 = thr.calculate_mask(data, mask, arguments["core_threshold"]["values"], operator)
 
         thr: BaseThreshold = threshold_dict[arguments["base_threshold"]["name"]]
-        mask2, thr_val2 = thr.calculate_mask(data, mask, arguments["base_threshold"]["values"],
-                                             operator)
+        mask2, thr_val2 = thr.calculate_mask(data, mask, arguments["base_threshold"]["values"], operator)
         mask2[mask2 > 0] = 1
         mask2[mask1 > 0] = 2
         return mask2, (thr_val1, thr_val2)
@@ -258,15 +274,20 @@ class DoubleOtsu(BaseThreshold):
     @classmethod
     def get_fields(cls):
         return [  # AlgorithmProperty("mask", "Use mask in calculation", True),
-                AlgorithmProperty("valley", "Valley emphasis", True),
-                AlgorithmProperty("hist_num", "Number of histogram bins", 128, (8, 2 ** 16))]
+            AlgorithmProperty("valley", "Valley emphasis", True),
+            AlgorithmProperty("hist_num", "Number of histogram bins", 128, (8, 2 ** 16)),
+        ]
 
     @classmethod
-    def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict,
-                       operator: typing.Callable[[object, object], bool]):
+    def calculate_mask(
+        cls,
+        data: np.ndarray,
+        mask: typing.Optional[np.ndarray],
+        arguments: dict,
+        operator: typing.Callable[[object, object], bool],
+    ):
         cleaned_image_sitk = sitk.GetImageFromArray(data)
-        res = sitk.OtsuMultipleThresholds(cleaned_image_sitk,  2, 0,
-                                          arguments["hist_num"], arguments["valley"])
+        res = sitk.OtsuMultipleThresholds(cleaned_image_sitk, 2, 0, arguments["hist_num"], arguments["valley"])
         res = sitk.GetArrayFromImage(res)
         thr1 = data[res == 2].min()
         thr2 = data[res == 1].min()

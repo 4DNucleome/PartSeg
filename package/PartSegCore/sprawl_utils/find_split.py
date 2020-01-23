@@ -25,8 +25,14 @@ def _allocate_cache(distance_cache: typing.Optional[np.ndarray], data_shape: tup
     return distance_cache, cache_size, components_numbers_translate
 
 
-def path_maximum_sprawl(data_f: np.ndarray, components: np.ndarray, components_count: int,
-                        neighbourhood: np.ndarray, distance_cache=None, data_cache=None):
+def path_maximum_sprawl(
+    data_f: np.ndarray,
+    components: np.ndarray,
+    components_count: int,
+    neighbourhood: np.ndarray,
+    distance_cache=None,
+    data_cache=None,
+):
     """
     Calculate sprawl in respect to brightens. Distance between voxels is minimum brightness on
     all paths connecting them.
@@ -56,16 +62,19 @@ def path_maximum_sprawl(data_f: np.ndarray, components: np.ndarray, components_c
         np.copyto(data_cache, data_f)
         data_cache[(base_components > 0) * (base_components != component)] = 0
         current_in_cache += 1
-        distance_cache[current_in_cache] = calculate_maximum(data_cache, (components == component).astype(np.uint8),
-                                                             neighbourhood)
+        distance_cache[current_in_cache] = calculate_maximum(
+            data_cache, (components == component).astype(np.uint8), neighbourhood
+        )
         components_numbers_translate[current_in_cache] = component
         if current_in_cache == cache_size:
-            components = get_maximum_component(components, masked_area, distance_cache,
-                                               components_numbers_translate, current_in_cache)
+            components = get_maximum_component(
+                components, masked_area, distance_cache, components_numbers_translate, current_in_cache
+            )
             current_in_cache = 0
     if current_in_cache > 0:
-        components = get_maximum_component(components, masked_area, distance_cache,
-                                           components_numbers_translate, current_in_cache)
+        components = get_maximum_component(
+            components, masked_area, distance_cache, components_numbers_translate, current_in_cache
+        )
     return components
 
 
@@ -100,21 +109,31 @@ def path_minimum_sprawl(data_f, components, components_count, neighbourhood, dis
         np.copyto(data_cache, data_f)
         data_cache[(base_components > 0) * (base_components != component)] = 0
         current_in_cache += 1
-        distance_cache[current_in_cache] = calculate_minimum(data_cache, (components == component).astype(np.uint8),
-                                                             neighbourhood)
+        distance_cache[current_in_cache] = calculate_minimum(
+            data_cache, (components == component).astype(np.uint8), neighbourhood
+        )
         components_numbers_translate[current_in_cache] = component
         if current_in_cache == cache_size:
-            components = get_minimum_component(components, masked_area, distance_cache,
-                                               components_numbers_translate, current_in_cache)
+            components = get_minimum_component(
+                components, masked_area, distance_cache, components_numbers_translate, current_in_cache
+            )
             current_in_cache = 0
     if current_in_cache > 0:
-        components = get_minimum_component(components, masked_area, distance_cache,
-                                           components_numbers_translate, current_in_cache)
+        components = get_minimum_component(
+            components, masked_area, distance_cache, components_numbers_translate, current_in_cache
+        )
     return components
 
 
-def euclidean_sprawl(data_m: np.ndarray, components: np.ndarray, components_count: int, neigh_arr, dist_arr,
-                     distance_cache=None, data_cache=None):
+def euclidean_sprawl(
+    data_m: np.ndarray,
+    components: np.ndarray,
+    components_count: int,
+    neigh_arr,
+    dist_arr,
+    distance_cache=None,
+    data_cache=None,
+):
     """
     Calculate euclidean sprawl (watershed)
 
@@ -129,12 +148,22 @@ def euclidean_sprawl(data_m: np.ndarray, components: np.ndarray, components_coun
     :return: array with updated labels
     """
     #  return calculate_euclidean_iterative(data_m, components, neigh_arr, dist_arr, components_count)
-    return distance_sprawl(calculate_euclidean, data_m, components, components_count,
-                           neigh_arr, dist_arr, distance_cache, data_cache)
+    return distance_sprawl(
+        calculate_euclidean, data_m, components, components_count, neigh_arr, dist_arr, distance_cache, data_cache
+    )
 
 
-def fdt_sprawl(data_m: np.ndarray, components: np.ndarray, components_count: int, neigh_arr, dist_arr, lower_bound,
-               upper_bound, distance_cache=None, data_cache=None):
+def fdt_sprawl(
+    data_m: np.ndarray,
+    components: np.ndarray,
+    components_count: int,
+    neigh_arr,
+    dist_arr,
+    lower_bound,
+    upper_bound,
+    distance_cache=None,
+    data_cache=None,
+):
     """
     Function for calculate fdt sprawl
 
@@ -154,13 +183,26 @@ def fdt_sprawl(data_m: np.ndarray, components: np.ndarray, components_count: int
         mu_array = 1 - calculate_mu_array(data_m, upper_bound, lower_bound, MuType.reflection_mu)
     else:
         mu_array = calculate_mu_array(data_m, lower_bound, upper_bound, MuType.reflection_mu)
-    return distance_sprawl(partial(fuzzy_distance, mu_array=mu_array),
-                           data_m, components, components_count, neigh_arr, dist_arr, distance_cache,
-                           data_cache)
+    return distance_sprawl(
+        partial(fuzzy_distance, mu_array=mu_array),
+        data_m,
+        components,
+        components_count,
+        neigh_arr,
+        dist_arr,
+        distance_cache,
+        data_cache,
+    )
 
 
-def sprawl_component(data_m: np.ndarray, components: np.ndarray, component_number: int,
-                     neigh_arr: np.ndarray, dist_arr: np.ndarray, calculate_operator: typing.Callable):
+def sprawl_component(
+    data_m: np.ndarray,
+    components: np.ndarray,
+    component_number: int,
+    neigh_arr: np.ndarray,
+    dist_arr: np.ndarray,
+    calculate_operator: typing.Callable,
+):
     """
     calculate sprawl for single component
 
@@ -174,12 +216,22 @@ def sprawl_component(data_m: np.ndarray, components: np.ndarray, component_numbe
     """
     data_cache = np.copy(data_m)
     data_cache[(components > 0) * (components != component_number)] = 0
-    return calculate_operator(data_cache, np.array(components == component_number).astype(np.uint8),
-                              neigh_arr, dist_arr)
+    return calculate_operator(
+        data_cache, np.array(components == component_number).astype(np.uint8), neigh_arr, dist_arr
+    )
 
 
-def distance_sprawl(calculate_operator, data_m: np.ndarray, components: np.ndarray, components_count: int, neigh_arr,
-                    dist_array, distance_cache=None, data_cache=None, parallel=False) -> np.ndarray:
+def distance_sprawl(
+    calculate_operator,
+    data_m: np.ndarray,
+    components: np.ndarray,
+    components_count: int,
+    neigh_arr,
+    dist_array,
+    distance_cache=None,
+    data_cache=None,
+    parallel=False,
+) -> np.ndarray:
     if data_m.dtype == np.bool:
         data_m = data_m.astype(np.uint8)
     if data_cache is None:
@@ -199,17 +251,27 @@ def distance_sprawl(calculate_operator, data_m: np.ndarray, components: np.ndarr
         if not workers_num:
             workers_num = 4
         with ThreadPoolExecutor(max_workers=workers_num) as executor:
-            result_info = {executor.submit(
-                sprawl_component, data_m, base_components, component_number, neigh_arr, dist_array, calculate_operator):
-                               component_number for component_number in range(1, components_count + 1)}
+            result_info = {
+                executor.submit(
+                    sprawl_component,
+                    data_m,
+                    base_components,
+                    component_number,
+                    neigh_arr,
+                    dist_array,
+                    calculate_operator,
+                ): component_number
+                for component_number in range(1, components_count + 1)
+            }
             for result in as_completed(result_info):
                 component_number = result_info[result]
                 current_in_cache += 1
                 components_numbers_translate[current_in_cache] = component_number
                 distance_cache[current_in_cache] = result.result()
                 if current_in_cache == cache_size:
-                    components = get_closest_component(components, masked_area, distance_cache,
-                                                       components_numbers_translate, current_in_cache)
+                    components = get_closest_component(
+                        components, masked_area, distance_cache, components_numbers_translate, current_in_cache
+                    )
                     current_in_cache = 0
 
     else:
@@ -218,16 +280,22 @@ def distance_sprawl(calculate_operator, data_m: np.ndarray, components: np.ndarr
             data_cache[(base_components > 0) * (base_components != component)] = 0
             current_in_cache += 1
             distance_cache[current_in_cache] = calculate_operator(
-                data_cache, (components == component).astype(np.uint8), neigh_arr, dist_array,
-                distance_cache=distance_cache[0])
+                data_cache,
+                (components == component).astype(np.uint8),
+                neigh_arr,
+                dist_array,
+                distance_cache=distance_cache[0],
+            )
             components_numbers_translate[current_in_cache] = component
             if current_in_cache == cache_size:
-                components = get_closest_component(components, masked_area, distance_cache,
-                                                   components_numbers_translate, current_in_cache)
+                components = get_closest_component(
+                    components, masked_area, distance_cache, components_numbers_translate, current_in_cache
+                )
                 current_in_cache = 0
     if current_in_cache > 0:
-        components = get_closest_component(components, masked_area, distance_cache,
-                                           components_numbers_translate, current_in_cache)
+        components = get_closest_component(
+            components, masked_area, distance_cache, components_numbers_translate, current_in_cache
+        )
     return components
 
 

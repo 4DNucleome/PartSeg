@@ -13,12 +13,14 @@ def my_excepthook(type_, value, trace_back):
         try:
             # noinspection PyUnresolvedReferences
             from qtpy.QtWidgets import QApplication
+
             if QApplication.instance():
                 from qtpy.QtCore import Qt, QThread
                 from qtpy.QtCore import QMetaObject
+
                 QApplication.instance().error = value
                 if QThread.currentThread() != QApplication.instance().thread():
-                    QMetaObject.invokeMethod(QApplication.instance(), "show_error",  Qt.QueuedConnection)
+                    QMetaObject.invokeMethod(QApplication.instance(), "show_error", Qt.QueuedConnection)
                 else:
                     QApplication.instance().show_error()
         except ImportError:

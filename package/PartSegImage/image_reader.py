@@ -27,6 +27,7 @@ class BaseImageReader:
 
     :cvar typing.Type[Image] ~.image_class: image class to return
     """
+
     image_class = Image
 
     @classmethod
@@ -69,9 +70,13 @@ class BaseImageReader:
         raise NotImplementedError()
 
     @classmethod
-    def read_image(cls, image_path: typing.Union[str, BytesIO], mask_path=None,
-                   callback_function: typing.Optional[typing.Callable] = None,
-                   default_spacing: typing.Tuple[float, float, float] = None) -> Image:
+    def read_image(
+        cls,
+        image_path: typing.Union[str, BytesIO],
+        mask_path=None,
+        callback_function: typing.Optional[typing.Callable] = None,
+        default_spacing: typing.Tuple[float, float, float] = None,
+    ) -> Image:
         """
         read image file with optional mask file
 
@@ -116,8 +121,9 @@ class BaseImageReader:
 
             final_mapping = [final_mapping_dict[letter] for letter in axes]
         except KeyError as e:
-            raise NotImplementedError(f"Data type not supported ({e.args[0]})."
-                                      f" Please contact with author for update code")
+            raise NotImplementedError(
+                f"Data type not supported ({e.args[0]})." f" Please contact with author for update code"
+            )
         if len(final_mapping) != len(set(final_mapping)):
             raise NotImplementedError("Data type not supported. Please contact with author for update code")
         if len(array.shape) < len(cls.return_order()):
@@ -153,12 +159,12 @@ class OifImagReader(BaseImageReader):
         image_data = self.image_file.asarray()
         image_data = self.update_array_shape(image_data, axes)
         try:
-            flat_parm = self.image_file.mainfile['Reference Image Parameter']
-            x_scale = flat_parm['HeightConvertValue'] * name_to_scalar[flat_parm['HeightUnit']]
-            y_scale = flat_parm['WidthConvertValue'] * name_to_scalar[flat_parm['WidthUnit']]
+            flat_parm = self.image_file.mainfile["Reference Image Parameter"]
+            x_scale = flat_parm["HeightConvertValue"] * name_to_scalar[flat_parm["HeightUnit"]]
+            y_scale = flat_parm["WidthConvertValue"] * name_to_scalar[flat_parm["WidthUnit"]]
             i = 0
             while True:
-                name = f'Axis {i} Parameters Common'
+                name = f"Axis {i} Parameters Common"
                 if name not in self.image_file.mainfile:
                     z_scale = 1
                     break
@@ -172,41 +178,48 @@ class OifImagReader(BaseImageReader):
         except KeyError:
             pass
         # TODO add mask reading
-        return self.image_class(image_data, self.spacing, file_path=os.path.abspath(image_path),
-                                axes_order=self.return_order())
+        return self.image_class(
+            image_data, self.spacing, file_path=os.path.abspath(image_path), axes_order=self.return_order()
+        )
 
 
 class CziImageReader(BaseImageReader):
     """
     This class is to read data from czi files. Masks will be treated as TIFF.
     """
+
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
         self.image_file = CziFile(image_path)
         image_data = self.image_file.asarray()
         image_data = self.update_array_shape(image_data, self.image_file.axes)
         metadata = self.image_file.metadata(False)
         try:
-            scaling = metadata['ImageDocument']['Metadata']['Scaling']['Items']['Distance']
+            scaling = metadata["ImageDocument"]["Metadata"]["Scaling"]["Items"]["Distance"]
             scale_info = {}
             for el in scaling:
                 scale_info[el["Id"]] = el["Value"]
-            self.spacing = scale_info.get("Z", self.default_spacing[0]), \
-                scale_info.get("Y", self.default_spacing[1]), \
+            self.spacing = (
+                scale_info.get("Z", self.default_spacing[0]),
+                scale_info.get("Y", self.default_spacing[1]),
                 scale_info.get("X", self.default_spacing[2]),
+            )
         except KeyError:
             pass
         # TODO add mask reading
-        return self.image_class(image_data, self.spacing, file_path=os.path.abspath(image_path),
-                                axes_order=self.return_order())
+        return self.image_class(
+            image_data, self.spacing, file_path=os.path.abspath(image_path), axes_order=self.return_order()
+        )
 
     def update_array_shape(self, array: np.ndarray, axes: str):
         if "B" in axes:
             index = axes.index("B")
             if array.shape[index] != 1:
-                raise NotImplementedError("Czi file with B axes is not currently supported by PartSeg."
-                                          " Please contact with author for update code")
+                raise NotImplementedError(
+                    "Czi file with B axes is not currently supported by PartSeg."
+                    " Please contact with author for update code"
+                )
             array = array.take(0, axis=index)
-            axes = axes[:index] + axes[index+1:]
+            axes = axes[:index] + axes[index + 1 :]
         if axes[-1] == "0":
             array = array[..., 0]
             axes = axes[:-1]
@@ -282,9 +295,16 @@ class TiffImageReader(BaseImageReader):
             self.mask_file.close()
         if not isinstance(image_path, str):
             image_path = ""
-        return self.image_class(image_data, self.spacing, mask=mask_data, default_coloring=self.colors,
-                                labels=self.labels, ranges=self.ranges, file_path=os.path.abspath(image_path),
-                                axes_order=self.return_order())
+        return self.image_class(
+            image_data,
+            self.spacing,
+            mask=mask_data,
+            default_coloring=self.colors,
+            labels=self.labels,
+            ranges=self.ranges,
+            file_path=os.path.abspath(image_path),
+            axes_order=self.return_order(),
+        )
 
     def verify_mask(self):
         """
@@ -340,8 +360,9 @@ class TiffImageReader(BaseImageReader):
 
     def read_imagej_metadata(self):
         try:
-            z_spacing = \
+            z_spacing = (
                 self.image_file.imagej_metadata["spacing"] * name_to_scalar[self.image_file.imagej_metadata["unit"]]
+            )
         except KeyError:
             z_spacing = 1
         x_spacing, y_spacing = self.read_resolution_from_tags()
@@ -355,14 +376,16 @@ class TiffImageReader(BaseImageReader):
     def read_ome_metadata(self):
         if isinstance(self.image_file.ome_metadata, str):
             if hasattr(tifffile, "xml2dict"):
-                meta_data = tifffile.xml2dict(self.image_file.ome_metadata)["OME"]['Image']["Pixels"]
+                meta_data = tifffile.xml2dict(self.image_file.ome_metadata)["OME"]["Image"]["Pixels"]
             else:
                 return
         else:
-            meta_data = self.image_file.ome_metadata['Image']["Pixels"]
+            meta_data = self.image_file.ome_metadata["Image"]["Pixels"]
         try:
-            self.spacing = [meta_data[f"PhysicalSize{x}"] *
-                            name_to_scalar[meta_data[f"PhysicalSize{x}Unit"]] for x in ["Z", "Y", "X"]]
+            self.spacing = [
+                meta_data[f"PhysicalSize{x}"] * name_to_scalar[meta_data[f"PhysicalSize{x}Unit"]]
+                for x in ["Z", "Y", "X"]
+            ]
         except KeyError:
             pass
         if "Channel" in meta_data and isinstance(meta_data["Channel"], (list, tuple)):
@@ -376,8 +399,7 @@ class TiffImageReader(BaseImageReader):
                 pass
 
     def read_lsm_metadata(self):
-        self.spacing = \
-            [self.image_file.lsm_metadata[f"VoxelSize{x}"] for x in ["Z", "Y", "X"]]
+        self.spacing = [self.image_file.lsm_metadata[f"VoxelSize{x}"] for x in ["Z", "Y", "X"]]
         if "ChannelColors" in self.image_file.lsm_metadata:
             if "Colors" in self.image_file.lsm_metadata["ChannelColors"]:
                 self.colors = [x[:3] for x in self.image_file.lsm_metadata["ChannelColors"]["Colors"]]
@@ -398,5 +420,5 @@ name_to_scalar = {
     "\\u00B5m": 10 ** -6,
     "centimeter": 10 ** -2,
     "cm": 10 ** -2,
-    "cal": 2.54 * 10 ** -2
+    "cal": 2.54 * 10 ** -2,
 }  #: dict with known names of scalar to scalar value. May be some missed

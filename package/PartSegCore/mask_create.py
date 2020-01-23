@@ -21,6 +21,7 @@ class MaskProperty(BaseSerializableClass):
         Useful for positive dilate radius
     :ivar bool ~.reversed_mask: If mask should be reversed (region which are not part of segmentation)
     """
+
     dilate: RadiusType
     dilate_radius: int
     fill_holes: RadiusType
@@ -30,28 +31,38 @@ class MaskProperty(BaseSerializableClass):
     reversed_mask: bool = False
 
     def __str__(self):
-        return f"Mask property\ndilate: {self.dilate}\n" + \
-               (f"dilate radius {self.dilate_radius}\n" if self.dilate != RadiusType.NO else "") + \
-               f"fill holes: {self.fill_holes}\n" + \
-               (f"max holes size: {self.max_holes_size}\n" if self.fill_holes != RadiusType.NO else "") + \
-               f"save components: {self.save_components}\nclip to mask: {self.clip_to_mask}\n" + \
-               f"reversed mask {self.reversed_mask}"
+        return (
+            f"Mask property\ndilate: {self.dilate}\n"
+            + (f"dilate radius {self.dilate_radius}\n" if self.dilate != RadiusType.NO else "")
+            + f"fill holes: {self.fill_holes}\n"
+            + (f"max holes size: {self.max_holes_size}\n" if self.fill_holes != RadiusType.NO else "")
+            + f"save components: {self.save_components}\nclip to mask: {self.clip_to_mask}\n"
+            + f"reversed mask {self.reversed_mask}"
+        )
 
 
 def mp_eq(self, other):
-    return self.__class__ == other.__class__ and self.dilate == other.dilate and \
-           self.fill_holes == other.fill_holes and self.save_components == other.save_components and \
-           self.clip_to_mask == other.clip_to_mask and \
-           (self.dilate == RadiusType.NO or (self.dilate_radius == other.dilate_radius)) and \
-           (self.fill_holes == RadiusType.NO or (self.max_holes_size == other.max_holes_size)) and \
-           (self.rreversed_mask == other.reversed_mask)
+    return (
+        self.__class__ == other.__class__
+        and self.dilate == other.dilate
+        and self.fill_holes == other.fill_holes
+        and self.save_components == other.save_components
+        and self.clip_to_mask == other.clip_to_mask
+        and (self.dilate == RadiusType.NO or (self.dilate_radius == other.dilate_radius))
+        and (self.fill_holes == RadiusType.NO or (self.max_holes_size == other.max_holes_size))
+        and (self.rreversed_mask == other.reversed_mask)
+    )
 
 
 MaskProperty.__eq__ = mp_eq
 
 
-def calculate_mask(mask_description: MaskProperty, segmentation: np.ndarray, old_mask: typing.Union[None, np.ndarray],
-                   spacing: typing.Iterable[typing.Union[float, int]]) -> np.ndarray:
+def calculate_mask(
+    mask_description: MaskProperty,
+    segmentation: np.ndarray,
+    old_mask: typing.Union[None, np.ndarray],
+    spacing: typing.Iterable[typing.Union[float, int]],
+) -> np.ndarray:
     """
     Function for calculate mask base on MaskProperty.
     If dilate_radius is negative then holes closing is done before erode,
@@ -90,8 +101,9 @@ def calculate_mask(mask_description: MaskProperty, segmentation: np.ndarray, old
     return mask
 
 
-def cut_components(mask: np.ndarray, image: np.ndarray, borders: int = 0) -> \
-        typing.Iterator[typing.Tuple[np.ndarray, typing.List[slice], int]]:
+def cut_components(
+    mask: np.ndarray, image: np.ndarray, borders: int = 0
+) -> typing.Iterator[typing.Tuple[np.ndarray, typing.List[slice], int]]:
     sizes = np.bincount(mask.flat)
     for i, size in enumerate(sizes[1:], 1):
         if size > 0:
@@ -99,10 +111,10 @@ def cut_components(mask: np.ndarray, image: np.ndarray, borders: int = 0) -> \
             lower_bound = np.min(points, axis=1)
             upper_bound = np.max(points, axis=1)
             new_cut = tuple([slice(x, y + 1) for x, y in zip(lower_bound, upper_bound)])
-            new_size = [y - x + 1 + 2*borders for x, y in zip(lower_bound, upper_bound)]
+            new_size = [y - x + 1 + 2 * borders for x, y in zip(lower_bound, upper_bound)]
             if borders > 0:
                 res = np.zeros(new_size, dtype=image.dtype)
-                res_cut = tuple([slice(borders, x-borders) for x in res.shape])
+                res_cut = tuple([slice(borders, x - borders) for x in res.shape])
                 tmp_res = image[new_cut]
                 tmp_res[mask[new_cut] != i] = 0
                 res[res_cut] = tmp_res
@@ -142,14 +154,15 @@ def fill_holes_in_mask(mask: np.ndarray, volume: int) -> np.ndarray:
     """
     holes_mask = (mask == 0).astype(np.uint8)
     component_mask = sitk.GetArrayFromImage(
-        sitk.RelabelComponent(sitk.ConnectedComponent(sitk.GetImageFromArray(holes_mask))))
+        sitk.RelabelComponent(sitk.ConnectedComponent(sitk.GetImageFromArray(holes_mask)))
+    )
     border_set: typing.Set[int] = set()
     for dim_num in range(component_mask.ndim):
         border_set.update(list(np.unique(np.take(component_mask, [0, -1], axis=dim_num))))
     if 0 in border_set:
         border_set.remove(0)
     components_num = component_mask.max()
-    if component_mask.dtype.type(components_num) >= component_mask.dtype.type(components_num+1):
+    if component_mask.dtype.type(components_num) >= component_mask.dtype.type(components_num + 1):
         raise ValueError("overflow error")
     for num in border_set:
         component_mask[component_mask == num] = components_num + 1

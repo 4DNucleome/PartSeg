@@ -3,6 +3,7 @@ from qtpy.QtWidgets import QStackedWidget, QComboBox, QWidget, QGridLayout
 
 class StackedWidgetWithSelector(QStackedWidget):
     """Stacked widget with selector which can be putted somewhere. Check show and hide event before usage"""
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.selector = QComboBox()

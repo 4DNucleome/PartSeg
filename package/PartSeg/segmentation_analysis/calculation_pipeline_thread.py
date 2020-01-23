@@ -18,7 +18,8 @@ class CalculatePipelineThread(ProgressTread):
 
     def run(self):
         try:
-            self.result = calculate_pipeline(image=self.image, mask=self.mask, pipeline=self.pipeline,
-                                             report_fun=self.info_function)
+            self.result = calculate_pipeline(
+                image=self.image, mask=self.mask, pipeline=self.pipeline, report_fun=self.info_function
+            )
         except Exception as e:
             self.error_signal.emit(e)

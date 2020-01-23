@@ -56,20 +56,34 @@ class CustomParser(argparse.ArgumentParser):
          constructor add developer tab..
 
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_argument("--no_report", action="store_false", help="disable error reporting")
         self.add_argument("--no_dialog", action="store_false", help="disable error reporting and showing error dialog")
         self.add_argument("--no_update", action="store_false", help="disable check for updates")
-        self.add_argument("--save_suffix", "--ssuf", type=proper_suffix, default=[""],
-                          help="suffix for configuration_directory", nargs=1, metavar="suffix")
-        self.add_argument("--save_directory", "--sdir", type=proper_path, default=[state_store.save_folder],
-                          help="path to custom configuration folder", nargs=1, metavar="path")
+        self.add_argument(
+            "--save_suffix",
+            "--ssuf",
+            type=proper_suffix,
+            default=[""],
+            help="suffix for configuration_directory",
+            nargs=1,
+            metavar="suffix",
+        )
+        self.add_argument(
+            "--save_directory",
+            "--sdir",
+            type=proper_path,
+            default=[state_store.save_folder],
+            help="path to custom configuration folder",
+            nargs=1,
+            metavar="path",
+        )
         self.add_argument("--inner_plugins", action="store_true", help=argparse.SUPPRESS)
         self.add_argument("--develop", action="store_true", help=argparse.SUPPRESS)
 
-    def parse_args(self, args: Optional[Sequence[Text]] = None,
-                   namespace: Optional[argparse.Namespace] = None):
+    def parse_args(self, args: Optional[Sequence[Text]] = None, namespace: Optional[argparse.Namespace] = None):
         """
         overload of :py:meth:`argparse.ArgumentParser.parse_args`. Set flags like described in class documentation.
         """
@@ -82,8 +96,10 @@ class CustomParser(argparse.ArgumentParser):
         state_store.save_suffix = args.save_suffix[0]
         state_store.save_folder = args.save_directory[0]
         if args.no_report and args.no_dialog:
-            sentry_sdk.init("https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302",
-                            release="PartSeg@{}".format(PartSeg.__version__))
+            sentry_sdk.init(
+                "https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302",
+                release="PartSeg@{}".format(PartSeg.__version__),
+            )
         sys.excepthook = my_excepthook
-        locale.setlocale(locale.LC_NUMERIC, '')
+        locale.setlocale(locale.LC_NUMERIC, "")
         return args

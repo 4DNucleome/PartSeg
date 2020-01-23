@@ -22,8 +22,12 @@ def minimal_dtype(val: int):
         return np.uint32
 
 
-def reduce_array(array: np.ndarray, components: typing.Optional[typing.Iterable[int]] = None,
-                 max_val: typing.Optional[int] = None, dtype=None) -> np.ndarray:
+def reduce_array(
+    array: np.ndarray,
+    components: typing.Optional[typing.Iterable[int]] = None,
+    max_val: typing.Optional[int] = None,
+    dtype=None,
+) -> np.ndarray:
     """
     Relabel components from 1 to components_num with keeping order
 
@@ -38,14 +42,14 @@ def reduce_array(array: np.ndarray, components: typing.Optional[typing.Iterable[
         components = np.unique(array.flat)
         if max_val is None:
             max_val = np.max(components)
-    
+
     if max_val is None:
         max_val = np.max(array)
-        
+
     translate = np.zeros(max_val + 1, dtype=dtype if dtype else minimal_dtype(len(components) + 1))
     for i, val in enumerate(sorted(components), start=0 if 0 in components else 1):
         translate[val] = i
-    
+
     return translate[array]
 
 
@@ -70,36 +74,45 @@ class Image:
     >>>     return_order = "TZCYX"
 
     """
+
     _image_spacing: Spacing
     return_order = "TZYXC"
 
-    def __init__(self, data: np.ndarray, image_spacing: Spacing, file_path=None,
-                 mask: typing.Union[None, np.ndarray] = None,
-                 default_coloring=None, ranges=None, labels=None, axes_order: typing.Optional[str] = None):
+    def __init__(
+        self,
+        data: np.ndarray,
+        image_spacing: Spacing,
+        file_path=None,
+        mask: typing.Union[None, np.ndarray] = None,
+        default_coloring=None,
+        ranges=None,
+        labels=None,
+        axes_order: typing.Optional[str] = None,
+    ):
         # TODO add time distance to image spacing
         if axes_order is None:
             axes_order = self.return_order
         if data.ndim != len(axes_order):
-            raise ValueError("Data should have same number of dimensions "
-                             f"like length of axes_order (current :{len(axes_order)}")
+            raise ValueError(
+                "Data should have same number of dimensions " f"like length of axes_order (current :{len(axes_order)}"
+            )
         if not isinstance(image_spacing, tuple):
             image_spacing = tuple(image_spacing)
         self._image_array = self.reorder_axes(data, axes_order)
-        self._image_spacing = (1.0, ) * (3-len(image_spacing)) + image_spacing
-        self._image_spacing = tuple([el if el > 0 else 10**-6 for el in self._image_spacing])
+        self._image_spacing = (1.0,) * (3 - len(image_spacing)) + image_spacing
+        self._image_spacing = tuple([el if el > 0 else 10 ** -6 for el in self._image_spacing])
         self.file_path = file_path
         self.default_coloring = default_coloring
         if self.default_coloring is not None:
             self.default_coloring = [np.array(x) for x in default_coloring]
         self.labels = labels
         if isinstance(self.labels, (tuple, list)):
-            self.labels = self.labels[:self.channels]
+            self.labels = self.labels[: self.channels]
         if ranges is None:
             axis = list(range(len(self.return_order)))
             axis.remove(self.return_order.index("C"))
             axis = tuple(axis)
-            self.ranges = list(
-                zip(np.min(self._image_array, axis=axis), np.max(self._image_array, axis=axis)))
+            self.ranges = list(zip(np.min(self._image_array, axis=axis), np.max(self._image_array, axis=axis)))
         else:
             self.ranges = ranges
         if mask is not None:
@@ -155,8 +168,9 @@ class Image:
         """
         return "".join([key for val, key in zip(self._image_array.shape, self.return_order) if val > 1])
 
-    def substitute(self, data=None, image_spacing=None, file_path=None, mask=None, default_coloring=None, ranges=None,
-                   labels=None):
+    def substitute(
+        self, data=None, image_spacing=None, file_path=None, mask=None, default_coloring=None, ranges=None, labels=None
+    ):
         """Create copy of image with substitution of not None elements"""
         data = self._image_array if data is None else data
         image_spacing = self._image_spacing if image_spacing is None else image_spacing
@@ -165,8 +179,15 @@ class Image:
         default_coloring = self.default_coloring if default_coloring is None else default_coloring
         ranges = self.ranges if ranges is None else ranges
         labels = self.labels if labels is None else labels
-        return self.__class__(data=data, image_spacing=image_spacing, file_path=file_path, mask=mask,
-                              default_coloring=default_coloring, ranges=ranges, labels=labels)
+        return self.__class__(
+            data=data,
+            image_spacing=image_spacing,
+            file_path=file_path,
+            mask=mask,
+            default_coloring=default_coloring,
+            ranges=ranges,
+            labels=labels,
+        )
 
     def set_mask(self, mask: typing.Optional[np.ndarray], axes: typing.Optional[str] = None):
         """
@@ -179,8 +200,7 @@ class Image:
         if mask is None:
             self._mask_array = None
         elif axes is not None:
-            self._mask_array = self.fit_mask_to_image(
-                np.take(self.reorder_axes(mask, axes), 0, self.channel_pos))
+            self._mask_array = self.fit_mask_to_image(np.take(self.reorder_axes(mask, axes), 0, self.channel_pos))
         else:
             self._mask_array = self.fit_mask_to_image(mask)
 
@@ -321,7 +341,6 @@ class Image:
                 indices[i] = slice(None)
         indices = tuple(indices)
         return self._image_array[indices]
-        
 
     def get_mask_layer(self, num) -> np.ndarray:
         if self._mask_array is None:
@@ -357,8 +376,9 @@ class Image:
             raise ValueError("Correction of spacing fail.")
         self._image_spacing = tuple(value)
 
-    def cut_image(self, cut_area: typing.Union[np.ndarray, typing.List[slice], typing.Tuple[slice]],
-                  replace_mask=False):
+    def cut_image(
+        self, cut_area: typing.Union[np.ndarray, typing.List[slice], typing.Tuple[slice]], replace_mask=False
+    ):
         """
         Create new image base on mask or list of slices
         :param replace_mask: if cut area is represented by mask array,
@@ -391,8 +411,9 @@ class Image:
             elif self._mask_array is not None:
                 new_mask = self._mask_array[tuple(new_cut)]
                 new_mask[catted_cut_area == 0] = 0
-        return self.__class__(new_image, self._image_spacing, None, new_mask,
-                              self.default_coloring, self.ranges, self.labels)
+        return self.__class__(
+            new_image, self._image_spacing, None, new_mask, self.default_coloring, self.ranges, self.labels
+        )
 
     def get_imagej_colors(self):
         # TODO review
@@ -409,9 +430,13 @@ class Image:
                 res.append(np.array([np.linspace(0, x, num=256) for x in color]))
             else:
                 if color.shape[1] != 256:
-                    res.append(np.array(
-                        [np.interp(np.linspace(0, 255, num=256), np.linspace(0, color.shape[1], num=256), x)
-                         for x in color])
+                    res.append(
+                        np.array(
+                            [
+                                np.interp(np.linspace(0, 255, num=256), np.linspace(0, color.shape[1], num=256), x)
+                                for x in color
+                            ]
+                        )
                     )
                 res.append(color)
         return res
@@ -437,5 +462,7 @@ class Image:
         return self.ranges[:]
 
     def __str__(self):
-        return f"{self.__class__} Shape {self._image_array.shape}, dtype: {self._image_array.dtype}, " \
-               f"labels: {self.labels}, coloring: {self.get_colors()} mask: {self.has_mask}"
+        return (
+            f"{self.__class__} Shape {self._image_array.shape}, dtype: {self._image_array.dtype}, "
+            f"labels: {self.labels}, coloring: {self.get_colors()} mask: {self.has_mask}"
+        )

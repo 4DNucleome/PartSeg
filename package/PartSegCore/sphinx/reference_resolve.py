@@ -36,53 +36,42 @@ except ImportError:
 signal_slot_uri = {
     "Qt": "https://doc.qt.io/qt-5/signalsandslots.html",
     "PySide": "https://doc.qt.io/qtforpython/overviews/signalsandslots.html",
-    "PyQt": "https://www.riverbankcomputing.com/static/Docs/PyQt5/signals_slots.html"
+    "PyQt": "https://www.riverbankcomputing.com/static/Docs/PyQt5/signals_slots.html",
 }
 
-signal_name = {
-    "Qt": "Signal",
-    "PySide": "Signal",
-    "PyQt": "pyqtSignal"
-}
+signal_name = {"Qt": "Signal", "PySide": "Signal", "PyQt": "pyqtSignal"}
 
-slot_name = {
-    "Qt": "Slot",
-    "PySide": "Slot",
-    "PyQt": "pyqtSlot"
-}
+slot_name = {"Qt": "Slot", "PySide": "Slot", "PyQt": "pyqtSlot"}
 
-type_translate_dict = {
-    "class": ["class"],
-    "meth": ["method", "signal"],
-    "mod": ["module"]
-}
+type_translate_dict = {"class": ["class"], "meth": ["method", "signal"], "mod": ["module"]}
 
-signal_pattern = re.compile(r'((\w+\d?\.QtCore\.)|(QtCore\.)|(\.))?(pyqt)?Signal')
-slot_pattern = re.compile(r'((\w+\d?\.QtCore\.)|(QtCore\.)|(\.))?(pyqt)?Slot')
+signal_pattern = re.compile(r"((\w+\d?\.QtCore\.)|(QtCore\.)|(\.))?(pyqt)?Signal")
+slot_pattern = re.compile(r"((\w+\d?\.QtCore\.)|(QtCore\.)|(\.))?(pyqt)?Slot")
 
 
 # noinspection PyUnusedLocal
-def missing_reference(app: Sphinx, env: BuildEnvironment, node: Element, contnode: TextElement
-                      ) -> Optional[nodes.reference]:
+def missing_reference(
+    app: Sphinx, env: BuildEnvironment, node: Element, contnode: TextElement
+) -> Optional[nodes.reference]:
     """Linking to Qt documentation."""
-    target: str = node['reftarget']
+    target: str = node["reftarget"]
     inventories = InventoryAdapter(env)
     objtypes: Optional[List[str]] = None
-    if node['reftype'] == 'any':
+    if node["reftype"] == "any":
         # we search anything!
-        objtypes = ['%s:%s' % (domain.name, objtype)
-                    for domain in env.domains.values()
-                    for objtype in domain.object_types]
+        objtypes = [
+            "%s:%s" % (domain.name, objtype) for domain in env.domains.values() for objtype in domain.object_types
+        ]
         domain = None
     else:
-        domain = node.get('refdomain')
+        domain = node.get("refdomain")
         if not domain:
             # only objects in domains are in the inventory
             return None
-        objtypes = env.get_domain(domain).objtypes_for_role(node['reftype'])
+        objtypes = env.get_domain(domain).objtypes_for_role(node["reftype"])
         if not objtypes:
             return None
-        objtypes = ['%s:%s' % (domain, objtype) for objtype in objtypes]
+        objtypes = ["%s:%s" % (domain, objtype) for objtype in objtypes]
     if target.startswith("PySide2"):
         head, tail = target.split(".", 1)
         target = "PyQt5." + tail
@@ -120,7 +109,7 @@ def missing_reference(app: Sphinx, env: BuildEnvironment, node: Element, contnod
             html_name = uri.split("/")[-1]
             uri = "https://doc.qt.io/qt-5/" + html_name
         elif app.config.qt_documentation == "PySide":
-            if node.get('reftype') == "meth":
+            if node.get("reftype") == "meth":
                 split_tup = target_name.split(".")[1:]
                 ref_name = ".".join(["PySide2", split_tup[0], "PySide2"] + split_tup)
                 html_name = "/".join(split_tup[:-1]) + ".html#" + ref_name
@@ -130,11 +119,11 @@ def missing_reference(app: Sphinx, env: BuildEnvironment, node: Element, contnod
 
     # remove this line if you would like straight to pyqt documentation
     if version:
-        reftitle = _('(in %s v%s)') % (app.config.qt_documentation, version)
+        reftitle = _("(in %s v%s)") % (app.config.qt_documentation, version)
     else:
-        reftitle = _('(in %s)') % (app.config.qt_documentation,)
-    newnode = nodes.reference('', '', internal=False, refuri=uri, reftitle=reftitle)
-    if node.get('refexplicit'):
+        reftitle = _("(in %s)") % (app.config.qt_documentation,)
+    newnode = nodes.reference("", "", internal=False, refuri=uri, reftitle=reftitle)
+    if node.get("refexplicit"):
         # use whatever title was given
         newnode.append(contnode)
     else:
@@ -143,7 +132,7 @@ def missing_reference(app: Sphinx, env: BuildEnvironment, node: Element, contnod
     return newnode
 
 
-re.compile(r' +algorithm_changed *= *Signal(\([^)]*\))')
+re.compile(r" +algorithm_changed *= *Signal(\([^)]*\))")
 
 
 # noinspection PyUnusedLocal
@@ -152,7 +141,7 @@ def autodoc_process_signature(app: Sphinx, what, name: str, obj, options, signat
         module_name, class_name, signal_name_local = name.rsplit(".", 2)
         module = importlib.import_module(module_name)
         class_ob = getattr(module, class_name)
-        reg = re.compile(r' +' + signal_name_local + r' *= *Signal(\([^)]*\))')
+        reg = re.compile(r" +" + signal_name_local + r" *= *Signal(\([^)]*\))")
         match = reg.findall(inspect.getsource(class_ob))
         if match:
             return match[0], None
@@ -168,15 +157,11 @@ def setup(app: Sphinx) -> Dict[str, Any]:
             app.config.intersphinx_mapping["PyQt"] = ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None)
     else:
         app.config.intersphinx_mapping = {"PyQt": ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None)}
-    app.connect('missing-reference', missing_reference)
+    app.connect("missing-reference", missing_reference)
     app.connect("autodoc-process-signature", autodoc_process_signature)
     # app.connect('doctree-read', doctree_read)
-    app.add_config_value('qt_documentation', "Qt", True, ENUM("Qt", "PySide", "PyQt"))
-    return {
-        'version': "0.9",
-        'env_version': 1,
-        'parallel_read_safe': True
-    }
+    app.add_config_value("qt_documentation", "Qt", True, ENUM("Qt", "PySide", "PyQt"))
+    return {"version": "0.9", "env_version": 1, "parallel_read_safe": True}
 
 
 # https://doc.qt.io/qtforpython/PySide2/QtWidgets/QListWidget.html#PySide2.QtWidgets.QListWidget.itemDoubleClicked

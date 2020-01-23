@@ -5,10 +5,29 @@ from typing import List, Optional, Dict, Tuple, Iterable, Set
 
 import numpy as np
 from qtpy.QtCore import Qt, QRect, QPointF, Signal
-from qtpy.QtGui import QPaintEvent, QPainter, QMouseEvent, QBrush, QColor, QHideEvent, QFontMetrics, QFont, \
-    QShowEvent, QResizeEvent
-from qtpy.QtWidgets import QWidget, QColorDialog, QVBoxLayout, QHBoxLayout, QPushButton, QCheckBox, \
-    QToolButton, QScrollArea, QGridLayout
+from qtpy.QtGui import (
+    QPaintEvent,
+    QPainter,
+    QMouseEvent,
+    QBrush,
+    QColor,
+    QHideEvent,
+    QFontMetrics,
+    QFont,
+    QShowEvent,
+    QResizeEvent,
+)
+from qtpy.QtWidgets import (
+    QWidget,
+    QColorDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QCheckBox,
+    QToolButton,
+    QScrollArea,
+    QGridLayout,
+)
 
 from PartSeg.common_backend.base_settings import ViewSettings
 from PartSeg.common_gui.icon_selector import IconSelector
@@ -40,26 +59,26 @@ class ColormapEdit(QWidget):
         self.color_list: List[Color] = []
         self.position_list: List[float] = []
         self.move_ind = None
-        self.image = convert_colormap_to_image(ColorMap((ColorPosition(0, Color(0, 0, 0)),
-                                                         ColorPosition(1, Color(255, 255, 255)))))
+        self.image = convert_colormap_to_image(
+            ColorMap((ColorPosition(0, Color(0, 0, 0)), ColorPosition(1, Color(255, 255, 255))))
+        )
         self.setMinimumHeight(60)
 
     def paintEvent(self, a0: QPaintEvent) -> None:
         painter = QPainter(self)
         margin = 10
         width = self.width() - 2 * margin
-        rect = QRect(margin, margin, width, self.height()-2*margin)
+        rect = QRect(margin, margin, width, self.height() - 2 * margin)
         painter.drawImage(rect, self.image)
         painter.save()
 
         for pos_factor in self.position_list:
             pos = width * pos_factor
-            point = QPointF(pos+margin, self.height()/2)
+            point = QPointF(pos + margin, self.height() / 2)
             painter.setBrush(QBrush(Qt.black))
             painter.drawEllipse(point, 5, 5)
             painter.setBrush(QBrush(Qt.white))
             painter.drawEllipse(point, 3, 3)
-
 
         painter.restore()
 
@@ -148,8 +167,9 @@ class ColormapEdit(QWidget):
         """
         self.color_list = []
         self.position_list = []
-        self.image = convert_colormap_to_image(ColorMap((ColorPosition(0, Color(0, 0, 0)),
-                                                         ColorPosition(1, Color(255, 255, 255)))))
+        self.image = convert_colormap_to_image(
+            ColorMap((ColorPosition(0, Color(0, 0, 0)), ColorPosition(1, Color(255, 255, 255))))
+        )
         self.repaint()
 
     def distribute_evenly(self):
@@ -182,6 +202,7 @@ class ColormapCreator(QWidget):
     """
     Widget for creating colormap.
     """
+
     colormap_selected = Signal(ColorMap)
     """
     emitted on save button click. Contains current colormap in format accepted by :py:func:`create_color_map`
@@ -198,10 +219,14 @@ class ColormapCreator(QWidget):
         self.distribute_btn = QPushButton("Distribute evenly")
         self.reverse_btn = QPushButton("Reverse")
         self.info_label = InfoLabel(
-            ["<strong>Tip:</strong> Select color and double click on below color bar. " +
-             "Then repeat to add another colors.",
-             "<strong>Tip:</strong> Double click on marker to remove it.",
-             "<strong>Tip:</strong>  Press and hold mouse left button on marker to move it on color bar."], delay=10000)
+            [
+                "<strong>Tip:</strong> Select color and double click on below color bar. "
+                + "Then repeat to add another colors.",
+                "<strong>Tip:</strong> Double click on marker to remove it.",
+                "<strong>Tip:</strong>  Press and hold mouse left button on marker to move it on color bar.",
+            ],
+            delay=10000,
+        )
         layout = QVBoxLayout()
         layout.addWidget(self.color_picker)
         layout.addWidget(self.info_label)
@@ -242,6 +267,7 @@ class PColormapCreator(ColormapCreator):
     """
     :py:class:`~.ColormapCreator` variant which save result in :py:class:`.ViewSettings`
     """
+
     def __init__(self, settings: ViewSettings):
         super().__init__()
         self.settings = settings
@@ -278,6 +304,7 @@ class ChannelPreview(QWidget):
     :param accepted: if checkbox should be checked
     :param name: name which will be emitted in all signals as firs argument
     """
+
     selection_changed = Signal(str, bool)
     """checkbox selection changed (name)"""
     edit_request = Signal([str], [ColorMap])
@@ -320,7 +347,7 @@ class ChannelPreview(QWidget):
             self.edit_btn.setDisabled(True)
             self.edit_btn.setToolTip("This colormap is not editable")
         self.remove_btn.clicked.connect(partial(self.remove_request.emit, name))
-        self.setMinimumHeight(max(metrics.height(), self.edit_btn.minimumHeight(), self.checked.minimumHeight())+20)
+        self.setMinimumHeight(max(metrics.height(), self.edit_btn.minimumHeight(), self.checked.minimumHeight()) + 20)
 
     def _selection_changed(self, _=None):
         chk = self.checked.isChecked()
@@ -356,7 +383,7 @@ class ChannelPreview(QWidget):
         end = self.remove_btn.x() - self.checked.x()
         rect = self.rect()
         rect.setX(start)
-        rect.setWidth(end-start)
+        rect.setWidth(end - start)
         painter.drawImage(rect, self.image)
         super().paintEvent(event)
 
@@ -365,6 +392,7 @@ class ColormapList(QWidget):
     """
     Show list of colormaps
     """
+
     edit_signal = Signal(ColorMap)
     """Colormap for edit"""
 
@@ -498,6 +526,7 @@ class PColormapList(ColormapList):
         :param control_names: list of names of :py:class:`PartSeg.common_gui.stack_image_view.ImageView`
             for protect used channels from uncheck or remove
     """
+
     def __init__(self, settings: ViewSettings, control_names: List[str]):
         super().__init__(settings.colormap_dict)
         settings.colormap_dict.colormap_removed.connect(self.refresh)

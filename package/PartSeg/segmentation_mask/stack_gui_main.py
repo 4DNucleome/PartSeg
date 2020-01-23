@@ -9,9 +9,25 @@ from typing import Type
 import numpy as np
 from qtpy.QtCore import Signal, Qt, QByteArray, Slot
 from qtpy.QtGui import QGuiApplication, QIcon
-from qtpy.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox, QVBoxLayout, QCheckBox, \
-    QDoubleSpinBox, QSpinBox, QProgressBar, QLabel, QAbstractSpinBox, QFormLayout, \
-    QTabWidget, QSizePolicy, QGridLayout, QDialog
+from qtpy.QtWidgets import (
+    QWidget,
+    QPushButton,
+    QHBoxLayout,
+    QFileDialog,
+    QMessageBox,
+    QVBoxLayout,
+    QCheckBox,
+    QDoubleSpinBox,
+    QSpinBox,
+    QProgressBar,
+    QLabel,
+    QAbstractSpinBox,
+    QFormLayout,
+    QTabWidget,
+    QSizePolicy,
+    QGridLayout,
+    QDialog,
+)
 
 from PartSeg.common_gui.advanced_tabs import AdvancedWindow
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
@@ -39,8 +55,12 @@ from .stack_settings import StackSettings, get_mask
 from PartSegImage import TiffImageReader, Image
 from .batch_proceed import BatchProceed, BatchTask
 from .image_view import StackImageView
-from PartSegCore.mask.io_functions import SaveSegmentation, LoadSegmentation, SegmentationTuple, \
-    LoadSegmentationParameters
+from PartSegCore.mask.io_functions import (
+    SaveSegmentation,
+    LoadSegmentation,
+    SegmentationTuple,
+    LoadSegmentationParameters,
+)
 from PartSegCore import state_store
 import PartSegData
 
@@ -81,7 +101,6 @@ class MaskWindow(QDialog):
         self.setLayout(main_layout)
         self.mask_widget.values_changed.connect(self.values_changed)
 
-
     def values_changed(self):
         pass
 
@@ -99,8 +118,7 @@ class MaskWindow(QDialog):
         components = self.settings.chosen_components()
         segmentation = reduce_array(segmentation, components, len(self.settings.sizes) + 1)
 
-        mask = calculate_mask(mask_property, segmentation,
-                              self.settings.mask, self.settings.image_spacing)
+        mask = calculate_mask(mask_property, segmentation, self.settings.mask, self.settings.image_spacing)
         # self.settings.segmentation_history.append(
         #     HistoryElement.create(segmentation, self.settings.full_segmentation, self.settings.mask, algorithm_name,
         #                           algorithm_values, mask_property)
@@ -162,7 +180,8 @@ class MainMenu(BaseMainMenu):
         self.mask_manager_btn.clicked.connect(self.mask_manager)
         self.segmentation_dialog = SegmentationInfoDialog(
             self.main_window.settings,
-            self.main_window.options_panel.algorithm_options.algorithm_choose_widget.change_algorithm)
+            self.main_window.options_panel.algorithm_options.algorithm_choose_widget.change_algorithm,
+        )
 
         self.setContentsMargins(0, 0, 0, 0)
         layout = QHBoxLayout()
@@ -212,15 +231,21 @@ class MainMenu(BaseMainMenu):
             elif isinstance(exception, IOError):
                 QMessageBox.warning(self, "Open error", f"Some problem with reading from disc: {exception}")
             elif isinstance(exception, WrongFileTypeException):
-                QMessageBox.warning(self, "Open error", f"No needed files inside archive. "
-                                    "Most probably you choose file from segmentation analysis")
+                QMessageBox.warning(
+                    self,
+                    "Open error",
+                    f"No needed files inside archive. " "Most probably you choose file from segmentation analysis",
+                )
             else:
                 raise exception
 
         execute_dialog = ExecuteFunctionDialog(
-            load_property.load_class.load, [load_property.load_location],
-            {"metadata": {"default_spacing": self.settings.image.spacing}}, text="Load data",
-            exception_hook=exception_hook)
+            load_property.load_class.load,
+            [load_property.load_location],
+            {"metadata": {"default_spacing": self.settings.image.spacing}},
+            text="Load data",
+            exception_hook=exception_hook,
+        )
         if execute_dialog.exec():
             result = execute_dialog.get_result()
             if result is None:
@@ -232,14 +257,16 @@ class MainMenu(BaseMainMenu):
             return False
         if image.is_time:
             if image.is_stack:
-                QMessageBox.warning(
-                    self, "Not supported", "Data that are time data are currently not supported")
+                QMessageBox.warning(self, "Not supported", "Data that are time data are currently not supported")
                 return False
             else:
                 res = QMessageBox.question(
-                    self, "Not supported",
+                    self,
+                    "Not supported",
                     "Time data are currently not supported. Maybe You would like to treat time as z-stack",
-                    QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No,
+                )
 
                 if res == QMessageBox.Yes:
                     image = image.swap_time_and_stack()
@@ -250,8 +277,11 @@ class MainMenu(BaseMainMenu):
 
     def load_segmentation(self):
         dial = CustomLoadDialog(
-            {LoadSegmentation.get_name(): LoadSegmentation,
-             LoadSegmentationParameters.get_name(): LoadSegmentationParameters})
+            {
+                LoadSegmentation.get_name(): LoadSegmentation,
+                LoadSegmentationParameters.get_name(): LoadSegmentationParameters,
+            }
+        )
         dial.setDirectory(self.settings.get("io.open_segmentation_directory", str(Path.home())))
         dial.setHistory(dial.history() + self.settings.get_path_history())
         if not dial.exec_():
@@ -269,13 +299,20 @@ class MainMenu(BaseMainMenu):
             elif isinstance(exception, IOError):
                 mess.warning(self, "Open error", "Some problem with reading from disc")
             elif isinstance(exception, WrongFileTypeException):
-                mess.warning(self, "Open error", f"No needed files inside archive. "
-                             "Most probably you choose file from segmentation analysis")
+                mess.warning(
+                    self,
+                    "Open error",
+                    f"No needed files inside archive. " "Most probably you choose file from segmentation analysis",
+                )
             else:
                 raise exception
 
-        dial = ExecuteFunctionDialog(load_property.load_class.load, [load_property.load_location],
-                                     text="Load segmentation", exception_hook=exception_hook)
+        dial = ExecuteFunctionDialog(
+            load_property.load_class.load,
+            [load_property.load_location],
+            text="Load segmentation",
+            exception_hook=exception_hook,
+        )
         if dial.exec():
             result = dial.get_result()
             if result is None:
@@ -286,10 +323,11 @@ class MainMenu(BaseMainMenu):
                     self.settings.set_project_data(dial.get_result(), self.settings.keep_chosen_components)
                     return
                 except ValueError as e:
-                    if e.args != ("Segmentation do not fit to image", ):
+                    if e.args != ("Segmentation do not fit to image",):
                         raise
                     self.segmentation_dialog.set_additional_text(
-                        "Segmentation do not fit to image, maybe you would lie to load parameters only.")
+                        "Segmentation do not fit to image, maybe you would lie to load parameters only."
+                    )
             else:
                 self.segmentation_dialog.set_additional_text("")
             self.segmentation_dialog.set_parameters_dict(result.segmentation_parameters)
@@ -299,8 +337,7 @@ class MainMenu(BaseMainMenu):
         if self.settings.segmentation is None:
             QMessageBox.warning(self, "No segmentation", "No segmentation to save")
             return
-        dial = SaveDialog(io_functions.save_segmentation_dict, False,
-                          history=self.settings.get_path_history())
+        dial = SaveDialog(io_functions.save_segmentation_dict, False, history=self.settings.get_path_history())
         dial.setDirectory(self.settings.get("io.save_segmentation_directory", str(Path.home())))
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0] + ".seg")
         if not dial.exec_():
@@ -314,22 +351,30 @@ class MainMenu(BaseMainMenu):
             QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.Ok)
             raise exception
 
-        dial = ExecuteFunctionDialog(save_class.save, [save_location, self.settings.get_project_info(), values],
-                                     text="Save segmentation", exception_hook=exception_hook)
+        dial = ExecuteFunctionDialog(
+            save_class.save,
+            [save_location, self.settings.get_project_info(), values],
+            text="Save segmentation",
+            exception_hook=exception_hook,
+        )
         dial.exec()
 
     def save_result(self):
-        if self.settings.image_path is not None and \
-                QMessageBox.Yes == QMessageBox.question(self, "Copy", "Copy name to clipboard?",
-                                                        QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes):
+        if self.settings.image_path is not None and QMessageBox.Yes == QMessageBox.question(
+            self, "Copy", "Copy name to clipboard?", QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes
+        ):
             clipboard = QGuiApplication.clipboard()
             clipboard.setText(os.path.splitext(os.path.basename(self.settings.image_path))[0])
 
         if self.settings.segmentation is None:
             QMessageBox.warning(self, "No components", "No components to save")
             return
-        dial = SaveDialog(io_functions.save_components_dict, False, history=self.settings.get_path_history(),
-                          file_mode=QFileDialog.Directory)
+        dial = SaveDialog(
+            io_functions.save_components_dict,
+            False,
+            history=self.settings.get_path_history(),
+            file_mode=QFileDialog.Directory,
+        )
         dial.setDirectory(self.settings.get("io.save_components_directory", str(Path.home())))
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0])
         if not dial.exec_():
@@ -343,8 +388,13 @@ class MainMenu(BaseMainMenu):
         if len(conflict) > 0:
             # TODO modify because of long lists
             conflict_str = "\n".join(conflict)
-            if QMessageBox.No == QMessageBox.warning(self, "Overwrite", f"Overwrite files:\n {conflict_str}",
-                                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No):
+            if QMessageBox.No == QMessageBox.warning(
+                self,
+                "Overwrite",
+                f"Overwrite files:\n {conflict_str}",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            ):
                 self.save_result()
                 return
 
@@ -355,8 +405,11 @@ class MainMenu(BaseMainMenu):
             QMessageBox.critical(self, "Save error", f"Error on disc operation. Text: {exception}", QMessageBox.Ok)
 
         dial = ExecuteFunctionDialog(
-            res.save_class.save, [res.save_destination, self.settings.get_project_info(), res.parameters],
-            text="Save components", exception_hook=exception_hook)
+            res.save_class.save,
+            [res.save_destination, self.settings.get_project_info(), res.parameters],
+            text="Save components",
+            exception_hook=exception_hook,
+        )
         dial.exec()
 
 
@@ -379,6 +432,7 @@ class ChosenComponents(QWidget):
     """
     :type check_box: dict[int, QCheckBox]
     """
+
     check_change_signal = Signal()
     mouse_enter = Signal(int)
     mouse_leave = Signal(int)
@@ -492,8 +546,9 @@ class AlgorithmOptions(QWidget):
         self.execute_btn = QPushButton("Execute")
         self.execute_btn.setStyleSheet("QPushButton{font-weight: bold;}")
         self.execute_all_btn = QPushButton("Execute all")
-        self.execute_all_btn.setToolTip("Execute in batch mode segmentation with current parameter. "
-                                        "File list need to be specified in image tab.")
+        self.execute_all_btn.setToolTip(
+            "Execute in batch mode segmentation with current parameter. " "File list need to be specified in image tab."
+        )
         self.execute_all_btn.setDisabled(True)
         self.save_parameters_btn = QPushButton("Save parameters")
         self.block_execute_all_btn = False
@@ -504,14 +559,16 @@ class AlgorithmOptions(QWidget):
 
         # self.stack_layout = QStackedLayout()
         self.keep_chosen_components_chk = QCheckBox("Save chosen components")
-        self.keep_chosen_components_chk.setToolTip("Save chosen components when loading segmentation form file\n"
-                                                   "or from multiple file widget.")
+        self.keep_chosen_components_chk.setToolTip(
+            "Save chosen components when loading segmentation form file\n" "or from multiple file widget."
+        )
         self.keep_chosen_components_chk.stateChanged.connect(self.set_keep_chosen_components)
         self.keep_chosen_components_chk.setChecked(settings.keep_chosen_components)
         self.show_parameters = QPushButton("Show parameters")
         self.show_parameters.setToolTip("Show parameters of segmentation for each components")
-        self.show_parameters_widget = SegmentationInfoDialog(self.settings,
-                                                             self.algorithm_choose_widget.change_algorithm)
+        self.show_parameters_widget = SegmentationInfoDialog(
+            self.settings, self.algorithm_choose_widget.change_algorithm
+        )
         self.show_parameters.clicked.connect(self.show_parameters_widget.show)
         self.choose_components = ChosenComponents()
         self.choose_components.check_change_signal.connect(control_view.components_change)
@@ -647,8 +704,11 @@ class AlgorithmOptions(QWidget):
         self._execute_in_background_init()
 
     def execute_all_action(self):
-        dial = SaveDialog({SaveSegmentation.get_name(): SaveSegmentation}, history=self.settings.get_path_history(),
-                          system_widget=False)
+        dial = SaveDialog(
+            {SaveSegmentation.get_name(): SaveSegmentation},
+            history=self.settings.get_path_history(),
+            system_widget=False,
+        )
         dial.setFileMode(QFileDialog.Directory)
         dial.setDirectory(self.settings.get("io.save_batch", self.settings.get("io.save_segmentation_directory", "")))
         if not dial.exec_():
@@ -663,7 +723,7 @@ class AlgorithmOptions(QWidget):
         for file_path in self.file_list:
             task = BatchTask(file_path, segmentation_profile, (folder_path, save_parameters))
             self.batch_process.add_task(task)
-        self.progress_bar2.setRange(0, self.progress_bar2.maximum()+len(self.file_list))
+        self.progress_bar2.setRange(0, self.progress_bar2.maximum() + len(self.file_list))
         self._execute_in_background_init()
 
     def execution_all_error(self, text):
@@ -717,13 +777,15 @@ class AlgorithmOptions(QWidget):
 
     def execution_done(self, segmentation: SegmentationResult):
         if segmentation.segmentation.max() == 0:
-            QMessageBox.information(self, "No result", "Segmentation contains no component, check parameters, "
-                                                       "especially chosen channel.")
+            QMessageBox.information(
+                self, "No result", "Segmentation contains no component, check parameters, " "especially chosen channel."
+            )
         if segmentation.info_text != "":
             QMessageBox.information(self, "Algorithm info", segmentation.info_text)
         parameters_dict = defaultdict(lambda: deepcopy(segmentation.parameters))
-        self.settings.set_segmentation(segmentation.segmentation,
-                                       self.settings.keep_chosen_components, [], parameters_dict)
+        self.settings.set_segmentation(
+            segmentation.segmentation, self.settings.keep_chosen_components, [], parameters_dict
+        )
 
     def showEvent(self, _):
         widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
@@ -794,8 +856,9 @@ class ImageInformation(QWidget):
         self.update_spacing()
 
     def image_spacing_change(self):
-        self._settings.image_spacing = [el.value() / UNIT_SCALE[self.units.currentIndex()] for i, el in
-                                        enumerate(self.spacing[::-1])]
+        self._settings.image_spacing = [
+            el.value() / UNIT_SCALE[self.units.currentIndex()] for i, el in enumerate(self.spacing[::-1])
+        ]
 
     def showEvent(self, _a0):
         units_value = self._settings.get("units_value", Units.nm)
@@ -828,15 +891,15 @@ class Options(QTabWidget):
 
 
 class MainWindow(BaseMainWindow):
-
     @classmethod
     def get_setting_class(cls) -> Type[StackSettings]:
         return StackSettings
 
     initial_image_path = PartSegData.segmentation_mask_default_image
 
-    def __init__(self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None,
-                 initial_image=None):
+    def __init__(
+        self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None, initial_image=None
+    ):
         super().__init__(config_folder, title, settings, signal_fun)
         self.channel_control = ChannelProperty(self.settings, start_name="channelcontrol")
         self.image_view = StackImageView(self.settings, self.channel_control, name="channelcontrol")
@@ -897,7 +960,7 @@ class MainWindow(BaseMainWindow):
             self.settings.image = initial_image
         try:
             geometry = self.settings.get_from_profile("main_window_geometry")
-            self.restoreGeometry(QByteArray.fromHex(bytes(geometry, 'ascii')))
+            self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
         except KeyError:
             pass
 
@@ -909,7 +972,7 @@ class MainWindow(BaseMainWindow):
     def closeEvent(self, e):
         # print(self.settings.dump_view_profiles())
         # print(self.settings.segmentation_dict["default"].my_dict)
-        self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode('ascii'))
+        self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
         self.options_panel.algorithm_options.algorithm_choose_widget.recursive_get_values()
         self.settings.dump()
         self.main_menu.segmentation_dialog.close()
@@ -927,9 +990,9 @@ class MainWindow(BaseMainWindow):
         dial = ImageAdjustmentDialog(self.settings.image)
         if dial.exec():
             algorithm = dial.result_val.algorithm
-            dial2 = ExecuteFunctionDialog(algorithm.transform, [],
-                                          {"image": self.settings.image, "arguments": dial.result_val.values}
-                                          )
+            dial2 = ExecuteFunctionDialog(
+                algorithm.transform, [], {"image": self.settings.image, "arguments": dial.result_val.values}
+            )
             if dial2.exec():
                 result: Image = dial2.get_result()
                 self.settings.set_project_info(SegmentationTuple(result.file_path, result))

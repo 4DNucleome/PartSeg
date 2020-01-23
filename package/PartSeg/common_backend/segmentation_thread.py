@@ -11,6 +11,7 @@ class SegmentationThread(QThread):
     Method to run calculation task in separated Thread. This allows to not freeze main window.
     To get info if calculation is done connect to :py:meth:`~.QThread.finished`.
     """
+
     execution_done = Signal(SegmentationResult)
     """
     Signal contains result of segmentation algorithm. Emitted if calculation ends without exception and
@@ -99,7 +100,7 @@ class SegmentationThread(QThread):
             self.algorithm.set_parameters(*args, **kwargs)
         self.mutex.unlock()
 
-    def start(self, priority: 'QThread.Priority' = QThread.InheritPriority):
+    def start(self, priority: "QThread.Priority" = QThread.InheritPriority):
         """
         If calculation is running remember to restart it with new parameters.
 

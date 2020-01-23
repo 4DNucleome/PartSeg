@@ -17,11 +17,13 @@ multiprocessing.freeze_support()
 # noinspection PyUnresolvedReferences,PyUnusedLocal
 def _test_imports():
     from qtpy.QtWidgets import QApplication
+
     app = QApplication([])
     from .segmentation_analysis.main_window import MainWindow as AnalysisMain
     from .segmentation_mask.stack_gui_main import MainWindow as MaskMain
     from .launcher.main_window import MainWindow
     from . import plugins
+
     plugins.register()
     w1 = AnalysisMain("test")
     w2 = MaskMain("test")
@@ -39,8 +41,9 @@ def main():
         _test_imports()
         return
     parser = CustomParser("PartSeg")
-    parser.add_argument("--multiprocessing-fork", dest="mf", action="store_true",
-                        help=argparse.SUPPRESS)  # Windows bug fix
+    parser.add_argument(
+        "--multiprocessing-fork", dest="mf", action="store_true", help=argparse.SUPPRESS
+    )  # Windows bug fix
     sp = parser.add_subparsers()
     sp_a = sp.add_parser("segmentation_analysis", help="Starts GUI for segmentation analysis")
     sp_s = sp.add_parser("segmentation", help="Starts GUI for segmentation")
@@ -61,8 +64,10 @@ def main():
     QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf"))
     if args.gui == "segmentation_analysis" or args.mf:
         from . import plugins
+
         plugins.register()
         from .segmentation_analysis.main_window import MainWindow
+
         title = "PartSeg Segmentation Analysis"
         if args.image:
             image = TiffImageReader.read_image(args.image, args.mask)
@@ -72,8 +77,10 @@ def main():
             wind.main_menu.batch_window()
     elif args.gui == "segmentation":
         from . import plugins
+
         plugins.register()
         from .segmentation_mask.stack_gui_main import MainWindow
+
         title = "PartSeg Mask Segmentation"
         if args.image:
             image = TiffImageReader.read_image(args.image)
@@ -81,6 +88,7 @@ def main():
         wind = MainWindow(title=title)
     else:
         from .launcher.main_window import MainWindow
+
         title = "PartSeg Launcher"
         wind = MainWindow(title=title)
 
@@ -91,5 +99,5 @@ def main():
     sys.exit(rc)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

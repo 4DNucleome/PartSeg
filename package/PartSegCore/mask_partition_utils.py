@@ -30,10 +30,13 @@ class BorderRim(AlgorithmDescribeBase):
     1. For each image voxel calculate distance from background (0 labeled voxels in mask) with respect of voxel size
     2. Select this voxels which are closer than gvien distance.
     """
+
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("distance", "Distance", 0.0, options_range=(0, 10000), property_type=float),
-                AlgorithmProperty("units", "Units", Units.nm, property_type=Units)]
+        return [
+            AlgorithmProperty("distance", "Distance", 0.0, options_range=(0, 10000), property_type=float),
+            AlgorithmProperty("units", "Units", Units.nm, property_type=Units),
+        ]
 
     @classmethod
     def get_name(cls) -> str:
@@ -57,8 +60,9 @@ class BorderRim(AlgorithmDescribeBase):
         final_radius = [int((distance / units_scalar) / x) for x in reversed(voxel_size)]
         mask = np.array(mask > 0)
         mask = mask.astype(np.uint8)
-        eroded = SimpleITK.GetArrayFromImage(SimpleITK.BinaryErode(SimpleITK.GetImageFromArray(mask.squeeze()),
-                                                                   final_radius))
+        eroded = SimpleITK.GetArrayFromImage(
+            SimpleITK.BinaryErode(SimpleITK.GetImageFromArray(mask.squeeze()), final_radius)
+        )
         eroded = eroded.reshape(mask.shape)
         mask[eroded > 0] = 0
         return mask
@@ -90,15 +94,22 @@ class SplitMaskOnPart(AlgorithmDescribeBase):
        }
 
     """
+
     @classmethod
     def get_name(cls) -> str:
         return "Mask on Part"
 
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
-        return [AlgorithmProperty("num_of_parts", "Number of Parts", 2, (1, 1024)),
-                AlgorithmProperty("equal_volume", "Equal Volume", False,
-                                  help_text="If split should be done in respect of parts volume of parts thickness.")]
+        return [
+            AlgorithmProperty("num_of_parts", "Number of Parts", 2, (1, 1024)),
+            AlgorithmProperty(
+                "equal_volume",
+                "Equal Volume",
+                False,
+                help_text="If split should be done in respect of parts volume of parts thickness.",
+            ),
+        ]
 
     @staticmethod
     def split(mask: np.ndarray, num_of_parts: int, equal_volume: bool, voxel_size, **_):
@@ -116,17 +127,17 @@ class SplitMaskOnPart(AlgorithmDescribeBase):
         distance_arr = distance_transform_edt(mask, sampling=voxel_size)
         if equal_volume:
             # TODO add more bins, fix tests for more bins
-            hist, bins = np.histogram(distance_arr[distance_arr > 0], bins=10*num_of_parts)
+            hist, bins = np.histogram(distance_arr[distance_arr > 0], bins=10 * num_of_parts)
             total = np.sum(hist)
-            levels, step = np.linspace(0, total, num_of_parts+1, True, retstep=True)
+            levels, step = np.linspace(0, total, num_of_parts + 1, True, retstep=True)
             bounds = [0]
             i = 1
             cum_sum = 0
             for val, begin, end in zip(hist, bins, bins[1:]):
                 cum_sum = cum_sum + val
                 if cum_sum > levels[i]:
-                    exceed = (cum_sum - levels[i])/step
-                    bounds.append(begin + (end - begin)*exceed)
+                    exceed = (cum_sum - levels[i]) / step
+                    bounds.append(begin + (end - begin) * exceed)
                     i += 1
         else:
             max_dist = np.max(distance_arr)

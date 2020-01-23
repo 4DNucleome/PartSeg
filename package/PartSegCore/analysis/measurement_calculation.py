@@ -54,6 +54,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
     """
     Class for storage measurements info.
     """
+
     def __init__(self, components_info: ComponentsInfo):
         self.components_info = components_info
         self._data_dict = OrderedDict()
@@ -105,10 +106,12 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
 
         :return: has_mask_components, has_segmentation_components
         """
-        has_mask_components = \
-            any([x == PerComponent.Yes and y != AreaType.Segmentation for x, y in self._type_dict.values()])
-        has_segmentation_components = \
-            any([x == PerComponent.Yes and y == AreaType.Segmentation for x, y in self._type_dict.values()])
+        has_mask_components = any(
+            [x == PerComponent.Yes and y != AreaType.Segmentation for x, y in self._type_dict.values()]
+        )
+        has_segmentation_components = any(
+            [x == PerComponent.Yes and y == AreaType.Segmentation for x, y in self._type_dict.values()]
+        )
         return has_mask_components, has_segmentation_components
 
     def get_labels(self) -> List[str]:
@@ -264,8 +267,12 @@ class MeasurementProfile(object):
         res = []
         # Fixme remove binding to 3 dimensions
         for el in self.chosen_fields:
-            res.append(((self.name_prefix + el.name, el.get_unit(unit, 3)),
-                        self._is_component_measurement(el.calculation_tree)))
+            res.append(
+                (
+                    (self.name_prefix + el.name, el.get_unit(unit, 3)),
+                    self._is_component_measurement(el.calculation_tree),
+                )
+            )
         return res
 
     def get_parameters(self):
@@ -283,9 +290,9 @@ class MeasurementProfile(object):
         else:
             return self._is_component_measurement(node.left) or self._is_component_measurement(node.right)
 
-    def calculate_tree(self, node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo,
-                       help_dict: dict, kwargs: dict) \
-            -> Tuple[Union[float, np.ndarray], symbols, AreaType]:
+    def calculate_tree(
+        self, node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
+    ) -> Tuple[Union[float, np.ndarray], symbols, AreaType]:
         """
         Main function for calculation tree of measurements. It is executed recursively
 
@@ -305,14 +312,14 @@ class MeasurementProfile(object):
                 val = help_dict[hash_str]
             else:
                 if node.channel is not None:
-                    kw['channel'] = kw[f"chanel_{node.channel}"]
-                    kw['channel_num'] = node.channel
+                    kw["channel"] = kw[f"chanel_{node.channel}"]
+                    kw["channel_num"] = node.channel
                 else:
-                    kw['channel_num'] = -1
-                kw['help_dict'] = help_dict
-                kw['_area'] = node.area
-                kw['_per_component'] = node.per_component
-                kw['_cache'] = True
+                    kw["channel_num"] = -1
+                kw["help_dict"] = help_dict
+                kw["_area"] = node.area
+                kw["_per_component"] = node.per_component
+                kw["_cache"] = True
                 if area_type == AreaType.Mask:
                     kw["area_array"] = kw["mask"]
                 elif area_type == AreaType.Mask_without_segmentation:
@@ -322,7 +329,7 @@ class MeasurementProfile(object):
                 else:
                     raise ValueError(f"Unknown area type {node.area}")
                 if node.per_component != PerComponent.No:
-                    kw['_cache'] = False
+                    kw["_cache"] = False
                     val = []
                     area_array = kw["area_array"]
                     if area_type == AreaType.Segmentation:
@@ -344,10 +351,10 @@ class MeasurementProfile(object):
                 return pow(val, node.power), pow(unit, node.power), area_type
             return val, unit, area_type
         elif isinstance(node, Node):
-            left_res, left_unit, left_area = \
-                self.calculate_tree(node.left, segmentation_mask_map, help_dict, kwargs)
-            right_res, right_unit, right_area = \
-                self.calculate_tree(node.right, segmentation_mask_map, help_dict, kwargs)
+            left_res, left_unit, left_area = self.calculate_tree(node.left, segmentation_mask_map, help_dict, kwargs)
+            right_res, right_unit, right_area = self.calculate_tree(
+                node.right, segmentation_mask_map, help_dict, kwargs
+            )
             if node.op == "/":
                 if isinstance(left_res, np.ndarray) and isinstance(right_res, np.ndarray) and left_area != right_area:
                     area_set = {left_area, right_area}
@@ -360,9 +367,9 @@ class MeasurementProfile(object):
                             if len(div_vals) != 1:
                                 raise ProhibitedDivision("Cannot calculate when object do not belongs to one mask area")
                             if left_area == AreaType.Segmentation:
-                                res.append(val/div_vals[0])
+                                res.append(val / div_vals[0])
                             else:
-                                res.append(div_vals[0]/val)
+                                res.append(div_vals[0] / val)
                         return np.array(res), left_unit / right_unit, AreaType.Segmentation
                     left_area = AreaType.Mask_without_segmentation
 
@@ -370,8 +377,7 @@ class MeasurementProfile(object):
         raise ValueError("Wrong measurement: {}".format(node))
 
     @staticmethod
-    def get_segmentation_to_mask_component(segmentation: np.ndarray, mask: Optional[np.ndarray]) \
-            -> ComponentsInfo:
+    def get_segmentation_to_mask_component(segmentation: np.ndarray, mask: Optional[np.ndarray]) -> ComponentsInfo:
         """
         Calculate map from segmentation component num to mask component num
 
@@ -403,10 +409,18 @@ class MeasurementProfile(object):
             res.append(self._get_par_component_and_area_type(tree))
         return res
 
-    def calculate(self, channel: np.ndarray, segmentation: np.ndarray, full_mask: np.ndarray,
-                  mask: Optional[np.ndarray], voxel_size, result_units: Units,
-                  range_changed: Callable[[int, int], Any] = None,
-                  step_changed: Callable[[int], Any] = None, **kwargs) -> MeasurementResult:
+    def calculate(
+        self,
+        channel: np.ndarray,
+        segmentation: np.ndarray,
+        full_mask: np.ndarray,
+        mask: Optional[np.ndarray],
+        voxel_size,
+        result_units: Units,
+        range_changed: Callable[[int, int], Any] = None,
+        step_changed: Callable[[int], Any] = None,
+        **kwargs,
+    ) -> MeasurementResult:
         """
         Calculate measurements on given set of parameters
 
@@ -432,8 +446,14 @@ class MeasurementProfile(object):
         segmentation_mask_map = self.get_segmentation_to_mask_component(segmentation, mask)
         result = MeasurementResult(segmentation_mask_map)
         result_scalar = UNIT_SCALE[result_units.value]
-        kw = {"channel": channel, "segmentation": segmentation, "mask": mask, "full_segmentation": full_mask,
-              "voxel_size": voxel_size, "result_scalar": result_scalar}
+        kw = {
+            "channel": channel,
+            "segmentation": segmentation,
+            "mask": mask,
+            "full_segmentation": full_mask,
+            "voxel_size": voxel_size,
+            "result_scalar": result_scalar,
+        }
         for el in kwargs.keys():
             if not el.startswith("channel_"):
                 raise ValueError(f"unknown parameter {el} of calculate function")
@@ -484,15 +504,15 @@ def calculate_main_axis(area_array: np.ndarray, channel: np.ndarray, voxel_size)
     positions = np.array(np.nonzero(cut_img), dtype=np.float64)
     for i, v in enumerate(reversed(voxel_size), start=1):
         positions[-i] *= v
-        positions[-i] -= center_of_mass[i-1]
+        positions[-i] -= center_of_mass[i - 1]
     centered = np.dot(orientation_matrix.T, positions)
     size = np.max(centered, axis=1) - np.min(centered, axis=1)
     return size
 
 
-def get_main_axis_length(index: int, area_array: np.ndarray, channel: np.ndarray, voxel_size,
-                         result_scalar,
-                         _cache=False, **kwargs):
+def get_main_axis_length(
+    index: int, area_array: np.ndarray, channel: np.ndarray, voxel_size, result_scalar, _cache=False, **kwargs
+):
     _cache = _cache and "_area" in kwargs and "_per_component" in kwargs
     if _cache:
         help_dict: Dict = kwargs["help_dict"]
@@ -751,8 +771,10 @@ class MedianPixelBrightness(MeasurementMethodBase):
 
 
 class StandardDeviationOfPixelBrightness(MeasurementMethodBase):
-    text_info = "Standard deviation of pixel brightness", \
-                "Calculate standard deviation of pixel brightness for current area"
+    text_info = (
+        "Standard deviation of pixel brightness",
+        "Calculate standard deviation of pixel brightness for current area",
+    )
 
     @staticmethod
     def calculate_property(area_array, channel, **_):
@@ -889,8 +911,9 @@ class Sphericity(MeasurementMethodBase):
 
     @staticmethod
     def calculate_property(**kwargs):
-        if all(key in kwargs for key in ["help_dict", "_area", "_per_component"])\
-                and ("_cache" not in kwargs or kwargs["_cache"]):
+        if all(key in kwargs for key in ["help_dict", "_area", "_per_component"]) and (
+            "_cache" not in kwargs or kwargs["_cache"]
+        ):
             help_dict = kwargs["help_dict"]
         else:
             help_dict = {}
@@ -910,7 +933,7 @@ class Sphericity(MeasurementMethodBase):
             diameter_val = help_dict[diameter_hash_str]
         radius = diameter_val / 2
         if kwargs["area_array"].shape[0] > 1:
-            return volume / (4/3 * pi * (radius ** 3))
+            return volume / (4 / 3 * pi * (radius ** 3))
         else:
             return volume / (pi * (radius ** 2))
 
@@ -960,8 +983,10 @@ class RimVolume(MeasurementMethodBase):
 
 
 class RimPixelBrightnessSum(MeasurementMethodBase):
-    text_info = "Rim Pixel Brightness Sum", \
-                "Calculate mass for components located within rim (in physical units) from mask"
+    text_info = (
+        "Rim Pixel Brightness Sum",
+        "Calculate mass for components located within rim (in physical units) from mask",
+    )
 
     @classmethod
     def get_fields(cls):
@@ -1020,8 +1045,10 @@ class DistanceMaskSegmentation(MeasurementMethodBase):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("distance_from_mask", "Distance from mask", DistancePoint.Border),
-                AlgorithmProperty("distance_to_segmentation", "Distance to segmentation", DistancePoint.Border)]
+        return [
+            AlgorithmProperty("distance_from_mask", "Distance from mask", DistancePoint.Border),
+            AlgorithmProperty("distance_to_segmentation", "Distance to segmentation", DistancePoint.Border),
+        ]
 
     @staticmethod
     def calculate_points(channel, area_array, voxel_size, result_scalar, point_type: DistancePoint) -> np.ndarray:
@@ -1039,8 +1066,17 @@ class DistanceMaskSegmentation(MeasurementMethodBase):
         return area_pos
 
     @classmethod
-    def calculate_property(cls, channel, area_array, mask, voxel_size, result_scalar, distance_from_mask: DistancePoint,
-                           distance_to_segmentation: DistancePoint, **kwargs):
+    def calculate_property(
+        cls,
+        channel,
+        area_array,
+        mask,
+        voxel_size,
+        result_scalar,
+        distance_from_mask: DistancePoint,
+        distance_to_segmentation: DistancePoint,
+        **kwargs,
+    ):
         if len(channel.shape) == 4:
             if channel.shape[0] != 1:
                 raise ValueError("This measurements do not support time data")
@@ -1075,13 +1111,16 @@ class DistanceMaskSegmentation(MeasurementMethodBase):
 
 
 class SplitOnPartVolume(MeasurementMethodBase):
-    text_info = "split on part volume", "Split mask on parts and then calculate volume of cross " \
-                                        "of segmentation and mask part"
+    text_info = (
+        "split on part volume",
+        "Split mask on parts and then calculate volume of cross " "of segmentation and mask part",
+    )
 
     @classmethod
     def get_fields(cls):
-        return SplitMaskOnPart.get_fields() + \
-               [AlgorithmProperty("part_selection", "Which part  (from border)", 2, (1, 1024))]
+        return SplitMaskOnPart.get_fields() + [
+            AlgorithmProperty("part_selection", "Which part  (from border)", 2, (1, 1024))
+        ]
 
     @staticmethod
     def calculate_property(part_selection, area_array, voxel_size, result_scalar, **kwargs):
@@ -1103,13 +1142,16 @@ class SplitOnPartVolume(MeasurementMethodBase):
 
 
 class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
-    text_info = "split on part pixel brightness sum", "Split mask on parts and then calculate pixel brightness sum" \
-                                                      " of cross of segmentation and mask part"
+    text_info = (
+        "split on part pixel brightness sum",
+        "Split mask on parts and then calculate pixel brightness sum" " of cross of segmentation and mask part",
+    )
 
     @classmethod
     def get_fields(cls):
-        return SplitMaskOnPart.get_fields() + \
-               [AlgorithmProperty("part_selection", "Which part (from border)", 2, (1, 1024))]
+        return SplitMaskOnPart.get_fields() + [
+            AlgorithmProperty("part_selection", "Which part (from border)", 2, (1, 1024))
+        ]
 
     @staticmethod
     def calculate_property(part_selection, channel, area_array, **kwargs):
@@ -1140,11 +1182,12 @@ def calculate_volume_surface(volume_mask, voxel_size):
     border_surface = 0
     surf_im: np.ndarray = np.array(volume_mask).astype(np.uint8).squeeze()
     for ax in range(surf_im.ndim):
-        border_surface += \
-            np.count_nonzero(
-                np.logical_xor(surf_im.take(np.arange(surf_im.shape[ax]-1), axis=ax),
-                               surf_im.take(np.arange(surf_im.shape[ax]-1)+1, axis=ax))
-            ) * reduce(lambda x, y: x*y, [voxel_size[x] for x in range(surf_im.ndim) if x != ax])
+        border_surface += np.count_nonzero(
+            np.logical_xor(
+                surf_im.take(np.arange(surf_im.shape[ax] - 1), axis=ax),
+                surf_im.take(np.arange(surf_im.shape[ax] - 1) + 1, axis=ax),
+            )
+        ) * reduce(lambda x, y: x * y, [voxel_size[x] for x in range(surf_im.ndim) if x != ax])
     return border_surface
 
 
@@ -1160,15 +1203,33 @@ def calc_diam(array, voxel_size):
         pos[:, i] *= val
     diam = 0
     for i, p in enumerate(zip(pos[:-1])):
-        tmp = np.array((pos[i + 1:] - p) ** 2)
+        tmp = np.array((pos[i + 1 :] - p) ** 2)
         diam = max(diam, np.max(np.sum(tmp, 1)))
     return np.sqrt(diam)
 
 
-MEASUREMENT_DICT = Register(Volume, Diameter, PixelBrightnessSum, ComponentsNumber, MaximumPixelBrightness,
-                            MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness,
-                            StandardDeviationOfPixelBrightness, MomentOfInertia, LongestMainAxisLength,
-                            MiddleMainAxisLength, ShortestMainAxisLength, Compactness, Sphericity, Surface, RimVolume,
-                            RimPixelBrightnessSum, DistanceMaskSegmentation, SplitOnPartVolume,
-                            SplitOnPartPixelBrightnessSum, suggested_base_class=MeasurementMethodBase)
+MEASUREMENT_DICT = Register(
+    Volume,
+    Diameter,
+    PixelBrightnessSum,
+    ComponentsNumber,
+    MaximumPixelBrightness,
+    MinimumPixelBrightness,
+    MeanPixelBrightness,
+    MedianPixelBrightness,
+    StandardDeviationOfPixelBrightness,
+    MomentOfInertia,
+    LongestMainAxisLength,
+    MiddleMainAxisLength,
+    ShortestMainAxisLength,
+    Compactness,
+    Sphericity,
+    Surface,
+    RimVolume,
+    RimPixelBrightnessSum,
+    DistanceMaskSegmentation,
+    SplitOnPartVolume,
+    SplitOnPartPixelBrightnessSum,
+    suggested_base_class=MeasurementMethodBase,
+)
 """Register with all measurements algorithms"""

@@ -87,6 +87,7 @@ class AdvancedWindow(QTabWidget):
     :param settings: program settings
     :param image_view_names: passed as second argument to :py:class:`~.PColormapList`
     """
+
     def __init__(self, settings: ViewSettings, image_view_names: List[str], parent=None):
         super().__init__(parent)
         self.color_control = ColorControl(settings, image_view_names)
@@ -99,7 +100,7 @@ class AdvancedWindow(QTabWidget):
         if self.window() == self:
             try:
                 geometry = self.settings.get_from_profile("advanced_window_geometry")
-                self.restoreGeometry(QByteArray.fromHex(bytes(geometry, 'ascii')))
+                self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
             except KeyError:
                 pass
 
@@ -108,5 +109,5 @@ class AdvancedWindow(QTabWidget):
         Save geometry if widget is used as standalone window.
         """
         if self.window() == self:
-            self.settings.set_in_profile("advanced_window_geometry", self.saveGeometry().toHex().data().decode('ascii'))
+            self.settings.set_in_profile("advanced_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
         super(AdvancedWindow, self).closeEvent(event)

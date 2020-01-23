@@ -4,11 +4,12 @@ from io import BytesIO
 from tifffile import imsave
 import numpy as np
 
-from . import Image
+from .image import Image, minimal_dtype
 
 
 class ImageWriter:
     """class for saving TIFF images"""
+
     @classmethod
     def save(cls, image: Image, save_path: typing.Union[str, BytesIO]):
         """
@@ -26,7 +27,7 @@ class ImageWriter:
         if coloring is not None:
             imagej_kwargs["LUTs"] = coloring
         ranges = image.get_ranges()
-        ranges = np.array(ranges).reshape(len(ranges)*2)
+        ranges = np.array(ranges).reshape(len(ranges) * 2)
         # print(ranges)
         imagej_kwargs["Ranges"] = ranges
         spacing = image.get_um_spacing()
@@ -34,7 +35,7 @@ class ImageWriter:
         metadata = {"mode": "color", "unit": "\\u00B5m"}
         if len(spacing) == 3:
             metadata.update({"spacing": spacing[0]})
-        resolution = [1/x for x in spacing[-2:]]
+        resolution = [1 / x for x in spacing[-2:]]
         cls._save(data, save_path, resolution, metadata, imagej_kwargs)
 
     @classmethod
@@ -49,18 +50,19 @@ class ImageWriter:
         if mask is None:
             return
         mask_max = np.max(mask)
-        if mask.dtype == np.bool:
-            mask = mask.astype(np.uint8)
-        elif mask_max < 255:
-            mask = mask.astype(np.uint8)
-        elif mask_max < 2**16 - 1:
-            mask = mask.astype(np.uint16)
-        # print(f"[save_mask] {save_path}")
+        mask = mask.astype(minimal_dtype(mask_max))
         cls._save(mask, save_path)
 
     @staticmethod
     def _save(data: np.ndarray, save_path, resolution=None, metadata=None, imagej_metadata=None):
         if data.dtype in [np.uint8, np.uint16, np.float32]:
-            imsave(save_path, data, imagej=True, software="PartSeg", metadata=metadata, ijmetadata=imagej_metadata,
-                   resolution=resolution)#, compress=6,
-                   #imagej=True, software="PartSeg")
+            imsave(
+                save_path,
+                data,
+                imagej=True,
+                software="PartSeg",
+                metadata=metadata,
+                ijmetadata=imagej_metadata,
+                resolution=resolution,
+            )  # , compress=6,
+            # imagej=True, software="PartSeg")

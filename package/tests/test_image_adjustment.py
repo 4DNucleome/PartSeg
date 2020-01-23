@@ -63,5 +63,5 @@ class TestInterpolateImage:
     def test_multiple_interpolate(self):
         image = get_cube_image()
         image_res = InterpolateImage.transform(image, {"scale_x": 2, "scale_y": 3, "scale_z": 4})
-        assert image_res.spacing == (2.5, 5/3, 2.5)
+        assert image_res.spacing == (2.5, 5 / 3, 2.5)
         assert image_res.get_data().shape == (1, 40, 30, 20, 1)

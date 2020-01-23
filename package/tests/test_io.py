@@ -16,15 +16,27 @@ from PartSegImage import Image
 from PartSegCore import Units, UNIT_SCALE
 from PartSegCore.analysis import ProjectTuple
 from PartSegCore.analysis.load_functions import UpdateLoadedMetadataAnalysis, LoadProject
-from PartSegCore.analysis.save_functions import SaveCmap, SaveXYZ, SaveProject, SaveAsTiff, SaveAsNumpy, \
-    SaveSegmentationAsNumpy
+from PartSegCore.analysis.save_functions import (
+    SaveCmap,
+    SaveXYZ,
+    SaveProject,
+    SaveAsTiff,
+    SaveAsNumpy,
+    SaveSegmentationAsNumpy,
+)
 from PartSegCore.analysis.save_hooks import PartEncoder, part_hook
 from PartSegCore.io_utils import UpdateLoadedMetadataBase
 from PartSegCore.json_hooks import check_loaded_dict
 from PartSegCore.segmentation.noise_filtering import DimensionType
 from PartSegCore.class_generator import enum_register
-from PartSegCore.mask.io_functions import LoadSegmentation, SaveSegmentation, LoadSegmentationImage, save_components, \
-    LoadStackImage, SegmentationTuple
+from PartSegCore.mask.io_functions import (
+    LoadSegmentation,
+    SaveSegmentation,
+    LoadSegmentationImage,
+    save_components,
+    LoadStackImage,
+    SegmentationTuple,
+)
 
 
 @pytest.fixture(scope="module")
@@ -35,8 +47,9 @@ def analysis_project():
     data[0, 15:35, 15:35, 15:85] = 70
     data[0, 15:35, 55:85, 15:85] = 60
     data[0, 10:40, 40:50, 10:90] = 40
-    image =\
-        Image(data, (10/UNIT_SCALE[Units.nm.value], 5/UNIT_SCALE[Units.nm.value], 5/UNIT_SCALE[Units.nm.value]), "")
+    image = Image(
+        data, (10 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value]), ""
+    )
     mask = data[0, ..., 0] > 0
     segmentation = np.zeros(data.shape, dtype=np.uint8)
     segmentation[data == 70] = 1
@@ -57,8 +70,9 @@ def analysis_project_reversed():
     segmentation[data == 70] = 1
     segmentation[data == 60] = 2
     data = 100 - data
-    image = \
-        Image(data, (10/UNIT_SCALE[Units.nm.value], 5/UNIT_SCALE[Units.nm.value], 5/UNIT_SCALE[Units.nm.value]), "")
+    image = Image(
+        data, (10 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value]), ""
+    )
     return ProjectTuple("test_data.tiff", image, segmentation[0, ..., 0], segmentation[0, ..., 0], mask)
 
 
@@ -67,7 +81,7 @@ class TestJsonLoad:
         profile_path = os.path.join(data_test_dir, "segment_profile_test.json")
         # noinspection PyBroadException
         try:
-            with open(profile_path, 'r') as ff:
+            with open(profile_path, "r") as ff:
                 data = json.load(ff, object_hook=part_hook)
             assert check_loaded_dict(data)
         except Exception:
@@ -77,7 +91,7 @@ class TestJsonLoad:
         profile_path = os.path.join(data_test_dir, "measurements_profile_test.json")
         # noinspection PyBroadException
         try:
-            with open(profile_path, 'r') as ff:
+            with open(profile_path, "r") as ff:
                 data = json.load(ff, object_hook=part_hook)
             assert check_loaded_dict(data)
         except Exception:
@@ -92,7 +106,6 @@ class TestJsonLoad:
         assert re.search('"value":[^,}]+[,}]', data_string) is not None
 
     def test_json_load(self):
-
         class Test(Enum):
             test0 = 0
             test1 = 1
@@ -134,8 +147,9 @@ class TestSegmentationMask:
         assert os.path.basename(seg.image) == "test_nucleus.tif"
 
     def test_load_old_seg_with_image(self, data_test_dir):
-        seg = LoadSegmentationImage.load([os.path.join(data_test_dir, "test_nucleus_old.seg")],
-                                         metadata={"default_spacing": (1, 1, 1)})
+        seg = LoadSegmentationImage.load(
+            [os.path.join(data_test_dir, "test_nucleus_old.seg")], metadata={"default_spacing": (1, 1, 1)}
+        )
         assert isinstance(seg.image, Image)
         assert seg.chosen_components == [1, 3]
         assert isinstance(seg.segmentation, np.ndarray)
@@ -143,8 +157,9 @@ class TestSegmentationMask:
         assert os.path.basename(seg.image.file_path) == "test_nucleus.tif"
 
     def test_load_seg_with_image(self, data_test_dir):
-        seg = LoadSegmentationImage.load([os.path.join(data_test_dir, "test_nucleus.seg")],
-                                         metadata={"default_spacing": (1, 1, 1)})
+        seg = LoadSegmentationImage.load(
+            [os.path.join(data_test_dir, "test_nucleus.seg")], metadata={"default_spacing": (1, 1, 1)}
+        )
         assert isinstance(seg.image, Image)
         assert seg.chosen_components == [1, 3]
         assert isinstance(seg.segmentation, np.ndarray)
@@ -152,8 +167,9 @@ class TestSegmentationMask:
         assert os.path.basename(seg.image.file_path) == "test_nucleus.tif"
 
     def test_save_segmentation(self, tmpdir, data_test_dir):
-        seg = LoadSegmentationImage.load([os.path.join(data_test_dir, "test_nucleus.seg")],
-                                         metadata={"default_spacing": (1, 1, 1)})
+        seg = LoadSegmentationImage.load(
+            [os.path.join(data_test_dir, "test_nucleus.seg")], metadata={"default_spacing": (1, 1, 1)}
+        )
         SaveSegmentation.save(os.path.join(tmpdir, "segmentation.seg"), seg, {"relative_path": False})
         assert os.path.exists(os.path.join(tmpdir, "segmentation.seg"))
         os.makedirs(os.path.join(tmpdir, "seg_save"))
@@ -174,8 +190,9 @@ class TestSegmentationMask:
         num = np.max(res.segmentation) + 1
         data_dict = {str(i): deepcopy(res.parameters) for i in range(1, num)}
 
-        to_save = SegmentationTuple(image_data.image.file_path, image_data.image, res.segmentation,
-                                    list(range(1, num)), data_dict)
+        to_save = SegmentationTuple(
+            image_data.image.file_path, image_data.image, res.segmentation, list(range(1, num)), data_dict
+        )
 
         SaveSegmentation.save(os.path.join(tmpdir, "segmentation2.seg"), to_save, {"relative_path": False})
         seg2 = LoadSegmentation.load([os.path.join(tmpdir, "segmentation2.seg")])
@@ -185,9 +202,9 @@ class TestSegmentationMask:
 class TestSaveFunctions:
     @staticmethod
     def read_cmap(file_path):
-        with h5py.File(file_path, 'r') as fp:
+        with h5py.File(file_path, "r") as fp:
             arr = np.array(fp.get("Chimera/image1/data_zyx"))
-            steps = tuple(map(lambda x: int(x+0.5), fp.get("Chimera/image1").attrs["step"]))
+            steps = tuple(map(lambda x: int(x + 0.5), fp.get("Chimera/image1").attrs["step"]))
             return arr, steps
 
     def test_save_cmap(self, tmpdir, analysis_project):

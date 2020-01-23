@@ -12,8 +12,18 @@ from sys import platform
 from qtpy import PYQT5
 from qtpy.QtCore import Qt, QTimer, QRect, QPointF, Signal
 from qtpy.QtGui import QPaintEvent, QPainter, QColor, QPalette, QFontMetrics
-from qtpy.QtWidgets import QWidget, QLabel, QDoubleSpinBox, QAbstractSpinBox, QSpinBox, QComboBox, QSlider, \
-    QLineEdit, QHBoxLayout, QTextEdit
+from qtpy.QtWidgets import (
+    QWidget,
+    QLabel,
+    QDoubleSpinBox,
+    QAbstractSpinBox,
+    QSpinBox,
+    QComboBox,
+    QSlider,
+    QLineEdit,
+    QHBoxLayout,
+    QTextEdit,
+)
 
 from PartSegCore.universal_const import Units, UNIT_SCALE
 
@@ -25,6 +35,7 @@ else:
 
 class ChannelComboBox(QComboBox):
     """Combobox for selecting channel index. Channel numeration starts from 1 for user and from 0 for developer"""
+
     def get_value(self) -> int:
         """Return current channel. Starting from 0"""
         return self.currentIndex()
@@ -52,6 +63,7 @@ class EnumComboBox(QComboBox):
     :param enum: Enum on which base combo box should be created.
         For proper showing labels overload the ``__str__`` function of given :py:class:`enum.Enum`
     """
+
     current_choose = Signal(enum_type)
     """:py:class:`Signal` emitted when currentIndexChanged is emitted.
     Argument is selected value"""
@@ -59,7 +71,7 @@ class EnumComboBox(QComboBox):
     def __init__(self, enum: type(Enum), parent=None):
         super().__init__(parent=parent)
         self.enum = enum
-        self.addItems(list(map(str,  enum.__members__.values())))
+        self.addItems(list(map(str, enum.__members__.values())))
         self.currentIndexChanged.connect(self._emit_signal)
 
     def get_value(self) -> Enum:
@@ -83,8 +95,18 @@ class Spacing(QWidget):
     """
     :type elements: list[QDoubleSpinBox | QSpinBox]
     """
-    def __init__(self, title, data_sequence, unit: Units, parent=None, input_type=QDoubleSpinBox, decimals=2,
-                 data_range=(0, 100000), single_step=1):
+
+    def __init__(
+        self,
+        title,
+        data_sequence,
+        unit: Units,
+        parent=None,
+        input_type=QDoubleSpinBox,
+        decimals=2,
+        data_range=(0, 100000),
+        single_step=1,
+    ):
         """
         :type data_sequence: list[(float)]
         :param data_sequence:
@@ -102,7 +124,7 @@ class Spacing(QWidget):
         if len(data_sequence) == 2:
             data_sequence = (1,) + tuple(data_sequence)
         for name, value in zip(["z", "y", "x"], data_sequence):
-            lab = QLabel(name+":")
+            lab = QLabel(name + ":")
             layout.addWidget(lab)
             val = input_type()
             val.setButtonSymbols(QAbstractSpinBox.NoButtons)
@@ -114,7 +136,7 @@ class Spacing(QWidget):
             val.setSingleStep(single_step)
             font = val.font()
             fm = QFontMetrics(font)
-            val_len = max(fm.width(str(data_range[0])), fm.width(str(data_range[1]))) + fm.width(" "*8)
+            val_len = max(fm.width(str(data_range[0])), fm.width(str(data_range[1]))) + fm.width(" " * 8)
             val.setFixedWidth(val_len)
             layout.addWidget(val)
             self.elements.append(val)
@@ -169,7 +191,7 @@ def _verify_bounds(bounds):
         if not (isinstance(bounds[1], (int, float)) and isinstance(bounds[0], typing.Iterable)):
             raise ValueError(f"Wrong bounds format for bounds: {bounds}")
         for el in bounds[1]:
-            if len(el) != 2 or not isinstance(el[0], (int,float)) or not isinstance(el[1], (int,float)):
+            if len(el) != 2 or not isinstance(el[0], (int, float)) or not isinstance(el[1], (int, float)):
                 raise ValueError(f"Wrong bounds format for bounds: {bounds}")
     except TypeError:
         raise ValueError(f"Wrong bounds format for bounds: {bounds}")
@@ -186,6 +208,7 @@ class CustomSpinBox(QSpinBox):
         the single_step is chosen by checking upper bound of threshold of
         current spin box value
     """
+
     def __init__(self, *args, bounds=None, **kwargs):
         _verify_bounds(bounds)
         super().__init__(*args, **kwargs)
@@ -216,6 +239,7 @@ class CustomDoubleSpinBox(QDoubleSpinBox):
         the single_step is chosen by checking upper bound of threshold of
         current spin box value
     """
+
     def __init__(self, bounds=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.valueChanged.connect(self._value_changed)
@@ -244,6 +268,7 @@ class ProgressCircle(QWidget):
     .. warning::
       This widget currently have no minimum size. You need to specify it in your code
     """
+
     def __init__(self, background: QColor = "white", main_color: QColor = "darkCyan", parent=None):
         super().__init__(parent)
         self.nominator = 1
@@ -266,14 +291,15 @@ class ProgressCircle(QWidget):
         radius = size / 2
         if factor > 0.5:
             painter.drawChord(rect, 0, 16 * 360 * 0.5)
-            painter.drawChord(rect, 16*180, 16 * 360 * (factor-0.5))
+            painter.drawChord(rect, 16 * 180, 16 * 360 * (factor - 0.5))
             zero_point = QPointF(0, radius)
         else:
             painter.drawChord(rect, 0, 16 * 360 * factor)
             zero_point = QPointF(size, radius)
         mid_point = QPointF(radius, radius)
-        point = mid_point + QPointF(math.cos(math.pi * (factor * 2)) * radius,
-                                    -math.sin(math.pi * (factor * 2)) * radius)
+        point = mid_point + QPointF(
+            math.cos(math.pi * (factor * 2)) * radius, -math.sin(math.pi * (factor * 2)) * radius
+        )
         painter.drawPolygon(mid_point, zero_point, point)
         painter.restore()
 
@@ -298,6 +324,7 @@ class InfoLabel(QWidget):
     :param delay: time in milliseconds between changes
     :param parent: passed to :py:class:`QWidget` constructor
     """
+
     def __init__(self, text_list: typing.List[str], delay: int = 10000, parent=None):
         if len(text_list) == 0:
             raise ValueError("List of text to show should be non empty.")
@@ -362,6 +389,7 @@ class TextShow(QTextEdit):
     Show text with word wrap and scroll if needed.
     Limit to show first :py:attr:`lines` without scroll bar.
     """
+
     def __init__(self, lines=5, text="", parent=None):
         super().__init__(text, parent)
         self.lines = lines

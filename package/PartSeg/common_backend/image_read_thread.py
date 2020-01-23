@@ -7,6 +7,7 @@ class ImageReaderThread(ProgressTread):
     """
     thread for reading files. Useful for reading from disc
     """
+
     image_read_finish = Signal(Image)
 
     def __init__(self, file_path=None, mask_path=None):

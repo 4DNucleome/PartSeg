@@ -37,7 +37,7 @@ def create_polygon(shape, vertices):
 
     # Create check array for each edge segment, combine into fill array
     for k in range(vertices.shape[0]):
-        fill = np.all([fill, check(vertices[k-1], vertices[k], idxs)], axis=0)
+        fill = np.all([fill, check(vertices[k - 1], vertices[k], idxs)], axis=0)
 
     # Set all values inside polygon to one
     base_array[fill] = 1

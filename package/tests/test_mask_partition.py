@@ -19,7 +19,7 @@ class TestBorderRim:
         mask = np.zeros((6, 12), dtype=np.uint8)
         mask[1:-1, 2:-2] = 1
         nm_scalar = UNIT_SCALE[Units.nm.value]
-        voxel_size = (2 / nm_scalar, 1/nm_scalar)
+        voxel_size = (2 / nm_scalar, 1 / nm_scalar)
         result_mask = BorderRim.border_mask(mask, 2, Units.nm, voxel_size)
         mask2 = np.copy(mask)
         mask2[2:-2, 4:-4] = 0
@@ -31,7 +31,7 @@ class TestBorderRim:
         mask2 = np.copy(mask)
         mask2[3:-3, 3:-3, 3:-3] = 0
         nm_scalar = UNIT_SCALE[Units.nm.value]
-        voxel_size = (1/nm_scalar,) * 3
+        voxel_size = (1 / nm_scalar,) * 3
         result_mask = BorderRim.border_mask(mask, 1, Units.nm, voxel_size)
         assert np.all(result_mask == mask2)
 
@@ -41,7 +41,7 @@ class TestBorderRim:
         mask2 = np.copy(mask)
         mask2[2:-2, 4:-4, 4:-4] = 0
         nm_scalar = UNIT_SCALE[Units.nm.value]
-        voxel_size = (2/nm_scalar, 1/nm_scalar, 1/nm_scalar)
+        voxel_size = (2 / nm_scalar, 1 / nm_scalar, 1 / nm_scalar)
         result_mask = BorderRim.border_mask(mask, 2, Units.nm, voxel_size)
         assert np.all(result_mask == mask2)
 

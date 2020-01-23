@@ -60,12 +60,22 @@ class TestCreateColorMap:
         assert np.sum(np.bincount(res[:, 1]) != 4) < 4
 
     def test_three_colors(self):
-        res = create_color_map(ColorMap([ColorPosition(0, Color(0, 0, 0)), ColorPosition(0.5, Color(0, 0, 0)),
-                                         ColorPosition(1, Color(0, 0, 0))]))
+        res = create_color_map(
+            ColorMap(
+                [ColorPosition(0, Color(0, 0, 0)), ColorPosition(0.5, Color(0, 0, 0)), ColorPosition(1, Color(0, 0, 0))]
+            )
+        )
         assert res.shape == (1024, 3)
         assert np.all(res == 0)
-        res = create_color_map(ColorMap([ColorPosition(0, Color(0, 0, 0)), ColorPosition(0.5, Color(255, 0, 0)),
-                                         ColorPosition(1, Color(0, 0, 0))]))
+        res = create_color_map(
+            ColorMap(
+                [
+                    ColorPosition(0, Color(0, 0, 0)),
+                    ColorPosition(0.5, Color(255, 0, 0)),
+                    ColorPosition(1, Color(0, 0, 0)),
+                ]
+            )
+        )
         assert res.shape == (1024, 3)
         assert np.all(res[:, 1:] == 0)
         assert np.all(np.sort(res[:512, 0]) == res[:512, 0])
@@ -74,8 +84,16 @@ class TestCreateColorMap:
         assert np.sum(np.bincount(res[512:, 0]) != 2) < 2
 
     def test_three_colors_power(self):
-        res = create_color_map(ColorMap((ColorPosition(0, Color(0, 0, 0)), ColorPosition(0.5, Color(255, 0, 0)),
-                                         ColorPosition(1, Color(0, 0, 0)))), 2)
+        res = create_color_map(
+            ColorMap(
+                (
+                    ColorPosition(0, Color(0, 0, 0)),
+                    ColorPosition(0.5, Color(255, 0, 0)),
+                    ColorPosition(1, Color(0, 0, 0)),
+                )
+            ),
+            2,
+        )
         assert res.shape == (1024, 3)
         assert np.all(res[:, 1:] == 0)
         assert np.all(np.sort(res[:256, 0]) == res[:256, 0])
@@ -83,8 +101,16 @@ class TestCreateColorMap:
         assert np.all(np.sort(res[256:, 0])[::-1] == res[256:, 0])
         assert np.sum(np.bincount(res[256:, 0]) != 3) < 2
 
-        res = create_color_map(ColorMap((ColorPosition(0, Color(0, 0, 0)), ColorPosition(0.25, Color(255, 0, 0)),
-                                         ColorPosition(1, Color(0, 0, 0)))), 0.5)
+        res = create_color_map(
+            ColorMap(
+                (
+                    ColorPosition(0, Color(0, 0, 0)),
+                    ColorPosition(0.25, Color(255, 0, 0)),
+                    ColorPosition(1, Color(0, 0, 0)),
+                )
+            ),
+            0.5,
+        )
         assert res.shape == (1024, 3)
         assert np.all(res[:, 1:] == 0)
         assert np.all(np.sort(res[:512, 0]) == res[:512, 0])
@@ -94,8 +120,9 @@ class TestCreateColorMap:
 
     def test_use_color_image(self):
         array = create_color_map(ColorMap([ColorPosition(0, Color(0, 255, 0)), ColorPosition(1, Color(255, 0, 0))]))
-        img = color_image_fun(np.linspace(0, 256, 512, endpoint=False, dtype=np.uint8).
-                              reshape((1, 512, 1)), [array], [(0, 255)])
+        img = color_image_fun(
+            np.linspace(0, 256, 512, endpoint=False, dtype=np.uint8).reshape((1, 512, 1)), [array], [(0, 255)]
+        )
         assert img.shape == (1, 512, 3)
         assert np.all(img[0, :, 2] == 0)
         assert np.all(np.sort(img[0, :, 0]) == img[0, :, 0])

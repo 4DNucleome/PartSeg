@@ -7,10 +7,30 @@ from typing import Union, Optional, Tuple
 from PartSegData import icons_dir
 from qtpy.QtCore import Qt, QEvent, Slot
 from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QWidget, QListWidget, QTextEdit, QPushButton, QLineEdit, \
-    QVBoxLayout, QLabel, QHBoxLayout, QListWidgetItem, QDialog, QDoubleSpinBox, QSpinBox, QGridLayout, QApplication, \
-    QMessageBox, QFileDialog, QComboBox, QAbstractSpinBox, QInputDialog, \
-    QPlainTextEdit, QFrame, QCheckBox
+from qtpy.QtWidgets import (
+    QWidget,
+    QListWidget,
+    QTextEdit,
+    QPushButton,
+    QLineEdit,
+    QVBoxLayout,
+    QLabel,
+    QHBoxLayout,
+    QListWidgetItem,
+    QDialog,
+    QDoubleSpinBox,
+    QSpinBox,
+    QGridLayout,
+    QApplication,
+    QMessageBox,
+    QFileDialog,
+    QComboBox,
+    QAbstractSpinBox,
+    QInputDialog,
+    QPlainTextEdit,
+    QFrame,
+    QCheckBox,
+)
 
 from PartSeg.common_gui.advanced_tabs import AdvancedWindow
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
@@ -178,8 +198,9 @@ class AdvancedSettings(QWidget):
         voxel_size = 1
         for el in self._settings.image_spacing:
             voxel_size *= el * UNIT_SCALE[self.units.currentIndex()]
-        self.voxel_size_label.setText(f"Voxel_size: {voxel_size} {self.units.get_value().name}"
-                                      f"<sup>{len(self._settings.image_spacing)}</sup>")
+        self.voxel_size_label.setText(
+            f"Voxel_size: {voxel_size} {self.units.get_value().name}" f"<sup>{len(self._settings.image_spacing)}</sup>"
+        )
 
     def update_spacing(self, index=None):
         voxel_size = 1
@@ -193,8 +214,9 @@ class AdvancedSettings(QWidget):
             el.setValue(current_size)
             el.blockSignals(False)
         self.spacing[0].setDisabled(len(self._settings.image_spacing) == 2)
-        self.voxel_size_label.setText(f"Voxel_size: {voxel_size} {value.name}"
-                                      f"<sup>{len(self._settings.image_spacing)}</sup>")
+        self.voxel_size_label.setText(
+            f"Voxel_size: {voxel_size} {value.name}" f"<sup>{len(self._settings.image_spacing)}</sup>"
+        )
 
     def update_profile_list(self):
         current_names = set(self._settings.segmentation_profiles.keys())
@@ -246,7 +268,7 @@ class AdvancedSettings(QWidget):
             self._settings.set("io.save_directory", os.path.dirname(file_path))
             self._settings.add_path_history(os.path.dirname(file_path))
             data = dict([(x, self._settings.segmentation_profiles[x]) for x in exp.get_export_list()])
-            with open(file_path, 'w') as ff:
+            with open(file_path, "w") as ff:
                 json.dump(data, ff, cls=self._settings.json_encoder_class, indent=2)
 
     def import_profiles(self):
@@ -261,7 +283,7 @@ class AdvancedSettings(QWidget):
             save_dir = os.path.dirname(file_path)
             self._settings.set("io.save_directory", save_dir)
             self._settings.add_path_history(save_dir)
-            profs,err = self._settings.load_part(file_path)
+            profs, err = self._settings.load_part(file_path)
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
             profiles_dict = self._settings.segmentation_profiles
@@ -288,7 +310,7 @@ class AdvancedSettings(QWidget):
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
             data = dict([(x, self._settings.segmentation_pipelines[x]) for x in exp.get_export_list()])
-            with open(file_path, 'w') as ff:
+            with open(file_path, "w") as ff:
                 json.dump(data, ff, cls=self._settings.json_encoder_class, indent=2)
             self._settings.set("io.save_directory", os.path.dirname(file_path))
             self._settings.add_path_history(os.path.dirname(file_path))
@@ -330,9 +352,13 @@ class AdvancedSettings(QWidget):
         if ok:
             text = text.strip()
             if text in profiles_dict.keys():
-                res = QMessageBox.warning(self, "Already exist",
-                                          f"Profile with name {text} already exist. Would you like to overwrite?",
-                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                res = QMessageBox.warning(
+                    self,
+                    "Already exist",
+                    f"Profile with name {text} already exist. Would you like to overwrite?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No,
+                )
                 if res == QMessageBox.No:
                     self.rename_profile()
                     return
@@ -368,12 +394,12 @@ class MeasurementSettings(QWidget):
         self.power_num.setDecimals(3)
         self.power_num.setRange(-100, 100)
         self.power_num.setValue(1)
-        self.choose_butt = QPushButton(u"→", self)
-        self.discard_butt = QPushButton(u"←", self)
-        self.proportion_butt = QPushButton(u"Ratio", self)
+        self.choose_butt = QPushButton("→", self)
+        self.discard_butt = QPushButton("←", self)
+        self.proportion_butt = QPushButton("Ratio", self)
         self.proportion_butt.setToolTip("Create proportion from two parameter")
-        self.move_up = QPushButton(u"↑", self)
-        self.move_down = QPushButton(u"↓", self)
+        self.move_up = QPushButton("↑", self)
+        self.move_down = QPushButton("↓", self)
         self.remove_button = QPushButton("Remove")
         self.save_butt = QPushButton("Save")
         self.save_butt.setToolTip("Set name for set and choose at least one parameter")
@@ -528,27 +554,34 @@ class MeasurementSettings(QWidget):
         # TODO use get_parameters
         if self.chosen_element is None:
             item = self.profile_options.currentItem()
-            self.chosen_element_area = \
-                self.get_parameters(deepcopy(item.stat), self.measurement_area_choose.get_value(),
-                                    self.per_component.get_value(), self.power_num.value())
+            self.chosen_element_area = self.get_parameters(
+                deepcopy(item.stat),
+                self.measurement_area_choose.get_value(),
+                self.per_component.get_value(),
+                self.power_num.value(),
+            )
             if self.chosen_element_area is None:
                 return
             self.chosen_element = item
             item.setIcon(QIcon(os.path.join(icons_dir, "task-accepted.png")))
-        elif self.profile_options.currentItem() == self.chosen_element and \
-                self.measurement_area_choose.get_value() == self.chosen_element_area.area and \
-                self.per_component.get_value() == self.chosen_element_area.per_component:
+        elif (
+            self.profile_options.currentItem() == self.chosen_element
+            and self.measurement_area_choose.get_value() == self.chosen_element_area.area
+            and self.per_component.get_value() == self.chosen_element_area.per_component
+        ):
             self.chosen_element.setIcon(QIcon())
             self.chosen_element = None
         else:
             item: MeasurementListWidgetItem = self.profile_options.currentItem()
-            leaf = self.get_parameters(deepcopy(item.stat), self.measurement_area_choose.get_value(),
-                                       self.per_component.get_value(), self.power_num.value())
+            leaf = self.get_parameters(
+                deepcopy(item.stat),
+                self.measurement_area_choose.get_value(),
+                self.per_component.get_value(),
+                self.power_num.value(),
+            )
             if leaf is None:
                 return
-            lw = MeasurementListWidgetItem(
-                Node(op="/", left=self.chosen_element_area,
-                     right=leaf))
+            lw = MeasurementListWidgetItem(Node(op="/", left=self.chosen_element_area, right=leaf))
             lw.setToolTip("User defined")
             self.profile_options_chosen.addItem(lw)
             self.chosen_element.setIcon(QIcon())
@@ -633,8 +666,9 @@ class MeasurementSettings(QWidget):
             raise ValueError(f"Current item (type: {type(selected_item)} is not instance of MeasurementListWidgetItem")
         node = deepcopy(selected_item.stat)
         # noinspection PyTypeChecker
-        node = self.get_parameters(node, self.measurement_area_choose.get_value(), self.per_component.get_value(),
-                                   self.power_num.value())
+        node = self.get_parameters(
+            node, self.measurement_area_choose.get_value(), self.per_component.get_value(), self.power_num.value()
+        )
         if node is None:
             return
         lw = MeasurementListWidgetItem(node)
@@ -676,8 +710,12 @@ class MeasurementSettings(QWidget):
     def save_action(self):
         for i in range(self.profile_list.count()):
             if self.profile_name.text() == self.profile_list.item(i).text():
-                ret = QMessageBox.warning(self, "Profile exist", "Profile exist\nWould you like to overwrite it?",
-                                          QMessageBox.No | QMessageBox.Yes)
+                ret = QMessageBox.warning(
+                    self,
+                    "Profile exist",
+                    "Profile exist\nWould you like to overwrite it?",
+                    QMessageBox.No | QMessageBox.Yes,
+                )
                 if ret == QMessageBox.No:
                     return
         selected_values = []
@@ -694,8 +732,12 @@ class MeasurementSettings(QWidget):
     def named_save_action(self):
         for i in range(self.profile_list.count()):
             if self.profile_name.text() == self.profile_list.item(i).text():
-                ret = QMessageBox.warning(self, "Profile exist", "Profile exist\nWould you like to overwrite it?",
-                                          QMessageBox.No | QMessageBox.Yes)
+                ret = QMessageBox.warning(
+                    self,
+                    "Profile exist",
+                    "Profile exist\nWould you like to overwrite it?",
+                    QMessageBox.No | QMessageBox.Yes,
+                )
                 if ret == QMessageBox.No:
                     return
         selected_values = []
@@ -760,7 +802,7 @@ class MeasurementSettings(QWidget):
             file_path = str(dial.selectedFiles()[0])
             self.settings.set("io.export_directory", file_path)
             data = dict([(x, self.settings.measurement_profiles[x]) for x in exp.get_export_list()])
-            with open(file_path, 'w') as ff:
+            with open(file_path, "w") as ff:
                 json.dump(data, ff, cls=self.settings.json_encoder_class, indent=2)
             self.settings.set("io.save_directory", os.path.dirname(file_path))
 
@@ -790,6 +832,7 @@ class SegAdvancedWindow(AdvancedWindow):
     """
     :type settings: Settings
     """
+
     def __init__(self, settings, parent=None, reload_list=None):
         super().__init__(settings, ["result_image", "raw_image"], parent)
         self.settings = settings

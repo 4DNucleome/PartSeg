@@ -22,7 +22,7 @@ class MeanBound(BaseMuMid):
 
     @classmethod
     def value(cls, sprawl_area: np.ndarray, data: np.ndarray, lower_bound, upper_bound, arguments: dict):
-        return (lower_bound + upper_bound)/2
+        return (lower_bound + upper_bound) / 2
 
 
 class PercentBound(BaseMuMid):
@@ -32,12 +32,19 @@ class PercentBound(BaseMuMid):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty('percent', 'Percent', 50, options_range=(0, 100),
-                                  help_text="Calculate: lower_value + (upper_bound - lower_bound) * percent / 100")]
+        return [
+            AlgorithmProperty(
+                "percent",
+                "Percent",
+                50,
+                options_range=(0, 100),
+                help_text="Calculate: lower_value + (upper_bound - lower_bound) * percent / 100",
+            )
+        ]
 
     @classmethod
     def value(cls, sprawl_area: np.ndarray, data: np.ndarray, lower_bound, upper_bound, arguments: dict):
-        return min(lower_bound, upper_bound) + abs(lower_bound - upper_bound) * arguments['percent']/100
+        return min(lower_bound, upper_bound) + abs(lower_bound - upper_bound) * arguments["percent"] / 100
 
 
 class MeanPixelValue(BaseMuMid):
@@ -67,11 +74,11 @@ class QuantilePixelValue(BaseMuMid):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty('quantile', 'Quantile', 50, options_range=(0, 100))]
+        return [AlgorithmProperty("quantile", "Quantile", 50, options_range=(0, 100))]
 
     @classmethod
     def value(cls, sprawl_area: np.ndarray, data: np.ndarray, lower_bound, upper_bound, arguments: dict):
-        return np.quantile[data[sprawl_area > 0], arguments['quantile']/100]
+        return np.quantile[data[sprawl_area > 0], arguments["quantile"] / 100]
 
 
 mu_mid_dict = Register(MeanBound, PercentBound, MeanPixelValue, MedianPixelValue, QuantilePixelValue)

@@ -25,7 +25,7 @@ class TestSegmentation:
             return
         image = TiffImageReader.read_image(
             os.path.join(data_test_dir, "stack1_components", "stack1_component5.tif"),
-            os.path.join(data_test_dir, "stack1_components", "stack1_component5_mask.tif")
+            os.path.join(data_test_dir, "stack1_components", "stack1_component5_mask.tif"),
         )
 
         val: SegmentationProfile

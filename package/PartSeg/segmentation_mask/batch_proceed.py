@@ -22,7 +22,7 @@ class BatchTask(NamedTuple):
 
 class BatchProceed(QThread):
     error_signal = Signal(str)
-    progress_signal = Signal(str, int,  str, int)
+    progress_signal = Signal(str, int, str, int)
     range_signal = Signal(int, int)
     execution_done = Signal()
     multiple_result = Signal(SegmentationTuple)
@@ -74,8 +74,9 @@ class BatchProceed(QThread):
                 else:
                     self.range_signal.emit(0, algorithm.get_steps_num())
                 segmentation = algorithm.calculation_run(partial(self.progress_info, name))
-                state2 = StackSettings.transform_state(project_tuple, segmentation.segmentation,
-                                                       defaultdict(lambda: segmentation.parameters), [])
+                state2 = StackSettings.transform_state(
+                    project_tuple, segmentation.segmentation, defaultdict(lambda: segmentation.parameters), []
+                )
                 if isinstance(task.save_prefix, tuple):
                     self.progress_info(name, "saving", algorithm.get_steps_num())
                     name = path.splitext(path.basename(file_path))[0] + ".seg"
@@ -87,8 +88,7 @@ class BatchProceed(QThread):
                             name = match.group(1) + str(num) + ".seg"
                         else:
                             name = path.splitext(path.basename(file_path))[0] + "_version1.seg"
-                    SaveSegmentation.save(path.join(task.save_prefix[0], name), state2,
-                                          parameters=task.save_prefix[1])
+                    SaveSegmentation.save(path.join(task.save_prefix[0], name), state2, parameters=task.save_prefix[1])
                 else:
                     self.multiple_result.emit(state2)
             except Exception as e:

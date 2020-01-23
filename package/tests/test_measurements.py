@@ -6,12 +6,32 @@ import numpy as np
 
 from PartSegImage import Image
 from PartSegCore.analysis import load_metadata
-from PartSegCore.analysis.measurement_calculation import Diameter, PixelBrightnessSum, Volume, ComponentsNumber, \
-    MaximumPixelBrightness, MinimumPixelBrightness, MeanPixelBrightness, MedianPixelBrightness, \
-    StandardDeviationOfPixelBrightness, MomentOfInertia, LongestMainAxisLength, MiddleMainAxisLength, \
-    ShortestMainAxisLength, Surface, RimVolume, RimPixelBrightnessSum, MeasurementProfile, Sphericity, \
-    DistanceMaskSegmentation, DistancePoint, ComponentsInfo, MeasurementResult, SplitOnPartVolume, \
-    SplitOnPartPixelBrightnessSum
+from PartSegCore.analysis.measurement_calculation import (
+    Diameter,
+    PixelBrightnessSum,
+    Volume,
+    ComponentsNumber,
+    MaximumPixelBrightness,
+    MinimumPixelBrightness,
+    MeanPixelBrightness,
+    MedianPixelBrightness,
+    StandardDeviationOfPixelBrightness,
+    MomentOfInertia,
+    LongestMainAxisLength,
+    MiddleMainAxisLength,
+    ShortestMainAxisLength,
+    Surface,
+    RimVolume,
+    RimPixelBrightnessSum,
+    MeasurementProfile,
+    Sphericity,
+    DistanceMaskSegmentation,
+    DistancePoint,
+    ComponentsInfo,
+    MeasurementResult,
+    SplitOnPartVolume,
+    SplitOnPartPixelBrightnessSum,
+)
 from PartSegCore.analysis.measurement_base import Node, MeasurementEntry, PerComponent, AreaType
 from PartSegCore.autofit import density_mass_center
 from PartSegCore.universal_const import UNIT_SCALE, Units
@@ -71,8 +91,9 @@ class TestDiameter(object):
     def test_scale(self):
         image = get_cube_image()
         mask1 = image.get_channel(0)[0] > 40
-        assert isclose(Diameter.calculate_property(mask1, image.spacing, 2),
-                       2 * np.sqrt(2 * (50 * 59) ** 2 + (100 * 29) ** 2))
+        assert isclose(
+            Diameter.calculate_property(mask1, image.spacing, 2), 2 * np.sqrt(2 * (50 * 59) ** 2 + (100 * 29) ** 2)
+        )
         image = get_square_image()
         mask1 = image.get_channel(0)[0] > 40
         assert isclose(Diameter.calculate_property(mask1, image.spacing, 2), 2 * np.sqrt(2 * (50 * 59) ** 2))
@@ -89,8 +110,9 @@ class TestPixelBrightnessSum(object):
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
-        assert PixelBrightnessSum.calculate_property(mask1,
-                                                     image.get_channel(0)) == 30 * 60 * 60 * 50 + 20 * 40 * 40 * 20
+        assert (
+            PixelBrightnessSum.calculate_property(mask1, image.get_channel(0)) == 30 * 60 * 60 * 50 + 20 * 40 * 40 * 20
+        )
         assert PixelBrightnessSum.calculate_property(mask2, image.get_channel(0)) == 20 * 40 * 40 * 70
         assert PixelBrightnessSum.calculate_property(mask3, image.get_channel(0)) == (30 * 60 * 60 - 20 * 40 * 40) * 50
 
@@ -117,8 +139,9 @@ class TestVolume(object):
         mask3 = mask1 * ~mask2
         assert Volume.calculate_property(mask1, image.spacing, 1) == (100 * 30) * (50 * 60) * (50 * 60)
         assert Volume.calculate_property(mask2, image.spacing, 1) == (100 * 20) * (50 * 40) * (50 * 40)
-        assert Volume.calculate_property(mask3, image.spacing, 1) == (100 * 30) * (50 * 60) * (50 * 60) -\
-                                                                     (100 * 20) * (50 * 40) * (50 * 40)
+        assert Volume.calculate_property(mask3, image.spacing, 1) == (100 * 30) * (50 * 60) * (50 * 60) - (100 * 20) * (
+            50 * 40
+        ) * (50 * 40)
 
     def test_square(self):
         image = get_square_image()
@@ -248,22 +271,26 @@ class TestMeanPixelBrightness:
         mask1 = image.get_channel(0) > 40
         mask2 = image.get_channel(0) > 60
         mask3 = image.get_channel(0) >= 0
-        assert MeanPixelBrightness.calculate_property(mask1, image.get_channel(0)) == \
-            (30 * 60 * 60 * 50 + 20 * 40 * 40 * 20) / (30 * 60 * 60)
+        assert MeanPixelBrightness.calculate_property(mask1, image.get_channel(0)) == (
+            30 * 60 * 60 * 50 + 20 * 40 * 40 * 20
+        ) / (30 * 60 * 60)
         assert MeanPixelBrightness.calculate_property(mask2, image.get_channel(0)) == 70
-        assert MeanPixelBrightness.calculate_property(mask3, image.get_channel(0)) == \
-            (30 * 60 * 60 * 50 + 20 * 40 * 40 * 20) / (50 * 100 * 100)
+        assert MeanPixelBrightness.calculate_property(mask3, image.get_channel(0)) == (
+            30 * 60 * 60 * 50 + 20 * 40 * 40 * 20
+        ) / (50 * 100 * 100)
 
     def test_square(self):
         image = get_square_image()
         mask1 = image.get_channel(0) > 40
         mask2 = image.get_channel(0) > 60
         mask3 = image.get_channel(0) >= 0
-        assert MeanPixelBrightness.calculate_property(mask1, image.get_channel(0)) == \
-            (60 * 60 * 50 + 40 * 40 * 20) / (60 * 60)
+        assert MeanPixelBrightness.calculate_property(mask1, image.get_channel(0)) == (60 * 60 * 50 + 40 * 40 * 20) / (
+            60 * 60
+        )
         assert MeanPixelBrightness.calculate_property(mask2, image.get_channel(0)) == 70
-        assert MeanPixelBrightness.calculate_property(mask3, image.get_channel(0)) == \
-            (60 * 60 * 50 + 40 * 40 * 20) / (100 * 100)
+        assert MeanPixelBrightness.calculate_property(mask3, image.get_channel(0)) == (60 * 60 * 50 + 40 * 40 * 20) / (
+            100 * 100
+        )
 
     def test_empty(self):
         image = get_cube_image()
@@ -278,15 +305,23 @@ class TestStandardDeviationOfPixelBrightness:
         mask2 = image.get_channel(0) > 60
         mask3 = image.get_channel(0) >= 0
         mean = (30 * 60 * 60 * 50 + 20 * 40 * 40 * 20) / (30 * 60 * 60)
-        assert StandardDeviationOfPixelBrightness.calculate_property(mask1, image.get_channel(0)) == \
-            np.sqrt(((30 * 60 * 60 - 20 * 40 * 40) * (50 - mean) ** 2 + ((20 * 40 * 40) * (70 - mean) ** 2)) / (
-                       30 * 60 * 60))
+        assert StandardDeviationOfPixelBrightness.calculate_property(mask1, image.get_channel(0)) == np.sqrt(
+            ((30 * 60 * 60 - 20 * 40 * 40) * (50 - mean) ** 2 + ((20 * 40 * 40) * (70 - mean) ** 2)) / (30 * 60 * 60)
+        )
 
         assert StandardDeviationOfPixelBrightness.calculate_property(mask2, image.get_channel(0)) == 0
         mean = (30 * 60 * 60 * 50 + 20 * 40 * 40 * 20) / (50 * 100 * 100)
-        assert isclose(StandardDeviationOfPixelBrightness.calculate_property(mask3, image.get_channel(0)),
-                       np.sqrt(((30 * 60 * 60 - 20 * 40 * 40) * (50 - mean) ** 2 + ((20 * 40 * 40) * (70 - mean) ** 2) +
-                                (50 * 100 * 100 - 30 * 60 * 60) * mean ** 2) / (50 * 100 * 100)))
+        assert isclose(
+            StandardDeviationOfPixelBrightness.calculate_property(mask3, image.get_channel(0)),
+            np.sqrt(
+                (
+                    (30 * 60 * 60 - 20 * 40 * 40) * (50 - mean) ** 2
+                    + ((20 * 40 * 40) * (70 - mean) ** 2)
+                    + (50 * 100 * 100 - 30 * 60 * 60) * mean ** 2
+                )
+                / (50 * 100 * 100)
+            ),
+        )
 
     def test_square(self):
         image = get_square_image()
@@ -294,14 +329,23 @@ class TestStandardDeviationOfPixelBrightness:
         mask2 = image.get_channel(0) > 60
         mask3 = image.get_channel(0) >= 0
         mean = (60 * 60 * 50 + 40 * 40 * 20) / (60 * 60)
-        assert StandardDeviationOfPixelBrightness.calculate_property(mask1, image.get_channel(0)) == \
-            np.sqrt(((60 * 60 - 40 * 40) * (50 - mean) ** 2 + ((40 * 40) * (70 - mean) ** 2)) / (60 * 60))
+        assert StandardDeviationOfPixelBrightness.calculate_property(mask1, image.get_channel(0)) == np.sqrt(
+            ((60 * 60 - 40 * 40) * (50 - mean) ** 2 + ((40 * 40) * (70 - mean) ** 2)) / (60 * 60)
+        )
 
         assert StandardDeviationOfPixelBrightness.calculate_property(mask2, image.get_channel(0)) == 0
         mean = (60 * 60 * 50 + 40 * 40 * 20) / (100 * 100)
-        assert isclose(StandardDeviationOfPixelBrightness.calculate_property(mask3, image.get_channel(0)),
-                       np.sqrt(((60 * 60 - 40 * 40) * (50 - mean) ** 2 + ((40 * 40) * (70 - mean) ** 2) +
-                                (100 * 100 - 60 * 60) * mean ** 2) / (100 * 100)))
+        assert isclose(
+            StandardDeviationOfPixelBrightness.calculate_property(mask3, image.get_channel(0)),
+            np.sqrt(
+                (
+                    (60 * 60 - 40 * 40) * (50 - mean) ** 2
+                    + ((40 * 40) * (70 - mean) ** 2)
+                    + (100 * 100 - 60 * 60) * mean ** 2
+                )
+                / (100 * 100)
+            ),
+        )
 
     def test_empty(self):
         image = get_cube_image()
@@ -384,101 +428,225 @@ class TestMainAxis:
         image = Image(array, (10, 10, 20))
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
-        assert LongestMainAxisLength.calculate_property(
-            area_array=mask1, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
-            _area=AreaType.Mask
-        ) == 20 * 59
-        assert MiddleMainAxisLength.calculate_property(
-            area_array=mask1, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
-            _area=AreaType.Mask
-        ) == 10 * 59
-        assert ShortestMainAxisLength.calculate_property(
-            area_array=mask1, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
-            _area=AreaType.Mask
-        ) == 10 * 29
-        assert LongestMainAxisLength.calculate_property(
-            area_array=mask2, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
-            _area=AreaType.Mask
-        ) == 20 * 39
-        assert MiddleMainAxisLength.calculate_property(
-            area_array=mask2, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
-            _area=AreaType.Mask
-        ) == 10 * 39
-        assert ShortestMainAxisLength.calculate_property(
-            area_array=mask2, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
-            _area=AreaType.Mask
-        ) == 10 * 19
+        assert (
+            LongestMainAxisLength.calculate_property(
+                area_array=mask1,
+                channel=image.get_channel(0),
+                help_dict={},
+                voxel_size=image.spacing,
+                result_scalar=1,
+                _area=AreaType.Mask,
+            )
+            == 20 * 59
+        )
+        assert (
+            MiddleMainAxisLength.calculate_property(
+                area_array=mask1,
+                channel=image.get_channel(0),
+                help_dict={},
+                voxel_size=image.spacing,
+                result_scalar=1,
+                _area=AreaType.Mask,
+            )
+            == 10 * 59
+        )
+        assert (
+            ShortestMainAxisLength.calculate_property(
+                area_array=mask1,
+                channel=image.get_channel(0),
+                help_dict={},
+                voxel_size=image.spacing,
+                result_scalar=1,
+                _area=AreaType.Mask,
+            )
+            == 10 * 29
+        )
+        assert (
+            LongestMainAxisLength.calculate_property(
+                area_array=mask2,
+                channel=image.get_channel(0),
+                help_dict={},
+                voxel_size=image.spacing,
+                result_scalar=1,
+                _area=AreaType.Mask,
+            )
+            == 20 * 39
+        )
+        assert (
+            MiddleMainAxisLength.calculate_property(
+                area_array=mask2,
+                channel=image.get_channel(0),
+                help_dict={},
+                voxel_size=image.spacing,
+                result_scalar=1,
+                _area=AreaType.Mask,
+            )
+            == 10 * 39
+        )
+        assert (
+            ShortestMainAxisLength.calculate_property(
+                area_array=mask2,
+                channel=image.get_channel(0),
+                help_dict={},
+                voxel_size=image.spacing,
+                result_scalar=1,
+                _area=AreaType.Mask,
+            )
+            == 10 * 19
+        )
 
     def test_square(self):
         array = get_cube_array()
         image = Image(array[:, 25:26], (10, 10, 20))
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
-        assert LongestMainAxisLength.calculate_property(
-            area_array=mask1, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
-            _area=AreaType.Mask
-        ) == 20 * 59
-        assert MiddleMainAxisLength.calculate_property(
-            area_array=mask1, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
-            _area=AreaType.Mask
-        ) == 10 * 59
-        assert ShortestMainAxisLength.calculate_property(
-            area_array=mask1, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
-            _area=AreaType.Mask
-        ) == 0
-        assert LongestMainAxisLength.calculate_property(
-            area_array=mask2, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
-            _area=AreaType.Mask
-        ) == 20 * 39
-        assert MiddleMainAxisLength.calculate_property(
-            area_array=mask2, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
-            _area=AreaType.Mask
-        ) == 10 * 39
-        assert ShortestMainAxisLength.calculate_property(
-            area_array=mask2, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=1,
-            _area=AreaType.Mask
-        ) == 0
+        assert (
+            LongestMainAxisLength.calculate_property(
+                area_array=mask1,
+                channel=image.get_channel(0),
+                help_dict={},
+                voxel_size=image.spacing,
+                result_scalar=1,
+                _area=AreaType.Mask,
+            )
+            == 20 * 59
+        )
+        assert (
+            MiddleMainAxisLength.calculate_property(
+                area_array=mask1,
+                channel=image.get_channel(0),
+                help_dict={},
+                voxel_size=image.spacing,
+                result_scalar=1,
+                _area=AreaType.Mask,
+            )
+            == 10 * 59
+        )
+        assert (
+            ShortestMainAxisLength.calculate_property(
+                area_array=mask1,
+                channel=image.get_channel(0),
+                help_dict={},
+                voxel_size=image.spacing,
+                result_scalar=1,
+                _area=AreaType.Mask,
+            )
+            == 0
+        )
+        assert (
+            LongestMainAxisLength.calculate_property(
+                area_array=mask2,
+                channel=image.get_channel(0),
+                help_dict={},
+                voxel_size=image.spacing,
+                result_scalar=1,
+                _area=AreaType.Mask,
+            )
+            == 20 * 39
+        )
+        assert (
+            MiddleMainAxisLength.calculate_property(
+                area_array=mask2,
+                channel=image.get_channel(0),
+                help_dict={},
+                voxel_size=image.spacing,
+                result_scalar=1,
+                _area=AreaType.Mask,
+            )
+            == 10 * 39
+        )
+        assert (
+            ShortestMainAxisLength.calculate_property(
+                area_array=mask2,
+                channel=image.get_channel(0),
+                help_dict={},
+                voxel_size=image.spacing,
+                result_scalar=1,
+                _area=AreaType.Mask,
+            )
+            == 0
+        )
 
     def test_scale(self):
         array = get_cube_array()
         image = Image(array, (10, 10, 20))
         mask1 = image.get_channel(0)[0] > 40
-        assert LongestMainAxisLength.calculate_property(
-            area_array=mask1, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=2,
-            _area=AreaType.Mask
-        ) == 2 * 20 * 59
+        assert (
+            LongestMainAxisLength.calculate_property(
+                area_array=mask1,
+                channel=image.get_channel(0),
+                help_dict={},
+                voxel_size=image.spacing,
+                result_scalar=2,
+                _area=AreaType.Mask,
+            )
+            == 2 * 20 * 59
+        )
 
         array = get_cube_array()
         image = Image(array[:, 25:26], (10, 10, 20))
         mask1 = image.get_channel(0)[0] > 40
-        assert LongestMainAxisLength.calculate_property(
-            area_array=mask1, channel=image.get_channel(0), help_dict={}, voxel_size=image.spacing, result_scalar=2,
-            _area=AreaType.Mask
-        ) == 2 * 20 * 59
+        assert (
+            LongestMainAxisLength.calculate_property(
+                area_array=mask1,
+                channel=image.get_channel(0),
+                help_dict={},
+                voxel_size=image.spacing,
+                result_scalar=2,
+                _area=AreaType.Mask,
+            )
+            == 2 * 20 * 59
+        )
 
     def test_empty(self):
         image = get_cube_image()
         mask = image.get_channel(0)[0] > 80
-        assert ShortestMainAxisLength.calculate_property(area_array=mask, channel=image.get_channel(0), help_dict={},
-                                                         voxel_size=image.spacing, result_scalar=1,
-                                                         _area=AreaType.Segmentation) == 0
+        assert (
+            ShortestMainAxisLength.calculate_property(
+                area_array=mask,
+                channel=image.get_channel(0),
+                help_dict={},
+                voxel_size=image.spacing,
+                result_scalar=1,
+                _area=AreaType.Segmentation,
+            )
+            == 0
+        )
 
     def test_without_help_dict(self):
         array = get_cube_array()
         image = Image(array, (10, 10, 20))
         mask1 = image.get_channel(0)[0] > 40
-        assert LongestMainAxisLength.calculate_property(
-            area_array=mask1, channel=image.get_channel(0), voxel_size=image.spacing, result_scalar=1,
-            _area=AreaType.Mask
-        ) == 20 * 59
-        assert MiddleMainAxisLength.calculate_property(
-            area_array=mask1, channel=image.get_channel(0), voxel_size=image.spacing, result_scalar=1,
-            _area=AreaType.Mask
-        ) == 10 * 59
-        assert ShortestMainAxisLength.calculate_property(
-            area_array=mask1, channel=image.get_channel(0), voxel_size=image.spacing, result_scalar=1,
-            _area=AreaType.Mask
-        ) == 10 * 29
+        assert (
+            LongestMainAxisLength.calculate_property(
+                area_array=mask1,
+                channel=image.get_channel(0),
+                voxel_size=image.spacing,
+                result_scalar=1,
+                _area=AreaType.Mask,
+            )
+            == 20 * 59
+        )
+        assert (
+            MiddleMainAxisLength.calculate_property(
+                area_array=mask1,
+                channel=image.get_channel(0),
+                voxel_size=image.spacing,
+                result_scalar=1,
+                _area=AreaType.Mask,
+            )
+            == 10 * 59
+        )
+        assert (
+            ShortestMainAxisLength.calculate_property(
+                area_array=mask1,
+                channel=image.get_channel(0),
+                voxel_size=image.spacing,
+                result_scalar=1,
+                _area=AreaType.Mask,
+            )
+            == 10 * 29
+        )
 
 
 class TestSurface:
@@ -524,11 +692,28 @@ class TestRimVolume:
         mask3 = mask1 * ~mask2
         result_scale = reduce(lambda x, y: x * y, image.voxel_size)
 
-        assert RimVolume.calculate_property(area_array=mask1, mask=mask1, voxel_size=image.voxel_size,
-                                            result_scalar=1, distance=10 * 50, units=Units.nm) == \
-            np.count_nonzero(mask3) * result_scale
-        assert RimVolume.calculate_property(area_array=mask2, mask=mask1, voxel_size=image.voxel_size,
-                                            result_scalar=1, distance=10 * 50, units=Units.nm) == 0
+        assert (
+            RimVolume.calculate_property(
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+                distance=10 * 50,
+                units=Units.nm,
+            )
+            == np.count_nonzero(mask3) * result_scale
+        )
+        assert (
+            RimVolume.calculate_property(
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+                distance=10 * 50,
+                units=Units.nm,
+            )
+            == 0
+        )
 
     def test_square(self):
         image = get_square_image()
@@ -538,11 +723,28 @@ class TestRimVolume:
         mask3 = mask1 * ~mask2
         result_scale = reduce(lambda x, y: x * y, image.voxel_size)
 
-        assert RimVolume.calculate_property(area_array=mask1, mask=mask1, voxel_size=image.voxel_size,
-                                            result_scalar=1, distance=10 * 50, units=Units.nm) == \
-            np.count_nonzero(mask3) * result_scale
-        assert RimVolume.calculate_property(area_array=mask2, mask=mask1, voxel_size=image.voxel_size,
-                                            result_scalar=1, distance=10 * 50, units=Units.nm) == 0
+        assert (
+            RimVolume.calculate_property(
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+                distance=10 * 50,
+                units=Units.nm,
+            )
+            == np.count_nonzero(mask3) * result_scale
+        )
+        assert (
+            RimVolume.calculate_property(
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+                distance=10 * 50,
+                units=Units.nm,
+            )
+            == 0
+        )
 
     def test_scale(self):
         image = get_cube_image()
@@ -551,12 +753,28 @@ class TestRimVolume:
         mask2 = image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
         result_scale = reduce(lambda x, y: x * y, image.voxel_size)
-        assert RimVolume.calculate_property(area_array=mask1, mask=mask1, voxel_size=image.voxel_size,
-                                            result_scalar=1, distance=10 * 50, units=Units.nm) == \
-            np.count_nonzero(mask3) * result_scale
-        assert RimVolume.calculate_property(area_array=mask1, mask=mask1, voxel_size=image.voxel_size,
-                                            result_scalar=UNIT_SCALE[Units.nm.value], distance=10 * 50,
-                                            units=Units.nm) == np.count_nonzero(mask3) * 100 * 50 ** 2
+        assert (
+            RimVolume.calculate_property(
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+                distance=10 * 50,
+                units=Units.nm,
+            )
+            == np.count_nonzero(mask3) * result_scale
+        )
+        assert (
+            RimVolume.calculate_property(
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=UNIT_SCALE[Units.nm.value],
+                distance=10 * 50,
+                units=Units.nm,
+            )
+            == np.count_nonzero(mask3) * 100 * 50 ** 2
+        )
 
         image = get_square_image()
         image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
@@ -564,26 +782,66 @@ class TestRimVolume:
         mask2 = image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
         result_scale = reduce(lambda x, y: x * y, image.voxel_size)
-        assert RimVolume.calculate_property(area_array=mask1, mask=mask1, voxel_size=image.voxel_size,
-                                            result_scalar=1, distance=10 * 50, units=Units.nm) == \
-            np.count_nonzero(mask3) * result_scale
-        assert RimVolume.calculate_property(area_array=mask1, mask=mask1, voxel_size=image.voxel_size,
-                                            result_scalar=UNIT_SCALE[Units.nm.value], distance=10 * 50,
-                                            units=Units.nm) == np.count_nonzero(mask3) * 50 ** 2
+        assert (
+            RimVolume.calculate_property(
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+                distance=10 * 50,
+                units=Units.nm,
+            )
+            == np.count_nonzero(mask3) * result_scale
+        )
+        assert (
+            RimVolume.calculate_property(
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=UNIT_SCALE[Units.nm.value],
+                distance=10 * 50,
+                units=Units.nm,
+            )
+            == np.count_nonzero(mask3) * 50 ** 2
+        )
 
     def test_empty(self):
         image = get_cube_image()
         mask = image.get_channel(0)[0] > 80
         mask1 = image.get_channel(0)[0] > 40
-        assert RimVolume.calculate_property(area_array=mask1, mask=mask, voxel_size=image.voxel_size,
-                                            result_scalar=UNIT_SCALE[Units.nm.value], distance=10 * 50,
-                                            units=Units.nm) == 0
-        assert RimVolume.calculate_property(area_array=mask, mask=mask1, voxel_size=image.voxel_size,
-                                            result_scalar=UNIT_SCALE[Units.nm.value], distance=10 * 50,
-                                            units=Units.nm) == 0
-        assert RimVolume.calculate_property(area_array=mask, mask=mask, voxel_size=image.voxel_size,
-                                            result_scalar=UNIT_SCALE[Units.nm.value], distance=10 * 50,
-                                            units=Units.nm) == 0
+        assert (
+            RimVolume.calculate_property(
+                area_array=mask1,
+                mask=mask,
+                voxel_size=image.voxel_size,
+                result_scalar=UNIT_SCALE[Units.nm.value],
+                distance=10 * 50,
+                units=Units.nm,
+            )
+            == 0
+        )
+        assert (
+            RimVolume.calculate_property(
+                area_array=mask,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=UNIT_SCALE[Units.nm.value],
+                distance=10 * 50,
+                units=Units.nm,
+            )
+            == 0
+        )
+        assert (
+            RimVolume.calculate_property(
+                area_array=mask,
+                mask=mask,
+                voxel_size=image.voxel_size,
+                result_scalar=UNIT_SCALE[Units.nm.value],
+                distance=10 * 50,
+                units=Units.nm,
+            )
+            == 0
+        )
 
 
 class TestRimPixelBrightnessSum:
@@ -593,12 +851,28 @@ class TestRimPixelBrightnessSum:
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
-        assert RimPixelBrightnessSum.calculate_property(area_array=mask1, mask=mask1, voxel_size=image.voxel_size,
-                                                        distance=10 * 50, units=Units.nm, channel=image.get_channel(0)
-                                                        ) == np.count_nonzero(mask3) * 50
-        assert RimPixelBrightnessSum.calculate_property(area_array=mask2, mask=mask1, voxel_size=image.voxel_size,
-                                                        distance=10 * 50, units=Units.nm,
-                                                        channel=image.get_channel(0)) == 0
+        assert (
+            RimPixelBrightnessSum.calculate_property(
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                distance=10 * 50,
+                units=Units.nm,
+                channel=image.get_channel(0),
+            )
+            == np.count_nonzero(mask3) * 50
+        )
+        assert (
+            RimPixelBrightnessSum.calculate_property(
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                distance=10 * 50,
+                units=Units.nm,
+                channel=image.get_channel(0),
+            )
+            == 0
+        )
 
     def test_square(self):
         image = get_square_image()
@@ -606,26 +880,66 @@ class TestRimPixelBrightnessSum:
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
-        assert RimPixelBrightnessSum.calculate_property(area_array=mask1, mask=mask1, voxel_size=image.voxel_size,
-                                                        distance=10 * 50, units=Units.nm, channel=image.get_channel(0)
-                                                        ) == np.count_nonzero(mask3) * 50
-        assert RimPixelBrightnessSum.calculate_property(area_array=mask2, mask=mask1, voxel_size=image.voxel_size,
-                                                        distance=10 * 50, units=Units.nm,
-                                                        channel=image.get_channel(0)) == 0
+        assert (
+            RimPixelBrightnessSum.calculate_property(
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                distance=10 * 50,
+                units=Units.nm,
+                channel=image.get_channel(0),
+            )
+            == np.count_nonzero(mask3) * 50
+        )
+        assert (
+            RimPixelBrightnessSum.calculate_property(
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                distance=10 * 50,
+                units=Units.nm,
+                channel=image.get_channel(0),
+            )
+            == 0
+        )
 
     def test_empty(self):
         image = get_cube_image()
         mask = image.get_channel(0)[0] > 80
         mask1 = image.get_channel(0)[0] > 40
-        assert RimPixelBrightnessSum.calculate_property(area_array=mask1, mask=mask, voxel_size=image.voxel_size,
-                                                        distance=10 * 50, channel=image.get_channel(0),
-                                                        units=Units.nm) == 0
-        assert RimPixelBrightnessSum.calculate_property(area_array=mask, mask=mask1, voxel_size=image.voxel_size,
-                                                        distance=10 * 50, channel=image.get_channel(0),
-                                                        units=Units.nm) == 0
-        assert RimPixelBrightnessSum.calculate_property(area_array=mask, mask=mask, voxel_size=image.voxel_size,
-                                                        distance=10 * 50, channel=image.get_channel(0),
-                                                        units=Units.nm) == 0
+        assert (
+            RimPixelBrightnessSum.calculate_property(
+                area_array=mask1,
+                mask=mask,
+                voxel_size=image.voxel_size,
+                distance=10 * 50,
+                channel=image.get_channel(0),
+                units=Units.nm,
+            )
+            == 0
+        )
+        assert (
+            RimPixelBrightnessSum.calculate_property(
+                area_array=mask,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                distance=10 * 50,
+                channel=image.get_channel(0),
+                units=Units.nm,
+            )
+            == 0
+        )
+        assert (
+            RimPixelBrightnessSum.calculate_property(
+                area_array=mask,
+                mask=mask,
+                voxel_size=image.voxel_size,
+                distance=10 * 50,
+                channel=image.get_channel(0),
+                units=Units.nm,
+            )
+            == 0
+        )
 
 
 class TestSphericity:
@@ -636,18 +950,24 @@ class TestSphericity:
         mask3 = mask1 * ~mask2
         mask1_radius = np.sqrt(2 * (50 * 59) ** 2 + (100 * 29) ** 2) / 2
         mask1_volume = np.count_nonzero(mask1) * reduce(lambda x, y: x * y, image.voxel_size)
-        assert isclose(Sphericity.calculate_property(area_array=mask1, voxel_size=image.voxel_size, result_scalar=1),
-                       mask1_volume / (4 / 3 * pi * mask1_radius ** 3))
+        assert isclose(
+            Sphericity.calculate_property(area_array=mask1, voxel_size=image.voxel_size, result_scalar=1),
+            mask1_volume / (4 / 3 * pi * mask1_radius ** 3),
+        )
 
         mask2_radius = np.sqrt(2 * (50 * 39) ** 2 + (100 * 19) ** 2) / 2
         mask2_volume = np.count_nonzero(mask2) * reduce(lambda x, y: x * y, image.voxel_size)
-        assert isclose(Sphericity.calculate_property(area_array=mask2, voxel_size=image.voxel_size, result_scalar=1),
-                       mask2_volume / (4 / 3 * pi * mask2_radius ** 3))
+        assert isclose(
+            Sphericity.calculate_property(area_array=mask2, voxel_size=image.voxel_size, result_scalar=1),
+            mask2_volume / (4 / 3 * pi * mask2_radius ** 3),
+        )
 
         mask3_radius = mask1_radius
         mask3_volume = np.count_nonzero(mask3) * reduce(lambda x, y: x * y, image.voxel_size)
-        assert isclose(Sphericity.calculate_property(area_array=mask3, voxel_size=image.voxel_size, result_scalar=1),
-                       mask3_volume / (4 / 3 * pi * mask3_radius ** 3))
+        assert isclose(
+            Sphericity.calculate_property(area_array=mask3, voxel_size=image.voxel_size, result_scalar=1),
+            mask3_volume / (4 / 3 * pi * mask3_radius ** 3),
+        )
 
     def test_square(self):
         image = get_square_image()
@@ -656,18 +976,24 @@ class TestSphericity:
         mask3 = mask1 * ~mask2
         mask1_radius = np.sqrt(2 * (50 * 59) ** 2) / 2
         mask1_volume = np.count_nonzero(mask1) * reduce(lambda x, y: x * y, image.voxel_size)
-        assert isclose(Sphericity.calculate_property(area_array=mask1, voxel_size=image.voxel_size, result_scalar=1),
-                       mask1_volume / (pi * mask1_radius ** 2))
+        assert isclose(
+            Sphericity.calculate_property(area_array=mask1, voxel_size=image.voxel_size, result_scalar=1),
+            mask1_volume / (pi * mask1_radius ** 2),
+        )
 
         mask2_radius = np.sqrt(2 * (50 * 39) ** 2) / 2
         mask2_volume = np.count_nonzero(mask2) * reduce(lambda x, y: x * y, image.voxel_size)
-        assert isclose(Sphericity.calculate_property(area_array=mask2, voxel_size=image.voxel_size, result_scalar=1),
-                       mask2_volume / (pi * mask2_radius ** 2))
+        assert isclose(
+            Sphericity.calculate_property(area_array=mask2, voxel_size=image.voxel_size, result_scalar=1),
+            mask2_volume / (pi * mask2_radius ** 2),
+        )
 
         mask3_radius = mask1_radius
         mask3_volume = np.count_nonzero(mask3) * reduce(lambda x, y: x * y, image.voxel_size)
-        assert isclose(Sphericity.calculate_property(area_array=mask3, voxel_size=image.voxel_size, result_scalar=1),
-                       mask3_volume / (pi * mask3_radius ** 2))
+        assert isclose(
+            Sphericity.calculate_property(area_array=mask3, voxel_size=image.voxel_size, result_scalar=1),
+            mask3_volume / (pi * mask3_radius ** 2),
+        )
 
 
 class TestDistanceMaskSegmentation:
@@ -675,29 +1001,77 @@ class TestDistanceMaskSegmentation:
         image = get_cube_image()
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
-        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), mask2, mask1, image.voxel_size, 1,
-                                                           DistancePoint.Geometrical_center,
-                                                           DistancePoint.Geometrical_center) == 0
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0),
+                mask2,
+                mask1,
+                image.voxel_size,
+                1,
+                DistancePoint.Geometrical_center,
+                DistancePoint.Geometrical_center,
+            )
+            == 0
+        )
 
-        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), mask2, mask1, image.voxel_size, 1,
-                                                           DistancePoint.Geometrical_center,
-                                                           DistancePoint.Mass_center) == 0
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0),
+                mask2,
+                mask1,
+                image.voxel_size,
+                1,
+                DistancePoint.Geometrical_center,
+                DistancePoint.Mass_center,
+            )
+            == 0
+        )
 
-        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), mask2, mask1, image.voxel_size, 1,
-                                                           DistancePoint.Mass_center,
-                                                           DistancePoint.Geometrical_center) == 0
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0),
+                mask2,
+                mask1,
+                image.voxel_size,
+                1,
+                DistancePoint.Mass_center,
+                DistancePoint.Geometrical_center,
+            )
+            == 0
+        )
 
-        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), mask2, mask1, image.voxel_size, 1,
-                                                           DistancePoint.Border,
-                                                           DistancePoint.Geometrical_center) == 1400
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0),
+                mask2,
+                mask1,
+                image.voxel_size,
+                1,
+                DistancePoint.Border,
+                DistancePoint.Geometrical_center,
+            )
+            == 1400
+        )
 
-        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), mask2, mask1, image.voxel_size, 1,
-                                                           DistancePoint.Geometrical_center,
-                                                           DistancePoint.Border) == 900
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0),
+                mask2,
+                mask1,
+                image.voxel_size,
+                1,
+                DistancePoint.Geometrical_center,
+                DistancePoint.Border,
+            )
+            == 900
+        )
 
-        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), mask2, mask1, image.voxel_size, 1,
-                                                           DistancePoint.Border,
-                                                           DistancePoint.Border) == 500
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0), mask2, mask1, image.voxel_size, 1, DistancePoint.Border, DistancePoint.Border
+            )
+            == 500
+        )
 
     def test_two_components(self):
         data = np.zeros((1, 30, 30, 60, 1), dtype=np.uint16)
@@ -707,99 +1081,266 @@ class TestDistanceMaskSegmentation:
         mask = np.zeros(data.shape[1:-1], dtype=np.uint8)
         mask[2:-2, 2:-2, 2:-2] = 1
 
-        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0)[0], mask,
-                                                           image.voxel_size, 1,
-                                                           DistancePoint.Geometrical_center,
-                                                           DistancePoint.Geometrical_center) == 0
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0),
+                image.get_channel(0)[0],
+                mask,
+                image.voxel_size,
+                1,
+                DistancePoint.Geometrical_center,
+                DistancePoint.Geometrical_center,
+            )
+            == 0
+        )
 
-        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0)[0] == 50, mask,
-                                                           image.voxel_size, 1,
-                                                           DistancePoint.Geometrical_center,
-                                                           DistancePoint.Geometrical_center) == 650
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0),
+                image.get_channel(0)[0] == 50,
+                mask,
+                image.voxel_size,
+                1,
+                DistancePoint.Geometrical_center,
+                DistancePoint.Geometrical_center,
+            )
+            == 650
+        )
 
-        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0)[0] == 60, mask,
-                                                           image.voxel_size, 1,
-                                                           DistancePoint.Geometrical_center,
-                                                           DistancePoint.Geometrical_center) == 650
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0),
+                image.get_channel(0)[0] == 60,
+                mask,
+                image.voxel_size,
+                1,
+                DistancePoint.Geometrical_center,
+                DistancePoint.Geometrical_center,
+            )
+            == 650
+        )
 
-        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0)[0] == 50, mask,
-                                                           image.voxel_size, 1,
-                                                           DistancePoint.Geometrical_center,
-                                                           DistancePoint.Mass_center) == 650
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0),
+                image.get_channel(0)[0] == 50,
+                mask,
+                image.voxel_size,
+                1,
+                DistancePoint.Geometrical_center,
+                DistancePoint.Mass_center,
+            )
+            == 650
+        )
 
-        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0)[0] == 60, mask,
-                                                           image.voxel_size, 1,
-                                                           DistancePoint.Geometrical_center,
-                                                           DistancePoint.Mass_center) == 650
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0),
+                image.get_channel(0)[0] == 60,
+                mask,
+                image.voxel_size,
+                1,
+                DistancePoint.Geometrical_center,
+                DistancePoint.Mass_center,
+            )
+            == 650
+        )
 
         assert isclose(
-            DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0)[0], mask,
-                                                        image.voxel_size, 1, DistancePoint.Geometrical_center,
-                                                        DistancePoint.Mass_center), 1300 * 6 / 11 - 650)
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0),
+                image.get_channel(0)[0],
+                mask,
+                image.voxel_size,
+                1,
+                DistancePoint.Geometrical_center,
+                DistancePoint.Mass_center,
+            ),
+            1300 * 6 / 11 - 650,
+        )
 
         assert isclose(
-            DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0)[0], mask,
-                                                        image.voxel_size, 1, DistancePoint.Mass_center,
-                                                        DistancePoint.Geometrical_center), 1300 * 6 / 11 - 650)
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0),
+                image.get_channel(0)[0],
+                mask,
+                image.voxel_size,
+                1,
+                DistancePoint.Mass_center,
+                DistancePoint.Geometrical_center,
+            ),
+            1300 * 6 / 11 - 650,
+        )
 
-        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0)[0], mask,
-                                                           image.voxel_size, 1, DistancePoint.Geometrical_center,
-                                                           DistancePoint.Geometrical_center) == 0
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0),
+                image.get_channel(0)[0],
+                mask,
+                image.voxel_size,
+                1,
+                DistancePoint.Geometrical_center,
+                DistancePoint.Geometrical_center,
+            )
+            == 0
+        )
 
-        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0)[0], mask,
-                                                           image.voxel_size, 1, DistancePoint.Border,
-                                                           DistancePoint.Geometrical_center) == 1200
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0),
+                image.get_channel(0)[0],
+                mask,
+                image.voxel_size,
+                1,
+                DistancePoint.Border,
+                DistancePoint.Geometrical_center,
+            )
+            == 1200
+        )
 
-        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0)[0], mask,
-                                                           image.voxel_size, 1, DistancePoint.Geometrical_center,
-                                                           DistancePoint.Border) == 50
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0),
+                image.get_channel(0)[0],
+                mask,
+                image.voxel_size,
+                1,
+                DistancePoint.Geometrical_center,
+                DistancePoint.Border,
+            )
+            == 50
+        )
 
-        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0)[0], mask,
-                                                           image.voxel_size, 1, DistancePoint.Border,
-                                                           DistancePoint.Border) == 150
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0),
+                image.get_channel(0)[0],
+                mask,
+                image.voxel_size,
+                1,
+                DistancePoint.Border,
+                DistancePoint.Border,
+            )
+            == 150
+        )
 
-        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0)[0] == 50, mask,
-                                                           image.voxel_size, 1, DistancePoint.Border,
-                                                           DistancePoint.Border) == 150
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0),
+                image.get_channel(0)[0] == 50,
+                mask,
+                image.voxel_size,
+                1,
+                DistancePoint.Border,
+                DistancePoint.Border,
+            )
+            == 150
+        )
 
-        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), image.get_channel(0)[0] == 60, mask,
-                                                           image.voxel_size, 1, DistancePoint.Border,
-                                                           DistancePoint.Border) == 150
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0),
+                image.get_channel(0)[0] == 60,
+                mask,
+                image.voxel_size,
+                1,
+                DistancePoint.Border,
+                DistancePoint.Border,
+            )
+            == 150
+        )
 
     def test_square(self):
         image = get_square_image()
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
-        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), mask2, mask1, image.voxel_size, 1,
-                                                           DistancePoint.Geometrical_center,
-                                                           DistancePoint.Geometrical_center) == 0
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0),
+                mask2,
+                mask1,
+                image.voxel_size,
+                1,
+                DistancePoint.Geometrical_center,
+                DistancePoint.Geometrical_center,
+            )
+            == 0
+        )
         mask3 = mask2.astype(np.uint8)
         mask3[:, 50:] = 2
         mask3[mask2 == 0] = 0
 
-        assert DistanceMaskSegmentation.calculate_property(image.get_channel(0), mask2, mask1, image.voxel_size, 1,
-                                                           DistancePoint.Geometrical_center,
-                                                           DistancePoint.Geometrical_center) == 0
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                image.get_channel(0),
+                mask2,
+                mask1,
+                image.voxel_size,
+                1,
+                DistancePoint.Geometrical_center,
+                DistancePoint.Geometrical_center,
+            )
+            == 0
+        )
 
-        assert DistanceMaskSegmentation.calculate_property(mask3, mask3 == 1, mask1, image.voxel_size, 1,
-                                                           DistancePoint.Geometrical_center,
-                                                           DistancePoint.Geometrical_center) == 500
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                mask3,
+                mask3 == 1,
+                mask1,
+                image.voxel_size,
+                1,
+                DistancePoint.Geometrical_center,
+                DistancePoint.Geometrical_center,
+            )
+            == 500
+        )
 
-        assert DistanceMaskSegmentation.calculate_property(mask3, mask3 == 2, mask1, image.voxel_size, 1,
-                                                           DistancePoint.Geometrical_center,
-                                                           DistancePoint.Geometrical_center) == 500
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                mask3,
+                mask3 == 2,
+                mask1,
+                image.voxel_size,
+                1,
+                DistancePoint.Geometrical_center,
+                DistancePoint.Geometrical_center,
+            )
+            == 500
+        )
 
-        assert DistanceMaskSegmentation.calculate_property(mask3, mask3 == 1, mask1, image.voxel_size, 1,
-                                                           DistancePoint.Geometrical_center,
-                                                           DistancePoint.Mass_center) == 500
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                mask3,
+                mask3 == 1,
+                mask1,
+                image.voxel_size,
+                1,
+                DistancePoint.Geometrical_center,
+                DistancePoint.Mass_center,
+            )
+            == 500
+        )
 
-        assert DistanceMaskSegmentation.calculate_property(mask3, mask3 == 2, mask1, image.voxel_size, 1,
-                                                           DistancePoint.Geometrical_center,
-                                                           DistancePoint.Mass_center) == 500
+        assert (
+            DistanceMaskSegmentation.calculate_property(
+                mask3,
+                mask3 == 2,
+                mask1,
+                image.voxel_size,
+                1,
+                DistancePoint.Geometrical_center,
+                DistancePoint.Mass_center,
+            )
+            == 500
+        )
 
-        assert isclose(DistanceMaskSegmentation.calculate_property(mask3, mask2, mask1, image.voxel_size, 1,
-                                                                   DistancePoint.Geometrical_center,
-                                                                   DistancePoint.Mass_center), 1000 * 2 / 3 - 500)
+        assert isclose(
+            DistanceMaskSegmentation.calculate_property(
+                mask3, mask2, mask1, image.voxel_size, 1, DistancePoint.Geometrical_center, DistancePoint.Mass_center
+            ),
+            1000 * 2 / 3 - 500,
+        )
 
 
 class TestSplitOnPartVolume:
@@ -810,38 +1351,109 @@ class TestSplitOnPartVolume:
         mask2 = image.get_channel(0)[0] > 60
         result_scale = reduce(lambda x, y: x * y, image.voxel_size)
 
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=1,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == (30 * 60 * 60 - 20 * 40 * 40) * result_scale
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=1, num_of_parts=3, equal_volume=False, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == (30*60*60 - 20*40*40)  * result_scale
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=2,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == (20 * 40 * 40 - 10 * 20 * 20) * result_scale
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=2, num_of_parts=3, equal_volume=False, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == (20 * 40 * 40 - 10 * 20 * 20) * result_scale
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=3,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == (10 * 20 * 20) * result_scale
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=3, num_of_parts=3, equal_volume=False, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == (10 * 20 * 20) * result_scale
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=4,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == 0
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=4, num_of_parts=3, equal_volume=False, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == 0
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=1,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == 0
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=1, num_of_parts=3, equal_volume=False, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == 0
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=2,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == (20 * 40 * 40 - 10 * 20 * 20) * result_scale
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=2, num_of_parts=3, equal_volume=False, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == (20 * 40 * 40 - 10 * 20 * 20) * result_scale
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=3,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == (10 * 20 * 20) * result_scale
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=3, num_of_parts=3, equal_volume=False, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == (10 * 20 * 20) * result_scale
-
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=4, num_of_parts=3, equal_volume=False, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == 0
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=4,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == 0
+        )
 
     def test_result_scalar(self):
         image = get_cube_image()
@@ -850,10 +1462,18 @@ class TestSplitOnPartVolume:
         mask2 = image.get_channel(0)[0] > 60
         result_scale = reduce(lambda x, y: x * y, image.voxel_size)
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=3, num_of_parts=3, equal_volume=False, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=2) == \
-               (10 * 20 * 20) * result_scale * 8
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=3,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=2,
+            )
+            == (10 * 20 * 20) * result_scale * 8
+        )
 
     def test_cube_equal_volume(self):
         data = np.zeros((1, 60, 100, 100, 1), dtype=np.uint16)
@@ -865,37 +1485,109 @@ class TestSplitOnPartVolume:
         mask2 = image.get_channel(0)[0] > 60
         result_scale = reduce(lambda x, y: x * y, image.voxel_size)
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=1, num_of_parts=3, equal_volume=True, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == (40*60*60 - 36 * 52 * 52) * result_scale
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=1,
+                num_of_parts=3,
+                equal_volume=True,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == (40 * 60 * 60 - 36 * 52 * 52) * result_scale
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=2, num_of_parts=3, equal_volume=True, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == (36 * 52 * 52 - 30 * 40 * 40) * result_scale
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=2,
+                num_of_parts=3,
+                equal_volume=True,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == (36 * 52 * 52 - 30 * 40 * 40) * result_scale
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=3, num_of_parts=3, equal_volume=True, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == (30 * 40 * 40) * result_scale
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=3,
+                num_of_parts=3,
+                equal_volume=True,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == (30 * 40 * 40) * result_scale
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=4, num_of_parts=3, equal_volume=True, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == 0
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=4,
+                num_of_parts=3,
+                equal_volume=True,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == 0
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=1, num_of_parts=3, equal_volume=True, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == 0
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=1,
+                num_of_parts=3,
+                equal_volume=True,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == 0
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=2, num_of_parts=3, equal_volume=True, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == 0
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=2,
+                num_of_parts=3,
+                equal_volume=True,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == 0
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=3, num_of_parts=3, equal_volume=True, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == (30 * 40 * 40) * result_scale
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=3,
+                num_of_parts=3,
+                equal_volume=True,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == (30 * 40 * 40) * result_scale
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=4, num_of_parts=3, equal_volume=False, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == 0
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=4,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == 0
+        )
 
     def test_square_equal_radius(self):
         image = get_square_image()
@@ -905,21 +1597,57 @@ class TestSplitOnPartVolume:
 
         result_scale = reduce(lambda x, y: x * y, image.voxel_size)
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=1, num_of_parts=3, equal_volume=False, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == (60 * 60 - 40 * 40) * result_scale
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=1,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == (60 * 60 - 40 * 40) * result_scale
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=1, num_of_parts=2, equal_volume=False, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == (60 * 60 - 30 * 30) * result_scale
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=1,
+                num_of_parts=2,
+                equal_volume=False,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == (60 * 60 - 30 * 30) * result_scale
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=1, num_of_parts=3, equal_volume=False, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == 0
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=1,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == 0
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=1, num_of_parts=2, equal_volume=False, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == (40 * 40 - 30 * 30) * result_scale
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=1,
+                num_of_parts=2,
+                equal_volume=False,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == (40 * 40 - 30 * 30) * result_scale
+        )
 
     def test_square_equal_volume(self):
         image = get_square_image()
@@ -929,25 +1657,70 @@ class TestSplitOnPartVolume:
 
         result_scale = reduce(lambda x, y: x * y, image.voxel_size)
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=1, num_of_parts=3, equal_volume=True, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == (60 * 60 - 50 * 50) * result_scale
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=1,
+                num_of_parts=3,
+                equal_volume=True,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == (60 * 60 - 50 * 50) * result_scale
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=1, num_of_parts=2, equal_volume=True, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == (60 * 60 - 44 * 44) * result_scale
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=1,
+                num_of_parts=2,
+                equal_volume=True,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == (60 * 60 - 44 * 44) * result_scale
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=1, num_of_parts=3, equal_volume=True, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == 0
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=1,
+                num_of_parts=3,
+                equal_volume=True,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == 0
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=1, num_of_parts=2, equal_volume=True, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == 0
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=1,
+                num_of_parts=2,
+                equal_volume=True,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == 0
+        )
 
-        assert SplitOnPartVolume.calculate_property(
-            part_selection=2, num_of_parts=2, equal_volume=True, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, result_scalar=1) == (40 * 40 ) * result_scale
+        assert (
+            SplitOnPartVolume.calculate_property(
+                part_selection=2,
+                num_of_parts=2,
+                equal_volume=True,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                result_scalar=1,
+            )
+            == (40 * 40) * result_scale
+        )
 
 
 class TestSplitOnPartPixelBrightnessSum:
@@ -957,39 +1730,109 @@ class TestSplitOnPartPixelBrightnessSum:
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
 
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=1,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == (30 * 60 * 60 - 20 * 40 * 40) * 50
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=1, num_of_parts=3, equal_volume=False, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (30*60*60 - 20*40*40) * 50
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=2,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == (20 * 40 * 40 - 10 * 20 * 20) * 70
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=2, num_of_parts=3, equal_volume=False, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (20 * 40 * 40 - 10 * 20 * 20) * 70
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=3,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == (10 * 20 * 20) * 70
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=3, num_of_parts=3, equal_volume=False, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (10 * 20 * 20) * 70
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=4,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == 0
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=4, num_of_parts=3, equal_volume=False, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == 0
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=1,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == 0
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=1, num_of_parts=3, equal_volume=False, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == 0
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=2,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == (20 * 40 * 40 - 10 * 20 * 20) * 70
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=2, num_of_parts=3, equal_volume=False, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == \
-               (20 * 40 * 40 - 10 * 20 * 20) * 70
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=3,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == (10 * 20 * 20) * 70
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=3, num_of_parts=3, equal_volume=False, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (10 * 20 * 20) * 70
-
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=4, num_of_parts=3, equal_volume=False, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == 0
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=4,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == 0
+        )
 
     def test_cube_equal_volume(self):
         data = np.zeros((1, 60, 100, 100, 1), dtype=np.uint16)
@@ -1000,38 +1843,109 @@ class TestSplitOnPartPixelBrightnessSum:
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=1, num_of_parts=3, equal_volume=True, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size,  channel = image.get_channel(0)) == (40*60*60 - 36 * 52 * 52) * 50
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=1,
+                num_of_parts=3,
+                equal_volume=True,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == (40 * 60 * 60 - 36 * 52 * 52) * 50
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=2, num_of_parts=3, equal_volume=True, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (36 * 52 * 52 - 30 * 40 * 40) * 50
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=2,
+                num_of_parts=3,
+                equal_volume=True,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == (36 * 52 * 52 - 30 * 40 * 40) * 50
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=3, num_of_parts=3, equal_volume=True, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (30 * 40 * 40) * 70
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=3,
+                num_of_parts=3,
+                equal_volume=True,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == (30 * 40 * 40) * 70
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=4, num_of_parts=3, equal_volume=True, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == 0
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=4,
+                num_of_parts=3,
+                equal_volume=True,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == 0
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=1, num_of_parts=3, equal_volume=True, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == 0
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=1,
+                num_of_parts=3,
+                equal_volume=True,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == 0
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=2, num_of_parts=3, equal_volume=True, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == 0
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=2,
+                num_of_parts=3,
+                equal_volume=True,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == 0
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=3, num_of_parts=3, equal_volume=True, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == \
-               (30 * 40 * 40) * 70
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=3,
+                num_of_parts=3,
+                equal_volume=True,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == (30 * 40 * 40) * 70
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=4, num_of_parts=3, equal_volume=False, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == 0
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=4,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == 0
+        )
 
     def test_square_equal_radius(self):
         image = get_square_image()
@@ -1039,22 +1953,57 @@ class TestSplitOnPartPixelBrightnessSum:
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=1, num_of_parts=3, equal_volume=False, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (60 * 60 - 40 * 40) * 50
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=1,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == (60 * 60 - 40 * 40) * 50
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=1, num_of_parts=2, equal_volume=False, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == \
-               (60 * 60 - 40 * 40) * 50 + (40 * 40 - 30 * 30) * 70
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=1,
+                num_of_parts=2,
+                equal_volume=False,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == (60 * 60 - 40 * 40) * 50 + (40 * 40 - 30 * 30) * 70
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=1, num_of_parts=3, equal_volume=False, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == 0
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=1,
+                num_of_parts=3,
+                equal_volume=False,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == 0
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=1, num_of_parts=2, equal_volume=False, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (40 * 40 - 30 * 30) * 70
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=1,
+                num_of_parts=2,
+                equal_volume=False,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == (40 * 40 - 30 * 30) * 70
+        )
 
     def test_square_equal_volume(self):
         image = get_square_image()
@@ -1062,25 +2011,70 @@ class TestSplitOnPartPixelBrightnessSum:
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=1, num_of_parts=3, equal_volume=True, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (60 * 60 - 50 * 50) * 50
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=1,
+                num_of_parts=3,
+                equal_volume=True,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == (60 * 60 - 50 * 50) * 50
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=1, num_of_parts=2, equal_volume=True, area_array=mask1, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (60 * 60 - 44 * 44) * 50
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=1,
+                num_of_parts=2,
+                equal_volume=True,
+                area_array=mask1,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == (60 * 60 - 44 * 44) * 50
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=1, num_of_parts=3, equal_volume=True, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == 0
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=1,
+                num_of_parts=3,
+                equal_volume=True,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == 0
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=1, num_of_parts=2, equal_volume=True, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == 0
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=1,
+                num_of_parts=2,
+                equal_volume=True,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == 0
+        )
 
-        assert SplitOnPartPixelBrightnessSum.calculate_property(
-            part_selection=2, num_of_parts=2, equal_volume=True, area_array=mask2, mask=mask1,
-            voxel_size=image.voxel_size, channel = image.get_channel(0)) == (40 * 40 ) * 70
+        assert (
+            SplitOnPartPixelBrightnessSum.calculate_property(
+                part_selection=2,
+                num_of_parts=2,
+                equal_volume=True,
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=image.voxel_size,
+                channel=image.get_channel(0),
+            )
+            == (40 * 40) * 70
+        )
 
 
 class TestStatisticProfile:
@@ -1091,18 +2085,29 @@ class TestStatisticProfile:
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
         statistics = [
-            MeasurementEntry("Mask Volume",
-                             Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)),
-            MeasurementEntry("Segmentation Volume",
-                             Volume.get_starting_leaf().replace_(area=AreaType.Segmentation,
-                                                               per_component=PerComponent.No)),
-            MeasurementEntry("Mask without segmentation Volume",
-                             Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
-                                                               per_component=PerComponent.No))
+            MeasurementEntry(
+                "Mask Volume", Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)
+            ),
+            MeasurementEntry(
+                "Segmentation Volume",
+                Volume.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.No),
+            ),
+            MeasurementEntry(
+                "Mask without segmentation Volume",
+                Volume.get_starting_leaf().replace_(
+                    area=AreaType.Mask_without_segmentation, per_component=PerComponent.No
+                ),
+            ),
         ]
         profile = MeasurementProfile("statistic", statistics)
-        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
-                                   voxel_size=image.voxel_size, result_units=Units.µm)
+        result = profile.calculate(
+            image.get_channel(0),
+            segmentation,
+            full_mask=mask,
+            mask=mask,
+            voxel_size=image.voxel_size,
+            result_units=Units.µm,
+        )
         tot_vol, seg_vol, rim_vol = list(result.values())
         assert isclose(tot_vol[0], seg_vol[0] + rim_vol[0])
         assert result.get_units()[0] == "μm**3"
@@ -1114,18 +2119,29 @@ class TestStatisticProfile:
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
         statistics = [
-            MeasurementEntry("Mask Volume",
-                             Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)),
-            MeasurementEntry("Segmentation Volume",
-                             Volume.get_starting_leaf().replace_(area=AreaType.Segmentation,
-                                                               per_component=PerComponent.No)),
-            MeasurementEntry("Mask without segmentation Volume",
-                             Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
-                                                               per_component=PerComponent.No))
+            MeasurementEntry(
+                "Mask Volume", Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)
+            ),
+            MeasurementEntry(
+                "Segmentation Volume",
+                Volume.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.No),
+            ),
+            MeasurementEntry(
+                "Mask without segmentation Volume",
+                Volume.get_starting_leaf().replace_(
+                    area=AreaType.Mask_without_segmentation, per_component=PerComponent.No
+                ),
+            ),
         ]
         profile = MeasurementProfile("statistic", statistics)
-        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
-                                   voxel_size=image.voxel_size, result_units=Units.µm)
+        result = profile.calculate(
+            image.get_channel(0),
+            segmentation,
+            full_mask=mask,
+            mask=mask,
+            voxel_size=image.voxel_size,
+            result_units=Units.µm,
+        )
         tot_vol, seg_vol, rim_vol = list(result.values())
         assert isclose(tot_vol[0], seg_vol[0] + rim_vol[0])
         assert result.get_units()[0] == "μm**2"
@@ -1137,19 +2153,32 @@ class TestStatisticProfile:
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
         statistics = [
-            MeasurementEntry("Mask PixelBrightnessSum",
-                             PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask,
-                                                                           per_component=PerComponent.No)),
-            MeasurementEntry("Segmentation PixelBrightnessSum",
-                             PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Segmentation,
-                                                                           per_component=PerComponent.No)),
-            MeasurementEntry("Mask without segmentation PixelBrightnessSum",
-                             PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
-                                                                           per_component=PerComponent.No))
+            MeasurementEntry(
+                "Mask PixelBrightnessSum",
+                PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
+            ),
+            MeasurementEntry(
+                "Segmentation PixelBrightnessSum",
+                PixelBrightnessSum.get_starting_leaf().replace_(
+                    area=AreaType.Segmentation, per_component=PerComponent.No
+                ),
+            ),
+            MeasurementEntry(
+                "Mask without segmentation PixelBrightnessSum",
+                PixelBrightnessSum.get_starting_leaf().replace_(
+                    area=AreaType.Mask_without_segmentation, per_component=PerComponent.No
+                ),
+            ),
         ]
         profile = MeasurementProfile("statistic", statistics)
-        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
-                                   voxel_size=image.voxel_size, result_units=Units.µm)
+        result = profile.calculate(
+            image.get_channel(0),
+            segmentation,
+            full_mask=mask,
+            mask=mask,
+            voxel_size=image.voxel_size,
+            result_units=Units.µm,
+        )
         tot_vol, seg_vol, rim_vol = list(result.values())
         assert isclose(tot_vol[0], seg_vol[0] + rim_vol[0])
 
@@ -1160,18 +2189,29 @@ class TestStatisticProfile:
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
         statistics = [
-            MeasurementEntry("Mask Surface",
-                             Surface.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)),
-            MeasurementEntry("Segmentation Surface",
-                             Surface.get_starting_leaf().replace_(area=AreaType.Segmentation,
-                                                                per_component=PerComponent.No)),
-            MeasurementEntry("Mask without segmentation Surface",
-                             Surface.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
-                                                                per_component=PerComponent.No))
+            MeasurementEntry(
+                "Mask Surface", Surface.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)
+            ),
+            MeasurementEntry(
+                "Segmentation Surface",
+                Surface.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.No),
+            ),
+            MeasurementEntry(
+                "Mask without segmentation Surface",
+                Surface.get_starting_leaf().replace_(
+                    area=AreaType.Mask_without_segmentation, per_component=PerComponent.No
+                ),
+            ),
         ]
         profile = MeasurementProfile("statistic", statistics)
-        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
-                                   voxel_size=image.voxel_size, result_units=Units.µm)
+        result = profile.calculate(
+            image.get_channel(0),
+            segmentation,
+            full_mask=mask,
+            mask=mask,
+            voxel_size=image.voxel_size,
+            result_units=Units.µm,
+        )
         tot_vol, seg_vol, rim_vol = list(result.values())
         assert isclose(tot_vol[0] + seg_vol[0], rim_vol[0])
 
@@ -1182,51 +2222,75 @@ class TestStatisticProfile:
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
         statistics = [
-            MeasurementEntry("Mask Volume",
-                             Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)),
-            MeasurementEntry("Segmentation Volume",
-                             Volume.get_starting_leaf().replace_(area=AreaType.Segmentation,
-                                                               per_component=PerComponent.No)),
-            MeasurementEntry("Mask without segmentation Volume",
-                             Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
-                                                               per_component=PerComponent.No)),
-            MeasurementEntry("Mask PixelBrightnessSum",
-                             PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask,
-                                                                           per_component=PerComponent.No)),
-            MeasurementEntry("Segmentation PixelBrightnessSum",
-                             PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Segmentation,
-                                                                           per_component=PerComponent.No)),
-            MeasurementEntry("Mask without segmentation PixelBrightnessSum",
-                             PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
-                                                                           per_component=PerComponent.No)),
-            MeasurementEntry("Mask Volume/PixelBrightnessSum",
-                             Node(
-                               Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
-                               "/",
-                               PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask,
-                                                                               per_component=PerComponent.No)
-                           )),
-            MeasurementEntry("Segmentation Volume/PixelBrightnessSum",
-                             Node(
-                               Volume.get_starting_leaf().replace_(area=AreaType.Segmentation,
-                                                                   per_component=PerComponent.No),
-                               "/",
-                               PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Segmentation,
-                                                                               per_component=PerComponent.No)
-                           )),
-            MeasurementEntry("Mask without segmentation Volume/PixelBrightnessSum",
-                             Node(
-                               Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
-                                                                   per_component=PerComponent.No),
-                               "/",
-                               PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask_without_segmentation,
-                                                                               per_component=PerComponent.No)
-                           )),
-
+            MeasurementEntry(
+                "Mask Volume", Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)
+            ),
+            MeasurementEntry(
+                "Segmentation Volume",
+                Volume.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.No),
+            ),
+            MeasurementEntry(
+                "Mask without segmentation Volume",
+                Volume.get_starting_leaf().replace_(
+                    area=AreaType.Mask_without_segmentation, per_component=PerComponent.No
+                ),
+            ),
+            MeasurementEntry(
+                "Mask PixelBrightnessSum",
+                PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
+            ),
+            MeasurementEntry(
+                "Segmentation PixelBrightnessSum",
+                PixelBrightnessSum.get_starting_leaf().replace_(
+                    area=AreaType.Segmentation, per_component=PerComponent.No
+                ),
+            ),
+            MeasurementEntry(
+                "Mask without segmentation PixelBrightnessSum",
+                PixelBrightnessSum.get_starting_leaf().replace_(
+                    area=AreaType.Mask_without_segmentation, per_component=PerComponent.No
+                ),
+            ),
+            MeasurementEntry(
+                "Mask Volume/PixelBrightnessSum",
+                Node(
+                    Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
+                    "/",
+                    PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
+                ),
+            ),
+            MeasurementEntry(
+                "Segmentation Volume/PixelBrightnessSum",
+                Node(
+                    Volume.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.No),
+                    "/",
+                    PixelBrightnessSum.get_starting_leaf().replace_(
+                        area=AreaType.Segmentation, per_component=PerComponent.No
+                    ),
+                ),
+            ),
+            MeasurementEntry(
+                "Mask without segmentation Volume/PixelBrightnessSum",
+                Node(
+                    Volume.get_starting_leaf().replace_(
+                        area=AreaType.Mask_without_segmentation, per_component=PerComponent.No
+                    ),
+                    "/",
+                    PixelBrightnessSum.get_starting_leaf().replace_(
+                        area=AreaType.Mask_without_segmentation, per_component=PerComponent.No
+                    ),
+                ),
+            ),
         ]
         profile = MeasurementProfile("statistic", statistics)
-        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
-                                   voxel_size=image.voxel_size, result_units=Units.µm)
+        result = profile.calculate(
+            image.get_channel(0),
+            segmentation,
+            full_mask=mask,
+            mask=mask,
+            voxel_size=image.voxel_size,
+            result_units=Units.µm,
+        )
         values = list(result.values())
         for i in range(3):
             volume, brightness, density = values[i::3]
@@ -1239,26 +2303,35 @@ class TestStatisticProfile:
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
         statistics = [
-            MeasurementEntry("Mask Volume",
-                             Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)),
-            MeasurementEntry("Mask Volume power 2",
-                             Volume.get_starting_leaf().replace_(area=AreaType.Mask,
-                                                                 per_component=PerComponent.No, power=2)),
-            MeasurementEntry("Mask Volume 2",
-                             Node(
-                               Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No,
-                                                                   power=2),
-                               "/",
-                               Volume.get_starting_leaf().replace_(area=AreaType.Mask,
-                                                                   per_component=PerComponent.No)
-                              )),
-            MeasurementEntry("Mask Volume power -1",
-                             Volume.get_starting_leaf().replace_(area=AreaType.Mask,
-                                                                 per_component=PerComponent.No, power=-1)),
+            MeasurementEntry(
+                "Mask Volume", Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)
+            ),
+            MeasurementEntry(
+                "Mask Volume power 2",
+                Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No, power=2),
+            ),
+            MeasurementEntry(
+                "Mask Volume 2",
+                Node(
+                    Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No, power=2),
+                    "/",
+                    Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No),
+                ),
+            ),
+            MeasurementEntry(
+                "Mask Volume power -1",
+                Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No, power=-1),
+            ),
         ]
         profile = MeasurementProfile("statistic", statistics)
-        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
-                                   voxel_size=image.voxel_size, result_units=Units.µm)
+        result = profile.calculate(
+            image.get_channel(0),
+            segmentation,
+            full_mask=mask,
+            mask=mask,
+            voxel_size=image.voxel_size,
+            result_units=Units.µm,
+        )
         vol1, vol2, vol3, vol4 = list(result.values())
         assert isclose(vol1[0], vol3[0])
         assert isclose(vol1[0] ** 2, vol2[0])
@@ -1271,40 +2344,75 @@ class TestStatisticProfile:
         segmentation[image.get_channel(0)[0] == 50] = 1
         segmentation[image.get_channel(0)[0] == 60] = 2
         statistics = [
-            MeasurementEntry("Volume", Volume.get_starting_leaf().replace_(
-                area=AreaType.Segmentation, per_component=PerComponent.No)),
-            MeasurementEntry("Volume per component", Volume.get_starting_leaf().replace_(
-                area=AreaType.Segmentation, per_component=PerComponent.Yes)),
-            MeasurementEntry("Diameter", Diameter.get_starting_leaf().replace_(
-                area=AreaType.Segmentation, per_component=PerComponent.No)),
-            MeasurementEntry("Diameter per component", Diameter.get_starting_leaf().replace_(
-                area=AreaType.Segmentation, per_component=PerComponent.Yes)),
-            MeasurementEntry("MaximumPixelBrightness", MaximumPixelBrightness.get_starting_leaf().replace_(
-                area=AreaType.Segmentation, per_component=PerComponent.No)),
-            MeasurementEntry("MaximumPixelBrightness per component", MaximumPixelBrightness.get_starting_leaf().
-                             replace_(area=AreaType.Segmentation, per_component=PerComponent.Yes)),
-            MeasurementEntry("Sphericity", Sphericity.get_starting_leaf().replace_(
-                area=AreaType.Segmentation, per_component=PerComponent.No)),
-            MeasurementEntry("Sphericity per component", Sphericity.get_starting_leaf().replace_(
-                area=AreaType.Segmentation, per_component=PerComponent.Yes)),
-            MeasurementEntry("LongestMainAxisLength", LongestMainAxisLength.get_starting_leaf().replace_(
-                area=AreaType.Segmentation, per_component=PerComponent.No)),
-            MeasurementEntry("LongestMainAxisLength per component", LongestMainAxisLength.get_starting_leaf().replace_(
-                area=AreaType.Segmentation, per_component=PerComponent.Yes)),
+            MeasurementEntry(
+                "Volume", Volume.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.No)
+            ),
+            MeasurementEntry(
+                "Volume per component",
+                Volume.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.Yes),
+            ),
+            MeasurementEntry(
+                "Diameter",
+                Diameter.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.No),
+            ),
+            MeasurementEntry(
+                "Diameter per component",
+                Diameter.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.Yes),
+            ),
+            MeasurementEntry(
+                "MaximumPixelBrightness",
+                MaximumPixelBrightness.get_starting_leaf().replace_(
+                    area=AreaType.Segmentation, per_component=PerComponent.No
+                ),
+            ),
+            MeasurementEntry(
+                "MaximumPixelBrightness per component",
+                MaximumPixelBrightness.get_starting_leaf().replace_(
+                    area=AreaType.Segmentation, per_component=PerComponent.Yes
+                ),
+            ),
+            MeasurementEntry(
+                "Sphericity",
+                Sphericity.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.No),
+            ),
+            MeasurementEntry(
+                "Sphericity per component",
+                Sphericity.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.Yes),
+            ),
+            MeasurementEntry(
+                "LongestMainAxisLength",
+                LongestMainAxisLength.get_starting_leaf().replace_(
+                    area=AreaType.Segmentation, per_component=PerComponent.No
+                ),
+            ),
+            MeasurementEntry(
+                "LongestMainAxisLength per component",
+                LongestMainAxisLength.get_starting_leaf().replace_(
+                    area=AreaType.Segmentation, per_component=PerComponent.Yes
+                ),
+            ),
         ]
 
         profile = MeasurementProfile("statistic", statistics)
-        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
-                                   voxel_size=image.voxel_size, result_units=Units.nm)
+        result = profile.calculate(
+            image.get_channel(0),
+            segmentation,
+            full_mask=mask,
+            mask=mask,
+            voxel_size=image.voxel_size,
+            result_units=Units.nm,
+        )
         assert result["Volume"][0] == result["Volume per component"][0][0] + result["Volume per component"][0][1]
         assert len(result["Diameter per component"][0]) == 2
         assert result["MaximumPixelBrightness"][0] == 60
         assert result["MaximumPixelBrightness per component"][0] == [50, 60]
         assert result["Sphericity per component"][0] == [
-            Sphericity.calculate_property(area_array=segmentation == 1, voxel_size=image.voxel_size,
-                                          result_scalar=UNIT_SCALE[Units.nm.value]),
-            Sphericity.calculate_property(area_array=segmentation == 2, voxel_size=image.voxel_size,
-                                          result_scalar=UNIT_SCALE[Units.nm.value])
+            Sphericity.calculate_property(
+                area_array=segmentation == 1, voxel_size=image.voxel_size, result_scalar=UNIT_SCALE[Units.nm.value]
+            ),
+            Sphericity.calculate_property(
+                area_array=segmentation == 2, voxel_size=image.voxel_size, result_scalar=UNIT_SCALE[Units.nm.value]
+            ),
         ]
         assert result["LongestMainAxisLength"][0] == 55 * 50 * UNIT_SCALE[Units.nm.value]
         assert result["LongestMainAxisLength per component"][0][0] == 35 * 50 * UNIT_SCALE[Units.nm.value]
@@ -1319,8 +2427,14 @@ class TestStatisticProfile:
         segmentation = np.zeros(mask.shape, dtype=np.uint8)
         segmentation[image.get_channel(0)[0] == 50] = 1
         segmentation[image.get_channel(0)[0] == 60] = 2
-        result = profile.calculate(image.get_channel(0), segmentation, full_mask=mask, mask=mask,
-                                   voxel_size=image.voxel_size, result_units=Units.nm)
+        result = profile.calculate(
+            image.get_channel(0),
+            segmentation,
+            full_mask=mask,
+            mask=mask,
+            voxel_size=image.voxel_size,
+            result_units=Units.nm,
+        )
         names = set([x.name for x in profile.chosen_fields])
         assert names == set(result.keys())
 
@@ -1434,8 +2548,11 @@ class TestMeasurementResult:
         storage["cc"] = [11, 3], "np", (PerComponent.Yes, AreaType.Mask)
         assert list(storage.keys()) == ["File name", "aa", "bb", "cc"]
         assert list(storage.values()) == [("test.tif", ""), (1, ""), ([4, 5, 6], "np"), ([11, 3], "np")]
-        assert storage.get_separated() == [["test.tif", 1, 1, 1, 4, 11], ["test.tif", 2, 2, 1, 5, 3],
-                                           ["test.tif", 3, 1, 1, 6, 11]]
+        assert storage.get_separated() == [
+            ["test.tif", 1, 1, 1, 4, 11],
+            ["test.tif", 2, 2, 1, 5, 3],
+            ["test.tif", 3, 1, 1, 6, 11],
+        ]
         assert storage.get_labels() == ["File name", "Segmentation component", "Mask component", "aa", "bb", "cc"]
 
     def test_mask_segmentation_components3(self):
@@ -1455,6 +2572,10 @@ class TestMeasurementResult:
         storage["cc"] = [11, 3], "np", (PerComponent.Yes, AreaType.Mask)
         assert list(storage.keys()) == ["File name", "aa", "bb", "cc"]
         assert list(storage.values()) == [("test.tif", ""), (1, ""), ([4, 5, 6], "np"), ([11, 3], "np")]
-        assert storage.get_separated() == [["test.tif", 1, 1, 1, 4, 11], ["test.tif", 2, 2, 1, 5, 3],
-                                           ["test.tif", 3, 1, 1, 6, 11], ["test.tif", 3, 2, 1, 6, 3]]
+        assert storage.get_separated() == [
+            ["test.tif", 1, 1, 1, 4, 11],
+            ["test.tif", 2, 2, 1, 5, 3],
+            ["test.tif", 3, 1, 1, 6, 11],
+            ["test.tif", 3, 2, 1, 6, 3],
+        ]
         assert storage.get_labels() == ["File name", "Segmentation component", "Mask component", "aa", "bb", "cc"]

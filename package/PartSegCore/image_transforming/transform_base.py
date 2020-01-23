@@ -7,8 +7,9 @@ from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase
 
 class TransformBase(AlgorithmDescribeBase, ABC):
     @classmethod
-    def transform(cls, image: Image, arguments: dict, callback_function: Optional[Callable[[str, int], None]] = None) \
-            -> Image:
+    def transform(
+        cls, image: Image, arguments: dict, callback_function: Optional[Callable[[str, int], None]] = None
+    ) -> Image:
         raise NotImplementedError
 
     @classmethod

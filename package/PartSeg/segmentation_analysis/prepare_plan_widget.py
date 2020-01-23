@@ -7,16 +7,51 @@ from enum import Enum
 from pathlib import Path
 
 from qtpy.QtCore import Qt, Signal
-from qtpy.QtWidgets import QDialog, QCompleter, QLineEdit, QPushButton, QGridLayout, QWidget, QCheckBox, QComboBox, \
-    QListWidget, QSpinBox, QTextEdit, QVBoxLayout, QGroupBox, QLabel, QInputDialog, QMessageBox, \
-    QTreeWidget, QTreeWidgetItem, QFileDialog, QSplitter, QTabWidget, QListWidgetItem
+from qtpy.QtWidgets import (
+    QDialog,
+    QCompleter,
+    QLineEdit,
+    QPushButton,
+    QGridLayout,
+    QWidget,
+    QCheckBox,
+    QComboBox,
+    QListWidget,
+    QSpinBox,
+    QTextEdit,
+    QVBoxLayout,
+    QGroupBox,
+    QLabel,
+    QInputDialog,
+    QMessageBox,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QFileDialog,
+    QSplitter,
+    QTabWidget,
+    QListWidgetItem,
+)
 
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, SegmentationProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
-from PartSegCore.analysis.calculation_plan import CalculationPlan, MaskCreate, Operations, \
-    MaskSuffix, MaskSub, MaskFile, PlanChanges, NodeType, MaskIntersection, MaskSum, \
-    MeasurementCalculate, Save, RootType, MaskBase, MaskMapper
+from PartSegCore.analysis.calculation_plan import (
+    CalculationPlan,
+    MaskCreate,
+    Operations,
+    MaskSuffix,
+    MaskSub,
+    MaskFile,
+    PlanChanges,
+    NodeType,
+    MaskIntersection,
+    MaskSum,
+    MeasurementCalculate,
+    Save,
+    RootType,
+    MaskBase,
+    MaskMapper,
+)
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.io_utils import SaveBase
@@ -27,8 +62,10 @@ from ..common_gui.custom_save_dialog import FormDialog
 from ..common_gui.mask_widget import MaskWidget
 from ..common_gui.universal_gui_part import right_label
 
-group_sheet = "QGroupBox {border: 1px solid gray; border-radius: 9px; margin-top: 0.5em;} " \
-              "QGroupBox::title {subcontrol-origin: margin; left: 10px; padding: 0 3px 0 3px;}"
+group_sheet = (
+    "QGroupBox {border: 1px solid gray; border-radius: 9px; margin-top: 0.5em;} "
+    "QGroupBox::title {subcontrol-origin: margin; left: 10px; padding: 0 3px 0 3px;}"
+)
 
 MAX_CHANNEL_NUM = 10
 
@@ -67,7 +104,7 @@ class MaskDialog(QDialog):
 
     def get_result(self):
         text1 = str(self.mask1_name.text()).strip()
-        return text1,
+        return (text1,)
 
 
 class TwoMaskDialog(QDialog):
@@ -134,7 +171,7 @@ class FileMask(QWidget):
         super().__init__()
         self.select_type = QComboBox()
         self.select_type.addItems(["Suffix", "Replace", "Mapping file"])
-        self.values = ["_mask", ("",""), ""]
+        self.values = ["_mask", ("", ""), ""]
         self.first_text = QLineEdit(self.values[0])
         self.second_text = QLineEdit()
         self.first_label = QLabel("Use suffix:")
@@ -200,7 +237,7 @@ class FileMask(QWidget):
         if self.select_type.currentIndex() == 1:
             return self.first_text.text().strip() != "" and self.second_text.text().strip() != ""
         else:
-            text =self.first_text.text().strip()
+            text = self.first_text.text().strip()
             return text != "" and os.path.exists(text) and os.path.isfile(text)
 
     def get_value(self, name=""):
@@ -256,7 +293,9 @@ class CreatePlan(QWidget):
 
         self.chanel_num = QSpinBox()
         self.choose_channel_for_measurements = QComboBox()
-        self.choose_channel_for_measurements.addItems(["Same as segmentation"] + [str(x+1) for x in range(MAX_CHANNEL_NUM)])
+        self.choose_channel_for_measurements.addItems(
+            ["Same as segmentation"] + [str(x + 1) for x in range(MAX_CHANNEL_NUM)]
+        )
         self.units_choose = EnumComboBox(Units)
         self.units_choose.set_value(self.settings.get("units_value", Units.nm))
         self.chanel_num.setRange(0, 10)
@@ -426,7 +465,7 @@ class CreatePlan(QWidget):
     def change_segmentation_table(self):
         index = self.segment_stack.currentIndex()
         text = self.segment_stack.tabText(index)
-        self.chose_profile_btn.setText("Segement "+ text)
+        self.chose_profile_btn.setText("Segement " + text)
         self.segment_profile.setCurrentItem(None)
         self.pipeline_profile.setCurrentItem(None)
 
@@ -520,8 +559,9 @@ class CreatePlan(QWidget):
         if save_class is None:
             QMessageBox.warning(self, "Save problem", "Not found save class")
         dial = FormDialog(
-            [AlgorithmProperty("suffix", "File suffix", ""),  AlgorithmProperty("directory", "Sub directory", "")] +
-            save_class.get_fields())
+            [AlgorithmProperty("suffix", "File suffix", ""), AlgorithmProperty("directory", "Sub directory", "")]
+            + save_class.get_fields()
+        )
         if dial.exec():
             values = dial.get_values()
             suffix = values["suffix"]
@@ -564,8 +604,9 @@ class CreatePlan(QWidget):
             node = self.calculation_plan.get_node()
             name = node.operation.name
             if name in self.calculation_plan.get_reused_mask() and name != text:
-                QMessageBox.warning(self, "Cannot remove",
-                                    f"Cannot remove mask '{name}' from plan because it is used in other elements")
+                QMessageBox.warning(
+                    self, "Cannot remove", f"Cannot remove mask '{name}' from plan because it is used in other elements"
+                )
                 return
 
             self.mask_set.remove(name)
@@ -587,13 +628,17 @@ class CreatePlan(QWidget):
             self.generate_mask_btn.setDisabled(True)
             return
         operation = self.calculation_plan.get_node().operation
-        if not update and isinstance(operation, (MaskMapper, MaskBase)) and\
-                self.calculation_plan.get_node().operation.name == text:
+        if (
+            not update
+            and isinstance(operation, (MaskMapper, MaskBase))
+            and self.calculation_plan.get_node().operation.name == text
+        ):
             self.generate_mask_btn.setDisabled(True)
             return
         if _check_widget(self.mask_stack, EnumComboBox):  # reuse mask
-            if len(self.mask_set) > 1 and \
-                    ((not update and node_type == NodeType.root) or (update and node_type == NodeType.file_mask)):
+            if len(self.mask_set) > 1 and (
+                (not update and node_type == NodeType.root) or (update and node_type == NodeType.file_mask)
+            ):
                 self.generate_mask_btn.setEnabled(True)
             else:
                 self.generate_mask_btn.setEnabled(False)
@@ -660,8 +705,9 @@ class CreatePlan(QWidget):
         channel = self.choose_channel_for_measurements.currentIndex() - 1
         measurement_copy.name_prefix = prefix
         # noinspection PyTypeChecker
-        measurement_calculate = MeasurementCalculate(channel=channel, statistic_profile=measurement_copy, name_prefix=prefix,
-                                                   units=self.units_choose.get_value())
+        measurement_calculate = MeasurementCalculate(
+            channel=channel, statistic_profile=measurement_copy, name_prefix=prefix, units=self.units_choose.get_value()
+        )
         if self.update_element_chk.isChecked():
             self.calculation_plan.replace_step(measurement_calculate)
         else:
@@ -703,20 +749,24 @@ class CreatePlan(QWidget):
         if text is None or isinstance(text, bool):
             text, ok = QInputDialog.getText(self, "Plan title", "Set plan title")
         else:
-            text, ok = QInputDialog.getText(self, "Plan title",
-                                            "Set plan title. Previous ({}) is already in use".format(text),
-                                            text=text)
+            text, ok = QInputDialog.getText(
+                self, "Plan title", "Set plan title. Previous ({}) is already in use".format(text), text=text
+            )
         text = text.strip()
         if ok:
             if text == "":
-                QMessageBox.information(self, "Name cannot be empty", "Name cannot be empty, Please set correct name",
-                                        QMessageBox.Ok)
+                QMessageBox.information(
+                    self, "Name cannot be empty", "Name cannot be empty, Please set correct name", QMessageBox.Ok
+                )
                 self.add_calculation_plan()
                 return
             if text in self.settings.batch_plans:
-                res = QMessageBox.information(self, "Name already in use",
-                                              "Name already in use. Would like to overwrite?",
-                                              QMessageBox.Yes | QMessageBox.No)
+                res = QMessageBox.information(
+                    self,
+                    "Name already in use",
+                    "Name already in use. Would like to overwrite?",
+                    QMessageBox.Yes | QMessageBox.No,
+                )
                 if res == QMessageBox.No:
                     self.add_calculation_plan(text)
                     return
@@ -836,6 +886,7 @@ class PlanPreview(QTreeWidget):
     """
     :type calculation_plan: CalculationPlan
     """
+
     changed_node = Signal()
 
     def __init__(self, parent=None, calculation_plan=None):
@@ -879,7 +930,6 @@ class PlanPreview(QTreeWidget):
         self.calculation_plan = calculation_plan
         self.setCurrentItem(self.topLevelItem(0))
         self.update_view(True)
-
 
     def explore_tree(self, up_widget, node_plan, deep=True):
         """
@@ -965,6 +1015,7 @@ class CalculateInfo(QWidget):
     "widget to show information about plans and allow to se plan details
     :type settings: Settings
     """
+
     plan_to_edit_signal = Signal()
 
     def __init__(self, settings: PartSettings):
@@ -1040,7 +1091,7 @@ class CalculateInfo(QWidget):
             self.settings.set("io.batch_plan_directory", os.path.dirname(file_path))
             self.settings.add_path_history(os.path.dirname(file_path))
             data = dict([(x, self.settings.batch_plans[x]) for x in choose.get_export_list()])
-            with open(file_path, 'w') as ff:
+            with open(file_path, "w") as ff:
                 json.dump(data, ff, cls=self.settings.json_encoder_class, indent=2)
 
     def import_plans(self):
@@ -1099,6 +1150,7 @@ class CalculatePlaner(QSplitter):
     """
     :type settings: Settings
     """
+
     def __init__(self, settings, parent):
         super().__init__(parent)
         self.settings = settings

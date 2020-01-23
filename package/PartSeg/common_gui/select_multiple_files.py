@@ -3,8 +3,20 @@ import os
 from pathlib import Path
 
 from qtpy.QtCore import Signal, Qt
-from qtpy.QtWidgets import QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QListWidget, QLineEdit, QListWidgetItem, \
-    QMessageBox, QDialog, QAbstractItemView, QLabel, QFileDialog
+from qtpy.QtWidgets import (
+    QWidget,
+    QHBoxLayout,
+    QPushButton,
+    QVBoxLayout,
+    QListWidget,
+    QLineEdit,
+    QListWidgetItem,
+    QMessageBox,
+    QDialog,
+    QAbstractItemView,
+    QLabel,
+    QFileDialog,
+)
 from ..common_backend.base_settings import BaseSettings
 
 
@@ -102,7 +114,8 @@ class AddFiles(QWidget):
     def select_files(self):
         dial = QFileDialog(self, "Select files")
         dial.setDirectory(
-            self.settings.get("io.batch_directory", self.settings.get("io.load_image_directory", str(Path.home()))))
+            self.settings.get("io.batch_directory", self.settings.get("io.load_image_directory", str(Path.home())))
+        )
         dial.setFileMode(QFileDialog.ExistingFiles)
         if dial.exec_():
             self.settings.set("io.batch_directory", os.path.dirname(str(dial.selectedFiles()[0])))
@@ -119,7 +132,8 @@ class AddFiles(QWidget):
     def select_directory(self):
         dial = QFileDialog(self, "Select directory")
         dial.setDirectory(
-            self.settings.get("io.batch_directory", self.settings.get("io.load_image_directory", str(Path.home()))))
+            self.settings.get("io.batch_directory", self.settings.get("io.load_image_directory", str(Path.home())))
+        )
         dial.setFileMode(QFileDialog.Directory)
         if dial.exec_():
             self.paths.setText(dial.selectedFiles()[0])
@@ -131,7 +145,7 @@ class AddFiles(QWidget):
     def delete_element(self):
         item = self.selected_files.takeItem(self.selected_files.currentRow())
         path = str(item.text())
-        path = path[:path.rfind("(") - 1]
+        path = path[: path.rfind("(") - 1]
         self.files_to_proceed.remove(path)
         self.file_list_changed.emit(self.files_to_proceed)
         if self.selected_files.count() == 0:

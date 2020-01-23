@@ -11,10 +11,15 @@ class NumpyQImage(QImage):
     """
     Class for fix problem with PySide2 QImage implementation (non copied buffer)
     """
+
     def __init__(self, image: np.ndarray):
-        super().__init__(image.data, image.shape[1], image.shape[0],
-                         image.dtype.itemsize * image.shape[1] * image.shape[2],
-                         QImage.Format_RGB888)
+        super().__init__(
+            image.data,
+            image.shape[1],
+            image.shape[0],
+            image.dtype.itemsize * image.shape[1] * image.shape[2],
+            QImage.Format_RGB888,
+        )
         self.image = image
 
 

@@ -22,9 +22,21 @@ import tifffile
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.analysis.analysis_utils import HistoryElement
-from PartSegCore.analysis.calculation_plan import MaskMapper, MaskUse, MaskCreate, Save, \
-    Operations, FileCalculation, MaskIntersection, MaskSum, get_save_path, MeasurementCalculate, BaseCalculation, \
-    Calculation, RootType
+from PartSegCore.analysis.calculation_plan import (
+    MaskMapper,
+    MaskUse,
+    MaskCreate,
+    Save,
+    Operations,
+    FileCalculation,
+    MaskIntersection,
+    MaskSum,
+    get_save_path,
+    MeasurementCalculate,
+    BaseCalculation,
+    Calculation,
+    RootType,
+)
 from PartSegCore.analysis.io_utils import ProjectTuple
 from PartSegCore.analysis.load_functions import LoadMaskSegmentation, LoadProject, load_dict
 from PartSegCore.analysis.measurement_base import AreaType, PerComponent
@@ -53,6 +65,7 @@ class CalculationProcess:
     """
     Main class to calculate PartSeg calculation plan
     """
+
     def __init__(self):
         self.reused_mask = set()
         self.mask_dict = dict()
@@ -182,20 +195,29 @@ class CalculationProcess:
             self.mask = old_mask
         elif isinstance(node.operation, Save):
             save_class = save_dict[node.operation.algorithm]
-            project_tuple = ProjectTuple(file_path="", image=self.image, segmentation=self.segmentation,
-                                         full_segmentation=self.full_segmentation, mask=self.mask,
-                                         history=self.history, algorithm_parameters=self.algorithm_parameters)
+            project_tuple = ProjectTuple(
+                file_path="",
+                image=self.image,
+                segmentation=self.segmentation,
+                full_segmentation=self.full_segmentation,
+                mask=self.mask,
+                history=self.history,
+                algorithm_parameters=self.algorithm_parameters,
+            )
             save_path = get_save_path(node.operation, self.calculation)
             save_class.save(save_path, project_tuple, node.operation.values)
         elif isinstance(node.operation, MaskCreate):
-            mask = calculate_mask(node.operation.mask_property, self.segmentation,
-                                  self.mask, self.image.spacing)
+            mask = calculate_mask(node.operation.mask_property, self.segmentation, self.mask, self.image.spacing)
             if node.operation.name in self.reused_mask:
                 self.mask_dict[node.operation.name] = mask
-            history_element = \
-                HistoryElement.create(self.segmentation, self.full_segmentation, self.mask,
-                                      self.algorithm_parameters["name"], self.algorithm_parameters["values"],
-                                      node.operation.mask_property)
+            history_element = HistoryElement.create(
+                self.segmentation,
+                self.full_segmentation,
+                self.mask,
+                self.algorithm_parameters["name"],
+                self.algorithm_parameters["values"],
+                node.operation.mask_property,
+            )
             backup = self.mask, self.history
             self.mask = mask
             self.history.append(history_element)
@@ -221,19 +243,23 @@ class CalculationProcess:
         elif isinstance(node.operation, MeasurementCalculate):
             channel = node.operation.channel
             if channel == -1:
-                segmentation_class: typing.Type[SegmentationAlgorithm] =\
-                    analysis_algorithm_dict.get(self.algorithm_parameters["name"], None)
+                segmentation_class: typing.Type[SegmentationAlgorithm] = analysis_algorithm_dict.get(
+                    self.algorithm_parameters["name"], None
+                )
                 if segmentation_class is None:
                     raise ValueError(f"Segmentation class {self.algorithm_parameters['name']} do not found")
                 channel = self.algorithm_parameters["values"][segmentation_class.get_channel_parameter_name()]
 
             image_channel = self.image.get_channel(channel)
             # FIXME use additional information
-            measurement = \
-                node.operation.statistic_profile.calculate(image_channel,
-                                                           self.segmentation, self.full_segmentation,
-                                                           self.mask, self.image.spacing,
-                                                           node.operation.units)
+            measurement = node.operation.statistic_profile.calculate(
+                image_channel,
+                self.segmentation,
+                self.full_segmentation,
+                self.mask,
+                self.image.spacing,
+                node.operation.units,
+            )
             self.measurement.append(measurement)
         else:
             raise ValueError("Unknown operation {} {}".format(type(node.operation), node.operation))
@@ -249,6 +275,7 @@ class CalculationManager:
     This class manage batch processing in PartSeg.
 
     """
+
     def __init__(self):
         self.batch_manager = BatchManager()
         self.calculation_queue = Queue()
@@ -385,8 +412,9 @@ class FileData:
         :return:
         """
         if calculation.measurement_file_path != self.file_path:
-            raise ValueError("[FileData] different file path {} vs {}".format(calculation.measurement_file_path,
-                                                                              self.file_path))
+            raise ValueError(
+                "[FileData] different file path {} vs {}".format(calculation.measurement_file_path, self.file_path)
+            )
         if calculation.sheet_name in self.sheet_set:
             raise ValueError("[FileData] sheet name {} already in use".format(calculation.sheet_name))
         measurement = calculation.calculation_plan.get_measurements()
@@ -409,8 +437,14 @@ class FileData:
             if component_mask:
                 local_header.append(("Mask component", "num"))
             if any([x[1] for x in el]):
-                sheet_list.append("{}{}{} - {}".format(calculation.sheet_name, FileData.component_str, num,
-                                                       measurement[i].name_prefix + measurement[i].name))
+                sheet_list.append(
+                    "{}{}{} - {}".format(
+                        calculation.sheet_name,
+                        FileData.component_str,
+                        num,
+                        measurement[i].name_prefix + measurement[i].name,
+                    )
+                )
                 num += 1
             else:
                 sheet_list.append(None)
@@ -423,7 +457,8 @@ class FileData:
         self.sheet_dict[calculation.uuid] = (
             SheetData(calculation.sheet_name, main_header),
             [SheetData(name, header_list[i]) if name is not None else None for i, name in enumerate(sheet_list)],
-            component_information)
+            component_information,
+        )
 
     def wrote_data(self, uuid, data: ResponseData):
         self.new_count += 1

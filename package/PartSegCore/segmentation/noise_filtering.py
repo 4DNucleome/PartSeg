@@ -28,6 +28,7 @@ except NameError:
 
 class NoiseFilteringBase(AlgorithmDescribeBase, ABC):
     """Base class for noise filtering operations"""
+
     @classmethod
     def noise_filter(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: dict) -> np.ndarray:
         """
@@ -62,8 +63,10 @@ class GaussNoiseFiltering(NoiseFilteringBase):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("dimension_type", "Gauss type", DimensionType.Layer),
-                AlgorithmProperty("radius", "Gauss radius", 1.0, property_type=float)]
+        return [
+            AlgorithmProperty("dimension_type", "Gauss type", DimensionType.Layer),
+            AlgorithmProperty("radius", "Gauss radius", 1.0, property_type=float),
+        ]
 
     @classmethod
     def noise_filter(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: dict):
@@ -86,8 +89,10 @@ class MedianNoiseFiltering(NoiseFilteringBase):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("dimension_type", "Median type", DimensionType.Layer),
-                AlgorithmProperty("radius", "Median radius", 1, property_type=int)]
+        return [
+            AlgorithmProperty("dimension_type", "Median type", DimensionType.Layer),
+            AlgorithmProperty("radius", "Median radius", 1, property_type=int),
+        ]
 
     @classmethod
     def noise_filter(cls, channel: np.ndarray, spacing: typing.Iterable[float], arguments: dict):
@@ -97,5 +102,6 @@ class MedianNoiseFiltering(NoiseFilteringBase):
         return median(channel, gauss_radius, layer=layer)
 
 
-noise_filtering_dict = Register(NoneNoiseFiltering, GaussNoiseFiltering, MedianNoiseFiltering,
-                                class_methods=["noise_filter"])
+noise_filtering_dict = Register(
+    NoneNoiseFiltering, GaussNoiseFiltering, MedianNoiseFiltering, class_methods=["noise_filter"]
+)

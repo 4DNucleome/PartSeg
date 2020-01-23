@@ -2,3 +2,27 @@
 # Minimum requirements for the build system to execute.
 requires = ["setuptools>=42.0.0", "wheel @ https://github.com/pypa/wheel/archive/882650d0fd2fadd75f4ea7c5d6b62f15f81b398a.zip#sha1=cf20454c64728efd9912f7031880f63750226aaa", "Cython", "numpy"]  # PEP 508 specifications.
 build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 120
+target-version = ['py36']
+include = '\.pyi?$'
+exclude = '''
+
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+  | foo.py           # also separately exclude a file named foo.py in
+                     # the root of the project
+)
+'''

@@ -9,8 +9,14 @@ from .restartable_segmentation_algorithms import RestartableAlgorithm
 from .segmentation_algorithm import StackAlgorithm
 
 
-__all__ = ["SegmentationAlgorithm", "BaseSprawl", "NoiseFilteringBase", "BaseThreshold", "RestartableAlgorithm",
-           "StackAlgorithm"]
+__all__ = [
+    "SegmentationAlgorithm",
+    "BaseSprawl",
+    "NoiseFilteringBase",
+    "BaseThreshold",
+    "RestartableAlgorithm",
+    "StackAlgorithm",
+]
 
 
 if os.path.basename(sys.argv[0]) in ["sphinx-build", "sphinx-build.exe"]:

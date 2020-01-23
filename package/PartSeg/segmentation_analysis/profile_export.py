@@ -2,8 +2,21 @@ import numpy as np
 import re
 
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QDialog, QListWidget, QListWidgetItem, QPushButton, QHBoxLayout, QVBoxLayout, QTreeWidget, \
-    QTreeWidgetItem, QLabel, QRadioButton, QButtonGroup, QLineEdit, QTextEdit
+from qtpy.QtWidgets import (
+    QDialog,
+    QListWidget,
+    QListWidgetItem,
+    QPushButton,
+    QHBoxLayout,
+    QVBoxLayout,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QLabel,
+    QRadioButton,
+    QButtonGroup,
+    QLineEdit,
+    QTextEdit,
+)
 
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
@@ -139,7 +152,7 @@ class ImportDialog(QDialog):
                     match = end_reg.match(ob_name)
                     if match:
                         new_name_format = match.group(1) + " ({})"
-                        i = int(match.group(2))+1
+                        i = int(match.group(2)) + 1
                     else:
                         new_name_format = ob_name + " ({})"
                         i = 1

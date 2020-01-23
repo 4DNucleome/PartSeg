@@ -10,6 +10,7 @@ class RadiusType(Enum):
     """
     If operation should be performed and if on each layer separately on globally
     """
+
     NO = 0  #: No operation
     R2D = 1  #: operation in each layer separately
     R3D = 2  #: operation on whole stack

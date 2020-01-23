@@ -16,6 +16,7 @@ class ImageViewWithMask(ImageView):
     """
     :type _settings PartSettings:
     """
+
     def __init__(self, settings: PartSettings, channel_property: ChannelProperty, name: str):
         super().__init__(settings, channel_property, name)
         self.mask_show = QCheckBox()
@@ -98,8 +99,9 @@ class ImageViewWithMask(ImageView):
         if self.mask_prop[1] == 1:
             im[~mask_layer] = MASK_COLORS[self.mask_prop[0]]
         else:
-            im[~mask_layer] = (1 - self.mask_prop[1]) * im[~mask_layer] + \
-                              self.mask_prop[1] * MASK_COLORS[self.mask_prop[0]]
+            im[~mask_layer] = (1 - self.mask_prop[1]) * im[~mask_layer] + self.mask_prop[1] * MASK_COLORS[
+                self.mask_prop[0]
+            ]
 
     def set_image(self):
         super().set_image()
@@ -136,8 +138,9 @@ class CompareImageView(ImageViewWithMask):
                 self.component = None
             else:
                 comp = str(comp)
-            self.text_info_change.emit("Position: {}, Brightness: {}, component {}".format(
-                tuple(pos2), brightness, comp))
+            self.text_info_change.emit(
+                "Position: {}, Brightness: {}, component {}".format(tuple(pos2), brightness, comp)
+            )
         else:
             self.text_info_change.emit("Position: {}, Brightness: {}".format(tuple(pos2), brightness))
 
@@ -163,7 +166,7 @@ class ResultImageView(ImageViewWithMask):
 
 class SynchronizeView(QObject):
     def __init__(self, image_view1: ImageView, image_view2: ImageView, parent=None):
-        super(). __init__(parent)
+        super().__init__(parent)
         self.image_view1 = image_view1
         self.image_view2 = image_view2
         self.synchronize = False

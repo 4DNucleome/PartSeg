@@ -35,8 +35,9 @@ def calculate_pipeline(image: Image, mask: typing.Optional[np.ndarray], pipeline
         report_fun("step", 2 * i + 1)
         new_mask = calculate_mask(el.mask_property, segmentation, mask, image.spacing)
         history.append(
-            HistoryElement.create(segmentation, full_segmentation, mask, el.segmentation.name, el.segmentation.values,
-                                  el.mask_property)
+            HistoryElement.create(
+                segmentation, full_segmentation, mask, el.segmentation.name, el.segmentation.values, el.mask_property
+            )
         )
         report_fun("step", 2 * i + 2)
         mask = new_mask

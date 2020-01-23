@@ -6,8 +6,17 @@ from copy import deepcopy
 import numpy as np
 from qtpy.QtCore import Qt, Signal, Slot
 from qtpy.QtGui import QPainter, QMouseEvent, QPalette, QColor
-from qtpy.QtWidgets import QWidget, QColorDialog, QVBoxLayout, QLabel, QApplication, QPushButton, QHBoxLayout, \
-    QToolButton, QRadioButton
+from qtpy.QtWidgets import (
+    QWidget,
+    QColorDialog,
+    QVBoxLayout,
+    QLabel,
+    QApplication,
+    QPushButton,
+    QHBoxLayout,
+    QToolButton,
+    QRadioButton,
+)
 
 from PartSegCore.custom_name_generate import custom_name_generate
 from .icon_selector import IconSelector
@@ -37,6 +46,7 @@ class _LabelShow(QLabel):
 
 class LabelShow(QWidget):
     """Present single label color scheme"""
+
     remove_labels = Signal(str)
     edit_labels = Signal([str, list], [list])
     selected = Signal(str)

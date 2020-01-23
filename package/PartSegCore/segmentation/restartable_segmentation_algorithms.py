@@ -33,6 +33,7 @@ class RestartableAlgorithm(SegmentationAlgorithm, ABC):
     :ivar dict ~.parameters: variable for store last run parameters
     :ivar dict ~.new_parameters: variable for store parameters for next run
     """
+
     def __init__(self, **kwargs):
         super().__init__()
         self.parameters = defaultdict(lambda: None)
@@ -75,6 +76,7 @@ class BorderRim(RestartableAlgorithm):
     This class wrap the :py:class:`PartSegCore.mask_partition_utils.BorderRim``
     class in segmentation algorithm interface. It allow user to check how rim look with given set of parameters
     """
+
     @classmethod
     def get_name(cls):
         return "Border Rim"
@@ -100,7 +102,8 @@ class BorderRim(RestartableAlgorithm):
     def calculation_run(self, _report_fun) -> SegmentationResult:
         if self.mask is not None:
             result = BorderRimBase.border_mask(
-                mask=self.mask, distance=self.distance, units=self.units, voxel_size=self.image.spacing)
+                mask=self.mask, distance=self.distance, units=self.units, voxel_size=self.image.spacing
+            )
             return SegmentationResult(result, self.get_segmentation_profile(), result, None)
 
 
@@ -109,6 +112,7 @@ class SplitMaskOnPart(RestartableAlgorithm):
     This class wrap the :py:class:`PartSegCore.mask_partition_utils.SplitMaskOnPart`
     class in segmentation algorithm interface. It allow user to check how split look with given set of parameters
     """
+
     def calculation_run(self, report_fun: typing.Callable[[str, int], None]) -> SegmentationResult:
         if self.mask is not None:
             result = SplitMaskOnPartBase.split(mask=self.mask, voxel_size=self.image.voxel_size, **self.new_parameters)
@@ -136,13 +140,24 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
-                AlgorithmProperty("noise_filtering", "Filter", next(iter(noise_filtering_dict.keys())),
-                                  possible_values=noise_filtering_dict, property_type=AlgorithmDescribeBase),
-                AlgorithmProperty("minimum_size", "Minimum size (px)", 8000, (0, 10 ** 6), 1000),
-                AlgorithmProperty("side_connection", "Connect only sides", False, (True, False),
-                                  help_text="During calculation of connected components includes"
-                                            " only side by side connected pixels")]
+        return [
+            AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
+            AlgorithmProperty(
+                "noise_filtering",
+                "Filter",
+                next(iter(noise_filtering_dict.keys())),
+                possible_values=noise_filtering_dict,
+                property_type=AlgorithmDescribeBase,
+            ),
+            AlgorithmProperty("minimum_size", "Minimum size (px)", 8000, (0, 10 ** 6), 1000),
+            AlgorithmProperty(
+                "side_connection",
+                "Connect only sides",
+                False,
+                (True, False),
+                help_text="During calculation of connected components includes" " only side by side connected pixels",
+            ),
+        ]
 
     def __init__(self, **kwargs):
         super(ThresholdBaseAlgorithm, self).__init__()
@@ -158,8 +173,9 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         self.threshold_info = None
 
     def get_info_text(self):
-        return f"Threshold: {self.threshold_info}\nSizes: " + \
-               ", ".join(map(str, self._sizes_array[1:self.components_num + 1]))
+        return f"Threshold: {self.threshold_info}\nSizes: " + ", ".join(
+            map(str, self._sizes_array[1 : self.components_num + 1])
+        )
 
     def calculation_run(self, report_fun: typing.Callable[[str, int], typing.Any]) -> SegmentationResult:
         """
@@ -176,8 +192,9 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         if restarted or self.parameters["noise_filtering"] != self.new_parameters["noise_filtering"]:
             self.parameters["noise_filtering"] = deepcopy(self.new_parameters["noise_filtering"])
             noise_filtering_parameters = self.new_parameters["noise_filtering"]
-            self.cleaned_image = noise_filtering_dict[noise_filtering_parameters["name"]]. \
-                noise_filter(self.channel, self.image.spacing, noise_filtering_parameters["values"])
+            self.cleaned_image = noise_filtering_dict[noise_filtering_parameters["name"]].noise_filter(
+                self.channel, self.image.spacing, noise_filtering_parameters["values"]
+            )
             restarted = True
         if restarted or self.new_parameters["threshold"] != self.parameters["threshold"]:
             self.parameters["threshold"] = deepcopy(self.new_parameters["threshold"])
@@ -188,16 +205,21 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             elif self.old_threshold_info != self.threshold_info:
                 restarted = True
             if self.threshold_image.max() == 0:
-                return SegmentationResult(self.threshold_image.astype(np.uint8), self.get_segmentation_profile(),
-                                          self.segmentation, self.cleaned_image,
-                                          "Something wrong with chosen threshold. Please check it. "
-                                          "May be to low or to high. The channel bright range is "
-                                          f"{self.cleaned_image.min()}-{self.cleaned_image.max()} "
-                                          f"and chosen threshold is {self.threshold_info}")
+                return SegmentationResult(
+                    self.threshold_image.astype(np.uint8),
+                    self.get_segmentation_profile(),
+                    self.segmentation,
+                    self.cleaned_image,
+                    "Something wrong with chosen threshold. Please check it. "
+                    "May be to low or to high. The channel bright range is "
+                    f"{self.cleaned_image.min()}-{self.cleaned_image.max()} "
+                    f"and chosen threshold is {self.threshold_info}",
+                )
         if restarted or self.new_parameters["side_connection"] != self.parameters["side_connection"]:
             self.parameters["side_connection"] = self.new_parameters["side_connection"]
-            connect = SimpleITK.ConnectedComponent(SimpleITK.GetImageFromArray(self.threshold_image),
-                                                   not self.new_parameters["side_connection"])
+            connect = SimpleITK.ConnectedComponent(
+                SimpleITK.GetImageFromArray(self.threshold_image), not self.new_parameters["side_connection"]
+            )
             self.segmentation = SimpleITK.GetArrayFromImage(SimpleITK.RelabelComponent(connect))
             """seg_max = self.segmentation.max()
             if seg_max < 2**8 - 5:
@@ -214,12 +236,16 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             finally_segment[finally_segment > ind] = 0
             self.components_num = ind
             if ind == 0:
-                return SegmentationResult(finally_segment, self.get_segmentation_profile(),
-                                          self.segmentation, self.cleaned_image,
-                                          "Please check the minimum size parameter. "
-                                          f"The biggest element has size {self._sizes_array[1]}")
-            return SegmentationResult(finally_segment, self.get_segmentation_profile(),
-                                      self.segmentation, self.cleaned_image)
+                return SegmentationResult(
+                    finally_segment,
+                    self.get_segmentation_profile(),
+                    self.segmentation,
+                    self.cleaned_image,
+                    "Please check the minimum size parameter. " f"The biggest element has size {self._sizes_array[1]}",
+                )
+            return SegmentationResult(
+                finally_segment, self.get_segmentation_profile(), self.segmentation, self.cleaned_image
+            )
 
     def clean(self):
         super().clean()
@@ -230,19 +256,29 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
     def _threshold(self, image, thr=None):
         if thr is None:
             thr: BaseThreshold = threshold_dict[self.new_parameters["threshold"]["name"]]
-        mask, thr_val = thr.calculate_mask(image, self.mask, self.new_parameters["threshold"]["values"],
-                                           self.threshold_operator)
+        mask, thr_val = thr.calculate_mask(
+            image, self.mask, self.new_parameters["threshold"]["values"], self.threshold_operator
+        )
         self.threshold_info = thr_val
         return mask
 
 
 class OneThresholdAlgorithm(ThresholdBaseAlgorithm, ABC):
     """Base class for PartSeg analysis algorithm which apply one threshold. Created for reduce code repetition."""
+
     @classmethod
     def get_fields(cls):
         fields = super().get_fields()
-        fields.insert(2, AlgorithmProperty("threshold", "Threshold", next(iter(threshold_dict.keys())),
-                                           possible_values=threshold_dict, property_type=AlgorithmDescribeBase))
+        fields.insert(
+            2,
+            AlgorithmProperty(
+                "threshold",
+                "Threshold",
+                next(iter(threshold_dict.keys())),
+                possible_values=threshold_dict,
+                property_type=AlgorithmDescribeBase,
+            ),
+        )
         return fields
 
 
@@ -252,6 +288,7 @@ class LowerThresholdAlgorithm(OneThresholdAlgorithm):
     It has same flow like :py:class:`ThresholdBaseAlgorithm`.
     The area of interest are voxels from filtered channel with value above the given threshold
     """
+
     threshold_operator = staticmethod(operator.gt)
 
     @classmethod
@@ -265,6 +302,7 @@ class UpperThresholdAlgorithm(OneThresholdAlgorithm):
     It has same flow like :py:class:`ThresholdBaseAlgorithm`.
     The area of interest are voxels from filtered channel with value below the given threshold
     """
+
     threshold_operator = staticmethod(operator.lt)
 
     @classmethod
@@ -278,10 +316,13 @@ class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
     It has same flow like :py:class:`ThresholdBaseAlgorithm`.
     The area of interest are voxels from filtered channel with value between the lower and upper threshold
     """
+
     def set_parameters(self, **kwargs):
         super().set_parameters(**kwargs)
-        self.new_parameters["threshold"] = \
-            self.new_parameters["lower_threshold"], self.new_parameters["upper_threshold"]
+        self.new_parameters["threshold"] = (
+            self.new_parameters["lower_threshold"],
+            self.new_parameters["upper_threshold"],
+        )
 
     def get_segmentation_profile(self) -> SegmentationProfile:
         resp = super().get_segmentation_profile()
@@ -293,8 +334,9 @@ class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
 
     def _threshold(self, image, thr=None):
         self.threshold_info = self.new_parameters["threshold"]
-        return ((image > self.new_parameters["threshold"][0]) *
-                np.array(image < self.new_parameters["threshold"][1])).astype(np.uint8)
+        return (
+            (image > self.new_parameters["threshold"][0]) * np.array(image < self.new_parameters["threshold"][1])
+        ).astype(np.uint8)
 
     @classmethod
     def get_fields(cls):
@@ -312,8 +354,9 @@ class TwoLevelThresholdBaseAlgorithm(ThresholdBaseAlgorithm, ABC):
     def _threshold(self, image, thr=None):
         if thr is None:
             thr: BaseThreshold = double_threshold_dict[self.new_parameters["threshold"]["name"]]
-        mask, thr_val = thr.calculate_mask(image, self.mask, self.new_parameters["threshold"]["values"],
-                                           self.threshold_operator)
+        mask, thr_val = thr.calculate_mask(
+            image, self.mask, self.new_parameters["threshold"]["values"], self.threshold_operator
+        )
         self.threshold_info = thr_val
         self.sprawl_area = (mask >= 1).astype(np.uint8)
         return (mask == 2).astype(np.uint8)
@@ -323,10 +366,26 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
         fields = super().get_fields()
-        fields.insert(2, AlgorithmProperty("threshold", "Threshold", next(iter(double_threshold_dict.keys())),
-                                           possible_values=double_threshold_dict, property_type=AlgorithmDescribeBase))
-        fields.insert(3, AlgorithmProperty("sprawl_type", "Flow type", next(iter(sprawl_dict.keys())),
-                                           possible_values=sprawl_dict, property_type=AlgorithmDescribeBase))
+        fields.insert(
+            2,
+            AlgorithmProperty(
+                "threshold",
+                "Threshold",
+                next(iter(double_threshold_dict.keys())),
+                possible_values=double_threshold_dict,
+                property_type=AlgorithmDescribeBase,
+            ),
+        )
+        fields.insert(
+            3,
+            AlgorithmProperty(
+                "sprawl_type",
+                "Flow type",
+                next(iter(sprawl_dict.keys())),
+                possible_values=sprawl_dict,
+                property_type=AlgorithmDescribeBase,
+            ),
+        )
         for i, el in enumerate(fields):
             if el.name == "minimum_size":
                 index = i
@@ -337,9 +396,14 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
         return fields
 
     def get_info_text(self):
-        return f"Threshold: " + ", ".join(map(str, self.threshold_info)) + \
-               "\nMid sizes: " + ", ".join(map(str, self._sizes_array[1:self.components_num + 1])) + \
-               "\nFinal sizes: " + ", ".join(map(str, self.final_sizes[1:]))
+        return (
+            f"Threshold: "
+            + ", ".join(map(str, self.threshold_info))
+            + "\nMid sizes: "
+            + ", ".join(map(str, self._sizes_array[1 : self.components_num + 1]))
+            + "\nFinal sizes: "
+            + ", ".join(map(str, self.final_sizes[1:]))
+        )
 
     def __init__(self):
         super().__init__()
@@ -370,22 +434,34 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
             finally_segment = segment_data.segmentation
             restarted = True
 
-        if restarted or self.old_threshold_info[1] != self.threshold_info[1] or \
-                self.new_parameters["sprawl_type"] != self.parameters["sprawl_type"]:
+        if (
+            restarted
+            or self.old_threshold_info[1] != self.threshold_info[1]
+            or self.new_parameters["sprawl_type"] != self.parameters["sprawl_type"]
+        ):
             if self.threshold_operator(self.threshold_info[1], self.threshold_info[0]):
                 self.final_sizes = np.bincount(finally_segment.flat)
-                return SegmentationResult(self.finally_segment, self.get_segmentation_profile(), self.segmentation,
-                                          self.cleaned_image)
+                return SegmentationResult(
+                    self.finally_segment, self.get_segmentation_profile(), self.segmentation, self.cleaned_image
+                )
             path_sprawl: BaseSprawl = sprawl_dict[self.new_parameters["sprawl_type"]["name"]]
             self.parameters["sprawl_type"] = self.new_parameters["sprawl_type"]
-            new_segment = path_sprawl.sprawl(self.sprawl_area, finally_segment, self.channel, self.components_num,
-                                             self.image.spacing,
-                                             self.new_parameters["side_connection"], self.threshold_operator,
-                                             self.new_parameters["sprawl_type"]["values"], self.threshold_info[1],
-                                             self.threshold_info[0])
+            new_segment = path_sprawl.sprawl(
+                self.sprawl_area,
+                finally_segment,
+                self.channel,
+                self.components_num,
+                self.image.spacing,
+                self.new_parameters["side_connection"],
+                self.threshold_operator,
+                self.new_parameters["sprawl_type"]["values"],
+                self.threshold_info[1],
+                self.threshold_info[0],
+            )
             self.final_sizes = np.bincount(new_segment.flat)
-            return SegmentationResult(new_segment, self.get_segmentation_profile(),
-                                      self.sprawl_area, self.cleaned_image)
+            return SegmentationResult(
+                new_segment, self.get_segmentation_profile(), self.sprawl_area, self.cleaned_image
+            )
 
 
 class LowerThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
@@ -411,13 +487,20 @@ class OtsuSegment(RestartableAlgorithm):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
-                AlgorithmProperty("noise_filtering", "Noise Removal", next(iter(noise_filtering_dict.keys())),
-                                  possible_values=noise_filtering_dict, property_type=AlgorithmDescribeBase),
-                AlgorithmProperty("components", "Number of Components", 2, (0, 100)),
-                # AlgorithmProperty("mask", "Use mask in calculation", True),
-                AlgorithmProperty("valley", "Valley emphasis", True),
-                AlgorithmProperty("hist_num", "Number of histogram bins", 128, (8, 2 ** 16))]
+        return [
+            AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
+            AlgorithmProperty(
+                "noise_filtering",
+                "Noise Removal",
+                next(iter(noise_filtering_dict.keys())),
+                possible_values=noise_filtering_dict,
+                property_type=AlgorithmDescribeBase,
+            ),
+            AlgorithmProperty("components", "Number of Components", 2, (0, 100)),
+            # AlgorithmProperty("mask", "Use mask in calculation", True),
+            AlgorithmProperty("valley", "Valley emphasis", True),
+            AlgorithmProperty("hist_num", "Number of histogram bins", 128, (8, 2 ** 16)),
+        ]
 
     def __init__(self):
         super().__init__()
@@ -427,11 +510,17 @@ class OtsuSegment(RestartableAlgorithm):
     def calculation_run(self, report_fun):
         channel = self.get_channel(self.new_parameters["channel"])
         noise_filtering_parameters = self.new_parameters["noise_filtering"]
-        cleaned_image = noise_filtering_dict[noise_filtering_parameters["name"]]. \
-            noise_filter(channel, self.image.spacing, noise_filtering_parameters["values"])
+        cleaned_image = noise_filtering_dict[noise_filtering_parameters["name"]].noise_filter(
+            channel, self.image.spacing, noise_filtering_parameters["values"]
+        )
         cleaned_image_sitk = SimpleITK.GetImageFromArray(cleaned_image)
-        res = SimpleITK.OtsuMultipleThresholds(cleaned_image_sitk, self.new_parameters["components"], 0,
-                                               self.new_parameters["hist_num"], self.new_parameters["valley"])
+        res = SimpleITK.OtsuMultipleThresholds(
+            cleaned_image_sitk,
+            self.new_parameters["components"],
+            0,
+            self.new_parameters["hist_num"],
+            self.new_parameters["valley"],
+        )
         res = SimpleITK.GetArrayFromImage(res)
         self._sizes_array = np.bincount(res.flat)[1:]
         self.threshold_info = []
@@ -446,26 +535,45 @@ class OtsuSegment(RestartableAlgorithm):
         return SegmentationResult(res, res, cleaned_image)
 
     def get_info_text(self):
-        return f"Threshold: " + ", ".join(map(str, self.threshold_info)) + \
-               "\nSizes: " + ", ".join(map(str, self._sizes_array))
+        return (
+            f"Threshold: "
+            + ", ".join(map(str, self.threshold_info))
+            + "\nSizes: "
+            + ", ".join(map(str, self._sizes_array))
+        )
 
 
 class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("threshold", "Threshold", next(iter(double_threshold_dict.keys())),
-                                  possible_values=double_threshold_dict, property_type=AlgorithmDescribeBase),
-                AlgorithmProperty("mu_mid", "Mu mid value", next(iter(mu_mid_dict.keys())),
-                                  possible_values=mu_mid_dict,
-                                  property_type=AlgorithmDescribeBase),
-                AlgorithmProperty("step_limits", "Limits of Steps", 100, options_range=(1, 1000), property_type=int)] \
-               + super().get_fields()
+        return [
+            AlgorithmProperty(
+                "threshold",
+                "Threshold",
+                next(iter(double_threshold_dict.keys())),
+                possible_values=double_threshold_dict,
+                property_type=AlgorithmDescribeBase,
+            ),
+            AlgorithmProperty(
+                "mu_mid",
+                "Mu mid value",
+                next(iter(mu_mid_dict.keys())),
+                possible_values=mu_mid_dict,
+                property_type=AlgorithmDescribeBase,
+            ),
+            AlgorithmProperty("step_limits", "Limits of Steps", 100, options_range=(1, 1000), property_type=int),
+        ] + super().get_fields()
 
     def get_info_text(self):
-        return f"Threshold: " + ", ".join(map(str, self.threshold_info)) + \
-               "\nMid sizes: " + ", ".join(map(str, self._sizes_array[1:self.components_num + 1])) + \
-               "\nFinal sizes: " + ", ".join(map(str, self.final_sizes[1:])) + \
-               f"\nsteps: {self.steps}"
+        return (
+            f"Threshold: "
+            + ", ".join(map(str, self.threshold_info))
+            + "\nMid sizes: "
+            + ", ".join(map(str, self._sizes_array[1 : self.components_num + 1]))
+            + "\nFinal sizes: "
+            + ", ".join(map(str, self.final_sizes[1:]))
+            + f"\nsteps: {self.steps}"
+        )
 
     def __init__(self):
         super().__init__()
@@ -490,7 +598,8 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):
     def calculation_run(self, report_fun) -> SegmentationResult:
         if self.new_parameters["side_connection"] != self.parameters["side_connection"]:
             neigh, dist = calculate_distances_array(
-                self.image.spacing, get_neigh(self.new_parameters["side_connection"]))
+                self.image.spacing, get_neigh(self.new_parameters["side_connection"])
+            )
             self.mso.set_neighbourhood(neigh, dist)
         segment_data = super().calculation_run(report_fun)
         if segment_data is not None and self.components_num == 0:
@@ -505,25 +614,35 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):
             finally_segment = segment_data.segmentation
             if np.max(finally_segment) > 250:
                 raise SegmentationLimitException(
-                    "Current implementation of MSO do not support more than 250 components")
+                    "Current implementation of MSO do not support more than 250 components"
+                )
             components = finally_segment.astype(np.uint8)
             components[components > 0] += 1
             components[self.sprawl_area == 0] = 1
             self.mso.set_components(components, self.components_num)
             restarted = True
 
-        if restarted or self.old_threshold_info[1] != self.threshold_info[1] or \
-                self.new_parameters["mu_mid"] != self.parameters["mu_mid"]:
+        if (
+            restarted
+            or self.old_threshold_info[1] != self.threshold_info[1]
+            or self.new_parameters["mu_mid"] != self.parameters["mu_mid"]
+        ):
             if self.threshold_operator(self.threshold_info[1], self.threshold_info[0]):
                 self.final_sizes = np.bincount(finally_segment.flat)
-                return SegmentationResult(self.finally_segment, self.get_segmentation_profile(),
-                                          self.segmentation, self.cleaned_image)
+                return SegmentationResult(
+                    self.finally_segment, self.get_segmentation_profile(), self.segmentation, self.cleaned_image
+                )
             mu_calc: BaseMuMid = mu_mid_dict[self.new_parameters["mu_mid"]["name"]]
             self.parameters["mu_mid"] = self.new_parameters["mu_mid"]
             sprawl_area = (self.sprawl_area > 0).astype(np.uint8)
             sprawl_area[finally_segment > 0] = 0
-            mid_val = mu_calc.value(sprawl_area, self.channel, self.threshold_info[0], self.threshold_info[1],
-                                    self.new_parameters["mu_mid"]["values"])
+            mid_val = mu_calc.value(
+                sprawl_area,
+                self.channel,
+                self.threshold_info[0],
+                self.threshold_info[1],
+                self.new_parameters["mu_mid"]["values"],
+            )
             mu_array = calculate_mu_mid(self.channel, self.threshold_info[0], mid_val, self.threshold_info[1])
             self.mso.set_mu_array(mu_array)
             restarted = True
@@ -554,7 +673,14 @@ class UpperThresholdMultiScaleOpening(BaseMultiScaleOpening):
         return "Upper threshold MultiScale Opening"
 
 
-final_algorithm_list = [LowerThresholdAlgorithm, UpperThresholdAlgorithm, RangeThresholdAlgorithm,
-                        LowerThresholdFlowAlgorithm, UpperThresholdFlowAlgorithm,  # LowerThresholdMultiScaleOpening,
-                        # UpperThresholdMultiScaleOpening,
-                        OtsuSegment, BorderRim, SplitMaskOnPart]
+final_algorithm_list = [
+    LowerThresholdAlgorithm,
+    UpperThresholdAlgorithm,
+    RangeThresholdAlgorithm,
+    LowerThresholdFlowAlgorithm,
+    UpperThresholdFlowAlgorithm,  # LowerThresholdMultiScaleOpening,
+    # UpperThresholdMultiScaleOpening,
+    OtsuSegment,
+    BorderRim,
+    SplitMaskOnPart,
+]
