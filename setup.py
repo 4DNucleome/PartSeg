@@ -125,7 +125,7 @@ setuptools.setup(
         "SimpleITK>=1.1.0",
         "scipy>=0.19.1",
         "QtPy>=1.3.1",
-        "sentry_sdk==0.14.0",
+        "sentry_sdk==0.14.1",
         qt_string,
         "six>=1.11.0",
         "h5py>=2.7.1",
