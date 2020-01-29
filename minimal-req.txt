@@ -17,4 +17,4 @@ six==1.11.0
 sympy==1.1.1
 tifffile==2019.7.26
 urllib3==1.24.3
-xlrd==1.1.0
+xlrd==1.2.0
