@@ -129,7 +129,7 @@ class TestJsonLoad:
 
 class TestSegmentationMask:
     def test_load_seg(self, data_test_dir):
-        seg = LoadSegmentation.load([os.path.join(data_test_dir, "test_nucleus.seg")])
+        seg = LoadSegmentation.load([os.path.join(data_test_dir, "test_nucleus_1_1.seg")])
         assert isinstance(seg.image, str)
         assert seg.chosen_components == [1, 3]
         assert os.path.exists(os.path.join(data_test_dir, seg.image))
@@ -140,7 +140,7 @@ class TestSegmentationMask:
         """
         For PartSeg 0.9.4 and older
         """
-        seg = LoadSegmentation.load([os.path.join(data_test_dir, "test_nucleus_old.seg")])
+        seg = LoadSegmentation.load([os.path.join(data_test_dir, "test_nucleus.seg")])
         assert isinstance(seg.image, str)
         assert seg.chosen_components == [1, 3]
         assert os.path.exists(os.path.join(data_test_dir, seg.image))
@@ -148,7 +148,7 @@ class TestSegmentationMask:
 
     def test_load_old_seg_with_image(self, data_test_dir):
         seg = LoadSegmentationImage.load(
-            [os.path.join(data_test_dir, "test_nucleus_old.seg")], metadata={"default_spacing": (1, 1, 1)}
+            [os.path.join(data_test_dir, "test_nucleus.seg")], metadata={"default_spacing": (1, 1, 1)}
         )
         assert isinstance(seg.image, Image)
         assert seg.chosen_components == [1, 3]
@@ -158,7 +158,7 @@ class TestSegmentationMask:
 
     def test_load_seg_with_image(self, data_test_dir):
         seg = LoadSegmentationImage.load(
-            [os.path.join(data_test_dir, "test_nucleus.seg")], metadata={"default_spacing": (1, 1, 1)}
+            [os.path.join(data_test_dir, "test_nucleus_1_1.seg")], metadata={"default_spacing": (1, 1, 1)}
         )
         assert isinstance(seg.image, Image)
         assert seg.chosen_components == [1, 3]
@@ -168,7 +168,7 @@ class TestSegmentationMask:
 
     def test_save_segmentation(self, tmpdir, data_test_dir):
         seg = LoadSegmentationImage.load(
-            [os.path.join(data_test_dir, "test_nucleus.seg")], metadata={"default_spacing": (1, 1, 1)}
+            [os.path.join(data_test_dir, "test_nucleus_1_1.seg")], metadata={"default_spacing": (1, 1, 1)}
         )
         SaveSegmentation.save(os.path.join(tmpdir, "segmentation.seg"), seg, {"relative_path": False})
         assert os.path.exists(os.path.join(tmpdir, "segmentation.seg"))
