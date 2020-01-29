@@ -7,7 +7,7 @@ numpy==1.16.0
 imagecodecs-lite==2019.4.20
 oiffile==2019.1.1
 openpyxl==2.4.9
-packaging==17.1
+packaging==20.1
 pandas==0.22.0
 PartSegData==0.9.4
 PyQt5==5.10.1
