@@ -6,7 +6,7 @@ h5py==2.10.0
 imagecodecs-lite==2019.4.20
 numpy==1.17.3
 oiffile==2019.1.1
-openpyxl==3.0.0
+openpyxl==3.0.3
 packaging==19.2
 pandas==0.25.3
 PartSegData==0.9.4
