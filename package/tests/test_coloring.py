@@ -132,3 +132,4 @@ class TestCreateColorMap:
 class TestArrayColorMap:
     def test_base(self):
         res = create_color_map(inferno)
+        assert res.shape == (1024, 3)

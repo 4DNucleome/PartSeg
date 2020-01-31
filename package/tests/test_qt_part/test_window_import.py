@@ -5,28 +5,28 @@ import packaging.version
 
 def test_analysis_import():
     try:
-        import PartSeg.segmentation_analysis.main_window
+        import PartSeg.segmentation_analysis.main_window  # noqa: F401
     except ImportError:
         pytest.fail("Error in importing segmentation ui")
 
 
 def test_launcher_import():
     try:
-        import PartSeg.launcher.main_window
+        import PartSeg.launcher.main_window  # noqa: F401
     except ImportError:
         pytest.fail("Error in importing launcher ui")
 
 
 def test_segmentation_import():
     try:
-        import PartSeg.segmentation_mask.stack_gui_main
+        import PartSeg.segmentation_mask.stack_gui_main  # noqa: F401
     except ImportError:
         pytest.fail("Error in importing mask segmentation ui")
 
 
 def test_core_application():
     try:
-        import PartSeg.custom_application.application
+        import PartSeg.custom_application.application  # noqa: F401
     except ImportError:
         pytest.fail("Error in importing custom application")
 

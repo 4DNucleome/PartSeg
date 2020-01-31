@@ -113,7 +113,7 @@ class BaseThreshold(object):
         raise NotImplementedError
 
     def get_multiple_part(self, parts_num):
-        raise NotImplemented
+        raise NotImplementedError
 
     algorithm_class = None
 

@@ -32,7 +32,7 @@ class {typename}({base_classes}):
 
     _fields = {field_names!r}
     _root = True
-    
+
     #def __new__(cls, {signature}):
     #    ob = super().__new__(cls)
     #    cls.__init__(ob, {arg_list})
@@ -46,7 +46,7 @@ class {typename}({base_classes}):
     def _make(cls, iterable):
         'Make a new {typename} object from a sequence or iterable'
         return cls.make_(iterable)
-        
+
     @classmethod
     def make_(cls, iterable):
         'Make a new {typename} object from a sequence or iterable'
@@ -61,28 +61,28 @@ class {typename}({base_classes}):
         dkt = self.asdict()
         dkt.update(kwargs)
         return self.__class__(**dkt)
-        
+
     def _replace(self, **kwargs):
         return self.replace_(**kwargs)
 
     def __repr__(self):
         'Return a nicely formatted representation string'
         return self.__class__.__name__ + '({repr_fmt})' % _attrgetter(*self.__slots__)(self)
-    
+
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.as_tuple() == other.as_tuple()
 
     def asdict(self):
         'Return a new OrderedDict which maps field names to their values.'
         return OrderedDict(zip(self._fields, _attrgetter(*self.__slots__)(self)))
-    
+
     def as_tuple(self):
         return {tuple_fields}
 
     def __getnewargs__(self):
         'Return self as a plain tuple.  Used by copy and pickle.'
         return tuple(_attrgetter(*self.__slots__)(self))
-    
+
     #def __setattr__(self, name, value):
     #    raise AttributeError('can\\\'t set attribute')
 

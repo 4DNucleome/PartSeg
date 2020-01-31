@@ -1,7 +1,5 @@
 import typing
 
-import numpy as np
-
 from PartSegCore.class_generator import BaseSerializableClass
 from .color_data import magma_data, plasma_data, inferno_data, viridis_data, sitk_labels
 

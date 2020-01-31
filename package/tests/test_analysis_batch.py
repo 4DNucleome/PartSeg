@@ -279,7 +279,7 @@ class TestCalculationProcess:
 
         while manager.has_work:
             time.sleep(0.1)
-            __ = manager.get_results()
+            manager.get_results()
         if sys.platform == "darwin":
             time.sleep(2)
         else:
@@ -309,7 +309,7 @@ class TestCalculationProcess:
 
         while manager.has_work:
             time.sleep(0.1)
-            __ = manager.get_results()
+            manager.get_results()
         if sys.platform == "darwin":
             time.sleep(2)
         else:
@@ -339,7 +339,7 @@ class TestCalculationProcess:
 
         while manager.has_work:
             time.sleep(0.1)
-            __ = manager.get_results()
+            manager.get_results()
         if sys.platform == "darwin":
             time.sleep(2)
         else:

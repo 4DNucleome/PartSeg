@@ -103,8 +103,9 @@ class TestMu:
         assert np.all(res == (np.ones(image.shape, dtype=np.float64) - (image == 10) * 0.5) * mask)
 
     def test_two_object_mu(self):
+        pass
         # TODO
-        image = np.zeros((10, 10, 10), dtype=np.uint8)
+        # image = np.zeros((10, 10, 10), dtype=np.uint8)
 
     def test_reshape(self):
         image = np.zeros((40, 150, 120), dtype=np.uint16)
@@ -115,6 +116,7 @@ class TestMu:
 
 def test_mso_construct():
     data = PyMSO()
+    assert hasattr(data, "set_image")
 
 
 class TestConstrainedDilation:
