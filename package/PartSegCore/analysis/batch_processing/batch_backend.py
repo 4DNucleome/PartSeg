@@ -36,6 +36,7 @@ from PartSegCore.analysis.calculation_plan import (
     BaseCalculation,
     Calculation,
     RootType,
+    CalculationTree,
 )
 from PartSegCore.analysis.io_utils import ProjectTuple
 from PartSegCore.analysis.load_functions import LoadMaskSegmentation, LoadProject, load_dict
@@ -130,137 +131,186 @@ class CalculationProcess:
             self.measurement = []
         return self.results
 
-    def iterate_over(self, node):
+    def iterate_over(self, node: typing.Union[CalculationTree, typing.List[CalculationTree]]):
         """
+        Execute calculation on node children or list oof nodes
+
         :type node: CalculationTree
         :param node:
         :return:
         """
-        for el in node.children:
+        if isinstance(node, CalculationTree):
+            node = node.children
+        for el in node:
             self.recursive_calculation(el)
 
-    def recursive_calculation(self, node):
+    def step_load_mask(self, operation: MaskMapper, children: typing.List[CalculationTree]):
         """
-        :type node: CalculationTree
-        :param node:
-        :return:
+        Load mask using mask mapper (mask can be defined with suffix, substitution, or file with mapping saved,
+        then iterate over ``children`` nodes.
+
+        :param MaskMapper operation: operation to perform
+        :param typing.List[CalculationTree] children: list of nodes to iterate over with applied mask
+        """
+        mask_path = operation.get_mask_path(self.calculation.file_path)
+        if mask_path == "":
+            raise ValueError("Empty path to mask.")
+        mask = tifffile.imread(mask_path)
+        mask = (mask > 0).astype(np.uint8)
+        try:
+            mask = self.image.fit_array_to_image(mask)[0]
+            # TODO fix this time bug fix
+        except ValueError:
+            raise ValueError("Mask do not fit to given image")
+        old_mask = self.mask
+        self.mask = mask
+        self.iterate_over(children)
+        self.mask = old_mask
+
+    def step_segmentation(self, operation: SegmentationProfile, children: typing.List[CalculationTree]):
+        """
+        Perform segmentation and iterate over ``children`` nodes
+
+        :param SegmentationProfile operation: Specification of segmentation operation
+        :param typing.List[CalculationTree] children: list of nodes to iterate over after perform segmentation
+        """
+        segmentation_class = analysis_algorithm_dict.get(operation.algorithm, None)
+        if segmentation_class is None:
+            raise ValueError(f"Segmentation class {operation.algorithm} do not found")
+        segmentation_algorithm = segmentation_class()
+        segmentation_algorithm.set_image(self.image)
+        segmentation_algorithm.set_mask(self.mask)
+        segmentation_algorithm.set_parameters(**operation.values)
+        result = segmentation_algorithm.calculation_run(report_empty_fun)
+        backup_data = self.segmentation, self.full_segmentation, self.cleaned_channel, self.algorithm_parameters
+        self.segmentation = result.segmentation
+        self.full_segmentation = result.full_segmentation
+        self.cleaned_channel = result.cleaned_channel
+        self.algorithm_parameters = {"name": operation.algorithm, "values": operation.values}
+        self.iterate_over(children)
+        self.segmentation, self.full_segmentation, self.cleaned_channel, self.algorithm_parameters = backup_data
+
+    def step_mask_use(self, operation: MaskUse, children: typing.List[CalculationTree]):
+        """
+        use already defined mask and iterate over ``children`` nodes
+
+        :param MaskUse operation:
+        :param typing.List[CalculationTree] children: list of nodes to iterate over after perform segmentation
+        """
+        old_mask = self.mask
+        mask = self.mask_dict[operation.name]
+        self.mask = mask
+        self.iterate_over(children)
+        self.mask = old_mask
+
+    def step_mask_operation(
+        self, operation: typing.Union[MaskSum, MaskIntersection], children: typing.List[CalculationTree]
+    ):
+        """
+        Generate new mask by sum or intersection of existing and iterate over ``children`` nodes
+
+        :param typing.Union[MaskSum, MaskIntersection] operation: mask operation to perform
+        :param typing.List[CalculationTree] children: list of nodes to iterate over after perform segmentation
+        """
+        old_mask = self.mask
+        mask1 = self.mask_dict[operation.mask1]
+        mask2 = self.mask_dict[operation.mask2]
+        if isinstance(operation, MaskSum):
+            mask = np.logical_or(mask1, mask2).astype(np.uint8)
+        else:
+            mask = np.logical_and(mask1, mask2).astype(np.uint8)
+        self.mask = mask
+        self.iterate_over(children)
+        self.mask = old_mask
+
+    def step_save(self, operation: Save):
+        """
+        Perform save operation selected in plan. 
+
+        :param Save operation: save definition
+        """
+        save_class = save_dict[operation.algorithm]
+        project_tuple = ProjectTuple(
+            file_path="",
+            image=self.image,
+            segmentation=self.segmentation,
+            full_segmentation=self.full_segmentation,
+            mask=self.mask,
+            history=self.history,
+            algorithm_parameters=self.algorithm_parameters,
+        )
+        save_path = get_save_path(operation, self.calculation)
+        save_class.save(save_path, project_tuple, operation.values)
+
+    def step_mask_create(self, operation: MaskCreate, children: typing.List[CalculationTree]):
+        """
+        Create mask from current segmentation state using definition
+
+        :param MaskCreate operation:  
+        :param typing.List[CalculationTree] children: list of nodes to iterate over after perform segmentation 
+        """
+        mask = calculate_mask(operation.mask_property, self.segmentation, self.mask, self.image.spacing)
+        if operation.name in self.reused_mask:
+            self.mask_dict[operation.name] = mask
+        history_element = HistoryElement.create(
+            self.segmentation,
+            self.full_segmentation,
+            self.mask,
+            self.algorithm_parameters["name"],
+            self.algorithm_parameters["values"],
+            operation.mask_property,
+        )
+        backup = self.mask, self.history
+        self.mask = mask
+        self.history.append(history_element)
+        self.iterate_over(children)
+        self.mask, self.history = backup
+
+    def step_measurement(self, operation: MeasurementCalculate):
+        """
+        Calculate measurement defined in current operation.
+
+        :param MeasurementCalculate operation: definition of measurement to calculate
+        """
+        channel = operation.channel
+        if channel == -1:
+            segmentation_class: typing.Type[SegmentationAlgorithm] = analysis_algorithm_dict.get(
+                self.algorithm_parameters["name"], None
+            )
+            if segmentation_class is None:
+                raise ValueError(f"Segmentation class {self.algorithm_parameters['name']} do not found")
+            channel = self.algorithm_parameters["values"][segmentation_class.get_channel_parameter_name()]
+
+        image_channel = self.image.get_channel(channel)
+        # FIXME use additional information
+        measurement = operation.statistic_profile.calculate(
+            image_channel, self.segmentation, self.full_segmentation, self.mask, self.image.spacing, operation.units,
+        )
+        self.measurement.append(measurement)
+
+    def recursive_calculation(self, node: CalculationTree):
+        """
+        Identify node type and then call proper `step_*` function
+
+        :param CalculationTree node: Node to be proceed
         """
         if isinstance(node.operation, MaskMapper):
-            mask_path = node.operation.get_mask_path(self.calculation.file_path)
-            if mask_path == "":
-                raise ValueError("Empty path to mask.")
-            mask = tifffile.imread(mask_path)
-            mask = (mask > 0).astype(np.uint8)
-            try:
-                mask = self.image.fit_array_to_image(mask)[0]
-                # TODO fix this time bug fix
-            except ValueError:
-                raise ValueError("Mask do not fit to given image")
-            old_mask = self.mask
-            self.mask = mask
-            self.iterate_over(node)
-            self.mask = old_mask
+            self.step_load_mask(node.operation, node.children)
         elif isinstance(node.operation, SegmentationProfile):
-            segmentation_class = analysis_algorithm_dict.get(node.operation.algorithm, None)
-            if segmentation_class is None:
-                raise ValueError(f"Segmentation class {node.operation.algorithm} do not found")
-            segmentation_algorithm = segmentation_class()
-            segmentation_algorithm.set_image(self.image)
-            segmentation_algorithm.set_mask(self.mask)
-            segmentation_algorithm.set_parameters(**node.operation.values)
-            result = segmentation_algorithm.calculation_run(report_empty_fun)
-            backup_data = self.segmentation, self.full_segmentation, self.cleaned_channel, self.algorithm_parameters
-            self.segmentation = result.segmentation
-            self.full_segmentation = result.full_segmentation
-            self.cleaned_channel = result.cleaned_channel
-            self.algorithm_parameters = {"name": node.operation.algorithm, "values": node.operation.values}
-            self.iterate_over(node)
-            self.segmentation, self.full_segmentation, self.cleaned_channel, self.algorithm_parameters = backup_data
+            self.step_segmentation(node.operation, node.children)
         elif isinstance(node.operation, MaskUse):
-            old_mask = self.mask
-            mask = self.mask_dict[node.operation.name]
-            self.mask = mask
-            self.iterate_over(node)
-            self.mask = old_mask
+            self.step_mask_use(node.operation, node.children)
         elif isinstance(node.operation, (MaskSum, MaskIntersection)):
-            old_mask = self.mask
-            mask1 = self.mask_dict[node.operation.mask1]
-            mask2 = self.mask_dict[node.operation.mask2]
-            if isinstance(node.operation, MaskSum):
-                mask = np.logical_or(mask1, mask2).astype(np.uint8)
-            else:
-                mask = np.logical_and(mask1, mask2).astype(np.uint8)
-            self.mask = mask
-            self.iterate_over(node)
-            self.mask = old_mask
+            self.step_mask_operation(node.operation, node.children)
         elif isinstance(node.operation, Save):
-            save_class = save_dict[node.operation.algorithm]
-            project_tuple = ProjectTuple(
-                file_path="",
-                image=self.image,
-                segmentation=self.segmentation,
-                full_segmentation=self.full_segmentation,
-                mask=self.mask,
-                history=self.history,
-                algorithm_parameters=self.algorithm_parameters,
-            )
-            save_path = get_save_path(node.operation, self.calculation)
-            save_class.save(save_path, project_tuple, node.operation.values)
+            self.step_save(node.operation)
         elif isinstance(node.operation, MaskCreate):
-            mask = calculate_mask(node.operation.mask_property, self.segmentation, self.mask, self.image.spacing)
-            if node.operation.name in self.reused_mask:
-                self.mask_dict[node.operation.name] = mask
-            history_element = HistoryElement.create(
-                self.segmentation,
-                self.full_segmentation,
-                self.mask,
-                self.algorithm_parameters["name"],
-                self.algorithm_parameters["values"],
-                node.operation.mask_property,
-            )
-            backup = self.mask, self.history
-            self.mask = mask
-            self.history.append(history_element)
-            self.iterate_over(node)
-            self.mask, self.history = backup
+            self.step_mask_create(node.operation, node.children)
         elif isinstance(node.operation, Operations):
-            if node.operation == Operations.reset_to_base:
-                if len(self.history) > 0:
-                    backup = self.history, self.mask, self.segmentation, self.full_segmentation, self.cleaned_channel
-                    history_element: HistoryElement = self.history[0]
-                    history_element.arrays.seek(0)
-                    seg = np.load(history_element.arrays)
-                    history_element.arrays.seek(0)
-                    if "mask" in seg:
-                        self.mask = seg["mask"]
-                    else:
-                        self.mask = None
-                    self.history, self.segmentation, self.full_segmentation, self.cleaned_channel = [], None, None, None
-                    self.iterate_over(node)
-                    self.history, self.mask, self.segmentation, self.full_segmentation, self.cleaned_channel = backup
-                else:
-                    self.iterate_over(node)
+            # backward compatybility
+            self.iterate_over(node)
         elif isinstance(node.operation, MeasurementCalculate):
-            channel = node.operation.channel
-            if channel == -1:
-                segmentation_class: typing.Type[SegmentationAlgorithm] = analysis_algorithm_dict.get(
-                    self.algorithm_parameters["name"], None
-                )
-                if segmentation_class is None:
-                    raise ValueError(f"Segmentation class {self.algorithm_parameters['name']} do not found")
-                channel = self.algorithm_parameters["values"][segmentation_class.get_channel_parameter_name()]
-
-            image_channel = self.image.get_channel(channel)
-            # FIXME use additional information
-            measurement = node.operation.statistic_profile.calculate(
-                image_channel,
-                self.segmentation,
-                self.full_segmentation,
-                self.mask,
-                self.image.spacing,
-                node.operation.units,
-            )
-            self.measurement.append(measurement)
+            self.step_measurement(node.operation)
         else:
             raise ValueError("Unknown operation {} {}".format(type(node.operation), node.operation))
 
