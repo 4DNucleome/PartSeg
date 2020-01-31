@@ -132,7 +132,7 @@ class StackSettings(BaseSettings):
         if components[0] == 0 or components[0] is None:
             components = components[1:]
         for i in components:
-            _skip = data.segmentation_parameters[int(i)]
+            _skip = data.segmentation_parameters[int(i)]  # noqa: F841
         if self.keep_chosen_components:
             state2 = self.transform_state(
                 state,

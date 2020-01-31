@@ -328,7 +328,7 @@ class TestSaveFunctions:
     def test_save_project(self, tmpdir, analysis_project):
         SaveProject.save(os.path.join(tmpdir, "test1.tgz"), analysis_project)
         assert os.path.exists(os.path.join(tmpdir, "test1.tgz"))
-        load_data = LoadProject.load([os.path.join(tmpdir, "test1.tgz")])
+        LoadProject.load([os.path.join(tmpdir, "test1.tgz")])
         # TODO add more
 
     def test_save_tiff(self, tmpdir, analysis_project):

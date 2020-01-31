@@ -171,7 +171,9 @@ class QtAlgorithmProperty(AlgorithmProperty):
     @staticmethod
     def get_getter_and_setter_function(
         widget: QWidget,
-    ) -> typing.Tuple[typing.Callable[[QWidget,], typing.Any], typing.Callable[[QWidget, typing.Any], None]]:
+    ) -> typing.Tuple[
+        typing.Callable[[QWidget,], typing.Any], typing.Callable[[QWidget, typing.Any], None]  # noqa E231
+    ]:
         """
         For each widget type return proper functions. This functions need instance as first argument
 

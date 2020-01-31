@@ -38,12 +38,12 @@ def dict_set_class(obj, dic, *args):
 
 
 def bisect(arr, val, comp):
-    l = -1
-    r = len(arr)
-    while r - l > 1:
-        e = (l + r) >> 1
-        if comp(arr[e], val):
-            l = e
+    left = -1
+    right = len(arr)
+    while right - left > 1:
+        mid = (left + right) >> 1
+        if comp(arr[mid], val):
+            left = mid
         else:
-            r = e
-    return r
+            right = mid
+    return right

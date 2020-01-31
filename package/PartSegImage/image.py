@@ -31,12 +31,12 @@ def reduce_array(
     """
     Relabel components from 1 to components_num with keeping order
 
-    :param array: array to relabel, deed to be integer type 
+    :param array: array to relabel, deed to be integer type
     :param components: components to be keep, if None then all will be keep
     :param max_val: number of maximum component in array, if absent then will be calculated
         (to reduce whole array processing)
     :param dtype: type of returned array if no then minimal type is calculated
-    :return: relabeled array in minimum type 
+    :return: relabeled array in minimum type
     """
     if components is None:
         components = np.unique(array.flat)

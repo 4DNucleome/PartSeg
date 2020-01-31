@@ -110,8 +110,8 @@ class MaskWindow(QDialog):
         self.reset_next_btn.setDisabled(True)
 
     def new_mask(self):
-        algorithm_name = self.settings.last_executed_algorithm
-        algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
+        # algorithm_name = self.settings.last_executed_algorithm
+        # algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
         segmentation = self.settings.segmentation
         mask_property = self.mask_widget.get_mask_property()
         self.settings.set("mask_manager.mask_property", mask_property)
