@@ -302,9 +302,6 @@ class CreatePlan(QWidget):
         self.expected_node_type = None
         self.save_constructor = None
 
-        self.project_segmentation = QPushButton("Reset project")
-        self.project_segmentation.clicked.connect(self.segmentation_from_project)
-
         self.chose_profile_btn = QPushButton("Segment Profile")
         self.get_big_btn = QPushButton("Leave the biggest")
         self.get_big_btn.hide()
@@ -372,7 +369,6 @@ class CreatePlan(QWidget):
         bt_lay.addWidget(QLabel("Saving:"))
         bt_lay.addWidget(self.save_choose)
         bt_lay.addWidget(self.save_btn)
-        bt_lay.addWidget(self.project_segmentation)
         other_box.setLayout(bt_lay)
         other_box.setStyleSheet(group_sheet)
 
@@ -515,7 +511,6 @@ class CreatePlan(QWidget):
     def node_type_changed(self):
         # self.cmap_save_btn.setDisabled(True)
         self.save_btn.setDisabled(True)
-        self.project_segmentation.setDisabled(True)
         self.node_name = ""
         if self.plan.currentItem() is None:
             self.mask_allow = False
@@ -546,7 +541,6 @@ class CreatePlan(QWidget):
             self.mask_allow = False
             self.segment_allow = True
             self.file_mask_allow = True
-            self.project_segmentation.setEnabled(True)
         elif node_type == NodeType.none or node_type == NodeType.measurement or node_type == NodeType.save:
             self.mask_allow = False
             self.segment_allow = False
