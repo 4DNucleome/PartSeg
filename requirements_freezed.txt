@@ -4,7 +4,7 @@ et-xmlfile==1.0.1
 jdcal==1.4.1
 mpmath==1.1.0
 pyparsing==2.4.6
-PyQt5-sip==12.7.0
+PyQt5-sip==12.7.1
 python-dateutil==2.8.1
 pytz==2019.3
 urllib3==1.25.8
