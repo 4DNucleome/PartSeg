@@ -1,0 +1,9 @@
+version: 1
+update_configs:
+  - package_manager: "python"
+    directory: "/"
+    update_schedule: "daily"
+    target_branch: "develop"
+    ignored_updates:
+      - match:
+          dependency_name: "imagecodecs"
