@@ -51,7 +51,7 @@ Firstly segmentation of nuclei is performed based on the DNA signal. Segmented n
 
 7.  Select nuclei that were segmented correctly (where mask includes whole volume of a single nucleus) by selecting one by one on the picture.
     If all nuclei are segmented properly use **Select all** option. The borders of segmentation are visible after enabling "show results" option (7a).
-    After the first iteration the rest of nuclei can be subjected to another round of segmentation with a higher threshold.
+    After the first iteration the rest of nuclei can be subjected to another round of segmentation with a different settings.
 
 8.  Each of segmented and selected nuclei and it's mask can be saved as separate 3D tiff image using **Save components** option.
     Images containing all channels of the original picture are saved under the initial name with a "component" and number suffix.
@@ -64,7 +64,7 @@ Firstly segmentation of nuclei is performed based on the DNA signal. Segmented n
 
 #### Segmentation of chromosome 1 territories
 
-In order to qauntify features of chromosome 1 territory segmentation of FISH specyfic signal is carried off. Threshold for segmentation is adjusted to cover whole chromosome paint staining.
+In order to quantify features of chromosome 1 territory segmentation of FISH specific signal is carried off. Threshold for segmentation is adjusted to cover whole chromosome paint staining.
 
 1.  Open PartSeg
 
@@ -114,6 +114,8 @@ In order to qauntify features of chromosome 1 territory segmentation of FISH spe
     option reduce a risk of losing small bumps and protrusions.
 
 8.  Execute segmentation
+
+9.  Save segmentation profile (more details in ...)  **TODO** 
 
 Some background signal is always present in FISH, however specific signal is much brighter.
 As an example nucleus with two separate chromosome 1 territories is shown,
@@ -172,6 +174,9 @@ At the end established settings profile is used to measure features of nuclei an
     ![PartSeg GUI](images/main_window_analysis2.png)
 
 ## Appendix
+
+### How to translate this data analysis to batch processing 
+[link](link) 
 
 ### Chromosome 1 dataset
 Data set contains 5 original 3D confocal images of chromosome 1 FISH. Data contains 2 channels: channel 1 represents DNA staining and channel 2- chromosome paint probe. Voxel size of the whole data set is 77.52x77.52x210 nm.

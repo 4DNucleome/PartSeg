@@ -1,5 +1,21 @@
 # Graphical User Interface (GUI) overview
 
+
+## Table of content
+
+1.   ROI GUI description
+2.   Mask GUI description
+3.   Common elements
+  * algorithm settings 
+  * image view
+  * mask manager 
+  
+4.   Color control
+5.   Measurement detailed description
+6.   Pipeline, profile, project (importing, exporting) 
+7.   Batch 
+
+
 ## Analysis GUI
 
 This is main ui for this application
