@@ -217,6 +217,12 @@ class LoadImageMask(LoadBase):
     ):
         if metadata is None:
             metadata = {"default_spacing": (10 ** -6, 10 ** -6, 10 ** -6)}
+        if len(load_locations) == 1:
+            new_path, ext = os.path.splitext(load_locations[0])
+            new_path += "_mask" + ext
+            if not os.path.exists(new_path):
+                raise ValueError("Cannot determine mask file. It need to have '_mask' suffix.")
+            load_locations.append(load_locations)
         image = GenericImageReader.read_image(
             load_locations[0],
             load_locations[1],
