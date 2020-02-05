@@ -470,6 +470,9 @@ class CalculationPlan:
     def get_root_type(self):
         return self.execution_tree.operation
 
+    def set_root_type(self, root_type: RootType):
+        self.execution_tree.operation = root_type
+
     def __str__(self):
         return f"CalculationPlan<{self.name}>\n{self.execution_tree}"
 

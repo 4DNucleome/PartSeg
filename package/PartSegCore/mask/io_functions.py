@@ -47,7 +47,7 @@ class SegmentationTuple(ProjectInfoBase, typing.NamedTuple):
 
 
 def save_stack_segmentation(
-    file_data: typing.Union[tarfile.TarFile, str, TextIOBase, BufferedIOBase, RawIOBase, IOBase],
+    file_data: typing.Union[tarfile.TarFile, str, Path, TextIOBase, BufferedIOBase, RawIOBase, IOBase],
     segmentation_info: SegmentationTuple,
     parameters: dict,
     range_changed=None,
@@ -60,66 +60,69 @@ def save_stack_segmentation(
     range_changed(0, 5)
     tar_file, file_path = open_tar_file(file_data, "w")
     step_changed(1)
-    segmentation_buff = BytesIO()
-    # noinspection PyTypeChecker
-    tifffile.imwrite(segmentation_buff, segmentation_info.segmentation, compress=9)
-    segmentation_tar = get_tarinfo("segmentation.tif", segmentation_buff)
-    tar_file.addfile(segmentation_tar, fileobj=segmentation_buff)
-    step_changed(3)
-    metadata = {
-        "components": [int(x) for x in segmentation_info.chosen_components],
-        "parameters": {str(k): v for k, v in segmentation_info.segmentation_parameters.items()},
-        "shape": segmentation_info.segmentation.shape,
-    }
-    if isinstance(segmentation_info.image, Image):
-        file_path = segmentation_info.image.file_path
-    elif isinstance(segmentation_info.image, str):
-        file_path = segmentation_info.image
-    else:
-        file_path = ""
-    if file_path != "":
-        if parameters["relative_path"] and isinstance(file_data, str):
-            metadata["base_file"] = os.path.relpath(file_path, os.path.dirname(file_data))
+    try:
+        segmentation_buff = BytesIO()
+        # noinspection PyTypeChecker
+        tifffile.imwrite(segmentation_buff, segmentation_info.segmentation, compress=9)
+        segmentation_tar = get_tarinfo("segmentation.tif", segmentation_buff)
+        tar_file.addfile(segmentation_tar, fileobj=segmentation_buff)
+        step_changed(3)
+        metadata = {
+            "components": [int(x) for x in segmentation_info.chosen_components],
+            "parameters": {str(k): v for k, v in segmentation_info.segmentation_parameters.items()},
+            "shape": segmentation_info.segmentation.shape,
+        }
+        if isinstance(segmentation_info.image, Image):
+            file_path = segmentation_info.image.file_path
+        elif isinstance(segmentation_info.image, str):
+            file_path = segmentation_info.image
         else:
-            metadata["base_file"] = file_path
-    metadata_buff = BytesIO(json.dumps(metadata, cls=ProfileEncoder).encode("utf-8"))
-    metadata_tar = get_tarinfo("metadata.json", metadata_buff)
-    tar_file.addfile(metadata_tar, metadata_buff)
-    step_changed(4)
-    if isinstance(file_data, str):
-        tar_file.close()
+            file_path = ""
+        if file_path != "":
+            if parameters["relative_path"] and isinstance(file_data, str):
+                metadata["base_file"] = os.path.relpath(file_path, os.path.dirname(file_data))
+            else:
+                metadata["base_file"] = file_path
+        metadata_buff = BytesIO(json.dumps(metadata, cls=ProfileEncoder).encode("utf-8"))
+        metadata_tar = get_tarinfo("metadata.json", metadata_buff)
+        tar_file.addfile(metadata_tar, metadata_buff)
+        step_changed(4)
+    finally:
+        if isinstance(file_data, (str, Path)):
+            tar_file.close()
     step_changed(5)
 
 
-def load_stack_segmentation(file_data: str, range_changed=None, step_changed=None):
+def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=None, step_changed=None):
     if range_changed is None:
         range_changed = empty_fun
     if step_changed is None:
         step_changed = empty_fun
     range_changed(0, 4)
     tar_file = open_tar_file(file_data)[0]
-
-    if check_segmentation_type(tar_file) != SegmentationType.mask:
-        raise WrongFileTypeException()
-    files = tar_file.getnames()
-    step_changed(1)
-    if "segmentation.npy" in files:
-        segmentation_file_name = "segmentation.npy"
-        segmentation_load_fun = np.load
-    else:
-        segmentation_file_name = "segmentation.tif"
-        segmentation_load_fun = tifffile.imread
-    segmentation_buff = BytesIO()
-    segmentation_tar = tar_file.extractfile(tar_file.getmember(segmentation_file_name))
-    segmentation_buff.write(segmentation_tar.read())
-    step_changed(2)
-    segmentation_buff.seek(0)
-    segmentation = segmentation_load_fun(segmentation_buff)
-    step_changed(3)
-    metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
-    step_changed(4)
-    if isinstance(file_data, str):
-        tar_file.close()
+    try:
+        if check_segmentation_type(tar_file) != SegmentationType.mask:
+            raise WrongFileTypeException()
+        files = tar_file.getnames()
+        step_changed(1)
+        metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
+        step_changed(2)
+        if "segmentation.npy" in files:
+            segmentation_file_name = "segmentation.npy"
+            segmentation_load_fun = np.load
+        else:
+            segmentation_file_name = "segmentation.tif"
+            segmentation_load_fun = tifffile.imread
+        segmentation_buff = BytesIO()
+        segmentation_tar = tar_file.extractfile(tar_file.getmember(segmentation_file_name))
+        segmentation_buff.write(segmentation_tar.read())
+        step_changed(3)
+        segmentation_buff.seek(0)
+        segmentation = segmentation_load_fun(segmentation_buff)
+        step_changed(4)
+    finally:
+        if isinstance(file_data, (str, Path)):
+            tar_file.close()
     return segmentation, metadata
 
 
@@ -215,10 +218,14 @@ class LoadSegmentationParameters(LoadBase):
                 return SegmentationTuple(file_data, None, None, [], parameters)
 
         tar_file, _ = open_tar_file(file_data)
-        metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
-        parameters = defaultdict(
-            lambda: None, [(int(k), LoadSegmentation.fix_parameters(v)) for k, v in metadata["parameters"].items()]
-        )
+        try:
+            metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
+            parameters = defaultdict(
+                lambda: None, [(int(k), LoadSegmentation.fix_parameters(v)) for k, v in metadata["parameters"].items()]
+            )
+        finally:
+            if isinstance(file_data, (str, Path)):
+                tar_file.close()
         return SegmentationTuple(file_data, None, None, [], parameters)
 
 

@@ -47,6 +47,7 @@ from PartSegCore.mask_create import calculate_mask
 from PartSegCore.segmentation.algorithm_base import report_empty_fun, SegmentationAlgorithm
 from PartSegImage import Image
 from .parallel_backend import BatchManager
+from ...io_utils import WrongFileTypeException
 
 
 def do_calculation(file_path: str, calculation: BaseCalculation):
@@ -108,7 +109,11 @@ class CalculationProcess:
         elif operation == RootType.Project:
             projects = LoadProject.load([calculation.file_path], metadata=metadata)
         else:  # operation == RootType.Mask_project
-            projects = LoadMaskSegmentation.load([calculation.file_path], metadata=metadata)
+            try:
+                projects = LoadProject.load([calculation.file_path], metadata=metadata)
+            except (KeyError, WrongFileTypeException):
+                # TODO identify exceptions
+                projects = LoadMaskSegmentation.load([calculation.file_path], metadata=metadata)
 
         if isinstance(projects, ProjectTuple):
             projects = [projects]
@@ -307,7 +312,7 @@ class CalculationProcess:
         elif isinstance(node.operation, MaskCreate):
             self.step_mask_create(node.operation, node.children)
         elif isinstance(node.operation, Operations):
-            # backward compatybility
+            # backward compatibility
             self.iterate_over(node)
         elif isinstance(node.operation, MeasurementCalculate):
             self.step_measurement(node.operation)

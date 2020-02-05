@@ -43,7 +43,7 @@ __all__ = [
 ]
 
 
-def _tar_to_buff(tar_file, member_name):
+def _tar_to_buff(tar_file, member_name) -> BytesIO:
     tar_value = tar_file.extractfile(tar_file.getmember(member_name))
     buffer = BytesIO()
     buffer.write(tar_value.read())
@@ -52,64 +52,66 @@ def _tar_to_buff(tar_file, member_name):
 
 
 def load_project(
-    file: typing.Union[str, tarfile.TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase]
+    file: typing.Union[str, Path, tarfile.TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase]
 ) -> ProjectTuple:
     """Load project from archive"""
     tar_file, file_path = open_tar_file(file)
-    if check_segmentation_type(tar_file) != SegmentationType.analysis:
-        raise WrongFileTypeException()
-    image_buffer = BytesIO()
-    image_tar = tar_file.extractfile(tar_file.getmember("image.tif"))
-    image_buffer.write(image_tar.read())
-    image_buffer.seek(0)
-    reader = GenericImageReader()
-    image = reader.read(image_buffer, ext=".tif")
-    image.file_path = file_path
-
-    algorithm_str = tar_file.extractfile("algorithm.json").read()
-    algorithm_dict = load_metadata(algorithm_str)
-    algorithm_dict = update_algorithm_dict(algorithm_dict)
-    algorithm_dict.get("project_file_version")
     try:
-        version = parse_version(json.loads(tar_file.extractfile("metadata.json").read())["project_version_info"])
-    except KeyError:
-        version = Version("1.0")
-    if version == Version("1.0"):
-        seg_dict = np.load(_tar_to_buff(tar_file, "segmentation.npz"))
-        mask = seg_dict["mask"] if "mask" in seg_dict else None
-        segmentation, full_segmentation = seg_dict["segmentation"], seg_dict["full_segmentation"]
-    else:
-        segmentation = tifffile.imread(_tar_to_buff(tar_file, "segmentation.tif"))
-        full_segmentation = tifffile.imread(_tar_to_buff(tar_file, "full_segmentation.tif"))
-        if "mask.tif" in tar_file.getnames():
-            mask = tifffile.imread(_tar_to_buff(tar_file, "mask.tif"))
-            if np.max(mask) == 1:
-                mask = mask.astype(np.bool)
+        if check_segmentation_type(tar_file) != SegmentationType.analysis:
+            raise WrongFileTypeException()
+        image_buffer = BytesIO()
+        image_tar = tar_file.extractfile(tar_file.getmember("image.tif"))
+        image_buffer.write(image_tar.read())
+        image_buffer.seek(0)
+        reader = GenericImageReader()
+        image = reader.read(image_buffer, ext=".tif")
+        image.file_path = file_path
+
+        algorithm_str = tar_file.extractfile("algorithm.json").read()
+        algorithm_dict = load_metadata(algorithm_str)
+        algorithm_dict = update_algorithm_dict(algorithm_dict)
+        algorithm_dict.get("project_file_version")
+        try:
+            version = parse_version(json.loads(tar_file.extractfile("metadata.json").read())["project_version_info"])
+        except KeyError:
+            version = Version("1.0")
+        if version == Version("1.0"):
+            seg_dict = np.load(_tar_to_buff(tar_file, "segmentation.npz"))
+            mask = seg_dict["mask"] if "mask" in seg_dict else None
+            segmentation, full_segmentation = seg_dict["segmentation"], seg_dict["full_segmentation"]
         else:
-            mask = None
+            segmentation = tifffile.imread(_tar_to_buff(tar_file, "segmentation.tif"))
+            full_segmentation = tifffile.imread(_tar_to_buff(tar_file, "full_segmentation.tif"))
+            if "mask.tif" in tar_file.getnames():
+                mask = tifffile.imread(_tar_to_buff(tar_file, "mask.tif"))
+                if np.max(mask) == 1:
+                    mask = mask.astype(np.bool)
+            else:
+                mask = None
 
-    history = []
-    try:
-        history_buff = tar_file.extractfile(tar_file.getmember("history/history.json"))
-        history_json = load_metadata(history_buff)
-        for el in history_json:
-            history_buffer = BytesIO()
-            history_buffer.write(tar_file.extractfile(f"history/arrays_{el['index']}.npz").read())
-            history_buffer.seek(0)
-            el = update_algorithm_dict(el)
-            history.append(
-                HistoryElement(
-                    algorithm_name=el["algorithm_name"],
-                    algorithm_values=el["values"],
-                    mask_property=el["mask_property"],
-                    arrays=history_buffer,
+        history = []
+        try:
+            history_buff = tar_file.extractfile(tar_file.getmember("history/history.json"))
+            history_json = load_metadata(history_buff)
+            for el in history_json:
+                history_buffer = BytesIO()
+                history_buffer.write(tar_file.extractfile(f"history/arrays_{el['index']}.npz").read())
+                history_buffer.seek(0)
+                el = update_algorithm_dict(el)
+                history.append(
+                    HistoryElement(
+                        algorithm_name=el["algorithm_name"],
+                        algorithm_values=el["values"],
+                        mask_property=el["mask_property"],
+                        arrays=history_buffer,
+                    )
                 )
-            )
 
-    except KeyError:
-        pass
-    if isinstance(file, str):
-        tar_file.close()
+        except KeyError:
+            pass
+    finally:
+        if isinstance(file, (str, Path)):
+            tar_file.close()
     image.set_mask(mask)
     if version <= project_version_info:
         return ProjectTuple(file_path, image, segmentation, full_segmentation, mask, history, algorithm_dict)

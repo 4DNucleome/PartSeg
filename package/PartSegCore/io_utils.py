@@ -272,15 +272,15 @@ def proxy_callback(
 
 
 def open_tar_file(
-    file_data: typing.Union[str, TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase], mode="r"
+    file_data: typing.Union[str, Path, TarFile, TextIOBase, BufferedIOBase, RawIOBase, IOBase], mode="r"
 ) -> typing.Tuple[TarFile, str]:
     """Create tar file from path or buffer. If passed :py:class:`TarFile` then return it."""
     if isinstance(file_data, TarFile):
         tar_file = file_data
         file_path = ""
-    elif isinstance(file_data, str):
+    elif isinstance(file_data, (str, Path)):
         tar_file = TarFile.open(file_data, mode)
-        file_path = file_data
+        file_path = str(file_data)
     elif isinstance(file_data, (TextIOBase, BufferedIOBase, RawIOBase, IOBase)):
         tar_file = TarFile.open(fileobj=file_data, mode="r")
         file_path = ""

@@ -321,6 +321,7 @@ class CreatePlan(QWidget):
         self.segmentation_mask = MaskWidget(settings)
         self.file_mask = FileMask()
 
+        self.change_root.currentIndexChanged.connect(self.change_root_type)
         self.save_choose.currentTextChanged.connect(self.save_changed)
         self.measurements_list.currentTextChanged.connect(self.show_measurement)
         self.segment_profile.currentTextChanged.connect(self.show_segment)
@@ -457,6 +458,13 @@ class CreatePlan(QWidget):
         self.file_mask.value_changed.connect(self.mask_stack_change)
         self.mask_name.textChanged.connect(self.mask_stack_change)
         self.node_type_changed()
+
+
+    def change_root_type(self):
+        value: RootType = self.change_root.get_value()
+        self.calculation_plan.set_root_type(value)
+        self.plan.update_view()
+
 
     def change_segmentation_table(self):
         index = self.segment_stack.currentIndex()
@@ -968,12 +976,14 @@ class PlanPreview(QTreeWidget):
         if reset:
             self.clear()
             root = QTreeWidgetItem(self)
-            root.setText(0, f"Root {self.calculation_plan.execution_tree.operation}")
+            root.setText(0, f"Root {self.calculation_plan.get_root_type()}")
             self.setCurrentItem(root)
             for el in self.calculation_plan.execution_tree.children:
                 self.explore_tree(root, el, True)
             return
         self.blockSignals(True)
+        root = self.get_node([])
+        root.setText(0, f"Root {self.calculation_plan.get_root_type()}")
         for path, el, op_type in self.calculation_plan.get_changes():
             if op_type == PlanChanges.add_node:
                 node = self.get_node(path)
