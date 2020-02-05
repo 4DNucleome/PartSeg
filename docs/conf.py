@@ -31,7 +31,7 @@ release = PartSeg.__version__
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', "PartSegCore.sphinx.reference_resolve",
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', "sphinx_qt_documentation",
               'sphinx.ext.viewcode', 'sphinx.ext.graphviz', "PartSegCore.sphinx.auto_parameters"
 ]
 
@@ -59,7 +59,7 @@ html_static_path = ['_static']
 master_doc = 'index'
 
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
-                       "PyQt": ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None),
+                       "PyQt5": ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None),
                        "Numpy": ('https://docs.scipy.org/doc/numpy/', None)}
 
-qt_documentation = "Qt"
+qt_documentation = "Qt5"

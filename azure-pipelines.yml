@@ -248,7 +248,7 @@ stages:
           - bash: |
               python -m pip install -r requirements_pyinstaller.txt
               python -m pip install .
-              python -m pip install sphinx
+              python -m pip install -r docs/requirements.txt
             displayName: InstallDeps
           - bash: make -C docs html
             displayName: BuildDocs
