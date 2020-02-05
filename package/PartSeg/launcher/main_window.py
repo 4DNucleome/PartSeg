@@ -8,6 +8,7 @@ from qtpy.QtWidgets import QMainWindow, QToolButton, QGridLayout, QWidget, QProg
 from PartSeg.common_backend.load_backup import import_config
 from PartSeg.common_backend.main_window import BaseMainWindow
 from PartSeg.common_backend.base_settings import BaseSettings
+from PartSeg import MASK_NAME, SEGMENTATION_NAME
 from PartSegImage import TiffImageReader
 from PartSegData import icons_dir
 
@@ -45,12 +46,13 @@ class MainWindow(QMainWindow):
         self.analysis_button = QToolButton(self)
         self.analysis_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.analysis_button.setIcon(analysis_icon)
-        self.analysis_button.setText("Segmentation\nAnalysis")
+        # TODO use more general solution for text wrapping
+        self.analysis_button.setText(SEGMENTATION_NAME.replace(" ", "\n"))
         self.analysis_button.setIconSize(QSize(100, 100))
         self.mask_button = QToolButton(self)
         self.mask_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.mask_button.setIcon(stack_icon)
-        self.mask_button.setText("Mask\nSegmentation")
+        self.mask_button.setText(MASK_NAME.replace(" ", "\n"))
         self.mask_button.setIconSize(QSize(100, 100))
         self.analysis_button.clicked.connect(self.launch_analysis)
         self.mask_button.clicked.connect(self.launch_mask)

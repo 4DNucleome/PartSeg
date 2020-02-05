@@ -11,6 +11,8 @@ from PartSegData import font_dir
 from .custom_application import CustomApplication
 from PartSeg.common_backend.base_argparser import CustomParser
 
+from . import APP_NAME, MASK_NAME, SEGMENTATION_NAME
+
 multiprocessing.freeze_support()
 
 
@@ -68,7 +70,7 @@ def main():
         plugins.register()
         from .segmentation_analysis.main_window import MainWindow
 
-        title = "PartSeg Segmentation Analysis"
+        title = f"{APP_NAME} {SEGMENTATION_NAME}"
         if args.image:
             image = TiffImageReader.read_image(args.image, args.mask)
             MainWindow = partial(MainWindow, initial_image=image)
@@ -81,7 +83,7 @@ def main():
         plugins.register()
         from .segmentation_mask.stack_gui_main import MainWindow
 
-        title = "PartSeg Mask Segmentation"
+        title = f"{APP_NAME} {MASK_NAME}"
         if args.image:
             image = TiffImageReader.read_image(args.image)
             MainWindow = partial(MainWindow, initial_image=image)
@@ -89,7 +91,7 @@ def main():
     else:
         from .launcher.main_window import MainWindow
 
-        title = "PartSeg Launcher"
+        title = f"{APP_NAME} Launcher"
         wind = MainWindow(title=title)
 
     wind.show()
