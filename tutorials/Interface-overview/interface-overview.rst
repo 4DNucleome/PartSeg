@@ -30,6 +30,75 @@ In this section we describe main window of "ROI Analysis".
 
 Measurement
 ~~~~~~~~~~~
+Here there are described widgets for prepare measurements set and
+execute its calculation. Both are available in "Settings and Measurement" window.
+
+.. image::  images/measurement_prepare.png
+   :alt: Main Roi Analysis GUI
+
+Upper part of this widget is designed for manage existing sets.
+
+1. List of already defined measurement set.
+2. Preview of selected measurement set.
+
+Buttons below list of existing there are 4 buttons which are used to
+control saved ones.
+
+3. List of available measurement.
+4. Chosen elements to new measurement set.
+5. Select area on which measurement element should be calculated:
+
+   * **Mask** - area of mask
+   * **Segmentation** - area of segmentation
+   * **Mask without segmentation** area of mask minus area of segmentation
+
+6. If measurement should be calculate:
+
+   * **No** - For whole selected area.
+   * **Yes** - For each component of area.
+   * **Mean** - For each component of area and then mean value of its.
+
+7. Adding elements to chosen
+
+   *  **→** - Move element to right list.
+   *  **←** - Move element to left list. May be useful to create complex one.
+   *  **Ratio** - Allow to create ratio of two measurements result.
+      First select numerator then click **Ratio** then select denominator
+      and press **Ratio** again.
+   *  **Clear** - clear chosen element
+
+8. Control single elements of set:
+
+   * **↑** - Move selected element up.
+   * **↓** - Move selected element down.
+   * **Remove** - Remove selected element.
+
+
+.. image::  images/measurement_calculate.png
+   :alt: Main Roi Analysis GUI
+
+This widget ia also available as left panel of main window.
+
+1. Area to show result.
+2. Select which measurement set need to be calculated.
+3. Remove existing result and show result of new calculation.
+4. Add result of new calculation to existing ones.
+
+Other controls:
+
+*  Horizontal view - if result should be presented in rows or columns
+*  No header - remove column "Name".
+*  No units - do not show units
+*  Expand - if result of per component calculations should be show in separate
+   columns or as inline list ``[res1, res2, ...]``
+*  Add file name - add element with file name
+
+   - No
+   - Short - only file name
+   - Full - ful path to file
+
+*  Channel - on which channel calculation should be performed.
+*  Units - in which units show physical values
 
 Profile, Pipeline, Project
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
