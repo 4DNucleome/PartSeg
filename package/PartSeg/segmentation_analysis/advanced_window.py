@@ -70,7 +70,7 @@ class AdvancedSettings(QWidget):
         self.multiple_files_chk = QCheckBox("Show multiple files widget")
         self.multiple_files_chk.setChecked(self._settings.get("multiple_files", False))
         self.multiple_files_chk.stateChanged.connect(self.multiple_files_visibility)
-        self.rename_btn = QPushButton("Rename Profile")
+        self.rename_btn = QPushButton("Rename profile")
         self.rename_btn.clicked.connect(self.rename_profile)
         self.rename_btn.setDisabled(True)
         self.voxel_size_label = QLabel()
@@ -172,9 +172,13 @@ class AdvancedSettings(QWidget):
             if self.sender() == self.profile_list:
                 profile = self._settings.segmentation_profiles[text]
                 self.pipeline_list.selectionModel().clear()
+                self.delete_btn.setText("Delete profile")
+                self.rename_btn.setText("Rename profile")
             elif self.sender() == self.pipeline_list:
                 profile = self._settings.segmentation_pipelines[text]
                 self.profile_list.selectionModel().clear()
+                self.delete_btn.setText("Delete pipeline")
+                self.rename_btn.setText("Rename pipeline")
             else:
                 return
         except KeyError:
