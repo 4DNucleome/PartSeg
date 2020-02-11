@@ -1,5 +1,5 @@
 appdirs==1.4.3
-Cython==0.29.14
+Cython==0.29.15
 czifile==2019.7.2
 defusedxml==0.6.0
 h5py==2.10.0
