@@ -119,7 +119,6 @@ control saved ones.
    * **↓** - Move selected element down.
    * **Remove** - Remove selected element.
 
-
 .. image::  images/measurement_calculate.png
    :alt: View on measurement calculation widget
 
@@ -190,9 +189,38 @@ Mask Segmentation GUI
 
 Common elements
 ---------------
+In this section there are described elements which are
+common for "ROI Analysis GUI" and "Mask Segmentation GUI".
 
 Image view
 ~~~~~~~~~~
+Zoom of image can be also changed by Ctrl+Mouse scroll.
+
+.. image::  images/image_view.png
+   :alt: Image view widget.
+
+1.  Reset Zoom.
+2.  Enable zoom bay mark area.
+3.  Shifting image by mouse.
+4.  Channel view control. Only Channels with selected checkbox
+    are visible. `Color map`_ for current channel
+    can be selected when click in triangle in upper right corner
+    |channel_select|. This triangle is visible when mouse is over widget.
+5.  Mark segmentation only by borders or by masking whole area.
+6.  Set opacity of segmentation marking.
+7.  Mark mask visible.
+8.  Control which layer is visible.
+    If image contains time data, then similar
+    slider will be visible on left part of image.
+
+.. image::  images/range_control.png
+   :alt: Image view widget.
+
+1.  Set boundaries for minimum maximum brightness for given channel.
+2.  Use boundaries for presenting current channel.
+    If is checked then lock is present right to checkbox |fixed_range|.
+3.  Use gaus for presenting current channel.
+    If is checked then proper symbol is present right to checkbox |gauss|.
 
 Color control
 ~~~~~~~~~~~~~
@@ -211,6 +239,8 @@ Here we describe widget used for control this elements.
 
 Color maps
 ^^^^^^^^^^
+.. _Color map:
+
 .. image:: images/colormap_list.png
    :alt: View on list of color maps
 
@@ -307,3 +337,6 @@ For each saved
 .. |delete| image:: images/delete.png
 .. |edit| image:: images/edit.png
 .. |radio_button| image:: images/radio_button.png
+.. |channel_select| image:: images/channel_select.png
+.. |fixed_range| image:: images/fixed_range.png
+.. |gauss| image:: images/gauss.png
