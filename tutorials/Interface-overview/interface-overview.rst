@@ -23,10 +23,55 @@ In this section we describe main window of "ROI Analysis".
 .. image::  images/main_window.png
    :alt: Main Roi Analysis GUI
 
-1.  Colorbar
-2.  Two copy of Image view. Preview of data.
-    Image view is described in `Image View`_.
-3.  Algorithm parameters. Here you set parameters for segmentation.
+1.  `Multiple files widget`_ for manage multiple files.
+    Visible only if enabled in Settings and Measurements
+    (described in `Profile, Pipeline, Project`_)
+2.  Colorbar - Preview how current colors maps on brightness.
+    Presented colormap is changed by selection channel in `Image View`_.
+3.  Two copy of `Image View`_.
+    Left is for preview raw data or see freezed view on segmentation.
+4.  `Algorithm parameters`_. Here you set parameters for
+    segmentation algorithm.
+
+Above colorbar there are two controls:
+
+.. image::  images/main_window_cmp.png
+   :alt: Main Roi Analysis GUI
+
+5.  Change if left panel should contain view on image or measurement.
+6.  Copy segmentation from right view.
+    Allows precise comparison of segmentation.
+    Visible only when image is selected with control 5.
+
+.. image::  images/main_window_exec.png
+   :alt: Main Roi Analysis GUI
+
+7.  Save current pipeline in memory.
+    Name of pipeline is is set in dialog window.
+8.  Chose which pipeline should be applied to data.
+9.  Save current algorithm ands its parameters.
+10. Select profile to be applied.
+11. If segmentation should be recalculated on every parameters change,
+    or only after "Execute" click.
+12. Execute segmentation algorithm.
+
+On top of window there are also 6 buttons:
+
+*   **Open** - load data.
+*   **Save** - save data.
+*   **Settings and Measurement** - open window with:
+    Properties_, `Color control`_ and `Measurement`_.
+*   **Image adjustments** - image transformation.
+    Currently only Interpolation and swap Time and Z.
+*   **Mask manager** - Open `Mask manager`_ to create
+    mask from current segmentation.
+*   **Batch processing** - Open `Batch processing`_ window
+
+Below Algorithm parameters there are two checkbox:
+
+*   **Hide left panel** - as name. Useful for tight screen.
+*   **Synchronize view** - for synchronization both image views:
+    Zoom, layer, and X,Y position.
 
 Measurement
 ~~~~~~~~~~~
@@ -103,6 +148,8 @@ Other controls:
 
 Profile, Pipeline, Project
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _Properties:
+
 In PartSeg We define three ways for saving segmentation:
 
 *  **Profile** - It is saved parameters of one algorithm
@@ -110,7 +157,7 @@ In PartSeg We define three ways for saving segmentation:
    and mask operation
 
 Both operation are saved in application but can be managed in
-**Properies** tab of **Settings and Measurement** which is describe bellow.
+**Properties** tab of **Settings and Measurement** which is describe bellow.
 
 Third option is to save current work as project. Project contains:
 
@@ -203,8 +250,8 @@ Create labels
 After select color use **Add color** buton.
 Color order can be changed by drag and drop.
 
-Algorithm settings
-~~~~~~~~~~~~~~~~~~
+Algorithm parameters
+~~~~~~~~~~~~~~~~~~~~
 This is widget for chose algorithm and set it parameters.
 
 .. image:: images/algorithm_settings.png
