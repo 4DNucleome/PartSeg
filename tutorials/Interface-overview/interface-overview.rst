@@ -183,6 +183,55 @@ and "Rename profile".
 Batch processing
 ~~~~~~~~~~~~~~~~
 
+Prepare batch plan
+^^^^^^^^^^^^^^^^^^
+
+.. image::  images/batch_create_plan.png
+   :alt: View on Properties Tab in Settings and Measurement.
+
+1. List of already defined bath plan.
+   Above buttons allow to manage them.
+2. Preview of currently selected plan from saved one.
+3. Preview on current edited plan.
+4. Selection of root type:
+
+   * Image - only image is loaded. As input file can be used any of
+     image, ROI project, mask project
+     (each component is loaded as separated entry).
+   * Project - load whole ROI project as it is.
+   * Mask project - load image with mask. Possible entry:
+     ROI project, mask project
+
+   and adding save operation to plan.
+
+5. Selection of segmentation profile or pipeline to be add to plan.
+6. Selection of measurement set to be add to plan.
+7. Preview of already selected pipeline/profile/measurement.
+8. Mask creation widget. Mask can hev set name for past reference.
+   It has 3 states:
+
+   * Load mask from file:
+
+     |batch_mask_from_file|
+
+     + Suffix - add suffix to create file name.
+     + Replace - use substitution in file name to create mask name.
+
+   * Create mask from segmentation. This is described
+     in `Mask manager`_ in `Common elements`_
+
+     |batch_mask_from_segmentation|
+
+   * Create mask from other masks
+
+     |batch_mask_from_masks|
+
+     + Mask sum
+     + Mask intersection
+
+Execute batch
+^^^^^^^^^^^^^
+
 .. _select multiple files:
 
 Mask Segmentation GUI
@@ -401,3 +450,9 @@ For each saved
 .. |channel_select| image:: images/channel_select.png
 .. |fixed_range| image:: images/fixed_range.png
 .. |gauss| image:: images/gauss.png
+.. |batch_mask_from_file| image::  images/batch_mask_from_file.png
+   :alt: Load mask from file.
+.. |batch_mask_from_segmentation| image::  images/batch_mask_from_segmentation.png
+   :alt: Load mask from file.
+.. |batch_mask_from_masks| image::  images/batch_mask_from_masks.png
+   :alt: Load mask from file.
