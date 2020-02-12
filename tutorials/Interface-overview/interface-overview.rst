@@ -183,9 +183,70 @@ and "Rename profile".
 Batch processing
 ~~~~~~~~~~~~~~~~
 
+.. _select multiple files:
+
 Mask Segmentation GUI
 ---------------------
 
+.. image::  images/mask_window.png
+   :alt: Mask Segmentation GUI.
+
+1.  `Multiple files widget`_ for manage multiple files.
+    Visible by default. can be hide in `image tab`_.
+2.  Colorbar - Preview how current colors maps on brightness.
+    Presented colormap is changed by selection channel in `Image View`_.
+3.  `Image View`_. In this GUI control of segmentation result presentation
+    is above algorithm parameters.
+4.  `Algorithm parameters`_. Here you set parameters for
+    segmentation algorithm.
+
+.. image::  images/mask_control_view.png
+   :alt: Part above algorithm parameters.
+
+5.  Select how present segmentation result:
+
+    * Not show - disable showing, for better data preview.
+    * Show result - show whole algorithm output.
+    * Show chosen - show only components selected in widget
+      bellow algorithm segmentation
+
+6.  Segmentation component marker opacity.
+7.  Mark segmentation only by borders or by masking whole area.
+8.  If segmentation is marked by borders then set it thick.
+    Useful for big images.
+9.  Execute segmentation.
+10. Execute segmentation in background. Result will be put
+    in `Multiple files widget`_ as entry.
+11. Execute in batch mode. Execution will be done on
+    files selected in `image tab`_.
+12. Save parameters of current algorithm to json file.
+
+.. image::  images/mask_select_component.png
+   :alt: Selection which components are selected properly.
+
+13. Select all components as properly selected.
+14. Remove selection from all checkbox.
+15. Selection of components. Selection can be also
+    changed by click on component on `Image view`_.
+    When mouse is over checkbox given component is
+    marked by frame on `Image view`_.
+16. Select if chosen components should be saved over next segmentation.
+    ``TODO add example``
+17. For each component show parameters used for segmentation.
+
+
+Here there is description of image tab:
+
+.. _image tab:
+
+.. image::  images/mask_window_image.png
+   :alt: View on image tab.
+
+1. Information about image.
+2. Widget to select files for batch processing.
+   It is described in `select multiple files`_ part of
+   `Batch processing`_ from `ROI Analysis GUI`_.
+3. Control if show multiple files widget.
 
 Common elements
 ---------------
