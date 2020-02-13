@@ -45,7 +45,7 @@ from PartSegCore.analysis.measurement_calculation import MeasurementResult
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.mask_create import calculate_mask
 from PartSegCore.segmentation.algorithm_base import report_empty_fun, SegmentationAlgorithm
-from PartSegImage import Image
+from PartSegImage import Image, TiffImageReader
 from .parallel_backend import BatchManager
 from ...io_utils import WrongFileTypeException
 
@@ -160,7 +160,9 @@ class CalculationProcess:
         mask_path = operation.get_mask_path(self.calculation.file_path)
         if mask_path == "":
             raise ValueError("Empty path to mask.")
-        mask = tifffile.imread(mask_path)
+        with tifffile.TiffFile(mask_path) as mask_file:
+            mask = mask_file.asarray()
+            mask = TiffImageReader.update_array_shape(mask, mask_file.series[0].axes)[..., 0]
         mask = (mask > 0).astype(np.uint8)
         try:
             mask = self.image.fit_array_to_image(mask)[0]

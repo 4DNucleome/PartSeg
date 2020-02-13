@@ -4,10 +4,11 @@ import logging
 from functools import partial
 import os
 import multiprocessing
-from qtpy.QtGui import QFontDatabase
+
+from qtpy.QtGui import QFontDatabase, QIcon
 
 from PartSegImage import TiffImageReader
-from PartSegData import font_dir
+from PartSegData import font_dir, icons_dir
 from .custom_application import CustomApplication
 from PartSeg.common_backend.base_argparser import CustomParser
 
@@ -61,7 +62,7 @@ def main():
     # print(args)
 
     logging.basicConfig(level=logging.INFO)
-    my_app = CustomApplication(sys.argv)
+    my_app = CustomApplication(sys.argv, name="PartSeg", icon=os.path.join(icons_dir, "icon.png"))
     my_app.check_release()
     QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf"))
     if args.gui == "segmentation_analysis" or args.mf:

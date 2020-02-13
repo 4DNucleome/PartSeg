@@ -1,9 +1,7 @@
 import json
-import os
 import sys
 from urllib import request, error
 
-import PartSegData
 import packaging.version
 import sentry_sdk
 from qtpy.QtGui import QIcon
@@ -51,14 +49,14 @@ class CustomApplication(QApplication):
     :ivar warning: Pair of strings. First is set as title, second as content of :py:class:`PyQt5.QtWidgets.QMessageBox`
     """
 
-    def __init__(self, argv):
+    def __init__(self, argv, name, icon):
         super().__init__(argv)
         self.error = None
         self.warning = "", ""
         self.release_check = CheckVersionThread()
         self.release_check.finished.connect(self._check_release)
-        icon = QIcon(os.path.join(PartSegData.icons_dir, "icon.png"))
-        self.setWindowIcon(icon)
+        self.setWindowIcon(QIcon(icon))
+        self.setApplicationName(name)
 
     @Slot()
     def show_error(self):

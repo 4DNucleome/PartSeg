@@ -210,7 +210,8 @@ class CziImageReader(BaseImageReader):
             image_data, self.spacing, file_path=os.path.abspath(image_path), axes_order=self.return_order()
         )
 
-    def update_array_shape(self, array: np.ndarray, axes: str):
+    @classmethod
+    def update_array_shape(cls, array: np.ndarray, axes: str):
         if "B" in axes:
             index = axes.index("B")
             if array.shape[index] != 1:
