@@ -1,5 +1,8 @@
 # Changelog 
 
+## 0.9.7
+-   fix bug in compare mask
+
 ## 0.9.6 
 -   fix bug in loading project with mask
 -   upgrade PyInstaller version (bug  GHSA-7fcj-pq9j-wh2r) 
