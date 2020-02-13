@@ -459,12 +459,10 @@ class CreatePlan(QWidget):
         self.mask_name.textChanged.connect(self.mask_stack_change)
         self.node_type_changed()
 
-
     def change_root_type(self):
         value: RootType = self.change_root.get_value()
         self.calculation_plan.set_root_type(value)
         self.plan.update_view()
-
 
     def change_segmentation_table(self):
         index = self.segment_stack.currentIndex()

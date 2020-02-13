@@ -50,7 +50,7 @@ def mp_eq(self, other):
         and self.clip_to_mask == other.clip_to_mask
         and (self.dilate == RadiusType.NO or (self.dilate_radius == other.dilate_radius))
         and (self.fill_holes == RadiusType.NO or (self.max_holes_size == other.max_holes_size))
-        and (self.rreversed_mask == other.reversed_mask)
+        and (self.reversed_mask == other.reversed_mask)
     )
 
 
