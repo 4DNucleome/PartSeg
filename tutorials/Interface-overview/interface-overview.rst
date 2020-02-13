@@ -6,19 +6,16 @@ Graphical User Interface (GUI) overview
 :Version: $Revision: 1 $
 :Copyright: This document has been placed in the public domain.
 
-
-
 .. contents:: Table of Contents
 
-
-
-
+In this document user interface of PartSeg is described.
+As some elements are used in both `Roi Analysis` and `Mask Segmentation`
+then they are described in `Common elements`_.
 
 ROI Analysis GUI
 ----------------
 
-In this section we describe main window of "ROI Analysis".
-
+This is main interface to identify ROI and perform analysis of them.
 
 .. image::  images/main_window.png
    :alt: Main Roi Analysis GUI
@@ -75,9 +72,12 @@ Below Algorithm parameters there are two checkbox:
 
 Measurement
 ~~~~~~~~~~~
-Here there are described widgets for prepare measurements set and
-execute its calculation. Both are available in
-"Settings and Measurement" window.
+Important part of analysis data is define what should be measured
+and perform this calculation. Both utilities are available
+in "Settings and Measurement" window.
+
+Measurements settings
+^^^^^^^^^^^^^^^^^^^^^
 
 .. image::  images/measurement_prepare.png
    :alt: View on widget for prepare measurement set
@@ -119,6 +119,9 @@ control saved ones.
    * **↓** - Move selected element down.
    * **Remove** - Remove selected element.
 
+Measurements
+^^^^^^^^^^^^
+
 .. image::  images/measurement_calculate.png
    :alt: View on measurement calculation widget
 
@@ -131,19 +134,19 @@ This widget ia also available as left panel of main window.
 
 Other controls:
 
-*  Horizontal view - if result should be presented in rows or columns
-*  No header - remove column "Name".
-*  No units - do not show units
-*  Expand - if result of per component calculations should be show in separate
+*  **Horizontal view** - if result should be presented in rows or columns
+*  **No header** - remove column "Name".
+*  **No units** - do not show units
+*  **Expand** - if result of per component calculations should be show in separate
    columns or as inline list ``[res1, res2, ...]``
-*  Add file name - add element with file name
+*  **Add file name** - add element with file name
 
-   - No
-   - Short - only file name
-   - Full - ful path to file
+   - **No**
+   - **Short** - only file name
+   - **Full** - ful path to file
 
-*  Channel - on which channel calculation should be performed.
-*  Units - in which units show physical values
+*  **Channel** - on which channel calculation should be performed.
+*  **Units** - in which units show physical values
 
 Profile, Pipeline, Project
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -195,11 +198,11 @@ Prepare batch plan
 3. Preview on current edited plan.
 4. Selection of root type:
 
-   * Image - only image is loaded. As input file can be used any of
+   * **Image** - only image is loaded. As input file can be used any of
      image, ROI project, mask project
      (each component is loaded as separated entry).
-   * Project - load whole ROI project as it is.
-   * Mask project - load image with mask. Possible entry:
+   * **Project** - load whole ROI project as it is.
+   * **Mask project** - load image with mask. Possible entry:
      ROI project, mask project
 
    and adding save operation to plan.
@@ -214,8 +217,8 @@ Prepare batch plan
 
      |batch_mask_from_file|
 
-     + Suffix - add suffix to create file name.
-     + Replace - use substitution in file name to create mask name.
+     + **Suffix** - add suffix to create file name.
+     + **Replace** - use substitution in file name to create mask name.
 
    * Create mask from segmentation. This is described
      in `Mask manager`_ in `Common elements`_
@@ -226,8 +229,8 @@ Prepare batch plan
 
      |batch_mask_from_masks|
 
-     + Mask sum
-     + Mask intersection
+     + **Mask sum**
+     + **Mask intersection**
 
 Execute batch
 ^^^^^^^^^^^^^
