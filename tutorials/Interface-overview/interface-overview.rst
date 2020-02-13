@@ -231,8 +231,61 @@ Prepare batch plan
 
 Execute batch
 ^^^^^^^^^^^^^
+.. image::  images/batch_select_files.png
+   :alt: Wiew on widget for select files to proceed.
 
 .. _select multiple files:
+
+1. Text field with pattern to find files to proceed.
+   Pattern matching is in UNIX style.
+   More details in https://docs.python.org/3/library/glob.html.
+2. Buttons:
+
+   *  **Select files** - select given files.
+   *  **Select directory** - use dialog to find base
+      directory for pattern search.
+      Path to selected directory will be put in 1.
+   *  **Find all** - find all files witch match to pattern from 1.
+      It show dialog with list of found file for verification:
+
+      |batch_find_files|
+
+   *  **Remove all** - clean file list.
+   *  **Remove file** - remove selected one.
+
+3. List of already selected files.
+
+.. image::  images/batch_execute.png
+   :alt: View on Properties Tab in Settings and Measurement.
+
+4.  Select batch plan.
+5.  Path to file with saved measurement.
+    Use **Save result as** to modify.
+6.  Global progress bar. Summ of all tasks.
+7.  Progress bar for current task.
+8.  Number of workers to be used during batch.
+    Can be adjusted during runtime.
+9.  Error log. For report double click on entry.
+10. Information about tasks status.
+11. Launch batch calculation.Before it runs
+    window described bellow for check if everything is set correctly.
+
+    .. image::  images/batch_check_ok.png
+       :alt: View on Properties Tab in Settings and Measurement.
+
+    1. Default voxel size for images which has no such information in metadata.
+       Initial value is from current file from main GUI.
+    2. Set prefixes for processing data:
+
+       * Prefix for calculation relative path of processed images
+       * Prefix for save elements. Save path is `save_prefix + relative_path`
+
+    3. Settings for measurement save location and sheet
+    4. Information if PartSeg can find all needed data for each entry.
+       Bellow image show view on version with errors.
+
+   .. image::  images/batch_check_bad.png
+      :alt: View on Properties Tab in Settings and Measurement.
 
 Mask Segmentation GUI
 ---------------------
@@ -456,3 +509,4 @@ For each saved
    :alt: Load mask from file.
 .. |batch_mask_from_masks| image::  images/batch_mask_from_masks.png
    :alt: Load mask from file.
+.. |batch_find_files| image:: images/batch_find_files.png
