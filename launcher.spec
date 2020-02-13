@@ -21,14 +21,8 @@ if num == '0':
 else:
     try:
         import imagecodecs
-        hiddenimports = [
-            "imagecodecs._aec", "imagecodecs._bitshuffle", "imagecodecs._blosc", "imagecodecs._brotli",
-            "imagecodecs._bz2", "imagecodecs._gif", "imagecodecs._imcd", "imagecodecs._jpeg12", "imagecodecs._jpeg2k",
-            "imagecodecs._jpeg8", "imagecodecs._jpegls", "imagecodecs._jpegsof3", "imagecodecs._jpegxl",
-            "imagecodecs._jpegxr", "imagecodecs._lz4", "imagecodecs._lzf", "imagecodecs._lzma", "imagecodecs._png",
-            "imagecodecs._shared", "imagecodecs._snappy", "imagecodecs._szip", "imagecodecs._template",
-            "imagecodecs._tiff", "imagecodecs._webp", "imagecodecs._zfp", "imagecodecs._zlib", "imagecodecs._zopfli",
-            "imagecodecs._zstd",]
+        hiddenimports = ["imagecodecs._" + x for x in imagecodecs._extensions()] + ["imagecodecs._shared"]
+        print(hiddenimports)
     except ImportError:
         hiddenimports = ["imagecodecs_lite._imagecodecs_lite"]
 
