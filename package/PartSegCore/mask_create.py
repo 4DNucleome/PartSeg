@@ -41,7 +41,8 @@ class MaskProperty(BaseSerializableClass):
         )
 
 
-def mp_eq(self, other):
+def mp_eq(self: MaskProperty, other: MaskProperty):
+    """Compare two :class:`MaskProperty`"""
     return (
         self.__class__ == other.__class__
         and self.dilate == other.dilate
@@ -101,7 +102,7 @@ def calculate_mask(
     return mask
 
 
-def cut_components(
+def _cut_components(
     mask: np.ndarray, image: np.ndarray, borders: int = 0
 ) -> typing.Iterator[typing.Tuple[np.ndarray, typing.List[slice], int]]:
     sizes = np.bincount(mask.flat)
@@ -131,7 +132,7 @@ def _fill_holes(mask_description: MaskProperty, mask: np.ndarray) -> np.ndarray:
         border = 1
         res_slice = tuple([slice(border, -border) for _ in range(mask.ndim)])
         mask_description_copy = mask_description.replace_(save_components=False)
-        for component, slice_arr, cmp_num in cut_components(mask, mask, border):
+        for component, slice_arr, cmp_num in _cut_components(mask, mask, border):
             new_component = _fill_holes(mask_description_copy, component)
             new_component = new_component[res_slice]
             mask[slice_arr][new_component > 0] = cmp_num
@@ -169,7 +170,7 @@ def fill_holes_in_mask(mask: np.ndarray, volume: int) -> np.ndarray:
     if volume > 0:
         sizes = np.bincount(component_mask.flat)
         for i, v in enumerate(sizes[1:], 1):
-            if v < volume and i < components_num + 1:
+            if v <= volume and i < components_num + 1:
                 component_mask[component_mask == i] = 0
     else:
         component_mask[component_mask <= components_num] = 0
