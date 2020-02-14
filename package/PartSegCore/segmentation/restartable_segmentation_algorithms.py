@@ -392,7 +392,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
                 break
         else:
             raise ValueError("No minimum size field")
-        fields[index] = AlgorithmProperty("minimum_size", "Minimum core size (px)", 8000, (0, 10 ** 6), 1000)
+        fields[index] = AlgorithmProperty("minimum_size", "Minimum core\nsize (px)", 8000, (0, 10 ** 6), 1000)
         return fields
 
     def get_info_text(self):

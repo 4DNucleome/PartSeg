@@ -272,9 +272,13 @@ class FormWidget(QWidget):
                         pass
                 el.change_fun.connect(any_arguments(self.value_changed.emit))
         self.setLayout(layout)
+        self.value_changed.connect(self.update_size)
 
     def has_elements(self):
         return len(self.widgets_dict) > 0
+
+    def update_size(self):
+        self.setMinimumHeight(self.layout().minimumSize().height())
 
     def get_values(self):
         return dict(((name, el.get_value()) for name, el in self.widgets_dict.items()))
@@ -436,7 +440,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
         start_values = settings.get(f"algorithm_widget_state.{name}", dict())
         self.form_widget = FormWidget(algorithm.get_fields(), start_values=start_values)
         self.form_widget.value_changed.connect(self.values_changed.emit)
-        self.form_widget.setMinimumHeight(1500)
+        # self.form_widget.setMinimumHeight(1500)
         self.setWidget(self.form_widget)
         value_dict = self.settings.get(f"algorithms.{self.name}", {})
         self.set_values(value_dict)
