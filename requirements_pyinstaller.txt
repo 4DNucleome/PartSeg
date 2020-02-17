@@ -19,6 +19,6 @@ sentry-sdk==0.14.1
 SimpleITK==1.2.4
 six==1.14.0
 sympy==1.5.1
-tifffile==2019.7.26.2
+tifffile==2020.2.16
 xlrd==1.2.0
 
