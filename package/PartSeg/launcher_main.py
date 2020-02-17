@@ -48,11 +48,11 @@ def main():
         "--multiprocessing-fork", dest="mf", action="store_true", help=argparse.SUPPRESS
     )  # Windows bug fix
     sp = parser.add_subparsers()
-    sp_a = sp.add_parser("segmentation_analysis", help="Starts GUI for segmentation analysis")
-    sp_s = sp.add_parser("segmentation", help="Starts GUI for segmentation")
+    sp_a = sp.add_parser("roi_analysis", help="Starts GUI for segmentation analysis")
+    sp_s = sp.add_parser("mask_segmentation", help="Starts GUI for segmentation")
     parser.set_defaults(gui="launcher")
-    sp_a.set_defaults(gui="segmentation_analysis")
-    sp_s.set_defaults(gui="segmentation")
+    sp_a.set_defaults(gui="roi_analysis")
+    sp_s.set_defaults(gui="mask_segmentation")
     sp_a.add_argument("image", nargs="?", help="image to read on begin", default="")
     sp_a.add_argument("mask", nargs="?", help="mask to read on begin", default=None)
     sp_a.add_argument("--batch", action="store_true", help=argparse.SUPPRESS)
@@ -65,7 +65,7 @@ def main():
     my_app = CustomApplication(sys.argv, name="PartSeg", icon=os.path.join(icons_dir, "icon.png"))
     my_app.check_release()
     QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf"))
-    if args.gui == "segmentation_analysis" or args.mf:
+    if args.gui == "roi_analysis" or args.mf:
         from . import plugins
 
         plugins.register()
@@ -78,7 +78,7 @@ def main():
         wind = MainWindow(title=title)
         if args.batch:
             wind.main_menu.batch_window()
-    elif args.gui == "segmentation":
+    elif args.gui == "mask_segmentation":
         from . import plugins
 
         plugins.register()

@@ -60,16 +60,27 @@ a = Analysis(['launch_partseg.py'],
              noarchive=False)
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
+
+exe_args = {
+    "exclude_binaries": True,
+    "name": 'PartSeg_exec',
+    "debug": False,
+    "bootloader_ignore_signals": False,
+    "strip": False,
+    "upx": True,
+    "console": True
+}
+
+if platform.system() == "Darwin":
+    exe_args["icon"] = os.path.join(PartSegData.__init__.icons_dir, "icon.icns")
+elif platform.system() == "Windows":
+    exe_args["icon"] = os.path.join(PartSegData.__init__.icons_dir, "icon.ico")
+
 exe = EXE(pyz,
           a.scripts,
           [],
-          exclude_binaries=True,
-          name='PartSeg_exec',
-          debug=False,
-          bootloader_ignore_signals=False,
-          strip=False,
-          upx=True,
-          console=True)
+          **exe_args
+          )
 
 if platform.system() == "Darwin":
     app = BUNDLE(exe,
