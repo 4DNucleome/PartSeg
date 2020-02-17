@@ -9,6 +9,7 @@
   * algorithm settings 
   * image view
   * mask manager 
+  * multiple files widget
   
 4.   Color control
 5.   Measurement detailed description
@@ -16,11 +17,16 @@
 7.   Batch 
 
 
-## Analysis GUI
+## ROI Analysis GUI
 
-This is main ui for this application
+In this section we describe main window of "ROI Analysis".
 
-![manin window](images/main_window.png)
+
+![main window](images/main_window.png)
+
+1.   Colorbar
+2.   Two copy of Image view. Preview of data. Image view is described below. 
+3.   Algorithm parameters. Here you set parameters for segmentation.   
 
 ### Color Control
 
