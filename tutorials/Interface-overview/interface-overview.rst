@@ -12,6 +12,18 @@ In this document user interface of PartSeg is described.
 As some elements are used in both `Roi Analysis` and `Mask Segmentation`
 then they are described in `Common elements`_.
 
+.. image:: images/launcher.png
+   :alt: Selection of program to be launched.
+
+If user would like to run selected program without
+choose window user may create shortcut with arguments.
+
+* ROI Analysis: ``roi_analysis``
+* Mask Segmentation: ``mask_segmentation``
+
+.. image:: images/shortcut.png
+   :alt: Example of shortcut to specified subprogram
+
 ROI Analysis GUI
 ----------------
 
@@ -20,22 +32,24 @@ This is main interface to identify ROI and perform analysis of them.
 .. image::  images/main_window.png
    :alt: Main Roi Analysis GUI
 
-1.  `Multiple files widget`_ for manage multiple files.
+1.  `Multiple files widget`_ for work with multiple files without
+    loading from disc.
     Visible only if enabled in Settings and Measurements
     (described in `Profile, Pipeline, Project`_)
 2.  Colorbar - Preview how current colors maps on brightness.
     Presented colormap is changed by selection channel in `Image View`_.
-3.  Two copy of `Image View`_.
-    Left is for preview raw data or see freezed view on segmentation.
-4.  `Algorithm parameters`_. Here you set parameters for
-    segmentation algorithm.
+3.  Two copy of `Image View`_. Main panel is right.
+    Left panel can be used to preview raw data, selected segmentation,
+    or measurement.
+4.  `Algorithm parameters`_. Entry for select segmentation algorithm and
+    set it parameters.
 
 Above colorbar there are two controls:
 
 .. image::  images/main_window_cmp.png
    :alt: Main Roi Analysis GUI
 
-5.  Change if left panel should contain view on image or measurement.
+5.  Control if left panel should contain view on image or measurement.
 6.  Copy segmentation from right view.
     Allows precise comparison of segmentation.
     Visible only when image is selected with control 5.
@@ -44,7 +58,7 @@ Above colorbar there are two controls:
    :alt: Main Roi Analysis GUI
 
 7.  Save current pipeline in memory.
-    Name of pipeline is is set in dialog window.
+    Name of pipeline is set in dialog window.
 8.  Chose which pipeline should be applied to data.
 9.  Save current algorithm ands its parameters.
 10. Select profile to be applied.
@@ -59,7 +73,7 @@ On top of window there are also 6 buttons:
 *   **Settings and Measurement** - open window with:
     Properties_, `Color control`_ and `Measurement`_.
 *   **Image adjustments** - image transformation.
-    Currently only Interpolation and swap Time and Z.
+    Currently only Interpolation and swap Time and Z-stack.
 *   **Mask manager** - Open `Mask manager`_ to create
     mask from current segmentation.
 *   **Batch processing** - Open `Batch processing`_ window
@@ -94,9 +108,9 @@ control saved ones.
 4. Chosen elements to new measurement set.
 5. Select area on which measurement element should be calculated:
 
-   * **Mask** - area of mask
-   * **Segmentation** - area of segmentation
-   * **Mask without segmentation** area of mask minus area of segmentation
+   * **Mask** - area of mask.
+   * **Segmentation** - area of segmentation.
+   * **Mask without segmentation** area of mask minus area of segmentation.
 
 6. If measurement should be calculate:
 
@@ -123,7 +137,7 @@ Measurements
 ^^^^^^^^^^^^
 
 .. image::  images/measurement_calculate.png
-   :alt: View on measurement calculation widget
+   :alt: View on measurement calculation widget.
 
 This widget ia also available as left panel of main window.
 
@@ -134,29 +148,29 @@ This widget ia also available as left panel of main window.
 
 Other controls:
 
-*  **Horizontal view** - if result should be presented in rows or columns
+*  **Horizontal view** - if result should be presented in rows or columns.
 *  **No header** - remove column "Name".
-*  **No units** - do not show units
-*  **Expand** - if result of per component calculations should be show in separate
-   columns or as inline list ``[res1, res2, ...]``
-*  **Add file name** - add element with file name
+*  **No units** - do not show units.
+*  **Expand** - if result of per component calculations should.
+   be show in separate columns or as inline list ``[res1, res2, ...]``.
+*  **Add file name** - select if add element with file name:
 
-   - **No**
-   - **Short** - only file name
-   - **Full** - ful path to file
+   - **No** - do not add.
+   - **Short** - add only only file name.
+   - **Full** - add full path to file.
 
 *  **Channel** - on which channel calculation should be performed.
-*  **Units** - in which units show physical values
+*  **Units** - in which units show physical values.
 
 Profile, Pipeline, Project
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. _Properties:
 
-In PartSeg We define three ways for saving segmentation:
+In PartSeg there are defined three ways for saving segmentation.
+The first two are:
 
-*  **Profile** - It is saved parameters of one algorithm
+*  **Profile** - It is saved parameters of one algorithm.
 *  **Pipeline** - It is saved minimal sequence of segmentation
-   and mask operation
+   and mask operation.
 
 Both operation are saved in application but can be managed in
 **Properties** tab of **Settings and Measurement** which is describe bellow.
@@ -168,6 +182,9 @@ Third option is to save current work as project. Project contains:
 *  Whole pipeline needed to create current segmentation.
 *  All masks and segmentation created in middle steps.
 
+Properties
+^^^^^^^^^^
+
 .. image::  images/segmentation_advanced.png
    :alt: View on Properties Tab in Settings and Measurement.
 
@@ -176,7 +193,7 @@ Third option is to save current work as project. Project contains:
 3.  If show multiple files widget in main window.
 4.  List of segmentation profiles.
 5.  List of segmentation pipelines.
-6.  Preview of selected Profile/pipeline
+6.  Preview of selected Profile/pipeline.
 
 Additionally, bellow preview there are 6 buttons.
 We think that they are self explanatory with addition that,
@@ -196,16 +213,20 @@ Prepare batch plan
    Above buttons allow to manage them.
 2. Preview of currently selected plan from saved one.
 3. Preview on current edited plan.
-4. Selection of root type:
+4. Add saving operation to plan and selection of root type:
 
-   * **Image** - only image is loaded. As input file can be used any of
-     image, ROI project, mask project
-     (each component is loaded as separated entry).
-   * **Project** - load whole ROI project as it is.
+   * **Image** - only image is loaded. As input file can be used any of:
+
+     + image
+     + ROI project
+     + mask project
+
+     (each component is loaded as separated entry),
+   * **Project** - load whole ROI project as it is,
    * **Mask project** - load image with mask. Possible entry:
-     ROI project, mask project
 
-   and adding save operation to plan.
+     + ROI project
+     + mask project
 
 5. Selection of segmentation profile or pipeline to be add to plan.
 6. Selection of measurement set to be add to plan.
@@ -310,9 +331,9 @@ Mask Segmentation GUI
 
 5.  Select how present segmentation result:
 
-    * Not show - disable showing, for better data preview.
-    * Show result - show whole algorithm output.
-    * Show chosen - show only components selected in widget
+    * **Not show** - disable showing, for better data preview.
+    * **Show result** - show whole algorithm output.
+    * **Show chosen** - show only components selected in widget
       bellow algorithm segmentation
 
 6.  Segmentation component marker opacity.
