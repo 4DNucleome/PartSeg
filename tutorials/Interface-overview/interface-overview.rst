@@ -217,16 +217,16 @@ Prepare batch plan
 
    * **Image** - only image is loaded. As input file can be used any of:
 
-     + image
-     + ROI project
-     + mask project
+     + image,
+     + ROI project,
+     + mask project.
 
      (each component is loaded as separated entry),
-   * **Project** - load whole ROI project as it is,
+   * **Project** - load whole ROI project as it is.
    * **Mask project** - load image with mask. Possible entry:
 
-     + ROI project
-     + mask project
+     + ROI project,
+     + mask project.
 
 5. Selection of segmentation profile or pipeline to be add to plan.
 6. Selection of measurement set to be add to plan.
@@ -242,11 +242,11 @@ Prepare batch plan
      + **Replace** - use substitution in file name to create mask name.
 
    * Create mask from segmentation. This is described
-     in `Mask manager`_ in `Common elements`_
+     in `Mask manager`_ in `Common elements`_.
 
      |batch_mask_from_segmentation|
 
-   * Create mask from other masks
+   * Create mask from other masks:
 
      |batch_mask_from_masks|
 
@@ -274,7 +274,7 @@ Execute batch
 
       |batch_find_files|
 
-   *  **Remove all** - clean file list.
+   *  **Remove all** - clean file list,
    *  **Remove file** - remove selected one.
 
 3. List of already selected files.
@@ -291,7 +291,7 @@ Execute batch
     Can be adjusted during runtime.
 9.  Error log. For report double click on entry.
 10. Information about tasks status.
-11. Launch batch calculation.Before it runs
+11. Launch batch calculation. Before it runs
     window described bellow for check if everything is set correctly.
 
     .. image::  images/batch_check_ok.png
