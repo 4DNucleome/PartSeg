@@ -302,10 +302,10 @@ class CreatePlan(QWidget):
         self.expected_node_type = None
         self.save_constructor = None
 
-        self.chose_profile_btn = QPushButton("Segment Profile")
+        self.chose_profile_btn = QPushButton("Add Profile")
         self.get_big_btn = QPushButton("Leave the biggest")
         self.get_big_btn.hide()
-        self.add_new_segmentation_btn = QPushButton("Add new segmentation")
+        self.add_new_segmentation_btn = QPushButton("Add new profile")
         self.get_big_btn.setDisabled(True)
         self.add_new_segmentation_btn.setDisabled(True)
         self.measurements_list = QListWidget(self)
@@ -467,7 +467,10 @@ class CreatePlan(QWidget):
     def change_segmentation_table(self):
         index = self.segment_stack.currentIndex()
         text = self.segment_stack.tabText(index)
-        self.chose_profile_btn.setText("Segement " + text)
+        if self.update_element_chk.isChecked():
+            self.chose_profile_btn.setText("Replace " + text)
+        else:
+            self.chose_profile_btn.setText("Add " + text)
         self.segment_profile.setCurrentItem(None)
         self.pipeline_profile.setCurrentItem(None)
 
@@ -506,12 +509,12 @@ class CreatePlan(QWidget):
 
     def update_names(self):
         if self.update_element_chk.isChecked():
-            self.chose_profile_btn.setText("Replace Segment Profile")
-            self.add_calculation_btn.setText("Replace measurement calculation")
+            self.chose_profile_btn.setText("Replace Profile")
+            self.add_calculation_btn.setText("Replace set of measurements")
             self.generate_mask_btn.setText("Replace mask")
         else:
-            self.chose_profile_btn.setText("Segment Profile")
-            self.add_calculation_btn.setText("Add measurement calculation")
+            self.chose_profile_btn.setText("Add Profile")
+            self.add_calculation_btn.setText("Add set of measurements")
             self.generate_mask_btn.setText("Generate mask")
 
     def node_type_changed(self):
