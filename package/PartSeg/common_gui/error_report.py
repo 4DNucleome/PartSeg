@@ -23,6 +23,7 @@ from sentry_sdk.utils import exc_info_from_error, event_from_exception
 
 from PartSegCore import state_store
 import sentry_sdk
+from packaging.version import parse as pares_version
 
 from PartSeg import __version__
 
@@ -94,6 +95,8 @@ class ErrorDialog(QDialog):
         if not state_store.show_error_dialog:
             sys.__excepthook__(type(self.exception), self.exception, self.exception.__traceback__)
             return False
+        if pares_version(__version__).is_prerelease or pares_version(__version__).is_devrelease:
+            sentry_sdk.capture_exception(self.exception)
         super().exec_()
 
     def send_information(self):
@@ -153,6 +156,8 @@ class ExceptionList(QListWidget):
         Add exception to list
         """
         ExceptionListItem(exc, self)
+        if pares_version(__version__).is_prerelease or pares_version(__version__).is_devrelease:
+            sentry_sdk.capture_exception(exc)
 
     @staticmethod
     def item_double_clicked(el: QListWidgetItem):
