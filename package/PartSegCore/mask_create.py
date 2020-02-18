@@ -116,7 +116,7 @@ def _cut_components(
             if borders > 0:
                 res = np.zeros(new_size, dtype=image.dtype)
                 res_cut = tuple([slice(borders, x - borders) for x in res.shape])
-                tmp_res = image[new_cut]
+                tmp_res = np.copy(image[new_cut])
                 tmp_res[mask[new_cut] != i] = 0
                 res[res_cut] = tmp_res
             else:

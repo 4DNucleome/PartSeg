@@ -362,14 +362,15 @@ class MeasurementProfile(object):
                         raise ProhibitedDivision("This division is prohibited")
                     if area_set == {AreaType.Segmentation, AreaType.Mask}:
                         res = []
+                        # TODO Test this part of code
                         for val, num in zip(left_res, segmentation_mask_map.segmentation_components):
                             div_vals = segmentation_mask_map.components_translation[num]
                             if len(div_vals) != 1:
                                 raise ProhibitedDivision("Cannot calculate when object do not belongs to one mask area")
                             if left_area == AreaType.Segmentation:
-                                res.append(val / div_vals[0])
+                                res.append(val / right_res[div_vals[0] - 1])
                             else:
-                                res.append(div_vals[0] / val)
+                                res.append(right_res[div_vals[0] - 1] / val)
                         return np.array(res), left_unit / right_unit, AreaType.Segmentation
                     left_area = AreaType.Mask_without_segmentation
 
