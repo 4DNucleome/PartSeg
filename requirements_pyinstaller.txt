@@ -4,7 +4,7 @@ czifile==2019.7.2
 defusedxml==0.6.0
 h5py==2.10.0
 imagecodecs-lite==2019.12.3
-imagecodecs==2020.1.31
+imagecodecs==2020.2.18
 numpy==1.18.1
 oiffile==2020.1.18
 openpyxl==3.0.3  # rq.filter: !=3.0.2
