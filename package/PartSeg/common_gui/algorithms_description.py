@@ -421,8 +421,6 @@ class AbstractAlgorithmSettingsWidget(with_metaclass(ABCMeta, object)):
 class BaseAlgorithmSettingsWidget(QScrollArea):
     values_changed = Signal()
     algorithm_thread: SegmentationThread
-    gauss_radius_name = "gauss_radius"
-    use_gauss_name = "use_gauss"
 
     def __init__(self, settings: BaseSettings, name, algorithm: typing.Type[SegmentationAlgorithm]):
         """

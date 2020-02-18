@@ -7,6 +7,7 @@ from qtpy.QtGui import QImage
 from PartSeg.common_gui.channel_control import ColorComboBox, ColorComboBoxGroup, ChannelProperty
 from PartSeg.common_gui.stack_image_view import ImageView, ImageCanvas
 from PartSeg.common_backend.base_settings import ViewSettings, ColormapDict
+from PartSegCore.image_operations import NoiseFilterType
 from PartSegImage import TiffImageReader
 from PartSegCore.color_image import color_image_fun
 from PartSegCore.color_image.base_colors import starting_colors
@@ -113,7 +114,12 @@ class TestColorComboBoxGroup:
         with qtbot.waitSignal(box.coloring_update), qtbot.waitSignal(
             box.change_channel, check_params_cb=check_parameters
         ):
-            ch_property.use_gauss.setChecked(True)
+            ch_property.use_filter.set_value(NoiseFilterType.Gauss)
+
+        with qtbot.waitSignal(box.coloring_update), qtbot.waitSignal(
+            box.change_channel, check_params_cb=check_parameters
+        ):
+            ch_property.use_filter.set_value(NoiseFilterType.Median)
 
         ch_property.gauss_radius.setValue(0.5)
         with qtbot.waitSignal(box.coloring_update), qtbot.waitSignal(
@@ -124,7 +130,7 @@ class TestColorComboBoxGroup:
         with qtbot.waitSignal(box.coloring_update), qtbot.waitSignal(
             box.change_channel, check_params_cb=check_parameters
         ):
-            ch_property.use_gauss.setChecked(False)
+            ch_property.use_filter.set_value(NoiseFilterType.No)
 
         with qtbot.assert_not_emitted(box.coloring_update), qtbot.assert_not_emitted(box.change_channel):
             ch_property.gauss_radius.setValue(0.5)
@@ -191,7 +197,7 @@ class TestColorComboBoxGroup:
         with qtbot.waitSignal(image_view.channel_control.coloring_update), qtbot.waitSignal(
             image_view.channel_control.change_channel, check_params_cb=check_parameters
         ):
-            ch_property.use_gauss.setChecked(True)
+            ch_property.use_filter.set_value(NoiseFilterType.Gauss)
         image4 = image_canvas.image
         assert np.any(image1 != image4)
         assert np.any(image2 != image4)

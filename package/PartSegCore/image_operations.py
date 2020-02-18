@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Union, List, Iterable
 
 import numpy as np
 import SimpleITK as sitk
@@ -19,7 +20,17 @@ class RadiusType(Enum):
         return self.name
 
 
+class NoiseFilterType(Enum):
+    No = 0
+    Gauss = 1
+    Median = 2
+
+    def __str__(self):
+        return self.name
+
+
 enum_register.register_class(RadiusType)
+enum_register.register_class(NoiseFilterType)
 
 
 def _generic_image_operation(image, radius, fun, layer):
@@ -40,31 +51,33 @@ def _generic_image_operation(image, radius, fun, layer):
 
 def gaussian(image: np.ndarray, radius: float, layer=True):
     """
-    Gaussian blur of image
+    Gaussian blur of image.
 
-    :param image: image to apply gaussian filter
-    :param radius: radius for gaussian kernel
-    :param layer: if operation should be run on each layer separately
+    :param np.ndarray image: image to apply gaussian filter
+    :param float radius: radius for gaussian kernel
+    :param bool layer: if operation should be run on each layer separately
     :return:
     """
     return _generic_image_operation(image, radius, sitk.DiscreteGaussian, layer)
 
 
-def median(image, radius, layer=True):
+def median(image: np.ndarray, radius: Union[int, List[int]], layer=True):
     """
-    Median blur of image
+    Median blur of image.
 
-    :param image: image to apply median filter
-    :param radius: radius for median kernel
-    :param layer: if operation should be run on each layer separately
+    :param np.ndarray image: image to apply median filter
+    :param float radius: radius for median kernel
+    :param bool layer: if operation should be run on each layer separately
     :return:
     """
+    if not isinstance(radius, Iterable):
+        radius = [radius] * image.ndim
     return _generic_image_operation(image, radius, sitk.Median, layer)
 
 
 def dilate(image, radius, layer=True):
     """
-    Dilate of image
+    Dilate of image.
 
     :param image: image to apply dilation
     :param radius: dilation radius
@@ -72,6 +85,24 @@ def dilate(image, radius, layer=True):
     :return:
     """
     return _generic_image_operation(image, radius, sitk.GrayscaleDilate, layer)
+
+
+def apply_filter(filter_type, image, radius, layer=True) -> np.ndarray:
+    """
+    Apply operation selected by filter type to image.
+
+    :param NoiseFilterType filter_type:
+    :param np.ndarray image:
+    :param float radius:
+    :param bool layer:
+    :return: image after operation
+    :rtype: np.ndarray
+    """
+    if filter_type == NoiseFilterType.Gauss:
+        return gaussian(image, radius, layer)
+    elif filter_type == NoiseFilterType.Median:
+        return median(image, int(radius), layer)
+    return image
 
 
 def erode(image, radius, layer=True):

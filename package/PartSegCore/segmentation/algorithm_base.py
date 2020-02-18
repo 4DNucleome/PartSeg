@@ -89,13 +89,6 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
             raise ValueError("This algorithm do not support time data")
         return channel[0]
 
-    def get_gauss(self, gauss_type: RadiusType, gauss_radius: float):
-        if gauss_type == RadiusType.NO:
-            return self.channel
-        gauss_radius = calculate_operation_radius(gauss_radius, self.image.spacing, gauss_type)
-        layer = gauss_type == RadiusType.R2D
-        return gaussian(self.channel, gauss_radius, layer=layer)
-
     def set_image(self, image):
         self.image = image
         self.channel = None

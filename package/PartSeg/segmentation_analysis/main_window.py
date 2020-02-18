@@ -83,7 +83,7 @@ class Options(QWidget):
         self.choose_pipe.addItems(list(self._settings.segmentation_pipelines.keys()))
         self.choose_pipe.currentTextChanged.connect(self.choose_pipeline)
         self.choose_pipe.setToolTip("Execute chosen pipeline")
-        self.save_profile_btn = QPushButton("Save segmentation profile")
+        self.save_profile_btn = QPushButton("Save profile")
         self.save_profile_btn.setToolTip("Save values from current view")
         self.save_profile_btn.clicked.connect(self.save_profile)
         self.choose_profile = QComboBox()

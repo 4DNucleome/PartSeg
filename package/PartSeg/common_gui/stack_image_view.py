@@ -28,7 +28,7 @@ from qtpy.QtWidgets import (
 
 from PartSeg.common_gui.numpy_qimage import NumpyQImage
 from PartSegCore.class_generator import enum_register
-from PartSegCore.image_operations import gaussian
+from PartSegCore.image_operations import apply_filter, NoiseFilterType
 from PartSegCore.color_image import color_image_fun, add_labels
 from PartSegCore.color_image.color_image_base import color_maps
 from PartSegCore.colors import default_colors
@@ -478,9 +478,9 @@ class ImageView(QWidget):
         for i, p in enumerate(self.channel_control.get_limits()):
             if p is not None:
                 borders[i] = p
-        for i, (use, radius) in enumerate(self.channel_control.get_gauss()):
-            if use and color_list[i] is not None and radius > 0:
-                img[..., i] = gaussian(img[..., i], radius)
+        for i, (use, radius) in enumerate(self.channel_control.get_filter()):
+            if use != NoiseFilterType.No and color_list[i] is not None and radius > 0:
+                img[..., i] = apply_filter(use, img[..., i], radius)
         im = color_image_fun(img, color_list, borders)
         self.add_labels(im)
         self.add_mask(im)

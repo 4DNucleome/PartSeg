@@ -384,12 +384,6 @@ class AutoThresholdAlgorithm(BaseSingleThresholdAlgorithm):
         super().__init__()
         self.suggested_size = 0
 
-    def get_gauss(self, gauss_type, gauss_radius):
-        if gauss_type == RadiusType.NO:
-            return np.copy(self.channel)
-        else:
-            return super().get_gauss(gauss_type, gauss_radius)
-
     def _threshold_image(self, image: np.ndarray) -> np.ndarray:
         sitk_image = sitk.GetImageFromArray(image)
         sitk_mask = sitk.ThresholdMaximumConnectedComponents(sitk_image, self.suggested_size)
