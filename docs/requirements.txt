@@ -1,2 +1,2 @@
 sphinx-autodoc-annotation==1.0.post1
-sphinx-qt-documentation==0.1
+sphinx-qt-documentation==0.2
