@@ -6,23 +6,86 @@ Graphical User Interface (GUI) overview
 :Version: $Revision: 1 $
 :Copyright: This document has been placed in the public domain.
 
-.. contents:: Table of Contents
+# .. contents:: Table of Contents
 
 In this document user interface of PartSeg is described.
-As some elements are used in both `Roi Analysis` and `Mask Segmentation`
-then they are described in `Common elements`_.
+As some elements are used in both modules `Roi Analysis` and
+`Mask Segmentation` they are described in `Common elements`_.
 
 .. image:: images/launcher.png
    :alt: Selection of program to be launched.
 
-If user would like to run selected program without
-choose window user may create shortcut with arguments.
+Mask Segmentation GUI
+---------------------
 
-* ROI Analysis: ``roi_analysis``
-* Mask Segmentation: ``mask_segmentation``
+TODO describe First line of buttons
 
-.. image:: images/shortcut.png
-   :alt: Example of shortcut to specified subprogram
+.. image::  images/mask_window.png
+   :alt: Mask Segmentation GUI.
+
+1.  `Multiple files panel`_ is used to manage multiple files.
+    This panel is visible by default and can be can be hidden in `image tab`_.
+2.  Colorbar - Shows relation of currently used color map and
+    brightness values for selected channel.
+    Selection of colormap is described in `Image View`_.
+3.  `Image View`_. Shows preview of current file and its segmentation result.
+4.  `Algorithm parameters`_. This panel is used to set parameters of
+    segmentation.
+
+.. image::  images/mask_control_view.png
+   :alt: Part above algorithm parameters.
+
+5.  Select how results of segmentation are presented:
+
+    * **Don`t show** - shows input data.
+    * **Show result** - shows result of segmentation.
+    * **Show selected** - shows only components selected
+      at the bottom of segmentation panel (see point 15)
+
+6.  Segmentation marker opacity.
+7.  Controls display of segmentation result.
+    Shows only borders or whole area of segmentation components.
+8.  Controls thickness of displayed segmentation borders for components.
+    Used only if 7 is selected.
+9.  Executes segmentation with selected parameters.
+10. Executes segmentation in background.
+    Set segmentations are executed one by one in background.
+    End results are available in
+    `Multiple files panel`_ as ``state`` entry.
+11. Executes segmentation with set parameters in batch mode.
+    Execution will be done on
+    files selected in `image tab`_.
+    Results will be saved on disc as ``seg`` files.
+12. Saves currently selected parameters as json file.
+    This file can be imported using **Load Segmentation**
+    with **Files of type** `Segmentation parameters`
+
+.. image::  images/mask_select_component.png
+   :alt: Selection which components are selected properly.
+
+13. Select all components as properly selected.
+14. Remove selection from all checkbox.
+15. Selection of components. Selection can be also
+    changed by click on component on `Image view`_.
+    When mouse is over checkbox given component is
+    marked by frame on `Image view`_.
+16. Select if chosen components should be saved over next segmentation.
+    ``TODO add example``
+17. For each component show parameters used for segmentation.
+
+
+Here there is description of image tab:
+
+.. _image tab:
+
+.. image::  images/mask_window_image.png
+   :alt: View on image tab.
+
+1. Information about image.
+2. Widget to select files for batch processing.
+   It is described in `select multiple files`_ part of
+   `Batch processing`_ from `ROI Analysis GUI`_.
+3. Control if show Multiple files panel.
 
 ROI Analysis GUI
 ----------------
@@ -32,7 +95,7 @@ This is main interface to identify ROI and perform analysis of them.
 .. image::  images/main_window.png
    :alt: Main Roi Analysis GUI
 
-1.  `Multiple files widget`_ for work with multiple files without
+1.  `Multiple files panel`_ for work with multiple files without
     loading from disc.
     Visible only if enabled in Settings and Measurements
     (described in `Profile, Pipeline, Project`_)
@@ -190,7 +253,7 @@ Properties
 
 1.  Image spacing with units.
 2.  Control of mask presenting. Its color and opacity.
-3.  If show multiple files widget in main window.
+3.  If show Multiple files panel in main window.
 4.  List of segmentation profiles.
 5.  List of segmentation pipelines.
 6.  Preview of selected Profile/pipeline.
@@ -311,69 +374,6 @@ Execute batch
    .. image::  images/batch_check_bad.png
       :alt: View on Properties Tab in Settings and Measurement.
 
-Mask Segmentation GUI
----------------------
-
-.. image::  images/mask_window.png
-   :alt: Mask Segmentation GUI.
-
-1.  `Multiple files widget`_ for manage multiple files.
-    Visible by default. can be hide in `image tab`_.
-2.  Colorbar - Preview how current colors maps on brightness.
-    Presented colormap is changed by selection channel in `Image View`_.
-3.  `Image View`_. In this GUI control of segmentation result presentation
-    is above algorithm parameters.
-4.  `Algorithm parameters`_. Here you set parameters for
-    segmentation algorithm.
-
-.. image::  images/mask_control_view.png
-   :alt: Part above algorithm parameters.
-
-5.  Select how present segmentation result:
-
-    * **Not show** - disable showing, for better data preview.
-    * **Show result** - show whole algorithm output.
-    * **Show chosen** - show only components selected in widget
-      bellow algorithm segmentation
-
-6.  Segmentation component marker opacity.
-7.  Mark segmentation only by borders or by masking whole area.
-8.  If segmentation is marked by borders then set it thick.
-    Useful for big images.
-9.  Execute segmentation.
-10. Execute segmentation in background. Result will be put
-    in `Multiple files widget`_ as entry.
-11. Execute in batch mode. Execution will be done on
-    files selected in `image tab`_.
-12. Save parameters of current algorithm to json file.
-
-.. image::  images/mask_select_component.png
-   :alt: Selection which components are selected properly.
-
-13. Select all components as properly selected.
-14. Remove selection from all checkbox.
-15. Selection of components. Selection can be also
-    changed by click on component on `Image view`_.
-    When mouse is over checkbox given component is
-    marked by frame on `Image view`_.
-16. Select if chosen components should be saved over next segmentation.
-    ``TODO add example``
-17. For each component show parameters used for segmentation.
-
-
-Here there is description of image tab:
-
-.. _image tab:
-
-.. image::  images/mask_window_image.png
-   :alt: View on image tab.
-
-1. Information about image.
-2. Widget to select files for batch processing.
-   It is described in `select multiple files`_ part of
-   `Batch processing`_ from `ROI Analysis GUI`_.
-3. Control if show multiple files widget.
-
 Common elements
 ---------------
 In this section there are described elements which are
@@ -399,6 +399,9 @@ Zoom of image can be also changed by Ctrl+Mouse scroll.
 8.  Control which layer is visible.
     If image contains time data, then similar
     slider will be visible on left part of image.
+
+In `Mask Segmentation GUI`_ elements 5, 6 and 7 are place above
+Algorithm Parameters part.
 
 .. image::  images/range_control.png
    :alt: Image view widget.
@@ -502,7 +505,7 @@ segmentation into mask.
 8. TODO
 9. TODO
 
-Multiple files widget
+Multiple files panel
 ~~~~~~~~~~~~~~~~~~~~~
 This is widget to manage work on multiple files without need
 to reload it from disc.
@@ -511,7 +514,7 @@ Each element of top level list is one file.
 For each saved
 
 .. image:: images/multiple_files_widget.png
-   :alt: Multiple files widget
+   :alt: Multiple files panel
 
 1.  List of opened files.
 2.  Save current image state to be possible to reload.
@@ -519,6 +522,19 @@ For each saved
 4.  Load multiple files to PartSeg.
 5.  When click **Save State** open popup with option to set
     custom name instead of default one.
+
+Tips and Tricks
+---------------
+
+In order to run selected module without PartSeg Launcher
+create PartSeg_exec shortcut, next open its Properties and add proper
+argument at the end of access path.
+For ROI Analysis add ``roi_analysis`` and for
+Mask Segmentation add ``mask_segmentation``. 
+See image below showing shortcut Properties for ROI Analysis.
+
+.. image:: images/shortcut.png
+   :alt: Example of shortcut to specified subprogram
 
 
 .. |delete| image:: images/delete.png
