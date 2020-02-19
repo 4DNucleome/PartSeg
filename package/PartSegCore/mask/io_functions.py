@@ -25,6 +25,7 @@ from ..io_utils import (
     open_tar_file,
 )
 from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationProfile
+from ..analysis.save_functions import SaveMaskAsTiff
 from PartSegImage import Image, ImageWriter, GenericImageReader
 
 
@@ -301,6 +302,44 @@ class LoadStackImage(LoadBase):
         return SegmentationTuple(image.file_path, image, None, [])
 
 
+class LoadStackImageWithMask(LoadBase):
+    @classmethod
+    def get_short_name(cls):
+        return "img_with_mask"
+
+    @classmethod
+    def get_next_file(cls, file_paths: typing.List[str]):
+        base, ext = os.path.splitext(file_paths[0])
+        return base + "_mask" + ext
+
+    @classmethod
+    def number_of_files(cls):
+        return 2
+
+    @classmethod
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ) -> typing.Union[ProjectInfoBase, typing.List[ProjectInfoBase]]:
+        if metadata is None:
+            metadata = {"default_spacing": (10 ** -6, 10 ** -6, 10 ** -6)}
+        image = GenericImageReader.read_image(
+            load_locations[0],
+            load_locations[1],
+            callback_function=partial(proxy_callback, range_changed, step_changed),
+            default_spacing=metadata["default_spacing"],
+        )
+
+        return SegmentationTuple(image.file_path, image, None, [])
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Image with mask(*.tif *.tiff *.lsm *.czi *.oib *.oif)"
+
+
 class SaveSegmentation(SaveBase):
     @classmethod
     def get_name(cls):
@@ -441,7 +480,9 @@ class UpdateLoadedMetadataMask(UpdateLoadedMetadataBase):
         return profile_data
 
 
-load_dict = Register(LoadStackImage, LoadSegmentationImage, class_methods=LoadBase.need_functions)
+load_dict = Register(
+    LoadStackImage, LoadSegmentationImage, LoadStackImageWithMask, class_methods=LoadBase.need_functions
+)
 save_parameters_dict = Register(SaveParametersJSON, class_methods=SaveBase.need_functions)
 save_components_dict = Register(SaveComponents, class_methods=SaveBase.need_functions)
-save_segmentation_dict = Register(SaveSegmentation, class_methods=SaveBase.need_functions)
+save_segmentation_dict = Register(SaveSegmentation, SaveMaskAsTiff, class_methods=SaveBase.need_functions)
