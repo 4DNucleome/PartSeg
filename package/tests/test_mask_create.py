@@ -1,5 +1,7 @@
 import numpy as np
 
+import pytest
+
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask_create import MaskProperty, fill_2d_holes_in_mask, fill_holes_in_mask, calculate_mask
 
@@ -145,6 +147,50 @@ class TestCalculateMask:
         mask4[mask4 == 2] = 3
         mask3 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.NO, -1, True, True), mask4, None, (1, 1, 1))
         assert np.all(mask3 == mask4)
+
+    def test_save_component_fill_holes(self):
+        mask = np.zeros((12, 12, 12), dtype=np.uint8)
+        mask[2:7, 2:-2, 2:-2] = 1
+        mask[7:-2, 2:-2, 2:-2] = 2
+        mask[4:-4, 4:-4, 4:-4] = 3
+        mask2 = np.copy(mask)
+        mask2[5, 5, 5] = 0
+        mask2[3, 3, 3] = 0
+        mask1 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R2D, -1, True, True), mask2, None, (1, 1, 1))
+        assert np.all(mask == mask1)
+        mask1 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R3D, -1, True, True), mask2, None, (1, 1, 1))
+        assert np.all(mask == mask1)
+        mask[2:-2, 4:-4, 4:-4] = 3
+        mask2 = np.copy(mask)
+        mask2[5, 5, 5] = 0
+        mask2[3, 3, 3] = 0
+        mask1 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R2D, -1, True, True), mask2, None, (1, 1, 1))
+        assert np.all(mask == mask1)
+        mask1 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R3D, -1, True, True), mask2, None, (1, 1, 1))
+        assert np.all(mask == mask1)
+        mask[2:7, 2:-2, 2:-2] = 1
+        mask[4:-4, 4:-4, 4:-4] = 2
+        mask2 = np.copy(mask)
+        mask2[5, 5, 5] = 0
+        mask2[3, 3, 3] = 0
+        mask1 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R2D, -1, True, True), mask2, None, (1, 1, 1))
+        assert np.all(mask == mask1)
+        mask1 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R3D, -1, True, True), mask2, None, (1, 1, 1))
+        assert np.all(mask == mask1)
+
+    @pytest.mark.xfail(reason="problem with alone pixels")
+    def test_save_component_fill_holes_problematic(self):
+        mask = np.zeros((12, 12, 12), dtype=np.uint8)
+        mask[2:7, 2:-2, 2:-2] = 3
+        mask[7:-2, 2:-2, 2:-2] = 2
+        mask[4:-4, 4:-4, 4:-4] = 1
+        mask2 = np.copy(mask)
+        mask2[5, 5, 5] = 0
+        mask2[3, 3, 3] = 0
+        mask1 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R2D, -1, True, True), mask2, None, (1, 1, 1))
+        assert np.all(mask == mask1)
+        mask1 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R3D, -1, True, True), mask2, None, (1, 1, 1))
+        assert np.all(mask == mask1)
 
     def test_reverse(self):
         mask = np.zeros((10, 10, 10), dtype=np.uint8)
