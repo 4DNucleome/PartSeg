@@ -32,7 +32,7 @@ from PartSegCore.image_operations import apply_filter, NoiseFilterType
 from PartSegCore.color_image import color_image_fun, add_labels
 from PartSegCore.color_image.color_image_base import color_maps
 from PartSegCore.colors import default_colors
-from ..common_backend.base_settings import ViewSettings
+from ..common_backend.base_settings import BaseSettings, ViewSettings
 from PartSegImage import Image
 from .channel_control import ColorComboBoxGroup, ChannelProperty
 
@@ -286,10 +286,10 @@ class ImageView(QWidget):
 
     # zoom_changed = Signal(float, float, float)
 
-    def __init__(self, settings: ViewSettings, channel_property: ChannelProperty, name: str):
+    def __init__(self, settings: BaseSettings, channel_property: ChannelProperty, name: str):
         # noinspection PyArgumentList
         super().__init__()
-        self._settings: ViewSettings = settings
+        self._settings: BaseSettings = settings
         self.channel_property = channel_property
         self.exclude_btn_list = []
         self.image_state = ImageShowState(settings, name)
@@ -418,6 +418,7 @@ class ImageView(QWidget):
                 if self.channel_control.active_channel(i):
                     res_brightness.append(b)
             brightness = ", ".join(map(str, res_brightness))
+        res_text = f"Position: {tuple(pos2)}, Brightness: {brightness}"
         if self.labels_layer is not None:
             comp = self.labels_layer[pos]
             self.component = comp
@@ -431,11 +432,12 @@ class ImageView(QWidget):
                     self.labels_layer = None
                     self.paint_layer()
                     return
-            self.text_info_change.emit(
-                "Position: {}, Brightness: {}, component {}".format(tuple(pos2), brightness, comp)
-            )
-        else:
-            self.text_info_change.emit("Position: {}, Brightness: {}".format(tuple(pos2), brightness))
+            res_text += f", component {comp}"
+
+        if self._settings.mask is not None:
+            res_text += f", mask {self._settings.mask[pos]}"
+
+        self.text_info_change.emit(res_text)
 
     def position_info(self, point, size):
         """
