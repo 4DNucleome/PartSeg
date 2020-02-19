@@ -542,7 +542,7 @@ class AlgorithmOptions(QWidget):
         # noinspection PyUnresolvedReferences
         self.borders_thick.valueChanged.connect(self.border_value_check)
         self.execute_in_background_btn = QPushButton("Execute in background")
-        self.execute_in_background_btn.setToolTip("Run calculation in background. Put result in multiple files widget")
+        self.execute_in_background_btn.setToolTip("Run calculation in background. Put result in multiple files panel")
         self.execute_btn = QPushButton("Execute")
         self.execute_btn.setStyleSheet("QPushButton{font-weight: bold;}")
         self.execute_all_btn = QPushButton("Execute all")
@@ -558,7 +558,7 @@ class AlgorithmOptions(QWidget):
         self.algorithm_choose_widget.progress_signal.connect(self.progress_info)
 
         # self.stack_layout = QStackedLayout()
-        self.keep_chosen_components_chk = QCheckBox("Save chosen components")
+        self.keep_chosen_components_chk = QCheckBox("Save selected components")
         self.keep_chosen_components_chk.setToolTip(
             "Save chosen components when loading segmentation form file\n" "or from multiple file widget."
         )
@@ -696,6 +696,7 @@ class AlgorithmOptions(QWidget):
         self.batch_process.start()
 
     def execute_in_background(self):
+        # TODO check if components are properly passed
         widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
         segmentation_profile = widget.get_segmentation_profile()
         task = BatchTask(self.settings.get_project_info(), segmentation_profile, None)
@@ -800,7 +801,7 @@ class ImageInformation(QWidget):
         self.path = QLabel("<b>Path:</b> example image")
         self.path.setWordWrap(True)
         self.spacing = [QDoubleSpinBox() for _ in range(3)]
-        self.multiple_files = QCheckBox("Show multiple files widget")
+        self.multiple_files = QCheckBox("Show multiple files panel")
         self.multiple_files.setChecked(settings.get("multiple_files_widget", True))
         self.multiple_files.stateChanged.connect(self.set_multiple_files)
         units_value = self._settings.get("units_value", Units.nm)

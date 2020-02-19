@@ -360,7 +360,6 @@ class MainMenu(BaseMainMenu):
         self.open_btn = QPushButton("Open")
         self.save_btn = QPushButton("Save")
         self.advanced_btn = QPushButton("Settings and Measurement")
-        self.image_adjust_btn = QPushButton("Image adjustments")
         self.mask_manager_btn = QPushButton("Mask manager")
         self.batch_processing_btn = QPushButton("Batch Processing")
 
@@ -370,7 +369,6 @@ class MainMenu(BaseMainMenu):
         layout.addWidget(self.open_btn)
         layout.addWidget(self.save_btn)
         layout.addWidget(self.advanced_btn)
-        layout.addWidget(self.image_adjust_btn)
         layout.addWidget(self.mask_manager_btn)
         layout.addWidget(self.batch_processing_btn)
         self.setLayout(layout)
@@ -379,7 +377,6 @@ class MainMenu(BaseMainMenu):
         self.save_btn.clicked.connect(self.save_file)
         self.advanced_btn.clicked.connect(self.advanced_window_show)
         self.mask_manager_btn.clicked.connect(self.mask_manager)
-        self.image_adjust_btn.clicked.connect(self.image_adjust_exec)
         self.batch_processing_btn.clicked.connect(self.batch_window)
         self.setFocusPolicy(Qt.StrongFocus)
         # self.test_btn.clicked.connect(self.test_fun)

@@ -44,9 +44,11 @@ max_step = log(1.2, step)
 class LabelEnum(Enum):
     Not_show = 0
     Show_results = 1
-    Show_chosen = 2
+    Show_selected = 2
 
     def __str__(self):
+        if self.value == 0:
+            return "Don't show"
         return self.name.replace("_", " ")
 
 
@@ -100,7 +102,7 @@ class ImageShowState(QObject):
             self.parameter_changed.emit()
 
     def components_change(self):
-        if self.show_label == LabelEnum.Show_chosen:
+        if self.show_label == LabelEnum.Show_selected:
             self.parameter_changed.emit()
 
     def set_show_label(self, val: LabelEnum):
