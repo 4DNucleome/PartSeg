@@ -7,9 +7,19 @@ import sys
 from functools import partial
 from typing import List
 
-from qtpy.QtGui import QCloseEvent
-from qtpy.QtCore import QByteArray
-from qtpy.QtWidgets import QTabWidget, QWidget, QPushButton, QGridLayout
+from qtpy.QtGui import QCloseEvent, QPalette, QColor
+from qtpy.QtCore import QByteArray, Qt
+from qtpy.QtWidgets import (
+    QTabWidget,
+    QWidget,
+    QPushButton,
+    QGridLayout,
+    QColorDialog,
+    QVBoxLayout,
+    QDoubleSpinBox,
+    QLabel,
+    QHBoxLayout,
+)
 
 from PartSeg import plugins
 from PartSeg.common_gui.colormap_creator import PColormapCreator, PColormapList
@@ -57,6 +67,52 @@ class DevelopTab(QWidget):
             el()
 
 
+class MaskControl(QWidget):
+    def __init__(self, settings: ViewSettings):
+        super().__init__()
+        self.settings = settings
+        self.color_picker = QColorDialog()
+        self.color_picker.setWindowFlag(Qt.Widget)
+        self.color_picker.setOptions(QColorDialog.DontUseNativeDialog | QColorDialog.NoButtons)
+        self.opacity_spin = QDoubleSpinBox()
+        self.opacity_spin.setRange(0, 1)
+        self.opacity_spin.setSingleStep(0.1)
+        self.opacity_spin.setDecimals(2)
+        self.change_mask_color_btn = QPushButton("Change mask color")
+        self.current_mask_color_preview = QLabel()
+
+        self.set_color_preview(self.settings.get_from_profile("mask_presentation_color", [255, 255, 255]))
+        self.opacity_spin.setValue(self.settings.get_from_profile("mask_presentation_opacity", 1))
+
+        self.current_mask_color_preview.setAutoFillBackground(True)
+        self.change_mask_color_btn.clicked.connect(self.change_color)
+        self.opacity_spin.valueChanged.connect(self.change_opacity)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.color_picker)
+        layout2 = QHBoxLayout()
+        layout2.addWidget(self.change_mask_color_btn)
+        layout2.addWidget(self.current_mask_color_preview, 1)
+        layout2.addWidget(QLabel("Mask opacity"))
+        layout2.addWidget(self.opacity_spin)
+        layout.addLayout(layout2)
+        self.setLayout(layout)
+
+    def set_color_preview(self, color):
+        palette = QPalette()
+        palette.setColor(QPalette.Background, QColor(*color))
+        self.current_mask_color_preview.setPalette(palette)
+
+    def change_color(self):
+        color = self.color_picker.currentColor()
+        color = (color.red(), color.green(), color.blue())
+        self.settings.set_in_profile("mask_presentation_color", color)
+        self.set_color_preview(color)
+
+    def change_opacity(self):
+        self.settings.set_in_profile("mask_presentation_opacity", self.opacity_spin.value())
+
+
 class ColorControl(QTabWidget):
     """
     Class for storage all settings for labels and colormaps.
@@ -72,10 +128,12 @@ class ColorControl(QTabWidget):
         self.label_view = LabelChoose(settings)
         self.label_view.edit_signal.connect(partial(self.setCurrentWidget, self.label_editor))
         self.label_view.edit_signal[list].connect(self.label_editor.set_colors)
+        self.mask_control = MaskControl(settings)
         self.addTab(self.color_preview, "Color maps")
         self.addTab(self.label_view, "Choose labels")
         self.addTab(self.colormap_selector, "Color Map creator")
         self.addTab(self.label_editor, "Create labels")
+        self.addTab(self.mask_control, "Control mask marking")
 
 
 class AdvancedWindow(QTabWidget):

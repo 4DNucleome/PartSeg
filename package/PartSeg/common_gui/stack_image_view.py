@@ -35,7 +35,6 @@ from PartSegCore.colors import default_colors
 from ..common_backend.base_settings import BaseSettings, ViewSettings
 from PartSegImage import Image
 from .channel_control import ColorComboBoxGroup, ChannelProperty
-from ..segmentation_analysis.partseg_settings import MASK_COLORS
 
 canvas_icon_size = QSize(20, 20)
 step = 1.01
@@ -909,7 +908,10 @@ class ImageViewWithMask(ImageView):
         self.mask_label = QLabel("Mask:")
         self.btn_layout.addWidget(self.mask_label)
         self.btn_layout.addWidget(self.mask_show)
-        self.mask_prop = self._settings.get_from_profile("mask_presentation", (list(MASK_COLORS.keys())[0], 1))
+        self.mask_prop = (
+            np.array(self._settings.get_from_profile("mask_presentation_color", [255, 255, 255])),
+            self._settings.get_from_profile("mask_presentation_opacity", 1),
+        )
         self.mask_show.setDisabled(True)
         self.mask_label.setDisabled(True)
         settings.mask_changed.connect(self.mask_changed)
@@ -917,9 +919,10 @@ class ImageViewWithMask(ImageView):
 
     def event(self, event: QtCore.QEvent):
         if event.type() == QEvent.WindowActivate:
-           if self.mask_show.isChecked():
-                color, opacity = self._settings.get_from_profile("mask_presentation")
-                if color != self.mask_prop[0] or opacity != self.mask_prop[1]:
+            if self.mask_show.isChecked():
+                color = np.array(self._settings.get_from_profile("mask_presentation_color", [255, 255, 255]))
+                opacity = self._settings.get_from_profile("mask_presentation_opacity", 1)
+                if np.any(color != self.mask_prop[0]) or opacity != self.mask_prop[1]:
                     self.mask_prop = color, opacity
                     self.paint_layer()
         return super().event(event)
@@ -939,11 +942,9 @@ class ImageViewWithMask(ImageView):
         mask_layer = mask_layer.astype(np.bool)
 
         if self.mask_prop[1] == 1:
-            im[~mask_layer] = MASK_COLORS[self.mask_prop[0]]
+            im[~mask_layer] = self.mask_prop[0]
         else:
-            im[~mask_layer] = (1 - self.mask_prop[1]) * im[~mask_layer] + self.mask_prop[1] * MASK_COLORS[
-                self.mask_prop[0]
-            ]
+            im[~mask_layer] = (1 - self.mask_prop[1]) * im[~mask_layer] + self.mask_prop[1] * self.mask_prop[0]
 
     def set_image(self):
         super().set_image()

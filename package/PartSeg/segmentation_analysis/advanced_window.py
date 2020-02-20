@@ -98,23 +98,6 @@ class AdvancedSettings(QWidget):
         # noinspection PyUnresolvedReferences
         self.units.currentIndexChanged.connect(self.update_spacing)
 
-        color, opacity = self._settings.get_from_profile("mask_presentation", (list(MASK_COLORS.keys())[0], 0.6))
-        self.mask_color = QComboBox()
-        self.mask_color.addItems(list(MASK_COLORS.keys()))
-        self.mask_opacity = QDoubleSpinBox()
-        self.mask_opacity.setRange(0, 1)
-        self.mask_opacity.setSingleStep(0.1)
-        try:
-            index = list(MASK_COLORS.keys()).index(color)
-        except IndexError:
-            index = 0
-        self.mask_color.setCurrentIndex(index)
-        self.mask_opacity.setValue(opacity)
-        # noinspection PyUnresolvedReferences
-        self.mask_opacity.valueChanged.connect(self.mask_prop_changed)
-        # noinspection PyUnresolvedReferences
-        self.mask_color.currentIndexChanged.connect(self.mask_prop_changed)
-
         spacing_layout = QHBoxLayout()
         spacing_layout.addWidget(self.lock_spacing)
         for txt, el in zip(["x", "y", "z"], self.spacing[::-1]):
@@ -125,12 +108,6 @@ class AdvancedSettings(QWidget):
         voxel_size_layout = QHBoxLayout()
         voxel_size_layout.addWidget(self.voxel_size_label)
         voxel_size_layout.addSpacing(30)
-        mask_layout = QHBoxLayout()
-        mask_layout.addWidget(QLabel("Mask mark color"))
-        mask_layout.addWidget(self.mask_color)
-        mask_layout.addWidget(QLabel("Mask mark opacity"))
-        mask_layout.addWidget(self.mask_opacity)
-        mask_layout.addStretch(1)
         profile_layout = QGridLayout()
         profile_layout.setSpacing(0)
         profile_layout.addWidget(QLabel("Profiles:"), 0, 0)
@@ -147,7 +124,6 @@ class AdvancedSettings(QWidget):
         layout = QVBoxLayout()
         layout.addLayout(spacing_layout)
         layout.addLayout(voxel_size_layout)
-        layout.addLayout(mask_layout)
         layout.addWidget(self.multiple_files_chk)
 
         layout.addLayout(profile_layout, 1)
@@ -156,10 +132,6 @@ class AdvancedSettings(QWidget):
     @Slot(int)
     def multiple_files_visibility(self, val: int):
         self._settings.set("multiple_files", val)
-
-    @Slot()
-    def mask_prop_changed(self):
-        self._settings.set_in_profile("mask_presentation", (self.mask_color.currentText(), self.mask_opacity.value()))
 
     @Slot(str)
     def profile_chosen(self, text):
