@@ -44,7 +44,7 @@ from .calculation_pipeline_thread import CalculatePipelineThread
 from PartSegImage import TiffImageReader, Image
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.analysis.analysis_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
-from .image_view import SynchronizeView, ImageViewWithMask, CompareImageView
+from .image_view import SynchronizeView, ResultImageView, CompareImageView
 from .partseg_settings import PartSettings
 from ..common_gui.custom_save_dialog import SaveDialog
 from PartSegCore.analysis.save_functions import save_dict
@@ -58,8 +58,8 @@ class Options(QWidget):
         self,
         settings: PartSettings,
         channel_control2: ChannelProperty,
-        left_image: ImageViewWithMask,
-        main_image: ImageViewWithMask,
+        left_image: ResultImageView,
+        main_image: ResultImageView,
         synchronize: SynchronizeView,
     ):
         super().__init__()
@@ -658,7 +658,7 @@ class MainWindow(BaseMainWindow):
         self.left_stack = StackedWidgetWithSelector()
         self.left_stack.addWidget(self.raw_image, "Image")
         self.left_stack.addWidget(self.measurements, "Measurements")
-        self.result_image = ImageViewWithMask(self.settings, self.channel_control2, "result_image")
+        self.result_image = ResultImageView(self.settings, self.channel_control2, "result_image")
         self.color_bar = ColorBar(self.settings, [self.raw_image, self.result_image])
         self.info_text = QLabel()
         self.raw_image.text_info_change.connect(self.info_text.setText)
