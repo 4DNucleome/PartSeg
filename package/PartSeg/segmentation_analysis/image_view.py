@@ -2,33 +2,22 @@ from typing import Optional
 
 import collections
 from qtpy.QtGui import QResizeEvent
-from qtpy import QtCore
-from qtpy.QtCore import QObject, QEvent, Slot
+from qtpy.QtCore import QObject, Slot
 from qtpy.QtWidgets import QCheckBox, QDoubleSpinBox, QLabel
 
 from ..common_gui.channel_control import ChannelProperty
-from ..common_gui.stack_image_view import ImageView
+from ..common_gui.stack_image_view import ImageView, ImageViewWithMask
 from .partseg_settings import MASK_COLORS, PartSettings
 import numpy as np
 
 
-class ImageViewWithMask(ImageView):
+class ResultImageView(ImageViewWithMask):
     """
     :type _settings PartSettings:
     """
 
     def __init__(self, settings: PartSettings, channel_property: ChannelProperty, name: str):
         super().__init__(settings, channel_property, name)
-        self.mask_show = QCheckBox()
-        self.mask_label = QLabel("Mask:")
-        # self.btn_layout.takeAt(self.btn_layout.count()-1)
-        self.btn_layout.addWidget(self.mask_label)
-        self.btn_layout.addWidget(self.mask_show)
-        self.mask_prop = self._settings.get_from_profile("mask_presentation", (list(MASK_COLORS.keys())[0], 1))
-        self.mask_show.setDisabled(True)
-        self.mask_label.setDisabled(True)
-        settings.mask_changed.connect(self.mask_changed)
-        self.mask_show.stateChanged.connect(self.paint_layer)
         self.only_border = QCheckBox("")
         self.image_state.only_borders = False
         self.only_border.setChecked(self.image_state.only_borders)
@@ -73,42 +62,9 @@ class ImageViewWithMask(ImageView):
             self.btn_layout2.insertWidget(0, w)
             self._channel_control_top = False
 
-    def event(self, event: QtCore.QEvent):
-        if event.type() == QEvent.WindowActivate:
-            if self.mask_show.isChecked():
-                color, opacity = self._settings.get_from_profile("mask_presentation")
-                if color != self.mask_prop[0] or opacity != self.mask_prop[1]:
-                    self.mask_prop = color, opacity
-                    self.paint_layer()
-        return super().event(event)
-
-    def mask_changed(self):
-        self.mask_show.setDisabled(self._settings.mask is None)
-        self.mask_label.setDisabled(self._settings.mask is None)
-        if self._settings.mask is None:
-            self.mask_show.setChecked(False)
-        elif self.mask_show.isChecked():
-            self.paint_layer()
-
-    def add_mask(self, im):
-        if not self.mask_show.isChecked() or self._settings.mask is None:
-            return
-        mask_layer = self._settings.mask[self.stack_slider.value()]
-        mask_layer = mask_layer.astype(np.bool)
-
-        if self.mask_prop[1] == 1:
-            im[~mask_layer] = MASK_COLORS[self.mask_prop[0]]
-        else:
-            im[~mask_layer] = (1 - self.mask_prop[1]) * im[~mask_layer] + self.mask_prop[1] * MASK_COLORS[
-                self.mask_prop[0]
-            ]
-
-    def set_image(self):
-        super().set_image()
-        self.mask_changed()
 
 
-class CompareImageView(ImageViewWithMask):
+class CompareImageView(ResultImageView):
     def __init__(self, settings: PartSettings, channel_property: ChannelProperty, name: str):
         super().__init__(settings, channel_property, name)
         settings.segmentation_changed.disconnect(self.set_labels)
@@ -145,23 +101,23 @@ class CompareImageView(ImageViewWithMask):
             self.text_info_change.emit("Position: {}, Brightness: {}".format(tuple(pos2), brightness))
 
 
-class ResultImageView(ImageViewWithMask):
-    def __init__(self, settings, channel_property: ChannelProperty, name: str):
-        super().__init__(settings, channel_property, name)
-        self.only_border = QCheckBox("")
-        self.image_state.only_borders = False
-        self.only_border.setChecked(self.image_state.only_borders)
-        self.only_border.stateChanged.connect(self.image_state.set_borders)
-        self.opacity = QDoubleSpinBox()
-        self.opacity.setRange(0, 1)
-        self.opacity.setValue(self.image_state.opacity)
-        self.opacity.setSingleStep(0.1)
-        self.opacity.valueChanged.connect(self.image_state.set_opacity)
-
-        self.btn_layout.addWidget(QLabel("Borders:"))
-        self.btn_layout.addWidget(self.only_border)
-        self.btn_layout.addWidget(QLabel("Opacity:"))
-        self.btn_layout.addWidget(self.opacity)
+# class ResultImageView(ImageViewWithMask):
+#     def __init__(self, settings, channel_property: ChannelProperty, name: str):
+#         super().__init__(settings, channel_property, name)
+#         self.only_border = QCheckBox("")
+#         self.image_state.only_borders = False
+#         self.only_border.setChecked(self.image_state.only_borders)
+#         self.only_border.stateChanged.connect(self.image_state.set_borders)
+#         self.opacity = QDoubleSpinBox()
+#         self.opacity.setRange(0, 1)
+#         self.opacity.setValue(self.image_state.opacity)
+#         self.opacity.setSingleStep(0.1)
+#         self.opacity.valueChanged.connect(self.image_state.set_opacity)
+#
+#         self.btn_layout.addWidget(QLabel("Borders:"))
+#         self.btn_layout.addWidget(self.only_border)
+#         self.btn_layout.addWidget(QLabel("Opacity:"))
+#         self.btn_layout.addWidget(self.opacity)
 
 
 class SynchronizeView(QObject):

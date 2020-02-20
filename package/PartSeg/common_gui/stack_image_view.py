@@ -8,7 +8,7 @@ from typing import Type, List, Union, Callable, Optional
 from PartSegData import icons_dir
 
 import numpy as np
-from qtpy import QtGui
+from qtpy import QtGui, QtCore
 from qtpy.QtCore import QRect, QTimerEvent, QSize, QObject, Signal, QPoint, Qt, QEvent, Slot
 from qtpy.QtGui import QWheelEvent, QPainter, QPen, QColor, QPalette, QPixmap, QImage, QIcon, QResizeEvent, QMouseEvent
 from qtpy.QtWidgets import QScrollBar, QLabel, QGridLayout
@@ -35,6 +35,7 @@ from PartSegCore.colors import default_colors
 from ..common_backend.base_settings import BaseSettings, ViewSettings
 from PartSegImage import Image
 from .channel_control import ColorComboBoxGroup, ChannelProperty
+from ..segmentation_analysis.partseg_settings import MASK_COLORS
 
 canvas_icon_size = QSize(20, 20)
 step = 1.01
@@ -899,3 +900,51 @@ class ColorBar(QLabel):
             painter.drawText(bar_width + 5, pos, f"{val}")
         painter.setFont(old_font)
         # print(self.image.shape)
+
+
+class ImageViewWithMask(ImageView):
+    def __init__(self, settings: BaseSettings, channel_property: ChannelProperty, name: str):
+        super().__init__(settings, channel_property, name)
+        self.mask_show = QCheckBox()
+        self.mask_label = QLabel("Mask:")
+        self.btn_layout.addWidget(self.mask_label)
+        self.btn_layout.addWidget(self.mask_show)
+        self.mask_prop = self._settings.get_from_profile("mask_presentation", (list(MASK_COLORS.keys())[0], 1))
+        self.mask_show.setDisabled(True)
+        self.mask_label.setDisabled(True)
+        settings.mask_changed.connect(self.mask_changed)
+        self.mask_show.stateChanged.connect(self.paint_layer)
+
+    def event(self, event: QtCore.QEvent):
+        if event.type() == QEvent.WindowActivate:
+           if self.mask_show.isChecked():
+                color, opacity = self._settings.get_from_profile("mask_presentation")
+                if color != self.mask_prop[0] or opacity != self.mask_prop[1]:
+                    self.mask_prop = color, opacity
+                    self.paint_layer()
+        return super().event(event)
+
+    def mask_changed(self):
+        self.mask_show.setDisabled(self._settings.mask is None)
+        self.mask_label.setDisabled(self._settings.mask is None)
+        if self._settings.mask is None:
+            self.mask_show.setChecked(False)
+        elif self.mask_show.isChecked():
+            self.paint_layer()
+
+    def add_mask(self, im):
+        if not self.mask_show.isChecked() or self._settings.mask is None:
+            return
+        mask_layer = self._settings.mask[self.stack_slider.value()]
+        mask_layer = mask_layer.astype(np.bool)
+
+        if self.mask_prop[1] == 1:
+            im[~mask_layer] = MASK_COLORS[self.mask_prop[0]]
+        else:
+            im[~mask_layer] = (1 - self.mask_prop[1]) * im[~mask_layer] + self.mask_prop[1] * MASK_COLORS[
+                self.mask_prop[0]
+            ]
+
+    def set_image(self):
+        super().set_image()
+        self.mask_changed()
