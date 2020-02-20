@@ -63,7 +63,6 @@ class ResultImageView(ImageViewWithMask):
             self._channel_control_top = False
 
 
-
 class CompareImageView(ResultImageView):
     def __init__(self, settings: PartSettings, channel_property: ChannelProperty, name: str):
         super().__init__(settings, channel_property, name)
