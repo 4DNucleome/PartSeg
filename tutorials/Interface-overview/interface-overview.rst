@@ -18,10 +18,22 @@ As some elements are used in both modules `Roi Analysis` and
 Mask Segmentation GUI
 ---------------------
 
-TODO describe First line of buttons
-
 .. image::  images/mask_window.png
    :alt: Mask Segmentation GUI.
+
+On top of the window they are 6 buttons:
+
+*  **Load image** - load image or image with existing segmentation. 
+*  **Load segmentation** - load segmentation to already loaded image or load 
+   segmentation parameters from segmentation.
+*  **Save components** - save each selected component to separate ``tiff`` file. 
+*  **Save segmentation** - save current segmentation to file. 
+   File contains segmentation, its parameters and path to
+   file on which process were performed.
+   Path can be absolute (may not work on another computer) or
+   relative (may not work when saved file has ben moved). 
+*  **Advanced settings** - currently only color map and labeling administration.
+*  **Mask manager** - (currently in implementation)
 
 1.  `Multiple files panel`_ is used to manage multiple files.
     This panel is visible by default and can be can be hidden in `image tab`_.
@@ -63,7 +75,7 @@ TODO describe First line of buttons
 .. image::  images/mask_select_component.png
    :alt: Selection which components are selected properly.
 
-13. Select all components as properly selected.
+13. Select all checkbox.
 14. Remove selection from all checkbox.
 15. Selection of components. Selection can be also
     changed by click on component on `Image view`_.
@@ -71,7 +83,11 @@ TODO describe First line of buttons
     marked by frame on `Image view`_.
 16. Select if chosen components should be saved over next segmentation.
     ``TODO add example``
-17. For each component show parameters used for segmentation.
+17. Open window with preview of segmentation parameters for each component.
+    **Reuse parameters** button restore selected parameter.
+
+.. image:: images/mask_segmentation_parameters_preview.png
+   :alt: Window to preview parameters of segmentation.
 
 
 Here there is description of image tab:
@@ -90,22 +106,31 @@ Here there is description of image tab:
 ROI Analysis GUI
 ----------------
 
-This is main interface to identify ROI and perform analysis of them.
-
 .. image::  images/main_window.png
    :alt: Main Roi Analysis GUI
 
-1.  `Multiple files panel`_ for work with multiple files without
-    loading from disc.
-    Visible only if enabled in Settings and Measurements
+On top of the window they are 5 buttons:
+
+
+*   **Open** - load data.
+*   **Save** - save data.
+*   **Settings and Measurement** - open window with:
+    Properties_, `Color control`_ and `Measurement`_.
+*   **Mask manager** - Open `Mask manager`_ to create
+    mask from current segmentation.
+*   **Batch processing** - Open `Batch processing`_ window
+
+1.  `Multiple files panel`_ is used to manage multiple files. 
+    This panel is hidden by default and can be can be enabled in
+    Settings and Measurements window.
     (described in `Profile, Pipeline, Project`_)
-2.  Colorbar - Preview how current colors maps on brightness.
-    Presented colormap is changed by selection channel in `Image View`_.
+2.  Colorbar - Shows relation of currently used color map and brightness
+    values for selected channel. Selection of colormap
+    is described in `Image View`_.
 3.  Two copy of `Image View`_. Main panel is right.
     Left panel can be used to preview raw data, selected segmentation,
-    or measurement.
-4.  `Algorithm parameters`_. Entry for select segmentation algorithm and
-    set it parameters.
+    or replaced with measurement.
+4.  `Algorithm parameters`_ - This panel is used to set parameters of segmentation
 
 Above colorbar there are two controls:
 
@@ -123,23 +148,13 @@ Above colorbar there are two controls:
 7.  Save current pipeline in memory.
     Name of pipeline is set in dialog window.
 8.  Chose which pipeline should be applied to data.
-9.  Save current algorithm ands its parameters.
+9.  Save current algorithm and its parameters.
+    Name of profile is set in dialog window.
 10. Select profile to be applied.
 11. If segmentation should be recalculated on every parameters change,
     or only after "Execute" click.
 12. Execute segmentation algorithm.
 
-On top of window there are also 6 buttons:
-
-*   **Open** - load data.
-*   **Save** - save data.
-*   **Settings and Measurement** - open window with:
-    Properties_, `Color control`_ and `Measurement`_.
-*   **Image adjustments** - image transformation.
-    Currently only Interpolation and swap Time and Z-stack.
-*   **Mask manager** - Open `Mask manager`_ to create
-    mask from current segmentation.
-*   **Batch processing** - Open `Batch processing`_ window
 
 Below Algorithm parameters there are two checkbox:
 
