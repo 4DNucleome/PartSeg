@@ -675,6 +675,9 @@ class CreatePlan(QWidget):
     def add_segmentation(self):
         if self.segment_stack.currentIndex() == 0:
             text = str(self.segment_profile.currentItem().text())
+            if text not in self.settings.segmentation_profiles:
+                self.refresh_all_profiles()
+                return
             profile = self.settings.segmentation_profiles[text]
             if self.update_element_chk.isChecked():
                 self.calculation_plan.replace_step(profile)
@@ -786,7 +789,7 @@ class CreatePlan(QWidget):
         text = item.text()
         try:
             return new_values.index(text)
-        except IndexError:
+        except ValueError:
             return -1
 
     @staticmethod
@@ -797,6 +800,9 @@ class CreatePlan(QWidget):
             list_widget.setCurrentRow(index)
 
     def showEvent(self, event):
+        self.refresh_all_profiles()
+
+    def refresh_all_profiles(self):
         new_measurements = list(sorted(self.settings.measurement_profiles.keys()))
         new_segment = list(sorted(self.settings.segmentation_profiles.keys()))
         new_pipelines = list(sorted(self.settings.segmentation_pipelines.keys()))
