@@ -750,7 +750,7 @@ class AlgorithmOptions(QWidget):
         self.progress_bar.setRange(0, 0)
         self.choose_components.setDisabled(True)
         chosen = sorted(self.choose_components.get_chosen())
-        blank = get_mask(self.settings.segmentation, chosen) if self.settings.keep_chosen_components else None
+        blank = get_mask(self.settings.segmentation, chosen)  #  if self.settings.keep_chosen_components else None
         self.progress_bar.setHidden(False)
         widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
         widget.set_mask(blank)
@@ -784,9 +784,7 @@ class AlgorithmOptions(QWidget):
         if segmentation.info_text != "":
             QMessageBox.information(self, "Algorithm info", segmentation.info_text)
         parameters_dict = defaultdict(lambda: deepcopy(segmentation.parameters))
-        self.settings.set_segmentation(
-            segmentation.segmentation, self.settings.keep_chosen_components, [], parameters_dict
-        )
+        self.settings.set_segmentation(segmentation.segmentation, True, [], parameters_dict)
 
     def showEvent(self, _):
         widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
