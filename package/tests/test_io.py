@@ -191,7 +191,7 @@ class TestSegmentationMask:
         data_dict = {str(i): deepcopy(res.parameters) for i in range(1, num)}
 
         to_save = SegmentationTuple(
-            image_data.image.file_path, image_data.image, res.segmentation, list(range(1, num)), data_dict
+            image_data.image.file_path, image_data.image, None, res.segmentation, list(range(1, num)), data_dict
         )
 
         SaveSegmentation.save(os.path.join(tmpdir, "segmentation2.seg"), to_save, {"relative_path": False})

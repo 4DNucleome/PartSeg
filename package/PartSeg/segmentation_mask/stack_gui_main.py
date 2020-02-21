@@ -750,7 +750,7 @@ class AlgorithmOptions(QWidget):
         self.progress_bar.setRange(0, 0)
         self.choose_components.setDisabled(True)
         chosen = sorted(self.choose_components.get_chosen())
-        blank = get_mask(self.settings.segmentation, chosen)  #  if self.settings.keep_chosen_components else None
+        blank = get_mask(self.settings.segmentation, self.settings.mask, chosen)
         self.progress_bar.setHidden(False)
         widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
         widget.set_mask(blank)
