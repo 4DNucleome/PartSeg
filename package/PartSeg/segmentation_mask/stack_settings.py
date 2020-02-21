@@ -111,11 +111,12 @@ class StackSettings(BaseSettings):
 
     def get_project_info(self) -> SegmentationTuple:
         return SegmentationTuple(
-            self.image.file_path,
-            self.image.substitute(),
-            self.segmentation,
-            self.chosen_components(),
-            copy(self.components_parameters_dict),
+            file_path=self.image.file_path,
+            image=self.image.substitute(),
+            mask=self.mask,
+            segmentation=self.segmentation,
+            chosen_components=self.chosen_components(),
+            segmentation_parameters=copy(self.components_parameters_dict),
         )
 
     def set_project_info(self, data: SegmentationTuple):
@@ -133,6 +134,7 @@ class StackSettings(BaseSettings):
             components = components[1:]
         for i in components:
             _skip = data.segmentation_parameters[int(i)]  # noqa: F841
+        self.mask = data.mask
         if self.keep_chosen_components:
             state2 = self.transform_state(
                 state,
@@ -287,10 +289,22 @@ class StackSettings(BaseSettings):
         return True
 
 
-def get_mask(segmentation: typing.Optional[np.ndarray], chosen: typing.List[int]):
-    if segmentation is None or len(chosen) == 0:
-        return None
-    segmentation = reduce_array(segmentation, chosen)
-    resp = np.ones(segmentation.shape, dtype=np.uint8)
+def get_mask(segmentation: typing.Optional[np.ndarray], mask: typing.Optional[np.ndarray], selected: typing.List[int]):
+    """
+    Calculate mask base on segmentation, current mask and list of chosen components.
+
+    :param typing.Optional[np.ndarray] segmentation: segmentation array
+    :param typing.Optional[np.ndarray] mask: current mask
+    :param typing.List[int] selected: list of selected components
+    :return: new mask
+    :rtype: typing.Optional[np.ndarray]
+    """
+    if segmentation is None or len(selected) == 0:
+        return None if mask is None else mask
+    segmentation = reduce_array(segmentation, selected)
+    if mask is None:
+        resp = np.ones(segmentation.shape, dtype=np.uint8)
+    else:
+        resp = np.copy(mask)
     resp[segmentation > 0] = 0
     return resp

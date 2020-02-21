@@ -32,6 +32,7 @@ from PartSegImage import Image, ImageWriter, GenericImageReader
 class SegmentationTuple(ProjectInfoBase, typing.NamedTuple):
     file_path: str
     image: typing.Union[Image, str, None]
+    mask: typing.Optional[np.ndarray] = None
     segmentation: typing.Optional[np.ndarray] = None
     chosen_components: typing.List = []
     segmentation_parameters: typing.Dict[int, typing.Optional[SegmentationProfile]] = {}
@@ -174,11 +175,11 @@ class LoadSegmentation(LoadBase):
                 lambda: None, [(int(k), cls.fix_parameters(v)) for k, v in metadata["parameters"].items()]
             )
         return SegmentationTuple(
-            load_locations[0],
-            metadata["base_file"] if "base_file" in metadata else None,
-            segmentation,
-            metadata["components"],
-            parameters,
+            file_path=load_locations[0],
+            image=metadata["base_file"] if "base_file" in metadata else None,
+            segmentation=segmentation,
+            chosen_components=metadata["components"],
+            segmentation_parameters=parameters,
         )
 
     @classmethod
@@ -216,7 +217,7 @@ class LoadSegmentationParameters(LoadBase):
                         lambda: None,
                         [(int(k), LoadSegmentation.fix_parameters(v)) for k, v in metadata["parameters"].items()],
                     )
-                return SegmentationTuple(file_data, None, None, [], parameters)
+                return SegmentationTuple(file_path=file_data, image=None, segmentation_parameters=parameters)
 
         tar_file, _ = open_tar_file(file_data)
         try:
@@ -227,7 +228,7 @@ class LoadSegmentationParameters(LoadBase):
         finally:
             if isinstance(file_data, (str, Path)):
                 tar_file.close()
-        return SegmentationTuple(file_data, None, None, [], parameters)
+        return SegmentationTuple(file_path=file_data, image=None, segmentation_parameters=parameters)
 
 
 class LoadSegmentationImage(LoadBase):
@@ -299,7 +300,7 @@ class LoadStackImage(LoadBase):
             default_spacing=metadata["default_spacing"],
         )
 
-        return SegmentationTuple(image.file_path, image, None, [])
+        return SegmentationTuple(image.file_path, image, chosen_components=[])
 
 
 class LoadStackImageWithMask(LoadBase):
@@ -333,7 +334,7 @@ class LoadStackImageWithMask(LoadBase):
             default_spacing=metadata["default_spacing"],
         )
 
-        return SegmentationTuple(image.file_path, image, None, [])
+        return SegmentationTuple(image.file_path, image, chosen_components=[])
 
     @classmethod
     def get_name(cls) -> str:
