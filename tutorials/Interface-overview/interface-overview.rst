@@ -21,15 +21,16 @@ Mask Segmentation GUI
 .. image::  images/mask_window.png
    :alt: Mask Segmentation GUI.
 
-On top of the window they are 6 buttons:
+On top of the window there are 6 buttons:
 
-*  **Load image** - load image or image with existing segmentation. 
-*  **Load segmentation** - load segmentation to already loaded image or load 
-   segmentation parameters from segmentation.
-*  **Save components** - save each selected component to separate ``tiff`` file. 
-*  **Save segmentation** - save current segmentation to file. 
+*  **Load image** - loads image or image with existing segmentation. 
+*  **Load segmentation** - loads segmentation to already loaded image or loads 
+   segmentation parameters from segmentation file.
+*  **Save components** - saves each of selected components to separate ``tiff`` file.
+   For each component mask file is created.
+*  **Save segmentation** - saves current segmentation to a file. 
    File contains segmentation, its parameters and path to
-   file on which process were performed.
+   original picture on which segmentation was performed.
    Path can be absolute (may not work on another computer) or
    relative (may not work when saved file has ben moved). 
 *  **Advanced settings** - currently only color map and labeling administration.
@@ -47,7 +48,7 @@ On top of the window they are 6 buttons:
 .. image::  images/mask_control_view.png
    :alt: Part above algorithm parameters.
 
-5.  Select how results of segmentation are presented:
+5.  Selects how results of segmentation are presented:
 
     * **Don`t show** - shows input data.
     * **Show result** - shows result of segmentation.
@@ -75,16 +76,19 @@ On top of the window they are 6 buttons:
 .. image::  images/mask_select_component.png
    :alt: Selection which components are selected properly.
 
-13. Select all checkbox.
-14. Remove selection from all checkbox.
-15. Selection of components. Selection can be also
-    changed by click on component on `Image view`_.
-    When mouse is over checkbox given component is
-    marked by frame on `Image view`_.
-16. Select if chosen components should be saved over next segmentation.
-    ``TODO add example``
-17. Open window with preview of segmentation parameters for each component.
-    **Reuse parameters** button restore selected parameter.
+13. Selects all checkboxes.
+14. Removes selection from all checkboxes.
+15. Selection of single components. Selection/deselection can be done by
+    clicking on a component in `Image view`_.
+    Pointing on a checkbox of a component with cursor distinguishes
+    given component by dashed frame in `Image view`_. 
+    Only selected components are saved using **Save components**.
+    Selected components are omitted when next round of segmentation
+    is performed.
+16. Select if preserve selected components when loading different segmentation
+    (from file or `Multiple files panel`_). TODO
+17. Opens window with a preview of segmentation parameters for each component.
+    **Reuse parameters** button from this window restores selected parameters.
 
 .. image:: images/mask_segmentation_parameters_preview.png
    :alt: Window to preview parameters of segmentation.
@@ -97,11 +101,11 @@ Here there is description of image tab:
 .. image::  images/mask_window_image.png
    :alt: View on image tab.
 
-1. Information about image.
-2. Widget to select files for batch processing.
-   It is described in `select multiple files`_ part of
-   `Batch processing`_ from `ROI Analysis GUI`_.
-3. Control if show Multiple files panel.
+1. Gives information on image. Spacing parameters can be changed manually.
+2. In this panel files for batch processing can be selected.
+   (For further details see `select multiple files`_ part of
+   `Batch processing`_ from `ROI Analysis GUI`_.)
+3. Controls appearance of `Multiple files panel`_ in main window.
 
 ROI Analysis GUI
 ----------------
@@ -112,13 +116,13 @@ ROI Analysis GUI
 On top of the window they are 5 buttons:
 
 
-*   **Open** - load data.
-*   **Save** - save data.
-*   **Settings and Measurement** - open window with:
+*   **Open** - loads data.
+*   **Save** - saves data.
+*   **Settings and Measurement** - opens window with:
     Properties_, `Color control`_ and `Measurement`_.
-*   **Mask manager** - Open `Mask manager`_ to create
+*   **Mask manager** - Opens `Mask manager`_ to create
     mask from current segmentation.
-*   **Batch processing** - Open `Batch processing`_ window
+*   **Batch processing** - Opens `Batch processing`_ window
 
 1.  `Multiple files panel`_ is used to manage multiple files. 
     This panel is hidden by default and can be can be enabled in
@@ -127,9 +131,9 @@ On top of the window they are 5 buttons:
 2.  Colorbar - Shows relation of currently used color map and brightness
     values for selected channel. Selection of colormap
     is described in `Image View`_.
-3.  Two copy of `Image View`_. Main panel is right.
+3.  Two copies of `Image View`_. Main panel is placed on the right.
     Left panel can be used to preview raw data, selected segmentation,
-    or replaced with measurement.
+    or be replaced with `Measurements`_ panel.
 4.  `Algorithm parameters`_ - This panel is used to set parameters of segmentation
 
 Above colorbar there are two controls:
