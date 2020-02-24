@@ -318,6 +318,57 @@ class BaseSettings(ViewSettings):
     """:py:class:`~.Signal` emitted when current algorithm should be changed"""
     save_locations_keys = []
 
+    def __init__(self, json_path):
+        super().__init__()
+        self.current_segmentation_dict = "default"
+        self.segmentation_dict = ProfileDict()
+        self.json_folder_path = json_path
+        self.last_executed_algorithm = ""
+        self.history = []
+        self.history_index = -1
+
+    def add_history_element(self, elem) -> None:
+        self.history_index += 1
+        if self.history_index < len(self.history) and self.cmp_history_element(elem, self.history[self.history_index]):
+            self.history[self.history_index] = elem
+        else:
+            self.history = self.history[: self.history_index]
+            self.history.append(elem)
+
+    def history_size(self) -> int:
+        return self.history_index + 1
+
+    def history_redo_size(self) -> int:
+        if self.history_index + 1 == len(self.history):
+            return 0
+        return len(self.history[self.history_index + 1 :])
+
+    def history_redo_clean(self) -> None:
+        self.history = self.history[: self.history_size()]
+
+    def history_current_element(self):
+        return self.history[self.history_index]
+
+    def history_next_element(self):
+        return self.history[self.history_index + 1]
+
+    def history_pop(self):
+        if self.history_index != -1:
+            self.history_index -= 1
+            return self.history[self.history_index + 1]
+        return None
+
+    def set_history(self, history):
+        self.history = history
+        self.history_index = len(self.history) - 1
+
+    def get_history(self):
+        return self.history[: self.history_index + 1]
+
+    @staticmethod
+    def cmp_history_element(el1, el2):
+        return False
+
     @property
     def mask(self):
         if self._image.mask is not None:
@@ -338,13 +389,6 @@ class BaseSettings(ViewSettings):
             SaveSettingsDescription("segmentation_settings.json", self.segmentation_dict),
             SaveSettingsDescription("view_settings.json", self.view_settings_dict),
         ]
-
-    def __init__(self, json_path):
-        super().__init__()
-        self.current_segmentation_dict = "default"
-        self.segmentation_dict = ProfileDict()
-        self.json_folder_path = json_path
-        self.last_executed_algorithm = ""
 
     def get_path_history(self) -> List[str]:
         """

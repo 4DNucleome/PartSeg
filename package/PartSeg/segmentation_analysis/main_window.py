@@ -18,7 +18,6 @@ from qtpy.QtWidgets import (
     QCheckBox,
     QComboBox,
     QInputDialog,
-    QDialog,
 )
 
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
@@ -28,14 +27,14 @@ from PartSeg.segmentation_analysis.measurement_widget import MeasurementWidget
 from PartSegCore.analysis import ProjectTuple
 from PartSegCore.analysis import algorithm_description, load_functions
 from PartSegCore.io_utils import WrongFileTypeException
+from PartSegCore.mask_create import calculate_mask
 from ..common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, AlgorithmChoose
 from ..common_gui.channel_control import ChannelProperty
-from ..common_gui.mask_widget import MaskWidget
+from ..common_gui.mask_widget import MaskDialogBase
 from ..common_gui.stack_image_view import ColorBar
 from ..common_gui.universal_gui_part import TextShow
 from ..common_gui.waiting_dialog import WaitingDialog, ExecuteFunctionDialog
 from ..common_gui.multiple_file_widget import MultipleFileWidget
-from PartSegCore.mask_create import calculate_mask, MaskProperty
 from PartSegCore.segmentation.algorithm_base import SegmentationResult
 from ..common_backend.main_window import BaseMainWindow, BaseMainMenu
 from .advanced_window import SegAdvancedWindow
@@ -43,7 +42,7 @@ from .batch_window import BatchWindow
 from .calculation_pipeline_thread import CalculatePipelineThread
 from PartSegImage import TiffImageReader, Image
 from PartSegCore.algorithm_describe_base import SegmentationProfile
-from PartSegCore.analysis.analysis_utils import HistoryElement, SegmentationPipelineElement, SegmentationPipeline
+from PartSegCore.analysis.analysis_utils import SegmentationPipelineElement, SegmentationPipeline, HistoryElement
 from .image_view import SynchronizeView, ResultImageView, CompareImageView
 from .partseg_settings import PartSettings
 from ..common_gui.custom_save_dialog import SaveDialog
@@ -154,7 +153,7 @@ class Options(QWidget):
         self.interactive_use.setEnabled(True)
 
     def save_pipeline(self):
-        history = self._settings.segmentation_history
+        history = self._settings.get_history()
         if not history:
             QMessageBox.information(self, "No mask created", "There is no new mask created", QMessageBox.Ok)
             return
@@ -205,8 +204,7 @@ class Options(QWidget):
             self._settings.mask = pipeline_result.mask
             self._settings.segmentation = pipeline_result.segmentation
             self._settings.full_segmentation = pipeline_result.full_segmentation
-            self._settings.segmentation_history = pipeline_result.history
-            self._settings.undo_segmentation_history = []
+            self._settings.set_history(pipeline_result.history)
             self.label.setText(pipeline_result.description)
             self.algorithm_choose_widget.change_algorithm(pipeline.segmentation.algorithm, pipeline.segmentation.values)
         self.choose_pipe.setCurrentIndex(0)
@@ -445,7 +443,7 @@ class MainMenu(BaseMainMenu):
         if self.settings.segmentation is None:
             QMessageBox.information(self, "No segmentation", "Cannot create mask without segmentation")
             return
-        dial = MaskWindow(self.settings)
+        dial = MaskDialog(self.settings)
         dial.exec_()
 
     def load_data(self):
@@ -519,74 +517,7 @@ class MainMenu(BaseMainMenu):
             self.main_window.advanced_window.show()
 
 
-class MaskWindow(QDialog):
-    def __init__(self, settings: PartSettings):
-        super().__init__()
-        self.setWindowTitle("Mask manager")
-        self.settings = settings
-        main_layout = QVBoxLayout()
-        self.mask_widget = MaskWidget(settings, self)
-        main_layout.addWidget(self.mask_widget)
-        try:
-            mask_property = self.settings.get("mask_manager.mask_property")
-            self.mask_widget.set_mask_property(mask_property)
-        except KeyError:
-            pass
-
-        self.reset_next_btn = QPushButton("Reset Next")
-        self.reset_next_btn.clicked.connect(self.reset_next_fun)
-        if len(settings.undo_segmentation_history) == 0:
-            self.reset_next_btn.setDisabled(True)
-        self.set_next_btn = QPushButton("Set Next")
-        if not self.settings.undo_segmentation_history:
-            self.set_next_btn.setDisabled(True)
-        self.set_next_btn.clicked.connect(self.set_next)
-        self.cancel = QPushButton("Cancel", self)
-        self.cancel.clicked.connect(self.close)
-        self.prev_button = QPushButton(f"Previous mask ({len(settings.segmentation_history)})", self)
-        if len(settings.segmentation_history) == 0:
-            self.prev_button.setDisabled(True)
-        self.next_button = QPushButton(f"Next mask ({len(settings.undo_segmentation_history)})", self)
-        if len(settings.undo_segmentation_history) == 0:
-            self.next_button.setText("Next mask (new)")
-        self.next_button.clicked.connect(self.next_mask)
-        self.prev_button.clicked.connect(self.prev_mask)
-        op_layout = QHBoxLayout()
-        op_layout.addWidget(self.mask_widget.radius_information)
-        main_layout.addLayout(op_layout)
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(self.cancel)
-        button_layout.addWidget(self.set_next_btn)
-        button_layout.addWidget(self.reset_next_btn)
-        main_layout.addLayout(button_layout)
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(self.prev_button)
-        button_layout.addWidget(self.next_button)
-        main_layout.addLayout(button_layout)
-        self.setLayout(main_layout)
-        if self.settings.undo_segmentation_history:
-            mask_prop: MaskProperty = self.settings.undo_segmentation_history[-1].mask_property
-            self.mask_widget.set_mask_property(mask_prop)
-        self.mask_widget.values_changed.connect(self.values_changed)
-
-    def set_next(self):
-        if self.settings.undo_segmentation_history:
-            self.mask_widget.set_mask_property(self.settings.undo_segmentation_history[-1].mask_property)
-
-    def values_changed(self):
-        if (
-            self.settings.undo_segmentation_history
-            and self.mask_widget.get_mask_property() == self.settings.undo_segmentation_history[-1].mask_property
-        ):
-            self.next_button.setText(f"Next mask ({len(self.settings.undo_segmentation_history)})")
-        else:
-            self.next_button.setText("Next mask (new)")
-
-    def reset_next_fun(self):
-        self.settings.undo_segmentation_settings = []
-        self.next_button.setText("Next mask (new)")
-        self.reset_next_btn.setDisabled(True)
-
+class MaskDialog(MaskDialogBase):
     def next_mask(self):
         algorithm_name = self.settings.last_executed_algorithm
         algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
@@ -594,7 +525,7 @@ class MaskWindow(QDialog):
         mask_property = self.mask_widget.get_mask_property()
         self.settings.set("mask_manager.mask_property", mask_property)
         mask = calculate_mask(mask_property, segmentation, self.settings.mask, self.settings.image_spacing)
-        self.settings.segmentation_history.append(
+        self.settings.add_history_element(
             HistoryElement.create(
                 segmentation,
                 self.settings.full_segmentation,
@@ -604,24 +535,18 @@ class MaskWindow(QDialog):
                 mask_property,
             )
         )
-        if (
-            self.settings.undo_segmentation_history
-            and self.settings.undo_segmentation_history[-1].mask_property
-            == self.settings.segmentation_history[-1].mask_property
-        ):
-            history = self.settings.undo_segmentation_history.pop()
+        if self.settings.history_redo_size():
+            history = self.settings.history_next_element()
             self.settings.set("current_algorithm", history.algorithm_name)
             self.settings.set(f"algorithm.{history.algorithm_name}", history.algorithm_values)
-        else:
-            self.settings.undo_segmentation_history = []
         self.settings.mask = mask
         self.close()
 
     def prev_mask(self):
-        history: HistoryElement = self.settings.segmentation_history.pop()
+        history: HistoryElement = self.settings.history_pop()
         algorithm_name = self.settings.last_executed_algorithm
         algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
-        history2 = history.replace_(algorithm_name=algorithm_name, algorithm_values=algorithm_values)
+        self.settings.fix_history(algorithm_name=algorithm_name, algorithm_values=algorithm_values)
         self.settings.set("current_algorithm", history.algorithm_name)
         self.settings.set(f"algorithm.{history.algorithm_name}", history.algorithm_values)
         history.arrays.seek(0)
@@ -633,7 +558,6 @@ class MaskWindow(QDialog):
             self.settings.mask = seg["mask"]
         else:
             self.settings.mask = None
-        self.settings.undo_segmentation_history.append(history2)
         self.close()
 
 
