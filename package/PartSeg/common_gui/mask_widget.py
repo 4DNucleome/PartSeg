@@ -1,12 +1,17 @@
 from functools import partial
 
+import numpy as np
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QPushButton, QHBoxLayout
+
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QWidget, QAbstractSpinBox, QCheckBox, QLabel, QHBoxLayout, QSpinBox, QVBoxLayout
+
+from PartSegCore.analysis import HistoryElement
 from .dim_combobox import DimComboBox
 from PartSegCore.segmentation.algorithm_base import calculate_operation_radius
 from PartSegCore.image_operations import RadiusType
-from ..common_backend.base_settings import ImageSettings
-from PartSegCore.mask_create import MaskProperty
+from ..common_backend.base_settings import ImageSettings, BaseSettings
+from PartSegCore.mask_create import MaskProperty, calculate_mask
 
 
 def off_widget(widget: QWidget, combo_box: DimComboBox):
@@ -135,3 +140,78 @@ class MaskWidget(QWidget):
         self.save_components.setChecked(prop.save_components)
         self.clip_to_mask.setChecked(prop.clip_to_mask)
         self.reversed_check.setChecked(prop.reversed_mask)
+
+
+class MaskDialogBase(QDialog):
+    def __init__(self, settings: BaseSettings):
+        super().__init__()
+        self.setWindowTitle("Mask manager")
+        self.settings = settings
+        main_layout = QVBoxLayout()
+        self.mask_widget = MaskWidget(settings, self)
+        main_layout.addWidget(self.mask_widget)
+        try:
+            mask_property = self.settings.get("mask_manager.mask_property")
+            self.mask_widget.set_mask_property(mask_property)
+        except KeyError:
+            pass
+
+        self.reset_next_btn = QPushButton("Reset Next")
+        self.reset_next_btn.clicked.connect(self.reset_next_fun)
+        if settings.history_redo_size() == 0:
+            self.reset_next_btn.setDisabled(True)
+        self.set_next_btn = QPushButton("Set Next")
+        if settings.history_redo_size() == 0:
+            self.set_next_btn.setDisabled(True)
+        self.set_next_btn.clicked.connect(self.set_next)
+        self.cancel = QPushButton("Cancel", self)
+        self.cancel.clicked.connect(self.close)
+        self.prev_button = QPushButton(f"Previous mask ({settings.history_size()})", self)
+        if settings.history_size() == 0:
+            self.prev_button.setDisabled(True)
+        self.next_button = QPushButton(f"Next mask ({settings.history_redo_size()})", self)
+        if settings.history_redo_size() == 0:
+            self.next_button.setText("Next mask (new)")
+        self.next_button.clicked.connect(self.next_mask)
+        self.prev_button.clicked.connect(self.prev_mask)
+        op_layout = QHBoxLayout()
+        op_layout.addWidget(self.mask_widget.radius_information)
+        main_layout.addLayout(op_layout)
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.cancel)
+        button_layout.addWidget(self.set_next_btn)
+        button_layout.addWidget(self.reset_next_btn)
+        main_layout.addLayout(button_layout)
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.prev_button)
+        button_layout.addWidget(self.next_button)
+        main_layout.addLayout(button_layout)
+        self.setLayout(main_layout)
+        if self.settings.history_redo_size():
+            mask_prop: MaskProperty = self.settings.history_next_element().mask_property
+            self.mask_widget.set_mask_property(mask_prop)
+        self.mask_widget.values_changed.connect(self.values_changed)
+
+    def set_next(self):
+        if self.settings.history_redo_size():
+            self.mask_widget.set_mask_property(self.settings.history_next_element().mask_property)
+
+    def values_changed(self):
+        if (
+            self.settings.history_redo_size()
+            and self.mask_widget.get_mask_property() == self.settings.history_next_element().mask_property
+        ):
+            self.next_button.setText(f"Next mask ({self.settings.history_redo_size()})")
+        else:
+            self.next_button.setText("Next mask (new)")
+
+    def reset_next_fun(self):
+        self.settings.history_redo_clean()
+        self.next_button.setText("Next mask (new)")
+        self.reset_next_btn.setDisabled(True)
+
+    def next_mask(self):
+        raise NotImplementedError()
+
+    def prev_mask(self):
+        raise NotImplementedError()

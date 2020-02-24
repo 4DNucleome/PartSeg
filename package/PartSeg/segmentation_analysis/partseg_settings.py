@@ -46,13 +46,26 @@ class PartSettings(BaseSettings):
         self._mask = None
         self.full_segmentation = None
         self.compare_segmentation = None
-        self.segmentation_history: typing.List[HistoryElement] = []
-        self.undo_segmentation_history: typing.List[HistoryElement] = []
         self.last_executed_algorithm = ""
         self.segmentation_pipelines_dict = ProfileDict()
         self.segmentation_profiles_dict = ProfileDict()
         self.batch_plans_dict = ProfileDict()
         self.measurement_profiles_dict = ProfileDict()
+
+    def fix_history(self, algorithm_name, algorithm_values):
+        """
+        set new algorithm parameters to
+
+        :param str algorithm_name:
+        :param dict algorithm_values:
+        """
+        self.history[self.history_index + 1] = self.history[self.history_index + 1].replace_(
+            algorithm_name=algorithm_name, algorithm_values=algorithm_values
+        )
+
+    @staticmethod
+    def cmp_history_element(el1: HistoryElement, el2: HistoryElement):
+        return el1.mask_property == el2.mask_property
 
     def set_segmentation_to_compare(self, segmentation):
         self.compare_segmentation = segmentation
@@ -107,7 +120,7 @@ class PartSettings(BaseSettings):
                 self.image = data.image.substitute(mask=data.mask)
             self.segmentation = data.segmentation
             self.full_segmentation = data.full_segmentation
-            self.segmentation_history = data.history[:]
+            self.set_history(data.history[:])
             if data.algorithm_parameters:
                 self.last_executed_algorithm = data.algorithm_parameters["algorithm_name"]
                 self.set(f"algorithms.{self.last_executed_algorithm}", deepcopy(data.algorithm_parameters["values"]))
