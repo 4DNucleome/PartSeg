@@ -627,6 +627,8 @@ class CalculationPlan:
 
     def remove_step(self):
         path = copy(self.current_pos)
+        if not path:
+            return
         pos = path[-1]
         parent_node = self.get_node(path[:-1])
         del parent_node.children[pos]
