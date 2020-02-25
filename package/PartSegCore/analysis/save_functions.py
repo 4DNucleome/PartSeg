@@ -12,10 +12,9 @@ import tifffile
 from PartSegImage import Image, ImageWriter
 from .io_utils import ProjectTuple, project_version_info
 from ..algorithm_describe_base import AlgorithmProperty, Register
-from .analysis_utils import HistoryElement
 from .save_hooks import PartEncoder
 from ..channel_class import Channel
-from ..io_utils import get_tarinfo, SaveBase, NotSupportedImage
+from ..io_utils import get_tarinfo, SaveBase, NotSupportedImage, HistoryElement
 from ..universal_const import UNIT_SCALE, Units
 
 __all__ = [
@@ -90,8 +89,8 @@ def save_project(
             el_info.append(
                 {
                     "index": i,
-                    "algorithm_name": el.algorithm_name,
-                    "values": el.algorithm_values,
+                    "algorithm_name": el.segmentation_parameters["algorithm_name"],
+                    "values": el.segmentation_parameters["values"],
                     "mask_property": el.mask_property,
                 }
             )

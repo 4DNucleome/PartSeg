@@ -54,7 +54,24 @@ def analysis_project():
     segmentation = np.zeros(data.shape, dtype=np.uint8)
     segmentation[data == 70] = 1
     segmentation[data == 60] = 2
-    return ProjectTuple("test_data.tiff", image, segmentation[0, ..., 0], segmentation[0, ..., 0], mask)
+    algorithm_parameters = {
+        "algorithm_name": "Lower Threshold",
+        "values": {
+            "threshold": 60,
+            "channel": 0,
+            "noise_filtering": {"name": "None", "values": {}},
+            "minimum_size": 10,
+            "side_connection": False,
+        },
+    }
+    return ProjectTuple(
+        file_path="test_data.tiff",
+        image=image,
+        segmentation=segmentation[0, ..., 0],
+        full_segmentation=segmentation[0, ..., 0],
+        mask=mask,
+        algorithm_parameters=algorithm_parameters,
+    )
 
 
 @pytest.fixture(scope="module")

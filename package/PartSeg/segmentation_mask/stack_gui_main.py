@@ -41,7 +41,7 @@ from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.custom_save_dialog import SaveDialog
 from ..common_gui.custom_load_dialog import CustomLoadDialog
 from ..common_gui.flow_layout import FlowLayout
-from ..common_gui.mask_widget import MaskWidget
+from ..common_gui.mask_widget import MaskWidget, MaskDialogBase
 from ..common_gui.select_multiple_files import AddFiles
 from ..common_gui.stack_image_view import ColorBar, LabelEnum
 from ..common_gui.universal_gui_part import right_label
@@ -68,89 +68,48 @@ import PartSegData
 CONFIG_FOLDER = os.path.join(state_store.save_folder, "mask")
 
 
-class MaskWindow(QDialog):
-    def __init__(self, settings: StackSettings):
-        super().__init__()
-        self.setWindowTitle("Mask manager")
-        self.settings = settings
-        main_layout = QVBoxLayout()
-        self.mask_widget = MaskWidget(settings, self)
-        main_layout.addWidget(self.mask_widget)
-        try:
-            mask_property = self.settings.get("mask_manager.mask_property")
-            self.mask_widget.set_mask_property(mask_property)
-        except KeyError:
-            pass
-
-        self.cancel = QPushButton("Cancel", self)
-        self.cancel.clicked.connect(self.close)
-
-        self.next_button = QPushButton(f"New mask", self)
-        self.next_button.clicked.connect(self.new_mask)
-
-        self.next_button = QPushButton(f"Pop mask", self)
-        self.next_button.clicked.connect(self.pop_mask)
-
-        op_layout = QHBoxLayout()
-        op_layout.addWidget(self.mask_widget.radius_information)
-        main_layout.addLayout(op_layout)
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(self.cancel)
-        button_layout.addWidget(self.next_button)
-        main_layout.addLayout(button_layout)
-        self.setLayout(main_layout)
-        self.mask_widget.values_changed.connect(self.values_changed)
-
-    def values_changed(self):
-        pass
-
-    def reset_next_fun(self):
-        self.settings.undo_segmentation_settings = []
-        self.next_button.setText("Next mask (new)")
-        self.reset_next_btn.setDisabled(True)
-
-    def new_mask(self):
-        # algorithm_name = self.settings.last_executed_algorithm
-        # algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
+class MaskDialog(MaskDialogBase):
+    def next_mask(self):
+        project_info = self.settings.get_project_info()
+        algorithm_name = self.settings.last_executed_algorithm
+        algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
         segmentation = self.settings.segmentation
         mask_property = self.mask_widget.get_mask_property()
         self.settings.set("mask_manager.mask_property", mask_property)
-        components = self.settings.chosen_components()
-        segmentation = reduce_array(segmentation, components, len(self.settings.sizes) + 1)
-
         mask = calculate_mask(mask_property, segmentation, self.settings.mask, self.settings.image_spacing)
-        # self.settings.segmentation_history.append(
-        #     HistoryElement.create(segmentation, self.settings.full_segmentation, self.settings.mask, algorithm_name,
-        #                           algorithm_values, mask_property)
-        # )
-        # if self.settings.undo_segmentation_history and \
-        #         self.settings.undo_segmentation_history[-1].mask_property == \
-        #         self.settings.segmentation_history[-1].mask_property:
-        #     history = self.settings.undo_segmentation_history.pop()
-        #     self.settings.set("current_algorithm", history.algorithm_name)
-        #     self.settings.set(f"algorithm.{history.algorithm_name}", history.algorithm_values)
-        # else:
-        #     self.settings.undo_segmentation_history = []
+        self.settings.add_history_element(
+            HistoryElement.create(
+                segmentation,
+                self.settings.full_segmentation,
+                self.settings.mask,
+                algorithm_name,
+                algorithm_values,
+                mask_property,
+            )
+        )
+        if self.settings.history_redo_size():
+            history = self.settings.history_next_element()
+            self.settings.set("current_algorithm", history.algorithm_name)
+            self.settings.set(f"algorithm.{history.algorithm_name}", history.algorithm_values)
         self.settings.mask = mask
         self.close()
 
-    def pop_mask(self):
-        # history: HistoryElement = self.settings.segmentation_history.pop()
-        # algorithm_name = self.settings.last_executed_algorithm
-        # algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
-        # history2 = history.replace_(algorithm_name=algorithm_name, algorithm_values=algorithm_values)
-        # self.settings.set("current_algorithm", history.algorithm_name)
-        # self.settings.set(f"algorithm.{history.algorithm_name}", history.algorithm_values)
-        # history.arrays.seek(0)
-        # seg = np.load(history.arrays)
-        # history.arrays.seek(0)
-        # self.settings.segmentation = seg["segmentation"]
-        # self.settings.full_segmentation = seg["full_segmentation"]
-        # if "mask" in seg:
-        #     self.settings.mask = seg["mask"]
-        # else:
-        #     self.settings.mask = None
-        # self.settings.undo_segmentation_history.append(history2)
+    def prev_mask(self):
+        history: HistoryElement = self.settings.history_pop()
+        algorithm_name = self.settings.last_executed_algorithm
+        algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
+        self.settings.fix_history(algorithm_name=algorithm_name, algorithm_values=algorithm_values)
+        self.settings.set("current_algorithm", history.algorithm_name)
+        self.settings.set(f"algorithm.{history.algorithm_name}", history.algorithm_values)
+        history.arrays.seek(0)
+        seg = np.load(history.arrays)
+        history.arrays.seek(0)
+        self.settings.segmentation = seg["segmentation"]
+        self.settings.full_segmentation = seg["full_segmentation"]
+        if "mask" in seg:
+            self.settings.mask = seg["mask"]
+        else:
+            self.settings.mask = None
         self.close()
 
 
@@ -202,7 +161,7 @@ class MainMenu(BaseMainMenu):
         if not self.settings.chosen_components():
             QMessageBox.information(self, "No selected components", "Mask is created only from selected components")
             return
-        dial = MaskWindow(self.settings)
+        dial = MaskDialog(self.settings)
         dial.exec_()
 
     def show_advanced_window(self):

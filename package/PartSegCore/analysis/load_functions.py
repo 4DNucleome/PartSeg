@@ -25,8 +25,9 @@ from ..io_utils import (
     WrongFileTypeException,
     UpdateLoadedMetadataBase,
     open_tar_file,
+    HistoryElement,
 )
-from .analysis_utils import HistoryElement, SegmentationPipeline, SegmentationPipelineElement
+from .analysis_utils import SegmentationPipeline, SegmentationPipelineElement
 from .io_utils import ProjectTuple, MaskInfo, project_version_info
 from .calculation_plan import CalculationPlan, CalculationTree
 from .save_hooks import part_hook
@@ -91,17 +92,17 @@ def load_project(
 
         history = []
         try:
-            history_buff = tar_file.extractfile(tar_file.getmember("history/history.json"))
+            history_buff = tar_file.extractfile(tar_file.getmember("history/history.json")).read()
             history_json = load_metadata(history_buff)
             for el in history_json:
                 history_buffer = BytesIO()
                 history_buffer.write(tar_file.extractfile(f"history/arrays_{el['index']}.npz").read())
                 history_buffer.seek(0)
                 el = update_algorithm_dict(el)
+                segmentation_parameters = {"algorithm_name": el["algorithm_name"], "values": el["values"]}
                 history.append(
                     HistoryElement(
-                        algorithm_name=el["algorithm_name"],
-                        algorithm_values=el["values"],
+                        segmentation_parameters=segmentation_parameters,
                         mask_property=el["mask_property"],
                         arrays=history_buffer,
                     )

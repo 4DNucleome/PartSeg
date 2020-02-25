@@ -6,9 +6,10 @@ from qtpy.QtCore import Signal
 from PartSegImage import Image
 from PartSegCore.analysis.calculation_plan import CalculationPlan
 from PartSegCore.analysis.io_utils import ProjectTuple, MaskInfo
+from PartSegCore.io_utils import HistoryElement
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.algorithm_describe_base import SegmentationProfile
-from PartSegCore.analysis.analysis_utils import HistoryElement, SegmentationPipeline
+from PartSegCore.analysis.analysis_utils import SegmentationPipeline
 from PartSegCore.analysis.save_hooks import PartEncoder
 from PartSegCore.analysis.load_functions import load_metadata
 from ..common_backend.base_settings import BaseSettings, SaveSettingsDescription
@@ -96,13 +97,13 @@ class PartSettings(BaseSettings):
         else:
             algorithm_val = {}
         return ProjectTuple(
-            self.image.file_path,
-            self.image.substitute(),
-            self.segmentation,
-            self.full_segmentation,
-            self.mask,
-            self.segmentation_history[:],
-            algorithm_val,
+            file_path=self.image.file_path,
+            image=self.image.substitute(),
+            segmentation=self.segmentation,
+            full_segmentation=self.full_segmentation,
+            mask=self.mask,
+            history=self.history[: self.history_index + 1],
+            algorithm_parameters=algorithm_val,
         )
 
     def set_project_info(self, data: typing.Union[ProjectTuple, MaskInfo]):

@@ -21,7 +21,6 @@ import tifffile
 
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
-from PartSegCore.analysis.analysis_utils import HistoryElement
 from PartSegCore.analysis.calculation_plan import (
     MaskMapper,
     MaskUse,
@@ -47,7 +46,7 @@ from PartSegCore.mask_create import calculate_mask
 from PartSegCore.segmentation.algorithm_base import report_empty_fun, SegmentationAlgorithm
 from PartSegImage import Image, TiffImageReader
 from .parallel_backend import BatchManager
-from ...io_utils import WrongFileTypeException
+from ...io_utils import WrongFileTypeException, HistoryElement
 
 
 def do_calculation(file_path: str, calculation: BaseCalculation):
@@ -193,7 +192,7 @@ class CalculationProcess:
         self.segmentation = result.segmentation
         self.full_segmentation = result.full_segmentation
         self.cleaned_channel = result.cleaned_channel
-        self.algorithm_parameters = {"name": operation.algorithm, "values": operation.values}
+        self.algorithm_parameters = {"algorithm_name": operation.algorithm, "values": operation.values}
         self.iterate_over(children)
         self.segmentation, self.full_segmentation, self.cleaned_channel, self.algorithm_parameters = backup_data
 
@@ -260,12 +259,7 @@ class CalculationProcess:
         if operation.name in self.reused_mask:
             self.mask_dict[operation.name] = mask
         history_element = HistoryElement.create(
-            self.segmentation,
-            self.full_segmentation,
-            self.mask,
-            self.algorithm_parameters["name"],
-            self.algorithm_parameters["values"],
-            operation.mask_property,
+            self.segmentation, self.full_segmentation, self.mask, self.algorithm_parameters, operation.mask_property,
         )
         backup = self.mask, self.history
         self.mask = mask
@@ -282,10 +276,10 @@ class CalculationProcess:
         channel = operation.channel
         if channel == -1:
             segmentation_class: typing.Type[SegmentationAlgorithm] = analysis_algorithm_dict.get(
-                self.algorithm_parameters["name"], None
+                self.algorithm_parameters["algorithm_name"], None
             )
             if segmentation_class is None:
-                raise ValueError(f"Segmentation class {self.algorithm_parameters['name']} do not found")
+                raise ValueError(f"Segmentation class {self.algorithm_parameters['algorithm_name']} do not found")
             channel = self.algorithm_parameters["values"][segmentation_class.get_channel_parameter_name()]
 
         image_channel = self.image.get_channel(channel)

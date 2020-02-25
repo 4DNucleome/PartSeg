@@ -1,8 +1,9 @@
 import typing
 
+from PartSegCore.io_utils import HistoryElement
 from PartSegCore.class_generator import BaseSerializableClass
 from PartSegCore.segmentation import RestartableAlgorithm
-from PartSegCore.analysis.analysis_utils import SegmentationPipeline, HistoryElement
+from PartSegCore.analysis.analysis_utils import SegmentationPipeline
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.mask_create import calculate_mask
 from PartSegImage import Image
@@ -34,10 +35,9 @@ def calculate_pipeline(image: Image, mask: typing.Optional[np.ndarray], pipeline
         full_segmentation = result.full_segmentation
         report_fun("step", 2 * i + 1)
         new_mask = calculate_mask(el.mask_property, segmentation, mask, image.spacing)
+        segmentation_parameters = {"algorithm_name": el.segmentation.name, "values": el.segmentation.values}
         history.append(
-            HistoryElement.create(
-                segmentation, full_segmentation, mask, el.segmentation.name, el.segmentation.values, el.mask_property
-            )
+            HistoryElement.create(segmentation, full_segmentation, mask, segmentation_parameters, el.mask_property)
         )
         report_fun("step", 2 * i + 2)
         mask = new_mask

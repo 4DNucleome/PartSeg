@@ -11,7 +11,7 @@ from PartSegImage import Image
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.analysis.analysis_utils import SegmentationPipelineElement, SegmentationPipeline
-from PartSegCore.calculate_pipeline import calculate_pipeline
+from PartSegCore.analysis.calculate_pipeline import calculate_pipeline
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask_create import calculate_mask, MaskProperty
 from PartSegCore.segmentation import restartable_segmentation_algorithms as sa, SegmentationAlgorithm

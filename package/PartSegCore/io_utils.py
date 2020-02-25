@@ -14,6 +14,8 @@ import numpy as np
 from PartSegCore.json_hooks import profile_hook, ProfileDict
 from PartSegImage import Image
 from .algorithm_describe_base import AlgorithmDescribeBase, SegmentationProfile
+from .class_generator import BaseSerializableClass
+from .mask_create import MaskProperty
 
 
 class SegmentationType(Enum):
@@ -287,3 +289,28 @@ def open_tar_file(
     else:
         raise ValueError(f"wrong type of file_ argument: {type(file_data)}")
     return tar_file, file_path
+
+
+class HistoryElement(BaseSerializableClass):
+    segmentation_parameters: typing.Dict[str, typing.Any]
+    mask_property: MaskProperty
+    arrays: BytesIO
+
+    @classmethod
+    def create(
+        cls,
+        segmentation: np.ndarray,
+        full_segmentation: np.ndarray,
+        mask: typing.Union[np.ndarray, None],
+        segmentation_parameters: dict,
+        mask_property: MaskProperty,
+    ):
+        if "name" in segmentation_parameters:
+            raise ValueError("name")
+        arrays = BytesIO()
+        arrays_dict = {"segmentation": segmentation, "full_segmentation": full_segmentation}
+        if mask is not None:
+            arrays_dict["mask"] = mask
+        np.savez_compressed(arrays, **arrays_dict)
+        arrays.seek(0)
+        return cls(segmentation_parameters=segmentation_parameters, mask_property=mask_property, arrays=arrays)

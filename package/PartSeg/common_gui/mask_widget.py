@@ -1,12 +1,9 @@
 from functools import partial
 
-import numpy as np
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QPushButton, QHBoxLayout
-
+from qtpy.QtWidgets import QDialog, QPushButton
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QWidget, QAbstractSpinBox, QCheckBox, QLabel, QHBoxLayout, QSpinBox, QVBoxLayout
 
-from PartSegCore.analysis import HistoryElement
 from .dim_combobox import DimComboBox
 from PartSegCore.segmentation.algorithm_base import calculate_operation_radius
 from PartSegCore.image_operations import RadiusType

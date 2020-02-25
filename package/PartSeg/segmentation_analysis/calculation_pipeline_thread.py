@@ -1,5 +1,5 @@
 from PartSegCore.analysis.analysis_utils import SegmentationPipeline
-from PartSegCore.calculate_pipeline import calculate_pipeline, PipelineResult
+from PartSegCore.analysis.calculate_pipeline import calculate_pipeline, PipelineResult
 from ..common_backend.progress_thread import ProgressTread
 from PartSegImage import Image
 import numpy as np
