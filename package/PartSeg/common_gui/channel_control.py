@@ -289,9 +289,9 @@ class ChannelProperty(QWidget):
         self.fixed.stateChanged.connect(self.lock_channel)
         self.use_filter = EnumComboBox(NoiseFilterType)
         self.use_filter.setToolTip("Only current channel")
-        self.gauss_radius = QDoubleSpinBox()
-        self.gauss_radius.setSingleStep(0.1)
-        self.gauss_radius.valueChanged.connect(self.gauss_radius_changed)
+        self.filter_radius = QDoubleSpinBox()
+        self.filter_radius.setSingleStep(0.1)
+        self.filter_radius.valueChanged.connect(self.gauss_radius_changed)
         self.use_filter.currentIndexChanged.connect(self.gauss_use_changed)
 
         self.collapse_widget = CollapseCheckbox("Channel property")
@@ -299,7 +299,7 @@ class ChannelProperty(QWidget):
         self.collapse_widget.add_hide_element(self.maximum_value)
         self.collapse_widget.add_hide_element(self.fixed)
         self.collapse_widget.add_hide_element(self.use_filter)
-        self.collapse_widget.add_hide_element(self.gauss_radius)
+        self.collapse_widget.add_hide_element(self.filter_radius)
 
         layout = QGridLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -312,7 +312,7 @@ class ChannelProperty(QWidget):
         layout.addWidget(self.maximum_value, 2, 1)
         layout.addWidget(self.fixed, 1, 2, 1, 2)
         layout.addWidget(self.use_filter, 2, 2, 1, 1)
-        layout.addWidget(self.gauss_radius, 2, 3, 1, 1)
+        layout.addWidget(self.filter_radius, 2, 3, 1, 1)
         self.setLayout(layout)
 
         self.collapse_widget.add_hide_element(label1)
@@ -348,7 +348,7 @@ class ChannelProperty(QWidget):
                 f"{self.current_name}.use_filter_{self.current_channel}", NoiseFilterType.No
             )
         )
-        self.gauss_radius.setValue(
+        self.filter_radius.setValue(
             self._settings.get_from_profile(f"{self.current_name}.filter_radius_{self.current_channel}", 1)
         )
         self.fixed.setChecked(
@@ -358,7 +358,7 @@ class ChannelProperty(QWidget):
 
     def gauss_radius_changed(self):
         self._settings.set_in_profile(
-            f"{self.current_name}.filter_radius_{self.current_channel}", self.gauss_radius.value()
+            f"{self.current_name}.filter_radius_{self.current_channel}", self.filter_radius.value()
         )
         if self.use_filter.get_value() != NoiseFilterType.No:
             self.send_info()
@@ -367,6 +367,13 @@ class ChannelProperty(QWidget):
         self._settings.set_in_profile(
             f"{self.current_name}.use_filter_{self.current_channel}", self.use_filter.get_value()
         )
+        if self.use_filter.get_value() == NoiseFilterType.Median:
+            self.filter_radius.setDecimals(0)
+            self.filter_radius.setSingleStep(1)
+        else:
+            self.filter_radius.setDecimals(2)
+            self.filter_radius.setSingleStep(0.1)
+
         self.send_info()
 
     def lock_channel(self, value):
