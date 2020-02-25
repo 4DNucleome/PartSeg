@@ -5,35 +5,9 @@ from textwrap import indent
 import numpy as np
 
 from PartSegCore.algorithm_describe_base import SegmentationProfile
+from ..io_utils import HistoryElement
 from ..class_generator import BaseSerializableClass
 from ..mask_create import MaskProperty
-
-
-class HistoryElement(BaseSerializableClass):
-    algorithm_name: str
-    algorithm_values: typing.Dict[str, typing.Any]
-    mask_property: MaskProperty
-    arrays: BytesIO
-
-    @classmethod
-    def create(
-        cls,
-        segmentation: np.ndarray,
-        full_segmentation: np.ndarray,
-        mask: typing.Union[np.ndarray, None],
-        algorithm_name: str,
-        algorithm_values: dict,
-        mask_property: MaskProperty,
-    ):
-        arrays = BytesIO()
-        arrays_dict = {"segmentation": segmentation, "full_segmentation": full_segmentation}
-        if mask is not None:
-            arrays_dict["mask"] = mask
-        np.savez_compressed(arrays, **arrays_dict)
-        arrays.seek(0)
-        return HistoryElement(
-            algorithm_name=algorithm_name, algorithm_values=algorithm_values, mask_property=mask_property, arrays=arrays
-        )
 
 
 class SegmentationPipelineElement(BaseSerializableClass):

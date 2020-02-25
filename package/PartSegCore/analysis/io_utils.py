@@ -3,9 +3,9 @@ import typing
 import numpy as np
 import packaging.version
 
-from PartSegCore.io_utils import ProjectInfoBase
+from PartSegCore.io_utils import ProjectInfoBase, HistoryElement
+from PartSegCore.mask_create import MaskProperty
 from PartSegImage import Image
-from .analysis_utils import HistoryElement
 
 project_version_info = packaging.version.Version("1.1")
 
@@ -33,3 +33,13 @@ class ProjectTuple(ProjectInfoBase, typing.NamedTuple):
 class MaskInfo(typing.NamedTuple):
     file_path: str
     mask_array: np.ndarray
+
+
+def create_history_element_from_project(project_info: ProjectTuple, mask_property: MaskProperty):
+    return HistoryElement.create(
+        project_info.segmentation,
+        project_info.full_segmentation,
+        project_info.mask,
+        project_info.algorithm_parameters,
+        mask_property,
+    )

@@ -26,7 +26,8 @@ from PartSeg.common_gui.stacked_widget_with_selector import StackedWidgetWithSel
 from PartSeg.segmentation_analysis.measurement_widget import MeasurementWidget
 from PartSegCore.analysis import ProjectTuple
 from PartSegCore.analysis import algorithm_description, load_functions
-from PartSegCore.io_utils import WrongFileTypeException
+from PartSegCore.analysis.io_utils import create_history_element_from_project
+from PartSegCore.io_utils import WrongFileTypeException, HistoryElement
 from PartSegCore.mask_create import calculate_mask
 from ..common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, AlgorithmChoose
 from ..common_gui.channel_control import ChannelProperty
@@ -42,7 +43,7 @@ from .batch_window import BatchWindow
 from .calculation_pipeline_thread import CalculatePipelineThread
 from PartSegImage import TiffImageReader, Image
 from PartSegCore.algorithm_describe_base import SegmentationProfile
-from PartSegCore.analysis.analysis_utils import SegmentationPipelineElement, SegmentationPipeline, HistoryElement
+from PartSegCore.analysis.analysis_utils import SegmentationPipelineElement, SegmentationPipeline
 from .image_view import SynchronizeView, ResultImageView, CompareImageView
 from .partseg_settings import PartSettings
 from ..common_gui.custom_save_dialog import SaveDialog
@@ -519,22 +520,11 @@ class MainMenu(BaseMainMenu):
 
 class MaskDialog(MaskDialogBase):
     def next_mask(self):
-        algorithm_name = self.settings.last_executed_algorithm
-        algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
-        segmentation = self.settings.segmentation
+        project_info: ProjectTuple = self.settings.get_project_info()
         mask_property = self.mask_widget.get_mask_property()
         self.settings.set("mask_manager.mask_property", mask_property)
-        mask = calculate_mask(mask_property, segmentation, self.settings.mask, self.settings.image_spacing)
-        self.settings.add_history_element(
-            HistoryElement.create(
-                segmentation,
-                self.settings.full_segmentation,
-                self.settings.mask,
-                algorithm_name,
-                algorithm_values,
-                mask_property,
-            )
-        )
+        mask = calculate_mask(mask_property, project_info.segmentation, project_info.mask, project_info.image.spacing)
+        self.settings.add_history_element(create_history_element_from_project(project_info, mask_property,))
         if self.settings.history_redo_size():
             history = self.settings.history_next_element()
             self.settings.set("current_algorithm", history.algorithm_name)
@@ -547,8 +537,10 @@ class MaskDialog(MaskDialogBase):
         algorithm_name = self.settings.last_executed_algorithm
         algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
         self.settings.fix_history(algorithm_name=algorithm_name, algorithm_values=algorithm_values)
-        self.settings.set("current_algorithm", history.algorithm_name)
-        self.settings.set(f"algorithm.{history.algorithm_name}", history.algorithm_values)
+        self.settings.set("current_algorithm", history.segmentation_parameters["algorithm_name"])
+        self.settings.set(
+            f"algorithm.{history.segmentation_parameters['algorithm_name']}", history.segmentation_parameters["values"]
+        )
         history.arrays.seek(0)
         seg = np.load(history.arrays)
         history.arrays.seek(0)
