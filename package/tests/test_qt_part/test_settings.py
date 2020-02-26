@@ -26,13 +26,17 @@ class TestStackSettings:
         settings.chosen_components_widget = chosen_components
         settings.set_project_info(project1)
         project1_res = settings.get_project_info()
-        assert isinstance(project1_res.chosen_components, typing.Iterable) and len(project1_res.chosen_components) == 2
+        assert (
+            isinstance(project1_res.selected_components, typing.Iterable) and len(project1_res.selected_components) == 2
+        )
         assert project1_res.file_path == os.path.join(data_test_dir, "test_nucleus.tif")
         project2 = LoadStackImage.load([os.path.join(data_test_dir, "test_lsm.tif")])
         settings.set_project_info(project2)
         project2_res = settings.get_project_info()
         assert project2_res.segmentation is None
-        assert isinstance(project2_res.chosen_components, typing.Iterable) and len(project2_res.chosen_components) == 0
+        assert (
+            isinstance(project2_res.selected_components, typing.Iterable) and len(project2_res.selected_components) == 0
+        )
         assert project2_res.file_path == os.path.join(data_test_dir, "test_lsm.tif")
 
 
@@ -109,7 +113,7 @@ class TestPartSettings:
         settings.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
         project_info = settings.get_project_info()
         mask = calculate_mask(mask_property, settings.segmentation, settings.mask, settings.image_spacing)
-        settings.add_history_element(create_history_element_from_project(project_info, mask_property, ))
+        settings.add_history_element(create_history_element_from_project(project_info, mask_property,))
         settings.mask = mask
         algorithm_parameters["values"]["channel"] = 1
         algorithm.set_parameters(**algorithm_parameters["values"])

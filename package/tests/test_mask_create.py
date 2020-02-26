@@ -218,5 +218,15 @@ class TestCalculateMask:
         mask[mask2 == 1] = 0
         assert np.all(mask3 == mask)
 
+    def test_chose_components(self):
+        mask = np.zeros((12, 12, 12), dtype=np.uint8)
+        mask[2:7, 2:-2, 2:-2] = 3
+        mask[7:-2, 2:-2, 2:-2] = 2
+        mask[4:-4, 4:-4, 4:-4] = 1
+        mask1 = calculate_mask(
+            MaskProperty(RadiusType.NO, 0, RadiusType.R2D, -1, True, True), mask, None, (1, 1, 1), [1, 3]
+        )
+        assert np.all(np.unique(mask1) == [0, 1, 3])
+
 
 # TODO add test with touching boundaries.

@@ -115,7 +115,7 @@ class StackSettings(BaseSettings):
             image=self.image.substitute(),
             mask=self.mask,
             segmentation=self.segmentation,
-            chosen_components=self.chosen_components(),
+            selected_components=self.chosen_components(),
             segmentation_parameters=copy(self.components_parameters_dict),
         )
 
@@ -140,17 +140,17 @@ class StackSettings(BaseSettings):
                 state,
                 data.segmentation,
                 data.segmentation_parameters,
-                data.chosen_components,
+                data.selected_components,
                 self.keep_chosen_components,
             )
             self.chosen_components_widget.set_chose(
-                list(sorted(state2.segmentation_parameters.keys())), state2.chosen_components
+                list(sorted(state2.segmentation_parameters.keys())), state2.selected_components
             )
             self.segmentation = state2.segmentation
             self.components_parameters_dict = state2.segmentation_parameters
         else:
             self.chosen_components_widget.set_chose(
-                list(sorted(data.segmentation_parameters.keys())), data.chosen_components
+                list(sorted(data.segmentation_parameters.keys())), data.selected_components
             )
             self.segmentation = data.segmentation
             self.components_parameters_dict = data.segmentation_parameters
@@ -174,11 +174,11 @@ class StackSettings(BaseSettings):
         new_segmentation_count = 0 if new_segmentation_data is None else len(np.unique(new_segmentation_data.flat))
         segmentation_dtype = minimal_dtype(segmentation_count + new_segmentation_count)
         if save_chosen and state.segmentation is not None:
-            segmentation = reduce_array(state.segmentation, state.chosen_components, dtype=segmentation_dtype)
+            segmentation = reduce_array(state.segmentation, state.selected_components, dtype=segmentation_dtype)
             components_parameters_dict = {}
-            for i, val in enumerate(sorted(state.chosen_components), 1):
+            for i, val in enumerate(sorted(state.selected_components), 1):
                 components_parameters_dict[i] = state.segmentation_parameters[val]
-            base_chose = list(range(1, len(state.chosen_components) + 1))
+            base_chose = list(range(1, len(state.selected_components) + 1))
         else:
             segmentation = None
             base_chose = []
@@ -228,7 +228,9 @@ class StackSettings(BaseSettings):
         if isinstance(data.image, Image):
             self.image = data.image
         if data.segmentation is not None:
-            self.set_segmentation(data.segmentation, save_chosen, data.chosen_components, data.segmentation_parameters)
+            self.set_segmentation(
+                data.segmentation, save_chosen, data.selected_components, data.segmentation_parameters
+            )
 
     def set_segmentation(
         self, new_segmentation_data, save_chosen=True, list_of_components=None, segmentation_parameters=None
@@ -247,7 +249,7 @@ class StackSettings(BaseSettings):
                 state, new_segmentation_data, segmentation_parameters, list_of_components, save_chosen
             )
             self.chosen_components_widget.set_chose(
-                list(sorted(state2.segmentation_parameters.keys())), state2.chosen_components
+                list(sorted(state2.segmentation_parameters.keys())), state2.selected_components
             )
             self.segmentation = state2.segmentation
             self.components_parameters_dict = state2.segmentation_parameters
