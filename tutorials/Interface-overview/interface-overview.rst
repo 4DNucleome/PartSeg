@@ -141,29 +141,30 @@ Above colorbar there are two controls:
 .. image::  images/main_window_cmp.png
    :alt: Main Roi Analysis GUI
 
-5.  Control if left panel should contain view on image or measurement.
-6.  Copy segmentation from right view.
-    Allows precise comparison of segmentation.
-    Visible only when image is selected with control 5.
+5. Controls if the left panel contains `Image view`_ or `Measurements`_.
+6. Enables/disables comparison mode. Visible only when image is selected with control 5.
+
+   * **Compare** - Copies current segmentation.
+     Allows to compare segmentations made with different parameters.
+   * **Remove** - Removes segmentation from left panel.
 
 .. image::  images/main_window_exec.png
    :alt: Main Roi Analysis GUI
 
-7.  Save current pipeline in memory.
-    Name of pipeline is set in dialog window.
-8.  Chose which pipeline should be applied to data.
-9.  Save current algorithm and its parameters.
-    Name of profile is set in dialog window.
-10. Select profile to be applied.
-11. If segmentation should be recalculated on every parameters change,
-    or only after "Execute" click.
-12. Execute segmentation algorithm.
+7.  Saves current pipeline, which is a sequence of segmentation and masking operations.
+    Name of pipeline is set in the dialog window.
+8.  Selects which pipeline is applied to data.
+9.  Saves current algorithm and its parameters as a profile.
+    Name of profile is set in the dialog window.
+10. Selects which profile is applied to the current state.
+11. Enables interactive mode where segmentation is recalculated after every parameters changes.
+12. Executes segmentation algorithm with current parameters.
 
 
-Below Algorithm parameters there are two checkbox:
+Below `Algorithm parameters`_ there are two checkbox:
 
-*   **Hide left panel** - as name. Useful for tight screen.
-*   **Synchronize view** - for synchronization both image views:
+*   **Hide left panel** - Hides left panel. Useful for tight screen.
+*   **Synchronize view** - Enables synchronization of both `Image view`_ panels:
     Zoom, layer, and X,Y position.
 
 Measurement
@@ -171,6 +172,7 @@ Measurement
 Important part of analysis data is define what should be measured
 and perform this calculation. Both utilities are available
 in "Settings and Measurement" window.
+TODO 
 
 Measurements settings
 ^^^^^^^^^^^^^^^^^^^^^
@@ -178,29 +180,30 @@ Measurements settings
 .. image::  images/measurement_prepare.png
    :alt: View on widget for prepare measurement set
 
-Upper part of this widget is designed for manage existing sets.
+The upper part of this window is designed to manage existing sets of measurements.
 
-1. List of already defined measurement set.
+1. List of already defined measurement sets.
 2. Preview of selected measurement set.
 
-Buttons below list of existing there are 4 buttons which are used to
-control saved ones.
+Below the list there are four buttons, which are used to 
+delete, export, import and edit saved sets of measurement. 
 
-3. List of available measurement.
-4. Chosen elements to new measurement set.
-5. Select area on which measurement element should be calculated:
+
+3. List of measurements currently available in PartSeg.
+4. Elements selected for new measurement set.
+5. Selects area on which measurement element is calculated:
 
    * **Mask** - area of mask.
    * **Segmentation** - area of segmentation.
-   * **Mask without segmentation** area of mask minus area of segmentation.
+   * **Mask without segmentation** - area of mask minus area of segmentation.
 
-6. If measurement should be calculate:
+6. Selects how measurement element handles area components. Calculate:
 
-   * **No** - For whole selected area.
-   * **Yes** - For each component of area.
-   * **Mean** - For each component of area and then mean value of its.
+   * **No** - for whole area.
+   * **Yes** - for each component of area.
+   * **Mean** - for each component of area and then mean value of its.
 
-7. Adding elements to chosen
+7. Adding elements to selected
 
    *  **→** - Move element to right list.
    *  **←** - Move element to left list. May be useful to create complex one.
@@ -452,9 +455,7 @@ Color maps
 
 .. image:: images/colormap_list.png
    :alt: View on list of color maps
-
-*  Only color maps with checked checkbox are available to select in
-   `Image View`_ controls.
+on
 *  Only custom created color maps can be deleted with |delete| button.
 *  Part of existing color maps (all custom) can be use as base to new
    after click |edit| button.
