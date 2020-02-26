@@ -3,6 +3,7 @@ import typing
 import numpy as np
 import SimpleITK as sitk
 
+from PartSegImage.image import minimal_dtype
 from .class_generator import BaseSerializableClass
 from .image_operations import dilate, erode, RadiusType
 
@@ -63,6 +64,7 @@ def calculate_mask(
     segmentation: np.ndarray,
     old_mask: typing.Union[None, np.ndarray],
     spacing: typing.Iterable[typing.Union[float, int]],
+    components: typing.Optional[typing.List[int]] = None,
 ) -> np.ndarray:
     """
     Function for calculate mask base on MaskProperty.
@@ -81,6 +83,13 @@ def calculate_mask(
     dilate_radius = [int(abs(mask_description.dilate_radius / x) + 0.5) for x in spacing]
     if mask_description.dilate == RadiusType.R2D:
         dilate_radius = dilate_radius[-2:]
+    if components is not None:
+        components_num = max(np.max(segmentation), *components) + 1
+        map_array = np.zeros(components_num, dtype=minimal_dtype(components_num))
+        for el in components:
+            map_array[el] = el
+        segmentation = map_array[segmentation]
+
     if mask_description.save_components:
         mask = np.copy(segmentation)
     else:

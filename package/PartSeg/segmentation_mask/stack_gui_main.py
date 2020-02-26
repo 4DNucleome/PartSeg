@@ -26,14 +26,14 @@ from qtpy.QtWidgets import (
     QTabWidget,
     QSizePolicy,
     QGridLayout,
-    QDialog,
 )
 
 from PartSeg.common_gui.advanced_tabs import AdvancedWindow
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
 from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
 from PartSeg.segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
-from PartSegCore.io_utils import WrongFileTypeException
+from PartSegCore.io_utils import WrongFileTypeException, HistoryElement
+from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask_create import calculate_mask
 from PartSegImage.image import reduce_array
 from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox, AlgorithmChoose
@@ -41,7 +41,7 @@ from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.custom_save_dialog import SaveDialog
 from ..common_gui.custom_load_dialog import CustomLoadDialog
 from ..common_gui.flow_layout import FlowLayout
-from ..common_gui.mask_widget import MaskWidget, MaskDialogBase
+from ..common_gui.mask_widget import MaskDialogBase
 from ..common_gui.select_multiple_files import AddFiles
 from ..common_gui.stack_image_view import ColorBar, LabelEnum
 from ..common_gui.universal_gui_part import right_label
@@ -70,42 +70,33 @@ CONFIG_FOLDER = os.path.join(state_store.save_folder, "mask")
 
 class MaskDialog(MaskDialogBase):
     def next_mask(self):
-        project_info = self.settings.get_project_info()
-        algorithm_name = self.settings.last_executed_algorithm
-        algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
-        segmentation = self.settings.segmentation
+        project_info: SegmentationTuple = self.settings.get_project_info()
         mask_property = self.mask_widget.get_mask_property()
         self.settings.set("mask_manager.mask_property", mask_property)
-        mask = calculate_mask(mask_property, segmentation, self.settings.mask, self.settings.image_spacing)
-        self.settings.add_history_element(
-            HistoryElement.create(
-                segmentation,
-                self.settings.full_segmentation,
-                self.settings.mask,
-                algorithm_name,
-                algorithm_values,
-                mask_property,
-            )
+        mask = calculate_mask(
+            mask_property,
+            project_info.segmentation,
+            project_info.mask,
+            project_info.image.spacing,
+            project_info.selected_components,
         )
-        if self.settings.history_redo_size():
-            history = self.settings.history_next_element()
-            self.settings.set("current_algorithm", history.algorithm_name)
-            self.settings.set(f"algorithm.{history.algorithm_name}", history.algorithm_values)
+        self.settings.add_history_element(create_history_element_from_segmentation_tuple(project_info, mask_property,))
         self.settings.mask = mask
+        self.settings.chosen_components_widget.un_check_all()
         self.close()
 
     def prev_mask(self):
         history: HistoryElement = self.settings.history_pop()
-        algorithm_name = self.settings.last_executed_algorithm
-        algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
-        self.settings.fix_history(algorithm_name=algorithm_name, algorithm_values=algorithm_values)
-        self.settings.set("current_algorithm", history.algorithm_name)
-        self.settings.set(f"algorithm.{history.algorithm_name}", history.algorithm_values)
         history.arrays.seek(0)
         seg = np.load(history.arrays)
         history.arrays.seek(0)
         self.settings.segmentation = seg["segmentation"]
-        self.settings.full_segmentation = seg["full_segmentation"]
+        self.settings.set_segmentation(
+            seg["segmentation"],
+            False,
+            history.segmentation_parameters["selected"],
+            history.segmentation_parameters["parameters"],
+        )
         if "mask" in seg:
             self.settings.mask = seg["mask"]
         else:
@@ -736,7 +727,7 @@ class AlgorithmOptions(QWidget):
         self.choose_components.setDisabled(False)
 
     def execution_done(self, segmentation: SegmentationResult):
-        if segmentation.segmentation.max() == 0:
+        if np.max(segmentation.segmentation) == 0:
             QMessageBox.information(
                 self, "No result", "Segmentation contains no component, check parameters, " "especially chosen channel."
             )

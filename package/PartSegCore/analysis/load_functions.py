@@ -295,7 +295,7 @@ class LoadMaskSegmentation(LoadBase):
         data = LoadSegmentationImage.load(load_locations, range_changed, step_changed, metadata)
         image = data.image
         segmentation = data.segmentation
-        components = data.chosen_components
+        components = data.selected_components
         res = []
         base, ext = os.path.splitext(load_locations[0])
         path_template = base + "_component{}" + ext

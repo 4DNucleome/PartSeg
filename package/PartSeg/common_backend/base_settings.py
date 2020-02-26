@@ -12,7 +12,7 @@ from qtpy.QtCore import QObject, Signal
 from PartSeg.common_backend.partially_const_dict import PartiallyConstDict
 from PartSegCore.color_image import ColorMap, default_colormap_dict, default_label_dict
 from PartSegCore.color_image.base_colors import starting_colors
-from PartSegCore.io_utils import ProjectInfoBase, load_metadata_base
+from PartSegCore.io_utils import ProjectInfoBase, load_metadata_base, HistoryElement
 from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, check_loaded_dict
 from PartSegImage import Image
 
@@ -327,7 +327,7 @@ class BaseSettings(ViewSettings):
         self.history = []
         self.history_index = -1
 
-    def add_history_element(self, elem) -> None:
+    def add_history_element(self, elem: HistoryElement) -> None:
         self.history_index += 1
         if self.history_index < len(self.history) and self.cmp_history_element(elem, self.history[self.history_index]):
             self.history[self.history_index] = elem
@@ -346,19 +346,19 @@ class BaseSettings(ViewSettings):
     def history_redo_clean(self) -> None:
         self.history = self.history[: self.history_size()]
 
-    def history_current_element(self):
+    def history_current_element(self) -> HistoryElement:
         return self.history[self.history_index]
 
-    def history_next_element(self):
+    def history_next_element(self) -> HistoryElement:
         return self.history[self.history_index + 1]
 
-    def history_pop(self):
+    def history_pop(self) -> Optional[HistoryElement]:
         if self.history_index != -1:
             self.history_index -= 1
             return self.history[self.history_index + 1]
         return None
 
-    def set_history(self, history):
+    def set_history(self, history: List[HistoryElement]):
         self.history = history
         self.history_index = len(self.history) - 1
 

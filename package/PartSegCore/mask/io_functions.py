@@ -34,7 +34,7 @@ class SegmentationTuple(ProjectInfoBase, typing.NamedTuple):
     image: typing.Union[Image, str, None]
     mask: typing.Optional[np.ndarray] = None
     segmentation: typing.Optional[np.ndarray] = None
-    chosen_components: typing.List = []
+    selected_components: typing.List = []
     segmentation_parameters: typing.Dict[int, typing.Optional[SegmentationProfile]] = {}
     errors: str = ""
 
@@ -70,7 +70,7 @@ def save_stack_segmentation(
         tar_file.addfile(segmentation_tar, fileobj=segmentation_buff)
         step_changed(3)
         metadata = {
-            "components": [int(x) for x in segmentation_info.chosen_components],
+            "components": [int(x) for x in segmentation_info.selected_components],
             "parameters": {str(k): v for k, v in segmentation_info.segmentation_parameters.items()},
             "shape": segmentation_info.segmentation.shape,
         }
@@ -178,7 +178,7 @@ class LoadSegmentation(LoadBase):
             file_path=load_locations[0],
             image=metadata["base_file"] if "base_file" in metadata else None,
             segmentation=segmentation,
-            chosen_components=metadata["components"],
+            selected_components=metadata["components"],
             segmentation_parameters=parameters,
         )
 
@@ -300,7 +300,7 @@ class LoadStackImage(LoadBase):
             default_spacing=metadata["default_spacing"],
         )
 
-        return SegmentationTuple(image.file_path, image, chosen_components=[])
+        return SegmentationTuple(image.file_path, image, selected_components=[])
 
 
 class LoadStackImageWithMask(LoadBase):
@@ -334,7 +334,7 @@ class LoadStackImageWithMask(LoadBase):
             default_spacing=metadata["default_spacing"],
         )
 
-        return SegmentationTuple(image.file_path, image, chosen_components=[])
+        return SegmentationTuple(image.file_path, image, selected_components=[])
 
     @classmethod
     def get_name(cls) -> str:
@@ -401,7 +401,7 @@ class SaveComponents(SaveBase):
     ):
         save_components(
             project_info.image,
-            project_info.chosen_components,
+            project_info.selected_components,
             project_info.segmentation,
             save_location,
             range_changed,

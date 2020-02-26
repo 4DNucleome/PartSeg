@@ -64,7 +64,7 @@ class BatchProceed(QThread):
                 continue
             try:
                 name = path.basename(file_path)
-                blank = get_mask(project_tuple.segmentation, project_tuple.mask, project_tuple.chosen_components)
+                blank = get_mask(project_tuple.segmentation, project_tuple.mask, project_tuple.selected_components)
                 algorithm = mask_algorithm_dict[task.parameters.algorithm]()
                 algorithm.set_image(project_tuple.image)
                 algorithm.set_mask(blank)
