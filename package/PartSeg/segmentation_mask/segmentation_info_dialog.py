@@ -29,8 +29,10 @@ class SegmentationInfoDialog(QWidget):
         self.set_parameters_btn.clicked.connect(self.set_parameter_action)
         self.additional_text_label = QLabel(additional_text)
         layout = QGridLayout()
-        if additional_text:
-            layout.addWidget(self.additional_text_label, 0, 0, 1, 2)
+        layout.addWidget(self.additional_text_label, 0, 0, 1, 2)
+        if not additional_text:
+            self.additional_text_label.setVisible(False)
+
         layout.addWidget(QLabel("Components:"), 1, 0)
         layout.addWidget(QLabel("segmentation parameters:"), 1, 1)
         layout.addWidget(self.components, 2, 0)
@@ -45,6 +47,7 @@ class SegmentationInfoDialog(QWidget):
 
     def set_additional_text(self, text):
         self.additional_text_label.setText(text)
+        self.additional_text_label.setVisible(bool(text))
 
     @property
     def get_parameters(self):

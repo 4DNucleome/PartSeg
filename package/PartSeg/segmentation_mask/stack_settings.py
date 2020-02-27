@@ -8,7 +8,8 @@ from qtpy.QtCore import Signal, Slot
 from qtpy.QtWidgets import QMessageBox, QWidget
 
 from PartSegCore.algorithm_describe_base import SegmentationProfile
-from PartSegCore.mask.io_functions import load_stack_segmentation, save_components, SegmentationTuple, load_metadata
+from PartSegCore.io_utils import HistoryElement, HistoryProblem
+from PartSegCore.mask.io_functions import SegmentationTuple, load_metadata
 from PartSegImage import Image
 from PartSegImage.image import reduce_array, minimal_dtype
 from ..common_backend.base_settings import BaseSettings
@@ -49,30 +50,6 @@ class StackSettings(BaseSettings):
             res.append(path.join(dir_path, f"{file_name}_component{i}_mask.tif"))
         return res
 
-    def set_segmentation_old(self, segmentation, components):
-        num = segmentation.max()
-        self.chosen_components_widget.set_chose(range(1, num + 1), components)
-        self.image.fit_array_to_image(segmentation)
-        self.segmentation = segmentation
-
-    def save_components(self, dir_path, range_changed=None, step_changed=None):
-        save_components(
-            self.image,
-            self.chosen_components_widget.get_chosen(),
-            self.segmentation,
-            dir_path,
-            range_changed=range_changed,
-            step_changed=step_changed,
-        )
-
-    def load_segmentation(self, file_path: str, range_changed=None, step_changed=None):
-        self.segmentation, metadata = load_stack_segmentation(
-            file_path, range_changed=range_changed, step_changed=step_changed
-        )
-        num = self.segmentation.max()
-        self.components_change_list.emit(num, list(metadata["components"]))
-        # self.chosen_components_widget.set_chose(range(1, num + 1), metadata["components"])
-
     def chosen_components(self) -> typing.List[int]:
         """
         Needs instance of :py:class:`PartSeg.segmentation_mask.stack_gui_main.ChosenComponents` on variable
@@ -110,6 +87,12 @@ class StackSettings(BaseSettings):
             raise RuntimeError("chosen_components_widget do not initialized")
 
     def get_project_info(self) -> SegmentationTuple:
+        """
+        Get all information about current project
+
+        :return: object with all project details.
+        :rtype: SegmentationTuple
+        """
         return SegmentationTuple(
             file_path=self.image.file_path,
             image=self.image.substitute(),
@@ -117,13 +100,17 @@ class StackSettings(BaseSettings):
             segmentation=self.segmentation,
             selected_components=self.chosen_components(),
             segmentation_parameters=copy(self.components_parameters_dict),
+            history=self.history[: self.history_index + 1],
         )
 
     def set_project_info(self, data: SegmentationTuple):
         """signals = self.signalsBlocked()
         if data.segmentation is not None:
             self.blockSignals(True)"""
-        if data.image is not None and (self.image_path != data.image.file_path or self.image_shape != data.image.shape):
+        if isinstance(data.image, Image) and (
+            self.image_path != data.image.file_path or self.image_shape != data.image.shape
+        ):
+            # This line clean segmentation also
             self.image = data.image
         # self.blockSignals(signals)
         state = self.get_project_info()
@@ -136,6 +123,8 @@ class StackSettings(BaseSettings):
             _skip = data.segmentation_parameters[int(i)]  # noqa: F841
         self.mask = data.mask
         if self.keep_chosen_components:
+            if not self.compare_history(data.history) and self.chosen_components():
+                raise HistoryProblem("Incompatible history")
             state2 = self.transform_state(
                 state,
                 data.segmentation,
@@ -149,6 +138,7 @@ class StackSettings(BaseSettings):
             self.segmentation = state2.segmentation
             self.components_parameters_dict = state2.segmentation_parameters
         else:
+            self.set_history(data.history)
             self.chosen_components_widget.set_chose(
                 list(sorted(data.segmentation_parameters.keys())), data.selected_components
             )
@@ -163,8 +153,6 @@ class StackSettings(BaseSettings):
         list_of_components: typing.List[int],
         save_chosen: bool = True,
     ) -> SegmentationTuple:
-
-        # TODO check why components are keep even if save chosen is not selected
 
         if list_of_components is None:
             list_of_components = []
@@ -185,7 +173,7 @@ class StackSettings(BaseSettings):
             components_parameters_dict = {}
         if new_segmentation_data is not None:
             state.image.fit_array_to_image(new_segmentation_data)
-            num = new_segmentation_data.max()
+            num = np.max(new_segmentation_data)
             if segmentation is not None:
                 new_segmentation = np.copy(new_segmentation_data)
                 new_segmentation[segmentation > 0] = 0
@@ -206,7 +194,7 @@ class StackSettings(BaseSettings):
                         base_index += 1
                 return state._replace(
                     segmentation=segmentation,
-                    chosen_components=chosen_components,
+                    selected_components=chosen_components,
                     segmentation_parameters=components_parameters_dict,
                 )
             else:
@@ -214,20 +202,32 @@ class StackSettings(BaseSettings):
                     components_parameters_dict[i] = segmentation_parameters[i]
                 return state._replace(
                     segmentation=new_segmentation_data,
-                    chosen_components=list_of_components,
+                    selected_components=list_of_components,
                     segmentation_parameters=components_parameters_dict,
                 )
         else:
             return state._replace(
                 segmentation=segmentation,
-                chosen_components=base_chose,
+                selected_components=base_chose,
                 segmentation_parameters=components_parameters_dict,
             )
+
+    def compare_history(self, history: typing.List[HistoryElement]):
+        if len(history) != self.history_size():
+            return False
+        for el1, el2 in zip(self.history, history):
+            if el2.mask_property != el1.mask_property or el2.segmentation_parameters != el1.segmentation_parameters:
+                return False
+        return True
 
     def set_project_data(self, data: SegmentationTuple, save_chosen=True):
         if isinstance(data.image, Image):
             self.image = data.image
         if data.segmentation is not None:
+            if not self.compare_history(data.history) and data.selected_components:
+                raise HistoryProblem("Incompatible history")
+            self.set_history(data.history)
+            self.mask = data.mask
             self.set_segmentation(
                 data.segmentation, save_chosen, data.selected_components, data.segmentation_parameters
             )

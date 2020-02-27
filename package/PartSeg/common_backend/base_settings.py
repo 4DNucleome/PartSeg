@@ -324,7 +324,7 @@ class BaseSettings(ViewSettings):
         self.segmentation_dict = ProfileDict()
         self.json_folder_path = json_path
         self.last_executed_algorithm = ""
-        self.history = []
+        self.history: List[HistoryElement] = []
         self.history_index = -1
 
     def add_history_element(self, elem: HistoryElement) -> None:
@@ -395,7 +395,7 @@ class BaseSettings(ViewSettings):
         return list containing last 10 elements added with :py:meth:`.add_path_history` and
         last opened in each category form :py:attr:`save_location_keys`
         """
-        res = self.get("io.history", [])
+        res = self.get("io.history", [])[:]
         for name in self.save_locations_keys:
             val = self.get("io." + name, str(Path.home()))
             if val not in res:
@@ -404,9 +404,13 @@ class BaseSettings(ViewSettings):
 
     def add_path_history(self, dir_path: str):
         """Save path in history of visited directories. Store only 10 last"""
-        history = self.get("io.history", [])
-        if dir_path not in history:
-            self.set("io.history", history[-9:] + [dir_path])
+        history: List[str] = self.get("io.history", [])
+        try:
+            history.remove(dir_path)
+        except ValueError:
+            history = history[:9]
+
+        self.set("io.history", [dir_path] + history[-9:])
 
     def set(self, key_path: str, value):
         """
