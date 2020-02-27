@@ -32,7 +32,7 @@ from PartSeg.common_gui.advanced_tabs import AdvancedWindow
 from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
 from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
 from PartSeg.segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
-from PartSegCore.io_utils import WrongFileTypeException, HistoryElement
+from PartSegCore.io_utils import WrongFileTypeException, HistoryElement, HistoryProblem
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask_create import calculate_mask
 from PartSegImage.image import reduce_array
@@ -270,7 +270,7 @@ class MainMenu(BaseMainMenu):
                 return
             if result.segmentation is not None:
                 try:
-                    self.settings.set_project_data(dial.get_result(), self.settings.keep_chosen_components)
+                    self.settings.set_project_info(dial.get_result())
                     return
                 except ValueError as e:
                     if e.args != ("Segmentation do not fit to image",):
@@ -278,6 +278,13 @@ class MainMenu(BaseMainMenu):
                     self.segmentation_dialog.set_additional_text(
                         "Segmentation do not fit to image, maybe you would lie to load parameters only."
                     )
+                except HistoryProblem:
+                    QMessageBox().warning(
+                        self,
+                        "Load Problem",
+                        "You set to save selected components when loading another segmentation but history is incomatybile",
+                    )
+
             else:
                 self.segmentation_dialog.set_additional_text("")
             self.segmentation_dialog.set_parameters_dict(result.segmentation_parameters)

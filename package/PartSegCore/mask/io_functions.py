@@ -23,6 +23,7 @@ from ..io_utils import (
     WrongFileTypeException,
     UpdateLoadedMetadataBase,
     open_tar_file,
+    HistoryElement,
 )
 from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationProfile
 from ..analysis.save_functions import SaveMaskAsTiff
@@ -36,6 +37,7 @@ class SegmentationTuple(ProjectInfoBase, typing.NamedTuple):
     segmentation: typing.Optional[np.ndarray] = None
     selected_components: typing.List = []
     segmentation_parameters: typing.Dict[int, typing.Optional[SegmentationProfile]] = {}
+    history: typing.List[HistoryElement] = []
     errors: str = ""
 
     def get_raw_copy(self):
