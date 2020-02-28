@@ -14,7 +14,7 @@ from .io_utils import ProjectTuple, project_version_info
 from ..algorithm_describe_base import AlgorithmProperty, Register
 from .save_hooks import PartEncoder
 from ..channel_class import Channel
-from ..io_utils import get_tarinfo, SaveBase, NotSupportedImage, HistoryElement
+from ..io_utils import get_tarinfo, SaveBase, NotSupportedImage, HistoryElement, SaveMaskAsTiff
 from ..universal_const import UNIT_SCALE, Units
 
 __all__ = [
@@ -22,7 +22,6 @@ __all__ = [
     "SaveCmap",
     "SaveXYZ",
     "SaveAsTiff",
-    "SaveMaskAsTiff",
     "SaveAsNumpy",
     "SaveSegmentationAsTIFF",
     "SaveSegmentationAsNumpy",
@@ -47,13 +46,6 @@ def save_project(
     else:
         tar_mod = "w:gz"
     with tarfile.open(file_path, tar_mod) as tar:
-        """sek_dkt = {"segmentation": segmentation, "full_segmentation": full_segmentation}
-        if mask is not None:
-            sek_dkt["mask"] = mask
-        seg_buff = BytesIO()
-        np.savez(seg_buff, **sek_dkt)
-        tar_numpy = get_tarinfo("segmentation.npz", seg_buff)
-        tar.addfile(tarinfo=tar_numpy, fileobj=seg_buff)"""
         segmentation_buff = BytesIO()
         # noinspection PyTypeChecker
         tifffile.imwrite(segmentation_buff, segmentation, compress=9)
@@ -374,31 +366,6 @@ class SaveAsNumpy(SaveBase):
         if parameters["squeeze"]:
             data = np.squeeze(data)
         np.save(save_location, data)
-
-
-class SaveMaskAsTiff(SaveBase):
-    @classmethod
-    def get_name(cls):
-        return "Mask (*.tiff *.tif)"
-
-    @classmethod
-    def get_short_name(cls):
-        return "mask_tiff"
-
-    @classmethod
-    def get_fields(cls):
-        return []
-
-    @classmethod
-    def save(
-        cls,
-        save_location: typing.Union[str, BytesIO, Path],
-        project_info,
-        parameters: dict,
-        range_changed=None,
-        step_changed=None,
-    ):
-        ImageWriter.save_mask(project_info.image, save_location)
 
 
 class SaveSegmentationAsTIFF(SaveBase):

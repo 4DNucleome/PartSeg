@@ -24,9 +24,8 @@ from ..io_utils import (
     UpdateLoadedMetadataBase,
     open_tar_file,
     HistoryElement,
-)
+    SaveMaskAsTiff)
 from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationProfile
-from ..analysis.save_functions import SaveMaskAsTiff
 from PartSegImage import Image, ImageWriter, GenericImageReader
 
 
@@ -61,7 +60,7 @@ def save_stack_segmentation(
         range_changed = empty_fun
     if step_changed is None:
         step_changed = empty_fun
-    range_changed(0, 5)
+    range_changed(0, 6)
     tar_file, file_path = open_tar_file(file_data, "w")
     step_changed(1)
     try:
@@ -91,10 +90,28 @@ def save_stack_segmentation(
         metadata_tar = get_tarinfo("metadata.json", metadata_buff)
         tar_file.addfile(metadata_tar, metadata_buff)
         step_changed(4)
+        el_info = []
+        for i, hist in enumerate(segmentation_info.history):
+            el_info.append({
+                "index": i,
+                "mask_property": hist.mask_property,
+                "segmentation_parameters": hist.segmentation_parameters,
+            })
+            hist.arrays.seek(0)
+            hist_info = get_tarinfo(f"history/arrays_{i}.npz", hist.arrays)
+            hist.arrays.seek(0)
+            tar_file.addfile(hist_info, hist.arrays)
+        if len(el_info) > 0:
+            hist_str = json.dumps(el_info, cls=ProfileEncoder)
+            hist_buff = BytesIO(hist_str.encode("utf-8"))
+            tar_algorithm = get_tarinfo("history/history.json", hist_buff)
+            tar_file.addfile(tar_algorithm, hist_buff)
+        step_changed(5)
+
     finally:
         if isinstance(file_data, (str, Path)):
             tar_file.close()
-    step_changed(5)
+    step_changed(6)
 
 
 def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=None, step_changed=None):
