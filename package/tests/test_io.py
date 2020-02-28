@@ -38,7 +38,8 @@ from PartSegCore.mask.io_functions import (
     save_components,
     LoadStackImage,
     SegmentationTuple,
-    LoadStackImageWithMask)
+    LoadStackImageWithMask,
+)
 
 
 @pytest.fixture(scope="module")
@@ -220,19 +221,21 @@ class TestSegmentationMask:
     def test_load_mask(self, data_test_dir):
         res = LoadStackImage.load([os.path.join(data_test_dir, "test_nucleus.tif")])
         assert res.mask is None
-        res = LoadStackImageWithMask.load([os.path.join(data_test_dir, "test_nucleus.tif"), os.path.join(data_test_dir, "test_nucleus_mask.tif")])
+        res = LoadStackImageWithMask.load(
+            [os.path.join(data_test_dir, "test_nucleus.tif"), os.path.join(data_test_dir, "test_nucleus_mask.tif")]
+        )
         assert res.image.mask is not None
         assert res.mask is not None
-        
+
     def test_save_project_with_history(self, tmp_path, stack_segmentation1, mask_property):
         SaveSegmentation.save(tmp_path / "test1.seg", stack_segmentation1, {"relative_path": False})
         seg2 = stack_segmentation1._replace(
             history=[create_history_element_from_segmentation_tuple(stack_segmentation1, mask_property)],
             selected_components=[1],
-            mask=stack_segmentation1.segmentation
+            mask=stack_segmentation1.segmentation,
         )
         SaveSegmentation.save(tmp_path / "test1.seg", seg2, {"relative_path": False})
-        with tarfile.open(tmp_path / "test1.seg", 'r') as tf:
+        with tarfile.open(tmp_path / "test1.seg", "r") as tf:
             tf.getmember("mask.tif")
             tf.getmember("segmentation.tif")
             tf.getmember("history/history.json")
@@ -246,7 +249,7 @@ class TestSegmentationMask:
             selected_components=[1],
             mask=stack_segmentation1.segmentation,
             image=stack_segmentation1.image.substitute(file_path=image_location),
-            file_path=image_location
+            file_path=image_location,
         )
         SaveSegmentation.save(tmp_path / "test1.seg", seg2, {"relative_path": False})
         res = LoadSegmentation.load([tmp_path / "test1.seg"])

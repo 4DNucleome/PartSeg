@@ -24,7 +24,6 @@ from qtpy.QtWidgets import (
     QApplication,
     QMessageBox,
     QFileDialog,
-    QComboBox,
     QAbstractSpinBox,
     QInputDialog,
     QPlainTextEdit,
@@ -37,7 +36,7 @@ from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from ..common_gui.universal_gui_part import EnumComboBox
 from ..common_gui.custom_save_dialog import FormDialog
 from ..common_gui.lock_checkbox import LockCheckBox
-from .partseg_settings import PartSettings, MASK_COLORS
+from .partseg_settings import PartSettings
 from .profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer
 from .measurement_widget import MeasurementWidget
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile, MEASUREMENT_DICT

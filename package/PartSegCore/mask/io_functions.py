@@ -24,7 +24,9 @@ from ..io_utils import (
     UpdateLoadedMetadataBase,
     open_tar_file,
     HistoryElement,
-    SaveMaskAsTiff, tar_to_buff)
+    SaveMaskAsTiff,
+    tar_to_buff,
+)
 from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationProfile
 from PartSegImage import Image, ImageWriter, GenericImageReader
 
@@ -101,11 +103,13 @@ def save_stack_segmentation(
         step_changed(5)
         el_info = []
         for i, hist in enumerate(segmentation_info.history):
-            el_info.append({
-                "index": i,
-                "mask_property": hist.mask_property,
-                "segmentation_parameters": hist.segmentation_parameters,
-            })
+            el_info.append(
+                {
+                    "index": i,
+                    "mask_property": hist.mask_property,
+                    "segmentation_parameters": hist.segmentation_parameters,
+                }
+            )
             hist.arrays.seek(0)
             hist_info = get_tarinfo(f"history/arrays_{i}.npz", hist.arrays)
             hist.arrays.seek(0)
@@ -180,14 +184,15 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
         if isinstance(file_data, (str, Path)):
             tar_file.close()
     return SegmentationTuple(
-            file_path=file_data if isinstance(file_data, str) else "",
-            image=metadata["base_file"] if "base_file" in metadata else None,
-            segmentation=segmentation,
-            selected_components=metadata["components"],
-            mask=mask,
-            segmentation_parameters= metadata["parameters"] if "parameters" in metadata else None,
-        history=history
-        )
+        file_path=file_data if isinstance(file_data, str) else "",
+        image=metadata["base_file"] if "base_file" in metadata else None,
+        segmentation=segmentation,
+        selected_components=metadata["components"],
+        mask=mask,
+        segmentation_parameters=metadata["parameters"] if "parameters" in metadata else None,
+        history=history,
+    )
+
 
 def empty_fun(_a0=None, _a1=None):
     pass
@@ -233,9 +238,10 @@ class LoadSegmentation(LoadBase):
             parameters = defaultdict(lambda: None)
         else:
             parameters = defaultdict(
-                lambda: None, [(int(k), cls.fix_parameters(v)) for k, v in segmentation_tuple.segmentation_parameters.items()]
+                lambda: None,
+                [(int(k), cls.fix_parameters(v)) for k, v in segmentation_tuple.segmentation_parameters.items()],
             )
-        return segmentation_tuple._replace(segmentation_parameters=parameters)
+        return segmentation_tuple.replace_(segmentation_parameters=parameters)
 
     @classmethod
     def partial(cls):

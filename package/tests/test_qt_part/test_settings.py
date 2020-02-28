@@ -18,6 +18,7 @@ from PartSegCore.mask.history_utils import create_history_element_from_segmentat
 from PartSegCore.mask.io_functions import LoadStackImage
 from PartSegCore.mask_create import calculate_mask
 
+
 @pytest.fixture
 def stack_settings(qtbot, tmp_path):
     settings = StackSettings(tmp_path)
@@ -123,13 +124,11 @@ class TestStackSettings:
         with pytest.raises(HistoryProblem):
             stack_settings.set_project_info(seg2)
 
-    def test_set_project_with_history_length_fail(
-        self, stack_settings, stack_segmentation1, mask_property
-    ):
+    def test_set_project_with_history_length_fail(self, stack_settings, stack_segmentation1, mask_property):
         seg2 = stack_segmentation1._replace(
             history=[
                 create_history_element_from_segmentation_tuple(stack_segmentation1, mask_property),
-                create_history_element_from_segmentation_tuple(stack_segmentation1, mask_property)
+                create_history_element_from_segmentation_tuple(stack_segmentation1, mask_property),
             ],
             selected_components=[1],
         )

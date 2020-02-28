@@ -8,7 +8,7 @@ from .dim_combobox import DimComboBox
 from PartSegCore.segmentation.algorithm_base import calculate_operation_radius
 from PartSegCore.image_operations import RadiusType
 from ..common_backend.base_settings import ImageSettings, BaseSettings
-from PartSegCore.mask_create import MaskProperty, calculate_mask
+from PartSegCore.mask_create import MaskProperty
 
 
 def off_widget(widget: QWidget, combo_box: DimComboBox):
