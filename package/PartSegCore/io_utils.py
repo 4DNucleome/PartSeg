@@ -12,7 +12,7 @@ from tarfile import TarInfo, TarFile
 import numpy as np
 
 from PartSegCore.json_hooks import profile_hook, ProfileDict
-from PartSegImage import Image
+from PartSegImage import Image, ImageWriter
 from .algorithm_describe_base import AlgorithmDescribeBase, SegmentationProfile
 from .class_generator import BaseSerializableClass
 from .mask_create import MaskProperty
@@ -318,3 +318,28 @@ class HistoryElement(BaseSerializableClass):
 
 class HistoryProblem(Exception):
     pass
+
+
+class SaveMaskAsTiff(SaveBase):
+    @classmethod
+    def get_name(cls):
+        return "Mask (*.tiff *.tif)"
+
+    @classmethod
+    def get_short_name(cls):
+        return "mask_tiff"
+
+    @classmethod
+    def get_fields(cls):
+        return []
+
+    @classmethod
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info,
+        parameters: dict,
+        range_changed=None,
+        step_changed=None,
+    ):
+        ImageWriter.save_mask(project_info.image, save_location)

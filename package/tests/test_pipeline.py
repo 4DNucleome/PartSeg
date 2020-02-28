@@ -19,37 +19,6 @@ from PartSegCore.mask_create import MaskProperty, calculate_mask
 from PartSegImage import Image
 
 
-@pytest.fixture
-def image():
-    data = np.zeros([1, 20, 20, 20, 2], dtype=np.uint8)
-    data[0, 10:-1, 1:-1, 1:-1, 0] = 20
-    data[0, 1:10, 1:-1, 1:-1, 1] = 20
-    data[0, 1:-1, 1:5, 1:-1, 1] = 20
-    data[0, 1:-1, -5:-1, 1:-1, 1] = 20
-
-    return Image(data, (1, 1, 1), axes_order="TZYXC")
-
-
-@pytest.fixture
-def algorithm_parameters():
-    algorithm_parameters = {
-        "algorithm_name": "Lower threshold",
-        "values": {
-            "threshold": {"name": "Manual", "values": {"threshold": 10}},
-            "channel": 0,
-            "noise_filtering": {"name": "None", "values": {}},
-            "minimum_size": 1,
-            "side_connection": False,
-        },
-    }
-    return deepcopy(algorithm_parameters)
-
-
-@pytest.fixture
-def mask_property():
-    return MaskProperty(RadiusType.NO, 0, RadiusType.NO, 0, False, False, False)
-
-
 @pytest.mark.parametrize("channel", [0, 1])
 def test_simple(image, algorithm_parameters, channel):
     algorithm_parameters["values"]["channel"] = channel
