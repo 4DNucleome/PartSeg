@@ -26,7 +26,8 @@ from ..io_utils import (
     UpdateLoadedMetadataBase,
     open_tar_file,
     HistoryElement,
-    tar_to_buff)
+    tar_to_buff,
+)
 from .analysis_utils import SegmentationPipeline, SegmentationPipelineElement
 from .io_utils import ProjectTuple, MaskInfo, project_version_info
 from .calculation_plan import CalculationPlan, CalculationTree

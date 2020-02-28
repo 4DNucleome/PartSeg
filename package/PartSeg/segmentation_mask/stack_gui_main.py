@@ -35,7 +35,6 @@ from PartSeg.segmentation_mask.segmentation_info_dialog import SegmentationInfoD
 from PartSegCore.io_utils import WrongFileTypeException, HistoryElement, HistoryProblem
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask_create import calculate_mask
-from PartSegImage.image import reduce_array
 from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox, AlgorithmChoose
 from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.custom_save_dialog import SaveDialog

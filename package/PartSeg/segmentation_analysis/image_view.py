@@ -7,7 +7,7 @@ from qtpy.QtWidgets import QCheckBox, QDoubleSpinBox, QLabel
 
 from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.stack_image_view import ImageView, ImageViewWithMask
-from .partseg_settings import MASK_COLORS, PartSettings
+from .partseg_settings import PartSettings
 import numpy as np
 
 
