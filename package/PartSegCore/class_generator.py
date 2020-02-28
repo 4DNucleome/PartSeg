@@ -1,4 +1,5 @@
 import json
+import pathlib
 import sys
 import collections
 import importlib
@@ -393,6 +394,8 @@ class BaseSerializableClass(metaclass=BaseMeta):
 class SerializeClassEncoder(json.JSONEncoder):
     # pylint: disable=E0202
     def default(self, o):
+        if isinstance(o, pathlib.Path):
+            return str(o)
         if isinstance(o, Enum):
             return {"__Enum__": True, "__subtype__": extract_type_info(o.__class__)[0], "value": o.value}
         if isinstance(o, BaseSerializableClass):

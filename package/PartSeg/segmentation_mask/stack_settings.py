@@ -213,6 +213,7 @@ class StackSettings(BaseSettings):
             )
 
     def compare_history(self, history: typing.List[HistoryElement]):
+        # TODO check dict comparision
         if len(history) != self.history_size():
             return False
         for el1, el2 in zip(self.history, history):

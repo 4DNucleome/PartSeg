@@ -5,6 +5,7 @@ from copy import deepcopy
 import numpy as np
 import pytest
 
+from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.image_operations import RadiusType
 from PartSegImage import Image
 from PartSegCore.mask.io_functions import SegmentationTuple
@@ -58,9 +59,10 @@ def algorithm_parameters():
 
 @pytest.fixture
 def mask_segmentation_parameters():
-    return {
-        "algorithm": "Threshold",
-        "values": {
+    return SegmentationProfile(
+        name="",
+        algorithm="Threshold",
+        values={
             "channel": 0,
             "noise_filtering": {"name": "None", "values": {}},
             "threshold": {"name": "Manual", "values": {"threshold": 10}},
@@ -71,7 +73,7 @@ def mask_segmentation_parameters():
             "minimum_size": 10000,
             "use_convex": False,
         },
-    }
+    )
 
 
 @pytest.fixture
@@ -88,7 +90,7 @@ def stack_segmentation2(stack_image: SegmentationTuple, mask_segmentation_parame
     data = np.zeros([20, 40, 40], dtype=np.uint8)
     for i, (x, y) in enumerate(itertools.product([0, 20], repeat=2), start=1):
         data[3:-3, x + 4 : x + 16, y + 4 : y + 16] = i
-    mask_segmentation_parameters["values"]["threshold"]["values"]["threshold"] = 110
+    mask_segmentation_parameters.values["threshold"]["values"]["threshold"] = 110
     parameters = {i: deepcopy(mask_segmentation_parameters) for i in range(1, 5)}
     return stack_image._replace(segmentation=data, segmentation_parameters=parameters, selected_components=[1, 3])
 

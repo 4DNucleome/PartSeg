@@ -24,7 +24,7 @@ from ..io_utils import (
     UpdateLoadedMetadataBase,
     open_tar_file,
     HistoryElement,
-    SaveMaskAsTiff)
+    SaveMaskAsTiff, tar_to_buff)
 from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationProfile
 from PartSegImage import Image, ImageWriter, GenericImageReader
 
@@ -60,7 +60,7 @@ def save_stack_segmentation(
         range_changed = empty_fun
     if step_changed is None:
         step_changed = empty_fun
-    range_changed(0, 6)
+    range_changed(0, 7)
     tar_file, file_path = open_tar_file(file_data, "w")
     step_changed(1)
     try:
@@ -90,6 +90,15 @@ def save_stack_segmentation(
         metadata_tar = get_tarinfo("metadata.json", metadata_buff)
         tar_file.addfile(metadata_tar, metadata_buff)
         step_changed(4)
+        if segmentation_info.mask is not None:
+            mask = segmentation_info.mask
+            if mask.dtype == np.bool:
+                mask = mask.astype(np.uint8)
+            mask_buff = BytesIO()
+            tifffile.imwrite(mask_buff, mask, compress="LZMA")
+            mask_tar = get_tarinfo("mask.tif", mask_buff)
+            tar_file.addfile(mask_tar, fileobj=mask_buff)
+        step_changed(5)
         el_info = []
         for i, hist in enumerate(segmentation_info.history):
             el_info.append({
@@ -106,7 +115,7 @@ def save_stack_segmentation(
             hist_buff = BytesIO(hist_str.encode("utf-8"))
             tar_algorithm = get_tarinfo("history/history.json", hist_buff)
             tar_file.addfile(tar_algorithm, hist_buff)
-        step_changed(5)
+        step_changed(6)
 
     finally:
         if isinstance(file_data, (str, Path)):
@@ -119,7 +128,7 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
         range_changed = empty_fun
     if step_changed is None:
         step_changed = empty_fun
-    range_changed(0, 4)
+    range_changed(0, 7)
     tar_file = open_tar_file(file_data)[0]
     try:
         if check_segmentation_type(tar_file) != SegmentationType.mask:
@@ -141,11 +150,44 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
         segmentation_buff.seek(0)
         segmentation = segmentation_load_fun(segmentation_buff)
         step_changed(4)
+        if "mask.tif" in tar_file.getnames():
+            mask = tifffile.imread(tar_to_buff(tar_file, "mask.tif"))
+            if np.max(mask) == 1:
+                mask = mask.astype(np.bool)
+        else:
+            mask = None
+        step_changed(5)
+        history = []
+        try:
+            history_buff = tar_file.extractfile(tar_file.getmember("history/history.json")).read()
+            history_json = load_metadata(history_buff)
+            for el in history_json:
+                history_buffer = BytesIO()
+                history_buffer.write(tar_file.extractfile(f"history/arrays_{el['index']}.npz").read())
+                history_buffer.seek(0)
+                history.append(
+                    HistoryElement(
+                        segmentation_parameters=el["segmentation_parameters"],
+                        mask_property=el["mask_property"],
+                        arrays=history_buffer,
+                    )
+                )
+
+        except KeyError:
+            pass
+        step_changed(6)
     finally:
         if isinstance(file_data, (str, Path)):
             tar_file.close()
-    return segmentation, metadata
-
+    return SegmentationTuple(
+            file_path=file_data if isinstance(file_data, str) else "",
+            image=metadata["base_file"] if "base_file" in metadata else None,
+            segmentation=segmentation,
+            selected_components=metadata["components"],
+            mask=mask,
+            segmentation_parameters= metadata["parameters"] if "parameters" in metadata else None,
+        history=history
+        )
 
 def empty_fun(_a0=None, _a1=None):
     pass
@@ -184,22 +226,16 @@ class LoadSegmentation(LoadBase):
         step_changed: typing.Callable[[int], typing.Any] = None,
         metadata: typing.Optional[dict] = None,
     ) -> SegmentationTuple:
-        segmentation, metadata = load_stack_segmentation(
+        segmentation_tuple = load_stack_segmentation(
             load_locations[0], range_changed=range_changed, step_changed=step_changed
         )
-        if "parameters" not in metadata:
+        if segmentation_tuple.segmentation_parameters is None:
             parameters = defaultdict(lambda: None)
         else:
             parameters = defaultdict(
-                lambda: None, [(int(k), cls.fix_parameters(v)) for k, v in metadata["parameters"].items()]
+                lambda: None, [(int(k), cls.fix_parameters(v)) for k, v in segmentation_tuple.segmentation_parameters.items()]
             )
-        return SegmentationTuple(
-            file_path=load_locations[0],
-            image=metadata["base_file"] if "base_file" in metadata else None,
-            segmentation=segmentation,
-            selected_components=metadata["components"],
-            segmentation_parameters=parameters,
-        )
+        return segmentation_tuple._replace(segmentation_parameters=parameters)
 
     @classmethod
     def partial(cls):
@@ -353,7 +389,7 @@ class LoadStackImageWithMask(LoadBase):
             default_spacing=metadata["default_spacing"],
         )
 
-        return SegmentationTuple(image.file_path, image, selected_components=[])
+        return SegmentationTuple(image.file_path, image, mask=image.mask, selected_components=[])
 
     @classmethod
     def get_name(cls) -> str:
