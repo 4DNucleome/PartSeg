@@ -55,6 +55,7 @@ class ProjectInfoBase:
     file_path: str
     image: Image
     segmentation: np.ndarray
+    mask: typing.Optional[np.ndarray]
     errors: str = ""
 
     def _replace(self, file_path=None, image=None):
@@ -342,4 +343,14 @@ class SaveMaskAsTiff(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
+        if project_info.image.mask is None and project_info.mask is not None:
+            ImageWriter.save_mask(project_info.image.substitute(mask=project_info.mask), save_location)
         ImageWriter.save_mask(project_info.image, save_location)
+
+
+def tar_to_buff(tar_file, member_name) -> BytesIO:
+    tar_value = tar_file.extractfile(tar_file.getmember(member_name))
+    buffer = BytesIO()
+    buffer.write(tar_value.read())
+    buffer.seek(0)
+    return buffer

@@ -26,7 +26,7 @@ from ..io_utils import (
     UpdateLoadedMetadataBase,
     open_tar_file,
     HistoryElement,
-)
+    tar_to_buff)
 from .analysis_utils import SegmentationPipeline, SegmentationPipelineElement
 from .io_utils import ProjectTuple, MaskInfo, project_version_info
 from .calculation_plan import CalculationPlan, CalculationTree
@@ -42,14 +42,6 @@ __all__ = [
     "UpdateLoadedMetadataAnalysis",
     "LoadMaskSegmentation",
 ]
-
-
-def _tar_to_buff(tar_file, member_name) -> BytesIO:
-    tar_value = tar_file.extractfile(tar_file.getmember(member_name))
-    buffer = BytesIO()
-    buffer.write(tar_value.read())
-    buffer.seek(0)
-    return buffer
 
 
 def load_project(
@@ -77,14 +69,14 @@ def load_project(
         except KeyError:
             version = Version("1.0")
         if version == Version("1.0"):
-            seg_dict = np.load(_tar_to_buff(tar_file, "segmentation.npz"))
+            seg_dict = np.load(tar_to_buff(tar_file, "segmentation.npz"))
             mask = seg_dict["mask"] if "mask" in seg_dict else None
             segmentation, full_segmentation = seg_dict["segmentation"], seg_dict["full_segmentation"]
         else:
-            segmentation = tifffile.imread(_tar_to_buff(tar_file, "segmentation.tif"))
-            full_segmentation = tifffile.imread(_tar_to_buff(tar_file, "full_segmentation.tif"))
+            segmentation = tifffile.imread(tar_to_buff(tar_file, "segmentation.tif"))
+            full_segmentation = tifffile.imread(tar_to_buff(tar_file, "full_segmentation.tif"))
             if "mask.tif" in tar_file.getnames():
-                mask = tifffile.imread(_tar_to_buff(tar_file, "mask.tif"))
+                mask = tifffile.imread(tar_to_buff(tar_file, "mask.tif"))
                 if np.max(mask) == 1:
                     mask = mask.astype(np.bool)
             else:

@@ -1,3 +1,4 @@
+import tarfile
 from copy import deepcopy
 
 import tifffile
@@ -11,6 +12,7 @@ import re
 from glob import glob
 import h5py
 
+from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.segmentation.segmentation_algorithm import ThresholdAlgorithm
 from PartSegImage import Image
 from PartSegCore import Units, UNIT_SCALE
@@ -36,7 +38,7 @@ from PartSegCore.mask.io_functions import (
     save_components,
     LoadStackImage,
     SegmentationTuple,
-)
+    LoadStackImageWithMask)
 
 
 @pytest.fixture(scope="module")
@@ -214,6 +216,46 @@ class TestSegmentationMask:
         SaveSegmentation.save(os.path.join(tmpdir, "segmentation2.seg"), to_save, {"relative_path": False})
         seg2 = LoadSegmentation.load([os.path.join(tmpdir, "segmentation2.seg")])
         assert seg2 is not None
+
+    def test_load_mask(self, data_test_dir):
+        res = LoadStackImage.load([os.path.join(data_test_dir, "test_nucleus.tif")])
+        assert res.mask is None
+        res = LoadStackImageWithMask.load([os.path.join(data_test_dir, "test_nucleus.tif"), os.path.join(data_test_dir, "test_nucleus_mask.tif")])
+        assert res.image.mask is not None
+        assert res.mask is not None
+        
+    def test_save_project_with_history(self, tmp_path, stack_segmentation1, mask_property):
+        SaveSegmentation.save(tmp_path / "test1.seg", stack_segmentation1, {"relative_path": False})
+        seg2 = stack_segmentation1._replace(
+            history=[create_history_element_from_segmentation_tuple(stack_segmentation1, mask_property)],
+            selected_components=[1],
+            mask=stack_segmentation1.segmentation
+        )
+        SaveSegmentation.save(tmp_path / "test1.seg", seg2, {"relative_path": False})
+        with tarfile.open(tmp_path / "test1.seg", 'r') as tf:
+            tf.getmember("mask.tif")
+            tf.getmember("segmentation.tif")
+            tf.getmember("history/history.json")
+            tf.getmember("history/arrays_0.npz")
+
+    def test_load_project_with_history(self, tmp_path, stack_segmentation1, mask_property):
+        image_location = tmp_path / "test1.tif"
+        SaveAsTiff.save(image_location, stack_segmentation1)
+        seg2 = stack_segmentation1._replace(
+            history=[create_history_element_from_segmentation_tuple(stack_segmentation1, mask_property)],
+            selected_components=[1],
+            mask=stack_segmentation1.segmentation,
+            image=stack_segmentation1.image.substitute(file_path=image_location),
+            file_path=image_location
+        )
+        SaveSegmentation.save(tmp_path / "test1.seg", seg2, {"relative_path": False})
+        res = LoadSegmentation.load([tmp_path / "test1.seg"])
+        assert res.image == str(image_location)
+        assert res.mask is not None
+        assert len(res.history) == 1
+        assert res.history[0].mask_property == mask_property
+        cmp_dict = {str(k): v for k, v in stack_segmentation1.segmentation_parameters.items()}
+        assert str(res.history[0].segmentation_parameters["parameters"]) == str(cmp_dict)
 
 
 class TestSaveFunctions:
