@@ -23,6 +23,7 @@ else:
         import imagecodecs
         hiddenimports = ["imagecodecs._" + x for x in imagecodecs._extensions()] + ["imagecodecs._shared"]
         print(hiddenimports)
+
     except ImportError:
         hiddenimports = ["imagecodecs_lite._imagecodecs_lite"]
 

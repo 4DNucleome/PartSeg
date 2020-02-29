@@ -56,6 +56,7 @@ def mp_eq(self: MaskProperty, other: MaskProperty):
     )
 
 
+
 MaskProperty.__eq__ = mp_eq
 
 
