@@ -3,8 +3,8 @@ import typing
 import PartSegData
 import numpy as np
 
-from PartSegCore.color_image.base_colors import BaseColormap
-from .color_image import color_grayscale, resolution
+from .base_colors import BaseColormap
+from .color_image_cython import color_grayscale, resolution
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 color_maps = np.load(PartSegData.colors_file)

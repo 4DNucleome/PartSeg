@@ -445,11 +445,6 @@ class MeasurementSettings(QWidget):
         name_layout.addWidget(self.measurement_area_choose)
         name_layout.addWidget(QLabel("to power:"))
         name_layout.addWidget(self.power_num)
-        """name_layout.addWidget(self.reversed_brightness)
-        name_layout.addWidget(QLabel("Gauss image:"))
-        name_layout.addWidget(self.gauss_img)
-        name_layout.addWidget(QLabel("Gauss radius (pix):"))
-        name_layout.addWidget(self.gauss_radius)"""
         layout.addLayout(name_layout)
         create_layout = QHBoxLayout()
         create_layout.addWidget(self.profile_options)

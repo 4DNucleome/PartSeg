@@ -11,7 +11,6 @@ from ..utils import bisect
 from ..channel_class import Channel
 from ..segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
 from ..convex_fill import convex_fill
-from ..image_operations import RadiusType
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
 from .noise_filtering import noise_filtering_dict
 from .threshold import threshold_dict, BaseThreshold, double_threshold_dict
@@ -70,7 +69,7 @@ class ThresholdPreview(StackAlgorithm):
         self.channel = None
         return SegmentationResult(res, self.get_segmentation_profile(), res, cleaned_channel=self.channel)
 
-    def set_parameters(self, channel, threshold, noise_filtering):
+    def set_parameters(self, channel, threshold, noise_filtering):  # pylint: disable=W0221
         self.channel_num = channel
         self.threshold = threshold
         self.noise_filtering = noise_filtering
@@ -231,7 +230,7 @@ class ThresholdAlgorithm(BaseSingleThresholdAlgorithm):
     def _threshold_and_exclude(self, image, report_fun):
         report_fun("Threshold calculation", 1)
         threshold_algorithm: BaseThreshold = threshold_dict[self.threshold["name"]]
-        mask, thr_val = threshold_algorithm.calculate_mask(image, self.mask, self.threshold["values"], operator.ge)
+        mask, _thr_val = threshold_algorithm.calculate_mask(image, self.mask, self.threshold["values"], operator.ge)
         report_fun("Threshold calculated", 2)
         return mask
 
@@ -405,7 +404,7 @@ class AutoThresholdAlgorithm(BaseSingleThresholdAlgorithm):
         mask = self._threshold_image(image)
         return mask
 
-    def set_parameters(self, suggested_size, *args, **kwargs):
+    def set_parameters(self, suggested_size, *args, **kwargs):  # pylint: disable=W0221
         self._set_parameters(*args, **kwargs)
         self.suggested_size = suggested_size
 

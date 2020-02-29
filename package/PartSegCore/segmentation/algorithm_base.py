@@ -6,7 +6,7 @@ import numpy as np
 from PartSegCore.channel_class import Channel
 from PartSegImage import Image
 
-from ..image_operations import gaussian, RadiusType
+from ..image_operations import RadiusType
 from ..algorithm_describe_base import AlgorithmDescribeBase, SegmentationProfile
 
 

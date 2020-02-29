@@ -539,7 +539,7 @@ class Volume(MeasurementMethodBase):
     text_info = "Volume", "Calculate volume of current segmentation"
 
     @classmethod
-    def calculate_property(cls, area_array, voxel_size, result_scalar, **_):
+    def calculate_property(cls, area_array, voxel_size, result_scalar, **_):  # pylint: disable=W0221
         return np.count_nonzero(area_array) * pixel_volume(voxel_size, result_scalar)
 
     @classmethod
@@ -635,7 +635,7 @@ class PixelBrightnessSum(MeasurementMethodBase):
     text_info = "Pixel Brightness Sum", "Sum of pixel brightness for current segmentation"
 
     @staticmethod
-    def calculate_property(area_array: np.ndarray, channel: np.ndarray, **_):
+    def calculate_property(area_array: np.ndarray, channel: np.ndarray, **_):  # pylint: disable=W0221
         """
         :param area_array: mask for area
         :param channel: data. same shape like area_type
@@ -663,7 +663,7 @@ class ComponentsNumber(MeasurementMethodBase):
     text_info = "Components Number", "Calculate number of connected components on segmentation"
 
     @staticmethod
-    def calculate_property(area_array, **_):
+    def calculate_property(area_array, **_):  # pylint: disable=W0221
         return np.unique(area_array).size - 1
 
     @classmethod
@@ -778,7 +778,7 @@ class StandardDeviationOfPixelBrightness(MeasurementMethodBase):
     )
 
     @staticmethod
-    def calculate_property(area_array, channel, **_):
+    def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
         if area_array.shape != channel.shape:
             if area_array.size == channel.size:
                 channel = channel.reshape(area_array.shape)
@@ -802,7 +802,7 @@ class MomentOfInertia(MeasurementMethodBase):
     text_info = "Moment of inertia", "Calculate moment of inertia for segmented structure"
 
     @staticmethod
-    def calculate_property(area_array, channel, voxel_size, **_):
+    def calculate_property(area_array, channel, voxel_size, **_):  # pylint: disable=W0221
         if len(channel.shape) == 4:
             if channel.shape[0] != 1:
                 raise ValueError("This measurements do not support time data")
@@ -947,7 +947,7 @@ class Surface(MeasurementMethodBase):
     text_info = "Surface", "Calculating surface of current segmentation"
 
     @staticmethod
-    def calculate_property(area_array, voxel_size, result_scalar, **_):
+    def calculate_property(area_array, voxel_size, result_scalar, **_):  # pylint: disable=W0221
         return calculate_volume_surface(area_array, [x * result_scalar for x in voxel_size])
 
     @classmethod
@@ -967,7 +967,7 @@ class RimVolume(MeasurementMethodBase):
         return Leaf(name=cls.text_info[0], area=AreaType.Mask)
 
     @staticmethod
-    def calculate_property(area_array, voxel_size, result_scalar, **kwargs):
+    def calculate_property(area_array, voxel_size, result_scalar, **kwargs):  # pylint: disable=W0221
         border_mask_array = BorderRim.border_mask(voxel_size=voxel_size, result_scalar=result_scalar, **kwargs)
         if border_mask_array is None:
             return None
@@ -998,7 +998,7 @@ class RimPixelBrightnessSum(MeasurementMethodBase):
         return Leaf(name=cls.text_info[0], area=AreaType.Mask)
 
     @staticmethod
-    def calculate_property(channel, area_array, **kwargs):
+    def calculate_property(channel, area_array, **kwargs):  # pylint: disable=W0221
         if len(channel.shape) == 4:
             if channel.shape[0] != 1:
                 raise ValueError("This measurements do not support time data")
@@ -1076,8 +1076,9 @@ class DistanceMaskSegmentation(MeasurementMethodBase):
         result_scalar,
         distance_from_mask: DistancePoint,
         distance_to_segmentation: DistancePoint,
+        *args,
         **kwargs,
-    ):
+    ):  # pylint: disable=W0221
         if len(channel.shape) == 4:
             if channel.shape[0] != 1:
                 raise ValueError("This measurements do not support time data")
@@ -1124,7 +1125,7 @@ class SplitOnPartVolume(MeasurementMethodBase):
         ]
 
     @staticmethod
-    def calculate_property(part_selection, area_array, voxel_size, result_scalar, **kwargs):
+    def calculate_property(part_selection, area_array, voxel_size, result_scalar, **kwargs):  # pylint: disable=W0221
         masked = SplitMaskOnPart.split(voxel_size=voxel_size, **kwargs)
         mask = masked == part_selection
         return np.count_nonzero(mask * area_array) * pixel_volume(voxel_size, result_scalar)
@@ -1155,7 +1156,7 @@ class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
         ]
 
     @staticmethod
-    def calculate_property(part_selection, channel, area_array, **kwargs):
+    def calculate_property(part_selection, channel, area_array, **kwargs):  # pylint: disable=W0221
         masked = SplitMaskOnPart.split(**kwargs)
         mask = np.array(masked == part_selection)
         if channel.ndim - mask.ndim == 1:

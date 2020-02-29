@@ -231,7 +231,7 @@ class CalculationProcess:
 
     def step_save(self, operation: Save):
         """
-        Perform save operation selected in plan. 
+        Perform save operation selected in plan.
 
         :param Save operation: save definition
         """
@@ -252,8 +252,8 @@ class CalculationProcess:
         """
         Create mask from current segmentation state using definition
 
-        :param MaskCreate operation:  
-        :param typing.List[CalculationTree] children: list of nodes to iterate over after perform segmentation 
+        :param MaskCreate operation: mask create description.
+        :param typing.List[CalculationTree] children: list of nodes to iterate over after perform segmentation
         """
         mask = calculate_mask(operation.mask_property, self.segmentation, self.mask, self.image.spacing)
         if operation.name in self.reused_mask:

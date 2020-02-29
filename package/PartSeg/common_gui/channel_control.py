@@ -2,9 +2,8 @@ import math
 import typing
 from functools import partial
 
-import numpy as np
 from qtpy.QtCore import Signal, Qt, QRect, QRectF, QPointF, QSize, QModelIndex, QEvent, QPoint
-from qtpy.QtGui import QImage, QShowEvent, QPaintEvent, QPainter, QPen, QMouseEvent, QColor, QPolygonF
+from qtpy.QtGui import QShowEvent, QPaintEvent, QPainter, QPen, QMouseEvent, QColor, QPolygonF
 from qtpy.QtWidgets import (
     QWidget,
     QCheckBox,
@@ -21,12 +20,10 @@ from qtpy.QtWidgets import (
 
 from PartSeg.common_gui.numpy_qimage import create_colormap_image
 from PartSegCore.color_image import ColorMap
-from PartSegCore.color_image.base_colors import starting_colors
 from PartSegCore.image_operations import NoiseFilterType
 from .collapse_checkbox import CollapseCheckbox
 from .universal_gui_part import CustomSpinBox, EnumComboBox
 from ..common_backend.base_settings import ViewSettings
-from PartSegCore.color_image import color_image_fun
 
 image_dict = {}  # dict to store QImages generated from colormap
 

@@ -63,7 +63,7 @@ class ColorPosition(BaseSerializableClass):
     # noinspection PyOverloads,PyMissingConstructor
     @typing.overload
     def __init__(self, color_position: float, color: Color):
-        ...
+        ...  # pylint: disable=W0104
 
     color_position: float  # point in which this color is started to be used. value from range [0, 1]
     color: Color  # As name suggest. Color as RGB

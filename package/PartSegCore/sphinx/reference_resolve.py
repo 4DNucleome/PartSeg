@@ -73,7 +73,7 @@ def missing_reference(
             return None
         objtypes = ["%s:%s" % (domain, objtype) for objtype in objtypes]
     if target.startswith("PySide2"):
-        head, tail = target.split(".", 1)
+        _head, tail = target.split(".", 1)
         target = "PyQt5." + tail
     if signal_pattern.match(target):
         uri = signal_slot_uri[app.config.qt_documentation]
@@ -96,7 +96,7 @@ def missing_reference(
                 return None
             for target_name in target_list:
                 if target_name in inventories.main_inventory[obj_type_name]:
-                    proj, version, uri, dispname = inventories.named_inventory["PyQt"][obj_type_name][target_name]
+                    _proj, version, uri, dispname = inventories.named_inventory["PyQt"][obj_type_name][target_name]
                     uri = uri.replace("##", "#")
                     #  print(node)  # print nodes with unresolved references
                     break

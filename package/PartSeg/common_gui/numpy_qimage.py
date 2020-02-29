@@ -2,7 +2,7 @@ from qtpy.QtGui import QImage
 import numpy as np
 import typing
 from PartSegCore.color_image import color_image_fun, create_color_map, BaseColormap
-from PartSegCore.color_image.color_image import resolution
+from PartSegCore.color_image import resolution
 
 ColorMapDict = typing.MutableMapping[str, typing.Tuple[BaseColormap, bool]]
 

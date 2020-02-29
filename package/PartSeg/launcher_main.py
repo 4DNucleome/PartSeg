@@ -5,7 +5,7 @@ from functools import partial
 import os
 import multiprocessing
 
-from qtpy.QtGui import QFontDatabase, QIcon
+from qtpy.QtGui import QFontDatabase
 
 from PartSegImage import TiffImageReader
 from PartSegData import font_dir, icons_dir

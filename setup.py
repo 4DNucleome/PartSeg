@@ -55,8 +55,8 @@ extensions = [
         extra_link_args=["-std=c++11"],
     ),
     Extension(
-        "PartSegCore.color_image.color_image",
-        ["package/PartSegCore/color_image/color_image.pyx"],
+        "PartSegCore.color_image.color_image_cython",
+        ["package/PartSegCore/color_image/color_image_cython.pyx"],
         include_dirs=[np.get_include()],
         extra_compile_args=["-std=c++11"],
         language="c++",
