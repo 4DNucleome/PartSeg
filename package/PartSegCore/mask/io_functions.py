@@ -97,7 +97,7 @@ def save_stack_segmentation(
             if mask.dtype == np.bool:
                 mask = mask.astype(np.uint8)
             mask_buff = BytesIO()
-            tifffile.imwrite(mask_buff, mask, compress="LZMA")
+            tifffile.imwrite(mask_buff, mask, compress=9)
             mask_tar = get_tarinfo("mask.tif", mask_buff)
             tar_file.addfile(mask_tar, fileobj=mask_buff)
         step_changed(5)
