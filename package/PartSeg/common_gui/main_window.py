@@ -11,7 +11,7 @@ from PartSeg.common_backend.load_backup import import_config
 from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
 from PartSegCore.io_utils import ProjectInfoBase
 from PartSegImage import Image
-from .base_settings import BaseSettings
+from PartSeg.common_backend.base_settings import BaseSettings
 
 
 class BaseMainMenu(QWidget):
@@ -117,7 +117,7 @@ class BaseMainWindow(QMainWindow):
     def showEvent(self, a0: QShowEvent):
         self.show_signal.emit()
 
-    def dragEnterEvent(self, event: QDragEnterEvent):
+    def dragEnterEvent(self, event: QDragEnterEvent):  # pylint: disable=R0201
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
 

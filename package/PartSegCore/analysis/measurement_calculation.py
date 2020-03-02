@@ -605,7 +605,7 @@ class Diameter(MeasurementMethodBase):
     text_info = "Diameter", "Diameter of area"
 
     @staticmethod
-    def calculate_property(area_array, voxel_size, result_scalar, **_):
+    def calculate_property(area_array, voxel_size, result_scalar, **_):  # pylint: disable=W0221
         pos = np.transpose(np.nonzero(get_border(area_array))).astype(np.float)
         if pos.size == 0:
             return 0
@@ -623,7 +623,7 @@ class DiameterOld(MeasurementMethodBase):
     text_info = "Diameter old", "Diameter of area (Very slow)"
 
     @staticmethod
-    def calculate_property(area_array, voxel_size, result_scalar, **_):
+    def calculate_property(area_array, voxel_size, result_scalar, **_):  # pylint: disable=W0221
         return calc_diam(get_border(area_array), [x * result_scalar for x in voxel_size])
 
     @classmethod
@@ -727,7 +727,7 @@ class MeanPixelBrightness(MeasurementMethodBase):
     text_info = "Mean pixel brightness", "Calculate mean pixel brightness for current area"
 
     @staticmethod
-    def calculate_property(area_array, channel, **_):
+    def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
         if area_array.shape != channel.shape:
             if area_array.size == channel.size:
                 channel = channel.reshape(area_array.shape)
@@ -751,7 +751,7 @@ class MedianPixelBrightness(MeasurementMethodBase):
     text_info = "Median pixel brightness", "Calculate median pixel brightness for current area"
 
     @staticmethod
-    def calculate_property(area_array, channel, **_):
+    def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
         if area_array.shape != channel.shape:
             if area_array.size == channel.size:
                 channel = channel.reshape(area_array.shape)

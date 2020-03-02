@@ -513,7 +513,7 @@ class FileData:
 
     def wrote_data(self, uuid, data: ResponseData):
         self.new_count += 1
-        main_sheet, component_sheets, component_information = self.sheet_dict[uuid]
+        main_sheet, component_sheets, _component_information = self.sheet_dict[uuid]
         name = data.path_to_file
         data_list = [name]
         for el, comp_sheet in zip(data.values, component_sheets):

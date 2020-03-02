@@ -62,7 +62,7 @@ class CustomTreeWidget(QTreeWidget):
     def set_show_compare(self, compare: bool):
         self.compare = compare
 
-    def mouseMoveEvent(self, _):
+    def mouseMoveEvent(self, _):  # pylint: disable=R0201
         QApplication.setOverrideCursor(Qt.ArrowCursor)
 
 
@@ -280,7 +280,7 @@ class MultipleFileWidget(QWidget):
         new_width = min(new_width, 600)
         self.setMinimumWidth(new_width)
 
-    def leaveEvent(self, _):
+    def leaveEvent(self, _):  # pylint: disable=R0201
         QApplication.setOverrideCursor(Qt.ArrowCursor)
 
     def mouseReleaseEvent(self, event: QMouseEvent):

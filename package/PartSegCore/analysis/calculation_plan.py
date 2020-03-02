@@ -61,8 +61,6 @@ class MaskUse(MaskBase, BaseSerializableClass):
     Will be deprecated in short time
     """
 
-    pass
-
 
 class MaskSum(MaskBase, BaseSerializableClass):
     """

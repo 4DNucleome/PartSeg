@@ -6,7 +6,7 @@ from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QMainWindow, QToolButton, QGridLayout, QWidget, QProgressBar, QMessageBox
 
 from PartSeg.common_backend.load_backup import import_config
-from PartSeg.common_backend.main_window import BaseMainWindow
+from PartSeg.common_gui.main_window import BaseMainWindow
 from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg import MASK_NAME, SEGMENTATION_NAME
 from PartSegImage import TiffImageReader

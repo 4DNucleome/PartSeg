@@ -47,7 +47,7 @@ from ..common_gui.universal_gui_part import right_label
 from ..common_gui.waiting_dialog import ExecuteFunctionDialog
 from PartSegCore.segmentation.algorithm_base import SegmentationResult
 from PartSegCore.universal_const import UNIT_SCALE, Units
-from ..common_backend.main_window import BaseMainWindow, BaseMainMenu
+from PartSeg.common_gui.main_window import BaseMainWindow, BaseMainMenu
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 from PartSegCore.mask import io_functions
 from .stack_settings import StackSettings, get_mask

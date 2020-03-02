@@ -37,7 +37,7 @@ from ..common_gui.universal_gui_part import TextShow
 from ..common_gui.waiting_dialog import WaitingDialog, ExecuteFunctionDialog
 from ..common_gui.multiple_file_widget import MultipleFileWidget
 from PartSegCore.segmentation.algorithm_base import SegmentationResult
-from ..common_backend.main_window import BaseMainWindow, BaseMainMenu
+from PartSeg.common_gui.main_window import BaseMainWindow, BaseMainMenu
 from .advanced_window import SegAdvancedWindow
 from .batch_window import BatchWindow
 from .calculation_pipeline_thread import CalculatePipelineThread
