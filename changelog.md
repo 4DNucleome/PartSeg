@@ -1,9 +1,12 @@
 # Changelog 
 
-## develop 
+## 0.10.0 
 -   Add creating custom label coloring.
--   Change execs interpreter to python 3.7   
--   Add masking operation in Segmentation Mask 
+-   Change execs interpreter to python 3.7.
+-   Add masking operation in Segmentation Mask.
+-   Change license to BSD.
+-   Allow select root type in batch processing.
+-   Add median filter in preview.
 
 ## 0.9.7
 -   fix bug in compare mask
