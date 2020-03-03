@@ -29,7 +29,6 @@ from qtpy.QtWidgets import (
 )
 
 from PartSeg.common_gui.advanced_tabs import AdvancedWindow
-from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
 from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
 from PartSeg.segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
 from PartSegCore.io_utils import WrongFileTypeException, HistoryElement, HistoryProblem
@@ -941,14 +940,6 @@ class MainWindow(BaseMainWindow):
     def read_drop(self, paths):
         self._read_drop(paths, io_functions)
 
-    def image_adjust_exec(self):
-        dial = ImageAdjustmentDialog(self.settings.image)
-        if dial.exec():
-            algorithm = dial.result_val.algorithm
-            dial2 = ExecuteFunctionDialog(
-                algorithm.transform, [], {"image": self.settings.image, "arguments": dial.result_val.values}
-            )
-            if dial2.exec():
-                result: Image = dial2.get_result()
-                self.settings.set_project_info(SegmentationTuple(result.file_path, result))
-        return
+    @staticmethod
+    def get_project_info(file_path, image):
+        return SegmentationTuple(file_path=file_path, image=image)

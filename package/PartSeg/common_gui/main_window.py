@@ -6,12 +6,13 @@ from qtpy.QtCore import Signal
 import os
 
 from PartSeg.common_gui.about_dialog import AboutDialog
+from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
 from PartSeg.common_gui.show_directory_dialog import DirectoryDialog
 from PartSeg.common_backend.load_backup import import_config
 from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
 from PartSegCore.io_utils import ProjectInfoBase
 from PartSegImage import Image
-from PartSeg.common_backend.base_settings import BaseSettings
+from PartSeg.common_backend.base_settings import BaseSettings, SwapTimeStackException, TimeAndStackException
 
 
 class BaseMainMenu(QWidget):
@@ -42,7 +43,24 @@ class BaseMainMenu(QWidget):
                 )
                 if resp == QMessageBox.No:
                     return
-            image = self._settings.verify_image(data.image, False)
+            try:
+                image = self._settings.verify_image(data.image, False)
+            except SwapTimeStackException:
+                res = QMessageBox.question(
+                    self,
+                    "Not supported",
+                    "Time data are currently not supported. Maybe You would like to treat time as z-stack",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No,
+                )
+
+                if res == QMessageBox.Yes:
+                    image = data.image.swap_time_and_stack()
+                else:
+                    return
+            except TimeAndStackException:
+                QMessageBox.warning(self, "image error", "Do not support time and stack image")
+                return
             if image:
                 if isinstance(image, Image):
                     # noinspection PyProtectedMember
@@ -167,3 +185,19 @@ class BaseMainWindow(QMainWindow):
     def show_about_dialog():
         """Show about dialog."""
         AboutDialog().exec()
+
+    @staticmethod
+    def get_project_info(file_path, image):
+        raise NotADirectoryError()
+
+    def image_adjust_exec(self):
+        dial = ImageAdjustmentDialog(self.settings.image)
+        if dial.exec():
+            algorithm = dial.result_val.algorithm
+            dial2 = ExecuteFunctionDialog(
+                algorithm.transform, [], {"image": self.settings.image, "arguments": dial.result_val.values}
+            )
+            if dial2.exec():
+                result: Image = dial2.get_result()
+                self.settings.set_project_info(self.get_project_info(result.file_path, result))
+

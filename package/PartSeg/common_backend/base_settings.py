@@ -521,5 +521,23 @@ class BaseSettings(ViewSettings):
 
     @staticmethod
     def verify_image(image: Image, silent=True) -> Union[Image, bool]:
-        """verify if image is correct (ex. program can not support time data)"""
-        raise NotImplementedError
+        if image.is_time:
+            if image.is_stack:
+                raise TimeAndStackException()
+            if silent:
+                return image.swap_time_and_stack()
+            else:
+                raise SwapTimeStackException()
+        return True
+
+class SwapTimeStackException(Exception):
+    """
+    Exception which inform that current image shape is not supported,
+    but can be if time and stack axes were swapped
+    """
+
+class TimeAndStackException(Exception):
+    """
+    Exception which inform that current image has both time
+    and stack dat which is not supported
+    """

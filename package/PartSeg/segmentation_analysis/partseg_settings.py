@@ -1,9 +1,7 @@
 import typing
 from copy import deepcopy
-from qtpy.QtWidgets import QMessageBox, QWidget
 from qtpy.QtCore import Signal
 
-from PartSegImage import Image
 from PartSegCore.analysis.calculation_plan import CalculationPlan
 from PartSegCore.analysis.io_utils import ProjectTuple, MaskInfo
 from PartSegCore.io_utils import HistoryElement
@@ -136,33 +134,6 @@ class PartSettings(BaseSettings):
             SaveSettingsDescription("statistic_profiles_save.json", self.measurement_profiles_dict),
             SaveSettingsDescription("batch_plans_save.json", self.batch_plans_dict),
         ]
-
-    @staticmethod
-    def verify_image(image: Image, silent=True) -> typing.Union[Image, bool]:
-        if image.is_time:
-            if image.is_stack:
-                if silent:
-                    raise ValueError("Do not support time and stack image")
-                else:
-                    wid = QWidget()
-                    QMessageBox.warning(wid, "image error", "Do not support time and stack image")
-                    return False
-            if silent:
-                return image.swap_time_and_stack()
-            else:
-                wid = QWidget()
-                res = QMessageBox.question(
-                    wid,
-                    "Not supported",
-                    "Time data are currently not supported." " Maybe You would like to treat time as z-stack",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No,
-                )
-
-                if res == QMessageBox.Yes:
-                    return image.swap_time_and_stack()
-                return False
-        return True
 
     @property
     def segmentation_pipelines(self) -> typing.Dict[str, SegmentationPipeline]:

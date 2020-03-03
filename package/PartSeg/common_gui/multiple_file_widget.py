@@ -23,7 +23,7 @@ from qtpy.QtGui import QFontMetrics, QResizeEvent, QMouseEvent
 from qtpy.QtCore import Qt, QTimer, Slot, Signal
 from collections import defaultdict, Counter
 
-from PartSeg.common_backend.base_settings import BaseSettings
+from PartSeg.common_backend.base_settings import BaseSettings, SwapTimeStackException, TimeAndStackException
 from PartSegImage import Image
 from PartSegCore.io_utils import LoadBase, ProjectInfoBase
 from .custom_load_dialog import CustomLoadDialog, LoadProperty
@@ -165,7 +165,24 @@ class MultipleFileWidget(QWidget):
         file_name = self.file_list[self.file_view.indexOfTopLevelItem(item.parent())]
         state_name = item.text(0)
         project_info = self.state_dict[file_name][state_name]
-        image = self.settings.verify_image(project_info.image, False)
+        try:
+            image = self._settings.verify_image(project_info.image, False)
+        except SwapTimeStackException:
+            res = QMessageBox.question(
+                self,
+                "Not supported",
+                "Time data are currently not supported. Maybe You would like to treat time as z-stack",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            )
+
+            if res == QMessageBox.Yes:
+                image = project_info.image.swap_time_and_stack()
+            else:
+                return
+        except TimeAndStackException:
+            QMessageBox.warning(self, "image error", "Do not support time and stack image")
+            return
         if isinstance(image, Image):
             project_info = project_info._replace(image=image)
             self.state_dict[file_name][state_name] = project_info
