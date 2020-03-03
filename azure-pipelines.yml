@@ -4,6 +4,9 @@ trigger:
     - '*'
     exclude:
     - dependabot/*
+  tags:
+    include:
+    - v*
 
 variables:
   TOX_PARALLEL_NO_SPINNER: 1

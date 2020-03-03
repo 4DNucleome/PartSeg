@@ -1,4 +1,4 @@
-__version__ = "0.10.0.pre2"
+__version__ = "0.10.0"
 
 
 __author__ = "Grzegorz Bokota"

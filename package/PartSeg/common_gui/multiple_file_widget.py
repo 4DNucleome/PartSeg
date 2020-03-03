@@ -109,7 +109,7 @@ class MultipleFileWidget(QWidget):
         range_changed(0, len(load_data.load_location))
         for i, el in enumerate(load_data.load_location, 1):
             load_list = [el]
-            while load_data.load_class.number_of_files() < len(load_list):
+            while load_data.load_class.number_of_files() > len(load_list):
                 load_list.append(load_data.load_class.get_next_file(load_list))
                 if not os.path.exists(load_list[-1]):
                     self.error_list.append(el)
@@ -166,7 +166,7 @@ class MultipleFileWidget(QWidget):
         state_name = item.text(0)
         project_info = self.state_dict[file_name][state_name]
         try:
-            image = self._settings.verify_image(project_info.image, False)
+            image = self.settings.verify_image(project_info.image, False)
         except SwapTimeStackException:
             res = QMessageBox.question(
                 self,
