@@ -5,7 +5,6 @@ from os import path
 
 import numpy as np
 from qtpy.QtCore import Signal, Slot
-from qtpy.QtWidgets import QMessageBox, QWidget
 
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.io_utils import HistoryElement, HistoryProblem
@@ -263,33 +262,6 @@ class StackSettings(BaseSettings):
             self.chosen_components_widget.set_chose(list(sorted(selected_parameters.keys())), list_of_components)
             self.segmentation = new_segmentation_data
             self.components_parameters_dict = segmentation_parameters
-
-    @staticmethod
-    def verify_image(image: Image, silent=True) -> typing.Union[Image, bool]:
-        if image.is_time:
-            if image.is_stack:
-                if silent:
-                    raise ValueError("Do not support time and stack image")
-                else:
-                    wid = QWidget()
-                    QMessageBox.warning(wid, "image error", "Do not support time and stack image")
-                    return False
-            if silent:
-                return image.swap_time_and_stack()
-            else:
-                wid = QWidget()
-                res = QMessageBox.question(
-                    wid,
-                    "Not supported",
-                    "Time data are currently not supported. " "Maybe You would like to treat time as z-stack",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No,
-                )
-
-                if res == QMessageBox.Yes:
-                    return image.swap_time_and_stack()
-                return False
-        return True
 
 
 def get_mask(segmentation: typing.Optional[np.ndarray], mask: typing.Optional[np.ndarray], selected: typing.List[int]):

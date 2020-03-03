@@ -21,7 +21,6 @@ from qtpy.QtWidgets import (
 )
 
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
-from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
 from PartSeg.common_gui.stacked_widget_with_selector import StackedWidgetWithSelector
 from PartSeg.segmentation_analysis.measurement_widget import MeasurementWidget
 from PartSegCore.analysis import ProjectTuple
@@ -41,7 +40,7 @@ from PartSeg.common_gui.main_window import BaseMainWindow, BaseMainMenu
 from .advanced_window import SegAdvancedWindow
 from .batch_window import BatchWindow
 from .calculation_pipeline_thread import CalculatePipelineThread
-from PartSegImage import TiffImageReader, Image
+from PartSegImage import TiffImageReader
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.analysis.analysis_utils import SegmentationPipelineElement, SegmentationPipeline
 from .image_view import SynchronizeView, ResultImageView, CompareImageView
@@ -428,18 +427,6 @@ class MainMenu(BaseMainMenu):
             )
             dial2.exec()
 
-    def image_adjust_exec(self):
-        dial = ImageAdjustmentDialog(self.settings.image)
-        if dial.exec():
-            algorithm = dial.result_val.algorithm
-            dial2 = ExecuteFunctionDialog(
-                algorithm.transform, [], {"image": self.settings.image, "arguments": dial.result_val.values}
-            )
-            if dial2.exec():
-                result: Image = dial2.get_result()
-                self.settings.set_project_info(ProjectTuple(result.file_path, result))
-        return
-
     def mask_manager(self):
         if self.settings.segmentation is None:
             QMessageBox.information(self, "No segmentation", "Cannot create mask without segmentation")
@@ -611,7 +598,7 @@ class MainWindow(BaseMainWindow):
         file_menu.addAction("&Save").triggered.connect(self.main_menu.save_file)
         file_menu.addAction("Batch processing").triggered.connect(self.main_menu.batch_window)
         image_menu = menu_bar.addMenu("Image operations")
-        image_menu.addAction("Image adjustment").triggered.connect(self.main_menu.image_adjust_exec)
+        image_menu.addAction("Image adjustment").triggered.connect(self.image_adjust_exec)
         image_menu.addAction("Mask manager").triggered.connect(self.main_menu.mask_manager)
         help_menu = menu_bar.addMenu("Help")
         help_menu.addAction("State directory").triggered.connect(self.show_settings_directory)
@@ -686,3 +673,7 @@ class MainWindow(BaseMainWindow):
         self.settings.dump()
         del self.batch_window
         del self.advanced_window
+
+    @staticmethod
+    def get_project_info(file_path, image):
+        return ProjectTuple(file_path=file_path, image=image)
