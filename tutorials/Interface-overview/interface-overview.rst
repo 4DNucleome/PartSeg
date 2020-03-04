@@ -274,11 +274,10 @@ Properties
    :alt: View on Properties Tab in Settings and Measurement.
 
 1.  Image spacing with units.
-2.  Control of mask presenting. Its color and opacity.
-3.  If show Multiple files panel in main window.
-4.  List of segmentation profiles.
-5.  List of segmentation pipelines.
-6.  Preview of selected Profile/pipeline.
+2.  If show Multiple files panel in main window.
+3.  List of segmentation profiles.
+4.  List of segmentation pipelines.
+5.  Preview of selected Profile/pipeline.
 
 Additionally, bellow preview there are 6 buttons.
 We think that they are self explanatory with addition that,
@@ -422,7 +421,7 @@ Zoom of image can be also changed by Ctrl+Mouse scroll.
     If image contains time data, then similar
     slider will be visible on left part of image.
 
-In `Mask Segmentation GUI`_ elements 5, 6 and 7 are place above
+In `Mask Segmentation GUI`_ elements 5 and 6 are place above
 Algorithm Parameters part.
 
 .. image::  images/range_control.png
@@ -431,8 +430,8 @@ Algorithm Parameters part.
 1.  Set boundaries for minimum maximum brightness for given channel.
 2.  Use boundaries for presenting current channel.
     If is checked then lock is present right to checkbox |fixed_range|.
-3.  Use gaus for presenting current channel.
-    If is checked then proper symbol is present right to checkbox |gauss|.
+3.  Use filter (Median or gauss) for presenting current channel.
+    If is checked then proper symbol is present right to checkbox |filter|.
 
 Color control
 ~~~~~~~~~~~~~
@@ -481,14 +480,22 @@ After select color double click on bottom bar to create marker.
 Markers can be moved by drag and drop or removed by double click on them.
 Values between markers are created with linear interpolation.
 
-
 Create labels
 ^^^^^^^^^^^^^
 .. image:: images/create_labels.png
    :alt: View on labels map create widget.
 
-After select color use **Add color** buton.
+After select color use **Add color** button.
 Color order can be changed by drag and drop.
+
+Create labels
+^^^^^^^^^^^^^
+.. image:: images/color_mask_marking.png
+   :alt: Select color and opacity of mask marking.
+
+After select color use **Change mask color** button.
+Mask marker opacity can be changed with spin box in lower right corner.
+
 
 Algorithm parameters
 ~~~~~~~~~~~~~~~~~~~~
@@ -562,7 +569,7 @@ See image below showing shortcut Properties for ROI Analysis.
 .. |radio_button| image:: images/radio_button.png
 .. |channel_select| image:: images/channel_select.png
 .. |fixed_range| image:: images/fixed_range.png
-.. |gauss| image:: images/gauss.png
+.. |filter| image:: images/gauss.png
 .. |batch_mask_from_file| image::  images/batch_mask_from_file.png
    :alt: Load mask from file.
 .. |batch_mask_from_segmentation| image::  images/batch_mask_from_segmentation.png
