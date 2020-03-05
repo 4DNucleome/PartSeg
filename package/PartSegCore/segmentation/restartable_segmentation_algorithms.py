@@ -68,7 +68,7 @@ class RestartableAlgorithm(SegmentationAlgorithm, ABC):
             missed_arguments = ", ".join(set(base_names).difference(set(kwargs.keys())))
             additional_arguments = ", ".join(set(kwargs.keys()).difference(set(base_names)))
             raise ValueError(f"Missed arguments {missed_arguments}; Additional arguments: {additional_arguments}")
-        self.new_parameters = dict(kwargs)
+        self.new_parameters = deepcopy(kwargs)
 
 
 class BorderRim(RestartableAlgorithm):
