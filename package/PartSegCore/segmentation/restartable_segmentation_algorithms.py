@@ -45,7 +45,6 @@ class RestartableAlgorithm(SegmentationAlgorithm, ABC):
 
     def set_mask(self, mask):
         super().set_mask(mask)
-        self.new_parameters["threshold"] = self.parameters["threshold"]
         self.parameters["threshold"] = None
 
     def get_info_text(self):
