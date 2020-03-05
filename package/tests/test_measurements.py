@@ -1,8 +1,10 @@
+import itertools
 import os
 from functools import reduce
 from math import isclose, pi
 
 import numpy as np
+import pytest
 
 from PartSegImage import Image
 from PartSegCore.analysis import load_metadata
@@ -48,8 +50,28 @@ def get_cube_image():
     return Image(get_cube_array(), (100, 50, 50), "")
 
 
+@pytest.fixture(name="cube_image")
+def cube_image_fixture():
+    return get_cube_image()
+
+
+@pytest.fixture
+def cube_mask_40(cube_image):
+    return cube_image.get_channel(0)[0] > 40
+
+
+@pytest.fixture
+def cube_mask_60(cube_image):
+    return cube_image.get_channel(0)[0] > 60
+
+
 def get_square_image():
     return Image(get_cube_array()[:, 25:26], (100, 50, 50), "")
+
+
+@pytest.fixture(name="square_image")
+def square_image_fixture():
+    return get_square_image()
 
 
 def get_two_components_array():
@@ -70,23 +92,27 @@ def get_two_component_mask():
 
 
 class TestDiameter(object):
-    def test_cube(self):
-        image = get_cube_image()
-        mask1 = image.get_channel(0)[0] > 40
-        mask2 = image.get_channel(0)[0] > 60
+    def test_cube(self, cube_image):
+        mask1 = cube_image.get_channel(0)[0] > 40
+        mask2 = cube_image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
-        assert Diameter.calculate_property(mask1, image.spacing, 1) == np.sqrt(2 * (50 * 59) ** 2 + (100 * 29) ** 2)
-        assert Diameter.calculate_property(mask2, image.spacing, 1) == np.sqrt(2 * (50 * 39) ** 2 + (100 * 19) ** 2)
-        assert Diameter.calculate_property(mask3, image.spacing, 1) == np.sqrt(2 * (50 * 59) ** 2 + (100 * 29) ** 2)
+        assert Diameter.calculate_property(mask1, cube_image.spacing, 1) == np.sqrt(
+            2 * (50 * 59) ** 2 + (100 * 29) ** 2
+        )
+        assert Diameter.calculate_property(mask2, cube_image.spacing, 1) == np.sqrt(
+            2 * (50 * 39) ** 2 + (100 * 19) ** 2
+        )
+        assert Diameter.calculate_property(mask3, cube_image.spacing, 1) == np.sqrt(
+            2 * (50 * 59) ** 2 + (100 * 29) ** 2
+        )
 
-    def test_square(self):
-        image = get_square_image()
-        mask1 = image.get_channel(0)[0] > 40
-        mask2 = image.get_channel(0)[0] > 60
+    def test_square(self, square_image):
+        mask1 = square_image.get_channel(0)[0] > 40
+        mask2 = square_image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
-        assert Diameter.calculate_property(mask1, image.spacing, 1) == np.sqrt(2 * (50 * 59) ** 2)
-        assert Diameter.calculate_property(mask2, image.spacing, 1) == np.sqrt(2 * (50 * 39) ** 2)
-        assert Diameter.calculate_property(mask3, image.spacing, 1) == np.sqrt(2 * (50 * 59) ** 2)
+        assert Diameter.calculate_property(mask1, square_image.spacing, 1) == np.sqrt(2 * (50 * 59) ** 2)
+        assert Diameter.calculate_property(mask2, square_image.spacing, 1) == np.sqrt(2 * (50 * 39) ** 2)
+        assert Diameter.calculate_property(mask3, square_image.spacing, 1) == np.sqrt(2 * (50 * 59) ** 2)
 
     def test_scale(self):
         image = get_cube_image()
@@ -215,158 +241,26 @@ class TestMaximumPixelBrightness:
         assert MaximumPixelBrightness.calculate_property(mask, image.get_channel(0)) == 0
 
 
-class TestMinimumPixelBrightness:
-    def test_cube(self):
-        image = get_cube_image()
-        mask1 = image.get_channel(0) > 40
-        mask2 = image.get_channel(0) > 60
-        mask3 = image.get_channel(0) >= 0
-        assert MinimumPixelBrightness.calculate_property(mask1, image.get_channel(0)) == 50
-        assert MinimumPixelBrightness.calculate_property(mask2, image.get_channel(0)) == 70
-        assert MinimumPixelBrightness.calculate_property(mask3, image.get_channel(0)) == 0
-
-    def test_square(self):
-        image = get_square_image()
-        mask1 = image.get_channel(0) > 40
-        mask2 = image.get_channel(0) > 60
-        mask3 = image.get_channel(0) >= 0
-        assert MinimumPixelBrightness.calculate_property(mask1, image.get_channel(0)) == 50
-        assert MinimumPixelBrightness.calculate_property(mask2, image.get_channel(0)) == 70
-        assert MinimumPixelBrightness.calculate_property(mask3, image.get_channel(0)) == 0
-
-    def test_empty(self):
-        image = get_cube_image()
-        mask = image.get_channel(0) > 80
-        assert MinimumPixelBrightness.calculate_property(mask, image.get_channel(0)) == 0
-
-
-class TestMedianPixelBrightness:
-    def test_cube(self):
-        image = get_cube_image()
-        mask1 = image.get_channel(0) > 40
-        mask2 = image.get_channel(0) > 60
-        mask3 = image.get_channel(0) >= 0
-        assert MedianPixelBrightness.calculate_property(mask1, image.get_channel(0)) == 50
-        assert MedianPixelBrightness.calculate_property(mask2, image.get_channel(0)) == 70
-        assert MedianPixelBrightness.calculate_property(mask3, image.get_channel(0)) == 0
-
-    def test_square(self):
-        image = get_square_image()
-        mask1 = image.get_channel(0) > 40
-        mask2 = image.get_channel(0) > 60
-        mask3 = image.get_channel(0) >= 0
-        assert MedianPixelBrightness.calculate_property(mask1, image.get_channel(0)) == 50
-        assert MedianPixelBrightness.calculate_property(mask2, image.get_channel(0)) == 70
-        assert MedianPixelBrightness.calculate_property(mask3, image.get_channel(0)) == 0
-
-    def test_empty(self):
-        image = get_cube_image()
-        mask = image.get_channel(0) > 80
-        assert MedianPixelBrightness.calculate_property(mask, image.get_channel(0)) == 0
-
-
-class TestMeanPixelBrightness:
-    def test_cube(self):
-        image = get_cube_image()
-        mask1 = image.get_channel(0) > 40
-        mask2 = image.get_channel(0) > 60
-        mask3 = image.get_channel(0) >= 0
-        assert MeanPixelBrightness.calculate_property(mask1, image.get_channel(0)) == (
-            30 * 60 * 60 * 50 + 20 * 40 * 40 * 20
-        ) / (30 * 60 * 60)
-        assert MeanPixelBrightness.calculate_property(mask2, image.get_channel(0)) == 70
-        assert MeanPixelBrightness.calculate_property(mask3, image.get_channel(0)) == (
-            30 * 60 * 60 * 50 + 20 * 40 * 40 * 20
-        ) / (50 * 100 * 100)
-
-    def test_square(self):
-        image = get_square_image()
-        mask1 = image.get_channel(0) > 40
-        mask2 = image.get_channel(0) > 60
-        mask3 = image.get_channel(0) >= 0
-        assert MeanPixelBrightness.calculate_property(mask1, image.get_channel(0)) == (60 * 60 * 50 + 40 * 40 * 20) / (
-            60 * 60
-        )
-        assert MeanPixelBrightness.calculate_property(mask2, image.get_channel(0)) == 70
-        assert MeanPixelBrightness.calculate_property(mask3, image.get_channel(0)) == (60 * 60 * 50 + 40 * 40 * 20) / (
-            100 * 100
-        )
-
-    def test_empty(self):
-        image = get_cube_image()
-        mask = image.get_channel(0) > 80
-        assert MeanPixelBrightness.calculate_property(mask, image.get_channel(0)) == 0
-
-
-class TestStandardDeviationOfPixelBrightness:
-    def test_cube(self):
-        image = get_cube_image()
-        mask1 = image.get_channel(0) > 40
-        mask2 = image.get_channel(0) > 60
-        mask3 = image.get_channel(0) >= 0
-        mean = (30 * 60 * 60 * 50 + 20 * 40 * 40 * 20) / (30 * 60 * 60)
-        assert StandardDeviationOfPixelBrightness.calculate_property(mask1, image.get_channel(0)) == np.sqrt(
-            ((30 * 60 * 60 - 20 * 40 * 40) * (50 - mean) ** 2 + ((20 * 40 * 40) * (70 - mean) ** 2)) / (30 * 60 * 60)
-        )
-
-        assert StandardDeviationOfPixelBrightness.calculate_property(mask2, image.get_channel(0)) == 0
-        mean = (30 * 60 * 60 * 50 + 20 * 40 * 40 * 20) / (50 * 100 * 100)
-        assert isclose(
-            StandardDeviationOfPixelBrightness.calculate_property(mask3, image.get_channel(0)),
-            np.sqrt(
-                (
-                    (30 * 60 * 60 - 20 * 40 * 40) * (50 - mean) ** 2
-                    + ((20 * 40 * 40) * (70 - mean) ** 2)
-                    + (50 * 100 * 100 - 30 * 60 * 60) * mean ** 2
-                )
-                / (50 * 100 * 100)
-            ),
-        )
-
-    def test_square(self):
-        image = get_square_image()
-        mask1 = image.get_channel(0) > 40
-        mask2 = image.get_channel(0) > 60
-        mask3 = image.get_channel(0) >= 0
-        mean = (60 * 60 * 50 + 40 * 40 * 20) / (60 * 60)
-        assert StandardDeviationOfPixelBrightness.calculate_property(mask1, image.get_channel(0)) == np.sqrt(
-            ((60 * 60 - 40 * 40) * (50 - mean) ** 2 + ((40 * 40) * (70 - mean) ** 2)) / (60 * 60)
-        )
-
-        assert StandardDeviationOfPixelBrightness.calculate_property(mask2, image.get_channel(0)) == 0
-        mean = (60 * 60 * 50 + 40 * 40 * 20) / (100 * 100)
-        assert isclose(
-            StandardDeviationOfPixelBrightness.calculate_property(mask3, image.get_channel(0)),
-            np.sqrt(
-                (
-                    (60 * 60 - 40 * 40) * (50 - mean) ** 2
-                    + ((40 * 40) * (70 - mean) ** 2)
-                    + (100 * 100 - 60 * 60) * mean ** 2
-                )
-                / (100 * 100)
-            ),
-        )
-
-    def test_empty(self):
-        image = get_cube_image()
-        mask = image.get_channel(0) > 80
-        assert StandardDeviationOfPixelBrightness.calculate_property(mask, image.get_channel(0)) == 0
+@pytest.mark.parametrize("threshold", [80, 60, 40, 0])
+@pytest.mark.parametrize("image", [get_square_image(), get_cube_image()], ids=["square", "cube"])
+@pytest.mark.parametrize(
+    "calc_class,np_method",
+    [
+        (MinimumPixelBrightness, np.min),
+        (MedianPixelBrightness, np.median),
+        (MeanPixelBrightness, np.mean),
+        (StandardDeviationOfPixelBrightness, np.std),
+    ],
+)
+def test_pixel_brightness(image, threshold, calc_class, np_method):
+    channel = image.get_channel(0)
+    mask = channel > threshold
+    assert calc_class.calculate_property(mask, channel) == (np_method(channel[mask]) if np.any(mask) else 0)
 
 
 class TestMomentOfInertia:
-    def test_cube(self):
-        image = get_cube_image()
-        mask1 = image.get_channel(0)[0] > 40
-        mask2 = image.get_channel(0)[0] > 60
-        mask3 = image.get_channel(0)[0] >= 0
-        in1 = MomentOfInertia.calculate_property(mask1, image.get_channel(0), image.spacing)
-        in2 = MomentOfInertia.calculate_property(mask2, image.get_channel(0), image.spacing)
-        in3 = MomentOfInertia.calculate_property(mask3, image.get_channel(0), image.spacing)
-        assert in1 == in3
-        assert in1 > in2
-
-    def test_square(self):
-        image = get_square_image()
+    @pytest.mark.parametrize("image", [get_cube_image(), get_square_image()], ids=["cube", "square"])
+    def test_image(self, image):
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         mask3 = image.get_channel(0)[0] >= 0
@@ -423,229 +317,62 @@ class TestMomentOfInertia:
 
 
 class TestMainAxis:
-    def test_cube(self):
-        array = get_cube_array()
-        image = Image(array, (10, 10, 20))
-        mask1 = image.get_channel(0)[0] > 40
-        mask2 = image.get_channel(0)[0] > 60
+    @pytest.mark.parametrize("image", (get_cube_image(), get_square_image()), ids=["cube", "square"])
+    @pytest.mark.parametrize(
+        "method,scalar,last",
+        [(LongestMainAxisLength, 20, 0), (MiddleMainAxisLength, 10, 0), (ShortestMainAxisLength, 10, 1)],
+    )
+    @pytest.mark.parametrize("threshold,len_scalar", [(40, 59), (60, 39)])
+    @pytest.mark.parametrize("result_scalar", [1, 0.5, 3])
+    def test_cube(self, image, method, scalar, threshold, len_scalar, last, result_scalar):
+        image = image.substitute(image_spacing=(10, 10, 20))
+        channel = image.get_channel(0)
+        mask = channel[0] > threshold
+        len_scalar = len_scalar - last * ((100 - threshold) / 2)
+        if image.is_2d and last:
+            return
         assert (
-            LongestMainAxisLength.calculate_property(
-                area_array=mask1,
-                channel=image.get_channel(0),
+            method.calculate_property(
+                area_array=mask,
+                channel=channel,
                 help_dict={},
                 voxel_size=image.spacing,
-                result_scalar=1,
+                result_scalar=result_scalar,
                 _area=AreaType.Mask,
             )
-            == 20 * 59
-        )
-        assert (
-            MiddleMainAxisLength.calculate_property(
-                area_array=mask1,
-                channel=image.get_channel(0),
-                help_dict={},
-                voxel_size=image.spacing,
-                result_scalar=1,
-                _area=AreaType.Mask,
-            )
-            == 10 * 59
-        )
-        assert (
-            ShortestMainAxisLength.calculate_property(
-                area_array=mask1,
-                channel=image.get_channel(0),
-                help_dict={},
-                voxel_size=image.spacing,
-                result_scalar=1,
-                _area=AreaType.Mask,
-            )
-            == 10 * 29
-        )
-        assert (
-            LongestMainAxisLength.calculate_property(
-                area_array=mask2,
-                channel=image.get_channel(0),
-                help_dict={},
-                voxel_size=image.spacing,
-                result_scalar=1,
-                _area=AreaType.Mask,
-            )
-            == 20 * 39
-        )
-        assert (
-            MiddleMainAxisLength.calculate_property(
-                area_array=mask2,
-                channel=image.get_channel(0),
-                help_dict={},
-                voxel_size=image.spacing,
-                result_scalar=1,
-                _area=AreaType.Mask,
-            )
-            == 10 * 39
-        )
-        assert (
-            ShortestMainAxisLength.calculate_property(
-                area_array=mask2,
-                channel=image.get_channel(0),
-                help_dict={},
-                voxel_size=image.spacing,
-                result_scalar=1,
-                _area=AreaType.Mask,
-            )
-            == 10 * 19
+            == scalar * len_scalar * result_scalar
         )
 
-    def test_square(self):
-        array = get_cube_array()
-        image = Image(array[:, 25:26], (10, 10, 20))
-        mask1 = image.get_channel(0)[0] > 40
-        mask2 = image.get_channel(0)[0] > 60
-        assert (
-            LongestMainAxisLength.calculate_property(
-                area_array=mask1,
-                channel=image.get_channel(0),
-                help_dict={},
-                voxel_size=image.spacing,
-                result_scalar=1,
-                _area=AreaType.Mask,
-            )
-            == 20 * 59
-        )
-        assert (
-            MiddleMainAxisLength.calculate_property(
-                area_array=mask1,
-                channel=image.get_channel(0),
-                help_dict={},
-                voxel_size=image.spacing,
-                result_scalar=1,
-                _area=AreaType.Mask,
-            )
-            == 10 * 59
-        )
-        assert (
-            ShortestMainAxisLength.calculate_property(
-                area_array=mask1,
-                channel=image.get_channel(0),
-                help_dict={},
-                voxel_size=image.spacing,
-                result_scalar=1,
-                _area=AreaType.Mask,
-            )
-            == 0
-        )
-        assert (
-            LongestMainAxisLength.calculate_property(
-                area_array=mask2,
-                channel=image.get_channel(0),
-                help_dict={},
-                voxel_size=image.spacing,
-                result_scalar=1,
-                _area=AreaType.Mask,
-            )
-            == 20 * 39
-        )
-        assert (
-            MiddleMainAxisLength.calculate_property(
-                area_array=mask2,
-                channel=image.get_channel(0),
-                help_dict={},
-                voxel_size=image.spacing,
-                result_scalar=1,
-                _area=AreaType.Mask,
-            )
-            == 10 * 39
-        )
-        assert (
-            ShortestMainAxisLength.calculate_property(
-                area_array=mask2,
-                channel=image.get_channel(0),
-                help_dict={},
-                voxel_size=image.spacing,
-                result_scalar=1,
-                _area=AreaType.Mask,
-            )
-            == 0
-        )
-
-    def test_scale(self):
-        array = get_cube_array()
-        image = Image(array, (10, 10, 20))
-        mask1 = image.get_channel(0)[0] > 40
-        assert (
-            LongestMainAxisLength.calculate_property(
-                area_array=mask1,
-                channel=image.get_channel(0),
-                help_dict={},
-                voxel_size=image.spacing,
-                result_scalar=2,
-                _area=AreaType.Mask,
-            )
-            == 2 * 20 * 59
-        )
-
-        array = get_cube_array()
-        image = Image(array[:, 25:26], (10, 10, 20))
-        mask1 = image.get_channel(0)[0] > 40
-        assert (
-            LongestMainAxisLength.calculate_property(
-                area_array=mask1,
-                channel=image.get_channel(0),
-                help_dict={},
-                voxel_size=image.spacing,
-                result_scalar=2,
-                _area=AreaType.Mask,
-            )
-            == 2 * 20 * 59
-        )
-
-    def test_empty(self):
-        image = get_cube_image()
-        mask = image.get_channel(0)[0] > 80
+    def test_empty(self, cube_image):
+        mask = cube_image.get_channel(0)[0] > 80
         assert (
             ShortestMainAxisLength.calculate_property(
                 area_array=mask,
-                channel=image.get_channel(0),
+                channel=cube_image.get_channel(0),
                 help_dict={},
-                voxel_size=image.spacing,
+                voxel_size=cube_image.spacing,
                 result_scalar=1,
                 _area=AreaType.Segmentation,
             )
             == 0
         )
 
-    def test_without_help_dict(self):
-        array = get_cube_array()
-        image = Image(array, (10, 10, 20))
-        mask1 = image.get_channel(0)[0] > 40
+    @pytest.mark.parametrize(
+        "method,result",
+        [(LongestMainAxisLength, 20 * 59), (MiddleMainAxisLength, 10 * 59), (ShortestMainAxisLength, 0)],
+    )
+    def test_without_help_dict(self, square_image, method, result):
+        square_image = square_image.substitute(image_spacing=(10, 10, 20))
+        mask1 = square_image.get_channel(0)[0] > 40
         assert (
-            LongestMainAxisLength.calculate_property(
+            method.calculate_property(
                 area_array=mask1,
-                channel=image.get_channel(0),
-                voxel_size=image.spacing,
+                channel=square_image.get_channel(0),
+                voxel_size=square_image.spacing,
                 result_scalar=1,
                 _area=AreaType.Mask,
             )
-            == 20 * 59
-        )
-        assert (
-            MiddleMainAxisLength.calculate_property(
-                area_array=mask1,
-                channel=image.get_channel(0),
-                voxel_size=image.spacing,
-                result_scalar=1,
-                _area=AreaType.Mask,
-            )
-            == 10 * 59
-        )
-        assert (
-            ShortestMainAxisLength.calculate_property(
-                area_array=mask1,
-                channel=image.get_channel(0),
-                voxel_size=image.spacing,
-                result_scalar=1,
-                _area=AreaType.Mask,
-            )
-            == 10 * 29
+            == result
         )
 
 
@@ -684,125 +411,36 @@ class TestSurface:
 
 
 class TestRimVolume:
-    def test_cube(self):
-        image = get_cube_image()
-        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+    @pytest.mark.parametrize("image", [get_cube_image(), get_square_image()], ids=["cube", "square"])
+    @pytest.mark.parametrize("scale", [1, 4])
+    def test_image(self, image, scale):
+        image = image.substitute(image_spacing=tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
         result_scale = reduce(lambda x, y: x * y, image.voxel_size)
-
+        exp = 2 if image.is_2d else 3
         assert (
             RimVolume.calculate_property(
                 area_array=mask1,
                 mask=mask1,
                 voxel_size=image.voxel_size,
-                result_scalar=1,
+                result_scalar=scale,
                 distance=10 * 50,
                 units=Units.nm,
             )
-            == np.count_nonzero(mask3) * result_scale
+            == np.count_nonzero(mask3) * result_scale * scale**exp
         )
         assert (
             RimVolume.calculate_property(
                 area_array=mask2,
                 mask=mask1,
                 voxel_size=image.voxel_size,
-                result_scalar=1,
+                result_scalar=scale,
                 distance=10 * 50,
                 units=Units.nm,
             )
             == 0
-        )
-
-    def test_square(self):
-        image = get_square_image()
-        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
-        mask1 = image.get_channel(0)[0] > 40
-        mask2 = image.get_channel(0)[0] > 60
-        mask3 = mask1 * ~mask2
-        result_scale = reduce(lambda x, y: x * y, image.voxel_size)
-
-        assert (
-            RimVolume.calculate_property(
-                area_array=mask1,
-                mask=mask1,
-                voxel_size=image.voxel_size,
-                result_scalar=1,
-                distance=10 * 50,
-                units=Units.nm,
-            )
-            == np.count_nonzero(mask3) * result_scale
-        )
-        assert (
-            RimVolume.calculate_property(
-                area_array=mask2,
-                mask=mask1,
-                voxel_size=image.voxel_size,
-                result_scalar=1,
-                distance=10 * 50,
-                units=Units.nm,
-            )
-            == 0
-        )
-
-    def test_scale(self):
-        image = get_cube_image()
-        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
-        mask1 = image.get_channel(0)[0] > 40
-        mask2 = image.get_channel(0)[0] > 60
-        mask3 = mask1 * ~mask2
-        result_scale = reduce(lambda x, y: x * y, image.voxel_size)
-        assert (
-            RimVolume.calculate_property(
-                area_array=mask1,
-                mask=mask1,
-                voxel_size=image.voxel_size,
-                result_scalar=1,
-                distance=10 * 50,
-                units=Units.nm,
-            )
-            == np.count_nonzero(mask3) * result_scale
-        )
-        assert (
-            RimVolume.calculate_property(
-                area_array=mask1,
-                mask=mask1,
-                voxel_size=image.voxel_size,
-                result_scalar=UNIT_SCALE[Units.nm.value],
-                distance=10 * 50,
-                units=Units.nm,
-            )
-            == np.count_nonzero(mask3) * 100 * 50 ** 2
-        )
-
-        image = get_square_image()
-        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
-        mask1 = image.get_channel(0)[0] > 40
-        mask2 = image.get_channel(0)[0] > 60
-        mask3 = mask1 * ~mask2
-        result_scale = reduce(lambda x, y: x * y, image.voxel_size)
-        assert (
-            RimVolume.calculate_property(
-                area_array=mask1,
-                mask=mask1,
-                voxel_size=image.voxel_size,
-                result_scalar=1,
-                distance=10 * 50,
-                units=Units.nm,
-            )
-            == np.count_nonzero(mask3) * result_scale
-        )
-        assert (
-            RimVolume.calculate_property(
-                area_array=mask1,
-                mask=mask1,
-                voxel_size=image.voxel_size,
-                result_scalar=UNIT_SCALE[Units.nm.value],
-                distance=10 * 50,
-                units=Units.nm,
-            )
-            == np.count_nonzero(mask3) * 50 ** 2
         )
 
     def test_empty(self):
@@ -845,37 +483,8 @@ class TestRimVolume:
 
 
 class TestRimPixelBrightnessSum:
-    def test_cube(self):
-        image = get_cube_image()
-        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
-        mask1 = image.get_channel(0)[0] > 40
-        mask2 = image.get_channel(0)[0] > 60
-        mask3 = mask1 * ~mask2
-        assert (
-            RimPixelBrightnessSum.calculate_property(
-                area_array=mask1,
-                mask=mask1,
-                voxel_size=image.voxel_size,
-                distance=10 * 50,
-                units=Units.nm,
-                channel=image.get_channel(0),
-            )
-            == np.count_nonzero(mask3) * 50
-        )
-        assert (
-            RimPixelBrightnessSum.calculate_property(
-                area_array=mask2,
-                mask=mask1,
-                voxel_size=image.voxel_size,
-                distance=10 * 50,
-                units=Units.nm,
-                channel=image.get_channel(0),
-            )
-            == 0
-        )
-
-    def test_square(self):
-        image = get_square_image()
+    @pytest.mark.parametrize("image", [get_cube_image(), get_square_image()], ids=["cube", "square"])
+    def test_image(self, image):
         image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
@@ -997,80 +606,48 @@ class TestSphericity:
 
 
 class TestDistanceMaskSegmentation:
-    def test_cube(self):
-        image = get_cube_image()
-        mask1 = image.get_channel(0)[0] > 40
-        mask2 = image.get_channel(0)[0] > 60
+    @pytest.mark.parametrize(
+        "d_mask,d_seg", itertools.product([DistancePoint.Geometrical_center, DistancePoint.Mass_center], repeat=2)
+    )
+    def test_cube_zero(self, cube_image, d_mask, d_seg):
+        mask1 = cube_image.get_channel(0)[0] > 40
+        mask2 = cube_image.get_channel(0)[0] > 60
         assert (
             DistanceMaskSegmentation.calculate_property(
-                image.get_channel(0),
-                mask2,
-                mask1,
-                image.voxel_size,
-                1,
-                DistancePoint.Geometrical_center,
-                DistancePoint.Geometrical_center,
+                channel=cube_image.get_channel(0),
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=cube_image.voxel_size,
+                result_scalar=1,
+                distance_from_mask=d_mask,
+                distance_to_segmentation=d_seg,
             )
             == 0
         )
 
-        assert (
-            DistanceMaskSegmentation.calculate_property(
-                image.get_channel(0),
-                mask2,
-                mask1,
-                image.voxel_size,
-                1,
-                DistancePoint.Geometrical_center,
-                DistancePoint.Mass_center,
-            )
-            == 0
-        )
+    @pytest.mark.parametrize(
+        "d_mask,d_seg,dist",
+        [
+            (DistancePoint.Border, DistancePoint.Geometrical_center, 1400),
+            (DistancePoint.Geometrical_center, DistancePoint.Border, 900),
+            (DistancePoint.Border, DistancePoint.Border, 500),
+        ],
+    )
+    def test_cube(self, cube_image, d_mask, d_seg, dist):
+        mask1 = cube_image.get_channel(0)[0] > 40
+        mask2 = cube_image.get_channel(0)[0] > 60
 
         assert (
             DistanceMaskSegmentation.calculate_property(
-                image.get_channel(0),
-                mask2,
-                mask1,
-                image.voxel_size,
-                1,
-                DistancePoint.Mass_center,
-                DistancePoint.Geometrical_center,
+                channel=cube_image.get_channel(0),
+                area_array=mask2,
+                mask=mask1,
+                voxel_size=cube_image.voxel_size,
+                result_scalar=1,
+                distance_from_mask=d_mask,
+                distance_to_segmentation=d_seg,
             )
-            == 0
-        )
-
-        assert (
-            DistanceMaskSegmentation.calculate_property(
-                image.get_channel(0),
-                mask2,
-                mask1,
-                image.voxel_size,
-                1,
-                DistancePoint.Border,
-                DistancePoint.Geometrical_center,
-            )
-            == 1400
-        )
-
-        assert (
-            DistanceMaskSegmentation.calculate_property(
-                image.get_channel(0),
-                mask2,
-                mask1,
-                image.voxel_size,
-                1,
-                DistancePoint.Geometrical_center,
-                DistancePoint.Border,
-            )
-            == 900
-        )
-
-        assert (
-            DistanceMaskSegmentation.calculate_property(
-                image.get_channel(0), mask2, mask1, image.voxel_size, 1, DistancePoint.Border, DistancePoint.Border
-            )
-            == 500
+            == dist
         )
 
     def test_two_components(self):
