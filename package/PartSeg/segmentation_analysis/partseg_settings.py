@@ -59,7 +59,7 @@ class PartSettings(BaseSettings):
         :param dict algorithm_values:
         """
         self.history[self.history_index + 1] = self.history[self.history_index + 1].replace_(
-            algorithm_name=algorithm_name, algorithm_values=algorithm_values
+            segmentation_parameters={"algorithm_name": algorithm_name, "values": algorithm_values}
         )
 
     @staticmethod
