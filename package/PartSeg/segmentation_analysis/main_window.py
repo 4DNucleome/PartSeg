@@ -160,7 +160,11 @@ class Options(QWidget):
         mask_history = []
         for el in history:
             mask = el.mask_property
-            segmentation = SegmentationProfile(name="Unknown", algorithm=el.algorithm_name, values=el.algorithm_values)
+            segmentation = SegmentationProfile(
+                name="Unknown",
+                algorithm=el.segmentation_parameters["algorithm_name"],
+                values=el.segmentation_parameters["values"],
+            )
             new_el = SegmentationPipelineElement(mask_property=mask, segmentation=segmentation)
             mask_history.append(new_el)
         name = self._settings.last_executed_algorithm
