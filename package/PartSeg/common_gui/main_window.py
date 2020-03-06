@@ -200,4 +200,3 @@ class BaseMainWindow(QMainWindow):
             if dial2.exec():
                 result: Image = dial2.get_result()
                 self.settings.set_project_info(self.get_project_info(result.file_path, result))
-

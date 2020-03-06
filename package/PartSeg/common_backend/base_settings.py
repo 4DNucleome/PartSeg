@@ -362,7 +362,7 @@ class BaseSettings(ViewSettings):
         self.history = history
         self.history_index = len(self.history) - 1
 
-    def get_history(self):
+    def get_history(self) -> List[HistoryElement]:
         return self.history[: self.history_index + 1]
 
     @staticmethod
@@ -530,11 +530,13 @@ class BaseSettings(ViewSettings):
                 raise SwapTimeStackException()
         return True
 
+
 class SwapTimeStackException(Exception):
     """
     Exception which inform that current image shape is not supported,
     but can be if time and stack axes were swapped
     """
+
 
 class TimeAndStackException(Exception):
     """

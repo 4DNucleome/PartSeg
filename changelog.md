@@ -1,5 +1,11 @@
 # Changelog 
 
+## 0.10.2 
+-   bugfixes 
+
+## 0.10.1 
+-   bugfixes
+
 ## 0.10.0 
 -   Add creating custom label coloring.
 -   Change execs interpreter to python 3.7.
