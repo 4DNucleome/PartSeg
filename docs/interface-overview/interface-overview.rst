@@ -454,7 +454,10 @@ Color maps
 
 .. image:: images/colormap_list.png
    :alt: View on list of color maps
-on
+
+
+*  Only color maps with checked checkbox are available to select in
+   `Image View`_ controls
 *  Only custom created color maps can be deleted with |delete| button.
 *  Part of existing color maps (all custom) can be use as base to new
    after click |edit| button.
