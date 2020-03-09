@@ -53,13 +53,6 @@ PartSeg.common\_backend.load\_backup module
    :undoc-members:
    :show-inheritance:
 
-PartSeg.common\_backend.main\_window module
--------------------------------------------
-
-.. automodule:: PartSeg.common_backend.main_window
-   :members:
-   :show-inheritance:
-
 PartSeg.common\_backend.partially\_const\_dict module
 -----------------------------------------------------
 

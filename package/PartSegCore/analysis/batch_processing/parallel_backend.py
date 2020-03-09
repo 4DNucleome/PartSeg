@@ -199,7 +199,7 @@ class BatchWorker:
         self.result_queue = result_queue
         self.calculation_dict = calculation_dict
 
-    def calculate_task(self, val):
+    def calculate_task(self, val: Tuple[Any, uuid.UUID]):
         """
         Calculate single task.
         ``val`` is tuple with two elements (task_data, uuid).

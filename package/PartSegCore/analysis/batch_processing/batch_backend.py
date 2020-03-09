@@ -1,19 +1,34 @@
 """
 This module contains PartSeg function used for calculate in batch processing
 
+Calculation hierarchy:
+
 .. graphviz::
 
-   digraph foo {
+   digraph calc {
+      rankdir="LR";
+      "CalculationManager"[shape=rectangle style=filled];
+      "BatchManager"[shape=rectangle];
+      "BatchWorker"[shape=rectangle];
       "CalculationManager" -> "BatchManager" -> "BatchWorker"[arrowhead="crow"];
+
+      "CalculationManager" -> "DataWriter"[arrowhead="inv"];
+      "DataWriter"[shape=rectangle];
+      "FileData"[shape=rectangle];
+      "SheetData"[shape=rectangle];
+      "DataWriter" -> "FileData" -> "SheetData"[arrowhead="crow"];
    }
+
 """
 import logging
 import threading
 import typing
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict
 from enum import Enum
 from os import path
 from queue import Queue
+from traceback import StackSummary
+import uuid
 
 import numpy as np
 import pandas as pd
@@ -64,7 +79,9 @@ def do_calculation(file_path: str, calculation: BaseCalculation):
 
 class CalculationProcess:
     """
-    Main class to calculate PartSeg calculation plan
+    Main class to calculate PartSeg calculation plan.
+    To support other operations overwrite :py:meth:`recursive_calculation`
+    call super function to support already defined operations.
     """
 
     def __init__(self):
@@ -215,7 +232,8 @@ class CalculationProcess:
         """
         Generate new mask by sum or intersection of existing and iterate over ``children`` nodes
 
-        :param typing.Union[MaskSum, MaskIntersection] operation: mask operation to perform
+        :param operation: mask operation to perform
+        :type operation: typing.Union[MaskSum, MaskIntersection]
         :param typing.List[CalculationTree] children: list of nodes to iterate over after perform segmentation
         """
         old_mask = self.mask
@@ -291,7 +309,7 @@ class CalculationProcess:
 
     def recursive_calculation(self, node: CalculationTree):
         """
-        Identify node type and then call proper `step_*` function
+        Identify node type and then call proper ``step_*`` function
 
         :param CalculationTree node: Node to be proceed
         """
@@ -321,6 +339,15 @@ class ResponseData(typing.NamedTuple):
     values: typing.List[MeasurementResult]
 
 
+class BatchResultDescription(typing.NamedTuple):
+    """
+    Tuple to handle information about part of calculation result.
+    """
+    errors: typing.List[typing.Tuple[Exception, StackSummary]]  #: list of errors occurred during calculation
+    global_counter: int  #: total number of calculated steps
+    jobs_status: typing.Iterable[typing.Tuple[int, int]]  #: for each job information about progress
+
+
 class CalculationManager:
     """
     This class manage batch processing in PartSeg.
@@ -336,18 +363,23 @@ class CalculationManager:
         self.calculation_done = 0
         self.counter_dict = OrderedDict()
         self.errors_list = []
-        self.sheet_name = defaultdict(set)
         self.writer = DataWriter()
 
-    def is_valid_sheet_name(self, excel_path, sheet_name):
-        return sheet_name not in self.sheet_name[excel_path]
+    def is_valid_sheet_name(self, excel_path: str, sheet_name: str) -> bool:
+        """
+        Check if sheet name can be used
+
+        :param str excel_path: path which allow identify excel file
+        :param str sheet_name: name of excel sheet
+        :return:
+        :rtype: bool
+        """
+        return self.writer.is_empty_sheet(excel_path, sheet_name)
 
     def add_calculation(self, calculation: Calculation):
         """
-        :param calculation: alculation
-        :return:
+        :param calculation: Calculation
         """
-        self.sheet_name[calculation.measurement_file_path].add(calculation.sheet_name)
         self.calculation_dict[calculation.uuid] = calculation, calculation.calculation_plan.get_measurements()
         self.counter_dict[calculation.uuid] = 0
         size = len(calculation.file_list)
@@ -357,20 +389,34 @@ class CalculationManager:
         self.writer.add_data_part(calculation)
 
     @property
-    def has_work(self):
+    def has_work(self) -> bool:
+        """
+        Is still some calculation or data writing in progress
+        """
         return self.batch_manager.has_work or not self.writer.writing_finished()
 
-    def set_number_of_workers(self, val):
+    def set_number_of_workers(self, val: int):
+        """
+        Set number of workers to perform calculation.
+
+        :param int val: number of workers.
+        """
         logging.debug("Number off process {}".format(val))
         self.batch_manager.set_number_of_process(val)
 
-    def get_results(self):
+    def get_results(self) -> BatchResultDescription:
+        """
+        Consume results from :py:class:`BatchWorker` and transfer it to :py:class:`DataWriter`
+
+        :return: information about calculation status
+        :rtype: BatchResultDescription
+        """
         responses = self.batch_manager.get_result()
         new_errors = []
-        for uuid, result_list in responses:
+        for uuid_id, result_list in responses:
             self.calculation_done += 1
-            self.counter_dict[uuid] += 1
-            calculation = self.calculation_dict[uuid][0]
+            self.counter_dict[uuid_id] += 1
+            calculation = self.calculation_dict[uuid_id][0]
             for el in result_list:
                 if isinstance(el, tuple) and isinstance(el[0], Exception):
                     self.errors_list.append(el)
@@ -382,11 +428,13 @@ class CalculationManager:
                     errors = self.writer.add_result(data, calculation)
                     for err in errors:
                         new_errors.append(err)
-                if self.counter_dict[uuid] == len(calculation.file_list):
+                if self.counter_dict[uuid_id] == len(calculation.file_list):
                     errors = self.writer.calculation_finished(calculation)
                     for err in errors:
                         new_errors.append(err)
-        return new_errors, self.calculation_done, zip(self.counter_dict.values(), self.calculation_sizes)
+        return BatchResultDescription(
+            new_errors, self.calculation_done, zip(self.counter_dict.values(), self.calculation_sizes)
+        )
 
 
 class FileType(Enum):
@@ -396,11 +444,14 @@ class FileType(Enum):
 
 
 class SheetData(object):
-    def __init__(self, name, columns):
+    """
+    Store single sheet information
+    """
+    def __init__(self, name: str, columns: typing.List[typing.Tuple[str, str]]):
         self.name = name
         self.columns = pd.MultiIndex.from_tuples([("name", "units")] + columns)
         self.data_frame = pd.DataFrame([], columns=self.columns)
-        self.row_list = []
+        self.row_list: typing.List[typing.Any] = []
 
     def add_data(self, data):
         self.row_list.append(data)
@@ -408,7 +459,13 @@ class SheetData(object):
     def add_data_list(self, data):
         self.row_list.extend(data)
 
-    def get_data_to_write(self):
+    def get_data_to_write(self) -> typing.Tuple[str, pd.DataFrame]:
+        """
+        Get data for write
+
+        :return: sheet name and data to write
+        :rtype: typing.Tuple[str, pd.DataFrame]
+        """
         df = pd.DataFrame(self.row_list, columns=self.columns)
         df2 = self.data_frame.append(df)
         self.data_frame = df2.reset_index(drop=True)
@@ -417,11 +474,22 @@ class SheetData(object):
 
 
 class FileData:
-    component_str = "_comp_"
+    """
+    Handle information about single file.
 
-    def __init__(self, calculation: BaseCalculation):
+    This class run separate thread for writing purpose.
+    This need additional synchronisation. but not freeze
+
+    :param BaseCalculation calculation: calculation information
+    :param int write_threshold: every how many lines of data are written to disk
+    :cvar component_str: separator for per component sheet information
+    """
+    component_str = "_comp_"  #: separator for per component sheet information
+
+    def __init__(self, calculation: BaseCalculation, write_threshold: int = 40):
         """
-        :param calculation:
+        :param BaseCalculation calculation: calculation information
+        :param int write_threshold: every how many lines of data are written to disk
         """
         self.file_path = calculation.measurement_file_path
         ext = path.splitext(calculation.measurement_file_path)[1]
@@ -435,7 +503,7 @@ class FileData:
         self.sheet_dict = dict()
         self.sheet_set = set()
         self.new_count = 0
-        self.write_threshold = 40
+        self.write_threshold = write_threshold
         self.wrote_queue = Queue()
         self.error_queue = Queue()
         self.write_thread = threading.Thread(target=self.wrote_data_to_file)
@@ -447,20 +515,33 @@ class FileData:
         """check if any data wait on write to disc"""
         return not self.writing and self.wrote_queue.empty()
 
-    def good_sheet_name(self, name):
+    def good_sheet_name(self, name: str) -> typing.Tuple[bool, str]:
+        """
+        Check if sheet name can be used in current file.
+        Return False if:
+
+        * file is text file
+        * contains :py:attr:`component_str` in name
+        * name is already in use
+
+        :param str name: sheet name
+        :return: if can be used and error message
+        """
         if self.file_type == FileType.text_file:
             return False, "Text file allow store only one sheet"
-        if FileData.component_str in name:
+        if self.component_str in name:
             return False, "Sequence '{}' is reserved for auto generated sheets".format(FileData.component_str)
         if name in self.sheet_set:
             return False, "Sheet name {} already in use".format(name)
-        return True, True
+        return True, ""
 
     def add_data_part(self, calculation: BaseCalculation):
         """
-        :type calculation: Calculation
-        :param calculation:
-        :return:
+        Add new calculation which result will be stored in handled file.
+
+        :param BaseCalculation calculation: information about calculation
+        :raises ValueError: when :py:attr:`measurement_file_path` is different to handled file
+            or :py:attr:`sheet_name` name already is in use.
         """
         if calculation.measurement_file_path != self.file_path:
             raise ValueError(
@@ -511,9 +592,15 @@ class FileData:
             component_information,
         )
 
-    def wrote_data(self, uuid, data: ResponseData):
+    def wrote_data(self, uuid_id: uuid.UUID, data: ResponseData):
+        """
+        Add information to be stored in output file
+
+        :param uuid.UUID uuid_id:
+        :param ResponseData data:
+        """
         self.new_count += 1
-        main_sheet, component_sheets, _component_information = self.sheet_dict[uuid]
+        main_sheet, component_sheets, _component_information = self.sheet_dict[uuid_id]
         name = data.path_to_file
         data_list = [name]
         for el, comp_sheet in zip(data.values, component_sheets):
@@ -527,6 +614,9 @@ class FileData:
             self.new_count = 0
 
     def dump_data(self):
+        """
+        Fire writing data to disc
+        """
         data = []
         for main_sheet, component_sheets, _ in self.sheet_dict.values():
             data.append(main_sheet.get_data_to_write())
@@ -536,6 +626,10 @@ class FileData:
         self.wrote_queue.put(data)
 
     def wrote_data_to_file(self):
+        """
+        Main function to write data to hard drive.
+        It is executed in separate thread.
+        """
         while True:
             data = self.wrote_queue.get()
             self.writing = True
@@ -565,7 +659,10 @@ class FileData:
             finally:
                 self.writing = False
 
-    def get_errors(self):
+    def get_errors(self) -> typing.List[Exception]:
+        """
+        Get list of errors occurred in last write
+        """
         res = []
         while not self.error_queue.empty():
             res.append(self.error_queue.get())
@@ -574,15 +671,26 @@ class FileData:
     def finish(self):
         self.wrote_queue.put("finish")
 
-    def is_empty_sheet(self, sheet_name):
-        return sheet_name not in self.sheet_set
+    def is_empty_sheet(self, sheet_name) -> bool:
+        return self.good_sheet_name(sheet_name)[0]
 
 
 class DataWriter:
+    """
+    Handle information
+    """
     def __init__(self):
         self.file_dict: typing.Dict[str, FileData] = dict()
 
-    def is_empty_sheet(self, file_path, sheet_name):
+    def is_empty_sheet(self, file_path: str, sheet_name: str) -> bool:
+        """
+        Check if given pair of `file_path` and `sheet_name` can be used.
+
+        :param str file_path: path to file to store measurement result
+        :param str sheet_name: Name of excel sheet in which data will be stored
+        :return: If calling :py:meth:`FileData.add_data_part` finish without error.
+        :rtype: bool
+        """
         if FileData.component_str in sheet_name:
             return False
         if file_path not in self.file_dict:
@@ -590,12 +698,20 @@ class DataWriter:
         return self.file_dict[file_path].is_empty_sheet(sheet_name)
 
     def add_data_part(self, calculation: BaseCalculation):
+        """
+        Add information about calculation
+        """
         if calculation.measurement_file_path in self.file_dict:
             self.file_dict[calculation.measurement_file_path].add_data_part(calculation)
         else:
             self.file_dict[calculation.measurement_file_path] = FileData(calculation)
 
-    def add_result(self, data: ResponseData, calculation: BaseCalculation):
+    def add_result(self, data: ResponseData, calculation: BaseCalculation) -> typing.List[Exception]:
+        """
+        Add calculation result to file writer
+
+        :raises ValueError: when calculation.measurement_file_path is not added with :py:meth:`.add_data_part`
+        """
         if calculation.measurement_file_path not in self.file_dict:
             raise ValueError("Unknown measurement file")
         file_writer = self.file_dict[calculation.measurement_file_path]
@@ -607,10 +723,17 @@ class DataWriter:
         return all([x.finished() for x in self.file_dict.values()])
 
     def finish(self):
+        """close all files"""
         for file_data in self.file_dict.values():
             file_data.finish()
 
-    def calculation_finished(self, calculation):
+    def calculation_finished(self, calculation) -> typing.List[Exception]:
+        """
+        Force write data for given calculation.
+
+        :raises ValueError: when measurement is not added with :py:meth:`.add_data_part`
+        :return: list of errors during write.
+        """
         if calculation.measurement_file_path not in self.file_dict:
             raise ValueError("Unknown measurement file")
         self.file_dict[calculation.measurement_file_path].dump_data()

@@ -15,3 +15,11 @@ This module contains custom Qt based widgets. You may also use it in your projec
     numpy_qimage
     universal_gui_part
     error_report
+
+
+PartSeg.common\_gui.main\_window module
+-------------------------------------------
+
+.. automodule:: PartSeg.common_gui.main_window
+   :members:
+   :show-inheritance:
