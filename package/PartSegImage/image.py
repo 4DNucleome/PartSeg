@@ -117,7 +117,10 @@ class Image:
             self.ranges = ranges
         if mask is not None:
             data_shape = list(data.shape)
-            data_shape.pop(axes_order.index("C"))
+            try:
+                data_shape.pop(axes_order.index("C"))
+            except ValueError:
+                pass
             mask = self._fit_array_to_image(data_shape, mask)
             mask = np.take(self.reorder_axes(mask, axes_order.replace("C", "")), 0, self.channel_pos)
             self._mask_array = self.fit_mask_to_image(mask)

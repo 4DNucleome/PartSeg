@@ -65,4 +65,6 @@ class ImageWriter:
                 ijmetadata=imagej_metadata,
                 resolution=resolution,
             )  # , compress=6,
+        else:
+            raise ValueError(f"Data type {data.dtype} not supported by tiff")
             # imagej=True, software="PartSeg")
