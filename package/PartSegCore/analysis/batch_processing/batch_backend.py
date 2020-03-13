@@ -64,17 +64,18 @@ from .parallel_backend import BatchManager
 from ...io_utils import WrongFileTypeException, HistoryElement
 
 
-def do_calculation(file_path: str, calculation: BaseCalculation):
+def do_calculation(file_info: typing.Tuple[int, str], calculation: BaseCalculation):
     """
     Main function which will be used for run calculation.
     It create :py:class:`.CalculationProcess` and call it method
     :py:meth:`.CalculationProcess.do_calculation`
 
-    :param file_path: path to file which should be processed
+    :param file_info: index and path to file which should be processed
     :param calculation: calculation description
     """
     calc = CalculationProcess()
-    return calc.do_calculation(FileCalculation(file_path, calculation))
+    index, file_path = file_info
+    return index, calc.do_calculation(FileCalculation(file_path, calculation))
 
 
 class CalculationProcess:
@@ -343,6 +344,7 @@ class BatchResultDescription(typing.NamedTuple):
     """
     Tuple to handle information about part of calculation result.
     """
+
     errors: typing.List[typing.Tuple[Exception, StackSummary]]  #: list of errors occurred during calculation
     global_counter: int  #: total number of calculated steps
     jobs_status: typing.Iterable[typing.Tuple[int, int]]  #: for each job information about progress
@@ -385,7 +387,9 @@ class CalculationManager:
         size = len(calculation.file_list)
         self.calculation_sizes.append(size)
         self.calculation_size += size
-        self.batch_manager.add_work(calculation.file_list, calculation.get_base_calculation(), do_calculation)
+        self.batch_manager.add_work(
+            list(enumerate(calculation.file_list)), calculation.get_base_calculation(), do_calculation
+        )
         self.writer.add_data_part(calculation)
 
     @property
@@ -413,7 +417,7 @@ class CalculationManager:
         """
         responses = self.batch_manager.get_result()
         new_errors = []
-        for uuid_id, result_list in responses:
+        for uuid_id, (ind, result_list) in responses:
             self.calculation_done += 1
             self.counter_dict[uuid_id] += 1
             calculation = self.calculation_dict[uuid_id][0]
@@ -425,7 +429,7 @@ class CalculationManager:
                     if not isinstance(el, tuple):
                         raise ValueError(f"el should be tuple. It is {type(el)}")
                     data = ResponseData._make(el)
-                    errors = self.writer.add_result(data, calculation)
+                    errors = self.writer.add_result(data, calculation, ind=ind)
                     for err in errors:
                         new_errors.append(err)
                 if self.counter_dict[uuid_id] == len(calculation.file_list):
@@ -447,17 +451,22 @@ class SheetData(object):
     """
     Store single sheet information
     """
+
     def __init__(self, name: str, columns: typing.List[typing.Tuple[str, str]]):
         self.name = name
         self.columns = pd.MultiIndex.from_tuples([("name", "units")] + columns)
         self.data_frame = pd.DataFrame([], columns=self.columns)
         self.row_list: typing.List[typing.Any] = []
 
-    def add_data(self, data):
-        self.row_list.append(data)
+    def add_data(self, data, ind):
+        if ind is None:
+            ind = len(self.row_list)
+        self.row_list.append((ind, data))
 
-    def add_data_list(self, data):
-        self.row_list.extend(data)
+    def add_data_list(self, data, ind):
+        if ind is None:
+            ind = len(self.row_list)
+        self.row_list.extend([(ind, x) for x in data])
 
     def get_data_to_write(self) -> typing.Tuple[str, pd.DataFrame]:
         """
@@ -466,7 +475,8 @@ class SheetData(object):
         :return: sheet name and data to write
         :rtype: typing.Tuple[str, pd.DataFrame]
         """
-        df = pd.DataFrame(self.row_list, columns=self.columns)
+        sorted_row = [x[1] for x in sorted(self.row_list)]
+        df = pd.DataFrame(sorted_row, columns=self.columns)
         df2 = self.data_frame.append(df)
         self.data_frame = df2.reset_index(drop=True)
         self.row_list = []
@@ -484,6 +494,7 @@ class FileData:
     :param int write_threshold: every how many lines of data are written to disk
     :cvar component_str: separator for per component sheet information
     """
+
     component_str = "_comp_"  #: separator for per component sheet information
 
     def __init__(self, calculation: BaseCalculation, write_threshold: int = 40):
@@ -592,12 +603,13 @@ class FileData:
             component_information,
         )
 
-    def wrote_data(self, uuid_id: uuid.UUID, data: ResponseData):
+    def wrote_data(self, uuid_id: uuid.UUID, data: ResponseData, ind: typing.Optional[int] = None):
         """
         Add information to be stored in output file
 
-        :param uuid.UUID uuid_id:
-        :param ResponseData data:
+        :param uuid.UUID uuid_id: calculation identifier
+        :param ResponseData data: calculation result
+        :param typing.Optional[int] ind: element index
         """
         self.new_count += 1
         main_sheet, component_sheets, _component_information = self.sheet_dict[uuid_id]
@@ -607,8 +619,8 @@ class FileData:
             data_list.extend(el.get_global_parameters()[1:])
             comp_list = el.get_separated()
             if comp_sheet is not None:
-                comp_sheet.add_data_list(comp_list)
-        main_sheet.add_data(data_list)
+                comp_sheet.add_data_list(comp_list, ind)
+        main_sheet.add_data(data_list, ind)
         if self.new_count >= self.write_threshold:
             self.dump_data()
             self.new_count = 0
@@ -679,6 +691,7 @@ class DataWriter:
     """
     Handle information
     """
+
     def __init__(self):
         self.file_dict: typing.Dict[str, FileData] = dict()
 
@@ -706,7 +719,9 @@ class DataWriter:
         else:
             self.file_dict[calculation.measurement_file_path] = FileData(calculation)
 
-    def add_result(self, data: ResponseData, calculation: BaseCalculation) -> typing.List[Exception]:
+    def add_result(
+        self, data: ResponseData, calculation: BaseCalculation, ind: typing.Optional[int] = None
+    ) -> typing.List[Exception]:
         """
         Add calculation result to file writer
 
@@ -715,7 +730,7 @@ class DataWriter:
         if calculation.measurement_file_path not in self.file_dict:
             raise ValueError("Unknown measurement file")
         file_writer = self.file_dict[calculation.measurement_file_path]
-        file_writer.wrote_data(calculation.uuid, data)
+        file_writer.wrote_data(calculation.uuid, data, ind)
         return file_writer.get_errors()
 
     def writing_finished(self) -> bool:

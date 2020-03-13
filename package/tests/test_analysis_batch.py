@@ -4,12 +4,14 @@ import time
 import pandas as pd
 import sys
 
+import numpy as np
 import pytest
 
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask_create import MaskProperty
-from PartSegImage import TiffImageReader
+from PartSegImage import TiffImageReader, Image, ImageWriter
 from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.analysis.batch_processing import batch_backend
 from PartSegCore.analysis.batch_processing.batch_backend import CalculationProcess, CalculationManager
 from PartSegCore.analysis.calculation_plan import (
     CalculationPlan,
@@ -19,16 +21,36 @@ from PartSegCore.analysis.calculation_plan import (
     Calculation,
     RootType,
     MaskCreate,
+    FileCalculation,
 )
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.analysis.measurement_base import Leaf, Node, MeasurementEntry, PerComponent, AreaType
 from PartSegCore.segmentation.noise_filtering import DimensionType
-from PartSegCore.universal_const import Units
+from PartSegCore.universal_const import Units, UNIT_SCALE
 
 
 class MocksCalculation:
     def __init__(self, file_path):
         self.file_path = file_path
+
+
+@pytest.fixture
+def create_test_data(tmpdir):
+    # for future use
+    spacing = tuple([x / UNIT_SCALE[Units.nm.value] for x in (210, 70, 70)])
+    res = []
+    for i in range(8):
+        mask_data = np.zeros((10, 20, 20 + i), dtype=np.uint8)
+        mask_data[1:-1, 2:-2, 2:-2] = 1
+        data = np.zeros(mask_data.shape + (2,), dtype=np.uint16)
+        data[1:-1, 2:-2, 2:-2] = 15000
+        data[2:-2, 3:-3, 3:7] = 33000
+        data[2:-2, 3:-3, -7:-3] = 33000
+        image = Image(data, spacing, "", mask=mask_data, axes_order="ZYXC")
+        ImageWriter.save(image, os.path.join(str(tmpdir), f"file_{i}.tif"))
+        res.append(os.path.join(str(tmpdir), f"file_{i}.tif"))
+        ImageWriter.save_mask(image, os.path.join(str(tmpdir), f"file_{i}_mask.tif"))
+    return res
 
 
 # TODO add check of per component measurements
@@ -259,10 +281,12 @@ class TestCalculationProcess:
         assert len(process.measurement[0]) == 3
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
-    def test_full_pipeline(self, tmpdir, data_test_dir):
+    def test_full_pipeline(self, tmpdir, data_test_dir, monkeypatch):
+        monkeypatch.setattr(batch_backend, "CalculationProcess", MockCalculationProcess)
         plan = self.create_calculation_plan()
         file_pattern = os.path.join(data_test_dir, "stack1_components", "stack1_component*[0-9].tif")
-        file_paths = glob(file_pattern)
+        file_paths = sorted(glob(file_pattern))
+        assert os.path.basename(file_paths[0]) == "stack1_component1.tif"
         calc = Calculation(
             file_paths,
             base_prefix=data_test_dir,
@@ -274,7 +298,7 @@ class TestCalculationProcess:
         )
 
         manager = CalculationManager()
-        manager.set_number_of_workers(2)
+        manager.set_number_of_workers(3)
         manager.add_calculation(calc)
 
         while manager.has_work:
@@ -287,6 +311,8 @@ class TestCalculationProcess:
         assert os.path.exists(os.path.join(tmpdir, "test.xlsx"))
         df = pd.read_excel(os.path.join(tmpdir, "test.xlsx"), index_col=0, header=[0, 1])
         assert df.shape == (8, 4)
+        for i in range(8):
+            assert os.path.basename(df.name.units[i]) == f"stack1_component{i+1}.tif"
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
     def test_full_pipeline_mask_project(self, tmpdir, data_test_dir):
@@ -354,3 +380,10 @@ class TestCalculationProcess:
         assert df3.shape == (df["Segmentation Components Number"]["count"].sum(), 6)
         df4 = pd.read_excel(os.path.join(tmpdir, "test3.xlsx"), sheet_name=3, index_col=0, header=[0, 1])
         assert df4.shape == (df["Segmentation Components Number"]["count"].sum(), 8)
+
+
+class MockCalculationProcess(CalculationProcess):
+    def do_calculation(self, calculation: FileCalculation):
+        if os.path.basename(calculation.file_path) == "stack1_component1.tif":
+            time.sleep(0.5)
+        return super().do_calculation(calculation)

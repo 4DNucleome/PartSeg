@@ -1,5 +1,8 @@
 # Changelog 
 
+## 0.10.3
+-   deterministic order of elements in batch processing.
+
 ## 0.10.2 
 -   bugfixes 
 
