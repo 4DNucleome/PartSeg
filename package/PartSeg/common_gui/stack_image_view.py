@@ -9,9 +9,9 @@ from PartSegData import icons_dir
 
 import numpy as np
 from qtpy import QtGui, QtCore
-from qtpy.QtCore import QRect, QTimerEvent, QSize, QObject, Signal, QPoint, Qt, QEvent, Slot
+from qtpy.QtCore import QRect, QSize, QObject, Signal, QPoint, Qt, QEvent, Slot
 from qtpy.QtGui import QWheelEvent, QPainter, QPen, QColor, QPalette, QPixmap, QImage, QIcon, QResizeEvent, QMouseEvent
-from qtpy.QtWidgets import QScrollBar, QLabel, QGridLayout
+from qtpy.QtWidgets import QLabel, QGridLayout
 from qtpy.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -20,8 +20,7 @@ from qtpy.QtWidgets import (
     QSizePolicy,
     QToolButton,
     QAction,
-    QApplication,
-    QSlider,
+    QScrollBar,
     QCheckBox,
     QComboBox,
 )
@@ -325,10 +324,10 @@ class ImageView(QWidget):
         self.btn_layout.addWidget(self.channel_control, 1)
         self.btn_layout2 = QHBoxLayout()
 
-        self.stack_slider = QSlider(Qt.Horizontal)
+        self.stack_slider = QScrollBar(Qt.Horizontal)
         self.stack_slider.valueChanged.connect(self.paint_layer)
         self.stack_slider.valueChanged.connect(self.change_layer)
-        self.time_slider = QSlider(Qt.Vertical)
+        self.time_slider = QScrollBar(Qt.Vertical)
         self.time_slider.valueChanged.connect(self.paint_layer)
         self.time_slider.valueChanged.connect(self.change_time)
         self.stack_layer_info = QLabel()
@@ -350,14 +349,14 @@ class ImageView(QWidget):
         # noinspection PyArgumentList
         time_slider_layout.addWidget(self.time_layer_info)
         # noinspection PyArgumentList
-        time_slider_layout.addWidget(self.time_slider)
+        time_slider_layout.addWidget(self.time_slider, 1)
         main_layout.addLayout(time_slider_layout, 2, 0)
         # noinspection PyArgumentList
         main_layout.addWidget(self.image_area, 2, 1)
         stack_slider_layout = QHBoxLayout()
         stack_slider_layout.setContentsMargins(0, 0, 0, 0)
         # noinspection PyArgumentList
-        stack_slider_layout.addWidget(self.stack_slider)
+        stack_slider_layout.addWidget(self.stack_slider, 1)
         # noinspection PyArgumentList
         stack_slider_layout.addWidget(self.stack_layer_info)
         main_layout.addLayout(stack_slider_layout, 3, 1)
@@ -603,13 +602,13 @@ class MyScrollArea(QScrollArea):
         self.timer_id = 0
 
     def horizontal_range_changed(self, min_val, max_val):
-        if self.x_mid is not None and self.sender().isVisible():
+        if self.x_mid is not None and self.sender().maximum() > 0:
             diff = self.widget().size().width() - (max_val - min_val)
             self.sender().setValue(self.x_mid - diff / 2)
             self.x_mid = None
 
     def vertical_range_changed(self, min_val, max_val):
-        if self.y_mid is not None and self.sender().isVisible():
+        if self.y_mid is not None and self.sender().maximum() > 0:
             diff = self.widget().size().height() - (max_val - min_val)
             self.sender().setValue(self.y_mid - diff / 2)
             self.y_mid = None
@@ -750,17 +749,6 @@ class MyScrollArea(QScrollArea):
         else:
             self.resize_pixmap()
 
-    def timerEvent(self, a0: QTimerEvent):
-        # Some try to reduce number of repaint event
-        self.killTimer(self.timer_id)
-        self.timer_id = 0
-        if self.size().width() - 2 > self.pixmap.width() and self.size().height() - 2 > self.pixmap.height():
-            # print("B")
-            self.reset_image()
-        else:
-            # print("C", self.pixmap.size())
-            self.resize_pixmap()
-
     def get_width(self, width=None):
         if width is None:
             width = self.width()
@@ -779,8 +767,8 @@ class MyScrollArea(QScrollArea):
 
     def wheelEvent(self, event: QWheelEvent):
         # noinspection PyTypeChecker
-        if not (QApplication.keyboardModifiers() & Qt.ControlModifier) == Qt.ControlModifier:
-            return
+        # if not (QApplication.keyboardModifiers() & Qt.ControlModifier) == Qt.ControlModifier:
+        #     return
         delta = event.angleDelta().y()
         if abs(delta) > max_step:
             delta = max_step * (delta / abs(delta))
@@ -794,8 +782,10 @@ class MyScrollArea(QScrollArea):
         else:
             self.zoom_scale *= scale_mod
 
-        x_pos = event.x() - self.widget().pos().x()
-        y_pos = event.y() - self.widget().pos().y()
+        x_modify = self.pixmap.pos().x() if self.pixmap.pos().x() > 0 else 0
+        y_modify = self.pixmap.pos().y() if self.pixmap.pos().y() > 0 else 0
+        x_pos = event.x() - self.widget().pos().x() + x_modify
+        y_pos = event.y() - self.widget().pos().y() + y_modify
         x_ratio = x_pos / self.widget().size().width()
         y_ratio = y_pos / self.widget().size().height()
         ratio = self.get_ratio_factor()
@@ -805,14 +795,14 @@ class MyScrollArea(QScrollArea):
         y_pos_new = final_size.height() * y_ratio
         self.x_mid = x_pos_new - event.x() + (self.get_width()) / 2
         self.y_mid = y_pos_new - event.y() + (self.get_height()) / 2
+        print(self.pixmap.pos(), self.x_mid, self.y_mid)
 
-        if self.timer_id:
-            self.killTimer(self.timer_id)
-            self.timer_id = 0
-
-        self.timer_id = self.startTimer(50)
-        self.zoom_changed.emit()
-        event.accept()
+        if self.size().width() - 2 > self.pixmap.width() and self.size().height() - 2 > self.pixmap.height():
+            # print("B")
+            self.reset_image()
+        else:
+            # print("C", self.pixmap.size())
+            self.resize_pixmap()
 
 
 class ColorBar(QLabel):
