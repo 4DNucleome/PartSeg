@@ -781,6 +781,7 @@ class MyScrollArea(QScrollArea):
         y_pos_new = final_size.height() * y_ratio
         self.x_mid = x_pos_new - event.x() + (self.get_width()) / 2
         self.y_mid = y_pos_new - event.y() + (self.get_height()) / 2
+        print(self.pixmap.pos(), self.x_mid, self.y_mid)
 
         if self.size().width() - 2 > self.pixmap.width() and self.size().height() - 2 > self.pixmap.height():
             # print("B")
