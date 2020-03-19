@@ -9,7 +9,7 @@ numpy==1.18.1
 oiffile==2020.1.18
 openpyxl==3.0.3  # rq.filter: !=3.0.2
 packaging==20.1
-pandas==1.0.1
+pandas==1.0.3
 PartSegData==0.9.4
 PyInstaller==3.6
 PyQt5==5.14.1
