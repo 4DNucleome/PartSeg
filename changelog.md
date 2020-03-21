@@ -1,5 +1,8 @@
 # Changelog 
 
+## 0.10.4
+-   fix slow zoom
+
 ## 0.10.3
 -   deterministic order of elements in batch processing.
 
