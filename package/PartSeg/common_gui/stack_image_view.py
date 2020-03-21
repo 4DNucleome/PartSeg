@@ -691,7 +691,7 @@ class MyScrollArea(QScrollArea):
         self.prev_pos = None
 
     def mouseMoveEvent(self, event):
-        if not self.local_settings.move:
+        if not self.local_settings.move or self.prev_pos is None:
             return
         x, y = event.x(), event.y()
         x_dif, y_dif = self.prev_pos[0] - x, self.prev_pos[1] - y
