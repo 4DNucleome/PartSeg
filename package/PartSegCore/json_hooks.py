@@ -168,7 +168,7 @@ def profile_hook(dkt):
         del dkt["__SegmentationProfile__"]
         res = SegmentationProfile(**dkt)
         return res
-    if "__Serializable__" in dkt and "__subtype__" == "HistoryElement" and "algorithm_name" in dkt:
+    if "__Serializable__" in dkt and dkt["__subtype__"] == "HistoryElement" and "algorithm_name" in dkt:
         name = dkt["algorithm_name"]
         par = dkt["algorithm_values"]
         del dkt["algorithm_name"]
