@@ -96,7 +96,7 @@ stages:
             inputs:
               artifact: TestData
               path: $(Build.SourcesDirectory)/test_data
-          - bash: python -m pip install git+https://github.com/Czaki/cibuildwheel.git@before_test cython numpy
+          - bash: python -m pip install cibuildwheel cython numpy
             displayName: InstallDeps
           - bash: python -m cibuildwheel
             displayName: BuildWheel
@@ -144,7 +144,7 @@ stages:
               artifact: TestData
               path: $(Build.SourcesDirectory)/test_data
           - bash: |
-              python -m pip install git+https://github.com/Czaki/cibuildwheel
+              python -m pip install cibuildwheel
               python -m cibuildwheel --output-dir wheelhouse
             displayName: BuildWheel
           - task: PublishBuildArtifacts@1
@@ -166,7 +166,7 @@ stages:
               artifact: TestData
               path: $(Build.SourcesDirectory)/test_data
           - bash: |
-              python -m pip install git+https://github.com/Czaki/cibuildwheel
+              python -m pip install cibuildwheel
               python -m cibuildwheel --output-dir wheelhouse
             displayName: BuildWheel
           - task: PublishBuildArtifacts@1
