@@ -1,21 +1,21 @@
 appdirs==1.4.3
-Cython==0.29.15
+Cython==0.29.16
 czifile==2019.7.2
 defusedxml==0.6.0
 h5py==2.10.0
 imagecodecs-lite==2020.1.31
 imagecodecs==2020.2.18
-numpy==1.18.1
+numpy==1.18.2
 oiffile==2020.1.18
 openpyxl==3.0.3  # rq.filter: !=3.0.2
-packaging==20.1
-pandas==1.0.1
+packaging==20.3
+pandas==1.0.3
 PartSegData==0.9.4
 PyInstaller==3.6
 PyQt5==5.14.1
 QtPy==1.9.0
 scipy==1.4.1
-sentry-sdk==0.14.2
+sentry-sdk==0.14.3
 SimpleITK==1.2.4
 six==1.14.0
 sympy==1.5.1
