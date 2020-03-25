@@ -45,8 +45,8 @@ On top of the window there are 6 buttons:
 4.  `Algorithm parameters`_. This panel is used to set parameters of
     segmentation.
 
-.. image::  images/mask_control_view.png
-   :alt: Part above algorithm parameters.
+    .. image::  images/mask_control_view.png
+       :alt: Part above algorithm parameters.
 
 5.  Selects how results of segmentation are presented:
 
@@ -73,8 +73,8 @@ On top of the window there are 6 buttons:
     This file can be imported using **Load Segmentation**
     with **Files of type** `Segmentation parameters`
 
-.. image::  images/mask_select_component.png
-   :alt: Selection which components are selected properly.
+    .. image::  images/mask_select_component.png
+       :alt: Selection which components are selected properly.
 
 13. Selects all checkboxes.
 14. Removes selection from all checkboxes.
@@ -136,10 +136,10 @@ On top of the window they are 5 buttons:
     or be replaced with `Measurements`_ panel.
 4.  `Algorithm parameters`_ - This panel is used to set parameters of segmentation
 
-Above colorbar there are two controls:
+    Above colorbar there are two controls:
 
-.. image::  images/main_window_cmp.png
-   :alt: Main Roi Analysis GUI
+    .. image::  images/main_window_cmp.png
+       :alt: Main Roi Analysis GUI
 
 5. Controls if the left panel contains `Image view`_ or `Measurements`_.
 6. Enables/disables comparison mode. Visible only when image is selected with control 5.
@@ -148,8 +148,8 @@ Above colorbar there are two controls:
      Allows to compare segmentations made with different parameters.
    * **Remove** - Removes segmentation from left panel.
 
-.. image::  images/main_window_exec.png
-   :alt: Main Roi Analysis GUI
+    .. image::  images/main_window_exec.png
+       :alt: Main Roi Analysis GUI
 
 7.  Saves current pipeline, which is a sequence of segmentation and masking operations.
     Name of pipeline is set in the dialog window.
@@ -185,8 +185,8 @@ The upper part of this window is designed to manage existing sets of measurement
 1. List of already defined measurement sets.
 2. Preview of selected measurement set.
 
-Below the list there are four buttons, which are used to 
-delete, export, import and edit saved sets of measurement. 
+    Below the list there are four buttons, which are used to 
+    delete, export, import and edit saved sets of measurement. 
 
 
 3. List of measurements currently available in PartSeg.
@@ -363,8 +363,8 @@ Execute batch
 
 3. List of already selected files.
 
-.. image::  images/batch_execute.png
-   :alt: View on Properties Tab in Settings and Measurement.
+    .. image::  images/batch_execute.png
+       :alt: View on Properties Tab in Settings and Measurement.
 
 4.  Select batch plan.
 5.  Path to file with saved measurement.
@@ -491,8 +491,8 @@ Create labels
 After select color use **Add color** button.
 Color order can be changed by drag and drop.
 
-Create labels
-^^^^^^^^^^^^^
+Mask marking color select
+^^^^^^^^^^^^^^^^^^^^^^^^^
 .. image:: images/color_mask_marking.png
    :alt: Select color and opacity of mask marking.
 
