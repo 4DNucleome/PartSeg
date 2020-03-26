@@ -1,5 +1,6 @@
 # PartSeg
-[![Travis Build Status](https://travis-ci.com/4DNucleome/PartSeg.svg?branch=master)](https://travis-ci.com/4DNucleome/PartSeg) 
+[![Travis Build Status](https://travis-ci.com/4DNucleome/PartSeg.svg?branch=master)](https://travis-ci.com/4DNucleome/PartSeg)
+![Tests](https://github.com/4DNucleome/PartSeg/workflows/Tests/badge.svg?branch=master) 
 [![PyPI version](https://badge.fury.io/py/PartSeg.svg)](https://badge.fury.io/py/PartSeg)
 [![Documentation Status](https://readthedocs.org/projects/partseg/badge/?version=latest)](https://partseg.readthedocs.io/en/latest/?badge=latest)
 [![Azure Pipelines Build Status](https://dev.azure.com/PartSeg/PartSeg/_apis/build/status/4DNucleome.PartSeg?branchName=master)](https://dev.azure.com/PartSeg/PartSeg/_build/latest?definitionId=1&branchName=master)

@@ -32,13 +32,20 @@ stages:
 
   - stage: Tests
     jobs:
-    - job: linux
-      pool: {vmImage: 'Ubuntu-16.04'}
+    - job: test
+      strategy:
+        matrix:
+          linux:
+            imageName: 'ubuntu-16.04'
+          mac:
+            imageName: 'macos-10.14'
+          windows:
+            imageName: 'vs2017-win2016'
+      pool: {vmImage: $(imageName)}
       steps:
-        - {task: UsePythonVersion@0, inputs: {versionSpec: '3.6'}}
         - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7'}}
-        - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8'}}
         - script: sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0
+          condition: "startsWith(variables['imageName'], 'ubuntu')"
           displayName: "install libs"
         - task: DownloadPipelineArtifact@2
           inputs:
@@ -46,35 +53,7 @@ stages:
             path: $(Build.SourcesDirectory)/test_data
         - script: pip install tox cython numpy pytest-azurepipelines
           displayName: "Install deps"
-        - script: tox -c tox-azure.ini
-          displayName: "Run Tox"
-    - job: macos
-      pool: {vmImage: 'macOS-10.14'}
-      steps:
-        - {task: UsePythonVersion@0, inputs: {versionSpec: '3.6'}}
-        - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7'}}
-        - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8'}}
-        - task: DownloadPipelineArtifact@2
-          inputs:
-            artifact: TestData
-            path: $(Build.SourcesDirectory)/test_data
-        - script: pip install tox cython numpy pytest-azurepipelines
-          displayName: "Install deps"
-        - script: tox -c tox-azure.ini 
-          displayName: "Run Tox"
-    - job: windows
-      pool: {vmImage: 'vs2017-win2016'}
-      steps:
-        - {task: UsePythonVersion@0, inputs: {versionSpec: '3.6'}}
-        - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7'}}
-        - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8'}}
-        - task: DownloadPipelineArtifact@2
-          inputs:
-            artifact: TestData
-            path: $(Build.SourcesDirectory)/test_data
-        - script: pip install tox cython numpy pytest-azurepipelines
-          displayName: "Install deps"
-        - script: tox -c tox-azure.ini -p 2
+        - script: tox -c tox-azure.ini -e py37-PyQt5,py37-PySide2
           displayName: "Run Tox"
 
   - stage: Builds
