@@ -6,7 +6,7 @@ Graphical User Interface (GUI) overview
 :Version: $Revision: 1 $
 :Copyright: This document has been placed in the public domain.
 
-# .. contents:: Table of Contents
+.. contents:: Table of Contents
 
 In this document user interface of PartSeg is described.
 As some elements are used in both modules `Roi Analysis` and
@@ -42,7 +42,7 @@ On top of the window there are 6 buttons:
     brightness values for selected channel.
     Selection of colormap is described in `Image View`_.
 3.  `Image View`_. Shows preview of current file and its segmentation result.
-4.  `Algorithm parameters`_. This panel is used to set parameters of
+4.  `Segmentation parameters`_. This panel is used to set parameters of
     segmentation.
 
     .. image::  images/mask_control_view.png
@@ -134,7 +134,7 @@ On top of the window they are 5 buttons:
 3.  Two copies of `Image View`_. Main panel is placed on the right.
     Left panel can be used to preview raw data, selected segmentation,
     or be replaced with `Measurements`_ panel.
-4.  `Algorithm parameters`_ - This panel is used to set parameters of segmentation
+4.  `Segmentation parameters`_ - This panel is used to set parameters of segmentation
 
     Above colorbar there are two controls:
 
@@ -161,7 +161,7 @@ On top of the window they are 5 buttons:
 12. Executes segmentation algorithm with current parameters.
 
 
-Below `Algorithm parameters`_ there are two checkbox:
+Below `Segmentation parameters`_ there are two checkbox:
 
 *   **Hide left panel** - Hides left panel. Useful for tight screen.
 *   **Synchronize view** - Enables synchronization of both `Image view`_ panels:
@@ -457,101 +457,100 @@ Color maps
 
 
 *  Only color maps with checked checkbox are available to select in
-   `Image View`_ controls
-*  Only custom created color maps can be deleted with |delete| button.
-*  Part of existing color maps (all custom) can be use as base to new
-   after click |edit| button.
-
-Choose labels
-^^^^^^^^^^^^^
-.. image:: images/label_list.png
-   :alt: View on list of label coloring
-
-In this tab User can chose labels coloring scheme.
-
-*  Current scheme is chosen with radio button (|radio_button|) on left.
-*  Custom schemes can be deleted with |delete| button.
-*  New scheme can be defined based on old one after click |edit| button.
+   `Image View`_ controls aaa
+*  Only custom created color maps can be deleted with a |delete| button.
+*  Some of existing color maps (all custom) can be used as a base to
+   creation of a new color map using |edit| button.
 
 Color Map creator
 ^^^^^^^^^^^^^^^^^
 .. image:: images/create_colormap.png
-   :alt: View on color map create widget.
+   :alt: View on color map creator widget.
 
-After select color double click on bottom bar to create marker.
+After selection of a new color, double click on the bottom bar to create position marker.
 
-Markers can be moved by drag and drop or removed by double click on them.
-Values between markers are created with linear interpolation.
+Markers can be moved by drag and drop or removed by double click.
+Colors between markers are created with linear interpolation.
+
+Select labels
+^^^^^^^^^^^^^
+.. image:: images/label_list.png
+   :alt: View of the list of label coloring
+
+In this tab User can select coloring scheme of segmentation components labels .
+
+*  Current scheme is choosen with radio button (|radio_button|) on the left.
+*  Custom schemes can be deleted with |delete| button.
+*  New scheme can be defined based on old one using |edit| button.
 
 Create labels
 ^^^^^^^^^^^^^
 .. image:: images/create_labels.png
-   :alt: View on labels map create widget.
+   :alt: View on labels map creator widget.
 
-After select color use **Add color** button.
+After selection of a new color use **Add color** button.
 Color order can be changed by drag and drop.
 
-Mask marking color select
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Mask marking 
+^^^^^^^^^^^^
 .. image:: images/color_mask_marking.png
    :alt: Select color and opacity of mask marking.
 
-After select color use **Change mask color** button.
-Mask marker opacity can be changed with spin box in lower right corner.
+After selection of color use **Change mask color** button to confirm.
+Mask marker opacity can be changed with a spin box in lower right corner.
 
 
-Algorithm parameters
-~~~~~~~~~~~~~~~~~~~~
-This is widget for chose algorithm and set it parameters.
+Segmentation parameters
+~~~~~~~~~~~~~~~~~~~~~~~
+In this widget User can choose segmentation parameters.
 
 .. image:: images/algorithm_settings.png
    :alt: Algorithm settings
 
-1. This is drop down list on which user can select algorithm.
-2. In this area user set parameters of algorithms.
-3. In this area there are show additional information produced by algorithm.
+1. Drop down list on which user can select segmentation method.
+2. Parameters settings.
+3. Additional information produced by algorithm (e.g. information on used threshold, components sizes etc.).
 
 Mask manager
 ~~~~~~~~~~~~
 This widget/dialog allows to set parameters of transferring
-segmentation into mask.
+of current segmentation into a new mask.
 
 .. image:: images/mask_manager.png
    :alt: Mask Manager
 
 1. Select to use dilation (2d or 3d) with set
-   its radius. If dilation is in 3d then z radius is calculated
-   base on image spacing.
-2. If fill holes in mask. Hole is background part
-   not connected to border of image. If Maximum size is set to -1
-   then all holes are closed.
-3. **Save components instead** of producing binary mask.
-   **Clip previous mask** is useful when using positive radius in Dilate mask
-   and want to fit in previous defined mask.
-4. Negate produced mask.
-5. Show calculated dilation radius for current image.
-6. Undo last masking operation.
-7. Create new mask or go to previously undone one.
+   radius in pixels. If dilation is in 3d then radius in z plane is calculated
+   base on image spacing. Negative values of radius will reduce mask size. 
+2. Select to fill up holes in a current segmentation. Holes are parts of background, which
+   are not connected (in 2d or 3d - depends on selection) to a border of image. 
+   If Maximum size is set to -1 then all holes will be closed.
+3. **Save components** allows to create a new mask made of multiple components present in current segmentation.
+   **Clip to previous mask** option is useful when using positive radius in Dilate mask
+   and want to fit it in previously defined mask.
+4. Creates mask based on negative of current selection (disables **Save comnponents** option).
+5. Shows calculated dilation radius in x, y, z for current image.
+6. Undo of last masking operation.
+7. Creates new mask or draws back to previously undone one.
 8. TODO
 9. TODO
 
 Multiple files panel
 ~~~~~~~~~~~~~~~~~~~~~
-This is widget to manage work on multiple files without need
-to reload it from disc.
+This widget enables to work on multiple files without need
+to reload them from disc.
 
-Each element of top level list is one file.
-For each saved
+Each file is presented in the list as a raw image and multiple states created by user. 
+Each state represents segmentation done with different parameters.
 
 .. image:: images/multiple_files_widget.png
    :alt: Multiple files panel
 
-1.  List of opened files.
-2.  Save current image state to be possible to reload.
-3.  Remove saved state.
-4.  Load multiple files to PartSeg.
-5.  When click **Save State** open popup with option to set
-    custom name instead of default one.
+1.  List of opened files and created states.
+2.  Saves current image state. Each stated can be reloaded by double click.
+3.  Removes saved state.
+4.  Loads multiple files to PartSeg.
+5.  Enables to set custome names for saved states.
 
 Tips and Tricks
 ---------------
