@@ -21,13 +21,19 @@ class ProjectTuple(ProjectInfoBase, typing.NamedTuple):
     errors: str = ""
 
     def get_raw_copy(self):
-        return ProjectTuple(self.file_path, self.image.substitute())
+        return ProjectTuple(self.file_path, self.image.substitute(mask=None))
 
     def is_raw(self):
         return self.segmentation is None
 
     def replace_(self, *args, **kwargs):
         return self._replace(*args, **kwargs)
+
+    def is_masked(self):
+        return self.mask is not None
+
+    def get_raw_mask_copy(self):
+        return ProjectTuple(file_path=self.file_path, image=self.image.substitute(), mask=self.mask)
 
 
 class MaskInfo(typing.NamedTuple):

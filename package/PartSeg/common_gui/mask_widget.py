@@ -110,13 +110,13 @@ class MaskWidget(QWidget):
 
     def dilate_change(self):
         if self.dilate_radius.value() == 0 or self.dilate_dim.value() == RadiusType.NO:
-            self.radius_information.setText("Real radius: 0")
+            self.radius_information.setText("Dilation radius: 0")
         else:
             dilate_radius = self.get_dilate_radius()
             if isinstance(dilate_radius, list):
-                self.radius_information.setText(f"Real radius: {dilate_radius[::-1]}")
+                self.radius_information.setText(f"Dilation radius: {dilate_radius[::-1]}")
             else:
-                self.radius_information.setText(f"Real radius: {dilate_radius}")
+                self.radius_information.setText(f"Dilation radius: {dilate_radius}")
 
     def get_mask_property(self):
         return MaskProperty(

@@ -67,7 +67,13 @@ class ProjectInfoBase:
     def get_raw_copy(self):
         raise NotImplementedError
 
+    def get_raw_mask_copy(self):
+        raise NotImplementedError
+
     def is_raw(self):
+        raise NotImplementedError
+
+    def is_masked(self):
         raise NotImplementedError
 
 

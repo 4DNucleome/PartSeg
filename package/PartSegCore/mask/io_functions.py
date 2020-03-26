@@ -42,13 +42,19 @@ class SegmentationTuple(ProjectInfoBase, typing.NamedTuple):
     errors: str = ""
 
     def get_raw_copy(self):
-        return SegmentationTuple(self.file_path, self.image.substitute())
+        return SegmentationTuple(self.file_path, self.image.substitute(mask=None))
 
     def is_raw(self):
         return self.segmentation is None
 
     def replace_(self, *args, **kwargs):
         return self._replace(*args, **kwargs)
+
+    def is_masked(self):
+        return self.mask is not None
+
+    def get_raw_mask_copy(self):
+        return SegmentationTuple(file_path=self.file_path, image=self.image.substitute(), mask=self.mask)
 
 
 def save_stack_segmentation(

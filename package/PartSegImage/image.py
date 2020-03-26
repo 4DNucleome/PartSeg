@@ -5,6 +5,8 @@ from tifffile import lazyattr
 
 Spacing = typing.Tuple[typing.Union[float, int], ...]
 
+_DEF = object()
+
 
 def minimal_dtype(val: int):
     """
@@ -172,13 +174,13 @@ class Image:
         return "".join([key for val, key in zip(self._image_array.shape, self.return_order) if val > 1])
 
     def substitute(
-        self, data=None, image_spacing=None, file_path=None, mask=None, default_coloring=None, ranges=None, labels=None
+        self, data=None, image_spacing=None, file_path=None, mask=_DEF, default_coloring=None, ranges=None, labels=None,
     ):
         """Create copy of image with substitution of not None elements"""
         data = self._image_array if data is None else data
         image_spacing = self._image_spacing if image_spacing is None else image_spacing
         file_path = self.file_path if file_path is None else file_path
-        mask = self._mask_array if mask is None else mask
+        mask = self._mask_array if mask is _DEF else mask
         default_coloring = self.default_coloring if default_coloring is None else default_coloring
         ranges = self.ranges if ranges is None else ranges
         labels = self.labels if labels is None else labels

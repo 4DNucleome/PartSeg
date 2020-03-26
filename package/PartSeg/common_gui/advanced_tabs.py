@@ -130,10 +130,10 @@ class ColorControl(QTabWidget):
         self.label_view.edit_signal[list].connect(self.label_editor.set_colors)
         self.mask_control = MaskControl(settings)
         self.addTab(self.color_preview, "Color maps")
-        self.addTab(self.label_view, "Choose labels")
         self.addTab(self.colormap_selector, "Color Map creator")
+        self.addTab(self.label_view, "Select labels")
         self.addTab(self.label_editor, "Create labels")
-        self.addTab(self.mask_control, "Control mask marking")
+        self.addTab(self.mask_control, "Mask marking")
 
 
 class AdvancedWindow(QTabWidget):

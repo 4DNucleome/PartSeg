@@ -166,27 +166,8 @@ class MultipleFileWidget(QWidget):
         state_name = item.text(0)
         project_info = self.state_dict[file_name][state_name]
         try:
-            image = self.settings.verify_image(project_info.image, False)
-        except SwapTimeStackException:
-            res = QMessageBox.question(
-                self,
-                "Not supported",
-                "Time data are currently not supported. Maybe You would like to treat time as z-stack",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No,
-            )
-
-            if res == QMessageBox.Yes:
-                image = project_info.image.swap_time_and_stack()
-            else:
-                return
-        except TimeAndStackException:
-            QMessageBox.warning(self, "image error", "Do not support time and stack image")
-            return
-        if isinstance(image, Image):
-            project_info = project_info._replace(image=image)
-            self.state_dict[file_name][state_name] = project_info
-        if image:
+            self.parent().parent().parent().set_data(project_info)
+        except AttributeError:
             self.settings.set_project_info(project_info)
 
     def load_compare(self, item):
@@ -221,7 +202,7 @@ class MultipleFileWidget(QWidget):
                     return
 
         try:
-            index = self.file_list.index(state.file_path)
+            index = self.file_list.index(os.path.normpath(state.file_path))
             item = self.file_view.topLevelItem(index)
         except ValueError:
             metric = QFontMetrics(self.file_view.font())
@@ -229,9 +210,13 @@ class MultipleFileWidget(QWidget):
             clipped_text = metric.elidedText(state.file_path, Qt.ElideLeft, width)
             item = QTreeWidgetItem(self.file_view, [clipped_text])
             item.setToolTip(0, state.file_path)
-            self.file_list.append(state.file_path)
+            self.file_list.append(os.path.normpath(state.file_path))
             QTreeWidgetItem(item, ["raw image"])
             sub_dict["raw image"] = state.get_raw_copy()
+            if state.is_masked():
+                QTreeWidgetItem(item, ["image with mask"])
+                sub_dict["image with mask"] = state.get_raw_mask_copy()
+
         item.setExpanded(True)
         if state.is_raw():
             return
