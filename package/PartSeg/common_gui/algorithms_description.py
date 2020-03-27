@@ -7,6 +7,7 @@ from enum import Enum
 from qtpy.QtCore import Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent
 from qtpy.QtWidgets import (
+    QApplication,
     QComboBox,
     QCheckBox,
     QWidget,
@@ -16,6 +17,7 @@ from qtpy.QtWidgets import (
     QScrollArea,
     QLineEdit,
     QStackedLayout,
+    QMessageBox,
 )
 from six import with_metaclass
 
@@ -23,7 +25,11 @@ from PartSeg.common_gui.error_report import ErrorDialog
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, AlgorithmDescribeBase, SegmentationProfile
 from PartSegCore.channel_class import Channel
 from PartSegCore.image_operations import RadiusType
-from PartSegCore.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
+from PartSegCore.segmentation.algorithm_base import (
+    SegmentationAlgorithm,
+    SegmentationResult,
+    SegmentationLimitException,
+)
 from PartSegImage import Image
 from .dim_combobox import DimComboBox
 from .universal_gui_part import CustomSpinBox, CustomDoubleSpinBox, EnumComboBox, ChannelComboBox
@@ -448,7 +454,23 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
         self.algorithm_thread.exception_occurred.connect(self.exception_occurred)
 
     def exception_occurred(self, exc: Exception):
-        dial = ErrorDialog(exc, "Error during segmentation", f"{self.name}")
+        if isinstance(exc, SegmentationLimitException):
+            mess = QMessageBox()
+            mess.setIcon(QMessageBox.Critical)
+            mess.setText("During segmentation process algorithm meet limitations:\n" + "\n".join(exc.args))
+            mess.setWindowTitle("Segmentation limitations")
+            mess.exec()
+            return
+        if isinstance(exc, RuntimeError) and exc.args[0].startswith(
+            "Exception thrown in SimpleITK KittlerIllingworthThreshold"
+        ):
+            mess = QMessageBox()
+            mess.setIcon(QMessageBox.Critical)
+            mess.setText("Fail to apply Kittler Illingworth to current data\n" + exc.args[0].split("\n")[1])
+            mess.setWindowTitle("Segmentation limitations")
+            mess.exec()
+            return
+        dial = ErrorDialog(exc, "Error during segmentation", f"{QApplication.instance().name}")
         dial.exec()
 
     def show_info(self, text):

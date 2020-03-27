@@ -78,6 +78,7 @@ class CustomApplication(QApplication):
             mess.setText("During segmentation process algorithm meet limitations:\n" + "\n".join(self.error.args))
             mess.setWindowTitle("Segmentation limitations")
             mess.exec()
+            return
         dial = ErrorDialog(self.error, "Exception during program run")
         # TODO check
         # dial.moveToThread(QApplication.instance().thread())
