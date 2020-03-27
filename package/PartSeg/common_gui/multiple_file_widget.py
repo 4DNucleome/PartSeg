@@ -57,7 +57,7 @@ class CustomTreeWidget(QTreeWidget):
         action = QAction("Forget")
         action.triggered.connect(partial(self.context_forget.emit, item))
         menu.addAction(action)
-        menu.exec(self.mapToGlobal(point))
+        menu.exec_(self.mapToGlobal(point))
 
     def set_show_compare(self, compare: bool):
         self.compare = compare
@@ -67,6 +67,8 @@ class CustomTreeWidget(QTreeWidget):
 
 
 class MultipleFileWidget(QWidget):
+    _add_state = Signal(object, bool)
+
     def __init__(self, settings: BaseSettings, load_dict: Dict[str, LoadBase], compare_in_context_menu=False):
         super().__init__()
         self.settings = settings
@@ -105,6 +107,8 @@ class MultipleFileWidget(QWidget):
         self.file_view.context_forget.connect(self.forget_action)
         self.error_list = []
 
+        self._add_state.connect(self.save_state_action)
+
     def execute_load_files(self, load_data: LoadProperty, range_changed, step_changed):
         range_changed(0, len(load_data.load_location))
         for i, el in enumerate(load_data.load_location, 1):
@@ -116,7 +120,7 @@ class MultipleFileWidget(QWidget):
                     step_changed(i)
                     continue
             state: ProjectInfoBase = load_data.load_class.load(load_list)
-            self.save_state_action(state, False)
+            self._add_state.emit(state, False)
             step_changed(i)
 
     def load_files(self):
