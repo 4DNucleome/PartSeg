@@ -50,7 +50,7 @@ class CustomTreeWidget(QTreeWidget):
             action1 = QAction("Load")
             action1.triggered.connect(partial(self.context_load.emit, item))
             menu.addAction(action1)
-            if self.compare:
+            if self.compare and item.text(0) not in ["raw image", "image with mask"]:
                 action2 = QAction("Compare")
                 action2.triggered.connect(partial(self.context_compare.emit, item))
                 menu.addAction(action2)
