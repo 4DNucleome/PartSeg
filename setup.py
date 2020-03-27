@@ -12,14 +12,7 @@ from Cython.Build import cythonize
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 package_dir = os.path.join(current_dir, "package")
-print(current_dir)
-try:
-    import imagecodecs
-    import imagecodecs._imagecodecs
 
-    imagecodecs_string = imagecodecs.__name__
-except ImportError:
-    imagecodecs_string = "imagecodecs-lite>=2019.4.20"
 
 extensions = [
     Extension(
@@ -100,14 +93,6 @@ def readme():
     return text
 
 
-try:
-    import PySide2
-
-    qt_string = PySide2.__name__
-except ImportError:
-    qt_string = "PyQt5>=5.10.1"
-
-
 setuptools.setup(
     ext_modules=cythonize(extensions),
     packages=setuptools.find_packages("./package"),
@@ -120,13 +105,11 @@ setuptools.setup(
         "tifffile>=2019.7.26",
         "czifile>=2019.4.20",
         "oiffile>=2019.1.1",
-        imagecodecs_string,
         "appdirs>=1.4.3",
         "SimpleITK>=1.1.0",
         "scipy>=0.19.1",
         "QtPy>=1.3.1",
         "sentry_sdk==0.14.1",
-        qt_string,
         "six>=1.11.0",
         "h5py>=2.7.1",
         "packaging>=17.1",
@@ -138,4 +121,11 @@ setuptools.setup(
         "PartSegData==0.9.4",
         "defusedxml>=0.6.0",
     ],
+    extras_require={
+        "pyqt": ["PyQt5>=5.10.1"],
+        "pyqt5": ["PyQt5>=5.10.1"],
+        "pyside": ["PySide2>=5.10.1"],
+        "pyside2": ["PySide2>=5.10.1"]
+    }
+
 )

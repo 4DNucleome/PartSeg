@@ -60,6 +60,7 @@ stages:
     dependsOn: Tests
     variables:
       CIBW_BEFORE_BUILD: pip install numpy cython
+      CIBW_TEST_EXTRAS: pyqt
     jobs:
       - job: linux_wheel
         pool: {vmImage: 'Ubuntu-16.04'}
