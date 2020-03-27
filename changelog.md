@@ -1,5 +1,9 @@
 # Changelog 
 
+## 0.10.5
+-   make PartSeg PEP517 compatible.
+-   fix multiple files widget on Windows (path normalisation)  
+
 ## 0.10.4
 -   fix slow zoom
 
