@@ -60,7 +60,7 @@ stages:
     dependsOn: Tests
     variables:
       CIBW_BEFORE_BUILD: pip install numpy cython
-      CIBW_TEST_EXTRAS: pyqt
+      CIBW_TEST_EXTRAS: pyqt,test
     jobs:
       - job: linux_wheel
         pool: {vmImage: 'Ubuntu-16.04'}
@@ -70,6 +70,7 @@ stages:
           CIBW_TEST_REQUIRES: pytest pytest-cov
           CIBW_TEST_COMMAND: pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part
           CIBW_BEFORE_TEST: pip install PyQt5==5.13.2
+          CIBW_TEST_EXTRAS: ""
         steps:
           - task: UsePythonVersion@0
           - task: DownloadPipelineArtifact@2
@@ -92,7 +93,6 @@ stages:
         variables:
           CIBW_BUILD: cp3[6-8]*64
           CIBW_BEFORE_BUILD: pip install numpy cython; yum -y install hdf5-devel;
-          CIBW_TEST_EXTRAS: test
           CIBW_TEST_COMMAND: pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
         steps:
@@ -114,7 +114,6 @@ stages:
         pool: {vmImage: 'macOS-10.14'}
         variables:
           CIBW_BUILD: cp3[6-8]-*
-          CIBW_TEST_REQUIRES: -r requirements_test.txt
           CIBW_TEST_COMMAND: pytest {project}/package/tests
           MACOSX_DEPLOYMENT_TARGET: "10.9"
         steps:
@@ -136,7 +135,6 @@ stages:
         pool: {vmImage: 'macOS-10.14'}
         variables:
           CIBW_BUILD: cp3[6-8]-*
-          CIBW_TEST_REQUIRES: -r requirements_test.txt
           CIBW_TEST_COMMAND: pytest {project}/package/tests
           MACOSX_DEPLOYMENT_TARGET: "10.14"
         steps:
@@ -158,7 +156,6 @@ stages:
         pool: {vmImage: 'vs2017-win2016'}
         variables:
           CIBW_BUILD: cp3[6-8]*64
-          CIBW_TEST_REQUIRES: -r requirements_test.txt
           CIBW_TEST_COMMAND: pytest {project}/package/tests
         steps:
           - {task: UsePythonVersion@0, inputs: {versionSpec: '3.6', architecture: x64}}

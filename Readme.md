@@ -30,7 +30,7 @@ based on threshold and connected components
     -   [MacOS](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-macos.zip) (build on MacOS Mojave)
 
 -   With pip (on linux you need to install `numpy` and `cython` earlier) 
-    -   From pypi: `pip install PartSeg`
+    -   From pypi: `pip install PartSeg[pyqt]`
     -   From repository: `pip install git+https://github.com/4DNucleome/PartSeg.git`
   
 ## Running 

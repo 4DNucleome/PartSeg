@@ -121,11 +121,4 @@ setuptools.setup(
         "PartSegData==0.9.4",
         "defusedxml>=0.6.0",
     ],
-    extras_require={
-        "pyqt": ["PyQt5>=5.10.1"],
-        "pyqt5": ["PyQt5>=5.10.1"],
-        "pyside": ["PySide2>=5.10.1"],
-        "pyside2": ["PySide2>=5.10.1"]
-    }
-
 )
