@@ -37,7 +37,7 @@ class WaitingDialog(QDialog):
 
     def exec(self):
         self.thread_to_wait.start()
-        ret = super().exec()
+        ret = super().exec_()
         return ret
 
 

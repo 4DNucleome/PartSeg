@@ -190,27 +190,27 @@ class MultipleFileWidget(QWidget):
     def save_state_action(self, state: ProjectInfoBase, custom_name):
         # TODO left elipsis
         # state: ProjectInfoBase = self.get_state()
-        sub_dict = self.state_dict[state.file_path]
-        name = f"state {self.state_dict_count[state.file_path]+1}"
+        normed_file_path = os.path.normpath(state.file_path)
+        sub_dict = self.state_dict[normed_file_path]
+        name = f"state {self.state_dict_count[normed_file_path]+1}"
         if custom_name:
             name, ok = QInputDialog.getText(self, "Save name", "Save name:", text=name)
             if not ok:
                 return
-            while name in sub_dict or name == "raw image":
+            while name in sub_dict or name in ["raw image", "image with mask"]:
                 name, ok = QInputDialog.getText(self, "Save name", "Save name (previous in use):", text=name)
                 if not ok:
                     return
-
         try:
-            index = self.file_list.index(os.path.normpath(state.file_path))
+            index = self.file_list.index(os.path.normpath(normed_file_path))
             item = self.file_view.topLevelItem(index)
         except ValueError:
             metric = QFontMetrics(self.file_view.font())
             width = self.file_view.width() - 45
-            clipped_text = metric.elidedText(state.file_path, Qt.ElideLeft, width)
+            clipped_text = metric.elidedText(normed_file_path, Qt.ElideLeft, width)
             item = QTreeWidgetItem(self.file_view, [clipped_text])
-            item.setToolTip(0, state.file_path)
-            self.file_list.append(os.path.normpath(state.file_path))
+            item.setToolTip(0, normed_file_path)
+            self.file_list.append(normed_file_path)
             QTreeWidgetItem(item, ["raw image"])
             sub_dict["raw image"] = state.get_raw_copy()
             if state.is_masked():
@@ -238,6 +238,8 @@ class MultipleFileWidget(QWidget):
         if isinstance(item.parent(), QTreeWidgetItem):
             index = self.file_view.indexOfTopLevelItem(item.parent())
             text = self.file_list[index]
+            if item.text(0) not in self.state_dict[text]:
+                return
             del self.state_dict[text][item.text(0)]
             parent = item.parent()
             parent.removeChild(item)
