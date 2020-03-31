@@ -30,6 +30,7 @@ from PartSegCore.io_utils import WrongFileTypeException, HistoryElement
 from PartSegCore.mask_create import calculate_mask
 from ..common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, AlgorithmChoose
 from ..common_gui.channel_control import ChannelProperty
+from ..common_gui.equal_column_layout import EqualColumnLayout
 from ..common_gui.mask_widget import MaskDialogBase
 from ..common_gui.stack_image_view import ColorBar
 from ..common_gui.universal_gui_part import TextShow
@@ -615,16 +616,22 @@ class MainWindow(BaseMainWindow):
         info_layout.addWidget(self.left_stack.selector)
         info_layout.addWidget(self.options_panel.compare_btn)
         info_layout.addWidget(self.info_text, 1, Qt.AlignHCenter)
+
+        image_layout =  EqualColumnLayout()
+        image_layout.addWidget(self.left_stack)
+        image_layout.addWidget(self.result_image)
+
         layout.setSpacing(0)
-        layout.addWidget(self.main_menu, 0, 0, 1, 4)
-        layout.addLayout(info_layout, 1, 1, 1, 3)
+        layout.addWidget(self.main_menu, 0, 0, 1, 3)
+        layout.addLayout(info_layout, 1, 1, 1, 2)
         layout.addWidget(self.multiple_files, 2, 0)
         layout.addWidget(self.color_bar, 2, 1)
-        layout.addWidget(self.left_stack, 2, 2)
-        layout.addWidget(self.result_image, 2, 3)
-        layout.addWidget(self.options_panel, 0, 4, 3, 1)
+        #layout.addWidget(self.left_stack, 2, 2)
+        #layout.addWidget(self.result_image, 2, 3)
+        layout.addLayout(image_layout, 2, 2, 1, 1)
+        layout.addWidget(self.options_panel, 0, 3, 3, 1)
         layout.setColumnStretch(2, 1)
-        layout.setColumnStretch(3, 1)
+        #layout.setColumnStretch(3, 1)
         widget = QWidget()
         widget.setLayout(layout)
         # self.multiple_files.setHidden(True)

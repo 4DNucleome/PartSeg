@@ -1,5 +1,9 @@
 # Changelog 
 
+## 0.10.6
+-   fix border rim preview
+-   fix problem with size of image preview   
+
 ## 0.10.5
 -   make PartSeg PEP517 compatible.
 -   fix multiple files widget on Windows (path normalisation)  

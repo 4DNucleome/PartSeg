@@ -42,22 +42,7 @@
 #############################################################################
 
 from qtpy.QtCore import QPoint, QRect, QSize, Qt
-from qtpy.QtWidgets import QApplication, QLayout, QPushButton, QSizePolicy, QWidget
-
-
-class Window(QWidget):
-    def __init__(self):
-        super(Window, self).__init__()
-
-        flow_layout = FlowLayout()
-        flow_layout.addWidget(QPushButton("Short"))
-        flow_layout.addWidget(QPushButton("Longer"))
-        flow_layout.addWidget(QPushButton("Different text"))
-        flow_layout.addWidget(QPushButton("More text"))
-        flow_layout.addWidget(QPushButton("Even longer button text"))
-        self.setLayout(flow_layout)
-
-        self.setWindowTitle("Flow Layout")
+from qtpy.QtWidgets import QLayout, QSizePolicy
 
 
 class FlowLayout(QLayout):
@@ -166,13 +151,3 @@ class FlowLayout(QLayout):
             line_height = max(line_height, item.sizeHint().height())
 
         return y + line_height - rect.y()
-
-
-if __name__ == "__main__":
-
-    import sys
-
-    app = QApplication(sys.argv)
-    mainWin = Window()
-    mainWin.show()
-    sys.exit(app.exec_())

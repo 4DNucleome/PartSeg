@@ -29,13 +29,9 @@ class StackedWidgetWithSelector(QStackedWidget):
         super().removeWidget(widget)
 
     def showEvent(self, _):
-        if isinstance(self.parent().layout(), QGridLayout):
-            index = self.parent().layout().indexOf(self)
-            self.parent().layout().setColumnStretch(self.parent().layout().getItemPosition(index)[1], 1)
         self.selector.show()
+        print(self.parent().layout())
+
 
     def hideEvent(self, _):
-        if isinstance(self.parent().layout(), QGridLayout):
-            self.selector.hide()
-            index = self.parent().layout().indexOf(self)
-        self.parent().layout().setColumnStretch(self.parent().layout().getItemPosition(index)[1], 0)
+        self.selector.hide()

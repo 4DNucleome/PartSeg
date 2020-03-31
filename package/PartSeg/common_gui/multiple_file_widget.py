@@ -17,7 +17,7 @@ from qtpy.QtWidgets import (
     QApplication,
     QMenu,
     QAction,
-)
+    QLayout)
 from qtpy.QtGui import QFontMetrics, QResizeEvent, QMouseEvent
 
 from qtpy.QtCore import Qt, QTimer, Slot, Signal
@@ -97,7 +97,7 @@ class MultipleFileWidget(QWidget):
         layout.addWidget(self.save_state_btn, 1, 0, 1, 2)
         layout.addWidget(self.load_files_btn, 2, 0)
         layout.addWidget(self.forget_btn, 2, 1)
-        layout.addWidget(self.custom_names_chk, 3, 0)
+        layout.addWidget(self.custom_names_chk, 3, 0, 1, 2)
 
         self.setLayout(layout)
         self.setMouseTracking(True)
@@ -284,8 +284,9 @@ class MultipleFileWidget(QWidget):
         if self.last_point is None or not (event.buttons() & Qt.LeftButton):
             return
         new_width = event.x() + 10
-        new_width = max(new_width, 200)
+        new_width = max(new_width, 150)
         new_width = min(new_width, 600)
+
         self.setMinimumWidth(new_width)
 
     def leaveEvent(self, _):  # pylint: disable=R0201
