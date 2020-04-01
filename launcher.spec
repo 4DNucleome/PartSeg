@@ -1,4 +1,5 @@
 # -*- mode: python -*-
+from PyInstaller.building.build_main import Analysis, PYZ, EXE, BUNDLE, COLLECT
 
 block_cipher = None
 import sys
@@ -7,25 +8,17 @@ import platform
 sys.setrecursionlimit(5000)
 sys.path.append(os.path.dirname('__file__'))
 
-import tifffile
+
 # import plugins
 import PartSeg.__main__
 import PartSegData.__init__
 base_path = os.path.dirname(PartSeg.__main__.__file__)
 data_path = os.path.dirname(PartSegData.__init__.__file__)
 
-num = tifffile.__version__.split(".")[0]
 
-if num == '0':
-    hiddenimports = ["tifffile._tifffile"]
-else:
-    try:
-        import imagecodecs
-        hiddenimports = ["imagecodecs._" + x for x in imagecodecs._extensions()] + ["imagecodecs._shared"]
-        print(hiddenimports)
+import imagecodecs
+hiddenimports = ["imagecodecs._" + x for x in imagecodecs._extensions()] + ["imagecodecs._shared"]
 
-    except ImportError:
-        hiddenimports = ["imagecodecs_lite._imagecodecs_lite"]
 
 if platform.system() == "Windows":
     import PyQt5
@@ -36,7 +29,7 @@ else:
 
 # print(["plugins." + x.name for x in plugins.get_plugins()])
 
-a = Analysis(['launch_partseg.py'],
+a = Analysis(['package/PartSeg/launcher_main.py'],
              # pathex=['C:\\Users\\Grzegorz\\Documents\\segmentation-gui\\PartSeg'],
              binaries=[],
              datas = [(os.path.join(data_path, x), y) for x, y in [

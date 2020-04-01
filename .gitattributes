@@ -1,4 +1,2 @@
-src/static_files/colors.npz filter=lfs diff=lfs merge=lfs -text
-
 tutorials/* linguist-vendored
 notebooks/* linguist-vendored

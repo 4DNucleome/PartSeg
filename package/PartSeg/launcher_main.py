@@ -9,10 +9,10 @@ from qtpy.QtGui import QFontDatabase
 
 from PartSegImage import TiffImageReader
 from PartSegData import font_dir, icons_dir
-from .custom_application import CustomApplication
+from PartSeg.custom_application import CustomApplication
 from PartSeg.common_backend.base_argparser import CustomParser
 
-from . import APP_NAME, MASK_NAME, SEGMENTATION_NAME
+from PartSeg import APP_NAME, MASK_NAME, SEGMENTATION_NAME
 
 multiprocessing.freeze_support()
 
@@ -22,10 +22,10 @@ def _test_imports():
     from qtpy.QtWidgets import QApplication
 
     app = QApplication([])
-    from .segmentation_analysis.main_window import MainWindow as AnalysisMain
-    from .segmentation_mask.stack_gui_main import MainWindow as MaskMain
-    from .launcher.main_window import MainWindow
-    from . import plugins
+    from PartSeg.segmentation_analysis.main_window import MainWindow as AnalysisMain
+    from PartSeg.segmentation_mask.stack_gui_main import MainWindow as MaskMain
+    from PartSeg.launcher.main_window import MainWindow
+    from PartSeg import plugins
 
     plugins.register()
     w1 = AnalysisMain("test")
@@ -66,10 +66,10 @@ def main():
     my_app.check_release()
     QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf"))
     if args.gui == "roi_analysis" or args.mf:
-        from . import plugins
+        from PartSeg import plugins
 
         plugins.register()
-        from .segmentation_analysis.main_window import MainWindow
+        from PartSeg.segmentation_analysis.main_window import MainWindow
 
         title = f"{APP_NAME} {SEGMENTATION_NAME}"
         if args.image:
@@ -79,10 +79,10 @@ def main():
         if args.batch:
             wind.main_menu.batch_window()
     elif args.gui == "mask_segmentation":
-        from . import plugins
+        from PartSeg import plugins
 
         plugins.register()
-        from .segmentation_mask.stack_gui_main import MainWindow
+        from PartSeg.segmentation_mask.stack_gui_main import MainWindow
 
         title = f"{APP_NAME} {MASK_NAME}"
         if args.image:
@@ -90,7 +90,7 @@ def main():
             MainWindow = partial(MainWindow, initial_image=image)
         wind = MainWindow(title=title)
     else:
-        from .launcher.main_window import MainWindow
+        from PartSeg.launcher.main_window import MainWindow
 
         title = f"{APP_NAME} Launcher"
         wind = MainWindow(title=title)
