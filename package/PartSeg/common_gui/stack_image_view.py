@@ -891,6 +891,7 @@ class ImageViewWithMask(ImageView):
         super().__init__(settings, channel_property, name)
         self.mask_show = QCheckBox()
         self.mask_label = QLabel("Mask:")
+        self.mask_label.setMinimumHeight(25)
         self.btn_layout.addWidget(self.mask_label)
         self.btn_layout.addWidget(self.mask_show)
         self.mask_prop = (

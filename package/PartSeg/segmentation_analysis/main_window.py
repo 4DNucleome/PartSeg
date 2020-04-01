@@ -572,6 +572,7 @@ class MainWindow(BaseMainWindow):
         self.result_image = ResultImageView(self.settings, self.channel_control2, "result_image")
         self.color_bar = ColorBar(self.settings, [self.raw_image, self.result_image])
         self.info_text = QLabel()
+        self.info_text.setMinimumHeight(25)
         self.raw_image.text_info_change.connect(self.info_text.setText)
         self.result_image.text_info_change.connect(self.info_text.setText)
         self.synchronize_tool = SynchronizeView(self.raw_image, self.result_image, self)
