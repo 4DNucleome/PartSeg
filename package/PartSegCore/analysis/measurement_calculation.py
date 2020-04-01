@@ -340,7 +340,7 @@ class MeasurementProfile(object):
                         kw["area_array"] = area_array == i
                         val.append(method.calculate_property(**kw))
                     if node.per_component == PerComponent.Mean:
-                        val = np.mean(val)
+                        val = np.mean(val) if len(val) else 0
                     else:
                         val = np.array(val)
                 else:

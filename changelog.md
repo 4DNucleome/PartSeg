@@ -1,5 +1,8 @@
 # Changelog 
 
+## 0.10.7
+-   in measurements, on empty list of components mean will return 0
+
 ## 0.10.6
 -   fix border rim preview
 -   fix problem with size of image preview
