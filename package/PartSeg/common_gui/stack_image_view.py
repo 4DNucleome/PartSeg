@@ -304,7 +304,6 @@ class ImageView(QWidget):
         crop = QAction("Crop", self.zoom_button)
         # crop.triggered.connect(self.crop_view)
 
-
         self.btn_layout = QHBoxLayout()
         self.btn_layout.setSpacing(0)
         self.btn_layout.setContentsMargins(0, 0, 0, 0)

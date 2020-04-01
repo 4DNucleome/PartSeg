@@ -17,7 +17,8 @@ from qtpy.QtWidgets import (
     QApplication,
     QMenu,
     QAction,
-    QLayout)
+    QLayout,
+)
 from qtpy.QtGui import QFontMetrics, QResizeEvent, QMouseEvent
 
 from qtpy.QtCore import Qt, QTimer, Slot, Signal

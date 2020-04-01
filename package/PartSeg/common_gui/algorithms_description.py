@@ -608,7 +608,6 @@ class AlgorithmChoose(QWidget):
         self.algorithm_dict = {}
         self.add_widgets_to_algorithm()
 
-
     def updated_algorithm(self):
         self.change_algorithm(
             self.settings.last_executed_algorithm,
