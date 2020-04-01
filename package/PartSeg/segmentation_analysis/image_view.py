@@ -51,13 +51,13 @@ class ResultImageView(ImageViewWithMask):
     def resizeEvent(self, event: QResizeEvent):
         if event.size().width() > 700 and not self._channel_control_top:
             w = self.btn_layout2.takeAt(0).widget()
-            self.btn_layout.takeAt(3)
+            self.btn_layout.takeAt(2)
             # noinspection PyArgumentList
-            self.btn_layout.insertWidget(3, w)
+            self.btn_layout.insertWidget(2, w)
             self._channel_control_top = True
         elif event.size().width() <= 700 and self._channel_control_top:
-            w = self.btn_layout.takeAt(3).widget()
-            self.btn_layout.insertStretch(3, 1)
+            w = self.btn_layout.takeAt(2).widget()
+            self.btn_layout.insertStretch(2, 1)
             # noinspection PyArgumentList
             self.btn_layout2.insertWidget(0, w)
             self._channel_control_top = False

@@ -2,7 +2,8 @@
 
 ## 0.10.6
 -   fix border rim preview
--   fix problem with size of image preview   
+-   fix problem with size of image preview
+-   zoom with scroll and moving if rectangle zoom is not marked 
 
 ## 0.10.5
 -   make PartSeg PEP517 compatible.

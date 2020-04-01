@@ -76,9 +76,6 @@ class ImageShowState(QObject):
     def set_zoom(self, val):
         self.zoom = val
 
-    def set_move(self, val):
-        self.move = val
-
     def set_borders(self, val: bool):
         """decide if draw only component 2D borders, or whole area"""
         if self.only_borders != val:
@@ -292,7 +289,6 @@ class ImageView(QWidget):
         super().__init__()
         self._settings: BaseSettings = settings
         self.channel_property = channel_property
-        self.exclude_btn_list = []
         self.image_state = ImageShowState(settings, name)
         self.channel_control = ColorComboBoxGroup(settings, name, channel_property, height=30)
         self._channel_control_top = True
@@ -306,10 +302,7 @@ class ImageView(QWidget):
         self.component = None
         crop = QAction("Crop", self.zoom_button)
         # crop.triggered.connect(self.crop_view)
-        self.zoom_button.addAction(crop)
-        self.move_button = create_tool_button("Move", "transform-move.png")
-        self.move_button.toggled.connect(self.image_state.set_move)
-        self.move_button.setCheckable(True)
+
 
         self.btn_layout = QHBoxLayout()
         self.btn_layout.setSpacing(0)
@@ -318,8 +311,6 @@ class ImageView(QWidget):
         self.btn_layout.addWidget(self.reset_button)
         # noinspection PyArgumentList
         self.btn_layout.addWidget(self.zoom_button)
-        # noinspection PyArgumentList
-        self.btn_layout.addWidget(self.move_button)
         # noinspection PyArgumentList
         self.btn_layout.addWidget(self.channel_control, 1)
         self.btn_layout2 = QHBoxLayout()
@@ -362,9 +353,6 @@ class ImageView(QWidget):
         main_layout.addLayout(stack_slider_layout, 3, 1)
 
         self.setLayout(main_layout)
-        self.exclude_btn_list.extend([self.zoom_button, self.move_button])
-        self.zoom_button.clicked.connect(self.exclude_btn_fun)
-        self.move_button.clicked.connect(self.exclude_btn_fun)
 
         self.image_state.parameter_changed.connect(self.paint_layer)
         self.image_area.pixmap.position_signal.connect(self.position_info)
@@ -380,13 +368,13 @@ class ImageView(QWidget):
     def resizeEvent(self, event: QResizeEvent):
         if event.size().width() > 500 and not self._channel_control_top:
             w = self.btn_layout2.takeAt(0).widget()
-            self.btn_layout.takeAt(3)
+            self.btn_layout.takeAt(2)
             # noinspection PyArgumentList
-            self.btn_layout.insertWidget(3, w)
+            self.btn_layout.insertWidget(2, w)
             self._channel_control_top = True
         elif event.size().width() <= 500 and self._channel_control_top:
-            w = self.btn_layout.takeAt(3).widget()
-            self.btn_layout.insertStretch(3, 1)
+            w = self.btn_layout.takeAt(2).widget()
+            self.btn_layout.insertStretch(2, 1)
             # noinspection PyArgumentList
             self.btn_layout2.insertWidget(0, w)
             self._channel_control_top = False
@@ -394,12 +382,6 @@ class ImageView(QWidget):
     def update_channels_coloring(self, new_image: bool):
         if not new_image:
             self.paint_layer()
-
-    def exclude_btn_fun(self):
-        sender = self.sender()
-        for el in self.exclude_btn_list:
-            if el != sender:
-                el.setChecked(False)
 
     def clean_text(self):
         self.text_info_change.emit("")
@@ -584,7 +566,7 @@ class MyScrollArea(QScrollArea):
         self.setWidget(self.pixmap)
         # self.image_ratio = 1
         self.zoom_scale = 1
-        self.max_zoom = 20
+        self.max_zoom = 40
         self.image_size = QSize(1, 1)
         self.horizontal_ratio = False, 1
         self.vertical_ratio = False, 1
@@ -686,7 +668,7 @@ class MyScrollArea(QScrollArea):
         self.prev_pos = None
 
     def mouseMoveEvent(self, event):
-        if not self.local_settings.move or self.prev_pos is None:
+        if self.local_settings.zoom or self.prev_pos is None:
             return
         x, y = event.x(), event.y()
         x_dif, y_dif = self.prev_pos[0] - x, self.prev_pos[1] - y
@@ -774,7 +756,7 @@ class MyScrollArea(QScrollArea):
         if self.zoom_scale * scale_mod > self.max_zoom:
             self.zoom_scale = self.max_zoom
         elif self.zoom_scale * scale_mod < 1:
-            return
+            self.zoom_scale = 1
         else:
             self.zoom_scale *= scale_mod
 
