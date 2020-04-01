@@ -2,7 +2,7 @@ from typing import Optional
 
 import collections
 from qtpy.QtGui import QResizeEvent
-from qtpy.QtCore import QObject, Slot
+from qtpy.QtCore import QObject, Slot, QSignalBlocker
 from qtpy.QtWidgets import QCheckBox, QDoubleSpinBox, QLabel
 
 from ..common_gui.channel_control import ChannelProperty
@@ -125,43 +125,27 @@ class SynchronizeView(QObject):
         self.image_view1 = image_view1
         self.image_view2 = image_view2
         self.synchronize = False
-        self.image_view1.stack_slider.sliderMoved.connect(self.synchronize_views)
-        self.image_view2.stack_slider.sliderMoved.connect(self.synchronize_views)
-        self.image_view1.time_slider.sliderMoved.connect(self.synchronize_views)
-        self.image_view2.time_slider.sliderMoved.connect(self.synchronize_views)
-        self.image_view1.image_area.zoom_changed.connect(self.synchronize_views)
-        self.image_view2.image_area.zoom_changed.connect(self.synchronize_views)
-        self.image_view1.image_area.horizontalScrollBar().valueChanged.connect(self.synchronize_views)
-        self.image_view2.image_area.horizontalScrollBar().valueChanged.connect(self.synchronize_views)
-        self.image_view1.image_area.verticalScrollBar().valueChanged.connect(self.synchronize_views)
-        self.image_view2.image_area.verticalScrollBar().valueChanged.connect(self.synchronize_views)
+        self.image_view1.view_changed.connect(self.synchronize_views)
+        self.image_view2.view_changed.connect(self.synchronize_views)
 
     def set_synchronize(self, val: bool):
         self.synchronize = val
 
-    @Slot(int)
     @Slot()
-    def synchronize_views(self, val=None):
+    def synchronize_views(self):
         if not self.synchronize or self.image_view1.isHidden() or self.image_view2.isHidden():
             return
-        if self.sender().parent() == self.image_view1:
+        sender = self.sender()
+        if sender == self.image_view1:
             origin, dest = self.image_view1, self.image_view2
         else:
             origin, dest = self.image_view2, self.image_view1
-        block = dest.blockSignals(True)
-        sender = self.sender()
-        if sender == origin.stack_slider:
-            dest.stack_slider.setValue(val)
-        else:
-            dest.stack_slider.setValue(origin.stack_slider.value())
-        if sender == origin.time_slider:
-            dest.time_slider.setValue(val)
-        else:
-            dest.time_slider.setValue(origin.time_slider.value())
+        _block = QSignalBlocker(dest)
+        dest.stack_slider.setValue(origin.stack_slider.value())
+        dest.time_slider.setValue(origin.time_slider.value())
         dest.image_area.zoom_scale = origin.image_area.zoom_scale
         dest.image_area.x_mid = origin.image_area.x_mid
         dest.image_area.y_mid = origin.image_area.y_mid
         dest.image_area.resize_pixmap()
         dest.image_area.horizontalScrollBar().setValue(origin.image_area.horizontalScrollBar().value())
         dest.image_area.verticalScrollBar().setValue(origin.image_area.verticalScrollBar().value())
-        dest.blockSignals(block)

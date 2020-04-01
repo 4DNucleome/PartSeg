@@ -281,6 +281,7 @@ class ImageView(QWidget):
 
     image_canvas = ImageCanvas  # can be used to customize canvas. eg. add more signals
     hide_signal = Signal(bool)
+    view_changed = Signal()
 
     # zoom_changed = Signal(float, float, float)
 
@@ -364,6 +365,15 @@ class ImageView(QWidget):
         settings.image_changed.connect(self.set_image)
         settings.labels_changed.connect(self.paint_layer)
         self.channel_control.coloring_update.connect(self.paint_layer)
+        self.stack_slider.sliderMoved.connect(self.view_changed_func)
+        self.time_slider.sliderMoved.connect(self.view_changed_func)
+        self.image_area.zoom_changed.connect(self.view_changed_func)
+        self.image_area.horizontalScrollBar().valueChanged.connect(self.view_changed_func)
+        self.image_area.verticalScrollBar().valueChanged.connect(self.view_changed_func)
+
+    @Slot()
+    def view_changed_func(self):
+        self.view_changed.emit()
 
     def resizeEvent(self, event: QResizeEvent):
         if event.size().width() > 500 and not self._channel_control_top:
