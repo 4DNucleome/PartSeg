@@ -57,7 +57,6 @@ class GenericGetPropertyWidget(GetPropertyWidget):
             widget = self.get_widget(val)
             layout.addRow(name, widget)
             self.widget_list.append((key, widget))
-            # print(key, val)
         self.setLayout(layout)
 
     def get_values(self):

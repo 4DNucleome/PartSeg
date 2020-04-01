@@ -396,13 +396,10 @@ class TextShow(QTextEdit):
         self.setReadOnly(True)
         # self.setTextBackgroundColor()
         p: QPalette = self.palette()
-        print(p.color(self.backgroundRole()).getRgb())
         p.setColor(QPalette.Base, p.color(self.backgroundRole()))
-        print(p.color(self.backgroundRole()).getRgb())
         self.setPalette(p)
 
     def height(self):
-        print("a")
         metrics = QFontMetrics(self.currentFont())
         height = metrics.height()
         return height * 5

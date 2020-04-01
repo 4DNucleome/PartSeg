@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import tarfile
 import typing
 from copy import copy
@@ -110,7 +111,7 @@ def load_project(
     if version <= project_version_info:
         return ProjectTuple(file_path, image, segmentation, full_segmentation, mask, history, algorithm_dict)
     else:
-        print(version, project_version_info)
+        print("This project is from new version of PartSeg:", version, project_version_info, file=sys.stderr)
         return ProjectTuple(
             file_path,
             image,

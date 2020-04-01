@@ -30,7 +30,6 @@ class StackedWidgetWithSelector(QStackedWidget):
 
     def showEvent(self, _):
         self.selector.show()
-        print(self.parent().layout())
 
 
     def hideEvent(self, _):

@@ -29,7 +29,8 @@ sys.meta_path.append(MyImport())
 
 print(
     "[Warning] PartSeg.tiff_image module name is deprecated. It is renamed to PartSegImage"
-    "To fail this import set environment variable 'NO_DEPRECATED' to 1"
+    "To fail this import set environment variable 'NO_DEPRECATED' to 1",
+    file=sys.stderr
 )
 
 if "NO_DEPRECATED" in os.environ and os.environ["NO_DEPRECATED"] == "1":

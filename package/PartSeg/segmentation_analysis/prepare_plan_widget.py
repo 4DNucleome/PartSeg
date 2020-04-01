@@ -646,7 +646,6 @@ class CreatePlan(QWidget):
             else:
                 self.generate_mask_btn.setEnabled(False)
             self.generate_mask_btn.setToolTip("Need at least two named mask and root selected")
-            print(self.mask_set)
         elif _check_widget(self.mask_stack, MaskWidget):  # mask from segmentation
             if (not update and node_type == NodeType.segment) or (update and node_type == NodeType.mask):
                 self.generate_mask_btn.setEnabled(True)

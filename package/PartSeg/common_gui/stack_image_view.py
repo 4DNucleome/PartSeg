@@ -471,11 +471,7 @@ class ImageView(QWidget):
     def paint_layer(self):
         if self.image is None:
             return
-        try:
-            img = np.copy(self.get_layer())
-        except IndexError:
-            print(self.sender())
-            raise
+        img = np.copy(self.get_layer())
         color_list = self.channel_control.current_colormaps
         borders = self._settings.border_val[:]
         for i, p in enumerate(self.channel_control.get_limits()):
@@ -795,7 +791,6 @@ class MyScrollArea(QScrollArea):
         y_pos_new = final_size.height() * y_ratio
         self.x_mid = x_pos_new - event.x() + (self.get_width()) / 2
         self.y_mid = y_pos_new - event.y() + (self.get_height()) / 2
-        print(self.pixmap.pos(), self.x_mid, self.y_mid)
 
         if self.size().width() - 2 > self.pixmap.width() and self.size().height() - 2 > self.pixmap.height():
             # print("B")

@@ -113,6 +113,7 @@ class ProgressView(QWidget):
                 self.task_que.addItem("Task {} ({}/{})".format(i, progress, total))
         if not self.calculation_manager.has_work:
             print(
+                "[ProgressView.update_info]",
                 self.calculation_manager.has_work,
                 self.calculation_manager.batch_manager.has_work,
                 self.calculation_manager.writer.writing_finished(),
