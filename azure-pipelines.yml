@@ -53,7 +53,7 @@ stages:
             path: $(Build.SourcesDirectory)/test_data
         - script: pip install -r requirements/requirements_dev.txt
           displayName: "Install deps"
-        - script: tox -c tox-azure.ini -e py37-PyQt5,py37-PySide2
+        - script: tox -c tox-azure.ini -e py37-PyQt5
           displayName: "Run Tox"
 
   - stage: Builds
@@ -154,10 +154,13 @@ stages:
           - script: $(test_path)
             displayName: TestBuild
 
+  - stage: Documentation_check
+    dependsOn: []
+    jobs:
       - job: help
         pool: {vmImage: 'Ubuntu-16.04'}
         steps:
-          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.6', architecture: x64}}
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7', architecture: x64}}
           - bash: |
               python -m pip install -r requirements/requirements_pyinstaller.txt
               python -m pip install .
@@ -179,7 +182,7 @@ stages:
         variables:
           DATA_PATH: typy_neuronow2
         steps:
-          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.6', architecture: x64}}
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7', architecture: x64}}
           - bash: |
               python -m pip install -r requirements_pyinstaller.txt
               python -m pip install .
