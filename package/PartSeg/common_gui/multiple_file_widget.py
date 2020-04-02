@@ -17,15 +17,13 @@ from qtpy.QtWidgets import (
     QApplication,
     QMenu,
     QAction,
-    QLayout,
 )
 from qtpy.QtGui import QFontMetrics, QResizeEvent, QMouseEvent
 
 from qtpy.QtCore import Qt, QTimer, Slot, Signal
 from collections import defaultdict, Counter
 
-from PartSeg.common_backend.base_settings import BaseSettings, SwapTimeStackException, TimeAndStackException
-from PartSegImage import Image
+from PartSeg.common_backend.base_settings import BaseSettings
 from PartSegCore.io_utils import LoadBase, ProjectInfoBase
 from .custom_load_dialog import CustomLoadDialog, LoadProperty
 from .waiting_dialog import ExecuteFunctionDialog

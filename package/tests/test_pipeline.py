@@ -14,9 +14,7 @@ from PartSegCore.analysis import (
 from PartSegCore.analysis.calculate_pipeline import calculate_pipeline
 from PartSegCore.analysis.load_functions import LoadProject
 from PartSegCore.analysis.save_functions import SaveProject
-from PartSegCore.image_operations import RadiusType
-from PartSegCore.mask_create import MaskProperty, calculate_mask
-from PartSegImage import Image
+from PartSegCore.mask_create import calculate_mask
 
 
 @pytest.mark.parametrize("channel", [0, 1])
