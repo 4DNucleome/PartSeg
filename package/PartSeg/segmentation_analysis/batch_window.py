@@ -2,6 +2,8 @@
 import logging
 import multiprocessing
 import os
+import typing
+from io import BytesIO
 from pathlib import Path
 
 import numpy as np
@@ -29,6 +31,9 @@ from qtpy.QtWidgets import (
 )
 
 from PartSeg.common_gui.error_report import ExceptionListItem, ExceptionList
+from PartSegCore.algorithm_describe_base import AlgorithmProperty
+from PartSegCore.io_utils import SaveBase
+from ..common_gui.custom_save_dialog import SaveDialog
 from ..common_gui.select_multiple_files import AddFiles
 from .partseg_settings import PartSettings
 from PartSegCore.analysis.batch_processing.batch_backend import CalculationManager
@@ -38,6 +43,31 @@ from PartSegCore.universal_const import Units
 from ..common_gui.universal_gui_part import Spacing, right_label
 
 __author__ = "Grzegorz Bokota"
+
+
+class SaveExcel(SaveBase):
+    @classmethod
+    def get_short_name(cls):
+        return "excel"
+
+    @classmethod
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info,
+        parameters: dict,
+        range_changed=None,
+        step_changed=None,
+    ):
+        pass
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Excel (*.xlsx)"
+
+    @classmethod
+    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+        return []
 
 
 class ProgressView(QWidget):
@@ -209,15 +239,15 @@ class FileChoose(QWidget):
             self.run_button.setDisabled(True)
 
     def chose_result_file(self):
-        dial = QFileDialog(self, "Select result file")
+        dial = SaveDialog(
+            {SaveExcel.get_short_name(): SaveExcel}, system_widget=False, history=self.settings.get_path_history()
+        )
         dial.setDirectory(
             self.settings.get("io.save_directory", self.settings.get("io.open_directory", str(Path.home())))
         )
-        dial.setFileMode(QFileDialog.AnyFile)
-        dial.setAcceptMode(QFileDialog.AcceptSave)
-        dial.setNameFilter("Excel file (*.xlsx)")
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
+            self.settings.add_path_history(os.path.dirname(file_path))
             if os.path.splitext(file_path)[1] == "":
                 file_path += ".xlsx"
             self.result_file.setText(file_path)
@@ -387,6 +417,7 @@ class CalculationPrepare(QDialog):
 
     def choose_result_prefix(self):
         dial = QFileDialog()
+        dial.setOption(QFileDialog.DontUseNativeDialog, True)
         dial.setAcceptMode(QFileDialog.AcceptOpen)
         dial.setFileMode(QFileDialog.Directory)
         dial.setDirectory(self.result_prefix.text())
