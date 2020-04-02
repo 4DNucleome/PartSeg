@@ -28,6 +28,7 @@ from qtpy.QtWidgets import (
     QTabWidget,
     QTreeWidget,
     QTreeWidgetItem,
+    QListWidgetItem,
 )
 
 from PartSeg.common_gui.error_report import ExceptionListItem, ExceptionList
@@ -128,7 +129,8 @@ class ProgressView(QWidget):
     def update_info(self):
         errors, total, parts = self.calculation_manager.get_results()
         for el in errors:
-            ExceptionListItem(el, self.logs)
+            QListWidgetItem(el[0], self.logs)
+            ExceptionListItem(el[1], self.logs)
         self.whole_progress.setValue(total)
         working_search = True
         for i, (progress, total) in enumerate(parts):

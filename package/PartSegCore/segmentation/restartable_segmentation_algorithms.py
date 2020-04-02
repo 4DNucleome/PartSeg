@@ -102,6 +102,7 @@ class BorderRim(RestartableAlgorithm):
         if self.mask is not None:
             result = BorderRimBase.border_mask(mask=self.mask, voxel_size=self.image.spacing, **self.new_parameters)
             return SegmentationResult(result, self.get_segmentation_profile(), result, None)
+        raise SegmentationLimitException("Border Rim needs mask")
 
 
 class SplitMaskOnPart(RestartableAlgorithm):

@@ -26,6 +26,7 @@ import sentry_sdk
 from packaging.version import parse as pares_version
 
 from PartSeg import __version__
+from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 
 
 class ErrorDialog(QDialog):
@@ -131,15 +132,16 @@ class ExceptionListItem(QListWidgetItem):
         self, exception: typing.Union[Exception, typing.Tuple[Exception, typing.List]], parent: QListWidget = None
     ):
         if isinstance(exception, Exception):
-            super().__init__(f"{type(exception)}: {exception}", parent, QListWidgetItem.UserType)
-            self.exception = exception
-            self.traceback_summary = None
+            traceback_summary = None
         else:
-            super().__init__(f"{type(exception[0])}: {exception[0]}", parent, QListWidgetItem.UserType)
-            self.exception = exception[0]
-            self.traceback_summary = exception[1]
-
-        self.setToolTip("Double click for report")
+            exception, traceback_summary = exception
+        if isinstance(exception, SegmentationLimitException):
+            super().__init__(f"{exception}", parent, QListWidgetItem.UserType)
+        elif isinstance(exception, Exception):
+            super().__init__(f"{type(exception)}: {exception}", parent, QListWidgetItem.UserType)
+            self.setToolTip("Double click for report")
+        self.exception = exception
+        self.traceback_summary = traceback_summary
 
 
 class ExceptionList(QListWidget):
@@ -167,6 +169,6 @@ class ExceptionList(QListWidget):
 
         This function is connected to :py:meth:`QListWidget.itemDoubleClicked`
         """
-        if isinstance(el, ExceptionListItem):
+        if isinstance(el, ExceptionListItem) and not isinstance(el.exception, SegmentationLimitException):
             dial = ErrorDialog(el.exception, "Error during batch processing", traceback_summary=el.traceback_summary)
             dial.exec()

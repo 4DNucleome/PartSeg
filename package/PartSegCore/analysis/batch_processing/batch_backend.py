@@ -22,6 +22,7 @@ Calculation hierarchy:
 """
 import logging
 import threading
+import traceback
 import typing
 from collections import OrderedDict
 from enum import Enum
@@ -75,7 +76,11 @@ def do_calculation(file_info: typing.Tuple[int, str], calculation: BaseCalculati
     """
     calc = CalculationProcess()
     index, file_path = file_info
-    return index, calc.do_calculation(FileCalculation(file_path, calculation))
+    try:
+        return index, calc.do_calculation(FileCalculation(file_path, calculation))
+    except Exception as e:
+        # traceback.print_exc()
+        return index, [(e, traceback.extract_tb(e.__traceback__))]
 
 
 class CalculationProcess:
@@ -421,10 +426,14 @@ class CalculationManager:
             self.calculation_done += 1
             self.counter_dict[uuid_id] += 1
             calculation = self.calculation_dict[uuid_id][0]
+            if isinstance(ind, Exception):
+                self.errors_list.append((ind, result_list))
+                new_errors.append((ind, result_list))
+                continue
             for el in result_list:
                 if isinstance(el, tuple) and isinstance(el[0], Exception):
-                    self.errors_list.append(el)
-                    new_errors.append(el)
+                    self.errors_list.append((calculation.file_list[ind], el))
+                    new_errors.append((calculation.file_list[ind], el))
                 else:
                     if not isinstance(el, tuple):
                         raise ValueError(f"el should be tuple. It is {type(el)}")
