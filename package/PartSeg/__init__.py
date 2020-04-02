@@ -1,4 +1,5 @@
 from PartSeg.version import version
+from PartSeg.changelog import changelog
 
 __version__ = version
 

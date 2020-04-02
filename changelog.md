@@ -1,4 +1,9 @@
-# Changelog 
+# Changelog
+
+## 0.10.8
+-   fix synchronisation between viewers in Segmentation Analysis 
+-   fix batch crash on error during batch run, add information about file on which calculation fails 
+-   add changelog preview in Help > About
 
 ## 0.10.7
 -   in measurements, on empty list of components mean will return 0
