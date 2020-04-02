@@ -21,6 +21,6 @@ python:
   version: 3.7
   install:
     - requirements: docs/requirements.txt
-    - requirements: requirements_freezed.txt
+    - requirements: requirements/requirements_pyinstaller.txt
     - method: setuptools
       path: .

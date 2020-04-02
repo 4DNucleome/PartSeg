@@ -1,13 +1,11 @@
 version: 1.0
 requirements:
-  - requirements_freezed.txt
-  - requirements-ci.txt
-  - requirements_pyinstaller.txt
-  - docs/requirements_freezed.txt
+  - requirements/requirements_ci.txt
+  - requirements/requirements_dev.txt
+  - requirements/requirements_pyinstaller.txt
+  - docs/requirements.txt
   - setup.py
   - tox.ini
-  - path: dev_requirements.txt
-    parser: python/pip
   - path: tox-azure.ini
     parser: python/tox
   - path: tox-minimal.ini

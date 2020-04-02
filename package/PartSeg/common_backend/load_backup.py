@@ -11,7 +11,7 @@ from .. import __version__
 
 def import_config():
     if not os.path.exists(state_store.save_folder):
-        version = packaging.version.parse(__version__)
+        version = packaging.version.parse(packaging.version.parse(__version__).base_version)
         base_folder = os.path.dirname(state_store.save_folder)
         possible_folders = glob(os.path.join(base_folder, "*"))
         versions = list(

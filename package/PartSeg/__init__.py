@@ -1,4 +1,6 @@
-__version__ = "0.10.7"
+from PartSeg.version import version
+
+__version__ = version
 
 __author__ = "Grzegorz Bokota"
 

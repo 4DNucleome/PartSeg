@@ -1,0 +1,6 @@
+numpy >= 1.16.0
+Cython >= 0.29.16
+setuptools>=42.0.0
+wheel>=0.34.2
+setuptools_scm[toml]>=3.4
+tox

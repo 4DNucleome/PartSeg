@@ -3,6 +3,7 @@ import os
 import re
 
 import setuptools
+from setuptools_scm import get_version
 
 # from distutils.core import setup
 from distutils.extension import Extension
@@ -71,14 +72,6 @@ def read(*parts):
         return fp.read()
 
 
-def find_version(*file_paths):
-    version_file = read(*file_paths)
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
-    if version_match:
-        return version_match.group(1)
-    raise RuntimeError("Unable to find version string.")
-
-
 def readme():
     this_directory = os.path.abspath(os.path.dirname(__file__))
     reg = re.compile(r"(!\[[^]]*\])\((images/[^)]*)\)")
@@ -86,7 +79,7 @@ def readme():
     with open(os.path.join(this_directory, "Readme.md")) as f:
         text = f.read()
         text = reg.sub(r"\1(https://raw.githubusercontent.com/4DNucleome/PartSeg/master/\2)", text)
-        text = reg2.sub(f"PartSeg-{find_version('package', 'PartSeg', '__init__.py')}", text)
+        text = reg2.sub(f"PartSeg-{get_version()}", text)
     with open(os.path.join(this_directory, "changelog.md")) as f:
         chg = f.read()
         text += "\n\n" + chg.replace("# ", "## ")
