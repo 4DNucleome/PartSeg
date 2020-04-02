@@ -37,7 +37,7 @@ a = Analysis(['package/PartSeg/launcher_main.py'],
                  ("static_files/initial_images/*", "PartSegData/static_files/initial_images"),
                  ("static_files/colors.npz", "PartSegData/static_files/"),
                  ("fonts/*", "PartSegData/fonts/")]] + qt_data +
-                     [(os.path.join(base_path, "plugins/itk_snap_save/__init__.py"), "PartSeg/plugins/itk_snap_save")],
+                     [(os.path.join(base_path, "plugins/itk_snap_save/__init__.py"), "plugins/itk_snap_save")],
              hiddenimports=hiddenimports + [
                  'numpy.core._dtype_ctypes', 'sentry_sdk.integrations.logging', 'sentry_sdk.integrations.stdlib',
                  'sentry_sdk.integrations.excepthook','sentry_sdk.integrations.dedupe', 'sentry_sdk.integrations.atexit'
@@ -52,12 +52,13 @@ a = Analysis(['package/PartSeg/launcher_main.py'],
              win_private_assemblies=False,
              cipher=block_cipher,
              noarchive=False)
+
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
 
 exe_args = {
     "exclude_binaries": True,
-    "name": 'PartSeg_exec',
+    "name": 'PartSeg',
     "debug": False,
     "bootloader_ignore_signals": False,
     "strip": False,
