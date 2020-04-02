@@ -153,7 +153,7 @@ def get_save_path(op: Save, calculation: "FileCalculation") -> str:
 
     extension = save_dict[op.algorithm].get_default_extension()
     rel_path = os.path.relpath(calculation.file_path, calculation.base_prefix)
-    rel_path = os.path.splitext(rel_path)[1]
+    rel_path = os.path.splitext(rel_path)[0]
     if op.directory:
         file_path = os.path.join(calculation.result_prefix, rel_path, op.suffix + extension)
     else:
@@ -731,9 +731,9 @@ class CalculationPlan:
                 text = f"Save {base} in directory with name " + el.suffix
             else:
                 if el.suffix != "":
-                    text = base + " with suffix " + el.suffix
+                    text = "Save " + base + " with suffix " + el.suffix
                 else:
-                    text = base
+                    text = "Save " + base
             return text
         if isinstance(el, MaskIntersection):
             if el.name == "":
