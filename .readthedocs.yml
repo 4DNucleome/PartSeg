@@ -22,5 +22,6 @@ python:
   install:
     - requirements: docs/requirements.txt
     - requirements: requirements/requirements_pyinstaller.txt
+    - requirements: requirements/requirements_dev.txt
     - method: setuptools
       path: .
