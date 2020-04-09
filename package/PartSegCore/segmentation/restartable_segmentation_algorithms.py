@@ -121,7 +121,7 @@ class SplitMaskOnPart(RestartableAlgorithm):
 
     @classmethod
     def get_name(cls) -> str:
-        return "Split Mask o Part"
+        return "Split Mask on Part"
 
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
