@@ -230,12 +230,12 @@ class ColorComboBox(QComboBox):
         return self.blur.isVisible
 
     @property
-    def set_lock(self):
+    def set_lock(self) -> typing.Callable[[bool], None]:
         """set lock property"""
         return self.lock.setVisible
 
     @property
-    def set_blur(self):
+    def set_blur(self) -> typing.Callable[[bool], None]:
         """set blur property"""
         return self.blur.setVisible
 
@@ -433,6 +433,23 @@ class ColorComboBoxGroup(QWidget):
         return self.layout().count()
 
     @property
+    def selected_colormaps(self) -> typing.List[ColorMap]:
+        resp = []
+        for i in range(self.layout().count()):
+            el: ColorComboBox = self.layout().itemAt(i).widget()
+            resp.append(self.settings.colormap_dict[el.currentText()][0])
+
+        return resp
+
+    @property
+    def channel_visibility(self) -> typing.List[bool]:
+        resp = []
+        for i in range(self.layout().count()):
+            el: ColorComboBox = self.layout().itemAt(i).widget()
+            resp.append(el.is_checked())
+        return resp
+
+    @property
     def current_colors(self) -> typing.List[typing.Optional[str]]:
         """"""
         resp = []
@@ -538,17 +555,6 @@ class ColorComboBoxGroup(QWidget):
             self.coloring_update.emit()
         if self.active_box == channel:
             self.change_channel.emit(self.name, channel)
-
-
-class ColorPreview(QWidget):
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    def paintEvent(self, event: QPaintEvent):
-        rect = event.rect()
-        painter = QPainter(self)
-        if self.parent().image is not None:
-            painter.drawImage(rect, self.parent().image)
 
 
 class LockedInfoWidget(QWidget):

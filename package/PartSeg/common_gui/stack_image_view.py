@@ -11,7 +11,6 @@ import numpy as np
 from qtpy import QtGui, QtCore
 from qtpy.QtCore import QRect, QSize, QObject, Signal, QPoint, Qt, QEvent, Slot
 from qtpy.QtGui import QWheelEvent, QPainter, QPen, QColor, QPalette, QPixmap, QImage, QIcon, QResizeEvent, QMouseEvent
-from qtpy.QtWidgets import QLabel, QGridLayout
 from qtpy.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -22,6 +21,8 @@ from qtpy.QtWidgets import (
     QScrollBar,
     QCheckBox,
     QComboBox,
+    QLabel,
+    QGridLayout,
 )
 
 from PartSeg.common_gui.numpy_qimage import NumpyQImage
