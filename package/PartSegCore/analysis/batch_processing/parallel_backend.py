@@ -192,7 +192,7 @@ class BatchWorker:
         task_queue: Queue,
         order_queue: Queue,
         result_queue: Queue,
-        calculation_dict: Dict[str, Tuple[Any, Callable[[Any, Any], Any]]],
+        calculation_dict: Dict[uuid.UUID, Tuple[Any, Callable[[Any, Any], Any]]],
     ):
         self.task_queue = task_queue
         self.order_queue = order_queue
@@ -208,13 +208,15 @@ class BatchWorker:
         data, task_uuid = val
         global_data, fun = self.calculation_dict[task_uuid]
         try:
-            self.result_queue.put((task_uuid, fun(data, global_data)))
+            res = fun(data, global_data)
+            print(res)
+            self.result_queue.put((task_uuid, res))
         except Exception as e:
             traceback.print_exc()
             exc_type, _exc_obj, exc_tb = sys.exc_info()
             f_name = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print(exc_type, f_name, exc_tb.tb_lineno, file=sys.stderr)
-            self.result_queue.put((task_uuid, (e, traceback.extract_tb(e.__traceback__))))
+            self.result_queue.put((task_uuid, (-1, [(e, traceback.extract_tb(e.__traceback__))])))
 
     def run(self):
         """Worker main loop"""
@@ -247,7 +249,7 @@ class BatchWorker:
         logging.info("Process {} ended".format(os.getpid()))
 
 
-def spawn_worker(task_queue: Queue, order_queue: Queue, result_queue: Queue, calculation_dict: Dict[str, Any]):
+def spawn_worker(task_queue: Queue, order_queue: Queue, result_queue: Queue, calculation_dict: Dict[uuid.UUID, Any]):
     """
     Function for spawning worker. Designed as argument for :py:meth:`multiprocessing.Process`.
 

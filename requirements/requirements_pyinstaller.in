@@ -13,6 +13,7 @@ pandas
 PartSegData
 PyInstaller
 PyQt5
+requests
 QtPy
 scipy
 sentry-sdk

@@ -432,7 +432,8 @@ class CalculationManager:
                 continue
             for el in result_list:
                 if isinstance(el, tuple) and isinstance(el[0], Exception):
-                    self.errors_list.append((calculation.file_list[ind], el))
+                    if ind != -1:
+                        self.errors_list.append((calculation.file_list[ind], el))
                     new_errors.append((calculation.file_list[ind], el))
                 else:
                     if not isinstance(el, tuple):

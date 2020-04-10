@@ -1,9 +1,13 @@
 import argparse
+import getpass
 import locale
+import os
+import platform
 import sys
 import sentry_sdk
-import os
 from typing import Optional, Sequence, Text
+import zlib
+
 from PartSegCore import state_store
 from PartSeg.common_backend.except_hook import my_excepthook
 import PartSeg
@@ -96,10 +100,18 @@ class CustomParser(argparse.ArgumentParser):
         state_store.save_suffix = args.save_suffix[0]
         state_store.save_folder = args.save_directory[0]
         if args.no_report and args.no_dialog:
-            sentry_sdk.init(
-                "https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302",
-                release="PartSeg@{}".format(PartSeg.__version__),
-            )
+            _setup_sentry()
         sys.excepthook = my_excepthook
         locale.setlocale(locale.LC_NUMERIC, "")
         return args
+
+
+def _setup_sentry():
+    sentry_sdk.init(
+        "https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302",
+        release="PartSeg@{}".format(PartSeg.__version__),
+    )
+    with sentry_sdk.configure_scope() as scope:
+        scope.user = {
+            "name": getpass.getuser(), "id": zlib.adler32((getpass.getuser() + "#" + platform.node()).encode())
+        }
