@@ -35,6 +35,9 @@ import numpy as np
 import pandas as pd
 import tifffile
 
+from ...segmentation import RestartableAlgorithm
+
+
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.analysis.calculation_plan import (
@@ -65,6 +68,18 @@ from .parallel_backend import BatchManager
 from ...io_utils import WrongFileTypeException, HistoryElement
 
 
+def prepare_error_data(exception: Exception):
+    try:
+        from sentry_sdk.serializer import serialize
+        from sentry_sdk.utils import event_from_exception
+
+        event, hint = event_from_exception(exception)
+        event = serialize(event)
+        return exception, (event, traceback.extract_tb(exception.__traceback__))
+    except ImportError:
+        return exception, traceback.extract_tb(exception.__traceback__)
+
+
 def do_calculation(file_info: typing.Tuple[int, str], calculation: BaseCalculation):
     """
     Main function which will be used for run calculation.
@@ -80,7 +95,7 @@ def do_calculation(file_info: typing.Tuple[int, str], calculation: BaseCalculati
         return index, calc.do_calculation(FileCalculation(file_path, calculation))
     except Exception as e:
         # traceback.print_exc()
-        return index, [(e, traceback.extract_tb(e.__traceback__))]
+        return index, [prepare_error_data(e)]
 
 
 class CalculationProcess:
@@ -206,7 +221,7 @@ class CalculationProcess:
         segmentation_class = analysis_algorithm_dict.get(operation.algorithm, None)
         if segmentation_class is None:
             raise ValueError(f"Segmentation class {operation.algorithm} do not found")
-        segmentation_algorithm = segmentation_class()
+        segmentation_algorithm: RestartableAlgorithm = segmentation_class()
         segmentation_algorithm.set_image(self.image)
         segmentation_algorithm.set_mask(self.mask)
         segmentation_algorithm.set_parameters(**operation.values)

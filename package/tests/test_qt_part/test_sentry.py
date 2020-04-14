@@ -1,9 +1,13 @@
-import pytest
+import multiprocessing
+import traceback
+
 import sentry_sdk
 import sentry_sdk.utils
 from sentry_sdk.hub import Hub
 from sentry_sdk.client import Client
 from sentry_sdk.serializer import serialize
+
+from PartSegCore.analysis.batch_processing.batch_backend import prepare_error_data
 
 
 def test_message_clip(monkeypatch):
@@ -72,4 +76,37 @@ def test_sentry_report_no_clip(monkeypatch):
         with sentry_sdk.push_scope() as scope:
             scope.set_extra("lorem", message)
             event_id = sentry_sdk.capture_event(event, hint=hint)
+        assert event_id is not None
         assert happen[0] is True
+
+
+def exception_fun(num: int):
+    if num < 1:
+        raise ValueError("test")
+    exception_fun(num - 1)
+
+
+def executor_fun(que: multiprocessing.Queue):
+    try:
+        exception_fun(10)
+    except ValueError as e:
+        ex, (event, tr) = prepare_error_data(e)
+        que.put((ex, event, tr))
+
+
+def test_exception_pass(monkeypatch):
+    def check_event(event):
+        assert len(event["exception"]["values"][0]["stacktrace"]["frames"]) == 12
+
+    message_queue = multiprocessing.Queue()
+    p = multiprocessing.Process(target=executor_fun, args=(message_queue,))
+    p.start()
+    p.join()
+    ex, event, tr = message_queue.get()
+    assert isinstance(ex, ValueError)
+    assert isinstance(event, dict)
+    client = Client("https://aaa@test.pl/77")
+    Hub.current.bind_client(client)
+    monkeypatch.setattr(client.transport, "capture_event", check_event)
+    event_id = sentry_sdk.capture_event(event)
+    assert event_id is not None

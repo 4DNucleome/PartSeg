@@ -40,7 +40,7 @@ class ErrorDialog(QDialog):
     Dialog to present user the exception information. User can send error report (possible to add custom information)
     """
 
-    def __init__(self, exception: Exception, description: str, additional_notes: str = "", traceback_summary=None):
+    def __init__(self, exception: Exception, description: str, additional_notes: str = "", additional_info=None):
         super().__init__()
         self.exception = exception
         self.additional_notes = additional_notes
@@ -48,13 +48,15 @@ class ErrorDialog(QDialog):
         self.send_report_btn.setDisabled(not state_store.report_errors)
         self.cancel_btn = QPushButton("Cancel")
         self.error_description = QTextEdit()
-        self.traceback_summary = traceback_summary
-        if traceback_summary is None:
+        self.traceback_summary = additional_info
+        if additional_info is None:
             self.error_description.setText(
                 "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
             )
-        elif isinstance(traceback_summary, traceback.StackSummary):
-            self.error_description.setText("".join(traceback_summary.format()))
+        elif isinstance(additional_info, traceback.StackSummary):
+            self.error_description.setText("".join(additional_info.format()))
+        elif isinstance(additional_info[1], traceback.StackSummary):
+            self.error_description.setText("".join(additional_info[1].format()))
         self.error_description.append(str(exception))
         self.error_description.setReadOnly(True)
         self.additional_info = QTextEdit()
@@ -93,8 +95,11 @@ class ErrorDialog(QDialog):
         btn_layout.addWidget(self.send_report_btn)
         layout.addLayout(btn_layout)
         self.setLayout(layout)
-        exec_info = exc_info_from_error(exception)
-        self.exception_tuple = event_from_exception(exec_info)
+        if isinstance(additional_info, tuple):
+            self.exception_tuple = additional_info[0], None
+        else:
+            exec_info = exc_info_from_error(exception)
+            self.exception_tuple = event_from_exception(exec_info)
 
     def exec(self):
         """
@@ -133,7 +138,7 @@ class ErrorDialog(QDialog):
 
             event["message"] = text
             if self.traceback_summary is not None:
-                scope.set_extra("traceback", "".join(self.traceback_summary.format()))
+                scope.set_extra("traceback", self.error_description.toPlainText())
 
             event_id = sentry_sdk.capture_event(event, hint=hint)
         if event_id is None:
@@ -187,7 +192,7 @@ class ExceptionListItem(QListWidgetItem):
             super().__init__(f"{type(exception)}: {exception}", parent, QListWidgetItem.UserType)
             self.setToolTip("Double click for report")
         self.exception = exception
-        self.traceback_summary = traceback_summary
+        self.additional_info = traceback_summary
 
 
 class ExceptionList(QListWidget):
@@ -215,6 +220,6 @@ class ExceptionList(QListWidget):
 
         This function is connected to :py:meth:`QListWidget.itemDoubleClicked`
         """
-        if isinstance(el, ExceptionListItem):  #  and not isinstance(el.exception, SegmentationLimitException):
-            dial = ErrorDialog(el.exception, "Error during batch processing", traceback_summary=el.traceback_summary)
+        if isinstance(el, ExceptionListItem) and not isinstance(el.exception, SegmentationLimitException):
+            dial = ErrorDialog(el.exception, "Error during batch processing", additional_info=el.additional_info)
             dial.exec()
