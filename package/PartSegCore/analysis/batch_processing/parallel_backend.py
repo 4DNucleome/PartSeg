@@ -24,7 +24,7 @@ import uuid
 from enum import Enum
 from queue import Queue, Empty
 from threading import Timer, RLock
-from typing import Callable, List, Any, Tuple, Dict, Union
+from typing import Callable, List, Any, Tuple, Dict
 
 __author__ = "Grzegorz Bokota"
 
@@ -64,7 +64,7 @@ class BatchManager:
         self.process_list = []
         self.locker = RLock()
 
-    def get_result(self) -> List[Tuple[str, Union[Any, Tuple[Exception, Any]]]]:
+    def get_result(self) -> List[Tuple[uuid.UUID, Any]]:
         """
         Clean result queue and return it as list
 

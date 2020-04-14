@@ -91,7 +91,7 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
             return self.calculation_run(report_fun)
         except SegmentationLimitException:
             raise
-        except Exception as e:
+        except Exception:
             parameters = self.get_segmentation_profile()
             image = self.image
             raise SegmentationException(self.get_name(), parameters, image)

@@ -11,7 +11,6 @@ import typing
 
 import requests
 import sentry_sdk
-from packaging.version import parse as pares_version
 from qtpy.QtWidgets import (
     QDialog,
     QPushButton,
@@ -110,16 +109,6 @@ class ErrorDialog(QDialog):
         if not state_store.show_error_dialog:
             sys.__excepthook__(type(self.exception), self.exception, self.exception.__traceback__)
             return False
-        """if pares_version(__version__).is_prerelease or pares_version(__version__).is_devrelease:
-            with sentry_sdk.push_scope() as scope:
-                if self.traceback_summary is not None:
-                    scope.set_extra("traceback", "".join(self.traceback_summary.format()))
-                if len(self.additional_notes) > 0:
-                    scope.set_extra("additional_notes", self.additional_notes)
-                event, hint = self.exception_tuple
-
-                event["message"] = "".join(self.traceback_summary.format())
-                sentry_sdk.capture_exception(self.exception)"""
         super().exec_()
 
     def send_information(self):
@@ -203,14 +192,6 @@ class ExceptionList(QListWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.itemDoubleClicked.connect(self.item_double_clicked)
-
-    def add_exception(self, exc: Exception):
-        """
-        Add exception to list
-        """
-        ExceptionListItem(exc, self)
-        if pares_version(__version__).is_prerelease or pares_version(__version__).is_devrelease:
-            sentry_sdk.capture_exception(exc)
 
     @staticmethod
     def item_double_clicked(el: QListWidgetItem):

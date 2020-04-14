@@ -7,6 +7,7 @@ from io import BytesIO
 from pathlib import Path
 
 import numpy as np
+import sentry_sdk
 from PartSegData import icons_dir
 from qtpy.QtCore import Qt, QTimer, QByteArray
 from qtpy.QtGui import QIcon
@@ -32,8 +33,11 @@ from qtpy.QtWidgets import (
 )
 
 from PartSeg.common_gui.error_report import ExceptionListItem, ExceptionList
+from PartSegCore import state_store
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
 from PartSegCore.io_utils import SaveBase
+from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
+from .. import parsed_version
 from ..common_gui.custom_save_dialog import SaveDialog
 from ..common_gui.select_multiple_files import AddFiles
 from .partseg_settings import PartSettings
@@ -127,13 +131,21 @@ class ProgressView(QWidget):
             self.preview_timer.start()
 
     def update_info(self):
-        errors, total, parts = self.calculation_manager.get_results()
-        for el in errors:
-            QListWidgetItem(el[0], self.logs)
+        res = self.calculation_manager.get_results()
+        for el in res.errors:
+            if el[0]:
+                QListWidgetItem(el[0], self.logs)
             ExceptionListItem(el[1], self.logs)
-        self.whole_progress.setValue(total)
+            if (
+                state_store.report_errors
+                and parsed_version.is_devrelease
+                and not isinstance(el[1][0], SegmentationLimitException)
+                and isinstance(el[1][1], tuple)
+            ):
+                sentry_sdk.capture_event(el[1][1][0])
+        self.whole_progress.setValue(res.global_counter)
         working_search = True
-        for i, (progress, total) in enumerate(parts):
+        for i, (progress, total) in enumerate(res.jobs_status):
             if working_search and progress != total:
                 self.part_progress.setMaximum(total)
                 self.part_progress.setValue(progress)

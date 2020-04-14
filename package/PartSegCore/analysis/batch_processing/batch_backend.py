@@ -23,12 +23,12 @@ Calculation hierarchy:
 import logging
 import threading
 import traceback
-import typing
 from collections import OrderedDict
 from enum import Enum
 from os import path
 from queue import Queue
 from traceback import StackSummary
+from typing import List, Tuple, Union, Optional, Type, NamedTuple, Iterable, Any, Dict
 import uuid
 
 import numpy as np
@@ -68,19 +68,29 @@ from .parallel_backend import BatchManager
 from ...io_utils import WrongFileTypeException, HistoryElement
 
 
-def prepare_error_data(exception: Exception):
+class ResponseData(NamedTuple):
+    path_to_file: str
+    values: List[MeasurementResult]
+
+
+CalculationResultList = List[ResponseData]
+ErrorInfo = Tuple[Exception, Union[StackSummary, Tuple[Dict, StackSummary]]]
+WrappedResult = Tuple[int, List[Union[ErrorInfo, ResponseData]]]
+
+
+def prepare_error_data(exception: Exception) -> ErrorInfo:
     try:
         from sentry_sdk.serializer import serialize
         from sentry_sdk.utils import event_from_exception
 
-        event, hint = event_from_exception(exception)
+        event = event_from_exception(exception)[0]
         event = serialize(event)
         return exception, (event, traceback.extract_tb(exception.__traceback__))
     except ImportError:
         return exception, traceback.extract_tb(exception.__traceback__)
 
 
-def do_calculation(file_info: typing.Tuple[int, str], calculation: BaseCalculation):
+def do_calculation(file_info: Tuple[int, str], calculation: BaseCalculation) -> WrappedResult:
     """
     Main function which will be used for run calculation.
     It create :py:class:`.CalculationProcess` and call it method
@@ -109,17 +119,17 @@ class CalculationProcess:
         self.reused_mask = set()
         self.mask_dict = dict()
         self.calculation = None
-        self.measurement = []
-        self.image: typing.Optional[Image] = None
-        self.segmentation: typing.Optional[np.ndarray] = None
-        self.full_segmentation: typing.Optional[np.ndarray] = None
-        self.mask: typing.Optional[np.ndarray] = None
-        self.history: typing.List[HistoryElement] = []
+        self.measurement: List[MeasurementResult] = []
+        self.image: Optional[Image] = None
+        self.segmentation: Optional[np.ndarray] = None
+        self.full_segmentation: Optional[np.ndarray] = None
+        self.mask: Optional[np.ndarray] = None
+        self.history: List[HistoryElement] = []
         self.algorithm_parameters: dict = {}
-        self.cleaned_channel: typing.Optional[np.ndarray] = None
-        self.results = []
+        self.cleaned_channel: Optional[np.ndarray] = None
+        self.results: CalculationResultList = []
 
-    def do_calculation(self, calculation: FileCalculation):
+    def do_calculation(self, calculation: FileCalculation) -> CalculationResultList:
         """
         Main function for calculation process
 
@@ -169,11 +179,13 @@ class CalculationProcess:
             self.iterate_over(calculation.calculation_plan.execution_tree)
             for el in self.measurement:
                 el.set_filename(path.relpath(project.image.file_path, calculation.base_prefix))
-            self.results.append((path.relpath(project.image.file_path, calculation.base_prefix), self.measurement))
+            self.results.append(
+                ResponseData(path.relpath(project.image.file_path, calculation.base_prefix), self.measurement)
+            )
             self.measurement = []
         return self.results
 
-    def iterate_over(self, node: typing.Union[CalculationTree, typing.List[CalculationTree]]):
+    def iterate_over(self, node: Union[CalculationTree, List[CalculationTree]]):
         """
         Execute calculation on node children or list oof nodes
 
@@ -186,13 +198,13 @@ class CalculationProcess:
         for el in node:
             self.recursive_calculation(el)
 
-    def step_load_mask(self, operation: MaskMapper, children: typing.List[CalculationTree]):
+    def step_load_mask(self, operation: MaskMapper, children: List[CalculationTree]):
         """
         Load mask using mask mapper (mask can be defined with suffix, substitution, or file with mapping saved,
         then iterate over ``children`` nodes.
 
         :param MaskMapper operation: operation to perform
-        :param typing.List[CalculationTree] children: list of nodes to iterate over with applied mask
+        :param List[CalculationTree] children: list of nodes to iterate over with applied mask
         """
         mask_path = operation.get_mask_path(self.calculation.file_path)
         if mask_path == "":
@@ -211,12 +223,12 @@ class CalculationProcess:
         self.iterate_over(children)
         self.mask = old_mask
 
-    def step_segmentation(self, operation: SegmentationProfile, children: typing.List[CalculationTree]):
+    def step_segmentation(self, operation: SegmentationProfile, children: List[CalculationTree]):
         """
         Perform segmentation and iterate over ``children`` nodes
 
         :param SegmentationProfile operation: Specification of segmentation operation
-        :param typing.List[CalculationTree] children: list of nodes to iterate over after perform segmentation
+        :param List[CalculationTree] children: list of nodes to iterate over after perform segmentation
         """
         segmentation_class = analysis_algorithm_dict.get(operation.algorithm, None)
         if segmentation_class is None:
@@ -234,12 +246,12 @@ class CalculationProcess:
         self.iterate_over(children)
         self.segmentation, self.full_segmentation, self.cleaned_channel, self.algorithm_parameters = backup_data
 
-    def step_mask_use(self, operation: MaskUse, children: typing.List[CalculationTree]):
+    def step_mask_use(self, operation: MaskUse, children: List[CalculationTree]):
         """
         use already defined mask and iterate over ``children`` nodes
 
         :param MaskUse operation:
-        :param typing.List[CalculationTree] children: list of nodes to iterate over after perform segmentation
+        :param List[CalculationTree] children: list of nodes to iterate over after perform segmentation
         """
         old_mask = self.mask
         mask = self.mask_dict[operation.name]
@@ -247,15 +259,13 @@ class CalculationProcess:
         self.iterate_over(children)
         self.mask = old_mask
 
-    def step_mask_operation(
-        self, operation: typing.Union[MaskSum, MaskIntersection], children: typing.List[CalculationTree]
-    ):
+    def step_mask_operation(self, operation: Union[MaskSum, MaskIntersection], children: List[CalculationTree]):
         """
         Generate new mask by sum or intersection of existing and iterate over ``children`` nodes
 
         :param operation: mask operation to perform
-        :type operation: typing.Union[MaskSum, MaskIntersection]
-        :param typing.List[CalculationTree] children: list of nodes to iterate over after perform segmentation
+        :type operation: Union[MaskSum, MaskIntersection]
+        :param List[CalculationTree] children: list of nodes to iterate over after perform segmentation
         """
         old_mask = self.mask
         mask1 = self.mask_dict[operation.mask1]
@@ -287,12 +297,12 @@ class CalculationProcess:
         save_path = get_save_path(operation, self.calculation)
         save_class.save(save_path, project_tuple, operation.values)
 
-    def step_mask_create(self, operation: MaskCreate, children: typing.List[CalculationTree]):
+    def step_mask_create(self, operation: MaskCreate, children: List[CalculationTree]):
         """
         Create mask from current segmentation state using definition
 
         :param MaskCreate operation: mask create description.
-        :param typing.List[CalculationTree] children: list of nodes to iterate over after perform segmentation
+        :param List[CalculationTree] children: list of nodes to iterate over after perform segmentation
         """
         mask = calculate_mask(operation.mask_property, self.segmentation, self.mask, self.image.spacing)
         if operation.name in self.reused_mask:
@@ -314,7 +324,7 @@ class CalculationProcess:
         """
         channel = operation.channel
         if channel == -1:
-            segmentation_class: typing.Type[SegmentationAlgorithm] = analysis_algorithm_dict.get(
+            segmentation_class: Type[SegmentationAlgorithm] = analysis_algorithm_dict.get(
                 self.algorithm_parameters["algorithm_name"], None
             )
             if segmentation_class is None:
@@ -355,19 +365,19 @@ class CalculationProcess:
             raise ValueError("Unknown operation {} {}".format(type(node.operation), node.operation))
 
 
-class ResponseData(typing.NamedTuple):
-    path_to_file: str
-    values: typing.List[MeasurementResult]
-
-
-class BatchResultDescription(typing.NamedTuple):
+class BatchResultDescription(NamedTuple):
     """
     Tuple to handle information about part of calculation result.
     """
 
-    errors: typing.List[typing.Tuple[Exception, StackSummary]]  #: list of errors occurred during calculation
+    errors: List[Tuple[str, ErrorInfo]]  #: list of errors occurred during calculation
     global_counter: int  #: total number of calculated steps
-    jobs_status: typing.Iterable[typing.Tuple[int, int]]  #: for each job information about progress
+    jobs_status: Iterable[Tuple[int, int]]  #: for each job information about progress
+
+
+class CalculationInfo(NamedTuple):
+    calculation: Calculation
+    measurement: List[MeasurementCalculate]
 
 
 class CalculationManager:
@@ -379,7 +389,7 @@ class CalculationManager:
     def __init__(self):
         self.batch_manager = BatchManager()
         self.calculation_queue = Queue()
-        self.calculation_dict = OrderedDict()
+        self.calculation_dict: Dict[uuid.UUID, CalculationInfo] = OrderedDict()
         self.calculation_sizes = []
         self.calculation_size = 0
         self.calculation_done = 0
@@ -402,7 +412,9 @@ class CalculationManager:
         """
         :param calculation: Calculation
         """
-        self.calculation_dict[calculation.uuid] = calculation, calculation.calculation_plan.get_measurements()
+        self.calculation_dict[calculation.uuid] = CalculationInfo(
+            calculation, calculation.calculation_plan.get_measurements()
+        )
         self.counter_dict[calculation.uuid] = 0
         size = len(calculation.file_list)
         self.calculation_sizes.append(size)
@@ -435,32 +447,29 @@ class CalculationManager:
         :return: information about calculation status
         :rtype: BatchResultDescription
         """
-        responses = self.batch_manager.get_result()
-        new_errors = []
+        responses: List[Tuple[uuid.UUID, WrappedResult]] = self.batch_manager.get_result()
+        new_errors: List[Tuple[str, ErrorInfo]] = []
         for uuid_id, (ind, result_list) in responses:
             self.calculation_done += 1
             self.counter_dict[uuid_id] += 1
-            calculation = self.calculation_dict[uuid_id][0]
-            if isinstance(ind, Exception):
-                self.errors_list.append((ind, result_list))
-                new_errors.append((ind, result_list))
-                continue
+            calculation = self.calculation_dict[uuid_id].calculation
             for el in result_list:
-                if isinstance(el, tuple) and isinstance(el[0], Exception):
-                    if ind != -1:
-                        self.errors_list.append((calculation.file_list[ind], el))
-                    new_errors.append((calculation.file_list[ind], el))
-                else:
-                    if not isinstance(el, tuple):
-                        raise ValueError(f"el should be tuple. It is {type(el)}")
-                    data = ResponseData._make(el)
-                    errors = self.writer.add_result(data, calculation, ind=ind)
+                if isinstance(el, ResponseData):
+                    errors = self.writer.add_result(el, calculation, ind=ind)
                     for err in errors:
-                        new_errors.append(err)
+                        new_errors.append((el.path_to_file, err))
+                else:
+                    if ind != -1:
+                        file_info = calculation.file_list[ind]
+                    else:
+                        file_info = "unknown file"
+                    self.errors_list.append((file_info, el))
+                    new_errors.append((file_info, el))
+
                 if self.counter_dict[uuid_id] == len(calculation.file_list):
                     errors = self.writer.calculation_finished(calculation)
                     for err in errors:
-                        new_errors.append(err)
+                        new_errors.append(("", err))
         return BatchResultDescription(
             new_errors, self.calculation_done, zip(self.counter_dict.values(), self.calculation_sizes)
         )
@@ -477,11 +486,11 @@ class SheetData(object):
     Store single sheet information
     """
 
-    def __init__(self, name: str, columns: typing.List[typing.Tuple[str, str]]):
+    def __init__(self, name: str, columns: List[Tuple[str, str]]):
         self.name = name
         self.columns = pd.MultiIndex.from_tuples([("name", "units")] + columns)
         self.data_frame = pd.DataFrame([], columns=self.columns)
-        self.row_list: typing.List[typing.Any] = []
+        self.row_list: List[Any] = []
 
     def add_data(self, data, ind):
         if ind is None:
@@ -493,12 +502,12 @@ class SheetData(object):
             ind = len(self.row_list)
         self.row_list.extend([(ind, x) for x in data])
 
-    def get_data_to_write(self) -> typing.Tuple[str, pd.DataFrame]:
+    def get_data_to_write(self) -> Tuple[str, pd.DataFrame]:
         """
         Get data for write
 
         :return: sheet name and data to write
-        :rtype: typing.Tuple[str, pd.DataFrame]
+        :rtype: Tuple[str, pd.DataFrame]
         """
         sorted_row = [x[1] for x in sorted(self.row_list)]
         df = pd.DataFrame(sorted_row, columns=self.columns)
@@ -551,7 +560,7 @@ class FileData:
         """check if any data wait on write to disc"""
         return not self.writing and self.wrote_queue.empty()
 
-    def good_sheet_name(self, name: str) -> typing.Tuple[bool, str]:
+    def good_sheet_name(self, name: str) -> Tuple[bool, str]:
         """
         Check if sheet name can be used in current file.
         Return False if:
@@ -628,13 +637,13 @@ class FileData:
             component_information,
         )
 
-    def wrote_data(self, uuid_id: uuid.UUID, data: ResponseData, ind: typing.Optional[int] = None):
+    def wrote_data(self, uuid_id: uuid.UUID, data: ResponseData, ind: Optional[int] = None):
         """
         Add information to be stored in output file
 
         :param uuid.UUID uuid_id: calculation identifier
         :param ResponseData data: calculation result
-        :param typing.Optional[int] ind: element index
+        :param Optional[int] ind: element index
         """
         self.new_count += 1
         main_sheet, component_sheets, _component_information = self.sheet_dict[uuid_id]
@@ -692,11 +701,11 @@ class FileData:
                     writer.save()
             except Exception as e:
                 logging.error(e)
-                self.error_queue.put(e)
+                self.error_queue.put(prepare_error_data(e))
             finally:
                 self.writing = False
 
-    def get_errors(self) -> typing.List[Exception]:
+    def get_errors(self) -> List[ErrorInfo]:
         """
         Get list of errors occurred in last write
         """
@@ -718,7 +727,7 @@ class DataWriter:
     """
 
     def __init__(self):
-        self.file_dict: typing.Dict[str, FileData] = dict()
+        self.file_dict: Dict[str, FileData] = dict()
 
     def is_empty_sheet(self, file_path: str, sheet_name: str) -> bool:
         """
@@ -745,8 +754,8 @@ class DataWriter:
             self.file_dict[calculation.measurement_file_path] = FileData(calculation)
 
     def add_result(
-        self, data: ResponseData, calculation: BaseCalculation, ind: typing.Optional[int] = None
-    ) -> typing.List[Exception]:
+        self, data: ResponseData, calculation: BaseCalculation, ind: Optional[int] = None
+    ) -> List[ErrorInfo]:
         """
         Add calculation result to file writer
 
@@ -767,7 +776,7 @@ class DataWriter:
         for file_data in self.file_dict.values():
             file_data.finish()
 
-    def calculation_finished(self, calculation) -> typing.List[Exception]:
+    def calculation_finished(self, calculation) -> List[ErrorInfo]:
         """
         Force write data for given calculation.
 

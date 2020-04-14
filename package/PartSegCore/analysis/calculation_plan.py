@@ -397,7 +397,7 @@ class Calculation(BaseCalculation):
         self, file_list, base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan, voxel_size
     ):
         super().__init__(base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan, voxel_size)
-        self.file_list = file_list
+        self.file_list: typing.List[str] = file_list
 
     def get_base_calculation(self) -> BaseCalculation:
         """Extract py:class:`BaseCalculation` from instance."""
