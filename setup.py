@@ -122,5 +122,6 @@ setuptools.setup(
         "xlrd>=1.1.0",
         "PartSegData==0.9.4",
         "defusedxml>=0.6.0",
+        "requests>=2.18.0"
     ],
 )
