@@ -1,5 +1,6 @@
 import typing
 
+from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.io_utils import HistoryElement
 from PartSegCore.class_generator import BaseSerializableClass
 from PartSegCore.segmentation import RestartableAlgorithm
@@ -26,11 +27,7 @@ def calculate_pipeline(image: Image, mask: typing.Optional[np.ndarray], pipeline
     history = []
     report_fun("max", 2 * len(pipeline.mask_history) + 1)
     for i, el in enumerate(pipeline.mask_history):
-        algorithm: RestartableAlgorithm = analysis_algorithm_dict[el.segmentation.algorithm]()
-        algorithm.set_image(image)
-        algorithm.set_mask(mask)
-        algorithm.set_parameters(**el.segmentation.values)
-        result = algorithm.calculation_run(_empty_fun)
+        result, _ = calculate_segmentation_step(el.segmentation, image, mask)
         segmentation = result.segmentation
         full_segmentation = result.full_segmentation
         report_fun("step", 2 * i + 1)
@@ -41,12 +38,15 @@ def calculate_pipeline(image: Image, mask: typing.Optional[np.ndarray], pipeline
         )
         report_fun("step", 2 * i + 2)
         mask = new_mask
-    algorithm: RestartableAlgorithm = analysis_algorithm_dict[pipeline.segmentation.algorithm]()
+    result, text = calculate_segmentation_step(pipeline.segmentation, image, mask)
+    report_fun("step", 2 * len(pipeline.mask_history) + 1)
+    return PipelineResult(result.segmentation, result.full_segmentation, mask, history, text)
+
+
+def calculate_segmentation_step(profile: SegmentationProfile, image: Image, mask: typing.Optional[np.ndarray]):
+    algorithm: RestartableAlgorithm = analysis_algorithm_dict[profile.algorithm]()
     algorithm.set_image(image)
     algorithm.set_mask(mask)
-    algorithm.set_parameters(**pipeline.segmentation.values)
-    result = algorithm.calculation_run(_empty_fun)
-    segmentation = result.segmentation
-    full_segmentation = result.full_segmentation
-    report_fun("step", 2 * len(pipeline.mask_history) + 1)
-    return PipelineResult(segmentation, full_segmentation, mask, history, algorithm.get_info_text())
+    parameters = profile.values
+    algorithm.set_parameters(**parameters)
+    return algorithm.calculation_run(_empty_fun), algorithm.get_info_text()

@@ -325,6 +325,9 @@ class CalculationTree:
     def __str__(self):
         return f"{self.operation}:\n[{'n'.join([str(x) for x in self.children])}]"
 
+    def __repr__(self):
+        return f"CalculationTree(operation={repr(self.operation)}, children={self.children})"
+
 
 class NodeType(Enum):
     """Type of node in calculation"""
@@ -351,7 +354,15 @@ class BaseCalculation:
     :ivar ~.voxel_size: default voxel size (for files which do not contains this information in metadata
     """
 
-    def __init__(self, base_prefix, result_prefix, measurement_file_path, sheet_name, calculation_plan, voxel_size):
+    def __init__(
+        self,
+        base_prefix: str,
+        result_prefix: str,
+        measurement_file_path: str,
+        sheet_name: str,
+        calculation_plan: "CalculationPlan",
+        voxel_size: typing.Sequence[float],
+    ):
         self.base_prefix = base_prefix
         self.result_prefix = result_prefix
         self.measurement_file_path = measurement_file_path
@@ -359,6 +370,13 @@ class BaseCalculation:
         self.calculation_plan = calculation_plan
         self.uuid = uuid.uuid4()
         self.voxel_size = voxel_size
+
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}(calculation_plan={self.calculation_plan}, voxel_size={self.voxel_size}, "
+            f"base_prefix={self.base_prefix}, result_prefix={self.base_prefix}, "
+            f"measurement_file_path{self.measurement_file_path}, sheet_name={self.sheet_name})"
+        )
 
 
 class Calculation(BaseCalculation):
@@ -429,6 +447,9 @@ class FileCalculation:
         """default voxel size (for files which do not contains this information in metadata"""
         return self.calculation.voxel_size
 
+    def __repr__(self):
+        return f"FileCalculation(file_path={self.file_path}, calculation={self.calculation})"
+
 
 class CalculationPlan:
     """
@@ -473,6 +494,9 @@ class CalculationPlan:
 
     def __str__(self):
         return f"CalculationPlan<{self.name}>\n{self.execution_tree}"
+
+    def __repr__(self):
+        return f"CalculationPlan(name={repr(self.name)}, execution_tree={repr(self.execution_tree)})"
 
     def get_measurements(self, node: typing.Optional[CalculationTree] = None) -> typing.List[MeasurementCalculate]:
         """

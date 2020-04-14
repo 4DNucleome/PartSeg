@@ -49,7 +49,7 @@ class SegmentationThread(QThread):
             print(f"No image in class {self.algorithm.__class__}", file=sys.stderr)
             return
         try:
-            segment_data = self.algorithm.calculation_run(self.send_info)
+            segment_data = self.algorithm.calculation_run_wrap(self.send_info)
         except Exception as e:
             self.exception_occurred.emit(e)
             return

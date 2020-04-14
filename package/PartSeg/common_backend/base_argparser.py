@@ -110,10 +110,9 @@ class CustomParser(argparse.ArgumentParser):
 def _setup_sentry():
     sentry_sdk.utils.MAX_STRING_LENGTH = 10 ** 4
     sentry_sdk.init(
-        "https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302",
-        release="PartSeg@{}".format(PartSeg.__version__),
+        "https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302", release="PartSeg@{}".format(PartSeg.__version__),
     )
     with sentry_sdk.configure_scope() as scope:
-        scope.set_user({
-            "name": getpass.getuser(), "id": zlib.adler32((getpass.getuser() + "#" + platform.node()).encode())
-        })
+        scope.set_user(
+            {"name": getpass.getuser(), "id": zlib.adler32((getpass.getuser() + "#" + platform.node()).encode())}
+        )

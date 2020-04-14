@@ -223,7 +223,7 @@ class Register(OrderedDict):
         super().__setitem__(key, value)
 
 
-class SegmentationProfile(object):
+class SegmentationProfile:
     """
 
     :ivar str ~.name: name for segmentation profile
@@ -299,4 +299,4 @@ class SegmentationProfile(object):
         )
 
     def __repr__(self):
-        return f"SegmentationProfile(name={self.name}, algorithm={self.algorithm}, values={self.values})"
+        return f"SegmentationProfile(name={self.name}, algorithm={repr(self.algorithm)}, values={self.values})"

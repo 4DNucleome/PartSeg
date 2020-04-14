@@ -20,6 +20,9 @@ class SegmentationPipelineElement(BaseSerializableClass):
     def __str__(self):
         return indent(str(self.segmentation), "    ") + "\n\n" + indent(str(self.mask_property), "    ")
 
+    def __repr__(self):
+        return f"SegmentationPipelineElement(segmentation={repr(self.segmentation)},mask_property={repr(self.mask_property)})"
+
 
 class SegmentationPipeline(BaseSerializableClass):
     name: str
@@ -40,4 +43,10 @@ class SegmentationPipeline(BaseSerializableClass):
             + "\n––––––––––––––\n".join([str(x) for x in self.mask_history])
             + "\n––––––––––––––\nLast segmentation\n"
             + str(self.segmentation)
+        )
+
+    def __repr__(self):
+        return (
+            f"SegmentationPipeline(name={self.name},\nmask_history={self.mask_history},\n"
+            f"segmentation={repr(self.segmentation)})"
         )

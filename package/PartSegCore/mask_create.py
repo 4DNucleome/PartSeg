@@ -41,6 +41,14 @@ class MaskProperty(BaseSerializableClass):
             + f"reversed mask {self.reversed_mask}"
         )
 
+    def __repr__(self):
+        return (
+            f"Mask MaskProperty(dilate={self.dilate}, dilate radius={self.dilate_radius}, "
+            + f"fill holes={self.fill_holes}, max holes size={self.max_holes_size}, "
+            + f"save components={self.save_components}, clip to mask={self.clip_to_mask}, "
+            + f"reversed mask={self.reversed_mask})"
+        )
+
 
 def mp_eq(self: MaskProperty, other: MaskProperty):
     """Compare two :class:`MaskProperty`"""
@@ -76,6 +84,7 @@ def calculate_mask(
     :param old_mask: if in mask_description there is set to crop and old_mask is not None
         then final mask is clipped to this area
     :param spacing: spacing of image. Needed for calculating radius of dilate
+    :param components: If present inform which components should be used when calculation mask, otherwise use all.
     :return: new mask
     """
     spacing_min = min(spacing)

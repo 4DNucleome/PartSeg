@@ -470,7 +470,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
             mess.setWindowTitle("Segmentation limitations")
             mess.exec()
             return
-        dial = ErrorDialog(exc, "Error during segmentation", f"{QApplication.instance().name}")
+        dial = ErrorDialog(exc, "Error during segmentation", f"{QApplication.instance().applicationName()}")
         dial.exec()
 
     def show_info(self, text):

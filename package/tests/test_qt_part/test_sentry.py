@@ -9,7 +9,7 @@ from sentry_sdk.serializer import serialize
 def test_message_clip(monkeypatch):
     message = "a" * 5000
     assert len(sentry_sdk.utils.strip_string(message).value) == 512
-    monkeypatch.setattr(sentry_sdk.utils, "MAX_STRING_LENGTH", 10**4)
+    monkeypatch.setattr(sentry_sdk.utils, "MAX_STRING_LENGTH", 10 ** 4)
     assert len(sentry_sdk.utils.strip_string(message)) == 5000
 
 

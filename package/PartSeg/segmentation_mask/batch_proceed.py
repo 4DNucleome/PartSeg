@@ -11,6 +11,7 @@ from PartSeg.segmentation_mask.stack_settings import get_mask, StackSettings
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 from PartSegCore.mask.io_functions import SaveSegmentation, LoadSegmentationImage, LoadStackImage, SegmentationTuple
+from PartSegCore.segmentation import StackAlgorithm
 from PartSegCore.segmentation.algorithm_base import SegmentationAlgorithm
 
 
@@ -45,7 +46,7 @@ class BatchProceed(QThread):
         else:
             self.queue.put(task)
 
-    def progress_info(self, name, text, num):
+    def progress_info(self, name: str, text: str, num: int):
         self.progress_signal.emit(text, num, name, self.index)
 
     def run_calculation(self):
@@ -65,7 +66,7 @@ class BatchProceed(QThread):
             try:
                 name = path.basename(file_path)
                 blank = get_mask(project_tuple.segmentation, project_tuple.mask, project_tuple.selected_components)
-                algorithm = mask_algorithm_dict[task.parameters.algorithm]()
+                algorithm: StackAlgorithm = mask_algorithm_dict[task.parameters.algorithm]()
                 algorithm.set_image(project_tuple.image)
                 algorithm.set_mask(blank)
                 algorithm.set_parameters(**task.parameters.values)
@@ -73,6 +74,7 @@ class BatchProceed(QThread):
                     self.range_signal.emit(0, algorithm.get_steps_num() + 1)
                 else:
                     self.range_signal.emit(0, algorithm.get_steps_num())
+                # noinspection PyTypeChecker
                 segmentation = algorithm.calculation_run(partial(self.progress_info, name))
                 state2 = StackSettings.transform_state(
                     project_tuple, segmentation.segmentation, defaultdict(lambda: segmentation.parameters), []

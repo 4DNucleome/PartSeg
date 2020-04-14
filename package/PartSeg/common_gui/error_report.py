@@ -30,7 +30,9 @@ from PartSegCore import state_store
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 
 _email_regexp = re.compile("[\w+]+@\w+\.\w+")
-_feedback_url = "https://sentry.io/api/0/projects/{organization_slug}/{project_slug}/user-feedback/".format(organization_slug="cent", project_slug="partseg")
+_feedback_url = "https://sentry.io/api/0/projects/{organization_slug}/{project_slug}/user-feedback/".format(
+    organization_slug="cent", project_slug="partseg"
+)
 
 
 class ErrorDialog(QDialog):
@@ -94,7 +96,6 @@ class ErrorDialog(QDialog):
         exec_info = exc_info_from_error(exception)
         self.exception_tuple = event_from_exception(exec_info)
 
-
     def exec(self):
         """
         Check if dialog should be shown  base on :py:data:`state_store.show_error_dialog`.
@@ -104,7 +105,7 @@ class ErrorDialog(QDialog):
         if not state_store.show_error_dialog:
             sys.__excepthook__(type(self.exception), self.exception, self.exception.__traceback__)
             return False
-        if pares_version(__version__).is_prerelease or pares_version(__version__).is_devrelease:
+        """if pares_version(__version__).is_prerelease or pares_version(__version__).is_devrelease:
             with sentry_sdk.push_scope() as scope:
                 if self.traceback_summary is not None:
                     scope.set_extra("traceback", "".join(self.traceback_summary.format()))
@@ -113,7 +114,7 @@ class ErrorDialog(QDialog):
                 event, hint = self.exception_tuple
 
                 event["message"] = "".join(self.traceback_summary.format())
-                sentry_sdk.capture_exception(self.exception)
+                sentry_sdk.capture_exception(self.exception)"""
         super().exec_()
 
     def send_information(self):
@@ -145,15 +146,21 @@ class ErrorDialog(QDialog):
                 "comments": self.additional_info.toPlainText(),
                 "event_id": event_id,
                 "email": contact_text if _email_regexp.match(contact_text) else "unknown@unknown.com",
-                "name": user_name if user_name else getpass.getuser()
+                "name": user_name if user_name else getpass.getuser(),
             }
-            r = requests.post(url=_feedback_url, data=data, headers={
-                "Authorization": "DSN https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302"})
+            r = requests.post(
+                url=_feedback_url,
+                data=data,
+                headers={"Authorization": "DSN https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302"},
+            )
             if r.status_code != 200:
                 data["email"] = "unknown@unknown.com"
                 data["name"] = getpass.getuser()
-                requests.post(url=_feedback_url, data=data, headers={
-                    "Authorization": "DSN https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302"})
+                requests.post(
+                    url=_feedback_url,
+                    data=data,
+                    headers={"Authorization": "DSN https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302"},
+                )
 
         # sentry_sdk.capture_event({"message": text, "level": "error", "exception": self.exception})
         self.accept()
@@ -208,6 +215,6 @@ class ExceptionList(QListWidget):
 
         This function is connected to :py:meth:`QListWidget.itemDoubleClicked`
         """
-        if isinstance(el, ExceptionListItem): #  and not isinstance(el.exception, SegmentationLimitException):
+        if isinstance(el, ExceptionListItem):  #  and not isinstance(el.exception, SegmentationLimitException):
             dial = ErrorDialog(el.exception, "Error during batch processing", traceback_summary=el.traceback_summary)
             dial.exec()
