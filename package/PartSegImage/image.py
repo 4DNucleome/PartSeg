@@ -471,3 +471,10 @@ class Image:
             f"{self.__class__} Shape {self._image_array.shape}, dtype: {self._image_array.dtype}, "
             f"labels: {self.labels}, coloring: {self.get_colors()} mask: {self.has_mask}"
         )
+
+    def __repr__(self):
+        mask_info = f"mask=True, mask_dtype={self._mask_array.dtype}" if self.mask else "mask=False"
+        return (
+            f"Image(shape={self._image_array.shape} dtype={self._image_array.dtype}, spacing={self.spacing}"
+            f"labels={self.labels}, channels={self.channels}, axes={repr(self.return_order)}, {mask_info})"
+        )

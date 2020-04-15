@@ -163,6 +163,7 @@ stages:
           - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7', architecture: x64}}
           - bash: |
               python -m pip install -r requirements/requirements_pyinstaller.txt
+              python -m pip install -r requirements/requirements_dev.txt
               python -m pip install .
               python -m pip install -r docs/requirements.txt
             displayName: InstallDeps

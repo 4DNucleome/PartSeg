@@ -1,7 +1,10 @@
+from packaging.version import parse
+
 from PartSeg.version import version
 from PartSeg.changelog import changelog
 
 __version__ = version
+parsed_version = parse(version)
 
 __author__ = "Grzegorz Bokota"
 

@@ -89,7 +89,7 @@ def readme():
 changelog_path = os.path.join(os.path.dirname(__file__), "changelog.md")
 changelog_result_path = os.path.join(os.path.dirname(__file__), "package", "PartSeg", "changelog.py")
 if os.path.exists(changelog_path):
-    with open (changelog_path) as ff:
+    with open(changelog_path) as ff:
         changelog_str = ff.read()
     with open(changelog_result_path, 'w') as ff:
         ff.write(f"changelog = \"\"\"\n{changelog_str}\"\"\"\n")
@@ -111,7 +111,7 @@ setuptools.setup(
         "SimpleITK>=1.1.0",
         "scipy>=0.19.1",
         "QtPy>=1.3.1",
-        "sentry_sdk==0.14.1",
+        "sentry_sdk>=0.14.3",
         "six>=1.11.0",
         "h5py>=2.7.1",
         "packaging>=17.1",
@@ -122,5 +122,6 @@ setuptools.setup(
         "xlrd>=1.1.0",
         "PartSegData==0.9.4",
         "defusedxml>=0.6.0",
+        "requests>=2.18.0"
     ],
 )

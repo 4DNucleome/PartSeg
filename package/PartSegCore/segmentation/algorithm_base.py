@@ -48,7 +48,18 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         self.image: Optional[Image] = None
         self.channel = None
         self.segmentation = None
-        self.mask = None
+        self.mask: Optional[np.ndarray] = None
+
+    def __repr__(self):
+        if self.mask is None:
+            mask_info = "mask=None"
+        elif isinstance(self.mask, np.ndarray):
+            mask_info = (
+                f"mask_dtype={self.mask.dtype}, mask_shape={self.mask.shape}, mask_unique={np.unique(self.mask)}"
+            )
+        else:
+            mask_info = f"mask={self.mask}"
+        return f"{self.__class__.__module__}.{self.__class__.__name__}(image={repr(self.image)}, channel={self.channel} {mask_info}, value={self.get_segmentation_profile().values})"
 
     def clean(self):
         self.image = None
@@ -74,6 +85,16 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
     def set_mask(self, mask):
         """Set mask which will limit segmentation area"""
         self.mask = mask
+
+    def calculation_run_wrap(self, report_fun: Callable[[str, int], None]) -> SegmentationResult:
+        try:
+            return self.calculation_run(report_fun)
+        except SegmentationLimitException:
+            raise
+        except Exception:
+            parameters = self.get_segmentation_profile()
+            image = self.image
+            raise SegmentationException(self.get_name(), parameters, image)
 
     @abstractmethod
     def calculation_run(self, report_fun: Callable[[str, int], None]) -> SegmentationResult:
@@ -117,4 +138,8 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
 
 
 class SegmentationLimitException(Exception):
+    pass
+
+
+class SegmentationException(Exception):
     pass

@@ -3,9 +3,14 @@ THis module contains widgets used for error reporting. The report backed is sent
 
 .. _sentry: https://sentry.io
 """
+import getpass
+import re
 import sys
+import traceback
 import typing
 
+import requests
+import sentry_sdk
 from qtpy.QtWidgets import (
     QDialog,
     QPushButton,
@@ -17,16 +22,16 @@ from qtpy.QtWidgets import (
     QListWidgetItem,
     QListWidget,
 )
-import traceback
-
 from sentry_sdk.utils import exc_info_from_error, event_from_exception
 
-from PartSegCore import state_store
-import sentry_sdk
-from packaging.version import parse as pares_version
-
 from PartSeg import __version__
+from PartSegCore import state_store
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
+
+_email_regexp = re.compile("[\w+]+@\w+\.\w+")
+_feedback_url = "https://sentry.io/api/0/projects/{organization_slug}/{project_slug}/user-feedback/".format(
+    organization_slug="cent", project_slug="partseg"
+)
 
 
 class ErrorDialog(QDialog):
@@ -34,7 +39,7 @@ class ErrorDialog(QDialog):
     Dialog to present user the exception information. User can send error report (possible to add custom information)
     """
 
-    def __init__(self, exception: Exception, description: str, additional_notes: str = "", traceback_summary=None):
+    def __init__(self, exception: Exception, description: str, additional_notes: str = "", additional_info=None):
         super().__init__()
         self.exception = exception
         self.additional_notes = additional_notes
@@ -42,17 +47,20 @@ class ErrorDialog(QDialog):
         self.send_report_btn.setDisabled(not state_store.report_errors)
         self.cancel_btn = QPushButton("Cancel")
         self.error_description = QTextEdit()
-        if traceback_summary is None:
+        self.traceback_summary = additional_info
+        if additional_info is None:
             self.error_description.setText(
                 "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
             )
-        elif isinstance(traceback_summary, traceback.StackSummary):
-            self.error_description.setText("".join(traceback_summary.format()))
+        elif isinstance(additional_info, traceback.StackSummary):
+            self.error_description.setText("".join(additional_info.format()))
+        elif isinstance(additional_info[1], traceback.StackSummary):
+            self.error_description.setText("".join(additional_info[1].format()))
         self.error_description.append(str(exception))
         self.error_description.setReadOnly(True)
         self.additional_info = QTextEdit()
         self.contact_info = QLineEdit()
-
+        self.user_name = QLineEdit()
         self.cancel_btn.clicked.connect(self.reject)
         self.send_report_btn.clicked.connect(self.send_information)
 
@@ -69,13 +77,15 @@ class ErrorDialog(QDialog):
         layout.addWidget(self.error_description)
         layout.addWidget(QLabel("Contact information"))
         layout.addWidget(self.contact_info)
+        layout.addWidget(QLabel("User name"))
+        layout.addWidget(self.user_name)
         layout.addWidget(QLabel("Additional information from user:"))
         layout.addWidget(self.additional_info)
         if not state_store.report_errors:
             layout.addWidget(
                 QLabel(
                     "Sending reports was disabled by runtime flag. "
-                    "You can report it manually by creating report on"
+                    "You can report it manually by creating report on "
                     "https://github.com/4DNucleome/PartSeg/issues"
                 )
             )
@@ -84,8 +94,11 @@ class ErrorDialog(QDialog):
         btn_layout.addWidget(self.send_report_btn)
         layout.addLayout(btn_layout)
         self.setLayout(layout)
-        exec_info = exc_info_from_error(exception)
-        self.exception_tuple = event_from_exception(exec_info)
+        if isinstance(additional_info, tuple):
+            self.exception_tuple = additional_info[0], None
+        else:
+            exec_info = exc_info_from_error(exception)
+            self.exception_tuple = event_from_exception(exec_info)
 
     def exec(self):
         """
@@ -96,15 +109,13 @@ class ErrorDialog(QDialog):
         if not state_store.show_error_dialog:
             sys.__excepthook__(type(self.exception), self.exception, self.exception.__traceback__)
             return False
-        if pares_version(__version__).is_prerelease or pares_version(__version__).is_devrelease:
-            sentry_sdk.capture_exception(self.exception)
         super().exec_()
 
     def send_information(self):
         """
         Function with construct final error message and send it using sentry.
         """
-        with sentry_sdk.configure_scope() as scope:
+        with sentry_sdk.push_scope() as scope:
             text = self.desc.text() + "\n\nVersion: " + __version__ + "\n"
             if len(self.additional_notes) > 0:
                 scope.set_extra("additional_notes", self.additional_notes)
@@ -115,7 +126,36 @@ class ErrorDialog(QDialog):
             event, hint = self.exception_tuple
 
             event["message"] = text
-            sentry_sdk.capture_event(event, hint=hint)
+            if self.traceback_summary is not None:
+                scope.set_extra("traceback", self.error_description.toPlainText())
+
+            event_id = sentry_sdk.capture_event(event, hint=hint)
+        if event_id is None:
+            event_id = sentry_sdk.hub.Hub.current.last_event_id()
+
+        if len(self.additional_info.toPlainText()) > 0:
+            contact_text = self.contact_info.text()
+            user_name = self.user_name.text()
+            data = {
+                "comments": self.additional_info.toPlainText(),
+                "event_id": event_id,
+                "email": contact_text if _email_regexp.match(contact_text) else "unknown@unknown.com",
+                "name": user_name if user_name else getpass.getuser(),
+            }
+            r = requests.post(
+                url=_feedback_url,
+                data=data,
+                headers={"Authorization": "DSN https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302"},
+            )
+            if r.status_code != 200:
+                data["email"] = "unknown@unknown.com"
+                data["name"] = getpass.getuser()
+                requests.post(
+                    url=_feedback_url,
+                    data=data,
+                    headers={"Authorization": "DSN https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302"},
+                )
+
         # sentry_sdk.capture_event({"message": text, "level": "error", "exception": self.exception})
         self.accept()
 
@@ -141,7 +181,7 @@ class ExceptionListItem(QListWidgetItem):
             super().__init__(f"{type(exception)}: {exception}", parent, QListWidgetItem.UserType)
             self.setToolTip("Double click for report")
         self.exception = exception
-        self.traceback_summary = traceback_summary
+        self.additional_info = traceback_summary
 
 
 class ExceptionList(QListWidget):
@@ -153,14 +193,6 @@ class ExceptionList(QListWidget):
         super().__init__(parent)
         self.itemDoubleClicked.connect(self.item_double_clicked)
 
-    def add_exception(self, exc: Exception):
-        """
-        Add exception to list
-        """
-        ExceptionListItem(exc, self)
-        if pares_version(__version__).is_prerelease or pares_version(__version__).is_devrelease:
-            sentry_sdk.capture_exception(exc)
-
     @staticmethod
     def item_double_clicked(el: QListWidgetItem):
         """
@@ -170,5 +202,5 @@ class ExceptionList(QListWidget):
         This function is connected to :py:meth:`QListWidget.itemDoubleClicked`
         """
         if isinstance(el, ExceptionListItem) and not isinstance(el.exception, SegmentationLimitException):
-            dial = ErrorDialog(el.exception, "Error during batch processing", traceback_summary=el.traceback_summary)
+            dial = ErrorDialog(el.exception, "Error during batch processing", additional_info=el.additional_info)
             dial.exec()
