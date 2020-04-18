@@ -908,7 +908,7 @@ class Compactness(MeasurementMethodBase):
 
 
 class Sphericity(MeasurementMethodBase):
-    text_info = "Sphericity", "volume/((4/3 * π * radius **3) for 3d data and volume/((π * radius **2) for 2d data"
+    text_info = "Sphericity", "volume/(4/3 * π * radius **3) for 3d data and volume/(π * radius **2) for 2d data"
 
     @staticmethod
     def calculate_property(**kwargs):
