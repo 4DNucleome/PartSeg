@@ -4,6 +4,3 @@ update_configs:
     directory: "/requirements"
     update_schedule: "daily"
     target_branch: "develop"
-    ignored_updates:
-      - match:
-          dependency_name: "imagecodecs"
