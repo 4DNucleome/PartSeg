@@ -144,7 +144,7 @@ class BaseMainWindow(QMainWindow):
         raise NotImplementedError()
 
     def _read_drop(self, paths, load_module):
-        ext_set = set([os.path.splitext(x)[1] for x in paths])
+        ext_set = set([os.path.splitext(x)[1].lower() for x in paths])
 
         def exception_hook(exception):
             if isinstance(exception, OSError):
@@ -160,7 +160,7 @@ class BaseMainWindow(QMainWindow):
                 if dial.exec():
                     self.main_menu.set_data(dial.get_result())
                 return
-        QMessageBox.information(self, "No method", f"No  methods for load files: " + ",".join(paths))
+        QMessageBox.information(self, "No method", f"No methods for load files: " + ",".join(paths))
 
     def dropEvent(self, event: QDropEvent):
         """

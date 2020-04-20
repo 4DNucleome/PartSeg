@@ -142,6 +142,7 @@ class GenericImageReader(BaseImageReader):
                 ext = os.path.splitext(image_path)[1]
             else:
                 ext = ".tif"
+        ext = ext.lower()
         if ext == ".czi":
             return CziImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext in [".oif", ".oib"]:
