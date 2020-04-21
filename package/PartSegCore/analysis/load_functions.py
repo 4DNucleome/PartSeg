@@ -15,6 +15,8 @@ from packaging.version import Version, parse as parse_version
 from tifffile import TiffFile
 
 from PartSegImage import GenericImageReader
+from .measurement_base import MeasurementEntry, Leaf, Node
+from .measurement_calculation import MeasurementProfile
 from ..mask.io_functions import LoadSegmentationImage
 from ..universal_const import Units, UNIT_SCALE
 from ..algorithm_describe_base import Register, SegmentationProfile
@@ -307,27 +309,50 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
     json_hook = part_hook
 
     @classmethod
-    def update_calculation_tree(cls, data: CalculationTree):
+    def update_calculation_tree(cls, data: CalculationTree) -> CalculationTree:
         data.operation = cls.recursive_update(data.operation)
         data.children = [cls.update_calculation_tree(x) for x in data.children]
         return data
 
     @classmethod
-    def update_calculation_plan(cls, data: CalculationPlan):
+    def update_calculation_plan(cls, data: CalculationPlan) -> CalculationPlan:
         data.execution_tree = cls.update_calculation_tree(data.execution_tree)
         return data
 
     @classmethod
-    def update_segmentation_pipeline_element(cls, data: SegmentationPipelineElement):
+    def update_segmentation_pipeline_element(cls, data: SegmentationPipelineElement) -> SegmentationPipelineElement:
         return SegmentationPipelineElement(cls.update_segmentation_profile(data.segmentation), data.mask_property)
 
     @classmethod
-    def update_segmentation_pipeline(cls, data: SegmentationPipeline):
+    def update_segmentation_pipeline(cls, data: SegmentationPipeline) -> SegmentationPipeline:
         return SegmentationPipeline(
             data.name,
             cls.update_segmentation_profile(data.segmentation),
             [cls.update_segmentation_pipeline_element(x) for x in data.mask_history],
         )
+
+    @classmethod
+    def update_measurement_profile(cls, data: MeasurementProfile) -> MeasurementProfile:
+        data.chosen_fields = [cls.update_measurement_entry(x) for x in data.chosen_fields]
+        return data
+
+    @classmethod
+    def update_measurement_entry(cls, data: MeasurementEntry) -> MeasurementEntry:
+        return data.replace_(calculation_tree=cls.update_measurement_calculation_tree(data.calculation_tree))
+
+    @classmethod
+    def update_measurement_calculation_tree(cls, data: typing.Union[Leaf, Node]) -> typing.Union[Leaf, Node]:
+        if isinstance(data, Leaf):
+            if data.name == "Components Number":
+                return data.replace_(name="Components number")
+            elif data.name == "Pixel Brightness Sum":
+                return data.replace_(name="Pixel brightness sum")
+            return data
+        else:
+            return data.replace_(
+                left=cls.update_measurement_calculation_tree(data.left),
+                right=cls.update_measurement_calculation_tree(data.right),
+            )
 
     @classmethod
     def recursive_update(cls, data):
@@ -337,6 +362,8 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
             return cls.update_calculation_tree(data)
         if isinstance(data, SegmentationPipeline):
             return cls.update_segmentation_pipeline(data)
+        if isinstance(data, MeasurementProfile):
+            return cls.update_measurement_profile(data)
 
         return super().recursive_update(data)
 
