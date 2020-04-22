@@ -6,3 +6,14 @@ include Readme.md
 include changelog.md
 include pyproject.toml
 exclude .tox/**
+exclude .dependabot/*
+exclude .github/**
+exclude tutorials/**
+exclude .travis/**
+exclude bug_fixes/**
+exclude build_utils/*
+exclude *.yml
+exclude .git*
+exclude .coveragerc
+exclude .zenodo.json
+exclude tox*
