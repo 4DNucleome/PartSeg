@@ -18,7 +18,7 @@ imagecodecs-lite==2020.1.31  # via -r requirements_pyinstaller.in
 imagecodecs==2020.2.18    # via -r requirements_pyinstaller.in, imagecodecs-lite, tifffile
 jdcal==1.4.1              # via openpyxl
 mpmath==1.1.0             # via sympy
-numpy==1.18.2             # via -r requirements_pyinstaller.in, czifile, h5py, imagecodecs, oiffile, pandas, scipy, tifffile
+numpy==1.18.3             # via -r requirements_pyinstaller.in, czifile, h5py, imagecodecs, oiffile, pandas, scipy, tifffile
 oiffile==2020.1.18        # via -r requirements_pyinstaller.in
 openpyxl==3.0.3           # via -r requirements_pyinstaller.in
 packaging==20.3           # via -r requirements_pyinstaller.in
