@@ -3,7 +3,6 @@ import os
 import re
 
 import setuptools
-from setuptools_scm import get_version
 
 # from distutils.core import setup
 from distutils.extension import Extension
@@ -79,7 +78,12 @@ def readme():
     with open(os.path.join(this_directory, "Readme.md")) as f:
         text = f.read()
         text = reg.sub(r"\1(https://raw.githubusercontent.com/4DNucleome/PartSeg/master/\2)", text)
-        text = reg2.sub(f"PartSeg-{get_version()}", text)
+        try:
+            from setuptools_scm import get_version
+
+            text = reg2.sub(f"PartSeg-{get_version()}", text)
+        except ImportError:
+            pass
     with open(os.path.join(this_directory, "changelog.md")) as f:
         chg = f.read()
         text += "\n\n" + chg.replace("# ", "## ")
@@ -97,31 +101,8 @@ if os.path.exists(changelog_path):
 
 setuptools.setup(
     ext_modules=cythonize(extensions),
-    packages=setuptools.find_packages("./package"),
-    package_dir={"": "package"},
     include_package_data=True,
     long_description=readme(),
     long_description_content_type="text/markdown",
-    install_requires=[
-        "numpy>=1.16.0",
-        "tifffile>=2019.7.26",
-        "czifile>=2019.4.20",
-        "oiffile>=2019.1.1",
-        "appdirs>=1.4.3",
-        "SimpleITK>=1.1.0",
-        "scipy>=0.19.1",
-        "QtPy>=1.3.1",
-        "sentry_sdk>=0.14.3",
-        "six>=1.11.0",
-        "h5py>=2.7.1",
-        "packaging>=17.1",
-        "pandas>=0.22.0",
-        "sympy>=1.1.1",
-        "Cython>=0.29.13",
-        "openpyxl>=2.4.9",
-        "xlrd>=1.1.0",
-        "PartSegData==0.9.4",
-        "defusedxml>=0.6.0",
-        "requests>=2.18.0"
-    ],
+    use_scm_version=True
 )
