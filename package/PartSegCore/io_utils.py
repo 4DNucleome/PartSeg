@@ -239,6 +239,8 @@ class UpdateLoadedMetadataBase:
     # noinspection PyUnusedLocal
     @classmethod
     def update_segmentation_sub_dict(cls, name: str, dkt: dict) -> dict:
+        if name == "sprawl_type" and dkt["name"].endswith(" sprawl"):
+            dkt["name"] = dkt["name"][: -len(" sprawl")]
         for key in dkt["values"].keys():
             item = dkt["values"][key]
             if isinstance(item, Enum):

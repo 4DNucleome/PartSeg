@@ -71,7 +71,7 @@ class TestCalculationProcess:
             },
             "noise_filtering": {"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
             "side_connection": False,
-            "sprawl_type": {"name": "Euclidean sprawl", "values": {}},
+            "sprawl_type": {"name": "Euclidean", "values": {}},
         }
 
         segmentation = SegmentationProfile(name="test", algorithm="Lower threshold flow", values=parameters)
@@ -118,7 +118,7 @@ class TestCalculationProcess:
             },
             "noise_filtering": {"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
             "side_connection": False,
-            "sprawl_type": {"name": "Euclidean sprawl", "values": {}},
+            "sprawl_type": {"name": "Euclidean", "values": {}},
         }
 
         segmentation = SegmentationProfile(name="test", algorithm="Lower threshold flow", values=parameters)
@@ -163,7 +163,7 @@ class TestCalculationProcess:
             },
             "noise_filtering": {"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
             "side_connection": False,
-            "sprawl_type": {"name": "Euclidean sprawl", "values": {}},
+            "sprawl_type": {"name": "Euclidean", "values": {}},
         }
 
         segmentation = SegmentationProfile(name="test", algorithm="Lower threshold flow", values=parameters)

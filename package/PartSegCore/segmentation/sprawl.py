@@ -56,7 +56,7 @@ class BaseSprawl(AlgorithmDescribeBase, ABC):
 class PathSprawl(BaseSprawl):
     @classmethod
     def get_name(cls):
-        return "Path sprawl"
+        return "Path"
 
     @classmethod
     def sprawl(
@@ -89,7 +89,7 @@ class DistanceSprawl(BaseSprawl):
 
     @classmethod
     def get_name(cls):
-        return "Euclidean sprawl"
+        return "Euclidean"
 
     @classmethod
     def sprawl(
@@ -112,7 +112,7 @@ class DistanceSprawl(BaseSprawl):
 class FDTSprawl(BaseSprawl):
     @classmethod
     def get_name(cls):
-        return "Fuzzy distance sprawl"
+        return "Fuzzy distance"
 
     @classmethod
     def sprawl(
@@ -137,7 +137,7 @@ class FDTSprawl(BaseSprawl):
 class PathDistanceSprawl(BaseSprawl):
     @classmethod
     def get_name(cls):
-        return "Path euclidean sprawl"
+        return "Path euclidean"
 
     @classmethod
     def sprawl(
@@ -182,7 +182,7 @@ class PathDistanceSprawl(BaseSprawl):
 class MSOSprawl(BaseSprawl):
     @classmethod
     def get_name(cls):
-        return "MultiScale Opening sprawl"
+        return "MultiScale Opening"
 
     @classmethod
     def get_fields(cls):

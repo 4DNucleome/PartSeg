@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.0
+-   Make sprawl algorithm name shorter
+-   Unify capitalisation of measurement names
+
 ## 0.10.8
 -   fix synchronisation between viewers in Segmentation Analysis 
 -   fix batch crash on error during batch run, add information about file on which calculation fails 
