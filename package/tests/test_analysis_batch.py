@@ -91,7 +91,7 @@ class TestCalculationProcess:
             ),
             MeasurementEntry(
                 "Segmentation Components Number",
-                calculation_tree=Leaf("Components Number", area=AreaType.Segmentation, per_component=PerComponent.No),
+                calculation_tree=Leaf("Components number", area=AreaType.Segmentation, per_component=PerComponent.No),
             ),
         ]
         statistic = MeasurementProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
@@ -137,7 +137,7 @@ class TestCalculationProcess:
             ),
             MeasurementEntry(
                 "Segmentation Components Number",
-                calculation_tree=Leaf("Components Number", area=AreaType.Segmentation, per_component=PerComponent.No),
+                calculation_tree=Leaf("Components number", area=AreaType.Segmentation, per_component=PerComponent.No),
             ),
         ]
         statistic = MeasurementProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
@@ -183,7 +183,7 @@ class TestCalculationProcess:
             ),
             MeasurementEntry(
                 "Segmentation Components Number",
-                calculation_tree=Leaf("Components Number", area=AreaType.Segmentation, per_component=PerComponent.No),
+                calculation_tree=Leaf("Components number", area=AreaType.Segmentation, per_component=PerComponent.No),
             ),
             MeasurementEntry(
                 "Segmentation Volume per component",
@@ -219,7 +219,7 @@ class TestCalculationProcess:
             ),
             MeasurementEntry(
                 "Segmentation Components Number",
-                calculation_tree=Leaf("Components Number", area=AreaType.Segmentation, per_component=PerComponent.No),
+                calculation_tree=Leaf("Components number", area=AreaType.Segmentation, per_component=PerComponent.No),
             ),
             MeasurementEntry(
                 "Mask Volume per component",

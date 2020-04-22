@@ -196,7 +196,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         return res
 
 
-class MeasurementProfile(object):
+class MeasurementProfile:
     PARAMETERS = ["name", "chosen_fields", "reversed_brightness", "use_gauss_image", "name_prefix"]
 
     def __init__(self, name, chosen_fields: List[MeasurementEntry], name_prefix=""):
@@ -632,7 +632,7 @@ class DiameterOld(MeasurementMethodBase):
 
 
 class PixelBrightnessSum(MeasurementMethodBase):
-    text_info = "Pixel Brightness Sum", "Sum of pixel brightness for current segmentation"
+    text_info = "Pixel brightness sum", "Sum of pixel brightness for current segmentation"
 
     @staticmethod
     def calculate_property(area_array: np.ndarray, channel: np.ndarray, **_):  # pylint: disable=W0221
@@ -660,7 +660,7 @@ class PixelBrightnessSum(MeasurementMethodBase):
 
 
 class ComponentsNumber(MeasurementMethodBase):
-    text_info = "Components Number", "Calculate number of connected components on segmentation"
+    text_info = "Components number", "Calculate number of connected components on segmentation"
 
     @staticmethod
     def calculate_property(area_array, **_):  # pylint: disable=W0221

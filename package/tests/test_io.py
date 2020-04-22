@@ -12,6 +12,8 @@ import re
 from glob import glob
 import h5py
 
+from PartSegCore.analysis.measurement_base import MeasurementEntry, Leaf
+from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.segmentation.segmentation_algorithm import ThresholdAlgorithm
 from PartSegImage import Image
@@ -145,6 +147,16 @@ class TestJsonLoad:
         assert "dimension_type" in data["test_0.9.2.3"].values["noise_filtering"]["values"]
         file_path = os.path.join(os.path.dirname(__file__), "test_data", "calculation_plan_0.9.2.3.json")
         data = UpdateLoadedMetadataAnalysis.load_json_data(file_path)
+
+    def test_update_name(self):
+        data = UpdateLoadedMetadataAnalysis.load_json_data(update_name_json)
+        print(data)
+        mp = data["problematic set"]
+        assert isinstance(mp, MeasurementProfile)
+        assert isinstance(mp.chosen_fields[0], MeasurementEntry)
+        assert isinstance(mp.chosen_fields[0].calculation_tree, Leaf)
+        assert mp.chosen_fields[0].calculation_tree.name == "Pixel brightness sum"
+        assert mp.chosen_fields[1].calculation_tree.name == "Components number"
 
 
 class TestSegmentationMask:
@@ -414,3 +426,84 @@ class TestSaveFunctions:
         SaveSegmentationAsNumpy.save(os.path.join(tmpdir, "test1.npy"), analysis_project)
         array = np.load(os.path.join(tmpdir, "test1.npy"))
         assert np.all(array == analysis_project.segmentation)
+
+
+update_name_json = """
+{"problematic set": {
+      "__MeasurementProfile__": true,
+      "name": "problematic set",
+      "chosen_fields": [
+        {
+          "__Serializable__": true,
+          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+          "name": "Segmentation Pixel Brightness Sum",
+          "calculation_tree": {
+            "__Serializable__": true,
+            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+            "name": "Pixel Brightness Sum",
+            "dict": {},
+            "power": 1.0,
+            "area": {
+              "__Enum__": true,
+              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+              "value": 1
+            },
+            "per_component": {
+              "__Enum__": true,
+              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+              "value": 1
+            },
+            "channel": null
+          }
+        },
+        {
+          "__Serializable__": true,
+          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+          "name": "Segmentation Components Number",
+          "calculation_tree": {
+            "__Serializable__": true,
+            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+            "name": "Components Number",
+            "dict": {},
+            "power": 1.0,
+            "area": {
+              "__Enum__": true,
+              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+              "value": 1
+            },
+            "per_component": {
+              "__Enum__": true,
+              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+              "value": 1
+            },
+            "channel": null
+          }
+        },
+        {
+          "__Serializable__": true,
+          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+          "name": "Segmentation Diameter",
+          "calculation_tree": {
+            "__Serializable__": true,
+            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+            "name": "Diameter",
+            "dict": {},
+            "power": 1.0,
+            "area": {
+              "__Enum__": true,
+              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+              "value": 1
+            },
+            "per_component": {
+              "__Enum__": true,
+              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+              "value": 1
+            },
+            "channel": null
+          }
+        }
+      ],
+      "name_prefix": ""
+    }
+  }
+"""
