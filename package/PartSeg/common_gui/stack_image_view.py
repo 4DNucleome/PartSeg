@@ -25,7 +25,161 @@ max_step = log(1.2, step)
 enum_register.register_class(LabelEnum)
 
 
-def create_tool_button(text, icon):
+class ImageShowState(QObject):
+    """Object for storing state used when presenting it in :class:`.ImageView`"""
+
+    parameter_changed = Signal()  # signal informing that some of image presenting parameters
+    # changed and image need to be refreshed
+
+    def __init__(self, settings: ViewSettings, name: str):
+        if len(name) == 0:
+            raise ValueError("Name string should be not empty")
+        super().__init__()
+        self.name = name
+        self.settings = settings
+        self.zoom = False
+        self.move = False
+        self.opacity = settings.get_from_profile(f"{name}.image_state.opacity", 1.0)
+        self.show_label = settings.get_from_profile(f"{name}.image_state.show_label", LabelEnum.Show_results)
+        self.only_borders = settings.get_from_profile(f"{name}.image_state.only_border", True)
+        self.borders_thick = settings.get_from_profile(f"{name}.image_state.border_thick", 1)
+
+    def set_zoom(self, val):
+        self.zoom = val
+
+    def set_borders(self, val: bool):
+        """decide if draw only component 2D borders, or whole area"""
+        if self.only_borders != val:
+            self.settings.set_in_profile(f"{self.name}.image_state.only_border", val)
+            self.only_borders = val
+            self.parameter_changed.emit()
+
+    def set_borders_thick(self, val: int):
+        """If draw only 2D borders of component then set thickness of line used for it"""
+        if val != self.borders_thick:
+            self.settings.set_in_profile(f"{self.name}.image_state.border_thick", val)
+            self.borders_thick = val
+            self.parameter_changed.emit()
+
+    def set_opacity(self, val: float):
+        """Set opacity of component labels"""
+        if self.opacity != val:
+            self.settings.set_in_profile(f"{self.name}.image_state.opacity", val)
+            self.opacity = val
+            self.parameter_changed.emit()
+
+    def components_change(self):
+        if self.show_label == LabelEnum.Show_selected:
+            self.parameter_changed.emit()
+
+    def set_show_label(self, val: LabelEnum):
+        if self.show_label != val:
+            self.settings.set_in_profile(f"{self.name}.image_state.show_label", val)
+            self.show_label = val
+            self.parameter_changed.emit()
+
+
+class ImageCanvas(QLabel):
+    """Canvas for painting image"""
+
+    zoom_mark = Signal(QPoint, QPoint, QSize)  # Signal emitted on end of marking zoom area.
+    # Contains two oposit corners of rectangle and current size of canvas
+    position_signal = Signal([QPoint, QSize], [QPoint])
+    click_signal = Signal([QPoint, QSize], [QPoint])
+    leave_signal = Signal()  # mouse left Canvas area
+
+    def __init__(self, local_settings: ImageShowState):
+        """
+        :type local_settings: ImageShowState
+        :param local_settings:
+        """
+        super().__init__()
+        self.scale_factor = 1
+        self.local_settings = local_settings
+        self.point = None
+        self.point2 = None
+        self.image = None
+        self.image_size = QSize(1, 1)
+        self.image_ratio = 1
+        self.setMouseTracking(True)
+        self.my_pixmap = None
+
+    def set_image(self, im: np.ndarray):
+        """set image which will be shown. This function is called from
+         :class: `ImageView` when changing image or layer"""
+        self.image = im
+        height, width, _ = im.shape
+        self.image_size = QSize(width, height)
+        self.image_ratio = float(width) / float(height)
+        self.paint_image()
+
+    def paint_image(self):
+        if self.image is None:
+            return
+        im = self.image
+        width, height = self.image_size.width(), self.image_size.height()
+        im2 = QImage(im.data, width, height, im.dtype.itemsize * width * 3, QImage.Format_RGB888)
+        self.my_pixmap = QPixmap.fromImage(im2)
+        self.repaint()
+
+    def leaveEvent(self, a0: QEvent):
+        self.point = None
+        self.point2 = None
+        self.leave_signal.emit()
+
+    def _calculate_real_position(self, pos: QPoint):
+        x = int(pos.x() / (self.width() / self.image_size.width()))
+        y = int(pos.y() / (self.height() / self.image_size.height()))
+        return QPoint(x, y)
+
+    def mousePressEvent(self, event: QMouseEvent):
+        super().mousePressEvent(event)
+        if self.local_settings.zoom:
+            self.point = event.pos()
+        elif not self.local_settings.move:
+            self.click_signal.emit(event.pos(), self.size())
+            self.click_signal[QPoint].emit(self._calculate_real_position(event.pos()))
+
+    def mouseMoveEvent(self, event: QMouseEvent):
+        super().mouseMoveEvent(event)
+        if self.local_settings.zoom and self.point is not None:
+            self.point2 = event.pos()
+            self.update()
+        self.position_signal.emit(event.pos(), self.size())
+        self.position_signal[QPoint].emit(self._calculate_real_position(event.pos()))
+
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
+        if self.local_settings.zoom and self.point is not None and self.point2 is not None:
+            diff = self.point2 - self.point
+            if abs(diff.x()) and abs(diff.y()):
+                self.zoom_mark.emit(self.point, self.point2, self.size())
+            self.point2 = None
+            self.point = None
+            self.update()
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        painter = QPainter(self)
+        if self.my_pixmap is not None:
+            painter.drawPixmap(self.rect(), self.my_pixmap)
+        if not self.local_settings.zoom or self.point is None or self.point2 is None:
+            return
+        pen = QPen(QColor("white"))
+        pen.setStyle(Qt.DashLine)
+        pen.setDashPattern([5, 5])
+        painter.setPen(pen)
+        diff = self.point2 - self.point
+        painter.drawRect(self.point.x(), self.point.y(), diff.x(), diff.y())
+        pen = QPen(QColor("blue"))
+        pen.setStyle(Qt.DashLine)
+        pen.setDashPattern([5, 5])
+        pen.setDashOffset(3)
+        painter.setPen(pen)
+        painter.drawRect(self.point.x(), self.point.y(), diff.x(), diff.y())
+
+
+def create_tool_button(text: str, icon: Union[str, QIcon]) -> QToolButton:
     res = QToolButton()
     # res.setIconSize(canvas_icon_size)
     if icon is None:
