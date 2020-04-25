@@ -73,6 +73,22 @@ class TestImageClass:
         GenericImageReader.read_image(os.path.join(data_test_dir, "N2A_H2BGFP_dapi_falloidin_cycling1.oib"))
 
 
+class CustomImage(Image):
+    return_order = "TCXYZ"
+
+
+class CustomTiffReader(TiffImageReader):
+    image_class = CustomImage
+
+
+def test_change_class(data_test_dir):
+    img = CustomTiffReader.read_image(os.path.join(data_test_dir, "test_lsm.tif"))
+    assert isinstance(img, CustomImage)
+    assert img.plane_shape == (1024, 1024)
+    assert img.layers == 6
+    assert img.channels == 3
+
+
 def test_xml2dict():
     sample_text = """
     <level1>
