@@ -28,7 +28,7 @@ from PartSeg import __version__
 from PartSegCore import state_store
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 
-_email_regexp = re.compile("[\w+]+@\w+\.\w+")
+_email_regexp = re.compile(r"[\w+]+@\w+\.\w+")
 _feedback_url = "https://sentry.io/api/0/projects/{organization_slug}/{project_slug}/user-feedback/".format(
     organization_slug="cent", project_slug="partseg"
 )

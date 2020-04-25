@@ -12,3 +12,14 @@ APP_NAME = "PartSeg"
 APP_LAB = "LFSG"
 MASK_NAME = "Mask Segmentation"
 SEGMENTATION_NAME = "ROI Analysis"
+
+__all__ = (
+    "__author__",
+    "parsed_version",
+    "__version__",
+    "changelog",
+    "APP_NAME",
+    "MASK_NAME",
+    "APP_LAB",
+    "SEGMENTATION_NAME",
+)

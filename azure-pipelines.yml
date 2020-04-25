@@ -30,7 +30,24 @@ stages:
         - publish: changelog_cut.md
           artifact: ReleaseInfo
 
+  - stage: formating_check
+    dependsOn: []
+    jobs:
+      - job: check_formating
+        pool: {vmImage: 'Ubuntu-16.04'}
+        steps:
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7', architecture: x64}}
+          - bash: |
+              python -m pip install black flake8
+            displayName: InstallDeps
+          - bash: black --check .
+            displayName: Black
+          - bash: flake8 .
+            displayName: flake8
+
+
   - stage: Tests
+    dependsOn: [GetTestData, formating_check]
     jobs:
     - job: test
       strategy:
@@ -192,3 +209,4 @@ stages:
             displayName: InstallDeps
           - bash: DATA_PATH=${PWD}/typy_neuronow2 jupyter nbconvert --to notebook --execute tutorials/tutorial_neuron_types/Neuron_types_example.ipynb
             displayName: "Run Notebook"
+

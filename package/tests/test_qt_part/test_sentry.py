@@ -1,5 +1,4 @@
 import multiprocessing
-import traceback
 
 import sentry_sdk
 import sentry_sdk.utils
@@ -51,7 +50,7 @@ def test_sentry_report(monkeypatch):
         monkeypatch.setattr(client.transport, "capture_event", check_event)
         with sentry_sdk.push_scope() as scope:
             scope.set_extra("lorem", message)
-            event_id = sentry_sdk.capture_event(event, hint=hint)
+            sentry_sdk.capture_event(event, hint=hint)
         assert happen[0] is True
 
 

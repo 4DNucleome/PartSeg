@@ -475,8 +475,8 @@ class TestMSO:
         mso.set_mu_array(mu_arr)
         mso.set_components_num(3)
 
-        changes = mso.run_MSO(10)
-        steps = mso.steps_done()
+        mso.run_MSO(10)
+        mso.steps_done()
         # res = mso.get_result_catted()
         arr = np.copy(components)
         arr[arr == 1] = 0
@@ -546,7 +546,7 @@ class TestMSO:
         mso.set_mu_array(mu_array)
         mso.set_components_num(3)
         mso.run_MSO(10)
-        res = mso.get_result_catted()
+        mso.get_result_catted()
 
 
 class TestMuMid:

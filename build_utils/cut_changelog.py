@@ -1,6 +1,7 @@
 import os
 import sys
 
+
 def cut_changelog(changelog_path):
     res = []
     first_found = False
@@ -21,5 +22,5 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
         print(result)
     else:
-        with open(sys.argv[1], 'w') as ff:
+        with open(sys.argv[1], "w") as ff:
             ff.write(result)

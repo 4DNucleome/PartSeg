@@ -1,5 +1,4 @@
 from .io_utils import ProjectTuple
-from ..io_utils import HistoryElement
 from .algorithm_description import analysis_algorithm_dict
 from .analysis_utils import SegmentationPipelineElement, SegmentationPipeline
 from .save_hooks import part_hook, PartEncoder

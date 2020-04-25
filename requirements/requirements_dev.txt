@@ -2,4 +2,5 @@ numpy >= 1.16.0
 Cython >= 0.29.16
 tox
 black
+pre-commit
 -r requirements_test.txt

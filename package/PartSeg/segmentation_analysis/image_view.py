@@ -140,7 +140,7 @@ class SynchronizeView(QObject):
             origin, dest = self.image_view1, self.image_view2
         else:
             origin, dest = self.image_view2, self.image_view1
-        _block = QSignalBlocker(dest)
+        _block = QSignalBlocker(dest)  # noqa F841
         dest.stack_slider.setValue(origin.stack_slider.value())
         dest.time_slider.setValue(origin.time_slider.value())
         dest.image_area.zoom_scale = origin.image_area.zoom_scale

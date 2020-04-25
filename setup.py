@@ -94,8 +94,8 @@ changelog_result_path = os.path.join(os.path.dirname(__file__), "package", "Part
 if os.path.exists(changelog_path):
     with open(changelog_path) as ff:
         changelog_str = ff.read()
-    with open(changelog_result_path, 'w') as ff:
-        ff.write(f"changelog = \"\"\"\n{changelog_str}\"\"\"\n")
+    with open(changelog_result_path, "w") as ff:
+        ff.write(f'changelog = """\n{changelog_str}"""\n')
 
 
 setuptools.setup(
@@ -103,5 +103,5 @@ setuptools.setup(
     include_package_data=True,
     long_description=readme(),
     long_description_content_type="text/markdown",
-    use_scm_version=True
+    use_scm_version=True,
 )

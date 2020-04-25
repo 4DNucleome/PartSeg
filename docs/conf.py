@@ -13,16 +13,16 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-
+import PartSeg
 
 # -- Project information -----------------------------------------------------
 
-project = 'PartSeg'
-copyright = '2019, Laboratory of Functional and Structural Genomics'
-author = 'Grzegorz Bokota (LFSG)'
+project = "PartSeg"
+copyright = "2019, Laboratory of Functional and Structural Genomics"
+author = "Grzegorz Bokota (LFSG)"
 
 # The full version, including alpha/beta/rc tags
-import PartSeg
+
 release = PartSeg.__version__
 
 
@@ -31,17 +31,22 @@ release = PartSeg.__version__
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', "sphinx_qt_documentation",
-              'sphinx.ext.viewcode', 'sphinx.ext.graphviz', "PartSegCore.sphinx.auto_parameters"
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
+    "sphinx_qt_documentation",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.graphviz",
+    "PartSegCore.sphinx.auto_parameters",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -49,17 +54,19 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'nature'
+html_theme = "nature"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
-master_doc = 'index'
+master_doc = "index"
 
-intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
-                       "PyQt5": ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None),
-                       "Numpy": ('https://docs.scipy.org/doc/numpy/', None)}
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "PyQt5": ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None),
+    "Numpy": ("https://docs.scipy.org/doc/numpy/", None),
+}
 
 qt_documentation = "Qt5"

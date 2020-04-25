@@ -19,7 +19,6 @@ from qtpy.QtWidgets import (
     QScrollArea,
     QSizePolicy,
     QToolButton,
-    QAction,
     QScrollBar,
     QCheckBox,
     QComboBox,
@@ -301,7 +300,7 @@ class ImageView(QWidget):
         self.zoom_button.setCheckable(True)
         self.zoom_button.setContextMenuPolicy(Qt.ActionsContextMenu)
         self.component = None
-        crop = QAction("Crop", self.zoom_button)
+        # crop = QAction("Crop", self.zoom_button)
         # crop.triggered.connect(self.crop_view)
 
         self.btn_layout = QHBoxLayout()
