@@ -1,5 +1,6 @@
 import os.path
 import typing
+import warnings
 from abc import abstractmethod
 from io import BytesIO
 from pathlib import Path
@@ -36,6 +37,11 @@ class BaseImageReader:
         Order to which image axes should be rearranged before pass to :py:attr:`image_class` constructor.
         Default is :py:attr:`image_class.return_order`
         """
+        if hasattr(cls.image_class, "return_order"):
+            warnings.warn(
+                "Using return_order is deprecated since PartSeg 0.12.0. Please fix your image_class", DeprecationWarning
+            )
+            return cls.image_class.return_order
         return cls.image_class.axis_order
 
     def __init__(self, callback_function=None):

@@ -85,7 +85,7 @@ class Image:
     def __new__(cls, *args, **kwargs):
         if hasattr(cls, "return_order"):
             warnings.warn("Using return_order is deprecated since PartSeg 0.11.0", DeprecationWarning)
-            cls.axes_order = cls.return_order
+            cls.axis_order = cls.return_order
         return super(Image, cls).__new__(cls)
 
     def __init__(
@@ -137,8 +137,25 @@ class Image:
         else:
             self._mask_array = None
 
+    def merge(self, image: "Image", axis: typing.Union[str, int]) -> "Image":
+        """
+        Produce new image merging image data along given axis. All metadata
+        are obtained from self.
+
+        :param Image image: Image to be merged
+        :param typing.Union[str, int] axis:
+        :return: New image produced from merge
+        :rtype: Image
+        """
+        if isinstance(axis, str):
+            axis = self.axis_order.index(axis)
+        data = self.reorder_axes(image.get_data(), image.axis_order)
+        data = np.concatenate((self.get_data(), data), axis=axis)
+        return self.substitute(data=data, ranges=self.ranges + image.ranges)
+
     @lazyattr
-    def channel_pos(self):
+    def channel_pos(self) -> int:
+        """Channel axis. Need to have 'C' in :py:attr:`axis_order`"""
         return self.axis_order.index("C")
 
     @lazyattr
@@ -151,15 +168,22 @@ class Image:
 
     @lazyattr
     def time_pos(self):
+        """Time axis. Need to have 'T' in :py:attr:`axis_order`"""
         return self.axis_order.index("T")
 
     @lazyattr
-    def stack_pos(self):
+    def stack_pos(self) -> int:
+        """Stack axis. Need to have 'Z' in :py:attr:`axis_order`"""
         return self.axis_order.index("Z")
 
     @lazyattr
     def array_axis_order(self):
         return self.axis_order.replace("C", "")
+
+    @property
+    def dtype(self) -> np.dtype:
+        """dtype of image array"""
+        return self._image_array.dtype
 
     @staticmethod
     def _reorder_axes(array: np.ndarray, input_axes: str, return_axes) -> np.ndarray:
@@ -453,7 +477,7 @@ class Image:
 
     def cut_image(
         self, cut_area: typing.Union[np.ndarray, typing.List[slice], typing.Tuple[slice]], replace_mask=False
-    ):
+    ) -> "Image":
         """
         Create new image base on mask or list of slices
         :param replace_mask: if cut area is represented by mask array,
