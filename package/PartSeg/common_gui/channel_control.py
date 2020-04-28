@@ -495,7 +495,7 @@ class ColorComboBoxGroup(QWidget):
                     blur=self.settings.get_from_profile(f"{self.name}.use_filter_{i}", NoiseFilterType.No),
                 )
                 el.clicked.connect(self.set_active)
-                el.channel_visible_changed.connect(self.coloring_update)
+                el.channel_visible_changed.connect(self.change_selected_color)
                 el.channel_colormap_changed.connect(self.change_selected_color)
                 self.layout().addWidget(el)
         else:
