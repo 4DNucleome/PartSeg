@@ -4,7 +4,7 @@ import PartSegData
 import numpy as np
 from napari.utils.theme import template as napari_template
 from napari.resources import get_stylesheet
-from qtpy.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QSlider
+from qtpy.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QSlider, QLabel
 from qtpy.QtCore import Qt
 
 from PartSeg.common_backend.base_settings import ViewSettings
@@ -28,17 +28,30 @@ class TestWidget(QWidget):
         self.setLayout(layout)
         self.btn = QPushButton("Aaaa")
         self.btn.clicked.connect(self.load_image)
+        self.btn2 = QPushButton("Aaaa2")
+        self.btn2.clicked.connect(self.load_image2)
+        self.label = QLabel()
         layout.addWidget(self.btn)
+        layout.addWidget(self.btn2)
+        layout.addWidget(self.label)
         self.bar = QSlider(Qt.Horizontal)
         self.bar.setRange(0, 100)
         layout.addWidget(self.bar)
         self.setStyleSheet(napari_template(get_stylesheet(), **self.image_view.viewer.palette))
+        self.image_view.text_info_change.connect(self.label.setText)
 
     def load_image(self):
         image = TiffImageReader.read_image(
             "/home/czaki/Projekty/partseg/test_data/stack1_components/stack1_component1.tif"
         )
         self.image_view.set_image(image)
+
+    def load_image2(self):
+        image = TiffImageReader.read_image(
+            "/home/czaki/Projekty/partseg/test_data/stack1_components/stack1_component1.tif"
+        )
+        self.image_view.add_image(image)
+        self.image_view.viewer.grid_view(stride=2)
 
 
 def main():
