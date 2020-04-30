@@ -687,23 +687,38 @@ class FileData:
                     for sheet_name, data_frame in data:
                         data_frame.to_csv(base_path + "_" + sheet_name + ext)
                 else:
-                    writer = pd.ExcelWriter(self.file_path)
-                    new_sheet_names = []
-                    ind = 0
-                    for sheet_name, _ in data:
-                        if len(sheet_name) < 32:
-                            new_sheet_names.append(sheet_name)
+                    try:
+                        self.write_to_excel(self.file_path, data)
+                    except PermissionError:
+                        base, ext = path.splitext(self.file_path)
+                        for i in range(1, 100):
+                            try:
+                                self.write_to_excel(f"{base}({i}){ext}", data)
+                                break
+                            except PermissionError:
+                                pass
                         else:
-                            new_sheet_names.append(sheet_name[:27] + f"_{ind}_")
-                            ind += 1
-                    for sheet_name, (_, data_frame) in zip(new_sheet_names, data):
-                        data_frame.to_excel(writer, sheet_name=sheet_name)
-                    writer.save()
+                            raise PermissionError(f"Fail to write result excel {self.file_path}")
             except Exception as e:
                 logging.error(e)
                 self.error_queue.put(prepare_error_data(e))
             finally:
                 self.writing = False
+
+    @staticmethod
+    def write_to_excel(file_path, data):
+        writer = pd.ExcelWriter(file_path)
+        new_sheet_names = []
+        ind = 0
+        for sheet_name, _ in data:
+            if len(sheet_name) < 32:
+                new_sheet_names.append(sheet_name)
+            else:
+                new_sheet_names.append(sheet_name[:27] + f"_{ind}_")
+                ind += 1
+        for sheet_name, (_, data_frame) in zip(new_sheet_names, data):
+            data_frame.to_excel(writer, sheet_name=sheet_name)
+        writer.save()
 
     def get_errors(self) -> List[ErrorInfo]:
         """
