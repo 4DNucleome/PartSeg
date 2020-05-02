@@ -14,7 +14,7 @@ def my_excepthook(type_, value, trace_back):
 
     # log the exception here
     if state_store.show_error_dialog:
-        if state_store.report_errors and parsed_version.is_devrelease:
+        if state_store.report_errors and parsed_version.is_devrelease and not isinstance(value, KeyboardInterrupt):
             sentry_sdk.capture_exception(value)
         try:
             # noinspection PyUnresolvedReferences
