@@ -1,9 +1,11 @@
 appdirs
 Cython
 czifile
+dataclasses; python_version < '3.7'
 defusedxml
 h5py
 imagecodecs
+napari
 numpy
 oiffile
 openpyxl

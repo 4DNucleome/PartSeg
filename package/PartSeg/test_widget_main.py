@@ -1,4 +1,5 @@
 import sys
+from glob import glob
 
 import PartSegData
 import numpy as np
@@ -21,7 +22,7 @@ class TestWidget(QWidget):
         self.settings = ViewSettings()
         self.prop = ChannelProperty(self.settings, "test")
         image = TiffImageReader.read_image("/home/czaki/Projekty/partseg/test_data/test_lsm.lsm")
-        self.image_view = ImageView(self.settings, self.prop, "test")
+        self.image_view = ImageView(self.settings, self.prop, "test", ndisplay=3)
         self.image_view.set_image(image)
         layout = QVBoxLayout()
         layout.addWidget(self.image_view)
@@ -30,15 +31,20 @@ class TestWidget(QWidget):
         self.btn.clicked.connect(self.load_image)
         self.btn2 = QPushButton("Aaaa2")
         self.btn2.clicked.connect(self.load_image2)
+        self.btn3 = QPushButton("toggle")
+        self.btn3.clicked.connect(self.image_view.toggle_dims)
         self.label = QLabel()
         layout.addWidget(self.btn)
         layout.addWidget(self.btn2)
+        layout.addWidget(self.btn3)
         layout.addWidget(self.label)
         self.bar = QSlider(Qt.Horizontal)
         self.bar.setRange(0, 100)
         layout.addWidget(self.bar)
         self.setStyleSheet(napari_template(get_stylesheet(), **self.image_view.viewer.palette))
         self.image_view.text_info_change.connect(self.label.setText)
+        self.file_list = glob("/home/czaki/Projekty/partseg/test_data/stack1_components/*[0-9].tif")
+        self.index = 0
 
     def load_image(self):
         image = TiffImageReader.read_image(
@@ -47,11 +53,10 @@ class TestWidget(QWidget):
         self.image_view.set_image(image)
 
     def load_image2(self):
-        image = TiffImageReader.read_image(
-            "/home/czaki/Projekty/partseg/test_data/stack1_components/stack1_component1.tif"
-        )
+        image = TiffImageReader.read_image(self.file_list[self.index])
+        self.index += 1
         self.image_view.add_image(image)
-        self.image_view.viewer.grid_view(stride=2)
+        self.image_view.grid_view()
 
 
 def main():
