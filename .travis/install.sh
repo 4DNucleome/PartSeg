@@ -28,4 +28,3 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
     pip install pytest
 fi
-

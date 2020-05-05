@@ -141,4 +141,3 @@ def show_border(np.ndarray[component_types, ndim=3] base_object, np.ndarray[int8
         current_points.pop()
         result[p.z, p.y, p.x] = 1
     return result
-

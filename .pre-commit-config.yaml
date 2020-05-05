@@ -11,3 +11,10 @@ repos:
       pass_filenames: true
       # this seems to need to be here in addition to setup.cfg
       exclude: vendored|__init__.py|examples
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+    - id: check-json
+    - id: check-yaml
+    - id: check-merge-conflict
+    - id: end-of-file-fixer

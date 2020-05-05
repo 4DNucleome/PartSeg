@@ -21,5 +21,3 @@ PartSegImage.tifffile_fixes
 
 .. autoclass:: PartSegImage.tifffile_fixes.MyTiffPage
     :members: asarray
-
-

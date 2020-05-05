@@ -263,14 +263,3 @@ def calculate_mu_mid(numpy.ndarray[image_types, ndim=3] image, image_types lower
                     res_val = 0
                 res[z, y, x] = res_val
     return res
-
-
-
-
-
-
-
-
-
-
-

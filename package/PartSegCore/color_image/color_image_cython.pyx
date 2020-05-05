@@ -149,4 +149,3 @@ def add_labels(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[label_types, ndim=2
                 image[x, y, 2] = <DTYPE_t> (image[x, y, 2] * (1-overlay) + label_colors[col_num, 2] * overlay)
     # local_labels = labels_color_map[labels]
     return image
-

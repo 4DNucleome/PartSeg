@@ -32,4 +32,3 @@ ctypedef fused component_types:
     cnp.uint32_t
     cnp.uint16_t
     cnp.uint8_t
-
