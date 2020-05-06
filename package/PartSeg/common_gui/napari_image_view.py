@@ -4,6 +4,7 @@ from typing import Optional, List, Dict, Tuple
 
 import numpy as np
 from napari._qt.qt_viewer import QtViewer
+from napari._qt.qt_viewer_buttons import QtNDisplayButton, QtViewerPushButton
 from napari.components import ViewerModel as Viewer
 from napari.layers.image import Image as NapariImage
 from qtpy.QtCore import Signal
@@ -48,11 +49,16 @@ class ImageView(QWidget):
         self.current_image = ""
 
         self.viewer = Viewer(ndisplay=ndisplay)
+        self.viewer.theme = self.settings.theme_name
         self.viewer_widget = QtViewer(self.viewer)
         self.image_state = ImageShowState(settings, name)
         self.channel_control = ColorComboBoxGroup(settings, name, channel_property, height=30)
+        self.ndim_btn = QtNDisplayButton(self.viewer)
+        self.reset_view_button = QtViewerPushButton(self.viewer, "home", "Reset view", self.viewer.reset_view)
 
         self.btn_layout = QHBoxLayout()
+        self.btn_layout.addWidget(self.reset_view_button)
+        self.btn_layout.addWidget(self.ndim_btn)
         self.btn_layout.addWidget(self.channel_control)
         self.btn_layout2 = QHBoxLayout()
         layout = QVBoxLayout()
@@ -174,3 +180,9 @@ class ImageView(QWidget):
                     self.channel_control.selected_colormaps[index]
                 )
                 image_info.layers[index].visible = self.channel_control.channel_visibility[index]
+
+    def reset_image_size(self):
+        self.viewer.reset_view()
+
+    def set_theme(self, theme: str):
+        self.viewer.theme = theme

@@ -1,18 +1,18 @@
+import os
 from typing import List, Optional, Type
 
-from qtpy.QtGui import QShowEvent, QDragEnterEvent, QDropEvent
-from qtpy.QtWidgets import QMainWindow, QMessageBox, QWidget
 from qtpy.QtCore import Signal
-import os
+from qtpy.QtGui import QShowEvent, QDragEnterEvent, QDropEvent
+from qtpy.QtWidgets import QMainWindow, QMessageBox, QWidget, QApplication
 
-from PartSeg.common_gui.about_dialog import AboutDialog
-from PartSeg.common_gui.image_adjustment import ImageAdjustmentDialog
-from PartSeg.common_gui.show_directory_dialog import DirectoryDialog
-from PartSeg.common_backend.load_backup import import_config
-from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
+from ..common_backend.base_settings import BaseSettings, SwapTimeStackException, TimeAndStackException
+from ..common_backend.load_backup import import_config
+from .about_dialog import AboutDialog
+from .image_adjustment import ImageAdjustmentDialog
+from .show_directory_dialog import DirectoryDialog
+from .waiting_dialog import ExecuteFunctionDialog
 from PartSegCore.io_utils import ProjectInfoBase
 from PartSegImage import Image
-from PartSeg.common_backend.base_settings import BaseSettings, SwapTimeStackException, TimeAndStackException
 
 
 class BaseMainMenu(QWidget):
@@ -131,6 +131,15 @@ class BaseMainWindow(QMainWindow):
         self.setAcceptDrops(True)
         self.setWindowTitle(title)
         self.title_base = title
+        app = QApplication.instance()
+        if app is not None:
+            app.setStyleSheet(settings.style_sheet)
+        self.settings.theme_changed.connect(self.change_theme)
+
+    def change_theme(self):
+        app = QApplication.instance()
+        if app is not None:
+            app.setStyleSheet(self.settings.style_sheet)
 
     def showEvent(self, a0: QShowEvent):
         self.show_signal.emit()

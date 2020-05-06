@@ -139,7 +139,7 @@ class MainMenu(BaseMainMenu):
         self.setContentsMargins(0, 0, 0, 0)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        # layout.setSpacing(0)
         layout.addWidget(self.load_image_btn)
         layout.addWidget(self.load_segmentation_btn)
         layout.addWidget(self.save_catted_parts)
@@ -562,7 +562,7 @@ class AlgorithmOptions(QWidget):
 
         self.setContentsMargins(0, 0, 0, 0)
         main_layout = QVBoxLayout()
-        main_layout.setSpacing(0)
+        # main_layout.setSpacing(0)
         opt_layout = QHBoxLayout()
         opt_layout.setContentsMargins(0, 0, 0, 0)
         opt_layout.addWidget(self.show_result)
@@ -595,7 +595,7 @@ class AlgorithmOptions(QWidget):
         main_layout.addLayout(down_layout)
         main_layout.addStretch()
         main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
+        # main_layout.setSpacing(0)
         self.setLayout(main_layout)
 
         # noinspection PyUnresolvedReferences
@@ -963,3 +963,7 @@ class MainWindow(BaseMainWindow):
 
     def set_data(self, data):
         self.main_menu.set_data(data)
+
+    def change_theme(self):
+        self.image_view.set_theme(self.settings.theme_name)
+        super().change_theme()

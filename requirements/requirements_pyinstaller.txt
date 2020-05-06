@@ -58,6 +58,7 @@ psutil==5.7.0             # via napari
 ptyprocess==0.6.0         # via pexpect
 pygments==2.6.1           # via ipython, qtconsole, sphinx
 pyinstaller==3.6          # via -r requirements_pyinstaller.in
+pyopengl-accelerate==3.1.5  # via -r requirements_pyinstaller.in
 pyopengl==3.1.5           # via napari
 pyparsing==2.4.7          # via packaging
 pyqt5-sip==12.7.2         # via pyqt5

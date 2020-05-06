@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import Optional, Tuple, Union, NamedTuple, List
 
 import numpy as np
+import napari.utils.theme
+from napari.resources import get_stylesheet
+from napari.utils.theme import template as napari_template
 from qtpy.QtCore import QObject, Signal
 
 from PartSeg.common_backend.partially_const_dict import PartiallyConstDict
@@ -191,6 +194,7 @@ class LabelColorDict(PartiallyConstDict[list]):
 class ViewSettings(ImageSettings):
     colormap_changes = Signal()
     labels_changed = Signal()
+    theme_changed = Signal()
 
     def __init__(self):
         super().__init__()
@@ -201,6 +205,26 @@ class ViewSettings(ImageSettings):
         self.colormap_dict = ColormapDict(self.get_from_profile("custom_colormap", {}))
         self.label_color_dict = LabelColorDict(self.get_from_profile("custom_label_colors", {}))
         self.cached_labels: Optional[Tuple[str, np.ndarray]] = None
+
+    @property
+    def theme_name(self) -> str:
+        return self.get_from_profile("theme", "light")
+
+    @property
+    def style_sheet(self):
+        return napari_template(get_stylesheet(), **napari.utils.theme.palettes[self.theme_name])
+
+    @theme_name.setter
+    def theme_name(self, value: str):
+        if value not in napari.utils.theme.palettes:
+            raise ValueError(f"Unsupported theme {value}. Supported one: {self.theme_list()}")
+        if value == self.theme_name:
+            return
+        self.set_in_profile("theme", value)
+        self.theme_changed.emit()
+
+    def theme_list(self):
+        return list(napari.utils.theme.palettes.keys())
 
     @property
     def chosen_colormap(self):

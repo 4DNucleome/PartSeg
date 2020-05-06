@@ -138,7 +138,7 @@ class Options(QWidget):
         layout2.addWidget(self.synchronize_checkbox)
         layout.addLayout(layout2)
         layout.addWidget(self._ch_control2)
-        layout.setSpacing(0)
+        # layout.setSpacing(0)
         self.setLayout(layout)
 
     def compare_action(self):
@@ -367,8 +367,8 @@ class MainMenu(BaseMainMenu):
         self.batch_processing_btn = QPushButton("Batch Processing")
 
         layout = QHBoxLayout()
-        layout.setSpacing(0)
-        layout.setContentsMargins(0, 0, 0, 0)
+        # layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 4, 4)
         layout.addWidget(self.open_btn)
         layout.addWidget(self.save_btn)
         layout.addWidget(self.advanced_btn)

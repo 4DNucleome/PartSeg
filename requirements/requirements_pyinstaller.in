@@ -13,6 +13,7 @@ packaging
 pandas
 PartSegData
 PyInstaller
+PyOpenGL-accelerate
 PyQt5
 requests
 QtPy
