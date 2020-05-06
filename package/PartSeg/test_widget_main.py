@@ -8,7 +8,7 @@ from napari.resources import get_stylesheet
 from qtpy.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QSlider, QLabel
 from qtpy.QtCore import Qt
 
-from PartSeg.common_backend.base_settings import ViewSettings
+from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui.channel_control import ChannelProperty
 from PartSeg.common_gui.napari_image_view import ImageView
 from PartSegImage import TiffImageReader
@@ -19,10 +19,10 @@ color_maps = np.load(PartSegData.colors_file)
 class TestWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.settings = ViewSettings()
+        self.settings = BaseSettings("")
         self.prop = ChannelProperty(self.settings, "test")
         image = TiffImageReader.read_image("/home/czaki/Projekty/partseg/test_data/test_lsm.lsm")
-        self.image_view = ImageView(self.settings, self.prop, "test", ndisplay=3)
+        self.image_view = ImageView(self.settings, self.prop, "test", ndisplay=2)
         self.image_view.set_image(image)
         layout = QVBoxLayout()
         layout.addWidget(self.image_view)
@@ -31,12 +31,9 @@ class TestWidget(QWidget):
         self.btn.clicked.connect(self.load_image)
         self.btn2 = QPushButton("Aaaa2")
         self.btn2.clicked.connect(self.load_image2)
-        self.btn3 = QPushButton("toggle")
-        self.btn3.clicked.connect(self.image_view.toggle_dims)
         self.label = QLabel()
         layout.addWidget(self.btn)
         layout.addWidget(self.btn2)
-        layout.addWidget(self.btn3)
         layout.addWidget(self.label)
         self.bar = QSlider(Qt.Horizontal)
         self.bar.setRange(0, 100)
@@ -48,12 +45,13 @@ class TestWidget(QWidget):
 
     def load_image(self):
         image = TiffImageReader.read_image(
-            "/home/czaki/Projekty/partseg/test_data/stack1_components/stack1_component1.tif"
+            "/home/czaki/Projekty/partseg/test_data/stack1_components/stack1_component1.tif",
+            "/home/czaki/Projekty/partseg/test_data/stack1_components/stack1_component1_mask.tif",
         )
         self.image_view.set_image(image)
 
     def load_image2(self):
-        image = TiffImageReader.read_image(self.file_list[self.index])
+        image = TiffImageReader.read_image(self.file_list[self.index], self.file_list[self.index][:-4] + "_mask.tif")
         self.index += 1
         self.image_view.add_image(image)
         self.image_view.grid_view()

@@ -1,11 +1,11 @@
 import os
 from collections import defaultdict
+from copy import deepcopy
 from functools import partial
 from pathlib import Path
-
-from copy import deepcopy
 from typing import Type
 
+import PartSegData
 import numpy as np
 from qtpy.QtCore import Signal, Qt, QByteArray, Slot
 from qtpy.QtGui import QGuiApplication, QIcon
@@ -28,41 +28,32 @@ from qtpy.QtWidgets import (
     QGridLayout,
 )
 
-from PartSeg.common_gui.advanced_tabs import AdvancedWindow
-from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
-from PartSeg.segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
+from PartSegCore import state_store
 from PartSegCore.io_utils import WrongFileTypeException, HistoryElement, HistoryProblem
-from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
-from PartSegCore.mask_create import calculate_mask
-from .simple_measurements import SimpleMeasurements
-from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox, AlgorithmChoose
-from ..common_gui.channel_control import ChannelProperty
-from ..common_gui.custom_save_dialog import SaveDialog
-from ..common_gui.custom_load_dialog import CustomLoadDialog
-from ..common_gui.flow_layout import FlowLayout
-from ..common_gui.mask_widget import MaskDialogBase
-from ..common_gui.select_multiple_files import AddFiles
-from ..common_gui.stack_image_view import ColorBar, LabelEnum
-from ..common_gui.universal_gui_part import right_label
-from ..common_gui.waiting_dialog import ExecuteFunctionDialog
-from PartSegCore.segmentation.algorithm_base import SegmentationResult
-from PartSegCore.universal_const import UNIT_SCALE, Units
-from PartSeg.common_gui.main_window import BaseMainWindow, BaseMainMenu
-from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 from PartSegCore.mask import io_functions
-from .stack_settings import StackSettings, get_mask
-from PartSegImage import TiffImageReader, Image
-from .batch_proceed import BatchProceed, BatchTask
-from .image_view import StackImageView
+from PartSegCore.mask.algorithm_description import mask_algorithm_dict
+from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import (
     SaveSegmentation,
     LoadSegmentation,
     SegmentationTuple,
     LoadSegmentationParameters,
 )
-from PartSegCore import state_store
-import PartSegData
-
+from PartSegCore.mask_create import calculate_mask
+from .simple_measurements import SimpleMeasurements
+from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox, AlgorithmChoose
+from ..common_gui.channel_control import ChannelProperty
+from ..common_gui.custom_load_dialog import CustomLoadDialog
+from ..common_gui.custom_save_dialog import SaveDialog
+from ..common_gui.flow_layout import FlowLayout
+from ..common_gui.main_window import BaseMainWindow, BaseMainMenu
+from ..common_gui.mask_widget import MaskDialogBase
+from ..common_gui.multiple_file_widget import MultipleFileWidget
+from ..common_gui.select_multiple_files import AddFiles
+from ..common_gui.stack_image_view import ColorBar, LabelEnum
+from ..common_gui.universal_gui_part import right_label
+from ..common_gui.waiting_dialog import ExecuteFunctionDialog
+from ..segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
 
 CONFIG_FOLDER = os.path.join(state_store.save_folder, "mask")
 

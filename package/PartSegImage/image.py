@@ -368,6 +368,11 @@ class Image:
         return self._image_spacing
 
     @property
+    def normalized_scaling(self) -> Spacing:
+        min_val = min(self._image_spacing)
+        return (1,) + tuple(np.divide(self._image_spacing, min_val))
+
+    @property
     def voxel_size(self) -> Spacing:
         """alias for spacing"""
         return self.spacing

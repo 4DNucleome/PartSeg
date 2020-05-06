@@ -6,10 +6,12 @@ import numpy as np
 from napari._qt.qt_viewer import QtViewer
 from napari._qt.qt_viewer_buttons import QtNDisplayButton, QtViewerPushButton
 from napari.components import ViewerModel as Viewer
+from napari.layers import Layer
 from napari.layers.image import Image as NapariImage
+from napari.layers.labels import Labels
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
-from vispy.color import Colormap, ColorArray
+from vispy.color import Colormap, ColorArray, Color
 
 from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui.channel_control import ChannelProperty, ColorComboBoxGroup
@@ -22,7 +24,11 @@ from PartSegImage import Image
 class ImageInfo:
     image: Image
     layers: List[NapariImage]
-    mask: Optional[NapariImage] = None
+    mask: Optional[Labels] = None
+    mask_array: Optional[np.ndarray] = None
+    segmentation: Optional[Labels] = None
+    segmentation_array: Optional[np.ndarray] = None
+    segmentation_count: int = 0
 
 
 class ImageView(QWidget):
@@ -45,7 +51,7 @@ class ImageView(QWidget):
         self.settings = settings
         self.channel_property = channel_property
         self.name = name
-        self.image_layers: Dict[str, ImageInfo] = {}
+        self.image_info: Dict[str, ImageInfo] = {}
         self.current_image = ""
 
         self.viewer = Viewer(ndisplay=ndisplay)
@@ -70,13 +76,18 @@ class ImageView(QWidget):
 
         self.channel_control.change_channel.connect(self.change_visibility)
         self.viewer.events.status.connect(self.print_info)
-        self.viewer.grid_view()
+
+        settings.mask_changed.connect(self.set_mask)
+        settings.segmentation_changed.connect(self.set_segmentation)
+        settings.segmentation_clean.connect(self.set_segmentation)
+        settings.image_changed.connect(self.set_image)
+        # settings.labels_changed.connect(self.paint_layer)
 
     def print_info(self, value):
         if self.viewer.active_layer:
             cords = np.array([int(x) for x in self.viewer.active_layer.coordinates])
             bright_array = []
-            for image_info in self.image_layers.values():
+            for image_info in self.image_info.values():
                 for layer in image_info.layers:
                     moved_coords = (cords - layer.translate_grid).astype(np.int)
                     if np.all(moved_coords >= 0) and np.all(moved_coords < layer.data.shape):
@@ -87,27 +98,103 @@ class ImageView(QWidget):
                 return
             self.text_info_change.emit(f"{cords}: {bright_array}")
 
-    def toggle_dims(self):
-        if self.viewer.dims.ndim == 2:
-            self.viewer.dims.ndim = 3
-        else:
-            self.viewer.dims.ndim = 2
+    def get_control_view(self) -> ImageShowState:
+        return self.image_state
 
     @staticmethod
     def convert_to_vispy_colormap(colormap: ColorMap):
         return Colormap(ColorArray(create_color_map(colormap) / 255))
 
+    def mask_opacity(self) -> float:
+        """Get mask opacity"""
+        return self.settings.get_from_profile("mask_presentation   _opacity", 1)
+
+    def mask_color(self) -> Colormap:
+        """Get mask marking color"""
+        color = Color(np.divide(self.settings.get_from_profile("mask_presentation_color", [255, 255, 255]), 255))
+        return Colormap(ColorArray(["black", color.rgba]))
+
+    def get_image(self, image: Optional[Image]) -> Image:
+        if image is not None:
+            return image
+        if self.current_image not in self.image_info:
+            return self.settings.image
+        return self.image_info[self.current_image].image
+
+    def set_segmentation(self, segmentation: Optional[np.ndarray] = None, image: Optional[Image] = None) -> None:
+        image = self.get_image(image)
+        if segmentation is None:
+            segmentation = self.settings.segmentation
+        image_info = self.image_info[image.file_path]
+        if image_info.segmentation is not None:
+            self.viewer.layers.unselect_all()
+            image_info.segmentation.selected = True
+            self.viewer.layers.remove_selected()
+            image_info.segmentation = None
+
+        if segmentation is None:
+            return
+
+        segmentation = segmentation.reshape((1,) + segmentation.shape)
+
+        layer = self.viewer.add_labels(segmentation, scale=image.normalized_scaling, opacity=1)
+        image_info.segmentation = layer
+        image_info.segmentation_array = segmentation
+        image_info.segmentation_count = np.max(segmentation)
+        self.set_segmentation_view_parameters(image_info)
+
+    def set_segmentation_view_parameters(self, image_info: ImageInfo):
+        colors = self.settings.label_colors / 255
+        repeat = int(np.ceil(image_info.segmentation_count / colors.shape[0]))
+        colors = np.concatenate([colors] * repeat)
+        colors = np.concatenate([colors, np.ones(colors.shape[0]).reshape(colors.shape[0], 1)], axis=1)
+        colors = np.concatenate([[[0, 0, 0, 0]], colors[: image_info.segmentation_count]])
+        image_info.segmentation.colormap = Colormap(colors)
+        print(colors.shape, image_info.segmentation_count)
+
+    def set_mask(self, mask: Optional[np.ndarray] = None, image: Optional[Image] = None) -> None:
+        image = self.get_image(image)
+        if image.file_path not in self.image_info:
+            raise ValueError("Image not added to viewer")
+        if mask is None:
+            mask = image.mask
+
+        image_info = self.image_info[image.file_path]
+        if image_info.mask is not None:
+            self.viewer.layers.unselect_all()
+            image_info.mask.selected = True
+            self.viewer.layers.remove_selected()
+            image_info.mask = None
+
+        if mask is None:
+            return
+
+        mask_marker = mask == 0
+
+        layer = self.viewer.add_image(mask_marker, scale=image.normalized_scaling, blending="additive")
+        layer.colormap = self.mask_color()
+        layer.opacity = self.mask_opacity()
+        image_info.mask = layer
+
+    def update_mask_parameters(self):
+        opacity = self.mask_opacity()
+        colormap = self.mask_color()
+        for image_info in self.image_info.values():
+            if image_info.mask is not None:
+                image_info.mask.opacity = opacity
+                image_info.mask.colormap = colormap
+
     def set_image(self, image: Optional[Image] = None):
         self.viewer.layers.select_all()
         self.viewer.layers.remove_selected()
-        self.image_layers = {}
+        self.image_info = {}
         image = self.add_image(image)
         self.viewer.stack_view()
-        self.viewer.dims.set_point(image.time_pos, image.times // 2)
-        self.viewer.dims.set_point(image.stack_pos, image.layers // 2)
+        self.viewer.dims.set_point(image.time_pos, image.times * image.normalized_scaling[image.time_pos] // 2)
+        self.viewer.dims.set_point(image.stack_pos, image.layers * image.normalized_scaling[image.stack_pos] // 2)
 
     def has_image(self, image: Image):
-        return image.file_path in self.image_layers
+        return image.file_path in self.image_info
 
     def add_image(self, image: Optional[Image]):
         if image is None:
@@ -116,18 +203,16 @@ class ImageView(QWidget):
         if not image.channels:
             raise ValueError("Need non empty image")
 
-        if image.file_path in self.image_layers:
+        if image.file_path in self.image_info:
             raise ValueError("Image already added")
 
         channels = image.channels
-        if self.image_layers:
-            channels = max(channels, *[x.image.channels for x in self.image_layers.values()])
+        if self.image_info:
+            channels = max(channels, *[x.image.channels for x in self.image_info.values()])
 
         self.channel_control.set_channels(channels)
         visibility = self.channel_control.channel_visibility
         image_layers = []
-        min_scale = min(image.spacing)
-        scaling = (1,) + tuple([x / min_scale for x in image.spacing])
         for i in range(image.channels):
             image_layers.append(
                 self.viewer.add_image(
@@ -135,16 +220,20 @@ class ImageView(QWidget):
                     colormap=self.convert_to_vispy_colormap(self.channel_control.selected_colormaps[i]),
                     visible=visibility[i],
                     blending="additive",
-                    scale=scaling,
+                    scale=image.normalized_scaling,
                 )
             )
-        self.image_layers[image.file_path] = ImageInfo(image, image_layers)
+        if not self.image_info:
+            image_layers[0].blending = "translucent"
+        self.image_info[image.file_path] = ImageInfo(image, image_layers)
         self.current_image = image.file_path
+        if image.mask is not None:
+            self.set_mask()
         return image
 
-    def images_bounds(self) -> Tuple[List[int], List[int], Tuple[int, int]]:
+    def images_bounds(self) -> Tuple[List[int], List[int]]:
         ranges = []
-        for image_info in self.image_layers.values():
+        for image_info in self.image_info.values():
             if not image_info.layers:
                 continue
             ranges = [
@@ -157,24 +246,32 @@ class ImageView(QWidget):
         visible = [ranges[i] for i in self.viewer.dims.displayed]
         min_shape, max_shape, _ = zip(*visible)
         size = np.subtract(max_shape, min_shape)
-        return size, min_shape, (min_shape[1], max_shape[1])
+        return size, min_shape
+
+    def _shift_layer(self, layer: Layer, translate_2d):
+        translate = [0] * layer.ndim
+        translate[-2:] = translate_2d
+        layer.translate_grid = translate
 
     def grid_view(self):
-        n_row = np.ceil(np.sqrt(len(self.image_layers))).astype(int)
+        """Present multiple images in grid view"""
+        n_row = np.ceil(np.sqrt(len(self.image_info))).astype(int)
         n_row = max(1, n_row)
-        scene_size, corner, layers = self.images_bounds()
-        layers_max = layers[1] - layers[0]
-        for image_info, pos in zip(self.image_layers.values(), itertools.product(range(n_row), repeat=2)):
+        scene_size, corner = self.images_bounds()
+        for image_info, pos in zip(self.image_info.values(), itertools.product(range(n_row), repeat=2)):
             translate_2d = np.multiply(scene_size[-2:], pos)
             for layer in image_info.layers:
-                translate = [0] * layer.ndim
-                translate[-2:] = translate_2d
-                layers_shift = layers[0] + (layers_max - layer.shape[1]) // 2
-                translate[-3] = layers_shift
-                layer.translate_grid = translate
+                self._shift_layer(layer, translate_2d)
+
+            if image_info.mask is not None:
+                self._shift_layer(image_info.mask, translate_2d)
+
+            if image_info.segmentation is not None:
+                self._shift_layer(image_info.segmentation, translate_2d)
+        self.viewer.reset_view()
 
     def change_visibility(self, name: str, index: int):
-        for image_info in self.image_layers.values():
+        for image_info in self.image_info.values():
             if len(image_info.layers) > index:
                 image_info.layers[index].colormap = self.convert_to_vispy_colormap(
                     self.channel_control.selected_colormaps[index]

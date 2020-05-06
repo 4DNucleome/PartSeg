@@ -4,7 +4,34 @@ from qtpy.QtWidgets import QToolTip
 
 from PartSeg.common_gui.channel_control import ChannelProperty
 from ..common_gui.stack_image_view import ImageViewWithMask, ImageCanvas
+from ..common_gui.napari_image_view import ImageView
 import numpy as np
+
+
+class StackImageView(ImageView):
+    def __init__(self, settings, channel_property: ChannelProperty, name: str):
+        super().__init__(settings, channel_property, name)
+        self.component = None
+        # self.image_area.pixmap.click_signal.connect(self.component_click)
+
+    def component_unmark(self, _num):
+        pass
+
+    def component_mark(self, num):
+        pass
+
+    def component_click(self, point, size):
+        pass
+
+    def event(self, event: QEvent):
+        if event.type() == QEvent.ToolTip and self.component is not None:
+            # text = str(self.component)
+            if self._settings.component_is_chosen(self.component):
+                text = "☑{}".format(self.component)
+            else:
+                text = "☐{}".format(self.component)
+            QToolTip.showText(event.globalPos(), text)
+        return super().event(event)
 
 
 class StackImageCanvas(ImageCanvas):
@@ -27,7 +54,7 @@ class StackImageCanvas(ImageCanvas):
             painter.drawRect(self.mark_component)
 
 
-class StackImageView(ImageViewWithMask):
+class StackImageViewOld(ImageViewWithMask):
     image_canvas = StackImageCanvas
 
     def __init__(self, settings, channel_property: ChannelProperty, name: str):
