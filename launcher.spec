@@ -1,5 +1,6 @@
 # -*- mode: python -*-
 from PyInstaller.building.build_main import Analysis, PYZ, EXE, BUNDLE, COLLECT
+from PyInstaller.utils.hooks import collect_data_files
 
 block_cipher = None
 import sys
@@ -17,6 +18,8 @@ import PartSegData.__init__
 base_path = os.path.dirname(PartSeg.__main__.__file__)
 data_path = os.path.dirname(PartSegData.__init__.__file__)
 
+from napari.resources import import_resources
+from dask import config
 
 import imagecodecs
 
@@ -47,7 +50,12 @@ a = Analysis(
         ]
     ]
     + qt_data
-    + [(os.path.join(base_path, "plugins/itk_snap_save/__init__.py"), "plugins/itk_snap_save")],
+    + [(os.path.join(base_path, "plugins/itk_snap_save/__init__.py"), "plugins/itk_snap_save")]
+    + [(import_resources(), "napari/resources")]
+    + [(os.path.join(os.path.dirname(config.__file__), "dask.yaml"), "dask")]
+    + collect_data_files("dask")
+    + collect_data_files("vispy")
+    + collect_data_files("napari"),
     hiddenimports=hiddenimports
     + [
         "numpy.core._dtype_ctypes",

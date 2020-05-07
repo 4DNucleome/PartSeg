@@ -212,7 +212,9 @@ class ViewSettings(ImageSettings):
 
     @property
     def style_sheet(self):
-        return napari_template(get_stylesheet(), **napari.utils.theme.palettes[self.theme_name])
+        palette = napari.utils.theme.palettes[self.theme_name]
+        palette["canvas"] = "black"
+        return napari_template(get_stylesheet(), **palette)
 
     @theme_name.setter
     def theme_name(self, value: str):
