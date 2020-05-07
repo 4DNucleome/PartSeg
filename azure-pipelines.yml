@@ -126,7 +126,7 @@ stages:
           CIBW_TEST_COMMAND_LINUX: pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part
           CIBW_TEST_COMMAND_windows: pytest {project}/package/tests || pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part/test_main_windows.py
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-          CIBW_TEST_COMMAND: python -m pip uninstall PySide2 shiboken2 -y; pytest {project}/package/tests
+          CIBW_TEST_COMMAND: python -m pip uninstall PySide2 shiboken2 -y && pytest {project}/package/tests
           MACOSX_DEPLOYMENT_TARGET: "10.9"
         steps:
           - task: UsePythonVersion@0
