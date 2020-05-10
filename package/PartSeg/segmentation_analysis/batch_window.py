@@ -142,7 +142,9 @@ class ProgressView(QWidget):
                 and not isinstance(el[1][0], SegmentationLimitException)
                 and isinstance(el[1][1], tuple)
             ):
-                sentry_sdk.capture_event(el[1][1][0])
+                with sentry_sdk.push_scope() as scope:
+                    scope.set_tag("auto_report", "true")
+                    sentry_sdk.capture_event(el[1][1][0])
         self.whole_progress.setValue(res.global_counter)
         working_search = True
         for i, (progress, total) in enumerate(res.jobs_status):
