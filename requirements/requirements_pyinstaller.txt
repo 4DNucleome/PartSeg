@@ -5,41 +5,40 @@
 #    pip-compile requirements_pyinstaller.in
 #
 altgraph==0.17            # via pyinstaller
-appdirs==1.4.3            # via -r requirements/requirements_pyinstaller.in
+appdirs==1.4.3            # via -r requirements_pyinstaller.in
 certifi==2020.4.5.1       # via requests, sentry-sdk
 chardet==3.0.4            # via requests
-cython==0.29.16           # via -r requirements/requirements_pyinstaller.in
-czifile==2019.7.2         # via -r requirements/requirements_pyinstaller.in
-defusedxml==0.6.0         # via -r requirements/requirements_pyinstaller.in
+cython==0.29.17           # via -r requirements_pyinstaller.in
+czifile==2019.7.2         # via -r requirements_pyinstaller.in
+defusedxml==0.6.0         # via -r requirements_pyinstaller.in
 et-xmlfile==1.0.1         # via openpyxl
-h5py==2.10.0              # via -r requirements/requirements_pyinstaller.in
+h5py==2.10.0              # via -r requirements_pyinstaller.in
 idna==2.9                 # via requests
-imagecodecs-lite==2020.1.31  # via -r requirements/requirements_pyinstaller.in
-imagecodecs==2020.2.18    # via -r requirements/requirements_pyinstaller.in, imagecodecs-lite, tifffile
+imagecodecs==2020.2.18    # via -r requirements_pyinstaller.in, tifffile
 jdcal==1.4.1              # via openpyxl
 mpmath==1.1.0             # via sympy
-numpy==1.18.3             # via -r requirements/requirements_pyinstaller.in, czifile, h5py, imagecodecs, oiffile, pandas, scipy, tifffile
-oiffile==2020.1.18        # via -r requirements/requirements_pyinstaller.in
-openpyxl==3.0.3           # via -r requirements/requirements_pyinstaller.in
-packaging==20.3           # via -r requirements/requirements_pyinstaller.in
-pandas==1.0.3             # via -r requirements/requirements_pyinstaller.in
-partsegdata==0.9.4        # via -r requirements/requirements_pyinstaller.in
-pyinstaller==3.6          # via -r requirements/requirements_pyinstaller.in
+numpy==1.18.4             # via -r requirements_pyinstaller.in, czifile, h5py, imagecodecs, oiffile, pandas, scipy, tifffile
+oiffile==2020.1.18        # via -r requirements_pyinstaller.in
+openpyxl==3.0.3           # via -r requirements_pyinstaller.in
+packaging==20.3           # via -r requirements_pyinstaller.in
+pandas==1.0.3             # via -r requirements_pyinstaller.in
+partsegdata==0.9.4        # via -r requirements_pyinstaller.in
+pyinstaller==3.6          # via -r requirements_pyinstaller.in
 pyparsing==2.4.7          # via packaging
 pyqt5-sip==12.7.2         # via pyqt5
-pyqt5==5.14.2             # via -r requirements/requirements_pyinstaller.in
+pyqt5==5.14.2             # via -r requirements_pyinstaller.in
 python-dateutil==2.8.1    # via pandas
-pytz==2019.3              # via pandas
-qtpy==1.9.0               # via -r requirements/requirements_pyinstaller.in
-requests==2.23.0          # via -r requirements/requirements_pyinstaller.in
-scipy==1.4.1              # via -r requirements/requirements_pyinstaller.in
-sentry-sdk==0.14.3        # via -r requirements/requirements_pyinstaller.in
-simpleitk==1.2.4          # via -r requirements/requirements_pyinstaller.in
-six==1.14.0               # via -r requirements/requirements_pyinstaller.in, h5py, packaging, python-dateutil
-sympy==1.5.1              # via -r requirements/requirements_pyinstaller.in
-tifffile==2020.2.16       # via -r requirements/requirements_pyinstaller.in, czifile, oiffile
+pytz==2020.1              # via pandas
+qtpy==1.9.0               # via -r requirements_pyinstaller.in
+requests==2.23.0          # via -r requirements_pyinstaller.in
+scipy==1.4.1              # via -r requirements_pyinstaller.in
+sentry-sdk==0.14.3        # via -r requirements_pyinstaller.in
+simpleitk==1.2.4          # via -r requirements_pyinstaller.in
+six==1.14.0               # via -r requirements_pyinstaller.in, h5py, packaging, python-dateutil
+sympy==1.5.1              # via -r requirements_pyinstaller.in
+tifffile==2020.5.7        # via -r requirements_pyinstaller.in, czifile, oiffile
 urllib3==1.25.9           # via requests, sentry-sdk
-xlrd==1.2.0               # via -r requirements/requirements_pyinstaller.in
+xlrd==1.2.0               # via -r requirements_pyinstaller.in
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
