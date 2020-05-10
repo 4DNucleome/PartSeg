@@ -13,9 +13,11 @@ def my_excepthook(type_, value, trace_back):
     """
 
     # log the exception here
-    if state_store.show_error_dialog:
-        if state_store.report_errors and parsed_version.is_devrelease and not isinstance(value, KeyboardInterrupt):
-            sentry_sdk.capture_exception(value)
+    if state_store.show_error_dialog and not isinstance(value, KeyboardInterrupt):
+        if state_store.report_errors and parsed_version.is_devrelease:
+            with sentry_sdk.push_scope() as scope:
+                scope.set_tag("auto_report", "true")
+                sentry_sdk.capture_exception(value)
         try:
             # noinspection PyUnresolvedReferences
             from qtpy.QtWidgets import QApplication

@@ -37,7 +37,10 @@ class CheckVersionThread(QThread):
         except (KeyError, error.URLError):
             pass
         except Exception as e:
-            sentry_sdk.capture_exception(e)
+            with sentry_sdk.push_scope() as scope:
+                scope.set_tag("auto_report", "true")
+                scope.set_tag("check_version", "true")
+                sentry_sdk.capture_exception(e)
 
 
 class CustomApplication(QApplication):
