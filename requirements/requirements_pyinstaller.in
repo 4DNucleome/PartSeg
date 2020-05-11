@@ -3,7 +3,6 @@ Cython
 czifile
 defusedxml
 h5py
-imagecodecs-lite
 imagecodecs
 numpy
 oiffile
