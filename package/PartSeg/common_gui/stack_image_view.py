@@ -58,6 +58,8 @@ class ImageShowState(QObject):
     """Object for storing state used when presenting it in :class:`.ImageView`"""
 
     parameter_changed = Signal()  # signal informing that some of image presenting parameters
+    coloring_changed = Signal()
+    borders_changed = Signal()
     # changed and image need to be refreshed
 
     def __init__(self, settings: ViewSettings, name: str):
@@ -82,6 +84,7 @@ class ImageShowState(QObject):
             self.settings.set_in_profile(f"{self.name}.image_state.only_border", val)
             self.only_borders = val
             self.parameter_changed.emit()
+            self.borders_changed.emit()
 
     def set_borders_thick(self, val: int):
         """If draw only 2D borders of component then set thickness of line used for it"""
@@ -89,6 +92,7 @@ class ImageShowState(QObject):
             self.settings.set_in_profile(f"{self.name}.image_state.border_thick", val)
             self.borders_thick = val
             self.parameter_changed.emit()
+            self.borders_changed.emit()
 
     def set_opacity(self, val: float):
         """Set opacity of component labels"""
@@ -96,16 +100,19 @@ class ImageShowState(QObject):
             self.settings.set_in_profile(f"{self.name}.image_state.opacity", val)
             self.opacity = val
             self.parameter_changed.emit()
+            self.coloring_changed.emit()
 
     def components_change(self):
         if self.show_label == LabelEnum.Show_selected:
             self.parameter_changed.emit()
+            self.coloring_changed.emit()
 
     def set_show_label(self, val: LabelEnum):
         if self.show_label != val:
             self.settings.set_in_profile(f"{self.name}.image_state.show_label", val)
             self.show_label = val
             self.parameter_changed.emit()
+            self.coloring_changed.emit()
 
 
 class ImageCanvas(QLabel):

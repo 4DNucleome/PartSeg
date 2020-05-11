@@ -9,6 +9,10 @@ import numpy as np
 
 
 class StackImageView(ImageView):
+    """
+    :cvar settings: StackSettings
+    """
+
     def __init__(self, settings, channel_property: ChannelProperty, name: str):
         super().__init__(settings, channel_property, name)
         self.component = None
@@ -26,7 +30,7 @@ class StackImageView(ImageView):
     def event(self, event: QEvent):
         if event.type() == QEvent.ToolTip and self.component is not None:
             # text = str(self.component)
-            if self._settings.component_is_chosen(self.component):
+            if self.settings.component_is_chosen(self.component):
                 text = "☑{}".format(self.component)
             else:
                 text = "☐{}".format(self.component)

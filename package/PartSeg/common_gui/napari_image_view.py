@@ -15,7 +15,7 @@ from vispy.color import Colormap, ColorArray, Color
 
 from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui.channel_control import ChannelProperty, ColorComboBoxGroup
-from PartSeg.common_gui.stack_image_view import ImageShowState
+from PartSeg.common_gui.stack_image_view import ImageShowState, LabelEnum
 from PartSegCore.color_image import create_color_map, ColorMap
 from PartSegImage import Image
 
@@ -83,6 +83,9 @@ class ImageView(QWidget):
         settings.image_changed.connect(self.set_image)
         # settings.labels_changed.connect(self.paint_layer)
 
+        self.image_state.coloring_changed.connect(self.update_segmentation_coloring)
+        self.image_state.borders_changed.connect()
+
     def print_info(self, value):
         if self.viewer.active_layer:
             cords = np.array([int(x) for x in self.viewer.active_layer.coordinates])
@@ -141,16 +144,42 @@ class ImageView(QWidget):
         image_info.segmentation = layer
         image_info.segmentation_array = segmentation
         image_info.segmentation_count = np.max(segmentation)
-        self.set_segmentation_view_parameters(image_info)
+        image_info.segmentation.colormap = self.get_segmentation_view_parameters(image_info)
+        image_info.segmentation.opacity = self.image_state.opacity
 
-    def set_segmentation_view_parameters(self, image_info: ImageInfo):
-        colors = self.settings.label_colors / 255
-        repeat = int(np.ceil(image_info.segmentation_count / colors.shape[0]))
-        colors = np.concatenate([colors] * repeat)
-        colors = np.concatenate([colors, np.ones(colors.shape[0]).reshape(colors.shape[0], 1)], axis=1)
-        colors = np.concatenate([[[0, 0, 0, 0]], colors[: image_info.segmentation_count]])
-        image_info.segmentation.colormap = Colormap(colors)
-        print(colors.shape, image_info.segmentation_count)
+    def get_segmentation_view_parameters(self, image_info: ImageInfo) -> Colormap:
+        if self.image_state.show_label == LabelEnum.Not_show:
+            colors = [[0, 0, 0, 0], [0, 0, 0, 0]]
+        else:
+            colors = self.settings.label_colors / 255
+            repeat = int(np.ceil(image_info.segmentation_count / colors.shape[0]))
+            colors = np.concatenate([colors] * repeat)
+            colors = np.concatenate([colors, np.ones(colors.shape[0]).reshape(colors.shape[0], 1)], axis=1)
+            colors = np.concatenate([[[0, 0, 0, 0]], colors[: image_info.segmentation_count]])
+            if self.image_state.show_label == LabelEnum.Show_selected:
+                colors *= self.settings.components_mask()
+        return Colormap(colors)
+
+    def update_segmentation_coloring(self):
+        for image_info in self.image_info.values():
+            if image_info.segmentation is None:
+                continue
+            image_info.segmentation.colormap = self.get_segmentation_view_parameters(image_info)
+            image_info.segmentation.opacity = self.image_state.opacity
+
+    def update_segmentation_representation(self):
+        self.viewer.layers.unselect_all()
+        for image_info in self.image_info.values():
+            if image_info.segmentation is None:
+                continue
+            image_info.segmentation.selected = True
+            image_info.segmentation = None
+
+        self.viewer.layers.remove_selected()
+
+        for image_info in self.image_info.values():
+            if image_info.segmentation_array is None:
+                continue
 
     def set_mask(self, mask: Optional[np.ndarray] = None, image: Optional[Image] = None) -> None:
         image = self.get_image(image)

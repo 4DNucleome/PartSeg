@@ -54,6 +54,31 @@ cdef inline long scale_factor(numpy_types value, double min_val, double factor) 
     return max[long](0, min[long](resolution - 1, <long>((value - min_val) * factor)))
 
 
+def calculate_borders(np.ndarray[numpy_types, ndim=3] image, int border_thick, bool per_layer=True):
+    cdef Py_ssize_t x, y, z
+    cdef int R, Y, Z
+    circle_list = []
+    if numpy_types.shape[0] == 1:
+        per_layer = True
+    if border_thick > 0:
+        R = border_thick
+        if per_layer:
+            for x in range(-R,R+1):
+                Y = int((R*R-x*x)**0.5) # bound for y given x
+                for y in range(-Y,Y+1):
+                    circle_list.append([0, x, y])
+        else:
+             for x in range(-R,R+1):
+                Y = int((R*R-x*x)**0.5) # bound for y given x
+                for y in range(-Y,Y+1):
+                    Z = int((R*R - x*x - y*y)**0.5)
+                    for z in range(-Z, Z+1):
+                        circle_list.append([z, x, y])
+        circle_shift = np.array(circle_list).astype(np.int8)
+    else:
+        circle_shift = np.array([[0,0,0]]).astype(np.int8)
+
+
 def color_grayscale(np.ndarray[DTYPE_t, ndim=2] cmap, np.ndarray[numpy_types, ndim=2] image, double min_val,
                     double max_val, int single_channel=-1):
     """color image channel in respect to cmap array. Array should be in size (resolution, 3)"""
