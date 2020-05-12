@@ -1,10 +1,11 @@
 # distutils: define_macros=CYTHON_TRACE_NOGIL=1
 # cython: language_level=3, boundscheck=False, wraparound=False, nonecheck=False, cdivision=True, embedsignature=True
-
+import itertools
 
 import numpy as np
 cimport numpy as np
 from cython.parallel import prange
+from libcpp cimport bool
 
 cpdef enum:
     resolution = 1024
@@ -54,29 +55,85 @@ cdef inline long scale_factor(numpy_types value, double min_val, double factor) 
     return max[long](0, min[long](resolution - 1, <long>((value - min_val) * factor)))
 
 
-def calculate_borders(np.ndarray[numpy_types, ndim=3] image, int border_thick, bool per_layer=True):
-    cdef Py_ssize_t x, y, z
-    cdef int R, Y, Z
-    circle_list = []
-    if numpy_types.shape[0] == 1:
+def calculate_borders(np.ndarray[label_types, ndim=4] labels, int border_thick, bool per_layer=True):
+    if labels.shape[1] < 3:
         per_layer = True
+    if per_layer:
+        return calculate_borders2d(labels, border_thick)
+    cdef Py_ssize_t x, y, z, t
+    cdef int R, Y, Z
+    cdef Py_ssize_t x_max = labels.shape[3]
+    cdef Py_ssize_t y_max = labels.shape[2]
+    cdef Py_ssize_t z_max = labels.shape[1]
+    cdef Py_ssize_t t_max = labels.shape[0]
+    cdef Py_ssize_t circle_len
+    cdef np.ndarray[np.int8_t, ndim=2] circle_shift
+    cdef np.ndarray[label_types, ndim=4] local_labels
+    cdef label_types label_val
+
+    R = border_thick**2
+    values = list(range(-border_thick, border_thick+1))
+    circle_list = []
+    for x in values:
+        for y in values:
+            for z in values:
+                if (x**2 + y**2 + z **2 <= R):
+                    circle_list.append((x,y,z))
+    circle_shift = np.array(circle_list).astype(np.int8)
+    circle_len = circle_shift.shape[0]
+    local_labels = np.zeros((labels.shape[0], labels.shape[1] + 2*border_thick, labels.shape[2] + 2*border_thick, labels.shape[3] + 2*border_thick), dtype=labels.dtype)
+    circle_shift = circle_shift + border_thick
+    for t in range(0, t_max):
+        for z in range(1, z_max-1):
+            for y in range(1,y_max-1):
+                for x in range(1,x_max-1):
+                    label_val = labels[t, z, y, x]
+                    if label_val and (labels[t, z, y+1, x] != label_val or labels[t, z, y-1, x] != label_val or
+                                      labels[t, z, y, x+1] != label_val or labels[t, z, y, x-1] != label_val or
+                                      labels[t, z+1, y, x] != label_val or labels[t, z-1, y, x] != label_val):
+                        for circle_pos in range(circle_len):
+                            local_labels[t, z + circle_shift[circle_pos, 0], y + circle_shift[circle_pos, 1], x + circle_shift[circle_pos, 2]] = label_val
     if border_thick > 0:
-        R = border_thick
-        if per_layer:
-            for x in range(-R,R+1):
-                Y = int((R*R-x*x)**0.5) # bound for y given x
-                for y in range(-Y,Y+1):
-                    circle_list.append([0, x, y])
-        else:
-             for x in range(-R,R+1):
-                Y = int((R*R-x*x)**0.5) # bound for y given x
-                for y in range(-Y,Y+1):
-                    Z = int((R*R - x*x - y*y)**0.5)
-                    for z in range(-Z, Z+1):
-                        circle_list.append([z, x, y])
-        circle_shift = np.array(circle_list).astype(np.int8)
-    else:
-        circle_shift = np.array([[0,0,0]]).astype(np.int8)
+        local_labels = local_labels[:, border_thick:-border_thick, border_thick:-border_thick, border_thick:-border_thick]
+    return local_labels
+
+
+def calculate_borders2d(np.ndarray[label_types, ndim=4] labels, int border_thick):
+    cdef Py_ssize_t x, y, z, t
+    cdef int R, Y, Z
+    cdef Py_ssize_t x_max = labels.shape[3]
+    cdef Py_ssize_t y_max = labels.shape[2]
+    cdef Py_ssize_t z_max = labels.shape[1]
+    cdef Py_ssize_t t_max = labels.shape[0]
+    cdef Py_ssize_t circle_len
+    cdef np.ndarray[np.int8_t, ndim=2] circle_shift
+    cdef np.ndarray[label_types, ndim=4] local_labels
+    cdef label_types label_val
+
+    R = border_thick**2
+    values = list(range(-border_thick, border_thick+1))
+    circle_list = []
+    for x in values:
+        for y in values:
+            if (x**2 + y**2 <= R):
+                circle_list.append((x,y))
+    circle_shift = np.array(circle_list).astype(np.int8)
+    circle_len = circle_shift.shape[0]
+    local_labels = np.zeros((labels.shape[0], labels.shape[1], labels.shape[2] + 2*border_thick, labels.shape[3] + 2*border_thick), dtype=labels.dtype)
+    circle_shift = circle_shift + border_thick
+    for t in range(0, t_max):
+        for z in range(0, z_max):
+            for y in range(1,y_max-1):
+                for x in range(1,x_max-1):
+                    label_val = labels[t, z, y, x]
+                    if label_val and (labels[t, z, y+1, x] != label_val or labels[t, z, y-1, x] != label_val or
+                                      labels[t, z, y, x+1] != label_val or labels[t, z, y, x-1] != label_val):
+                        for circle_pos in range(circle_len):
+                            local_labels[t, z, y + circle_shift[circle_pos, 0], x + circle_shift[circle_pos, 1]] =\
+                                label_val
+    if border_thick > 0:
+        local_labels = local_labels[:, :, border_thick:-border_thick, border_thick:-border_thick]
+    return local_labels
 
 
 def color_grayscale(np.ndarray[DTYPE_t, ndim=2] cmap, np.ndarray[numpy_types, ndim=2] image, double min_val,
@@ -154,7 +211,7 @@ def add_labels(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[label_types, ndim=2
                 label_val =labels[x,y]
                 if use_labels[label_val] and (labels[x+1,y] != label_val or labels[x-1, y] != label_val or labels[x, y+1] != label_val or labels[x, y-1] != label_val):
                     for circle_pos in range(circle_len):
-                        local_labels[x + circle_shift[circle_pos, 0], y + circle_shift[circle_pos, 1]] = labels[x,y]
+                        local_labels[x + circle_shift[circle_pos, 0], y + circle_shift[circle_pos, 1]] = label_val
 
         if border_thick > 0:
             local_labels = local_labels[border_thick:-border_thick, border_thick:-border_thick]

@@ -16,7 +16,7 @@ from vispy.color import Colormap, ColorArray, Color
 from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui.channel_control import ChannelProperty, ColorComboBoxGroup
 from PartSeg.common_gui.stack_image_view import ImageShowState, LabelEnum
-from PartSegCore.color_image import create_color_map, ColorMap
+from PartSegCore.color_image import create_color_map, ColorMap, calculate_borders
 from PartSegImage import Image
 
 
@@ -84,7 +84,7 @@ class ImageView(QWidget):
         # settings.labels_changed.connect(self.paint_layer)
 
         self.image_state.coloring_changed.connect(self.update_segmentation_coloring)
-        self.image_state.borders_changed.connect()
+        self.image_state.borders_changed.connect(self.update_segmentation_representation)
 
     def print_info(self, value):
         if not self.viewer.active_layer:
@@ -101,7 +101,9 @@ class ImageView(QWidget):
                 moved_coords = (cords - image_info.segmentation.translate_grid).astype(np.int)
                 if np.all(moved_coords >= 0) and np.all(moved_coords < image_info.segmentation_array.shape):
                     val = image_info.segmentation_array[tuple(moved_coords)]
+                    # val2 = image_info.segmentation.selected_label
                     if val:
+                        # components.append((val, val2))
                         components.append(val)
 
         if not bright_array and not components:
@@ -156,25 +158,28 @@ class ImageView(QWidget):
 
         segmentation = segmentation.reshape((1,) + segmentation.shape)
 
-        layer = self.viewer.add_labels(segmentation, scale=image.normalized_scaling, opacity=1)
-        image_info.segmentation = layer
         image_info.segmentation_array = segmentation
         image_info.segmentation_count = np.max(segmentation)
+        self.add_segmentation_layer(image_info)
         image_info.segmentation.colormap = self.get_segmentation_view_parameters(image_info)
         image_info.segmentation.opacity = self.image_state.opacity
 
     def get_segmentation_view_parameters(self, image_info: ImageInfo) -> Colormap:
-        if self.image_state.show_label == LabelEnum.Not_show:
-            colors = [[0, 0, 0, 0], [0, 0, 0, 0]]
+        colors = self.settings.label_colors / 255
+        if self.image_state.show_label == LabelEnum.Not_show or image_info.segmentation_count == 0 or colors.size == 0:
+            colors = np.array([[0, 0, 0, 0], [0, 0, 0, 0]])
         else:
-            colors = self.settings.label_colors / 255
             repeat = int(np.ceil(image_info.segmentation_count / colors.shape[0]))
             colors = np.concatenate([colors] * repeat)
             colors = np.concatenate([colors, np.ones(colors.shape[0]).reshape(colors.shape[0], 1)], axis=1)
             colors = np.concatenate([[[0, 0, 0, 0]], colors[: image_info.segmentation_count]])
             if self.image_state.show_label == LabelEnum.Show_selected:
-                colors *= self.settings.components_mask()
-        return Colormap(colors)
+                try:
+                    colors *= self.settings.components_mask().reshape((colors.shape[0], 1))
+                except ValueError:
+                    pass
+        control_points = np.linspace(0, 1, endpoint=True, num=colors.shape[0] + 1)
+        return Colormap(colors, controls=control_points, interpolation="zero")
 
     def update_segmentation_coloring(self):
         for image_info in self.image_info.values():
@@ -183,7 +188,7 @@ class ImageView(QWidget):
             image_info.segmentation.colormap = self.get_segmentation_view_parameters(image_info)
             image_info.segmentation.opacity = self.image_state.opacity
 
-    def update_segmentation_representation(self):
+    def remove_all_segmentation(self):
         self.viewer.layers.unselect_all()
         for image_info in self.image_info.values():
             if image_info.segmentation is None:
@@ -193,9 +198,26 @@ class ImageView(QWidget):
 
         self.viewer.layers.remove_selected()
 
+    def add_segmentation_layer(self, image_info: ImageInfo):
+        if image_info.segmentation_array is None:
+            return
+        if self.image_state.only_borders:
+            data = calculate_borders(
+                image_info.segmentation_array, self.image_state.borders_thick // 2, self.viewer.dims.ndisplay == 2
+            )
+            image_info.segmentation = self.viewer.add_image(data, scale=image_info.image.normalized_scaling)
+        else:
+            image_info.segmentation = self.viewer.add_image(
+                image_info.segmentation_array, scale=image_info.image.normalized_scaling
+            )
+
+    def update_segmentation_representation(self):
+        self.remove_all_segmentation()
+
         for image_info in self.image_info.values():
-            if image_info.segmentation_array is None:
-                continue
+            self.add_segmentation_layer(image_info)
+
+        self.update_segmentation_coloring()
 
     def set_mask(self, mask: Optional[np.ndarray] = None, image: Optional[Image] = None) -> None:
         image = self.get_image(image)

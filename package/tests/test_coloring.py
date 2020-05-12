@@ -1,7 +1,8 @@
 import numpy as np
+import pytest
 
 from PartSegCore.color_image.base_colors import inferno
-from PartSegCore.color_image import Color, ColorPosition, ColorMap, create_color_map, color_image_fun
+from PartSegCore.color_image import Color, ColorPosition, ColorMap, create_color_map, color_image_fun, calculate_borders
 
 
 def arrays_are_close(arr1, arr2, num):
@@ -133,3 +134,103 @@ class TestArrayColorMap:
     def test_base(self):
         res = create_color_map(inferno)
         assert res.shape == (1024, 3)
+
+
+class TestCalculateBorders:
+    @pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32])
+    def test_simple_2d(self, dtype):
+        data = np.zeros((1, 10, 10, 10), dtype=dtype)
+        data[0, 2:-2, 2:-2, 2:-2] = 1
+        res = calculate_borders(data, 0, True)
+        data[:, :, 3:-3, 3:-3] = 0
+        assert np.all(res == data)
+        assert res.dtype == dtype
+
+    @pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32])
+    def test_sizes_2d(self, dtype):
+        data = np.zeros((1, 10, 20, 30), dtype=dtype)
+        data[0, 2:-2, 2:-2, 2:-2] = 1
+        res = calculate_borders(data, 0, True)
+        data[0, :, 3:-3, 3:-3] = 0
+        assert np.all(res == data)
+        assert res.dtype == dtype
+
+    @pytest.mark.parametrize("num", list(range(2, 7)))
+    @pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32])
+    def test_labels_2d(self, num, dtype):
+        data = np.zeros((1, 10, num * 10, 10), dtype=dtype)
+        for ind in range(num):
+            data[0, 2:-2, ind * 10 + 2 : ind * 10 + 8, 2:-2] = ind + 1
+        res = calculate_borders(data, 0, True)
+        for ind in range(num):
+            data[0, :, ind * 10 + 3 : ind * 10 + 7, 3:-3] = 0
+        assert np.all(res == data)
+        assert res.dtype == dtype
+
+    @pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32])
+    def test_simple_thick_2d(self, dtype):
+        data = np.zeros((1, 10, 10, 10), dtype=dtype)
+        data[0, 2:-2, 2:-2, 2:-2] = 1
+        res = calculate_borders(data, 1, True)
+        data2 = np.copy(data)
+        res2 = np.copy(res)
+        res2[data == 0] = 0
+        data2[0, :, 4:-4, 4:-4] = 0
+        assert np.all(res2 == data2)
+        assert res.dtype == dtype
+        data[0, 2:-2, 1, 2:-2] = 1
+        data[0, 2:-2, -2, 2:-2] = 1
+        data[0, 2:-2, 2:-2, 1] = 1
+        data[0, 2:-2, 2:-2, -2] = 1
+        data[0, :, 4:-4, 4:-4] = 0
+        assert np.all(res == data)
+
+    @pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32])
+    def test_simple_3d(self, dtype):
+        data = np.zeros((1, 10, 10, 10), dtype=dtype)
+        data[0, 2:-2, 2:-2, 2:-2] = 1
+        res = calculate_borders(data, 0, False)
+        data[0, 3:-3, 3:-3, 3:-3] = 0
+        assert np.all(res == data)
+        assert res.dtype == dtype
+
+    @pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32])
+    def test_sizes_3d(self, dtype):
+        data = np.zeros((1, 10, 20, 30), dtype=dtype)
+        data[0, 2:-2, 2:-2, 2:-2] = 1
+        res = calculate_borders(data, 0, False)
+        data[0, 3:-3, 3:-3, 3:-3] = 0
+        assert np.all(res == data)
+        assert res.dtype == dtype
+
+    @pytest.mark.parametrize("num", list(range(2, 7)))
+    @pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32])
+    def test_labels_3d(self, num, dtype):
+        data = np.zeros((1, 10, num * 10, 10), dtype=dtype)
+        for ind in range(num):
+            data[0, 2:-2, ind * 10 + 2 : ind * 10 + 8, 2:-2] = ind + 1
+        res = calculate_borders(data, 0, False)
+        for ind in range(num):
+            data[0, 3:-3, ind * 10 + 3 : ind * 10 + 7, 3:-3] = 0
+        assert np.all(res == data)
+        assert res.dtype == dtype
+
+    @pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32])
+    def test_simple_thick_3d(self, dtype):
+        data = np.zeros((1, 10, 10, 10), dtype=dtype)
+        data[0, 2:-2, 2:-2, 2:-2] = 1
+        res = calculate_borders(data, 1, False)
+        data2 = np.copy(data)
+        res2 = np.copy(res)
+        res2[data == 0] = 0
+        data2[0, 4:-4, 4:-4, 4:-4] = 0
+        assert np.all(res2 == data2)
+        assert res.dtype == dtype
+        data[0, 2:-2, 1, 2:-2] = 1
+        data[0, 2:-2, -2, 2:-2] = 1
+        data[0, 2:-2, 2:-2, 1] = 1
+        data[0, 2:-2, 2:-2, -2] = 1
+        data[0, 1, 2:-2, 2:-2] = 1
+        data[0, -2, 2:-2, 2:-2] = 1
+        data[0, 4:-4, 4:-4, 4:-4] = 0
+        assert np.all(res == data)
