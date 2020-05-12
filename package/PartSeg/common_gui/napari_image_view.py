@@ -87,19 +87,35 @@ class ImageView(QWidget):
         self.image_state.borders_changed.connect()
 
     def print_info(self, value):
-        if self.viewer.active_layer:
-            cords = np.array([int(x) for x in self.viewer.active_layer.coordinates])
-            bright_array = []
-            for image_info in self.image_info.values():
-                for layer in image_info.layers:
-                    moved_coords = (cords - layer.translate_grid).astype(np.int)
-                    if np.all(moved_coords >= 0) and np.all(moved_coords < layer.data.shape):
-                        bright_array.append(layer.data[tuple(moved_coords)])
+        if not self.viewer.active_layer:
+            return
+        cords = np.array([int(x) for x in self.viewer.active_layer.coordinates])
+        bright_array = []
+        components = []
+        for image_info in self.image_info.values():
+            for layer in image_info.layers:
+                moved_coords = (cords - layer.translate_grid).astype(np.int)
+                if np.all(moved_coords >= 0) and np.all(moved_coords < layer.data.shape):
+                    bright_array.append(layer.data[tuple(moved_coords)])
+            if image_info.segmentation_array is not None and image_info.segmentation is not None:
+                moved_coords = (cords - image_info.segmentation.translate_grid).astype(np.int)
+                if np.all(moved_coords >= 0) and np.all(moved_coords < image_info.segmentation_array.shape):
+                    val = image_info.segmentation_array[tuple(moved_coords)]
+                    if val:
+                        components.append(val)
 
-            if not bright_array:
-                self.text_info_change.emit("")
-                return
-            self.text_info_change.emit(f"{cords}: {bright_array}")
+        if not bright_array and not components:
+            self.text_info_change.emit("")
+            return
+        text = f"{cords}: "
+        if bright_array:
+            text += str(bright_array)
+        if components:
+            if len(components) == 1:
+                text += f" component: {components[0]}"
+            else:
+                text += f" components: {components}"
+        self.text_info_change.emit(text)
 
     def get_control_view(self) -> ImageShowState:
         return self.image_state
