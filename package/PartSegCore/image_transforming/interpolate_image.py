@@ -10,12 +10,12 @@ from .transform_base import TransformBase
 class InterpolateImage(TransformBase):
     @classmethod
     def get_fields(cls):
-        return ["it can be very slow", AlgorithmProperty(f"scale", "Scale", 1.0)]
+        return ["It can be very slow.", AlgorithmProperty("scale", "Scale", 1.0)]
 
     @classmethod
     def get_fields_per_dimension(cls, component_list: List[str]):
         return ["it can be very slow"] + [
-            AlgorithmProperty(f"scale_{l.lower()}", f"Scale {l}", 1.0) for l in reversed(component_list)
+            AlgorithmProperty(f"scale_{i.lower()}", f"Scale {i}", 1.0) for i in reversed(component_list)
         ]
 
     @classmethod

@@ -42,7 +42,7 @@ class SitkThreshold(BaseThreshold, ABC):
     def get_fields(cls):
         return [
             AlgorithmProperty("masked", "Apply mask", True),
-            AlgorithmProperty("bins", f"histogram bins", cls.bins_num, (8, 2 ** 16)),
+            AlgorithmProperty("bins", "histogram bins", cls.bins_num, (8, 2 ** 16)),
         ]
 
     @classmethod

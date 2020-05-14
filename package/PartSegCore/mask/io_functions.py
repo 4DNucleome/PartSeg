@@ -321,7 +321,7 @@ class LoadSegmentationImage(LoadBase):
         else:
             base_file = seg.image
         if base_file is None:
-            raise IOError(f"base file for segmentation not defined")
+            raise IOError("base file for segmentation not defined")
         if os.path.isabs(base_file):
             file_path = base_file
         else:

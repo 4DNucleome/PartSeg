@@ -155,7 +155,7 @@ def test_typing():
 def test_forward_ref():
     class Test(BaseSerializableClass):
         val: int
-        child: typing.Optional["Test"] = None
+        child: typing.Optional["Test"] = None  # noqa F821
 
     base_serialize_register.clear()
 

@@ -160,7 +160,7 @@ class BaseMainWindow(QMainWindow):
                 if dial.exec():
                     self.main_menu.set_data(dial.get_result())
                 return
-        QMessageBox.information(self, "No method", f"No methods for load files: " + ",".join(paths))
+        QMessageBox.information(self, "No method", "No methods for load files: " + ",".join(paths))
 
     def dropEvent(self, event: QDropEvent):
         """

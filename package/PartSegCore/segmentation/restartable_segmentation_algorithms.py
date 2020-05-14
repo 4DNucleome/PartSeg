@@ -390,7 +390,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
 
     def get_info_text(self):
         return (
-            f"Threshold: "
+            "Threshold: "
             + ", ".join(map(str, self.threshold_info))
             + "\nMid sizes: "
             + ", ".join(map(str, self._sizes_array[1 : self.components_num + 1]))
@@ -529,7 +529,7 @@ class OtsuSegment(RestartableAlgorithm):
 
     def get_info_text(self):
         return (
-            f"Threshold: "
+            "Threshold: "
             + ", ".join(map(str, self.threshold_info))
             + "\nSizes: "
             + ", ".join(map(str, self._sizes_array))
@@ -559,7 +559,7 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):
 
     def get_info_text(self):
         return (
-            f"Threshold: "
+            "Threshold: "
             + ", ".join(map(str, self.threshold_info))
             + "\nMid sizes: "
             + ", ".join(map(str, self._sizes_array[1 : self.components_num + 1]))

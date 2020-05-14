@@ -182,7 +182,7 @@ class MainMenu(BaseMainMenu):
                 QMessageBox.warning(
                     self,
                     "Open error",
-                    f"No needed files inside archive. " "Most probably you choose file from segmentation analysis",
+                    "No needed files inside archive. Most probably you choose file from segmentation analysis",
                 )
             else:
                 raise exception
@@ -250,7 +250,7 @@ class MainMenu(BaseMainMenu):
                 mess.warning(
                     self,
                     "Open error",
-                    f"No needed files inside archive. " "Most probably you choose file from segmentation analysis",
+                    "No needed files inside archive. Most probably you choose file from segmentation analysis",
                 )
             else:
                 raise exception

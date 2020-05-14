@@ -464,7 +464,7 @@ class MainMenu(BaseMainMenu):
             elif isinstance(exception, WrongFileTypeException):
                 instance.warning = (
                     "Open error",
-                    f"No needed files inside archive. " f"Most probably you choose file from segmentation mask",
+                    "No needed files inside archive. Most probably you choose file from segmentation mask",
                 )
                 QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
             else:
