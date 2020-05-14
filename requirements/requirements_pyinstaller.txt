@@ -36,7 +36,7 @@ sentry-sdk==0.14.3        # via -r requirements_pyinstaller.in
 simpleitk==1.2.4          # via -r requirements_pyinstaller.in
 six==1.14.0               # via -r requirements_pyinstaller.in, h5py, packaging, python-dateutil
 sympy==1.5.1              # via -r requirements_pyinstaller.in
-tifffile==2020.5.7        # via -r requirements_pyinstaller.in, czifile, oiffile
+tifffile==2020.5.11       # via -r requirements_pyinstaller.in, czifile, oiffile
 urllib3==1.25.9           # via requests, sentry-sdk
 xlrd==1.2.0               # via -r requirements_pyinstaller.in
 
