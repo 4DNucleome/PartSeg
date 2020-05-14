@@ -1,12 +1,14 @@
 import logging
 import os
 import sys
+import textwrap
 import typing
 import uuid
 from abc import abstractmethod
 from copy import copy, deepcopy
 from enum import Enum
 
+from . import analysis_algorithm_dict
 from ..algorithm_describe_base import SegmentationProfile
 from ..universal_const import Units
 from ..class_generator import BaseSerializableClass, enum_register
@@ -137,7 +139,7 @@ class MeasurementCalculate(BaseSerializableClass):
     def __str__(self):
         channel = "Like segmentation" if self.channel == -1 else str(self.channel)
         desc = str(self.statistic_profile).split("\n", 1)[1]
-        return f"{self.__class__.name}\nChannel: {channel}\nUnits: {self.units}\n{desc}\n"
+        return f"MeasurementCalculate \nChannel: {channel}\nUnits: {self.units}\n{desc}\n"
 
 
 def get_save_path(op: Save, calculation: "FileCalculation") -> str:
@@ -473,6 +475,7 @@ class CalculationPlan:
         Operations.__name__: Operations,
         MaskIntersection.__name__: MaskIntersection,
         MaskSum.__name__: MaskSum,
+        RootType.__name__: RootType,
     }
 
     def __init__(self, tree: typing.Optional[CalculationTree] = None, name: str = ""):
@@ -724,8 +727,10 @@ class CalculationPlan:
         :return: str
         """
         if el.__class__.__name__ not in CalculationPlan.correct_name.keys():
-            print(el, file=sys.stderr)
+            print(el, el.__class__.__name__, file=sys.stderr)
             raise ValueError("Unknown type {}".format(el.__class__.__name__))
+        if isinstance(el, RootType):
+            return f"Root: {el}"
         if isinstance(el, Operations):
             if el == Operations.reset_to_base:
                 return "reset project to base image with mask"
@@ -771,3 +776,26 @@ class CalculationPlan:
                 return "Mask {} sum of mask {} and {}".format(el.name, el.mask1, el.mask2)
 
         raise ValueError("Unknown type {}".format(type(el)))
+
+    def pretty_print(self) -> str:
+        return f"Calcualation Plan: {self.name}\n" + self._pretty_print(self.execution_tree, 0)
+
+    def _pretty_print(self, elem: CalculationTree, indent) -> str:
+        if isinstance(elem.operation, str):
+            name = elem.operation
+        else:
+            name = self.get_el_name(elem.operation)
+        if isinstance(elem.operation, (MeasurementCalculate, SegmentationProfile, MaskCreate)):
+            if isinstance(elem.operation, SegmentationProfile):
+                txt = elem.operation.pretty_print(analysis_algorithm_dict)
+            else:
+                txt = str(elem.operation)
+            txt = "\n".join(txt.split("\n")[1:])
+            name += "\n" + textwrap.indent(txt, " " * (indent + 4))
+
+        if elem.children:
+            suffix = "\n" + "\n".join([self._pretty_print(x, indent + 2) for x in elem.children])
+        else:
+            suffix = ""
+
+        return " " * indent + name + suffix

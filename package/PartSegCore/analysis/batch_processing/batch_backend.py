@@ -20,23 +20,22 @@ Calculation hierarchy:
    }
 
 """
+import json
 import logging
 import threading
 import traceback
+import uuid
 from collections import OrderedDict
 from enum import Enum
 from os import path
 from queue import Queue
 from traceback import StackSummary
 from typing import List, Tuple, Union, Optional, Type, NamedTuple, Iterable, Any, Dict
-import uuid
 
 import numpy as np
 import pandas as pd
 import tifffile
-
-from ...segmentation import RestartableAlgorithm
-
+import xlsxwriter
 
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
@@ -55,6 +54,7 @@ from PartSegCore.analysis.calculation_plan import (
     Calculation,
     RootType,
     CalculationTree,
+    CalculationPlan,
 )
 from PartSegCore.analysis.io_utils import ProjectTuple
 from PartSegCore.analysis.load_functions import LoadMaskSegmentation, LoadProject, load_dict
@@ -65,7 +65,9 @@ from PartSegCore.mask_create import calculate_mask
 from PartSegCore.segmentation.algorithm_base import report_empty_fun, SegmentationAlgorithm
 from PartSegImage import Image, TiffImageReader
 from .parallel_backend import BatchManager
+from .. import PartEncoder
 from ...io_utils import WrongFileTypeException, HistoryElement
+from ...segmentation import RestartableAlgorithm
 
 
 class ResponseData(NamedTuple):
@@ -545,7 +547,10 @@ class FileData:
         else:
             self.file_type = FileType.text_file
         self.writing = False
-        self.sheet_dict = dict()
+        data = SheetData("calculation_info", [("Description", "str"), ("JSON", "str")])
+        data.add_data([str(calculation.calculation_plan), json.dumps(calculation.calculation_plan, cls=PartEncoder)], 0)
+        self.sheet_dict = {}
+        self.calculation_info = {}
         self.sheet_set = set()
         self.new_count = 0
         self.write_threshold = write_threshold
@@ -636,6 +641,7 @@ class FileData:
             [SheetData(name, header_list[i]) if name is not None else None for i, name in enumerate(sheet_list)],
             component_information,
         )
+        self.calculation_info[calculation.uuid] = calculation.calculation_plan
 
     def wrote_data(self, uuid_id: uuid.UUID, data: ResponseData, ind: Optional[int] = None):
         """
@@ -669,7 +675,8 @@ class FileData:
             for sheet in component_sheets:
                 if sheet is not None:
                     data.append(sheet.get_data_to_write())
-        self.wrote_queue.put(data)
+        segmentation_info = [x for x in self.calculation_info.values()]
+        self.wrote_queue.put((data, segmentation_info))
 
     def wrote_data_to_file(self):
         """
@@ -684,7 +691,7 @@ class FileData:
             try:
                 if self.file_type == FileType.text_file:
                     base_path, ext = path.splitext(self.file_path)
-                    for sheet_name, data_frame in data:
+                    for sheet_name, data_frame in data[0]:
                         data_frame.to_csv(base_path + "_" + sheet_name + ext)
                 else:
                     try:
@@ -706,19 +713,46 @@ class FileData:
                 self.writing = False
 
     @staticmethod
-    def write_to_excel(file_path, data):
-        writer = pd.ExcelWriter(file_path)
-        new_sheet_names = []
-        ind = 0
-        for sheet_name, _ in data:
-            if len(sheet_name) < 32:
-                new_sheet_names.append(sheet_name)
-            else:
-                new_sheet_names.append(sheet_name[:27] + f"_{ind}_")
-                ind += 1
-        for sheet_name, (_, data_frame) in zip(new_sheet_names, data):
-            data_frame.to_excel(writer, sheet_name=sheet_name)
-        writer.save()
+    def write_to_excel(file_path: str, data: Tuple[List[Tuple[str, pd.DataFrame]], List[CalculationPlan]]):
+        with pd.ExcelWriter(file_path) as writer:
+            new_sheet_names = []
+            ind = 0
+            sheets, plans = data
+            for sheet_name, _ in sheets:
+                if len(sheet_name) < 32:
+                    new_sheet_names.append(sheet_name)
+                else:
+                    new_sheet_names.append(sheet_name[:27] + f"_{ind}_")
+                    ind += 1
+            for sheet_name, (_, data_frame) in zip(new_sheet_names, sheets):
+                data_frame.to_excel(writer, sheet_name=sheet_name)
+                sheet = writer.book.sheetnames[sheet_name]
+                sheet.set_column(1, 1, 10)
+                for i, (text, _unit) in enumerate(data_frame.columns[1:], start=2):
+                    sheet.set_column(i, i, len(text) + 1)
+            book: xlsxwriter.Workbook = writer.book
+            for calculation_plan in plans:
+                sheet_name = f"info {calculation_plan.name}"
+                if sheet_name in book.sheetnames:
+                    for i in range(100):
+                        sheet_name = f"info {calculation_plan.name} ({i})"
+                        if sheet_name not in book.sheetnames:
+                            break
+                    else:
+                        raise ValueError(
+                            f"Name collision in sheets with information about calculation plan: {sheet_name}"
+                        )
+
+                sheet = book.add_worksheet(sheet_name)
+                cell_format = book.add_format({"bold": True})
+                sheet.write("A1", "Plan Description", cell_format)
+                sheet.write("B1", "Plan JSON", cell_format)
+                description = calculation_plan.pretty_print()
+                sheet.write("A2", description)
+                sheet.set_row(1, description.count("\n") * 12 + 10)
+                sheet.set_column(0, 0, max(map(len, description.split("\n"))))
+                sheet.set_column(1, 1, 15)
+                sheet.write("B2", json.dumps(calculation_plan, cls=PartEncoder, indent=2))
 
     def get_errors(self) -> List[ErrorInfo]:
         """

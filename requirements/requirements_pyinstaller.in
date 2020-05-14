@@ -21,3 +21,4 @@ six
 sympy
 tifffile
 xlrd
+xlsxwriter

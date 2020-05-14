@@ -52,7 +52,6 @@ from PartSegCore.analysis.calculation_plan import (
     MaskBase,
     MaskMapper,
 )
-from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.io_utils import SaveBase
 from PartSegCore.universal_const import Units
@@ -1003,7 +1002,7 @@ class PlanPreview(QTreeWidget):
             elif op_type == PlanChanges.replace_node:
                 node = self.get_node(path)
                 node.setText(0, CalculationPlan.get_el_name(el.operation))
-                if isinstance(el.operation, (MeasurementProfile, SegmentationProfile, MaskCreate)):
+                if isinstance(el.operation, (MeasurementCalculate, SegmentationProfile, MaskCreate)):
                     child = node.child(0)
                     child.takeChildren()
                     if isinstance(el.operation, SegmentationProfile):

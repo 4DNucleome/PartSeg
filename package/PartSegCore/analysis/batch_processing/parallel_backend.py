@@ -209,7 +209,6 @@ class BatchWorker:
         global_data, fun = self.calculation_dict[task_uuid]
         try:
             res = fun(data, global_data)
-            print(res)
             self.result_queue.put((task_uuid, res))
         except Exception as e:
             traceback.print_exc()
