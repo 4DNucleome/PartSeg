@@ -8,7 +8,7 @@ altgraph==0.17            # via pyinstaller
 appdirs==1.4.4            # via -r requirements_pyinstaller.in
 certifi==2020.4.5.1       # via requests, sentry-sdk
 chardet==3.0.4            # via requests
-cython==0.29.17           # via -r requirements_pyinstaller.in
+cython==0.29.19           # via -r requirements_pyinstaller.in
 czifile==2019.7.2         # via -r requirements_pyinstaller.in
 defusedxml==0.6.0         # via -r requirements_pyinstaller.in
 et-xmlfile==1.0.1         # via openpyxl
