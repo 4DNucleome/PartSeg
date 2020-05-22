@@ -58,7 +58,8 @@ class SimpleMeasurements(QWidget):
             # noinspection PyTypeChecker
             chk: QCheckBox = self.measurement_layout.itemAt(i).widget()
             if chk.isChecked():
-                to_calculate.append(Leaf(name=chk.text(), per_component=PerComponent.Yes, area=AreaType.Segmentation))
+                leaf: Leaf = MEASUREMENT_DICT[chk.text()].get_starting_leaf()
+                to_calculate.append(leaf.replace_(per_component=PerComponent.Yes, area=AreaType.Segmentation))
         if not to_calculate:
             QMessageBox.warning(self, "No measurement", "Select at least one measurement")
             return
@@ -100,7 +101,13 @@ class SimpleMeasurements(QWidget):
                     selected.add(chk.text())
                 del chk
             for val in MEASUREMENT_DICT.values():
-                if val.get_fields() or val.get_starting_leaf().area is not None:
+                area = val.get_starting_leaf().area
+                pc = val.get_starting_leaf().per_component
+                if (
+                    val.get_fields()
+                    or (area is not None and area != AreaType.Segmentation)
+                    or (pc is not None and pc != PerComponent.Yes)
+                ):
                     continue
                 text = val.get_name()
                 chk = QCheckBox(text)
