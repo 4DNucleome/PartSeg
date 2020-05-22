@@ -939,7 +939,6 @@ class MainWindow(BaseMainWindow):
         # print(self.settings.segmentation_dict["default"].my_dict)
         self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
         self.options_panel.algorithm_options.algorithm_choose_widget.recursive_get_values()
-        self.settings.dump()
         self.main_menu.segmentation_dialog.close()
         self.options_panel.algorithm_options.show_parameters_widget.close()
         if self.main_menu.advanced_window is not None:
@@ -950,6 +949,7 @@ class MainWindow(BaseMainWindow):
             del self.main_menu.measurements_window
         del self.main_menu.segmentation_dialog
         del self.options_panel.algorithm_options.show_parameters_widget
+        self.settings.dump()
 
     def read_drop(self, paths):
         self._read_drop(paths, io_functions)

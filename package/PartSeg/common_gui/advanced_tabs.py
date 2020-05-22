@@ -168,4 +168,4 @@ class AdvancedWindow(QTabWidget):
         """
         if self.window() == self:
             self.settings.set_in_profile("advanced_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
-        super(AdvancedWindow, self).closeEvent(event)
+        super().closeEvent(event)

@@ -9,7 +9,8 @@ from qtpy.QtWidgets import (
     QTableWidgetItem,
     QLabel,
 )
-from qtpy.QtCore import QEvent
+from qtpy.QtCore import QEvent, QByteArray
+from qtpy.QtGui import QCloseEvent
 
 from PartSeg.common_gui.universal_gui_part import ChannelComboBox, EnumComboBox
 from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
@@ -48,6 +49,24 @@ class SimpleMeasurements(QWidget):
         layout.addLayout(result_layout)
         self.setLayout(layout)
         self.setWindowTitle("Measurement")
+        if self.window() == self:
+            try:
+                geometry = self.settings.get_from_profile("simple_measurement_window_geometry")
+                self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
+            except KeyError:
+                pass
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        """
+        Save geometry if widget is used as standalone window.
+        """
+        print("Aaaa")
+        if self.window() == self:
+            print("bbbb")
+            self.settings.set_in_profile(
+                "simple_measurement_window_geometry", self.saveGeometry().toHex().data().decode("ascii")
+            )
+        super().closeEvent(event)
 
     def calculate(self):
         if self.settings.segmentation is None:
