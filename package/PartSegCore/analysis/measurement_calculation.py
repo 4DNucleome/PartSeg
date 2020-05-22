@@ -414,7 +414,7 @@ class MeasurementProfile:
         self,
         channel: np.ndarray,
         segmentation: np.ndarray,
-        full_mask: np.ndarray,
+        full_segmentation: np.ndarray,
         mask: Optional[np.ndarray],
         voxel_size,
         result_units: Units,
@@ -451,7 +451,7 @@ class MeasurementProfile:
             "channel": channel,
             "segmentation": segmentation,
             "mask": mask,
-            "full_segmentation": full_mask,
+            "full_segmentation": full_segmentation,
             "voxel_size": voxel_size,
             "result_scalar": result_scalar,
         }

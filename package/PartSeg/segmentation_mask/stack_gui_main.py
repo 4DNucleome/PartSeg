@@ -34,6 +34,7 @@ from PartSeg.segmentation_mask.segmentation_info_dialog import SegmentationInfoD
 from PartSegCore.io_utils import WrongFileTypeException, HistoryElement, HistoryProblem
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask_create import calculate_mask
+from .simple_measurements import SimpleMeasurements
 from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox, AlgorithmChoose
 from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.custom_save_dialog import SaveDialog
@@ -111,9 +112,11 @@ class MainMenu(BaseMainMenu):
         :param settings:
         """
         super().__init__(settings, main_window)
+        self.settings = settings
         self.segmentation_cache = None
         self.read_thread = None
         self.advanced_window = None
+        self.measurements_window = None
         self.load_image_btn = QPushButton("Load image")
         self.load_image_btn.clicked.connect(self.load_image)
         self.load_segmentation_btn = QPushButton("Load segmentation")
@@ -126,6 +129,8 @@ class MainMenu(BaseMainMenu):
         self.advanced_window_btn.clicked.connect(self.show_advanced_window)
         self.mask_manager_btn = QPushButton("Mask manager")
         self.mask_manager_btn.clicked.connect(self.mask_manager)
+        self.measurements_btn = QPushButton("Simple measurements")
+        self.measurements_btn.clicked.connect(self.simple_measurement)
         self.segmentation_dialog = SegmentationInfoDialog(
             self.main_window.settings,
             self.main_window.options_panel.algorithm_options.algorithm_choose_widget.change_algorithm,
@@ -141,7 +146,13 @@ class MainMenu(BaseMainMenu):
         layout.addWidget(self.save_segmentation_btn)
         layout.addWidget(self.advanced_window_btn)
         layout.addWidget(self.mask_manager_btn)
+        layout.addWidget(self.measurements_btn)
         self.setLayout(layout)
+
+    def simple_measurement(self):
+        if self.measurements_window is None:
+            self.measurements_window = SimpleMeasurements(self.settings)
+        self.measurements_window.show()
 
     def mask_manager(self):
         if self.settings.segmentation is None:
@@ -652,7 +663,7 @@ class AlgorithmOptions(QWidget):
 
     def execute_in_background(self):
         # TODO check if components are properly passed
-        widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
+        widget = self.algorithm_choose_widget.current_widget()
         segmentation_profile = widget.get_segmentation_profile()
         task = BatchTask(self.settings.get_project_info(), segmentation_profile, None)
         self.batch_process.add_task(task)
@@ -742,7 +753,7 @@ class AlgorithmOptions(QWidget):
         self.settings.set_segmentation(segmentation.segmentation, True, [], parameters_dict)
 
     def showEvent(self, _):
-        widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
+        widget = self.algorithm_choose_widget.current_widget()
         widget.image_changed(self.settings.image)
 
 
@@ -934,6 +945,9 @@ class MainWindow(BaseMainWindow):
         if self.main_menu.advanced_window is not None:
             self.main_menu.advanced_window.close()
             del self.main_menu.advanced_window
+        if self.main_menu.measurements_window is not None:
+            self.main_menu.measurements_window.close()
+            del self.main_menu.measurements_window
         del self.main_menu.segmentation_dialog
         del self.options_panel.algorithm_options.show_parameters_widget
 
