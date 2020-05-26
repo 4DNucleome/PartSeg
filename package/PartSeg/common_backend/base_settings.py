@@ -27,6 +27,7 @@ class ImageSettings(QObject):
     """
 
     image_changed = Signal([Image], [int], [str])
+    image_spacing_changed = Signal()
     """:py:class:`Signal` ``([Image], [int], [str])`` emitted when image has changed"""
     segmentation_changed = Signal(np.ndarray)
     """
@@ -72,6 +73,7 @@ class ImageSettings(QObject):
             self._image.set_spacing(tuple([self._image.spacing[0]] + list(value)))
         else:
             self._image.set_spacing(value)
+        self.image_spacing_changed.emit()
 
     @property
     def segmentation(self) -> np.ndarray:

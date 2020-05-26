@@ -81,10 +81,35 @@ class ImageView(QWidget):
         settings.segmentation_changed.connect(self.set_segmentation)
         settings.segmentation_clean.connect(self.set_segmentation)
         settings.image_changed.connect(self.set_image)
+        settings.image_spacing_changed.connect(self.update_spacing_info)
         # settings.labels_changed.connect(self.paint_layer)
 
         self.image_state.coloring_changed.connect(self.update_segmentation_coloring)
         self.image_state.borders_changed.connect(self.update_segmentation_representation)
+
+    def update_spacing_info(self, image=None) -> None:
+        """
+        Update spacing of image if not provide, then use image pointed by settings.
+
+        :param Optional[Image] image: image which spacing should be updated.
+        :return: None
+        """
+        if image is None:
+            image = self.settings.image
+
+        if image.file_path not in self.image_info:
+            raise ValueError("Image not registered")
+
+        image_info = self.image_info[image.file_path]
+
+        for layer in image_info.layers:
+            layer.scale = image.normalized_scaling
+
+        if image_info.segmentation is not None:
+            image_info.segmentation.scale = image.normalized_scaling
+
+        if image_info.mask is not None:
+            image_info.mask.scale = image.normalized_scaling
 
     def print_info(self, value):
         if not self.viewer.active_layer:
