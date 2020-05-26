@@ -113,7 +113,7 @@ class SimpleMeasurements(QWidget):
         if event.type() == QEvent.WindowActivate:
             selected = set()
             self.channel_select.change_channels_num(self.settings.image.channels)
-            for i in range(self.measurement_layout.count() - 2):
+            for _ in range(self.measurement_layout.count() - 2):
                 # noinspection PyTypeChecker
                 chk: QCheckBox = self.measurement_layout.takeAt(2).widget()
                 if chk.isChecked():
