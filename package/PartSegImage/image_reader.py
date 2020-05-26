@@ -50,7 +50,8 @@ class BaseImageReader:
     def set_default_spacing(self, spacing):
         spacing = tuple(spacing)
         if len(spacing) == 2:
-            spacing = (1,) + spacing
+            # one micrometer
+            spacing = (10 ** -6,) + spacing
         if len(spacing) != 3:
             raise ValueError(f"wrong spacing {spacing}")
         self.default_spacing = spacing
@@ -366,7 +367,7 @@ class TiffImageReader(BaseImageReader):
                 self.image_file.imagej_metadata["spacing"] * name_to_scalar[self.image_file.imagej_metadata["unit"]]
             )
         except KeyError:
-            z_spacing = 1
+            z_spacing = self.default_spacing[0]
         x_spacing, y_spacing = self.read_resolution_from_tags()
         self.spacing = z_spacing, y_spacing, x_spacing
         self.colors = self.image_file.imagej_metadata.get("LUTs")

@@ -87,7 +87,7 @@ class ImageView(QWidget):
         self.image_state.coloring_changed.connect(self.update_segmentation_coloring)
         self.image_state.borders_changed.connect(self.update_segmentation_representation)
 
-    def update_spacing_info(self, image=None) -> None:
+    def update_spacing_info(self, image: Optional[Image] = None) -> None:
         """
         Update spacing of image if not provide, then use image pointed by settings.
 
@@ -103,13 +103,13 @@ class ImageView(QWidget):
         image_info = self.image_info[image.file_path]
 
         for layer in image_info.layers:
-            layer.scale = image.normalized_scaling
+            layer.scale = image.normalized_scaling()
 
         if image_info.segmentation is not None:
-            image_info.segmentation.scale = image.normalized_scaling
+            image_info.segmentation.scale = image.normalized_scaling()
 
         if image_info.mask is not None:
-            image_info.mask.scale = image.normalized_scaling
+            image_info.mask.scale = image.normalized_scaling()
 
     def print_info(self, value):
         if not self.viewer.active_layer:
@@ -230,10 +230,10 @@ class ImageView(QWidget):
             data = calculate_borders(
                 image_info.segmentation_array, self.image_state.borders_thick // 2, self.viewer.dims.ndisplay == 2
             )
-            image_info.segmentation = self.viewer.add_image(data, scale=image_info.image.normalized_scaling)
+            image_info.segmentation = self.viewer.add_image(data, scale=image_info.image.normalized_scaling())
         else:
             image_info.segmentation = self.viewer.add_image(
-                image_info.segmentation_array, scale=image_info.image.normalized_scaling
+                image_info.segmentation_array, scale=image_info.image.normalized_scaling()
             )
 
     def update_segmentation_representation(self):
@@ -263,7 +263,7 @@ class ImageView(QWidget):
 
         mask_marker = mask == 0
 
-        layer = self.viewer.add_image(mask_marker, scale=image.normalized_scaling, blending="additive")
+        layer = self.viewer.add_image(mask_marker, scale=image.normalized_scaling(), blending="additive")
         layer.colormap = self.mask_color()
         layer.opacity = self.mask_opacity()
         image_info.mask = layer
@@ -282,8 +282,8 @@ class ImageView(QWidget):
         self.image_info = {}
         image = self.add_image(image)
         self.viewer.stack_view()
-        self.viewer.dims.set_point(image.time_pos, image.times * image.normalized_scaling[image.time_pos] // 2)
-        self.viewer.dims.set_point(image.stack_pos, image.layers * image.normalized_scaling[image.stack_pos] // 2)
+        self.viewer.dims.set_point(image.time_pos, image.times * image.normalized_scaling()[image.time_pos] // 2)
+        self.viewer.dims.set_point(image.stack_pos, image.layers * image.normalized_scaling()[image.stack_pos] // 2)
 
     def has_image(self, image: Image):
         return image.file_path in self.image_info
@@ -312,7 +312,7 @@ class ImageView(QWidget):
                     colormap=self.convert_to_vispy_colormap(self.channel_control.selected_colormaps[i]),
                     visible=visibility[i],
                     blending="additive",
-                    scale=image.normalized_scaling,
+                    scale=image.normalized_scaling(),
                 )
             )
         if not self.image_info:

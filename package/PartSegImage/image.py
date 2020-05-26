@@ -367,8 +367,8 @@ class Image:
             return tuple(self._image_spacing[1:])
         return self._image_spacing
 
-    @property
-    def normalized_scaling(self) -> Spacing:
+    def normalized_scaling(self, factor=10 ** 9) -> Spacing:
+        return (1,) + tuple(np.multiply(self._image_spacing, factor))
         min_val = min(self._image_spacing)
         return (1,) + tuple(np.divide(self._image_spacing, min_val))
 
