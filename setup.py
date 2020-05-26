@@ -2,10 +2,7 @@ import codecs
 import os
 import re
 
-import setuptools
-
-# from distutils.core import setup
-from setuptools import Extension
+from setuptools import Extension, setup
 
 import numpy as np
 
@@ -98,7 +95,7 @@ if os.path.exists(changelog_path):
         ff.write(f'changelog = """\n{changelog_str}"""\n')
 
 
-setuptools.setup(
+setup(
     ext_modules=extensions,
     include_package_data=True,
     long_description=readme(),
