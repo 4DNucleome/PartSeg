@@ -133,7 +133,10 @@ def is_static(fun):
     return False
 
 
-class Register(OrderedDict):
+AlgorithmType = typing.TypeVar("AlgorithmType", bound=AlgorithmDescribeBase)
+
+
+class Register(OrderedDict, typing.Generic[AlgorithmType]):
     """
     Dict used for register :class:`.AlgorithmDescribeBase` classes.
     All registers from `PartSeg.PartSegCore.register` are this
@@ -142,7 +145,7 @@ class Register(OrderedDict):
     :param methods: list of method which should be instance method
     """
 
-    def __init__(self, *args, class_methods=None, methods=None, suggested_base_class=None, **kwargs):
+    def __init__(self, *args: AlgorithmType, class_methods=None, methods=None, suggested_base_class=None, **kwargs):
         """
         :param class_methods: list of method which should be class method
         :param methods: list of method which should be instance method
@@ -157,6 +160,10 @@ class Register(OrderedDict):
         for el in args:
             self.register(el)
 
+    def values(self) -> typing.Iterable[AlgorithmType]:
+        # noinspection PyTypeChecker
+        return super().values()
+
     def __eq__(self, other):
         return (
             super().__eq__(other)
@@ -166,10 +173,10 @@ class Register(OrderedDict):
             and self.suggested_base_class == other.suggested_base_class
         )
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> AlgorithmType:
         return super().__getitem__(item)
 
-    def register(self, value: typing.Type[AlgorithmDescribeBase], replace=False):
+    def register(self, value: AlgorithmType, replace=False):
         """
         Function for registering :class:`.AlgorithmDescribeBase` based algorithms
         :param value: algorithm to register
@@ -194,7 +201,7 @@ class Register(OrderedDict):
         if is_class and not (inspect.ismethod(fun) or is_static(fun)):
             raise ValueError(f"Class {ob} need to define classmethod {function_name}")
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: AlgorithmType):
         if not issubclass(value, AlgorithmDescribeBase):
             raise ValueError(
                 f"Class {value} need to inherit from " f"{AlgorithmDescribeBase.__module__}.AlgorithmDescribeBase"

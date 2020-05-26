@@ -59,12 +59,12 @@ class {typename}({base_classes}):
 
     def replace_(self, **kwargs):
         'Return a new {typename} object replacing specified fields with new values'
+        return self._replace(**kwargs)
+
+    def _replace(self, **kwargs):
         dkt = self.asdict()
         dkt.update(kwargs)
         return self.__class__(**dkt)
-
-    def _replace(self, **kwargs):
-        return self.replace_(**kwargs)
 
     def __repr__(self):
         'Return a nicely formatted representation string'

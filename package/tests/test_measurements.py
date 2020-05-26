@@ -1279,7 +1279,7 @@ class TestStatisticProfile:
         result = profile.calculate(
             image.get_channel(0),
             segmentation,
-            full_mask=mask,
+            full_segmentation=mask,
             mask=mask,
             voxel_size=image.voxel_size,
             result_units=Units.µm,
@@ -1313,7 +1313,7 @@ class TestStatisticProfile:
         result = profile.calculate(
             image.get_channel(0),
             segmentation,
-            full_mask=mask,
+            full_segmentation=mask,
             mask=mask,
             voxel_size=image.voxel_size,
             result_units=Units.µm,
@@ -1350,7 +1350,7 @@ class TestStatisticProfile:
         result = profile.calculate(
             image.get_channel(0),
             segmentation,
-            full_mask=mask,
+            full_segmentation=mask,
             mask=mask,
             voxel_size=image.voxel_size,
             result_units=Units.µm,
@@ -1383,7 +1383,7 @@ class TestStatisticProfile:
         result = profile.calculate(
             image.get_channel(0),
             segmentation,
-            full_mask=mask,
+            full_segmentation=mask,
             mask=mask,
             voxel_size=image.voxel_size,
             result_units=Units.µm,
@@ -1462,7 +1462,7 @@ class TestStatisticProfile:
         result = profile.calculate(
             image.get_channel(0),
             segmentation,
-            full_mask=mask,
+            full_segmentation=mask,
             mask=mask,
             voxel_size=image.voxel_size,
             result_units=Units.µm,
@@ -1503,7 +1503,7 @@ class TestStatisticProfile:
         result = profile.calculate(
             image.get_channel(0),
             segmentation,
-            full_mask=mask,
+            full_segmentation=mask,
             mask=mask,
             voxel_size=image.voxel_size,
             result_units=Units.µm,
@@ -1573,7 +1573,7 @@ class TestStatisticProfile:
         result = profile.calculate(
             image.get_channel(0),
             segmentation,
-            full_mask=mask,
+            full_segmentation=mask,
             mask=mask,
             voxel_size=image.voxel_size,
             result_units=Units.nm,
@@ -1606,7 +1606,7 @@ class TestStatisticProfile:
         result = profile.calculate(
             image.get_channel(0),
             segmentation,
-            full_mask=mask,
+            full_segmentation=segmentation,
             mask=mask,
             voxel_size=image.voxel_size,
             result_units=Units.nm,

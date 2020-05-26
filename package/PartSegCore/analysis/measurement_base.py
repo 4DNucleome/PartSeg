@@ -125,6 +125,23 @@ class Leaf(BaseSerializableClass):
         return self.per_component == PerComponent.Yes
 
 
+def replace(self, **kwargs):
+    for key in list(kwargs.keys()):
+        if key == "power":
+            continue
+        if not hasattr(self, key):
+            raise ValueError(f"Unknown parameter {key}")
+        if getattr(self, key) is not None:
+            del kwargs[key]
+
+    dkt = self.asdict()
+    dkt.update(kwargs)
+    return Leaf(**dkt)
+
+
+Leaf.replace_ = replace
+
+
 class Node(BaseSerializableClass):
     left: Union["Node", Leaf]
     op: str

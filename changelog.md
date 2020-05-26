@@ -3,6 +3,7 @@
 ## 0.11.0
 -   Make sprawl algorithm name shorter
 -   Unify capitalisation of measurement names
+-   Add simple measurements to mask segmentation
 
 ## 0.10.8
 -   fix synchronisation between viewers in Segmentation Analysis 

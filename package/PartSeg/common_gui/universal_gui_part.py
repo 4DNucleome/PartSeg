@@ -56,6 +56,9 @@ class ChannelComboBox(QComboBox):
         self.setCurrentIndex(index)
 
 
+EnumType = typing.TypeVar("EnumType", bound=Enum)
+
+
 class EnumComboBox(QComboBox):
     """
     Combobox for choose :py:class:`enum.Enum` values
@@ -68,20 +71,20 @@ class EnumComboBox(QComboBox):
     """:py:class:`Signal` emitted when currentIndexChanged is emitted.
     Argument is selected value"""
 
-    def __init__(self, enum: type(Enum), parent=None):
+    def __init__(self, enum: type(EnumType), parent=None):
         super().__init__(parent=parent)
         self.enum = enum
         self.addItems(list(map(str, enum.__members__.values())))
         self.currentIndexChanged.connect(self._emit_signal)
 
-    def get_value(self) -> Enum:
+    def get_value(self) -> EnumType:
         """current value as Enum member"""
         return list(self.enum.__members__.values())[self.currentIndex()]
 
     def _emit_signal(self):
         self.current_choose.emit(self.get_value())
 
-    def set_value(self, value: typing.Union[Enum, int]):
+    def set_value(self, value: typing.Union[EnumType, int]):
         """Set value with Eunum or int"""
         if not isinstance(value, (Enum, int)):
             return
