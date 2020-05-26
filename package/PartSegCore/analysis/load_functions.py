@@ -344,9 +344,11 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
     def update_measurement_calculation_tree(cls, data: typing.Union[Leaf, Node]) -> typing.Union[Leaf, Node]:
         if isinstance(data, Leaf):
             if data.name == "Components Number":
-                return data.replace_(name="Components number")
+                # noinspection PyUnresolvedReferences
+                return data._replace(name="Components number")
             elif data.name == "Pixel Brightness Sum":
-                return data.replace_(name="Pixel brightness sum")
+                # noinspection PyUnresolvedReferences
+                return data._replace(name="Pixel brightness sum")
             return data
         else:
             return data.replace_(

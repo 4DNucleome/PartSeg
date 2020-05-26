@@ -127,6 +127,8 @@ class Leaf(BaseSerializableClass):
 
 def replace(self, **kwargs):
     for key in list(kwargs.keys()):
+        if key == "power":
+            continue
         if not hasattr(self, key):
             raise ValueError(f"Unknown parameter {key}")
         if getattr(self, key) is not None:
