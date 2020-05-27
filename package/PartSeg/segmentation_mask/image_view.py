@@ -15,7 +15,6 @@ class StackImageView(ImageView):
 
     def __init__(self, settings, channel_property: ChannelProperty, name: str):
         super().__init__(settings, channel_property, name)
-        self.component = None
         # self.image_area.pixmap.click_signal.connect(self.component_click)
 
     def component_unmark(self, _num):
@@ -28,13 +27,15 @@ class StackImageView(ImageView):
         pass
 
     def event(self, event: QEvent):
-        if event.type() == QEvent.ToolTip and self.component is not None:
+        if event.type() == QEvent.ToolTip and self.components:
             # text = str(self.component)
-            if self.settings.component_is_chosen(self.component):
-                text = "☑{}".format(self.component)
-            else:
-                text = "☐{}".format(self.component)
-            QToolTip.showText(event.globalPos(), text)
+            text_list = []
+            for el in self.components:
+                if self.settings.component_is_chosen(el):
+                    text_list.append("☑{}".format(el))
+                else:
+                    text_list.append("☐{}".format(el))
+            QToolTip.showText(event.globalPos(), " ".join(text_list))
         return super().event(event)
 
 

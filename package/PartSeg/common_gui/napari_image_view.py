@@ -53,6 +53,7 @@ class ImageView(QWidget):
         self.name = name
         self.image_info: Dict[str, ImageInfo] = {}
         self.current_image = ""
+        self.components = None
 
         self.viewer = Viewer(ndisplay=ndisplay)
         self.viewer.theme = self.settings.theme_name
@@ -137,6 +138,7 @@ class ImageView(QWidget):
         text = f"{cords}: "
         if bright_array:
             text += str(bright_array)
+        self.components = components
         if components:
             if len(components) == 1:
                 text += f" component: {components[0]}"
