@@ -23,3 +23,11 @@ Base classes
 .. automodule:: PartSegCore.segmentation.restartable_segmentation_algorithms
    :members:
    :show-inheritance:
+
+
+.segmentaton_info
+~~~~~~~~~~~~~~~~~
+
+.. automodule:: PartSegCore.segmentation.segmentation_info
+   :members:
+   :show-inheritance:

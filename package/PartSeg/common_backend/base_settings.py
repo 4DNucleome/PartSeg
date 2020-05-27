@@ -14,6 +14,7 @@ from PartSegCore.color_image import ColorMap, default_colormap_dict, default_lab
 from PartSegCore.color_image.base_colors import starting_colors
 from PartSegCore.io_utils import ProjectInfoBase, load_metadata_base, HistoryElement
 from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, check_loaded_dict
+from PartSegCore.segmentation.segmentation_info import SegmentationInfo
 from PartSegImage import Image
 
 
@@ -37,9 +38,8 @@ class ImageSettings(QObject):
         self._image: Optional[Image] = None
         self._image_path = ""
         self._image_spacing = 210, 70, 70
-        self._segmentation = None
+        self._segmentation_info = SegmentationInfo(None)
         self._noise_removed = None
-        self.sizes = []
 
     @property
     def noise_remove_image_part(self):
@@ -73,7 +73,7 @@ class ImageSettings(QObject):
     @property
     def segmentation(self) -> np.ndarray:
         """current segmentation"""
-        return self._segmentation
+        return self._segmentation_info.segmentation
 
     @segmentation.setter
     def segmentation(self, val: np.ndarray):
@@ -82,13 +82,15 @@ class ImageSettings(QObject):
                 self.image.fit_array_to_image(val)
             except ValueError:
                 raise ValueError("Segmentation do not fit to image")
-        self._segmentation = val
+        self._segmentation_info = SegmentationInfo(val)
         if val is not None:
-            self.sizes = np.bincount(val.flat)
             self.segmentation_changed.emit(val)
         else:
-            self.sizes = []
             self.segmentation_clean.emit()
+
+    @property
+    def sizes(self):
+        return self._segmentation_info.sizes
 
     @property
     def image(self):
@@ -102,8 +104,7 @@ class ImageSettings(QObject):
         if value.file_path is not None:
             self.image_changed[str].emit(value.file_path)
         self._image_changed()
-        self._segmentation = None
-        self.sizes = []
+        self._segmentation_info = SegmentationInfo(None)
 
         self.image_changed.emit(self._image)
         self.image_changed[int].emit(self._image.channels)

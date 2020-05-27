@@ -1,22 +1,23 @@
-from abc import ABC
 import operator
-
-import numpy as np
+from abc import ABC
 from copy import deepcopy
 from typing import Type
+
+import numpy as np
 import pytest
 
-from PartSegCore.convex_fill import convex_fill, _convex_fill
-from PartSegImage import Image
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.analysis.analysis_utils import SegmentationPipelineElement, SegmentationPipeline
 from PartSegCore.analysis.calculate_pipeline import calculate_pipeline
+from PartSegCore.convex_fill import convex_fill, _convex_fill
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask_create import calculate_mask, MaskProperty
 from PartSegCore.segmentation import restartable_segmentation_algorithms as sa, SegmentationAlgorithm
 from PartSegCore.segmentation.noise_filtering import noise_filtering_dict
+from PartSegCore.segmentation.segmentation_info import SegmentationInfo, BoundInfo
 from PartSegCore.segmentation.sprawl import sprawl_dict
+from PartSegImage import Image
 
 
 def get_two_parts_array():
@@ -747,3 +748,60 @@ class TestConvexFill:
     def test__convex_fill(self):
         arr = np.zeros((20, 20), dtype=np.bool)
         assert _convex_fill(arr) is None
+
+
+class TestSegmentationInfo:
+    def test_none(self):
+        si = SegmentationInfo(None)
+        assert si.segmentation is None
+        assert len(si.bound_info) == 0
+        assert len(si.sizes) == 0
+
+    def test_empty(self):
+        si = SegmentationInfo(np.zeros((10, 10), dtype=np.uint8))
+        assert np.all(si.segmentation == 0)
+        assert len(si.bound_info) == 0
+        assert len(si.sizes) == 1
+
+    @pytest.mark.parametrize("num", [1, 5])
+    def test_simple(self, num):
+        data = np.zeros((10, 10), dtype=np.uint8)
+        data[2:8, 2:8] = num
+        si = SegmentationInfo(data)
+        assert len(si.bound_info) == 1
+        assert num in si.bound_info
+        assert isinstance(si.bound_info[num], BoundInfo)
+        assert np.all(si.bound_info[num].lower == [2, 2])
+        assert np.all(si.bound_info[num].upper == [7, 7])
+        assert len(si.sizes) == num + 1
+        assert np.all(si.sizes[1:num] == 0)
+        assert si.sizes[num] == 36
+
+    @pytest.mark.parametrize("dims", [3, 5, 6])
+    def test_more_dims(self, dims):
+        si = SegmentationInfo(np.ones((10,) * dims, dtype=np.uint8))
+        assert len(si.bound_info[1].lower) == dims
+        assert len(si.bound_info[1].upper) == dims
+        assert np.all(si.bound_info[1].lower == 0)
+        assert np.all(si.bound_info[1].upper == 9)
+        assert len(si.sizes) == 2
+        assert np.all(si.sizes == [0, 10 ** dims])
+
+    @pytest.mark.parametrize("comp_num", [2, 4, 8])
+    def test_multiple_components(self, comp_num):
+        data = np.zeros((10 * comp_num, 10), dtype=np.uint8)
+        for i in range(comp_num):
+            data[i * 10 + 2 : i * 10 + 8, 2:8] = i + 1
+        si = SegmentationInfo(data)
+        assert len(si.bound_info) == comp_num
+        assert set(si.bound_info.keys()) == set(range(1, comp_num + 1))
+        for i in range(comp_num):
+            assert np.all(si.bound_info[i + 1].lower == [i * 10 + 2, 2])
+            assert np.all(si.bound_info[i + 1].upper == [i * 10 + 7, 7])
+        assert len(si.sizes) == comp_num + 1
+        assert np.all(si.sizes[1:] == 36)
+
+        data[-1, 8] = 1
+        si = SegmentationInfo(data)
+        assert np.all(si.bound_info[1].lower == 2)
+        assert np.all(si.bound_info[1].upper == [10 * comp_num - 1, 8])
