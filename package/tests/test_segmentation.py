@@ -805,3 +805,11 @@ class TestSegmentationInfo:
         si = SegmentationInfo(data)
         assert np.all(si.bound_info[1].lower == 2)
         assert np.all(si.bound_info[1].upper == [10 * comp_num - 1, 8])
+
+
+def test_bound_info():
+    bi = BoundInfo(lower=np.array([1, 1, 1]), upper=np.array([5, 5, 5]))
+    assert np.all(bi.box_size() == 5)
+    assert len(bi.box_size() == 3)
+    assert len(bi.get_slices()) == 3
+    assert np.all([x == slice(1, 6) for x in bi.get_slices()])

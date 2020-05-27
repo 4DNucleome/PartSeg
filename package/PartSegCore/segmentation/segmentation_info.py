@@ -1,4 +1,4 @@
-from typing import NamedTuple, Dict, Optional
+from typing import NamedTuple, Dict, Optional, List
 
 import numpy as np
 
@@ -13,7 +13,10 @@ class BoundInfo(NamedTuple):
 
     def box_size(self) -> np.ndarray:
         """Size of bounding box"""
-        return self.upper - self.lower
+        return self.upper - self.lower + 1
+
+    def get_slices(self) -> List[slice]:
+        return [slice(x, y + 1) for x, y in zip(self.lower, self.upper)]
 
 
 class SegmentationInfo:

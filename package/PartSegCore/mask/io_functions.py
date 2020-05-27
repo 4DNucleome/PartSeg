@@ -28,6 +28,7 @@ from ..io_utils import (
     tar_to_buff,
 )
 from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationProfile
+from ..segmentation.segmentation_info import SegmentationInfo
 from PartSegImage import Image, ImageWriter, GenericImageReader
 
 
@@ -36,6 +37,7 @@ class SegmentationTuple(ProjectInfoBase, typing.NamedTuple):
     image: typing.Union[Image, str, None]
     mask: typing.Optional[np.ndarray] = None
     segmentation: typing.Optional[np.ndarray] = None
+    segmentation_info: SegmentationInfo = SegmentationInfo(None)
     selected_components: typing.List = []
     segmentation_parameters: typing.Dict[int, typing.Optional[SegmentationProfile]] = {}
     history: typing.List[HistoryElement] = []
@@ -434,17 +436,29 @@ class SaveSegmentation(SaveBase):
 
 
 def save_components(
-    image: Image, components: list, segmentation: np.ndarray, dir_path: str, range_changed=None, step_changed=None
+    image: Image,
+    components: list,
+    segmentation: np.ndarray,
+    dir_path: str,
+    segmentation_info: typing.Optional[SegmentationInfo] = None,
+    range_changed=None,
+    step_changed=None,
 ):
     if range_changed is None:
         range_changed = empty_fun
     if step_changed is None:
         step_changed = empty_fun
 
+    if segmentation_info is None:
+        segmentation_info = SegmentationInfo(segmentation)
+
     file_name = os.path.splitext(os.path.basename(image.file_path))[0]
     range_changed(0, 2 * len(components))
     for i in components:
-        im = image.cut_image(segmentation == i, replace_mask=True)
+        slices = segmentation_info.bound_info[i].get_slices()
+        cut_segmentation = segmentation[slices]
+        cut_image = image.cut_image([slice(None)] + slices)
+        im = cut_image.cut_image(cut_segmentation == i, replace_mask=True)
         # print(f"[run] {im}")
         ImageWriter.save(im, os.path.join(dir_path, f"{file_name}_component{i}.tif"))
         step_changed(2 * i + 1)
@@ -471,6 +485,7 @@ class SaveComponents(SaveBase):
             project_info.selected_components,
             project_info.segmentation,
             save_location,
+            project_info.segmentation_info,
             range_changed,
             step_changed,
         )

@@ -75,6 +75,10 @@ class ImageSettings(QObject):
         """current segmentation"""
         return self._segmentation_info.segmentation
 
+    @property
+    def segmentation_info(self) -> SegmentationInfo:
+        return self._segmentation_info
+
     @segmentation.setter
     def segmentation(self, val: np.ndarray):
         if val is not None:
