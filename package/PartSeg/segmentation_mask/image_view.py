@@ -1,6 +1,7 @@
 from qtpy.QtCore import QEvent, Qt, QRect
 from qtpy.QtGui import QPainter, QPen, QColor
 from qtpy.QtWidgets import QToolTip
+from vispy.app import MouseEvent
 
 from PartSeg.common_gui.channel_control import ChannelProperty
 from ..common_gui.stack_image_view import ImageViewWithMask, ImageCanvas
@@ -15,6 +16,7 @@ class StackImageView(ImageView):
 
     def __init__(self, settings, channel_property: ChannelProperty, name: str):
         super().__init__(settings, channel_property, name)
+        self.viewer_widget.canvas.events.mouse_press.connect(self.component_click)
         # self.image_area.pixmap.click_signal.connect(self.component_click)
 
     def component_unmark(self, _num):
@@ -23,8 +25,15 @@ class StackImageView(ImageView):
     def component_mark(self, num):
         pass
 
-    def component_click(self, point, size):
-        pass
+    def component_click(self, event: MouseEvent):
+        cords = np.array([int(x) for x in self.viewer.active_layer.coordinates])
+        for image_info in self.image_info.values():
+            if not image_info.coords_in(cords):
+                continue
+            moved_coords = image_info.translated_coords(cords)
+            component = image_info.segmentation_array[tuple(moved_coords)]
+            if component:
+                self.component_clicked.emit(component)
 
     def event(self, event: QEvent):
         if event.type() == QEvent.ToolTip and self.components:

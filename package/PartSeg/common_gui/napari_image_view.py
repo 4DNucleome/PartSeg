@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import itertools
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict, Tuple, Union
 
 import numpy as np
 from napari._qt.qt_viewer import QtViewer
@@ -29,6 +29,15 @@ class ImageInfo:
     segmentation: Optional[Labels] = None
     segmentation_array: Optional[np.ndarray] = None
     segmentation_count: int = 0
+
+    def coords_in(self, coords: Union[List[int], np.ndarray]) -> bool:
+        fst_layer = self.layers[0]
+        moved_coords = self.translated_coords(coords)
+        return np.all(moved_coords >= 0) and np.all(moved_coords < fst_layer.data.shape)
+
+    def translated_coords(self, coords: Union[List[int], np.ndarray]) -> np.ndarray:
+        fst_layer = self.layers[0]
+        return np.subtract(coords, fst_layer.translate_grid).astype(np.int)
 
 
 class ImageView(QWidget):
@@ -119,25 +128,26 @@ class ImageView(QWidget):
         bright_array = []
         components = []
         for image_info in self.image_info.values():
+            if not image_info.coords_in(cords):
+                continue
+            moved_coords = image_info.translated_coords(cords)
             for layer in image_info.layers:
-                moved_coords = (cords - layer.translate_grid).astype(np.int)
-                if np.all(moved_coords >= 0) and np.all(moved_coords < layer.data.shape):
+                if layer.visible:
                     bright_array.append(layer.data[tuple(moved_coords)])
             if image_info.segmentation_array is not None and image_info.segmentation is not None:
-                moved_coords = (cords - image_info.segmentation.translate_grid).astype(np.int)
-                if np.all(moved_coords >= 0) and np.all(moved_coords < image_info.segmentation_array.shape):
-                    val = image_info.segmentation_array[tuple(moved_coords)]
-                    # val2 = image_info.segmentation.selected_label
-                    if val:
-                        # components.append((val, val2))
-                        components.append(val)
+                val = image_info.segmentation_array[tuple(moved_coords)]
+                if val:
+                    components.append(val)
 
         if not bright_array and not components:
             self.text_info_change.emit("")
             return
         text = f"{cords}: "
         if bright_array:
-            text += str(bright_array)
+            if len(bright_array) == 1:
+                text += str(bright_array[0])
+            else:
+                text += str(bright_array)
         self.components = components
         if components:
             if len(components) == 1:
