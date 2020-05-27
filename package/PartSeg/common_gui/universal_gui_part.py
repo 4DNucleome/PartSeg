@@ -11,7 +11,7 @@ from sys import platform
 
 from qtpy import PYQT5
 from qtpy.QtCore import Qt, QTimer, QRect, QPointF, Signal
-from qtpy.QtGui import QPaintEvent, QPainter, QColor, QPalette, QFontMetrics
+from qtpy.QtGui import QPaintEvent, QPainter, QColor, QPalette, QFontMetrics, QPolygonF
 from qtpy.QtWidgets import (
     QWidget,
     QLabel,
@@ -303,7 +303,11 @@ class ProgressCircle(QWidget):
         point = mid_point + QPointF(
             math.cos(math.pi * (factor * 2)) * radius, -math.sin(math.pi * (factor * 2)) * radius
         )
-        painter.drawPolygon(mid_point, zero_point, point)
+        polygon = QPolygonF()
+        polygon += mid_point
+        polygon += zero_point
+        polygon += point
+        painter.drawPolygon(polygon)
         painter.restore()
 
     def set_fraction(self, nominator, denominator=1):
