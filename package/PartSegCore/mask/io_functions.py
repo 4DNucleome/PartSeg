@@ -456,7 +456,7 @@ def save_components(
     range_changed(0, 2 * len(components))
     for i in components:
         slices = segmentation_info.bound_info[i].get_slices()
-        cut_segmentation = segmentation[slices]
+        cut_segmentation = segmentation[tuple(slices)]
         cut_image = image.cut_image([slice(None)] + slices)
         im = cut_image.cut_image(cut_segmentation == i, replace_mask=True)
         # print(f"[run] {im}")
