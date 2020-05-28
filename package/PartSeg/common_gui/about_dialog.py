@@ -22,7 +22,8 @@ class AboutDialog(QDialog):
                 changelog_text = ff.read()
         else:
             changelog_text = PartSeg.changelog
-        text_label = QLabel(text)
+        text_label = QLabel(self)
+        text_label.setText(text)
         self.change_log = TextShow()
         self.change_log.setAcceptRichText(True)
         self.change_log.setMarkdown(changelog_text)

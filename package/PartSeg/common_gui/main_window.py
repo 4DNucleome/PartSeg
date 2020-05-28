@@ -184,7 +184,7 @@ class BaseMainWindow(QMainWindow):
     @staticmethod
     def show_about_dialog():
         """Show about dialog."""
-        AboutDialog().exec()
+        AboutDialog().exec_()
 
     @staticmethod
     def get_project_info(file_path, image):
