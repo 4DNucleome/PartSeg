@@ -8,6 +8,7 @@ from napari._qt.qt_viewer_buttons import QtNDisplayButton, QtViewerPushButton
 from napari.components import ViewerModel as Viewer
 from napari.layers import Layer
 from napari.layers.image import Image as NapariImage
+from napari.layers.image._image_constants import Interpolation3D
 from napari.layers.labels import Labels
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
@@ -240,17 +241,24 @@ class ImageView(QWidget):
     def add_segmentation_layer(self, image_info: ImageInfo):
         if image_info.segmentation_info.segmentation is None:
             return
+        dtype = image_info.segmentation_info.segmentation.dtype
+        # TODO remove uint8 fix in future
+        if dtype == np.uint8:
+            dtype = np.uint16
         if self.image_state.only_borders:
             data = calculate_borders(
                 image_info.segmentation_info.segmentation,
                 self.image_state.borders_thick // 2,
                 self.viewer.dims.ndisplay == 2,
             )
-            image_info.segmentation = self.viewer.add_image(data, scale=image_info.image.normalized_scaling())
+            image_info.segmentation = self.viewer.add_image(
+                data.astype(dtype), scale=image_info.image.normalized_scaling()
+            )
         else:
             image_info.segmentation = self.viewer.add_image(
-                image_info.segmentation_info.segmentation, scale=image_info.image.normalized_scaling()
+                image_info.segmentation_info.segmentation.astype(dtype), scale=image_info.image.normalized_scaling()
             )
+        image_info.segmentation._interpolation[3] = Interpolation3D.NEAREST
 
     def update_segmentation_representation(self):
         self.remove_all_segmentation()
@@ -381,10 +389,11 @@ class ImageView(QWidget):
     def change_visibility(self, name: str, index: int):
         for image_info in self.image_info.values():
             if len(image_info.layers) > index:
-                image_info.layers[index].colormap = self.convert_to_vispy_colormap(
-                    self.channel_control.selected_colormaps[index]
-                )
                 image_info.layers[index].visible = self.channel_control.channel_visibility[index]
+                if self.channel_control.channel_visibility[index]:
+                    image_info.layers[index].colormap = self.convert_to_vispy_colormap(
+                        self.channel_control.selected_colormaps[index]
+                    )
 
     def reset_image_size(self):
         self.viewer.reset_view()

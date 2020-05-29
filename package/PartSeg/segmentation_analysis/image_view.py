@@ -1,23 +1,23 @@
 from typing import Optional
 
-import collections
 from qtpy.QtGui import QResizeEvent
 from qtpy.QtCore import QObject, Slot, QSignalBlocker
 from qtpy.QtWidgets import QCheckBox, QDoubleSpinBox, QLabel
 
+from PartSegCore.segmentation.segmentation_info import SegmentationInfo
 from ..common_gui.channel_control import ChannelProperty
-from ..common_gui.stack_image_view import ImageView, ImageViewWithMask
+from ..common_gui.napari_image_view import ImageView
 from .partseg_settings import PartSettings
-import numpy as np
 
 
-class ResultImageView(ImageViewWithMask):
+class ResultImageView(ImageView):
     """
     :type _settings PartSettings:
     """
 
     def __init__(self, settings: PartSettings, channel_property: ChannelProperty, name: str):
         super().__init__(settings, channel_property, name)
+        self._channel_control_top = True
         self.only_border = QCheckBox("")
         self.image_state.only_borders = False
         self.only_border.setChecked(self.image_state.only_borders)
@@ -38,11 +38,17 @@ class ResultImageView(ImageViewWithMask):
         self.opacity.setVisible(False)
         self.only_border.setVisible(False)
 
+    def any_segmentation(self):
+        for image_info in self.image_info.values():
+            if image_info.segmentation is not None:
+                return True
+        return False
+
     @Slot()
-    @Slot(np.ndarray)
-    def set_labels(self, labels: Optional[np.ndarray] = None):
-        super().set_labels(labels)
-        show = self.labels_layer is not None
+    @Slot(SegmentationInfo)
+    def set_segmentation(self, labels: Optional[SegmentationInfo] = None):
+        super().set_segmentation(labels)
+        show = self.any_segmentation()
         self.label1.setVisible(show)
         self.label2.setVisible(show)
         self.opacity.setVisible(show)
@@ -66,10 +72,12 @@ class ResultImageView(ImageViewWithMask):
 class CompareImageView(ResultImageView):
     def __init__(self, settings: PartSettings, channel_property: ChannelProperty, name: str):
         super().__init__(settings, channel_property, name)
-        settings.segmentation_changed.disconnect(self.set_labels)
-        settings.segmentation_clean.disconnect(self.set_labels)
-        settings.compare_segmentation_change.connect(self.set_labels)
+        settings.segmentation_changed.disconnect(self.set_segmentation)
+        settings.segmentation_clean.disconnect(self.set_segmentation)
+        settings.compare_segmentation_change.connect(self.set_segmentation)
 
+
+"""
     def info_text_pos(self, *pos):
         if self.tmp_image is None:
             return
@@ -99,6 +107,7 @@ class CompareImageView(ResultImageView):
         else:
             self.text_info_change.emit("Position: {}, Brightness: {}".format(tuple(pos2), brightness))
 
+"""
 
 # class ResultImageView(ImageViewWithMask):
 #     def __init__(self, settings, channel_property: ChannelProperty, name: str):
@@ -141,6 +150,7 @@ class SynchronizeView(QObject):
         else:
             origin, dest = self.image_view2, self.image_view1
         _block = QSignalBlocker(dest)  # noqa F841
+        return
         dest.stack_slider.setValue(origin.stack_slider.value())
         dest.time_slider.setValue(origin.time_slider.value())
         dest.image_area.zoom_scale = origin.image_area.zoom_scale

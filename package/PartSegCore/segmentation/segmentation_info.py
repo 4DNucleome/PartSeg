@@ -34,6 +34,9 @@ class SegmentationInfo:
         self.bound_info = self.calc_bounds(segmentation) if segmentation is not None else {}
         self.sizes = np.bincount(segmentation.flat) if segmentation is not None else []
 
+    def __str__(self):
+        return f"SegmentationInfo; components: {len(self.bound_info)}, sizes: {self.sizes}"
+
     @staticmethod
     def calc_bounds(segmentation: np.ndarray) -> Dict[int, BoundInfo]:
         """
