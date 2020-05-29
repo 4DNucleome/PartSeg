@@ -28,7 +28,7 @@ from qtpy.QtWidgets import (
     QGridLayout,
 )
 
-from PartSegCore import state_store
+from PartSegCore import state_store, Units, UNIT_SCALE
 from PartSegCore.io_utils import WrongFileTypeException, HistoryElement, HistoryProblem
 from PartSegCore.mask import io_functions
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
@@ -40,7 +40,13 @@ from PartSegCore.mask.io_functions import (
     LoadSegmentationParameters,
 )
 from PartSegCore.mask_create import calculate_mask
+from PartSegCore.segmentation.algorithm_base import SegmentationResult
+from PartSegImage import Image, TiffImageReader
+from .batch_proceed import BatchProceed, BatchTask
+from .image_view import StackImageView
 from .simple_measurements import SimpleMeasurements
+from .stack_settings import StackSettings, get_mask
+from ..common_gui.advanced_tabs import AdvancedWindow
 from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox, AlgorithmChoose
 from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.custom_load_dialog import CustomLoadDialog
@@ -59,6 +65,10 @@ CONFIG_FOLDER = os.path.join(state_store.save_folder, "mask")
 
 
 class MaskDialog(MaskDialogBase):
+    def __init__(self, settings: StackSettings):
+        super().__init__(settings)
+        self.settings = settings
+
     def next_mask(self):
         project_info: SegmentationTuple = self.settings.get_project_info()
         mask_property = self.mask_widget.get_mask_property()
