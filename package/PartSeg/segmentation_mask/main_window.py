@@ -721,6 +721,10 @@ class AlgorithmOptions(QWidget):
         self.choose_components.setDisabled(True)
         chosen = sorted(self.choose_components.get_chosen())
         blank = get_mask(self.settings.segmentation, self.settings.mask, chosen)
+        if blank is not None:
+            # Problem with handling time data in algorithms
+            # TODO Fix This
+            blank = blank[0]
         self.progress_bar.setHidden(False)
         widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
         widget.set_mask(blank)

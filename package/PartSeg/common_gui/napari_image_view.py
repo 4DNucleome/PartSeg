@@ -11,7 +11,7 @@ from napari.layers.image import Image as NapariImage
 from napari.layers.image._image_constants import Interpolation3D
 from napari.layers.labels import Labels
 from qtpy.QtCore import Signal
-from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
+from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QLabel
 from vispy.color import Colormap, ColorArray, Color
 
 from PartSeg.common_backend.base_settings import BaseSettings
@@ -73,11 +73,15 @@ class ImageView(QWidget):
         self.channel_control = ColorComboBoxGroup(settings, name, channel_property, height=30)
         self.ndim_btn = QtNDisplayButton(self.viewer)
         self.reset_view_button = QtViewerPushButton(self.viewer, "home", "Reset view", self.viewer.reset_view)
+        self.mask_chk = QCheckBox()
+        self.mask_label = QLabel("Mask:")
 
         self.btn_layout = QHBoxLayout()
         self.btn_layout.addWidget(self.reset_view_button)
         self.btn_layout.addWidget(self.ndim_btn)
-        self.btn_layout.addWidget(self.channel_control)
+        self.btn_layout.addWidget(self.channel_control, 1)
+        self.btn_layout.addWidget(self.mask_label)
+        self.btn_layout.addWidget(self.mask_chk)
         self.btn_layout2 = QHBoxLayout()
         layout = QVBoxLayout()
         layout.addLayout(self.btn_layout)
@@ -98,6 +102,12 @@ class ImageView(QWidget):
 
         self.image_state.coloring_changed.connect(self.update_segmentation_coloring)
         self.image_state.borders_changed.connect(self.update_segmentation_representation)
+        self.mask_chk.stateChanged.connect(self.change_mask_visibility)
+
+    def change_mask_visibility(self):
+        for image_info in self.image_info.values():
+            if image_info.mask is not None:
+                image_info.mask.visible = self.mask_chk.isChecked()
 
     def update_spacing_info(self, image: Optional[Image] = None) -> None:
         """
@@ -290,6 +300,7 @@ class ImageView(QWidget):
         layer = self.viewer.add_image(mask_marker, scale=image.normalized_scaling(), blending="additive")
         layer.colormap = self.mask_color()
         layer.opacity = self.mask_opacity()
+        layer.visible = self.mask_chk.isChecked()
         image_info.mask = layer
 
     def update_mask_parameters(self):

@@ -32,7 +32,7 @@ class ManualThreshold(BaseThreshold):
     def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict, operator):
         result = np.array(operator(data, arguments["threshold"])).astype(np.uint8)
         if mask is not None:
-            result[mask[0] == 0] = 0
+            result[mask == 0] = 0
         return result, arguments["threshold"]
 
 
