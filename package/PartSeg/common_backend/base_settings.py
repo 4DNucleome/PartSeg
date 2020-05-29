@@ -29,7 +29,7 @@ class ImageSettings(QObject):
     image_changed = Signal([Image], [int], [str])
     image_spacing_changed = Signal()
     """:py:class:`Signal` ``([Image], [int], [str])`` emitted when image has changed"""
-    segmentation_changed = Signal(np.ndarray)
+    segmentation_changed = Signal(SegmentationInfo)
     """
     :py:class:`.Signal`
     emitted when segmentation has changed
@@ -88,12 +88,12 @@ class ImageSettings(QObject):
     def segmentation(self, val: np.ndarray):
         if val is not None:
             try:
-                self.image.fit_array_to_image(val)
+                val = self.image.fit_array_to_image(val)
             except ValueError:
                 raise ValueError("Segmentation do not fit to image")
         self._segmentation_info = SegmentationInfo(val)
         if val is not None:
-            self.segmentation_changed.emit(val)
+            self.segmentation_changed.emit(self._segmentation_info)
         else:
             self.segmentation_clean.emit()
 

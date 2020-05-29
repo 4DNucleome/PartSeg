@@ -31,6 +31,7 @@ from PartSegCore.image_operations import apply_filter, NoiseFilterType
 from PartSegCore.color_image import color_image_fun, add_labels
 from PartSegCore.color_image.color_image_base import color_maps
 from PartSegCore.colors import default_colors
+from PartSegCore.segmentation.segmentation_info import SegmentationInfo
 from ..common_backend.base_settings import BaseSettings, ViewSettings
 from PartSegImage import Image
 from .channel_control import ColorComboBoxGroup, ChannelProperty
@@ -538,6 +539,8 @@ class ImageView(QWidget):
     def set_labels(self, labels: Optional[np.ndarray] = None):
         if isinstance(labels, np.ndarray) and labels.size == 0:
             labels = None
+        if isinstance(labels, SegmentationInfo):
+            labels = labels.segmentation[0]
         self.labels_layer = labels
         self.paint_layer()
 

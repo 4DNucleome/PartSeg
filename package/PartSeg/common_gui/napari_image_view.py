@@ -17,6 +17,7 @@ from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui.channel_control import ChannelProperty, ColorComboBoxGroup
 from PartSeg.common_gui.stack_image_view import ImageShowState, LabelEnum
 from PartSegCore.color_image import create_color_map, ColorMap, calculate_borders
+from PartSegCore.segmentation.segmentation_info import SegmentationInfo
 from PartSegImage import Image
 
 
@@ -27,7 +28,7 @@ class ImageInfo:
     mask: Optional[Labels] = None
     mask_array: Optional[np.ndarray] = None
     segmentation: Optional[Labels] = None
-    segmentation_array: Optional[np.ndarray] = None
+    segmentation_info: SegmentationInfo = SegmentationInfo(None)
     segmentation_count: int = 0
 
     def coords_in(self, coords: Union[List[int], np.ndarray]) -> bool:
@@ -134,8 +135,8 @@ class ImageView(QWidget):
             for layer in image_info.layers:
                 if layer.visible:
                     bright_array.append(layer.data[tuple(moved_coords)])
-            if image_info.segmentation_array is not None and image_info.segmentation is not None:
-                val = image_info.segmentation_array[tuple(moved_coords)]
+            if image_info.segmentation_info.segmentation is not None and image_info.segmentation is not None:
+                val = image_info.segmentation_info.segmentation[tuple(moved_coords)]
                 if val:
                     components.append(val)
 
@@ -179,10 +180,12 @@ class ImageView(QWidget):
             return self.settings.image
         return self.image_info[self.current_image].image
 
-    def set_segmentation(self, segmentation: Optional[np.ndarray] = None, image: Optional[Image] = None) -> None:
+    def set_segmentation(
+        self, segmentation_info: Optional[SegmentationInfo] = None, image: Optional[Image] = None
+    ) -> None:
         image = self.get_image(image)
-        if segmentation is None:
-            segmentation = self.settings.segmentation
+        if segmentation_info is None:
+            segmentation_info = self.settings.segmentation_info
         image_info = self.image_info[image.file_path]
         if image_info.segmentation is not None:
             self.viewer.layers.unselect_all()
@@ -190,12 +193,11 @@ class ImageView(QWidget):
             self.viewer.layers.remove_selected()
             image_info.segmentation = None
 
+        segmentation = segmentation_info.segmentation
         if segmentation is None:
             return
 
-        segmentation = segmentation.reshape((1,) + segmentation.shape)
-
-        image_info.segmentation_array = segmentation
+        image_info.segmentation_info = segmentation_info
         image_info.segmentation_count = np.max(segmentation)
         self.add_segmentation_layer(image_info)
         image_info.segmentation.colormap = self.get_segmentation_view_parameters(image_info)
@@ -236,16 +238,18 @@ class ImageView(QWidget):
         self.viewer.layers.remove_selected()
 
     def add_segmentation_layer(self, image_info: ImageInfo):
-        if image_info.segmentation_array is None:
+        if image_info.segmentation_info.segmentation is None:
             return
         if self.image_state.only_borders:
             data = calculate_borders(
-                image_info.segmentation_array, self.image_state.borders_thick // 2, self.viewer.dims.ndisplay == 2
+                image_info.segmentation_info.segmentation,
+                self.image_state.borders_thick // 2,
+                self.viewer.dims.ndisplay == 2,
             )
             image_info.segmentation = self.viewer.add_image(data, scale=image_info.image.normalized_scaling())
         else:
             image_info.segmentation = self.viewer.add_image(
-                image_info.segmentation_array, scale=image_info.image.normalized_scaling()
+                image_info.segmentation_info.segmentation, scale=image_info.image.normalized_scaling()
             )
 
     def update_segmentation_representation(self):

@@ -369,8 +369,6 @@ class Image:
 
     def normalized_scaling(self, factor=10 ** 9) -> Spacing:
         return (1,) + tuple(np.multiply(self._image_spacing, factor))
-        min_val = min(self._image_spacing)
-        return (1,) + tuple(np.divide(self._image_spacing, min_val))
 
     @property
     def voxel_size(self) -> Spacing:
@@ -379,6 +377,8 @@ class Image:
 
     def set_spacing(self, value: Spacing):
         """set image spacing"""
+        if any([x == 0 for x in value]):
+            return
         if self.is_2d and len(value) + 1 == len(self._image_spacing):
             value = (1.0,) + tuple(value)
         if len(value) != len(self._image_spacing):

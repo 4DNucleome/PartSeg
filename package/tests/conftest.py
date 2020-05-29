@@ -81,6 +81,7 @@ def stack_segmentation1(stack_image: SegmentationTuple, mask_segmentation_parame
     data = np.zeros([20, 40, 40], dtype=np.uint8)
     for i, (x, y) in enumerate(itertools.product([0, 20], repeat=2), start=1):
         data[1:-1, x + 2 : x + 18, y + 2 : y + 18] = i
+    data = stack_image.image.fit_array_to_image(data)
     parameters = {i: deepcopy(mask_segmentation_parameters) for i in range(1, 5)}
     return stack_image._replace(segmentation=data, segmentation_parameters=parameters, selected_components=[1, 3])
 
@@ -90,6 +91,7 @@ def stack_segmentation2(stack_image: SegmentationTuple, mask_segmentation_parame
     data = np.zeros([20, 40, 40], dtype=np.uint8)
     for i, (x, y) in enumerate(itertools.product([0, 20], repeat=2), start=1):
         data[3:-3, x + 4 : x + 16, y + 4 : y + 16] = i
+    data = stack_image.image.fit_array_to_image(data)
     mask_segmentation_parameters.values["threshold"]["values"]["threshold"] = 110
     parameters = {i: deepcopy(mask_segmentation_parameters) for i in range(1, 5)}
     return stack_image._replace(segmentation=data, segmentation_parameters=parameters, selected_components=[1, 3])
