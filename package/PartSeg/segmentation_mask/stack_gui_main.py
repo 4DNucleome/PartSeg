@@ -332,7 +332,7 @@ class MainMenu(BaseMainMenu):
             clipboard = QGuiApplication.clipboard()
             clipboard.setText(os.path.splitext(os.path.basename(self.settings.image_path))[0])
 
-        if self.settings.segmentation is None:
+        if self.settings.segmentation is None or len(self.settings.sizes) == 1:
             QMessageBox.warning(self, "No components", "No components to save")
             return
         dial = SaveDialog(

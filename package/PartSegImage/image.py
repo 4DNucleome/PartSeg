@@ -336,7 +336,7 @@ class Image:
         :return:
         """
         elem_num = max(self.stack_pos, self.time_pos) + 1
-        indices = [0] * elem_num
+        indices: typing.List[typing.Union[int, slice]] = [0] * elem_num
         for i in range(elem_num):
             if i == self.time_pos:
                 indices[i] = time
@@ -344,8 +344,7 @@ class Image:
                 indices[i] = stack
             else:
                 indices[i] = slice(None)
-        indices = tuple(indices)
-        return self._image_array[indices]
+        return self._image_array[tuple(indices)]
 
     def get_mask_layer(self, num) -> np.ndarray:
         if self._mask_array is None:
@@ -393,9 +392,11 @@ class Image:
         """
         new_mask = None
         if isinstance(cut_area, (list, tuple)):
-            new_image = self._image_array[cut_area]
+            cut_area2 = cut_area[:]
+            cut_area2.insert(self.channel_pos, slice(None))
+            new_image = self._image_array[tuple(cut_area2)]
             if self._mask_array is not None:
-                new_mask = self._mask_array[cut_area]
+                new_mask = self._mask_array[tuple(cut_area)]
         else:
             cut_area = self.fit_array_to_image(cut_area)
             points = np.nonzero(cut_area)

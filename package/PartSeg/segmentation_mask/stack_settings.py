@@ -97,6 +97,7 @@ class StackSettings(BaseSettings):
             image=self.image.substitute(),
             mask=self.mask,
             segmentation=self.segmentation,
+            segmentation_info=self.segmentation_info,
             selected_components=self.chosen_components(),
             segmentation_parameters=copy(self.components_parameters_dict),
             history=self.history[: self.history_index + 1],
