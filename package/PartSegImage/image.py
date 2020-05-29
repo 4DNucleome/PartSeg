@@ -134,6 +134,14 @@ class Image:
         return self.return_order.index("C")
 
     @lazyattr
+    def x_pos(self):
+        return self.return_order.index("X")
+
+    @lazyattr
+    def y_pos(self):
+        return self.return_order.index("Y")
+
+    @lazyattr
     def time_pos(self):
         return self.return_order.index("T")
 

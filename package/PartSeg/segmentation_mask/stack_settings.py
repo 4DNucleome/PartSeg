@@ -236,6 +236,7 @@ class StackSettings(BaseSettings):
     def set_segmentation(
         self, new_segmentation_data, save_chosen=True, list_of_components=None, segmentation_parameters=None
     ):
+        new_segmentation_data = self.image.fit_array_to_image(new_segmentation_data)
         if list_of_components is None:
             list_of_components = []
         if segmentation_parameters is None:
