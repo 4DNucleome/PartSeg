@@ -251,10 +251,6 @@ class ImageView(QWidget):
     def add_segmentation_layer(self, image_info: ImageInfo):
         if image_info.segmentation_info.segmentation is None:
             return
-        dtype = image_info.segmentation_info.segmentation.dtype
-        # TODO remove uint8 fix in future
-        if dtype == np.uint8:
-            dtype = np.uint16
         if self.image_state.only_borders:
             data = calculate_borders(
                 image_info.segmentation_info.segmentation,
@@ -262,11 +258,15 @@ class ImageView(QWidget):
                 self.viewer.dims.ndisplay == 2,
             )
             image_info.segmentation = self.viewer.add_image(
-                data.astype(dtype), scale=image_info.image.normalized_scaling()
+                data,
+                scale=image_info.image.normalized_scaling(),
+                contrast_limits=[0, max(image_info.segmentation_info.bound_info.keys())],
             )
         else:
             image_info.segmentation = self.viewer.add_image(
-                image_info.segmentation_info.segmentation.astype(dtype), scale=image_info.image.normalized_scaling()
+                image_info.segmentation_info.segmentation,
+                scale=image_info.image.normalized_scaling(),
+                contrast_limits=[0, max(image_info.segmentation_info.bound_info.keys())],
             )
         image_info.segmentation._interpolation[3] = Interpolation3D.NEAREST
 
