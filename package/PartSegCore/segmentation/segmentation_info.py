@@ -2,6 +2,8 @@ from typing import NamedTuple, Dict, Optional, List
 
 import numpy as np
 
+from PartSegImage.image import minimal_dtype
+
 
 class BoundInfo(NamedTuple):
     """
@@ -30,9 +32,17 @@ class SegmentationInfo:
     """
 
     def __init__(self, segmentation: Optional[np.ndarray]):
+        if segmentation is None:
+            self.segmentation = None
+            self.bound_info = {}
+            self.sizes = []
+            return
+        max_val = np.max(segmentation)
+        dtype = minimal_dtype(max_val)
+        segmentation = segmentation.astype(dtype)
         self.segmentation = segmentation
-        self.bound_info = self.calc_bounds(segmentation) if segmentation is not None else {}
-        self.sizes = np.bincount(segmentation.flat) if segmentation is not None else []
+        self.bound_info = self.calc_bounds(segmentation)
+        self.sizes = np.bincount(segmentation.flat)
 
     def __str__(self):
         return f"SegmentationInfo; components: {len(self.bound_info)}, sizes: {self.sizes}"
