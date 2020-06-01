@@ -20,7 +20,7 @@ matrix:
       env: TOXENV=py36-PyQt5,py36-PySide2
       dist: xenial          # required for Python >= 3.7
       before_install:
-        - sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0
+        - sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
         - pip install -U setuptools pip virtualenv
       services:
         - xvfb
@@ -28,7 +28,7 @@ matrix:
       python: 3.6
       dist: bionic
       before_install:
-        - sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0
+        - sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
         - pip install -r .travis/minimal-req.txt
       services:
         - xvfb
@@ -40,7 +40,7 @@ matrix:
       services:
         - xvfb
       before_install:
-        - sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0
+        - sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
         - pip install -U setuptools pip virtualenv
     - name: "Python 3.8 on Xenial Linux"
       python: 3.8
@@ -49,7 +49,7 @@ matrix:
       services:
         - xvfb
       before_install:
-        - sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 gfortran libblas-dev liblapack-dev libhdf5-dev
+        - sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 libxkbcommon-x11-0 gfortran libblas-dev liblapack-dev libhdf5-dev
         - pip install -U setuptools pip virtualenv
 
 

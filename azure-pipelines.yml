@@ -61,7 +61,7 @@ stages:
       pool: {vmImage: $(imageName)}
       steps:
         - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7'}}
-        - script: sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0
+        - script: sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
           condition: "startsWith(variables['imageName'], 'ubuntu')"
           displayName: "install libs"
         - task: DownloadPipelineArtifact@2
@@ -161,7 +161,7 @@ stages:
               python -m pip install -r requirements/requirements_pyinstaller.txt
               python -m pip install -e .
               python  build_utils/create_and_pack_executable.py
-          - script: sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0
+          - script: sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
             condition: "startsWith(variables['imageName'], 'ubuntu')"
             displayName: "install libs"
 
