@@ -14,7 +14,7 @@ defusedxml==0.6.0         # via -r requirements_pyinstaller.in
 et-xmlfile==1.0.1         # via openpyxl
 h5py==2.10.0              # via -r requirements_pyinstaller.in
 idna==2.9                 # via requests
-imagecodecs==2020.2.18    # via -r requirements_pyinstaller.in
+imagecodecs==2020.5.30    # via -r requirements_pyinstaller.in
 jdcal==1.4.1              # via openpyxl
 mpmath==1.1.0             # via sympy
 numpy==1.18.4             # via -r requirements_pyinstaller.in, czifile, h5py, imagecodecs, oiffile, pandas, scipy, tifffile
