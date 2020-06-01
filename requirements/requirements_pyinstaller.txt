@@ -39,7 +39,7 @@ sympy==1.6                # via -r requirements_pyinstaller.in
 tifffile==2020.5.25       # via -r requirements_pyinstaller.in, czifile, oiffile
 urllib3==1.25.9           # via requests, sentry-sdk
 xlrd==1.2.0               # via -r requirements_pyinstaller.in
-xlsxwriter==1.2.8         # via -r requirements_pyinstaller.in
+xlsxwriter==1.2.9         # via -r requirements_pyinstaller.in
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
