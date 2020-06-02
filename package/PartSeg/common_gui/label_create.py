@@ -5,7 +5,7 @@ from copy import deepcopy
 
 import numpy as np
 from qtpy.QtCore import Qt, Signal, Slot
-from qtpy.QtGui import QPainter, QMouseEvent, QPalette, QColor
+from qtpy.QtGui import QPainter, QMouseEvent, QColor, QPaintEvent
 from qtpy.QtWidgets import (
     QWidget,
     QColorDialog,
@@ -162,11 +162,11 @@ class ColorShow(QLabel):
 
     def __init__(self, color, parent=None):
         super().__init__(parent)
-        self.color = color
-        palette = QPalette()
-        palette.setColor(QPalette.Background, QColor(*color))
-        self.setAutoFillBackground(True)
-        self.setPalette(palette)
+        self.color = QColor(*color)
+
+    def paintEvent(self, event: QPaintEvent):
+        painter = QPainter(self)
+        painter.fillRect(event.rect(), self.color)
 
     def enterEvent(self, QEvent):  # pylint: disable=R0201
         QApplication.setOverrideCursor(Qt.DragMoveCursor)
