@@ -21,7 +21,7 @@ numpy==1.18.4             # via -r requirements_pyinstaller.in, czifile, h5py, i
 oiffile==2020.1.18        # via -r requirements_pyinstaller.in
 openpyxl==3.0.3           # via -r requirements_pyinstaller.in
 packaging==20.4           # via -r requirements_pyinstaller.in
-pandas==1.0.3             # via -r requirements_pyinstaller.in
+pandas==1.0.4             # via -r requirements_pyinstaller.in
 partsegdata==0.9.4        # via -r requirements_pyinstaller.in
 pyinstaller==3.6          # via -r requirements_pyinstaller.in
 pyparsing==2.4.7          # via packaging
