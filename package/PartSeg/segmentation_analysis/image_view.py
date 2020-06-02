@@ -77,57 +77,6 @@ class CompareImageView(ResultImageView):
         settings.compare_segmentation_change.connect(self.set_segmentation)
 
 
-"""
-    def info_text_pos(self, *pos):
-        if self.tmp_image is None:
-            return
-        try:
-            brightness = self.tmp_image[pos if len(pos) == self.tmp_image.ndim - 1 else pos[1:]]
-        except IndexError:
-            return
-        pos2 = list(pos)
-        pos2[0] += 1
-        if isinstance(brightness, collections.Iterable):
-            res_brightness = []
-            for i, b in enumerate(brightness):
-                if self.channel_control.active_channel(i):
-                    res_brightness.append(b)
-            brightness = ", ".join(map(str, res_brightness))
-        if self.labels_layer is not None:
-            comp = self.labels_layer[pos]
-            self.component = comp
-            if comp == 0:
-                comp = "none"
-                self.component = None
-            else:
-                comp = str(comp)
-            self.text_info_change.emit(
-                "Position: {}, Brightness: {}, component {}".format(tuple(pos2), brightness, comp)
-            )
-        else:
-            self.text_info_change.emit("Position: {}, Brightness: {}".format(tuple(pos2), brightness))
-
-"""
-
-# class ResultImageView(ImageViewWithMask):
-#     def __init__(self, settings, channel_property: ChannelProperty, name: str):
-#         super().__init__(settings, channel_property, name)
-#         self.only_border = QCheckBox("")
-#         self.image_state.only_borders = False
-#         self.only_border.setChecked(self.image_state.only_borders)
-#         self.only_border.stateChanged.connect(self.image_state.set_borders)
-#         self.opacity = QDoubleSpinBox()
-#         self.opacity.setRange(0, 1)
-#         self.opacity.setValue(self.image_state.opacity)
-#         self.opacity.setSingleStep(0.1)
-#         self.opacity.valueChanged.connect(self.image_state.set_opacity)
-#
-#         self.btn_layout.addWidget(QLabel("Borders:"))
-#         self.btn_layout.addWidget(self.only_border)
-#         self.btn_layout.addWidget(QLabel("Opacity:"))
-#         self.btn_layout.addWidget(self.opacity)
-
-
 class SynchronizeView(QObject):
     def __init__(self, image_view1: ImageView, image_view2: ImageView, parent=None):
         super().__init__(parent)

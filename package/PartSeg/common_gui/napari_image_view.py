@@ -1,26 +1,27 @@
-from dataclasses import dataclass
 import itertools
+from enum import Enum
 from typing import Optional, List, Dict, Tuple, Union
 
 import numpy as np
-from napari.qt import QtViewer, QtNDisplayButton
+from dataclasses import dataclass
 from napari._qt.qt_viewer_buttons import QtViewerPushButton
 from napari.components import ViewerModel as Viewer
 from napari.layers import Layer
 from napari.layers.image import Image as NapariImage
 from napari.layers.image._image_constants import Interpolation3D
 from napari.layers.labels import Labels
+from napari.qt import QtViewer, QtNDisplayButton
+from qtpy.QtCore import QObject
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QLabel
 from vispy.color import Colormap, ColorArray, Color
 from vispy.scene import BaseCamera
 
-from PartSeg.common_backend.base_settings import BaseSettings
-from PartSeg.common_gui.channel_control import ChannelProperty, ColorComboBoxGroup
-from PartSeg.common_gui.stack_image_view import ImageShowState, LabelEnum
 from PartSegCore.color_image import create_color_map, ColorMap, calculate_borders
 from PartSegCore.segmentation.segmentation_info import SegmentationInfo
 from PartSegImage import Image
+from .channel_control import ChannelProperty, ColorComboBoxGroup
+from ..common_backend.base_settings import BaseSettings, ViewSettings
 
 
 @dataclass
@@ -41,6 +42,78 @@ class ImageInfo:
     def translated_coords(self, coords: Union[List[int], np.ndarray]) -> np.ndarray:
         fst_layer = self.layers[0]
         return np.subtract(coords, fst_layer.translate_grid).astype(np.int)
+
+
+class LabelEnum(Enum):
+    Not_show = 0
+    Show_results = 1
+    Show_selected = 2
+
+    def __str__(self):
+        if self.value == 0:
+            return "Don't show"
+        return self.name.replace("_", " ")
+
+
+class ImageShowState(QObject):
+    """Object for storing state used when presenting it in :class:`.ImageView`"""
+
+    parameter_changed = Signal()  # signal informing that some of image presenting parameters
+    coloring_changed = Signal()
+    borders_changed = Signal()
+    # changed and image need to be refreshed
+
+    def __init__(self, settings: ViewSettings, name: str):
+        if len(name) == 0:
+            raise ValueError("Name string should be not empty")
+        super().__init__()
+        self.name = name
+        self.settings = settings
+        self.zoom = False
+        self.move = False
+        self.opacity = settings.get_from_profile(f"{name}.image_state.opacity", 1.0)
+        self.show_label = settings.get_from_profile(f"{name}.image_state.show_label", LabelEnum.Show_results)
+        self.only_borders = settings.get_from_profile(f"{name}.image_state.only_border", True)
+        self.borders_thick = settings.get_from_profile(f"{name}.image_state.border_thick", 1)
+
+    def set_zoom(self, val):
+        self.zoom = val
+
+    def set_borders(self, val: bool):
+        """decide if draw only component 2D borders, or whole area"""
+        if self.only_borders != val:
+            self.settings.set_in_profile(f"{self.name}.image_state.only_border", val)
+            self.only_borders = val
+            self.parameter_changed.emit()
+            self.borders_changed.emit()
+
+    def set_borders_thick(self, val: int):
+        """If draw only 2D borders of component then set thickness of line used for it"""
+        if val != self.borders_thick:
+            self.settings.set_in_profile(f"{self.name}.image_state.border_thick", val)
+            self.borders_thick = val
+            self.parameter_changed.emit()
+            self.borders_changed.emit()
+
+    def set_opacity(self, val: float):
+        """Set opacity of component labels"""
+        if self.opacity != val:
+            self.settings.set_in_profile(f"{self.name}.image_state.opacity", val)
+            self.opacity = val
+            self.parameter_changed.emit()
+            self.coloring_changed.emit()
+
+    def components_change(self):
+        if self.show_label == LabelEnum.Show_selected:
+            self.parameter_changed.emit()
+            self.coloring_changed.emit()
+
+    def set_show_label(self, val: LabelEnum):
+        if self.show_label != val:
+            self.settings.set_in_profile(f"{self.name}.image_state.show_label", val)
+            self.show_label = val
+            self.parameter_changed.emit()
+            self.coloring_changed.emit()
 
 
 class ImageView(QWidget):

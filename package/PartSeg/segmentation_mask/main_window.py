@@ -56,7 +56,8 @@ from ..common_gui.main_window import BaseMainWindow, BaseMainMenu
 from ..common_gui.mask_widget import MaskDialogBase
 from ..common_gui.multiple_file_widget import MultipleFileWidget
 from ..common_gui.select_multiple_files import AddFiles
-from ..common_gui.stack_image_view import ColorBar, LabelEnum
+from ..common_gui.stack_image_view import ColorBar
+from ..common_gui.napari_image_view import LabelEnum
 from ..common_gui.universal_gui_part import right_label
 from ..common_gui.waiting_dialog import ExecuteFunctionDialog
 from ..segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog

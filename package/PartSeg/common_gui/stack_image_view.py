@@ -2,14 +2,13 @@ from __future__ import division, print_function
 
 import collections
 import os
-from enum import Enum
 from math import log
 from typing import Type, List, Union, Callable, Optional
 from PartSegData import icons_dir
 
 import numpy as np
 from qtpy import QtGui, QtCore
-from qtpy.QtCore import QRect, QSize, QObject, Signal, QPoint, Qt, QEvent, Slot
+from qtpy.QtCore import QRect, QSize, Signal, QPoint, Qt, QEvent, Slot
 from qtpy.QtGui import QWheelEvent, QPainter, QPen, QColor, QPalette, QPixmap, QImage, QIcon, QResizeEvent, QMouseEvent
 from qtpy.QtWidgets import (
     QWidget,
@@ -32,88 +31,17 @@ from PartSegCore.color_image import color_image_fun, add_labels
 from PartSegCore.color_image.color_image_base import color_maps
 from PartSegCore.colors import default_colors
 from PartSegCore.segmentation.segmentation_info import SegmentationInfo
+from .napari_image_view import LabelEnum, ImageShowState
 from ..common_backend.base_settings import BaseSettings, ViewSettings
 from PartSegImage import Image
 from .channel_control import ColorComboBoxGroup, ChannelProperty
+from .napari_image_view import ImageView
 
 canvas_icon_size = QSize(20, 20)
 step = 1.01
 max_step = log(1.2, step)
 
-
-class LabelEnum(Enum):
-    Not_show = 0
-    Show_results = 1
-    Show_selected = 2
-
-    def __str__(self):
-        if self.value == 0:
-            return "Don't show"
-        return self.name.replace("_", " ")
-
-
 enum_register.register_class(LabelEnum)
-
-
-class ImageShowState(QObject):
-    """Object for storing state used when presenting it in :class:`.ImageView`"""
-
-    parameter_changed = Signal()  # signal informing that some of image presenting parameters
-    coloring_changed = Signal()
-    borders_changed = Signal()
-    # changed and image need to be refreshed
-
-    def __init__(self, settings: ViewSettings, name: str):
-        if len(name) == 0:
-            raise ValueError("Name string should be not empty")
-        super().__init__()
-        self.name = name
-        self.settings = settings
-        self.zoom = False
-        self.move = False
-        self.opacity = settings.get_from_profile(f"{name}.image_state.opacity", 1.0)
-        self.show_label = settings.get_from_profile(f"{name}.image_state.show_label", LabelEnum.Show_results)
-        self.only_borders = settings.get_from_profile(f"{name}.image_state.only_border", True)
-        self.borders_thick = settings.get_from_profile(f"{name}.image_state.border_thick", 1)
-
-    def set_zoom(self, val):
-        self.zoom = val
-
-    def set_borders(self, val: bool):
-        """decide if draw only component 2D borders, or whole area"""
-        if self.only_borders != val:
-            self.settings.set_in_profile(f"{self.name}.image_state.only_border", val)
-            self.only_borders = val
-            self.parameter_changed.emit()
-            self.borders_changed.emit()
-
-    def set_borders_thick(self, val: int):
-        """If draw only 2D borders of component then set thickness of line used for it"""
-        if val != self.borders_thick:
-            self.settings.set_in_profile(f"{self.name}.image_state.border_thick", val)
-            self.borders_thick = val
-            self.parameter_changed.emit()
-            self.borders_changed.emit()
-
-    def set_opacity(self, val: float):
-        """Set opacity of component labels"""
-        if self.opacity != val:
-            self.settings.set_in_profile(f"{self.name}.image_state.opacity", val)
-            self.opacity = val
-            self.parameter_changed.emit()
-            self.coloring_changed.emit()
-
-    def components_change(self):
-        if self.show_label == LabelEnum.Show_selected:
-            self.parameter_changed.emit()
-            self.coloring_changed.emit()
-
-    def set_show_label(self, val: LabelEnum):
-        if self.show_label != val:
-            self.settings.set_in_profile(f"{self.name}.image_state.show_label", val)
-            self.show_label = val
-            self.parameter_changed.emit()
-            self.coloring_changed.emit()
 
 
 class ImageCanvas(QLabel):
@@ -282,7 +210,7 @@ class ChanelColor(QWidget):
             self.blockSignals(False)
 
 
-class ImageView(QWidget):
+class OldImageView(QWidget):
     position_changed = Signal([int, int, int], [int, int])
     component_clicked = Signal(int)
     text_info_change = Signal(str)
@@ -888,7 +816,7 @@ class ColorBar(QLabel):
         # print(self.image.shape)
 
 
-class ImageViewWithMask(ImageView):
+class ImageViewWithMask(OldImageView):
     def __init__(self, settings: BaseSettings, channel_property: ChannelProperty, name: str):
         super().__init__(settings, channel_property, name)
         self.mask_show = QCheckBox()

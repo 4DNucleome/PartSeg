@@ -15,7 +15,7 @@ from PartSeg.common_gui.colormap_creator import (
     ColormapList,
     PColormapList,
 )
-from PartSeg.common_gui.stack_image_view import ImageView
+from PartSeg.common_gui.stack_image_view import OldImageView
 from PartSeg.common_backend.base_settings import ViewSettings, ColormapDict
 from PartSegCore.color_image import ColorPosition, Color
 from PartSegCore.color_image.base_colors import starting_colors
@@ -269,7 +269,7 @@ class TestColormapList:
     def test_image_view_integration(self, qtbot):
         settings = ViewSettings()
         channel_property = ChannelProperty(settings, "test")
-        image_view = ImageView(settings, channel_property, "test")
+        image_view = OldImageView(settings, channel_property, "test")
         qtbot.addWidget(channel_property)
         qtbot.addWidget(image_view)
         color_list = PColormapList(settings, ["test"])
