@@ -162,11 +162,12 @@ class ColorShow(QLabel):
 
     def __init__(self, color, parent=None):
         super().__init__(parent)
-        self.color = QColor(*color)
+        self.color = color
+        self._qcolor = QColor(*color)
 
     def paintEvent(self, event: QPaintEvent):
         painter = QPainter(self)
-        painter.fillRect(event.rect(), self.color)
+        painter.fillRect(event.rect(), self._qcolor)
 
     def enterEvent(self, QEvent):  # pylint: disable=R0201
         QApplication.setOverrideCursor(Qt.DragMoveCursor)
