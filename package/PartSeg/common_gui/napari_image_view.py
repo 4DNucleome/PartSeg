@@ -100,12 +100,12 @@ class ImageView(QWidget):
         settings.image_changed.connect(self.set_image)
         settings.image_spacing_changed.connect(self.update_spacing_info)
         # settings.labels_changed.connect(self.paint_layer)
-        self.old_camera: BaseCamera = self.viewer_widget.view.camera
+        self.old_scene: BaseCamera = self.viewer_widget.view.scene
 
         self.image_state.coloring_changed.connect(self.update_segmentation_coloring)
         self.image_state.borders_changed.connect(self.update_segmentation_representation)
         self.mask_chk.stateChanged.connect(self.change_mask_visibility)
-        self.viewer_widget.view.camera.events.transform_change.connect(self._view_changed, position="last")
+        self.viewer_widget.view.scene.transform.changed.connect(self._view_changed, position="last")
         self.viewer.dims.events.axis.connect(self._view_changed, position="last")
         self.viewer.dims.events.ndisplay.connect(self._view_changed, position="last")
         self.viewer.dims.events.camera.connect(self._view_changed, position="last")
@@ -113,13 +113,11 @@ class ImageView(QWidget):
         self.viewer.events.reset_view.connect(self._view_changed, position="last")
 
     def camera_change(self, _args):
-        self.old_camera.events.transform_change.disconnect(self._view_changed)
-        self.old_camera: BaseCamera = self.viewer_widget.view.camera
-        self.old_camera.events.transform_change.connect(self._view_changed)
+        self.old_scene.transform.changed.disconnect(self._view_changed)
+        self.old_scene: BaseCamera = self.viewer_widget.view.camera
+        self.old_scene.transform.changed.connect(self._view_changed)
 
     def _view_changed(self, _args):
-        # print("BBBB", args, type(self.viewer_widget.view.camera), type(self.viewer_widget.view.camera.viewbox))
-        # print(self.get_state())
         self.view_changed.emit()
 
     def get_state(self):
