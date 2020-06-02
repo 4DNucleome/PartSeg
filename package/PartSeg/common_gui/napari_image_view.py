@@ -3,8 +3,8 @@ import itertools
 from typing import Optional, List, Dict, Tuple, Union
 
 import numpy as np
-from napari._qt.qt_viewer import QtViewer
-from napari._qt.qt_viewer_buttons import QtNDisplayButton, QtViewerPushButton
+from napari.qt import QtViewer, QtNDisplayButton
+from napari._qt.qt_viewer_buttons import QtViewerPushButton
 from napari.components import ViewerModel as Viewer
 from napari.layers import Layer
 from napari.layers.image import Image as NapariImage
@@ -13,6 +13,7 @@ from napari.layers.labels import Labels
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QLabel
 from vispy.color import Colormap, ColorArray, Color
+from vispy.scene import BaseCamera
 
 from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui.channel_control import ChannelProperty, ColorComboBoxGroup
@@ -99,10 +100,44 @@ class ImageView(QWidget):
         settings.image_changed.connect(self.set_image)
         settings.image_spacing_changed.connect(self.update_spacing_info)
         # settings.labels_changed.connect(self.paint_layer)
+        self.old_camera: BaseCamera = self.viewer_widget.view.camera
 
         self.image_state.coloring_changed.connect(self.update_segmentation_coloring)
         self.image_state.borders_changed.connect(self.update_segmentation_representation)
         self.mask_chk.stateChanged.connect(self.change_mask_visibility)
+        self.viewer_widget.view.camera.events.transform_change.connect(self._view_changed, position="last")
+        self.viewer.dims.events.axis.connect(self._view_changed, position="last")
+        self.viewer.dims.events.ndisplay.connect(self._view_changed, position="last")
+        self.viewer.dims.events.camera.connect(self._view_changed, position="last")
+        self.viewer.dims.events.camera.connect(self.camera_change, position="last")
+        self.viewer.events.reset_view.connect(self._view_changed, position="last")
+
+    def camera_change(self, _args):
+        self.old_camera.events.transform_change.disconnect(self._view_changed)
+        self.old_camera: BaseCamera = self.viewer_widget.view.camera
+        self.old_camera.events.transform_change.connect(self._view_changed)
+
+    def _view_changed(self, _args):
+        # print("BBBB", args, type(self.viewer_widget.view.camera), type(self.viewer_widget.view.camera.viewbox))
+        # print(self.get_state())
+        self.view_changed.emit()
+
+    def get_state(self):
+        return {
+            "ndisplay": self.viewer.dims.ndisplay,
+            "point": self.viewer.dims.point,
+            "camera": self.viewer_widget.view.camera.get_state(),
+        }
+
+    def set_state(self, dkt):
+        if "ndisplay" in dkt and self.viewer.dims.ndisplay != dkt["ndisplay"]:
+            self.viewer.dims.ndisplay = dkt["ndisplay"]
+            return
+        if "point" in dkt:
+            for i, val in enumerate(dkt["point"]):
+                self.viewer.dims.set_point(i, val)
+        if "camera" in dkt:
+            self.viewer_widget.view.camera.set_state(dkt["camera"])
 
     def change_mask_visibility(self):
         for image_info in self.image_info.values():
