@@ -440,7 +440,7 @@ class BaseSettings(ViewSettings):
     def dump_part(self, file_path, path_in_dict, names=None):
         data = self.get(path_in_dict)
         if names is not None:
-            data = dict([(name, data[name]) for name in names])
+            data = {name: data[name] for name in names}
         with open(file_path, "w") as ff:
             json.dump(data, ff, cls=self.json_encoder_class, indent=2)
 

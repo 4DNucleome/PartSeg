@@ -1611,7 +1611,7 @@ class TestStatisticProfile:
             voxel_size=image.voxel_size,
             result_units=Units.nm,
         )
-        names = set([x.name for x in profile.chosen_fields])
+        names = {x.name for x in profile.chosen_fields}
         assert names == set(result.keys())
 
 

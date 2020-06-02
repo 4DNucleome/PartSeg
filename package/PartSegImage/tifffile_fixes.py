@@ -6,7 +6,7 @@ import packaging.version
 import tifffile.tifffile
 from tifffile import TiffPage, TiffFile
 
-if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":
+if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":  # noqa C901
 
     class MyTiffPage(TiffPage):
         """Modification of :py:class:`TiffPage` from `tifffile` package to provide progress information"""

@@ -107,7 +107,7 @@ class AlgorithmDescribeBase(ABC):
 
     @classmethod
     def get_fields_dict(cls) -> typing.Dict[str, AlgorithmProperty]:
-        return dict([(v.name, v) for v in cls.get_fields() if isinstance(v, AlgorithmProperty)])
+        return {v.name: v for v in cls.get_fields() if isinstance(v, AlgorithmProperty)}
 
     @classmethod
     def get_default_values(cls):

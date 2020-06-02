@@ -5,7 +5,7 @@ from libcpp.vector cimport vector
 from libcpp cimport bool
 from numpy cimport uint8_t, uint16_t, uint32_t, float32_t, float64_t, int8_t, int16_t
 import numpy
-cimport numpy 
+cimport numpy
 import cython
 
 
@@ -65,7 +65,7 @@ cdef extern from 'mso.h' namespace 'MSO':
                                                   T lower_mid_bound, T upper_mid_bound)
         vector[R] calculate_two_object_mu_masked(T *array, size_t length, T lower_bound, T upper_bound,
                                                      T lower_mid_bound, T upper_mid_bound, uint8_t *mask)
-    
+
 cdef vector[mu_type] calculate_mu_vector(numpy.ndarray[image_types, ndim=3] image, image_types lower_bound,
                                          image_types upper_bound, MuType type_, mask=None,
                                          image_types lower_mid_bound=0, image_types upper_mid_bound=0):

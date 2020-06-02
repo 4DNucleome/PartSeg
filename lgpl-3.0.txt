@@ -1,7 +1,7 @@
 This license applies to icons stored in icons folder
 They comes from Oxygen/KDE project (http://www.kde.org/)
 I know that I should set link (or include it to bundle) to all icons in svg
-but I con not found from here I can download this icons. 
+but I con not found from here I can download this icons.
 
 GNU LESSER GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007

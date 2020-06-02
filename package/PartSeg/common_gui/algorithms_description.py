@@ -287,10 +287,10 @@ class FormWidget(QWidget):
         self.setMinimumHeight(self.layout().minimumSize().height())
 
     def get_values(self):
-        return dict(((name, el.get_value()) for name, el in self.widgets_dict.items()))
+        return {name: el.get_value() for name, el in self.widgets_dict.items()}
 
     def recursive_get_values(self):
-        return dict(((name, el.recursive_get_values()) for name, el in self.widgets_dict.items()))
+        return {name: el.recursive_get_values() for name, el in self.widgets_dict.items()}
 
     def set_values(self, values: dict):
         for name, value in values.items():
@@ -362,7 +362,7 @@ class SubAlgorithmWidget(QWidget):
             self.widgets_dict[val["name"]].set_values(val["values"])
 
     def recursive_get_values(self):
-        return dict(((name, el.recursive_get_values()) for name, el in self.widgets_dict.items()))
+        return {name: el.recursive_get_values() for name, el in self.widgets_dict.items()}
 
     def get_values(self):
         name = self.choose.currentText()

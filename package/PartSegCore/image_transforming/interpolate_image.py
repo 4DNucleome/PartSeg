@@ -51,4 +51,4 @@ class InterpolateImage(TransformBase):
     @classmethod
     def calculate_initial(cls, image: Image):
         min_val = min(image.spacing)
-        return dict([(f"scale_{l}", x / min_val) for x, l in zip(image.spacing, image.get_dimension_letters().lower())])
+        return {f"scale_{l}": x / min_val for x, l in zip(image.spacing, image.get_dimension_letters().lower())}

@@ -1,8 +1,8 @@
-# Chromosome 1 territory analysis 
+# Chromosome 1 territory analysis
 
-In this tutorial we will show how to use PartSeg to segment territories of chromosome 1 inside human cell nucleus and then do simple analysis.  
+In this tutorial we will show how to use PartSeg to segment territories of chromosome 1 inside human cell nucleus and then do simple analysis.
 
-## Use case 
+## Use case
 
 We are dealing with dataset of photos from confocal microscopy obtained with TO-PRO3 probe which is bind non-specyffic to chromatin fiber. This means that it can be assumed that the brighter the voxel of photo is the more chromatin it represends. This dependency is assumed to be linear.
 We will use this depndency to tune parameters of segmentation algorithm.
@@ -22,18 +22,18 @@ channel 1 - chromosome 1 telomere 3', channel 2 - chromosome 1 telomere 5', chan
 
 1.  Open PartSeg
 
-2.  Click "Analysis GUI" button  
+2.  Click "Analysis GUI" button
     ![launcher GUI](./images/launcher.png)
 
-3.  Click "Advanced" on top of the window (third from the right)  
+3.  Click "Advanced" on top of the window (third from the right)
     ![PartSeg GUI](images/main_window.png)
 
-4.  Choose "Statistic settings" tab (number 1)  
+4.  Choose "Statistic settings" tab (number 1)
     ![Advanced window](images/advanced.png)
 
 5.  Prepare Statistic profile which will giv information about percentage occupancy of segmented region.
     1.  Choose "Mass" from list in lower left part (number 2)
-    2.  Click button with symbol ∺ (number 3) 
+    2.  Click button with symbol ∺ (number 3)
     3.  Choose "Mask mass" (number 4)
     4.  Again push button with symbol ∺ (number 3)
     5.  Set name of statistic profile (number 5)
@@ -44,7 +44,7 @@ channel 1 - chromosome 1 telomere 3', channel 2 - chromosome 1 telomere 5', chan
 1.  Load data:
     1.  Click **Open** button or press **ctrl+O** (cmd+O on mac)
 
-    2.  Choose `image with mask` file filter  
+    2.  Choose `image with mask` file filter
         ![open dialog](images/open_file.png)
 
     3.  Choose data to load
@@ -57,27 +57,27 @@ channel 1 - chromosome 1 telomere 3', channel 2 - chromosome 1 telomere 5', chan
 
     ![PartSeg GUI](images/main_window_analysis.png)
 
-    -   If you prefer to see booth panels and have place on screen you can preview statistic in 
+    -   If you prefer to see booth panels and have place on screen you can preview statistic in
         "Advanced" window in tab "Statistics". These views are independent.
 
     -   In this view you can see difference between checked and unchecked mask checkbox (number 2).
         The mask coloring property can be set in "Advanced" window in tab "Settings"
 
-3.  In the right panel (number 1) you should chose algorithm (I suggest Lower threshold on beginning). 
+3.  In the right panel (number 1) you should chose algorithm (I suggest Lower threshold on beginning).
     Then set parameters. Don't forget to choose the right channel. And click "Execute" button (number 3)
 
-    ![PartSeg GUI](images/main_window_analysis2.png)      
+    ![PartSeg GUI](images/main_window_analysis2.png)
 
 4.  To verify if segmentation is good, in the left panel choose channel with chromatin - in this case it is 3 (number 4)
-    and choose statistic set prepared in Preparation part (number 5). Then press "Recalculate and replace statistics" 
+    and choose statistic set prepared in Preparation part (number 5). Then press "Recalculate and replace statistics"
     button (number 6)
 
 5.  Based on result decide how to modify parameters of the algorithm.
 
 6.  If the result is only one component then you can try it split using "Lower threshold path euclidean".
 
-## Apendix 
-### A little more about statistics 
+## Apendix
+### A little more about statistics
 
 1.  If you are interested with some statistic which are on the list you can add it to set using button with symbol "→"
 2.  If you wold like to remove statistic from set use button with symbol "←"
@@ -86,7 +86,7 @@ channel 1 - chromosome 1 telomere 3', channel 2 - chromosome 1 telomere 5', chan
 5.  You can set custom names for statistics.
 
 ### Segment nucleus from stack
-The original deconvoluted stack is available under this [link]([link](http://nucleus3d.cent.uw.edu.pl/PartSeg/Downloads/A_deconv_stack.zip)) 
+The original deconvoluted stack is available under this [link]([link](http://nucleus3d.cent.uw.edu.pl/PartSeg/Downloads/A_deconv_stack.zip))
 
 You can try to improve segmentation by hand. To do it with PartSeg tool on laucher screen choose button "Segmentation GUI". The workflow is similar.
 

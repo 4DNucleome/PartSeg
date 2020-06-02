@@ -48,7 +48,7 @@ class SaveDialog(QFileDialog):
     ):
         super().__init__(parent)
         self.setFileMode(file_mode)
-        self.save_register = dict((x.get_name_with_suffix(), x) for x in save_register.values())
+        self.save_register = {x.get_name_with_suffix(): x for x in save_register.values()}
         self.setOption(QFileDialog.DontUseNativeDialog, not system_widget)
         self.setAcceptMode(QFileDialog.AcceptSave)
         self.filterSelected.connect(self.change_filter)

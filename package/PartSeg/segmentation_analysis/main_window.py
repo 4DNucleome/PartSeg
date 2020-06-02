@@ -233,7 +233,7 @@ class Options(QWidget):
     @staticmethod
     def update_combo_box(combo_box: QComboBox, dkt: dict):
         current_names = set(dkt.keys())
-        prev_names = set([combo_box.itemText(i) for i in range(1, combo_box.count())])
+        prev_names = {combo_box.itemText(i) for i in range(1, combo_box.count())}
         new_names = current_names - prev_names
         delete_names = prev_names - current_names
         if len(delete_names) > 0:

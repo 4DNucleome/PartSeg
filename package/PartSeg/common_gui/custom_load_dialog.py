@@ -18,7 +18,7 @@ class CustomLoadDialog(QFileDialog):
         history: typing.Optional[typing.List[str]] = None,
     ):
         super().__init__(parent)
-        self.load_register = dict((x.get_name_with_suffix(), x) for x in load_register.values())
+        self.load_register = {x.get_name_with_suffix(): x for x in load_register.values()}
         self.setOption(QFileDialog.DontUseNativeDialog, True)
         self.setFileMode(QFileDialog.ExistingFile)
         self.setAcceptMode(QFileDialog.AcceptOpen)

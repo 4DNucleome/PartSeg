@@ -269,7 +269,7 @@ class CreatePlan(QWidget):
     def __init__(self, settings: PartSettings):
         super().__init__()
         self.settings = settings
-        self.save_translate_dict: typing.Dict[str, SaveBase] = dict((x.get_short_name(), x) for x in save_dict.values())
+        self.save_translate_dict: typing.Dict[str, SaveBase] = {x.get_short_name(): x for x in save_dict.values()}
         self.plan = PlanPreview(self)
         self.save_plan_btn = QPushButton("Save")
         self.clean_plan_btn = QPushButton("Remove all")
@@ -1099,7 +1099,7 @@ class CalculateInfo(QWidget):
             file_path = str(dial.selectedFiles()[0])
             self.settings.set("io.batch_plan_directory", os.path.dirname(file_path))
             self.settings.add_path_history(os.path.dirname(file_path))
-            data = dict([(x, self.settings.batch_plans[x]) for x in choose.get_export_list()])
+            data = {x: self.settings.batch_plans[x] for x in choose.get_export_list()}
             with open(file_path, "w") as ff:
                 json.dump(data, ff, cls=self.settings.json_encoder_class, indent=2)
 

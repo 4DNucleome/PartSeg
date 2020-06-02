@@ -242,7 +242,7 @@ class AdvancedSettings(QWidget):
             file_path = dial.selectedFiles()[0]
             self._settings.set("io.save_directory", os.path.dirname(file_path))
             self._settings.add_path_history(os.path.dirname(file_path))
-            data = dict([(x, self._settings.segmentation_profiles[x]) for x in exp.get_export_list()])
+            data = {x: self._settings.segmentation_profiles[x] for x in exp.get_export_list()}
             with open(file_path, "w") as ff:
                 json.dump(data, ff, cls=self._settings.json_encoder_class, indent=2)
 
@@ -284,7 +284,7 @@ class AdvancedSettings(QWidget):
         dial.setHistory(dial.history() + self._settings.get_path_history())
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
-            data = dict([(x, self._settings.segmentation_pipelines[x]) for x in exp.get_export_list()])
+            data = {x: self._settings.segmentation_pipelines[x] for x in exp.get_export_list()}
             with open(file_path, "w") as ff:
                 json.dump(data, ff, cls=self._settings.json_encoder_class, indent=2)
             self._settings.set("io.save_directory", os.path.dirname(file_path))
@@ -771,7 +771,7 @@ class MeasurementSettings(QWidget):
         if dial.exec_():
             file_path = str(dial.selectedFiles()[0])
             self.settings.set("io.export_directory", file_path)
-            data = dict([(x, self.settings.measurement_profiles[x]) for x in exp.get_export_list()])
+            data = {x: self.settings.measurement_profiles[x] for x in exp.get_export_list()}
             with open(file_path, "w") as ff:
                 json.dump(data, ff, cls=self.settings.json_encoder_class, indent=2)
             self.settings.set("io.save_directory", os.path.dirname(file_path))

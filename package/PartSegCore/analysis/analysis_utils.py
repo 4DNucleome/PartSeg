@@ -21,7 +21,10 @@ class SegmentationPipelineElement(BaseSerializableClass):
         return indent(str(self.segmentation), "    ") + "\n\n" + indent(str(self.mask_property), "    ")
 
     def __repr__(self):
-        return f"SegmentationPipelineElement(segmentation={repr(self.segmentation)},mask_property={repr(self.mask_property)})"
+        return (
+            "SegmentationPipelineElement(segmentation="
+            f"{repr(self.segmentation)},mask_property={repr(self.mask_property)})"
+        )
 
 
 class SegmentationPipeline(BaseSerializableClass):

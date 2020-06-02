@@ -291,7 +291,8 @@ class MainMenu(BaseMainMenu):
                     QMessageBox().warning(
                         self,
                         "Load Problem",
-                        "You set to save selected components when loading another segmentation but history is incomatybile",
+                        "You set to save selected components when loading "
+                        "another segmentation but history is incomatybile",
                     )
 
             else:

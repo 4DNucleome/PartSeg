@@ -59,7 +59,10 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
             )
         else:
             mask_info = f"mask={self.mask}"
-        return f"{self.__class__.__module__}.{self.__class__.__name__}(image={repr(self.image)}, channel={self.channel} {mask_info}, value={self.get_segmentation_profile().values})"
+        return (
+            f"{self.__class__.__module__}.{self.__class__.__name__}(image={repr(self.image)}, "
+            f"channel={self.channel} {mask_info}, value={self.get_segmentation_profile().values})"
+        )
 
     def clean(self):
         self.image = None

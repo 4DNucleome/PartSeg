@@ -144,7 +144,7 @@ class BaseMainWindow(QMainWindow):
         raise NotImplementedError()
 
     def _read_drop(self, paths, load_module):
-        ext_set = set([os.path.splitext(x)[1].lower() for x in paths])
+        ext_set = {os.path.splitext(x)[1].lower() for x in paths}
 
         def exception_hook(exception):
             if isinstance(exception, OSError):
