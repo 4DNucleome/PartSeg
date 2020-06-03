@@ -190,7 +190,7 @@ class ImageView(QWidget):
     def camera_change(self, _args):
         self.old_scene.transform.changed.disconnect(self._view_changed)
         self.old_scene: BaseCamera = self.viewer_widget.view.camera
-        self.old_scene.transform.changed.connect(self._view_changed)
+        self.old_scene.transform.changed.connect(self._view_changed, position="last")
 
     def _view_changed(self, _args):
         self.view_changed.emit()
