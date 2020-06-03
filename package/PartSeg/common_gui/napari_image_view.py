@@ -458,6 +458,7 @@ class ImageView(QWidget):
         visibility = self.channel_control.channel_visibility
         limits = self.channel_control.get_limits()
         limits = [image.get_ranges()[i] if x is None else x for i, x in enumerate(limits)]
+        gamma = self.channel_control.get_gamma()
         filters = self.channel_control.get_filter()
         image_layers = []
 
@@ -470,6 +471,7 @@ class ImageView(QWidget):
                     blending="additive",
                     scale=image.normalized_scaling(),
                     contrast_limits=limits[i],
+                    gamma=gamma[i],
                 )
             )
         if not self.image_info:
@@ -530,6 +532,7 @@ class ImageView(QWidget):
                     limits = self.channel_control.get_limits()[index]
                     limits = image_info.image.get_ranges()[index] if limits is None else limits
                     image_info.layers[index].contrast_limits = limits
+                    image_info.layers[index].gamma = self.channel_control.get_gamma()[index]
                     filter = self.channel_control.get_filter()[index]
                     if filter != image_info.filter_info[index]:
                         image_info.layers[index].data = self.calculate_filter(

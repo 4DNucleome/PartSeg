@@ -3,7 +3,7 @@ import typing
 from functools import partial
 
 from qtpy.QtCore import Signal, Qt, QRect, QRectF, QPointF, QSize, QModelIndex, QEvent, QPoint
-from qtpy.QtGui import QShowEvent, QPaintEvent, QPainter, QPen, QMouseEvent, QColor, QPolygonF
+from qtpy.QtGui import QShowEvent, QPaintEvent, QPainter, QPen, QMouseEvent, QColor, QPolygonF, QPainterPath
 from qtpy.QtWidgets import (
     QWidget,
     QCheckBox,
@@ -94,7 +94,8 @@ class ColorComboBox(QComboBox):
         colormap: str = "",
         base_height=50,
         lock=False,
-        blur=False,
+        blur=NoiseFilterType.No,
+        gamma=1,
     ):
         super().__init__()
         self.id = id_num
@@ -104,6 +105,8 @@ class ColorComboBox(QComboBox):
         self.lock.setVisible(lock)
         self.blur = BlurInfoWidget(base_height - 10)
         self.blur.setVisible(blur != NoiseFilterType.No)
+        self.gamma = GammaInfoWidget()
+        self.gamma.setVisible(gamma != 1)
         self.color_dict = color_dict
         self.colors = colors
         self.addItems(self.colors)
@@ -127,6 +130,7 @@ class ColorComboBox(QComboBox):
         layout.addWidget(self.check_box)
         layout.addWidget(self.lock)
         layout.addWidget(self.blur)
+        layout.addWidget(self.gamma)
         layout.addStretch(1)
 
         self.setLayout(layout)
@@ -235,6 +239,11 @@ class ColorComboBox(QComboBox):
         return self.lock.setVisible
 
     @property
+    def set_gamma(self) -> typing.Callable[[bool], None]:
+        """set lock property"""
+        return self.gamma.setVisible
+
+    @property
     def set_blur(self) -> typing.Callable[[bool], None]:
         """set blur property"""
         return self.blur.setVisible
@@ -290,6 +299,9 @@ class ChannelProperty(QWidget):
         self.filter_radius.setSingleStep(0.1)
         self.filter_radius.valueChanged.connect(self.gauss_radius_changed)
         self.use_filter.currentIndexChanged.connect(self.gauss_use_changed)
+        self.gamma_value = QDoubleSpinBox()
+        self.gamma_value.setSingleStep(0.1)
+        self.gamma_value.valueChanged.connect(self.gamma_value_changed)
 
         self.collapse_widget = CollapseCheckbox("Channel property")
         self.collapse_widget.add_hide_element(self.minimum_value)
@@ -301,15 +313,20 @@ class ChannelProperty(QWidget):
         layout = QGridLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.collapse_widget, 0, 0, 1, 4)
-        label1 = QLabel("Min bright")
+        label1 = QLabel("Min bright:")
         layout.addWidget(label1, 1, 0)
         layout.addWidget(self.minimum_value, 1, 1)
-        label2 = QLabel("Max bright")
+        label2 = QLabel("Max bright:")
         layout.addWidget(label2, 2, 0)
         layout.addWidget(self.maximum_value, 2, 1)
         layout.addWidget(self.fixed, 1, 2, 1, 2)
-        layout.addWidget(self.use_filter, 2, 2, 1, 1)
-        layout.addWidget(self.filter_radius, 2, 3, 1, 1)
+        label3 = QLabel("Filter:")
+        layout.addWidget(label3, 3, 0, 1, 1)
+        layout.addWidget(self.use_filter, 3, 1, 1, 1)
+        layout.addWidget(self.filter_radius, 3, 2, 1, 1)
+        label4 = QLabel("Gamma:")
+        layout.addWidget(label4, 4, 0, 1, 1)
+        layout.addWidget(self.gamma_value, 4, 1, 1, 1)
         self.setLayout(layout)
 
         self.collapse_widget.add_hide_element(label1)
@@ -351,7 +368,16 @@ class ChannelProperty(QWidget):
         self.fixed.setChecked(
             self._settings.get_from_profile(f"{self.current_name}.lock_{self.current_channel}", False)
         )
+        self.gamma_value.setValue(
+            self._settings.get_from_profile(f"{self.current_name}.gamma_value_{self.current_channel}", 1)
+        )
         self.blockSignals(block)
+
+    def gamma_value_changed(self):
+        self._settings.set_in_profile(
+            f"{self.current_name}.gamma_value_{self.current_channel}", self.gamma_value.value()
+        )
+        self.send_info()
 
     def gauss_radius_changed(self):
         self._settings.set_in_profile(
@@ -493,6 +519,7 @@ class ColorComboBoxGroup(QWidget):
                     base_height=self.height,
                     lock=self.settings.get_from_profile(f"{self.name}.lock_{i}", False),
                     blur=self.settings.get_from_profile(f"{self.name}.use_filter_{i}", NoiseFilterType.No),
+                    gamma=self.settings.get_from_profile(f"{self.name}.gamma_value_{i}", 1),
                 )
                 el.clicked.connect(self.set_active)
                 el.channel_visible_changed.connect(self.change_selected_color)
@@ -541,6 +568,12 @@ class ColorComboBoxGroup(QWidget):
                 resp[i] = self.settings.get_from_profile(f"{self.name}.range_{i}", (0, 65000))
         return resp
 
+    def get_gamma(self) -> typing.List[float]:
+        resp = []
+        for i in range(self.layout().count()):
+            resp.append(self.settings.get_from_profile(f"{self.name}.gamma_value_{i}", 1))
+        return resp
+
     def parameters_changed(self, channel):
         """for ChannelProperty to inform about change of parameters"""
         if self.layout().itemAt(channel) is None:
@@ -551,6 +584,7 @@ class ColorComboBoxGroup(QWidget):
             != NoiseFilterType.No
         )
         widget.set_lock(self.settings.get_from_profile(f"{self.name}.lock_{channel}", False))
+        widget.set_gamma(self.settings.get_from_profile(f"{self.name}.gamma_value_{channel}", 1) != 1)
         if self.active_channel(channel):
             self.coloring_update.emit()
         if self.active_box == channel:
@@ -607,8 +641,6 @@ class BlurInfoWidget(QWidget):
         self.setFixedHeight(size)
 
     def paintEvent(self, a0: QPaintEvent) -> None:
-        self.margin = 2
-
         super().paintEvent(a0)
         painter = QPainter(self)
         painter.save()
@@ -632,4 +664,35 @@ class BlurInfoWidget(QWidget):
                 math.sin(math.pi / (rays_num / 2) * i) * radius, math.cos(math.pi / (rays_num / 2) * i) * radius
             )
             painter.drawLine(mid_point + (point * 0.4), mid_point + point)
+        painter.restore()
+
+
+class GammaInfoWidget(QWidget):
+    def __init__(self, size=25, margin=2):
+        super().__init__()
+        self.margin = margin
+        self.setFixedWidth(size)
+        self.setFixedHeight(size)
+
+    def paintEvent(self, a0: QPaintEvent) -> None:
+
+        super().paintEvent(a0)
+        painter = QPainter(self)
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
+        rect = QRectF(self.margin, self.margin, self.width() - self.margin * 2, self.height() - 2 * self.margin)
+        painter.setBrush(Qt.white)
+        painter.setPen(Qt.white)
+        painter.drawRect(rect)
+        painter.restore()
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
+        pen = QPen()
+        pen.setWidth(3)
+        painter.setPen(pen)
+        path = QPainterPath()
+        height, width = rect.height() + self.margin, rect.width() + self.margin
+        path.moveTo(self.margin, height)
+        path.cubicTo(height * 0.5, width * 0.9, height * 0.9, width * 0.5, height, self.margin)
+        painter.drawPath(path)
         painter.restore()

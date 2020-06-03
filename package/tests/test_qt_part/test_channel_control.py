@@ -48,6 +48,23 @@ def test_color_combo_box(qtbot):
     assert np.all(array_from_image(box.image) == img.flatten())
 
 
+class TestColorComboBox:
+    def test_visibility(self, qtbot):
+        dkt = ColormapDict({})
+        box = ColorComboBox(0, starting_colors, dkt, lock=True)
+        box.show()
+        qtbot.add_widget(box)
+        assert box.lock.isVisible()
+        box = ColorComboBox(0, starting_colors, dkt, blur=NoiseFilterType.Gauss)
+        box.show()
+        qtbot.add_widget(box)
+        assert box.blur.isVisible()
+        box = ColorComboBox(0, starting_colors, dkt, gamma=2)
+        box.show()
+        qtbot.add_widget(box)
+        assert box.gamma.isVisible()
+
+
 class TestColorComboBoxGroup:
     def test_change_channels_num(self, qtbot):
         settings = ViewSettings()

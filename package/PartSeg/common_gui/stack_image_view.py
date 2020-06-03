@@ -747,6 +747,7 @@ class ColorBar(QLabel):
 
     def update_colormap(self, name, channel_id):
         fixed_range = self._settings.get_from_profile(f"{name}.lock_{channel_id}", False)
+        gamma = self._settings.get_from_profile(f"{name}.gamma_value_{channel_id}", 1)
         if fixed_range:
             self.range = self._settings.get_from_profile(f"{name}.range_{channel_id}")
         else:
@@ -763,7 +764,9 @@ class ColorBar(QLabel):
         if self.round_range[1] > self.range[1]:
             self.round_range = self.round_range[0], self.round_range[1] - round_factor
         # print(self.range, self.round_range)
-        img = color_image_fun(np.linspace(0, 256, 512).reshape((1, 512, 1))[:, ::-1], [cmap], [(0, 256)])
+        data = np.linspace(0, 1, 512)
+        data = (data ** gamma) * 255
+        img = color_image_fun(data.reshape((1, 512, 1))[:, ::-1], [cmap], [(0, 256)])
         self.image = NumpyQImage(np.swapaxes(img, 0, 1))
         self.repaint()
 
