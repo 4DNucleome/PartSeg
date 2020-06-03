@@ -521,7 +521,7 @@ class ColorComboBoxGroup(QWidget):
         self.change_channel.emit(self.name, pos)
         self.repaint()
 
-    def get_filter(self):
+    def get_filter(self) -> typing.List[typing.Tuple[NoiseFilterType, float]]:
         resp = []
         for i in range(self.layout().count()):
             resp.append(
@@ -532,7 +532,7 @@ class ColorComboBoxGroup(QWidget):
             )
         return resp
 
-    def get_limits(self):
+    def get_limits(self) -> typing.List[typing.Union[typing.Tuple[int, int], None]]:
         resp: typing.List[typing.Union[typing.Tuple[int, int], None]] = [(0, 0)] * self.layout().count()  #
         for i in range(self.layout().count()):
             if not self.settings.get_from_profile(f"{self.name}.lock_{i}", False):

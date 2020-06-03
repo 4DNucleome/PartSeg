@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Optional, List, Dict, Tuple, Union
 
 import numpy as np
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from napari._qt.qt_viewer_buttons import QtViewerPushButton
 from napari.components import ViewerModel as Viewer
 from napari.layers import Layer
@@ -18,6 +18,7 @@ from vispy.color import Colormap, ColorArray, Color
 from vispy.scene import BaseCamera
 
 from PartSegCore.color_image import create_color_map, ColorMap, calculate_borders
+from PartSegCore.image_operations import NoiseFilterType, median, gaussian
 from PartSegCore.segmentation.segmentation_info import SegmentationInfo
 from PartSegImage import Image
 from .channel_control import ChannelProperty, ColorComboBoxGroup
@@ -28,10 +29,11 @@ from ..common_backend.base_settings import BaseSettings, ViewSettings
 class ImageInfo:
     image: Image
     layers: List[NapariImage]
+    filter_info: List[Tuple[NoiseFilterType, float]] = field(default_factory=list)
     mask: Optional[Labels] = None
     mask_array: Optional[np.ndarray] = None
     segmentation: Optional[Labels] = None
-    segmentation_info: SegmentationInfo = SegmentationInfo(None)
+    segmentation_info: SegmentationInfo = field(default_factory=lambda: SegmentationInfo(None))
     segmentation_count: int = 0
 
     def coords_in(self, coords: Union[List[int], np.ndarray]) -> bool:
@@ -429,6 +431,15 @@ class ImageView(QWidget):
     def has_image(self, image: Image):
         return image.file_path in self.image_info
 
+    @staticmethod
+    def calculate_filter(array: np.ndarray, parameters: Tuple[NoiseFilterType, float]) -> np.ndarray:
+        if parameters[0] == NoiseFilterType.No or parameters[1] == 0:
+            return array
+        if parameters[0] == NoiseFilterType.Gauss:
+            return gaussian(array, parameters[1])
+        else:
+            return median(array, int(parameters[1]))
+
     def add_image(self, image: Optional[Image]):
         if image is None:
             image = self.settings.image
@@ -447,12 +458,13 @@ class ImageView(QWidget):
         visibility = self.channel_control.channel_visibility
         limits = self.channel_control.get_limits()
         limits = [image.get_ranges()[i] if x is None else x for i, x in enumerate(limits)]
+        filters = self.channel_control.get_filter()
         image_layers = []
 
         for i in range(image.channels):
             image_layers.append(
                 self.viewer.add_image(
-                    image.get_channel(i),
+                    self.calculate_filter(image.get_channel(i), filters[i]),
                     colormap=self.convert_to_vispy_colormap(self.channel_control.selected_colormaps[i]),
                     visible=visibility[i],
                     blending="additive",
@@ -462,7 +474,7 @@ class ImageView(QWidget):
             )
         if not self.image_info:
             image_layers[0].blending = "translucent"
-        self.image_info[image.file_path] = ImageInfo(image, image_layers)
+        self.image_info[image.file_path] = ImageInfo(image, image_layers, filters)
         self.current_image = image.file_path
         if image.mask is not None:
             self.set_mask()
@@ -518,6 +530,12 @@ class ImageView(QWidget):
                     limits = self.channel_control.get_limits()[index]
                     limits = image_info.image.get_ranges()[index] if limits is None else limits
                     image_info.layers[index].contrast_limits = limits
+                    filter = self.channel_control.get_filter()[index]
+                    if filter != image_info.filter_info[index]:
+                        image_info.layers[index].data = self.calculate_filter(
+                            image_info.image.get_channel(index), filter
+                        )
+                        image_info.filter_info[index] = filter
 
     def reset_image_size(self):
         self.viewer.reset_view()
