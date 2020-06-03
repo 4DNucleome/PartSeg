@@ -445,7 +445,10 @@ class ImageView(QWidget):
 
         self.channel_control.set_channels(channels)
         visibility = self.channel_control.channel_visibility
+        limits = self.channel_control.get_limits()
+        limits = [image.get_ranges()[i] if x is None else x for i, x in enumerate(limits)]
         image_layers = []
+
         for i in range(image.channels):
             image_layers.append(
                 self.viewer.add_image(
@@ -454,6 +457,7 @@ class ImageView(QWidget):
                     visible=visibility[i],
                     blending="additive",
                     scale=image.normalized_scaling(),
+                    contrast_limits=limits[i],
                 )
             )
         if not self.image_info:
@@ -511,6 +515,9 @@ class ImageView(QWidget):
                     image_info.layers[index].colormap = self.convert_to_vispy_colormap(
                         self.channel_control.selected_colormaps[index]
                     )
+                    limits = self.channel_control.get_limits()[index]
+                    limits = image_info.image.get_ranges()[index] if limits is None else limits
+                    image_info.layers[index].contrast_limits = limits
 
     def reset_image_size(self):
         self.viewer.reset_view()

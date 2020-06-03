@@ -476,7 +476,7 @@ class Image:
         """image spacing in micrometers"""
         return tuple([float(x * 10 ** 6) for x in self.spacing])
 
-    def get_ranges(self) -> typing.Collection[typing.Tuple[float, float]]:
+    def get_ranges(self) -> typing.List[typing.Tuple[float, float]]:
         """image brightness ranges for each channel"""
         return self.ranges[:]
 

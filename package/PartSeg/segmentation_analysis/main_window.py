@@ -561,6 +561,7 @@ class MainWindow(BaseMainWindow):
         super().__init__(config_folder, title, settings, signal_fun)
         self.files_num = 2
         self.setMinimumWidth(600)
+        assert isinstance(self.settings, PartSettings)
         self.main_menu = MainMenu(self.settings, self)
         # self.channel_control1 = ChannelControl(self.settings, name="raw_control", text="Left panel:")
         self.channel_control2 = ChannelProperty(self.settings, start_name="result_control")
@@ -632,7 +633,6 @@ class MainWindow(BaseMainWindow):
         layout.addLayout(image_layout, 2, 2, 1, 1)
         layout.addWidget(self.options_panel, 0, 3, 3, 1)
         layout.setColumnStretch(2, 1)
-        # layout.setColumnStretch(3, 1)
         widget = QWidget()
         widget.setLayout(layout)
         # self.multiple_files.setHidden(True)
