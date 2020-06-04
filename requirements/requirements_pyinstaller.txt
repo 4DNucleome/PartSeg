@@ -17,7 +17,7 @@ idna==2.9                 # via requests
 imagecodecs==2020.2.18    # via -r requirements_pyinstaller.in
 jdcal==1.4.1              # via openpyxl
 mpmath==1.1.0             # via sympy
-numpy==1.18.4             # via -r requirements_pyinstaller.in, czifile, h5py, imagecodecs, oiffile, pandas, scipy, tifffile
+numpy==1.18.5             # via -r requirements_pyinstaller.in, czifile, h5py, imagecodecs, oiffile, pandas, scipy, tifffile
 oiffile==2020.1.18        # via -r requirements_pyinstaller.in
 openpyxl==3.0.3           # via -r requirements_pyinstaller.in
 packaging==20.4           # via -r requirements_pyinstaller.in
