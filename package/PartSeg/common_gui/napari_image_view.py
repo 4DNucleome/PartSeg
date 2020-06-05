@@ -210,7 +210,10 @@ class ImageView(QWidget):
             for i, val in enumerate(dkt["point"]):
                 self.viewer.dims.set_point(i, val)
         if "camera" in dkt:
-            self.viewer_widget.view.camera.set_state(dkt["camera"])
+            try:
+                self.viewer_widget.view.camera.set_state(dkt["camera"])
+            except KeyError:
+                pass
 
     def change_mask_visibility(self):
         for image_info in self.image_info.values():
@@ -359,6 +362,10 @@ class ImageView(QWidget):
     def add_segmentation_layer(self, image_info: ImageInfo):
         if image_info.segmentation_info.segmentation is None:
             return
+        try:
+            max_num = max(image_info.segmentation_info.bound_info.keys())
+        except ValueError:
+            max_num = 0
         if self.image_state.only_borders:
             data = calculate_borders(
                 image_info.segmentation_info.segmentation,
@@ -368,13 +375,13 @@ class ImageView(QWidget):
             image_info.segmentation = self.viewer.add_image(
                 data,
                 scale=image_info.image.normalized_scaling(),
-                contrast_limits=[0, max(image_info.segmentation_info.bound_info.keys())],
+                contrast_limits=[0, max_num],
             )
         else:
             image_info.segmentation = self.viewer.add_image(
                 image_info.segmentation_info.segmentation,
                 scale=image_info.image.normalized_scaling(),
-                contrast_limits=[0, max(image_info.segmentation_info.bound_info.keys())],
+                contrast_limits=[0, max_num],
             )
         image_info.segmentation._interpolation[3] = Interpolation3D.NEAREST
 
