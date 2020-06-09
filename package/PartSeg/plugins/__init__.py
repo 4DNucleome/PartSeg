@@ -1,8 +1,12 @@
 import importlib
+import itertools
 import os
 import pkgutil
-import pkg_resources
 import sys
+
+import pkg_resources
+
+import PartSegCore.plugins
 
 
 def get_plugins():
@@ -11,7 +15,9 @@ def get_plugins():
         packages = pkgutil.iter_modules(new_path, "plugins" + ".")
     else:
         packages = pkgutil.iter_modules(__path__, __name__ + ".")
-    packages2 = pkg_resources.iter_entry_points("PartSeg.plugins")
+    packages2 = itertools.chain(
+        pkg_resources.iter_entry_points("PartSeg.plugins"), pkg_resources.iter_entry_points("partseg.plugins"),
+    )
     return [importlib.import_module(el.name) for el in packages] + [el.load() for el in packages2]
 
 
@@ -19,6 +25,7 @@ plugins_loaded = set()
 
 
 def register():
+    PartSegCore.plugins.register()
     for el in get_plugins():
         if hasattr(el, "register") and el.__name__ not in plugins_loaded:
             el.register()
