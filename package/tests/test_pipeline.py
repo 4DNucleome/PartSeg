@@ -62,7 +62,6 @@ def test_pipeline(image, algorithm_parameters, mask_property, tmp_path):
         file_path=image.file_path,
         image=image,
         segmentation=result.segmentation,
-        full_segmentation=result.full_segmentation,
         mask=result.mask,
         history=result.history,
         algorithm_parameters=algorithm_parameters,

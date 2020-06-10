@@ -373,9 +373,7 @@ class ImageView(QWidget):
                 self.viewer.dims.ndisplay == 2,
             )
             image_info.segmentation = self.viewer.add_image(
-                data,
-                scale=image_info.image.normalized_scaling(),
-                contrast_limits=[0, max_num],
+                data, scale=image_info.image.normalized_scaling(), contrast_limits=[0, max_num],
             )
         else:
             image_info.segmentation = self.viewer.add_image(

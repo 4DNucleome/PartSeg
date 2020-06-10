@@ -1,3 +1,4 @@
+import dataclasses
 import os
 import typing
 
@@ -53,8 +54,8 @@ class TestStackSettings:
         assert np.any(segmentation1 != segmentation2)
 
     def test_set_project_with_components(self, stack_settings, stack_segmentation1):
-        seg1 = stack_segmentation1._replace(selected_components=[1, 2])
-        seg2 = stack_segmentation1._replace(selected_components=[3])
+        seg1 = dataclasses.replace(stack_segmentation1, selected_components=[1, 2])
+        seg2 = dataclasses.replace(stack_segmentation1, selected_components=[3])
         stack_settings.set_project_info(seg1)
         assert stack_settings.chosen_components() == [1, 2]
         stack_settings.set_project_info(seg2)
@@ -64,11 +65,13 @@ class TestStackSettings:
         assert stack_settings.chosen_components() == [1, 2, 3]
 
     def test_set_project_with_history(self, stack_settings, stack_segmentation1, mask_property):
-        seg2 = stack_segmentation1._replace(
+        seg2 = dataclasses.replace(
+            stack_segmentation1,
             history=[create_history_element_from_segmentation_tuple(stack_segmentation1, mask_property)],
             selected_components=[1],
         )
-        seg3 = stack_segmentation1._replace(
+        seg3 = dataclasses.replace(
+            stack_segmentation1,
             history=[create_history_element_from_segmentation_tuple(stack_segmentation1, mask_property)],
             selected_components=[2],
         )
@@ -81,18 +84,20 @@ class TestStackSettings:
         assert stack_settings.chosen_components() == [1, 2]
 
     def test_set_project_with_history_components_fail(self, stack_settings, stack_segmentation1, mask_property):
-        seg2 = stack_segmentation1._replace(
+        seg2 = dataclasses.replace(
+            stack_segmentation1,
             history=[
                 create_history_element_from_segmentation_tuple(
-                    stack_segmentation1._replace(selected_components=[1]), mask_property
+                    dataclasses.replace(stack_segmentation1, selected_components=[1]), mask_property
                 )
             ],
             selected_components=[1],
         )
-        seg3 = stack_segmentation1._replace(
+        seg3 = dataclasses.replace(
+            stack_segmentation1,
             history=[
                 create_history_element_from_segmentation_tuple(
-                    stack_segmentation1._replace(selected_components=[1, 2]), mask_property
+                    dataclasses.replace(stack_segmentation1, selected_components=[1, 2]), mask_property
                 )
             ],
             selected_components=[2],
@@ -108,11 +113,13 @@ class TestStackSettings:
     def test_set_project_with_history_parameters_fail(
         self, stack_settings, stack_segmentation1, stack_segmentation2, mask_property
     ):
-        seg2 = stack_segmentation1._replace(
+        seg2 = dataclasses.replace(
+            stack_segmentation1,
             history=[create_history_element_from_segmentation_tuple(stack_segmentation1, mask_property)],
             selected_components=[1],
         )
-        seg3 = stack_segmentation1._replace(
+        seg3 = dataclasses.replace(
+            stack_segmentation1,
             history=[create_history_element_from_segmentation_tuple(stack_segmentation2, mask_property)],
             selected_components=[2],
         )
@@ -125,14 +132,16 @@ class TestStackSettings:
             stack_settings.set_project_info(seg2)
 
     def test_set_project_with_history_length_fail(self, stack_settings, stack_segmentation1, mask_property):
-        seg2 = stack_segmentation1._replace(
+        seg2 = dataclasses.replace(
+            stack_segmentation1,
             history=[
                 create_history_element_from_segmentation_tuple(stack_segmentation1, mask_property),
                 create_history_element_from_segmentation_tuple(stack_segmentation1, mask_property),
             ],
             selected_components=[1],
         )
-        seg3 = stack_segmentation1._replace(
+        seg3 = dataclasses.replace(
+            stack_segmentation1,
             history=[create_history_element_from_segmentation_tuple(stack_segmentation1, mask_property)],
             selected_components=[2],
         )
@@ -212,8 +221,7 @@ class TestPartSettings:
         algorithm.set_parameters(**algorithm_parameters["values"])
         result = algorithm.calculation_run(lambda x, y: None)
         settings.segmentation = result.segmentation
-        settings.full_segmentation = result.full_segmentation
-        settings.noise_remove_image_part = result.cleaned_channel
+        settings.additional_layers = result.additional_layers
         settings.last_executed_algorithm = result.parameters.algorithm
         settings.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
         project_info = settings.get_project_info()
@@ -226,8 +234,7 @@ class TestPartSettings:
         result2 = algorithm.calculation_run(lambda x, y: None)
         assert np.max(result2.segmentation) == 2
         settings.segmentation = result2.segmentation
-        settings.full_segmentation = result2.full_segmentation
-        settings.noise_remove_image_part = result2.cleaned_channel
+        settings.additional_layers = result2.additional_layers
         settings.last_executed_algorithm = result.parameters.algorithm
         settings.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
         project_info = settings.get_project_info()

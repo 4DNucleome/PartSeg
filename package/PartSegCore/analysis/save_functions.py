@@ -34,7 +34,6 @@ def save_project(
     file_path: str,
     image: Image,
     segmentation: np.ndarray,
-    full_segmentation: np.ndarray,
     mask: typing.Optional[np.ndarray],
     history: typing.List[HistoryElement],
     algorithm_parameters: dict,
@@ -50,11 +49,6 @@ def save_project(
         # noinspection PyTypeChecker
         tifffile.imwrite(segmentation_buff, segmentation, compress=9)
         segmentation_tar = get_tarinfo("segmentation.tif", segmentation_buff)
-        tar.addfile(segmentation_tar, fileobj=segmentation_buff)
-        segmentation_buff = BytesIO()
-        # noinspection PyTypeChecker
-        tifffile.imwrite(segmentation_buff, full_segmentation, compress=9)
-        segmentation_tar = get_tarinfo("full_segmentation.tif", segmentation_buff)
         tar.addfile(segmentation_tar, fileobj=segmentation_buff)
         if mask is not None:
             if mask.dtype == np.bool:
@@ -172,7 +166,6 @@ class SaveProject(SaveBase):
             save_location,
             project_info.image,
             project_info.segmentation,
-            project_info.full_segmentation,
             project_info.mask,
             project_info.history,
             project_info.algorithm_parameters,
@@ -215,8 +208,9 @@ class SaveCmap(SaveBase):
         data = data[0]
         spacing = project_info.image.spacing
         segmentation = project_info.segmentation
-        full_segmentation = project_info.full_segmentation
-        if full_segmentation is None:
+        if "full segmentation" in project_info.additional_layers:
+            full_segmentation = project_info.additional_layers["full segmentation"].data
+        else:
             full_segmentation = segmentation
         reverse_base = float(np.mean(data[full_segmentation == 0]))
         if parameters.get("clip", False):

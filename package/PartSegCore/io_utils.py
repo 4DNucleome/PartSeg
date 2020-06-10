@@ -58,12 +58,6 @@ class ProjectInfoBase:
     mask: typing.Optional[np.ndarray]
     errors: str = ""
 
-    def _replace(self, file_path=None, image=None):
-        pass
-
-    def replace_(self, *args, **kwargs):
-        return self._replace(*args, **kwargs)
-
     def get_raw_copy(self):
         raise NotImplementedError
 
@@ -309,7 +303,6 @@ class HistoryElement(BaseSerializableClass):
     def create(
         cls,
         segmentation: np.ndarray,
-        full_segmentation: np.ndarray,
         mask: typing.Union[np.ndarray, None],
         segmentation_parameters: dict,
         mask_property: MaskProperty,
@@ -317,12 +310,12 @@ class HistoryElement(BaseSerializableClass):
         if "name" in segmentation_parameters:
             raise ValueError("name")
         arrays = BytesIO()
-        arrays_dict = {"segmentation": segmentation, "full_segmentation": full_segmentation}
+        arrays_dict = {"segmentation": segmentation}
         if mask is not None:
             arrays_dict["mask"] = mask
         np.savez_compressed(arrays, **arrays_dict)
         arrays.seek(0)
-        return cls(segmentation_parameters=segmentation_parameters, mask_property=mask_property, arrays=arrays)
+        return cls(segmentation_parameters=segmentation_parameters, mask_property=mask_property, arrays=arrays,)
 
 
 class HistoryProblem(Exception):

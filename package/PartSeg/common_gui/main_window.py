@@ -44,7 +44,7 @@ class BaseMainMenu(QWidget):
                 if resp == QMessageBox.No:
                     return
             try:
-                image = self._settings.verify_image(data.image, False)
+                image = self.settings.verify_image(data.image, False)
             except SwapTimeStackException:
                 res = QMessageBox.question(
                     self,

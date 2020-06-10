@@ -1,3 +1,4 @@
+import dataclasses
 import tarfile
 from copy import deepcopy
 
@@ -15,6 +16,7 @@ import h5py
 from PartSegCore.analysis.measurement_base import MeasurementEntry, Leaf
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
+from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
 from PartSegCore.segmentation.segmentation_algorithm import ThresholdAlgorithm
 from PartSegImage import Image
 from PartSegCore import Units, UNIT_SCALE
@@ -73,7 +75,9 @@ def analysis_project():
         file_path="test_data.tiff",
         image=image,
         segmentation=segmentation[0, ..., 0],
-        full_segmentation=segmentation[0, ..., 0],
+        additional_layers={
+            "denoised image": AdditionalLayerDescription(data=segmentation[0, ..., 0], layer_type="layer")
+        },
         mask=mask,
         algorithm_parameters=algorithm_parameters,
     )
@@ -241,7 +245,8 @@ class TestSegmentationMask:
 
     def test_save_project_with_history(self, tmp_path, stack_segmentation1, mask_property):
         SaveSegmentation.save(tmp_path / "test1.seg", stack_segmentation1, {"relative_path": False})
-        seg2 = stack_segmentation1._replace(
+        seg2 = dataclasses.replace(
+            stack_segmentation1,
             history=[create_history_element_from_segmentation_tuple(stack_segmentation1, mask_property)],
             selected_components=[1],
             mask=stack_segmentation1.segmentation,
@@ -256,7 +261,8 @@ class TestSegmentationMask:
     def test_load_project_with_history(self, tmp_path, stack_segmentation1, mask_property):
         image_location = tmp_path / "test1.tif"
         SaveAsTiff.save(image_location, stack_segmentation1)
-        seg2 = stack_segmentation1._replace(
+        seg2 = dataclasses.replace(
+            stack_segmentation1,
             history=[create_history_element_from_segmentation_tuple(stack_segmentation1, mask_property)],
             selected_components=[1],
             mask=stack_segmentation1.segmentation,

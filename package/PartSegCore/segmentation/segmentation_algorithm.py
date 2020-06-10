@@ -9,7 +9,7 @@ from PartSegCore.segmentation.border_smoothing import smooth_dict
 from PartSegCore.segmentation.watershed import sprawl_dict, BaseWatershed
 from ..utils import bisect
 from ..channel_class import Channel
-from ..segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
+from ..segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult, AdditionalLayerDescription
 from ..convex_fill import convex_fill
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
 from .noise_filtering import noise_filtering_dict
@@ -67,7 +67,11 @@ class ThresholdPreview(StackAlgorithm):
             res[self.mask == 0] = 0
         self.image = None
         self.channel = None
-        return SegmentationResult(res, self.get_segmentation_profile(), res, cleaned_channel=self.channel)
+        return SegmentationResult(
+            segmentation=res,
+            parameters=self.get_segmentation_profile(),
+            additional_layers={"denoised image": AdditionalLayerDescription(layer_type="image", data=image)},
+        )
 
     def set_parameters(self, channel, threshold, noise_filtering):  # pylint: disable=W0221
         self.channel_num = channel
@@ -177,7 +181,14 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
             report_fun("convex hull", 6)
             resp = convex_fill(resp)
         report_fun("Calculation done", 7)
-        return SegmentationResult(resp, self.get_segmentation_profile(), self.segmentation, image)
+        return SegmentationResult(
+            segmentation=resp,
+            parameters=self.get_segmentation_profile(),
+            additional_layers={
+                "denoised image": AdditionalLayerDescription(data=image, layer_type="image"),
+                "full segmentation": AdditionalLayerDescription(data=self.segmentation, layer_type="labels"),
+            },
+        )
 
     def _set_parameters(
         self,
@@ -347,7 +358,14 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
             report_fun("convex hull", 6)
             segmentation = convex_fill(segmentation)
         report_fun("Calculation done", 7)
-        return SegmentationResult(segmentation, self.get_segmentation_profile(), mask, noise_filtered)
+        return SegmentationResult(
+            segmentation=segmentation,
+            parameters=self.get_segmentation_profile(),
+            additional_layers={
+                "denoised image": AdditionalLayerDescription(data=noise_filtered, layer_type="image"),
+                "full segmentation": AdditionalLayerDescription(data=mask, layer_type="labels"),
+            },
+        )
 
     @staticmethod
     def get_steps_num():

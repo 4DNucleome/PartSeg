@@ -2,6 +2,7 @@ import os
 import tarfile
 import typing
 from collections import defaultdict
+import dataclasses
 from functools import partial
 from pathlib import Path
 from io import BytesIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
@@ -32,15 +33,18 @@ from ..segmentation.segmentation_info import SegmentationInfo
 from PartSegImage import Image, ImageWriter, GenericImageReader
 
 
-class SegmentationTuple(ProjectInfoBase, typing.NamedTuple):
+@dataclasses.dataclass(frozen=True)
+class SegmentationTuple(ProjectInfoBase):
     file_path: str
     image: typing.Union[Image, str, None]
     mask: typing.Optional[np.ndarray] = None
     segmentation: typing.Optional[np.ndarray] = None
     segmentation_info: SegmentationInfo = SegmentationInfo(None)
-    selected_components: typing.List = []
-    segmentation_parameters: typing.Dict[int, typing.Optional[SegmentationProfile]] = {}
-    history: typing.List[HistoryElement] = []
+    selected_components: typing.List = dataclasses.field(default_factory=list)
+    segmentation_parameters: typing.Dict[int, typing.Optional[SegmentationProfile]] = dataclasses.field(
+        default_factory=dict
+    )
+    history: typing.List[HistoryElement] = dataclasses.field(default_factory=list)
     errors: str = ""
 
     def get_raw_copy(self):
@@ -48,9 +52,6 @@ class SegmentationTuple(ProjectInfoBase, typing.NamedTuple):
 
     def is_raw(self):
         return self.segmentation is None
-
-    def replace_(self, *args, **kwargs):
-        return self._replace(*args, **kwargs)
 
     def is_masked(self):
         return self.mask is not None
@@ -249,7 +250,7 @@ class LoadSegmentation(LoadBase):
                 lambda: None,
                 [(int(k), cls.fix_parameters(v)) for k, v in segmentation_tuple.segmentation_parameters.items()],
             )
-        return segmentation_tuple.replace_(segmentation_parameters=parameters)
+        return dataclasses.replace(segmentation_tuple, segmentation_parameters=parameters)
 
     @classmethod
     def partial(cls):
@@ -341,7 +342,7 @@ class LoadSegmentationImage(LoadBase):
         )
         # noinspection PyProtectedMember
         # image.file_path = load_locations[0]
-        return seg.replace_(file_path=image.file_path, image=image)
+        return dataclasses.replace(seg, file_path=image.file_path, image=image)
 
 
 class LoadStackImage(LoadBase):

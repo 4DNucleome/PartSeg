@@ -759,6 +759,7 @@ class AlgorithmOptions(QWidget):
         if segmentation.info_text != "":
             QMessageBox.information(self, "Algorithm info", segmentation.info_text)
         parameters_dict = defaultdict(lambda: deepcopy(segmentation.parameters))
+        self.settings.additional_layers = segmentation.additional_layers
         self.settings.set_segmentation(segmentation.segmentation, True, [], parameters_dict)
 
     def showEvent(self, _):

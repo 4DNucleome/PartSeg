@@ -62,7 +62,7 @@ from PartSegCore.analysis.measurement_base import AreaType, PerComponent
 from PartSegCore.analysis.measurement_calculation import MeasurementResult
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.mask_create import calculate_mask
-from PartSegCore.segmentation.algorithm_base import report_empty_fun, SegmentationAlgorithm
+from PartSegCore.segmentation.algorithm_base import report_empty_fun, SegmentationAlgorithm, AdditionalLayerDescription
 from PartSegImage import Image, TiffImageReader
 from .parallel_backend import BatchManager
 from .. import PartEncoder
@@ -124,11 +124,10 @@ class CalculationProcess:
         self.measurement: List[MeasurementResult] = []
         self.image: Optional[Image] = None
         self.segmentation: Optional[np.ndarray] = None
-        self.full_segmentation: Optional[np.ndarray] = None
+        self.additional_layers: Dict[str, AdditionalLayerDescription] = {}
         self.mask: Optional[np.ndarray] = None
         self.history: List[HistoryElement] = []
         self.algorithm_parameters: dict = {}
-        self.cleaned_channel: Optional[np.ndarray] = None
         self.results: CalculationResultList = []
 
     def do_calculation(self, calculation: FileCalculation) -> CalculationResultList:
@@ -174,7 +173,7 @@ class CalculationProcess:
             if operation == RootType.Project:
                 self.mask = project.mask[0]
                 self.segmentation = project.segmentation
-                self.full_segmentation = project.full_segmentation
+                self.additional_layers = project.additional_layers
                 self.history = project.history
                 self.algorithm_parameters = project.algorithm_parameters
 
@@ -240,13 +239,12 @@ class CalculationProcess:
         segmentation_algorithm.set_mask(self.mask)
         segmentation_algorithm.set_parameters(**operation.values)
         result = segmentation_algorithm.calculation_run(report_empty_fun)
-        backup_data = self.segmentation, self.full_segmentation, self.cleaned_channel, self.algorithm_parameters
+        backup_data = self.segmentation, self.additional_layers, self.algorithm_parameters
         self.segmentation = result.segmentation
-        self.full_segmentation = result.full_segmentation
-        self.cleaned_channel = result.cleaned_channel
+        self.additional_layers = result.additional_layers
         self.algorithm_parameters = {"algorithm_name": operation.algorithm, "values": operation.values}
         self.iterate_over(children)
-        self.segmentation, self.full_segmentation, self.cleaned_channel, self.algorithm_parameters = backup_data
+        self.segmentation, self.additional_layers, self.algorithm_parameters = backup_data
 
     def step_mask_use(self, operation: MaskUse, children: List[CalculationTree]):
         """
@@ -291,7 +289,7 @@ class CalculationProcess:
             file_path="",
             image=self.image,
             segmentation=self.segmentation,
-            full_segmentation=self.full_segmentation,
+            additional_layers=self.additional_layers,
             mask=self.mask,
             history=self.history,
             algorithm_parameters=self.algorithm_parameters,
@@ -310,7 +308,7 @@ class CalculationProcess:
         if operation.name in self.reused_mask:
             self.mask_dict[operation.name] = mask
         history_element = HistoryElement.create(
-            self.segmentation, self.full_segmentation, self.mask, self.algorithm_parameters, operation.mask_property,
+            self.segmentation, self.mask, self.algorithm_parameters, operation.mask_property,
         )
         backup = self.mask, self.history
         self.mask = mask
@@ -335,8 +333,11 @@ class CalculationProcess:
 
         image_channel = self.image.get_channel(channel)
         # FIXME use additional information
+        full_segmentation = None
+        if "full segmentation" in self.additional_layers:
+            full_segmentation = self.additional_layers["full segmentation"].data
         measurement = operation.statistic_profile.calculate(
-            image_channel, self.segmentation, self.full_segmentation, self.mask, self.image.spacing, operation.units,
+            image_channel, self.segmentation, full_segmentation, self.mask, self.image.spacing, operation.units,
         )
         self.measurement.append(measurement)
 

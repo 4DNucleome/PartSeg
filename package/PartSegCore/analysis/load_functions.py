@@ -75,10 +75,9 @@ def load_project(
         if version == Version("1.0"):
             seg_dict = np.load(tar_to_buff(tar_file, "segmentation.npz"))
             mask = seg_dict["mask"] if "mask" in seg_dict else None
-            segmentation, full_segmentation = seg_dict["segmentation"], seg_dict["full_segmentation"]
+            segmentation = seg_dict["segmentation"]
         else:
             segmentation = tifffile.imread(tar_to_buff(tar_file, "segmentation.tif"))
-            full_segmentation = tifffile.imread(tar_to_buff(tar_file, "full_segmentation.tif"))
             if "mask.tif" in tar_file.getnames():
                 mask = tifffile.imread(tar_to_buff(tar_file, "mask.tif"))
                 if np.max(mask) == 1:
@@ -111,18 +110,24 @@ def load_project(
             tar_file.close()
     image.set_mask(mask)
     if version <= project_version_info:
-        return ProjectTuple(file_path, image, segmentation, full_segmentation, mask, history, algorithm_dict)
+        return ProjectTuple(
+            file_path=file_path,
+            image=image,
+            segmentation=segmentation,
+            mask=mask,
+            history=history,
+            algorithm_parameters=algorithm_dict,
+        )
     else:
         print("This project is from new version of PartSeg:", version, project_version_info, file=sys.stderr)
         return ProjectTuple(
-            file_path,
-            image,
-            segmentation,
-            full_segmentation,
-            mask,
-            history,
-            algorithm_dict,
-            "This project is from new version of PartSeg. It may load incorrect.",
+            file_path=file_path,
+            image=image,
+            segmentation=segmentation,
+            mask=mask,
+            history=history,
+            algorithm_parameters=algorithm_dict,
+            errors="This project is from new version of PartSeg. It may load incorrect.",
         )
 
 

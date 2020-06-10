@@ -1,3 +1,4 @@
+import dataclasses
 import typing
 from collections import defaultdict
 from copy import copy
@@ -192,7 +193,8 @@ class StackSettings(BaseSettings):
                         components_list.append(base_index)
                         components_parameters_dict[base_index] = segmentation_parameters[i]
                         base_index += 1
-                return state._replace(
+                return dataclasses.replace(
+                    state,
                     segmentation=segmentation,
                     selected_components=chosen_components,
                     segmentation_parameters=components_parameters_dict,
@@ -200,13 +202,15 @@ class StackSettings(BaseSettings):
             else:
                 for i in range(1, num + 1):
                     components_parameters_dict[i] = segmentation_parameters[i]
-                return state._replace(
+                return dataclasses.replace(
+                    state,
                     segmentation=new_segmentation_data,
                     selected_components=list_of_components,
                     segmentation_parameters=components_parameters_dict,
                 )
         else:
-            return state._replace(
+            return dataclasses.replace(
+                state,
                 segmentation=segmentation,
                 selected_components=base_chose,
                 segmentation_parameters=components_parameters_dict,

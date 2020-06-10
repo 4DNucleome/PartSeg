@@ -4,7 +4,7 @@ import os.path
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple, Union, NamedTuple, List
+from typing import Optional, Tuple, Union, NamedTuple, List, Dict
 
 import numpy as np
 import napari.utils.theme
@@ -17,6 +17,7 @@ from PartSegCore.color_image import ColorMap, default_colormap_dict, default_lab
 from PartSegCore.color_image.base_colors import starting_colors
 from PartSegCore.io_utils import ProjectInfoBase, load_metadata_base, HistoryElement
 from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, check_loaded_dict
+from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
 from PartSegCore.segmentation.segmentation_info import SegmentationInfo
 from PartSegImage import Image
 
@@ -35,7 +36,7 @@ class ImageSettings(QObject):
     emitted when segmentation has changed
     """
     segmentation_clean = Signal()
-    noise_remove_image_part_changed = Signal()
+    additional_layers_changed = Signal()
 
     def __init__(self):
         super().__init__()
@@ -43,16 +44,32 @@ class ImageSettings(QObject):
         self._image_path = ""
         self._image_spacing = 210, 70, 70
         self._segmentation_info = SegmentationInfo(None)
-        self._noise_removed = None
+        self._additional_layers = {}
+
+    @property
+    def full_segmentation(self):
+        raise AttributeError("full_segmentation not supported")
+
+    @full_segmentation.setter
+    def full_segmentation(self, val):
+        raise AttributeError("full_segmentation not supported")
 
     @property
     def noise_remove_image_part(self):
-        return self._noise_removed
+        raise AttributeError("full_segmentation not supported")
 
     @noise_remove_image_part.setter
     def noise_remove_image_part(self, val):
-        self._noise_removed = val
-        self.noise_remove_image_part_changed.emit()
+        raise AttributeError("full_segmentation not supported")
+
+    @property
+    def additional_layers(self) -> Dict[str, AdditionalLayerDescription]:
+        return self._additional_layers
+
+    @additional_layers.setter
+    def additional_layers(self, val: Dict[str, AdditionalLayerDescription]):
+        self._additional_layers = val
+        self.additional_layers_changed.emit()
 
     @property
     def image_spacing(self):

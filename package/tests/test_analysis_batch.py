@@ -367,7 +367,9 @@ class TestCalculationProcess:
 
         while manager.has_work:
             time.sleep(0.1)
-            manager.get_results()
+            res = manager.get_results()
+            if res.errors:
+                print(res.errors, file=sys.stderr)
         if sys.platform == "darwin":
             time.sleep(2)
         else:

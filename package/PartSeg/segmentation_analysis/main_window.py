@@ -349,8 +349,7 @@ class Options(QWidget):
         self.compare_btn.setEnabled(
             isinstance(segmentation.segmentation, np.ndarray) and np.any(segmentation.segmentation)
         )
-        self._settings.noise_remove_image_part = segmentation.cleaned_channel
-        self._settings.full_segmentation = segmentation.full_segmentation
+        self._settings.additional_layers = segmentation.additional_layers
         self.label.setText(self.sender().get_info_text())
 
     def showEvent(self, _event):

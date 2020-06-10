@@ -310,7 +310,9 @@ class MeasurementWidget(QWidget):
         segmentation = self.settings.segmentation
         if segmentation is None:
             return
-        full_segmentation = self.settings.full_segmentation
+        full_segmentation = None
+        if "full segmentation" in self.settings.additional_layers:
+            full_segmentation = self.settings.additional_layers["full segmentation"].data
         base_mask = self.settings.mask
         units = self.units_choose.get_value()
 
