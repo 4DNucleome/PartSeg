@@ -1,5 +1,5 @@
 from PartSeg.segmentation_analysis.main_window import MainWindow as AnalysisMainWindow
-from PartSeg.segmentation_mask.stack_gui_main import MainWindow as MaskMainWindow
+from PartSeg.segmentation_mask.main_window import MainWindow as MaskMainWindow
 
 
 class TestAnalysisMainWindow:

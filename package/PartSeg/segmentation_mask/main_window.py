@@ -167,6 +167,8 @@ class MainMenu(BaseMainMenu):
     def show_advanced_window(self):
         if self.advanced_window is None:
             self.advanced_window = AdvancedWindow(self.settings, ["channelcontrol"])
+            # FIXME temporary workaround
+            self.advanced_window.reload_list = []
         self.advanced_window.show()
 
     def load_image(self):

@@ -3,6 +3,7 @@ import itertools
 import os
 import pkgutil
 import sys
+import typing
 
 import pkg_resources
 
@@ -28,5 +29,6 @@ def register():
     PartSegCore.plugins.register()
     for el in get_plugins():
         if hasattr(el, "register") and el.__name__ not in plugins_loaded:
+            assert isinstance(el.register, typing.Callable)
             el.register()
             plugins_loaded.add(el.__name__)

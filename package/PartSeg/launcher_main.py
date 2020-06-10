@@ -23,7 +23,7 @@ def _test_imports():
 
     app = QApplication([])
     from PartSeg.segmentation_analysis.main_window import MainWindow as AnalysisMain
-    from PartSeg.segmentation_mask.stack_gui_main import MainWindow as MaskMain
+    from PartSeg.segmentation_mask.main_window import MainWindow as MaskMain
     from PartSeg.launcher.main_window import MainWindow
     from PartSeg import plugins
 
@@ -82,7 +82,7 @@ def main():
         from PartSeg import plugins
 
         plugins.register()
-        from PartSeg.segmentation_mask.stack_gui_main import MainWindow
+        from PartSeg.segmentation_mask.main_window import MainWindow
 
         title = f"{APP_NAME} {MASK_NAME}"
         if args.image:

@@ -1,6 +1,7 @@
 import importlib
 import itertools
 import pkgutil
+import typing
 
 import pkg_resources
 
@@ -20,5 +21,6 @@ plugins_loaded = set()
 def register():
     for el in get_plugins():
         if hasattr(el, "register") and el.__name__ not in plugins_loaded:
+            assert isinstance(el.register, typing.Callable)
             el.register()
             plugins_loaded.add(el.__name__)

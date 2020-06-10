@@ -19,7 +19,7 @@ def test_launcher_import():
 
 def test_segmentation_import():
     try:
-        import PartSeg.segmentation_mask.stack_gui_main  # noqa: F401
+        import PartSeg.segmentation_mask.main_window  # noqa: F401
     except ImportError:
         pytest.fail("Error in importing mask segmentation ui")
 
