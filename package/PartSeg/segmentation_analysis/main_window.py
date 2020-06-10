@@ -359,6 +359,7 @@ class Options(QWidget):
 class MainMenu(BaseMainMenu):
     def __init__(self, settings: PartSettings, main_window):
         super().__init__(settings, main_window)
+        self.settings = settings
         self.open_btn = QPushButton("Open")
         self.save_btn = QPushButton("Save")
         self.advanced_btn = QPushButton("Settings and Measurement")
@@ -603,6 +604,10 @@ class MainWindow(BaseMainWindow):
         file_menu.addAction("&Open").triggered.connect(self.main_menu.load_data)
         file_menu.addAction("&Save").triggered.connect(self.main_menu.save_file)
         file_menu.addAction("Batch processing").triggered.connect(self.main_menu.batch_window)
+        view_menu = menu_bar.addMenu("View")
+        view_menu.addAction("Settings and Measurement").triggered.connect(self.main_menu.advanced_window_show)
+        view_menu.addAction("Additional output").triggered.connect(self.additional_layers_show)
+        view_menu.addAction("Additional output with data").triggered.connect(lambda: self.additional_layers_show(True))
         image_menu = menu_bar.addMenu("Image operations")
         image_menu.addAction("Image adjustment").triggered.connect(self.image_adjust_exec)
         image_menu.addAction("Mask manager").triggered.connect(self.main_menu.mask_manager)
@@ -684,6 +689,7 @@ class MainWindow(BaseMainWindow):
         self.settings.dump()
         del self.batch_window
         del self.advanced_window
+        super().closeEvent(event)
 
     @staticmethod
     def get_project_info(file_path, image):

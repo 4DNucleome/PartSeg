@@ -1,8 +1,9 @@
 import os
 from typing import List, Optional, Type
 
+from napari import Viewer
 from qtpy.QtCore import Signal
-from qtpy.QtGui import QShowEvent, QDragEnterEvent, QDropEvent
+from qtpy.QtGui import QShowEvent, QDragEnterEvent, QDropEvent, QCloseEvent
 from qtpy.QtWidgets import QMainWindow, QMessageBox, QWidget, QApplication
 
 from ..common_backend.base_settings import BaseSettings, SwapTimeStackException, TimeAndStackException
@@ -127,6 +128,7 @@ class BaseMainWindow(QMainWindow):
         if signal_fun is not None:
             self.show_signal.connect(signal_fun)
         self.settings = settings
+        self.viewer_list: List[Viewer] = []
         self.files_num = 1
         self.setAcceptDrops(True)
         self.setWindowTitle(title)
@@ -135,6 +137,33 @@ class BaseMainWindow(QMainWindow):
         if app is not None:
             app.setStyleSheet(settings.style_sheet)
         self.settings.theme_changed.connect(self.change_theme)
+
+    def additional_layers_show(self, with_channels=False):
+        if not self.settings.additional_layers:
+            QMessageBox().information(self, "No data", "Last executed algoritm does not provide additional data")
+            return
+        viewer = Viewer(title="Additional output")
+        viewer.theme = self.settings.theme_name
+        image = self.settings.image
+        scaling = image.normalized_scaling()
+        if with_channels:
+            for i in range(image.channels):
+                viewer.add_image(image.get_channel(i), name=f"channnel {i+1}", scale=scaling, blending="additive")
+        for k, v in self.settings.additional_layers.items():
+            name = v.name if v.name else k
+            if v.layer_type == "labels":
+                viewer.add_labels(v.data, name=name, scale=scaling[-v.data.ndim :])
+            else:
+                viewer.add_image(v.data, name=name, blending="additive", scale=scaling[-v.data.ndim :])
+        self.viewer_list.append(viewer)
+        viewer.window.qt_viewer.destroyed.connect(lambda x: self.close_viewer(viewer))
+
+    def close_viewer(self, obj):
+
+        for i, el in enumerate(self.viewer_list):
+            if el == obj:
+                self.viewer_list.pop(i)
+                break
 
     def change_theme(self):
         app = QApplication.instance()
@@ -209,3 +238,9 @@ class BaseMainWindow(QMainWindow):
             if dial2.exec():
                 result: Image = dial2.get_result()
                 self.settings.set_project_info(self.get_project_info(result.file_path, result))
+
+    def closeEvent(self, event: QCloseEvent):
+        for el in self.viewer_list:
+            el.close()
+            del el
+        super().closeEvent(event)
