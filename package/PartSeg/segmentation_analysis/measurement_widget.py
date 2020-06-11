@@ -335,7 +335,7 @@ class MeasurementWidget(QWidget):
             [channel, segmentation, full_segmentation, base_mask, self.settings.image.spacing, units],
             kwargs,
         )
-        dial = WaitingDialog(thread, "Measurement calculation", exception_hook=exception_hook)
+        dial = WaitingDialog(thread, "Measurement calculation")  # , exception_hook=exception_hook)
         dial.exec()
         stat: MeasurementResult = thread.result
         if stat is None:

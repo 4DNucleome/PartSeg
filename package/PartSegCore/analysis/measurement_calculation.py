@@ -420,6 +420,8 @@ class MeasurementProfile:
         result_units: Units,
         range_changed: Callable[[int, int], Any] = None,
         step_changed: Callable[[int], Any] = None,
+        time: int = 0,
+        time_pos: int = 0,
         **kwargs,
     ) -> MeasurementResult:
         """
@@ -433,9 +435,17 @@ class MeasurementProfile:
         :param result_units:
         :param range_changed: callback function to set information about steps range
         :param step_changed: callback function fo set information about steps done
+        :param time: which data point should be measured
+        :param time_pos: axis of time
         :param kwargs: additional data required by measurements. Ex additional channels
         :return: measurements
         """
+
+        def get_time(array: np.ndarray):
+            if array is not None and array.ndim == 4:
+                return array.take(time, axis=time_pos)
+            return array
+
         if range_changed is None:
             range_changed = empty_fun
         if step_changed is None:
@@ -448,10 +458,10 @@ class MeasurementProfile:
         result = MeasurementResult(segmentation_mask_map)
         result_scalar = UNIT_SCALE[result_units.value]
         kw = {
-            "channel": channel,
-            "segmentation": segmentation,
-            "mask": mask,
-            "full_segmentation": full_segmentation,
+            "channel": get_time(channel),
+            "segmentation": get_time(segmentation),
+            "mask": get_time(mask),
+            "full_segmentation": get_time(full_segmentation),
             "voxel_size": voxel_size,
             "result_scalar": result_scalar,
         }
