@@ -1,8 +1,14 @@
+import os
+import platform
+
+import pytest
+
 from PartSeg.segmentation_analysis.main_window import MainWindow as AnalysisMainWindow
 from PartSeg.segmentation_mask.main_window import MainWindow as MaskMainWindow
 
 
 class TestAnalysisMainWindow:
+    @pytest.mark.skipif(platform.system() == "Windows" and os.environ.get("AZURE_PIPELINES"), reason="qt problem on AZ")
     def test_opening(self, qtbot, tmpdir):
         main_window = AnalysisMainWindow(tmpdir)
         qtbot.addWidget(main_window)
@@ -11,6 +17,7 @@ class TestAnalysisMainWindow:
 
 
 class TestMaskMainWindow:
+    @pytest.mark.skipif(platform.system() == "Windows" and os.environ.get("AZURE_PIPELINES"), reason="qt problem on AZ")
     def test_opening(self, qtbot, tmpdir):
         main_window = MaskMainWindow(tmpdir)
         qtbot.addWidget(main_window)
