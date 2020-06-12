@@ -186,7 +186,7 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
             parameters=self.get_segmentation_profile(),
             additional_layers={
                 "denoised image": AdditionalLayerDescription(data=image, layer_type="image"),
-                "full segmentation": AdditionalLayerDescription(data=self.segmentation, layer_type="labels"),
+                "no size filtering": AdditionalLayerDescription(data=self.segmentation, layer_type="labels"),
             },
         )
 
@@ -363,7 +363,7 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
             parameters=self.get_segmentation_profile(),
             additional_layers={
                 "denoised image": AdditionalLayerDescription(data=noise_filtered, layer_type="image"),
-                "full segmentation": AdditionalLayerDescription(data=mask, layer_type="labels"),
+                "no size filtering": AdditionalLayerDescription(data=mask, layer_type="labels"),
             },
         )
 

@@ -3,7 +3,7 @@ from collections import OrderedDict
 from enum import Enum
 from functools import reduce
 from math import pi
-from typing import NamedTuple, Optional, Dict, Callable, List, Any, Union, Tuple, MutableMapping, Iterator
+from typing import NamedTuple, Optional, Dict, Callable, List, Any, Union, Tuple, MutableMapping, Iterator, Set
 
 import SimpleITK
 import numpy as np
@@ -245,7 +245,7 @@ class MeasurementProfile:
                 res_area = AreaType.Mask_without_segmentation
             return res_par, res_area
 
-    def get_channels_num(self):
+    def get_channels_num(self) -> Set[Channel]:
         resp = set()
         for el in self.chosen_fields:
             resp.update(el.get_channel_num(MEASUREMENT_DICT))
@@ -303,7 +303,7 @@ class MeasurementProfile:
         :return: measurement value
         """
         if isinstance(node, Leaf):
-            method = MEASUREMENT_DICT[node.name]
+            method: MeasurementMethodBase = MEASUREMENT_DICT[node.name]
             kw = dict(kwargs)
             kw.update(node.dict)
             hash_str = hash_fun_call_name(method, node.dict, node.area, node.per_component, node.channel)
@@ -346,7 +346,7 @@ class MeasurementProfile:
                 else:
                     val = method.calculate_property(**kw)
                 help_dict[hash_str] = val
-            unit: symbols = method.get_units(3) if kw["channel"].shape[1] > 1 else method.get_units(2)
+            unit: symbols = method.get_units(3) if kw["channel"].shape[0] > 1 else method.get_units(2)
             if node.power != 1:
                 return pow(val, node.power), pow(unit, node.power), area_type
             return val, unit, area_type
@@ -414,7 +414,6 @@ class MeasurementProfile:
         self,
         channel: np.ndarray,
         segmentation: np.ndarray,
-        full_segmentation: np.ndarray,
         mask: Optional[np.ndarray],
         voxel_size,
         result_units: Units,
@@ -461,7 +460,6 @@ class MeasurementProfile:
             "channel": get_time(channel),
             "segmentation": get_time(segmentation),
             "mask": get_time(mask),
-            "full_segmentation": get_time(full_segmentation),
             "voxel_size": voxel_size,
             "result_scalar": result_scalar,
         }
@@ -537,7 +535,23 @@ def get_main_axis_length(
         return calculate_main_axis(area_array, channel, [x * result_scalar for x in voxel_size])[index]
 
 
-def hash_fun_call_name(fun: Callable, arguments: Dict, area: AreaType, per_component: PerComponent, channel: Channel):
+def hash_fun_call_name(
+    fun: Union[Callable, MeasurementMethodBase],
+    arguments: Dict,
+    area: AreaType,
+    per_component: PerComponent,
+    channel: Channel,
+) -> str:
+    """
+    Calculate string for properly cache measurements result.
+
+    :param fun: method for which hash string should be calculated
+    :param arguments: its additional arguments
+    :param area: type of rea
+    :param per_component: If it is per component
+    :param channel: channel number on which calculation is performed
+    :return: unique string for such set of arguments
+    """
     if hasattr(fun, "__module__"):
         fun_name = f"{fun.__module__}.{fun.__name__}"
     else:

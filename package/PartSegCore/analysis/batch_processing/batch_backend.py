@@ -333,11 +333,8 @@ class CalculationProcess:
 
         image_channel = self.image.get_channel(channel)
         # FIXME use additional information
-        full_segmentation = None
-        if "full segmentation" in self.additional_layers:
-            full_segmentation = self.additional_layers["full segmentation"].data
         measurement = operation.statistic_profile.calculate(
-            image_channel, self.segmentation, full_segmentation, self.mask, self.image.spacing, operation.units,
+            image_channel, self.segmentation, self.mask, self.image.spacing, operation.units,
         )
         self.measurement.append(measurement)
 

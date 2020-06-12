@@ -133,7 +133,7 @@ def is_static(fun):
     return False
 
 
-AlgorithmType = typing.TypeVar("AlgorithmType", bound=AlgorithmDescribeBase)
+AlgorithmType = typing.TypeVar("AlgorithmType", bound=type(AlgorithmDescribeBase))
 
 
 class Register(OrderedDict, typing.Generic[AlgorithmType]):

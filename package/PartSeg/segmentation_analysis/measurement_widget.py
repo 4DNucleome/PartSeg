@@ -311,11 +311,10 @@ class MeasurementWidget(QWidget):
         if segmentation is None:
             return
         full_segmentation = None
-        if "full segmentation" in self.settings.additional_layers:
-            full_segmentation = self.settings.additional_layers["full segmentation"].data
         base_mask = self.settings.mask
         units = self.units_choose.get_value()
 
+        # FIXME find which errors should be displayed as warning
         def exception_hook(exception):
             QMessageBox.warning(self, "Calculation error", f"Error during calculation: {exception}")
 

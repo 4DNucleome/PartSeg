@@ -208,11 +208,7 @@ class SaveCmap(SaveBase):
         data = data[0]
         spacing = project_info.image.spacing
         segmentation = project_info.segmentation
-        if "full segmentation" in project_info.additional_layers:
-            full_segmentation = project_info.additional_layers["full segmentation"].data
-        else:
-            full_segmentation = segmentation
-        reverse_base = float(np.mean(data[full_segmentation == 0]))
+        reverse_base = float(np.mean(data[segmentation == 0]))
         if parameters.get("clip", False):
             positions = np.transpose(np.nonzero(segmentation))
             clip_down = np.min(positions, 0)

@@ -172,7 +172,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         """
         Create dict with standard additional layers.
 
-        :param full_segmentation: full segmentation if not `self.segmentation`
+        :param full_segmentation: no size filtering if not `self.segmentation`
 
         :return:
         """
@@ -180,7 +180,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             full_segmentation = self.segmentation
         return {
             "denoised image": AdditionalLayerDescription(data=self.cleaned_image, layer_type="image"),
-            "full segmentation": AdditionalLayerDescription(data=full_segmentation, layer_type="labels"),
+            "no size filtering": AdditionalLayerDescription(data=full_segmentation, layer_type="labels"),
         }
 
     def prepare_result(self, segmentation: np.ndarray) -> SegmentationResult:
