@@ -15,8 +15,8 @@ from PartSeg.common_gui.colormap_creator import (
     ColormapList,
     PColormapList,
 )
-from PartSeg.common_gui.stack_image_view import OldImageView
-from PartSeg.common_backend.base_settings import ViewSettings, ColormapDict
+from PartSeg.common_gui.napari_image_view import ImageView
+from PartSeg.common_backend.base_settings import ViewSettings, ColormapDict, BaseSettings
 from PartSegCore.color_image import ColorPosition, Color
 from PartSegCore.color_image.base_colors import starting_colors
 from PartSegImage import TiffImageReader
@@ -266,10 +266,10 @@ class TestColormapList:
         assert "BlackRed" not in selected2
         assert "BlackRed" in selected
 
-    def test_image_view_integration(self, qtbot):
-        settings = ViewSettings()
+    def test_image_view_integration(self, qtbot, tmp_path):
+        settings = BaseSettings(tmp_path)
         channel_property = ChannelProperty(settings, "test")
-        image_view = OldImageView(settings, channel_property, "test")
+        image_view = ImageView(settings, channel_property, "test")
         qtbot.addWidget(channel_property)
         qtbot.addWidget(image_view)
         color_list = PColormapList(settings, ["test"])

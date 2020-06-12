@@ -1,12 +1,15 @@
+import platform
+
 import PartSegData
 import numpy as np
+import pytest
 from qtpy import PYQT5
 from qtpy.QtCore import Qt, QPoint
 from qtpy.QtGui import QImage
 
 from PartSeg.common_gui.channel_control import ColorComboBox, ColorComboBoxGroup, ChannelProperty
-from PartSeg.common_gui.stack_image_view import OldImageView, ImageCanvas
-from PartSeg.common_backend.base_settings import ViewSettings, ColormapDict
+from PartSeg.common_gui.napari_image_view import ImageView
+from PartSeg.common_backend.base_settings import ViewSettings, ColormapDict, BaseSettings
 from PartSegCore.image_operations import NoiseFilterType
 from PartSegImage import TiffImageReader
 from PartSegCore.color_image import color_image_fun
@@ -152,10 +155,12 @@ class TestColorComboBoxGroup:
         with qtbot.assert_not_emitted(box.coloring_update), qtbot.assert_not_emitted(box.change_channel):
             ch_property.filter_radius.setValue(0.5)
 
-    def test_image_view_integration(self, qtbot):
-        settings = ViewSettings()
+    @pytest.mark.xfail(platform.system() == "Windows", reason="GL problem")
+    def test_image_view_integration(self, qtbot, tmp_path):
+        settings = BaseSettings(tmp_path)
         ch_property = ChannelProperty(settings, "test")
-        image_view = OldImageView(settings, ch_property, "test")
+        image_view = ImageView(settings, ch_property, "test")
+        # image_view.show()
         qtbot.addWidget(image_view)
         qtbot.addWidget(ch_property)
         image = TiffImageReader.read_image(PartSegData.segmentation_analysis_default_image)
@@ -164,16 +169,19 @@ class TestColorComboBoxGroup:
         channels_num = image.channels
         assert image_view.channel_control.channels_count == channels_num
 
-        assert image_view.stack_slider.isVisible() is False
-        assert image_view.time_slider.isVisible() is False
-        image_canvas: ImageCanvas = image_view.image_area.widget()
+        # assert image_view.stack_slider.isVisible() is False
+        # assert image_view.time_slider.isVisible() is False
+        # image_canvas: ImageCanvas = image_view.image_area.widget()
 
-        image1 = image_canvas.image
+        image_view.viewer_widget.screenshot()
+        image1 = image_view.viewer_widget.canvas.render()
+        assert np.any(image1 != 255)
         image_view.channel_control.set_active(1)
         ch_property.minimum_value.setValue(100)
         ch_property.maximum_value.setValue(10000)
         ch_property.filter_radius.setValue(0.5)
-        image2 = image_canvas.image
+        image2 = image_view.viewer_widget.canvas.render()
+        assert np.any(image2 != 255)
 
         assert np.all(image1 == image2)
 
@@ -186,19 +194,22 @@ class TestColorComboBoxGroup:
         ):
             ch_property.fixed.setChecked(True)
 
-        image1 = image_canvas.image
+        image1 = image_view.viewer_widget.canvas.render()
+        assert np.any(image1 != 255)
         with qtbot.waitSignal(image_view.channel_control.coloring_update), qtbot.waitSignal(
             image_view.channel_control.change_channel, check_params_cb=check_parameters
         ):
             ch_property.minimum_value.setValue(20)
-        image2 = image_canvas.image
+        image2 = image_view.viewer_widget.canvas.render()
+        assert np.any(image2 != 255)
         assert np.any(image1 != image2)
 
         with qtbot.waitSignal(image_view.channel_control.coloring_update), qtbot.waitSignal(
             image_view.channel_control.change_channel, check_params_cb=check_parameters
         ):
             ch_property.maximum_value.setValue(11000)
-        image3 = image_canvas.image
+        image3 = image_view.viewer_widget.screenshot()
+        assert np.any(image3 != 255)
         assert np.any(image2 != image3)
         assert np.any(image1 != image3)
 
@@ -207,7 +218,8 @@ class TestColorComboBoxGroup:
         ):
             ch_property.fixed.setChecked(False)
 
-        image1 = image_canvas.image
+        image1 = image_view.viewer_widget.screenshot()
+        assert np.any(image1 != 255)
         assert np.any(image1 != image2)
         assert np.any(image1 != image3)
         # Test gauss
@@ -215,7 +227,8 @@ class TestColorComboBoxGroup:
             image_view.channel_control.change_channel, check_params_cb=check_parameters
         ):
             ch_property.use_filter.set_value(NoiseFilterType.Gauss)
-        image4 = image_canvas.image
+        image4 = image_view.viewer_widget.screenshot()
+        assert np.any(image4 != 255)
         assert np.any(image1 != image4)
         assert np.any(image2 != image4)
         assert np.any(image3 != image4)
@@ -223,7 +236,8 @@ class TestColorComboBoxGroup:
             image_view.channel_control.change_channel, check_params_cb=check_parameters
         ):
             ch_property.filter_radius.setValue(1)
-        image5 = image_canvas.image
+        image5 = image_view.viewer_widget.screenshot()
+        assert np.any(image5 != 255)
         assert np.any(image1 != image5)
         assert np.any(image2 != image5)
         assert np.any(image3 != image5)
@@ -236,19 +250,21 @@ class TestColorComboBoxGroup:
         ):
             ch_property.fixed.setChecked(True)
 
-        image1 = image_canvas.image
+        image1 = image_view.viewer_widget.screenshot()
         with qtbot.waitSignal(image_view.channel_control.coloring_update), qtbot.waitSignal(
             image_view.channel_control.change_channel, check_params_cb=check_parameters
         ):
             ch_property.minimum_value.setValue(10)
-        image2 = image_canvas.image
+        image2 = image_view.viewer_widget.screenshot()
+        assert np.any(image2 != 255)
         assert np.any(image1 != image2)
 
         with qtbot.waitSignal(image_view.channel_control.coloring_update), qtbot.waitSignal(
             image_view.channel_control.change_channel, check_params_cb=check_parameters
         ):
             ch_property.maximum_value.setValue(11000)
-        image3 = image_canvas.image
+        image3 = image_view.viewer_widget.screenshot()
+        assert np.any(image3 != 255)
         assert np.any(image2 != image3)
         assert np.any(image1 != image3)
 
@@ -257,6 +273,7 @@ class TestColorComboBoxGroup:
         ):
             ch_property.fixed.setChecked(False)
 
-        image1 = image_canvas.image
+        image1 = image_view.viewer_widget.screenshot()
+        assert np.any(image1 != 255)
         assert np.any(image1 != image2)
         assert np.any(image1 != image3)
