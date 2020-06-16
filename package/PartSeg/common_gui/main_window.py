@@ -138,6 +138,16 @@ class BaseMainWindow(QMainWindow):
             app.setStyleSheet(settings.style_sheet)
         self.settings.theme_changed.connect(self.change_theme)
 
+    def napari_viewer_show(self):
+        viewer = Viewer(title="Additional output")
+        viewer.theme = self.settings.theme_name
+        image = self.settings.image
+        scaling = image.normalized_scaling()
+        for i in range(image.channels):
+            viewer.add_image(image.get_channel(i), name=f"channnel {i + 1}", scale=scaling, blending="additive")
+        self.viewer_list.append(viewer)
+        viewer.window.qt_viewer.destroyed.connect(lambda x: self.close_viewer(viewer))
+
     def additional_layers_show(self, with_channels=False):
         if not self.settings.additional_layers:
             QMessageBox().information(self, "No data", "Last executed algoritm does not provide additional data")

@@ -608,6 +608,7 @@ class MainWindow(BaseMainWindow):
         view_menu.addAction("Settings and Measurement").triggered.connect(self.main_menu.advanced_window_show)
         view_menu.addAction("Additional output").triggered.connect(self.additional_layers_show)
         view_menu.addAction("Additional output with data").triggered.connect(lambda: self.additional_layers_show(True))
+        view_menu.addAction("Napari viewer").triggered.connect(self.napari_viewer_show)
         image_menu = menu_bar.addMenu("Image operations")
         image_menu.addAction("Image adjustment").triggered.connect(self.image_adjust_exec)
         image_menu.addAction("Mask manager").triggered.connect(self.main_menu.mask_manager)
