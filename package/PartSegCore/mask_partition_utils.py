@@ -68,7 +68,7 @@ class BorderRim(AlgorithmDescribeBase):
         return mask
 
 
-class SplitMaskOnPart(AlgorithmDescribeBase):
+class MaskDistanceSplit(AlgorithmDescribeBase):
     """
     This class contains implementation of splitting mask on parts based on distance from borders.
     Has two modes or working. It may split on parts with same thickness or same volume..
@@ -97,7 +97,7 @@ class SplitMaskOnPart(AlgorithmDescribeBase):
 
     @classmethod
     def get_name(cls) -> str:
-        return "Mask on Part"
+        return "Mask Distance Split"
 
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:

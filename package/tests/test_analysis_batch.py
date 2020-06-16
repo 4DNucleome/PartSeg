@@ -74,7 +74,7 @@ class TestCalculationProcess:
             "sprawl_type": {"name": "Euclidean", "values": {}},
         }
 
-        segmentation = SegmentationProfile(name="test", algorithm="Lower threshold flow", values=parameters)
+        segmentation = SegmentationProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)
         mask_suffix = MaskSuffix(name="", suffix="_mask")
         chosen_fields = [
             MeasurementEntry(
@@ -121,7 +121,7 @@ class TestCalculationProcess:
             "sprawl_type": {"name": "Euclidean", "values": {}},
         }
 
-        segmentation = SegmentationProfile(name="test", algorithm="Lower threshold flow", values=parameters)
+        segmentation = SegmentationProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)
         chosen_fields = [
             MeasurementEntry(
                 name="Segmentation Volume",
@@ -166,7 +166,7 @@ class TestCalculationProcess:
             "sprawl_type": {"name": "Euclidean", "values": {}},
         }
 
-        segmentation = SegmentationProfile(name="test", algorithm="Lower threshold flow", values=parameters)
+        segmentation = SegmentationProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)
         mask_suffix = MaskSuffix(name="", suffix="_mask")
         chosen_fields = [
             MeasurementEntry(

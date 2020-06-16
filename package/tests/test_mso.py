@@ -7,7 +7,7 @@ from PartSegCore.multiscale_opening import PyMSO, calculate_mu, MuType
 import numpy as np
 
 from PartSegCore.multiscale_opening import calculate_mu_mid
-from PartSegCore.segmentation.sprawl import NeighType, calculate_distances_array
+from PartSegCore.segmentation.watershed import NeighType, calculate_distances_array
 
 
 class TestMu:

@@ -14,7 +14,7 @@ from ..algorithm_describe_base import Register, AlgorithmDescribeBase, Algorithm
 from .algorithm_base import SegmentationLimitException
 
 
-class BaseSprawl(AlgorithmDescribeBase, ABC):
+class BaseWatershed(AlgorithmDescribeBase, ABC):
     """base class for all sprawl interface"""
 
     @classmethod
@@ -53,7 +53,7 @@ class BaseSprawl(AlgorithmDescribeBase, ABC):
         raise NotImplementedError()
 
 
-class PathSprawl(BaseSprawl):
+class PathWatershed(BaseWatershed):
     @classmethod
     def get_name(cls):
         return "Path"
@@ -84,7 +84,7 @@ class PathSprawl(BaseSprawl):
         return path_sprawl(image, mid, components_num, neigh)
 
 
-class DistanceSprawl(BaseSprawl):
+class DistanceWatershed(BaseWatershed):
     """Calculate Euclidean sprawl (watersheed) with respect to image spacing"""
 
     @classmethod
@@ -109,7 +109,7 @@ class DistanceSprawl(BaseSprawl):
         return euclidean_sprawl(sprawl_area, core_objects, components_num, neigh, dist)
 
 
-class FDTSprawl(BaseSprawl):
+class FDTWatershed(BaseWatershed):
     @classmethod
     def get_name(cls):
         return "Fuzzy distance"
@@ -134,7 +134,7 @@ class FDTSprawl(BaseSprawl):
         return fdt_sprawl(image, core_objects, components_num, neigh, dist, lower_bound, upper_bound)
 
 
-class PathDistanceSprawl(BaseSprawl):
+class PathDistanceWatershed(BaseWatershed):
     @classmethod
     def get_name(cls):
         return "Path euclidean"
@@ -153,7 +153,7 @@ class PathDistanceSprawl(BaseSprawl):
         lower_bound,
         upper_bound,
     ):
-        mid = PathSprawl.sprawl(
+        mid = PathWatershed.sprawl(
             sprawl_area,
             core_objects,
             data,
@@ -165,7 +165,7 @@ class PathDistanceSprawl(BaseSprawl):
             lower_bound,
             upper_bound,
         )
-        return DistanceSprawl.sprawl(
+        return DistanceWatershed.sprawl(
             sprawl_area,
             mid,
             data,
@@ -179,7 +179,7 @@ class PathDistanceSprawl(BaseSprawl):
         )
 
 
-class MSOSprawl(BaseSprawl):
+class MSOWatershed(BaseWatershed):
     @classmethod
     def get_name(cls):
         return "MultiScale Opening"
@@ -226,7 +226,9 @@ class MSOSprawl(BaseSprawl):
         return result
 
 
-sprawl_dict = Register(MSOSprawl, PathSprawl, DistanceSprawl, PathDistanceSprawl, FDTSprawl, class_methods=["sprawl"])
+sprawl_dict = Register(
+    MSOWatershed, PathWatershed, DistanceWatershed, PathDistanceWatershed, FDTWatershed, class_methods=["sprawl"]
+)
 """This register contains algorithms for sprawl area from core object."""
 
 

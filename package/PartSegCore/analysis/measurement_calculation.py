@@ -13,7 +13,7 @@ from sympy import symbols
 from .. import autofit as af
 from ..channel_class import Channel
 from ..algorithm_describe_base import Register, AlgorithmProperty
-from ..mask_partition_utils import BorderRim, SplitMaskOnPart
+from ..mask_partition_utils import BorderRim, MaskDistanceSplit
 from ..class_generator import enum_register
 from ..universal_const import UNIT_SCALE, Units
 from ..utils import class_to_dict
@@ -798,8 +798,8 @@ class StandardDeviationOfPixelBrightness(MeasurementMethodBase):
         return True
 
 
-class MomentOfInertia(MeasurementMethodBase):
-    text_info = "Moment of inertia", "Calculate moment of inertia for segmented structure"
+class Moment(MeasurementMethodBase):
+    text_info = "Moment", "Calculate moment of segmented structure"
 
     @staticmethod
     def calculate_property(area_array, channel, voxel_size, **_):  # pylint: disable=W0221
@@ -824,8 +824,8 @@ class MomentOfInertia(MeasurementMethodBase):
         return True
 
 
-class LongestMainAxisLength(MeasurementMethodBase):
-    text_info = "Longest main axis length", "Length of first main axis"
+class FirstPrincipalAxisLength(MeasurementMethodBase):
+    text_info = "First principal axis length", "Length of first principal axis"
 
     @staticmethod
     def calculate_property(**kwargs):
@@ -840,8 +840,8 @@ class LongestMainAxisLength(MeasurementMethodBase):
         return True
 
 
-class MiddleMainAxisLength(MeasurementMethodBase):
-    text_info = "Middle main axis length", "Length of second main axis"
+class SecondPrincipalAxisLength(MeasurementMethodBase):
+    text_info = "Second principal axis length", "Length of second principal axis"
 
     @staticmethod
     def calculate_property(**kwargs):
@@ -856,8 +856,8 @@ class MiddleMainAxisLength(MeasurementMethodBase):
         return True
 
 
-class ShortestMainAxisLength(MeasurementMethodBase):
-    text_info = "Shortest main axis length", "Length of third main axis"
+class ThirdPrincipalAxisLength(MeasurementMethodBase):
+    text_info = "Third principal axis length", "Length of third principal axis"
 
     @staticmethod
     def calculate_property(**kwargs):
@@ -956,7 +956,7 @@ class Surface(MeasurementMethodBase):
 
 
 class RimVolume(MeasurementMethodBase):
-    text_info = "Rim Volume", "Calculate volumes for elements in radius (in physical units) from mask"
+    text_info = "rim volume", "Calculate volumes for elements in radius (in physical units) from mask"
 
     @classmethod
     def get_fields(cls):
@@ -985,7 +985,7 @@ class RimVolume(MeasurementMethodBase):
 
 class RimPixelBrightnessSum(MeasurementMethodBase):
     text_info = (
-        "Rim Pixel Brightness Sum",
+        "rim pixel brightness sum",
         "Calculate mass for components located within rim (in physical units) from mask",
     )
 
@@ -1114,19 +1114,19 @@ class DistanceMaskSegmentation(MeasurementMethodBase):
 
 class SplitOnPartVolume(MeasurementMethodBase):
     text_info = (
-        "split on part volume",
+        "distance splitting volume",
         "Split mask on parts and then calculate volume of cross " "of segmentation and mask part",
     )
 
     @classmethod
     def get_fields(cls):
-        return SplitMaskOnPart.get_fields() + [
+        return MaskDistanceSplit.get_fields() + [
             AlgorithmProperty("part_selection", "Which part  (from border)", 2, (1, 1024))
         ]
 
     @staticmethod
     def calculate_property(part_selection, area_array, voxel_size, result_scalar, **kwargs):  # pylint: disable=W0221
-        masked = SplitMaskOnPart.split(voxel_size=voxel_size, **kwargs)
+        masked = MaskDistanceSplit.split(voxel_size=voxel_size, **kwargs)
         mask = masked == part_selection
         return np.count_nonzero(mask * area_array) * pixel_volume(voxel_size, result_scalar)
 
@@ -1145,19 +1145,19 @@ class SplitOnPartVolume(MeasurementMethodBase):
 
 class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
     text_info = (
-        "split on part pixel brightness sum",
+        "distance splitting pixel brightness sum",
         "Split mask on parts and then calculate pixel brightness sum" " of cross of segmentation and mask part",
     )
 
     @classmethod
     def get_fields(cls):
-        return SplitMaskOnPart.get_fields() + [
+        return MaskDistanceSplit.get_fields() + [
             AlgorithmProperty("part_selection", "Which part (from border)", 2, (1, 1024))
         ]
 
     @staticmethod
     def calculate_property(part_selection, channel, area_array, **kwargs):  # pylint: disable=W0221
-        masked = SplitMaskOnPart.split(**kwargs)
+        masked = MaskDistanceSplit.split(**kwargs)
         mask = np.array(masked == part_selection)
         if channel.ndim - mask.ndim == 1:
             channel = channel[0]
@@ -1220,10 +1220,10 @@ MEASUREMENT_DICT = Register(
     MeanPixelBrightness,
     MedianPixelBrightness,
     StandardDeviationOfPixelBrightness,
-    MomentOfInertia,
-    LongestMainAxisLength,
-    MiddleMainAxisLength,
-    ShortestMainAxisLength,
+    Moment,
+    FirstPrincipalAxisLength,
+    SecondPrincipalAxisLength,
+    ThirdPrincipalAxisLength,
     Compactness,
     Sphericity,
     Surface,

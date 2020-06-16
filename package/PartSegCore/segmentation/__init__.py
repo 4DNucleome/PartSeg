@@ -2,7 +2,7 @@ import sys
 import os
 
 from .algorithm_base import SegmentationAlgorithm
-from .sprawl import BaseSprawl
+from .watershed import BaseWatershed
 from .threshold import BaseThreshold
 from .noise_filtering import NoiseFilteringBase
 from .restartable_segmentation_algorithms import RestartableAlgorithm
@@ -11,7 +11,7 @@ from .segmentation_algorithm import StackAlgorithm
 
 __all__ = [
     "SegmentationAlgorithm",
-    "BaseSprawl",
+    "BaseWatershed",
     "NoiseFilteringBase",
     "BaseThreshold",
     "RestartableAlgorithm",

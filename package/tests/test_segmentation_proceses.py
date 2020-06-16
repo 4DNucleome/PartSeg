@@ -1,12 +1,14 @@
 import os.path
+
+import numpy as np
 import pytest
 
-from PartSegImage import TiffImageReader
-from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.analysis.load_functions import UpdateLoadedMetadataAnalysis
 from PartSegCore.json_hooks import check_loaded_dict
 from PartSegCore.segmentation.algorithm_base import SegmentationAlgorithm
+from PartSegImage import TiffImageReader
 
 
 def empty(_a, _b):
@@ -35,4 +37,4 @@ class TestSegmentation:
             algorithm.set_mask(image.mask.squeeze())
             algorithm.set_parameters(**val.values)
             result = algorithm.calculation_run(empty)
-            assert result.segmentation.max() == 2
+            assert np.max(result.segmentation) == 2

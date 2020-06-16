@@ -9,12 +9,12 @@ import numpy as np
 
 from ..multiscale_opening import PyMSO
 from ..multiscale_opening import calculate_mu_mid
-from ..mask_partition_utils import BorderRim as BorderRimBase, SplitMaskOnPart as SplitMaskOnPartBase
+from ..mask_partition_utils import BorderRim as BorderRimBase, MaskDistanceSplit as MaskDistanceSplitBase
 from ..channel_class import Channel
 from .algorithm_base import SegmentationAlgorithm, SegmentationResult, SegmentationLimitException
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
 from .noise_filtering import noise_filtering_dict
-from .sprawl import sprawl_dict, BaseSprawl, calculate_distances_array, get_neigh
+from .watershed import sprawl_dict, BaseWatershed, calculate_distances_array, get_neigh
 from .threshold import threshold_dict, BaseThreshold, double_threshold_dict
 from ..universal_const import Units
 from ..utils import bisect
@@ -105,7 +105,7 @@ class BorderRim(RestartableAlgorithm):
         raise SegmentationLimitException("Border Rim needs mask")
 
 
-class SplitMaskOnPart(RestartableAlgorithm):
+class MaskDistanceSplit(RestartableAlgorithm):
     """
     This class wrap the :py:class:`PartSegCore.mask_partition_utils.SplitMaskOnPart`
     class in segmentation algorithm interface. It allow user to check how split look with given set of parameters
@@ -113,7 +113,9 @@ class SplitMaskOnPart(RestartableAlgorithm):
 
     def calculation_run(self, report_fun: typing.Callable[[str, int], None]) -> SegmentationResult:
         if self.mask is not None:
-            result = SplitMaskOnPartBase.split(mask=self.mask, voxel_size=self.image.voxel_size, **self.new_parameters)
+            result = MaskDistanceSplitBase.split(
+                mask=self.mask, voxel_size=self.image.voxel_size, **self.new_parameters
+            )
             return SegmentationResult(result, self.get_segmentation_profile(), result, None)
 
     def get_segmentation_profile(self) -> SegmentationProfile:
@@ -121,11 +123,11 @@ class SplitMaskOnPart(RestartableAlgorithm):
 
     @classmethod
     def get_name(cls) -> str:
-        return "Split Mask on Part"
+        return "Mask Distance Splitting"
 
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
-        return ["Need mask"] + SplitMaskOnPartBase.get_fields()
+        return ["Need mask"] + MaskDistanceSplitBase.get_fields()
 
 
 class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
@@ -437,7 +439,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
                 return SegmentationResult(
                     self.finally_segment, self.get_segmentation_profile(), self.segmentation, self.cleaned_image
                 )
-            path_sprawl: BaseSprawl = sprawl_dict[self.new_parameters["sprawl_type"]["name"]]
+            path_sprawl: BaseWatershed = sprawl_dict[self.new_parameters["sprawl_type"]["name"]]
             self.parameters["sprawl_type"] = self.new_parameters["sprawl_type"]
             new_segment = path_sprawl.sprawl(
                 self.sprawl_area,
@@ -462,7 +464,7 @@ class LowerThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
 
     @classmethod
     def get_name(cls):
-        return "Lower threshold flow"
+        return "Lower threshold with watershed"
 
 
 class UpperThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
@@ -470,7 +472,7 @@ class UpperThresholdFlowAlgorithm(BaseThresholdFlowAlgorithm):
 
     @classmethod
     def get_name(cls):
-        return "Upper threshold flow"
+        return "Upper threshold with watershed"
 
 
 class OtsuSegment(RestartableAlgorithm):
@@ -675,5 +677,5 @@ final_algorithm_list = [
     # UpperThresholdMultiScaleOpening,
     OtsuSegment,
     BorderRim,
-    SplitMaskOnPart,
+    MaskDistanceSplit,
 ]

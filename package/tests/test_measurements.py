@@ -19,10 +19,10 @@ from PartSegCore.analysis.measurement_calculation import (
     MeanPixelBrightness,
     MedianPixelBrightness,
     StandardDeviationOfPixelBrightness,
-    MomentOfInertia,
-    LongestMainAxisLength,
-    MiddleMainAxisLength,
-    ShortestMainAxisLength,
+    Moment,
+    FirstPrincipalAxisLength,
+    SecondPrincipalAxisLength,
+    ThirdPrincipalAxisLength,
     Surface,
     RimVolume,
     RimPixelBrightnessSum,
@@ -265,33 +265,33 @@ class TestMomentOfInertia:
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         mask3 = image.get_channel(0)[0] >= 0
-        in1 = MomentOfInertia.calculate_property(mask1, image.get_channel(0), image.spacing)
-        in2 = MomentOfInertia.calculate_property(mask2, image.get_channel(0), image.spacing)
-        in3 = MomentOfInertia.calculate_property(mask3, image.get_channel(0), image.spacing)
+        in1 = Moment.calculate_property(mask1, image.get_channel(0), image.spacing)
+        in2 = Moment.calculate_property(mask2, image.get_channel(0), image.spacing)
+        in3 = Moment.calculate_property(mask3, image.get_channel(0), image.spacing)
         assert in1 == in3
         assert in1 > in2
 
     def test_empty(self):
         image = get_cube_image()
         mask = image.get_channel(0)[0] > 80
-        assert MomentOfInertia.calculate_property(mask, image.get_channel(0), image.spacing) == 0
+        assert Moment.calculate_property(mask, image.get_channel(0), image.spacing) == 0
 
     def test_values(self):
         spacing = (10, 6, 6)
         image_array = np.zeros((10, 16, 16))
         mask = np.ones(image_array.shape)
         image_array[5, 8, 8] = 1
-        assert MomentOfInertia.calculate_property(mask, image_array, spacing) == 0
+        assert Moment.calculate_property(mask, image_array, spacing) == 0
         image_array[5, 8, 9] = 1
-        assert MomentOfInertia.calculate_property(mask, image_array, spacing) == (0.5 * 6) ** 2 * 2
+        assert Moment.calculate_property(mask, image_array, spacing) == (0.5 * 6) ** 2 * 2
         image_array = np.zeros((10, 16, 16))
         image_array[5, 8, 8] = 1
         image_array[5, 10, 8] = 3
-        assert MomentOfInertia.calculate_property(mask, image_array, spacing) == 9 ** 2 + 3 ** 2 * 3
+        assert Moment.calculate_property(mask, image_array, spacing) == 9 ** 2 + 3 ** 2 * 3
         image_array = np.zeros((10, 16, 16))
         image_array[5, 6, 8] = 3
         image_array[5, 10, 8] = 3
-        assert MomentOfInertia.calculate_property(mask, image_array, spacing) == 3 * 2 * 12 ** 2
+        assert Moment.calculate_property(mask, image_array, spacing) == 3 * 2 * 12 ** 2
 
     def test_density_mass_center(self):
         spacing = (10, 6, 6)
@@ -321,7 +321,7 @@ class TestMainAxis:
     @pytest.mark.parametrize("image", (get_cube_image(), get_square_image()), ids=["cube", "square"])
     @pytest.mark.parametrize(
         "method,scalar,last",
-        [(LongestMainAxisLength, 20, 0), (MiddleMainAxisLength, 10, 0), (ShortestMainAxisLength, 10, 1)],
+        [(FirstPrincipalAxisLength, 20, 0), (SecondPrincipalAxisLength, 10, 0), (ThirdPrincipalAxisLength, 10, 1)],
     )
     @pytest.mark.parametrize("threshold,len_scalar", [(40, 59), (60, 39)])
     @pytest.mark.parametrize("result_scalar", [1, 0.5, 3])
@@ -347,7 +347,7 @@ class TestMainAxis:
     def test_empty(self, cube_image):
         mask = cube_image.get_channel(0)[0] > 80
         assert (
-            ShortestMainAxisLength.calculate_property(
+            ThirdPrincipalAxisLength.calculate_property(
                 area_array=mask,
                 channel=cube_image.get_channel(0),
                 help_dict={},
@@ -360,7 +360,7 @@ class TestMainAxis:
 
     @pytest.mark.parametrize(
         "method,result",
-        [(LongestMainAxisLength, 20 * 59), (MiddleMainAxisLength, 10 * 59), (ShortestMainAxisLength, 0)],
+        [(FirstPrincipalAxisLength, 20 * 59), (SecondPrincipalAxisLength, 10 * 59), (ThirdPrincipalAxisLength, 0)],
     )
     def test_without_help_dict(self, square_image, method, result):
         square_image = square_image.substitute(image_spacing=(10, 10, 20))
@@ -1557,13 +1557,13 @@ class TestStatisticProfile:
             ),
             MeasurementEntry(
                 "LongestMainAxisLength",
-                LongestMainAxisLength.get_starting_leaf().replace_(
+                FirstPrincipalAxisLength.get_starting_leaf().replace_(
                     area=AreaType.Segmentation, per_component=PerComponent.No
                 ),
             ),
             MeasurementEntry(
                 "LongestMainAxisLength per component",
-                LongestMainAxisLength.get_starting_leaf().replace_(
+                FirstPrincipalAxisLength.get_starting_leaf().replace_(
                     area=AreaType.Segmentation, per_component=PerComponent.Yes
                 ),
             ),

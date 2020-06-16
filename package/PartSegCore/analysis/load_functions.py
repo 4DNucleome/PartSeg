@@ -309,6 +309,17 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
     json_hook = part_hook
 
     @classmethod
+    def update_segmentation_profile(cls, profile_data: SegmentationProfile) -> SegmentationProfile:
+        replace_name_dict = {
+            "Split Mask on Part": "Mask Distance Splitting",
+            "Lower threshold flow": "Lower threshold with watershed",
+            "Upper threshold flow": "Upper threshold with watershed",
+        }
+        if profile_data.algorithm in replace_name_dict:
+            profile_data.algorithm = replace_name_dict[profile_data.algorithm]
+        return super().update_segmentation_profile(profile_data)
+
+    @classmethod
     def update_calculation_tree(cls, data: CalculationTree) -> CalculationTree:
         data.operation = cls.recursive_update(data.operation)
         data.children = [cls.update_calculation_tree(x) for x in data.children]
@@ -342,13 +353,23 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
 
     @classmethod
     def update_measurement_calculation_tree(cls, data: typing.Union[Leaf, Node]) -> typing.Union[Leaf, Node]:
+        replace_name_dict = {
+            "Moment of inertia": "Moment",
+            "Components Number": "Components number",
+            "Pixel Brightness Sum": "Pixel brightness sum",
+            "Longest main axis length": "First principal axis length",
+            "Middle main axis length": "Second principal axis length",
+            "Shortest main axis length": "Third principal axis length",
+            "split on part volume": "distance splitting volume",
+            "split on part pixel brightness sum": "distance splitting pixel brightness sum",
+            "Rim Volume": "rim volume",
+            "Rim Pixel Brightness Sum": "rim pixel brightness sum",
+        }
+
         if isinstance(data, Leaf):
-            if data.name == "Components Number":
+            if data.name in replace_name_dict:
                 # noinspection PyUnresolvedReferences
-                return data._replace(name="Components number")
-            elif data.name == "Pixel Brightness Sum":
-                # noinspection PyUnresolvedReferences
-                return data._replace(name="Pixel brightness sum")
+                return data._replace(name=replace_name_dict[data.name])
             return data
         else:
             return data.replace_(

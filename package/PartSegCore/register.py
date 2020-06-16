@@ -28,7 +28,7 @@ from .image_transforming import image_transform_dict, TransformBase
 from .mask import io_functions, algorithm_description as mask_algorithm_description
 from .segmentation import (
     threshold,
-    sprawl,
+    watershed,
     segmentation_algorithm,
     restartable_segmentation_algorithms,
     noise_filtering,
@@ -60,7 +60,7 @@ class RegisterEnum(Enum):
 
 # noinspection DuplicatedCode
 register_dict = {
-    RegisterEnum.sprawl: sprawl.sprawl_dict,
+    RegisterEnum.sprawl: watershed.sprawl_dict,
     RegisterEnum.threshold: threshold.threshold_dict,
     RegisterEnum.noise_filtering: noise_filtering.noise_filtering_dict,
     RegisterEnum.analysis_algorithm: analysis_algorithm_description.analysis_algorithm_dict,
@@ -77,7 +77,7 @@ register_dict = {
 
 # noinspection DuplicatedCode
 base_class_dict = {
-    RegisterEnum.sprawl: sprawl.BaseSprawl,
+    RegisterEnum.sprawl: watershed.BaseWatershed,
     RegisterEnum.threshold: threshold.BaseThreshold,
     RegisterEnum.noise_filtering: noise_filtering.NoiseFilteringBase,
     RegisterEnum.analysis_algorithm: restartable_segmentation_algorithms.RestartableAlgorithm,
@@ -94,7 +94,7 @@ base_class_dict = {
 
 reload_module_list = [
     threshold,
-    sprawl,
+    watershed,
     segmentation_algorithm,
     restartable_segmentation_algorithms,
     noise_filtering,

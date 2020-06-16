@@ -6,7 +6,7 @@ import SimpleITK as sitk
 import numpy as np
 
 from PartSegCore.segmentation.border_smoothing import smooth_dict
-from PartSegCore.segmentation.sprawl import sprawl_dict, BaseSprawl
+from PartSegCore.segmentation.watershed import sprawl_dict, BaseWatershed
 from ..utils import bisect
 from ..channel_class import Channel
 from ..segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
@@ -330,7 +330,7 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
         )
 
         report_fun("Sprawl calculation", 5)
-        sprawl_algorithm: BaseSprawl = sprawl_dict[self.parameters["sprawl_type"]["name"]]
+        sprawl_algorithm: BaseWatershed = sprawl_dict[self.parameters["sprawl_type"]["name"]]
         segmentation = sprawl_algorithm.sprawl(
             mask,
             core_objects,
