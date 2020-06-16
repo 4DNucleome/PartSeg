@@ -164,16 +164,18 @@ class LoadBase(AlgorithmDescribeBase, ABC):
         return cls.get_name()
 
     @classmethod
-    def get_fields(cls):
-        return []
+    def get_extensions(cls) -> typing.List[str]:
+        match = re.match(r".*\((.*)\)", cls.get_name())
+        if match is None:
+            raise ValueError(f"No extensions found in {cls.get_name()}")
+        extensions = match.group(1).split(" ")
+        if not all((x.startswith("*.") for x in extensions)):
+            raise ValueError(f"Error with parsing extensions in {cls.get_name()}")
+        return [x[1:] for x in extensions]
 
     @classmethod
-    def get_extensions(cls) -> typing.List:
-        match = re.match(r".*\((.*)\)", cls.get_name())
-        if match:
-            return [x[1:] for x in match.group(1).split(" ") if len(x) > 3]
-        else:
-            return []
+    def get_fields(cls):
+        return []
 
     @classmethod
     def number_of_files(cls):
