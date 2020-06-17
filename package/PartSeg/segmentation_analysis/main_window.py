@@ -561,7 +561,8 @@ class MainWindow(BaseMainWindow):
         super().__init__(config_folder, title, settings, signal_fun)
         self.files_num = 2
         self.setMinimumWidth(600)
-        assert isinstance(self.settings, PartSettings)
+        # thi isinstance is only for hinting in IDE
+        assert isinstance(self.settings, PartSettings)  # nosec
         self.main_menu = MainMenu(self.settings, self)
         # self.channel_control1 = ChannelControl(self.settings, name="raw_control", text="Left panel:")
         self.channel_control2 = ChannelProperty(self.settings, start_name="result_control")

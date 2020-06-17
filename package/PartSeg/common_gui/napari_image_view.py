@@ -504,7 +504,8 @@ class ImageView(QWidget):
         size = np.subtract(max_shape, min_shape)
         return size, min_shape
 
-    def _shift_layer(self, layer: Layer, translate_2d):
+    @staticmethod
+    def _shift_layer(layer: Layer, translate_2d):
         translate = [0] * layer.ndim
         translate[-2:] = translate_2d
         layer.translate_grid = translate
@@ -513,7 +514,7 @@ class ImageView(QWidget):
         """Present multiple images in grid view"""
         n_row = np.ceil(np.sqrt(len(self.image_info))).astype(int)
         n_row = max(1, n_row)
-        scene_size, corner = self.images_bounds()
+        scene_size, _ = self.images_bounds()
         for image_info, pos in zip(self.image_info.values(), itertools.product(range(n_row), repeat=2)):
             translate_2d = np.multiply(scene_size[-2:], pos)
             for layer in image_info.layers:
@@ -538,12 +539,12 @@ class ImageView(QWidget):
                     limits = image_info.image.get_ranges()[index] if limits is None else limits
                     image_info.layers[index].contrast_limits = limits
                     image_info.layers[index].gamma = self.channel_control.get_gamma()[index]
-                    filter = self.channel_control.get_filter()[index]
-                    if filter != image_info.filter_info[index]:
+                    filter_type = self.channel_control.get_filter()[index]
+                    if filter_type != image_info.filter_info[index]:
                         image_info.layers[index].data = self.calculate_filter(
-                            image_info.image.get_channel(index), filter
+                            image_info.image.get_channel(index), filter_type
                         )
-                        image_info.filter_info[index] = filter
+                        image_info.filter_info[index] = filter_type
 
     def reset_image_size(self):
         self.viewer.reset_view()

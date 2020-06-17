@@ -8,7 +8,7 @@ from typing import Type
 import PartSegData
 import numpy as np
 from qtpy.QtCore import Signal, Qt, QByteArray, Slot
-from qtpy.QtGui import QGuiApplication, QIcon
+from qtpy.QtGui import QGuiApplication, QIcon, QCloseEvent
 from qtpy.QtWidgets import (
     QWidget,
     QPushButton,
@@ -949,7 +949,7 @@ class MainWindow(BaseMainWindow):
         self.image_view.reset_image_size()
         self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
 
-    def closeEvent(self, e):
+    def closeEvent(self, event: QCloseEvent):
         # print(self.settings.dump_view_profiles())
         # print(self.settings.segmentation_dict["default"].my_dict)
         self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
@@ -965,6 +965,7 @@ class MainWindow(BaseMainWindow):
         del self.main_menu.segmentation_dialog
         del self.options_panel.algorithm_options.show_parameters_widget
         self.settings.dump()
+        super().closeEvent(event)
 
     def read_drop(self, paths):
         self._read_drop(paths, io_functions)

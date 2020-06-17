@@ -51,7 +51,7 @@ class ImageSettings(QObject):
         raise AttributeError("full_segmentation not supported")
 
     @full_segmentation.setter
-    def full_segmentation(self, val):
+    def full_segmentation(self, val):  # pylint: disable=R0201
         raise AttributeError("full_segmentation not supported")
 
     @property
@@ -59,7 +59,7 @@ class ImageSettings(QObject):
         raise AttributeError("full_segmentation not supported")
 
     @noise_remove_image_part.setter
-    def noise_remove_image_part(self, val):
+    def noise_remove_image_part(self, val):  # pylint: disable=R0201
         raise AttributeError("full_segmentation not supported")
 
     @property
@@ -244,7 +244,8 @@ class ViewSettings(ImageSettings):
         self.set_in_profile("theme", value)
         self.theme_changed.emit()
 
-    def theme_list(self):
+    @staticmethod
+    def theme_list():
         return list(napari.utils.theme.palettes.keys())
 
     @property

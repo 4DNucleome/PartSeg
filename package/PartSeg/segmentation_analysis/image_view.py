@@ -5,6 +5,7 @@ from qtpy.QtCore import QObject, Slot, QSignalBlocker
 from qtpy.QtWidgets import QCheckBox, QDoubleSpinBox, QLabel
 
 from PartSegCore.segmentation.segmentation_info import SegmentationInfo
+from PartSegImage import Image
 from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.napari_image_view import ImageView
 from .partseg_settings import PartSettings
@@ -46,8 +47,10 @@ class ResultImageView(ImageView):
 
     @Slot()
     @Slot(SegmentationInfo)
-    def set_segmentation(self, labels: Optional[SegmentationInfo] = None):
-        super().set_segmentation(labels)
+    def set_segmentation(
+        self, segmentation_info: Optional[SegmentationInfo] = None, image: Optional[Image] = None
+    ) -> None:
+        super().set_segmentation(segmentation_info, image)
         show = self.any_segmentation()
         self.label1.setVisible(show)
         self.label2.setVisible(show)

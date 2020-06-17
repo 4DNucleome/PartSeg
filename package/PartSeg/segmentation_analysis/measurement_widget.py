@@ -315,8 +315,8 @@ class MeasurementWidget(QWidget):
         units = self.units_choose.get_value()
 
         # FIXME find which errors should be displayed as warning
-        def exception_hook(exception):
-            QMessageBox.warning(self, "Calculation error", f"Error during calculation: {exception}")
+        # def exception_hook(exception):
+        #    QMessageBox.warning(self, "Calculation error", f"Error during calculation: {exception}")
 
         kwargs = {}
         for num in compute_class.get_channels_num():
