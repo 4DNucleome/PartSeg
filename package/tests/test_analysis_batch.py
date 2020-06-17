@@ -304,6 +304,7 @@ class TestCalculationProcess:
         while manager.has_work:
             time.sleep(0.1)
             manager.get_results()
+        manager.writer.finish()
         if sys.platform == "darwin":
             time.sleep(2)
         else:
@@ -340,6 +341,7 @@ class TestCalculationProcess:
             time.sleep(2)
         else:
             time.sleep(0.4)
+        manager.writer.finish()
         assert os.path.exists(os.path.join(tmpdir, "test2.xlsx"))
         df = pd.read_excel(os.path.join(tmpdir, "test2.xlsx"), index_col=0, header=[0, 1])
         assert df.shape == (2, 4)
@@ -365,11 +367,14 @@ class TestCalculationProcess:
 
         while manager.has_work:
             time.sleep(0.1)
-            manager.get_results()
+            res = manager.get_results()
+            if res.errors:
+                print(res.errors, file=sys.stderr)
         if sys.platform == "darwin":
             time.sleep(2)
         else:
             time.sleep(0.4)
+        manager.writer.finish()
         assert os.path.exists(os.path.join(tmpdir, "test3.xlsx"))
         df = pd.read_excel(os.path.join(tmpdir, "test3.xlsx"), index_col=0, header=[0, 1])
         assert df.shape == (8, 10)

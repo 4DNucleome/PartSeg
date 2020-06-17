@@ -21,6 +21,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: downoload_data
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
         python_version: ['3.6', '3.7', '3.8']

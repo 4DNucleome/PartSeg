@@ -4,9 +4,12 @@ import os.path
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple, Union, NamedTuple, List
+from typing import Optional, Tuple, Union, NamedTuple, List, Dict
 
 import numpy as np
+import napari.utils.theme
+from napari.resources import get_stylesheet
+from napari.utils.theme import template as napari_template
 from qtpy.QtCore import QObject, Signal
 
 from PartSeg.common_backend.partially_const_dict import PartiallyConstDict
@@ -14,6 +17,7 @@ from PartSegCore.color_image import ColorMap, default_colormap_dict, default_lab
 from PartSegCore.color_image.base_colors import starting_colors
 from PartSegCore.io_utils import ProjectInfoBase, load_metadata_base, HistoryElement
 from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, check_loaded_dict
+from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
 from PartSegCore.segmentation.segmentation_info import SegmentationInfo
 from PartSegImage import Image
 
@@ -24,14 +28,15 @@ class ImageSettings(QObject):
     """
 
     image_changed = Signal([Image], [int], [str])
+    image_spacing_changed = Signal()
     """:py:class:`Signal` ``([Image], [int], [str])`` emitted when image has changed"""
-    segmentation_changed = Signal(np.ndarray)
+    segmentation_changed = Signal(SegmentationInfo)
     """
     :py:class:`.Signal`
     emitted when segmentation has changed
     """
     segmentation_clean = Signal()
-    noise_remove_image_part_changed = Signal()
+    additional_layers_changed = Signal()
 
     def __init__(self):
         super().__init__()
@@ -39,16 +44,32 @@ class ImageSettings(QObject):
         self._image_path = ""
         self._image_spacing = 210, 70, 70
         self._segmentation_info = SegmentationInfo(None)
-        self._noise_removed = None
+        self._additional_layers = {}
+
+    @property
+    def full_segmentation(self):
+        raise AttributeError("full_segmentation not supported")
+
+    @full_segmentation.setter
+    def full_segmentation(self, val):  # pylint: disable=R0201
+        raise AttributeError("full_segmentation not supported")
 
     @property
     def noise_remove_image_part(self):
-        return self._noise_removed
+        raise AttributeError("full_segmentation not supported")
 
     @noise_remove_image_part.setter
-    def noise_remove_image_part(self, val):
-        self._noise_removed = val
-        self.noise_remove_image_part_changed.emit()
+    def noise_remove_image_part(self, val):  # pylint: disable=R0201
+        raise AttributeError("full_segmentation not supported")
+
+    @property
+    def additional_layers(self) -> Dict[str, AdditionalLayerDescription]:
+        return self._additional_layers
+
+    @additional_layers.setter
+    def additional_layers(self, val: Dict[str, AdditionalLayerDescription]):
+        self._additional_layers = val
+        self.additional_layers_changed.emit()
 
     @property
     def image_spacing(self):
@@ -69,6 +90,7 @@ class ImageSettings(QObject):
             self._image.set_spacing(tuple([self._image.spacing[0]] + list(value)))
         else:
             self._image.set_spacing(value)
+        self.image_spacing_changed.emit()
 
     @property
     def segmentation(self) -> np.ndarray:
@@ -83,12 +105,12 @@ class ImageSettings(QObject):
     def segmentation(self, val: np.ndarray):
         if val is not None:
             try:
-                self.image.fit_array_to_image(val)
+                val = self.image.fit_array_to_image(val)
             except ValueError:
                 raise ValueError("Segmentation do not fit to image")
         self._segmentation_info = SegmentationInfo(val)
         if val is not None:
-            self.segmentation_changed.emit(val)
+            self.segmentation_changed.emit(self._segmentation_info)
         else:
             self.segmentation_clean.emit()
 
@@ -191,6 +213,7 @@ class LabelColorDict(PartiallyConstDict[list]):
 class ViewSettings(ImageSettings):
     colormap_changes = Signal()
     labels_changed = Signal()
+    theme_changed = Signal()
 
     def __init__(self):
         super().__init__()
@@ -201,6 +224,29 @@ class ViewSettings(ImageSettings):
         self.colormap_dict = ColormapDict(self.get_from_profile("custom_colormap", {}))
         self.label_color_dict = LabelColorDict(self.get_from_profile("custom_label_colors", {}))
         self.cached_labels: Optional[Tuple[str, np.ndarray]] = None
+
+    @property
+    def theme_name(self) -> str:
+        return self.get_from_profile("theme", "light")
+
+    @property
+    def style_sheet(self):
+        palette = napari.utils.theme.palettes[self.theme_name]
+        palette["canvas"] = "black"
+        return napari_template(get_stylesheet(), **palette)
+
+    @theme_name.setter
+    def theme_name(self, value: str):
+        if value not in napari.utils.theme.palettes:
+            raise ValueError(f"Unsupported theme {value}. Supported one: {self.theme_list()}")
+        if value == self.theme_name:
+            return
+        self.set_in_profile("theme", value)
+        self.theme_changed.emit()
+
+    @staticmethod
+    def theme_list():
+        return list(napari.utils.theme.palettes.keys())
 
     @property
     def chosen_colormap(self):

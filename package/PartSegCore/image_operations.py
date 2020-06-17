@@ -40,13 +40,19 @@ def _generic_image_operation(image, radius, fun, layer):
         image = image.astype(np.uint8)
     if isinstance(radius, (list, tuple)):
         radius = list(reversed(radius))
-    if not layer or image.ndim == 2:
+    if not layer and image.ndim <= 3:
         return sitk.GetArrayFromImage(fun(sitk.GetImageFromArray(image), radius))
     else:
-        res = np.copy(image)
-        for layer in res:
-            layer[...] = sitk.GetArrayFromImage(fun(sitk.GetImageFromArray(layer), radius))
-        return res
+        return _generic_image_operations_recurse(np.copy(image), radius, fun, layer)
+
+
+def _generic_image_operations_recurse(image, radius, fun, layer):
+    if (not layer and image.ndim == 3) or image.ndim == 2:
+        return sitk.GetArrayFromImage(fun(sitk.GetImageFromArray(image), radius))
+    else:
+        for layer_data in image:
+            layer_data[...] = _generic_image_operations_recurse(layer_data, radius, fun, layer)
+        return image
 
 
 def gaussian(image: np.ndarray, radius: float, layer=True):
@@ -71,7 +77,7 @@ def median(image: np.ndarray, radius: Union[int, List[int]], layer=True):
     :return:
     """
     if not isinstance(radius, Iterable):
-        radius = [radius] * image.ndim
+        radius = [radius] * min(image.ndim, 2 if layer else 3)
     return _generic_image_operation(image, radius, sitk.Median, layer)
 
 

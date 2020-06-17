@@ -134,6 +134,14 @@ class Image:
         return self.return_order.index("C")
 
     @lazyattr
+    def x_pos(self):
+        return self.return_order.index("X")
+
+    @lazyattr
+    def y_pos(self):
+        return self.return_order.index("Y")
+
+    @lazyattr
     def time_pos(self):
         return self.return_order.index("T")
 
@@ -367,6 +375,9 @@ class Image:
             return tuple(self._image_spacing[1:])
         return self._image_spacing
 
+    def normalized_scaling(self, factor=10 ** 9) -> Spacing:
+        return (1,) + tuple(np.multiply(self._image_spacing, factor))
+
     @property
     def voxel_size(self) -> Spacing:
         """alias for spacing"""
@@ -374,6 +385,8 @@ class Image:
 
     def set_spacing(self, value: Spacing):
         """set image spacing"""
+        if any([x == 0 for x in value]):
+            return
         if self.is_2d and len(value) + 1 == len(self._image_spacing):
             value = (1.0,) + tuple(value)
         if len(value) != len(self._image_spacing):
@@ -463,7 +476,7 @@ class Image:
         """image spacing in micrometers"""
         return tuple([float(x * 10 ** 6) for x in self.spacing])
 
-    def get_ranges(self) -> typing.Collection[typing.Tuple[float, float]]:
+    def get_ranges(self) -> typing.List[typing.Tuple[float, float]]:
         """image brightness ranges for each channel"""
         return self.ranges[:]
 
@@ -474,7 +487,7 @@ class Image:
         )
 
     def __repr__(self):
-        mask_info = f"mask=True, mask_dtype={self._mask_array.dtype}" if self.mask else "mask=False"
+        mask_info = f"mask=True, mask_dtype={self._mask_array.dtype}" if self.mask is not None else "mask=False"
         return (
             f"Image(shape={self._image_array.shape} dtype={self._image_array.dtype}, spacing={self.spacing}"
             f"labels={self.labels}, channels={self.channels}, axes={repr(self.return_order)}, {mask_info})"

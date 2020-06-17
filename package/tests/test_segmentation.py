@@ -97,8 +97,8 @@ class BaseThreshold(object):
         assert result.parameters.values == parameters
         assert result.parameters.algorithm == self.algorithm_class.get_name()
 
-    def get_parameters(self):
-        if hasattr(self, "parameters"):
+    def get_parameters(self) -> dict:
+        if hasattr(self, "parameters") and isinstance(self.parameters, dict):
             return deepcopy(self.parameters)
         raise NotImplementedError
 

@@ -138,7 +138,7 @@ class Options(QWidget):
         layout2.addWidget(self.synchronize_checkbox)
         layout.addLayout(layout2)
         layout.addWidget(self._ch_control2)
-        layout.setSpacing(0)
+        # layout.setSpacing(0)
         self.setLayout(layout)
 
     def compare_action(self):
@@ -349,8 +349,7 @@ class Options(QWidget):
         self.compare_btn.setEnabled(
             isinstance(segmentation.segmentation, np.ndarray) and np.any(segmentation.segmentation)
         )
-        self._settings.noise_remove_image_part = segmentation.cleaned_channel
-        self._settings.full_segmentation = segmentation.full_segmentation
+        self._settings.additional_layers = segmentation.additional_layers
         self.label.setText(self.sender().get_info_text())
 
     def showEvent(self, _event):
@@ -360,6 +359,7 @@ class Options(QWidget):
 class MainMenu(BaseMainMenu):
     def __init__(self, settings: PartSettings, main_window):
         super().__init__(settings, main_window)
+        self.settings = settings
         self.open_btn = QPushButton("Open")
         self.save_btn = QPushButton("Save")
         self.advanced_btn = QPushButton("Settings and Measurement")
@@ -367,8 +367,8 @@ class MainMenu(BaseMainMenu):
         self.batch_processing_btn = QPushButton("Batch Processing")
 
         layout = QHBoxLayout()
-        layout.setSpacing(0)
-        layout.setContentsMargins(0, 0, 0, 0)
+        # layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 4, 4)
         layout.addWidget(self.open_btn)
         layout.addWidget(self.save_btn)
         layout.addWidget(self.advanced_btn)
@@ -561,6 +561,8 @@ class MainWindow(BaseMainWindow):
         super().__init__(config_folder, title, settings, signal_fun)
         self.files_num = 2
         self.setMinimumWidth(600)
+        # thi isinstance is only for hinting in IDE
+        assert isinstance(self.settings, PartSettings)  # nosec
         self.main_menu = MainMenu(self.settings, self)
         # self.channel_control1 = ChannelControl(self.settings, name="raw_control", text="Left panel:")
         self.channel_control2 = ChannelProperty(self.settings, start_name="result_control")
@@ -603,6 +605,11 @@ class MainWindow(BaseMainWindow):
         file_menu.addAction("&Open").triggered.connect(self.main_menu.load_data)
         file_menu.addAction("&Save").triggered.connect(self.main_menu.save_file)
         file_menu.addAction("Batch processing").triggered.connect(self.main_menu.batch_window)
+        view_menu = menu_bar.addMenu("View")
+        view_menu.addAction("Settings and Measurement").triggered.connect(self.main_menu.advanced_window_show)
+        view_menu.addAction("Additional output").triggered.connect(self.additional_layers_show)
+        view_menu.addAction("Additional output with data").triggered.connect(lambda: self.additional_layers_show(True))
+        view_menu.addAction("Napari viewer").triggered.connect(self.napari_viewer_show)
         image_menu = menu_bar.addMenu("Image operations")
         image_menu.addAction("Image adjustment").triggered.connect(self.image_adjust_exec)
         image_menu.addAction("Mask manager").triggered.connect(self.main_menu.mask_manager)
@@ -632,7 +639,6 @@ class MainWindow(BaseMainWindow):
         layout.addLayout(image_layout, 2, 2, 1, 1)
         layout.addWidget(self.options_panel, 0, 3, 3, 1)
         layout.setColumnStretch(2, 1)
-        # layout.setColumnStretch(3, 1)
         widget = QWidget()
         widget.setLayout(layout)
         # self.multiple_files.setHidden(True)
@@ -685,6 +691,7 @@ class MainWindow(BaseMainWindow):
         self.settings.dump()
         del self.batch_window
         del self.advanced_window
+        super().closeEvent(event)
 
     @staticmethod
     def get_project_info(file_path, image):

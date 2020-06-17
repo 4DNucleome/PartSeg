@@ -1,3 +1,4 @@
+import dataclasses
 from io import BytesIO
 from pathlib import Path
 from copy import deepcopy
@@ -61,13 +62,9 @@ class SaveModeling(SaveBase):
             # WARNING time
             image = project_info.image.cut_image((slice(None),) + cut_area)
             segmentation = project_info.segmentation[cut_area]
-            full_segmentation = (
-                project_info.full_segmentation[cut_area] if project_info.full_segmentation is not None else None
-            )
+
             mask = project_info.mask[cut_area] if project_info.mask else None
-            project_info = project_info._replace(
-                image=image, segmentation=segmentation, full_segmentation=full_segmentation, mask=mask
-            )
+            project_info = dataclasses.replace(project_info, image=image, segmentation=segmentation, mask=mask)
             parameters["clip"] = False
 
         parameters.update({"separated_objects": False})

@@ -58,12 +58,6 @@ class ProjectInfoBase:
     mask: typing.Optional[np.ndarray]
     errors: str = ""
 
-    def _replace(self, file_path=None, image=None):
-        pass
-
-    def replace_(self, *args, **kwargs):
-        return self._replace(*args, **kwargs)
-
     def get_raw_copy(self):
         raise NotImplementedError
 
@@ -170,16 +164,18 @@ class LoadBase(AlgorithmDescribeBase, ABC):
         return cls.get_name()
 
     @classmethod
-    def get_fields(cls):
-        return []
+    def get_extensions(cls) -> typing.List[str]:
+        match = re.match(r".*\((.*)\)", cls.get_name())
+        if match is None:
+            raise ValueError(f"No extensions found in {cls.get_name()}")
+        extensions = match.group(1).split(" ")
+        if not all((x.startswith("*.") for x in extensions)):
+            raise ValueError(f"Error with parsing extensions in {cls.get_name()}")
+        return [x[1:] for x in extensions]
 
     @classmethod
-    def get_extensions(cls) -> typing.List:
-        match = re.match(r".*\((.*)\)", cls.get_name())
-        if match:
-            return [x[1:] for x in match.group(1).split(" ") if len(x) > 3]
-        else:
-            return []
+    def get_fields(cls):
+        return []
 
     @classmethod
     def number_of_files(cls):
@@ -309,7 +305,6 @@ class HistoryElement(BaseSerializableClass):
     def create(
         cls,
         segmentation: np.ndarray,
-        full_segmentation: np.ndarray,
         mask: typing.Union[np.ndarray, None],
         segmentation_parameters: dict,
         mask_property: MaskProperty,
@@ -317,12 +312,12 @@ class HistoryElement(BaseSerializableClass):
         if "name" in segmentation_parameters:
             raise ValueError("name")
         arrays = BytesIO()
-        arrays_dict = {"segmentation": segmentation, "full_segmentation": full_segmentation}
+        arrays_dict = {"segmentation": segmentation}
         if mask is not None:
             arrays_dict["mask"] = mask
         np.savez_compressed(arrays, **arrays_dict)
         arrays.seek(0)
-        return cls(segmentation_parameters=segmentation_parameters, mask_property=mask_property, arrays=arrays)
+        return cls(segmentation_parameters=segmentation_parameters, mask_property=mask_property, arrays=arrays,)
 
 
 class HistoryProblem(Exception):

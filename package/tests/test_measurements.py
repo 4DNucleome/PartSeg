@@ -1277,12 +1277,7 @@ class TestStatisticProfile:
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0),
-            segmentation,
-            full_segmentation=mask,
-            mask=mask,
-            voxel_size=image.voxel_size,
-            result_units=Units.µm,
+            image.get_channel(0), segmentation, mask=mask, voxel_size=image.voxel_size, result_units=Units.µm,
         )
         tot_vol, seg_vol, rim_vol = list(result.values())
         assert isclose(tot_vol[0], seg_vol[0] + rim_vol[0])
@@ -1311,12 +1306,7 @@ class TestStatisticProfile:
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0),
-            segmentation,
-            full_segmentation=mask,
-            mask=mask,
-            voxel_size=image.voxel_size,
-            result_units=Units.µm,
+            image.get_channel(0), segmentation, mask=mask, voxel_size=image.voxel_size, result_units=Units.µm,
         )
         tot_vol, seg_vol, rim_vol = list(result.values())
         assert isclose(tot_vol[0], seg_vol[0] + rim_vol[0])
@@ -1348,12 +1338,7 @@ class TestStatisticProfile:
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0),
-            segmentation,
-            full_segmentation=mask,
-            mask=mask,
-            voxel_size=image.voxel_size,
-            result_units=Units.µm,
+            image.get_channel(0), segmentation, mask=mask, voxel_size=image.voxel_size, result_units=Units.µm,
         )
         tot_vol, seg_vol, rim_vol = list(result.values())
         assert isclose(tot_vol[0], seg_vol[0] + rim_vol[0])
@@ -1381,12 +1366,7 @@ class TestStatisticProfile:
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0),
-            segmentation,
-            full_segmentation=mask,
-            mask=mask,
-            voxel_size=image.voxel_size,
-            result_units=Units.µm,
+            image.get_channel(0), segmentation, mask=mask, voxel_size=image.voxel_size, result_units=Units.µm,
         )
         tot_vol, seg_vol, rim_vol = list(result.values())
         assert isclose(tot_vol[0] + seg_vol[0], rim_vol[0])
@@ -1460,12 +1440,7 @@ class TestStatisticProfile:
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0),
-            segmentation,
-            full_segmentation=mask,
-            mask=mask,
-            voxel_size=image.voxel_size,
-            result_units=Units.µm,
+            image.get_channel(0), segmentation, mask=mask, voxel_size=image.voxel_size, result_units=Units.µm,
         )
         values = list(result.values())
         for i in range(3):
@@ -1501,12 +1476,7 @@ class TestStatisticProfile:
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0),
-            segmentation,
-            full_segmentation=mask,
-            mask=mask,
-            voxel_size=image.voxel_size,
-            result_units=Units.µm,
+            image.get_channel(0), segmentation, mask=mask, voxel_size=image.voxel_size, result_units=Units.µm,
         )
         vol1, vol2, vol3, vol4 = list(result.values())
         assert isclose(vol1[0], vol3[0])
@@ -1571,12 +1541,7 @@ class TestStatisticProfile:
 
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0),
-            segmentation,
-            full_segmentation=mask,
-            mask=mask,
-            voxel_size=image.voxel_size,
-            result_units=Units.nm,
+            image.get_channel(0), segmentation, mask=mask, voxel_size=image.voxel_size, result_units=Units.nm,
         )
         assert result["Volume"][0] == result["Volume per component"][0][0] + result["Volume per component"][0][1]
         assert len(result["Diameter per component"][0]) == 2
@@ -1604,12 +1569,7 @@ class TestStatisticProfile:
         segmentation[image.get_channel(0)[0] == 50] = 1
         segmentation[image.get_channel(0)[0] == 60] = 2
         result = profile.calculate(
-            image.get_channel(0),
-            segmentation,
-            full_segmentation=segmentation,
-            mask=mask,
-            voxel_size=image.voxel_size,
-            result_units=Units.nm,
+            image.get_channel(0), segmentation, mask=mask, voxel_size=image.voxel_size, result_units=Units.nm,
         )
         names = {x.name for x in profile.chosen_fields}
         assert names == set(result.keys())

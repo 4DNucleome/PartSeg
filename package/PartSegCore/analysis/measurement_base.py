@@ -1,6 +1,6 @@
 from abc import ABC
 from enum import Enum
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, Set
 
 from sympy import symbols
 
@@ -53,7 +53,13 @@ class Leaf(BaseSerializableClass):
     per_component: Optional[PerComponent] = None
     channel: Optional[Channel] = None
 
-    def get_channel_num(self, measurement_dict: Dict[str, "MeasurementMethodBase"]):
+    def get_channel_num(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> Set[Channel]:
+        """
+        Get set with number of channels needed for calculate this measurement
+
+        :param measurement_dict: dict with all measurementh method.
+        :return: set of channels num
+        """
         resp = set()
         if self.channel is not None and self.channel >= 0:
             resp.add(self.channel)
@@ -152,7 +158,7 @@ class Node(BaseSerializableClass):
     def __init__(self, left: Union["Node", Leaf], op: str, right: Union["Node", Leaf]):
         ...
 
-    def get_channel_num(self, measurement_dict: Dict[str, "MeasurementMethodBase"]):
+    def get_channel_num(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> Set[Channel]:
         return self.left.get_channel_num(measurement_dict) | self.right.get_channel_num(measurement_dict)
 
     def __str__(self):
@@ -198,7 +204,7 @@ class MeasurementEntry(BaseSerializableClass):
     def get_unit(self, unit: Units, ndim):
         return str(self.calculation_tree.get_unit(ndim)).format(str(unit))
 
-    def get_channel_num(self, measurement_dict: Dict[str, "MeasurementMethodBase"]):
+    def get_channel_num(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> Set[Channel]:
         return self.calculation_tree.get_channel_num(measurement_dict)
 
 

@@ -4,10 +4,9 @@ from itertools import count
 import numpy as np
 
 from qtpy.QtCore import Signal
-from qtpy.QtGui import QImage
+from qtpy.QtGui import QImage, QPaintEvent, QPainter
 from qtpy.QtWidgets import QWidget, QVBoxLayout, QCheckBox, QPushButton, QHBoxLayout
 
-from .channel_control import ColorPreview
 from .flow_layout import FlowLayout
 from .vetical_scroll_area import VerticalScrollArea
 from PartSegCore.color_image import color_image_fun
@@ -119,3 +118,15 @@ class ColorSelector(QWidget):
 
     def showEvent(self, _):
         self.reset()
+
+
+class ColorPreview(QWidget):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def paintEvent(self, event: QPaintEvent):
+        rect = event.rect()
+        painter = QPainter(self)
+        if self.parent().image is not None:
+            parent: "ColorSelector" = self.parent()
+            painter.drawImage(rect, parent.image)

@@ -1,3 +1,4 @@
+import dataclasses
 import operator
 import typing
 from abc import ABC
@@ -11,7 +12,12 @@ from ..multiscale_opening import PyMSO
 from ..multiscale_opening import calculate_mu_mid
 from ..mask_partition_utils import BorderRim as BorderRimBase, MaskDistanceSplit as MaskDistanceSplitBase
 from ..channel_class import Channel
-from .algorithm_base import SegmentationAlgorithm, SegmentationResult, SegmentationLimitException
+from .algorithm_base import (
+    SegmentationAlgorithm,
+    SegmentationResult,
+    SegmentationLimitException,
+    AdditionalLayerDescription,
+)
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
 from .noise_filtering import noise_filtering_dict
 from .watershed import sprawl_dict, BaseWatershed, calculate_distances_array, get_neigh
@@ -61,14 +67,6 @@ class RestartableAlgorithm(SegmentationAlgorithm, ABC):
     def support_z(cls):
         return True
 
-    def set_parameters(self, **kwargs):
-        base_names = [x.name for x in self.get_fields() if isinstance(x, AlgorithmProperty)]
-        if set(base_names) != set(kwargs.keys()):
-            missed_arguments = ", ".join(set(base_names).difference(set(kwargs.keys())))
-            additional_arguments = ", ".join(set(kwargs.keys()).difference(set(base_names)))
-            raise ValueError(f"Missed arguments {missed_arguments}; Additional arguments: {additional_arguments}")
-        self.new_parameters = deepcopy(kwargs)
-
 
 class BorderRim(RestartableAlgorithm):
     """
@@ -101,7 +99,7 @@ class BorderRim(RestartableAlgorithm):
     def calculation_run(self, _report_fun) -> SegmentationResult:
         if self.mask is not None:
             result = BorderRimBase.border_mask(mask=self.mask, voxel_size=self.image.spacing, **self.new_parameters)
-            return SegmentationResult(result, self.get_segmentation_profile(), result, None)
+            return SegmentationResult(segmentation=result, parameters=self.get_segmentation_profile())
         raise SegmentationLimitException("Border Rim needs mask")
 
 
@@ -168,6 +166,36 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         self.threshold_info = None
         self.old_threshold_info = None
 
+    def get_additional_layers(
+        self, full_segmentation: typing.Optional[np.ndarray] = None
+    ) -> typing.Dict[str, AdditionalLayerDescription]:
+        """
+        Create dict with standard additional layers.
+
+        :param full_segmentation: no size filtering if not `self.segmentation`
+
+        :return:
+        """
+        if full_segmentation is None:
+            full_segmentation = self.segmentation
+        return {
+            "denoised image": AdditionalLayerDescription(data=self.cleaned_image, layer_type="image"),
+            "no size filtering": AdditionalLayerDescription(data=full_segmentation, layer_type="labels"),
+        }
+
+    def prepare_result(self, segmentation: np.ndarray) -> SegmentationResult:
+        """
+        Collect data for result.
+
+        :param segmentation: array with segmentation
+        :return: algorithm result description
+        """
+        return SegmentationResult(
+            segmentation=segmentation,
+            parameters=self.get_segmentation_profile(),
+            additional_layers=self.get_additional_layers(),
+        )
+
     def set_image(self, image):
         super().set_image(image)
         self.threshold_info = None
@@ -205,16 +233,14 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             elif self.old_threshold_info != self.threshold_info:
                 restarted = True
             if self.threshold_image.max() == 0:
-                return SegmentationResult(
-                    self.threshold_image.astype(np.uint8),
-                    self.get_segmentation_profile(),
-                    self.segmentation,
-                    self.cleaned_image,
+                res = self.prepare_result(self.threshold_image.astype(np.uint8))
+                info_text = (
                     "Something wrong with chosen threshold. Please check it. "
                     "May be to low or to high. The channel bright range is "
                     f"{self.cleaned_image.min()}-{self.cleaned_image.max()} "
-                    f"and chosen threshold is {self.threshold_info}",
+                    f"and chosen threshold is {self.threshold_info}"
                 )
+                return dataclasses.replace(res, info_text=info_text)
         if restarted or self.new_parameters["side_connection"] != self.parameters["side_connection"]:
             self.parameters["side_connection"] = self.new_parameters["side_connection"]
             connect = SimpleITK.ConnectedComponent(
@@ -231,16 +257,13 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             finally_segment[finally_segment > ind] = 0
             self.components_num = ind
             if ind == 0:
-                return SegmentationResult(
-                    finally_segment,
-                    self.get_segmentation_profile(),
-                    self.segmentation,
-                    self.cleaned_image,
+                info_text = (
                     "Please check the minimum size parameter. " f"The biggest element has size {self._sizes_array[1]}",
                 )
-            return SegmentationResult(
-                finally_segment, self.get_segmentation_profile(), self.segmentation, self.cleaned_image
-            )
+            else:
+                info_text = ""
+            res = self.prepare_result(finally_segment)
+            return dataclasses.replace(res, info_text=info_text)
 
     def clean(self):
         super().clean()
@@ -436,9 +459,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
         ):
             if self.threshold_operator(self.threshold_info[1], self.threshold_info[0]):
                 self.final_sizes = np.bincount(finally_segment.flat)
-                return SegmentationResult(
-                    self.finally_segment, self.get_segmentation_profile(), self.segmentation, self.cleaned_image
-                )
+                return self.prepare_result(self.finally_segment)
             path_sprawl: BaseWatershed = sprawl_dict[self.new_parameters["sprawl_type"]["name"]]
             self.parameters["sprawl_type"] = self.new_parameters["sprawl_type"]
             new_segment = path_sprawl.sprawl(
@@ -455,7 +476,9 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
             )
             self.final_sizes = np.bincount(new_segment.flat)
             return SegmentationResult(
-                new_segment, self.get_segmentation_profile(), self.sprawl_area, self.cleaned_image
+                segmentation=new_segment,
+                parameters=self.get_segmentation_profile(),
+                additional_layers=self.get_additional_layers(full_segmentation=self.sprawl_area),
             )
 
 
@@ -527,7 +550,11 @@ class OtsuSegment(RestartableAlgorithm):
                 self.threshold_info.append(self.threshold_info[-1])
             else:
                 self.threshold_info.append(0)
-        return SegmentationResult(res, res, cleaned_image)
+        return SegmentationResult(
+            segmentation=res,
+            parameters=self.get_segmentation_profile(),
+            additional_layers={"denoised_image": AdditionalLayerDescription(data=cleaned_image, layer_type="image")},
+        )
 
     def get_info_text(self):
         return (
@@ -624,9 +651,7 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):
         ):
             if self.threshold_operator(self.threshold_info[1], self.threshold_info[0]):
                 self.final_sizes = np.bincount(finally_segment.flat)
-                return SegmentationResult(
-                    self.finally_segment, self.get_segmentation_profile(), self.segmentation, self.cleaned_image
-                )
+                return self.prepare_result(self.finally_segment)
             mu_calc: BaseMuMid = mu_mid_dict[self.new_parameters["mu_mid"]["name"]]
             self.parameters["mu_mid"] = self.new_parameters["mu_mid"]
             sprawl_area = (self.sprawl_area > 0).astype(np.uint8)
@@ -649,7 +674,7 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):
             new_segment = self.mso.get_result_catted()
             new_segment[new_segment > 0] -= 1
             self.final_sizes = np.bincount(new_segment.flat)
-            return SegmentationResult(new_segment, self.sprawl_area, self.cleaned_image)
+            return self.prepare_result(new_segment)
 
 
 class LowerThresholdMultiScaleOpening(BaseMultiScaleOpening):

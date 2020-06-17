@@ -43,7 +43,6 @@ class PartSettings(BaseSettings):
     def __init__(self, json_path):
         super().__init__(json_path)
         self._mask = None
-        self.full_segmentation = None
         self.compare_segmentation = None
         self.last_executed_algorithm = ""
         self.segmentation_pipelines_dict = ProfileDict()
@@ -83,7 +82,7 @@ class PartSettings(BaseSettings):
     def _image_changed(self):
         super()._image_changed()
         self._mask = None
-        self.full_segmentation = None
+        self.additional_layers = {}
 
     def get_project_info(self) -> ProjectTuple:
         algorithm_name = self.last_executed_algorithm
@@ -98,7 +97,7 @@ class PartSettings(BaseSettings):
             file_path=self.image.file_path,
             image=self.image.substitute(),
             segmentation=self.segmentation,
-            full_segmentation=self.full_segmentation,
+            additional_layers=self.additional_layers,
             mask=self.mask,
             history=self.history[: self.history_index + 1],
             algorithm_parameters=algorithm_val,
@@ -118,7 +117,7 @@ class PartSettings(BaseSettings):
             else:
                 self.image = data.image.substitute(mask=data.mask)
             self.segmentation = data.segmentation
-            self.full_segmentation = data.full_segmentation
+            self.additional_layers = data.additional_layers
             self.set_history(data.history[:])
             if data.algorithm_parameters:
                 self.last_executed_algorithm = data.algorithm_parameters["algorithm_name"]

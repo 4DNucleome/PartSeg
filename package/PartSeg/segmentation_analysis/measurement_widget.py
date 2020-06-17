@@ -310,12 +310,13 @@ class MeasurementWidget(QWidget):
         segmentation = self.settings.segmentation
         if segmentation is None:
             return
-        full_segmentation = self.settings.full_segmentation
+        full_segmentation = None
         base_mask = self.settings.mask
         units = self.units_choose.get_value()
 
-        def exception_hook(exception):
-            QMessageBox.warning(self, "Calculation error", f"Error during calculation: {exception}")
+        # FIXME find which errors should be displayed as warning
+        # def exception_hook(exception):
+        #    QMessageBox.warning(self, "Calculation error", f"Error during calculation: {exception}")
 
         kwargs = {}
         for num in compute_class.get_channels_num():
@@ -333,7 +334,7 @@ class MeasurementWidget(QWidget):
             [channel, segmentation, full_segmentation, base_mask, self.settings.image.spacing, units],
             kwargs,
         )
-        dial = WaitingDialog(thread, "Measurement calculation", exception_hook=exception_hook)
+        dial = WaitingDialog(thread, "Measurement calculation")  # , exception_hook=exception_hook)
         dial.exec()
         stat: MeasurementResult = thread.result
         if stat is None:

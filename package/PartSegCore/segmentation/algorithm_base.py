@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import NamedTuple, Union, Callable, Optional
+from copy import deepcopy
+from dataclasses import dataclass, field
+from typing import Dict, Callable, Optional, Any
 
 import numpy as np
 
@@ -7,7 +9,7 @@ from PartSegCore.channel_class import Channel
 from PartSegImage import Image
 
 from ..image_operations import RadiusType
-from ..algorithm_describe_base import AlgorithmDescribeBase, SegmentationProfile
+from ..algorithm_describe_base import AlgorithmDescribeBase, SegmentationProfile, AlgorithmProperty
 
 
 def calculate_operation_radius(radius, spacing, gauss_type):
@@ -21,11 +23,18 @@ def calculate_operation_radius(radius, spacing, gauss_type):
     return radius
 
 
-class SegmentationResult(NamedTuple):
+@dataclass
+class AdditionalLayerDescription:
+    data: np.ndarray
+    layer_type: str
+    name: str = ""
+
+
+@dataclass(frozen=True)
+class SegmentationResult:
     segmentation: np.ndarray
     parameters: SegmentationProfile
-    full_segmentation: Union[np.ndarray, None] = None
-    cleaned_channel: Union[np.ndarray, None] = None
+    additional_layers: Dict[str, AdditionalLayerDescription] = field(default_factory=dict)
     info_text: str = ""
 
 
@@ -49,6 +58,7 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         self.channel = None
         self.segmentation = None
         self.mask: Optional[np.ndarray] = None
+        self.new_parameters: Dict[str, Any] = {}
 
     def __repr__(self):
         if self.mask is None:
@@ -117,10 +127,13 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         self.image = image
         self.channel = None
 
-    @abstractmethod
     def set_parameters(self, **kwargs):
-        """Set parameters for next segmentation."""
-        raise NotImplementedError()
+        base_names = [x.name for x in self.get_fields() if isinstance(x, AlgorithmProperty)]
+        if set(base_names) != set(kwargs.keys()):
+            missed_arguments = ", ".join(set(base_names).difference(set(kwargs.keys())))
+            additional_arguments = ", ".join(set(kwargs.keys()).difference(set(base_names)))
+            raise ValueError(f"Missed arguments {missed_arguments}; Additional arguments: {additional_arguments}")
+        self.new_parameters = deepcopy(kwargs)
 
     @abstractmethod
     def get_segmentation_profile(self) -> SegmentationProfile:

@@ -1,14 +1,14 @@
 import os
 from collections import defaultdict
+from copy import deepcopy
 from functools import partial
 from pathlib import Path
-
-from copy import deepcopy
 from typing import Type
 
+import PartSegData
 import numpy as np
 from qtpy.QtCore import Signal, Qt, QByteArray, Slot
-from qtpy.QtGui import QGuiApplication, QIcon
+from qtpy.QtGui import QGuiApplication, QIcon, QCloseEvent
 from qtpy.QtWidgets import (
     QWidget,
     QPushButton,
@@ -28,46 +28,48 @@ from qtpy.QtWidgets import (
     QGridLayout,
 )
 
-from PartSeg.common_gui.advanced_tabs import AdvancedWindow
-from PartSeg.common_gui.multiple_file_widget import MultipleFileWidget
-from PartSeg.segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
+from PartSegCore import state_store, Units, UNIT_SCALE
 from PartSegCore.io_utils import WrongFileTypeException, HistoryElement, HistoryProblem
-from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
-from PartSegCore.mask_create import calculate_mask
-from .simple_measurements import SimpleMeasurements
-from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox, AlgorithmChoose
-from ..common_gui.channel_control import ChannelProperty
-from ..common_gui.custom_save_dialog import SaveDialog
-from ..common_gui.custom_load_dialog import CustomLoadDialog
-from ..common_gui.flow_layout import FlowLayout
-from ..common_gui.mask_widget import MaskDialogBase
-from ..common_gui.select_multiple_files import AddFiles
-from ..common_gui.stack_image_view import ColorBar, LabelEnum
-from ..common_gui.universal_gui_part import right_label
-from ..common_gui.waiting_dialog import ExecuteFunctionDialog
-from PartSegCore.segmentation.algorithm_base import SegmentationResult
-from PartSegCore.universal_const import UNIT_SCALE, Units
-from PartSeg.common_gui.main_window import BaseMainWindow, BaseMainMenu
-from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 from PartSegCore.mask import io_functions
-from .stack_settings import StackSettings, get_mask
-from PartSegImage import TiffImageReader, Image
-from .batch_proceed import BatchProceed, BatchTask
-from .image_view import StackImageView
+from PartSegCore.mask.algorithm_description import mask_algorithm_dict
+from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import (
     SaveSegmentation,
     LoadSegmentation,
     SegmentationTuple,
     LoadSegmentationParameters,
 )
-from PartSegCore import state_store
-import PartSegData
-
+from PartSegCore.mask_create import calculate_mask
+from PartSegCore.segmentation.algorithm_base import SegmentationResult
+from PartSegImage import Image, TiffImageReader
+from .batch_proceed import BatchProceed, BatchTask
+from .image_view import StackImageView
+from .simple_measurements import SimpleMeasurements
+from .stack_settings import StackSettings, get_mask
+from ..common_gui.advanced_tabs import AdvancedWindow
+from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox, AlgorithmChoose
+from ..common_gui.channel_control import ChannelProperty
+from ..common_gui.custom_load_dialog import CustomLoadDialog
+from ..common_gui.custom_save_dialog import SaveDialog
+from ..common_gui.flow_layout import FlowLayout
+from ..common_gui.main_window import BaseMainWindow, BaseMainMenu
+from ..common_gui.mask_widget import MaskDialogBase
+from ..common_gui.multiple_file_widget import MultipleFileWidget
+from ..common_gui.select_multiple_files import AddFiles
+from ..common_gui.stack_image_view import ColorBar
+from ..common_gui.napari_image_view import LabelEnum
+from ..common_gui.universal_gui_part import right_label
+from ..common_gui.waiting_dialog import ExecuteFunctionDialog
+from ..segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
 
 CONFIG_FOLDER = os.path.join(state_store.save_folder, "mask")
 
 
 class MaskDialog(MaskDialogBase):
+    def __init__(self, settings: StackSettings):
+        super().__init__(settings)
+        self.settings = settings
+
     def next_mask(self):
         project_info: SegmentationTuple = self.settings.get_project_info()
         mask_property = self.mask_widget.get_mask_property()
@@ -139,7 +141,7 @@ class MainMenu(BaseMainMenu):
         self.setContentsMargins(0, 0, 0, 0)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        # layout.setSpacing(0)
         layout.addWidget(self.load_image_btn)
         layout.addWidget(self.load_segmentation_btn)
         layout.addWidget(self.save_catted_parts)
@@ -562,7 +564,7 @@ class AlgorithmOptions(QWidget):
 
         self.setContentsMargins(0, 0, 0, 0)
         main_layout = QVBoxLayout()
-        main_layout.setSpacing(0)
+        # main_layout.setSpacing(0)
         opt_layout = QHBoxLayout()
         opt_layout.setContentsMargins(0, 0, 0, 0)
         opt_layout.addWidget(self.show_result)
@@ -595,7 +597,7 @@ class AlgorithmOptions(QWidget):
         main_layout.addLayout(down_layout)
         main_layout.addStretch()
         main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
+        # main_layout.setSpacing(0)
         self.setLayout(main_layout)
 
         # noinspection PyUnresolvedReferences
@@ -720,6 +722,10 @@ class AlgorithmOptions(QWidget):
         self.choose_components.setDisabled(True)
         chosen = sorted(self.choose_components.get_chosen())
         blank = get_mask(self.settings.segmentation, self.settings.mask, chosen)
+        if blank is not None:
+            # Problem with handling time data in algorithms
+            # TODO Fix This
+            blank = blank[0]
         self.progress_bar.setHidden(False)
         widget: AlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
         widget.set_mask(blank)
@@ -753,6 +759,7 @@ class AlgorithmOptions(QWidget):
         if segmentation.info_text != "":
             QMessageBox.information(self, "Algorithm info", segmentation.info_text)
         parameters_dict = defaultdict(lambda: deepcopy(segmentation.parameters))
+        self.settings.additional_layers = segmentation.additional_layers
         self.settings.set_segmentation(segmentation.segmentation, True, [], parameters_dict)
 
     def showEvent(self, _):
@@ -895,6 +902,11 @@ class MainWindow(BaseMainWindow):
         file_menu.addAction("&Open").triggered.connect(self.main_menu.load_image)
         file_menu.addAction("&Save segmentation").triggered.connect(self.main_menu.save_segmentation)
         file_menu.addAction("&Save components").triggered.connect(self.main_menu.save_result)
+        view_menu = menu_bar.addMenu("View")
+        view_menu.addAction("Settings and Measurement").triggered.connect(self.main_menu.show_advanced_window)
+        view_menu.addAction("Additional output").triggered.connect(self.additional_layers_show)
+        view_menu.addAction("Additional output with data").triggered.connect(lambda: self.additional_layers_show(True))
+        view_menu.addAction("Napari viewer").triggered.connect(self.napari_viewer_show)
         image_menu = menu_bar.addMenu("Image operations")
         image_menu.addAction("Image adjustment").triggered.connect(self.image_adjust_exec)
         help_menu = menu_bar.addMenu("Help")
@@ -937,7 +949,7 @@ class MainWindow(BaseMainWindow):
         self.image_view.reset_image_size()
         self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
 
-    def closeEvent(self, e):
+    def closeEvent(self, event: QCloseEvent):
         # print(self.settings.dump_view_profiles())
         # print(self.settings.segmentation_dict["default"].my_dict)
         self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
@@ -953,6 +965,7 @@ class MainWindow(BaseMainWindow):
         del self.main_menu.segmentation_dialog
         del self.options_panel.algorithm_options.show_parameters_widget
         self.settings.dump()
+        super().closeEvent(event)
 
     def read_drop(self, paths):
         self._read_drop(paths, io_functions)
@@ -963,3 +976,7 @@ class MainWindow(BaseMainWindow):
 
     def set_data(self, data):
         self.main_menu.set_data(data)
+
+    def change_theme(self):
+        self.image_view.set_theme(self.settings.theme_name)
+        super().change_theme()

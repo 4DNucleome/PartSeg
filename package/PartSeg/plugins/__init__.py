@@ -14,6 +14,14 @@ def get_plugins():
     if getattr(sys, "frozen", False):
         new_path = [os.path.join(os.path.dirname(os.path.dirname(__path__[0])), "plugins")]
         packages = pkgutil.iter_modules(new_path, "plugins" + ".")
+        import napari
+        import PartSegCore.napari_plugin
+        import napari_svg
+        import napari_plugin_engine
+
+        napari.plugins.plugin_manager.register(napari_svg)
+        napari.plugins.plugin_manager.register(PartSegCore.napari_plugin)
+        napari.plugins.plugin_manager.register(napari_plugin_engine)
     else:
         packages = pkgutil.iter_modules(__path__, __name__ + ".")
     packages2 = itertools.chain(
