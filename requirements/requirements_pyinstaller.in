@@ -14,7 +14,7 @@ pandas
 PartSegData
 PyInstaller
 PyOpenGL-accelerate
-PyQt5
+PyQt5!=5.15.0
 requests
 QtPy
 scipy
