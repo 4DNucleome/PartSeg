@@ -4,6 +4,9 @@
 -   Make sprawl algorithm name shorter
 -   Unify capitalisation of measurement names
 -   Add simple measurements to mask segmentation
+-   Use napari as viewer
+-   Add possibility to preview additional output of algorithms (In View menu)
+-   Update names of available Algorithm and Measurement to be more descriptive.
 
 ## 0.10.8
 -   fix synchronisation between viewers in Segmentation Analysis
