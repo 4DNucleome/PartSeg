@@ -126,7 +126,7 @@ stages:
           CIBW_TEST_COMMAND_LINUX: pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part
           CIBW_TEST_COMMAND_windows: pytest {project}/package/tests || pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part/test_main_windows.py
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-          CIBW_TEST_COMMAND: python -m pip uninstall PySide2 shiboken2 -y && pytest {project}/package/tests
+          CIBW_TEST_COMMAND: pytest {project}/package/tests
           MACOSX_DEPLOYMENT_TARGET: "10.9"
         steps:
           - task: UsePythonVersion@0
@@ -161,7 +161,6 @@ stages:
           - bash: |
               python -m pip install -r requirements/requirements_pyinstaller.txt
               python -m pip install -e .
-              python -m pip uninstall PySide2 shiboken2 -y
               python  build_utils/create_and_pack_executable.py
           - script: sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
             condition: "startsWith(variables['imageName'], 'ubuntu')"
