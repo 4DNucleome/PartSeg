@@ -20,10 +20,14 @@ data_path = os.path.dirname(PartSegData.__init__.__file__)
 
 from napari.resources import import_resources
 from dask import config
+import napari
 
 import imagecodecs
 
-hiddenimports = ["imagecodecs._" + x for x in imagecodecs._extensions()] + ["imagecodecs._shared"]
+napari.plugins.plugin_manager.discover()
+
+hiddenimports = ["imagecodecs._" + x for x in imagecodecs._extensions()] +\
+                ["imagecodecs._shared"] + [x.__name__ for x in napari.plugins.plugin_manager.plugins.values()] + ["pkg_resources.py2_warn"]
 
 
 if platform.system() == "Windows":
