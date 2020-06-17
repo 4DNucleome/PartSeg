@@ -12,7 +12,7 @@ backcall==0.1.0           # via ipython
 cachey==0.2.1             # via napari
 certifi==2020.4.5.1       # via requests, sentry-sdk
 chardet==3.0.4            # via requests
-cython==0.29.19           # via -r requirements_pyinstaller.in
+cython==0.29.20           # via -r requirements_pyinstaller.in
 czifile==2019.7.2         # via -r requirements_pyinstaller.in
 dask[array]==2.17.2       # via napari
 decorator==4.4.2          # via ipython, traitlets
@@ -26,7 +26,6 @@ idna==2.9                 # via requests
 imagecodecs==2020.5.30    # via -r requirements_pyinstaller.in
 imageio==2.8.0            # via napari, napari-svg
 imagesize==1.2.0          # via sphinx
-importlib-metadata==1.6.0  # via napari, napari-plugin-engine
 ipykernel==5.3.0          # via napari, qtconsole
 ipython-genutils==0.2.0   # via qtconsole, traitlets
 ipython==7.15.0           # via ipykernel, napari
@@ -91,7 +90,6 @@ wcwidth==0.2.3            # via prompt-toolkit
 wrapt==1.12.1             # via napari
 xlrd==1.2.0               # via -r requirements_pyinstaller.in
 xlsxwriter==1.2.9         # via -r requirements_pyinstaller.in
-zipp==3.1.0               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
