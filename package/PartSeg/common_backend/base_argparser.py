@@ -99,7 +99,7 @@ class CustomParser(argparse.ArgumentParser):
         state_store.check_for_updates = args.no_update
         state_store.develop = args.develop
         state_store.save_suffix = args.save_suffix[0]
-        state_store.save_folder = args.save_directory[0]
+        state_store.save_folder = args.save_directory[0] + "_" + state_store.save_suffix
         if args.no_report and args.no_dialog:
             _setup_sentry()
         sys.excepthook = my_excepthook
