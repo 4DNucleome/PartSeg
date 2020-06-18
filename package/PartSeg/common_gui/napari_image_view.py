@@ -363,9 +363,9 @@ class ImageView(QWidget):
         if image_info.segmentation_info.segmentation is None:
             return
         try:
-            max_num = max(image_info.segmentation_info.bound_info.keys())
+            max_num = max(1, max(image_info.segmentation_info.bound_info.keys()))
         except ValueError:
-            max_num = 0
+            max_num = 1
         if self.image_state.only_borders:
             data = calculate_borders(
                 image_info.segmentation_info.segmentation,
@@ -468,6 +468,9 @@ class ImageView(QWidget):
         image_layers = []
 
         for i in range(image.channels):
+            lim = limits[1]
+            if lim[1] == lim[0]:
+                lim[1] += 1
             image_layers.append(
                 self.viewer.add_image(
                     self.calculate_filter(image.get_channel(i), filters[i]),
@@ -475,7 +478,7 @@ class ImageView(QWidget):
                     visible=visibility[i],
                     blending="additive",
                     scale=image.normalized_scaling(),
-                    contrast_limits=limits[i],
+                    contrast_limits=lim,
                     gamma=gamma[i],
                 )
             )

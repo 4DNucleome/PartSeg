@@ -376,7 +376,9 @@ class Image:
         return self._image_spacing
 
     def normalized_scaling(self, factor=10 ** 9) -> Spacing:
-        return (1,) + tuple(np.multiply(self._image_spacing, factor))
+        if self.is_2d:
+            return (1, 1) + tuple(np.multiply(self.spacing, factor))
+        return (1,) + tuple(np.multiply(self.spacing, factor))
 
     @property
     def voxel_size(self) -> Spacing:
@@ -489,6 +491,6 @@ class Image:
     def __repr__(self):
         mask_info = f"mask=True, mask_dtype={self._mask_array.dtype}" if self.mask is not None else "mask=False"
         return (
-            f"Image(shape={self._image_array.shape} dtype={self._image_array.dtype}, spacing={self.spacing}"
+            f"Image(shape={self._image_array.shape} dtype={self._image_array.dtype}, spacing={self.spacing}, "
             f"labels={self.labels}, channels={self.channels}, axes={repr(self.return_order)}, {mask_info})"
         )

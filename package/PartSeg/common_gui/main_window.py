@@ -164,7 +164,8 @@ class BaseMainWindow(QMainWindow):
             if v.layer_type == "labels":
                 viewer.add_labels(v.data, name=name, scale=scaling[-v.data.ndim :])
             else:
-                viewer.add_image(v.data, name=name, blending="additive", scale=scaling[-v.data.ndim :])
+                ndim = v.data.ndim - 1 if v.data.shape[-1] == 3 else v.data.ndim
+                viewer.add_image(v.data, name=name, blending="additive", scale=scaling[-ndim:])
         self.viewer_list.append(viewer)
         viewer.window.qt_viewer.destroyed.connect(lambda x: self.close_viewer(viewer))
 
