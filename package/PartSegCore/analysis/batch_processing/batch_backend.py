@@ -608,9 +608,9 @@ class FileData:
             component_seg = False
             component_mask = False
             for per_component, area in measurement[i].statistic_profile.get_component_and_area_info():
-                if per_component == PerComponent.Yes and area == AreaType.Segmentation:
+                if per_component == PerComponent.Yes and area == AreaType.ROI:
                     component_seg = True
-                if per_component == PerComponent.Yes and area != AreaType.Segmentation:
+                if per_component == PerComponent.Yes and area != AreaType.ROI:
                     component_mask = True
             if component_seg:
                 local_header.append(("Segmentation component", "num"))

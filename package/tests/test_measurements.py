@@ -353,7 +353,7 @@ class TestMainAxis:
                 help_dict={},
                 voxel_size=cube_image.spacing,
                 result_scalar=1,
-                _area=AreaType.Segmentation,
+                _area=AreaType.ROI,
             )
             == 0
         )
@@ -1266,13 +1266,11 @@ class TestStatisticProfile:
             ),
             MeasurementEntry(
                 "Segmentation Volume",
-                Volume.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.No),
+                Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
                 "Mask without segmentation Volume",
-                Volume.get_starting_leaf().replace_(
-                    area=AreaType.Mask_without_segmentation, per_component=PerComponent.No
-                ),
+                Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_ROI, per_component=PerComponent.No),
             ),
         ]
         profile = MeasurementProfile("statistic", statistics)
@@ -1295,13 +1293,11 @@ class TestStatisticProfile:
             ),
             MeasurementEntry(
                 "Segmentation Volume",
-                Volume.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.No),
+                Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
                 "Mask without segmentation Volume",
-                Volume.get_starting_leaf().replace_(
-                    area=AreaType.Mask_without_segmentation, per_component=PerComponent.No
-                ),
+                Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_ROI, per_component=PerComponent.No),
             ),
         ]
         profile = MeasurementProfile("statistic", statistics)
@@ -1325,14 +1321,12 @@ class TestStatisticProfile:
             ),
             MeasurementEntry(
                 "Segmentation PixelBrightnessSum",
-                PixelBrightnessSum.get_starting_leaf().replace_(
-                    area=AreaType.Segmentation, per_component=PerComponent.No
-                ),
+                PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
                 "Mask without segmentation PixelBrightnessSum",
                 PixelBrightnessSum.get_starting_leaf().replace_(
-                    area=AreaType.Mask_without_segmentation, per_component=PerComponent.No
+                    area=AreaType.Mask_without_ROI, per_component=PerComponent.No
                 ),
             ),
         ]
@@ -1355,13 +1349,11 @@ class TestStatisticProfile:
             ),
             MeasurementEntry(
                 "Segmentation Surface",
-                Surface.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.No),
+                Surface.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
                 "Mask without segmentation Surface",
-                Surface.get_starting_leaf().replace_(
-                    area=AreaType.Mask_without_segmentation, per_component=PerComponent.No
-                ),
+                Surface.get_starting_leaf().replace_(area=AreaType.Mask_without_ROI, per_component=PerComponent.No),
             ),
         ]
         profile = MeasurementProfile("statistic", statistics)
@@ -1383,13 +1375,11 @@ class TestStatisticProfile:
             ),
             MeasurementEntry(
                 "Segmentation Volume",
-                Volume.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.No),
+                Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
                 "Mask without segmentation Volume",
-                Volume.get_starting_leaf().replace_(
-                    area=AreaType.Mask_without_segmentation, per_component=PerComponent.No
-                ),
+                Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
                 "Mask PixelBrightnessSum",
@@ -1397,14 +1387,12 @@ class TestStatisticProfile:
             ),
             MeasurementEntry(
                 "Segmentation PixelBrightnessSum",
-                PixelBrightnessSum.get_starting_leaf().replace_(
-                    area=AreaType.Segmentation, per_component=PerComponent.No
-                ),
+                PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
                 "Mask without segmentation PixelBrightnessSum",
                 PixelBrightnessSum.get_starting_leaf().replace_(
-                    area=AreaType.Mask_without_segmentation, per_component=PerComponent.No
+                    area=AreaType.Mask_without_ROI, per_component=PerComponent.No
                 ),
             ),
             MeasurementEntry(
@@ -1418,22 +1406,18 @@ class TestStatisticProfile:
             MeasurementEntry(
                 "Segmentation Volume/PixelBrightnessSum",
                 Node(
-                    Volume.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.No),
+                    Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
                     "/",
-                    PixelBrightnessSum.get_starting_leaf().replace_(
-                        area=AreaType.Segmentation, per_component=PerComponent.No
-                    ),
+                    PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
                 ),
             ),
             MeasurementEntry(
                 "Mask without segmentation Volume/PixelBrightnessSum",
                 Node(
-                    Volume.get_starting_leaf().replace_(
-                        area=AreaType.Mask_without_segmentation, per_component=PerComponent.No
-                    ),
+                    Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_ROI, per_component=PerComponent.No),
                     "/",
                     PixelBrightnessSum.get_starting_leaf().replace_(
-                        area=AreaType.Mask_without_segmentation, per_component=PerComponent.No
+                        area=AreaType.Mask_without_ROI, per_component=PerComponent.No
                     ),
                 ),
             ),
@@ -1491,50 +1475,42 @@ class TestStatisticProfile:
         segmentation[image.get_channel(0)[0] == 60] = 2
         statistics = [
             MeasurementEntry(
-                "Volume", Volume.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.No)
+                "Volume", Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No)
             ),
             MeasurementEntry(
                 "Volume per component",
-                Volume.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.Yes),
+                Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes),
             ),
             MeasurementEntry(
-                "Diameter",
-                Diameter.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.No),
+                "Diameter", Diameter.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
                 "Diameter per component",
-                Diameter.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.Yes),
+                Diameter.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes),
             ),
             MeasurementEntry(
                 "MaximumPixelBrightness",
-                MaximumPixelBrightness.get_starting_leaf().replace_(
-                    area=AreaType.Segmentation, per_component=PerComponent.No
-                ),
+                MaximumPixelBrightness.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
                 "MaximumPixelBrightness per component",
-                MaximumPixelBrightness.get_starting_leaf().replace_(
-                    area=AreaType.Segmentation, per_component=PerComponent.Yes
-                ),
+                MaximumPixelBrightness.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes),
             ),
             MeasurementEntry(
-                "Sphericity",
-                Sphericity.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.No),
+                "Sphericity", Sphericity.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
                 "Sphericity per component",
-                Sphericity.get_starting_leaf().replace_(area=AreaType.Segmentation, per_component=PerComponent.Yes),
+                Sphericity.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes),
             ),
             MeasurementEntry(
                 "LongestMainAxisLength",
-                FirstPrincipalAxisLength.get_starting_leaf().replace_(
-                    area=AreaType.Segmentation, per_component=PerComponent.No
-                ),
+                FirstPrincipalAxisLength.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
                 "LongestMainAxisLength per component",
                 FirstPrincipalAxisLength.get_starting_leaf().replace_(
-                    area=AreaType.Segmentation, per_component=PerComponent.Yes
+                    area=AreaType.ROI, per_component=PerComponent.Yes
                 ),
             ),
         ]
@@ -1580,8 +1556,8 @@ class TestMeasurementResult:
     def test_simple(self):
         info = ComponentsInfo(np.arange(0), np.arange(0), dict())
         storage = MeasurementResult(info)
-        storage["aa"] = 1, "", (PerComponent.No, AreaType.Segmentation)
-        storage["bb"] = 5, "np", (PerComponent.No, AreaType.Segmentation)
+        storage["aa"] = 1, "", (PerComponent.No, AreaType.ROI)
+        storage["bb"] = 5, "np", (PerComponent.No, AreaType.ROI)
         assert list(storage.keys()) == ["aa", "bb"]
         assert list(storage.values()) == [(1, ""), (5, "np")]
         assert storage.get_separated() == [[1, 5]]
@@ -1595,8 +1571,8 @@ class TestMeasurementResult:
     def test_simple2(self):
         info = ComponentsInfo(np.arange(1, 5), np.arange(1, 5), {i: [i] for i in range(1, 5)})
         storage = MeasurementResult(info)
-        storage["aa"] = 1, "", (PerComponent.No, AreaType.Segmentation)
-        storage["bb"] = 5, "np", (PerComponent.No, AreaType.Segmentation)
+        storage["aa"] = 1, "", (PerComponent.No, AreaType.ROI)
+        storage["bb"] = 5, "np", (PerComponent.No, AreaType.ROI)
         assert list(storage.keys()) == ["aa", "bb"]
         assert list(storage.values()) == [(1, ""), (5, "np")]
         assert storage.get_separated() == [[1, 5]]
@@ -1610,8 +1586,8 @@ class TestMeasurementResult:
     def test_segmentation_components(self):
         info = ComponentsInfo(np.arange(1, 3), np.arange(0), {1: [], 2: []})
         storage = MeasurementResult(info)
-        storage["aa"] = 1, "", (PerComponent.No, AreaType.Segmentation)
-        storage["bb"] = [4, 5], "np", (PerComponent.Yes, AreaType.Segmentation)
+        storage["aa"] = 1, "", (PerComponent.No, AreaType.ROI)
+        storage["bb"] = [4, 5], "np", (PerComponent.Yes, AreaType.ROI)
         assert list(storage.keys()) == ["aa", "bb"]
         assert list(storage.values()) == [(1, ""), ([4, 5], "np")]
         assert storage.get_separated() == [[1, 1, 4], [2, 1, 5]]
@@ -1621,7 +1597,7 @@ class TestMeasurementResult:
         assert list(storage.values()) == [("test.tif", ""), (1, ""), ([4, 5], "np")]
         assert storage.get_separated() == [["test.tif", 1, 1, 4], ["test.tif", 2, 1, 5]]
         assert storage.get_labels() == ["File name", "Segmentation component", "aa", "bb"]
-        storage["cc"] = [11, 3], "np", (PerComponent.Yes, AreaType.Segmentation)
+        storage["cc"] = [11, 3], "np", (PerComponent.Yes, AreaType.ROI)
         assert list(storage.keys()) == ["File name", "aa", "bb", "cc"]
         assert list(storage.values()) == [("test.tif", ""), (1, ""), ([4, 5], "np"), ([11, 3], "np")]
         assert storage.get_separated() == [["test.tif", 1, 1, 4, 11], ["test.tif", 2, 1, 5, 3]]
@@ -1630,7 +1606,7 @@ class TestMeasurementResult:
     def test_mask_components(self):
         info = ComponentsInfo(np.arange(1, 2), np.arange(1, 3), {1: [], 2: []})
         storage = MeasurementResult(info)
-        storage["aa"] = 1, "", (PerComponent.No, AreaType.Segmentation)
+        storage["aa"] = 1, "", (PerComponent.No, AreaType.ROI)
         storage["bb"] = [4, 5], "np", (PerComponent.Yes, AreaType.Mask)
         assert list(storage.keys()) == ["aa", "bb"]
         assert list(storage.values()) == [(1, ""), ([4, 5], "np")]
@@ -1641,7 +1617,7 @@ class TestMeasurementResult:
         assert list(storage.values()) == [("test.tif", ""), (1, ""), ([4, 5], "np")]
         assert storage.get_separated() == [["test.tif", 1, 1, 4], ["test.tif", 2, 1, 5]]
         assert storage.get_labels() == ["File name", "Mask component", "aa", "bb"]
-        storage["cc"] = [11, 3], "np", (PerComponent.Yes, AreaType.Mask_without_segmentation)
+        storage["cc"] = [11, 3], "np", (PerComponent.Yes, AreaType.Mask_without_ROI)
         assert list(storage.keys()) == ["File name", "aa", "bb", "cc"]
         assert list(storage.values()) == [("test.tif", ""), (1, ""), ([4, 5], "np"), ([11, 3], "np")]
         assert storage.get_separated() == [["test.tif", 1, 1, 4, 11], ["test.tif", 2, 1, 5, 3]]
@@ -1650,8 +1626,8 @@ class TestMeasurementResult:
     def test_mask_segmentation_components(self):
         info = ComponentsInfo(np.arange(1, 3), np.arange(1, 3), {1: [1], 2: [2]})
         storage = MeasurementResult(info)
-        storage["aa"] = 1, "", (PerComponent.No, AreaType.Segmentation)
-        storage["bb"] = [4, 5], "np", (PerComponent.Yes, AreaType.Segmentation)
+        storage["aa"] = 1, "", (PerComponent.No, AreaType.ROI)
+        storage["bb"] = [4, 5], "np", (PerComponent.Yes, AreaType.ROI)
         assert list(storage.keys()) == ["aa", "bb"]
         assert list(storage.values()) == [(1, ""), ([4, 5], "np")]
         assert storage.get_separated() == [[1, 1, 4], [2, 1, 5]]
@@ -1670,8 +1646,8 @@ class TestMeasurementResult:
     def test_mask_segmentation_components2(self):
         info = ComponentsInfo(np.arange(1, 4), np.arange(1, 3), {1: [1], 2: [2], 3: [1]})
         storage = MeasurementResult(info)
-        storage["aa"] = 1, "", (PerComponent.No, AreaType.Segmentation)
-        storage["bb"] = [4, 5, 6], "np", (PerComponent.Yes, AreaType.Segmentation)
+        storage["aa"] = 1, "", (PerComponent.No, AreaType.ROI)
+        storage["bb"] = [4, 5, 6], "np", (PerComponent.Yes, AreaType.ROI)
         assert list(storage.keys()) == ["aa", "bb"]
         assert list(storage.values()) == [(1, ""), ([4, 5, 6], "np")]
         assert storage.get_separated() == [[1, 1, 4], [2, 1, 5], [3, 1, 6]]
@@ -1694,8 +1670,8 @@ class TestMeasurementResult:
     def test_mask_segmentation_components3(self):
         info = ComponentsInfo(np.arange(1, 4), np.arange(1, 3), {1: [1], 2: [2], 3: [1, 2]})
         storage = MeasurementResult(info)
-        storage["aa"] = 1, "", (PerComponent.No, AreaType.Segmentation)
-        storage["bb"] = [4, 5, 6], "np", (PerComponent.Yes, AreaType.Segmentation)
+        storage["aa"] = 1, "", (PerComponent.No, AreaType.ROI)
+        storage["bb"] = [4, 5, 6], "np", (PerComponent.Yes, AreaType.ROI)
         assert list(storage.keys()) == ["aa", "bb"]
         assert list(storage.values()) == [(1, ""), ([4, 5, 6], "np")]
         assert storage.get_separated() == [[1, 1, 4], [2, 1, 5], [3, 1, 6]]

@@ -96,7 +96,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         Set name of file to be presented as first position.
         """
         self._data_dict["File name"] = path_fo_file
-        self._type_dict["File name"] = PerComponent.No, AreaType.Segmentation
+        self._type_dict["File name"] = PerComponent.No, AreaType.ROI
         self._units_dict["File name"] = ""
         self._data_dict.move_to_end("File name", False)
 
@@ -106,11 +106,9 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
 
         :return: has_mask_components, has_segmentation_components
         """
-        has_mask_components = any(
-            [x == PerComponent.Yes and y != AreaType.Segmentation for x, y in self._type_dict.values()]
-        )
+        has_mask_components = any([x == PerComponent.Yes and y != AreaType.ROI for x, y in self._type_dict.values()])
         has_segmentation_components = any(
-            [x == PerComponent.Yes and y == AreaType.Segmentation for x, y in self._type_dict.values()]
+            [x == PerComponent.Yes and y == AreaType.ROI for x, y in self._type_dict.values()]
         )
         return has_mask_components, has_segmentation_components
 
@@ -187,7 +185,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
                 for i in range(counts):
                     res[i].append(val)
             else:
-                if area_type == AreaType.Segmentation:
+                if area_type == AreaType.ROI:
                     for i, (seg, _mask) in enumerate(component_info):
                         res[i].append(val[segmentation_to_pos[seg]])
                 else:
@@ -212,15 +210,15 @@ class MeasurementProfile:
 
     def need_mask(self, tree):
         if isinstance(tree, Leaf):
-            return tree.area == AreaType.Mask or tree.area == AreaType.Mask_without_segmentation
+            return tree.area == AreaType.Mask or tree.area == AreaType.Mask_without_ROI
         else:
             return self.need_mask(tree.left) or self.need_mask(tree.right)
 
     def _need_mask_without_segmentation(self, tree):
         if isinstance(tree, Leaf):
-            return tree.area == AreaType.Mask_without_segmentation
+            return tree.area == AreaType.Mask_without_ROI
         else:
-            return self.need_mask(tree.left) or self.need_mask(tree.right)
+            return self._need_mask_without_segmentation(tree.left) or self._need_mask_without_segmentation(tree.right)
 
     def _get_par_component_and_area_type(self, tree: Union[Node, Leaf]) -> Tuple[PerComponent, AreaType]:
         if isinstance(tree, Leaf):
@@ -239,10 +237,10 @@ class MeasurementProfile:
             area_set = {left_area, right_area}
             if len(area_set) == 1:
                 res_area = area_set.pop()
-            elif AreaType.Segmentation in area_set:
-                res_area = AreaType.Segmentation
+            elif AreaType.ROI in area_set:
+                res_area = AreaType.ROI
             else:
-                res_area = AreaType.Mask_without_segmentation
+                res_area = AreaType.Mask_without_ROI
             return res_par, res_area
 
     def get_channels_num(self) -> Set[Channel]:
@@ -322,9 +320,9 @@ class MeasurementProfile:
                 kw["_cache"] = True
                 if area_type == AreaType.Mask:
                     kw["area_array"] = kw["mask"]
-                elif area_type == AreaType.Mask_without_segmentation:
+                elif area_type == AreaType.Mask_without_ROI:
                     kw["area_array"] = kw["mask_without_segmentation"]
-                elif area_type == AreaType.Segmentation:
+                elif area_type == AreaType.ROI:
                     kw["area_array"] = kw["segmentation"]
                 else:
                     raise ValueError(f"Unknown area type {node.area}")
@@ -332,7 +330,7 @@ class MeasurementProfile:
                     kw["_cache"] = False
                     val = []
                     area_array = kw["area_array"]
-                    if area_type == AreaType.Segmentation:
+                    if area_type == AreaType.ROI:
                         components = segmentation_mask_map.segmentation_components
                     else:
                         components = segmentation_mask_map.mask_components
@@ -358,21 +356,21 @@ class MeasurementProfile:
             if node.op == "/":
                 if isinstance(left_res, np.ndarray) and isinstance(right_res, np.ndarray) and left_area != right_area:
                     area_set = {left_area, right_area}
-                    if area_set == {AreaType.Segmentation, AreaType.Mask_without_segmentation}:
+                    if area_set == {AreaType.ROI, AreaType.Mask_without_ROI}:
                         raise ProhibitedDivision("This division is prohibited")
-                    if area_set == {AreaType.Segmentation, AreaType.Mask}:
+                    if area_set == {AreaType.ROI, AreaType.Mask}:
                         res = []
                         # TODO Test this part of code
                         for val, num in zip(left_res, segmentation_mask_map.segmentation_components):
                             div_vals = segmentation_mask_map.components_translation[num]
                             if len(div_vals) != 1:
                                 raise ProhibitedDivision("Cannot calculate when object do not belongs to one mask area")
-                            if left_area == AreaType.Segmentation:
+                            if left_area == AreaType.ROI:
                                 res.append(val / right_res[div_vals[0] - 1])
                             else:
                                 res.append(right_res[div_vals[0] - 1] / val)
-                        return np.array(res), left_unit / right_unit, AreaType.Segmentation
-                    left_area = AreaType.Mask_without_segmentation
+                        return np.array(res), left_unit / right_unit, AreaType.ROI
+                    left_area = AreaType.Mask_without_ROI
 
                 return left_res / right_res, left_unit / right_unit, left_area
         raise ValueError("Wrong measurement: {}".format(node))
@@ -473,7 +471,7 @@ class MeasurementProfile:
         for el in self.chosen_fields:
             if self._need_mask_without_segmentation(el.calculation_tree):
                 mm = mask.copy()
-                mm[segmentation > 0] = 0
+                mm[kw["segmentation"] > 0] = 0
                 kw["mask_without_segmentation"] = mm
                 break
         range_changed(0, len(self.chosen_fields))
@@ -942,7 +940,7 @@ class Sphericity(MeasurementMethodBase):
             help_dict = kwargs["help_dict"]
         else:
             help_dict = {}
-            kwargs.update({"_area": AreaType.Segmentation, "_per_component": PerComponent.No})
+            kwargs.update({"_area": AreaType.ROI, "_per_component": PerComponent.No})
         volume_hash_str = hash_fun_call_name(Volume, {}, kwargs["_area"], kwargs["_per_component"], Channel(-1))
         if volume_hash_str not in help_dict:
             volume = Volume.calculate_property(**kwargs)
@@ -1004,7 +1002,7 @@ class RimVolume(MeasurementMethodBase):
 
     @staticmethod
     def area_type(area: AreaType):
-        return AreaType.Segmentation
+        return AreaType.ROI
 
 
 class RimPixelBrightnessSum(MeasurementMethodBase):
@@ -1045,7 +1043,7 @@ class RimPixelBrightnessSum(MeasurementMethodBase):
 
     @staticmethod
     def area_type(area: AreaType):
-        return AreaType.Segmentation
+        return AreaType.ROI
 
 
 class DistancePoint(Enum):
@@ -1133,7 +1131,7 @@ class DistanceMaskSegmentation(MeasurementMethodBase):
 
     @staticmethod
     def area_type(area: AreaType):
-        return AreaType.Segmentation
+        return AreaType.ROI
 
 
 class SplitOnPartVolume(MeasurementMethodBase):
@@ -1164,7 +1162,7 @@ class SplitOnPartVolume(MeasurementMethodBase):
 
     @staticmethod
     def area_type(area: AreaType):
-        return AreaType.Segmentation
+        return AreaType.ROI
 
 
 class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
@@ -1197,7 +1195,7 @@ class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
 
     @staticmethod
     def area_type(area: AreaType):
-        return AreaType.Segmentation
+        return AreaType.ROI
 
 
 def pixel_volume(spacing, result_scalar):

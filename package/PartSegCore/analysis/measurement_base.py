@@ -20,9 +20,9 @@ class PerComponent(Enum):
 
 
 class AreaType(Enum):
-    Segmentation = 1
+    ROI = 1
     Mask = 2
-    Mask_without_segmentation = 3
+    Mask_without_ROI = 3
 
     def __str__(self):
         return self.name.replace("_", " ")

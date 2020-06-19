@@ -310,7 +310,6 @@ class MeasurementWidget(QWidget):
         segmentation = self.settings.segmentation
         if segmentation is None:
             return
-        full_segmentation = None
         base_mask = self.settings.mask
         units = self.units_choose.get_value()
 
@@ -330,9 +329,7 @@ class MeasurementWidget(QWidget):
             kwargs[f"channel+{num}"] = self.settings.image.get_channel(num)
 
         thread = ExecuteFunctionThread(
-            compute_class.calculate,
-            [channel, segmentation, full_segmentation, base_mask, self.settings.image.spacing, units],
-            kwargs,
+            compute_class.calculate, [channel, segmentation, base_mask, self.settings.image.spacing, units], kwargs,
         )
         dial = WaitingDialog(thread, "Measurement calculation")  # , exception_hook=exception_hook)
         dial.exec()

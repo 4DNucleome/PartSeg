@@ -78,7 +78,7 @@ class SimpleMeasurements(QWidget):
             chk: QCheckBox = self.measurement_layout.itemAt(i).widget()
             if chk.isChecked():
                 leaf: Leaf = MEASUREMENT_DICT[chk.text()].get_starting_leaf()
-                to_calculate.append(leaf.replace_(per_component=PerComponent.Yes, area=AreaType.Segmentation))
+                to_calculate.append(leaf.replace_(per_component=PerComponent.Yes, area=AreaType.ROI))
         if not to_calculate:
             QMessageBox.warning(self, "No measurement", "Select at least one measurement")
             return
@@ -124,7 +124,7 @@ class SimpleMeasurements(QWidget):
                 pc = val.get_starting_leaf().per_component
                 if (
                     val.get_fields()
-                    or (area is not None and area != AreaType.Segmentation)
+                    or (area is not None and area != AreaType.ROI)
                     or (pc is not None and pc != PerComponent.Yes)
                 ):
                     continue

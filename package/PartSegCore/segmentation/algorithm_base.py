@@ -30,12 +30,26 @@ class AdditionalLayerDescription:
     name: str = ""
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, repr=False)
 class SegmentationResult:
     segmentation: np.ndarray
     parameters: SegmentationProfile
     additional_layers: Dict[str, AdditionalLayerDescription] = field(default_factory=dict)
     info_text: str = ""
+
+    def __str__(self):
+        return (
+            f"SegmentationResult(segmentation=[shape: {self.segmentation.shape}, dtype: {self.segmentation.dtype},"
+            f" max: {np.max(self.segmentation)}], parameters={self.parameters},"
+            f" additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text}"
+        )
+
+    def __repr__(self):
+        return (
+            f"SegmentationResult(segmentation=[shape: {self.segmentation.shape}, dtype: {self.segmentation.dtype}, "
+            f"max: {np.max(self.segmentation)}], parameters={self.parameters}, "
+            f"additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text}"
+        )
 
 
 def report_empty_fun(_x, _y):

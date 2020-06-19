@@ -258,7 +258,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             self.components_num = ind
             if ind == 0:
                 info_text = (
-                    "Please check the minimum size parameter. " f"The biggest element has size {self._sizes_array[1]}",
+                    "Please check the minimum size parameter. " f"The biggest element has size {self._sizes_array[1]}"
                 )
             else:
                 info_text = ""

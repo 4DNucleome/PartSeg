@@ -468,7 +468,7 @@ class ImageView(QWidget):
         image_layers = []
 
         for i in range(image.channels):
-            lim = limits[1]
+            lim = limits[i]
             if lim[1] == lim[0]:
                 lim[1] += 1
             image_layers.append(
