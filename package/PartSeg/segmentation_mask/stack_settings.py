@@ -52,7 +52,7 @@ class StackSettings(BaseSettings):
 
     def chosen_components(self) -> typing.List[int]:
         """
-        Needs instance of :py:class:`PartSeg.segmentation_mask.stack_gui_main.ChosenComponents` on variable
+        Needs instance of :py:class:`PartSeg.segmentation_mask.main_window.ChosenComponents` on variable
         Py:attr:`chosen_components_widget` (or something implementing its interface)
 
         :return: list of chosen components
@@ -64,7 +64,7 @@ class StackSettings(BaseSettings):
 
     def component_is_chosen(self, val: int) -> bool:
         """
-        Needs instance of :py:class:`PartSeg.segmentation_mask.stack_gui_main.ChosenComponents` on variable
+        Needs instance of :py:class:`PartSeg.segmentation_mask.main_window.ChosenComponents` on variable
         Py:attr:`chosen_components_widget` (or something implementing its interface)
 
         :return: if given component is selected
@@ -76,7 +76,7 @@ class StackSettings(BaseSettings):
 
     def components_mask(self) -> np.ndarray:
         """
-        Needs instance of :py:class:`PartSeg.segmentation_mask.stack_gui_main.ChosenComponents` on variable
+        Needs instance of :py:class:`PartSeg.segmentation_mask.main_window.ChosenComponents` on variable
         Py:attr:`chosen_components_widget` (or something implementing its interface)
 
         :return: boolean mask if component is selected

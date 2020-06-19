@@ -86,7 +86,7 @@ class MainWindow(QMainWindow):
 
     def launch_mask(self):
         self._launch_begin()
-        self.lib_path = "PartSeg.segmentation_mask.stack_gui_main"
+        self.lib_path = "PartSeg.segmentation_mask.main_window"
         self.final_title = "PartSeg Mask Segmentation"
         self.prepare = Prepare(self.lib_path)
         self.prepare.finished.connect(self.launch)
