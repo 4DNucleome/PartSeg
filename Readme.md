@@ -69,7 +69,7 @@ Main window of Segmentation Analysis with view on measurement result:
 
 Window for creating set of measurements:
 
-![statistics](images/statisitcs.png)
+![statistics](images/measurement.png)
 
 Main window of Mask Segmentation:
 
