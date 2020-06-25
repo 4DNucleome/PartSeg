@@ -8,9 +8,9 @@ import pytest
 
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.image_operations import RadiusType
-from PartSegImage import Image
 from PartSegCore.mask.io_functions import SegmentationTuple
 from PartSegCore.mask_create import MaskProperty
+from PartSegImage import Image
 
 
 @pytest.fixture(scope="module")

@@ -1,19 +1,20 @@
-from abc import ABC
-from typing import Optional, Callable
 import operator
+from abc import ABC
+from typing import Callable, Optional
 
-import SimpleITK as sitk
 import numpy as np
+import SimpleITK as sitk
 
 from PartSegCore.segmentation.border_smoothing import smooth_dict
-from PartSegCore.segmentation.watershed import sprawl_dict, BaseWatershed
-from ..utils import bisect
-from ..channel_class import Channel
-from ..segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult, AdditionalLayerDescription
-from ..convex_fill import convex_fill
+from PartSegCore.segmentation.watershed import BaseWatershed, sprawl_dict
+
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
+from ..channel_class import Channel
+from ..convex_fill import convex_fill
+from ..segmentation.algorithm_base import AdditionalLayerDescription, SegmentationAlgorithm, SegmentationResult
+from ..utils import bisect
 from .noise_filtering import noise_filtering_dict
-from .threshold import threshold_dict, BaseThreshold, double_threshold_dict
+from .threshold import BaseThreshold, double_threshold_dict, threshold_dict
 
 
 class StackAlgorithm(SegmentationAlgorithm, ABC):

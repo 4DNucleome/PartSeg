@@ -3,8 +3,11 @@ from typing import List, Optional, Type
 
 from napari import Viewer
 from qtpy.QtCore import Signal
-from qtpy.QtGui import QShowEvent, QDragEnterEvent, QDropEvent, QCloseEvent
-from qtpy.QtWidgets import QMainWindow, QMessageBox, QWidget, QApplication
+from qtpy.QtGui import QCloseEvent, QDragEnterEvent, QDropEvent, QShowEvent
+from qtpy.QtWidgets import QApplication, QMainWindow, QMessageBox, QWidget
+
+from PartSegCore.io_utils import ProjectInfoBase
+from PartSegImage import Image
 
 from ..common_backend.base_settings import BaseSettings, SwapTimeStackException, TimeAndStackException
 from ..common_backend.load_backup import import_config
@@ -12,8 +15,6 @@ from .about_dialog import AboutDialog
 from .image_adjustment import ImageAdjustmentDialog
 from .show_directory_dialog import DirectoryDialog
 from .waiting_dialog import ExecuteFunctionDialog
-from PartSegCore.io_utils import ProjectInfoBase
-from PartSegImage import Image
 
 
 class BaseMainMenu(QWidget):

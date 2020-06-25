@@ -8,14 +8,15 @@ import pytest
 
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
-from PartSegCore.analysis.analysis_utils import SegmentationPipelineElement, SegmentationPipeline
+from PartSegCore.analysis.analysis_utils import SegmentationPipeline, SegmentationPipelineElement
 from PartSegCore.analysis.calculate_pipeline import calculate_pipeline
-from PartSegCore.convex_fill import convex_fill, _convex_fill
+from PartSegCore.convex_fill import _convex_fill, convex_fill
 from PartSegCore.image_operations import RadiusType
-from PartSegCore.mask_create import calculate_mask, MaskProperty
-from PartSegCore.segmentation import restartable_segmentation_algorithms as sa, SegmentationAlgorithm
+from PartSegCore.mask_create import MaskProperty, calculate_mask
+from PartSegCore.segmentation import SegmentationAlgorithm
+from PartSegCore.segmentation import restartable_segmentation_algorithms as sa
 from PartSegCore.segmentation.noise_filtering import noise_filtering_dict
-from PartSegCore.segmentation.segmentation_info import SegmentationInfo, BoundInfo
+from PartSegCore.segmentation.segmentation_info import BoundInfo, SegmentationInfo
 from PartSegCore.segmentation.watershed import sprawl_dict
 from PartSegImage import Image
 

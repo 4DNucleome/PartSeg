@@ -1,28 +1,28 @@
 import itertools
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional, List, Dict, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from dataclasses import dataclass, field
 from napari._qt.qt_viewer_buttons import QtViewerPushButton
 from napari.components import ViewerModel as Viewer
 from napari.layers import Layer
 from napari.layers.image import Image as NapariImage
 from napari.layers.image._image_constants import Interpolation3D
 from napari.layers.labels import Labels
-from napari.qt import QtViewer, QtNDisplayButton
-from qtpy.QtCore import QObject
-from qtpy.QtCore import Signal
-from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QLabel
-from vispy.color import Colormap, ColorArray, Color
+from napari.qt import QtNDisplayButton, QtViewer
+from qtpy.QtCore import QObject, Signal
+from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from vispy.color import Color, ColorArray, Colormap
 from vispy.scene import BaseCamera
 
-from PartSegCore.color_image import create_color_map, ColorMap, calculate_borders
-from PartSegCore.image_operations import NoiseFilterType, median, gaussian
+from PartSegCore.color_image import ColorMap, calculate_borders, create_color_map
+from PartSegCore.image_operations import NoiseFilterType, gaussian, median
 from PartSegCore.segmentation.segmentation_info import SegmentationInfo
 from PartSegImage import Image
-from .channel_control import ChannelProperty, ColorComboBoxGroup
+
 from ..common_backend.base_settings import BaseSettings, ViewSettings
+from .channel_control import ChannelProperty, ColorComboBoxGroup
 
 
 @dataclass

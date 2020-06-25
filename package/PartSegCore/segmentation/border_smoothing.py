@@ -4,7 +4,7 @@ import numpy as np
 import SimpleITK as sitk
 
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
-from PartSegCore.segmentation.watershed import get_neighbourhood, NeighType
+from PartSegCore.segmentation.watershed import NeighType, get_neighbourhood
 
 
 class BaseSmoothing(AlgorithmDescribeBase, ABC):

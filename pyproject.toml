@@ -30,3 +30,9 @@ exclude = '''
   | package/PartSeg/version.py
 )
 '''
+
+[tool.isort]
+line_length=120
+known_first_party=['PartSeg', 'PartSegData','PartSegCore','PartSegImage']
+multi_line_output=3
+include_trailing_comma='true'

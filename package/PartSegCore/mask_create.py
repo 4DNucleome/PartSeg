@@ -4,8 +4,9 @@ import numpy as np
 import SimpleITK as sitk
 
 from PartSegImage.image import minimal_dtype
+
 from .class_generator import BaseSerializableClass
-from .image_operations import dilate, erode, RadiusType
+from .image_operations import RadiusType, dilate, erode
 
 
 # noinspection PyUnresolvedReferences

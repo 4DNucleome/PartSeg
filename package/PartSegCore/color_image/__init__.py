@@ -1,14 +1,14 @@
 from .base_colors import (
-    Color,
-    ColorPosition,
-    default_colormap_dict,
-    ColorMap,
     BaseColormap,
-    default_label_dict,
+    Color,
+    ColorMap,
+    ColorPosition,
     LabelColors,
+    default_colormap_dict,
+    default_label_dict,
 )
-from .color_image_cython import add_labels, resolution, calculate_borders
 from .color_image_base import color_image_fun, create_color_map
+from .color_image_cython import add_labels, calculate_borders, resolution
 
 __all__ = (
     "calculate_borders",

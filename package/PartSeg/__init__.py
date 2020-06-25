@@ -1,7 +1,7 @@
 from packaging.version import parse
 
-from PartSeg.version import version
 from PartSeg.changelog import changelog
+from PartSeg.version import version
 
 __version__ = version
 parsed_version = parse(version)

@@ -4,9 +4,9 @@ from enum import Enum
 
 import numpy as np
 
-from ..image_operations import gaussian, median
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
 from ..class_generator import enum_register
+from ..image_operations import gaussian, median
 from .algorithm_base import calculate_operation_radius as _calculate_operation_radius
 
 

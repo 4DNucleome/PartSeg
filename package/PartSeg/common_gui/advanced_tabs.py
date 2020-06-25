@@ -7,24 +7,24 @@ import sys
 from functools import partial
 from typing import List
 
-from qtpy.QtGui import QCloseEvent, QPalette, QColor
 from qtpy.QtCore import QByteArray, Qt
+from qtpy.QtGui import QCloseEvent, QColor, QPalette
 from qtpy.QtWidgets import (
-    QTabWidget,
-    QWidget,
-    QPushButton,
-    QGridLayout,
     QColorDialog,
-    QVBoxLayout,
     QDoubleSpinBox,
-    QLabel,
+    QGridLayout,
     QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
 )
 
 from PartSeg import plugins
-from PartSeg.common_gui.colormap_creator import PColormapCreator, PColormapList
 from PartSeg.common_backend.base_settings import ViewSettings
-from PartSeg.common_gui.label_create import LabelEditor, LabelChoose
+from PartSeg.common_gui.colormap_creator import PColormapCreator, PColormapList
+from PartSeg.common_gui.label_create import LabelChoose, LabelEditor
 from PartSegCore import register, state_store
 
 

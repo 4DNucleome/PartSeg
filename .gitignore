@@ -1,3 +1,4 @@
+.isort.cfg
 node_modules
 tutorials/tutorial_neuron_types/typy_neuronow2
 package-lock.json

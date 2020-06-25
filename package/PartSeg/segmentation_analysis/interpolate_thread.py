@@ -1,5 +1,5 @@
-from qtpy.QtCore import QThread
 import numpy as np
+from qtpy.QtCore import QThread
 from scipy.ndimage import zoom
 
 

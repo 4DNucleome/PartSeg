@@ -3,52 +3,52 @@ import sys
 from pathlib import Path
 from typing import Type
 
-import PartSegData
 import numpy as np
-from qtpy.QtCore import Qt, QByteArray, QEvent
+from qtpy.QtCore import QByteArray, QEvent, Qt
 from qtpy.QtGui import QIcon, QKeyEvent, QKeySequence, QResizeEvent
 from qtpy.QtWidgets import (
-    QLabel,
-    QWidget,
-    QPushButton,
-    QHBoxLayout,
-    QVBoxLayout,
-    QGridLayout,
-    QMessageBox,
     QCheckBox,
     QComboBox,
+    QGridLayout,
+    QHBoxLayout,
     QInputDialog,
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
 )
 
+import PartSegData
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
+from PartSeg.common_gui.main_window import BaseMainMenu, BaseMainWindow
 from PartSeg.common_gui.stacked_widget_with_selector import StackedWidgetWithSelector
 from PartSeg.segmentation_analysis.measurement_widget import MeasurementWidget
-from PartSegCore.analysis import ProjectTuple
-from PartSegCore.analysis import algorithm_description, load_functions
+from PartSegCore import state_store
+from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.analysis import ProjectTuple, algorithm_description, load_functions
+from PartSegCore.analysis.analysis_utils import SegmentationPipeline, SegmentationPipelineElement
 from PartSegCore.analysis.io_utils import create_history_element_from_project
-from PartSegCore.io_utils import WrongFileTypeException, HistoryElement
+from PartSegCore.analysis.save_functions import save_dict
+from PartSegCore.io_utils import HistoryElement, WrongFileTypeException
 from PartSegCore.mask_create import calculate_mask
-from ..common_gui.algorithms_description import InteractiveAlgorithmSettingsWidget, AlgorithmChoose
+from PartSegCore.segmentation.algorithm_base import SegmentationResult
+from PartSegImage import TiffImageReader
+
+from ..common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgorithmSettingsWidget
 from ..common_gui.channel_control import ChannelProperty
+from ..common_gui.custom_save_dialog import SaveDialog
 from ..common_gui.equal_column_layout import EqualColumnLayout
 from ..common_gui.mask_widget import MaskDialogBase
+from ..common_gui.multiple_file_widget import MultipleFileWidget
 from ..common_gui.stack_image_view import ColorBar
 from ..common_gui.universal_gui_part import TextShow
-from ..common_gui.waiting_dialog import WaitingDialog, ExecuteFunctionDialog
-from ..common_gui.multiple_file_widget import MultipleFileWidget
-from PartSegCore.segmentation.algorithm_base import SegmentationResult
-from PartSeg.common_gui.main_window import BaseMainWindow, BaseMainMenu
+from ..common_gui.waiting_dialog import ExecuteFunctionDialog, WaitingDialog
 from .advanced_window import SegAdvancedWindow
 from .batch_window import BatchWindow
 from .calculation_pipeline_thread import CalculatePipelineThread
-from PartSegImage import TiffImageReader
-from PartSegCore.algorithm_describe_base import SegmentationProfile
-from PartSegCore.analysis.analysis_utils import SegmentationPipelineElement, SegmentationPipeline
-from .image_view import SynchronizeView, ResultImageView, CompareImageView
+from .image_view import CompareImageView, ResultImageView, SynchronizeView
 from .partseg_settings import PartSettings
-from ..common_gui.custom_save_dialog import SaveDialog
-from PartSegCore.analysis.save_functions import save_dict
-from PartSegCore import state_store
 
 CONFIG_FOLDER = os.path.join(state_store.save_folder, "analysis")
 

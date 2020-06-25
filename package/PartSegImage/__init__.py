@@ -3,7 +3,7 @@ import sys
 
 from . import tifffile_fixes  # noqa: F401
 from .image import Image
-from .image_reader import TiffImageReader, TiffFileException, CziImageReader, GenericImageReader, OifImagReader
+from .image_reader import CziImageReader, GenericImageReader, OifImagReader, TiffFileException, TiffImageReader
 from .image_writer import ImageWriter
 
 __all__ = (

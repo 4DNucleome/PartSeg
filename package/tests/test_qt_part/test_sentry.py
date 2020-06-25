@@ -2,8 +2,8 @@ import multiprocessing
 
 import sentry_sdk
 import sentry_sdk.utils
-from sentry_sdk.hub import Hub
 from sentry_sdk.client import Client
+from sentry_sdk.hub import Hub
 from sentry_sdk.serializer import serialize
 
 from PartSegCore.analysis.batch_processing.batch_backend import prepare_error_data

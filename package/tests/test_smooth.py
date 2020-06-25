@@ -2,7 +2,7 @@ import itertools
 
 import numpy as np
 
-from PartSegCore.segmentation.border_smoothing import VoteSmoothing, IterativeVoteSmoothing, OpeningSmoothing
+from PartSegCore.segmentation.border_smoothing import IterativeVoteSmoothing, OpeningSmoothing, VoteSmoothing
 from PartSegCore.segmentation.watershed import NeighType
 
 

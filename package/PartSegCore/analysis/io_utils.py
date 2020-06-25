@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 import numpy as np
 import packaging.version
 
-from PartSegCore.io_utils import ProjectInfoBase, HistoryElement
+from PartSegCore.io_utils import HistoryElement, ProjectInfoBase
 from PartSegCore.mask_create import MaskProperty
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
 from PartSegImage import Image

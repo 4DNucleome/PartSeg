@@ -1,9 +1,8 @@
 import sys
 
-from qtpy.QtCore import QMutex
+from qtpy.QtCore import QMutex, QThread, Signal
 
 from PartSegCore.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
-from qtpy.QtCore import QThread, Signal
 
 
 class SegmentationThread(QThread):

@@ -1,9 +1,9 @@
 import sys
 
-import PartSegData
 import numpy as np
 from qtpy.QtWidgets import QApplication, QWidget
 
+import PartSegData
 from PartSeg.common_gui.channel_control import GammaInfoWidget
 
 color_maps = np.load(PartSegData.colors_file)

@@ -1,16 +1,17 @@
-import os
 import importlib
+import os
 from functools import partial
+
 from qtpy.QtCore import QSize, Qt, QThread
 from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QMainWindow, QToolButton, QGridLayout, QWidget, QProgressBar, QMessageBox
+from qtpy.QtWidgets import QGridLayout, QMainWindow, QMessageBox, QProgressBar, QToolButton, QWidget
 
+from PartSeg import MASK_NAME, SEGMENTATION_NAME
+from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_backend.load_backup import import_config
 from PartSeg.common_gui.main_window import BaseMainWindow
-from PartSeg.common_backend.base_settings import BaseSettings
-from PartSeg import MASK_NAME, SEGMENTATION_NAME
-from PartSegImage import TiffImageReader
 from PartSegData import icons_dir
+from PartSegImage import TiffImageReader
 
 
 class Prepare(QThread):

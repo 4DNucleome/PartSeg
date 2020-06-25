@@ -1,18 +1,20 @@
 import typing
 from copy import deepcopy
+
+import numpy as np
 from qtpy.QtCore import Signal
 
-from PartSegCore.analysis.calculation_plan import CalculationPlan
-from PartSegCore.analysis.io_utils import ProjectTuple, MaskInfo
-from PartSegCore.io_utils import HistoryElement
-from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.analysis.analysis_utils import SegmentationPipeline
-from PartSegCore.analysis.save_hooks import PartEncoder
+from PartSegCore.analysis.calculation_plan import CalculationPlan
+from PartSegCore.analysis.io_utils import MaskInfo, ProjectTuple
 from PartSegCore.analysis.load_functions import load_metadata
-from ..common_backend.base_settings import BaseSettings, SaveSettingsDescription
+from PartSegCore.analysis.measurement_calculation import MeasurementProfile
+from PartSegCore.analysis.save_hooks import PartEncoder
+from PartSegCore.io_utils import HistoryElement
 from PartSegCore.json_hooks import ProfileDict
-import numpy as np
+
+from ..common_backend.base_settings import BaseSettings, SaveSettingsDescription
 
 MASK_COLORS = {
     "white": np.array((255, 255, 255)),

@@ -1,6 +1,6 @@
-import numpy as np
 import typing
 
+import numpy as np
 from tifffile import lazyattr
 
 Spacing = typing.Tuple[typing.Union[float, int], ...]

@@ -3,7 +3,7 @@ import os
 import appdirs
 import packaging.version
 
-from PartSeg import APP_NAME, APP_LAB, __version__
+from PartSeg import APP_LAB, APP_NAME, __version__
 
 report_errors = False
 show_error_dialog = False

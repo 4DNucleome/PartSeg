@@ -1,11 +1,12 @@
 from typing import Optional
 
+from qtpy.QtCore import QObject, QSignalBlocker, Slot
 from qtpy.QtGui import QResizeEvent
-from qtpy.QtCore import QObject, Slot, QSignalBlocker
 from qtpy.QtWidgets import QCheckBox, QDoubleSpinBox, QLabel
 
 from PartSegCore.segmentation.segmentation_info import SegmentationInfo
 from PartSegImage import Image
+
 from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.napari_image_view import ImageView
 from .partseg_settings import PartSettings

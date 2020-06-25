@@ -1,18 +1,18 @@
 from enum import Enum
 
 from qtpy.QtWidgets import (
+    QCheckBox,
+    QComboBox,
     QDialog,
-    QWidget,
+    QDoubleSpinBox,
+    QFormLayout,
     QHBoxLayout,
     QLabel,
-    QPushButton,
-    QVBoxLayout,
-    QFormLayout,
-    QSpinBox,
-    QDoubleSpinBox,
-    QCheckBox,
     QLineEdit,
-    QComboBox,
+    QPushButton,
+    QSpinBox,
+    QVBoxLayout,
+    QWidget,
 )
 
 from PartSegCore.channel_class import Channel

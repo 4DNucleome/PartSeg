@@ -1,6 +1,6 @@
 import numpy as np
 
-from PartSegCore import Units, UNIT_SCALE
+from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.mask_partition_utils import BorderRim, MaskDistanceSplit
 
 

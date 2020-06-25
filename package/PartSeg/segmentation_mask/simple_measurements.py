@@ -1,23 +1,23 @@
+from qtpy.QtCore import QByteArray, QEvent
+from qtpy.QtGui import QCloseEvent
 from qtpy.QtWidgets import (
-    QWidget,
     QCheckBox,
-    QPushButton,
     QHBoxLayout,
-    QVBoxLayout,
+    QLabel,
     QMessageBox,
+    QPushButton,
     QTableWidget,
     QTableWidgetItem,
-    QLabel,
+    QVBoxLayout,
+    QWidget,
 )
-from qtpy.QtCore import QEvent, QByteArray
-from qtpy.QtGui import QCloseEvent
 
 from PartSeg.common_gui.universal_gui_part import ChannelComboBox, EnumComboBox
 from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
 from PartSeg.segmentation_mask.stack_settings import StackSettings
 from PartSegCore import Units
+from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, PerComponent
 from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile, MeasurementResult
-from PartSegCore.analysis.measurement_base import MeasurementEntry, Leaf, PerComponent, AreaType
 
 
 class SimpleMeasurements(QWidget):

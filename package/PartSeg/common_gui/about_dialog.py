@@ -1,6 +1,8 @@
 import os
-from qtpy.QtWidgets import QDialog, QLabel, QPushButton, QGridLayout
+
 from qtpy.QtCore import Qt
+from qtpy.QtWidgets import QDialog, QGridLayout, QLabel, QPushButton
+
 import PartSeg
 from PartSeg.common_gui.universal_gui_part import TextShow
 

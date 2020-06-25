@@ -1,7 +1,8 @@
 from qtpy.QtCore import QThread
-from qtpy.QtWidgets import QDialog, QProgressBar, QPushButton, QHBoxLayout, QLabel
+from qtpy.QtWidgets import QDialog, QHBoxLayout, QLabel, QProgressBar, QPushButton
 
 from PartSeg.common_backend.progress_thread import ExecuteFunctionThread
+
 from ..common_backend.progress_thread import ProgressTread
 
 

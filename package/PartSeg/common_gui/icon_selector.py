@@ -1,7 +1,8 @@
 import os
 
-from PartSegData import icons_dir
 from qtpy.QtGui import QIcon
+
+from PartSegData import icons_dir
 
 
 class IconSelector:

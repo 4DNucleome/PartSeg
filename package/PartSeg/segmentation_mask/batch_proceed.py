@@ -2,15 +2,15 @@ import re
 from collections import defaultdict
 from functools import partial
 from os import path
-from typing import Optional, NamedTuple, Union, Tuple, List
 from queue import Queue
+from typing import List, NamedTuple, Optional, Tuple, Union
 
 from qtpy.QtCore import QThread, Signal
 
-from PartSeg.segmentation_mask.stack_settings import get_mask, StackSettings
+from PartSeg.segmentation_mask.stack_settings import StackSettings, get_mask
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
-from PartSegCore.mask.io_functions import SaveSegmentation, LoadSegmentationImage, LoadStackImage, SegmentationTuple
+from PartSegCore.mask.io_functions import LoadSegmentationImage, LoadStackImage, SaveSegmentation, SegmentationTuple
 from PartSegCore.segmentation import StackAlgorithm
 from PartSegCore.segmentation.algorithm_base import SegmentationAlgorithm
 

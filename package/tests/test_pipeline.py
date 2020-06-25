@@ -1,15 +1,15 @@
-from copy import deepcopy
 import os
+from copy import deepcopy
 
 import numpy as np
 import pytest
 
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.analysis import (
-    analysis_algorithm_dict,
-    SegmentationPipelineElement,
-    SegmentationPipeline,
     ProjectTuple,
+    SegmentationPipeline,
+    SegmentationPipelineElement,
+    analysis_algorithm_dict,
 )
 from PartSegCore.analysis.calculate_pipeline import calculate_pipeline
 from PartSegCore.analysis.load_functions import LoadProject

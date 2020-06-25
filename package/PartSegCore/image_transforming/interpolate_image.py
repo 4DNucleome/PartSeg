@@ -1,9 +1,10 @@
-from typing import List, Callable, Optional
+from typing import Callable, List, Optional
 
 from scipy.ndimage import zoom
 
-from PartSegImage import Image
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
+from PartSegImage import Image
+
 from .transform_base import TransformBase
 
 

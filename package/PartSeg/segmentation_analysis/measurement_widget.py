@@ -2,29 +2,31 @@ import locale
 import os
 from enum import Enum
 from typing import List, Tuple
-from qtpy.QtGui import QResizeEvent, QKeyEvent
-from qtpy.QtCore import Qt, QEvent
+
+from qtpy.QtCore import QEvent, Qt
+from qtpy.QtGui import QKeyEvent, QResizeEvent
 from qtpy.QtWidgets import (
-    QWidget,
-    QPushButton,
+    QApplication,
+    QBoxLayout,
     QCheckBox,
     QComboBox,
-    QTableWidget,
-    QVBoxLayout,
     QHBoxLayout,
     QLabel,
-    QApplication,
-    QTableWidgetItem,
     QMessageBox,
-    QBoxLayout,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
 )
 
+from PartSeg.common_backend.progress_thread import ExecuteFunctionThread
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile, MeasurementResult
+from PartSegCore.universal_const import Units
+
 from ..common_gui.universal_gui_part import ChannelComboBox, EnumComboBox
 from ..common_gui.waiting_dialog import WaitingDialog
 from .partseg_settings import PartSettings
-from PartSegCore.universal_const import Units
-from PartSeg.common_backend.progress_thread import ExecuteFunctionThread
 
 
 class FileNamesEnum(Enum):

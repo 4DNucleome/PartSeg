@@ -1,6 +1,8 @@
-from PartSegImage import TiffImageReader, Image
-from .progress_thread import ProgressTread
 from qtpy.QtCore import Signal
+
+from PartSegImage import Image, TiffImageReader
+
+from .progress_thread import ProgressTread
 
 
 class ImageReaderThread(ProgressTread):

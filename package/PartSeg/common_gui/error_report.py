@@ -13,16 +13,16 @@ import requests
 import sentry_sdk
 from qtpy.QtWidgets import (
     QDialog,
-    QPushButton,
-    QTextEdit,
     QHBoxLayout,
-    QVBoxLayout,
     QLabel,
     QLineEdit,
-    QListWidgetItem,
     QListWidget,
+    QListWidgetItem,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
 )
-from sentry_sdk.utils import exc_info_from_error, event_from_exception
+from sentry_sdk.utils import event_from_exception, exc_info_from_error
 
 from PartSeg import __version__
 from PartSegCore import state_store

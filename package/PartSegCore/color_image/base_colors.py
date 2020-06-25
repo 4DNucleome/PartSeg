@@ -1,7 +1,8 @@
 import typing
 
 from PartSegCore.class_generator import BaseSerializableClass
-from .color_data import magma_data, plasma_data, inferno_data, viridis_data, sitk_labels
+
+from .color_data import inferno_data, magma_data, plasma_data, sitk_labels, viridis_data
 
 Num = typing.Union[int, float]
 

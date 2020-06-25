@@ -8,24 +8,23 @@ import typing
 from enum import Enum
 from sys import platform
 
-
 from qtpy import PYQT5
-from qtpy.QtCore import Qt, QTimer, QRect, QPointF, Signal
-from qtpy.QtGui import QPaintEvent, QPainter, QColor, QPalette, QFontMetrics, QPolygonF
+from qtpy.QtCore import QPointF, QRect, Qt, QTimer, Signal
+from qtpy.QtGui import QColor, QFontMetrics, QPainter, QPaintEvent, QPalette, QPolygonF
 from qtpy.QtWidgets import (
-    QWidget,
-    QLabel,
-    QDoubleSpinBox,
     QAbstractSpinBox,
-    QSpinBox,
     QComboBox,
-    QSlider,
-    QLineEdit,
+    QDoubleSpinBox,
     QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QSlider,
+    QSpinBox,
     QTextEdit,
+    QWidget,
 )
 
-from PartSegCore.universal_const import Units, UNIT_SCALE
+from PartSegCore.universal_const import UNIT_SCALE, Units
 
 if PYQT5:
     enum_type = Enum

@@ -10,9 +10,9 @@ from functools import partial
 import numpy as np
 
 from .euclidean_cython import calculate_euclidean
-from .fuzzy_distance import fuzzy_distance, calculate_mu_array, MuType
+from .fuzzy_distance import MuType, calculate_mu_array, fuzzy_distance
 from .path_sprawl_cython import calculate_maximum, calculate_minimum
-from .sprawl_utils import get_maximum_component, get_closest_component, get_minimum_component
+from .sprawl_utils import get_closest_component, get_maximum_component, get_minimum_component
 
 
 def _allocate_cache(distance_cache: typing.Optional[np.ndarray], data_shape: tuple):

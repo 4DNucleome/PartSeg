@@ -4,14 +4,15 @@ import locale
 import os
 import platform
 import sys
+import zlib
+from typing import Optional, Sequence, Text
+
 import sentry_sdk
 import sentry_sdk.utils
-from typing import Optional, Sequence, Text
-import zlib
 
-from PartSegCore import state_store
-from PartSeg.common_backend.except_hook import my_excepthook
 import PartSeg
+from PartSeg.common_backend.except_hook import my_excepthook
+from PartSegCore import state_store
 
 
 def proper_suffix(val: str):

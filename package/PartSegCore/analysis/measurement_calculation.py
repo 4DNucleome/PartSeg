@@ -3,22 +3,21 @@ from collections import OrderedDict
 from enum import Enum
 from functools import reduce
 from math import pi
-from typing import NamedTuple, Optional, Dict, Callable, List, Any, Union, Tuple, MutableMapping, Iterator, Set
+from typing import Any, Callable, Dict, Iterator, List, MutableMapping, NamedTuple, Optional, Set, Tuple, Union
 
-import SimpleITK
 import numpy as np
+import SimpleITK
 from scipy.spatial.distance import cdist
 from sympy import symbols
 
 from .. import autofit as af
+from ..algorithm_describe_base import AlgorithmProperty, Register
 from ..channel_class import Channel
-from ..algorithm_describe_base import Register, AlgorithmProperty
-from ..mask_partition_utils import BorderRim, MaskDistanceSplit
 from ..class_generator import enum_register
+from ..mask_partition_utils import BorderRim, MaskDistanceSplit
 from ..universal_const import UNIT_SCALE, Units
 from ..utils import class_to_dict
-from .measurement_base import Leaf, Node, MeasurementEntry, MeasurementMethodBase, PerComponent, AreaType
-
+from .measurement_base import AreaType, Leaf, MeasurementEntry, MeasurementMethodBase, Node, PerComponent
 
 # TODO change image to channel in signature of measurement calculate_property
 

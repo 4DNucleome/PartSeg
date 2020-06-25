@@ -5,62 +5,63 @@ from functools import partial
 from pathlib import Path
 from typing import Type
 
-import PartSegData
 import numpy as np
-from qtpy.QtCore import Signal, Qt, QByteArray, Slot
-from qtpy.QtGui import QGuiApplication, QIcon, QCloseEvent
+from qtpy.QtCore import QByteArray, Qt, Signal, Slot
+from qtpy.QtGui import QCloseEvent, QGuiApplication, QIcon
 from qtpy.QtWidgets import (
-    QWidget,
-    QPushButton,
-    QHBoxLayout,
-    QFileDialog,
-    QMessageBox,
-    QVBoxLayout,
+    QAbstractSpinBox,
     QCheckBox,
     QDoubleSpinBox,
-    QSpinBox,
-    QProgressBar,
-    QLabel,
-    QAbstractSpinBox,
+    QFileDialog,
     QFormLayout,
-    QTabWidget,
-    QSizePolicy,
     QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QSizePolicy,
+    QSpinBox,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
 )
 
-from PartSegCore import state_store, Units, UNIT_SCALE
-from PartSegCore.io_utils import WrongFileTypeException, HistoryElement, HistoryProblem
+import PartSegData
+from PartSegCore import UNIT_SCALE, Units, state_store
+from PartSegCore.io_utils import HistoryElement, HistoryProblem, WrongFileTypeException
 from PartSegCore.mask import io_functions
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import (
-    SaveSegmentation,
     LoadSegmentation,
-    SegmentationTuple,
     LoadSegmentationParameters,
+    SaveSegmentation,
+    SegmentationTuple,
 )
 from PartSegCore.mask_create import calculate_mask
 from PartSegCore.segmentation.algorithm_base import SegmentationResult
 from PartSegImage import Image, TiffImageReader
-from .batch_proceed import BatchProceed, BatchTask
-from .image_view import StackImageView
-from .simple_measurements import SimpleMeasurements
-from .stack_settings import StackSettings, get_mask
+
 from ..common_gui.advanced_tabs import AdvancedWindow
-from ..common_gui.algorithms_description import AlgorithmSettingsWidget, EnumComboBox, AlgorithmChoose
+from ..common_gui.algorithms_description import AlgorithmChoose, AlgorithmSettingsWidget, EnumComboBox
 from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.custom_load_dialog import CustomLoadDialog
 from ..common_gui.custom_save_dialog import SaveDialog
 from ..common_gui.flow_layout import FlowLayout
-from ..common_gui.main_window import BaseMainWindow, BaseMainMenu
+from ..common_gui.main_window import BaseMainMenu, BaseMainWindow
 from ..common_gui.mask_widget import MaskDialogBase
 from ..common_gui.multiple_file_widget import MultipleFileWidget
+from ..common_gui.napari_image_view import LabelEnum
 from ..common_gui.select_multiple_files import AddFiles
 from ..common_gui.stack_image_view import ColorBar
-from ..common_gui.napari_image_view import LabelEnum
 from ..common_gui.universal_gui_part import right_label
 from ..common_gui.waiting_dialog import ExecuteFunctionDialog
 from ..segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
+from .batch_proceed import BatchProceed, BatchTask
+from .image_view import StackImageView
+from .simple_measurements import SimpleMeasurements
+from .stack_settings import StackSettings, get_mask
 
 CONFIG_FOLDER = os.path.join(state_store.save_folder, "mask")
 

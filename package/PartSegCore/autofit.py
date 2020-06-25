@@ -1,5 +1,6 @@
+from math import acos, pi, sqrt
+
 import numpy as np
-from math import acos, sqrt, pi
 
 
 def find_density_orientation(img, voxel_size, cutoff=1):

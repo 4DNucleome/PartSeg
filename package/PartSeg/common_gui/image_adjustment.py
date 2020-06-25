@@ -1,8 +1,10 @@
-from qtpy.QtWidgets import QDialog, QComboBox, QStackedWidget, QPushButton, QGridLayout
 from typing import Dict, NamedTuple
 
+from qtpy.QtWidgets import QComboBox, QDialog, QGridLayout, QPushButton, QStackedWidget
+
+from PartSegCore.image_transforming import TransformBase, image_transform_dict
 from PartSegImage import Image
-from PartSegCore.image_transforming import image_transform_dict, TransformBase
+
 from .algorithms_description import FormWidget
 
 

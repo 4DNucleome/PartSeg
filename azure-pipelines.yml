@@ -39,13 +39,16 @@ stages:
         steps:
           - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7', architecture: x64}}
           - bash: |
-              python -m pip install black flake8
+              python -m pip install black flake8 isort[pyproject] seed-isort-config
             displayName: InstallDeps
           - bash: black --check .
             displayName: Black
           - bash: flake8 .
             displayName: flake8
-
+          - bash: |
+              seed-isort-config
+              isort -c
+            displayName: isort
 
   - stage: Tests
     dependsOn: [GetTestData, formating_check]

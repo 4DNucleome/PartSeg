@@ -1,11 +1,11 @@
-import json
-import pathlib
-import sys
 import collections
 import importlib
-import pprint
 import inspect
 import itertools
+import json
+import pathlib
+import pprint
+import sys
 import typing
 from enum import Enum, EnumMeta
 

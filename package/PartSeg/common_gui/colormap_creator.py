@@ -1,39 +1,39 @@
 import bisect
 from functools import partial
 from math import ceil
-from typing import List, Optional, Dict, Tuple, Iterable, Set
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import numpy as np
-from qtpy.QtCore import Qt, QRect, QPointF, Signal
+from qtpy.QtCore import QPointF, QRect, Qt, Signal
 from qtpy.QtGui import (
-    QPaintEvent,
-    QPainter,
-    QMouseEvent,
     QBrush,
     QColor,
-    QHideEvent,
-    QFontMetrics,
     QFont,
-    QShowEvent,
+    QFontMetrics,
+    QHideEvent,
+    QMouseEvent,
+    QPainter,
+    QPaintEvent,
     QResizeEvent,
+    QShowEvent,
 )
 from qtpy.QtWidgets import (
-    QWidget,
+    QCheckBox,
     QColorDialog,
-    QVBoxLayout,
+    QGridLayout,
     QHBoxLayout,
     QPushButton,
-    QCheckBox,
-    QToolButton,
     QScrollArea,
-    QGridLayout,
+    QToolButton,
+    QVBoxLayout,
+    QWidget,
 )
 
 from PartSeg.common_backend.base_settings import ViewSettings
 from PartSeg.common_gui.icon_selector import IconSelector
 from PartSeg.common_gui.numpy_qimage import convert_colormap_to_image
 from PartSeg.common_gui.universal_gui_part import InfoLabel
-from PartSegCore.color_image import Color, ColorPosition, ColorMap, BaseColormap
+from PartSegCore.color_image import BaseColormap, Color, ColorMap, ColorPosition
 from PartSegCore.custom_name_generate import custom_name_generate
 
 

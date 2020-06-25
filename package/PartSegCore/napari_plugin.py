@@ -7,7 +7,8 @@ from napari_plugin_engine import napari_hook_implementation
 from .analysis import ProjectTuple
 from .analysis.load_functions import load_dict as analysis_load_dict
 from .io_utils import LoadBase
-from .mask.io_functions import load_dict as mask_load_dict, SegmentationTuple
+from .mask.io_functions import SegmentationTuple
+from .mask.io_functions import load_dict as mask_load_dict
 
 
 def partseg_loader(loader: typing.Type[LoadBase], path: str):

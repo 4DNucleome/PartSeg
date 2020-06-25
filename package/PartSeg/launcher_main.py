@@ -1,18 +1,17 @@
 import argparse
-import sys
 import logging
-from functools import partial
-import os
 import multiprocessing
+import os
+import sys
+from functools import partial
 
 from qtpy.QtGui import QFontDatabase
 
-from PartSegImage import TiffImageReader
-from PartSegData import font_dir, icons_dir
-from PartSeg.custom_application import CustomApplication
-from PartSeg.common_backend.base_argparser import CustomParser
-
 from PartSeg import APP_NAME, MASK_NAME, SEGMENTATION_NAME
+from PartSeg.common_backend.base_argparser import CustomParser
+from PartSeg.custom_application import CustomApplication
+from PartSegData import font_dir, icons_dir
+from PartSegImage import TiffImageReader
 
 multiprocessing.freeze_support()
 

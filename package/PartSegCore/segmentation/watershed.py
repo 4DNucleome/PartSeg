@@ -3,14 +3,15 @@ This module contains PartSeg wrapers for function for :py:mod:`..sprawl_utils.fi
 """
 from abc import ABC
 from enum import Enum
-from typing import Callable, Any
+from typing import Any, Callable
 
 import numpy as np
 
 from PartSegCore.class_generator import enum_register
-from ..multiscale_opening import PyMSO, calculate_mu, MuType
-from ..sprawl_utils.find_split import path_maximum_sprawl, path_minimum_sprawl, euclidean_sprawl, fdt_sprawl
-from ..algorithm_describe_base import Register, AlgorithmDescribeBase, AlgorithmProperty
+
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
+from ..multiscale_opening import MuType, PyMSO, calculate_mu
+from ..sprawl_utils.find_split import euclidean_sprawl, fdt_sprawl, path_maximum_sprawl, path_minimum_sprawl
 from .algorithm_base import SegmentationLimitException
 
 

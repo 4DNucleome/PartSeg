@@ -5,14 +5,15 @@ import typing
 from abc import ABC
 from datetime import datetime
 from enum import Enum
-from io import BytesIO, StringIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
+from io import BufferedIOBase, BytesIO, IOBase, RawIOBase, StringIO, TextIOBase
 from pathlib import Path
-from tarfile import TarInfo, TarFile
+from tarfile import TarFile, TarInfo
 
 import numpy as np
 
-from PartSegCore.json_hooks import profile_hook, ProfileDict
+from PartSegCore.json_hooks import ProfileDict, profile_hook
 from PartSegImage import Image, ImageWriter
+
 from .algorithm_describe_base import AlgorithmDescribeBase, SegmentationProfile
 from .class_generator import BaseSerializableClass
 from .mask_create import MaskProperty

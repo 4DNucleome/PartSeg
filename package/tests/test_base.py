@@ -1,5 +1,5 @@
-import pytest
 import numpy as np
+import pytest
 
 from PartSegCore.image_operations import gaussian, median
 

@@ -5,7 +5,6 @@ import typing
 import numpy as np
 import pytest
 
-
 from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.segmentation_analysis.partseg_settings import PartSettings
 from PartSeg.segmentation_mask.main_window import ChosenComponents

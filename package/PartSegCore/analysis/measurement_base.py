@@ -1,13 +1,13 @@
 from abc import ABC
 from enum import Enum
-from typing import Dict, Optional, Union, Set
+from typing import Dict, Optional, Set, Union
 
 from sympy import symbols
 
-from ..universal_const import Units
-from ..algorithm_describe_base import AlgorithmDescribeNotFound, AlgorithmDescribeBase
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmDescribeNotFound
 from ..channel_class import Channel
 from ..class_generator import BaseSerializableClass, enum_register
+from ..universal_const import Units
 
 
 class PerComponent(Enum):

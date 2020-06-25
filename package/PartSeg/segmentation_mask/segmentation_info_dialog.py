@@ -1,10 +1,12 @@
-from qtpy.QtWidgets import QWidget, QGridLayout, QListWidget, QPlainTextEdit, QLabel, QPushButton
+from typing import Callable, Dict, Optional
+
 from qtpy.QtCore import QEvent
+from qtpy.QtWidgets import QGridLayout, QLabel, QListWidget, QPlainTextEdit, QPushButton, QWidget
 
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
+
 from .stack_settings import StackSettings
-from typing import Callable, Optional, Dict
 
 
 class SegmentationInfoDialog(QWidget):

@@ -1,13 +1,11 @@
 import itertools
 
-import pytest
-from PartSegCore.sprawl_utils.euclidean_cython import calculate_euclidean
-
-from PartSegCore.multiscale_opening import PyMSO, calculate_mu, MuType
 import numpy as np
+import pytest
 
-from PartSegCore.multiscale_opening import calculate_mu_mid
+from PartSegCore.multiscale_opening import MuType, PyMSO, calculate_mu, calculate_mu_mid
 from PartSegCore.segmentation.watershed import NeighType, calculate_distances_array
+from PartSegCore.sprawl_utils.euclidean_cython import calculate_euclidean
 
 
 class TestMu:

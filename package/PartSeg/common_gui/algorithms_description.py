@@ -8,33 +8,34 @@ from qtpy.QtCore import Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent
 from qtpy.QtWidgets import (
     QApplication,
-    QComboBox,
     QCheckBox,
-    QWidget,
-    QVBoxLayout,
-    QLabel,
+    QComboBox,
     QFormLayout,
-    QScrollArea,
+    QLabel,
     QLineEdit,
-    QStackedLayout,
     QMessageBox,
+    QScrollArea,
+    QStackedLayout,
+    QVBoxLayout,
+    QWidget,
 )
 from six import with_metaclass
 
 from PartSeg.common_gui.error_report import ErrorDialog
-from PartSegCore.algorithm_describe_base import AlgorithmProperty, AlgorithmDescribeBase, SegmentationProfile
+from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
 from PartSegCore.channel_class import Channel
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.segmentation.algorithm_base import (
     SegmentationAlgorithm,
-    SegmentationResult,
     SegmentationLimitException,
+    SegmentationResult,
 )
 from PartSegImage import Image
-from .dim_combobox import DimComboBox
-from .universal_gui_part import CustomSpinBox, CustomDoubleSpinBox, EnumComboBox, ChannelComboBox
+
 from ..common_backend.base_settings import BaseSettings
 from ..common_backend.segmentation_thread import SegmentationThread
+from .dim_combobox import DimComboBox
+from .universal_gui_part import ChannelComboBox, CustomDoubleSpinBox, CustomSpinBox, EnumComboBox
 
 
 def update(d, u):

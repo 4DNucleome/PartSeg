@@ -1,6 +1,8 @@
-from qtpy.QtWidgets import QFileDialog
 import typing
-from os.path import basename, isfile, isdir
+from os.path import basename, isdir, isfile
+
+from qtpy.QtWidgets import QFileDialog
+
 from PartSegCore.io_utils import LoadBase
 
 

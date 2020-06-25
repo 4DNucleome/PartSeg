@@ -2,6 +2,7 @@ import copy
 import typing
 
 from PartSegCore.algorithm_describe_base import SegmentationProfile
+
 from .class_generator import SerializeClassEncoder, serialize_hook
 from .image_operations import RadiusType
 

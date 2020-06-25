@@ -1,23 +1,23 @@
 from math import isclose
 
-import PartSegData
 from pytestqt.qtbot import QtBot
 from qtpy.QtCore import QPoint, Qt
 from qtpy.QtGui import QColor
 
+import PartSegData
+from PartSeg.common_backend.base_settings import BaseSettings, ColormapDict, ViewSettings
 from PartSeg.common_gui.channel_control import ChannelProperty
 from PartSeg.common_gui.colormap_creator import (
+    ColormapCreator,
+    ColormapEdit,
+    ColormapList,
+    PColormapCreator,
+    PColormapList,
     color_from_qcolor,
     qcolor_from_color,
-    ColormapEdit,
-    ColormapCreator,
-    PColormapCreator,
-    ColormapList,
-    PColormapList,
 )
 from PartSeg.common_gui.napari_image_view import ImageView
-from PartSeg.common_backend.base_settings import ViewSettings, ColormapDict, BaseSettings
-from PartSegCore.color_image import ColorPosition, Color
+from PartSegCore.color_image import Color, ColorPosition
 from PartSegCore.color_image.base_colors import starting_colors
 from PartSegImage import TiffImageReader
 

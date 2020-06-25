@@ -1,4 +1,4 @@
-from qtpy.QtWidgets import QStackedWidget, QComboBox, QWidget
+from qtpy.QtWidgets import QComboBox, QStackedWidget, QWidget
 
 
 class StackedWidgetWithSelector(QStackedWidget):

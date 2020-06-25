@@ -10,12 +10,13 @@ import numpy as np
 import tifffile
 
 from PartSegImage import Image, ImageWriter
-from .io_utils import ProjectTuple, project_version_info
+
 from ..algorithm_describe_base import AlgorithmProperty, Register
-from .save_hooks import PartEncoder
 from ..channel_class import Channel
-from ..io_utils import get_tarinfo, SaveBase, NotSupportedImage, HistoryElement, SaveMaskAsTiff
+from ..io_utils import HistoryElement, NotSupportedImage, SaveBase, SaveMaskAsTiff, get_tarinfo
 from ..universal_const import UNIT_SCALE, Units
+from .io_utils import ProjectTuple, project_version_info
+from .save_hooks import PartEncoder
 
 __all__ = [
     "SaveProject",

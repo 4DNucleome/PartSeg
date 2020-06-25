@@ -8,28 +8,28 @@ from pathlib import Path
 
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import (
-    QDialog,
-    QCompleter,
-    QLineEdit,
-    QPushButton,
-    QGridLayout,
-    QWidget,
     QCheckBox,
     QComboBox,
-    QListWidget,
-    QSpinBox,
-    QTextEdit,
-    QVBoxLayout,
-    QGroupBox,
-    QLabel,
-    QInputDialog,
-    QMessageBox,
-    QTreeWidget,
-    QTreeWidgetItem,
+    QCompleter,
+    QDialog,
     QFileDialog,
+    QGridLayout,
+    QGroupBox,
+    QInputDialog,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMessageBox,
+    QPushButton,
+    QSpinBox,
     QSplitter,
     QTabWidget,
-    QListWidgetItem,
+    QTextEdit,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QVBoxLayout,
+    QWidget,
 )
 
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
@@ -37,29 +37,30 @@ from PartSegCore.algorithm_describe_base import AlgorithmProperty, SegmentationP
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.analysis.calculation_plan import (
     CalculationPlan,
+    MaskBase,
     MaskCreate,
-    Operations,
-    MaskSuffix,
-    MaskSub,
     MaskFile,
-    PlanChanges,
-    NodeType,
     MaskIntersection,
+    MaskMapper,
+    MaskSub,
+    MaskSuffix,
     MaskSum,
     MeasurementCalculate,
-    Save,
+    NodeType,
+    Operations,
+    PlanChanges,
     RootType,
-    MaskBase,
-    MaskMapper,
+    Save,
 )
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.io_utils import SaveBase
 from PartSegCore.universal_const import Units
-from .partseg_settings import PartSettings
-from .profile_export import ExportDialog, ImportDialog
+
 from ..common_gui.custom_save_dialog import FormDialog
 from ..common_gui.mask_widget import MaskWidget
 from ..common_gui.universal_gui_part import right_label
+from .partseg_settings import PartSettings
+from .profile_export import ExportDialog, ImportDialog
 
 group_sheet = (
     "QGroupBox {border: 1px solid gray; border-radius: 9px; margin-top: 0.5em;} "

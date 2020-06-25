@@ -1,9 +1,9 @@
-import subprocess
-
-from qtpy.QtWidgets import QDialog, QLabel, QPushButton, QGridLayout
-from qtpy.QtCore import Qt
 import os
+import subprocess
 from sys import platform
+
+from qtpy.QtCore import Qt
+from qtpy.QtWidgets import QDialog, QGridLayout, QLabel, QPushButton
 
 
 class DirectoryDialog(QDialog):

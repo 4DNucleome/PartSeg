@@ -1,14 +1,24 @@
 from functools import partial
 
-from qtpy.QtWidgets import QDialog, QPushButton
 from qtpy.QtCore import Signal
-from qtpy.QtWidgets import QWidget, QAbstractSpinBox, QCheckBox, QLabel, QHBoxLayout, QSpinBox, QVBoxLayout
+from qtpy.QtWidgets import (
+    QAbstractSpinBox,
+    QCheckBox,
+    QDialog,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QSpinBox,
+    QVBoxLayout,
+    QWidget,
+)
 
-from .dim_combobox import DimComboBox
-from PartSegCore.segmentation.algorithm_base import calculate_operation_radius
 from PartSegCore.image_operations import RadiusType
-from ..common_backend.base_settings import ImageSettings, BaseSettings
 from PartSegCore.mask_create import MaskProperty
+from PartSegCore.segmentation.algorithm_base import calculate_operation_radius
+
+from ..common_backend.base_settings import BaseSettings, ImageSettings
+from .dim_combobox import DimComboBox
 
 
 def off_widget(widget: QWidget, combo_box: DimComboBox):

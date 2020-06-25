@@ -1,15 +1,15 @@
 import os.path
 import typing
+from abc import abstractmethod
 from io import BytesIO
 from pathlib import Path
 from threading import Lock
-from abc import abstractmethod
 
 import numpy as np
 import tifffile.tifffile
-from tifffile import TiffFile
 from czifile.czifile import CziFile
 from oiffile import OifFile
+from tifffile import TiffFile
 
 from .image import Image
 

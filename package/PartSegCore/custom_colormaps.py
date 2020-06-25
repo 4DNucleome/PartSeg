@@ -1,5 +1,5 @@
-from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
 
 __all__ = [
     "black_red",

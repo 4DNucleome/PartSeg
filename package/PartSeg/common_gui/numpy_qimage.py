@@ -1,8 +1,9 @@
-from qtpy.QtGui import QImage
-import numpy as np
 import typing
-from PartSegCore.color_image import color_image_fun, create_color_map, BaseColormap
-from PartSegCore.color_image import resolution
+
+import numpy as np
+from qtpy.QtGui import QImage
+
+from PartSegCore.color_image import BaseColormap, color_image_fun, create_color_map, resolution
 
 ColorMapDict = typing.MutableMapping[str, typing.Tuple[BaseColormap, bool]]
 

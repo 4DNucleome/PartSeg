@@ -1,22 +1,23 @@
-from glob import glob
 import os
+from glob import glob
 from pathlib import Path
 
-from qtpy.QtCore import Signal, Qt
+from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import (
-    QWidget,
+    QAbstractItemView,
+    QDialog,
+    QFileDialog,
     QHBoxLayout,
-    QPushButton,
-    QVBoxLayout,
-    QListWidget,
+    QLabel,
     QLineEdit,
+    QListWidget,
     QListWidgetItem,
     QMessageBox,
-    QDialog,
-    QAbstractItemView,
-    QLabel,
-    QFileDialog,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
 )
+
 from ..common_backend.base_settings import BaseSettings
 
 

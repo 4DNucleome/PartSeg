@@ -1,30 +1,30 @@
 import os
 import sys
-from pathlib import Path
+from collections import Counter, defaultdict
 from functools import partial
+from pathlib import Path
 from typing import Dict, List
 
+from qtpy.QtCore import Qt, QTimer, Signal, Slot
+from qtpy.QtGui import QFontMetrics, QMouseEvent, QResizeEvent
 from qtpy.QtWidgets import (
-    QWidget,
+    QAction,
+    QApplication,
+    QCheckBox,
+    QFileDialog,
+    QGridLayout,
+    QInputDialog,
+    QMenu,
+    QMessageBox,
     QPushButton,
     QTreeWidget,
-    QGridLayout,
-    QFileDialog,
-    QCheckBox,
-    QInputDialog,
     QTreeWidgetItem,
-    QMessageBox,
-    QApplication,
-    QMenu,
-    QAction,
+    QWidget,
 )
-from qtpy.QtGui import QFontMetrics, QResizeEvent, QMouseEvent
-
-from qtpy.QtCore import Qt, QTimer, Slot, Signal
-from collections import defaultdict, Counter
 
 from PartSeg.common_backend.base_settings import BaseSettings
 from PartSegCore.io_utils import LoadBase, ProjectInfoBase
+
 from .custom_load_dialog import CustomLoadDialog, LoadProperty
 from .waiting_dialog import ExecuteFunctionDialog
 

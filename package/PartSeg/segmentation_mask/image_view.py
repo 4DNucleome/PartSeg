@@ -1,13 +1,14 @@
 from typing import List
 
+import numpy as np
+from napari.layers import Layer
 from qtpy.QtCore import QEvent
 from qtpy.QtWidgets import QToolTip
 from vispy.app import MouseEvent
-from napari.layers import Layer
 
 from PartSeg.common_gui.channel_control import ChannelProperty
+
 from ..common_gui.napari_image_view import ImageView
-import numpy as np
 
 
 class StackImageView(ImageView):

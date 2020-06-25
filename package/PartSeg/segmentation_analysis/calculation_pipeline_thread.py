@@ -1,9 +1,12 @@
-from PartSegCore.analysis.analysis_utils import SegmentationPipeline
-from PartSegCore.analysis.calculate_pipeline import calculate_pipeline, PipelineResult
-from ..common_backend.progress_thread import ProgressTread
-from PartSegImage import Image
-import numpy as np
 import typing
+
+import numpy as np
+
+from PartSegCore.analysis.analysis_utils import SegmentationPipeline
+from PartSegCore.analysis.calculate_pipeline import PipelineResult, calculate_pipeline
+from PartSegImage import Image
+
+from ..common_backend.progress_thread import ProgressTread
 
 
 class CalculatePipelineThread(ProgressTread):

@@ -1,7 +1,8 @@
-import sys
 import os
-import appdirs
 import platform
+import sys
+
+import appdirs
 
 app_name = "PartSeg"
 app_lab = "LFSG"

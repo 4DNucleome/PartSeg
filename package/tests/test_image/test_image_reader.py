@@ -1,12 +1,12 @@
-import os.path
 import math
+import os.path
 
-import PartSegData
 import numpy as np
 import pytest
 import tifffile
 
-from PartSegImage import TiffImageReader, Image, CziImageReader, OifImagReader, GenericImageReader
+import PartSegData
+from PartSegImage import CziImageReader, GenericImageReader, Image, OifImagReader, TiffImageReader
 
 
 class TestImageClass:

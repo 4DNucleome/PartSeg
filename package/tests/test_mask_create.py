@@ -1,9 +1,8 @@
 import numpy as np
-
 import pytest
 
 from PartSegCore.image_operations import RadiusType
-from PartSegCore.mask_create import MaskProperty, fill_2d_holes_in_mask, fill_holes_in_mask, calculate_mask
+from PartSegCore.mask_create import MaskProperty, calculate_mask, fill_2d_holes_in_mask, fill_holes_in_mask
 
 
 class TestMaskProperty:

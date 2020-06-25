@@ -1,16 +1,17 @@
 import json
 import sys
-from urllib import request, error
+from urllib import error, request
 
 import packaging.version
 import sentry_sdk
+from qtpy.QtCore import QThread, Slot
 from qtpy.QtGui import QIcon
-from qtpy.QtCore import Slot, QThread
 from qtpy.QtWidgets import QApplication, QMessageBox
 
 from PartSegCore import state_store
-from PartSegImage import TiffFileException
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
+from PartSegImage import TiffFileException
+
 from .. import __version__
 
 

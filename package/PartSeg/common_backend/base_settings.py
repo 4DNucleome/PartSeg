@@ -4,10 +4,10 @@ import os.path
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple, Union, NamedTuple, List, Dict
+from typing import Dict, List, NamedTuple, Optional, Tuple, Union
 
-import numpy as np
 import napari.utils.theme
+import numpy as np
 from napari.resources import get_stylesheet
 from napari.utils.theme import template as napari_template
 from qtpy.QtCore import QObject, Signal
@@ -15,7 +15,7 @@ from qtpy.QtCore import QObject, Signal
 from PartSeg.common_backend.partially_const_dict import PartiallyConstDict
 from PartSegCore.color_image import ColorMap, default_colormap_dict, default_label_dict
 from PartSegCore.color_image.base_colors import starting_colors
-from PartSegCore.io_utils import ProjectInfoBase, load_metadata_base, HistoryElement
+from PartSegCore.io_utils import HistoryElement, ProjectInfoBase, load_metadata_base
 from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, check_loaded_dict
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
 from PartSegCore.segmentation.segmentation_info import SegmentationInfo

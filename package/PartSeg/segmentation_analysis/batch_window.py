@@ -8,44 +8,45 @@ from pathlib import Path
 
 import numpy as np
 import sentry_sdk
-from PartSegData import icons_dir
-from qtpy.QtCore import Qt, QTimer, QByteArray
+from qtpy.QtCore import QByteArray, Qt, QTimer
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
-    QPushButton,
-    QListWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QLineEdit,
-    QFileDialog,
-    QWidget,
+    QComboBox,
     QDialog,
+    QFileDialog,
+    QGridLayout,
+    QHBoxLayout,
     QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
     QMessageBox,
     QProgressBar,
+    QPushButton,
     QSpinBox,
-    QGridLayout,
-    QComboBox,
     QTabWidget,
     QTreeWidget,
     QTreeWidgetItem,
-    QListWidgetItem,
+    QVBoxLayout,
+    QWidget,
 )
 
-from PartSeg.common_gui.error_report import ExceptionListItem, ExceptionList
+from PartSeg.common_gui.error_report import ExceptionList, ExceptionListItem
 from PartSegCore import state_store
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
+from PartSegCore.analysis.batch_processing.batch_backend import CalculationManager
+from PartSegCore.analysis.calculation_plan import Calculation, MaskFile
 from PartSegCore.io_utils import SaveBase
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
+from PartSegCore.universal_const import Units
+from PartSegData import icons_dir
+
 from .. import parsed_version
 from ..common_gui.custom_save_dialog import SaveDialog
 from ..common_gui.select_multiple_files import AddFiles
-from .partseg_settings import PartSettings
-from PartSegCore.analysis.batch_processing.batch_backend import CalculationManager
-from PartSegCore.analysis.calculation_plan import MaskFile, Calculation
-from .prepare_plan_widget import CalculatePlaner
-from PartSegCore.universal_const import Units
 from ..common_gui.universal_gui_part import Spacing, right_label
+from .partseg_settings import PartSettings
+from .prepare_plan_widget import CalculatePlaner
 
 __author__ = "Grzegorz Bokota"
 

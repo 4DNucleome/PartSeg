@@ -1,10 +1,10 @@
 import typing
 from abc import ABC
 
-import SimpleITK as sitk
 import numpy as np
+import SimpleITK as sitk
 
-from ..algorithm_describe_base import Register, AlgorithmDescribeBase, AlgorithmProperty
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
 
 
 class BaseThreshold(AlgorithmDescribeBase, ABC):

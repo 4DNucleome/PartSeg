@@ -1,15 +1,16 @@
-import typing
-from io import BytesIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
-from pathlib import Path
-import tarfile
-import numpy as np
 import json
+import tarfile
+import typing
+from io import BufferedIOBase, BytesIO, IOBase, RawIOBase, TextIOBase
+from pathlib import Path
 
-from PartSegImage import Image
+import numpy as np
+
 from PartSegCore.analysis.io_utils import ProjectTuple
 from PartSegCore.io_utils import LoadBase
 from PartSegCore.segmentation.noise_filtering import DimensionType
-from PartSegCore.universal_const import Units, UNIT_SCALE
+from PartSegCore.universal_const import UNIT_SCALE, Units
+from PartSegImage import Image
 
 
 class LoadPartSegOld(LoadBase):

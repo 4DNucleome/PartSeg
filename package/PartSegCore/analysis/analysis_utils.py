@@ -2,6 +2,7 @@ import typing
 from textwrap import indent
 
 from PartSegCore.algorithm_describe_base import SegmentationProfile
+
 from ..class_generator import BaseSerializableClass
 from ..mask_create import MaskProperty
 

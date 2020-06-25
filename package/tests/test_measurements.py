@@ -1,43 +1,43 @@
 import itertools
 import os
-from functools import reduce, partial
+from functools import partial, reduce
 from math import isclose, pi
 from operator import eq, lt
 
 import numpy as np
 import pytest
 
-from PartSegImage import Image
 from PartSegCore.analysis import load_metadata
+from PartSegCore.analysis.measurement_base import AreaType, MeasurementEntry, Node, PerComponent
 from PartSegCore.analysis.measurement_calculation import (
-    Diameter,
-    PixelBrightnessSum,
-    Volume,
+    ComponentsInfo,
     ComponentsNumber,
-    MaximumPixelBrightness,
-    MinimumPixelBrightness,
-    MeanPixelBrightness,
-    MedianPixelBrightness,
-    StandardDeviationOfPixelBrightness,
-    Moment,
-    FirstPrincipalAxisLength,
-    SecondPrincipalAxisLength,
-    ThirdPrincipalAxisLength,
-    Surface,
-    RimVolume,
-    RimPixelBrightnessSum,
-    MeasurementProfile,
-    Sphericity,
+    Diameter,
     DistanceMaskSegmentation,
     DistancePoint,
-    ComponentsInfo,
+    FirstPrincipalAxisLength,
+    MaximumPixelBrightness,
+    MeanPixelBrightness,
+    MeasurementProfile,
     MeasurementResult,
-    SplitOnPartVolume,
+    MedianPixelBrightness,
+    MinimumPixelBrightness,
+    Moment,
+    PixelBrightnessSum,
+    RimPixelBrightnessSum,
+    RimVolume,
+    SecondPrincipalAxisLength,
+    Sphericity,
     SplitOnPartPixelBrightnessSum,
+    SplitOnPartVolume,
+    StandardDeviationOfPixelBrightness,
+    Surface,
+    ThirdPrincipalAxisLength,
+    Volume,
 )
-from PartSegCore.analysis.measurement_base import Node, MeasurementEntry, PerComponent, AreaType
 from PartSegCore.autofit import density_mass_center
 from PartSegCore.universal_const import UNIT_SCALE, Units
+from PartSegImage import Image
 
 
 def get_cube_array():

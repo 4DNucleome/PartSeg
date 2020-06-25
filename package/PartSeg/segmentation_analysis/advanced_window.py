@@ -2,46 +2,47 @@ import json
 import os
 from copy import deepcopy
 from pathlib import Path
-from typing import Union, Optional, Tuple
+from typing import Optional, Tuple, Union
 
-from PartSegData import icons_dir
-from qtpy.QtCore import Qt, QEvent, Slot
+from qtpy.QtCore import QEvent, Qt, Slot
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
-    QWidget,
-    QListWidget,
-    QTextEdit,
-    QPushButton,
-    QLineEdit,
-    QVBoxLayout,
-    QLabel,
-    QHBoxLayout,
-    QListWidgetItem,
+    QAbstractSpinBox,
+    QApplication,
+    QCheckBox,
     QDialog,
     QDoubleSpinBox,
-    QSpinBox,
-    QGridLayout,
-    QApplication,
-    QMessageBox,
     QFileDialog,
-    QAbstractSpinBox,
-    QInputDialog,
-    QPlainTextEdit,
     QFrame,
-    QCheckBox,
+    QGridLayout,
+    QHBoxLayout,
+    QInputDialog,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMessageBox,
+    QPlainTextEdit,
+    QPushButton,
+    QSpinBox,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
 )
 
 from PartSeg.common_gui.advanced_tabs import AdvancedWindow
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
-from ..common_gui.universal_gui_part import EnumComboBox
+from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
+from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile
+from PartSegCore.universal_const import UNIT_SCALE, Units
+from PartSegData import icons_dir
+
 from ..common_gui.custom_save_dialog import FormDialog
 from ..common_gui.lock_checkbox import LockCheckBox
-from .partseg_settings import PartSettings
-from .profile_export import ExportDialog, StringViewer, ImportDialog, ProfileDictViewer
+from ..common_gui.universal_gui_part import EnumComboBox
 from .measurement_widget import MeasurementWidget
-from PartSegCore.analysis.measurement_calculation import MeasurementProfile, MEASUREMENT_DICT
-from PartSegCore.analysis.measurement_base import Leaf, Node, MeasurementEntry, PerComponent, AreaType
-from PartSegCore.universal_const import UNIT_SCALE, Units
+from .partseg_settings import PartSettings
+from .profile_export import ExportDialog, ImportDialog, ProfileDictViewer, StringViewer
 
 
 def h_line():

@@ -2,13 +2,13 @@
 This module contain utilities to document Register class.
 """
 import inspect
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 from sphinx.application import Sphinx
 from sphinx.ext.autodoc import ModuleLevelDocumenter
 
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
-from PartSegCore.class_generator import extract_type_name, extract_type_info
+from PartSegCore.class_generator import extract_type_info, extract_type_name
 
 
 # noinspection PyUnusedLocal

@@ -1,16 +1,17 @@
 import dataclasses
+import os
+import typing
+from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
-from copy import deepcopy
-import typing
-import os
+
 import numpy as np
 
+from PartSegCore.algorithm_describe_base import AlgorithmProperty
 from PartSegCore.analysis.io_utils import ProjectTuple
-from PartSegCore.analysis.save_functions import SaveCmap, SaveSegmentationAsTIFF, SaveSegmentationAsNumpy
+from PartSegCore.analysis.save_functions import SaveCmap, SaveSegmentationAsNumpy, SaveSegmentationAsTIFF
 from PartSegCore.channel_class import Channel
 from PartSegCore.io_utils import SaveBase
-from PartSegCore.algorithm_describe_base import AlgorithmProperty
 from PartSegCore.universal_const import Units
 
 

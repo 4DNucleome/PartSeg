@@ -1,15 +1,15 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Dict, Callable, Optional, Any
+from typing import Any, Callable, Dict, Optional
 
 import numpy as np
 
 from PartSegCore.channel_class import Channel
 from PartSegImage import Image
 
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
 from ..image_operations import RadiusType
-from ..algorithm_describe_base import AlgorithmDescribeBase, SegmentationProfile, AlgorithmProperty
 
 
 def calculate_operation_radius(radius, spacing, gauss_type):

@@ -1,8 +1,8 @@
 import typing
 from io import BytesIO
 
-from tifffile import imsave
 import numpy as np
+from tifffile import imsave
 
 from .image import Image, minimal_dtype
 

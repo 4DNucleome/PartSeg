@@ -1,6 +1,7 @@
-import pytest
-import PartSeg
 import packaging.version
+import pytest
+
+import PartSeg
 
 
 def test_analysis_import():

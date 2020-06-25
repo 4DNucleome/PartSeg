@@ -11,7 +11,8 @@ from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.io_utils import HistoryElement, HistoryProblem
 from PartSegCore.mask.io_functions import SegmentationTuple, load_metadata
 from PartSegImage import Image
-from PartSegImage.image import reduce_array, minimal_dtype
+from PartSegImage.image import minimal_dtype, reduce_array
+
 from ..common_backend.base_settings import BaseSettings
 
 

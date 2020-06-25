@@ -1,8 +1,8 @@
-import sys
 import platform
+import sys
 
-import pytest
 import napari
+import pytest
 import qtpy
 
 from PartSeg.segmentation_analysis.main_window import MainWindow as AnalysisMainWindow

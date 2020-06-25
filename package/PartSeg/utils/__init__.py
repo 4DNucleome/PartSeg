@@ -1,7 +1,7 @@
-import sys
-import os
-from importlib.abc import MetaPathFinder, Loader
 import importlib
+import os
+import sys
+from importlib.abc import Loader, MetaPathFinder
 
 
 class MyLoader(Loader):

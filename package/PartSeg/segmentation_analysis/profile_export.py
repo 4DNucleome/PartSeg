@@ -1,21 +1,21 @@
-import numpy as np
 import re
 
+import numpy as np
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
+    QButtonGroup,
     QDialog,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
     QListWidget,
     QListWidgetItem,
     QPushButton,
-    QHBoxLayout,
-    QVBoxLayout,
+    QRadioButton,
+    QTextEdit,
     QTreeWidget,
     QTreeWidgetItem,
-    QLabel,
-    QRadioButton,
-    QButtonGroup,
-    QLineEdit,
-    QTextEdit,
+    QVBoxLayout,
 )
 
 from PartSegCore.algorithm_describe_base import SegmentationProfile

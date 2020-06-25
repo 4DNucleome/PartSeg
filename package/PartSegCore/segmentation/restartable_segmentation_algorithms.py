@@ -5,26 +5,26 @@ from abc import ABC
 from collections import defaultdict
 from copy import deepcopy
 
-import SimpleITK
 import numpy as np
+import SimpleITK
 
-from ..multiscale_opening import PyMSO
-from ..multiscale_opening import calculate_mu_mid
-from ..mask_partition_utils import BorderRim as BorderRimBase, MaskDistanceSplit as MaskDistanceSplitBase
-from ..channel_class import Channel
-from .algorithm_base import (
-    SegmentationAlgorithm,
-    SegmentationResult,
-    SegmentationLimitException,
-    AdditionalLayerDescription,
-)
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
-from .noise_filtering import noise_filtering_dict
-from .watershed import sprawl_dict, BaseWatershed, calculate_distances_array, get_neigh
-from .threshold import threshold_dict, BaseThreshold, double_threshold_dict
+from ..channel_class import Channel
+from ..mask_partition_utils import BorderRim as BorderRimBase
+from ..mask_partition_utils import MaskDistanceSplit as MaskDistanceSplitBase
+from ..multiscale_opening import PyMSO, calculate_mu_mid
 from ..universal_const import Units
 from ..utils import bisect
-from .mu_mid_point import mu_mid_dict, BaseMuMid
+from .algorithm_base import (
+    AdditionalLayerDescription,
+    SegmentationAlgorithm,
+    SegmentationLimitException,
+    SegmentationResult,
+)
+from .mu_mid_point import BaseMuMid, mu_mid_dict
+from .noise_filtering import noise_filtering_dict
+from .threshold import BaseThreshold, double_threshold_dict, threshold_dict
+from .watershed import BaseWatershed, calculate_distances_array, get_neigh, sprawl_dict
 
 
 def blank_operator(_x, _y):

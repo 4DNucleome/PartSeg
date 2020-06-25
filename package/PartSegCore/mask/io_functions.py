@@ -1,36 +1,36 @@
+import dataclasses
+import json
 import os
 import tarfile
 import typing
 from collections import defaultdict
-import dataclasses
 from functools import partial
+from io import BufferedIOBase, BytesIO, IOBase, RawIOBase, TextIOBase
 from pathlib import Path
-from io import BytesIO, TextIOBase, BufferedIOBase, RawIOBase, IOBase
 
 import numpy as np
-import json
-
 import tifffile
 
-from ..json_hooks import ProfileEncoder
+from PartSegImage import GenericImageReader, Image, ImageWriter
+
+from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationProfile
 from ..io_utils import (
-    get_tarinfo,
-    SaveBase,
-    LoadBase,
-    proxy_callback,
-    ProjectInfoBase,
-    check_segmentation_type,
-    SegmentationType,
-    WrongFileTypeException,
-    UpdateLoadedMetadataBase,
-    open_tar_file,
     HistoryElement,
+    LoadBase,
+    ProjectInfoBase,
+    SaveBase,
     SaveMaskAsTiff,
+    SegmentationType,
+    UpdateLoadedMetadataBase,
+    WrongFileTypeException,
+    check_segmentation_type,
+    get_tarinfo,
+    open_tar_file,
+    proxy_callback,
     tar_to_buff,
 )
-from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationProfile
+from ..json_hooks import ProfileEncoder
 from ..segmentation.segmentation_info import SegmentationInfo
-from PartSegImage import Image, ImageWriter, GenericImageReader
 
 
 @dataclasses.dataclass(frozen=True)

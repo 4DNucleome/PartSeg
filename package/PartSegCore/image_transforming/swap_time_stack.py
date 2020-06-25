@@ -1,7 +1,8 @@
 import typing
 
-from PartSegImage import Image
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
+from PartSegImage import Image
+
 from .transform_base import TransformBase
 
 

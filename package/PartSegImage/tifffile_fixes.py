@@ -1,10 +1,9 @@
 import collections
 import re
 
-
 import packaging.version
 import tifffile.tifffile
-from tifffile import TiffPage, TiffFile
+from tifffile import TiffFile, TiffPage
 
 if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":  # noqa C901
 

@@ -1,49 +1,49 @@
 import dataclasses
+import json
+import os.path
+import re
 import tarfile
 from copy import deepcopy
-
-import tifffile
 from enum import Enum
-import os.path
+from glob import glob
+
+import h5py
 import numpy as np
 import pandas as pd
 import pytest
-import json
-import re
-from glob import glob
-import h5py
+import tifffile
 
-from PartSegCore.analysis.measurement_base import MeasurementEntry, Leaf
-from PartSegCore.analysis.measurement_calculation import MeasurementProfile
-from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
-from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
-from PartSegCore.segmentation.segmentation_algorithm import ThresholdAlgorithm
-from PartSegImage import Image
-from PartSegCore import Units, UNIT_SCALE
+from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.analysis import ProjectTuple
-from PartSegCore.analysis.load_functions import UpdateLoadedMetadataAnalysis, LoadProject
+from PartSegCore.analysis.load_functions import LoadProject, UpdateLoadedMetadataAnalysis
+from PartSegCore.analysis.measurement_base import Leaf, MeasurementEntry
+from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.analysis.save_functions import (
-    SaveCmap,
-    SaveXYZ,
-    SaveProject,
-    SaveAsTiff,
     SaveAsNumpy,
+    SaveAsTiff,
+    SaveCmap,
+    SaveProject,
     SaveSegmentationAsNumpy,
+    SaveXYZ,
 )
 from PartSegCore.analysis.save_hooks import PartEncoder, part_hook
+from PartSegCore.class_generator import enum_register
 from PartSegCore.io_utils import UpdateLoadedMetadataBase
 from PartSegCore.json_hooks import check_loaded_dict
-from PartSegCore.segmentation.noise_filtering import DimensionType
-from PartSegCore.class_generator import enum_register
+from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import (
     LoadSegmentation,
-    SaveSegmentation,
     LoadSegmentationImage,
-    save_components,
     LoadStackImage,
-    SegmentationTuple,
     LoadStackImageWithMask,
+    SaveSegmentation,
+    SegmentationTuple,
+    save_components,
 )
+from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
+from PartSegCore.segmentation.noise_filtering import DimensionType
+from PartSegCore.segmentation.segmentation_algorithm import ThresholdAlgorithm
+from PartSegImage import Image
 
 
 @pytest.fixture(scope="module")

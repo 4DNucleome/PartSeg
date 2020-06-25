@@ -1,9 +1,9 @@
+import typing
 from math import sqrt
 
-import typing
 from qtpy import QtGui
-from qtpy.QtCore import QPointF, Qt, QLineF
-from qtpy.QtGui import QPolygonF, QPainter, QFontMetrics, QFont
+from qtpy.QtCore import QLineF, QPointF, Qt
+from qtpy.QtGui import QFont, QFontMetrics, QPainter, QPolygonF
 from qtpy.QtWidgets import QCheckBox, QWidget
 
 

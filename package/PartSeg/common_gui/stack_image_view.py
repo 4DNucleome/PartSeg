@@ -5,21 +5,18 @@ from math import log
 from typing import List, Union
 
 import numpy as np
-from PartSegData import icons_dir
 from qtpy import QtGui
 from qtpy.QtCore import QRect, QSize
-from qtpy.QtGui import QPainter, QIcon
-from qtpy.QtWidgets import (
-    QToolButton,
-    QLabel,
-)
+from qtpy.QtGui import QIcon, QPainter
+from qtpy.QtWidgets import QLabel, QToolButton
 
 from PartSeg.common_gui.numpy_qimage import NumpyQImage
 from PartSegCore.class_generator import enum_register
 from PartSegCore.color_image import color_image_fun
-from .napari_image_view import ImageView
-from .napari_image_view import LabelEnum
+from PartSegData import icons_dir
+
 from ..common_backend.base_settings import ViewSettings
+from .napari_image_view import ImageView, LabelEnum
 
 canvas_icon_size = QSize(20, 20)
 step = 1.01

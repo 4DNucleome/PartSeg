@@ -5,23 +5,24 @@ from copy import deepcopy
 
 import numpy as np
 from qtpy.QtCore import Qt, Signal, Slot
-from qtpy.QtGui import QPainter, QMouseEvent, QColor, QPaintEvent
+from qtpy.QtGui import QColor, QMouseEvent, QPainter, QPaintEvent
 from qtpy.QtWidgets import (
-    QWidget,
-    QColorDialog,
-    QVBoxLayout,
-    QLabel,
     QApplication,
-    QPushButton,
+    QColorDialog,
     QHBoxLayout,
-    QToolButton,
+    QLabel,
+    QPushButton,
     QRadioButton,
+    QToolButton,
+    QVBoxLayout,
+    QWidget,
 )
 
 from PartSegCore.custom_name_generate import custom_name_generate
+
+from ..common_backend.base_settings import ViewSettings
 from .icon_selector import IconSelector
 from .numpy_qimage import NumpyQImage
-from ..common_backend.base_settings import ViewSettings
 
 _icon_selector = IconSelector()
 

@@ -1,13 +1,12 @@
-import sys
 import os
+import sys
 
 from .algorithm_base import SegmentationAlgorithm
-from .watershed import BaseWatershed
-from .threshold import BaseThreshold
 from .noise_filtering import NoiseFilteringBase
 from .restartable_segmentation_algorithms import RestartableAlgorithm
 from .segmentation_algorithm import StackAlgorithm
-
+from .threshold import BaseThreshold
+from .watershed import BaseWatershed
 
 __all__ = [
     "SegmentationAlgorithm",

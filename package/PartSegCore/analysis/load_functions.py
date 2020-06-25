@@ -5,35 +5,37 @@ import tarfile
 import typing
 from copy import copy
 from functools import partial
-from io import TextIOBase, BufferedIOBase, RawIOBase, IOBase, BytesIO
+from io import BufferedIOBase, BytesIO, IOBase, RawIOBase, TextIOBase
 from pathlib import Path
 from threading import Lock
 
 import numpy as np
 import tifffile
-from packaging.version import Version, parse as parse_version
+from packaging.version import Version
+from packaging.version import parse as parse_version
 from tifffile import TiffFile
 
 from PartSegImage import GenericImageReader
-from .measurement_base import MeasurementEntry, Leaf, Node
-from .measurement_calculation import MeasurementProfile
-from ..mask.io_functions import LoadSegmentationImage
-from ..universal_const import Units, UNIT_SCALE
+
 from ..algorithm_describe_base import Register, SegmentationProfile
 from ..io_utils import (
-    LoadBase,
-    proxy_callback,
-    check_segmentation_type,
-    SegmentationType,
-    WrongFileTypeException,
-    UpdateLoadedMetadataBase,
-    open_tar_file,
     HistoryElement,
+    LoadBase,
+    SegmentationType,
+    UpdateLoadedMetadataBase,
+    WrongFileTypeException,
+    check_segmentation_type,
+    open_tar_file,
+    proxy_callback,
     tar_to_buff,
 )
+from ..mask.io_functions import LoadSegmentationImage
+from ..universal_const import UNIT_SCALE, Units
 from .analysis_utils import SegmentationPipeline, SegmentationPipelineElement
-from .io_utils import ProjectTuple, MaskInfo, project_version_info
 from .calculation_plan import CalculationPlan, CalculationTree
+from .io_utils import MaskInfo, ProjectTuple, project_version_info
+from .measurement_base import Leaf, MeasurementEntry, Node
+from .measurement_calculation import MeasurementProfile
 from .save_hooks import part_hook
 
 __all__ = [

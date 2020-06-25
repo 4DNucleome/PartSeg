@@ -30,7 +30,7 @@ from enum import Enum
 from os import path
 from queue import Queue
 from traceback import StackSummary
-from typing import List, Tuple, Union, Optional, Type, NamedTuple, Iterable, Any, Dict
+from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -40,21 +40,21 @@ import xlsxwriter
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.analysis.calculation_plan import (
-    MaskMapper,
-    MaskUse,
-    MaskCreate,
-    Save,
-    Operations,
-    FileCalculation,
-    MaskIntersection,
-    MaskSum,
-    get_save_path,
-    MeasurementCalculate,
     BaseCalculation,
     Calculation,
-    RootType,
-    CalculationTree,
     CalculationPlan,
+    CalculationTree,
+    FileCalculation,
+    MaskCreate,
+    MaskIntersection,
+    MaskMapper,
+    MaskSum,
+    MaskUse,
+    MeasurementCalculate,
+    Operations,
+    RootType,
+    Save,
+    get_save_path,
 )
 from PartSegCore.analysis.io_utils import ProjectTuple
 from PartSegCore.analysis.load_functions import LoadMaskSegmentation, LoadProject, load_dict
@@ -62,12 +62,13 @@ from PartSegCore.analysis.measurement_base import AreaType, PerComponent
 from PartSegCore.analysis.measurement_calculation import MeasurementResult
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.mask_create import calculate_mask
-from PartSegCore.segmentation.algorithm_base import report_empty_fun, SegmentationAlgorithm, AdditionalLayerDescription
+from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription, SegmentationAlgorithm, report_empty_fun
 from PartSegImage import Image, TiffImageReader
-from .parallel_backend import BatchManager
-from .. import PartEncoder
-from ...io_utils import WrongFileTypeException, HistoryElement
+
+from ...io_utils import HistoryElement, WrongFileTypeException
 from ...segmentation import RestartableAlgorithm
+from .. import PartEncoder
+from .parallel_backend import BatchManager
 
 
 class ResponseData(NamedTuple):

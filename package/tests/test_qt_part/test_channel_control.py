@@ -1,20 +1,19 @@
 import platform
 
-import PartSegData
 import numpy as np
 import pytest
 from qtpy import PYQT5
-from qtpy.QtCore import Qt, QPoint
+from qtpy.QtCore import QPoint, Qt
 from qtpy.QtGui import QImage
 
-from PartSeg.common_gui.channel_control import ColorComboBox, ColorComboBoxGroup, ChannelProperty
+import PartSegData
+from PartSeg.common_backend.base_settings import BaseSettings, ColormapDict, ViewSettings
+from PartSeg.common_gui.channel_control import ChannelProperty, ColorComboBox, ColorComboBoxGroup
 from PartSeg.common_gui.napari_image_view import ImageView
-from PartSeg.common_backend.base_settings import ViewSettings, ColormapDict, BaseSettings
-from PartSegCore.image_operations import NoiseFilterType
-from PartSegImage import TiffImageReader
 from PartSegCore.color_image import color_image_fun
 from PartSegCore.color_image.base_colors import starting_colors
-
+from PartSegCore.image_operations import NoiseFilterType
+from PartSegImage import TiffImageReader
 
 if PYQT5:
 

@@ -1,8 +1,8 @@
 from abc import ABC
-from typing import List, Callable, Optional
+from typing import Callable, List, Optional
 
-from PartSegImage import Image
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase
+from PartSegImage import Image
 
 
 class TransformBase(AlgorithmDescribeBase, ABC):

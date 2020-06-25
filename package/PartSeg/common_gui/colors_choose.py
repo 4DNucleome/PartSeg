@@ -2,15 +2,15 @@ import typing
 from itertools import count
 
 import numpy as np
-
 from qtpy.QtCore import Signal
-from qtpy.QtGui import QImage, QPaintEvent, QPainter
-from qtpy.QtWidgets import QWidget, QVBoxLayout, QCheckBox, QPushButton, QHBoxLayout
+from qtpy.QtGui import QImage, QPainter, QPaintEvent
+from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QPushButton, QVBoxLayout, QWidget
 
+from PartSegCore.color_image import color_image_fun
+
+from ..common_backend.base_settings import ViewSettings
 from .flow_layout import FlowLayout
 from .vetical_scroll_area import VerticalScrollArea
-from PartSegCore.color_image import color_image_fun
-from ..common_backend.base_settings import ViewSettings
 
 
 class CheckBoxWithMouseSignal(QCheckBox):

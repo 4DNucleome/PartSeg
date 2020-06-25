@@ -22,9 +22,9 @@ import time
 import traceback
 import uuid
 from enum import Enum
-from queue import Queue, Empty
-from threading import Timer, RLock
-from typing import Callable, List, Any, Tuple, Dict
+from queue import Empty, Queue
+from threading import RLock, Timer
+from typing import Any, Callable, Dict, List, Tuple
 
 __author__ = "Grzegorz Bokota"
 

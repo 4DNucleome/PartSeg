@@ -1,6 +1,6 @@
 from qtpy.QtCore import QPoint
+from qtpy.QtGui import QFont, QPainter, QPaintEvent
 from qtpy.QtWidgets import QCheckBox
-from qtpy.QtGui import QPaintEvent, QPainter, QFont
 
 lock_close = "\U0001F512"
 lock_open = "\U0001F513"

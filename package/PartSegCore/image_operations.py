@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Union, List, Iterable
+from typing import Iterable, List, Union
 
 import numpy as np
 import SimpleITK as sitk

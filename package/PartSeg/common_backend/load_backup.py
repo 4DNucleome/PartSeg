@@ -1,11 +1,12 @@
 import os
-import packaging.version
 import shutil
 from glob import glob
 
+import packaging.version
 from qtpy.QtWidgets import QMessageBox, QWidget
 
 from PartSegCore import state_store
+
 from .. import __version__
 
 

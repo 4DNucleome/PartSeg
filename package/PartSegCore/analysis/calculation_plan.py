@@ -8,11 +8,11 @@ from abc import abstractmethod
 from copy import copy, deepcopy
 from enum import Enum
 
-from . import analysis_algorithm_dict
 from ..algorithm_describe_base import SegmentationProfile
-from ..universal_const import Units
 from ..class_generator import BaseSerializableClass, enum_register
 from ..mask_create import MaskProperty
+from ..universal_const import Units
+from . import analysis_algorithm_dict
 from .measurement_calculation import MeasurementProfile
 
 

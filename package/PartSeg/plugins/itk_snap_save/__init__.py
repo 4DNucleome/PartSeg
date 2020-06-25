@@ -1,9 +1,11 @@
 import typing
 from io import BytesIO
 from pathlib import Path
+
 import SimpleITK as sitk
-from PartSegCore.io_utils import SaveBase
+
 from PartSegCore.analysis.save_functions import ProjectTuple
+from PartSegCore.io_utils import SaveBase
 
 
 class SaveITKSnap(SaveBase):

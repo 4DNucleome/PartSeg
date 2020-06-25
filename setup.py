@@ -2,9 +2,8 @@ import codecs
 import os
 import re
 
-from setuptools import Extension, setup
-
 import numpy as np
+from setuptools import Extension, setup
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 package_dir = os.path.join(current_dir, "package")

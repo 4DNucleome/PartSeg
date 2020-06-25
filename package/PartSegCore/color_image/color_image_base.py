@@ -1,11 +1,12 @@
 import typing
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+import numpy as np
 
 import PartSegData
-import numpy as np
 
 from .base_colors import BaseColormap
 from .color_image_cython import color_grayscale, resolution
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 color_maps = np.load(PartSegData.colors_file)
 

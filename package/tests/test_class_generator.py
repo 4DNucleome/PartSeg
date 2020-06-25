@@ -1,6 +1,8 @@
-import pytest
 import typing
 from collections import OrderedDict
+
+import pytest
+
 from PartSegCore.class_generator import BaseSerializableClass, base_serialize_register
 
 

@@ -1,5 +1,5 @@
-import typing
 import sys
+import typing
 
 import pytest
 from qtpy.QtCore import QObject

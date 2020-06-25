@@ -1,7 +1,7 @@
 import itertools
 import sys
-from typing import Tuple, TypeVar, Generic, Union, Iterator
 from collections.abc import MutableMapping
+from typing import Generic, Iterator, Tuple, TypeVar, Union
 
 from qtpy.QtCore import QObject, Signal
 

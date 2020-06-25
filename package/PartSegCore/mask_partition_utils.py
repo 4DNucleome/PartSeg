@@ -10,11 +10,12 @@ Both class from this module are designed for spherical mask, but may be useful a
 """
 import typing
 
-import SimpleITK
 import numpy as np
+import SimpleITK
 from scipy.ndimage import distance_transform_edt
 
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
+
 from .universal_const import UNIT_SCALE, Units
 
 

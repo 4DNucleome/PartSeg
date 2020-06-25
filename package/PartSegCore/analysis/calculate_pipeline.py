@@ -1,15 +1,16 @@
 import typing
 from dataclasses import dataclass
 
+import numpy as np
+
 from PartSegCore.algorithm_describe_base import SegmentationProfile
-from PartSegCore.io_utils import HistoryElement
-from PartSegCore.segmentation import RestartableAlgorithm
-from PartSegCore.analysis.analysis_utils import SegmentationPipeline
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.analysis_utils import SegmentationPipeline
+from PartSegCore.io_utils import HistoryElement
 from PartSegCore.mask_create import calculate_mask
+from PartSegCore.segmentation import RestartableAlgorithm
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
 from PartSegImage import Image
-import numpy as np
 
 
 def _empty_fun(_a1, _a2):
