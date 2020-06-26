@@ -125,9 +125,10 @@ stages:
               imageName: 'vs2017-win2016'
         pool: {vmImage: $(imageName)}
         variables:
-          CIBW_BEFORE_BUILD_LINUX: yum -y install hdf5-devel;
+          CIBW_BEFORE_ALL_LINUX: yum -y install hdf5-devel;
           CIBW_TEST_COMMAND_LINUX: pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part
-          CIBW_TEST_COMMAND_windows: pytest {project}/package/tests || pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part/test_main_windows.py
+          CIBW_TEST_COMMAND_WINDOWS: pytest {project}/package/tests || pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part/test_main_windows.py
+          CIBW_TEST_COMMAND_MACOS: pytest {project}/package/tests || pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part/test_main_windows.py
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           CIBW_TEST_COMMAND: pytest {project}/package/tests
           MACOSX_DEPLOYMENT_TARGET: "10.9"

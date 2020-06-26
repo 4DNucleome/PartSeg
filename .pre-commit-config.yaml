@@ -41,7 +41,7 @@ repos:
     hooks:
     -   id: seed-isort-config
 -   repo: https://github.com/pre-commit/mirrors-isort
-    rev: ''  # Use the revision sha / tag you want to point at
+    rev: 'v4.3.21'  # Use the revision sha / tag you want to point at
     hooks:
     -   id: isort
         additional_dependencies:
