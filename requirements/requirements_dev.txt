@@ -1,6 +1,6 @@
-numpy >= 1.16.0
-Cython >= 0.29.16
-tox
 black
+cython >= 0.29.16
+numpy >= 1.16.0
 pre-commit
+tox
 -r requirements_test.txt

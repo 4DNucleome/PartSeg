@@ -15,8 +15,8 @@ PartSegData
 PyInstaller
 PyOpenGL-accelerate
 PyQt5!=5.15.0
-requests
 QtPy
+requests
 scipy
 sentry-sdk
 SimpleITK
