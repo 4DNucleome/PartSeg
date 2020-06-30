@@ -37,6 +37,6 @@ def register():
     PartSegCore.plugins.register()
     for el in get_plugins():
         if hasattr(el, "register") and el.__name__ not in plugins_loaded:
-            assert isinstance(el.register, typing.Callable)
+            assert isinstance(el.register, typing.Callable)  # nosec
             el.register()
             plugins_loaded.add(el.__name__)
