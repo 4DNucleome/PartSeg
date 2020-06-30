@@ -159,7 +159,7 @@ class BaseMainWindow(QMainWindow):
         scaling = image.normalized_scaling()
         if with_channels:
             for i in range(image.channels):
-                viewer.add_image(image.get_channel(i), name=f"channnel {i+1}", scale=scaling, blending="additive")
+                viewer.add_image(image.get_channel(i), name=f"channel {i+1}", scale=scaling, blending="additive")
         for k, v in self.settings.additional_layers.items():
             name = v.name if v.name else k
             if v.layer_type == "labels":

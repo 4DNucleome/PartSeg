@@ -471,19 +471,18 @@ class ImageView(QWidget):
             lim = limits[i]
             if lim[1] == lim[0]:
                 lim[1] += 1
+            blending = "additive" if self.image_info or i != 0 else "translucent"
             image_layers.append(
                 self.viewer.add_image(
                     self.calculate_filter(image.get_channel(i), filters[i]),
                     colormap=self.convert_to_vispy_colormap(self.channel_control.selected_colormaps[i]),
                     visible=visibility[i],
-                    blending="additive",
+                    blending=blending,
                     scale=image.normalized_scaling(),
                     contrast_limits=lim,
                     gamma=gamma[i],
                 )
             )
-        if not self.image_info:
-            image_layers[0].blending = "translucent"
         self.image_info[image.file_path] = ImageInfo(image, image_layers, filters)
         self.current_image = image.file_path
         if image.mask is not None:

@@ -650,10 +650,10 @@ class MainWindow(BaseMainWindow):
             pass
 
     def image_read(self):
-        self.raw_image.set_image()
-        self.raw_image.reset_image_size()
-        self.result_image.set_image()
-        self.result_image.reset_image_size()
+        # self.raw_image.set_image()
+        # self.raw_image.reset_image_size()
+        # self.result_image.set_image()
+        # self.result_image.reset_image_size()
         self.options_panel.interactive_algorithm_execute()
         self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
 
