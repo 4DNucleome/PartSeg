@@ -39,6 +39,7 @@ def _test_imports():
     del w2
     del w3
     del app
+    del console
 
 
 def main():

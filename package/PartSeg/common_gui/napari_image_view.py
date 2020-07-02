@@ -468,7 +468,7 @@ class ImageView(QWidget):
         image_layers = []
 
         for i in range(image.channels):
-            lim = limits[i]
+            lim = list(limits[i])
             if lim[1] == lim[0]:
                 lim[1] += 1
             blending = "additive" if self.image_info or i != 0 else "translucent"
