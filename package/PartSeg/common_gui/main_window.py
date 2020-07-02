@@ -9,12 +9,12 @@ from vispy.color import colormap
 
 from PartSegCore.io_utils import ProjectInfoBase
 from PartSegImage import Image
-from .napari_image_view import ImageView
 
 from ..common_backend.base_settings import BaseSettings, SwapTimeStackException, TimeAndStackException
 from ..common_backend.load_backup import import_config
 from .about_dialog import AboutDialog
 from .image_adjustment import ImageAdjustmentDialog
+from .napari_image_view import ImageView
 from .show_directory_dialog import DirectoryDialog
 from .waiting_dialog import ExecuteFunctionDialog
 
@@ -157,7 +157,9 @@ class BaseMainWindow(QMainWindow):
         colormap = self.get_colormaps()
         print(colormap)
         for i in range(image.channels):
-            viewer.add_image(image.get_channel(i), name=f"channnel {i + 1}", scale=scaling, blending="additive", colormap=colormap[i])
+            viewer.add_image(
+                image.get_channel(i), name=f"channnel {i + 1}", scale=scaling, blending="additive", colormap=colormap[i]
+            )
         self.viewer_list.append(viewer)
         viewer.window.qt_viewer.destroyed.connect(lambda x: self.close_viewer(viewer))
 
