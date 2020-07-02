@@ -297,7 +297,7 @@ class ViewSettings(ImageSettings):
         # TODO update sorting rule
         self.chosen_colormap = list(sorted(colormaps, key=self.colormap_dict.get_position))
 
-    def get_channel_info(self, view: str, num: int, default: Optional[str] = None):
+    def get_channel_info(self, view: str, num: int, default: Optional[str] = None) -> List[str]:
         cm = self.chosen_colormap
         if default is None:
             default = cm[num % len(cm)]

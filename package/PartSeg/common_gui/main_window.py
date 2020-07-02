@@ -5,9 +5,11 @@ from napari import Viewer
 from qtpy.QtCore import Signal
 from qtpy.QtGui import QCloseEvent, QDragEnterEvent, QDropEvent, QShowEvent
 from qtpy.QtWidgets import QApplication, QMainWindow, QMessageBox, QWidget
+from vispy.color import colormap
 
 from PartSegCore.io_utils import ProjectInfoBase
 from PartSegImage import Image
+from .napari_image_view import ImageView
 
 from ..common_backend.base_settings import BaseSettings, SwapTimeStackException, TimeAndStackException
 from ..common_backend.load_backup import import_config
@@ -138,14 +140,24 @@ class BaseMainWindow(QMainWindow):
         if app is not None:
             app.setStyleSheet(settings.style_sheet)
         self.settings.theme_changed.connect(self.change_theme)
+        self.channel_info = ""
+
+    def get_colormaps(self) -> List[Optional[colormap.Colormap]]:
+        channel_num = self.settings.image.channels
+        if not self.channel_info:
+            return [None for _ in range(channel_num)]
+        colormaps_name = [self.settings.get_channel_info(self.channel_info, i) for i in range(channel_num)]
+        return [ImageView.convert_to_vispy_colormap(self.settings.colormap_dict[name][0]) for name in colormaps_name]
 
     def napari_viewer_show(self):
         viewer = Viewer(title="Additional output")
         viewer.theme = self.settings.theme_name
         image = self.settings.image
         scaling = image.normalized_scaling()
+        colormap = self.get_colormaps()
+        print(colormap)
         for i in range(image.channels):
-            viewer.add_image(image.get_channel(i), name=f"channnel {i + 1}", scale=scaling, blending="additive")
+            viewer.add_image(image.get_channel(i), name=f"channnel {i + 1}", scale=scaling, blending="additive", colormap=colormap[i])
         self.viewer_list.append(viewer)
         viewer.window.qt_viewer.destroyed.connect(lambda x: self.close_viewer(viewer))
 

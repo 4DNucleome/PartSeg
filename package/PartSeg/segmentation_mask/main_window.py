@@ -877,6 +877,7 @@ class MainWindow(BaseMainWindow):
         self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None, initial_image=None
     ):
         super().__init__(config_folder, title, settings, signal_fun)
+        self.channel_info = "channelcontrol"
         self.channel_control = ChannelProperty(self.settings, start_name="channelcontrol")
         self.image_view = StackImageView(self.settings, self.channel_control, name="channelcontrol")
         self.image_view.setMinimumWidth(450)

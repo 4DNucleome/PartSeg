@@ -559,6 +559,7 @@ class MainWindow(BaseMainWindow):
         self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None, initial_image=None
     ):
         super().__init__(config_folder, title, settings, signal_fun)
+        self.channel_info = "result_image"
         self.files_num = 2
         self.setMinimumWidth(600)
         # thi isinstance is only for hinting in IDE
