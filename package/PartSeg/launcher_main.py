@@ -5,6 +5,7 @@ import os
 import sys
 from functools import partial
 
+from qtpy.QtCore import Qt
 from qtpy.QtGui import QFontDatabase
 
 from PartSeg import APP_NAME, MASK_NAME, SEGMENTATION_NAME
@@ -61,6 +62,7 @@ def main():
     # print(args)
 
     logging.basicConfig(level=logging.INFO)
+    CustomApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     my_app = CustomApplication(sys.argv, name="PartSeg", icon=os.path.join(icons_dir, "icon.png"))
     my_app.check_release()
     QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf"))
