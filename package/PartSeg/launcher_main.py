@@ -26,11 +26,13 @@ def _test_imports():
     from PartSeg.segmentation_mask.main_window import MainWindow as MaskMain
     from PartSeg.launcher.main_window import MainWindow
     from PartSeg import plugins
+    from napari._qt.qt_console import QtConsole
 
     plugins.register()
     w1 = AnalysisMain("test")
     w2 = MaskMain("test")
     w3 = MainWindow("test")
+    console = QtConsole()
     if QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf")) == -1:
         raise ValueError("Error with loading Symbola font")
     del w1

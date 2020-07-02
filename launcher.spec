@@ -28,7 +28,7 @@ napari.plugins.plugin_manager.discover()
 
 hiddenimports = ["imagecodecs._" + x for x in imagecodecs._extensions()] +\
                 ["imagecodecs._shared"] + [x.__name__ for x in napari.plugins.plugin_manager.plugins.values()] + \
-                ["pkg_resources.py2_warn", "scipy.special.cython_special"]
+                ["pkg_resources.py2_warn", "scipy.special.cython_special", "ipykernel.datapub"]
 
 
 if platform.system() == "Windows":
