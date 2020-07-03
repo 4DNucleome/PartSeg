@@ -342,7 +342,9 @@ class LoadSegmentationImage(LoadBase):
         )
         # noinspection PyProtectedMember
         # image.file_path = load_locations[0]
-        return dataclasses.replace(seg, file_path=image.file_path, image=image)
+        return dataclasses.replace(
+            seg, file_path=image.file_path, image=image, segmentation=image.fit_array_to_image(seg.segmentation)
+        )
 
 
 class LoadStackImage(LoadBase):
@@ -450,15 +452,18 @@ def save_components(
     if step_changed is None:
         step_changed = empty_fun
 
+    segmentation = image.fit_array_to_image(segmentation)
+
     if segmentation_info is None:
         segmentation_info = SegmentationInfo(segmentation)
+    os.makedirs(dir_path, exist_ok=True)
 
     file_name = os.path.splitext(os.path.basename(image.file_path))[0]
     range_changed(0, 2 * len(components))
     for i in components:
         slices = segmentation_info.bound_info[i].get_slices()
         cut_segmentation = segmentation[tuple(slices)]
-        cut_image = image.cut_image([slice(None)] + slices)
+        cut_image = image.cut_image(slices)
         im = cut_image.cut_image(cut_segmentation == i, replace_mask=True)
         # print(f"[run] {im}")
         ImageWriter.save(im, os.path.join(dir_path, f"{file_name}_component{i}.tif"))
@@ -519,7 +524,7 @@ class SaveParametersJSON(SaveBase):
         :return:
         """
         with open(save_location, "w") as ff:
-            json.dump(project_info, ff, cls=ProfileEncoder)
+            json.dump({"parameters": project_info.segmentation_parameters}, ff, cls=ProfileEncoder)
 
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:

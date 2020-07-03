@@ -7,6 +7,9 @@ import numpy as np
 import pytest
 
 from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.analysis import ProjectTuple
+from PartSegCore.analysis.measurement_base import AreaType, MeasurementEntry, PerComponent
+from PartSegCore.analysis.measurement_calculation import ComponentsNumber, MeasurementProfile, Volume
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask.io_functions import SegmentationTuple
 from PartSegCore.mask_create import MaskProperty
@@ -90,6 +93,21 @@ def stack_segmentation1(stack_image: SegmentationTuple, mask_segmentation_parame
 
 
 @pytest.fixture
+def analysis_segmentation(stack_image: SegmentationTuple):
+    data = np.zeros([20, 40, 40], dtype=np.uint8)
+    for i, (x, y) in enumerate(itertools.product([0, 20], repeat=2), start=1):
+        data[1:-1, x + 2 : x + 18, y + 2 : y + 18] = i
+    data = stack_image.image.fit_array_to_image(data)
+    return ProjectTuple(file_path=stack_image.file_path, image=stack_image.image, segmentation=data)
+
+
+@pytest.fixture
+def analysis_segmentation2(analysis_segmentation: ProjectTuple):
+    mask = (analysis_segmentation.segmentation > 0).astype(np.uint8)
+    return dataclasses.replace(analysis_segmentation, mask=mask)
+
+
+@pytest.fixture
 def stack_segmentation2(stack_image: SegmentationTuple, mask_segmentation_parameters):
     data = np.zeros([20, 40, 40], dtype=np.uint8)
     for i, (x, y) in enumerate(itertools.product([0, 20], repeat=2), start=1):
@@ -105,3 +123,23 @@ def stack_segmentation2(stack_image: SegmentationTuple, mask_segmentation_parame
 @pytest.fixture
 def mask_property():
     return MaskProperty(RadiusType.NO, 0, RadiusType.NO, 0, False, False, False)
+
+
+@pytest.fixture
+def measurement_profiles():
+    statistics = [
+        MeasurementEntry(
+            "Segmentation Volume",
+            Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+        ),
+        MeasurementEntry(
+            "ROI Components Number",
+            ComponentsNumber.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+        ),
+    ]
+    statistics2 = [
+        MeasurementEntry(
+            "Mask Volume", Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.No)
+        ),
+    ]
+    return MeasurementProfile("statistic1", statistics), MeasurementProfile("statistic2", statistics + statistics2)

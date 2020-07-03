@@ -74,7 +74,8 @@ class Viewer(ViewerModel):
             image = self.window.screenshot(path=path)
         return image
 
-    def update(self, func, *args, **kwargs):
+    @staticmethod
+    def update(func, *args, **kwargs):
         import warnings
 
         warnings.warn(

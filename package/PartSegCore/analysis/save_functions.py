@@ -103,7 +103,7 @@ def save_cmap(
 ):
     if segmentation is None or np.max(segmentation) == 0:
         raise ValueError("No segmentation")
-    if isinstance(file, (str, BytesIO)):
+    if isinstance(file, (str, BytesIO, Path)):
         if isinstance(file, str) and os.path.exists(file):
             os.remove(file)
         cmap_file = h5py.File(file, "w")
@@ -116,6 +116,7 @@ def save_cmap(
         data[data < 0] = 0
     data = np.copy(data)
     data[segmentation == 0] = 0
+    # data = data[0]  # remove time axis
     grp = cmap_file.create_group("Chimera/image1")
     z, y, x = data.shape
     data_set = grp.create_dataset("data_zyx", (z, y, x), dtype="f", compression="gzip")
@@ -206,9 +207,10 @@ class SaveCmap(SaveBase):
         data = project_info.image.get_channel(parameters["channel"])
         if data.shape[0] != 1:
             raise NotSupportedImage("This save method o not support time data")
-        data = data[0]
         spacing = project_info.image.spacing
-        segmentation = project_info.segmentation
+        segmentation = project_info.segmentation[parameters.get("time", 0)]
+        data = data[parameters.get("time", 0)]
+
         reverse_base = float(np.mean(data[segmentation == 0]))
         if parameters.get("clip", False):
             positions = np.transpose(np.nonzero(segmentation))
@@ -278,10 +280,11 @@ class SaveXYZ(SaveBase):
         if parameters.get("separated_objects", False) and not isinstance(save_location, (str, Path)):
             raise ValueError("Saving components to buffer not supported")
         channel_image = project_info.image.get_channel(parameters["channel"])
-        if channel_image.shape[0] != 1:
+        if channel_image.shape[0] != 1 and "time" not in parameters:
             raise NotSupportedImage("This save method o not support time data")
-        channel_image = channel_image[0]
         segmentation_mask = np.array(project_info.segmentation > 0)
+        channel_image = channel_image[parameters.get("time", 0)]
+        segmentation_mask = segmentation_mask[parameters.get("time", 0)]
         if parameters.get("clip", False):
             positions = np.transpose(np.nonzero(segmentation_mask))
             positions = np.flip(positions, 1)
@@ -293,7 +296,7 @@ class SaveXYZ(SaveBase):
             components_count = np.bincount(project_info.segmentation.flat)
             for i, size in enumerate(components_count[1:], 1):
                 if size > 0:
-                    segmentation_mask = np.array(project_info.segmentation == i)
+                    segmentation_mask = np.array(project_info.segmentation == i)[parameters.get("time", 0)]
                     base_path, ext = os.path.splitext(save_location)
                     new_save_location = base_path + f"_part{i}" + ext
                     cls._save(new_save_location, channel_image, segmentation_mask, shift)

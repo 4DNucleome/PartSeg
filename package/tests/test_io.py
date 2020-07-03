@@ -34,8 +34,10 @@ from PartSegCore.mask.history_utils import create_history_element_from_segmentat
 from PartSegCore.mask.io_functions import (
     LoadSegmentation,
     LoadSegmentationImage,
+    LoadSegmentationParameters,
     LoadStackImage,
     LoadStackImageWithMask,
+    SaveParametersJSON,
     SaveSegmentation,
     SegmentationTuple,
     save_components,
@@ -71,13 +73,12 @@ def analysis_project():
             "side_connection": False,
         },
     }
+    segmentation = image.fit_array_to_image(segmentation.squeeze())
     return ProjectTuple(
         file_path="test_data.tiff",
         image=image,
-        segmentation=segmentation[0, ..., 0],
-        additional_layers={
-            "denoised image": AdditionalLayerDescription(data=segmentation[0, ..., 0], layer_type="layer")
-        },
+        segmentation=segmentation,
+        additional_layers={"denoised image": AdditionalLayerDescription(data=segmentation, layer_type="layer")},
         mask=mask,
         algorithm_parameters=algorithm_parameters,
     )
@@ -95,11 +96,13 @@ def analysis_project_reversed():
     segmentation = np.zeros(data.shape, dtype=np.uint8)
     segmentation[data == 70] = 1
     segmentation[data == 60] = 2
+
     data = 100 - data
     image = Image(
         data, (10 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value], 5 / UNIT_SCALE[Units.nm.value]), ""
     )
-    return ProjectTuple("test_data.tiff", image, segmentation[0, ..., 0], segmentation[0, ..., 0], mask)
+    segmentation = image.fit_array_to_image(segmentation.squeeze())
+    return ProjectTuple("test_data.tiff", image, segmentation, mask=mask)
 
 
 class TestJsonLoad:
@@ -294,7 +297,7 @@ class TestSaveFunctions:
         points = np.nonzero(arr)
         assert tuple(np.min(points, axis=1)) == (15, 15, 15)
         assert tuple(np.max(points, axis=1)) == (34, 84, 84)
-        assert arr.shape == analysis_project.segmentation.shape
+        assert (1,) + arr.shape == analysis_project.segmentation.shape
         assert steps == (5, 5, 10)
 
         parameters = {"channel": 0, "separated_objects": True, "clip": False, "units": Units.nm, "reverse": False}
@@ -303,13 +306,13 @@ class TestSaveFunctions:
         points = np.nonzero(arr)
         assert tuple(np.min(points, axis=1)) == (15, 15, 15)
         assert tuple(np.max(points, axis=1)) == (34, 34, 84)
-        assert arr.shape == analysis_project.segmentation.shape
+        assert (1,) + arr.shape == analysis_project.segmentation.shape
         assert steps == (5, 5, 10)
         arr, steps = self.read_cmap(os.path.join(tmpdir, "test2_comp2.cmap"))
         points = np.nonzero(arr)
         assert tuple(np.min(points, axis=1)) == (15, 55, 15)
         assert tuple(np.max(points, axis=1)) == (34, 84, 84)
-        assert arr.shape == analysis_project.segmentation.shape
+        assert (1,) + arr.shape == analysis_project.segmentation.shape
         assert steps == (5, 5, 10)
 
         parameters = {"channel": 0, "separated_objects": False, "clip": True, "units": Units.nm, "reverse": False}
@@ -343,7 +346,7 @@ class TestSaveFunctions:
         points = np.nonzero(arr)
         assert tuple(np.min(points, axis=1)) == (15, 15, 15)
         assert tuple(np.max(points, axis=1)) == (34, 84, 84)
-        assert arr.shape == analysis_project_reversed.segmentation.shape
+        assert (1,) + arr.shape == analysis_project_reversed.segmentation.shape
         assert steps == (5, 5, 10)
 
         parameters = {"channel": 0, "separated_objects": True, "clip": True, "units": Units.nm, "reverse": True}
@@ -361,39 +364,23 @@ class TestSaveFunctions:
         assert arr.shape == (20, 70, 70)
         assert steps == (5, 5, 10)
 
-    def test_save_xyz(self, tmpdir, analysis_project):
-        parameters = {"channel": 0, "separated_objects": False, "clip": False}
+    @pytest.mark.parametrize("separated_objects", [True, False])
+    @pytest.mark.parametrize("clip", [True, False])
+    def test_save_xyz(self, tmpdir, analysis_project, separated_objects, clip):
+        parameters = {"channel": 0, "separated_objects": separated_objects, "clip": clip}
         SaveXYZ.save(os.path.join(tmpdir, "test1.xyz"), analysis_project, parameters)
         array = pd.read_csv(os.path.join(tmpdir, "test1.xyz"), dtype=np.uint16, sep=" ")
-        assert tuple(np.min(array, axis=0)) == (15, 15, 15, 60)
-        assert tuple(np.max(array, axis=0)) == (84, 84, 34, 70)
-        parameters = {"channel": 0, "separated_objects": False, "clip": True}
-        SaveXYZ.save(os.path.join(tmpdir, "test2.xyz"), analysis_project, parameters)
-        array = pd.read_csv(os.path.join(tmpdir, "test2.xyz"), dtype=np.uint16, sep=" ")
-        assert tuple(np.min(array, axis=0)) == (0, 0, 0, 60)
-        assert tuple(np.max(array, axis=0)) == (69, 69, 19, 70)
-        parameters = {"channel": 0, "separated_objects": True, "clip": True}
-        SaveXYZ.save(os.path.join(tmpdir, "test3.xyz"), analysis_project, parameters)
-        array = pd.read_csv(os.path.join(tmpdir, "test3.xyz"), dtype=np.uint16, sep=" ")
-        assert tuple(np.min(array, axis=0)) == (0, 0, 0, 60)
-        assert tuple(np.max(array, axis=0)) == (69, 69, 19, 70)
-        array = pd.read_csv(os.path.join(tmpdir, "test3_part1.xyz"), dtype=np.uint16, sep=" ")
-        assert tuple(np.min(array, axis=0)) == (0, 0, 0, 70)
-        assert tuple(np.max(array, axis=0)) == (69, 19, 19, 70)
-        array = pd.read_csv(os.path.join(tmpdir, "test3_part2.xyz"), dtype=np.uint16, sep=" ")
-        assert tuple(np.min(array, axis=0)) == (0, 40, 0, 60)
-        assert tuple(np.max(array, axis=0)) == (69, 69, 19, 60)
-        parameters = {"channel": 0, "separated_objects": True, "clip": False}
-        SaveXYZ.save(os.path.join(tmpdir, "test4.xyz"), analysis_project, parameters)
-        array = pd.read_csv(os.path.join(tmpdir, "test4.xyz"), dtype=np.uint16, sep=" ")
-        assert tuple(np.min(array, axis=0)) == (15, 15, 15, 60)
-        assert tuple(np.max(array, axis=0)) == (84, 84, 34, 70)
-        array = pd.read_csv(os.path.join(tmpdir, "test4_part1.xyz"), dtype=np.uint16, sep=" ")
-        assert tuple(np.min(array, axis=0)) == (15, 15, 15, 70)
-        assert tuple(np.max(array, axis=0)) == (84, 34, 34, 70)
-        array = pd.read_csv(os.path.join(tmpdir, "test4_part2.xyz"), dtype=np.uint16, sep=" ")
-        assert tuple(np.min(array, axis=0)) == (15, 55, 15, 60)
-        assert tuple(np.max(array, axis=0)) == (84, 84, 34, 60)
+        shift = (15, 15, 15, 0) if clip else (0, 0, 0, 0)
+
+        assert np.all(np.min(array, axis=0) == np.subtract((15, 15, 15, 60), shift))
+        assert np.all(np.max(array, axis=0) == np.subtract((84, 84, 34, 70), shift))
+        if separated_objects:
+            array = pd.read_csv(os.path.join(tmpdir, "test1_part1.xyz"), dtype=np.uint16, sep=" ")
+            assert np.all(np.min(array, axis=0) == np.subtract((15, 15, 15, 70), shift))
+            assert np.all(np.max(array, axis=0) == np.subtract((84, 34, 34, 70), shift))
+            array = pd.read_csv(os.path.join(tmpdir, "test1_part2.xyz"), dtype=np.uint16, sep=" ")
+            assert np.all(np.min(array, axis=0) == np.subtract((15, 55, 15, 60), shift))
+            assert np.all(np.max(array, axis=0) == np.subtract((84, 84, 34, 60), shift))
 
     def test_load_old_project(self, data_test_dir):
         load_data = LoadProject.load([os.path.join(data_test_dir, "stack1_component1.tgz")])
@@ -414,7 +401,7 @@ class TestSaveFunctions:
     def test_save_tiff(self, tmpdir, analysis_project):
         SaveAsTiff.save(os.path.join(tmpdir, "test1.tiff"), analysis_project)
         array = tifffile.imread(os.path.join(tmpdir, "test1.tiff"))
-        assert analysis_project.segmentation.shape == array.shape
+        assert analysis_project.segmentation.shape == (1,) + array.shape
 
     def test_save_numpy(self, tmpdir, analysis_project):
         parameters = {"squeeze": False}
@@ -425,13 +412,19 @@ class TestSaveFunctions:
         parameters = {"squeeze": True}
         SaveAsNumpy.save(os.path.join(tmpdir, "test2.npy"), analysis_project, parameters)
         array = np.load(os.path.join(tmpdir, "test2.npy"))
-        assert array.shape == analysis_project.segmentation.shape
+        assert (1,) + array.shape == analysis_project.segmentation.shape
         assert np.all(array == analysis_project.image.get_data().squeeze())
 
     def test_save_segmentation_numpy(self, tmpdir, analysis_project):
         SaveSegmentationAsNumpy.save(os.path.join(tmpdir, "test1.npy"), analysis_project)
         array = np.load(os.path.join(tmpdir, "test1.npy"))
         assert np.all(array == analysis_project.segmentation)
+
+
+def test_json_parameters_mask(stack_segmentation1, tmp_path):
+    SaveParametersJSON.save(tmp_path / "test.json", stack_segmentation1)
+    load_param = LoadSegmentationParameters.load([tmp_path / "test.json"])
+    assert len(load_param.segmentation_parameters) == 4
 
 
 update_name_json = """
