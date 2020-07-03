@@ -7,7 +7,7 @@ from typing import Type
 
 import numpy as np
 from qtpy.QtCore import QByteArray, Qt, Signal, Slot
-from qtpy.QtGui import QCloseEvent, QGuiApplication, QIcon
+from qtpy.QtGui import QCloseEvent, QGuiApplication, QIcon, QTextOption
 from qtpy.QtWidgets import (
     QAbstractSpinBox,
     QCheckBox,
@@ -23,6 +23,7 @@ from qtpy.QtWidgets import (
     QSizePolicy,
     QSpinBox,
     QTabWidget,
+    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -773,8 +774,10 @@ class ImageInformation(QWidget):
         """:type settings: ImageSettings"""
         super(ImageInformation, self).__init__(parent)
         self._settings = settings
-        self.path = QLabel("<b>Path:</b> example image")
-        self.path.setWordWrap(True)
+        self.path = QTextEdit("<b>Path:</b> example image")
+        self.path.setWordWrapMode(QTextOption.WrapAnywhere)
+        self.path.setReadOnly(True)
+        self.setMinimumHeight(20)
         self.spacing = [QDoubleSpinBox() for _ in range(3)]
         self.multiple_files = QCheckBox("Show multiple files panel")
         self.multiple_files.setChecked(settings.get("multiple_files_widget", True))
@@ -804,7 +807,7 @@ class ImageInformation(QWidget):
         layout.addWidget(QLabel("Image spacing:"))
         layout.addLayout(spacing_layout)
         layout.addWidget(self.add_files)
-        layout.addStretch()
+        layout.addStretch(1)
         layout.addWidget(self.multiple_files)
         self.setLayout(layout)
         self._settings.image_changed[str].connect(self.set_image_path)
