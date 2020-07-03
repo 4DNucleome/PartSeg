@@ -1,7 +1,6 @@
 import os
 from typing import List, Optional, Type
 
-from napari import Viewer
 from qtpy.QtCore import Signal
 from qtpy.QtGui import QCloseEvent, QDragEnterEvent, QDropEvent, QShowEvent
 from qtpy.QtWidgets import QApplication, QMainWindow, QMessageBox, QWidget
@@ -14,6 +13,7 @@ from ..common_backend.base_settings import BaseSettings, SwapTimeStackException,
 from ..common_backend.load_backup import import_config
 from .about_dialog import AboutDialog
 from .image_adjustment import ImageAdjustmentDialog
+from .napar_viewer_wrap import Viewer
 from .napari_image_view import ImageView
 from .show_directory_dialog import DirectoryDialog
 from .waiting_dialog import ExecuteFunctionDialog
