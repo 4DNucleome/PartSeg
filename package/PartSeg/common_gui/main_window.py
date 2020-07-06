@@ -1,11 +1,10 @@
 import os
 from typing import List, Optional, Type
 
-import numpy as np
 from qtpy.QtCore import Signal
 from qtpy.QtGui import QCloseEvent, QDragEnterEvent, QDropEvent, QShowEvent
 from qtpy.QtWidgets import QApplication, QMainWindow, QMessageBox, QWidget
-from vispy.color import Colormap, colormap
+from vispy.color import colormap
 
 from PartSegCore.io_utils import ProjectInfoBase
 from PartSegImage import Image
@@ -161,22 +160,6 @@ class BaseMainWindow(QMainWindow):
             viewer.add_image(
                 image.get_channel(i), name=f"channnel {i + 1}", scale=scaling, blending="additive", colormap=colormap[i]
             )
-        if self.settings.segmentation is not None:
-            count = max(self.settings.segmentation_info.bound_info.keys())
-            max_num = max(1, count)
-            seg = viewer.add_image(
-                self.settings.segmentation,
-                scale=image.normalized_scaling(),
-                contrast_limits=[0, max_num],
-                name="segmentation",
-            )
-            colors = self.settings.label_colors / 255
-            repeat = int(np.ceil(max_num / colors.shape[0]))
-            colors = np.concatenate([colors] * repeat)
-            colors = np.concatenate([colors, np.ones(colors.shape[0]).reshape(colors.shape[0], 1)], axis=1)
-            colors = np.concatenate([[[0, 0, 0, 0]], colors[:count]])
-            control_points = np.linspace(0, 1, endpoint=True, num=colors.shape[0] + 1)
-            seg.colormap = Colormap(colors, controls=control_points, interpolation="zero")
         self.viewer_list.append(viewer)
         viewer.window.qt_viewer.destroyed.connect(lambda x: self.close_viewer(viewer))
 

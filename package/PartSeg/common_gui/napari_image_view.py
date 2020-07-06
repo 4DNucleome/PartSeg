@@ -339,7 +339,7 @@ class ImageView(QWidget):
                     colors *= self.settings.components_mask().reshape((colors.shape[0], 1))
                 except ValueError:
                     pass
-        control_points = np.linspace(0, 1, endpoint=True, num=colors.shape[0] + 1)
+        control_points = [0] + list(np.linspace(1 / (2 * colors.shape[0]), 1, endpoint=True, num=colors.shape[0]))
         return Colormap(colors, controls=control_points, interpolation="zero")
 
     def update_segmentation_coloring(self):
@@ -363,7 +363,7 @@ class ImageView(QWidget):
         if image_info.segmentation_info.segmentation is None:
             return
         try:
-            max_num = max(1, max(image_info.segmentation_info.bound_info.keys()))
+            max_num = max(1, image_info.segmentation_count)
         except ValueError:
             max_num = 1
         if self.image_state.only_borders:
