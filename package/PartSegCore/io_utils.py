@@ -17,6 +17,7 @@ from PartSegImage import Image, ImageWriter
 from .algorithm_describe_base import AlgorithmDescribeBase, SegmentationProfile
 from .class_generator import BaseSerializableClass
 from .mask_create import MaskProperty
+from .segmentation.segmentation_info import SegmentationInfo
 
 
 class SegmentationType(Enum):
@@ -56,6 +57,7 @@ class ProjectInfoBase:
     file_path: str
     image: Image
     segmentation: np.ndarray
+    segmentation_info: SegmentationInfo = SegmentationInfo(None)
     mask: typing.Optional[np.ndarray]
     errors: str = ""
 

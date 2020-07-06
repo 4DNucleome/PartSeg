@@ -380,6 +380,8 @@ class ImageView(QWidget):
                 image_info.segmentation_info.segmentation,
                 scale=image_info.image.normalized_scaling(),
                 contrast_limits=[0, max_num],
+                name="segmentation",
+                blending="translucent",
             )
         image_info.segmentation._interpolation[3] = Interpolation3D.NEAREST
 
@@ -425,6 +427,8 @@ class ImageView(QWidget):
                 image_info.mask.colormap = colormap
 
     def set_image(self, image: Optional[Image] = None):
+        # self.viewer.layers.select_all()
+        # self.viewer.layers.remove_selected()
         layer_list = list(self.viewer.layers)
         self.image_info = {}
 
@@ -433,9 +437,17 @@ class ImageView(QWidget):
         # self.viewer.stack_view()
         self.viewer.layers.unselect_all()
         for el in layer_list:
+            index = self.viewer.layers.index(el)
+            self.viewer.layers.move_selected(index, len(self.viewer.layers))
+
+        self.viewer.layers.unselect_all()
+        for el in layer_list:
             el.selected = True
+
         self.viewer.layers.remove_selected()
         self.viewer.reset_view()
+        if len(self.viewer.layers):
+            self.viewer.layers[-1].selected = True
         self.viewer.dims.set_point(image.time_pos, image.times * image.normalized_scaling()[image.time_pos] // 2)
         self.viewer.dims.set_point(image.stack_pos, image.layers * image.normalized_scaling()[image.stack_pos] // 2)
 
@@ -478,6 +490,7 @@ class ImageView(QWidget):
             if lim[1] == lim[0]:
                 lim[1] += 1
             blending = "additive" if self.image_info or i != 0 else "translucent"
+            # FIXME detect layer order impact on representation.
             image_layers.append(
                 NapariImage(
                     self.calculate_filter(image.get_channel(i), filters[i]),
@@ -487,6 +500,7 @@ class ImageView(QWidget):
                     scale=image.normalized_scaling(),
                     contrast_limits=lim,
                     gamma=gamma[i],
+                    name=f"channel {i}; {len(self.viewer.layers) + i}",
                 )
             )
         for el in image_layers:

@@ -33,6 +33,7 @@ from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.io_utils import HistoryElement, WrongFileTypeException
 from PartSegCore.mask_create import calculate_mask
 from PartSegCore.segmentation.algorithm_base import SegmentationResult
+from PartSegCore.segmentation.segmentation_info import SegmentationInfo
 from PartSegImage import TiffImageReader
 
 from ..common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgorithmSettingsWidget
@@ -143,10 +144,10 @@ class Options(QWidget):
 
     def compare_action(self):
         if self.compare_btn.text() == "Compare":
-            self._settings.set_segmentation_to_compare(self._settings.segmentation)
+            self._settings.set_segmentation_to_compare(self._settings.segmentation_info)
             self.compare_btn.setText("Remove")
         else:
-            self._settings.set_segmentation_to_compare(None)
+            self._settings.set_segmentation_to_compare(SegmentationInfo(None))
             self.compare_btn.setText("Compare")
 
     def calculation_finished(self):

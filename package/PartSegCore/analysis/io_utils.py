@@ -7,6 +7,7 @@ import packaging.version
 from PartSegCore.io_utils import HistoryElement, ProjectInfoBase
 from PartSegCore.mask_create import MaskProperty
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
+from PartSegCore.segmentation.segmentation_info import SegmentationInfo
 from PartSegImage import Image
 
 project_version_info = packaging.version.Version("1.1")
@@ -17,11 +18,16 @@ class ProjectTuple(ProjectInfoBase):
     file_path: str
     image: Image
     segmentation: typing.Optional[np.ndarray] = None
+    segmentation_info: SegmentationInfo = SegmentationInfo(None)
     additional_layers: typing.Dict[str, AdditionalLayerDescription] = field(default_factory=dict)
     mask: typing.Optional[np.ndarray] = None
     history: typing.List[HistoryElement] = field(default_factory=list)
     algorithm_parameters: dict = field(default_factory=dict)
     errors: str = ""
+
+    def __post_init__(self):
+        if self.segmentation_info.segmentation is not None:
+            object.__setattr__(self, "segmentation_info", SegmentationInfo(self.segmentation))
 
     def get_raw_copy(self):
         return ProjectTuple(self.file_path, self.image.substitute(mask=None))

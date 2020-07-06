@@ -183,7 +183,7 @@ class MultipleFileWidget(QWidget):
         state_name = item.text(0)
         project_info = self.state_dict[file_name][state_name]
         if hasattr(self.settings, "set_segmentation_to_compare"):
-            self.settings.set_segmentation_to_compare(project_info.segmentation)
+            self.settings.set_segmentation_to_compare(project_info.segmentation_info)
 
     def save_state(self):
         state: ProjectInfoBase = self.settings.get_project_info()

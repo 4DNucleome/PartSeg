@@ -13,6 +13,7 @@ from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.analysis.save_hooks import PartEncoder
 from PartSegCore.io_utils import HistoryElement
 from PartSegCore.json_hooks import ProfileDict
+from PartSegCore.segmentation.segmentation_info import SegmentationInfo
 
 from ..common_backend.base_settings import BaseSettings, SaveSettingsDescription
 
@@ -30,7 +31,7 @@ class PartSettings(BaseSettings):
     last_executed_algorithm - parameter for caring last used algorithm
     """
 
-    compare_segmentation_change = Signal(np.ndarray)
+    compare_segmentation_change = Signal(SegmentationInfo)
     json_encoder_class = PartEncoder
     load_metadata = staticmethod(load_metadata)
     last_executed_algorithm: str
@@ -67,12 +68,9 @@ class PartSettings(BaseSettings):
     def cmp_history_element(el1: HistoryElement, el2: HistoryElement):
         return el1.mask_property == el2.mask_property
 
-    def set_segmentation_to_compare(self, segmentation):
+    def set_segmentation_to_compare(self, segmentation: SegmentationInfo):
         self.compare_segmentation = segmentation
-        if segmentation is None:
-            self.compare_segmentation_change.emit(np.array([]))
-        else:
-            self.compare_segmentation_change.emit(segmentation)
+        self.compare_segmentation_change.emit(segmentation)
 
     @property
     def use_physical_unit(self):
@@ -99,6 +97,7 @@ class PartSettings(BaseSettings):
             file_path=self.image.file_path,
             image=self.image.substitute(),
             segmentation=self.segmentation,
+            segmentation_info=self.segmentation_info,
             additional_layers=self.additional_layers,
             mask=self.mask,
             history=self.history[: self.history_index + 1],
