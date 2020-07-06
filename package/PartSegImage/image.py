@@ -333,7 +333,9 @@ class Image:
 
     def get_channel(self, num) -> np.ndarray:
         """"""
-        return np.take(self._image_array, num, self.channel_pos)
+        slices = [slice(None) for _ in range(len(self.return_order))]
+        slices[self.channel_pos] = num
+        return self._image_array[tuple(slices)]  # np.take(self._image_array, num, self.channel_pos)
 
     def get_layer(self, time: int, stack: int) -> np.ndarray:
         """

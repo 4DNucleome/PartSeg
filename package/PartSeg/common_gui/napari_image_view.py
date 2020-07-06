@@ -425,20 +425,16 @@ class ImageView(QWidget):
                 image_info.mask.colormap = colormap
 
     def set_image(self, image: Optional[Image] = None):
-        self.viewer.layers.select_all()
-        if len(self.viewer.layers):
-            first_layer = list(self.viewer.layers)[0]
-            first_layer.selected = False
-        else:
-            first_layer = None
-        self.viewer.layers.remove_selected()
+        layer_list = list(self.viewer.layers)
         self.image_info = {}
+
         image = self.add_image(image)
+
         # self.viewer.stack_view()
         self.viewer.layers.unselect_all()
-        if first_layer is not None:
-            first_layer.selected = True
-            self.viewer.layers.remove_selected()
+        for el in layer_list:
+            el.selected = True
+        self.viewer.layers.remove_selected()
         self.viewer.reset_view()
         self.viewer.dims.set_point(image.time_pos, image.times * image.normalized_scaling()[image.time_pos] // 2)
         self.viewer.dims.set_point(image.stack_pos, image.layers * image.normalized_scaling()[image.stack_pos] // 2)
@@ -483,7 +479,7 @@ class ImageView(QWidget):
                 lim[1] += 1
             blending = "additive" if self.image_info or i != 0 else "translucent"
             image_layers.append(
-                self.viewer.add_image(
+                NapariImage(
                     self.calculate_filter(image.get_channel(i), filters[i]),
                     colormap=self.convert_to_vispy_colormap(self.channel_control.selected_colormaps[i]),
                     visible=visibility[i],
@@ -493,6 +489,8 @@ class ImageView(QWidget):
                     gamma=gamma[i],
                 )
             )
+        for el in image_layers:
+            self.viewer.add_layer(el)
         self.image_info[image.file_path] = ImageInfo(image, image_layers, filters)
         self.current_image = image.file_path
         if image.mask is not None:
