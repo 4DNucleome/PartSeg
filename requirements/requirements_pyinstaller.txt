@@ -82,7 +82,7 @@ sphinxcontrib-jsmath==1.0.1  # via sphinx
 sphinxcontrib-qthelp==1.0.3  # via sphinx
 sphinxcontrib-serializinghtml==1.1.4  # via sphinx
 sympy==1.6                # via -r requirements_pyinstaller.in
-tifffile==2020.6.3        # via -r requirements_pyinstaller.in, czifile, napari, oiffile
+tifffile==2020.7.4        # via -r requirements_pyinstaller.in, czifile, napari, oiffile
 toolz==0.10.0             # via dask, napari
 tornado==6.0.4            # via ipykernel, jupyter-client
 traitlets==4.3.3          # via ipykernel, ipython, jupyter-client, jupyter-core, qtconsole
