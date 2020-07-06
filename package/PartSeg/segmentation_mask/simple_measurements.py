@@ -60,9 +60,7 @@ class SimpleMeasurements(QWidget):
         """
         Save geometry if widget is used as standalone window.
         """
-        print("Aaaa")
         if self.window() == self:
-            print("bbbb")
             self.settings.set_in_profile(
                 "simple_measurement_window_geometry", self.saveGeometry().toHex().data().decode("ascii")
             )
@@ -90,7 +88,6 @@ class SimpleMeasurements(QWidget):
             kwargs={
                 "channel": self.settings.image.get_channel(self.channel_select.get_value()),
                 "segmentation": self.settings.segmentation,
-                "full_segmentation": self.settings.segmentation,
                 "mask": None,
                 "voxel_size": self.settings.image.spacing,
                 "result_units": self.units_select.get_value(),

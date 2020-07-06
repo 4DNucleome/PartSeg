@@ -1,16 +1,8 @@
-import pytest
+from qtpy.QtCore import QEvent
+from qtpy.QtWidgets import QApplication, QCheckBox
 
 from PartSeg.segmentation_analysis.measurement_widget import MeasurementWidget, QMessageBox
-from PartSeg.segmentation_analysis.partseg_settings import PartSettings
-
-
-@pytest.fixture
-def part_settings(measurement_profiles, image, tmp_path):
-    settings = PartSettings(tmp_path)
-    settings.image = image
-    for el in measurement_profiles:
-        settings.measurement_profiles[el.name] = el
-    return settings
+from PartSeg.segmentation_mask.simple_measurements import SimpleMeasurements
 
 
 class TestMeasurementWidget:
@@ -54,3 +46,21 @@ class TestMeasurementWidget:
         assert widget.info_field.columnCount() == 2
         assert widget.info_field.rowCount() == 3
         assert widget.info_field.item(1, 1).text() == "4"
+
+
+class TestSimpleMeasurementsWidget:
+    def test_base(self, stack_settings, stack_segmentation1, qtbot):
+        widget = SimpleMeasurements(stack_settings)
+        qtbot.addWidget(widget)
+        stack_settings.set_project_info(stack_segmentation1)
+        widget.show()
+        event = QEvent(QEvent.WindowActivate)
+        QApplication.sendEvent(widget, event)
+        assert widget.measurement_layout.count() > 2
+        for i in range(2, widget.measurement_layout.count()):
+            chk = widget.measurement_layout.itemAt(i).widget()
+            assert isinstance(chk, QCheckBox)
+            chk.setChecked(True)
+        widget.calculate()
+        assert widget.result_view.rowCount() == widget.measurement_layout.count() - 1
+        assert widget.result_view.columnCount() == len(stack_settings.segmentation_info.bound_info) + 1
