@@ -144,7 +144,7 @@ class ImageView(QWidget):
 
         self.viewer = Viewer(ndisplay=ndisplay)
         self.viewer.theme = self.settings.theme_name
-        self.viewer_widget = QtViewer(self.viewer)
+        self.viewer_widget = NapariQtViewer(self.viewer)
         self.image_state = ImageShowState(settings, name)
         self.channel_control = ColorComboBoxGroup(settings, name, channel_property, height=30)
         self.ndim_btn = QtNDisplayButton(self.viewer)
@@ -563,3 +563,12 @@ class ImageView(QWidget):
 
     def set_theme(self, theme: str):
         self.viewer.theme = theme
+
+
+class NapariQtViewer(QtViewer):
+    def dragEnterEvent(self, event):  # pylint: disable=R0201
+
+        """
+        ignore napari reading mechanism
+        """
+        event.ignore()
