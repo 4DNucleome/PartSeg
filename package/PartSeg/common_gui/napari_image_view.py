@@ -426,10 +426,20 @@ class ImageView(QWidget):
 
     def set_image(self, image: Optional[Image] = None):
         self.viewer.layers.select_all()
+        if len(self.viewer.layers):
+            first_layer = list(self.viewer.layers)[0]
+            first_layer.selected = False
+        else:
+            first_layer = None
         self.viewer.layers.remove_selected()
         self.image_info = {}
         image = self.add_image(image)
-        self.viewer.stack_view()
+        # self.viewer.stack_view()
+        self.viewer.layers.unselect_all()
+        if first_layer is not None:
+            first_layer.selected = True
+            self.viewer.layers.remove_selected()
+        self.viewer.reset_view()
         self.viewer.dims.set_point(image.time_pos, image.times * image.normalized_scaling()[image.time_pos] // 2)
         self.viewer.dims.set_point(image.stack_pos, image.layers * image.normalized_scaling()[image.stack_pos] // 2)
 
