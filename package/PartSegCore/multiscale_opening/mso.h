@@ -501,7 +501,7 @@ class MSO {
           }
         }
         if (count_steps > 3 * area_size){
-          throw std::runtime_error("two many steps: constrained dilation");
+          throw std::runtime_error("to many steps: constrained dilation");
         }
         coord_in_queue[position] = false;
       }

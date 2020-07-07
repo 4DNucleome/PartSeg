@@ -246,7 +246,7 @@ class CustomDoubleSpinBox(QDoubleSpinBox):
         super().__init__(*args, **kwargs)
         self.valueChanged.connect(self._value_changed)
         if bounds is None:
-            self.bounds = ((300, 1), (1000, 10), (10000, 100)), 1000
+            self.bounds = ((0.2, 0.01), (2, 0.1), (300, 1), (1000, 10), (10000, 100)), 1000
         else:
             self.bounds = bounds
 
