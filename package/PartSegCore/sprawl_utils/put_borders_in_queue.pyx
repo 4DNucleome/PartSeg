@@ -22,9 +22,9 @@ cdef void put_borders_in_queue(my_queue[Point] & current_points,
     z_size = base_object.shape[0]
     y_size = base_object.shape[1]
     x_size = base_object.shape[2]
-    for z in range(1, z_size-1):
-        for y in range(1, y_size-1):
-            for x in range (1, x_size-1):
+    for z in range(0, z_size):
+        for y in range(0, y_size):
+            for x in range (0, x_size):
                 if base_object[z,y,x] > 0:
                     for neigh_it in range(neigh_length):
                         zz = z+neighbourhood[neigh_it, 0]
