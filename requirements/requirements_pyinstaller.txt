@@ -12,7 +12,7 @@ backcall==0.2.0           # via ipython
 cachey==0.2.1             # via napari
 certifi==2020.6.20        # via requests, sentry-sdk
 chardet==3.0.4            # via requests
-cython==0.29.20           # via -r requirements_pyinstaller.in
+cython==0.29.21           # via -r requirements_pyinstaller.in
 czifile==2019.7.2         # via -r requirements_pyinstaller.in
 dask[array]==2.19.0       # via napari
 dataclasses==0.7 ; python_version < "3.7"  # via -r requirements_pyinstaller.in
