@@ -1,3 +1,4 @@
+import numpy as np
 from napari._qt.qt_main_window import Window
 from napari._qt.qt_viewer import QtViewer
 from napari._qt.threading import create_worker
@@ -94,3 +95,18 @@ class Viewer(ViewerModel):
     def __str__(self):
         """Simple string representation"""
         return f"napari.Viewer: {self.title}"
+
+    def calc_min_scale(self):
+        return np.min([layer.scale for layer in self.layers], axis=0)
+
+    def _new_labels(self):
+        if self.dims.ndim == 0:
+            dims = (512, 512)
+        else:
+            dims = self._calc_bbox()[1]
+            scale = self.calc_min_scale()
+            dims = [np.ceil(d / s).astype("int") if d > 0 else 1 for s, d in zip(dims, scale)]
+            if len(dims) < 1:
+                dims = (512, 512)
+        empty_labels = np.zeros(dims, dtype=int)
+        self.add_labels(empty_labels)
