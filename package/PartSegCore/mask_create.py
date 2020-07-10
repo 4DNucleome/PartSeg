@@ -74,6 +74,7 @@ def calculate_mask(
     old_mask: typing.Union[None, np.ndarray],
     spacing: typing.Iterable[typing.Union[float, int]],
     components: typing.Optional[typing.List[int]] = None,
+    time_axis: typing.Optional[int] = 0,
 ) -> np.ndarray:
     """
     Function for calculate mask base on MaskProperty.
@@ -86,6 +87,7 @@ def calculate_mask(
         then final mask is clipped to this area
     :param spacing: spacing of image. Needed for calculating radius of dilate
     :param components: If present inform which components should be used when calculation mask, otherwise use all.
+    :param time_axis: which axis of array should be treated as time. IF none then none.
     :return: new mask
     """
     spacing_min = min(spacing)
@@ -104,7 +106,27 @@ def calculate_mask(
         mask = np.copy(segmentation)
     else:
         mask = np.array(segmentation > 0)
+    if time_axis is None:
+        return _calculate_mask(mask_description, dilate_radius, mask, old_mask)
+    else:
+        slices: typing.List[typing.Union[slice, int]] = [slice(None) for _ in range(mask.ndim)]
+        final_shape = list(mask.shape)
+        final_shape[time_axis] = 1
+        final_shape = tuple(final_shape)
+        res = []
+        for i in range(mask.shape[time_axis]):
+            slices[time_axis] = i
+            _old_mask = old_mask[slices] if old_mask is not None else None
+            res.append(_calculate_mask(mask_description, dilate_radius, mask[slices], _old_mask).reshape(final_shape))
+        return np.concatenate(res, axis=time_axis)
 
+
+def _calculate_mask(
+    mask_description: MaskProperty,
+    dilate_radius: typing.List[int],
+    mask: np.ndarray,
+    old_mask: typing.Union[None, np.ndarray],
+) -> np.ndarray:
     if mask_description.dilate != RadiusType.NO and mask_description.dilate_radius != 0:
         if mask_description.dilate_radius > 0:
             mask = dilate(mask, dilate_radius, mask_description.dilate == RadiusType.R2D)

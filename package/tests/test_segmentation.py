@@ -1,7 +1,7 @@
 import operator
 from abc import ABC
 from copy import deepcopy
-from typing import Type
+from typing import List, Type, Union
 
 import numpy as np
 import pytest
@@ -346,10 +346,10 @@ class TestMaskCreate:
         assert np.all(new_mask == mask_array2)
 
     def test_fill_holes(self):
-        mask_base_array = np.zeros((20, 30, 30), dtype=np.uint8)
-        mask_base_array[4:16, 8:22, 8:22] = 1
+        mask_base_array = np.zeros((1, 20, 30, 30), dtype=np.uint8)
+        mask_base_array[:, 4:16, 8:22, 8:22] = 1
         mask1_array = np.copy(mask_base_array)
-        mask1_array[4:16, 10:15, 10:15] = 0
+        mask1_array[:, 4:16, 10:15, 10:15] = 0
         prop = MaskProperty(
             dilate=RadiusType.NO,
             dilate_radius=0,
@@ -373,7 +373,7 @@ class TestMaskCreate:
         assert np.all(mask1_array == new_mask)
 
         mask2_array = np.copy(mask1_array)
-        mask2_array[5:15, 10:15, 17:20] = 0
+        mask2_array[:, 5:15, 10:15, 17:20] = 0
         new_mask = calculate_mask(prop, mask2_array, None, (1, 1, 1))
         assert np.all(mask1_array == new_mask)
 
@@ -414,11 +414,11 @@ class TestMaskCreate:
         assert np.all(new_mask == res_mask2)
 
     def test_fill_holes_size(self):
-        mask_base_array = np.zeros((20, 20, 40), dtype=np.uint8)
-        mask_base_array[2:18, 2:18, 4:36] = 1
-        mask_base_array[4:16, 4:16, 6:18] = 0
+        mask_base_array = np.zeros((1, 20, 20, 40), dtype=np.uint8)
+        mask_base_array[0, 2:18, 2:18, 4:36] = 1
+        mask_base_array[0, 4:16, 4:16, 6:18] = 0
         mask1_array = np.copy(mask_base_array)
-        mask1_array[6:14, 6:14, 24:32] = 0
+        mask1_array[0, 6:14, 6:14, 24:32] = 0
 
         prop1 = MaskProperty(
             dilate=RadiusType.NO,
@@ -442,104 +442,55 @@ class TestMaskCreate:
         new_mask = calculate_mask(prop2, mask_base_array, None, (1, 1, 1))
         assert np.all(new_mask == mask_base_array)
 
-    def test_dilate(self):
-        mask_base_array = np.zeros((30, 30, 30), dtype=np.uint8)
-        mask_base_array[10:20, 10:20, 10:20] = 1
+    @pytest.mark.parametrize("radius_type", [RadiusType.R2D, RadiusType.R3D])
+    @pytest.mark.parametrize("radius", [1, -1])
+    @pytest.mark.parametrize("time", [1, 2, 5])
+    def test_dilate(self, radius_type, radius, time):
+        mask_base_array = np.zeros((time, 30, 30, 30), dtype=np.uint8)
+        mask_base_array[:, 10:20, 10:20, 10:20] = 1
         prop1 = MaskProperty(
-            dilate=RadiusType.R2D,
-            dilate_radius=-1,
+            dilate=radius_type,
+            dilate_radius=radius,
             fill_holes=RadiusType.NO,
             max_holes_size=70,
             save_components=False,
             clip_to_mask=False,
         )
-        prop2 = MaskProperty(
-            dilate=RadiusType.R3D,
-            dilate_radius=-1,
-            fill_holes=RadiusType.NO,
-            max_holes_size=70,
-            save_components=False,
-            clip_to_mask=False,
-        )
-        res_array1 = np.zeros((30, 30, 30), dtype=np.uint8)
-        res_array1[10:20, 11:19, 11:19] = 1
+        res_array1 = np.zeros((1, 30, 30, 30), dtype=np.uint8)
+        slices: List[Union[int, slice]] = [slice(None)] * 4
+        for i in range(1, 4):
+            slices[i] = slice(10 - radius, 20 + radius)
+        if radius_type == RadiusType.R2D:
+            slices[1] = slice(10, 20)
+        res_array1[slices] = 1
+        if radius_type == RadiusType.R3D:
+            res_array1[:, (9, 9, 9, 9), (9, 9, 20, 20), (9, 20, 20, 9)] = 0
+            res_array1[:, (20, 20, 20, 20), (9, 9, 20, 20), (9, 20, 20, 9)] = 0
         new_mask = calculate_mask(prop1, mask_base_array, None, (1, 1, 1))
         assert np.all(new_mask == res_array1)
-        res_array2 = np.zeros((30, 30, 30), dtype=np.uint8)
-        res_array2[11:19, 11:19, 11:19] = 1
-        new_mask = calculate_mask(prop2, mask_base_array, None, (1, 1, 1))
-        assert np.all(new_mask == res_array2)
+
+    @pytest.mark.parametrize("radius", [-1, -2, -3])
+    def test_dilate_spacing_negative(self, radius):
+        mask_base_array = np.zeros((1, 30, 30, 30), dtype=np.uint8)
+        mask_base_array[:, 10:20, 5:25, 5:25] = 1
+        res_array1 = np.zeros((1, 30, 30, 30), dtype=np.uint8)
+        s = slice(10, 20) if radius == -1 else slice(11, 19)
+        res_array1[:, s, 5 - radius : 25 + radius, 5 - radius : 25 + radius] = 1
 
         prop1 = MaskProperty(
-            dilate=RadiusType.R2D,
-            dilate_radius=1,
-            fill_holes=RadiusType.NO,
-            max_holes_size=70,
-            save_components=False,
-            clip_to_mask=False,
-        )
-        prop2 = MaskProperty(
             dilate=RadiusType.R3D,
-            dilate_radius=1,
+            dilate_radius=radius,
             fill_holes=RadiusType.NO,
             max_holes_size=70,
             save_components=False,
             clip_to_mask=False,
         )
-        res_array1 = np.zeros((30, 30, 30), dtype=np.uint8)
-        res_array1[10:20, 9:21, 9:21] = 1
-        new_mask = calculate_mask(prop1, mask_base_array, None, (1, 1, 1))
-        assert np.all(new_mask == res_array1)
-        res_array2 = np.zeros((30, 30, 30), dtype=np.uint8)
-        res_array2[9:21, 9:21, 9:21] = 1
-        res_array2[(9, 9, 9, 9), (9, 9, 20, 20), (9, 20, 20, 9)] = 0
-        res_array2[(20, 20, 20, 20), (9, 9, 20, 20), (9, 20, 20, 9)] = 0
-        new_mask = calculate_mask(prop2, mask_base_array, None, (1, 1, 1))
-        assert np.all(new_mask == res_array2)
-
-    def test_dilate_spacing_negative(self):
-        mask_base_array = np.zeros((30, 30, 30), dtype=np.uint8)
-        mask_base_array[10:20, 5:25, 5:25] = 1
-        prop1 = MaskProperty(
-            dilate=RadiusType.R3D,
-            dilate_radius=-1,
-            fill_holes=RadiusType.NO,
-            max_holes_size=70,
-            save_components=False,
-            clip_to_mask=False,
-        )
-        prop2 = MaskProperty(
-            dilate=RadiusType.R3D,
-            dilate_radius=-2,
-            fill_holes=RadiusType.NO,
-            max_holes_size=70,
-            save_components=False,
-            clip_to_mask=False,
-        )
-        prop3 = MaskProperty(
-            dilate=RadiusType.R3D,
-            dilate_radius=-3,
-            fill_holes=RadiusType.NO,
-            max_holes_size=70,
-            save_components=False,
-            clip_to_mask=False,
-        )
-        res_array1 = np.zeros((30, 30, 30), dtype=np.uint8)
-        res_array1[10:20, 6:24, 6:24] = 1
         new_mask = calculate_mask(prop1, mask_base_array, None, (3, 1, 1))
         assert np.all(new_mask == res_array1)
-        res_array2 = np.zeros((30, 30, 30), dtype=np.uint8)
-        res_array2[11:19, 7:23, 7:23] = 1
-        new_mask = calculate_mask(prop2, mask_base_array, None, (3, 1, 1))
-        assert np.all(new_mask == res_array2)
-        res_array3 = np.zeros((30, 30, 30), dtype=np.uint8)
-        res_array3[11:19, 8:22, 8:22] = 1
-        new_mask = calculate_mask(prop3, mask_base_array, None, (3, 1, 1))
-        assert np.all(new_mask == res_array3)
 
     def test_dilate_spacing_positive(self):
-        mask_base_array = np.zeros((30, 30, 30), dtype=np.uint8)
-        mask_base_array[10:20, 10:20, 10:20] = 1
+        mask_base_array = np.zeros((1, 30, 30, 30), dtype=np.uint8)
+        mask_base_array[:, 10:20, 10:20, 10:20] = 1
         prop1 = MaskProperty(
             dilate=RadiusType.R3D,
             dilate_radius=1,
@@ -567,13 +518,13 @@ class TestMaskCreate:
         res_array1 = np.zeros((30, 30, 30), dtype=np.uint8)
         res_array1[10:20, 9:21, 9:21] = 1
         new_mask = calculate_mask(prop1, mask_base_array, None, (3, 1, 1))
-        assert np.all(new_mask == res_array1)
+        assert np.all(new_mask[0] == res_array1)
         res_array2 = np.zeros((30, 30, 30), dtype=np.uint8)
         res_array2[10:20, 8:22, 8:22] = 1
         res_array2[(9, 20), 9:21, 9:21] = 1
         res_array2[:, (8, 21, 8, 21), (8, 8, 21, 21)] = 0
         new_mask = calculate_mask(prop2, mask_base_array, None, (3, 1, 1))
-        assert np.all(new_mask == res_array2)
+        assert np.all(new_mask[0] == res_array2)
         res_array3 = np.zeros((30, 30, 30), dtype=np.uint8)
         res_array3[(9, 20), 8:22, 9:21] = 1
         res_array3[(9, 9, 20, 20), 9:21, (8, 21, 8, 21)] = 1

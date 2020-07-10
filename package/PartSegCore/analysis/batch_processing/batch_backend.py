@@ -305,7 +305,13 @@ class CalculationProcess:
         :param MaskCreate operation: mask create description.
         :param List[CalculationTree] children: list of nodes to iterate over after perform segmentation
         """
-        mask = calculate_mask(operation.mask_property, self.segmentation, self.mask, self.image.spacing)
+        mask = calculate_mask(
+            mask_description=operation.mask_property,
+            segmentation=self.segmentation,
+            old_mask=self.mask,
+            spacing=self.image.spacing,
+            time_axis=self.image.time_pos,
+        )
         if operation.name in self.reused_mask:
             self.mask_dict[operation.name] = mask
         history_element = HistoryElement.create(

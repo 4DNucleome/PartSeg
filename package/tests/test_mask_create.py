@@ -3,6 +3,7 @@ import pytest
 
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask_create import MaskProperty, calculate_mask, fill_2d_holes_in_mask, fill_holes_in_mask
+from PartSegImage import Image
 
 
 class TestMaskProperty:
@@ -91,22 +92,22 @@ class TestCalculateMask:
         assert np.all(mask2 == mask)
 
     def test_dilate(self):
-        mask = np.zeros((10, 10, 10), dtype=np.uint8)
-        mask[2:8, 2:8, 2:8] = 1
+        mask = np.zeros((1, 10, 10, 10), dtype=np.uint8)
+        mask[0, 2:8, 2:8, 2:8] = 1
         mask2 = calculate_mask(MaskProperty(RadiusType.R3D, -1, RadiusType.NO, -1, False, True), mask, None, (1, 1, 1))
-        mask3 = np.zeros((10, 10, 10), dtype=np.uint8)
-        mask3[3:7, 3:7, 3:7] = 1
+        mask3 = np.zeros((1, 10, 10, 10), dtype=np.uint8)
+        mask3[0, 3:7, 3:7, 3:7] = 1
         assert np.all(mask2 == mask3)
         mask2 = calculate_mask(MaskProperty(RadiusType.R2D, -1, RadiusType.NO, -1, False, True), mask, None, (1, 1, 1))
-        mask3 = np.zeros((10, 10, 10), dtype=np.uint8)
-        mask3[2:8, 3:7, 3:7] = 1
+        mask3 = np.zeros((1, 10, 10, 10), dtype=np.uint8)
+        mask3[0, 2:8, 3:7, 3:7] = 1
         assert np.all(mask2 == mask3)
 
     def test_fil_holes_3d(self):
-        mask = np.zeros((10, 10, 10), dtype=np.uint8)
-        mask[2:8, 2:8, 2:8] = 1
+        mask = np.zeros((1, 10, 10, 10), dtype=np.uint8)
+        mask[0, 2:8, 2:8, 2:8] = 1
         mask2 = np.copy(mask)
-        mask2[4:6, 4:6, 4:6] = 0
+        mask2[0, 4:6, 4:6, 4:6] = 0
         mask3 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R3D, -1, False, True), mask2, None, (1, 1, 1))
         assert np.all(mask3 == mask)
         mask3 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R3D, 7, False, True), mask2, None, (1, 1, 1))
@@ -115,9 +116,9 @@ class TestCalculateMask:
         assert np.all(mask3 == mask)
 
     def test_fil_holes_3d_torus(self):
-        mask = np.zeros((10, 10, 10), dtype=np.uint8)
-        mask[2:8, 2:8, 2:8] = 1
-        mask[:, 4:6, 4:6] = 0
+        mask = np.zeros((1, 10, 10, 10), dtype=np.uint8)
+        mask[0, 2:8, 2:8, 2:8] = 1
+        mask[0, :, 4:6, 4:6] = 0
         mask2 = calculate_mask(MaskProperty(RadiusType.NO, 0, RadiusType.R3D, -1, False, True), mask, None, (1, 1, 1))
         assert np.all(mask2 == mask)
 
@@ -226,6 +227,59 @@ class TestCalculateMask:
             MaskProperty(RadiusType.NO, 0, RadiusType.R2D, -1, True, True), mask, None, (1, 1, 1), [1, 3]
         )
         assert np.all(np.unique(mask1) == [0, 1, 3])
+
+    @pytest.mark.parametrize("dilate", [RadiusType.NO, RadiusType.R2D, RadiusType.R3D])
+    @pytest.mark.parametrize("radius", [-1, 0, 1, 3])
+    @pytest.mark.parametrize("fill_holes", [RadiusType.NO, RadiusType.R2D, RadiusType.R3D])
+    @pytest.mark.parametrize("max_holes_size", [-1, 0, 100])
+    @pytest.mark.parametrize("save_components", [True, False])
+    @pytest.mark.parametrize("clip_to_mask", [True, False])
+    @pytest.mark.parametrize("reversed_mask", [True, False])
+    @pytest.mark.parametrize("old_mask", [True, False])
+    def test_mask_property_combinations(
+        self, dilate, radius, fill_holes, max_holes_size, save_components, clip_to_mask, reversed_mask, old_mask
+    ):
+        mask = np.zeros((1, 6, 6, 15), dtype=np.uint8)
+        im = Image(data=mask.copy(), image_spacing=(3, 1, 1), file_path="", axes_order="TZYX")
+        mask[:, 1:-1, 1:-1, 2:5] = 1
+        mask[:, 2:-2, 2:-2, 3:4] = 0
+        mask[:, 1:-1, 1:-1, 6:9] = 2
+        mask[:, 2:-2, 2:-2, 7:8] = 0
+        mask[:, 1:-1, 1:-1, 10:13] = 3
+        mask[:, 2:-2, 2:-2, 11:12] = 0
+        mask = im.fit_mask_to_image(mask)
+        assert np.all(np.unique(mask.flat) == [0, 1, 2, 3])
+        if old_mask:
+            _old_mask = np.zeros(mask.shape, dtype=mask.dtype)
+        else:
+            _old_mask = None
+        mp = MaskProperty(
+            dilate=dilate,
+            dilate_radius=radius,
+            fill_holes=fill_holes,
+            max_holes_size=max_holes_size,
+            save_components=save_components,
+            clip_to_mask=clip_to_mask,
+            reversed_mask=reversed_mask,
+        )
+        mask1 = calculate_mask(mp, mask, _old_mask, im.spacing, time_axis=im.time_pos)
+        assert mask1.shape == mask.shape
+
+    @pytest.mark.parametrize("time", [1, 2, 4])
+    def test_time_axis(self, time):
+        mask = np.zeros((time, 6, 6, 6), dtype=np.uint8)
+        mask[:, 1:-1, 1:-1, 2:5] = 1
+        mask[:, 2:-2, 2:-2, 3:4] = 0
+        mp = MaskProperty(
+            dilate=RadiusType.NO,
+            dilate_radius=0,
+            fill_holes=RadiusType.NO,
+            max_holes_size=-1,
+            save_components=False,
+            clip_to_mask=False,
+        )
+        mask1 = calculate_mask(mp, mask, None, (1, 1, 1))
+        assert mask1.shape == mask.shape
 
 
 # TODO add test with touching boundaries.

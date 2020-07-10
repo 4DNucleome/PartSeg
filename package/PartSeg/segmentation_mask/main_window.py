@@ -77,11 +77,12 @@ class MaskDialog(MaskDialogBase):
         mask_property = self.mask_widget.get_mask_property()
         self.settings.set("mask_manager.mask_property", mask_property)
         mask = calculate_mask(
-            mask_property,
-            project_info.segmentation,
-            project_info.mask,
-            project_info.image.spacing,
-            project_info.selected_components,
+            mask_description=mask_property,
+            segmentation=project_info.segmentation,
+            old_mask=project_info.mask,
+            spacing=project_info.image.spacing,
+            components=project_info.selected_components,
+            time_axis=project_info.image.time_pos,
         )
         self.settings.add_history_element(create_history_element_from_segmentation_tuple(project_info, mask_property,))
         self.settings.mask = mask
