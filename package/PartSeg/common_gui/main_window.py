@@ -155,7 +155,6 @@ class BaseMainWindow(QMainWindow):
         image = self.settings.image
         scaling = image.normalized_scaling()
         colormap = self.get_colormaps()
-        print(colormap)
         for i in range(image.channels):
             viewer.add_image(
                 image.get_channel(i), name=f"channnel {i + 1}", scale=scaling, blending="additive", colormap=colormap[i]

@@ -1,13 +1,15 @@
 import functools
 import itertools
+import os
 import typing
 
+import numpy as np
 from napari_plugin_engine import napari_hook_implementation
 
 from .analysis import ProjectTuple
 from .analysis.load_functions import load_dict as analysis_load_dict
 from .io_utils import LoadBase
-from .mask.io_functions import SegmentationTuple
+from .mask.io_functions import SaveSegmentation, SegmentationTuple
 from .mask.io_functions import load_dict as mask_load_dict
 
 
@@ -49,3 +51,16 @@ def napari_get_reader(path: str):
         for extension in loader.get_extensions():
             if path.endswith(extension):
                 return functools.partial(partseg_loader, loader)
+
+
+@napari_hook_implementation
+def napari_write_labels(path: str, data: typing.Any, meta: dict) -> typing.Optional[str]:
+    if not os.path.splitext(path)[1] == ".seg":
+        return
+    components = np.unique(data.flat)
+    if components[0] == 0:
+        components = components[1:]
+
+    st = SegmentationTuple(file_path="", image=None, mask=None, segmentation=data, selected_components=components)
+    SaveSegmentation.save(path, st, {})
+    return path

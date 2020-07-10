@@ -105,8 +105,8 @@ class Viewer(ViewerModel):
         else:
             dims = self._calc_bbox()[1]
             scale = self.calc_min_scale()
-            dims = [np.ceil(d / s).astype("int") if d > 0 else 1 for s, d in zip(dims, scale)]
+            dims = [np.ceil(d / s).astype("int") if d > 0 else 1 for s, d in zip(scale, dims)]
             if len(dims) < 1:
                 dims = (512, 512)
         empty_labels = np.zeros(dims, dtype=int)
-        self.add_labels(empty_labels)
+        self.add_labels(empty_labels, scale=scale)
