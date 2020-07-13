@@ -701,18 +701,18 @@ class FileData:
                 else:
                     try:
                         self.write_to_excel(self.file_path, data)
-                    except PermissionError:
+                    except (PermissionError, IOError):
                         base, ext = path.splitext(self.file_path)
                         for i in range(1, 100):
                             try:
                                 self.write_to_excel(f"{base}({i}){ext}", data)
                                 break
-                            except PermissionError:
+                            except (PermissionError, IOError):
                                 pass
                         else:
                             raise PermissionError(f"Fail to write result excel {self.file_path}")
             except Exception as e:
-                logging.error(e)
+                logging.error(f"[batch_backend] {e}")
                 self.error_queue.put(prepare_error_data(e))
             finally:
                 self.writing = False
