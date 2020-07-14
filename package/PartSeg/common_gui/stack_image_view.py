@@ -6,8 +6,8 @@ from typing import List, Union
 
 import numpy as np
 from qtpy import QtGui
-from qtpy.QtCore import QRect, QSize
-from qtpy.QtGui import QIcon, QPainter
+from qtpy.QtCore import QEvent, QObject, QPoint, QRect, QSize, Qt, Signal
+from qtpy.QtGui import QColor, QIcon, QImage, QMouseEvent, QPainter, QPen, QPixmap
 from qtpy.QtWidgets import QLabel, QToolButton
 
 from PartSeg.common_gui.numpy_qimage import NumpyQImage
