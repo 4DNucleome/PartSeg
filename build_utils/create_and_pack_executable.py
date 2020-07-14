@@ -48,7 +48,7 @@ else:
     )
 base_zip_path = os.path.join(base_path, "dist")
 
-if platform.system() == "Darwin":
+if platform.system() == "Darwin2":
     dir_name = "PartSeg.app"
 else:
     dir_name = "PartSeg"

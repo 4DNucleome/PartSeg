@@ -108,7 +108,7 @@ elif platform.system() == "Windows":
 
 exe = EXE(pyz, a.scripts, [], **exe_args)
 
-if platform.system() == "Darwin":
+if platform.system() == "Darwin2":
     app = BUNDLE(
         exe,
         a.binaries,
