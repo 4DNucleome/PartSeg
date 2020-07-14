@@ -77,7 +77,7 @@ class ImageSettings(QObject):
         """:py:meth:`Image.spacing` proxy"""
         if self._image is not None:
             return self._image.spacing
-        return ()
+        return (1, 1, 1)
 
     def is_image_2d(self):
         """:py:meth:`Image.is_2d` proxy"""
