@@ -669,7 +669,8 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):
 
         if restarted or self.new_parameters["step_limits"] != self.parameters["step_limits"]:
             self.parameters["step_limits"] = self.new_parameters["step_limits"]
-            self.mso.run_MSO(self.new_parameters["step_limits"])
+            count_steps_factor = 20 if self.image.is_2d else 3
+            self.mso.run_MSO(self.new_parameters["step_limits"], count_steps_factor)
             self.steps = self.mso.steps_done()
             new_segment = self.mso.get_result_catted()
             new_segment[new_segment > 0] -= 1

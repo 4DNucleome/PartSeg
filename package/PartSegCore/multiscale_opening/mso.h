@@ -429,7 +429,8 @@ class MSO {
 
   size_t optimum_erosion_calculate(const std::vector<mu_type> &fdt_array,
                                    std::vector<T> &components_arr,
-                                   std::vector<bool> &sprawl_area) {
+                                   std::vector<bool> &sprawl_area,
+                                   size_t count_steps_factor=3) {
     Point coord, coord2;
     size_t position, neigh_position;
     mu_type val, val2;
@@ -500,7 +501,8 @@ class MSO {
             count_steps++;
           }
         }
-        if (count_steps > 3 * area_size){
+
+        if (count_steps > count_steps_factor * area_size){
           throw std::runtime_error("to many steps: constrained dilation");
         }
         coord_in_queue[position] = false;
@@ -723,7 +725,7 @@ class MSO {
     return res;
   }
 
-  size_t run_MSO(size_t steps_limits = 1) {
+  size_t run_MSO(size_t steps_limits = 1, size_t count_steps_factor=3) {
     if (this->components_num == 0)
       throw BadInitialization("Wrong number of components seted");
     size_t total_changes = 0;
@@ -742,7 +744,7 @@ class MSO {
       //std::cerr << "loop " << count_changes << std::endl;
       count_changes = 0;
       count_changes += optimum_erosion_calculate(
-          this->fdt_array, this->res_components_array, this->sprawl_area_array);
+          this->fdt_array, this->res_components_array, this->sprawl_area_array, count_steps_factor);
       //std::cerr << "loop2\n";
       count_changes += constrained_dilation(
           this->fdt_array, this->res_components_array, this->sprawl_area_array);
