@@ -9,7 +9,7 @@ on:
       - '**'
 
 jobs:
-  downoload_data:
+  download_data:
     name: Download test data
     runs-on: ubuntu-18.04
     steps:
@@ -25,7 +25,7 @@ jobs:
   test:
     name: Test PartSeg on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    needs: downoload_data
+    needs: download_data
     strategy:
       fail-fast: false
       matrix:
