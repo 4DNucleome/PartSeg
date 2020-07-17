@@ -46,6 +46,7 @@ from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
 from PartSegCore.segmentation.noise_filtering import DimensionType
 from PartSegCore.segmentation.segmentation_algorithm import ThresholdAlgorithm
 from PartSegImage import Image
+from PartSegImage.image import reduce_array
 
 
 @pytest.fixture(scope="module")
@@ -217,6 +218,18 @@ class TestSegmentationMask:
         assert len(glob(os.path.join(tmpdir, "seg_save", "*"))) == 4
         seg2 = LoadSegmentation.load([os.path.join(tmpdir, "segmentation.seg")])
         assert seg2 is not None
+
+    def test_save_segmentation_without_image(self, tmpdir, data_test_dir):
+        seg = LoadSegmentationImage.load(
+            [os.path.join(data_test_dir, "test_nucleus_1_1.seg")], metadata={"default_spacing": (1, 1, 1)}
+        )
+        seg_clean = dataclasses.replace(seg, image=None, segmentation=reduce_array(seg.segmentation))
+        SaveSegmentation.save(os.path.join(tmpdir, "segmentation.seg"), seg_clean, {"relative_path": False})
+        SaveSegmentation.save(
+            os.path.join(tmpdir, "segmentation1.seg"),
+            seg_clean,
+            {"relative_path": False, "spacing": (210 * 10 ** -6, 70 * 10 ** -6, 70 * 10 ** -6)},
+        )
 
     def test_loading_new_segmentation(self, tmpdir, data_test_dir):
         image_data = LoadStackImage.load([os.path.join(data_test_dir, "test_nucleus.tif")])

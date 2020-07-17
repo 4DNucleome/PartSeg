@@ -183,7 +183,7 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
             resp = convex_fill(resp)
         report_fun("Calculation done", 7)
         return SegmentationResult(
-            segmentation=resp,
+            segmentation=self.image.fit_array_to_image(resp),
             parameters=self.get_segmentation_profile(),
             additional_layers={
                 "denoised image": AdditionalLayerDescription(data=image, layer_type="image"),

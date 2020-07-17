@@ -159,6 +159,10 @@ class BaseMainWindow(QMainWindow):
             viewer.add_image(
                 image.get_channel(i), name=f"channnel {i + 1}", scale=scaling, blending="additive", colormap=colormap[i]
             )
+        if self.settings.segmentation is not None:
+            viewer.add_labels(self.settings.segmentation, name="ROI", scale=scaling)
+        if image.mask is not None:
+            viewer.add_labels(image.mask, name="Mask", scale=scaling)
         self.viewer_list.append(viewer)
         viewer.window.qt_viewer.destroyed.connect(lambda x: self.close_viewer(viewer))
 

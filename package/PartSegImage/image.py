@@ -40,6 +40,7 @@ def reduce_array(
     :param dtype: type of returned array if no then minimal type is calculated
     :return: relabeled array in minimum type
     """
+    # this function minimal dtype is np.uint8 so there is no need to do calculation.
     if components is None:
         components = np.unique(array.flat)
         if max_val is None:

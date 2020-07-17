@@ -62,6 +62,9 @@ class ProjectInfoBase:
     errors: str = ""
 
     def get_raw_copy(self):
+        """
+        Create copy with only image
+        """
         raise NotImplementedError
 
     def get_raw_mask_copy(self):

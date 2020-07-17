@@ -9,10 +9,10 @@ Base classes
    :inherited-members:
    :show-inheritance:
 
-.sprawl
--------
+.watershed
+----------
 
-.. automodule:: PartSegCore.segmentation.sprawl
+.. automodule:: PartSegCore.segmentation.watershed
    :members:
    :inherited-members:
    :show-inheritance:

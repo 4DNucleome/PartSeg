@@ -11,7 +11,8 @@ from pathlib import Path
 import numpy as np
 import tifffile
 
-from PartSegImage import GenericImageReader, Image, ImageWriter
+from PartSegImage import GenericImageReader, Image, ImageWriter, TiffImageReader
+from PartSegImage.image import reduce_array
 
 from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationProfile
 from ..io_utils import (
@@ -35,17 +36,36 @@ from ..segmentation.segmentation_info import SegmentationInfo
 
 @dataclasses.dataclass(frozen=True)
 class SegmentationTuple(ProjectInfoBase):
+    """
+    Dataclass instance to describe segmentation state
+
+    :ivar str file_path: path to current processed file
+    :ivar typing.Union[Image,str,None] ~.image: image which is proceeded in given segmentation.
+        If :py:class:`str` then it is path to image on drive
+    :ivar typing.Optional[np.ndarray] ~.mask: Mask limiting segmentation area.
+    :ivar typing.Optional[np.ndarray] ~.segmentation: Segmentation array.
+    :ivar SegmentationInfo ~.segmentation_info: segmentation description
+    :ivar typing.List[int] ~.selected_components: list of selected components
+    :ivar typing.Dict[int,typing.Optional[SegmentationProfile]] ~.segmentation_parameters:
+        For each component description set of parameters used for segmentation
+    :ivar typing.List[HistoryElement] history: list of operations needed to create :py:attr:`mask`
+    :ivar str ~.errors: information about problems meet during calculation
+    :ivar typing.Optional[typing.List[float]] ~.spacing: information about spacing when image is missed.
+        For napari read plugin
+    """
+
     file_path: str
     image: typing.Union[Image, str, None]
     mask: typing.Optional[np.ndarray] = None
     segmentation: typing.Optional[np.ndarray] = None
     segmentation_info: SegmentationInfo = SegmentationInfo(None)
-    selected_components: typing.List = dataclasses.field(default_factory=list)
+    selected_components: typing.List[int] = dataclasses.field(default_factory=list)
     segmentation_parameters: typing.Dict[int, typing.Optional[SegmentationProfile]] = dataclasses.field(
         default_factory=dict
     )
     history: typing.List[HistoryElement] = dataclasses.field(default_factory=list)
     errors: str = ""
+    spacing: typing.Optional[typing.List[float]] = None
 
     def get_raw_copy(self):
         return SegmentationTuple(self.file_path, self.image.substitute(mask=None))
@@ -77,7 +97,18 @@ def save_stack_segmentation(
     try:
         segmentation_buff = BytesIO()
         # noinspection PyTypeChecker
-        tifffile.imwrite(segmentation_buff, segmentation_info.segmentation, compress=9)
+        if segmentation_info.image is not None:
+            spacing = segmentation_info.image.spacing
+        else:
+            spacing = parameters.get("spacing", (10 ** -6, 10 ** -6, 10 ** -6))
+        segmentation_image = Image(
+            segmentation_info.segmentation, spacing, axes_order=Image.return_order.replace("C", "")
+        )
+        try:
+            ImageWriter.save(segmentation_image, segmentation_buff)
+        except ValueError:
+            segmentation_buff.seek(0)
+            tifffile.imwrite(segmentation_buff, segmentation_info.segmentation, compress=9)
         segmentation_tar = get_tarinfo("segmentation.tif", segmentation_buff)
         tar_file.addfile(segmentation_tar, fileobj=segmentation_buff)
         step_changed(3)
@@ -155,13 +186,19 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
             segmentation_load_fun = np.load
         else:
             segmentation_file_name = "segmentation.tif"
-            segmentation_load_fun = tifffile.imread
+            segmentation_load_fun = TiffImageReader.read_image
         segmentation_buff = BytesIO()
         segmentation_tar = tar_file.extractfile(tar_file.getmember(segmentation_file_name))
         segmentation_buff.write(segmentation_tar.read())
         step_changed(3)
         segmentation_buff.seek(0)
         segmentation = segmentation_load_fun(segmentation_buff)
+        if isinstance(segmentation, Image):
+            spacing = segmentation.spacing
+            segmentation = segmentation.get_channel(0)
+        else:
+            spacing = None
+        segmentation = reduce_array(segmentation)
         step_changed(4)
         if "mask.tif" in tar_file.getnames():
             mask = tifffile.imread(tar_to_buff(tar_file, "mask.tif"))
@@ -200,6 +237,7 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
         mask=mask,
         segmentation_parameters=metadata["parameters"] if "parameters" in metadata else None,
         history=history,
+        spacing=[10 ** -9] + list(spacing),
     )
 
 
@@ -208,6 +246,10 @@ def empty_fun(_a0=None, _a1=None):
 
 
 class LoadSegmentation(LoadBase):
+    """
+    Load ROI segmentation data.
+    """
+
     @classmethod
     def get_name(cls):
         return "Segmentation to image (*.seg *.tgz)"
@@ -258,6 +300,10 @@ class LoadSegmentation(LoadBase):
 
 
 class LoadSegmentationParameters(LoadBase):
+    """
+    Load parameters of ROI segmentation. From segmentation file or from json
+    """
+
     @classmethod
     def get_name(cls):
         return "Segmentation parameters (*.json *.seg *.tgz)"
@@ -302,6 +348,10 @@ class LoadSegmentationParameters(LoadBase):
 
 
 class LoadSegmentationImage(LoadBase):
+    """
+    Load ROI segmentation and image which is pointed in.
+    """
+
     @classmethod
     def get_name(cls):
         return "Segmentation with image (*.seg *.tgz)"
@@ -348,6 +398,10 @@ class LoadSegmentationImage(LoadBase):
 
 
 class LoadStackImage(LoadBase):
+    """
+    Load image from standard microscopy images
+    """
+
     @classmethod
     def get_name(cls):
         return "Image(*.tif *.tiff *.lsm *.czi *.oib *.oif)"
@@ -376,6 +430,10 @@ class LoadStackImage(LoadBase):
 
 
 class LoadStackImageWithMask(LoadBase):
+    """
+    Load image, hne mask from secondary file
+    """
+
     @classmethod
     def get_short_name(cls):
         return "img_with_mask"
@@ -414,6 +472,10 @@ class LoadStackImageWithMask(LoadBase):
 
 
 class SaveSegmentation(SaveBase):
+    """
+    Save current ROI
+    """
+
     @classmethod
     def get_name(cls):
         return "Segmentation (*.seg *.tgz)"
@@ -473,6 +535,10 @@ def save_components(
 
 
 class SaveComponents(SaveBase):
+    """
+    Save selected components in separated files.
+    """
+
     @classmethod
     def get_short_name(cls):
         return "comp"

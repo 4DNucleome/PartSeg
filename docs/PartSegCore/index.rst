@@ -14,3 +14,4 @@ This package contains calculation backend of PartSeg
    analysis/base
    analysis/batch_processing
    analysis/calculation_plan
+   mask/io_functions

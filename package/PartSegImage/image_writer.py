@@ -2,7 +2,7 @@ import typing
 from io import BytesIO
 
 import numpy as np
-from tifffile import imsave
+from tifffile import imwrite
 
 from .image import Image, minimal_dtype
 
@@ -55,8 +55,9 @@ class ImageWriter:
 
     @staticmethod
     def _save(data: np.ndarray, save_path, resolution=None, metadata=None, imagej_metadata=None):
+        # TODO change to ome TIFF
         if data.dtype in [np.uint8, np.uint16, np.float32]:
-            imsave(
+            imwrite(
                 save_path,
                 data,
                 imagej=True,
@@ -66,5 +67,5 @@ class ImageWriter:
                 resolution=resolution,
             )  # , compress=6,
         else:
-            raise ValueError(f"Data type {data.dtype} not supported by tiff")
+            raise ValueError(f"Data type {data.dtype} not supported by imagej tiff")
             # imagej=True, software="PartSeg")

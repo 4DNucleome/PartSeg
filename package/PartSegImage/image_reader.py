@@ -111,6 +111,10 @@ class BaseImageReader:
             if "C" in final_mapping_dict and "S" not in final_mapping_dict:
                 final_mapping_dict["S"] = final_mapping_dict["C"]
             axes = list(axes)
+            # Fixme; workaround for old saved segmentation
+            if axes[0] == "Q" and axes[1] == "Q":
+                axes[0] = "T"
+                axes[1] = "Z"
             i = 0
             while i < len(axes):
                 name = axes[i]
