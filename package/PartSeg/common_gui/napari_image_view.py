@@ -430,9 +430,26 @@ class ImageView(QWidget):
         # self.viewer.layers.select_all()
         # self.viewer.layers.remove_selected()
         layer_list = list(self.viewer.layers)
+        if image is None:
+            image = self.settings.image
         self.image_info = {}
+        self.viewer.dims.set_point(
+            image.time_pos,
+            min(self.viewer.dims.point[image.time_pos], image.times * image.normalized_scaling()[image.time_pos] // 2),
+        )
+        self.viewer.dims.set_point(
+            image.stack_pos,
+            min(
+                self.viewer.dims.point[image.stack_pos], image.layers * image.normalized_scaling()[image.stack_pos] // 2
+            ),
+        )
 
-        image = self.add_image(image)
+        try:
+            image = self.add_image(image)
+        except IndexError:
+            for el in layer_list:
+                el.selected = True
+            self.viewer.layers.remove_selected()
 
         # self.viewer.stack_view()
         self.viewer.layers.unselect_all()

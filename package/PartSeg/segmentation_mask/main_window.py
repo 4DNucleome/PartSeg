@@ -826,7 +826,7 @@ class ImageInformation(QWidget):
             el.setValue(val * UNIT_SCALE[units_value.value])
             el.blockSignals(False)
         if self._settings.is_image_2d():
-            self.spacing[2].setValue(0)
+            # self.spacing[2].setValue(0)
             self.spacing[2].setDisabled(True)
         else:
             self.spacing[2].setDisabled(False)
