@@ -58,6 +58,8 @@ def _convex_fill(array: np.ndarray):
 
 
 def convex_fill(array: np.ndarray):
+    arr_shape = array.shape
+    array = np.squeeze(array)
     if array.ndim not in [2, 3]:
         raise ValueError("Convex hull support only 2 and 3 dimension images")
     #  res = np.zeros(array.shape, array.dtype)
@@ -89,4 +91,4 @@ def convex_fill(array: np.ndarray):
                 tmp = array[new_cut]
                 tmp[res > 0] = i
                 array[new_cut] = tmp
-    return array
+    return array.reshape(arr_shape)

@@ -157,7 +157,7 @@ stages:
               DISPLAY: ':99.0'
             macos:
               imageName: 'macos-10.14'
-              test_path: dist/PartSeg.app/Contents/MacOS/PartSeg _test
+              test_path: dist/PartSeg/PartSeg _test
             windows:
               imageName: 'vs2017-win2016'
               test_path: dist\PartSeg\PartSeg _test
