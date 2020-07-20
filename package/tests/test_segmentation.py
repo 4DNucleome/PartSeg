@@ -462,7 +462,7 @@ class TestMaskCreate:
             slices[i] = slice(10 - radius, 20 + radius)
         if radius_type == RadiusType.R2D:
             slices[1] = slice(10, 20)
-        res_array1[slices] = 1
+        res_array1[tuple(slices)] = 1
         if radius_type == RadiusType.R3D:
             res_array1[:, (9, 9, 9, 9), (9, 9, 20, 20), (9, 20, 20, 9)] = 0
             res_array1[:, (20, 20, 20, 20), (9, 9, 20, 20), (9, 20, 20, 9)] = 0

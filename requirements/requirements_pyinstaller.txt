@@ -12,37 +12,37 @@ backcall==0.2.0           # via ipython
 cachey==0.2.1             # via napari
 certifi==2020.6.20        # via requests, sentry-sdk
 chardet==3.0.4            # via requests
-cython==0.29.20           # via -r requirements_pyinstaller.in
+cython==0.29.21           # via -r requirements_pyinstaller.in
 czifile==2019.7.2         # via -r requirements_pyinstaller.in
-dask[array]==2.19.0       # via napari
-dataclasses==0.7 ; python_version < "3.7"  # via -r requirements_pyinstaller.in
+dask[array]==2.21.0       # via napari
 decorator==4.4.2          # via ipython, traitlets
 defusedxml==0.6.0         # via -r requirements_pyinstaller.in
 docutils==0.16            # via sphinx
 et-xmlfile==1.0.1         # via openpyxl
-freetype-py==2.1.0.post1  # via vispy
+freetype-py==2.2.0        # via vispy
 h5py==2.10.0              # via -r requirements_pyinstaller.in
 heapdict==1.0.1           # via cachey
 idna==2.10                # via requests
 imagecodecs==2020.5.30    # via -r requirements_pyinstaller.in
-imageio==2.8.0            # via napari, napari-svg
+imageio==2.9.0            # via napari, napari-svg
 imagesize==1.2.0          # via sphinx
 importlib-metadata==1.7.0  # via napari, napari-plugin-engine
-ipykernel==5.3.0          # via napari, qtconsole
+ipykernel==5.3.3          # via napari, qtconsole
 ipython-genutils==0.2.0   # via qtconsole, traitlets
 ipython==7.16.1           # via ipykernel, napari
 jdcal==1.4.1              # via openpyxl
-jedi==0.17.1              # via ipython
+jedi==0.17.2              # via ipython
 jinja2==2.11.2            # via numpydoc, sphinx
-jupyter-client==6.1.3     # via ipykernel, qtconsole
+jupyter-client==6.1.6     # via ipykernel, qtconsole
 jupyter-core==4.6.3       # via jupyter-client, qtconsole
+lxml==4.5.2               # via -r requirements_pyinstaller.in
 markupsafe==1.1.1         # via jinja2
 mpmath==1.1.0             # via sympy
 napari-plugin-engine==0.1.6  # via napari, napari-svg
 napari-svg==0.1.3         # via napari
-napari==0.3.5             # via -r requirements_pyinstaller.in
+napari==0.3.6             # via -r requirements_pyinstaller.in
 numpy==1.19.0             # via -r requirements_pyinstaller.in, czifile, dask, h5py, imagecodecs, imageio, napari, napari-svg, oiffile, pandas, scipy, tifffile, vispy
-numpydoc==1.0.0           # via napari
+numpydoc==1.1.0           # via napari
 oiffile==2020.1.18        # via -r requirements_pyinstaller.in
 openpyxl==3.0.4           # via -r requirements_pyinstaller.in
 packaging==20.4           # via -r requirements_pyinstaller.in, sphinx
@@ -51,9 +51,9 @@ parso==0.7.0              # via jedi
 partsegdata==0.9.4        # via -r requirements_pyinstaller.in
 pexpect==4.8.0            # via ipython
 pickleshare==0.7.5        # via ipython
-pillow==7.1.2             # via imageio, napari
+pillow==7.2.0             # via imageio, napari
 prompt-toolkit==3.0.5     # via ipython
-psutil==5.7.0             # via napari
+psutil==5.7.2             # via napari
 ptyprocess==0.6.0         # via pexpect
 pygments==2.6.1           # via ipython, qtconsole, sphinx
 pyinstaller==3.6          # via -r requirements_pyinstaller.in
@@ -69,20 +69,20 @@ pyzmq==19.0.1             # via jupyter-client, qtconsole
 qtconsole==4.7.5          # via napari
 qtpy==1.9.0               # via -r requirements_pyinstaller.in, napari, qtconsole
 requests==2.24.0          # via -r requirements_pyinstaller.in, sphinx
-scipy==1.5.0              # via -r requirements_pyinstaller.in, napari
-sentry-sdk==0.15.1        # via -r requirements_pyinstaller.in
+scipy==1.5.1              # via -r requirements_pyinstaller.in, napari
+sentry-sdk==0.16.1        # via -r requirements_pyinstaller.in
 simpleitk==1.2.4          # via -r requirements_pyinstaller.in
 six==1.15.0               # via -r requirements_pyinstaller.in, h5py, packaging, python-dateutil, traitlets
 snowballstemmer==2.0.0    # via sphinx
-sphinx==3.1.1             # via numpydoc
+sphinx==3.1.2             # via numpydoc
 sphinxcontrib-applehelp==1.0.2  # via sphinx
 sphinxcontrib-devhelp==1.0.2  # via sphinx
 sphinxcontrib-htmlhelp==1.0.3  # via sphinx
 sphinxcontrib-jsmath==1.0.1  # via sphinx
 sphinxcontrib-qthelp==1.0.3  # via sphinx
 sphinxcontrib-serializinghtml==1.1.4  # via sphinx
-sympy==1.6                # via -r requirements_pyinstaller.in
-tifffile==2020.6.3        # via -r requirements_pyinstaller.in, czifile, napari, oiffile
+sympy==1.6.1              # via -r requirements_pyinstaller.in
+tifffile==2020.7.17       # via -r requirements_pyinstaller.in, czifile, napari, oiffile
 toolz==0.10.0             # via dask, napari
 tornado==6.0.4            # via ipykernel, jupyter-client
 traitlets==4.3.3          # via ipykernel, ipython, jupyter-client, jupyter-core, qtconsole

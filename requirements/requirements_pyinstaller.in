@@ -5,6 +5,7 @@ dataclasses; python_version < '3.7'
 defusedxml
 h5py
 imagecodecs
+lxml
 napari
 numpy
 oiffile
