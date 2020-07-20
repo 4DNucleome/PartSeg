@@ -20,3 +20,4 @@ sympy==1.1.1
 tifffile==2019.7.26
 urllib3==1.24.3
 xlrd==1.1.0
+imageio==2.5.0

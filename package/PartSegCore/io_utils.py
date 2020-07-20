@@ -9,12 +9,13 @@ from io import BufferedIOBase, BytesIO, IOBase, RawIOBase, StringIO, TextIOBase
 from pathlib import Path
 from tarfile import TarFile, TarInfo
 
+import imageio
 import numpy as np
 
 from PartSegCore.json_hooks import ProfileDict, profile_hook
 from PartSegImage import Image, ImageWriter
 
-from .algorithm_describe_base import AlgorithmDescribeBase, SegmentationProfile
+from .algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
 from .class_generator import BaseSerializableClass
 from .mask_create import MaskProperty
 from .segmentation.segmentation_info import SegmentationInfo
@@ -363,3 +364,28 @@ def tar_to_buff(tar_file, member_name) -> BytesIO:
     buffer.write(tar_value.read())
     buffer.seek(0)
     return buffer
+
+
+class SaveScreenshot(SaveBase):
+    @classmethod
+    def get_short_name(cls):
+        return "screenshot"
+
+    @classmethod
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info,
+        parameters: dict,
+        range_changed=None,
+        step_changed=None,
+    ):
+        imageio.imsave(save_location, project_info)
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Screenshot (*.png *.jpg *.jpeg)"
+
+    @classmethod
+    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+        return []

@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.11.1
+-   Add screenshot option in View menu
+
 ## 0.11.0
 -   Make sprawl algorithm name shorter
 -   Unify capitalisation of measurement names

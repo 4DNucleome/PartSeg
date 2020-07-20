@@ -7,7 +7,7 @@ from typing import Type
 
 import numpy as np
 from qtpy.QtCore import QByteArray, Qt, Signal, Slot
-from qtpy.QtGui import QCloseEvent, QGuiApplication, QIcon, QTextOption
+from qtpy.QtGui import QCloseEvent, QGuiApplication, QIcon, QKeySequence, QTextOption
 from qtpy.QtWidgets import (
     QAbstractSpinBox,
     QCheckBox,
@@ -913,6 +913,9 @@ class MainWindow(BaseMainWindow):
         view_menu.addAction("Additional output").triggered.connect(self.additional_layers_show)
         view_menu.addAction("Additional output with data").triggered.connect(lambda: self.additional_layers_show(True))
         view_menu.addAction("Napari viewer").triggered.connect(self.napari_viewer_show)
+        action = view_menu.addAction("Screenshot")
+        action.triggered.connect(self.screenshot(self.image_view))
+        action.setShortcut(QKeySequence.Print)
         image_menu = menu_bar.addMenu("Image operations")
         image_menu.addAction("Image adjustment").triggered.connect(self.image_adjust_exec)
         help_menu = menu_bar.addMenu("Help")
