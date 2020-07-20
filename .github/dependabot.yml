@@ -1,6 +1,6 @@
 version: 2
-update_configs:
-  - package_manager: "pip"
+updates:
+  - package-ecosystem: "pip"
     directory: "/requirements"
     schedule:
       interval: "daily"
