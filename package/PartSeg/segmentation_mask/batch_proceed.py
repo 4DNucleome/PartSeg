@@ -1,4 +1,5 @@
 import re
+import sys
 from collections import defaultdict
 from functools import partial
 from os import path
@@ -14,6 +15,11 @@ from PartSegCore.mask.io_functions import LoadSegmentationImage, LoadStackImage,
 from PartSegCore.segmentation import StackAlgorithm
 from PartSegCore.segmentation.algorithm_base import SegmentationAlgorithm
 
+if sys.version_info.minor == 6:
+    SegmentationTupleWrapper = object
+else:
+    SegmentationTupleWrapper = SegmentationTuple
+
 
 class BatchTask(NamedTuple):
     data: Union[str, SegmentationTuple]
@@ -26,7 +32,7 @@ class BatchProceed(QThread):
     progress_signal = Signal(str, int, str, int)
     range_signal = Signal(int, int)
     execution_done = Signal()
-    multiple_result = Signal(SegmentationTuple)
+    multiple_result = Signal(SegmentationTupleWrapper)
     algorithm: SegmentationAlgorithm
 
     def __init__(self):

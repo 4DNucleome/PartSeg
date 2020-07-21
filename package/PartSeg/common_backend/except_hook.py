@@ -33,6 +33,9 @@ def my_excepthook(type_, value, trace_back):
                     QApplication.instance().show_error()
         except ImportError:
             sys.__excepthook__(type_, value, trace_back)
+    elif isinstance(value, KeyboardInterrupt):
+        print("KeyboardInterrupt close", file=sys.stderr)
+        sys.exit(1)
     else:
         # then call the default handler
         sys.__excepthook__(type_, value, trace_back)
