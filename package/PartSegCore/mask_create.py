@@ -7,9 +7,9 @@ from PartSegImage.image import minimal_dtype
 
 from .class_generator import BaseSerializableClass
 from .image_operations import RadiusType, dilate, erode
+from .project_info import ProjectInfoBase
 
 
-# noinspection PyUnresolvedReferences
 class MaskProperty(BaseSerializableClass):
     """
     Description of creation mask from segmentation
@@ -50,6 +50,15 @@ class MaskProperty(BaseSerializableClass):
             + f"reversed mask={self.reversed_mask})"
         )
 
+    @classmethod
+    def simple_mask(cls) -> "MaskProperty":
+        """
+        Create MaskProperty which describe simple conversion segmentation to mask
+
+        :rtype: MaskProperty
+        """
+        return cls(RadiusType.NO, 0, RadiusType.NO, 0, False, False)
+
 
 def mp_eq(self: MaskProperty, other: MaskProperty):
     """Compare two :class:`MaskProperty`"""
@@ -68,10 +77,33 @@ def mp_eq(self: MaskProperty, other: MaskProperty):
 MaskProperty.__eq__ = mp_eq
 
 
+def calculate_mask_from_project(
+    mask_description: MaskProperty, project: ProjectInfoBase, components: typing.Optional[typing.List[int]] = None
+) -> np.ndarray:
+    """
+    Function for calculate mask base on MaskProperty.
+    This function calls :py:func:`calculate_mask` with arguments from project.
+
+    :param MaskProperty mask_description: information how calculate mask
+    :param ProjectInfoBase project: project with information about segmentation
+    :param typing.Optional[typing.List[int]] components: If present inform which components
+        should be used when calculation mask, otherwise use all.
+    :return: new mask
+    :rtype: np.ndarray
+    """
+    try:
+        time_axis = project.image.time_pos
+    except AttributeError:
+        time_axis = None
+    return calculate_mask(
+        mask_description, project.segmentation, project.mask, project.image.spacing, components, time_axis
+    )
+
+
 def calculate_mask(
     mask_description: MaskProperty,
     segmentation: np.ndarray,
-    old_mask: typing.Union[None, np.ndarray],
+    old_mask: typing.Optional[np.ndarray],
     spacing: typing.Iterable[typing.Union[float, int]],
     components: typing.Optional[typing.List[int]] = None,
     time_axis: typing.Optional[int] = 0,
@@ -81,14 +113,16 @@ def calculate_mask(
     If dilate_radius is negative then holes closing is done before erode,
     otherwise it is done after dilate
 
-    :param mask_description: information how calculate mask
-    :param segmentation: array on which mask is calculated
-    :param old_mask: if in mask_description there is set to crop and old_mask is not None
+    :param MaskProperty mask_description: information how calculate mask
+    :param np.ndarray segmentation: array on which mask is calculated
+    :param typing.Optional[np.ndarray] old_mask: if in mask_description there is set to crop and old_mask is not None
         then final mask is clipped to this area
-    :param spacing: spacing of image. Needed for calculating radius of dilate
-    :param components: If present inform which components should be used when calculation mask, otherwise use all.
-    :param time_axis: which axis of array should be treated as time. IF none then none.
+    :param typing.Iterable[typing.Union[float,int]] spacing: spacing of image. Needed for calculating radius of dilate
+    :param typing.Optional[typing.List[int]] components: If present inform which components
+        should be used when calculation mask, otherwise use all.
+    :param typing.Optional[int] time_axis: which axis of array should be treated as time. IF none then none.
     :return: new mask
+    :rtype: np.ndarray
     """
     spacing_min = min(spacing)
     spacing = [x / spacing_min for x in spacing]

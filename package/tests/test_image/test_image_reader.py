@@ -74,7 +74,7 @@ class TestImageClass:
 
 
 class CustomImage(Image):
-    return_order = "TCXYZ"
+    axis_order = "TCXYZ"
 
 
 class CustomTiffReader(TiffImageReader):

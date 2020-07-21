@@ -18,7 +18,6 @@ from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationP
 from ..io_utils import (
     HistoryElement,
     LoadBase,
-    ProjectInfoBase,
     SaveBase,
     SaveMaskAsTiff,
     SegmentationType,
@@ -31,6 +30,7 @@ from ..io_utils import (
     tar_to_buff,
 )
 from ..json_hooks import ProfileEncoder
+from ..project_info import ProjectInfoBase
 from ..segmentation.segmentation_info import SegmentationInfo
 
 
@@ -102,7 +102,7 @@ def save_stack_segmentation(
         else:
             spacing = parameters.get("spacing", (10 ** -6, 10 ** -6, 10 ** -6))
         segmentation_image = Image(
-            segmentation_info.segmentation, spacing, axes_order=Image.return_order.replace("C", "")
+            segmentation_info.segmentation, spacing, axes_order=Image.axis_order.replace("C", "")
         )
         try:
             ImageWriter.save(segmentation_image, segmentation_buff)

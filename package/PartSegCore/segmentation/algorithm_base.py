@@ -10,6 +10,7 @@ from PartSegImage import Image
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
 from ..image_operations import RadiusType
+from ..project_info import ProjectInfoBase
 
 
 def calculate_operation_radius(radius, spacing, gauss_type):
@@ -71,7 +72,7 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         self.image: Optional[Image] = None
         self.channel = None
         self.segmentation = None
-        self.mask: Optional[np.ndarray] = None
+        self._mask: Optional[np.ndarray] = None
         self.new_parameters: Dict[str, Any] = {}
 
     def __repr__(self):
@@ -98,6 +99,16 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
     def single_channel():
         """Check if algorithm run on single channel"""
         return True
+
+    @property
+    def mask(self) -> Optional[np.ndarray]:
+        if self._mask is not None and not self.support_time():
+            return self.image.clip_array(self._mask, t=0)
+        return self._mask
+
+    @mask.setter
+    def mask(self, val: np.ndarray):
+        self._mask = val
 
     @classmethod
     @abstractmethod
@@ -127,15 +138,31 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
     def calculation_run(self, report_fun: Callable[[str, int], None]) -> SegmentationResult:
         raise NotImplementedError()
 
+    @classmethod
+    def segment_project(cls, project: ProjectInfoBase, parameters: dict) -> SegmentationResult:
+        """
+
+        :param ProjectInfoBase project:
+        :param dict parameters:
+        :return:
+        :rtype:
+        """
+        instance = cls()
+        instance.set_image(project.image)
+        instance.set_mask(project.mask)
+        instance.set_parameters(**parameters)
+        return instance.calculation_run(report_empty_fun)
+
     @abstractmethod
     def get_info_text(self):
         raise NotImplementedError()
 
     def get_channel(self, channel_idx):
-        channel = self.image.get_channel(channel_idx)
-        if channel.shape[0] != 1:
+        if self.support_time():
+            return self.image.get_data_by_axis(c=channel_idx)
+        if self.image.shape[self.image.time_pos] != 1:
             raise ValueError("This algorithm do not support time data")
-        return channel[0]
+        return self.image.get_data_by_axis(c=channel_idx, t=0)
 
     def set_image(self, image):
         self.image = image

@@ -29,6 +29,9 @@ class TestMaskProperty:
         assert "dilate radius" in text
         assert "max holes size" in text
 
+    def test_simple_mask(self):
+        assert MaskProperty.simple_mask() == MaskProperty(RadiusType.NO, 0, RadiusType.NO, 0, False, False)
+
 
 class TestFillHoles:
     def test_fill_2d(self):

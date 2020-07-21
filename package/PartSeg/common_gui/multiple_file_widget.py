@@ -23,7 +23,8 @@ from qtpy.QtWidgets import (
 )
 
 from PartSeg.common_backend.base_settings import BaseSettings
-from PartSegCore.io_utils import LoadBase, ProjectInfoBase
+from PartSegCore.io_utils import LoadBase
+from PartSegCore.project_info import ProjectInfoBase
 
 from .custom_load_dialog import CustomLoadDialog, LoadProperty
 from .waiting_dialog import ExecuteFunctionDialog

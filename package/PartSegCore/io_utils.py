@@ -13,12 +13,12 @@ import imageio
 import numpy as np
 
 from PartSegCore.json_hooks import ProfileDict, profile_hook
-from PartSegImage import Image, ImageWriter
+from PartSegImage import ImageWriter
 
 from .algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
 from .class_generator import BaseSerializableClass
 from .mask_create import MaskProperty
-from .segmentation.segmentation_info import SegmentationInfo
+from .project_info import ProjectInfoBase
 
 
 class SegmentationType(Enum):
@@ -52,30 +52,6 @@ def get_tarinfo(name, buffer: typing.Union[BytesIO, StringIO]):
         tar_info.size = len(buffer.getvalue())
     tar_info.mtime = datetime.now().timestamp()
     return tar_info
-
-
-class ProjectInfoBase:
-    file_path: str
-    image: Image
-    segmentation: np.ndarray
-    segmentation_info: SegmentationInfo = SegmentationInfo(None)
-    mask: typing.Optional[np.ndarray]
-    errors: str = ""
-
-    def get_raw_copy(self):
-        """
-        Create copy with only image
-        """
-        raise NotImplementedError
-
-    def get_raw_mask_copy(self):
-        raise NotImplementedError
-
-    def is_raw(self):
-        raise NotImplementedError
-
-    def is_masked(self):
-        raise NotImplementedError
 
 
 class SaveBase(AlgorithmDescribeBase, ABC):

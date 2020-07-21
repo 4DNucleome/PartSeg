@@ -301,6 +301,7 @@ class ChannelProperty(QWidget):
         self.filter_radius.valueChanged.connect(self.gauss_radius_changed)
         self.use_filter.currentIndexChanged.connect(self.gauss_use_changed)
         self.gamma_value = QDoubleSpinBox()
+        self.gamma_value.setRange(0.01, 100)
         self.gamma_value.setSingleStep(0.1)
         self.gamma_value.valueChanged.connect(self.gamma_value_changed)
 

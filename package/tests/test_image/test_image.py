@@ -10,7 +10,7 @@ class TestImageBase:
     image_class = Image
 
     def needed_shape(self, shape, axes: str, drop: str):
-        new_axes = self.image_class.return_order
+        new_axes = self.image_class.axis_order
         for el in drop:
             new_axes = new_axes.replace(el, "")
         res_shape = [1] * len(new_axes)
@@ -25,13 +25,13 @@ class TestImageBase:
         return self.needed_shape(shape, axes, "C")
 
     def reorder_axes_letter(self, letters: str):
-        res = "".join([x for x in self.image_class.return_order if x in letters])
+        res = "".join([x for x in self.image_class.axis_order if x in letters])
         assert len(res) == len(letters)
         return res
 
     def prepare_mask_shape(self, shape):
         base_axes = set("TZYX")
-        refer_axes = self.image_class.return_order.replace("C", "")
+        refer_axes = self.image_class.axis_order.replace("C", "")
         i, j = 0, 0
         new_shape = [1] * len(refer_axes)
         for i, val in enumerate(refer_axes):
@@ -42,7 +42,7 @@ class TestImageBase:
 
     def prepare_image_initial_shape(self, shape, channel):
         new_shape = self.prepare_mask_shape(shape)
-        new_shape.insert(self.image_class.return_order.index("C"), channel)
+        new_shape.insert(self.image_class.axis_order.index("C"), channel)
         return new_shape
 
     def test_fit_mask_simple(self):
@@ -131,7 +131,7 @@ class TestImageBase:
     def test_channel_pos(self):
         initial_shape = self.prepare_image_initial_shape([1, 10, 20, 20], 1)
         image = self.image_class(np.zeros(initial_shape), (1, 1, 1), "")
-        assert image.channel_pos == image.return_order.index("C")
+        assert image.channel_pos == image.axis_order.index("C")
 
     def test_get_dimension_number(self):
         assert (
@@ -334,7 +334,7 @@ class TestImageBase:
 
 
 class ChangeChannelPosImage(Image):
-    return_order = "TZCYX"
+    axis_order = "TZCYX"
 
 
 class TestInheritanceImageChannelPos(TestImageBase):
@@ -342,7 +342,7 @@ class TestInheritanceImageChannelPos(TestImageBase):
 
 
 class ChangeTimePosImage(Image):
-    return_order = "ZTYXC"
+    axis_order = "ZTYXC"
 
 
 class TestInheritanceImageTimePos(TestImageBase):
@@ -350,7 +350,7 @@ class TestInheritanceImageTimePos(TestImageBase):
 
 
 class WeirdOrderImage(Image):
-    return_order = "XYZTC"
+    axis_order = "XYZTC"
 
 
 class TestInheritanceWeirdOrderImage(TestImageBase):
@@ -358,7 +358,7 @@ class TestInheritanceWeirdOrderImage(TestImageBase):
 
 
 class AdditionalAxesImage(Image):
-    return_order = "VTZYXC"
+    axis_order = "VTZYXC"
 
     def get_image_for_save(self, index=0) -> np.ndarray:
         return super().get_image_for_save()[..., index]

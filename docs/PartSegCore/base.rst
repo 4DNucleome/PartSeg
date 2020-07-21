@@ -26,10 +26,21 @@ On this page there are described base classes of PartSegCore module
    :members:
    :show-inheritance:
 
+.io_utils
+---------
+.. automodule:: PartSegCore.io_utils
+   :members:
+   :show-inheritance:
 
 .mask_create
 ------------
 .. automodule:: PartSegCore.mask_create
+   :members:
+   :show-inheritance:
+
+.project_info
+-------------
+.. automodule:: PartSegCore.project_info
    :members:
    :show-inheritance:
 

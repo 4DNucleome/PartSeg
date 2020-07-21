@@ -204,12 +204,12 @@ class SaveCmap(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
-        data = project_info.image.get_channel(parameters["channel"])
-        if data.shape[0] != 1:
+
+        if project_info.image.shape[project_info.image.time_pos] != 1:
             raise NotSupportedImage("This save method o not support time data")
+        data = project_info.image.get_data_by_axis(c=parameters["channel"], t=0)
         spacing = project_info.image.spacing
-        segmentation = project_info.segmentation[parameters.get("time", 0)]
-        data = data[parameters.get("time", 0)]
+        segmentation = project_info.image.clip_array(project_info.segmentation, t=0)
 
         reverse_base = float(np.mean(data[segmentation == 0]))
         if parameters.get("clip", False):
@@ -279,12 +279,12 @@ class SaveXYZ(SaveBase):
                 os.makedirs(os.path.dirname(save_location))
         if parameters.get("separated_objects", False) and not isinstance(save_location, (str, Path)):
             raise ValueError("Saving components to buffer not supported")
-        channel_image = project_info.image.get_channel(parameters["channel"])
-        if channel_image.shape[0] != 1 and "time" not in parameters:
+        if project_info.image.shape[project_info.image.time_pos] != 1 and "time" not in parameters:
             raise NotSupportedImage("This save method o not support time data")
+        channel_image = project_info.image.get_data_by_axis(c=parameters["channel"], t=parameters.get("time", 0))
+
         segmentation_mask = np.array(project_info.segmentation > 0)
-        channel_image = channel_image[parameters.get("time", 0)]
-        segmentation_mask = segmentation_mask[parameters.get("time", 0)]
+        segmentation_mask = project_info.image.clip_array(segmentation_mask, t=parameters.get("time", 0))
         if parameters.get("clip", False):
             positions = np.transpose(np.nonzero(segmentation_mask))
             positions = np.flip(positions, 1)

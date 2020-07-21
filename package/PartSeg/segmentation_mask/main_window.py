@@ -40,7 +40,7 @@ from PartSegCore.mask.io_functions import (
     SaveSegmentation,
     SegmentationTuple,
 )
-from PartSegCore.mask_create import calculate_mask
+from PartSegCore.mask_create import calculate_mask_from_project
 from PartSegCore.segmentation.algorithm_base import SegmentationResult
 from PartSegImage import Image, TiffImageReader
 
@@ -76,14 +76,8 @@ class MaskDialog(MaskDialogBase):
         project_info: SegmentationTuple = self.settings.get_project_info()
         mask_property = self.mask_widget.get_mask_property()
         self.settings.set("mask_manager.mask_property", mask_property)
-        mask = calculate_mask(
-            mask_description=mask_property,
-            segmentation=project_info.segmentation,
-            old_mask=project_info.mask,
-            spacing=project_info.image.spacing,
-            components=project_info.selected_components,
-            time_axis=project_info.image.time_pos,
-        )
+        mask = calculate_mask_from_project(mask_description=mask_property, project=project_info)
+
         self.settings.add_history_element(create_history_element_from_segmentation_tuple(project_info, mask_property,))
         self.settings.mask = mask
         self.settings.chosen_components_widget.un_check_all()

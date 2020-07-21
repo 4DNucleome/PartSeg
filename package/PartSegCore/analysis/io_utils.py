@@ -1,11 +1,12 @@
 import typing
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 import numpy as np
 import packaging.version
 
-from PartSegCore.io_utils import HistoryElement, ProjectInfoBase
+from PartSegCore.io_utils import HistoryElement
 from PartSegCore.mask_create import MaskProperty
+from PartSegCore.project_info import ProjectInfoBase
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
 from PartSegCore.segmentation.segmentation_info import SegmentationInfo
 from PartSegImage import Image
@@ -35,8 +36,8 @@ class ProjectTuple(ProjectInfoBase):
     def is_raw(self):
         return self.segmentation is None
 
-    def replace_(self, *args, **kwargs):
-        return self._replace(*args, **kwargs)
+    def replace_(self, **kwargs):
+        return replace(self, **kwargs)
 
     def is_masked(self):
         return self.mask is not None

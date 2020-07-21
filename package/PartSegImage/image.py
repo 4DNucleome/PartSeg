@@ -1,4 +1,5 @@
 import typing
+import warnings
 
 import numpy as np
 from tifffile import lazyattr
@@ -69,17 +70,23 @@ class Image:
     :param labels: labels for channels
     :param axes_order: allow to create Image object form data with different axes order, or missed axes
 
-    :cvar str ~.return_order: internal order of axes
+    :cvar str ~.axis_order: internal order of axes
 
     It is prepared for subclassing with changed internal order. Eg:
 
     >>> class ImageJImage(Image):
-    >>>     return_order = "TZCYX"
+    >>>     axis_order = "TZCYX"
 
     """
 
     _image_spacing: Spacing
-    return_order = "TZYXC"
+    axis_order = "TZYXC"
+
+    def __new__(cls, *args, **kwargs):
+        if hasattr(cls, "return_order"):
+            warnings.warn("Using return_order is deprecated since PartSeg 0.11.0", DeprecationWarning)
+            cls.axes_order = cls.return_order
+        return super(Image, cls).__new__(cls)
 
     def __init__(
         self,
@@ -94,7 +101,7 @@ class Image:
     ):
         # TODO add time distance to image spacing
         if axes_order is None:
-            axes_order = self.return_order
+            axes_order = self.axis_order
         if data.ndim != len(axes_order):
             raise ValueError(
                 "Data should have same number of dimensions " f"like length of axes_order (current :{len(axes_order)}"
@@ -112,8 +119,8 @@ class Image:
         if isinstance(self.labels, (tuple, list)):
             self.labels = self.labels[: self.channels]
         if ranges is None:
-            axis = list(range(len(self.return_order)))
-            axis.remove(self.return_order.index("C"))
+            axis = list(range(len(self.axis_order)))
+            axis.remove(self.axis_order.index("C"))
             axis = tuple(axis)
             self.ranges = list(zip(np.min(self._image_array, axis=axis), np.max(self._image_array, axis=axis)))
         else:
@@ -132,23 +139,27 @@ class Image:
 
     @lazyattr
     def channel_pos(self):
-        return self.return_order.index("C")
+        return self.axis_order.index("C")
 
     @lazyattr
     def x_pos(self):
-        return self.return_order.index("X")
+        return self.axis_order.index("X")
 
     @lazyattr
     def y_pos(self):
-        return self.return_order.index("Y")
+        return self.axis_order.index("Y")
 
     @lazyattr
     def time_pos(self):
-        return self.return_order.index("T")
+        return self.axis_order.index("T")
 
     @lazyattr
     def stack_pos(self):
-        return self.return_order.index("Z")
+        return self.axis_order.index("Z")
+
+    @lazyattr
+    def array_axis_order(self):
+        return self.axis_order.replace("C", "")
 
     @staticmethod
     def _reorder_axes(array: np.ndarray, input_axes: str, return_axes) -> np.ndarray:
@@ -170,7 +181,7 @@ class Image:
         :param str axes: axes order
         :return: array with correct order of axes
         """
-        return cls._reorder_axes(array, axes, cls.return_order)
+        return cls._reorder_axes(array, axes, cls.axis_order)
 
     def get_dimension_number(self) -> int:
         """return number of nontrivial dimensions"""
@@ -180,7 +191,7 @@ class Image:
         """
         :return: letters which indicates non trivial dimensions
         """
-        return "".join([key for val, key in zip(self._image_array.shape, self.return_order) if val > 1])
+        return "".join([key for val, key in zip(self._image_array.shape, self.axis_order) if val > 1])
 
     def substitute(
         self, data=None, image_spacing=None, file_path=None, mask=_DEF, default_coloring=None, ranges=None, labels=None,
@@ -270,7 +281,7 @@ class Image:
         """
         :return: numpy array in imagej tiff order axes
         """
-        return self._reorder_axes(self._image_array, self.return_order, "TZCYX")
+        return self._reorder_axes(self._image_array, self.axis_order, "TZCYX")
 
     def get_mask_for_save(self) -> typing.Optional[np.ndarray]:
         """
@@ -278,7 +289,7 @@ class Image:
         """
         if not self.has_mask:
             return None
-        axes_order = list(self.return_order)
+        axes_order = list(self.axis_order)
         axes_order.pop(self.channel_pos)
         return self._reorder_axes(self._mask_array, "".join(axes_order), "TZCYX")
 
@@ -315,8 +326,8 @@ class Image:
     @property
     def plane_shape(self) -> (int, int):
         """y,x size of image"""
-        x_index = self.return_order.index("X")
-        y_index = self.return_order.index("Y")
+        x_index = self.axis_order.index("X")
+        y_index = self.axis_order.index("Y")
         return self._image_array.shape[y_index], self._image_array.shape[x_index]
 
     @property
@@ -332,11 +343,53 @@ class Image:
         image_array = np.swapaxes(self._image_array, self.time_pos, self.stack_pos)
         return self.substitute(data=image_array)
 
+    def get_axis_positions(self) -> typing.Dict[str, int]:
+        """
+        :return: dict with mapping axis to its position
+        :rtype: dict
+        """
+        return {l: i for i, l in enumerate(self.axis_order)}
+
+    def get_array_axis_positions(self) -> typing.Dict[str, int]:
+        """
+        :return: dict with mapping axis to its position for array fitted to image
+        :rtype: dict
+        """
+        return {l: i for i, l in enumerate(self.axis_order.replace("C", ""))}
+
+    def get_data_by_axis(self, **kwargs) -> np.ndarray:
+        """
+        Get part of data extracted by sub axis. Axis is selected by single letter from :py:attr:`axis_order`
+
+        :param kwargs: axis list with
+        :return:
+        :rtype:
+        """
+        slices: typing.List[typing.Union[int, slice]] = [slice(None) for _ in range(len(self.axis_order))]
+        axis_pos = self.get_axis_positions()
+        for name in kwargs:
+            if name.upper() in axis_pos:
+                slices[axis_pos[name.upper()]] = kwargs[name]
+        return self._image_array[tuple(slices)]
+
+    def clip_array(self, array, **kwargs):
+        array = self.fit_array_to_image(array)
+        slices: typing.List[typing.Union[int, slice]] = [slice(None) for _ in range(len(self.array_axis_order))]
+        axis_pos = self.get_array_axis_positions()
+        for name in kwargs:
+            if name.upper() in axis_pos:
+                slices[axis_pos[name.upper()]] = kwargs[name]
+        return array[tuple(slices)]
+
     def get_channel(self, num) -> np.ndarray:
-        """"""
-        slices = [slice(None) for _ in range(len(self.return_order))]
-        slices[self.channel_pos] = num
-        return self._image_array[tuple(slices)]  # np.take(self._image_array, num, self.channel_pos)
+        """
+        Alias for :py:func:`get_sub_data`(c=num)
+
+        :param int num: channel num to be extracted
+        :return: given channel
+        :rtype:  numpy.ndarray
+        """
+        return self.get_data_by_axis(c=num)
 
     def get_layer(self, time: int, stack: int) -> np.ndarray:
         """
@@ -425,7 +478,7 @@ class Image:
             image_cut = new_cut[:]
             image_cut.insert(self.channel_pos, slice(None))
             new_image = np.copy(self._image_array[tuple(image_cut)])
-            if self.channel_pos == len(self.return_order) - 1:
+            if self.channel_pos == len(self.axis_order) - 1:
                 new_image[catted_cut_area == 0] = 0
             else:
                 for i in range(self.channels):
@@ -495,5 +548,5 @@ class Image:
         mask_info = f"mask=True, mask_dtype={self._mask_array.dtype}" if self.mask is not None else "mask=False"
         return (
             f"Image(shape={self._image_array.shape} dtype={self._image_array.dtype}, spacing={self.spacing}, "
-            f"labels={self.labels}, channels={self.channels}, axes={repr(self.return_order)}, {mask_info})"
+            f"labels={self.labels}, channels={self.channels}, axes={repr(self.axis_order)}, {mask_info})"
         )

@@ -36,7 +36,7 @@ class BaseImageReader:
         Order to which image axes should be rearranged before pass to :py:attr:`image_class` constructor.
         Default is :py:attr:`image_class.return_order`
         """
-        return cls.image_class.return_order
+        return cls.image_class.axis_order
 
     def __init__(self, callback_function=None):
         self.default_spacing = 10 ** -6, 10 ** -6, 10 ** -6

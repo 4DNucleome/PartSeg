@@ -7,7 +7,8 @@ from qtpy.QtGui import QCloseEvent, QDragEnterEvent, QDropEvent, QShowEvent
 from qtpy.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox, QWidget
 from vispy.color import colormap
 
-from PartSegCore.io_utils import ProjectInfoBase, SaveScreenshot
+from PartSegCore.io_utils import SaveScreenshot
+from PartSegCore.project_info import ProjectInfoBase
 from PartSegImage import Image
 
 from ..common_backend.base_settings import BaseSettings, SwapTimeStackException, TimeAndStackException

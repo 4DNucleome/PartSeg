@@ -31,7 +31,7 @@ from PartSegCore.analysis.analysis_utils import SegmentationPipeline, Segmentati
 from PartSegCore.analysis.io_utils import create_history_element_from_project
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.io_utils import HistoryElement, WrongFileTypeException
-from PartSegCore.mask_create import calculate_mask
+from PartSegCore.mask_create import calculate_mask_from_project
 from PartSegCore.segmentation.algorithm_base import SegmentationResult
 from PartSegCore.segmentation.segmentation_info import SegmentationInfo
 from PartSegImage import TiffImageReader
@@ -516,13 +516,7 @@ class MaskDialog(MaskDialogBase):
         project_info: ProjectTuple = self.settings.get_project_info()
         mask_property = self.mask_widget.get_mask_property()
         self.settings.set("mask_manager.mask_property", mask_property)
-        mask = calculate_mask(
-            mask_description=mask_property,
-            segmentation=project_info.segmentation,
-            old_mask=project_info.mask,
-            spacing=project_info.image.spacing,
-            time_axis=project_info.image.time_pos,
-        )
+        mask = calculate_mask_from_project(mask_description=mask_property, project=project_info)
         self.settings.add_history_element(create_history_element_from_project(project_info, mask_property,))
         if self.settings.history_redo_size():
             history: HistoryElement = self.settings.history_next_element()
