@@ -13,7 +13,7 @@ from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.analysis.save_hooks import PartEncoder
 from PartSegCore.io_utils import HistoryElement
 from PartSegCore.json_hooks import ProfileDict
-from PartSegCore.segmentation.segmentation_info import SegmentationInfo
+from PartSegCore.segmentation_info import SegmentationInfo
 
 from ..common_backend.base_settings import BaseSettings, SaveSettingsDescription
 

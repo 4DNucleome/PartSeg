@@ -19,7 +19,7 @@ from PartSegCore.io_utils import HistoryElement, load_metadata_base
 from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, check_loaded_dict
 from PartSegCore.project_info import ProjectInfoBase
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
-from PartSegCore.segmentation.segmentation_info import SegmentationInfo
+from PartSegCore.segmentation_info import SegmentationInfo
 from PartSegImage import Image
 
 

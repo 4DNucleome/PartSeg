@@ -8,7 +8,7 @@ from PartSegCore.io_utils import HistoryElement
 from PartSegCore.mask_create import MaskProperty
 from PartSegCore.project_info import ProjectInfoBase
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
-from PartSegCore.segmentation.segmentation_info import SegmentationInfo
+from PartSegCore.segmentation_info import SegmentationInfo
 from PartSegImage import Image
 
 project_version_info = packaging.version.Version("1.1")

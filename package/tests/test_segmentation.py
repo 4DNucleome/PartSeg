@@ -16,8 +16,8 @@ from PartSegCore.mask_create import MaskProperty, calculate_mask
 from PartSegCore.segmentation import SegmentationAlgorithm
 from PartSegCore.segmentation import restartable_segmentation_algorithms as sa
 from PartSegCore.segmentation.noise_filtering import noise_filtering_dict
-from PartSegCore.segmentation.segmentation_info import BoundInfo, SegmentationInfo
 from PartSegCore.segmentation.watershed import sprawl_dict
+from PartSegCore.segmentation_info import BoundInfo, SegmentationInfo
 from PartSegImage import Image
 
 
