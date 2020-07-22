@@ -2,6 +2,7 @@
 
 ## 0.11.1
 -   Add screenshot option in View menu
+-   Add Voxels measurements
 
 ## 0.11.0
 -   Make sprawl algorithm name shorter

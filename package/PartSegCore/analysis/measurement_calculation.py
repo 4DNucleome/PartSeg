@@ -41,12 +41,16 @@ class ComponentsInfo(NamedTuple):
 
 
 def empty_fun(_a0=None, _a1=None):
+    """This function  is be used as dummy reporting function."""
     pass
 
 
 MeasurementValueType = Union[float, List[float], str]
 MeasurementResultType = Tuple[MeasurementValueType, str]
 MeasurementResultInputType = Tuple[MeasurementValueType, str, Tuple[PerComponent, AreaType]]
+
+
+FILE_NAME_STR = "File name"
 
 
 class MeasurementResult(MutableMapping[str, MeasurementResultType]):
@@ -73,8 +77,8 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         self._data_dict[k] = v[0]
         self._units_dict[k] = v[1]
         self._type_dict[k] = v[2]
-        if k == "File name":
-            self._data_dict.move_to_end("File name", False)
+        if k == FILE_NAME_STR:
+            self._data_dict.move_to_end(FILE_NAME_STR, False)
 
     def __delitem__(self, v: str) -> None:
         del self._data_dict[v]
@@ -94,10 +98,10 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         """
         Set name of file to be presented as first position.
         """
-        self._data_dict["File name"] = path_fo_file
-        self._type_dict["File name"] = PerComponent.No, AreaType.ROI
-        self._units_dict["File name"] = ""
-        self._data_dict.move_to_end("File name", False)
+        self._data_dict[FILE_NAME_STR] = path_fo_file
+        self._type_dict[FILE_NAME_STR] = PerComponent.No, AreaType.ROI
+        self._units_dict[FILE_NAME_STR] = ""
+        self._data_dict.move_to_end(FILE_NAME_STR, False)
 
     def get_component_info(self) -> Tuple[bool, bool]:
         """
@@ -116,7 +120,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         If has mask components, or has segmentation_components then add this labels"""
         has_mask_components, has_segmentation_components = self.get_component_info()
         labels = list(self._data_dict.keys())
-        index = 1 if "File name" in self._data_dict else 0
+        index = 1 if FILE_NAME_STR in self._data_dict else 0
         if has_mask_components:
             labels.insert(index, "Mask component")
         if has_segmentation_components:
@@ -133,8 +137,8 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
 
     def get_global_parameters(self):
         """Get only parameters which are not 'PerComponent.Yes'"""
-        if "File name" in self._data_dict:
-            name = self._data_dict["File name"]
+        if FILE_NAME_STR in self._data_dict:
+            name = self._data_dict[FILE_NAME_STR]
             res = [name]
             iterator = iter(self._data_dict.keys())
             next(iterator)
@@ -163,8 +167,8 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         counts = len(component_info)
         mask_to_pos = {val: i for i, val in enumerate(self.components_info.mask_components)}
         segmentation_to_pos = {val: i for i, val in enumerate(self.components_info.segmentation_components)}
-        if "File name" in self._data_dict:
-            name = self._data_dict["File name"]
+        if FILE_NAME_STR in self._data_dict:
+            name = self._data_dict[FILE_NAME_STR]
             res = [[name] for _ in range(counts)]
             iterator = iter(self._data_dict.keys())
             next(iterator)
@@ -566,6 +570,18 @@ class Volume(MeasurementMethodBase):
     @classmethod
     def get_units(cls, ndim):
         return symbols("{}") ** ndim
+
+
+class Voxels(MeasurementMethodBase):
+    text_info = "Voxels", "Calculate number of voxels of current segmentation"
+
+    @classmethod
+    def calculate_property(cls, area_array, **_):  # pylint: disable=W0221
+        return np.count_nonzero(area_array)
+
+    @classmethod
+    def get_units(cls, ndim):
+        return symbols("1")
 
 
 # From Malandain, G., & Boissonnat, J. (2002). Computing the diameter of a point set,
@@ -1136,7 +1152,7 @@ class DistanceMaskSegmentation(MeasurementMethodBase):
 class SplitOnPartVolume(MeasurementMethodBase):
     text_info = (
         "distance splitting volume",
-        "Split mask on parts and then calculate volume of cross " "of segmentation and mask part",
+        "Split mask on parts and then calculate volume of cross of segmentation and mask part",
     )
 
     @classmethod
@@ -1167,7 +1183,7 @@ class SplitOnPartVolume(MeasurementMethodBase):
 class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
     text_info = (
         "distance splitting pixel brightness sum",
-        "Split mask on parts and then calculate pixel brightness sum" " of cross of segmentation and mask part",
+        "Split mask on parts and then calculate pixel brightness sum of cross of segmentation and mask part",
     )
 
     @classmethod
@@ -1253,6 +1269,7 @@ MEASUREMENT_DICT = Register(
     DistanceMaskSegmentation,
     SplitOnPartVolume,
     SplitOnPartPixelBrightnessSum,
+    Voxels,
     suggested_base_class=MeasurementMethodBase,
 )
 """Register with all measurements algorithms"""

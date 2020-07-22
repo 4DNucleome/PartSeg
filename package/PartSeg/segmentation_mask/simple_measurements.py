@@ -106,16 +106,20 @@ class SimpleMeasurements(QWidget):
             for i, val in enumerate(values_list):
                 self.result_view.setItem(i, j + 1, QTableWidgetItem(str(val)))
 
+    def _clean_measurements(self):
+        selected = set()
+        for _ in range(self.measurement_layout.count() - 2):
+            # noinspection PyTypeChecker
+            chk: QCheckBox = self.measurement_layout.takeAt(2).widget()
+            if chk.isChecked():
+                selected.add(chk.text())
+            chk.deleteLater()
+        return selected
+
     def event(self, event: QEvent) -> bool:
         if event.type() == QEvent.WindowActivate:
-            selected = set()
             self.channel_select.change_channels_num(self.settings.image.channels)
-            for _ in range(self.measurement_layout.count() - 2):
-                # noinspection PyTypeChecker
-                chk: QCheckBox = self.measurement_layout.takeAt(2).widget()
-                if chk.isChecked():
-                    selected.add(chk.text())
-                del chk
+            selected = self._clean_measurements()
             for val in MEASUREMENT_DICT.values():
                 area = val.get_starting_leaf().area
                 pc = val.get_starting_leaf().per_component

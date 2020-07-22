@@ -34,6 +34,7 @@ from PartSegCore.analysis.measurement_calculation import (
     Surface,
     ThirdPrincipalAxisLength,
     Volume,
+    Voxels,
 )
 from PartSegCore.autofit import density_mass_center
 from PartSegCore.universal_const import UNIT_SCALE, Units
@@ -192,6 +193,31 @@ class TestVolume(object):
         image = get_cube_image()
         mask = image.get_channel(0) > 80
         assert Volume.calculate_property(mask, image.spacing, 1) == 0
+
+
+class TestVoxels:
+    def test_cube(self):
+        image = get_cube_image()
+        mask1 = image.get_channel(0) > 40
+        mask2 = image.get_channel(0) > 60
+        mask3 = mask1 * ~mask2
+        assert Voxels.calculate_property(mask1) == 30 * 60 * 60
+        assert Voxels.calculate_property(mask2) == 20 * 40 * 40
+        assert Voxels.calculate_property(mask3) == 30 * 60 * 60 - 20 * 40 * 40
+
+    def test_square(self):
+        image = get_square_image()
+        mask1 = image.get_channel(0) > 40
+        mask2 = image.get_channel(0) > 60
+        mask3 = mask1 * ~mask2
+        assert Voxels.calculate_property(mask1) == 60 * 60
+        assert Voxels.calculate_property(mask2) == 40 * 40
+        assert Voxels.calculate_property(mask3) == 60 * 60 - 40 * 40
+
+    def test_empty(self):
+        image = get_cube_image()
+        mask = image.get_channel(0) > 80
+        assert Voxels.calculate_property(mask) == 0
 
 
 class TestComponentsNumber(object):
