@@ -737,10 +737,11 @@ class FileData:
                     sheet.set_column(i, i, len(text) + 1)
             book: xlsxwriter.Workbook = writer.book
             for calculation_plan in plans:
-                sheet_name = f"info {calculation_plan.name}"
+                sheet_base_name = f"info {calculation_plan.name}"[:30]
+                sheet_name = sheet_base_name
                 if sheet_name in book.sheetnames:
                     for i in range(100):
-                        sheet_name = f"info {calculation_plan.name} ({i})"
+                        sheet_name = f"{sheet_base_name[:26]} ({i})"
                         if sheet_name not in book.sheetnames:
                             break
                     else:
