@@ -11,6 +11,7 @@ from napari.layers.image import Image as NapariImage
 from napari.layers.image._image_constants import Interpolation3D
 from napari.layers.labels import Labels
 from napari.qt import QtNDisplayButton, QtViewer
+from napari.qt.threading import thread_worker
 from qtpy.QtCore import QObject, Signal
 from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 from vispy.color import Color, ColorArray, Colormap
@@ -472,7 +473,7 @@ class ImageView(QWidget):
         return image.file_path in self.image_info
 
     @staticmethod
-    def calculate_filter(array: np.ndarray, parameters: Tuple[NoiseFilterType, float]) -> np.ndarray:
+    def calculate_filter(array: np.ndarray, parameters: Tuple[NoiseFilterType, float]) -> Optional[np.ndarray]:
         if parameters[0] == NoiseFilterType.No or parameters[1] == 0:
             return array
         if parameters[0] == NoiseFilterType.Gauss:
@@ -508,18 +509,33 @@ class ImageView(QWidget):
                 lim[1] += 1
             blending = "additive" if self.image_info or i != 0 else "translucent"
             # FIXME detect layer order impact on representation.
-            image_layers.append(
-                NapariImage(
-                    self.calculate_filter(image.get_channel(i), filters[i]),
-                    colormap=self.convert_to_vispy_colormap(self.channel_control.selected_colormaps[i]),
-                    visible=visibility[i],
-                    blending=blending,
-                    scale=image.normalized_scaling(),
-                    contrast_limits=lim,
-                    gamma=gamma[i],
-                    name=f"channel {i}; {len(self.viewer.layers) + i}",
-                )
+            data = image.get_channel(i)
+
+            layer = NapariImage(
+                data,
+                colormap=self.convert_to_vispy_colormap(self.channel_control.selected_colormaps[i]),
+                visible=visibility[i],
+                blending=blending,
+                scale=image.normalized_scaling(),
+                contrast_limits=lim,
+                gamma=gamma[i],
+                name=f"channel {i}; {len(self.viewer.layers) + i}",
             )
+
+            def set_data(data_):
+                if data_ is None:
+                    return
+                layer.data = data_
+
+            @thread_worker(connect={"returned": set_data})
+            def calc_filter():
+                if filters[i][0] == NoiseFilterType.No or filters[i][1] == 0:
+                    return None
+
+                return self.calculate_filter(data, parameters=filters[i])
+
+            calc_filter()
+            image_layers.append(layer)
         for el in image_layers:
             self.viewer.add_layer(el)
         self.image_info[image.file_path] = ImageInfo(image, image_layers, filters)
