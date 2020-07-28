@@ -948,7 +948,6 @@ class MainWindow(BaseMainWindow):
             pass
 
     def image_read(self):
-        self.image_view.set_image()
         self.image_view.reset_image_size()
         self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
 

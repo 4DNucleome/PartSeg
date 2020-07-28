@@ -163,14 +163,10 @@ class TestColorComboBoxGroup:
         qtbot.addWidget(image_view)
         qtbot.addWidget(ch_property)
         image = TiffImageReader.read_image(PartSegData.segmentation_analysis_default_image)
-        with qtbot.waitSignal(settings.image_changed):
+        with qtbot.waitSignals([settings.image_changed, image_view.image_added]):
             settings.image = image
         channels_num = image.channels
         assert image_view.channel_control.channels_count == channels_num
-
-        # assert image_view.stack_slider.isVisible() is False
-        # assert image_view.time_slider.isVisible() is False
-        # image_canvas: ImageCanvas = image_view.image_area.widget()
 
         image_view.viewer_widget.screenshot()
         image1 = image_view.viewer_widget.canvas.render()
