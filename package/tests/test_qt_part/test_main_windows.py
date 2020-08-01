@@ -14,7 +14,7 @@ napari_warnings = napari.__version__ == "0.3.4" and platform.system() == "Linux"
 
 
 class TestAnalysisMainWindow:
-    @pytest.mark.skipif(platform.system() == "Linux" and CI_BUILD, reason="vispy problem")
+    @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
     @pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
     @pytest.mark.skipif(napari_warnings, reason="warnings fail test")
     def test_opening(self, qtbot, tmpdir):
@@ -25,10 +25,9 @@ class TestAnalysisMainWindow:
 
 
 class TestMaskMainWindow:
-    @pytest.mark.skipif(platform.system() == "Linux" and CI_BUILD, reason="vispy problem")
+    @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
     @pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
     @pytest.mark.skipif(napari_warnings, reason="warnings fail test")
     def test_opening(self, qtbot, tmpdir):
         main_window = MaskMainWindow(tmpdir, initial_image=False)
         qtbot.addWidget(main_window)
-        main_window.close()
