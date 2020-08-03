@@ -26,7 +26,6 @@ idna==2.10                # via requests
 imagecodecs==2020.5.30    # via -r requirements_pyinstaller.in
 imageio==2.9.0            # via napari, napari-svg
 imagesize==1.2.0          # via sphinx
-importlib-metadata==1.7.0  # via napari, napari-plugin-engine
 ipykernel==5.3.3          # via napari, qtconsole
 ipython-genutils==0.2.0   # via qtconsole, traitlets
 ipython==7.16.1           # via ipykernel, napari
@@ -46,7 +45,7 @@ numpydoc==1.1.0           # via napari
 oiffile==2020.1.18        # via -r requirements_pyinstaller.in
 openpyxl==3.0.4           # via -r requirements_pyinstaller.in
 packaging==20.4           # via -r requirements_pyinstaller.in, sphinx
-pandas==1.0.5             # via -r requirements_pyinstaller.in
+pandas==1.1.0             # via -r requirements_pyinstaller.in
 parso==0.7.0              # via jedi
 partsegdata==0.9.4        # via -r requirements_pyinstaller.in
 pexpect==4.8.0            # via ipython
@@ -92,7 +91,6 @@ wcwidth==0.2.5            # via prompt-toolkit
 wrapt==1.12.1             # via napari
 xlrd==1.2.0               # via -r requirements_pyinstaller.in
 xlsxwriter==1.2.9         # via -r requirements_pyinstaller.in
-zipp==3.1.0               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
