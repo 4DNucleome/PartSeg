@@ -23,8 +23,7 @@ def my_excepthook(type_, value, trace_back):
             from qtpy.QtWidgets import QApplication
 
             if QApplication.instance():
-                from qtpy.QtCore import Qt, QThread
-                from qtpy.QtCore import QMetaObject
+                from qtpy.QtCore import QMetaObject, Qt, QThread
 
                 QApplication.instance().error = value
                 if QThread.currentThread() != QApplication.instance().thread():

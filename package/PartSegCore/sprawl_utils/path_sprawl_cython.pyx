@@ -5,6 +5,7 @@
 from numpy cimport float64_t, int8_t, uint8_t
 
 from .distance_utils cimport Point
+
 include "put_borders_in_queue.pyx"
 
 

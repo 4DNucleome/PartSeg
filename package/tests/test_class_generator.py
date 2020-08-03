@@ -7,8 +7,9 @@ from PartSegCore.class_generator import BaseSerializableClass, base_serialize_re
 
 
 def setup_module():
-    from PartSegCore import class_generator
     from copy import deepcopy
+
+    from PartSegCore import class_generator
 
     """ setup any state specific to the execution of the given module."""
     global copy_register
@@ -251,8 +252,7 @@ def test_functions():
 
 
 def test_statistic_type():
-    from PartSegCore.analysis.measurement_base import Node
-    from PartSegCore.analysis.measurement_base import Leaf
+    from PartSegCore.analysis.measurement_base import Leaf, Node
 
     empty(Leaf, Node)
     base_serialize_register.clear()

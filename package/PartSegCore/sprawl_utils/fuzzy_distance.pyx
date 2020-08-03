@@ -2,7 +2,7 @@
 # cython: boundscheck=False, wraparound=False, nonecheck=False, cdivision=True
 # cython: language_level=3
 
-from  __future__ import print_function
+from __future__ import print_function
 
 from numpy cimport float64_t, int8_t, uint8_t
 

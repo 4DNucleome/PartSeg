@@ -40,16 +40,49 @@ stages:
         steps:
           - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7', architecture: x64}}
           - bash: |
-              python -m pip install black flake8 isort[pyproject] seed-isort-config
+              python -m pip install pre-commit
             displayName: InstallDeps
-          - bash: black --check .
-            displayName: Black
-          - bash: flake8 .
-            displayName: flake8
+          - bash: pre-commit run --all --show-diff-on-failure
+            displayName: pre-commmit
+
+  - stage: Documentation_check
+    dependsOn: []
+    jobs:
+      - job: help
+        pool: {vmImage: 'Ubuntu-16.04'}
+        steps:
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7', architecture: x64}}
           - bash: |
-              seed-isort-config
-              isort -c
-            displayName: isort
+              python -m pip install -r requirements/requirements_pyinstaller.txt
+              python -m pip install -r requirements/requirements_dev.txt
+              python -m pip install .
+              python -m pip install -r docs/requirements.txt
+            displayName: InstallDeps
+          - bash: make -C docs html
+            displayName: BuildDocs
+          - bash: |
+              mkdir docs_result
+              cd docs/_build; zip -r ../../docs_result/PartSeg_documentation_`python -c "import PartSeg; print(PartSeg.__version__)"`.zip html; cd ../..
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathToPublish: docs_result
+              artifactName: docs
+
+      - job: Notebook_check
+        pool: {vmImage: 'Ubuntu-16.04'}
+        continueOnError: true
+        variables:
+          DATA_PATH: typy_neuronow2
+        steps:
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7', architecture: x64}}
+          - bash: |
+              python -m pip install -r requirements_pyinstaller.txt
+              python -m pip install .
+              python -m pip install jupyter[all]
+              python -m pip install matplotlib
+            displayName: InstallDeps
+          - bash: DATA_PATH=${PWD}/typy_neuronow2 jupyter nbconvert --to notebook --execute tutorials/tutorial_neuron_types/Neuron_types_example.ipynb
+            displayName: "Run Notebook"
 
   - stage: Tests
     dependsOn: [GetTestData, formating_check]
@@ -184,42 +217,3 @@ stages:
               artifactName: execs
           - script: $(test_path)
             displayName: TestBuild
-
-  - stage: Documentation_check
-    dependsOn: []
-    jobs:
-      - job: help
-        pool: {vmImage: 'Ubuntu-16.04'}
-        steps:
-          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7', architecture: x64}}
-          - bash: |
-              python -m pip install -r requirements/requirements_pyinstaller.txt
-              python -m pip install -r requirements/requirements_dev.txt
-              python -m pip install .
-              python -m pip install -r docs/requirements.txt
-            displayName: InstallDeps
-          - bash: make -C docs html
-            displayName: BuildDocs
-          - bash: |
-              mkdir docs_result
-              cd docs/_build; zip -r ../../docs_result/PartSeg_documentation_`python -c "import PartSeg; print(PartSeg.__version__)"`.zip html; cd ../..
-          - task: PublishBuildArtifacts@1
-            inputs:
-              pathToPublish: docs_result
-              artifactName: docs
-
-      - job: Notebook_check
-        pool: {vmImage: 'Ubuntu-16.04'}
-        continueOnError: true
-        variables:
-          DATA_PATH: typy_neuronow2
-        steps:
-          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7', architecture: x64}}
-          - bash: |
-              python -m pip install -r requirements_pyinstaller.txt
-              python -m pip install .
-              python -m pip install jupyter[all]
-              python -m pip install matplotlib
-            displayName: InstallDeps
-          - bash: DATA_PATH=${PWD}/typy_neuronow2 jupyter nbconvert --to notebook --execute tutorials/tutorial_neuron_types/Neuron_types_example.ipynb
-            displayName: "Run Notebook"

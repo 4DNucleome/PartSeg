@@ -3,10 +3,12 @@
 # cython: language_level=3
 
 import numpy as np
+
 cimport numpy as np
-from numpy cimport float64_t, int8_t, uint8_t
-from .distance_utils cimport Point, my_queue, Size, component_types
 from libcpp.vector cimport vector
+from numpy cimport float64_t, int8_t, uint8_t
+
+from .distance_utils cimport Point, Size, component_types, my_queue
 
 ctypedef fused object_area_types:
     float64_t

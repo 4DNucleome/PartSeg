@@ -1,13 +1,15 @@
 # distutils: language = c++
 # cython: language_level=3
 
-from libcpp.vector cimport vector
 from libcpp cimport bool
-from numpy cimport uint8_t, uint16_t, uint32_t, float32_t, float64_t, int8_t, int16_t
-import numpy
-cimport numpy
-import cython
+from libcpp.vector cimport vector
+from numpy cimport float32_t, float64_t, int8_t, int16_t, uint8_t, uint16_t, uint32_t
 
+import numpy
+
+cimport numpy
+
+import cython
 
 ctypedef fused image_types:
     int8_t

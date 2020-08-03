@@ -418,8 +418,8 @@ class MainMenu(BaseMainMenu):
             base_values[selected_filter] = values
 
             def exception_hook(exception):
-                from qtpy.QtWidgets import QApplication
                 from qtpy.QtCore import QMetaObject
+                from qtpy.QtWidgets import QApplication
 
                 instance = QApplication.instance()
                 if isinstance(exception, ValueError):
@@ -442,8 +442,8 @@ class MainMenu(BaseMainMenu):
 
     def load_data(self):
         def exception_hook(exception):
-            from qtpy.QtWidgets import QApplication
             from qtpy.QtCore import QMetaObject
+            from qtpy.QtWidgets import QApplication
 
             instance = QApplication.instance()
             if isinstance(exception, ValueError) and exception.args[0] == "Incompatible shape of mask and image":

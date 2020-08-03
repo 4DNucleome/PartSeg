@@ -3,9 +3,13 @@
 import itertools
 
 import numpy as np
+
 cimport numpy as np
+
 from cython.parallel import prange
+
 from libcpp cimport bool
+
 
 cpdef enum:
     resolution = 1024

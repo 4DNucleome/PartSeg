@@ -53,4 +53,4 @@ def create_colormap_image(colormap: str, color_dict: ColorMapDict) -> NumpyQImag
     :param color_dict: dict mapping name to definition of colormap
     :return: Color Bar image
     """
-    return convert_colormap_to_image((color_dict[colormap][0]))
+    return convert_colormap_to_image(color_dict[colormap][0])

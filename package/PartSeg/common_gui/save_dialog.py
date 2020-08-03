@@ -34,7 +34,7 @@ class SavePropertyDialog(QDialog):
         cancel.clicked.connect(self.reject)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget((QLabel(description)))
+        layout.addWidget(QLabel(description))
         layout.addWidget(self.widget)
         btn_layout = QVBoxLayout()
         btn_layout.addWidget(cancel)

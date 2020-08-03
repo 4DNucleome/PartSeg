@@ -24,11 +24,12 @@ def _test_imports():
     from qtpy.QtWidgets import QApplication
 
     app = QApplication([])
+    from napari._qt.qt_console import QtConsole
+
+    from PartSeg import plugins
+    from PartSeg.launcher.main_window import MainWindow
     from PartSeg.segmentation_analysis.main_window import MainWindow as AnalysisMain
     from PartSeg.segmentation_mask.main_window import MainWindow as MaskMain
-    from PartSeg.launcher.main_window import MainWindow
-    from PartSeg import plugins
-    from napari._qt.qt_console import QtConsole
 
     plugins.register()
     w1 = AnalysisMain("test")

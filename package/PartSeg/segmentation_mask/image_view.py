@@ -6,8 +6,7 @@ from qtpy.QtCore import QEvent
 from qtpy.QtWidgets import QToolTip
 from vispy.app import MouseEvent
 
-from PartSeg.common_gui.channel_control import ChannelProperty
-
+from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.napari_image_view import ImageView
 
 
