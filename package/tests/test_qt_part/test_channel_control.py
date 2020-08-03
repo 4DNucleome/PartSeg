@@ -15,6 +15,8 @@ from PartSegCore.color_image.base_colors import starting_colors
 from PartSegCore.image_operations import NoiseFilterType
 from PartSegImage import TiffImageReader
 
+from .utils import CI_BUILD
+
 if PYQT5:
 
     def array_from_image(image: QImage):
@@ -154,7 +156,7 @@ class TestColorComboBoxGroup:
         with qtbot.assert_not_emitted(box.coloring_update), qtbot.assert_not_emitted(box.change_channel):
             ch_property.filter_radius.setValue(0.5)
 
-    @pytest.mark.xfail(platform.system() == "Windows", reason="GL problem")
+    @pytest.mark.xfail((platform.system() == "Windows") and CI_BUILD, reason="GL problem")
     def test_image_view_integration(self, qtbot, tmp_path):
         settings = BaseSettings(tmp_path)
         ch_property = ChannelProperty(settings, "test")
@@ -163,14 +165,10 @@ class TestColorComboBoxGroup:
         qtbot.addWidget(image_view)
         qtbot.addWidget(ch_property)
         image = TiffImageReader.read_image(PartSegData.segmentation_analysis_default_image)
-        with qtbot.waitSignal(settings.image_changed):
+        with qtbot.waitSignals([settings.image_changed, image_view.image_added], timeout=10 ** 6):
             settings.image = image
         channels_num = image.channels
         assert image_view.channel_control.channels_count == channels_num
-
-        # assert image_view.stack_slider.isVisible() is False
-        # assert image_view.time_slider.isVisible() is False
-        # image_canvas: ImageCanvas = image_view.image_area.widget()
 
         image_view.viewer_widget.screenshot()
         image1 = image_view.viewer_widget.canvas.render()

@@ -38,11 +38,15 @@ class ImageInfo:
     segmentation_count: int = 0
 
     def coords_in(self, coords: Union[List[int], np.ndarray]) -> bool:
+        if not self.layers:
+            return False
         fst_layer = self.layers[0]
         moved_coords = self.translated_coords(coords)
         return np.all(moved_coords >= 0) and np.all(moved_coords < fst_layer.data.shape)
 
     def translated_coords(self, coords: Union[List[int], np.ndarray]) -> np.ndarray:
+        if not self.layers:
+            return np.array(coords)
         fst_layer = self.layers[0]
         return np.subtract(coords, fst_layer.translate_grid).astype(np.int)
 
@@ -125,6 +129,7 @@ class ImageView(QWidget):
     text_info_change = Signal(str)
     hide_signal = Signal(bool)
     view_changed = Signal()
+    image_added = Signal()
 
     def __init__(
         self,
@@ -142,6 +147,7 @@ class ImageView(QWidget):
         self.image_info: Dict[str, ImageInfo] = {}
         self.current_image = ""
         self.components = None
+        self.worker_list = []
 
         self.viewer = Viewer(ndisplay=ndisplay)
         self.viewer.theme = self.settings.theme_name
@@ -428,46 +434,8 @@ class ImageView(QWidget):
                 image_info.mask.colormap = colormap
 
     def set_image(self, image: Optional[Image] = None):
-        # self.viewer.layers.select_all()
-        # self.viewer.layers.remove_selected()
-        layer_list = list(self.viewer.layers)
-        if image is None:
-            image = self.settings.image
         self.image_info = {}
-        self.viewer.dims.set_point(
-            image.time_pos,
-            min(self.viewer.dims.point[image.time_pos], image.times * image.normalized_scaling()[image.time_pos] // 2),
-        )
-        self.viewer.dims.set_point(
-            image.stack_pos,
-            min(
-                self.viewer.dims.point[image.stack_pos], image.layers * image.normalized_scaling()[image.stack_pos] // 2
-            ),
-        )
-
-        try:
-            image = self.add_image(image)
-        except IndexError:
-            for el in layer_list:
-                el.selected = True
-            self.viewer.layers.remove_selected()
-
-        # self.viewer.stack_view()
-        self.viewer.layers.unselect_all()
-        for el in layer_list:
-            index = self.viewer.layers.index(el)
-            self.viewer.layers.move_selected(index, len(self.viewer.layers))
-
-        self.viewer.layers.unselect_all()
-        for el in layer_list:
-            el.selected = True
-
-        self.viewer.layers.remove_selected()
-        self.viewer.reset_view()
-        if len(self.viewer.layers):
-            self.viewer.layers[-1].selected = True
-        self.viewer.dims.set_point(image.time_pos, image.times * image.normalized_scaling()[image.time_pos] // 2)
-        self.viewer.dims.set_point(image.stack_pos, image.layers * image.normalized_scaling()[image.stack_pos] // 2)
+        self.add_image(image, True)
 
     def has_image(self, image: Image):
         return image.file_path in self.image_info
@@ -481,7 +449,57 @@ class ImageView(QWidget):
         else:
             return median(array, int(parameters[1]))
 
-    def add_image(self, image: Optional[Image]):
+    def _remove_worker(self, sender):
+        try:
+            sender_index = self.worker_list.index(sender)
+            self.worker_list.pop(sender_index)
+        except ValueError:
+            pass
+
+    def _add_image(self, image_data: Tuple[ImageInfo, bool]):
+        self._remove_worker(self.sender())
+
+        image_info, replace = image_data
+        image = image_info.image
+        if replace:
+            self.viewer.layers.select_all()
+            self.viewer.layers.remove_selected()
+
+        filters = self.channel_control.get_filter()
+        for i, layer in enumerate(image_info.layers):
+            self.viewer.add_layer(layer)
+
+            def set_data(val):
+                self._remove_worker(self.sender())
+                data_, layer_ = val
+                if data_ is None:
+                    return
+                if layer_ not in self.viewer.layers:
+                    return
+                layer_.data = data_
+
+            @thread_worker(connect={"returned": set_data})
+            def calc_filter(j, layer_):
+                if filters[j][0] == NoiseFilterType.No or filters[j][1] == 0:
+                    return None, layer_
+                return self.calculate_filter(layer_.data, parameters=filters[j]), layer_
+
+            worker = calc_filter(i, layer)
+            self.worker_list.append(worker)
+
+        self.image_info[image.file_path].filter_info = filters
+        self.image_info[image.file_path].layers = image_info.layers
+        self.current_image = image.file_path
+        self.viewer.reset_view()
+        if len(self.viewer.layers):
+            self.viewer.layers[-1].selected = True
+        self.viewer.dims.set_point(image.time_pos, image.times * image.normalized_scaling()[image.time_pos] // 2)
+        self.viewer.dims.set_point(image.stack_pos, image.layers * image.normalized_scaling()[image.stack_pos] // 2)
+        if image_info.image.mask is not None:
+            self.set_mask()
+        self.image_added.emit()
+
+    def add_image(self, image: Optional[Image], replace=False):
         if image is None:
             image = self.settings.image
 
@@ -491,57 +509,30 @@ class ImageView(QWidget):
         if image.file_path in self.image_info:
             raise ValueError("Image already added")
 
+        self.image_info[image.file_path] = ImageInfo(image, [])
+
         channels = image.channels
-        if self.image_info:
+        if self.image_info and not replace:
             channels = max(channels, *[x.image.channels for x in self.image_info.values()])
 
         self.channel_control.set_channels(channels)
         visibility = self.channel_control.channel_visibility
         limits = self.channel_control.get_limits()
-        limits = [image.get_ranges()[i] if x is None else x for i, x in enumerate(limits)]
+        ranges = image.get_ranges()
+        limits = [ranges[i] if x is None else x for i, x in zip(range(image.channels), limits)]
         gamma = self.channel_control.get_gamma()
-        filters = self.channel_control.get_filter()
-        image_layers = []
+        colormaps = [
+            self.convert_to_vispy_colormap(self.channel_control.selected_colormaps[i]) for i in range(image.channels)
+        ]
+        parameters = ImageParameters(
+            limits, visibility, gamma, colormaps, image.normalized_scaling(), len(self.viewer.layers)
+        )
 
-        for i in range(image.channels):
-            lim = list(limits[i])
-            if lim[1] == lim[0]:
-                lim[1] += 1
-            blending = "additive" if self.image_info or i != 0 else "translucent"
-            # FIXME detect layer order impact on representation.
-            data = image.get_channel(i)
+        worker = prepare_layers(image, parameters, replace)
+        worker.returned.connect(self._add_image)
+        worker.start()
+        self.worker_list.append(worker)
 
-            layer = NapariImage(
-                data,
-                colormap=self.convert_to_vispy_colormap(self.channel_control.selected_colormaps[i]),
-                visible=visibility[i],
-                blending=blending,
-                scale=image.normalized_scaling(),
-                contrast_limits=lim,
-                gamma=gamma[i],
-                name=f"channel {i}; {len(self.viewer.layers) + i}",
-            )
-
-            def set_data(data_):
-                if data_ is None:
-                    return
-                layer.data = data_
-
-            @thread_worker(connect={"returned": set_data})
-            def calc_filter():
-                if filters[i][0] == NoiseFilterType.No or filters[i][1] == 0:
-                    return None
-
-                return self.calculate_filter(data, parameters=filters[i])
-
-            calc_filter()
-            image_layers.append(layer)
-        for el in image_layers:
-            self.viewer.add_layer(el)
-        self.image_info[image.file_path] = ImageInfo(image, image_layers, filters)
-        self.current_image = image.file_path
-        if image.mask is not None:
-            self.set_mask()
         return image
 
     def images_bounds(self) -> Tuple[List[int], List[int]]:
@@ -609,6 +600,11 @@ class ImageView(QWidget):
     def set_theme(self, theme: str):
         self.viewer.theme = theme
 
+    def closeEvent(self, event):
+        for worker in self.worker_list:
+            worker.quit()
+        super().closeEvent(event)
+
 
 class NapariQtViewer(QtViewer):
     def dragEnterEvent(self, event):  # pylint: disable=R0201
@@ -617,3 +613,37 @@ class NapariQtViewer(QtViewer):
         ignore napari reading mechanism
         """
         event.ignore()
+
+
+@dataclass
+class ImageParameters:
+    limits: List[Tuple[float, float]]
+    visibility: List[bool]
+    gamma: List[float]
+    colormaps: List[Colormap]
+    scaling: Tuple[Union[float, int]]
+    layers: int = 0
+
+
+@thread_worker
+def prepare_layers(image: Image, param: ImageParameters, replace: bool) -> Tuple[ImageInfo, bool]:
+    image_layers = []
+    for i in range(image.channels):
+        lim = list(param.limits[i])
+        if lim[1] == lim[0]:
+            lim[1] += 1
+        blending = "additive" if i != 0 else "translucent"
+        data = image.get_channel(i)
+
+        layer = NapariImage(
+            data,
+            colormap=param.colormaps[i],
+            visible=param.visibility[i],
+            blending=blending,
+            scale=param.scaling,
+            contrast_limits=lim,
+            gamma=param.gamma[i],
+            name=f"channel {i}; {param.layers + i}",
+        )
+        image_layers.append(layer)
+    return ImageInfo(image, image_layers, []), replace
