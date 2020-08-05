@@ -443,7 +443,7 @@ class Image:
 
     def set_spacing(self, value: Spacing):
         """set image spacing"""
-        if any([x == 0 for x in value]):
+        if any(x == 0 for x in value):
             return
         if self.is_2d and len(value) + 1 == len(self._image_spacing):
             value = (1.0,) + tuple(value)

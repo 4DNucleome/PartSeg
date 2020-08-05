@@ -28,4 +28,3 @@ class InterpolateThread(QThread):
                 for i in range(el.shape[-1]):
                     cache[..., i] = zoom(el[..., i], self.scaling, mode="mirror")
             self.result.append(cache)
-        return

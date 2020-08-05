@@ -623,7 +623,7 @@ class FileData:
                 local_header.append(("Segmentation component", "num"))
             if component_mask:
                 local_header.append(("Mask component", "num"))
-            if any([x[1] for x in el]):
+            if any(x[1] for x in el):
                 sheet_list.append(
                     "{}{}{} - {}".format(
                         calculation.sheet_name,
@@ -824,7 +824,7 @@ class DataWriter:
 
     def writing_finished(self) -> bool:
         """check if all data are written to disc"""
-        return all([x.finished() for x in self.file_dict.values()])
+        return all(x.finished() for x in self.file_dict.values())
 
     def finish(self):
         """close all files"""
