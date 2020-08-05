@@ -939,6 +939,9 @@ class MainWindow(BaseMainWindow):
             im = reader.read(self.initial_image_path)
             im.file_path = ""
             self.settings.image = im
+        elif initial_image is False:
+            # FIXME This is for test opening
+            pass
         else:
             self.settings.image = initial_image
         try:
@@ -948,7 +951,6 @@ class MainWindow(BaseMainWindow):
             pass
 
     def image_read(self):
-        self.image_view.set_image()
         self.image_view.reset_image_size()
         self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
 

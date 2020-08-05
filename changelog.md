@@ -1,4 +1,7 @@
 # Changelog
+## 0.11.2
+-   Speedup image set in viewer using async calls
+-   Fix bug in long name of sheet with parameters
 
 ## 0.11.1
 -   Add screenshot option in View menu
