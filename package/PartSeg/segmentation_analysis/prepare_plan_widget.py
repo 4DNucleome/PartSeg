@@ -177,6 +177,7 @@ class FileMask(QWidget):
         self.first_label = QLabel("Use suffix:")
         self.second_label = QLabel("Replace:")
         self.select_file_btn = QPushButton("Select file")
+        # FIXME use Enum instead of int
         self.state = 0
 
         layout = QGridLayout()
@@ -203,7 +204,7 @@ class FileMask(QWidget):
         if self.state == index:
             return
         if self.state == 1:
-            self.values[1] == self.first_text.text(), self.second_text.text()
+            self.values[1] = self.first_text.text(), self.second_text.text()
         else:
             self.values[self.state] = self.first_text.text()
         if index == 1:
@@ -535,7 +536,7 @@ class CreatePlan(QWidget):
             self.remove_btn.setEnabled(True)
         else:
             self.remove_btn.setEnabled(False)
-        if node_type == NodeType.mask or node_type == NodeType.file_mask:
+        if node_type in [NodeType.mask, NodeType.file_mask]:
             self.mask_allow = False
             self.segment_allow = True
             self.file_mask_allow = False
@@ -550,7 +551,7 @@ class CreatePlan(QWidget):
             self.mask_allow = False
             self.segment_allow = True
             self.file_mask_allow = True
-        elif node_type == NodeType.none or node_type == NodeType.measurement or node_type == NodeType.save:
+        elif node_type in [NodeType.none, NodeType.measurement, NodeType.save]:
             self.mask_allow = False
             self.segment_allow = False
             self.file_mask_allow = False
