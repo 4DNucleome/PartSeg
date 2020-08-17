@@ -31,7 +31,7 @@ class CheckVersionThread(QThread):
 
         # noinspection PyBroadException
         try:
-            r = request.urlopen("https://pypi.org/pypi/PartSeg/json")
+            r = request.urlopen("https://pypi.org/pypi/PartSeg/json")  # skipcq: BAN-B404
             data = json.load(r)
             self.release = data["info"]["version"]
             self.url = data["info"]["home_page"]

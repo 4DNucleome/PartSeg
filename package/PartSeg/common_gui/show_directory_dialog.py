@@ -1,5 +1,5 @@
 import os
-import subprocess
+import subprocess  # skipcq: BAN-B404
 from sys import platform
 
 from qtpy.QtCore import Qt
