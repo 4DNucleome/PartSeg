@@ -423,9 +423,7 @@ class BaseSettings(ViewSettings):
 
     @property
     def mask(self):
-        if self._image.mask is not None:
-            return self._image.mask[0]
-        return None
+        return self._image.mask
 
     @mask.setter
     def mask(self, value):

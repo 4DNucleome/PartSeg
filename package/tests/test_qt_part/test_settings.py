@@ -16,7 +16,7 @@ from PartSegCore.analysis.save_functions import SaveProject
 from PartSegCore.io_utils import HistoryProblem
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import LoadStackImage
-from PartSegCore.mask_create import calculate_mask
+from PartSegCore.mask_create import calculate_mask_from_project
 
 
 @pytest.fixture
@@ -224,9 +224,10 @@ class TestPartSettings:
         settings.last_executed_algorithm = result.parameters.algorithm
         settings.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
         project_info = settings.get_project_info()
-        mask = calculate_mask(mask_property, settings.segmentation, settings.mask, settings.image_spacing)
+        mask = calculate_mask_from_project(mask_property, settings.get_project_info())
         settings.add_history_element(create_history_element_from_project(project_info, mask_property,))
         settings.mask = mask
+        calculate_mask_from_project(mask_property, settings.get_project_info())
         algorithm_parameters["values"]["channel"] = 1
         algorithm.set_parameters(**algorithm_parameters["values"])
         algorithm.set_mask(settings.mask)
