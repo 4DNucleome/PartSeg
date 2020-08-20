@@ -2,6 +2,7 @@ from typing import Dict, List, NamedTuple, Optional
 
 import numpy as np
 
+from PartSegCore.utils import numpy_repr
 from PartSegImage.image import minimal_dtype
 
 
@@ -46,6 +47,12 @@ class SegmentationInfo:
 
     def __str__(self):
         return f"SegmentationInfo; components: {len(self.bound_info)}, sizes: {self.sizes}"
+
+    def __repr__(self):
+        return (
+            f"SegmentationInfo(segmentation={numpy_repr(self.segmentation)},"
+            f" bound_info={self.bound_info}, sizes={repr(self.sizes)})"
+        )
 
     @staticmethod
     def calc_bounds(segmentation: np.ndarray) -> Dict[int, BoundInfo]:

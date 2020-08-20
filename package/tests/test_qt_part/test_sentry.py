@@ -1,11 +1,15 @@
 import multiprocessing
 
+import numpy as np
+import pytest
 import sentry_sdk
+import sentry_sdk.serializer
 import sentry_sdk.utils
 from sentry_sdk.client import Client
 from sentry_sdk.hub import Hub
 from sentry_sdk.serializer import serialize
 
+from PartSeg.common_backend.base_argparser import safe_repr
 from PartSegCore.analysis.batch_processing.batch_backend import prepare_error_data
 
 
@@ -109,3 +113,12 @@ def test_exception_pass(monkeypatch):
     monkeypatch.setattr(client.transport, "capture_event", check_event)
     event_id = sentry_sdk.capture_event(event)
     assert event_id is not None
+
+
+@pytest.mark.parametrize("dtype", [np.uint8, np.int8, np.float32])
+def test_numpy_array_serialize(monkeypatch, dtype):
+    arr = np.zeros((10, 10), dtype=dtype)
+    arr[1, 5] = 10
+    monkeypatch.setattr(sentry_sdk.serializer, "safe_repr", safe_repr)
+    res = serialize(arr)
+    assert res == f"array(size={arr.size}, shape={arr.shape}, dtype={arr.dtype}, min={arr.min()}, max={arr.max()})"

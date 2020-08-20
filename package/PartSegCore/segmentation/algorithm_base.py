@@ -11,6 +11,7 @@ from PartSegImage import Image
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
 from ..image_operations import RadiusType
 from ..project_info import ProjectInfoBase
+from ..utils import numpy_repr
 
 
 def calculate_operation_radius(radius, spacing, gauss_type):
@@ -29,6 +30,12 @@ class AdditionalLayerDescription:
     data: np.ndarray
     layer_type: str
     name: str = ""
+
+    def __repr__(self):
+        return (
+            f"AdditionalLayerDescription(data={numpy_repr(self.data)},"
+            f" layer_type='{self.layer_type}', name='{self.name}')"
+        )
 
 
 @dataclass(frozen=True, repr=False)

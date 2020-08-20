@@ -7,12 +7,16 @@ import sys
 import zlib
 from typing import Optional, Sequence, Text
 
+import numpy as np
 import sentry_sdk
+import sentry_sdk.serializer
 import sentry_sdk.utils
+from sentry_sdk.utils import safe_repr as _safe_repr
 
 import PartSeg
 from PartSeg.common_backend.except_hook import my_excepthook
 from PartSegCore import state_store
+from PartSegCore.utils import numpy_repr
 
 
 def proper_suffix(val: str):
@@ -100,7 +104,9 @@ class CustomParser(argparse.ArgumentParser):
         state_store.check_for_updates = args.no_update
         state_store.develop = args.develop
         state_store.save_suffix = args.save_suffix[0]
-        state_store.save_folder = args.save_directory[0] + "_" + state_store.save_suffix
+        state_store.save_folder = args.save_directory[0] + (
+            "_" + state_store.save_suffix if state_store.save_suffix else ""
+        )
         if args.no_report and args.no_dialog:
             _setup_sentry()
         sys.excepthook = my_excepthook
@@ -110,6 +116,7 @@ class CustomParser(argparse.ArgumentParser):
 
 def _setup_sentry():
     sentry_sdk.utils.MAX_STRING_LENGTH = 10 ** 4
+    sentry_sdk.serializer.safe_repr = safe_repr
     sentry_sdk.init(
         "https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302", release="PartSeg@{}".format(PartSeg.__version__),
     )
@@ -117,3 +124,9 @@ def _setup_sentry():
         scope.set_user(
             {"name": getpass.getuser(), "id": zlib.adler32((getpass.getuser() + "#" + platform.node()).encode())}
         )
+
+
+def safe_repr(val):
+    if isinstance(val, np.ndarray):
+        return numpy_repr(val)
+    return _safe_repr(val)

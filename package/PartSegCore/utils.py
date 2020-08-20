@@ -1,5 +1,7 @@
 import logging
 
+import numpy as np
+
 __author__ = "Grzegorz Bokota"
 
 
@@ -47,3 +49,11 @@ def bisect(arr, val, comp):
         else:
             right = mid
     return right
+
+
+def numpy_repr(val: np.ndarray):
+    if val is None:
+        return repr(val)
+    if val.size < 20:
+        return repr(val)
+    return f"array(size={val.size}, shape={val.shape}, dtype={val.dtype}, min={val.min()}, max={val.max()})"

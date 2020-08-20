@@ -9,6 +9,7 @@ from PartSegCore.mask_create import MaskProperty
 from PartSegCore.project_info import ProjectInfoBase
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
 from PartSegCore.segmentation_info import SegmentationInfo
+from PartSegCore.utils import numpy_repr
 from PartSegImage import Image
 
 project_version_info = packaging.version.Version("1.1")
@@ -44,6 +45,14 @@ class ProjectTuple(ProjectInfoBase):
 
     def get_raw_mask_copy(self):
         return ProjectTuple(file_path=self.file_path, image=self.image.substitute(), mask=self.mask)
+
+    def __repr__(self):
+        return (
+            f"ProjectTuple(file_path={self.file_path},\nimage={repr(self.image)},\n"
+            f"segmentation={numpy_repr(self.segmentation)},\nsegmentation_info={repr(self.segmentation_info)},\n"
+            f"additional_layers={repr(self.additional_layers)},\nmask={numpy_repr(self.mask)},\n"
+            f"history={repr(self.history)},\nalgorithm_parameters={self.algorithm_parameters},\nerrors={self.errors})"
+        )
 
 
 class MaskInfo(typing.NamedTuple):
