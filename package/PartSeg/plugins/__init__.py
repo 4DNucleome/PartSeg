@@ -18,10 +18,13 @@ def get_plugins():
         import napari_plugin_engine
         import napari_svg
 
-        import PartSegCore.napari_plugin
+        from PartSegCore.napari_plugins import load_image, load_mask_project, load_masked_image, load_roi_project
 
         napari.plugins.plugin_manager.register(napari_svg)
-        napari.plugins.plugin_manager.register(PartSegCore.napari_plugin)
+        napari.plugins.plugin_manager.register(load_image)
+        napari.plugins.plugin_manager.register(load_mask_project)
+        napari.plugins.plugin_manager.register(load_masked_image)
+        napari.plugins.plugin_manager.register(load_roi_project)
         napari.plugins.plugin_manager.register(napari_plugin_engine)
     else:
         packages = pkgutil.iter_modules(__path__, __name__ + ".")
