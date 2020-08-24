@@ -4,7 +4,12 @@ from enum import Enum
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from napari._qt.qt_viewer_buttons import QtViewerPushButton
+
+try:
+    from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton
+except ImportError:
+    from napari._qt.qt_viewer_buttons import QtViewerPushButton
+
 from napari.components import ViewerModel as Viewer
 from napari.layers import Layer
 from napari.layers.image import Image as NapariImage
@@ -188,7 +193,10 @@ class ImageView(QWidget):
         self.image_state.borders_changed.connect(self.update_segmentation_representation)
         self.mask_chk.stateChanged.connect(self.change_mask_visibility)
         self.viewer_widget.view.scene.transform.changed.connect(self._view_changed, position="last")
-        self.viewer.dims.events.axis.connect(self._view_changed, position="last")
+        try:
+            self.viewer.dims.events.axis.connect(self._view_changed, position="last")
+        except AttributeError:
+            self.viewer.dims.events.step.connect(self._view_changed, position="last")
         self.viewer.dims.events.ndisplay.connect(self._view_changed, position="last")
         self.viewer.dims.events.camera.connect(self._view_changed, position="last")
         self.viewer.dims.events.camera.connect(self.camera_change, position="last")

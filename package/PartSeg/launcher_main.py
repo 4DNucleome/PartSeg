@@ -5,7 +5,10 @@ import os
 import sys
 from functools import partial
 
-from napari._qt.threading import wait_for_workers_to_quit
+try:
+    from napari._qt.qthreading import wait_for_workers_to_quit
+except ImportError:
+    from napari._qt.threading import wait_for_workers_to_quit
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QFontDatabase
 

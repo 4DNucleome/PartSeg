@@ -1,8 +1,6 @@
 import numpy as np
-from napari._qt.qt_main_window import Window
-from napari._qt.qt_viewer import QtViewer
-from napari._qt.threading import create_worker
 from napari.components import ViewerModel
+from napari.qt import QtViewer, Window, create_worker
 
 
 class Viewer(ViewerModel):
