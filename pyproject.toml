@@ -36,3 +36,7 @@ line_length=120
 known_first_party=['PartSeg', 'PartSegData','PartSegCore','PartSegImage']
 profile="black"
 src_paths=["package"]
+
+
+[tool.check-manifest]
+ignore = [".travis.yml", "package/PartSeg/changelog.py", "package/PartSeg/version.py"]

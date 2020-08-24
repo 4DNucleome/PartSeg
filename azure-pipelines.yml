@@ -36,7 +36,7 @@ stages:
     dependsOn: []
     jobs:
       - job: check_formating
-        pool: {vmImage: 'Ubuntu-16.04'}
+        pool: {vmImage: 'Ubuntu-18.04'}
         steps:
           - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7', architecture: x64}}
           - bash: |
@@ -44,6 +44,19 @@ stages:
             displayName: InstallDeps
           - bash: pre-commit run --all --show-diff-on-failure
             displayName: pre-commmit
+
+  - stage: manifest_check
+    dependsOn: []
+    jobs:
+      - job: manifest_check
+        pool: {vmImage: 'Ubuntu-18.04'}
+        steps:
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7', architecture: x64}}
+          - bash: |
+              python -m pip install check-manifest==0.42 numpy==1.19.1
+            displayName: InstallDeps
+          - bash: check-manifest
+            displayName: check-manifest
 
   - stage: Documentation_check
     dependsOn: []

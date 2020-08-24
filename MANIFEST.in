@@ -5,6 +5,12 @@ include package/PartSegCore/multiscale_opening/*.h
 include Readme.md
 include changelog.md
 include pyproject.toml
+include lgpl-3.0.txt
+include requirements/*
+include pytest.ini
+include package/tests/*.py
+include package/tests/*/*.py
+include package/tests/test_data/*.json
 exclude .tox/**
 exclude .dependabot/*
 exclude .github/**
@@ -17,3 +23,10 @@ exclude .git*
 exclude .coveragerc
 exclude .zenodo.json
 exclude tox*
+exclude .pre-commit-config.yaml
+exclude .deepsource.toml
+exclude help/**
+exclude docs/**
+exclude images/**
+exclude launcher.spec
+exclude **/.coverage

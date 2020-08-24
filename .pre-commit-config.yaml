@@ -44,5 +44,3 @@ repos:
     rev: 'v5.2.2'  # Use the revision sha / tag you want to point at
     hooks:
     -   id: isort
-        additional_dependencies:
-            - toml
