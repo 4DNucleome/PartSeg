@@ -9,8 +9,8 @@ Graphical User Interface (GUI) overview
 .. contents:: Table of Contents
 
 In this document user interface of PartSeg is described.
-As some elements are used in both modules `Roi Analysis` and
-`Mask Segmentation` they are described in `Common elements`_.
+As some elements are used in both modules ``Roi Analysis`` and
+``Mask Segmentation`` they are described in `Common elements`_.
 
 .. image:: images/launcher.png
    :alt: Selection of program to be launched.
@@ -23,18 +23,19 @@ Mask Segmentation GUI
 
 On top of the window there are 6 buttons:
 
-*  **Load image** - loads image or image with existing segmentation. 
-*  **Load segmentation** - loads segmentation to already loaded image or loads 
+*  **Load image** - loads image or image with existing segmentation.
+*  **Load segmentation** - loads segmentation to already loaded image or loads
    segmentation parameters from segmentation file.
 *  **Save components** - saves each of selected components to separate ``tiff`` file.
    For each component mask file is created.
-*  **Save segmentation** - saves current segmentation to a file. 
+*  **Save segmentation** - saves current segmentation to a file.
    File contains segmentation, its parameters and path to
    original picture on which segmentation was performed.
    Path can be absolute (may not work on another computer) or
-   relative (may not work when saved file has ben moved). 
+   relative (may not work when saved file has ben moved).
 *  **Advanced settings** - currently only color map and labeling administration.
-*  **Mask manager** - (currently in implementation)
+*  **Mask manager** - mask part of image base on segmentation
+*  **Simple measurements** - subset of measurements available in `Measurements`_ to be calculated ROI objects
 
 1.  `Multiple files panel`_ is used to manage multiple files.
     This panel is visible by default and can be can be hidden in `image tab`_.
@@ -71,7 +72,7 @@ On top of the window there are 6 buttons:
     Results will be saved on disc as ``seg`` files.
 12. Saves currently selected parameters as json file.
     This file can be imported using **Load Segmentation**
-    with **Files of type** `Segmentation parameters`
+    with **Files of type** ``Segmentation parameters``
 
     .. image::  images/mask_select_component.png
        :alt: Selection which components are selected properly.
@@ -81,7 +82,7 @@ On top of the window there are 6 buttons:
 15. Selection of single components. Selection/deselection can be done by
     clicking on a component in `Image view`_.
     Pointing on a checkbox of a component with cursor distinguishes
-    given component by dashed frame in `Image view`_. 
+    given component by dashed frame in `Image view`_.
     Only selected components are saved using **Save components**.
     Selected components are omitted when next round of segmentation
     is performed.
@@ -124,7 +125,7 @@ On top of the window they are 5 buttons:
     mask from current segmentation.
 *   **Batch processing** - Opens `Batch processing`_ window
 
-1.  `Multiple files panel`_ is used to manage multiple files. 
+1.  `Multiple files panel`_ is used to manage multiple files.
     This panel is hidden by default and can be can be enabled in
     Settings and Measurements window.
     (described in `Profile, Pipeline, Project`_)
@@ -172,7 +173,7 @@ Measurement
 Important part of analysis data is define what should be measured
 and perform this calculation. Both utilities are available
 in "Settings and Measurement" window.
-TODO 
+TODO
 
 Measurements settings
 ^^^^^^^^^^^^^^^^^^^^^
@@ -185,8 +186,8 @@ The upper part of this window is designed to manage existing sets of measurement
 1. List of already defined measurement sets.
 2. Preview of selected measurement set.
 
-    Below the list there are four buttons, which are used to 
-    delete, export, import and edit saved sets of measurement. 
+    Below the list there are four buttons, which are used to
+    delete, export, import and edit saved sets of measurement.
 
 
 3. List of measurements currently available in PartSeg.
@@ -386,7 +387,7 @@ Execute batch
     2. Set prefixes for processing data:
 
        * Prefix for calculation relative path of processed images
-       * Prefix for save elements. Save path is `save_prefix + relative_path`
+       * Prefix for save elements. Save path is ``save_prefix + relative_path``
 
     3. Settings for measurement save location and sheet
     4. Information if PartSeg can find all needed data for each entry.
@@ -491,7 +492,7 @@ Create labels
 After selection of a new color use **Add color** button.
 Color order can be changed by drag and drop.
 
-Mask marking 
+Mask marking
 ^^^^^^^^^^^^
 .. image:: images/color_mask_marking.png
    :alt: Select color and opacity of mask marking.
@@ -521,9 +522,9 @@ of current segmentation into a new mask.
 
 1. Select to use dilation (2d or 3d) with set
    radius in pixels. If dilation is in 3d then radius in z plane is calculated
-   base on image spacing. Negative values of radius will reduce mask size. 
+   base on image spacing. Negative values of radius will reduce mask size.
 2. Select to fill up holes in a current segmentation. Holes are parts of background, which
-   are not connected (in 2d or 3d - depends on selection) to a border of image. 
+   are not connected (in 2d or 3d - depends on selection) to a border of image.
    If Maximum size is set to -1 then all holes will be closed.
 3. **Save components** allows to create a new mask made of multiple components present in current segmentation.
    **Clip to previous mask** option is useful when using positive radius in Dilate mask
@@ -540,7 +541,7 @@ Multiple files panel
 This widget enables to work on multiple files without need
 to reload them from disc.
 
-Each file is presented in the list as a raw image and multiple states created by user. 
+Each file is presented in the list as a raw image and multiple states created by user.
 Each state represents segmentation done with different parameters.
 
 .. image:: images/multiple_files_widget.png
@@ -559,7 +560,7 @@ In order to run selected module without PartSeg Launcher
 create PartSeg_exec shortcut, next open its Properties and add proper
 argument at the end of access path.
 For ROI Analysis add ``roi_analysis`` and for
-Mask Segmentation add ``mask_segmentation``. 
+Mask Segmentation add ``mask_segmentation``.
 See image below showing shortcut Properties for ROI Analysis.
 
 .. image:: images/shortcut.png
