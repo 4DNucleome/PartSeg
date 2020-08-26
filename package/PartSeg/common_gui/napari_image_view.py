@@ -194,9 +194,9 @@ class ImageView(QWidget):
         self.mask_chk.stateChanged.connect(self.change_mask_visibility)
         self.viewer_widget.view.scene.transform.changed.connect(self._view_changed, position="last")
         try:
-            self.viewer.dims.events.axis.connect(self._view_changed, position="last")
+            self.viewer.dims.events.current_step.connect(self._view_changed, position="last")
         except AttributeError:
-            self.viewer.dims.events.step.connect(self._view_changed, position="last")
+            self.viewer.dims.events.axis.connect(self._view_changed, position="last")
         self.viewer.dims.events.ndisplay.connect(self._view_changed, position="last")
         self.viewer.dims.events.camera.connect(self._view_changed, position="last")
         self.viewer.dims.events.camera.connect(self.camera_change, position="last")

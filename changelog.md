@@ -1,4 +1,9 @@
 # Changelog
+## 0.11.3
+-  prepare for napari 0.3.7
+-  split napari io plugin on multiple part
+-  better reporting for numpy array via sentry
+
 ## 0.11.2
 -   Speedup image set in viewer using async calls
 -   Fix bug in long name of sheet with parameters
