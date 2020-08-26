@@ -29,6 +29,7 @@ class ResultImageView(ImageView):
         self.opacity.setValue(self.image_state.opacity)
         self.opacity.setSingleStep(0.1)
         self.opacity.valueChanged.connect(self.image_state.set_opacity)
+        self.opacity.setMinimumWidth(500)
         self.label1 = QLabel("Borders:")
         self.label2 = QLabel("Opacity:")
         self.btn_layout.insertWidget(3, self.label1)

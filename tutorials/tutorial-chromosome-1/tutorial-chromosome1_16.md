@@ -23,10 +23,10 @@ Firstly segmentation of nuclei is performed based on the DNA signal. Segmented n
 
 1.  Open PartSeg
 
-2.  Select "Mask Segmentation"
+2.  Select "Mask Segmentation"  
     ![launcher GUI](./images/launcher.png)
 
-3.  Load image
+3.  Load image  
     ![mask segmentation](./images/mask_segmentation.png)
 
 4.  Ensure that threshold segmentation method is selected
@@ -59,7 +59,7 @@ Firstly segmentation of nuclei is performed based on the DNA signal. Segmented n
     (`stack1_component5.tif`, `stack1_component6.tif`, `stack1_component7.tif`, ...)
     (`stack1_component5_mask.tif`, `stack1_component6_mask.tif`, `stack1_component7_mask.tif`, ...)
 
-9.  The whole segmentation can be saved separately (**Save segmentation** option) and later can be loaded using **Load segmentation** menu.
+9.  The whole segmentation can be saved separately (**Save segmentation** option) and later can be loaded using **Load segmentation** menu.  
     ![mask segmentation](./images/mask_segmentation.png)
 
 #### Segmentation of chromosome 1 territories
@@ -68,13 +68,13 @@ In order to qauntify features of chromosome 1 territory segmentation of FISH spe
 
 1.  Open PartSeg
 
-2.  Select **Segmentation Analysis**
+2.  Select **Segmentation Analysis**  
     ![launcher GUI](./images/launcher.png)
 
 3.  Load data:
     1.  Select **Open** button or press **ctrl+O** (cmd+O on mac)
 
-    2.  Select **image with mask**
+    2.  Select **image with mask**  
         ![open dialog](images/open_file.png)
 
     3.  Select image to load: `stack1_component5.tif`
@@ -83,7 +83,7 @@ In order to qauntify features of chromosome 1 territory segmentation of FISH spe
 
     You can also simply drag and drop both files on the main window.
 
-4.  Enable **Synchronise view** option
+4.  Enable **Synchronise view** option  
     ![main window for segmentation](images/main_window_segmentation.png)
 
 5.  Disable channel 1 (DNA staining) on both windows
@@ -91,22 +91,22 @@ In order to qauntify features of chromosome 1 territory segmentation of FISH spe
 6.  Enable **Mask** option on the left panel
 
 7.  Set algorithm parameters to:
-    1.  Use Lower Threshold Flow
+    1.  Use Lower Threshold with watershed
+    
+    2.  Channel: 2
+    
+    3.  Filter: Gauss with type Layer and radius 1
 
-    2.  Threshold type: Base/Core
+    4.  Threshold type: Base/Core
 
-    3.  Core Threshold: Manual, threshold value: 19500
+    5.  Core Threshold: Manual, threshold value: 19500
 
-    4.  Base Threshold: Manual, threshold value: 11500
+    6.  Base Threshold: Manual, threshold value: 11500
 
-    5.  Flow type: MultiScale Opening Sprawl
+    7.  Flow type: MultiScale Opening Sprawl
 
-    6.  Channel: 2
-
-    7.  Minimum size (px): 800
-
-    8.  Filter: Gauss with type Layer and radius 1
-
+    8.  Minimum core size (px): 800
+  
     9.  Connect only sides: Not checked
         This option limits segmentation to pixels connected side by side.
 
@@ -126,10 +126,10 @@ In this example we show how to measure volume, diameter and surface of a whole n
 (these parameters are calculated based on a set threshold).
 In addition we calculated ratio of chromosome 1 to nucleus volume to show how big is chromosome 1 in relation to the whole nucleus.
 
-1.  Open **Settings and Measurement** option
+1.  Open **Settings and Measurement** option  
     ![PartSeg GUI](images/main_window.png)
 
-2.  Select *Measurements settings**
+2.  Select *Measurements settings**  
     ![Advanced window](images/advanced_set_measure.png)
 
 3.  Prepare profile of parameters for chromosome 1 territories analysis.
@@ -161,14 +161,14 @@ At the end established settings profile is used to measure features of nuclei an
 1.  In **Settings and Measurement** menu check for **Properties**. The pixel size and an voxel depth should be the same as the original image.
     The rest of measurements depends on these properties, so make sure they are correct.
 
-2.  Next select **Measurements** to get a preview on actual numbers.
+2.  Next select **Measurements** to get a preview on actual numbers.  
     ![PartSeg GUI](images/main_window.png)
     Select channel 1 and profile "test_case" created in the last paragraph. Enable **Horizontal view** and select units of choice. Execute the analysis with **Calculate and append results** button.
     Resulting table can be copied to any text, or spreadsheet file using **copy to clipboard** option.
 
 3.  Next, open file `stack1_component1.tif` and load mask file `stack1_component1_mask.tif` from `stack1_components` folder.
     Without changing any parameters select **Execute** in main window and **Calculate and append results** once more.
-    Second line of results shows the same set of measurements for the second nucleus. Measurements are shown in selected units.
+    Second line of results shows the same set of measurements for the second nucleus. Measurements are shown in selected units.  
     ![PartSeg GUI](images/main_window_analysis2.png)
 
 ## Appendix

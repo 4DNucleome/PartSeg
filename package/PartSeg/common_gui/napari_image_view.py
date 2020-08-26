@@ -303,7 +303,7 @@ class ImageView(QWidget):
 
     def mask_opacity(self) -> float:
         """Get mask opacity"""
-        return self.settings.get_from_profile("mask_presentation   _opacity", 1)
+        return self.settings.get_from_profile("mask_presentation_opacity", 1)
 
     def mask_color(self) -> Colormap:
         """Get mask marking color"""
