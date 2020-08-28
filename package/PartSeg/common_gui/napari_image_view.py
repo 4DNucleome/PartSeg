@@ -182,6 +182,7 @@ class ImageView(QWidget):
         self.viewer.events.status.connect(self.print_info)
 
         settings.mask_changed.connect(self.set_mask)
+        settings.mask_representation_changed.connect(self.update_mask_parameters)
         settings.segmentation_changed.connect(self.set_segmentation)
         settings.segmentation_clean.connect(self.set_segmentation)
         settings.image_changed.connect(self.set_image)

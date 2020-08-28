@@ -3,6 +3,7 @@
 -   prepare for napari 0.3.7
 -   split napari io plugin on multiple part
 -   better reporting for numpy array via sentry
+-   fix setting color for mask marking
 
 ## 0.11.2
 -   Speedup image set in viewer using async calls

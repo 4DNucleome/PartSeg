@@ -1,17 +1,7 @@
 from functools import partial
 
 from qtpy.QtCore import Signal
-from qtpy.QtWidgets import (
-    QAbstractSpinBox,
-    QCheckBox,
-    QDialog,
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QSpinBox,
-    QVBoxLayout,
-    QWidget,
-)
+from qtpy.QtWidgets import QCheckBox, QDialog, QHBoxLayout, QLabel, QPushButton, QSpinBox, QVBoxLayout, QWidget
 
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask_create import MaskProperty
@@ -34,7 +24,7 @@ class MaskWidget(QWidget):
         self.settings = settings
         self.dilate_radius = QSpinBox()
         self.dilate_radius.setRange(-100, 100)
-        self.dilate_radius.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        # self.dilate_radius.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.dilate_radius.setSingleStep(1)
         self.dilate_radius.setDisabled(True)
         self.dilate_dim = DimComboBox()

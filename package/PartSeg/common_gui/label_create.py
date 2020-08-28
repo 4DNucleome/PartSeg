@@ -176,6 +176,11 @@ class ColorShow(QLabel):
     def leaveEvent(self, QEvent):  # pylint: disable=R0201
         QApplication.restoreOverrideCursor()
 
+    def set_color(self, color):
+        self.color = color
+        self._qcolor = QColor(*color)
+        self.repaint()
+
 
 class LabelEditor(QWidget):
     """Widget for create label scheme."""
