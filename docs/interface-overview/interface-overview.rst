@@ -195,8 +195,8 @@ The upper part of this window is designed to manage existing sets of measurement
 5. Selects area on which measurement element is calculated:
 
    * **Mask** - area of mask.
-   * **Segmentation** - area of segmentation.
-   * **Mask without segmentation** - area of mask minus area of segmentation.
+   * **ROI** - area of ROI.
+   * **Mask without ROI** - area of mask minus area of ROI.
 
 6. Selects how measurement element handles area components. Calculate:
 
