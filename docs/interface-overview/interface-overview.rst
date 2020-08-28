@@ -403,22 +403,22 @@ common for "ROI Analysis GUI" and "Mask Segmentation GUI".
 
 Image view
 ~~~~~~~~~~
+
 Zoom of image can be also changed by Ctrl+Mouse scroll.
 
 .. image::  images/image_view.png
    :alt: Image view widget.
 
 1.  Reset Zoom.
-2.  Enable zoom bay mark area.
-3.  Shifting image by mouse.
-4.  Channel view control. Only Channels with selected checkbox
+2.  Change to 3D rendering.
+3.  Channel view control. Only Channels with selected checkbox
     are visible. `Color map`_ for current channel
     can be selected when click in triangle in upper right corner
     |channel_select|. This triangle is visible when mouse is over widget.
-5.  Mark segmentation only by borders or by masking whole area.
-6.  Set opacity of segmentation marking.
-7.  Mark mask visible.
-8.  Control which layer is visible.
+4.  Mark segmentation only by borders or by masking whole area.
+5.  Set opacity of segmentation marking.
+6.  Mark mask visible.
+7.  Control which layer is visible.
     If image contains time data, then similar
     slider will be visible on left part of image.
 
@@ -432,7 +432,8 @@ Algorithm Parameters part.
 2.  Use boundaries for presenting current channel.
     If is checked then lock is present right to checkbox |fixed_range|.
 3.  Use filter (Median or gauss) for presenting current channel.
-    If is checked then proper symbol is present right to checkbox |filter|.
+    If different to *No* then proper symbol is present right to checkbox |filter|.
+4. Translate brightness with gamma. If different than 1 then proper symbol is present right to checkbox |gamma|.
 
 Color control
 ~~~~~~~~~~~~~
@@ -573,6 +574,7 @@ See image below showing shortcut Properties for ROI Analysis.
 .. |channel_select| image:: images/channel_select.png
 .. |fixed_range| image:: images/fixed_range.png
 .. |filter| image:: images/gauss.png
+.. |gamma| image:: images/gamma.png
 .. |batch_mask_from_file| image::  images/batch_mask_from_file.png
    :alt: Load mask from file.
 .. |batch_mask_from_segmentation| image::  images/batch_mask_from_segmentation.png
