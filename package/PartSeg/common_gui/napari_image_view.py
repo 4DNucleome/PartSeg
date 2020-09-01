@@ -182,6 +182,7 @@ class ImageView(QWidget):
         self.viewer.events.status.connect(self.print_info)
 
         settings.mask_changed.connect(self.set_mask)
+        settings.mask_representation_changed.connect(self.update_mask_parameters)
         settings.segmentation_changed.connect(self.set_segmentation)
         settings.segmentation_clean.connect(self.set_segmentation)
         settings.image_changed.connect(self.set_image)
@@ -194,9 +195,9 @@ class ImageView(QWidget):
         self.mask_chk.stateChanged.connect(self.change_mask_visibility)
         self.viewer_widget.view.scene.transform.changed.connect(self._view_changed, position="last")
         try:
-            self.viewer.dims.events.axis.connect(self._view_changed, position="last")
+            self.viewer.dims.events.current_step.connect(self._view_changed, position="last")
         except AttributeError:
-            self.viewer.dims.events.step.connect(self._view_changed, position="last")
+            self.viewer.dims.events.axis.connect(self._view_changed, position="last")
         self.viewer.dims.events.ndisplay.connect(self._view_changed, position="last")
         self.viewer.dims.events.camera.connect(self._view_changed, position="last")
         self.viewer.dims.events.camera.connect(self.camera_change, position="last")
@@ -303,7 +304,7 @@ class ImageView(QWidget):
 
     def mask_opacity(self) -> float:
         """Get mask opacity"""
-        return self.settings.get_from_profile("mask_presentation   _opacity", 1)
+        return self.settings.get_from_profile("mask_presentation_opacity", 1)
 
     def mask_color(self) -> Colormap:
         """Get mask marking color"""

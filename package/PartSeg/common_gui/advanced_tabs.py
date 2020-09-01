@@ -8,7 +8,7 @@ from functools import partial
 from typing import List
 
 from qtpy.QtCore import QByteArray, Qt
-from qtpy.QtGui import QCloseEvent, QColor, QPalette
+from qtpy.QtGui import QCloseEvent
 from qtpy.QtWidgets import (
     QColorDialog,
     QDoubleSpinBox,
@@ -24,7 +24,7 @@ from qtpy.QtWidgets import (
 from PartSeg import plugins
 from PartSeg.common_backend.base_settings import ViewSettings
 from PartSeg.common_gui.colormap_creator import PColormapCreator, PColormapList
-from PartSeg.common_gui.label_create import LabelChoose, LabelEditor
+from PartSeg.common_gui.label_create import ColorShow, LabelChoose, LabelEditor
 from PartSegCore import register, state_store
 
 
@@ -79,9 +79,10 @@ class MaskControl(QWidget):
         self.opacity_spin.setSingleStep(0.1)
         self.opacity_spin.setDecimals(2)
         self.change_mask_color_btn = QPushButton("Change mask color")
-        self.current_mask_color_preview = QLabel()
+        self.current_mask_color_preview = ColorShow(
+            self.settings.get_from_profile("mask_presentation_color", [255, 255, 255])
+        )
 
-        self.set_color_preview(self.settings.get_from_profile("mask_presentation_color", [255, 255, 255]))
         self.opacity_spin.setValue(self.settings.get_from_profile("mask_presentation_opacity", 1))
 
         self.current_mask_color_preview.setAutoFillBackground(True)
@@ -99,18 +100,18 @@ class MaskControl(QWidget):
         self.setLayout(layout)
 
     def set_color_preview(self, color):
-        palette = QPalette()
-        palette.setColor(QPalette.Background, QColor(*color))
-        self.current_mask_color_preview.setPalette(palette)
+        self.current_mask_color_preview.set_color(color)
 
     def change_color(self):
         color = self.color_picker.currentColor()
         color = (color.red(), color.green(), color.blue())
         self.settings.set_in_profile("mask_presentation_color", color)
+        self.settings.mask_representation_changed_emit()
         self.set_color_preview(color)
 
     def change_opacity(self):
         self.settings.set_in_profile("mask_presentation_opacity", self.opacity_spin.value())
+        self.settings.mask_representation_changed_emit()
 
 
 class ColorControl(QTabWidget):
