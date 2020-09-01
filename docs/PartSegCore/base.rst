@@ -61,3 +61,10 @@ On this page there are described base classes of PartSegCore module
 .. automodule:: PartSegCore.mask_partition_utils
    :members:
    :show-inheritance:
+
+.segmentaton_info
+~~~~~~~~~~~~~~~~~
+
+.. automodule:: PartSegCore.segmentation_info
+   :members:
+   :show-inheritance:

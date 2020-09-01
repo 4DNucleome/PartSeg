@@ -87,7 +87,9 @@ On top of the window there are 6 buttons:
     Selected components are omitted when next round of segmentation
     is performed.
 16. Select if preserve selected components when loading different segmentation
-    (from file or `Multiple files panel`_). TODO
+    (from file or `Multiple files panel`_).
+    Preserved components overwrite existing voxel labeling in loaded segmentation.
+    (CHECK)
 17. Opens window with a preview of segmentation parameters for each component.
     **Reuse parameters** button from this window restores selected parameters.
 
@@ -534,8 +536,8 @@ of current segmentation into a new mask.
 5. Shows calculated dilation radius in x, y, z for current image.
 6. Undo of last masking operation.
 7. Creates new mask or draws back to previously undone one.
-8. TODO
-9. TODO
+8. Clean redo history. (CHECK)
+9. Take mask creation parameters from next mask and set in interface. (CHECK)
 
 Multiple files panel
 ~~~~~~~~~~~~~~~~~~~~~
@@ -550,9 +552,9 @@ Each state represents segmentation done with different parameters.
 
 1.  List of opened files and created states.
 2.  Saves current image state. Each stated can be reloaded by double click.
-3.  Removes saved state.
-4.  Loads multiple files to PartSeg.
-5.  Enables to set custome names for saved states.
+3.  Loads multiple files to PartSeg.
+4.  Removes saved state.
+5.  Enables to set custom names for saved states.
 
 Tips and Tricks
 ---------------
