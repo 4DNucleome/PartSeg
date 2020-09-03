@@ -5,7 +5,7 @@ PyOpenGL-accelerate==3.1.5
 QtPy==1.7.0
 SimpleITK==1.1.0
 appdirs==1.4.3
-czifile==2019.4.20
+czifile==2019.5.22
 defusedxml==0.6.0
 h5py==2.7.1
 imagecodecs==2020.5.30
@@ -26,3 +26,4 @@ xlrd==1.1.0
 xlsxwriter
 dataclasses==0.7 ;python_version < '3.7'
 typing-extensions==3.7 ;python_version < '3.8'
+PyQt5==5.12.3
