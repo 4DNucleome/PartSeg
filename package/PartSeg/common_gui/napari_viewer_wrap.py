@@ -1,6 +1,8 @@
 import numpy as np
+from napari import __version__ as napari_version
 from napari.components import ViewerModel
 from napari.qt import QtViewer, Window, create_worker
+from packaging.version import parse
 
 
 class Viewer(ViewerModel):
@@ -78,7 +80,7 @@ class Viewer(ViewerModel):
         import warnings
 
         warnings.warn(
-            "Viewer.update() is deprecated, use " "create_worker(func, *args, **kwargs) instead", DeprecationWarning,
+            "Viewer.update() is deprecated, use  create_worker(func, *args, **kwargs) instead", DeprecationWarning,
         )
         return create_worker(func, *args, **kwargs, _start_thread=True)
 
@@ -98,6 +100,9 @@ class Viewer(ViewerModel):
         return np.min([layer.scale for layer in self.layers], axis=0)
 
     def _new_labels(self):
+        if parse("0.3.7") <= parse(napari_version):
+            super()._new_labels()
+            return
         if self.dims.ndim == 0:
             dims = (512, 512)
         else:
