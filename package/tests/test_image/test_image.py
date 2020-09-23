@@ -269,6 +269,7 @@ class TestImageBase:
         with pytest.raises(ValueError):
             image.set_spacing((1, 2, 3, 4))
         with pytest.raises(TypeError):
+            # noinspection PyTypeChecker
             image.set_spacing(1)
 
     def test_spacing_2d(self):
@@ -290,10 +291,10 @@ class TestImageBase:
         image.set_mask(np.zeros((1, 10, 20, 30), np.uint8), "TZYX")
         im = image.cut_image(mask == 1, replace_mask=False)
         assert np.all(im.mask == 0)
-        assert im.shape == self.image_shape((1, 6, 7, 26, 3), axes="TZYXC")
+        assert im.shape == self.image_shape((1, 8, 9, 28, 3), axes="TZYXC")
         im = image.cut_image(mask == 2, replace_mask=True)
-        assert np.all(im.mask == 1)
-        assert im.shape == self.image_shape((1, 6, 7, 26, 3), axes="TZYXC")
+        assert np.all(im.mask[:, 1:-1, 1:-1, 1:-1] == 1)
+        assert im.shape == self.image_shape((1, 8, 9, 28, 3), axes="TZYXC")
 
     def test_get_ranges(self):
         data = np.zeros((1, 10, 20, 30, 3), np.uint8)

@@ -268,9 +268,9 @@ class Image:
             if el == 1 and el != shape[i]:
                 shape.insert(i, 1)
             elif el != shape[i]:
-                raise ValueError("Wrong array shape")
+                raise ValueError(f"Wrong array shape {shape} for {base_shape}")
         if len(shape) != len(base_shape):
-            raise ValueError("Wrong array shape")
+            raise ValueError(f"Wrong array shape {shape} for {base_shape}")
         return np.reshape(array, shape)
 
     def fit_array_to_image(self, array: np.ndarray) -> np.ndarray:
@@ -475,6 +475,24 @@ class Image:
             raise ValueError("Correction of spacing fail.")
         self._image_spacing = tuple(value)
 
+    def _frame_array(self, array: typing.Optional[np.ndarray], index_to_add: typing.List[int]):
+        if array is None:
+            return array
+        result_shape = list(array.shape)
+        image_pos = [slice(None) for _ in range(array.ndim)]
+
+        for index in index_to_add:
+            result_shape[index] += 2
+            image_pos[index] = slice(1, result_shape[index] - 1)
+
+        data = np.zeros(shape=result_shape, dtype=array.dtype)
+        data[tuple(image_pos)] = array
+        return data
+
+    @staticmethod
+    def _calc_index_to_frame(array_axis, important_axis):
+        return [array_axis.index(letter) for letter in important_axis]
+
     def cut_image(
         self, cut_area: typing.Union[np.ndarray, typing.List[slice], typing.Tuple[slice]], replace_mask=False
     ) -> "Image":
@@ -512,8 +530,16 @@ class Image:
             elif self._mask_array is not None:
                 new_mask = self._mask_array[tuple(new_cut)]
                 new_mask[catted_cut_area == 0] = 0
+        important_axis = "XY" if self.is_2d else "XYZ"
+
         return self.__class__(
-            new_image, self._image_spacing, None, new_mask, self.default_coloring, self.ranges, self.labels
+            self._frame_array(new_image, self._calc_index_to_frame(self.axis_order, important_axis)),
+            self._image_spacing,
+            None,
+            self._frame_array(new_mask, self._calc_index_to_frame(self.array_axis_order, important_axis)),
+            self.default_coloring,
+            self.ranges,
+            self.labels,
         )
 
     def get_imagej_colors(self):
