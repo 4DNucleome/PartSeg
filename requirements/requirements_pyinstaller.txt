@@ -39,7 +39,7 @@ markupsafe==1.1.1         # via jinja2
 mpmath==1.1.0             # via sympy
 napari-plugin-engine==0.1.7  # via napari, napari-svg
 napari-svg==0.1.3         # via napari
-napari==0.3.7             # via -r requirements_pyinstaller.in
+napari==0.3.8rc1             # via -r requirements_pyinstaller.in
 numpy==1.19.1             # via -r requirements_pyinstaller.in, czifile, dask, h5py, imagecodecs, imageio, napari, napari-svg, oiffile, pandas, scipy, tifffile, vispy
 numpydoc==1.1.0           # via napari
 oiffile==2020.1.18        # via -r requirements_pyinstaller.in

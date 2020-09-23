@@ -27,7 +27,7 @@ def _test_imports():
     from qtpy.QtWidgets import QApplication
 
     app = QApplication([])
-    from napari._qt.qt_console import QtConsole
+    from napari._qt.widgets.qt_console import QtConsole
 
     from PartSeg import plugins
     from PartSeg.launcher.main_window import MainWindow
