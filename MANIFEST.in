@@ -30,3 +30,4 @@ exclude docs/**
 exclude images/**
 exclude launcher.spec
 exclude **/.coverage
+exclude .azure-pipelines/**
