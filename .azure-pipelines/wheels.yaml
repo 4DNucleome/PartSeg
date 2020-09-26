@@ -1,0 +1,14 @@
+steps:
+  - task: UsePythonVersion@0
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      artifact: TestData
+      path: $(Build.SourcesDirectory)/test_data
+  - bash: python -m pip install cibuildwheel cython numpy
+    displayName: InstallDeps
+  - bash: python -m cibuildwheel
+    displayName: BuildWheel
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: wheelhouse
+      artifactName: wheels

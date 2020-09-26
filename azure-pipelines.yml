@@ -102,7 +102,8 @@ stages:
     variables:
       AZURE_PIPELINES: 1
     jobs:
-    - job: test_windows_macos
+    - job: test
+      condition: not(startsWith(variables['Build.SourceBranch'], 'refs/heads/feature'))
       strategy:
         matrix:
           macos:
@@ -113,7 +114,7 @@ stages:
       steps:
         - template: .azure-pipelines/tests.yaml
     - job: test_linux
-      pool: { vmImage: 'ubuntu-18.04' }
+      pool: { vmImage: 'ubuntu-16.04' }
       steps:
         - template: .azure-pipelines/tests.yaml
 
@@ -124,25 +125,12 @@ stages:
       CIBW_BEFORE_BUILD: pip install numpy cython
       CIBW_TEST_EXTRAS: pyqt,test
       CIBW_BUILD: cp3[6-8]*64
+      CIBW_TEST_COMMAND: pytest {project}/package/tests
     jobs:
-      - job: wheel_manylinux2010
-        pool: {vmImage: 'Ubuntu-16.04'}
-        variables:
-          CIBW_BEFORE_ALL_LINUX: yum -y install hdf5-devel fontconfig
-          CIBW_TEST_REQUIRES: pytest pytest-cov
-          CIBW_TEST_COMMAND: pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part
-          CIBW_BEFORE_TEST: pip install PyQt5==5.13.2
-          CIBW_TEST_EXTRAS: ""
+      - job: sdist
+        pool: {vmImage: 'Ubuntu-18.04'}
         steps:
           - task: UsePythonVersion@0
-          - task: DownloadPipelineArtifact@2
-            inputs:
-              artifact: TestData
-              path: $(Build.SourcesDirectory)/test_data
-          - bash: python -m pip install cibuildwheel cython numpy
-            displayName: InstallDeps
-          - bash: python -m cibuildwheel
-            displayName: BuildWheel
           - bash: pip install -r requirements/requirements_dev.txt
             displayName: sdist requirements
           - bash: python setup.py sdist -d wheelhouse
@@ -152,11 +140,31 @@ stages:
               pathToPublish: wheelhouse
               artifactName: wheels
 
+      - job: wheel_manylinux2010
+        condition: not(startsWith(variables['Build.SourceBranch'], 'refs/heads/feature'))
+        pool: {vmImage: 'Ubuntu-18.04'}
+        variables:
+          CIBW_BEFORE_ALL_LINUX: yum -y install hdf5-devel fontconfig
+          CIBW_TEST_REQUIRES: pytest pytest-cov
+          CIBW_TEST_COMMAND: pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part
+          CIBW_BEFORE_TEST: pip install PyQt5==5.13.2
+          CIBW_TEST_EXTRAS: ""
+        steps:
+          - template: .azure-pipelines/tests.yaml
+
+      - job: wheel_manylinux2014
+        strategy:
+        pool: { vmImage: 'ubuntu-18.04' }
+        variables:
+          CIBW_BEFORE_ALL_LINUX: yum -y install hdf5-devel fontconfig
+          CIBW_TEST_COMMAND_LINUX: pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+        steps:
+          - template: .azure-pipelines/wheels.yaml
+
       - job: wheel
         strategy:
           matrix:
-            manylinux2014:
-              imageName: 'ubuntu-16.04'
             macos:
               imageName: 'macos-10.14'
             macos14:
@@ -166,27 +174,11 @@ stages:
               imageName: 'vs2017-win2016'
         pool: {vmImage: $(imageName)}
         variables:
-          CIBW_BEFORE_ALL_LINUX: yum -y install hdf5-devel fontconfig
-          CIBW_TEST_COMMAND_LINUX: pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part
           CIBW_TEST_COMMAND_WINDOWS: pytest {project}/package/tests || pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part/test_main_windows.py
           CIBW_TEST_COMMAND_MACOS: pytest {project}/package/tests || pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part/test_main_windows.py
-          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-          CIBW_TEST_COMMAND: pytest {project}/package/tests
           MACOSX_DEPLOYMENT_TARGET: "10.9"
         steps:
-          - task: UsePythonVersion@0
-          - task: DownloadPipelineArtifact@2
-            inputs:
-              artifact: TestData
-              path: $(Build.SourcesDirectory)/test_data
-          - bash: python -m pip install cibuildwheel cython numpy
-            displayName: InstallDeps
-          - bash: python -m cibuildwheel
-            displayName: BuildWheel
-          - task: PublishBuildArtifacts@1
-            inputs:
-              pathToPublish: wheelhouse
-              artifactName: wheels
+          - template: .azure-pipelines/wheels.yaml
 
       - job: pyinstaller
         strategy:
