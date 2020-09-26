@@ -1,0 +1,13 @@
+steps:
+  - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7'}}
+  - script: sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
+    condition: "startsWith(variables['imageName'], 'ubuntu')"
+    displayName: "install libs"
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      artifact: TestData
+      path: $(Build.SourcesDirectory)/test_data
+  - script: pip install -r requirements/requirements_dev.txt
+    displayName: "Install deps"
+  - script: tox -c tox-azure.ini -e py37-PyQt5
+    displayName: "Run Tox"
