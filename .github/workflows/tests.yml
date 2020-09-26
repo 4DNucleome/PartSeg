@@ -79,7 +79,7 @@ jobs:
       - uses: actions/setup-python@v1
         name: Install Python '3.7'
         with:
-          python-version: ${{ matrix.python_version }}
+          python-version: '3.7'
 
       - name: Install ubuntu libraries
         if: startsWith(matrix.os, 'ubuntu')

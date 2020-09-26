@@ -154,7 +154,19 @@ stages:
         steps:
           - template: .azure-pipelines/tests.yaml
 
+      - job: wheel_manylinux2014_feature
+        condition: startsWith(variables['Build.SourceBranch'], 'refs/heads/feature')
+        pool: { vmImage: 'ubuntu-18.04' }
+        variables:
+          CIBW_BEFORE_ALL_LINUX: yum -y install hdf5-devel fontconfig
+          CIBW_TEST_COMMAND_LINUX: pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+          CIBW_BUILD: cp37*64
+        steps:
+          - template: .azure-pipelines/wheels.yaml
+
       - job: wheel_manylinux2014
+        condition: not(startsWith(variables['Build.SourceBranch'], 'refs/heads/feature'))
         pool: { vmImage: 'ubuntu-18.04' }
         variables:
           CIBW_BEFORE_ALL_LINUX: yum -y install hdf5-devel fontconfig
