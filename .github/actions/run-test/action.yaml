@@ -4,7 +4,6 @@ description: "extracted to action to allow limit executions on feature branch"
 runs:
   using: "composite"
   steps:
-  - uses: actions/checkout@v1
   - uses: actions/setup-python@v1
     name: Install Python ${{ matrix.python_version }}
     with:

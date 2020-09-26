@@ -40,5 +40,6 @@ jobs:
           - python_version: '3.8'
             toxenv: 'py38-PyQt5,py38-PySide2'
     steps:
+    - uses: actions/checkout@v1
     - name: Use local my-action
       uses: ./.github/actions/run-test
