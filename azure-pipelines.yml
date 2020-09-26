@@ -126,7 +126,7 @@ stages:
     variables:
       CIBW_BEFORE_BUILD: pip install numpy cython
       CIBW_TEST_EXTRAS: pyqt,test
-      CIBW_BUILD: cp3[6-8]*64
+      CIBW_BUILD: cp3[6-9]*64
       CIBW_TEST_COMMAND: pytest {project}/package/tests
     jobs:
       - job: sdist
