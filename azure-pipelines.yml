@@ -102,11 +102,9 @@ stages:
     variables:
       AZURE_PIPELINES: 1
     jobs:
-    - job: test
+    - job: test_windows_macos
       strategy:
         matrix:
-          linux:
-            imageName: 'ubuntu-16.04'
           macos:
             imageName: 'macos-10.14'
           windows:
@@ -114,6 +112,11 @@ stages:
       pool: {vmImage: $(imageName)}
       steps:
         - template: .azure-pipelines/tests.yaml
+    - job: test_linux
+      pool: { vmImage: 'ubuntu-18.04' }
+      steps:
+        - template: .azure-pipelines/tests.yaml
+
 
   - stage: Builds
     dependsOn: Tests
