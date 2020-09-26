@@ -505,9 +505,7 @@ class ImageView(QWidget):
         self.viewer.dims.set_point(image.time_pos, image.times * image.normalized_scaling()[image.time_pos] // 2)
         self.viewer.dims.set_point(image.stack_pos, image.layers * image.normalized_scaling()[image.stack_pos] // 2)
         if self.image_info[image.file_path].segmentation is not None:
-            print("a", self.viewer.layers)
             self.set_segmentation()
-            print("b", self.viewer.layers)
         if image_info.image.mask is not None:
             self.set_mask()
         self.image_added.emit()
