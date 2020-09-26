@@ -152,7 +152,7 @@ stages:
           CIBW_BEFORE_TEST: pip install PyQt5==5.13.2
           CIBW_TEST_EXTRAS: ""
         steps:
-          - template: .azure-pipelines/tests.yaml
+          - template: .azure-pipelines/wheels.yaml
 
       - job: wheel_manylinux2014_feature
         condition: startsWith(variables['Build.SourceBranch'], 'refs/heads/feature')
