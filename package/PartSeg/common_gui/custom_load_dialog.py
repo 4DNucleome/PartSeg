@@ -33,6 +33,8 @@ class CustomLoadDialog(QFileDialog):
 
     def accept(self):
         selected_files = self.selectedFiles()
+        if len(selected_files) == 0:
+            return
         if len(selected_files) == 1 and self.fileMode != QFileDialog.Directory and isdir(selected_files[0]):
             super().accept()
             return

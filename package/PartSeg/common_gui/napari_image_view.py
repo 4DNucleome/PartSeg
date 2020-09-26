@@ -336,7 +336,7 @@ class ImageView(QWidget):
             return
 
         image_info.segmentation_info = segmentation_info
-        image_info.segmentation_count = np.max(segmentation)
+        image_info.segmentation_count = max(segmentation_info.bound_info.keys())
         self.add_segmentation_layer(image_info)
         image_info.segmentation.colormap = self.get_segmentation_view_parameters(image_info)
         image_info.segmentation.opacity = self.image_state.opacity
@@ -504,6 +504,8 @@ class ImageView(QWidget):
             self.viewer.layers[-1].selected = True
         self.viewer.dims.set_point(image.time_pos, image.times * image.normalized_scaling()[image.time_pos] // 2)
         self.viewer.dims.set_point(image.stack_pos, image.layers * image.normalized_scaling()[image.stack_pos] // 2)
+        if self.image_info[image.file_path].segmentation is not None:
+            self.set_segmentation()
         if image_info.image.mask is not None:
             self.set_mask()
         self.image_added.emit()
