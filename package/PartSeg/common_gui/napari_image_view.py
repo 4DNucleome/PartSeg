@@ -160,8 +160,8 @@ class ImageView(QWidget):
         self.image_state = ImageShowState(settings, name)
         self.channel_control = ColorComboBoxGroup(settings, name, channel_property, height=30)
         self.ndim_btn = QtNDisplayButton(self.viewer)
-        self.reset_view_button = QtViewerPushButton(self.viewer, "home", "Reset view", self.viewer.reset_view)
-        self.roll_dim_button = QtViewerPushButton(self.viewer, "roll", "Roll dimension", self.viewer.reset_view)
+        self.reset_view_button = QtViewerPushButton(self.viewer, "home", "Reset view", self._reset_view)
+        self.roll_dim_button = QtViewerPushButton(self.viewer, "roll", "Roll dimension", self._rotate_dim)
         self.mask_chk = QCheckBox()
         self.mask_label = QLabel("Mask:")
 
@@ -204,6 +204,13 @@ class ImageView(QWidget):
         self.viewer.dims.events.camera.connect(self._view_changed, position="last")
         self.viewer.dims.events.camera.connect(self.camera_change, position="last")
         self.viewer.events.reset_view.connect(self._view_changed, position="last")
+
+    def _reset_view(self):
+        self.viewer.dims.order = sorted(self.viewer.dims.order)
+        self.viewer.reset_view()
+
+    def _rotate_dim(self):
+        self.viewer.dims.order = [0] + list(np.roll(self.viewer.dims.order[1:], 1))
 
     def camera_change(self, _args):
         self.old_scene.transform.changed.disconnect(self._view_changed)

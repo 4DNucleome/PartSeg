@@ -61,7 +61,6 @@ class ResultImageView(ImageView):
         self.only_border.setVisible(show)
 
     def resizeEvent(self, event: QResizeEvent):
-        print("AAAA", self.channel_control_index)
         if event.size().width() > 700 and not self._channel_control_top:
             w = self.btn_layout2.takeAt(0).widget()
             self.btn_layout.takeAt(self.channel_control_index)
@@ -100,7 +99,6 @@ class SynchronizeView(QObject):
 
     @Slot()
     def synchronize_views(self):
-        # print("AAAAA")
         if not self.synchronize or self.image_view1.isHidden() or self.image_view2.isHidden():
             return
         sender = self.sender()
