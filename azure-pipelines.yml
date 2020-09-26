@@ -164,6 +164,7 @@ stages:
           - template: .azure-pipelines/wheels.yaml
 
       - job: wheel
+        condition: not(startsWith(variables['Build.SourceBranch'], 'refs/heads/feature'))
         strategy:
           matrix:
             macos:
@@ -181,22 +182,13 @@ stages:
         steps:
           - template: .azure-pipelines/wheels.yaml
 
-      - job: pyinstaller
-        strategy:
-          matrix:
-            linux:
-              imageName: 'ubuntu-16.04'
-              test_path: dist/PartSeg/PartSeg _test
-              DISPLAY: ':99.0'
-            macos:
-              imageName: 'macos-10.14'
-              test_path: dist/PartSeg/PartSeg _test
-            windows:
-              imageName: 'vs2017-win2016'
-              test_path: dist\PartSeg\PartSeg _test
-        pool: {vmImage: $(imageName)}
+      - job: pyinstaller_linux
+        variables:
+          test_path: dist/PartSeg/PartSeg _test
+          DISPLAY: ':99.0'
+        pool: { vmImage: 'ubuntu-16.04' }
         steps:
-          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7', architecture: x64}}
+          - { task: UsePythonVersion@0, inputs: { versionSpec: '3.7', architecture: x64 } }
           - script: |
               sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
               /sbin/start-stop-daemon --start --quiet \
@@ -206,6 +198,31 @@ stages:
             condition: "startsWith(variables['imageName'], 'ubuntu')"
             displayName: "install libs"
 
+          - bash: |
+              python -m pip install -r requirements/requirements_pyinstaller.txt
+              python -m pip install -e .
+              python  build_utils/create_and_pack_executable.py
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathToPublish: dist2
+              artifactName: execs
+          - script: $(test_path)
+            displayName: TestBuild
+
+      - job: pyinstaller
+        condition: not(startsWith(variables['Build.SourceBranch'], 'refs/heads/feature'))
+        strategy:
+          matrix:
+            macos:
+              imageName: 'macos-10.14'
+              test_path: dist/PartSeg/PartSeg _test
+            windows:
+              imageName: 'vs2017-win2016'
+              test_path: dist\PartSeg\PartSeg _test
+        pool: {vmImage: $(imageName)}
+        steps:
+          - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7', architecture: x64}}
           - bash: |
               python -m pip install -r requirements/requirements_pyinstaller.txt
               python -m pip install -e .
