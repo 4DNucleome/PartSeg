@@ -41,4 +41,4 @@ jobs:
             toxenv: 'py38-PyQt5,py38-PySide2'
     steps:
     - name: Use local my-action
-      uses: ./.github/actions/tun-test
+      uses: ./.github/actions/run-test
