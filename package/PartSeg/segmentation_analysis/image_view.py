@@ -68,8 +68,6 @@ class ResultImageView(ImageView):
             self.btn_layout.insertWidget(self.channel_control_index, w)
             self._channel_control_top = True
         elif event.size().width() <= 700 and self._channel_control_top:
-            for i in range(self.btn_layout.count()):
-                w = self.btn_layout.itemAt(i).widget()
             w = self.btn_layout.takeAt(self.channel_control_index).widget()
             self.btn_layout.insertStretch(self.channel_control_index, 1)
             # noinspection PyArgumentList
