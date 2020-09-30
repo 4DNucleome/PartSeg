@@ -1,6 +1,7 @@
 import itertools
 from dataclasses import dataclass, field
 from enum import Enum
+from functools import partial
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -17,8 +18,8 @@ from napari.layers.image._image_constants import Interpolation3D
 from napari.layers.labels import Labels
 from napari.qt import QtNDisplayButton, QtViewer
 from napari.qt.threading import thread_worker
-from qtpy.QtCore import QObject, Signal
-from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from qtpy.QtCore import QObject, QPoint, Qt, Signal
+from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QVBoxLayout, QWidget
 from vispy.color import Color, ColorArray, Colormap
 from vispy.scene import BaseCamera
 
@@ -29,6 +30,9 @@ from PartSegImage import Image
 
 from ..common_backend.base_settings import BaseSettings, ViewSettings
 from .channel_control import ChannelProperty, ColorComboBoxGroup
+
+ORDER_DICT = {"xy": [0, 1, 2, 3], "zy": [0, 2, 1, 3], "zx": [0, 3, 1, 2]}
+NEXT_ORDER = {"xy": "zy", "zy": "zx", "zx": "xy"}
 
 
 @dataclass
@@ -151,6 +155,7 @@ class ImageView(QWidget):
         self.name = name
         self.image_info: Dict[str, ImageInfo] = {}
         self.current_image = ""
+        self._current_order = "xy"
         self.components = None
         self.worker_list = []
 
@@ -160,13 +165,17 @@ class ImageView(QWidget):
         self.image_state = ImageShowState(settings, name)
         self.channel_control = ColorComboBoxGroup(settings, name, channel_property, height=30)
         self.ndim_btn = QtNDisplayButton(self.viewer)
-        self.reset_view_button = QtViewerPushButton(self.viewer, "home", "Reset view", self.viewer.reset_view)
+        self.reset_view_button = QtViewerPushButton(self.viewer, "home", "Reset view", self._reset_view)
+        self.roll_dim_button = QtViewerPushButton(self.viewer, "roll", "Roll dimension", self._rotate_dim)
+        self.roll_dim_button.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.roll_dim_button.customContextMenuRequested.connect(self._dim_order_menu)
         self.mask_chk = QCheckBox()
         self.mask_label = QLabel("Mask:")
 
         self.btn_layout = QHBoxLayout()
         self.btn_layout.addWidget(self.reset_view_button)
         self.btn_layout.addWidget(self.ndim_btn)
+        self.btn_layout.addWidget(self.roll_dim_button)
         self.btn_layout.addWidget(self.channel_control, 1)
         self.btn_layout.addWidget(self.mask_label)
         self.btn_layout.addWidget(self.mask_chk)
@@ -202,6 +211,30 @@ class ImageView(QWidget):
         self.viewer.dims.events.camera.connect(self._view_changed, position="last")
         self.viewer.dims.events.camera.connect(self.camera_change, position="last")
         self.viewer.events.reset_view.connect(self._view_changed, position="last")
+
+    def _dim_order_menu(self, point: QPoint):
+        menu = QMenu()
+        for key in ORDER_DICT:
+            action = menu.addAction(key)
+            action.triggered.connect(partial(self._set_new_order, key))
+            if key == self._current_order:
+                font = action.font()
+                font.setBold(True)
+                action.setFont(font)
+
+        menu.exec_(self.roll_dim_button.mapToGlobal(point))
+
+    def _set_new_order(self, text: str):
+        self._current_order = text
+        self.viewer.dims.order = ORDER_DICT[text]
+
+    def _reset_view(self):
+        self._set_new_order("xy")
+        self.viewer.dims.order = ORDER_DICT[self._current_order]
+        self.viewer.reset_view()
+
+    def _rotate_dim(self):
+        self._set_new_order(NEXT_ORDER[self._current_order])
 
     def camera_change(self, _args):
         self.old_scene.transform.changed.disconnect(self._view_changed)
@@ -336,7 +369,7 @@ class ImageView(QWidget):
             return
 
         image_info.segmentation_info = segmentation_info
-        image_info.segmentation_count = np.max(segmentation)
+        image_info.segmentation_count = max(segmentation_info.bound_info.keys())
         self.add_segmentation_layer(image_info)
         image_info.segmentation.colormap = self.get_segmentation_view_parameters(image_info)
         image_info.segmentation.opacity = self.image_state.opacity
@@ -502,8 +535,13 @@ class ImageView(QWidget):
         self.viewer.reset_view()
         if self.viewer.layers:
             self.viewer.layers[-1].selected = True
-        self.viewer.dims.set_point(image.time_pos, image.times * image.normalized_scaling()[image.time_pos] // 2)
-        self.viewer.dims.set_point(image.stack_pos, image.layers * image.normalized_scaling()[image.stack_pos] // 2)
+
+        for i, axis in enumerate(image.axis_order):
+            if axis == "C":
+                continue
+            self.viewer.dims.set_point(i, image.shape[i] * image.normalized_scaling()[i] // 2)
+        if self.image_info[image.file_path].segmentation is not None:
+            self.set_segmentation()
         if image_info.image.mask is not None:
             self.set_mask()
         self.image_added.emit()

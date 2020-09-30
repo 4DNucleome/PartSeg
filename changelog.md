@@ -1,4 +1,10 @@
 # Changelog
+## 0.11.4
+-   bump to napari 0.3.8 in bundle
+-   fix bug with not presented segmentation loaded from project
+-   add frame (1 pix) to image cat from base one based on segmentation 
+-   pin to Qt version to 5.14
+
 ## 0.11.3
 -   prepare for napari 0.3.7
 -   split napari io plugin on multiple part

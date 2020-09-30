@@ -523,10 +523,7 @@ def save_components(
     file_name = os.path.splitext(os.path.basename(image.file_path))[0]
     range_changed(0, 2 * len(components))
     for i in components:
-        slices = segmentation_info.bound_info[i].get_slices()
-        cut_segmentation = segmentation[tuple(slices)]
-        cut_image = image.cut_image(slices)
-        im = cut_image.cut_image(cut_segmentation == i, replace_mask=True)
+        im = image.cut_image(segmentation == i, replace_mask=True)
         # print(f"[run] {im}")
         ImageWriter.save(im, os.path.join(dir_path, f"{file_name}_component{i}.tif"))
         step_changed(2 * i + 1)

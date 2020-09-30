@@ -30,12 +30,13 @@ class ResultImageView(ImageView):
         self.opacity.setSingleStep(0.1)
         self.opacity.valueChanged.connect(self.image_state.set_opacity)
         self.opacity.setMinimumWidth(500)
+        self.channel_control_index = self.btn_layout.indexOf(self.channel_control)
         self.label1 = QLabel("Borders:")
         self.label2 = QLabel("Opacity:")
-        self.btn_layout.insertWidget(3, self.label1)
-        self.btn_layout.insertWidget(4, self.only_border)
-        self.btn_layout.insertWidget(5, self.label2)
-        self.btn_layout.insertWidget(6, self.opacity)
+        self.btn_layout.insertWidget(self.channel_control_index + 1, self.label1)
+        self.btn_layout.insertWidget(self.channel_control_index + 2, self.only_border)
+        self.btn_layout.insertWidget(self.channel_control_index + 3, self.label2)
+        self.btn_layout.insertWidget(self.channel_control_index + 4, self.opacity)
         self.label1.setVisible(False)
         self.label2.setVisible(False)
         self.opacity.setVisible(False)
@@ -62,13 +63,13 @@ class ResultImageView(ImageView):
     def resizeEvent(self, event: QResizeEvent):
         if event.size().width() > 700 and not self._channel_control_top:
             w = self.btn_layout2.takeAt(0).widget()
-            self.btn_layout.takeAt(2)
+            self.btn_layout.takeAt(self.channel_control_index)
             # noinspection PyArgumentList
-            self.btn_layout.insertWidget(2, w)
+            self.btn_layout.insertWidget(self.channel_control_index, w)
             self._channel_control_top = True
         elif event.size().width() <= 700 and self._channel_control_top:
-            w = self.btn_layout.takeAt(2).widget()
-            self.btn_layout.insertStretch(2, 1)
+            w = self.btn_layout.takeAt(self.channel_control_index).widget()
+            self.btn_layout.insertStretch(self.channel_control_index, 1)
             # noinspection PyArgumentList
             self.btn_layout2.insertWidget(0, w)
             self._channel_control_top = False
@@ -96,7 +97,6 @@ class SynchronizeView(QObject):
 
     @Slot()
     def synchronize_views(self):
-        # print("AAAAA")
         if not self.synchronize or self.image_view1.isHidden() or self.image_view2.isHidden():
             return
         sender = self.sender()
