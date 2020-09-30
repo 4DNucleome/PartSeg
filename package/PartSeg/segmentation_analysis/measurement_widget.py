@@ -6,6 +6,7 @@ from typing import List, Tuple
 from qtpy.QtCore import QEvent, Qt
 from qtpy.QtGui import QKeyEvent, QResizeEvent
 from qtpy.QtWidgets import (
+    QAbstractItemView,
     QApplication,
     QBoxLayout,
     QCheckBox,
@@ -47,13 +48,14 @@ class MeasurementsStorage:
         self.content = []
         self.measurements = []
         self.expand = False
+        self.show_units = False
 
     def clear(self):
         """clear storage"""
         self.header = []
         self.max_rows = 0
         self.content = []
-        self.measurements: List[MeasurementResult, bool, bool] = []
+        self.measurements: List[MeasurementResult] = []
 
     def get_size(self, save_orientation: bool):
         if save_orientation:
@@ -61,41 +63,44 @@ class MeasurementsStorage:
         else:
             return len(self.header), self.max_rows
 
-    def change_expand(self, expand):
+    def set_expand(self, expand):
         if self.expand != expand:
             self.expand = expand
+            self.refresh()
+
+    def set_show_units(self, show_units):
+        if self.show_units != show_units:
+            self.show_units = show_units
             self.refresh()
 
     def refresh(self):
         self.header = []
         self.content = []
         self.max_rows = 0
-        for data, add_names, add_units in self.measurements:
+        previous_labels = []
+        previous_units = []
+        for data in self.measurements:
+            labels = data.get_labels(self.expand)
+            if labels != previous_labels:
+                self.content.append(labels)
+                self.header.append("Name")
+                previous_labels = labels
             if self.expand:
-                if add_names:
-                    self.content.append(data.get_labels())
-                    self.header.append("Name")
                 values = data.get_separated()
-                self.max_rows = max(self.max_rows, len(values[0]))
-                self.content.extend(values)
-                self.header.extend(["Value" for _ in range(len(values))])
-                if add_units:
-                    self.content.append(data.get_units())
-                    self.header.append("Units")
+                units = data.get_units()
             else:
-                if add_names:
-                    self.content.append(list(data.keys()))
-                    self.header.append("Name")
                 values, units = zip(*list(data.values()))
-                self.max_rows = max(self.max_rows, len(values))
-                self.content.append(values)
-                self.header.append("Value")
-                if add_units:
-                    self.content.append(units)
-                    self.header.append("Units")
+                values = [values]
+            self.max_rows = max(self.max_rows, len(values[0]))
+            self.content.extend(values)
+            self.header.extend(["Value" for _ in range(len(values))])
+            if self.show_units and units != previous_units:
+                previous_units = units
+                self.content.append(units)
+                self.header.append("Units")
 
-    def add_measurements(self, data: MeasurementResult, add_names, add_units):
-        self.measurements.append((data, add_names, add_units))
+    def add_measurements(self, data: MeasurementResult):
+        self.measurements.append(data)
         self.refresh()
 
     def get_val_as_str(self, x: int, y: int, save_orientation: bool) -> str:
@@ -143,6 +148,7 @@ class MeasurementWidget(QWidget):
         self.no_header = QCheckBox("No header", self)
         self.no_units = QCheckBox("No units", self)
         self.no_units.setChecked(True)
+        self.no_units.clicked.connect(self.refresh_view)
         self.expand_mode = QCheckBox("Expand", self)
         self.file_names = EnumComboBox(FileNamesEnum)
         self.file_names_label = QLabel("Add file name:")
@@ -265,38 +271,36 @@ class MeasurementWidget(QWidget):
         self.append_measurement_result()
 
     def refresh_view(self):
-        self.measurements_storage.change_expand(self.expand_mode.isChecked())
+        self.measurements_storage.set_expand(self.expand_mode.isChecked())
+        self.measurements_storage.set_show_units(not self.no_units.isChecked())
         self.info_field.clear()
         save_orientation = self.horizontal_measurement_present.isChecked()
         columns, rows = self.measurements_storage.get_size(save_orientation)
-        if self.file_names.get_value() == FileNamesEnum.No:
-            rows -= 1
-            shift = 1
-        else:
-            shift = 0
         self.info_field.setColumnCount(columns)
         self.info_field.setRowCount(rows)
         self.info_field.setHorizontalHeaderLabels(self.measurements_storage.get_header(save_orientation))
         self.info_field.setVerticalHeaderLabels(self.measurements_storage.get_rows(save_orientation))
-        if self.file_names.get_value() == FileNamesEnum.Full:
+        for x in range(rows):
             for y in range(columns):
                 self.info_field.setItem(
-                    0, y, QTableWidgetItem(self.measurements_storage.get_val_as_str(0, y, save_orientation))
+                    x, y, QTableWidgetItem(self.measurements_storage.get_val_as_str(x, y, save_orientation))
                 )
+        if self.file_names.get_value() == FileNamesEnum.No:
+            if save_orientation:
+                self.info_field.removeColumn(0)
+            else:
+                self.info_field.removeRow(0)
         elif self.file_names.get_value() == FileNamesEnum.Short:
-            for y in range(columns):
-                self.info_field.setItem(
-                    0,
-                    y,
-                    QTableWidgetItem(
-                        os.path.basename(self.measurements_storage.get_val_as_str(0, y, save_orientation))
-                    ),
-                )
-        for x in range(1, rows + shift):
-            for y in range(columns):
-                self.info_field.setItem(
-                    x - shift, y, QTableWidgetItem(self.measurements_storage.get_val_as_str(x, y, save_orientation))
-                )
+            if save_orientation:
+                columns = 1
+            else:
+                rows = 1
+            for x in range(rows):
+                for y in range(columns):
+                    item = self.info_field.item(x, y)
+                    item.setText(os.path.basename(item.text()))
+
+        self.info_field.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
     def append_measurement_result(self):
         try:
@@ -339,11 +343,7 @@ class MeasurementWidget(QWidget):
         if stat is None:
             return
         stat.set_filename(self.settings.image_path)
-        self.measurements_storage.add_measurements(
-            stat,
-            (not self.no_header.isChecked()) and (self.previous_profile != compute_class.name),
-            not self.no_units.isChecked(),
-        )
+        self.measurements_storage.add_measurements(stat)
         self.previous_profile = compute_class.name
         self.refresh_view()
 

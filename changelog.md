@@ -1,4 +1,9 @@
 # Changelog
+
+## 0.11.5
+-   add side view to viewer
+-   fix horizontal view for Measurements result table
+
 ## 0.11.4
 -   bump to napari 0.3.8 in bundle
 -   fix bug with not presented segmentation loaded from project
