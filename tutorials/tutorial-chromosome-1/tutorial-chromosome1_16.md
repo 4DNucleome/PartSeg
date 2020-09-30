@@ -68,7 +68,7 @@ In order to qauntify features of chromosome 1 territory segmentation of FISH spe
 
 1.  Open PartSeg
 
-2.  Select **Segmentation Analysis**  
+2.  Select **ROI Analysis**  
     ![launcher GUI](./images/launcher.png)
 
 3.  Load data:
