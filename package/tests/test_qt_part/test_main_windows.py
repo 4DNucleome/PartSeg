@@ -67,6 +67,7 @@ class TestLauncherMainWindow:
             count += 1
             QCoreApplication.processEvents()
 
+    @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
     def test_open_analysis(self, qtbot, monkeypatch, tmp_path):
         monkeypatch.setattr(analysis_main_window, "CONFIG_FOLDER", str(tmp_path))
         main_window = LauncherMainWindow("Launcher")
