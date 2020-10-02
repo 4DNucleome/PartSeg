@@ -492,11 +492,13 @@ class ImageView(QWidget):
             return median(array, int(parameters[1]))
 
     def _remove_worker(self, sender):
-        try:
-            sender_index = self.worker_list.index(sender)
-            self.worker_list.pop(sender_index)
-        except ValueError:
-            pass
+        for worker in self.worker_list:
+            signals = "_signals" if hasattr(worker, "_signals") else "signals"
+            if sender is getattr(worker, signals):
+                self.worker_list.remove(worker)
+                break
+        else:
+            print("[_remove_worker]", sender)
 
     def _add_image(self, image_data: Tuple[ImageInfo, bool]):
         self._remove_worker(self.sender())
@@ -577,8 +579,8 @@ class ImageView(QWidget):
 
         worker = prepare_layers(image, parameters, replace)
         worker.returned.connect(self._add_image)
-        worker.start()
         self.worker_list.append(worker)
+        worker.start()
 
         return image
 

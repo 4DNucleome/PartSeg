@@ -79,19 +79,25 @@ class MainWindow(QMainWindow):
 
     def launch_analysis(self):
         self._launch_begin()
+        self._launch_analysis()
+        self.prepare.start()
+
+    def _launch_analysis(self):
         self.lib_path = "PartSeg.roi_analysis.main_window"
         self.final_title = f"{APP_NAME} {ANALYSIS_NAME}"
         self.prepare = Prepare(self.lib_path)
         self.prepare.finished.connect(self.launch)
-        self.prepare.start()
 
     def launch_mask(self):
         self._launch_begin()
+        self._launch_mask()
+        self.prepare.start()
+
+    def _launch_mask(self):
         self.lib_path = "PartSeg.roi_mask.main_window"
         self.final_title = f"{APP_NAME} {MASK_NAME}"
         self.prepare = Prepare(self.lib_path)
         self.prepare.finished.connect(self.launch)
-        self.prepare.start()
 
     def window_shown(self):
         self.close()
