@@ -6,9 +6,9 @@ import numpy as np
 import pytest
 
 from PartSeg.common_backend.base_settings import BaseSettings
-from PartSeg.segmentation_analysis.partseg_settings import PartSettings
-from PartSeg.segmentation_mask.main_window import ChosenComponents
-from PartSeg.segmentation_mask.stack_settings import StackSettings
+from PartSeg.roi_analysis.partseg_settings import PartSettings
+from PartSeg.roi_mask.main_window import ChosenComponents
+from PartSeg.roi_mask.stack_settings import StackSettings
 from PartSegCore.analysis import analysis_algorithm_dict
 from PartSegCore.analysis.io_utils import create_history_element_from_project
 from PartSegCore.analysis.load_functions import LoadProject

@@ -11,7 +11,7 @@ __author__ = "Grzegorz Bokota"
 APP_NAME = "PartSeg"
 APP_LAB = "LFSG"
 MASK_NAME = "ROI Mask"
-SEGMENTATION_NAME = "ROI Analysis"
+ANALYSIS_NAME = "ROI Analysis"
 
 __all__ = (
     "__author__",
@@ -21,5 +21,5 @@ __all__ = (
     "APP_NAME",
     "MASK_NAME",
     "APP_LAB",
-    "SEGMENTATION_NAME",
+    "ANALYSIS_NAME",
 )

@@ -14,7 +14,7 @@ from qtpy.QtWidgets import (
 
 from PartSeg.common_gui.universal_gui_part import ChannelComboBox, EnumComboBox
 from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
-from PartSeg.segmentation_mask.stack_settings import StackSettings
+from PartSeg.roi_mask.stack_settings import StackSettings
 from PartSegCore import Units
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, PerComponent
 from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile, MeasurementResult

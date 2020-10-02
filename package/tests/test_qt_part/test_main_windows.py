@@ -5,8 +5,8 @@ import napari
 import pytest
 import qtpy
 
-from PartSeg.segmentation_analysis.main_window import MainWindow as AnalysisMainWindow
-from PartSeg.segmentation_mask.main_window import MainWindow as MaskMainWindow
+from PartSeg.roi_analysis.main_window import MainWindow as AnalysisMainWindow
+from PartSeg.roi_mask.main_window import MainWindow as MaskMainWindow
 
 from .utils import CI_BUILD, GITHUB_ACTIONS
 

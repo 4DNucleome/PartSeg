@@ -58,7 +58,7 @@ from ..common_gui.select_multiple_files import AddFiles
 from ..common_gui.stack_image_view import ColorBar
 from ..common_gui.universal_gui_part import right_label
 from ..common_gui.waiting_dialog import ExecuteFunctionDialog
-from ..segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
+from ..roi_mask.segmentation_info_dialog import SegmentationInfoDialog
 from .batch_proceed import BatchProceed, BatchTask
 from .image_view import StackImageView
 from .simple_measurements import SimpleMeasurements

@@ -9,10 +9,11 @@ try:
     from napari._qt.qthreading import wait_for_workers_to_quit
 except ImportError:
     from napari._qt.threading import wait_for_workers_to_quit
+
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QFontDatabase
 
-from PartSeg import APP_NAME, MASK_NAME, SEGMENTATION_NAME
+from PartSeg import ANALYSIS_NAME, APP_NAME, MASK_NAME
 from PartSeg.common_backend.base_argparser import CustomParser
 from PartSeg.custom_application import CustomApplication
 from PartSegData import font_dir, icons_dir
@@ -31,8 +32,8 @@ def _test_imports():
 
     from PartSeg import plugins
     from PartSeg.launcher.main_window import MainWindow
-    from PartSeg.segmentation_analysis.main_window import MainWindow as AnalysisMain
-    from PartSeg.segmentation_mask.main_window import MainWindow as MaskMain
+    from PartSeg.roi_analysis.main_window import MainWindow as AnalysisMain
+    from PartSeg.roi_mask.main_window import MainWindow as MaskMain
 
     plugins.register()
     w1 = AnalysisMain("test")
@@ -62,7 +63,7 @@ def main():
     sp_s = sp.add_parser("mask_segmentation", help="Starts GUI for segmentation")
     parser.set_defaults(gui="launcher")
     sp_a.set_defaults(gui="roi_analysis")
-    sp_s.set_defaults(gui="mask_segmentation")
+    sp_s.set_defaults(gui="roi_mask")
     sp_a.add_argument("image", nargs="?", help="image to read on begin", default="")
     sp_a.add_argument("mask", nargs="?", help="mask to read on begin", default=None)
     sp_a.add_argument("--batch", action="store_true", help=argparse.SUPPRESS)
@@ -81,20 +82,20 @@ def main():
         from PartSeg import plugins
 
         plugins.register()
-        from PartSeg.segmentation_analysis.main_window import MainWindow
+        from PartSeg.roi_analysis.main_window import MainWindow
 
-        title = f"{APP_NAME} {SEGMENTATION_NAME}"
+        title = f"{APP_NAME} {ANALYSIS_NAME}"
         if args.image:
             image = TiffImageReader.read_image(args.image, args.mask)
             MainWindow = partial(MainWindow, initial_image=image)
         wind = MainWindow(title=title)
         if args.batch:
             wind.main_menu.batch_window()
-    elif args.gui == "mask_segmentation":
+    elif args.gui == "roi_mask":
         from PartSeg import plugins
 
         plugins.register()
-        from PartSeg.segmentation_mask.main_window import MainWindow
+        from PartSeg.roi_mask.main_window import MainWindow
 
         title = f"{APP_NAME} {MASK_NAME}"
         if args.image:

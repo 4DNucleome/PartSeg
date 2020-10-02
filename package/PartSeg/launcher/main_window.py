@@ -6,7 +6,7 @@ from qtpy.QtCore import QSize, Qt, QThread
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QGridLayout, QMainWindow, QMessageBox, QProgressBar, QToolButton, QWidget
 
-from PartSeg import MASK_NAME, SEGMENTATION_NAME
+from PartSeg import ANALYSIS_NAME, APP_NAME, MASK_NAME
 from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_backend.load_backup import import_config
 from PartSeg.common_gui.main_window import BaseMainWindow
@@ -48,7 +48,7 @@ class MainWindow(QMainWindow):
         self.analysis_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.analysis_button.setIcon(analysis_icon)
         # TODO use more general solution for text wrapping
-        self.analysis_button.setText(SEGMENTATION_NAME.replace(" ", "\n"))
+        self.analysis_button.setText(ANALYSIS_NAME.replace(" ", "\n"))
         self.analysis_button.setIconSize(QSize(100, 100))
         self.mask_button = QToolButton(self)
         self.mask_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
@@ -79,16 +79,16 @@ class MainWindow(QMainWindow):
 
     def launch_analysis(self):
         self._launch_begin()
-        self.lib_path = "PartSeg.segmentation_analysis.main_window"
-        self.final_title = "PartSeg Segmentation Analysis"
+        self.lib_path = "PartSeg.roi_analysis.main_window"
+        self.final_title = f"{APP_NAME} {ANALYSIS_NAME}"
         self.prepare = Prepare(self.lib_path)
         self.prepare.finished.connect(self.launch)
         self.prepare.start()
 
     def launch_mask(self):
         self._launch_begin()
-        self.lib_path = "PartSeg.segmentation_mask.main_window"
-        self.final_title = "PartSeg Mask Segmentation"
+        self.lib_path = "PartSeg.roi_mask.main_window"
+        self.final_title = f"{APP_NAME} {MASK_NAME}"
         self.prepare = Prepare(self.lib_path)
         self.prepare.finished.connect(self.launch)
         self.prepare.start()

@@ -8,7 +8,7 @@ from typing import List, NamedTuple, Optional, Tuple, Union
 
 from qtpy.QtCore import QThread, Signal
 
-from PartSeg.segmentation_mask.stack_settings import StackSettings, get_mask
+from PartSeg.roi_mask.stack_settings import StackSettings, get_mask
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 from PartSegCore.mask.io_functions import LoadSegmentationImage, LoadStackImage, SaveSegmentation, SegmentationTuple

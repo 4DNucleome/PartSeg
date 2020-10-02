@@ -23,7 +23,7 @@ import PartSegData
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.main_window import BaseMainMenu, BaseMainWindow
 from PartSeg.common_gui.stacked_widget_with_selector import StackedWidgetWithSelector
-from PartSeg.segmentation_analysis.measurement_widget import MeasurementWidget
+from PartSeg.roi_analysis.measurement_widget import MeasurementWidget
 from PartSegCore import state_store
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.analysis import ProjectTuple, algorithm_description, load_functions

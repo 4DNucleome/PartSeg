@@ -3,9 +3,9 @@ import pytest
 try:
     # to ignore problem with test in docker container
 
-    from PartSeg.segmentation_analysis.partseg_settings import PartSettings
-    from PartSeg.segmentation_mask.main_window import ChosenComponents
-    from PartSeg.segmentation_mask.stack_settings import StackSettings
+    from PartSeg.roi_analysis.partseg_settings import PartSettings
+    from PartSeg.roi_mask.main_window import ChosenComponents
+    from PartSeg.roi_mask.stack_settings import StackSettings
 
     @pytest.fixture
     def part_settings(image, tmp_path, measurement_profiles):
