@@ -10,7 +10,7 @@ __author__ = "Grzegorz Bokota"
 
 APP_NAME = "PartSeg"
 APP_LAB = "LFSG"
-MASK_NAME = "Mask Segmentation"
+MASK_NAME = "ROI Cut"
 SEGMENTATION_NAME = "ROI Analysis"
 
 __all__ = (
