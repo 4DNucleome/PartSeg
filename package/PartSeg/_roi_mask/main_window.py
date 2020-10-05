@@ -907,7 +907,7 @@ class MainWindow(BaseMainWindow):
         view_menu.addAction("Additional output").triggered.connect(self.additional_layers_show)
         view_menu.addAction("Additional output with data").triggered.connect(lambda: self.additional_layers_show(True))
         view_menu.addAction("Napari viewer").triggered.connect(self.napari_viewer_show)
-        view_menu.addAction("Toggle Multiple Files Widget").triggered.connect(self.toggle_multiple_files)
+        view_menu.addAction("Toggle Multiple Files").triggered.connect(self.toggle_multiple_files)
         action = view_menu.addAction("Screenshot")
         action.triggered.connect(self.screenshot(self.image_view))
         action.setShortcut(QKeySequence.Print)
