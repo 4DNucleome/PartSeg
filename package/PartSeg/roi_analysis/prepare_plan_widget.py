@@ -98,7 +98,6 @@ class MaskDialog(QDialog):
         text1 = self.get_result()[0]
         if text1 == "" or text1 not in self.mask_names:
             self.ok_btn.setDisabled(True)
-            return
         else:
             self.ok_btn.setDisabled(False)
 
@@ -144,7 +143,6 @@ class TwoMaskDialog(QDialog):
         text1, text2 = self.get_result()
         if text1 == "" or text2 == "" or text1 not in self.mask_names or text2 not in self.mask_names:
             self.ok_btn.setDisabled(True)
-            return
         else:
             self.ok_btn.setDisabled(text1 == text2)
 
@@ -203,7 +201,7 @@ class FileMask(QWidget):
         if self.state == index:
             return
         if self.state == 1:
-            self.values[1] == self.first_text.text(), self.second_text.text()
+            self.values[1] = self.first_text.text(), self.second_text.text()
         else:
             self.values[self.state] = self.first_text.text()
         if index == 1:
@@ -236,18 +234,18 @@ class FileMask(QWidget):
             return self.first_text.text().strip() != ""
         if self.select_type.currentIndex() == 1:
             return self.first_text.text().strip() != "" and self.second_text.text().strip() != ""
-        else:
-            text = self.first_text.text().strip()
-            return text != "" and os.path.exists(text) and os.path.isfile(text)
+
+        text = self.first_text.text().strip()
+        return text != "" and os.path.exists(text) and os.path.isfile(text)
 
     def get_value(self, name=""):
         mask_type = self.select_type.currentIndex()
         if mask_type == 0:
             return MaskSuffix(name, self.first_text.text().strip())
-        elif mask_type == 1:
+        if mask_type == 1:
             return MaskSub(name, self.first_text.text().strip(), self.second_text.text().strip())
-        else:
-            return MaskFile(name, self.first_text.text().strip())
+
+        return MaskFile(name, self.first_text.text().strip())
 
 
 class MaskOperation(Enum):
@@ -535,7 +533,7 @@ class CreatePlan(QWidget):
             self.remove_btn.setEnabled(True)
         else:
             self.remove_btn.setEnabled(False)
-        if node_type == NodeType.mask or node_type == NodeType.file_mask:
+        if node_type in (NodeType.mask, NodeType.file_mask):
             self.mask_allow = False
             self.segment_allow = True
             self.file_mask_allow = False
@@ -550,7 +548,7 @@ class CreatePlan(QWidget):
             self.mask_allow = False
             self.segment_allow = True
             self.file_mask_allow = True
-        elif node_type == NodeType.none or node_type == NodeType.measurement or node_type == NodeType.save:
+        elif node_type in (NodeType.none, NodeType.measurement, NodeType.save):
             self.mask_allow = False
             self.segment_allow = False
             self.file_mask_allow = False

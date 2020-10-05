@@ -219,19 +219,19 @@ class MainMenu(BaseMainMenu):
             if image.is_stack:
                 QMessageBox.warning(self, "Not supported", "Data that are time data are currently not supported")
                 return False
-            else:
-                res = QMessageBox.question(
-                    self,
-                    "Not supported",
-                    "Time data are currently not supported. Maybe You would like to treat time as z-stack",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No,
-                )
 
-                if res == QMessageBox.Yes:
-                    image = image.swap_time_and_stack()
-                else:
-                    return False
+            res = QMessageBox.question(
+                self,
+                "Not supported",
+                "Time data are currently not supported. Maybe You would like to treat time as z-stack",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            )
+
+            if res == QMessageBox.Yes:
+                image = image.swap_time_and_stack()
+            else:
+                return False
         self.settings.image = image
         return True
 
@@ -408,7 +408,7 @@ class ChosenComponents(QWidget):
     def __init__(self):
         super(ChosenComponents, self).__init__()
         # self.setLayout(FlowLayout())
-        self.check_box = dict()
+        self.check_box = {}
         self.check_all_btn = QPushButton("Select all")
         self.check_all_btn.clicked.connect(self.check_all)
         self.un_check_all_btn = QPushButton("Unselect all")

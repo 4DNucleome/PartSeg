@@ -137,16 +137,16 @@ class PartSettings(BaseSettings):
 
     @property
     def segmentation_pipelines(self) -> typing.Dict[str, SegmentationPipeline]:
-        return self.segmentation_pipelines_dict.get(self.current_segmentation_dict, dict())
+        return self.segmentation_pipelines_dict.get(self.current_segmentation_dict, {})
 
     @property
     def segmentation_profiles(self) -> typing.Dict[str, SegmentationProfile]:
-        return self.segmentation_profiles_dict.get(self.current_segmentation_dict, dict())
+        return self.segmentation_profiles_dict.get(self.current_segmentation_dict, {})
 
     @property
     def batch_plans(self) -> typing.Dict[str, CalculationPlan]:
-        return self.batch_plans_dict.get(self.current_segmentation_dict, dict())
+        return self.batch_plans_dict.get(self.current_segmentation_dict, {})
 
     @property
     def measurement_profiles(self) -> typing.Dict[str, MeasurementProfile]:
-        return self.measurement_profiles_dict.get(self.current_segmentation_dict, dict())
+        return self.measurement_profiles_dict.get(self.current_segmentation_dict, {})

@@ -289,17 +289,25 @@ class ImportDialog(QDialog):
         self.import_btn.setDisabled(False)
 
 
-class StringViewer(QTextEdit):
-    def __init__(self):
-        super(StringViewer, self).__init__()
+class ObjectPreview(QTextEdit):
+    """Base class for viewer used by :py:class:`ExportDialog` to preview data  """
+
+    def preview_object(self, ob):
+        raise NotImplementedError()
+
+
+class StringViewer(ObjectPreview):
+    """Simple __str__ serialization"""
 
     def preview_object(self, ob):
         self.setText(str(ob))
 
 
-class ProfileDictViewer(QTextEdit):
-    def __init__(self):
-        super().__init__()
+class ProfileDictViewer(ObjectPreview):
+    """
+    Preview of :py:class"`SegmentationProfile`.
+    Serialized using :py:meth:`ObjectPreview.pretty_print`.
+    """
 
     def preview_object(self, profile: SegmentationProfile):
         text = profile.pretty_print(analysis_algorithm_dict)

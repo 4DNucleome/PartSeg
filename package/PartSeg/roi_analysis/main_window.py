@@ -399,7 +399,7 @@ class MainMenu(BaseMainMenu):
         super().keyPressEvent(event)
 
     def save_file(self):
-        base_values = self.settings.get("save_parameters", dict())
+        base_values = self.settings.get("save_parameters", {})
         dial = SaveDialog(
             save_dict, system_widget=False, base_values=base_values, history=self.settings.get_path_history()
         )
@@ -449,7 +449,7 @@ class MainMenu(BaseMainMenu):
             if isinstance(exception, ValueError) and exception.args[0] == "Incompatible shape of mask and image":
                 instance.warning = (
                     "Open error",
-                    "Most probably you try to load mask from other image. " "Check selected files",
+                    "Most probably you try to load mask from other image. Check selected files",
                 )
                 QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
             elif isinstance(exception, MemoryError):

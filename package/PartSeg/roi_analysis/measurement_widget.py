@@ -60,8 +60,8 @@ class MeasurementsStorage:
     def get_size(self, save_orientation: bool):
         if save_orientation:
             return self.max_rows, len(self.header)
-        else:
-            return len(self.header), self.max_rows
+
+        return len(self.header), self.max_rows
 
     def set_expand(self, expand):
         if self.expand != expand:
@@ -120,8 +120,8 @@ class MeasurementsStorage:
     def get_header(self, save_orientation: bool) -> List[str]:
         if save_orientation:
             return [str(i) for i in range(self.max_rows)]
-        else:
-            return self.header
+
+        return self.header
 
     def get_rows(self, save_orientation: bool) -> List[str]:
         return self.get_header(not save_orientation)

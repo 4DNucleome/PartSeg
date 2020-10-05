@@ -60,8 +60,8 @@ class StackSettings(BaseSettings):
         """
         if self.chosen_components_widget is not None:
             return sorted(self.chosen_components_widget.get_chosen())
-        else:
-            raise RuntimeError("chosen_components_widget do not initialized")
+
+        raise RuntimeError("chosen_components_widget do not initialized")
 
     def component_is_chosen(self, val: int) -> bool:
         """
@@ -72,8 +72,8 @@ class StackSettings(BaseSettings):
         """
         if self.chosen_components_widget is not None:
             return self.chosen_components_widget.get_state(val)
-        else:
-            raise RuntimeError("chosen_components_widget do not idealized")
+
+        raise RuntimeError("chosen_components_widget do not idealized")
 
     def components_mask(self) -> np.ndarray:
         """
@@ -84,8 +84,8 @@ class StackSettings(BaseSettings):
         """
         if self.chosen_components_widget is not None:
             return self.chosen_components_widget.get_mask()
-        else:
-            raise RuntimeError("chosen_components_widget do not initialized")
+
+        raise RuntimeError("chosen_components_widget do not initialized")
 
     def get_project_info(self) -> SegmentationTuple:
         """
@@ -156,6 +156,7 @@ class StackSettings(BaseSettings):
         save_chosen: bool = True,
     ) -> SegmentationTuple:
 
+        # TODO Refactor
         if list_of_components is None:
             list_of_components = []
         if segmentation_parameters is None:
@@ -194,21 +195,23 @@ class StackSettings(BaseSettings):
                         components_list.append(base_index)
                         components_parameters_dict[base_index] = segmentation_parameters[i]
                         base_index += 1
+
                 return dataclasses.replace(
                     state,
                     segmentation=segmentation,
                     selected_components=chosen_components,
                     segmentation_parameters=components_parameters_dict,
                 )
-            else:
-                for i in range(1, num + 1):
-                    components_parameters_dict[i] = segmentation_parameters[i]
-                return dataclasses.replace(
-                    state,
-                    segmentation=new_segmentation_data,
-                    selected_components=list_of_components,
-                    segmentation_parameters=components_parameters_dict,
-                )
+
+            for i in range(1, num + 1):
+                components_parameters_dict[i] = segmentation_parameters[i]
+
+            return dataclasses.replace(
+                state,
+                segmentation=new_segmentation_data,
+                selected_components=list_of_components,
+                segmentation_parameters=components_parameters_dict,
+            )
         else:
             return dataclasses.replace(
                 state,
