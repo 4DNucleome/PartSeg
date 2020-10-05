@@ -612,6 +612,7 @@ class MainWindow(BaseMainWindow):
         view_menu.addAction("Additional output").triggered.connect(self.additional_layers_show)
         view_menu.addAction("Additional output with data").triggered.connect(lambda: self.additional_layers_show(True))
         view_menu.addAction("Napari viewer").triggered.connect(self.napari_viewer_show)
+        view_menu.addAction("Toggle Multiple Files Widget").triggered.connect(self.toggle_multiple_files)
         action = view_menu.addAction("Screenshot right panel")
         action.triggered.connect(self.screenshot(self.result_image))
         action.setShortcut(QKeySequence.Print)
@@ -654,6 +655,10 @@ class MainWindow(BaseMainWindow):
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
         except KeyError:
             pass
+
+    def toggle_multiple_files(self):
+        self.settings.set("multiple_files", not self.settings.get("multiple_files"))
+        self.multiple_files.setVisible(self.settings.get("multiple_files"))
 
     def image_read(self):
         # self.raw_image.set_image()

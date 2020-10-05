@@ -907,6 +907,7 @@ class MainWindow(BaseMainWindow):
         view_menu.addAction("Additional output").triggered.connect(self.additional_layers_show)
         view_menu.addAction("Additional output with data").triggered.connect(lambda: self.additional_layers_show(True))
         view_menu.addAction("Napari viewer").triggered.connect(self.napari_viewer_show)
+        view_menu.addAction("Toggle Multiple Files Widget").triggered.connect(self.toggle_multiple_files)
         action = view_menu.addAction("Screenshot")
         action.triggered.connect(self.screenshot(self.image_view))
         action.setShortcut(QKeySequence.Print)
@@ -950,13 +951,15 @@ class MainWindow(BaseMainWindow):
         except KeyError:
             pass
 
+    def toggle_multiple_files(self):
+        self.settings.set("multiple_files_widget", not self.settings.get("multiple_files_widget"))
+        self.multiple_file.setVisible(self.settings.get("multiple_files_widget"))
+
     def image_read(self):
         self.image_view.reset_image_size()
         self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
 
     def closeEvent(self, event: QCloseEvent):
-        # print(self.settings.dump_view_profiles())
-        # print(self.settings.segmentation_dict["default"].my_dict)
         self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
         self.options_panel.algorithm_options.algorithm_choose_widget.recursive_get_values()
         self.main_menu.segmentation_dialog.close()
