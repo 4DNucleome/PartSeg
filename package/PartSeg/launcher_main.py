@@ -31,9 +31,9 @@ def _test_imports():
     from napari._qt.widgets.qt_console import QtConsole
 
     from PartSeg import plugins
-    from PartSeg.launcher.main_window import MainWindow
-    from PartSeg.roi_analysis.main_window import MainWindow as AnalysisMain
-    from PartSeg.roi_mask.main_window import MainWindow as MaskMain
+    from PartSeg._launcher.main_window import MainWindow
+    from PartSeg._roi_analysis.main_window import MainWindow as AnalysisMain
+    from PartSeg._roi_mask.main_window import MainWindow as MaskMain
 
     plugins.register()
     w1 = AnalysisMain("test")
@@ -82,7 +82,7 @@ def main():
         from PartSeg import plugins
 
         plugins.register()
-        from PartSeg.roi_analysis.main_window import MainWindow
+        from PartSeg._roi_analysis.main_window import MainWindow
 
         title = f"{APP_NAME} {ANALYSIS_NAME}"
         if args.image:
@@ -95,7 +95,7 @@ def main():
         from PartSeg import plugins
 
         plugins.register()
-        from PartSeg.roi_mask.main_window import MainWindow
+        from PartSeg._roi_mask.main_window import MainWindow
 
         title = f"{APP_NAME} {MASK_NAME}"
         if args.image:
@@ -103,7 +103,7 @@ def main():
             MainWindow = partial(MainWindow, initial_image=image)
         wind = MainWindow(title=title)
     else:
-        from PartSeg.launcher.main_window import MainWindow
+        from PartSeg._launcher.main_window import MainWindow
 
         title = f"{APP_NAME} Launcher"
         wind = MainWindow(title=title)

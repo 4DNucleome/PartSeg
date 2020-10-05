@@ -2,8 +2,8 @@ import numpy as np
 from qtpy.QtCore import QEvent
 from qtpy.QtWidgets import QApplication, QCheckBox
 
-from PartSeg.roi_analysis.measurement_widget import MeasurementsStorage, MeasurementWidget, QMessageBox
-from PartSeg.roi_mask.simple_measurements import SimpleMeasurements
+from PartSeg._roi_analysis.measurement_widget import MeasurementsStorage, MeasurementWidget, QMessageBox
+from PartSeg._roi_mask.simple_measurements import SimpleMeasurements
 from PartSegCore.analysis.measurement_base import AreaType, PerComponent
 from PartSegCore.analysis.measurement_calculation import ComponentsInfo, MeasurementResult
 

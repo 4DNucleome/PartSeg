@@ -6,9 +6,9 @@ import pytest
 import qtpy
 from qtpy.QtCore import QCoreApplication
 
-from PartSeg.launcher.main_window import MainWindow as LauncherMainWindow
-from PartSeg.roi_analysis import main_window as analysis_main_window
-from PartSeg.roi_mask import main_window as mask_main_window
+from PartSeg._launcher.main_window import MainWindow as LauncherMainWindow
+from PartSeg._roi_analysis import main_window as analysis_main_window
+from PartSeg._roi_mask import main_window as mask_main_window
 
 from .utils import CI_BUILD, GITHUB_ACTIONS
 

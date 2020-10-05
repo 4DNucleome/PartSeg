@@ -6,21 +6,21 @@ import PartSeg
 
 def test_analysis_import():
     try:
-        import PartSeg.roi_analysis.main_window  # noqa: F401
+        import PartSeg._roi_analysis.main_window  # noqa: F401
     except ImportError:
         pytest.fail("Error in importing segmentation ui")
 
 
 def test_launcher_import():
     try:
-        import PartSeg.launcher.main_window  # noqa: F401
+        import PartSeg._launcher.main_window  # noqa: F401
     except ImportError:
         pytest.fail("Error in importing launcher ui")
 
 
 def test_segmentation_import():
     try:
-        import PartSeg.roi_mask.main_window  # noqa: F401
+        import PartSeg._roi_mask.main_window  # noqa: F401
     except ImportError:
         pytest.fail("Error in importing mask segmentation ui")
 
