@@ -887,12 +887,12 @@ class MainWindow(BaseMainWindow):
         self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
         self.color_bar = ColorBar(self.settings, self.image_view)
-        self.multiple_file = MultipleFileWidget(self.settings, io_functions.load_dict)
-        self.multiple_file.setVisible(self.options_panel.image_properties.multiple_files.isChecked())
+        self.multiple_files = MultipleFileWidget(self.settings, io_functions.load_dict)
+        self.multiple_files.setVisible(self.options_panel.image_properties.multiple_files.isChecked())
         self.options_panel.algorithm_options.batch_process.multiple_result.connect(
-            partial(self.multiple_file.save_state_action, custom_name=False)
+            partial(self.multiple_files.save_state_action, custom_name=False)
         )
-        self.options_panel.image_properties.multiple_files.stateChanged.connect(self.multiple_file.setVisible)
+        self.options_panel.image_properties.multiple_files.stateChanged.connect(self.multiple_files.setVisible)
 
         icon = QIcon(os.path.join(PartSegData.icons_dir, "icon_stack.png"))
         self.setWindowIcon(icon)
@@ -907,6 +907,7 @@ class MainWindow(BaseMainWindow):
         view_menu.addAction("Additional output").triggered.connect(self.additional_layers_show)
         view_menu.addAction("Additional output with data").triggered.connect(lambda: self.additional_layers_show(True))
         view_menu.addAction("Napari viewer").triggered.connect(self.napari_viewer_show)
+        view_menu.addAction("Toggle Multiple Files").triggered.connect(self.toggle_multiple_files)
         action = view_menu.addAction("Screenshot")
         action.triggered.connect(self.screenshot(self.image_view))
         action.setShortcut(QKeySequence.Print)
@@ -921,7 +922,7 @@ class MainWindow(BaseMainWindow):
         sub_layout = QHBoxLayout()
         sub2_layout = QVBoxLayout()
         sub3_layout = QVBoxLayout()
-        sub_layout.addWidget(self.multiple_file)
+        sub_layout.addWidget(self.multiple_files)
         sub_layout.addWidget(self.color_bar, 0)
         sub3_layout.addWidget(self.image_view, 1)
         sub3_layout.addWidget(self.info_text, 0)
@@ -955,8 +956,6 @@ class MainWindow(BaseMainWindow):
         self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
 
     def closeEvent(self, event: QCloseEvent):
-        # print(self.settings.dump_view_profiles())
-        # print(self.settings.segmentation_dict["default"].my_dict)
         self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
         self.options_panel.algorithm_options.algorithm_choose_widget.recursive_get_values()
         self.main_menu.segmentation_dialog.close()

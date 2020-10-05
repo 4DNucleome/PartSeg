@@ -565,7 +565,6 @@ class MainWindow(BaseMainWindow):
         # thi isinstance is only for hinting in IDE
         assert isinstance(self.settings, PartSettings)  # nosec
         self.main_menu = MainMenu(self.settings, self)
-        # self.channel_control1 = ChannelControl(self.settings, name="raw_control", text="Left panel:")
         self.channel_control2 = ChannelProperty(self.settings, start_name="result_control")
         self.raw_image = CompareImageView(self.settings, self.channel_control2, "raw_image")
         self.measurements = MeasurementWidget(self.settings)
@@ -579,7 +578,6 @@ class MainWindow(BaseMainWindow):
         self.raw_image.text_info_change.connect(self.info_text.setText)
         self.result_image.text_info_change.connect(self.info_text.setText)
         self.synchronize_tool = SynchronizeView(self.raw_image, self.result_image, self)
-        # image_view_control = self.image_view.get_control_view()
         self.options_panel = Options(self.settings, self.channel_control2, self.raw_image, self.synchronize_tool)
         # self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
@@ -612,6 +610,8 @@ class MainWindow(BaseMainWindow):
         view_menu.addAction("Additional output").triggered.connect(self.additional_layers_show)
         view_menu.addAction("Additional output with data").triggered.connect(lambda: self.additional_layers_show(True))
         view_menu.addAction("Napari viewer").triggered.connect(self.napari_viewer_show)
+        view_menu.addAction("Toggle Multiple Files").triggered.connect(self.toggle_multiple_files)
+        view_menu.addAction("Toggle left panel").triggered.connect(self.toggle_left_panel)
         action = view_menu.addAction("Screenshot right panel")
         action.triggered.connect(self.screenshot(self.result_image))
         action.setShortcut(QKeySequence.Print)
@@ -624,7 +624,6 @@ class MainWindow(BaseMainWindow):
         help_menu.addAction("About").triggered.connect(self.show_about_dialog)
 
         layout = QGridLayout()
-        # layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         info_layout = QHBoxLayout()
         info_layout.addWidget(self.left_stack.selector)
@@ -640,14 +639,11 @@ class MainWindow(BaseMainWindow):
         layout.addLayout(info_layout, 1, 1, 1, 2)
         layout.addWidget(self.multiple_files, 2, 0)
         layout.addWidget(self.color_bar, 2, 1)
-        # layout.addWidget(self.left_stack, 2, 2)
-        # layout.addWidget(self.result_image, 2, 3)
         layout.addLayout(image_layout, 2, 2, 1, 1)
         layout.addWidget(self.options_panel, 0, 3, 3, 1)
         layout.setColumnStretch(2, 1)
         widget = QWidget()
         widget.setLayout(layout)
-        # self.multiple_files.setHidden(True)
         self.setCentralWidget(widget)
         try:
             geometry = self.settings.get_from_profile("main_window_geometry")
@@ -655,11 +651,10 @@ class MainWindow(BaseMainWindow):
         except KeyError:
             pass
 
+    def toggle_left_panel(self):
+        self.options_panel.hide_left_panel(not self.settings.get_from_profile("hide_left_panel"))
+
     def image_read(self):
-        # self.raw_image.set_image()
-        # self.raw_image.reset_image_size()
-        # self.result_image.set_image()
-        # self.result_image.reset_image_size()
         self.options_panel.interactive_algorithm_execute()
         self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
 
@@ -671,12 +666,10 @@ class MainWindow(BaseMainWindow):
 
     def event(self, event: QEvent):
         if event.type() == QEvent.WindowActivate:
-            self.multiple_files.setVisible(self.settings.get("multiple_files", False))
+            self.multiple_files.setVisible(self.settings.get("multiple_files_widget", False))
         return super().event(event)
 
     def closeEvent(self, event):
-        # print(self.settings.dump_view_profiles())
-        # print(self.settings.segmentation_dict["default"].my_dict)
         self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
         self.options_panel.algorithm_choose_widget.recursive_get_values()
         if self.batch_window is not None:

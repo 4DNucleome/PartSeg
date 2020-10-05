@@ -68,7 +68,7 @@ class AdvancedSettings(QWidget):
         self.delete_btn.setDisabled(True)
         self.delete_btn.clicked.connect(self.delete_profile)
         self.multiple_files_chk = QCheckBox("Show multiple files panel")
-        self.multiple_files_chk.setChecked(self._settings.get("multiple_files", False))
+        self.multiple_files_chk.setChecked(self._settings.get("multiple_files_widget", False))
         self.multiple_files_chk.stateChanged.connect(self.multiple_files_visibility)
         self.rename_btn = QPushButton("Rename profile")
         self.rename_btn.clicked.connect(self.rename_profile)
@@ -131,7 +131,7 @@ class AdvancedSettings(QWidget):
 
     @Slot(int)
     def multiple_files_visibility(self, val: int):
-        self._settings.set("multiple_files", val)
+        self._settings.set("multiple_files_widget", val)
 
     @Slot(str)
     def profile_chosen(self, text):
@@ -212,6 +212,7 @@ class AdvancedSettings(QWidget):
         if event.type() == QEvent.WindowActivate and self.isVisible():
             self.update_profile_list()
             self.update_spacing()
+            self.multiple_files_chk.setChecked(self._settings.get("multiple_files_widget", False))
         return super().event(event)
 
     def delete_profile(self):
