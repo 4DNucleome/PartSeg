@@ -50,8 +50,8 @@ class InterpolateDialog(QDialog):
     def get_zoom_factor(self):
         if len(self.start_value) == 3:
             return 1, self.z_spacing.value(), self.y_spacing.value(), self.x_spacing.value()
-        else:
-            return 1, self.y_spacing.value(), self.x_spacing.value()
+
+        return 1, self.y_spacing.value(), self.x_spacing.value()
 
     def get_new_spacing(self):
         if len(self.start_value) == 3:
@@ -60,5 +60,5 @@ class InterpolateDialog(QDialog):
                 self.spacing[1] / self.y_spacing.value(),
                 self.spacing[2] / self.z_spacing.value(),
             ]
-        else:
-            return [self.spacing[0] / self.x_spacing.value(), self.spacing[1] / self.y_spacing.value(), 1]
+
+        return [self.spacing[0] / self.x_spacing.value(), self.spacing[1] / self.y_spacing.value(), 1]

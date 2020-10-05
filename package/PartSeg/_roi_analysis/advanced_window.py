@@ -204,7 +204,7 @@ class AdvancedSettings(QWidget):
         self.rename_btn.setDisabled(True)
         self.info_label.setPlainText("")
 
-    def showEvent(self, a0):
+    def showEvent(self, _event):
         self.update_profile_list()
         self.update_spacing()
 
@@ -855,7 +855,7 @@ class MultipleInput(QDialog):
         QDialog.__init__(self)
         ok_butt = QPushButton("Ok", self)
         cancel_butt = QPushButton("Cancel", self)
-        self.object_dict = dict()
+        self.object_dict = {}
         self.result = None
         ok_butt.clicked.connect(self.accept_response)
         cancel_butt.clicked.connect(self.close)
@@ -893,7 +893,7 @@ class MultipleInput(QDialog):
         self.setLayout(main_layout)
 
     def accept_response(self):
-        res = dict()
+        res = {}
         for name, (type_of, item) in self.object_dict.items():
             if type_of == str:
                 val = str(item.text())

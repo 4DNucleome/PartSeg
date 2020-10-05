@@ -44,6 +44,7 @@ from PartSegCore.mask_create import calculate_mask_from_project
 from PartSegCore.segmentation.algorithm_base import SegmentationResult
 from PartSegImage import Image, TiffImageReader
 
+from .._roi_mask.segmentation_info_dialog import SegmentationInfoDialog
 from ..common_gui.advanced_tabs import AdvancedWindow
 from ..common_gui.algorithms_description import AlgorithmChoose, AlgorithmSettingsWidget, EnumComboBox
 from ..common_gui.channel_control import ChannelProperty
@@ -58,7 +59,6 @@ from ..common_gui.select_multiple_files import AddFiles
 from ..common_gui.stack_image_view import ColorBar
 from ..common_gui.universal_gui_part import right_label
 from ..common_gui.waiting_dialog import ExecuteFunctionDialog
-from ..segmentation_mask.segmentation_info_dialog import SegmentationInfoDialog
 from .batch_proceed import BatchProceed, BatchTask
 from .image_view import StackImageView
 from .simple_measurements import SimpleMeasurements
@@ -219,19 +219,19 @@ class MainMenu(BaseMainMenu):
             if image.is_stack:
                 QMessageBox.warning(self, "Not supported", "Data that are time data are currently not supported")
                 return False
-            else:
-                res = QMessageBox.question(
-                    self,
-                    "Not supported",
-                    "Time data are currently not supported. Maybe You would like to treat time as z-stack",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No,
-                )
 
-                if res == QMessageBox.Yes:
-                    image = image.swap_time_and_stack()
-                else:
-                    return False
+            res = QMessageBox.question(
+                self,
+                "Not supported",
+                "Time data are currently not supported. Maybe You would like to treat time as z-stack",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            )
+
+            if res == QMessageBox.Yes:
+                image = image.swap_time_and_stack()
+            else:
+                return False
         self.settings.image = image
         return True
 
@@ -408,7 +408,7 @@ class ChosenComponents(QWidget):
     def __init__(self):
         super(ChosenComponents, self).__init__()
         # self.setLayout(FlowLayout())
-        self.check_box = dict()
+        self.check_box = {}
         self.check_all_btn = QPushButton("Select all")
         self.check_all_btn.clicked.connect(self.check_all)
         self.un_check_all_btn = QPushButton("Unselect all")

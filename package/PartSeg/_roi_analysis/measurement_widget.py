@@ -60,8 +60,8 @@ class MeasurementsStorage:
     def get_size(self, save_orientation: bool):
         if save_orientation:
             return self.max_rows, len(self.header)
-        else:
-            return len(self.header), self.max_rows
+
+        return len(self.header), self.max_rows
 
     def set_expand(self, expand):
         if self.expand != expand:
@@ -120,8 +120,8 @@ class MeasurementsStorage:
     def get_header(self, save_orientation: bool) -> List[str]:
         if save_orientation:
             return [str(i) for i in range(self.max_rows)]
-        else:
-            return self.header
+
+        return self.header
 
     def get_rows(self, save_orientation: bool) -> List[str]:
         return self.get_header(not save_orientation)
@@ -391,7 +391,7 @@ class MeasurementWidget(QWidget):
             layout1.removeWidget(el[0])
             layout2.addWidget(el[0], el[1])
 
-    def resizeEvent(self, a0: QResizeEvent) -> None:
+    def resizeEvent(self, _event: QResizeEvent) -> None:
         if self.width() < 800 and self.butt_layout2.count() == 0:
             self._move_widgets(
                 [(self.file_names_label, 1), (self.file_names, 1), (self.copy_button, 2)],

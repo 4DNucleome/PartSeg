@@ -20,10 +20,10 @@ from qtpy.QtWidgets import (
 )
 
 import PartSegData
+from PartSeg._roi_analysis.measurement_widget import MeasurementWidget
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.main_window import BaseMainMenu, BaseMainWindow
 from PartSeg.common_gui.stacked_widget_with_selector import StackedWidgetWithSelector
-from PartSeg.segmentation_analysis.measurement_widget import MeasurementWidget
 from PartSegCore import state_store
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.analysis import ProjectTuple, algorithm_description, load_functions
@@ -60,7 +60,6 @@ class Options(QWidget):
         settings: PartSettings,
         channel_control2: ChannelProperty,
         left_image: ResultImageView,
-        main_image: ResultImageView,
         synchronize: SynchronizeView,
     ):
         super().__init__()
@@ -399,7 +398,7 @@ class MainMenu(BaseMainMenu):
         super().keyPressEvent(event)
 
     def save_file(self):
-        base_values = self.settings.get("save_parameters", dict())
+        base_values = self.settings.get("save_parameters", {})
         dial = SaveDialog(
             save_dict, system_widget=False, base_values=base_values, history=self.settings.get_path_history()
         )
@@ -449,7 +448,7 @@ class MainMenu(BaseMainMenu):
             if isinstance(exception, ValueError) and exception.args[0] == "Incompatible shape of mask and image":
                 instance.warning = (
                     "Open error",
-                    "Most probably you try to load mask from other image. " "Check selected files",
+                    "Most probably you try to load mask from other image. Check selected files",
                 )
                 QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
             elif isinstance(exception, MemoryError):
@@ -581,9 +580,7 @@ class MainWindow(BaseMainWindow):
         self.result_image.text_info_change.connect(self.info_text.setText)
         self.synchronize_tool = SynchronizeView(self.raw_image, self.result_image, self)
         # image_view_control = self.image_view.get_control_view()
-        self.options_panel = Options(
-            self.settings, self.channel_control2, self.raw_image, self.result_image, self.synchronize_tool
-        )
+        self.options_panel = Options(self.settings, self.channel_control2, self.raw_image, self.synchronize_tool)
         # self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
         self.advanced_window = SegAdvancedWindow(self.settings, reload_list=[self.reload])
