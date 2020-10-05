@@ -887,12 +887,12 @@ class MainWindow(BaseMainWindow):
         self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
         self.color_bar = ColorBar(self.settings, self.image_view)
-        self.multiple_file = MultipleFileWidget(self.settings, io_functions.load_dict)
-        self.multiple_file.setVisible(self.options_panel.image_properties.multiple_files.isChecked())
+        self.multiple_files = MultipleFileWidget(self.settings, io_functions.load_dict)
+        self.multiple_files.setVisible(self.options_panel.image_properties.multiple_files.isChecked())
         self.options_panel.algorithm_options.batch_process.multiple_result.connect(
-            partial(self.multiple_file.save_state_action, custom_name=False)
+            partial(self.multiple_files.save_state_action, custom_name=False)
         )
-        self.options_panel.image_properties.multiple_files.stateChanged.connect(self.multiple_file.setVisible)
+        self.options_panel.image_properties.multiple_files.stateChanged.connect(self.multiple_files.setVisible)
 
         icon = QIcon(os.path.join(PartSegData.icons_dir, "icon_stack.png"))
         self.setWindowIcon(icon)
@@ -922,7 +922,7 @@ class MainWindow(BaseMainWindow):
         sub_layout = QHBoxLayout()
         sub2_layout = QVBoxLayout()
         sub3_layout = QVBoxLayout()
-        sub_layout.addWidget(self.multiple_file)
+        sub_layout.addWidget(self.multiple_files)
         sub_layout.addWidget(self.color_bar, 0)
         sub3_layout.addWidget(self.image_view, 1)
         sub3_layout.addWidget(self.info_text, 0)
@@ -950,10 +950,6 @@ class MainWindow(BaseMainWindow):
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
         except KeyError:
             pass
-
-    def toggle_multiple_files(self):
-        self.settings.set("multiple_files_widget", not self.settings.get("multiple_files_widget"))
-        self.multiple_file.setVisible(self.settings.get("multiple_files_widget"))
 
     def image_read(self):
         self.image_view.reset_image_size()

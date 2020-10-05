@@ -641,24 +641,17 @@ class MainWindow(BaseMainWindow):
         layout.addLayout(info_layout, 1, 1, 1, 2)
         layout.addWidget(self.multiple_files, 2, 0)
         layout.addWidget(self.color_bar, 2, 1)
-        # layout.addWidget(self.left_stack, 2, 2)
-        # layout.addWidget(self.result_image, 2, 3)
         layout.addLayout(image_layout, 2, 2, 1, 1)
         layout.addWidget(self.options_panel, 0, 3, 3, 1)
         layout.setColumnStretch(2, 1)
         widget = QWidget()
         widget.setLayout(layout)
-        # self.multiple_files.setHidden(True)
         self.setCentralWidget(widget)
         try:
             geometry = self.settings.get_from_profile("main_window_geometry")
             self.restoreGeometry(QByteArray.fromHex(bytes(geometry, "ascii")))
         except KeyError:
             pass
-
-    def toggle_multiple_files(self):
-        self.settings.set("multiple_files", not self.settings.get("multiple_files"))
-        self.multiple_files.setVisible(self.settings.get("multiple_files"))
 
     def image_read(self):
         # self.raw_image.set_image()
@@ -676,7 +669,7 @@ class MainWindow(BaseMainWindow):
 
     def event(self, event: QEvent):
         if event.type() == QEvent.WindowActivate:
-            self.multiple_files.setVisible(self.settings.get("multiple_files", False))
+            self.multiple_files.setVisible(self.settings.get("multiple_files_widget", False))
         return super().event(event)
 
     def closeEvent(self, event):
