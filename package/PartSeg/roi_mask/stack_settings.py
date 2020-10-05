@@ -212,13 +212,13 @@ class StackSettings(BaseSettings):
                 selected_components=list_of_components,
                 segmentation_parameters=components_parameters_dict,
             )
-        else:
-            return dataclasses.replace(
-                state,
-                segmentation=segmentation,
-                selected_components=base_chose,
-                segmentation_parameters=components_parameters_dict,
-            )
+
+        return dataclasses.replace(
+            state,
+            segmentation=segmentation,
+            selected_components=base_chose,
+            segmentation_parameters=components_parameters_dict,
+        )
 
     def compare_history(self, history: typing.List[HistoryElement]):
         # TODO check dict comparision

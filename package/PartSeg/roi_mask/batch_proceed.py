@@ -99,7 +99,7 @@ class BatchProceed(QThread):
                     SaveSegmentation.save(path.join(task.save_prefix[0], name), state2, parameters=task.save_prefix[1])
                 else:
                     self.multiple_result.emit(state2)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=W0703
                 self.error_signal.emit("Exception occurred during proceed {}. Exception info {}".format(file_path, e))
             self.index += 1
         self.index = 0

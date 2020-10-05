@@ -204,7 +204,7 @@ class AdvancedSettings(QWidget):
         self.rename_btn.setDisabled(True)
         self.info_label.setPlainText("")
 
-    def showEvent(self, a0):
+    def showEvent(self, _event):
         self.update_profile_list()
         self.update_spacing()
 

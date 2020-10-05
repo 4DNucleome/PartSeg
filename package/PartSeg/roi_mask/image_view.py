@@ -52,7 +52,7 @@ class StackImageView(ImageView):
             )
             self.additional_layers[-1].translate_grid = translate_grid
 
-    def component_click(self, event: MouseEvent):
+    def component_click(self, _event: MouseEvent):
         cords = np.array([int(x) for x in self.viewer.active_layer.coordinates])
         for image_info in self.image_info.values():
             if image_info.segmentation_info.segmentation is None:

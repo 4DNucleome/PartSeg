@@ -60,7 +60,6 @@ class Options(QWidget):
         settings: PartSettings,
         channel_control2: ChannelProperty,
         left_image: ResultImageView,
-        main_image: ResultImageView,
         synchronize: SynchronizeView,
     ):
         super().__init__()
@@ -581,9 +580,7 @@ class MainWindow(BaseMainWindow):
         self.result_image.text_info_change.connect(self.info_text.setText)
         self.synchronize_tool = SynchronizeView(self.raw_image, self.result_image, self)
         # image_view_control = self.image_view.get_control_view()
-        self.options_panel = Options(
-            self.settings, self.channel_control2, self.raw_image, self.result_image, self.synchronize_tool
-        )
+        self.options_panel = Options(self.settings, self.channel_control2, self.raw_image, self.synchronize_tool)
         # self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)
         self.advanced_window = SegAdvancedWindow(self.settings, reload_list=[self.reload])

@@ -796,7 +796,7 @@ class CreatePlan(QWidget):
         if index != -1:
             list_widget.setCurrentRow(index)
 
-    def showEvent(self, event):
+    def showEvent(self, _event):
         self.refresh_all_profiles()
 
     def refresh_all_profiles(self):

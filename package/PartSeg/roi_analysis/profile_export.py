@@ -309,6 +309,6 @@ class ProfileDictViewer(ObjectPreview):
     Serialized using :py:meth:`ObjectPreview.pretty_print`.
     """
 
-    def preview_object(self, profile: SegmentationProfile):
-        text = profile.pretty_print(analysis_algorithm_dict)
+    def preview_object(self, ob: SegmentationProfile):
+        text = ob.pretty_print(analysis_algorithm_dict)
         self.setText(text)

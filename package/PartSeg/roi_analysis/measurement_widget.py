@@ -391,7 +391,7 @@ class MeasurementWidget(QWidget):
             layout1.removeWidget(el[0])
             layout2.addWidget(el[0], el[1])
 
-    def resizeEvent(self, a0: QResizeEvent) -> None:
+    def resizeEvent(self, _event: QResizeEvent) -> None:
         if self.width() < 800 and self.butt_layout2.count() == 0:
             self._move_widgets(
                 [(self.file_names_label, 1), (self.file_names, 1), (self.copy_button, 2)],
