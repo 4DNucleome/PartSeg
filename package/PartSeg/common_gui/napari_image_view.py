@@ -369,7 +369,7 @@ class ImageView(QWidget):
             return
 
         image_info.segmentation_info = segmentation_info
-        image_info.segmentation_count = max(segmentation_info.bound_info.keys())
+        image_info.segmentation_count = max(segmentation_info.bound_info) if segmentation_info.bound_info else 0
         self.add_segmentation_layer(image_info)
         image_info.segmentation.colormap = self.get_segmentation_view_parameters(image_info)
         image_info.segmentation.opacity = self.image_state.opacity
