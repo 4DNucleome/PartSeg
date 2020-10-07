@@ -96,7 +96,7 @@ class AddFiles(QWidget):
         self.setLayout(layout)
         self.setAcceptDrops(True)
 
-    def dragEnterEvent(self, event: QDragEnterEvent):
+    def dragEnterEvent(self, event: QDragEnterEvent):  # pylint: disable=R0201
         if event.mimeData().hasFormat("text/plain"):
             event.acceptProposedAction()
 
