@@ -491,7 +491,7 @@ class ChosenComponents(QWidget):
 
 
 class AlgorithmOptions(QWidget):
-    def __init__(self, settings: StackSettings, image_view: StackImageView, component_checker):
+    def __init__(self, settings: StackSettings, image_view: StackImageView):
         control_view = image_view.get_control_view()
         super().__init__()
         self.settings = settings
@@ -609,7 +609,7 @@ class AlgorithmOptions(QWidget):
         self.only_borders.stateChanged.connect(control_view.set_borders)
         # noinspection PyUnresolvedReferences
         self.borders_thick.valueChanged.connect(control_view.set_borders_thick)
-        component_checker.component_clicked.connect(self.choose_components.other_component_choose)
+        image_view.component_clicked.connect(self.choose_components.other_component_choose)
         settings.chosen_components_widget = self.choose_components
         settings.components_change_list.connect(self.choose_components.new_choose)
         settings.image_changed.connect(self.choose_components.remove_components)
@@ -846,10 +846,10 @@ class ImageInformation(QWidget):
 
 
 class Options(QTabWidget):
-    def __init__(self, settings, image_view, component_checker, parent=None):
-        super(Options, self).__init__(parent)
+    def __init__(self, settings, image_view, parent=None):
+        super().__init__(parent)
         self._settings = settings
-        self.algorithm_options = AlgorithmOptions(settings, image_view, component_checker)
+        self.algorithm_options = AlgorithmOptions(settings, image_view)
         self.image_properties = ImageInformation(settings, parent)
         self.image_properties.add_files.file_list_changed.connect(self.algorithm_options.file_list_change)
         self.algorithm_options.batch_process.multiple_result.connect(
@@ -882,7 +882,7 @@ class MainWindow(BaseMainWindow):
         self.info_text = QLabel()
         self.info_text.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         self.image_view.text_info_change.connect(self.info_text.setText)
-        self.options_panel = Options(self.settings, self.image_view, self.image_view)
+        self.options_panel = Options(self.settings, self.image_view)
         self.main_menu = MainMenu(self.settings, self)
         self.main_menu.image_loaded.connect(self.image_read)
         self.settings.image_changed.connect(self.image_read)

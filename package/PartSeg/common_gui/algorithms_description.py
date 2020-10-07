@@ -5,7 +5,7 @@ from copy import deepcopy
 from enum import Enum
 
 from qtpy.QtCore import Signal
-from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent
+from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent, QResizeEvent
 from qtpy.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -502,6 +502,13 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
 
     def hideEvent(self, a0: QHideEvent):
         self.algorithm_thread.clean()
+
+    def resizeEvent(self, event: QResizeEvent):
+        if self.height() < self.form_widget.height():
+            self.setMinimumWidth(self.form_widget.width() + 20)
+        else:
+            self.setMinimumWidth(self.form_widget.width() + 10)
+        super().resizeEvent(event)
 
     def recursive_get_values(self):
         return self.form_widget.recursive_get_values()
