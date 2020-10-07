@@ -2,8 +2,8 @@ import os
 from glob import glob
 from pathlib import Path
 
-from PyQt5.QtGui import QDragEnterEvent, QDropEvent
 from qtpy.QtCore import Qt, Signal
+from qtpy.QtGui import QDragEnterEvent, QDropEvent
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QDialog,
