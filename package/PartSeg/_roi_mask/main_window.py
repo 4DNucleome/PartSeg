@@ -35,9 +35,10 @@ from PartSegCore.mask import io_functions
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import (
+    LoadROIFromTIFF,
+    LoadROIParameters,
     LoadSegmentation,
-    LoadSegmentationParameters,
-    SaveSegmentation,
+    SaveROI,
     SegmentationTuple,
 )
 from PartSegCore.mask_create import calculate_mask_from_project
@@ -239,7 +240,8 @@ class MainMenu(BaseMainMenu):
         dial = CustomLoadDialog(
             {
                 LoadSegmentation.get_name(): LoadSegmentation,
-                LoadSegmentationParameters.get_name(): LoadSegmentationParameters,
+                LoadROIParameters.get_name(): LoadROIParameters,
+                LoadROIFromTIFF.get_name(): LoadROIFromTIFF,
             }
         )
         dial.setDirectory(self.settings.get("io.open_segmentation_directory", str(Path.home())))
@@ -673,11 +675,7 @@ class AlgorithmOptions(QWidget):
         self._execute_in_background_init()
 
     def execute_all_action(self):
-        dial = SaveDialog(
-            {SaveSegmentation.get_name(): SaveSegmentation},
-            history=self.settings.get_path_history(),
-            system_widget=False,
-        )
+        dial = SaveDialog({SaveROI.get_name(): SaveROI}, history=self.settings.get_path_history(), system_widget=False,)
         dial.setFileMode(QFileDialog.Directory)
         dial.setDirectory(self.settings.get("io.save_batch", self.settings.get("io.save_segmentation_directory", "")))
         if not dial.exec_():

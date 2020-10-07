@@ -7,7 +7,7 @@ import pytest
 from PartSegCore.analysis import ProjectTuple
 from PartSegCore.analysis.load_functions import LoadImageMask, LoadMaskSegmentation, LoadProject, LoadStackImage
 from PartSegCore.analysis.save_functions import save_dict as analysis_save_dict
-from PartSegCore.mask.io_functions import LoadSegmentationImage, LoadSegmentationParameters
+from PartSegCore.mask.io_functions import LoadROIImage, LoadROIParameters
 from PartSegCore.mask.io_functions import LoadStackImage as MaskLoadStackImage
 from PartSegCore.mask.io_functions import (
     SegmentationTuple,
@@ -90,13 +90,13 @@ class TestStackSettingsIO:
         stack_settings.set_project_info(pi)
 
     def test_load_segmentation_image(self, data_test_dir, stack_settings):
-        pi = LoadSegmentationImage.load([os.path.join(data_test_dir, "test_nucleus.seg")])
+        pi = LoadROIImage.load([os.path.join(data_test_dir, "test_nucleus.seg")])
         assert isinstance(pi, SegmentationTuple)
         stack_settings.set_project_info(pi)
         assert pi.image is not None
 
     def test_load_parameters(self, data_test_dir):
-        pi = LoadSegmentationParameters.load([os.path.join(data_test_dir, "test_nucleus.seg")])
+        pi = LoadROIParameters.load([os.path.join(data_test_dir, "test_nucleus.seg")])
         assert isinstance(pi, SegmentationTuple)
         assert len(pi.segmentation_parameters) == 4
         assert pi.segmentation_parameters[1].algorithm == "Threshold"

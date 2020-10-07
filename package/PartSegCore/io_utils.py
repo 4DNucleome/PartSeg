@@ -11,6 +11,7 @@ from tarfile import TarFile, TarInfo
 
 import imageio
 import numpy as np
+import tifffile
 
 from PartSegCore.json_hooks import ProfileDict, profile_hook
 from PartSegImage import ImageWriter
@@ -321,6 +322,10 @@ class SaveMaskAsTiff(SaveBase):
         return []
 
     @classmethod
+    def need_mask(cls):
+        return True
+
+    @classmethod
     def save(
         cls,
         save_location: typing.Union[str, BytesIO, Path],
@@ -365,3 +370,65 @@ class SaveScreenshot(SaveBase):
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
         return []
+
+
+class SaveROIAsTIFF(SaveBase):
+    @classmethod
+    def get_name(cls):
+        return "ROI as tiff (*.tiff *.tif)"
+
+    @classmethod
+    def get_short_name(cls):
+        return "roi_tiff"
+
+    @classmethod
+    def get_fields(cls):
+        return []
+
+    @classmethod
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info,
+        parameters: dict,
+        range_changed=None,
+        step_changed=None,
+    ):
+        segmentation = project_info.segmentation
+        segmentation_max = segmentation.max()
+        if segmentation_max < 2 ** 8 - 1:
+            segmentation = segmentation.astype(np.uint8)
+        elif segmentation_max < 2 ** 16 - 1:
+            segmentation = segmentation.astype(np.uint16)
+        tifffile.imsave(save_location, segmentation)
+
+
+class SaveROIAsNumpy(SaveBase):
+    @classmethod
+    def get_name(cls):
+        return "ROI as numpy (*.npy)"
+
+    @classmethod
+    def get_short_name(cls):
+        return "ROI_numpy"
+
+    @classmethod
+    def get_fields(cls):
+        return []
+
+    @classmethod
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info,
+        parameters: dict = None,
+        range_changed=None,
+        step_changed=None,
+    ):
+        segmentation = project_info.segmentation
+        segmentation_max = segmentation.max()
+        if segmentation_max < 2 ** 8 - 1:
+            segmentation = segmentation.astype(np.uint8)
+        elif segmentation_max < 2 ** 16 - 1:
+            segmentation = segmentation.astype(np.uint16)
+        np.save(save_location, segmentation)

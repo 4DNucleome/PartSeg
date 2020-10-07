@@ -227,6 +227,7 @@ class ImageView(QWidget):
     def _set_new_order(self, text: str):
         self._current_order = text
         self.viewer.dims.order = ORDER_DICT[text]
+        self.update_segmentation_representation()
 
     def _reset_view(self):
         self._set_new_order("xy")
@@ -416,11 +417,12 @@ class ImageView(QWidget):
         except ValueError:
             max_num = 1
         if self.image_state.only_borders:
+
             data = calculate_borders(
-                image_info.segmentation_info.segmentation,
+                image_info.segmentation_info.segmentation.transpose(ORDER_DICT[self._current_order]),
                 self.image_state.borders_thick // 2,
                 self.viewer.dims.ndisplay == 2,
-            )
+            ).transpose(np.argsort(ORDER_DICT[self._current_order]))
             image_info.segmentation = self.viewer.add_image(
                 data, scale=image_info.image.normalized_scaling(), contrast_limits=[0, max_num],
             )

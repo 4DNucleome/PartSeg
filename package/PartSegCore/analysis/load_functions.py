@@ -29,7 +29,7 @@ from ..io_utils import (
     proxy_callback,
     tar_to_buff,
 )
-from ..mask.io_functions import LoadSegmentationImage
+from ..mask.io_functions import LoadROIImage
 from ..universal_const import UNIT_SCALE, Units
 from .analysis_utils import SegmentationPipeline, SegmentationPipelineElement
 from .calculation_plan import CalculationPlan, CalculationTree
@@ -295,7 +295,7 @@ class LoadMaskSegmentation(LoadBase):
         step_changed: typing.Callable[[int], typing.Any] = None,
         metadata: typing.Optional[dict] = None,
     ) -> typing.List[ProjectTuple]:
-        data = LoadSegmentationImage.load(load_locations, range_changed, step_changed, metadata)
+        data = LoadROIImage.load(load_locations, range_changed, step_changed, metadata)
         image = data.image
         segmentation = data.segmentation
         components = data.selected_components

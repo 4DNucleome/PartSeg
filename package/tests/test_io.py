@@ -18,27 +18,20 @@ from PartSegCore.analysis import ProjectTuple
 from PartSegCore.analysis.load_functions import LoadProject, UpdateLoadedMetadataAnalysis
 from PartSegCore.analysis.measurement_base import Leaf, MeasurementEntry
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile
-from PartSegCore.analysis.save_functions import (
-    SaveAsNumpy,
-    SaveAsTiff,
-    SaveCmap,
-    SaveProject,
-    SaveSegmentationAsNumpy,
-    SaveXYZ,
-)
+from PartSegCore.analysis.save_functions import SaveAsNumpy, SaveAsTiff, SaveCmap, SaveProject, SaveXYZ
 from PartSegCore.analysis.save_hooks import PartEncoder, part_hook
 from PartSegCore.class_generator import enum_register
-from PartSegCore.io_utils import UpdateLoadedMetadataBase
+from PartSegCore.io_utils import SaveROIAsNumpy, UpdateLoadedMetadataBase
 from PartSegCore.json_hooks import check_loaded_dict
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import (
+    LoadROIImage,
+    LoadROIParameters,
     LoadSegmentation,
-    LoadSegmentationImage,
-    LoadSegmentationParameters,
     LoadStackImage,
     LoadStackImageWithMask,
     SaveParametersJSON,
-    SaveSegmentation,
+    SaveROI,
     SegmentationTuple,
     save_components,
 )
@@ -187,7 +180,7 @@ class TestSegmentationMask:
         assert os.path.basename(seg.image) == "test_nucleus.tif"
 
     def test_load_old_seg_with_image(self, data_test_dir):
-        seg = LoadSegmentationImage.load(
+        seg = LoadROIImage.load(
             [os.path.join(data_test_dir, "test_nucleus.seg")], metadata={"default_spacing": (1, 1, 1)}
         )
         assert isinstance(seg.image, Image)
@@ -197,7 +190,7 @@ class TestSegmentationMask:
         assert os.path.basename(seg.image.file_path) == "test_nucleus.tif"
 
     def test_load_seg_with_image(self, data_test_dir):
-        seg = LoadSegmentationImage.load(
+        seg = LoadROIImage.load(
             [os.path.join(data_test_dir, "test_nucleus_1_1.seg")], metadata={"default_spacing": (1, 1, 1)}
         )
         assert isinstance(seg.image, Image)
@@ -207,10 +200,10 @@ class TestSegmentationMask:
         assert os.path.basename(seg.image.file_path) == "test_nucleus.tif"
 
     def test_save_segmentation(self, tmpdir, data_test_dir):
-        seg = LoadSegmentationImage.load(
+        seg = LoadROIImage.load(
             [os.path.join(data_test_dir, "test_nucleus_1_1.seg")], metadata={"default_spacing": (1, 1, 1)}
         )
-        SaveSegmentation.save(os.path.join(tmpdir, "segmentation.seg"), seg, {"relative_path": False})
+        SaveROI.save(os.path.join(tmpdir, "segmentation.seg"), seg, {"relative_path": False})
         assert os.path.exists(os.path.join(tmpdir, "segmentation.seg"))
         os.makedirs(os.path.join(tmpdir, "seg_save"))
         save_components(seg.image, seg.selected_components, seg.segmentation, os.path.join(tmpdir, "seg_save"))
@@ -220,12 +213,12 @@ class TestSegmentationMask:
         assert seg2 is not None
 
     def test_save_segmentation_without_image(self, tmpdir, data_test_dir):
-        seg = LoadSegmentationImage.load(
+        seg = LoadROIImage.load(
             [os.path.join(data_test_dir, "test_nucleus_1_1.seg")], metadata={"default_spacing": (1, 1, 1)}
         )
         seg_clean = dataclasses.replace(seg, image=None, segmentation=reduce_array(seg.segmentation))
-        SaveSegmentation.save(os.path.join(tmpdir, "segmentation.seg"), seg_clean, {"relative_path": False})
-        SaveSegmentation.save(
+        SaveROI.save(os.path.join(tmpdir, "segmentation.seg"), seg_clean, {"relative_path": False})
+        SaveROI.save(
             os.path.join(tmpdir, "segmentation1.seg"),
             seg_clean,
             {"relative_path": False, "spacing": (210 * 10 ** -6, 70 * 10 ** -6, 70 * 10 ** -6)},
@@ -246,7 +239,7 @@ class TestSegmentationMask:
             image_data.image.file_path, image_data.image, None, res.segmentation, list(range(1, num)), data_dict
         )
 
-        SaveSegmentation.save(os.path.join(tmpdir, "segmentation2.seg"), to_save, {"relative_path": False})
+        SaveROI.save(os.path.join(tmpdir, "segmentation2.seg"), to_save, {"relative_path": False})
         seg2 = LoadSegmentation.load([os.path.join(tmpdir, "segmentation2.seg")])
         assert seg2 is not None
 
@@ -260,14 +253,14 @@ class TestSegmentationMask:
         assert res.mask is not None
 
     def test_save_project_with_history(self, tmp_path, stack_segmentation1, mask_property):
-        SaveSegmentation.save(tmp_path / "test1.seg", stack_segmentation1, {"relative_path": False})
+        SaveROI.save(tmp_path / "test1.seg", stack_segmentation1, {"relative_path": False})
         seg2 = dataclasses.replace(
             stack_segmentation1,
             history=[create_history_element_from_segmentation_tuple(stack_segmentation1, mask_property)],
             selected_components=[1],
             mask=stack_segmentation1.segmentation,
         )
-        SaveSegmentation.save(tmp_path / "test1.seg", seg2, {"relative_path": False})
+        SaveROI.save(tmp_path / "test1.seg", seg2, {"relative_path": False})
         with tarfile.open(tmp_path / "test1.seg", "r") as tf:
             tf.getmember("mask.tif")
             tf.getmember("segmentation.tif")
@@ -285,7 +278,7 @@ class TestSegmentationMask:
             image=stack_segmentation1.image.substitute(file_path=image_location),
             file_path=image_location,
         )
-        SaveSegmentation.save(tmp_path / "test1.seg", seg2, {"relative_path": False})
+        SaveROI.save(tmp_path / "test1.seg", seg2, {"relative_path": False})
         res = LoadSegmentation.load([tmp_path / "test1.seg"])
         assert res.image == str(image_location)
         assert res.mask is not None
@@ -429,14 +422,14 @@ class TestSaveFunctions:
         assert np.all(array == analysis_project.image.get_data().squeeze())
 
     def test_save_segmentation_numpy(self, tmpdir, analysis_project):
-        SaveSegmentationAsNumpy.save(os.path.join(tmpdir, "test1.npy"), analysis_project)
+        SaveROIAsNumpy.save(os.path.join(tmpdir, "test1.npy"), analysis_project)
         array = np.load(os.path.join(tmpdir, "test1.npy"))
         assert np.all(array == analysis_project.segmentation)
 
 
 def test_json_parameters_mask(stack_segmentation1, tmp_path):
     SaveParametersJSON.save(tmp_path / "test.json", stack_segmentation1)
-    load_param = LoadSegmentationParameters.load([tmp_path / "test.json"])
+    load_param = LoadROIParameters.load([tmp_path / "test.json"])
     assert len(load_param.segmentation_parameters) == 4
 
 
