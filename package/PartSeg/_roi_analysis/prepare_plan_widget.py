@@ -868,16 +868,12 @@ class CreatePlan(QWidget):
                 self.get_big_btn.setEnabled(True)
             else:
                 self.get_big_btn.setDisabled(True)
-            if self.segment_stack.currentIndex() == 0:
-                if self.segment_profile.currentItem() is not None:
-                    self.chose_profile_btn.setEnabled(self.segment_allow)
-                else:
-                    self.chose_profile_btn.setDisabled(True)
+            if (
+                self.segment_stack.currentIndex() == 0 and self.segment_profile.currentItem()
+            ) or self.pipeline_profile.currentItem() is not None:
+                self.chose_profile_btn.setEnabled(self.segment_allow)
             else:
-                if self.pipeline_profile.currentItem() is not None:
-                    self.chose_profile_btn.setEnabled(self.segment_allow)
-                else:
-                    self.chose_profile_btn.setDisabled(True)
+                self.chose_profile_btn.setDisabled(True)
 
     def edit_plan(self):
         plan = self.sender().plan_to_edit  # type: CalculationPlan
