@@ -11,7 +11,7 @@ from qtpy.QtCore import QThread, Signal
 from PartSeg._roi_mask.stack_settings import StackSettings, get_mask
 from PartSegCore.algorithm_describe_base import SegmentationProfile
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
-from PartSegCore.mask.io_functions import LoadSegmentationImage, LoadStackImage, SaveSegmentation, SegmentationTuple
+from PartSegCore.mask.io_functions import LoadROIImage, LoadStackImage, SaveROI, SegmentationTuple
 from PartSegCore.segmentation import StackAlgorithm
 from PartSegCore.segmentation.algorithm_base import SegmentationAlgorithm
 
@@ -61,7 +61,7 @@ class BatchProceed(QThread):
             if isinstance(task.data, str):
                 file_path = task.data
                 if path.splitext(task.data)[1] == ".seg":
-                    project_tuple = LoadSegmentationImage.load([task.data])
+                    project_tuple = LoadROIImage.load([task.data])
                 else:
                     project_tuple = LoadStackImage.load([task.data])
             elif isinstance(task.data, SegmentationTuple):
@@ -96,7 +96,7 @@ class BatchProceed(QThread):
                             name = match.group(1) + str(num) + ".seg"
                         else:
                             name = path.splitext(path.basename(file_path))[0] + "_version1.seg"
-                    SaveSegmentation.save(path.join(task.save_prefix[0], name), state2, parameters=task.save_prefix[1])
+                    SaveROI.save(path.join(task.save_prefix[0], name), state2, parameters=task.save_prefix[1])
                 else:
                     self.multiple_result.emit(state2)
             except Exception as e:  # pylint: disable=W0703

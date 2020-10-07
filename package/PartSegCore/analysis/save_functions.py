@@ -13,7 +13,15 @@ from PartSegImage import Image, ImageWriter
 
 from ..algorithm_describe_base import AlgorithmProperty, Register
 from ..channel_class import Channel
-from ..io_utils import HistoryElement, NotSupportedImage, SaveBase, SaveMaskAsTiff, get_tarinfo
+from ..io_utils import (
+    HistoryElement,
+    NotSupportedImage,
+    SaveBase,
+    SaveMaskAsTiff,
+    SaveROIAsNumpy,
+    SaveROIAsTIFF,
+    get_tarinfo,
+)
 from ..universal_const import UNIT_SCALE, Units
 from .io_utils import ProjectTuple, project_version_info
 from .save_hooks import PartEncoder
@@ -24,8 +32,6 @@ __all__ = [
     "SaveXYZ",
     "SaveAsTiff",
     "SaveAsNumpy",
-    "SaveSegmentationAsTIFF",
-    "SaveSegmentationAsNumpy",
     "save_dict",
 ]
 
@@ -362,68 +368,6 @@ class SaveAsNumpy(SaveBase):
         np.save(save_location, data)
 
 
-class SaveSegmentationAsTIFF(SaveBase):
-    @classmethod
-    def get_name(cls):
-        return "Segmentation (*.tiff *.tif)"
-
-    @classmethod
-    def get_short_name(cls):
-        return "segmentation_tiff"
-
-    @classmethod
-    def get_fields(cls):
-        return []
-
-    @classmethod
-    def save(
-        cls,
-        save_location: typing.Union[str, BytesIO, Path],
-        project_info,
-        parameters: dict,
-        range_changed=None,
-        step_changed=None,
-    ):
-        segmentation = project_info.segmentation
-        segmentation_max = segmentation.max()
-        if segmentation_max < 2 ** 8 - 1:
-            segmentation = segmentation.astype(np.uint8)
-        elif segmentation_max < 2 ** 16 - 1:
-            segmentation = segmentation.astype(np.uint16)
-        tifffile.imsave(save_location, segmentation)
-
-
-class SaveSegmentationAsNumpy(SaveBase):
-    @classmethod
-    def get_name(cls):
-        return "Segmentation (*.npy)"
-
-    @classmethod
-    def get_short_name(cls):
-        return "segmentation_numpy"
-
-    @classmethod
-    def get_fields(cls):
-        return []
-
-    @classmethod
-    def save(
-        cls,
-        save_location: typing.Union[str, BytesIO, Path],
-        project_info,
-        parameters: dict = None,
-        range_changed=None,
-        step_changed=None,
-    ):
-        segmentation = project_info.segmentation
-        segmentation_max = segmentation.max()
-        if segmentation_max < 2 ** 8 - 1:
-            segmentation = segmentation.astype(np.uint8)
-        elif segmentation_max < 2 ** 16 - 1:
-            segmentation = segmentation.astype(np.uint16)
-        np.save(save_location, segmentation)
-
-
 save_dict = Register(
     SaveProject,
     SaveCmap,
@@ -431,7 +375,7 @@ save_dict = Register(
     SaveAsTiff,
     SaveMaskAsTiff,
     SaveAsNumpy,
-    SaveSegmentationAsTIFF,
-    SaveSegmentationAsNumpy,
+    SaveROIAsTIFF,
+    SaveROIAsNumpy,
     class_methods=SaveBase.need_functions,
 )

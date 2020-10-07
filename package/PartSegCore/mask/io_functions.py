@@ -20,6 +20,8 @@ from ..io_utils import (
     LoadBase,
     SaveBase,
     SaveMaskAsTiff,
+    SaveROIAsNumpy,
+    SaveROIAsTIFF,
     SegmentationType,
     UpdateLoadedMetadataBase,
     WrongFileTypeException,
@@ -299,7 +301,7 @@ class LoadSegmentation(LoadBase):
         return False
 
 
-class LoadSegmentationParameters(LoadBase):
+class LoadROIParameters(LoadBase):
     """
     Load parameters of ROI segmentation. From segmentation file or from json
     """
@@ -325,21 +327,25 @@ class LoadSegmentationParameters(LoadBase):
         if isinstance(file_data, (str, Path)):
             ext = os.path.splitext(file_data)[1]
             if ext == ".json":
-                metadata = load_metadata(file_data)
+                project_metadata = load_metadata(file_data)
                 if isinstance(metadata, SegmentationProfile):
                     parameters = {1: metadata}
                 else:
                     parameters = defaultdict(
                         lambda: None,
-                        [(int(k), LoadSegmentation.fix_parameters(v)) for k, v in metadata["parameters"].items()],
+                        [
+                            (int(k), LoadSegmentation.fix_parameters(v))
+                            for k, v in project_metadata["parameters"].items()
+                        ],
                     )
                 return SegmentationTuple(file_path=file_data, image=None, segmentation_parameters=parameters)
 
         tar_file, _ = open_tar_file(file_data)
         try:
-            metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
+            project_metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
             parameters = defaultdict(
-                lambda: None, [(int(k), LoadSegmentation.fix_parameters(v)) for k, v in metadata["parameters"].items()]
+                lambda: None,
+                [(int(k), LoadSegmentation.fix_parameters(v)) for k, v in project_metadata["parameters"].items()],
             )
         finally:
             if isinstance(file_data, (str, Path)):
@@ -347,18 +353,18 @@ class LoadSegmentationParameters(LoadBase):
         return SegmentationTuple(file_path=file_data, image=None, segmentation_parameters=parameters)
 
 
-class LoadSegmentationImage(LoadBase):
+class LoadROIImage(LoadBase):
     """
     Load ROI segmentation and image which is pointed in.
     """
 
     @classmethod
     def get_name(cls):
-        return "Segmentation with image (*.seg *.tgz)"
+        return "ROI project with image (*.seg *.tgz)"
 
     @classmethod
     def get_short_name(cls):
-        return "seg_img"
+        return "roi_image"
 
     @classmethod
     def load(
@@ -471,14 +477,14 @@ class LoadStackImageWithMask(LoadBase):
         return "Image with mask(*.tif *.tiff *.lsm *.czi *.oib *.oif)"
 
 
-class SaveSegmentation(SaveBase):
+class SaveROI(SaveBase):
     """
     Save current ROI
     """
 
     @classmethod
     def get_name(cls):
-        return "Segmentation (*.seg *.tgz)"
+        return "ROI project (*.seg *.tgz)"
 
     @classmethod
     def get_short_name(cls):
@@ -602,6 +608,33 @@ class SaveParametersJSON(SaveBase):
         return "Parameters (*.json)"
 
 
+class LoadROIFromTIFF(LoadBase):
+    @classmethod
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ) -> typing.Union[ProjectInfoBase, typing.List[ProjectInfoBase]]:
+        image = TiffImageReader.read_image(load_locations[0])
+        segmentation = image.get_channel(0)
+        return SegmentationTuple(
+            file_path=load_locations[0],
+            image=None,
+            segmentation=segmentation,
+            segmentation_parameters=defaultdict(lambda: None),
+        )
+
+    @classmethod
+    def get_short_name(cls):
+        return "roi_tiff"
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "ROI from tiff (*.tif *.tiff)"
+
+
 def load_metadata(data: typing.Union[str, Path, typing.TextIO]):
     """
     Load metadata saved in json format for segmentation mask
@@ -632,9 +665,9 @@ class UpdateLoadedMetadataMask(UpdateLoadedMetadataBase):
         return profile_data
 
 
-load_dict = Register(
-    LoadStackImage, LoadSegmentationImage, LoadStackImageWithMask, class_methods=LoadBase.need_functions
-)
+load_dict = Register(LoadStackImage, LoadROIImage, LoadStackImageWithMask, class_methods=LoadBase.need_functions)
 save_parameters_dict = Register(SaveParametersJSON, class_methods=SaveBase.need_functions)
 save_components_dict = Register(SaveComponents, class_methods=SaveBase.need_functions)
-save_segmentation_dict = Register(SaveSegmentation, SaveMaskAsTiff, class_methods=SaveBase.need_functions)
+save_segmentation_dict = Register(
+    SaveROI, SaveMaskAsTiff, SaveROIAsTIFF, SaveROIAsNumpy, class_methods=SaveBase.need_functions
+)
