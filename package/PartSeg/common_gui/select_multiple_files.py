@@ -2,6 +2,7 @@ import os
 from glob import glob
 from pathlib import Path
 
+from PyQt5.QtGui import QDragEnterEvent, QDropEvent
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import (
     QAbstractItemView,
@@ -67,7 +68,7 @@ class AddFiles(QWidget):
         QWidget.__init__(self, parent)
         self.settings = settings
         self.files_to_proceed = set()
-        self.paths = QLineEdit(self)
+        self.paths_input = QLineEdit(self)
         self.selected_files = QListWidget(self)
         self.selected_files.itemSelectionChanged.connect(self.file_chosen)
         self.found_button = QPushButton("Find all", self)
@@ -82,7 +83,7 @@ class AddFiles(QWidget):
         self.clean_button = QPushButton("Remove all", self)
         self.clean_button.clicked.connect(self.clean)
         layout = QVBoxLayout()
-        layout.addWidget(self.paths)
+        layout.addWidget(self.paths_input)
         select_layout = btn_layout()
         select_layout.addWidget(self.select_files_button)
         select_layout.addWidget(self.select_dir_button)
@@ -93,24 +94,56 @@ class AddFiles(QWidget):
         layout.addLayout(select_layout)
         layout.addWidget(self.selected_files)
         self.setLayout(layout)
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        if event.mimeData().hasFormat("text/plain"):
+            event.acceptProposedAction()
+
+    def dropEvent(self, event: QDropEvent):
+        files_list = event.mimeData().text().split()
+        self.parse_drop_file_list(files_list)
+
+    def parse_drop_file_list(self, files_list):
+        res_list = []
+        base_path = self.paths_input.text()
+        for file_path in files_list:
+            if os.path.isabs(file_path):
+                res_list.append(file_path)
+            else:
+                res_list.append(os.path.join(base_path, file_path))
+        missed_files = [x for x in res_list if not os.path.exists(x)]
+        if missed_files:
+            missed_files_str = "<br>".join(missed_files)
+            QMessageBox().warning(
+                self,
+                "Missed Files",
+                f"Cannot find files:<br>{missed_files_str}<br>Set proper base directory using <i>Select directory</i>",
+            )
+        else:
+            self.update_files_list(res_list)
 
     def find_all(self):
-        paths = glob(str(self.paths.text()))
+        paths = glob(str(self.paths_input.text()))
         paths = sorted([x for x in (set(paths) - self.files_to_proceed) if not os.path.isdir(x)])
         if len(paths) > 0:
-            dialog = AcceptFiles(paths)
-            if dialog.exec_():
-                new_paths = dialog.get_files()
-                for path in new_paths:
-                    size = os.stat(path).st_size
-                    size = float(size) / (1024 ** 2)
-                    lwi = QListWidgetItem("{:s} ({:.2f} MB)".format(path, size))
-                    lwi.setTextAlignment(Qt.AlignRight)
-                    self.selected_files.addItem(lwi)
-                self.files_to_proceed.update(new_paths)
-                self.file_list_changed.emit(self.files_to_proceed)
+            self.update_files_list(paths)
+
         else:
             QMessageBox.warning(self, "No new files", "No new files found", QMessageBox.Ok)
+
+    def update_files_list(self, paths):
+        dialog = AcceptFiles(paths)
+        if dialog.exec_():
+            new_paths = dialog.get_files()
+            for path in new_paths:
+                size = os.stat(path).st_size
+                size = float(size) / (1024 ** 2)
+                lwi = QListWidgetItem("{:s} ({:.2f} MB)".format(path, size))
+                lwi.setTextAlignment(Qt.AlignRight)
+                self.selected_files.addItem(lwi)
+            self.files_to_proceed.update(new_paths)
+            self.file_list_changed.emit(self.files_to_proceed)
 
     def select_files(self):
         dial = QFileDialog(self, "Select files")
@@ -137,7 +170,7 @@ class AddFiles(QWidget):
         )
         dial.setFileMode(QFileDialog.Directory)
         if dial.exec_():
-            self.paths.setText(dial.selectedFiles()[0])
+            self.paths_input.setText(dial.selectedFiles()[0])
             self.settings.set("io.batch_directory", str(dial.selectedFiles()[0]))
 
     def file_chosen(self):
