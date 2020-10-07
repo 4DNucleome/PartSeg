@@ -110,3 +110,16 @@ class TestAddFiles:
         widget.parse_drop_file_list(name_list)
         assert mock_warning[0] == 0
         assert len(widget.files_to_proceed) == 10
+
+    def test_delete_element(self, qtbot, tmp_path, part_settings):
+        for i in range(10):
+            with open(tmp_path / f"test_{i}.txt", "w") as f_p:
+                f_p.write("test")
+        widget = select_multiple_files.AddFiles(part_settings)
+        qtbot.addWidget(widget)
+        file_list = [str(tmp_path / f"test_{i}.txt") for i in range(10)]
+        widget.update_files_list(file_list)
+        assert len(widget.files_to_proceed) == 10
+        widget.selected_files.setCurrentRow(2)
+        widget.delete_element()
+        assert len(widget.files_to_proceed) == 9
