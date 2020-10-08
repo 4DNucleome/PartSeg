@@ -1,8 +1,10 @@
 import os
+from functools import partial
 from glob import glob
 from pathlib import Path
+from typing import List
 
-from qtpy.QtCore import Qt, Signal
+from qtpy.QtCore import QPoint, Qt, Signal
 from qtpy.QtGui import QDragEnterEvent, QDropEvent
 from qtpy.QtWidgets import (
     QAbstractItemView,
@@ -13,11 +15,14 @@ from qtpy.QtWidgets import (
     QLineEdit,
     QListWidget,
     QListWidgetItem,
+    QMenu,
     QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
+
+from PartSegCore.analysis.calculation_plan import MaskMapper
 
 from ..common_backend.base_settings import BaseSettings
 
@@ -58,6 +63,21 @@ class AcceptFiles(QDialog):
         return [str(item.text()) for item in self.files.selectedItems()]
 
 
+class FileListItem(QListWidgetItem):
+    def __init__(self, file_path):
+        size = os.stat(file_path).st_size
+        size = float(size) / (1024 ** 2)
+        super().__init__("{:s} ({:.2f} MB)".format(file_path, size))
+        self.setTextAlignment(Qt.AlignRight)
+        self.file_path = file_path
+
+
+class FileListWidget(QListWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+
+
 class AddFiles(QWidget):
     """Docstring for AddFiles. """
 
@@ -66,10 +86,11 @@ class AddFiles(QWidget):
     def __init__(self, settings: BaseSettings, parent=None, btn_layout=QHBoxLayout):
         """TODO: to be defined1. """
         QWidget.__init__(self, parent)
+        self.mask_list: List[MaskMapper] = []
         self.settings = settings
         self.files_to_proceed = set()
         self.paths_input = QLineEdit(self)
-        self.selected_files = QListWidget(self)
+        self.selected_files = FileListWidget(self)
         self.selected_files.itemSelectionChanged.connect(self.file_chosen)
         self.found_button = QPushButton("Find all", self)
         self.found_button.clicked.connect(self.find_all)
@@ -95,6 +116,29 @@ class AddFiles(QWidget):
         layout.addWidget(self.selected_files)
         self.setLayout(layout)
         self.setAcceptDrops(True)
+        self.selected_files.customContextMenuRequested.connect(self.files_context_menu)
+
+    def files_context_menu(self, point: QPoint):
+        element = self.selected_files.itemAt(point)
+        if element is None:
+            return
+        menu = QMenu()
+        menu.addAction("Load image").triggered.connect(self._load_file)
+        for mask_def in self.mask_list:
+            menu.addAction(f"Load with mask '{mask_def.name}'").triggered.connect(
+                partial(self._load_file_with_mask, mask_def)
+            )
+        menu.addAction("Delete").triggered.connect(self.delete_element)
+        menu.exec_(self.selected_files.mapToGlobal(point))
+
+    def _load_file(self):
+        file_path = self.selected_files.item(self.selected_files.currentRow()).file_path
+        self.settings._load_files_call([file_path])
+
+    def _load_file_with_mask(self, mask_mapper: MaskMapper):
+        file_path = self.selected_files.item(self.selected_files.currentRow()).file_path
+        mask_path = mask_mapper.get_mask_path(file_path)
+        self.settings._load_files_call([file_path, mask_path])
 
     def dragEnterEvent(self, event: QDragEnterEvent):  # pylint: disable=R0201
         if event.mimeData().hasFormat("text/plain"):
@@ -137,11 +181,7 @@ class AddFiles(QWidget):
         if dialog.exec_():
             new_paths = dialog.get_files()
             for path in new_paths:
-                size = os.stat(path).st_size
-                size = float(size) / (1024 ** 2)
-                lwi = QListWidgetItem("{:s} ({:.2f} MB)".format(path, size))
-                lwi.setTextAlignment(Qt.AlignRight)
-                self.selected_files.addItem(lwi)
+                self.selected_files.addItem(FileListItem(path))
             self.files_to_proceed.update(new_paths)
             self.file_list_changed.emit(self.files_to_proceed)
 
@@ -155,11 +195,7 @@ class AddFiles(QWidget):
             self.settings.set("io.batch_directory", os.path.dirname(str(dial.selectedFiles()[0])))
             new_paths = sorted(set(map(str, dial.selectedFiles())) - self.files_to_proceed)
             for path in new_paths:
-                size = os.stat(path).st_size
-                size = float(size) / (1024 ** 2)
-                lwi = QListWidgetItem("{:s} ({:.2f} MB)".format(path, size))
-                lwi.setTextAlignment(Qt.AlignRight)
-                self.selected_files.addItem(lwi)
+                self.selected_files.addItem(FileListItem(path))
             self.files_to_proceed.update(new_paths)
             self.file_list_changed.emit(self.files_to_proceed)
 
@@ -178,9 +214,7 @@ class AddFiles(QWidget):
 
     def delete_element(self):
         item = self.selected_files.takeItem(self.selected_files.currentRow())
-        path = str(item.text())
-        path = path[: path.rfind("(") - 1]
-        self.files_to_proceed.remove(path)
+        self.files_to_proceed.remove(item.file_path)
         self.file_list_changed.emit(self.files_to_proceed)
         if self.selected_files.count() == 0:
             self.delete_button.setDisabled(True)
