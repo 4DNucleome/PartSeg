@@ -4,6 +4,7 @@ import pytest
 
 from PartSeg.common_gui import select_multiple_files
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
+from PartSegCore.analysis.calculation_plan import MaskSuffix
 
 
 class Enum1(Enum):
@@ -123,3 +124,27 @@ class TestAddFiles:
         widget.selected_files.setCurrentRow(2)
         widget.delete_element()
         assert len(widget.files_to_proceed) == 9
+
+    def test_load_file(self, qtbot, tmp_path, part_settings):
+        for i in range(10):
+            with open(tmp_path / f"test_{i}.txt", "w") as f_p:
+                f_p.write("test")
+        widget = select_multiple_files.AddFiles(part_settings)
+        qtbot.addWidget(widget)
+        file_list = [str(tmp_path / f"test_{i}.txt") for i in range(10)]
+        widget.update_files_list(file_list)
+        widget.selected_files.setCurrentRow(2)
+
+        def check_res(val):
+            return val == [str(tmp_path / "test_2.txt")]
+
+        with qtbot.waitSignal(part_settings.request_load_files, check_params_cb=check_res):
+            widget._load_file()
+
+        mapper = MaskSuffix(name="", suffix="_mask")
+
+        def check_res(val):
+            return val == [str(tmp_path / "test_2.txt"), str(tmp_path / "test_2_mask.txt")]
+
+        with qtbot.waitSignal(part_settings.request_load_files, check_params_cb=check_res):
+            widget._load_file_with_mask(mapper)
