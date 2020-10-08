@@ -143,8 +143,8 @@ class TestAddFiles:
 
         mapper = MaskSuffix(name="", suffix="_mask")
 
-        def check_res(val):
+        def check_res2(val):
             return val == [str(tmp_path / "test_2.txt"), str(tmp_path / "test_2_mask.txt")]
 
-        with qtbot.waitSignal(part_settings.request_load_files, check_params_cb=check_res):
+        with qtbot.waitSignal(part_settings.request_load_files, check_params_cb=check_res2):
             widget._load_file_with_mask(mapper)

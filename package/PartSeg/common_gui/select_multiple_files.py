@@ -133,12 +133,12 @@ class AddFiles(QWidget):
 
     def _load_file(self):
         file_path = self.selected_files.item(self.selected_files.currentRow()).file_path
-        self.settings._load_files_call([file_path])
+        self.settings._load_files_call([file_path])  # pylint: disable=W0212
 
     def _load_file_with_mask(self, mask_mapper: MaskMapper):
         file_path = self.selected_files.item(self.selected_files.currentRow()).file_path
         mask_path = mask_mapper.get_mask_path(file_path)
-        self.settings._load_files_call([file_path, mask_path])
+        self.settings._load_files_call([file_path, mask_path])  # pylint: disable=W0212
 
     def dragEnterEvent(self, event: QDragEnterEvent):  # pylint: disable=R0201
         if event.mimeData().hasFormat("text/plain"):
