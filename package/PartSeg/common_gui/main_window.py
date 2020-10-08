@@ -145,6 +145,7 @@ class BaseMainWindow(QMainWindow):
         self.settings.theme_changed.connect(self.change_theme)
         self.channel_info = ""
         self.multiple_files = None
+        self.settings.request_load_files.connect(self.read_drop)
 
     def toggle_multiple_files(self):
         self.settings.set("multiple_files_widget", not self.settings.get("multiple_files_widget"))

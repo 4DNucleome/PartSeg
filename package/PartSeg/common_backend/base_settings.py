@@ -364,6 +364,7 @@ class BaseSettings(ViewSettings):
 
     mask_changed = Signal()
     mask_representation_changed = Signal()
+    request_load_files = Signal(list)
     """:py:class:`~.Signal` mask changed signal"""
     json_encoder_class = ProfileEncoder
     load_metadata = staticmethod(load_metadata_base)
@@ -379,6 +380,9 @@ class BaseSettings(ViewSettings):
         self.last_executed_algorithm = ""
         self.history: List[HistoryElement] = []
         self.history_index = -1
+
+    def _load_files_call(self, files_list: List[str]):
+        self.request_load_files.emit(files_list)
 
     def mask_representation_changed_emit(self):
         self.mask_representation_changed.emit()

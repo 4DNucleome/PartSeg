@@ -60,7 +60,7 @@ class TestLauncherMainWindow:
         qtbot.addWidget(main_window.wind)
         count = 0
         while main_window.wind.image_view.worker_list:
-            if count > 3:
+            if count > 4:
                 raise RuntimeError("Problem with clean worker list")
             count += 1
             QCoreApplication.processEvents()
