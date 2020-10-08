@@ -4,7 +4,7 @@ from qtpy.QtCore import QObject, QSignalBlocker, Slot
 from qtpy.QtGui import QResizeEvent
 from qtpy.QtWidgets import QCheckBox, QDoubleSpinBox, QLabel
 
-from PartSegCore.segmentation_info import SegmentationInfo
+from PartSegCore.segmentation_info import ROIInfo
 from PartSegImage import Image
 
 from ..common_gui.channel_control import ChannelProperty
@@ -49,10 +49,8 @@ class ResultImageView(ImageView):
         return False
 
     @Slot()
-    @Slot(SegmentationInfo)
-    def set_segmentation(
-        self, segmentation_info: Optional[SegmentationInfo] = None, image: Optional[Image] = None
-    ) -> None:
+    @Slot(ROIInfo)
+    def set_segmentation(self, segmentation_info: Optional[ROIInfo] = None, image: Optional[Image] = None) -> None:
         super().set_segmentation(segmentation_info, image)
         show = self.any_segmentation()
         self.label1.setVisible(show)

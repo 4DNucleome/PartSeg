@@ -38,7 +38,7 @@ class StackImageView(ImageView):
             # TODO think about marking on bright background
             slices = bound_info.get_slices()
             slices[image_info.image.stack_pos] = slice(None)
-            component_mark = image_info.segmentation_info.segmentation[tuple(slices)] == num
+            component_mark = image_info.segmentation_info.roi[tuple(slices)] == num
             translate_grid = image_info.segmentation.translate_grid + (bound_info.lower) * image_info.segmentation.scale
             translate_grid[image_info.image.stack_pos] = 0
             self.additional_layers.append(
@@ -55,12 +55,12 @@ class StackImageView(ImageView):
     def component_click(self, _event: MouseEvent):
         cords = np.array([int(x) for x in self.viewer.active_layer.coordinates])
         for image_info in self.image_info.values():
-            if image_info.segmentation_info.segmentation is None:
+            if image_info.segmentation_info.roi is None:
                 continue
             if not image_info.coords_in(cords):
                 continue
             moved_coords = image_info.translated_coords(cords)
-            component = image_info.segmentation_info.segmentation[tuple(moved_coords)]
+            component = image_info.segmentation_info.roi[tuple(moved_coords)]
             if component:
                 self.component_clicked.emit(component)
 

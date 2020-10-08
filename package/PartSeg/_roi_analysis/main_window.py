@@ -25,7 +25,7 @@ from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.main_window import BaseMainMenu, BaseMainWindow
 from PartSeg.common_gui.stacked_widget_with_selector import StackedWidgetWithSelector
 from PartSegCore import state_store
-from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import ProjectTuple, algorithm_description, load_functions
 from PartSegCore.analysis.analysis_utils import SegmentationPipeline, SegmentationPipelineElement
 from PartSegCore.analysis.io_utils import create_history_element_from_project
@@ -33,7 +33,7 @@ from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.io_utils import HistoryElement, WrongFileTypeException
 from PartSegCore.mask_create import calculate_mask_from_project
 from PartSegCore.segmentation.algorithm_base import SegmentationResult
-from PartSegCore.segmentation_info import SegmentationInfo
+from PartSegCore.segmentation_info import ROIInfo
 from PartSegImage import TiffImageReader
 
 from ..common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgorithmSettingsWidget
@@ -146,7 +146,7 @@ class Options(QWidget):
             self._settings.set_segmentation_to_compare(self._settings.segmentation_info)
             self.compare_btn.setText("Remove")
         else:
-            self._settings.set_segmentation_to_compare(SegmentationInfo(None))
+            self._settings.set_segmentation_to_compare(ROIInfo(None))
             self.compare_btn.setText("Compare")
 
     def calculation_finished(self):
@@ -161,7 +161,7 @@ class Options(QWidget):
         mask_history = []
         for el in history:
             mask = el.mask_property
-            segmentation = SegmentationProfile(
+            segmentation = ROIExtractionProfile(
                 name="Unknown",
                 algorithm=el.segmentation_parameters["algorithm_name"],
                 values=el.segmentation_parameters["values"],
@@ -176,7 +176,7 @@ class Options(QWidget):
         if len(values) == 0:
             QMessageBox.information(self, "Some problem", "Pleas run execution again", QMessageBox.Ok)
             return
-        current_segmentation = SegmentationProfile(name="Unknown", algorithm=name, values=values)
+        current_segmentation = ROIExtractionProfile(name="Unknown", algorithm=name, values=values)
 
         while True:
             text, ok = QInputDialog.getText(self, "Pipeline name", "Input pipeline name here")
@@ -207,7 +207,7 @@ class Options(QWidget):
         if dial.exec() and process_thread.result:
             pipeline_result = process_thread.result
             self._settings.mask = pipeline_result.mask
-            self._settings.segmentation = pipeline_result.segmentation
+            self._settings.segmentation = pipeline_result.roi
             self._settings.full_segmentation = pipeline_result.full_segmentation
             self._settings.set_history(pipeline_result.history)
             self.label.setText(pipeline_result.description)
@@ -219,7 +219,7 @@ class Options(QWidget):
             if self.choose_profile.itemData(i, Qt.ToolTipRole) is not None:
                 continue
             text = self.choose_profile.itemText(i)
-            profile: SegmentationProfile = self._settings.segmentation_profiles[text]
+            profile: ROIExtractionProfile = self._settings.segmentation_profiles[text]
             tool_tip_text = str(profile)
             self.choose_profile.setItemData(i, tool_tip_text, Qt.ToolTipRole)
         for i in range(1, self.choose_pipe.count()):
@@ -274,7 +274,7 @@ class Options(QWidget):
                     QMessageBox.No,
                 ):
                     continue
-            resp = SegmentationProfile(text, widget.name, widget.get_values())
+            resp = ROIExtractionProfile(text, widget.name, widget.get_values())
             self._settings.segmentation_profiles[text] = resp
             self._settings.dump()
             self.choose_profile.addItem(text)
@@ -345,10 +345,8 @@ class Options(QWidget):
     def execution_done(self, segmentation: SegmentationResult):
         if segmentation.info_text != "":
             QMessageBox.information(self, "Algorithm info", segmentation.info_text)
-        self._settings.segmentation = segmentation.segmentation
-        self.compare_btn.setEnabled(
-            isinstance(segmentation.segmentation, np.ndarray) and np.any(segmentation.segmentation)
-        )
+        self._settings.segmentation = segmentation.roi
+        self.compare_btn.setEnabled(isinstance(segmentation.roi, np.ndarray) and np.any(segmentation.roi))
         self._settings.additional_layers = segmentation.additional_layers
         self.label.setText(self.sender().get_info_text())
 

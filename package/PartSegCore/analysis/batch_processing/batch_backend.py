@@ -37,7 +37,7 @@ import pandas as pd
 import tifffile
 import xlsxwriter
 
-from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.analysis.calculation_plan import (
     BaseCalculation,
@@ -225,11 +225,11 @@ class CalculationProcess:
         self.iterate_over(children)
         self.mask = old_mask
 
-    def step_segmentation(self, operation: SegmentationProfile, children: List[CalculationTree]):
+    def step_segmentation(self, operation: ROIExtractionProfile, children: List[CalculationTree]):
         """
         Perform segmentation and iterate over ``children`` nodes
 
-        :param SegmentationProfile operation: Specification of segmentation operation
+        :param ROIExtractionProfile operation: Specification of segmentation operation
         :param List[CalculationTree] children: list of nodes to iterate over after perform segmentation
         """
         segmentation_class = analysis_algorithm_dict.get(operation.algorithm, None)
@@ -241,7 +241,7 @@ class CalculationProcess:
         segmentation_algorithm.set_parameters(**operation.values)
         result = segmentation_algorithm.calculation_run(report_empty_fun)
         backup_data = self.segmentation, self.additional_layers, self.algorithm_parameters
-        self.segmentation = result.segmentation
+        self.segmentation = result.roi
         self.additional_layers = result.additional_layers
         self.algorithm_parameters = {"algorithm_name": operation.algorithm, "values": operation.values}
         self.iterate_over(children)
@@ -353,7 +353,7 @@ class CalculationProcess:
         """
         if isinstance(node.operation, MaskMapper):
             self.step_load_mask(node.operation, node.children)
-        elif isinstance(node.operation, SegmentationProfile):
+        elif isinstance(node.operation, ROIExtractionProfile):
             self.step_segmentation(node.operation, node.children)
         elif isinstance(node.operation, MaskUse):
             self.step_mask_use(node.operation, node.children)

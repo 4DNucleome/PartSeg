@@ -38,8 +38,8 @@ from PartSegCore.mask.io_functions import (
     LoadROIFromTIFF,
     LoadROIParameters,
     LoadSegmentation,
+    MaskProjectTuple,
     SaveROI,
-    SegmentationTuple,
 )
 from PartSegCore.mask_create import calculate_mask_from_project
 from PartSegCore.segmentation.algorithm_base import SegmentationResult
@@ -74,7 +74,7 @@ class MaskDialog(MaskDialogBase):
         self.settings = settings
 
     def next_mask(self):
-        project_info: SegmentationTuple = self.settings.get_project_info()
+        project_info: MaskProjectTuple = self.settings.get_project_info()
         mask_property = self.mask_widget.get_mask_property()
         self.settings.set("mask_manager.mask_property", mask_property)
         mask = calculate_mask_from_project(mask_description=mask_property, project=project_info)
@@ -280,7 +280,7 @@ class MainMenu(BaseMainMenu):
             if result is None:
                 QMessageBox.critical(self, "Data Load fail", "Fail of loading data")
                 return
-            if result.segmentation is not None:
+            if result.roi is not None:
                 try:
                     self.settings.set_project_info(dial.get_result())
                     return
@@ -300,7 +300,7 @@ class MainMenu(BaseMainMenu):
 
             else:
                 self.segmentation_dialog.set_additional_text("")
-            self.segmentation_dialog.set_parameters_dict(result.segmentation_parameters)
+            self.segmentation_dialog.set_parameters_dict(result.roi_extraction_parameters)
             self.segmentation_dialog.show()
 
     def save_segmentation(self):
@@ -747,7 +747,7 @@ class AlgorithmOptions(QWidget):
         self.choose_components.setDisabled(False)
 
     def execution_done(self, segmentation: SegmentationResult):
-        if np.max(segmentation.segmentation) == 0:
+        if np.max(segmentation.roi) == 0:
             QMessageBox.information(
                 self, "No result", "Segmentation contains no component, check parameters, " "especially chosen channel."
             )
@@ -755,7 +755,7 @@ class AlgorithmOptions(QWidget):
             QMessageBox.information(self, "Algorithm info", segmentation.info_text)
         parameters_dict = defaultdict(lambda: deepcopy(segmentation.parameters))
         self.settings.additional_layers = segmentation.additional_layers
-        self.settings.set_segmentation(segmentation.segmentation, True, [], parameters_dict)
+        self.settings.set_segmentation(segmentation.roi, True, [], parameters_dict)
 
     def showEvent(self, _):
         widget = self.algorithm_choose_widget.current_widget()
@@ -974,7 +974,7 @@ class MainWindow(BaseMainWindow):
 
     @staticmethod
     def get_project_info(file_path, image):
-        return SegmentationTuple(file_path=file_path, image=image)
+        return MaskProjectTuple(file_path=file_path, image=image)
 
     def set_data(self, data):
         self.main_menu.set_data(data)

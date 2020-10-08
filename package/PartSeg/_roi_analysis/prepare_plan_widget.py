@@ -33,7 +33,7 @@ from qtpy.QtWidgets import (
 )
 
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
-from PartSegCore.algorithm_describe_base import AlgorithmProperty, SegmentationProfile
+from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.analysis.calculation_plan import (
     CalculationPlan,
@@ -945,10 +945,10 @@ class PlanPreview(QTreeWidget):
         widget = QTreeWidgetItem(up_widget)
         widget.setText(0, CalculationPlan.get_el_name(node_plan.operation))
         self.setCurrentItem(widget)
-        if isinstance(node_plan.operation, (MeasurementCalculate, SegmentationProfile, MaskCreate)):
+        if isinstance(node_plan.operation, (MeasurementCalculate, ROIExtractionProfile, MaskCreate)):
             desc = QTreeWidgetItem(widget)
             desc.setText(0, "Description")
-            if isinstance(node_plan.operation, SegmentationProfile):
+            if isinstance(node_plan.operation, ROIExtractionProfile):
                 txt = node_plan.operation.pretty_print(analysis_algorithm_dict)
             else:
                 txt = str(node_plan.operation)
@@ -997,10 +997,10 @@ class PlanPreview(QTreeWidget):
             elif op_type == PlanChanges.replace_node:
                 node = self.get_node(path)
                 node.setText(0, CalculationPlan.get_el_name(el.operation))
-                if isinstance(el.operation, (MeasurementCalculate, SegmentationProfile, MaskCreate)):
+                if isinstance(el.operation, (MeasurementCalculate, ROIExtractionProfile, MaskCreate)):
                     child = node.child(0)
                     child.takeChildren()
-                    if isinstance(el.operation, SegmentationProfile):
+                    if isinstance(el.operation, ROIExtractionProfile):
                         txt = el.operation.pretty_print(analysis_algorithm_dict)
                     else:
                         txt = str(el.operation)

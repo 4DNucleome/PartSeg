@@ -17,7 +17,7 @@ from tifffile import TiffFile
 
 from PartSegImage import GenericImageReader
 
-from ..algorithm_describe_base import Register, SegmentationProfile
+from ..algorithm_describe_base import Register, ROIExtractionProfile
 from ..io_utils import (
     HistoryElement,
     LoadBase,
@@ -115,7 +115,7 @@ def load_project(
         return ProjectTuple(
             file_path=file_path,
             image=image,
-            segmentation=segmentation,
+            roi=segmentation,
             mask=mask,
             history=history,
             algorithm_parameters=algorithm_dict,
@@ -125,7 +125,7 @@ def load_project(
         return ProjectTuple(
             file_path=file_path,
             image=image,
-            segmentation=segmentation,
+            roi=segmentation,
             mask=mask,
             history=history,
             algorithm_parameters=algorithm_dict,
@@ -297,7 +297,7 @@ class LoadMaskSegmentation(LoadBase):
     ) -> typing.List[ProjectTuple]:
         data = LoadROIImage.load(load_locations, range_changed, step_changed, metadata)
         image = data.image
-        segmentation = data.segmentation
+        segmentation = data.roi
         components = data.selected_components
         res = []
         base, ext = os.path.splitext(load_locations[0])
@@ -316,7 +316,7 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
     json_hook = part_hook
 
     @classmethod
-    def update_segmentation_profile(cls, profile_data: SegmentationProfile) -> SegmentationProfile:
+    def update_segmentation_profile(cls, profile_data: ROIExtractionProfile) -> ROIExtractionProfile:
         replace_name_dict = {
             "Split Mask on Part": "Mask Distance Splitting",
             "Lower threshold flow": "Lower threshold with watershed",
@@ -409,9 +409,9 @@ def load_metadata(data: typing.Union[str, Path]):
 
 def update_algorithm_dict(dkt):
     if "name" in dkt:
-        profile = SegmentationProfile("", dkt["name"], dkt["values"])
+        profile = ROIExtractionProfile("", dkt["name"], dkt["values"])
     elif "algorithm_name" in dkt:
-        profile = SegmentationProfile("", dkt["algorithm_name"], dkt["values"])
+        profile = ROIExtractionProfile("", dkt["algorithm_name"], dkt["values"])
     else:
         return dkt
     profile = UpdateLoadedMetadataAnalysis.recursive_update(profile)

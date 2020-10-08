@@ -8,7 +8,7 @@ from abc import abstractmethod
 from copy import copy, deepcopy
 from enum import Enum
 
-from ..algorithm_describe_base import SegmentationProfile
+from ..algorithm_describe_base import ROIExtractionProfile
 from ..class_generator import BaseSerializableClass, enum_register
 from ..mask_create import MaskProperty
 from ..universal_const import Units
@@ -316,7 +316,7 @@ class CalculationTree:
 
     def __init__(
         self,
-        operation: typing.Union[BaseSerializableClass, SegmentationProfile, MeasurementCalculate, RootType],
+        operation: typing.Union[BaseSerializableClass, ROIExtractionProfile, MeasurementCalculate, RootType],
         children: typing.List["CalculationTree"],
     ):
         if operation == "root":
@@ -468,7 +468,7 @@ class CalculationPlan:
         MaskUse.__name__: MaskUse,
         Save.__name__: Save,
         MeasurementCalculate.__name__: MeasurementCalculate,
-        SegmentationProfile.__name__: SegmentationProfile,
+        ROIExtractionProfile.__name__: ROIExtractionProfile,
         MaskSuffix.__name__: MaskSuffix,
         MaskSub.__name__: MaskSub,
         MaskFile.__name__: MaskFile,
@@ -610,7 +610,7 @@ class CalculationPlan:
             return NodeType.mask
         if isinstance(node.operation, MeasurementCalculate):
             return NodeType.measurement
-        if isinstance(node.operation, SegmentationProfile):
+        if isinstance(node.operation, ROIExtractionProfile):
             return NodeType.segment
         if isinstance(node.operation, Save):
             return NodeType.save
@@ -626,7 +626,7 @@ class CalculationPlan:
             return
         node = self.get_node()
         node.children.append(CalculationTree(step, []))
-        if isinstance(step, SegmentationProfile):
+        if isinstance(step, ROIExtractionProfile):
             self.segmentation_count += 1
         self.changes.append((self.current_pos, node.children[-1], PlanChanges.add_node))
 
@@ -734,7 +734,7 @@ class CalculationPlan:
         if isinstance(el, Operations):
             if el == Operations.reset_to_base:
                 return "reset project to base image with mask"
-        if isinstance(el, SegmentationProfile):
+        if isinstance(el, ROIExtractionProfile):
             return "Segmentation: {}".format(el.name)
         if isinstance(el, MeasurementCalculate):
             if el.name_prefix == "":
@@ -785,8 +785,8 @@ class CalculationPlan:
             name = elem.operation
         else:
             name = self.get_el_name(elem.operation)
-        if isinstance(elem.operation, (MeasurementCalculate, SegmentationProfile, MaskCreate)):
-            if isinstance(elem.operation, SegmentationProfile):
+        if isinstance(elem.operation, (MeasurementCalculate, ROIExtractionProfile, MaskCreate)):
+            if isinstance(elem.operation, ROIExtractionProfile):
                 txt = elem.operation.pretty_print(analysis_algorithm_dict)
             else:
                 txt = str(elem.operation)

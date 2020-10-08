@@ -8,7 +8,7 @@ import SimpleITK as sitk
 from PartSegCore.segmentation.border_smoothing import smooth_dict
 from PartSegCore.segmentation.watershed import BaseWatershed, sprawl_dict
 
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
 from ..channel_class import Channel
 from ..convex_fill import convex_fill
 from ..segmentation.algorithm_base import AdditionalLayerDescription, SegmentationAlgorithm, SegmentationResult
@@ -82,8 +82,8 @@ class ThresholdPreview(StackAlgorithm):
     def get_info_text(self):
         return ""
 
-    def get_segmentation_profile(self) -> SegmentationProfile:
-        return SegmentationProfile(
+    def get_segmentation_profile(self) -> ROIExtractionProfile:
+        return ROIExtractionProfile(
             "",
             self.get_name(),
             {"channel": self.channel_num, "threshold": self.threshold, "noise_filtering": self.noise_filtering},
@@ -183,7 +183,7 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
             resp = convex_fill(resp)
         report_fun("Calculation done", 7)
         return SegmentationResult(
-            segmentation=self.image.fit_array_to_image(resp),
+            roi=self.image.fit_array_to_image(resp),
             parameters=self.get_segmentation_profile(),
             additional_layers={
                 "denoised image": AdditionalLayerDescription(data=image, layer_type="image"),
@@ -213,8 +213,8 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
         self.edge_connection = not side_connection
         self.use_convex = use_convex
 
-    def get_segmentation_profile(self) -> SegmentationProfile:
-        return SegmentationProfile(
+    def get_segmentation_profile(self) -> ROIExtractionProfile:
+        return ROIExtractionProfile(
             "",
             self.get_name(),
             {
@@ -383,8 +383,8 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
         for name in fields:
             self.parameters[name] = kwargs[name]
 
-    def get_segmentation_profile(self) -> SegmentationProfile:
-        return SegmentationProfile("", self.get_name(), dict(self.parameters))
+    def get_segmentation_profile(self) -> ROIExtractionProfile:
+        return ROIExtractionProfile("", self.get_name(), dict(self.parameters))
 
 
 class AutoThresholdAlgorithm(BaseSingleThresholdAlgorithm):

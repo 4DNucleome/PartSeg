@@ -25,7 +25,7 @@ from vispy.scene import BaseCamera
 
 from PartSegCore.color_image import ColorMap, calculate_borders, create_color_map
 from PartSegCore.image_operations import NoiseFilterType, gaussian, median
-from PartSegCore.segmentation_info import SegmentationInfo
+from PartSegCore.segmentation_info import ROIInfo
 from PartSegImage import Image
 
 from ..common_backend.base_settings import BaseSettings, ViewSettings
@@ -43,7 +43,7 @@ class ImageInfo:
     mask: Optional[Labels] = None
     mask_array: Optional[np.ndarray] = None
     segmentation: Optional[Labels] = None
-    segmentation_info: SegmentationInfo = field(default_factory=lambda: SegmentationInfo(None))
+    segmentation_info: ROIInfo = field(default_factory=lambda: ROIInfo(None))
     segmentation_count: int = 0
 
     def coords_in(self, coords: Union[List[int], np.ndarray]) -> bool:
@@ -307,8 +307,8 @@ class ImageView(QWidget):
             for layer in image_info.layers:
                 if layer.visible:
                     bright_array.append(layer.data[tuple(moved_coords)])
-            if image_info.segmentation_info.segmentation is not None and image_info.segmentation is not None:
-                val = image_info.segmentation_info.segmentation[tuple(moved_coords)]
+            if image_info.segmentation_info.roi is not None and image_info.segmentation is not None:
+                val = image_info.segmentation_info.roi[tuple(moved_coords)]
                 if val:
                     components.append(val)
 
@@ -352,9 +352,7 @@ class ImageView(QWidget):
             return self.settings.image
         return self.image_info[self.current_image].image
 
-    def set_segmentation(
-        self, segmentation_info: Optional[SegmentationInfo] = None, image: Optional[Image] = None
-    ) -> None:
+    def set_segmentation(self, segmentation_info: Optional[ROIInfo] = None, image: Optional[Image] = None) -> None:
         image = self.get_image(image)
         if segmentation_info is None:
             segmentation_info = self.settings.segmentation_info
@@ -365,7 +363,7 @@ class ImageView(QWidget):
             self.viewer.layers.remove_selected()
             image_info.segmentation = None
 
-        segmentation = segmentation_info.segmentation
+        segmentation = segmentation_info.roi
         if segmentation is None:
             return
 
@@ -410,7 +408,7 @@ class ImageView(QWidget):
         self.viewer.layers.remove_selected()
 
     def add_segmentation_layer(self, image_info: ImageInfo):
-        if image_info.segmentation_info.segmentation is None:
+        if image_info.segmentation_info.roi is None:
             return
         try:
             max_num = max(1, image_info.segmentation_count)
@@ -419,7 +417,7 @@ class ImageView(QWidget):
         if self.image_state.only_borders:
 
             data = calculate_borders(
-                image_info.segmentation_info.segmentation.transpose(ORDER_DICT[self._current_order]),
+                image_info.segmentation_info.roi.transpose(ORDER_DICT[self._current_order]),
                 self.image_state.borders_thick // 2,
                 self.viewer.dims.ndisplay == 2,
             ).transpose(np.argsort(ORDER_DICT[self._current_order]))
@@ -428,7 +426,7 @@ class ImageView(QWidget):
             )
         else:
             image_info.segmentation = self.viewer.add_image(
-                image_info.segmentation_info.segmentation,
+                image_info.segmentation_info.roi,
                 scale=image_info.image.normalized_scaling(),
                 contrast_limits=[0, max_num],
                 name="segmentation",

@@ -19,7 +19,7 @@ from PartSegCore.io_utils import HistoryElement, load_metadata_base
 from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, check_loaded_dict
 from PartSegCore.project_info import ProjectInfoBase
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
-from PartSegCore.segmentation_info import SegmentationInfo
+from PartSegCore.segmentation_info import ROIInfo
 from PartSegImage import Image
 
 
@@ -31,7 +31,7 @@ class ImageSettings(QObject):
     image_changed = Signal([Image], [int], [str])
     image_spacing_changed = Signal()
     """:py:class:`Signal` ``([Image], [int], [str])`` emitted when image has changed"""
-    segmentation_changed = Signal(SegmentationInfo)
+    segmentation_changed = Signal(ROIInfo)
     """
     :py:class:`.Signal`
     emitted when segmentation has changed
@@ -44,7 +44,7 @@ class ImageSettings(QObject):
         self._image: Optional[Image] = None
         self._image_path = ""
         self._image_spacing = 210, 70, 70
-        self._segmentation_info = SegmentationInfo(None)
+        self._segmentation_info = ROIInfo(None)
         self._additional_layers = {}
 
     @property
@@ -96,10 +96,10 @@ class ImageSettings(QObject):
     @property
     def segmentation(self) -> np.ndarray:
         """current segmentation"""
-        return self._segmentation_info.segmentation
+        return self._segmentation_info.roi
 
     @property
-    def segmentation_info(self) -> SegmentationInfo:
+    def segmentation_info(self) -> ROIInfo:
         return self._segmentation_info
 
     @segmentation.setter
@@ -109,7 +109,7 @@ class ImageSettings(QObject):
                 val = self.image.fit_array_to_image(val)
             except ValueError:
                 raise ValueError("Segmentation do not fit to image")
-        self._segmentation_info = SegmentationInfo(val)
+        self._segmentation_info = ROIInfo(val)
         if val is not None:
             self.segmentation_changed.emit(self._segmentation_info)
         else:
@@ -131,7 +131,7 @@ class ImageSettings(QObject):
         if value.file_path is not None:
             self.image_changed[str].emit(value.file_path)
         self._image_changed()
-        self._segmentation_info = SegmentationInfo(None)
+        self._segmentation_info = ROIInfo(None)
 
         self.image_changed.emit(self._image)
         self.image_changed[int].emit(self._image.channels)

@@ -39,7 +39,7 @@ class TestStackSettings:
         project2 = LoadStackImage.load([os.path.join(data_test_dir, "test_lsm.tif")])
         stack_settings.set_project_info(project2)
         project2_res = stack_settings.get_project_info()
-        assert project2_res.segmentation is None
+        assert project2_res.roi is None
         assert (
             isinstance(project2_res.selected_components, typing.Iterable) and len(project2_res.selected_components) == 0
         )
@@ -219,7 +219,7 @@ class TestPartSettings:
         algorithm.set_image(settings.image)
         algorithm.set_parameters(**algorithm_parameters["values"])
         result = algorithm.calculation_run(lambda x, y: None)
-        settings.segmentation = result.segmentation
+        settings.segmentation = result.roi
         settings.additional_layers = result.additional_layers
         settings.last_executed_algorithm = result.parameters.algorithm
         settings.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
@@ -232,8 +232,8 @@ class TestPartSettings:
         algorithm.set_parameters(**algorithm_parameters["values"])
         algorithm.set_mask(settings.mask)
         result2 = algorithm.calculation_run(lambda x, y: None)
-        assert np.max(result2.segmentation) == 2
-        settings.segmentation = result2.segmentation
+        assert np.max(result2.roi) == 2
+        settings.segmentation = result2.roi
         settings.additional_layers = result2.additional_layers
         settings.last_executed_algorithm = result.parameters.algorithm
         settings.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
@@ -241,5 +241,5 @@ class TestPartSettings:
         SaveProject.save(tmp_path / "project.tgz", project_info)
         assert os.path.exists(tmp_path / "project.tgz")
         loaded = LoadProject.load([tmp_path / "project.tgz"])
-        assert np.all(loaded.segmentation == result2.segmentation)
+        assert np.all(loaded.roi == result2.roi)
         assert len(loaded.history) == 1

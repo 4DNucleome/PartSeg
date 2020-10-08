@@ -18,7 +18,7 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
 )
 
-from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 
 
@@ -309,6 +309,6 @@ class ProfileDictViewer(ObjectPreview):
     Serialized using :py:meth:`ObjectPreview.pretty_print`.
     """
 
-    def preview_object(self, ob: SegmentationProfile):
+    def preview_object(self, ob: ROIExtractionProfile):
         text = ob.pretty_print(analysis_algorithm_dict)
         self.setText(text)

@@ -4,10 +4,10 @@ import numpy as np
 
 from PartSegCore.analysis import ProjectTuple
 from PartSegCore.io_utils import LoadBase, WrongFileTypeException
-from PartSegCore.mask.io_functions import SegmentationTuple
+from PartSegCore.mask.io_functions import MaskProjectTuple
 
 
-def project_to_layers(project_info: typing.Union[ProjectTuple, SegmentationTuple]):
+def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]):
     res_layers = []
     if project_info.image is not None and not isinstance(project_info.image, str):
         scale = project_info.image.normalized_scaling()
@@ -32,7 +32,7 @@ def project_to_layers(project_info: typing.Union[ProjectTuple, SegmentationTuple
                 (project_info.image.fit_array_to_image(project_info.mask), {"scale": scale, "name": "Mask"}, "labels",)
             )
     else:
-        if isinstance(project_info, SegmentationTuple) and project_info.spacing is not None:
+        if isinstance(project_info, MaskProjectTuple) and project_info.spacing is not None:
             scale = np.multiply(project_info.spacing, 10 ** 9)
         else:
             scale = None
@@ -50,7 +50,7 @@ def partseg_loader(loader: typing.Type[LoadBase], path: str):
     except WrongFileTypeException:
         return None
 
-    if isinstance(project_info, (ProjectTuple, SegmentationTuple)):
+    if isinstance(project_info, (ProjectTuple, MaskProjectTuple)):
         return project_to_layers(project_info)
     else:
         return None

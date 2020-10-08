@@ -4,7 +4,7 @@ from copy import deepcopy
 import numpy as np
 import pytest
 
-from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import (
     ProjectTuple,
     SegmentationPipeline,
@@ -24,7 +24,7 @@ def test_simple(image, algorithm_parameters, channel):
     algorithm.set_image(image)
     algorithm.set_parameters(**algorithm_parameters["values"])
     result = algorithm.calculation_run(lambda x, y: None)
-    assert np.max(result.segmentation) == 1
+    assert np.max(result.roi) == 1
 
 
 def test_pipeline_manual(image, algorithm_parameters, mask_property):
@@ -32,17 +32,17 @@ def test_pipeline_manual(image, algorithm_parameters, mask_property):
     algorithm.set_image(image)
     algorithm.set_parameters(**algorithm_parameters["values"])
     result = algorithm.calculation_run(lambda x, y: None)
-    mask = calculate_mask(mask_property, result.segmentation, None, image.spacing)
+    mask = calculate_mask(mask_property, result.roi, None, image.spacing)
     algorithm_parameters["values"]["channel"] = 1
     algorithm.set_parameters(**algorithm_parameters["values"])
     algorithm.set_mask(mask)
     result2 = algorithm.calculation_run(lambda x, y: None)
-    assert np.max(result2.segmentation) == 2
+    assert np.max(result2.roi) == 2
 
 
 def test_pipeline(image, algorithm_parameters, mask_property, tmp_path):
     elem = SegmentationPipelineElement(
-        segmentation=SegmentationProfile(
+        segmentation=ROIExtractionProfile(
             name="", algorithm=algorithm_parameters["algorithm_name"], values=algorithm_parameters["values"]
         ),
         mask_property=mask_property,
@@ -51,17 +51,17 @@ def test_pipeline(image, algorithm_parameters, mask_property, tmp_path):
     algorithm_parameters["values"]["channel"] = 1
     pipeline = SegmentationPipeline(
         name="",
-        segmentation=SegmentationProfile(
+        segmentation=ROIExtractionProfile(
             name="", algorithm=algorithm_parameters["algorithm_name"], values=algorithm_parameters["values"]
         ),
         mask_history=[elem],
     )
     result = calculate_pipeline(image, None, pipeline, lambda x, y: None)
-    assert np.max(result.segmentation) == 2
+    assert np.max(result.roi) == 2
     pt = ProjectTuple(
         file_path=image.file_path,
         image=image,
-        segmentation=result.segmentation,
+        roi=result.roi,
         mask=result.mask,
         history=result.history,
         algorithm_parameters=algorithm_parameters,
@@ -69,4 +69,4 @@ def test_pipeline(image, algorithm_parameters, mask_property, tmp_path):
     SaveProject.save(tmp_path / "project.tgz", pt)
     assert os.path.exists(tmp_path / "project.tgz")
     loaded = LoadProject.load([tmp_path / "project.tgz"])
-    assert np.all(loaded.segmentation == result.segmentation)
+    assert np.all(loaded.roi == result.roi)

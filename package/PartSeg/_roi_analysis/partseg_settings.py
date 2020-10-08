@@ -4,7 +4,7 @@ from copy import deepcopy
 import numpy as np
 from qtpy.QtCore import Signal
 
-from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.analysis_utils import SegmentationPipeline
 from PartSegCore.analysis.calculation_plan import CalculationPlan
 from PartSegCore.analysis.io_utils import MaskInfo, ProjectTuple
@@ -13,7 +13,7 @@ from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.analysis.save_hooks import PartEncoder
 from PartSegCore.io_utils import HistoryElement
 from PartSegCore.json_hooks import ProfileDict
-from PartSegCore.segmentation_info import SegmentationInfo
+from PartSegCore.segmentation_info import ROIInfo
 
 from ..common_backend.base_settings import BaseSettings, SaveSettingsDescription
 
@@ -31,7 +31,7 @@ class PartSettings(BaseSettings):
     last_executed_algorithm - parameter for caring last used algorithm
     """
 
-    compare_segmentation_change = Signal(SegmentationInfo)
+    compare_segmentation_change = Signal(ROIInfo)
     json_encoder_class = PartEncoder
     load_metadata = staticmethod(load_metadata)
     last_executed_algorithm: str
@@ -68,7 +68,7 @@ class PartSettings(BaseSettings):
     def cmp_history_element(el1: HistoryElement, el2: HistoryElement):
         return el1.mask_property == el2.mask_property
 
-    def set_segmentation_to_compare(self, segmentation: SegmentationInfo):
+    def set_segmentation_to_compare(self, segmentation: ROIInfo):
         self.compare_segmentation = segmentation
         self.compare_segmentation_change.emit(segmentation)
 
@@ -96,8 +96,8 @@ class PartSettings(BaseSettings):
         return ProjectTuple(
             file_path=self.image.file_path,
             image=self.image.substitute(),
-            segmentation=self.segmentation,
-            segmentation_info=self.segmentation_info,
+            roi=self.segmentation,
+            roi_info=self.segmentation_info,
             additional_layers=self.additional_layers,
             mask=self.mask,
             history=self.history[: self.history_index + 1],
@@ -107,9 +107,9 @@ class PartSettings(BaseSettings):
     def set_project_info(self, data: typing.Union[ProjectTuple, MaskInfo]):
         if isinstance(data, ProjectTuple):
             if self.image.file_path == data.image.file_path and self.image.shape == data.image.shape:
-                if data.segmentation is not None:
+                if data.roi is not None:
                     try:
-                        self.image.fit_array_to_image(data.segmentation)
+                        self.image.fit_array_to_image(data.roi)
                         self.mask = data.mask
                     except ValueError:
                         self.image = data.image.substitute()
@@ -117,7 +117,7 @@ class PartSettings(BaseSettings):
                     self.mask = data.mask
             else:
                 self.image = data.image.substitute(mask=data.mask)
-            self.segmentation = data.segmentation
+            self.segmentation = data.roi
             self.additional_layers = data.additional_layers
             self.set_history(data.history[:])
             if data.algorithm_parameters:
@@ -140,7 +140,7 @@ class PartSettings(BaseSettings):
         return self.segmentation_pipelines_dict.get(self.current_segmentation_dict, {})
 
     @property
-    def segmentation_profiles(self) -> typing.Dict[str, SegmentationProfile]:
+    def segmentation_profiles(self) -> typing.Dict[str, ROIExtractionProfile]:
         return self.segmentation_profiles_dict.get(self.current_segmentation_dict, {})
 
     @property

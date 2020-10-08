@@ -3,7 +3,7 @@ from typing import Optional
 
 import numpy as np
 
-from PartSegCore.segmentation_info import SegmentationInfo
+from PartSegCore.segmentation_info import ROIInfo
 from PartSegImage import Image
 
 if sys.version_info.minor < 8:
@@ -26,8 +26,8 @@ class ProjectInfoBase(Protocol):
 
     file_path: str
     image: Image
-    segmentation: np.ndarray
-    segmentation_info: SegmentationInfo = SegmentationInfo(None)
+    roi: np.ndarray
+    roi_info: ROIInfo = ROIInfo(None)
     mask: Optional[np.ndarray]
     errors: str = ""
 

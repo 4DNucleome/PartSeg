@@ -1561,9 +1561,10 @@ class TestStatisticProfile:
         assert result["LongestMainAxisLength per component"][0][0] == 35 * 50 * UNIT_SCALE[Units.nm.value]
         assert result["LongestMainAxisLength per component"][0][1] == 26 * 50 * UNIT_SCALE[Units.nm.value]
 
-    def test_all_variants(self):
+    def test_all_variants(self, bundle_test_dir):
         """ This test check if all calculations finished, not values. """
-        file_path = os.path.join(os.path.dirname(__file__), "test_data", "measurements_profile.json")
+        file_path = os.path.join(bundle_test_dir, "measurements_profile.json")
+        assert os.path.exists(file_path)
         profile = load_metadata(file_path)["all_statistic"]
         image = get_two_components_image()
         mask = get_two_component_mask()
