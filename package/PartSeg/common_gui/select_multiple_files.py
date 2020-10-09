@@ -158,6 +158,8 @@ class AddFiles(QWidget):
                 res_list.append(os.path.join(base_path, file_path))
         missed_files = [x for x in res_list if not os.path.exists(x)]
         if missed_files:
+            if len(missed_files) > 6:
+                missed_files = missed_files[:6] + ["..."]
             missed_files_str = "<br>".join(missed_files)
             QMessageBox().warning(
                 self,
