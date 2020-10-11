@@ -255,6 +255,12 @@ class FileChoose(QWidget):
         else:
             self.run_button.setDisabled(True)
 
+        if self.calculation_choose.currentText() in self.settings.batch_plans:
+            plan = self.settings.batch_plans[str(self.calculation_choose.currentText())]
+            self.files_widget.mask_list = plan.get_list_file_mask()
+        else:
+            self.files_widget.mask_list = []
+
     def chose_result_file(self):
         dial = SaveDialog(
             {SaveExcel.get_short_name(): SaveExcel}, system_widget=False, history=self.settings.get_path_history()
