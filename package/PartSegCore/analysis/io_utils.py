@@ -7,8 +7,8 @@ import packaging.version
 from PartSegCore.io_utils import HistoryElement
 from PartSegCore.mask_create import MaskProperty
 from PartSegCore.project_info import ProjectInfoBase
+from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
-from PartSegCore.segmentation_info import ROIInfo
 from PartSegCore.utils import numpy_repr
 from PartSegImage import Image
 

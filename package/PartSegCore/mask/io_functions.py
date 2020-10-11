@@ -33,7 +33,7 @@ from ..io_utils import (
 )
 from ..json_hooks import ProfileEncoder
 from ..project_info import ProjectInfoBase
-from ..segmentation_info import ROIInfo
+from ..roi_info import ROIInfo
 
 
 @dataclasses.dataclass(frozen=True)

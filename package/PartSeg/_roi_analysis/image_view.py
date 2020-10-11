@@ -4,7 +4,7 @@ from qtpy.QtCore import QObject, QSignalBlocker, Slot
 from qtpy.QtGui import QResizeEvent
 from qtpy.QtWidgets import QCheckBox, QDoubleSpinBox, QLabel
 
-from PartSegCore.segmentation_info import ROIInfo
+from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
 from ..common_gui.channel_control import ChannelProperty

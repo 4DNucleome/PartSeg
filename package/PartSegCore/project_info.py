@@ -3,7 +3,7 @@ from typing import Optional
 
 import numpy as np
 
-from PartSegCore.segmentation_info import ROIInfo
+from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
 if sys.version_info.minor < 8:

@@ -25,7 +25,7 @@ from vispy.scene import BaseCamera
 
 from PartSegCore.color_image import ColorMap, calculate_borders, create_color_map
 from PartSegCore.image_operations import NoiseFilterType, gaussian, median
-from PartSegCore.segmentation_info import ROIInfo
+from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
 from ..common_backend.base_settings import BaseSettings, ViewSettings

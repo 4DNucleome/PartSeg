@@ -13,11 +13,11 @@ from PartSegCore.analysis.calculate_pipeline import calculate_pipeline
 from PartSegCore.convex_fill import _convex_fill, convex_fill
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask_create import MaskProperty, calculate_mask
+from PartSegCore.roi_info import BoundInfo, ROIInfo
 from PartSegCore.segmentation import SegmentationAlgorithm
 from PartSegCore.segmentation import restartable_segmentation_algorithms as sa
 from PartSegCore.segmentation.noise_filtering import noise_filtering_dict
 from PartSegCore.segmentation.watershed import sprawl_dict
-from PartSegCore.segmentation_info import BoundInfo, ROIInfo
 from PartSegImage import Image
 
 
