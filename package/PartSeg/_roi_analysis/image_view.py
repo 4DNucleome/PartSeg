@@ -44,14 +44,14 @@ class ResultImageView(ImageView):
 
     def any_segmentation(self):
         for image_info in self.image_info.values():
-            if image_info.segmentation is not None:
+            if image_info.roi is not None:
                 return True
         return False
 
     @Slot()
     @Slot(ROIInfo)
-    def set_segmentation(self, segmentation_info: Optional[ROIInfo] = None, image: Optional[Image] = None) -> None:
-        super().set_segmentation(segmentation_info, image)
+    def set_roi(self, roi_info: Optional[ROIInfo] = None, image: Optional[Image] = None) -> None:
+        super().set_roi(roi_info, image)
         show = self.any_segmentation()
         self.label1.setVisible(show)
         self.label2.setVisible(show)
@@ -76,9 +76,9 @@ class ResultImageView(ImageView):
 class CompareImageView(ResultImageView):
     def __init__(self, settings: PartSettings, channel_property: ChannelProperty, name: str):
         super().__init__(settings, channel_property, name)
-        settings.segmentation_changed.disconnect(self.set_segmentation)
-        settings.segmentation_clean.disconnect(self.set_segmentation)
-        settings.compare_segmentation_change.connect(self.set_segmentation)
+        settings.segmentation_changed.disconnect(self.set_roi)
+        settings.segmentation_clean.disconnect(self.set_roi)
+        settings.compare_segmentation_change.connect(self.set_roi)
 
 
 class SynchronizeView(QObject):

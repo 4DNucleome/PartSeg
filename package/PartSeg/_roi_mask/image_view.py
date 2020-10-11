@@ -32,22 +32,18 @@ class StackImageView(ImageView):
         self.component_unmark(num)
 
         for image_info in self.image_info.values():
-            bound_info = image_info.segmentation_info.bound_info.get(num, None)
+            bound_info = image_info.roi_info.bound_info.get(num, None)
             if bound_info is None:
                 continue
             # TODO think about marking on bright background
             slices = bound_info.get_slices()
             slices[image_info.image.stack_pos] = slice(None)
-            component_mark = image_info.segmentation_info.roi[tuple(slices)] == num
-            translate_grid = image_info.segmentation.translate_grid + (bound_info.lower) * image_info.segmentation.scale
+            component_mark = image_info.roi_info.roi[tuple(slices)] == num
+            translate_grid = image_info.roi.translate_grid + (bound_info.lower) * image_info.roi.scale
             translate_grid[image_info.image.stack_pos] = 0
             self.additional_layers.append(
                 self.viewer.add_image(
-                    component_mark,
-                    scale=image_info.segmentation.scale,
-                    blending="additive",
-                    colormap="gray",
-                    opacity=0.5,
+                    component_mark, scale=image_info.roi.scale, blending="additive", colormap="gray", opacity=0.5,
                 )
             )
             self.additional_layers[-1].translate_grid = translate_grid
@@ -55,12 +51,12 @@ class StackImageView(ImageView):
     def component_click(self, _event: MouseEvent):
         cords = np.array([int(x) for x in self.viewer.active_layer.coordinates])
         for image_info in self.image_info.values():
-            if image_info.segmentation_info.roi is None:
+            if image_info.roi_info.roi is None:
                 continue
             if not image_info.coords_in(cords):
                 continue
             moved_coords = image_info.translated_coords(cords)
-            component = image_info.segmentation_info.roi[tuple(moved_coords)]
+            component = image_info.roi_info.roi[tuple(moved_coords)]
             if component:
                 self.component_clicked.emit(component)
 
