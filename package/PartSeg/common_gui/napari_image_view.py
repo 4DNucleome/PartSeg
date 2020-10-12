@@ -192,8 +192,8 @@ class ImageView(QWidget):
 
         settings.mask_changed.connect(self.set_mask)
         settings.mask_representation_changed.connect(self.update_mask_parameters)
-        settings.segmentation_changed.connect(self.set_roi)
-        settings.segmentation_clean.connect(self.set_roi)
+        settings.roi_changed.connect(self.set_roi)
+        settings.roi_clean.connect(self.set_roi)
         settings.image_changed.connect(self.set_image)
         settings.image_spacing_changed.connect(self.update_spacing_info)
         # settings.labels_changed.connect(self.paint_layer)
@@ -355,7 +355,7 @@ class ImageView(QWidget):
     def set_roi(self, roi_info: Optional[ROIInfo] = None, image: Optional[Image] = None) -> None:
         image = self.get_image(image)
         if roi_info is None:
-            roi_info = self.settings.segmentation_info
+            roi_info = self.settings.roi_info
         image_info = self.image_info[image.file_path]
         if image_info.roi is not None:
             self.viewer.layers.unselect_all()

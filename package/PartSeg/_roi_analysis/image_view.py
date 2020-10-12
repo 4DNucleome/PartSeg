@@ -76,8 +76,8 @@ class ResultImageView(ImageView):
 class CompareImageView(ResultImageView):
     def __init__(self, settings: PartSettings, channel_property: ChannelProperty, name: str):
         super().__init__(settings, channel_property, name)
-        settings.segmentation_changed.disconnect(self.set_roi)
-        settings.segmentation_clean.disconnect(self.set_roi)
+        settings.roi_changed.disconnect(self.set_roi)
+        settings.roi_clean.disconnect(self.set_roi)
         settings.compare_segmentation_change.connect(self.set_roi)
 
 

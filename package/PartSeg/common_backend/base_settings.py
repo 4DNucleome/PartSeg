@@ -2,6 +2,7 @@ import json
 import os
 import os.path
 import sys
+import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, NamedTuple, Optional, Tuple, Union
@@ -31,12 +32,12 @@ class ImageSettings(QObject):
     image_changed = Signal([Image], [int], [str])
     image_spacing_changed = Signal()
     """:py:class:`Signal` ``([Image], [int], [str])`` emitted when image has changed"""
-    segmentation_changed = Signal(ROIInfo)
+    roi_changed = Signal(ROIInfo)
     """
     :py:class:`.Signal`
-    emitted when segmentation has changed
+    emitted when roi has changed
     """
-    segmentation_clean = Signal()
+    roi_clean = Signal()
     additional_layers_changed = Signal()
 
     def __init__(self):
@@ -44,7 +45,7 @@ class ImageSettings(QObject):
         self._image: Optional[Image] = None
         self._image_path = ""
         self._image_spacing = 210, 70, 70
-        self._segmentation_info = ROIInfo(None)
+        self._roi_info = ROIInfo(None)
         self._additional_layers = {}
 
     @property
@@ -95,29 +96,40 @@ class ImageSettings(QObject):
 
     @property
     def segmentation(self) -> np.ndarray:
-        """current segmentation"""
-        return self._segmentation_info.roi
+        """current roi"""
+        warnings.warn("segmentation parameter is renamed to roi", DeprecationWarning)
+        return self.roi
+
+    @property
+    def roi(self) -> np.ndarray:
+        """current roi"""
+        return self._roi_info.roi
 
     @property
     def segmentation_info(self) -> ROIInfo:
-        return self._segmentation_info
+        warnings.warn("segmentation info parameter is renamed to roi", DeprecationWarning)
+        return self.roi_info
 
-    @segmentation.setter
-    def segmentation(self, val: np.ndarray):
+    @property
+    def roi_info(self) -> ROIInfo:
+        return self._roi_info
+
+    @roi.setter
+    def roi(self, val: np.ndarray):
         if val is not None:
             try:
                 val = self.image.fit_array_to_image(val)
             except ValueError:
-                raise ValueError("Segmentation do not fit to image")
-        self._segmentation_info = ROIInfo(val)
+                raise ValueError("roi do not fit to image")
+        self._roi_info = ROIInfo(val)
         if val is not None:
-            self.segmentation_changed.emit(self._segmentation_info)
+            self.roi_changed.emit(self._roi_info)
         else:
-            self.segmentation_clean.emit()
+            self.roi_clean.emit()
 
     @property
     def sizes(self):
-        return self._segmentation_info.sizes
+        return self._roi_info.sizes
 
     @property
     def image(self):
@@ -131,7 +143,7 @@ class ImageSettings(QObject):
         if value.file_path is not None:
             self.image_changed[str].emit(value.file_path)
         self._image_changed()
-        self._segmentation_info = ROIInfo(None)
+        self._roi_info = ROIInfo(None)
 
         self.image_changed.emit(self._image)
         self.image_changed[int].emit(self._image.channels)
@@ -170,7 +182,7 @@ class ImageSettings(QObject):
         return self._image[pos]
 
     def components_mask(self):
-        return np.array([0] + [1] * np.max(self.segmentation), dtype=np.uint8)
+        return np.array([0] + [1] * np.max(self.roi), dtype=np.uint8)
 
 
 class ColormapDict(PartiallyConstDict[ColorMap]):
@@ -374,8 +386,8 @@ class BaseSettings(ViewSettings):
 
     def __init__(self, json_path):
         super().__init__()
-        self.current_segmentation_dict = "default"
-        self.segmentation_dict = ProfileDict()
+        self._current_roi_dict = "default"
+        self._roi_dict = ProfileDict()
         self.json_folder_path = json_path
         self.last_executed_algorithm = ""
         self.history: List[HistoryElement] = []
@@ -444,7 +456,7 @@ class BaseSettings(ViewSettings):
     def get_save_list(self) -> List[SaveSettingsDescription]:
         """List of files in which program save the state."""
         return [
-            SaveSettingsDescription("segmentation_settings.json", self.segmentation_dict),
+            SaveSettingsDescription("segmentation_settings.json", self._roi_dict),
             SaveSettingsDescription("view_settings.json", self.view_settings_dict),
         ]
 
@@ -478,7 +490,7 @@ class BaseSettings(ViewSettings):
         :param key_path: dot separated path
         :param value: value to store. The value need to be json serializable.
          """
-        self.segmentation_dict.set(f"{self.current_segmentation_dict}.{key_path}", value)
+        self._roi_dict.set(f"{self._current_roi_dict}.{key_path}", value)
 
     def get(self, key_path: str, default=None):
         """
@@ -488,7 +500,7 @@ class BaseSettings(ViewSettings):
         :param key_path: dot separated path
         :param default: default value if key is missed
         """
-        return self.segmentation_dict.get(f"{self.current_segmentation_dict}.{key_path}", default)
+        return self._roi_dict.get(f"{self._current_roi_dict}.{key_path}", default)
 
     def dump_part(self, file_path, path_in_dict, names=None):
         data = self.get(path_in_dict)

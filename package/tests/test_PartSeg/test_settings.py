@@ -47,9 +47,9 @@ class TestStackSettings:
 
     def test_set_project(self, stack_settings, stack_segmentation1, stack_segmentation2):
         stack_settings.set_project_info(stack_segmentation1)
-        segmentation1 = stack_settings.segmentation
+        segmentation1 = stack_settings.roi
         stack_settings.set_project_info(stack_segmentation2)
-        segmentation2 = stack_settings.segmentation
+        segmentation2 = stack_settings.roi
         assert np.any(segmentation1 != segmentation2)
 
     def test_set_project_with_components(self, stack_settings, stack_segmentation1):
@@ -219,7 +219,7 @@ class TestPartSettings:
         algorithm.set_image(settings.image)
         algorithm.set_parameters(**algorithm_parameters["values"])
         result = algorithm.calculation_run(lambda x, y: None)
-        settings.segmentation = result.roi
+        settings.roi = result.roi
         settings.additional_layers = result.additional_layers
         settings.last_executed_algorithm = result.parameters.algorithm
         settings.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
@@ -233,7 +233,7 @@ class TestPartSettings:
         algorithm.set_mask(settings.mask)
         result2 = algorithm.calculation_run(lambda x, y: None)
         assert np.max(result2.roi) == 2
-        settings.segmentation = result2.roi
+        settings.roi = result2.roi
         settings.additional_layers = result2.additional_layers
         settings.last_executed_algorithm = result.parameters.algorithm
         settings.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)

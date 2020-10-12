@@ -67,7 +67,7 @@ class SimpleMeasurements(QWidget):
         super().closeEvent(event)
 
     def calculate(self):
-        if self.settings.segmentation is None:
+        if self.settings.roi is None:
             QMessageBox.warning(self, "No segmentation", "need segmentation to work")
             return
         to_calculate = []
@@ -87,7 +87,7 @@ class SimpleMeasurements(QWidget):
             profile.calculate,
             kwargs={
                 "channel": self.settings.image.get_channel(self.channel_select.get_value()),
-                "segmentation": self.settings.segmentation,
+                "segmentation": self.settings.roi,
                 "mask": None,
                 "voxel_size": self.settings.image.spacing,
                 "result_units": self.units_select.get_value(),

@@ -98,8 +98,8 @@ class StackSettings(BaseSettings):
             file_path=self.image.file_path,
             image=self.image.substitute(),
             mask=self.mask,
-            roi=self.segmentation,
-            roi_info=self.segmentation_info,
+            roi=self.roi,
+            roi_info=self.roi_info,
             selected_components=self.chosen_components(),
             roi_extraction_parameters=copy(self.components_parameters_dict),
             history=self.history[: self.history_index + 1],
@@ -133,14 +133,14 @@ class StackSettings(BaseSettings):
             self.chosen_components_widget.set_chose(
                 list(sorted(state2.roi_extraction_parameters.keys())), state2.selected_components
             )
-            self.segmentation = state2.roi
+            self.roi = state2.roi
             self.components_parameters_dict = state2.roi_extraction_parameters
         else:
             self.set_history(data.history)
             self.chosen_components_widget.set_chose(
                 list(sorted(data.roi_extraction_parameters.keys())), data.selected_components
             )
-            self.segmentation = data.roi
+            self.roi = data.roi
             self.components_parameters_dict = data.roi_extraction_parameters
 
     @staticmethod
@@ -255,7 +255,7 @@ class StackSettings(BaseSettings):
             self.chosen_components_widget.set_chose(
                 list(sorted(state2.roi_extraction_parameters.keys())), state2.selected_components
             )
-            self.segmentation = state2.roi
+            self.roi = state2.roi
             self.components_parameters_dict = state2.roi_extraction_parameters
         else:
             unique = np.unique(new_segmentation_data.flat)
@@ -264,7 +264,7 @@ class StackSettings(BaseSettings):
             selected_parameters = {i: segmentation_parameters[i] for i in unique}
 
             self.chosen_components_widget.set_chose(list(sorted(selected_parameters.keys())), list_of_components)
-            self.segmentation = new_segmentation_data
+            self.roi = new_segmentation_data
             self.components_parameters_dict = segmentation_parameters
 
 

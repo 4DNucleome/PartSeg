@@ -89,7 +89,7 @@ class MaskDialog(MaskDialogBase):
         history.arrays.seek(0)
         seg = np.load(history.arrays)
         history.arrays.seek(0)
-        self.settings.segmentation = seg["segmentation"]
+        self.settings.roi = seg["segmentation"]
         self.settings.set_segmentation(
             seg["segmentation"],
             False,
@@ -155,7 +155,7 @@ class MainMenu(BaseMainMenu):
         self.measurements_window.show()
 
     def mask_manager(self):
-        if self.settings.segmentation is None:
+        if self.settings.roi is None:
             QMessageBox.information(self, "No segmentation", "Cannot create mask without segmentation")
             return
         if not self.settings.chosen_components():
@@ -304,7 +304,7 @@ class MainMenu(BaseMainMenu):
             self.segmentation_dialog.show()
 
     def save_segmentation(self):
-        if self.settings.segmentation is None:
+        if self.settings.roi is None:
             QMessageBox.warning(self, "No segmentation", "No segmentation to save")
             return
         dial = SaveDialog(io_functions.save_segmentation_dict, False, history=self.settings.get_path_history())
@@ -336,7 +336,7 @@ class MainMenu(BaseMainMenu):
             clipboard = QGuiApplication.clipboard()
             clipboard.setText(os.path.splitext(os.path.basename(self.settings.image_path))[0])
 
-        if self.settings.segmentation is None or len(self.settings.sizes) == 1:
+        if self.settings.roi is None or len(self.settings.sizes) == 1:
             QMessageBox.warning(self, "No components", "No components to save")
             return
         dial = SaveDialog(
@@ -644,14 +644,14 @@ class AlgorithmOptions(QWidget):
 
     @property
     def segmentation(self):
-        return self.settings.segmentation
+        return self.settings.roi
 
     @segmentation.setter
     def segmentation(self, val):
-        self.settings.segmentation = val
+        self.settings.roi = val
 
     def _image_changed(self):
-        self.settings.segmentation = None
+        self.settings.roi = None
         self.choose_components.set_chose([], [])
 
     def _execute_in_background_init(self):
@@ -716,7 +716,7 @@ class AlgorithmOptions(QWidget):
         self.progress_bar.setRange(0, 0)
         self.choose_components.setDisabled(True)
         chosen = sorted(self.choose_components.get_chosen())
-        blank = get_mask(self.settings.segmentation, self.settings.mask, chosen)
+        blank = get_mask(self.settings.roi, self.settings.mask, chosen)
         if blank is not None:
             # Problem with handling time data in algorithms
             # TODO Fix This

@@ -96,8 +96,8 @@ class PartSettings(BaseSettings):
         return ProjectTuple(
             file_path=self.image.file_path,
             image=self.image.substitute(),
-            roi=self.segmentation,
-            roi_info=self.segmentation_info,
+            roi=self.roi,
+            roi_info=self.roi_info,
             additional_layers=self.additional_layers,
             mask=self.mask,
             history=self.history[: self.history_index + 1],
@@ -117,7 +117,7 @@ class PartSettings(BaseSettings):
                     self.mask = data.mask
             else:
                 self.image = data.image.substitute(mask=data.mask)
-            self.segmentation = data.roi
+            self.roi = data.roi
             self.additional_layers = data.additional_layers
             self.set_history(data.history[:])
             if data.algorithm_parameters:
@@ -137,16 +137,16 @@ class PartSettings(BaseSettings):
 
     @property
     def segmentation_pipelines(self) -> typing.Dict[str, SegmentationPipeline]:
-        return self.segmentation_pipelines_dict.get(self.current_segmentation_dict, {})
+        return self.segmentation_pipelines_dict.get(self._current_roi_dict, {})
 
     @property
     def segmentation_profiles(self) -> typing.Dict[str, ROIExtractionProfile]:
-        return self.segmentation_profiles_dict.get(self.current_segmentation_dict, {})
+        return self.segmentation_profiles_dict.get(self._current_roi_dict, {})
 
     @property
     def batch_plans(self) -> typing.Dict[str, CalculationPlan]:
-        return self.batch_plans_dict.get(self.current_segmentation_dict, {})
+        return self.batch_plans_dict.get(self._current_roi_dict, {})
 
     @property
     def measurement_profiles(self) -> typing.Dict[str, MeasurementProfile]:
-        return self.measurement_profiles_dict.get(self.current_segmentation_dict, {})
+        return self.measurement_profiles_dict.get(self._current_roi_dict, {})

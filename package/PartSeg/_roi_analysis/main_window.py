@@ -143,7 +143,7 @@ class Options(QWidget):
 
     def compare_action(self):
         if self.compare_btn.text() == "Compare":
-            self._settings.set_segmentation_to_compare(self._settings.segmentation_info)
+            self._settings.set_segmentation_to_compare(self._settings.roi_info)
             self.compare_btn.setText("Remove")
         else:
             self._settings.set_segmentation_to_compare(ROIInfo(None))
@@ -207,8 +207,7 @@ class Options(QWidget):
         if dial.exec() and process_thread.result:
             pipeline_result = process_thread.result
             self._settings.mask = pipeline_result.mask
-            self._settings.segmentation = pipeline_result.roi
-            self._settings.full_segmentation = pipeline_result.full_segmentation
+            self._settings.roi = pipeline_result.roi
             self._settings.set_history(pipeline_result.history)
             self.label.setText(pipeline_result.description)
             self.algorithm_choose_widget.change_algorithm(pipeline.segmentation.algorithm, pipeline.segmentation.values)
@@ -296,7 +295,7 @@ class Options(QWidget):
 
     @property
     def segmentation(self):
-        return self._settings.segmentation
+        return self._settings.roi
 
     @property
     def interactive(self):
@@ -345,7 +344,7 @@ class Options(QWidget):
     def execution_done(self, segmentation: SegmentationResult):
         if segmentation.info_text != "":
             QMessageBox.information(self, "Algorithm info", segmentation.info_text)
-        self._settings.segmentation = segmentation.roi
+        self._settings.roi = segmentation.roi
         self.compare_btn.setEnabled(isinstance(segmentation.roi, np.ndarray) and np.any(segmentation.roi))
         self._settings.additional_layers = segmentation.additional_layers
         self.label.setText(self.sender().get_info_text())
@@ -431,7 +430,7 @@ class MainMenu(BaseMainMenu):
             dial2.exec()
 
     def mask_manager(self):
-        if self.settings.segmentation is None:
+        if self.settings.roi is None:
             QMessageBox.information(self, "No segmentation", "Cannot create mask without segmentation")
             return
         dial = MaskDialog(self.settings)
@@ -537,7 +536,7 @@ class MaskDialog(MaskDialogBase):
         history.arrays.seek(0)
         seg = np.load(history.arrays)
         history.arrays.seek(0)
-        self.settings.segmentation = seg["segmentation"]
+        self.settings.roi = seg["segmentation"]
         self.settings.full_segmentation = seg["full_segmentation"]
         if "mask" in seg:
             self.settings.mask = seg["mask"]
