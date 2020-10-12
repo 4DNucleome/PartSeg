@@ -153,6 +153,7 @@ class ImageSettings(QObject):
         return self._image.channels > 1
 
     def _image_changed(self):
+        """Reimplement hook for change of main image"""
         pass
 
     @property
@@ -177,9 +178,6 @@ class ImageSettings(QObject):
         if self._image is None:
             return 0
         return self._image.channels
-
-    def get_information(self, *pos):
-        return self._image[pos]
 
     def components_mask(self):
         return np.array([0] + [1] * np.max(self.roi), dtype=np.uint8)
@@ -356,7 +354,6 @@ class ViewSettings(ImageSettings):
         return self.view_settings_dict.get(f"{self.current_profile_dict}.{key_path}", default)
 
     def dump_view_profiles(self):
-        # return json.dumps(self.profile_dict, cls=ProfileEncoder)
         return self.view_settings_dict
 
 
@@ -519,9 +516,8 @@ class BaseSettings(ViewSettings):
                         bad_key.append(k)
                 for el in bad_key:
                     del data[el]
-        elif isinstance(data, ProfileDict):
-            if not data.verify_data():
-                bad_key = data.filter_data()
+        elif isinstance(data, ProfileDict) and not data.verify_data():
+            bad_key = data.filter_data()
         return data, bad_key
 
     def dump(self, folder_path: Optional[str] = None):
