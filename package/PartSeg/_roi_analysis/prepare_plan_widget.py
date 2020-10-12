@@ -58,6 +58,7 @@ from PartSegCore.universal_const import Units
 
 from ..common_gui.custom_save_dialog import FormDialog
 from ..common_gui.mask_widget import MaskWidget
+from ..common_gui.searchable_list_widget import SearchableListWidget
 from ..common_gui.universal_gui_part import right_label
 from .partseg_settings import PartSettings
 from .profile_export import ExportDialog, ImportDialog
@@ -279,8 +280,8 @@ class CreatePlan(QWidget):
         self.save_choose.addItem("<none>")
         self.save_choose.addItems(list(self.save_translate_dict.keys()))
         self.save_btn = QPushButton("Save")
-        self.segment_profile = QListWidget()
-        self.pipeline_profile = QListWidget()
+        self.segment_profile = SearchableListWidget()
+        self.pipeline_profile = SearchableListWidget()
         self.segment_stack = QTabWidget()
         self.segment_stack.addTab(self.segment_profile, "Profile")
         self.segment_stack.addTab(self.pipeline_profile, "Pipeline")
@@ -306,7 +307,7 @@ class CreatePlan(QWidget):
         self.add_new_segmentation_btn = QPushButton("Add new profile")
         self.get_big_btn.setDisabled(True)
         self.add_new_segmentation_btn.setDisabled(True)
-        self.measurements_list = QListWidget(self)
+        self.measurements_list = SearchableListWidget(self)
         self.measurement_name_prefix = QLineEdit(self)
         self.add_calculation_btn = QPushButton("Add measurement calculation")
         self.information = QTextEdit()
@@ -405,16 +406,16 @@ class CreatePlan(QWidget):
         measurement_box.setStyleSheet(group_sheet)
         lay = QGridLayout()
         lay.setSpacing(0)
-        lay.addWidget(self.measurements_list, 0, 0, 1, 2)
+        lay.addWidget(self.measurements_list, 1, 0, 1, 2)
         lab = QLabel("Name prefix:")
         lab.setToolTip("Prefix added before each column name")
-        lay.addWidget(lab, 1, 0)
-        lay.addWidget(self.measurement_name_prefix, 1, 1)
-        lay.addWidget(QLabel("Channel:"), 2, 0)
-        lay.addWidget(self.choose_channel_for_measurements, 2, 1)
-        lay.addWidget(QLabel("Units:"))
-        lay.addWidget(self.units_choose, 3, 1)
-        lay.addWidget(self.add_calculation_btn, 4, 0, 1, 2)
+        lay.addWidget(lab, 2, 0)
+        lay.addWidget(self.measurement_name_prefix, 2, 1)
+        lay.addWidget(QLabel("Channel:"), 3, 0)
+        lay.addWidget(self.choose_channel_for_measurements, 3, 1)
+        lay.addWidget(QLabel("Units:"), 4, 0)
+        lay.addWidget(self.units_choose, 4, 1)
+        lay.addWidget(self.add_calculation_btn, 5, 0, 1, 2)
         measurement_box.setLayout(lay)
 
         info_box = QGroupBox("Information")
