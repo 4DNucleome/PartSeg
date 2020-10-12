@@ -100,7 +100,7 @@ def test_name_collision():
     empty(Test4)
     with pytest.raises(ValueError):
 
-        class Test4(BaseSerializableClass):
+        class Test4(BaseSerializableClass):  # pylint: disable=E0102
             field1: str
             field2: str
 
@@ -156,7 +156,7 @@ def test_typing():
 
 
 def test_forward_ref():
-    class Test(BaseSerializableClass):
+    class Test(BaseSerializableClass):  # pylint: disable=W0612
         val: int
         child: typing.Optional["Test"] = None  # noqa F821
 

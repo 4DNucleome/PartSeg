@@ -22,7 +22,7 @@ class TestSegmentation:
         try:
             data = UpdateLoadedMetadataAnalysis.load_json_data(profile_path)
             assert check_loaded_dict(data)
-        except Exception:
+        except Exception:  # pylint: disable=W0703
             pytest.fail("Fail in loading profile")
             return
         image = TiffImageReader.read_image(

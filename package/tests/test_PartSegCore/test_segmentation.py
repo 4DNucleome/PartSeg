@@ -75,6 +75,7 @@ def get_two_parts_side_reversed():
 
 
 def empty(_s: str, _i: int):
+    """mock function for callback"""
     pass
 
 
@@ -91,7 +92,7 @@ def test_base_parameters(algorithm_name):
     assert parameters.values == values
 
 
-class BaseThreshold(object):
+class BaseThreshold:
     def check_result(self, result, sizes, op, parameters):
         assert result.roi.max() == len(sizes)
         assert np.all(op(np.bincount(result.roi.flat)[1:], np.array(sizes)))
@@ -117,7 +118,7 @@ class BaseThreshold(object):
     def get_multiple_part(self, parts_num):
         raise NotImplementedError
 
-    algorithm_class = None
+    algorithm_class = SegmentationAlgorithm
 
 
 class BaseOneThreshold(BaseThreshold, ABC):
@@ -179,7 +180,7 @@ class TestUpperThreshold(BaseOneThreshold):
     algorithm_class = sa.UpperThresholdAlgorithm
 
 
-class TestRangeThresholdAlgorithm(object):
+class TestRangeThresholdAlgorithm:
     def test_simple(self):
         image = get_two_parts()
         alg = sa.RangeThresholdAlgorithm()

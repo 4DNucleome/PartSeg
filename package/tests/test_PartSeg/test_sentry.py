@@ -105,7 +105,7 @@ def test_exception_pass(monkeypatch):
     p = multiprocessing.Process(target=executor_fun, args=(message_queue,))
     p.start()
     p.join()
-    ex, event, tr = message_queue.get()
+    ex, event, _tr = message_queue.get()
     assert isinstance(ex, ValueError)
     assert isinstance(event, dict)
     client = Client("https://aaa@test.pl/77")

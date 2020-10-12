@@ -2,7 +2,6 @@ import typing
 import warnings
 
 import numpy as np
-from tifffile import lazyattr
 
 Spacing = typing.Tuple[typing.Union[float, int], ...]
 
@@ -153,30 +152,30 @@ class Image:
         data = np.concatenate((self.get_data(), data), axis=axis)
         return self.substitute(data=data, ranges=self.ranges + image.ranges)
 
-    @lazyattr
+    @property
     def channel_pos(self) -> int:
         """Channel axis. Need to have 'C' in :py:attr:`axis_order`"""
         return self.axis_order.index("C")
 
-    @lazyattr
+    @property
     def x_pos(self):
         return self.axis_order.index("X")
 
-    @lazyattr
+    @property
     def y_pos(self):
         return self.axis_order.index("Y")
 
-    @lazyattr
+    @property
     def time_pos(self):
         """Time axis. Need to have 'T' in :py:attr:`axis_order`"""
         return self.axis_order.index("T")
 
-    @lazyattr
+    @property
     def stack_pos(self) -> int:
         """Stack axis. Need to have 'Z' in :py:attr:`axis_order`"""
         return self.axis_order.index("Z")
 
-    @lazyattr
+    @property
     def array_axis_order(self):
         return self.axis_order.replace("C", "")
 
