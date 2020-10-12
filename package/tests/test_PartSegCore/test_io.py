@@ -30,9 +30,9 @@ from PartSegCore.mask.io_functions import (
     LoadSegmentation,
     LoadStackImage,
     LoadStackImageWithMask,
+    MaskProjectTuple,
     SaveParametersJSON,
     SaveROI,
-    SegmentationTuple,
     save_components,
 )
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
@@ -43,7 +43,7 @@ from PartSegImage.image import reduce_array
 
 
 @pytest.fixture(scope="module")
-def analysis_project():
+def analysis_project() -> ProjectTuple:
     data = np.zeros((1, 50, 100, 100, 1), dtype=np.uint16)
     data[0, 10:40, 10:40, 10:90] = 50
     data[0, 10:40, 50:90, 10:90] = 50
@@ -71,7 +71,7 @@ def analysis_project():
     return ProjectTuple(
         file_path="test_data.tiff",
         image=image,
-        segmentation=segmentation,
+        roi=segmentation,
         additional_layers={"denoised image": AdditionalLayerDescription(data=segmentation, layer_type="layer")},
         mask=mask,
         algorithm_parameters=algorithm_parameters,
@@ -79,7 +79,7 @@ def analysis_project():
 
 
 @pytest.fixture(scope="module")
-def analysis_project_reversed():
+def analysis_project_reversed() -> ProjectTuple:
     data = np.zeros((1, 50, 100, 100, 1), dtype=np.uint16)
     data[0, 10:40, 10:40, 10:90] = 50
     data[0, 10:40, 50:90, 10:90] = 50
@@ -107,7 +107,7 @@ class TestJsonLoad:
             with open(profile_path, "r") as ff:
                 data = json.load(ff, object_hook=part_hook)
             assert check_loaded_dict(data)
-        except Exception:
+        except Exception:  # pylint: disable=W0703
             pytest.fail("Fail in loading profile")
 
     def test_measure_load(self, data_test_dir):
@@ -117,7 +117,7 @@ class TestJsonLoad:
             with open(profile_path, "r") as ff:
                 data = json.load(ff, object_hook=part_hook)
             assert check_loaded_dict(data)
-        except Exception:
+        except Exception:  # pylint: disable=W0703
             pytest.fail("Fail in loading profile")
 
     def test_json_dump(self):
@@ -141,12 +141,13 @@ class TestJsonLoad:
         enum_register.register_class(Test)
         assert isinstance(json.loads(test_json, object_hook=part_hook), Test)
 
-    def test_modernize_0_9_2_3(self):
-        file_path = os.path.join(os.path.dirname(__file__), "test_data", "segment_profile_0.9.2.3.json")
+    def test_modernize_0_9_2_3(self, bundle_test_dir):
+        file_path = os.path.join(bundle_test_dir, "segment_profile_0.9.2.3.json")
+        assert os.path.exists(file_path)
         data = UpdateLoadedMetadataBase.load_json_data(file_path)
         assert "noise_filtering" in data["test_0.9.2.3"].values
         assert "dimension_type" in data["test_0.9.2.3"].values["noise_filtering"]["values"]
-        file_path = os.path.join(os.path.dirname(__file__), "test_data", "calculation_plan_0.9.2.3.json")
+        file_path = os.path.join(bundle_test_dir, "calculation_plan_0.9.2.3.json")
         data = UpdateLoadedMetadataAnalysis.load_json_data(file_path)
 
     def test_update_name(self):
@@ -166,7 +167,7 @@ class TestSegmentationMask:
         assert isinstance(seg.image, str)
         assert seg.selected_components == [1, 3]
         assert os.path.exists(os.path.join(data_test_dir, seg.image))
-        assert len(seg.segmentation_parameters) == 4
+        assert len(seg.roi_extraction_parameters) == 4
         assert os.path.basename(seg.image) == "test_nucleus.tif"
 
     def test_load_old_seg(self, data_test_dir):
@@ -185,8 +186,8 @@ class TestSegmentationMask:
         )
         assert isinstance(seg.image, Image)
         assert seg.selected_components == [1, 3]
-        assert isinstance(seg.segmentation, np.ndarray)
-        seg.image.fit_array_to_image(seg.segmentation)
+        assert isinstance(seg.roi, np.ndarray)
+        seg.image.fit_array_to_image(seg.roi)
         assert os.path.basename(seg.image.file_path) == "test_nucleus.tif"
 
     def test_load_seg_with_image(self, data_test_dir):
@@ -195,8 +196,8 @@ class TestSegmentationMask:
         )
         assert isinstance(seg.image, Image)
         assert seg.selected_components == [1, 3]
-        assert isinstance(seg.segmentation, np.ndarray)
-        seg.image.fit_array_to_image(seg.segmentation)
+        assert isinstance(seg.roi, np.ndarray)
+        seg.image.fit_array_to_image(seg.roi)
         assert os.path.basename(seg.image.file_path) == "test_nucleus.tif"
 
     def test_save_segmentation(self, tmpdir, data_test_dir):
@@ -206,7 +207,7 @@ class TestSegmentationMask:
         SaveROI.save(os.path.join(tmpdir, "segmentation.seg"), seg, {"relative_path": False})
         assert os.path.exists(os.path.join(tmpdir, "segmentation.seg"))
         os.makedirs(os.path.join(tmpdir, "seg_save"))
-        save_components(seg.image, seg.selected_components, seg.segmentation, os.path.join(tmpdir, "seg_save"))
+        save_components(seg.image, seg.selected_components, seg.roi, os.path.join(tmpdir, "seg_save"))
         assert os.path.isdir(os.path.join(tmpdir, "seg_save"))
         assert len(glob(os.path.join(tmpdir, "seg_save", "*"))) == 4
         seg2 = LoadSegmentation.load([os.path.join(tmpdir, "segmentation.seg")])
@@ -216,7 +217,7 @@ class TestSegmentationMask:
         seg = LoadROIImage.load(
             [os.path.join(data_test_dir, "test_nucleus_1_1.seg")], metadata={"default_spacing": (1, 1, 1)}
         )
-        seg_clean = dataclasses.replace(seg, image=None, segmentation=reduce_array(seg.segmentation))
+        seg_clean = dataclasses.replace(seg, image=None, roi=reduce_array(seg.roi))
         SaveROI.save(os.path.join(tmpdir, "segmentation.seg"), seg_clean, {"relative_path": False})
         SaveROI.save(
             os.path.join(tmpdir, "segmentation1.seg"),
@@ -232,11 +233,11 @@ class TestSegmentationMask:
         param["channel"] = 0
         algorithm.set_parameters(**param)
         res = algorithm.calculation_run(lambda x, y: None)
-        num = np.max(res.segmentation) + 1
+        num = np.max(res.roi) + 1
         data_dict = {str(i): deepcopy(res.parameters) for i in range(1, num)}
 
-        to_save = SegmentationTuple(
-            image_data.image.file_path, image_data.image, None, res.segmentation, list(range(1, num)), data_dict
+        to_save = MaskProjectTuple(
+            image_data.image.file_path, image_data.image, None, res.roi, list(range(1, num)), data_dict
         )
 
         SaveROI.save(os.path.join(tmpdir, "segmentation2.seg"), to_save, {"relative_path": False})
@@ -258,7 +259,7 @@ class TestSegmentationMask:
             stack_segmentation1,
             history=[create_history_element_from_segmentation_tuple(stack_segmentation1, mask_property)],
             selected_components=[1],
-            mask=stack_segmentation1.segmentation,
+            mask=stack_segmentation1.roi,
         )
         SaveROI.save(tmp_path / "test1.seg", seg2, {"relative_path": False})
         with tarfile.open(tmp_path / "test1.seg", "r") as tf:
@@ -274,7 +275,7 @@ class TestSegmentationMask:
             stack_segmentation1,
             history=[create_history_element_from_segmentation_tuple(stack_segmentation1, mask_property)],
             selected_components=[1],
-            mask=stack_segmentation1.segmentation,
+            mask=stack_segmentation1.roi,
             image=stack_segmentation1.image.substitute(file_path=image_location),
             file_path=image_location,
         )
@@ -284,7 +285,7 @@ class TestSegmentationMask:
         assert res.mask is not None
         assert len(res.history) == 1
         assert res.history[0].mask_property == mask_property
-        cmp_dict = {str(k): v for k, v in stack_segmentation1.segmentation_parameters.items()}
+        cmp_dict = {str(k): v for k, v in stack_segmentation1.roi_extraction_parameters.items()}
         assert str(res.history[0].segmentation_parameters["parameters"]) == str(cmp_dict)
 
 
@@ -303,7 +304,7 @@ class TestSaveFunctions:
         points = np.nonzero(arr)
         assert tuple(np.min(points, axis=1)) == (15, 15, 15)
         assert tuple(np.max(points, axis=1)) == (34, 84, 84)
-        assert (1,) + arr.shape == analysis_project.segmentation.shape
+        assert (1,) + arr.shape == analysis_project.roi.shape
         assert steps == (5, 5, 10)
 
         parameters = {"channel": 0, "separated_objects": True, "clip": False, "units": Units.nm, "reverse": False}
@@ -312,13 +313,13 @@ class TestSaveFunctions:
         points = np.nonzero(arr)
         assert tuple(np.min(points, axis=1)) == (15, 15, 15)
         assert tuple(np.max(points, axis=1)) == (34, 34, 84)
-        assert (1,) + arr.shape == analysis_project.segmentation.shape
+        assert (1,) + arr.shape == analysis_project.roi.shape
         assert steps == (5, 5, 10)
         arr, steps = self.read_cmap(os.path.join(tmpdir, "test2_comp2.cmap"))
         points = np.nonzero(arr)
         assert tuple(np.min(points, axis=1)) == (15, 55, 15)
         assert tuple(np.max(points, axis=1)) == (34, 84, 84)
-        assert (1,) + arr.shape == analysis_project.segmentation.shape
+        assert (1,) + arr.shape == analysis_project.roi.shape
         assert steps == (5, 5, 10)
 
         parameters = {"channel": 0, "separated_objects": False, "clip": True, "units": Units.nm, "reverse": False}
@@ -352,7 +353,7 @@ class TestSaveFunctions:
         points = np.nonzero(arr)
         assert tuple(np.min(points, axis=1)) == (15, 15, 15)
         assert tuple(np.max(points, axis=1)) == (34, 84, 84)
-        assert (1,) + arr.shape == analysis_project_reversed.segmentation.shape
+        assert (1,) + arr.shape == analysis_project_reversed.roi.shape
         assert steps == (5, 5, 10)
 
         parameters = {"channel": 0, "separated_objects": True, "clip": True, "units": Units.nm, "reverse": True}
@@ -390,12 +391,12 @@ class TestSaveFunctions:
 
     def test_load_old_project(self, data_test_dir):
         load_data = LoadProject.load([os.path.join(data_test_dir, "stack1_component1.tgz")])
-        assert np.max(load_data.segmentation) == 2
+        assert np.max(load_data.roi) == 2
         # TODO add more checks
 
     def test_load_project(self, data_test_dir):
         load_data = LoadProject.load([os.path.join(data_test_dir, "stack1_component1_1.tgz")])
-        assert np.max(load_data.segmentation) == 2
+        assert np.max(load_data.roi) == 2
         # TODO add more checks
 
     def test_save_project(self, tmpdir, analysis_project):
@@ -407,7 +408,7 @@ class TestSaveFunctions:
     def test_save_tiff(self, tmpdir, analysis_project):
         SaveAsTiff.save(os.path.join(tmpdir, "test1.tiff"), analysis_project)
         array = tifffile.imread(os.path.join(tmpdir, "test1.tiff"))
-        assert analysis_project.segmentation.shape == (1,) + array.shape
+        assert analysis_project.roi.shape == (1,) + array.shape
 
     def test_save_numpy(self, tmpdir, analysis_project):
         parameters = {"squeeze": False}
@@ -418,19 +419,19 @@ class TestSaveFunctions:
         parameters = {"squeeze": True}
         SaveAsNumpy.save(os.path.join(tmpdir, "test2.npy"), analysis_project, parameters)
         array = np.load(os.path.join(tmpdir, "test2.npy"))
-        assert (1,) + array.shape == analysis_project.segmentation.shape
+        assert (1,) + array.shape == analysis_project.roi.shape
         assert np.all(array == analysis_project.image.get_data().squeeze())
 
     def test_save_segmentation_numpy(self, tmpdir, analysis_project):
         SaveROIAsNumpy.save(os.path.join(tmpdir, "test1.npy"), analysis_project)
         array = np.load(os.path.join(tmpdir, "test1.npy"))
-        assert np.all(array == analysis_project.segmentation)
+        assert np.all(array == analysis_project.roi)
 
 
 def test_json_parameters_mask(stack_segmentation1, tmp_path):
     SaveParametersJSON.save(tmp_path / "test.json", stack_segmentation1)
     load_param = LoadROIParameters.load([tmp_path / "test.json"])
-    assert len(load_param.segmentation_parameters) == 4
+    assert len(load_param.roi_extraction_parameters) == 4
 
 
 update_name_json = """

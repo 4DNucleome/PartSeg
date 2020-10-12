@@ -221,7 +221,7 @@ class MeasurementWidget(QWidget):
             )
             self.measurement_type.setCurrentIndex(0)
             return "<none>"
-        if self.settings.segmentation is None:
+        if self.settings.roi is None:
             QMessageBox.information(
                 self,
                 "Need segmentation",
@@ -313,8 +313,8 @@ class MeasurementWidget(QWidget):
             )
             return
         channel = self.settings.image.get_channel(self.channels_chose.currentIndex())
-        segmentation = self.settings.segmentation
-        if segmentation is None:
+        roi = self.settings.roi
+        if roi is None:
             return
         base_mask = self.settings.mask
         units = self.units_choose.get_value()
@@ -335,7 +335,7 @@ class MeasurementWidget(QWidget):
             kwargs[f"channel+{num}"] = self.settings.image.get_channel(num)
 
         thread = ExecuteFunctionThread(
-            compute_class.calculate, [channel, segmentation, base_mask, self.settings.image.spacing, units], kwargs,
+            compute_class.calculate, [channel, roi, base_mask, self.settings.image.spacing, units], kwargs,
         )
         dial = WaitingDialog(thread, "Measurement calculation")  # , exception_hook=exception_hook)
         dial.exec()

@@ -25,7 +25,7 @@ from vispy.scene import BaseCamera
 
 from PartSegCore.color_image import ColorMap, calculate_borders, create_color_map
 from PartSegCore.image_operations import NoiseFilterType, gaussian, median
-from PartSegCore.segmentation_info import SegmentationInfo
+from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
 from ..common_backend.base_settings import BaseSettings, ViewSettings
@@ -42,9 +42,9 @@ class ImageInfo:
     filter_info: List[Tuple[NoiseFilterType, float]] = field(default_factory=list)
     mask: Optional[Labels] = None
     mask_array: Optional[np.ndarray] = None
-    segmentation: Optional[Labels] = None
-    segmentation_info: SegmentationInfo = field(default_factory=lambda: SegmentationInfo(None))
-    segmentation_count: int = 0
+    roi: Optional[Labels] = None
+    roi_info: ROIInfo = field(default_factory=lambda: ROIInfo(None))
+    roi_count: int = 0
 
     def coords_in(self, coords: Union[List[int], np.ndarray]) -> bool:
         if not self.layers:
@@ -192,15 +192,15 @@ class ImageView(QWidget):
 
         settings.mask_changed.connect(self.set_mask)
         settings.mask_representation_changed.connect(self.update_mask_parameters)
-        settings.segmentation_changed.connect(self.set_segmentation)
-        settings.segmentation_clean.connect(self.set_segmentation)
+        settings.roi_changed.connect(self.set_roi)
+        settings.roi_clean.connect(self.set_roi)
         settings.image_changed.connect(self.set_image)
         settings.image_spacing_changed.connect(self.update_spacing_info)
         # settings.labels_changed.connect(self.paint_layer)
         self.old_scene: BaseCamera = self.viewer_widget.view.scene
 
-        self.image_state.coloring_changed.connect(self.update_segmentation_coloring)
-        self.image_state.borders_changed.connect(self.update_segmentation_representation)
+        self.image_state.coloring_changed.connect(self.update_roi_coloring)
+        self.image_state.borders_changed.connect(self.update_roi_representation)
         self.mask_chk.stateChanged.connect(self.change_mask_visibility)
         self.viewer_widget.view.scene.transform.changed.connect(self._view_changed, position="last")
         try:
@@ -227,7 +227,7 @@ class ImageView(QWidget):
     def _set_new_order(self, text: str):
         self._current_order = text
         self.viewer.dims.order = ORDER_DICT[text]
-        self.update_segmentation_representation()
+        self.update_roi_representation()
 
     def _reset_view(self):
         self._set_new_order("xy")
@@ -288,8 +288,8 @@ class ImageView(QWidget):
         for layer in image_info.layers:
             layer.scale = image.normalized_scaling()
 
-        if image_info.segmentation is not None:
-            image_info.segmentation.scale = image.normalized_scaling()
+        if image_info.roi is not None:
+            image_info.roi.scale = image.normalized_scaling()
 
         if image_info.mask is not None:
             image_info.mask.scale = image.normalized_scaling()
@@ -307,8 +307,8 @@ class ImageView(QWidget):
             for layer in image_info.layers:
                 if layer.visible:
                     bright_array.append(layer.data[tuple(moved_coords)])
-            if image_info.segmentation_info.segmentation is not None and image_info.segmentation is not None:
-                val = image_info.segmentation_info.segmentation[tuple(moved_coords)]
+            if image_info.roi_info.roi is not None and image_info.roi is not None:
+                val = image_info.roi_info.roi[tuple(moved_coords)]
                 if val:
                     components.append(val)
 
@@ -352,38 +352,35 @@ class ImageView(QWidget):
             return self.settings.image
         return self.image_info[self.current_image].image
 
-    def set_segmentation(
-        self, segmentation_info: Optional[SegmentationInfo] = None, image: Optional[Image] = None
-    ) -> None:
+    def set_roi(self, roi_info: Optional[ROIInfo] = None, image: Optional[Image] = None) -> None:
         image = self.get_image(image)
-        if segmentation_info is None:
-            segmentation_info = self.settings.segmentation_info
+        if roi_info is None:
+            roi_info = self.settings.roi_info
         image_info = self.image_info[image.file_path]
-        if image_info.segmentation is not None:
+        if image_info.roi is not None:
             self.viewer.layers.unselect_all()
-            image_info.segmentation.selected = True
+            image_info.roi.selected = True
             self.viewer.layers.remove_selected()
-            image_info.segmentation = None
+            image_info.roi = None
 
-        segmentation = segmentation_info.segmentation
-        if segmentation is None:
+        if roi_info.roi is None:
             return
 
-        image_info.segmentation_info = segmentation_info
-        image_info.segmentation_count = max(segmentation_info.bound_info) if segmentation_info.bound_info else 0
-        self.add_segmentation_layer(image_info)
-        image_info.segmentation.colormap = self.get_segmentation_view_parameters(image_info)
-        image_info.segmentation.opacity = self.image_state.opacity
+        image_info.roi_info = roi_info
+        image_info.roi_count = max(roi_info.bound_info) if roi_info.bound_info else 0
+        self.add_roi_layer(image_info)
+        image_info.roi.colormap = self.get_roi_view_parameters(image_info)
+        image_info.roi.opacity = self.image_state.opacity
 
-    def get_segmentation_view_parameters(self, image_info: ImageInfo) -> Colormap:
+    def get_roi_view_parameters(self, image_info: ImageInfo) -> Colormap:
         colors = self.settings.label_colors / 255
-        if self.image_state.show_label == LabelEnum.Not_show or image_info.segmentation_count == 0 or colors.size == 0:
+        if self.image_state.show_label == LabelEnum.Not_show or image_info.roi_count == 0 or colors.size == 0:
             colors = np.array([[0, 0, 0, 0], [0, 0, 0, 0]])
         else:
-            repeat = int(np.ceil(image_info.segmentation_count / colors.shape[0]))
+            repeat = int(np.ceil(image_info.roi_count / colors.shape[0]))
             colors = np.concatenate([colors] * repeat)
             colors = np.concatenate([colors, np.ones(colors.shape[0]).reshape(colors.shape[0], 1)], axis=1)
-            colors = np.concatenate([[[0, 0, 0, 0]], colors[: image_info.segmentation_count]])
+            colors = np.concatenate([[[0, 0, 0, 0]], colors[: image_info.roi_count]])
             if self.image_state.show_label == LabelEnum.Show_selected:
                 try:
                     colors *= self.settings.components_mask().reshape((colors.shape[0], 1))
@@ -392,57 +389,57 @@ class ImageView(QWidget):
         control_points = [0] + list(np.linspace(1 / (2 * colors.shape[0]), 1, endpoint=True, num=colors.shape[0]))
         return Colormap(colors, controls=control_points, interpolation="zero")
 
-    def update_segmentation_coloring(self):
+    def update_roi_coloring(self):
         for image_info in self.image_info.values():
-            if image_info.segmentation is None:
+            if image_info.roi is None:
                 continue
-            image_info.segmentation.colormap = self.get_segmentation_view_parameters(image_info)
-            image_info.segmentation.opacity = self.image_state.opacity
+            image_info.roi.colormap = self.get_roi_view_parameters(image_info)
+            image_info.roi.opacity = self.image_state.opacity
 
-    def remove_all_segmentation(self):
+    def remove_all_roi(self):
         self.viewer.layers.unselect_all()
         for image_info in self.image_info.values():
-            if image_info.segmentation is None:
+            if image_info.roi is None:
                 continue
-            image_info.segmentation.selected = True
-            image_info.segmentation = None
+            image_info.roi.selected = True
+            image_info.roi = None
 
         self.viewer.layers.remove_selected()
 
-    def add_segmentation_layer(self, image_info: ImageInfo):
-        if image_info.segmentation_info.segmentation is None:
+    def add_roi_layer(self, image_info: ImageInfo):
+        if image_info.roi_info.roi is None:
             return
         try:
-            max_num = max(1, image_info.segmentation_count)
+            max_num = max(1, image_info.roi_count)
         except ValueError:
             max_num = 1
         if self.image_state.only_borders:
 
             data = calculate_borders(
-                image_info.segmentation_info.segmentation.transpose(ORDER_DICT[self._current_order]),
+                image_info.roi_info.roi.transpose(ORDER_DICT[self._current_order]),
                 self.image_state.borders_thick // 2,
                 self.viewer.dims.ndisplay == 2,
             ).transpose(np.argsort(ORDER_DICT[self._current_order]))
-            image_info.segmentation = self.viewer.add_image(
+            image_info.roi = self.viewer.add_image(
                 data, scale=image_info.image.normalized_scaling(), contrast_limits=[0, max_num],
             )
         else:
-            image_info.segmentation = self.viewer.add_image(
-                image_info.segmentation_info.segmentation,
+            image_info.roi = self.viewer.add_image(
+                image_info.roi_info.roi,
                 scale=image_info.image.normalized_scaling(),
                 contrast_limits=[0, max_num],
-                name="segmentation",
+                name="ROI",
                 blending="translucent",
             )
-        image_info.segmentation._interpolation[3] = Interpolation3D.NEAREST
+        image_info.roi._interpolation[3] = Interpolation3D.NEAREST
 
-    def update_segmentation_representation(self):
-        self.remove_all_segmentation()
+    def update_roi_representation(self):
+        self.remove_all_roi()
 
         for image_info in self.image_info.values():
-            self.add_segmentation_layer(image_info)
+            self.add_roi_layer(image_info)
 
-        self.update_segmentation_coloring()
+        self.update_roi_coloring()
 
     def set_mask(self, mask: Optional[np.ndarray] = None, image: Optional[Image] = None) -> None:
         image = self.get_image(image)
@@ -544,8 +541,8 @@ class ImageView(QWidget):
             if axis == "C":
                 continue
             self.viewer.dims.set_point(i, image.shape[i] * image.normalized_scaling()[i] // 2)
-        if self.image_info[image.file_path].segmentation is not None:
-            self.set_segmentation()
+        if self.image_info[image.file_path].roi is not None:
+            self.set_roi()
         if image_info.image.mask is not None:
             self.set_mask()
         self.image_added.emit()
@@ -622,8 +619,8 @@ class ImageView(QWidget):
             if image_info.mask is not None:
                 self._shift_layer(image_info.mask, translate_2d)
 
-            if image_info.segmentation is not None:
-                self._shift_layer(image_info.segmentation, translate_2d)
+            if image_info.roi is not None:
+                self._shift_layer(image_info.roi, translate_2d)
         self.viewer.reset_view()
 
     def change_visibility(self, name: str, index: int):

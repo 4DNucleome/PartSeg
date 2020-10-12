@@ -10,7 +10,7 @@ from PartSegCore.analysis.save_functions import save_dict as analysis_save_dict
 from PartSegCore.mask.io_functions import LoadROIImage, LoadROIParameters
 from PartSegCore.mask.io_functions import LoadStackImage as MaskLoadStackImage
 from PartSegCore.mask.io_functions import (
-    SegmentationTuple,
+    MaskProjectTuple,
     save_components_dict,
     save_parameters_dict,
     save_segmentation_dict,
@@ -86,17 +86,17 @@ class TestStackSettingsIO:
     def test_load_images(self, file_name, stack_settings, data_test_dir):
         path = os.path.join(data_test_dir, file_name)
         pi = MaskLoadStackImage.load([path])
-        assert isinstance(pi, SegmentationTuple)
+        assert isinstance(pi, MaskProjectTuple)
         stack_settings.set_project_info(pi)
 
     def test_load_segmentation_image(self, data_test_dir, stack_settings):
         pi = LoadROIImage.load([os.path.join(data_test_dir, "test_nucleus.seg")])
-        assert isinstance(pi, SegmentationTuple)
+        assert isinstance(pi, MaskProjectTuple)
         stack_settings.set_project_info(pi)
         assert pi.image is not None
 
     def test_load_parameters(self, data_test_dir):
         pi = LoadROIParameters.load([os.path.join(data_test_dir, "test_nucleus.seg")])
-        assert isinstance(pi, SegmentationTuple)
-        assert len(pi.segmentation_parameters) == 4
-        assert pi.segmentation_parameters[1].algorithm == "Threshold"
+        assert isinstance(pi, MaskProjectTuple)
+        assert len(pi.roi_extraction_parameters) == 4
+        assert pi.roi_extraction_parameters[1].algorithm == "Threshold"

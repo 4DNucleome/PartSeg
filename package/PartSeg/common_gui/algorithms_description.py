@@ -22,7 +22,7 @@ from qtpy.QtWidgets import (
 from six import with_metaclass
 
 from PartSeg.common_gui.error_report import ErrorDialog
-from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
+from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
 from PartSegCore.channel_class import Channel
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.segmentation.algorithm_base import (
@@ -550,8 +550,8 @@ class InteractiveAlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
         for el in self.selector:
             el.setEnabled(True)
 
-    def get_segmentation_profile(self) -> SegmentationProfile:
-        return SegmentationProfile("", self.algorithm.get_name(), self.get_values())
+    def get_segmentation_profile(self) -> ROIExtractionProfile:
+        return ROIExtractionProfile("", self.algorithm.get_name(), self.get_values())
 
 
 class AlgorithmChoose(QWidget):
@@ -662,9 +662,9 @@ class AlgorithmChoose(QWidget):
     def current_widget(self) -> InteractiveAlgorithmSettingsWidget:
         return self.stack_layout.currentWidget()
 
-    def current_parameters(self) -> SegmentationProfile:
+    def current_parameters(self) -> ROIExtractionProfile:
         widget = self.current_widget()
-        return SegmentationProfile("", widget.name, widget.get_values())
+        return ROIExtractionProfile("", widget.name, widget.get_values())
 
     def get_info_text(self):
         return self.current_widget().algorithm_thread.get_info_text()

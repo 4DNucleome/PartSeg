@@ -3,7 +3,7 @@ import os.path
 import numpy as np
 import pytest
 
-from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.analysis.load_functions import UpdateLoadedMetadataAnalysis
 from PartSegCore.json_hooks import check_loaded_dict
@@ -22,7 +22,7 @@ class TestSegmentation:
         try:
             data = UpdateLoadedMetadataAnalysis.load_json_data(profile_path)
             assert check_loaded_dict(data)
-        except Exception:
+        except Exception:  # pylint: disable=W0703
             pytest.fail("Fail in loading profile")
             return
         image = TiffImageReader.read_image(
@@ -30,11 +30,11 @@ class TestSegmentation:
             os.path.join(data_test_dir, "stack1_components", "stack1_component5_mask.tif"),
         )
 
-        val: SegmentationProfile
+        val: ROIExtractionProfile
         for val in data.values():
             algorithm: SegmentationAlgorithm = analysis_algorithm_dict[val.algorithm]()
             algorithm.set_image(image)
             algorithm.set_mask(image.mask.squeeze())
             algorithm.set_parameters(**val.values)
             result = algorithm.calculation_run(empty)
-            assert np.max(result.segmentation) == 2
+            assert np.max(result.roi) == 2

@@ -22,7 +22,7 @@ class BoundInfo(NamedTuple):
         return [slice(x, y + 1) for x, y in zip(self.lower, self.upper)]
 
 
-class SegmentationInfo:
+class ROIInfo:
     """
     Object to storage meta information about given segmentation.
     Segmentation array is only referenced, not copied.
@@ -32,41 +32,41 @@ class SegmentationInfo:
     :ivar numpy.ndarray sizes: array with sizes of components
     """
 
-    def __init__(self, segmentation: Optional[np.ndarray]):
-        if segmentation is None:
-            self.segmentation = None
+    def __init__(self, roi: Optional[np.ndarray]):
+        if roi is None:
+            self.roi = None
             self.bound_info = {}
             self.sizes = []
             return
-        max_val = np.max(segmentation)
+        max_val = np.max(roi)
         dtype = minimal_dtype(max_val)
-        segmentation = segmentation.astype(dtype)
-        self.segmentation = segmentation
-        self.bound_info = self.calc_bounds(segmentation)
-        self.sizes = np.bincount(segmentation.flat)
+        roi = roi.astype(dtype)
+        self.roi = roi
+        self.bound_info = self.calc_bounds(roi)
+        self.sizes = np.bincount(roi.flat)
 
     def __str__(self):
         return f"SegmentationInfo; components: {len(self.bound_info)}, sizes: {self.sizes}"
 
     def __repr__(self):
         return (
-            f"SegmentationInfo(segmentation={numpy_repr(self.segmentation)},"
+            f"SegmentationInfo(segmentation={numpy_repr(self.roi)},"
             f" bound_info={self.bound_info}, sizes={repr(self.sizes)})"
         )
 
     @staticmethod
-    def calc_bounds(segmentation: np.ndarray) -> Dict[int, BoundInfo]:
+    def calc_bounds(roi: np.ndarray) -> Dict[int, BoundInfo]:
         """
         Calculate bounding boxes components
 
-        :param np.ndarray segmentation: array for which bounds boxes should be calculated
+        :param np.ndarray roi: array for which bounds boxes should be calculated
         :return: mapping component number to bounding box
         :rtype: Dict[int, BoundInfo]
         """
         bound_info = {}
-        count = np.max(segmentation)
+        count = np.max(roi)
         for i in range(1, count + 1):
-            component = np.array(segmentation == i)
+            component = np.array(roi == i)
             if np.any(component):
                 points = np.nonzero(component)
                 lower = np.min(points, 1)

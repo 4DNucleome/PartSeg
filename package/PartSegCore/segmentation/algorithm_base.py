@@ -8,7 +8,7 @@ import numpy as np
 from PartSegCore.channel_class import Channel
 from PartSegImage import Image
 
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
 from ..image_operations import RadiusType
 from ..project_info import ProjectInfoBase
 from ..utils import numpy_repr
@@ -40,22 +40,22 @@ class AdditionalLayerDescription:
 
 @dataclass(frozen=True, repr=False)
 class SegmentationResult:
-    segmentation: np.ndarray
-    parameters: SegmentationProfile
+    roi: np.ndarray
+    parameters: ROIExtractionProfile
     additional_layers: Dict[str, AdditionalLayerDescription] = field(default_factory=dict)
     info_text: str = ""
 
     def __str__(self):
         return (
-            f"SegmentationResult(segmentation=[shape: {self.segmentation.shape}, dtype: {self.segmentation.dtype},"
-            f" max: {np.max(self.segmentation)}], parameters={self.parameters},"
+            f"SegmentationResult(segmentation=[shape: {self.roi.shape}, dtype: {self.roi.dtype},"
+            f" max: {np.max(self.roi)}], parameters={self.parameters},"
             f" additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text}"
         )
 
     def __repr__(self):
         return (
-            f"SegmentationResult(segmentation=[shape: {self.segmentation.shape}, dtype: {self.segmentation.dtype}, "
-            f"max: {np.max(self.segmentation)}], parameters={self.parameters}, "
+            f"SegmentationResult(segmentation=[shape: {self.roi.shape}, dtype: {self.roi.dtype}, "
+            f"max: {np.max(self.roi)}], parameters={self.parameters}, "
             f"additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text}"
         )
 
@@ -184,7 +184,7 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         self.new_parameters = deepcopy(kwargs)
 
     @abstractmethod
-    def get_segmentation_profile(self) -> SegmentationProfile:
+    def get_segmentation_profile(self) -> ROIExtractionProfile:
         """Get parameters seated by :py:meth:`set_parameters` method."""
         raise NotImplementedError()
 

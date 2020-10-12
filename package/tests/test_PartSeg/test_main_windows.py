@@ -61,7 +61,8 @@ class TestLauncherMainWindow:
         count = 0
         while main_window.wind.image_view.worker_list:
             if count > 4:
-                raise RuntimeError("Problem with clean worker list")
+                info = [(x, x._func) for x in main_window.wind.image_view.worker_list]
+                raise RuntimeError(f"Problem with clean worker list {info}")
             count += 1
             QCoreApplication.processEvents()
 

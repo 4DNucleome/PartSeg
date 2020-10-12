@@ -16,7 +16,7 @@ import tifffile
 from PartSegCore.json_hooks import ProfileDict, profile_hook
 from PartSegImage import ImageWriter
 
-from .algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
+from .algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
 from .class_generator import BaseSerializableClass
 from .mask_create import MaskProperty
 from .project_info import ProjectInfoBase
@@ -201,7 +201,7 @@ class UpdateLoadedMetadataBase:
     def recursive_update(cls, data):
         if isinstance(data, (tuple, list)):
             return type(data)([cls.recursive_update(x) for x in data])
-        if isinstance(data, SegmentationProfile):
+        if isinstance(data, ROIExtractionProfile):
             return cls.update_segmentation_profile(data)
         if isinstance(data, Enum):
             return cls.update_enum(data)
@@ -230,7 +230,7 @@ class UpdateLoadedMetadataBase:
         return dkt
 
     @classmethod
-    def update_segmentation_profile(cls, profile_data: SegmentationProfile) -> SegmentationProfile:
+    def update_segmentation_profile(cls, profile_data: ROIExtractionProfile) -> ROIExtractionProfile:
         for key in list(profile_data.values.keys()):
             item = profile_data.values[key]
             if isinstance(item, Enum):
@@ -394,7 +394,7 @@ class SaveROIAsTIFF(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
-        segmentation = project_info.segmentation
+        segmentation = project_info.roi
         segmentation_max = segmentation.max()
         if segmentation_max < 2 ** 8 - 1:
             segmentation = segmentation.astype(np.uint8)
@@ -425,7 +425,7 @@ class SaveROIAsNumpy(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
-        segmentation = project_info.segmentation
+        segmentation = project_info.roi
         segmentation_max = segmentation.max()
         if segmentation_max < 2 ** 8 - 1:
             segmentation = segmentation.astype(np.uint8)

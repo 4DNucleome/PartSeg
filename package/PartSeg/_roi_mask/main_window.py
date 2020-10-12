@@ -38,8 +38,8 @@ from PartSegCore.mask.io_functions import (
     LoadROIFromTIFF,
     LoadROIParameters,
     LoadSegmentation,
+    MaskProjectTuple,
     SaveROI,
-    SegmentationTuple,
 )
 from PartSegCore.mask_create import calculate_mask_from_project
 from PartSegCore.segmentation.algorithm_base import SegmentationResult
@@ -74,7 +74,7 @@ class MaskDialog(MaskDialogBase):
         self.settings = settings
 
     def next_mask(self):
-        project_info: SegmentationTuple = self.settings.get_project_info()
+        project_info: MaskProjectTuple = self.settings.get_project_info()
         mask_property = self.mask_widget.get_mask_property()
         self.settings.set("mask_manager.mask_property", mask_property)
         mask = calculate_mask_from_project(mask_description=mask_property, project=project_info)
@@ -89,7 +89,7 @@ class MaskDialog(MaskDialogBase):
         history.arrays.seek(0)
         seg = np.load(history.arrays)
         history.arrays.seek(0)
-        self.settings.segmentation = seg["segmentation"]
+        self.settings.roi = seg["segmentation"]
         self.settings.set_segmentation(
             seg["segmentation"],
             False,
@@ -155,7 +155,7 @@ class MainMenu(BaseMainMenu):
         self.measurements_window.show()
 
     def mask_manager(self):
-        if self.settings.segmentation is None:
+        if self.settings.roi is None:
             QMessageBox.information(self, "No segmentation", "Cannot create mask without segmentation")
             return
         if not self.settings.chosen_components():
@@ -280,7 +280,7 @@ class MainMenu(BaseMainMenu):
             if result is None:
                 QMessageBox.critical(self, "Data Load fail", "Fail of loading data")
                 return
-            if result.segmentation is not None:
+            if result.roi is not None:
                 try:
                     self.settings.set_project_info(dial.get_result())
                     return
@@ -300,11 +300,11 @@ class MainMenu(BaseMainMenu):
 
             else:
                 self.segmentation_dialog.set_additional_text("")
-            self.segmentation_dialog.set_parameters_dict(result.segmentation_parameters)
+            self.segmentation_dialog.set_parameters_dict(result.roi_extraction_parameters)
             self.segmentation_dialog.show()
 
     def save_segmentation(self):
-        if self.settings.segmentation is None:
+        if self.settings.roi is None:
             QMessageBox.warning(self, "No segmentation", "No segmentation to save")
             return
         dial = SaveDialog(io_functions.save_segmentation_dict, False, history=self.settings.get_path_history())
@@ -336,7 +336,7 @@ class MainMenu(BaseMainMenu):
             clipboard = QGuiApplication.clipboard()
             clipboard.setText(os.path.splitext(os.path.basename(self.settings.image_path))[0])
 
-        if self.settings.segmentation is None or len(self.settings.sizes) == 1:
+        if self.settings.roi is None or len(self.settings.sizes) == 1:
             QMessageBox.warning(self, "No components", "No components to save")
             return
         dial = SaveDialog(
@@ -644,14 +644,14 @@ class AlgorithmOptions(QWidget):
 
     @property
     def segmentation(self):
-        return self.settings.segmentation
+        return self.settings.roi
 
     @segmentation.setter
     def segmentation(self, val):
-        self.settings.segmentation = val
+        self.settings.roi = val
 
     def _image_changed(self):
-        self.settings.segmentation = None
+        self.settings.roi = None
         self.choose_components.set_chose([], [])
 
     def _execute_in_background_init(self):
@@ -716,7 +716,7 @@ class AlgorithmOptions(QWidget):
         self.progress_bar.setRange(0, 0)
         self.choose_components.setDisabled(True)
         chosen = sorted(self.choose_components.get_chosen())
-        blank = get_mask(self.settings.segmentation, self.settings.mask, chosen)
+        blank = get_mask(self.settings.roi, self.settings.mask, chosen)
         if blank is not None:
             # Problem with handling time data in algorithms
             # TODO Fix This
@@ -747,7 +747,7 @@ class AlgorithmOptions(QWidget):
         self.choose_components.setDisabled(False)
 
     def execution_done(self, segmentation: SegmentationResult):
-        if np.max(segmentation.segmentation) == 0:
+        if np.max(segmentation.roi) == 0:
             QMessageBox.information(
                 self, "No result", "Segmentation contains no component, check parameters, " "especially chosen channel."
             )
@@ -755,7 +755,7 @@ class AlgorithmOptions(QWidget):
             QMessageBox.information(self, "Algorithm info", segmentation.info_text)
         parameters_dict = defaultdict(lambda: deepcopy(segmentation.parameters))
         self.settings.additional_layers = segmentation.additional_layers
-        self.settings.set_segmentation(segmentation.segmentation, True, [], parameters_dict)
+        self.settings.set_segmentation(segmentation.roi, True, [], parameters_dict)
 
     def showEvent(self, _):
         widget = self.algorithm_choose_widget.current_widget()
@@ -974,7 +974,7 @@ class MainWindow(BaseMainWindow):
 
     @staticmethod
     def get_project_info(file_path, image):
-        return SegmentationTuple(file_path=file_path, image=image)
+        return MaskProjectTuple(file_path=file_path, image=image)
 
     def set_data(self, data):
         self.main_menu.set_data(data)

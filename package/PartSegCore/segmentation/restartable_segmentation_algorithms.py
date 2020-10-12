@@ -8,7 +8,7 @@ from copy import deepcopy
 import numpy as np
 import SimpleITK
 
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, SegmentationProfile
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
 from ..channel_class import Channel
 from ..mask_partition_utils import BorderRim as BorderRimBase
 from ..mask_partition_utils import MaskDistanceSplit as MaskDistanceSplitBase
@@ -56,8 +56,8 @@ class RestartableAlgorithm(SegmentationAlgorithm, ABC):
     def get_info_text(self):
         return "No info [Report this ass error]"
 
-    def get_segmentation_profile(self) -> SegmentationProfile:
-        return SegmentationProfile("", self.get_name(), deepcopy(self.new_parameters))
+    def get_segmentation_profile(self) -> ROIExtractionProfile:
+        return ROIExtractionProfile("", self.get_name(), deepcopy(self.new_parameters))
 
     @classmethod
     def support_time(cls):
@@ -87,8 +87,8 @@ class BorderRim(RestartableAlgorithm):
     def get_fields(cls):
         return ["Need mask"] + BorderRimBase.get_fields()
 
-    def get_segmentation_profile(self) -> SegmentationProfile:
-        return SegmentationProfile("", self.get_name(), deepcopy(self.new_parameters))
+    def get_segmentation_profile(self) -> ROIExtractionProfile:
+        return ROIExtractionProfile("", self.get_name(), deepcopy(self.new_parameters))
 
     def get_info_text(self):
         if self.mask is None:
@@ -116,8 +116,8 @@ class MaskDistanceSplit(RestartableAlgorithm):
             )
             return SegmentationResult(result, self.get_segmentation_profile(), result, None)
 
-    def get_segmentation_profile(self) -> SegmentationProfile:
-        return SegmentationProfile("", self.get_name(), deepcopy(self.new_parameters))
+    def get_segmentation_profile(self) -> ROIExtractionProfile:
+        return ROIExtractionProfile("", self.get_name(), deepcopy(self.new_parameters))
 
     @classmethod
     def get_name(cls) -> str:
@@ -183,17 +183,15 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             "no size filtering": AdditionalLayerDescription(data=full_segmentation, layer_type="labels"),
         }
 
-    def prepare_result(self, segmentation: np.ndarray) -> SegmentationResult:
+    def prepare_result(self, roi: np.ndarray) -> SegmentationResult:
         """
         Collect data for result.
 
-        :param segmentation: array with segmentation
+        :param roi: array with segmentation
         :return: algorithm result description
         """
         return SegmentationResult(
-            segmentation=segmentation,
-            parameters=self.get_segmentation_profile(),
-            additional_layers=self.get_additional_layers(),
+            roi=roi, parameters=self.get_segmentation_profile(), additional_layers=self.get_additional_layers(),
         )
 
     def set_image(self, image):
@@ -342,7 +340,7 @@ class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
             self.new_parameters["upper_threshold"],
         )
 
-    def get_segmentation_profile(self) -> SegmentationProfile:
+    def get_segmentation_profile(self) -> ROIExtractionProfile:
         resp = super().get_segmentation_profile()
         low, upp = resp.values["threshold"]
         del resp.values["threshold"]
@@ -448,8 +446,8 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
             restarted = False
             finally_segment = np.copy(self.finally_segment)
         else:
-            self.finally_segment = segment_data.segmentation
-            finally_segment = segment_data.segmentation
+            self.finally_segment = segment_data.roi
+            finally_segment = segment_data.roi
             restarted = True
 
         if (
@@ -476,7 +474,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
             )
             self.final_sizes = np.bincount(new_segment.flat)
             return SegmentationResult(
-                segmentation=new_segment,
+                roi=new_segment,
                 parameters=self.get_segmentation_profile(),
                 additional_layers=self.get_additional_layers(full_segmentation=self.sprawl_area),
             )
@@ -632,8 +630,8 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):
             restarted = False
             finally_segment = np.copy(self.finally_segment)
         else:
-            self.finally_segment = segment_data.segmentation
-            finally_segment = segment_data.segmentation
+            self.finally_segment = segment_data.roi
+            finally_segment = segment_data.roi
             if np.max(finally_segment) > 250:
                 raise SegmentationLimitException(
                     "Current implementation of MSO do not support more than 250 components"

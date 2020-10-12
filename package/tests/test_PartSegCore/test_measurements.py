@@ -93,7 +93,7 @@ def get_two_component_mask():
     return mask
 
 
-class TestDiameter(object):
+class TestDiameter:
     def test_cube(self, cube_image):
         mask1 = cube_image.get_channel(0)[0] > 40
         mask2 = cube_image.get_channel(0)[0] > 60
@@ -132,7 +132,7 @@ class TestDiameter(object):
         assert Diameter.calculate_property(mask, image.spacing, 1) == 0
 
 
-class TestPixelBrightnessSum(object):
+class TestPixelBrightnessSum:
     def test_cube(self):
         image = get_cube_image()
         mask1 = image.get_channel(0)[0] > 40
@@ -159,7 +159,7 @@ class TestPixelBrightnessSum(object):
         assert PixelBrightnessSum.calculate_property(mask, image.get_channel(0)) == 0
 
 
-class TestVolume(object):
+class TestVolume:
     def test_cube(self):
         image = get_cube_image()
         mask1 = image.get_channel(0) > 40
@@ -220,7 +220,7 @@ class TestVoxels:
         assert Voxels.calculate_property(mask) == 0
 
 
-class TestComponentsNumber(object):
+class TestComponentsNumber:
     def test_cube(self):
         image = get_cube_image()
         mask1 = image.get_channel(0) > 40
@@ -1561,9 +1561,10 @@ class TestStatisticProfile:
         assert result["LongestMainAxisLength per component"][0][0] == 35 * 50 * UNIT_SCALE[Units.nm.value]
         assert result["LongestMainAxisLength per component"][0][1] == 26 * 50 * UNIT_SCALE[Units.nm.value]
 
-    def test_all_variants(self):
+    def test_all_variants(self, bundle_test_dir):
         """ This test check if all calculations finished, not values. """
-        file_path = os.path.join(os.path.dirname(__file__), "test_data", "measurements_profile.json")
+        file_path = os.path.join(bundle_test_dir, "measurements_profile.json")
+        assert os.path.exists(file_path)
         profile = load_metadata(file_path)["all_statistic"]
         image = get_two_components_image()
         mask = get_two_component_mask()
@@ -1580,7 +1581,7 @@ class TestStatisticProfile:
 # noinspection DuplicatedCode
 class TestMeasurementResult:
     def test_simple(self):
-        info = ComponentsInfo(np.arange(0), np.arange(0), dict())
+        info = ComponentsInfo(np.arange(0), np.arange(0), {})
         storage = MeasurementResult(info)
         storage["aa"] = 1, "", (PerComponent.No, AreaType.ROI)
         storage["bb"] = 5, "np", (PerComponent.No, AreaType.ROI)

@@ -3,7 +3,7 @@ from typing import Callable, Dict, Optional
 from qtpy.QtCore import QEvent
 from qtpy.QtWidgets import QGridLayout, QLabel, QListWidget, QPlainTextEdit, QPushButton, QWidget
 
-from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 
 from .stack_settings import StackSettings
@@ -44,7 +44,7 @@ class SegmentationInfoDialog(QWidget):
         self.setLayout(layout)
         self.setWindowTitle("Parameters preview")
 
-    def set_parameters_dict(self, val: Optional[Dict[int, SegmentationProfile]]):
+    def set_parameters_dict(self, val: Optional[Dict[int, ROIExtractionProfile]]):
         self.parameters_dict = val
 
     def set_additional_text(self, text):

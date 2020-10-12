@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.analysis.analysis_utils import SegmentationPipeline
 from PartSegCore.io_utils import HistoryElement
@@ -19,7 +19,7 @@ def _empty_fun(_a1, _a2):
 
 @dataclass(frozen=True)
 class PipelineResult:
-    segmentation: np.ndarray
+    roi: np.ndarray
     additional_layers: typing.Dict[str, AdditionalLayerDescription]
     mask: np.ndarray
     history: typing.List[HistoryElement]
@@ -31,7 +31,7 @@ def calculate_pipeline(image: Image, mask: typing.Optional[np.ndarray], pipeline
     report_fun("max", 2 * len(pipeline.mask_history) + 1)
     for i, el in enumerate(pipeline.mask_history):
         result, _ = calculate_segmentation_step(el.segmentation, image, mask)
-        segmentation = result.segmentation
+        segmentation = result.roi
         report_fun("step", 2 * i + 1)
         new_mask = calculate_mask(
             mask_description=el.mask_property,
@@ -46,10 +46,10 @@ def calculate_pipeline(image: Image, mask: typing.Optional[np.ndarray], pipeline
         mask = new_mask
     result, text = calculate_segmentation_step(pipeline.segmentation, image, mask)
     report_fun("step", 2 * len(pipeline.mask_history) + 1)
-    return PipelineResult(result.segmentation, result.additional_layers, mask, history, text)
+    return PipelineResult(result.roi, result.additional_layers, mask, history, text)
 
 
-def calculate_segmentation_step(profile: SegmentationProfile, image: Image, mask: typing.Optional[np.ndarray]):
+def calculate_segmentation_step(profile: ROIExtractionProfile, image: Image, mask: typing.Optional[np.ndarray]):
     algorithm: RestartableAlgorithm = analysis_algorithm_dict[profile.algorithm]()
     algorithm.set_image(image)
     algorithm.set_mask(mask)

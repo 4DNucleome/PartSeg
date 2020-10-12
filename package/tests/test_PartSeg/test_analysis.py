@@ -72,7 +72,7 @@ class TestSimpleMeasurementsWidget:
             chk.setChecked(True)
         widget.calculate()
         assert widget.result_view.rowCount() == widget.measurement_layout.count() - 1
-        assert widget.result_view.columnCount() == len(stack_settings.segmentation_info.bound_info) + 1
+        assert widget.result_view.columnCount() == len(stack_settings.roi_info.bound_info) + 1
 
 
 class TestMeasurementsStorage:

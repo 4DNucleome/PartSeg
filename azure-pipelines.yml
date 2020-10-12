@@ -148,7 +148,7 @@ stages:
         variables:
           CIBW_BEFORE_ALL_LINUX: yum -y install hdf5-devel fontconfig
           CIBW_TEST_REQUIRES: pytest pytest-cov
-          CIBW_TEST_COMMAND: pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part
+          CIBW_TEST_COMMAND: pytest {project}/package/tests --ignore={project}/package/tests/test_PartSeg
           CIBW_BEFORE_TEST: pip install PyQt5==5.13.2
           CIBW_TEST_EXTRAS: ""
         steps:
@@ -159,7 +159,7 @@ stages:
         pool: { vmImage: 'ubuntu-18.04' }
         variables:
           CIBW_BEFORE_ALL_LINUX: yum -y install hdf5-devel fontconfig
-          CIBW_TEST_COMMAND_LINUX: pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part
+          CIBW_TEST_COMMAND_LINUX: pytest {project}/package/tests --ignore={project}/package/tests/test_PartSeg
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           CIBW_BUILD: cp37*64
         steps:
@@ -170,7 +170,7 @@ stages:
         pool: { vmImage: 'ubuntu-18.04' }
         variables:
           CIBW_BEFORE_ALL_LINUX: yum -y install hdf5-devel fontconfig
-          CIBW_TEST_COMMAND_LINUX: pytest {project}/package/tests --ignore={project}/package/tests/test_qt_part
+          CIBW_TEST_COMMAND_LINUX: pytest {project}/package/tests --ignore={project}/package/tests/test_PartSeg
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
         steps:
           - template: .azure-pipelines/wheels.yaml

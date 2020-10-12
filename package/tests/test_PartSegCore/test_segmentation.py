@@ -6,18 +6,18 @@ from typing import List, Type, Union
 import numpy as np
 import pytest
 
-from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.analysis.analysis_utils import SegmentationPipeline, SegmentationPipelineElement
 from PartSegCore.analysis.calculate_pipeline import calculate_pipeline
 from PartSegCore.convex_fill import _convex_fill, convex_fill
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask_create import MaskProperty, calculate_mask
+from PartSegCore.roi_info import BoundInfo, ROIInfo
 from PartSegCore.segmentation import SegmentationAlgorithm
 from PartSegCore.segmentation import restartable_segmentation_algorithms as sa
 from PartSegCore.segmentation.noise_filtering import noise_filtering_dict
 from PartSegCore.segmentation.watershed import sprawl_dict
-from PartSegCore.segmentation_info import BoundInfo, SegmentationInfo
 from PartSegImage import Image
 
 
@@ -75,7 +75,7 @@ def get_two_parts_side_reversed():
 
 
 def empty(_s: str, _i: int):
-    pass
+    """mock function for callback"""
 
 
 @pytest.mark.parametrize("algorithm_name", analysis_algorithm_dict.keys())
@@ -91,12 +91,12 @@ def test_base_parameters(algorithm_name):
     assert parameters.values == values
 
 
-class BaseThreshold(object):
+class BaseThreshold:
     def check_result(self, result, sizes, op, parameters):
-        assert result.segmentation.max() == len(sizes)
-        assert np.all(op(np.bincount(result.segmentation.flat)[1:], np.array(sizes)))
+        assert result.roi.max() == len(sizes)
+        assert np.all(op(np.bincount(result.roi.flat)[1:], np.array(sizes)))
         assert result.parameters.values == parameters
-        assert result.parameters.algorithm == self.algorithm_class.get_name()
+        assert result.parameters.algorithm == self.get_algorithm_class().get_name()
 
     def get_parameters(self) -> dict:
         if hasattr(self, "parameters") and isinstance(self.parameters, dict):
@@ -108,22 +108,22 @@ class BaseThreshold(object):
             return deepcopy(self.shift)
         raise NotImplementedError
 
-    def get_base_object(self):
+    @staticmethod
+    def get_base_object():
         raise NotImplementedError
 
-    def get_side_object(self):
+    @staticmethod
+    def get_side_object():
         raise NotImplementedError
 
-    def get_multiple_part(self, parts_num):
-        raise NotImplementedError
-
-    algorithm_class = None
+    def get_algorithm_class(self) -> Type[SegmentationAlgorithm]:
+        raise NotImplementedError()
 
 
-class BaseOneThreshold(BaseThreshold, ABC):
+class BaseOneThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
     def test_simple(self):
         image = self.get_base_object()
-        alg: SegmentationAlgorithm = self.algorithm_class()
+        alg: SegmentationAlgorithm = self.get_algorithm_class()()
         parameters = self.get_parameters()
         alg.set_image(image)
         alg.set_parameters(**parameters)
@@ -137,7 +137,7 @@ class BaseOneThreshold(BaseThreshold, ABC):
 
     def test_side_connection(self):
         image = self.get_side_object()
-        alg: SegmentationAlgorithm = self.algorithm_class()
+        alg: SegmentationAlgorithm = self.get_algorithm_class()()
         parameters = self.get_parameters()
         parameters["side_connection"] = True
         alg.set_image(image)
@@ -160,9 +160,17 @@ class TestLowerThreshold(BaseOneThreshold):
         "side_connection": False,
     }
     shift = -6
-    get_base_object = staticmethod(get_two_parts)
-    get_side_object = staticmethod(get_two_parts_side)
-    algorithm_class = sa.LowerThresholdAlgorithm
+
+    @staticmethod
+    def get_base_object():
+        return get_two_parts()
+
+    @staticmethod
+    def get_side_object():
+        return get_two_parts_side()
+
+    def get_algorithm_class(self) -> Type[SegmentationAlgorithm]:
+        return sa.LowerThresholdAlgorithm
 
 
 class TestUpperThreshold(BaseOneThreshold):
@@ -174,12 +182,20 @@ class TestUpperThreshold(BaseOneThreshold):
         "side_connection": False,
     }
     shift = 6
-    get_base_object = staticmethod(get_two_parts_reversed)
-    get_side_object = staticmethod(get_two_parts_side_reversed)
-    algorithm_class = sa.UpperThresholdAlgorithm
+
+    @staticmethod
+    def get_base_object():
+        return get_two_parts_reversed()
+
+    @staticmethod
+    def get_side_object():
+        return get_two_parts_side_reversed()
+
+    def get_algorithm_class(self) -> Type[SegmentationAlgorithm]:
+        return sa.UpperThresholdAlgorithm
 
 
-class TestRangeThresholdAlgorithm(object):
+class TestRangeThresholdAlgorithm:
     def test_simple(self):
         image = get_two_parts()
         alg = sa.RangeThresholdAlgorithm()
@@ -194,10 +210,9 @@ class TestRangeThresholdAlgorithm(object):
         alg.set_parameters(**parameters)
         alg.set_image(image)
         result = alg.calculation_run(empty)
-        assert np.max(result.segmentation) == 2
+        assert np.max(result.roi) == 2
         assert np.all(
-            np.bincount(result.segmentation.flat)[1:]
-            == np.array([30 * 40 * 80 - 20 * 30 * 70, 30 * 30 * 80 - 20 * 20 * 70])
+            np.bincount(result.roi.flat)[1:] == np.array([30 * 40 * 80 - 20 * 30 * 70, 30 * 30 * 80 - 20 * 20 * 70])
         )
         assert result.parameters.values == parameters
         assert result.parameters.algorithm == alg.get_name()
@@ -205,8 +220,8 @@ class TestRangeThresholdAlgorithm(object):
         parameters["lower_threshold"] -= 6
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
-        assert np.max(result.segmentation) == 1
-        assert np.bincount(result.segmentation.flat)[1] == 30 * 80 * 80 - 20 * 50 * 70
+        assert np.max(result.roi) == 1
+        assert np.bincount(result.roi.flat)[1] == 30 * 80 * 80 - 20 * 50 * 70
         assert result.parameters.values == parameters
         assert result.parameters.algorithm == alg.get_name()
 
@@ -224,9 +239,9 @@ class TestRangeThresholdAlgorithm(object):
         alg.set_parameters(**parameters)
         alg.set_image(image)
         result = alg.calculation_run(empty)
-        assert np.max(result.segmentation) == 2
+        assert np.max(result.roi) == 2
         assert np.all(
-            np.bincount(result.segmentation.flat)[1:]
+            np.bincount(result.roi.flat)[1:]
             == np.array([30 * 40 * 80 - 20 * 30 * 70 + 5, 30 * 30 * 80 - 20 * 20 * 70 + 5])
         )
         assert result.parameters.values == parameters
@@ -235,18 +250,18 @@ class TestRangeThresholdAlgorithm(object):
         parameters["side_connection"] = False
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
-        assert np.max(result.segmentation) == 1
-        assert np.bincount(result.segmentation.flat)[1] == 30 * 70 * 80 - 20 * 50 * 70 + 10
+        assert np.max(result.roi) == 1
+        assert np.bincount(result.roi.flat)[1] == 30 * 70 * 80 - 20 * 50 * 70 + 10
         assert result.parameters.values == parameters
         assert result.parameters.algorithm == alg.get_name()
 
 
-class BaseFlowThreshold(BaseThreshold, ABC):
+class BaseFlowThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
     @pytest.mark.parametrize("sprawl_algorithm_name", sprawl_dict.keys())
     @pytest.mark.parametrize("compare_op", [operator.eq, operator.ge])
     @pytest.mark.parametrize("components", [2] + list(range(3, 15, 2)))
     def test_multiple(self, sprawl_algorithm_name, compare_op, components):
-        alg = self.algorithm_class()
+        alg = self.get_algorithm_class()()
         parameters = self.get_parameters()
         image = self.get_multiple_part(components)
         alg.set_image(image)
@@ -261,7 +276,7 @@ class BaseFlowThreshold(BaseThreshold, ABC):
     @pytest.mark.parametrize("algorithm_name", sprawl_dict.keys())
     def test_side_connection(self, algorithm_name):
         image = self.get_side_object()
-        alg = self.algorithm_class()
+        alg = self.get_algorithm_class()()
         parameters = self.get_parameters()
         parameters["side_connection"] = True
         alg.set_image(image)
@@ -270,6 +285,9 @@ class BaseFlowThreshold(BaseThreshold, ABC):
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
         self.check_result(result, [96000 + 5, 72000 + 5], operator.eq, parameters)
+
+    def get_multiple_part(self, parts_num):
+        raise NotImplementedError
 
 
 class TestLowerThresholdFlow(BaseFlowThreshold):
@@ -291,7 +309,9 @@ class TestLowerThresholdFlow(BaseFlowThreshold):
     get_base_object = staticmethod(get_two_parts)
     get_side_object = staticmethod(get_two_parts_side)
     get_multiple_part = staticmethod(get_multiple_part)
-    algorithm_class = sa.LowerThresholdFlowAlgorithm
+
+    def get_algorithm_class(self) -> Type[SegmentationAlgorithm]:
+        return sa.LowerThresholdFlowAlgorithm
 
 
 class TestUpperThresholdFlow(BaseFlowThreshold):
@@ -313,7 +333,9 @@ class TestUpperThresholdFlow(BaseFlowThreshold):
     get_base_object = staticmethod(get_two_parts_reversed)
     get_side_object = staticmethod(get_two_parts_side_reversed)
     get_multiple_part = staticmethod(get_multiple_part_reversed)
-    algorithm_class = sa.UpperThresholdFlowAlgorithm
+
+    def get_algorithm_class(self) -> Type[SegmentationAlgorithm]:
+        return sa.UpperThresholdFlowAlgorithm
 
 
 class TestMaskCreate:
@@ -625,15 +647,15 @@ class TestPipeline:
             "noise_filtering": {"name": "None", "values": {}},
             "side_connection": False,
         }
-        seg_profile1 = SegmentationProfile(name="Unknown", algorithm="Lower threshold", values=parameters1)
+        seg_profile1 = ROIExtractionProfile(name="Unknown", algorithm="Lower threshold", values=parameters1)
         pipeline_element = SegmentationPipelineElement(mask_property=prop1, segmentation=seg_profile1)
-        seg_profile2 = SegmentationProfile(name="Unknown", algorithm="Lower threshold", values=parameters2)
+        seg_profile2 = ROIExtractionProfile(name="Unknown", algorithm="Lower threshold", values=parameters2)
 
         pipeline = SegmentationPipeline(name="test", segmentation=seg_profile2, mask_history=[pipeline_element])
         result = calculate_pipeline(image=image, mask=None, pipeline=pipeline, report_fun=empty)
         result_segmentation = np.zeros((50, 100, 100), dtype=np.uint8)
         result_segmentation[10:40, 20:80, 40:60] = 1
-        assert np.all(result.segmentation == result_segmentation)
+        assert np.all(result.roi == result_segmentation)
 
 
 class TestNoiseFiltering:
@@ -704,14 +726,14 @@ class TestConvexFill:
 
 class TestSegmentationInfo:
     def test_none(self):
-        si = SegmentationInfo(None)
-        assert si.segmentation is None
+        si = ROIInfo(None)
+        assert si.roi is None
         assert len(si.bound_info) == 0
         assert len(si.sizes) == 0
 
     def test_empty(self):
-        si = SegmentationInfo(np.zeros((10, 10), dtype=np.uint8))
-        assert np.all(si.segmentation == 0)
+        si = ROIInfo(np.zeros((10, 10), dtype=np.uint8))
+        assert np.all(si.roi == 0)
         assert len(si.bound_info) == 0
         assert len(si.sizes) == 1
 
@@ -719,7 +741,7 @@ class TestSegmentationInfo:
     def test_simple(self, num):
         data = np.zeros((10, 10), dtype=np.uint8)
         data[2:8, 2:8] = num
-        si = SegmentationInfo(data)
+        si = ROIInfo(data)
         assert len(si.bound_info) == 1
         assert num in si.bound_info
         assert isinstance(si.bound_info[num], BoundInfo)
@@ -731,7 +753,7 @@ class TestSegmentationInfo:
 
     @pytest.mark.parametrize("dims", [3, 5, 6])
     def test_more_dims(self, dims):
-        si = SegmentationInfo(np.ones((10,) * dims, dtype=np.uint8))
+        si = ROIInfo(np.ones((10,) * dims, dtype=np.uint8))
         assert len(si.bound_info[1].lower) == dims
         assert len(si.bound_info[1].upper) == dims
         assert np.all(si.bound_info[1].lower == 0)
@@ -744,7 +766,7 @@ class TestSegmentationInfo:
         data = np.zeros((10 * comp_num, 10), dtype=np.uint8)
         for i in range(comp_num):
             data[i * 10 + 2 : i * 10 + 8, 2:8] = i + 1
-        si = SegmentationInfo(data)
+        si = ROIInfo(data)
         assert len(si.bound_info) == comp_num
         assert set(si.bound_info.keys()) == set(range(1, comp_num + 1))
         for i in range(comp_num):
@@ -754,7 +776,7 @@ class TestSegmentationInfo:
         assert np.all(si.sizes[1:] == 36)
 
         data[-1, 8] = 1
-        si = SegmentationInfo(data)
+        si = ROIInfo(data)
         assert np.all(si.bound_info[1].lower == 2)
         assert np.all(si.bound_info[1].upper == [10 * comp_num - 1, 8])
 
@@ -762,6 +784,6 @@ class TestSegmentationInfo:
 def test_bound_info():
     bi = BoundInfo(lower=np.array([1, 1, 1]), upper=np.array([5, 5, 5]))
     assert np.all(bi.box_size() == 5)
-    assert len(bi.box_size() == 3)
+    assert len(bi.box_size()) == 3
     assert len(bi.get_slices()) == 3
     assert np.all([x == slice(1, 6) for x in bi.get_slices()])

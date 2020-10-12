@@ -7,9 +7,9 @@ from os import path
 import numpy as np
 from qtpy.QtCore import Signal, Slot
 
-from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.io_utils import HistoryElement, HistoryProblem
-from PartSegCore.mask.io_functions import SegmentationTuple, load_metadata
+from PartSegCore.mask.io_functions import MaskProjectTuple, load_metadata
 from PartSegImage import Image
 from PartSegImage.image import minimal_dtype, reduce_array
 
@@ -33,7 +33,7 @@ class StackSettings(BaseSettings):
         super().__init__(json_path)
         self.chosen_components_widget = None
         self.keep_chosen_components = False
-        self.components_parameters_dict: typing.Dict[int, SegmentationProfile] = {}
+        self.components_parameters_dict: typing.Dict[int, ROIExtractionProfile] = {}
 
     @Slot(int)
     def set_keep_chosen_components(self, val: bool):
@@ -87,25 +87,25 @@ class StackSettings(BaseSettings):
 
         raise RuntimeError("chosen_components_widget do not initialized")
 
-    def get_project_info(self) -> SegmentationTuple:
+    def get_project_info(self) -> MaskProjectTuple:
         """
         Get all information about current project
 
         :return: object with all project details.
-        :rtype: SegmentationTuple
+        :rtype: MaskProjectTuple
         """
-        return SegmentationTuple(
+        return MaskProjectTuple(
             file_path=self.image.file_path,
             image=self.image.substitute(),
             mask=self.mask,
-            segmentation=self.segmentation,
-            segmentation_info=self.segmentation_info,
+            roi=self.roi,
+            roi_info=self.roi_info,
             selected_components=self.chosen_components(),
-            segmentation_parameters=copy(self.components_parameters_dict),
+            roi_extraction_parameters=copy(self.components_parameters_dict),
             history=self.history[: self.history_index + 1],
         )
 
-    def set_project_info(self, data: SegmentationTuple):
+    def set_project_info(self, data: MaskProjectTuple):
         """signals = self.signalsBlocked()
         if data.segmentation is not None:
             self.blockSignals(True)"""
@@ -118,57 +118,53 @@ class StackSettings(BaseSettings):
         state = self.get_project_info()
         # TODO Remove repetition this and set_segmentation code
 
-        components = np.unique(data.segmentation)
+        components = np.unique(data.roi)
         if components[0] == 0 or components[0] is None:
             components = components[1:]
         for i in components:
-            _skip = data.segmentation_parameters[int(i)]  # noqa: F841
+            _skip = data.roi_extraction_parameters[int(i)]  # noqa: F841
         self.mask = data.mask
         if self.keep_chosen_components:
             if not self.compare_history(data.history) and self.chosen_components():
                 raise HistoryProblem("Incompatible history")
             state2 = self.transform_state(
-                state,
-                data.segmentation,
-                data.segmentation_parameters,
-                data.selected_components,
-                self.keep_chosen_components,
+                state, data.roi, data.roi_extraction_parameters, data.selected_components, self.keep_chosen_components,
             )
             self.chosen_components_widget.set_chose(
-                list(sorted(state2.segmentation_parameters.keys())), state2.selected_components
+                list(sorted(state2.roi_extraction_parameters.keys())), state2.selected_components
             )
-            self.segmentation = state2.segmentation
-            self.components_parameters_dict = state2.segmentation_parameters
+            self.roi = state2.roi
+            self.components_parameters_dict = state2.roi_extraction_parameters
         else:
             self.set_history(data.history)
             self.chosen_components_widget.set_chose(
-                list(sorted(data.segmentation_parameters.keys())), data.selected_components
+                list(sorted(data.roi_extraction_parameters.keys())), data.selected_components
             )
-            self.segmentation = data.segmentation
-            self.components_parameters_dict = data.segmentation_parameters
+            self.roi = data.roi
+            self.components_parameters_dict = data.roi_extraction_parameters
 
     @staticmethod
     def transform_state(
-        state: SegmentationTuple,
+        state: MaskProjectTuple,
         new_segmentation_data: np.ndarray,
         segmentation_parameters: typing.Dict,
         list_of_components: typing.List[int],
         save_chosen: bool = True,
-    ) -> SegmentationTuple:
+    ) -> MaskProjectTuple:
 
         # TODO Refactor
         if list_of_components is None:
             list_of_components = []
         if segmentation_parameters is None:
             segmentation_parameters = defaultdict(lambda: None)
-        segmentation_count = 0 if state.segmentation is None else len(np.unique(state.segmentation.flat))
+        segmentation_count = 0 if state.roi is None else len(np.unique(state.roi.flat))
         new_segmentation_count = 0 if new_segmentation_data is None else len(np.unique(new_segmentation_data.flat))
         segmentation_dtype = minimal_dtype(segmentation_count + new_segmentation_count)
-        if save_chosen and state.segmentation is not None:
-            segmentation = reduce_array(state.segmentation, state.selected_components, dtype=segmentation_dtype)
+        if save_chosen and state.roi is not None:
+            segmentation = reduce_array(state.roi, state.selected_components, dtype=segmentation_dtype)
             components_parameters_dict = {}
             for i, val in enumerate(sorted(state.selected_components), 1):
-                components_parameters_dict[i] = state.segmentation_parameters[val]
+                components_parameters_dict[i] = state.roi_extraction_parameters[val]
             base_chose = list(range(1, len(state.selected_components) + 1))
         else:
             segmentation = None
@@ -198,9 +194,9 @@ class StackSettings(BaseSettings):
 
                 return dataclasses.replace(
                     state,
-                    segmentation=segmentation,
+                    roi=segmentation,
                     selected_components=chosen_components,
-                    segmentation_parameters=components_parameters_dict,
+                    roi_extraction_parameters=components_parameters_dict,
                 )
 
             for i in range(1, num + 1):
@@ -208,16 +204,16 @@ class StackSettings(BaseSettings):
 
             return dataclasses.replace(
                 state,
-                segmentation=new_segmentation_data,
+                roi=new_segmentation_data,
                 selected_components=list_of_components,
-                segmentation_parameters=components_parameters_dict,
+                roi_extraction_parameters=components_parameters_dict,
             )
 
         return dataclasses.replace(
             state,
-            segmentation=segmentation,
+            roi=segmentation,
             selected_components=base_chose,
-            segmentation_parameters=components_parameters_dict,
+            roi_extraction_parameters=components_parameters_dict,
         )
 
     def compare_history(self, history: typing.List[HistoryElement]):
@@ -229,17 +225,15 @@ class StackSettings(BaseSettings):
                 return False
         return True
 
-    def set_project_data(self, data: SegmentationTuple, save_chosen=True):
+    def set_project_data(self, data: MaskProjectTuple, save_chosen=True):
         if isinstance(data.image, Image):
             self.image = data.image
-        if data.segmentation is not None:
+        if data.roi is not None:
             if not self.compare_history(data.history) and data.selected_components:
                 raise HistoryProblem("Incompatible history")
             self.set_history(data.history)
             self.mask = data.mask
-            self.set_segmentation(
-                data.segmentation, save_chosen, data.selected_components, data.segmentation_parameters
-            )
+            self.set_segmentation(data.roi, save_chosen, data.selected_components, data.roi_extraction_parameters)
 
     def set_segmentation(
         self, new_segmentation_data, save_chosen=True, list_of_components=None, segmentation_parameters=None
@@ -259,10 +253,10 @@ class StackSettings(BaseSettings):
                 state, new_segmentation_data, segmentation_parameters, list_of_components, save_chosen
             )
             self.chosen_components_widget.set_chose(
-                list(sorted(state2.segmentation_parameters.keys())), state2.selected_components
+                list(sorted(state2.roi_extraction_parameters.keys())), state2.selected_components
             )
-            self.segmentation = state2.segmentation
-            self.components_parameters_dict = state2.segmentation_parameters
+            self.roi = state2.roi
+            self.components_parameters_dict = state2.roi_extraction_parameters
         else:
             unique = np.unique(new_segmentation_data.flat)
             if unique[0] == 0:
@@ -270,7 +264,7 @@ class StackSettings(BaseSettings):
             selected_parameters = {i: segmentation_parameters[i] for i in unique}
 
             self.chosen_components_widget.set_chose(list(sorted(selected_parameters.keys())), list_of_components)
-            self.segmentation = new_segmentation_data
+            self.roi = new_segmentation_data
             self.components_parameters_dict = segmentation_parameters
 
 

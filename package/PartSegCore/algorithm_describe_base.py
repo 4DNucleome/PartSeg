@@ -17,21 +17,18 @@ class AlgorithmProperty:
     """
     This class is used to verbose describe algorithm parameters
 
-    :param name: name of parameter used in code
-    :param user_name: name presented to user in interface
+    :param str name: name of parameter used in code
+    :param str user_name: name presented to user in interface
     :param default_value: initial value which be used during interface generation
-    :param help_text: toll tip presented to user when keep mouse over widget
-    :type name: str
-    :type user_name: str
+    :param str help_text: toll tip presented to user when keep mouse over widget
     :type value_type: type
-    :type default_value: typing.Union[object, str, int, float]
     """
 
     def __init__(
         self,
         name: str,
         user_name: str,
-        default_value,
+        default_value: typing.Union[str, int, float, object],
         options_range=None,
         single_steep=None,
         possible_values=None,
@@ -230,7 +227,7 @@ class Register(OrderedDict, typing.Generic[AlgorithmType]):
         super().__setitem__(key, value)
 
 
-class SegmentationProfile:
+class ROIExtractionProfile:
     """
 
     :ivar str ~.name: name for segmentation profile

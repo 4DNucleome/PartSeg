@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.batch_processing import batch_backend
 from PartSegCore.analysis.batch_processing.batch_backend import CalculationManager, CalculationProcess
 from PartSegCore.analysis.calculation_plan import (
@@ -74,7 +74,7 @@ class TestCalculationProcess:
             "sprawl_type": {"name": "Euclidean", "values": {}},
         }
 
-        segmentation = SegmentationProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)
+        segmentation = ROIExtractionProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)
         mask_suffix = MaskSuffix(name="", suffix="_mask")
         chosen_fields = [
             MeasurementEntry(
@@ -121,7 +121,7 @@ class TestCalculationProcess:
             "sprawl_type": {"name": "Euclidean", "values": {}},
         }
 
-        segmentation = SegmentationProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)
+        segmentation = ROIExtractionProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)
         chosen_fields = [
             MeasurementEntry(
                 name="Segmentation Volume",
@@ -166,7 +166,7 @@ class TestCalculationProcess:
             "sprawl_type": {"name": "Euclidean", "values": {}},
         }
 
-        segmentation = SegmentationProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)
+        segmentation = ROIExtractionProfile(name="test", algorithm="Lower threshold with watershed", values=parameters)
         mask_suffix = MaskSuffix(name="", suffix="_mask")
         chosen_fields = [
             MeasurementEntry(
@@ -203,7 +203,7 @@ class TestCalculationProcess:
             "side_connection": False,
         }
 
-        segmentation2 = SegmentationProfile(name="test", algorithm="Lower threshold", values=parameters2)
+        segmentation2 = ROIExtractionProfile(name="test", algorithm="Lower threshold", values=parameters2)
         chosen_fields = [
             MeasurementEntry(
                 name="Segmentation Volume",

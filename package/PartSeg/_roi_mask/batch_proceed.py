@@ -9,21 +9,21 @@ from typing import List, NamedTuple, Optional, Tuple, Union
 from qtpy.QtCore import QThread, Signal
 
 from PartSeg._roi_mask.stack_settings import StackSettings, get_mask
-from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
-from PartSegCore.mask.io_functions import LoadROIImage, LoadStackImage, SaveROI, SegmentationTuple
+from PartSegCore.mask.io_functions import LoadROIImage, LoadStackImage, MaskProjectTuple, SaveROI
 from PartSegCore.segmentation import StackAlgorithm
 from PartSegCore.segmentation.algorithm_base import SegmentationAlgorithm
 
 if sys.version_info.minor == 6:
     SegmentationTupleWrapper = object
 else:
-    SegmentationTupleWrapper = SegmentationTuple
+    SegmentationTupleWrapper = MaskProjectTuple
 
 
 class BatchTask(NamedTuple):
-    data: Union[str, SegmentationTuple]
-    parameters: SegmentationProfile
+    data: Union[str, MaskProjectTuple]
+    parameters: ROIExtractionProfile
     save_prefix: Optional[Tuple[str, dict]]
 
 
@@ -64,8 +64,8 @@ class BatchProceed(QThread):
                     project_tuple = LoadROIImage.load([task.data])
                 else:
                     project_tuple = LoadStackImage.load([task.data])
-            elif isinstance(task.data, SegmentationTuple):
-                project_tuple: SegmentationTuple = task.data
+            elif isinstance(task.data, MaskProjectTuple):
+                project_tuple: MaskProjectTuple = task.data
                 file_path = project_tuple.image.file_path
             else:
                 continue
@@ -83,7 +83,7 @@ class BatchProceed(QThread):
                 # noinspection PyTypeChecker
                 segmentation = algorithm.calculation_run(partial(self.progress_info, name))
                 state2 = StackSettings.transform_state(
-                    project_tuple, segmentation.segmentation, defaultdict(lambda: segmentation.parameters), []
+                    project_tuple, segmentation.roi, defaultdict(lambda: segmentation.parameters), []
                 )
                 if isinstance(task.save_prefix, tuple):
                     self.progress_info(name, "saving", algorithm.get_steps_num())
