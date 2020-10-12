@@ -433,11 +433,6 @@ class Image:
                 indices[i] = slice(None)
         return self._image_array[tuple(indices)]
 
-    def get_mask_layer(self, num) -> np.ndarray:
-        if self._mask_array is None:
-            raise ValueError("No mask")
-        return self._mask_array[0, num]
-
     @property
     def is_2d(self) -> bool:
         """
