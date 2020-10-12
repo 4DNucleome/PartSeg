@@ -108,10 +108,12 @@ class BaseThreshold:
             return deepcopy(self.shift)
         raise NotImplementedError
 
-    def get_base_object(self):
+    @staticmethod
+    def get_base_object():
         raise NotImplementedError
 
-    def get_side_object(self):
+    @staticmethod
+    def get_side_object():
         raise NotImplementedError
 
     def get_multiple_part(self, parts_num):
@@ -121,7 +123,7 @@ class BaseThreshold:
         raise NotImplementedError()
 
 
-class BaseOneThreshold(BaseThreshold, ABC):
+class BaseOneThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
     def test_simple(self):
         image = self.get_base_object()
         alg: SegmentationAlgorithm = self.get_algorithm_class()()
@@ -161,8 +163,14 @@ class TestLowerThreshold(BaseOneThreshold):
         "side_connection": False,
     }
     shift = -6
-    get_base_object = staticmethod(get_two_parts)
-    get_side_object = staticmethod(get_two_parts_side)
+
+    @staticmethod
+    def get_base_object():
+        return get_two_parts()
+
+    @staticmethod
+    def get_side_object():
+        return get_two_parts_side()
 
     def get_algorithm_class(self) -> Type[SegmentationAlgorithm]:
         return sa.LowerThresholdAlgorithm
@@ -177,8 +185,14 @@ class TestUpperThreshold(BaseOneThreshold):
         "side_connection": False,
     }
     shift = 6
-    get_base_object = staticmethod(get_two_parts_reversed)
-    get_side_object = staticmethod(get_two_parts_side_reversed)
+
+    @staticmethod
+    def get_base_object():
+        return get_two_parts_reversed()
+
+    @staticmethod
+    def get_side_object():
+        return get_two_parts_side_reversed()
 
     def get_algorithm_class(self) -> Type[SegmentationAlgorithm]:
         return sa.UpperThresholdAlgorithm
@@ -245,7 +259,7 @@ class TestRangeThresholdAlgorithm:
         assert result.parameters.algorithm == alg.get_name()
 
 
-class BaseFlowThreshold(BaseThreshold, ABC):
+class BaseFlowThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
     @pytest.mark.parametrize("sprawl_algorithm_name", sprawl_dict.keys())
     @pytest.mark.parametrize("compare_op", [operator.eq, operator.ge])
     @pytest.mark.parametrize("components", [2] + list(range(3, 15, 2)))
