@@ -19,13 +19,9 @@ def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]
                     "image",
                 )
             )
-        if project_info.segmentation is not None:
+        if project_info.roi is not None:
             res_layers.append(
-                (
-                    project_info.image.fit_array_to_image(project_info.segmentation),
-                    {"scale": scale, "name": "ROI"},
-                    "labels",
-                )
+                (project_info.image.fit_array_to_image(project_info.roi), {"scale": scale, "name": "ROI"}, "labels",)
             )
         if project_info.mask is not None:
             res_layers.append(
@@ -36,8 +32,8 @@ def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]
             scale = np.multiply(project_info.spacing, 10 ** 9)
         else:
             scale = None
-        if project_info.segmentation is not None:
-            res_layers.append((project_info.segmentation, {"scale": scale, "name": "ROI"}, "labels",))
+        if project_info.roi is not None:
+            res_layers.append((project_info.roi, {"scale": scale, "name": "ROI"}, "labels",))
     return res_layers
 
 
