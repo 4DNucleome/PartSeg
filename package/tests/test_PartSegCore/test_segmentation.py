@@ -76,7 +76,6 @@ def get_two_parts_side_reversed():
 
 def empty(_s: str, _i: int):
     """mock function for callback"""
-    pass
 
 
 @pytest.mark.parametrize("algorithm_name", analysis_algorithm_dict.keys())
@@ -97,7 +96,7 @@ class BaseThreshold:
         assert result.roi.max() == len(sizes)
         assert np.all(op(np.bincount(result.roi.flat)[1:], np.array(sizes)))
         assert result.parameters.values == parameters
-        assert result.parameters.algorithm == self.algorithm_class.get_name()
+        assert result.parameters.algorithm == self.get_algorithm_class().get_name()
 
     def get_parameters(self) -> dict:
         if hasattr(self, "parameters") and isinstance(self.parameters, dict):
@@ -118,13 +117,14 @@ class BaseThreshold:
     def get_multiple_part(self, parts_num):
         raise NotImplementedError
 
-    algorithm_class = SegmentationAlgorithm
+    def get_algorithm_class(self) -> Type[SegmentationAlgorithm]:
+        raise NotImplementedError()
 
 
 class BaseOneThreshold(BaseThreshold, ABC):
     def test_simple(self):
         image = self.get_base_object()
-        alg: SegmentationAlgorithm = self.algorithm_class()
+        alg: SegmentationAlgorithm = self.get_algorithm_class()()
         parameters = self.get_parameters()
         alg.set_image(image)
         alg.set_parameters(**parameters)
@@ -138,7 +138,7 @@ class BaseOneThreshold(BaseThreshold, ABC):
 
     def test_side_connection(self):
         image = self.get_side_object()
-        alg: SegmentationAlgorithm = self.algorithm_class()
+        alg: SegmentationAlgorithm = self.get_algorithm_class()()
         parameters = self.get_parameters()
         parameters["side_connection"] = True
         alg.set_image(image)
@@ -163,7 +163,9 @@ class TestLowerThreshold(BaseOneThreshold):
     shift = -6
     get_base_object = staticmethod(get_two_parts)
     get_side_object = staticmethod(get_two_parts_side)
-    algorithm_class = sa.LowerThresholdAlgorithm
+
+    def get_algorithm_class(self) -> Type[SegmentationAlgorithm]:
+        return sa.LowerThresholdAlgorithm
 
 
 class TestUpperThreshold(BaseOneThreshold):
@@ -177,7 +179,9 @@ class TestUpperThreshold(BaseOneThreshold):
     shift = 6
     get_base_object = staticmethod(get_two_parts_reversed)
     get_side_object = staticmethod(get_two_parts_side_reversed)
-    algorithm_class = sa.UpperThresholdAlgorithm
+
+    def get_algorithm_class(self) -> Type[SegmentationAlgorithm]:
+        return sa.UpperThresholdAlgorithm
 
 
 class TestRangeThresholdAlgorithm:
@@ -246,7 +250,7 @@ class BaseFlowThreshold(BaseThreshold, ABC):
     @pytest.mark.parametrize("compare_op", [operator.eq, operator.ge])
     @pytest.mark.parametrize("components", [2] + list(range(3, 15, 2)))
     def test_multiple(self, sprawl_algorithm_name, compare_op, components):
-        alg = self.algorithm_class()
+        alg = self.get_algorithm_class()()
         parameters = self.get_parameters()
         image = self.get_multiple_part(components)
         alg.set_image(image)
@@ -261,7 +265,7 @@ class BaseFlowThreshold(BaseThreshold, ABC):
     @pytest.mark.parametrize("algorithm_name", sprawl_dict.keys())
     def test_side_connection(self, algorithm_name):
         image = self.get_side_object()
-        alg = self.algorithm_class()
+        alg = self.get_algorithm_class()()
         parameters = self.get_parameters()
         parameters["side_connection"] = True
         alg.set_image(image)
@@ -291,7 +295,9 @@ class TestLowerThresholdFlow(BaseFlowThreshold):
     get_base_object = staticmethod(get_two_parts)
     get_side_object = staticmethod(get_two_parts_side)
     get_multiple_part = staticmethod(get_multiple_part)
-    algorithm_class = sa.LowerThresholdFlowAlgorithm
+
+    def get_algorithm_class(self) -> Type[SegmentationAlgorithm]:
+        return sa.LowerThresholdFlowAlgorithm
 
 
 class TestUpperThresholdFlow(BaseFlowThreshold):
@@ -313,7 +319,9 @@ class TestUpperThresholdFlow(BaseFlowThreshold):
     get_base_object = staticmethod(get_two_parts_reversed)
     get_side_object = staticmethod(get_two_parts_side_reversed)
     get_multiple_part = staticmethod(get_multiple_part_reversed)
-    algorithm_class = sa.UpperThresholdFlowAlgorithm
+
+    def get_algorithm_class(self) -> Type[SegmentationAlgorithm]:
+        return sa.UpperThresholdFlowAlgorithm
 
 
 class TestMaskCreate:
@@ -762,6 +770,6 @@ class TestSegmentationInfo:
 def test_bound_info():
     bi = BoundInfo(lower=np.array([1, 1, 1]), upper=np.array([5, 5, 5]))
     assert np.all(bi.box_size() == 5)
-    assert len(bi.box_size() == 3)
+    assert len(bi.box_size()) == 3
     assert len(bi.get_slices()) == 3
     assert np.all([x == slice(1, 6) for x in bi.get_slices()])
