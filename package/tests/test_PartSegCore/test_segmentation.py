@@ -116,9 +116,6 @@ class BaseThreshold:
     def get_side_object():
         raise NotImplementedError
 
-    def get_multiple_part(self, parts_num):
-        raise NotImplementedError
-
     def get_algorithm_class(self) -> Type[SegmentationAlgorithm]:
         raise NotImplementedError()
 
@@ -288,6 +285,9 @@ class BaseFlowThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
         self.check_result(result, [96000 + 5, 72000 + 5], operator.eq, parameters)
+
+    def get_multiple_part(self, parts_num):
+        raise NotImplementedError
 
 
 class TestLowerThresholdFlow(BaseFlowThreshold):
