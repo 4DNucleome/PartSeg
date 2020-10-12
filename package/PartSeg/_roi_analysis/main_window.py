@@ -42,7 +42,7 @@ from ..common_gui.custom_save_dialog import SaveDialog
 from ..common_gui.equal_column_layout import EqualColumnLayout
 from ..common_gui.mask_widget import MaskDialogBase
 from ..common_gui.multiple_file_widget import MultipleFileWidget
-from ..common_gui.search_combo_box import SearchCombBox
+from ..common_gui.searchable_combo_box import SearchCombBox
 from ..common_gui.stack_image_view import ColorBar
 from ..common_gui.universal_gui_part import TextShow
 from ..common_gui.waiting_dialog import ExecuteFunctionDialog, WaitingDialog

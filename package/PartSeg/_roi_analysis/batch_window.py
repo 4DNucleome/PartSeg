@@ -42,7 +42,7 @@ from PartSegData import icons_dir
 from .. import parsed_version
 from ..common_gui.custom_save_dialog import SaveDialog
 from ..common_gui.error_report import ExceptionList, ExceptionListItem
-from ..common_gui.search_combo_box import SearchCombBox
+from ..common_gui.searchable_combo_box import SearchCombBox
 from ..common_gui.select_multiple_files import AddFiles
 from ..common_gui.universal_gui_part import Spacing, right_label
 from .partseg_settings import PartSettings
