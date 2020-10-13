@@ -1026,7 +1026,7 @@ class CalculateInfo(QWidget):
     def __init__(self, settings: PartSettings):
         super(CalculateInfo, self).__init__()
         self.settings = settings
-        self.calculate_plans = QListWidget(self)
+        self.calculate_plans = SearchableListWidget(self)
         self.plan_view = PlanPreview(self)
         self.delete_plan_btn = QPushButton("Delete")
         self.edit_plan_btn = QPushButton("Edit")

@@ -10,7 +10,6 @@ from qtpy.QtWidgets import (
     QApplication,
     QBoxLayout,
     QCheckBox,
-    QComboBox,
     QHBoxLayout,
     QLabel,
     QMessageBox,
@@ -25,6 +24,7 @@ from PartSeg.common_backend.progress_thread import ExecuteFunctionThread
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile, MeasurementResult
 from PartSegCore.universal_const import Units
 
+from ..common_gui.searchable_combo_box import SearchCombBox
 from ..common_gui.universal_gui_part import ChannelComboBox, EnumComboBox
 from ..common_gui.waiting_dialog import WaitingDialog
 from .partseg_settings import PartSettings
@@ -156,9 +156,9 @@ class MeasurementWidget(QWidget):
         self.horizontal_measurement_present.stateChanged.connect(self.refresh_view)
         self.expand_mode.stateChanged.connect(self.refresh_view)
         self.copy_button.clicked.connect(self.copy_to_clipboard)
-        self.measurement_type = QComboBox(self)
+        self.measurement_type = SearchCombBox(self)
         # noinspection PyUnresolvedReferences
-        self.measurement_type.currentTextChanged.connect(self.measurement_profile_selection_changed)
+        self.measurement_type.textActivated.connect(self.measurement_profile_selection_changed)
         self.measurement_type.addItem("<none>")
         self.measurement_type.addItems(list(sorted(self.settings.measurement_profiles.keys())))
         self.measurement_type.setToolTip(
