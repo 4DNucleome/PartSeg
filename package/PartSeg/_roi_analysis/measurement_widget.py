@@ -158,7 +158,7 @@ class MeasurementWidget(QWidget):
         self.copy_button.clicked.connect(self.copy_to_clipboard)
         self.measurement_type = SearchCombBox(self)
         # noinspection PyUnresolvedReferences
-        self.measurement_type.textActivated.connect(self.measurement_profile_selection_changed)
+        self.measurement_type.currentIndexChanged.connect(self.measurement_profile_selection_changed)
         self.measurement_type.addItem("<none>")
         self.measurement_type.addItems(list(sorted(self.settings.measurement_profiles.keys())))
         self.measurement_type.setToolTip(
@@ -235,7 +235,8 @@ class MeasurementWidget(QWidget):
     def image_changed(self, channels_num):
         self.channels_chose.change_channels_num(channels_num)
 
-    def measurement_profile_selection_changed(self, text):
+    def measurement_profile_selection_changed(self, index):
+        text = self.measurement_type.itemText(index)
         text = self.check_if_measurement_can_be_calculated(text)
         try:
             stat = self.settings.measurement_profiles[text]

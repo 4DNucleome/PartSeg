@@ -20,7 +20,8 @@ class TestMeasurementWidget:
         assert widget.measurement_type.count() == 3
         part_settings.set_project_info(analysis_segmentation)
 
-        widget.measurement_type.setCurrentIndex(2)
+        with qtbot.waitSignal(widget.measurement_type.currentIndexChanged):
+            widget.measurement_type.setCurrentIndex(2)
         assert widget.measurement_type.currentIndex() == 0
         assert not widget.recalculate_button.isEnabled()
 
