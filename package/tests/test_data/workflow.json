@@ -1,0 +1,589 @@
+{
+  "workflow": {
+    "__CalculationPlan__": true,
+    "tree": {
+      "__CalculationTree__": true,
+      "operation": {
+        "__Enum__": true,
+        "__subtype__": "PartSegCore.analysis.calculation_plan.RootType",
+        "value": 0
+      },
+      "children": [
+        {
+          "__CalculationTree__": true,
+          "operation": {
+            "__Serializable__": true,
+            "__subtype__": "PartSegCore.analysis.calculation_plan.MaskSuffix",
+            "name": "",
+            "suffix": "_mask"
+          },
+          "children": [
+            {
+              "__CalculationTree__": true,
+              "operation": {
+                "__SegmentationProfile__": true,
+                "name": "Ch2_G1_triangle_37_3000_COS",
+                "algorithm": "Lower threshold",
+                "values": {
+                  "channel": 1,
+                  "noise_filtering": {
+                    "name": "Gauss",
+                    "values": {
+                      "dimension_type": {
+                        "__Enum__": true,
+                        "__subtype__": "PartSegCore.segmentation.noise_filtering.DimensionType",
+                        "value": 2
+                      },
+                      "radius": 1.0
+                    }
+                  },
+                  "threshold": {
+                    "name": "Triangle",
+                    "values": {
+                      "masked": true,
+                      "bins": 37
+                    }
+                  },
+                  "minimum_size": 3000,
+                  "side_connection": true
+                }
+              },
+              "children": [
+                {
+                  "__CalculationTree__": true,
+                  "operation": {
+                    "__Serializable__": true,
+                    "__subtype__": "PartSegCore.analysis.calculation_plan.MeasurementCalculate",
+                    "channel": -1,
+                    "units": {
+                      "__Enum__": true,
+                      "__subtype__": "PartSegCore.universal_const.Units",
+                      "value": 1
+                    },
+                    "statistic_profile": {
+                      "__MeasurementProfile__": true,
+                      "name": "Chr1_stats",
+                      "chosen_fields": [
+                        {
+                          "__Serializable__": true,
+                          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                          "name": "Mask Volume",
+                          "calculation_tree": {
+                            "__Serializable__": true,
+                            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+                            "name": "Volume",
+                            "dict": {},
+                            "power": 1.0,
+                            "area": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+                              "value": 2
+                            },
+                            "per_component": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+                              "value": 1
+                            },
+                            "channel": null
+                          }
+                        },
+                        {
+                          "__Serializable__": true,
+                          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                          "name": "Mask Diameter",
+                          "calculation_tree": {
+                            "__Serializable__": true,
+                            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+                            "name": "Diameter",
+                            "dict": {},
+                            "power": 1.0,
+                            "area": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+                              "value": 2
+                            },
+                            "per_component": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+                              "value": 1
+                            },
+                            "channel": null
+                          }
+                        },
+                        {
+                          "__Serializable__": true,
+                          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                          "name": "Segmentation Components Number",
+                          "calculation_tree": {
+                            "__Serializable__": true,
+                            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+                            "name": "Components Number",
+                            "dict": {},
+                            "power": 1.0,
+                            "area": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+                              "value": 1
+                            },
+                            "per_component": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+                              "value": 1
+                            },
+                            "channel": null
+                          }
+                        },
+                        {
+                          "__Serializable__": true,
+                          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                          "name": "Segmentation Volume",
+                          "calculation_tree": {
+                            "__Serializable__": true,
+                            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+                            "name": "Volume",
+                            "dict": {},
+                            "power": 1.0,
+                            "area": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+                              "value": 1
+                            },
+                            "per_component": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+                              "value": 1
+                            },
+                            "channel": null
+                          }
+                        },
+                        {
+                          "__Serializable__": true,
+                          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                          "name": "Segmentation Surface",
+                          "calculation_tree": {
+                            "__Serializable__": true,
+                            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+                            "name": "Surface",
+                            "dict": {},
+                            "power": 1.0,
+                            "area": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+                              "value": 1
+                            },
+                            "per_component": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+                              "value": 1
+                            },
+                            "channel": null
+                          }
+                        },
+                        {
+                          "__Serializable__": true,
+                          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                          "name": "Segmentation Diameter",
+                          "calculation_tree": {
+                            "__Serializable__": true,
+                            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+                            "name": "Diameter",
+                            "dict": {},
+                            "power": 1.0,
+                            "area": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+                              "value": 1
+                            },
+                            "per_component": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+                              "value": 1
+                            },
+                            "channel": null
+                          }
+                        },
+                        {
+                          "__Serializable__": true,
+                          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                          "name": "Segmentation Longest main axis length",
+                          "calculation_tree": {
+                            "__Serializable__": true,
+                            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+                            "name": "Longest main axis length",
+                            "dict": {},
+                            "power": 1.0,
+                            "area": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+                              "value": 1
+                            },
+                            "per_component": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+                              "value": 1
+                            },
+                            "channel": null
+                          }
+                        },
+                        {
+                          "__Serializable__": true,
+                          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                          "name": "Segmentation Middle main axis length",
+                          "calculation_tree": {
+                            "__Serializable__": true,
+                            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+                            "name": "Middle main axis length",
+                            "dict": {},
+                            "power": 1.0,
+                            "area": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+                              "value": 1
+                            },
+                            "per_component": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+                              "value": 1
+                            },
+                            "channel": null
+                          }
+                        },
+                        {
+                          "__Serializable__": true,
+                          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                          "name": "Segmentation Shortest main axis length",
+                          "calculation_tree": {
+                            "__Serializable__": true,
+                            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+                            "name": "Shortest main axis length",
+                            "dict": {},
+                            "power": 1.0,
+                            "area": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+                              "value": 1
+                            },
+                            "per_component": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+                              "value": 1
+                            },
+                            "channel": null
+                          }
+                        },
+                        {
+                          "__Serializable__": true,
+                          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                          "name": "Mask Rim Volume[Distance=1500.0, Units=nm]",
+                          "calculation_tree": {
+                            "__Serializable__": true,
+                            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+                            "name": "Rim Volume",
+                            "dict": {
+                              "distance": 1500.0,
+                              "units": {
+                                "__Enum__": true,
+                                "__subtype__": "PartSegCore.universal_const.Units",
+                                "value": 2
+                              }
+                            },
+                            "power": 1.0,
+                            "area": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+                              "value": 2
+                            },
+                            "per_component": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+                              "value": 1
+                            },
+                            "channel": null
+                          }
+                        },
+                        {
+                          "__Serializable__": true,
+                          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                          "name": "Segmentation Pixel Brightness Sum",
+                          "calculation_tree": {
+                            "__Serializable__": true,
+                            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+                            "name": "Pixel Brightness Sum",
+                            "dict": {},
+                            "power": 1.0,
+                            "area": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+                              "value": 1
+                            },
+                            "per_component": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+                              "value": 1
+                            },
+                            "channel": null
+                          }
+                        },
+                        {
+                          "__Serializable__": true,
+                          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                          "name": "Segmentation Maximum pixel brightness",
+                          "calculation_tree": {
+                            "__Serializable__": true,
+                            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+                            "name": "Maximum pixel brightness",
+                            "dict": {},
+                            "power": 1.0,
+                            "area": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+                              "value": 1
+                            },
+                            "per_component": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+                              "value": 1
+                            },
+                            "channel": null
+                          }
+                        },
+                        {
+                          "__Serializable__": true,
+                          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                          "name": "Segmentation Minimum pixel brightness",
+                          "calculation_tree": {
+                            "__Serializable__": true,
+                            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+                            "name": "Minimum pixel brightness",
+                            "dict": {},
+                            "power": 1.0,
+                            "area": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+                              "value": 1
+                            },
+                            "per_component": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+                              "value": 1
+                            },
+                            "channel": null
+                          }
+                        },
+                        {
+                          "__Serializable__": true,
+                          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                          "name": "Segmentation Mean pixel brightness",
+                          "calculation_tree": {
+                            "__Serializable__": true,
+                            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+                            "name": "Mean pixel brightness",
+                            "dict": {},
+                            "power": 1.0,
+                            "area": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+                              "value": 1
+                            },
+                            "per_component": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+                              "value": 1
+                            },
+                            "channel": null
+                          }
+                        },
+                        {
+                          "__Serializable__": true,
+                          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                          "name": "Segmentation Median pixel brightness",
+                          "calculation_tree": {
+                            "__Serializable__": true,
+                            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+                            "name": "Median pixel brightness",
+                            "dict": {},
+                            "power": 1.0,
+                            "area": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+                              "value": 1
+                            },
+                            "per_component": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+                              "value": 1
+                            },
+                            "channel": null
+                          }
+                        },
+                        {
+                          "__Serializable__": true,
+                          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                          "name": "Segmentation Standard deviation of pixel brightness",
+                          "calculation_tree": {
+                            "__Serializable__": true,
+                            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+                            "name": "Standard deviation of pixel brightness",
+                            "dict": {},
+                            "power": 1.0,
+                            "area": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+                              "value": 1
+                            },
+                            "per_component": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+                              "value": 1
+                            },
+                            "channel": null
+                          }
+                        },
+                        {
+                          "__Serializable__": true,
+                          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                          "name": "Mask Rim Pixel Brightness Sum[Distance=1500.0, Units=nm]",
+                          "calculation_tree": {
+                            "__Serializable__": true,
+                            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+                            "name": "Rim Pixel Brightness Sum",
+                            "dict": {
+                              "distance": 1500.0,
+                              "units": {
+                                "__Enum__": true,
+                                "__subtype__": "PartSegCore.universal_const.Units",
+                                "value": 2
+                              }
+                            },
+                            "power": 1.0,
+                            "area": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+                              "value": 2
+                            },
+                            "per_component": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+                              "value": 1
+                            },
+                            "channel": null
+                          }
+                        },
+                        {
+                          "__Serializable__": true,
+                          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                          "name": "Mask segmentation distance[Distance from mask=Border, Distance to segmentation=Border]",
+                          "calculation_tree": {
+                            "__Serializable__": true,
+                            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+                            "name": "segmentation distance",
+                            "dict": {
+                              "distance_from_mask": {
+                                "__Enum__": true,
+                                "__subtype__": "PartSegCore.analysis.measurement_calculation.DistancePoint",
+                                "value": 1
+                              },
+                              "distance_to_segmentation": {
+                                "__Enum__": true,
+                                "__subtype__": "PartSegCore.analysis.measurement_calculation.DistancePoint",
+                                "value": 1
+                              }
+                            },
+                            "power": 1.0,
+                            "area": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+                              "value": 2
+                            },
+                            "per_component": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+                              "value": 1
+                            },
+                            "channel": null
+                          }
+                        },
+                        {
+                          "__Serializable__": true,
+                          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                          "name": "Mask segmentation distance[Distance from mask=Border, Distance to segmentation=Mass center]",
+                          "calculation_tree": {
+                            "__Serializable__": true,
+                            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+                            "name": "segmentation distance",
+                            "dict": {
+                              "distance_from_mask": {
+                                "__Enum__": true,
+                                "__subtype__": "PartSegCore.analysis.measurement_calculation.DistancePoint",
+                                "value": 1
+                              },
+                              "distance_to_segmentation": {
+                                "__Enum__": true,
+                                "__subtype__": "PartSegCore.analysis.measurement_calculation.DistancePoint",
+                                "value": 2
+                              }
+                            },
+                            "power": 1.0,
+                            "area": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+                              "value": 2
+                            },
+                            "per_component": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+                              "value": 1
+                            },
+                            "channel": null
+                          }
+                        },
+                        {
+                          "__Serializable__": true,
+                          "__subtype__": "PartSegCore.analysis.measurement_base.MeasurementEntry",
+                          "name": "Mask segmentation distance[Distance from mask=Border, Distance to segmentation=Geometrical center]",
+                          "calculation_tree": {
+                            "__Serializable__": true,
+                            "__subtype__": "PartSegCore.analysis.measurement_base.Leaf",
+                            "name": "segmentation distance",
+                            "dict": {
+                              "distance_from_mask": {
+                                "__Enum__": true,
+                                "__subtype__": "PartSegCore.analysis.measurement_calculation.DistancePoint",
+                                "value": 1
+                              },
+                              "distance_to_segmentation": {
+                                "__Enum__": true,
+                                "__subtype__": "PartSegCore.analysis.measurement_calculation.DistancePoint",
+                                "value": 3
+                              }
+                            },
+                            "power": 1.0,
+                            "area": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.AreaType",
+                              "value": 2
+                            },
+                            "per_component": {
+                              "__Enum__": true,
+                              "__subtype__": "PartSegCore.analysis.measurement_base.PerComponent",
+                              "value": 1
+                            },
+                            "channel": null
+                          }
+                        }
+                      ],
+                      "name_prefix": ""
+                    },
+                    "name_prefix": ""
+                  },
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "name": "Chr1_Ch2_G1_triangle_37_3000_COS"
+  }
+}
