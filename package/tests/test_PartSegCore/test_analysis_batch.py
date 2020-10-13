@@ -96,7 +96,7 @@ class TestCalculationProcess:
         ]
         statistic = MeasurementProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
         statistic_calculate = MeasurementCalculate(
-            channel=0, units=Units.µm, statistic_profile=statistic, name_prefix=""
+            channel=0, units=Units.µm, measurement_profile=statistic, name_prefix=""
         )
         tree = CalculationTree(
             RootType.Image,
@@ -142,7 +142,7 @@ class TestCalculationProcess:
         ]
         statistic = MeasurementProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
         statistic_calculate = MeasurementCalculate(
-            channel=0, units=Units.µm, statistic_profile=statistic, name_prefix=""
+            channel=0, units=Units.µm, measurement_profile=statistic, name_prefix=""
         )
         tree = CalculationTree(
             RootType.Mask_project, [CalculationTree(segmentation, [CalculationTree(statistic_calculate, [])])]
@@ -192,7 +192,7 @@ class TestCalculationProcess:
         ]
         statistic = MeasurementProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
         statistic_calculate = MeasurementCalculate(
-            channel=0, units=Units.µm, statistic_profile=statistic, name_prefix=""
+            channel=0, units=Units.µm, measurement_profile=statistic, name_prefix=""
         )
         mask_create = MaskCreate("", MaskProperty(RadiusType.NO, 0, RadiusType.NO, 0, True, False, False))
         parameters2 = {
@@ -228,7 +228,7 @@ class TestCalculationProcess:
         ]
         statistic = MeasurementProfile(name="base_measure2", chosen_fields=chosen_fields[:], name_prefix="aa_")
         statistic_calculate2 = MeasurementCalculate(
-            channel=0, units=Units.µm, statistic_profile=statistic, name_prefix=""
+            channel=0, units=Units.µm, measurement_profile=statistic, name_prefix=""
         )
         chosen_fields.append(
             MeasurementEntry(
@@ -238,7 +238,7 @@ class TestCalculationProcess:
         )
         statistic = MeasurementProfile(name="base_measure3", chosen_fields=chosen_fields[:], name_prefix="bb_")
         statistic_calculate3 = MeasurementCalculate(
-            channel=0, units=Units.µm, statistic_profile=statistic, name_prefix=""
+            channel=0, units=Units.µm, measurement_profile=statistic, name_prefix=""
         )
         tree = CalculationTree(
             RootType.Image,

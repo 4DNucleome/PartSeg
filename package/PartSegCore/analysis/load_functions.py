@@ -32,7 +32,7 @@ from ..io_utils import (
 from ..mask.io_functions import LoadROIImage
 from ..universal_const import UNIT_SCALE, Units
 from .analysis_utils import SegmentationPipeline, SegmentationPipelineElement
-from .calculation_plan import CalculationPlan, CalculationTree
+from .calculation_plan import CalculationPlan, CalculationTree, MeasurementCalculate
 from .io_utils import MaskInfo, ProjectTuple, project_version_info
 from .measurement_base import Leaf, MeasurementEntry, Node
 from .measurement_calculation import MeasurementProfile
@@ -385,6 +385,10 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
             )
 
     @classmethod
+    def update_measurement_calculate(cls, data: MeasurementCalculate):
+        return data.replace_(measurement_profile=cls.update_measurement_profile(data.measurement_profile))
+
+    @classmethod
     def recursive_update(cls, data):
         if isinstance(data, CalculationPlan):
             return cls.update_calculation_plan(data)
@@ -394,6 +398,8 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
             return cls.update_segmentation_pipeline(data)
         if isinstance(data, MeasurementProfile):
             return cls.update_measurement_profile(data)
+        if isinstance(data, MeasurementCalculate):
+            return cls.update_measurement_calculate(data)
 
         return super().recursive_update(data)
 

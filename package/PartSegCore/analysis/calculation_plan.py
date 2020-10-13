@@ -121,24 +121,24 @@ class MeasurementCalculate(BaseSerializableClass):
     __old_names__ = "StatisticCalculate"
     channel: int
     units: Units
-    statistic_profile: MeasurementProfile
+    measurement_profile: MeasurementProfile
     name_prefix: str
     # TODO rename statistic_profile to measurement_profile
 
     # noinspection PyOverloads,PyMissingConstructor
     # pylint: disable=W0104
     @typing.overload
-    def __init__(self, channel: int, units: Units, statistic_profile: MeasurementProfile, name_prefix: str):
+    def __init__(self, channel: int, units: Units, measurement_profile: MeasurementProfile, name_prefix: str):
         ...
 
     @property
     def name(self):
         """name of used MeasurementProfile"""
-        return self.statistic_profile.name
+        return self.measurement_profile.name
 
     def __str__(self):
         channel = "Like segmentation" if self.channel == -1 else str(self.channel)
-        desc = str(self.statistic_profile).split("\n", 1)[1]
+        desc = str(self.measurement_profile).split("\n", 1)[1]
         return f"MeasurementCalculate \nChannel: {channel}\nUnits: {self.units}\n{desc}\n"
 
 
