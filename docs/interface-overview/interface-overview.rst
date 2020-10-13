@@ -404,7 +404,7 @@ The zoom of the image can be also changed by Ctrl+Mouse scroll.
 
 1.  Reset Zoom.
 2.  Change to 3D rendering.
-3.  Channel view control. Only Channels with a selected checkbox are visible. `Colormap`_ for the current channel
+3.  Channel view control. Only Channels with a selected checkbox are visible. `Color map`_ for the current channel
     can be selected when clicking in the triangle in the upper right corner
     |channel_select|. This triangle is visible when the mouse is over the widget.
 4.  Mark segmentation only by borders or by masking the whole area.
