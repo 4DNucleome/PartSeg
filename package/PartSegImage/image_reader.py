@@ -79,7 +79,7 @@ class BaseImageReader:
     @classmethod
     def read_image(
         cls,
-        image_path: typing.Union[str, BytesIO],
+        image_path: typing.Union[str, BytesIO, Path],
         mask_path=None,
         callback_function: typing.Optional[typing.Callable] = None,
         default_spacing: typing.Tuple[float, float, float] = None,
