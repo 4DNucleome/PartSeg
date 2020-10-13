@@ -13,7 +13,15 @@ from PartSegImage import Image, ImageWriter
 
 from ..algorithm_describe_base import AlgorithmProperty, Register
 from ..channel_class import Channel
-from ..io_utils import HistoryElement, NotSupportedImage, SaveBase, SaveMaskAsTiff, get_tarinfo
+from ..io_utils import (
+    HistoryElement,
+    NotSupportedImage,
+    SaveBase,
+    SaveMaskAsTiff,
+    SaveROIAsNumpy,
+    SaveROIAsTIFF,
+    get_tarinfo,
+)
 from ..universal_const import UNIT_SCALE, Units
 from .io_utils import ProjectTuple, project_version_info
 from .save_hooks import PartEncoder
@@ -24,8 +32,6 @@ __all__ = [
     "SaveXYZ",
     "SaveAsTiff",
     "SaveAsNumpy",
-    "SaveSegmentationAsTIFF",
-    "SaveSegmentationAsNumpy",
     "save_dict",
 ]
 
@@ -116,7 +122,6 @@ def save_cmap(
         data[data < 0] = 0
     data = np.copy(data)
     data[segmentation == 0] = 0
-    # data = data[0]  # remove time axis
     grp = cmap_file.create_group("Chimera/image1")
     z, y, x = data.shape
     data_set = grp.create_dataset("data_zyx", (z, y, x), dtype="f", compression="gzip")
@@ -167,7 +172,7 @@ class SaveProject(SaveBase):
         save_project(
             save_location,
             project_info.image,
-            project_info.segmentation,
+            project_info.roi,
             project_info.mask,
             project_info.history,
             project_info.algorithm_parameters,
@@ -209,7 +214,7 @@ class SaveCmap(SaveBase):
             raise NotSupportedImage("This save method o not support time data")
         data = project_info.image.get_data_by_axis(c=parameters["channel"], t=0)
         spacing = project_info.image.spacing
-        segmentation = project_info.image.clip_array(project_info.segmentation, t=0)
+        segmentation = project_info.image.clip_array(project_info.roi, t=0)
 
         reverse_base = float(np.mean(data[segmentation == 0]))
         if parameters.get("clip", False):
@@ -272,18 +277,17 @@ class SaveXYZ(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
-        if project_info.segmentation is None:
+        if project_info.roi is None:
             raise ValueError("Not segmentation")
-        if isinstance(save_location, (str, Path)):
-            if not os.path.exists(os.path.dirname(save_location)):
-                os.makedirs(os.path.dirname(save_location))
+        if isinstance(save_location, (str, Path)) and not os.path.exists(os.path.dirname(save_location)):
+            os.makedirs(os.path.dirname(save_location))
         if parameters.get("separated_objects", False) and not isinstance(save_location, (str, Path)):
             raise ValueError("Saving components to buffer not supported")
         if project_info.image.shape[project_info.image.time_pos] != 1 and "time" not in parameters:
             raise NotSupportedImage("This save method o not support time data")
         channel_image = project_info.image.get_data_by_axis(c=parameters["channel"], t=parameters.get("time", 0))
 
-        segmentation_mask = np.array(project_info.segmentation > 0)
+        segmentation_mask = np.array(project_info.roi > 0)
         segmentation_mask = project_info.image.clip_array(segmentation_mask, t=parameters.get("time", 0))
         if parameters.get("clip", False):
             positions = np.transpose(np.nonzero(segmentation_mask))
@@ -293,10 +297,10 @@ class SaveXYZ(SaveBase):
             shift = np.array([0] * segmentation_mask.ndim)
         cls._save(save_location, channel_image, segmentation_mask, shift)
         if parameters.get("separated_objects", False):
-            components_count = np.bincount(project_info.segmentation.flat)
+            components_count = np.bincount(project_info.roi.flat)
             for i, size in enumerate(components_count[1:], 1):
                 if size > 0:
-                    segmentation_mask = np.array(project_info.segmentation == i)[parameters.get("time", 0)]
+                    segmentation_mask = np.array(project_info.roi == i)[parameters.get("time", 0)]
                     base_path, ext = os.path.splitext(save_location)
                     new_save_location = base_path + f"_part{i}" + ext
                     cls._save(new_save_location, channel_image, segmentation_mask, shift)
@@ -362,68 +366,6 @@ class SaveAsNumpy(SaveBase):
         np.save(save_location, data)
 
 
-class SaveSegmentationAsTIFF(SaveBase):
-    @classmethod
-    def get_name(cls):
-        return "Segmentation (*.tiff *.tif)"
-
-    @classmethod
-    def get_short_name(cls):
-        return "segmentation_tiff"
-
-    @classmethod
-    def get_fields(cls):
-        return []
-
-    @classmethod
-    def save(
-        cls,
-        save_location: typing.Union[str, BytesIO, Path],
-        project_info,
-        parameters: dict,
-        range_changed=None,
-        step_changed=None,
-    ):
-        segmentation = project_info.segmentation
-        segmentation_max = segmentation.max()
-        if segmentation_max < 2 ** 8 - 1:
-            segmentation = segmentation.astype(np.uint8)
-        elif segmentation_max < 2 ** 16 - 1:
-            segmentation = segmentation.astype(np.uint16)
-        tifffile.imsave(save_location, segmentation)
-
-
-class SaveSegmentationAsNumpy(SaveBase):
-    @classmethod
-    def get_name(cls):
-        return "Segmentation (*.npy)"
-
-    @classmethod
-    def get_short_name(cls):
-        return "segmentation_numpy"
-
-    @classmethod
-    def get_fields(cls):
-        return []
-
-    @classmethod
-    def save(
-        cls,
-        save_location: typing.Union[str, BytesIO, Path],
-        project_info,
-        parameters: dict = None,
-        range_changed=None,
-        step_changed=None,
-    ):
-        segmentation = project_info.segmentation
-        segmentation_max = segmentation.max()
-        if segmentation_max < 2 ** 8 - 1:
-            segmentation = segmentation.astype(np.uint8)
-        elif segmentation_max < 2 ** 16 - 1:
-            segmentation = segmentation.astype(np.uint16)
-        np.save(save_location, segmentation)
-
-
 save_dict = Register(
     SaveProject,
     SaveCmap,
@@ -431,7 +373,7 @@ save_dict = Register(
     SaveAsTiff,
     SaveMaskAsTiff,
     SaveAsNumpy,
-    SaveSegmentationAsTIFF,
-    SaveSegmentationAsNumpy,
+    SaveROIAsTIFF,
+    SaveROIAsNumpy,
     class_methods=SaveBase.need_functions,
 )

@@ -9,9 +9,9 @@ import numpy as np
 
 from PartSegCore.algorithm_describe_base import AlgorithmProperty
 from PartSegCore.analysis.io_utils import ProjectTuple
-from PartSegCore.analysis.save_functions import SaveCmap, SaveSegmentationAsNumpy, SaveSegmentationAsTIFF
+from PartSegCore.analysis.save_functions import SaveCmap
 from PartSegCore.channel_class import Channel
-from PartSegCore.io_utils import SaveBase
+from PartSegCore.io_utils import SaveBase, SaveROIAsNumpy, SaveROIAsTIFF
 from PartSegCore.universal_const import Units
 
 
@@ -76,9 +76,9 @@ class SaveModeling(SaveBase):
         SaveCmap.save(
             os.path.join(save_location, "density.cmap"), project_info, parameters, range_changed, step_changed
         )
-        SaveSegmentationAsTIFF.save(
+        SaveROIAsTIFF.save(
             os.path.join(save_location, "segmentation.tiff"), project_info, {}, range_changed, step_changed
         )
-        SaveSegmentationAsNumpy.save(
+        SaveROIAsNumpy.save(
             os.path.join(save_location, "segmentation.npy"), project_info, {}, range_changed, step_changed
         )

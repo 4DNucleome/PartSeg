@@ -14,12 +14,14 @@ import tifffile
 from PartSegImage import GenericImageReader, Image, ImageWriter, TiffImageReader
 from PartSegImage.image import reduce_array
 
-from ..algorithm_describe_base import AlgorithmProperty, Register, SegmentationProfile
+from ..algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
 from ..io_utils import (
     HistoryElement,
     LoadBase,
     SaveBase,
     SaveMaskAsTiff,
+    SaveROIAsNumpy,
+    SaveROIAsTIFF,
     SegmentationType,
     UpdateLoadedMetadataBase,
     WrongFileTypeException,
@@ -31,11 +33,11 @@ from ..io_utils import (
 )
 from ..json_hooks import ProfileEncoder
 from ..project_info import ProjectInfoBase
-from ..segmentation_info import SegmentationInfo
+from ..roi_info import ROIInfo
 
 
 @dataclasses.dataclass(frozen=True)
-class SegmentationTuple(ProjectInfoBase):
+class MaskProjectTuple(ProjectInfoBase):
     """
     Dataclass instance to describe segmentation state
 
@@ -57,10 +59,10 @@ class SegmentationTuple(ProjectInfoBase):
     file_path: str
     image: typing.Union[Image, str, None]
     mask: typing.Optional[np.ndarray] = None
-    segmentation: typing.Optional[np.ndarray] = None
-    segmentation_info: SegmentationInfo = SegmentationInfo(None)
+    roi: typing.Optional[np.ndarray] = None
+    roi_info: ROIInfo = ROIInfo(None)
     selected_components: typing.List[int] = dataclasses.field(default_factory=list)
-    segmentation_parameters: typing.Dict[int, typing.Optional[SegmentationProfile]] = dataclasses.field(
+    roi_extraction_parameters: typing.Dict[int, typing.Optional[ROIExtractionProfile]] = dataclasses.field(
         default_factory=dict
     )
     history: typing.List[HistoryElement] = dataclasses.field(default_factory=list)
@@ -68,21 +70,21 @@ class SegmentationTuple(ProjectInfoBase):
     spacing: typing.Optional[typing.List[float]] = None
 
     def get_raw_copy(self):
-        return SegmentationTuple(self.file_path, self.image.substitute(mask=None))
+        return MaskProjectTuple(self.file_path, self.image.substitute(mask=None))
 
     def is_raw(self):
-        return self.segmentation is None
+        return self.roi is None
 
     def is_masked(self):
         return self.mask is not None
 
     def get_raw_mask_copy(self):
-        return SegmentationTuple(file_path=self.file_path, image=self.image.substitute(), mask=self.mask)
+        return MaskProjectTuple(file_path=self.file_path, image=self.image.substitute(), mask=self.mask)
 
 
 def save_stack_segmentation(
     file_data: typing.Union[tarfile.TarFile, str, Path, TextIOBase, BufferedIOBase, RawIOBase, IOBase],
-    segmentation_info: SegmentationTuple,
+    segmentation_info: MaskProjectTuple,
     parameters: dict,
     range_changed=None,
     step_changed=None,
@@ -101,21 +103,19 @@ def save_stack_segmentation(
             spacing = segmentation_info.image.spacing
         else:
             spacing = parameters.get("spacing", (10 ** -6, 10 ** -6, 10 ** -6))
-        segmentation_image = Image(
-            segmentation_info.segmentation, spacing, axes_order=Image.axis_order.replace("C", "")
-        )
+        segmentation_image = Image(segmentation_info.roi, spacing, axes_order=Image.axis_order.replace("C", ""))
         try:
             ImageWriter.save(segmentation_image, segmentation_buff)
         except ValueError:
             segmentation_buff.seek(0)
-            tifffile.imwrite(segmentation_buff, segmentation_info.segmentation, compress=9)
+            tifffile.imwrite(segmentation_buff, segmentation_info.roi, compress=9)
         segmentation_tar = get_tarinfo("segmentation.tif", segmentation_buff)
         tar_file.addfile(segmentation_tar, fileobj=segmentation_buff)
         step_changed(3)
         metadata = {
             "components": [int(x) for x in segmentation_info.selected_components],
-            "parameters": {str(k): v for k, v in segmentation_info.segmentation_parameters.items()},
-            "shape": segmentation_info.segmentation.shape,
+            "parameters": {str(k): v for k, v in segmentation_info.roi_extraction_parameters.items()},
+            "shape": segmentation_info.roi.shape,
         }
         if isinstance(segmentation_info.image, Image):
             file_path = segmentation_info.image.file_path
@@ -229,13 +229,13 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
     finally:
         if isinstance(file_data, (str, Path)):
             tar_file.close()
-    return SegmentationTuple(
+    return MaskProjectTuple(
         file_path=file_data if isinstance(file_data, str) else "",
         image=metadata["base_file"] if "base_file" in metadata else None,
-        segmentation=segmentation,
+        roi=segmentation,
         selected_components=metadata["components"],
         mask=mask,
-        segmentation_parameters=metadata["parameters"] if "parameters" in metadata else None,
+        roi_extraction_parameters=metadata["parameters"] if "parameters" in metadata else None,
         history=history,
         spacing=([10 ** -9] + list(spacing)) if spacing is not None else None,
     )
@@ -259,7 +259,7 @@ class LoadSegmentation(LoadBase):
         return "seg"
 
     @staticmethod
-    def fix_parameters(profile: SegmentationProfile):
+    def fix_parameters(profile: ROIExtractionProfile):
         if profile is None:
             return
         if profile.algorithm == "Threshold" or profile.algorithm == "Auto Threshold":
@@ -281,25 +281,25 @@ class LoadSegmentation(LoadBase):
         range_changed: typing.Callable[[int, int], typing.Any] = None,
         step_changed: typing.Callable[[int], typing.Any] = None,
         metadata: typing.Optional[dict] = None,
-    ) -> SegmentationTuple:
+    ) -> MaskProjectTuple:
         segmentation_tuple = load_stack_segmentation(
             load_locations[0], range_changed=range_changed, step_changed=step_changed
         )
-        if segmentation_tuple.segmentation_parameters is None:
+        if segmentation_tuple.roi_extraction_parameters is None:
             parameters = defaultdict(lambda: None)
         else:
             parameters = defaultdict(
                 lambda: None,
-                [(int(k), cls.fix_parameters(v)) for k, v in segmentation_tuple.segmentation_parameters.items()],
+                [(int(k), cls.fix_parameters(v)) for k, v in segmentation_tuple.roi_extraction_parameters.items()],
             )
-        return dataclasses.replace(segmentation_tuple, segmentation_parameters=parameters)
+        return dataclasses.replace(segmentation_tuple, roi_extraction_parameters=parameters)
 
     @classmethod
     def partial(cls):
         return False
 
 
-class LoadSegmentationParameters(LoadBase):
+class LoadROIParameters(LoadBase):
     """
     Load parameters of ROI segmentation. From segmentation file or from json
     """
@@ -319,46 +319,50 @@ class LoadSegmentationParameters(LoadBase):
         range_changed: typing.Callable[[int, int], typing.Any] = None,
         step_changed: typing.Callable[[int], typing.Any] = None,
         metadata: typing.Optional[dict] = None,
-    ) -> SegmentationTuple:
+    ) -> MaskProjectTuple:
         file_data = load_locations[0]
 
         if isinstance(file_data, (str, Path)):
             ext = os.path.splitext(file_data)[1]
             if ext == ".json":
-                metadata = load_metadata(file_data)
-                if isinstance(metadata, SegmentationProfile):
+                project_metadata = load_metadata(file_data)
+                if isinstance(metadata, ROIExtractionProfile):
                     parameters = {1: metadata}
                 else:
                     parameters = defaultdict(
                         lambda: None,
-                        [(int(k), LoadSegmentation.fix_parameters(v)) for k, v in metadata["parameters"].items()],
+                        [
+                            (int(k), LoadSegmentation.fix_parameters(v))
+                            for k, v in project_metadata["parameters"].items()
+                        ],
                     )
-                return SegmentationTuple(file_path=file_data, image=None, segmentation_parameters=parameters)
+                return MaskProjectTuple(file_path=file_data, image=None, roi_extraction_parameters=parameters)
 
         tar_file, _ = open_tar_file(file_data)
         try:
-            metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
+            project_metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
             parameters = defaultdict(
-                lambda: None, [(int(k), LoadSegmentation.fix_parameters(v)) for k, v in metadata["parameters"].items()]
+                lambda: None,
+                [(int(k), LoadSegmentation.fix_parameters(v)) for k, v in project_metadata["parameters"].items()],
             )
         finally:
             if isinstance(file_data, (str, Path)):
                 tar_file.close()
-        return SegmentationTuple(file_path=file_data, image=None, segmentation_parameters=parameters)
+        return MaskProjectTuple(file_path=file_data, image=None, roi_extraction_parameters=parameters)
 
 
-class LoadSegmentationImage(LoadBase):
+class LoadROIImage(LoadBase):
     """
     Load ROI segmentation and image which is pointed in.
     """
 
     @classmethod
     def get_name(cls):
-        return "Segmentation with image (*.seg *.tgz)"
+        return "ROI project with image (*.seg *.tgz)"
 
     @classmethod
     def get_short_name(cls):
-        return "seg_img"
+        return "roi_image"
 
     @classmethod
     def load(
@@ -367,7 +371,7 @@ class LoadSegmentationImage(LoadBase):
         range_changed: typing.Callable[[int, int], typing.Any] = None,
         step_changed: typing.Callable[[int], typing.Any] = None,
         metadata: typing.Optional[dict] = None,
-    ) -> SegmentationTuple:
+    ) -> MaskProjectTuple:
         seg = LoadSegmentation.load(load_locations)
         if len(load_locations) > 1:
             base_file = load_locations[1]
@@ -392,9 +396,7 @@ class LoadSegmentationImage(LoadBase):
         )
         # noinspection PyProtectedMember
         # image.file_path = load_locations[0]
-        return dataclasses.replace(
-            seg, file_path=image.file_path, image=image, segmentation=image.fit_array_to_image(seg.segmentation)
-        )
+        return dataclasses.replace(seg, file_path=image.file_path, image=image, roi=image.fit_array_to_image(seg.roi))
 
 
 class LoadStackImage(LoadBase):
@@ -417,7 +419,7 @@ class LoadStackImage(LoadBase):
         range_changed: typing.Callable[[int, int], typing.Any] = None,
         step_changed: typing.Callable[[int], typing.Any] = None,
         metadata: typing.Optional[dict] = None,
-    ) -> SegmentationTuple:
+    ) -> MaskProjectTuple:
         if metadata is None:
             metadata = {"default_spacing": (10 ** -6, 10 ** -6, 10 ** -6)}
         image = GenericImageReader.read_image(
@@ -426,7 +428,7 @@ class LoadStackImage(LoadBase):
             default_spacing=metadata["default_spacing"],
         )
 
-        return SegmentationTuple(image.file_path, image, selected_components=[])
+        return MaskProjectTuple(image.file_path, image, selected_components=[])
 
 
 class LoadStackImageWithMask(LoadBase):
@@ -464,21 +466,21 @@ class LoadStackImageWithMask(LoadBase):
             default_spacing=metadata["default_spacing"],
         )
 
-        return SegmentationTuple(image.file_path, image, mask=image.mask, selected_components=[])
+        return MaskProjectTuple(image.file_path, image, mask=image.mask, selected_components=[])
 
     @classmethod
     def get_name(cls) -> str:
         return "Image with mask(*.tif *.tiff *.lsm *.czi *.oib *.oif)"
 
 
-class SaveSegmentation(SaveBase):
+class SaveROI(SaveBase):
     """
     Save current ROI
     """
 
     @classmethod
     def get_name(cls):
-        return "Segmentation (*.seg *.tgz)"
+        return "ROI project (*.seg *.tgz)"
 
     @classmethod
     def get_short_name(cls):
@@ -492,7 +494,7 @@ class SaveSegmentation(SaveBase):
     def save(
         cls,
         save_location: typing.Union[str, BytesIO, Path],
-        project_info: SegmentationTuple,
+        project_info: MaskProjectTuple,
         parameters: dict,
         range_changed=None,
         step_changed=None,
@@ -505,7 +507,7 @@ def save_components(
     components: list,
     segmentation: np.ndarray,
     dir_path: str,
-    segmentation_info: typing.Optional[SegmentationInfo] = None,
+    segmentation_info: typing.Optional[ROIInfo] = None,
     range_changed=None,
     step_changed=None,
 ):
@@ -517,7 +519,7 @@ def save_components(
     segmentation = image.fit_array_to_image(segmentation)
 
     if segmentation_info is None:
-        segmentation_info = SegmentationInfo(segmentation)
+        segmentation_info = ROIInfo(segmentation)
     os.makedirs(dir_path, exist_ok=True)
 
     file_name = os.path.splitext(os.path.basename(image.file_path))[0]
@@ -544,7 +546,7 @@ class SaveComponents(SaveBase):
     def save(
         cls,
         save_location: typing.Union[str, BytesIO, Path],
-        project_info: SegmentationTuple,
+        project_info: MaskProjectTuple,
         parameters: dict,
         range_changed=None,
         step_changed=None,
@@ -552,9 +554,9 @@ class SaveComponents(SaveBase):
         save_components(
             project_info.image,
             project_info.selected_components,
-            project_info.segmentation,
+            project_info.roi,
             save_location,
-            project_info.segmentation_info,
+            project_info.roi_info,
             range_changed,
             step_changed,
         )
@@ -587,7 +589,7 @@ class SaveParametersJSON(SaveBase):
         :return:
         """
         with open(save_location, "w") as ff:
-            json.dump({"parameters": project_info.segmentation_parameters}, ff, cls=ProfileEncoder)
+            json.dump({"parameters": project_info.roi_extraction_parameters}, ff, cls=ProfileEncoder)
 
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
@@ -602,6 +604,33 @@ class SaveParametersJSON(SaveBase):
         return "Parameters (*.json)"
 
 
+class LoadROIFromTIFF(LoadBase):
+    @classmethod
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ) -> typing.Union[ProjectInfoBase, typing.List[ProjectInfoBase]]:
+        image = TiffImageReader.read_image(load_locations[0])
+        segmentation = image.get_channel(0)
+        return MaskProjectTuple(
+            file_path=load_locations[0],
+            image=None,
+            segmentation=segmentation,
+            segmentation_parameters=defaultdict(lambda: None),
+        )
+
+    @classmethod
+    def get_short_name(cls):
+        return "roi_tiff"
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "ROI from tiff (*.tif *.tiff)"
+
+
 def load_metadata(data: typing.Union[str, Path, typing.TextIO]):
     """
     Load metadata saved in json format for segmentation mask
@@ -613,7 +642,7 @@ def load_metadata(data: typing.Union[str, Path, typing.TextIO]):
 
 class UpdateLoadedMetadataMask(UpdateLoadedMetadataBase):
     @classmethod
-    def update_segmentation_profile(cls, profile_data: SegmentationProfile) -> SegmentationProfile:
+    def update_segmentation_profile(cls, profile_data: ROIExtractionProfile) -> ROIExtractionProfile:
         profile_data = super().update_segmentation_profile(profile_data)
         if profile_data.algorithm == "Threshold" or profile_data.algorithm == "Auto Threshold":
             if isinstance(profile_data.values["smooth_border"], bool):
@@ -632,9 +661,9 @@ class UpdateLoadedMetadataMask(UpdateLoadedMetadataBase):
         return profile_data
 
 
-load_dict = Register(
-    LoadStackImage, LoadSegmentationImage, LoadStackImageWithMask, class_methods=LoadBase.need_functions
-)
+load_dict = Register(LoadStackImage, LoadROIImage, LoadStackImageWithMask, class_methods=LoadBase.need_functions)
 save_parameters_dict = Register(SaveParametersJSON, class_methods=SaveBase.need_functions)
 save_components_dict = Register(SaveComponents, class_methods=SaveBase.need_functions)
-save_segmentation_dict = Register(SaveSegmentation, SaveMaskAsTiff, class_methods=SaveBase.need_functions)
+save_segmentation_dict = Register(
+    SaveROI, SaveMaskAsTiff, SaveROIAsTIFF, SaveROIAsNumpy, class_methods=SaveBase.need_functions
+)

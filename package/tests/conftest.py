@@ -6,12 +6,12 @@ from copy import deepcopy
 import numpy as np
 import pytest
 
-from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import ProjectTuple
 from PartSegCore.analysis.measurement_base import AreaType, MeasurementEntry, PerComponent
 from PartSegCore.analysis.measurement_calculation import ComponentsNumber, MeasurementProfile, Volume
 from PartSegCore.image_operations import RadiusType
-from PartSegCore.mask.io_functions import SegmentationTuple
+from PartSegCore.mask.io_functions import MaskProjectTuple
 from PartSegCore.mask_create import MaskProperty
 from PartSegImage import Image
 
@@ -20,6 +20,12 @@ from PartSegImage import Image
 def data_test_dir():
     """Return path to directory with test data"""
     return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "test_data")
+
+
+@pytest.fixture(scope="module")
+def bundle_test_dir():
+    """Return path to directory with test data"""
+    return os.path.join(os.path.dirname(__file__), "test_data")
 
 
 @pytest.fixture
@@ -43,7 +49,7 @@ def stack_image():
     for x, y in itertools.product([0, 20], repeat=2):
         data[5:-5, x + 6 : x + 14, y + 6 : y + 14] = 140
 
-    return SegmentationTuple("test_path", Image(data, (2, 1, 1), axes_order="ZYX", file_path="test_path"))
+    return MaskProjectTuple("test_path", Image(data, (2, 1, 1), axes_order="ZYX", file_path="test_path"))
 
 
 @pytest.fixture
@@ -63,7 +69,7 @@ def algorithm_parameters():
 
 @pytest.fixture
 def mask_segmentation_parameters():
-    return SegmentationProfile(
+    return ROIExtractionProfile(
         name="",
         algorithm="Threshold",
         values={
@@ -81,43 +87,39 @@ def mask_segmentation_parameters():
 
 
 @pytest.fixture
-def stack_segmentation1(stack_image: SegmentationTuple, mask_segmentation_parameters):
+def stack_segmentation1(stack_image: MaskProjectTuple, mask_segmentation_parameters):
     data = np.zeros([20, 40, 40], dtype=np.uint8)
     for i, (x, y) in enumerate(itertools.product([0, 20], repeat=2), start=1):
         data[1:-1, x + 2 : x + 18, y + 2 : y + 18] = i
     data = stack_image.image.fit_array_to_image(data)
     parameters = {i: deepcopy(mask_segmentation_parameters) for i in range(1, 5)}
-    return dataclasses.replace(
-        stack_image, segmentation=data, segmentation_parameters=parameters, selected_components=[1, 3]
-    )
+    return dataclasses.replace(stack_image, roi=data, roi_extraction_parameters=parameters, selected_components=[1, 3])
 
 
 @pytest.fixture
-def analysis_segmentation(stack_image: SegmentationTuple):
+def analysis_segmentation(stack_image: MaskProjectTuple):
     data = np.zeros([20, 40, 40], dtype=np.uint8)
     for i, (x, y) in enumerate(itertools.product([0, 20], repeat=2), start=1):
         data[1:-1, x + 2 : x + 18, y + 2 : y + 18] = i
     data = stack_image.image.fit_array_to_image(data)
-    return ProjectTuple(file_path=stack_image.file_path, image=stack_image.image, segmentation=data)
+    return ProjectTuple(file_path=stack_image.file_path, image=stack_image.image, roi=data)
 
 
 @pytest.fixture
 def analysis_segmentation2(analysis_segmentation: ProjectTuple):
-    mask = (analysis_segmentation.segmentation > 0).astype(np.uint8)
+    mask = (analysis_segmentation.roi > 0).astype(np.uint8)
     return dataclasses.replace(analysis_segmentation, mask=mask)
 
 
 @pytest.fixture
-def stack_segmentation2(stack_image: SegmentationTuple, mask_segmentation_parameters):
+def stack_segmentation2(stack_image: MaskProjectTuple, mask_segmentation_parameters):
     data = np.zeros([20, 40, 40], dtype=np.uint8)
     for i, (x, y) in enumerate(itertools.product([0, 20], repeat=2), start=1):
         data[3:-3, x + 4 : x + 16, y + 4 : y + 16] = i
     data = stack_image.image.fit_array_to_image(data)
     mask_segmentation_parameters.values["threshold"]["values"]["threshold"] = 110
     parameters = {i: deepcopy(mask_segmentation_parameters) for i in range(1, 5)}
-    return dataclasses.replace(
-        stack_image, segmentation=data, segmentation_parameters=parameters, selected_components=[1, 3]
-    )
+    return dataclasses.replace(stack_image, roi=data, roi_extraction_parameters=parameters, selected_components=[1, 3])
 
 
 @pytest.fixture

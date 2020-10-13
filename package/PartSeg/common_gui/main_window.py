@@ -144,6 +144,13 @@ class BaseMainWindow(QMainWindow):
             app.setStyleSheet(settings.style_sheet)
         self.settings.theme_changed.connect(self.change_theme)
         self.channel_info = ""
+        self.multiple_files = None
+        self.settings.request_load_files.connect(self.read_drop)
+
+    def toggle_multiple_files(self):
+        self.settings.set("multiple_files_widget", not self.settings.get("multiple_files_widget"))
+        if self.multiple_files is not None:
+            self.multiple_files.setVisible(self.settings.get("multiple_files_widget"))
 
     def get_colormaps(self) -> List[Optional[colormap.Colormap]]:
         channel_num = self.settings.image.channels
@@ -162,8 +169,8 @@ class BaseMainWindow(QMainWindow):
             viewer.add_image(
                 image.get_channel(i), name=f"channnel {i + 1}", scale=scaling, blending="additive", colormap=colormap[i]
             )
-        if self.settings.segmentation is not None:
-            viewer.add_labels(self.settings.segmentation, name="ROI", scale=scaling)
+        if self.settings.roi is not None:
+            viewer.add_labels(self.settings.roi, name="ROI", scale=scaling)
         if image.mask is not None:
             viewer.add_labels(image.mask, name="Mask", scale=scaling)
         self.viewer_list.append(viewer)

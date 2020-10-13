@@ -23,11 +23,11 @@ Firstly segmentation of nuclei is performed based on the DNA signal. Segmented n
 
 1.  Open PartSeg
 
-2.  Select "Mask Segmentation"  
+2.  Select "ROI Mask"  
     ![launcher GUI](./images/launcher.png)
 
 3.  Load image  
-    ![mask segmentation](./images/mask_segmentation.png)
+    ![ROI Mask main window](./images/roi_mask.png)
 
 4.  Ensure that threshold segmentation method is selected
 
@@ -60,7 +60,7 @@ Firstly segmentation of nuclei is performed based on the DNA signal. Segmented n
     (`stack1_component5_mask.tif`, `stack1_component6_mask.tif`, `stack1_component7_mask.tif`, ...)
 
 9.  The whole segmentation can be saved separately (**Save segmentation** option) and later can be loaded using **Load segmentation** menu.  
-    ![mask segmentation](./images/mask_segmentation.png)
+    ![ROI Mask main window](./images/roi_mask.png)
 
 #### Segmentation of chromosome 1 territories
 
@@ -68,7 +68,7 @@ In order to quantify features of chromosome 1 territory segmentation of FISH spe
 
 1.  Open PartSeg
 
-2.  Select **Segmentation Analysis**  
+2.  Select **ROI Analysis**  
     ![launcher GUI](./images/launcher.png)
 
 3.  Load data:

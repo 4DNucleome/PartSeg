@@ -1,14 +1,14 @@
 import typing
 from textwrap import indent
 
-from PartSegCore.algorithm_describe_base import SegmentationProfile
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 
 from ..class_generator import BaseSerializableClass
 from ..mask_create import MaskProperty
 
 
 class SegmentationPipelineElement(BaseSerializableClass):
-    segmentation: SegmentationProfile
+    segmentation: ROIExtractionProfile
     mask_property: MaskProperty
 
     def pretty_print(self, algorithm_dict):
@@ -30,7 +30,7 @@ class SegmentationPipelineElement(BaseSerializableClass):
 
 class SegmentationPipeline(BaseSerializableClass):
     name: str
-    segmentation: SegmentationProfile
+    segmentation: ROIExtractionProfile
     mask_history: typing.List[SegmentationPipelineElement]
 
     def pretty_print(self, algorithm_dict):

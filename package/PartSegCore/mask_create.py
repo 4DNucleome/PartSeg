@@ -95,9 +95,7 @@ def calculate_mask_from_project(
         time_axis = project.image.time_pos
     except AttributeError:
         time_axis = None
-    return calculate_mask(
-        mask_description, project.segmentation, project.mask, project.image.spacing, components, time_axis
-    )
+    return calculate_mask(mask_description, project.roi, project.mask, project.image.spacing, components, time_axis)
 
 
 def calculate_mask(

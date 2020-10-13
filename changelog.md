@@ -1,4 +1,14 @@
 # Changelog
+
+## 0.12.0
+-   Toggle multiple files widget in View menu
+-   Toggle Left panel in ROI Analysis in View Menu  
+-   Rename Mask Segmentation to ROI Mask
+
+## 0.11.5
+-   add side view to viewer
+-   fix horizontal view for Measurements result table
+
 ## 0.11.4
 -   bump to napari 0.3.8 in bundle
 -   fix bug with not presented segmentation loaded from project

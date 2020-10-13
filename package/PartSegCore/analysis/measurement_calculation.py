@@ -115,9 +115,15 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         )
         return has_mask_components, has_segmentation_components
 
-    def get_labels(self) -> List[str]:
-        """Get labels for measurement. Base are keys of this storage.
-        If has mask components, or has segmentation_components then add this labels"""
+    def get_labels(self, expand=True) -> List[str]:
+        """
+        If expand is false return list of keys of this storage.
+        Otherwise return  labels for measurement. Base are keys of this storage.
+        If has mask components, or has segmentation_components then add this labels
+        """
+
+        if not expand:
+            return list(self.keys())
         has_mask_components, has_segmentation_components = self.get_component_info()
         labels = list(self._data_dict.keys())
         index = 1 if FILE_NAME_STR in self._data_dict else 0
