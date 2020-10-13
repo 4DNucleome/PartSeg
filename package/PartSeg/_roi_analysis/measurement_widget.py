@@ -196,7 +196,7 @@ class MeasurementWidget(QWidget):
         self.butt_layout3.addWidget(self.units_choose)
         # self.butt_layout3.addWidget(QLabel("Noise removal:"))
         # self.butt_layout3.addWidget(self.noise_removal_method)
-        self.butt_layout3.addWidget(QLabel("Profile:"))
+        self.butt_layout3.addWidget(QLabel("Measurement set:"))
         self.butt_layout3.addWidget(self.measurement_type, 2)
         v_butt_layout.addLayout(self.up_butt_layout)
         v_butt_layout.addLayout(self.butt_layout)

@@ -356,8 +356,8 @@ class MeasurementSettings(QWidget):
     :type settings: Settings
     """
 
-    def __init__(self, settings: PartSettings):
-        super(MeasurementSettings, self).__init__()
+    def __init__(self, settings: PartSettings, parent=None):
+        super().__init__(parent)
         self.chosen_element: Optional[MeasurementListWidgetItem] = None
         self.chosen_element_area: Optional[Tuple[AreaType, float]] = None
         self.settings = settings
