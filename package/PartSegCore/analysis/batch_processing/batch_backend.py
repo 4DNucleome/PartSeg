@@ -340,7 +340,7 @@ class CalculationProcess:
 
         image_channel = self.image.get_channel(channel)
         # FIXME use additional information
-        measurement = operation.statistic_profile.calculate(
+        measurement = operation.measurement_profile.calculate(
             image_channel, self.segmentation, self.mask, self.image.spacing, operation.units,
         )
         self.measurement.append(measurement)
@@ -605,7 +605,7 @@ class FileData:
         if calculation.sheet_name in self.sheet_set:
             raise ValueError("[FileData] sheet name {} already in use".format(calculation.sheet_name))
         measurement = calculation.calculation_plan.get_measurements()
-        component_information = [x.statistic_profile.get_component_info(x.units) for x in measurement]
+        component_information = [x.measurement_profile.get_component_info(x.units) for x in measurement]
         num = 1
         sheet_list = []
         header_list = []
@@ -614,7 +614,7 @@ class FileData:
             local_header = []
             component_seg = False
             component_mask = False
-            for per_component, area in measurement[i].statistic_profile.get_component_and_area_info():
+            for per_component, area in measurement[i].measurement_profile.get_component_and_area_info():
                 if per_component == PerComponent.Yes and area == AreaType.ROI:
                     component_seg = True
                 if per_component == PerComponent.Yes and area != AreaType.ROI:

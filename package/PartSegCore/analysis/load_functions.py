@@ -386,7 +386,7 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
 
     @classmethod
     def update_measurement_calculate(cls, data: MeasurementCalculate):
-        return data.replace_(statistic_profile=cls.update_measurement_profile(data.statistic_profile))
+        return data.replace_(measurement_profile=cls.update_measurement_profile(data.measurement_profile))
 
     @classmethod
     def recursive_update(cls, data):

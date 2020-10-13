@@ -173,7 +173,7 @@ class TestJsonLoad:
         measurement_step = segmentation_step.children[0]
         assert isinstance(measurement_step.operation, MeasurementCalculate)
         assert measurement_step.children == []
-        measurement_profile = measurement_step.operation.statistic_profile
+        measurement_profile = measurement_step.operation.measurement_profile
         assert isinstance(measurement_profile, MeasurementProfile)
         for entry in measurement_profile.chosen_fields:
             assert entry.calculation_tree.name in MEASUREMENT_DICT

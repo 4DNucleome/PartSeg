@@ -29,4 +29,15 @@ def part_hook(dkt):
         return CalculationPlan(**dkt)
     if "__CalculationTree__" in dkt:
         return CalculationTree(operation=dkt["operation"], children=dkt["children"])
+    if (
+        "__subtype__" in dkt
+        and "statistic_profile" in dkt
+        and dkt["__subtype__"]
+        in (
+            "PartSegCore.analysis.calculation_plan.MeasurementCalculate",
+            "PartSeg.utils.analysis.calculation_plan.StatisticCalculate",
+        )
+    ):
+        dkt["measurement_profile"] = dkt["statistic_profile"]
+        del dkt["statistic_profile"]
     return profile_hook(dkt)
