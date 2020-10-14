@@ -51,7 +51,12 @@ class ImageWriter:
             return
         mask_max = np.max(mask)
         mask = mask.astype(minimal_dtype(mask_max))
-        cls._save(mask, save_path)
+        metadata = {"mode": "color", "unit": "\\u00B5m"}
+        spacing = image.get_um_spacing()
+        if len(spacing) == 3:
+            metadata.update({"spacing": spacing[0]})
+        resolution = [1 / x for x in spacing[-2:]]
+        cls._save(mask, save_path, resolution, metadata)
 
     @staticmethod
     def _save(data: np.ndarray, save_path, resolution=None, metadata=None):
