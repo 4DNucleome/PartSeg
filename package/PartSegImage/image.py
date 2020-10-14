@@ -82,7 +82,7 @@ class Image:
     axis_order = "TZYXC"
 
     def __new__(cls, *args, **kwargs):
-        if hasattr(cls, "return_order"):
+        if hasattr(cls, "return_order"):  # pragma: no cover
             warnings.warn("Using return_order is deprecated since PartSeg 0.11.0", DeprecationWarning)
             cls.axis_order = cls.return_order
         return super(Image, cls).__new__(cls)
@@ -128,7 +128,7 @@ class Image:
             data_shape = list(data.shape)
             try:
                 data_shape.pop(axes_order.index("C"))
-            except ValueError:
+            except ValueError:  # pragma: no cover
                 pass
             mask = self._fit_array_to_image(data_shape, mask)
             mask = np.take(self.reorder_axes(mask, axes_order.replace("C", "")), 0, self.channel_pos)
@@ -277,10 +277,6 @@ class Image:
         base_shape = list(self._image_array.shape)
         base_shape.pop(self.channel_pos)
         return self._fit_array_to_image(base_shape, array)
-
-    @staticmethod
-    def _change_array_type_to_minimal(array, max_val):
-        return array.astype(minimal_dtype(max_val))
 
     # noinspection DuplicatedCode
     def fit_mask_to_image(self, array: np.ndarray) -> np.ndarray:
@@ -470,7 +466,7 @@ class Image:
         self._image_spacing = tuple(value)
 
     def _frame_array(self, array: typing.Optional[np.ndarray], index_to_add: typing.List[int]):
-        if array is None:
+        if array is None:  # pragma: no cover
             return array
         result_shape = list(array.shape)
         image_pos = [slice(None) for _ in range(array.ndim)]

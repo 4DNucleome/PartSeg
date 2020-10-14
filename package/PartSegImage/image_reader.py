@@ -37,7 +37,7 @@ class BaseImageReader:
         Order to which image axes should be rearranged before pass to :py:attr:`image_class` constructor.
         Default is :py:attr:`image_class.return_order`
         """
-        if hasattr(cls.image_class, "return_order"):
+        if hasattr(cls.image_class, "return_order"):  # pragma: no cover
             warnings.warn(
                 "Using return_order is deprecated since PartSeg 0.12.0. Please fix your image_class", DeprecationWarning
             )
@@ -131,7 +131,7 @@ class BaseImageReader:
                     i += 1
 
             final_mapping = [final_mapping_dict[letter] for letter in axes]
-        except KeyError as e:
+        except KeyError as e:  # pragma: no cover
             raise NotImplementedError(
                 f"Data type not supported ({e.args[0]})." f" Please contact with author for update code"
             )
@@ -187,7 +187,7 @@ class OifImagReader(BaseImageReader):
                 i += 1
 
             self.spacing = z_scale, x_scale, y_scale
-        except KeyError:
+        except KeyError:  # pragma: no cover
             pass
         # TODO add mask reading
         return self.image_class(
@@ -215,7 +215,7 @@ class CziImageReader(BaseImageReader):
                 scale_info.get("Y", self.default_spacing[1]),
                 scale_info.get("X", self.default_spacing[2]),
             )
-        except KeyError:
+        except KeyError:  # pragma: no cover
             pass
         # TODO add mask reading
         return self.image_class(
@@ -294,7 +294,7 @@ class TiffImageReader(BaseImageReader):
         self.image_file.report_func = report_func
         try:
             image_data = self.image_file.asarray()
-        except ValueError as e:
+        except ValueError as e:  # pragma: no cover
             raise TiffFileException(*e.args)
         image_data = self.update_array_shape(image_data, axes)
         if self.mask_file is not None:
@@ -324,12 +324,12 @@ class TiffImageReader(BaseImageReader):
         verify if mask fit to image. Raise ValueError exception on error
         :return:
         """
-        if self.mask_file is None:
+        if self.mask_file is None:  # pragma: no cover
             return
         image_series = self.image_file.pages[0]
         mask_series = self.mask_file.pages[0]
         for i, pos in enumerate(mask_series.axes):
-            if mask_series.shape[i] == 1:
+            if mask_series.shape[i] == 1:  # pragma: no cover
                 continue
             try:
                 j = image_series.axes.index(pos)
@@ -399,7 +399,7 @@ class TiffImageReader(BaseImageReader):
                 meta_data[f"PhysicalSize{x}"] * name_to_scalar[meta_data[f"PhysicalSize{x}Unit"]]
                 for x in ["Z", "Y", "X"]
             ]
-        except KeyError:
+        except KeyError:  # pragma: no cover
             pass
         if "Channel" in meta_data and isinstance(meta_data["Channel"], (list, tuple)):
             try:
