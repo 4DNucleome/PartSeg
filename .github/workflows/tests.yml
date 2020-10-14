@@ -125,3 +125,6 @@ jobs:
           python -m pip install -r requirements/requirements_dev.txt
       - name: Test PartSeg
         run: tox -e  'py37-PyQt5-coverage'
+      - uses: codecov/codecov-action@v1
+        file: ./coverage.xml
+        fail_ci_if_error: true
