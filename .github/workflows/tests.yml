@@ -126,5 +126,6 @@ jobs:
       - name: Test PartSeg
         run: tox -e  'py37-PyQt5-coverage'
       - uses: codecov/codecov-action@v1
-        file: ./coverage.xml
-        fail_ci_if_error: true
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: true
