@@ -6,9 +6,10 @@ from operator import eq, lt
 
 import numpy as np
 import pytest
+from sympy import symbols
 
 from PartSegCore.analysis import load_metadata
-from PartSegCore.analysis.measurement_base import AreaType, MeasurementEntry, Node, PerComponent
+from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
 from PartSegCore.analysis.measurement_calculation import (
     ComponentsInfo,
     ComponentsNumber,
@@ -94,6 +95,16 @@ def get_two_component_mask():
 
 
 class TestDiameter:
+    def test_parameters(self):
+        assert Diameter.get_units(3) == symbols("{}")
+        assert Diameter.get_units(2) == symbols("{}")
+        assert Diameter.need_channel() is False
+        leaf = Diameter.get_starting_leaf()
+        assert isinstance(leaf, Leaf)
+        assert leaf.area is None
+        assert leaf.per_component is None
+        assert leaf.channel is None
+
     def test_cube(self, cube_image):
         mask1 = cube_image.get_channel(0)[0] > 40
         mask2 = cube_image.get_channel(0)[0] > 60
@@ -133,6 +144,16 @@ class TestDiameter:
 
 
 class TestPixelBrightnessSum:
+    def test_parameters(self):
+        assert PixelBrightnessSum.get_units(3) == symbols("Pixel_brightness")
+        assert PixelBrightnessSum.get_units(2) == symbols("Pixel_brightness")
+        assert PixelBrightnessSum.need_channel() is True
+        leaf = PixelBrightnessSum.get_starting_leaf()
+        assert isinstance(leaf, Leaf)
+        assert leaf.area is None
+        assert leaf.per_component is None
+        assert leaf.channel is None
+
     def test_cube(self):
         image = get_cube_image()
         mask1 = image.get_channel(0)[0] > 40
@@ -160,6 +181,16 @@ class TestPixelBrightnessSum:
 
 
 class TestVolume:
+    def test_parameters(self):
+        assert Volume.get_units(3) == symbols("{}") ** 3
+        assert Volume.get_units(2) == symbols("{}") ** 2
+        assert Volume.need_channel() is False
+        leaf = Volume.get_starting_leaf()
+        assert isinstance(leaf, Leaf)
+        assert leaf.area is None
+        assert leaf.per_component is None
+        assert leaf.channel is None
+
     def test_cube(self):
         image = get_cube_image()
         mask1 = image.get_channel(0) > 40
@@ -196,6 +227,16 @@ class TestVolume:
 
 
 class TestVoxels:
+    def test_parameters(self):
+        assert Voxels.get_units(3) == symbols("1")
+        assert Voxels.get_units(2) == symbols("1")
+        assert Voxels.need_channel() is False
+        leaf = Voxels.get_starting_leaf()
+        assert isinstance(leaf, Leaf)
+        assert leaf.area is None
+        assert leaf.per_component is None
+        assert leaf.channel is None
+
     def test_cube(self):
         image = get_cube_image()
         mask1 = image.get_channel(0) > 40
@@ -221,6 +262,16 @@ class TestVoxels:
 
 
 class TestComponentsNumber:
+    def test_parameters(self):
+        assert ComponentsNumber.get_units(3) == symbols("count")
+        assert ComponentsNumber.get_units(2) == symbols("count")
+        assert ComponentsNumber.need_channel() is False
+        leaf = ComponentsNumber.get_starting_leaf()
+        assert isinstance(leaf, Leaf)
+        assert leaf.area is None
+        assert leaf.per_component is PerComponent.No
+        assert leaf.channel is None
+
     def test_cube(self):
         image = get_cube_image()
         mask1 = image.get_channel(0) > 40
@@ -244,6 +295,16 @@ class TestComponentsNumber:
 
 
 class TestMaximumPixelBrightness:
+    def test_parameters(self):
+        assert MaximumPixelBrightness.get_units(3) == symbols("Pixel_brightness")
+        assert MaximumPixelBrightness.get_units(2) == symbols("Pixel_brightness")
+        assert MaximumPixelBrightness.need_channel() is True
+        leaf = MaximumPixelBrightness.get_starting_leaf()
+        assert isinstance(leaf, Leaf)
+        assert leaf.area is None
+        assert leaf.per_component is None
+        assert leaf.channel is None
+
     def test_cube(self):
         image = get_cube_image()
         mask1 = image.get_channel(0) > 40
@@ -274,6 +335,7 @@ class TestMaximumPixelBrightness:
     "calc_class,np_method",
     [
         (MinimumPixelBrightness, np.min),
+        (MaximumPixelBrightness, np.max),
         (MedianPixelBrightness, np.median),
         (MeanPixelBrightness, np.mean),
         (StandardDeviationOfPixelBrightness, np.std),
@@ -285,7 +347,32 @@ def test_pixel_brightness(image, threshold, calc_class, np_method):
     assert calc_class.calculate_property(mask, channel) == (np_method(channel[mask]) if np.any(mask) else 0)
 
 
-class TestMomentOfInertia:
+@pytest.mark.parametrize(
+    "calc_class",
+    [MinimumPixelBrightness, MaximumPixelBrightness, MeanPixelBrightness, StandardDeviationOfPixelBrightness],
+)
+def test_parameters_pixel_brightness(calc_class):
+    assert calc_class.get_units(3) == symbols("Pixel_brightness")
+    assert calc_class.get_units(2) == symbols("Pixel_brightness")
+    assert calc_class.need_channel() is True
+    leaf = calc_class.get_starting_leaf()
+    assert isinstance(leaf, Leaf)
+    assert leaf.area is None
+    assert leaf.per_component is None
+    assert leaf.channel is None
+
+
+class TestMoment:
+    def test_parameters(self):
+        assert Moment.get_units(3) == symbols("{}") ** 2 * symbols("Pixel_brightness")
+        assert Moment.get_units(2) == symbols("{}") ** 2 * symbols("Pixel_brightness")
+        assert Moment.need_channel() is True
+        leaf = Moment.get_starting_leaf()
+        assert isinstance(leaf, Leaf)
+        assert leaf.area is None
+        assert leaf.per_component is None
+        assert leaf.channel is None
+
     @pytest.mark.parametrize("image", [get_cube_image(), get_square_image()], ids=["cube", "square"])
     def test_image(self, image):
         mask1 = image.get_channel(0)[0] > 40
@@ -344,6 +431,17 @@ class TestMomentOfInertia:
 
 
 class TestMainAxis:
+    @pytest.mark.parametrize("method", [FirstPrincipalAxisLength, SecondPrincipalAxisLength, ThirdPrincipalAxisLength])
+    def test_parameters(self, method):
+        assert method.get_units(3) == symbols("{}")
+        assert method.get_units(2) == symbols("{}")
+        assert method.need_channel() is True
+        leaf = method.get_starting_leaf()
+        assert isinstance(leaf, Leaf)
+        assert leaf.area is None
+        assert leaf.per_component is None
+        assert leaf.channel is None
+
     @pytest.mark.parametrize("image", (get_cube_image(), get_square_image()), ids=["cube", "square"])
     @pytest.mark.parametrize(
         "method,scalar,last",
@@ -404,6 +502,16 @@ class TestMainAxis:
 
 
 class TestSurface:
+    def test_parameters(self):
+        assert Surface.get_units(3) == symbols("{}") ** 2
+        assert Surface.get_units(2) == symbols("{}") ** 2
+        assert Surface.need_channel() is False
+        leaf = Surface.get_starting_leaf()
+        assert isinstance(leaf, Leaf)
+        assert leaf.area is None
+        assert leaf.per_component is None
+        assert leaf.channel is None
+
     def test_cube(self):
         image = get_cube_image()
         mask1 = image.get_channel(0)[0] > 40
@@ -438,6 +546,16 @@ class TestSurface:
 
 
 class TestRimVolume:
+    def test_parameters(self):
+        assert RimVolume.get_units(3) == symbols("{}") ** 3
+        assert RimVolume.get_units(2) == symbols("{}") ** 2
+        assert RimVolume.need_channel() is False
+        leaf = RimVolume.get_starting_leaf()
+        assert isinstance(leaf, Leaf)
+        assert leaf.area is AreaType.Mask
+        assert leaf.per_component is None
+        assert leaf.channel is None
+
     @pytest.mark.parametrize("image", [get_cube_image(), get_square_image()], ids=["cube", "square"])
     @pytest.mark.parametrize("scale", [1, 4])
     def test_image(self, image, scale):
@@ -510,6 +628,16 @@ class TestRimVolume:
 
 
 class TestRimPixelBrightnessSum:
+    def test_parameters(self):
+        assert RimPixelBrightnessSum.get_units(3) == symbols("Pixel_brightness")
+        assert RimPixelBrightnessSum.get_units(2) == symbols("Pixel_brightness")
+        assert RimPixelBrightnessSum.need_channel() is True
+        leaf = RimPixelBrightnessSum.get_starting_leaf()
+        assert isinstance(leaf, Leaf)
+        assert leaf.area is AreaType.Mask
+        assert leaf.per_component is None
+        assert leaf.channel is None
+
     @pytest.mark.parametrize("image", [get_cube_image(), get_square_image()], ids=["cube", "square"])
     def test_image(self, image):
         image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
@@ -579,6 +707,16 @@ class TestRimPixelBrightnessSum:
 
 
 class TestSphericity:
+    def test_parameters(self):
+        assert Sphericity.get_units(3) == 1
+        assert Sphericity.get_units(2) == 1
+        assert Sphericity.need_channel() is False
+        leaf = Sphericity.get_starting_leaf()
+        assert isinstance(leaf, Leaf)
+        assert leaf.area is None
+        assert leaf.per_component is None
+        assert leaf.channel is None
+
     def test_cube(self):
         image = get_cube_image()
         mask1 = image.get_channel(0)[0] > 40
@@ -641,6 +779,16 @@ def two_comp_img():
 
 
 class TestDistanceMaskSegmentation:
+    def test_parameters(self):
+        assert DistanceMaskSegmentation.get_units(3) == symbols("{}")
+        assert DistanceMaskSegmentation.get_units(2) == symbols("{}")
+        assert DistanceMaskSegmentation.need_channel() is True
+        leaf = DistanceMaskSegmentation.get_starting_leaf()
+        assert isinstance(leaf, Leaf)
+        assert leaf.area is AreaType.Mask
+        assert leaf.per_component is None
+        assert leaf.channel is None
+
     @pytest.mark.parametrize(
         "d_mask,d_seg", itertools.product([DistancePoint.Geometrical_center, DistancePoint.Mass_center], repeat=2)
     )
@@ -880,6 +1028,16 @@ class TestDistanceMaskSegmentation:
 
 
 class TestSplitOnPartVolume:
+    def test_parameters(self):
+        assert SplitOnPartVolume.get_units(3) == symbols("{}") ** 3
+        assert SplitOnPartVolume.get_units(2) == symbols("{}") ** 2
+        assert SplitOnPartVolume.need_channel() is False
+        leaf = SplitOnPartVolume.get_starting_leaf()
+        assert isinstance(leaf, Leaf)
+        assert leaf.area is AreaType.Mask
+        assert leaf.per_component is None
+        assert leaf.channel is None
+
     def test_cube_equal_radius(self, cube_image):
         cube_image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in cube_image.spacing]))
         mask1 = cube_image.get_channel(0)[0] > 40
@@ -1180,6 +1338,16 @@ class TestSplitOnPartVolume:
 
 
 class TestSplitOnPartPixelBrightnessSum:
+    def test_parameters(self):
+        assert SplitOnPartPixelBrightnessSum.get_units(3) == symbols("Pixel_brightness")
+        assert SplitOnPartPixelBrightnessSum.get_units(2) == symbols("Pixel_brightness")
+        assert SplitOnPartPixelBrightnessSum.need_channel() is True
+        leaf = SplitOnPartPixelBrightnessSum.get_starting_leaf()
+        assert isinstance(leaf, Leaf)
+        assert leaf.area is AreaType.Mask
+        assert leaf.per_component is None
+        assert leaf.channel is None
+
     @pytest.mark.parametrize(
         "nr, sum_val, diff_array",
         [
@@ -1577,6 +1745,36 @@ class TestStatisticProfile:
         names = {x.name for x in profile.chosen_fields}
         assert names == set(result.keys())
 
+    def test_proportion(self):
+        image = get_two_components_image()
+        mask = get_two_component_mask()
+        segmentation = np.zeros(mask.shape, dtype=np.uint8)
+        segmentation[image.get_channel(0)[0] == 50] = 1
+        segmentation[image.get_channel(0)[0] == 60] = 2
+        leaf1 = Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes)
+        leaf2 = Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.Yes)
+        leaf3 = Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_ROI, per_component=PerComponent.Yes)
+        leaf4 = PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes)
+        statistics = [
+            MeasurementEntry("ROI Volume per component", leaf1,),
+            MeasurementEntry("Mask Volume per component", leaf2,),
+            MeasurementEntry("ROI Volume per component/Mask Volume per component", Node(leaf1, "/", leaf2)),
+            MeasurementEntry("Mask Volume per component/ROI Volume per component", Node(leaf2, "/", leaf1)),
+            MeasurementEntry(
+                "Mask Volume per component/Mask without ROI Volume per component", Node(leaf2, "/", leaf3)
+            ),
+            MeasurementEntry("Density per component", Node(leaf4, "/", leaf1)),
+        ]
+        profile = MeasurementProfile("statistic", statistics)
+        result = profile.calculate(
+            image.get_channel(0), segmentation, mask=mask, voxel_size=image.voxel_size, result_units=Units.nm,
+        )
+        # TODO check values
+        assert len(result["ROI Volume per component/Mask Volume per component"][0]) == 2
+        assert len(result["Mask Volume per component/ROI Volume per component"][0]) == 2
+        assert len(result["Mask Volume per component/Mask without ROI Volume per component"][0]) == 1
+        assert len(result["Density per component"][0]) == 2
+
 
 # noinspection DuplicatedCode
 class TestMeasurementResult:
@@ -1594,6 +1792,8 @@ class TestMeasurementResult:
         assert list(storage.values()) == [("test.tif", ""), (1, ""), (5, "np")]
         assert storage.get_separated() == [["test.tif", 1, 5]]
         assert storage.get_labels() == ["File name", "aa", "bb"]
+        del storage["aa"]
+        assert list(storage.keys()) == ["File name", "bb"]
 
     def test_simple2(self):
         info = ComponentsInfo(np.arange(1, 5), np.arange(1, 5), {i: [i] for i in range(1, 5)})
@@ -1629,6 +1829,7 @@ class TestMeasurementResult:
         assert list(storage.values()) == [("test.tif", ""), (1, ""), ([4, 5], "np"), ([11, 3], "np")]
         assert storage.get_separated() == [["test.tif", 1, 1, 4, 11], ["test.tif", 2, 1, 5, 3]]
         assert storage.get_labels() == ["File name", "Segmentation component", "aa", "bb", "cc"]
+        assert storage.get_global_names() == ["File name", "aa"]
 
     def test_mask_components(self):
         info = ComponentsInfo(np.arange(1, 2), np.arange(1, 3), {1: [], 2: []})

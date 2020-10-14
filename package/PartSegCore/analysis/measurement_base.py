@@ -73,7 +73,7 @@ class Leaf(BaseSerializableClass):
             raise AlgorithmDescribeNotFound(self.name)
         return resp
 
-    def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]):
+    def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]):  # pragma: no cover
         resp = self.name
         if self.area is not None:
             resp = str(self.area) + " " + resp
@@ -100,7 +100,7 @@ class Leaf(BaseSerializableClass):
             resp += f" to the power {self.power}"
         return resp
 
-    def __str__(self):
+    def __str__(self):  # pragma: no cover
         resp = self.name
         if self.area is not None:
             resp = str(self.area) + " " + resp
@@ -161,12 +161,12 @@ class Node(BaseSerializableClass):
     def get_channel_num(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> Set[Channel]:
         return self.left.get_channel_num(measurement_dict) | self.right.get_channel_num(measurement_dict)
 
-    def __str__(self):
+    def __str__(self):  # pragma: no cover
         left_text = "(" + str(self.left) + ")" if isinstance(self.left, Node) else str(self.left)
         right_text = "(" + str(self.right) + ")" if isinstance(self.right, Node) else str(self.right)
         return left_text + self.op + right_text
 
-    def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]):
+    def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]):  # pragma: no cover
         left_text = (
             "(" + self.left.pretty_print(measurement_dict) + ")"
             if isinstance(self.left, Node)
@@ -250,7 +250,7 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
         raise NotImplementedError()
 
     @classmethod
-    def get_starting_leaf(cls):
+    def get_starting_leaf(cls) -> Leaf:
         """This leaf is putted on default list"""
         return Leaf(cls.text_info[0])
 
@@ -268,6 +268,3 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     def area_type(area: AreaType):
         """Map chosen area type to proper area type. Allow to correct Area type."""
         return area
-
-    def test(self):
-        pass

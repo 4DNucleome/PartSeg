@@ -65,7 +65,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         self._units_dict["Mask component"] = ""
         self._units_dict["Segmentation component"] = ""
 
-    def __str__(self):
+    def __str__(self):  # pragma: no cover
         text = ""
         for key, val in self._data_dict.items():
             text += f"{key}: {val}; type {self._type_dict[key]}, units {self._units_dict[key]}\n"
@@ -76,8 +76,6 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         self._data_dict[k] = v[0]
         self._units_dict[k] = v[1]
         self._type_dict[k] = v[2]
-        if k == FILE_NAME_STR:
-            self._data_dict.move_to_end(FILE_NAME_STR, False)
 
     def __delitem__(self, v: str) -> None:
         del self._data_dict[v]
@@ -138,7 +136,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
     def get_global_names(self):
         """Get names for only parameters which are not 'PerComponent.Yes'"""
         labels = list(self._data_dict.keys())
-        return [x for x in labels if self._type_dict[x] != PerComponent.Yes]
+        return [x for x in labels if self._type_dict[x][0] != PerComponent.Yes]
 
     def get_global_parameters(self):
         """Get only parameters which are not 'PerComponent.Yes'"""
@@ -361,20 +359,28 @@ class MeasurementProfile:
             if node.op == "/":
                 if isinstance(left_res, np.ndarray) and isinstance(right_res, np.ndarray) and left_area != right_area:
                     area_set = {left_area, right_area}
-                    if area_set == {AreaType.ROI, AreaType.Mask_without_ROI}:
+                    if area_set == {AreaType.ROI, AreaType.Mask_without_ROI}:  # pragma: no cover
                         raise ProhibitedDivision("This division is prohibited")
                     if area_set == {AreaType.ROI, AreaType.Mask}:
                         res = []
-                        # TODO Test this part of code
+                        reverse = False
+                        if left_area == AreaType.Mask:
+                            left_res, right_res = right_res, left_res
+                            reverse = True
                         for val, num in zip(left_res, segmentation_mask_map.segmentation_components):
                             div_vals = segmentation_mask_map.components_translation[num]
-                            if len(div_vals) != 1:
+                            if len(div_vals) != 1:  # pragma: no cover
                                 raise ProhibitedDivision("Cannot calculate when object do not belongs to one mask area")
                             if left_area == AreaType.ROI:
                                 res.append(val / right_res[div_vals[0] - 1])
                             else:
                                 res.append(right_res[div_vals[0] - 1] / val)
-                        return np.array(res), left_unit / right_unit, AreaType.ROI
+                        res = np.array(res)
+                        if reverse:
+                            res = 1 / res
+                            # TODO check this area type
+                        return res, left_unit / right_unit, AreaType.ROI
+                    # TODO check this
                     left_area = AreaType.Mask_without_ROI
 
                 return left_res / right_res, left_unit / right_unit, left_area
@@ -489,14 +495,14 @@ class MeasurementProfile:
                 if isinstance(val, np.ndarray):
                     val = list(val)
                 result[self.name_prefix + user_name] = val, str(unit).format(str(result_units)), component_and_area
-            except ZeroDivisionError:
+            except ZeroDivisionError:  # pragma: no cover
                 result[self.name_prefix + user_name] = "Div by zero", "", component_and_area
-            except TypeError:
+            except TypeError:  # pragma: no cover
                 traceback.print_exc()
                 result[self.name_prefix + user_name] = "None div", "", component_and_area
-            except AttributeError:
+            except AttributeError:  # pragma: no cover
                 result[self.name_prefix + user_name] = "No attribute", "", component_and_area
-            except ProhibitedDivision as e:
+            except ProhibitedDivision as e:  # pragma: no cover
                 result[self.name_prefix + user_name] = e.args[0], "", component_and_area
         return result
 
@@ -658,7 +664,7 @@ class Diameter(MeasurementMethodBase):
         return symbols("{}")
 
 
-class DiameterOld(MeasurementMethodBase):
+class DiameterOld(MeasurementMethodBase):  # pragma: no cover
     text_info = "Diameter old", "Diameter of area (Very slow)"
 
     @staticmethod
@@ -683,7 +689,7 @@ class PixelBrightnessSum(MeasurementMethodBase):
         if area_array.shape != channel.shape:
             if area_array.size == channel.size:
                 channel = channel.reshape(area_array.shape)
-            else:
+            else:  # pragma: no cover
                 raise ValueError("channel and mask do not fit each other")
         if np.any(area_array):
             return np.sum(channel[area_array > 0])
@@ -719,11 +725,8 @@ class MaximumPixelBrightness(MeasurementMethodBase):
 
     @staticmethod
     def calculate_property(area_array, channel, **_):
-        if area_array.shape != channel.shape:
-            if area_array.size == channel.size:
-                channel = channel.reshape(area_array.shape)
-            else:
-                raise ValueError("channel and mask do not fit each other")
+        if area_array.shape != channel.shape:  # pragma: no cover
+            raise ValueError("channel and mask do not fit each other")
         if np.any(area_array):
             return np.max(channel[area_array > 0])
         else:
@@ -743,11 +746,8 @@ class MinimumPixelBrightness(MeasurementMethodBase):
 
     @staticmethod
     def calculate_property(area_array, channel, **_):
-        if area_array.shape != channel.shape:
-            if area_array.size == channel.size:
-                channel = channel.reshape(area_array.shape)
-            else:
-                raise ValueError("channel and mask do not fit each other")
+        if area_array.shape != channel.shape:  # pragma: no cover
+            raise ValueError("channel and mask do not fit each other")
         if np.any(area_array):
             return np.min(channel[area_array > 0])
         else:
@@ -767,11 +767,8 @@ class MeanPixelBrightness(MeasurementMethodBase):
 
     @staticmethod
     def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
-        if area_array.shape != channel.shape:
-            if area_array.size == channel.size:
-                channel = channel.reshape(area_array.shape)
-            else:
-                raise ValueError("channel and mask do not fit each other")
+        if area_array.shape != channel.shape:  # pragma: no cover
+            raise ValueError("channel and mask do not fit each other")
         if np.any(area_array):
             return np.mean(channel[area_array > 0])
         else:
@@ -791,11 +788,8 @@ class MedianPixelBrightness(MeasurementMethodBase):
 
     @staticmethod
     def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
-        if area_array.shape != channel.shape:
-            if area_array.size == channel.size:
-                channel = channel.reshape(area_array.shape)
-            else:
-                raise ValueError("channel and mask do not fit each other")
+        if area_array.shape != channel.shape:  # pragma: no cover
+            raise ValueError("channel and mask do not fit each other")
         if np.any(area_array):
             return np.median(channel[area_array > 0])
         else:
@@ -818,11 +812,8 @@ class StandardDeviationOfPixelBrightness(MeasurementMethodBase):
 
     @staticmethod
     def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
-        if area_array.shape != channel.shape:
-            if area_array.size == channel.size:
-                channel = channel.reshape(area_array.shape)
-            else:
-                raise ValueError("channel and mask do not fit each other")
+        if area_array.shape != channel.shape:  # pragma: no cover
+            raise ValueError("channel and mask do not fit each other")
         if np.any(area_array):
             return np.std(channel[area_array > 0])
         else:
@@ -843,11 +834,9 @@ class Moment(MeasurementMethodBase):
     @staticmethod
     def calculate_property(area_array, channel, voxel_size, **_):  # pylint: disable=W0221
         if len(channel.shape) == 4:
-            if channel.shape[0] != 1:
+            if channel.shape[0] != 1:  # pragma: no cover
                 raise ValueError("This measurements do not support time data")
             channel = channel[0]
-        if channel.ndim != 3:
-            return None
         img = np.copy(channel)
         img[area_array == 0] = 0
         if np.all(img == 0):
@@ -979,7 +968,7 @@ class Sphericity(MeasurementMethodBase):
 
     @classmethod
     def get_units(cls, ndim):
-        return Volume.get_units(ndim) / Diameter.get_units(ndim) ** 3
+        return Volume.get_units(ndim) / Diameter.get_units(ndim) ** ndim
 
 
 class Surface(MeasurementMethodBase):
@@ -1015,7 +1004,7 @@ class RimVolume(MeasurementMethodBase):
 
     @classmethod
     def get_units(cls, ndim):
-        return symbols("{}") ** 3
+        return symbols("{}") ** ndim
 
     @staticmethod
     def area_type(area: AreaType):
@@ -1039,7 +1028,7 @@ class RimPixelBrightnessSum(MeasurementMethodBase):
     @staticmethod
     def calculate_property(channel, area_array, **kwargs):  # pylint: disable=W0221
         if len(channel.shape) == 4:
-            if channel.shape[0] != 1:
+            if channel.shape[0] != 1:  # pragma: no cover
                 raise ValueError("This measurements do not support time data")
             channel = channel[0]
         border_mask_array = BorderRim.border_mask(**kwargs)
@@ -1171,7 +1160,7 @@ class SplitOnPartVolume(MeasurementMethodBase):
 
     @classmethod
     def get_units(cls, ndim):
-        return symbols("{}") ** 3
+        return symbols("{}") ** ndim
 
     @classmethod
     def get_starting_leaf(cls):
@@ -1214,6 +1203,10 @@ class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
     def area_type(area: AreaType):
         return AreaType.ROI
 
+    @classmethod
+    def need_channel(cls):
+        return True
+
 
 def pixel_volume(spacing, result_scalar):
     return reduce((lambda x, y: x * y), [x * result_scalar for x in spacing])
@@ -1238,7 +1231,7 @@ def get_border(array):
     return SimpleITK.GetArrayFromImage(SimpleITK.LabelContour(SimpleITK.GetImageFromArray(array)))
 
 
-def calc_diam(array, voxel_size):
+def calc_diam(array, voxel_size):  # pragma: no cover
     pos = np.transpose(np.nonzero(array)).astype(np.float)
     for i, val in enumerate(voxel_size):
         pos[:, i] *= val
