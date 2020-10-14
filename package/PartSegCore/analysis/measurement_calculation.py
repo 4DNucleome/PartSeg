@@ -16,7 +16,6 @@ from ..channel_class import Channel
 from ..class_generator import enum_register
 from ..mask_partition_utils import BorderRim, MaskDistanceSplit
 from ..universal_const import UNIT_SCALE, Units
-from ..utils import class_to_dict
 from .measurement_base import AreaType, Leaf, MeasurementEntry, MeasurementMethodBase, Node, PerComponent
 
 # TODO change image to channel in signature of measurement calculate_property
@@ -281,9 +280,6 @@ class MeasurementProfile:
                 )
             )
         return res
-
-    def get_parameters(self):
-        return class_to_dict(self, *self.PARAMETERS)
 
     def is_any_mask_measurement(self):
         for el in self.chosen_fields:
