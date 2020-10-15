@@ -173,7 +173,7 @@ class CalculationProcess:
                 self.mask = project.mask[0]
             if operation == RootType.Project:
                 self.mask = project.mask[0]
-                self.segmentation = project.segmentation
+                self.segmentation = project.roi
                 self.additional_layers = project.additional_layers
                 self.history = project.history
                 self.algorithm_parameters = project.algorithm_parameters
@@ -470,6 +470,7 @@ class CalculationManager:
                         file_info = calculation.file_list[ind]
                     else:
                         file_info = "unknown file"
+                    self.writer.add_calculation_error(calculation, file_info, el[0])
                     self.errors_list.append((file_info, el))
                     new_errors.append((file_info, el))
 
@@ -556,7 +557,7 @@ class FileData:
         data.add_data([str(calculation.calculation_plan), json.dumps(calculation.calculation_plan, cls=PartEncoder)], 0)
         self.sheet_dict = {}
         self.calculation_info = {}
-        self.sheet_set = set()
+        self.sheet_set = {"Errors"}
         self.new_count = 0
         self.write_threshold = write_threshold
         self.wrote_queue = Queue()
@@ -564,6 +565,7 @@ class FileData:
         self.write_thread = threading.Thread(target=self.wrote_data_to_file)
         self.write_thread.daemon = True
         self.write_thread.start()
+        self._error_info = []
         self.add_data_part(calculation)
 
     def finished(self):
@@ -670,6 +672,10 @@ class FileData:
             self.dump_data()
             self.new_count = 0
 
+    def wrote_errors(self, file_path, error_description):
+        self.new_count += 1
+        self._error_info.append((file_path, str(error_description)))
+
     def dump_data(self):
         """
         Fire writing data to disc
@@ -681,7 +687,7 @@ class FileData:
                 if sheet is not None:
                     data.append(sheet.get_data_to_write())
         segmentation_info = [x for x in self.calculation_info.values()]
-        self.wrote_queue.put((data, segmentation_info))
+        self.wrote_queue.put((data, segmentation_info, self._error_info[:]))
 
     def wrote_data_to_file(self):
         """
@@ -690,39 +696,41 @@ class FileData:
         """
         while True:
             data = self.wrote_queue.get()
-            self.writing = True
             if data == "finish":
                 break
+            self.writing = True
             try:
                 if self.file_type == FileType.text_file:
                     base_path, ext = path.splitext(self.file_path)
                     for sheet_name, data_frame in data[0]:
                         data_frame.to_csv(base_path + "_" + sheet_name + ext)
-                else:
+                    continue
+                file_path = self.file_path
+                i = 0
+                while i < 100:
+                    i += 1
                     try:
-                        self.write_to_excel(self.file_path, data)
+                        self.write_to_excel(file_path, data)
+                        break
                     except (PermissionError, IOError):
                         base, ext = path.splitext(self.file_path)
-                        for i in range(1, 100):
-                            try:
-                                self.write_to_excel(f"{base}({i}){ext}", data)
-                                break
-                            except (PermissionError, IOError):
-                                pass
-                        else:
-                            raise PermissionError(f"Fail to write result excel {self.file_path}")
+                        file_path = f"{base}({i}){ext}"
+                if i == 100:
+                    raise PermissionError(f"Fail to write result excel {self.file_path}")
             except Exception as e:
                 logging.error(f"[batch_backend] {e}")
                 self.error_queue.put(prepare_error_data(e))
             finally:
                 self.writing = False
 
-    @staticmethod
-    def write_to_excel(file_path: str, data: Tuple[List[Tuple[str, pd.DataFrame]], List[CalculationPlan]]):
+    @classmethod
+    def write_to_excel(
+        cls, file_path: str, data: Tuple[List[Tuple[str, pd.DataFrame]], List[CalculationPlan], List[Tuple[str, str]]]
+    ):
         with pd.ExcelWriter(file_path) as writer:
             new_sheet_names = []
             ind = 0
-            sheets, plans = data
+            sheets, plans, errors = data
             for sheet_name, _ in sheets:
                 if len(sheet_name) < 32:
                     new_sheet_names.append(sheet_name)
@@ -735,30 +743,37 @@ class FileData:
                 sheet.set_column(1, 1, 10)
                 for i, (text, _unit) in enumerate(data_frame.columns[1:], start=2):
                     sheet.set_column(i, i, len(text) + 1)
-            book: xlsxwriter.Workbook = writer.book
-            for calculation_plan in plans:
-                sheet_base_name = f"info {calculation_plan.name}"[:30]
-                sheet_name = sheet_base_name
-                if sheet_name in book.sheetnames:
-                    for i in range(100):
-                        sheet_name = f"{sheet_base_name[:26]} ({i})"
-                        if sheet_name not in book.sheetnames:
-                            break
-                    else:
-                        raise ValueError(
-                            f"Name collision in sheets with information about calculation plan: {sheet_name}"
-                        )
 
-                sheet = book.add_worksheet(sheet_name)
-                cell_format = book.add_format({"bold": True})
-                sheet.write("A1", "Plan Description", cell_format)
-                sheet.write("B1", "Plan JSON", cell_format)
-                description = calculation_plan.pretty_print()
-                sheet.write("A2", description)
-                sheet.set_row(1, description.count("\n") * 12 + 10)
-                sheet.set_column(0, 0, max(map(len, description.split("\n"))))
-                sheet.set_column(1, 1, 15)
-                sheet.write("B2", json.dumps(calculation_plan, cls=PartEncoder, indent=2))
+            for calculation_plan in plans:
+                cls.write_calculation_plan(writer, calculation_plan)
+
+            if errors:
+                errors_data = pd.DataFrame(errors, columns=["File path", "error description"])
+                errors_data.to_excel(writer, "Errors")
+
+    @staticmethod
+    def write_calculation_plan(writer: pd.ExcelWriter, calculation_plan: CalculationPlan):
+        book: xlsxwriter.Workbook = writer.book
+        sheet_base_name = f"info {calculation_plan.name}"[:30]
+        sheet_name = sheet_base_name
+        if sheet_name in book.sheetnames:
+            for i in range(100):
+                sheet_name = f"{sheet_base_name[:26]} ({i})"
+                if sheet_name not in book.sheetnames:
+                    break
+            else:
+                raise ValueError(f"Name collision in sheets with information about calculation plan: {sheet_name}")
+
+        sheet = book.add_worksheet(sheet_name)
+        cell_format = book.add_format({"bold": True})
+        sheet.write("A1", "Plan Description", cell_format)
+        sheet.write("B1", "Plan JSON", cell_format)
+        description = calculation_plan.pretty_print()
+        sheet.write("A2", description)
+        sheet.set_row(1, description.count("\n") * 12 + 10)
+        sheet.set_column(0, 0, max(map(len, description.split("\n"))))
+        sheet.set_column(1, 1, 15)
+        sheet.write("B2", json.dumps(calculation_plan, cls=PartEncoder, indent=2))
 
     def get_errors(self) -> List[ErrorInfo]:
         """
@@ -821,6 +836,10 @@ class DataWriter:
         file_writer = self.file_dict[calculation.measurement_file_path]
         file_writer.wrote_data(calculation.uuid, data, ind)
         return file_writer.get_errors()
+
+    def add_calculation_error(self, calculation: BaseCalculation, file_path: str, error):
+        file_writer = self.file_dict[calculation.measurement_file_path]
+        file_writer.wrote_errors(file_path, error)
 
     def writing_finished(self) -> bool:
         """check if all data are written to disc"""
