@@ -695,27 +695,27 @@ class FileData:
         """
         while True:
             data = self.wrote_queue.get()
-            self.writing = True
             if data == "finish":
                 break
+            self.writing = True
             try:
                 if self.file_type == FileType.text_file:
                     base_path, ext = path.splitext(self.file_path)
                     for sheet_name, data_frame in data[0]:
                         data_frame.to_csv(base_path + "_" + sheet_name + ext)
-                else:
+                    continue
+                file_path = self.file_path
+                i = 0
+                while i < 100:
+                    i += 1
                     try:
-                        self.write_to_excel(self.file_path, data)
+                        self.write_to_excel(file_path, data)
+                        break
                     except (PermissionError, IOError):
                         base, ext = path.splitext(self.file_path)
-                        for i in range(1, 100):
-                            try:
-                                self.write_to_excel(f"{base}({i}){ext}", data)
-                                break
-                            except (PermissionError, IOError):
-                                pass
-                        else:
-                            raise PermissionError(f"Fail to write result excel {self.file_path}")
+                        file_path = f"{base}({i}){ext}"
+                if i == 100:
+                    raise PermissionError(f"Fail to write result excel {self.file_path}")
             except Exception as e:
                 logging.error(f"[batch_backend] {e}")
                 self.error_queue.put(prepare_error_data(e))
