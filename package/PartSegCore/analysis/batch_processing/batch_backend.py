@@ -470,7 +470,7 @@ class CalculationManager:
                         file_info = calculation.file_list[ind]
                     else:
                         file_info = "unknown file"
-                    self.writer.add_calculation_error(calculation, file_info, el)
+                    self.writer.add_calculation_error(calculation, file_info, el[0])
                     self.errors_list.append((file_info, el))
                     new_errors.append((file_info, el))
 
@@ -673,6 +673,7 @@ class FileData:
             self.new_count = 0
 
     def wrote_errors(self, file_path, error_description):
+        self.new_count += 1
         self._error_info.append((file_path, str(error_description)))
 
     def dump_data(self):
@@ -748,7 +749,7 @@ class FileData:
 
             if errors:
                 errors_data = pd.DataFrame(errors, columns=["File path", "error description"])
-                errors_data.to_excel(errors_data, "Errors")
+                errors_data.to_excel(writer, "Errors")
 
     @staticmethod
     def write_calculation_plan(writer: pd.ExcelWriter, calculation_plan: CalculationPlan):

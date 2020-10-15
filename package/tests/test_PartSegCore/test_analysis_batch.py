@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 import time
 from glob import glob
@@ -314,6 +315,51 @@ class TestCalculationProcess:
         assert df.shape == (8, 4)
         for i in range(8):
             assert os.path.basename(df.name.units[i]) == f"stack1_component{i+1}.tif"
+
+    @pytest.mark.filterwarnings("ignore:This method will be removed")
+    def test_full_pipeline_error(self, tmp_path_factory, data_test_dir, monkeypatch):
+        plan = self.create_calculation_plan()
+        data_dir = tmp_path_factory.mktemp("data")
+        file_pattern_copy = os.path.join(data_test_dir, "stack1_components", "stack1_component*.tif")
+        file_paths = sorted(glob(file_pattern_copy))
+        for el in file_paths:
+            shutil.copy(el, data_dir)
+        shutil.copy(data_dir / "stack1_component1.tif", data_dir / "stack1_component10.tif")
+        file_pattern = os.path.join(data_dir, "stack1_component*[0-9].tif")
+        file_paths = sorted(glob(file_pattern))
+        result_dir = tmp_path_factory.mktemp("result")
+
+        assert os.path.basename(file_paths[0]) == "stack1_component1.tif"
+        calc = Calculation(
+            file_paths,
+            base_prefix=str(data_dir),
+            result_prefix=str(data_dir),
+            measurement_file_path=os.path.join(result_dir, "test.xlsx"),
+            sheet_name="Sheet1",
+            calculation_plan=plan,
+            voxel_size=(1, 1, 1),
+        )
+
+        manager = CalculationManager()
+        manager.set_number_of_workers(3)
+        manager.add_calculation(calc)
+
+        while manager.has_work:
+            time.sleep(0.1)
+            manager.get_results()
+        manager.writer.finish()
+        if sys.platform == "darwin":
+            time.sleep(2)
+        else:
+            time.sleep(0.4)
+        assert os.path.exists(os.path.join(result_dir, "test.xlsx"))
+        df = pd.read_excel(os.path.join(result_dir, "test.xlsx"), index_col=0, header=[0, 1])
+        assert df.shape == (8, 4)
+        for i in range(8):
+            assert os.path.basename(df.name.units[i]) == f"stack1_component{i + 1}.tif"
+        df2 = pd.read_excel(os.path.join(result_dir, "test.xlsx"), sheet_name="Errors")
+        assert df2.shape == (1, 3)
+        str(df2.loc[0]["error description"]).startswith("[Errno 2]")
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
     def test_full_pipeline_mask_project(self, tmpdir, data_test_dir):
