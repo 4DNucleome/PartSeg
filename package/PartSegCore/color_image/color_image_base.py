@@ -95,8 +95,8 @@ def color_image_fun(
     if len(result_images) > 0:
         if len(result_images) == 1:
             return result_images[0]
-        else:
-            # TODO use ColorMap additional information
-            return np.max(result_images, axis=0)
-    else:
-        return np.zeros(new_shape, dtype=np.uint8)
+
+        # TODO use ColorMap additional information
+        return np.max(result_images, axis=0)
+
+    return np.zeros(new_shape, dtype=np.uint8)
