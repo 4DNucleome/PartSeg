@@ -173,7 +173,7 @@ class CalculationProcess:
                 self.mask = project.mask[0]
             if operation == RootType.Project:
                 self.mask = project.mask[0]
-                self.segmentation = project.segmentation
+                self.segmentation = project.roi
                 self.additional_layers = project.additional_layers
                 self.history = project.history
                 self.algorithm_parameters = project.algorithm_parameters
