@@ -8,7 +8,6 @@ from qtpy.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QListWidget,
     QListWidgetItem,
     QPushButton,
     QRadioButton,
@@ -18,6 +17,7 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
 )
 
+from PartSeg.common_gui.searchable_list_widget import SearchableListWidget
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 
@@ -28,7 +28,7 @@ class ExportDialog(QDialog):
         self.setWindowTitle("Export")
         self.export_dict = export_dict
         self.viewer = viewer()
-        self.list_view = QListWidget()
+        self.list_view = SearchableListWidget()
         self.check_state = np.zeros(len(export_dict), dtype=np.bool)
         self.check_state[...] = True
         for el in sorted(export_dict.keys()):
