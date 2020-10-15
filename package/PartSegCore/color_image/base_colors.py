@@ -107,14 +107,6 @@ class BaseColormap:
         """
         raise NotImplementedError()
 
-    def num_of_channels(self) -> int:
-        """Num of channels (RGB) used by this colormap"""
-        return len(self.non_zero_channels())
-
-    def non_zero_channels(self) -> typing.List[int]:
-        """return list with indices of nonzero channels"""
-        raise NotImplementedError()
-
     def __hash__(self):
         raise NotImplementedError()
 
@@ -141,21 +133,6 @@ class ColorMap(BaseSerializableClass, BaseColormap):
 
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.colormap == other.colormap and self.points == other.points
-
-    def non_zero_channels(self) -> typing.List[int]:
-        rm, gm, bm = 0, 0, 0
-        for el in self.colormap:
-            rm = max(rm, el.color.red)
-            gm = max(gm, el.color.green)
-            bm = max(bm, el.color.blue)
-        res = list()
-        if rm:
-            res.append(0)
-        if gm:
-            res.append(1)
-        if bm:
-            res.append(2)
-        return res
 
     def color_values(self) -> ColorInfoType:
         return tuple([x.color.as_tuple() for x in self.colormap])
@@ -187,13 +164,6 @@ class ArrayColorMap(BaseColormap):
 
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.array == other.array
-
-    def non_zero_channels(self) -> typing.List[int]:
-        res = []
-        for i in range(3):
-            if max(self.array[i]) > 0:
-                res.append(i)
-        return res
 
     def get_points(self) -> typing.Iterable[float]:
         return []

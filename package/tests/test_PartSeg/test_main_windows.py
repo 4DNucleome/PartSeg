@@ -60,7 +60,7 @@ class TestLauncherMainWindow:
         qtbot.addWidget(main_window.wind)
         count = 0
         while main_window.wind.image_view.worker_list:
-            if count > 4:
+            if count > 6:
                 info = [(x, x._func) for x in main_window.wind.image_view.worker_list]
                 raise RuntimeError(f"Problem with clean worker list {info}")
             count += 1

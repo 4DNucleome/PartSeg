@@ -22,16 +22,6 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":  # no
             return res
 
         @property
-        def is_ome2(self):
-            """Page contains OME-XML in ImageDescription tag."""
-            if self.index > 1 or not self.description:
-                return False
-            d = self.description
-            return (d[:14] == "<?xml version=" or d[:15] == "<?xml version =") and (
-                d[-6:] == "</OME>" or d[-10:] == "</OME:OME>"
-            )
-
-        @property
         def is_ome(self):
             """Page contains OME-XML in ImageDescription tag."""
             if self.index > 1 or not self.description:
@@ -45,7 +35,7 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":  # no
     TiffFile.report_func = lambda x: 0
     tifffile.tifffile.TiffPage = MyTiffPage
 
-    if packaging.version.parse(tifffile.__version__) <= packaging.version.parse("2019.7.26"):
+    if packaging.version.parse(tifffile.__version__) <= packaging.version.parse("2019.7.26"):  # pragma: no cover
         asbool = tifffile.tifffile.asbool
 
         def _xml2dict(xml, sanitize=True, prefix=None):

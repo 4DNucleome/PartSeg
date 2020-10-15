@@ -72,6 +72,18 @@ class TestImageClass:
         GenericImageReader.read_image(os.path.join(data_test_dir, "Image0003_01.oif"))
         GenericImageReader.read_image(os.path.join(data_test_dir, "N2A_H2BGFP_dapi_falloidin_cycling1.oib"))
 
+    def test_decode_int(self):
+        assert TiffImageReader.decode_int(0) == [0, 0, 0, 0]
+        assert TiffImageReader.decode_int(15) == [0, 0, 0, 15]
+        assert TiffImageReader.decode_int(3 + 7 * 256 + 11 * 256 ** 2 + 13 * 256 ** 3) == [13, 11, 7, 3]
+
+    def test_set_spacing(self):
+        reader = TiffImageReader()
+        reader.set_default_spacing((11, 12, 13))
+        assert reader.default_spacing == (11, 12, 13)
+        reader.set_default_spacing((5, 7))
+        assert reader.default_spacing == (10 ** -6, 5, 7)
+
 
 class CustomImage(Image):
     axis_order = "TCXYZ"

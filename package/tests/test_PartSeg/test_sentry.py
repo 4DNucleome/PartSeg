@@ -122,3 +122,11 @@ def test_numpy_array_serialize(monkeypatch, dtype):
     monkeypatch.setattr(sentry_sdk.serializer, "safe_repr", safe_repr)
     res = serialize(arr)
     assert res == f"array(size={arr.size}, shape={arr.shape}, dtype={arr.dtype}, min={arr.min()}, max={arr.max()})"
+
+
+def test_small_numpy_serialize(monkeypatch):
+    arr = np.zeros(10, dtype=np.uint8)
+    arr[1] = 10
+    monkeypatch.setattr(sentry_sdk.serializer, "safe_repr", safe_repr)
+    res = serialize(arr)
+    assert res == str(res)

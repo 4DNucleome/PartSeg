@@ -42,7 +42,7 @@ class ProfileDict:
     """
 
     def __init__(self):
-        self.my_dict = dict()
+        self.my_dict = {}
 
     def update(self, ob: typing.Union["ProfileDict", dict, None] = None, **kwargs):
         """
@@ -73,6 +73,7 @@ class ProfileDict:
 
         for i, key in enumerate(key_path[:-1]):
             try:
+                # TODO add check if next step element is dict and create custom information
                 curr_dict = curr_dict[key]
             except KeyError:
                 for key2 in key_path[i:-1]:
@@ -114,6 +115,8 @@ class ProfileDict:
     def filter_data(self):
         error_list = []
         for group, up_dkt in list(self.my_dict.items()):
+            if not isinstance(up_dkt, dict):
+                continue
             for key, dkt in list(up_dkt.items()):
                 if not check_loaded_dict(dkt):
                     error_list.append(f"{group}.{key}")
