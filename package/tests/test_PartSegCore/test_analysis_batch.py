@@ -357,8 +357,8 @@ class TestCalculationProcess:
         assert df.shape == (8, 4)
         for i in range(8):
             assert os.path.basename(df.name.units[i]) == f"stack1_component{i + 1}.tif"
-        df2 = pd.read_excel(os.path.join(result_dir, "test.xlsx"), sheet_name="Errors")
-        assert df2.shape == (1, 3)
+        df2 = pd.read_excel(os.path.join(result_dir, "test.xlsx"), sheet_name="Errors", index_col=0)
+        assert df2.shape == (1, 2)
         str(df2.loc[0]["error description"]).startswith("[Errno 2]")
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
