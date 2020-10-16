@@ -53,7 +53,7 @@ def h_line():
     return toto
 
 
-class AdvancedSettings(QWidget):
+class Properties(QWidget):
     def __init__(self, settings: PartSettings):
         super().__init__()
         self._settings = settings
@@ -142,12 +142,12 @@ class AdvancedSettings(QWidget):
             self.info_label.setPlainText("")
             return
         try:
-            if self.sender() == self.profile_list:
+            if self.sender() == self.profile_list.list_widget:
                 profile = self._settings.segmentation_profiles[text]
                 self.pipeline_list.selectionModel().clear()
                 self.delete_btn.setText("Delete profile")
                 self.rename_btn.setText("Rename profile")
-            elif self.sender() == self.pipeline_list:
+            elif self.sender() == self.pipeline_list.list_widget:
                 profile = self._settings.segmentation_pipelines[text]
                 self.profile_list.selectionModel().clear()
                 self.delete_btn.setText("Delete pipeline")
@@ -814,7 +814,7 @@ class SegAdvancedWindow(AdvancedWindow):
         else:
             self.reload_list = []
         self.setWindowTitle("Settings and Measurement")
-        self.advanced_settings = AdvancedSettings(settings)
+        self.advanced_settings = Properties(settings)
         # self.colormap_settings = ColorSelector(settings, ["result_control"])
         self.measurement = MeasurementWidget(settings)
         self.measurement_settings = MeasurementSettings(settings)
