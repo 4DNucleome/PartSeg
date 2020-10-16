@@ -176,7 +176,7 @@ At the end established settings profile is used to measure features of nuclei an
 ## Appendix
 
 ### How to translate this data analysis to batch processing 
-[link](link) 
+[link](../tutorial-batch-processing/tutorial-batch.md) 
 
 ### Chromosome 1 dataset
 Data set contains 5 original 3D confocal images of chromosome 1 FISH. Data contains 2 channels: channel 1 represents DNA staining and channel 2- chromosome paint probe. Voxel size of the whole data set is 77.52x77.52x210 nm.
