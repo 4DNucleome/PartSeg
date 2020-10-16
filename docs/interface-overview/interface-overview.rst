@@ -142,10 +142,10 @@ Bottons visible in the top row of the main window:
 
 
 
-    .. image::  images/main_window_exec.png
+    .. image:: images/main_window_exec.png
        :alt: Main Roi Analysis GUI
 
-       Settings of segmentation parameters are avaliable on the right side of the main "ROI Analysis" window
+    Settings of segmentation parameters are available on the right side of the main "ROI Analysis" window
 
 
 7.  Saves the current pipeline, which is a sequence of segmentation and masking operations.
@@ -159,7 +159,7 @@ Bottons visible in the top row of the main window:
 
 4.  `Segmentation parameters`_ - This panel is used to set parameters of segmentation
 
-Two chcekboxes placed below the`Segmentation parameters`_ :
+Two checkboxes placed below the`Segmentation parameters`_ :
 
 *   **Hide left panel** - Enables hiding of the left panel. Useful for the tight screen.
 *   **Synchronize view** - Enables synchronization of Zoom, layer, and X, Y position for both `Image view`_ panels
@@ -183,8 +183,8 @@ The third option is to save the current work as a project. Project will contain:
 * All masks and segmentations created in between.
 
 Settings and Measurement
-~~~~~~~~~~~
-This botton enables popup window with 4 tabs: Properties, Color control, Measurements settings, Measurements
+~~~~~~~~~~~~~~~~~~~~~~~~
+This bottom enables popup window with 4 tabs: Properties, Color control, Measurements settings, Measurements
 
 
 
@@ -403,13 +403,14 @@ The zoom of the image can be also changed by Ctrl+Mouse scroll.
 
 1.  Reset Zoom.
 2.  Change to 3D rendering.
-3.  Channel view control. Only Channels with a selected checkbox are visible. `Color map`_ for the current channel
+3.  Side view (support right click)
+4.  Channel view control. Only Channels with a selected checkbox are visible. `Color map`_ for the current channel
     can be selected when clicking in the triangle in the upper right corner
     |channel_select|. This triangle is visible when the mouse is over the widget.
-4.  Mark segmentation only by borders or by masking the whole area.
-5.  Set the opacity of segmentation marking.
-6.  Mark mask visible.
-7.  Control which layer is visible.
+5.  Mark segmentation only by borders or by masking the whole area.
+6.  Set the opacity of segmentation marking.
+7.  Mark mask visible.
+8.  Control which layer is visible.
     If the image contains time data, then a similar
     slider will be visible on the left part of the image.
 
