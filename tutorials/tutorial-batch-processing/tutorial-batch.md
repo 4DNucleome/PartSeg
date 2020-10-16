@@ -86,7 +86,9 @@ Zdjęcie panelu z zanaczonymi miejscami z tekstu
 
 ## Data curation
  
- animowany gif?
+ [![batch load example](https://img.youtube.com/vi/71J3KG_Zeao/0.jpg)](https://www.youtube.com/watch?v=71J3KG_Zeao)
+ 
+(click to open video)
 
 
 1. In case some errors are detected during batch processing, a list of files and descriptions of errors appears in the bottom left panel (8). 
