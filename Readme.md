@@ -17,7 +17,7 @@ PartSeg is gui and library for segmentation algorithms.
 This application is designed to help biologist with segmentation
 based on threshold and connected components
 
-![interface](images/analysis_gui.png)
+![interface](images/roi_analysis.png)
 
 ## Tutorials
 -   Tutorial: **Chromosome 1 (as gui)** [link](https://4dnucleome.cent.uw.edu.pl/PartSeg/tutorials/tutorial_chromosome_1/)
@@ -62,11 +62,11 @@ Launcher. Chose program that you will launch:
 
 Main window of Segmentation Analysis:
 
-![interface](images/analysis_gui.png)
+![interface](images/roi_analysis.png)
 
 Main window of Segmentation Analysis with view on measurement result:
 
-![interface](images/analysis_gui2.png)
+![interface](images/roi_analysis2.png)
 
 Window for creating set of measurements:
 
@@ -74,7 +74,7 @@ Window for creating set of measurements:
 
 Main window of Mask Segmentation:
 
-![mask interface](images/mask_gui.png)
+![mask interface](images/roi_mask.png)
 
 ## Laboratory
 Laboratory of functional and structural genomics
