@@ -121,7 +121,6 @@ stages:
           displayName: "install libs"
         - template: .azure-pipelines/tests.yaml
 
-
   - stage: Builds
     dependsOn: Tests
     variables:

@@ -39,6 +39,7 @@ from PartSegData import icons_dir
 
 from ..common_gui.custom_save_dialog import FormDialog
 from ..common_gui.lock_checkbox import LockCheckBox
+from ..common_gui.searchable_list_widget import SearchableListWidget
 from ..common_gui.universal_gui_part import EnumComboBox
 from .measurement_widget import MeasurementWidget
 from .partseg_settings import PartSettings
@@ -76,9 +77,9 @@ class AdvancedSettings(QWidget):
         self.voxel_size_label = QLabel()
         self.info_label = QPlainTextEdit()
         self.info_label.setReadOnly(True)
-        self.profile_list = QListWidget()
+        self.profile_list = SearchableListWidget()
         self.profile_list.currentTextChanged.connect(self.profile_chosen)
-        self.pipeline_list = QListWidget()
+        self.pipeline_list = SearchableListWidget()
         self.pipeline_list.currentTextChanged.connect(self.profile_chosen)
         self.spacing = [QDoubleSpinBox() for _ in range(3)]
         self.lock_spacing = LockCheckBox()
@@ -355,8 +356,8 @@ class MeasurementSettings(QWidget):
     :type settings: Settings
     """
 
-    def __init__(self, settings: PartSettings):
-        super(MeasurementSettings, self).__init__()
+    def __init__(self, settings: PartSettings, parent=None):
+        super().__init__(parent)
         self.chosen_element: Optional[MeasurementListWidgetItem] = None
         self.chosen_element_area: Optional[Tuple[AreaType, float]] = None
         self.settings = settings

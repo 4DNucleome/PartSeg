@@ -26,7 +26,6 @@ idna==2.10                # via requests
 imagecodecs==2020.5.30    # via -r requirements_pyinstaller.in
 imageio==2.9.0            # via napari, napari-svg
 imagesize==1.2.0          # via sphinx
-importlib-metadata==2.0.0  # via napari, napari-plugin-engine
 ipykernel==5.3.4          # via napari, qtconsole
 ipython-genutils==0.2.0   # via qtconsole, traitlets
 ipython==7.18.1           # via ipykernel, napari
@@ -56,13 +55,12 @@ prompt-toolkit==3.0.7     # via ipython
 psutil==5.7.2             # via napari
 ptyprocess==0.6.0         # via pexpect
 pygments==2.7.1           # via ipython, qtconsole, sphinx
-pyinstaller-hooks-contrib==2020.8  # via pyinstaller
 pyinstaller==3.6          # via -r requirements_pyinstaller.in
 pyopengl-accelerate==3.1.5  # via -r requirements_pyinstaller.in
 pyopengl==3.1.5           # via napari
 pyparsing==2.4.7          # via packaging
 pyqt5-sip==12.8.1         # via pyqt5
-pyqt5==5.14.2             # via -r requirements_pyinstaller.in
+pyqt5==5.15.1             # via -r requirements_pyinstaller.in
 python-dateutil==2.8.1    # via jupyter-client, pandas
 pytz==2020.1              # via babel, pandas
 pyyaml==5.3.1             # via dask, napari
@@ -94,7 +92,6 @@ wcwidth==0.2.5            # via prompt-toolkit
 wrapt==1.12.1             # via napari
 xlrd==1.2.0               # via -r requirements_pyinstaller.in
 xlsxwriter==1.3.6         # via -r requirements_pyinstaller.in
-zipp==3.2.0               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

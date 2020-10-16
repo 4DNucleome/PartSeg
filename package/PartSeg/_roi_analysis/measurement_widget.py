@@ -10,7 +10,6 @@ from qtpy.QtWidgets import (
     QApplication,
     QBoxLayout,
     QCheckBox,
-    QComboBox,
     QHBoxLayout,
     QLabel,
     QMessageBox,
@@ -25,6 +24,7 @@ from PartSeg.common_backend.progress_thread import ExecuteFunctionThread
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile, MeasurementResult
 from PartSegCore.universal_const import Units
 
+from ..common_gui.searchable_combo_box import SearchCombBox
 from ..common_gui.universal_gui_part import ChannelComboBox, EnumComboBox
 from ..common_gui.waiting_dialog import WaitingDialog
 from .partseg_settings import PartSettings
@@ -157,9 +157,9 @@ class MeasurementWidget(QWidget):
         self.horizontal_measurement_present.stateChanged.connect(self.refresh_view)
         self.expand_mode.stateChanged.connect(self.refresh_view)
         self.copy_button.clicked.connect(self.copy_to_clipboard)
-        self.measurement_type = QComboBox(self)
+        self.measurement_type = SearchCombBox(self)
         # noinspection PyUnresolvedReferences
-        self.measurement_type.currentTextChanged.connect(self.measurement_profile_selection_changed)
+        self.measurement_type.currentIndexChanged.connect(self.measurement_profile_selection_changed)
         self.measurement_type.addItem("<none>")
         self.measurement_type.addItems(list(sorted(self.settings.measurement_profiles.keys())))
         self.measurement_type.setToolTip(
@@ -197,7 +197,7 @@ class MeasurementWidget(QWidget):
         self.butt_layout3.addWidget(self.units_choose)
         # self.butt_layout3.addWidget(QLabel("Noise removal:"))
         # self.butt_layout3.addWidget(self.noise_removal_method)
-        self.butt_layout3.addWidget(QLabel("Profile:"))
+        self.butt_layout3.addWidget(QLabel("Measurement set:"))
         self.butt_layout3.addWidget(self.measurement_type, 2)
         v_butt_layout.addLayout(self.up_butt_layout)
         v_butt_layout.addLayout(self.butt_layout)
@@ -236,7 +236,8 @@ class MeasurementWidget(QWidget):
     def image_changed(self, channels_num):
         self.channels_chose.change_channels_num(channels_num)
 
-    def measurement_profile_selection_changed(self, text):
+    def measurement_profile_selection_changed(self, index):
+        text = self.measurement_type.itemText(index)
         text = self.check_if_measurement_can_be_calculated(text)
         try:
             stat = self.settings.measurement_profiles[text]

@@ -244,7 +244,6 @@ class BatchWorker:
                     logging.warning("Unsupported exception {}".format(ex))
             else:
                 time.sleep(0.1)
-                continue
         logging.info("Process {} ended".format(os.getpid()))
 
 

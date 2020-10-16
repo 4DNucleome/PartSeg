@@ -130,6 +130,20 @@ class TestCreateColorMap:
         assert np.sum(np.bincount(img[0, :, 0]) != 2) < 1
 
 
+def test_color_add_sub():
+    color1 = Color(128, 0, 0)
+    color2 = Color(0, 128, 0)
+    color3 = Color(128, 128, 0)
+    assert color1 + color2 == color3
+    assert color3 - color1 == color2
+    assert color1 + 10 == Color(138, 10, 10)
+    assert Color(50, 60, 80) - 20 == Color(30, 40, 60)
+    with pytest.raises(ValueError):
+        color1 + (10, 10, 10)
+    with pytest.raises(ValueError):
+        color1 - (10, 10, 10)
+
+
 class TestArrayColorMap:
     def test_base(self):
         res = create_color_map(inferno)

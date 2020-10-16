@@ -169,6 +169,10 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
             return self.image.get_data_by_axis(c=channel_idx)
         if self.image.shape[self.image.time_pos] != 1:
             raise ValueError("This algorithm do not support time data")
+        if self.image.channels <= channel_idx:
+            raise SegmentationException(
+                f"Image {self.image} has only {self.image.channels} when requested channel {channel_idx}"
+            )
         return self.image.get_data_by_axis(c=channel_idx, t=0)
 
     def set_image(self, image):

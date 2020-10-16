@@ -59,33 +59,6 @@ def create_color_map(colormap_definition: BaseColormap, power: float = 1.0) -> n
     return colormap
 
 
-def color_chanel(cmap, chanel, max_val, min_val):
-    cmap0 = cmap[:, 0]
-    cmap1 = cmap[:, 1]
-    cmap2 = cmap[:, 2]
-    range_val = max_val - min_val
-    norm_factor = range_val / 255.0
-    temp_image = np.zeros(chanel.shape + (3,), dtype=np.uint8)
-
-    def _norm_array0(x):
-        return cmap0[x]
-
-    def _norm_array1(x):
-        return cmap1[x]
-
-    def _norm_array2(x):
-        return cmap2[x]
-
-    vec_norm_array0 = np.vectorize(_norm_array0, otypes=[np.uint8])
-    vec_norm_array1 = np.vectorize(_norm_array1, otypes=[np.uint8])
-    vec_norm_array2 = np.vectorize(_norm_array2, otypes=[np.uint8])
-    normed_image = (chanel - min_val / norm_factor).astype(np.uint8)
-    temp_image[..., 0] = vec_norm_array0(normed_image)
-    temp_image[..., 1] = vec_norm_array1(normed_image)
-    temp_image[..., 2] = vec_norm_array2(normed_image)
-    return temp_image
-
-
 def color_image_fun(
     image: np.ndarray,
     colors: typing.List[typing.Union[BaseColormap, np.ndarray]],
@@ -122,8 +95,8 @@ def color_image_fun(
     if len(result_images) > 0:
         if len(result_images) == 1:
             return result_images[0]
-        else:
-            # TODO use ColorMap additional information
-            return np.max(result_images, axis=0)
-    else:
-        return np.zeros(new_shape, dtype=np.uint8)
+
+        # TODO use ColorMap additional information
+        return np.max(result_images, axis=0)
+
+    return np.zeros(new_shape, dtype=np.uint8)

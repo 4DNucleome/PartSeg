@@ -271,6 +271,9 @@ class TestImageBase:
         with pytest.raises(TypeError):
             # noinspection PyTypeChecker
             image.set_spacing(1)
+        image.set_spacing((1, 0, 4))
+        assert image.spacing == (1, 2, 3)
+        assert image.voxel_size == (1, 2, 3)
 
     def test_spacing_2d(self):
         image = self.image_class(np.zeros((1, 1, 20, 30, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC")
@@ -295,6 +298,19 @@ class TestImageBase:
         im = image.cut_image(mask == 2, replace_mask=True)
         assert np.all(im.mask[:, 1:-1, 1:-1, 1:-1] == 1)
         assert im.shape == self.image_shape((1, 8, 9, 28, 3), axes="TZYXC")
+
+        # Test cutting with list of slices
+        points = np.nonzero(mask == 2)
+        lower_bound = np.min(points, axis=1)
+        upper_bound = np.max(points, axis=1)
+        cut_list = [slice(x, y + 1) for x, y in zip(lower_bound, upper_bound)]
+        res = image.cut_image(cut_list)
+        shape = [y - x + 1 for x, y in zip(lower_bound, upper_bound)]
+        shape.insert(image.channel_pos, 3)
+        shape[image.x_pos] += 2
+        shape[image.y_pos] += 2
+        shape[image.stack_pos] += 2
+        assert res.shape == tuple(shape)
 
     def test_get_ranges(self):
         data = np.zeros((1, 10, 20, 30, 3), np.uint8)
@@ -332,6 +348,15 @@ class TestImageBase:
         assert read_image.get_um_spacing() == (1, 1, 1)
         assert len(read_image.get_ranges()) == 3
         assert read_image.get_ranges() == [(0, 2), (0, 20), (0, 9)]
+
+    def test_axes_pos(self):
+        data = np.zeros((10, 10), np.uint8)
+        image = self.image_class(data, (1, 1), axes_order="XY")
+        assert image.x_pos == image.axis_order.index("X")
+        assert image.y_pos == image.axis_order.index("Y")
+        assert image.time_pos == image.axis_order.index("T")
+        assert image.stack_pos == image.axis_order.index("Z")
+        assert image.channel_pos == image.axis_order.index("C")
 
 
 class ChangeChannelPosImage(Image):

@@ -11,7 +11,6 @@ import sentry_sdk
 from qtpy.QtCore import QByteArray, Qt, QTimer
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
-    QComboBox,
     QDialog,
     QFileDialog,
     QGridLayout,
@@ -43,6 +42,7 @@ from PartSegData import icons_dir
 from .. import parsed_version
 from ..common_gui.custom_save_dialog import SaveDialog
 from ..common_gui.error_report import ExceptionList, ExceptionListItem
+from ..common_gui.searchable_combo_box import SearchCombBox
 from ..common_gui.select_multiple_files import AddFiles
 from ..common_gui.universal_gui_part import Spacing, right_label
 from .partseg_settings import PartSettings
@@ -200,7 +200,7 @@ class FileChoose(QWidget):
         self.progress = ProgressView(self, batch_manager)
         self.run_button = QPushButton("Process")
         self.run_button.setDisabled(True)
-        self.calculation_choose = QComboBox()
+        self.calculation_choose = SearchCombBox()
         self.calculation_choose.addItem("<no workflow>")
         self.calculation_choose.currentIndexChanged[str].connect(self.change_situation)
         self.result_file = QLineEdit(self)

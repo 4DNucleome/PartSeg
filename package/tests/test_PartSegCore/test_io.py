@@ -14,10 +14,12 @@ import pytest
 import tifffile
 
 from PartSegCore import UNIT_SCALE, Units
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import ProjectTuple
+from PartSegCore.analysis.calculation_plan import CalculationPlan, MaskSuffix, MeasurementCalculate
 from PartSegCore.analysis.load_functions import LoadProject, UpdateLoadedMetadataAnalysis
 from PartSegCore.analysis.measurement_base import Leaf, MeasurementEntry
-from PartSegCore.analysis.measurement_calculation import MeasurementProfile
+from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile
 from PartSegCore.analysis.save_functions import SaveAsNumpy, SaveAsTiff, SaveCmap, SaveProject, SaveXYZ
 from PartSegCore.analysis.save_hooks import PartEncoder, part_hook
 from PartSegCore.class_generator import enum_register
@@ -159,6 +161,22 @@ class TestJsonLoad:
         assert isinstance(mp.chosen_fields[0].calculation_tree, Leaf)
         assert mp.chosen_fields[0].calculation_tree.name == "Pixel brightness sum"
         assert mp.chosen_fields[1].calculation_tree.name == "Components number"
+
+    def test_load_workflow(self, bundle_test_dir):
+        data = UpdateLoadedMetadataAnalysis.load_json_data(os.path.join(bundle_test_dir, "workflow.json"))
+        plan = data["workflow"]
+        assert isinstance(plan, CalculationPlan)
+        mask_step = plan.execution_tree.children[0]
+        assert isinstance(mask_step.operation, MaskSuffix)
+        segmentation_step = mask_step.children[0]
+        assert isinstance(segmentation_step.operation, ROIExtractionProfile)
+        measurement_step = segmentation_step.children[0]
+        assert isinstance(measurement_step.operation, MeasurementCalculate)
+        assert measurement_step.children == []
+        measurement_profile = measurement_step.operation.measurement_profile
+        assert isinstance(measurement_profile, MeasurementProfile)
+        for entry in measurement_profile.chosen_fields:
+            assert entry.calculation_tree.name in MEASUREMENT_DICT
 
 
 class TestSegmentationMask:

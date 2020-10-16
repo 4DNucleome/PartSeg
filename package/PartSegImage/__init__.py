@@ -16,6 +16,6 @@ __all__ = (
     "GenericImageReader",
 )
 
-if os.path.basename(sys.argv[0]) in ["sphinx-build", "sphinx-build.exe"]:
+if os.path.basename(sys.argv[0]) in ["sphinx-build", "sphinx-build.exe"]:  # pragma: no cover
     for el in __all__:
         globals()[el].__module__ = __name__

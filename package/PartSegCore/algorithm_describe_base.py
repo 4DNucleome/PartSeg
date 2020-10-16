@@ -247,13 +247,13 @@ class ROIExtractionProfile:
             return str(self)
         if self.name == "" or self.name == "Unknown":
             return (
-                "Segmentation profile\nAlgorithm: "
+                "ROI extraction profile\nAlgorithm: "
                 + self.algorithm
                 + "\n"
                 + self._pretty_print(self.values, algorithm.get_fields_dict())
             )
         return (
-            "Segmentation profile name: "
+            "ROI extraction profile name: "
             + self.name
             + "\nAlgorithm: "
             + self.algorithm
