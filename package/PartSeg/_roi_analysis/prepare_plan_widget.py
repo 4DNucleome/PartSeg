@@ -304,9 +304,7 @@ class CreatePlan(QWidget):
         self.chose_profile_btn = QPushButton("Add Profile")
         self.get_big_btn = QPushButton("Leave the biggest")
         self.get_big_btn.hide()
-        self.add_new_segmentation_btn = QPushButton("Add new profile")
         self.get_big_btn.setDisabled(True)
-        self.add_new_segmentation_btn.setDisabled(True)
         self.measurements_list = SearchableListWidget(self)
         self.measurement_name_prefix = QLineEdit(self)
         self.add_calculation_btn = QPushButton("Add measurement calculation")
@@ -350,7 +348,7 @@ class CreatePlan(QWidget):
         lay = QVBoxLayout()
         lay.addWidget(self.plan)
         bt_lay = QGridLayout()
-        bt_lay.setSpacing(0)
+        bt_lay.setSpacing(1)
         bt_lay.addWidget(self.save_plan_btn, 0, 0)
         bt_lay.addWidget(self.clean_plan_btn, 0, 1)
         bt_lay.addWidget(self.remove_btn, 1, 0)
@@ -377,7 +375,7 @@ class CreatePlan(QWidget):
         self.mask_stack = QTabWidget()
 
         self.mask_stack.addTab(stretch_widget(self.file_mask), "File")
-        self.mask_stack.addTab(stretch_widget(self.segmentation_mask), "Current segmentation")
+        self.mask_stack.addTab(stretch_widget(self.segmentation_mask), "Current ROI")
         self.mask_stack.addTab(stretch_widget(self.mask_operation), "Operations on masks")
         self.mask_stack.setTabToolTip(2, "Allows to create mask which is based on masks previously added to plan.")
 
@@ -392,14 +390,13 @@ class CreatePlan(QWidget):
         lay.addWidget(self.generate_mask_btn, 2, 0, 1, 2)
         mask_box.setLayout(lay)
 
-        segment_box = QGroupBox("Segmentation:")
+        segment_box = QGroupBox("ROI extraction:")
         segment_box.setStyleSheet(group_sheet)
         lay = QVBoxLayout()
         lay.setSpacing(0)
         lay.addWidget(self.segment_stack)
         lay.addWidget(self.chose_profile_btn)
         lay.addWidget(self.get_big_btn)
-        lay.addWidget(self.add_new_segmentation_btn)
         segment_box.setLayout(lay)
 
         measurement_box = QGroupBox("Set of measurements:")
@@ -710,7 +707,10 @@ class CreatePlan(QWidget):
         measurement_copy.name_prefix = prefix
         # noinspection PyTypeChecker
         measurement_calculate = MeasurementCalculate(
-            channel=channel, statistic_profile=measurement_copy, name_prefix=prefix, units=self.units_choose.get_value()
+            channel=channel,
+            measurement_profile=measurement_copy,
+            name_prefix=prefix,
+            units=self.units_choose.get_value(),
         )
         if self.update_element_chk.isChecked():
             self.calculation_plan.replace_step(measurement_calculate)
@@ -1034,7 +1034,7 @@ class CalculateInfo(QWidget):
         self.import_plans_btn = QPushButton("Import")
         info_layout = QVBoxLayout()
         info_butt_layout = QGridLayout()
-        info_butt_layout.setSpacing(0)
+        info_butt_layout.setSpacing(1)
         info_butt_layout.addWidget(self.delete_plan_btn, 1, 1)
         info_butt_layout.addWidget(self.edit_plan_btn, 0, 1)
         info_butt_layout.addWidget(self.export_plans_btn, 1, 0)

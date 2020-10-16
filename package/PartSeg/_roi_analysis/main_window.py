@@ -583,6 +583,7 @@ class MainWindow(BaseMainWindow):
         self.batch_window = None  # BatchWindow(self.settings)
 
         self.multiple_files = MultipleFileWidget(self.settings, load_functions.load_dict, True)
+        self.multiple_files.setVisible(self.settings.get("multiple_files_widget", False))
 
         if initial_image is None:
             reader = TiffImageReader()
