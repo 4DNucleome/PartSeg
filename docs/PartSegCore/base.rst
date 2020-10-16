@@ -62,9 +62,9 @@ On this page there are described base classes of PartSegCore module
    :members:
    :show-inheritance:
 
-.segmentaton_info
+.roi_info
 ~~~~~~~~~~~~~~~~~
 
-.. automodule:: PartSegCore.segmentation_info
+.. automodule:: PartSegCore.roi_info
    :members:
    :show-inheritance:
