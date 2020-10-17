@@ -29,7 +29,8 @@ class TestProperties:
         assert widget.profile_list.count() == 2
         assert widget.pipeline_list.count() == 1
         assert widget.info_label.toPlainText() == ""
-        widget.profile_list.setCurrentRow(1)
+        with qtbot.waitSignal(widget.profile_list.currentItemChanged, timeout=10 ** 4):
+            widget.profile_list.setCurrentRow(1)
         profile = part_settings.segmentation_profiles[widget.profile_list.item(1).text()]
         assert widget.info_label.toPlainText() == profile.pretty_print(analysis_algorithm_dict)
         widget.pipeline_list.setCurrentRow(0)
@@ -42,8 +43,10 @@ class TestProperties:
         qtbot.addWidget(widget)
         widget.update_profile_list()
         assert widget.profile_list.count() == 2
-        widget.profile_list.setCurrentRow(0)
-        widget.delete_btn.click()
+        with qtbot.waitSignal(widget.profile_list.currentItemChanged, timeout=10 ** 4):
+            widget.profile_list.setCurrentRow(0)
+        with qtbot.waitSignal(widget.delete_btn.clicked):
+            widget.delete_btn.click()
         assert len(part_settings.segmentation_profiles) == 1
         assert lower_threshold_profile.name in part_settings.segmentation_profiles
 
