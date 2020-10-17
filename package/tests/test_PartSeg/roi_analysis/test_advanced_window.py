@@ -45,6 +45,7 @@ class TestProperties:
         assert widget.profile_list.count() == 2
         with qtbot.waitSignal(widget.profile_list.currentItemChanged, timeout=10 ** 4):
             widget.profile_list.setCurrentRow(0)
+        assert widget.delete_btn.isEnabled()
         with qtbot.waitSignal(widget.delete_btn.clicked):
             widget.delete_btn.click()
         assert len(part_settings.segmentation_profiles) == 1
