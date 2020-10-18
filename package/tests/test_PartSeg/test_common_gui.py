@@ -1,6 +1,8 @@
+import platform
 from enum import Enum
 
 import pytest
+import qtpy
 from qtpy.QtWidgets import QWidget
 
 from PartSeg.common_gui import select_multiple_files
@@ -185,6 +187,7 @@ class TestEqualColumnLayout:
         assert widget.layout().count() == 1
         assert widget.layout().takeAt(2) is None
 
+    @pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
     def test_geometry(self, qtbot):
         widget = _TestWidget()
         qtbot.addWidget(widget)
@@ -198,6 +201,7 @@ class TestEqualColumnLayout:
         assert w1.width() == 100
         widget.hide()
 
+    @pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
     def test_hidden_widget(self, qtbot):
         widget = _TestWidget()
         qtbot.addWidget(widget)
