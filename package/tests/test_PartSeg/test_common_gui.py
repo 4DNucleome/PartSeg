@@ -1,8 +1,10 @@
 from enum import Enum
 
 import pytest
+from qtpy.QtWidgets import QWidget
 
 from PartSeg.common_gui import select_multiple_files
+from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
 from PartSegCore.analysis.calculation_plan import MaskSuffix
 
@@ -148,3 +150,65 @@ class TestAddFiles:
 
         with qtbot.waitSignal(part_settings.request_load_files, check_params_cb=check_res2):
             widget._load_file_with_mask(mapper)
+
+
+class _TestWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setLayout(EqualColumnLayout())
+
+
+class TestEqualColumnLayout:
+    def test_add(self, qtbot):
+        widget = _TestWidget()
+        qtbot.addWidget(widget)
+        w1 = QWidget()
+        w2 = QWidget()
+        widget.layout().addWidget(w1)
+        assert widget.layout().count() == 1
+        widget.layout().addWidget(w2)
+        assert widget.layout().count() == 2
+        assert widget.layout().itemAt(1).widget() == w2
+        assert widget.layout().itemAt(0).widget() == w1
+        assert widget.layout().itemAt(2) is None
+
+    def test_remove_item(self, qtbot):
+        widget = _TestWidget()
+        qtbot.addWidget(widget)
+        w1 = QWidget()
+        w2 = QWidget()
+        widget.layout().addWidget(w1)
+        widget.layout().addWidget(w2)
+        assert widget.layout().count() == 2
+        assert widget.layout().takeAt(0).widget() == w1
+        assert widget.layout().itemAt(0).widget() == w2
+        assert widget.layout().count() == 1
+        assert widget.layout().takeAt(2) is None
+
+    def test_geometry(self, qtbot):
+        widget = _TestWidget()
+        qtbot.addWidget(widget)
+        w1 = QWidget()
+        w2 = QWidget()
+        widget.layout().addWidget(w1)
+        widget.layout().addWidget(w2)
+        widget.show()
+        widget.resize(200, 200)
+        assert widget.width() == 200
+        assert w1.width() == 100
+        widget.hide()
+
+    def test_hidden_widget(self, qtbot):
+        widget = _TestWidget()
+        qtbot.addWidget(widget)
+        w1 = QWidget()
+        w2 = QWidget()
+        w3 = QWidget()
+        widget.layout().addWidget(w1)
+        widget.layout().addWidget(w2)
+        widget.layout().addWidget(w3)
+        w2.hide()
+        widget.show()
+        widget.resize(200, 200)
+        assert w1.width() == 100
+        widget.hide()
