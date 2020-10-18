@@ -134,7 +134,7 @@ class Properties(QWidget):
     def multiple_files_visibility(self, val: int):
         self._settings.set("multiple_files_widget", val)
 
-    @Slot(str)
+    # @Slot(str)  # PySide bug
     def profile_chosen(self, text):
         if text == "":
             self.delete_btn.setEnabled(False)
