@@ -129,6 +129,7 @@ Bottons visible in the top row of the main window:
 3.  Two copies of `Image View`_. The main panel is placed on the right.
     The left panel can be used to preview raw data, selected segmentation,
     or be replaced with `Measurements`_ panel using controls placed above it:
+4.  `Segmentation parameters`_ - This panel is used to set parameters of segmentation
 
 .. image::  images/main_window_cmp.png
        :alt: Main Roi Analysis GUI
@@ -139,8 +140,6 @@ Bottons visible in the top row of the main window:
    * **Compare** - Copies current segmentation.
      Allows comparing segmentations made with different parameters.
    * **Remove** - Removes segmentation from left panel.
-
-
 
     .. image:: images/main_window_exec.png
        :alt: Main Roi Analysis GUI
@@ -156,8 +155,6 @@ Bottons visible in the top row of the main window:
 10. Selects which profile is applied to the current state.
 11. Enables interactive mode where segmentation is recalculated after change of any segmentation parameter.
 12. Executes segmentation algorithm with current parameters.
-
-4.  `Segmentation parameters`_ - This panel is used to set parameters of segmentation
 
 Two checkboxes placed below the`Segmentation parameters`_ :
 
