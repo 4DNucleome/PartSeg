@@ -45,13 +45,7 @@ repos:
     rev: 'v5.2.2'  # Use the revision sha / tag you want to point at
     hooks:
     -   id: isort
--   repo: https://github.com/executablebooks/mdformat
-    rev: 0.3.4  # Use the ref you want to point at
+-   repo: https://github.com/markdownlint/markdownlint
+    rev: v0.11.0  # Use the ref you want to point at
     hooks:
-    - id: mdformat
-      # optional
-      additional_dependencies:
-      - mdformat-tables
-      - mdformat-black
-      args:
-      - "--number"
+    - id: markdownlint
