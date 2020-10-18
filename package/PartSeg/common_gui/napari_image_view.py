@@ -499,6 +499,27 @@ class ImageView(QWidget):
         else:
             print("[_remove_worker]", sender)
 
+    def _add_layer_util(self, index, layer, filters):
+        self.viewer.add_layer(layer)
+
+        def set_data(val):
+            self._remove_worker(self.sender())
+            data_, layer_ = val
+            if data_ is None:
+                return
+            if layer_ not in self.viewer.layers:
+                return
+            layer_.data = data_
+
+        @thread_worker(connect={"returned": set_data})
+        def calc_filter(j, layer_):
+            if filters[j][0] == NoiseFilterType.No or filters[j][1] == 0:
+                return None, layer_
+            return self.calculate_filter(layer_.data, parameters=filters[j]), layer_
+
+        worker = calc_filter(index, layer)
+        self.worker_list.append(worker)
+
     def _add_image(self, image_data: Tuple[ImageInfo, bool]):
         self._remove_worker(self.sender())
 
@@ -510,25 +531,7 @@ class ImageView(QWidget):
 
         filters = self.channel_control.get_filter()
         for i, layer in enumerate(image_info.layers):
-            self.viewer.add_layer(layer)
-
-            def set_data(val):
-                self._remove_worker(self.sender())
-                data_, layer_ = val
-                if data_ is None:
-                    return
-                if layer_ not in self.viewer.layers:
-                    return
-                layer_.data = data_
-
-            @thread_worker(connect={"returned": set_data})
-            def calc_filter(j, layer_):
-                if filters[j][0] == NoiseFilterType.No or filters[j][1] == 0:
-                    return None, layer_
-                return self.calculate_filter(layer_.data, parameters=filters[j]), layer_
-
-            worker = calc_filter(i, layer)
-            self.worker_list.append(worker)
+            self._add_layer_util(i, layer, filters)
 
         self.image_info[image.file_path].filter_info = filters
         self.image_info[image.file_path].layers = image_info.layers
@@ -576,12 +579,15 @@ class ImageView(QWidget):
             limits, visibility, gamma, colormaps, image.normalized_scaling(), len(self.viewer.layers)
         )
 
+        self._prepare_layers(image, parameters, replace)
+
+        return image
+
+    def _prepare_layers(self, image, parameters, replace):
         worker = prepare_layers(image, parameters, replace)
         worker.returned.connect(self._add_image)
         self.worker_list.append(worker)
         worker.start()
-
-        return image
 
     def images_bounds(self) -> Tuple[List[int], List[int]]:
         ranges = []
@@ -673,8 +679,7 @@ class ImageParameters:
     layers: int = 0
 
 
-@thread_worker
-def prepare_layers(image: Image, param: ImageParameters, replace: bool) -> Tuple[ImageInfo, bool]:
+def _prepare_layers(image: Image, param: ImageParameters, replace: bool) -> Tuple[ImageInfo, bool]:
     image_layers = []
     for i in range(image.channels):
         lim = list(param.limits[i])
@@ -695,3 +700,6 @@ def prepare_layers(image: Image, param: ImageParameters, replace: bool) -> Tuple
         )
         image_layers.append(layer)
     return ImageInfo(image, image_layers, []), replace
+
+
+prepare_layers = thread_worker(_prepare_layers)
