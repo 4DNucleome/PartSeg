@@ -34,7 +34,7 @@ def disable_threads_viewer(monkeypatch):
 
 
 class TestAnalysisMainWindow:
-    @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
+    # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
     @pytest.mark.skipif(
         (platform.system() == "Windows") and GITHUB_ACTIONS and sys.version_info.minor == 7, reason="need to debug"
     )
@@ -48,7 +48,7 @@ class TestAnalysisMainWindow:
 
 
 class TestMaskMainWindow:
-    @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
+    # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
     @pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
     @pytest.mark.skipif(napari_warnings, reason="warnings fail test")
     def test_opening(self, qtbot, tmpdir):
@@ -61,7 +61,7 @@ class TestLauncherMainWindow:
         main_window = LauncherMainWindow("Launcher")
         qtbot.addWidget(main_window)
 
-    @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
+    # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
     @pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
     @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
     def test_open_mask(self, qtbot, monkeypatch, tmp_path):
@@ -75,7 +75,7 @@ class TestLauncherMainWindow:
         qtbot.addWidget(main_window.wind)
         QCoreApplication.processEvents()
 
-    @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
+    # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
     @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
     @pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
     def test_open_analysis(self, qtbot, monkeypatch, tmp_path):
