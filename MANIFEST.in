@@ -31,3 +31,4 @@ exclude launcher.spec
 exclude **/.coverage
 exclude .azure-pipelines/**
 exclude dist/*
+exclude .mdlrc
