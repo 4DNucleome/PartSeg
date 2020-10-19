@@ -66,25 +66,25 @@ class TestLauncherMainWindow:
     @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
     def test_open_mask(self, qtbot, monkeypatch, tmp_path):
         monkeypatch.setattr(mask_main_window, "CONFIG_FOLDER", str(tmp_path))
-        monkeypatch.setattr(mask_main_window.MainWindow, "show", empty)
         main_window = LauncherMainWindow("Launcher")
         qtbot.addWidget(main_window)
         main_window._launch_mask()
         with qtbot.waitSignal(main_window.prepare.finished):
             main_window.prepare.start()
-        qtbot.addWidget(main_window.wind)
+        # qtbot.addWidget(main_window.wind)
         QCoreApplication.processEvents()
+        main_window.wind.hide()
 
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
     @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
     @pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
     def test_open_analysis(self, qtbot, monkeypatch, tmp_path):
         monkeypatch.setattr(analysis_main_window, "CONFIG_FOLDER", str(tmp_path))
-        monkeypatch.setattr(analysis_main_window.MainWindow, "show", empty)
         main_window = LauncherMainWindow("Launcher")
         qtbot.addWidget(main_window)
         main_window._launch_analysis()
         with qtbot.waitSignal(main_window.prepare.finished):
             main_window.prepare.start()
-        qtbot.addWidget(main_window.wind)
+        # qtbot.addWidget(main_window.wind)
         QCoreApplication.processEvents()
+        main_window.wind.hide()
