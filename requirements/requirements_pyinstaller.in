@@ -13,14 +13,14 @@ openpyxl
 packaging
 pandas
 PartSegData
-PyInstaller
+PyInstaller!=4.0
 PyOpenGL-accelerate
 PyQt5<5.16.0
 QtPy
 requests
 scipy
 sentry-sdk
-SimpleITK
+SimpleITK!=2.0.0
 six
 sympy
 tifffile
