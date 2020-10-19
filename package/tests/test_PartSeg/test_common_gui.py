@@ -7,6 +7,7 @@ from qtpy.QtWidgets import QWidget
 
 from PartSeg.common_gui import select_multiple_files
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
+from PartSeg.common_gui.searchable_combo_box import SearchCombBox
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
 from PartSegCore.analysis.calculation_plan import MaskSuffix
 
@@ -216,3 +217,24 @@ class TestEqualColumnLayout:
         widget.resize(200, 200)
         assert w1.width() == 100
         widget.hide()
+
+
+class TestSearchCombBox:
+    def test_create(self, qtbot):
+        widget = SearchCombBox()
+        qtbot.addWidget(widget)
+
+    def test_add_item(self, qtbot):
+        widget = SearchCombBox()
+        qtbot.addWidget(widget)
+        widget.addItem("test1")
+        assert widget.count() == 1
+        assert widget.itemText(0) == "test1"
+
+    def test_add_items(self, qtbot):
+        widget = SearchCombBox()
+        qtbot.addWidget(widget)
+        widget.addItems(["test1", "test2", "test3"])
+        assert widget.count() == 3
+        assert widget.itemText(0) == "test1"
+        assert widget.itemText(2) == "test3"
