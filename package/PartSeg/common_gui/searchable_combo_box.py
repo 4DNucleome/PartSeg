@@ -23,7 +23,7 @@ class SearchCombBox(QComboBox):
             self.currentIndexChanged.connect(self._text_activated)
 
     def _text_activated(self):
-        self.textActivated.emmit(self.currentText())
+        self.textActivated.emit(self.currentText())
 
     def addItem(self, *args):
         super().addItem(*args)
