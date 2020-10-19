@@ -5,6 +5,12 @@
 -   Toggle multiple files widget in View menu
 -   Toggle Left panel in ROI Analysis in View Menu
 -   Rename Mask Segmentation to ROI Mask
+-   Add documentation for interface
+-   Add Batch processing tutorial
+-   Add information about errors to batch processing output file
+-   Load image from the batch prepare window
+-   Add search option in part of list and combo boxes
+-   Add drag and drop mechanism to load list of files to batch window.
 
 ## 0.11.5
 
