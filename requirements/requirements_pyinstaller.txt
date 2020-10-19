@@ -68,7 +68,7 @@ pyzmq==19.0.2             # via jupyter-client, qtconsole
 qtconsole==4.7.7          # via napari
 qtpy==1.9.0               # via -r requirements_pyinstaller.in, napari, qtconsole
 requests==2.24.0          # via -r requirements_pyinstaller.in, sphinx
-scipy==1.5.2              # via -r requirements_pyinstaller.in, napari
+scipy==1.5.3              # via -r requirements_pyinstaller.in, napari
 sentry-sdk==0.17.8        # via -r requirements_pyinstaller.in
 simpleitk==2.0.0          # via -r requirements_pyinstaller.in
 six==1.15.0               # via -r requirements_pyinstaller.in, h5py, packaging, python-dateutil
