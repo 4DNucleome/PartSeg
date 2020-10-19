@@ -1,6 +1,7 @@
 # API
 
 ## Base classes for creating plugin
+
 The base classes for creating extensions are stored in `partseg_utils.segmentation.algorithm_describe_base.py`
 There are three classes
 
@@ -49,6 +50,7 @@ There are three classes
     the function which is called to run segmentation. It is done is separated thread.
 
 ## Creating Plugins
+
 In current stage PartSeg support plugin only for segmentation methods.
 The plugins are loaded before creating objects, so it is possibly to modify its parts with plugins is possible,
 but can brake after change of version.

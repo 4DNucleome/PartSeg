@@ -150,6 +150,7 @@ class MeasurementWidget(QWidget):
         self.no_units.setChecked(True)
         self.no_units.clicked.connect(self.refresh_view)
         self.expand_mode = QCheckBox("Expand", self)
+        self.expand_mode.setToolTip("Shows results for each component in separate entry")
         self.file_names = EnumComboBox(FileNamesEnum)
         self.file_names_label = QLabel("Add file name:")
         self.file_names.currentIndexChanged.connect(self.refresh_view)

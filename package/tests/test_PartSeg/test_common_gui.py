@@ -1,8 +1,13 @@
+import platform
 from enum import Enum
 
 import pytest
+import qtpy
+from qtpy.QtWidgets import QWidget
 
 from PartSeg.common_gui import select_multiple_files
+from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
+from PartSeg.common_gui.searchable_combo_box import SearchCombBox
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
 from PartSegCore.analysis.calculation_plan import MaskSuffix
 
@@ -148,3 +153,88 @@ class TestAddFiles:
 
         with qtbot.waitSignal(part_settings.request_load_files, check_params_cb=check_res2):
             widget._load_file_with_mask(mapper)
+
+
+class _TestWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setLayout(EqualColumnLayout())
+
+
+class TestEqualColumnLayout:
+    def test_add(self, qtbot):
+        widget = _TestWidget()
+        qtbot.addWidget(widget)
+        w1 = QWidget()
+        w2 = QWidget()
+        widget.layout().addWidget(w1)
+        assert widget.layout().count() == 1
+        widget.layout().addWidget(w2)
+        assert widget.layout().count() == 2
+        assert widget.layout().itemAt(1).widget() == w2
+        assert widget.layout().itemAt(0).widget() == w1
+        assert widget.layout().itemAt(2) is None
+
+    def test_remove_item(self, qtbot):
+        widget = _TestWidget()
+        qtbot.addWidget(widget)
+        w1 = QWidget()
+        w2 = QWidget()
+        widget.layout().addWidget(w1)
+        widget.layout().addWidget(w2)
+        assert widget.layout().count() == 2
+        assert widget.layout().takeAt(0).widget() == w1
+        assert widget.layout().itemAt(0).widget() == w2
+        assert widget.layout().count() == 1
+        assert widget.layout().takeAt(2) is None
+
+    @pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
+    def test_geometry(self, qtbot):
+        widget = _TestWidget()
+        qtbot.addWidget(widget)
+        w1 = QWidget()
+        w2 = QWidget()
+        widget.layout().addWidget(w1)
+        widget.layout().addWidget(w2)
+        widget.show()
+        widget.resize(200, 200)
+        assert widget.width() == 200
+        assert w1.width() == 100
+        widget.hide()
+
+    @pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
+    def test_hidden_widget(self, qtbot):
+        widget = _TestWidget()
+        qtbot.addWidget(widget)
+        w1 = QWidget()
+        w2 = QWidget()
+        w3 = QWidget()
+        widget.layout().addWidget(w1)
+        widget.layout().addWidget(w2)
+        widget.layout().addWidget(w3)
+        w2.hide()
+        widget.show()
+        widget.resize(200, 200)
+        assert w1.width() == 100
+        widget.hide()
+
+
+class TestSearchCombBox:
+    def test_create(self, qtbot):
+        widget = SearchCombBox()
+        qtbot.addWidget(widget)
+
+    def test_add_item(self, qtbot):
+        widget = SearchCombBox()
+        qtbot.addWidget(widget)
+        widget.addItem("test1")
+        assert widget.count() == 1
+        assert widget.itemText(0) == "test1"
+
+    def test_add_items(self, qtbot):
+        widget = SearchCombBox()
+        qtbot.addWidget(widget)
+        widget.addItems(["test1", "test2", "test3"])
+        assert widget.count() == 3
+        assert widget.itemText(0) == "test1"
+        assert widget.itemText(2) == "test3"

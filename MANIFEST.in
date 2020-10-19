@@ -8,8 +8,7 @@ include pyproject.toml
 include lgpl-3.0.txt
 include requirements/*
 include pytest.ini
-include package/tests/*.py
-include package/tests/*/*.py
+recursive-include package *.py
 include package/tests/test_data/*.json
 exclude .tox/**
 exclude .dependabot/*
@@ -31,3 +30,5 @@ exclude images/**
 exclude launcher.spec
 exclude **/.coverage
 exclude .azure-pipelines/**
+exclude dist/*
+exclude .mdlrc

@@ -4,6 +4,7 @@ trigger:
     - '*'
     exclude:
     - dependabot/*
+    - documentation
     - release/*
   tags:
     include:

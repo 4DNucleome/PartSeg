@@ -402,11 +402,11 @@ class Image:
 
     def get_channel(self, num) -> np.ndarray:
         """
-        Alias for :py:func:`get_sub_data`(c=num)
+        Alias for :py:func:`get_sub_data` with argument ``c=num``
 
         :param int num: channel num to be extracted
-        :return: given channel
-        :rtype:  numpy.ndarray
+        :return: given channel array
+        :rtype: numpy.ndarray
         """
         return self.get_data_by_axis(c=num)
 

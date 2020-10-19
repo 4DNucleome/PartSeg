@@ -45,3 +45,7 @@ repos:
     rev: 'v5.2.2'  # Use the revision sha / tag you want to point at
     hooks:
     -   id: isort
+-   repo: https://github.com/markdownlint/markdownlint
+    rev: v0.11.0  # Use the ref you want to point at
+    hooks:
+    - id: markdownlint
