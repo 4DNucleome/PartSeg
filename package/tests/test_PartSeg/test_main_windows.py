@@ -11,12 +11,13 @@ from PartSeg._roi_analysis import main_window as analysis_main_window
 from PartSeg._roi_mask import main_window as mask_main_window
 from PartSeg.common_gui import napari_image_view
 
-from .utils import CI_BUILD, GITHUB_ACTIONS
+from .utils import CI_BUILD, GITHUB_ACTIONS, TRAVIS
 
 napari_warnings = napari.__version__ == "0.3.4" and platform.system() == "Linux" and sys.version_info.minor == 8
 
 
 def empty(*_):
+    """To silent some functions"""
     pass
 
 
@@ -66,6 +67,8 @@ class TestLauncherMainWindow:
     @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
     def test_open_mask(self, qtbot, monkeypatch, tmp_path):
         monkeypatch.setattr(mask_main_window, "CONFIG_FOLDER", str(tmp_path))
+        if platform.system() == "Linux" and (GITHUB_ACTIONS or TRAVIS):
+            monkeypatch.setattr(mask_main_window.MainWindow, "show", empty)
         main_window = LauncherMainWindow("Launcher")
         qtbot.addWidget(main_window)
         main_window._launch_mask()
@@ -80,6 +83,8 @@ class TestLauncherMainWindow:
     @pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
     def test_open_analysis(self, qtbot, monkeypatch, tmp_path):
         monkeypatch.setattr(analysis_main_window, "CONFIG_FOLDER", str(tmp_path))
+        if platform.system() == "Linux" and (GITHUB_ACTIONS or TRAVIS):
+            monkeypatch.setattr(analysis_main_window.MainWindow, "show", empty)
         main_window = LauncherMainWindow("Launcher")
         qtbot.addWidget(main_window)
         main_window._launch_analysis()
