@@ -10,16 +10,16 @@ Graphical User Interface (GUI) overview
 
 In this document user interface of PartSeg is described.
 As some elements are used in both modules ``Roi Analysis`` and
-``Mask Segmentation`` they are described in `Common elements`_.
+``ROI Mask`` they are described in `Common elements`_.
 
 .. image:: images/launcher.png
    :alt: Selection of program to be launched.
 
-Mask Segmentation GUI
----------------------
+ROI Mask GUI
+------------
 
 .. image::  images/mask_window.png
-   :alt: Mask Segmentation GUI.
+   :alt: ROI Mask GUI
 
 On top of the window there are 6 buttons:
 
@@ -181,6 +181,7 @@ The third option is to save the current work as a project. Project will contain:
 
 Settings and Measurement
 ~~~~~~~~~~~~~~~~~~~~~~~~
+
 This bottom enables popup window with 4 tabs: Properties, Color control, Measurements settings, Measurements
 
 
@@ -267,9 +268,9 @@ Other controls:
 
    - **No** - no name will be displayed.
    - **Short** -only name file will be displayed .
-   - **Full** - full path to file will be displayed.
+   - **Full** - full path to the file will be displayed.
 
-*  **Channel** - controls which channel is used for calculation.
+*  **Channel** - controls which channel is used for the calculation.
 *  **Units** - controls in which units physical values are shown .
 
 
@@ -340,7 +341,7 @@ Execute batch
    More details on https://docs.python.org/3/library/glob.html.
 2. Buttons:
 
-   *  **Select files** - select given files.
+   *  **Select files** - select files for analysis.
    *  **Select directory** - use dialog to find the base directory for pattern search.
       The path to the selected directory will be put in 1.
    *  **Find all** - find all files witch match to pattern from 1.
@@ -348,8 +349,8 @@ Execute batch
 
       |batch_find_files|
 
-   *  **Remove all** - clean file list,
-   *  **Remove file** - remove selected one.
+   *  **Remove all** - cleans file list,
+   *  **Remove file** - removes selected one.
 
 3. List of already selected files.
 
@@ -357,86 +358,83 @@ Execute batch
        :alt: View on Properties Tab in Settings and Measurement.
 
 4.  Select the batch plan.
-5.  Path to file with saved measurement.
+5.  Path to a file with saved measurement.
     Use **Save result as** to modify.
 6.  Global progress bar. Sum of all tasks.
 7.  Progress bar for the current task.
 8.  The number of workers to be used during the batch.
     Can be adjusted during runtime.
-9.  Error log. For report double click on the entry.
+9.  Error log. For a report double click on the entry.
 10. Information about task status.
-11. Launch batch calculation. Before it runs
-    window described bellow to check if everything is set correctly.
+11. Launches batch calculation, by opening a popout window described bellow, which allows to check if everything is set correctly.
 
     .. image::  images/batch_check_ok.png
        :alt: View on Properties Tab in Settings and Measurement.
 
-    1. Default voxel size for images which has no such information in the metadata.
-       The initial value is from the current file from the main GUI.
-    2. Set prefixes for processing data:
+    1. Default voxel size for images which have no such information in the metadata.
+       The initial value is taken from the current file run the main GUI.
+    2. Sets prefixes for processing data:
 
        * Prefix for calculation relative path of processed images
        * Prefix for saving elements. Save path is ``save_prefix + relative_path``
 
-    3. Settings for measurement save location and sheet
-    4. Information if PartSeg can find all the needed data for each entry.
-       Bellow image show view on the version with errors.
+    3. Settings for a resulting spreadsheet localisation and name
+    4. Gives information if PartSeg can find all the needed data for each entry.
+       The image placed bellow image shows a View on Properties Tab in Settings and Measurement containing errors.
 
    .. image::  images/batch_check_bad.png
       :alt: View on Properties Tab in Settings and Measurement.
 
 Common elements
 ---------------
-In this section, there are described elements which are
-common for "ROI Analysis GUI" and "Mask Segmentation GUI".
+In this section common elements for "ROI Analysis GUI" and "ROI Mask GUI" are described.
 
 Image view
 ~~~~~~~~~~
 
-The zoom of the image can be also changed by Ctrl+Mouse scroll.
+The zoom of the image can be also changed by a Ctrl+Mouse scroll.
 
 .. image::  images/image_view.png
    :alt: Image view widget.
 
-1.  Reset Zoom.
-2.  Change to 3D rendering.
-3.  Side view (support right click)
-4.  Channel view control. Only Channels with a selected checkbox are visible. `Color map`_ for the current channel
+1.  Resets Zoom.
+2.  Changes view to a 3D rendering.
+3.  Channel view control. Only Channels with a selected checkbox are visible. `Color map`_ for the current channel
     can be selected when clicking in the triangle in the upper right corner
-    |channel_select|. This triangle is visible when the mouse is over the widget.
-5.  Mark segmentation only by borders or by masking the whole area.
-6.  Set the opacity of segmentation marking.
-7.  Mark mask visible.
-8.  Control which layer is visible.
+    |channel_select|. This triangle is visible when the coursor is placed over the widget.
+4.  Switches the view of segmenation between showing only segmentation borders or the whole segmented area.
+5.  Set the opacity of segmenattion view.
+6.  Marks mask visible or not.
+7.  Controls which layer is visible.
     If the image contains time data, then a similar
     slider will be visible on the left part of the image.
 
-In `Mask Segmentation GUI`_ elements 5 and 6 are placed above
-Algorithm Parameters part.
+In `ROI Mask GUI`_ elements 5 and 6 are placed above
+the Algorithm Parameters part.
 
 .. image::  images/range_control.png
    :alt: Image view widget.
 
-1.  Set boundaries for minimum maximum brightness for the given channel.
-2.  Use boundaries for presenting the current channel.
-    If is checked then lock is present right to checkbox |fixed_range|.
-3.  Use filter (Median or gauss) for presenting the current channel.
-    If different to *No* then the proper symbol is present right to checkbox |filter|.
-4. Translate brightness with gamma. If different than 1 then the proper symbol is present right to checkbox |gamma|.
+1.  Sets boundaries of minimum maximum brightness for the given channel.
+2.  Uses boundaries for presenting the current channel.
+    When checked then icon of the lock is present right next to a checkbox |fixed_range|.
+3.  Enables filter (Median or gauss) for presenting the current channel.
+    If different to *No* then the proper symbol is present right next to checkbox |filter|.
+4. Translates brightness with gamma. If different than 1 then the proper symbol is present right next to checkbox |gamma|.
 
 Color control
 ~~~~~~~~~~~~~
 
-PartSeg give user option to use a custom colormap
+PartSeg give user an option to use a custom colormap
 to adjust parameters of intensity presentation.
-For multichannel image, PartSeg use maximum projection
+For multichannel image, PartSeg uses maximum projection
 to calculate the final view.
 
 Also, segmentation labels can be adjusted.
-If more labels are needed one can define them cyclically.
+If more labels are needed user can define them cyclically.
 
 
-Here we describe the widget used to control these elements.
+Here the widgets used to control these elements are described.
 
 Color maps
 ^^^^^^^^^^
@@ -446,10 +444,10 @@ Color maps
    :alt: View on list of color maps
 
 
-*  Only color maps with a checked checkbox are available to select in
+*  Color maps are available for channels with a checked checkbox and can be selected in the
    `Image View`_ controls aaa
-* The only custom created color maps can be deleted with a |delete| button.
-*  Some of existing color maps (all custom) can be used as a base to
+*  Only custom created color maps can be deleted with a |delete| button.
+*  Some of the existing color maps and all custom created masps can be used as a base for
    creation of a new color map using the |edit| button.
 
 Color Map creator
@@ -457,20 +455,20 @@ Color Map creator
 .. image:: images/create_colormap.png
    :alt: View on color map creator widget.
 
-After the selection of a new color, double click on the bottom bar to create a position marker.
+After selection of a the new color, double click on the bottom bar to create a position marker.
 
-Markers can be moved by drag and drop or removed by double click.
-Colors between markers are created with linear interpolation.
+Markers can be moved by drag and drop or removed by a double click.
+Colors between markers are created with the linear interpolation.
 
 Select labels
 ^^^^^^^^^^^^^
 .. image:: images/label_list.png
    :alt: View of the list of label coloring
 
-In this tab, Users can select the coloring scheme of segmentation components labels.
+In this tab, users can select the coloring scheme of segmentation components labels.
 
 *  Current scheme is chosen with the radio button (|radio_button|) on the left.
-*  Custom schemes can be deleted with the |delete| button.
+*  Custom creted schemes can be deleted with the |delete| button.
 *  New scheme can be defined based on the old one using the |edit| button.
 
 Create labels
@@ -492,35 +490,34 @@ Mask marker opacity can be changed with a spin box in the lower right corner.
 
 Segmentation parameters
 ~~~~~~~~~~~~~~~~~~~~~~~
-In this widget User can choose segmentation parameters.
+In this widget user can choose segmentation parameters.
 
 .. image:: images/algorithm_settings.png
    :alt: Algorithm settings
 
-1. Dropdown list on which the User can select the segmentation method.
+1. Dropdown list on which the user can select the segmentation method.
 2. Parameters settings.
 3. Additional information is produced by the algorithm (e.g. information on the used threshold, components sizes, etc.).
 
 Mask manager
 ~~~~~~~~~~~~
-This widget/dialog allows setting parameters of transferring
+This widget/dialog allows for setting parameters of transferring
 of current segmentation into a new mask.
 
 .. image:: images/mask_manager.png
    :alt: Mask Manager
 
-1. Select to use dilation (2d or 3d) with a set radius in pixels. If dilation is in 3d then the radius in the z plane is calculated base on image spacing. Negative values of the radius will reduce mask size.
+1. Select to use dilation (2d or 3d) with a set radius in pixels. If dilation is in 3d then the radius in the z plane is calculated base on the image spacing. Negative values of the radius will reduce the mask size.
 2. Select to fill up holes in a current segmentation. Holes are parts of the background, which are not connected (in 2d or 3d - depends on selection) to a border of the image.
-   If the maximum size is set to -1 then all holes will be closed.
+   If the maximum size is set to -1 then all holes within segmentation area will be included in the segemntation.
 3. **Save components** allows to create a new mask made of multiple components present in current segmentation.
-   **Clip to previous mask** option is useful when using positive radius in Dilate mask
-   and want to fit it in a previously defined mask.
+   **Clip to previous mask** option is useful when using positive radius in Dilate mask to fit it in a previously defined mask.
 4. Creates a mask based on the negative of the current selection (disables **Save components** option).
 5. Shows calculated dilation radius in x, y, z for the current image.
-6. Undo of last masking operation.
+6. Undos of last masking operation.
 7. Creates a new mask or draws back to the previously undone one.
-8. Clean redo history. (CHECK)
-9. Take mask creation parameters from the next mask and set in the interface. (CHECK)
+8. Cleans redo history.
+9. Takes mask creation parameters from the next mask and to set in the interface.
 
 Multiple files panel
 ~~~~~~~~~~~~~~~~~~~~~
@@ -528,14 +525,14 @@ This widget enables us to work on multiple files without the need
 to reload them from the disc.
 
 Each file is presented in the list as a raw image and multiple states created by the user.
-Each state represents segmentation done with different parameters.
+Each state represents segmentation done with a different parameters.
 
 .. image:: images/multiple_files_widget.png
    :alt: Multiple files panel
 
 1.  List of opened files and created states.
-2.  Saves current image state. Each stated can be reloaded by double click.
-3.  Loads multiple files to PartSeg.
+2.  Saves current image state. Each state can be reloaded by a double click.
+3.  Loads multiple files to the PartSeg.
 4.  Removes saved state.
 5.  Enables to set custom names for saved states.
 
@@ -543,10 +540,10 @@ Tips and Tricks
 ---------------
 
 To run selected module without PartSeg Launcher
-create PartSeg_exec shortcut, next open its Properties and add proper
+create a PartSeg_exec shortcut, next open its Properties and add proper
 argument at the end of the access path.
 For ROI Analysis add ``roi_analysis`` and for
-Mask Segmentation add ``mask_segmentation``.
+ROI_Mask add ``roi_mask``.
 See the image below showing shortcut Properties for ROI Analysis.
 
 .. image:: images/shortcut.png
