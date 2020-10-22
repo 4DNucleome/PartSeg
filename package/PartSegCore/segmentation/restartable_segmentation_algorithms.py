@@ -99,7 +99,7 @@ class BorderRim(RestartableAlgorithm):
     def calculation_run(self, _report_fun) -> SegmentationResult:
         if self.mask is not None:
             result = BorderRimBase.border_mask(mask=self.mask, voxel_size=self.image.spacing, **self.new_parameters)
-            return SegmentationResult(segmentation=result, parameters=self.get_segmentation_profile())
+            return SegmentationResult(roi=result, parameters=self.get_segmentation_profile())
         raise SegmentationLimitException("Border Rim needs mask")
 
 
@@ -549,7 +549,7 @@ class OtsuSegment(RestartableAlgorithm):
             else:
                 self.threshold_info.append(0)
         return SegmentationResult(
-            segmentation=res,
+            roi=res,
             parameters=self.get_segmentation_profile(),
             additional_layers={"denoised_image": AdditionalLayerDescription(data=cleaned_image, layer_type="image")},
         )

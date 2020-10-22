@@ -27,6 +27,14 @@ def calculate_operation_radius(radius, spacing, gauss_type):
 
 @dataclass
 class AdditionalLayerDescription:
+    """
+    Dataclass
+
+    :ivar numpy.ndarray data: layer data
+    :ivar str layer_type: napari layer type
+    :ivar str name: layer name
+    """
+
     data: np.ndarray
     layer_type: str
     name: str = ""

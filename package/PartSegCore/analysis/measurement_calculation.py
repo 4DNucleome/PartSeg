@@ -34,7 +34,16 @@ class SettingsValue(NamedTuple):
 
 
 class ComponentsInfo(NamedTuple):
-    segmentation_components: np.ndarray
+    """
+    Class for storage information about relation between roi components and mask components
+
+    :ivar numpy.ndarray roi_components: list of roi components
+    :ivar numpy.ndarray mask_components: list of mask components
+    :ivar Dict[int, List[int]] components_translation: mapping
+        from roi components to mask components base on intersections
+    """
+
+    roi_components: np.ndarray
     mask_components: np.ndarray
     components_translation: Dict[int, List[int]]
 
@@ -166,10 +175,10 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         elif has_mask_components:
             component_info = [(0, x) for x in self.components_info.mask_components]
         else:
-            component_info = [(x, 0) for x in self.components_info.segmentation_components]
+            component_info = [(x, 0) for x in self.components_info.roi_components]
         counts = len(component_info)
         mask_to_pos = {val: i for i, val in enumerate(self.components_info.mask_components)}
-        segmentation_to_pos = {val: i for i, val in enumerate(self.components_info.segmentation_components)}
+        segmentation_to_pos = {val: i for i, val in enumerate(self.components_info.roi_components)}
         if FILE_NAME_STR in self._data_dict:
             name = self._data_dict[FILE_NAME_STR]
             res = [[name] for _ in range(counts)]
@@ -334,7 +343,7 @@ class MeasurementProfile:
                     val = []
                     area_array = kw["area_array"]
                     if area_type == AreaType.ROI:
-                        components = segmentation_mask_map.segmentation_components
+                        components = segmentation_mask_map.roi_components
                     else:
                         components = segmentation_mask_map.mask_components
                     for i in components:
@@ -367,7 +376,7 @@ class MeasurementProfile:
                         if left_area == AreaType.Mask:
                             left_res, right_res = right_res, left_res
                             reverse = True
-                        for val, num in zip(left_res, segmentation_mask_map.segmentation_components):
+                        for val, num in zip(left_res, segmentation_mask_map.roi_components):
                             div_vals = segmentation_mask_map.components_translation[num]
                             if len(div_vals) != 1:  # pragma: no cover
                                 raise ProhibitedDivision("Cannot calculate when object do not belongs to one mask area")
@@ -409,6 +418,8 @@ class MeasurementProfile:
         else:
             for num in components:
                 res[num] = list(np.unique(mask[segmentation == num]))
+                if res[num][0] == 0:
+                    res[num] = res[num][1:]
         return ComponentsInfo(components, mask_components, res)
 
     def get_component_and_area_info(self) -> List[Tuple[PerComponent, AreaType]]:
@@ -647,6 +658,13 @@ def iterative_double_normal(points_positions: np.ndarray):
 
 
 class Diameter(MeasurementMethodBase):
+    """
+    Class for calculate diameter of ROI in fast way.
+    From Malandain, G., & Boissonnat, J. (2002). Computing the diameter of a point set,
+    12(6), 489–509. https://doi.org/10.1142/S0218195902001006
+
+    """
+
     text_info = "Diameter", "Diameter of area"
 
     @staticmethod
@@ -665,6 +683,10 @@ class Diameter(MeasurementMethodBase):
 
 
 class DiameterOld(MeasurementMethodBase):  # pragma: no cover
+    """
+    n**2 calculate diameter of ROI
+    """
+
     text_info = "Diameter old", "Diameter of area (Very slow)"
 
     @staticmethod

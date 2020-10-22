@@ -352,6 +352,7 @@ class SubAlgorithmWidget(QWidget):
 
     def set_starting(self, starting_values):
         self.starting_values = starting_values
+        # self.set_values(starting_values)
 
     def set_values(self, val: dict):
         if not isinstance(val, dict):
@@ -442,7 +443,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
         self.info_label = QLabel()
         self.info_label.setHidden(True)
         main_layout.addWidget(self.info_label)
-        start_values = settings.get(f"algorithm_widget_state.{name}", dict())
+        start_values = settings.get(f"algorithm_widget_state.{name}", {})
         self.form_widget = FormWidget(algorithm.get_fields(), start_values=start_values)
         self.form_widget.value_changed.connect(self.values_changed.emit)
         # self.form_widget.setMinimumHeight(1500)
