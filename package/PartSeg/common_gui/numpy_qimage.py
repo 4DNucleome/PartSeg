@@ -3,7 +3,8 @@ import typing
 import numpy as np
 from qtpy.QtGui import QImage
 
-from PartSegCore.color_image import BaseColormap, color_image_fun, create_color_map, resolution
+from PartSegCore.color_image import BaseColormap, create_color_map, resolution
+from PartSegCore.color_image.color_image_base import color_bar_fun
 
 ColorMapDict = typing.MutableMapping[str, typing.Tuple[BaseColormap, bool]]
 
@@ -30,7 +31,7 @@ def colormap_array_to_image(array: np.ndarray) -> NumpyQImage:
     """
     if array.shape != (resolution, 3):
         raise ValueError(f"Wrong shape ({array.shape}) of colormap")
-    img = color_image_fun(np.linspace(0, 256, 512, endpoint=False).reshape((1, 512, 1)), [array], [(0, 255)])
+    img = color_bar_fun(np.linspace(0, 256, 512, endpoint=False).reshape((1, 512)), array)
     return NumpyQImage(img)
 
 

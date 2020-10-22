@@ -6,7 +6,7 @@ from qtpy.QtCore import Signal
 from qtpy.QtGui import QImage, QPainter, QPaintEvent
 from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QPushButton, QVBoxLayout, QWidget
 
-from PartSegCore.color_image import color_image_fun
+from PartSegCore.color_image.color_image_base import color_bar_fun
 
 from ..common_backend.base_settings import ViewSettings
 from .flow_layout import FlowLayout
@@ -109,7 +109,7 @@ class ColorSelector(QWidget):
     def mouse_on_map(self, val):
         if val != self.current_color:
             self.current_color = val
-            img = color_image_fun(np.arange(0, 256).reshape((1, 256, 1)), [val], [(0, 256)])
+            img = color_bar_fun(np.arange(0, 256), val)
             self.image = QImage(img.data, 256, 1, img.dtype.itemsize * 256 * 3, QImage.Format_RGB888)
             self.preview.repaint()
 

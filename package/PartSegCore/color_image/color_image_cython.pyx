@@ -38,23 +38,6 @@ ctypedef fused label_types:
     np.uint16_t
     np.uint32_t
 
-def min_max_calc_int(np.ndarray arr):
-    cdef Py_ssize_t i
-    cdef int min, max, val
-    min = arr.flat[0]
-    max = arr.flat[0]
-    it = np.nditer([arr],
-                   flags=['external_loop', 'buffered'],
-                   op_flags=[['readwrite']])
-    for x in it:
-        for i in range(x.size):
-            val = x[i]
-            if val < min:
-                min = val
-            if val > max:
-                max = val
-    return min, max
-
 cdef inline long scale_factor(numpy_types value, double min_val, double factor) nogil:
     return max[long](0, min[long](resolution - 1, <long>((value - min_val) * factor)))
 
@@ -138,29 +121,3 @@ def calculate_borders2d(np.ndarray[label_types, ndim=4] labels, int border_thick
     if border_thick > 0:
         local_labels = local_labels[:, :, border_thick:-border_thick, border_thick:-border_thick]
     return local_labels
-
-
-def color_grayscale(np.ndarray[DTYPE_t, ndim=2] cmap, np.ndarray[numpy_types, ndim=2] image, double min_val,
-                    double max_val, int single_channel=-1):
-    """color image channel in respect to cmap array. Array should be in size (resolution, 3)"""
-    # TODO maybe not use empty channels
-    cdef Py_ssize_t x_max = image.shape[0]
-    cdef Py_ssize_t y_max = image.shape[1]
-    cdef int val, x, y
-    cdef double factor =  1/ ((max_val - min_val) / (resolution - 1))
-    cdef np.ndarray[DTYPE_t, ndim=3] result_array = np.zeros((x_max, y_max, 3), dtype=DTYPE)
-    with nogil:
-        if 0 <= single_channel <= 2:
-            for x in prange(x_max):
-                for y in range(y_max):
-                    val = scale_factor(image[x, y], min_val, factor)
-                    result_array[x, y, single_channel] = cmap[val, single_channel]
-        else:
-            for x in prange(x_max):
-                for y in range(y_max):
-                    val = scale_factor(image[x, y], min_val, factor)
-                    result_array[x, y, 0] = cmap[val, 0]
-                    result_array[x, y, 1] = cmap[val, 1]
-                    result_array[x, y, 2] = cmap[val, 2]
-
-    return result_array

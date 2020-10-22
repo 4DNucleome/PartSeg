@@ -12,7 +12,7 @@ from qtpy.QtWidgets import QLabel, QToolButton
 
 from PartSeg.common_gui.numpy_qimage import NumpyQImage
 from PartSegCore.class_generator import enum_register
-from PartSegCore.color_image import color_image_fun
+from PartSegCore.color_image.color_image_base import color_bar_fun
 from PartSegData import icons_dir
 
 from ..common_backend.base_settings import ViewSettings
@@ -75,7 +75,7 @@ class ColorBar(QLabel):
         # print(self.range, self.round_range)
         data = np.linspace(0, 1, 512)
         data = (data ** gamma) * 255
-        img = color_image_fun(data.reshape((1, 512, 1))[:, ::-1], [cmap], [(0, 256)])
+        img = color_bar_fun(data.reshape((1, 512))[:, ::-1], cmap)
         self.image = NumpyQImage(np.swapaxes(img, 0, 1))
         self.repaint()
 

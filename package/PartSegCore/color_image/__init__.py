@@ -7,12 +7,11 @@ from .base_colors import (
     default_colormap_dict,
     default_label_dict,
 )
-from .color_image_base import color_image_fun, create_color_map
+from .color_image_base import create_color_map
 from .color_image_cython import calculate_borders, resolution
 
 __all__ = (
     "calculate_borders",
-    "color_image_fun",
     "create_color_map",
     "default_colormap_dict",
     "Color",

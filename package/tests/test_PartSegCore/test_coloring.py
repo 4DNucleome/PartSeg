@@ -1,8 +1,9 @@
 import numpy as np
 import pytest
 
-from PartSegCore.color_image import Color, ColorMap, ColorPosition, calculate_borders, color_image_fun, create_color_map
+from PartSegCore.color_image import Color, ColorMap, ColorPosition, calculate_borders, create_color_map
 from PartSegCore.color_image.base_colors import inferno
+from PartSegCore.color_image.color_image_base import color_bar_fun
 
 
 def arrays_are_close(arr1, arr2, num):
@@ -121,9 +122,7 @@ class TestCreateColorMap:
 
     def test_use_color_image(self):
         array = create_color_map(ColorMap([ColorPosition(0, Color(0, 255, 0)), ColorPosition(1, Color(255, 0, 0))]))
-        img = color_image_fun(
-            np.linspace(0, 256, 512, endpoint=False, dtype=np.uint8).reshape((1, 512, 1)), [array], [(0, 255)]
-        )
+        img = color_bar_fun(np.linspace(0, 256, 512, endpoint=False, dtype=np.uint8).reshape((1, 512)), array)
         assert img.shape == (1, 512, 3)
         assert np.all(img[0, :, 2] == 0)
         assert np.all(np.sort(img[0, :, 0]) == img[0, :, 0])
