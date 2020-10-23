@@ -34,7 +34,9 @@ def _test_imports():
     from PartSeg._launcher.main_window import MainWindow
     from PartSeg._roi_analysis.main_window import MainWindow as AnalysisMain
     from PartSeg._roi_mask.main_window import MainWindow as MaskMain
+    from PartSeg.common_backend.base_argparser import _setup_sentry
 
+    _setup_sentry()
     plugins.register()
     w1 = AnalysisMain("test")
     w2 = MaskMain("test")
