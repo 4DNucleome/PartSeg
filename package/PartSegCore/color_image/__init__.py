@@ -9,7 +9,7 @@ from .base_colors import (
     default_colormap_dict,
     default_label_dict,
 )
-from .color_image_base import create_color_map
+from .color_image_base import color_image_fun, create_color_map
 
 __all__ = (
     "BaseColormap",
@@ -20,6 +20,7 @@ __all__ = (
     "add_labels",
     "calculate_borders",
     "color_grayscale",
+    "color_image_fun",
     "create_color_map",
     "default_colormap_dict",
     "default_label_dict",

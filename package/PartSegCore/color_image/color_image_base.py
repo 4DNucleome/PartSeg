@@ -1,9 +1,10 @@
 import typing
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import numpy as np
 
 import PartSegData
-from PartSegCore_compiled_backend.color_image_cython import resolution
+from PartSegCore_compiled_backend.color_image_cython import color_grayscale, resolution
 
 from .base_colors import BaseColormap
 
@@ -68,3 +69,45 @@ def color_bar_fun(bar: np.ndarray, colormap: typing.Union[BaseColormap, np.ndarr
     min_val = np.min(bar)
     cords = ((bar - min_val) * ((colormap.shape[0] - 1) / (np.max(bar) - min_val))).astype(np.uint16)
     return colormap[cords]
+
+
+def color_image_fun(
+    image: np.ndarray,
+    colors: typing.List[typing.Union[BaseColormap, np.ndarray]],
+    min_max: typing.List[typing.Tuple[float, float]],
+) -> np.ndarray:
+    """
+    Color given image layer.
+    :param image: Single image layer (array of size (width, height, channels)
+    :param colors: list of colormaps by name (from ``.color_maps`` dict) or array (its size ned to be size (1024, 3))
+      array can be created by :py:func:`.create_color_map`
+    :param min_max: bounds for each channel separately
+    :return: colored image (array of size (width, height, 3) as RGB image
+    """
+    new_shape = image.shape[:-1] + (3,)
+
+    result_images = []  # = np.zeros(new_shape, dtype=np.uint8)
+    colored_channels = {}
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        for i, colormap in enumerate(colors):
+            if colormap is None:
+                continue
+            if isinstance(colormap, BaseColormap):
+                if colormap not in color_array_dict:
+                    color_array_dict[colormap] = create_color_map(colormap)
+                colormap = color_array_dict[colormap]
+            if not isinstance(colormap, np.ndarray) or not colormap.shape == (resolution, 3):
+                raise ValueError(f"colormap should be passed as numpy array with shape ({resolution},3)")
+            min_val, max_val = min_max[i]
+
+            colored_channels[executor.submit(color_grayscale, colormap, image[..., i], min_val, max_val)] = i
+    for res in as_completed(colored_channels):
+        result_images.append(res.result())
+    if len(result_images) > 0:
+        if len(result_images) == 1:
+            return result_images[0]
+        else:
+            # TODO use ColorMap additional information
+            return np.max(result_images, axis=0)
+    else:
+        return np.zeros(new_shape, dtype=np.uint8)
