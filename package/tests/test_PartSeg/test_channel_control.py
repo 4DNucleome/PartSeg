@@ -10,8 +10,8 @@ import PartSegData
 from PartSeg.common_backend.base_settings import BaseSettings, ColormapDict, ViewSettings
 from PartSeg.common_gui.channel_control import ChannelProperty, ColorComboBox, ColorComboBoxGroup
 from PartSeg.common_gui.napari_image_view import ImageView
-from PartSegCore.color_image import color_image_fun
 from PartSegCore.color_image.base_colors import starting_colors
+from PartSegCore.color_image.color_image_base import color_bar_fun
 from PartSegCore.image_operations import NoiseFilterType
 from PartSegImage import TiffImageReader
 
@@ -46,9 +46,7 @@ def test_color_combo_box(qtbot):
     index = 3
     with qtbot.waitSignal(box.currentTextChanged):
         box.set_color(starting_colors[index])
-    img = color_image_fun(
-        np.linspace(0, 256, 512, endpoint=False).reshape((1, 512, 1)), [dkt[starting_colors[index]][0]], [(0, 255)]
-    )
+    img = color_bar_fun(np.linspace(0, 256, 512, endpoint=False).reshape((1, 512, 1)), dkt[starting_colors[index]][0])
     assert np.all(array_from_image(box.image) == img.flatten())
 
 

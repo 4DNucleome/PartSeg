@@ -4,9 +4,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import numpy as np
 
 import PartSegData
+from PartSegCore_compiled_backend.color_image_cython import color_grayscale, resolution
 
 from .base_colors import BaseColormap
-from .color_image_cython import color_grayscale, resolution
 
 color_maps = np.load(PartSegData.colors_file)
 
@@ -59,6 +59,18 @@ def create_color_map(colormap_definition: BaseColormap, power: float = 1.0) -> n
     return colormap
 
 
+def color_bar_fun(bar: np.ndarray, colormap: typing.Union[BaseColormap, np.ndarray]):
+    if isinstance(colormap, BaseColormap):
+        if colormap not in color_array_dict:
+            color_array_dict[colormap] = create_color_map(colormap)
+        colormap = color_array_dict[colormap]
+    if not isinstance(colormap, np.ndarray) or not colormap.shape == (resolution, 3):
+        raise ValueError(f"colormap should be passed as numpy array with shape ({resolution},3)")
+    min_val = np.min(bar)
+    cords = ((bar - min_val) * ((colormap.shape[0] - 1) / (np.max(bar) - min_val))).astype(np.uint16)
+    return colormap[cords]
+
+
 def color_image_fun(
     image: np.ndarray,
     colors: typing.List[typing.Union[BaseColormap, np.ndarray]],
@@ -66,7 +78,6 @@ def color_image_fun(
 ) -> np.ndarray:
     """
     Color given image layer.
-
     :param image: Single image layer (array of size (width, height, channels)
     :param colors: list of colormaps by name (from ``.color_maps`` dict) or array (its size ned to be size (1024, 3))
       array can be created by :py:func:`.create_color_map`
@@ -95,8 +106,6 @@ def color_image_fun(
     if len(result_images) > 0:
         if len(result_images) == 1:
             return result_images[0]
-
         # TODO use ColorMap additional information
         return np.max(result_images, axis=0)
-
     return np.zeros(new_shape, dtype=np.uint8)
