@@ -2,63 +2,10 @@ import codecs
 import os
 import re
 
-import numpy as np
-from setuptools import Extension, setup
+from setuptools import setup
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 package_dir = os.path.join(current_dir, "package")
-
-
-extensions = [
-    Extension(
-        "PartSegCore.sprawl_utils.euclidean_cython",
-        sources=["package/PartSegCore/sprawl_utils/euclidean_cython.pyx"],
-        include_dirs=[np.get_include()] + [os.path.join(package_dir, "PartSegCore", "sprawl_utils")],
-        language="c++",
-        extra_compile_args=["-std=c++11"],
-        extra_link_args=["-std=c++11"],
-    ),
-    Extension(
-        "PartSegCore.sprawl_utils.path_sprawl_cython",
-        sources=["package/PartSegCore/sprawl_utils/path_sprawl_cython.pyx"],
-        include_dirs=[np.get_include()] + [os.path.join(package_dir, "PartSegCore", "sprawl_utils")],
-        language="c++",
-        extra_compile_args=["-std=c++11"],
-        extra_link_args=["-std=c++11"],
-    ),
-    Extension(
-        "PartSegCore.sprawl_utils.sprawl_utils",
-        sources=["package/PartSegCore/sprawl_utils/sprawl_utils.pyx"],
-        include_dirs=[np.get_include()] + [os.path.join(package_dir, "PartSegCore", "sprawl_utils")],
-        language="c++",
-        extra_compile_args=["-std=c++11"],
-        extra_link_args=["-std=c++11"],
-    ),
-    Extension(
-        "PartSegCore.sprawl_utils.fuzzy_distance",
-        sources=["package/PartSegCore/sprawl_utils/fuzzy_distance.pyx"],
-        include_dirs=[np.get_include()] + [os.path.join(package_dir, "PartSegCore", "sprawl_utils")],
-        language="c++",
-        extra_compile_args=["-std=c++11"],
-        extra_link_args=["-std=c++11"],
-    ),
-    Extension(
-        "PartSegCore.color_image.color_image_cython",
-        ["package/PartSegCore/color_image/color_image_cython.pyx"],
-        include_dirs=[np.get_include()],
-        extra_compile_args=["-std=c++11"],
-        language="c++",
-    ),
-    Extension(
-        "PartSegCore.multiscale_opening.mso_bind",
-        ["package/PartSegCore/multiscale_opening/mso_bind.pyx"],
-        include_dirs=[np.get_include()],
-        extra_compile_args=["-std=c++11", "-Wall"],
-        language="c++",
-        # undef_macros=["NDEBUG"],
-        # define_macros=[("DEBUG", None)]
-    ),
-]
 
 
 def read(*parts):
@@ -95,7 +42,6 @@ if os.path.exists(changelog_path):
 
 
 setup(
-    ext_modules=extensions,
     include_package_data=True,
     long_description=readme(),
     long_description_content_type="text/markdown",

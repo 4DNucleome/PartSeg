@@ -3,9 +3,9 @@ import typing
 import numpy as np
 
 import PartSegData
+from PartSegCore_compiled_backend.color_image_cython import resolution
 
 from .base_colors import BaseColormap
-from .color_image_cython import resolution
 
 color_maps = np.load(PartSegData.colors_file)
 

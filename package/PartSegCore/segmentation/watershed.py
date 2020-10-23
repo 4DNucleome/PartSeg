@@ -8,10 +8,15 @@ from typing import Any, Callable
 import numpy as np
 
 from PartSegCore.class_generator import enum_register
+from PartSegCore_compiled_backend.multiscale_opening import MuType, PyMSO, calculate_mu
+from PartSegCore_compiled_backend.sprawl_utils.find_split import (
+    euclidean_sprawl,
+    fdt_sprawl,
+    path_maximum_sprawl,
+    path_minimum_sprawl,
+)
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
-from ..multiscale_opening import MuType, PyMSO, calculate_mu
-from ..sprawl_utils.find_split import euclidean_sprawl, fdt_sprawl, path_maximum_sprawl, path_minimum_sprawl
 from .algorithm_base import SegmentationLimitException
 
 

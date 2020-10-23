@@ -8,11 +8,12 @@ from copy import deepcopy
 import numpy as np
 import SimpleITK
 
+from PartSegCore_compiled_backend.multiscale_opening import PyMSO, calculate_mu_mid
+
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
 from ..channel_class import Channel
 from ..mask_partition_utils import BorderRim as BorderRimBase
 from ..mask_partition_utils import MaskDistanceSplit as MaskDistanceSplitBase
-from ..multiscale_opening import PyMSO, calculate_mu_mid
 from ..universal_const import Units
 from ..utils import bisect
 from .algorithm_base import (

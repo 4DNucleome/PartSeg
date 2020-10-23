@@ -3,9 +3,9 @@ import itertools
 import numpy as np
 import pytest
 
-from PartSegCore.multiscale_opening import MuType, PyMSO, calculate_mu, calculate_mu_mid
 from PartSegCore.segmentation.watershed import NeighType, calculate_distances_array
-from PartSegCore.sprawl_utils.euclidean_cython import calculate_euclidean
+from PartSegCore_compiled_backend.multiscale_opening import MuType, PyMSO, calculate_mu, calculate_mu_mid
+from PartSegCore_compiled_backend.sprawl_utils.euclidean_cython import calculate_euclidean
 
 
 class TestMu:
