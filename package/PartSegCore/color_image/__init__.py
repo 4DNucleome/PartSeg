@@ -1,4 +1,4 @@
-from PartSegCore_compiled_backend.color_image_cython import calculate_borders, resolution
+from PartSegCore_compiled_backend.color_image_cython import add_labels, calculate_borders, color_grayscale, resolution
 
 from .base_colors import (
     BaseColormap,
@@ -12,14 +12,16 @@ from .base_colors import (
 from .color_image_base import create_color_map
 
 __all__ = (
+    "BaseColormap",
+    "Color",
+    "ColorMap",
+    "ColorPosition",
+    "LabelColors",
+    "add_labels",
     "calculate_borders",
+    "color_grayscale",
     "create_color_map",
     "default_colormap_dict",
-    "Color",
-    "ColorPosition",
-    "ColorMap",
-    "BaseColormap",
     "default_label_dict",
-    "LabelColors",
     "resolution",
 )
