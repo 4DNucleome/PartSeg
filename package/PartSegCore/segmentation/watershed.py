@@ -241,8 +241,7 @@ sprawl_dict = Register(
 def get_neigh(sides):
     if sides:
         return NeighType.sides
-    else:
-        return NeighType.edges
+    return NeighType.edges
 
 
 class NeighType(Enum):
@@ -286,8 +285,7 @@ def get_neighbourhood(spacing, neigh_type: NeighType):
         if neigh_type == NeighType.sides:
             return neighbourhood2d[:4]
         return neighbourhood2d
-    else:
-        return neighbourhood[: neigh_type.value]
+    return neighbourhood[: neigh_type.value]
 
 
 neighbourhood = np.array(
