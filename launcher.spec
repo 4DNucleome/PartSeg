@@ -30,6 +30,12 @@ hiddenimports = ["imagecodecs._" + x for x in imagecodecs._extensions()] +\
                 ["imagecodecs._shared"] + [x.__name__ for x in napari.plugins.plugin_manager.plugins.values()] + \
                 ["pkg_resources.py2_warn", "scipy.special.cython_special", "ipykernel.datapub"]
 
+try:
+    from sentry_sdk.integrations import _AUTO_ENABLING_INTEGRATIONS
+    for el in _AUTO_ENABLING_INTEGRATIONS:
+        hiddenimports.append(os.path.splitext(el)[0])
+except ImportError:
+    pass
 
 if platform.system() == "Windows":
     import PyQt5
