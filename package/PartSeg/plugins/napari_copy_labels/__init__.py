@@ -33,8 +33,7 @@ class CopyLabelWidget(QWidget):
         if layer is None:
             return
 
-        widget = self.viewer.window.qt_viewer.controls.widgets[layer]
-        component_num = widget.selectionSpinBox.value()
+        component_num = layer.selected_label
         z_position = self.viewer.dims.current_step[1]
         print(layer, component_num, z_position)
         mask = layer.data[0, z_position] == component_num
