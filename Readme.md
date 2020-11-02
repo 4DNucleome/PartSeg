@@ -51,9 +51,9 @@ PartSeg export few commandline options:
 -   `segmentation_analysis` - skip launcher and start analysis gui
 -   `segmentation` - skip launcher and start segmentation gui
 
-## Additional remarks
+## napari plugin
 
-PartSeg use current `imagecodecs-lite` as backed for `tifffile`. You may install full version if `imagecodecs` manually.
+PartSeg provides napari plugins for io to allow read projects format in napari viewer.
 
 ## Save Format
 
