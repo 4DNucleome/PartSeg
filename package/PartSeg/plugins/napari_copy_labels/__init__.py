@@ -41,4 +41,3 @@ class CopyLabelWidget(QWidget):
         end = min(layer.shape[1], self.upper.value()) + 1
         for i in range(start, end):
             layer.data[0, i][mask] = component_num
-        print(widget)

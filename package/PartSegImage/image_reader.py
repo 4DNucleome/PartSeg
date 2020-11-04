@@ -5,6 +5,7 @@ from abc import abstractmethod
 from io import BytesIO
 from pathlib import Path
 from threading import Lock
+from xml.etree import ElementTree
 
 import numpy as np
 import tifffile.tifffile
@@ -158,6 +159,8 @@ class GenericImageReader(BaseImageReader):
             return CziImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext in [".oif", ".oib"]:
             return OifImagReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
+        if ext == ".obsep":
+            return ObsepImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         else:
             return TiffImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
 
@@ -237,6 +240,37 @@ class CziImageReader(BaseImageReader):
             array = array[..., 0]
             axes = axes[:-1]
         return super().update_array_shape(array, axes)
+
+
+class ObsepImageReader(BaseImageReader):
+    def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
+        directory = Path(os.path.dirname(image_path))
+        xml_doc = ElementTree.parse(image_path).getroot()
+        channels = xml_doc.findall("net/node/node/attribute[@name='image type']")
+        if not channels:
+            raise ValueError("Information about channel images not found")
+        possible_extensions = [".tiff", ".tif", ".TIFF", ".TIF"]
+        channel_list = []
+        for channel in channels:
+            name = next(iter(channel)).attrib["val"]
+            for ex in possible_extensions:
+                if (directory / (name + ex)).exists():
+                    name += ex
+                    break
+            else:
+                raise ValueError(f"Not found file for key {name}")
+            channel_list.append(TiffImageReader.read_image(directory / name, default_spacing=self.default_spacing))
+        image = channel_list[0]
+        for el in channel_list[1:]:
+            image = image.merge(el, "C")
+
+        z_spacing = (
+            float(xml_doc.find("net/node/attribute[@name='step width']/double").attrib["val"]) * name_to_scalar["um"]
+        )
+
+        image.set_spacing((z_spacing,) + image.spacing[1:])
+
+        return image
 
 
 class TiffImageReader(BaseImageReader):
