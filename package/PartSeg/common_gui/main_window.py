@@ -198,7 +198,6 @@ class BaseMainWindow(QMainWindow):
         viewer.window.qt_viewer.destroyed.connect(lambda x: self.close_viewer(viewer))
 
     def close_viewer(self, obj):
-
         for i, el in enumerate(self.viewer_list):
             if el == obj:
                 self.viewer_list.pop(i)
