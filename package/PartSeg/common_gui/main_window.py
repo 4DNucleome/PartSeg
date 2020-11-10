@@ -78,6 +78,8 @@ class BaseMainMenu(QWidget):
             QMessageBox().warning(self, "Data load fail", "Fail with loading data", QMessageBox.Ok)
             return
         self.settings.set_project_info(data)
+        if data.file_path:
+            self.settings.add_path_history(os.path.dirname(data.file_path))
 
 
 class BaseMainWindow(QMainWindow):
