@@ -151,8 +151,6 @@ class BaseMainWindow(QMainWindow):
 
     def toggle_multiple_files(self):
         self.settings.set("multiple_files_widget", not self.settings.get("multiple_files_widget"))
-        if self.multiple_files is not None:
-            self.multiple_files.setVisible(self.settings.get("multiple_files_widget"))
 
     def get_colormaps(self) -> List[Optional[colormap.Colormap]]:
         channel_num = self.settings.image.channels

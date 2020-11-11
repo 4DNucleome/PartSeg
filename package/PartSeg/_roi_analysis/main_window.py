@@ -663,11 +663,6 @@ class MainWindow(BaseMainWindow):
     def reload(self):
         self.options_panel.algorithm_choose_widget.reload(algorithm_description.analysis_algorithm_dict)
 
-    def event(self, event: QEvent):
-        if event.type() == QEvent.WindowActivate:
-            self.multiple_files.setVisible(self.settings.get("multiple_files_widget", False))
-        return super().event(event)
-
     def closeEvent(self, event):
         self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
         self.options_panel.algorithm_choose_widget.recursive_get_values()

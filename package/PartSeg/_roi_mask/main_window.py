@@ -890,7 +890,6 @@ class MainWindow(BaseMainWindow):
         self.options_panel.algorithm_options.batch_process.multiple_result.connect(
             partial(self.multiple_files.save_state_action, custom_name=False)
         )
-        self.options_panel.image_properties.multiple_files.stateChanged.connect(self.multiple_files.setVisible)
 
         icon = QIcon(os.path.join(PartSegData.icons_dir, "icon_stack.png"))
         self.setWindowIcon(icon)
