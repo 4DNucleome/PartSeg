@@ -78,6 +78,8 @@ class BaseMainMenu(QWidget):
             QMessageBox().warning(self, "Data load fail", "Fail with loading data", QMessageBox.Ok)
             return
         self.settings.set_project_info(data)
+        if data.file_path:
+            self.settings.add_path_history(os.path.dirname(data.file_path))
 
 
 class BaseMainWindow(QMainWindow):
@@ -198,7 +200,6 @@ class BaseMainWindow(QMainWindow):
         viewer.window.qt_viewer.destroyed.connect(lambda x: self.close_viewer(viewer))
 
     def close_viewer(self, obj):
-
         for i, el in enumerate(self.viewer_list):
             if el == obj:
                 self.viewer_list.pop(i)
