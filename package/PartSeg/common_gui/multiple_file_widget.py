@@ -108,6 +108,11 @@ class MultipleFileWidget(QWidget):
         self.error_list = []
 
         self._add_state.connect(self.save_state_action)
+        self.settings.data_changed.connect(self.view_changed)
+
+    def view_changed(self, path, value):
+        if path == "multiple_files_widget":
+            self.setVisible(value)
 
     def execute_load_files(self, load_data: LoadProperty, range_changed, step_changed):
         range_changed(0, len(load_data.load_location))

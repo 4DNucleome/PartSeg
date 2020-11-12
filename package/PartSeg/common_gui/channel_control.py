@@ -311,6 +311,7 @@ class ChannelProperty(QWidget):
         self.collapse_widget.add_hide_element(self.fixed)
         self.collapse_widget.add_hide_element(self.use_filter)
         self.collapse_widget.add_hide_element(self.filter_radius)
+        self.collapse_widget.add_hide_element(self.gamma_value)
 
         layout = QGridLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -333,6 +334,8 @@ class ChannelProperty(QWidget):
 
         self.collapse_widget.add_hide_element(label1)
         self.collapse_widget.add_hide_element(label2)
+        self.collapse_widget.add_hide_element(label3)
+        self.collapse_widget.add_hide_element(label4)
 
     def send_info(self):
         """send info to """

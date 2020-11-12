@@ -471,13 +471,17 @@ class MainMenu(BaseMainMenu):
         try:
             dial = CustomLoadDialog(load_functions.load_dict, history=self.settings.get_path_history())
             dial.setDirectory(self.settings.get("io.open_directory", str(Path.home())))
+            file_path = self.settings.get("io.open_file", "")
+            if os.path.isfile(file_path):
+                dial.selectFile(file_path)
             dial.selectNameFilter(self.settings.get("io.open_filter", next(iter(load_functions.load_dict.keys()))))
             if dial.exec_():
                 result = dial.get_result()
                 self.settings.set("io.open_filter", result.selected_filter)
                 load_dir = os.path.dirname(result.load_location[0])
                 self.settings.set("io.open_directory", load_dir)
-                self.settings.add_path_history(load_dir)
+                self.settings.set("io.open_file", result.load_location[0])
+                self.settings.add_load_files_history(result.load_location, result.load_class.get_name())
                 dial2 = ExecuteFunctionDialog(
                     result.load_class.load,
                     [result.load_location],
@@ -556,7 +560,7 @@ class MainWindow(BaseMainWindow):
     def __init__(
         self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None, initial_image=None
     ):
-        super().__init__(config_folder, title, settings, signal_fun)
+        super().__init__(config_folder, title, settings, load_functions.load_dict, signal_fun)
         self.channel_info = "result_image"
         self.files_num = 2
         self.setMinimumWidth(600)
@@ -602,6 +606,7 @@ class MainWindow(BaseMainWindow):
         menu_bar = self.menuBar()
         file_menu = menu_bar.addMenu("File")
         file_menu.addAction("&Open").triggered.connect(self.main_menu.load_data)
+        file_menu.addMenu(self.recent_file_menu)
         file_menu.addAction("&Save").triggered.connect(self.main_menu.save_file)
         file_menu.addAction("Batch processing").triggered.connect(self.main_menu.batch_window)
         view_menu = menu_bar.addMenu("View")
@@ -654,19 +659,11 @@ class MainWindow(BaseMainWindow):
         self.options_panel.hide_left_panel(not self.settings.get_from_profile("hide_left_panel"))
 
     def image_read(self):
+        super().image_read()
         self.options_panel.interactive_algorithm_execute()
-        self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
-
-    def read_drop(self, paths):
-        self._read_drop(paths, load_functions)
 
     def reload(self):
         self.options_panel.algorithm_choose_widget.reload(algorithm_description.analysis_algorithm_dict)
-
-    def event(self, event: QEvent):
-        if event.type() == QEvent.WindowActivate:
-            self.multiple_files.setVisible(self.settings.get("multiple_files_widget", False))
-        return super().event(event)
 
     def closeEvent(self, event):
         self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
