@@ -5,7 +5,7 @@ import sys
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import napari.utils.theme
 import numpy as np
@@ -22,6 +22,9 @@ from PartSegCore.project_info import ProjectInfoBase
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
 from PartSegImage import Image
+
+DIR_HISTORY = "io.dir_location_history"
+FILE_HISTORY = "io.files_open_history"
 
 
 class ImageSettings(QObject):
@@ -466,22 +469,31 @@ class BaseSettings(ViewSettings):
         return list containing last 10 elements added with :py:meth:`.add_path_history` and
         last opened in each category form :py:attr:`save_location_keys`
         """
-        res = self.get("io.history", [])[:]
+        res = self.get(DIR_HISTORY, [])[:]
         for name in self.save_locations_keys:
             val = self.get("io." + name, str(Path.home()))
             if val not in res:
                 res = res + [val]
         return res
 
+    def get_last_files(self) -> list:
+        return self.get(FILE_HISTORY, [])
+
+    @staticmethod
+    def _add_elem_to_list(data_list: list, value: Any) -> list:
+        try:
+            data_list.remove(value)
+        except ValueError:
+            data_list = data_list[:9]
+        return [value] + data_list
+
     def add_path_history(self, dir_path: str):
         """Save path in history of visited directories. Store only 10 last"""
-        history: List[str] = self.get("io.history", [])
-        try:
-            history.remove(dir_path)
-        except ValueError:
-            history = history[:9]
+        self.set(DIR_HISTORY, self._add_elem_to_list(self.get(DIR_HISTORY, []), dir_path))
 
-        self.set("io.history", [dir_path] + history[-9:])
+    def add_load_files_history(self, file_path: List[str], load_method: str):
+        self.set(FILE_HISTORY, self._add_elem_to_list(self.get(FILE_HISTORY, []), (file_path, load_method)))
+        self.add_path_history(os.path.dirname(file_path[0]))
 
     def set(self, key_path: str, value):
         """

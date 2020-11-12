@@ -175,14 +175,18 @@ class MainMenu(BaseMainMenu):
         # TODO move segmentation with image load to load_segmentaion
         dial = CustomLoadDialog(io_functions.load_dict)
         dial.setDirectory(self.settings.get("io.load_image_directory", str(Path.home())))
+        default_file_path = self.settings.get("io.load_image_file", "")
+        if os.path.isfile(default_file_path):
+            dial.selectFile(default_file_path)
         dial.selectNameFilter(self.settings.get("io.load_data_filter", next(iter(io_functions.load_dict.keys()))))
         dial.setHistory(dial.history() + self.settings.get_path_history())
         if not dial.exec_():
             return
         load_property = dial.get_result()
         self.settings.set("io.load_image_directory", os.path.dirname(load_property.load_location[0]))
+        self.settings.set("io.load_image_file", load_property.load_location[0])
         self.settings.set("io.load_data_filter", load_property.selected_filter)
-        self.settings.add_path_history(os.path.dirname(load_property.load_location[0]))
+        self.settings.add_load_files_history(load_property.load_location, load_property.load_class.get_name())
 
         def exception_hook(exception):
             if isinstance(exception, ValueError) and exception.args[0] == "not a TIFF file":
@@ -872,7 +876,7 @@ class MainWindow(BaseMainWindow):
     def __init__(
         self, config_folder=CONFIG_FOLDER, title="PartSeg", settings=None, signal_fun=None, initial_image=None
     ):
-        super().__init__(config_folder, title, settings, signal_fun)
+        super().__init__(config_folder, title, settings, io_functions.load_dict, signal_fun)
         self.channel_info = "channelcontrol"
         self.channel_control = ChannelProperty(self.settings, start_name="channelcontrol")
         self.image_view = StackImageView(self.settings, self.channel_control, name="channelcontrol")
@@ -897,6 +901,7 @@ class MainWindow(BaseMainWindow):
         menu_bar = self.menuBar()
         file_menu = menu_bar.addMenu("File")
         file_menu.addAction("&Open").triggered.connect(self.main_menu.load_image)
+        file_menu.addMenu(self.recent_file_menu)
         file_menu.addAction("&Save segmentation").triggered.connect(self.main_menu.save_segmentation)
         file_menu.addAction("&Save components").triggered.connect(self.main_menu.save_result)
         view_menu = menu_bar.addMenu("View")
@@ -967,9 +972,6 @@ class MainWindow(BaseMainWindow):
         del self.options_panel.algorithm_options.show_parameters_widget
         self.settings.dump()
         super().closeEvent(event)
-
-    def read_drop(self, paths):
-        self._read_drop(paths, io_functions)
 
     @staticmethod
     def get_project_info(file_path, image):
