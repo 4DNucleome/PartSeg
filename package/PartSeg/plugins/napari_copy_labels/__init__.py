@@ -37,31 +37,40 @@ class CopyLabelWidget(QWidget):
     def activate_widget(self, event):
         self.setVisible(isinstance(event.item, Labels))
         if isinstance(event.item, Labels):
-            event.item.events.selected_label.connect(self.update_items)
+            event.item.events.set_data.connect(self.update_items)
 
     def update_items(self, event):
         unique = np.unique(event.source.data)
         if unique[0] == 0:
             unique = unique[1:]
+        checked = set()
         for _ in range(self.checkbox_layout.count()):
-            w = self.checkbox_layout.takeAt(0).widget()
+            w: QCheckBox = self.checkbox_layout.takeAt(0).widget()
+            if w.isChecked():
+                checked.add(w.text())
             w.deleteLater()
         for v in unique:
             chk = QCheckBox(str(v))
+            if chk.text() in checked:
+                chk.setChecked(True)
             self.checkbox_layout.addWidget(chk)
-
-        print(event, unique)
 
     def copy_action(self):
         layer = self.viewer.active_layer
         if layer is None:
             return
 
-        component_num = layer.selected_label
+        checked = set()
+        for i in range(self.checkbox_layout.count()):
+            w: QCheckBox = self.checkbox_layout.itemAt(i).widget()
+            if w.isChecked():
+                checked.add(int(w.text()))
+        if not checked:
+            checked = {layer.selected_label}
         z_position = self.viewer.dims.current_step[1]
-        print(layer, component_num, z_position)
-        mask = layer.data[0, z_position] == component_num
-        start = max(0, self.lower.value())
-        end = min(layer.shape[1], self.upper.value()) + 1
-        for i in range(start, end):
-            layer.data[0, i][mask] = component_num
+        for component_num in checked:
+            mask = layer.data[0, z_position] == component_num
+            start = max(0, self.lower.value())
+            end = min(layer.shape[1], self.upper.value()) + 1
+            for i in range(start, end):
+                layer.data[0, i][mask] = component_num
