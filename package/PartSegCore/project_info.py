@@ -7,11 +7,12 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
 if sys.version_info.minor < 8:
-    from typing_extensions import Protocol
+    from typing_extensions import Protocol, runtime_checkable
 else:
-    from typing import Protocol
+    from typing import Protocol, runtime_checkable
 
 
+@runtime_checkable
 class ProjectInfoBase(Protocol):
     """
     This is base protocol for Project Information.

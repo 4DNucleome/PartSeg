@@ -500,6 +500,10 @@ class ColorComboBoxGroup(QWidget):
                 resp.append(None)
         return resp
 
+    def visibility_changed(self, index):
+        self.coloring_update.emit()
+        self.change_channel.emit(self.name, index)
+
     def change_selected_color(self, index, color):
         self.settings.set_channel_info(self.name, index, str(color))
         self.coloring_update.emit()
@@ -524,7 +528,7 @@ class ColorComboBoxGroup(QWidget):
                     gamma=self.settings.get_from_profile(f"{self.name}.gamma_value_{i}", 1),
                 )
                 el.clicked.connect(self.set_active)
-                el.channel_visible_changed.connect(self.change_selected_color)
+                el.channel_visible_changed.connect(self.visibility_changed)
                 el.channel_colormap_changed.connect(self.change_selected_color)
                 self.layout().addWidget(el)
         else:
