@@ -1,7 +1,7 @@
 import numpy as np
 from napari import Viewer
 from napari.layers.labels import Labels
-from PyQt5.QtGui import QKeySequence
+from qtpy.QtGui import QKeySequence
 from qtpy.QtWidgets import QCheckBox, QGridLayout, QLabel, QPushButton, QShortcut, QSpinBox, QWidget
 
 from PartSeg.common_gui.flow_layout import FlowLayout
