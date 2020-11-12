@@ -269,7 +269,7 @@ class ObsepImageReader(BaseImageReader):
         )
 
         image.set_spacing((z_spacing,) + image.spacing[1:])
-
+        image.file_path = str(image_path)
         return image
 
 
@@ -340,7 +340,7 @@ class TiffImageReader(BaseImageReader):
         self.image_file.close()
         if self.mask_file is not None:
             self.mask_file.close()
-        if not isinstance(image_path, str):
+        if not isinstance(image_path, (str, Path)):
             image_path = ""
         return self.image_class(
             image_data,

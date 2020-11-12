@@ -1,6 +1,7 @@
 from napari import Viewer
 from napari.layers.labels import Labels
-from qtpy.QtWidgets import QGridLayout, QLabel, QPushButton, QSpinBox, QWidget
+from PyQt5.QtGui import QKeySequence
+from qtpy.QtWidgets import QGridLayout, QLabel, QPushButton, QShortcut, QSpinBox, QWidget
 
 
 class CopyLabelWidget(QWidget):
@@ -19,6 +20,8 @@ class CopyLabelWidget(QWidget):
         layout.addWidget(self.lower, 0, 1)
         layout.addWidget(self.upper, 1, 1)
         layout.addWidget(self.copy_btn, 3, 0, 1, 2)
+        self.shortcut = QShortcut(QKeySequence("Ctrl+K"), self)
+        self.shortcut.activated.connect(self.copy_action)
 
         self.setLayout(layout)
 
