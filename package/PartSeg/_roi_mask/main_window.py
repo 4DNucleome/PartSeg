@@ -953,10 +953,6 @@ class MainWindow(BaseMainWindow):
         except KeyError:
             pass
 
-    def image_read(self):
-        self.image_view.reset_image_size()
-        self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
-
     def closeEvent(self, event: QCloseEvent):
         self.settings.set_in_profile("main_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
         self.options_panel.algorithm_options.algorithm_choose_widget.recursive_get_values()

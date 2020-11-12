@@ -659,8 +659,8 @@ class MainWindow(BaseMainWindow):
         self.options_panel.hide_left_panel(not self.settings.get_from_profile("hide_left_panel"))
 
     def image_read(self):
+        super().image_read()
         self.options_panel.interactive_algorithm_execute()
-        self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
 
     def reload(self):
         self.options_panel.algorithm_choose_widget.reload(algorithm_description.analysis_algorithm_dict)

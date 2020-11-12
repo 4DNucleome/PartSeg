@@ -336,3 +336,7 @@ class BaseMainWindow(QMainWindow):
             res.save_class.save(res.save_destination, data, res.parameters)
 
         return _screenshot
+
+    def image_read(self):
+        self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
+        self.statusBar().showMessage(self.settings.image_path)
