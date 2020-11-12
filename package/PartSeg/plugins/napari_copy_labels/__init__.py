@@ -1,7 +1,10 @@
+import numpy as np
 from napari import Viewer
 from napari.layers.labels import Labels
 from PyQt5.QtGui import QKeySequence
-from qtpy.QtWidgets import QGridLayout, QLabel, QPushButton, QShortcut, QSpinBox, QWidget
+from qtpy.QtWidgets import QCheckBox, QGridLayout, QLabel, QPushButton, QShortcut, QSpinBox, QWidget
+
+from PartSeg.common_gui.flow_layout import FlowLayout
 
 
 class CopyLabelWidget(QWidget):
@@ -14,11 +17,14 @@ class CopyLabelWidget(QWidget):
         self.lower.setSingleStep(1)
         self.upper = QSpinBox()
         self.upper.setSingleStep(1)
+        self.checkbox_layout = FlowLayout()
+
         layout = QGridLayout()
         layout.addWidget(QLabel("Lower layer"), 0, 0)
         layout.addWidget(QLabel("Upper layer"), 1, 0)
         layout.addWidget(self.lower, 0, 1)
         layout.addWidget(self.upper, 1, 1)
+        layout.addLayout(self.checkbox_layout, 2, 0, 1, 2)
         layout.addWidget(self.copy_btn, 3, 0, 1, 2)
         self.shortcut = QShortcut(QKeySequence("Ctrl+K"), self)
         self.shortcut.activated.connect(self.copy_action)
@@ -30,6 +36,21 @@ class CopyLabelWidget(QWidget):
 
     def activate_widget(self, event):
         self.setVisible(isinstance(event.item, Labels))
+        if isinstance(event.item, Labels):
+            event.item.events.selected_label.connect(self.update_items)
+
+    def update_items(self, event):
+        unique = np.unique(event.source.data)
+        if unique[0] == 0:
+            unique = unique[1:]
+        for _ in range(self.checkbox_layout.count()):
+            w = self.checkbox_layout.takeAt(0).widget()
+            w.deleteLater()
+        for v in unique:
+            chk = QCheckBox(str(v))
+            self.checkbox_layout.addWidget(chk)
+
+        print(event, unique)
 
     def copy_action(self):
         layer = self.viewer.active_layer
