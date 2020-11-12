@@ -63,7 +63,12 @@ class ImageWriter:
         # TODO change to ome TIFF
         if data.dtype in [np.uint8, np.uint16, np.float32]:
             imwrite(
-                save_path, data, imagej=True, software="PartSeg", metadata=metadata, resolution=resolution,
+                save_path,
+                data,
+                imagej=True,
+                software="PartSeg",
+                metadata=metadata,
+                resolution=resolution,
             )  # , compress=6,
         else:
             raise ValueError(f"Data type {data.dtype} not supported by imagej tiff")

@@ -25,10 +25,18 @@ class Viewer(ViewerModel):
     """
 
     def __init__(
-        self, title="napari", ndisplay=2, order=None, axis_labels=None, show=True,
+        self,
+        title="napari",
+        ndisplay=2,
+        order=None,
+        axis_labels=None,
+        show=True,
     ):
         super().__init__(
-            title=title, ndisplay=ndisplay, order=order, axis_labels=axis_labels,
+            title=title,
+            ndisplay=ndisplay,
+            order=order,
+            axis_labels=axis_labels,
         )
         qt_viewer = QtViewer(self)
         self.window = Window(qt_viewer, show=show)
@@ -80,7 +88,8 @@ class Viewer(ViewerModel):
         import warnings
 
         warnings.warn(
-            "Viewer.update() is deprecated, use  create_worker(func, *args, **kwargs) instead", DeprecationWarning,
+            "Viewer.update() is deprecated, use  create_worker(func, *args, **kwargs) instead",
+            DeprecationWarning,
         )
         return create_worker(func, *args, **kwargs, _start_thread=True)
 

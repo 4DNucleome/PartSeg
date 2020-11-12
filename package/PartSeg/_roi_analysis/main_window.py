@@ -518,7 +518,12 @@ class MaskDialog(MaskDialogBase):
         mask_property = self.mask_widget.get_mask_property()
         self.settings.set("mask_manager.mask_property", mask_property)
         mask = calculate_mask_from_project(mask_description=mask_property, project=project_info)
-        self.settings.add_history_element(create_history_element_from_project(project_info, mask_property,))
+        self.settings.add_history_element(
+            create_history_element_from_project(
+                project_info,
+                mask_property,
+            )
+        )
         if self.settings.history_redo_size():
             history: HistoryElement = self.settings.history_next_element()
             self.settings.set("current_algorithm", history.segmentation_parameters["algorithm_name"])

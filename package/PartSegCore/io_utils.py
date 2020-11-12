@@ -311,7 +311,11 @@ class HistoryElement(BaseSerializableClass):
             arrays_dict["mask"] = mask
         np.savez_compressed(arrays, **arrays_dict)
         arrays.seek(0)
-        return cls(segmentation_parameters=segmentation_parameters, mask_property=mask_property, arrays=arrays,)
+        return cls(
+            segmentation_parameters=segmentation_parameters,
+            mask_property=mask_property,
+            arrays=arrays,
+        )
 
 
 class HistoryProblem(Exception):

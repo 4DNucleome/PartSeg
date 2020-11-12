@@ -217,7 +217,14 @@ class Image:
         return "".join([key for val, key in zip(self._image_array.shape, self.axis_order) if val > 1])
 
     def substitute(
-        self, data=None, image_spacing=None, file_path=None, mask=_DEF, default_coloring=None, ranges=None, labels=None,
+        self,
+        data=None,
+        image_spacing=None,
+        file_path=None,
+        mask=_DEF,
+        default_coloring=None,
+        ranges=None,
+        labels=None,
     ):
         """Create copy of image with substitution of not None elements"""
         data = self._image_array if data is None else data

@@ -421,7 +421,9 @@ class ImageView(QWidget):
                 self.viewer.dims.ndisplay == 2,
             ).transpose(np.argsort(ORDER_DICT[self._current_order]))
             image_info.roi = self.viewer.add_image(
-                data, scale=image_info.image.normalized_scaling(), contrast_limits=[0, max_num],
+                data,
+                scale=image_info.image.normalized_scaling(),
+                contrast_limits=[0, max_num],
             )
         else:
             image_info.roi = self.viewer.add_image(

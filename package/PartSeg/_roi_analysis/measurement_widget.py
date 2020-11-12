@@ -337,7 +337,9 @@ class MeasurementWidget(QWidget):
             kwargs[f"channel+{num}"] = self.settings.image.get_channel(num)
 
         thread = ExecuteFunctionThread(
-            compute_class.calculate, [channel, roi, base_mask, self.settings.image.spacing, units], kwargs,
+            compute_class.calculate,
+            [channel, roi, base_mask, self.settings.image.spacing, units],
+            kwargs,
         )
         dial = WaitingDialog(thread, "Measurement calculation")  # , exception_hook=exception_hook)
         dial.exec()

@@ -192,7 +192,9 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         :return: algorithm result description
         """
         return SegmentationResult(
-            roi=roi, parameters=self.get_segmentation_profile(), additional_layers=self.get_additional_layers(),
+            roi=roi,
+            parameters=self.get_segmentation_profile(),
+            additional_layers=self.get_additional_layers(),
         )
 
     def set_image(self, image):

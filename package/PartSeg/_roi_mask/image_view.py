@@ -43,7 +43,11 @@ class StackImageView(ImageView):
             translate_grid[image_info.image.stack_pos] = 0
             self.additional_layers.append(
                 self.viewer.add_image(
-                    component_mark, scale=image_info.roi.scale, blending="additive", colormap="gray", opacity=0.5,
+                    component_mark,
+                    scale=image_info.roi.scale,
+                    blending="additive",
+                    colormap="gray",
+                    opacity=0.5,
                 )
             )
             self.additional_layers[-1].translate_grid = translate_grid

@@ -345,7 +345,7 @@ class ViewSettings(ImageSettings):
         :py:meth:`~.ProfileDict.set` of inner variable.
 
         :param key_path: dot separated path
-        :param value: value to store. The value need to be json serializable. """
+        :param value: value to store. The value need to be json serializable."""
         self.view_settings_dict.set(f"{self.current_profile_dict}.{key_path}", value)
         self.profile_data_changed.emit(key_path, value)
 
@@ -502,7 +502,7 @@ class BaseSettings(ViewSettings):
 
         :param key_path: dot separated path
         :param value: value to store. The value need to be json serializable.
-         """
+        """
         self._roi_dict.set(f"{self._current_roi_dict}.{key_path}", value)
         self.data_changed.emit(key_path, value)
 

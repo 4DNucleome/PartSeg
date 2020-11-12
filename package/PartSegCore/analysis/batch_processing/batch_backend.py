@@ -315,7 +315,10 @@ class CalculationProcess:
         if operation.name in self.reused_mask:
             self.mask_dict[operation.name] = mask
         history_element = HistoryElement.create(
-            self.segmentation, self.mask, self.algorithm_parameters, operation.mask_property,
+            self.segmentation,
+            self.mask,
+            self.algorithm_parameters,
+            operation.mask_property,
         )
         backup = self.mask, self.history
         self.mask = mask
@@ -341,7 +344,11 @@ class CalculationProcess:
         image_channel = self.image.get_channel(channel)
         # FIXME use additional information
         measurement = operation.measurement_profile.calculate(
-            image_channel, self.segmentation, self.mask, self.image.spacing, operation.units,
+            image_channel,
+            self.segmentation,
+            self.mask,
+            self.image.spacing,
+            operation.units,
         )
         self.measurement.append(measurement)
 

@@ -17,7 +17,7 @@ def setup_module():
 
 
 def teardown_module():
-    """ teardown any state that was previously setup with a setup_module
+    """teardown any state that was previously setup with a setup_module
     method.
     """
     from PartSegCore import class_generator

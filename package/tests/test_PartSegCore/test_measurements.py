@@ -1469,7 +1469,11 @@ class TestStatisticProfile:
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0), segmentation, mask=mask, voxel_size=image.voxel_size, result_units=Units.µm,
+            image.get_channel(0),
+            segmentation,
+            mask=mask,
+            voxel_size=image.voxel_size,
+            result_units=Units.µm,
         )
         tot_vol, seg_vol, rim_vol = list(result.values())
         assert isclose(tot_vol[0], seg_vol[0] + rim_vol[0])
@@ -1496,7 +1500,11 @@ class TestStatisticProfile:
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0), segmentation, mask=mask, voxel_size=image.voxel_size, result_units=Units.µm,
+            image.get_channel(0),
+            segmentation,
+            mask=mask,
+            voxel_size=image.voxel_size,
+            result_units=Units.µm,
         )
         tot_vol, seg_vol, rim_vol = list(result.values())
         assert isclose(tot_vol[0], seg_vol[0] + rim_vol[0])
@@ -1526,7 +1534,11 @@ class TestStatisticProfile:
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0), segmentation, mask=mask, voxel_size=image.voxel_size, result_units=Units.µm,
+            image.get_channel(0),
+            segmentation,
+            mask=mask,
+            voxel_size=image.voxel_size,
+            result_units=Units.µm,
         )
         tot_vol, seg_vol, rim_vol = list(result.values())
         assert isclose(tot_vol[0], seg_vol[0] + rim_vol[0])
@@ -1552,7 +1564,11 @@ class TestStatisticProfile:
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0), segmentation, mask=mask, voxel_size=image.voxel_size, result_units=Units.µm,
+            image.get_channel(0),
+            segmentation,
+            mask=mask,
+            voxel_size=image.voxel_size,
+            result_units=Units.µm,
         )
         tot_vol, seg_vol, rim_vol = list(result.values())
         assert isclose(tot_vol[0] + seg_vol[0], rim_vol[0])
@@ -1618,7 +1634,11 @@ class TestStatisticProfile:
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0), segmentation, mask=mask, voxel_size=image.voxel_size, result_units=Units.µm,
+            image.get_channel(0),
+            segmentation,
+            mask=mask,
+            voxel_size=image.voxel_size,
+            result_units=Units.µm,
         )
         values = list(result.values())
         for i in range(3):
@@ -1654,7 +1674,11 @@ class TestStatisticProfile:
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0), segmentation, mask=mask, voxel_size=image.voxel_size, result_units=Units.µm,
+            image.get_channel(0),
+            segmentation,
+            mask=mask,
+            voxel_size=image.voxel_size,
+            result_units=Units.µm,
         )
         vol1, vol2, vol3, vol4 = list(result.values())
         assert isclose(vol1[0], vol3[0])
@@ -1676,7 +1700,8 @@ class TestStatisticProfile:
                 Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes),
             ),
             MeasurementEntry(
-                "Diameter", Diameter.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                "Diameter",
+                Diameter.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
                 "Diameter per component",
@@ -1691,7 +1716,8 @@ class TestStatisticProfile:
                 MaximumPixelBrightness.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes),
             ),
             MeasurementEntry(
-                "Sphericity", Sphericity.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
+                "Sphericity",
+                Sphericity.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No),
             ),
             MeasurementEntry(
                 "Sphericity per component",
@@ -1711,7 +1737,11 @@ class TestStatisticProfile:
 
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0), segmentation, mask=mask, voxel_size=image.voxel_size, result_units=Units.nm,
+            image.get_channel(0),
+            segmentation,
+            mask=mask,
+            voxel_size=image.voxel_size,
+            result_units=Units.nm,
         )
         assert result["Volume"][0] == result["Volume per component"][0][0] + result["Volume per component"][0][1]
         assert len(result["Diameter per component"][0]) == 2
@@ -1740,7 +1770,11 @@ class TestStatisticProfile:
         segmentation[image.get_channel(0)[0] == 50] = 1
         segmentation[image.get_channel(0)[0] == 60] = 2
         result = profile.calculate(
-            image.get_channel(0), segmentation, mask=mask, voxel_size=image.voxel_size, result_units=Units.nm,
+            image.get_channel(0),
+            segmentation,
+            mask=mask,
+            voxel_size=image.voxel_size,
+            result_units=Units.nm,
         )
         names = {x.name for x in profile.chosen_fields}
         assert names == set(result.keys())
@@ -1756,8 +1790,14 @@ class TestStatisticProfile:
         leaf3 = Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_ROI, per_component=PerComponent.Yes)
         leaf4 = PixelBrightnessSum.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes)
         statistics = [
-            MeasurementEntry("ROI Volume per component", leaf1,),
-            MeasurementEntry("Mask Volume per component", leaf2,),
+            MeasurementEntry(
+                "ROI Volume per component",
+                leaf1,
+            ),
+            MeasurementEntry(
+                "Mask Volume per component",
+                leaf2,
+            ),
             MeasurementEntry("ROI Volume per component/Mask Volume per component", Node(leaf1, "/", leaf2)),
             MeasurementEntry("Mask Volume per component/ROI Volume per component", Node(leaf2, "/", leaf1)),
             MeasurementEntry(
@@ -1767,7 +1807,11 @@ class TestStatisticProfile:
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0), segmentation, mask=mask, voxel_size=image.voxel_size, result_units=Units.nm,
+            image.get_channel(0),
+            segmentation,
+            mask=mask,
+            voxel_size=image.voxel_size,
+            result_units=Units.nm,
         )
         # TODO check values
         assert len(result["ROI Volume per component/Mask Volume per component"][0]) == 2

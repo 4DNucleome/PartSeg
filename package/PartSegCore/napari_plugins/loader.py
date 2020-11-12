@@ -21,11 +21,19 @@ def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]
             )
         if project_info.roi is not None:
             res_layers.append(
-                (project_info.image.fit_array_to_image(project_info.roi), {"scale": scale, "name": "ROI"}, "labels",)
+                (
+                    project_info.image.fit_array_to_image(project_info.roi),
+                    {"scale": scale, "name": "ROI"},
+                    "labels",
+                )
             )
         if project_info.mask is not None:
             res_layers.append(
-                (project_info.image.fit_array_to_image(project_info.mask), {"scale": scale, "name": "Mask"}, "labels",)
+                (
+                    project_info.image.fit_array_to_image(project_info.mask),
+                    {"scale": scale, "name": "Mask"},
+                    "labels",
+                )
             )
     else:
         if isinstance(project_info, MaskProjectTuple) and project_info.spacing is not None:
@@ -33,7 +41,13 @@ def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]
         else:
             scale = None
         if project_info.roi is not None:
-            res_layers.append((project_info.roi, {"scale": scale, "name": "ROI"}, "labels",))
+            res_layers.append(
+                (
+                    project_info.roi,
+                    {"scale": scale, "name": "ROI"},
+                    "labels",
+                )
+            )
     return res_layers
 
 
