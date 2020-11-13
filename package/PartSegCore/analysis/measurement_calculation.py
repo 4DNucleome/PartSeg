@@ -115,9 +115,9 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
 
         :return: has_mask_components, has_segmentation_components
         """
-        has_mask_components = any([x == PerComponent.Yes and y != AreaType.ROI for x, y in self._type_dict.values()])
+        has_mask_components = any((x == PerComponent.Yes and y != AreaType.ROI for x, y in self._type_dict.values()))
         has_segmentation_components = any(
-            [x == PerComponent.Yes and y == AreaType.ROI for x, y in self._type_dict.values()]
+            (x == PerComponent.Yes and y == AreaType.ROI for x, y in self._type_dict.values())
         )
         return has_mask_components, has_segmentation_components
 
@@ -670,7 +670,7 @@ class Diameter(MeasurementMethodBase):
         pos = np.transpose(np.nonzero(get_border(area_array))).astype(np.float)
         if pos.size == 0:
             return 0
-        for i, val in enumerate([x * result_scalar for x in reversed(voxel_size)], start=1):
+        for i, val in enumerate((x * result_scalar for x in reversed(voxel_size)), start=1):
             pos[:, -i] *= val
         diam_sq = iterative_double_normal(pos)[0]
         return np.sqrt(diam_sq)
@@ -1098,7 +1098,7 @@ class DistanceMaskSegmentation(MeasurementMethodBase):
         if point_type == DistancePoint.Border:
             area_pos = np.transpose(np.nonzero(get_border(area_array))).astype(np.float)
             area_pos += 0.5
-            for i, val in enumerate([x * result_scalar for x in reversed(voxel_size)], start=1):
+            for i, val in enumerate((x * result_scalar for x in reversed(voxel_size)), start=1):
                 area_pos[:, -i] *= val
         elif point_type == DistancePoint.Mass_center:
             im = np.copy(channel)
