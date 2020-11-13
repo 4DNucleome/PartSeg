@@ -53,14 +53,14 @@ class SegmentationResult:
     additional_layers: Dict[str, AdditionalLayerDescription] = field(default_factory=dict)
     info_text: str = ""
 
-    def __str__(self):
+    def __str__(self):  # pragma: no cover
         return (
             f"SegmentationResult(segmentation=[shape: {self.roi.shape}, dtype: {self.roi.dtype},"
             f" max: {np.max(self.roi)}], parameters={self.parameters},"
             f" additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text}"
         )
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return (
             f"SegmentationResult(segmentation=[shape: {self.roi.shape}, dtype: {self.roi.dtype}, "
             f"max: {np.max(self.roi)}], parameters={self.parameters}, "
@@ -68,7 +68,7 @@ class SegmentationResult:
         )
 
 
-def report_empty_fun(_x, _y):
+def report_empty_fun(_x, _y):  # pragma: no cover
     pass
 
 
@@ -90,7 +90,7 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         self._mask: Optional[np.ndarray] = None
         self.new_parameters: Dict[str, Any] = {}
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         if self.mask is None:
             mask_info = "mask=None"
         elif isinstance(self.mask, np.ndarray):
@@ -142,9 +142,9 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
     def calculation_run_wrap(self, report_fun: Callable[[str, int], None]) -> SegmentationResult:
         try:
             return self.calculation_run(report_fun)
-        except SegmentationLimitException:
+        except SegmentationLimitException:  # pragma: no cover
             raise
-        except Exception:
+        except Exception:  # pragma: no cover
             parameters = self.get_segmentation_profile()
             image = self.image
             raise SegmentationException(self.get_name(), parameters, image)

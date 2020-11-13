@@ -115,6 +115,7 @@ class MaskDistanceSplit(RestartableAlgorithm):
                 mask=self.mask, voxel_size=self.image.voxel_size, **self.new_parameters
             )
             return SegmentationResult(result, self.get_segmentation_profile(), result, "")
+        raise SegmentationLimitException("Mask Distance Split needs mask")
 
     def get_segmentation_profile(self) -> ROIExtractionProfile:
         return ROIExtractionProfile("", self.get_name(), deepcopy(self.new_parameters))
@@ -568,7 +569,7 @@ class OtsuSegment(RestartableAlgorithm):
         )
 
 
-class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):
+class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):  # pragma: no cover
     @classmethod
     def get_fields(cls):
         return [
@@ -684,7 +685,7 @@ class LowerThresholdMultiScaleOpening(BaseMultiScaleOpening):
     threshold_operator = staticmethod(operator.gt)
 
     @classmethod
-    def get_name(cls):
+    def get_name(cls):  # pragma: no cover
         return "Lower threshold MultiScale Opening"
 
 
@@ -692,7 +693,7 @@ class UpperThresholdMultiScaleOpening(BaseMultiScaleOpening):
     threshold_operator = staticmethod(operator.lt)
 
     @classmethod
-    def get_name(cls):
+    def get_name(cls):  # pragma: no cover
         return "Upper threshold MultiScale Opening"
 
 

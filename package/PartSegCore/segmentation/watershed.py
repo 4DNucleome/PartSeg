@@ -221,7 +221,10 @@ class MSOWatershed(BaseWatershed):
         mso.set_neighbourhood(neigh, dist)
         mso.set_components(components_arr, components_num + 1)
         mso.set_use_background(False)
-        mu_array = calculate_mu(data.copy("C"), lower_bound, upper_bound, MuType.base_mu)
+        try:
+            mu_array = calculate_mu(data.copy("C"), lower_bound, upper_bound, MuType.base_mu)
+        except OverflowError:
+            raise SegmentationLimitException("Wrong range for ")
         if arguments["reflective"]:
             mu_array[mu_array < 0.5] = 1 - mu_array[mu_array < 0.5]
         mso.set_mu_array(mu_array)

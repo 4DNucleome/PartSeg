@@ -66,7 +66,7 @@ class ThresholdPreview(StackAlgorithm):
         self.image = None
         self.channel = None
         return SegmentationResult(
-            segmentation=res,
+            roi=res,
             parameters=self.get_segmentation_profile(),
             additional_layers={"denoised image": AdditionalLayerDescription(layer_type="image", data=image)},
         )
@@ -357,7 +357,7 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
             segmentation = convex_fill(segmentation)
         report_fun("Calculation done", 7)
         return SegmentationResult(
-            segmentation=segmentation,
+            roi=segmentation,
             parameters=self.get_segmentation_profile(),
             additional_layers={
                 "denoised image": AdditionalLayerDescription(data=noise_filtered, layer_type="image"),
