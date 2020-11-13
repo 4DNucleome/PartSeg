@@ -241,7 +241,7 @@ class CustomDoubleSpinBox(QDoubleSpinBox):
         current spin box value
     """
 
-    def __init__(self, bounds=None, *args, **kwargs):
+    def __init__(self, *args, bounds=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.valueChanged.connect(self._value_changed)
         if bounds is None:

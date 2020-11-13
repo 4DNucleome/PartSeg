@@ -39,7 +39,7 @@ class _LabelShow(QLabel):
         self.image = NumpyQImage(label.reshape(1, label.shape[0], 3))
         self.repaint()
 
-    def paintEvent(self, QPaintEvent):
+    def paintEvent(self, event: QPaintEvent):
         painter = QPainter(self)
         rect = self.rect()
         painter.drawImage(rect, self.image)

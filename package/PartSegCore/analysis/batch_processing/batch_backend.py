@@ -496,7 +496,7 @@ class FileType(Enum):
     text_file = 3
 
 
-class SheetData(object):
+class SheetData:
     """
     Store single sheet information
     """

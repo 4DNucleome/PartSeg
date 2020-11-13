@@ -114,7 +114,7 @@ class MaskDistanceSplit(RestartableAlgorithm):
             result = MaskDistanceSplitBase.split(
                 mask=self.mask, voxel_size=self.image.voxel_size, **self.new_parameters
             )
-            return SegmentationResult(result, self.get_segmentation_profile(), result, None)
+            return SegmentationResult(result, self.get_segmentation_profile(), result, "")
 
     def get_segmentation_profile(self) -> ROIExtractionProfile:
         return ROIExtractionProfile("", self.get_name(), deepcopy(self.new_parameters))
@@ -369,6 +369,10 @@ class RangeThresholdAlgorithm(ThresholdBaseAlgorithm):
 
 
 class TwoLevelThresholdBaseAlgorithm(ThresholdBaseAlgorithm, ABC):
+    def __init__(self):
+        super().__init__()
+        self.sprawl_area = None
+
     def _threshold(self, image, thr=None):
         if thr is None:
             thr: BaseThreshold = double_threshold_dict[self.new_parameters["threshold"]["name"]]
@@ -428,7 +432,6 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
         self.finally_segment = None
         self.final_sizes = []
         self.threshold_info = [None, None]
-        self.sprawl_area = None
 
     def clean(self):
         self.sprawl_area = None
@@ -602,7 +605,6 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):
         self.finally_segment = None
         self.final_sizes = []
         self.threshold_info = [None, None]
-        self.sprawl_area = None
         self.steps = 0
         self.mso = PyMSO()
         self.mso.set_use_background(True)
