@@ -1,12 +1,12 @@
 steps:
-  - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7'}}
+  - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8'}}
   - task: DownloadPipelineArtifact@2
     inputs:
       artifact: TestData
       path: $(Build.SourcesDirectory)/test_data
   - script: pip install -r requirements/requirements_dev.txt
     displayName: "Install deps"
-  - script: tox -c tox-azure.ini -e py37-PyQt5
+  - script: tox -c tox-azure.ini -e py38-PyQt5
     displayName: "Run Tox"
     env:
       CODECOV_TOKEN: $(codecov_token_secret)

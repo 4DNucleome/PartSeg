@@ -225,7 +225,12 @@ class TestPartSettings:
         settings.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
         project_info = settings.get_project_info()
         mask = calculate_mask_from_project(mask_property, settings.get_project_info())
-        settings.add_history_element(create_history_element_from_project(project_info, mask_property,))
+        settings.add_history_element(
+            create_history_element_from_project(
+                project_info,
+                mask_property,
+            )
+        )
         settings.mask = mask
         calculate_mask_from_project(mask_property, settings.get_project_info())
         algorithm_parameters["values"]["channel"] = 1

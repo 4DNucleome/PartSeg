@@ -128,7 +128,11 @@ class StackSettings(BaseSettings):
             if not self.compare_history(data.history) and self.chosen_components():
                 raise HistoryProblem("Incompatible history")
             state2 = self.transform_state(
-                state, data.roi, data.roi_extraction_parameters, data.selected_components, self.keep_chosen_components,
+                state,
+                data.roi,
+                data.roi_extraction_parameters,
+                data.selected_components,
+                self.keep_chosen_components,
             )
             self.chosen_components_widget.set_chose(
                 list(sorted(state2.roi_extraction_parameters.keys())), state2.selected_components

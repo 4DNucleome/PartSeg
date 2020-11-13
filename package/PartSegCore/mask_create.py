@@ -140,19 +140,18 @@ def calculate_mask(
         mask = np.array(segmentation > 0)
     if time_axis is None:
         return _calculate_mask(mask_description, dilate_radius, mask, old_mask)
-    else:
-        slices: typing.List[typing.Union[slice, int]] = [slice(None) for _ in range(mask.ndim)]
-        final_shape = list(mask.shape)
-        final_shape[time_axis] = 1
-        final_shape = tuple(final_shape)
-        res = []
-        for i in range(mask.shape[time_axis]):
-            slices[time_axis] = i
-            _old_mask = old_mask[tuple(slices)] if old_mask is not None else None
-            res.append(
-                _calculate_mask(mask_description, dilate_radius, mask[tuple(slices)], _old_mask).reshape(final_shape)
-            )
-        return np.concatenate(res, axis=time_axis)
+    slices: typing.List[typing.Union[slice, int]] = [slice(None) for _ in range(mask.ndim)]
+    final_shape = list(mask.shape)
+    final_shape[time_axis] = 1
+    final_shape = tuple(final_shape)
+    res = []
+    for i in range(mask.shape[time_axis]):
+        slices[time_axis] = i
+        _old_mask = old_mask[tuple(slices)] if old_mask is not None else None
+        res.append(
+            _calculate_mask(mask_description, dilate_radius, mask[tuple(slices)], _old_mask).reshape(final_shape)
+        )
+    return np.concatenate(res, axis=time_axis)
 
 
 def _calculate_mask(

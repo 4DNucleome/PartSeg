@@ -40,14 +40,14 @@ class Color(BaseSerializableClass):
     def __add__(self, other):
         if isinstance(other, (float, int)):
             return Color(self.red + other, self.green + other, self.blue + other)
-        elif isinstance(other, Color):
+        if isinstance(other, Color):
             return Color(self.red + other.red, self.green + other.green, self.blue + other.blue)
         raise ValueError(f"Type {type(other)} not supported")
 
     def __sub__(self, other):
         if isinstance(other, (float, int)):
             return Color(self.red - other, self.green - other, self.blue - other)
-        elif isinstance(other, Color):
+        if isinstance(other, Color):
             return Color(self.red - other.red, self.green - other.green, self.blue - other.blue)
         raise ValueError(f"Type {type(other)} not supported")
 

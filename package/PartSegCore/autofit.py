@@ -5,14 +5,14 @@ import numpy as np
 
 def find_density_orientation(img, voxel_size, cutoff=1):
     """
-       Identify axis of point set.
+    Identify axis of point set.
 
-       Args:
-           img (3D array): value in x, y, z
-           voxel_size (len 3 vector): self explanatory
-           cutoff (float): minimum value of value in image to take into account
-       Returns:
-           3x3 numpy array of eigen vectors
+    Args:
+        img (3D array): value in x, y, z
+        voxel_size (len 3 vector): self explanatory
+        cutoff (float): minimum value of value in image to take into account
+    Returns:
+        3x3 numpy array of eigen vectors
     """
     # logging.info("\n============ Performing weighted PCA on image ============")
 
@@ -67,14 +67,14 @@ def get_rotation_parameters(isometric_matrix):
 
 def density_mass_center(image, voxel_size=(1.0, 1.0, 1.0)):
     """
-        Args:
-            image: 3d numpy array
+    Args:
+        image: 3d numpy array
 
-        Returns:
-            x, y, z: three floats tuple with mass center coords
-        :type image: np.ndarray
-        :type voxel_size: tuple[float] | np.ndarray | list[float]
-        :return np.ndarray
+    Returns:
+        x, y, z: three floats tuple with mass center coords
+    :type image: np.ndarray
+    :type voxel_size: tuple[float] | np.ndarray | list[float]
+    :return np.ndarray
 
     """
     single_dim = tuple([i for i, x in enumerate(image.shape) if x == 1])
@@ -84,10 +84,9 @@ def density_mass_center(image, voxel_size=(1.0, 1.0, 1.0)):
     if len(voxel_size) != image.ndim:
         if len(voxel_size) != len(iter_dim):
             raise ValueError("Cannot fit voxel size to array")
-        else:
-            voxel_size_array = [0] * image.ndim
-            for i, item in enumerate(iter_dim):
-                voxel_size_array[item] = voxel_size[i]
+        voxel_size_array = [0] * image.ndim
+        for i, item in enumerate(iter_dim):
+            voxel_size_array[item] = voxel_size[i]
     else:
         voxel_size_array = voxel_size
 

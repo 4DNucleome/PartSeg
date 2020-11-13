@@ -4,14 +4,15 @@ from typing import List, Optional, Type
 
 from qtpy.QtCore import Signal
 from qtpy.QtGui import QCloseEvent, QDragEnterEvent, QDropEvent, QShowEvent
-from qtpy.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox, QWidget
+from qtpy.QtWidgets import QAction, QApplication, QFileDialog, QMainWindow, QMenu, QMessageBox, QWidget
 from vispy.color import colormap
 
-from PartSegCore.io_utils import SaveScreenshot
+from PartSegCore.algorithm_describe_base import Register
+from PartSegCore.io_utils import LoadBase, SaveScreenshot
 from PartSegCore.project_info import ProjectInfoBase
 from PartSegImage import Image
 
-from ..common_backend.base_settings import BaseSettings, SwapTimeStackException, TimeAndStackException
+from ..common_backend.base_settings import FILE_HISTORY, BaseSettings, SwapTimeStackException, TimeAndStackException
 from ..common_backend.load_backup import import_config
 from ..plugins.napari_copy_labels import CopyLabelWidget
 from .about_dialog import AboutDialog
@@ -111,6 +112,7 @@ class BaseMainWindow(QMainWindow):
         config_folder: Optional[str] = None,
         title="PartSeg",
         settings: Optional[BaseSettings] = None,
+        load_dict: Optional[Register] = None,
         signal_fun=None,
     ):
         if settings is None:
@@ -137,6 +139,7 @@ class BaseMainWindow(QMainWindow):
         if signal_fun is not None:
             self.show_signal.connect(signal_fun)
         self.settings = settings
+        self._load_dict = load_dict
         self.viewer_list: List[Viewer] = []
         self.files_num = 1
         self.setAcceptDrops(True)
@@ -149,11 +152,32 @@ class BaseMainWindow(QMainWindow):
         self.channel_info = ""
         self.multiple_files = None
         self.settings.request_load_files.connect(self.read_drop)
+        self.recent_file_menu = QMenu("Open recent")
+        self._refresh_recent(FILE_HISTORY, self.settings.get_last_files())
+        self.settings.data_changed.connect(self._refresh_recent)
+
+    def _refresh_recent(self, name, value):
+        if name != FILE_HISTORY or self._load_dict is None:
+            return
+        self.recent_file_menu.clear()
+        for name_list, method in value:
+            action = self.recent_file_menu.addAction(f"{name_list[0]}, {method}")
+            action.setData((name_list, method))
+            action.triggered.connect(self._load_recent)
+
+    def _load_recent(self):
+        sender: QAction = self.sender()
+        data = sender.data()
+        try:
+            method: LoadBase = self._load_dict[data[1]]
+            dial = ExecuteFunctionDialog(method.load, [data[0]])
+            if dial.exec():
+                self.main_menu.set_data(dial.get_result())
+        except KeyError:
+            self.read_drop(data[0])
 
     def toggle_multiple_files(self):
         self.settings.set("multiple_files_widget", not self.settings.get("multiple_files_widget"))
-        if self.multiple_files is not None:
-            self.multiple_files.setVisible(self.settings.get("multiple_files_widget"))
 
     def get_colormaps(self) -> List[Optional[colormap.Colormap]]:
         channel_num = self.settings.image.channels
@@ -168,10 +192,14 @@ class BaseMainWindow(QMainWindow):
         viewer.theme = self.settings.theme_name
         image = self.settings.image
         scaling = image.normalized_scaling()
-        colormap = self.get_colormaps()
+        colormap_list = self.get_colormaps()
         for i in range(image.channels):
             viewer.add_image(
-                image.get_channel(i), name=f"channnel {i + 1}", scale=scaling, blending="additive", colormap=colormap[i]
+                image.get_channel(i),
+                name=f"channnel {i + 1}",
+                scale=scaling,
+                blending="additive",
+                colormap=colormap_list[i],
             )
         if self.settings.roi is not None:
             viewer.add_labels(self.settings.roi, name="ROI", scale=scaling)
@@ -189,8 +217,15 @@ class BaseMainWindow(QMainWindow):
         image = self.settings.image
         scaling = image.normalized_scaling()
         if with_channels:
+            colormap_list = self.get_colormaps()
             for i in range(image.channels):
-                viewer.add_image(image.get_channel(i), name=f"channel {i+1}", scale=scaling, blending="additive")
+                viewer.add_image(
+                    image.get_channel(i),
+                    name=f"channel {i+1}",
+                    scale=scaling,
+                    blending="additive",
+                    colormap=colormap_list[i],
+                )
         for k, v in self.settings.additional_layers.items():
             name = v.name if v.name else k
             if v.layer_type == "labels":
@@ -220,10 +255,11 @@ class BaseMainWindow(QMainWindow):
             event.acceptProposedAction()
 
     def read_drop(self, paths: List[str]):
-        """Function to process loading files by drag and drop."""
-        raise NotImplementedError()
 
-    def _read_drop(self, paths, load_module):
+        """Function to process loading files by drag and drop."""
+        self._read_drop(paths, self._load_dict)
+
+    def _read_drop(self, paths, load_dict):
         ext_set = {os.path.splitext(x)[1].lower() for x in paths}
 
         def exception_hook(exception):
@@ -232,7 +268,7 @@ class BaseMainWindow(QMainWindow):
                     self, "IO Error", "Disc operation error: " + ", ".join(exception.args), QMessageBox.Ok
                 )
 
-        for load_class in load_module.load_dict.values():
+        for load_class in load_dict.values():
             if load_class.partial() or load_class.number_of_files() != len(paths):
                 continue
             if ext_set.issubset(load_class.get_extensions()):
@@ -248,7 +284,7 @@ class BaseMainWindow(QMainWindow):
         At beginning it check number of files and if it greater than :py:attr:`.files_num` it refuse loading. Otherwise
         it call :py:meth:`.read_drop` method and this method should be overwritten in sub classes
         """
-        if not all([x.isLocalFile() for x in event.mimeData().urls()]):
+        if not all(x.isLocalFile() for x in event.mimeData().urls()):
             QMessageBox().warning(self, "Load error", "Not all files are locally. Cannot load data.", QMessageBox.Ok)
         paths = [x.toLocalFile() for x in event.mimeData().urls()]
         if self.files_num != -1 and len(paths) > self.files_num:
@@ -306,3 +342,7 @@ class BaseMainWindow(QMainWindow):
             res.save_class.save(res.save_destination, data, res.parameters)
 
         return _screenshot
+
+    def image_read(self):
+        self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
+        self.statusBar().showMessage(self.settings.image_path)

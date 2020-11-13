@@ -42,17 +42,16 @@ def _generic_image_operation(image, radius, fun, layer):
         radius = list(reversed(radius))
     if not layer and image.ndim <= 3:
         return sitk.GetArrayFromImage(fun(sitk.GetImageFromArray(image), radius))
-    else:
-        return _generic_image_operations_recurse(np.copy(image), radius, fun, layer)
+    return _generic_image_operations_recurse(np.copy(image), radius, fun, layer)
 
 
 def _generic_image_operations_recurse(image, radius, fun, layer):
     if (not layer and image.ndim == 3) or image.ndim == 2:
         return sitk.GetArrayFromImage(fun(sitk.GetImageFromArray(image), radius))
-    else:
-        for layer_data in image:
-            layer_data[...] = _generic_image_operations_recurse(layer_data, radius, fun, layer)
-        return image
+
+    for layer_data in image:
+        layer_data[...] = _generic_image_operations_recurse(layer_data, radius, fun, layer)
+    return image
 
 
 def gaussian(image: np.ndarray, radius: float, layer=True):
@@ -106,7 +105,7 @@ def apply_filter(filter_type, image, radius, layer=True) -> np.ndarray:
     """
     if filter_type == NoiseFilterType.Gauss:
         return gaussian(image, radius, layer)
-    elif filter_type == NoiseFilterType.Median:
+    if filter_type == NoiseFilterType.Median:
         return median(image, int(radius), layer)
     return image
 

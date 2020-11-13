@@ -20,10 +20,9 @@ def minimal_dtype(val: int):
     """
     if val < 250:
         return np.uint8
-    elif val < 2 ** 16 - 5:
+    if val < 2 ** 16 - 5:
         return np.uint16
-    else:
-        return np.uint32
+    return np.uint32
 
 
 def reduce_array(
@@ -219,7 +218,14 @@ class Image:
         return "".join([key for val, key in zip(self._image_array.shape, self.axis_order) if val > 1])
 
     def substitute(
-        self, data=None, image_spacing=None, file_path=None, mask=_DEF, default_coloring=None, ranges=None, labels=None,
+        self,
+        data=None,
+        image_spacing=None,
+        file_path=None,
+        mask=_DEF,
+        default_coloring=None,
+        ranges=None,
+        labels=None,
     ):
         """Create copy of image with substitution of not None elements"""
         data = self._image_array if data is None else data
@@ -459,7 +465,7 @@ class Image:
 
     def set_spacing(self, value: Spacing):
         """set image spacing"""
-        if any([x == 0 for x in value]):
+        if any(x == 0 for x in value):
             return
         if self.is_2d and len(value) + 1 == len(self._image_spacing):
             value = (1.0,) + tuple(value)
@@ -467,7 +473,8 @@ class Image:
             raise ValueError("Correction of spacing fail.")
         self._image_spacing = tuple(value)
 
-    def _frame_array(self, array: typing.Optional[np.ndarray], index_to_add: typing.List[int]):
+    @staticmethod
+    def _frame_array(array: typing.Optional[np.ndarray], index_to_add: typing.List[int]):
         if array is None:  # pragma: no cover
             return array
         result_shape = list(array.shape)

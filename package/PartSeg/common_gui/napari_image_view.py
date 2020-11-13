@@ -421,7 +421,9 @@ class ImageView(QWidget):
                 self.viewer.dims.ndisplay == 2,
             ).transpose(np.argsort(ORDER_DICT[self._current_order]))
             image_info.roi = self.viewer.add_image(
-                data, scale=image_info.image.normalized_scaling(), contrast_limits=[0, max_num],
+                data,
+                scale=image_info.image.normalized_scaling(),
+                contrast_limits=[0, max_num],
             )
         else:
             image_info.roi = self.viewer.add_image(
@@ -487,8 +489,7 @@ class ImageView(QWidget):
             return array
         if parameters[0] == NoiseFilterType.Gauss:
             return gaussian(array, parameters[1])
-        else:
-            return median(array, int(parameters[1]))
+        return median(array, int(parameters[1]))
 
     def _remove_worker(self, sender):
         for worker in self.worker_list:
