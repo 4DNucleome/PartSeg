@@ -15,7 +15,7 @@ def setup_module():
 
     from PartSegCore import class_generator
 
-    global copy_register
+    global copy_register  # pylint: disable=W0603
     copy_register = deepcopy(class_generator.base_serialize_register)
 
 
