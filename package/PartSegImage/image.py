@@ -471,7 +471,8 @@ class Image:
             raise ValueError("Correction of spacing fail.")
         self._image_spacing = tuple(value)
 
-    def _frame_array(self, array: typing.Optional[np.ndarray], index_to_add: typing.List[int]):
+    @staticmethod
+    def _frame_array(array: typing.Optional[np.ndarray], index_to_add: typing.List[int]):
         if array is None:  # pragma: no cover
             return array
         result_shape = list(array.shape)

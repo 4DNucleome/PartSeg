@@ -461,7 +461,8 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
         self.algorithm_thread.info_signal.connect(self.show_info)
         self.algorithm_thread.exception_occurred.connect(self.exception_occurred)
 
-    def exception_occurred(self, exc: Exception):
+    @staticmethod
+    def exception_occurred(exc: Exception):
         if isinstance(exc, SegmentationLimitException):
             mess = QMessageBox()
             mess.setIcon(QMessageBox.Critical)
