@@ -120,17 +120,17 @@ def load_project(
             history=history,
             algorithm_parameters=algorithm_dict,
         )
-    else:
-        print("This project is from new version of PartSeg:", version, project_version_info, file=sys.stderr)
-        return ProjectTuple(
-            file_path=file_path,
-            image=image,
-            roi=segmentation,
-            mask=mask,
-            history=history,
-            algorithm_parameters=algorithm_dict,
-            errors="This project is from new version of PartSeg. It may load incorrect.",
-        )
+
+    print("This project is from new version of PartSeg:", version, project_version_info, file=sys.stderr)
+    return ProjectTuple(
+        file_path=file_path,
+        image=image,
+        roi=segmentation,
+        mask=mask,
+        history=history,
+        algorithm_parameters=algorithm_dict,
+        errors="This project is from new version of PartSeg. It may load incorrect.",
+    )
 
 
 class LoadProject(LoadBase):
@@ -208,8 +208,7 @@ class LoadImageMask(LoadBase):
         name1, name2 = [os.path.basename(os.path.splitext(x)[0]) for x in paths]
         if name2.endswith("_mask"):
             return [name1, name2]
-        else:
-            return paths
+        return paths
 
     @classmethod
     def load(
@@ -378,11 +377,11 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
                 # noinspection PyUnresolvedReferences
                 return data._replace(name=replace_name_dict[data.name])
             return data
-        else:
-            return data.replace_(
-                left=cls.update_measurement_calculation_tree(data.left),
-                right=cls.update_measurement_calculation_tree(data.right),
-            )
+
+        return data.replace_(
+            left=cls.update_measurement_calculation_tree(data.left),
+            right=cls.update_measurement_calculation_tree(data.right),
+        )
 
     @classmethod
     def update_measurement_calculate(cls, data: MeasurementCalculate):

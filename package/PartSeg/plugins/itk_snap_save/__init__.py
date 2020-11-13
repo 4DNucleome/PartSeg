@@ -2,7 +2,7 @@ import typing
 from io import BytesIO
 from pathlib import Path
 
-import SimpleITK as sitk
+import SimpleITK
 
 from PartSegCore.analysis.save_functions import ProjectTuple
 from PartSegCore.io_utils import SaveBase
@@ -30,11 +30,12 @@ class SaveITKSnap(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
-        mask = sitk.GetImageFromArray(project_info.segmentation)
-        sitk.WriteImage(save_location, mask)
+        mask = SimpleITK.GetImageFromArray(project_info.segmentation)
+        SimpleITK.WriteImage(save_location, mask)
 
 
 def register():
-    from PartSegCore.register import RegisterEnum, register
+    from PartSegCore.register import RegisterEnum
+    from PartSegCore.register import register as register_fun
 
-    register(SaveITKSnap, RegisterEnum.analysis_save)
+    register_fun(SaveITKSnap, RegisterEnum.analysis_save)

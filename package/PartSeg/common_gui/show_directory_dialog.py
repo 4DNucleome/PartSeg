@@ -1,5 +1,5 @@
 import os
-import subprocess
+import subprocess  # nosec
 from sys import platform
 
 from qtpy.QtCore import Qt

@@ -25,10 +25,18 @@ class Viewer(ViewerModel):
     """
 
     def __init__(
-        self, title="napari", ndisplay=2, order=None, axis_labels=None, show=True,
+        self,
+        title="napari",
+        ndisplay=2,
+        order=None,
+        axis_labels=None,
+        show=True,
     ):
         super().__init__(
-            title=title, ndisplay=ndisplay, order=order, axis_labels=axis_labels,
+            title=title,
+            ndisplay=ndisplay,
+            order=order,
+            axis_labels=axis_labels,
         )
         qt_viewer = QtViewer(self)
         self.window = Window(qt_viewer, show=show)
@@ -48,8 +56,7 @@ class Viewer(ViewerModel):
         """
         if self.window.qt_viewer.console is None:
             return
-        else:
-            self.window.qt_viewer.console.push(variables)
+        self.window.qt_viewer.console.push(variables)
 
     def screenshot(self, path=None, *, canvas_only=True):
         """Take currently displayed screen and convert to an image array.
@@ -80,7 +87,8 @@ class Viewer(ViewerModel):
         import warnings
 
         warnings.warn(
-            "Viewer.update() is deprecated, use  create_worker(func, *args, **kwargs) instead", DeprecationWarning,
+            "Viewer.update() is deprecated, use  create_worker(func, *args, **kwargs) instead",
+            DeprecationWarning,
         )
         return create_worker(func, *args, **kwargs, _start_thread=True)
 

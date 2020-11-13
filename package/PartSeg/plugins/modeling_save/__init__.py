@@ -5,6 +5,7 @@ def register():
     from PartSegCore import state_store
 
     if state_store.custom_plugin_load:
-        from PartSegCore.register import RegisterEnum, register
+        from PartSegCore.register import RegisterEnum
+        from PartSegCore.register import register as register_fun
 
-        register(SaveModeling, RegisterEnum.analysis_save)
+        register_fun(SaveModeling, RegisterEnum.analysis_save)

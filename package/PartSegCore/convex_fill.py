@@ -67,7 +67,7 @@ def convex_fill(array: np.ndarray):
     for i in range(1, components.size):
         if components[i] == 0:
             continue
-        component: np.ndarray = (array == i)
+        component: np.ndarray = array == i
         points = np.nonzero(component)
         if len(points) == 0 or len(points[0]) == 0:
             continue

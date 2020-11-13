@@ -121,9 +121,6 @@ class ColorSelector(QWidget):
 
 
 class ColorPreview(QWidget):
-    def __init__(self, parent):
-        super().__init__(parent)
-
     def paintEvent(self, event: QPaintEvent):
         rect = event.rect()
         painter = QPainter(self)

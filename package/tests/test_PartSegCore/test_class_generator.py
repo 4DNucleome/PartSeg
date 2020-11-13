@@ -3,21 +3,24 @@ from collections import OrderedDict
 
 import pytest
 
+from PartSegCore.algorithm_describe_base import Register
 from PartSegCore.class_generator import BaseSerializableClass, base_serialize_register
+
+copy_register = Register()
 
 
 def setup_module():
+    """ setup any state specific to the execution of the given module."""
     from copy import deepcopy
 
     from PartSegCore import class_generator
 
-    """ setup any state specific to the execution of the given module."""
-    global copy_register
+    global copy_register  # pylint: disable=W0603
     copy_register = deepcopy(class_generator.base_serialize_register)
 
 
 def teardown_module():
-    """ teardown any state that was previously setup with a setup_module
+    """teardown any state that was previously setup with a setup_module
     method.
     """
     from PartSegCore import class_generator

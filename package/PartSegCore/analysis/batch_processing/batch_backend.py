@@ -315,7 +315,10 @@ class CalculationProcess:
         if operation.name in self.reused_mask:
             self.mask_dict[operation.name] = mask
         history_element = HistoryElement.create(
-            self.segmentation, self.mask, self.algorithm_parameters, operation.mask_property,
+            self.segmentation,
+            self.mask,
+            self.algorithm_parameters,
+            operation.mask_property,
         )
         backup = self.mask, self.history
         self.mask = mask
@@ -341,7 +344,11 @@ class CalculationProcess:
         image_channel = self.image.get_channel(channel)
         # FIXME use additional information
         measurement = operation.measurement_profile.calculate(
-            image_channel, self.segmentation, self.mask, self.image.spacing, operation.units,
+            image_channel,
+            self.segmentation,
+            self.mask,
+            self.image.spacing,
+            operation.units,
         )
         self.measurement.append(measurement)
 
@@ -489,7 +496,7 @@ class FileType(Enum):
     text_file = 3
 
 
-class SheetData(object):
+class SheetData:
     """
     Store single sheet information
     """
@@ -625,7 +632,7 @@ class FileData:
                 local_header.append(("Segmentation component", "num"))
             if component_mask:
                 local_header.append(("Mask component", "num"))
-            if any([x[1] for x in el]):
+            if any(x[1] for x in el):
                 sheet_list.append(
                     "{}{}{} - {}".format(
                         calculation.sheet_name,
@@ -843,7 +850,7 @@ class DataWriter:
 
     def writing_finished(self) -> bool:
         """check if all data are written to disc"""
-        return all([x.finished() for x in self.file_dict.values()])
+        return all(x.finished() for x in self.file_dict.values())
 
     def finish(self):
         """close all files"""

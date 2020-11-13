@@ -155,12 +155,12 @@ def extract_type_info(type_):
     # noinspection PyUnresolvedReferences
     # if issubclass(type_, (typing.Any, typing.Union)):
     #    return str(type_), type_.__module__
-    if hasattr(type_, "__module__"):
-        if type_.__module__ == "typing":
-            return str(type_), type_.__module__
-        return "{}.{}".format(type_.__module__, type_.__name__), type_.__module__
-    else:
+    if not hasattr(type_, "__module__"):
         return type_.__name__, None
+
+    if type_.__module__ == "typing":
+        return str(type_), type_.__module__
+    return "{}.{}".format(type_.__module__, type_.__name__), type_.__module__
 
 
 _prohibited = (
@@ -358,7 +358,7 @@ class BaseMeta(type):
                 if key == "__init__":
                     continue
                 raise AttributeError("Cannot overwrite NamedTuple attribute " + key)
-            elif key not in _special and key not in result._fields:
+            if key not in _special and key not in result._fields:
                 setattr(result, key, attrs[key])
         if "_reloading" not in attrs or not attrs["_reloading"]:
             base_serialize_register.register_class(result, old_names)

@@ -105,7 +105,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
                 help_text=ob.help_text,
                 per_dimension=ob.per_dimension,
             )
-        elif isinstance(ob, str):
+        if isinstance(ob, str):
             return QLabel(ob)
         raise ValueError(f"unknown parameter type {type(ob)} of {ob}")
 
@@ -163,15 +163,15 @@ class QtAlgorithmProperty(AlgorithmProperty):
     def get_change_signal(widget: QWidget):
         if isinstance(widget, QComboBox):
             return widget.currentIndexChanged
-        elif isinstance(widget, QCheckBox):
+        if isinstance(widget, QCheckBox):
             return widget.stateChanged
-        elif isinstance(widget, (CustomDoubleSpinBox, CustomSpinBox)):
+        if isinstance(widget, (CustomDoubleSpinBox, CustomSpinBox)):
             return widget.valueChanged
-        elif isinstance(widget, QLineEdit):
+        if isinstance(widget, QLineEdit):
             return widget.textChanged
-        elif isinstance(widget, SubAlgorithmWidget):
+        if isinstance(widget, SubAlgorithmWidget):
             return widget.values_changed
-        elif isinstance(widget, ListInput):
+        if isinstance(widget, ListInput):
             return widget.change_signal
         raise ValueError(f"Unsupported type: {type(widget)}")
 
@@ -179,7 +179,13 @@ class QtAlgorithmProperty(AlgorithmProperty):
     def get_getter_and_setter_function(
         widget: QWidget,
     ) -> typing.Tuple[
-        typing.Callable[[QWidget,], typing.Any], typing.Callable[[QWidget, typing.Any], None]  # noqa E231
+        typing.Callable[
+            [
+                QWidget,
+            ],
+            typing.Any,
+        ],
+        typing.Callable[[QWidget, typing.Any], None],  # noqa E231
     ]:
         """
         For each widget type return proper functions. This functions need instance as first argument
@@ -192,17 +198,17 @@ class QtAlgorithmProperty(AlgorithmProperty):
             return widget.__class__.get_value, widget.__class__.set_value
         if isinstance(widget, QComboBox):
             return widget.__class__.currentText, widget.__class__.setCurrentText
-        elif isinstance(widget, QCheckBox):
+        if isinstance(widget, QCheckBox):
             return widget.__class__.isChecked, widget.__class__.setChecked
-        elif isinstance(widget, CustomSpinBox):
+        if isinstance(widget, CustomSpinBox):
             return widget.__class__.value, widget.__class__.setValue
-        elif isinstance(widget, CustomDoubleSpinBox):
+        if isinstance(widget, CustomDoubleSpinBox):
             return widget.__class__.value, widget.__class__.setValue
-        elif isinstance(widget, QLineEdit):
+        if isinstance(widget, QLineEdit):
             return widget.__class__.text, widget.__class__.setText
-        elif isinstance(widget, SubAlgorithmWidget):
+        if isinstance(widget, SubAlgorithmWidget):
             return widget.__class__.get_values, widget.__class__.set_values
-        elif isinstance(widget, ListInput):
+        if isinstance(widget, ListInput):
             return widget.__class__.get_value, widget.__class__.set_value
         raise ValueError(f"Unsupported type: {type(widget)}")
 
@@ -455,7 +461,8 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
         self.algorithm_thread.info_signal.connect(self.show_info)
         self.algorithm_thread.exception_occurred.connect(self.exception_occurred)
 
-    def exception_occurred(self, exc: Exception):
+    @staticmethod
+    def exception_occurred(exc: Exception):
         if isinstance(exc, SegmentationLimitException):
             mess = QMessageBox()
             mess.setIcon(QMessageBox.Critical)

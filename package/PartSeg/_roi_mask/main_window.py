@@ -79,7 +79,12 @@ class MaskDialog(MaskDialogBase):
         self.settings.set("mask_manager.mask_property", mask_property)
         mask = calculate_mask_from_project(mask_description=mask_property, project=project_info)
 
-        self.settings.add_history_element(create_history_element_from_segmentation_tuple(project_info, mask_property,))
+        self.settings.add_history_element(
+            create_history_element_from_segmentation_tuple(
+                project_info,
+                mask_property,
+            )
+        )
         self.settings.mask = mask
         self.settings.chosen_components_widget.un_check_all()
         self.close()
@@ -679,7 +684,11 @@ class AlgorithmOptions(QWidget):
         self._execute_in_background_init()
 
     def execute_all_action(self):
-        dial = SaveDialog({SaveROI.get_name(): SaveROI}, history=self.settings.get_path_history(), system_widget=False,)
+        dial = SaveDialog(
+            {SaveROI.get_name(): SaveROI},
+            history=self.settings.get_path_history(),
+            system_widget=False,
+        )
         dial.setFileMode(QFileDialog.Directory)
         dial.setDirectory(self.settings.get("io.save_batch", self.settings.get("io.save_segmentation_directory", "")))
         if not dial.exec_():

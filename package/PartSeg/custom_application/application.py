@@ -18,8 +18,8 @@ from .. import __version__
 class CheckVersionThread(QThread):
     """Thread to check if there is new PartSeg release. Checks base on newest version available on pypi_
 
-     .. _PYPI: https://pypi.org/project/PartSeg/
-     """
+    .. _PYPI: https://pypi.org/project/PartSeg/
+    """
 
     def __init__(self):
         super().__init__()
@@ -31,7 +31,7 @@ class CheckVersionThread(QThread):
 
         # noinspection PyBroadException
         try:
-            r = request.urlopen("https://pypi.org/pypi/PartSeg/json")
+            r = request.urlopen("https://pypi.org/pypi/PartSeg/json")  # nosec
             data = json.load(r)
             self.release = data["info"]["version"]
             self.url = data["info"]["home_page"]

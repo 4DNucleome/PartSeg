@@ -512,11 +512,11 @@ class CalculationPlan:
             node = self.execution_tree
         if isinstance(node.operation, MeasurementCalculate):
             return [node.operation]
-        else:
-            res = []
-            for el in node.children:
-                res.extend(self.get_measurements(el))
-            return res
+
+        res = []
+        for el in node.children:
+            res.extend(self.get_measurements(el))
+        return res
 
     def get_changes(self):
         ret = self.changes
@@ -677,11 +677,11 @@ class CalculationPlan:
         """
         if isinstance(node.operation, Save):
             return [node.operation]
-        else:
-            res = []
-            for chl in node.children:
-                res.extend(self._get_save_list(chl))
-            return res
+
+        res = []
+        for chl in node.children:
+            res.extend(self._get_save_list(chl))
+        return res
 
     def get_save_list(self):
         return self._get_save_list(self.execution_tree)
@@ -739,13 +739,11 @@ class CalculationPlan:
         if isinstance(el, MeasurementCalculate):
             if el.name_prefix == "":
                 return "Measurement: {}".format(el.name)
-            else:
-                return "Measurement: {} with prefix: {}".format(el.name, el.name_prefix)
+            return "Measurement: {} with prefix: {}".format(el.name, el.name_prefix)
         if isinstance(el, MaskCreate):
             if el.name != "":
                 return "Create mask: {}".format(el.name)
-            else:
-                return "Create mask:"
+            return "Create mask:"
         if isinstance(el, MaskUse):
             return "Use mask: {}".format(el.name)
         if isinstance(el, MaskSuffix):
@@ -767,13 +765,11 @@ class CalculationPlan:
         if isinstance(el, MaskIntersection):
             if el.name == "":
                 return "Mask intersection of mask {} and {}".format(el.mask1, el.mask2)
-            else:
-                return "Mask {} intersection of mask {} and {}".format(el.name, el.mask1, el.mask2)
+            return "Mask {} intersection of mask {} and {}".format(el.name, el.mask1, el.mask2)
         if isinstance(el, MaskSum):
             if el.name == "":
                 return "Mask sum of mask {} and {}".format(el.mask1, el.mask2)
-            else:
-                return "Mask {} sum of mask {} and {}".format(el.name, el.mask1, el.mask2)
+            return "Mask {} sum of mask {} and {}".format(el.name, el.mask1, el.mask2)
 
         raise ValueError("Unknown type {}".format(type(el)))
 

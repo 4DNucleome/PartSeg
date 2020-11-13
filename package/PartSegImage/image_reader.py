@@ -158,8 +158,7 @@ class GenericImageReader(BaseImageReader):
             return CziImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext in [".oif", ".oib"]:
             return OifImagReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
-        else:
-            return TiffImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
+        return TiffImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
 
 
 class OifImagReader(BaseImageReader):

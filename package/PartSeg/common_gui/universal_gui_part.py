@@ -159,8 +159,7 @@ class Spacing(QWidget):
     def get_unit_str(self):
         if self.has_units:
             return self.units.currentText()
-        else:
-            return ""
+        return ""
 
 
 def right_label(text):
@@ -242,7 +241,7 @@ class CustomDoubleSpinBox(QDoubleSpinBox):
         current spin box value
     """
 
-    def __init__(self, bounds=None, *args, **kwargs):
+    def __init__(self, *args, bounds=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.valueChanged.connect(self._value_changed)
         if bounds is None:

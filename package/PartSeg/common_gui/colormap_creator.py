@@ -520,11 +520,11 @@ class ColormapList(QWidget):
 
 class PColormapList(ColormapList):
     """
-        Show list of colormaps. Integrated with :py:class:`.ViewSettings`
+    Show list of colormaps. Integrated with :py:class:`.ViewSettings`
 
-        :param settings: used for store state
-        :param control_names: list of names of :py:class:`PartSeg.common_gui.stack_image_view.ImageView`
-            for protect used channels from uncheck or remove
+    :param settings: used for store state
+    :param control_names: list of names of :py:class:`PartSeg.common_gui.stack_image_view.ImageView`
+        for protect used channels from uncheck or remove
     """
 
     def __init__(self, settings: ViewSettings, control_names: List[str]):
