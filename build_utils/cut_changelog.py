@@ -10,8 +10,7 @@ def cut_changelog(changelog_path):
             if line.startswith("##"):
                 if first_found:
                     break
-                else:
-                    first_found = True
+                first_found = True
             if first_found:
                 res.append(line)
     return "".join(res)

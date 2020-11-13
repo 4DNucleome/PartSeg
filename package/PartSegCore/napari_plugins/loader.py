@@ -62,5 +62,4 @@ def partseg_loader(loader: typing.Type[LoadBase], path: str):
 
     if isinstance(project_info, (ProjectTuple, MaskProjectTuple)):
         return project_to_layers(project_info)
-    else:
-        return None
+    return None

@@ -39,7 +39,7 @@ def check_segmentation_type(tar_file: TarFile) -> SegmentationType:
     names = [x.name for x in tar_file.getmembers()]
     if "algorithm.json" in names:
         return SegmentationType.analysis
-    elif "metadata.json" in names:
+    if "metadata.json" in names:
         return SegmentationType.mask
     raise WrongFileTypeException()
 
@@ -97,8 +97,7 @@ class SaveBase(AlgorithmDescribeBase, ABC):
         match = re.search(r"\(\*(\.\w+)", cls.get_name_with_suffix())
         if match:
             return match.group(1)
-        else:
-            return ""
+        return ""
 
     @classmethod
     def need_segmentation(cls):

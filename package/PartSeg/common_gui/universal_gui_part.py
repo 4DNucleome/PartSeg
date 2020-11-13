@@ -159,8 +159,7 @@ class Spacing(QWidget):
     def get_unit_str(self):
         if self.has_units:
             return self.units.currentText()
-        else:
-            return ""
+        return ""
 
 
 def right_label(text):

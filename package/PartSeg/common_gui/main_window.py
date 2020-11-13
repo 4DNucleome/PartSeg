@@ -190,10 +190,14 @@ class BaseMainWindow(QMainWindow):
         viewer.theme = self.settings.theme_name
         image = self.settings.image
         scaling = image.normalized_scaling()
-        colormap = self.get_colormaps()
+        colormap_list = self.get_colormaps()
         for i in range(image.channels):
             viewer.add_image(
-                image.get_channel(i), name=f"channnel {i + 1}", scale=scaling, blending="additive", colormap=colormap[i]
+                image.get_channel(i),
+                name=f"channnel {i + 1}",
+                scale=scaling,
+                blending="additive",
+                colormap=colormap_list[i],
             )
         if self.settings.roi is not None:
             viewer.add_labels(self.settings.roi, name="ROI", scale=scaling)
@@ -211,14 +215,14 @@ class BaseMainWindow(QMainWindow):
         image = self.settings.image
         scaling = image.normalized_scaling()
         if with_channels:
-            colormap = self.get_colormaps()
+            colormap_list = self.get_colormaps()
             for i in range(image.channels):
                 viewer.add_image(
                     image.get_channel(i),
                     name=f"channel {i+1}",
                     scale=scaling,
                     blending="additive",
-                    colormap=colormap[i],
+                    colormap=colormap_list[i],
                 )
         for k, v in self.settings.additional_layers.items():
             name = v.name if v.name else k

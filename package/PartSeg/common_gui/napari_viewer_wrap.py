@@ -56,8 +56,7 @@ class Viewer(ViewerModel):
         """
         if self.window.qt_viewer.console is None:
             return
-        else:
-            self.window.qt_viewer.console.push(variables)
+        self.window.qt_viewer.console.push(variables)
 
     def screenshot(self, path=None, *, canvas_only=True):
         """Take currently displayed screen and convert to an image array.

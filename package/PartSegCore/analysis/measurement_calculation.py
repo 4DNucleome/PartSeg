@@ -226,14 +226,12 @@ class MeasurementProfile:
     def need_mask(self, tree):
         if isinstance(tree, Leaf):
             return tree.area == AreaType.Mask or tree.area == AreaType.Mask_without_ROI
-        else:
-            return self.need_mask(tree.left) or self.need_mask(tree.right)
+        return self.need_mask(tree.left) or self.need_mask(tree.right)
 
     def _need_mask_without_segmentation(self, tree):
         if isinstance(tree, Leaf):
             return tree.area == AreaType.Mask_without_ROI
-        else:
-            return self._need_mask_without_segmentation(tree.left) or self._need_mask_without_segmentation(tree.right)
+        return self._need_mask_without_segmentation(tree.left) or self._need_mask_without_segmentation(tree.right)
 
     def _get_par_component_and_area_type(self, tree: Union[Node, Leaf]) -> Tuple[PerComponent, AreaType]:
         if isinstance(tree, Leaf):
@@ -242,21 +240,21 @@ class MeasurementProfile:
             if tree.per_component == PerComponent.Mean:
                 return PerComponent.No, area_type
             return tree.per_component, area_type
+
+        left_par, left_area = self._get_par_component_and_area_type(tree.left)
+        right_par, right_area = self._get_par_component_and_area_type(tree.left)
+        if PerComponent.Yes == left_par or PerComponent.Yes == right_par:
+            res_par = PerComponent.Yes
         else:
-            left_par, left_area = self._get_par_component_and_area_type(tree.left)
-            right_par, right_area = self._get_par_component_and_area_type(tree.left)
-            if PerComponent.Yes == left_par or PerComponent.Yes == right_par:
-                res_par = PerComponent.Yes
-            else:
-                res_par = PerComponent.No
-            area_set = {left_area, right_area}
-            if len(area_set) == 1:
-                res_area = area_set.pop()
-            elif AreaType.ROI in area_set:
-                res_area = AreaType.ROI
-            else:
-                res_area = AreaType.Mask_without_ROI
-            return res_par, res_area
+            res_par = PerComponent.No
+        area_set = {left_area, right_area}
+        if len(area_set) == 1:
+            res_area = area_set.pop()
+        elif AreaType.ROI in area_set:
+            res_area = AreaType.ROI
+        else:
+            res_area = AreaType.Mask_without_ROI
+        return res_par, res_area
 
     def get_channels_num(self) -> Set[Channel]:
         resp = set()
@@ -297,8 +295,7 @@ class MeasurementProfile:
     def _is_component_measurement(self, node):
         if isinstance(node, Leaf):
             return node.per_component == PerComponent.Yes
-        else:
-            return self._is_component_measurement(node.left) or self._is_component_measurement(node.right)
+        return self._is_component_measurement(node.left) or self._is_component_measurement(node.right)
 
     def calculate_tree(
         self, node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
@@ -360,7 +357,8 @@ class MeasurementProfile:
             if node.power != 1:
                 return pow(val, node.power), pow(unit, node.power), area_type
             return val, unit, area_type
-        elif isinstance(node, Node):
+
+        if isinstance(node, Node):
             left_res, left_unit, left_area = self.calculate_tree(node.left, segmentation_mask_map, help_dict, kwargs)
             right_res, right_unit, right_area = self.calculate_tree(
                 node.right, segmentation_mask_map, help_dict, kwargs
@@ -483,7 +481,7 @@ class MeasurementProfile:
             "voxel_size": voxel_size,
             "result_scalar": result_scalar,
         }
-        for el in kwargs.keys():
+        for el in kwargs:
             if not el.startswith("channel_"):
                 raise ValueError(f"unknown parameter {el} of calculate function")
         for num in self.get_channels_num():
@@ -551,8 +549,8 @@ def get_main_axis_length(
         if hash_name not in help_dict:
             help_dict[hash_name] = calculate_main_axis(area_array, channel, [x * result_scalar for x in voxel_size])
         return help_dict[hash_name][index]
-    else:
-        return calculate_main_axis(area_array, channel, [x * result_scalar for x in voxel_size])[index]
+
+    return calculate_main_axis(area_array, channel, [x * result_scalar for x in voxel_size])[index]
 
 
 def hash_fun_call_name(
@@ -751,8 +749,7 @@ class MaximumPixelBrightness(MeasurementMethodBase):
             raise ValueError("channel and mask do not fit each other")
         if np.any(area_array):
             return np.max(channel[area_array > 0])
-        else:
-            return 0
+        return 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -772,8 +769,7 @@ class MinimumPixelBrightness(MeasurementMethodBase):
             raise ValueError("channel and mask do not fit each other")
         if np.any(area_array):
             return np.min(channel[area_array > 0])
-        else:
-            return 0
+        return 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -793,8 +789,7 @@ class MeanPixelBrightness(MeasurementMethodBase):
             raise ValueError("channel and mask do not fit each other")
         if np.any(area_array):
             return np.mean(channel[area_array > 0])
-        else:
-            return 0
+        return 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -814,8 +809,7 @@ class MedianPixelBrightness(MeasurementMethodBase):
             raise ValueError("channel and mask do not fit each other")
         if np.any(area_array):
             return np.median(channel[area_array > 0])
-        else:
-            return 0
+        return 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -838,8 +832,7 @@ class StandardDeviationOfPixelBrightness(MeasurementMethodBase):
             raise ValueError("channel and mask do not fit each other")
         if np.any(area_array):
             return np.std(channel[area_array > 0])
-        else:
-            return 0
+        return 0
 
     @classmethod
     def get_units(cls, ndim):
@@ -985,8 +978,7 @@ class Sphericity(MeasurementMethodBase):
         radius = diameter_val / 2
         if kwargs["area_array"].shape[0] > 1:
             return volume / (4 / 3 * pi * (radius ** 3))
-        else:
-            return volume / (pi * (radius ** 2))
+        return volume / (pi * (radius ** 2))
 
     @classmethod
     def get_units(cls, ndim):
@@ -1139,11 +1131,11 @@ class DistanceMaskSegmentation(MeasurementMethodBase):
         seg_pos = cls.calculate_points(channel, area_array, voxel_size, result_scalar, distance_to_segmentation)
         if mask_pos.shape[0] == 1 or seg_pos.shape[0] == 1:
             return np.min(cdist(mask_pos, seg_pos))
-        else:
-            min_val = np.inf
-            for i in range(seg_pos.shape[0]):
-                min_val = min(min_val, np.min(cdist(mask_pos, np.array([seg_pos[i]]))))
-            return min_val
+
+        min_val = np.inf
+        for i in range(seg_pos.shape[0]):
+            min_val = min(min_val, np.min(cdist(mask_pos, np.array([seg_pos[i]]))))
+        return min_val
 
     @classmethod
     def get_starting_leaf(cls):

@@ -7,9 +7,6 @@ lock_open = "\U0001F513"
 
 
 class LockCheckBox(QCheckBox):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
     def paintEvent(self, event: QPaintEvent):
         rect = event.rect()
         painter = QPainter(self)

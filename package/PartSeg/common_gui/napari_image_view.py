@@ -489,8 +489,7 @@ class ImageView(QWidget):
             return array
         if parameters[0] == NoiseFilterType.Gauss:
             return gaussian(array, parameters[1])
-        else:
-            return median(array, int(parameters[1]))
+        return median(array, int(parameters[1]))
 
     def _remove_worker(self, sender):
         for worker in self.worker_list:

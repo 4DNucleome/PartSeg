@@ -22,9 +22,6 @@ class StackAlgorithm(SegmentationAlgorithm, ABC):
         super().__init__()
         self.channel_num = 0
 
-    def clean(self):
-        super().clean()
-
     @classmethod
     def support_time(cls):
         return False
@@ -412,8 +409,7 @@ class AutoThresholdAlgorithm(BaseSingleThresholdAlgorithm):
         mask2, thr_val = threshold_algorithm.calculate_mask(image, None, self.threshold["values"], operator.le)
         if thr_val < min_val:
             return mask
-        else:
-            return mask2
+        return mask2
 
     def _threshold_and_exclude(self, image, report_fun):
         if self.mask is not None:

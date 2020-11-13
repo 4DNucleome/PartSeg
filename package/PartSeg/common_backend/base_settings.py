@@ -609,8 +609,7 @@ class BaseSettings(ViewSettings):
                 raise TimeAndStackException()
             if silent:
                 return image.swap_time_and_stack()
-            else:
-                raise SwapTimeStackException()
+            raise SwapTimeStackException()
         return True
 
 

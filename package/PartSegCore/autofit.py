@@ -84,10 +84,9 @@ def density_mass_center(image, voxel_size=(1.0, 1.0, 1.0)):
     if len(voxel_size) != image.ndim:
         if len(voxel_size) != len(iter_dim):
             raise ValueError("Cannot fit voxel size to array")
-        else:
-            voxel_size_array = [0] * image.ndim
-            for i, item in enumerate(iter_dim):
-                voxel_size_array[item] = voxel_size[i]
+        voxel_size_array = [0] * image.ndim
+        for i, item in enumerate(iter_dim):
+            voxel_size_array[item] = voxel_size[i]
     else:
         voxel_size_array = voxel_size
 

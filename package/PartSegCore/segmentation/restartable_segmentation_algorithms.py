@@ -94,8 +94,7 @@ class BorderRim(RestartableAlgorithm):
     def get_info_text(self):
         if self.mask is None:
             return "Need mask"
-        else:
-            return ""
+        return ""
 
     def calculation_run(self, _report_fun) -> SegmentationResult:
         if self.mask is not None:

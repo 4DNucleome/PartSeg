@@ -98,12 +98,13 @@ class ProfileDict:
             try:
                 curr_dict = curr_dict[key]
             except KeyError as e:
-                if default is not None:
-                    val = copy.deepcopy(default)
-                    self.set(key_path, val)
-                    return val
-                else:
+                if default is None:
                     raise e
+
+                val = copy.deepcopy(default)
+                self.set(key_path, val)
+                return val
+
         return curr_dict
 
     def verify_data(self) -> bool:
