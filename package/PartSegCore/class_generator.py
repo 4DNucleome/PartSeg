@@ -121,18 +121,17 @@ class RegisterClass(typing.Generic[T]):
     def get_class(self, path: str) -> T:
         if path in self.exact_class_register:
             return self.exact_class_register[path]
-        else:
-            name = path[path.rfind(".") + 1 :]
-            if name not in self.predict_class_register:
-                try:
-                    importlib.import_module(path[: path.rfind(".")])
-                except ImportError:
-                    pass
-            if name in self.predict_class_register:
-                if len(self.predict_class_register[name]) == 1:
-                    return self.predict_class_register[name][0]
-                return iter(self.predict_class_register[name])
-            raise ValueError(f"unregistered class {path}")
+        name = path[path.rfind(".") + 1 :]
+        if name not in self.predict_class_register:
+            try:
+                importlib.import_module(path[: path.rfind(".")])
+            except ImportError:
+                pass
+        if name in self.predict_class_register:
+            if len(self.predict_class_register[name]) == 1:
+                return self.predict_class_register[name][0]
+            return iter(self.predict_class_register[name])
+        raise ValueError(f"unregistered class {path}")
 
     def clear(self):  # for testing purpose
         self.exact_class_register.clear()
