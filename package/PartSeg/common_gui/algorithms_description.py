@@ -69,8 +69,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
     def recursive_get_values(self):
         if isinstance(self._widget, SubAlgorithmWidget):
             return self._widget.recursive_get_values()
-        else:
-            return self.get_value()
+        return self.get_value()
 
     def set_value(self, val):
         """set value of widget """

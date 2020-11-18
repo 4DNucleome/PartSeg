@@ -157,7 +157,7 @@ class Register(OrderedDict, typing.Generic[AlgorithmType]):
         for el in args:
             self.register(el)
 
-    def values(self) -> typing.Iterable[AlgorithmType]:
+    def values(self) -> typing.Iterable[AlgorithmType]:  # pylint: disable=W0235
         # noinspection PyTypeChecker
         return super().values()
 
@@ -170,7 +170,7 @@ class Register(OrderedDict, typing.Generic[AlgorithmType]):
             and self.suggested_base_class == other.suggested_base_class
         )
 
-    def __getitem__(self, item) -> AlgorithmType:
+    def __getitem__(self, item) -> AlgorithmType:  # pylint: disable=W0235
         return super().__getitem__(item)
 
     def register(self, value: AlgorithmType, replace=False):
