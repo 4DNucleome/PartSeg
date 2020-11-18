@@ -114,7 +114,7 @@ class MaskDistanceSplit(RestartableAlgorithm):
             result = MaskDistanceSplitBase.split(
                 mask=self.mask, voxel_size=self.image.voxel_size, **self.new_parameters
             )
-            return SegmentationResult(result, self.get_segmentation_profile(), result, "")
+            return SegmentationResult(roi=result, parameters=self.get_segmentation_profile())
         raise SegmentationLimitException("Mask Distance Split needs mask")
 
     def get_segmentation_profile(self) -> ROIExtractionProfile:

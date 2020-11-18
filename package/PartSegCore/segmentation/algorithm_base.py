@@ -15,9 +15,8 @@ from ..utils import numpy_repr
 
 
 def calculate_operation_radius(radius, spacing, gauss_type):
-    if gauss_type == RadiusType.R2D:
-        if len(spacing) == 3:
-            spacing = spacing[1:]
+    if gauss_type == RadiusType.R2D and len(spacing) == 3:
+        spacing = spacing[1:]
     base = min(spacing)
     if base != max(spacing):
         ratio = [x / base for x in spacing]
@@ -47,11 +46,21 @@ class AdditionalLayerDescription:
 
 
 @dataclass(frozen=True, repr=False)
+class ROIAnnotation:
+    alternative: Dict[str, np.ndarray] = field(default_factory=dict)
+    annotation: Dict = field(default_factory=dict)
+
+    def __repr__(self):
+        return f"ROIAnnotation(alternative={repr(self.alternative)}, annotation={repr(self.annotation)})"
+
+
+@dataclass(frozen=True, repr=False)
 class SegmentationResult:
     roi: np.ndarray
     parameters: ROIExtractionProfile
     additional_layers: Dict[str, AdditionalLayerDescription] = field(default_factory=dict)
     info_text: str = ""
+    roi_annotation: ROIAnnotation = field(default_factory=ROIAnnotation)
 
     def __str__(self):  # pragma: no cover
         return (
