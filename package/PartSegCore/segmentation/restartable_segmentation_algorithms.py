@@ -88,9 +88,6 @@ class BorderRim(RestartableAlgorithm):
     def get_fields(cls):
         return ["Need mask"] + BorderRimBase.get_fields()
 
-    def get_segmentation_profile(self) -> ROIExtractionProfile:
-        return ROIExtractionProfile("", self.get_name(), deepcopy(self.new_parameters))
-
     def get_info_text(self):
         if self.mask is None:
             return "Need mask"
@@ -116,9 +113,6 @@ class MaskDistanceSplit(RestartableAlgorithm):
             )
             return SegmentationResult(roi=result, parameters=self.get_segmentation_profile())
         raise SegmentationLimitException("Mask Distance Split needs mask")
-
-    def get_segmentation_profile(self) -> ROIExtractionProfile:
-        return ROIExtractionProfile("", self.get_name(), deepcopy(self.new_parameters))
 
     @classmethod
     def get_name(cls) -> str:
@@ -191,10 +185,13 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         :param roi: array with segmentation
         :return: algorithm result description
         """
+        sizes = np.bincount(roi.flat)
+        annotation = {i: {"voxels": size} for i, size in enumerate(sizes[1:], 1) if size > 0}
         return SegmentationResult(
             roi=roi,
             parameters=self.get_segmentation_profile(),
             additional_layers=self.get_additional_layers(),
+            roi_annotation=annotation,
         )
 
     def set_image(self, image):
@@ -483,6 +480,9 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
                 roi=new_segment,
                 parameters=self.get_segmentation_profile(),
                 additional_layers=self.get_additional_layers(full_segmentation=self.sprawl_area),
+                roi_annotation={
+                    i: {"core voxels": self._sizes_array[i], "voxels": v} for i, v in enumerate(self.final_sizes[1:], 1)
+                },
             )
 
 

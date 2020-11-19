@@ -18,8 +18,8 @@ from napari.layers.image._image_constants import Interpolation3D
 from napari.layers.labels import Labels
 from napari.qt import QtNDisplayButton, QtViewer
 from napari.qt.threading import thread_worker
-from qtpy.QtCore import QObject, QPoint, Qt, Signal
-from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QVBoxLayout, QWidget
+from qtpy.QtCore import QEvent, QObject, QPoint, Qt, Signal
+from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QToolTip, QVBoxLayout, QWidget
 from vispy.color import Color, ColorArray, Colormap
 from vispy.scene import BaseCamera
 
@@ -660,10 +660,24 @@ class ImageView(QWidget):
             worker.quit()
         super().closeEvent(event)
 
+    def get_tool_tip_text(self) -> str:
+        image = self.settings.image
+        image_info = self.image_info[image.file_path]
+        text_list = []
+        for el in self.components:
+            text_list.append(_print_dict(image_info.roi_info.annotations.get(el, {})))
+        return " ".join(text_list)
+
+    def event(self, event: QEvent):
+        if event.type() == QEvent.ToolTip and self.components:
+            text = self.get_tool_tip_text()
+            if text:
+                QToolTip.showText(event.globalPos(), text)
+        return super().event(event)
+
 
 class NapariQtViewer(QtViewer):
     def dragEnterEvent(self, event):  # pylint: disable=R0201
-
         """
         ignore napari reading mechanism
         """
@@ -704,3 +718,13 @@ def _prepare_layers(image: Image, param: ImageParameters, replace: bool) -> Tupl
 
 
 prepare_layers = thread_worker(_prepare_layers)
+
+
+def _print_dict(dkt: dict, indent=""):
+    res = []
+    for k, v in dkt.items():
+        if isinstance(v, dict):
+            res.append(f"{indent}{k}:\n{_print_dict(v, indent+'  ')}")
+        else:
+            res.append(f"{indent}{k}: {v}")
+    return "\n".join(res)
