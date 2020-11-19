@@ -1,4 +1,4 @@
-from typing import Dict, List, NamedTuple, Optional
+from typing import Any, Dict, List, NamedTuple, Optional
 
 import numpy as np
 
@@ -32,7 +32,14 @@ class ROIInfo:
     :ivar numpy.ndarray sizes: array with sizes of components
     """
 
-    def __init__(self, roi: Optional[np.ndarray]):
+    def __init__(
+        self,
+        roi: Optional[np.ndarray],
+        annotation: Optional[Dict[int, Any]] = None,
+        alternative: Optional[Dict[str, np.ndarray]] = None,
+    ):
+        self.annotations = {} if annotation is None else annotation
+        self.alternative = {} if alternative is None else alternative
         if roi is None:
             self.roi = None
             self.bound_info = {}

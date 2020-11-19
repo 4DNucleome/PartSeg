@@ -45,13 +45,22 @@ class AdditionalLayerDescription:
         )
 
 
-@dataclass(frozen=True, repr=False)
-class ROIAnnotation:
-    alternative: Dict[str, np.ndarray] = field(default_factory=dict)
-    annotation: Dict = field(default_factory=dict)
+def dict_repr(dkt: dict) -> str:
+    """
+    calculate dict representation which use :py:func:`numpy_repr` for numpy representation.
 
-    def __repr__(self):
-        return f"ROIAnnotation(alternative={repr(self.alternative)}, annotation={repr(self.annotation)})"
+    :param dict dkt: dict to be represented
+    :return: string representation
+    """
+    res = []
+    for k, v in dkt.items():
+        if isinstance(v, dict):
+            res.append(f"{k}: {dict_repr(v)}")
+        elif isinstance(v, np.ndarray):
+            res.append(f"{k}: {numpy_repr(v)}")
+        else:
+            res.append(f"{k}: {repr(v)}")
+    return "{" + ", ".join(res) + "}"
 
 
 @dataclass(frozen=True, repr=False)
@@ -60,20 +69,23 @@ class SegmentationResult:
     parameters: ROIExtractionProfile
     additional_layers: Dict[str, AdditionalLayerDescription] = field(default_factory=dict)
     info_text: str = ""
-    roi_annotation: ROIAnnotation = field(default_factory=ROIAnnotation)
+    roi_annotation: Dict = field(default_factory=dict)
+    alternative_representation: Dict[str, np.ndarray] = field(default_factory=dict)
 
     def __str__(self):  # pragma: no cover
         return (
             f"SegmentationResult(segmentation=[shape: {self.roi.shape}, dtype: {self.roi.dtype},"
             f" max: {np.max(self.roi)}], parameters={self.parameters},"
-            f" additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text}"
+            f" additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text},"
+            f" alternative={dict_repr(self.alternative_representation)}, annotation={dict_repr(self.roi_annotation)}"
         )
 
     def __repr__(self):  # pragma: no cover
         return (
             f"SegmentationResult(segmentation=[shape: {self.roi.shape}, dtype: {self.roi.dtype}, "
             f"max: {np.max(self.roi)}], parameters={self.parameters}, "
-            f"additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text}"
+            f"additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text},"
+            f" alternative={dict_repr(self.alternative_representation)}, annotation={dict_repr(self.roi_annotation)}"
         )
 
 

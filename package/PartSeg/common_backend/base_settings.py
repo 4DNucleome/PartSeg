@@ -12,6 +12,7 @@ import numpy as np
 from napari.resources import get_stylesheet
 from napari.utils.theme import template as napari_template
 from qtpy.QtCore import QObject, Signal
+from qtpy.QtWidgets import QMessageBox, QWidget
 
 from PartSeg.common_backend.partially_const_dict import PartiallyConstDict
 from PartSegCore.color_image import ColorMap, default_colormap_dict, default_label_dict
@@ -20,7 +21,7 @@ from PartSegCore.io_utils import HistoryElement, load_metadata_base
 from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, check_loaded_dict
 from PartSegCore.project_info import ProjectInfoBase
 from PartSegCore.roi_info import ROIInfo
-from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
+from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription, SegmentationResult
 from PartSegImage import Image
 
 DIR_HISTORY = "io.dir_location_history"
@@ -47,9 +48,20 @@ class ImageSettings(QObject):
         super().__init__()
         self._image: Optional[Image] = None
         self._image_path = ""
-        self._image_spacing = 210, 70, 70
         self._roi_info = ROIInfo(None)
         self._additional_layers = {}
+        self._parent: Optional[QWidget] = None
+
+    def set_parent(self, parent: QWidget):
+        self._parent = parent
+
+    def set_segmentation_result(self, result: SegmentationResult):
+        if result.info_text and self._parent is not None:
+            QMessageBox().information(self._parent, "Algorithm info", result.info_text)
+
+        self._additional_layers = result.additional_layers
+        self._roi_info = ROIInfo(result.roi, result.roi_annotation, result.alternative_representation)
+        self.roi_changed.emit(self._roi_info)
 
     @property
     def full_segmentation(self):
@@ -61,11 +73,11 @@ class ImageSettings(QObject):
 
     @property
     def noise_remove_image_part(self):
-        raise AttributeError("full_segmentation not supported")
+        raise AttributeError("noise_remove_image_part not supported")
 
     @noise_remove_image_part.setter
     def noise_remove_image_part(self, val):  # pylint: disable=R0201
-        raise AttributeError("full_segmentation not supported")
+        raise AttributeError("noise_remove_image_part not supported")
 
     @property
     def additional_layers(self) -> Dict[str, AdditionalLayerDescription]:
@@ -73,8 +85,7 @@ class ImageSettings(QObject):
 
     @additional_layers.setter
     def additional_layers(self, val: Dict[str, AdditionalLayerDescription]):
-        self._additional_layers = val
-        self.additional_layers_changed.emit()
+        raise AttributeError("additional_layers assign not supported")
 
     @property
     def image_spacing(self):
@@ -118,13 +129,17 @@ class ImageSettings(QObject):
         return self._roi_info
 
     @roi.setter
-    def roi(self, val: np.ndarray):
+    def roi(self, val: Union[np.ndarray, ROIInfo]):
         if val is not None:
             try:
                 val = self.image.fit_array_to_image(val)
             except ValueError:
                 raise ValueError("roi do not fit to image")
-        self._roi_info = ROIInfo(val)
+        self._additional_layers = {}
+        if isinstance(val, ROIInfo):
+            self._roi_info = val
+        else:
+            self._roi_info = ROIInfo(val)
         if val is not None:
             self.roi_changed.emit(self._roi_info)
         else:

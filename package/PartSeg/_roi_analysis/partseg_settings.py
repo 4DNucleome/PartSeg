@@ -82,7 +82,6 @@ class PartSettings(BaseSettings):
     def _image_changed(self):
         super()._image_changed()
         self._mask = None
-        self.additional_layers = {}
 
     def get_project_info(self) -> ProjectTuple:
         algorithm_name = self.last_executed_algorithm
@@ -118,7 +117,7 @@ class PartSettings(BaseSettings):
             else:
                 self.image = data.image.substitute(mask=data.mask)
             self.roi = data.roi
-            self.additional_layers = data.additional_layers
+            self._additional_layers = data.additional_layers
             self.set_history(data.history[:])
             if data.algorithm_parameters:
                 self.last_executed_algorithm = data.algorithm_parameters["algorithm_name"]
