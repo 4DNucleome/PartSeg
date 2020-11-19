@@ -60,7 +60,14 @@ class ImageSettings(QObject):
             QMessageBox().information(self._parent, "Algorithm info", result.info_text)
 
         self._additional_layers = result.additional_layers
-        self._roi_info = ROIInfo(result.roi, result.roi_annotation, result.alternative_representation)
+        try:
+            roi = self.image.fit_array_to_image(result.roi)
+            alternative_list = {
+                k: self.image.fit_array_to_image(v) for k, v in result.alternative_representation.items()
+            }
+        except ValueError:
+            raise ValueError("roi do not fit to image")
+        self._roi_info = ROIInfo(roi, result.roi_annotation, alternative_list)
         self.roi_changed.emit(self._roi_info)
 
     @property
@@ -130,20 +137,20 @@ class ImageSettings(QObject):
 
     @roi.setter
     def roi(self, val: Union[np.ndarray, ROIInfo]):
-        if val is not None:
-            try:
-                val = self.image.fit_array_to_image(val)
-            except ValueError:
-                raise ValueError("roi do not fit to image")
-        self._additional_layers = {}
-        if isinstance(val, ROIInfo):
-            self._roi_info = val
-        else:
+        if val is None:
             self._roi_info = ROIInfo(val)
-        if val is not None:
-            self.roi_changed.emit(self._roi_info)
-        else:
+            self._additional_layers = {}
             self.roi_clean.emit()
+            return
+        try:
+            if isinstance(val, np.ndarray):
+                self._roi_info = ROIInfo(self.image.fit_array_to_image(val))
+            else:
+                self._roi_infol = val.fit_to_image(self.image)
+        except ValueError:
+            raise ValueError("roi do not fit to image")
+        self._additional_layers = {}
+        self.roi_changed.emit(self._roi_info)
 
     @property
     def sizes(self):
