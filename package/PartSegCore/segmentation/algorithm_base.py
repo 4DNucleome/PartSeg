@@ -72,6 +72,10 @@ class SegmentationResult:
     roi_annotation: Dict = field(default_factory=dict)
     alternative_representation: Dict[str, np.ndarray] = field(default_factory=dict)
 
+    def __post_init__(self):
+        if "ROI" in self.alternative_representation:
+            raise ValueError("alternative_representation field cannot contain field with ROI key")
+
     def __str__(self):  # pragma: no cover
         return (
             f"SegmentationResult(segmentation=[shape: {self.roi.shape}, dtype: {self.roi.dtype},"
