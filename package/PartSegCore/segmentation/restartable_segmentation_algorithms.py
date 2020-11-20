@@ -483,6 +483,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
                 roi_annotation={
                     i: {"core voxels": self._sizes_array[i], "voxels": v} for i, v in enumerate(self.final_sizes[1:], 1)
                 },
+                alternative_representation={"core_objects": finally_segment},
             )
 
 

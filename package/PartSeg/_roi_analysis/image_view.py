@@ -2,7 +2,7 @@ from typing import Optional
 
 from qtpy.QtCore import QObject, QSignalBlocker, Slot
 from qtpy.QtGui import QResizeEvent
-from qtpy.QtWidgets import QCheckBox, QDoubleSpinBox, QLabel
+from qtpy.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QLabel
 
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
@@ -33,30 +33,54 @@ class ResultImageView(ImageView):
         self.channel_control_index = self.btn_layout.indexOf(self.channel_control)
         self.label1 = QLabel("Borders:")
         self.label2 = QLabel("Opacity:")
+        self.roi_alternative_select = QComboBox()
+        self.roi_alternative_select.currentTextChanged.connect(self.image_state.set_roi_presented)
+
         self.btn_layout.insertWidget(self.channel_control_index + 1, self.label1)
         self.btn_layout.insertWidget(self.channel_control_index + 2, self.only_border)
         self.btn_layout.insertWidget(self.channel_control_index + 3, self.label2)
         self.btn_layout.insertWidget(self.channel_control_index + 4, self.opacity)
+        self.btn_layout.insertWidget(self.channel_control_index + 1, self.roi_alternative_select)
         self.label1.setVisible(False)
         self.label2.setVisible(False)
         self.opacity.setVisible(False)
         self.only_border.setVisible(False)
+        self.roi_alternative_select.setVisible(False)
 
-    def any_segmentation(self):
+    def any_roi(self):
         for image_info in self.image_info.values():
             if image_info.roi is not None:
                 return True
         return False
 
+    def available_alternatives(self):
+        available_alternatives = set()
+        for image_info in self.image_info.values():
+            if image_info.roi_info.alternative:
+                available_alternatives.update(image_info.roi_info.alternative.keys())
+        return available_alternatives
+
     @Slot()
     @Slot(ROIInfo)
     def set_roi(self, roi_info: Optional[ROIInfo] = None, image: Optional[Image] = None) -> None:
         super().set_roi(roi_info, image)
-        show = self.any_segmentation()
+        show = self.any_roi()
         self.label1.setVisible(show)
         self.label2.setVisible(show)
         self.opacity.setVisible(show)
         self.only_border.setVisible(show)
+        self.update_alternatives()
+
+    def update_alternatives(self):
+        alternatives = self.available_alternatives()
+        self.roi_alternative_select.setVisible(bool(alternatives))
+        text = self.roi_alternative_select.currentText()
+        block = self.roi_alternative_select.signalsBlocked()
+        self.roi_alternative_select.blockSignals(True)
+        self.roi_alternative_select.clear()
+        self.roi_alternative_select.addItems(["ROI"] + list(alternatives))
+        self.roi_alternative_select.setCurrentText(text)
+        self.roi_alternative_select.blockSignals(block)
 
     def resizeEvent(self, event: QResizeEvent):
         if event.size().width() > 700 and not self._channel_control_top:

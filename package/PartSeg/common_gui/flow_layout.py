@@ -89,6 +89,12 @@ class FlowLayout(QLayout):
             return self.itemList.pop(index)
         return None
 
+    def insertWidget(self, index, widget):
+        self.addWidget(widget)
+        i = self.indexOf(widget)
+        element = self.itemList.pop(i)
+        self.itemList.insert(index, element)
+
     def expandingDirections(self):  # pylint: disable=R0201
         return Qt.Orientations(Qt.Orientation(0))
 

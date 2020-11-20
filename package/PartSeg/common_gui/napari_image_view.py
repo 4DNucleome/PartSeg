@@ -6,6 +6,8 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
+from .flow_layout import FlowLayout
+
 try:
     from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton
 except ImportError:
@@ -77,6 +79,7 @@ class ImageShowState(QObject):
     parameter_changed = Signal()  # signal informing that some of image presenting parameters
     coloring_changed = Signal()
     borders_changed = Signal()
+    roi_presented_changed = Signal()
     # changed and image need to be refreshed
 
     def __init__(self, settings: ViewSettings, name: str):
@@ -85,15 +88,15 @@ class ImageShowState(QObject):
         super().__init__()
         self.name = name
         self.settings = settings
-        self.zoom = False
-        self.move = False
         self.opacity = settings.get_from_profile(f"{name}.image_state.opacity", 1.0)
         self.show_label = settings.get_from_profile(f"{name}.image_state.show_label", LabelEnum.Show_results)
         self.only_borders = settings.get_from_profile(f"{name}.image_state.only_border", True)
         self.borders_thick = settings.get_from_profile(f"{name}.image_state.border_thick", 1)
+        self.roi_presented = "ROI"
 
-    def set_zoom(self, val):
-        self.zoom = val
+    def set_roi_presented(self, val):
+        self.roi_presented = val
+        self.roi_presented_changed.emit()
 
     def set_borders(self, val: bool):
         """decide if draw only component 2D borders, or whole area"""
@@ -179,10 +182,10 @@ class ImageView(QWidget):
         self.btn_layout.addWidget(self.channel_control, 1)
         self.btn_layout.addWidget(self.mask_label)
         self.btn_layout.addWidget(self.mask_chk)
-        self.btn_layout2 = QHBoxLayout()
+        self.btn_layout2 = FlowLayout()
         layout = QVBoxLayout()
-        layout.addLayout(self.btn_layout)
         layout.addLayout(self.btn_layout2)
+        layout.addLayout(self.btn_layout)
         layout.addWidget(self.viewer_widget)
 
         self.setLayout(layout)
@@ -200,6 +203,7 @@ class ImageView(QWidget):
         self.old_scene: BaseCamera = self.viewer_widget.view.scene
 
         self.image_state.coloring_changed.connect(self.update_roi_coloring)
+        self.image_state.roi_presented_changed.connect(self.update_roi_representation)
         self.image_state.borders_changed.connect(self.update_roi_representation)
         self.mask_chk.stateChanged.connect(self.change_mask_visibility)
         self.viewer_widget.view.scene.transform.changed.connect(self._view_changed, position="last")
@@ -413,10 +417,11 @@ class ImageView(QWidget):
             max_num = max(1, image_info.roi_count)
         except ValueError:
             max_num = 1
+        roi = image_info.roi_info.alternative.get(self.image_state.roi_presented, image_info.roi_info.roi)
         if self.image_state.only_borders:
 
             data = calculate_borders(
-                image_info.roi_info.roi.transpose(ORDER_DICT[self._current_order]),
+                roi.transpose(ORDER_DICT[self._current_order]),
                 self.image_state.borders_thick // 2,
                 self.viewer.dims.ndisplay == 2,
             ).transpose(np.argsort(ORDER_DICT[self._current_order]))
@@ -427,7 +432,7 @@ class ImageView(QWidget):
             )
         else:
             image_info.roi = self.viewer.add_image(
-                image_info.roi_info.roi,
+                roi,
                 scale=image_info.image.normalized_scaling(),
                 contrast_limits=[0, max_num],
                 name="ROI",
