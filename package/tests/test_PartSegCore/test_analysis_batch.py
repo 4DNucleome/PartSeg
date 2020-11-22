@@ -10,7 +10,12 @@ import pytest
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.batch_processing import batch_backend
-from PartSegCore.analysis.batch_processing.batch_backend import CalculationManager, CalculationProcess
+from PartSegCore.analysis.batch_processing.batch_backend import (
+    CalculationManager,
+    CalculationProcess,
+    ResponseData,
+    do_calculation,
+)
 from PartSegCore.analysis.calculation_plan import (
     Calculation,
     CalculationPlan,
@@ -391,6 +396,40 @@ class TestCalculationProcess:
         assert os.path.exists(os.path.join(tmpdir, "test2.xlsx"))
         df = pd.read_excel(os.path.join(tmpdir, "test2.xlsx"), index_col=0, header=[0, 1])
         assert df.shape == (2, 4)
+
+    def test_do_calculation(self, tmpdir, data_test_dir):
+        plan = self.create_calculation_plan3()
+        file_path = os.path.join(data_test_dir, "stack1_components", "stack1_component1.tif")
+        calc = Calculation(
+            [file_path],
+            base_prefix=data_test_dir,
+            result_prefix=data_test_dir,
+            measurement_file_path=os.path.join(tmpdir, "test3.xlsx"),
+            sheet_name="Sheet1",
+            calculation_plan=plan,
+            voxel_size=(1, 1, 1),
+        )
+        index, res = do_calculation((1, file_path), calc)
+        assert index == 1
+        assert isinstance(res, list)
+        assert isinstance(res[0], ResponseData)
+
+    def test_do_calculation_calculation_process(self, tmpdir, data_test_dir):
+        plan = self.create_calculation_plan3()
+        file_path = os.path.join(data_test_dir, "stack1_components", "stack1_component1.tif")
+        calc = Calculation(
+            [file_path],
+            base_prefix=data_test_dir,
+            result_prefix=data_test_dir,
+            measurement_file_path=os.path.join(tmpdir, "test3.xlsx"),
+            sheet_name="Sheet1",
+            calculation_plan=plan,
+            voxel_size=(1, 1, 1),
+        )
+        calc_process = CalculationProcess()
+        res = calc_process.do_calculation(FileCalculation(file_path, calc))
+        assert isinstance(res, list)
+        assert isinstance(res[0], ResponseData)
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
     def test_full_pipeline_component_split(self, tmpdir, data_test_dir):

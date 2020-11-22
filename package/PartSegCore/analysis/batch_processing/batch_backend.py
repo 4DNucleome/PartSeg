@@ -341,16 +341,17 @@ class CalculationProcess:
                 raise ValueError(f"Segmentation class {self.algorithm_parameters['algorithm_name']} do not found")
             channel = self.algorithm_parameters["values"][segmentation_class.get_channel_parameter_name()]
 
-        image_channel = self.image.get_channel(channel)
         # FIXME use additional information
+        old_mask = self.image.mask
+        self.image.set_mask(self.mask)
         measurement = operation.measurement_profile.calculate(
-            image_channel,
+            self.image,
+            channel,
             self.segmentation,
-            self.mask,
-            self.image.spacing,
             operation.units,
         )
         self.measurement.append(measurement)
+        self.image.set_mask(old_mask)
 
     def recursive_calculation(self, node: CalculationTree):
         """

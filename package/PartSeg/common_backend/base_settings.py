@@ -60,6 +60,8 @@ class ImageSettings(QObject):
             QMessageBox().information(self._parent, "Algorithm info", result.info_text)
 
         self._additional_layers = result.additional_layers
+        self.last_executed_algorithm = result.parameters.algorithm
+        self.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
         try:
             roi = self.image.fit_array_to_image(result.roi)
             alternative_list = {

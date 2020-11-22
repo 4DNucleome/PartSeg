@@ -86,10 +86,9 @@ class SimpleMeasurements(QWidget):
         dial = ExecuteFunctionDialog(
             profile.calculate,
             kwargs={
-                "channel": self.settings.image.get_channel(self.channel_select.get_value()),
+                "image": self.settings.image,
+                "channel_num": self.channel_select.get_value(),
                 "segmentation": self.settings.roi,
-                "mask": None,
-                "voxel_size": self.settings.image.spacing,
                 "result_units": self.units_select.get_value(),
             },
         )

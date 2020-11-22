@@ -1,4 +1,3 @@
-import traceback
 from collections import OrderedDict
 from enum import Enum
 from functools import reduce
@@ -9,6 +8,8 @@ import numpy as np
 import SimpleITK
 from scipy.spatial.distance import cdist
 from sympy import symbols
+
+from PartSegImage import Image
 
 from .. import autofit as af
 from ..algorithm_describe_base import AlgorithmProperty, Register
@@ -430,90 +431,84 @@ class MeasurementProfile:
 
     def calculate(
         self,
-        channel: np.ndarray,
+        image: Image,
+        channel_num: int,
         segmentation: np.ndarray,
-        mask: Optional[np.ndarray],
-        voxel_size,
         result_units: Units,
-        range_changed: Callable[[int, int], Any] = None,
-        step_changed: Callable[[int], Any] = None,
+        range_changed: Callable[[int, int], Any] = empty_fun,
+        step_changed: Callable[[int], Any] = empty_fun,
         time: int = 0,
-        time_pos: int = 0,
-        **kwargs,
     ) -> MeasurementResult:
         """
         Calculate measurements on given set of parameters
 
-        :param channel: main channel on which measurements should be calculated
-        :param segmentation: array with segmentation labeled as positive
-        :param full_mask:
-        :param mask:
-        :param voxel_size:
-        :param result_units:
+        :param image: image on which measurements should be calculated
+        :param segmentation: array with segmentation labeled as positive integers
+        :param result_units: unists which should be used to presents results.
         :param range_changed: callback function to set information about steps range
         :param step_changed: callback function fo set information about steps done
         :param time: which data point should be measured
-        :param time_pos: axis of time
-        :param kwargs: additional data required by measurements. Ex additional channels
         :return: measurements
         """
 
         def get_time(array: np.ndarray):
             if array is not None and array.ndim == 4:
-                return array.take(time, axis=time_pos)
+                return array.take(time, axis=image.time_pos)
             return array
 
-        if range_changed is None:
-            range_changed = empty_fun
-        if step_changed is None:
-            step_changed = empty_fun
-        if self._need_mask and mask is None:
+        if self._need_mask and image.mask is None:
             raise ValueError("measurement need mask")
-        channel = channel.astype(np.float)
-        help_dict = dict()
-        segmentation_mask_map = self.get_segmentation_to_mask_component(segmentation, mask)
-        result = MeasurementResult(segmentation_mask_map)
+        channel = image.get_channel(channel_num).astype(np.float)
+        cache_dict = dict()
         result_scalar = UNIT_SCALE[result_units.value]
         kw = {
             "channel": get_time(channel),
             "segmentation": get_time(segmentation),
-            "mask": get_time(mask),
-            "voxel_size": voxel_size,
+            "mask": get_time(image.mask),
+            "voxel_size": image.spacing,
             "result_scalar": result_scalar,
         }
-        for el in kwargs:
-            if not el.startswith("channel_"):
-                raise ValueError(f"unknown parameter {el} of calculate function")
+        segmentation_mask_map = self.get_segmentation_to_mask_component(kw["segmentation"], kw["mask"])
+        result = MeasurementResult(segmentation_mask_map)
         for num in self.get_channels_num():
-            if f"channel_{num}" not in kwargs:
-                raise ValueError(f"channel_{num} need to be passed as argument of calculate function")
-        kw.update(kwargs)
-        for el in self.chosen_fields:
-            if self._need_mask_without_segmentation(el.calculation_tree):
-                mm = mask.copy()
-                mm[kw["segmentation"] > 0] = 0
-                kw["mask_without_segmentation"] = mm
-                break
+            kw["channel_{num}"] = get_time(image.get_channel(num))
+        if any(self._need_mask_without_segmentation(el.calculation_tree) for el in self.chosen_fields):
+            mm = kw["mask"].copy()
+            mm[kw["segmentation"] > 0] = 0
+            kw["mask_without_segmentation"] = mm
+
         range_changed(0, len(self.chosen_fields))
-        for i, el in enumerate(self.chosen_fields):
+        for i, entry in enumerate(self.chosen_fields):
             step_changed(i)
-            tree, user_name = el.calculation_tree, el.name
-            component_and_area = self._get_par_component_and_area_type(tree)
-            try:
-                val, unit, _area = self.calculate_tree(tree, segmentation_mask_map, help_dict, kw)
-                if isinstance(val, np.ndarray):
-                    val = list(val)
-                result[self.name_prefix + user_name] = val, str(unit).format(str(result_units)), component_and_area
-            except ZeroDivisionError:  # pragma: no cover
-                result[self.name_prefix + user_name] = "Div by zero", "", component_and_area
-            except TypeError:  # pragma: no cover
-                traceback.print_exc()
-                result[self.name_prefix + user_name] = "None div", "", component_and_area
-            except AttributeError:  # pragma: no cover
-                result[self.name_prefix + user_name] = "No attribute", "", component_and_area
-            except ProhibitedDivision as e:  # pragma: no cover
-                result[self.name_prefix + user_name] = e.args[0], "", component_and_area
+            result[self.name_prefix + entry.name] = self._calc_single_field(
+                entry, segmentation_mask_map, cache_dict, kw, result_units
+            )
+
         return result
+
+    def _calc_single_field(
+        self,
+        entry: MeasurementEntry,
+        segmentation_mask_map: ComponentsInfo,
+        cache_dict: dict,
+        additional_args: dict,
+        result_units,
+    ):
+        tree = entry.calculation_tree
+        component_and_area = self._get_par_component_and_area_type(tree)
+        try:
+            val, unit, _area = self.calculate_tree(tree, segmentation_mask_map, cache_dict, additional_args)
+            if isinstance(val, np.ndarray):
+                val = list(val)
+            return val, str(unit).format(str(result_units)), component_and_area
+        except ZeroDivisionError:  # pragma: no cover
+            return "Div by zero", "", component_and_area
+        except TypeError:  # pragma: no cover
+            return "None div", "", component_and_area
+        except AttributeError:  # pragma: no cover
+            return "No attribute", "", component_and_area
+        except ProhibitedDivision as e:  # pragma: no cover
+            return e.args[0], "", component_and_area
 
 
 def calculate_main_axis(area_array: np.ndarray, channel: np.ndarray, voxel_size):
