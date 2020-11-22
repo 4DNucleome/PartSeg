@@ -6,8 +6,6 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
-from .flow_layout import FlowLayout
-
 try:
     from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton
 except ImportError:
@@ -182,10 +180,10 @@ class ImageView(QWidget):
         self.btn_layout.addWidget(self.channel_control, 1)
         self.btn_layout.addWidget(self.mask_label)
         self.btn_layout.addWidget(self.mask_chk)
-        self.btn_layout2 = FlowLayout()
+        self.btn_layout2 = QHBoxLayout()
         layout = QVBoxLayout()
-        layout.addLayout(self.btn_layout2)
         layout.addLayout(self.btn_layout)
+        layout.addLayout(self.btn_layout2)
         layout.addWidget(self.viewer_widget)
 
         self.setLayout(layout)

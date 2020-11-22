@@ -47,7 +47,7 @@ from qtpy.QtWidgets import QLayout, QSizePolicy
 
 class FlowLayout(QLayout):
     def __init__(self, parent=None, margin=0, spacing=-1):
-        super(FlowLayout, self).__init__(parent)
+        super().__init__(parent)
 
         if parent is not None:
             self.setContentsMargins(margin, margin, margin, margin)

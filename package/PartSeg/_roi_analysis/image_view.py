@@ -88,12 +88,16 @@ class ResultImageView(ImageView):
             self.btn_layout.takeAt(self.channel_control_index)
             # noinspection PyArgumentList
             self.btn_layout.insertWidget(self.channel_control_index, w)
+            select = self.btn_layout2.takeAt(self.btn_layout2.indexOf(self.roi_alternative_select)).widget()
+            self.btn_layout.insertWidget(self.channel_control_index + 1, select)
             self._channel_control_top = True
         elif event.size().width() <= 700 and self._channel_control_top:
             w = self.btn_layout.takeAt(self.channel_control_index).widget()
             self.btn_layout.insertStretch(self.channel_control_index, 1)
             # noinspection PyArgumentList
             self.btn_layout2.insertWidget(0, w)
+            select = self.btn_layout.takeAt(self.btn_layout.indexOf(self.roi_alternative_select)).widget()
+            self.btn_layout2.insertWidget(1, select)
             self._channel_control_top = False
 
 
