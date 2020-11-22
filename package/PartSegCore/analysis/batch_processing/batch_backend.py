@@ -107,7 +107,6 @@ def do_calculation(file_info: Tuple[int, str], calculation: BaseCalculation) -> 
     try:
         return index, calc.do_calculation(FileCalculation(file_path, calculation))
     except Exception as e:
-        # traceback.print_exc()
         return index, [prepare_error_data(e)]
 
 

@@ -444,7 +444,7 @@ class MeasurementProfile:
 
         :param image: image on which measurements should be calculated
         :param segmentation: array with segmentation labeled as positive integers
-        :param result_units: unists which should be used to presents results.
+        :param result_units: units which should be used to present results.
         :param range_changed: callback function to set information about steps range
         :param step_changed: callback function fo set information about steps done
         :param time: which data point should be measured
