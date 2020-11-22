@@ -16,6 +16,7 @@ from ..algorithm_describe_base import AlgorithmProperty, Register
 from ..channel_class import Channel
 from ..class_generator import enum_register
 from ..mask_partition_utils import BorderRim, MaskDistanceSplit
+from ..roi_info import ROIInfo
 from ..universal_const import UNIT_SCALE, Units
 from .measurement_base import AreaType, Leaf, MeasurementEntry, MeasurementMethodBase, Node, PerComponent
 
@@ -433,7 +434,7 @@ class MeasurementProfile:
         self,
         image: Image,
         channel_num: int,
-        segmentation: np.ndarray,
+        roi: Union[np.ndarray, ROIInfo],
         result_units: Units,
         range_changed: Callable[[int, int], Any] = empty_fun,
         step_changed: Callable[[int], Any] = empty_fun,
@@ -443,7 +444,7 @@ class MeasurementProfile:
         Calculate measurements on given set of parameters
 
         :param image: image on which measurements should be calculated
-        :param segmentation: array with segmentation labeled as positive integers
+        :param roi: array with segmentation labeled as positive integers
         :param result_units: units which should be used to present results.
         :param range_changed: callback function to set information about steps range
         :param step_changed: callback function fo set information about steps done
@@ -463,10 +464,11 @@ class MeasurementProfile:
         result_scalar = UNIT_SCALE[result_units.value]
         kw = {
             "channel": get_time(channel),
-            "segmentation": get_time(segmentation),
+            "segmentation": get_time(roi if isinstance(roi, np.ndarray) else roi.roi),
             "mask": get_time(image.mask),
             "voxel_size": image.spacing,
             "result_scalar": result_scalar,
+            "roi_alternative": roi.alternative if isinstance(roi, ROIInfo) else {},
         }
         segmentation_mask_map = self.get_segmentation_to_mask_component(kw["segmentation"], kw["mask"])
         result = MeasurementResult(segmentation_mask_map)

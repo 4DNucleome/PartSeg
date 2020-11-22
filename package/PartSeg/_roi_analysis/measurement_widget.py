@@ -334,7 +334,7 @@ class MeasurementWidget(QWidget):
 
         thread = ExecuteFunctionThread(
             compute_class.calculate,
-            [self.settings.image, self.channels_chose.currentIndex(), self.settings.roi, units],
+            [self.settings.image, self.channels_chose.currentIndex(), self.settings.roi_info, units],
         )
         dial = WaitingDialog(thread, "Measurement calculation")  # , exception_hook=exception_hook)
         dial.exec()

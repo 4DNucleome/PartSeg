@@ -66,6 +66,7 @@ from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription, 
 from PartSegImage import Image, TiffImageReader
 
 from ...io_utils import HistoryElement, WrongFileTypeException
+from ...roi_info import ROIInfo
 from ...segmentation import RestartableAlgorithm
 from .. import PartEncoder
 from .parallel_backend import BatchManager
@@ -123,7 +124,7 @@ class CalculationProcess:
         self.calculation = None
         self.measurement: List[MeasurementResult] = []
         self.image: Optional[Image] = None
-        self.segmentation: Optional[np.ndarray] = None
+        self.roi_info: Optional[ROIInfo] = None
         self.additional_layers: Dict[str, AdditionalLayerDescription] = {}
         self.mask: Optional[np.ndarray] = None
         self.history: List[HistoryElement] = []
@@ -172,7 +173,8 @@ class CalculationProcess:
                 self.mask = project.mask[0]
             if operation == RootType.Project:
                 self.mask = project.mask[0]
-                self.segmentation = project.roi
+                # FIXME when load annotation from project is done
+                self.roi_info = ROIInfo(project.roi)
                 self.additional_layers = project.additional_layers
                 self.history = project.history
                 self.algorithm_parameters = project.algorithm_parameters
@@ -239,12 +241,12 @@ class CalculationProcess:
         segmentation_algorithm.set_mask(self.mask)
         segmentation_algorithm.set_parameters(**operation.values)
         result = segmentation_algorithm.calculation_run(report_empty_fun)
-        backup_data = self.segmentation, self.additional_layers, self.algorithm_parameters
-        self.segmentation = result.roi
+        backup_data = self.roi_info, self.additional_layers, self.algorithm_parameters
+        self.roi_info = ROIInfo(result.roi, result.roi_annotation, result.alternative_representation)
         self.additional_layers = result.additional_layers
         self.algorithm_parameters = {"algorithm_name": operation.algorithm, "values": operation.values}
         self.iterate_over(children)
-        self.segmentation, self.additional_layers, self.algorithm_parameters = backup_data
+        self.roi_info, self.additional_layers, self.algorithm_parameters = backup_data
 
     def step_mask_use(self, operation: MaskUse, children: List[CalculationTree]):
         """
@@ -288,7 +290,7 @@ class CalculationProcess:
         project_tuple = ProjectTuple(
             file_path="",
             image=self.image,
-            segmentation=self.segmentation,
+            roi=self.roi_info.roi,  # FIXME
             additional_layers=self.additional_layers,
             mask=self.mask,
             history=self.history,
@@ -306,7 +308,7 @@ class CalculationProcess:
         """
         mask = calculate_mask(
             mask_description=operation.mask_property,
-            segmentation=self.segmentation,
+            segmentation=self.roi_info.roi,
             old_mask=self.mask,
             spacing=self.image.spacing,
             time_axis=self.image.time_pos,
@@ -314,7 +316,7 @@ class CalculationProcess:
         if operation.name in self.reused_mask:
             self.mask_dict[operation.name] = mask
         history_element = HistoryElement.create(
-            self.segmentation,
+            self.roi_info,
             self.mask,
             self.algorithm_parameters,
             operation.mask_property,
@@ -346,7 +348,7 @@ class CalculationProcess:
         measurement = operation.measurement_profile.calculate(
             self.image,
             channel,
-            self.segmentation,
+            self.roi_info,
             operation.units,
         )
         self.measurement.append(measurement)

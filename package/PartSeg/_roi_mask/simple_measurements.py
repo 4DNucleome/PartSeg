@@ -88,7 +88,7 @@ class SimpleMeasurements(QWidget):
             kwargs={
                 "image": self.settings.image,
                 "channel_num": self.channel_select.get_value(),
-                "segmentation": self.settings.roi,
+                "roi": self.settings.roi_info,
                 "result_units": self.units_select.get_value(),
             },
         )
