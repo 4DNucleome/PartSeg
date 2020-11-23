@@ -47,7 +47,6 @@ class PartSettings(BaseSettings):
         super().__init__(json_path)
         self._mask = None
         self.compare_segmentation = None
-        self.last_executed_algorithm = ""
         self.segmentation_pipelines_dict = ProfileDict()
         self.segmentation_profiles_dict = ProfileDict()
         self.batch_plans_dict = ProfileDict()

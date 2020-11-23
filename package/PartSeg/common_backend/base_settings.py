@@ -55,23 +55,6 @@ class ImageSettings(QObject):
     def set_parent(self, parent: QWidget):
         self._parent = parent
 
-    def set_segmentation_result(self, result: SegmentationResult):
-        if result.info_text and self._parent is not None:
-            QMessageBox().information(self._parent, "Algorithm info", result.info_text)
-
-        self._additional_layers = result.additional_layers
-        self.last_executed_algorithm = result.parameters.algorithm
-        self.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
-        try:
-            roi = self.image.fit_array_to_image(result.roi)
-            alternative_list = {
-                k: self.image.fit_array_to_image(v) for k, v in result.alternative_representation.items()
-            }
-        except ValueError:
-            raise ValueError("roi do not fit to image")
-        self._roi_info = ROIInfo(roi, result.roi_annotation, alternative_list)
-        self.roi_changed.emit(self._roi_info)
-
     @property
     def full_segmentation(self):
         raise AttributeError("full_segmentation not supported")
@@ -93,7 +76,7 @@ class ImageSettings(QObject):
         return self._additional_layers
 
     @additional_layers.setter
-    def additional_layers(self, val: Dict[str, AdditionalLayerDescription]):
+    def additional_layers(self, val):  # pylint: disable=R0201
         raise AttributeError("additional_layers assign not supported")
 
     @property
@@ -420,6 +403,24 @@ class BaseSettings(ViewSettings):
         self.last_executed_algorithm = ""
         self.history: List[HistoryElement] = []
         self.history_index = -1
+        self.last_executed_algorithm = ""
+
+    def set_segmentation_result(self, result: SegmentationResult):
+        if result.info_text and self._parent is not None:
+            QMessageBox().information(self._parent, "Algorithm info", result.info_text)
+
+        self._additional_layers = result.additional_layers
+        self.last_executed_algorithm = result.parameters.algorithm
+        self.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
+        try:
+            roi = self.image.fit_array_to_image(result.roi)
+            alternative_list = {
+                k: self.image.fit_array_to_image(v) for k, v in result.alternative_representation.items()
+            }
+        except ValueError:
+            raise ValueError("roi do not fit to image")
+        self._roi_info = ROIInfo(roi, result.roi_annotation, alternative_list)
+        self.roi_changed.emit(self._roi_info)
 
     def _load_files_call(self, files_list: List[str]):
         self.request_load_files.emit(files_list)

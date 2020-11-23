@@ -460,7 +460,7 @@ class MeasurementProfile:
         if self._need_mask and image.mask is None:
             raise ValueError("measurement need mask")
         channel = image.get_channel(channel_num).astype(np.float)
-        cache_dict = dict()
+        cache_dict = {}
         result_scalar = UNIT_SCALE[result_units.value]
         kw = {
             "channel": get_time(channel),
