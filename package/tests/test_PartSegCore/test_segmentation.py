@@ -14,7 +14,7 @@ from PartSegCore.convex_fill import _convex_fill, convex_fill
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask_create import MaskProperty, calculate_mask
 from PartSegCore.roi_info import BoundInfo, ROIInfo
-from PartSegCore.segmentation import SegmentationAlgorithm
+from PartSegCore.segmentation import SegmentationAlgorithm, algorithm_base
 from PartSegCore.segmentation import restartable_segmentation_algorithms as sa
 from PartSegCore.segmentation.noise_filtering import noise_filtering_dict
 from PartSegCore.segmentation.watershed import sprawl_dict
@@ -787,3 +787,22 @@ def test_bound_info():
     assert len(bi.box_size()) == 3
     assert len(bi.get_slices()) == 3
     assert np.all([x == slice(1, 6) for x in bi.get_slices()])
+
+
+def test_dict_repr(monkeypatch):
+    assert algorithm_base.dict_repr({}) == repr({})
+    assert algorithm_base.dict_repr({1: 1}) == repr({1: 1})
+    assert algorithm_base.dict_repr({1: 1, 2: {2: 2}}) == repr({1: 1, 2: {2: 2}})
+
+    count = [0]
+
+    def _repr(x):
+        count[0] += 1
+        return ""
+
+    monkeypatch.setattr(algorithm_base, "numpy_repr", _repr)
+    algorithm_base.dict_repr({1: np.zeros(5)})
+    assert count[0] == 1
+    count = [0]
+    algorithm_base.dict_repr({1: np.zeros(5), 2: {1: np.zeros(5)}})
+    assert count[0] == 2

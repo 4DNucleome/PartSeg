@@ -154,6 +154,7 @@ class BaseMainWindow(QMainWindow):
         self.recent_file_menu = QMenu("Open recent")
         self._refresh_recent(FILE_HISTORY, self.settings.get_last_files())
         self.settings.data_changed.connect(self._refresh_recent)
+        self.settings.set_parent(self)
 
     def _refresh_recent(self, name, value):
         if name != FILE_HISTORY or self._load_dict is None:
