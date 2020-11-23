@@ -413,5 +413,5 @@ class TextShow(QTextEdit):
         s = super().sizeHint()
         metrics = QFontMetrics(self.currentFont())
         height = metrics.height()
-        s.setHeight(height * (self.lines + 0.5))
+        s.setHeight(int(height * (self.lines + 0.5)))
         return s
