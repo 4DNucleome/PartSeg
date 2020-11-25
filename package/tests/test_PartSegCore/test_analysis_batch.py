@@ -22,7 +22,10 @@ from PartSegCore.analysis.calculation_plan import (
     CalculationTree,
     FileCalculation,
     MaskCreate,
+    MaskIntersection,
     MaskSuffix,
+    MaskSum,
+    MaskUse,
     MeasurementCalculate,
     RootType,
     Save,
@@ -304,6 +307,65 @@ class TestCalculationProcess:
             ],
         )
         return CalculationPlan(tree=tree, name="test")
+
+    @staticmethod
+    def create_mask_operation_plan(mask_op):
+        parameters = {
+            "channel": 0,
+            "minimum_size": 200,
+            "threshold": {"name": "Manual", "values": {"threshold": 13000}},
+            "noise_filtering": {"name": "Gauss", "values": {"dimension_type": DimensionType.Layer, "radius": 1.0}},
+            "side_connection": False,
+        }
+        parameters2 = dict(**parameters)
+        parameters2["channel"] = 1
+        segmentation = ROIExtractionProfile(name="test", algorithm="Lower threshold", values=parameters)
+        segmentation2 = ROIExtractionProfile(name="test2", algorithm="Lower threshold", values=parameters2)
+        chosen_fields = [
+            MeasurementEntry(
+                name="Segmentation Volume",
+                calculation_tree=Leaf(name="Volume", area=AreaType.ROI, per_component=PerComponent.No),
+            ),
+        ]
+        statistic = MeasurementProfile(name="base_measure", chosen_fields=chosen_fields, name_prefix="")
+        statistic_calculate = MeasurementCalculate(
+            channel=-1, units=Units.µm, measurement_profile=statistic, name_prefix=""
+        )
+        tree = CalculationTree(
+            RootType.Image,
+            [
+                CalculationTree(
+                    segmentation,
+                    [CalculationTree(MaskCreate(name="test1", mask_property=MaskProperty.simple_mask()), [])],
+                ),
+                CalculationTree(
+                    segmentation2,
+                    [CalculationTree(MaskCreate(name="test2", mask_property=MaskProperty.simple_mask()), [])],
+                ),
+                CalculationTree(mask_op, [CalculationTree(segmentation2, [CalculationTree(statistic_calculate, [])])]),
+            ],
+        )
+        return CalculationPlan(tree=tree, name="test")
+
+    @pytest.mark.parametrize(
+        "mask_op", [MaskUse("test1"), MaskSum("", "test1", "test2"), MaskIntersection("", "test1", "test2")]
+    )
+    def test_mask_op(self, mask_op, data_test_dir, tmpdir):
+        plan = self.create_mask_operation_plan(mask_op)
+        file_path = os.path.join(data_test_dir, "stack1_components", "stack1_component1.tif")
+        calc = Calculation(
+            [file_path],
+            base_prefix=os.path.dirname(file_path),
+            result_prefix=tmpdir,
+            measurement_file_path=os.path.join(tmpdir, "test3.xlsx"),
+            sheet_name="Sheet1",
+            calculation_plan=plan,
+            voxel_size=(1, 1, 1),
+        )
+        calc_process = CalculationProcess()
+        res = calc_process.do_calculation(FileCalculation(file_path, calc))
+        assert isinstance(res, list)
+        assert isinstance(res[0], ResponseData)
 
     def test_one_file(self, data_test_dir):
         plan = self.create_calculation_plan()

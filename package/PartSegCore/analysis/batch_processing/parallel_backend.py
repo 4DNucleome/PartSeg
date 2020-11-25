@@ -210,7 +210,7 @@ class BatchWorker:
         try:
             res = fun(data, global_data)
             self.result_queue.put((task_uuid, res))
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             traceback.print_exc()
             exc_type, _exc_obj, exc_tb = sys.exc_info()
             f_name = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -227,7 +227,7 @@ class BatchWorker:
                     logging.debug("Order message: {}".format(order))
                     if order == SubprocessOrder.kill:
                         break
-                except Empty:
+                except Empty:  # pragma: no cover
                     pass
             if not self.task_queue.empty():
                 try:
@@ -236,11 +236,11 @@ class BatchWorker:
                 except Empty:
                     time.sleep(0.1)
                     continue
-                except MemoryError:
+                except MemoryError:  # pragma: no cover
                     pass
-                except IOError:
+                except IOError:  # pragma: no cover
                     pass
-                except Exception as ex:
+                except Exception as ex:  # pragma: no cover
                     logging.warning("Unsupported exception {}".format(ex))
             else:
                 time.sleep(0.1)

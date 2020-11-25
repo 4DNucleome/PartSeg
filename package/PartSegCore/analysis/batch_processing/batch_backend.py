@@ -338,7 +338,7 @@ class CalculationProcess:
             segmentation_class: Type[SegmentationAlgorithm] = analysis_algorithm_dict.get(
                 self.algorithm_parameters["algorithm_name"], None
             )
-            if segmentation_class is None:
+            if segmentation_class is None:  # pragma: no cover
                 raise ValueError(f"Segmentation class {self.algorithm_parameters['algorithm_name']} do not found")
             channel = self.algorithm_parameters["values"][segmentation_class.get_channel_parameter_name()]
 
@@ -372,12 +372,12 @@ class CalculationProcess:
             self.step_save(node.operation)
         elif isinstance(node.operation, MaskCreate):
             self.step_mask_create(node.operation, node.children)
-        elif isinstance(node.operation, Operations):
+        elif isinstance(node.operation, Operations):  # pragma: no cover
             # backward compatibility
             self.iterate_over(node)
         elif isinstance(node.operation, MeasurementCalculate):
             self.step_measurement(node.operation)
-        else:
+        else:  # pragma: no cover
             raise ValueError("Unknown operation {} {}".format(type(node.operation), node.operation))
 
 
@@ -557,9 +557,9 @@ class FileData:
         ext = path.splitext(calculation.measurement_file_path)[1]
         if ext == ".xlsx":
             self.file_type = FileType.excel_xlsx_file
-        elif ext == ".xls":
+        elif ext == ".xls":  # pragma: no cover
             self.file_type = FileType.excel_xls_file
-        else:
+        else:  # pragma: no cover
             self.file_type = FileType.text_file
         self.writing = False
         data = SheetData("calculation_info", [("Description", "str"), ("JSON", "str")])
@@ -613,7 +613,7 @@ class FileData:
             raise ValueError(
                 "[FileData] different file path {} vs {}".format(calculation.measurement_file_path, self.file_path)
             )
-        if calculation.sheet_name in self.sheet_set:
+        if calculation.sheet_name in self.sheet_set:  # pragma: no cover
             raise ValueError("[FileData] sheet name {} already in use".format(calculation.sheet_name))
         measurement = calculation.calculation_plan.get_measurements()
         component_information = [x.measurement_profile.get_component_info(x.units) for x in measurement]
@@ -724,9 +724,9 @@ class FileData:
                     except (PermissionError, IOError):
                         base, ext = path.splitext(self.file_path)
                         file_path = f"{base}({i}){ext}"
-                if i == 100:
+                if i == 100:  # pragma: no cover
                     raise PermissionError(f"Fail to write result excel {self.file_path}")
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 logging.error(f"[batch_backend] {e}")
                 self.error_queue.put(prepare_error_data(e))
             finally:
@@ -765,7 +765,7 @@ class FileData:
         book: xlsxwriter.Workbook = writer.book
         sheet_base_name = f"info {calculation_plan.name}"[:30]
         sheet_name = sheet_base_name
-        if sheet_name in book.sheetnames:
+        if sheet_name in book.sheetnames:  # pragma: no cover
             for i in range(100):
                 sheet_name = f"{sheet_base_name[:26]} ({i})"
                 if sheet_name not in book.sheetnames:
