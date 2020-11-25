@@ -90,7 +90,7 @@ def prepare_error_data(exception: Exception) -> ErrorInfo:
         event = event_from_exception(exception)[0]
         event = serialize(event)
         return exception, (event, traceback.extract_tb(exception.__traceback__))
-    except ImportError:
+    except ImportError:  # pragma: no cover
         return exception, traceback.extract_tb(exception.__traceback__)
 
 
@@ -153,7 +153,7 @@ class CalculationProcess:
                 if ext in load_class.get_extensions():
                     projects = load_class.load([calculation.file_path], metadata=metadata)
                     break
-            else:
+            else:  # pragma: no cover
                 raise ValueError("File type not supported")
         elif operation == RootType.Project:
             projects = LoadProject.load([calculation.file_path], metadata=metadata)
@@ -170,9 +170,9 @@ class CalculationProcess:
             project: ProjectTuple
             self.image = project.image
             if operation == RootType.Mask_project:
-                self.mask = project.mask[0]
+                self.mask = project.mask
             if operation == RootType.Project:
-                self.mask = project.mask[0]
+                self.mask = project.mask
                 # FIXME when load annotation from project is done
                 self.roi_info = ROIInfo(project.roi)
                 self.additional_layers = project.additional_layers
@@ -210,7 +210,7 @@ class CalculationProcess:
         :param List[CalculationTree] children: list of nodes to iterate over with applied mask
         """
         mask_path = operation.get_mask_path(self.calculation.file_path)
-        if mask_path == "":
+        if mask_path == "":  # pragma: no cover
             raise ValueError("Empty path to mask.")
         with tifffile.TiffFile(mask_path) as mask_file:
             mask = mask_file.asarray()
@@ -219,7 +219,7 @@ class CalculationProcess:
         try:
             mask = self.image.fit_array_to_image(mask)[0]
             # TODO fix this time bug fix
-        except ValueError:
+        except ValueError:  # pragma: no cover
             raise ValueError("Mask do not fit to given image")
         old_mask = self.mask
         self.mask = mask
@@ -234,7 +234,7 @@ class CalculationProcess:
         :param List[CalculationTree] children: list of nodes to iterate over after perform segmentation
         """
         segmentation_class = analysis_algorithm_dict.get(operation.algorithm, None)
-        if segmentation_class is None:
+        if segmentation_class is None:  # pragma: no cover
             raise ValueError(f"Segmentation class {operation.algorithm} do not found")
         segmentation_algorithm: RestartableAlgorithm = segmentation_class()
         segmentation_algorithm.set_image(self.image)
