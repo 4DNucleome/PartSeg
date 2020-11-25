@@ -299,8 +299,9 @@ class MeasurementProfile:
             return node.per_component == PerComponent.Yes
         return self._is_component_measurement(node.left) or self._is_component_measurement(node.right)
 
+    @staticmethod
     def _calculate_leaf_value(
-        self, node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
+        node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
     ) -> Union[float, np.ndarray]:
         method: MeasurementMethodBase = MEASUREMENT_DICT[node.name]
         area_type = method.area_type(node.area)
