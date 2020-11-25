@@ -18,7 +18,7 @@ class CopyLabelWidget(QWidget):
         self.upper = QSpinBox()
         self.upper.setSingleStep(1)
         self.checkbox_layout = FlowLayout()
-        self._components = {}
+        self._components = set()
 
         layout = QGridLayout()
         layout.addWidget(QLabel("Lower layer"), 0, 0)
@@ -45,20 +45,24 @@ class CopyLabelWidget(QWidget):
         label = event.source.selected_label
         if label in self._components:
             return
-        self.update_items(event)
+        self._components.add(label)
+        self.refresh()
 
     def update_items(self, event):
         unique = np.unique(event.source.data)
         if unique[0] == 0:
             unique = unique[1:]
+        self._components = set(unique)
+        self.refresh()
+
+    def refresh(self):
         checked = set()
         for _ in range(self.checkbox_layout.count()):
             w: QCheckBox = self.checkbox_layout.takeAt(0).widget()
             if w.isChecked():
                 checked.add(w.text())
             w.deleteLater()
-        self._components = set(unique)
-        for v in unique:
+        for v in self._components:
             chk = QCheckBox(str(v))
             if chk.text() in checked:
                 chk.setChecked(True)
