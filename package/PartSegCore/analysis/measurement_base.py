@@ -33,6 +33,17 @@ enum_register.register_class(PerComponent)
 
 
 class Leaf(BaseSerializableClass):
+    """
+    Class for describe calculation of basic measurement
+
+    :ivar str name: node name of method used to calculate
+    :ivar dict dict: additional parameters of method
+    :ivar float power: power to be applied to result of calculation methods
+    :ivar AreaType area: which type of ROI should be used for calculation
+    :ivar PerComponent per_component: if value should be calculated per component or for whole roi set
+    :ivar Channel channel: probably not used TODO Check
+    """
+
     # noinspection PyMissingConstructor,PyShadowingBuiltins, PyUnusedLocal
     # pylint: disable=W0104,W0221,W0622
     def __init__(
