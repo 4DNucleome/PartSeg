@@ -478,6 +478,10 @@ class MeasurementProfile:
         channel = image.get_channel(channel_num).astype(np.float)
         cache_dict = {}
         result_scalar = UNIT_SCALE[result_units.value]
+        roi_alternative = {}
+        if isinstance(roi, ROIInfo):
+            for name, array in roi.alternative.items():
+                roi_alternative[name] = get_time(array)
         kw = {
             "image": image,
             "channel": get_time(channel),
@@ -485,7 +489,8 @@ class MeasurementProfile:
             "mask": get_time(image.mask),
             "voxel_size": image.spacing,
             "result_scalar": result_scalar,
-            "roi_alternative": roi.alternative if isinstance(roi, ROIInfo) else {},
+            "roi_alternative": roi_alternative,
+            "roi_annotation": roi.annotations if isinstance(roi, ROIInfo) else {},
         }
         segmentation_mask_map = self.get_segmentation_to_mask_component(kw["segmentation"], kw["mask"])
         result = MeasurementResult(segmentation_mask_map)
