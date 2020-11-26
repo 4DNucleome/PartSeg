@@ -1,12 +1,18 @@
+import platform
+
 import numpy as np
+import pytest
 from qtpy.QtCore import QCoreApplication
 
 from PartSeg._roi_analysis.image_view import ResultImageView
 from PartSeg.common_gui.channel_control import ChannelProperty
 from PartSegCore.roi_info import ROIInfo
 
+from .utils import CI_BUILD
+
 
 class TestResultImageView:
+    @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
     def test_simple(self, qtbot, part_settings, image):
         prop = ChannelProperty(part_settings, "test")
         viewer = ResultImageView(part_settings, prop, "test")
@@ -24,6 +30,7 @@ class TestResultImageView:
         assert not viewer.available_alternatives()
         viewer.hide()
 
+    @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
     def test_set_roi(self, qtbot, part_settings, image):
         prop = ChannelProperty(part_settings, "test")
         viewer = ResultImageView(part_settings, prop, "test")
