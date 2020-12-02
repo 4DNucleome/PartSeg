@@ -378,6 +378,28 @@ class TestCalculationProcess:
         assert len(process.measurement[0]) == 3
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
+    def test_full_pipeline_base(self, tmpdir, data_test_dir, monkeypatch):
+        monkeypatch.setattr(batch_backend, "CalculationProcess", MockCalculationProcess)
+        plan = self.create_calculation_plan()
+        file_pattern = os.path.join(data_test_dir, "stack1_components", "stack1_component*[0-9].tif")
+        file_paths = sorted(glob(file_pattern))
+        assert os.path.basename(file_paths[0]) == "stack1_component1.tif"
+        calc = Calculation(
+            file_paths,
+            base_prefix=data_test_dir,
+            result_prefix=data_test_dir,
+            measurement_file_path=os.path.join(tmpdir, "test.xlsx"),
+            sheet_name="Sheet1",
+            calculation_plan=plan,
+            voxel_size=(1, 1, 1),
+        )
+        calc_process = CalculationProcess()
+        for file_path in file_paths:
+            res = calc_process.do_calculation(FileCalculation(file_path, calc))
+            assert isinstance(res, list)
+            assert isinstance(res[0], ResponseData)
+
+    @pytest.mark.filterwarnings("ignore:This method will be removed")
     def test_full_pipeline(self, tmpdir, data_test_dir, monkeypatch):
         monkeypatch.setattr(batch_backend, "CalculationProcess", MockCalculationProcess)
         plan = self.create_calculation_plan()
@@ -398,9 +420,16 @@ class TestCalculationProcess:
         manager.set_number_of_workers(3)
         manager.add_calculation(calc)
 
-        while manager.has_work:
-            time.sleep(0.1)
+        for _ in range(int(120 / 0.1)):
             manager.get_results()
+            if manager.has_work:
+                time.sleep(0.1)
+            else:
+                break
+        else:
+            manager.kill_jobs()
+            pytest.fail("jobs hanged")
+
         manager.writer.finish()
         if sys.platform == "darwin":
             time.sleep(2)
