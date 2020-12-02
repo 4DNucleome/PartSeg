@@ -5,6 +5,7 @@ import pytest
 
 from PartSegCore.segmentation.threshold import (
     BaseThreshold,
+    IntermodesThreshold,
     KittlerIllingworthThreshold,
     double_threshold_dict,
     threshold_dict,
@@ -31,6 +32,8 @@ def test_threshold(method: BaseThreshold, data, op, masking):
     except RuntimeError:
         if method is KittlerIllingworthThreshold:
             pytest.xfail("KittlerIllingworth sigma problem")
+        if method is IntermodesThreshold:
+            pytest.xfail("IntermodesThreshold sigma problem")
         raise
     assert isinstance(data, np.ndarray)
     assert isinstance(thr_info, (int, float))

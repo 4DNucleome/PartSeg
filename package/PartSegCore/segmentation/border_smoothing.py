@@ -38,9 +38,10 @@ class OpeningSmoothing(BaseSmoothing):
 
     @classmethod
     def smooth(cls, segmentation: np.ndarray, arguments: dict) -> np.ndarray:
-        return sitk.GetArrayFromImage(
-            sitk.BinaryMorphologicalOpening(sitk.GetImageFromArray(segmentation), arguments["smooth_border_radius"])
-        )
+        radius = arguments["smooth_border_radius"]
+        if isinstance(radius, (int, float)):
+            radius = [radius] * segmentation.ndim
+        return sitk.GetArrayFromImage(sitk.BinaryMorphologicalOpening(sitk.GetImageFromArray(segmentation), radius))
 
 
 class VoteSmoothing(BaseSmoothing):
