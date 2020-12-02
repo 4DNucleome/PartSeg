@@ -1,9 +1,9 @@
-from typing import Dict, List, NamedTuple, Optional
+from typing import Any, Dict, List, NamedTuple, Optional
 
 import numpy as np
 
 from PartSegCore.utils import numpy_repr
-from PartSegImage.image import minimal_dtype
+from PartSegImage.image import Image, minimal_dtype
 
 
 class BoundInfo(NamedTuple):
@@ -32,7 +32,14 @@ class ROIInfo:
     :ivar numpy.ndarray sizes: array with sizes of components
     """
 
-    def __init__(self, roi: Optional[np.ndarray]):
+    def __init__(
+        self,
+        roi: Optional[np.ndarray],
+        annotation: Optional[Dict[int, Any]] = None,
+        alternative: Optional[Dict[str, np.ndarray]] = None,
+    ):
+        self.annotations = {} if annotation is None else annotation
+        self.alternative = {} if alternative is None else alternative
         if roi is None:
             self.roi = None
             self.bound_info = {}
@@ -44,6 +51,12 @@ class ROIInfo:
         self.roi = roi
         self.bound_info = self.calc_bounds(roi)
         self.sizes = np.bincount(roi.flat)
+
+    def fit_to_image(self, image: Image) -> "ROIInfo":
+        roi = image.fit_array_to_image(self.roi)
+        alternatives = {k: image.fit_array_to_image(v) for k, v in self.alternative.items()}
+
+        return ROIInfo(roi, self.annotations, alternatives)
 
     def __str__(self):
         return f"SegmentationInfo; components: {len(self.bound_info)}, sizes: {self.sizes}"

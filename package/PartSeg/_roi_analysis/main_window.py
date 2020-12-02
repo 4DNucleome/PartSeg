@@ -345,9 +345,8 @@ class Options(QWidget):
     def execution_done(self, segmentation: SegmentationResult):
         if segmentation.info_text != "":
             QMessageBox.information(self, "Algorithm info", segmentation.info_text)
-        self._settings.roi = segmentation.roi
+        self._settings.set_segmentation_result(segmentation)
         self.compare_btn.setEnabled(isinstance(segmentation.roi, np.ndarray) and np.any(segmentation.roi))
-        self._settings.additional_layers = segmentation.additional_layers
         self.label.setText(self.sender().get_info_text())
 
     def showEvent(self, _event):

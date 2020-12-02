@@ -47,7 +47,7 @@ from qtpy.QtWidgets import QLayout, QSizePolicy
 
 class FlowLayout(QLayout):
     def __init__(self, parent=None, margin=0, spacing=-1):
-        super(FlowLayout, self).__init__(parent)
+        super().__init__(parent)
 
         if parent is not None:
             self.setContentsMargins(margin, margin, margin, margin)
@@ -88,6 +88,12 @@ class FlowLayout(QLayout):
         if 0 <= index < len(self.itemList):
             return self.itemList.pop(index)
         return None
+
+    def insertWidget(self, index, widget):
+        self.addWidget(widget)
+        i = self.indexOf(widget)
+        element = self.itemList.pop(i)
+        self.itemList.insert(index, element)
 
     def expandingDirections(self):  # pylint: disable=R0201
         return Qt.Orientations(Qt.Orientation(0))

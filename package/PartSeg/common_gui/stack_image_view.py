@@ -123,6 +123,6 @@ class ColorBar(QLabel):
             np.linspace(10 + end_prop * rect.size().height(), start_prop * rect.size().height(), number_of_marks),
             np.linspace(self.round_range[1], self.round_range[0], number_of_marks, dtype=np.uint32),
         ):
-            painter.drawText(bar_width + 5, pos, f"{val}")
+            painter.drawText(bar_width + 5, int(pos), f"{val}")
         painter.setFont(old_font)
         # print(self.image.shape)

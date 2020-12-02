@@ -18,8 +18,8 @@ from napari.layers.image._image_constants import Interpolation3D
 from napari.layers.labels import Labels
 from napari.qt import QtNDisplayButton, QtViewer
 from napari.qt.threading import thread_worker
-from qtpy.QtCore import QObject, QPoint, Qt, Signal
-from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QVBoxLayout, QWidget
+from qtpy.QtCore import QEvent, QObject, QPoint, Qt, Signal
+from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QToolTip, QVBoxLayout, QWidget
 from vispy.color import Color, ColorArray, Colormap
 from vispy.scene import BaseCamera
 
@@ -77,6 +77,7 @@ class ImageShowState(QObject):
     parameter_changed = Signal()  # signal informing that some of image presenting parameters
     coloring_changed = Signal()
     borders_changed = Signal()
+    roi_presented_changed = Signal()
     # changed and image need to be refreshed
 
     def __init__(self, settings: ViewSettings, name: str):
@@ -85,15 +86,15 @@ class ImageShowState(QObject):
         super().__init__()
         self.name = name
         self.settings = settings
-        self.zoom = False
-        self.move = False
         self.opacity = settings.get_from_profile(f"{name}.image_state.opacity", 1.0)
         self.show_label = settings.get_from_profile(f"{name}.image_state.show_label", LabelEnum.Show_results)
         self.only_borders = settings.get_from_profile(f"{name}.image_state.only_border", True)
         self.borders_thick = settings.get_from_profile(f"{name}.image_state.border_thick", 1)
+        self.roi_presented = "ROI"
 
-    def set_zoom(self, val):
-        self.zoom = val
+    def set_roi_presented(self, val):
+        self.roi_presented = val
+        self.roi_presented_changed.emit()
 
     def set_borders(self, val: bool):
         """decide if draw only component 2D borders, or whole area"""
@@ -200,6 +201,7 @@ class ImageView(QWidget):
         self.old_scene: BaseCamera = self.viewer_widget.view.scene
 
         self.image_state.coloring_changed.connect(self.update_roi_coloring)
+        self.image_state.roi_presented_changed.connect(self.update_roi_representation)
         self.image_state.borders_changed.connect(self.update_roi_representation)
         self.mask_chk.stateChanged.connect(self.change_mask_visibility)
         self.viewer_widget.view.scene.transform.changed.connect(self._view_changed, position="last")
@@ -413,10 +415,11 @@ class ImageView(QWidget):
             max_num = max(1, image_info.roi_count)
         except ValueError:
             max_num = 1
+        roi = image_info.roi_info.alternative.get(self.image_state.roi_presented, image_info.roi_info.roi)
         if self.image_state.only_borders:
 
             data = calculate_borders(
-                image_info.roi_info.roi.transpose(ORDER_DICT[self._current_order]),
+                roi.transpose(ORDER_DICT[self._current_order]),
                 self.image_state.borders_thick // 2,
                 self.viewer.dims.ndisplay == 2,
             ).transpose(np.argsort(ORDER_DICT[self._current_order]))
@@ -427,7 +430,7 @@ class ImageView(QWidget):
             )
         else:
             image_info.roi = self.viewer.add_image(
-                image_info.roi_info.roi,
+                roi,
                 scale=image_info.image.normalized_scaling(),
                 contrast_limits=[0, max_num],
                 name="ROI",
@@ -660,10 +663,24 @@ class ImageView(QWidget):
             worker.quit()
         super().closeEvent(event)
 
+    def get_tool_tip_text(self) -> str:
+        image = self.settings.image
+        image_info = self.image_info[image.file_path]
+        text_list = []
+        for el in self.components:
+            text_list.append(_print_dict(image_info.roi_info.annotations.get(el, {})))
+        return " ".join(text_list)
+
+    def event(self, event: QEvent):
+        if event.type() == QEvent.ToolTip and self.components:
+            text = self.get_tool_tip_text()
+            if text:
+                QToolTip.showText(event.globalPos(), text)
+        return super().event(event)
+
 
 class NapariQtViewer(QtViewer):
     def dragEnterEvent(self, event):  # pylint: disable=R0201
-
         """
         ignore napari reading mechanism
         """
@@ -704,3 +721,13 @@ def _prepare_layers(image: Image, param: ImageParameters, replace: bool) -> Tupl
 
 
 prepare_layers = thread_worker(_prepare_layers)
+
+
+def _print_dict(dkt: dict, indent=""):
+    res = []
+    for k, v in dkt.items():
+        if isinstance(v, dict):
+            res.append(f"{indent}{k}:\n{_print_dict(v, indent+'  ')}")
+        else:
+            res.append(f"{indent}{k}: {v}")
+    return "\n".join(res)

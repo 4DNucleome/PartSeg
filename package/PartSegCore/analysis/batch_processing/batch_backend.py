@@ -66,6 +66,7 @@ from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription, 
 from PartSegImage import Image, TiffImageReader
 
 from ...io_utils import HistoryElement, WrongFileTypeException
+from ...roi_info import ROIInfo
 from ...segmentation import RestartableAlgorithm
 from .. import PartEncoder
 from .parallel_backend import BatchManager
@@ -89,7 +90,7 @@ def prepare_error_data(exception: Exception) -> ErrorInfo:
         event = event_from_exception(exception)[0]
         event = serialize(event)
         return exception, (event, traceback.extract_tb(exception.__traceback__))
-    except ImportError:
+    except ImportError:  # pragma: no cover
         return exception, traceback.extract_tb(exception.__traceback__)
 
 
@@ -107,7 +108,6 @@ def do_calculation(file_info: Tuple[int, str], calculation: BaseCalculation) -> 
     try:
         return index, calc.do_calculation(FileCalculation(file_path, calculation))
     except Exception as e:
-        # traceback.print_exc()
         return index, [prepare_error_data(e)]
 
 
@@ -124,7 +124,7 @@ class CalculationProcess:
         self.calculation = None
         self.measurement: List[MeasurementResult] = []
         self.image: Optional[Image] = None
-        self.segmentation: Optional[np.ndarray] = None
+        self.roi_info: Optional[ROIInfo] = None
         self.additional_layers: Dict[str, AdditionalLayerDescription] = {}
         self.mask: Optional[np.ndarray] = None
         self.history: List[HistoryElement] = []
@@ -153,7 +153,7 @@ class CalculationProcess:
                 if ext in load_class.get_extensions():
                     projects = load_class.load([calculation.file_path], metadata=metadata)
                     break
-            else:
+            else:  # pragma: no cover
                 raise ValueError("File type not supported")
         elif operation == RootType.Project:
             projects = LoadProject.load([calculation.file_path], metadata=metadata)
@@ -170,10 +170,11 @@ class CalculationProcess:
             project: ProjectTuple
             self.image = project.image
             if operation == RootType.Mask_project:
-                self.mask = project.mask[0]
+                self.mask = project.mask
             if operation == RootType.Project:
-                self.mask = project.mask[0]
-                self.segmentation = project.roi
+                self.mask = project.mask
+                # FIXME when load annotation from project is done
+                self.roi_info = ROIInfo(project.roi)
                 self.additional_layers = project.additional_layers
                 self.history = project.history
                 self.algorithm_parameters = project.algorithm_parameters
@@ -209,7 +210,7 @@ class CalculationProcess:
         :param List[CalculationTree] children: list of nodes to iterate over with applied mask
         """
         mask_path = operation.get_mask_path(self.calculation.file_path)
-        if mask_path == "":
+        if mask_path == "":  # pragma: no cover
             raise ValueError("Empty path to mask.")
         with tifffile.TiffFile(mask_path) as mask_file:
             mask = mask_file.asarray()
@@ -218,7 +219,7 @@ class CalculationProcess:
         try:
             mask = self.image.fit_array_to_image(mask)[0]
             # TODO fix this time bug fix
-        except ValueError:
+        except ValueError:  # pragma: no cover
             raise ValueError("Mask do not fit to given image")
         old_mask = self.mask
         self.mask = mask
@@ -233,19 +234,19 @@ class CalculationProcess:
         :param List[CalculationTree] children: list of nodes to iterate over after perform segmentation
         """
         segmentation_class = analysis_algorithm_dict.get(operation.algorithm, None)
-        if segmentation_class is None:
+        if segmentation_class is None:  # pragma: no cover
             raise ValueError(f"Segmentation class {operation.algorithm} do not found")
         segmentation_algorithm: RestartableAlgorithm = segmentation_class()
         segmentation_algorithm.set_image(self.image)
         segmentation_algorithm.set_mask(self.mask)
         segmentation_algorithm.set_parameters(**operation.values)
         result = segmentation_algorithm.calculation_run(report_empty_fun)
-        backup_data = self.segmentation, self.additional_layers, self.algorithm_parameters
-        self.segmentation = result.roi
+        backup_data = self.roi_info, self.additional_layers, self.algorithm_parameters
+        self.roi_info = ROIInfo(result.roi, result.roi_annotation, result.alternative_representation)
         self.additional_layers = result.additional_layers
         self.algorithm_parameters = {"algorithm_name": operation.algorithm, "values": operation.values}
         self.iterate_over(children)
-        self.segmentation, self.additional_layers, self.algorithm_parameters = backup_data
+        self.roi_info, self.additional_layers, self.algorithm_parameters = backup_data
 
     def step_mask_use(self, operation: MaskUse, children: List[CalculationTree]):
         """
@@ -289,7 +290,7 @@ class CalculationProcess:
         project_tuple = ProjectTuple(
             file_path="",
             image=self.image,
-            segmentation=self.segmentation,
+            roi=self.roi_info.roi,  # FIXME
             additional_layers=self.additional_layers,
             mask=self.mask,
             history=self.history,
@@ -307,7 +308,7 @@ class CalculationProcess:
         """
         mask = calculate_mask(
             mask_description=operation.mask_property,
-            segmentation=self.segmentation,
+            segmentation=self.roi_info.roi,
             old_mask=self.mask,
             spacing=self.image.spacing,
             time_axis=self.image.time_pos,
@@ -315,7 +316,7 @@ class CalculationProcess:
         if operation.name in self.reused_mask:
             self.mask_dict[operation.name] = mask
         history_element = HistoryElement.create(
-            self.segmentation,
+            self.roi_info,
             self.mask,
             self.algorithm_parameters,
             operation.mask_property,
@@ -337,20 +338,21 @@ class CalculationProcess:
             segmentation_class: Type[SegmentationAlgorithm] = analysis_algorithm_dict.get(
                 self.algorithm_parameters["algorithm_name"], None
             )
-            if segmentation_class is None:
+            if segmentation_class is None:  # pragma: no cover
                 raise ValueError(f"Segmentation class {self.algorithm_parameters['algorithm_name']} do not found")
             channel = self.algorithm_parameters["values"][segmentation_class.get_channel_parameter_name()]
 
-        image_channel = self.image.get_channel(channel)
         # FIXME use additional information
+        old_mask = self.image.mask
+        self.image.set_mask(self.mask)
         measurement = operation.measurement_profile.calculate(
-            image_channel,
-            self.segmentation,
-            self.mask,
-            self.image.spacing,
+            self.image,
+            channel,
+            self.roi_info,
             operation.units,
         )
         self.measurement.append(measurement)
+        self.image.set_mask(old_mask)
 
     def recursive_calculation(self, node: CalculationTree):
         """
@@ -370,12 +372,12 @@ class CalculationProcess:
             self.step_save(node.operation)
         elif isinstance(node.operation, MaskCreate):
             self.step_mask_create(node.operation, node.children)
-        elif isinstance(node.operation, Operations):
+        elif isinstance(node.operation, Operations):  # pragma: no cover
             # backward compatibility
             self.iterate_over(node)
         elif isinstance(node.operation, MeasurementCalculate):
             self.step_measurement(node.operation)
-        else:
+        else:  # pragma: no cover
             raise ValueError("Unknown operation {} {}".format(type(node.operation), node.operation))
 
 
@@ -555,9 +557,9 @@ class FileData:
         ext = path.splitext(calculation.measurement_file_path)[1]
         if ext == ".xlsx":
             self.file_type = FileType.excel_xlsx_file
-        elif ext == ".xls":
+        elif ext == ".xls":  # pragma: no cover
             self.file_type = FileType.excel_xls_file
-        else:
+        else:  # pragma: no cover
             self.file_type = FileType.text_file
         self.writing = False
         data = SheetData("calculation_info", [("Description", "str"), ("JSON", "str")])
@@ -611,7 +613,7 @@ class FileData:
             raise ValueError(
                 "[FileData] different file path {} vs {}".format(calculation.measurement_file_path, self.file_path)
             )
-        if calculation.sheet_name in self.sheet_set:
+        if calculation.sheet_name in self.sheet_set:  # pragma: no cover
             raise ValueError("[FileData] sheet name {} already in use".format(calculation.sheet_name))
         measurement = calculation.calculation_plan.get_measurements()
         component_information = [x.measurement_profile.get_component_info(x.units) for x in measurement]
@@ -722,9 +724,9 @@ class FileData:
                     except (PermissionError, IOError):
                         base, ext = path.splitext(self.file_path)
                         file_path = f"{base}({i}){ext}"
-                if i == 100:
+                if i == 100:  # pragma: no cover
                     raise PermissionError(f"Fail to write result excel {self.file_path}")
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 logging.error(f"[batch_backend] {e}")
                 self.error_queue.put(prepare_error_data(e))
             finally:
@@ -763,7 +765,7 @@ class FileData:
         book: xlsxwriter.Workbook = writer.book
         sheet_base_name = f"info {calculation_plan.name}"[:30]
         sheet_name = sheet_base_name
-        if sheet_name in book.sheetnames:
+        if sheet_name in book.sheetnames:  # pragma: no cover
             for i in range(100):
                 sheet_name = f"{sheet_base_name[:26]} ({i})"
                 if sheet_name not in book.sheetnames:

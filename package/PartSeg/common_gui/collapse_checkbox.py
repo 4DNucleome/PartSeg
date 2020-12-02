@@ -68,7 +68,7 @@ class CollapseCheckbox(QCheckBox):
         painter = QPainter(self)
 
         painter.setBrush(Qt.black)
-        top = rect.height() - (self.text_size.height() / 2)
+        top = int(rect.height() - (self.text_size.height() / 2))
         painter.drawText(rect.height() + 5, top, self.info_text)
         painter.drawPolygon(triangle, Qt.WindingFill)
         painter.drawLine(QLineF(line_begin, line_end))

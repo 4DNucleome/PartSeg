@@ -36,7 +36,7 @@ def image():
     data[1:-1, 1:5, 1:-1, 1] = 20
     data[1:-1, -5:-1, 1:-1, 1] = 20
 
-    return Image(data, (1, 1, 1), axes_order="ZYXC")
+    return Image(data, (10 ** -3, 10 ** -3, 10 ** -3), axes_order="ZYXC")
 
 
 @pytest.fixture

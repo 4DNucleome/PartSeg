@@ -127,6 +127,7 @@ class MeasurementCalculate(BaseSerializableClass):
 
     # noinspection PyOverloads,PyMissingConstructor
     # pylint: disable=W0104
+    # pragma: no cover
     @typing.overload
     def __init__(self, channel: int, units: Units, measurement_profile: MeasurementProfile, name_prefix: str):
         ...
@@ -182,7 +183,7 @@ class MaskMapper:
 
     @abstractmethod
     def get_parameters(self):
-        pass
+        """Parameters for serialize"""
 
     @staticmethod
     def is_ready() -> bool:
@@ -203,7 +204,7 @@ class MaskSuffix(MaskMapper, BaseSerializableClass):
     # noinspection PyMissingConstructor,PyOverloads
     # pylint: disable=W0104
     @typing.overload
-    def __init__(self, name: str, suffix: str):
+    def __init__(self, name: str, suffix: str):  # pragma: no cover
         ...
 
     def get_mask_path(self, file_path: str) -> str:
@@ -229,7 +230,7 @@ class MaskSub(MaskMapper, BaseSerializableClass):
     # noinspection PyMissingConstructor,PyOverloads
     # pylint: disable=W0104
     @typing.overload
-    def __init__(self, name: str, base: str, rep: str):
+    def __init__(self, name: str, base: str, rep: str):  # pragma: no cover
         ...
 
     def get_mask_path(self, file_path: str) -> str:
@@ -249,7 +250,7 @@ class MaskFile(MaskMapper, BaseSerializableClass):
     # noinspection PyMissingConstructor,PyOverloads
     # pylint: disable=W0104
     @typing.overload
-    def __init__(self, name: str, path_to_file: str, name_dict: typing.Optional[dict] = None):
+    def __init__(self, name: str, path_to_file: str, name_dict: typing.Optional[dict] = None):  # pragma: no cover
         ...
 
     def is_ready(self) -> bool:

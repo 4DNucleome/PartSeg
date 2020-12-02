@@ -219,10 +219,7 @@ class TestPartSettings:
         algorithm.set_image(settings.image)
         algorithm.set_parameters(**algorithm_parameters["values"])
         result = algorithm.calculation_run(lambda x, y: None)
-        settings.roi = result.roi
-        settings.additional_layers = result.additional_layers
-        settings.last_executed_algorithm = result.parameters.algorithm
-        settings.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
+        settings.set_segmentation_result(result)
         project_info = settings.get_project_info()
         mask = calculate_mask_from_project(mask_property, settings.get_project_info())
         settings.add_history_element(
@@ -238,10 +235,7 @@ class TestPartSettings:
         algorithm.set_mask(settings.mask)
         result2 = algorithm.calculation_run(lambda x, y: None)
         assert np.max(result2.roi) == 2
-        settings.roi = result2.roi
-        settings.additional_layers = result2.additional_layers
-        settings.last_executed_algorithm = result.parameters.algorithm
-        settings.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
+        settings.set_segmentation_result(result2)
         project_info = settings.get_project_info()
         SaveProject.save(tmp_path / "project.tgz", project_info)
         assert os.path.exists(tmp_path / "project.tgz")
