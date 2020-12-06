@@ -73,7 +73,7 @@ qtpy==1.9.0               # via -r requirements_pyinstaller.in, napari, qtconsol
 requests==2.25.0          # via -r requirements_pyinstaller.in, sphinx
 scipy==1.5.4              # via -r requirements_pyinstaller.in, napari
 sentry-sdk==0.19.4        # via -r requirements_pyinstaller.in
-simpleitk==2.0.1          # via -r requirements_pyinstaller.in
+simpleitk==2.0.2          # via -r requirements_pyinstaller.in
 six==1.15.0               # via -r requirements_pyinstaller.in, python-dateutil
 snowballstemmer==2.0.0    # via sphinx
 sphinx==3.3.1             # via numpydoc
