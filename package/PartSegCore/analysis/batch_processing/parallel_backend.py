@@ -121,6 +121,10 @@ class BatchManager:
         """Check if Manager has pending or processed work and if all results are consumed"""
         return self.work_task > 0 or (not self.result_queue.empty())
 
+    def kill_jobs(self):
+        for p in self.process_list:
+            p.terminate()
+
     def set_number_of_process(self, num: int):
         """
         Change number of workers which should be used for calculation

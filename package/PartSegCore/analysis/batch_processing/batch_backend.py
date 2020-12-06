@@ -34,6 +34,7 @@ from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Tuple, Type,
 
 import numpy as np
 import pandas as pd
+import SimpleITK
 import tifffile
 import xlsxwriter
 
@@ -103,6 +104,7 @@ def do_calculation(file_info: Tuple[int, str], calculation: BaseCalculation) -> 
     :param file_info: index and path to file which should be processed
     :param calculation: calculation description
     """
+    SimpleITK.ProcessObject_SetGlobalDefaultNumberOfThreads(1)
     calc = CalculationProcess()
     index, file_path = file_info
     try:
@@ -446,6 +448,9 @@ class CalculationManager:
         Is still some calculation or data writing in progress
         """
         return self.batch_manager.has_work or not self.writer.writing_finished()
+
+    def kill_jobs(self):
+        self.batch_manager.kill_jobs()
 
     def set_number_of_workers(self, val: int):
         """
