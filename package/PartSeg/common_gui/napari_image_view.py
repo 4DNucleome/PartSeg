@@ -210,8 +210,12 @@ class ImageView(QWidget):
         except AttributeError:
             self.viewer.dims.events.axis.connect(self._view_changed, position="last")
         self.viewer.dims.events.ndisplay.connect(self._view_changed, position="last")
-        self.viewer.dims.events.camera.connect(self._view_changed, position="last")
-        self.viewer.dims.events.camera.connect(self.camera_change, position="last")
+        if hasattr(self.viewer.dims.events, "ndisplay"):
+            self.viewer.dims.events.ndisplay.connect(self._view_changed, position="last")
+            self.viewer.dims.events.ndisplay.connect(self.camera_change, position="last")
+        else:
+            self.viewer.dims.events.camera.connect(self._view_changed, position="last")
+            self.viewer.dims.events.camera.connect(self.camera_change, position="last")
         self.viewer.events.reset_view.connect(self._view_changed, position="last")
 
     def _dim_order_menu(self, point: QPoint):
