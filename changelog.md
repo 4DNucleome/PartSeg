@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.2
+
+-   Fix windows bundle
+
 ## 0.12.1
 
 -   History of last opened files

@@ -42,7 +42,7 @@ mpmath==1.1.0             # via sympy
 napari-plugin-engine==0.1.8  # via napari, napari-svg
 napari-svg==0.1.4         # via napari
 napari==0.4.2             # via -r requirements_pyinstaller.in
-numpy==1.19.4             # via -r requirements_pyinstaller.in, czifile, dask, h5py, imagecodecs, imageio, napari, napari-svg, oiffile, pandas, scipy, tifffile, vispy
+numpy==1.19.3             # via -r requirements_pyinstaller.in, czifile, dask, h5py, imagecodecs, imageio, napari, napari-svg, oiffile, pandas, scipy, tifffile, vispy
 numpydoc==1.1.0           # via napari
 oiffile==2020.9.18        # via -r requirements_pyinstaller.in
 openpyxl==3.0.5           # via -r requirements_pyinstaller.in
