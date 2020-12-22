@@ -1,15 +1,17 @@
 import dataclasses
 import typing
 from collections import defaultdict
-from copy import copy
+from copy import copy, deepcopy
 from os import path
 
 import numpy as np
+from PyQt5.QtWidgets import QMessageBox
 from qtpy.QtCore import Signal, Slot
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.io_utils import HistoryElement, HistoryProblem
 from PartSegCore.mask.io_functions import MaskProjectTuple, load_metadata
+from PartSegCore.segmentation.algorithm_base import SegmentationResult
 from PartSegImage import Image
 from PartSegImage.image import minimal_dtype, reduce_array
 
@@ -28,6 +30,19 @@ class StackSettings(BaseSettings):
         "batch_directory",
         "multiple_open_directory",
     ]
+
+    def set_segmentation_result(self, result: SegmentationResult):
+        if self._parent and np.max(result.roi) == 0:
+            QMessageBox.information(
+                self, "No result", "Segmentation contains no component, check parameters, especially chosen channel."
+            )
+        if result.info_text and self._parent is not None:
+            QMessageBox().information(self._parent, "Algorithm info", result.info_text)
+        parameters_dict = defaultdict(lambda: deepcopy(result.parameters))
+        self._additional_layers = result.additional_layers
+        self.last_executed_algorithm = result.parameters.algorithm
+        self.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
+        self.set_segmentation(result.roi, True, [], parameters_dict)
 
     def __init__(self, json_path):
         super().__init__(json_path)
