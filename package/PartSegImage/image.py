@@ -2,8 +2,9 @@ import typing
 import warnings
 
 import numpy as np
+import unyt
 
-Spacing = typing.Tuple[typing.Union[float, int], ...]
+Spacing = typing.Tuple[unyt.unyt_quantity, ...]
 
 _DEF = object()
 
