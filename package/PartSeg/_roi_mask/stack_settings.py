@@ -5,8 +5,8 @@ from copy import copy, deepcopy
 from os import path
 
 import numpy as np
-from PyQt5.QtWidgets import QMessageBox
 from qtpy.QtCore import Signal, Slot
+from qtpy.QtWidgets import QMessageBox
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.io_utils import HistoryElement, HistoryProblem
