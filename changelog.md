@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.3
+
+-   Fix ROI Mask
+
 ## 0.12.2
 
 -   Fix windows bundle

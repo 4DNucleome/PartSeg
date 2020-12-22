@@ -1,6 +1,4 @@
 import os
-from collections import defaultdict
-from copy import deepcopy
 from functools import partial
 from pathlib import Path
 from typing import Type
@@ -42,7 +40,6 @@ from PartSegCore.mask.io_functions import (
     SaveROI,
 )
 from PartSegCore.mask_create import calculate_mask_from_project
-from PartSegCore.segmentation.algorithm_base import SegmentationResult
 from PartSegImage import Image, TiffImageReader
 
 from .._roi_mask.segmentation_info_dialog import SegmentationInfoDialog
@@ -532,7 +529,7 @@ class AlgorithmOptions(QWidget):
         self.save_parameters_btn = QPushButton("Save parameters")
         self.block_execute_all_btn = False
         self.algorithm_choose_widget = AlgorithmChoose(settings, mask_algorithm_dict)
-        self.algorithm_choose_widget.result.connect(self.execution_done)
+        self.algorithm_choose_widget.result.connect(self.settings.set_segmentation_result)
         self.algorithm_choose_widget.finished.connect(self.execution_finished)
         self.algorithm_choose_widget.progress_signal.connect(self.progress_info)
 
@@ -758,17 +755,6 @@ class AlgorithmOptions(QWidget):
         self.progress_bar.setHidden(True)
         self.progress_info_lab.setHidden(True)
         self.choose_components.setDisabled(False)
-
-    def execution_done(self, segmentation: SegmentationResult):
-        if np.max(segmentation.roi) == 0:
-            QMessageBox.information(
-                self, "No result", "Segmentation contains no component, check parameters, " "especially chosen channel."
-            )
-        if segmentation.info_text != "":
-            QMessageBox.information(self, "Algorithm info", segmentation.info_text)
-        parameters_dict = defaultdict(lambda: deepcopy(segmentation.parameters))
-        self.settings.additional_layers = segmentation.additional_layers
-        self.settings.set_segmentation(segmentation.roi, True, [], parameters_dict)
 
     def showEvent(self, _):
         widget = self.algorithm_choose_widget.current_widget()
