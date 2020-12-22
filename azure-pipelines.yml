@@ -6,6 +6,7 @@ trigger:
     - dependabot/*
     - documentation
     - release/*
+    - hotfix/*
   tags:
     include:
     - v*

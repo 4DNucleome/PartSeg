@@ -5,6 +5,7 @@ on:
     branches-ignore:
       - 'release/**'
       - 'dependabot/**'
+      - 'hotfix/**'
   pull_request:
     branches:
       - '**'
