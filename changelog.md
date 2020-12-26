@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.4
+
+-   Fix ROI Mask windows related build (signal not properly connected)
+
 ## 0.12.3
 
 -   Fix ROI Mask

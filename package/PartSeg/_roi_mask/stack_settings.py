@@ -34,7 +34,9 @@ class StackSettings(BaseSettings):
     def set_segmentation_result(self, result: SegmentationResult):
         if self._parent and np.max(result.roi) == 0:
             QMessageBox.information(
-                self, "No result", "Segmentation contains no component, check parameters, especially chosen channel."
+                self._parent,
+                "No result",
+                "Segmentation contains no component, check parameters, especially chosen channel.",
             )
         if result.info_text and self._parent is not None:
             QMessageBox().information(self._parent, "Algorithm info", result.info_text)

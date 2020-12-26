@@ -529,7 +529,7 @@ class AlgorithmOptions(QWidget):
         self.save_parameters_btn = QPushButton("Save parameters")
         self.block_execute_all_btn = False
         self.algorithm_choose_widget = AlgorithmChoose(settings, mask_algorithm_dict)
-        self.algorithm_choose_widget.result.connect(self.settings.set_segmentation_result)
+        self.algorithm_choose_widget.result.connect(self.execution_result_set)
         self.algorithm_choose_widget.finished.connect(self.execution_finished)
         self.algorithm_choose_widget.progress_signal.connect(self.progress_info)
 
@@ -755,6 +755,9 @@ class AlgorithmOptions(QWidget):
         self.progress_bar.setHidden(True)
         self.progress_info_lab.setHidden(True)
         self.choose_components.setDisabled(False)
+
+    def execution_result_set(self, result):
+        self.settings.set_segmentation_result(result)
 
     def showEvent(self, _):
         widget = self.algorithm_choose_widget.current_widget()
