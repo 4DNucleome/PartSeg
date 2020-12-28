@@ -31,7 +31,7 @@ def calculate_pipeline(image: Image, mask: typing.Optional[np.ndarray], pipeline
     report_fun("max", 2 * len(pipeline.mask_history) + 1)
     for i, el in enumerate(pipeline.mask_history):
         result, _ = calculate_segmentation_step(el.segmentation, image, mask)
-        segmentation = result.roi
+        segmentation = image.fit_array_to_image(result.roi)
         report_fun("step", 2 * i + 1)
         new_mask = calculate_mask(
             mask_description=el.mask_property,

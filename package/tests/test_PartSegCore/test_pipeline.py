@@ -40,7 +40,8 @@ def test_pipeline_manual(image, algorithm_parameters, mask_property):
     assert np.max(result2.roi) == 2
 
 
-def test_pipeline(image, algorithm_parameters, mask_property, tmp_path):
+@pytest.mark.parametrize("use_mask", [True, False])
+def test_pipeline(image, algorithm_parameters, mask_property, tmp_path, use_mask):
     elem = SegmentationPipelineElement(
         segmentation=ROIExtractionProfile(
             name="", algorithm=algorithm_parameters["algorithm_name"], values=algorithm_parameters["values"]
@@ -56,7 +57,8 @@ def test_pipeline(image, algorithm_parameters, mask_property, tmp_path):
         ),
         mask_history=[elem],
     )
-    result = calculate_pipeline(image, None, pipeline, lambda x, y: None)
+    mask = np.ones(image.get_channel(0).shape, dtype=np.uint8) if use_mask else None
+    result = calculate_pipeline(image, mask, pipeline, lambda x, y: None)
     assert np.max(result.roi) == 2
     pt = ProjectTuple(
         file_path=image.file_path,
