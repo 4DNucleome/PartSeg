@@ -148,9 +148,8 @@ def calculate_mask(
     for i in range(mask.shape[time_axis]):
         slices[time_axis] = i
         _old_mask = old_mask[tuple(slices)] if old_mask is not None else None
-        res.append(
-            _calculate_mask(mask_description, dilate_radius, mask[tuple(slices)], _old_mask).reshape(final_shape)
-        )
+        t_slices = tuple(slices)
+        res.append(_calculate_mask(mask_description, dilate_radius, mask[t_slices], _old_mask).reshape(final_shape))
     return np.concatenate(res, axis=time_axis)
 
 
