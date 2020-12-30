@@ -623,7 +623,8 @@ class TestPipeline:
         data[0, 10:40, 20:80, 40:80, 1] = 10
         return Image(data, (100, 50, 50), "")
 
-    def test_pipeline_simple(self):
+    @pytest.mark.parametrize("use_mask", [True, False])
+    def test_pipeline_simple(self, use_mask):
         image = self.get_image()
         prop1 = MaskProperty(
             dilate=RadiusType.NO,
@@ -652,7 +653,8 @@ class TestPipeline:
         seg_profile2 = ROIExtractionProfile(name="Unknown", algorithm="Lower threshold", values=parameters2)
 
         pipeline = SegmentationPipeline(name="test", segmentation=seg_profile2, mask_history=[pipeline_element])
-        result = calculate_pipeline(image=image, mask=None, pipeline=pipeline, report_fun=empty)
+        mask = np.ones(image.get_channel(0).shape, dtype=np.uint8) if use_mask else None
+        result = calculate_pipeline(image=image, mask=mask, pipeline=pipeline, report_fun=empty)
         result_segmentation = np.zeros((50, 100, 100), dtype=np.uint8)
         result_segmentation[10:40, 20:80, 40:60] = 1
         assert np.all(result.roi == result_segmentation)
