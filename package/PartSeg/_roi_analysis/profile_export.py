@@ -24,7 +24,7 @@ from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 
 class ExportDialog(QDialog):
     def __init__(self, export_dict, viewer):
-        super(ExportDialog, self).__init__()
+        super().__init__()
         self.setWindowTitle("Export")
         self.export_dict = export_dict
         self.viewer = viewer()
@@ -130,7 +130,7 @@ class ImportDialog(QDialog):
         :param local_dict:
         :param viewer:
         """
-        super(ImportDialog, self).__init__()
+        super().__init__()
         self.setWindowTitle("Import")
         self.viewer = viewer()
         self.local_viewer = viewer()

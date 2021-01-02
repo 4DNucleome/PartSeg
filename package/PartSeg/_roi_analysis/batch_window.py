@@ -1,4 +1,3 @@
-# coding=utf-8
 import logging
 import multiprocessing
 import os
@@ -155,9 +154,9 @@ class ProgressView(QWidget):
                 working_search = False
             if i < self.task_que.count():
                 item = self.task_que.item(i)
-                item.setText("Task {} ({}/{})".format(i, progress, total))
+                item.setText(f"Task {i} ({progress}/{total})")
             else:
-                self.task_que.addItem("Task {} ({}/{})".format(i, progress, total))
+                self.task_que.addItem(f"Task {i} ({progress}/{total})")
         if not self.calculation_manager.has_work:
             self.part_progress.setValue(self.part_progress.maximum())
             self.preview_timer.stop()
@@ -517,7 +516,7 @@ class CalculationPrepare(QDialog):
                     exist = os.path.exists(mask_path)
                     if exist:
                         sub_widget = QTreeWidgetItem(widget)
-                        sub_widget.setText(0, "Mask {} ok".format(mask_mapper.name))
+                        sub_widget.setText(0, f"Mask {mask_mapper.name} ok")
                         sub_widget.setIcon(0, ok_icon)
                         self.state_list[file_num, mask_num] = 0
                     else:
@@ -532,7 +531,7 @@ class CalculationPrepare(QDialog):
                         self.state_list[file_num, mask_num] = 2
                 else:
                     sub_widget = QTreeWidgetItem(widget)
-                    sub_widget.setText(0, "Mask {} unknown".format(mask_mapper.name))
+                    sub_widget.setText(0, f"Mask {mask_mapper.name} unknown")
                     sub_widget.setIcon(0, warn_icon)
                     self.state_list[file_num, mask_num] = 1
             if self.state_list.shape[1] == 0:

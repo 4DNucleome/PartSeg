@@ -61,7 +61,7 @@ class TestProfileDict:
         dkt.set("a.b.a", 2)
         with open(tmp_path / "test.json", "w") as f_p:
             json.dump(dkt, f_p, cls=ProfileEncoder)
-        with open(tmp_path / "test.json", "r") as f_p:
+        with open(tmp_path / "test.json") as f_p:
             dkt2 = json.load(f_p, object_hook=profile_hook)
 
         assert dkt.my_dict == dkt2.my_dict

@@ -22,6 +22,7 @@ Calculation hierarchy:
 """
 import json
 import logging
+import os
 import threading
 import traceback
 import uuid
@@ -214,6 +215,8 @@ class CalculationProcess:
         mask_path = operation.get_mask_path(self.calculation.file_path)
         if mask_path == "":  # pragma: no cover
             raise ValueError("Empty path to mask.")
+        if not os.path.exists(mask_path):
+            raise OSError(f"Mask file {mask_path} does not exists")
         with tifffile.TiffFile(mask_path) as mask_file:
             mask = mask_file.asarray()
             mask = TiffImageReader.update_array_shape(mask, mask_file.series[0].axes)[..., 0]
@@ -458,7 +461,7 @@ class CalculationManager:
 
         :param int val: number of workers.
         """
-        logging.debug("Number off process {}".format(val))
+        logging.debug(f"Number off process {val}")
         self.batch_manager.set_number_of_process(val)
 
     def get_results(self) -> BatchResultDescription:
@@ -601,9 +604,9 @@ class FileData:
         if self.file_type == FileType.text_file:
             return False, "Text file allow store only one sheet"
         if self.component_str in name:
-            return False, "Sequence '{}' is reserved for auto generated sheets".format(FileData.component_str)
+            return False, f"Sequence '{FileData.component_str}' is reserved for auto generated sheets"
         if name in self.sheet_set:
-            return False, "Sheet name {} already in use".format(name)
+            return False, f"Sheet name {name} already in use"
         return True, ""
 
     def add_data_part(self, calculation: BaseCalculation):
@@ -615,11 +618,9 @@ class FileData:
             or :py:attr:`sheet_name` name already is in use.
         """
         if calculation.measurement_file_path != self.file_path:
-            raise ValueError(
-                "[FileData] different file path {} vs {}".format(calculation.measurement_file_path, self.file_path)
-            )
+            raise ValueError(f"[FileData] different file path {calculation.measurement_file_path} vs {self.file_path}")
         if calculation.sheet_name in self.sheet_set:  # pragma: no cover
-            raise ValueError("[FileData] sheet name {} already in use".format(calculation.sheet_name))
+            raise ValueError(f"[FileData] sheet name {calculation.sheet_name} already in use")
         measurement = calculation.calculation_plan.get_measurements()
         component_information = [x.measurement_profile.get_component_info(x.units) for x in measurement]
         num = 1
@@ -726,7 +727,7 @@ class FileData:
                     try:
                         self.write_to_excel(file_path, data)
                         break
-                    except (PermissionError, IOError):
+                    except (PermissionError, OSError):
                         base, ext = path.splitext(self.file_path)
                         file_path = f"{base}({i}){ext}"
                 if i == 100:  # pragma: no cover

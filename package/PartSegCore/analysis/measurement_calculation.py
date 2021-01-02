@@ -265,12 +265,12 @@ class MeasurementProfile:
         return resp
 
     def __str__(self):
-        text = "Set name: {}\n".format(self.name)
+        text = f"Set name: {self.name}\n"
         if self.name_prefix != "":
-            text += "Name prefix: {}\n".format(self.name_prefix)
+            text += f"Name prefix: {self.name_prefix}\n"
         text += "Measurements list:\n"
         for el in self.chosen_fields:
-            text += "{}\n".format(el.name)
+            text += f"{el.name}\n"
         return text
 
     def get_component_info(self, unit: Units):
@@ -364,7 +364,7 @@ class MeasurementProfile:
         left_res, left_unit, left_area = self.calculate_tree(node.left, segmentation_mask_map, help_dict, kwargs)
         right_res, right_unit, right_area = self.calculate_tree(node.right, segmentation_mask_map, help_dict, kwargs)
         if node.op != "/":
-            raise ValueError("Wrong measurement: {}".format(node))
+            raise ValueError(f"Wrong measurement: {node}")
         if isinstance(left_res, np.ndarray) and isinstance(right_res, np.ndarray) and left_area != right_area:
             area_set = {left_area, right_area}
             if area_set == {AreaType.ROI, AreaType.Mask_without_ROI}:  # pragma: no cover
@@ -593,7 +593,7 @@ def hash_fun_call_name(
         fun_name = f"{fun.__module__}.{fun.__name__}"
     else:
         fun_name = fun.__name__
-    return "{}: {} # {} & {} * {}".format(fun_name, arguments, area, per_component, channel)
+    return f"{fun_name}: {arguments} # {area} & {per_component} * {channel}"
 
 
 class Volume(MeasurementMethodBase):

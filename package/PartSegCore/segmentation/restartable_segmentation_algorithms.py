@@ -153,7 +153,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         ]
 
     def __init__(self, **kwargs):
-        super(ThresholdBaseAlgorithm, self).__init__()
+        super().__init__()
         self.cleaned_image = None
         self.threshold_image = None
         self._sizes_array = []

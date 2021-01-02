@@ -1,4 +1,3 @@
-# coding=utf-8
 """
 This module contains simple, useful widgets which implementation is to short to create separated files for them
 """
@@ -121,7 +120,7 @@ class Spacing(QWidget):
         """
         super().__init__(parent)
         layout = QHBoxLayout()
-        layout.addWidget(QLabel("<strong>{}</strong>".format(title)))
+        layout.addWidget(QLabel(f"<strong>{title}</strong>"))
         self.elements = []
         if len(data_sequence) == 2:
             data_sequence = (1,) + tuple(data_sequence)

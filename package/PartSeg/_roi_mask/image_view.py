@@ -69,9 +69,9 @@ class StackImageView(ImageView):
         text_list = []
         for el in self.components:
             if self.settings.component_is_chosen(el):
-                text_list.append("☑{}".format(el))
+                text_list.append(f"☑{el}")
             else:
-                text_list.append("☐{}".format(el))
+                text_list.append(f"☐{el}")
         if text:
             return " ".join(text_list) + "\n" + text
         return " ".join(text_list)

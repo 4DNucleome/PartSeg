@@ -132,7 +132,7 @@ class BatchManager:
         :param num: target number of process
         """
         process_diff = num - self.number_off_available_process
-        logging.debug("[set_number_of_process] process diff: {}".format(process_diff))
+        logging.debug(f"[set_number_of_process] process diff: {process_diff}")
         self.number_off_available_process = num
         if not self.has_work:
             return
@@ -155,7 +155,7 @@ class BatchManager:
         with self.locker:
             if len(self.process_list) > self.number_off_process:
                 to_remove = []
-                logging.debug("Process list start {}".format(self.process_list))
+                logging.debug(f"Process list start {self.process_list}")
                 for p in self.process_list:
                     if not p.is_alive():
                         p.join()
@@ -164,7 +164,7 @@ class BatchManager:
                 for p in to_remove:
                     self.process_list.remove(p)
                 self.number_off_alive_process -= len(to_remove)
-                logging.debug("Process list end {}".format(self.process_list))
+                logging.debug(f"Process list end {self.process_list}")
                 # FIXME self.number_off_alive_process,  self.number_off_process negative values
                 if len(self.process_list) > self.number_off_process and len(self.process_list) > 0:
                     logging.info(
@@ -223,12 +223,12 @@ class BatchWorker:
 
     def run(self):
         """Worker main loop"""
-        logging.debug("Process started {}".format(os.getpid()))
+        logging.debug(f"Process started {os.getpid()}")
         while True:
             if not self.order_queue.empty():
                 try:
                     order = self.order_queue.get_nowait()
-                    logging.debug("Order message: {}".format(order))
+                    logging.debug(f"Order message: {order}")
                     if order == SubprocessOrder.kill:
                         break
                 except Empty:  # pragma: no cover
@@ -242,13 +242,13 @@ class BatchWorker:
                     continue
                 except MemoryError:  # pragma: no cover
                     pass
-                except IOError:  # pragma: no cover
+                except OSError:  # pragma: no cover
                     pass
                 except Exception as ex:  # pragma: no cover
-                    logging.warning("Unsupported exception {}".format(ex))
+                    logging.warning(f"Unsupported exception {ex}")
             else:
                 time.sleep(0.1)
-        logging.info("Process {} ended".format(os.getpid()))
+        logging.info(f"Process {os.getpid()} ended")
 
 
 def spawn_worker(task_queue: Queue, order_queue: Queue, result_queue: Queue, calculation_dict: Dict[uuid.UUID, Any]):

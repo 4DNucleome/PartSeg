@@ -19,7 +19,6 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from six import with_metaclass
 
 from PartSeg.common_gui.error_report import ErrorDialog
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
@@ -419,7 +418,7 @@ class SubAlgorithmWidget(QWidget):
             painter.drawRect(event.rect())
 
 
-class AbstractAlgorithmSettingsWidget(with_metaclass(ABCMeta, object)):
+class AbstractAlgorithmSettingsWidget(metaclass=ABCMeta):
     def __init__(self):
         pass
 

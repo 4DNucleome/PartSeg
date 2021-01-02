@@ -29,7 +29,7 @@ from ..common_backend.base_settings import BaseSettings
 
 class AcceptFiles(QDialog):
     def __init__(self, files):
-        super(AcceptFiles, self).__init__()
+        super().__init__()
         self.ok = QPushButton("Add", self)
         self.ok.clicked.connect(self.accept)
         discard = QPushButton("Discard", self)
@@ -67,7 +67,7 @@ class FileListItem(QListWidgetItem):
     def __init__(self, file_path):
         size = os.stat(file_path).st_size
         size = float(size) / (1024 ** 2)
-        super().__init__("{:s} ({:.2f} MB)".format(file_path, size))
+        super().__init__(f"{file_path:s} ({size:.2f} MB)")
         self.setTextAlignment(Qt.AlignRight)
         self.file_path = file_path
 

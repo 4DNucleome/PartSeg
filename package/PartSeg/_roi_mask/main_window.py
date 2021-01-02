@@ -414,7 +414,7 @@ class ChosenComponents(QWidget):
     mouse_leave = Signal(int)
 
     def __init__(self):
-        super(ChosenComponents, self).__init__()
+        super().__init__()
         # self.setLayout(FlowLayout())
         self.check_box = {}
         self.check_all_btn = QPushButton("Select all")
@@ -767,7 +767,7 @@ class AlgorithmOptions(QWidget):
 class ImageInformation(QWidget):
     def __init__(self, settings: StackSettings, parent=None):
         """:type settings: ImageSettings"""
-        super(ImageInformation, self).__init__(parent)
+        super().__init__(parent)
         self._settings = settings
         self.path = QTextEdit("<b>Path:</b> example image")
         self.path.setWordWrapMode(QTextOption.WrapAnywhere)
@@ -826,7 +826,7 @@ class ImageInformation(QWidget):
             self.spacing[2].setDisabled(False)
 
     def set_image_path(self, value):
-        self.path.setText("<b>Path:</b> {}".format(value))
+        self.path.setText(f"<b>Path:</b> {value}")
         self.update_spacing()
 
     def image_spacing_change(self):

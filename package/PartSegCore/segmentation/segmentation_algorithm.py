@@ -51,7 +51,7 @@ class ThresholdPreview(StackAlgorithm):
         return "Only Threshold"
 
     def __init__(self):
-        super(ThresholdPreview, self).__init__()
+        super().__init__()
         self.noise_filtering = None
         self.threshold = 0
 

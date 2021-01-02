@@ -492,7 +492,7 @@ class MainMenu(BaseMainMenu):
                     self.set_data(result)
 
         except ValueError as e:
-            QMessageBox.warning(self, "Open error", "{}".format(e))
+            QMessageBox.warning(self, "Open error", f"{e}")
 
     def batch_window(self):
         if self.main_window.batch_window is not None:

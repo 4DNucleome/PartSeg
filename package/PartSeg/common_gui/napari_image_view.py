@@ -149,7 +149,7 @@ class ImageView(QWidget):
         parent: Optional[QWidget] = None,
         ndisplay=2,
     ):
-        super(ImageView, self).__init__(parent=parent)
+        super().__init__(parent=parent)
 
         self.settings = settings
         self.channel_property = channel_property

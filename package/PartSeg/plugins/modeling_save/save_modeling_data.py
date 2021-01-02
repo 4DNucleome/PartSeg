@@ -51,7 +51,7 @@ class SaveModeling(SaveBase):
         if not os.path.exists(save_location):
             os.makedirs(save_location)
         if not os.path.isdir(save_location):
-            raise IOError("save location exist and is not a directory")
+            raise OSError("save location exist and is not a directory")
         parameters = deepcopy(parameters)
         if parameters["clip"]:
             points = np.nonzero(project_info.segmentation)

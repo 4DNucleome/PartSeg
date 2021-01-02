@@ -134,7 +134,7 @@ class MeasurementWidget(QWidget):
     """
 
     def __init__(self, settings: PartSettings, segment=None):
-        super(MeasurementWidget, self).__init__()
+        super().__init__()
         self.settings = settings
         self.segment = segment
         self.measurements_storage = MeasurementsStorage()

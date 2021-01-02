@@ -449,7 +449,7 @@ class TestCalculationProcess:
         file_paths = sorted(glob(file_pattern_copy))
         for el in file_paths:
             shutil.copy(el, data_dir)
-        shutil.copy(data_dir / "stack1_component1.tif", data_dir / "stack1_component10.tif")
+            shutil.copy(data_dir / "stack1_component1.tif", data_dir / "stack1_component10.tif")
         file_pattern = os.path.join(data_dir, "stack1_component*[0-9].tif")
         file_paths = sorted(glob(file_pattern))
         result_dir = tmp_path_factory.mktemp("result")

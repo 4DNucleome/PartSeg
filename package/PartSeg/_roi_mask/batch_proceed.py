@@ -36,7 +36,7 @@ class BatchProceed(QThread):
     algorithm: SegmentationAlgorithm
 
     def __init__(self):
-        super(BatchProceed, self).__init__()
+        super().__init__()
         self.queue = Queue()
         self.algorithm = Optional[None]
         self.parameters = None
@@ -100,7 +100,7 @@ class BatchProceed(QThread):
                 else:
                     self.multiple_result.emit(state2)
             except Exception as e:  # pylint: disable=W0703
-                self.error_signal.emit("Exception occurred during proceed {}. Exception info {}".format(file_path, e))
+                self.error_signal.emit(f"Exception occurred during proceed {file_path}. Exception info {e}")
             self.index += 1
         self.index = 0
         self.execution_done.emit()

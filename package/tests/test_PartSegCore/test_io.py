@@ -106,7 +106,7 @@ class TestJsonLoad:
         profile_path = os.path.join(data_test_dir, "segment_profile_test.json")
         # noinspection PyBroadException
         try:
-            with open(profile_path, "r") as ff:
+            with open(profile_path) as ff:
                 data = json.load(ff, object_hook=part_hook)
             assert check_loaded_dict(data)
         except Exception:  # pylint: disable=W0703
@@ -116,7 +116,7 @@ class TestJsonLoad:
         profile_path = os.path.join(data_test_dir, "measurements_profile_test.json")
         # noinspection PyBroadException
         try:
-            with open(profile_path, "r") as ff:
+            with open(profile_path) as ff:
                 data = json.load(ff, object_hook=part_hook)
             assert check_loaded_dict(data)
         except Exception:  # pylint: disable=W0703
