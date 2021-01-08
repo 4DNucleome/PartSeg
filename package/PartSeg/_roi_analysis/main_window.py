@@ -546,7 +546,6 @@ class MaskDialog(MaskDialogBase):
         seg = np.load(history.arrays)
         history.arrays.seek(0)
         self.settings.roi = seg["segmentation"]
-        self.settings.full_segmentation = seg["full_segmentation"]
         if "mask" in seg:
             self.settings.mask = seg["mask"]
         else:
