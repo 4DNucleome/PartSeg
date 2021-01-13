@@ -84,6 +84,7 @@ a = Analysis(
         "PartSegCore.register",
         "defusedxml.cElementTree",
         "vispy.app.backends._pyqt5",
+        "scipy.spatial.transform._rotation_groups"
     ],
     # + ["plugins." + x.name for x in plugins.get_plugins()],
     hookspath=[],
