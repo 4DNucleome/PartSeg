@@ -5,3 +5,6 @@ minApprovals: {}
 
 requiredLabels:
 - merge when green
+
+deleteBranchAfterMerge: true
+mergeMethod: squash
