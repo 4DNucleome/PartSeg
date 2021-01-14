@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.12.6
+
+-   Fix prev_mask_get
+-   Fix cache mechanism on mask change
+-   Update PyInstaller build
+
+## 0.12.5
+
+-   Fix bug in pipeline execute
+
 ## 0.12.4
 
 -   Fix ROI Mask windows related build (signal not properly connected)
