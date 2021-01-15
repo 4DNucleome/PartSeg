@@ -35,11 +35,12 @@ jinja2==2.11.2            # via numpydoc, sphinx
 jupyter-client==6.1.11    # via ipykernel, qtconsole
 jupyter-core==4.7.0       # via jupyter-client, qtconsole
 lxml==4.6.2               # via -r requirements_pyinstaller.in
+magicgui==0.2.5           # via napari
 markupsafe==1.1.1         # via jinja2
 mpmath==1.1.0             # via sympy
 napari-plugin-engine==0.1.9  # via napari, napari-svg
 napari-svg==0.1.4         # via napari
-napari==0.4.2             # via -r requirements_pyinstaller.in
+napari==0.4.3             # via -r requirements_pyinstaller.in
 numpy==1.19.5             # via -r requirements_pyinstaller.in, czifile, dask, h5py, imagecodecs, imageio, napari, napari-svg, oiffile, pandas, scipy, tifffile, vispy
 numpydoc==1.1.0           # via napari
 oiffile==2020.9.18        # via -r requirements_pyinstaller.in
@@ -67,7 +68,7 @@ pytz==2020.5              # via babel, pandas
 pyyaml==5.3.1             # via dask, napari
 pyzmq==20.0.0             # via jupyter-client, qtconsole
 qtconsole==5.0.1          # via napari
-qtpy==1.9.0               # via -r requirements_pyinstaller.in, napari, qtconsole
+qtpy==1.9.0               # via -r requirements_pyinstaller.in, magicgui, napari, qtconsole
 requests==2.25.1          # via -r requirements_pyinstaller.in, sphinx
 scipy==1.6.0              # via -r requirements_pyinstaller.in, napari
 sentry-sdk==0.19.5        # via -r requirements_pyinstaller.in
@@ -86,7 +87,7 @@ tifffile==2021.1.11       # via -r requirements_pyinstaller.in, czifile, napari,
 toolz==0.11.1             # via dask, napari
 tornado==6.1              # via ipykernel, jupyter-client
 traitlets==5.0.5          # via ipykernel, ipython, jupyter-client, jupyter-core, qtconsole
-typing-extensions==3.7.4.3  # via napari
+typing-extensions==3.7.4.3  # via magicgui, napari
 urllib3==1.26.2           # via requests, sentry-sdk
 vispy==0.6.6              # via napari, napari-svg
 wcwidth==0.2.5            # via prompt-toolkit
