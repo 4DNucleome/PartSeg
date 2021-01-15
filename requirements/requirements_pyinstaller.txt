@@ -43,7 +43,7 @@ napari==0.4.2             # via -r requirements_pyinstaller.in
 numpy==1.19.5             # via -r requirements_pyinstaller.in, czifile, dask, h5py, imagecodecs, imageio, napari, napari-svg, oiffile, pandas, scipy, tifffile, vispy
 numpydoc==1.1.0           # via napari
 oiffile==2020.9.18        # via -r requirements_pyinstaller.in
-openpyxl==3.0.5           # via -r requirements_pyinstaller.in
+openpyxl==3.0.6           # via -r requirements_pyinstaller.in
 packaging==20.8           # via -r requirements_pyinstaller.in, sphinx
 pandas==1.2.0             # via -r requirements_pyinstaller.in
 parso==0.8.1              # via jedi
