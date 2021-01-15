@@ -18,7 +18,14 @@ import PartSegData.__init__
 base_path = os.path.dirname(PartSeg.__main__.__file__)
 data_path = os.path.dirname(PartSegData.__init__.__file__)
 
-from napari.resources import import_resources
+try:
+    from napari.resources import import_resources
+except ImportError:
+    from napari._qt.qt_resources import import_resources as napari_import_resources
+
+    def import_resources():
+        return napari_import_resources()[0]
+
 from dask import config
 import napari
 
