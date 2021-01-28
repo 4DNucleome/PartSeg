@@ -166,7 +166,3 @@ jobs:
           python -m pip install -r requirements/requirements_dev.txt
       - name: Test PartSeg
         run: tox -e  'py36-PyQt5-minimal'
-      - uses: codecov/codecov-action@v1
-        with:
-          file: ./coverage.xml
-          fail_ci_if_error: true
