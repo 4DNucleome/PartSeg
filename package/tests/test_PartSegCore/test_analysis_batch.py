@@ -40,6 +40,8 @@ from PartSegCore.segmentation.noise_filtering import DimensionType
 from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegImage import Image, ImageWriter, TiffImageReader
 
+ENGINE = None if pd.__version__ == "0.22.0" else "openpyxl"
+
 
 class MocksCalculation:
     def __init__(self, file_path):
@@ -436,7 +438,7 @@ class TestCalculationProcess:
         else:
             time.sleep(0.4)
         assert os.path.exists(os.path.join(tmpdir, "test.xlsx"))
-        df = pd.read_excel(os.path.join(tmpdir, "test.xlsx"), index_col=0, header=[0, 1], engine="openpyxl")
+        df = pd.read_excel(os.path.join(tmpdir, "test.xlsx"), index_col=0, header=[0, 1], engine=ENGINE)
         assert df.shape == (8, 4)
         for i in range(8):
             assert os.path.basename(df.name.units[i]) == f"stack1_component{i+1}.tif"
@@ -478,11 +480,11 @@ class TestCalculationProcess:
         else:
             time.sleep(0.4)
         assert os.path.exists(os.path.join(result_dir, "test.xlsx"))
-        df = pd.read_excel(os.path.join(result_dir, "test.xlsx"), index_col=0, header=[0, 1], engine="openpyxl")
+        df = pd.read_excel(os.path.join(result_dir, "test.xlsx"), index_col=0, header=[0, 1], engine=ENGINE)
         assert df.shape == (8, 4)
         for i in range(8):
             assert os.path.basename(df.name.units[i]) == f"stack1_component{i + 1}.tif"
-        df2 = pd.read_excel(os.path.join(result_dir, "test.xlsx"), sheet_name="Errors", index_col=0, engine="openpyxl")
+        df2 = pd.read_excel(os.path.join(result_dir, "test.xlsx"), sheet_name="Errors", index_col=0, engine=ENGINE)
         assert df2.shape == (1, 2)
         str(df2.loc[0]["error description"]).startswith("[Errno 2]")
 
@@ -514,7 +516,7 @@ class TestCalculationProcess:
             time.sleep(0.4)
         manager.writer.finish()
         assert os.path.exists(os.path.join(tmpdir, "test2.xlsx"))
-        df = pd.read_excel(os.path.join(tmpdir, "test2.xlsx"), index_col=0, header=[0, 1], engine="openpyxl")
+        df = pd.read_excel(os.path.join(tmpdir, "test2.xlsx"), index_col=0, header=[0, 1], engine=ENGINE)
         assert df.shape == (2, 4)
 
     def test_do_calculation(self, tmpdir, data_test_dir):
@@ -612,20 +614,14 @@ class TestCalculationProcess:
             time.sleep(0.4)
         manager.writer.finish()
         assert os.path.exists(os.path.join(tmpdir, "test3.xlsx"))
-        df = pd.read_excel(os.path.join(tmpdir, "test3.xlsx"), index_col=0, header=[0, 1], engine="openpyxl")
+        df = pd.read_excel(os.path.join(tmpdir, "test3.xlsx"), index_col=0, header=[0, 1], engine=ENGINE)
         assert df.shape == (8, 10)
-        df2 = pd.read_excel(
-            os.path.join(tmpdir, "test3.xlsx"), sheet_name=1, index_col=0, header=[0, 1], engine="openpyxl"
-        )
+        df2 = pd.read_excel(os.path.join(tmpdir, "test3.xlsx"), sheet_name=1, index_col=0, header=[0, 1], engine=ENGINE)
         assert df2.shape[0] > 8
         assert df2.shape == (df["Segmentation Components Number"]["count"].sum(), 6)
-        df3 = pd.read_excel(
-            os.path.join(tmpdir, "test3.xlsx"), sheet_name=2, index_col=0, header=[0, 1], engine="openpyxl"
-        )
+        df3 = pd.read_excel(os.path.join(tmpdir, "test3.xlsx"), sheet_name=2, index_col=0, header=[0, 1], engine=ENGINE)
         assert df3.shape == (df["Segmentation Components Number"]["count"].sum(), 6)
-        df4 = pd.read_excel(
-            os.path.join(tmpdir, "test3.xlsx"), sheet_name=3, index_col=0, header=[0, 1], engine="openpyxl"
-        )
+        df4 = pd.read_excel(os.path.join(tmpdir, "test3.xlsx"), sheet_name=3, index_col=0, header=[0, 1], engine=ENGINE)
         assert df4.shape == (df["Segmentation Components Number"]["count"].sum(), 8)
 
 
