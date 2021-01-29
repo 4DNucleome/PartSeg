@@ -52,3 +52,4 @@ repos:
     rev: v0.11.0  # Use the ref you want to point at
     hooks:
     - id: markdownlint
+      exclude: vendored|__init__.py|examples|TEST_FAIL_TEMPLATE.md
