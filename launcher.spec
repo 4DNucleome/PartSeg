@@ -6,6 +6,7 @@ block_cipher = None
 import sys
 import os
 import platform
+import zmq
 
 sys.setrecursionlimit(5000)
 sys.path.append(os.path.dirname("__file__"))
@@ -54,6 +55,10 @@ else:
 
 # print(["plugins." + x.name for x in plugins.get_plugins()])
 
+pyzmq_libs = os.path.abspath(os.path.join(os.path.dirname(zmq.__file__), os.pardir, "pyzmq.libs"))
+
+pyzmq_data = [(os.path.join(pyzmq_libs, x), os.path.join("pyzmq.libs", x) ) for x in os.listdir(pyzmq_libs)]
+
 a = Analysis(
     ["package/PartSeg/launcher_main.py"],
     # pathex=['C:\\Users\\Grzegorz\\Documents\\segmentation-gui\\PartSeg'],
@@ -73,7 +78,8 @@ a = Analysis(
     + [(os.path.join(os.path.dirname(config.__file__), "dask.yaml"), "dask")]
     + collect_data_files("dask")
     + collect_data_files("vispy")
-    + collect_data_files("napari"),
+    + collect_data_files("napari")
+    + pyzmq_data,
     hiddenimports=hiddenimports
     + [
         "numpy.core._dtype_ctypes",
