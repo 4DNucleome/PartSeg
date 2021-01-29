@@ -56,8 +56,10 @@ else:
 # print(["plugins." + x.name for x in plugins.get_plugins()])
 
 pyzmq_libs = os.path.abspath(os.path.join(os.path.dirname(zmq.__file__), os.pardir, "pyzmq.libs"))
+pyzmq_data = []
 
-pyzmq_data = [(os.path.join(pyzmq_libs, x), os.path.join("pyzmq.libs", x) ) for x in os.listdir(pyzmq_libs)]
+if os.path.exists(pyzmq_libs):
+    pyzmq_data = [(os.path.join(pyzmq_libs, x), "pyzmq.libs") for x in os.listdir(pyzmq_libs)]
 
 a = Analysis(
     ["package/PartSeg/launcher_main.py"],
