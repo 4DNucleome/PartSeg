@@ -14,9 +14,24 @@ on:
   workflow_dispatch:
 
 jobs:
+  download_data:
+    name: Download test data
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v1
+      - shell: bash
+        run: bash build_utils/download_data.sh
+      - name: Upload test data
+        uses: actions/upload-artifact@v1
+        with:
+          name: test_data
+          path: test_data
+
+
   test:
     name: ${{ matrix.platform }} py${{ matrix.python }} ${{ matrix.backend }} --pre
     runs-on: ${{ matrix.platform }}
+    needs: download_data
     strategy:
       fail-fast: false
       matrix:
@@ -44,6 +59,11 @@ jobs:
         run: |
           git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
           powershell gl-ci-helpers/appveyor/install_opengl.ps1
+
+      - name: Download test data
+        uses: actions/download-artifact@v1
+        with:
+          name: test_data
 
       - name: Install dependencies
         run: |
