@@ -164,7 +164,6 @@ class ImageSettings(QObject):
 
     def _image_changed(self):
         """Reimplement hook for change of main image"""
-        pass
 
     @property
     def image_path(self):
@@ -551,13 +550,12 @@ class BaseSettings(ViewSettings):
     def load_part(self, file_path):
         data = self.load_metadata(file_path)
         bad_key = []
-        if isinstance(data, dict):
-            if not check_loaded_dict(data):
-                for k, v in data.items():
-                    if not check_loaded_dict(v):
-                        bad_key.append(k)
-                for el in bad_key:
-                    del data[el]
+        if isinstance(data, dict) and not check_loaded_dict(data):
+            for k, v in data.items():
+                if not check_loaded_dict(v):
+                    bad_key.append(k)
+            for el in bad_key:
+                del data[el]
         elif isinstance(data, ProfileDict) and not data.verify_data():
             bad_key = data.filter_data()
         return data, bad_key

@@ -52,7 +52,6 @@ class ComponentsInfo(NamedTuple):
 
 def empty_fun(_a0=None, _a1=None):
     """This function  is be used as dummy reporting function."""
-    pass
 
 
 MeasurementValueType = Union[float, List[float], str]

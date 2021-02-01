@@ -5,7 +5,7 @@ import os
 import platform
 import sys
 import zlib
-from typing import Optional, Sequence, Text
+from typing import Optional, Sequence
 
 import numpy as np
 import sentry_sdk
@@ -93,7 +93,7 @@ class CustomParser(argparse.ArgumentParser):
         self.add_argument("--inner_plugins", action="store_true", help=argparse.SUPPRESS)
         self.add_argument("--develop", action="store_true", help=argparse.SUPPRESS)
 
-    def parse_args(self, args: Optional[Sequence[Text]] = None, namespace: Optional[argparse.Namespace] = None):
+    def parse_args(self, args: Optional[Sequence[str]] = None, namespace: Optional[argparse.Namespace] = None):
         """
         overload of :py:meth:`argparse.ArgumentParser.parse_args`. Set flags like described in class documentation.
         """
