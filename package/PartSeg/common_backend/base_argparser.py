@@ -5,7 +5,7 @@ import os
 import platform
 import sys
 import zlib
-from typing import Optional, Sequence, Text
+from typing import Optional, Sequence
 
 import numpy as np
 import sentry_sdk

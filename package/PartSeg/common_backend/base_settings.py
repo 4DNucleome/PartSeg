@@ -164,7 +164,6 @@ class ImageSettings(QObject):
 
     def _image_changed(self):
         """Reimplement hook for change of main image"""
-        pass
 
     @property
     def image_path(self):
