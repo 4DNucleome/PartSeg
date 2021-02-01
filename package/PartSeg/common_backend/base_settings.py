@@ -550,7 +550,7 @@ class BaseSettings(ViewSettings):
     def load_part(self, file_path):
         data = self.load_metadata(file_path)
         bad_key = []
-        if isinstance(data, dict) and not not check_loaded_dict(data):
+        if isinstance(data, dict) and not check_loaded_dict(data):
             for k, v in data.items():
                 if not check_loaded_dict(v):
                     bad_key.append(k)
