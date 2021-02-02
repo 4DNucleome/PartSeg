@@ -242,7 +242,9 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
 
 
 def empty_fun(_a0=None, _a1=None):
-    pass
+    """
+    This is empty fun to pass as callback to for report.
+    """
 
 
 class LoadSegmentation(LoadBase):
@@ -262,16 +264,17 @@ class LoadSegmentation(LoadBase):
     def fix_parameters(profile: ROIExtractionProfile):
         if profile is None:
             return
-        if profile.algorithm == "Threshold" or profile.algorithm == "Auto Threshold":
-            if isinstance(profile.values["smooth_border"], bool):
-                if profile.values["smooth_border"] and "smooth_border_radius" in profile.values:
-                    profile.values["smooth_border"] = {
-                        "name": "Opening",
-                        "values": {"smooth_border_radius": profile.values["smooth_border_radius"]},
-                    }
-                    del profile.values["smooth_border_radius"]
-                else:
-                    profile.values["smooth_border"] = {"name": "None", "values": {}}
+        if (profile.algorithm == "Threshold" or profile.algorithm == "Auto Threshold") and isinstance(
+            profile.values["smooth_border"], bool
+        ):
+            if profile.values["smooth_border"] and "smooth_border_radius" in profile.values:
+                profile.values["smooth_border"] = {
+                    "name": "Opening",
+                    "values": {"smooth_border_radius": profile.values["smooth_border_radius"]},
+                }
+                del profile.values["smooth_border_radius"]
+            else:
+                profile.values["smooth_border"] = {"name": "None", "values": {}}
         return profile
 
     @classmethod

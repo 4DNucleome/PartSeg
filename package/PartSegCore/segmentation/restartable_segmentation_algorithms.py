@@ -227,9 +227,10 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
                 restarted = True
             self.parameters["threshold"] = deepcopy(self.new_parameters["threshold"])
             self.threshold_image = self._threshold(self.cleaned_image)
-            if isinstance(self.threshold_info, (list, tuple)):
-                if self.old_threshold_info is None or self.old_threshold_info[0] != self.threshold_info[0]:
-                    restarted = True
+            if isinstance(self.threshold_info, (list, tuple)) and (
+                self.old_threshold_info is None or self.old_threshold_info[0] != self.threshold_info[0]
+            ):
+                restarted = True
             elif self.old_threshold_info != self.threshold_info:
                 restarted = True
             if self.threshold_image.max() == 0:
