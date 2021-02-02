@@ -685,7 +685,7 @@ class Diameter(MeasurementMethodBase):
 
     @staticmethod
     def calculate_property(area_array, voxel_size, result_scalar, **_):  # pylint: disable=W0221
-        pos = np.transpose(np.nonzero(get_border(area_array))).astype(np.float)
+        pos = np.transpose(np.nonzero(get_border(area_array))).astype(float)
         if pos.size == 0:
             return 0
         for i, val in enumerate((x * result_scalar for x in reversed(voxel_size)), start=1):

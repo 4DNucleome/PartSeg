@@ -557,9 +557,9 @@ class TestMuMid:
         res = calculate_mu_mid(data, 5, 10, 20)
         assert np.all(ones == res)
         res = calculate_mu_mid(data, 5, 20, 30)
-        assert np.all(res == (data == 0).astype(np.float))
+        assert np.all(res == (data == 0).astype(float))
         data[2:-2, 2:-2, 2:-2] = 30
         res = calculate_mu_mid(data, 5, 25, 30)
-        assert np.all(res == (data != 20).astype(np.float) + (data == 20) * 0.25)
+        assert np.all(res == (data != 20).astype(float) + (data == 20) * 0.25)
         res = calculate_mu_mid(data, 5, 25, 35)
-        assert np.all(res == (data == 0).astype(np.float) + (data == 20) * 0.25 + (data == 30) * 0.5)
+        assert np.all(res == (data == 0).astype(float) + (data == 20) * 0.25 + (data == 30) * 0.5)
