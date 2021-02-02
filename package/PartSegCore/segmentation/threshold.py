@@ -48,16 +48,14 @@ class SitkThreshold(BaseThreshold, ABC):
 
     @classmethod
     def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict, operator):
-        if mask is not None and mask.dtype == np.bool:
-            mask = mask.astype(np.uint8)
+        if mask is not None and mask.dtype != np.uint8:
+            mask = (mask > 0).astype(np.uint8)
         if operator(1, 0):
             ob, bg, th_op = 0, 1, np.min
         else:
             ob, bg, th_op = 1, 0, np.max
         image_sitk = sitk.GetImageFromArray(data)
         if arguments["masked"] and mask is not None:
-            if mask.dtype != np.uint8:
-                mask = np.array(mask > 0).astype(np.uint8)
             mask_sitk = sitk.GetImageFromArray(mask)
             calculated = cls.calculate_threshold(image_sitk, mask_sitk, ob, bg, arguments["bins"], True, 1)
         else:
@@ -65,7 +63,10 @@ class SitkThreshold(BaseThreshold, ABC):
         result = sitk.GetArrayFromImage(calculated)
         if mask is not None:
             result[mask == 0] = 0
-        threshold = th_op(data[result > 0])
+        if np.any(result):
+            threshold = th_op(data[result > 0])
+        else:
+            threshold = th_op(-data)
         return result, threshold
 
     @staticmethod
@@ -172,7 +173,7 @@ class IntermodesThreshold(SitkThreshold):
 
     @classmethod
     def get_name(cls):
-        return "Yen"
+        return "Intermodes"
 
     @staticmethod
     def calculate_threshold(*args, **kwargs):
@@ -222,6 +223,7 @@ threshold_dict.register(LiThreshold)
 threshold_dict.register(RenyiEntropyThreshold)
 threshold_dict.register(ShanbhagThreshold)
 threshold_dict.register(TriangleThreshold)
+threshold_dict.register(YenThreshold)
 threshold_dict.register(HuangThreshold)
 threshold_dict.register(IntermodesThreshold)
 threshold_dict.register(IsoDataThreshold)

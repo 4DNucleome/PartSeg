@@ -121,18 +121,17 @@ class RegisterClass(typing.Generic[T]):
     def get_class(self, path: str) -> T:
         if path in self.exact_class_register:
             return self.exact_class_register[path]
-        else:
-            name = path[path.rfind(".") + 1 :]
-            if name not in self.predict_class_register:
-                try:
-                    importlib.import_module(path[: path.rfind(".")])
-                except ImportError:
-                    pass
-            if name in self.predict_class_register:
-                if len(self.predict_class_register[name]) == 1:
-                    return self.predict_class_register[name][0]
-                return iter(self.predict_class_register[name])
-            raise ValueError(f"unregistered class {path}")
+        name = path[path.rfind(".") + 1 :]
+        if name not in self.predict_class_register:
+            try:
+                importlib.import_module(path[: path.rfind(".")])
+            except ImportError:
+                pass
+        if name in self.predict_class_register:
+            if len(self.predict_class_register[name]) == 1:
+                return self.predict_class_register[name][0]
+            return iter(self.predict_class_register[name])
+        raise ValueError(f"unregistered class {path}")
 
     def clear(self):  # for testing purpose
         self.exact_class_register.clear()
@@ -160,7 +159,7 @@ def extract_type_info(type_):
 
     if type_.__module__ == "typing":
         return str(type_), type_.__module__
-    return "{}.{}".format(type_.__module__, type_.__name__), type_.__module__
+    return f"{type_.__module__}.{type_.__name__}", type_.__module__
 
 
 _prohibited = (
@@ -264,7 +263,7 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
         slots = tuple(field_names)
         field_definitions = ""
     init_sig = [f"self.{f_name} = {v_name}" for f_name, v_name in zip(slots, type_dict.keys())]
-    tuple_list = ["self.{name}".format(name=name_) for name_ in slots]
+    tuple_list = [f"self.{name_}" for name_ in slots]
     init_content = "\n        ".join(init_sig)
     init_content += "\n        self.__post_init__()"
     class_definition = _class_template.format(

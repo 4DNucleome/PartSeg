@@ -378,15 +378,15 @@ class LoadROIImage(LoadBase):
         else:
             base_file = seg.image
         if base_file is None:
-            raise IOError("base file for segmentation not defined")
+            raise OSError("base file for segmentation not defined")
         if os.path.isabs(base_file):
             file_path = base_file
         else:
             if not isinstance(load_locations[0], str):
-                raise IOError(f"Cannot use relative path {base_file} for non path argument")
+                raise OSError(f"Cannot use relative path {base_file} for non path argument")
             file_path = os.path.join(os.path.dirname(load_locations[0]), base_file)
         if not os.path.exists(file_path):
-            raise IOError(f"Base file for segmentation do not exists: {base_file} -> {file_path}")
+            raise OSError(f"Base file for segmentation do not exists: {base_file} -> {file_path}")
         if metadata is None:
             metadata = {"default_spacing": (10 ** -6, 10 ** -6, 10 ** -6)}
         image = GenericImageReader.read_image(

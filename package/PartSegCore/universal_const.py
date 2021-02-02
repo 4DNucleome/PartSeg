@@ -1,4 +1,3 @@
-# coding=utf-8
 from enum import Enum
 
 from PartSegCore.class_generator import enum_register

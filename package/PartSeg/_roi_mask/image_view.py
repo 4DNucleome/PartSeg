@@ -2,8 +2,6 @@ from typing import List
 
 import numpy as np
 from napari.layers import Layer
-from qtpy.QtCore import QEvent
-from qtpy.QtWidgets import QToolTip
 from vispy.app import MouseEvent
 
 from ..common_gui.channel_control import ChannelProperty
@@ -66,14 +64,14 @@ class StackImageView(ImageView):
             if component:
                 self.component_clicked.emit(component)
 
-    def event(self, event: QEvent):
-        if event.type() == QEvent.ToolTip and self.components:
-            # text = str(self.component)
-            text_list = []
-            for el in self.components:
-                if self.settings.component_is_chosen(el):
-                    text_list.append("☑{}".format(el))
-                else:
-                    text_list.append("☐{}".format(el))
-            QToolTip.showText(event.globalPos(), " ".join(text_list))
-        return super().event(event)
+    def get_tool_tip_text(self) -> str:
+        text = super().get_tool_tip_text()
+        text_list = []
+        for el in self.components:
+            if self.settings.component_is_chosen(el):
+                text_list.append(f"☑{el}")
+            else:
+                text_list.append(f"☐{el}")
+        if text:
+            return " ".join(text_list) + "\n" + text
+        return " ".join(text_list)

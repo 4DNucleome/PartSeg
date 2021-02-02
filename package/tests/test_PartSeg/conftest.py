@@ -10,6 +10,7 @@ try:
     from PartSeg._roi_analysis.partseg_settings import PartSettings
     from PartSeg._roi_mask.main_window import ChosenComponents
     from PartSeg._roi_mask.stack_settings import StackSettings
+    from PartSeg.common_gui import napari_image_view
 
     @pytest.fixture
     def part_settings(image, tmp_path, measurement_profiles):
@@ -49,6 +50,18 @@ try:
         return SegmentationPipeline(
             "sample_pipeline", border_rim_profile, [SegmentationPipelineElement(lower_threshold_profile, mask_property)]
         )
+
+    @pytest.fixture(autouse=True)
+    def disable_threads_viewer(monkeypatch):
+        def _prepare_layers(self, image, parameters, replace):
+            self._add_image(napari_image_view._prepare_layers(image, parameters, replace))
+
+        monkeypatch.setattr(napari_image_view.ImageView, "_prepare_layers", _prepare_layers)
+
+        def _add_layer_util(self, index, layer, filters):
+            self.viewer.add_layer(layer)
+
+        monkeypatch.setattr(napari_image_view.ImageView, "_add_layer_util", _add_layer_util)
 
 
 except (RuntimeError, ImportError):

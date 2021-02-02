@@ -1,6 +1,4 @@
 import os
-from collections import defaultdict
-from copy import deepcopy
 from functools import partial
 from pathlib import Path
 from typing import Type
@@ -42,7 +40,6 @@ from PartSegCore.mask.io_functions import (
     SaveROI,
 )
 from PartSegCore.mask_create import calculate_mask_from_project
-from PartSegCore.segmentation.algorithm_base import SegmentationResult
 from PartSegImage import Image, TiffImageReader
 
 from .._roi_mask.segmentation_info_dialog import SegmentationInfoDialog
@@ -417,7 +414,7 @@ class ChosenComponents(QWidget):
     mouse_leave = Signal(int)
 
     def __init__(self):
-        super(ChosenComponents, self).__init__()
+        super().__init__()
         # self.setLayout(FlowLayout())
         self.check_box = {}
         self.check_all_btn = QPushButton("Select all")
@@ -532,7 +529,7 @@ class AlgorithmOptions(QWidget):
         self.save_parameters_btn = QPushButton("Save parameters")
         self.block_execute_all_btn = False
         self.algorithm_choose_widget = AlgorithmChoose(settings, mask_algorithm_dict)
-        self.algorithm_choose_widget.result.connect(self.execution_done)
+        self.algorithm_choose_widget.result.connect(self.execution_result_set)
         self.algorithm_choose_widget.finished.connect(self.execution_finished)
         self.algorithm_choose_widget.progress_signal.connect(self.progress_info)
 
@@ -759,16 +756,8 @@ class AlgorithmOptions(QWidget):
         self.progress_info_lab.setHidden(True)
         self.choose_components.setDisabled(False)
 
-    def execution_done(self, segmentation: SegmentationResult):
-        if np.max(segmentation.roi) == 0:
-            QMessageBox.information(
-                self, "No result", "Segmentation contains no component, check parameters, " "especially chosen channel."
-            )
-        if segmentation.info_text != "":
-            QMessageBox.information(self, "Algorithm info", segmentation.info_text)
-        parameters_dict = defaultdict(lambda: deepcopy(segmentation.parameters))
-        self.settings.additional_layers = segmentation.additional_layers
-        self.settings.set_segmentation(segmentation.roi, True, [], parameters_dict)
+    def execution_result_set(self, result):
+        self.settings.set_segmentation_result(result)
 
     def showEvent(self, _):
         widget = self.algorithm_choose_widget.current_widget()
@@ -778,7 +767,7 @@ class AlgorithmOptions(QWidget):
 class ImageInformation(QWidget):
     def __init__(self, settings: StackSettings, parent=None):
         """:type settings: ImageSettings"""
-        super(ImageInformation, self).__init__(parent)
+        super().__init__(parent)
         self._settings = settings
         self.path = QTextEdit("<b>Path:</b> example image")
         self.path.setWordWrapMode(QTextOption.WrapAnywhere)
@@ -837,7 +826,7 @@ class ImageInformation(QWidget):
             self.spacing[2].setDisabled(False)
 
     def set_image_path(self, value):
-        self.path.setText("<b>Path:</b> {}".format(value))
+        self.path.setText(f"<b>Path:</b> {value}")
         self.update_spacing()
 
     def image_spacing_change(self):

@@ -754,7 +754,7 @@ class CreatePlan(QWidget):
             text, ok = QInputDialog.getText(self, "Plan title", "Set plan title")
         else:
             text, ok = QInputDialog.getText(
-                self, "Plan title", "Set plan title. Previous ({}) is already in use".format(text), text=text
+                self, "Plan title", f"Set plan title. Previous ({text}) is already in use", text=text
             )
         text = text.strip()
         if ok:
@@ -893,7 +893,7 @@ class PlanPreview(QTreeWidget):
     changed_node = Signal()
 
     def __init__(self, parent=None, calculation_plan=None):
-        super(PlanPreview, self).__init__(parent)
+        super().__init__(parent)
         self.calculation_plan = calculation_plan
         self.header().close()
         self.itemSelectionChanged.connect(self.set_path)
@@ -1009,7 +1009,7 @@ class PlanPreview(QTreeWidget):
                         QTreeWidgetItem(child, [line])
 
             else:
-                logging.error("Unknown operation {}".format(op_type))
+                logging.error(f"Unknown operation {op_type}")
         self.blockSignals(False)
         self.set_path()
         self.changed_node.emit()
@@ -1024,7 +1024,7 @@ class CalculateInfo(QWidget):
     plan_to_edit_signal = Signal()
 
     def __init__(self, settings: PartSettings):
-        super(CalculateInfo, self).__init__()
+        super().__init__()
         self.settings = settings
         self.calculate_plans = SearchableListWidget(self)
         self.plan_view = PlanPreview(self)

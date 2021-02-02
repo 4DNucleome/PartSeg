@@ -52,6 +52,7 @@ class RestartableAlgorithm(SegmentationAlgorithm, ABC):
 
     def set_mask(self, mask):
         super().set_mask(mask)
+        print("aaaaaaaaa")
         self.parameters["threshold"] = None
 
     def get_info_text(self):
@@ -88,9 +89,6 @@ class BorderRim(RestartableAlgorithm):
     def get_fields(cls):
         return ["Need mask"] + BorderRimBase.get_fields()
 
-    def get_segmentation_profile(self) -> ROIExtractionProfile:
-        return ROIExtractionProfile("", self.get_name(), deepcopy(self.new_parameters))
-
     def get_info_text(self):
         if self.mask is None:
             return "Need mask"
@@ -114,10 +112,8 @@ class MaskDistanceSplit(RestartableAlgorithm):
             result = MaskDistanceSplitBase.split(
                 mask=self.mask, voxel_size=self.image.voxel_size, **self.new_parameters
             )
-            return SegmentationResult(result, self.get_segmentation_profile(), result, "")
-
-    def get_segmentation_profile(self) -> ROIExtractionProfile:
-        return ROIExtractionProfile("", self.get_name(), deepcopy(self.new_parameters))
+            return SegmentationResult(roi=result, parameters=self.get_segmentation_profile())
+        raise SegmentationLimitException("Mask Distance Split needs mask")
 
     @classmethod
     def get_name(cls) -> str:
@@ -158,7 +154,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         ]
 
     def __init__(self, **kwargs):
-        super(ThresholdBaseAlgorithm, self).__init__()
+        super().__init__()
         self.cleaned_image = None
         self.threshold_image = None
         self._sizes_array = []
@@ -190,10 +186,13 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         :param roi: array with segmentation
         :return: algorithm result description
         """
+        sizes = np.bincount(roi.flat)
+        annotation = {i: {"voxels": size} for i, size in enumerate(sizes[1:], 1) if size > 0}
         return SegmentationResult(
             roi=roi,
             parameters=self.get_segmentation_profile(),
             additional_layers=self.get_additional_layers(),
+            roi_annotation=annotation,
         )
 
     def set_image(self, image):
@@ -224,7 +223,10 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
                 self.channel, self.image.spacing, noise_filtering_parameters["values"]
             )
             restarted = True
+        print(restarted, self.parameters["threshold"], self.new_parameters["threshold"])
         if restarted or self.new_parameters["threshold"] != self.parameters["threshold"]:
+            if self.parameters["threshold"] is None:
+                restarted = True
             self.parameters["threshold"] = deepcopy(self.new_parameters["threshold"])
             self.threshold_image = self._threshold(self.cleaned_image)
             if isinstance(self.threshold_info, (list, tuple)):
@@ -482,6 +484,10 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
                 roi=new_segment,
                 parameters=self.get_segmentation_profile(),
                 additional_layers=self.get_additional_layers(full_segmentation=self.sprawl_area),
+                roi_annotation={
+                    i: {"core voxels": self._sizes_array[i], "voxels": v} for i, v in enumerate(self.final_sizes[1:], 1)
+                },
+                alternative_representation={"core_objects": finally_segment},
             )
 
 
@@ -568,7 +574,7 @@ class OtsuSegment(RestartableAlgorithm):
         )
 
 
-class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):
+class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):  # pragma: no cover
     @classmethod
     def get_fields(cls):
         return [
@@ -684,7 +690,7 @@ class LowerThresholdMultiScaleOpening(BaseMultiScaleOpening):
     threshold_operator = staticmethod(operator.gt)
 
     @classmethod
-    def get_name(cls):
+    def get_name(cls):  # pragma: no cover
         return "Lower threshold MultiScale Opening"
 
 
@@ -692,7 +698,7 @@ class UpperThresholdMultiScaleOpening(BaseMultiScaleOpening):
     threshold_operator = staticmethod(operator.lt)
 
     @classmethod
-    def get_name(cls):
+    def get_name(cls):  # pragma: no cover
         return "Upper threshold MultiScale Opening"
 
 

@@ -1,4 +1,3 @@
-import traceback
 from collections import OrderedDict
 from enum import Enum
 from functools import reduce
@@ -10,11 +9,14 @@ import SimpleITK
 from scipy.spatial.distance import cdist
 from sympy import symbols
 
+from PartSegImage import Image
+
 from .. import autofit as af
 from ..algorithm_describe_base import AlgorithmProperty, Register
 from ..channel_class import Channel
 from ..class_generator import enum_register
 from ..mask_partition_utils import BorderRim, MaskDistanceSplit
+from ..roi_info import ROIInfo
 from ..universal_const import UNIT_SCALE, Units
 from .measurement_base import AreaType, Leaf, MeasurementEntry, MeasurementMethodBase, Node, PerComponent
 
@@ -50,7 +52,6 @@ class ComponentsInfo(NamedTuple):
 
 def empty_fun(_a0=None, _a1=None):
     """This function  is be used as dummy reporting function."""
-    pass
 
 
 MeasurementValueType = Union[float, List[float], str]
@@ -263,12 +264,12 @@ class MeasurementProfile:
         return resp
 
     def __str__(self):
-        text = "Set name: {}\n".format(self.name)
+        text = f"Set name: {self.name}\n"
         if self.name_prefix != "":
-            text += "Name prefix: {}\n".format(self.name_prefix)
+            text += f"Name prefix: {self.name_prefix}\n"
         text += "Measurements list:\n"
         for el in self.chosen_fields:
-            text += "{}\n".format(el.name)
+            text += f"{el.name}\n"
         return text
 
     def get_component_info(self, unit: Units):
@@ -297,6 +298,100 @@ class MeasurementProfile:
             return node.per_component == PerComponent.Yes
         return self._is_component_measurement(node.left) or self._is_component_measurement(node.right)
 
+    @staticmethod
+    def _calculate_leaf_value(
+        node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
+    ) -> Union[float, np.ndarray]:
+        method: MeasurementMethodBase = MEASUREMENT_DICT[node.name]
+        area_type = method.area_type(node.area)
+        area_type_dict = {
+            AreaType.Mask: "mask",
+            AreaType.Mask_without_ROI: "mask_without_segmentation",
+            AreaType.ROI: "segmentation",
+        }
+        kw = dict(kwargs)
+        kw.update(node.dict)
+
+        if node.channel is not None:
+            kw["channel"] = kw[f"channel_{node.channel}"]
+            kw["channel_num"] = node.channel
+        else:
+            kw["channel_num"] = -1
+        kw["help_dict"] = help_dict
+        kw["_area"] = node.area
+        kw["_per_component"] = node.per_component
+        kw["_cache"] = True
+        kw["area_array"] = kw[area_type_dict[area_type]]
+        if node.per_component == PerComponent.No:
+            val = method.calculate_property(**kw)
+        else:
+            kw["_cache"] = False
+            val = []
+            area_array = kw["area_array"]
+            if area_type == AreaType.ROI:
+                components = segmentation_mask_map.roi_components
+            else:
+                components = segmentation_mask_map.mask_components
+            for i in components:
+                kw["area_array"] = area_array == i
+                val.append(method.calculate_property(**kw))
+            val = np.array(val)
+            if node.per_component == PerComponent.Mean:
+                val = np.mean(val) if val.size else 0
+        return val
+
+    def _calculate_leaf(
+        self, node: Leaf, segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
+    ) -> Tuple[Union[float, np.ndarray], symbols, AreaType]:
+        method: MeasurementMethodBase = MEASUREMENT_DICT[node.name]
+
+        hash_str = hash_fun_call_name(method, node.dict, node.area, node.per_component, node.channel)
+        area_type = method.area_type(node.area)
+        if hash_str in help_dict:
+            val = help_dict[hash_str]
+        else:
+            val = self._calculate_leaf_value(node, segmentation_mask_map, help_dict, kwargs)
+            help_dict[hash_str] = val
+        unit: symbols = method.get_units(3) if kwargs["image"].is_stack else method.get_units(2)
+        if node.power != 1:
+            return pow(val, node.power), pow(unit, node.power), area_type
+        return val, unit, area_type
+
+    def _calculate_node(
+        self, node: Node, segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
+    ) -> Tuple[Union[float, np.ndarray], symbols, AreaType]:
+        left_res, left_unit, left_area = self.calculate_tree(node.left, segmentation_mask_map, help_dict, kwargs)
+        right_res, right_unit, right_area = self.calculate_tree(node.right, segmentation_mask_map, help_dict, kwargs)
+        if node.op != "/":
+            raise ValueError(f"Wrong measurement: {node}")
+        if isinstance(left_res, np.ndarray) and isinstance(right_res, np.ndarray) and left_area != right_area:
+            area_set = {left_area, right_area}
+            if area_set == {AreaType.ROI, AreaType.Mask_without_ROI}:  # pragma: no cover
+                raise ProhibitedDivision("This division is prohibited")
+            if area_set == {AreaType.ROI, AreaType.Mask}:
+                res = []
+                reverse = False
+                if left_area == AreaType.Mask:
+                    left_res, right_res = right_res, left_res
+                    reverse = True
+                for val, num in zip(left_res, segmentation_mask_map.roi_components):
+                    div_vals = segmentation_mask_map.components_translation[num]
+                    if len(div_vals) != 1:  # pragma: no cover
+                        raise ProhibitedDivision("Cannot calculate when object do not belongs to one mask area")
+                    if left_area == AreaType.ROI:
+                        res.append(val / right_res[div_vals[0] - 1])
+                    else:
+                        res.append(right_res[div_vals[0] - 1] / val)
+                res = np.array(res)
+                if reverse:
+                    res = 1 / res
+                    # TODO check this area type
+                return res, left_unit / right_unit, AreaType.ROI
+            # TODO check this
+            left_area = AreaType.Mask_without_ROI
+
+        return left_res / right_res, left_unit / right_unit, left_area
+
     def calculate_tree(
         self, node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
     ) -> Tuple[Union[float, np.ndarray], symbols, AreaType]:
@@ -310,88 +405,10 @@ class MeasurementProfile:
         :return: measurement value
         """
         if isinstance(node, Leaf):
-            method: MeasurementMethodBase = MEASUREMENT_DICT[node.name]
-            kw = dict(kwargs)
-            kw.update(node.dict)
-            hash_str = hash_fun_call_name(method, node.dict, node.area, node.per_component, node.channel)
-            area_type = method.area_type(node.area)
-            if hash_str in help_dict:
-                val = help_dict[hash_str]
-            else:
-                if node.channel is not None:
-                    kw["channel"] = kw[f"chanel_{node.channel}"]
-                    kw["channel_num"] = node.channel
-                else:
-                    kw["channel_num"] = -1
-                kw["help_dict"] = help_dict
-                kw["_area"] = node.area
-                kw["_per_component"] = node.per_component
-                kw["_cache"] = True
-                if area_type == AreaType.Mask:
-                    kw["area_array"] = kw["mask"]
-                elif area_type == AreaType.Mask_without_ROI:
-                    kw["area_array"] = kw["mask_without_segmentation"]
-                elif area_type == AreaType.ROI:
-                    kw["area_array"] = kw["segmentation"]
-                else:
-                    raise ValueError(f"Unknown area type {node.area}")
-                if node.per_component != PerComponent.No:
-                    kw["_cache"] = False
-                    val = []
-                    area_array = kw["area_array"]
-                    if area_type == AreaType.ROI:
-                        components = segmentation_mask_map.roi_components
-                    else:
-                        components = segmentation_mask_map.mask_components
-                    for i in components:
-                        kw["area_array"] = area_array == i
-                        val.append(method.calculate_property(**kw))
-                    if node.per_component == PerComponent.Mean:
-                        val = np.mean(val) if len(val) else 0
-                    else:
-                        val = np.array(val)
-                else:
-                    val = method.calculate_property(**kw)
-                help_dict[hash_str] = val
-            unit: symbols = method.get_units(3) if kw["channel"].shape[0] > 1 else method.get_units(2)
-            if node.power != 1:
-                return pow(val, node.power), pow(unit, node.power), area_type
-            return val, unit, area_type
-
+            return self._calculate_leaf(node, segmentation_mask_map, help_dict, kwargs)
         if isinstance(node, Node):
-            left_res, left_unit, left_area = self.calculate_tree(node.left, segmentation_mask_map, help_dict, kwargs)
-            right_res, right_unit, right_area = self.calculate_tree(
-                node.right, segmentation_mask_map, help_dict, kwargs
-            )
-            if node.op == "/":
-                if isinstance(left_res, np.ndarray) and isinstance(right_res, np.ndarray) and left_area != right_area:
-                    area_set = {left_area, right_area}
-                    if area_set == {AreaType.ROI, AreaType.Mask_without_ROI}:  # pragma: no cover
-                        raise ProhibitedDivision("This division is prohibited")
-                    if area_set == {AreaType.ROI, AreaType.Mask}:
-                        res = []
-                        reverse = False
-                        if left_area == AreaType.Mask:
-                            left_res, right_res = right_res, left_res
-                            reverse = True
-                        for val, num in zip(left_res, segmentation_mask_map.roi_components):
-                            div_vals = segmentation_mask_map.components_translation[num]
-                            if len(div_vals) != 1:  # pragma: no cover
-                                raise ProhibitedDivision("Cannot calculate when object do not belongs to one mask area")
-                            if left_area == AreaType.ROI:
-                                res.append(val / right_res[div_vals[0] - 1])
-                            else:
-                                res.append(right_res[div_vals[0] - 1] / val)
-                        res = np.array(res)
-                        if reverse:
-                            res = 1 / res
-                            # TODO check this area type
-                        return res, left_unit / right_unit, AreaType.ROI
-                    # TODO check this
-                    left_area = AreaType.Mask_without_ROI
-
-                return left_res / right_res, left_unit / right_unit, left_area
-        raise ValueError("Wrong measurement: {}".format(node))
+            return self._calculate_node(node, segmentation_mask_map, help_dict, kwargs)
+        raise ValueError(f"Node {node} need to be instance of Leaf or Node")
 
     @staticmethod
     def get_segmentation_to_mask_component(segmentation: np.ndarray, mask: Optional[np.ndarray]) -> ComponentsInfo:
@@ -430,90 +447,91 @@ class MeasurementProfile:
 
     def calculate(
         self,
-        channel: np.ndarray,
-        segmentation: np.ndarray,
-        mask: Optional[np.ndarray],
-        voxel_size,
+        image: Image,
+        channel_num: int,
+        roi: Union[np.ndarray, ROIInfo],
         result_units: Units,
-        range_changed: Callable[[int, int], Any] = None,
-        step_changed: Callable[[int], Any] = None,
+        range_changed: Callable[[int, int], Any] = empty_fun,
+        step_changed: Callable[[int], Any] = empty_fun,
         time: int = 0,
-        time_pos: int = 0,
-        **kwargs,
     ) -> MeasurementResult:
         """
         Calculate measurements on given set of parameters
 
-        :param channel: main channel on which measurements should be calculated
-        :param segmentation: array with segmentation labeled as positive
-        :param full_mask:
-        :param mask:
-        :param voxel_size:
-        :param result_units:
+        :param image: image on which measurements should be calculated
+        :param roi: array with segmentation labeled as positive integers
+        :param result_units: units which should be used to present results.
         :param range_changed: callback function to set information about steps range
         :param step_changed: callback function fo set information about steps done
         :param time: which data point should be measured
-        :param time_pos: axis of time
-        :param kwargs: additional data required by measurements. Ex additional channels
         :return: measurements
         """
 
         def get_time(array: np.ndarray):
             if array is not None and array.ndim == 4:
-                return array.take(time, axis=time_pos)
+                return array.take(time, axis=image.time_pos)
             return array
 
-        if range_changed is None:
-            range_changed = empty_fun
-        if step_changed is None:
-            step_changed = empty_fun
-        if self._need_mask and mask is None:
+        if self._need_mask and image.mask is None:
             raise ValueError("measurement need mask")
-        channel = channel.astype(np.float)
-        help_dict = dict()
-        segmentation_mask_map = self.get_segmentation_to_mask_component(segmentation, mask)
-        result = MeasurementResult(segmentation_mask_map)
+        channel = image.get_channel(channel_num).astype(np.float)
+        cache_dict = {}
         result_scalar = UNIT_SCALE[result_units.value]
+        roi_alternative = {}
+        if isinstance(roi, ROIInfo):
+            for name, array in roi.alternative.items():
+                roi_alternative[name] = get_time(array)
         kw = {
+            "image": image,
             "channel": get_time(channel),
-            "segmentation": get_time(segmentation),
-            "mask": get_time(mask),
-            "voxel_size": voxel_size,
+            "segmentation": get_time(roi if isinstance(roi, np.ndarray) else roi.roi),
+            "mask": get_time(image.mask),
+            "voxel_size": image.spacing,
             "result_scalar": result_scalar,
+            "roi_alternative": roi_alternative,
+            "roi_annotation": roi.annotations if isinstance(roi, ROIInfo) else {},
         }
-        for el in kwargs:
-            if not el.startswith("channel_"):
-                raise ValueError(f"unknown parameter {el} of calculate function")
+        segmentation_mask_map = self.get_segmentation_to_mask_component(kw["segmentation"], kw["mask"])
+        result = MeasurementResult(segmentation_mask_map)
         for num in self.get_channels_num():
-            if f"channel_{num}" not in kwargs:
-                raise ValueError(f"channel_{num} need to be passed as argument of calculate function")
-        kw.update(kwargs)
-        for el in self.chosen_fields:
-            if self._need_mask_without_segmentation(el.calculation_tree):
-                mm = mask.copy()
-                mm[kw["segmentation"] > 0] = 0
-                kw["mask_without_segmentation"] = mm
-                break
+            kw["channel_{num}"] = get_time(image.get_channel(num))
+        if any(self._need_mask_without_segmentation(el.calculation_tree) for el in self.chosen_fields):
+            mm = kw["mask"].copy()
+            mm[kw["segmentation"] > 0] = 0
+            kw["mask_without_segmentation"] = mm
+
         range_changed(0, len(self.chosen_fields))
-        for i, el in enumerate(self.chosen_fields):
+        for i, entry in enumerate(self.chosen_fields):
             step_changed(i)
-            tree, user_name = el.calculation_tree, el.name
-            component_and_area = self._get_par_component_and_area_type(tree)
-            try:
-                val, unit, _area = self.calculate_tree(tree, segmentation_mask_map, help_dict, kw)
-                if isinstance(val, np.ndarray):
-                    val = list(val)
-                result[self.name_prefix + user_name] = val, str(unit).format(str(result_units)), component_and_area
-            except ZeroDivisionError:  # pragma: no cover
-                result[self.name_prefix + user_name] = "Div by zero", "", component_and_area
-            except TypeError:  # pragma: no cover
-                traceback.print_exc()
-                result[self.name_prefix + user_name] = "None div", "", component_and_area
-            except AttributeError:  # pragma: no cover
-                result[self.name_prefix + user_name] = "No attribute", "", component_and_area
-            except ProhibitedDivision as e:  # pragma: no cover
-                result[self.name_prefix + user_name] = e.args[0], "", component_and_area
+            result[self.name_prefix + entry.name] = self._calc_single_field(
+                entry, segmentation_mask_map, cache_dict, kw, result_units
+            )
+
         return result
+
+    def _calc_single_field(
+        self,
+        entry: MeasurementEntry,
+        segmentation_mask_map: ComponentsInfo,
+        cache_dict: dict,
+        additional_args: dict,
+        result_units,
+    ):
+        tree = entry.calculation_tree
+        component_and_area = self._get_par_component_and_area_type(tree)
+        try:
+            val, unit, _area = self.calculate_tree(tree, segmentation_mask_map, cache_dict, additional_args)
+            if isinstance(val, np.ndarray):
+                val = list(val)
+            return val, str(unit).format(str(result_units)), component_and_area
+        except ZeroDivisionError:  # pragma: no cover
+            return "Div by zero", "", component_and_area
+        except TypeError:  # pragma: no cover
+            return "None div", "", component_and_area
+        except AttributeError:  # pragma: no cover
+            return "No attribute", "", component_and_area
+        except ProhibitedDivision as e:  # pragma: no cover
+            return e.args[0], "", component_and_area
 
 
 def calculate_main_axis(area_array: np.ndarray, channel: np.ndarray, voxel_size):
@@ -574,7 +592,7 @@ def hash_fun_call_name(
         fun_name = f"{fun.__module__}.{fun.__name__}"
     else:
         fun_name = fun.__name__
-    return "{}: {} # {} & {} * {}".format(fun_name, arguments, area, per_component, channel)
+    return f"{fun_name}: {arguments} # {area} & {per_component} * {channel}"
 
 
 class Volume(MeasurementMethodBase):

@@ -198,7 +198,7 @@ class UpdateLoadedMetadataBase:
             if isinstance(data, typing.TextIO):
                 decoded_data = json.load(data, object_hook=cls.json_hook)
             elif os.path.exists(data):
-                with open(data, "r") as ff:
+                with open(data) as ff:
                     decoded_data = json.load(ff, object_hook=cls.json_hook)
             else:
                 decoded_data = json.loads(data, object_hook=cls.json_hook)

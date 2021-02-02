@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.12.6
+
+-   Fix prev_mask_get
+-   Fix cache mechanism on mask change
+-   Update PyInstaller build
+
+## 0.12.5
+
+-   Fix bug in pipeline execute
+
+## 0.12.4
+
+-   Fix ROI Mask windows related build (signal not properly connected)
+
+## 0.12.3
+
+-   Fix ROI Mask
+
+## 0.12.2
+
+-   Fix windows bundle
+
+## 0.12.1
+
+-   History of last opened files
+-   Add ROI annotation and ROI alternatives
+-   Minor bugfix
+
 ## 0.12.0
 
 -   Toggle multiple files widget in View menu

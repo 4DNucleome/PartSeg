@@ -22,9 +22,9 @@ based on threshold and connected components
 
 ## Tutorials
 
--   Tutorial: **Chromosome 1 (as gui)** [link](https://4dnucleome.cent.uw.edu.pl/PartSeg/tutorials/tutorial_chromosome_1/)
+-   Tutorial: **Chromosome 1 (as gui)** [link](https://github.com/4DNucleome/PartSeg/blob/master/tutorials/tutorial-chromosome-1/tutorial-chromosome1_16.md)
 -   Data for chromosome 1 tutorial [link](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg_samples.zip)
--   Tutorial: **Different neuron types (as library)** [link](https://4dnucleome.cent.uw.edu.pl/PartSeg/tutorials/tutorial_diferrent_neurons/)
+-   Tutorial: **Different neuron types (as library)** [link](https://github.com/4DNucleome/PartSeg/blob/master/tutorials/tutorial_neuron_types/Neuron_types_example.ipynb)
 
 ## Installing
 

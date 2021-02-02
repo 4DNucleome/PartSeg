@@ -54,7 +54,7 @@ class EqualColumnLayout(QLayout):
                 columns += 1
         if columns == 0:
             return
-        element_width = rect.width() / columns
+        element_width = rect.width() // columns
         x = rect.x()
         for el in self._item_list:
             if el.widget() and el.widget().isHidden():

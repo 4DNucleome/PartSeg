@@ -86,7 +86,7 @@ class Image:
         if hasattr(cls, "return_order"):  # pragma: no cover
             warnings.warn("Using return_order is deprecated since PartSeg 0.11.0", DeprecationWarning)
             cls.axis_order = cls.return_order
-        return super(Image, cls).__new__(cls)
+        return super().__new__(cls)
 
     def __init__(
         self,

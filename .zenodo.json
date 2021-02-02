@@ -24,7 +24,7 @@
     }
   ],
   "license": {
-      "id": "GPL-3.0-only"
+      "id": "bsd-license"
   },
   "title": "PartSeg -  segmentation and reconstruction tool for 3D microscopy images",
   "keywords": [

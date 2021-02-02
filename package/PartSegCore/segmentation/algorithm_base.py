@@ -15,9 +15,8 @@ from ..utils import numpy_repr
 
 
 def calculate_operation_radius(radius, spacing, gauss_type):
-    if gauss_type == RadiusType.R2D:
-        if len(spacing) == 3:
-            spacing = spacing[1:]
+    if gauss_type == RadiusType.R2D and len(spacing) == 3:
+        spacing = spacing[1:]
     base = min(spacing)
     if base != max(spacing):
         ratio = [x / base for x in spacing]
@@ -46,29 +45,55 @@ class AdditionalLayerDescription:
         )
 
 
+def dict_repr(dkt: dict) -> str:
+    """
+    calculate dict representation which use :py:func:`numpy_repr` for numpy representation.
+
+    :param dict dkt: dict to be represented
+    :return: string representation
+    """
+    res = []
+    for k, v in dkt.items():
+        if isinstance(v, dict):
+            res.append(f"{k}: {dict_repr(v)}")
+        elif isinstance(v, np.ndarray):
+            res.append(f"{k}: {numpy_repr(v)}")
+        else:
+            res.append(f"{k}: {repr(v)}")
+    return "{" + ", ".join(res) + "}"
+
+
 @dataclass(frozen=True, repr=False)
 class SegmentationResult:
     roi: np.ndarray
     parameters: ROIExtractionProfile
     additional_layers: Dict[str, AdditionalLayerDescription] = field(default_factory=dict)
     info_text: str = ""
+    roi_annotation: Dict = field(default_factory=dict)
+    alternative_representation: Dict[str, np.ndarray] = field(default_factory=dict)
 
-    def __str__(self):
+    def __post_init__(self):
+        if "ROI" in self.alternative_representation:
+            raise ValueError("alternative_representation field cannot contain field with ROI key")
+
+    def __str__(self):  # pragma: no cover
         return (
-            f"SegmentationResult(segmentation=[shape: {self.roi.shape}, dtype: {self.roi.dtype},"
+            f"SegmentationResult(roi=[shape: {self.roi.shape}, dtype: {self.roi.dtype},"
             f" max: {np.max(self.roi)}], parameters={self.parameters},"
-            f" additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text}"
+            f" additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text},"
+            f" alternative={dict_repr(self.alternative_representation)}, annotation={dict_repr(self.roi_annotation)}"
         )
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return (
-            f"SegmentationResult(segmentation=[shape: {self.roi.shape}, dtype: {self.roi.dtype}, "
+            f"SegmentationResult(roi=[shape: {self.roi.shape}, dtype: {self.roi.dtype}, "
             f"max: {np.max(self.roi)}], parameters={self.parameters}, "
-            f"additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text}"
+            f"additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text},"
+            f" alternative={dict_repr(self.alternative_representation)}, annotation={dict_repr(self.roi_annotation)}"
         )
 
 
-def report_empty_fun(_x, _y):
+def report_empty_fun(_x, _y):  # pragma: no cover
     pass
 
 
@@ -90,7 +115,7 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         self._mask: Optional[np.ndarray] = None
         self.new_parameters: Dict[str, Any] = {}
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         if self.mask is None:
             mask_info = "mask=None"
         elif isinstance(self.mask, np.ndarray):
@@ -142,9 +167,9 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
     def calculation_run_wrap(self, report_fun: Callable[[str, int], None]) -> SegmentationResult:
         try:
             return self.calculation_run(report_fun)
-        except SegmentationLimitException:
+        except SegmentationLimitException:  # pragma: no cover
             raise
-        except Exception:
+        except Exception:  # pragma: no cover
             parameters = self.get_segmentation_profile()
             image = self.image
             raise SegmentationException(self.get_name(), parameters, image)

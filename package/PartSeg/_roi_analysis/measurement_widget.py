@@ -134,7 +134,7 @@ class MeasurementWidget(QWidget):
     """
 
     def __init__(self, settings: PartSettings, segment=None):
-        super(MeasurementWidget, self).__init__()
+        super().__init__()
         self.settings = settings
         self.segment = segment
         self.measurements_storage = MeasurementsStorage()
@@ -314,18 +314,15 @@ class MeasurementWidget(QWidget):
                 f"Measurement profile '{self.measurement_type.currentText()}' not found'",
             )
             return
-        channel = self.settings.image.get_channel(self.channels_chose.currentIndex())
-        roi = self.settings.roi
-        if roi is None:
+
+        if self.settings.roi is None:
             return
-        base_mask = self.settings.mask
         units = self.units_choose.get_value()
 
         # FIXME find which errors should be displayed as warning
         # def exception_hook(exception):
         #    QMessageBox.warning(self, "Calculation error", f"Error during calculation: {exception}")
 
-        kwargs = {}
         for num in compute_class.get_channels_num():
             if num >= self.settings.image.channels:
                 QMessageBox.warning(
@@ -334,12 +331,10 @@ class MeasurementWidget(QWidget):
                     "Cannot calculate this measurement because " f"image do not have channel {num+1}",
                 )
                 return
-            kwargs[f"channel+{num}"] = self.settings.image.get_channel(num)
 
         thread = ExecuteFunctionThread(
             compute_class.calculate,
-            [channel, roi, base_mask, self.settings.image.spacing, units],
-            kwargs,
+            [self.settings.image, self.channels_chose.currentIndex(), self.settings.roi_info, units],
         )
         dial = WaitingDialog(thread, "Measurement calculation")  # , exception_hook=exception_hook)
         dial.exec()

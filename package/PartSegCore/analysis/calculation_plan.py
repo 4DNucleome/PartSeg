@@ -127,6 +127,7 @@ class MeasurementCalculate(BaseSerializableClass):
 
     # noinspection PyOverloads,PyMissingConstructor
     # pylint: disable=W0104
+    # pragma: no cover
     @typing.overload
     def __init__(self, channel: int, units: Units, measurement_profile: MeasurementProfile, name_prefix: str):
         ...
@@ -182,7 +183,7 @@ class MaskMapper:
 
     @abstractmethod
     def get_parameters(self):
-        pass
+        """Parameters for serialize"""
 
     @staticmethod
     def is_ready() -> bool:
@@ -203,7 +204,7 @@ class MaskSuffix(MaskMapper, BaseSerializableClass):
     # noinspection PyMissingConstructor,PyOverloads
     # pylint: disable=W0104
     @typing.overload
-    def __init__(self, name: str, suffix: str):
+    def __init__(self, name: str, suffix: str):  # pragma: no cover
         ...
 
     def get_mask_path(self, file_path: str) -> str:
@@ -229,7 +230,7 @@ class MaskSub(MaskMapper, BaseSerializableClass):
     # noinspection PyMissingConstructor,PyOverloads
     # pylint: disable=W0104
     @typing.overload
-    def __init__(self, name: str, base: str, rep: str):
+    def __init__(self, name: str, base: str, rep: str):  # pragma: no cover
         ...
 
     def get_mask_path(self, file_path: str) -> str:
@@ -249,7 +250,7 @@ class MaskFile(MaskMapper, BaseSerializableClass):
     # noinspection PyMissingConstructor,PyOverloads
     # pylint: disable=W0104
     @typing.overload
-    def __init__(self, name: str, path_to_file: str, name_dict: typing.Optional[dict] = None):
+    def __init__(self, name: str, path_to_file: str, name_dict: typing.Optional[dict] = None):  # pragma: no cover
         ...
 
     def is_ready(self) -> bool:
@@ -281,9 +282,7 @@ class MaskFile(MaskMapper, BaseSerializableClass):
                 try:
                     file_name, mask_name = line.split(sep)
                 except ValueError:
-                    logging.error(
-                        "Error in parsing map file\nline {}\n{}\nfrom file{}".format(i, line, self.path_to_file)
-                    )
+                    logging.error(f"Error in parsing map file\nline {i}\n{line}\nfrom file{self.path_to_file}")
                     continue
                 file_name = file_name.strip()
                 mask_name = mask_name.strip()
@@ -619,7 +618,7 @@ class CalculationPlan:
         if isinstance(node.operation, Operations):
             if node.operation == Operations.reset_to_base:
                 return NodeType.mask
-        raise ValueError("[get_node_type] unknown node type {}".format(node.operation))
+        raise ValueError(f"[get_node_type] unknown node type {node.operation}")
 
     def add_step(self, step):
         if self.current_pos is None:
@@ -728,30 +727,30 @@ class CalculationPlan:
         """
         if el.__class__.__name__ not in CalculationPlan.correct_name.keys():
             print(el, el.__class__.__name__, file=sys.stderr)
-            raise ValueError("Unknown type {}".format(el.__class__.__name__))
+            raise ValueError(f"Unknown type {el.__class__.__name__}")
         if isinstance(el, RootType):
             return f"Root: {el}"
         if isinstance(el, Operations):
             if el == Operations.reset_to_base:
                 return "reset project to base image with mask"
         if isinstance(el, ROIExtractionProfile):
-            return "Segmentation: {}".format(el.name)
+            return f"Segmentation: {el.name}"
         if isinstance(el, MeasurementCalculate):
             if el.name_prefix == "":
-                return "Measurement: {}".format(el.name)
-            return "Measurement: {} with prefix: {}".format(el.name, el.name_prefix)
+                return f"Measurement: {el.name}"
+            return f"Measurement: {el.name} with prefix: {el.name_prefix}"
         if isinstance(el, MaskCreate):
             if el.name != "":
-                return "Create mask: {}".format(el.name)
+                return f"Create mask: {el.name}"
             return "Create mask:"
         if isinstance(el, MaskUse):
-            return "Use mask: {}".format(el.name)
+            return f"Use mask: {el.name}"
         if isinstance(el, MaskSuffix):
-            return "File mask: {} with suffix {}".format(el.name, el.suffix)
+            return f"File mask: {el.name} with suffix {el.suffix}"
         if isinstance(el, MaskSub):
-            return "File mask: {} substitution {} on {}".format(el.name, el.base, el.rep)
+            return f"File mask: {el.name} substitution {el.base} on {el.rep}"
         if isinstance(el, MaskFile):
-            return "File mapping mask: {}, {}".format(el.name, el.path_to_file)
+            return f"File mapping mask: {el.name}, {el.path_to_file}"
         if isinstance(el, Save):
             base = el.short_name
             if el.directory:
@@ -764,12 +763,12 @@ class CalculationPlan:
             return text
         if isinstance(el, MaskIntersection):
             if el.name == "":
-                return "Mask intersection of mask {} and {}".format(el.mask1, el.mask2)
-            return "Mask {} intersection of mask {} and {}".format(el.name, el.mask1, el.mask2)
+                return f"Mask intersection of mask {el.mask1} and {el.mask2}"
+            return f"Mask {el.name} intersection of mask {el.mask1} and {el.mask2}"
         if isinstance(el, MaskSum):
             if el.name == "":
-                return "Mask sum of mask {} and {}".format(el.mask1, el.mask2)
-            return "Mask {} sum of mask {} and {}".format(el.name, el.mask1, el.mask2)
+                return f"Mask sum of mask {el.mask1} and {el.mask2}"
+            return f"Mask {el.name} sum of mask {el.mask1} and {el.mask2}"
 
         raise ValueError("Unknown type {}".format(type(el)))
 

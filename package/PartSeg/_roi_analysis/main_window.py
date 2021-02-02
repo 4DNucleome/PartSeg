@@ -345,9 +345,8 @@ class Options(QWidget):
     def execution_done(self, segmentation: SegmentationResult):
         if segmentation.info_text != "":
             QMessageBox.information(self, "Algorithm info", segmentation.info_text)
-        self._settings.roi = segmentation.roi
+        self._settings.set_segmentation_result(segmentation)
         self.compare_btn.setEnabled(isinstance(segmentation.roi, np.ndarray) and np.any(segmentation.roi))
-        self._settings.additional_layers = segmentation.additional_layers
         self.label.setText(self.sender().get_info_text())
 
     def showEvent(self, _event):
@@ -493,7 +492,7 @@ class MainMenu(BaseMainMenu):
                     self.set_data(result)
 
         except ValueError as e:
-            QMessageBox.warning(self, "Open error", "{}".format(e))
+            QMessageBox.warning(self, "Open error", f"{e}")
 
     def batch_window(self):
         if self.main_window.batch_window is not None:
@@ -547,7 +546,6 @@ class MaskDialog(MaskDialogBase):
         seg = np.load(history.arrays)
         history.arrays.seek(0)
         self.settings.roi = seg["segmentation"]
-        self.settings.full_segmentation = seg["full_segmentation"]
         if "mask" in seg:
             self.settings.mask = seg["mask"]
         else:

@@ -6,6 +6,7 @@ block_cipher = None
 import sys
 import os
 import platform
+import zmq
 
 sys.setrecursionlimit(5000)
 sys.path.append(os.path.dirname("__file__"))
@@ -18,7 +19,14 @@ import PartSegData.__init__
 base_path = os.path.dirname(PartSeg.__main__.__file__)
 data_path = os.path.dirname(PartSegData.__init__.__file__)
 
-from napari.resources import import_resources
+try:
+    from napari.resources import import_resources
+except ImportError:
+    from napari._qt.qt_resources import import_resources as napari_import_resources
+
+    def import_resources():
+        return napari_import_resources()[0]
+
 from dask import config
 import napari
 
@@ -47,6 +55,12 @@ else:
 
 # print(["plugins." + x.name for x in plugins.get_plugins()])
 
+pyzmq_libs = os.path.abspath(os.path.join(os.path.dirname(zmq.__file__), os.pardir, "pyzmq.libs"))
+pyzmq_data = []
+
+if os.path.exists(pyzmq_libs):
+    pyzmq_data = [(os.path.join(pyzmq_libs, x), "pyzmq.libs") for x in os.listdir(pyzmq_libs)]
+
 a = Analysis(
     ["package/PartSeg/launcher_main.py"],
     # pathex=['C:\\Users\\Grzegorz\\Documents\\segmentation-gui\\PartSeg'],
@@ -66,7 +80,8 @@ a = Analysis(
     + [(os.path.join(os.path.dirname(config.__file__), "dask.yaml"), "dask")]
     + collect_data_files("dask")
     + collect_data_files("vispy")
-    + collect_data_files("napari"),
+    + collect_data_files("napari")
+    + pyzmq_data,
     hiddenimports=hiddenimports
     + [
         "numpy.core._dtype_ctypes",
@@ -84,6 +99,7 @@ a = Analysis(
         "PartSegCore.register",
         "defusedxml.cElementTree",
         "vispy.app.backends._pyqt5",
+        "scipy.spatial.transform._rotation_groups"
     ],
     # + ["plugins." + x.name for x in plugins.get_plugins()],
     hookspath=[],

@@ -5,7 +5,7 @@ import os
 import platform
 import sys
 import zlib
-from typing import Optional, Sequence, Text
+from typing import Optional, Sequence
 
 import numpy as np
 import sentry_sdk
@@ -93,7 +93,7 @@ class CustomParser(argparse.ArgumentParser):
         self.add_argument("--inner_plugins", action="store_true", help=argparse.SUPPRESS)
         self.add_argument("--develop", action="store_true", help=argparse.SUPPRESS)
 
-    def parse_args(self, args: Optional[Sequence[Text]] = None, namespace: Optional[argparse.Namespace] = None):
+    def parse_args(self, args: Optional[Sequence[str]] = None, namespace: Optional[argparse.Namespace] = None):
         """
         overload of :py:meth:`argparse.ArgumentParser.parse_args`. Set flags like described in class documentation.
         """
@@ -119,7 +119,7 @@ def _setup_sentry():
     sentry_sdk.serializer.safe_repr = safe_repr
     sentry_sdk.init(
         "https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302",
-        release="PartSeg@{}".format(PartSeg.__version__),
+        release=f"PartSeg@{PartSeg.__version__}",
     )
     with sentry_sdk.configure_scope() as scope:
         scope.set_user(

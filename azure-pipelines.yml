@@ -6,6 +6,7 @@ trigger:
     - dependabot/*
     - documentation
     - release/*
+    - hotfix/*
   tags:
     include:
     - v*
@@ -37,7 +38,7 @@ stages:
     dependsOn: []
     jobs:
       - job: check_formating
-        pool: {vmImage: 'Ubuntu-18.04'}
+        pool: {vmImage: 'Ubuntu-20.04'}
         steps:
           - {task: UsePythonVersion@0, inputs: {versionSpec: '3.7', architecture: x64}}
           - bash: |

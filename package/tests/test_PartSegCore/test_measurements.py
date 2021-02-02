@@ -1451,7 +1451,7 @@ class TestStatisticProfile:
     def test_cube_volume_area_type(self):
         image = get_cube_image()
         image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
-        mask = (image.get_channel(0)[0] > 40).astype(np.uint8)
+        image.set_mask((image.get_channel(0)[0] > 40).astype(np.uint8))
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
         statistics = [
@@ -1469,10 +1469,9 @@ class TestStatisticProfile:
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0),
+            image,
+            0,
             segmentation,
-            mask=mask,
-            voxel_size=image.voxel_size,
             result_units=Units.µm,
         )
         tot_vol, seg_vol, rim_vol = list(result.values())
@@ -1482,7 +1481,7 @@ class TestStatisticProfile:
     def test_square_volume_area_type(self):
         image = get_square_image()
         image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
-        mask = (image.get_channel(0)[0] > 40).astype(np.uint8)
+        image.set_mask((image.get_channel(0)[0] > 40).astype(np.uint8))
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
         statistics = [
@@ -1500,10 +1499,9 @@ class TestStatisticProfile:
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0),
+            image,
+            0,
             segmentation,
-            mask=mask,
-            voxel_size=image.voxel_size,
             result_units=Units.µm,
         )
         tot_vol, seg_vol, rim_vol = list(result.values())
@@ -1513,7 +1511,7 @@ class TestStatisticProfile:
     def test_cube_pixel_sum_area_type(self):
         image = get_cube_image()
         image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
-        mask = (image.get_channel(0)[0] > 40).astype(np.uint8)
+        image.set_mask((image.get_channel(0)[0] > 40).astype(np.uint8))
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
         statistics = [
@@ -1534,10 +1532,9 @@ class TestStatisticProfile:
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0),
+            image,
+            0,
             segmentation,
-            mask=mask,
-            voxel_size=image.voxel_size,
             result_units=Units.µm,
         )
         tot_vol, seg_vol, rim_vol = list(result.values())
@@ -1546,7 +1543,7 @@ class TestStatisticProfile:
     def test_cube_surface_area_type(self):
         image = get_cube_image()
         image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
-        mask = (image.get_channel(0)[0] > 40).astype(np.uint8)
+        image.set_mask((image.get_channel(0)[0] > 40).astype(np.uint8))
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
         statistics = [
@@ -1564,10 +1561,9 @@ class TestStatisticProfile:
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0),
+            image,
+            0,
             segmentation,
-            mask=mask,
-            voxel_size=image.voxel_size,
             result_units=Units.µm,
         )
         tot_vol, seg_vol, rim_vol = list(result.values())
@@ -1576,7 +1572,7 @@ class TestStatisticProfile:
     def test_cube_density(self):
         image = get_cube_image()
         image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
-        mask = (image.get_channel(0)[0] > 40).astype(np.uint8)
+        image.set_mask((image.get_channel(0)[0] > 40).astype(np.uint8))
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
         statistics = [
@@ -1634,10 +1630,9 @@ class TestStatisticProfile:
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0),
+            image,
+            0,
             segmentation,
-            mask=mask,
-            voxel_size=image.voxel_size,
             result_units=Units.µm,
         )
         values = list(result.values())
@@ -1648,7 +1643,7 @@ class TestStatisticProfile:
     def test_cube_volume_power(self):
         image = get_cube_image()
         image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
-        mask = (image.get_channel(0)[0] > 40).astype(np.uint8)
+        image.set_mask((image.get_channel(0)[0] > 40).astype(np.uint8))
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
         statistics = [
@@ -1674,10 +1669,9 @@ class TestStatisticProfile:
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0),
+            image,
+            0,
             segmentation,
-            mask=mask,
-            voxel_size=image.voxel_size,
             result_units=Units.µm,
         )
         vol1, vol2, vol3, vol4 = list(result.values())
@@ -1687,10 +1681,10 @@ class TestStatisticProfile:
 
     def test_per_component_cache_collision(self):
         image = get_two_components_image()
-        mask = get_two_component_mask()
-        segmentation = np.zeros(mask.shape, dtype=np.uint8)
-        segmentation[image.get_channel(0)[0] == 50] = 1
-        segmentation[image.get_channel(0)[0] == 60] = 2
+        image.set_mask(get_two_component_mask())
+        segmentation = np.zeros(image.mask.shape, dtype=np.uint8)
+        segmentation[image.get_channel(0) == 50] = 1
+        segmentation[image.get_channel(0) == 60] = 2
         statistics = [
             MeasurementEntry(
                 "Volume", Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.No)
@@ -1737,10 +1731,9 @@ class TestStatisticProfile:
 
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0),
+            image,
+            0,
             segmentation,
-            mask=mask,
-            voxel_size=image.voxel_size,
             result_units=Units.nm,
         )
         assert result["Volume"][0] == result["Volume per component"][0][0] + result["Volume per component"][0][1]
@@ -1749,10 +1742,10 @@ class TestStatisticProfile:
         assert result["MaximumPixelBrightness per component"][0] == [50, 60]
         assert result["Sphericity per component"][0] == [
             Sphericity.calculate_property(
-                area_array=segmentation == 1, voxel_size=image.voxel_size, result_scalar=UNIT_SCALE[Units.nm.value]
+                area_array=segmentation[0] == 1, voxel_size=image.voxel_size, result_scalar=UNIT_SCALE[Units.nm.value]
             ),
             Sphericity.calculate_property(
-                area_array=segmentation == 2, voxel_size=image.voxel_size, result_scalar=UNIT_SCALE[Units.nm.value]
+                area_array=segmentation[0] == 2, voxel_size=image.voxel_size, result_scalar=UNIT_SCALE[Units.nm.value]
             ),
         ]
         assert result["LongestMainAxisLength"][0] == 55 * 50 * UNIT_SCALE[Units.nm.value]
@@ -1765,15 +1758,14 @@ class TestStatisticProfile:
         assert os.path.exists(file_path)
         profile = load_metadata(file_path)["all_statistic"]
         image = get_two_components_image()
-        mask = get_two_component_mask()
-        segmentation = np.zeros(mask.shape, dtype=np.uint8)
-        segmentation[image.get_channel(0)[0] == 50] = 1
-        segmentation[image.get_channel(0)[0] == 60] = 2
+        image.set_mask(get_two_component_mask())
+        segmentation = np.zeros(image.mask.shape, dtype=np.uint8)
+        segmentation[image.get_channel(0) == 50] = 1
+        segmentation[image.get_channel(0) == 60] = 2
         result = profile.calculate(
-            image.get_channel(0),
+            image,
+            0,
             segmentation,
-            mask=mask,
-            voxel_size=image.voxel_size,
             result_units=Units.nm,
         )
         names = {x.name for x in profile.chosen_fields}
@@ -1781,10 +1773,10 @@ class TestStatisticProfile:
 
     def test_proportion(self):
         image = get_two_components_image()
-        mask = get_two_component_mask()
-        segmentation = np.zeros(mask.shape, dtype=np.uint8)
-        segmentation[image.get_channel(0)[0] == 50] = 1
-        segmentation[image.get_channel(0)[0] == 60] = 2
+        image.set_mask(get_two_component_mask())
+        segmentation = np.zeros(image.mask.shape, dtype=np.uint8)
+        segmentation[image.get_channel(0) == 50] = 1
+        segmentation[image.get_channel(0) == 60] = 2
         leaf1 = Volume.get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes)
         leaf2 = Volume.get_starting_leaf().replace_(area=AreaType.Mask, per_component=PerComponent.Yes)
         leaf3 = Volume.get_starting_leaf().replace_(area=AreaType.Mask_without_ROI, per_component=PerComponent.Yes)
@@ -1807,10 +1799,9 @@ class TestStatisticProfile:
         ]
         profile = MeasurementProfile("statistic", statistics)
         result = profile.calculate(
-            image.get_channel(0),
+            image,
+            0,
             segmentation,
-            mask=mask,
-            voxel_size=image.voxel_size,
             result_units=Units.nm,
         )
         # TODO check values

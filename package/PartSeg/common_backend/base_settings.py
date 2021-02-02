@@ -12,6 +12,7 @@ import numpy as np
 from napari.resources import get_stylesheet
 from napari.utils.theme import template as napari_template
 from qtpy.QtCore import QObject, Signal
+from qtpy.QtWidgets import QMessageBox, QWidget
 
 from PartSeg.common_backend.partially_const_dict import PartiallyConstDict
 from PartSegCore.color_image import ColorMap, default_colormap_dict, default_label_dict
@@ -20,7 +21,7 @@ from PartSegCore.io_utils import HistoryElement, load_metadata_base
 from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, check_loaded_dict
 from PartSegCore.project_info import ProjectInfoBase
 from PartSegCore.roi_info import ROIInfo
-from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
+from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription, SegmentationResult
 from PartSegImage import Image
 
 DIR_HISTORY = "io.dir_location_history"
@@ -47,9 +48,12 @@ class ImageSettings(QObject):
         super().__init__()
         self._image: Optional[Image] = None
         self._image_path = ""
-        self._image_spacing = 210, 70, 70
         self._roi_info = ROIInfo(None)
         self._additional_layers = {}
+        self._parent: Optional[QWidget] = None
+
+    def set_parent(self, parent: QWidget):
+        self._parent = parent
 
     @property
     def full_segmentation(self):
@@ -61,20 +65,19 @@ class ImageSettings(QObject):
 
     @property
     def noise_remove_image_part(self):
-        raise AttributeError("full_segmentation not supported")
+        raise AttributeError("noise_remove_image_part not supported")
 
     @noise_remove_image_part.setter
     def noise_remove_image_part(self, val):  # pylint: disable=R0201
-        raise AttributeError("full_segmentation not supported")
+        raise AttributeError("noise_remove_image_part not supported")
 
     @property
     def additional_layers(self) -> Dict[str, AdditionalLayerDescription]:
         return self._additional_layers
 
     @additional_layers.setter
-    def additional_layers(self, val: Dict[str, AdditionalLayerDescription]):
-        self._additional_layers = val
-        self.additional_layers_changed.emit()
+    def additional_layers(self, val):  # pylint: disable=R0201
+        raise AttributeError("additional_layers assign not supported")
 
     @property
     def image_spacing(self):
@@ -118,17 +121,21 @@ class ImageSettings(QObject):
         return self._roi_info
 
     @roi.setter
-    def roi(self, val: np.ndarray):
-        if val is not None:
-            try:
-                val = self.image.fit_array_to_image(val)
-            except ValueError:
-                raise ValueError("roi do not fit to image")
-        self._roi_info = ROIInfo(val)
-        if val is not None:
-            self.roi_changed.emit(self._roi_info)
-        else:
+    def roi(self, val: Union[np.ndarray, ROIInfo]):
+        if val is None:
+            self._roi_info = ROIInfo(val)
+            self._additional_layers = {}
             self.roi_clean.emit()
+            return
+        try:
+            if isinstance(val, np.ndarray):
+                self._roi_info = ROIInfo(self.image.fit_array_to_image(val))
+            else:
+                self._roi_infol = val.fit_to_image(self.image)
+        except ValueError:
+            raise ValueError("roi do not fit to image")
+        self._additional_layers = {}
+        self.roi_changed.emit(self._roi_info)
 
     @property
     def sizes(self):
@@ -157,7 +164,6 @@ class ImageSettings(QObject):
 
     def _image_changed(self):
         """Reimplement hook for change of main image"""
-        pass
 
     @property
     def image_path(self):
@@ -396,6 +402,24 @@ class BaseSettings(ViewSettings):
         self.last_executed_algorithm = ""
         self.history: List[HistoryElement] = []
         self.history_index = -1
+        self.last_executed_algorithm = ""
+
+    def set_segmentation_result(self, result: SegmentationResult):
+        if result.info_text and self._parent is not None:
+            QMessageBox().information(self._parent, "Algorithm info", result.info_text)
+
+        self._additional_layers = result.additional_layers
+        self.last_executed_algorithm = result.parameters.algorithm
+        self.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
+        try:
+            roi = self.image.fit_array_to_image(result.roi)
+            alternative_list = {
+                k: self.image.fit_array_to_image(v) for k, v in result.alternative_representation.items()
+            }
+        except ValueError:
+            raise ValueError("roi do not fit to image")
+        self._roi_info = ROIInfo(roi, result.roi_annotation, alternative_list)
+        self.roi_changed.emit(self._roi_info)
 
     def _load_files_call(self, files_list: List[str]):
         self.request_load_files.emit(files_list)
@@ -526,13 +550,12 @@ class BaseSettings(ViewSettings):
     def load_part(self, file_path):
         data = self.load_metadata(file_path)
         bad_key = []
-        if isinstance(data, dict):
-            if not check_loaded_dict(data):
-                for k, v in data.items():
-                    if not check_loaded_dict(v):
-                        bad_key.append(k)
-                for el in bad_key:
-                    del data[el]
+        if isinstance(data, dict) and not check_loaded_dict(data):
+            for k, v in data.items():
+                if not check_loaded_dict(v):
+                    bad_key.append(k)
+            for el in bad_key:
+                del data[el]
         elif isinstance(data, ProfileDict) and not data.verify_data():
             bad_key = data.filter_data()
         return data, bad_key

@@ -9,7 +9,6 @@ from qtpy.QtCore import QCoreApplication
 from PartSeg._launcher.main_window import MainWindow as LauncherMainWindow
 from PartSeg._roi_analysis import main_window as analysis_main_window
 from PartSeg._roi_mask import main_window as mask_main_window
-from PartSeg.common_gui import napari_image_view
 
 from .utils import CI_BUILD, GITHUB_ACTIONS, TRAVIS
 
@@ -18,20 +17,6 @@ napari_warnings = napari.__version__ == "0.3.4" and platform.system() == "Linux"
 
 def empty(*_):
     """To silent some functions"""
-    pass
-
-
-@pytest.fixture(autouse=True)
-def disable_threads_viewer(monkeypatch):
-    def _prepare_layers(self, image, parameters, replace):
-        self._add_image(napari_image_view._prepare_layers(image, parameters, replace))
-
-    monkeypatch.setattr(napari_image_view.ImageView, "_prepare_layers", _prepare_layers)
-
-    def _add_layer_util(self, index, layer, filters):
-        self.viewer.add_layer(layer)
-
-    monkeypatch.setattr(napari_image_view.ImageView, "_add_layer_util", _add_layer_util)
 
 
 class TestAnalysisMainWindow:
