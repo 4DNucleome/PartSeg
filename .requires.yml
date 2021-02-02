@@ -6,5 +6,3 @@ requirements:
   - docs/requirements.txt
   - setup.py
   - tox.ini
-  - path: tox-azure.ini
-    parser: python/tox
