@@ -52,7 +52,6 @@ class RestartableAlgorithm(SegmentationAlgorithm, ABC):
 
     def set_mask(self, mask):
         super().set_mask(mask)
-        print("aaaaaaaaa")
         self.parameters["threshold"] = None
 
     def get_info_text(self):
@@ -223,15 +222,15 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
                 self.channel, self.image.spacing, noise_filtering_parameters["values"]
             )
             restarted = True
-        print(restarted, self.parameters["threshold"], self.new_parameters["threshold"])
         if restarted or self.new_parameters["threshold"] != self.parameters["threshold"]:
             if self.parameters["threshold"] is None:
                 restarted = True
             self.parameters["threshold"] = deepcopy(self.new_parameters["threshold"])
             self.threshold_image = self._threshold(self.cleaned_image)
-            if isinstance(self.threshold_info, (list, tuple)):
-                if self.old_threshold_info is None or self.old_threshold_info[0] != self.threshold_info[0]:
-                    restarted = True
+            if isinstance(self.threshold_info, (list, tuple)) and (
+                self.old_threshold_info is None or self.old_threshold_info[0] != self.threshold_info[0]
+            ):
+                restarted = True
             elif self.old_threshold_info != self.threshold_info:
                 restarted = True
             if self.threshold_image.max() == 0:

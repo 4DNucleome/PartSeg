@@ -217,7 +217,7 @@ def _fill_holes(mask_description: MaskProperty, mask: np.ndarray) -> np.ndarray:
             mask = fill_2d_holes_in_mask(mask, mask_description.max_holes_size)
         elif mask_description.fill_holes == RadiusType.R3D:
             mask = fill_holes_in_mask(mask, mask_description.max_holes_size)
-        mask = mask.astype(np.bool)
+        mask = mask.astype(bool)
     return mask
 
 
