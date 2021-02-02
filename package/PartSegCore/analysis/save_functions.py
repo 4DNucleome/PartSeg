@@ -58,7 +58,7 @@ def save_project(
         segmentation_tar = get_tarinfo("segmentation.tif", segmentation_buff)
         tar.addfile(segmentation_tar, fileobj=segmentation_buff)
         if mask is not None:
-            if mask.dtype == np.bool:
+            if mask.dtype == bool:
                 mask = mask.astype(np.uint8)
             segmentation_buff = BytesIO()
             # noinspection PyTypeChecker

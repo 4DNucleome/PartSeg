@@ -83,7 +83,7 @@ def load_project(
             if "mask.tif" in tar_file.getnames():
                 mask = tifffile.imread(tar_to_buff(tar_file, "mask.tif"))
                 if np.max(mask) == 1:
-                    mask = mask.astype(np.bool)
+                    mask = mask.astype(bool)
             else:
                 mask = None
 

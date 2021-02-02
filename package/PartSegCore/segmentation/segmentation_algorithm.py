@@ -436,7 +436,7 @@ final_algorithm_list = [ThresholdAlgorithm, ThresholdFlowAlgorithm, ThresholdPre
 
 
 def close_small_holes(image, max_hole_size):
-    if image.dtype == np.bool:
+    if image.dtype == bool:
         image = image.astype(np.uint8)
     if len(image.shape) == 2:
         rev_conn = sitk.ConnectedComponent(sitk.BinaryNot(sitk.GetImageFromArray(image)), True)

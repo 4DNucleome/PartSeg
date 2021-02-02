@@ -21,7 +21,7 @@ stages:
     - job: linux
       pool: {vmImage: 'Ubuntu-16.04'}
       steps:
-        - script: bash .travis/install2.sh
+        - script: bash build_utils/download_data.sh
           displayName: "download data"
         - task: UsePythonVersion@0
           inputs:

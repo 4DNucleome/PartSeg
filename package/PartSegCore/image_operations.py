@@ -36,7 +36,7 @@ enum_register.register_class(NoiseFilterType)
 def _generic_image_operation(image, radius, fun, layer):
     if image.ndim == 2:
         layer = False
-    if image.dtype == np.bool:
+    if image.dtype == bool:
         image = image.astype(np.uint8)
     if isinstance(radius, (list, tuple)):
         radius = list(reversed(radius))
