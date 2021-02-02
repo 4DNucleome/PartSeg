@@ -134,7 +134,7 @@ def save_stack_segmentation(
         step_changed(4)
         if segmentation_info.mask is not None:
             mask = segmentation_info.mask
-            if mask.dtype == np.bool:
+            if mask.dtype == bool:
                 mask = mask.astype(np.uint8)
             mask_buff = BytesIO()
             tifffile.imwrite(mask_buff, mask, compress=9)
@@ -203,7 +203,7 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
         if "mask.tif" in tar_file.getnames():
             mask = tifffile.imread(tar_to_buff(tar_file, "mask.tif"))
             if np.max(mask) == 1:
-                mask = mask.astype(np.bool)
+                mask = mask.astype(bool)
         else:
             mask = None
         step_changed(5)

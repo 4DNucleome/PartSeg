@@ -474,7 +474,7 @@ class MeasurementProfile:
 
         if self._need_mask and image.mask is None:
             raise ValueError("measurement need mask")
-        channel = image.get_channel(channel_num).astype(np.float)
+        channel = image.get_channel(channel_num).astype(float)
         cache_dict = {}
         result_scalar = UNIT_SCALE[result_units.value]
         roi_alternative = {}
@@ -654,7 +654,7 @@ def iterative_double_normal(points_positions: np.ndarray):
     delta = 0
     dn = 0, 0
     point_index = 0
-    points_array = np.ones(points_positions.shape[0], dtype=np.bool)
+    points_array = np.ones(points_positions.shape[0], dtype=bool)
     while True:
         dn_r, delta_r = double_normal(point_index, points_positions, points_array)
         if delta_r > delta:
@@ -1114,7 +1114,7 @@ class DistanceMaskSegmentation(MeasurementMethodBase):
     @staticmethod
     def calculate_points(channel, area_array, voxel_size, result_scalar, point_type: DistancePoint) -> np.ndarray:
         if point_type == DistancePoint.Border:
-            area_pos = np.transpose(np.nonzero(get_border(area_array))).astype(np.float)
+            area_pos = np.transpose(np.nonzero(get_border(area_array))).astype(float)
             area_pos += 0.5
             for i, val in enumerate((x * result_scalar for x in reversed(voxel_size)), start=1):
                 area_pos[:, -i] *= val
@@ -1261,13 +1261,13 @@ def calculate_volume_surface(volume_mask, voxel_size):
 
 
 def get_border(array):
-    if array.dtype == np.bool:
+    if array.dtype == bool:
         array = array.astype(np.uint8)
     return SimpleITK.GetArrayFromImage(SimpleITK.LabelContour(SimpleITK.GetImageFromArray(array)))
 
 
 def calc_diam(array, voxel_size):  # pragma: no cover
-    pos = np.transpose(np.nonzero(array)).astype(np.float)
+    pos = np.transpose(np.nonzero(array)).astype(float)
     for i, val in enumerate(voxel_size):
         pos[:, i] *= val
     diam = 0

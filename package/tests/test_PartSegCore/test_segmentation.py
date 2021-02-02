@@ -722,7 +722,7 @@ class TestConvexFill:
         assert np.all(res == arr)
 
     def test__convex_fill(self):
-        arr = np.zeros((20, 20), dtype=np.bool)
+        arr = np.zeros((20, 20), dtype=bool)
         assert _convex_fill(arr) is None
 
 

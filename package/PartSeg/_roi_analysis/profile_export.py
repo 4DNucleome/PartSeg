@@ -29,7 +29,7 @@ class ExportDialog(QDialog):
         self.export_dict = export_dict
         self.viewer = viewer()
         self.list_view = SearchableListWidget()
-        self.check_state = np.zeros(len(export_dict), dtype=np.bool)
+        self.check_state = np.zeros(len(export_dict), dtype=bool)
         self.check_state[...] = True
         for el in sorted(export_dict.keys()):
             item = QListWidgetItem(el)
