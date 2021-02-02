@@ -17,7 +17,6 @@ napari_warnings = napari.__version__ == "0.3.4" and platform.system() == "Linux"
 
 def empty(*_):
     """To silent some functions"""
-    pass
 
 
 class TestAnalysisMainWindow:
