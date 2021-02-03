@@ -13,6 +13,7 @@ openpyxl
 packaging
 pandas
 PartSegData
+PartSegCore-compiled-backend
 PyInstaller!=4.0
 PyOpenGL-accelerate
 PyQt5<5.16.0
