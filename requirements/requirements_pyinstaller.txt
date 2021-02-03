@@ -139,7 +139,7 @@ pandas==1.2.1
     # via -r requirements_pyinstaller.in
 parso==0.8.1
     # via jedi
-partsegcore-compiled-backend==0.12.0a3
+partsegcore-compiled-backend==0.12.0a4
     # via -r requirements_pyinstaller.in
 partsegdata==0.10.0
     # via -r requirements_pyinstaller.in
