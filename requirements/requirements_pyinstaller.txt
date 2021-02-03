@@ -27,7 +27,9 @@ certifi==2020.12.5
 chardet==4.0.0
     # via requests
 cython==0.29.21
-    # via -r requirements_pyinstaller.in
+    # via
+    #   -r requirements_pyinstaller.in
+    #   partsegcore-compiled-backend
 czifile==2019.7.2
     # via -r requirements_pyinstaller.in
 dask[array]==2021.1.1
@@ -119,6 +121,7 @@ numpy==1.20.0
     #   napari-svg
     #   oiffile
     #   pandas
+    #   partsegcore-compiled-backend
     #   scipy
     #   tifffile
     #   vispy
@@ -136,6 +139,8 @@ pandas==1.2.1
     # via -r requirements_pyinstaller.in
 parso==0.8.1
     # via jedi
+partsegcore-compiled-backend==0.12.0a3
+    # via -r requirements_pyinstaller.in
 partsegdata==0.10.0
     # via -r requirements_pyinstaller.in
 pexpect==4.8.0
