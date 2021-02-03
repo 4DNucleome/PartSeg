@@ -11,6 +11,7 @@ from qtpy.QtWidgets import QComboBox, QHBoxLayout, QLabel
 from PartSeg._roi_mask.simple_measurements import SimpleMeasurements
 from PartSeg._roi_mask.stack_settings import StackSettings
 from PartSegImage import Image
+from PartSegImage.image import DEFAULT_SCALE_FACTOR
 
 
 class SimpleMeasurementWidget(SimpleMeasurements):
@@ -81,7 +82,9 @@ class SimpleMeasurementWidget(SimpleMeasurements):
         else:
             raise ValueError("LAyer not found")
         # TODO fix scale
-        self.settings.image = Image(channel.data, channel.scale, axes_order="TZXY"[-channel.data.ndim :])
+        self.settings.image = Image(
+            channel.data, channel.scale[1:] / DEFAULT_SCALE_FACTOR, axes_order="TZYX"[-channel.data.ndim :]
+        )
         self.settings.roi = roi.data
         super().calculate()
 

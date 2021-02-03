@@ -7,6 +7,8 @@ Spacing = typing.Tuple[typing.Union[float, int], ...]
 
 _DEF = object()
 
+DEFAULT_SCALE_FACTOR = 10 ** 9
+
 
 def minimal_dtype(val: int):
     """
@@ -452,7 +454,7 @@ class Image:
             return tuple(self._image_spacing[1:])
         return self._image_spacing
 
-    def normalized_scaling(self, factor=10 ** 9) -> Spacing:
+    def normalized_scaling(self, factor=DEFAULT_SCALE_FACTOR) -> Spacing:
         if self.is_2d:
             return (1, 1) + tuple(np.multiply(self.spacing, factor))
         return (1,) + tuple(np.multiply(self.spacing, factor))
