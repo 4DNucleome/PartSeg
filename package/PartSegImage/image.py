@@ -109,7 +109,8 @@ class Image:
             axes_order = self.axis_order
         if data.ndim != len(axes_order):
             raise ValueError(
-                "Data should have same number of dimensions " f"like length of axes_order (current :{len(axes_order)}"
+                "Data should have same number of dimensions "
+                f"like length of axes_order (axis :{len(axes_order)}, ndim: {data.ndim}"
             )
         if not isinstance(image_spacing, tuple):
             image_spacing = tuple(image_spacing)
