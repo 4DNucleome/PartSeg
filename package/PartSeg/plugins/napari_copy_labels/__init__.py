@@ -1,6 +1,7 @@
 import numpy as np
 from napari import Viewer
 from napari.layers.labels import Labels
+from napari_plugin_engine import napari_hook_implementation
 from qtpy.QtGui import QKeySequence
 from qtpy.QtWidgets import QCheckBox, QGridLayout, QLabel, QPushButton, QShortcut, QSpinBox, QWidget
 
@@ -8,9 +9,9 @@ from PartSeg.common_gui.flow_layout import FlowLayout
 
 
 class CopyLabelWidget(QWidget):
-    def __init__(self, viewer: Viewer):
+    def __init__(self, napari_viewer: Viewer):
         super().__init__()
-        self.viewer = viewer
+        self.viewer = napari_viewer
 
         self.copy_btn = QPushButton("Copy")
         self.lower = QSpinBox()
@@ -36,10 +37,10 @@ class CopyLabelWidget(QWidget):
         self.copy_btn.clicked.connect(self.copy_action)
 
     def activate_widget(self, event):
-        self.setVisible(isinstance(event.item, Labels))
-        if isinstance(event.item, Labels):
-            event.item.events.set_data.connect(self._shallow_update)
-            event.item.events.selected_label.connect(self.update_items)
+        self.setVisible(isinstance(event.value, Labels))
+        if isinstance(event.value, Labels):
+            event.value.events.set_data.connect(self._shallow_update)
+            event.value.events.selected_label.connect(self.update_items)
 
     def _shallow_update(self, event):
         label = event.source.selected_label
@@ -87,3 +88,8 @@ class CopyLabelWidget(QWidget):
             end = min(layer.shape[1], self.upper.value()) + 1
             for i in range(start, end):
                 layer.data[0, i][mask] = component_num
+
+
+@napari_hook_implementation
+def napari_experimental_provide_dock_widget():
+    return CopyLabelWidget

@@ -14,7 +14,6 @@ from PartSegImage import Image
 
 from ..common_backend.base_settings import FILE_HISTORY, BaseSettings, SwapTimeStackException, TimeAndStackException
 from ..common_backend.load_backup import import_config
-from ..plugins.napari_copy_labels import CopyLabelWidget
 from .about_dialog import AboutDialog
 from .custom_save_dialog import SaveDialog
 from .image_adjustment import ImageAdjustmentDialog
@@ -189,7 +188,7 @@ class BaseMainWindow(QMainWindow):
 
     def napari_viewer_show(self):
         viewer = Viewer(title="Additional output")
-        viewer.window.add_dock_widget(CopyLabelWidget(viewer), name="Copy", area="left")
+        # viewer.window.add_dock_widget(CopyLabelWidget(viewer), name="Copy", area="left")
         viewer.theme = self.settings.theme_name
         image = self.settings.image
         scaling = image.normalized_scaling()
