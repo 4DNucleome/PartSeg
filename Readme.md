@@ -38,7 +38,7 @@ This application is designed to help biologist with segmentation based on thresh
 
 ## Running
 
-If you downloaded binaries, run the `PartSeg_exec` file inside the `PartSeg` folder
+If you downloaded binaries, run the `PartSeg` (or `PartSeg.exe` for Windows) file inside the `PartSeg` folder
 
 If you installed from repository or from pip, you can run it with `PartSeg` command or `python -m PartSeg`.
 First option does not work on Windows.
