@@ -51,6 +51,8 @@ class RegisterEnum(Enum):
     mask_save_components = 10  #: save each segmentation component in separate file. Save location is directory
     mask_save_segmentation = 11  #: save project (to one file) in mask part
     analysis_measurement = 12  #: measurements algorithms (analysis mode)
+    roi_analysis_segmentation_algorithm = 13  #: algorithm for creating segmentation in analysis PartSeg part
+    roi_mask_segmentation_algorithm = 14  #: algorithm for creating segmentation in mask PartSeg part
 
 
 # noinspection DuplicatedCode
@@ -68,6 +70,8 @@ register_dict = {
     RegisterEnum.mask_save_components: io_functions.save_components_dict,
     RegisterEnum.mask_save_segmentation: io_functions.save_segmentation_dict,
     RegisterEnum.analysis_measurement: measurement_calculation.MEASUREMENT_DICT,
+    RegisterEnum.roi_analysis_segmentation_algorithm: analysis_algorithm_description.analysis_algorithm_dict,
+    RegisterEnum.roi_mask_segmentation_algorithm: mask_algorithm_description.mask_algorithm_dict,
 }
 
 # noinspection DuplicatedCode
