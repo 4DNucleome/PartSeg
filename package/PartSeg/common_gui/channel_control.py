@@ -2,6 +2,7 @@ import math
 import typing
 from functools import partial
 
+from napari.utils import Colormap
 from qtpy.QtCore import QEvent, QModelIndex, QPoint, QPointF, QRect, QRectF, QSize, Qt, Signal
 from qtpy.QtGui import QColor, QMouseEvent, QPainter, QPainterPath, QPaintEvent, QPen, QPolygonF, QShowEvent
 from qtpy.QtWidgets import (
@@ -19,7 +20,6 @@ from qtpy.QtWidgets import (
 )
 
 from PartSeg.common_gui.numpy_qimage import create_colormap_image
-from PartSegCore.color_image import ColorMap
 from PartSegCore.image_operations import NoiseFilterType
 
 from ..common_backend.base_settings import ViewSettings
@@ -28,7 +28,7 @@ from .universal_gui_part import CustomSpinBox, EnumComboBox
 
 image_dict = {}  # dict to store QImages generated from colormap
 
-ColorMapDict = typing.MutableMapping[str, typing.Tuple[ColorMap, bool]]
+ColorMapDict = typing.MutableMapping[str, typing.Tuple[Colormap, bool]]
 
 
 class ColorStyledDelegate(QStyledItemDelegate):
@@ -464,12 +464,11 @@ class ColorComboBoxGroup(QWidget):
         return self.layout().count()
 
     @property
-    def selected_colormaps(self) -> typing.List[typing.Tuple[str, ColorMap]]:
+    def selected_colormaps(self) -> typing.List[Colormap]:
         resp = []
         for i in range(self.layout().count()):
             el: ColorComboBox = self.layout().itemAt(i).widget()
-            resp.append((el.currentText(), self.settings.colormap_dict[el.currentText()][0]))
-
+            resp.append(self.settings.colormap_dict[el.currentText()][0])
         return resp
 
     @property

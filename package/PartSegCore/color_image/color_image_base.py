@@ -3,12 +3,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import numpy as np
 
-import PartSegData
 from PartSegCore_compiled_backend.color_image_cython import color_grayscale, resolution
 
 from .base_colors import BaseColormap
-
-color_maps = np.load(PartSegData.colors_file)
 
 color_array_dict: typing.Dict[BaseColormap, np.ndarray] = {}
 # TODO maybe replace with better cache structure

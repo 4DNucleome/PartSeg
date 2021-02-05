@@ -184,9 +184,7 @@ class BaseMainWindow(QMainWindow):
         if not self.channel_info:
             return [None for _ in range(channel_num)]
         colormaps_name = [self.settings.get_channel_info(self.channel_info, i) for i in range(channel_num)]
-        return [
-            ImageView.convert_to_vispy_colormap((name, self.settings.colormap_dict[name][0])) for name in colormaps_name
-        ]
+        return [self.settings.colormap_dict[name][0] for name in colormaps_name]
 
     def napari_viewer_show(self):
         viewer = Viewer(title="Additional output")
