@@ -464,11 +464,11 @@ class ColorComboBoxGroup(QWidget):
         return self.layout().count()
 
     @property
-    def selected_colormaps(self) -> typing.List[ColorMap]:
+    def selected_colormaps(self) -> typing.List[typing.Tuple[str, ColorMap]]:
         resp = []
         for i in range(self.layout().count()):
             el: ColorComboBox = self.layout().itemAt(i).widget()
-            resp.append(self.settings.colormap_dict[el.currentText()][0])
+            resp.append((el.currentText(), self.settings.colormap_dict[el.currentText()][0]))
 
         return resp
 

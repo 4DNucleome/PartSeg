@@ -339,8 +339,8 @@ class ImageView(QWidget):
         return self.image_state
 
     @staticmethod
-    def convert_to_vispy_colormap(colormap: ColorMap):
-        return Colormap(ColorArray(create_color_map(colormap) / 255))
+    def convert_to_vispy_colormap(colormap: Tuple[str, ColorMap]):
+        return colormap[0], Colormap(ColorArray(create_color_map(colormap[1]) / 255))
 
     def mask_opacity(self) -> float:
         """Get mask opacity"""
