@@ -516,6 +516,7 @@ class ColormapList(QWidget):
         if name not in self.colormap_map:
             raise ValueError(f"color with name {name} not found in any dict")
         del self.colormap_map[name]
+        self.refresh()
 
 
 class PColormapList(ColormapList):
