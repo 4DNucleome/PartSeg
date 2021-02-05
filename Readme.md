@@ -12,10 +12,9 @@
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![codecov](https://codecov.io/gh/4DNucleome/PartSeg/branch/master/graph/badge.svg?token=nbAbkOAe1C)](https://codecov.io/gh/4DNucleome/PartSeg)
 
-PartSeg is gui and library for segmentation algorithms.
+PartSeg is a GUI and a library for segmentation algorithms.
 
-This application is designed to help biologist with segmentation
-based on threshold and connected components
+This application is designed to help biologist with segmentation based on threshold and connected components.
 
 ![interface](images/roi_analysis.png)
 
@@ -32,38 +31,38 @@ based on threshold and connected components
     -   [Linux](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-linux.zip) (build on Ubuntu 18.04)
     -   [MacOS](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-macos.zip) (build on MacOS Mojave)
 
--   With pip (on linux you need to install `numpy` and `cython` earlier)
+-   With pip:
     -   From pypi: `pip install PartSeg[pyqt]`
     -   From repository: `pip install git+https://github.com/4DNucleome/PartSeg.git`
 
 ## Running
 
-If you download binaries look for `PartSeg_exec` file inside the `PartSeg` folder
+If you downloaded binaries, run the `PartSeg` (or `PartSeg.exe` for Windows) file inside the `PartSeg` folder
 
-If you install from repository or from pip you cat run it with `PartSeg` command or `python -m PartSeg`.
-First option do not work on Windows.
+If you installed from repository or from pip, you can run it with `PartSeg` command or `python -m PartSeg`.
+First option does not work on Windows.
 
 PartSeg export few commandline options:
 
--   `--no_report` - disable reporting errors to authors
--   `--no_dialog` - disable reporting errors to authors and showing error dialog. Use only when running from terminal.
+-   `--no_report` - disable error reporting
+-   `--no_dialog` - disable error reporting and error dialog. Use only when running from terminal.
 -   `segmentation_analysis` - skip launcher and start analysis gui
 -   `segmentation` - skip launcher and start segmentation gui
 
 ## napari plugin
 
-PartSeg provides napari plugins for io to allow read projects format in napari viewer.
+PartSeg provides napari plugins for io to allow reading projects format in napari viewer.
 
 ## Save Format
 
-Saved project are tar files compressed with gzip or bz2
+Saved projects are tar files compressed with gzip or bz2.
 
-Metadata are saved in data.json file (in json format)
-images/mask are saved as *.npy (numpy array format)
+Metadata is saved in data.json file (in json format).
+Images/masks are saved as *.npy (numpy array format).
 
 ## Interface
 
-Launcher. Chose program that you will launch:
+Launcher. Choose the program that you will launch:
 
 ![launcher](images/launcher.png)
 
@@ -75,7 +74,7 @@ Main window of Segmentation Analysis with view on measurement result:
 
 ![interface](images/roi_analysis2.png)
 
-Window for creating set of measurements:
+Window for creating a set of measurements:
 
 ![statistics](images/measurement.png)
 
@@ -85,5 +84,5 @@ Main window of Mask Segmentation:
 
 ## Laboratory
 
-Laboratory of functional and structural genomics
+Laboratory of Functional and Structural Genomics
 [http://4dnucleome.cent.uw.edu.pl/](http://4dnucleome.cent.uw.edu.pl/)
