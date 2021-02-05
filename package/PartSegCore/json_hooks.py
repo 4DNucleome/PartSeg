@@ -195,7 +195,7 @@ def profile_hook(dkt):
     if "__Serializable__" in dkt and dkt["__subtype__"] == "PartSegCore.color_image.base_colors.ColorPosition":
         return (dkt["color_position"], dkt["color"])
     if "__Serializable__" in dkt and dkt["__subtype__"] == "PartSegCore.color_image.base_colors.Color":
-        return (dkt["red"], dkt["green"], dkt["blue"])
+        return (dkt["red"] / 255, dkt["green"] / 255, dkt["blue"] / 255)
     if "__Colormap__" in dkt:
         del dkt["__Colormap__"]
         return Colormap(**dkt)

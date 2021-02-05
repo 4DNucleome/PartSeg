@@ -175,7 +175,7 @@ class ColormapEdit(QWidget):
         """
         self.color_list = []
         self.position_list = []
-        self.image = convert_colormap_to_image(Colormap((0, 0, 0), (1, 1, 1)))
+        self.image = convert_colormap_to_image(Colormap([(0, 0, 0), (1, 1, 1)]))
         self.repaint()
 
     def distribute_evenly(self):
