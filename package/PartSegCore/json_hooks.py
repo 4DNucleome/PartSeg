@@ -1,6 +1,8 @@
 import copy
 import typing
 
+from napari.utils import Colormap
+
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 
 from .class_generator import SerializeClassEncoder, serialize_hook
@@ -146,6 +148,14 @@ class ProfileEncoder(SerializeClassEncoder):
             return {"__RadiusType__": True, "value": o.value}
         if isinstance(o, ROIExtractionProfile):
             return {"__SegmentationProfile__": True, "name": o.name, "algorithm": o.algorithm, "values": o.values}
+        if isinstance(o, Colormap):
+            return {
+                "__Colormap__": True,
+                "name": o.name,
+                "colors": o.colors.tolist(),
+                "interpolation": o.interpolation,
+                "controls": o.controls.tolist(),
+            }
         return super().default(o)
 
 
@@ -179,6 +189,16 @@ def profile_hook(dkt):
         del dkt["algorithm_name"]
         del dkt["algorithm_values"]
         dkt["segmentation_parameters"] = {"algorithm_name": name, "values": par}
+    if "__Serializable__" in dkt and dkt["__subtype__"] == "PartSegCore.color_image.base_colors.ColorMap":
+        positions, colors = list(zip(*dkt["colormap"]))
+        return Colormap(colors, controls=positions)
+    if "__Serializable__" in dkt and dkt["__subtype__"] == "PartSegCore.color_image.base_colors.ColorPosition":
+        return (dkt["color_position"], dkt["color"])
+    if "__Serializable__" in dkt and dkt["__subtype__"] == "PartSegCore.color_image.base_colors.Color":
+        return (dkt["red"], dkt["green"], dkt["blue"])
+    if "__Colormap__" in dkt:
+        del dkt["__Colormap__"]
+        return Colormap(**dkt)
 
     return serialize_hook(dkt)
 

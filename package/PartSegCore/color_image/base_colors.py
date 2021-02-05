@@ -8,6 +8,22 @@ from PartSegCore.color_image.color_data import sitk_labels
 Num = typing.Union[int, float]
 
 
+class Color(typing.NamedTuple):
+    """
+    store color information
+
+    :param red: red color value
+    :param green: green color value
+    :param blue: blue color value
+    :param alpha: alpha value
+    """
+
+    red: float
+    green: float
+    blue: float
+    alpha: float = 1
+
+
 default_colormap_dict = {}
 default_colormap_dict.update(AVAILABLE_COLORMAPS)
 default_colormap_dict.update(

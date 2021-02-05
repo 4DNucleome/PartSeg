@@ -9,7 +9,6 @@ import PartSegData
 from PartSeg.common_backend.base_settings import BaseSettings, ColormapDict, ViewSettings
 from PartSeg.common_gui.channel_control import ChannelProperty
 from PartSeg.common_gui.colormap_creator import (
-    Color,
     ColormapCreator,
     ColormapEdit,
     ColormapList,
@@ -19,7 +18,7 @@ from PartSeg.common_gui.colormap_creator import (
     qcolor_from_color,
 )
 from PartSeg.common_gui.napari_image_view import ImageView
-from PartSegCore.color_image.base_colors import starting_colors
+from PartSegCore.color_image.base_colors import Color, starting_colors
 from PartSegImage import TiffImageReader
 
 

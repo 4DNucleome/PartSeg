@@ -1,7 +1,7 @@
 import bisect
 from functools import partial
 from math import ceil
-from typing import Dict, Iterable, List, NamedTuple, Optional, Set, Tuple
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import numpy as np
 from napari.utils import Colormap
@@ -34,14 +34,8 @@ from PartSeg.common_backend.base_settings import ViewSettings
 from PartSeg.common_gui.icon_selector import IconSelector
 from PartSeg.common_gui.numpy_qimage import convert_colormap_to_image
 from PartSeg.common_gui.universal_gui_part import InfoLabel
+from PartSegCore.color_image.base_colors import Color
 from PartSegCore.custom_name_generate import custom_name_generate
-
-
-class Color(NamedTuple):
-    red: float
-    green: float
-    blue: float
-    alpha: float = 1
 
 
 def color_from_qcolor(color: QColor) -> Color:
