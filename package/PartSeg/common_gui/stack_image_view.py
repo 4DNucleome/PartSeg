@@ -74,9 +74,9 @@ class ColorBar(QLabel):
         # print(self.range, self.round_range)
         data = np.linspace(0, 1, 512)
         interpolated = cmap.map(data)
-        data = (data ** gamma) * 255
+        data = data ** gamma
         colormap = Colormap(interpolated, controls=data)
-        self.image = NumpyQImage(np.array(make_colorbar(colormap, size=(1, 512))))
+        self.image = NumpyQImage(np.array(make_colorbar(colormap, size=(512, 1), horizontal=False)[::-1]))
         self.repaint()
 
     @staticmethod
