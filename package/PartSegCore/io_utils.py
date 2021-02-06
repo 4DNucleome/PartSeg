@@ -12,6 +12,7 @@ from tarfile import TarFile, TarInfo
 import imageio
 import numpy as np
 import tifffile
+from napari.utils import Colormap
 
 from PartSegCore.json_hooks import ProfileDict, profile_hook
 from PartSegImage import ImageWriter
@@ -217,9 +218,17 @@ class UpdateLoadedMetadataBase:
         if isinstance(data, dict):
             for key in data.keys():
                 data[key] = cls.recursive_update(data[key])
+                if key == "custom_colormap":
+                    cls.update_colormaps(data[key])
         if isinstance(data, ProfileDict):
             data.my_dict = cls.recursive_update(data.my_dict)
         return data
+
+    @staticmethod
+    def update_colormaps(dkt: dict):
+        for key, val in dkt.items():
+            if isinstance(val, Colormap):
+                val.name = key
 
     @classmethod
     def update_enum(cls, enum_data: Enum):

@@ -3,6 +3,8 @@ from math import log
 from typing import List, Union
 
 import numpy as np
+from napari.utils import Colormap
+from napari.utils.colormaps import make_colorbar
 from qtpy import QtGui
 from qtpy.QtCore import QRect, QSize
 from qtpy.QtGui import QIcon, QPainter
@@ -10,7 +12,6 @@ from qtpy.QtWidgets import QLabel, QToolButton
 
 from PartSeg.common_gui.numpy_qimage import NumpyQImage
 from PartSegCore.class_generator import enum_register
-from PartSegCore.color_image.color_image_base import color_bar_fun
 from PartSegData import icons_dir
 
 from ..common_backend.base_settings import ViewSettings
@@ -72,9 +73,10 @@ class ColorBar(QLabel):
             self.round_range = self.round_range[0], self.round_range[1] - round_factor
         # print(self.range, self.round_range)
         data = np.linspace(0, 1, 512)
-        data = (data ** gamma) * 255
-        img = color_bar_fun(data.reshape((1, 512))[:, ::-1], cmap)
-        self.image = NumpyQImage(np.swapaxes(img, 0, 1))
+        interpolated = cmap.map(data)
+        data = data ** gamma
+        colormap = Colormap(interpolated, controls=data)
+        self.image = NumpyQImage(np.array(make_colorbar(colormap, size=(512, 1), horizontal=False)[::-1]))
         self.repaint()
 
     @staticmethod

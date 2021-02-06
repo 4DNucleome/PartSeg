@@ -23,7 +23,7 @@ from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QToolTip, QVBo
 from vispy.color import Color, ColorArray, Colormap
 from vispy.scene import BaseCamera
 
-from PartSegCore.color_image import ColorMap, calculate_borders, create_color_map
+from PartSegCore.color_image import calculate_borders
 from PartSegCore.image_operations import NoiseFilterType, gaussian, median
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
@@ -338,10 +338,6 @@ class ImageView(QWidget):
     def get_control_view(self) -> ImageShowState:
         return self.image_state
 
-    @staticmethod
-    def convert_to_vispy_colormap(colormap: ColorMap):
-        return Colormap(ColorArray(create_color_map(colormap) / 255))
-
     def mask_opacity(self) -> float:
         """Get mask opacity"""
         return self.settings.get_from_profile("mask_presentation_opacity", 1)
@@ -580,9 +576,7 @@ class ImageView(QWidget):
         ranges = image.get_ranges()
         limits = [ranges[i] if x is None else x for i, x in zip(range(image.channels), limits)]
         gamma = self.channel_control.get_gamma()
-        colormaps = [
-            self.convert_to_vispy_colormap(self.channel_control.selected_colormaps[i]) for i in range(image.channels)
-        ]
+        colormaps = [self.channel_control.selected_colormaps[i] for i in range(image.channels)]
         parameters = ImageParameters(
             limits, visibility, gamma, colormaps, image.normalized_scaling(), len(self.viewer.layers)
         )
@@ -642,9 +636,7 @@ class ImageView(QWidget):
             if len(image_info.layers) > index:
                 image_info.layers[index].visible = self.channel_control.channel_visibility[index]
                 if self.channel_control.channel_visibility[index]:
-                    image_info.layers[index].colormap = self.convert_to_vispy_colormap(
-                        self.channel_control.selected_colormaps[index]
-                    )
+                    image_info.layers[index].colormap = self.channel_control.selected_colormaps[index]
                     limits = self.channel_control.get_limits()[index]
                     limits = image_info.image.get_ranges()[index] if limits is None else limits
                     image_info.layers[index].contrast_limits = limits
