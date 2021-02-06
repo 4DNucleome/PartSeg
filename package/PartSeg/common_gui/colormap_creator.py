@@ -60,18 +60,7 @@ class ColormapEdit(QWidget):
         self.color_list: List[Color] = []
         self.position_list: List[float] = []
         self.move_ind = None
-        self.image = convert_colormap_to_image(
-            Colormap(
-                [
-                    (
-                        0,
-                        0,
-                        0,
-                    ),
-                    (1, 1, 1),
-                ]
-            )
-        )
+        self.image = convert_colormap_to_image(Colormap([(0, 0, 0)]))
         self.setMinimumHeight(60)
 
     def paintEvent(self, a0: QPaintEvent) -> None:
