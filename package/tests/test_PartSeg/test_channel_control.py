@@ -2,6 +2,7 @@ import platform
 
 import numpy as np
 import pytest
+from napari.utils.colormaps import make_colorbar
 from qtpy import PYQT5
 from qtpy.QtCore import QPoint, Qt
 from qtpy.QtGui import QImage
@@ -11,7 +12,6 @@ from PartSeg.common_backend.base_settings import BaseSettings, ColormapDict, Vie
 from PartSeg.common_gui.channel_control import ChannelProperty, ColorComboBox, ColorComboBoxGroup
 from PartSeg.common_gui.napari_image_view import ImageView
 from PartSegCore.color_image.base_colors import starting_colors
-from PartSegCore.color_image.color_image_base import color_bar_fun
 from PartSegCore.image_operations import NoiseFilterType
 from PartSegImage import TiffImageReader
 
@@ -21,14 +21,14 @@ if PYQT5:
 
     def array_from_image(image: QImage):
         size = image.size().width() * image.size().height()
-        return np.frombuffer(image.bits().asstring(size * 3), dtype=np.uint8)
+        return np.frombuffer(image.bits().asstring(size * image.depth() // 8), dtype=np.uint8)
 
 
 else:
 
     def array_from_image(image: QImage):
         size = image.size().width() * image.size().height()
-        return np.frombuffer(image.bits(), dtype=np.uint8, count=size * 3)
+        return np.frombuffer(image.bits(), dtype=np.uint8, count=size * image.depth() // 8)
 
 
 def test_color_combo_box(qtbot):
@@ -46,7 +46,12 @@ def test_color_combo_box(qtbot):
     index = 3
     with qtbot.waitSignal(box.currentTextChanged):
         box.set_color(starting_colors[index])
-    img = color_bar_fun(np.linspace(0, 256, 512, endpoint=False).reshape((1, 512, 1)), dkt[starting_colors[index]][0])
+    img = np.array(make_colorbar(dkt[starting_colors[index]][0], size=(1, 512)))
+    print(array_from_image(box.image), array_from_image(box.image).size)
+    print(img)
+    print(img.flatten(), img.size, img.shape)
+    print(dkt[starting_colors[index]][0])
+    print(box.image, box.image.size(), box.image.depth())
     assert np.all(array_from_image(box.image) == img.flatten())
 
 

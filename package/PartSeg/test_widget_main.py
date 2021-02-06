@@ -1,23 +1,17 @@
 import sys
 
 import numpy as np
-from qtpy.QtWidgets import QApplication, QWidget
+from qtpy.QtWidgets import QApplication
 
 import PartSegData
-from PartSeg.common_gui.channel_control import GammaInfoWidget
+from PartSeg.common_gui.colormap_creator import ColormapCreator
 
 color_maps = np.load(PartSegData.colors_file)
 
 
-class TestWidget(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.widget = GammaInfoWidget(100, 10)
-
-
 def main():
     app = QApplication(sys.argv)
-    widget = GammaInfoWidget(300, 20)
+    widget = ColormapCreator()
     widget.show()
     app.exec_()
 

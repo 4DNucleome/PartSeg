@@ -1,0 +1,550 @@
+{
+  "__ProfileDict__": true,
+  "default": {
+    "custom_colormap": {
+      "custom_rzy4sE18lw": {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.color_image.base_colors.ColorMap",
+        "colormap": [
+          {
+            "__Serializable__": true,
+            "__subtype__": "PartSegCore.color_image.base_colors.ColorPosition",
+            "color_position": 0.0,
+            "color": {
+              "__Serializable__": true,
+              "__subtype__": "PartSegCore.color_image.base_colors.Color",
+              "red": 0,
+              "green": 0,
+              "blue": 0
+            }
+          },
+          {
+            "__Serializable__": true,
+            "__subtype__": "PartSegCore.color_image.base_colors.ColorPosition",
+            "color_position": 0.3333333333333333,
+            "color": {
+              "__Serializable__": true,
+              "__subtype__": "PartSegCore.color_image.base_colors.Color",
+              "red": 0,
+              "green": 0,
+              "blue": 255
+            }
+          },
+          {
+            "__Serializable__": true,
+            "__subtype__": "PartSegCore.color_image.base_colors.ColorPosition",
+            "color_position": 0.6666666666666666,
+            "color": {
+              "__Serializable__": true,
+              "__subtype__": "PartSegCore.color_image.base_colors.Color",
+              "red": 255,
+              "green": 255,
+              "blue": 0
+            }
+          },
+          {
+            "__Serializable__": true,
+            "__subtype__": "PartSegCore.color_image.base_colors.ColorPosition",
+            "color_position": 1.0,
+            "color": {
+              "__Serializable__": true,
+              "__subtype__": "PartSegCore.color_image.base_colors.Color",
+              "red": 170,
+              "green": 85,
+              "blue": 0
+            }
+          }
+        ],
+        "points": []
+      },
+      "custom_ZM0naoF24j": {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.color_image.base_colors.ColorMap",
+        "colormap": [
+          {
+            "__Serializable__": true,
+            "__subtype__": "PartSegCore.color_image.base_colors.ColorPosition",
+            "color_position": 0.0,
+            "color": {
+              "__Serializable__": true,
+              "__subtype__": "PartSegCore.color_image.base_colors.Color",
+              "red": 0,
+              "green": 0,
+              "blue": 0
+            }
+          },
+          {
+            "__Serializable__": true,
+            "__subtype__": "PartSegCore.color_image.base_colors.ColorPosition",
+            "color_position": 0.25,
+            "color": {
+              "__Serializable__": true,
+              "__subtype__": "PartSegCore.color_image.base_colors.Color",
+              "red": 85,
+              "green": 255,
+              "blue": 0
+            }
+          },
+          {
+            "__Serializable__": true,
+            "__subtype__": "PartSegCore.color_image.base_colors.ColorPosition",
+            "color_position": 0.5,
+            "color": {
+              "__Serializable__": true,
+              "__subtype__": "PartSegCore.color_image.base_colors.Color",
+              "red": 255,
+              "green": 255,
+              "blue": 0
+            }
+          },
+          {
+            "__Serializable__": true,
+            "__subtype__": "PartSegCore.color_image.base_colors.ColorPosition",
+            "color_position": 0.75,
+            "color": {
+              "__Serializable__": true,
+              "__subtype__": "PartSegCore.color_image.base_colors.Color",
+              "red": 255,
+              "green": 85,
+              "blue": 0
+            }
+          },
+          {
+            "__Serializable__": true,
+            "__subtype__": "PartSegCore.color_image.base_colors.ColorPosition",
+            "color_position": 1.0,
+            "color": {
+              "__Serializable__": true,
+              "__subtype__": "PartSegCore.color_image.base_colors.Color",
+              "red": 255,
+              "green": 85,
+              "blue": 255
+            }
+          }
+        ],
+        "points": []
+      },
+      "custom_b0u0qiWLPr": {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.color_image.base_colors.ColorMap",
+        "colormap": [
+          {
+            "__Serializable__": true,
+            "__subtype__": "PartSegCore.color_image.base_colors.ColorPosition",
+            "color_position": 0.0,
+            "color": {
+              "__Serializable__": true,
+              "__subtype__": "PartSegCore.color_image.base_colors.Color",
+              "red": 0,
+              "green": 0,
+              "blue": 0
+            }
+          },
+          {
+            "__Serializable__": true,
+            "__subtype__": "PartSegCore.color_image.base_colors.ColorPosition",
+            "color_position": 0.25,
+            "color": {
+              "__Serializable__": true,
+              "__subtype__": "PartSegCore.color_image.base_colors.Color",
+              "red": 255,
+              "green": 255,
+              "blue": 0
+            }
+          },
+          {
+            "__Serializable__": true,
+            "__subtype__": "PartSegCore.color_image.base_colors.ColorPosition",
+            "color_position": 0.5,
+            "color": {
+              "__Serializable__": true,
+              "__subtype__": "PartSegCore.color_image.base_colors.Color",
+              "red": 255,
+              "green": 170,
+              "blue": 0
+            }
+          },
+          {
+            "__Serializable__": true,
+            "__subtype__": "PartSegCore.color_image.base_colors.ColorPosition",
+            "color_position": 0.75,
+            "color": {
+              "__Serializable__": true,
+              "__subtype__": "PartSegCore.color_image.base_colors.Color",
+              "red": 255,
+              "green": 85,
+              "blue": 255
+            }
+          },
+          {
+            "__Serializable__": true,
+            "__subtype__": "PartSegCore.color_image.base_colors.ColorPosition",
+            "color_position": 1.0,
+            "color": {
+              "__Serializable__": true,
+              "__subtype__": "PartSegCore.color_image.base_colors.Color",
+              "red": 85,
+              "green": 0,
+              "blue": 255
+            }
+          }
+        ],
+        "points": []
+      }
+    },
+    "custom_label_colors": {
+      "custom_C6IN7g50aN": [
+        [
+          255,
+          255,
+          0
+        ],
+        [
+          0,
+          170,
+          0
+        ]
+      ],
+      "custom_eRJelZcZRS": [
+        [
+          170,
+          85,
+          255
+        ],
+        [
+          170,
+          85,
+          0
+        ],
+        [
+          255,
+          255,
+          0
+        ]
+      ],
+      "custom_NjzKiUpV0l": [
+        [
+          170,
+          170,
+          0
+        ],
+        [
+          0,
+          85,
+          0
+        ],
+        [
+          255,
+          255,
+          0
+        ],
+        [
+          255,
+          0,
+          0
+        ],
+        [
+          85,
+          255,
+          0
+        ],
+        [
+          0,
+          85,
+          255
+        ]
+      ]
+    },
+    "raw_image": {
+      "image_state": {
+        "opacity": 1.0,
+        "show_label": {
+          "__Enum__": true,
+          "__subtype__": "PartSeg.common_gui.napari_image_view.LabelEnum",
+          "value": 1
+        },
+        "only_border": 2,
+        "border_thick": 1
+      },
+      "range_0": [
+        0,
+        40000
+      ],
+      "use_gauss_0": false,
+      "gauss_radius_0": 1.0,
+      "lock_0": 0,
+      "channels_count": 4,
+      "cmap0": "BlackRed",
+      "cmap1": "custom_rzy4sE18lw",
+      "lock_1": 0,
+      "use_gauss_1": false,
+      "cmap2": "BlackMagenta",
+      "lock_2": 0,
+      "use_gauss_2": false,
+      "cmap3": "BlackMagenta",
+      "lock_3": false,
+      "use_gauss_3": false,
+      "gauss_radius_1": 1,
+      "gauss_radius_2": 1,
+      "gauss_radius_3": 1,
+      "use_filter_0": {
+        "__Enum__": true,
+        "__subtype__": "PartSegCore.image_operations.NoiseFilterType",
+        "value": 1
+      },
+      "filter_radius_0": 1.0,
+      "use_filter_1": {
+        "__Enum__": true,
+        "__subtype__": "PartSegCore.image_operations.NoiseFilterType",
+        "value": 1
+      },
+      "use_filter_2": {
+        "__Enum__": true,
+        "__subtype__": "PartSegCore.image_operations.NoiseFilterType",
+        "value": 0
+      },
+      "use_filter_3": {
+        "__Enum__": true,
+        "__subtype__": "PartSegCore.image_operations.NoiseFilterType",
+        "value": 0
+      },
+      "filter_radius_1": 1.0,
+      "filter_radius_2": 1.0,
+      "filter_radius_3": 1.0,
+      "range_1": [
+        0,
+        40000
+      ],
+      "range_3": [
+        0,
+        65000
+      ],
+      "gamma_value_0": 1.0,
+      "gamma_value_1": 1.0,
+      "gamma_value_2": 1,
+      "gamma_value_3": 1,
+      "range_2": [
+        0,
+        65000
+      ]
+    },
+    "mask_presentation": [
+      "white",
+      1
+    ],
+    "result_image": {
+      "image_state": {
+        "opacity": 0.9,
+        "show_label": {
+          "__Enum__": true,
+          "__subtype__": "PartSeg.common_gui.napari_image_view.LabelEnum",
+          "value": 1
+        },
+        "only_border": 2,
+        "border_thick": 1
+      },
+      "range_0": [
+        0,
+        65000
+      ],
+      "use_gauss_0": false,
+      "gauss_radius_0": 1,
+      "lock_0": 0,
+      "channels_count": 4,
+      "cmap0": "BlackGreen",
+      "cmap1": "BlackBlue",
+      "lock_1": 0,
+      "use_gauss_1": false,
+      "cmap2": "BlackBlue",
+      "lock_2": 0,
+      "use_gauss_2": false,
+      "cmap3": "BlackMagenta",
+      "lock_3": 0,
+      "use_gauss_3": false,
+      "gauss_radius_1": 1,
+      "gauss_radius_2": 1,
+      "gauss_radius_3": 1,
+      "use_filter_0": {
+        "__Enum__": true,
+        "__subtype__": "PartSegCore.image_operations.NoiseFilterType",
+        "value": 0
+      },
+      "filter_radius_0": 5.0,
+      "use_filter_1": {
+        "__Enum__": true,
+        "__subtype__": "PartSegCore.image_operations.NoiseFilterType",
+        "value": 0
+      },
+      "use_filter_2": {
+        "__Enum__": true,
+        "__subtype__": "PartSegCore.image_operations.NoiseFilterType",
+        "value": 0
+      },
+      "use_filter_3": {
+        "__Enum__": true,
+        "__subtype__": "PartSegCore.image_operations.NoiseFilterType",
+        "value": 1
+      },
+      "filter_radius_1": 1.0,
+      "filter_radius_2": 1.4,
+      "filter_radius_3": 1.0,
+      "range_1": [
+        10000,
+        65000
+      ],
+      "range_3": [
+        7900,
+        39000
+      ],
+      "range_2": [
+        0,
+        65000
+      ],
+      "gamma_value_0": 1.0,
+      "gamma_value_1": 1.0,
+      "gamma_value_2": 1,
+      "gamma_value_3": 1.0
+    },
+    "custom_colors": [
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.color_image.base_colors.Color",
+        "red": 255,
+        "green": 255,
+        "blue": 255
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.color_image.base_colors.Color",
+        "red": 255,
+        "green": 255,
+        "blue": 255
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.color_image.base_colors.Color",
+        "red": 10,
+        "green": 40,
+        "blue": 12
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.color_image.base_colors.Color",
+        "red": 255,
+        "green": 255,
+        "blue": 255
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.color_image.base_colors.Color",
+        "red": 255,
+        "green": 255,
+        "blue": 255
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.color_image.base_colors.Color",
+        "red": 255,
+        "green": 255,
+        "blue": 255
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.color_image.base_colors.Color",
+        "red": 255,
+        "green": 255,
+        "blue": 255
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.color_image.base_colors.Color",
+        "red": 100,
+        "green": 4,
+        "blue": 220
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.color_image.base_colors.Color",
+        "red": 255,
+        "green": 255,
+        "blue": 255
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.color_image.base_colors.Color",
+        "red": 255,
+        "green": 255,
+        "blue": 255
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.color_image.base_colors.Color",
+        "red": 255,
+        "green": 255,
+        "blue": 255
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.color_image.base_colors.Color",
+        "red": 255,
+        "green": 255,
+        "blue": 255
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.color_image.base_colors.Color",
+        "red": 255,
+        "green": 255,
+        "blue": 255
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.color_image.base_colors.Color",
+        "red": 255,
+        "green": 255,
+        "blue": 255
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.color_image.base_colors.Color",
+        "red": 255,
+        "green": 255,
+        "blue": 255
+      },
+      {
+        "__Serializable__": true,
+        "__subtype__": "PartSegCore.color_image.base_colors.Color",
+        "red": 255,
+        "green": 255,
+        "blue": 255
+      }
+    ],
+    "colormaps": [
+      "BlackRed",
+      "BlackGreen",
+      "BlackBlue",
+      "BlackMagenta",
+      "Grayscale",
+      "inferno",
+      "magma",
+      "plasma",
+      "viridis",
+      "custom_ZM0naoF24j",
+      "custom_rzy4sE18lw",
+      "custom_b0u0qiWLPr"
+    ],
+    "hide_left_panel": false,
+    "batch_window_geometry": "01d9d0cb00030000000012820000015800001755000003d8000012820000017d00001755000003d800000002000000000780000012820000017d00001755000003d8",
+    "main_window_geometry": "01d9d0cb0003000000000a82000000db000010f5000004a400000a8200000100000010f5000004a400000000000000000a0000000a8200000100000010f5000004a4",
+    "advanced_window_geometry": "01d9d0cb0003000000000aa50000020700000f320000051700000aa50000020700000f320000051700000000000000000a0000000aa50000020700000f3200000517",
+    "mask_presentation_color": [
+      255,
+      255,
+      0
+    ],
+    "mask_presentation_opacity": 0.8,
+    "labels_used": "default",
+    "theme": "light",
+    "mask_presentation   _opacity": 1
+  }
+}

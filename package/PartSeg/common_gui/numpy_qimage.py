@@ -1,12 +1,11 @@
 import typing
 
 import numpy as np
+from napari.utils import Colormap
+from napari.utils.colormaps import make_colorbar
 from qtpy.QtGui import QImage
 
-from PartSegCore.color_image import BaseColormap, create_color_map, resolution
-from PartSegCore.color_image.color_image_base import color_bar_fun
-
-ColorMapDict = typing.MutableMapping[str, typing.Tuple[BaseColormap, bool]]
+ColorMapDict = typing.MutableMapping[str, typing.Tuple[Colormap, bool]]
 
 
 class NumpyQImage(QImage):
@@ -20,30 +19,19 @@ class NumpyQImage(QImage):
             image.shape[1],
             image.shape[0],
             image.dtype.itemsize * image.shape[1] * image.shape[2],
-            QImage.Format_RGB888,
+            QImage.Format_RGBA8888,
         )
         self.image = image
 
 
-def colormap_array_to_image(array: np.ndarray) -> NumpyQImage:
-    """
-    Convert colormap in array format (:py:data:`.resolution`, 3) to :py:class:`~.NumpyQImage` instance
-    """
-    if array.shape != (resolution, 3):
-        raise ValueError(f"Wrong shape ({array.shape}) of colormap")
-    img = color_bar_fun(np.linspace(0, 256, 512, endpoint=False).reshape((1, 512)), array)
-    return NumpyQImage(img)
-
-
-def convert_colormap_to_image(colormap: BaseColormap) -> NumpyQImage:
+def convert_colormap_to_image(colormap: Colormap) -> NumpyQImage:
     """
     convert colormap to image of size (512, 1)
 
     :param colormap: colormap to convert
     :return: Color Bar image
     """
-    color_array = create_color_map(colormap)
-    return colormap_array_to_image(color_array)
+    return NumpyQImage(np.array(make_colorbar(colormap, size=(1, 512))))
 
 
 def create_colormap_image(colormap: str, color_dict: ColorMapDict) -> NumpyQImage:

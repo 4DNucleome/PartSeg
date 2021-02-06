@@ -2,6 +2,7 @@ import dataclasses
 import itertools
 import os
 from copy import deepcopy
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -25,7 +26,7 @@ def data_test_dir():
 @pytest.fixture(scope="module")
 def bundle_test_dir():
     """Return path to directory with test data"""
-    return os.path.join(os.path.dirname(__file__), "test_data")
+    return Path(os.path.join(os.path.dirname(__file__), "test_data"))
 
 
 @pytest.fixture

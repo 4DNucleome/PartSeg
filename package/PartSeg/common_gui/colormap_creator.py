@@ -4,6 +4,7 @@ from math import ceil
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import numpy as np
+from napari.utils import Colormap
 from qtpy.QtCore import QPointF, QRect, Qt, Signal
 from qtpy.QtGui import (
     QBrush,
@@ -22,6 +23,7 @@ from qtpy.QtWidgets import (
     QColorDialog,
     QGridLayout,
     QHBoxLayout,
+    QLabel,
     QPushButton,
     QScrollArea,
     QToolButton,
@@ -33,18 +35,18 @@ from PartSeg.common_backend.base_settings import ViewSettings
 from PartSeg.common_gui.icon_selector import IconSelector
 from PartSeg.common_gui.numpy_qimage import convert_colormap_to_image
 from PartSeg.common_gui.universal_gui_part import InfoLabel
-from PartSegCore.color_image import BaseColormap, Color, ColorMap, ColorPosition
+from PartSegCore.color_image.base_colors import Color
 from PartSegCore.custom_name_generate import custom_name_generate
 
 
 def color_from_qcolor(color: QColor) -> Color:
     """Convert :py:class:`PyQt5.QtGui.QColor` to :py:class:`.Color`"""
-    return Color(color.red(), color.green(), color.blue())
+    return Color(color.red() / 255, color.green() / 255, color.blue() / 255, color.alpha() / 255)
 
 
 def qcolor_from_color(color: Color) -> QColor:
     """Convert :py:class:`.Color` to :py:class:`PyQt5.QtGui.QColor`"""
-    return QColor(color.red, color.green, color.blue)
+    return QColor(color.red * 255, color.green * 255, color.blue * 255, color.alpha * 255)
 
 
 class ColormapEdit(QWidget):
@@ -59,9 +61,7 @@ class ColormapEdit(QWidget):
         self.color_list: List[Color] = []
         self.position_list: List[float] = []
         self.move_ind = None
-        self.image = convert_colormap_to_image(
-            ColorMap((ColorPosition(0, Color(0, 0, 0)), ColorPosition(1, Color(255, 255, 255))))
-        )
+        self.image = convert_colormap_to_image(Colormap([(0, 0, 0)]))
         self.setMinimumHeight(60)
 
     def paintEvent(self, a0: QPaintEvent) -> None:
@@ -89,12 +89,10 @@ class ColormapEdit(QWidget):
 
     def _get_color_ind(self, ratio) -> Optional[int]:
         ind = bisect.bisect_left(self.position_list, ratio)
-        if len(self.position_list) > ind:
-            if abs(self.position_list[ind] - ratio) < 0.01:
-                return ind
-        if len(self.position_list) > 0 and ind > 0:
-            if abs(self.position_list[ind - 1] - ratio) < 0.01:
-                return ind - 1
+        if len(self.position_list) > ind and abs(self.position_list[ind] - ratio) < 0.01:
+            return ind
+        if len(self.position_list) > 0 and ind > 0 and abs(self.position_list[ind - 1] - ratio) < 0.01:
+            return ind - 1
         return None
 
     def _get_ratio(self, e: QMouseEvent, margin=10):
@@ -149,16 +147,16 @@ class ColormapEdit(QWidget):
             return
         self.double_clicked.emit(ratio)
 
-    def add_color(self, color: ColorPosition):
+    def add_color(self, position: float, color: Color):
         """
         Add color to current colormap
 
         :param color: Color with position.
 
         """
-        ind = bisect.bisect_left(self.position_list, color.color_position)
-        self.color_list.insert(ind, color.color)
-        self.position_list.insert(ind, color.color_position)
+        ind = bisect.bisect_left(self.position_list, position)
+        self.color_list.insert(ind, color)
+        self.position_list.insert(ind, position)
         self.refresh()
 
     def clear(self):
@@ -167,9 +165,7 @@ class ColormapEdit(QWidget):
         """
         self.color_list = []
         self.position_list = []
-        self.image = convert_colormap_to_image(
-            ColorMap((ColorPosition(0, Color(0, 0, 0)), ColorPosition(1, Color(255, 255, 255))))
-        )
+        self.image = convert_colormap_to_image(Colormap([(0, 0, 0), (1, 1, 1)]))
         self.repaint()
 
     def distribute_evenly(self):
@@ -181,15 +177,15 @@ class ColormapEdit(QWidget):
         self.refresh()
 
     @property
-    def colormap(self) -> ColorMap:
+    def colormap(self) -> Colormap:
         """colormap getter"""
-        return ColorMap(tuple([ColorPosition(x, y) for x, y in zip(self.position_list, self.color_list)]))
+        return Colormap(colors=self.color_list, controls=self.position_list)
 
     @colormap.setter
-    def colormap(self, val: ColorMap):
+    def colormap(self, val: Colormap):
         """colormap setter"""
-        self.position_list = [x.color_position for x in val]
-        self.color_list = [x.color for x in val]
+        self.position_list = val.controls.tolist()
+        self.color_list = val.colors.tolist()
         self.refresh()
 
     def reverse(self):
@@ -203,7 +199,7 @@ class ColormapCreator(QWidget):
     Widget for creating colormap.
     """
 
-    colormap_selected = Signal(ColorMap)
+    colormap_selected = Signal(Colormap)
     """
     emitted on save button click. Contains current colormap in format accepted by :py:func:`create_color_map`
     """
@@ -247,17 +243,17 @@ class ColormapCreator(QWidget):
 
     def add_color(self, pos):
         color = self.color_picker.currentColor()
-        self.show_colormap.add_color(ColorPosition(pos, color_from_qcolor(color)))
+        self.show_colormap.add_color(pos, color_from_qcolor(color))
 
     def save(self):
         if self.show_colormap.colormap:
             self.colormap_selected.emit(self.show_colormap.colormap)
 
-    def current_colormap(self) -> ColorMap:
+    def current_colormap(self) -> Colormap:
         """:return: current colormap"""
         return self.show_colormap.colormap
 
-    def set_colormap(self, colormap: ColorMap):
+    def set_colormap(self, colormap: Colormap):
         """set current colormap"""
         self.show_colormap.colormap = colormap
         self.show_colormap.refresh()
@@ -272,7 +268,7 @@ class PColormapCreator(ColormapCreator):
         super().__init__()
         self.settings = settings
         for i, el in enumerate(settings.get_from_profile("custom_colors", [])):
-            self.color_picker.setCustomColor(i, qcolor_from_color(el))
+            self.color_picker.setCustomColor(i, qcolor_from_color(Color(*el)))
         self.prohibited_names = set(self.settings.colormap_dict.keys())  # Prohibited name is added to reduce
         # probability of colormap cache collision
 
@@ -307,12 +303,12 @@ class ChannelPreview(QWidget):
 
     selection_changed = Signal(str, bool)
     """checkbox selection changed (name)"""
-    edit_request = Signal([str], [ColorMap])
+    edit_request = Signal([str], [Colormap])
     """send after pressing edit signal (name) (ColorMap object)"""
     remove_request = Signal(str)
     """Signal with name of colormap (name)"""
 
-    def __init__(self, colormap: BaseColormap, accepted: bool, name: str, removable: bool = False, used: bool = False):
+    def __init__(self, colormap: Colormap, accepted: bool, name: str, removable: bool = False, used: bool = False):
         super().__init__()
         self.image = convert_colormap_to_image(colormap)
         self.name = name
@@ -320,6 +316,8 @@ class ChannelPreview(QWidget):
         self.checked = QCheckBox()
         self.checked.setChecked(accepted)
         self.checked.setDisabled(used)
+        self.label = QLabel(name)
+        self.label.setFixedWidth(150)
         self.setMinimumWidth(80)
         metrics = QFontMetrics(QFont())
         layout = QHBoxLayout()
@@ -337,17 +335,19 @@ class ChannelPreview(QWidget):
         self.edit_btn.setIcon(_icon_selector.edit_icon)
         layout.addWidget(self.remove_btn)
         layout.addWidget(self.edit_btn)
+        layout.addWidget(self.label)
         self.setLayout(layout)
         self.checked.stateChanged.connect(self._selection_changed)
         self.edit_btn.clicked.connect(partial(self.edit_request.emit, name))
-        if isinstance(colormap, ColorMap):
-            self.edit_btn.clicked.connect(partial(self.edit_request[ColorMap].emit, colormap))
+        if len(colormap.controls) < 20:
+            self.edit_btn.clicked.connect(partial(self.edit_request[Colormap].emit, colormap))
             self.edit_btn.setToolTip("Create colormap base on this")
         else:
             self.edit_btn.setDisabled(True)
             self.edit_btn.setToolTip("This colormap is not editable")
         self.remove_btn.clicked.connect(partial(self.remove_request.emit, name))
         self.setMinimumHeight(max(metrics.height(), self.edit_btn.minimumHeight(), self.checked.minimumHeight()) + 20)
+        self.setToolTip(self.name)
 
     def _selection_changed(self, _=None):
         chk = self.checked.isChecked()
@@ -393,7 +393,7 @@ class ColormapList(QWidget):
     Show list of colormaps
     """
 
-    edit_signal = Signal(ColorMap)
+    edit_signal = Signal(Colormap)
     """Colormap for edit"""
 
     remove_signal = Signal(str)
@@ -402,7 +402,7 @@ class ColormapList(QWidget):
     visibility_colormap_change = Signal(str, bool)
     """Hide or show colormap"""
 
-    def __init__(self, colormap_map: Dict[str, Tuple[ColorMap, bool]], selected: Optional[Iterable[str]] = None):
+    def __init__(self, colormap_map: Dict[str, Tuple[Colormap, bool]], selected: Optional[Iterable[str]] = None):
         super().__init__()
         if selected is None:
             self._selected = set()
@@ -448,7 +448,7 @@ class ColormapList(QWidget):
         return self._blocked
 
     def _get_columns(self):
-        return max(1, self.width() // 400)
+        return max(1, self.width() // 500)
 
     def resizeEvent(self, event: QResizeEvent):
         if self._get_columns() != self.current_columns:
@@ -465,7 +465,7 @@ class ColormapList(QWidget):
                 cache_dict[el.name] = el
             else:
                 el.deleteLater()
-                el.edit_request[ColorMap].disconnect()
+                el.edit_request[Colormap].disconnect()
                 el.remove_request.disconnect()
                 el.selection_changed.disconnect()
         selected = self.get_selected()
@@ -478,7 +478,7 @@ class ColormapList(QWidget):
                 widget.set_chosen(name in selected)
             else:
                 widget = ChannelPreview(colormap, name in selected, name, removable=removable, used=name in blocked)
-                widget.edit_request[ColorMap].connect(self.edit_signal)
+                widget.edit_request[Colormap].connect(self.edit_signal)
                 widget.remove_request.connect(self._remove_request)
                 widget.selection_changed.connect(self.change_selection)
             layout.addWidget(widget, i // columns, i % columns)
@@ -516,6 +516,7 @@ class ColormapList(QWidget):
         if name not in self.colormap_map:
             raise ValueError(f"color with name {name} not found in any dict")
         del self.colormap_map[name]
+        self.refresh()
 
 
 class PColormapList(ColormapList):

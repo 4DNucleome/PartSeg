@@ -10,12 +10,13 @@ from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
 import napari.utils.theme
 import numpy as np
 from napari.resources import get_stylesheet
+from napari.utils import Colormap
 from napari.utils.theme import template as napari_template
 from qtpy.QtCore import QObject, Signal
 from qtpy.QtWidgets import QMessageBox, QWidget
 
 from PartSeg.common_backend.partially_const_dict import PartiallyConstDict
-from PartSegCore.color_image import ColorMap, default_colormap_dict, default_label_dict
+from PartSegCore.color_image import default_colormap_dict, default_label_dict
 from PartSegCore.color_image.base_colors import starting_colors
 from PartSegCore.io_utils import HistoryElement, load_metadata_base
 from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, check_loaded_dict
@@ -192,7 +193,7 @@ class ImageSettings(QObject):
         return np.array([0] + [1] * np.max(self.roi), dtype=np.uint8)
 
 
-class ColormapDict(PartiallyConstDict[ColorMap]):
+class ColormapDict(PartiallyConstDict[Colormap]):
     """
     Dict for mixing custom colormap with predefined ones
     """
