@@ -194,8 +194,8 @@ class ColormapEdit(QWidget):
     @colormap.setter
     def colormap(self, val: Colormap):
         """colormap setter"""
-        self.position_list = [x for x in val.controls]
-        self.color_list = [x for x in val.colors]
+        self.position_list = val.controls.tolist()
+        self.color_list = val.colors.tolist()
         self.refresh()
 
     def reverse(self):
