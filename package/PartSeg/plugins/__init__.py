@@ -33,6 +33,11 @@ def get_plugins():
         napari.plugins.plugin_manager.register(load_roi_project)
         napari.plugins.plugin_manager.register(napari_plugin_engine)
         napari.plugins.plugin_manager.register(save_mask_roi)
+
+        from PartSeg.plugins import napari_copy_labels
+
+        napari.plugins.plugin_manager.register(napari_copy_labels)
+
     else:
         packages = pkgutil.iter_modules(__path__, __name__ + ".")
     packages2 = itertools.chain(
