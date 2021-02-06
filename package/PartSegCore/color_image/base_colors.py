@@ -24,7 +24,9 @@ class Color(typing.NamedTuple):
     alpha: float = 1
 
 
-default_colormap_dict = {}
+starting_colors = ["red", "green", "blue", "magenta", "inferno", "magma"]
+
+default_colormap_dict = {name: AVAILABLE_COLORMAPS[name] for name in starting_colors}
 default_colormap_dict.update(AVAILABLE_COLORMAPS)
 default_colormap_dict.update(
     {
@@ -34,7 +36,5 @@ default_colormap_dict.update(
     }
 )
 
-
-starting_colors = ["red", "blue", "green", "magenta", "inferno", "magma"]
 
 default_label_dict = {"default": sitk_labels}

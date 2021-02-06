@@ -23,6 +23,7 @@ from qtpy.QtWidgets import (
     QColorDialog,
     QGridLayout,
     QHBoxLayout,
+    QLabel,
     QPushButton,
     QScrollArea,
     QToolButton,
@@ -315,6 +316,8 @@ class ChannelPreview(QWidget):
         self.checked = QCheckBox()
         self.checked.setChecked(accepted)
         self.checked.setDisabled(used)
+        self.label = QLabel(name)
+        self.label.setFixedWidth(150)
         self.setMinimumWidth(80)
         metrics = QFontMetrics(QFont())
         layout = QHBoxLayout()
@@ -332,6 +335,7 @@ class ChannelPreview(QWidget):
         self.edit_btn.setIcon(_icon_selector.edit_icon)
         layout.addWidget(self.remove_btn)
         layout.addWidget(self.edit_btn)
+        layout.addWidget(self.label)
         self.setLayout(layout)
         self.checked.stateChanged.connect(self._selection_changed)
         self.edit_btn.clicked.connect(partial(self.edit_request.emit, name))
@@ -343,6 +347,7 @@ class ChannelPreview(QWidget):
             self.edit_btn.setToolTip("This colormap is not editable")
         self.remove_btn.clicked.connect(partial(self.remove_request.emit, name))
         self.setMinimumHeight(max(metrics.height(), self.edit_btn.minimumHeight(), self.checked.minimumHeight()) + 20)
+        self.setToolTip(self.name)
 
     def _selection_changed(self, _=None):
         chk = self.checked.isChecked()
@@ -443,7 +448,7 @@ class ColormapList(QWidget):
         return self._blocked
 
     def _get_columns(self):
-        return max(1, self.width() // 400)
+        return max(1, self.width() // 500)
 
     def resizeEvent(self, event: QResizeEvent):
         if self._get_columns() != self.current_columns:
