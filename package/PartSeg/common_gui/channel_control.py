@@ -47,8 +47,10 @@ class ColorStyledDelegate(QStyledItemDelegate):
     def paint(self, painter: QPainter, style: QStyleOptionViewItem, model: QModelIndex):
         if model.data() not in image_dict:
             image_dict[model.data()] = create_colormap_image(model.data(), self.color_dict)
-        rect = QRect(style.rect.x(), style.rect.y() + 2, style.rect.width(), style.rect.height() - 4)
+        rect = QRect(style.rect.x(), style.rect.y() + 2, style.rect.width() - 150, style.rect.height() - 4)
         painter.drawImage(rect, image_dict[model.data()])
+        rect2 = QRect(style.rect.x() + style.rect.width() - 140, style.rect.y() + 2, 140, style.rect.height() - 4)
+        painter.drawText(rect2, Qt.AlignLeft, model.data())
         if int(style.state & QStyle.State_HasFocus):
             painter.save()
             pen = QPen()
