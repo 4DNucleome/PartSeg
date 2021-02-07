@@ -9,7 +9,6 @@ This package contains calculation backend of PartSeg
 
    base
    color_image
-   sprawl_utils
    segmentation
    analysis/base
    analysis/batch_processing
