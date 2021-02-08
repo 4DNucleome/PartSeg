@@ -148,6 +148,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
         elif issubclass(self.value_type, list):
             res = QComboBox()
             res.addItems(list(map(str, self.possible_values)))
+        elif hasattr(self.value_type, "get_object"):
+            res = self.value_type.get_object()
         else:
             raise ValueError(f"Unknown class: {self.value_type}")
         tool_tip_text = ""
@@ -171,6 +173,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
             return widget.values_changed
         if isinstance(widget, ListInput):
             return widget.change_signal
+        if hasattr(widget, "values_changed"):
+            return widget.values_changed
         raise ValueError(f"Unsupported type: {type(widget)}")
 
     @staticmethod
@@ -207,6 +211,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
         if isinstance(widget, SubAlgorithmWidget):
             return widget.__class__.get_values, widget.__class__.set_values
         if isinstance(widget, ListInput):
+            return widget.__class__.get_value, widget.__class__.set_value
+        if hasattr(widget, "get_value") and hasattr(widget, "set_value"):
             return widget.__class__.get_value, widget.__class__.set_value
         raise ValueError(f"Unsupported type: {type(widget)}")
 
