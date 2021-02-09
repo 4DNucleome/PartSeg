@@ -5,11 +5,6 @@ import os
 import sys
 from functools import partial
 
-try:
-    from napari._qt.qthreading import wait_for_workers_to_quit
-except ImportError:
-    from napari._qt.threading import wait_for_workers_to_quit
-
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QFontDatabase
 
@@ -78,7 +73,6 @@ def main():
     CustomApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     my_app = CustomApplication(sys.argv, name="PartSeg", icon=os.path.join(icons_dir, "icon.png"))
     my_app.check_release()
-    my_app.aboutToQuit.connect(wait_for_workers_to_quit)
     QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf"))
     if args.gui == "roi_analysis" or args.mf:
         from PartSeg import plugins
@@ -110,6 +104,11 @@ def main():
         title = f"{APP_NAME} Launcher"
         wind = MainWindow(title=title)
 
+    try:
+        from napari._qt.qthreading import wait_for_workers_to_quit
+    except ImportError:
+        from napari._qt.threading import wait_for_workers_to_quit
+    my_app.aboutToQuit.connect(wait_for_workers_to_quit)
     wind.show()
     rc = my_app.exec_()
     del wind

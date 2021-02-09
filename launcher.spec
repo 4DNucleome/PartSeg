@@ -61,6 +61,10 @@ pyzmq_data = []
 if os.path.exists(pyzmq_libs):
     pyzmq_data = [(os.path.join(pyzmq_libs, x), "pyzmq.libs") for x in os.listdir(pyzmq_libs)]
 
+napari_resource_path = import_resources()
+napari_base_path = os.path.dirname(os.path.dirname(napari.__file__))
+napari_resource_dest_path = os.path.relpath(os.path.dirname(napari_resource_path), napari_base_path)
+
 a = Analysis(
     ["package/PartSeg/launcher_main.py"],
     # pathex=['C:\\Users\\Grzegorz\\Documents\\segmentation-gui\\PartSeg'],
@@ -76,7 +80,7 @@ a = Analysis(
     ]
     + qt_data
     + [(os.path.join(base_path, "plugins/itk_snap_save/__init__.py"), "plugins/itk_snap_save")]
-    + [(import_resources(), "napari/resources")]
+    + [(napari_resource_path, napari_resource_dest_path)]
     + [(os.path.join(os.path.dirname(config.__file__), "dask.yaml"), "dask")]
     + collect_data_files("dask")
     + collect_data_files("vispy")
