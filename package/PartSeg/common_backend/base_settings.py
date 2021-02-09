@@ -198,7 +198,10 @@ class ColormapDict(PartiallyConstDict[Colormap]):
     Dict for mixing custom colormap with predefined ones
     """
 
-    const_item_dict = default_colormap_dict
+    if os.path.basename(sys.argv[0]) in ["sphinx-build", "sphinx-build.exe"]:
+        const_item_dict = {}
+    else:
+        const_item_dict = default_colormap_dict
     """
     Non removable items for this dict. Current value is :py:data:`default_colormap_dict`
     """

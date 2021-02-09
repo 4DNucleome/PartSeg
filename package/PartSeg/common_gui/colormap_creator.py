@@ -46,7 +46,7 @@ def color_from_qcolor(color: QColor) -> Color:
 
 def qcolor_from_color(color: Color) -> QColor:
     """Convert :py:class:`.Color` to :py:class:`PyQt5.QtGui.QColor`"""
-    return QColor(color.red * 255, color.green * 255, color.blue * 255, color.alpha * 255)
+    return QColor(int(color.red * 255), int(color.green * 255), int(color.blue * 255), int(color.alpha * 255))
 
 
 class ColormapEdit(QWidget):

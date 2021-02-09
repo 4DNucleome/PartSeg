@@ -123,7 +123,7 @@ class ColorComboBox(QComboBox):
         self.show_arrow = False
         self.show_frame = False
         view = QListView()
-        view.setMinimumWidth(200)
+        view.setMinimumWidth(300)
         view.setItemDelegate(ColorStyledDelegate(self.base_height, color_dict))
         self.setView(view)
         self.image = None  # only for moment, to reduce code repetition

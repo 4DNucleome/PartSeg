@@ -70,3 +70,5 @@ intersphinx_mapping = {
 }
 
 qt_documentation = "Qt5"
+
+latex_engine = "xelatex"
