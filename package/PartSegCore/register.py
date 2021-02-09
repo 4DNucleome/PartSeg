@@ -32,6 +32,8 @@ from .segmentation import (
 
 # from .mask.io_functions import
 
+qss_list = []
+
 
 class RegisterEnum(Enum):
     """
@@ -53,6 +55,7 @@ class RegisterEnum(Enum):
     analysis_measurement = 12  #: measurements algorithms (analysis mode)
     roi_analysis_segmentation_algorithm = 13  #: algorithm for creating segmentation in analysis PartSeg part
     roi_mask_segmentation_algorithm = 14  #: algorithm for creating segmentation in mask PartSeg part
+    qss_register = 15  #: new qss styles
 
 
 # noinspection DuplicatedCode
@@ -114,4 +117,7 @@ def register(target: Type[AlgorithmDescribeBase], target_type: RegisterEnum, rep
     :param target_type: Which type of operation.
     :param replace: force to replace operation if same name is defined. Dangerous.
     """
-    register_dict[target_type].register(target, replace=replace)
+    if target_type == RegisterEnum.qss_register:
+        qss_list.append(target)
+    else:
+        register_dict[target_type].register(target, replace=replace)
