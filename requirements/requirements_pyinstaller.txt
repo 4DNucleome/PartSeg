@@ -16,8 +16,6 @@ babel==2.9.0
     # via sphinx
 backcall==0.2.0
     # via ipython
-cached-property==1.5.2
-    # via h5py
 cachey==0.2.1
     # via napari
 certifi==2020.12.5
@@ -60,11 +58,6 @@ imageio==2.9.0
     #   napari-svg
 imagesize==1.2.0
     # via sphinx
-importlib-metadata==3.4.0
-    # via
-    #   napari
-    #   napari-plugin-engine
-    #   pyinstaller
 ipykernel==5.4.3
     # via
     #   napari
@@ -135,7 +128,7 @@ packaging==20.9
     # via
     #   -r requirements_pyinstaller.in
     #   sphinx
-pandas==1.2.1
+pandas==1.2.2
     # via -r requirements_pyinstaller.in
 parso==0.8.1
     # via jedi
@@ -257,7 +250,6 @@ traitlets==5.0.5
     #   qtconsole
 typing-extensions==3.7.4.3
     # via
-    #   importlib-metadata
     #   magicgui
     #   napari
 urllib3==1.26.3
@@ -276,8 +268,6 @@ xlrd==2.0.1
     # via -r requirements_pyinstaller.in
 xlsxwriter==1.3.7
     # via -r requirements_pyinstaller.in
-zipp==3.4.0
-    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
