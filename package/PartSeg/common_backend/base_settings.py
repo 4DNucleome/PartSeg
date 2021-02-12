@@ -9,7 +9,6 @@ from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import napari.utils.theme
 import numpy as np
-from napari.resources import get_stylesheet
 from napari.utils import Colormap
 from napari.utils.theme import template as napari_template
 from qtpy.QtCore import QObject, Signal
@@ -24,6 +23,11 @@ from PartSegCore.project_info import ProjectInfoBase
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription, SegmentationResult
 from PartSegImage import Image
+
+try:
+    from napari.qt import get_stylesheet
+except ImportError:
+    from napari.resources import get_stylesheet
 
 DIR_HISTORY = "io.dir_location_history"
 FILE_HISTORY = "io.files_open_history"
