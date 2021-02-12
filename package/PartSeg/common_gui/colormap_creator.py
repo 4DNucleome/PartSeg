@@ -179,6 +179,8 @@ class ColormapEdit(QWidget):
     @property
     def colormap(self) -> Colormap:
         """colormap getter"""
+        if len(self.color_list) == 0:
+            return Colormap("black")
         return Colormap(colors=self.color_list, controls=self.position_list)
 
     @colormap.setter

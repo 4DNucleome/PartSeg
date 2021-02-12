@@ -57,7 +57,7 @@ class ImageInfo:
         if not self.layers:
             return np.array(coords)
         fst_layer = self.layers[0]
-        return np.subtract(coords, fst_layer.translate_grid).astype(np.int)
+        return np.subtract(coords, fst_layer.translate_grid).astype(int)
 
 
 class LabelEnum(Enum):
