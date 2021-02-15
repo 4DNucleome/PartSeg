@@ -281,7 +281,7 @@ class ViewSettings(ImageSettings):
     @property
     def style_sheet(self):
         theme = get_theme(self.theme_name)
-        return napari_template(get_stylesheet(), **theme)
+        return napari_template("\n".join(register.qss_list) + get_stylesheet() + "\n".join(register.qss_list), **theme)
 
     @theme_name.setter
     def theme_name(self, value: str):
