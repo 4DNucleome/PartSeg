@@ -5,13 +5,20 @@ from typing import Callable
 
 import numpy as np
 import SimpleITK
+from napari.layers import Image, Labels
+from napari.types import LayerDataTuple
 
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
 from PartSegCore.channel_class import Channel
 from PartSegCore.convex_fill import convex_fill
 from PartSegCore.segmentation import SegmentationAlgorithm
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription, SegmentationResult
-from PartSegCore.segmentation.noise_filtering import NoneNoiseFiltering, noise_filtering_dict
+from PartSegCore.segmentation.noise_filtering import (
+    DimensionType,
+    GaussNoiseFiltering,
+    NoneNoiseFiltering,
+    noise_filtering_dict,
+)
 from PartSegCore.segmentation.threshold import BaseThreshold, threshold_dict
 
 
@@ -166,3 +173,29 @@ class SMSegmentation(SegmentationAlgorithm):
             ),
             AlgorithmProperty("minimum_molecule_size", "Minimum molecule size (px)", 5, (0, 10 ** 6), 1000),
         ]
+
+
+def gauss_background_estimate(
+    image: Image,
+    mask: Labels,
+    background_gauss_radius: float = 6,
+    foreground_gauss_radius: float = 1,
+    remove_negative: bool = False,
+) -> LayerDataTuple:
+    # process the image
+    data = image.data[0].astype(np.float64)
+    mean_background = np.mean(data[mask.data[0] > 0])
+    data[mask.data[0] == 0] = mean_background
+    background_estimate = GaussNoiseFiltering.noise_filter(
+        data, image.scale[1:], {"dimension_type": DimensionType.Layer, "radius": background_gauss_radius}
+    )
+    foreground_estimate = GaussNoiseFiltering.noise_filter(
+        data, image.scale[1:], {"dimension_type": DimensionType.Layer, "radius": foreground_gauss_radius}
+    )
+    resp = foreground_estimate - background_estimate
+    resp[mask.data[0] == 0] = 0
+    if remove_negative:
+        resp[resp < 0] = 0
+    resp = resp.reshape((1,) + resp.shape)
+    # return it + some layer properties
+    return resp, {"colormap": "gray", "scale": image.scale, "name": "Signal estimate"}

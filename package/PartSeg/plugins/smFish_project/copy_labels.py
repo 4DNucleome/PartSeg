@@ -1,7 +1,6 @@
 import numpy as np
 from napari import Viewer
 from napari.layers.labels import Labels
-from napari_plugin_engine import napari_hook_implementation
 from qtpy.QtGui import QKeySequence
 from qtpy.QtWidgets import QCheckBox, QGridLayout, QLabel, QPushButton, QShortcut, QSpinBox, QWidget
 
@@ -88,8 +87,3 @@ class CopyLabelWidget(QWidget):
             end = min(layer.shape[1], self.upper.value()) + 1
             for i in range(start, end):
                 layer.data[0, i][mask] = component_num
-
-
-@napari_hook_implementation
-def napari_experimental_provide_dock_widget():
-    return CopyLabelWidget
