@@ -27,3 +27,4 @@ sympy
 tifffile
 xlrd
 xlsxwriter
+sphinx!=3.5.0

@@ -9,7 +9,6 @@ from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import napari.utils.theme
 import numpy as np
-from napari.resources import get_stylesheet
 from napari.utils import Colormap
 from napari.utils.theme import template as napari_template
 from qtpy.QtCore import QObject, Signal
@@ -24,6 +23,29 @@ from PartSegCore.project_info import ProjectInfoBase
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription, SegmentationResult
 from PartSegImage import Image
+
+try:
+    from napari.qt import get_stylesheet
+except ImportError:
+    from napari.resources import get_stylesheet
+
+if hasattr(napari.utils.theme, "get_theme"):
+
+    def get_theme(name: str) -> dict:
+        theme = napari.utils.theme.get_theme(name)
+        if "canvas" in theme and theme["canvas"] != "black":
+            theme["canvas"] = "black"
+            napari.utils.theme.register_theme(name, theme)
+        return theme
+
+
+else:
+
+    def get_theme(name: str) -> dict:
+        theme = napari.utils.theme.palettes[name]
+        theme["canvas"] = "black"
+        return theme
+
 
 DIR_HISTORY = "io.dir_location_history"
 FILE_HISTORY = "io.files_open_history"
@@ -257,9 +279,8 @@ class ViewSettings(ImageSettings):
 
     @property
     def style_sheet(self):
-        palette = napari.utils.theme.palettes[self.theme_name]
-        palette["canvas"] = "black"
-        return napari_template(get_stylesheet(), **palette)
+        theme = get_theme(self.theme_name)
+        return napari_template(get_stylesheet(), **theme)
 
     @theme_name.setter
     def theme_name(self, value: str):

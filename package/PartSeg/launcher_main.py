@@ -23,7 +23,13 @@ def _test_imports():
     from qtpy.QtWidgets import QApplication
 
     app = QApplication([])
-    from napari._qt.widgets.qt_console import QtConsole
+    import napari
+    from packaging.version import parse
+
+    if parse(napari.__version__) < parse("0.4.5"):
+        from napari._qt.widgets.qt_console import QtConsole
+    else:
+        from napari_console.qt_console import QtConsole
 
     from PartSeg import plugins
     from PartSeg._launcher.main_window import MainWindow
@@ -36,7 +42,10 @@ def _test_imports():
     w1 = AnalysisMain("test")
     w2 = MaskMain("test")
     w3 = MainWindow("test")
-    console = QtConsole()
+    if parse(napari.__version__) < parse("0.4.5"):
+        console = QtConsole()
+    else:
+        console = QtConsole(napari.Viewer())
     if QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf")) == -1:
         raise ValueError("Error with loading Symbola font")
     del w1
