@@ -8,6 +8,7 @@ import SimpleITK
 
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
 from PartSegCore.channel_class import Channel
+from PartSegCore.convex_fill import convex_fill
 from PartSegCore.segmentation import SegmentationAlgorithm
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription, SegmentationResult
 from PartSegCore.segmentation.noise_filtering import NoneNoiseFiltering, noise_filtering_dict
@@ -37,6 +38,7 @@ class SMSegmentation(SegmentationAlgorithm):
         nucleus_segmentation = SimpleITK.GetArrayFromImage(
             SimpleITK.RelabelComponent(nucleus_connect, self.new_parameters["minimum_nucleus_size"])
         )
+        nucleus_segmentation = convex_fill(nucleus_segmentation)
 
         channel_molecule = self.get_channel(self.new_parameters["channel_molecule"]).astype(np.float32)
         mask = self.mask if self.mask is not None else channel_molecule > 0
