@@ -217,8 +217,10 @@ six==1.15.0
     #   python-dateutil
 snowballstemmer==2.1.0
     # via sphinx
-sphinx==3.5.0
-    # via numpydoc
+sphinx==3.4.3
+    # via
+    #   -r requirements_pyinstaller.in
+    #   numpydoc
 sphinxcontrib-applehelp==1.0.2
     # via sphinx
 sphinxcontrib-devhelp==1.0.2
