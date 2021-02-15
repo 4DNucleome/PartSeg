@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, Iterator, List, MutableMapping, NamedTup
 
 import numpy as np
 import SimpleITK
+from mahotas.features import haralick
 from scipy.spatial.distance import cdist
 from sympy import symbols
 
@@ -1240,6 +1241,46 @@ class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
         return True
 
 
+HALARIC_FEATURES = """AngularSecondMoment Contrast Correlation Variance
+InverseDifferenceMoment SumAverage SumVariance SumEntropy Entropy
+DifferenceVariance DifferenceEntropy InfoMeas1 InfoMeas2""".split()
+
+
+def _rescale_image(data: np.ndarray):
+    if data.dtype == np.uint8:
+        return data
+    min_val = data.min()
+    max_val = data.max()
+    return ((data - min_val) / ((max_val - min_val) / 255)).astype(np.uint8)
+
+
+class Haralick(MeasurementMethodBase):
+    @classmethod
+    def get_units(cls, ndim) -> symbols:
+        return "1"
+
+    text_info = "Haralick", "Calculate Haralick features"
+
+    @classmethod
+    def get_fields(cls):
+        return [
+            AlgorithmProperty("feature", "Feature", HALARIC_FEATURES[0], possible_values=HALARIC_FEATURES),
+            AlgorithmProperty("distance", "Distance", 1, options_range=(1, 10)),
+        ]
+
+    @classmethod
+    def need_channel(cls):
+        return True
+
+    @staticmethod
+    def calculate_property(area_array, channel, distance, feature, **kwargs):
+        data = channel.copy()
+        data[area_array == 0] = 0
+        data = _rescale_image(data.squeeze())
+        res = haralick(data, distance=distance, ignore_zeros=True, return_mean=True)
+        return res[HALARIC_FEATURES.index(feature)]
+
+
 def pixel_volume(spacing, result_scalar):
     return reduce((lambda x, y: x * y), [x * result_scalar for x in spacing])
 
@@ -1300,6 +1341,7 @@ MEASUREMENT_DICT = Register(
     SplitOnPartVolume,
     SplitOnPartPixelBrightnessSum,
     Voxels,
+    Haralick,
     suggested_base_class=MeasurementMethodBase,
 )
 """Register with all measurements algorithms"""

@@ -90,6 +90,8 @@ lxml==4.6.2
     # via -r requirements_pyinstaller.in
 magicgui==0.2.6
     # via napari
+mahotas==1.4.11
+    # via -r requirements_pyinstaller.in
 markupsafe==1.1.1
     # via jinja2
 mpmath==1.2.1
@@ -113,6 +115,7 @@ numpy==1.20.1
     #   h5py
     #   imagecodecs
     #   imageio
+    #   mahotas
     #   napari
     #   napari-svg
     #   oiffile
