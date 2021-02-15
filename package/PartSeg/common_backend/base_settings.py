@@ -541,7 +541,7 @@ class BaseSettings(ViewSettings):
         self.set(DIR_HISTORY, self._add_elem_to_list(self.get(DIR_HISTORY, []), dir_path))
 
     def add_load_files_history(self, file_path: List[str], load_method: str):
-        self.set(FILE_HISTORY, self._add_elem_to_list(self.get(FILE_HISTORY, []), (file_path, load_method)))
+        self.set(FILE_HISTORY, self._add_elem_to_list(self.get(FILE_HISTORY, []), [file_path, load_method]))
         self.add_path_history(os.path.dirname(file_path[0]))
 
     def set(self, key_path: str, value):
