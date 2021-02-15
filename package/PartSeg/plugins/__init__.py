@@ -34,9 +34,9 @@ def get_plugins():
         napari.plugins.plugin_manager.register(napari_plugin_engine)
         napari.plugins.plugin_manager.register(save_mask_roi)
 
-        from PartSeg.plugins import napari_copy_labels
+        from PartSeg.plugins import smFish_project
 
-        napari.plugins.plugin_manager.register(napari_copy_labels)
+        napari.plugins.plugin_manager.register(smFish_project)
 
     else:
         packages = pkgutil.iter_modules(__path__, __name__ + ".")
