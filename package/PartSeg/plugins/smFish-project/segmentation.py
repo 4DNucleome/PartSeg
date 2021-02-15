@@ -73,7 +73,11 @@ class SMSegmentation(SegmentationAlgorithm):
         elements = np.unique(molecule_segmentation[molecule_segmentation > 0])
 
         cellular_components = set(np.unique(molecule_segmentation[nucleus_segmentation == 0]))
+        if 0 in cellular_components:
+            cellular_components.remove(0)
         nucleus_components = set(np.unique(molecule_segmentation[nucleus_segmentation == 1]))
+        if 0 in nucleus_components:
+            nucleus_components.remove(0)
         mixed_components = cellular_components & nucleus_components
         cellular_components = cellular_components - mixed_components
         nucleus_components = nucleus_components - mixed_components
@@ -82,7 +86,15 @@ class SMSegmentation(SegmentationAlgorithm):
         label_types.update({i: "Cytoplasm" for i in cellular_components})
         label_types.update({i: "Mixed" for i in mixed_components})
 
-        annotation = {el: {"voxels": sizes[el], "type": label_types[el]} for el in elements}
+        annotation = {el: {"voxels": sizes[el], "type": label_types[el], "number": el} for el in elements}
+        position_masking = np.zeros(elements.max() + 1, dtype=molecule_segmentation.dtype)
+        for el in cellular_components:
+            position_masking[el] = 1
+        for el in mixed_components:
+            position_masking[el] = 2
+        for el in nucleus_components:
+            position_masking[el] = 3
+        position_array = position_masking[molecule_segmentation]
 
         return SegmentationResult(
             roi=molecule_segmentation,
@@ -90,11 +102,13 @@ class SMSegmentation(SegmentationAlgorithm):
             additional_layers={
                 "nucleus segmentation": AdditionalLayerDescription(data=nucleus_segmentation, layer_type="labels"),
                 "roi segmentation": AdditionalLayerDescription(data=molecule_segmentation, layer_type="labels"),
-                "estimated background": AdditionalLayerDescription(data=estimated, layer_type="image"),
+                "estimated signal": AdditionalLayerDescription(data=estimated, layer_type="image"),
                 "background": AdditionalLayerDescription(data=background, layer_type="image"),
                 "channel molecule": AdditionalLayerDescription(data=channel_molecule, layer_type="image"),
+                "position": AdditionalLayerDescription(data=position_array, layer_type="labels"),
             },
             roi_annotation=annotation,
+            alternative_representation={"position": position_array},
         )
 
     def get_info_text(self):
