@@ -259,6 +259,15 @@ class ObsepImageReader(BaseImageReader):
             else:
                 raise ValueError(f"Not found file for key {name}")
             channel_list.append(TiffImageReader.read_image(directory / name, default_spacing=self.default_spacing))
+        for channel in channels:
+            name = next(iter(channel)).attrib["val"] + "_deconv"
+            for ex in possible_extensions:
+                if (directory / (name + ex)).exists():
+                    name += ex
+                    break
+            if (directory / name).exists():
+                channel_list.append(TiffImageReader.read_image(directory / name, default_spacing=self.default_spacing))
+
         image = channel_list[0]
         for el in channel_list[1:]:
             image = image.merge(el, "C")
