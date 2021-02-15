@@ -30,7 +30,7 @@ cython==0.29.21
     #   partsegcore-compiled-backend
 czifile==2019.7.2
     # via -r requirements_pyinstaller.in
-dask[array]==2021.1.1
+dask[array]==2021.2.0
     # via napari
 decorator==4.4.2
     # via ipython
@@ -92,9 +92,9 @@ magicgui==0.2.6
     # via napari
 markupsafe==1.1.1
     # via jinja2
-mpmath==1.1.0
+mpmath==1.2.1
     # via sympy
-napari-console==0.0.2
+napari-console==0.0.3
     # via napari
 napari-plugin-engine==0.1.9
     # via
@@ -105,7 +105,7 @@ napari-svg==0.1.4
     # via napari
 napari==0.4.5
     # via -r requirements_pyinstaller.in
-numpy==1.20.0
+numpy==1.20.1
     # via
     #   -r requirements_pyinstaller.in
     #   czifile
@@ -131,7 +131,7 @@ packaging==20.9
     # via
     #   -r requirements_pyinstaller.in
     #   sphinx
-pandas==1.2.1
+pandas==1.2.2
     # via -r requirements_pyinstaller.in
 parso==0.8.1
     # via jedi
@@ -147,7 +147,7 @@ pillow==8.1.0
     # via
     #   imageio
     #   napari
-prompt-toolkit==3.0.14
+prompt-toolkit==3.0.16
     # via ipython
 psutil==5.8.0
     # via napari
@@ -155,7 +155,7 @@ ptyprocess==0.7.0
     # via pexpect
 pydantic==1.7.3
     # via napari
-pygments==2.7.4
+pygments==2.8.0
     # via
     #   ipython
     #   qtconsole
@@ -186,7 +186,7 @@ pyyaml==5.4.1
     # via
     #   dask
     #   napari
-pyzmq==22.0.2
+pyzmq==22.0.3
     # via
     #   jupyter-client
     #   qtconsole
@@ -207,7 +207,7 @@ scipy==1.6.0
     # via
     #   -r requirements_pyinstaller.in
     #   napari
-sentry-sdk==0.19.5
+sentry-sdk==0.20.1
     # via -r requirements_pyinstaller.in
 simpleitk==2.0.2
     # via -r requirements_pyinstaller.in
@@ -217,7 +217,7 @@ six==1.15.0
     #   python-dateutil
 snowballstemmer==2.1.0
     # via sphinx
-sphinx==3.4.3
+sphinx==3.5.0
     # via numpydoc
 sphinxcontrib-applehelp==1.0.2
     # via sphinx
