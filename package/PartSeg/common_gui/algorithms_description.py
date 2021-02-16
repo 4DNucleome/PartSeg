@@ -46,6 +46,15 @@ def update(d, u):
     return d
 
 
+def _pretty_print(data, indent=2) -> str:
+    if isinstance(data, dict):
+        res = "\n"
+        for k, v in data.items():
+            res += f"{' ' * indent}{k}: {_pretty_print(v, indent+2)}\n"
+        return res[:-1]
+    return str(data)
+
+
 class QtAlgorithmProperty(AlgorithmProperty):
     qt_class_dict = {
         int: CustomSpinBox,
@@ -155,7 +164,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         tool_tip_text = ""
         if self.help_text:
             tool_tip_text = self.help_text
-        tool_tip_text += f" default value: {str(self.default_value)}"
+        tool_tip_text += f"default value: {_pretty_print(self.default_value)}"
         res.setToolTip(tool_tip_text)
         return res
 
