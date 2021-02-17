@@ -411,6 +411,7 @@ class BaseSettings(ViewSettings):
     """
 
     mask_changed = Signal()
+    points_changed = Signal()
     mask_representation_changed = Signal()
     request_load_files = Signal(list)
     """:py:class:`~.Signal` mask changed signal"""
@@ -430,6 +431,24 @@ class BaseSettings(ViewSettings):
         self.history: List[HistoryElement] = []
         self.history_index = -1
         self.last_executed_algorithm = ""
+        self._points = None
+
+    def _image_changed(self):
+        super()._image_changed()
+        self.points = None
+
+    @property
+    def points(self):
+        return self._points
+
+    @points.setter
+    def points(self, value):
+        print(value)
+        if value is not None:
+            self._points = value.points
+        else:
+            self._points = None
+        self.points_changed.emit()
 
     def set_segmentation_result(self, result: SegmentationResult):
         if result.info_text and self._parent is not None:

@@ -9,7 +9,7 @@ from qtpy.QtCore import Signal, Slot
 from qtpy.QtWidgets import QMessageBox
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.io_utils import HistoryElement, HistoryProblem
+from PartSegCore.io_utils import HistoryElement, HistoryProblem, PointsInfo
 from PartSegCore.mask.io_functions import MaskProjectTuple, load_metadata
 from PartSegCore.segmentation.algorithm_base import SegmentationResult
 from PartSegImage import Image
@@ -122,10 +122,14 @@ class StackSettings(BaseSettings):
             history=self.history[: self.history_index + 1],
         )
 
-    def set_project_info(self, data: MaskProjectTuple):
+    def set_project_info(self, data: typing.Union[MaskProjectTuple, PointsInfo]):
         """signals = self.signalsBlocked()
         if data.segmentation is not None:
             self.blockSignals(True)"""
+
+        if isinstance(data, PointsInfo):
+            self.points = data.points
+            return
         if isinstance(data.image, Image) and (
             self.image_path != data.image.file_path or self.image_shape != data.image.shape
         ):

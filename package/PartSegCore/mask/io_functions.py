@@ -18,6 +18,7 @@ from ..algorithm_describe_base import AlgorithmProperty, Register, ROIExtraction
 from ..io_utils import (
     HistoryElement,
     LoadBase,
+    LoadPoints,
     SaveBase,
     SaveMaskAsTiff,
     SaveROIAsNumpy,
@@ -664,7 +665,9 @@ class UpdateLoadedMetadataMask(UpdateLoadedMetadataBase):
         return profile_data
 
 
-load_dict = Register(LoadStackImage, LoadROIImage, LoadStackImageWithMask, class_methods=LoadBase.need_functions)
+load_dict = Register(
+    LoadPoints, LoadStackImage, LoadROIImage, LoadStackImageWithMask, class_methods=LoadBase.need_functions
+)
 save_parameters_dict = Register(SaveParametersJSON, class_methods=SaveBase.need_functions)
 save_components_dict = Register(SaveComponents, class_methods=SaveBase.need_functions)
 save_segmentation_dict = Register(

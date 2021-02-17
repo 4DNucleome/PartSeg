@@ -11,7 +11,7 @@ from PartSegCore.analysis.io_utils import MaskInfo, ProjectTuple
 from PartSegCore.analysis.load_functions import load_metadata
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.analysis.save_hooks import PartEncoder
-from PartSegCore.io_utils import HistoryElement
+from PartSegCore.io_utils import HistoryElement, PointsInfo
 from PartSegCore.json_hooks import ProfileDict
 from PartSegCore.roi_info import ROIInfo
 
@@ -102,7 +102,7 @@ class PartSettings(BaseSettings):
             algorithm_parameters=algorithm_val,
         )
 
-    def set_project_info(self, data: typing.Union[ProjectTuple, MaskInfo]):
+    def set_project_info(self, data: typing.Union[ProjectTuple, MaskInfo, PointsInfo]):
         if isinstance(data, ProjectTuple):
             if self.image.file_path == data.image.file_path and self.image.shape == data.image.shape:
                 if data.roi is not None:
@@ -124,6 +124,8 @@ class PartSettings(BaseSettings):
                 self.algorithm_changed.emit()
         elif isinstance(data, MaskInfo):
             self.mask = data.mask_array
+        elif isinstance(data, PointsInfo):
+            self.points = data
 
     def get_save_list(self) -> typing.List[SaveSettingsDescription]:
         return super().get_save_list() + [
