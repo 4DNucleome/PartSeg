@@ -217,7 +217,7 @@ six==1.15.0
     #   python-dateutil
 snowballstemmer==2.1.0
     # via sphinx
-sphinx==3.4.3
+sphinx==3.5.1
     # via
     #   -r requirements_pyinstaller.in
     #   numpydoc
