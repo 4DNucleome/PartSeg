@@ -15,6 +15,7 @@ from qtpy.QtCore import QObject, Signal
 from qtpy.QtWidgets import QMessageBox, QWidget
 
 from PartSeg.common_backend.partially_const_dict import PartiallyConstDict
+from PartSegCore import register
 from PartSegCore.color_image import default_colormap_dict, default_label_dict
 from PartSegCore.color_image.base_colors import starting_colors
 from PartSegCore.io_utils import HistoryElement, load_metadata_base
@@ -280,7 +281,8 @@ class ViewSettings(ImageSettings):
     @property
     def style_sheet(self):
         theme = get_theme(self.theme_name)
-        return napari_template(get_stylesheet(), **theme)
+        # TODO understand qss overwrite mechanism
+        return napari_template("\n".join(register.qss_list) + get_stylesheet() + "\n".join(register.qss_list), **theme)
 
     @theme_name.setter
     def theme_name(self, value: str):

@@ -191,10 +191,10 @@ class SaveCmap(SaveBase):
     @classmethod
     def get_fields(cls):
         return [
-            AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
+            AlgorithmProperty("channel", "Channel", 0, value_type=Channel),
             AlgorithmProperty("separated_objects", "Separate Objects", False),
             AlgorithmProperty("clip", "Clip area", False),
-            AlgorithmProperty("units", "Units", Units.nm, property_type=Units),
+            AlgorithmProperty("units", "Units", Units.nm, value_type=Units),
             AlgorithmProperty(
                 "reverse", "Reverse", False, help_text="Reverse brightness off image (for electron microscopy)"
             ),
@@ -248,7 +248,7 @@ class SaveXYZ(SaveBase):
     @classmethod
     def get_fields(cls):
         return [
-            AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
+            AlgorithmProperty("channel", "Channel", 0, value_type=Channel),
             AlgorithmProperty("separated_objects", "Separate Objects", False),
             AlgorithmProperty("clip", "Clip area", False),
         ]

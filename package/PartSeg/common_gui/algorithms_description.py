@@ -1,6 +1,5 @@
 import collections
 import typing
-from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 from enum import Enum
 
@@ -44,6 +43,15 @@ def update(d, u):
         else:
             d[k] = v
     return d
+
+
+def _pretty_print(data, indent=2) -> str:
+    if isinstance(data, dict):
+        res = "\n"
+        for k, v in data.items():
+            res += f"{' ' * indent}{k}: {_pretty_print(v, indent+2)}\n"
+        return res[:-1]
+    return str(data)
 
 
 class QtAlgorithmProperty(AlgorithmProperty):
@@ -98,7 +106,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
                 default_value=ob.default_value,
                 options_range=ob.range,
                 single_steep=ob.single_step,
-                property_type=ob.value_type,
+                value_type=ob.value_type,
                 possible_values=ob.possible_values,
                 help_text=ob.help_text,
                 per_dimension=ob.per_dimension,
@@ -148,12 +156,14 @@ class QtAlgorithmProperty(AlgorithmProperty):
         elif issubclass(self.value_type, list):
             res = QComboBox()
             res.addItems(list(map(str, self.possible_values)))
+        elif hasattr(self.value_type, "get_object"):
+            res = self.value_type.get_object()
         else:
             raise ValueError(f"Unknown class: {self.value_type}")
         tool_tip_text = ""
         if self.help_text:
             tool_tip_text = self.help_text
-        tool_tip_text += f" default value: {str(self.default_value)}"
+        tool_tip_text += f"default value: {_pretty_print(self.default_value)}"
         res.setToolTip(tool_tip_text)
         return res
 
@@ -171,6 +181,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
             return widget.values_changed
         if isinstance(widget, ListInput):
             return widget.change_signal
+        if hasattr(widget, "values_changed"):
+            return widget.values_changed
         raise ValueError(f"Unsupported type: {type(widget)}")
 
     @staticmethod
@@ -207,6 +219,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
         if isinstance(widget, SubAlgorithmWidget):
             return widget.__class__.get_values, widget.__class__.set_values
         if isinstance(widget, ListInput):
+            return widget.__class__.get_value, widget.__class__.set_value
+        if hasattr(widget, "get_value") and hasattr(widget, "set_value"):
             return widget.__class__.get_value, widget.__class__.set_value
         raise ValueError(f"Unsupported type: {type(widget)}")
 
@@ -416,18 +430,6 @@ class SubAlgorithmWidget(QWidget):
         if self.widgets_dict[name].has_elements() and event.rect().top() == 0 and event.rect().left() == 0:
             painter = QPainter(self)
             painter.drawRect(event.rect())
-
-
-class AbstractAlgorithmSettingsWidget(metaclass=ABCMeta):
-    def __init__(self):
-        pass
-
-    @abstractmethod
-    def get_values(self):
-        """
-        :return: dict[str, object]
-        """
-        return dict()
 
 
 class BaseAlgorithmSettingsWidget(QScrollArea):

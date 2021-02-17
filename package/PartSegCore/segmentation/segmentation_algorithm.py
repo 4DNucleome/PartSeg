@@ -35,13 +35,13 @@ class ThresholdPreview(StackAlgorithm):
     @classmethod
     def get_fields(cls):
         return [
-            AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
+            AlgorithmProperty("channel", "Channel", 0, value_type=Channel),
             AlgorithmProperty(
                 "noise_filtering",
                 "Filter",
                 next(iter(noise_filtering_dict.keys())),
                 possible_values=noise_filtering_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty("threshold", "Threshold", 1000, (0, 10 ** 6), 100),
         ]
@@ -91,20 +91,20 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
         return [
-            AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
+            AlgorithmProperty("channel", "Channel", 0, value_type=Channel),
             AlgorithmProperty(
                 "noise_filtering",
                 "Filter",
                 next(iter(noise_filtering_dict.keys())),
                 possible_values=noise_filtering_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty(
                 "threshold",
                 "Threshold",
                 next(iter(threshold_dict.keys())),
                 possible_values=threshold_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty("close_holes", "Fill holes", True, (True, False)),
             AlgorithmProperty("close_holes_size", "Maximum holes size (px)", 200, (0, 10 ** 5), 10),
@@ -113,7 +113,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
                 "Smooth borders",
                 next(iter(smooth_dict.keys())),
                 possible_values=smooth_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty(
                 "side_connection",
@@ -263,20 +263,20 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
     @classmethod
     def get_fields(cls):
         return [
-            AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
+            AlgorithmProperty("channel", "Channel", 0, value_type=Channel),
             AlgorithmProperty(
                 "noise_filtering",
                 "Filter",
                 next(iter(noise_filtering_dict.keys())),
                 possible_values=noise_filtering_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty(
                 "threshold",
                 "Threshold",
                 next(iter(double_threshold_dict.keys())),
                 possible_values=double_threshold_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty("close_holes", "Fill holes", True, (True, False)),
             AlgorithmProperty("close_holes_size", "Maximum holes size (px)", 200, (0, 10 ** 5), 10),
@@ -285,7 +285,7 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
                 "Smooth borders",
                 next(iter(smooth_dict.keys())),
                 possible_values=smooth_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty(
                 "side_connection",
@@ -300,7 +300,7 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
                 "Flow type",
                 next(iter(sprawl_dict.keys())),
                 possible_values=sprawl_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty("use_convex", "Use convex hull", False, (True, False)),
         ]

@@ -134,13 +134,13 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
     @classmethod
     def get_fields(cls):
         return [
-            AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
+            AlgorithmProperty("channel", "Channel", 0, value_type=Channel),
             AlgorithmProperty(
                 "noise_filtering",
                 "Filter",
                 next(iter(noise_filtering_dict.keys())),
                 possible_values=noise_filtering_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty("minimum_size", "Minimum size (px)", 8000, (0, 10 ** 6), 1000),
             AlgorithmProperty(
@@ -295,7 +295,7 @@ class OneThresholdAlgorithm(ThresholdBaseAlgorithm, ABC):
                 "Threshold",
                 next(iter(threshold_dict.keys())),
                 possible_values=threshold_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
         )
         return fields
@@ -396,7 +396,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
                 "Threshold",
                 next(iter(double_threshold_dict.keys())),
                 possible_values=double_threshold_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
         )
         fields.insert(
@@ -406,7 +406,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
                 "Flow type",
                 next(iter(sprawl_dict.keys())),
                 possible_values=sprawl_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
         )
         for i, el in enumerate(fields):
@@ -514,13 +514,13 @@ class OtsuSegment(RestartableAlgorithm):
     @classmethod
     def get_fields(cls):
         return [
-            AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
+            AlgorithmProperty("channel", "Channel", 0, value_type=Channel),
             AlgorithmProperty(
                 "noise_filtering",
                 "Noise Removal",
                 next(iter(noise_filtering_dict.keys())),
                 possible_values=noise_filtering_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty("components", "Number of Components", 2, (0, 100)),
             # AlgorithmProperty("mask", "Use mask in calculation", True),
@@ -582,16 +582,16 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):  # pragma: no 
                 "Threshold",
                 next(iter(double_threshold_dict.keys())),
                 possible_values=double_threshold_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty(
                 "mu_mid",
                 "Mu mid value",
                 next(iter(mu_mid_dict.keys())),
                 possible_values=mu_mid_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
-            AlgorithmProperty("step_limits", "Limits of Steps", 100, options_range=(1, 1000), property_type=int),
+            AlgorithmProperty("step_limits", "Limits of Steps", 100, options_range=(1, 1000), value_type=int),
         ] + super().get_fields()
 
     def get_info_text(self):
