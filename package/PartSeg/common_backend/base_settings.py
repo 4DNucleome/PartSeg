@@ -281,6 +281,7 @@ class ViewSettings(ImageSettings):
     @property
     def style_sheet(self):
         theme = get_theme(self.theme_name)
+        # TODO understand qss overwrite mechanism
         return napari_template("\n".join(register.qss_list) + get_stylesheet() + "\n".join(register.qss_list), **theme)
 
     @theme_name.setter
