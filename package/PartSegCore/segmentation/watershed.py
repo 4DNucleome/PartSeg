@@ -193,8 +193,8 @@ class MSOWatershed(BaseWatershed):
     @classmethod
     def get_fields(cls):
         return [
-            AlgorithmProperty("step_limits", "Limits of Steps", 100, options_range=(1, 1000), property_type=int),
-            AlgorithmProperty("reflective", "Reflective", False, property_type=bool),
+            AlgorithmProperty("step_limits", "Limits of Steps", 100, options_range=(1, 1000), value_type=int),
+            AlgorithmProperty("reflective", "Reflective", False, value_type=bool),
         ]
 
     @classmethod

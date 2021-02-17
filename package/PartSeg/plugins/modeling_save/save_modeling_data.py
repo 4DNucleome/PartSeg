@@ -19,12 +19,12 @@ class SaveModeling(SaveBase):
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
         return [
-            AlgorithmProperty("channel", "Channel", 0, property_type=Channel),
+            AlgorithmProperty("channel", "Channel", 0, value_type=Channel),
             AlgorithmProperty("clip", "Clip area", False),
             AlgorithmProperty(
                 "reverse", "Reverse", False, help_text="Reverse brightness off image (for electron microscopy)"
             ),
-            AlgorithmProperty("units", "Units", Units.nm, property_type=Units),
+            AlgorithmProperty("units", "Units", Units.nm, value_type=Units),
         ]
 
     @classmethod
