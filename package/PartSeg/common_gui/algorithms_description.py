@@ -1,6 +1,5 @@
 import collections
 import typing
-from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 from enum import Enum
 
@@ -107,7 +106,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
                 default_value=ob.default_value,
                 options_range=ob.range,
                 single_steep=ob.single_step,
-                property_type=ob.value_type,
+                value_type=ob.value_type,
                 possible_values=ob.possible_values,
                 help_text=ob.help_text,
                 per_dimension=ob.per_dimension,
@@ -431,18 +430,6 @@ class SubAlgorithmWidget(QWidget):
         if self.widgets_dict[name].has_elements() and event.rect().top() == 0 and event.rect().left() == 0:
             painter = QPainter(self)
             painter.drawRect(event.rect())
-
-
-class AbstractAlgorithmSettingsWidget(metaclass=ABCMeta):
-    def __init__(self):
-        pass
-
-    @abstractmethod
-    def get_values(self):
-        """
-        :return: dict[str, object]
-        """
-        return dict()
 
 
 class BaseAlgorithmSettingsWidget(QScrollArea):

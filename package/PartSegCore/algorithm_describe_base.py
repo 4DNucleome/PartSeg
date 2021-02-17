@@ -39,10 +39,11 @@ class AlgorithmProperty:
         **kwargs,
     ):
         if "property_type" in kwargs:
-            warnings.warn("property_type is deprecated, use value_type instead", DeprecationWarning)
+            warnings.warn("property_type is deprecated, use value_type instead", DeprecationWarning, stacklevel=2)
             value_type = kwargs["property_type"]
             del kwargs["property_type"]
-            assert len(kwargs) == 0
+            if len(kwargs) != 0:
+                raise ValueError(", ".join(kwargs.keys()) + " are not expected")
 
         self.name = name
         self.user_name = user_name
@@ -253,7 +254,7 @@ class ROIExtractionProfile:
             algorithm = algorithm_dict[self.algorithm]
         except KeyError:
             return str(self)
-        if self.name == "" or self.name == "Unknown":
+        if self.name in {"", "Unknown"}:
             return (
                 "ROI extraction profile\nAlgorithm: "
                 + self.algorithm
