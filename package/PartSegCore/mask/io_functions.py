@@ -544,8 +544,8 @@ def save_components(
             points_mask = components_mark[tuple(points_casted.T)]
             filtered_points = points[points_mask]
             lower_bound = np.min(np.nonzero(components_mark), axis=1)
-            for i in index_to_frame_points:
-                lower_bound[i] -= FRAME_THICKNESS
+            for j in index_to_frame_points:
+                lower_bound[j] -= FRAME_THICKNESS
 
             df = pd.DataFrame(filtered_points - lower_bound)
             df.to_csv(os.path.join(dir_path, f"{file_name}_component{i}.csv"))
