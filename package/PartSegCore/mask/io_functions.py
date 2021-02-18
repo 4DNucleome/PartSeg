@@ -9,10 +9,11 @@ from io import BufferedIOBase, BytesIO, IOBase, RawIOBase, TextIOBase
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import tifffile
 
 from PartSegImage import GenericImageReader, Image, ImageWriter, TiffImageReader
-from PartSegImage.image import reduce_array
+from PartSegImage.image import FRAME_THICKNESS, reduce_array
 
 from ..algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
 from ..io_utils import (
@@ -513,6 +514,7 @@ def save_components(
     segmentation: np.ndarray,
     dir_path: str,
     segmentation_info: typing.Optional[ROIInfo] = None,
+    points: typing.Optional[np.ndarray] = None,
     range_changed=None,
     step_changed=None,
 ):
@@ -528,9 +530,26 @@ def save_components(
     os.makedirs(dir_path, exist_ok=True)
 
     file_name = os.path.splitext(os.path.basename(image.file_path))[0]
+    points_casted = None
+    important_axis = "XY" if image.is_2d else "XYZ"
+    index_to_frame_points = image._calc_index_to_frame(image.axis_order, important_axis)
+    if points is not None:
+        points_casted = points.astype(np.uint16)
+
     range_changed(0, 2 * len(components))
     for i in components:
-        im = image.cut_image(segmentation == i, replace_mask=True)
+        components_mark = np.array(segmentation == i)
+        im = image.cut_image(components_mark, replace_mask=True)
+        if points is not None and points_casted is not None:
+            points_mask = components_mark[tuple(points_casted.T)]
+            filtered_points = points[points_mask]
+            lower_bound = np.min(np.nonzero(components_mark), axis=1)
+            for i in index_to_frame_points:
+                lower_bound[i] -= FRAME_THICKNESS
+
+            df = pd.DataFrame(filtered_points - lower_bound)
+            df.to_csv(os.path.join(dir_path, f"{file_name}_component{i}.csv"))
+
         # print(f"[run] {im}")
         ImageWriter.save(im, os.path.join(dir_path, f"{file_name}_component{i}.tif"))
         step_changed(2 * i + 1)
@@ -562,6 +581,7 @@ class SaveComponents(SaveBase):
             project_info.roi,
             save_location,
             project_info.roi_info,
+            project_info.points,
             range_changed,
             step_changed,
         )

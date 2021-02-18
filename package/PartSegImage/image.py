@@ -6,6 +6,7 @@ import numpy as np
 Spacing = typing.Tuple[typing.Union[float, int], ...]
 
 _DEF = object()
+FRAME_THICKNESS = 2
 
 
 def minimal_dtype(val: int):
@@ -479,8 +480,8 @@ class Image:
         image_pos = [slice(None) for _ in range(array.ndim)]
 
         for index in index_to_add:
-            result_shape[index] += 2
-            image_pos[index] = slice(1, result_shape[index] - 1)
+            result_shape[index] += FRAME_THICKNESS * 2
+            image_pos[index] = slice(FRAME_THICKNESS, result_shape[index] - FRAME_THICKNESS)
 
         data = np.zeros(shape=result_shape, dtype=array.dtype)
         data[tuple(image_pos)] = array
