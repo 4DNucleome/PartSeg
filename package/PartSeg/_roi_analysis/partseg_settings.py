@@ -71,13 +71,6 @@ class PartSettings(BaseSettings):
         self.compare_segmentation = segmentation
         self.compare_segmentation_change.emit(segmentation)
 
-    @property
-    def use_physical_unit(self):
-        return self.get("use_physical_unit", False)
-
-    def set_use_physical_unit(self, value):
-        self.set("use_physical_unit", value)
-
     def _image_changed(self):
         super()._image_changed()
         self._mask = None

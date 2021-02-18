@@ -57,6 +57,13 @@ class ProjectTuple(ProjectInfoBase):
 
 
 class MaskInfo(typing.NamedTuple):
+    """
+    Structure representing mask data
+
+    :param str file_path: path to file with mask
+    :param np.ndarray mask_array: numpy array with mask information
+    """
+
     file_path: str
     mask_array: np.ndarray
 
