@@ -159,7 +159,7 @@ class ImageView(QWidget):
         self._current_order = "xy"
         self.components = None
         self.worker_list = []
-        self.points_layer = Points(ndim=4)
+        self.points_layer = None
 
         self.viewer = Viewer(ndisplay=ndisplay)
         self.viewer.theme = self.settings.theme_name
@@ -176,7 +176,6 @@ class ImageView(QWidget):
         self.roll_dim_button.customContextMenuRequested.connect(self._dim_order_menu)
         self.mask_chk = QCheckBox()
         self.mask_label = QLabel("Mask:")
-        self.viewer.add_layer(self.points_layer)
 
         self.btn_layout = QHBoxLayout()
         self.btn_layout.addWidget(self.reset_view_button)
@@ -375,8 +374,9 @@ class ImageView(QWidget):
                 self.points_layer.data = self.settings.points
                 self.points_layer.scale = self.settings.image.normalized_scaling()
         else:
-            self.points_view_button.setVisible(False)
-            self.points_layer.data = np.empty((0, 4))
+            if self.points_layer in self.viewer.layers:
+                self.points_view_button.setVisible(False)
+                self.points_layer.data = np.empty((0, 4))
 
     def set_roi(self, roi_info: Optional[ROIInfo] = None, image: Optional[Image] = None) -> None:
         image = self.get_image(image)
