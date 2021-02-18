@@ -367,14 +367,14 @@ class ImageView(QWidget):
     def update_points(self):
         if self.settings.points is not None:
             self.points_view_button.setVisible(True)
-            if self.points_layer is not None and self.points_layer not in self.viewer.layers:
+            if self.points_layer is not None or self.points_layer not in self.viewer.layers:
                 self.points_layer = Points(self.settings.points, scale=self.settings.image.normalized_scaling())
                 self.viewer.add_layer(self.points_layer)
             else:
                 self.points_layer.data = self.settings.points
                 self.points_layer.scale = self.settings.image.normalized_scaling()
         else:
-            if self.points_layer is not None and self.points_layer in self.viewer.layers:
+            if self.points_layer is not None or self.points_layer in self.viewer.layers:
                 self.points_view_button.setVisible(False)
                 self.points_layer.data = np.empty((0, 4))
 
