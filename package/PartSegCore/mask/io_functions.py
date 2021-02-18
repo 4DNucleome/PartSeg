@@ -9,8 +9,8 @@ from io import BufferedIOBase, BytesIO, IOBase, RawIOBase, TextIOBase
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 import tifffile
+from napari.plugins._builtins import napari_write_points
 
 from PartSegImage import GenericImageReader, Image, ImageWriter, TiffImageReader
 from PartSegImage.image import FRAME_THICKNESS, reduce_array
@@ -541,12 +541,13 @@ def save_components(
         if points is not None and points_casted is not None:
             points_mask = components_mark[tuple(points_casted.T)]
             filtered_points = points[points_mask]
+            filtered_points[:, 1] = np.round(filtered_points[:, 1])
             lower_bound = np.min(np.nonzero(components_mark), axis=1)
             for j in index_to_frame_points:
                 lower_bound[j] -= FRAME_THICKNESS
-
-            df = pd.DataFrame(filtered_points - lower_bound)
-            df.to_csv(os.path.join(dir_path, f"{file_name}_component{i}.csv"))
+            napari_write_points(
+                os.path.join(dir_path, f"{file_name}_component{i}.csv"), filtered_points - lower_bound, {}
+            )
 
         # print(f"[run] {im}")
         ImageWriter.save(im, os.path.join(dir_path, f"{file_name}_component{i}.tif"))
