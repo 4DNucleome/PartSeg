@@ -267,9 +267,7 @@ class LoadSegmentation(LoadBase):
     def fix_parameters(profile: ROIExtractionProfile):
         if profile is None:
             return
-        if (profile.algorithm == "Threshold" or profile.algorithm == "Auto Threshold") and isinstance(
-            profile.values["smooth_border"], bool
-        ):
+        if (profile.algorithm in {"Threshold", "Auto Threshold"}) and isinstance(profile.values["smooth_border"], bool):
             if profile.values["smooth_border"] and "smooth_border_radius" in profile.values:
                 profile.values["smooth_border"] = {
                     "name": "Opening",
@@ -532,7 +530,7 @@ def save_components(
     file_name = os.path.splitext(os.path.basename(image.file_path))[0]
     points_casted = None
     important_axis = "XY" if image.is_2d else "XYZ"
-    index_to_frame_points = image._calc_index_to_frame(image.axis_order, important_axis)
+    index_to_frame_points = image.calc_index_to_frame(image.axis_order, important_axis)
     if points is not None:
         points_casted = points.astype(np.uint16)
 
@@ -669,7 +667,7 @@ class UpdateLoadedMetadataMask(UpdateLoadedMetadataBase):
     @classmethod
     def update_segmentation_profile(cls, profile_data: ROIExtractionProfile) -> ROIExtractionProfile:
         profile_data = super().update_segmentation_profile(profile_data)
-        if profile_data.algorithm == "Threshold" or profile_data.algorithm == "Auto Threshold":
+        if profile_data.algorithm in {"Threshold", "Auto Threshold"}:
             if isinstance(profile_data.values["smooth_border"], bool):
                 if profile_data.values["smooth_border"]:
                     profile_data.values["smooth_border"] = {
