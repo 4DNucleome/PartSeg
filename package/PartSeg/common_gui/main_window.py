@@ -204,6 +204,8 @@ class BaseMainWindow(QMainWindow):
             viewer.add_labels(self.settings.roi, name="ROI", scale=scaling)
         if image.mask is not None:
             viewer.add_labels(image.mask, name="Mask", scale=scaling)
+        if self.settings.points is not None:
+            viewer.add_points(self.settings.points, name="Points", scale=scaling)
         self.viewer_list.append(viewer)
         viewer.window.qt_viewer.destroyed.connect(lambda x: self.close_viewer(viewer))
 

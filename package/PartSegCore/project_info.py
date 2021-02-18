@@ -31,6 +31,7 @@ class ProjectInfoBase(Protocol):
     roi_info: ROIInfo = ROIInfo(None)
     mask: Optional[np.ndarray]
     errors: str = ""
+    points: Optional[np.ndarray] = None
 
     def get_raw_copy(self):
         """

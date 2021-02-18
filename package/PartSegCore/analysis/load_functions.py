@@ -21,6 +21,7 @@ from ..algorithm_describe_base import Register, ROIExtractionProfile
 from ..io_utils import (
     HistoryElement,
     LoadBase,
+    LoadPoints,
     SegmentationType,
     UpdateLoadedMetadataBase,
     WrongFileTypeException,
@@ -406,6 +407,7 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
 def load_metadata(data: typing.Union[str, Path]):
     """
     Load metadata saved in json format for segmentation mask
+
     :param data: path to json file, string with json, or opened file
     :return: restored structures
     """
@@ -426,5 +428,5 @@ def update_algorithm_dict(dkt):
 
 
 load_dict = Register(
-    LoadStackImage, LoadImageMask, LoadProject, LoadMaskSegmentation, class_methods=LoadBase.need_functions
+    LoadStackImage, LoadImageMask, LoadProject, LoadMaskSegmentation, LoadPoints, class_methods=LoadBase.need_functions
 )

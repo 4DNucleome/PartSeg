@@ -10,14 +10,16 @@ from pathlib import Path
 
 import numpy as np
 import tifffile
+from napari.plugins._builtins import napari_write_points
 
 from PartSegImage import GenericImageReader, Image, ImageWriter, TiffImageReader
-from PartSegImage.image import reduce_array
+from PartSegImage.image import FRAME_THICKNESS, reduce_array
 
 from ..algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
 from ..io_utils import (
     HistoryElement,
     LoadBase,
+    LoadPoints,
     SaveBase,
     SaveMaskAsTiff,
     SaveROIAsNumpy,
@@ -68,6 +70,7 @@ class MaskProjectTuple(ProjectInfoBase):
     history: typing.List[HistoryElement] = dataclasses.field(default_factory=list)
     errors: str = ""
     spacing: typing.Optional[typing.List[float]] = None
+    points: typing.Optional[np.ndarray] = None
 
     def get_raw_copy(self):
         return MaskProjectTuple(self.file_path, self.image.substitute(mask=None))
@@ -264,9 +267,7 @@ class LoadSegmentation(LoadBase):
     def fix_parameters(profile: ROIExtractionProfile):
         if profile is None:
             return
-        if (profile.algorithm == "Threshold" or profile.algorithm == "Auto Threshold") and isinstance(
-            profile.values["smooth_border"], bool
-        ):
+        if (profile.algorithm in {"Threshold", "Auto Threshold"}) and isinstance(profile.values["smooth_border"], bool):
             if profile.values["smooth_border"] and "smooth_border_radius" in profile.values:
                 profile.values["smooth_border"] = {
                     "name": "Opening",
@@ -511,6 +512,7 @@ def save_components(
     segmentation: np.ndarray,
     dir_path: str,
     segmentation_info: typing.Optional[ROIInfo] = None,
+    points: typing.Optional[np.ndarray] = None,
     range_changed=None,
     step_changed=None,
 ):
@@ -526,9 +528,27 @@ def save_components(
     os.makedirs(dir_path, exist_ok=True)
 
     file_name = os.path.splitext(os.path.basename(image.file_path))[0]
+    points_casted = None
+    important_axis = "XY" if image.is_2d else "XYZ"
+    index_to_frame_points = image.calc_index_to_frame(image.axis_order, important_axis)
+    if points is not None:
+        points_casted = points.astype(np.uint16)
+
     range_changed(0, 2 * len(components))
     for i in components:
-        im = image.cut_image(segmentation == i, replace_mask=True)
+        components_mark = np.array(segmentation == i)
+        im = image.cut_image(components_mark, replace_mask=True)
+        if points is not None and points_casted is not None:
+            points_mask = components_mark[tuple(points_casted.T)]
+            filtered_points = points[points_mask]
+            filtered_points[:, 1] = np.round(filtered_points[:, 1])
+            lower_bound = np.min(np.nonzero(components_mark), axis=1)
+            for j in index_to_frame_points:
+                lower_bound[j] -= FRAME_THICKNESS
+            napari_write_points(
+                os.path.join(dir_path, f"{file_name}_component{i}.csv"), filtered_points - lower_bound, {}
+            )
+
         # print(f"[run] {im}")
         ImageWriter.save(im, os.path.join(dir_path, f"{file_name}_component{i}.tif"))
         step_changed(2 * i + 1)
@@ -560,6 +580,7 @@ class SaveComponents(SaveBase):
             project_info.roi,
             save_location,
             project_info.roi_info,
+            project_info.points,
             range_changed,
             step_changed,
         )
@@ -647,7 +668,7 @@ class UpdateLoadedMetadataMask(UpdateLoadedMetadataBase):
     @classmethod
     def update_segmentation_profile(cls, profile_data: ROIExtractionProfile) -> ROIExtractionProfile:
         profile_data = super().update_segmentation_profile(profile_data)
-        if profile_data.algorithm == "Threshold" or profile_data.algorithm == "Auto Threshold":
+        if profile_data.algorithm in {"Threshold", "Auto Threshold"}:
             if isinstance(profile_data.values["smooth_border"], bool):
                 if profile_data.values["smooth_border"]:
                     profile_data.values["smooth_border"] = {
@@ -664,7 +685,9 @@ class UpdateLoadedMetadataMask(UpdateLoadedMetadataBase):
         return profile_data
 
 
-load_dict = Register(LoadStackImage, LoadROIImage, LoadStackImageWithMask, class_methods=LoadBase.need_functions)
+load_dict = Register(
+    LoadStackImage, LoadROIImage, LoadStackImageWithMask, LoadPoints, class_methods=LoadBase.need_functions
+)
 save_parameters_dict = Register(SaveParametersJSON, class_methods=SaveBase.need_functions)
 save_components_dict = Register(SaveComponents, class_methods=SaveBase.need_functions)
 save_segmentation_dict = Register(

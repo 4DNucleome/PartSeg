@@ -7,16 +7,18 @@ import pytest
 
 from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_mask.main_window import ChosenComponents
-from PartSeg._roi_mask.stack_settings import StackSettings
+from PartSeg._roi_mask.stack_settings import StackSettings, get_mask
 from PartSeg.common_backend.base_settings import BaseSettings
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import analysis_algorithm_dict
-from PartSegCore.analysis.io_utils import create_history_element_from_project
+from PartSegCore.analysis.io_utils import MaskInfo, create_history_element_from_project
 from PartSegCore.analysis.load_functions import LoadProject
 from PartSegCore.analysis.save_functions import SaveProject
-from PartSegCore.io_utils import HistoryProblem
+from PartSegCore.io_utils import HistoryProblem, PointsInfo
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import LoadStackImage
 from PartSegCore.mask_create import calculate_mask_from_project
+from PartSegCore.segmentation.algorithm_base import SegmentationResult
 
 
 @pytest.fixture
@@ -152,6 +154,24 @@ class TestStackSettings:
         with pytest.raises(HistoryProblem):
             stack_settings.set_project_info(seg2)
 
+    def test_set_segmentation_result(self, stack_settings, stack_segmentation1, stack_image):
+        stack_settings.set_project_info(stack_image)
+        seg = SegmentationResult(roi=stack_segmentation1.roi, parameters=ROIExtractionProfile("test", "test2", {}))
+        stack_settings.set_segmentation_result(seg)
+        assert stack_settings.last_executed_algorithm == "test2"
+        assert np.array_equal(stack_settings.roi, stack_segmentation1.roi)
+
+    def test_selected_components(self, stack_settings, stack_segmentation1):
+        stack_settings.set_project_info(stack_segmentation1)
+        assert stack_settings.chosen_components() == [1, 3]
+        assert stack_settings.component_is_chosen(1)
+        assert not stack_settings.component_is_chosen(2)
+        assert np.array_equal(stack_settings.components_mask(), [0, 1, 0, 1, 0])
+        stack_settings.chosen_components_widget.un_check_all()
+        assert stack_settings.chosen_components() == []
+        stack_settings.chosen_components_widget.check_all()
+        assert stack_settings.chosen_components() == list(range(1, stack_segmentation1.roi.max() + 1))
+
 
 class TestBaseSettings:
     def test_empty_history(self, tmp_path):
@@ -200,8 +220,34 @@ class TestBaseSettings:
         settings.history_redo_clean()
         settings.history_current_element()
 
+    def test_add_point(self, tmp_path, qtbot):
+        settings = BaseSettings(tmp_path)
+        with qtbot.waitSignal(settings.points_changed):
+            settings.points = [1, 2, 3]
+
 
 class TestPartSettings:
+    def test_set_mask_info(self, qtbot, tmp_path, image):
+        settings = PartSettings(tmp_path)
+        settings.image = image
+        mask_info = MaskInfo("", (image.get_channel(0) > 2).astype(np.uint8))
+        with qtbot.wait_signal(settings.mask_changed):
+            settings.set_project_info(mask_info)
+
+    def test_project_info_set(self, qtbot, analysis_segmentation, analysis_segmentation2, tmp_path, image):
+        settings = PartSettings(tmp_path)
+        settings.image = image
+        settings.set_project_info(analysis_segmentation)
+        assert settings.mask is None
+        settings.set_project_info(analysis_segmentation2)
+        assert settings.mask is not None
+        settings.set_project_info(analysis_segmentation)
+        assert settings.mask is None
+        analysis_segmentation3 = dataclasses.replace(analysis_segmentation2, roi=None)
+        settings.set_project_info(analysis_segmentation3)
+        assert settings.mask is not None
+        assert settings.roi is None
+
     def test_get_project_info(self, qtbot, tmp_path, image):
         settings = PartSettings(tmp_path)
         settings.last_executed_algorithm = "aa"
@@ -242,3 +288,35 @@ class TestPartSettings:
         loaded = LoadProject.load([tmp_path / "project.tgz"])
         assert np.all(loaded.roi == result2.roi)
         assert len(loaded.history) == 1
+
+
+@pytest.mark.parametrize("Settings", [PartSettings, StackSettings])
+def test_set_project_info(Settings, qtbot, tmp_path, image):
+    settings = Settings(tmp_path)
+    settings.points = [1, 2, 3]
+    assert settings.points == [1, 2, 3]
+    settings.image = image
+    assert settings.points is None
+    settings.set_project_info(PointsInfo("a", np.arange(3)))
+    assert np.all(settings.points == [0, 1, 2])
+
+
+def test_get_mask(stack_segmentation1):
+    res1 = get_mask(stack_segmentation1.roi, mask=None, selected=[1, 3])
+    assert isinstance(res1, np.ndarray)
+    assert set(np.unique(res1)) == {0, 1}
+    assert set(stack_segmentation1.roi[res1 > 0]) == {0, 2, 4}
+    mask = np.ones(stack_segmentation1.roi.shape, dtype=np.uint8)
+    res2 = get_mask(stack_segmentation1.roi, mask=mask, selected=[1, 3])
+    assert set(np.unique(res2)) == {0, 1}
+    assert np.array_equal(res1, res2)
+    res3 = get_mask(stack_segmentation1.roi, mask=res1, selected=[1, 2])
+    assert set(stack_segmentation1.roi[res3 > 0]) == {0, 4}
+    assert set(np.unique(res3)) == {0, 1}
+    res4 = get_mask(stack_segmentation1.roi, mask=None, selected=[1])
+    assert np.array_equal(res4, stack_segmentation1.roi != 1)
+
+    assert get_mask(stack_segmentation1.roi, mask=None, selected=[]) is None
+    assert get_mask(None, mask=None, selected=[1, 2]) is None
+    assert np.array_equal(get_mask(None, mask=res4, selected=[1, 2]), res4)
+    assert np.array_equal(get_mask(stack_segmentation1.roi, mask=res4, selected=[]), res4)
