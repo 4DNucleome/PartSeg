@@ -12,7 +12,7 @@ except ImportError:
     from napari._qt.qt_viewer_buttons import QtViewerPushButton
 
 from napari.components import ViewerModel as Viewer
-from napari.layers import Layer
+from napari.layers import Layer, Points
 from napari.layers.image import Image as NapariImage
 from napari.layers.image._image_constants import Interpolation3D
 from napari.layers.labels import Labels
@@ -159,6 +159,7 @@ class ImageView(QWidget):
         self._current_order = "xy"
         self.components = None
         self.worker_list = []
+        self.points_layer = Points(ndim=4)
 
         self.viewer = Viewer(ndisplay=ndisplay)
         self.viewer.theme = self.settings.theme_name
@@ -172,6 +173,7 @@ class ImageView(QWidget):
         self.roll_dim_button.customContextMenuRequested.connect(self._dim_order_menu)
         self.mask_chk = QCheckBox()
         self.mask_label = QLabel("Mask:")
+        self.viewer.add_layer(self.points_layer)
 
         self.btn_layout = QHBoxLayout()
         self.btn_layout.addWidget(self.reset_view_button)
@@ -197,6 +199,7 @@ class ImageView(QWidget):
         settings.roi_clean.connect(self.set_roi)
         settings.image_changed.connect(self.set_image)
         settings.image_spacing_changed.connect(self.update_spacing_info)
+        settings.points_changed.connect(self.update_points)
         # settings.labels_changed.connect(self.paint_layer)
         self.old_scene: BaseCamera = self.viewer_widget.view.scene
 
@@ -353,6 +356,17 @@ class ImageView(QWidget):
         if self.current_image not in self.image_info:
             return self.settings.image
         return self.image_info[self.current_image].image
+
+    def update_points(self):
+        if self.settings.points is not None:
+            if self.points_layer not in self.viewer.layers:
+                self.points_layer = Points(self.settings.points, scale=self.settings.image.normalized_scaling())
+                self.viewer.add_layer(self.points_layer)
+            else:
+                self.points_layer.data = self.settings.points
+                self.points_layer.scale = self.settings.image.normalized_scaling()
+        else:
+            self.points_layer.data = np.empty((0, 4))
 
     def set_roi(self, roi_info: Optional[ROIInfo] = None, image: Optional[Image] = None) -> None:
         image = self.get_image(image)

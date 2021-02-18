@@ -443,9 +443,8 @@ class BaseSettings(ViewSettings):
 
     @points.setter
     def points(self, value):
-        print(value)
         if value is not None:
-            self._points = value.points
+            self._points = value
         else:
             self._points = None
         self.points_changed.emit()

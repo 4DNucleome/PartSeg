@@ -125,7 +125,7 @@ class PartSettings(BaseSettings):
         elif isinstance(data, MaskInfo):
             self.mask = data.mask_array
         elif isinstance(data, PointsInfo):
-            self.points = data
+            self.points = data.points
 
     def get_save_list(self) -> typing.List[SaveSettingsDescription]:
         return super().get_save_list() + [

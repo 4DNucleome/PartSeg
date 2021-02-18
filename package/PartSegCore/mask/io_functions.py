@@ -666,7 +666,7 @@ class UpdateLoadedMetadataMask(UpdateLoadedMetadataBase):
 
 
 load_dict = Register(
-    LoadPoints, LoadStackImage, LoadROIImage, LoadStackImageWithMask, class_methods=LoadBase.need_functions
+    LoadStackImage, LoadROIImage, LoadStackImageWithMask, LoadPoints, class_methods=LoadBase.need_functions
 )
 save_parameters_dict = Register(SaveParametersJSON, class_methods=SaveBase.need_functions)
 save_components_dict = Register(SaveComponents, class_methods=SaveBase.need_functions)
