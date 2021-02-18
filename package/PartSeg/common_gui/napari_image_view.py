@@ -168,6 +168,9 @@ class ImageView(QWidget):
         self.channel_control = ColorComboBoxGroup(settings, name, channel_property, height=30)
         self.ndim_btn = QtNDisplayButton(self.viewer)
         self.reset_view_button = QtViewerPushButton(self.viewer, "home", "Reset view", self._reset_view)
+        self.points_view_button = QtViewerPushButton(
+            self.viewer, "new_points", "Show points", self.toggle_points_visibility
+        )
         self.roll_dim_button = QtViewerPushButton(self.viewer, "roll", "Roll dimension", self._rotate_dim)
         self.roll_dim_button.setContextMenuPolicy(Qt.CustomContextMenu)
         self.roll_dim_button.customContextMenuRequested.connect(self._dim_order_menu)
@@ -179,6 +182,7 @@ class ImageView(QWidget):
         self.btn_layout.addWidget(self.reset_view_button)
         self.btn_layout.addWidget(self.ndim_btn)
         self.btn_layout.addWidget(self.roll_dim_button)
+        self.btn_layout.addWidget(self.points_view_button)
         self.btn_layout.addWidget(self.channel_control, 1)
         self.btn_layout.addWidget(self.mask_label)
         self.btn_layout.addWidget(self.mask_chk)
@@ -220,6 +224,10 @@ class ImageView(QWidget):
             self.viewer.dims.events.camera.connect(self._view_changed, position="last")
             self.viewer.dims.events.camera.connect(self.camera_change, position="last")
         self.viewer.events.reset_view.connect(self._view_changed, position="last")
+
+    def toggle_points_visibility(self):
+        if self.points_layer is not None:
+            self.points_layer.visible = not self.points_layer.visible
 
     def _dim_order_menu(self, point: QPoint):
         menu = QMenu()
@@ -359,6 +367,7 @@ class ImageView(QWidget):
 
     def update_points(self):
         if self.settings.points is not None:
+            self.points_view_button.setVisible(True)
             if self.points_layer not in self.viewer.layers:
                 self.points_layer = Points(self.settings.points, scale=self.settings.image.normalized_scaling())
                 self.viewer.add_layer(self.points_layer)
@@ -366,6 +375,7 @@ class ImageView(QWidget):
                 self.points_layer.data = self.settings.points
                 self.points_layer.scale = self.settings.image.normalized_scaling()
         else:
+            self.points_view_button.setVisible(False)
             self.points_layer.data = np.empty((0, 4))
 
     def set_roi(self, roi_info: Optional[ROIInfo] = None, image: Optional[Image] = None) -> None:
