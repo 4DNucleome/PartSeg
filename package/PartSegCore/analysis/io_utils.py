@@ -26,6 +26,7 @@ class ProjectTuple(ProjectInfoBase):
     history: typing.List[HistoryElement] = field(default_factory=list)
     algorithm_parameters: dict = field(default_factory=dict)
     errors: str = ""
+    points: typing.Optional[np.ndarray] = None
 
     def __post_init__(self):
         if self.roi_info.roi is not None:

@@ -100,6 +100,7 @@ class PartSettings(BaseSettings):
             mask=self.mask,
             history=self.history[: self.history_index + 1],
             algorithm_parameters=algorithm_val,
+            points=self.points,
         )
 
     def set_project_info(self, data: typing.Union[ProjectTuple, MaskInfo, PointsInfo]):

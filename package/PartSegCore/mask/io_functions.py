@@ -69,6 +69,7 @@ class MaskProjectTuple(ProjectInfoBase):
     history: typing.List[HistoryElement] = dataclasses.field(default_factory=list)
     errors: str = ""
     spacing: typing.Optional[typing.List[float]] = None
+    points: typing.Optional[np.ndarray] = None
 
     def get_raw_copy(self):
         return MaskProjectTuple(self.file_path, self.image.substitute(mask=None))

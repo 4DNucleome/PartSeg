@@ -120,6 +120,7 @@ class StackSettings(BaseSettings):
             selected_components=self.chosen_components(),
             roi_extraction_parameters=copy(self.components_parameters_dict),
             history=self.history[: self.history_index + 1],
+            points=self.points,
         )
 
     def set_project_info(self, data: typing.Union[MaskProjectTuple, PointsInfo]):
