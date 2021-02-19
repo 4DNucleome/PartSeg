@@ -42,8 +42,8 @@ class AlgorithmProperty:
             warnings.warn("property_type is deprecated, use value_type instead", DeprecationWarning, stacklevel=2)
             value_type = kwargs["property_type"]
             del kwargs["property_type"]
-            if len(kwargs) != 0:
-                raise ValueError(", ".join(kwargs.keys()) + " are not expected")
+        if len(kwargs) != 0:
+            raise ValueError(", ".join(kwargs.keys()) + " are not expected")
 
         self.name = name
         self.user_name = user_name

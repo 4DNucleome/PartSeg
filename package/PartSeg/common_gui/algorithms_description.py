@@ -37,6 +37,8 @@ from .universal_gui_part import ChannelComboBox, CustomDoubleSpinBox, CustomSpin
 
 
 def update(d, u):
+    if not isinstance(d, dict):
+        d = {}
     for k, v in u.items():
         if isinstance(v, collections.abc.Mapping):
             d[k] = update(d.get(k, {}), v)
