@@ -133,43 +133,43 @@ class SMSegmentation(SegmentationAlgorithm):
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
         return [
-            AlgorithmProperty("channel_nuc", "Nucleus Channel", 0, property_type=Channel),
+            AlgorithmProperty("channel_nuc", "Nucleus Channel", 0, value_type=Channel),
             AlgorithmProperty(
                 "noise_filtering_nucleus",
                 "Filter nucleus",
                 next(iter(noise_filtering_dict.keys())),
                 possible_values=noise_filtering_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty(
                 "nucleus_threshold",
                 "Nucleus Threshold",
                 next(iter(threshold_dict.keys())),
                 possible_values=threshold_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty("minimum_nucleus_size", "Minimum nucleus size (px)", 500, (0, 10 ** 6), 1000),
-            AlgorithmProperty("channel_molecule", "Channel molecule", 1, property_type=Channel),
+            AlgorithmProperty("channel_molecule", "Channel molecule", 1, value_type=Channel),
             AlgorithmProperty(
                 "background_estimate",
                 "Background estimate",
                 next(iter(noise_filtering_dict.keys())),
                 possible_values=noise_filtering_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty(
                 "foreground_estimate",
                 "Foreground estimate",
                 next(iter(noise_filtering_dict.keys())),
                 possible_values=noise_filtering_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty(
                 "molecule_threshold",
                 "Molecule Threshold",
                 next(iter(threshold_dict.keys())),
                 possible_values=threshold_dict,
-                property_type=AlgorithmDescribeBase,
+                propevalue_typerty_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty("minimum_molecule_size", "Minimum molecule size (px)", 5, (0, 10 ** 6), 1000),
         ]
