@@ -96,7 +96,7 @@ class SMSegmentation(SegmentationAlgorithm):
         label_types.update({i: "Mixed" for i in mixed_components})
 
         annotation = {el: {"voxels": sizes[el], "type": label_types[el], "number": el} for el in elements}
-        position_masking = np.zeros(elements.max() + 1, dtype=molecule_segmentation.dtype)
+        position_masking = np.zeros((elements.max() if elements.size > 0 else 0) + 1, dtype=molecule_segmentation.dtype)
         for el in cellular_components:
             position_masking[el] = 1
         for el in mixed_components:
