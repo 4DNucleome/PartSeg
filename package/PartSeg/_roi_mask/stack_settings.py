@@ -9,7 +9,7 @@ from qtpy.QtCore import Signal, Slot
 from qtpy.QtWidgets import QMessageBox
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.io_utils import HistoryElement, HistoryProblem
+from PartSegCore.io_utils import HistoryElement, HistoryProblem, PointsInfo
 from PartSegCore.mask.io_functions import MaskProjectTuple, load_metadata
 from PartSegCore.segmentation.algorithm_base import SegmentationResult
 from PartSegImage import Image
@@ -32,13 +32,13 @@ class StackSettings(BaseSettings):
     ]
 
     def set_segmentation_result(self, result: SegmentationResult):
-        if self._parent and np.max(result.roi) == 0:
+        if self._parent and np.max(result.roi) == 0:  # pragma: no cover
             QMessageBox.information(
                 self._parent,
                 "No result",
                 "Segmentation contains no component, check parameters, especially chosen channel.",
             )
-        if result.info_text and self._parent is not None:
+        if result.info_text and self._parent is not None:  # pragma: no cover
             QMessageBox().information(self._parent, "Algorithm info", result.info_text)
         parameters_dict = defaultdict(lambda: deepcopy(result.parameters))
         self._additional_layers = result.additional_layers
@@ -78,7 +78,7 @@ class StackSettings(BaseSettings):
         if self.chosen_components_widget is not None:
             return sorted(self.chosen_components_widget.get_chosen())
 
-        raise RuntimeError("chosen_components_widget do not initialized")
+        raise RuntimeError("chosen_components_widget do not initialized")  # pragma: no cover
 
     def component_is_chosen(self, val: int) -> bool:
         """
@@ -90,7 +90,7 @@ class StackSettings(BaseSettings):
         if self.chosen_components_widget is not None:
             return self.chosen_components_widget.get_state(val)
 
-        raise RuntimeError("chosen_components_widget do not idealized")
+        raise RuntimeError("chosen_components_widget do not idealized")  # pragma: no cover
 
     def components_mask(self) -> np.ndarray:
         """
@@ -102,7 +102,7 @@ class StackSettings(BaseSettings):
         if self.chosen_components_widget is not None:
             return self.chosen_components_widget.get_mask()
 
-        raise RuntimeError("chosen_components_widget do not initialized")
+        raise RuntimeError("chosen_components_widget do not initialized")  # pragma: no cover
 
     def get_project_info(self) -> MaskProjectTuple:
         """
@@ -120,12 +120,17 @@ class StackSettings(BaseSettings):
             selected_components=self.chosen_components(),
             roi_extraction_parameters=copy(self.components_parameters_dict),
             history=self.history[: self.history_index + 1],
+            points=self.points,
         )
 
-    def set_project_info(self, data: MaskProjectTuple):
+    def set_project_info(self, data: typing.Union[MaskProjectTuple, PointsInfo]):
         """signals = self.signalsBlocked()
         if data.segmentation is not None:
             self.blockSignals(True)"""
+
+        if isinstance(data, PointsInfo):
+            self.points = data.points
+            return
         if isinstance(data.image, Image) and (
             self.image_path != data.image.file_path or self.image_shape != data.image.shape
         ):
@@ -246,16 +251,6 @@ class StackSettings(BaseSettings):
                 return False
         return True
 
-    def set_project_data(self, data: MaskProjectTuple, save_chosen=True):
-        if isinstance(data.image, Image):
-            self.image = data.image
-        if data.roi is not None:
-            if not self.compare_history(data.history) and data.selected_components:
-                raise HistoryProblem("Incompatible history")
-            self.set_history(data.history)
-            self.mask = data.mask
-            self.set_segmentation(data.roi, save_chosen, data.selected_components, data.roi_extraction_parameters)
-
     def set_segmentation(
         self, new_segmentation_data, save_chosen=True, list_of_components=None, segmentation_parameters=None
     ):
@@ -289,18 +284,21 @@ class StackSettings(BaseSettings):
             self.components_parameters_dict = segmentation_parameters
 
 
-def get_mask(segmentation: typing.Optional[np.ndarray], mask: typing.Optional[np.ndarray], selected: typing.List[int]):
+def get_mask(
+    segmentation: typing.Optional[np.ndarray], mask: typing.Optional[np.ndarray], selected: typing.List[int]
+) -> np.ndarray:
     """
     Calculate mask base on segmentation, current mask and list of chosen components.
+    Its exclude selected components from mask.
 
     :param typing.Optional[np.ndarray] segmentation: segmentation array
     :param typing.Optional[np.ndarray] mask: current mask
-    :param typing.List[int] selected: list of selected components
+    :param typing.List[int] selected: list of selected components which should be masked as non segmentation area
     :return: new mask
     :rtype: typing.Optional[np.ndarray]
     """
     if segmentation is None or len(selected) == 0:
-        return None if mask is None else mask
+        return mask
     segmentation = reduce_array(segmentation, selected)
     if mask is None:
         resp = np.ones(segmentation.shape, dtype=np.uint8)

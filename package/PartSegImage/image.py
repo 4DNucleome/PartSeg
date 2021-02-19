@@ -6,6 +6,7 @@ import numpy as np
 Spacing = typing.Tuple[typing.Union[float, int], ...]
 
 _DEF = object()
+FRAME_THICKNESS = 2
 
 NAPARI_SCALING = 10 ** 9
 
@@ -481,15 +482,22 @@ class Image:
         image_pos = [slice(None) for _ in range(array.ndim)]
 
         for index in index_to_add:
-            result_shape[index] += 2
-            image_pos[index] = slice(1, result_shape[index] - 1)
+            result_shape[index] += FRAME_THICKNESS * 2
+            image_pos[index] = slice(FRAME_THICKNESS, result_shape[index] - FRAME_THICKNESS)
 
         data = np.zeros(shape=result_shape, dtype=array.dtype)
         data[tuple(image_pos)] = array
         return data
 
     @staticmethod
-    def _calc_index_to_frame(array_axis, important_axis):
+    def calc_index_to_frame(array_axis, important_axis):
+        """
+        calculate in which axis frame should be added
+
+        :param str array_axis: list of image axis
+        :param str important_axis: list of framed axis
+        :return:
+        """
         return [array_axis.index(letter) for letter in important_axis]
 
     def cut_image(
@@ -532,10 +540,10 @@ class Image:
         important_axis = "XY" if self.is_2d else "XYZ"
 
         return self.__class__(
-            self._frame_array(new_image, self._calc_index_to_frame(self.axis_order, important_axis)),
+            self._frame_array(new_image, self.calc_index_to_frame(self.axis_order, important_axis)),
             self._image_spacing,
             None,
-            self._frame_array(new_mask, self._calc_index_to_frame(self.array_axis_order, important_axis)),
+            self._frame_array(new_mask, self.calc_index_to_frame(self.array_axis_order, important_axis)),
             self.default_coloring,
             self.ranges,
             self.labels,

@@ -1,5 +1,6 @@
 import inspect
 import typing
+import warnings
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from enum import Enum
@@ -32,16 +33,24 @@ class AlgorithmProperty:
         options_range=None,
         single_steep=None,
         possible_values=None,
-        property_type=None,
+        value_type=None,
         help_text="",
         per_dimension=False,
+        **kwargs,
     ):
+        if "property_type" in kwargs:
+            warnings.warn("property_type is deprecated, use value_type instead", DeprecationWarning, stacklevel=2)
+            value_type = kwargs["property_type"]
+            del kwargs["property_type"]
+            if len(kwargs) != 0:
+                raise ValueError(", ".join(kwargs.keys()) + " are not expected")
+
         self.name = name
         self.user_name = user_name
         if isinstance(possible_values, list):
             self.value_type = list
-        elif property_type is not None:
-            self.value_type = property_type
+        elif value_type is not None:
+            self.value_type = value_type
         else:
             self.value_type = type(default_value)
         self.default_value = default_value
@@ -245,7 +254,7 @@ class ROIExtractionProfile:
             algorithm = algorithm_dict[self.algorithm]
         except KeyError:
             return str(self)
-        if self.name == "" or self.name == "Unknown":
+        if self.name in {"", "Unknown"}:
             return (
                 "ROI extraction profile\nAlgorithm: "
                 + self.algorithm

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.7
+
+-   Add possibility of custom input widgets for algorithms
+-   Switch to napari Colormaps instead of custom one
+-   Add points visualization
+
 ## 0.12.6
 
 -   Fix prev_mask_get

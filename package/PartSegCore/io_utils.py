@@ -11,6 +11,7 @@ from tarfile import TarFile, TarInfo
 
 import imageio
 import numpy as np
+import pandas as pd
 import tifffile
 from napari.utils import Colormap
 
@@ -454,3 +455,33 @@ class SaveROIAsNumpy(SaveBase):
         elif segmentation_max < 2 ** 16 - 1:
             segmentation = segmentation.astype(np.uint16)
         np.save(save_location, segmentation)
+
+
+class PointsInfo(typing.NamedTuple):
+    file_path: str
+    points: np.ndarray
+
+
+class LoadPoints(LoadBase):
+    @classmethod
+    def get_short_name(cls):
+        return "point_csv"
+
+    @classmethod
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ) -> PointsInfo:
+        df = pd.read_csv(load_locations[0], delimiter=",", index_col=0)
+        return PointsInfo(load_locations[0], df.to_numpy())
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Points (*.csv)"
+
+    @classmethod
+    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+        return ["text"]

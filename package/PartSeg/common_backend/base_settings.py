@@ -15,6 +15,7 @@ from qtpy.QtCore import QObject, Signal
 from qtpy.QtWidgets import QMessageBox, QWidget
 
 from PartSeg.common_backend.partially_const_dict import PartiallyConstDict
+from PartSegCore import register
 from PartSegCore.color_image import default_colormap_dict, default_label_dict
 from PartSegCore.color_image.base_colors import starting_colors
 from PartSegCore.io_utils import HistoryElement, load_metadata_base
@@ -280,7 +281,8 @@ class ViewSettings(ImageSettings):
     @property
     def style_sheet(self):
         theme = get_theme(self.theme_name)
-        return napari_template(get_stylesheet(), **theme)
+        # TODO understand qss overwrite mechanism
+        return napari_template("\n".join(register.qss_list) + get_stylesheet() + "\n".join(register.qss_list), **theme)
 
     @theme_name.setter
     def theme_name(self, value: str):
@@ -409,6 +411,7 @@ class BaseSettings(ViewSettings):
     """
 
     mask_changed = Signal()
+    points_changed = Signal()
     mask_representation_changed = Signal()
     request_load_files = Signal(list)
     """:py:class:`~.Signal` mask changed signal"""
@@ -428,6 +431,23 @@ class BaseSettings(ViewSettings):
         self.history: List[HistoryElement] = []
         self.history_index = -1
         self.last_executed_algorithm = ""
+        self._points = None
+
+    def _image_changed(self):
+        super()._image_changed()
+        self.points = None
+
+    @property
+    def points(self):
+        return self._points
+
+    @points.setter
+    def points(self, value):
+        if value is not None:
+            self._points = value
+        else:
+            self._points = None
+        self.points_changed.emit()
 
     def set_segmentation_result(self, result: SegmentationResult):
         if result.info_text and self._parent is not None:
@@ -541,7 +561,7 @@ class BaseSettings(ViewSettings):
         self.set(DIR_HISTORY, self._add_elem_to_list(self.get(DIR_HISTORY, []), dir_path))
 
     def add_load_files_history(self, file_path: List[str], load_method: str):
-        self.set(FILE_HISTORY, self._add_elem_to_list(self.get(FILE_HISTORY, []), (file_path, load_method)))
+        self.set(FILE_HISTORY, self._add_elem_to_list(self.get(FILE_HISTORY, []), [file_path, load_method]))
         self.add_path_history(os.path.dirname(file_path[0]))
 
     def set(self, key_path: str, value):

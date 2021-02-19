@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from PartSegImage import Image, ImageWriter, TiffImageReader
+from PartSegImage.image import FRAME_THICKNESS
 
 
 class TestImageBase:
@@ -294,10 +295,15 @@ class TestImageBase:
         image.set_mask(np.zeros((1, 10, 20, 30), np.uint8), "TZYX")
         im = image.cut_image(mask == 1, replace_mask=False)
         assert np.all(im.mask == 0)
-        assert im.shape == self.image_shape((1, 8, 9, 28, 3), axes="TZYXC")
+        assert im.shape == self.image_shape((1, 10, 11, 30, 3), axes="TZYXC")
         im = image.cut_image(mask == 2, replace_mask=True)
-        assert np.all(im.mask[:, 1:-1, 1:-1, 1:-1] == 1)
-        assert im.shape == self.image_shape((1, 8, 9, 28, 3), axes="TZYXC")
+        assert np.all(
+            im.mask[
+                :, FRAME_THICKNESS:-FRAME_THICKNESS, FRAME_THICKNESS:-FRAME_THICKNESS, FRAME_THICKNESS:-FRAME_THICKNESS
+            ]
+            == 1
+        )
+        assert im.shape == self.image_shape((1, 10, 11, 30, 3), axes="TZYXC")
 
         # Test cutting with list of slices
         points = np.nonzero(mask == 2)
@@ -305,11 +311,11 @@ class TestImageBase:
         upper_bound = np.max(points, axis=1)
         cut_list = [slice(x, y + 1) for x, y in zip(lower_bound, upper_bound)]
         res = image.cut_image(cut_list)
-        shape = [y - x + 1 for x, y in zip(lower_bound, upper_bound)]
+        shape = [y - x + +1 for x, y in zip(lower_bound, upper_bound)]
         shape.insert(image.channel_pos, 3)
-        shape[image.x_pos] += 2
-        shape[image.y_pos] += 2
-        shape[image.stack_pos] += 2
+        shape[image.x_pos] += 2 * FRAME_THICKNESS
+        shape[image.y_pos] += 2 * FRAME_THICKNESS
+        shape[image.stack_pos] += 2 * FRAME_THICKNESS
         assert res.shape == tuple(shape)
 
     def test_get_ranges(self):

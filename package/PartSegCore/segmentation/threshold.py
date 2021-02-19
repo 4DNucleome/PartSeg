@@ -246,14 +246,14 @@ class DoubleThreshold(BaseThreshold):
                 "Core threshold",
                 next(iter(threshold_dict.keys())),
                 possible_values=threshold_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty(
                 "base_threshold",
                 "Base threshold",
                 next(iter(threshold_dict.keys())),
                 possible_values=threshold_dict,
-                property_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
         ]
 

@@ -65,7 +65,7 @@ class GaussNoiseFiltering(NoiseFilteringBase):
     def get_fields(cls):
         return [
             AlgorithmProperty("dimension_type", "Gauss type", DimensionType.Layer),
-            AlgorithmProperty("radius", "Gauss radius", 1.0, property_type=float),
+            AlgorithmProperty("radius", "Gauss radius", 1.0, value_type=float),
         ]
 
     @classmethod
@@ -91,7 +91,7 @@ class MedianNoiseFiltering(NoiseFilteringBase):
     def get_fields(cls):
         return [
             AlgorithmProperty("dimension_type", "Median type", DimensionType.Layer),
-            AlgorithmProperty("radius", "Median radius", 1, property_type=int),
+            AlgorithmProperty("radius", "Median radius", 1, value_type=int),
         ]
 
     @classmethod

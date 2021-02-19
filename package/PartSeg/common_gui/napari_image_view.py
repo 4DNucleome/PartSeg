@@ -12,7 +12,7 @@ except ImportError:
     from napari._qt.qt_viewer_buttons import QtViewerPushButton
 
 from napari.components import ViewerModel as Viewer
-from napari.layers import Layer
+from napari.layers import Layer, Points
 from napari.layers.image import Image as NapariImage
 from napari.layers.image._image_constants import Interpolation3D
 from napari.layers.labels import Labels
@@ -159,6 +159,7 @@ class ImageView(QWidget):
         self._current_order = "xy"
         self.components = None
         self.worker_list = []
+        self.points_layer = None
 
         self.viewer = Viewer(ndisplay=ndisplay)
         self.viewer.theme = self.settings.theme_name
@@ -167,6 +168,9 @@ class ImageView(QWidget):
         self.channel_control = ColorComboBoxGroup(settings, name, channel_property, height=30)
         self.ndim_btn = QtNDisplayButton(self.viewer)
         self.reset_view_button = QtViewerPushButton(self.viewer, "home", "Reset view", self._reset_view)
+        self.points_view_button = QtViewerPushButton(
+            self.viewer, "new_points", "Show points", self.toggle_points_visibility
+        )
         self.roll_dim_button = QtViewerPushButton(self.viewer, "roll", "Roll dimension", self._rotate_dim)
         self.roll_dim_button.setContextMenuPolicy(Qt.CustomContextMenu)
         self.roll_dim_button.customContextMenuRequested.connect(self._dim_order_menu)
@@ -177,6 +181,7 @@ class ImageView(QWidget):
         self.btn_layout.addWidget(self.reset_view_button)
         self.btn_layout.addWidget(self.ndim_btn)
         self.btn_layout.addWidget(self.roll_dim_button)
+        self.btn_layout.addWidget(self.points_view_button)
         self.btn_layout.addWidget(self.channel_control, 1)
         self.btn_layout.addWidget(self.mask_label)
         self.btn_layout.addWidget(self.mask_chk)
@@ -197,6 +202,7 @@ class ImageView(QWidget):
         settings.roi_clean.connect(self.set_roi)
         settings.image_changed.connect(self.set_image)
         settings.image_spacing_changed.connect(self.update_spacing_info)
+        settings.points_changed.connect(self.update_points)
         # settings.labels_changed.connect(self.paint_layer)
         self.old_scene: BaseCamera = self.viewer_widget.view.scene
 
@@ -217,6 +223,10 @@ class ImageView(QWidget):
             self.viewer.dims.events.camera.connect(self._view_changed, position="last")
             self.viewer.dims.events.camera.connect(self.camera_change, position="last")
         self.viewer.events.reset_view.connect(self._view_changed, position="last")
+
+    def toggle_points_visibility(self):
+        if self.points_layer is not None:
+            self.points_layer.visible = not self.points_layer.visible
 
     def _dim_order_menu(self, point: QPoint):
         menu = QMenu()
@@ -353,6 +363,20 @@ class ImageView(QWidget):
         if self.current_image not in self.image_info:
             return self.settings.image
         return self.image_info[self.current_image].image
+
+    def update_points(self):
+        if self.settings.points is not None:
+            self.points_view_button.setVisible(True)
+            if self.points_layer is None or self.points_layer not in self.viewer.layers:
+                self.points_layer = Points(self.settings.points, scale=self.settings.image.normalized_scaling())
+                self.viewer.add_layer(self.points_layer)
+            else:
+                self.points_layer.data = self.settings.points
+                self.points_layer.scale = self.settings.image.normalized_scaling()
+        else:
+            if self.points_layer is not None and self.points_layer in self.viewer.layers:
+                self.points_view_button.setVisible(False)
+                self.points_layer.data = np.empty((0, 4))
 
     def set_roi(self, roi_info: Optional[ROIInfo] = None, image: Optional[Image] = None) -> None:
         image = self.get_image(image)
