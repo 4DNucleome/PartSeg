@@ -169,7 +169,7 @@ class SMSegmentation(SegmentationAlgorithm):
                 "Molecule Threshold",
                 next(iter(threshold_dict.keys())),
                 possible_values=threshold_dict,
-                propevalue_typerty_type=AlgorithmDescribeBase,
+                value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty("minimum_molecule_size", "Minimum molecule size (px)", 5, (0, 10 ** 6), 1000),
         ]
