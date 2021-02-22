@@ -24,7 +24,7 @@ certifi==2020.12.5
     #   sentry-sdk
 chardet==4.0.0
     # via requests
-cython==0.29.21
+cython==0.29.22
     # via
     #   -r requirements_pyinstaller.in
     #   partsegcore-compiled-backend
