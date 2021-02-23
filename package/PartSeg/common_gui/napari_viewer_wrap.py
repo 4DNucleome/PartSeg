@@ -56,7 +56,7 @@ class SynchronizeWidget(QWidget):
         for name in layers_list:
             try:
                 del self.viewer.layers[name]
-            except (KeyError, ValueError):  # pragma: no cover # pylint: disable=W0703
+            except (KeyError, ValueError):  # pragma: no cover pylint: disable=W0703
                 pass
 
     def _substitute_image_layer(self, name, data, scale, cmap, name_list):
@@ -67,7 +67,7 @@ class SynchronizeWidget(QWidget):
                 layer.scale = scale
                 name_list.remove(name)
                 return layer
-            except Exception:  # pragma: no cover  # pylint: disable=W0703
+            except Exception:  # pragma: no cover  pylint: disable=W0703
                 del self.viewer.layers[name]
         layer = self.viewer.add_image(
             data,
@@ -90,7 +90,7 @@ class SynchronizeWidget(QWidget):
                 layer.scale = scale
                 name_list.remove(name)
                 return layer
-            except Exception:  # pragma: no cover # pylint: disable=W0703
+            except Exception:  # pragma: no cover pylint: disable=W0703
                 del self.viewer.layers[name]
         layer = self.viewer.add_labels(
             data,
@@ -111,7 +111,7 @@ class SynchronizeWidget(QWidget):
                 layer.scale = scale
                 name_list.remove(name)
                 return layer
-            except Exception:  # pragma: no cover
+            except Exception:  # pragma: no cover pylint: disable=W0703
                 del self.viewer.layers[name]
         layer = self.viewer.add_points(
             data,
