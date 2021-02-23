@@ -68,6 +68,8 @@ class SMSegmentation(SegmentationAlgorithm):
             channel_molecule, self.image.spacing, foreground_estimate_parameters["values"]
         )
         estimated = foreground - background
+        if self.mask is not None:
+            estimated[mask == 0] = 0
         thr: BaseThreshold = threshold_dict[self.new_parameters["molecule_threshold"]["name"]]
         molecule_mask, molecule_thr_val = thr.calculate_mask(
             estimated, self.mask, self.new_parameters["molecule_threshold"]["values"], operator.ge
