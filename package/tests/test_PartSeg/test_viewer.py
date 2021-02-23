@@ -6,7 +6,9 @@ import qtpy
 from qtpy.QtCore import QCoreApplication
 
 from PartSeg._roi_analysis.image_view import ResultImageView
+from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui.channel_control import ChannelProperty
+from PartSeg.common_gui.napari_viewer_wrap import Viewer
 from PartSegCore.roi_info import ROIInfo
 
 from .utils import CI_BUILD
@@ -54,3 +56,23 @@ class TestResultImageView:
         assert viewer.any_roi()
         assert not viewer.available_alternatives()
         viewer.hide()
+
+
+def test_napari_viewer(image, analysis_segmentation2, tmp_path):
+    settings = BaseSettings(tmp_path)
+    settings.image = image
+    viewer = Viewer(settings, "")
+    viewer.create_initial_layers(True, True, True, True)
+    assert len(viewer.layers) == 2
+    viewer.create_initial_layers(True, True, True, True)
+    assert len(viewer.layers) == 2
+    settings.image = analysis_segmentation2.image
+    viewer.create_initial_layers(True, True, True, True)
+    assert len(viewer.layers) == 1
+    settings.roi = analysis_segmentation2.roi
+    viewer.create_initial_layers(True, True, True, True)
+    assert len(viewer.layers) == 2
+    settings.mask = analysis_segmentation2.mask
+    viewer.create_initial_layers(True, True, True, True)
+    assert len(viewer.layers) == 3
+    viewer.close()

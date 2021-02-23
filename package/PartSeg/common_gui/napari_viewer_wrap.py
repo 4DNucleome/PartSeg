@@ -56,7 +56,7 @@ class SynchronizeWidget(QWidget):
         for name in layers_list:
             try:
                 del self.viewer.layers[name]
-            except (KeyError, ValueError):
+            except (KeyError, ValueError):  # pragma: no cover
                 pass
 
     def _substitute_image_layer(self, name, data, scale, cmap, name_list):
@@ -67,7 +67,7 @@ class SynchronizeWidget(QWidget):
                 layer.scale = scale
                 name_list.remove(name)
                 return layer
-            except Exception:
+            except Exception:  # pragma: no cover
                 del self.viewer.layers[name]
         layer = self.viewer.add_image(
             data,
@@ -78,7 +78,7 @@ class SynchronizeWidget(QWidget):
         )
         try:
             name_list.remove(layer.name)
-        except KeyError:
+        except KeyError:  # pragma: no cover
             pass
         return layer
 
@@ -90,7 +90,7 @@ class SynchronizeWidget(QWidget):
                 layer.scale = scale
                 name_list.remove(name)
                 return layer
-            except Exception:
+            except Exception:  # pragma: no cover
                 del self.viewer.layers[name]
         layer = self.viewer.add_labels(
             data,
@@ -99,7 +99,7 @@ class SynchronizeWidget(QWidget):
         )
         try:
             name_list.remove(layer.name)
-        except KeyError:
+        except KeyError:  # pragma: no cover
             pass
         return layer
 
@@ -111,7 +111,7 @@ class SynchronizeWidget(QWidget):
                 layer.scale = scale
                 name_list.remove(name)
                 return layer
-            except Exception:
+            except Exception:  # pragma: no cover
                 del self.viewer.layers[name]
         layer = self.viewer.add_points(
             data,
@@ -120,7 +120,7 @@ class SynchronizeWidget(QWidget):
         )
         try:
             name_list.remove(layer.name)
-        except KeyError:
+        except KeyError:  # pragma: no cover
             pass
         return layer
 
@@ -234,6 +234,6 @@ class Viewer(NViewer):
         if roi:
             self.sync_widget.sync_roi()
         if additional_layers:
-            self.sync_widget._sync_additional()
+            self.sync_widget.sync_additional()
         if points:
             self.sync_widget.sync_points()
