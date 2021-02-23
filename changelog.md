@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.12.7
+## 0.13.0
 
 -   Add possibility of custom input widgets for algorithms
 -   Switch to napari Colormaps instead of custom one
