@@ -3,7 +3,7 @@ import platform
 import numpy as np
 import pytest
 import qtpy
-from napari.layers import Points
+from napari.layers import Labels, Points
 from qtpy.QtCore import QCoreApplication
 
 from PartSeg._roi_analysis.image_view import ResultImageView
@@ -11,6 +11,7 @@ from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui.channel_control import ChannelProperty
 from PartSeg.common_gui.napari_viewer_wrap import Viewer
 from PartSegCore.roi_info import ROIInfo
+from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
 
 from .utils import CI_BUILD
 
@@ -59,6 +60,7 @@ class TestResultImageView:
         viewer.hide()
 
 
+@pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
 @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
 class TestNapariViewer:
     def test_base(self, image, analysis_segmentation2, tmp_path):
@@ -86,7 +88,7 @@ class TestNapariViewer:
         viewer = Viewer(settings, "")
         viewer.create_initial_layers(True, True, True, True)
         assert len(viewer.layers) == 2
-        points = [[0, 1, 1, 1], [0, 7, 10, 10]]
+        points = np.array([[0, 1, 1, 1], [0, 7, 10, 10]])
         settings.points = points
         viewer.create_initial_layers(True, True, True, True)
         assert len(viewer.layers) == 3
@@ -99,3 +101,44 @@ class TestNapariViewer:
             settings.points = points
         assert len(viewer.layers) == 3
         assert isinstance(viewer.layers[-1], Points)
+        viewer.close()
+
+    def test_image(self, image, image2, tmp_path, qtbot):
+        settings = BaseSettings(tmp_path)
+        settings.image = image
+        viewer = Viewer(settings, "test")
+        with qtbot.waitSignal(viewer.sync_widget.sync_image_chk.stateChanged):
+            viewer.sync_widget.sync_image_chk.setChecked(True)
+        assert len(viewer.layers) == 2
+        with qtbot.waitSignal(settings.image_changed):
+            settings.image = image2
+        assert len(viewer.layers) == 3
+        viewer.close()
+
+    def test_roi(self, image, tmp_path, qtbot):
+        settings = BaseSettings(tmp_path)
+        settings.image = image
+        viewer = Viewer(settings, "test")
+        viewer.sync_widget.sync_image()
+        assert len(viewer.layers) == 2
+        viewer.sync_widget.sync_ROI_chk.setChecked(True)
+        roi_info = ROIInfo(image.get_channel(0), {}, {"sample": image.get_channel(1)})
+        with qtbot.waitSignal(settings.roi_changed):
+            settings.roi = roi_info
+        assert len(viewer.layers) == 4
+        viewer.close()
+
+    def test_additional(self, image, tmp_path, qtbot):
+        settings = BaseSettings(tmp_path)
+        settings.image = image
+        viewer = Viewer(settings, "test")
+        viewer.sync_widget.sync_image()
+        assert len(viewer.layers) == 2
+        settings._additional_layers = {
+            "first": AdditionalLayerDescription(image.get_channel(0), "image", "first"),
+            "second": AdditionalLayerDescription(image.get_channel(0), "labels", "second"),
+        }
+        viewer.sync_widget.sync_additional()
+        assert len(viewer.layers) == 4
+        assert isinstance(viewer.layers[-1], Labels)
+        viewer.close()
