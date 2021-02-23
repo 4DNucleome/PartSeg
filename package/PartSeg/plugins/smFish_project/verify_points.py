@@ -45,7 +45,9 @@ def group_points(points: np.ndarray, max_dist=1):
 
 
 @magic_factory(info={"widget_type": "TextEdit"}, call_button=True)
-def VerifySegmentation(segmentation: Labels, points: Points, max_dist: int = 2, info: str = "") -> types.LayerDataTuple:
+def verify_segmentation(
+    segmentation: Labels, points: Points, max_dist: int = 2, info: str = ""
+) -> types.LayerDataTuple:
     labels = set(np.unique(segmentation.data))
     all_labels = len(labels)
     if 0 in labels:
@@ -59,7 +61,7 @@ def VerifySegmentation(segmentation: Labels, points: Points, max_dist: int = 2, 
                 labels.remove(value)
                 matched_points[i] = True
 
-    VerifySegmentation.info.value = (
+    verify_segmentation.info.value = (
         f"matched {np.sum(matched_points)} of {len(matched_points)}"
         f"\nconsumed {all_labels - len(labels)} of {all_labels} segmentation components"
     )
