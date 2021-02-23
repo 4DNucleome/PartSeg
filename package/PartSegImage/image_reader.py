@@ -134,7 +134,7 @@ class BaseImageReader:
             final_mapping = [final_mapping_dict[letter] for letter in axes]
         except KeyError as e:  # pragma: no cover
             raise NotImplementedError(
-                f"Data type not supported ({e.args[0]})." f" Please contact with author for update code"
+                f"Data type not supported ({e.args[0]}). Please contact with author for update code"
             )
         if len(final_mapping) != len(set(final_mapping)):
             raise NotImplementedError("Data type not supported. Please contact with author for update code")
@@ -294,14 +294,14 @@ class TiffImageReader(BaseImageReader):
         self.image_file = None
         self.mask_file: typing.Optional[TiffFile] = None
         self.colors = None
-        self.labels = None
+        self.channel_names = None
         self.ranges = None
 
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
         """
         Read tiff image from tiff_file
         """
-        self.spacing, self.colors, self.labels, self.ranges = self.default_spacing, None, None, None
+        self.spacing, self.colors, self.channel_names, self.ranges = self.default_spacing, None, None, None
         self.image_file = TiffFile(image_path)
         total_pages_num = len(self.image_file.series[0])
         if mask_path is not None:
@@ -355,7 +355,7 @@ class TiffImageReader(BaseImageReader):
             self.spacing,
             mask=mask_data,
             default_coloring=self.colors,
-            labels=self.labels,
+            channel_names=self.channel_names,
             ranges=self.ranges,
             file_path=os.path.abspath(image_path),
             axes_order=self.return_order(),
@@ -423,7 +423,7 @@ class TiffImageReader(BaseImageReader):
         x_spacing, y_spacing = self.read_resolution_from_tags()
         self.spacing = z_spacing, y_spacing, x_spacing
         self.colors = self.image_file.imagej_metadata.get("LUTs")
-        self.labels = self.image_file.imagej_metadata.get("Labels")
+        self.channel_names = self.image_file.imagej_metadata.get("Labels")
         if "Ranges" in self.image_file.imagej_metadata:
             ranges = self.image_file.imagej_metadata["Ranges"]
             self.ranges = list(zip(ranges[::2], ranges[1::2]))
@@ -445,7 +445,7 @@ class TiffImageReader(BaseImageReader):
             pass
         if "Channel" in meta_data and isinstance(meta_data["Channel"], (list, tuple)):
             try:
-                self.labels = [ch["Name"] for ch in meta_data["Channel"]]
+                self.channel_names = [ch["Name"] for ch in meta_data["Channel"]]
             except KeyError:
                 pass
             try:
@@ -459,7 +459,7 @@ class TiffImageReader(BaseImageReader):
             if "Colors" in self.image_file.lsm_metadata["ChannelColors"]:
                 self.colors = [x[:3] for x in self.image_file.lsm_metadata["ChannelColors"]["Colors"]]
             if "ColorNames" in self.image_file.lsm_metadata["ChannelColors"]:
-                self.labels = self.image_file.lsm_metadata["ChannelColors"]["ColorNames"]
+                self.channel_names = self.image_file.lsm_metadata["ChannelColors"]["ColorNames"]
 
 
 name_to_scalar = {

@@ -468,7 +468,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
             self.parameters["sprawl_type"] = self.new_parameters["sprawl_type"]
             new_segment = path_sprawl.sprawl(
                 self.sprawl_area,
-                finally_segment,
+                np.copy(finally_segment),  # TODO add tests for discover this problem
                 self.channel,
                 self.components_num,
                 self.image.spacing,

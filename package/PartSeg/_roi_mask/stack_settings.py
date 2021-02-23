@@ -42,6 +42,7 @@ class StackSettings(BaseSettings):
             QMessageBox().information(self._parent, "Algorithm info", result.info_text)
         parameters_dict = defaultdict(lambda: deepcopy(result.parameters))
         self._additional_layers = result.additional_layers
+        self.additional_layers_changed.emit()
         self.last_executed_algorithm = result.parameters.algorithm
         self.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
         self.set_segmentation(result.roi, True, [], parameters_dict)

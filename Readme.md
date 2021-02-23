@@ -86,3 +86,9 @@ Main window of Mask Segmentation:
 
 Laboratory of Functional and Structural Genomics
 [http://4dnucleome.cent.uw.edu.pl/](http://4dnucleome.cent.uw.edu.pl/)
+
+## Cite as
+
+Bokota, G., Sroka, J., Basu, S. et al. PartSeg: a tool for quantitative feature extraction
+from 3D microscopy images for dummies. BMC Bioinformatics 22, 72 (2021).
+[https://doi.org/10.1186/s12859-021-03984-1](https://doi.org/10.1186/s12859-021-03984-1)

@@ -15,7 +15,7 @@ def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]
             res_layers.append(
                 (
                     project_info.image.get_channel(i),
-                    {"scale": scale, "name": f"channel {i}", "blending": "additive"},
+                    {"scale": scale, "name": project_info.image.channel_names[i], "blending": "additive"},
                     "image",
                 )
             )

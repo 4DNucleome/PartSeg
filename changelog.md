@@ -1,10 +1,12 @@
 # Changelog
 
-## 0.12.7
+## 0.13.0
 
 -   Add possibility of custom input widgets for algorithms
 -   Switch to napari Colormaps instead of custom one
 -   Add points visualization
+-   Synchronization widget for builtin (View menu) napari viewer
+-   Drop Python 3.6
 
 ## 0.12.6
 

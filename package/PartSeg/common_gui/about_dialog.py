@@ -18,6 +18,11 @@ class AboutDialog(QDialog):
             "<br>Repository and issue tracker: "
             "<a href='https://github.com/4DNucleome/PartSeg'>https://github.com/4DNucleome/PartSeg</a>"
         )
+        cite_as_text = (
+            "Bokota, G., Sroka, J., Basu, S. et al. PartSeg: a tool for quantitative feature"
+            " extraction from 3D microscopy images for dummies. BMC Bioinformatics 22, 72 (2021)."
+            " https://doi.org/10.1186/s12859-021-03984-1"
+        )
         dev_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(PartSeg.__file__))), "changelog.md")
         if os.path.exists(dev_path):
             with open(dev_path) as ff:
@@ -29,6 +34,8 @@ class AboutDialog(QDialog):
         self.change_log = TextShow()
         self.change_log.setAcceptRichText(True)
         self.change_log.setMarkdown(changelog_text)
+        self.cite_as = TextShow(lines=3)
+        self.cite_as.setMarkdown(cite_as_text)
         ok_but = QPushButton("Ok")
         ok_but.clicked.connect(self.accept)
         # text_label.setWordWrap(True)
@@ -36,5 +43,7 @@ class AboutDialog(QDialog):
         layout = QGridLayout()
         layout.addWidget(text_label, 0, 0, 1, 3)
         layout.addWidget(self.change_log, 1, 0, 1, 3)
-        layout.addWidget(ok_but, 2, 2)
+        layout.addWidget(QLabel("Cite as:"), 2, 0, 1, 3)
+        layout.addWidget(self.cite_as, 3, 0, 1, 3)
+        layout.addWidget(ok_but, 4, 2)
         self.setLayout(layout)

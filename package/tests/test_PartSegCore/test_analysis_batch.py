@@ -40,7 +40,7 @@ from PartSegCore.segmentation.noise_filtering import DimensionType
 from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegImage import Image, ImageWriter, TiffImageReader
 
-ENGINE = None if pd.__version__ == "0.22.0" else "openpyxl"
+ENGINE = None if pd.__version__ == "0.24.0" else "openpyxl"
 
 
 class MocksCalculation:
