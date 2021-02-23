@@ -3,6 +3,7 @@ import platform
 import numpy as np
 import pytest
 import qtpy
+from napari.layers import Points
 from qtpy.QtCore import QCoreApplication
 
 from PartSeg._roi_analysis.image_view import ResultImageView
@@ -58,21 +59,43 @@ class TestResultImageView:
         viewer.hide()
 
 
-def test_napari_viewer(image, analysis_segmentation2, tmp_path):
-    settings = BaseSettings(tmp_path)
-    settings.image = image
-    viewer = Viewer(settings, "")
-    viewer.create_initial_layers(True, True, True, True)
-    assert len(viewer.layers) == 2
-    viewer.create_initial_layers(True, True, True, True)
-    assert len(viewer.layers) == 2
-    settings.image = analysis_segmentation2.image
-    viewer.create_initial_layers(True, True, True, True)
-    assert len(viewer.layers) == 1
-    settings.roi = analysis_segmentation2.roi
-    viewer.create_initial_layers(True, True, True, True)
-    assert len(viewer.layers) == 2
-    settings.mask = analysis_segmentation2.mask
-    viewer.create_initial_layers(True, True, True, True)
-    assert len(viewer.layers) == 3
-    viewer.close()
+@pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
+class TestNapariViewer:
+    def test_base(self, image, analysis_segmentation2, tmp_path):
+        settings = BaseSettings(tmp_path)
+        settings.image = image
+        viewer = Viewer(settings, "")
+        viewer.create_initial_layers(True, True, True, True)
+        assert len(viewer.layers) == 2
+        viewer.create_initial_layers(True, True, True, True)
+        assert len(viewer.layers) == 2
+        settings.image = analysis_segmentation2.image
+        viewer.create_initial_layers(True, True, True, True)
+        assert len(viewer.layers) == 1
+        settings.roi = analysis_segmentation2.roi
+        viewer.create_initial_layers(True, True, True, True)
+        assert len(viewer.layers) == 2
+        settings.mask = analysis_segmentation2.mask
+        viewer.create_initial_layers(True, True, True, True)
+        assert len(viewer.layers) == 3
+        viewer.close()
+
+    def test_points(self, image, tmp_path, qtbot):
+        settings = BaseSettings(tmp_path)
+        settings.image = image
+        viewer = Viewer(settings, "")
+        viewer.create_initial_layers(True, True, True, True)
+        assert len(viewer.layers) == 2
+        points = [[0, 1, 1, 1], [0, 7, 10, 10]]
+        settings.points = points
+        viewer.create_initial_layers(True, True, True, True)
+        assert len(viewer.layers) == 3
+        assert isinstance(viewer.layers[-1], Points)
+        viewer.sync_widget.sync_points_chk.setChecked(True)
+        with qtbot.wait_signal(settings.points_changed):
+            settings.points = None
+        assert len(viewer.layers) == 2
+        with qtbot.wait_signal(settings.points_changed):
+            settings.points = points
+        assert len(viewer.layers) == 3
+        assert isinstance(viewer.layers[-1], Points)
