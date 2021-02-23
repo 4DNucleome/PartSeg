@@ -187,25 +187,9 @@ class BaseMainWindow(QMainWindow):
         return [self.settings.colormap_dict[name][0] for name in colormaps_name]
 
     def napari_viewer_show(self):
-        viewer = Viewer(title="Additional output")
+        viewer = Viewer(title="Additional output", settings=self.settings, partseg_viewer_name=self.channel_info)
         viewer.theme = self.settings.theme_name
-        image = self.settings.image
-        scaling = image.normalized_scaling()
-        colormap_list = self.get_colormaps()
-        for i in range(image.channels):
-            viewer.add_image(
-                image.get_channel(i),
-                name=f"channnel {i + 1}",
-                scale=scaling,
-                blending="additive",
-                colormap=colormap_list[i],
-            )
-        if self.settings.roi is not None:
-            viewer.add_labels(self.settings.roi, name="ROI", scale=scaling)
-        if image.mask is not None:
-            viewer.add_labels(image.mask, name="Mask", scale=scaling)
-        if self.settings.points is not None:
-            viewer.add_points(self.settings.points, name="Points", scale=scaling)
+        viewer.create_initial_layers(image=True, roi=True, additional_layers=False, points=True)
         self.viewer_list.append(viewer)
         viewer.window.qt_viewer.destroyed.connect(lambda x: self.close_viewer(viewer))
 
@@ -213,27 +197,9 @@ class BaseMainWindow(QMainWindow):
         if not self.settings.additional_layers:
             QMessageBox().information(self, "No data", "Last executed algoritm does not provide additional data")
             return
-        viewer = Viewer(title="Additional output")
+        viewer = Viewer(title="Additional output", settings=self.settings, partseg_viewer_name=self.channel_info)
         viewer.theme = self.settings.theme_name
-        image = self.settings.image
-        scaling = image.normalized_scaling()
-        if with_channels:
-            colormap_list = self.get_colormaps()
-            for i in range(image.channels):
-                viewer.add_image(
-                    image.get_channel(i),
-                    name=f"channel {i+1}",
-                    scale=scaling,
-                    blending="additive",
-                    colormap=colormap_list[i],
-                )
-        for k, v in self.settings.additional_layers.items():
-            name = v.name if v.name else k
-            if v.layer_type == "labels":
-                viewer.add_labels(v.data, name=name, scale=scaling[-v.data.ndim :])
-            else:
-                ndim = v.data.ndim - 1 if v.data.shape[-1] == 3 else v.data.ndim
-                viewer.add_image(v.data, name=name, blending="additive", scale=scaling[-ndim:])
+        viewer.create_initial_layers(image=with_channels, roi=False, additional_layers=True, points=False)
         self.viewer_list.append(viewer)
         viewer.window.qt_viewer.destroyed.connect(lambda x: self.close_viewer(viewer))
 
