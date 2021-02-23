@@ -216,12 +216,8 @@ class ImageView(QWidget):
         except AttributeError:
             self.viewer.dims.events.axis.connect(self._view_changed, position="last")
         self.viewer.dims.events.ndisplay.connect(self._view_changed, position="last")
-        if hasattr(self.viewer.dims.events, "ndisplay"):
-            self.viewer.dims.events.ndisplay.connect(self._view_changed, position="last")
-            self.viewer.dims.events.ndisplay.connect(self.camera_change, position="last")
-        else:
-            self.viewer.dims.events.camera.connect(self._view_changed, position="last")
-            self.viewer.dims.events.camera.connect(self.camera_change, position="last")
+        self.viewer.dims.events.ndisplay.connect(self._view_changed, position="last")
+        self.viewer.dims.events.ndisplay.connect(self.camera_change, position="last")
         self.viewer.events.reset_view.connect(self._view_changed, position="last")
 
     def toggle_points_visibility(self):
@@ -520,8 +516,7 @@ class ImageView(QWidget):
 
     def _remove_worker(self, sender):
         for worker in self.worker_list:
-            signals = "_signals" if hasattr(worker, "_signals") else "signals"
-            if sender is getattr(worker, signals):
+            if sender is worker.signals:
                 self.worker_list.remove(worker)
                 break
         else:

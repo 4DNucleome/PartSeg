@@ -111,6 +111,7 @@ class PartSettings(BaseSettings):
                 self.image = data.image.substitute(mask=data.mask)
             self.roi = data.roi
             self._additional_layers = data.additional_layers
+            self.additional_layers_changed.emit()
             self.set_history(data.history[:])
             if data.algorithm_parameters:
                 self.last_executed_algorithm = data.algorithm_parameters["algorithm_name"]

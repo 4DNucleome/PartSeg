@@ -155,7 +155,7 @@ class ImageSettings(QObject):
             if isinstance(val, np.ndarray):
                 self._roi_info = ROIInfo(self.image.fit_array_to_image(val))
             else:
-                self._roi_infol = val.fit_to_image(self.image)
+                self._roi_info = val.fit_to_image(self.image)
         except ValueError:
             raise ValueError("roi do not fit to image")
         self._additional_layers = {}
