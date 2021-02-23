@@ -25,8 +25,8 @@ class ImageWriter:
         metadata = {"mode": "color", "unit": "\\u00B5m"}
         if len(spacing) == 3:
             metadata.update({"spacing": spacing[0]})
-        if image.labels is not None:
-            metadata["Labels"] = image.labels * image.layers
+        if image.channel_names is not None:
+            metadata["Labels"] = image.channel_names * image.layers
         coloring = image.get_imagej_colors()
         if coloring is not None:
             metadata["LUTs"] = coloring

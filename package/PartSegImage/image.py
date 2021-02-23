@@ -1,5 +1,7 @@
 import typing
 import warnings
+from collections.abc import Iterable
+from itertools import zip_longest
 
 import numpy as np
 
@@ -66,7 +68,7 @@ class Image:
     :param mask: mask array in shape z,y,x
     :param default_coloring: default colormap - not used yet
     :param ranges: default ranges for channels
-    :param labels: labels for channels
+    :param channel_names: labels for channels
     :param axes_order: allow to create Image object form data with different axes order, or missed axes
 
     :cvar str ~.axis_order: internal order of axes
@@ -95,7 +97,7 @@ class Image:
         mask: typing.Union[None, np.ndarray] = None,
         default_coloring=None,
         ranges=None,
-        labels=None,
+        channel_names=None,
         axes_order: typing.Optional[str] = None,
     ):
         # TODO add time distance to image spacing
@@ -114,9 +116,14 @@ class Image:
         self.default_coloring = default_coloring
         if self.default_coloring is not None:
             self.default_coloring = [np.array(x) for x in default_coloring]
-        self.labels = labels
-        if isinstance(self.labels, (tuple, list)):
-            self.labels = self.labels[: self.channels]
+        default_channel_names = [f"channel {i+1}" for i in range(self.channels)]
+        if isinstance(channel_names, Iterable):
+            self._channel_names = [
+                x if x is not None else y for x, y in zip_longest(channel_names, default_channel_names, fillvalue=None)
+            ]
+        else:
+            self._channel_names = default_channel_names
+        self._channel_names = self._channel_names[: self.channels]
         if ranges is None:
             axis = list(range(len(self.axis_order)))
             axis.remove(self.axis_order.index("C"))
@@ -150,7 +157,22 @@ class Image:
             axis = self.axis_order.index(axis)
         data = self.reorder_axes(image.get_data(), image.axis_order)
         data = np.concatenate((self.get_data(), data), axis=axis)
-        return self.substitute(data=data, ranges=self.ranges + image.ranges)
+        channel_names = self.channel_names
+        for name in image.channel_names:
+            new_name = name
+            i = 1
+            while new_name in channel_names:
+                new_name = f"{new_name} ({i})"
+                i += 1
+                if i > 10000:
+                    raise ValueError("fail when try to fix channel name")
+            channel_names.append(new_name)
+
+        return self.substitute(data=data, ranges=self.ranges + image.ranges, channel_names=channel_names)
+
+    @property
+    def channel_names(self) -> typing.List[str]:
+        return self._channel_names[:]
 
     @property
     def channel_pos(self) -> int:
@@ -224,7 +246,7 @@ class Image:
         mask=_DEF,
         default_coloring=None,
         ranges=None,
-        labels=None,
+        channel_names=None,
     ):
         """Create copy of image with substitution of not None elements"""
         data = self._image_array if data is None else data
@@ -233,7 +255,7 @@ class Image:
         mask = self._mask_array if mask is _DEF else mask
         default_coloring = self.default_coloring if default_coloring is None else default_coloring
         ranges = self.ranges if ranges is None else ranges
-        labels = self.labels if labels is None else labels
+        channel_names = self.channel_names if channel_names is None else channel_names
         return self.__class__(
             data=data,
             image_spacing=image_spacing,
@@ -241,7 +263,7 @@ class Image:
             mask=mask,
             default_coloring=default_coloring,
             ranges=ranges,
-            labels=labels,
+            channel_names=channel_names,
         )
 
     def set_mask(self, mask: typing.Optional[np.ndarray], axes: typing.Optional[str] = None):
@@ -544,7 +566,7 @@ class Image:
             self._frame_array(new_mask, self.calc_index_to_frame(self.array_axis_order, important_axis)),
             self.default_coloring,
             self.ranges,
-            self.labels,
+            self.channel_names,
         )
 
     def get_imagej_colors(self):
@@ -596,12 +618,12 @@ class Image:
     def __str__(self):
         return (
             f"{self.__class__} Shape {self._image_array.shape}, dtype: {self._image_array.dtype}, "
-            f"labels: {self.labels}, coloring: {self.get_colors()} mask: {self.has_mask}"
+            f"labels: {self.channel_names}, coloring: {self.get_colors()} mask: {self.has_mask}"
         )
 
     def __repr__(self):
         mask_info = f"mask=True, mask_dtype={self._mask_array.dtype}" if self.mask is not None else "mask=False"
         return (
             f"Image(shape={self._image_array.shape} dtype={self._image_array.dtype}, spacing={self.spacing}, "
-            f"labels={self.labels}, channels={self.channels}, axes={repr(self.axis_order)}, {mask_info})"
+            f"labels={self.channel_names}, channels={self.channels}, axes={repr(self.axis_order)}, {mask_info})"
         )
