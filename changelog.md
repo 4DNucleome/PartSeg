@@ -5,6 +5,7 @@
 -   Add possibility of custom input widgets for algorithms
 -   Switch to napari Colormaps instead of custom one
 -   Add points visualization
+-   Synchronization widget for builtin (View menu) napari viewer
 
 ## 0.12.6
 
