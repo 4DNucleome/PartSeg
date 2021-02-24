@@ -148,7 +148,7 @@ jobs:
 
   test_minimal:
     name: Test PartSeg minimal
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: download_data
     steps:
       - uses: actions/checkout@v1
