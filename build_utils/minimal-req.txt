@@ -11,7 +11,7 @@ h5py==2.8.0
 imagecodecs==2020.5.30
 imageio==2.5.0
 napari==0.4.3
-numpy==1.16.0
+numpy==1.16.5
 oiffile==2019.1.1
 openpyxl==2.4.9
 packaging==17.1
@@ -24,6 +24,5 @@ sympy==1.1.1
 tifffile==2020.2.16
 xlrd==1.1.0
 xlsxwriter
-dataclasses==0.7 ;python_version < '3.7'
-typing-extensions==3.7.4 ;python_version < '3.8'
+typing-extensions==3.7.4.2 ;python_version < '3.8'
 PyQt5!=5.15.0,==5.12.3
