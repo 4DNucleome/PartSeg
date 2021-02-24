@@ -1,3 +1,5 @@
+from itertools import product
+
 import numpy as np
 from magicgui import magic_factory
 from napari import types
@@ -46,20 +48,31 @@ def group_points(points: np.ndarray, max_dist=1):
 
 @magic_factory(info={"widget_type": "TextEdit"}, call_button=True)
 def verify_segmentation(
-    segmentation: Labels, points: Points, max_dist: int = 2, info: str = ""
+    segmentation: Labels, points: Points, points_dist: int = 2, points_to_roi: int = 1, info: str = ""
 ) -> types.LayerDataTuple:
     labels = set(np.unique(segmentation.data))
     all_labels = len(labels)
     if 0 in labels:
         labels.remove(0)
-    points_grouped = group_points(points.data, max_dist)
+    shift_array = np.array(
+        [
+            (0, 0, x, y)
+            for x, y in product(range(-points_to_roi, points_to_roi + 1), repeat=2)
+            if x ** 2 + y ** 2 <= points_to_roi ** 2
+        ]
+    )
+    print(shift_array)
+    points_grouped = group_points(points.data, points_dist)
     matched_points = [False for _ in points_grouped]
     for i, points_group in enumerate(points_grouped):
         for point in points_group:
-            value = segmentation.data[tuple(point.astype(np.uint8))]
-            if value > 0 and value in labels:
-                labels.remove(value)
-                matched_points[i] = True
+            coords = (shift_array + point.astype(np.int16)).astype(np.int16)
+            values = segmentation.data[tuple(coords.T)]
+            for value in values:
+                if value > 0:
+                    if value in labels:
+                        labels.remove(value)
+                    matched_points[i] = True
 
     verify_segmentation.info.value = (
         f"matched {np.sum(matched_points)} of {len(matched_points)}"
@@ -69,5 +82,7 @@ def verify_segmentation(
     for ok, points_group in zip(matched_points, points_grouped):
         if not ok:
             res.extend(points_group)
-
-    return np.array(res), {"name": "Missed points", "scale": points.scale}, "points"
+    if res:
+        return np.array(res), {"name": "Missed points", "scale": points.scale}, "points"
+    else:
+        return None, {"name": "Missed points", "scale": points.scale}, "points"
