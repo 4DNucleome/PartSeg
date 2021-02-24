@@ -87,9 +87,9 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-python@v1
-        name: Install Python '3.7'
+        name: Install Python '3.8'
         with:
-          python-version: '3.7'
+          python-version: '3.8'
 
       - name: Install ubuntu libraries
         if: runner.os == 'Linux'
@@ -115,7 +115,7 @@ jobs:
         run: |
           python -m pip install -r requirements/requirements_dev.txt tox-gh-actions
       - name: Test PartSeg
-        run: tox -e  'py37-PyQt5,py37-PySide2'
+        run: tox -e  'py38-PyQt5,py38-PySide2'
 
   test_coverage:
     name: Test PartSeg coverage
@@ -124,9 +124,9 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-python@v1
-        name: Install Python '3.7'
+        name: Install Python '3.8'
         with:
-          python-version: '3.7'
+          python-version: '3.8'
 
       - name: Download test data
         uses: actions/download-artifact@v1
@@ -139,7 +139,7 @@ jobs:
         run: |
           python -m pip install -r requirements/requirements_dev.txt
       - name: Test PartSeg
-        run: tox -e  'py37-PyQt5-coverage'
+        run: tox -e  'py38-PyQt5-coverage'
       - uses: codecov/codecov-action@v1
         with:
           file: ./coverage.xml
