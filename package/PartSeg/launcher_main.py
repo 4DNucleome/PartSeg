@@ -2,6 +2,7 @@ import argparse
 import logging
 import multiprocessing
 import os
+import platform
 import sys
 from functools import partial
 
@@ -79,6 +80,9 @@ def main():
     # print(args)
 
     logging.basicConfig(level=logging.INFO)
+    if platform.system() == "Darwin":
+        multiprocessing.set_start_method("spawn")
+
     CustomApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     my_app = CustomApplication(sys.argv, name="PartSeg", icon=os.path.join(icons_dir, "icon.png"))
     my_app.check_release()

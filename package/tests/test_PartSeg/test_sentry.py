@@ -101,8 +101,8 @@ def test_exception_pass(monkeypatch):
     def check_event(event):
         assert len(event["exception"]["values"][0]["stacktrace"]["frames"]) == 12
 
-    message_queue = multiprocessing.Queue()
-    p = multiprocessing.Process(target=executor_fun, args=(message_queue,))
+    message_queue = multiprocessing.get_context("spawn").Queue()
+    p = multiprocessing.get_context("spawn").Process(target=executor_fun, args=(message_queue,))
     p.start()
     p.join()
     assert not message_queue.empty()
