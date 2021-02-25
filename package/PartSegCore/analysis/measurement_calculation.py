@@ -23,6 +23,8 @@ from .measurement_base import AreaType, Leaf, MeasurementEntry, MeasurementMetho
 
 # TODO change image to channel in signature of measurement calculate_property
 
+NO_COMPONENT = -1
+
 
 class ProhibitedDivision(Exception):
     pass
@@ -321,13 +323,14 @@ class MeasurementProfile:
         kw["help_dict"] = help_dict
         kw["_area"] = node.area
         kw["_per_component"] = node.per_component
-        kw["_cache"] = True
+        kw["_cache"] = True  # TODO remove cache argument
         kw["area_array"] = kw[area_type_dict[area_type]]
+        kw["_component_num"] = NO_COMPONENT
         if node.per_component == PerComponent.No:
             val = method.calculate_property(**kw)
         else:
             # TODO use cache for per component calculate
-            kw["_cache"] = False
+            # kw["_cache"] = False
             val = []
             area_array = kw["area_array"]
             if area_type == AreaType.ROI:
@@ -336,6 +339,7 @@ class MeasurementProfile:
                 components = segmentation_mask_map.mask_components
             for i in components:
                 kw["area_array"] = area_array == i
+                kw["_component_num"] = i
                 val.append(method.calculate_property(**kw))
             val = np.array(val)
             if node.per_component == PerComponent.Mean:
@@ -347,7 +351,7 @@ class MeasurementProfile:
     ) -> Tuple[Union[float, np.ndarray], symbols, AreaType]:
         method: MeasurementMethodBase = MEASUREMENT_DICT[node.name]
 
-        hash_str = hash_fun_call_name(method, node.dict, node.area, node.per_component, node.channel)
+        hash_str = hash_fun_call_name(method, node.dict, node.area, node.per_component, node.channel, NO_COMPONENT)
         area_type = method.area_type(node.area)
         if hash_str in help_dict:
             val = help_dict[hash_str]
@@ -565,7 +569,9 @@ def get_main_axis_length(
         help_dict: Dict = kwargs["help_dict"]
         _area: AreaType = kwargs["_area"]
         _per_component: PerComponent = kwargs["_per_component"]
-        hash_name = hash_fun_call_name(calculate_main_axis, {}, _area, _per_component, kwargs["channel_num"])
+        hash_name = hash_fun_call_name(
+            calculate_main_axis, {}, _area, _per_component, kwargs["channel_num"], kwargs["_component_num"]
+        )
         if hash_name not in help_dict:
             help_dict[hash_name] = calculate_main_axis(area_array, channel, [x * result_scalar for x in voxel_size])
         return help_dict[hash_name][index]
@@ -579,6 +585,7 @@ def hash_fun_call_name(
     area: AreaType,
     per_component: PerComponent,
     channel: Channel,
+    components_num: int,
 ) -> str:
     """
     Calculate string for properly cache measurements result.
@@ -594,7 +601,7 @@ def hash_fun_call_name(
         fun_name = f"{fun.__module__}.{fun.__name__}"
     else:
         fun_name = fun.__name__
-    return f"{fun_name}: {arguments} # {area} & {per_component} * {channel}"
+    return f"{fun_name}: {arguments} # {area} & {per_component} * {channel} ^ {components_num}"
 
 
 class Volume(MeasurementMethodBase):
@@ -946,14 +953,18 @@ class Compactness(MeasurementMethodBase):
         cache = cache and "_per_component" in kwargs
         if cache:
             help_dict = kwargs["help_dict"]
-            border_hash_str = hash_fun_call_name(Surface, {}, kwargs["_area"], kwargs["_per_component"], Channel(-1))
+            border_hash_str = hash_fun_call_name(
+                Surface, {}, kwargs["_area"], kwargs["_per_component"], Channel(-1), kwargs["_component_num"]
+            )
             if border_hash_str not in help_dict:
                 border_surface = Surface.calculate_property(**kwargs)
                 help_dict[border_hash_str] = border_surface
             else:
                 border_surface = help_dict[border_hash_str]
 
-            volume_hash_str = hash_fun_call_name(Volume, {}, kwargs["_area"], kwargs["_per_component"], Channel(-1))
+            volume_hash_str = hash_fun_call_name(
+                Volume, {}, kwargs["_area"], kwargs["_per_component"], Channel(-1), kwargs["_component_num"]
+            )
 
             if volume_hash_str not in help_dict:
                 volume = Volume.calculate_property(**kwargs)
@@ -981,15 +992,19 @@ class Sphericity(MeasurementMethodBase):
             help_dict = kwargs["help_dict"]
         else:
             help_dict = {}
-            kwargs.update({"_area": AreaType.ROI, "_per_component": PerComponent.No})
-        volume_hash_str = hash_fun_call_name(Volume, {}, kwargs["_area"], kwargs["_per_component"], Channel(-1))
+            kwargs.update({"_area": AreaType.ROI, "_per_component": PerComponent.No, "_component_num": NO_COMPONENT})
+        volume_hash_str = hash_fun_call_name(
+            Volume, {}, kwargs["_area"], kwargs["_per_component"], Channel(-1), kwargs["_component_num"]
+        )
         if volume_hash_str not in help_dict:
             volume = Volume.calculate_property(**kwargs)
             help_dict[volume_hash_str] = volume
         else:
             volume = help_dict[volume_hash_str]
 
-        diameter_hash_str = hash_fun_call_name(Diameter, {}, kwargs["_area"], kwargs["_per_component"], Channel(-1))
+        diameter_hash_str = hash_fun_call_name(
+            Diameter, {}, kwargs["_area"], kwargs["_per_component"], Channel(-1), kwargs["_component_num"]
+        )
         if diameter_hash_str not in help_dict:
             diameter_val = Diameter.calculate_property(**kwargs)
             help_dict[diameter_hash_str] = diameter_val
@@ -1281,7 +1296,7 @@ class Haralick(MeasurementMethodBase):
             _area: AreaType = kwargs["_area"]
             _per_component: PerComponent = kwargs["_per_component"]
             hash_name = hash_fun_call_name(
-                Haralick, {"distance": distance}, _area, _per_component, kwargs["channel_num"]
+                Haralick, {"distance": distance}, _area, _per_component, kwargs["channel_num"], kwargs["_component_num"]
             )
             if hash_name not in help_dict:
                 help_dict[hash_name] = cls.calculate_haralick(channel, area_array, distance)
