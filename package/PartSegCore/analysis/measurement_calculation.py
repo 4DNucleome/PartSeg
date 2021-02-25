@@ -326,6 +326,7 @@ class MeasurementProfile:
         if node.per_component == PerComponent.No:
             val = method.calculate_property(**kw)
         else:
+            # TODO use cache for per component calculate
             kw["_cache"] = False
             val = []
             area_array = kw["area_array"]
@@ -1241,7 +1242,7 @@ class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
         return True
 
 
-HALARIC_FEATURES = """AngularSecondMoment Contrast Correlation Variance
+HARALIC_FEATURES = """AngularSecondMoment Contrast Correlation Variance
 InverseDifferenceMoment SumAverage SumVariance SumEntropy Entropy
 DifferenceVariance DifferenceEntropy InfoMeas1 InfoMeas2""".split()
 
@@ -1264,7 +1265,7 @@ class Haralick(MeasurementMethodBase):
     @classmethod
     def get_fields(cls):
         return [
-            AlgorithmProperty("feature", "Feature", HALARIC_FEATURES[0], possible_values=HALARIC_FEATURES),
+            AlgorithmProperty("feature", "Feature", HARALIC_FEATURES[0], possible_values=HARALIC_FEATURES),
             AlgorithmProperty("distance", "Distance", 1, options_range=(1, 10)),
         ]
 
@@ -1272,13 +1273,29 @@ class Haralick(MeasurementMethodBase):
     def need_channel(cls):
         return True
 
+    @classmethod
+    def calculate_property(cls, area_array, channel, distance, feature, _cache=False, **kwargs):
+        _cache = _cache and "_area" in kwargs and "_per_component" in kwargs
+        if _cache:
+            help_dict: Dict = kwargs["help_dict"]
+            _area: AreaType = kwargs["_area"]
+            _per_component: PerComponent = kwargs["_per_component"]
+            hash_name = hash_fun_call_name(
+                Haralick, {"distance": distance}, _area, _per_component, kwargs["channel_num"]
+            )
+            if hash_name not in help_dict:
+                help_dict[hash_name] = cls.calculate_haralick(channel, area_array, distance)
+            return help_dict[hash_name][HARALIC_FEATURES.index(feature)]
+
+        res = cls.calculate_haralick(channel, area_array, distance)
+        return res[HARALIC_FEATURES.index(feature)]
+
     @staticmethod
-    def calculate_property(area_array, channel, distance, feature, **kwargs):
+    def calculate_haralick(channel, area_array, distance):
         data = channel.copy()
         data[area_array == 0] = 0
         data = _rescale_image(data.squeeze())
-        res = haralick(data, distance=distance, ignore_zeros=True, return_mean=True)
-        return res[HALARIC_FEATURES.index(feature)]
+        return haralick(data, distance=distance, ignore_zeros=True, return_mean=True)
 
 
 def pixel_volume(spacing, result_scalar):

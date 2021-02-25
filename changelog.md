@@ -7,6 +7,7 @@
 -   Add points visualization
 -   Synchronization widget for builtin (View menu) napari viewer
 -   Drop Python 3.6
+-   Add Haralick measurements
 
 ## 0.12.6
 

@@ -11,7 +11,7 @@ from sympy import symbols
 from PartSegCore.analysis import load_metadata
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
 from PartSegCore.analysis.measurement_calculation import (
-    HALARIC_FEATURES,
+    HARALIC_FEATURES,
     MEASUREMENT_DICT,
     ComponentsInfo,
     ComponentsNumber,
@@ -1965,7 +1965,7 @@ class TestHaralick:
         data[1:-1, 3:-3, 3:-3] = 2
         data[1:-1, 4:-4, 4:-4] = 3
         mask = data > 0
-        res = Haralick.calculate_property(mask, data, distance=1, feature=HALARIC_FEATURES[0])
+        res = Haralick.calculate_property(mask, data, distance=1, feature=HARALIC_FEATURES[0])
         assert res.size == 1
 
     def test_4d_base(self):
@@ -1973,10 +1973,10 @@ class TestHaralick:
         data[0, :-1, 3:-3, 3:-3] = 2
         data[0, 1:-1, 4:-4, 4:-4] = 3
         mask = data > 0
-        res = Haralick.calculate_property(mask, data, distance=1, feature=HALARIC_FEATURES[0])
+        res = Haralick.calculate_property(mask, data, distance=1, feature=HARALIC_FEATURES[0])
         assert res.size == 1
 
-    @pytest.mark.parametrize("feature", HALARIC_FEATURES)
+    @pytest.mark.parametrize("feature", HARALIC_FEATURES)
     @pytest.mark.parametrize("distance", range(1, 5))
     def test_variants(self, feature, distance):
         data = np.zeros((10, 20, 20), dtype=np.uint8)
