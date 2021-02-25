@@ -172,7 +172,9 @@ class BaseMainWindow(QMainWindow):
             method: LoadBase = self._load_dict[data[1]]
             dial = ExecuteFunctionDialog(method.load, [data[0]])
             if dial.exec():
-                self.main_menu.set_data(dial.get_result())
+                result = dial.get_result()
+                self.main_menu.set_data(result)
+                self.settings.add_load_files_history(data[0], method.get_name())
         except KeyError:
             self.read_drop(data[0])
 
