@@ -1,5 +1,4 @@
 appdirs
-Cython
 czifile
 dataclasses; python_version < '3.7'
 defusedxml
