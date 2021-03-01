@@ -68,19 +68,14 @@ stages:
         steps:
           - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8', architecture: x64}}
           - bash: |
-              python -m pip install -r requirements/requirements_pyinstaller.txt
-              python -m pip install -r requirements/requirements_dev.txt
-              python -m pip install .
-              python -m pip install -r docs/requirements.txt
-            displayName: InstallDeps
-          - bash: make -C docs html
-            displayName: BuildDocs
+              python -m pip install tox
+            displayName: Install tox
           - bash: |
-              mkdir docs_result
-              cd docs/_build; zip -r ../../docs_result/PartSeg_documentation_`python -c "import PartSeg; print(PartSeg.__version__)"`.zip html; cd ../..
+              python -m tox -e docs
+            displayName: build docs
           - task: PublishBuildArtifacts@1
             inputs:
-              pathToPublish: docs_result
+              pathToPublish: docs.tar.gz
               artifactName: docs
 
       - job: Notebook_check
@@ -91,12 +86,9 @@ stages:
         steps:
           - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8', architecture: x64}}
           - bash: |
-              python -m pip install -r requirements_pyinstaller.txt
-              python -m pip install .
-              python -m pip install jupyter[all]
-              python -m pip install matplotlib
-            displayName: InstallDeps
-          - bash: DATA_PATH=${PWD}/typy_neuronow2 jupyter nbconvert --to notebook --execute tutorials/tutorial_neuron_types/Neuron_types_example.ipynb
+              python -m pip install tox
+            displayName: Test notebook
+          - bash: tox -e jupyter
             displayName: "Run Notebook"
 
   - stage: Tests
