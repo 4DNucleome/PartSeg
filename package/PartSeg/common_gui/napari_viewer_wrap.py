@@ -210,13 +210,16 @@ class SynchronizeWidget(QWidget):
 
 
 class Viewer(NViewer):
+    _settings: BaseSettings
+    _sync_widget: SynchronizeWidget
+
     _napari_app_id = False
 
     def __init__(self, settings: BaseSettings, partseg_viewer_name: str, **kwargs):
         super().__init__(**kwargs)
-        self.settings = settings
-        self.sync_widget = SynchronizeWidget(settings, self, partseg_viewer_name)
-        self.window.add_dock_widget(self.sync_widget, area="left")
+        self._settings = settings
+        self._sync_widget = SynchronizeWidget(settings, self, partseg_viewer_name)
+        self.window.add_dock_widget(self._sync_widget, area="left")
 
     def create_initial_layers(
         self, image: bool = True, roi: bool = True, additional_layers: bool = False, points: bool = True
@@ -230,10 +233,10 @@ class Viewer(NViewer):
         :param bool points: synchronize points
         """
         if image:
-            self.sync_widget.sync_image()
+            self._sync_widget.sync_image()
         if roi:
-            self.sync_widget.sync_roi()
+            self._sync_widget.sync_roi()
         if additional_layers:
-            self.sync_widget.sync_additional()
+            self._sync_widget.sync_additional()
         if points:
-            self.sync_widget.sync_points()
+            self._sync_widget.sync_points()

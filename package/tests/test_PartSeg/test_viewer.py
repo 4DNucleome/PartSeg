@@ -93,7 +93,7 @@ class TestNapariViewer:
         viewer.create_initial_layers(True, True, True, True)
         assert len(viewer.layers) == 3
         assert isinstance(viewer.layers[-1], Points)
-        viewer.sync_widget.sync_points_chk.setChecked(True)
+        viewer._sync_widget.sync_points_chk.setChecked(True)
         with qtbot.wait_signal(settings.points_changed):
             settings.points = None
         assert len(viewer.layers) == 2
@@ -107,8 +107,8 @@ class TestNapariViewer:
         settings = BaseSettings(tmp_path)
         settings.image = image
         viewer = Viewer(settings, "test")
-        with qtbot.waitSignal(viewer.sync_widget.sync_image_chk.stateChanged):
-            viewer.sync_widget.sync_image_chk.setChecked(True)
+        with qtbot.waitSignal(viewer._sync_widget.sync_image_chk.stateChanged):
+            viewer._sync_widget.sync_image_chk.setChecked(True)
         assert len(viewer.layers) == 2
         with qtbot.waitSignal(settings.image_changed):
             settings.image = image2
@@ -119,9 +119,9 @@ class TestNapariViewer:
         settings = BaseSettings(tmp_path)
         settings.image = image
         viewer = Viewer(settings, "test")
-        viewer.sync_widget.sync_image()
+        viewer._sync_widget.sync_image()
         assert len(viewer.layers) == 2
-        viewer.sync_widget.sync_ROI_chk.setChecked(True)
+        viewer._sync_widget.sync_ROI_chk.setChecked(True)
         roi_info = ROIInfo(image.get_channel(0), {}, {"sample": image.get_channel(1)})
         with qtbot.waitSignal(settings.roi_changed):
             settings.roi = roi_info
@@ -132,13 +132,13 @@ class TestNapariViewer:
         settings = BaseSettings(tmp_path)
         settings.image = image
         viewer = Viewer(settings, "test")
-        viewer.sync_widget.sync_image()
+        viewer._sync_widget.sync_image()
         assert len(viewer.layers) == 2
         settings._additional_layers = {
             "first": AdditionalLayerDescription(image.get_channel(0), "image", "first"),
             "second": AdditionalLayerDescription(image.get_channel(0), "labels", "second"),
         }
-        viewer.sync_widget.sync_additional()
+        viewer._sync_widget.sync_additional()
         assert len(viewer.layers) == 4
         assert isinstance(viewer.layers[-1], Labels)
         viewer.close()
