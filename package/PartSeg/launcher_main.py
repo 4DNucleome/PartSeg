@@ -6,6 +6,7 @@ import platform
 import sys
 from functools import partial
 
+from napari.qt import get_app
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QFontDatabase
 
@@ -86,6 +87,7 @@ def main():
     CustomApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     my_app = CustomApplication(sys.argv, name="PartSeg", icon=os.path.join(icons_dir, "icon.png"))
     my_app.check_release()
+    get_app()
     QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf"))
     if args.gui == "roi_analysis" or args.mf:
         from PartSeg import plugins
