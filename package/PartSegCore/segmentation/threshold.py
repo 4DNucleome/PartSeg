@@ -26,7 +26,7 @@ class ManualThreshold(BaseThreshold):
 
     @classmethod
     def get_fields(cls):
-        return [AlgorithmProperty("threshold", "Threshold", 8000, (-100000, 100000))]
+        return [AlgorithmProperty("threshold", "Threshold", 8000.0, (-100000, 100000))]
 
     @classmethod
     def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict, operator):
