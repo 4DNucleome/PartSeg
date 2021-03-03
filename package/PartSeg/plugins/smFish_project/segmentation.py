@@ -180,8 +180,8 @@ class SMSegmentation(SegmentationAlgorithm):
 def gauss_background_estimate(
     image: Image,
     mask: Labels,
-    background_gauss_radius: float = 6,
-    foreground_gauss_radius: float = 1,
+    background_gauss_radius: float = 5,
+    foreground_gauss_radius: float = 2.5,
     remove_negative: bool = False,
 ) -> LayerDataTuple:
     # process the image

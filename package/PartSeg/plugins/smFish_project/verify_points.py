@@ -1,4 +1,5 @@
 from itertools import product
+from typing import List
 
 import numpy as np
 from magicgui import magic_factory
@@ -49,8 +50,9 @@ def group_points(points: np.ndarray, max_dist=1):
 @magic_factory(info={"widget_type": "TextEdit"}, call_button=True)
 def verify_segmentation(
     segmentation: Labels, points: Points, points_dist: int = 2, points_to_roi: int = 1, info: str = ""
-) -> types.LayerDataTuple:
+) -> List[types.LayerDataTuple]:
     labels = set(np.unique(segmentation.data))
+    labels_map = np.arange(max(labels) + 1)
     all_labels = len(labels)
     if 0 in labels:
         labels.remove(0)
@@ -72,6 +74,7 @@ def verify_segmentation(
                 if value > 0:
                     if value in labels:
                         labels.remove(value)
+                        labels_map[value] = 0
                     matched_points[i] = True
 
     verify_segmentation.info.value = (
@@ -82,7 +85,12 @@ def verify_segmentation(
     for ok, points_group in zip(matched_points, points_grouped):
         if not ok:
             res.extend(points_group)
-    if res:
-        return np.array(res), {"name": "Missed points", "scale": points.scale}, "points"
-    else:
-        return None, {"name": "Missed points", "scale": points.scale}, "points"
+
+    missed_labels = (labels_map[segmentation.data], {"name": "Missed ROI", "scale": points.scale}, "labels")
+    missed_points = (
+        np.array(res) if res else None,
+        {"name": "Missed points", "scale": points.scale, "face_color": "red", "ndim": segmentation.data.ndim},
+        "points",
+    )
+
+    return [missed_points, missed_labels]
