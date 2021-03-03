@@ -147,8 +147,11 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         return self._mask
 
     @mask.setter
-    def mask(self, val: np.ndarray):
-        self._mask = val
+    def mask(self, val: Optional[np.ndarray]):
+        if val is None:
+            self._mask = None
+            return
+        self._mask = self.image.fit_mask_to_image(val)
 
     @classmethod
     @abstractmethod
@@ -211,6 +214,7 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
     def set_image(self, image):
         self.image = image
         self.channel = None
+        self._mask = None
 
     def set_parameters(self, **kwargs):
         base_names = [x.name for x in self.get_fields() if isinstance(x, AlgorithmProperty)]

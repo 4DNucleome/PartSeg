@@ -5,6 +5,7 @@ from PyInstaller.utils.hooks import collect_data_files
 block_cipher = None
 import sys
 import os
+from packaging.version import parse as parse_version
 import platform
 import zmq
 
@@ -19,16 +20,35 @@ import PartSegData.__init__
 base_path = os.path.dirname(PartSeg.__main__.__file__)
 data_path = os.path.dirname(PartSegData.__init__.__file__)
 
-try:
+import napari
+
+napari_version = parse_version(napari.__version__)
+
+if napari_version < parse_version("0.4.3"):
     from napari.resources import import_resources
-except ImportError:
+elif napari_version < parse_version("0.4.6"):
     from napari._qt.qt_resources import import_resources as napari_import_resources
 
     def import_resources():
         return napari_import_resources()[0]
+else:
+    from pathlib import Path
+
+    import qtpy
+    from napari._qt import qt_resources
+    from napari.resources import ICON_PATH
+    from napari.utils.misc import dir_hash
+
+    def import_resources():
+        qt_resources._register_napari_resources()
+        icon_hash = dir_hash(ICON_PATH)  # get hash of icons folder contents
+        key = f'_qt_resources_{qtpy.API_NAME}_{qtpy.QT_VERSION}_{icon_hash}'
+        key = key.replace(".", "_")
+        save_path = Path(qt_resources.__file__).parent / f"{key}.py"
+        return save_path
+
 
 from dask import config
-import napari
 
 import imagecodecs
 
