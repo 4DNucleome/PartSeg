@@ -198,6 +198,12 @@ def profile_hook(dkt):
         return (dkt["red"] / 255, dkt["green"] / 255, dkt["blue"] / 255)
     if "__Colormap__" in dkt:
         del dkt["__Colormap__"]
+        if dkt["controls"][0] != 0:
+            dkt["controls"].insert(0, 0)
+            dkt["colors"].insert(0, dkt["colors"][0])
+        if dkt["controls"][-1] != 1:
+            dkt["controls"].append(1)
+            dkt["colors"].append(dkt["colors"][-1])
         return Colormap(**dkt)
 
     return serialize_hook(dkt)

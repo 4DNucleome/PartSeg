@@ -184,11 +184,15 @@ class TestPColormapCreator:
 
         def check_res(colormap):
             return (
-                len(colormap.colors) == 2
+                len(colormap.colors) == 4
                 and np.allclose(colormap.colors[0], color_from_qcolor(color1))
-                and np.allclose(colormap.colors[1], color_from_qcolor(color2))
-                and colormap.controls[0] == 0.1
-                and colormap.controls[1] == 0.8
+                and np.allclose(colormap.colors[1], color_from_qcolor(color1))
+                and np.allclose(colormap.colors[2], color_from_qcolor(color2))
+                and np.allclose(colormap.colors[3], color_from_qcolor(color2))
+                and colormap.controls[0] == 0
+                and colormap.controls[1] == 0.1
+                and colormap.controls[2] == 0.8
+                and colormap.controls[3] == 1
             )
 
         with qtbot.wait_signal(widget.colormap_selected, check_params_cb=check_res):
