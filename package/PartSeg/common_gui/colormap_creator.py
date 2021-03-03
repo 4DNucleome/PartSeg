@@ -286,9 +286,17 @@ class PColormapCreator(ColormapCreator):
         if self.show_colormap.colormap:
             rand_name = custom_name_generate(self.prohibited_names, self.settings.colormap_dict)
             self.prohibited_names.add(rand_name)
-            self.settings.colormap_dict[rand_name] = self.show_colormap.colormap
+            colors = list(self.show_colormap.colormap.colors)
+            positions = list(self.show_colormap.colormap.controls)
+            if positions[0] != 0:
+                positions.insert(0, 0)
+                colors.insert(0, colors[0])
+            if positions[-1] != 1:
+                positions.append(1)
+                colors.append(colors[-1])
+            self.settings.colormap_dict[rand_name] = Colormap(colors=np.array(colors), controls=np.array(positions))
             self.settings.chosen_colormap_change(rand_name, True)
-            self.colormap_selected.emit(self.show_colormap.colormap)
+            self.colormap_selected.emit(self.settings.colormap_dict[rand_name][0])
 
 
 _icon_selector = IconSelector()

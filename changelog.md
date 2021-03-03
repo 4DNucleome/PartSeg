@@ -9,6 +9,10 @@
 -   Drop Python 3.6
 -   Add Haralick measurements
 
+## 0.12.7
+
+-   Fixes for napari 0.4.6
+
 ## 0.12.6
 
 -   Fix prev_mask_get

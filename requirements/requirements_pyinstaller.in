@@ -1,5 +1,4 @@
 appdirs
-Cython
 czifile
 dataclasses; python_version < '3.7'
 defusedxml
@@ -29,3 +28,4 @@ tifffile
 xlrd
 xlsxwriter
 sphinx!=3.5.0
+pydantic!=1.8
