@@ -127,7 +127,7 @@ packaging==20.9
     # via
     #   -r requirements_pyinstaller.in
     #   sphinx
-pandas==1.2.2
+pandas==1.2.3
     # via -r requirements_pyinstaller.in
 parso==0.8.1
     # via jedi
