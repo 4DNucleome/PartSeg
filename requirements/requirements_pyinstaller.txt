@@ -99,7 +99,7 @@ napari-plugin-engine==0.1.9
     #   napari-svg
 napari-svg==0.1.4
     # via napari
-napari==0.4.5
+napari==0.4.6
     # via -r requirements_pyinstaller.in
 numpy==1.20.1
     # via
