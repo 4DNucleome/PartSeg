@@ -149,7 +149,7 @@ psutil==5.8.0
     # via napari
 ptyprocess==0.7.0
     # via pexpect
-pydantic==1.7.3
+pydantic==1.8.1
     # via
     #   -r requirements_pyinstaller.in
     #   napari
@@ -260,6 +260,7 @@ typing-extensions==3.7.4.3
     # via
     #   magicgui
     #   napari
+    #   pydantic
 urllib3==1.26.3
     # via
     #   requests
