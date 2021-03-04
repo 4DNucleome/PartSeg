@@ -49,8 +49,14 @@ def group_points(points: np.ndarray, max_dist=1):
 
 @magic_factory(info={"widget_type": "TextEdit"}, call_button=True)
 def verify_segmentation(
-    segmentation: Labels, points: Points, points_dist: int = 2, points_to_roi: int = 1, info: str = ""
+    segmentation: Labels,
+    points: Points,
+    points_dist: int = 2,
+    points_to_roi: int = 1,
+    ignore_single_points: bool = True,
+    info: str = "",
 ) -> List[types.LayerDataTuple]:
+    ignored = 1
     labels = set(np.unique(segmentation.data))
     labels_map = np.arange(max(labels) + 1)
     all_labels = len(labels)
@@ -76,10 +82,15 @@ def verify_segmentation(
                         labels.remove(value)
                         labels_map[value] = 0
                     matched_points[i] = True
+        if len(points_group) == 1 and not matched_points[i]:
+            matched_points[i] = True
+            ignored += 1
 
     verify_segmentation.info.value = (
         f"matched {np.sum(matched_points)} of {len(matched_points)}"
-        f"\nconsumed {all_labels - len(labels)} of {all_labels} segmentation components"
+        f"\nconsumed {all_labels - len(labels)} of {all_labels} segmentation components" + f"\nignored {ignored}"
+        if ignore_single_points
+        else ""
     )
     res = []
     for ok, points_group in zip(matched_points, points_grouped):
