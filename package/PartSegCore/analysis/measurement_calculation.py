@@ -526,8 +526,10 @@ class MeasurementProfile:
             return val, str(unit).format(str(result_units)), component_and_area
         except ZeroDivisionError:  # pragma: no cover
             return "Div by zero", "", component_and_area
-        except TypeError:  # pragma: no cover
-            return "None div", "", component_and_area
+        except TypeError as e:  # pragma: no cover
+            if e.args[0].startswith("unsupported operand type(s) for /:"):
+                return "None div", "", component_and_area
+            raise e
         except AttributeError:  # pragma: no cover
             return "No attribute", "", component_and_area
         except ProhibitedDivision as e:  # pragma: no cover

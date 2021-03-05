@@ -64,7 +64,8 @@ class SynchronizeWidget(QWidget):
             try:
                 layer = self.viewer.layers[name]
                 layer.data = data
-                layer.scale = scale
+                if scale is not None:
+                    layer.scale = scale
                 name_list.remove(name)
                 return layer
             except Exception:  # pragma: no cover  pylint: disable=W0703
@@ -87,7 +88,8 @@ class SynchronizeWidget(QWidget):
             try:
                 layer = self.viewer.layers[name]
                 layer.data = data
-                layer.scale = scale
+                if scale is not None:
+                    layer.scale = scale
                 name_list.remove(name)
                 return layer
             except Exception:  # pragma: no cover pylint: disable=W0703
@@ -186,10 +188,16 @@ class SynchronizeWidget(QWidget):
         scale = self.settings.image.normalized_scaling()
         current_layers = []
         for value in self.settings.additional_layers.values():
+            try:
+                data = self.settings.image.fit_array_to_image(value.data)
+                local_scale = scale
+            except ValueError:
+                data = value.data
+                local_scale = None
             if value.layer_type == "labels":
-                layer = self._substitute_labels_layer(value.name, value.data, scale, additional_layers)
+                layer = self._substitute_labels_layer(value.name, data, local_scale, additional_layers)
             else:
-                layer = self._substitute_image_layer(value.name, value.data, scale, None, additional_layers)
+                layer = self._substitute_image_layer(value.name, data, local_scale, None, additional_layers)
             current_layers.append(layer.name)
         self._clean_layers(additional_layers)
         self.layer_name_dict["additional"] = current_layers
