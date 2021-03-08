@@ -34,13 +34,6 @@ jobs:
       matrix:
         os: [windows-2019, macos-10.15, ubuntu-20.04]
         python_version: ['3.7', '3.8', '3.9']
-        include:
-          - python_version: '3.7'
-            toxenv: 'py37-PyQt5,py37-PySide2'
-          - python_version: '3.8'
-            toxenv: 'py38-PyQt5,py38-PySide2'
-          - python_version: '3.9'
-            toxenv: 'py38-PyQt5,py38-PySide2'
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-python@v1
