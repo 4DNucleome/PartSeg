@@ -238,6 +238,8 @@ class UpdateLoadedMetadataBase:
     # noinspection PyUnusedLocal
     @classmethod
     def update_segmentation_sub_dict(cls, name: str, dkt: dict) -> dict:
+        if "values" not in dkt:
+            return dkt
         if name == "sprawl_type" and dkt["name"].endswith(" sprawl"):
             dkt["name"] = dkt["name"][: -len(" sprawl")]
         for key in dkt["values"].keys():
@@ -258,7 +260,7 @@ class UpdateLoadedMetadataBase:
                 if key == "noise_removal":
                     del profile_data.values[key]
                     key = "noise_filtering"
-                if "gauss_type" in item["values"]:
+                if "values" in item and "gauss_type" in item["values"]:
                     item["values"]["dimension_type"] = item["values"]["gauss_type"]
                     del item["values"]["gauss_type"]
                 profile_data.values[key] = cls.update_segmentation_sub_dict(key, item)
