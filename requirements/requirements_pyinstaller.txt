@@ -30,7 +30,7 @@ dask[array]==2021.2.0
     # via napari
 decorator==4.4.2
     # via ipython
-defusedxml==0.6.0
+defusedxml==0.7.0
     # via -r requirements_pyinstaller.in
 docstring-parser==0.7.3
     # via magicgui
@@ -40,7 +40,7 @@ et-xmlfile==1.0.1
     # via openpyxl
 freetype-py==2.2.0
     # via vispy
-h5py==3.1.0
+h5py==3.2.1
     # via -r requirements_pyinstaller.in
 heapdict==1.0.1
     # via cachey
@@ -127,7 +127,7 @@ packaging==20.9
     # via
     #   -r requirements_pyinstaller.in
     #   sphinx
-pandas==1.2.2
+pandas==1.2.3
     # via -r requirements_pyinstaller.in
 parso==0.8.1
     # via jedi
@@ -139,7 +139,7 @@ pexpect==4.8.0
     # via ipython
 pickleshare==0.7.5
     # via ipython
-pillow==8.1.0
+pillow==8.1.2
     # via
     #   imageio
     #   napari
@@ -153,12 +153,12 @@ pydantic==1.7.3
     # via
     #   -r requirements_pyinstaller.in
     #   napari
-pygments==2.8.0
+pygments==2.8.1
     # via
     #   ipython
     #   qtconsole
     #   sphinx
-pyinstaller-hooks-contrib==2020.11
+pyinstaller-hooks-contrib==2021.1
     # via pyinstaller
 pyinstaller==4.2
     # via -r requirements_pyinstaller.in
@@ -207,7 +207,7 @@ scipy==1.6.1
     # via
     #   -r requirements_pyinstaller.in
     #   napari
-sentry-sdk==0.20.3
+sentry-sdk==1.0.0
     # via -r requirements_pyinstaller.in
 simpleitk==2.0.2
     # via -r requirements_pyinstaller.in
@@ -217,7 +217,7 @@ six==1.15.0
     #   python-dateutil
 snowballstemmer==2.1.0
     # via sphinx
-sphinx==3.5.1
+sphinx==3.5.2
     # via
     #   -r requirements_pyinstaller.in
     #   numpydoc
@@ -235,7 +235,7 @@ sphinxcontrib-serializinghtml==1.1.4
     # via sphinx
 sympy==1.7.1
     # via -r requirements_pyinstaller.in
-tifffile==2021.2.26
+tifffile==2021.3.5
     # via
     #   -r requirements_pyinstaller.in
     #   czifile
