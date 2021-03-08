@@ -40,7 +40,7 @@ et-xmlfile==1.0.1
     # via openpyxl
 freetype-py==2.2.0
     # via vispy
-h5py==3.1.0
+h5py==3.2.1
     # via -r requirements_pyinstaller.in
 heapdict==1.0.1
     # via cachey
