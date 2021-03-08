@@ -26,7 +26,7 @@ chardet==4.0.0
     # via requests
 czifile==2019.7.2
     # via -r requirements_pyinstaller.in
-dask[array]==2021.3.0
+dask[array]==2021.2.0
     # via napari
 decorator==4.4.2
     # via ipython
