@@ -30,7 +30,7 @@ dask[array]==2021.2.0
     # via napari
 decorator==4.4.2
     # via ipython
-defusedxml==0.7.0
+defusedxml==0.7.1
     # via -r requirements_pyinstaller.in
 docstring-parser==0.7.3
     # via magicgui
