@@ -25,7 +25,7 @@ jobs:
           path: test_data
 
   test:
-    name: Test PartSeg on ${{ matrix.os }}
+    name: PartSeg on ${{ matrix.os }} py ${{ matrix.python_version }}
     if: startsWith(github.ref, 'refs/heads/feature') != true
     runs-on: ${{ matrix.os }}
     needs: download_data
@@ -76,7 +76,7 @@ jobs:
 
 
   test_feature:
-    name: Test PartSeg on ${{ matrix.os }}
+    name: PartSeg on ${{ matrix.os }} py ${{ matrix.python_version }}
     runs-on: ${{ matrix.os }}
     needs: download_data
     if: startsWith(github.ref, 'refs/heads/feature')
