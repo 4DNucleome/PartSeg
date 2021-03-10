@@ -304,7 +304,15 @@ class Image:
         return np.reshape(array, shape)
 
     def fit_array_to_image(self, array: np.ndarray) -> np.ndarray:
-        """change shape of array with inserting singe dimensional entries"""
+        """
+        Change shape of array with inserting singe dimensional entries
+
+        :param np.ndarray array: array to be fitted
+
+        :return: reshaped array witha added missing 1 in shape
+
+        :raises ValueError: if cannot fit array
+        """
         base_shape = list(self._image_array.shape)
         base_shape.pop(self.channel_pos)
         return self._fit_array_to_image(base_shape, array)

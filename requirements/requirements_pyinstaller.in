@@ -27,4 +27,4 @@ tifffile
 xlrd
 xlsxwriter
 sphinx!=3.5.0
-pydantic!=1.8
+pydantic!=1.8,!=1.8.1
