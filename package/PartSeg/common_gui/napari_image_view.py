@@ -6,6 +6,8 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
+from PartSegCore.class_generator import enum_register
+
 try:
     from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton
 except ImportError:
@@ -554,7 +556,11 @@ class ImageView(QWidget):
 
         filters = self.channel_control.get_filter()
         for i, layer in enumerate(image_info.layers):
-            self._add_layer_util(i, layer, filters)
+            try:
+                self._add_layer_util(i, layer, filters)
+            except AssertionError:
+                layer.colormap = "gray"
+                self._add_layer_util(i, layer, filters)
 
         self.image_info[image.file_path].filter_info = filters
         self.image_info[image.file_path].layers = image_info.layers
@@ -746,3 +752,6 @@ def _print_dict(dkt: dict, indent=""):
         else:
             res.append(f"{indent}{k}: {v}")
     return "\n".join(res)
+
+
+enum_register.register_class(LabelEnum)

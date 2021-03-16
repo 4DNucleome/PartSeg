@@ -11,17 +11,14 @@ from qtpy.QtGui import QIcon, QPainter
 from qtpy.QtWidgets import QLabel, QToolButton
 
 from PartSeg.common_gui.numpy_qimage import NumpyQImage
-from PartSegCore.class_generator import enum_register
 from PartSegData import icons_dir
 
 from ..common_backend.base_settings import ViewSettings
-from .napari_image_view import ImageView, LabelEnum
+from .napari_image_view import ImageView
 
 canvas_icon_size = QSize(20, 20)
 step = 1.01
 max_step = log(1.2, step)
-
-enum_register.register_class(LabelEnum)
 
 
 def create_tool_button(text, icon):
