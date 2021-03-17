@@ -201,3 +201,30 @@ def gauss_background_estimate(
     resp = resp.reshape((1,) + resp.shape)
     # return it + some layer properties
     return resp, {"colormap": "gray", "scale": image.scale, "name": "Signal estimate"}
+
+
+def laplacian_estimate(image: Image, radius=1.0, clip_bellow_0=True) -> LayerDataTuple:
+    data = image.data[0]
+    res = -SimpleITK.GetArrayFromImage(SimpleITK.LaplacianRecursiveGaussian(SimpleITK.GetImageFromArray(data), radius))
+    if clip_bellow_0:
+        res[res < 0] = 0
+    res = res.reshape(image.data.shape)
+    return res, {"colormap": "magma", "scale": image.scale, "name": "Laplacian estimate"}
+
+
+def laplacian_check(image: Image, mask: Labels, radius=1.0, threshold=-10.0, min_size=50) -> LayerDataTuple:
+    data = image.data[0]
+
+    labeling = SimpleITK.GetArrayFromImage(
+        SimpleITK.RelabelComponent(
+            SimpleITK.ConnectedComponent(
+                SimpleITK.BinaryThreshold(
+                    SimpleITK.LaplacianRecursiveGaussian(SimpleITK.GetImageFromArray(data), radius), -2000, -threshold
+                ),
+                SimpleITK.GetImageFromArray(mask.data),
+            ),
+            min_size,
+        )
+    )
+    labeling = labeling.reshape((1,) + data.shape)
+    return labeling, {"scale": image.scale, "name": "Signal estimate"}
