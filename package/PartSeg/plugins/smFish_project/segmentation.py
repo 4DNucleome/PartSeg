@@ -212,16 +212,17 @@ def laplacian_estimate(image: Image, radius=1.0, clip_bellow_0=True) -> LayerDat
     return res, {"colormap": "magma", "scale": image.scale, "name": "Laplacian estimate"}
 
 
-def laplacian_check(image: Image, mask: Labels, radius=1.0, threshold=-10.0, min_size=50) -> LayerDataTuple:
+def laplacian_check(image: Image, mask: Labels, radius=1.0, threshold=10.0, min_size=50) -> LayerDataTuple:
     data = image.data[0]
+    laplaced = -SimpleITK.GetArrayFromImage(
+        SimpleITK.LaplacianRecursiveGaussian(SimpleITK.GetImageFromArray(data), radius)
+    )
 
     labeling = SimpleITK.GetArrayFromImage(
         SimpleITK.RelabelComponent(
             SimpleITK.ConnectedComponent(
-                SimpleITK.BinaryThreshold(
-                    SimpleITK.LaplacianRecursiveGaussian(SimpleITK.GetImageFromArray(data), radius), -2000, -threshold
-                ),
-                SimpleITK.GetImageFromArray(mask.data),
+                SimpleITK.BinaryThreshold(SimpleITK.GetImageFromArray(laplaced), threshold, float(laplaced.max())),
+                SimpleITK.GetImageFromArray(mask.data[0]),
             ),
             min_size,
         )

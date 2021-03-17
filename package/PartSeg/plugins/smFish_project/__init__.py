@@ -2,7 +2,7 @@ from napari_plugin_engine import napari_hook_implementation
 
 from . import segmentation
 from .copy_labels import CopyLabelWidget
-from .segmentation import gauss_background_estimate, laplacian_estimate
+from .segmentation import gauss_background_estimate, laplacian_check, laplacian_estimate
 from .verify_points import verify_segmentation
 
 if "reload" in globals():
@@ -31,9 +31,9 @@ def napari_experimental_provide_function():
     return gauss_background_estimate  # , {"area": "bottom"}
 
 
-# @napari_hook_implementation(specname="napari_experimental_provide_function")
-# def napari_experimental_provide_function2():
-#     return laplacian_check
+@napari_hook_implementation(specname="napari_experimental_provide_function")
+def napari_experimental_provide_function2():
+    return laplacian_check
 
 
 @napari_hook_implementation(specname="napari_experimental_provide_function")
