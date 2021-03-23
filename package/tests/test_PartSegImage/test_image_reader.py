@@ -1,12 +1,14 @@
 import math
 import os.path
+import shutil
+from glob import glob
 
 import numpy as np
 import pytest
 import tifffile
 
 import PartSegData
-from PartSegImage import CziImageReader, GenericImageReader, Image, OifImagReader, TiffImageReader
+from PartSegImage import CziImageReader, GenericImageReader, Image, ObsepImageReader, OifImagReader, TiffImageReader
 
 
 class TestImageClass:
@@ -83,6 +85,26 @@ class TestImageClass:
         assert reader.default_spacing == (11, 12, 13)
         reader.set_default_spacing((5, 7))
         assert reader.default_spacing == (10 ** -6, 5, 7)
+
+    def test_obsep_read(self, data_test_dir):
+        image = ObsepImageReader.read_image(os.path.join(data_test_dir, "obsep", "test.obsep"))
+        assert image.channels == 2
+        assert np.allclose(image.spacing, (500 * 10 ** -9, 64 * 10 ** -9, 64 * 10 ** -9))
+        assert image.channel_names == ["channel 1", "channel 2"]
+
+    def test_obsep_deconv_read(self, data_test_dir, tmp_path):
+        for el in glob(os.path.join(data_test_dir, "obsep", "*")):
+            shutil.copy(os.path.join(data_test_dir, "obsep", el), tmp_path)
+        image = GenericImageReader.read_image(tmp_path / "test.obsep")
+        assert image.channels == 2
+        assert np.allclose(image.spacing, (500 * 10 ** -9, 64 * 10 ** -9, 64 * 10 ** -9))
+        assert image.channel_names == ["channel 1", "channel 2"]
+        shutil.copy(tmp_path / "Cy5.TIF", tmp_path / "Cy5_decon2.TIF")
+        image = GenericImageReader.read_image(tmp_path / "test.obsep")
+        assert image.channels == 2
+        shutil.copy(tmp_path / "Cy5.TIF", tmp_path / "Cy5_deconv.TIF")
+        image = GenericImageReader.read_image(tmp_path / "test.obsep")
+        assert image.channels == 3
 
 
 class CustomImage(Image):

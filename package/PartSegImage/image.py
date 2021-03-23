@@ -1,3 +1,4 @@
+import re
 import typing
 import warnings
 from collections.abc import Iterable
@@ -9,6 +10,8 @@ Spacing = typing.Tuple[typing.Union[float, int], ...]
 
 _DEF = object()
 FRAME_THICKNESS = 2
+
+NAPARI_SCALING = 10 ** 9
 
 
 def minimal_dtype(val: int):
@@ -158,13 +161,18 @@ class Image:
         data = self.reorder_axes(image.get_data(), image.axis_order)
         data = np.concatenate((self.get_data(), data), axis=axis)
         channel_names = self.channel_names
+        reg = re.compile(r"channel \d+")
         for name in image.channel_names:
+            match = reg.match(name)
             new_name = name
+            if match:
+                name = "channel"
+                new_name = f"channel {len(channel_names) + 1}"
             i = 1
             while new_name in channel_names:
-                new_name = f"{new_name} ({i})"
+                new_name = f"{name} ({i})"
                 i += 1
-                if i > 10000:
+                if i > 10000:  # pragma: no cover
                     raise ValueError("fail when try to fix channel name")
             channel_names.append(new_name)
 
@@ -482,7 +490,7 @@ class Image:
             return tuple(self._image_spacing[1:])
         return self._image_spacing
 
-    def normalized_scaling(self, factor=10 ** 9) -> Spacing:
+    def normalized_scaling(self, factor=NAPARI_SCALING) -> Spacing:
         if self.is_2d:
             return (1, 1) + tuple(np.multiply(self.spacing, factor))
         return (1,) + tuple(np.multiply(self.spacing, factor))
@@ -498,7 +506,7 @@ class Image:
             return
         if self.is_2d and len(value) + 1 == len(self._image_spacing):
             value = (1.0,) + tuple(value)
-        if len(value) != len(self._image_spacing):
+        if len(value) != len(self._image_spacing):  # pragma: no cover
             raise ValueError("Correction of spacing fail.")
         self._image_spacing = tuple(value)
 

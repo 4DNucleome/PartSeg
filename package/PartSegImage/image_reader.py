@@ -9,6 +9,7 @@ from threading import Lock
 import numpy as np
 import tifffile.tifffile
 from czifile.czifile import CziFile
+from defusedxml import ElementTree
 from oiffile import OifFile
 from tifffile import TiffFile
 
@@ -149,7 +150,7 @@ class GenericImageReader(BaseImageReader):
 
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
         if ext is None:
-            if isinstance(image_path, str):
+            if isinstance(image_path, (str, Path)):
                 ext = os.path.splitext(image_path)[1]
             else:
                 ext = ".tif"
@@ -158,6 +159,8 @@ class GenericImageReader(BaseImageReader):
             return CziImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         if ext in [".oif", ".oib"]:
             return OifImagReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
+        if ext == ".obsep":
+            return ObsepImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
         return TiffImageReader.read_image(image_path, mask_path, self.callback_function, self.default_spacing)
 
 
@@ -238,6 +241,52 @@ class CziImageReader(BaseImageReader):
         return super().update_array_shape(array, axes)
 
 
+class ObsepImageReader(BaseImageReader):
+    def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
+        directory = Path(os.path.dirname(image_path))
+        xml_doc = ElementTree.parse(image_path).getroot()
+        channels = xml_doc.findall("net/node/node/attribute[@name='image type']")
+        if not channels:
+            raise ValueError("Information about channel images not found")
+        possible_extensions = [".tiff", ".tif", ".TIFF", ".TIF"]
+        channel_list = []
+        for channel in channels:
+            try:
+                name = next(iter(channel)).attrib["val"]
+            except StopIteration:  # pragma: no cover
+                raise ValueError("Missed information about channel name in obsep file")
+            for ex in possible_extensions:
+                if (directory / (name + ex)).exists():
+                    name += ex
+                    break
+            else:  # pragma: no cover
+                raise ValueError(f"Not found file for key {name}")
+            channel_list.append(TiffImageReader.read_image(directory / name, default_spacing=self.default_spacing))
+        for channel in channels:
+            try:
+                name = next(iter(channel)).attrib["val"] + "_deconv"
+            except StopIteration:  # pragma: no cover
+                raise ValueError("Missed information about channel name in obsep file")
+            for ex in possible_extensions:
+                if (directory / (name + ex)).exists():
+                    name += ex
+                    break
+            if (directory / name).exists():
+                channel_list.append(TiffImageReader.read_image(directory / name, default_spacing=self.default_spacing))
+
+        image = channel_list[0]
+        for el in channel_list[1:]:
+            image = image.merge(el, "C")
+
+        z_spacing = (
+            float(xml_doc.find("net/node/attribute[@name='step width']/double").attrib["val"]) * name_to_scalar["um"]
+        )
+
+        image.set_spacing((z_spacing,) + image.spacing[1:])
+        image.file_path = str(image_path)
+        return image
+
+
 class TiffImageReader(BaseImageReader):
     """
     TIFF/LSM files reader. Base reading with :py:meth:`BaseImageReader.read_image`
@@ -305,7 +354,7 @@ class TiffImageReader(BaseImageReader):
         self.image_file.close()
         if self.mask_file is not None:
             self.mask_file.close()
-        if not isinstance(image_path, str):
+        if not isinstance(image_path, (str, Path)):
             image_path = ""
         return self.image_class(
             image_data,
@@ -332,10 +381,10 @@ class TiffImageReader(BaseImageReader):
                 continue
             try:
                 j = image_series.axes.index(pos)
-            except ValueError:
+            except ValueError:  # pragma: no cover
                 raise ValueError("Incompatible shape of mask and image (axes)")
                 # TODO add verification if problem with T/Z/I
-            if image_series.shape[j] != mask_series.shape[i]:
+            if image_series.shape[j] != mask_series.shape[i]:  # pragma: no cover
                 raise ValueError("Incompatible shape of mask and image")
             # TODO Add verification if mask have to few dimensions
 
@@ -361,7 +410,7 @@ class TiffImageReader(BaseImageReader):
                     scalar = name_to_scalar["centimeter"]
                 elif unit == 2:
                     scalar = name_to_scalar["cal"]
-                else:
+                else:  # pragma: no cover
                     raise KeyError(f"wrong scalar {tags['ResolutionUnit']}, {tags['ResolutionUnit'].value}")
 
             x_spacing = tags["XResolution"].value[1] / tags["XResolution"].value[0] * scalar

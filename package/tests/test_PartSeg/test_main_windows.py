@@ -57,7 +57,7 @@ class TestLauncherMainWindow:
         main_window = LauncherMainWindow("Launcher")
         qtbot.addWidget(main_window)
         main_window._launch_mask()
-        with qtbot.waitSignal(main_window.prepare.finished):
+        with qtbot.waitSignal(main_window.prepare.finished, timeout=10 ** 4):
             main_window.prepare.start()
         # qtbot.addWidget(main_window.wind)
         QCoreApplication.processEvents()
