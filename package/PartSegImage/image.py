@@ -172,7 +172,7 @@ class Image:
             while new_name in channel_names:
                 new_name = f"{name} ({i})"
                 i += 1
-                if i > 10000:
+                if i > 10000:  # pragma: no cover
                     raise ValueError("fail when try to fix channel name")
             channel_names.append(new_name)
 
@@ -506,7 +506,7 @@ class Image:
             return
         if self.is_2d and len(value) + 1 == len(self._image_spacing):
             value = (1.0,) + tuple(value)
-        if len(value) != len(self._image_spacing):
+        if len(value) != len(self._image_spacing):  # pragma: no cover
             raise ValueError("Correction of spacing fail.")
         self._image_spacing = tuple(value)
 

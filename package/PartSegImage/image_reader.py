@@ -253,19 +253,19 @@ class ObsepImageReader(BaseImageReader):
         for channel in channels:
             try:
                 name = next(iter(channel)).attrib["val"]
-            except StopIteration:
+            except StopIteration:  # pragma: no cover
                 raise ValueError("Missed information about channel name in obsep file")
             for ex in possible_extensions:
                 if (directory / (name + ex)).exists():
                     name += ex
                     break
-            else:
+            else:  # pragma: no cover
                 raise ValueError(f"Not found file for key {name}")
             channel_list.append(TiffImageReader.read_image(directory / name, default_spacing=self.default_spacing))
         for channel in channels:
             try:
                 name = next(iter(channel)).attrib["val"] + "_deconv"
-            except StopIteration:
+            except StopIteration:  # pragma: no cover
                 raise ValueError("Missed information about channel name in obsep file")
             for ex in possible_extensions:
                 if (directory / (name + ex)).exists():
@@ -381,10 +381,10 @@ class TiffImageReader(BaseImageReader):
                 continue
             try:
                 j = image_series.axes.index(pos)
-            except ValueError:
+            except ValueError:  # pragma: no cover
                 raise ValueError("Incompatible shape of mask and image (axes)")
                 # TODO add verification if problem with T/Z/I
-            if image_series.shape[j] != mask_series.shape[i]:
+            if image_series.shape[j] != mask_series.shape[i]:  # pragma: no cover
                 raise ValueError("Incompatible shape of mask and image")
             # TODO Add verification if mask have to few dimensions
 
@@ -410,7 +410,7 @@ class TiffImageReader(BaseImageReader):
                     scalar = name_to_scalar["centimeter"]
                 elif unit == 2:
                     scalar = name_to_scalar["cal"]
-                else:
+                else:  # pragma: no cover
                     raise KeyError(f"wrong scalar {tags['ResolutionUnit']}, {tags['ResolutionUnit'].value}")
 
             x_spacing = tags["XResolution"].value[1] / tags["XResolution"].value[0] * scalar
