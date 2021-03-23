@@ -251,7 +251,10 @@ class ObsepImageReader(BaseImageReader):
         possible_extensions = [".tiff", ".tif", ".TIFF", ".TIF"]
         channel_list = []
         for channel in channels:
-            name = next(iter(channel)).attrib["val"]
+            try:
+                name = next(iter(channel)).attrib["val"]
+            except StopIteration:
+                raise ValueError("Missed information about channel name in obsep file")
             for ex in possible_extensions:
                 if (directory / (name + ex)).exists():
                     name += ex
@@ -260,7 +263,10 @@ class ObsepImageReader(BaseImageReader):
                 raise ValueError(f"Not found file for key {name}")
             channel_list.append(TiffImageReader.read_image(directory / name, default_spacing=self.default_spacing))
         for channel in channels:
-            name = next(iter(channel)).attrib["val"] + "_deconv"
+            try:
+                name = next(iter(channel)).attrib["val"] + "_deconv"
+            except StopIteration:
+                raise ValueError("Missed information about channel name in obsep file")
             for ex in possible_extensions:
                 if (directory / (name + ex)).exists():
                     name += ex
