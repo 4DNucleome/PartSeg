@@ -66,8 +66,6 @@ ipython==7.21.0
     # via
     #   ipykernel
     #   napari-console
-jdcal==1.4.1
-    # via openpyxl
 jedi==0.18.0
     # via ipython
 jinja2==2.11.3
@@ -121,7 +119,7 @@ numpydoc==1.1.0
     # via napari
 oiffile==2020.9.18
     # via -r requirements_pyinstaller.in
-openpyxl==3.0.6
+openpyxl==3.0.7
     # via -r requirements_pyinstaller.in
 packaging==20.9
     # via
