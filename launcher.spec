@@ -118,7 +118,6 @@ a = Analysis(
     ]
     + qt_data
     + [(os.path.join(base_path, "plugins/itk_snap_save/__init__.py"), "plugins/itk_snap_save")]
-    + [(os.path.join(base_path, "plugins/smFish_project/*"), "plugins/napari_copy_labels")]
     + [(napari_resource_path, napari_resource_dest_path)]
     + [(os.path.join(os.path.dirname(config.__file__), "dask.yaml"), "dask")]
     + collect_data_files("dask")
