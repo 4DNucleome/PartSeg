@@ -1,3 +1,4 @@
+import re
 import typing
 import warnings
 from collections.abc import Iterable
@@ -160,11 +161,16 @@ class Image:
         data = self.reorder_axes(image.get_data(), image.axis_order)
         data = np.concatenate((self.get_data(), data), axis=axis)
         channel_names = self.channel_names
+        reg = re.compile(r"channel \d+")
         for name in image.channel_names:
+            match = reg.match(name)
             new_name = name
+            if match:
+                name = "channel"
+                new_name = f"channel {len(channel_names) + 1}"
             i = 1
             while new_name in channel_names:
-                new_name = f"{new_name} ({i})"
+                new_name = f"{name} ({i})"
                 i += 1
                 if i > 10000:
                     raise ValueError("fail when try to fix channel name")

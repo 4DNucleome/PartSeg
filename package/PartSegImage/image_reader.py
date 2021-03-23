@@ -5,11 +5,11 @@ from abc import abstractmethod
 from io import BytesIO
 from pathlib import Path
 from threading import Lock
-from xml.etree import ElementTree
 
 import numpy as np
 import tifffile.tifffile
 from czifile.czifile import CziFile
+from defusedxml import ElementTree
 from oiffile import OifFile
 from tifffile import TiffFile
 
@@ -150,7 +150,7 @@ class GenericImageReader(BaseImageReader):
 
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
         if ext is None:
-            if isinstance(image_path, str):
+            if isinstance(image_path, (str, Path)):
                 ext = os.path.splitext(image_path)[1]
             else:
                 ext = ".tif"

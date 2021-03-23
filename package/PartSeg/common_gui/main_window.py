@@ -1,3 +1,4 @@
+import dataclasses
 import os
 from pathlib import Path
 from typing import List, Optional, Type
@@ -72,7 +73,7 @@ class BaseMainMenu(QWidget):
             if image:
                 if isinstance(image, Image):
                     # noinspection PyProtectedMember
-                    data = data._replace(image=image)
+                    data = dataclasses.replace(data, image=image)
             else:
                 return
         if data is None:
