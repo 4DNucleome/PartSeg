@@ -282,9 +282,7 @@ class ROIExtractionProfile:
                 res += desc.possible_values[v["name"]].get_name()
                 if v["values"]:
                     res += "\n"
-                    res += cls._pretty_print(
-                        v["values"], desc.possible_values[v["name"]].get_fields_dict(), indent + 2
-                    )
+                    res += cls._pretty_print(v["values"], desc.possible_values[v["name"]].get_fields_dict(), indent + 2)
             else:
                 res += str(v)
             res += "\n"
@@ -300,9 +298,7 @@ class ROIExtractionProfile:
                 return dkt + 1
             return dkt
         return "\n" + "\n".join(
-            " " * indent
-            + f"{k.replace('_', ' ')}: {cls.print_dict(v, indent + 2, k)}"
-            for k, v in dkt.items()
+            " " * indent + f"{k.replace('_', ' ')}: {cls.print_dict(v, indent + 2, k)}" for k, v in dkt.items()
         )
 
     def __str__(self):

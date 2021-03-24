@@ -172,11 +172,7 @@ class LoadStackImage(LoadBase):
         metadata: typing.Optional[dict] = None,
     ):
         if metadata is None:
-            metadata = {
-                "default_spacing": tuple(
-                    1 / UNIT_SCALE[Units.nm.value] for _ in range(3)
-                )
-            }
+            metadata = {"default_spacing": tuple(1 / UNIT_SCALE[Units.nm.value] for _ in range(3))}
 
         if "recursion_limit" not in metadata:
             metadata = copy(metadata)

@@ -366,11 +366,7 @@ class CalculationPrepare(QDialog):
 
         self.mask_path_list = []
         self.mask_mapper_list = self.calculation_plan.get_list_file_mask()
-        mask_file_list = [
-            (i, el)
-            for i, el in enumerate(self.mask_mapper_list)
-            if isinstance(el, MaskFile)
-        ]
+        mask_file_list = [(i, el) for i, el in enumerate(self.mask_mapper_list) if isinstance(el, MaskFile)]
 
         mask_path_layout = QGridLayout()
         for i, (pos, mask_file) in enumerate(mask_file_list):

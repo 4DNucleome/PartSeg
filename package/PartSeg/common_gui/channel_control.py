@@ -555,12 +555,8 @@ class ColorComboBoxGroup(QWidget):
     def get_filter(self) -> typing.List[typing.Tuple[NoiseFilterType, float]]:
         return [
             (
-                self.settings.get_from_profile(
-                    f"{self.name}.use_filter_{i}", NoiseFilterType.No
-                ),
-                self.settings.get_from_profile(
-                    f"{self.name}.filter_radius_{i}", 1
-                ),
+                self.settings.get_from_profile(f"{self.name}.use_filter_{i}", NoiseFilterType.No),
+                self.settings.get_from_profile(f"{self.name}.filter_radius_{i}", 1),
             )
             for i in range(self.layout().count())
         ]
@@ -575,10 +571,7 @@ class ColorComboBoxGroup(QWidget):
         return resp
 
     def get_gamma(self) -> typing.List[float]:
-        return [
-            self.settings.get_from_profile(f"{self.name}.gamma_value_{i}", 1)
-            for i in range(self.layout().count())
-        ]
+        return [self.settings.get_from_profile(f"{self.name}.gamma_value_{i}", 1) for i in range(self.layout().count())]
 
     def parameters_changed(self, channel):
         """for ChannelProperty to inform about change of parameters"""

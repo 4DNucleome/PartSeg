@@ -249,9 +249,7 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
     del global_state[typename]
 
     signature = ", ".join(
-        "{}: {} = {}".format(
-            name_, translate_dict[type_], pprint.pformat(defaults_dict[name_])
-        )
+        "{}: {} = {}".format(name_, translate_dict[type_], pprint.pformat(defaults_dict[name_]))
         if name_ in defaults_dict
         else "{}: {}".format(name_, translate_dict[type_])
         for name_, type_ in types.items()
@@ -277,9 +275,7 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
         slots=slots,
         num_fields=len(field_names),
         arg_list=repr(tuple(field_names)).replace("'", "")[1:-1],
-        repr_fmt=", ".join(
-            _repr_template.format(name=name) for name in field_names
-        ),
+        repr_fmt=", ".join(_repr_template.format(name=name) for name in field_names),
         field_definitions=field_definitions,
         base_classes=", ".join(translate_dict[x] for x in base_classes),
     )

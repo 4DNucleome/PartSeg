@@ -48,9 +48,7 @@ class EqualColumnLayout(QLayout):
         return len(self._item_list)
 
     def calc_position(self, rect: QRect):
-        columns = sum(
-            1 for el in self._item_list if el.widget() and el.widget().isVisible()
-        )
+        columns = sum(1 for el in self._item_list if el.widget() and el.widget().isVisible())
 
         if columns == 0:
             return

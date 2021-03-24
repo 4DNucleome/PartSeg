@@ -37,9 +37,7 @@ class SegmentationPipeline(BaseSerializableClass):
         return (
             (
                 f"Segmentation pipeline name: {self.name}\n"
-                + "\n––––––––––––––\n".join(
-                    x.pretty_print(algorithm_dict) for x in self.mask_history
-                )
+                + "\n––––––––––––––\n".join(x.pretty_print(algorithm_dict) for x in self.mask_history)
             )
             + "\n––––––––––––––\nLast segmentation:\n"
         ) + self.segmentation.pretty_print(algorithm_dict).split("\n", 1)[1]

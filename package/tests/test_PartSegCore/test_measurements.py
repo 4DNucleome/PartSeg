@@ -559,11 +559,7 @@ class TestRimVolume:
     @pytest.mark.parametrize("image", [get_cube_image(), get_square_image()], ids=["cube", "square"])
     @pytest.mark.parametrize("scale", [1, 4])
     def test_image(self, image, scale):
-        image = image.substitute(
-            image_spacing=tuple(
-                x / UNIT_SCALE[Units.nm.value] for x in image.spacing
-            )
-        )
+        image = image.substitute(image_spacing=tuple(x / UNIT_SCALE[Units.nm.value] for x in image.spacing))
 
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
@@ -1044,9 +1040,7 @@ class TestSplitOnPartVolume:
         assert leaf.channel is None
 
     def test_cube_equal_radius(self, cube_image):
-        cube_image.set_spacing(
-            tuple(x / UNIT_SCALE[Units.nm.value] for x in cube_image.spacing)
-        )
+        cube_image.set_spacing(tuple(x / UNIT_SCALE[Units.nm.value] for x in cube_image.spacing))
 
         mask1 = cube_image.get_channel(0)[0] > 40
         mask2 = cube_image.get_channel(0)[0] > 60
@@ -1370,9 +1364,7 @@ class TestSplitOnPartPixelBrightnessSum:
         ],
     )
     def test_cube_equal_radius(self, cube_image, nr, sum_val, diff_array):
-        cube_image.set_spacing(
-            tuple(x / UNIT_SCALE[Units.nm.value] for x in cube_image.spacing)
-        )
+        cube_image.set_spacing(tuple(x / UNIT_SCALE[Units.nm.value] for x in cube_image.spacing))
 
         mask1 = cube_image.get_channel(0)[0] > 40
         mask2 = cube_image.get_channel(0)[0] > 60

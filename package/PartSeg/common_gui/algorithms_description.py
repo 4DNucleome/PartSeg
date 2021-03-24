@@ -633,10 +633,7 @@ class AlgorithmChoose(QWidget):
         )
 
     def recursive_get_values(self):
-        result = {
-            key: widget.recursive_get_values()
-            for key, widget in self.algorithm_dict.items()
-        }
+        result = {key: widget.recursive_get_values() for key, widget in self.algorithm_dict.items()}
 
         self.settings.set("algorithm_widget_state", update(self.settings.get("algorithm_widget_state", dict), result))
         return result

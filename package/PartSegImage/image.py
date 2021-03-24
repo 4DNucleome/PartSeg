@@ -54,9 +54,7 @@ def reduce_array(
     if max_val is None:
         max_val = np.max(array)
 
-    translate = np.zeros(
-        max_val + 1, dtype=dtype or minimal_dtype(len(components) + 1)
-    )
+    translate = np.zeros(max_val + 1, dtype=dtype or minimal_dtype(len(components) + 1))
 
     for i, val in enumerate(sorted(components), start=0 if 0 in components else 1):
         translate[val] = i
@@ -117,9 +115,7 @@ class Image:
             image_spacing = tuple(image_spacing)
         self._image_array = self.reorder_axes(data, axes_order)
         self._image_spacing = (1.0,) * (3 - len(image_spacing)) + image_spacing
-        self._image_spacing = tuple(
-            el if el > 0 else 10 ** -6 for el in self._image_spacing
-        )
+        self._image_spacing = tuple(el if el > 0 else 10 ** -6 for el in self._image_spacing)
 
         self.file_path = file_path
         self.default_coloring = default_coloring
@@ -250,11 +246,7 @@ class Image:
         """
         :return: letters which indicates non trivial dimensions
         """
-        return "".join(
-            key
-            for val, key in zip(self._image_array.shape, self.axis_order)
-            if val > 1
-        )
+        return "".join(key for val, key in zip(self._image_array.shape, self.axis_order) if val > 1)
 
     def substitute(
         self,

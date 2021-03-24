@@ -160,9 +160,7 @@ def get_save_path(op: Save, calculation: "FileCalculation") -> str:
     if op.directory:
         return os.path.join(calculation.result_prefix, rel_path, op.suffix + extension)
     else:
-        return os.path.join(
-            calculation.result_prefix, rel_path + op.suffix + extension
-        )
+        return os.path.join(calculation.result_prefix, rel_path + op.suffix + extension)
 
 
 class MaskMapper:
@@ -613,10 +611,7 @@ class CalculationPlan:
             return NodeType.save
         if isinstance(node.operation, MaskUse):
             return NodeType.file_mask
-        if (
-            isinstance(node.operation, Operations)
-            and node.operation == Operations.reset_to_base
-        ):
+        if isinstance(node.operation, Operations) and node.operation == Operations.reset_to_base:
             return NodeType.mask
         raise ValueError(f"[get_node_type] unknown node type {node.operation}")
 
@@ -687,11 +682,7 @@ class CalculationPlan:
         """
         :return: list[MaskMapper]
         """
-        return [
-            el.operation
-            for el in self.execution_tree.children
-            if isinstance(el.operation, MaskMapper)
-        ]
+        return [el.operation for el in self.execution_tree.children if isinstance(el.operation, MaskMapper)]
 
     def set_path_to_mapping_file(self, num, path):
         for el in self.execution_tree.children:
@@ -786,9 +777,7 @@ class CalculationPlan:
             name += "\n" + textwrap.indent(txt, " " * (indent + 4))
 
         if elem.children:
-            suffix = "\n" + "\n".join(
-                self._pretty_print(x, indent + 2) for x in elem.children
-            )
+            suffix = "\n" + "\n".join(self._pretty_print(x, indent + 2) for x in elem.children)
 
         else:
             suffix = ""

@@ -684,10 +684,7 @@ class ImageView(QWidget):
     def get_tool_tip_text(self) -> str:
         image = self.settings.image
         image_info = self.image_info[image.file_path]
-        text_list = [
-            _print_dict(image_info.roi_info.annotations.get(el, {}))
-            for el in self.components
-        ]
+        text_list = [_print_dict(image_info.roi_info.annotations.get(el, {})) for el in self.components]
 
         return " ".join(text_list)
 

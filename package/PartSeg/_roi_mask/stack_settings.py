@@ -247,8 +247,7 @@ class StackSettings(BaseSettings):
         if len(history) != self.history_size():
             return False
         return not any(
-            el2.mask_property != el1.mask_property
-            or el2.segmentation_parameters != el1.segmentation_parameters
+            el2.mask_property != el1.mask_property or el2.segmentation_parameters != el1.segmentation_parameters
             for el1, el2 in zip(self.history, history)
         )
 
