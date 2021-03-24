@@ -366,10 +366,12 @@ class CalculationPrepare(QDialog):
 
         self.mask_path_list = []
         self.mask_mapper_list = self.calculation_plan.get_list_file_mask()
-        mask_file_list = []
-        for i, el in enumerate(self.mask_mapper_list):
-            if isinstance(el, MaskFile):
-                mask_file_list.append((i, el))
+        mask_file_list = [
+            (i, el)
+            for i, el in enumerate(self.mask_mapper_list)
+            if isinstance(el, MaskFile)
+        ]
+
         mask_path_layout = QGridLayout()
         for i, (pos, mask_file) in enumerate(mask_file_list):
             if mask_file.name == "":
@@ -534,11 +536,7 @@ class CalculationPrepare(QDialog):
                     sub_widget.setText(0, f"Mask {mask_mapper.name} unknown")
                     sub_widget.setIcon(0, warn_icon)
                     self.state_list[file_num, mask_num] = 1
-            if self.state_list.shape[1] == 0:
-                state = 0
-            else:
-                state = self.state_list[file_num].max()
-
+            state = 0 if self.state_list.shape[1] == 0 else self.state_list[file_num].max()
             if state == 0:
                 widget.setIcon(0, ok_icon)
             elif state == 1:

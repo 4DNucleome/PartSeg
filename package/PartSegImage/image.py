@@ -54,7 +54,10 @@ def reduce_array(
     if max_val is None:
         max_val = np.max(array)
 
-    translate = np.zeros(max_val + 1, dtype=dtype if dtype else minimal_dtype(len(components) + 1))
+    translate = np.zeros(
+        max_val + 1, dtype=dtype or minimal_dtype(len(components) + 1)
+    )
+
     for i, val in enumerate(sorted(components), start=0 if 0 in components else 1):
         translate[val] = i
 
@@ -114,7 +117,10 @@ class Image:
             image_spacing = tuple(image_spacing)
         self._image_array = self.reorder_axes(data, axes_order)
         self._image_spacing = (1.0,) * (3 - len(image_spacing)) + image_spacing
-        self._image_spacing = tuple([el if el > 0 else 10 ** -6 for el in self._image_spacing])
+        self._image_spacing = tuple(
+            el if el > 0 else 10 ** -6 for el in self._image_spacing
+        )
+
         self.file_path = file_path
         self.default_coloring = default_coloring
         if self.default_coloring is not None:
@@ -244,7 +250,11 @@ class Image:
         """
         :return: letters which indicates non trivial dimensions
         """
-        return "".join([key for val, key in zip(self._image_array.shape, self.axis_order) if val > 1])
+        return "".join(
+            key
+            for val, key in zip(self._image_array.shape, self.axis_order)
+            if val > 1
+        )
 
     def substitute(
         self,
@@ -502,7 +512,7 @@ class Image:
 
     def set_spacing(self, value: Spacing):
         """set image spacing"""
-        if any(x == 0 for x in value):
+        if 0 in value:
             return
         if self.is_2d and len(value) + 1 == len(self._image_spacing):
             value = (1.0,) + tuple(value)
@@ -625,7 +635,7 @@ class Image:
 
     def get_um_spacing(self) -> Spacing:
         """image spacing in micrometers"""
-        return tuple([float(x * 10 ** 6) for x in self.spacing])
+        return tuple(float(x * 10 ** 6) for x in self.spacing)
 
     def get_ranges(self) -> typing.List[typing.Tuple[float, float]]:
         """image brightness ranges for each channel"""

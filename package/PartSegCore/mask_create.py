@@ -184,11 +184,11 @@ def _cut_components(
             points = np.nonzero(mask == i)
             lower_bound = np.min(points, axis=1)
             upper_bound = np.max(points, axis=1)
-            new_cut = tuple([slice(x, y + 1) for x, y in zip(lower_bound, upper_bound)])
+            new_cut = tuple(slice(x, y + 1) for x, y in zip(lower_bound, upper_bound))
             new_size = [y - x + 1 + 2 * borders for x, y in zip(lower_bound, upper_bound)]
             if borders > 0:
                 res = np.zeros(new_size, dtype=image.dtype)
-                res_cut = tuple([slice(borders, x - borders) for x in res.shape])
+                res_cut = tuple(slice(borders, x - borders) for x in res.shape)
                 tmp_res = np.copy(image[new_cut])
                 tmp_res[mask[new_cut] != i] = 0
                 res[res_cut] = tmp_res
@@ -203,7 +203,7 @@ def _fill_holes(mask_description: MaskProperty, mask: np.ndarray) -> np.ndarray:
         return mask
     if mask_description.save_components:
         border = 1
-        res_slice = tuple([slice(border, -border) for _ in range(mask.ndim)])
+        res_slice = tuple(slice(border, -border) for _ in range(mask.ndim))
         mask_description_copy = mask_description.replace_(save_components=False)
         mask_prohibited = mask > 0
         for component, slice_arr, cmp_num in _cut_components(mask, mask, border):

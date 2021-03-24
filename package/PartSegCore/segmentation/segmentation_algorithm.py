@@ -136,7 +136,7 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
         self.noise_filtering = None
         self.close_holes = False
         self.close_holes_size = 0
-        self.smooth_border = dict()
+        self.smooth_border = {}
         self.gauss_2d = False
         self.edge_connection = True
         self.use_convex = False
@@ -416,8 +416,7 @@ class AutoThresholdAlgorithm(BaseSingleThresholdAlgorithm):
             report_fun("Components exclusion apply", 1)
             image[self.mask == 0] = 0
         report_fun("Threshold calculation", 2)
-        mask = self._threshold_image(image)
-        return mask
+        return self._threshold_image(image)
 
     def set_parameters(self, suggested_size, *args, **kwargs):  # pylint: disable=W0221
         self._set_parameters(*args, **kwargs)

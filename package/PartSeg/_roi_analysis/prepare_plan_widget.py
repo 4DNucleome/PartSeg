@@ -678,8 +678,6 @@ class CreatePlan(QWidget):
                 self.calculation_plan.replace_step(profile)
             else:
                 self.calculation_plan.add_step(profile)
-            self.plan.update_view()
-
         else:  # self.segment_stack.currentIndex() == 1
             text = self.pipeline_profile.currentItem().text()
             segmentation_pipeline = self.settings.segmentation_pipelines[text]
@@ -697,7 +695,8 @@ class CreatePlan(QWidget):
                 self.calculation_plan.set_position(pos)
             self.calculation_plan.add_step(segmentation_pipeline.segmentation)
             self.calculation_plan.set_position(old_pos)
-            self.plan.update_view()
+
+        self.plan.update_view()
 
     def add_measurement(self):
         text = str(self.measurements_list.currentItem().text())
@@ -743,7 +742,7 @@ class CreatePlan(QWidget):
             if self.mask_allow and (name == "" or name not in self.mask_set):
                 self.generate_mask_btn.setEnabled(True)
         else:
-            if self.node_type != NodeType.file_mask and self.node_type != NodeType.mask:
+            if self.node_type not in [NodeType.file_mask, NodeType.mask]:
                 return
             # generate mask from segmentation
             if self.node_type == NodeType.mask and (name == "" or name == self.node_name or name not in self.mask_set):

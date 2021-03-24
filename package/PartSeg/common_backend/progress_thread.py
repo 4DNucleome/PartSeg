@@ -21,8 +21,8 @@ class ExecuteFunctionThread(ProgressTread):
 
     def __init__(self, fun, args: Union[list, tuple] = None, kwargs: dict = None):
         super().__init__()
-        self.args = args if args else []
-        self.kwargs = kwargs if kwargs else {}
+        self.args = args or []
+        self.kwargs = kwargs or {}
         self.function = fun
         self.result = None
 

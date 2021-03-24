@@ -11,10 +11,7 @@ class LockCheckBox(QCheckBox):
         rect = event.rect()
         painter = QPainter(self)
         painter.save()
-        if self.isChecked():
-            lock = lock_close
-        else:
-            lock = lock_open
+        lock = lock_close if self.isChecked() else lock_open
         painter.setFont(QFont("Symbola"))
         painter.drawText(rect.bottomLeft() + QPoint(0, -2), lock)
         painter.restore()

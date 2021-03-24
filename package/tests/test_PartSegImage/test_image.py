@@ -26,7 +26,7 @@ class TestImageBase:
         return self.needed_shape(shape, axes, "C")
 
     def reorder_axes_letter(self, letters: str):
-        res = "".join([x for x in self.image_class.axis_order if x in letters])
+        res = "".join(x for x in self.image_class.axis_order if x in letters)
         assert len(res) == len(letters)
         return res
 

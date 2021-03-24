@@ -96,7 +96,7 @@ class MeasurementsStorage:
             self.header.extend(["Value" for _ in range(len(values))])
             if self.show_units and units != previous_units:
                 previous_units = units
-                self.content.append(units)
+                self.content.append(previous_units)
                 self.header.append("Units")
 
     def add_measurements(self, data: MeasurementResult):
@@ -347,20 +347,21 @@ class MeasurementWidget(QWidget):
         self.refresh_view()
 
     def keyPressEvent(self, e: QKeyEvent):
-        if e.modifiers() & Qt.ControlModifier:
-            selected = self.info_field.selectedRanges()
+        if not e.modifiers() & Qt.ControlModifier:
+            return
+        selected = self.info_field.selectedRanges()
 
-            if e.key() == Qt.Key_C:  # copy
-                s = ""
+        if e.key() == Qt.Key_C:  # copy
+            s = ""
 
-                for r in range(selected[0].topRow(), selected[0].bottomRow() + 1):
-                    for c in range(selected[0].leftColumn(), selected[0].rightColumn() + 1):
-                        try:
-                            s += str(self.info_field.item(r, c).text()) + "\t"
-                        except AttributeError:
-                            s += "\t"
-                    s = s[:-1] + "\n"  # eliminate last '\t'
-                self.clip.setText(s)
+            for r in range(selected[0].topRow(), selected[0].bottomRow() + 1):
+                for c in range(selected[0].leftColumn(), selected[0].rightColumn() + 1):
+                    try:
+                        s += str(self.info_field.item(r, c).text()) + "\t"
+                    except AttributeError:
+                        s += "\t"
+                s = s[:-1] + "\n"  # eliminate last '\t'
+            self.clip.setText(s)
 
     def update_measurement_list(self):
         self.measurement_type.blockSignals(True)

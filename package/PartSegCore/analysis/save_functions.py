@@ -47,10 +47,7 @@ def save_project(
 ):
     # TODO add support for binary objects
     ext = os.path.splitext(file_path)[1]
-    if ext.lower() in [".bz2", ".tbz2"]:
-        tar_mod = "w:bz2"
-    else:
-        tar_mod = "w:gz"
+    tar_mod = "w:bz2" if ext.lower() in [".bz2", ".tbz2"] else "w:gz"
     with tarfile.open(file_path, tar_mod) as tar:
         segmentation_buff = BytesIO()
         # noinspection PyTypeChecker
@@ -91,7 +88,7 @@ def save_project(
             hist_info = get_tarinfo(f"history/arrays_{i}.npz", el.arrays)
             el.arrays.seek(0)
             tar.addfile(hist_info, el.arrays)
-        if len(el_info) > 0:
+        if el_info:
             hist_str = json.dumps(el_info, cls=PartEncoder)
             hist_buff = BytesIO(hist_str.encode("utf-8"))
             tar_algorithm = get_tarinfo("history/history.json", hist_buff)
@@ -221,7 +218,7 @@ class SaveCmap(SaveBase):
             positions = np.transpose(np.nonzero(segmentation))
             clip_down = np.min(positions, 0)
             clip_up = np.max(positions, 0)
-            clip = tuple([slice(x, y + 1) for x, y in zip(clip_down, clip_up)])
+            clip = tuple(slice(x, y + 1) for x, y in zip(clip_down, clip_up))
             data = data[clip]
             segmentation = segmentation[clip]
 
@@ -261,10 +258,7 @@ class SaveXYZ(SaveBase):
         values = channel_image[segmentation_mask]
         values = values.reshape(values.size, 1)
         data = np.append(positions, values, axis=1)
-        if np.issubdtype(channel_image.dtype, np.integer):
-            fm = "%d"
-        else:
-            fm = "%f"
+        fm = "%d" if np.issubdtype(channel_image.dtype, np.integer) else "%f"
         # noinspection PyTypeChecker
         np.savetxt(save_location, data, fmt=["%d"] * channel_image.ndim + [fm], delimiter=" ")
 

@@ -79,7 +79,7 @@ class ProfileDict:
                 curr_dict = curr_dict[key]
             except KeyError:
                 for key2 in key_path[i:-1]:
-                    curr_dict[key2] = dict()
+                    curr_dict[key2] = {}
                     curr_dict = curr_dict[key2]
                     break
         curr_dict[key_path[-1]] = value
@@ -219,7 +219,4 @@ def check_loaded_dict(dkt) -> bool:
         return True
     if "__error__" in dkt:
         return False
-    for val in dkt.values():
-        if not check_loaded_dict(val):
-            return False
-    return True
+    return all(check_loaded_dict(val) for val in dkt.values())

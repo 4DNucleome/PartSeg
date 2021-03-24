@@ -113,10 +113,7 @@ class ColorComboBox(QComboBox):
         self.color_dict = color_dict
         self.colors = colors
         self.addItems(self.colors)
-        if colormap:
-            self.color = colormap
-        else:
-            self.color = self.itemText(0)
+        self.color = colormap or self.itemText(0)
         self.setCurrentText(self.color)
         self.currentTextChanged.connect(self._update_image)
         self.base_height = base_height
@@ -536,7 +533,7 @@ class ColorComboBoxGroup(QWidget):
                 el.channel_colormap_changed.connect(self.change_selected_color)
                 self.layout().addWidget(el)
         else:
-            for i in range(self.layout().count() - num):
+            for _ in range(self.layout().count() - num):
                 el = self.layout().takeAt(num).widget()
                 el.colormap_changed.disconnect()
                 el.channel_colormap_changed.disconnect()
@@ -551,23 +548,22 @@ class ColorComboBoxGroup(QWidget):
         self.active_box = pos
         for i in range(self.layout().count()):
             el = self.layout().itemAt(i).widget()
-            if i == self.active_box:
-                el.show_frame = True
-            else:
-                el.show_frame = False
+            el.show_frame = i == self.active_box
         self.change_channel.emit(self.name, pos)
         self.repaint()
 
     def get_filter(self) -> typing.List[typing.Tuple[NoiseFilterType, float]]:
-        resp = []
-        for i in range(self.layout().count()):
-            resp.append(
-                (
-                    self.settings.get_from_profile(f"{self.name}.use_filter_{i}", NoiseFilterType.No),
-                    self.settings.get_from_profile(f"{self.name}.filter_radius_{i}", 1),
-                )
+        return [
+            (
+                self.settings.get_from_profile(
+                    f"{self.name}.use_filter_{i}", NoiseFilterType.No
+                ),
+                self.settings.get_from_profile(
+                    f"{self.name}.filter_radius_{i}", 1
+                ),
             )
-        return resp
+            for i in range(self.layout().count())
+        ]
 
     def get_limits(self) -> typing.List[typing.Union[typing.Tuple[int, int], None]]:
         resp: typing.List[typing.Union[typing.Tuple[int, int], None]] = [(0, 0)] * self.layout().count()  #
@@ -579,10 +575,10 @@ class ColorComboBoxGroup(QWidget):
         return resp
 
     def get_gamma(self) -> typing.List[float]:
-        resp = []
-        for i in range(self.layout().count()):
-            resp.append(self.settings.get_from_profile(f"{self.name}.gamma_value_{i}", 1))
-        return resp
+        return [
+            self.settings.get_from_profile(f"{self.name}.gamma_value_{i}", 1)
+            for i in range(self.layout().count())
+        ]
 
     def parameters_changed(self, channel):
         """for ChannelProperty to inform about change of parameters"""

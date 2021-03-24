@@ -98,10 +98,7 @@ class MaskDialog(MaskDialogBase):
             history.segmentation_parameters["selected"],
             history.segmentation_parameters["parameters"],
         )
-        if "mask" in seg:
-            self.settings.mask = seg["mask"]
-        else:
-            self.settings.mask = None
+        self.settings.mask = seg["mask"] if "mask" in seg else None
         self.close()
 
 
@@ -485,11 +482,7 @@ class ChosenComponents(QWidget):
         return self.check_box[num].isChecked()
 
     def get_chosen(self):
-        res = []
-        for num, check in self.check_box.items():
-            if check.isChecked():
-                res.append(num)
-        return res
+        return [num for num, check in self.check_box.items() if check.isChecked()]
 
     def get_mask(self):
         res = [0]

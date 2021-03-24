@@ -172,7 +172,12 @@ class LoadStackImage(LoadBase):
         metadata: typing.Optional[dict] = None,
     ):
         if metadata is None:
-            metadata = {"default_spacing": tuple([1 / UNIT_SCALE[Units.nm.value] for _ in range(3)])}
+            metadata = {
+                "default_spacing": tuple(
+                    1 / UNIT_SCALE[Units.nm.value] for _ in range(3)
+                )
+            }
+
         if "recursion_limit" not in metadata:
             metadata = copy(metadata)
             metadata["recursion_limit"] = 3
@@ -181,10 +186,7 @@ class LoadStackImage(LoadBase):
             callback_function=partial(proxy_callback, range_changed, step_changed),
             default_spacing=tuple(metadata["default_spacing"]),
         )
-        re_read = True
-        for el in image.get_ranges():
-            if el[0] != el[1]:
-                re_read = False
+        re_read = all(el[0] == el[1] for el in image.get_ranges())
         if re_read and metadata["recursion_limit"] > 0:
             metadata["recursion_limit"] -= 1
             cls.load(load_locations, range_changed, step_changed, metadata)
@@ -360,20 +362,20 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
 
     @classmethod
     def update_measurement_calculation_tree(cls, data: typing.Union[Leaf, Node]) -> typing.Union[Leaf, Node]:
-        replace_name_dict = {
-            "Moment of inertia": "Moment",
-            "Components Number": "Components number",
-            "Pixel Brightness Sum": "Pixel brightness sum",
-            "Longest main axis length": "First principal axis length",
-            "Middle main axis length": "Second principal axis length",
-            "Shortest main axis length": "Third principal axis length",
-            "split on part volume": "distance splitting volume",
-            "split on part pixel brightness sum": "distance splitting pixel brightness sum",
-            "Rim Volume": "rim volume",
-            "Rim Pixel Brightness Sum": "rim pixel brightness sum",
-        }
-
         if isinstance(data, Leaf):
+            replace_name_dict = {
+                "Moment of inertia": "Moment",
+                "Components Number": "Components number",
+                "Pixel Brightness Sum": "Pixel brightness sum",
+                "Longest main axis length": "First principal axis length",
+                "Middle main axis length": "Second principal axis length",
+                "Shortest main axis length": "Third principal axis length",
+                "split on part volume": "distance splitting volume",
+                "split on part pixel brightness sum": "distance splitting pixel brightness sum",
+                "Rim Volume": "rim volume",
+                "Rim Pixel Brightness Sum": "rim pixel brightness sum",
+            }
+
             if data.name in replace_name_dict:
                 # noinspection PyUnresolvedReferences
                 return data._replace(name=replace_name_dict[data.name])

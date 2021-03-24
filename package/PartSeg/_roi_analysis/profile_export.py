@@ -148,17 +148,22 @@ class ImportDialog(QDialog):
             end_reg = re.compile(r"(.*) \((\d+)\)$")
 
             def in_func():
-                if rename_radio.isChecked() and str(new_name_field.text()).strip() == "":
-                    match = end_reg.match(ob_name)
-                    if match:
-                        new_name_format = match.group(1) + " ({})"
-                        i = int(match.group(2)) + 1
-                    else:
-                        new_name_format = ob_name + " ({})"
-                        i = 1
-                    while new_name_format.format(i) in self.local_dict:
-                        i += 1
-                    new_name_field.setText(new_name_format.format(i))
+                if (
+                    not rename_radio.isChecked()
+                    or str(new_name_field.text()).strip() != ""
+                ):
+                    return
+
+                match = end_reg.match(ob_name)
+                if match:
+                    new_name_format = match.group(1) + " ({})"
+                    i = int(match.group(2)) + 1
+                else:
+                    new_name_format = ob_name + " ({})"
+                    i = 1
+                while new_name_format.format(i) in self.local_dict:
+                    i += 1
+                new_name_field.setText(new_name_format.format(i))
 
             return in_func
 

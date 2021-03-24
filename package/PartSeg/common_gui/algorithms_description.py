@@ -40,10 +40,7 @@ def update(d, u):
     if not isinstance(d, dict):
         d = {}
     for k, v in u.items():
-        if isinstance(v, collections.abc.Mapping):
-            d[k] = update(d.get(k, {}), v)
-        else:
-            d[k] = v
+        d[k] = update(d.get(k, {}), v) if isinstance(v, collections.abc.Mapping) else v
     return d
 
 
@@ -636,9 +633,11 @@ class AlgorithmChoose(QWidget):
         )
 
     def recursive_get_values(self):
-        result = {}
-        for key, widget in self.algorithm_dict.items():
-            result[key] = widget.recursive_get_values()
+        result = {
+            key: widget.recursive_get_values()
+            for key, widget in self.algorithm_dict.items()
+        }
+
         self.settings.set("algorithm_widget_state", update(self.settings.get("algorithm_widget_state", dict), result))
         return result
 

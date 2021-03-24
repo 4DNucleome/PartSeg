@@ -209,9 +209,7 @@ class CziImageReader(BaseImageReader):
         metadata = self.image_file.metadata(False)
         try:
             scaling = metadata["ImageDocument"]["Metadata"]["Scaling"]["Items"]["Distance"]
-            scale_info = {}
-            for el in scaling:
-                scale_info[el["Id"]] = el["Value"]
+            scale_info = {el["Id"]: el["Value"] for el in scaling}
             self.spacing = (
                 scale_info.get("Z", self.default_spacing[0]),
                 scale_info.get("Y", self.default_spacing[1]),

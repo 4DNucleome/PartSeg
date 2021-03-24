@@ -131,7 +131,7 @@ class BaseMainWindow(QMainWindow):
                     " state directory (Help > State directory)"
                 )
                 errors_message.setStandardButtons(QMessageBox.Ok)
-                text = "\n".join(["File: " + x[0] + "\n" + str(x[1]) for x in errors])
+                text = "\n".join("File: " + x[0] + "\n" + str(x[1]) for x in errors)
                 errors_message.setDetailedText(text)
                 errors_message.exec()
 

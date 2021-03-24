@@ -139,9 +139,12 @@ class ErrorDialog(QDialog):
             data = {
                 "comments": self.additional_info.toPlainText(),
                 "event_id": event_id,
-                "email": contact_text if _email_regexp.match(contact_text) else "unknown@unknown.com",
-                "name": user_name if user_name else getpass.getuser(),
+                "email": contact_text
+                if _email_regexp.match(contact_text)
+                else "unknown@unknown.com",
+                "name": user_name or getpass.getuser(),
             }
+
             r = requests.post(
                 url=_feedback_url,
                 data=data,

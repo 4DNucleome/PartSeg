@@ -114,7 +114,10 @@ class MainWindow(QMainWindow):
                 "The files has prepared backup copies in  state directory (Help > State directory)"
             )
             errors_message.setStandardButtons(QMessageBox.Ok)
-            text = "\n".join(["File: " + x[0] + "\n" + str(x[1]) for x in self.prepare.errors])
+            text = "\n".join(
+                "File: " + x[0] + "\n" + str(x[1]) for x in self.prepare.errors
+            )
+
             errors_message.setDetailedText(text)
             errors_message.exec()
         wind = self.prepare.result(title=self.final_title, signal_fun=self.window_shown)

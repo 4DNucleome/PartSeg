@@ -442,7 +442,7 @@ class TestIterativeVoteSmoothing:
         res2 = np.copy(data)
         for pos in itertools.product([2, -3], repeat=2):
             res2[(0,) + pos] = 0
-        for i in range(2, 5):
+        for _ in range(2, 5):
             res = IterativeVoteSmoothing.smooth(
                 data, {"neighbourhood_type": NeighType.edges, "support_level": 4, "max_steps": 1}
             )
@@ -503,7 +503,7 @@ class TestIterativeVoteSmoothing:
         res2 = np.copy(data)
         for pos in itertools.product([2, -3], repeat=2):
             res2[(0,) + pos] = 0
-        for i in range(2, 5):
+        for _ in range(2, 5):
             res = IterativeVoteSmoothing.smooth(
                 data, {"neighbourhood_type": NeighType.vertex, "support_level": 4, "max_steps": 1}
             )

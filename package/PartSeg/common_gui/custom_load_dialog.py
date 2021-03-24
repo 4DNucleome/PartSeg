@@ -43,7 +43,10 @@ class CustomLoadDialog(QFileDialog):
         chosen_class: LoadBase = self.load_register[self.selectedNameFilter()]
         if len(self.files_list) < chosen_class.number_of_files():
             self.setNameFilters([chosen_class.get_name()])
-            self.setWindowTitle("Open File for:" + ",".join([basename(x) for x in self.files_list]))
+            self.setWindowTitle(
+                "Open File for:" + ",".join(basename(x) for x in self.files_list)
+            )
+
             self.selectFile(chosen_class.get_next_file(self.files_list))
         else:
             super().accept()
