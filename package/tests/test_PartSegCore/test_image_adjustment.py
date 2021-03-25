@@ -7,29 +7,25 @@ from PartSegImage import Image
 def get_flat_image():
     data = np.zeros((1, 1, 10, 10, 1), dtype=np.uint8)
     data[:, :, 2:-2, 2:-2] = 5
-    image = Image(data, (5, 5))
-    return image
+    return Image(data, (5, 5))
 
 
 def get_cube_image():
     data = np.zeros((1, 10, 10, 10, 1), dtype=np.uint8)
     data[:, 2:-2, 2:-2, 2:-2] = 5
-    image = Image(data, (10, 5, 5))
-    return image
+    return Image(data, (10, 5, 5))
 
 
 def get_flat_image_up():
     data = np.ones((1, 1, 10, 10, 1), dtype=np.uint8) * 30
     data[:, :, 2:-2, 2:-2] = 10
-    image = Image(data, (5, 5))
-    return image
+    return Image(data, (5, 5))
 
 
 def get_cube_image_up():
     data = np.ones((1, 10, 10, 10, 1), dtype=np.uint8) * 30
     data[:, 2:-2, 2:-2, 2:-2] = 10
-    image = Image(data, (10, 5, 5))
-    return image
+    return Image(data, (10, 5, 5))
 
 
 class TestInterpolateImage:

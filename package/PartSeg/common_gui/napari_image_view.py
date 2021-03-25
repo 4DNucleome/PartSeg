@@ -331,10 +331,7 @@ class ImageView(QWidget):
             return
         text = f"{cords}: "
         if bright_array:
-            if len(bright_array) == 1:
-                text += str(bright_array[0])
-            else:
-                text += str(bright_array)
+            text += str(bright_array[0]) if len(bright_array) == 1 else str(bright_array)
         self.components = components
         if components:
             if len(components) == 1:
@@ -687,9 +684,8 @@ class ImageView(QWidget):
     def get_tool_tip_text(self) -> str:
         image = self.settings.image
         image_info = self.image_info[image.file_path]
-        text_list = []
-        for el in self.components:
-            text_list.append(_print_dict(image_info.roi_info.annotations.get(el, {})))
+        text_list = [_print_dict(image_info.roi_info.annotations.get(el, {})) for el in self.components]
+
         return " ".join(text_list)
 
     def event(self, event: QEvent):

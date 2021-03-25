@@ -70,16 +70,16 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
     def __init__(self, components_info: ComponentsInfo):
         self.components_info = components_info
         self._data_dict = OrderedDict()
-        self._units_dict: Dict[str, str] = dict()
-        self._type_dict: Dict[str, Tuple[PerComponent, AreaType]] = dict()
+        self._units_dict: Dict[str, str] = {}
+        self._type_dict: Dict[str, Tuple[PerComponent, AreaType]] = {}
         self._units_dict["Mask component"] = ""
         self._units_dict["Segmentation component"] = ""
 
     def __str__(self):  # pragma: no cover
-        text = ""
-        for key, val in self._data_dict.items():
-            text += f"{key}: {val}; type {self._type_dict[key]}, units {self._units_dict[key]}\n"
-        return text
+        return "".join(
+            f"{key}: {val}; type {self._type_dict[key]}, units {self._units_dict[key]}\n"
+            for key, val in self._data_dict.items()
+        )
 
     def __setitem__(self, k: str, v: MeasurementResultInputType) -> None:
 
@@ -154,7 +154,10 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             name = self._data_dict[FILE_NAME_STR]
             res = [name]
             iterator = iter(self._data_dict.keys())
-            next(iterator)
+            try:
+                next(iterator)
+            except StopIteration:
+                pass
         else:
             res = []
             iterator = iter(self._data_dict.keys())
@@ -184,7 +187,10 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             name = self._data_dict[FILE_NAME_STR]
             res = [[name] for _ in range(counts)]
             iterator = iter(self._data_dict.keys())
-            next(iterator)
+            try:
+                next(iterator)
+            except StopIteration:
+                pass
         else:
             res = [[] for _ in range(counts)]
             iterator = iter(self._data_dict.keys())
@@ -226,7 +232,7 @@ class MeasurementProfile:
 
     def need_mask(self, tree):
         if isinstance(tree, Leaf):
-            return tree.area == AreaType.Mask or tree.area == AreaType.Mask_without_ROI
+            return tree.area in [AreaType.Mask, AreaType.Mask_without_ROI]
         return self.need_mask(tree.left) or self.need_mask(tree.right)
 
     def _need_mask_without_segmentation(self, tree):
@@ -244,7 +250,7 @@ class MeasurementProfile:
 
         left_par, left_area = self._get_par_component_and_area_type(tree.left)
         right_par, right_area = self._get_par_component_and_area_type(tree.left)
-        if PerComponent.Yes == left_par or PerComponent.Yes == right_par:
+        if PerComponent.Yes in [left_par, right_par]:
             res_par = PerComponent.Yes
         else:
             res_par = PerComponent.No
@@ -288,10 +294,7 @@ class MeasurementProfile:
         return res
 
     def is_any_mask_measurement(self):
-        for el in self.chosen_fields:
-            if self.need_mask(el.calculation_tree):
-                return True
-        return False
+        return any(self.need_mask(el.calculation_tree) for el in self.chosen_fields)
 
     def _is_component_measurement(self, node):
         if isinstance(node, Leaf):
@@ -553,8 +556,7 @@ def calculate_main_axis(area_array: np.ndarray, channel: np.ndarray, voxel_size)
         positions[-i] *= v
         positions[-i] -= center_of_mass[i - 1]
     centered = np.dot(orientation_matrix.T, positions)
-    size = np.max(centered, axis=1) - np.min(centered, axis=1)
-    return size
+    return np.max(centered, axis=1) - np.min(centered, axis=1)
 
 
 def get_main_axis_length(
@@ -1149,7 +1151,7 @@ class DistanceMaskSegmentation(MeasurementMethodBase):
             return 0
         mask_pos = cls.calculate_points(channel, mask, voxel_size, result_scalar, distance_from_mask)
         seg_pos = cls.calculate_points(channel, area_array, voxel_size, result_scalar, distance_to_segmentation)
-        if mask_pos.shape[0] == 1 or seg_pos.shape[0] == 1:
+        if 1 in {mask_pos.shape[0], seg_pos.shape[0]}:
             return np.min(cdist(mask_pos, seg_pos))
 
         min_val = np.inf
@@ -1247,19 +1249,22 @@ def pixel_volume(spacing, result_scalar):
 
 
 def calculate_volume_surface(volume_mask, voxel_size):
-    border_surface = 0
     surf_im: np.ndarray = np.array(volume_mask).astype(np.uint8).squeeze()
-    for ax in range(surf_im.ndim):
-        border_surface += (
+    return sum(
+        (
             np.count_nonzero(
                 np.logical_xor(
                     surf_im.take(np.arange(surf_im.shape[ax] - 1), axis=ax),
                     surf_im.take(np.arange(surf_im.shape[ax] - 1) + 1, axis=ax),
                 )
             )
-            * reduce(lambda x, y: x * y, [voxel_size[x] for x in range(surf_im.ndim) if x != ax])
+            * reduce(
+                lambda x, y: x * y,
+                [voxel_size[x] for x in range(surf_im.ndim) if x != ax],
+            )
         )
-    return border_surface
+        for ax in range(surf_im.ndim)
+    )
 
 
 def get_border(array):

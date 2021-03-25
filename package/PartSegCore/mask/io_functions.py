@@ -157,7 +157,7 @@ def save_stack_segmentation(
             hist_info = get_tarinfo(f"history/arrays_{i}.npz", hist.arrays)
             hist.arrays.seek(0)
             tar_file.addfile(hist_info, hist.arrays)
-        if len(el_info) > 0:
+        if el_info:
             hist_str = json.dumps(el_info, cls=ProfileEncoder)
             hist_buff = BytesIO(hist_str.encode("utf-8"))
             tar_algorithm = get_tarinfo("history/history.json", hist_buff)
@@ -377,10 +377,7 @@ class LoadROIImage(LoadBase):
         metadata: typing.Optional[dict] = None,
     ) -> MaskProjectTuple:
         seg = LoadSegmentation.load(load_locations)
-        if len(load_locations) > 1:
-            base_file = load_locations[1]
-        else:
-            base_file = seg.image
+        base_file = load_locations[1] if len(load_locations) > 1 else seg.image
         if base_file is None:
             raise OSError("base file for segmentation not defined")
         if os.path.isabs(base_file):

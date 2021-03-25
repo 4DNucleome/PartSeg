@@ -77,9 +77,8 @@ class Leaf(BaseSerializableClass):
         try:
             measurement_method = measurement_dict[self.name]
             for el in measurement_method.get_fields():
-                if issubclass(el.value_type, Channel):
-                    if el.name in self.dict:
-                        resp.add(self.dict[el.name])
+                if issubclass(el.value_type, Channel) and el.name in self.dict:
+                    resp.add(self.dict[el.name])
         except KeyError:
             raise AlgorithmDescribeNotFound(self.name)
         return resp

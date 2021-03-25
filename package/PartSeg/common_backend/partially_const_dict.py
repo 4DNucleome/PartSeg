@@ -45,10 +45,7 @@ class PartiallyConstDict(QObject, MutableMapping, CustomGeneric, metaclass=QtMet
     def __setitem__(self, key: str, value: Union[T, RemovableInfo]) -> None:
         if not key.startswith("custom_"):
             raise ValueError("Cannot write base item")
-        if isinstance(value, tuple):
-            self.editable_items[key] = value[0]
-        else:
-            self.editable_items[key] = value
+        self.editable_items[key] = value[0] if isinstance(value, tuple) else value
         self._order_dict[key] = self._counter
         self._counter += 1
         self.item_added.emit(self.editable_items[key])

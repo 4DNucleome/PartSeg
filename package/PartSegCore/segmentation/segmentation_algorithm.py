@@ -39,7 +39,7 @@ class ThresholdPreview(StackAlgorithm):
             AlgorithmProperty(
                 "noise_filtering",
                 "Filter",
-                next(iter(noise_filtering_dict.keys())),
+                noise_filtering_dict.get_default(),
                 possible_values=noise_filtering_dict,
                 value_type=AlgorithmDescribeBase,
             ),
@@ -95,14 +95,14 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
             AlgorithmProperty(
                 "noise_filtering",
                 "Filter",
-                next(iter(noise_filtering_dict.keys())),
+                noise_filtering_dict.get_default(),
                 possible_values=noise_filtering_dict,
                 value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty(
                 "threshold",
                 "Threshold",
-                next(iter(threshold_dict.keys())),
+                threshold_dict.get_default(),
                 possible_values=threshold_dict,
                 value_type=AlgorithmDescribeBase,
             ),
@@ -111,7 +111,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
             AlgorithmProperty(
                 "smooth_border",
                 "Smooth borders",
-                next(iter(smooth_dict.keys())),
+                smooth_dict.get_default(),
                 possible_values=smooth_dict,
                 value_type=AlgorithmDescribeBase,
             ),
@@ -136,7 +136,7 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
         self.noise_filtering = None
         self.close_holes = False
         self.close_holes_size = 0
-        self.smooth_border = dict()
+        self.smooth_border = {}
         self.gauss_2d = False
         self.edge_connection = True
         self.use_convex = False
@@ -267,14 +267,14 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
             AlgorithmProperty(
                 "noise_filtering",
                 "Filter",
-                next(iter(noise_filtering_dict.keys())),
+                noise_filtering_dict.get_default(),
                 possible_values=noise_filtering_dict,
                 value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty(
                 "threshold",
                 "Threshold",
-                next(iter(double_threshold_dict.keys())),
+                double_threshold_dict.get_default(),
                 possible_values=double_threshold_dict,
                 value_type=AlgorithmDescribeBase,
             ),
@@ -283,7 +283,7 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
             AlgorithmProperty(
                 "smooth_border",
                 "Smooth borders",
-                next(iter(smooth_dict.keys())),
+                smooth_dict.get_default(),
                 possible_values=smooth_dict,
                 value_type=AlgorithmDescribeBase,
             ),
@@ -298,7 +298,7 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
             AlgorithmProperty(
                 "sprawl_type",
                 "Flow type",
-                next(iter(sprawl_dict.keys())),
+                sprawl_dict.get_default(),
                 possible_values=sprawl_dict,
                 value_type=AlgorithmDescribeBase,
             ),
@@ -416,8 +416,7 @@ class AutoThresholdAlgorithm(BaseSingleThresholdAlgorithm):
             report_fun("Components exclusion apply", 1)
             image[self.mask == 0] = 0
         report_fun("Threshold calculation", 2)
-        mask = self._threshold_image(image)
-        return mask
+        return self._threshold_image(image)
 
     def set_parameters(self, suggested_size, *args, **kwargs):  # pylint: disable=W0221
         self._set_parameters(*args, **kwargs)

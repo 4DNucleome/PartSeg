@@ -123,7 +123,7 @@ class CalculationProcess:
 
     def __init__(self):
         self.reused_mask = set()
-        self.mask_dict = dict()
+        self.mask_dict = {}
         self.calculation = None
         self.measurement: List[MeasurementResult] = []
         self.image: Optional[Image] = None
@@ -483,10 +483,7 @@ class CalculationManager:
                     for err in errors:
                         new_errors.append((el.path_to_file, err))
                 else:
-                    if ind != -1:
-                        file_info = calculation.file_list[ind]
-                    else:
-                        file_info = "unknown file"
+                    file_info = calculation.file_list[ind] if ind != -1 else "unknown file"
                     self.writer.add_calculation_error(calculation, file_info, el[0])
                     self.errors_list.append((file_info, el))
                     new_errors.append((file_info, el))

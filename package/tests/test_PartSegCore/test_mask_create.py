@@ -252,10 +252,7 @@ class TestCalculateMask:
         mask[:, 2:-2, 2:-2, 11:12] = 0
         mask = im.fit_mask_to_image(mask)
         assert np.all(np.unique(mask.flat) == [0, 1, 2, 3])
-        if old_mask:
-            _old_mask = np.zeros(mask.shape, dtype=mask.dtype)
-        else:
-            _old_mask = None
+        _old_mask = np.zeros(mask.shape, dtype=mask.dtype) if old_mask else None
         mp = MaskProperty(
             dilate=dilate,
             dilate_radius=radius,

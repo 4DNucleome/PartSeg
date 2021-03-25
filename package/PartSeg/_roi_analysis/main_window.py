@@ -183,15 +183,14 @@ class Options(QWidget):
             text, ok = QInputDialog.getText(self, "Pipeline name", "Input pipeline name here")
             if not ok:
                 return
-            if text in self._settings.segmentation_pipelines:
-                if QMessageBox.No == QMessageBox.warning(
-                    self,
-                    "Already exists",
-                    "Profile with this name already exist. Overwrite?",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No,
-                ):
-                    continue
+            if text in self._settings.segmentation_pipelines and QMessageBox.No == QMessageBox.warning(
+                self,
+                "Already exists",
+                "Profile with this name already exist. Overwrite?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            ):
+                continue
             profile = SegmentationPipeline(name=text, segmentation=current_segmentation, mask_history=mask_history)
             self._settings.segmentation_pipelines[text] = profile
             self._settings.dump()
@@ -256,7 +255,7 @@ class Options(QWidget):
         return super().event(event)
 
     def keyPressEvent(self, event: QKeyEvent):
-        if (event.key() == Qt.Key_Enter or event.key() == Qt.Key_Return) and (event.modifiers() == Qt.ControlModifier):
+        if event.key() in [Qt.Key_Enter, Qt.Key_Return] and event.modifiers() == Qt.ControlModifier:
             self.execute_btn.click()
 
     def save_profile(self):
@@ -265,15 +264,14 @@ class Options(QWidget):
             text, ok = QInputDialog.getText(self, "Profile Name", "Input profile name here")
             if not ok:
                 return
-            if text in self._settings.segmentation_profiles:
-                if QMessageBox.No == QMessageBox.warning(
-                    self,
-                    "Already exists",
-                    "Profile with this name already exist. Overwrite?",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No,
-                ):
-                    continue
+            if text in self._settings.segmentation_profiles and QMessageBox.No == QMessageBox.warning(
+                self,
+                "Already exists",
+                "Profile with this name already exist. Overwrite?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            ):
+                continue
             resp = ROIExtractionProfile(text, widget.name, widget.get_values())
             self._settings.segmentation_profiles[text] = resp
             self._settings.dump()
@@ -546,10 +544,7 @@ class MaskDialog(MaskDialogBase):
         seg = np.load(history.arrays)
         history.arrays.seek(0)
         self.settings.roi = seg["segmentation"]
-        if "mask" in seg:
-            self.settings.mask = seg["mask"]
-        else:
-            self.settings.mask = None
+        self.settings.mask = seg["mask"] if "mask" in seg else None
         self.close()
 
 

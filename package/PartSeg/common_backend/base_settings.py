@@ -302,7 +302,7 @@ class ViewSettings(ImageSettings):
         data = self.get_from_profile("colormaps", starting_colors[:])
         res = [x for x in data if x in self.colormap_dict]
         if len(res) != data:
-            if len(res) == 0:
+            if not res:
                 res = starting_colors[:]
             self.set_in_profile("colormaps", res)
         return res
@@ -443,10 +443,7 @@ class BaseSettings(ViewSettings):
 
     @points.setter
     def points(self, value):
-        if value is not None:
-            self._points = value
-        else:
-            self._points = None
+        self._points = value if value is not None else None
         self.points_changed.emit()
 
     def set_segmentation_result(self, result: SegmentationResult):

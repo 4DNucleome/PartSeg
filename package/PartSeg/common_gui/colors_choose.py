@@ -72,10 +72,7 @@ class ColorSelector(QWidget):
                 el.setChecked(False)
 
     def save(self):
-        res = []
-        for el in self.color_widget_list:
-            if el.isChecked():
-                res.append(el.text())
+        res = [el.text() for el in self.color_widget_list if el.isChecked()]
         self.settings.chosen_colormap = res
 
     def reset(self):

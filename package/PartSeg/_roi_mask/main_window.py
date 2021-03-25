@@ -98,10 +98,7 @@ class MaskDialog(MaskDialogBase):
             history.segmentation_parameters["selected"],
             history.segmentation_parameters["parameters"],
         )
-        if "mask" in seg:
-            self.settings.mask = seg["mask"]
-        else:
-            self.settings.mask = None
+        self.settings.mask = seg["mask"] if "mask" in seg else None
         self.close()
 
 
@@ -180,7 +177,7 @@ class MainMenu(BaseMainMenu):
         default_file_path = self.settings.get("io.load_image_file", "")
         if os.path.isfile(default_file_path):
             dial.selectFile(default_file_path)
-        dial.selectNameFilter(self.settings.get("io.load_data_filter", next(iter(io_functions.load_dict.keys()))))
+        dial.selectNameFilter(self.settings.get("io.load_data_filter", io_functions.load_dict.get_default()))
         dial.setHistory(dial.history() + self.settings.get_path_history())
         if not dial.exec_():
             return
@@ -485,11 +482,7 @@ class ChosenComponents(QWidget):
         return self.check_box[num].isChecked()
 
     def get_chosen(self):
-        res = []
-        for num, check in self.check_box.items():
-            if check.isChecked():
-                res.append(num)
-        return res
+        return [num for num, check in self.check_box.items() if check.isChecked()]
 
     def get_mask(self):
         res = [0]

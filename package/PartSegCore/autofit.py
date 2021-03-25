@@ -77,7 +77,7 @@ def density_mass_center(image, voxel_size=(1.0, 1.0, 1.0)):
     :return np.ndarray
 
     """
-    single_dim = tuple([i for i, x in enumerate(image.shape) if x == 1])
+    single_dim = tuple(i for i, x in enumerate(image.shape) if x == 1)
     iter_dim = [i for i, x in enumerate(image.shape) if x > 1]
     res = [0] * image.ndim
 
@@ -109,5 +109,4 @@ def calculate_density_momentum(image: np.ndarray, voxel_size=np.array([1.0, 1.0,
     for i, v in enumerate(reversed(voxel_size), start=1):
         points[:, -i] *= v
     weights = np.sum((points - mass_center) ** 2, axis=1)
-    momentum = float(np.sum(weights * image.flatten()))
-    return momentum
+    return float(np.sum(weights * image.flatten()))

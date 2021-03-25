@@ -19,7 +19,7 @@ class CollapseCheckbox(QCheckBox):
     """
 
     def __init__(self, info_text: str = "", parent: typing.Optional[QWidget] = None):
-        super().__init__(info_text if info_text else "-", parent)
+        super().__init__(info_text or "-", parent)
         self.hide_list = []
         self.stateChanged.connect(self.hide_element)
 
