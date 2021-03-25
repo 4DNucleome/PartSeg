@@ -75,13 +75,17 @@ class SegmentationResult:
     def __post_init__(self):
         if "ROI" in self.alternative_representation:
             raise ValueError("alternative_representation field cannot contain field with ROI key")
+        for key, value in self.additional_layers.items():
+            if value.name == "":
+                value.name = key
 
     def __str__(self):  # pragma: no cover
         return (
             f"SegmentationResult(roi=[shape: {self.roi.shape}, dtype: {self.roi.dtype},"
             f" max: {np.max(self.roi)}], parameters={self.parameters},"
             f" additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text},"
-            f" alternative={dict_repr(self.alternative_representation)}, annotation={dict_repr(self.roi_annotation)}"
+            f" alternative={dict_repr(self.alternative_representation)},"
+            f" roi_annotation={dict_repr(self.roi_annotation)}"
         )
 
     def __repr__(self):  # pragma: no cover
@@ -89,7 +93,8 @@ class SegmentationResult:
             f"SegmentationResult(roi=[shape: {self.roi.shape}, dtype: {self.roi.dtype}, "
             f"max: {np.max(self.roi)}], parameters={self.parameters}, "
             f"additional_layers={list(self.additional_layers.keys())}, info_text={self.info_text},"
-            f" alternative={dict_repr(self.alternative_representation)}, annotation={dict_repr(self.roi_annotation)}"
+            f" alternative={dict_repr(self.alternative_representation)},"
+            f" roi_annotation={dict_repr(self.roi_annotation)}"
         )
 
 
