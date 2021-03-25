@@ -233,6 +233,17 @@ class Register(OrderedDict, typing.Generic[AlgorithmType]):
 
         super().__setitem__(key, value)
 
+    def get_default(self) -> str:
+        """
+        Calculate default algorithm name for given dict.
+
+        :return: name of algorithm
+        """
+        try:
+            return next(iter(self.keys()))
+        except StopIteration:
+            raise ValueError("Register does not contain any algorithm.")
+
 
 class ROIExtractionProfile:
     """

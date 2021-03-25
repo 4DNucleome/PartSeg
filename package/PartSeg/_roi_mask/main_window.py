@@ -177,7 +177,7 @@ class MainMenu(BaseMainMenu):
         default_file_path = self.settings.get("io.load_image_file", "")
         if os.path.isfile(default_file_path):
             dial.selectFile(default_file_path)
-        dial.selectNameFilter(self.settings.get("io.load_data_filter", next(iter(io_functions.load_dict.keys()))))
+        dial.selectNameFilter(self.settings.get("io.load_data_filter", io_functions.load_dict.get_default()))
         dial.setHistory(dial.history() + self.settings.get_path_history())
         if not dial.exec_():
             return

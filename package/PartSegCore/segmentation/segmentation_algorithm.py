@@ -39,7 +39,7 @@ class ThresholdPreview(StackAlgorithm):
             AlgorithmProperty(
                 "noise_filtering",
                 "Filter",
-                next(iter(noise_filtering_dict.keys())),
+                noise_filtering_dict.get_default(),
                 possible_values=noise_filtering_dict,
                 value_type=AlgorithmDescribeBase,
             ),
@@ -95,14 +95,14 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
             AlgorithmProperty(
                 "noise_filtering",
                 "Filter",
-                next(iter(noise_filtering_dict.keys())),
+                noise_filtering_dict.get_default(),
                 possible_values=noise_filtering_dict,
                 value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty(
                 "threshold",
                 "Threshold",
-                next(iter(threshold_dict.keys())),
+                threshold_dict.get_default(),
                 possible_values=threshold_dict,
                 value_type=AlgorithmDescribeBase,
             ),
@@ -111,7 +111,7 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
             AlgorithmProperty(
                 "smooth_border",
                 "Smooth borders",
-                next(iter(smooth_dict.keys())),
+                smooth_dict.get_default(),
                 possible_values=smooth_dict,
                 value_type=AlgorithmDescribeBase,
             ),
@@ -267,14 +267,14 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
             AlgorithmProperty(
                 "noise_filtering",
                 "Filter",
-                next(iter(noise_filtering_dict.keys())),
+                noise_filtering_dict.get_default(),
                 possible_values=noise_filtering_dict,
                 value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty(
                 "threshold",
                 "Threshold",
-                next(iter(double_threshold_dict.keys())),
+                double_threshold_dict.get_default(),
                 possible_values=double_threshold_dict,
                 value_type=AlgorithmDescribeBase,
             ),
@@ -283,7 +283,7 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
             AlgorithmProperty(
                 "smooth_border",
                 "Smooth borders",
-                next(iter(smooth_dict.keys())),
+                smooth_dict.get_default(),
                 possible_values=smooth_dict,
                 value_type=AlgorithmDescribeBase,
             ),
@@ -298,7 +298,7 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
             AlgorithmProperty(
                 "sprawl_type",
                 "Flow type",
-                next(iter(sprawl_dict.keys())),
+                sprawl_dict.get_default(),
                 possible_values=sprawl_dict,
                 value_type=AlgorithmDescribeBase,
             ),
