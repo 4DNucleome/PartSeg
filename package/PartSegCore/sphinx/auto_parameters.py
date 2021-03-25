@@ -2,7 +2,7 @@
 This module contain utilities to document Register class.
 """
 import inspect
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from sphinx.application import Sphinx
 from sphinx.ext.autodoc import ModuleLevelDocumenter
@@ -38,9 +38,6 @@ class RegisterDocumenter(ModuleLevelDocumenter):
 
     def document_members(self, all_members: bool = False) -> None:
         pass
-
-    def get_doc(self, encoding: str = None, ignore: int = 1) -> List[List[str]]:
-        return super().get_doc(encoding, ignore)
 
     def add_content(self, more_content: Any, no_docstring: bool = False) -> None:
         super().add_content(more_content, no_docstring)

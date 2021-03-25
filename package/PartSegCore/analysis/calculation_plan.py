@@ -159,8 +159,7 @@ def get_save_path(op: Save, calculation: "FileCalculation") -> str:
     rel_path = os.path.splitext(rel_path)[0]
     if op.directory:
         return os.path.join(calculation.result_prefix, rel_path, op.suffix + extension)
-    else:
-        return os.path.join(calculation.result_prefix, rel_path + op.suffix + extension)
+    return os.path.join(calculation.result_prefix, rel_path + op.suffix + extension)
 
 
 class MaskMapper:
