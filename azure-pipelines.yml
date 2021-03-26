@@ -115,7 +115,7 @@ stages:
         - template: .azure-pipelines/tests.yaml
 
   - stage: Builds
-    dependsOn: Tests
+    dependsOn: GetTestData
     variables:
       CIBW_BEFORE_BUILD: pip install numpy cython
       CIBW_TEST_EXTRAS: pyqt,test

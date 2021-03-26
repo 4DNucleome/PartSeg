@@ -98,6 +98,7 @@ pyzmq_data = []
 
 if os.path.exists(pyzmq_libs):
     pyzmq_data = [(os.path.join(pyzmq_libs, x), "pyzmq.libs") for x in os.listdir(pyzmq_libs)]
+    print("#" * 50, "\n", "pyzmq_data found", pyzmq_data)
 else:
     print("#" * 50, "\n", "pyzmq_data not found")
 
