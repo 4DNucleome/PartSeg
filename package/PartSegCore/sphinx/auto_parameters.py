@@ -2,7 +2,7 @@
 This module contain utilities to document Register class.
 """
 import inspect
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from sphinx.application import Sphinx
 from sphinx.ext.autodoc import ModuleLevelDocumenter
@@ -15,7 +15,7 @@ from PartSegCore.class_generator import extract_type_info, extract_type_name
 def algorithm_parameters_doc(app: Sphinx, what, name: str, obj, options, lines: list):
     if inspect.isclass(obj) and issubclass(obj, AlgorithmDescribeBase) and not inspect.isabstract(obj):
         fields = [x for x in obj.get_fields() if isinstance(x, AlgorithmProperty)]
-        if len(fields) > 0:
+        if fields:
             lines.extend(["", "This algorithm has following parameters:", ""])
         for el in fields:
             if el.help_text:
@@ -34,16 +34,10 @@ class RegisterDocumenter(ModuleLevelDocumenter):
 
     @classmethod
     def can_document_member(cls, member: Any, membername: str, isattr: bool, parent: Any) -> bool:
-        if isinstance(member, Register):
-            return True
-        return False
+        return isinstance(member, Register)
 
     def document_members(self, all_members: bool = False) -> None:
         pass
-
-    def get_doc(self, encoding: str = None, ignore: int = 1) -> List[List[str]]:
-        doc = super().get_doc(encoding, ignore)
-        return doc
 
     def add_content(self, more_content: Any, no_docstring: bool = False) -> None:
         super().add_content(more_content, no_docstring)
@@ -53,16 +47,20 @@ class RegisterDocumenter(ModuleLevelDocumenter):
         k = 0
         if self.object.methods:
             self.add_line(
-                "Need methods: {}".format(", ".join(["``" + x + "``" for x in self.object.methods])), source, k
+                "Need methods: {}".format(", ".join("``" + x + "``" for x in self.object.methods)),
+                source,
+                k,
             )
+
             self.add_line("", source, k + 1)
             k += 2
         if self.object.class_methods:
             self.add_line(
-                "Need class methods: {}".format(", ".join(["``" + x + "``" for x in self.object.class_methods])),
+                "Need class methods: {}".format(", ".join("``" + x + "``" for x in self.object.class_methods)),
                 source,
                 k,
             )
+
             self.add_line("", source, k + 1)
             k += 2
         self.add_line("Default content:", source, k)

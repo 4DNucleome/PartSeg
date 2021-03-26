@@ -414,10 +414,7 @@ class ColormapList(QWidget):
 
     def __init__(self, colormap_map: Dict[str, Tuple[Colormap, bool]], selected: Optional[Iterable[str]] = None):
         super().__init__()
-        if selected is None:
-            self._selected = set()
-        else:
-            self._selected = set(selected)
+        self._selected = set() if selected is None else set(selected)
         self._blocked = set()
         self.current_columns = 1
         self.colormap_map = colormap_map

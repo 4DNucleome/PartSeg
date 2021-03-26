@@ -6,6 +6,8 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
+from PartSegCore.class_generator import enum_register
+
 try:
     from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton
 except ImportError:
@@ -329,10 +331,7 @@ class ImageView(QWidget):
             return
         text = f"{cords}: "
         if bright_array:
-            if len(bright_array) == 1:
-                text += str(bright_array[0])
-            else:
-                text += str(bright_array)
+            text += str(bright_array[0]) if len(bright_array) == 1 else str(bright_array)
         self.components = components
         if components:
             if len(components) == 1:
@@ -554,7 +553,11 @@ class ImageView(QWidget):
 
         filters = self.channel_control.get_filter()
         for i, layer in enumerate(image_info.layers):
-            self._add_layer_util(i, layer, filters)
+            try:
+                self._add_layer_util(i, layer, filters)
+            except AssertionError:
+                layer.colormap = "gray"
+                self._add_layer_util(i, layer, filters)
 
         self.image_info[image.file_path].filter_info = filters
         self.image_info[image.file_path].layers = image_info.layers
@@ -681,9 +684,8 @@ class ImageView(QWidget):
     def get_tool_tip_text(self) -> str:
         image = self.settings.image
         image_info = self.image_info[image.file_path]
-        text_list = []
-        for el in self.components:
-            text_list.append(_print_dict(image_info.roi_info.annotations.get(el, {})))
+        text_list = [_print_dict(image_info.roi_info.annotations.get(el, {})) for el in self.components]
+
         return " ".join(text_list)
 
     def event(self, event: QEvent):
@@ -746,3 +748,6 @@ def _print_dict(dkt: dict, indent=""):
         else:
             res.append(f"{indent}{k}: {v}")
     return "\n".join(res)
+
+
+enum_register.register_class(LabelEnum)

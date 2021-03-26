@@ -134,9 +134,7 @@ def is_static(fun):
     args = inspect.getfullargspec(fun).args
     if len(args) == 0:
         return True
-    if args[0] != "self":
-        return True
-    return False
+    return args[0] != "self"
 
 
 AlgorithmType = typing.TypeVar("AlgorithmType", bound=type(AlgorithmDescribeBase))
@@ -204,7 +202,7 @@ class Register(OrderedDict, typing.Generic[AlgorithmType]):
         fun = getattr(ob, function_name, None)
         if not is_class and not inspect.isfunction(fun):
             raise ValueError(f"Class {ob} need to define method {function_name}")
-        if is_class and not (inspect.ismethod(fun) or is_static(fun)):
+        if is_class and not inspect.ismethod(fun) and not is_static(fun):
             raise ValueError(f"Class {ob} need to define classmethod {function_name}")
 
     def __setitem__(self, key: str, value: AlgorithmType):
@@ -234,6 +232,17 @@ class Register(OrderedDict, typing.Generic[AlgorithmType]):
             self.check_function(value, el, False)
 
         super().__setitem__(key, value)
+
+    def get_default(self) -> str:
+        """
+        Calculate default algorithm name for given dict.
+
+        :return: name of algorithm
+        """
+        try:
+            return next(iter(self.keys()))
+        except StopIteration:
+            raise ValueError("Register does not contain any algorithm.")
 
 
 class ROIExtractionProfile:
@@ -274,22 +283,19 @@ class ROIExtractionProfile:
     def _pretty_print(cls, values: dict, translate_dict: typing.Dict[str, AlgorithmProperty], indent=0):
         res = ""
         for k, v in values.items():
-            if k in translate_dict:
-                desc = translate_dict[k]
-                res += " " * indent + desc.user_name + ": "
-                if issubclass(desc.value_type, Channel):
-                    res += str(Channel(v))
-                elif issubclass(desc.value_type, AlgorithmDescribeBase):
-                    res += desc.possible_values[v["name"]].get_name()
-                    if v["values"]:
-                        res += "\n"
-                        res += cls._pretty_print(
-                            v["values"], desc.possible_values[v["name"]].get_fields_dict(), indent + 2
-                        )
-                else:
-                    res += str(v)
-            else:
+            if k not in translate_dict:
                 raise ValueError(f"wrong argument {k}")
+            desc = translate_dict[k]
+            res += " " * indent + desc.user_name + ": "
+            if issubclass(desc.value_type, Channel):
+                res += str(Channel(v))
+            elif issubclass(desc.value_type, AlgorithmDescribeBase):
+                res += desc.possible_values[v["name"]].get_name()
+                if v["values"]:
+                    res += "\n"
+                    res += cls._pretty_print(v["values"], desc.possible_values[v["name"]].get_fields_dict(), indent + 2)
+            else:
+                res += str(v)
             res += "\n"
         return res[:-1]
 
@@ -303,7 +309,7 @@ class ROIExtractionProfile:
                 return dkt + 1
             return dkt
         return "\n" + "\n".join(
-            [" " * indent + f"{k.replace('_', ' ')}: {cls.print_dict(v, indent + 2, k)}" for k, v in dkt.items()]
+            " " * indent + f"{k.replace('_', ' ')}: {cls.print_dict(v, indent + 2, k)}" for k, v in dkt.items()
         )
 
     def __str__(self):

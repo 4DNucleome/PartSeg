@@ -48,11 +48,7 @@ else:
     )
 base_zip_path = os.path.join(base_path, "dist")
 
-if platform.system() == "Darwin2":
-    dir_name = "PartSeg.app"
-else:
-    dir_name = "PartSeg"
-
+dir_name = "PartSeg.app" if platform.system() == "Darwin2" else "PartSeg"
 for root, dirs, files in os.walk(os.path.join(base_path, "dist", dir_name), topdown=False, followlinks=True):
     for file_name in files:
         arch_file.write(os.path.join(root, file_name), os.path.relpath(os.path.join(root, file_name), base_zip_path))

@@ -78,10 +78,7 @@ class PathWatershed(BaseWatershed):
         lower_bound,
         upper_bound,
     ):
-        if operator(1, 0):
-            path_sprawl = path_maximum_sprawl
-        else:
-            path_sprawl = path_minimum_sprawl
+        path_sprawl = path_maximum_sprawl if operator(1, 0) else path_minimum_sprawl
         # print(path_sprawl)
         image = data.astype(np.float64)
         image[sprawl_area == 0] = 0

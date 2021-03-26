@@ -135,7 +135,7 @@ class MaskDistanceSplit(AlgorithmDescribeBase):
             i = 1
             cum_sum = 0
             for val, begin, end in zip(hist, bins, bins[1:]):
-                cum_sum = cum_sum + val
+                cum_sum += val
                 if cum_sum > levels[i]:
                     exceed = (cum_sum - levels[i]) / step
                     bounds.append(begin + (end - begin) * exceed)

@@ -187,16 +187,15 @@ class StackSettings(BaseSettings):
         segmentation_count = 0 if state.roi is None else len(np.unique(state.roi.flat))
         new_segmentation_count = 0 if new_segmentation_data is None else len(np.unique(new_segmentation_data.flat))
         segmentation_dtype = minimal_dtype(segmentation_count + new_segmentation_count)
+        components_parameters_dict = {}
         if save_chosen and state.roi is not None:
             segmentation = reduce_array(state.roi, state.selected_components, dtype=segmentation_dtype)
-            components_parameters_dict = {}
             for i, val in enumerate(sorted(state.selected_components), 1):
                 components_parameters_dict[i] = state.roi_extraction_parameters[val]
             base_chose = list(range(1, len(state.selected_components) + 1))
         else:
             segmentation = None
             base_chose = []
-            components_parameters_dict = {}
         if new_segmentation_data is not None:
             state.image.fit_array_to_image(new_segmentation_data)
             num = np.max(new_segmentation_data)
@@ -247,10 +246,10 @@ class StackSettings(BaseSettings):
         # TODO check dict comparision
         if len(history) != self.history_size():
             return False
-        for el1, el2 in zip(self.history, history):
-            if el2.mask_property != el1.mask_property or el2.segmentation_parameters != el1.segmentation_parameters:
-                return False
-        return True
+        return not any(
+            el2.mask_property != el1.mask_property or el2.segmentation_parameters != el1.segmentation_parameters
+            for el1, el2 in zip(self.history, history)
+        )
 
     def set_segmentation(
         self, new_segmentation_data, save_chosen=True, list_of_components=None, segmentation_parameters=None

@@ -73,8 +73,8 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
     def __init__(self, components_info: ComponentsInfo):
         self.components_info = components_info
         self._data_dict = OrderedDict()
-        self._units_dict: Dict[str, str] = dict()
-        self._type_dict: Dict[str, Tuple[PerComponent, AreaType]] = dict()
+        self._units_dict: Dict[str, str] = {}
+        self._type_dict: Dict[str, Tuple[PerComponent, AreaType]] = {}
         self._units_dict["Mask component"] = ""
         self._units_dict["Segmentation component"] = ""
 
@@ -157,7 +157,10 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             name = self._data_dict[FILE_NAME_STR]
             res = [name]
             iterator = iter(self._data_dict.keys())
-            next(iterator)
+            try:
+                next(iterator)
+            except StopIteration:
+                pass
         else:
             res = []
             iterator = iter(self._data_dict.keys())
@@ -187,7 +190,10 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             name = self._data_dict[FILE_NAME_STR]
             res = [[name] for _ in range(counts)]
             iterator = iter(self._data_dict.keys())
-            next(iterator)
+            try:
+                next(iterator)
+            except StopIteration:
+                pass
         else:
             res = [[] for _ in range(counts)]
             iterator = iter(self._data_dict.keys())
@@ -1162,7 +1168,7 @@ class DistanceMaskSegmentation(MeasurementMethodBase):
             return 0
         mask_pos = cls.calculate_points(channel, mask, voxel_size, result_scalar, distance_from_mask)
         seg_pos = cls.calculate_points(channel, area_array, voxel_size, result_scalar, distance_to_segmentation)
-        if mask_pos.shape[0] == 1 or seg_pos.shape[0] == 1:
+        if 1 in {mask_pos.shape[0], seg_pos.shape[0]}:
             return np.min(cdist(mask_pos, seg_pos))
 
         min_val = np.inf

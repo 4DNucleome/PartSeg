@@ -158,10 +158,8 @@ def get_save_path(op: Save, calculation: "FileCalculation") -> str:
     rel_path = os.path.relpath(calculation.file_path, calculation.base_prefix)
     rel_path = os.path.splitext(rel_path)[0]
     if op.directory:
-        file_path = os.path.join(calculation.result_prefix, rel_path, op.suffix + extension)
-    else:
-        file_path = os.path.join(calculation.result_prefix, rel_path + op.suffix + extension)
-    return file_path
+        return os.path.join(calculation.result_prefix, rel_path, op.suffix + extension)
+    return os.path.join(calculation.result_prefix, rel_path + op.suffix + extension)
 
 
 class MaskMapper:
@@ -585,10 +583,7 @@ class CalculationPlan:
         for el in node.children:
             if isinstance(el.operation, MaskUse):
                 used_mask.add(el.operation.name)
-            elif isinstance(el.operation, MaskSum):
-                used_mask.add(el.operation.mask1)
-                used_mask.add(el.operation.mask2)
-            elif isinstance(el.operation, MaskIntersection):
+            elif isinstance(el.operation, (MaskSum, MaskIntersection)):
                 used_mask.add(el.operation.mask1)
                 used_mask.add(el.operation.mask2)
         return used_mask
@@ -615,9 +610,8 @@ class CalculationPlan:
             return NodeType.save
         if isinstance(node.operation, MaskUse):
             return NodeType.file_mask
-        if isinstance(node.operation, Operations):
-            if node.operation == Operations.reset_to_base:
-                return NodeType.mask
+        if isinstance(node.operation, Operations) and node.operation == Operations.reset_to_base:
+            return NodeType.mask
         raise ValueError(f"[get_node_type] unknown node type {node.operation}")
 
     def add_step(self, step):
@@ -645,9 +639,7 @@ class CalculationPlan:
 
     def has_children(self):
         node = self.get_node()
-        if len(node.children) > 0:
-            return True
-        return False
+        return len(node.children) > 0
 
     def remove_step(self):
         path = copy(self.current_pos)
@@ -689,11 +681,7 @@ class CalculationPlan:
         """
         :return: list[MaskMapper]
         """
-        mask_mapper_list = []
-        for el in self.execution_tree.children:
-            if isinstance(el.operation, MaskMapper):
-                mask_mapper_list.append(el.operation)
-        return mask_mapper_list
+        return [el.operation for el in self.execution_tree.children if isinstance(el.operation, MaskMapper)]
 
     def set_path_to_mapping_file(self, num, path):
         for el in self.execution_tree.children:
@@ -730,9 +718,8 @@ class CalculationPlan:
             raise ValueError(f"Unknown type {el.__class__.__name__}")
         if isinstance(el, RootType):
             return f"Root: {el}"
-        if isinstance(el, Operations):
-            if el == Operations.reset_to_base:
-                return "reset project to base image with mask"
+        if isinstance(el, Operations) and el == Operations.reset_to_base:
+            return "reset project to base image with mask"
         if isinstance(el, ROIExtractionProfile):
             return f"Segmentation: {el.name}"
         if isinstance(el, MeasurementCalculate):
@@ -789,7 +776,8 @@ class CalculationPlan:
             name += "\n" + textwrap.indent(txt, " " * (indent + 4))
 
         if elem.children:
-            suffix = "\n" + "\n".join([self._pretty_print(x, indent + 2) for x in elem.children])
+            suffix = "\n" + "\n".join(self._pretty_print(x, indent + 2) for x in elem.children)
+
         else:
             suffix = ""
 

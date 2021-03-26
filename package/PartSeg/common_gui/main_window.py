@@ -1,3 +1,4 @@
+import dataclasses
 import os
 from pathlib import Path
 from typing import List, Optional, Type
@@ -72,7 +73,7 @@ class BaseMainMenu(QWidget):
             if image:
                 if isinstance(image, Image):
                     # noinspection PyProtectedMember
-                    data = data._replace(image=image)
+                    data = dataclasses.replace(data, image=image)
             else:
                 return
         if data is None:
@@ -130,7 +131,7 @@ class BaseMainWindow(QMainWindow):
                     " state directory (Help > State directory)"
                 )
                 errors_message.setStandardButtons(QMessageBox.Ok)
-                text = "\n".join(["File: " + x[0] + "\n" + str(x[1]) for x in errors])
+                text = "\n".join("File: " + x[0] + "\n" + str(x[1]) for x in errors)
                 errors_message.setDetailedText(text)
                 errors_message.exec()
 

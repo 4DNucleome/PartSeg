@@ -585,9 +585,7 @@ class MeasurementSettings(QWidget):
             self.move_down.setDisabled(True)
 
     def good_name(self):
-        if str(self.profile_name.text()).strip() == "":
-            return False
-        return True
+        return str(self.profile_name.text()).strip() != ""
 
     def move_down_fun(self):
         row = self.profile_options_chosen.currentRow()
@@ -809,10 +807,7 @@ class SegAdvancedWindow(AdvancedWindow):
     def __init__(self, settings, parent=None, reload_list=None):
         super().__init__(settings, ["result_image", "raw_image"], parent)
         self.settings = settings
-        if reload_list is not None:
-            self.reload_list = reload_list
-        else:
-            self.reload_list = []
+        self.reload_list = reload_list if reload_list is not None else []
         self.setWindowTitle("Settings and Measurement")
         self.advanced_settings = Properties(settings)
         # self.colormap_settings = ColorSelector(settings, ["result_control"])

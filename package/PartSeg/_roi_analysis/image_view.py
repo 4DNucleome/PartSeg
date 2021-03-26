@@ -48,10 +48,7 @@ class ResultImageView(ImageView):
         self.roi_alternative_select.setVisible(False)
 
     def any_roi(self):
-        for image_info in self.image_info.values():
-            if image_info.roi is not None:
-                return True
-        return False
+        return any(image_info.roi is not None for image_info in self.image_info.values())
 
     def available_alternatives(self):
         available_alternatives = set()

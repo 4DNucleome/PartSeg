@@ -101,7 +101,7 @@ T = typing.TypeVar("T")
 
 class RegisterClass(typing.Generic[T]):
     def __init__(self):
-        self.exact_class_register = dict()
+        self.exact_class_register = {}
         self.predict_class_register = collections.defaultdict(list)
 
     def register_class(self, cls: T, old_name=None):
@@ -193,7 +193,7 @@ def add_classes(types_list, translate_dict, global_state):
         if hasattr(type_, "__module__") and type_.__module__ == "typing":
             if hasattr(type_, "__args__") and isinstance(type_.__args__, collections.abc.Iterable):
                 sub_types = [x for x in type_.__args__ if not isinstance(x, omit_list)]
-                if len(sub_types) > 0:
+                if sub_types:
                     add_classes(sub_types, translate_dict, global_state)
                     if sys.version_info[:2] == (3, 6):
                         if hasattr(type_, "__origin__"):
@@ -207,7 +207,7 @@ def add_classes(types_list, translate_dict, global_state):
                             type_str = str(type_.__origin__)
                         else:
                             type_str = "typing." + str(type_._name)
-                        type_str += "[" + ", ".join([translate_dict[x] for x in sub_types]) + "]"
+                        type_str += "[" + ", ".join(translate_dict[x] for x in sub_types) + "]"
                         translate_dict[type_] = type_str
                         continue
 
@@ -249,15 +249,14 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
     del global_state[typename]
 
     signature = ", ".join(
-        [
-            "{}: {} = {}".format(name_, translate_dict[type_], pprint.pformat(defaults_dict[name_]))
-            if name_ in defaults_dict
-            else "{}: {}".format(name_, translate_dict[type_])
-            for name_, type_ in types.items()
-        ]
+        "{}: {} = {}".format(name_, translate_dict[type_], pprint.pformat(defaults_dict[name_]))
+        if name_ in defaults_dict
+        else "{}: {}".format(name_, translate_dict[type_])
+        for name_, type_ in types.items()
     )
+
     if readonly:
-        slots = tuple(["_" + x for x in field_names])
+        slots = tuple("_" + x for x in field_names)
         field_definitions = "\n".join(_field_template.format(name=name) for index, name in enumerate(field_names))
     else:
         slots = tuple(field_names)
@@ -278,8 +277,9 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
         arg_list=repr(tuple(field_names)).replace("'", "")[1:-1],
         repr_fmt=", ".join(_repr_template.format(name=name) for name in field_names),
         field_definitions=field_definitions,
-        base_classes=", ".join([translate_dict[x] for x in base_classes]),
+        base_classes=", ".join(translate_dict[x] for x in base_classes),
     )
+
     global_state["__name__"] = "serialize_%s" % typename
     try:
         # pylint: disable=W0122

@@ -2,6 +2,7 @@
 This module contains simple, useful widgets which implementation is to short to create separated files for them
 """
 
+
 import math
 import typing
 from enum import Enum
@@ -25,10 +26,7 @@ from qtpy.QtWidgets import (
 
 from PartSegCore.universal_const import UNIT_SCALE, Units
 
-if PYQT5:
-    enum_type = Enum
-else:
-    enum_type = object
+enum_type = Enum if PYQT5 else object
 
 
 class ChannelComboBox(QComboBox):

@@ -50,10 +50,7 @@ class SitkThreshold(BaseThreshold, ABC):
     def calculate_mask(cls, data: np.ndarray, mask: typing.Optional[np.ndarray], arguments: dict, operator):
         if mask is not None and mask.dtype != np.uint8:
             mask = (mask > 0).astype(np.uint8)
-        if operator(1, 0):
-            ob, bg, th_op = 0, 1, np.min
-        else:
-            ob, bg, th_op = 1, 0, np.max
+        ob, bg, th_op = (0, 1, np.min) if operator(1, 0) else (1, 0, np.max)
         image_sitk = sitk.GetImageFromArray(data)
         if arguments["masked"] and mask is not None:
             mask_sitk = sitk.GetImageFromArray(mask)
@@ -63,10 +60,7 @@ class SitkThreshold(BaseThreshold, ABC):
         result = sitk.GetArrayFromImage(calculated)
         if mask is not None:
             result[mask == 0] = 0
-        if np.any(result):
-            threshold = th_op(data[result > 0])
-        else:
-            threshold = th_op(-data)
+        threshold = th_op(data[result > 0]) if np.any(result) else th_op(-data)
         return result, threshold
 
     @staticmethod
@@ -244,14 +238,14 @@ class DoubleThreshold(BaseThreshold):
             AlgorithmProperty(
                 "core_threshold",
                 "Core threshold",
-                next(iter(threshold_dict.keys())),
+                threshold_dict.get_default(),
                 possible_values=threshold_dict,
                 value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty(
                 "base_threshold",
                 "Base threshold",
-                next(iter(threshold_dict.keys())),
+                threshold_dict.get_default(),
                 possible_values=threshold_dict,
                 value_type=AlgorithmDescribeBase,
             ),

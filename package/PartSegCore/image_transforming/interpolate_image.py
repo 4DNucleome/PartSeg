@@ -27,7 +27,7 @@ class InterpolateImage(TransformBase):
     def transform(
         cls, image: Image, arguments: dict, callback_function: Optional[Callable[[str, int], None]] = None
     ) -> Image:
-        keys = [x for x in arguments.keys() if x.startswith("scale")]
+        keys = [x for x in arguments if x.startswith("scale")]
         keys_order = Image.axis_order.lower()
         scale_factor = [1.0] * len(keys_order)
         if len(keys) == 1 and keys[0] == "scale":

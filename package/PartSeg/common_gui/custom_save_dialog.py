@@ -79,10 +79,9 @@ class SaveDialog(QFileDialog):
                 # print(layout.columnCount(), layout.rowCount())
                 # noinspection PyArgumentList
                 layout.addWidget(widget, 0, layout.columnCount(), layout.rowCount(), 1)
-                self.stack_widget = widget
             else:
                 layout.addWidget(widget)
-                self.stack_widget = widget
+            self.stack_widget = widget
             self.selectNameFilter(self.names[0])
 
     def change_parameters(self, text):

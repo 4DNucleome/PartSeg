@@ -51,7 +51,7 @@ class MocksCalculation:
 @pytest.fixture
 def create_test_data(tmpdir):
     # for future use
-    spacing = tuple([x / UNIT_SCALE[Units.nm.value] for x in (210, 70, 70)])
+    spacing = tuple(x / UNIT_SCALE[Units.nm.value] for x in (210, 70, 70))
     res = []
     for i in range(8):
         mask_data = np.zeros((10, 20, 20 + i), dtype=np.uint8)
