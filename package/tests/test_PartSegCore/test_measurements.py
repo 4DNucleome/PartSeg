@@ -562,7 +562,12 @@ class TestRimVolume:
     @pytest.mark.parametrize("image", [get_cube_image(), get_square_image()], ids=["cube", "square"])
     @pytest.mark.parametrize("scale", [1, 4])
     def test_image(self, image, scale):
-        image = image.substitute(image_spacing=tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        image = image.substitute(
+            image_spacing=tuple(
+                x / UNIT_SCALE[Units.nm.value] for x in image.spacing
+            )
+        )
+
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
@@ -643,7 +648,7 @@ class TestRimPixelBrightnessSum:
 
     @pytest.mark.parametrize("image", [get_cube_image(), get_square_image()], ids=["cube", "square"])
     def test_image(self, image):
-        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        image.set_spacing(tuple(x / UNIT_SCALE[Units.nm.value] for x in image.spacing))
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
@@ -1042,7 +1047,10 @@ class TestSplitOnPartVolume:
         assert leaf.channel is None
 
     def test_cube_equal_radius(self, cube_image):
-        cube_image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in cube_image.spacing]))
+        cube_image.set_spacing(
+            tuple(x / UNIT_SCALE[Units.nm.value] for x in cube_image.spacing)
+        )
+
         mask1 = cube_image.get_channel(0)[0] > 40
         mask2 = cube_image.get_channel(0)[0] > 60
         result_scale = reduce(lambda x, y: x * y, cube_image.voxel_size)
@@ -1153,7 +1161,7 @@ class TestSplitOnPartVolume:
 
     def test_result_scalar(self):
         image = get_cube_image()
-        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        image.set_spacing(tuple(x / UNIT_SCALE[Units.nm.value] for x in image.spacing))
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         result_scale = reduce(lambda x, y: x * y, image.voxel_size)
@@ -1208,7 +1216,7 @@ class TestSplitOnPartVolume:
 
     def test_square_equal_radius(self):
         image = get_square_image()
-        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        image.set_spacing(tuple(x / UNIT_SCALE[Units.nm.value] for x in image.spacing))
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
 
@@ -1268,7 +1276,7 @@ class TestSplitOnPartVolume:
 
     def test_square_equal_volume(self):
         image = get_square_image()
-        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        image.set_spacing(tuple(x / UNIT_SCALE[Units.nm.value] for x in image.spacing))
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
 
@@ -1365,7 +1373,10 @@ class TestSplitOnPartPixelBrightnessSum:
         ],
     )
     def test_cube_equal_radius(self, cube_image, nr, sum_val, diff_array):
-        cube_image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in cube_image.spacing]))
+        cube_image.set_spacing(
+            tuple(x / UNIT_SCALE[Units.nm.value] for x in cube_image.spacing)
+        )
+
         mask1 = cube_image.get_channel(0)[0] > 40
         mask2 = cube_image.get_channel(0)[0] > 60
 
@@ -1400,7 +1411,7 @@ class TestSplitOnPartPixelBrightnessSum:
         data[0, 10:50, 20:80, 20:80] = 50
         data[0, 15:45, 30:70, 30:70] = 70
         image = Image(data, (100, 50, 50), "")
-        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        image.set_spacing(tuple(x / UNIT_SCALE[Units.nm.value] for x in image.spacing))
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
 
@@ -1432,7 +1443,7 @@ class TestSplitOnPartPixelBrightnessSum:
     )
     def test_square(self, nr, sum_val, diff_array, equal_volume):
         image = get_square_image()
-        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        image.set_spacing(tuple(x / UNIT_SCALE[Units.nm.value] for x in image.spacing))
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
 
@@ -1453,7 +1464,7 @@ class TestSplitOnPartPixelBrightnessSum:
 class TestStatisticProfile:
     def test_cube_volume_area_type(self):
         image = get_cube_image()
-        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        image.set_spacing(tuple(x / UNIT_SCALE[Units.nm.value] for x in image.spacing))
         image.set_mask((image.get_channel(0)[0] > 40).astype(np.uint8))
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
@@ -1483,7 +1494,7 @@ class TestStatisticProfile:
 
     def test_square_volume_area_type(self):
         image = get_square_image()
-        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        image.set_spacing(tuple(x / UNIT_SCALE[Units.nm.value] for x in image.spacing))
         image.set_mask((image.get_channel(0)[0] > 40).astype(np.uint8))
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
@@ -1513,7 +1524,7 @@ class TestStatisticProfile:
 
     def test_cube_pixel_sum_area_type(self):
         image = get_cube_image()
-        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        image.set_spacing(tuple(x / UNIT_SCALE[Units.nm.value] for x in image.spacing))
         image.set_mask((image.get_channel(0)[0] > 40).astype(np.uint8))
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
@@ -1545,7 +1556,7 @@ class TestStatisticProfile:
 
     def test_cube_surface_area_type(self):
         image = get_cube_image()
-        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        image.set_spacing(tuple(x / UNIT_SCALE[Units.nm.value] for x in image.spacing))
         image.set_mask((image.get_channel(0)[0] > 40).astype(np.uint8))
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
@@ -1574,7 +1585,7 @@ class TestStatisticProfile:
 
     def test_cube_density(self):
         image = get_cube_image()
-        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        image.set_spacing(tuple(x / UNIT_SCALE[Units.nm.value] for x in image.spacing))
         image.set_mask((image.get_channel(0)[0] > 40).astype(np.uint8))
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
@@ -1645,7 +1656,7 @@ class TestStatisticProfile:
 
     def test_cube_volume_power(self):
         image = get_cube_image()
-        image.set_spacing(tuple([x / UNIT_SCALE[Units.nm.value] for x in image.spacing]))
+        image.set_spacing(tuple(x / UNIT_SCALE[Units.nm.value] for x in image.spacing))
         image.set_mask((image.get_channel(0)[0] > 40).astype(np.uint8))
         segmentation = (image.get_channel(0)[0] > 60).astype(np.uint8)
 
