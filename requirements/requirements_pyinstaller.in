@@ -1,6 +1,7 @@
 appdirs
 czifile
 dataclasses; python_version < '3.7'
+dask!=2021.3.
 defusedxml
 h5py
 imagecodecs
