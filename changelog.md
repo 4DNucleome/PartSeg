@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.13.1
+
+-   Add Haralick measurements
+-   Add obsep file support
+
 ## 0.13.0
 
 -   Add possibility of custom input widgets for algorithms

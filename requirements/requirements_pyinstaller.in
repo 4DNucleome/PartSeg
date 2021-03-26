@@ -5,6 +5,7 @@ defusedxml
 h5py
 imagecodecs
 lxml
+mahotas
 napari
 numpy
 oiffile

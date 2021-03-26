@@ -11,12 +11,15 @@ from sympy import symbols
 from PartSegCore.analysis import load_metadata
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
 from PartSegCore.analysis.measurement_calculation import (
+    HARALIC_FEATURES,
+    MEASUREMENT_DICT,
     ComponentsInfo,
     ComponentsNumber,
     Diameter,
     DistanceMaskSegmentation,
     DistancePoint,
     FirstPrincipalAxisLength,
+    Haralick,
     MaximumPixelBrightness,
     MeanPixelBrightness,
     MeasurementProfile,
@@ -1957,3 +1960,53 @@ class TestMeasurementResult:
             ["test.tif", 3, 2, 1, 6, 3],
         ]
         assert storage.get_labels() == ["File name", "Segmentation component", "Mask component", "aa", "bb", "cc"]
+
+
+class TestHaralick:
+    def test_base(self):
+        data = np.zeros((10, 20, 20), dtype=np.uint8)
+        data[1:-1, 3:-3, 3:-3] = 2
+        data[1:-1, 4:-4, 4:-4] = 3
+        mask = data > 0
+        res = Haralick.calculate_property(mask, data, distance=1, feature=HARALIC_FEATURES[0])
+        assert res.size == 1
+
+    def test_4d_base(self):
+        data = np.zeros((1, 10, 20, 20), dtype=np.uint8)
+        data[0, :-1, 3:-3, 3:-3] = 2
+        data[0, 1:-1, 4:-4, 4:-4] = 3
+        mask = data > 0
+        res = Haralick.calculate_property(mask, data, distance=1, feature=HARALIC_FEATURES[0])
+        assert res.size == 1
+
+    @pytest.mark.parametrize("feature", HARALIC_FEATURES)
+    @pytest.mark.parametrize("distance", range(1, 5))
+    def test_variants(self, feature, distance):
+        data = np.zeros((10, 20, 20), dtype=np.uint8)
+        data[1:-1, 3:-3, 3:-3] = 2
+        data[1:-1, 4:-4, 4:-4] = 3
+        mask = data > 0
+        Haralick.calculate_property(mask, data, distance=distance, feature=feature)
+
+
+@pytest.mark.parametrize("method", MEASUREMENT_DICT.values())
+@pytest.mark.parametrize("dtype", [float, int, np.uint8, np.uint16, np.uint32, np.float16, np.float32])
+def ttest_all_methods(method, dtype):
+    data = np.zeros((10, 20, 20), dtype=dtype)
+    data[1:-1, 3:-3, 3:-3] = 2
+    data[1:-1, 4:-4, 4:-4] = 3
+    roi = (data > 0).astype(np.uint8)
+    mask = (data > 2).astype(np.uint8)
+
+    res = method.calculate_property(
+        area_array=roi,
+        mask=mask,
+        channel=data,
+        channel_num=0,
+        voxel_size=(1, 1, 1),
+        result_scalar=1,
+        roi_alternative={},
+        roi_annotation={},
+        **method.get_default_values(),
+    )
+    float(res)
