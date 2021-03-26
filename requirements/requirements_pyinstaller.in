@@ -1,6 +1,7 @@
 appdirs
 czifile
 dataclasses; python_version < '3.7'
+dask!=2021.3.
 defusedxml
 h5py
 imagecodecs
@@ -16,7 +17,7 @@ PartSegData
 PartSegCore-compiled-backend
 PyInstaller!=4.0
 PyOpenGL-accelerate
-PyQt5<5.16.0
+PyQt5!=5.15.4
 QtPy
 requests
 scipy
@@ -28,4 +29,4 @@ tifffile
 xlrd
 xlsxwriter
 sphinx!=3.5.0
-pydantic!=1.8,!=1.8.1
+pydantic!=1.8
