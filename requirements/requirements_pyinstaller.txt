@@ -82,7 +82,7 @@ jupyter-core==4.7.1
     # via
     #   jupyter-client
     #   qtconsole
-lxml==4.6.2
+lxml==4.6.3
     # via -r requirements_pyinstaller.in
 magicgui==0.2.7
     # via napari
