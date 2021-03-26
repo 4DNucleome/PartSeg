@@ -98,6 +98,8 @@ pyzmq_data = []
 
 if os.path.exists(pyzmq_libs):
     pyzmq_data = [(os.path.join(pyzmq_libs, x), "pyzmq.libs") for x in os.listdir(pyzmq_libs)]
+else:
+    print("#" * 50, "\n", "pyzmq_data not found")
 
 napari_resource_path = import_resources()
 napari_base_path = os.path.dirname(os.path.dirname(napari.__file__))
