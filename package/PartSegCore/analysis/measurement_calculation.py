@@ -1293,7 +1293,9 @@ class Haralick(MeasurementMethodBase):
         return True
 
     @classmethod
-    def calculate_property(cls, area_array, channel, distance, feature, _cache=False, **kwargs):
+    def calculate_property(
+        cls, area_array, channel, distance, feature, _cache=False, **kwargs
+    ):  # pylint: disable=W0221
         _cache = _cache and "_area" in kwargs and "_per_component" in kwargs
         if _cache:
             help_dict: Dict = kwargs["help_dict"]
