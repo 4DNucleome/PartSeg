@@ -1322,9 +1322,7 @@ def calculate_volume_surface(volume_mask, voxel_size):
             np.count_nonzero(
                 np.logical_xor(
                     surf_im.take(np.arange(surf_im.shape[ax] - 1), axis=ax),
-                    surf_im.take(
-                        np.arange(surf_im.shape[ax] - 1) + 1, axis=ax
-                    ),
+                    surf_im.take(np.arange(surf_im.shape[ax] - 1) + 1, axis=ax),
                 )
             )
             * reduce(
