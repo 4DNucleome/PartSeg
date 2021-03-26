@@ -1,7 +1,10 @@
 on:
-  pull_request:
-    branches-ignore:
-      - 'dependabot/**'
+  pull_request_target:
+    branches:
+      - main
+      - master
+      - develop
+
   push:
     branches:
     - main
