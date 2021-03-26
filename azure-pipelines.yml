@@ -180,7 +180,10 @@ stages:
           - bash: |
               python -m pip install -r requirements/requirements_pyinstaller.txt
               python -m pip install -e .
+            displayName: install libs
+          - bash: |
               python  build_utils/create_and_pack_executable.py
+            displayName: build
 
           - task: PublishBuildArtifacts@1
             inputs:
