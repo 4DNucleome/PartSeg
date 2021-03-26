@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.13.1
+
+-   Add Haralick measurements
+-   Add obsep file support
+
 ## 0.13.0
 
 -   Add possibility of custom input widgets for algorithms
@@ -7,7 +12,6 @@
 -   Add points visualization
 -   Synchronization widget for builtin (View menu) napari viewer
 -   Drop Python 3.6
--   Add Haralick measurements
 
 ## 0.12.7
 
