@@ -83,13 +83,7 @@ try:
 except ImportError:
     pass
 
-if platform.system() == "Windows":
-    import PyQt5
-
-    qt_path = os.path.dirname(PyQt5.__file__)
-    qt_data = [(os.path.join(qt_path, "Qt", "bin", "Qt5Core.dll"), os.path.join("PyQt5", "Qt", "bin"))]
-else:
-    qt_data = []
+qt_data = []
 
 # print(["plugins." + x.name for x in plugins.get_plugins()])
 
