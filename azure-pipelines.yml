@@ -178,9 +178,13 @@ stages:
         steps:
           - {task: UsePythonVersion@0, inputs: {versionSpec: '3.8', architecture: x64}}
           - bash: |
+              python -m pip install -U pip
               python -m pip install -r requirements/requirements_pyinstaller.txt
               python -m pip install -e .
+            displayName: install libs
+          - bash: |
               python  build_utils/create_and_pack_executable.py
+            displayName: build
 
           - task: PublishBuildArtifacts@1
             inputs:

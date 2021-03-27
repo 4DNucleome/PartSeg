@@ -83,13 +83,7 @@ try:
 except ImportError:
     pass
 
-if platform.system() == "Windows":
-    import PyQt5
-
-    qt_path = os.path.dirname(PyQt5.__file__)
-    qt_data = [(os.path.join(qt_path, "Qt", "bin", "Qt5Core.dll"), os.path.join("PyQt5", "Qt", "bin"))]
-else:
-    qt_data = []
+qt_data = []
 
 # print(["plugins." + x.name for x in plugins.get_plugins()])
 
@@ -98,6 +92,7 @@ pyzmq_data = []
 
 if os.path.exists(pyzmq_libs):
     pyzmq_data = [(os.path.join(pyzmq_libs, x), "pyzmq.libs") for x in os.listdir(pyzmq_libs)]
+
 
 napari_resource_path = import_resources()
 napari_base_path = os.path.dirname(os.path.dirname(napari.__file__))
