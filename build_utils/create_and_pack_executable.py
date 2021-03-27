@@ -2,6 +2,7 @@ import codecs
 import os
 import platform
 import re
+import shutil
 import sys
 import tarfile
 import zipfile
@@ -49,6 +50,13 @@ else:
 base_zip_path = os.path.join(base_path, "dist")
 
 dir_name = "PartSeg.app" if platform.system() == "Darwin2" else "PartSeg"
+
+if platform.system() == "Darwin" and os.path.exists(os.path.join(base_path, "dist", dir_name, "PyQt5", "Qt")):
+    shutil.move(
+        os.path.join(base_path, "dist", dir_name, "PyQt5", "Qt"),
+        os.path.join(base_path, "dist", dir_name, "PyQt5", "Qt5"),
+    )
+
 for root, dirs, files in os.walk(os.path.join(base_path, "dist", dir_name), topdown=False, followlinks=True):
     for file_name in files:
         arch_file.write(os.path.join(root, file_name), os.path.relpath(os.path.join(root, file_name), base_zip_path))
