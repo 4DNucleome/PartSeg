@@ -4,7 +4,7 @@ from qtpy.QtGui import QColor
 
 from PartSeg.common_backend.base_settings import LabelColorDict, ViewSettings
 from PartSeg.common_gui.label_create import LabelEditor, _LabelShow
-from PartSegCore.color_image.color_data import _sitk_labels
+from PartSegCore.color_image.color_data import sitk_labels
 
 
 class TestLabelColorDict:
@@ -72,9 +72,9 @@ def test__label_show(qtbot):
     widget.set_labels(np.array([[255, 255, 255], [100, 100, 100], [250, 0, 50]], dtype=np.uint8))
     assert widget.image.height() == 1
     assert widget.image.width() == 3
-    widget.set_labels(np.array(_sitk_labels, dtype=np.uint8))
+    widget.set_labels(np.array(sitk_labels, dtype=np.uint8))
     assert widget.image.height() == 1
-    assert widget.image.width() == len(_sitk_labels)
+    assert widget.image.width() == len(sitk_labels)
     widget.set_labels(np.array([[255, 255, 255, 255], [100, 100, 100, 255]], dtype=np.uint8))
     assert widget.image.height() == 1
     assert widget.image.width() == 2
