@@ -3,7 +3,7 @@ import typing
 from napari.utils.colormaps.colormap import Colormap
 from napari.utils.colormaps.colormap_utils import AVAILABLE_COLORMAPS
 
-from PartSegCore.color_image.color_data import sitk_labels
+from PartSegCore.color_image.color_data import _sitk_labels
 
 Num = typing.Union[int, float]
 
@@ -37,4 +37,4 @@ default_colormap_dict.update(
 )
 
 
-default_label_dict = {"default": sitk_labels}
+default_label_dict = {"default": _sitk_labels}

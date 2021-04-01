@@ -34,11 +34,14 @@ class _LabelShow(QWidget):
         self.set_labels(label)
 
     def set_labels(self, label):
-        if label.ndim != 2 and label.shape[1] != 3:
+        if label.ndim != 2 and label.shape[1] not in (3, 4):
             raise ValueError("Wrong array shape")
-        new_label = np.zeros((label.shape[0], 4), dtype=np.uint8)
-        new_label[:, :3] = label
-        new_label[:, 3] = 255
+        if label.shape[1] == 3:
+            new_label = np.zeros((label.shape[0], 4), dtype=np.uint8)
+            new_label[:, :3] = label
+            new_label[:, 3] = 255
+        else:
+            new_label = label
         self.image = NumpyQImage(new_label.reshape(1, new_label.shape[0], 4))
         self.repaint()
 
