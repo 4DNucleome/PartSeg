@@ -27,21 +27,32 @@ from .numpy_qimage import NumpyQImage
 _icon_selector = IconSelector()
 
 
-class _LabelShow(QLabel):
+def add_alpha_channel(colors):
+    if colors.shape[1] == 4:
+        return colors
+    new_label = np.zeros((colors.shape[0], 4), dtype=np.uint8)
+    new_label[:, :3] = colors
+    new_label[:, 3] = 255
+    return new_label
+
+
+class _LabelShow(QWidget):
     def __init__(self, label: np.ndarray):
         super().__init__()
         self.image = None
         self.set_labels(label)
 
     def set_labels(self, label):
-        if label.ndim != 2 and label.shape[1] != 3:
+        if label.ndim != 2 and label.shape[1] not in (3, 4):
             raise ValueError("Wrong array shape")
-        self.image = NumpyQImage(label.reshape(1, label.shape[0], 3))
+        label = add_alpha_channel(label)
+        self.image = NumpyQImage(label.reshape((1,) + label.shape))
         self.repaint()
 
     def paintEvent(self, event: QPaintEvent):
         painter = QPainter(self)
         rect = self.rect()
+        painter.drawRect(rect)
         painter.drawImage(rect, self.image)
 
 

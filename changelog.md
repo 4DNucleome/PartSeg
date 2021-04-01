@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.2
+
+-   Fix showing label in select label tab
+
 ## 0.13.1
 
 -   Add Haralick measurements

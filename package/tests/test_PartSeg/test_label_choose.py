@@ -3,7 +3,8 @@ import pytest
 from qtpy.QtGui import QColor
 
 from PartSeg.common_backend.base_settings import LabelColorDict, ViewSettings
-from PartSeg.common_gui.label_create import LabelEditor
+from PartSeg.common_gui.label_create import LabelEditor, _LabelShow
+from PartSegCore.color_image.color_data import sitk_labels
 
 
 class TestLabelColorDict:
@@ -61,3 +62,19 @@ class TestLabelEditor:
         widget.color_picker.setCurrentColor(QColor(100, 200, 0))
         widget.add_color()
         assert widget.get_colors() == [[100, 200, 0]]
+
+
+def test__label_show(qtbot):
+    widget = _LabelShow(np.array([[255, 255, 255], [100, 100, 100]], dtype=np.uint8))
+    qtbot.addWidget(widget)
+    assert widget.image.height() == 1
+    assert widget.image.width() == 2
+    widget.set_labels(np.array([[255, 255, 255], [100, 100, 100], [250, 0, 50]], dtype=np.uint8))
+    assert widget.image.height() == 1
+    assert widget.image.width() == 3
+    widget.set_labels(np.array(sitk_labels, dtype=np.uint8))
+    assert widget.image.height() == 1
+    assert widget.image.width() == len(sitk_labels)
+    widget.set_labels(np.array([[255, 255, 255, 255], [100, 100, 100, 255]], dtype=np.uint8))
+    assert widget.image.height() == 1
+    assert widget.image.width() == 2

@@ -44,8 +44,7 @@ else:
         icon_hash = dir_hash(ICON_PATH)  # get hash of icons folder contents
         key = f'_qt_resources_{qtpy.API_NAME}_{qtpy.QT_VERSION}_{icon_hash}'
         key = key.replace(".", "_")
-        save_path = Path(qt_resources.__file__).parent / f"{key}.py"
-        return save_path
+        return Path(qt_resources.__file__).parent / f"{key}.py"
 
 
 from dask import config
