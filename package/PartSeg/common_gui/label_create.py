@@ -27,7 +27,7 @@ from .numpy_qimage import NumpyQImage
 _icon_selector = IconSelector()
 
 
-class _LabelShow(QLabel):
+class _LabelShow(QWidget):
     def __init__(self, label: np.ndarray):
         super().__init__()
         self.image = None
@@ -36,12 +36,16 @@ class _LabelShow(QLabel):
     def set_labels(self, label):
         if label.ndim != 2 and label.shape[1] != 3:
             raise ValueError("Wrong array shape")
-        self.image = NumpyQImage(label.reshape(1, label.shape[0], 3))
+        new_label = np.zeros((label.shape[0], 4), dtype=np.uint8)
+        new_label[:, :3] = label
+        new_label[:, 3] = 255
+        self.image = NumpyQImage(new_label.reshape(1, new_label.shape[0], 4))
         self.repaint()
 
     def paintEvent(self, event: QPaintEvent):
         painter = QPainter(self)
         rect = self.rect()
+        painter.drawRect(rect)
         painter.drawImage(rect, self.image)
 
 
