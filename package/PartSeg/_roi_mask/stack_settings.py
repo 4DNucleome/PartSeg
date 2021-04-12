@@ -173,7 +173,7 @@ class StackSettings(BaseSettings):
     @staticmethod
     def transform_state(
         state: MaskProjectTuple,
-        new_segmentation_data: np.ndarray,
+        new_roi_data: np.ndarray,
         segmentation_parameters: typing.Dict,
         list_of_components: typing.List[int],
         save_chosen: bool = True,
@@ -185,7 +185,7 @@ class StackSettings(BaseSettings):
         if segmentation_parameters is None:
             segmentation_parameters = defaultdict(lambda: None)
         segmentation_count = 0 if state.roi is None else len(np.unique(state.roi.flat))
-        new_segmentation_count = 0 if new_segmentation_data is None else len(np.unique(new_segmentation_data.flat))
+        new_segmentation_count = 0 if new_roi_data is None else len(np.unique(new_roi_data.flat))
         segmentation_dtype = minimal_dtype(segmentation_count + new_segmentation_count)
         components_parameters_dict = {}
         if save_chosen and state.roi is not None:
@@ -196,11 +196,11 @@ class StackSettings(BaseSettings):
         else:
             segmentation = None
             base_chose = []
-        if new_segmentation_data is not None:
-            state.image.fit_array_to_image(new_segmentation_data)
-            num = np.max(new_segmentation_data)
+        if new_roi_data is not None:
+            state.image.fit_array_to_image(new_roi_data)
+            num = np.max(new_roi_data)
             if segmentation is not None:
-                new_segmentation = np.copy(new_segmentation_data)
+                new_segmentation = np.copy(new_roi_data)
                 new_segmentation[segmentation > 0] = 0
                 new_segmentation = reduce_array(new_segmentation, dtype=segmentation_dtype)
                 segmentation[new_segmentation > 0] = new_segmentation[new_segmentation > 0] + len(base_chose)
@@ -230,7 +230,7 @@ class StackSettings(BaseSettings):
 
             return dataclasses.replace(
                 state,
-                roi=new_segmentation_data,
+                roi=new_roi_data,
                 selected_components=list_of_components,
                 roi_extraction_parameters=components_parameters_dict,
             )
