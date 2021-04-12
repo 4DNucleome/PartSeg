@@ -371,10 +371,10 @@ class CalculationPrepare(QDialog):
         mask_path_layout = QGridLayout()
         for i, (pos, mask_file) in enumerate(mask_file_list):
             if mask_file.name == "":
-                mask_path_layout.addWidget(right_label("Path to file {} with mask mapping".format(i + 1)))
+                mask_path_layout.addWidget(right_label(f"Path to file {i + 1} with mask mapping"))
             else:
                 mask_path_layout.addWidget(
-                    right_label("Path to file {} with mask mapping for name: {}".format(i + 1, mask_file.name))
+                    right_label(f"Path to file {i + 1} with mask mapping for name: {mask_file.name}")
                 )
             mask_path = QLineEdit(self)
             mask_path.setReadOnly(True)

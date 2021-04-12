@@ -383,7 +383,7 @@ class CalculationProcess:
         elif isinstance(node.operation, MeasurementCalculate):
             self.step_measurement(node.operation)
         else:  # pragma: no cover
-            raise ValueError("Unknown operation {} {}".format(type(node.operation), node.operation))
+            raise ValueError(f"Unknown operation {type(node.operation)} {node.operation}")
 
 
 class BatchResultDescription(NamedTuple):
