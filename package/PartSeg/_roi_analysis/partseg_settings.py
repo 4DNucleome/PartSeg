@@ -97,30 +97,34 @@ class PartSettings(BaseSettings):
         )
 
     def set_project_info(self, data: typing.Union[ProjectTuple, MaskInfo, PointsInfo]):
-        if isinstance(data, ProjectTuple):
-            if self.image.file_path == data.image.file_path and self.image.shape == data.image.shape:
-                if data.roi is not None:
-                    try:
-                        self.image.fit_array_to_image(data.roi)
-                        self.mask = data.mask
-                    except ValueError:
-                        self.image = data.image.substitute()
-                else:
-                    self.mask = data.mask
-            else:
-                self.image = data.image.substitute(mask=data.mask)
-            self.roi = data.roi
-            self._additional_layers = data.additional_layers
-            self.additional_layers_changed.emit()
-            self.set_history(data.history[:])
-            if data.algorithm_parameters:
-                self.last_executed_algorithm = data.algorithm_parameters["algorithm_name"]
-                self.set(f"algorithms.{self.last_executed_algorithm}", deepcopy(data.algorithm_parameters["values"]))
-                self.algorithm_changed.emit()
-        elif isinstance(data, MaskInfo):
+        if isinstance(data, MaskInfo):
             self.mask = data.mask_array
+            return
         elif isinstance(data, PointsInfo):
             self.points = data.points
+            return
+        elif not isinstance(data, ProjectTuple):
+            return
+        if self.image.file_path == data.image.file_path and self.image.shape == data.image.shape:
+            if data.roi is not None:
+                try:
+                    self.image.fit_array_to_image(data.roi)
+                except ValueError:
+                    self.image = data.image.substitute()
+            self.mask = data.mask
+        else:
+            self.image = data.image.substitute(mask=data.mask)
+        if data.roi_info is not None and data.roi_info.roi is not None:
+            self.roi = data.roi_info
+        else:
+            self.roi = data.roi
+        self._additional_layers = data.additional_layers
+        self.additional_layers_changed.emit()
+        self.set_history(data.history[:])
+        if data.algorithm_parameters:
+            self.last_executed_algorithm = data.algorithm_parameters["algorithm_name"]
+            self.set(f"algorithms.{self.last_executed_algorithm}", deepcopy(data.algorithm_parameters["values"]))
+            self.algorithm_changed.emit()
 
     def get_save_list(self) -> typing.List[SaveSettingsDescription]:
         return super().get_save_list() + [

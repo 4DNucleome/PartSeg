@@ -1,7 +1,8 @@
 import numpy as np
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription, SegmentationResult
+from PartSegCore.project_info import AdditionalLayerDescription
+from PartSegCore.segmentation.algorithm_base import SegmentationResult
 
 
 class TestSegmentationResult:

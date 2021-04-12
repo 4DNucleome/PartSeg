@@ -64,10 +64,11 @@ from PartSegCore.analysis.measurement_base import AreaType, PerComponent
 from PartSegCore.analysis.measurement_calculation import MeasurementResult
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.mask_create import calculate_mask
-from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription, SegmentationAlgorithm, report_empty_fun
+from PartSegCore.segmentation.algorithm_base import SegmentationAlgorithm, report_empty_fun
 from PartSegImage import Image, TiffImageReader
 
 from ...io_utils import HistoryElement, WrongFileTypeException
+from ...project_info import AdditionalLayerDescription
 from ...roi_info import ROIInfo
 from ...segmentation import RestartableAlgorithm
 from .. import PartEncoder

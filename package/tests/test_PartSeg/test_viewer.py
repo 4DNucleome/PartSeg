@@ -10,8 +10,8 @@ from PartSeg._roi_analysis.image_view import ResultImageView
 from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui.channel_control import ChannelProperty
 from PartSeg.common_gui.napari_viewer_wrap import Viewer
+from PartSegCore.project_info import AdditionalLayerDescription
 from PartSegCore.roi_info import ROIInfo
-from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
 
 from .utils import CI_BUILD
 

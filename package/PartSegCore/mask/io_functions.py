@@ -34,7 +34,7 @@ from ..io_utils import (
     tar_to_buff,
 )
 from ..json_hooks import ProfileEncoder
-from ..project_info import ProjectInfoBase
+from ..project_info import AdditionalLayerDescription, ProjectInfoBase
 from ..roi_info import ROIInfo
 
 
@@ -47,8 +47,8 @@ class MaskProjectTuple(ProjectInfoBase):
     :ivar typing.Union[Image,str,None] ~.image: image which is proceeded in given segmentation.
         If :py:class:`str` then it is path to image on drive
     :ivar typing.Optional[np.ndarray] ~.mask: Mask limiting segmentation area.
-    :ivar typing.Optional[np.ndarray] ~.segmentation: Segmentation array.
-    :ivar SegmentationInfo ~.segmentation_info: segmentation description
+    :ivar typing.Optional[np.ndarray] ~.roi: ROI array.
+    :ivar SegmentationInfo ~.roi_info: ROI description
     :ivar typing.List[int] ~.selected_components: list of selected components
     :ivar typing.Dict[int,typing.Optional[SegmentationProfile]] ~.segmentation_parameters:
         For each component description set of parameters used for segmentation
@@ -63,6 +63,7 @@ class MaskProjectTuple(ProjectInfoBase):
     mask: typing.Optional[np.ndarray] = None
     roi: typing.Optional[np.ndarray] = None
     roi_info: ROIInfo = ROIInfo(None)
+    additional_layers: typing.Dict[str, AdditionalLayerDescription] = dataclasses.field(default_factory=dict)
     selected_components: typing.List[int] = dataclasses.field(default_factory=list)
     roi_extraction_parameters: typing.Dict[int, typing.Optional[ROIExtractionProfile]] = dataclasses.field(
         default_factory=dict

@@ -20,9 +20,9 @@ from PartSegCore.color_image import default_colormap_dict, default_label_dict
 from PartSegCore.color_image.base_colors import starting_colors
 from PartSegCore.io_utils import HistoryElement, load_metadata_base
 from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, check_loaded_dict
-from PartSegCore.project_info import ProjectInfoBase
+from PartSegCore.project_info import AdditionalLayerDescription, ProjectInfoBase
 from PartSegCore.roi_info import ROIInfo
-from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription, SegmentationResult
+from PartSegCore.segmentation.algorithm_base import SegmentationResult
 from PartSegImage import Image
 
 try:

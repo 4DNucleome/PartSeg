@@ -37,7 +37,7 @@ from PartSegCore.mask.io_functions import (
     SaveROI,
     save_components,
 )
-from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
+from PartSegCore.project_info import AdditionalLayerDescription
 from PartSegCore.segmentation.noise_filtering import DimensionType
 from PartSegCore.segmentation.segmentation_algorithm import ThresholdAlgorithm
 from PartSegImage import Image

@@ -11,7 +11,8 @@ from PartSegCore.segmentation.watershed import BaseWatershed, sprawl_dict
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
 from ..channel_class import Channel
 from ..convex_fill import convex_fill
-from ..segmentation.algorithm_base import AdditionalLayerDescription, SegmentationAlgorithm, SegmentationResult
+from ..project_info import AdditionalLayerDescription
+from ..segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
 from ..utils import bisect
 from .noise_filtering import noise_filtering_dict
 from .threshold import BaseThreshold, double_threshold_dict, threshold_dict

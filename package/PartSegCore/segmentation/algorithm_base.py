@@ -10,7 +10,7 @@ from PartSegImage import Image
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
 from ..image_operations import RadiusType
-from ..project_info import ProjectInfoBase
+from ..project_info import AdditionalLayerDescription, ProjectInfoBase
 from ..utils import numpy_repr
 
 
@@ -22,27 +22,6 @@ def calculate_operation_radius(radius, spacing, gauss_type):
         ratio = [x / base for x in spacing]
         return [radius / r for r in ratio]
     return radius
-
-
-@dataclass
-class AdditionalLayerDescription:
-    """
-    Dataclass
-
-    :ivar numpy.ndarray data: layer data
-    :ivar str layer_type: napari layer type
-    :ivar str name: layer name
-    """
-
-    data: np.ndarray
-    layer_type: str
-    name: str = ""
-
-    def __repr__(self):
-        return (
-            f"AdditionalLayerDescription(data={numpy_repr(self.data)},"
-            f" layer_type='{self.layer_type}', name='{self.name}')"
-        )
 
 
 def dict_repr(dkt: dict) -> str:
