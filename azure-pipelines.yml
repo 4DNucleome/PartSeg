@@ -7,6 +7,7 @@ trigger:
     - documentation
     - release/*
     - hotfix/*
+    - pre-commit-ci-update-config
   tags:
     include:
     - v*
