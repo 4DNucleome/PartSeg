@@ -20,7 +20,7 @@ def empty(*_):
 
 
 class TestAnalysisMainWindow:
-    @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="debug test fail")
+    # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="debug test fail")
     @pytest.mark.skipif(
         (platform.system() == "Windows") and GITHUB_ACTIONS and sys.version_info.minor == 7, reason="need to debug"
     )
@@ -31,6 +31,8 @@ class TestAnalysisMainWindow:
         qtbot.addWidget(main_window)
         main_window.main_menu.batch_processing_btn.click()
         main_window.main_menu.advanced_btn.click()
+        main_window.advanced_window.close()
+        main_window.advanced_window.close()
 
 
 class TestMaskMainWindow:
