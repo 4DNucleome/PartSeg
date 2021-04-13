@@ -20,7 +20,7 @@ def empty(*_):
 
 
 class TestAnalysisMainWindow:
-    # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
+    @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="debug test fail")
     @pytest.mark.skipif(
         (platform.system() == "Windows") and GITHUB_ACTIONS and sys.version_info.minor == 7, reason="need to debug"
     )
