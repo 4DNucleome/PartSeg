@@ -151,7 +151,7 @@ class BatchManager:
             self.join_all()
 
     def join_all(self):
-        logging.debug("Join begin {} {}".format(len(self.process_list), self.number_off_process))
+        logging.debug(f"Join begin {len(self.process_list)} {self.number_off_process}")
         with self.locker:
             if len(self.process_list) > self.number_off_process:
                 to_remove = []

@@ -757,7 +757,7 @@ class CalculationPlan:
                 return f"Mask sum of mask {el.mask1} and {el.mask2}"
             return f"Mask {el.name} sum of mask {el.mask1} and {el.mask2}"
 
-        raise ValueError("Unknown type {}".format(type(el)))
+        raise ValueError(f"Unknown type {type(el)}")
 
     def pretty_print(self) -> str:
         return f"Calcualation Plan: {self.name}\n" + self._pretty_print(self.execution_tree, 0)

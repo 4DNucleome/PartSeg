@@ -44,7 +44,7 @@ class AcceptFiles(QDialog):
         self.ok.setAutoDefault(True)
 
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("Found {} files".format(len(files))))
+        layout.addWidget(QLabel(f"Found {len(files)} files"))
         layout.addWidget(self.files)
         butt_layout = QHBoxLayout()
         butt_layout.addWidget(discard)
