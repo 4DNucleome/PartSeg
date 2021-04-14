@@ -148,7 +148,7 @@ class StackSettings(BaseSettings):
         if self.keep_chosen_components:
             if not self.compare_history(data.history) and self.chosen_components():
                 raise HistoryProblem("Incompatible history")
-            state2 = self._transform_state(
+            state2 = self.transform_state(
                 state,
                 data.roi_info,
                 data.roi_extraction_parameters,
@@ -183,7 +183,7 @@ class StackSettings(BaseSettings):
         return res
 
     @classmethod
-    def _transform_state(
+    def transform_state(
         cls,
         state: MaskProjectTuple,
         new_roi_info: ROIInfo,
@@ -288,7 +288,7 @@ class StackSettings(BaseSettings):
         except ValueError:
             raise ValueError("Segmentation do not fit to image")
         if save_chosen:
-            state2 = self._transform_state(
+            state2 = self.transform_state(
                 state, ROIInfo(new_segmentation_data), segmentation_parameters, list_of_components, save_chosen
             )
             self.chosen_components_widget.set_chose(

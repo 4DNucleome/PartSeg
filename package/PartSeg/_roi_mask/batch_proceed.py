@@ -82,7 +82,7 @@ class BatchProceed(QThread):
                     self.range_signal.emit(0, algorithm.get_steps_num())
                 # noinspection PyTypeChecker
                 segmentation = algorithm.calculation_run(partial(self.progress_info, name))
-                state2 = StackSettings._transform_state(
+                state2 = StackSettings.transform_state(
                     project_tuple, segmentation.roi_info, defaultdict(lambda: segmentation.parameters), []
                 )
                 if isinstance(task.save_prefix, tuple):
