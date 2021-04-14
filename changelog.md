@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.3
+
+-   Fix saving roi_info in multiple files and history
+
 ## 0.13.2
 
 -   Fix showing label in select label tab
