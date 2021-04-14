@@ -63,7 +63,6 @@ try:
 
         monkeypatch.setattr(napari_image_view.ImageView, "_add_layer_util", _add_layer_util)
 
-
     @pytest.fixture(autouse=True)
     def check_opened_windows(qapp):
         yield
