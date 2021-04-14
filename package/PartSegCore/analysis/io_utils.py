@@ -66,6 +66,6 @@ def create_history_element_from_project(project_info: ProjectTuple, mask_propert
     return HistoryElement.create(
         roi_info=project_info.roi_info,
         mask=project_info.mask,
-        segmentation_parameters=project_info.algorithm_parameters,
+        roi_extraction_parameters=project_info.algorithm_parameters,
         mask_property=mask_property,
     )

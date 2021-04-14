@@ -1,6 +1,7 @@
 import copy
 import typing
 
+import numpy as np
 from napari.utils import Colormap
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
@@ -156,6 +157,10 @@ class ProfileEncoder(SerializeClassEncoder):
                 "interpolation": o.interpolation,
                 "controls": o.controls.tolist(),
             }
+        if isinstance(o, np.integer):
+            return int(o)
+        if isinstance(o, np.floating):
+            return float(o)
         return super().default(o)
 
 

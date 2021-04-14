@@ -7,7 +7,7 @@ def create_history_element_from_segmentation_tuple(project_info: MaskProjectTupl
     return HistoryElement.create(
         roi_info=project_info.roi_info,
         mask=project_info.mask,
-        segmentation_parameters={
+        roi_extraction_parameters={
             "selected": project_info.selected_components,
             "parameters": project_info.roi_extraction_parameters,
         },

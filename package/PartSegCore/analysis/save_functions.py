@@ -22,6 +22,7 @@ from ..io_utils import (
     SaveROIAsTIFF,
     get_tarinfo,
 )
+from ..roi_info import ROIInfo
 from ..universal_const import UNIT_SCALE, Units
 from .io_utils import ProjectTuple, project_version_info
 from .save_hooks import PartEncoder
@@ -40,7 +41,7 @@ __all__ = [
 def save_project(
     file_path: str,
     image: Image,
-    roi: np.ndarray,
+    roi_info: ROIInfo,
     mask: typing.Optional[np.ndarray],
     history: typing.List[HistoryElement],
     algorithm_parameters: dict,
@@ -51,7 +52,7 @@ def save_project(
     with tarfile.open(file_path, tar_mod) as tar:
         segmentation_buff = BytesIO()
         # noinspection PyTypeChecker
-        tifffile.imwrite(segmentation_buff, roi, compress=9)
+        tifffile.imwrite(segmentation_buff, roi_info.roi, compress=9)
         segmentation_tar = get_tarinfo("segmentation.tif", segmentation_buff)
         tar.addfile(segmentation_tar, fileobj=segmentation_buff)
         if mask is not None:
@@ -79,9 +80,10 @@ def save_project(
             el_info.append(
                 {
                     "index": i,
-                    "algorithm_name": el.segmentation_parameters["algorithm_name"],
-                    "values": el.segmentation_parameters["values"],
+                    "algorithm_name": el.roi_extraction_parameters["algorithm_name"],
+                    "values": el.roi_extraction_parameters["values"],
                     "mask_property": el.mask_property,
+                    "annotations": el.annotations,
                 }
             )
             el.arrays.seek(0)
@@ -169,7 +171,7 @@ class SaveProject(SaveBase):
         save_project(
             save_location,
             project_info.image,
-            project_info.roi_info.roi,
+            project_info.roi_info,
             project_info.mask,
             project_info.history,
             project_info.algorithm_parameters,

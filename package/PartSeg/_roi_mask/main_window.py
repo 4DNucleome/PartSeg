@@ -95,8 +95,8 @@ class MaskDialog(MaskDialogBase):
         self.settings.set_segmentation(
             seg["segmentation"],
             False,
-            history.segmentation_parameters["selected"],
-            history.segmentation_parameters["parameters"],
+            history.roi_extraction_parameters["selected"],
+            history.roi_extraction_parameters["parameters"],
         )
         self.settings.mask = seg["mask"] if "mask" in seg else None
         self.close()

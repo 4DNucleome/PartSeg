@@ -101,9 +101,10 @@ def load_project(
                 segmentation_parameters = {"algorithm_name": el["algorithm_name"], "values": el["values"]}
                 history.append(
                     HistoryElement(
-                        segmentation_parameters=segmentation_parameters,
+                        roi_extraction_parameters=segmentation_parameters,
                         mask_property=el["mask_property"],
                         arrays=history_buffer,
+                        annotations=el.get("annotations", {}),
                     )
                 )
 

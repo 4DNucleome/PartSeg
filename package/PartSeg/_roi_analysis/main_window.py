@@ -164,8 +164,8 @@ class Options(QWidget):
             mask = el.mask_property
             segmentation = ROIExtractionProfile(
                 name="Unknown",
-                algorithm=el.segmentation_parameters["algorithm_name"],
-                values=el.segmentation_parameters["values"],
+                algorithm=el.roi_extraction_parameters["algorithm_name"],
+                values=el.roi_extraction_parameters["values"],
             )
             new_el = SegmentationPipelineElement(mask_property=mask, segmentation=segmentation)
             mask_history.append(new_el)
@@ -523,10 +523,10 @@ class MaskDialog(MaskDialogBase):
         )
         if self.settings.history_redo_size():
             history: HistoryElement = self.settings.history_next_element()
-            self.settings.set("current_algorithm", history.segmentation_parameters["algorithm_name"])
+            self.settings.set("current_algorithm", history.roi_extraction_parameters["algorithm_name"])
             self.settings.set(
-                f"algorithm.{history.segmentation_parameters['algorithm_name']}",
-                history.segmentation_parameters["values"],
+                f"algorithm.{history.roi_extraction_parameters['algorithm_name']}",
+                history.roi_extraction_parameters["values"],
             )
         self.settings.mask = mask
         self.close()
@@ -536,15 +536,12 @@ class MaskDialog(MaskDialogBase):
         algorithm_name = self.settings.last_executed_algorithm
         algorithm_values = self.settings.get(f"algorithms.{algorithm_name}")
         self.settings.fix_history(algorithm_name=algorithm_name, algorithm_values=algorithm_values)
-        self.settings.set("current_algorithm", history.segmentation_parameters["algorithm_name"])
+        self.settings.set("current_algorithm", history.roi_extraction_parameters["algorithm_name"])
         self.settings.set(
-            f"algorithm.{history.segmentation_parameters['algorithm_name']}", history.segmentation_parameters["values"]
+            f"algorithm.{history.roi_extraction_parameters['algorithm_name']}",
+            history.roi_extraction_parameters["values"],
         )
-        history.arrays.seek(0)
-        seg = np.load(history.arrays)
-        history.arrays.seek(0)
-        self.settings.roi = seg["segmentation"]
-        self.settings.mask = seg["mask"] if "mask" in seg else None
+        self.settings.roi, self.settings.mask = history.get_roi_info_and_mask()
         self.close()
 
 

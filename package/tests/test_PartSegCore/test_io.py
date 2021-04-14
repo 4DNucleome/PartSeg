@@ -304,7 +304,7 @@ class TestSegmentationMask:
         assert len(res.history) == 1
         assert res.history[0].mask_property == mask_property
         cmp_dict = {str(k): v for k, v in stack_segmentation1.roi_extraction_parameters.items()}
-        assert str(res.history[0].segmentation_parameters["parameters"]) == str(cmp_dict)
+        assert str(res.history[0].roi_extraction_parameters["parameters"]) == str(cmp_dict)
 
 
 class TestSaveFunctions:

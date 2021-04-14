@@ -54,7 +54,7 @@ class SegmentationResult:
 
     @property
     def roi_info(self) -> ROIInfo:
-        return ROIInfo(roi=self.roi, annotation=self.roi_annotation, alternative=self.alternative_representation)
+        return ROIInfo(roi=self.roi, annotations=self.roi_annotation, alternative=self.alternative_representation)
 
     def __post_init__(self):
         if "ROI" in self.alternative_representation:

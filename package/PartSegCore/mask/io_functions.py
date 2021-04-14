@@ -121,6 +121,7 @@ def save_stack_segmentation(
             "components": [int(x) for x in segmentation_info.selected_components],
             "parameters": {str(k): v for k, v in segmentation_info.roi_extraction_parameters.items()},
             "shape": segmentation_info.roi_info.roi.shape,
+            "annotations": segmentation_info.roi_info.annotations,
         }
         if isinstance(segmentation_info.image, Image):
             file_path = segmentation_info.image.file_path
@@ -152,7 +153,8 @@ def save_stack_segmentation(
                 {
                     "index": i,
                     "mask_property": hist.mask_property,
-                    "segmentation_parameters": hist.segmentation_parameters,
+                    "segmentation_parameters": hist.roi_extraction_parameters,
+                    "annotations": hist.annotations,
                 }
             )
             hist.arrays.seek(0)
@@ -203,7 +205,7 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
             roi = roi.get_channel(0)
         else:
             spacing = None
-        roi_info = ROIInfo(reduce_array(roi))
+        roi_info = ROIInfo(reduce_array(roi), annotations=metadata.get("annotations", {}))
         step_changed(4)
         if "mask.tif" in tar_file.getnames():
             mask = tifffile.imread(tar_to_buff(tar_file, "mask.tif"))
@@ -222,9 +224,10 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
                 history_buffer.seek(0)
                 history.append(
                     HistoryElement(
-                        segmentation_parameters=el["segmentation_parameters"],
+                        roi_extraction_parameters=el["segmentation_parameters"],
                         mask_property=el["mask_property"],
                         arrays=history_buffer,
+                        annotations=el.get("annotations", {}),
                     )
                 )
 

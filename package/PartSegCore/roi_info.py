@@ -37,10 +37,10 @@ class ROIInfo:
     def __init__(
         self,
         roi: Optional[np.ndarray],
-        annotation: Optional[Dict[int, Any]] = None,
+        annotations: Optional[Dict[int, Any]] = None,
         alternative: Optional[Dict[str, np.ndarray]] = None,
     ):
-        self.annotations = {} if annotation is None else annotation
+        self.annotations = {} if annotations is None else annotations
         self.alternative = {} if alternative is None else alternative
         if roi is None:
             self.roi = None

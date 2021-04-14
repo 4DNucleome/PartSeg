@@ -233,7 +233,7 @@ class StackSettings(BaseSettings):
         if new_segmentation_count == 0:
             return dataclasses.replace(
                 state,
-                roi_info=ROIInfo(roi=roi_base, annotation=annotation_base, alternative=alternative_base),
+                roi_info=ROIInfo(roi=roi_base, annotations=annotation_base, alternative=alternative_base),
                 selected_components=base_chose,
                 roi_extraction_parameters=components_parameters_dict,
             )
@@ -256,7 +256,7 @@ class StackSettings(BaseSettings):
                 base_chose.append(i)
             components_parameters_dict[i] = new_roi_extraction_parameters[el]
 
-        roi_info = ROIInfo(roi=roi_base, annotation=annotation_base, alternative=alternative_base)
+        roi_info = ROIInfo(roi=roi_base, annotations=annotation_base, alternative=alternative_base)
 
         return dataclasses.replace(
             state,
@@ -270,7 +270,7 @@ class StackSettings(BaseSettings):
         if len(history) != self.history_size():
             return False
         return not any(
-            el2.mask_property != el1.mask_property or el2.segmentation_parameters != el1.segmentation_parameters
+            el2.mask_property != el1.mask_property or el2.roi_extraction_parameters != el1.roi_extraction_parameters
             for el1, el2 in zip(self.history, history)
         )
 

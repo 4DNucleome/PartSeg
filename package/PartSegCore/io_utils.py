@@ -304,7 +304,8 @@ def open_tar_file(
 
 
 class HistoryElement(BaseSerializableClass):
-    segmentation_parameters: typing.Dict[str, typing.Any]
+    roi_extraction_parameters: typing.Dict[str, typing.Any]
+    annotations: typing.Optional[typing.Dict[int, typing.Any]]
     mask_property: MaskProperty
     arrays: BytesIO
 
@@ -313,22 +314,35 @@ class HistoryElement(BaseSerializableClass):
         cls,
         roi_info: ROIInfo,
         mask: typing.Union[np.ndarray, None],
-        segmentation_parameters: dict,
+        roi_extraction_parameters: dict,
         mask_property: MaskProperty,
     ):
-        if "name" in segmentation_parameters:
+        if "name" in roi_extraction_parameters:
             raise ValueError("name")
         arrays = BytesIO()
-        arrays_dict = {"segmentation": roi_info.roi}
+        arrays_dict = {"roi": roi_info.roi}
+        for name, array in roi_info.alternative.items():
+            arrays_dict[name] = array
         if mask is not None:
             arrays_dict["mask"] = mask
+
         np.savez_compressed(arrays, **arrays_dict)
         arrays.seek(0)
         return cls(
-            segmentation_parameters=segmentation_parameters,
+            roi_extraction_parameters=roi_extraction_parameters,
             mask_property=mask_property,
             arrays=arrays,
+            annotations=roi_info.annotations,
         )
+
+    def get_roi_info_and_mask(self) -> typing.Tuple[ROIInfo, typing.Optional[np.ndarray]]:
+        self.arrays.seek(0)
+        seg = np.load(self.arrays)
+        self.arrays.seek(0)
+        alternative = {name: array for name, array in seg.items() if name not in {"roi", "mask"}}
+        roi_info = ROIInfo(seg["roi"], annotations=self.annotations, alternative=alternative)
+        mask = seg["mask"] if "mask" in seg else None
+        return roi_info, mask
 
 
 class HistoryProblem(Exception):
