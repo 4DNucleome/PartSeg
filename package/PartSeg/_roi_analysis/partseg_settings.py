@@ -99,10 +99,10 @@ class PartSettings(BaseSettings):
         if isinstance(data, MaskInfo):
             self.mask = data.mask_array
             return
-        elif isinstance(data, PointsInfo):
+        if isinstance(data, PointsInfo):
             self.points = data.points
             return
-        elif not isinstance(data, ProjectTuple):
+        if not isinstance(data, ProjectTuple):
             return
         if self.image.file_path == data.image.file_path and self.image.shape == data.image.shape:
             if data.roi_info.roi is not None:

@@ -52,8 +52,8 @@ class ProjectInfoBase(Protocol):
     file_path: str
     image: Image
     roi_info: ROIInfo = ROIInfo(None)
-    additional_layers: Dict[str, AdditionalLayerDescription] = dict()
-    mask: Optional[np.ndarray]
+    additional_layers: Dict[str, AdditionalLayerDescription] = {}
+    mask: Optional[np.ndarray] = None
     errors: str = ""
     points: Optional[np.ndarray] = None
 
