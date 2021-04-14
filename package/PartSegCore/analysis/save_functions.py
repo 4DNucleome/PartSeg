@@ -40,7 +40,7 @@ __all__ = [
 def save_project(
     file_path: str,
     image: Image,
-    segmentation: np.ndarray,
+    roi: np.ndarray,
     mask: typing.Optional[np.ndarray],
     history: typing.List[HistoryElement],
     algorithm_parameters: dict,
@@ -51,7 +51,7 @@ def save_project(
     with tarfile.open(file_path, tar_mod) as tar:
         segmentation_buff = BytesIO()
         # noinspection PyTypeChecker
-        tifffile.imwrite(segmentation_buff, segmentation, compress=9)
+        tifffile.imwrite(segmentation_buff, roi, compress=9)
         segmentation_tar = get_tarinfo("segmentation.tif", segmentation_buff)
         tar.addfile(segmentation_tar, fileobj=segmentation_buff)
         if mask is not None:
@@ -169,7 +169,7 @@ class SaveProject(SaveBase):
         save_project(
             save_location,
             project_info.image,
-            project_info.roi,
+            project_info.roi_info.roi,
             project_info.mask,
             project_info.history,
             project_info.algorithm_parameters,
@@ -211,7 +211,7 @@ class SaveCmap(SaveBase):
             raise NotSupportedImage("This save method o not support time data")
         data = project_info.image.get_data_by_axis(c=parameters["channel"], t=0)
         spacing = project_info.image.spacing
-        segmentation = project_info.image.clip_array(project_info.roi, t=0)
+        segmentation = project_info.image.clip_array(project_info.roi_info.roi, t=0)
 
         reverse_base = float(np.mean(data[segmentation == 0]))
         if parameters.get("clip", False):
@@ -271,7 +271,7 @@ class SaveXYZ(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
-        if project_info.roi is None:
+        if project_info.roi_info.roi is None:
             raise ValueError("Not segmentation")
         if isinstance(save_location, (str, Path)) and not os.path.exists(os.path.dirname(save_location)):
             os.makedirs(os.path.dirname(save_location))
@@ -281,7 +281,7 @@ class SaveXYZ(SaveBase):
             raise NotSupportedImage("This save method o not support time data")
         channel_image = project_info.image.get_data_by_axis(c=parameters["channel"], t=parameters.get("time", 0))
 
-        segmentation_mask = np.array(project_info.roi > 0)
+        segmentation_mask = np.array(project_info.roi_info.roi > 0)
         segmentation_mask = project_info.image.clip_array(segmentation_mask, t=parameters.get("time", 0))
         if parameters.get("clip", False):
             positions = np.transpose(np.nonzero(segmentation_mask))
@@ -291,10 +291,10 @@ class SaveXYZ(SaveBase):
             shift = np.array([0] * segmentation_mask.ndim)
         cls._save(save_location, channel_image, segmentation_mask, shift)
         if parameters.get("separated_objects", False):
-            components_count = np.bincount(project_info.roi.flat)
+            components_count = np.bincount(project_info.roi_info.roi.flat)
             for i, size in enumerate(components_count[1:], 1):
                 if size > 0:
-                    segmentation_mask = np.array(project_info.roi == i)[parameters.get("time", 0)]
+                    segmentation_mask = np.array(project_info.roi_info.roi == i)[parameters.get("time", 0)]
                     base_path, ext = os.path.splitext(save_location)
                     new_save_location = base_path + f"_part{i}" + ext
                     cls._save(new_save_location, channel_image, segmentation_mask, shift)

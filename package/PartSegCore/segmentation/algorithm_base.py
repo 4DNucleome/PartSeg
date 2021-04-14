@@ -11,6 +11,7 @@ from PartSegImage import Image
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
 from ..image_operations import RadiusType
 from ..project_info import AdditionalLayerDescription, ProjectInfoBase
+from ..roi_info import ROIInfo
 from ..utils import numpy_repr
 
 
@@ -50,6 +51,10 @@ class SegmentationResult:
     info_text: str = ""
     roi_annotation: Dict = field(default_factory=dict)
     alternative_representation: Dict[str, np.ndarray] = field(default_factory=dict)
+
+    @property
+    def roi_info(self) -> ROIInfo:
+        return ROIInfo(roi=self.roi, annotation=self.roi_annotation, alternative=self.alternative_representation)
 
     def __post_init__(self):
         if "ROI" in self.alternative_representation:

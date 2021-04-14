@@ -8,6 +8,7 @@ import numpy as np
 
 from PartSegCore.analysis.io_utils import ProjectTuple
 from PartSegCore.io_utils import LoadBase
+from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.noise_filtering import DimensionType
 from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegImage import Image
@@ -77,4 +78,4 @@ class LoadPartSegOld(LoadBase):
             "threshold_list": algorithm_dict["threshold_list"],
         }
 
-        return ProjectTuple(file_path, image, seg_array, algorithm_parameters=algorithm_parameters)
+        return ProjectTuple(file_path, image, ROIInfo(seg_array), algorithm_parameters=algorithm_parameters)

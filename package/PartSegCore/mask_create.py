@@ -95,12 +95,14 @@ def calculate_mask_from_project(
         time_axis = project.image.time_pos
     except AttributeError:
         time_axis = None
-    return calculate_mask(mask_description, project.roi, project.mask, project.image.spacing, components, time_axis)
+    return calculate_mask(
+        mask_description, project.roi_info.roi, project.mask, project.image.spacing, components, time_axis
+    )
 
 
 def calculate_mask(
     mask_description: MaskProperty,
-    segmentation: np.ndarray,
+    roi: np.ndarray,
     old_mask: typing.Optional[np.ndarray],
     spacing: typing.Iterable[typing.Union[float, int]],
     components: typing.Optional[typing.List[int]] = None,
@@ -112,7 +114,7 @@ def calculate_mask(
     otherwise it is done after dilate
 
     :param MaskProperty mask_description: information how calculate mask
-    :param np.ndarray segmentation: array on which mask is calculated
+    :param np.ndarray roi: array on which mask is calculated
     :param typing.Optional[np.ndarray] old_mask: if in mask_description there is set to crop and old_mask is not None
         then final mask is clipped to this area
     :param typing.Iterable[typing.Union[float,int]] spacing: spacing of image. Needed for calculating radius of dilate
@@ -128,16 +130,13 @@ def calculate_mask(
     if mask_description.dilate == RadiusType.R2D:
         dilate_radius = dilate_radius[-2:]
     if components is not None:
-        components_num = max(np.max(segmentation), *components) + 1
+        components_num = max(np.max(roi), *components) + 1
         map_array = np.zeros(components_num, dtype=minimal_dtype(components_num))
         for el in components:
             map_array[el] = el
-        segmentation = map_array[segmentation]
+        roi = map_array[roi]
 
-    if mask_description.save_components:
-        mask = np.copy(segmentation)
-    else:
-        mask = np.array(segmentation > 0)
+    mask = np.copy(roi) if mask_description.save_components else np.array(roi > 0)
     if time_axis is None:
         return _calculate_mask(mask_description, dilate_radius, mask, old_mask)
     slices: typing.List[typing.Union[slice, int]] = [slice(None) for _ in range(mask.ndim)]

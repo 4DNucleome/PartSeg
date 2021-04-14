@@ -74,7 +74,7 @@ class TestNapariViewer:
         settings.image = analysis_segmentation2.image
         viewer.create_initial_layers(True, True, True, True)
         assert len(viewer.layers) == 1
-        settings.roi = analysis_segmentation2.roi
+        settings.roi = analysis_segmentation2.roi_info.roi
         viewer.create_initial_layers(True, True, True, True)
         assert len(viewer.layers) == 2
         settings.mask = analysis_segmentation2.mask

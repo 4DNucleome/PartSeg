@@ -17,11 +17,13 @@ from napari.utils import Colormap
 
 from PartSegCore.json_hooks import ProfileDict, profile_hook
 from PartSegImage import ImageWriter
+from PartSegImage.image import minimal_dtype
 
 from .algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
 from .class_generator import BaseSerializableClass
 from .mask_create import MaskProperty
 from .project_info import ProjectInfoBase
+from .roi_info import ROIInfo
 
 
 class SegmentationType(Enum):
@@ -309,7 +311,7 @@ class HistoryElement(BaseSerializableClass):
     @classmethod
     def create(
         cls,
-        segmentation: np.ndarray,
+        roi_info: ROIInfo,
         mask: typing.Union[np.ndarray, None],
         segmentation_parameters: dict,
         mask_property: MaskProperty,
@@ -317,7 +319,7 @@ class HistoryElement(BaseSerializableClass):
         if "name" in segmentation_parameters:
             raise ValueError("name")
         arrays = BytesIO()
-        arrays_dict = {"segmentation": segmentation}
+        arrays_dict = {"segmentation": roi_info.roi}
         if mask is not None:
             arrays_dict["mask"] = mask
         np.savez_compressed(arrays, **arrays_dict)
@@ -419,13 +421,10 @@ class SaveROIAsTIFF(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
-        segmentation = project_info.roi
-        segmentation_max = segmentation.max()
-        if segmentation_max < 2 ** 8 - 1:
-            segmentation = segmentation.astype(np.uint8)
-        elif segmentation_max < 2 ** 16 - 1:
-            segmentation = segmentation.astype(np.uint16)
-        tifffile.imsave(save_location, segmentation)
+        roi = project_info.roi_info.roi
+        roi_max = max(project_info.roi_info.bound_info)
+        roi = roi.astype(minimal_dtype(roi_max))
+        tifffile.imsave(save_location, roi)
 
 
 class SaveROIAsNumpy(SaveBase):
@@ -450,13 +449,10 @@ class SaveROIAsNumpy(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
-        segmentation = project_info.roi
-        segmentation_max = segmentation.max()
-        if segmentation_max < 2 ** 8 - 1:
-            segmentation = segmentation.astype(np.uint8)
-        elif segmentation_max < 2 ** 16 - 1:
-            segmentation = segmentation.astype(np.uint16)
-        np.save(save_location, segmentation)
+        roi = project_info.roi_info.roi
+        roi_max = max(project_info.roi_info.bound_info)
+        roi = roi.astype(minimal_dtype(roi_max))
+        np.save(save_location, roi)
 
 
 class PointsInfo(typing.NamedTuple):

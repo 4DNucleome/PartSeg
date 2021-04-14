@@ -27,9 +27,11 @@ class ROIInfo:
     Object to storage meta information about given segmentation.
     Segmentation array is only referenced, not copied.
 
-    :ivar numpy.ndarray ~.segmentation: reference to segmentation
+    :ivar numpy.ndarray ~.roi: reference to segmentation
     :ivar Dict[int,BoundInfo] bound_info: mapping from component number to bounding box
     :ivar numpy.ndarray sizes: array with sizes of components
+    :ivar Dict[int, Any] annotations: annotations of roi
+    :ivar Dict[str, np.ndarray] alternative: alternative representation of roi
     """
 
     def __init__(
@@ -53,9 +55,10 @@ class ROIInfo:
         self.sizes = np.bincount(roi.flat)
 
     def fit_to_image(self, image: Image) -> "ROIInfo":
+        if self.roi is None:
+            return ROIInfo(self.roi, self.annotations, self.alternative)
         roi = image.fit_array_to_image(self.roi)
         alternatives = {k: image.fit_array_to_image(v) for k, v in self.alternative.items()}
-
         return ROIInfo(roi, self.annotations, alternatives)
 
     def __str__(self):

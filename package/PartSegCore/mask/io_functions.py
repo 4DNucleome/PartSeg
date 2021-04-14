@@ -61,7 +61,6 @@ class MaskProjectTuple(ProjectInfoBase):
     file_path: str
     image: typing.Union[Image, str, None]
     mask: typing.Optional[np.ndarray] = None
-    roi: typing.Optional[np.ndarray] = None
     roi_info: ROIInfo = ROIInfo(None)
     additional_layers: typing.Dict[str, AdditionalLayerDescription] = dataclasses.field(default_factory=dict)
     selected_components: typing.List[int] = dataclasses.field(default_factory=list)
@@ -107,19 +106,21 @@ def save_stack_segmentation(
             spacing = segmentation_info.image.spacing
         else:
             spacing = parameters.get("spacing", (10 ** -6, 10 ** -6, 10 ** -6))
-        segmentation_image = Image(segmentation_info.roi, spacing, axes_order=Image.axis_order.replace("C", ""))
+        segmentation_image = Image(
+            segmentation_info.roi_info.roi, spacing, axes_order=Image.axis_order.replace("C", "")
+        )
         try:
             ImageWriter.save(segmentation_image, segmentation_buff)
         except ValueError:
             segmentation_buff.seek(0)
-            tifffile.imwrite(segmentation_buff, segmentation_info.roi, compress=9)
+            tifffile.imwrite(segmentation_buff, segmentation_info.roi_info.roi, compress=9)
         segmentation_tar = get_tarinfo("segmentation.tif", segmentation_buff)
         tar_file.addfile(segmentation_tar, fileobj=segmentation_buff)
         step_changed(3)
         metadata = {
             "components": [int(x) for x in segmentation_info.selected_components],
             "parameters": {str(k): v for k, v in segmentation_info.roi_extraction_parameters.items()},
-            "shape": segmentation_info.roi.shape,
+            "shape": segmentation_info.roi_info.roi.shape,
         }
         if isinstance(segmentation_info.image, Image):
             file_path = segmentation_info.image.file_path
@@ -196,13 +197,13 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
         segmentation_buff.write(segmentation_tar.read())
         step_changed(3)
         segmentation_buff.seek(0)
-        segmentation = segmentation_load_fun(segmentation_buff)
-        if isinstance(segmentation, Image):
-            spacing = segmentation.spacing
-            segmentation = segmentation.get_channel(0)
+        roi = segmentation_load_fun(segmentation_buff)
+        if isinstance(roi, Image):
+            spacing = roi.spacing
+            roi = roi.get_channel(0)
         else:
             spacing = None
-        segmentation = reduce_array(segmentation)
+        roi_info = ROIInfo(reduce_array(roi))
         step_changed(4)
         if "mask.tif" in tar_file.getnames():
             mask = tifffile.imread(tar_to_buff(tar_file, "mask.tif"))
@@ -236,7 +237,7 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
     return MaskProjectTuple(
         file_path=file_data if isinstance(file_data, str) else "",
         image=metadata["base_file"] if "base_file" in metadata else None,
-        roi=segmentation,
+        roi_info=roi_info,
         selected_components=metadata["components"],
         mask=mask,
         roi_extraction_parameters=metadata["parameters"] if "parameters" in metadata else None,
@@ -398,7 +399,9 @@ class LoadROIImage(LoadBase):
         )
         # noinspection PyProtectedMember
         # image.file_path = load_locations[0]
-        return dataclasses.replace(seg, file_path=image.file_path, image=image, roi=image.fit_array_to_image(seg.roi))
+        return dataclasses.replace(
+            seg, file_path=image.file_path, image=image, roi_info=seg.roi_info.fit_to_image(image)
+        )
 
 
 class LoadStackImage(LoadBase):
@@ -507,9 +510,8 @@ class SaveROI(SaveBase):
 def save_components(
     image: Image,
     components: list,
-    segmentation: np.ndarray,
     dir_path: str,
-    segmentation_info: typing.Optional[ROIInfo] = None,
+    roi_info: ROIInfo,
     points: typing.Optional[np.ndarray] = None,
     range_changed=None,
     step_changed=None,
@@ -519,10 +521,7 @@ def save_components(
     if step_changed is None:
         step_changed = empty_fun
 
-    segmentation = image.fit_array_to_image(segmentation)
-
-    if segmentation_info is None:
-        segmentation_info = ROIInfo(segmentation)
+    roi_info = roi_info.fit_to_image(image)
     os.makedirs(dir_path, exist_ok=True)
 
     file_name = os.path.splitext(os.path.basename(image.file_path))[0]
@@ -534,7 +533,7 @@ def save_components(
 
     range_changed(0, 2 * len(components))
     for i in components:
-        components_mark = np.array(segmentation == i)
+        components_mark = np.array(roi_info.roi == i)
         im = image.cut_image(components_mark, replace_mask=True)
         if points is not None and points_casted is not None:
             points_mask = components_mark[tuple(points_casted.T)]
@@ -575,7 +574,6 @@ class SaveComponents(SaveBase):
         save_components(
             project_info.image,
             project_info.selected_components,
-            project_info.roi,
             save_location,
             project_info.roi_info,
             project_info.points,
@@ -636,12 +634,12 @@ class LoadROIFromTIFF(LoadBase):
         metadata: typing.Optional[dict] = None,
     ) -> typing.Union[ProjectInfoBase, typing.List[ProjectInfoBase]]:
         image = TiffImageReader.read_image(load_locations[0])
-        segmentation = image.get_channel(0)
+        roi = image.get_channel(0)
         return MaskProjectTuple(
             file_path=load_locations[0],
             image=None,
-            segmentation=segmentation,
-            segmentation_parameters=defaultdict(lambda: None),
+            roi_info=ROIInfo(roi),
+            roi_extraction_parameters=defaultdict(lambda: None),
         )
 
     @classmethod

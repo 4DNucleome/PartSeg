@@ -1,4 +1,5 @@
 import sys
+import warnings
 from dataclasses import dataclass
 from typing import Dict, Optional
 
@@ -43,19 +44,23 @@ class ProjectInfoBase(Protocol):
     :ivar str ~.file_path: path to current preceded file
     :ivar Image ~.image: project image
     :ivar numpy.ndarray ~.segmentation: numpy array representing current project ROI
-    :ivar SegmentationInfo ~.segmentation_info: segmentation metadata
+    :ivar ROIInfo ~.roi_info: segmentation metadata
     :ivar Optional[numpy.ndarray] ~.mask: mask used in project
     :ivar str errors: information about problems with current project
     """
 
     file_path: str
     image: Image
-    roi: np.ndarray
     roi_info: ROIInfo = ROIInfo(None)
     additional_layers: Dict[str, AdditionalLayerDescription] = dict()
     mask: Optional[np.ndarray]
     errors: str = ""
     points: Optional[np.ndarray] = None
+
+    @property
+    def roi(self):
+        warnings.warn("roi is deprecated", DeprecationWarning, 2)
+        return self.roi_info.roi
 
     def get_raw_copy(self):
         """

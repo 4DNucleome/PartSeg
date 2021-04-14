@@ -5,7 +5,7 @@ from PartSegCore.mask_create import MaskProperty
 
 def create_history_element_from_segmentation_tuple(project_info: MaskProjectTuple, mask_property: MaskProperty):
     return HistoryElement.create(
-        segmentation=project_info.roi,
+        roi_info=project_info.roi_info,
         mask=project_info.mask,
         segmentation_parameters={
             "selected": project_info.selected_components,

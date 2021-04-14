@@ -657,7 +657,7 @@ class TestPipeline:
         result = calculate_pipeline(image=image, mask=mask, pipeline=pipeline, report_fun=empty)
         result_segmentation = np.zeros((50, 100, 100), dtype=np.uint8)
         result_segmentation[10:40, 20:80, 40:60] = 1
-        assert np.all(result.roi == result_segmentation)
+        assert np.all(result.roi_info.roi == result_segmentation)
 
 
 class TestNoiseFiltering:

@@ -11,6 +11,7 @@ from qtpy.QtWidgets import QMessageBox
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.io_utils import HistoryElement, HistoryProblem, PointsInfo
 from PartSegCore.mask.io_functions import MaskProjectTuple, load_metadata
+from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import SegmentationResult
 from PartSegImage import Image
 from PartSegImage.image import minimal_dtype, reduce_array
@@ -116,7 +117,6 @@ class StackSettings(BaseSettings):
             file_path=self.image.file_path,
             image=self.image.substitute(),
             mask=self.mask,
-            roi=self.roi,
             roi_info=self.roi_info,
             selected_components=self.chosen_components(),
             roi_extraction_parameters=copy(self.components_parameters_dict),
@@ -141,18 +141,16 @@ class StackSettings(BaseSettings):
         state = self.get_project_info()
         # TODO Remove repetition this and set_segmentation code
 
-        components = np.unique(data.roi)
-        if components[0] == 0 or components[0] is None:
-            components = components[1:]
+        components = list(sorted(data.roi_info.bound_info))
         for i in components:
             _skip = data.roi_extraction_parameters[int(i)]  # noqa: F841
         self.mask = data.mask
         if self.keep_chosen_components:
             if not self.compare_history(data.history) and self.chosen_components():
                 raise HistoryProblem("Incompatible history")
-            state2 = self.transform_state(
+            state2 = self._transform_state(
                 state,
-                data.roi,
+                data.roi_info,
                 data.roi_extraction_parameters,
                 data.selected_components,
                 self.keep_chosen_components,
@@ -160,84 +158,109 @@ class StackSettings(BaseSettings):
             self.chosen_components_widget.set_chose(
                 list(sorted(state2.roi_extraction_parameters.keys())), state2.selected_components
             )
-            self.roi = state2.roi
+            self.roi = state2.roi_info
             self.components_parameters_dict = state2.roi_extraction_parameters
         else:
             self.set_history(data.history)
             self.chosen_components_widget.set_chose(
                 list(sorted(data.roi_extraction_parameters.keys())), data.selected_components
             )
-            self.roi = data.roi
+            self.roi = data.roi_info
             self.components_parameters_dict = data.roi_extraction_parameters
 
     @staticmethod
-    def transform_state(
+    def _clip_data_array(mask_array: np.ndarray, data_array: np.ndarray) -> np.ndarray:
+        """
+        From `data_array` fet only information masked with `mask_array`
+
+        :param np.ndarray mask_array: masking array
+        :param np.ndarray data_array: data array
+        :return: array with selected data
+        :rtype: np.ndarray
+        """
+        res = np.copy(data_array)
+        res[mask_array == 0] = 0
+        return res
+
+    @classmethod
+    def _transform_state(
+        cls,
         state: MaskProjectTuple,
-        new_roi_data: np.ndarray,
-        segmentation_parameters: typing.Dict,
+        new_roi_info: ROIInfo,
+        new_roi_extraction_parameters: typing.Dict[int, typing.Optional[ROIExtractionProfile]],
         list_of_components: typing.List[int],
         save_chosen: bool = True,
     ) -> MaskProjectTuple:
+        """
+
+        :param MaskProjectTuple state: state to be transformed
+        :param ROIInfo new_roi_info: roi description
+        :param typing.Dict[int, typing.Optional[ROIExtractionProfile]] new_roi_extraction_parameters:
+            Parameters used to extract roi
+        :param typing.List[int] list_of_components: list of components from new_roi which should be selected
+        :param bool save_chosen: if save currently selected components
+        :return: new state
+        """
 
         # TODO Refactor
-        if list_of_components is None:
-            list_of_components = []
-        if segmentation_parameters is None:
-            segmentation_parameters = defaultdict(lambda: None)
-        segmentation_count = 0 if state.roi is None else len(np.unique(state.roi.flat))
-        new_segmentation_count = 0 if new_roi_data is None else len(np.unique(new_roi_data.flat))
-        segmentation_dtype = minimal_dtype(segmentation_count + new_segmentation_count)
-        components_parameters_dict = {}
-        if save_chosen and state.roi is not None:
-            segmentation = reduce_array(state.roi, state.selected_components, dtype=segmentation_dtype)
-            for i, val in enumerate(sorted(state.selected_components), 1):
-                components_parameters_dict[i] = state.roi_extraction_parameters[val]
-            base_chose = list(range(1, len(state.selected_components) + 1))
-        else:
-            segmentation = None
-            base_chose = []
-        if new_roi_data is not None:
-            state.image.fit_array_to_image(new_roi_data)
-            num = np.max(new_roi_data)
-            if segmentation is not None:
-                new_segmentation = np.copy(new_roi_data)
-                new_segmentation[segmentation > 0] = 0
-                new_segmentation = reduce_array(new_segmentation, dtype=segmentation_dtype)
-                segmentation[new_segmentation > 0] = new_segmentation[new_segmentation > 0] + len(base_chose)
-
-                components_size = np.bincount(new_segmentation.flat)
-
-                base_index = len(base_chose) + 1
-                chosen_components = base_chose[:]
-                components_list = base_chose[:]
-                for i, val in enumerate(components_size[1:], 1):
-                    if val > 0:
-                        if i in list_of_components:
-                            chosen_components.append(base_index)
-                        components_list.append(base_index)
-                        components_parameters_dict[base_index] = segmentation_parameters[i]
-                        base_index += 1
-
-                return dataclasses.replace(
-                    state,
-                    roi=segmentation,
-                    selected_components=chosen_components,
-                    roi_extraction_parameters=components_parameters_dict,
-                )
-
-            for i in range(1, num + 1):
-                components_parameters_dict[i] = segmentation_parameters[i]
-
+        if not save_chosen or state.roi_info.roi is None or len(state.selected_components) == 0:
             return dataclasses.replace(
                 state,
-                roi=new_roi_data,
+                roi_info=new_roi_info,
                 selected_components=list_of_components,
+                roi_extraction_parameters=new_roi_extraction_parameters,
+            )
+        if list_of_components is None:
+            list_of_components = []
+        if new_roi_extraction_parameters is None:
+            new_roi_extraction_parameters = defaultdict(lambda: None)
+        segmentation_count = len(state.roi_info.bound_info)
+        new_segmentation_count = len(new_roi_info.bound_info)
+        segmentation_dtype = minimal_dtype(segmentation_count + new_segmentation_count)
+        roi_base = reduce_array(state.roi_info.roi, state.selected_components, dtype=segmentation_dtype)
+        annotation_base = {
+            i: state.roi_info.annotations.get(x) for i, x in enumerate(state.selected_components, start=1)
+        }
+        alternative_base = {
+            name: cls._clip_data_array(roi_base, array) for name, array in state.roi_info.alternative.items()
+        }
+        components_parameters_dict = {
+            i: state.roi_extraction_parameters[val] for i, val in enumerate(sorted(state.selected_components), 1)
+        }
+
+        base_chose = list(annotation_base.keys())
+
+        if new_segmentation_count == 0:
+            return dataclasses.replace(
+                state,
+                roi_info=ROIInfo(roi=roi_base, annotation=annotation_base, alternative=alternative_base),
+                selected_components=base_chose,
                 roi_extraction_parameters=components_parameters_dict,
             )
 
+        new_segmentation = np.copy(new_roi_info.roi)
+        new_segmentation[roi_base > 0] = 0
+        left_component_list = np.unique(new_segmentation.flat)
+        if left_component_list[0] == 0:
+            left_component_list = left_component_list[1:]
+        new_segmentation = reduce_array(new_segmentation, dtype=segmentation_dtype)
+        roi_base[new_segmentation > 0] = new_segmentation[new_segmentation > 0] + len(base_chose)
+        for name, array in new_roi_info.alternative.items():
+            if name in alternative_base:
+                alternative_base[name][new_segmentation > 0] = array[new_segmentation > 0]
+            else:
+                alternative_base[name] = cls._clip_data_array(new_segmentation, array)
+        for i, el in enumerate(left_component_list, start=len(base_chose) + 1):
+            annotation_base[i] = new_roi_info.annotations.get(el)
+            if el in list_of_components:
+                base_chose.append(i)
+            components_parameters_dict[i] = new_roi_extraction_parameters[el]
+
+        roi_info = ROIInfo(roi=roi_base, annotation=annotation_base, alternative=alternative_base)
+
         return dataclasses.replace(
             state,
-            roi=segmentation,
+            roi_info=roi_info,
             selected_components=base_chose,
             roi_extraction_parameters=components_parameters_dict,
         )
@@ -252,7 +275,7 @@ class StackSettings(BaseSettings):
         )
 
     def set_segmentation(
-        self, new_segmentation_data, save_chosen=True, list_of_components=None, segmentation_parameters=None
+        self, new_segmentation_data: np.ndarray, save_chosen=True, list_of_components=None, segmentation_parameters=None
     ):
         new_segmentation_data = self.image.fit_array_to_image(new_segmentation_data)
         if list_of_components is None:
@@ -265,13 +288,13 @@ class StackSettings(BaseSettings):
         except ValueError:
             raise ValueError("Segmentation do not fit to image")
         if save_chosen:
-            state2 = self.transform_state(
-                state, new_segmentation_data, segmentation_parameters, list_of_components, save_chosen
+            state2 = self._transform_state(
+                state, ROIInfo(new_segmentation_data), segmentation_parameters, list_of_components, save_chosen
             )
             self.chosen_components_widget.set_chose(
                 list(sorted(state2.roi_extraction_parameters.keys())), state2.selected_components
             )
-            self.roi = state2.roi
+            self.roi = state2.roi_info
             self.components_parameters_dict = state2.roi_extraction_parameters
         else:
             unique = np.unique(new_segmentation_data.flat)

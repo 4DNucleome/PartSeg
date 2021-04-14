@@ -87,7 +87,6 @@ class PartSettings(BaseSettings):
         return ProjectTuple(
             file_path=self.image.file_path,
             image=self.image.substitute(),
-            roi=self.roi,
             roi_info=self.roi_info,
             additional_layers=self.additional_layers,
             mask=self.mask,
@@ -106,18 +105,17 @@ class PartSettings(BaseSettings):
         elif not isinstance(data, ProjectTuple):
             return
         if self.image.file_path == data.image.file_path and self.image.shape == data.image.shape:
-            if data.roi is not None:
+            if data.roi_info.roi is not None:
                 try:
-                    self.image.fit_array_to_image(data.roi)
+                    self.image.fit_array_to_image(data.roi_info.roi)
+                    self.mask = data.mask
                 except ValueError:
                     self.image = data.image.substitute()
-            self.mask = data.mask
+            else:
+                self.mask = data.mask
         else:
             self.image = data.image.substitute(mask=data.mask)
-        if data.roi_info is not None and data.roi_info.roi is not None:
-            self.roi = data.roi_info
-        else:
-            self.roi = data.roi
+        self.roi = data.roi_info
         self._additional_layers = data.additional_layers
         self.additional_layers_changed.emit()
         self.set_history(data.history[:])

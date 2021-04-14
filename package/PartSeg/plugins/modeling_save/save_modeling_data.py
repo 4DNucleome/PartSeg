@@ -12,6 +12,7 @@ from PartSegCore.analysis.io_utils import ProjectTuple
 from PartSegCore.analysis.save_functions import SaveCmap
 from PartSegCore.channel_class import Channel
 from PartSegCore.io_utils import SaveBase, SaveROIAsNumpy, SaveROIAsTIFF
+from PartSegCore.roi_info import ROIInfo
 from PartSegCore.universal_const import Units
 
 
@@ -54,18 +55,18 @@ class SaveModeling(SaveBase):
             raise OSError("save location exist and is not a directory")
         parameters = deepcopy(parameters)
         if parameters["clip"]:
-            points = np.nonzero(project_info.segmentation)
+            points = np.nonzero(project_info.roi_info.roi)
             lower_bound = np.min(points, axis=1)
             lower_bound = np.max([lower_bound - 3, [0, 0, 0]], axis=0)
             upper_bound = np.max(points, axis=1)
-            upper_bound = np.max([upper_bound + 3, np.array(project_info.segmentation.shape) - 1], axis=0)
+            upper_bound = np.max([upper_bound + 3, np.array(project_info.roi_info.roi) - 1], axis=0)
             cut_area = tuple(slice(x, y) for x, y in zip(lower_bound, upper_bound))
             # WARNING time
             image = project_info.image.cut_image((slice(None),) + cut_area)
-            segmentation = project_info.segmentation[cut_area]
+            roi_info = ROIInfo(project_info.roi_info.roi[cut_area])
 
             mask = project_info.mask[cut_area] if project_info.mask else None
-            project_info = dataclasses.replace(project_info, image=image, segmentation=segmentation, mask=mask)
+            project_info = dataclasses.replace(project_info, image=image, roi_info=roi_info, mask=mask)
             parameters["clip"] = False
 
         parameters.update({"separated_objects": False})

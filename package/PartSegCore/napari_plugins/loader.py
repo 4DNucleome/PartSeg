@@ -19,10 +19,10 @@ def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]
                     "image",
                 )
             )
-        if project_info.roi is not None:
+        if project_info.roi_info.roi is not None:
             res_layers.append(
                 (
-                    project_info.image.fit_array_to_image(project_info.roi),
+                    project_info.image.fit_array_to_image(project_info.roi_info.roi),
                     {"scale": scale, "name": "ROI"},
                     "labels",
                 )
@@ -40,10 +40,10 @@ def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]
             scale = np.multiply(project_info.spacing, 10 ** 9)
         else:
             scale = None
-        if project_info.roi is not None:
+        if project_info.roi_info.roi is not None:
             res_layers.append(
                 (
-                    project_info.roi,
+                    project_info.roi_info.roi,
                     {"scale": scale, "name": "ROI"},
                     "labels",
                 )
