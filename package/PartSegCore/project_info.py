@@ -3,7 +3,7 @@ import typing
 import warnings
 from dataclasses import dataclass
 from io import BytesIO
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 
@@ -41,8 +41,8 @@ class AdditionalLayerDescription:
 
 
 class HistoryElement(BaseSerializableClass):
-    roi_extraction_parameters: typing.Dict[str, typing.Any]
-    annotations: typing.Optional[typing.Dict[int, typing.Any]]
+    roi_extraction_parameters: Dict[str, Any]
+    annotations: Optional[Dict[int, Any]]
     mask_property: MaskProperty
     arrays: BytesIO
 
@@ -50,7 +50,7 @@ class HistoryElement(BaseSerializableClass):
     def create(
         cls,
         roi_info: ROIInfo,
-        mask: typing.Union[np.ndarray, None],
+        mask: Union[np.ndarray, None],
         roi_extraction_parameters: dict,
         mask_property: MaskProperty,
     ):
