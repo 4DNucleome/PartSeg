@@ -317,7 +317,7 @@ class HistoryElement(BaseSerializableClass):
         roi_extraction_parameters: dict,
         mask_property: MaskProperty,
     ):
-        if "name" in roi_extraction_parameters:
+        if "name" in roi_extraction_parameters:  # pragma: no cover
             raise ValueError("name")
         arrays = BytesIO()
         arrays_dict = {"roi": roi_info.roi}

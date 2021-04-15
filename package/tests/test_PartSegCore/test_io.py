@@ -23,7 +23,8 @@ from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, Measu
 from PartSegCore.analysis.save_functions import SaveAsNumpy, SaveAsTiff, SaveCmap, SaveProject, SaveXYZ
 from PartSegCore.analysis.save_hooks import PartEncoder, part_hook
 from PartSegCore.class_generator import enum_register
-from PartSegCore.io_utils import SaveROIAsNumpy, UpdateLoadedMetadataBase
+from PartSegCore.image_operations import RadiusType
+from PartSegCore.io_utils import HistoryElement, SaveROIAsNumpy, UpdateLoadedMetadataBase
 from PartSegCore.json_hooks import check_loaded_dict
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import (
@@ -37,6 +38,7 @@ from PartSegCore.mask.io_functions import (
     SaveROI,
     save_components,
 )
+from PartSegCore.mask_create import MaskProperty
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
 from PartSegCore.segmentation.noise_filtering import DimensionType
@@ -99,6 +101,67 @@ def analysis_project_reversed() -> ProjectTuple:
     )
     roi_info = ROIInfo(roi.squeeze()).fit_to_image(image)
     return ProjectTuple("test_data.tiff", image, roi_info=roi_info, mask=mask)
+
+
+@pytest.fixture
+def mask_prop():
+    return MaskProperty(RadiusType.NO, 0, RadiusType.NO, 0, False, False)
+
+
+class TestHistoryElement:
+    def test_create(self, mask_prop):
+        roi_info = ROIInfo(np.zeros((10, 10), dtype=np.uint8))
+        elem = HistoryElement.create(roi_info, None, {}, mask_prop)
+        assert elem.mask_property == mask_prop
+        assert elem.roi_extraction_parameters == {}
+        param = {"a": 1, "b": 2}
+        elem2 = HistoryElement.create(roi_info, None, param, mask_prop)
+        assert elem2.roi_extraction_parameters == param
+        roi_info2, mask = elem2.get_roi_info_and_mask()
+        assert np.all(roi_info2.roi == 0)
+
+    def test_mask(self, mask_prop):
+        mask = np.zeros((10, 10), dtype=np.uint8)
+        mask[1:-1, 1:-1] = 2
+        mask2 = np.copy(mask)
+        mask2[2:-2, 2:-2] = 4
+        roi_info = ROIInfo(mask2)
+        elem = HistoryElement.create(roi_info, mask, {}, mask_prop)
+        roi_info2, mask2 = elem.get_roi_info_and_mask()
+        assert np.all(mask == mask2)
+        assert np.all(roi_info.roi == roi_info2.roi)
+
+    def test_additional(self, mask_prop):
+        data = np.zeros((10, 10), dtype=np.uint8)
+        data[1:-1, 1:-1] = 2
+        alternative = {}
+        for i in range(4):
+            alternative_array = np.copy(data)
+            alternative_array[alternative_array > 0] = i + 2
+            alternative[f"add{i}"] = alternative_array
+        roi_info = ROIInfo(data, alternative=alternative)
+        elem = HistoryElement.create(roi_info, None, {}, mask_prop)
+        roi_info2, mask2 = elem.get_roi_info_and_mask()
+        assert mask2 is None
+        assert len(roi_info.alternative) == 4
+        assert set(roi_info.alternative) == {f"add{i}" for i in range(4)}
+        for i in range(4):
+            arr = roi_info.alternative[f"add{i}"]
+            assert np.all(arr[arr > 0] == i + 2)
+
+    def test_annotations(self, mask_prop):
+        data = np.zeros((10, 10), dtype=np.uint8)
+        data[1:5, 1:5] = 1
+        data[5:-1, 1:5] = 2
+        data[1:5, 5:-1] = 3
+        data[5:-1, 5:-1] = 4
+        annotations = {1: "a", 2: "b", 3: "c", 4: "d"}
+        roi_info = ROIInfo(data, annotations=annotations)
+        elem = HistoryElement.create(roi_info, None, {}, mask_prop)
+        roi_info2, mask2 = elem.get_roi_info_and_mask()
+        assert mask2 is None
+        assert np.all(roi_info2.roi == roi_info.roi)
+        assert roi_info.annotations == roi_info2.annotations
 
 
 class TestJsonLoad:

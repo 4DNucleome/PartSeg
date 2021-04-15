@@ -50,6 +50,17 @@ class MaskProperty(BaseSerializableClass):
             + f"reversed mask={self.reversed_mask})"
         )
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, MaskProperty)
+            and self.dilate == other.dilate
+            and self.dilate_radius == other.dilate_radius
+            and self.fill_holes == other.fill_holes
+            and self.max_holes_size == other.max_holes_size
+            and self.clip_to_mask == other.clip_mask
+            and self.reversed_mask == other.reverse_mask
+        )
+
     @classmethod
     def simple_mask(cls) -> "MaskProperty":
         """
