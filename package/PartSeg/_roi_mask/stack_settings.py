@@ -9,8 +9,9 @@ from qtpy.QtCore import Signal, Slot
 from qtpy.QtWidgets import QMessageBox
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
-from PartSegCore.io_utils import HistoryElement, HistoryProblem, PointsInfo
+from PartSegCore.io_utils import PointsInfo
 from PartSegCore.mask.io_functions import MaskProjectTuple, load_metadata
+from PartSegCore.project_info import HistoryElement, HistoryProblem
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import SegmentationResult
 from PartSegImage import Image

@@ -30,8 +30,8 @@ from PartSegCore.analysis import ProjectTuple, algorithm_description, load_funct
 from PartSegCore.analysis.analysis_utils import SegmentationPipeline, SegmentationPipelineElement
 from PartSegCore.analysis.io_utils import create_history_element_from_project
 from PartSegCore.analysis.save_functions import save_dict
-from PartSegCore.io_utils import HistoryElement, WrongFileTypeException
-from PartSegCore.mask_create import calculate_mask_from_project
+from PartSegCore.io_utils import WrongFileTypeException
+from PartSegCore.project_info import HistoryElement, calculate_mask_from_project
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import SegmentationResult
 from PartSegImage import TiffImageReader

@@ -40,7 +40,8 @@ class ROIInfo:
         annotations: Optional[Dict[int, Any]] = None,
         alternative: Optional[Dict[str, np.ndarray]] = None,
     ):
-        self.annotations = {} if annotations is None else annotations
+        annotations = {} if annotations is None else annotations
+        self.annotations = {int(k): v for k, v in annotations.items()}
         self.alternative = {} if alternative is None else alternative
         if roi is None:
             self.roi = None

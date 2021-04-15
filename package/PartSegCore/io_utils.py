@@ -20,10 +20,7 @@ from PartSegImage import ImageWriter
 from PartSegImage.image import minimal_dtype
 
 from .algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
-from .class_generator import BaseSerializableClass
-from .mask_create import MaskProperty
 from .project_info import ProjectInfoBase
-from .roi_info import ROIInfo
 
 
 class SegmentationType(Enum):
@@ -301,52 +298,6 @@ def open_tar_file(
     else:
         raise ValueError(f"wrong type of file_ argument: {type(file_data)}")
     return tar_file, file_path
-
-
-class HistoryElement(BaseSerializableClass):
-    roi_extraction_parameters: typing.Dict[str, typing.Any]
-    annotations: typing.Optional[typing.Dict[int, typing.Any]]
-    mask_property: MaskProperty
-    arrays: BytesIO
-
-    @classmethod
-    def create(
-        cls,
-        roi_info: ROIInfo,
-        mask: typing.Union[np.ndarray, None],
-        roi_extraction_parameters: dict,
-        mask_property: MaskProperty,
-    ):
-        if "name" in roi_extraction_parameters:  # pragma: no cover
-            raise ValueError("name")
-        arrays = BytesIO()
-        arrays_dict = {"roi": roi_info.roi}
-        for name, array in roi_info.alternative.items():
-            arrays_dict[name] = array
-        if mask is not None:
-            arrays_dict["mask"] = mask
-
-        np.savez_compressed(arrays, **arrays_dict)
-        arrays.seek(0)
-        return cls(
-            roi_extraction_parameters=roi_extraction_parameters,
-            mask_property=mask_property,
-            arrays=arrays,
-            annotations=roi_info.annotations,
-        )
-
-    def get_roi_info_and_mask(self) -> typing.Tuple[ROIInfo, typing.Optional[np.ndarray]]:
-        self.arrays.seek(0)
-        seg = np.load(self.arrays)
-        self.arrays.seek(0)
-        alternative = {name: array for name, array in seg.items() if name not in {"roi", "mask"}}
-        roi_info = ROIInfo(seg["roi"], annotations=self.annotations, alternative=alternative)
-        mask = seg["mask"] if "mask" in seg else None
-        return roi_info, mask
-
-
-class HistoryProblem(Exception):
-    pass
 
 
 class SaveMaskAsTiff(SaveBase):

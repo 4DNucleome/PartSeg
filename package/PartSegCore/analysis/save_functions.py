@@ -13,15 +13,8 @@ from PartSegImage import Image, ImageWriter
 
 from ..algorithm_describe_base import AlgorithmProperty, Register
 from ..channel_class import Channel
-from ..io_utils import (
-    HistoryElement,
-    NotSupportedImage,
-    SaveBase,
-    SaveMaskAsTiff,
-    SaveROIAsNumpy,
-    SaveROIAsTIFF,
-    get_tarinfo,
-)
+from ..io_utils import NotSupportedImage, SaveBase, SaveMaskAsTiff, SaveROIAsNumpy, SaveROIAsTIFF, get_tarinfo
+from ..project_info import HistoryElement
 from ..roi_info import ROIInfo
 from ..universal_const import UNIT_SCALE, Units
 from .io_utils import ProjectTuple, project_version_info
@@ -55,6 +48,11 @@ def save_project(
         tifffile.imwrite(segmentation_buff, roi_info.roi, compress=9)
         segmentation_tar = get_tarinfo("segmentation.tif", segmentation_buff)
         tar.addfile(segmentation_tar, fileobj=segmentation_buff)
+        if roi_info.alternative:
+            alternative_buff = BytesIO()
+            np.savez(alternative_buff, **roi_info.alternative)
+            alternative_tar = get_tarinfo("alternative.npz", alternative_buff)
+            tar.addfile(alternative_tar, fileobj=alternative_buff)
         if mask is not None:
             if mask.dtype == bool:
                 mask = mask.astype(np.uint8)
@@ -71,7 +69,10 @@ def save_project(
         parameters_buff = BytesIO(para_str.encode("utf-8"))
         tar_algorithm = get_tarinfo("algorithm.json", parameters_buff)
         tar.addfile(tar_algorithm, parameters_buff)
-        meta_str = json.dumps({"project_version_info": str(project_version_info)}, cls=PartEncoder)
+        meta_str = json.dumps(
+            {"project_version_info": str(project_version_info), "roi_annotations": roi_info.annotations},
+            cls=PartEncoder,
+        )
         meta_buff = BytesIO(meta_str.encode("utf-8"))
         tar_meta = get_tarinfo("metadata.json", meta_buff)
         tar.addfile(tar_meta, meta_buff)

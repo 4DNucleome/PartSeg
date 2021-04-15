@@ -4,9 +4,8 @@ from dataclasses import dataclass, field, replace
 import numpy as np
 import packaging.version
 
-from PartSegCore.io_utils import HistoryElement
 from PartSegCore.mask_create import MaskProperty
-from PartSegCore.project_info import AdditionalLayerDescription, ProjectInfoBase
+from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement, ProjectInfoBase
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.utils import numpy_repr
 from PartSegImage import Image

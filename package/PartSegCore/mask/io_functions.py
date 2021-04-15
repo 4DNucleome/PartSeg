@@ -17,7 +17,6 @@ from PartSegImage.image import FRAME_THICKNESS, reduce_array
 
 from ..algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
 from ..io_utils import (
-    HistoryElement,
     LoadBase,
     LoadPoints,
     SaveBase,
@@ -34,7 +33,7 @@ from ..io_utils import (
     tar_to_buff,
 )
 from ..json_hooks import ProfileEncoder
-from ..project_info import AdditionalLayerDescription, ProjectInfoBase
+from ..project_info import AdditionalLayerDescription, HistoryElement, ProjectInfoBase
 from ..roi_info import ROIInfo
 
 
@@ -146,6 +145,11 @@ def save_stack_segmentation(
             tifffile.imwrite(mask_buff, mask, compress=9)
             mask_tar = get_tarinfo("mask.tif", mask_buff)
             tar_file.addfile(mask_tar, fileobj=mask_buff)
+        if segmentation_info.roi_info.alternative:
+            alternative_buff = BytesIO()
+            np.savez(alternative_buff, **segmentation_info.roi_info.alternative)
+            alternative_tar = get_tarinfo("alternative.npz", alternative_buff)
+            tar_file.addfile(alternative_tar, fileobj=alternative_buff)
         step_changed(5)
         el_info = []
         for i, hist in enumerate(segmentation_info.history):
@@ -205,7 +209,6 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
             roi = roi.get_channel(0)
         else:
             spacing = None
-        roi_info = ROIInfo(reduce_array(roi), annotations=metadata.get("annotations", {}))
         step_changed(4)
         if "mask.tif" in tar_file.getnames():
             mask = tifffile.imread(tar_to_buff(tar_file, "mask.tif"))
@@ -213,6 +216,11 @@ def load_stack_segmentation(file_data: typing.Union[str, Path], range_changed=No
                 mask = mask.astype(bool)
         else:
             mask = None
+        if "alternative.npz" in tar_file.getnames():
+            alternative = np.load(tar_to_buff(tar_file, "alternative.npz"))
+        else:
+            alternative = {}
+        roi_info = ROIInfo(reduce_array(roi), annotations=metadata.get("annotations", {}), alternative=alternative)
         step_changed(5)
         history = []
         try:
@@ -255,7 +263,7 @@ def empty_fun(_a0=None, _a1=None):
     """
 
 
-class LoadSegmentation(LoadBase):
+class LoadROI(LoadBase):
     """
     Load ROI segmentation data.
     """
@@ -340,10 +348,7 @@ class LoadROIParameters(LoadBase):
                 else:
                     parameters = defaultdict(
                         lambda: None,
-                        [
-                            (int(k), LoadSegmentation.fix_parameters(v))
-                            for k, v in project_metadata["parameters"].items()
-                        ],
+                        [(int(k), LoadROI.fix_parameters(v)) for k, v in project_metadata["parameters"].items()],
                     )
                 return MaskProjectTuple(file_path=file_data, image=None, roi_extraction_parameters=parameters)
 
@@ -352,7 +357,7 @@ class LoadROIParameters(LoadBase):
             project_metadata = load_metadata(tar_file.extractfile("metadata.json").read().decode("utf8"))
             parameters = defaultdict(
                 lambda: None,
-                [(int(k), LoadSegmentation.fix_parameters(v)) for k, v in project_metadata["parameters"].items()],
+                [(int(k), LoadROI.fix_parameters(v)) for k, v in project_metadata["parameters"].items()],
             )
         finally:
             if isinstance(file_data, (str, Path)):
@@ -381,7 +386,7 @@ class LoadROIImage(LoadBase):
         step_changed: typing.Callable[[int], typing.Any] = None,
         metadata: typing.Optional[dict] = None,
     ) -> MaskProjectTuple:
-        seg = LoadSegmentation.load(load_locations)
+        seg = LoadROI.load(load_locations)
         base_file = load_locations[1] if len(load_locations) > 1 else seg.image
         if base_file is None:
             raise OSError("base file for segmentation not defined")

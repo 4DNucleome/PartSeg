@@ -6,8 +6,8 @@ import numpy as np
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.analysis.analysis_utils import SegmentationPipeline
-from PartSegCore.io_utils import HistoryElement
 from PartSegCore.mask_create import calculate_mask
+from PartSegCore.project_info import HistoryElement
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation import RestartableAlgorithm
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription, SegmentationResult

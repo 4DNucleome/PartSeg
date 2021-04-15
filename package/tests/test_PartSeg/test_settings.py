@@ -14,10 +14,10 @@ from PartSegCore.analysis import analysis_algorithm_dict
 from PartSegCore.analysis.io_utils import MaskInfo, create_history_element_from_project
 from PartSegCore.analysis.load_functions import LoadProject
 from PartSegCore.analysis.save_functions import SaveProject
-from PartSegCore.io_utils import HistoryProblem, PointsInfo
+from PartSegCore.io_utils import PointsInfo
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import LoadStackImage
-from PartSegCore.mask_create import calculate_mask_from_project
+from PartSegCore.project_info import HistoryProblem, calculate_mask_from_project
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import SegmentationResult
 from PartSegImage import Image

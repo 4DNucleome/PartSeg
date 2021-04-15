@@ -19,7 +19,6 @@ from PartSegImage import GenericImageReader
 
 from ..algorithm_describe_base import Register, ROIExtractionProfile
 from ..io_utils import (
-    HistoryElement,
     LoadBase,
     LoadPoints,
     SegmentationType,
@@ -31,6 +30,7 @@ from ..io_utils import (
     tar_to_buff,
 )
 from ..mask.io_functions import LoadROIImage
+from ..project_info import HistoryElement
 from ..roi_info import ROIInfo
 from ..universal_const import UNIT_SCALE, Units
 from .analysis_utils import SegmentationPipeline, SegmentationPipelineElement
@@ -72,8 +72,9 @@ def load_project(
         algorithm_dict = load_metadata(algorithm_str)
         algorithm_dict = update_algorithm_dict(algorithm_dict)
         algorithm_dict.get("project_file_version")
+        metadata = json.loads(tar_file.extractfile("metadata.json").read())
         try:
-            version = parse_version(json.loads(tar_file.extractfile("metadata.json").read())["project_version_info"])
+            version = parse_version(metadata["project_version_info"])
         except KeyError:
             version = Version("1.0")
         if version == Version("1.0"):
@@ -88,7 +89,10 @@ def load_project(
                     mask = mask.astype(bool)
             else:
                 mask = None
-
+        if "alternative.npz" in tar_file.getnames():
+            alternative = np.load(tar_to_buff(tar_file, "alternative.npz"))
+        else:
+            alternative = {}
         history = []
         try:
             history_buff = tar_file.extractfile(tar_file.getmember("history/history.json")).read()
@@ -114,7 +118,7 @@ def load_project(
         if isinstance(file, (str, Path)):
             tar_file.close()
     image.set_mask(mask)
-    roi_info = ROIInfo(roi)
+    roi_info = ROIInfo(roi, annotations=metadata.get("roi_annotations"), alternative=alternative)
     if version <= project_version_info:
         return ProjectTuple(
             file_path=file_path,

@@ -1,6 +1,6 @@
-from PartSegCore.io_utils import HistoryElement
 from PartSegCore.mask.io_functions import MaskProjectTuple
 from PartSegCore.mask_create import MaskProperty
+from PartSegCore.project_info import HistoryElement
 
 
 def create_history_element_from_segmentation_tuple(project_info: MaskProjectTuple, mask_property: MaskProperty):

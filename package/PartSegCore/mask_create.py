@@ -7,7 +7,6 @@ from PartSegImage.image import minimal_dtype
 
 from .class_generator import BaseSerializableClass
 from .image_operations import RadiusType, dilate, erode
-from .project_info import ProjectInfoBase
 
 
 class MaskProperty(BaseSerializableClass):
@@ -86,29 +85,6 @@ def mp_eq(self: MaskProperty, other: MaskProperty):
 
 
 MaskProperty.__eq__ = mp_eq
-
-
-def calculate_mask_from_project(
-    mask_description: MaskProperty, project: ProjectInfoBase, components: typing.Optional[typing.List[int]] = None
-) -> np.ndarray:
-    """
-    Function for calculate mask base on MaskProperty.
-    This function calls :py:func:`calculate_mask` with arguments from project.
-
-    :param MaskProperty mask_description: information how calculate mask
-    :param ProjectInfoBase project: project with information about segmentation
-    :param typing.Optional[typing.List[int]] components: If present inform which components
-        should be used when calculation mask, otherwise use all.
-    :return: new mask
-    :rtype: np.ndarray
-    """
-    try:
-        time_axis = project.image.time_pos
-    except AttributeError:
-        time_axis = None
-    return calculate_mask(
-        mask_description, project.roi_info.roi, project.mask, project.image.spacing, components, time_axis
-    )
 
 
 def calculate_mask(

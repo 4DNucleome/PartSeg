@@ -28,18 +28,12 @@ from qtpy.QtWidgets import (
 
 import PartSegData
 from PartSegCore import UNIT_SCALE, Units, state_store
-from PartSegCore.io_utils import HistoryElement, HistoryProblem, WrongFileTypeException
+from PartSegCore.io_utils import WrongFileTypeException
 from PartSegCore.mask import io_functions
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
-from PartSegCore.mask.io_functions import (
-    LoadROIFromTIFF,
-    LoadROIParameters,
-    LoadSegmentation,
-    MaskProjectTuple,
-    SaveROI,
-)
-from PartSegCore.mask_create import calculate_mask_from_project
+from PartSegCore.mask.io_functions import LoadROI, LoadROIFromTIFF, LoadROIParameters, MaskProjectTuple, SaveROI
+from PartSegCore.project_info import HistoryElement, HistoryProblem, calculate_mask_from_project
 from PartSegImage import Image, TiffImageReader
 
 from .._roi_mask.segmentation_info_dialog import SegmentationInfoDialog
@@ -242,7 +236,7 @@ class MainMenu(BaseMainMenu):
     def load_segmentation(self):
         dial = CustomLoadDialog(
             {
-                LoadSegmentation.get_name(): LoadSegmentation,
+                LoadROI.get_name(): LoadROI,
                 LoadROIParameters.get_name(): LoadROIParameters,
                 LoadROIFromTIFF.get_name(): LoadROIFromTIFF,
             }

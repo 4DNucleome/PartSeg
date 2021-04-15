@@ -6,6 +6,7 @@ import tarfile
 from copy import deepcopy
 from enum import Enum
 from glob import glob
+from typing import Type
 
 import h5py
 import numpy as np
@@ -24,13 +25,13 @@ from PartSegCore.analysis.save_functions import SaveAsNumpy, SaveAsTiff, SaveCma
 from PartSegCore.analysis.save_hooks import PartEncoder, part_hook
 from PartSegCore.class_generator import enum_register
 from PartSegCore.image_operations import RadiusType
-from PartSegCore.io_utils import HistoryElement, SaveROIAsNumpy, UpdateLoadedMetadataBase
+from PartSegCore.io_utils import LoadBase, SaveBase, SaveROIAsNumpy, UpdateLoadedMetadataBase
 from PartSegCore.json_hooks import check_loaded_dict
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import (
+    LoadROI,
     LoadROIImage,
     LoadROIParameters,
-    LoadSegmentation,
     LoadStackImage,
     LoadStackImageWithMask,
     MaskProjectTuple,
@@ -39,6 +40,7 @@ from PartSegCore.mask.io_functions import (
     save_components,
 )
 from PartSegCore.mask_create import MaskProperty
+from PartSegCore.project_info import HistoryElement, ProjectInfoBase
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
 from PartSegCore.segmentation.noise_filtering import DimensionType
@@ -161,7 +163,74 @@ class TestHistoryElement:
         roi_info2, mask2 = elem.get_roi_info_and_mask()
         assert mask2 is None
         assert np.all(roi_info2.roi == roi_info.roi)
-        assert roi_info.annotations == roi_info2.annotations
+
+
+class TestSaveHistory:
+    def test_save_roi_info_project_tuple(self, analysis_segmentation2, tmp_path):
+        self.perform_roi_info_test(analysis_segmentation2, tmp_path, SaveProject, LoadProject)
+
+    def test_save_roi_info_mask_project(self, stack_segmentation2, tmp_path):
+        self.perform_roi_info_test(stack_segmentation2, tmp_path, SaveROI, LoadROI)
+
+    def perform_roi_info_test(self, project, save_path, save_method: Type[SaveBase], load_method: Type[LoadBase]):
+        alt1 = np.copy(project.roi_info.roi)
+        alt1[alt1 > 0] += 3
+        roi_info = ROIInfo(
+            roi=project.roi_info.roi, annotations={i: f"a{i}" for i in range(1, 5)}, alternative={"test": alt1}
+        )
+        proj = dataclasses.replace(project, roi_info=roi_info)
+        save_method.save(save_path / "data.tgz", proj, SaveROI.get_default_values())
+        proj2 = load_method.load([save_path / "data.tgz"])
+        assert np.all(proj2.roi_info.roi == project.roi_info.roi)
+        assert set(proj2.roi_info.annotations) == {1, 2, 3, 4}
+        assert proj2.roi_info.annotations == {i: f"a{i}" for i in range(1, 5)}
+        assert "test" in proj2.roi_info.alternative
+        assert np.all(proj2.roi_info.alternative["test"] == alt1)
+
+    def test_save_roi_info_history_project_tuple(self, analysis_segmentation2, mask_property, tmp_path):
+        self.perform_roi_info_history_test(analysis_segmentation2, tmp_path, mask_property, SaveProject, LoadProject)
+
+    def test_save_roi_info_history_mask_project(self, stack_segmentation2, mask_property, tmp_path):
+        self.perform_roi_info_history_test(stack_segmentation2, tmp_path, mask_property, SaveROI, LoadROI)
+
+    def perform_roi_info_history_test(
+        self, project, save_path, mask_property, save_method: Type[SaveBase], load_method: Type[LoadBase]
+    ):
+        alt1 = np.copy(project.roi_info.roi)
+        alt1[alt1 > 0] += 3
+        roi_info = ROIInfo(
+            roi=project.roi_info.roi, annotations={i: f"a{i}" for i in range(1, 5)}, alternative={"test": alt1}
+        )
+        history = []
+        for i in range(3):
+            alt2 = np.copy(alt1)
+            alt2[alt2 > 0] = i + 5
+            roi_info2 = ROIInfo(
+                roi=project.roi_info.roi,
+                annotations={i: f"a{i}_{j}" for j in range(1, 5)},
+                alternative={f"test{i}": alt2},
+            )
+            history.append(
+                HistoryElement.create(
+                    roi_info2, alt1, {"algorithm_name": f"task_{i}", "values": {"a": 1}}, mask_property
+                )
+            )
+        proj = dataclasses.replace(project, roi_info=roi_info, history=history)
+        save_method.save(save_path / "data.tgz", proj, SaveROI.get_default_values())
+        proj2: ProjectInfoBase = load_method.load([save_path / "data.tgz"])
+        assert np.all(proj2.roi_info.roi == project.roi_info.roi)
+        assert set(proj2.roi_info.annotations) == {1, 2, 3, 4}
+        assert proj2.roi_info.annotations == {i: f"a{i}" for i in range(1, 5)}
+        assert "test" in proj2.roi_info.alternative
+        assert np.all(proj2.roi_info.alternative["test"] == alt1)
+        assert len(proj2.history) == 3
+        for i in range(3):
+            roi_info3, mask2 = proj2.history[i].get_roi_info_and_mask()
+            assert set(roi_info3.alternative) == {f"test{i}"}
+            assert np.all(roi_info3.alternative[f"test{i}"][alt1 > 0] == i + 5)
+            assert np.all(roi_info3.alternative[f"test{i}"][alt1 == 0] == 0)
+            assert roi_info3.annotations == {i: f"a{i}_{j}" for j in range(1, 5)}
+            assert proj2.history[i].roi_extraction_parameters == {"algorithm_name": f"task_{i}", "values": {"a": 1}}
 
 
 class TestJsonLoad:
@@ -244,7 +313,7 @@ class TestJsonLoad:
 
 class TestSegmentationMask:
     def test_load_seg(self, data_test_dir):
-        seg = LoadSegmentation.load([os.path.join(data_test_dir, "test_nucleus_1_1.seg")])
+        seg = LoadROI.load([os.path.join(data_test_dir, "test_nucleus_1_1.seg")])
         assert isinstance(seg.image, str)
         assert seg.selected_components == [1, 3]
         assert os.path.exists(os.path.join(data_test_dir, seg.image))
@@ -255,7 +324,7 @@ class TestSegmentationMask:
         """
         For PartSeg 0.9.4 and older
         """
-        seg = LoadSegmentation.load([os.path.join(data_test_dir, "test_nucleus.seg")])
+        seg = LoadROI.load([os.path.join(data_test_dir, "test_nucleus.seg")])
         assert isinstance(seg.image, str)
         assert seg.selected_components == [1, 3]
         assert os.path.exists(os.path.join(data_test_dir, seg.image))
@@ -291,7 +360,7 @@ class TestSegmentationMask:
         save_components(seg.image, seg.selected_components, os.path.join(tmpdir, "seg_save"), seg.roi_info)
         assert os.path.isdir(os.path.join(tmpdir, "seg_save"))
         assert len(glob(os.path.join(tmpdir, "seg_save", "*"))) == 4
-        seg2 = LoadSegmentation.load([os.path.join(tmpdir, "segmentation.seg")])
+        seg2 = LoadROI.load([os.path.join(tmpdir, "segmentation.seg")])
         assert seg2 is not None
 
     def test_save_segmentation_without_image(self, tmpdir, data_test_dir):
@@ -322,7 +391,7 @@ class TestSegmentationMask:
         )
 
         SaveROI.save(os.path.join(tmpdir, "segmentation2.seg"), to_save, {"relative_path": False})
-        seg2 = LoadSegmentation.load([os.path.join(tmpdir, "segmentation2.seg")])
+        seg2 = LoadROI.load([os.path.join(tmpdir, "segmentation2.seg")])
         assert seg2 is not None
 
     def test_load_mask(self, data_test_dir):
@@ -361,7 +430,7 @@ class TestSegmentationMask:
             file_path=image_location,
         )
         SaveROI.save(tmp_path / "test1.seg", seg2, {"relative_path": False})
-        res = LoadSegmentation.load([tmp_path / "test1.seg"])
+        res = LoadROI.load([tmp_path / "test1.seg"])
         assert res.image == str(image_location)
         assert res.mask is not None
         assert len(res.history) == 1

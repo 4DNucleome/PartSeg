@@ -1,10 +1,14 @@
 import sys
+import typing
 import warnings
 from dataclasses import dataclass
-from typing import Dict, Optional
+from io import BytesIO
+from typing import Dict, List, Optional
 
 import numpy as np
 
+from PartSegCore.class_generator import BaseSerializableClass
+from PartSegCore.mask_create import MaskProperty, calculate_mask
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.utils import numpy_repr
 from PartSegImage import Image
@@ -36,6 +40,48 @@ class AdditionalLayerDescription:
         )
 
 
+class HistoryElement(BaseSerializableClass):
+    roi_extraction_parameters: typing.Dict[str, typing.Any]
+    annotations: typing.Optional[typing.Dict[int, typing.Any]]
+    mask_property: MaskProperty
+    arrays: BytesIO
+
+    @classmethod
+    def create(
+        cls,
+        roi_info: ROIInfo,
+        mask: typing.Union[np.ndarray, None],
+        roi_extraction_parameters: dict,
+        mask_property: MaskProperty,
+    ):
+        if "name" in roi_extraction_parameters:  # pragma: no cover
+            raise ValueError("name")
+        arrays = BytesIO()
+        arrays_dict = {"roi": roi_info.roi}
+        for name, array in roi_info.alternative.items():
+            arrays_dict[name] = array
+        if mask is not None:
+            arrays_dict["mask"] = mask
+
+        np.savez_compressed(arrays, **arrays_dict)
+        arrays.seek(0)
+        return cls(
+            roi_extraction_parameters=roi_extraction_parameters,
+            mask_property=mask_property,
+            arrays=arrays,
+            annotations=roi_info.annotations,
+        )
+
+    def get_roi_info_and_mask(self) -> typing.Tuple[ROIInfo, typing.Optional[np.ndarray]]:
+        self.arrays.seek(0)
+        seg = np.load(self.arrays)
+        self.arrays.seek(0)
+        alternative = {name: array for name, array in seg.items() if name not in {"roi", "mask"}}
+        roi_info = ROIInfo(seg["roi"], annotations=self.annotations, alternative=alternative)
+        mask = seg["mask"] if "mask" in seg else None
+        return roi_info, mask
+
+
 @runtime_checkable
 class ProjectInfoBase(Protocol):
     """
@@ -46,6 +92,7 @@ class ProjectInfoBase(Protocol):
     :ivar numpy.ndarray ~.segmentation: numpy array representing current project ROI
     :ivar ROIInfo ~.roi_info: segmentation metadata
     :ivar Optional[numpy.ndarray] ~.mask: mask used in project
+    :ivar List[HistoryElement] ~.history: history of calculation
     :ivar str errors: information about problems with current project
     """
 
@@ -54,6 +101,7 @@ class ProjectInfoBase(Protocol):
     roi_info: ROIInfo = ROIInfo(None)
     additional_layers: Dict[str, AdditionalLayerDescription] = {}
     mask: Optional[np.ndarray] = None
+    history: List[HistoryElement] = []
     errors: str = ""
     points: Optional[np.ndarray] = None
 
@@ -76,3 +124,30 @@ class ProjectInfoBase(Protocol):
 
     def is_masked(self):
         raise NotImplementedError
+
+
+def calculate_mask_from_project(
+    mask_description: MaskProperty, project: ProjectInfoBase, components: typing.Optional[typing.List[int]] = None
+) -> np.ndarray:
+    """
+    Function for calculate mask base on MaskProperty.
+    This function calls :py:func:`calculate_mask` with arguments from project.
+
+    :param MaskProperty mask_description: information how calculate mask
+    :param ProjectInfoBase project: project with information about segmentation
+    :param typing.Optional[typing.List[int]] components: If present inform which components
+        should be used when calculation mask, otherwise use all.
+    :return: new mask
+    :rtype: np.ndarray
+    """
+    try:
+        time_axis = project.image.time_pos
+    except AttributeError:
+        time_axis = None
+    return calculate_mask(
+        mask_description, project.roi_info.roi, project.mask, project.image.spacing, components, time_axis
+    )
+
+
+class HistoryProblem(Exception):
+    pass
