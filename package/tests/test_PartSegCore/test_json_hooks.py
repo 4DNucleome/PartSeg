@@ -102,3 +102,12 @@ def test_colormap_dump(tmp_path):
     assert cmap_list2[1].controls[-1] == 1
     assert np.array_equal(cmap_list[1].colors[0], cmap_list2[1].colors[0])
     assert np.array_equal(cmap_list[1].colors[-1], cmap_list2[1].colors[-1])
+
+
+class TestProfileEncoder:
+    @pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32, np.float32, np.float64])
+    def test_dump_numpy_types(self, dtype):
+        data = {"a": dtype(2)}
+        text = json.dumps(data, cls=ProfileEncoder)
+        loaded = json.loads(text)
+        assert loaded["a"] == 2
