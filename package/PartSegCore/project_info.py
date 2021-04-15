@@ -1,9 +1,8 @@
 import sys
-import typing
 import warnings
 from dataclasses import dataclass
 from io import BytesIO
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -72,7 +71,7 @@ class HistoryElement(BaseSerializableClass):
             annotations=roi_info.annotations,
         )
 
-    def get_roi_info_and_mask(self) -> typing.Tuple[ROIInfo, typing.Optional[np.ndarray]]:
+    def get_roi_info_and_mask(self) -> Tuple[ROIInfo, Optional[np.ndarray]]:
         self.arrays.seek(0)
         seg = np.load(self.arrays)
         self.arrays.seek(0)
@@ -127,7 +126,7 @@ class ProjectInfoBase(Protocol):
 
 
 def calculate_mask_from_project(
-    mask_description: MaskProperty, project: ProjectInfoBase, components: typing.Optional[typing.List[int]] = None
+    mask_description: MaskProperty, project: ProjectInfoBase, components: Optional[List[int]] = None
 ) -> np.ndarray:
     """
     Function for calculate mask base on MaskProperty.
@@ -135,7 +134,7 @@ def calculate_mask_from_project(
 
     :param MaskProperty mask_description: information how calculate mask
     :param ProjectInfoBase project: project with information about segmentation
-    :param typing.Optional[typing.List[int]] components: If present inform which components
+    :param Optional[List[int]] components: If present inform which components
         should be used when calculation mask, otherwise use all.
     :return: new mask
     :rtype: np.ndarray
