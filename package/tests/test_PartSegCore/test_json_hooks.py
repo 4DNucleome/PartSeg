@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from napari.utils import Colormap
 
+from PartSegCore.image_operations import RadiusType
 from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, profile_hook, recursive_update_dict
 
 
@@ -111,3 +112,12 @@ class TestProfileEncoder:
         text = json.dumps(data, cls=ProfileEncoder)
         loaded = json.loads(text)
         assert loaded["a"] == 2
+
+    def test_dump_custom_types(self):
+        prof_dict = ProfileDict()
+        prof_dict.set("a.b.c", 1)
+        data = {"a": RadiusType.R2D, "b": prof_dict}
+        text = json.dumps(data, cls=ProfileEncoder)
+        loaded = json.loads(text, object_hook=profile_hook)
+        assert loaded["a"] == RadiusType.R2D
+        assert loaded["b"].get("a.b.c") == 1

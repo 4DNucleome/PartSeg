@@ -188,7 +188,10 @@ def profile_hook(dkt):
         del dkt["__SegmentationProfile__"]
         res = ROIExtractionProfile(**dkt)
         return res
-    if "__Serializable__" in dkt and dkt["__subtype__"] == "HistoryElement" and "algorithm_name" in dkt:
+    if (
+        "__Serializable__" in dkt and dkt["__subtype__"] == "HistoryElement" and "algorithm_name" in dkt
+    ):  # pragma: no cover
+        # old code fix
         name = dkt["algorithm_name"]
         par = dkt["algorithm_values"]
         del dkt["algorithm_name"]
