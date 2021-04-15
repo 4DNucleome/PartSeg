@@ -8,7 +8,7 @@ import pytest
 from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_mask.main_window import ChosenComponents
 from PartSeg._roi_mask.stack_settings import StackSettings, get_mask
-from PartSeg.common_backend.base_settings import BaseSettings
+from PartSeg.common_backend.base_settings import BaseSettings, SwapTimeStackException, TimeAndStackException
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import analysis_algorithm_dict
 from PartSegCore.analysis.io_utils import MaskInfo, create_history_element_from_project
@@ -248,6 +248,37 @@ class TestBaseSettings:
 
         settings.image = None
         assert settings.image is not None
+
+    def test_channels(self, tmp_path, qtbot):
+        settings = BaseSettings(tmp_path)
+        assert not settings.has_channels
+        assert settings.channels == 0
+        settings.image = Image(np.zeros((10, 10, 2), dtype=np.uint8), (1, 1), axes_order="XYC")
+        assert settings.has_channels
+        assert settings.channels == 2
+        settings.image = Image(np.zeros((10, 10, 1), dtype=np.uint8), (1, 1), axes_order="XYC")
+        assert not settings.has_channels
+        assert settings.channels == 1
+
+    def test_shape(self, tmp_path):
+        settings = BaseSettings(tmp_path)
+        assert settings.image_shape == ()
+        settings.image = Image(np.zeros((10, 10, 2), dtype=np.uint8), (1, 1), axes_order="XYC")
+        assert settings.image_shape == (1, 1, 10, 10, 2)
+
+    def test_verify_image(self):
+        assert BaseSettings.verify_image(Image(np.zeros((10, 10, 2), dtype=np.uint8), (1, 1), axes_order="XYC"))
+        with pytest.raises(SwapTimeStackException):
+            BaseSettings.verify_image(
+                Image(np.zeros((2, 10, 10), dtype=np.uint8), (1, 1, 1), axes_order="TXY"), silent=False
+            )
+        im = BaseSettings.verify_image(Image(np.zeros((2, 10, 10), dtype=np.uint8), (1, 1, 1), axes_order="TXY"))
+        assert not im.is_time
+        assert im.times == 1
+        assert im.is_stack
+        assert im.layers == 2
+        with pytest.raises(TimeAndStackException):
+            BaseSettings.verify_image(Image(np.zeros((2, 2, 10, 10), dtype=np.uint8), (1, 1, 1), axes_order="TZXY"))
 
 
 class TestPartSettings:

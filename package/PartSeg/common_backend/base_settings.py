@@ -27,7 +27,7 @@ from PartSegImage import Image
 
 try:
     from napari.qt import get_stylesheet
-except ImportError:
+except ImportError:  # pragma: no cover
     from napari.resources import get_stylesheet
 
 if hasattr(napari.utils.theme, "get_theme"):
@@ -40,7 +40,7 @@ if hasattr(napari.utils.theme, "get_theme"):
         return theme
 
 
-else:
+else:  # pragma: no cover
 
     def get_theme(name: str) -> dict:
         theme = napari.utils.theme.palettes[name]
@@ -184,7 +184,7 @@ class ImageSettings(QObject):
 
     @property
     def has_channels(self):
-        return self._image.channels > 1
+        return self.channels > 1
 
     def _image_changed(self):
         """Reimplement hook for change of main image"""
@@ -197,6 +197,7 @@ class ImageSettings(QObject):
 
     @property
     def image_shape(self):
+        # TODO analyse and decide if channels should be part of shape
         if self.image is not None:
             return self._image.shape
         return ()
@@ -458,7 +459,7 @@ class BaseSettings(ViewSettings):
             alternative_list = {
                 k: self.image.fit_array_to_image(v) for k, v in result.alternative_representation.items()
             }
-        except ValueError:
+        except ValueError:  # pragma: no cover
             raise ValueError("roi do not fit to image")
         self._roi_info = ROIInfo(roi, result.roi_annotation, alternative_list)
         self.roi_changed.emit(self._roi_info)
