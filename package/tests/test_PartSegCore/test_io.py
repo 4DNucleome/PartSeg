@@ -121,6 +121,7 @@ class TestHistoryElement:
         assert elem2.roi_extraction_parameters == param
         roi_info2, mask = elem2.get_roi_info_and_mask()
         assert np.all(roi_info2.roi == 0)
+        assert mask is None
 
     def test_mask(self, mask_prop):
         mask = np.zeros((10, 10), dtype=np.uint8)
@@ -144,6 +145,7 @@ class TestHistoryElement:
         roi_info = ROIInfo(data, alternative=alternative)
         elem = HistoryElement.create(roi_info, None, {}, mask_prop)
         roi_info2, mask2 = elem.get_roi_info_and_mask()
+        assert np.all(roi_info2.roi == roi_info.roi)
         assert mask2 is None
         assert len(roi_info.alternative) == 4
         assert set(roi_info.alternative) == {f"add{i}" for i in range(4)}
@@ -226,6 +228,7 @@ class TestSaveHistory:
         assert len(proj2.history) == 3
         for i in range(3):
             roi_info3, mask2 = proj2.history[i].get_roi_info_and_mask()
+            assert np.all(mask2 == alt1)
             assert set(roi_info3.alternative) == {f"test{i}"}
             assert np.all(roi_info3.alternative[f"test{i}"][alt1 > 0] == i + 5)
             assert np.all(roi_info3.alternative[f"test{i}"][alt1 == 0] == 0)
