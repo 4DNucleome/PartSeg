@@ -20,6 +20,7 @@ from PartSegCore.mask.io_functions import LoadStackImage
 from PartSegCore.mask_create import calculate_mask_from_project
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import SegmentationResult
+from PartSegImage import Image
 
 
 @pytest.fixture
@@ -227,6 +228,26 @@ class TestBaseSettings:
         settings = BaseSettings(tmp_path)
         with qtbot.waitSignal(settings.points_changed):
             settings.points = [1, 2, 3]
+
+    def test_set_roi(self, tmp_path, qtbot):
+        settings = BaseSettings(tmp_path)
+        roi = np.zeros((10, 10), dtype=np.uint8)
+        settings.image = Image(roi, (1, 1), axes_order="XY")
+        roi[1:5, 1:5] = 1
+        roi[5:-1, 5:-1] = 3
+        with qtbot.waitSignal(settings.roi_changed):
+            settings.roi = roi
+        assert len(settings.roi_info.bound_info) == 2
+        assert set(settings.roi_info.bound_info) == {1, 3}
+        assert settings.roi_info.alternative == {}
+        assert settings.roi_info.annotations == {}
+
+        with qtbot.waitSignal(settings.roi_clean):
+            settings.roi = None
+        assert settings.roi is None
+
+        settings.image = None
+        assert settings.image is not None
 
 
 class TestPartSettings:

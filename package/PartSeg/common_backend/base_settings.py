@@ -80,19 +80,19 @@ class ImageSettings(QObject):
         self._parent = parent
 
     @property
-    def full_segmentation(self):
+    def full_segmentation(self):  # pragma: no cover
         raise AttributeError("full_segmentation not supported")
 
     @full_segmentation.setter
-    def full_segmentation(self, val):  # pylint: disable=R0201
+    def full_segmentation(self, val):  # pragma: no cover # pylint: disable=R0201
         raise AttributeError("full_segmentation not supported")
 
     @property
-    def noise_remove_image_part(self):
+    def noise_remove_image_part(self):  # pragma: no cover
         raise AttributeError("noise_remove_image_part not supported")
 
     @noise_remove_image_part.setter
-    def noise_remove_image_part(self, val):  # pylint: disable=R0201
+    def noise_remove_image_part(self, val):  # pragma: no cover # pylint: disable=R0201
         raise AttributeError("noise_remove_image_part not supported")
 
     @property
@@ -100,7 +100,7 @@ class ImageSettings(QObject):
         return self._additional_layers
 
     @additional_layers.setter
-    def additional_layers(self, val):  # pylint: disable=R0201
+    def additional_layers(self, val):  # pragma: no cover  # pylint: disable=R0201
         raise AttributeError("additional_layers assign not supported")
 
     @property
@@ -116,7 +116,7 @@ class ImageSettings(QObject):
 
     @image_spacing.setter
     def image_spacing(self, value):
-        if len(value) not in [2, 3]:
+        if len(value) not in [2, 3]:  # pragma: no cover
             raise ValueError(f"value parameter should have length 2 or 3. Current length is {len(value)}.")
         if len(value) == 2:
             self._image.set_spacing(tuple([self._image.spacing[0]] + list(value)))
@@ -125,7 +125,7 @@ class ImageSettings(QObject):
         self.image_spacing_changed.emit()
 
     @property
-    def segmentation(self) -> np.ndarray:
+    def segmentation(self) -> np.ndarray:  # pragma: no cover
         """current roi"""
         warnings.warn("segmentation parameter is renamed to roi", DeprecationWarning)
         return self.roi
@@ -136,7 +136,7 @@ class ImageSettings(QObject):
         return self._roi_info.roi
 
     @property
-    def segmentation_info(self) -> ROIInfo:
+    def segmentation_info(self) -> ROIInfo:  # pragma: no cover
         warnings.warn("segmentation info parameter is renamed to roi", DeprecationWarning)
         return self.roi_info
 
@@ -156,7 +156,7 @@ class ImageSettings(QObject):
                 self._roi_info = ROIInfo(self.image.fit_array_to_image(val))
             else:
                 self._roi_info = val.fit_to_image(self.image)
-        except ValueError:
+        except ValueError:  # pragma: no cover
             raise ValueError("roi do not fit to image")
         self._additional_layers = {}
         self.roi_changed.emit(self._roi_info)
