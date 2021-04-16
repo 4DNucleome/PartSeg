@@ -19,7 +19,6 @@ from PartSegImage import GenericImageReader
 
 from ..algorithm_describe_base import Register, ROIExtractionProfile
 from ..io_utils import (
-    HistoryElement,
     LoadBase,
     LoadPoints,
     SegmentationType,
@@ -31,6 +30,8 @@ from ..io_utils import (
     tar_to_buff,
 )
 from ..mask.io_functions import LoadROIImage
+from ..project_info import HistoryElement
+from ..roi_info import ROIInfo
 from ..universal_const import UNIT_SCALE, Units
 from .analysis_utils import SegmentationPipeline, SegmentationPipelineElement
 from .calculation_plan import CalculationPlan, CalculationTree, MeasurementCalculate
@@ -71,23 +72,27 @@ def load_project(
         algorithm_dict = load_metadata(algorithm_str)
         algorithm_dict = update_algorithm_dict(algorithm_dict)
         algorithm_dict.get("project_file_version")
+        metadata = json.loads(tar_file.extractfile("metadata.json").read())
         try:
-            version = parse_version(json.loads(tar_file.extractfile("metadata.json").read())["project_version_info"])
+            version = parse_version(metadata["project_version_info"])
         except KeyError:
             version = Version("1.0")
         if version == Version("1.0"):
             seg_dict = np.load(tar_to_buff(tar_file, "segmentation.npz"))
             mask = seg_dict["mask"] if "mask" in seg_dict else None
-            segmentation = seg_dict["segmentation"]
+            roi = seg_dict["segmentation"]
         else:
-            segmentation = tifffile.imread(tar_to_buff(tar_file, "segmentation.tif"))
+            roi = tifffile.imread(tar_to_buff(tar_file, "segmentation.tif"))
             if "mask.tif" in tar_file.getnames():
                 mask = tifffile.imread(tar_to_buff(tar_file, "mask.tif"))
                 if np.max(mask) == 1:
                     mask = mask.astype(bool)
             else:
                 mask = None
-
+        if "alternative.npz" in tar_file.getnames():
+            alternative = np.load(tar_to_buff(tar_file, "alternative.npz"))
+        else:
+            alternative = {}
         history = []
         try:
             history_buff = tar_file.extractfile(tar_file.getmember("history/history.json")).read()
@@ -100,9 +105,10 @@ def load_project(
                 segmentation_parameters = {"algorithm_name": el["algorithm_name"], "values": el["values"]}
                 history.append(
                     HistoryElement(
-                        segmentation_parameters=segmentation_parameters,
+                        roi_extraction_parameters=segmentation_parameters,
                         mask_property=el["mask_property"],
                         arrays=history_buffer,
+                        annotations=el.get("annotations", {}),
                     )
                 )
 
@@ -112,11 +118,12 @@ def load_project(
         if isinstance(file, (str, Path)):
             tar_file.close()
     image.set_mask(mask)
+    roi_info = ROIInfo(roi, annotations=metadata.get("roi_annotations"), alternative=alternative)
     if version <= project_version_info:
         return ProjectTuple(
             file_path=file_path,
             image=image,
-            roi=segmentation,
+            roi_info=roi_info,
             mask=mask,
             history=history,
             algorithm_parameters=algorithm_dict,
@@ -126,7 +133,7 @@ def load_project(
     return ProjectTuple(
         file_path=file_path,
         image=image,
-        roi=segmentation,
+        roi_info=roi_info,
         mask=mask,
         history=history,
         algorithm_parameters=algorithm_dict,
@@ -295,16 +302,16 @@ class LoadMaskSegmentation(LoadBase):
     ) -> typing.List[ProjectTuple]:
         data = LoadROIImage.load(load_locations, range_changed, step_changed, metadata)
         image = data.image
-        segmentation = data.roi
+        roi = data.roi_info.roi
         components = data.selected_components
         res = []
         base, ext = os.path.splitext(load_locations[0])
         path_template = base + "_component{}" + ext
         for i in components:
-            seg = segmentation == i
-            if not np.any(seg):
+            single_roi = roi == i
+            if not np.any(single_roi):
                 continue
-            im = image.cut_image(segmentation == i, replace_mask=True)
+            im = image.cut_image(roi == i, replace_mask=True)
             im.file_path = path_template.format(i)
             res.append(ProjectTuple(im.file_path, im, mask=im.mask))
         return res

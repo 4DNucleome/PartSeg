@@ -18,16 +18,16 @@ from PartSeg.common_backend.partially_const_dict import PartiallyConstDict
 from PartSegCore import register
 from PartSegCore.color_image import default_colormap_dict, default_label_dict
 from PartSegCore.color_image.base_colors import starting_colors
-from PartSegCore.io_utils import HistoryElement, load_metadata_base
+from PartSegCore.io_utils import load_metadata_base
 from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, check_loaded_dict
-from PartSegCore.project_info import ProjectInfoBase
+from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement, ProjectInfoBase
 from PartSegCore.roi_info import ROIInfo
-from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription, SegmentationResult
+from PartSegCore.segmentation.algorithm_base import SegmentationResult
 from PartSegImage import Image
 
 try:
     from napari.qt import get_stylesheet
-except ImportError:
+except ImportError:  # pragma: no cover
     from napari.resources import get_stylesheet
 
 if hasattr(napari.utils.theme, "get_theme"):
@@ -40,7 +40,7 @@ if hasattr(napari.utils.theme, "get_theme"):
         return theme
 
 
-else:
+else:  # pragma: no cover
 
     def get_theme(name: str) -> dict:
         theme = napari.utils.theme.palettes[name]
@@ -80,19 +80,19 @@ class ImageSettings(QObject):
         self._parent = parent
 
     @property
-    def full_segmentation(self):
+    def full_segmentation(self):  # pragma: no cover
         raise AttributeError("full_segmentation not supported")
 
     @full_segmentation.setter
-    def full_segmentation(self, val):  # pylint: disable=R0201
+    def full_segmentation(self, val):  # pragma: no cover # pylint: disable=R0201
         raise AttributeError("full_segmentation not supported")
 
     @property
-    def noise_remove_image_part(self):
+    def noise_remove_image_part(self):  # pragma: no cover
         raise AttributeError("noise_remove_image_part not supported")
 
     @noise_remove_image_part.setter
-    def noise_remove_image_part(self, val):  # pylint: disable=R0201
+    def noise_remove_image_part(self, val):  # pragma: no cover # pylint: disable=R0201
         raise AttributeError("noise_remove_image_part not supported")
 
     @property
@@ -100,7 +100,7 @@ class ImageSettings(QObject):
         return self._additional_layers
 
     @additional_layers.setter
-    def additional_layers(self, val):  # pylint: disable=R0201
+    def additional_layers(self, val):  # pragma: no cover  # pylint: disable=R0201
         raise AttributeError("additional_layers assign not supported")
 
     @property
@@ -116,7 +116,7 @@ class ImageSettings(QObject):
 
     @image_spacing.setter
     def image_spacing(self, value):
-        if len(value) not in [2, 3]:
+        if len(value) not in [2, 3]:  # pragma: no cover
             raise ValueError(f"value parameter should have length 2 or 3. Current length is {len(value)}.")
         if len(value) == 2:
             self._image.set_spacing(tuple([self._image.spacing[0]] + list(value)))
@@ -125,7 +125,7 @@ class ImageSettings(QObject):
         self.image_spacing_changed.emit()
 
     @property
-    def segmentation(self) -> np.ndarray:
+    def segmentation(self) -> np.ndarray:  # pragma: no cover
         """current roi"""
         warnings.warn("segmentation parameter is renamed to roi", DeprecationWarning)
         return self.roi
@@ -136,7 +136,7 @@ class ImageSettings(QObject):
         return self._roi_info.roi
 
     @property
-    def segmentation_info(self) -> ROIInfo:
+    def segmentation_info(self) -> ROIInfo:  # pragma: no cover
         warnings.warn("segmentation info parameter is renamed to roi", DeprecationWarning)
         return self.roi_info
 
@@ -156,7 +156,7 @@ class ImageSettings(QObject):
                 self._roi_info = ROIInfo(self.image.fit_array_to_image(val))
             else:
                 self._roi_info = val.fit_to_image(self.image)
-        except ValueError:
+        except ValueError:  # pragma: no cover
             raise ValueError("roi do not fit to image")
         self._additional_layers = {}
         self.roi_changed.emit(self._roi_info)
@@ -184,7 +184,7 @@ class ImageSettings(QObject):
 
     @property
     def has_channels(self):
-        return self._image.channels > 1
+        return self.channels > 1
 
     def _image_changed(self):
         """Reimplement hook for change of main image"""
@@ -197,6 +197,7 @@ class ImageSettings(QObject):
 
     @property
     def image_shape(self):
+        # TODO analyse and decide if channels should be part of shape
         if self.image is not None:
             return self._image.shape
         return ()
@@ -458,7 +459,7 @@ class BaseSettings(ViewSettings):
             alternative_list = {
                 k: self.image.fit_array_to_image(v) for k, v in result.alternative_representation.items()
             }
-        except ValueError:
+        except ValueError:  # pragma: no cover
             raise ValueError("roi do not fit to image")
         self._roi_info = ROIInfo(roi, result.roi_annotation, alternative_list)
         self.roi_changed.emit(self._roi_info)

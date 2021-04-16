@@ -1,6 +1,7 @@
 import copy
 import typing
 
+import numpy as np
 from napari.utils import Colormap
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
@@ -156,6 +157,10 @@ class ProfileEncoder(SerializeClassEncoder):
                 "interpolation": o.interpolation,
                 "controls": o.controls.tolist(),
             }
+        if isinstance(o, np.integer):
+            return int(o)
+        if isinstance(o, np.floating):
+            return float(o)
         return super().default(o)
 
 
@@ -183,7 +188,10 @@ def profile_hook(dkt):
         del dkt["__SegmentationProfile__"]
         res = ROIExtractionProfile(**dkt)
         return res
-    if "__Serializable__" in dkt and dkt["__subtype__"] == "HistoryElement" and "algorithm_name" in dkt:
+    if (
+        "__Serializable__" in dkt and dkt["__subtype__"] == "HistoryElement" and "algorithm_name" in dkt
+    ):  # pragma: no cover
+        # old code fix
         name = dkt["algorithm_name"]
         par = dkt["algorithm_values"]
         del dkt["algorithm_name"]

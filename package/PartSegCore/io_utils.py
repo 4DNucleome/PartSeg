@@ -17,10 +17,9 @@ from napari.utils import Colormap
 
 from PartSegCore.json_hooks import ProfileDict, profile_hook
 from PartSegImage import ImageWriter
+from PartSegImage.image import minimal_dtype
 
 from .algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
-from .class_generator import BaseSerializableClass
-from .mask_create import MaskProperty
 from .project_info import ProjectInfoBase
 
 
@@ -301,38 +300,6 @@ def open_tar_file(
     return tar_file, file_path
 
 
-class HistoryElement(BaseSerializableClass):
-    segmentation_parameters: typing.Dict[str, typing.Any]
-    mask_property: MaskProperty
-    arrays: BytesIO
-
-    @classmethod
-    def create(
-        cls,
-        segmentation: np.ndarray,
-        mask: typing.Union[np.ndarray, None],
-        segmentation_parameters: dict,
-        mask_property: MaskProperty,
-    ):
-        if "name" in segmentation_parameters:
-            raise ValueError("name")
-        arrays = BytesIO()
-        arrays_dict = {"segmentation": segmentation}
-        if mask is not None:
-            arrays_dict["mask"] = mask
-        np.savez_compressed(arrays, **arrays_dict)
-        arrays.seek(0)
-        return cls(
-            segmentation_parameters=segmentation_parameters,
-            mask_property=mask_property,
-            arrays=arrays,
-        )
-
-
-class HistoryProblem(Exception):
-    pass
-
-
 class SaveMaskAsTiff(SaveBase):
     @classmethod
     def get_name(cls):
@@ -419,13 +386,10 @@ class SaveROIAsTIFF(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
-        segmentation = project_info.roi
-        segmentation_max = segmentation.max()
-        if segmentation_max < 2 ** 8 - 1:
-            segmentation = segmentation.astype(np.uint8)
-        elif segmentation_max < 2 ** 16 - 1:
-            segmentation = segmentation.astype(np.uint16)
-        tifffile.imsave(save_location, segmentation)
+        roi = project_info.roi_info.roi
+        roi_max = max(project_info.roi_info.bound_info)
+        roi = roi.astype(minimal_dtype(roi_max))
+        tifffile.imsave(save_location, roi)
 
 
 class SaveROIAsNumpy(SaveBase):
@@ -450,13 +414,10 @@ class SaveROIAsNumpy(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
-        segmentation = project_info.roi
-        segmentation_max = segmentation.max()
-        if segmentation_max < 2 ** 8 - 1:
-            segmentation = segmentation.astype(np.uint8)
-        elif segmentation_max < 2 ** 16 - 1:
-            segmentation = segmentation.astype(np.uint16)
-        np.save(save_location, segmentation)
+        roi = project_info.roi_info.roi
+        roi_max = max(project_info.roi_info.bound_info)
+        roi = roi.astype(minimal_dtype(roi_max))
+        np.save(save_location, roi)
 
 
 class PointsInfo(typing.NamedTuple):

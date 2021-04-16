@@ -13,15 +13,9 @@ from PartSegImage import Image, ImageWriter
 
 from ..algorithm_describe_base import AlgorithmProperty, Register
 from ..channel_class import Channel
-from ..io_utils import (
-    HistoryElement,
-    NotSupportedImage,
-    SaveBase,
-    SaveMaskAsTiff,
-    SaveROIAsNumpy,
-    SaveROIAsTIFF,
-    get_tarinfo,
-)
+from ..io_utils import NotSupportedImage, SaveBase, SaveMaskAsTiff, SaveROIAsNumpy, SaveROIAsTIFF, get_tarinfo
+from ..project_info import HistoryElement
+from ..roi_info import ROIInfo
 from ..universal_const import UNIT_SCALE, Units
 from .io_utils import ProjectTuple, project_version_info
 from .save_hooks import PartEncoder
@@ -40,7 +34,7 @@ __all__ = [
 def save_project(
     file_path: str,
     image: Image,
-    segmentation: np.ndarray,
+    roi_info: ROIInfo,
     mask: typing.Optional[np.ndarray],
     history: typing.List[HistoryElement],
     algorithm_parameters: dict,
@@ -51,9 +45,14 @@ def save_project(
     with tarfile.open(file_path, tar_mod) as tar:
         segmentation_buff = BytesIO()
         # noinspection PyTypeChecker
-        tifffile.imwrite(segmentation_buff, segmentation, compress=9)
+        tifffile.imwrite(segmentation_buff, roi_info.roi, compress=9)
         segmentation_tar = get_tarinfo("segmentation.tif", segmentation_buff)
         tar.addfile(segmentation_tar, fileobj=segmentation_buff)
+        if roi_info.alternative:
+            alternative_buff = BytesIO()
+            np.savez(alternative_buff, **roi_info.alternative)
+            alternative_tar = get_tarinfo("alternative.npz", alternative_buff)
+            tar.addfile(alternative_tar, fileobj=alternative_buff)
         if mask is not None:
             if mask.dtype == bool:
                 mask = mask.astype(np.uint8)
@@ -70,7 +69,10 @@ def save_project(
         parameters_buff = BytesIO(para_str.encode("utf-8"))
         tar_algorithm = get_tarinfo("algorithm.json", parameters_buff)
         tar.addfile(tar_algorithm, parameters_buff)
-        meta_str = json.dumps({"project_version_info": str(project_version_info)}, cls=PartEncoder)
+        meta_str = json.dumps(
+            {"project_version_info": str(project_version_info), "roi_annotations": roi_info.annotations},
+            cls=PartEncoder,
+        )
         meta_buff = BytesIO(meta_str.encode("utf-8"))
         tar_meta = get_tarinfo("metadata.json", meta_buff)
         tar.addfile(tar_meta, meta_buff)
@@ -79,9 +81,10 @@ def save_project(
             el_info.append(
                 {
                     "index": i,
-                    "algorithm_name": el.segmentation_parameters["algorithm_name"],
-                    "values": el.segmentation_parameters["values"],
+                    "algorithm_name": el.roi_extraction_parameters["algorithm_name"],
+                    "values": el.roi_extraction_parameters["values"],
                     "mask_property": el.mask_property,
+                    "annotations": el.annotations,
                 }
             )
             el.arrays.seek(0)
@@ -169,7 +172,7 @@ class SaveProject(SaveBase):
         save_project(
             save_location,
             project_info.image,
-            project_info.roi,
+            project_info.roi_info,
             project_info.mask,
             project_info.history,
             project_info.algorithm_parameters,
@@ -211,7 +214,7 @@ class SaveCmap(SaveBase):
             raise NotSupportedImage("This save method o not support time data")
         data = project_info.image.get_data_by_axis(c=parameters["channel"], t=0)
         spacing = project_info.image.spacing
-        segmentation = project_info.image.clip_array(project_info.roi, t=0)
+        segmentation = project_info.image.clip_array(project_info.roi_info.roi, t=0)
 
         reverse_base = float(np.mean(data[segmentation == 0]))
         if parameters.get("clip", False):
@@ -271,7 +274,7 @@ class SaveXYZ(SaveBase):
         range_changed=None,
         step_changed=None,
     ):
-        if project_info.roi is None:
+        if project_info.roi_info.roi is None:
             raise ValueError("Not segmentation")
         if isinstance(save_location, (str, Path)) and not os.path.exists(os.path.dirname(save_location)):
             os.makedirs(os.path.dirname(save_location))
@@ -281,7 +284,7 @@ class SaveXYZ(SaveBase):
             raise NotSupportedImage("This save method o not support time data")
         channel_image = project_info.image.get_data_by_axis(c=parameters["channel"], t=parameters.get("time", 0))
 
-        segmentation_mask = np.array(project_info.roi > 0)
+        segmentation_mask = np.array(project_info.roi_info.roi > 0)
         segmentation_mask = project_info.image.clip_array(segmentation_mask, t=parameters.get("time", 0))
         if parameters.get("clip", False):
             positions = np.transpose(np.nonzero(segmentation_mask))
@@ -291,10 +294,10 @@ class SaveXYZ(SaveBase):
             shift = np.array([0] * segmentation_mask.ndim)
         cls._save(save_location, channel_image, segmentation_mask, shift)
         if parameters.get("separated_objects", False):
-            components_count = np.bincount(project_info.roi.flat)
+            components_count = np.bincount(project_info.roi_info.roi.flat)
             for i, size in enumerate(components_count[1:], 1):
                 if size > 0:
-                    segmentation_mask = np.array(project_info.roi == i)[parameters.get("time", 0)]
+                    segmentation_mask = np.array(project_info.roi_info.roi == i)[parameters.get("time", 0)]
                     base_path, ext = os.path.splitext(save_location)
                     new_save_location = base_path + f"_part{i}" + ext
                     cls._save(new_save_location, channel_image, segmentation_mask, shift)

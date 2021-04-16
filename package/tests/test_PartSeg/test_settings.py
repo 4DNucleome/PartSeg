@@ -8,17 +8,19 @@ import pytest
 from PartSeg._roi_analysis.partseg_settings import PartSettings
 from PartSeg._roi_mask.main_window import ChosenComponents
 from PartSeg._roi_mask.stack_settings import StackSettings, get_mask
-from PartSeg.common_backend.base_settings import BaseSettings
+from PartSeg.common_backend.base_settings import BaseSettings, SwapTimeStackException, TimeAndStackException
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import analysis_algorithm_dict
 from PartSegCore.analysis.io_utils import MaskInfo, create_history_element_from_project
 from PartSegCore.analysis.load_functions import LoadProject
 from PartSegCore.analysis.save_functions import SaveProject
-from PartSegCore.io_utils import HistoryProblem, PointsInfo
+from PartSegCore.io_utils import PointsInfo
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import LoadStackImage
-from PartSegCore.mask_create import calculate_mask_from_project
+from PartSegCore.project_info import HistoryProblem, calculate_mask_from_project
+from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import SegmentationResult
+from PartSegImage import Image
 
 
 @pytest.fixture
@@ -41,7 +43,7 @@ class TestStackSettings:
         project2 = LoadStackImage.load([os.path.join(data_test_dir, "test_lsm.tif")])
         stack_settings.set_project_info(project2)
         project2_res = stack_settings.get_project_info()
-        assert project2_res.roi is None
+        assert project2_res.roi_info.roi is None
         assert (
             isinstance(project2_res.selected_components, typing.Iterable) and len(project2_res.selected_components) == 0
         )
@@ -156,10 +158,12 @@ class TestStackSettings:
 
     def test_set_segmentation_result(self, stack_settings, stack_segmentation1, stack_image):
         stack_settings.set_project_info(stack_image)
-        seg = SegmentationResult(roi=stack_segmentation1.roi, parameters=ROIExtractionProfile("test", "test2", {}))
+        seg = SegmentationResult(
+            roi=stack_segmentation1.roi_info.roi, parameters=ROIExtractionProfile("test", "test2", {})
+        )
         stack_settings.set_segmentation_result(seg)
         assert stack_settings.last_executed_algorithm == "test2"
-        assert np.array_equal(stack_settings.roi, stack_segmentation1.roi)
+        assert np.array_equal(stack_settings.roi, stack_segmentation1.roi_info.roi)
 
     def test_selected_components(self, stack_settings, stack_segmentation1):
         stack_settings.set_project_info(stack_segmentation1)
@@ -170,7 +174,7 @@ class TestStackSettings:
         stack_settings.chosen_components_widget.un_check_all()
         assert stack_settings.chosen_components() == []
         stack_settings.chosen_components_widget.check_all()
-        assert stack_settings.chosen_components() == list(range(1, stack_segmentation1.roi.max() + 1))
+        assert stack_settings.chosen_components() == list(range(1, stack_segmentation1.roi_info.roi.max() + 1))
 
 
 class TestBaseSettings:
@@ -225,6 +229,57 @@ class TestBaseSettings:
         with qtbot.waitSignal(settings.points_changed):
             settings.points = [1, 2, 3]
 
+    def test_set_roi(self, tmp_path, qtbot):
+        settings = BaseSettings(tmp_path)
+        roi = np.zeros((10, 10), dtype=np.uint8)
+        settings.image = Image(roi, (1, 1), axes_order="XY")
+        roi[1:5, 1:5] = 1
+        roi[5:-1, 5:-1] = 3
+        with qtbot.waitSignal(settings.roi_changed):
+            settings.roi = roi
+        assert len(settings.roi_info.bound_info) == 2
+        assert set(settings.roi_info.bound_info) == {1, 3}
+        assert settings.roi_info.alternative == {}
+        assert settings.roi_info.annotations == {}
+
+        with qtbot.waitSignal(settings.roi_clean):
+            settings.roi = None
+        assert settings.roi is None
+
+        settings.image = None
+        assert settings.image is not None
+
+    def test_channels(self, tmp_path, qtbot):
+        settings = BaseSettings(tmp_path)
+        assert not settings.has_channels
+        assert settings.channels == 0
+        settings.image = Image(np.zeros((10, 10, 2), dtype=np.uint8), (1, 1), axes_order="XYC")
+        assert settings.has_channels
+        assert settings.channels == 2
+        settings.image = Image(np.zeros((10, 10, 1), dtype=np.uint8), (1, 1), axes_order="XYC")
+        assert not settings.has_channels
+        assert settings.channels == 1
+
+    def test_shape(self, tmp_path):
+        settings = BaseSettings(tmp_path)
+        assert settings.image_shape == ()
+        settings.image = Image(np.zeros((10, 10, 2), dtype=np.uint8), (1, 1), axes_order="XYC")
+        assert settings.image_shape == (1, 1, 10, 10, 2)
+
+    def test_verify_image(self):
+        assert BaseSettings.verify_image(Image(np.zeros((10, 10, 2), dtype=np.uint8), (1, 1), axes_order="XYC"))
+        with pytest.raises(SwapTimeStackException):
+            BaseSettings.verify_image(
+                Image(np.zeros((2, 10, 10), dtype=np.uint8), (1, 1, 1), axes_order="TXY"), silent=False
+            )
+        im = BaseSettings.verify_image(Image(np.zeros((2, 10, 10), dtype=np.uint8), (1, 1, 1), axes_order="TXY"))
+        assert not im.is_time
+        assert im.times == 1
+        assert im.is_stack
+        assert im.layers == 2
+        with pytest.raises(TimeAndStackException):
+            BaseSettings.verify_image(Image(np.zeros((2, 2, 10, 10), dtype=np.uint8), (1, 1, 1), axes_order="TZXY"))
+
 
 class TestPartSettings:
     def test_set_mask_info(self, qtbot, tmp_path, image):
@@ -243,7 +298,7 @@ class TestPartSettings:
         assert settings.mask is not None
         settings.set_project_info(analysis_segmentation)
         assert settings.mask is None
-        analysis_segmentation3 = dataclasses.replace(analysis_segmentation2, roi=None)
+        analysis_segmentation3 = dataclasses.replace(analysis_segmentation2, roi_info=ROIInfo(None))
         settings.set_project_info(analysis_segmentation3)
         assert settings.mask is not None
         assert settings.roi is None
@@ -286,7 +341,7 @@ class TestPartSettings:
         SaveProject.save(tmp_path / "project.tgz", project_info)
         assert os.path.exists(tmp_path / "project.tgz")
         loaded = LoadProject.load([tmp_path / "project.tgz"])
-        assert np.all(loaded.roi == result2.roi)
+        assert np.all(loaded.roi_info.roi == result2.roi)
         assert len(loaded.history) == 1
 
 
@@ -302,21 +357,21 @@ def test_set_project_info(Settings, qtbot, tmp_path, image):
 
 
 def test_get_mask(stack_segmentation1):
-    res1 = get_mask(stack_segmentation1.roi, mask=None, selected=[1, 3])
+    res1 = get_mask(stack_segmentation1.roi_info.roi, mask=None, selected=[1, 3])
     assert isinstance(res1, np.ndarray)
     assert set(np.unique(res1)) == {0, 1}
-    assert set(stack_segmentation1.roi[res1 > 0]) == {0, 2, 4}
-    mask = np.ones(stack_segmentation1.roi.shape, dtype=np.uint8)
-    res2 = get_mask(stack_segmentation1.roi, mask=mask, selected=[1, 3])
+    assert set(stack_segmentation1.roi_info.roi[res1 > 0]) == {0, 2, 4}
+    mask = np.ones(stack_segmentation1.roi_info.roi.shape, dtype=np.uint8)
+    res2 = get_mask(stack_segmentation1.roi_info.roi, mask=mask, selected=[1, 3])
     assert set(np.unique(res2)) == {0, 1}
     assert np.array_equal(res1, res2)
-    res3 = get_mask(stack_segmentation1.roi, mask=res1, selected=[1, 2])
-    assert set(stack_segmentation1.roi[res3 > 0]) == {0, 4}
+    res3 = get_mask(stack_segmentation1.roi_info.roi, mask=res1, selected=[1, 2])
+    assert set(stack_segmentation1.roi_info.roi[res3 > 0]) == {0, 4}
     assert set(np.unique(res3)) == {0, 1}
-    res4 = get_mask(stack_segmentation1.roi, mask=None, selected=[1])
-    assert np.array_equal(res4, stack_segmentation1.roi != 1)
+    res4 = get_mask(stack_segmentation1.roi_info.roi, mask=None, selected=[1])
+    assert np.array_equal(res4, stack_segmentation1.roi_info.roi != 1)
 
-    assert get_mask(stack_segmentation1.roi, mask=None, selected=[]) is None
+    assert get_mask(stack_segmentation1.roi_info.roi, mask=None, selected=[]) is None
     assert get_mask(None, mask=None, selected=[1, 2]) is None
     assert np.array_equal(get_mask(None, mask=res4, selected=[1, 2]), res4)
-    assert np.array_equal(get_mask(stack_segmentation1.roi, mask=res4, selected=[]), res4)
+    assert np.array_equal(get_mask(stack_segmentation1.roi_info.roi, mask=res4, selected=[]), res4)

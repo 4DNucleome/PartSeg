@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from napari.utils import Colormap
 
+from PartSegCore.image_operations import RadiusType
 from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, profile_hook, recursive_update_dict
 
 
@@ -102,3 +103,21 @@ def test_colormap_dump(tmp_path):
     assert cmap_list2[1].controls[-1] == 1
     assert np.array_equal(cmap_list[1].colors[0], cmap_list2[1].colors[0])
     assert np.array_equal(cmap_list[1].colors[-1], cmap_list2[1].colors[-1])
+
+
+class TestProfileEncoder:
+    @pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32, np.float32, np.float64])
+    def test_dump_numpy_types(self, dtype):
+        data = {"a": dtype(2)}
+        text = json.dumps(data, cls=ProfileEncoder)
+        loaded = json.loads(text)
+        assert loaded["a"] == 2
+
+    def test_dump_custom_types(self):
+        prof_dict = ProfileDict()
+        prof_dict.set("a.b.c", 1)
+        data = {"a": RadiusType.R2D, "b": prof_dict}
+        text = json.dumps(data, cls=ProfileEncoder)
+        loaded = json.loads(text, object_hook=profile_hook)
+        assert loaded["a"] == RadiusType.R2D
+        assert loaded["b"].get("a.b.c") == 1

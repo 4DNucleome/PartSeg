@@ -14,14 +14,10 @@ from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, 
 from ..channel_class import Channel
 from ..mask_partition_utils import BorderRim as BorderRimBase
 from ..mask_partition_utils import MaskDistanceSplit as MaskDistanceSplitBase
+from ..project_info import AdditionalLayerDescription
 from ..universal_const import Units
 from ..utils import bisect
-from .algorithm_base import (
-    AdditionalLayerDescription,
-    SegmentationAlgorithm,
-    SegmentationLimitException,
-    SegmentationResult,
-)
+from .algorithm_base import SegmentationAlgorithm, SegmentationLimitException, SegmentationResult
 from .mu_mid_point import BaseMuMid, mu_mid_dict
 from .noise_filtering import noise_filtering_dict
 from .threshold import BaseThreshold, double_threshold_dict, threshold_dict

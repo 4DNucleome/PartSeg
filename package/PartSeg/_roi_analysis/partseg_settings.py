@@ -11,8 +11,9 @@ from PartSegCore.analysis.io_utils import MaskInfo, ProjectTuple
 from PartSegCore.analysis.load_functions import load_metadata
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile
 from PartSegCore.analysis.save_hooks import PartEncoder
-from PartSegCore.io_utils import HistoryElement, PointsInfo
+from PartSegCore.io_utils import PointsInfo
 from PartSegCore.json_hooks import ProfileDict
+from PartSegCore.project_info import HistoryElement
 from PartSegCore.roi_info import ROIInfo
 
 from ..common_backend.base_settings import BaseSettings, SaveSettingsDescription
@@ -87,7 +88,6 @@ class PartSettings(BaseSettings):
         return ProjectTuple(
             file_path=self.image.file_path,
             image=self.image.substitute(),
-            roi=self.roi,
             roi_info=self.roi_info,
             additional_layers=self.additional_layers,
             mask=self.mask,
@@ -97,30 +97,33 @@ class PartSettings(BaseSettings):
         )
 
     def set_project_info(self, data: typing.Union[ProjectTuple, MaskInfo, PointsInfo]):
-        if isinstance(data, ProjectTuple):
-            if self.image.file_path == data.image.file_path and self.image.shape == data.image.shape:
-                if data.roi is not None:
-                    try:
-                        self.image.fit_array_to_image(data.roi)
-                        self.mask = data.mask
-                    except ValueError:
-                        self.image = data.image.substitute()
-                else:
-                    self.mask = data.mask
-            else:
-                self.image = data.image.substitute(mask=data.mask)
-            self.roi = data.roi
-            self._additional_layers = data.additional_layers
-            self.additional_layers_changed.emit()
-            self.set_history(data.history[:])
-            if data.algorithm_parameters:
-                self.last_executed_algorithm = data.algorithm_parameters["algorithm_name"]
-                self.set(f"algorithms.{self.last_executed_algorithm}", deepcopy(data.algorithm_parameters["values"]))
-                self.algorithm_changed.emit()
-        elif isinstance(data, MaskInfo):
+        if isinstance(data, MaskInfo):
             self.mask = data.mask_array
-        elif isinstance(data, PointsInfo):
+            return
+        if isinstance(data, PointsInfo):
             self.points = data.points
+            return
+        if not isinstance(data, ProjectTuple):
+            return
+        if self.image.file_path == data.image.file_path and self.image.shape == data.image.shape:
+            if data.roi_info.roi is not None:
+                try:
+                    self.image.fit_array_to_image(data.roi_info.roi)
+                    self.mask = data.mask
+                except ValueError:
+                    self.image = data.image.substitute()
+            else:
+                self.mask = data.mask
+        else:
+            self.image = data.image.substitute(mask=data.mask)
+        self.roi = data.roi_info
+        self._additional_layers = data.additional_layers
+        self.additional_layers_changed.emit()
+        self.set_history(data.history[:])
+        if data.algorithm_parameters:
+            self.last_executed_algorithm = data.algorithm_parameters["algorithm_name"]
+            self.set(f"algorithms.{self.last_executed_algorithm}", deepcopy(data.algorithm_parameters["values"]))
+            self.algorithm_changed.emit()
 
     def get_save_list(self) -> typing.List[SaveSettingsDescription]:
         return super().get_save_list() + [

@@ -4,11 +4,9 @@ from dataclasses import dataclass, field, replace
 import numpy as np
 import packaging.version
 
-from PartSegCore.io_utils import HistoryElement
 from PartSegCore.mask_create import MaskProperty
-from PartSegCore.project_info import ProjectInfoBase
+from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement, ProjectInfoBase
 from PartSegCore.roi_info import ROIInfo
-from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription
 from PartSegCore.utils import numpy_repr
 from PartSegImage import Image
 
@@ -19,7 +17,6 @@ project_version_info = packaging.version.Version("1.1")
 class ProjectTuple(ProjectInfoBase):
     file_path: str
     image: Image
-    roi: typing.Optional[np.ndarray] = None
     roi_info: ROIInfo = ROIInfo(None)
     additional_layers: typing.Dict[str, AdditionalLayerDescription] = field(default_factory=dict)
     mask: typing.Optional[np.ndarray] = None
@@ -27,10 +24,6 @@ class ProjectTuple(ProjectInfoBase):
     algorithm_parameters: dict = field(default_factory=dict)
     errors: str = ""
     points: typing.Optional[np.ndarray] = None
-
-    def __post_init__(self):
-        if self.roi_info.roi is not None:
-            object.__setattr__(self, "segmentation_info", ROIInfo(self.roi))
 
     def get_raw_copy(self):
         return ProjectTuple(self.file_path, self.image.substitute(mask=None))
@@ -70,8 +63,8 @@ class MaskInfo(typing.NamedTuple):
 
 def create_history_element_from_project(project_info: ProjectTuple, mask_property: MaskProperty):
     return HistoryElement.create(
-        segmentation=project_info.roi,
+        roi_info=project_info.roi_info,
         mask=project_info.mask,
-        segmentation_parameters=project_info.algorithm_parameters,
+        roi_extraction_parameters=project_info.algorithm_parameters,
         mask_property=mask_property,
     )

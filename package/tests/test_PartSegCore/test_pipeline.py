@@ -59,11 +59,11 @@ def test_pipeline(image, algorithm_parameters, mask_property, tmp_path, use_mask
     )
     mask = np.ones(image.get_channel(0).shape, dtype=np.uint8) if use_mask else None
     result = calculate_pipeline(image, mask, pipeline, lambda x, y: None)
-    assert np.max(result.roi) == 2
+    assert np.max(result.roi_info.roi) == 2
     pt = ProjectTuple(
         file_path=image.file_path,
         image=image,
-        roi=result.roi,
+        roi_info=result.roi_info,
         mask=result.mask,
         history=result.history,
         algorithm_parameters=algorithm_parameters,
@@ -71,4 +71,4 @@ def test_pipeline(image, algorithm_parameters, mask_property, tmp_path, use_mask
     SaveProject.save(tmp_path / "project.tgz", pt)
     assert os.path.exists(tmp_path / "project.tgz")
     loaded = LoadProject.load([tmp_path / "project.tgz"])
-    assert np.all(loaded.roi == result.roi)
+    assert np.all(loaded.roi_info.roi == result.roi_info.roi)

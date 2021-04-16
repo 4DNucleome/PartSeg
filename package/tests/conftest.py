@@ -14,6 +14,7 @@ from PartSegCore.analysis.measurement_calculation import ComponentsNumber, Measu
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask.io_functions import MaskProjectTuple
 from PartSegCore.mask_create import MaskProperty
+from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
 
@@ -99,9 +100,11 @@ def stack_segmentation1(stack_image: MaskProjectTuple, mask_segmentation_paramet
     data = np.zeros([20, 40, 40], dtype=np.uint8)
     for i, (x, y) in enumerate(itertools.product([0, 20], repeat=2), start=1):
         data[1:-1, x + 2 : x + 18, y + 2 : y + 18] = i
-    data = stack_image.image.fit_array_to_image(data)
+    data = ROIInfo(stack_image.image.fit_array_to_image(data))
     parameters = {i: deepcopy(mask_segmentation_parameters) for i in range(1, 5)}
-    return dataclasses.replace(stack_image, roi=data, roi_extraction_parameters=parameters, selected_components=[1, 3])
+    return dataclasses.replace(
+        stack_image, roi_info=data, roi_extraction_parameters=parameters, selected_components=[1, 3]
+    )
 
 
 @pytest.fixture
@@ -109,13 +112,13 @@ def analysis_segmentation(stack_image: MaskProjectTuple):
     data = np.zeros([20, 40, 40], dtype=np.uint8)
     for i, (x, y) in enumerate(itertools.product([0, 20], repeat=2), start=1):
         data[1:-1, x + 2 : x + 18, y + 2 : y + 18] = i
-    data = stack_image.image.fit_array_to_image(data)
-    return ProjectTuple(file_path=stack_image.file_path, image=stack_image.image, roi=data)
+    data = ROIInfo(stack_image.image.fit_array_to_image(data))
+    return ProjectTuple(file_path=stack_image.file_path, image=stack_image.image, roi_info=data)
 
 
 @pytest.fixture
 def analysis_segmentation2(analysis_segmentation: ProjectTuple):
-    mask = (analysis_segmentation.roi > 0).astype(np.uint8)
+    mask = (analysis_segmentation.roi_info.roi > 0).astype(np.uint8)
     return dataclasses.replace(analysis_segmentation, mask=mask)
 
 
@@ -124,10 +127,12 @@ def stack_segmentation2(stack_image: MaskProjectTuple, mask_segmentation_paramet
     data = np.zeros([20, 40, 40], dtype=np.uint8)
     for i, (x, y) in enumerate(itertools.product([0, 20], repeat=2), start=1):
         data[3:-3, x + 4 : x + 16, y + 4 : y + 16] = i
-    data = stack_image.image.fit_array_to_image(data)
+    data = ROIInfo(stack_image.image.fit_array_to_image(data))
     mask_segmentation_parameters.values["threshold"]["values"]["threshold"] = 110
     parameters = {i: deepcopy(mask_segmentation_parameters) for i in range(1, 5)}
-    return dataclasses.replace(stack_image, roi=data, roi_extraction_parameters=parameters, selected_components=[1, 3])
+    return dataclasses.replace(
+        stack_image, roi_info=data, roi_extraction_parameters=parameters, selected_components=[1, 3]
+    )
 
 
 @pytest.fixture

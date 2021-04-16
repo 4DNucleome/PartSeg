@@ -64,10 +64,11 @@ from PartSegCore.analysis.measurement_base import AreaType, PerComponent
 from PartSegCore.analysis.measurement_calculation import MeasurementResult
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.mask_create import calculate_mask
-from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription, SegmentationAlgorithm, report_empty_fun
+from PartSegCore.segmentation.algorithm_base import SegmentationAlgorithm, report_empty_fun
 from PartSegImage import Image, TiffImageReader
 
-from ...io_utils import HistoryElement, WrongFileTypeException
+from ...io_utils import WrongFileTypeException
+from ...project_info import AdditionalLayerDescription, HistoryElement
 from ...roi_info import ROIInfo
 from ...segmentation import RestartableAlgorithm
 from .. import PartEncoder
@@ -177,7 +178,7 @@ class CalculationProcess:
             if operation == RootType.Project:
                 self.mask = project.mask
                 # FIXME when load annotation from project is done
-                self.roi_info = ROIInfo(project.roi)
+                self.roi_info = project.roi_info
                 self.additional_layers = project.additional_layers
                 self.history = project.history
                 self.algorithm_parameters = project.algorithm_parameters
@@ -295,7 +296,7 @@ class CalculationProcess:
         project_tuple = ProjectTuple(
             file_path="",
             image=self.image,
-            roi=self.roi_info.roi,  # FIXME
+            roi_info=self.roi_info,
             additional_layers=self.additional_layers,
             mask=self.mask,
             history=self.history,
@@ -313,7 +314,7 @@ class CalculationProcess:
         """
         mask = calculate_mask(
             mask_description=operation.mask_property,
-            segmentation=self.roi_info.roi,
+            roi=self.roi_info.roi,
             old_mask=self.mask,
             spacing=self.image.spacing,
             time_axis=self.image.time_pos,
