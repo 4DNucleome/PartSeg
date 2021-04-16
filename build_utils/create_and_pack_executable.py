@@ -9,6 +9,8 @@ import zipfile
 
 from PyInstaller.__main__ import run as pyinstaller_run
 
+import PartSeg
+
 if len(sys.argv) == 2:
     base_path = os.path.abspath(sys.argv[1])
 else:
@@ -32,7 +34,7 @@ def find_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
 
 
-version = find_version(base_path, "package", "PartSeg", "version.py")
+version = find_version(os.path.join(os.path.dirname(PartSeg.__file__), "version.py"))
 
 name_dict = {"Linux": "linux", "Windows": "windows", "Darwin": "macos"}
 
