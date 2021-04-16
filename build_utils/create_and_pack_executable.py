@@ -2,12 +2,13 @@ import codecs
 import os
 import platform
 import re
-import shutil
 import sys
 import tarfile
 import zipfile
 
 from PyInstaller.__main__ import run as pyinstaller_run
+
+import PartSeg
 
 if len(sys.argv) == 2:
     base_path = os.path.abspath(sys.argv[1])
@@ -32,7 +33,7 @@ def find_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
 
 
-version = find_version(base_path, "package", "PartSeg", "version.py")
+version = find_version(os.path.join(os.path.dirname(PartSeg.__file__), "version.py"))
 
 name_dict = {"Linux": "linux", "Windows": "windows", "Darwin": "macos"}
 
@@ -50,12 +51,6 @@ else:
 base_zip_path = os.path.join(base_path, "dist")
 
 dir_name = "PartSeg.app" if platform.system() == "Darwin2" else "PartSeg"
-
-if platform.system() == "Darwin" and os.path.exists(os.path.join(base_path, "dist", dir_name, "PyQt5", "Qt")):
-    shutil.move(
-        os.path.join(base_path, "dist", dir_name, "PyQt5", "Qt"),
-        os.path.join(base_path, "dist", dir_name, "PyQt5", "Qt5"),
-    )
 
 for root, dirs, files in os.walk(os.path.join(base_path, "dist", dir_name), topdown=False, followlinks=True):
     for file_name in files:

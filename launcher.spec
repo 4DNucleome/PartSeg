@@ -98,7 +98,7 @@ napari_base_path = os.path.dirname(os.path.dirname(napari.__file__))
 napari_resource_dest_path = os.path.relpath(os.path.dirname(napari_resource_path), napari_base_path)
 
 a = Analysis(
-    ["package/PartSeg/launcher_main.py"],
+    [os.path.join(base_path, "launcher_main.py")],
     # pathex=['C:\\Users\\Grzegorz\\Documents\\segmentation-gui\\PartSeg'],
     binaries=[],
     datas=[
