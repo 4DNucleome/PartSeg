@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.4
+
+-   Bugfix for outdated profile/pipeline preview
+
 ## 0.13.3
 
 -   Fix saving roi_info in multiple files and history
