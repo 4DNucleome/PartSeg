@@ -284,7 +284,11 @@ class ROIExtractionProfile:
         res = ""
         for k, v in values.items():
             if k not in translate_dict:
-                raise ValueError(f"wrong argument {k}")
+                if isinstance(v, dict):
+                    res += " " * indent + f"{k}: {cls._pretty_print(v, {}, indent + 2)}\n"
+                else:
+                    res += " " * indent + f"{k}: {v}\n"
+                continue
             desc = translate_dict[k]
             res += " " * indent + desc.user_name + ": "
             if issubclass(desc.value_type, Channel):
@@ -294,6 +298,8 @@ class ROIExtractionProfile:
                 if v["values"]:
                     res += "\n"
                     res += cls._pretty_print(v["values"], desc.possible_values[v["name"]].get_fields_dict(), indent + 2)
+            elif isinstance(v, dict):
+                res += cls._pretty_print(v, {}, indent + 2)
             else:
                 res += str(v)
             res += "\n"
