@@ -175,7 +175,7 @@ pygments==2.8.1
     #   sphinx
 pyinstaller-hooks-contrib==2021.1
     # via pyinstaller
-pyinstaller==4.2
+pyinstaller==4.3
     # via -r requirements_pyinstaller.in
 pyopengl-accelerate==3.1.5
     # via -r requirements_pyinstaller.in
