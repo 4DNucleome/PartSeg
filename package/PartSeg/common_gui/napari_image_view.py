@@ -18,7 +18,7 @@ from napari.layers import Layer, Points
 from napari.layers.image import Image as NapariImage
 from napari.layers.image._image_constants import Interpolation3D
 from napari.layers.labels import Labels
-from napari.qt import QtNDisplayButton, QtViewer
+from napari.qt import QtStateButton, QtViewer
 from napari.qt.threading import thread_worker
 from qtpy.QtCore import QEvent, QObject, QPoint, Qt, Signal
 from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QToolTip, QVBoxLayout, QWidget
@@ -168,7 +168,14 @@ class ImageView(QWidget):
         self.viewer_widget = NapariQtViewer(self.viewer)
         self.image_state = ImageShowState(settings, name)
         self.channel_control = ColorComboBoxGroup(settings, name, channel_property, height=30)
-        self.ndim_btn = QtNDisplayButton(self.viewer)
+        self.ndim_btn = QtStateButton(
+            "ndisplay_button",
+            self.viewer.dims,
+            "ndisplay",
+            self.viewer.dims.events.ndisplay,
+            2,
+            3,
+        )
         self.reset_view_button = QtViewerPushButton(self.viewer, "home", "Reset view", self._reset_view)
         self.points_view_button = QtViewerPushButton(
             self.viewer, "new_points", "Show points", self.toggle_points_visibility
