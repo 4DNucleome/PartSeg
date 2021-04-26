@@ -78,7 +78,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         return self.get_value()
 
     def set_value(self, val):
-        """set value of widget """
+        """set value of widget"""
         try:
             return self._setter(self._widget, val)
         except TypeError:

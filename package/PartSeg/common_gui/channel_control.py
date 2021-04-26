@@ -250,7 +250,7 @@ class ColorComboBox(QComboBox):
 
     @property
     def colormap_changed(self):
-        """alias for signal, return color name """
+        """alias for signal, return color name"""
         return self.currentTextChanged
 
     def set_selection(self, val: bool):
@@ -337,7 +337,7 @@ class ChannelProperty(QWidget):
         self.collapse_widget.add_hide_element(label4)
 
     def send_info(self):
-        """send info to """
+        """send info to"""
         widget = self.widget_dict[self.current_name]
         widget.parameters_changed(self.current_channel)
 
@@ -480,7 +480,7 @@ class ColorComboBoxGroup(QWidget):
 
     @property
     def current_colors(self) -> typing.List[typing.Optional[str]]:
-        """"""
+        """ """
         resp = []
         for i in range(self.layout().count()):
             el: ColorComboBox = self.layout().itemAt(i).widget()

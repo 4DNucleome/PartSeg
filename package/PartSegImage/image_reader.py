@@ -146,7 +146,7 @@ class BaseImageReader:
 
 
 class GenericImageReader(BaseImageReader):
-    """This class try to decide which method use base on path """
+    """This class try to decide which method use base on path"""
 
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
         if ext is None:

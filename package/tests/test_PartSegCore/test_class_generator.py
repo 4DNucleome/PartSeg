@@ -10,7 +10,7 @@ copy_register = Register()
 
 
 def setup_module():
-    """ setup any state specific to the execution of the given module."""
+    """setup any state specific to the execution of the given module."""
     from copy import deepcopy
 
     from PartSegCore import class_generator

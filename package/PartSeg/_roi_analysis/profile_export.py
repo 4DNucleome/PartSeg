@@ -292,7 +292,7 @@ class ImportDialog(QDialog):
 
 
 class ObjectPreview(QTextEdit):
-    """Base class for viewer used by :py:class:`ExportDialog` to preview data  """
+    """Base class for viewer used by :py:class:`ExportDialog` to preview data"""
 
     def preview_object(self, ob):
         raise NotImplementedError()
