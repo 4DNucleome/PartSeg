@@ -294,7 +294,7 @@ wrapt==1.12.1
     # via napari
 xlrd==2.0.1
     # via -r requirements_pyinstaller.in
-xlsxwriter==1.3.9
+xlsxwriter==1.4.0
     # via -r requirements_pyinstaller.in
 
 # The following packages are considered to be unsafe in a requirements file:
