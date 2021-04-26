@@ -225,7 +225,13 @@ class MSOWatershed(BaseWatershed):
         if arguments["reflective"]:
             mu_array[mu_array < 0.5] = 1 - mu_array[mu_array < 0.5]
         mso.set_mu_array(mu_array)
-        mso.run_MSO(arguments["step_limits"])
+        try:
+            mso.run_MSO(arguments["step_limits"])
+        except RuntimeError as e:
+            if e.args[0] == "to many steps: constrained dilation":
+                raise SegmentationLimitException(*e.args)
+            raise
+
         # print("Steps: ", mso.steps_done(), file=sys.stderr)
         result = mso.get_result_catted()
         result[result > 0] -= 1
