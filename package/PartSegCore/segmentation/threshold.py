@@ -172,7 +172,12 @@ class IntermodesThreshold(SitkThreshold):
 
     @staticmethod
     def calculate_threshold(*args, **kwargs):
-        return sitk.IntermodesThreshold(*args)
+        try:
+            return sitk.IntermodesThreshold(*args)
+        except RuntimeError as e:
+            if "Exceeded maximum iterations for histogram smoothing" in e.args[0]:
+                raise SegmentationLimitException(*e.args)
+            raise
 
 
 class IsoDataThreshold(SitkThreshold):
