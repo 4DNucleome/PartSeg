@@ -5,6 +5,7 @@ import numpy as np
 import SimpleITK as sitk
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, Register
+from .algorithm_base import SegmentationLimitException
 
 
 class BaseThreshold(AlgorithmDescribeBase, ABC):
@@ -171,7 +172,12 @@ class IntermodesThreshold(SitkThreshold):
 
     @staticmethod
     def calculate_threshold(*args, **kwargs):
-        return sitk.IntermodesThreshold(*args)
+        try:
+            return sitk.IntermodesThreshold(*args)
+        except RuntimeError as e:
+            if "Exceeded maximum iterations for histogram smoothing" in e.args[0]:
+                raise SegmentationLimitException(*e.args)
+            raise
 
 
 class IsoDataThreshold(SitkThreshold):
@@ -195,7 +201,12 @@ class KittlerIllingworthThreshold(SitkThreshold):
 
     @staticmethod
     def calculate_threshold(*args, **kwargs):
-        return sitk.KittlerIllingworthThreshold(*args)
+        try:
+            return sitk.KittlerIllingworthThreshold(*args)
+        except RuntimeError as e:
+            if "sigma2 <= 0" in e.args[0]:
+                raise SegmentationLimitException(*e.args)
+            raise
 
 
 class MomentsThreshold(SitkThreshold):

@@ -3,6 +3,7 @@ import operator
 import numpy as np
 import pytest
 
+from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
 from PartSegCore.segmentation.threshold import (
     BaseThreshold,
     IntermodesThreshold,
@@ -29,7 +30,7 @@ def test_threshold(method: BaseThreshold, data, op, masking):
 
     try:
         data, thr_info = method.calculate_mask(data=data, mask=mask, arguments=method.get_default_values(), operator=op)
-    except RuntimeError:
+    except SegmentationLimitException:
         if method is KittlerIllingworthThreshold:
             pytest.xfail("KittlerIllingworth sigma problem")
         if method is IntermodesThreshold:
