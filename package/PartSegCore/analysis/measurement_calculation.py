@@ -447,7 +447,7 @@ class MeasurementProfile:
         return ComponentsInfo(components, mask_components, res)
 
     def get_component_and_area_info(self) -> List[Tuple[PerComponent, AreaType]]:
-        """For each measurement check if is per component and in which types """
+        """For each measurement check if is per component and in which types"""
         res = []
         for el in self.chosen_fields:
             tree = el.calculation_tree

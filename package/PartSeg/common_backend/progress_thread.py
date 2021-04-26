@@ -17,7 +17,7 @@ class ProgressTread(QThread):
 
 
 class ExecuteFunctionThread(ProgressTread):
-    """Generic Thread to execute """
+    """Generic Thread to execute"""
 
     def __init__(self, fun, args: Union[list, tuple] = None, kwargs: dict = None):
         super().__init__()

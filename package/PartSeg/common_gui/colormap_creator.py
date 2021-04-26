@@ -83,7 +83,7 @@ class ColormapEdit(QWidget):
         painter.restore()
 
     def refresh(self):
-        """Recreate presented image and force repaint event """
+        """Recreate presented image and force repaint event"""
         self.image = convert_colormap_to_image(self.colormap)
         self.repaint()
 
@@ -365,7 +365,7 @@ class ChannelPreview(QWidget):
         self.remove_btn.setEnabled(not chk and self.removable)
 
     def set_blocked(self, block):
-        """Set if block possibility of remove or uncheck """
+        """Set if block possibility of remove or uncheck"""
         self.checked.setDisabled(block)
         if self.removable and not block:
             self.remove_btn.setToolTip("Remove colormap")

@@ -79,12 +79,12 @@ class FileListWidget(QListWidget):
 
 
 class AddFiles(QWidget):
-    """Docstring for AddFiles. """
+    """Docstring for AddFiles."""
 
     file_list_changed = Signal(set)
 
     def __init__(self, settings: BaseSettings, parent=None, btn_layout=QHBoxLayout):
-        """TODO: to be defined1. """
+        """TODO: to be defined1."""
         QWidget.__init__(self, parent)
         self.mask_list: List[MaskMapper] = []
         self.settings = settings
