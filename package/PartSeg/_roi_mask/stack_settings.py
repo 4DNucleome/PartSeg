@@ -34,6 +34,15 @@ class StackSettings(BaseSettings):
     ]
 
     def set_segmentation_result(self, result: ROIExtractionResult):
+        if (
+            result.file_path is not None and result.file_path != "" and result.file_path != self.image.file_path
+        ):  # pragma: no cover
+            if self._parent is not None:
+                # TODO change to non disrupting popup
+                QMessageBox().warning(
+                    self._parent, "Result file bug", "It looks like one try to set ROI form another file."
+                )
+            return
         if self._parent and np.max(result.roi) == 0:  # pragma: no cover
             QMessageBox.information(
                 self._parent,

@@ -1,3 +1,4 @@
+import dataclasses
 import sys
 
 from qtpy.QtCore import QMutex, QThread, Signal
@@ -49,6 +50,7 @@ class SegmentationThread(QThread):
             return
         try:
             segment_data = self.algorithm.calculation_run_wrap(self.send_info)
+            segment_data = dataclasses.replace(segment_data, file_path=self.algorithm.image.file_path)
         except Exception as e:
             self.exception_occurred.emit(e)
             return
