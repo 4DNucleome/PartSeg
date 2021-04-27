@@ -33,7 +33,7 @@ from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.io_utils import WrongFileTypeException
 from PartSegCore.project_info import HistoryElement, calculate_mask_from_project
 from PartSegCore.roi_info import ROIInfo
-from PartSegCore.segmentation.algorithm_base import SegmentationResult
+from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
 from PartSegImage import TiffImageReader
 
 from ..common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgorithmSettingsWidget
@@ -340,7 +340,7 @@ class Options(QWidget):
         self.interactive_use.setDisabled(True)
         widget.execute()
 
-    def execution_done(self, segmentation: SegmentationResult):
+    def execution_done(self, segmentation: ROIExtractionResult):
         if segmentation.info_text != "":
             QMessageBox.information(self, "Algorithm info", segmentation.info_text)
         self._settings.set_segmentation_result(segmentation)

@@ -12,7 +12,7 @@ from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, 
 from ..channel_class import Channel
 from ..convex_fill import convex_fill
 from ..project_info import AdditionalLayerDescription
-from ..segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
+from ..segmentation.algorithm_base import ROIExtractionResult, SegmentationAlgorithm
 from ..utils import bisect
 from .noise_filtering import noise_filtering_dict
 from .threshold import BaseThreshold, double_threshold_dict, threshold_dict
@@ -56,7 +56,7 @@ class ThresholdPreview(StackAlgorithm):
         self.noise_filtering = None
         self.threshold = 0
 
-    def calculation_run(self, report_fun) -> SegmentationResult:
+    def calculation_run(self, report_fun) -> ROIExtractionResult:
         self.channel = self.get_channel(self.channel_num)
         image = noise_filtering_dict[self.noise_filtering["name"]].noise_filter(
             self.channel, self.image.spacing, self.noise_filtering["values"]
@@ -66,7 +66,7 @@ class ThresholdPreview(StackAlgorithm):
             res[self.mask == 0] = 0
         self.image = None
         self.channel = None
-        return SegmentationResult(
+        return ROIExtractionResult(
             roi=res,
             parameters=self.get_segmentation_profile(),
             additional_layers={"denoised image": AdditionalLayerDescription(layer_type="image", data=image)},
@@ -180,7 +180,7 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
             report_fun("convex hull", 6)
             resp = convex_fill(resp)
         report_fun("Calculation done", 7)
-        return SegmentationResult(
+        return ROIExtractionResult(
             roi=self.image.fit_array_to_image(resp),
             parameters=self.get_segmentation_profile(),
             additional_layers={
@@ -306,7 +306,7 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
             AlgorithmProperty("use_convex", "Use convex hull", False, (True, False)),
         ]
 
-    def calculation_run(self, report_fun: Callable[[str, int], None]) -> SegmentationResult:
+    def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:
         report_fun("Noise removal", 0)
         self.channel = self.get_channel(self.channel_num)
         noise_filtered = noise_filtering_dict[self.parameters["noise_filtering"]["name"]].noise_filter(
@@ -357,7 +357,7 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
             report_fun("convex hull", 6)
             segmentation = convex_fill(segmentation)
         report_fun("Calculation done", 7)
-        return SegmentationResult(
+        return ROIExtractionResult(
             roi=segmentation,
             parameters=self.get_segmentation_profile(),
             additional_layers={

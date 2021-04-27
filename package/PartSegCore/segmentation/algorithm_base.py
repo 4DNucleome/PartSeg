@@ -44,13 +44,27 @@ def dict_repr(dkt: dict) -> str:
 
 
 @dataclass(frozen=True, repr=False)
-class SegmentationResult:
+class ROIExtractionResult:
+    """
+    Class to store results of roi extraction process.
+
+    :ivar np.ndarray roi: Region of Interest represented as numpy array.
+    :ivar ROIExtractionProfile parameters: parameters of roi extraction process.
+    :ivar Dict[str,AdditionalLayerDescription] ~.additional_layers: additional layers returned by algorithm.
+        Could be previewer using napari viewer.
+    :ivar dict roi_annotation: Annotation for ROI. Currently displayed as tooltip
+    :ivar Dict[str,np.ndarray] alternative_representation: Arrays with alternative representations of ROI.
+    :ivar Optional[str] ~.file_path: information on which file roi extraction was performed.
+    """
+
+    # TODO add alternative representation using dict mapping.
     roi: np.ndarray
     parameters: ROIExtractionProfile
     additional_layers: Dict[str, AdditionalLayerDescription] = field(default_factory=dict)
     info_text: str = ""
     roi_annotation: Dict = field(default_factory=dict)
     alternative_representation: Dict[str, np.ndarray] = field(default_factory=dict)
+    file_path: Optional[str] = None
 
     @property
     def roi_info(self) -> ROIInfo:
@@ -80,6 +94,9 @@ class SegmentationResult:
             f" alternative={dict_repr(self.alternative_representation)},"
             f" roi_annotation={dict_repr(self.roi_annotation)}"
         )
+
+
+SegmentationResult = ROIExtractionResult
 
 
 def report_empty_fun(_x, _y):  # pragma: no cover
@@ -156,7 +173,7 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
         """Set mask which will limit segmentation area"""
         self.mask = mask
 
-    def calculation_run_wrap(self, report_fun: Callable[[str, int], None]) -> SegmentationResult:
+    def calculation_run_wrap(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:
         try:
             return self.calculation_run(report_fun)
         except SegmentationLimitException:  # pragma: no cover
@@ -167,11 +184,11 @@ class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
             raise SegmentationException(self.get_name(), parameters, image)
 
     @abstractmethod
-    def calculation_run(self, report_fun: Callable[[str, int], None]) -> SegmentationResult:
+    def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:
         raise NotImplementedError()
 
     @classmethod
-    def segment_project(cls, project: ProjectInfoBase, parameters: dict) -> SegmentationResult:
+    def segment_project(cls, project: ProjectInfoBase, parameters: dict) -> ROIExtractionResult:
         """
 
         :param ProjectInfoBase project:

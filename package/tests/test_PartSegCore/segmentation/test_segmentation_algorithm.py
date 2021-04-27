@@ -3,7 +3,7 @@ from typing import Type
 import pytest
 
 from PartSegCore.segmentation import SegmentationAlgorithm
-from PartSegCore.segmentation.algorithm_base import SegmentationLimitException, SegmentationResult
+from PartSegCore.segmentation.algorithm_base import ROIExtractionResult, SegmentationLimitException
 from PartSegCore.segmentation.restartable_segmentation_algorithms import final_algorithm_list as restartable_list
 from PartSegCore.segmentation.segmentation_algorithm import ThresholdFlowAlgorithm
 from PartSegCore.segmentation.segmentation_algorithm import final_algorithm_list as algorithm_list
@@ -41,5 +41,5 @@ def test_segmentation_algorithm(image, algorithm: Type[SegmentationAlgorithm], m
     else:
         res = instance.calculation_run(empty)
         assert isinstance(instance.get_info_text(), str)
-        assert isinstance(res, SegmentationResult)
+        assert isinstance(res, ROIExtractionResult)
     instance.clean()
