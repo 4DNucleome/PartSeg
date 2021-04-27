@@ -17,7 +17,7 @@ from ..mask_partition_utils import MaskDistanceSplit as MaskDistanceSplitBase
 from ..project_info import AdditionalLayerDescription
 from ..universal_const import Units
 from ..utils import bisect
-from .algorithm_base import SegmentationAlgorithm, SegmentationLimitException, SegmentationResult
+from .algorithm_base import ROIExtractionResult, SegmentationAlgorithm, SegmentationLimitException
 from .mu_mid_point import BaseMuMid, mu_mid_dict
 from .noise_filtering import noise_filtering_dict
 from .threshold import BaseThreshold, double_threshold_dict, threshold_dict
@@ -89,10 +89,10 @@ class BorderRim(RestartableAlgorithm):
             return "Need mask"
         return ""
 
-    def calculation_run(self, _report_fun) -> SegmentationResult:
+    def calculation_run(self, _report_fun) -> ROIExtractionResult:
         if self.mask is not None:
             result = BorderRimBase.border_mask(mask=self.mask, voxel_size=self.image.spacing, **self.new_parameters)
-            return SegmentationResult(roi=result, parameters=self.get_segmentation_profile())
+            return ROIExtractionResult(roi=result, parameters=self.get_segmentation_profile())
         raise SegmentationLimitException("Border Rim needs mask")
 
 
@@ -102,12 +102,12 @@ class MaskDistanceSplit(RestartableAlgorithm):
     class in segmentation algorithm interface. It allow user to check how split look with given set of parameters
     """
 
-    def calculation_run(self, report_fun: typing.Callable[[str, int], None]) -> SegmentationResult:
+    def calculation_run(self, report_fun: typing.Callable[[str, int], None]) -> ROIExtractionResult:
         if self.mask is not None:
             result = MaskDistanceSplitBase.split(
                 mask=self.mask, voxel_size=self.image.voxel_size, **self.new_parameters
             )
-            return SegmentationResult(roi=result, parameters=self.get_segmentation_profile())
+            return ROIExtractionResult(roi=result, parameters=self.get_segmentation_profile())
         raise SegmentationLimitException("Mask Distance Split needs mask")
 
     @classmethod
@@ -174,7 +174,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             "no size filtering": AdditionalLayerDescription(data=full_segmentation, layer_type="labels"),
         }
 
-    def prepare_result(self, roi: np.ndarray) -> SegmentationResult:
+    def prepare_result(self, roi: np.ndarray) -> ROIExtractionResult:
         """
         Collect data for result.
 
@@ -183,7 +183,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
         """
         sizes = np.bincount(roi.flat)
         annotation = {i: {"voxels": size} for i, size in enumerate(sizes[1:], 1) if size > 0}
-        return SegmentationResult(
+        return ROIExtractionResult(
             roi=roi,
             parameters=self.get_segmentation_profile(),
             additional_layers=self.get_additional_layers(),
@@ -199,7 +199,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
             map(str, self._sizes_array[1 : self.components_num + 1])
         )
 
-    def calculation_run(self, report_fun: typing.Callable[[str, int], typing.Any]) -> SegmentationResult:
+    def calculation_run(self, report_fun: typing.Callable[[str, int], typing.Any]) -> ROIExtractionResult:
         """
         main calculation function
 
@@ -438,7 +438,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
         super().set_image(image)
         self.threshold_info = [None, None]
 
-    def calculation_run(self, report_fun) -> SegmentationResult:
+    def calculation_run(self, report_fun) -> ROIExtractionResult:
         segment_data = super().calculation_run(report_fun)
         if segment_data is not None and self.components_num == 0:
             self.final_sizes = []
@@ -475,7 +475,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
                 self.threshold_info[0],
             )
             self.final_sizes = np.bincount(new_segment.flat)
-            return SegmentationResult(
+            return ROIExtractionResult(
                 roi=new_segment,
                 parameters=self.get_segmentation_profile(),
                 additional_layers=self.get_additional_layers(full_segmentation=self.sprawl_area),
@@ -554,7 +554,7 @@ class OtsuSegment(RestartableAlgorithm):
                 self.threshold_info.append(self.threshold_info[-1])
             else:
                 self.threshold_info.append(0)
-        return SegmentationResult(
+        return ROIExtractionResult(
             roi=res,
             parameters=self.get_segmentation_profile(),
             additional_layers={"denoised_image": AdditionalLayerDescription(data=cleaned_image, layer_type="image")},
@@ -620,7 +620,7 @@ class BaseMultiScaleOpening(TwoLevelThresholdBaseAlgorithm, ABC):  # pragma: no 
         super().set_image(image)
         self.threshold_info = [None, None]
 
-    def calculation_run(self, report_fun) -> SegmentationResult:
+    def calculation_run(self, report_fun) -> ROIExtractionResult:
         if self.new_parameters["side_connection"] != self.parameters["side_connection"]:
             neigh, dist = calculate_distances_array(
                 self.image.spacing, get_neigh(self.new_parameters["side_connection"])

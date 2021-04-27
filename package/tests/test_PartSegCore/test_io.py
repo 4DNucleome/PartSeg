@@ -390,7 +390,12 @@ class TestSegmentationMask:
         data_dict = {str(i): deepcopy(res.parameters) for i in range(1, num)}
 
         to_save = MaskProjectTuple(
-            image_data.image.file_path, image_data.image, None, res.roi_info, list(range(1, num)), data_dict
+            file_path=image_data.image.file_path,
+            image=image_data.image,
+            mask=None,
+            roi_info=res.roi_info,
+            selected_components=list(range(1, num)),
+            roi_extraction_parameters=data_dict,
         )
 
         SaveROI.save(os.path.join(tmpdir, "segmentation2.seg"), to_save, {"relative_path": False})

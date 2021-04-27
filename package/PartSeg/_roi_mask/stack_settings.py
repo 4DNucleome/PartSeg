@@ -13,7 +13,7 @@ from PartSegCore.io_utils import PointsInfo
 from PartSegCore.mask.io_functions import MaskProjectTuple, load_metadata
 from PartSegCore.project_info import HistoryElement, HistoryProblem
 from PartSegCore.roi_info import ROIInfo
-from PartSegCore.segmentation.algorithm_base import SegmentationResult
+from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
 from PartSegImage import Image
 from PartSegImage.image import minimal_dtype, reduce_array
 
@@ -33,7 +33,7 @@ class StackSettings(BaseSettings):
         "multiple_open_directory",
     ]
 
-    def set_segmentation_result(self, result: SegmentationResult):
+    def set_segmentation_result(self, result: ROIExtractionResult):
         if self._parent and np.max(result.roi) == 0:  # pragma: no cover
             QMessageBox.information(
                 self._parent,

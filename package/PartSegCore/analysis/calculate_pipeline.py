@@ -10,7 +10,7 @@ from PartSegCore.mask_create import calculate_mask
 from PartSegCore.project_info import HistoryElement
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation import RestartableAlgorithm
-from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription, SegmentationResult
+from PartSegCore.segmentation.algorithm_base import AdditionalLayerDescription, ROIExtractionResult
 from PartSegImage import Image
 
 
@@ -52,7 +52,7 @@ def calculate_pipeline(image: Image, mask: typing.Optional[np.ndarray], pipeline
 
 def calculate_segmentation_step(
     profile: ROIExtractionProfile, image: Image, mask: typing.Optional[np.ndarray]
-) -> typing.Tuple[SegmentationResult, str]:
+) -> typing.Tuple[ROIExtractionResult, str]:
     algorithm: RestartableAlgorithm = analysis_algorithm_dict[profile.algorithm]()
     algorithm.set_image(image)
     algorithm.set_mask(mask)

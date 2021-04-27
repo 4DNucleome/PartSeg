@@ -4,7 +4,7 @@ This module contains roi_extraction algorithms
 import os
 import sys
 
-from .algorithm_base import SegmentationAlgorithm
+from .algorithm_base import ROIExtractionResult, SegmentationAlgorithm
 from .noise_filtering import NoiseFilteringBase
 from .restartable_segmentation_algorithms import RestartableAlgorithm
 from .segmentation_algorithm import StackAlgorithm
@@ -17,6 +17,7 @@ __all__ = [
     "NoiseFilteringBase",
     "BaseThreshold",
     "RestartableAlgorithm",
+    "ROIExtractionResult",
     "StackAlgorithm",
 ]
 

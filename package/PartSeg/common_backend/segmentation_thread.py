@@ -2,7 +2,7 @@ import sys
 
 from qtpy.QtCore import QMutex, QThread, Signal
 
-from PartSegCore.segmentation.algorithm_base import SegmentationAlgorithm, SegmentationResult
+from PartSegCore.segmentation.algorithm_base import ROIExtractionResult, SegmentationAlgorithm
 
 
 class SegmentationThread(QThread):
@@ -11,7 +11,7 @@ class SegmentationThread(QThread):
     To get info if calculation is done connect to :py:meth:`~.QThread.finished`.
     """
 
-    execution_done = Signal(SegmentationResult)
+    execution_done = Signal(ROIExtractionResult)
     """
     Signal contains result of segmentation algorithm. Emitted if calculation ends without exception and
     :py:meth:`SegmentationAlgorithm.calculation_run` return not None result.

@@ -24,9 +24,9 @@ from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, Algorithm
 from PartSegCore.channel_class import Channel
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.segmentation.algorithm_base import (
+    ROIExtractionResult,
     SegmentationAlgorithm,
     SegmentationLimitException,
-    SegmentationResult,
 )
 from PartSegImage import Image
 
@@ -567,7 +567,7 @@ class InteractiveAlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
 class AlgorithmChoose(QWidget):
     finished = Signal()
     started = Signal()
-    result = Signal(SegmentationResult)
+    result = Signal(ROIExtractionResult)
     value_changed = Signal()
     progress_signal = Signal(str, int)
     algorithm_changed = Signal(str)

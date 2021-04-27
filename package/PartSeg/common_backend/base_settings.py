@@ -22,7 +22,7 @@ from PartSegCore.io_utils import load_metadata_base
 from PartSegCore.json_hooks import ProfileDict, ProfileEncoder, check_loaded_dict
 from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement, ProjectInfoBase
 from PartSegCore.roi_info import ROIInfo
-from PartSegCore.segmentation.algorithm_base import SegmentationResult
+from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
 from PartSegImage import Image
 
 try:
@@ -447,7 +447,7 @@ class BaseSettings(ViewSettings):
         self._points = value if value is not None else None
         self.points_changed.emit()
 
-    def set_segmentation_result(self, result: SegmentationResult):
+    def set_segmentation_result(self, result: ROIExtractionResult):
         if result.info_text and self._parent is not None:
             QMessageBox().information(self._parent, "Algorithm info", result.info_text)
 

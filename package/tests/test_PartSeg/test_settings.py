@@ -19,7 +19,7 @@ from PartSegCore.mask.history_utils import create_history_element_from_segmentat
 from PartSegCore.mask.io_functions import LoadStackImage
 from PartSegCore.project_info import HistoryProblem, calculate_mask_from_project
 from PartSegCore.roi_info import ROIInfo
-from PartSegCore.segmentation.algorithm_base import SegmentationResult
+from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
 from PartSegImage import Image
 
 
@@ -158,7 +158,7 @@ class TestStackSettings:
 
     def test_set_segmentation_result(self, stack_settings, stack_segmentation1, stack_image):
         stack_settings.set_project_info(stack_image)
-        seg = SegmentationResult(
+        seg = ROIExtractionResult(
             roi=stack_segmentation1.roi_info.roi, parameters=ROIExtractionProfile("test", "test2", {})
         )
         stack_settings.set_segmentation_result(seg)
