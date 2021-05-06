@@ -218,7 +218,7 @@ class StackSettings(BaseSettings):
                 state,
                 roi_info=new_roi_info,
                 selected_components=list_of_components,
-                roi_extraction_parameters=new_roi_extraction_parameters,
+                roi_extraction_parameters={i: new_roi_extraction_parameters[i] for i in new_roi_info.bound_info},
             )
         if list_of_components is None:
             list_of_components = []
