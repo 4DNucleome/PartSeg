@@ -33,6 +33,12 @@ class StackSettings(BaseSettings):
         "multiple_open_directory",
     ]
 
+    def __init__(self, json_path):
+        super().__init__(json_path)
+        self.chosen_components_widget = None
+        self.keep_chosen_components = False
+        self.components_parameters_dict: typing.Dict[int, ROIExtractionProfile] = {}
+
     def set_segmentation_result(self, result: ROIExtractionResult):
         if (
             result.file_path is not None and result.file_path != "" and result.file_path != self.image.file_path
@@ -57,12 +63,6 @@ class StackSettings(BaseSettings):
         self.last_executed_algorithm = result.parameters.algorithm
         self.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
         self.set_segmentation(result.roi, True, [], parameters_dict)
-
-    def __init__(self, json_path):
-        super().__init__(json_path)
-        self.chosen_components_widget = None
-        self.keep_chosen_components = False
-        self.components_parameters_dict: typing.Dict[int, ROIExtractionProfile] = {}
 
     @Slot(int)
     def set_keep_chosen_components(self, val: bool):
@@ -218,7 +218,7 @@ class StackSettings(BaseSettings):
                 state,
                 roi_info=new_roi_info,
                 selected_components=list_of_components,
-                roi_extraction_parameters=new_roi_extraction_parameters,
+                roi_extraction_parameters={i: new_roi_extraction_parameters[i] for i in new_roi_info.bound_info},
             )
         if list_of_components is None:
             list_of_components = []

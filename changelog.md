@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.13.5
+
+-   Small fixes for error reporting
+-   Fix mask segmentation
+
 ## 0.13.4
 
 -   Bugfix for outdated profile/pipeline preview

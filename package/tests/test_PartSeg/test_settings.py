@@ -1,6 +1,7 @@
 import dataclasses
 import os
 import typing
+from collections import defaultdict
 
 import numpy as np
 import pytest
@@ -33,6 +34,36 @@ def stack_settings(qtbot, tmp_path):
 
 
 class TestStackSettings:
+    def test_transform_state_simple(self, stack_image):
+        roi = np.zeros(stack_image.image.get_channel(0).shape, dtype=np.uint8)
+        roi[0, 1, 2:-2, 2:-2] = 1
+        roi[0, 2, 2:-2, 2:-2] = 2
+        roi[0, 3, 2:-2, 2:-2] = 3
+        roi_info = ROIInfo(roi).fit_to_image(stack_image.image)
+        roi_extraction_parameters = defaultdict(lambda: ROIExtractionProfile("aa", "aa", {1: "aa"}))
+        new_state = StackSettings.transform_state(
+            state=stack_image,
+            new_roi_info=roi_info,
+            new_roi_extraction_parameters=roi_extraction_parameters,
+            list_of_components=[2],
+        )
+        assert len(new_state.roi_extraction_parameters) == 3
+        assert new_state.selected_components == [2]
+
+    def test_transform_state(self, stack_segmentation1):
+        roi_extraction_parameters = defaultdict(lambda: ROIExtractionProfile("aa", "aa", {1: "aa"}))
+        new_state = StackSettings.transform_state(
+            state=stack_segmentation1,
+            new_roi_info=stack_segmentation1.roi_info,
+            new_roi_extraction_parameters=roi_extraction_parameters,
+            list_of_components=[4],
+        )
+        assert new_state.selected_components == [1, 2, 4]
+        assert new_state.roi_extraction_parameters[1] == stack_segmentation1.roi_extraction_parameters[1]
+        assert new_state.roi_extraction_parameters[2] == stack_segmentation1.roi_extraction_parameters[3]
+        assert new_state.roi_extraction_parameters[3] == ROIExtractionProfile("aa", "aa", {1: "aa"})
+        assert np.all((new_state.roi_info.roi == 2) == (stack_segmentation1.roi_info.roi == 3))
+
     def test_add_project(self, stack_settings, stack_segmentation1, data_test_dir):
         stack_settings.set_project_info(stack_segmentation1)
         project1_res = stack_settings.get_project_info()

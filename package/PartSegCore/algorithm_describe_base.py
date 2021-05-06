@@ -325,3 +325,11 @@ class ROIExtractionProfile:
 
     def __repr__(self):
         return f"SegmentationProfile(name={self.name}, algorithm={repr(self.algorithm)}, values={self.values})"
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, self.__class__)
+            and self.name == other.name
+            and self.algorithm == other.algorithm
+            and self.values == other.values
+        )
