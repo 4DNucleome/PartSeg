@@ -1,4 +1,5 @@
 import itertools
+import logging
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import partial
@@ -762,6 +763,9 @@ prepare_layers = thread_worker(_prepare_layers)
 
 
 def _print_dict(dkt: dict, indent=""):
+    if not isinstance(dkt, dict):
+        logging.error("None instead of dict passed to _print_dict")
+        return indent + str(dkt)
     res = []
     for k, v in dkt.items():
         if isinstance(v, dict):
