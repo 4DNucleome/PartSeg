@@ -233,7 +233,7 @@ class ThresholdBaseAlgorithm(RestartableAlgorithm, ABC):
                 res = self.prepare_result(self.threshold_image.astype(np.uint8))
                 info_text = (
                     "Something wrong with chosen threshold. Please check it. "
-                    "May be to low or to high. The channel bright range is "
+                    "May be too low or too high. The channel brightness range is "
                     f"{self.cleaned_image.min()}-{self.cleaned_image.max()} "
                     f"and chosen threshold is {self.threshold_info}"
                 )
