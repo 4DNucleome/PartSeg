@@ -198,7 +198,7 @@ def add_classes(types_list, translate_dict, global_state):
                     if sys.version_info[:2] == (3, 6):
                         if hasattr(type_, "__origin__"):
                             type_str = (
-                                str(type_.__origin__) + "[" + ", ".join([translate_dict[x] for x in sub_types]) + "]"
+                                str(type_.__origin__) + "[" + ", ".join(translate_dict[x] for x in sub_types) + "]"
                             )
                             translate_dict[type_] = type_str
                             continue

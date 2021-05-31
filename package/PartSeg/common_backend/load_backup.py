@@ -18,11 +18,11 @@ def import_config():
     possible_folders = glob(os.path.join(base_folder, "*"))
     versions = list(
         sorted(
-            [
+            (
                 x
                 for x in [packaging.version.parse(os.path.basename(y)) for y in possible_folders]
                 if isinstance(x, packaging.version.Version)
-            ],
+            ),
             reverse=True,
         )
     )

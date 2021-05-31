@@ -171,7 +171,7 @@ class AddFiles(QWidget):
 
     def find_all(self):
         paths = glob(str(self.paths_input.text()))
-        paths = sorted([x for x in (set(paths) - self.files_to_proceed) if not os.path.isdir(x)])
+        paths = sorted(x for x in (set(paths) - self.files_to_proceed) if not os.path.isdir(x))
         if len(paths) > 0:
             self.update_files_list(paths)
 
