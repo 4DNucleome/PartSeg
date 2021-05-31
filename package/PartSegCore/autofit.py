@@ -37,7 +37,7 @@ def find_density_orientation(img, voxel_size, cutoff=1):
     values, vectors = np.linalg.eig(cov)
     # logging.info("Eigen values0\n %s", str(values))
     # logging.info('Eigen vectors0\n %s', str(vectors))
-    sorted_values = sorted([(values[i], vectors[:, i]) for i in range(3)], key=lambda y: y[0], reverse=True)
+    sorted_values = sorted(((values[i], vectors[:, i]) for i in range(3)), key=lambda y: y[0], reverse=True)
     values = [x[0] for x in sorted_values]
     vectors = np.array([x[1] for x in sorted_values]).T
     # logging.info("Eigen values\n %s", str(values))

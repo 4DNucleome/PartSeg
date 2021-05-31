@@ -612,7 +612,7 @@ class ImageView(QWidget):
 
         channels = image.channels
         if self.image_info and not replace:
-            channels = max(channels, *[x.image.channels for x in self.image_info.values()])
+            channels = max(channels, *(x.image.channels for x in self.image_info.values()))
 
         self.channel_control.set_channels(channels)
         visibility = self.channel_control.channel_visibility
