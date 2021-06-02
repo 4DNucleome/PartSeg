@@ -15,10 +15,12 @@ from PartSegCore.roi_info import ROIInfo
 
 from .utils import CI_BUILD
 
+pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
+
 
 class TestResultImageView:
     @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
-    @pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
+    @pyside_skip
     def test_simple(self, qtbot, part_settings, image):
         prop = ChannelProperty(part_settings, "test")
         viewer = ResultImageView(part_settings, prop, "test")
@@ -37,7 +39,7 @@ class TestResultImageView:
         viewer.hide()
 
     @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
-    @pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
+    @pyside_skip
     def test_set_roi(self, qtbot, part_settings, image):
         prop = ChannelProperty(part_settings, "test")
         viewer = ResultImageView(part_settings, prop, "test")
@@ -60,7 +62,7 @@ class TestResultImageView:
         viewer.hide()
 
 
-@pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
+@pyside_skip
 @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
 class TestNapariViewer:
     def test_base(self, image, analysis_segmentation2, tmp_path):

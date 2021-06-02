@@ -19,12 +19,15 @@ def empty(*_):
     """To silent some functions"""
 
 
+pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
+
+
 class TestAnalysisMainWindow:
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="debug test fail")
     @pytest.mark.skipif(
         (platform.system() == "Windows") and GITHUB_ACTIONS and sys.version_info.minor == 7, reason="need to debug"
     )
-    @pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
+    @pyside_skip
     @pytest.mark.skipif(napari_warnings, reason="warnings fail test")
     def test_opening(self, qtbot, tmpdir):
         main_window = analysis_main_window.MainWindow(tmpdir, initial_image=False)
@@ -37,7 +40,7 @@ class TestAnalysisMainWindow:
 
 class TestMaskMainWindow:
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
-    @pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
+    @pyside_skip
     @pytest.mark.skipif(napari_warnings, reason="warnings fail test")
     def test_opening(self, qtbot, tmpdir):
         main_window = mask_main_window.MainWindow(tmpdir, initial_image=False)
@@ -50,7 +53,7 @@ class TestLauncherMainWindow:
         qtbot.addWidget(main_window)
 
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
-    @pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
+    @pyside_skip
     @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
     def test_open_mask(self, qtbot, monkeypatch, tmp_path):
         monkeypatch.setattr(mask_main_window, "CONFIG_FOLDER", str(tmp_path))
@@ -67,7 +70,7 @@ class TestLauncherMainWindow:
 
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
     @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
-    @pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
+    @pyside_skip
     def test_open_analysis(self, qtbot, monkeypatch, tmp_path):
         monkeypatch.setattr(analysis_main_window, "CONFIG_FOLDER", str(tmp_path))
         if platform.system() == "Linux" and (GITHUB_ACTIONS or TRAVIS):
