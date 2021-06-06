@@ -59,3 +59,20 @@ class EqualColumnLayout(QLayout):
                 continue
             el.setGeometry(QRect(x, rect.y(), element_width, rect.height()))
             x += element_width
+
+    def deleteLater(self):
+        for el in self._item_list:
+            if el.widget():
+                el.widget().deleteLater()
+            else:
+                el.layout().deleteLater()
+        self._item_list = []
+        super().deleteLater()
+
+    def __del__(self):
+        for el in self._item_list:
+            if el.widget():
+                el.widget().deleteLater()
+            else:
+                el.layout().deleteLater()
+        self._item_list = []

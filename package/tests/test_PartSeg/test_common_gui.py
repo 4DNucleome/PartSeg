@@ -11,6 +11,8 @@ from PartSeg.common_gui.searchable_combo_box import SearchCombBox
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
 from PartSegCore.analysis.calculation_plan import MaskSuffix
 
+pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
+
 
 class Enum1(Enum):
     test1 = 1
@@ -188,7 +190,7 @@ class TestEqualColumnLayout:
         assert widget.layout().count() == 1
         assert widget.layout().takeAt(2) is None
 
-    @pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
+    @pyside_skip
     def test_geometry(self, qtbot):
         widget = _TestWidget()
         qtbot.addWidget(widget)
@@ -202,10 +204,9 @@ class TestEqualColumnLayout:
         assert w1.width() == 100
         widget.hide()
 
-    @pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
+    @pyside_skip
     def test_hidden_widget(self, qtbot):
         widget = _TestWidget()
-        qtbot.addWidget(widget)
         w1 = QWidget()
         w2 = QWidget()
         w3 = QWidget()
@@ -213,6 +214,7 @@ class TestEqualColumnLayout:
         widget.layout().addWidget(w2)
         widget.layout().addWidget(w3)
         w2.hide()
+        qtbot.addWidget(widget)
         widget.show()
         widget.resize(200, 200)
         assert w1.width() == 100
