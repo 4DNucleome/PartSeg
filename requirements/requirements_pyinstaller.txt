@@ -40,7 +40,7 @@ defusedxml==0.7.1
     # via -r requirements_pyinstaller.in
 docstring-parser==0.8.1
     # via magicgui
-docutils==0.17.1
+docutils==0.16
     # via sphinx
 et-xmlfile==1.1.0
     # via openpyxl
@@ -237,7 +237,7 @@ six==1.16.0
     #   python-dateutil
 snowballstemmer==2.1.0
     # via sphinx
-sphinx==4.0.2
+sphinx==3.5.4
     # via
     #   -r requirements_pyinstaller.in
     #   numpydoc
