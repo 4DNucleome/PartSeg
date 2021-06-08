@@ -54,7 +54,7 @@ heapdict==1.0.1
     # via cachey
 idna==2.10
     # via requests
-imagecodecs==2021.5.20
+imagecodecs==2021.6.8
     # via -r requirements_pyinstaller.in
 imageio==2.9.0
     # via
