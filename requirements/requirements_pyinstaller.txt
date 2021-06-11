@@ -113,7 +113,7 @@ napari-plugin-engine==0.1.9
     #   napari-svg
 napari-svg==0.1.5
     # via napari
-napari==0.4.7
+napari==0.4.9
     # via -r requirements_pyinstaller.in
 numpy==1.20.3
     # via
@@ -141,6 +141,7 @@ openpyxl==3.0.7
 packaging==20.9
     # via
     #   -r requirements_pyinstaller.in
+    #   pint
     #   sphinx
 pandas==1.2.4
     # via -r requirements_pyinstaller.in
@@ -160,6 +161,8 @@ pillow==8.2.0
     # via
     #   imageio
     #   napari
+pint==0.17
+    # via napari
 prompt-toolkit==3.0.18
     # via ipython
 psutil==5.8.0
@@ -270,6 +273,8 @@ tornado==6.1
     # via
     #   ipykernel
     #   jupyter-client
+tqdm==4.61.0
+    # via napari
 traitlets==5.0.5
     # via
     #   ipykernel
