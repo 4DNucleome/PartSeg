@@ -404,10 +404,9 @@ class ImageView(QWidget):
             else:
                 self.points_layer.data = self.settings.points
                 self.points_layer.scale = self.settings.image.normalized_scaling()
-        else:
-            if self.points_layer is not None and self.points_layer in self.viewer.layers:
-                self.points_view_button.setVisible(False)
-                self.points_layer.data = np.empty((0, 4))
+        elif self.points_layer is not None and self.points_layer in self.viewer.layers:
+            self.points_view_button.setVisible(False)
+            self.points_layer.data = np.empty((0, 4))
 
     def set_roi(self, roi_info: Optional[ROIInfo] = None, image: Optional[Image] = None) -> None:
         image = self.get_image(image)

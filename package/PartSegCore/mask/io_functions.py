@@ -392,9 +392,9 @@ class LoadROIImage(LoadBase):
             raise OSError("base file for segmentation not defined")
         if os.path.isabs(base_file):
             file_path = base_file
+        elif not isinstance(load_locations[0], str):
+            raise OSError(f"Cannot use relative path {base_file} for non path argument")
         else:
-            if not isinstance(load_locations[0], str):
-                raise OSError(f"Cannot use relative path {base_file} for non path argument")
             file_path = os.path.join(os.path.dirname(load_locations[0]), base_file)
         if not os.path.exists(file_path):
             raise OSError(f"Base file for segmentation do not exists: {base_file} -> {file_path}")
