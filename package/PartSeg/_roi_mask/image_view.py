@@ -1,6 +1,5 @@
 from typing import List
 
-import numpy as np
 from napari.layers import Layer
 from vispy.app import MouseEvent
 

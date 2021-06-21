@@ -45,7 +45,7 @@ def save_project(
     with tarfile.open(file_path, tar_mod) as tar:
         segmentation_buff = BytesIO()
         # noinspection PyTypeChecker
-        tifffile.imwrite(segmentation_buff, roi_info.roi, compress=9)
+        tifffile.imwrite(segmentation_buff, roi_info.roi)
         segmentation_tar = get_tarinfo("segmentation.tif", segmentation_buff)
         tar.addfile(segmentation_tar, fileobj=segmentation_buff)
         if roi_info.alternative:
@@ -58,7 +58,7 @@ def save_project(
                 mask = mask.astype(np.uint8)
             segmentation_buff = BytesIO()
             # noinspection PyTypeChecker
-            tifffile.imwrite(segmentation_buff, mask, compress=9)
+            tifffile.imwrite(segmentation_buff, mask)
             segmentation_tar = get_tarinfo("mask.tif", segmentation_buff)
             tar.addfile(segmentation_tar, fileobj=segmentation_buff)
         image_buff = BytesIO()
