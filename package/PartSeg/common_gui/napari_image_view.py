@@ -330,10 +330,23 @@ class ImageView(QWidget):
         if image_info.mask is not None:
             image_info.mask.scale = image.normalized_scaling()
 
-    def print_info(self, value):
-        if not self.viewer.active_layer:
+    def _active_layer(self):
+        if hasattr(self.viewer.layers, "selection"):
+            return self.viewer.layers.selection.active
+        return self.viewer.active_layer
+
+    def _coordinates(self):
+        active_layer = self._active_layer()
+        if active_layer is None:
             return
-        cords = np.array([int(x) for x in self.viewer.active_layer.coordinates])
+        if hasattr(self.viewer, "cursor") and hasattr(self.viewer.cursor, "position"):
+            return [int(x) for x in active_layer.world_to_data(self.viewer.cursor.position)]
+        return [int(x) for x in active_layer.coordinates]
+
+    def print_info(self, value):
+        cords = self._coordinates()
+        if cords is None:
+            return
         bright_array = []
         components = []
         for image_info in self.image_info.values():

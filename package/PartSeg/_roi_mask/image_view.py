@@ -51,9 +51,9 @@ class StackImageView(ImageView):
             self.additional_layers[-1].translate_grid = translate_grid
 
     def component_click(self, _event: MouseEvent):
-        if self.viewer.active_layer is None:
+        cords = self._coordinates()
+        if cords is None:
             return
-        cords = np.array([int(x) for x in self.viewer.active_layer.coordinates])
         for image_info in self.image_info.values():
             if image_info.roi_info.roi is None:
                 continue
