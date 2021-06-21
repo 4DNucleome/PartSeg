@@ -112,7 +112,7 @@ def save_stack_segmentation(
             ImageWriter.save(segmentation_image, segmentation_buff)
         except ValueError:
             segmentation_buff.seek(0)
-            tifffile.imwrite(segmentation_buff, segmentation_info.roi_info.roi, compress=9)
+            tifffile.imwrite(segmentation_buff, segmentation_info.roi_info.roi)
         segmentation_tar = get_tarinfo("segmentation.tif", segmentation_buff)
         tar_file.addfile(segmentation_tar, fileobj=segmentation_buff)
         step_changed(3)
@@ -142,7 +142,7 @@ def save_stack_segmentation(
             if mask.dtype == bool:
                 mask = mask.astype(np.uint8)
             mask_buff = BytesIO()
-            tifffile.imwrite(mask_buff, mask, compress=9)
+            tifffile.imwrite(mask_buff, mask)
             mask_tar = get_tarinfo("mask.tif", mask_buff)
             tar_file.addfile(mask_tar, fileobj=mask_buff)
         if segmentation_info.roi_info.alternative:
@@ -392,9 +392,9 @@ class LoadROIImage(LoadBase):
             raise OSError("base file for segmentation not defined")
         if os.path.isabs(base_file):
             file_path = base_file
+        elif not isinstance(load_locations[0], str):
+            raise OSError(f"Cannot use relative path {base_file} for non path argument")
         else:
-            if not isinstance(load_locations[0], str):
-                raise OSError(f"Cannot use relative path {base_file} for non path argument")
             file_path = os.path.join(os.path.dirname(load_locations[0]), base_file)
         if not os.path.exists(file_path):
             raise OSError(f"Base file for segmentation do not exists: {base_file} -> {file_path}")

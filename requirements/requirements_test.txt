@@ -3,3 +3,4 @@ pytest-cov
 pytest-qt
 pytest-timeout
 codecov
+tox
