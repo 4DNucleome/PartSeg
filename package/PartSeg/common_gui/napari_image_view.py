@@ -10,9 +10,10 @@ import numpy as np
 from PartSegCore.class_generator import enum_register
 
 try:
-    from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton
-except ImportError:
     from napari._qt.qt_viewer_buttons import QtViewerPushButton
+except ImportError:
+    from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton
+
 
 from napari.components import ViewerModel as Viewer
 from napari.layers import Layer, Points
@@ -453,11 +454,17 @@ class ImageView(QWidget):
             image_info.roi.opacity = self.image_state.opacity
 
     def remove_all_roi(self):
-        self.viewer.layers.unselect_all()
+        if hasattr(self.viewer.layers, "selection"):
+            self.viewer.layers.selection.clear()
+        else:
+            self.viewer.layers.unselect_all()
         for image_info in self.image_info.values():
             if image_info.roi is None:
                 continue
-            image_info.roi.selected = True
+            if hasattr(self.viewer.layers, "selection"):
+                self.viewer.layers.selection.add(image_info.roi)
+            else:
+                image_info.roi.selected = True
             image_info.roi = None
 
         self.viewer.layers.remove_selected()
@@ -599,7 +606,11 @@ class ImageView(QWidget):
         self.current_image = image.file_path
         self.viewer.reset_view()
         if self.viewer.layers:
-            self.viewer.layers[-1].selected = True
+            if hasattr(self.viewer.layers, "selection"):
+                self.viewer.layers.selection.clear()
+                self.viewer.layers.selection.add(self.viewer.layers[-1])
+            else:
+                self.viewer.layers[-1].selected = True
 
         for i, axis in enumerate(image.axis_order):
             if axis == "C":
