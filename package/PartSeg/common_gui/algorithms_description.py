@@ -165,7 +165,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         tool_tip_text = ""
         if self.help_text:
             tool_tip_text = self.help_text
-        tool_tip_text += f"default value: {_pretty_print(self.default_value)}"
+        tool_tip_text += f" default value: {_pretty_print(self.default_value)}"
         res.setToolTip(tool_tip_text)
         return res
 
