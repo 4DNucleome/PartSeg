@@ -340,7 +340,11 @@ class ImageView(QWidget):
         active_layer = self._active_layer()
         if active_layer is None:
             return
-        if hasattr(self.viewer, "cursor") and hasattr(self.viewer.cursor, "position"):
+        if (
+            hasattr(self.viewer, "cursor")
+            and hasattr(self.viewer.cursor, "position")
+            and hasattr(active_layer, "world_to_data")
+        ):
             return [int(x) for x in active_layer.world_to_data(self.viewer.cursor.position)]
         return [int(x) for x in active_layer.coordinates]
 
