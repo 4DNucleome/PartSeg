@@ -510,6 +510,8 @@ class SheetData:
     """
 
     def __init__(self, name: str, columns: List[Tuple[str, str]]):
+        if len(columns) != len(set(columns)):
+            raise ValueError(f"Columns should be unique: {columns}")
         self.name = name
         self.columns = pd.MultiIndex.from_tuples([("name", "units")] + columns)
         self.data_frame = pd.DataFrame([], columns=self.columns)
