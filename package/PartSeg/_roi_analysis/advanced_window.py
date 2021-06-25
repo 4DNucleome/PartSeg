@@ -556,15 +556,21 @@ class MeasurementSettings(QWidget):
                 return
             lw = MeasurementListWidgetItem(Node(op="/", left=self.chosen_element_area, right=leaf))
             lw.setToolTip("User defined")
-            self.profile_options_chosen.addItem(lw)
+            self._add_option(lw)
             self.chosen_element.setIcon(QIcon())
             self.chosen_element = None
             self.chosen_element_area = None
-            if self.good_name():
-                self.save_butt.setEnabled(True)
-                self.save_butt_with_name.setEnabled(True)
-            if self.profile_options.count() == 0:
-                self.choose_butt.setDisabled(True)
+
+    def _add_option(self, item: MeasurementListWidgetItem):
+        for i in range(self.profile_options_chosen.count()):
+            if item.text() == self.profile_options_chosen.item(i).text():
+                return
+        self.profile_options_chosen.addItem(item)
+        if self.good_name():
+            self.save_butt.setEnabled(True)
+            self.save_butt_with_name.setEnabled(True)
+        if self.profile_options.count() == 0:
+            self.choose_butt.setDisabled(True)
 
     def create_selection_chosen_changed(self):
         # print(self.profile_options_chosen.count())
@@ -643,16 +649,8 @@ class MeasurementSettings(QWidget):
         if node is None:
             return
         lw = MeasurementListWidgetItem(node)
-        for i in range(self.profile_options_chosen.count()):
-            if lw.text() == self.profile_options_chosen.item(i).text():
-                return
         lw.setToolTip(selected_item.toolTip())
-        self.profile_options_chosen.addItem(lw)
-        if self.good_name():
-            self.save_butt.setEnabled(True)
-            self.save_butt_with_name.setEnabled(True)
-        if self.profile_options.count() == 0:
-            self.choose_butt.setDisabled(True)
+        self._add_option(lw)
 
     def discard_option(self):
         selected_item: MeasurementListWidgetItem = self.profile_options_chosen.currentItem()
