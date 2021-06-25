@@ -509,13 +509,23 @@ class SheetData:
     Store single sheet information
     """
 
-    def __init__(self, name: str, columns: List[Tuple[str, str]]):
+    def __init__(self, name: str, columns: List[Tuple[str, str]], raw=False):
+        if len(columns) != len(set(columns)):
+            raise ValueError(f"Columns should be unique: {columns}")
         self.name = name
-        self.columns = pd.MultiIndex.from_tuples([("name", "units")] + columns)
+        if raw:
+            self.columns = pd.MultiIndex.from_tuples(columns)
+        else:
+            self.columns = pd.MultiIndex.from_tuples([("name", "units")] + columns)
         self.data_frame = pd.DataFrame([], columns=self.columns)
         self.row_list: List[Any] = []
 
     def add_data(self, data, ind):
+        if len(data) != len(self.columns):
+            raise ValueError(
+                f"Wrong number of columns in data ({len(data)} instead of "
+                f"{len(self.columns)} {data} for columns {self.columns.values}"
+            )
         if ind is None:
             ind = len(self.row_list)
         self.row_list.append((ind, data))
@@ -523,7 +533,8 @@ class SheetData:
     def add_data_list(self, data, ind):
         if ind is None:
             ind = len(self.row_list)
-        self.row_list.extend([(ind, x) for x in data])
+        for x in data:
+            self.add_data(x, ind)
 
     def get_data_to_write(self) -> Tuple[str, pd.DataFrame]:
         """
@@ -568,7 +579,7 @@ class FileData:
         else:  # pragma: no cover
             self.file_type = FileType.text_file
         self.writing = False
-        data = SheetData("calculation_info", [("Description", "str"), ("JSON", "str")])
+        data = SheetData("calculation_info", [("Description", "str"), ("JSON", "str")], raw=True)
         data.add_data([str(calculation.calculation_plan), json.dumps(calculation.calculation_plan, cls=PartEncoder)], 0)
         self.sheet_dict = {}
         self.calculation_info = {}
