@@ -516,6 +516,8 @@ class SheetData:
         self.row_list: List[Any] = []
 
     def add_data(self, data, ind):
+        if len(data) != len(self.columns):
+            raise ValueError(f"Wrong number of columns in data {data} for columns {self.columns.values}")
         if ind is None:
             ind = len(self.row_list)
         self.row_list.append((ind, data))
@@ -523,7 +525,8 @@ class SheetData:
     def add_data_list(self, data, ind):
         if ind is None:
             ind = len(self.row_list)
-        self.row_list.extend([(ind, x) for x in data])
+        for x in data:
+            self.add_data(x, ind)
 
     def get_data_to_write(self) -> Tuple[str, pd.DataFrame]:
         """
