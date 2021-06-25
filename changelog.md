@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.13.6
+
+-   Hotfix release
+-   Prepare for a new napari version
+
 ## 0.13.5
 
 -   Small fixes for error reporting
