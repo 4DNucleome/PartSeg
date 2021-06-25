@@ -1,13 +1,13 @@
 appdirs
 czifile
 dataclasses; python_version < '3.7'
-dask!=2021.3
+dask!=2021.3,!=2021.6.1
 defusedxml
 h5py
 imagecodecs
 lxml
 mahotas
-napari
+napari==0.4.7
 numpy
 oiffile
 openpyxl
