@@ -60,6 +60,7 @@ CONFIG_FOLDER = os.path.join(state_store.save_folder, "mask")
 
 
 class MaskDialog(MaskDialogBase):
+    # FIXME add tests
     def __init__(self, settings: StackSettings):
         super().__init__(settings)
         self.settings = settings

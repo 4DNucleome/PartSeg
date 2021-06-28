@@ -510,6 +510,7 @@ class MainMenu(BaseMainMenu):
 
 
 class MaskDialog(MaskDialogBase):
+    # FIXME add tests
     def next_mask(self):
         project_info: ProjectTuple = self.settings.get_project_info()
         mask_property = self.mask_widget.get_mask_property()
