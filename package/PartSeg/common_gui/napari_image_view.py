@@ -728,6 +728,7 @@ class ImageView(QWidget):
     def closeEvent(self, event):
         for worker in self.worker_list:
             worker.quit()
+        self.viewer.layers.clear()
         super().closeEvent(event)
 
     def get_tool_tip_text(self) -> str:

@@ -70,6 +70,60 @@ try:
         for widget in widgets:
             assert not widget.isVisible()
 
+    @pytest.fixture(autouse=True)
+    def block_threads(monkeypatch, request):
+        if "enablethread" in request.keywords:
+            return
+
+        from pytestqt.qt_compat import qt_api
+        from qtpy.QtCore import QThread, QTimer
+
+        old_start = QTimer.start
+
+        class OldTimer(QTimer):
+            def start(self, time=None):
+                if time is not None:
+                    old_start(self, time)
+                else:
+                    old_start(self)
+
+        def not_start(self):
+            raise RuntimeError("Thread should not be used in test")
+
+        monkeypatch.setattr(QTimer, "start", not_start)
+        monkeypatch.setattr(QThread, "start", not_start)
+        monkeypatch.setattr(qt_api.QtCore, "QTimer", OldTimer)
+
+    @pytest.fixture(autouse=True)
+    def clean_settings():
+        from napari.utils.settings import SETTINGS
+
+        SETTINGS.reset()
+        yield
+        try:
+            SETTINGS.reset()
+        except AttributeError:
+            pass
+
+    # @pytest.fixture(scope="package", autouse=True)
+    # @pytest.mark.trylast
+    # def leaked_widgets():
+    #     initial = QApplication.topLevelWidgets()
+    #     yield
+    #     QApplication.processEvents()
+    #     leak = set(QApplication.topLevelWidgets()).difference(initial)
+    #     if any([n.__class__.__name__ != 'CanvasBackendDesktop' for n in leak]):
+    #         raise AssertionError(f'Widgets leaked!: {leak}')
+
+    import napari
+    import packaging.version
+
+    if packaging.version.parse(napari.__version__) > packaging.version.parse("0.4.7"):
+
+        @pytest.fixture(autouse=True)
+        def blocks_napari_plugin(napari_plugin_manager):
+            napari_plugin_manager.discovery_blocker.stop()
+
 
 except (RuntimeError, ImportError):
     pass

@@ -53,6 +53,7 @@ class TestLauncherMainWindow:
         qtbot.addWidget(main_window)
 
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
+    @pytest.mark.enablethread
     @pyside_skip
     @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
     def test_open_mask(self, qtbot, monkeypatch, tmp_path):
@@ -69,6 +70,7 @@ class TestLauncherMainWindow:
         main_window.wind.hide()
 
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
+    @pytest.mark.enablethread
     @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
     @pyside_skip
     def test_open_analysis(self, qtbot, monkeypatch, tmp_path):
