@@ -493,13 +493,13 @@ class MainMenu(BaseMainMenu):
             QMessageBox.warning(self, "Open error", f"{e}")
 
     def batch_window(self):
-        if self.main_window.batch_window is not None:
-            if self.main_window.batch_window.isVisible():
-                self.main_window.batch_window.activateWindow()
-            else:
-                self.main_window.batch_window.show()
-        else:
+        if self.main_window.batch_window is None:
             self.main_window.batch_window = BatchWindow(self.settings)
+            self.main_window.batch_window.show()
+
+        elif self.main_window.batch_window.isVisible():
+            self.main_window.batch_window.activateWindow()
+        else:
             self.main_window.batch_window.show()
 
     def advanced_window_show(self):
@@ -510,6 +510,7 @@ class MainMenu(BaseMainMenu):
 
 
 class MaskDialog(MaskDialogBase):
+    # FIXME add tests
     def next_mask(self):
         project_info: ProjectTuple = self.settings.get_project_info()
         mask_property = self.mask_widget.get_mask_property()
@@ -589,10 +590,7 @@ class MainWindow(BaseMainWindow):
             im = reader.read(self.initial_image_path)
             im.file_path = ""
             self.settings.image = im
-        elif initial_image is False:
-            # FIXME This is for test opening
-            pass
-        else:
+        elif initial_image is not False:
             self.settings.image = initial_image
 
         icon = QIcon(os.path.join(PartSegData.icons_dir, "icon.png"))
