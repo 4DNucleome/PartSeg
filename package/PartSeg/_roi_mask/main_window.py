@@ -928,10 +928,7 @@ class MainWindow(BaseMainWindow):
             im = reader.read(self.initial_image_path)
             im.file_path = ""
             self.settings.image = im
-        elif initial_image is False:
-            # FIXME This is for test opening
-            pass
-        else:
+        elif initial_image is not False:
             self.settings.image = initial_image
         try:
             geometry = self.settings.get_from_profile("main_window_geometry")
