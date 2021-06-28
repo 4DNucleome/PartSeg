@@ -122,7 +122,7 @@ try:
 
         @pytest.fixture(autouse=True)
         def blocks_napari_plugin(napari_plugin_manager):
-            napari_plugin_manager.discovery_blocker.stop()
+            yield
 
 
 except (RuntimeError, ImportError):
