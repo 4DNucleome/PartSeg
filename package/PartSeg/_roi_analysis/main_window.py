@@ -207,7 +207,7 @@ class Options(QWidget):
         if dial.exec() and process_thread.result:
             pipeline_result = process_thread.result
             self._settings.mask = pipeline_result.mask
-            self._settings.roi = pipeline_result.roi
+            self._settings.roi = pipeline_result.roi_info.roi
             self._settings.set_history(pipeline_result.history)
             self.label.setText(pipeline_result.description)
             self.algorithm_choose_widget.change_algorithm(pipeline.segmentation.algorithm, pipeline.segmentation.values)
