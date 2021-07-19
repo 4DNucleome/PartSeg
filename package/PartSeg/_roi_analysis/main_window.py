@@ -109,8 +109,6 @@ class Options(QWidget):
 
         self.label = TextShow()
 
-        # self.label.setWordWrap(True)
-        # self.label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         layout = QVBoxLayout()
         layout2 = QHBoxLayout()
         layout2.setSpacing(1)
@@ -327,12 +325,12 @@ class Options(QWidget):
         widget: InteractiveAlgorithmSettingsWidget = self.algorithm_choose_widget.current_widget()
         if self._settings.image.is_time and not widget.algorithm.support_time():
             QMessageBox.information(
-                self, "Not supported", "This algorithm do not support time data. " "You can convert it in image adjust"
+                self, "Not supported", "This algorithm do not support time data. You can convert it in image adjust"
             )
             return
         if self._settings.image.is_stack and not widget.algorithm.support_z():
             QMessageBox.information(
-                self, "Not supported", "This algorithm do not support stack data. " "You can convert it in image adjust"
+                self, "Not supported", "This algorithm do not support stack data. You can convert it in image adjust"
             )
             return
         self._settings.last_executed_algorithm = widget.name
@@ -666,7 +664,7 @@ class MainWindow(BaseMainWindow):
                 ret = QMessageBox.warning(
                     self,
                     "Batch work",
-                    "Batch work is not finished. " "Would you like to terminate it?",
+                    "Batch work is not finished. Would you like to terminate it?",
                     QMessageBox.No | QMessageBox.Yes,
                 )
                 if ret == QMessageBox.Yes:
