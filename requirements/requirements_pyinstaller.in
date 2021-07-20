@@ -7,7 +7,7 @@ h5py
 imagecodecs
 lxml
 mahotas
-napari==0.4.7
+napari
 numpy
 oiffile
 openpyxl
