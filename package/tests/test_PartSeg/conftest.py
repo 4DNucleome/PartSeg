@@ -1,4 +1,5 @@
 import pytest
+from qtpy.QtWidgets import QApplication
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import SegmentationPipeline, SegmentationPipelineElement
@@ -21,12 +22,12 @@ try:
         return settings
 
     @pytest.fixture
-    def stack_settings(qtbot, tmp_path):
+    def stack_settings(tmp_path):
         settings = StackSettings(tmp_path)
         chose = ChosenComponents()
-        qtbot.addWidget(chose)
         settings.chosen_components_widget = chose
-        return settings
+        yield settings
+        chose.deleteLater()
 
     @pytest.fixture
     def part_settings_with_project(image, analysis_segmentation2, tmp_path):
@@ -105,24 +106,14 @@ try:
         except AttributeError:
             pass
 
-    # @pytest.fixture(scope="package", autouse=True)
-    # @pytest.mark.trylast
-    # def leaked_widgets():
-    #     initial = QApplication.topLevelWidgets()
-    #     yield
-    #     QApplication.processEvents()
-    #     leak = set(QApplication.topLevelWidgets()).difference(initial)
-    #     if any([n.__class__.__name__ != 'CanvasBackendDesktop' for n in leak]):
-    #         raise AssertionError(f'Widgets leaked!: {leak}')
-
-    import napari
-    import packaging.version
-
-    if packaging.version.parse(napari.__version__) > packaging.version.parse("0.4.7"):
-
-        @pytest.fixture(autouse=True)
-        def blocks_napari_plugin(napari_plugin_manager):
-            yield
+    @pytest.fixture
+    def leaked_widgets():
+        initial = QApplication.topLevelWidgets()
+        yield
+        QApplication.processEvents()
+        leak = set(QApplication.topLevelWidgets()).difference(initial)
+        if any([n.__class__.__name__ != "CanvasBackendDesktop" for n in leak]):
+            raise AssertionError(f"Widgets leaked!: {leak}")
 
 
 except (RuntimeError, ImportError):
