@@ -112,8 +112,8 @@ try:
         yield
         QApplication.processEvents()
         leak = set(QApplication.topLevelWidgets()).difference(initial)
-        if any([n.__class__.__name__ != "CanvasBackendDesktop" for n in leak]):
-            raise AssertionError(f"Widgets leaked!: {leak}")
+        if any(n.__class__.__name__ != "CanvasBackendDesktop" for n in leak):
+            raise AssertionError(f"Widgets ({len(leak)}) leaked!: {leak}")
 
 
 except (RuntimeError, ImportError):

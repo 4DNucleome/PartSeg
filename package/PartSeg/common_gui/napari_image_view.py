@@ -729,6 +729,7 @@ class ImageView(QWidget):
         for worker in self.worker_list:
             worker.quit()
         self.viewer.layers.clear()
+        self.viewer_widget.close()
         super().closeEvent(event)
 
     def get_tool_tip_text(self) -> str:
@@ -752,6 +753,17 @@ class NapariQtViewer(QtViewer):
         ignore napari reading mechanism
         """
         event.ignore()
+
+    def close(self):
+        self.dockConsole.deleteLater()
+        self.dockLayerList.deleteLater()
+        self.dockLayerControls.deleteLater()
+        self.activityDock.deleteLater()
+        return super().close()
+
+    def closeEvent(self, event):
+        self.close()
+        super().closeEvent(event)
 
 
 @dataclass
