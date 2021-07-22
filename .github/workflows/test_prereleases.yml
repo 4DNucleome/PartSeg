@@ -37,7 +37,8 @@ jobs:
       matrix:
         platform: [windows-2019, macos-10.15, ubuntu-20.04]
         python: [3.8]
-
+    env:
+      DISPLAY: ':99.0'
     steps:
       - uses: actions/checkout@v2
 

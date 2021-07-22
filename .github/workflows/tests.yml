@@ -35,6 +35,8 @@ jobs:
       matrix:
         os: [windows-2019, macos-10.15, ubuntu-20.04]
         python_version: ['3.7', '3.8', '3.9']
+    env:
+      DISPLAY: ':99.0'
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-python@v1
@@ -80,6 +82,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ windows-2019, macos-10.15, ubuntu-20.04 ]
+    env:
+      DISPLAY: ':99.0'
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-python@v1
@@ -91,8 +95,9 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 \
-          libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 \
-          libxcb-xinput0 libxcb-xfixes0
+            libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 \
+            libxcb-xinput0 libxcb-xfixes0
+          /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1920x1200x24 -ac +extension GLX
 
       - name: Install Windows OpenGL
         if: runner.os == 'Windows'
@@ -147,6 +152,8 @@ jobs:
     name: Test PartSeg minimal
     runs-on: ubuntu-20.04
     needs: download_data
+    env:
+      DISPLAY: ':99.0'
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-python@v1
