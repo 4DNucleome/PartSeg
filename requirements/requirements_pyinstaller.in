@@ -7,7 +7,7 @@ h5py
 imagecodecs
 lxml
 mahotas
-napari==0.4.7
+napari
 numpy
 oiffile
 openpyxl
@@ -15,7 +15,7 @@ packaging
 pandas
 PartSegData
 PartSegCore-compiled-backend
-PyInstaller!=4.0
+PyInstaller!=4.4
 PyOpenGL-accelerate
 PyQt5
 QtPy

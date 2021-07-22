@@ -37,6 +37,8 @@ class TestResultImageView:
         assert not viewer.any_roi()
         assert not viewer.available_alternatives()
         viewer.hide()
+        # prop.close()
+        # viewer.close()
 
     @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
     @pyside_skip

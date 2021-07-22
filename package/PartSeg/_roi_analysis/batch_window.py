@@ -314,6 +314,7 @@ class BatchWindow(QTabWidget):
             else:
                 event.ignore()
         self.settings.set_in_profile("batch_window_geometry", self.saveGeometry().toHex().data().decode("ascii"))
+        super().closeEvent(event)
 
 
 class CalculationPrepare(QDialog):
