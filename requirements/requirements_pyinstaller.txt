@@ -52,6 +52,8 @@ h5py==3.3.0
     # via -r requirements_pyinstaller.in
 heapdict==1.0.1
     # via cachey
+hsluv==5.0.2
+    # via vispy
 idna==2.10
     # via requests
 imagecodecs==2021.6.8
@@ -66,14 +68,14 @@ ipykernel==5.5.5
     # via
     #   napari-console
     #   qtconsole
-ipython-genutils==0.2.0
-    # via
-    #   qtconsole
-    #   traitlets
 ipython==7.24.1
     # via
     #   ipykernel
     #   napari-console
+ipython-genutils==0.2.0
+    # via
+    #   qtconsole
+    #   traitlets
 jedi==0.18.0
     # via ipython
 jinja2==3.0.1
@@ -90,6 +92,8 @@ jupyter-core==4.7.1
     # via
     #   jupyter-client
     #   qtconsole
+kiwisolver==1.3.1
+    # via vispy
 locket==0.2.1
     # via partd
 lxml==4.6.3
@@ -104,6 +108,8 @@ matplotlib-inline==0.1.2
     # via ipython
 mpmath==1.2.1
     # via sympy
+napari==0.4.7
+    # via -r requirements_pyinstaller.in
 napari-console==0.0.3
     # via napari
 napari-plugin-engine==0.1.9
@@ -113,8 +119,6 @@ napari-plugin-engine==0.1.9
     #   napari-svg
 napari-svg==0.1.5
     # via napari
-napari==0.4.7
-    # via -r requirements_pyinstaller.in
 numpy==1.21.0
     # via
     #   -r requirements_pyinstaller.in
@@ -175,22 +179,22 @@ pygments==2.9.0
     #   ipython
     #   qtconsole
     #   sphinx
-pyinstaller-hooks-contrib==2021.1
-    # via pyinstaller
 pyinstaller==4.3
     # via -r requirements_pyinstaller.in
-pyopengl-accelerate==3.1.5
-    # via -r requirements_pyinstaller.in
+pyinstaller-hooks-contrib==2021.1
+    # via pyinstaller
 pyopengl==3.1.5
     # via napari
+pyopengl-accelerate==3.1.5
+    # via -r requirements_pyinstaller.in
 pyparsing==2.4.7
     # via packaging
+pyqt5==5.15.4
+    # via -r requirements_pyinstaller.in
 pyqt5-qt5==5.15.2
     # via pyqt5
 pyqt5-sip==12.9.0
     # via pyqt5
-pyqt5==5.15.4
-    # via -r requirements_pyinstaller.in
 pyrsistent==0.17.3
     # via jsonschema
 python-dateutil==2.8.1
@@ -287,7 +291,7 @@ urllib3==1.26.5
     # via
     #   requests
     #   sentry-sdk
-vispy==0.6.6
+vispy==0.7.3
     # via
     #   -r requirements_pyinstaller.in
     #   napari
