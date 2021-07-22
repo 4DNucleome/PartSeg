@@ -97,14 +97,17 @@ try:
 
     @pytest.fixture(autouse=True)
     def clean_settings():
-        from napari.utils.settings import SETTINGS
-
-        SETTINGS.reset()
-        yield
         try:
+            from napari.utils.settings import SETTINGS
+
             SETTINGS.reset()
-        except AttributeError:
-            pass
+            yield
+            try:
+                SETTINGS.reset()
+            except AttributeError:
+                pass
+        except ImportError:
+            yield
 
     @pytest.fixture
     def leaked_widgets():
