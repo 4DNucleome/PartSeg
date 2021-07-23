@@ -804,7 +804,7 @@ prepare_layers = thread_worker(_prepare_layers)
 
 def _print_dict(dkt: dict, indent=""):
     if not isinstance(dkt, dict):
-        logging.error("None instead of dict passed to _print_dict")
+        logging.error(f"{type(dkt)} instead of dict passed to _print_dict")
         return indent + str(dkt)
     res = []
     for k, v in dkt.items():
