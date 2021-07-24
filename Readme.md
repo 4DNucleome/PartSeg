@@ -7,7 +7,7 @@
 [![DOI](https://zenodo.org/badge/166421141.svg)](https://zenodo.org/badge/latestdoi/166421141)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/4DNucleome/PartSeg.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/4DNucleome/PartSeg/alerts/)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/4DNucleome/PartSeg.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/4DNucleome/PartSeg/context:python)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/6c6bef8ebb6a4785a7a1a2da88524661)](https://www.codacy.com/manual/Czaki/PartSeg?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=4DNucleome/PartSeg&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/f9b0f1eb2c92486d9efd99ed5b2ef326)](https://www.codacy.com/gh/4DNucleome/PartSeg/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=4DNucleome/PartSeg&amp;utm_campaign=Badge_Grade)
 [![Requirements Status](https://requires.io/github/4DNucleome/PartSeg/requirements.svg?branch=develop)](https://requires.io/github/4DNucleome/PartSeg/requirements/?branch=master)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![codecov](https://codecov.io/gh/4DNucleome/PartSeg/branch/master/graph/badge.svg?token=nbAbkOAe1C)](https://codecov.io/gh/4DNucleome/PartSeg)
