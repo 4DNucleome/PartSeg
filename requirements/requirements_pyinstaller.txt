@@ -239,7 +239,7 @@ scipy==1.7.0
     #   napari
 sentry-sdk==1.3.0
     # via -r requirements_pyinstaller.in
-simpleitk==2.0.2
+simpleitk==2.1.0
     # via -r requirements_pyinstaller.in
 six==1.16.0
     # via
