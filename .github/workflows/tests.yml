@@ -6,6 +6,8 @@ on:
       - 'release/**'
       - 'dependabot/**'
       - 'hotfix/**'
+      - 'bugfix/**'
+      - update_requirements
       - pre-commit-ci-update-config
   pull_request:
     branches:
