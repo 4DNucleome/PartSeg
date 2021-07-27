@@ -34,15 +34,15 @@ dask[array]==2021.7.0
     # via
     #   -r requirements_pyinstaller.in
     #   napari
-debugpy==1.4.0
+debugpy==1.4.1
     # via ipykernel
 decorator==5.0.9
     # via ipython
 defusedxml==0.7.1
     # via -r requirements_pyinstaller.in
-docstring-parser==0.9.1
+docstring-parser==0.10
     # via magicgui
-docutils==0.16
+docutils==0.17.1
     # via sphinx
 et-xmlfile==1.1.0
     # via openpyxl
@@ -151,7 +151,7 @@ packaging==21.0
     #   -r requirements_pyinstaller.in
     #   pint
     #   sphinx
-pandas==1.3.0
+pandas==1.3.1
     # via -r requirements_pyinstaller.in
 parso==0.8.2
     # via jedi
@@ -239,7 +239,7 @@ scipy==1.7.0
     #   napari
 sentry-sdk==1.3.0
     # via -r requirements_pyinstaller.in
-simpleitk==2.0.2
+simpleitk==2.1.0
     # via -r requirements_pyinstaller.in
 six==1.16.0
     # via
@@ -248,7 +248,7 @@ six==1.16.0
     #   python-dateutil
 snowballstemmer==2.1.0
     # via sphinx
-sphinx==3.5.4
+sphinx==4.1.2
     # via
     #   -r requirements_pyinstaller.in
     #   numpydoc
