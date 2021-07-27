@@ -1,7 +1,7 @@
 appdirs
 czifile
 dataclasses; python_version < '3.7'
-dask!=2021.3,!=2021.6.1
+dask!=2021.3,!=2021.6.1,!=2021.7.1
 defusedxml
 h5py
 imagecodecs
@@ -28,6 +28,6 @@ sympy
 tifffile
 xlrd
 xlsxwriter
-sphinx!=3.5.0,<4.0
+sphinx!=3.5.0
 pydantic!=1.8
 vispy
