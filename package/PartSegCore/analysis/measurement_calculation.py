@@ -5,6 +5,7 @@ from math import pi
 from typing import Any, Callable, Dict, Iterator, List, MutableMapping, NamedTuple, Optional, Set, Tuple, Union
 
 import numpy as np
+import pandas as pd
 import SimpleITK
 from mahotas.features import haralick
 from scipy.spatial.distance import cdist
@@ -103,6 +104,15 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
 
     def __iter__(self) -> Iterator[str]:
         return iter(self._data_dict)
+
+    def to_dataframe(self) -> pd.DataFrame:
+        data = self.get_separated()
+        transposed_data = np.transpose(data)
+        df = pd.DataFrame(
+            transposed_data[1:], index=self.get_labels()[1:], columns=np.array(transposed_data[0]).astype(int)
+        )
+        df["Units"] = self.get_units()[1:]
+        return df
 
     def set_filename(self, path_fo_file: str):
         """
