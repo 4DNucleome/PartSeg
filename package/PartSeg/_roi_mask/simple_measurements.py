@@ -1,6 +1,7 @@
-from qtpy.QtCore import QByteArray, QEvent
-from qtpy.QtGui import QCloseEvent
+from qtpy.QtCore import QByteArray, QEvent, Qt
+from qtpy.QtGui import QCloseEvent, QKeyEvent
 from qtpy.QtWidgets import (
+    QApplication,
     QCheckBox,
     QHBoxLayout,
     QLabel,
@@ -132,6 +133,23 @@ class SimpleMeasurements(QWidget):
             if text in selected:
                 chk.setChecked(True)
             self.measurement_layout.addWidget(chk)
+
+    def keyPressEvent(self, e: QKeyEvent):
+        if not e.modifiers() & Qt.ControlModifier:
+            return
+        selected = self.result_view.selectedRanges()
+
+        if e.key() == Qt.Key_C:  # copy
+            s = ""
+
+            for r in range(selected[0].topRow(), selected[0].bottomRow() + 1):
+                for c in range(selected[0].leftColumn(), selected[0].rightColumn() + 1):
+                    try:
+                        s += str(self.result_view.item(r, c).text()) + "\t"
+                    except AttributeError:
+                        s += "\t"
+                s = s[:-1] + "\n"  # eliminate last '\t'
+            QApplication.clipboard().setText(s)
 
     def event(self, event: QEvent) -> bool:
         if event.type() == QEvent.WindowActivate:
