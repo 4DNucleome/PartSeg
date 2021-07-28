@@ -107,12 +107,11 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
 
     def to_dataframe(self) -> pd.DataFrame:
         data = self.get_separated()
-        transposed_data = np.transpose(data)
-        df = pd.DataFrame(
-            transposed_data[1:], index=self.get_labels()[1:], columns=np.array(transposed_data[0]).astype(int)
-        )
-        df["Units"] = self.get_units()[1:]
-        return df
+        columns = [
+            f"{label} ({units})" if units else label for label, units in zip(self.get_labels(), self.get_units())
+        ]
+        df = pd.DataFrame(data, columns=columns)
+        return df.astype({"Segmentation component": int}).set_index("Segmentation component")
 
     def set_filename(self, path_fo_file: str):
         """
