@@ -20,8 +20,8 @@ class Measurement(QWidget):
     def __init__(self, napari_viewer: Viewer):
         super().__init__()
         self.viewer = napari_viewer
-        self.image_choice = create_widget(annotation=Optional[NapariImage], label="Image")
         self.labels_choice = create_widget(annotation=NapariLabels, label="Labels")
+        self.image_choice = create_widget(annotation=Optional[NapariImage], label="Image")
         self.scale_units_select = EnumComboBox(Units)
         self.units_select = EnumComboBox(Units)
         self.table = Table()
