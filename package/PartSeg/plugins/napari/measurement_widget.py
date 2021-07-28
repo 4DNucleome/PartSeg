@@ -1,13 +1,12 @@
 from typing import Optional
 
-from magicgui.widgets import Table, create_widget
+from magicgui.widgets import CheckBox, Container, HBox, PushButton, Table, VBox, create_widget
 from napari import Viewer
 from napari.layers import Image as NapariImage
 from napari.layers import Labels as NapariLabels
 from napari_plugin_engine import napari_hook_implementation
-from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMessageBox, QPushButton, QVBoxLayout, QWidget
+from qtpy.QtWidgets import QMessageBox
 
-from PartSeg.common_gui.universal_gui_part import EnumComboBox
 from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
 from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, PerComponent
@@ -16,47 +15,44 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
 
-class Measurement(QWidget):
+class Measurement(Container):
     def __init__(self, napari_viewer: Viewer):
-        super().__init__()
+        super().__init__(layout="vertical")
         self.viewer = napari_viewer
         self.labels_choice = create_widget(annotation=NapariLabels, label="Labels")
+        self.scale_units_select = create_widget(annotation=Units, label="Data units")  # EnumComboBox(Units)
+        self.units_select = create_widget(annotation=Units, label="Units")
         self.image_choice = create_widget(annotation=Optional[NapariImage], label="Image")
-        self.scale_units_select = EnumComboBox(Units)
-        self.units_select = EnumComboBox(Units)
         self.table = Table()
-        self.calculate_btn = QPushButton("Calculate")
-        layout = QVBoxLayout()
-        options_layout = QHBoxLayout()
-        options_layout.addWidget(QLabel(self.image_choice.label + ":"))
-        options_layout.addWidget(self.image_choice.native)
-        options_layout.addWidget(QLabel(self.labels_choice.label + ":"))
-        options_layout.addWidget(self.labels_choice.native)
-        options_layout.addWidget(QLabel("Data units:"))
-        options_layout.addWidget(self.scale_units_select)
-        options_layout.addWidget(QLabel("Units:"))
-        options_layout.addWidget(self.units_select)
-        options_layout.addWidget(self.calculate_btn)
-        layout.addLayout(options_layout)
+        self.calculate_btn = PushButton(text="Calculate")
+        self.margins = (0, 0, 0, 0)
 
-        bottom_layout = QHBoxLayout()
-        self.measurement_layout = QVBoxLayout()
-        bottom_layout.addLayout(self.measurement_layout)
-        bottom_layout.addWidget(self.table.native)
-        layout.addLayout(bottom_layout)
+        options_layout = HBox(
+            widgets=(
+                self.image_choice,
+                self.labels_choice,
+                self.scale_units_select,
+                self.units_select,
+                self.calculate_btn,
+            )
+        )
+        self.measurement_layout = VBox()
 
-        self.setLayout(layout)
+        bottom_layout = HBox(widgets=(self.measurement_layout, self.table))
+
+        self.insert(0, options_layout)
+        self.insert(1, bottom_layout)
+
         self.image_choice.native.currentIndexChanged.connect(self.refresh_measurements)
         self.labels_choice.native.currentIndexChanged.connect(self.refresh_measurements)
-        self.calculate_btn.clicked.connect(self.calculate)
+        self.calculate_btn.changed.connect(self.calculate)
 
-    def calculate(self):
+    def calculate(self, event=None):
         to_calculate = []
-        for i in range(self.measurement_layout.count()):
+        for chk in self.measurement_layout:
             # noinspection PyTypeChecker
-            chk: QCheckBox = self.measurement_layout.itemAt(i).widget()
-            if chk.isChecked():
-                leaf: Leaf = MEASUREMENT_DICT[chk.text()].get_starting_leaf()
+            if chk.value:
+                leaf: Leaf = MEASUREMENT_DICT[chk.text].get_starting_leaf()
                 to_calculate.append(leaf.replace_(per_component=PerComponent.Yes, area=AreaType.ROI))
         if not to_calculate:
             QMessageBox.warning(self, "No measurement", "Select at least one measurement")
@@ -89,12 +85,11 @@ class Measurement(QWidget):
 
     def _clean_measurements(self):
         selected = set()
-        for _ in range(self.measurement_layout.count()):
+        for _ in range(len(self.measurement_layout)):
             # noinspection PyTypeChecker
-            chk = self.measurement_layout.takeAt(0).widget()
-            if chk.isChecked():
-                selected.add(chk.text())
-            chk.deleteLater()
+            chk = self.measurement_layout.pop(0)
+            if chk.value:
+                selected.add(chk.text)
         return selected
 
     def refresh_measurements(self, event=None):
@@ -110,17 +105,17 @@ class Measurement(QWidget):
             ):
                 continue
             text = val.get_name()
-            chk = QCheckBox(text)
+            chk = CheckBox(name=text, label=text)
             if val.need_channel() and not has_channel:
-                chk.setDisabled(True)
-                chk.setToolTip("Need selected image")
+                chk.enabled = False
+                chk.tooltip = "Need selected image"
             elif text in selected:
-                chk.setChecked(True)
-            self.measurement_layout.addWidget(chk)
+                chk.value = True
+            self.measurement_layout.insert(-1, chk)
 
     def reset_choices(self, event=None):
-        self.image_choice.reset_choices(event)
-        self.labels_choice.reset_choices(event)
+        super().reset_choices(event)
+        self.refresh_measurements()
 
     def showEvent(self, event):
         self.reset_choices()
@@ -129,4 +124,5 @@ class Measurement(QWidget):
 
 @napari_hook_implementation
 def napari_experimental_provide_dock_widget():
+    print("aaa")
     return Measurement
