@@ -520,10 +520,10 @@ class MeasurementProfile:
 
         range_changed(0, len(self.chosen_fields))
         for i, entry in enumerate(self.chosen_fields):
-            step_changed(i)
             result[self.name_prefix + entry.name] = self._calc_single_field(
                 entry, segmentation_mask_map, cache_dict, kw, result_units
             )
+            step_changed(i + 1)
 
         return result
 

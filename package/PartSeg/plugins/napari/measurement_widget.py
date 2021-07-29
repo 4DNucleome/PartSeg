@@ -7,12 +7,20 @@ from napari.layers import Image as NapariImage
 from napari.layers import Labels as NapariLabels
 from napari.qt import create_worker, progress
 from napari_plugin_engine import napari_hook_implementation
+from qtpy.QtCore import QObject, Signal
 
 from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, PerComponent
 from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile, MeasurementResult
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
+
+
+class _MainThreadMove(QObject):
+    data_callback = Signal(object)
+
+    def move(self, data):
+        self.data_callback.emit(data)
 
 
 class Measurement(Container):
@@ -28,6 +36,8 @@ class Measurement(Container):
         self.margins = (0, 0, 0, 0)
         self.progress = None
         self.prev_step = 0
+        self._main_thread_move = _MainThreadMove()
+        self._main_thread_move.data_callback.connect(self.step_changed)
 
         options_layout = HBox(
             widgets=(
@@ -77,7 +87,7 @@ class Measurement(Container):
 
         create_worker(
             profile.calculate,
-            step_changed=self.step_changed,
+            step_changed=self._main_thread_move.move,
             _start_thread=True,
             _connect={"returned": self.set_result, "finished": self.finished},
             image=image,
@@ -88,7 +98,6 @@ class Measurement(Container):
         self.calculate_btn.enabled = False
 
     def step_changed(self, current_step: int):
-        print("aaa", current_step, self.progress._pbar)
         self.progress.update(current_step - self.prev_step)
         self.prev_step = current_step
 
