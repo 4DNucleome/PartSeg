@@ -60,14 +60,16 @@ class Measurement(Container):
 
         profile = MeasurementProfile("", [MeasurementEntry(x.name, x) for x in to_calculate])
 
-        data_ndim = self.image_choice.value.data.ndim
+        data_layer = self.image_choice.value or self.labels_choice.value
+
+        data_ndim = data_layer.data.ndim
         if data_ndim > 4:
             QMessageBox.warning(
                 self, "Not Supported", "Currently measurement engine does not support data over 4 dim (TZYX)"
             )
             return
-        data_scale = self.image_choice.value.scale[-3:] / UNIT_SCALE[self.scale_units_select.get_value().value]
-        image = Image(self.image_choice.value.data, data_scale, axes_order="TZYX"[-data_ndim:])
+        data_scale = data_layer.scale[-3:] / UNIT_SCALE[self.scale_units_select.get_value().value]
+        image = Image(data_layer.data, data_scale, axes_order="TZYX"[-data_ndim:])
         roi_info = ROIInfo(self.labels_choice.value.data).fit_to_image(image)
 
         dial = ExecuteFunctionDialog(
