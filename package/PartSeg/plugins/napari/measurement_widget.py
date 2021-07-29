@@ -5,9 +5,9 @@ from magicgui.widgets import CheckBox, Container, HBox, PushButton, Table, VBox,
 from napari import Viewer
 from napari.layers import Image as NapariImage
 from napari.layers import Labels as NapariLabels
+from napari.qt import create_worker, progress
 from napari_plugin_engine import napari_hook_implementation
 
-from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
 from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, PerComponent
 from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile, MeasurementResult
@@ -26,6 +26,8 @@ class Measurement(Container):
         self.table = Table()
         self.calculate_btn = PushButton(text="Calculate")
         self.margins = (0, 0, 0, 0)
+        self.progress = None
+        self.prev_step = 0
 
         options_layout = HBox(
             widgets=(
@@ -70,18 +72,33 @@ class Measurement(Container):
         image = Image(data_layer.data, data_scale, axes_order="TZYX"[-data_ndim:])
         roi_info = ROIInfo(self.labels_choice.value.data).fit_to_image(image)
 
-        dial = ExecuteFunctionDialog(
+        self.progress = progress(total=len(profile.chosen_fields))
+        self.prev_step = 0
+
+        create_worker(
             profile.calculate,
-            kwargs={
-                "image": image,
-                "channel_num": 0,
-                "roi": roi_info,
-                "result_units": self.units_select.get_value(),
-            },
+            step_changed=self.step_changed,
+            _start_thread=True,
+            _connect={"returned": self.set_result, "finished": self.finished},
+            image=image,
+            channel_num=0,
+            roi=roi_info,
+            result_units=self.units_select.get_value(),
         )
-        dial.exec()
-        result: MeasurementResult = dial.get_result()
+        self.calculate_btn.enabled = False
+
+    def step_changed(self, current_step: int):
+        print("aaa", current_step, self.progress._pbar)
+        self.progress.update(current_step - self.prev_step)
+        self.prev_step = current_step
+
+    def set_result(self, result: MeasurementResult):
         self.table.value = result.to_dataframe()
+
+    def finished(self):
+        if self.progress:
+            self.progress.close()
+        self.calculate_btn.enabled = True
 
     def _clean_measurements(self):
         selected = set()
