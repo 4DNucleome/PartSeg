@@ -1,3 +1,4 @@
+import warnings
 from typing import Optional
 
 from magicgui.widgets import CheckBox, Container, HBox, PushButton, Table, VBox, create_widget
@@ -5,7 +6,6 @@ from napari import Viewer
 from napari.layers import Image as NapariImage
 from napari.layers import Labels as NapariLabels
 from napari_plugin_engine import napari_hook_implementation
-from qtpy.QtWidgets import QMessageBox
 
 from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
 from PartSegCore import UNIT_SCALE, Units
@@ -55,7 +55,7 @@ class Measurement(Container):
                 leaf: Leaf = MEASUREMENT_DICT[chk.text].get_starting_leaf()
                 to_calculate.append(leaf.replace_(per_component=PerComponent.Yes, area=AreaType.ROI))
         if not to_calculate:
-            QMessageBox.warning(self, "No measurement", "Select at least one measurement")
+            warnings.warn("No measurement. Select at least one measurement")
             return
 
         profile = MeasurementProfile("", [MeasurementEntry(x.name, x) for x in to_calculate])
@@ -64,9 +64,7 @@ class Measurement(Container):
 
         data_ndim = data_layer.data.ndim
         if data_ndim > 4:
-            QMessageBox.warning(
-                self, "Not Supported", "Currently measurement engine does not support data over 4 dim (TZYX)"
-            )
+            warnings.warn("Not Supported. Currently measurement engine does not support data over 4 dim (TZYX)")
             return
         data_scale = data_layer.scale[-3:] / UNIT_SCALE[self.scale_units_select.get_value().value]
         image = Image(data_layer.data, data_scale, axes_order="TZYX"[-data_ndim:])
