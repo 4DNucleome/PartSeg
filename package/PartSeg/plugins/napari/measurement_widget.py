@@ -44,7 +44,7 @@ class Measurement(Container):
         self.insert(1, bottom_layout)
 
         self.image_choice.native.currentIndexChanged.connect(self.refresh_measurements)
-        self.labels_choice.native.currentIndexChanged.connect(self.refresh_measurements)
+        self.labels_choice.changed.connect(self.refresh_measurements)
         self.calculate_btn.changed.connect(self.calculate)
 
     def calculate(self, event=None):
@@ -124,5 +124,4 @@ class Measurement(Container):
 
 @napari_hook_implementation
 def napari_experimental_provide_dock_widget():
-    print("aaa")
     return Measurement
