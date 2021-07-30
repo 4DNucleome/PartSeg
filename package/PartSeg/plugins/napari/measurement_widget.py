@@ -5,22 +5,14 @@ from magicgui.widgets import CheckBox, Container, HBox, PushButton, Table, VBox,
 from napari import Viewer
 from napari.layers import Image as NapariImage
 from napari.layers import Labels as NapariLabels
-from napari.qt import create_worker, progress
+from napari.qt import create_worker
 from napari_plugin_engine import napari_hook_implementation
-from qtpy.QtCore import QObject, Signal
 
 from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, PerComponent
 from PartSegCore.analysis.measurement_calculation import MEASUREMENT_DICT, MeasurementProfile, MeasurementResult
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
-
-
-class _MainThreadMove(QObject):
-    data_callback = Signal(object)
-
-    def move(self, data):
-        self.data_callback.emit(data)
 
 
 class Measurement(Container):
@@ -30,14 +22,11 @@ class Measurement(Container):
         self.labels_choice = create_widget(annotation=NapariLabels, label="Labels")
         self.scale_units_select = create_widget(annotation=Units, label="Data units")  # EnumComboBox(Units)
         self.units_select = create_widget(annotation=Units, label="Units")
-        self.image_choice = create_widget(annotation=Optional[NapariImage], label="Image")
+        self.image_choice = create_widget(annotation=Optional[NapariImage], label="Image", options={})
         self.table = Table()
         self.calculate_btn = PushButton(text="Calculate")
         self.margins = (0, 0, 0, 0)
-        self.progress = None
-        self.prev_step = 0
-        self._main_thread_move = _MainThreadMove()
-        self._main_thread_move.data_callback.connect(self.step_changed)
+        self.measurement_result: Optional[MeasurementResult] = None
 
         options_layout = HBox(
             widgets=(
@@ -81,32 +70,27 @@ class Measurement(Container):
         data_scale = data_layer.scale[-3:] / UNIT_SCALE[self.scale_units_select.get_value().value]
         image = Image(data_layer.data, data_scale, axes_order="TZYX"[-data_ndim:])
         roi_info = ROIInfo(self.labels_choice.value.data).fit_to_image(image)
-
-        self.progress = progress(total=len(profile.chosen_fields))
-        self.prev_step = 0
+        segmentation_mask_map = profile.get_segmentation_mask_map(image, roi_info, time=0)
+        self.measurement_result = MeasurementResult(segmentation_mask_map)
 
         create_worker(
-            profile.calculate,
-            step_changed=self._main_thread_move.move,
+            profile.calculate_yield,
             _start_thread=True,
-            _connect={"returned": self.set_result, "finished": self.finished},
+            _progress={"total": len(profile.chosen_fields)},
+            _connect={"finished": self.finished, "yielded": self.set_result},
             image=image,
             channel_num=0,
             roi=roi_info,
             result_units=self.units_select.get_value(),
+            segmentation_mask_map=segmentation_mask_map,
         )
         self.calculate_btn.enabled = False
 
-    def step_changed(self, current_step: int):
-        self.progress.update(current_step - self.prev_step)
-        self.prev_step = current_step
-
-    def set_result(self, result: MeasurementResult):
-        self.table.value = result.to_dataframe()
+    def set_result(self, result):
+        self.measurement_result[result[0]] = result[1]
+        self.table.value = self.measurement_result.to_dataframe()
 
     def finished(self):
-        if self.progress:
-            self.progress.close()
         self.calculate_btn.enabled = True
 
     def _clean_measurements(self):

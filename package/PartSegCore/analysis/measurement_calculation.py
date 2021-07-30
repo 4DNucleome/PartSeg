@@ -2,7 +2,20 @@ from collections import OrderedDict
 from enum import Enum
 from functools import reduce
 from math import pi
-from typing import Any, Callable, Dict, Iterator, List, MutableMapping, NamedTuple, Optional, Set, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterator,
+    List,
+    MutableMapping,
+    NamedTuple,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 import pandas as pd
@@ -463,6 +476,16 @@ class MeasurementProfile:
             res.append(self._get_par_component_and_area_type(tree))
         return res
 
+    def get_segmentation_mask_map(self, image: Image, roi: Union[np.ndarray, ROIInfo], time: int = 0) -> ComponentsInfo:
+        def get_time(array: np.ndarray):
+            if array is not None and array.ndim == 4:
+                return array.take(time, axis=image.time_pos)
+            return array
+
+        return self.get_segmentation_to_mask_component(
+            get_time(roi if isinstance(roi, np.ndarray) else roi.roi), get_time(image.mask)
+        )
+
     def calculate(
         self,
         image: Image,
@@ -481,6 +504,45 @@ class MeasurementProfile:
         :param result_units: units which should be used to present results.
         :param range_changed: callback function to set information about steps range
         :param step_changed: callback function fo set information about steps done
+        :param time: which data point should be measured
+        :return: measurements
+        """
+
+        segmentation_mask_map = self.get_segmentation_mask_map(image, roi, time)
+        result = MeasurementResult(segmentation_mask_map)
+        range_changed(0, len(self.chosen_fields))
+        for i, (name, data) in enumerate(
+            self.calculate_yield(
+                image=image,
+                channel_num=channel_num,
+                roi=roi,
+                result_units=result_units,
+                segmentation_mask_map=segmentation_mask_map,
+                time=time,
+            ),
+            start=1,
+        ):
+            result[name] = data
+            step_changed(i)
+
+        return result
+
+    def calculate_yield(
+        self,
+        image: Image,
+        channel_num: int,
+        roi: Union[np.ndarray, ROIInfo],
+        result_units: Units,
+        segmentation_mask_map: ComponentsInfo,
+        time: int = 0,
+    ) -> Generator[Tuple[str, Tuple[Any, str, Tuple[PerComponent, AreaType]]], None, None]:
+        """
+        Calculate measurements on given set of parameters
+
+        :param image: image on which measurements should be calculated
+        :param roi: array with segmentation labeled as positive integers
+        :param result_units: units which should be used to present results.
+        :param segmentation_mask_map: information which component of roi belongs to which mask component.
         :param time: which data point should be measured
         :return: measurements
         """
@@ -509,8 +571,6 @@ class MeasurementProfile:
             "roi_alternative": roi_alternative,
             "roi_annotation": roi.annotations if isinstance(roi, ROIInfo) else {},
         }
-        segmentation_mask_map = self.get_segmentation_to_mask_component(kw["segmentation"], kw["mask"])
-        result = MeasurementResult(segmentation_mask_map)
         for num in self.get_channels_num():
             kw["channel_{num}"] = get_time(image.get_channel(num))
         if any(self._need_mask_without_segmentation(el.calculation_tree) for el in self.chosen_fields):
@@ -518,14 +578,9 @@ class MeasurementProfile:
             mm[kw["segmentation"] > 0] = 0
             kw["mask_without_segmentation"] = mm
 
-        range_changed(0, len(self.chosen_fields))
         for i, entry in enumerate(self.chosen_fields):
-            result[self.name_prefix + entry.name] = self._calc_single_field(
-                entry, segmentation_mask_map, cache_dict, kw, result_units
-            )
-            step_changed(i + 1)
-
-        return result
+            name = self.name_prefix + entry.name
+            yield name, self._calc_single_field(entry, segmentation_mask_map, cache_dict, kw, result_units)
 
     def _calc_single_field(
         self,
