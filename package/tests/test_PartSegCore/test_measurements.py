@@ -1961,6 +1961,16 @@ class TestMeasurementResult:
         ]
         assert storage.get_labels() == ["File name", "Segmentation component", "Mask component", "aa", "bb", "cc"]
 
+    def test_to_dataframe(self):
+        info = ComponentsInfo(np.arange(1, 4), np.arange(1, 3), {1: [1], 2: [2], 3: [1, 2]})
+        storage = MeasurementResult(info)
+        storage["aa"] = 1, "", (PerComponent.No, AreaType.ROI)
+        storage["bb"] = [4, 5, 6], "np", (PerComponent.Yes, AreaType.ROI)
+        df = storage.to_dataframe()
+        assert np.all(df.columns == ["aa", "bb (np)"])
+        assert np.all(df.index == [1, 2, 3])
+        assert np.all(df.values == [[1, 4], [1, 5], [1, 6]])
+
 
 class TestHaralick:
     def test_base(self):

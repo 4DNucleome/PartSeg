@@ -535,7 +535,7 @@ class MeasurementProfile:
         result_units: Units,
         segmentation_mask_map: ComponentsInfo,
         time: int = 0,
-    ) -> Generator[Tuple[str, Tuple[Any, str, Tuple[PerComponent, AreaType]]], None, None]:
+    ) -> Generator[MeasurementResultInputType, None, None]:
         """
         Calculate measurements on given set of parameters
 
