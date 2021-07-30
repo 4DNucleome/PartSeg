@@ -1,3 +1,5 @@
+# pylint: disable=R0201
+
 import itertools
 import os
 from functools import partial, reduce

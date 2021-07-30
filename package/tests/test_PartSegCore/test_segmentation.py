@@ -1,3 +1,5 @@
+# pylint: disable=R0201
+
 import operator
 from abc import ABC
 from copy import deepcopy

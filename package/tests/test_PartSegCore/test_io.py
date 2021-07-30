@@ -1,3 +1,5 @@
+# pylint: disable=R0201
+
 import dataclasses
 import json
 import os.path

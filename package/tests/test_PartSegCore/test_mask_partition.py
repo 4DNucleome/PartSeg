@@ -1,3 +1,5 @@
+# pylint: disable=R0201
+
 import numpy as np
 
 from PartSegCore import UNIT_SCALE, Units
