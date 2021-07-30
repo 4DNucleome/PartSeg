@@ -91,7 +91,7 @@ class LabelEnum(Enum):
     Show_selected = 2
 
     def __str__(self):
-        if self.value == 0:
+        if self.value == 0:  # pylint: disable=W0143
             return "Don't show"
         return self.name.replace("_", " ")
 

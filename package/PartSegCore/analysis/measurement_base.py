@@ -45,7 +45,7 @@ class Leaf(BaseSerializableClass):
     """
 
     # noinspection PyMissingConstructor,PyShadowingBuiltins, PyUnusedLocal
-    # pylint: disable=W0104,W0221,W0622
+    # pylint: disable=W0104,W0221,W0622,W0231
     def __init__(
         self,
         name: str,
@@ -164,7 +164,7 @@ class Node(BaseSerializableClass):
     right: Union["Node", Leaf]
 
     # noinspection PyMissingConstructor, PyUnusedLocal
-    # pylint: disable=W0104
+    # pylint: disable=W0104,W0231
     def __init__(self, left: Union["Node", Leaf], op: str, right: Union["Node", Leaf]):
         ...
 
@@ -204,7 +204,7 @@ class MeasurementEntry(BaseSerializableClass):
     __old_names__ = "StatisticEntry"
 
     # noinspection PyMissingConstructor,PyUnusedLocal
-    # pylint: disable=W0104
+    # pylint: disable=W0104,W0231
     def __init__(self, name: str, calculation_tree: Union[Node, Leaf]):
         ...
 
