@@ -16,9 +16,7 @@ from PartSegImage import Image
 
 
 class SimpleMeasurement(Container):
-    """
-    Widget that provide access to simple measurement feature from PartSeg ROI Mask.
-    """
+    """Widget that provide access to simple measurement feature from PartSeg ROI Mask."""
 
     def __init__(self, napari_viewer: Viewer):
         super().__init__(layout="vertical")
