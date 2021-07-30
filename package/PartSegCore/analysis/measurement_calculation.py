@@ -578,7 +578,7 @@ class MeasurementProfile:
             mm[kw["segmentation"] > 0] = 0
             kw["mask_without_segmentation"] = mm
 
-        for i, entry in enumerate(self.chosen_fields):
+        for entry in self.chosen_fields:
             name = self.name_prefix + entry.name
             yield name, self._calc_single_field(entry, segmentation_mask_map, cache_dict, kw, result_units)
 
