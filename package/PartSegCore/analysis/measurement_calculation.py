@@ -196,7 +196,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
     def get_separated(self) -> List[List[MeasurementValueType]]:
         """Get measurements separated for each component"""
         has_mask_components, has_segmentation_components = self.get_component_info()
-        if not (has_mask_components or has_segmentation_components):
+        if not has_mask_components and not has_segmentation_components:
             return [list(self._data_dict.values())]
         if has_mask_components and has_segmentation_components:
             translation = self.components_info.components_translation
@@ -231,13 +231,12 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             if per_comp != PerComponent.Yes:
                 for i in range(counts):
                     res[i].append(val)
+            elif area_type == AreaType.ROI:
+                for i, (seg, _mask) in enumerate(component_info):
+                    res[i].append(val[segmentation_to_pos[seg]])
             else:
-                if area_type == AreaType.ROI:
-                    for i, (seg, _mask) in enumerate(component_info):
-                        res[i].append(val[segmentation_to_pos[seg]])
-                else:
-                    for i, (_seg, mask) in enumerate(component_info):
-                        res[i].append(val[mask_to_pos[mask]])
+                for i, (_seg, mask) in enumerate(component_info):
+                    res[i].append(val[mask_to_pos[mask]])
         return res
 
 
@@ -307,16 +306,10 @@ class MeasurementProfile:
         """
         :return: list[((str, str), bool)]
         """
-        res = []
-        # Fixme remove binding to 3 dimensions
-        for el in self.chosen_fields:
-            res.append(
-                (
+        return [(
                     (self.name_prefix + el.name, el.get_unit(unit, 3)),
                     self._is_component_measurement(el.calculation_tree),
-                )
-            )
-        return res
+                ) for el in self.chosen_fields]
 
     def is_any_mask_measurement(self):
         return any(self.need_mask(el.calculation_tree) for el in self.chosen_fields)
