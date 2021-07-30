@@ -15,7 +15,7 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
 
 
-class Measurement(Container):
+class SimpleMeasurement(Container):
     def __init__(self, napari_viewer: Viewer):
         super().__init__(layout="vertical")
         self.viewer = napari_viewer
@@ -134,4 +134,4 @@ class Measurement(Container):
 
 @napari_hook_implementation
 def napari_experimental_provide_dock_widget():
-    return Measurement
+    return SimpleMeasurement
