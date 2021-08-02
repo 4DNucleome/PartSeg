@@ -323,9 +323,8 @@ class MeasurementProfile:
             return node.per_component == PerComponent.Yes
         return self._is_component_measurement(node.left) or self._is_component_measurement(node.right)
 
-    @staticmethod
     def _calculate_leaf_value(
-        node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
+        self, node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
     ) -> Union[float, np.ndarray]:
         method: MeasurementMethodBase = MEASUREMENT_DICT[node.name]
         area_type = method.area_type(node.area)
@@ -360,9 +359,17 @@ class MeasurementProfile:
             else:
                 components = segmentation_mask_map.mask_components
             for i in components:
-                kw["area_array"] = area_array == i
+                bounds = tuple(kw["bounds_info"][i].get_slices(margin=1))
                 kw["_component_num"] = i
-                val.append(method.calculate_property(**kw))
+                kw2 = kw.copy()
+                kw2["area_array"] = area_array[bounds] == i
+                for name in ["channel", "segmentation", "mask"] + [f"channel_{num}" for num in self.get_channels_num()]:
+                    if kw[name] is not None:
+                        kw2[name] = kw[name][bounds]
+                kw2["roi_alternative"] = kw2["roi_alternative"].copy()
+                for name, array in kw2["roi_alternative"].items():
+                    kw2["roi_alternative"][name] = kw2["roi_alternative"][name][bounds]
+                val.append(method.calculate_property(**kw2))
             val = np.array(val)
             if node.per_component == PerComponent.Mean:
                 val = np.mean(val) if val.size else 0
@@ -554,14 +561,16 @@ class MeasurementProfile:
         channel = image.get_channel(channel_num).astype(float)
         cache_dict = {}
         result_scalar = UNIT_SCALE[result_units.value]
+        if isinstance(roi, np.ndarray):
+            roi = ROIInfo(roi).fit_to_image(image)
         roi_alternative = {}
-        if isinstance(roi, ROIInfo):
-            for name, array in roi.alternative.items():
-                roi_alternative[name] = get_time(array)
+        for name, array in roi.alternative.items():
+            roi_alternative[name] = get_time(array)
         kw = {
             "image": image,
             "channel": get_time(channel),
-            "segmentation": get_time(roi if isinstance(roi, np.ndarray) else roi.roi),
+            "segmentation": get_time(roi.roi),
+            "bounds_info": {k: v.del_dim(image.time_pos) for k, v in roi.bound_info.items()},
             "mask": get_time(image.mask),
             "voxel_size": image.spacing,
             "result_scalar": result_scalar,
@@ -802,7 +811,7 @@ class PixelBrightnessSum(MeasurementMethodBase):
             if area_array.size == channel.size:
                 channel = channel.reshape(area_array.shape)
             else:  # pragma: no cover
-                raise ValueError("channel and mask do not fit each other")
+                raise ValueError(f"channel ({channel.shape}) and mask ({area_array.shape}) do not fit each other")
         if np.any(area_array):
             return np.sum(channel[area_array > 0])
         return 0
@@ -838,7 +847,7 @@ class MaximumPixelBrightness(MeasurementMethodBase):
     @staticmethod
     def calculate_property(area_array, channel, **_):
         if area_array.shape != channel.shape:  # pragma: no cover
-            raise ValueError("channel and mask do not fit each other")
+            raise ValueError(f"channel ({channel.shape}) and mask ({area_array.shape}) do not fit each other")
         if np.any(area_array):
             return np.max(channel[area_array > 0])
         return 0

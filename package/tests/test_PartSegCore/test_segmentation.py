@@ -786,11 +786,15 @@ class TestSegmentationInfo:
 
 
 def test_bound_info():
-    bi = BoundInfo(lower=np.array([1, 1, 1]), upper=np.array([5, 5, 5]))
-    assert np.all(bi.box_size() == 5)
+    bi = BoundInfo(lower=np.array([1, 1, 1]), upper=np.array([5, 6, 7]))
+    assert np.all(bi.box_size() == [5, 6, 7])
     assert len(bi.box_size()) == 3
     assert len(bi.get_slices()) == 3
-    assert np.all([x == slice(1, 6) for x in bi.get_slices()])
+    assert np.all([x == slice(1, 6 + i) for i, x in enumerate(bi.get_slices())])
+    bi2 = bi.del_dim(1)
+    assert len(bi2.box_size()) == 2
+    assert len(bi2.get_slices()) == 2
+    assert np.all(bi2.box_size() == [5, 7])
 
 
 def test_dict_repr(monkeypatch):
