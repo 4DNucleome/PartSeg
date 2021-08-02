@@ -233,7 +233,7 @@ requests==2.26.0
     # via
     #   -r requirements_pyinstaller.in
     #   sphinx
-scipy==1.7.0
+scipy==1.7.1
     # via
     #   -r requirements_pyinstaller.in
     #   napari
