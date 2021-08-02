@@ -418,8 +418,12 @@ class ImageView(QWidget):
             roi_info = self.settings.roi_info
         image_info = self.image_info[image.file_path]
         if image_info.roi is not None and image_info.roi in self.viewer.layers:
-            self.viewer.layers.unselect_all()
-            image_info.roi.selected = True
+            if hasattr(self.viewer.layers, "selection"):
+                self.viewer.layers.selection.clear()
+                self.viewer.layers.selection.add(image_info.roi)
+            else:
+                self.viewer.layers.unselect_all()
+                image_info.roi.selected = True
             self.viewer.layers.remove_selected()
             image_info.roi = None
 
@@ -519,8 +523,12 @@ class ImageView(QWidget):
 
         image_info = self.image_info[image.file_path]
         if image_info.mask is not None:
-            self.viewer.layers.unselect_all()
-            image_info.mask.selected = True
+            if hasattr(self.viewer.layers, "selection"):
+                self.viewer.layers.selection.clear()
+                self.viewer.layers.selection.add(image_info.mask)
+            else:
+                self.viewer.layers.unselect_all()
+                image_info.mask.selected = True
             self.viewer.layers.remove_selected()
             image_info.mask = None
 
@@ -735,8 +743,11 @@ class ImageView(QWidget):
     def get_tool_tip_text(self) -> str:
         image = self.settings.image
         image_info = self.image_info[image.file_path]
-        text_list = [_print_dict(image_info.roi_info.annotations.get(el, {})) for el in self.components]
-
+        text_list = []
+        for el in self.components:
+            data = image_info.roi_info.annotations.get(el, {})
+            if data:
+                text_list.append(_print_dict(el))
         return " ".join(text_list)
 
     def event(self, event: QEvent):
@@ -805,6 +816,7 @@ prepare_layers = thread_worker(_prepare_layers)
 def _print_dict(dkt: dict, indent=""):
     if not isinstance(dkt, dict):
         logging.error(f"{type(dkt)} instead of dict passed to _print_dict")
+        raise RuntimeError("aa")
         return indent + str(dkt)
     res = []
     for k, v in dkt.items():
