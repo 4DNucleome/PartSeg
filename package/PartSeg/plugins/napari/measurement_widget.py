@@ -1,3 +1,5 @@
+"""Implementation of PartSeg measurement feature for napari viewer."""
+
 import warnings
 from typing import Optional
 
@@ -19,6 +21,7 @@ class SimpleMeasurement(Container):
     """Widget that provide access to simple measurement feature from PartSeg ROI Mask."""
 
     def __init__(self, napari_viewer: Viewer):
+        """:param napari_viewer: napari viewer instance."""
         super().__init__(layout="vertical")
         self.viewer = napari_viewer
         self.labels_choice = create_widget(annotation=NapariLabels, label="Labels")
@@ -46,11 +49,11 @@ class SimpleMeasurement(Container):
         self.insert(0, options_layout)
         self.insert(1, bottom_layout)
 
-        self.image_choice.native.currentIndexChanged.connect(self.refresh_measurements)
-        self.labels_choice.changed.connect(self.refresh_measurements)
-        self.calculate_btn.changed.connect(self.calculate)
+        self.image_choice.native.currentIndexChanged.connect(self._refresh_measurements)
+        self.labels_choice.changed.connect(self._refresh_measurements)
+        self.calculate_btn.changed.connect(self._calculate)
 
-    def calculate(self, event=None):
+    def _calculate(self, event=None):
         to_calculate = []
         for chk in self.measurement_layout:
             # noinspection PyTypeChecker
@@ -79,7 +82,7 @@ class SimpleMeasurement(Container):
             profile.calculate_yield,
             _start_thread=True,
             _progress={"total": len(profile.chosen_fields)},
-            _connect={"finished": self.finished, "yielded": self.set_result},
+            _connect={"finished": self._finished, "yielded": self._set_result},
             image=image,
             channel_num=0,
             roi=roi_info,
@@ -88,11 +91,11 @@ class SimpleMeasurement(Container):
         )
         self.calculate_btn.enabled = False
 
-    def set_result(self, result):
+    def _set_result(self, result):
         self.measurement_result[result[0]] = result[1]
         self.table.value = self.measurement_result.to_dataframe()
 
-    def finished(self):
+    def _finished(self):
         self.calculate_btn.enabled = True
 
     def _clean_measurements(self):
@@ -104,7 +107,7 @@ class SimpleMeasurement(Container):
                 selected.add(chk.text)
         return selected
 
-    def refresh_measurements(self, event=None):
+    def _refresh_measurements(self, event=None):
         has_channel = self.image_choice.value is not None
         selected = self._clean_measurements()
         for val in MEASUREMENT_DICT.values():
@@ -127,11 +130,7 @@ class SimpleMeasurement(Container):
 
     def reset_choices(self, event=None):
         super().reset_choices(event)
-        self.refresh_measurements()
-
-    def showEvent(self, event):
-        self.reset_choices()
-        self.refresh_measurements()
+        self._refresh_measurements()
 
 
 @napari_hook_implementation
