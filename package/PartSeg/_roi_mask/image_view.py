@@ -19,9 +19,14 @@ class StackImageView(ImageView):
         # self.image_area.pixmap.click_signal.connect(self.component_click)
 
     def component_unmark(self, _num):
-        self.viewer.layers.unselect_all()
-        for el in self.additional_layers:
-            el.selected = True
+        if hasattr(self.viewer.layers, "selection"):
+            self.viewer.layers.selection.clear()
+            for el in self.additional_layers:
+                self.viewer.layers.selection.add(el)
+        else:
+            self.viewer.layers.unselect_all()
+            for el in self.additional_layers:
+                el.selected = True
         self.viewer.layers.remove_selected()
         self.additional_layers = []
 
