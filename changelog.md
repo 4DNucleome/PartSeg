@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.13.7
+
+-   add measurements widget for napari
+-   fix bug in pipeline usage
+
 ## 0.13.6
 
 -   Hotfix release
