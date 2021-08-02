@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.8
+
+-   napari deprecation fixes
+
 ## 0.13.7
 
 -   add measurements widget for napari
