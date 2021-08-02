@@ -70,12 +70,11 @@ class BaseMainMenu(QWidget):
             except TimeAndStackException:
                 QMessageBox.warning(self, "image error", "Do not support time and stack image")
                 return
-            if image:
-                if isinstance(image, Image):
-                    # noinspection PyProtectedMember
-                    data = dataclasses.replace(data, image=image)
-            else:
+            if not image:
                 return
+            if isinstance(image, Image):
+                # noinspection PyProtectedMember
+                data = dataclasses.replace(data, image=image)
         if data is None:
             QMessageBox().warning(self, "Data load fail", "Fail with loading data", QMessageBox.Ok)
             return

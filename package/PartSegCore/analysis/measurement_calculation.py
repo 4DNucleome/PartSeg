@@ -2,9 +2,23 @@ from collections import OrderedDict
 from enum import Enum
 from functools import reduce
 from math import pi
-from typing import Any, Callable, Dict, Iterator, List, MutableMapping, NamedTuple, Optional, Set, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterator,
+    List,
+    MutableMapping,
+    NamedTuple,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 import numpy as np
+import pandas as pd
 import SimpleITK
 from mahotas.features import haralick
 from scipy.spatial.distance import cdist
@@ -104,6 +118,14 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
     def __iter__(self) -> Iterator[str]:
         return iter(self._data_dict)
 
+    def to_dataframe(self) -> pd.DataFrame:
+        data = self.get_separated()
+        columns = [
+            f"{label} ({units})" if units else label for label, units in zip(self.get_labels(), self.get_units())
+        ]
+        df = pd.DataFrame(data, columns=columns)
+        return df.astype({"Segmentation component": int}).set_index("Segmentation component")
+
     def set_filename(self, path_fo_file: str):
         """
         Set name of file to be presented as first position.
@@ -174,7 +196,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
     def get_separated(self) -> List[List[MeasurementValueType]]:
         """Get measurements separated for each component"""
         has_mask_components, has_segmentation_components = self.get_component_info()
-        if not (has_mask_components or has_segmentation_components):
+        if not has_mask_components and not has_segmentation_components:
             return [list(self._data_dict.values())]
         if has_mask_components and has_segmentation_components:
             translation = self.components_info.components_translation
@@ -209,13 +231,12 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             if per_comp != PerComponent.Yes:
                 for i in range(counts):
                     res[i].append(val)
+            elif area_type == AreaType.ROI:
+                for i, (seg, _mask) in enumerate(component_info):
+                    res[i].append(val[segmentation_to_pos[seg]])
             else:
-                if area_type == AreaType.ROI:
-                    for i, (seg, _mask) in enumerate(component_info):
-                        res[i].append(val[segmentation_to_pos[seg]])
-                else:
-                    for i, (_seg, mask) in enumerate(component_info):
-                        res[i].append(val[mask_to_pos[mask]])
+                for i, (_seg, mask) in enumerate(component_info):
+                    res[i].append(val[mask_to_pos[mask]])
         return res
 
 
@@ -285,16 +306,14 @@ class MeasurementProfile:
         """
         :return: list[((str, str), bool)]
         """
-        res = []
         # Fixme remove binding to 3 dimensions
-        for el in self.chosen_fields:
-            res.append(
-                (
-                    (self.name_prefix + el.name, el.get_unit(unit, 3)),
-                    self._is_component_measurement(el.calculation_tree),
-                )
+        return [
+            (
+                (self.name_prefix + el.name, el.get_unit(unit, 3)),
+                self._is_component_measurement(el.calculation_tree),
             )
-        return res
+            for el in self.chosen_fields
+        ]
 
     def is_any_mask_measurement(self):
         return any(self.need_mask(el.calculation_tree) for el in self.chosen_fields)
@@ -454,6 +473,16 @@ class MeasurementProfile:
             res.append(self._get_par_component_and_area_type(tree))
         return res
 
+    def get_segmentation_mask_map(self, image: Image, roi: Union[np.ndarray, ROIInfo], time: int = 0) -> ComponentsInfo:
+        def get_time(array: np.ndarray):
+            if array is not None and array.ndim == 4:
+                return array.take(time, axis=image.time_pos)
+            return array
+
+        return self.get_segmentation_to_mask_component(
+            get_time(roi if isinstance(roi, np.ndarray) else roi.roi), get_time(image.mask)
+        )
+
     def calculate(
         self,
         image: Image,
@@ -472,6 +501,45 @@ class MeasurementProfile:
         :param result_units: units which should be used to present results.
         :param range_changed: callback function to set information about steps range
         :param step_changed: callback function fo set information about steps done
+        :param time: which data point should be measured
+        :return: measurements
+        """
+
+        segmentation_mask_map = self.get_segmentation_mask_map(image, roi, time)
+        result = MeasurementResult(segmentation_mask_map)
+        range_changed(0, len(self.chosen_fields))
+        for i, (name, data) in enumerate(
+            self.calculate_yield(
+                image=image,
+                channel_num=channel_num,
+                roi=roi,
+                result_units=result_units,
+                segmentation_mask_map=segmentation_mask_map,
+                time=time,
+            ),
+            start=1,
+        ):
+            result[name] = data
+            step_changed(i)
+
+        return result
+
+    def calculate_yield(
+        self,
+        image: Image,
+        channel_num: int,
+        roi: Union[np.ndarray, ROIInfo],
+        result_units: Units,
+        segmentation_mask_map: ComponentsInfo,
+        time: int = 0,
+    ) -> Generator[MeasurementResultInputType, None, None]:
+        """
+        Calculate measurements on given set of parameters
+
+        :param image: image on which measurements should be calculated
+        :param roi: array with segmentation labeled as positive integers
+        :param result_units: units which should be used to present results.
+        :param segmentation_mask_map: information which component of roi belongs to which mask component.
         :param time: which data point should be measured
         :return: measurements
         """
@@ -500,8 +568,6 @@ class MeasurementProfile:
             "roi_alternative": roi_alternative,
             "roi_annotation": roi.annotations if isinstance(roi, ROIInfo) else {},
         }
-        segmentation_mask_map = self.get_segmentation_to_mask_component(kw["segmentation"], kw["mask"])
-        result = MeasurementResult(segmentation_mask_map)
         for num in self.get_channels_num():
             kw["channel_{num}"] = get_time(image.get_channel(num))
         if any(self._need_mask_without_segmentation(el.calculation_tree) for el in self.chosen_fields):
@@ -509,14 +575,9 @@ class MeasurementProfile:
             mm[kw["segmentation"] > 0] = 0
             kw["mask_without_segmentation"] = mm
 
-        range_changed(0, len(self.chosen_fields))
-        for i, entry in enumerate(self.chosen_fields):
-            step_changed(i)
-            result[self.name_prefix + entry.name] = self._calc_single_field(
-                entry, segmentation_mask_map, cache_dict, kw, result_units
-            )
-
-        return result
+        for entry in self.chosen_fields:
+            name = self.name_prefix + entry.name
+            yield name, self._calc_single_field(entry, segmentation_mask_map, cache_dict, kw, result_units)
 
     def _calc_single_field(
         self,

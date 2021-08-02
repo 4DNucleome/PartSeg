@@ -1,3 +1,5 @@
+# pylint: disable=R0201
+
 import json
 
 import numpy as np

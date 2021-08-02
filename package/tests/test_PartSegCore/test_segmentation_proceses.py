@@ -1,3 +1,5 @@
+# pylint: disable=R0201
+
 import os.path
 
 import numpy as np

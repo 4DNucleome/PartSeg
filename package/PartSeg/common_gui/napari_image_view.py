@@ -91,7 +91,7 @@ class LabelEnum(Enum):
     Show_selected = 2
 
     def __str__(self):
-        if self.value == 0:
+        if self.value == 0:  # pylint: disable=W0143
             return "Don't show"
         return self.name.replace("_", " ")
 
@@ -417,7 +417,7 @@ class ImageView(QWidget):
         if roi_info is None:
             roi_info = self.settings.roi_info
         image_info = self.image_info[image.file_path]
-        if image_info.roi is not None:
+        if image_info.roi is not None and image_info.roi in self.viewer.layers:
             self.viewer.layers.unselect_all()
             image_info.roi.selected = True
             self.viewer.layers.remove_selected()

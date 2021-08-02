@@ -1,6 +1,7 @@
-from qtpy.QtCore import QByteArray, QEvent
-from qtpy.QtGui import QCloseEvent
+from qtpy.QtCore import QByteArray, QEvent, Qt
+from qtpy.QtGui import QCloseEvent, QKeyEvent
 from qtpy.QtWidgets import (
+    QApplication,
     QCheckBox,
     QHBoxLayout,
     QLabel,
@@ -31,6 +32,7 @@ class SimpleMeasurements(QWidget):
         self.units_select = EnumComboBox(Units)
         self.units_select.set_value(self.settings.get("simple_measurements.units", Units.nm))
         self.units_select.currentIndexChanged.connect(self.change_units)
+        self._shift = 2
 
         layout = QHBoxLayout()
         self.measurement_layout = QVBoxLayout()
@@ -71,7 +73,7 @@ class SimpleMeasurements(QWidget):
             QMessageBox.warning(self, "No segmentation", "need segmentation to work")
             return
         to_calculate = []
-        for i in range(2, self.measurement_layout.count()):
+        for i in range(self._shift, self.measurement_layout.count()):
             # noinspection PyTypeChecker
             chk: QCheckBox = self.measurement_layout.itemAt(i).widget()
             if chk.isChecked():
@@ -107,32 +109,54 @@ class SimpleMeasurements(QWidget):
 
     def _clean_measurements(self):
         selected = set()
-        for _ in range(self.measurement_layout.count() - 2):
+        for _ in range(self.measurement_layout.count() - self._shift):
             # noinspection PyTypeChecker
-            chk: QCheckBox = self.measurement_layout.takeAt(2).widget()
+            chk: QCheckBox = self.measurement_layout.takeAt(self._shift).widget()
             if chk.isChecked():
                 selected.add(chk.text())
             chk.deleteLater()
         return selected
 
+    def refresh_measurements(self):
+        selected = self._clean_measurements()
+        for val in MEASUREMENT_DICT.values():
+            area = val.get_starting_leaf().area
+            pc = val.get_starting_leaf().per_component
+            if (
+                val.get_fields()
+                or (area is not None and area != AreaType.ROI)
+                or (pc is not None and pc != PerComponent.Yes)
+            ):
+                continue
+            text = val.get_name()
+            chk = QCheckBox(text)
+            if text in selected:
+                chk.setChecked(True)
+            self.measurement_layout.addWidget(chk)
+
+    def keyPressEvent(self, e: QKeyEvent):
+        if not e.modifiers() & Qt.ControlModifier:
+            return
+        selected = self.result_view.selectedRanges()
+
+        if e.key() == Qt.Key_C:  # copy
+            s = ""
+
+            for r in range(selected[0].topRow(), selected[0].bottomRow() + 1):
+                for c in range(selected[0].leftColumn(), selected[0].rightColumn() + 1):
+                    try:
+                        s += str(self.result_view.item(r, c).text()) + "\t"
+                    except AttributeError:
+                        s += "\t"
+                s = s[:-1] + "\n"  # eliminate last '\t'
+            QApplication.clipboard().setText(s)
+
     def event(self, event: QEvent) -> bool:
         if event.type() == QEvent.WindowActivate:
-            self.channel_select.change_channels_num(self.settings.image.channels)
-            selected = self._clean_measurements()
-            for val in MEASUREMENT_DICT.values():
-                area = val.get_starting_leaf().area
-                pc = val.get_starting_leaf().per_component
-                if (
-                    val.get_fields()
-                    or (area is not None and area != AreaType.ROI)
-                    or (pc is not None and pc != PerComponent.Yes)
-                ):
-                    continue
-                text = val.get_name()
-                chk = QCheckBox(text)
-                if text in selected:
-                    chk.setChecked(True)
-                self.measurement_layout.addWidget(chk)
+            if self.settings.image is not None:
+                self.channel_select.change_channels_num(self.settings.image.channels)
+            self.refresh_measurements()
+
         return super().event(event)
 
     def change_units(self):
