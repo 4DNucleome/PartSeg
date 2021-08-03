@@ -360,6 +360,8 @@ class MeasurementProfile:
                 components = segmentation_mask_map.mask_components
             for i in components:
                 bounds = tuple(kw["bounds_info"][i].get_slices(margin=1))
+                if node.area != AreaType.ROI:
+                    bounds = tuple(slice(None, None) for _ in bounds)
                 kw["_component_num"] = i
                 kw2 = kw.copy()
                 kw2["area_array"] = area_array[bounds] == i
