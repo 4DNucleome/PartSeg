@@ -9,6 +9,7 @@ This module contains all utils specific for segmentation analysis task
 
    batch_processing
    calculation_plan
+   measurement_base
    measurement_calculation
 
 PartSegCore.analysis.algorithm_description

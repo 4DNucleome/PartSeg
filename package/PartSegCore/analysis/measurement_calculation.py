@@ -365,7 +365,9 @@ class MeasurementProfile:
                 kw["_component_num"] = i
                 kw2 = kw.copy()
                 kw2["area_array"] = area_array[bounds] == i
-                for name in ["channel", "segmentation", "mask"] + [f"channel_{num}" for num in self.get_channels_num()]:
+                for name in ["channel", "segmentation", "roi", "mask"] + [
+                    f"channel_{num}" for num in self.get_channels_num()
+                ]:
                     if kw[name] is not None:
                         kw2[name] = kw[name][bounds]
                 kw2["roi_alternative"] = kw2["roi_alternative"].copy()
@@ -572,12 +574,13 @@ class MeasurementProfile:
             "image": image,
             "channel": get_time(channel),
             "segmentation": get_time(roi.roi),
+            "roi": get_time(roi.roi),
             "bounds_info": {k: v.del_dim(image.time_pos) for k, v in roi.bound_info.items()},
             "mask": get_time(image.mask),
             "voxel_size": image.spacing,
             "result_scalar": result_scalar,
             "roi_alternative": roi_alternative,
-            "roi_annotation": roi.annotations if isinstance(roi, ROIInfo) else {},
+            "roi_annotation": roi.annotations,
         }
         for num in self.get_channels_num():
             kw["channel_{num}"] = get_time(image.get_channel(num))

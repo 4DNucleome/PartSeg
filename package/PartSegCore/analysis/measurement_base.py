@@ -1,8 +1,11 @@
 from abc import ABC
 from enum import Enum
-from typing import Dict, Optional, Set, Union
+from typing import Any, Dict, Optional, Set, Union
 
+import numpy as np
 from sympy import symbols
+
+from PartSegImage.image import Spacing
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmDescribeNotFound
 from ..channel_class import Channel
@@ -255,8 +258,33 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
         return []
 
     @staticmethod
-    def calculate_property(**kwargs):
-        """Main function for calculating measurement"""
+    def calculate_property(
+        # image: Image,
+        channel: np.ndarray,
+        roi: np.ndarray,
+        mask: np.ndarray,
+        voxel_size: Spacing,
+        result_scalar: float,
+        roi_alternative: Dict[str, np.ndarray],
+        roi_annotation: Dict[int, Any],
+        **kwargs,
+    ):
+        """
+        Main function for calculating measurement
+
+        :param channel: main channel selected for measurement
+        :param channel_{i}: for channel requested using :py:meth:`get_fields`
+            ``AlgorithmProperty("channel", "Channel", 0, value_type=Channel)``
+        :param area_array: array representing current area returned by :py:meth:`area_type`
+        :param roi: array representing roi
+        :param mask: array representing mask (upper level roi)
+        :param voxel_size: size of single voxel in meters
+        :param result_scalar: scalar to get proper units in result
+        :param roi_alternative: dict with alternative roi representation (for plugin specific mapping)
+        :param roi_annotation: dict with roi annotations (for plugin specific mapping)
+
+        List incomplete.
+        """
         raise NotImplementedError()
 
     @classmethod
@@ -271,7 +299,7 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def need_channel(cls):
-        """TBA"""
+        """if need image data"""
         return False
 
     @staticmethod
