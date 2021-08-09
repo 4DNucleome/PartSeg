@@ -18,6 +18,7 @@ def get_plugins():
         import napari_plugin_engine
         import napari_svg
 
+        from PartSeg.plugins.napari import measurement_widget
         from PartSegCore.napari_plugins import (
             load_image,
             load_mask_project,
@@ -33,6 +34,7 @@ def get_plugins():
         napari.plugins.plugin_manager.register(load_roi_project)
         napari.plugins.plugin_manager.register(napari_plugin_engine)
         napari.plugins.plugin_manager.register(save_mask_roi)
+        napari.plugins.plugin_manager.register(measurement_widget)
 
     else:
         packages = pkgutil.iter_modules(__path__, __name__ + ".")

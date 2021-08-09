@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 import platform
 import shutil
@@ -9,10 +10,8 @@ from PyInstaller.__main__ import run as pyinstaller_run
 
 import PartSeg
 
-# if len(sys.argv) == 2:
-#     base_path = os.path.abspath(sys.argv[1])
-# else:
-#     base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+logger = logging.getLogger("bundle build")
+logger.setLevel(logging.INFO)
 
 parser = argparse.ArgumentParser("PartSeg build")
 parser.add_argument(
@@ -22,18 +21,18 @@ parser.add_argument("--working-dir", default=os.path.abspath(os.curdir))
 
 args = parser.parse_args()
 
+pyinstaller_args = [
+    "-y",
+    "--debug=all",
+    args.spec,
+    "--distpath",
+    os.path.join(args.working_dir, "dist"),
+    "--workpath",
+    os.path.join(args.working_dir, "build"),
+]
+logger.info("run PyInstaller" + " ".join(pyinstaller_args))
 
-pyinstaller_run(
-    [
-        "-y",
-        "--debug=all",
-        args.spec,
-        "--distpath",
-        os.path.join(args.working_dir, "dist"),
-        "--workpath",
-        os.path.join(args.working_dir, "dist"),
-    ]
-)
+pyinstaller_run(pyinstaller_args)
 
 
 name_dict = {"Linux": "linux", "Windows": "windows", "Darwin": "macos"}

@@ -8,9 +8,11 @@ import os
 from packaging.version import parse as parse_version
 import platform
 import zmq
+import itertools
+import pkg_resources
 
 sys.setrecursionlimit(5000)
-sys.path.append(os.path.dirname("__file__"))
+sys.path.append(os.path.abspath("__file__"))
 
 
 # import plugins
@@ -97,6 +99,20 @@ napari_resource_path = import_resources()
 napari_base_path = os.path.dirname(os.path.dirname(napari.__file__))
 napari_resource_dest_path = os.path.relpath(os.path.dirname(napari_resource_path), napari_base_path)
 
+packages = itertools.chain(
+        pkg_resources.iter_entry_points("PartSeg.plugins"),
+        pkg_resources.iter_entry_points("partseg.plugins"),
+        pkg_resources.iter_entry_points("PartSegCore.plugins"),
+        pkg_resources.iter_entry_points("partsegcore.plugins"),
+    )
+
+plugins_data = []
+
+for package in packages:
+    module = package.load()
+    path_to_module = os.path.dirname(module.__file__)
+    plugins_data.append((os.path.join(path_to_module, "*.py"), os.path.join("plugins", os.path.basename(path_to_module))))
+
 a = Analysis(
     [os.path.join(base_path, "launcher_main.py")],
     # pathex=['C:\\Users\\Grzegorz\\Documents\\segmentation-gui\\PartSeg'],
@@ -107,17 +123,21 @@ a = Analysis(
             ("static_files/icons/*", "PartSegData/static_files/icons"),
             ("static_files/initial_images/*", "PartSegData/static_files/initial_images"),
             ("static_files/colors.npz", "PartSegData/static_files/"),
-            ("fonts/*", "PartSegData/fonts/"),
+            ("fonts/*", "PartSegData/fonts/")
         ]
     ]
     + qt_data
     + [(os.path.join(base_path, "plugins/itk_snap_save/__init__.py"), "plugins/itk_snap_save")]
+    + [(os.path.join(base_path, "plugins/napari/__init__.py"), "plugins/napari")]
+    + [(os.path.join(base_path, "plugins/napari/measurement_widget.py"), "plugins/napari")]
+    # + [ ("Readme.md", "/"), ("changelog.md", "/")]
     + [(napari_resource_path, napari_resource_dest_path)]
     + [(os.path.join(os.path.dirname(config.__file__), "dask.yaml"), "dask")]
     + collect_data_files("dask")
     + collect_data_files("vispy")
     + collect_data_files("napari")
-    + pyzmq_data,
+    + pyzmq_data
+    + plugins_data,
     hiddenimports=hiddenimports,
     # + ["plugins." + x.name for x in plugins.get_plugins()],
     hookspath=[],
