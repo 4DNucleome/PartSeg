@@ -18,7 +18,7 @@ def get_plugins():
         import napari_plugin_engine
         import napari_svg
 
-        from PartSeg.plugins.napari import measurement_widget
+        from PartSeg.plugins.napari_widgets import measurement_widget
         from PartSegCore.napari_plugins import (
             load_image,
             load_mask_project,
