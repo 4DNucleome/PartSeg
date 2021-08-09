@@ -51,18 +51,14 @@ def create_bundle(spec_path, working_dir):
 
 
 def archive_build(working_dir, dir_name):
-    arch_file = create_archive(working_dir)
-
     base_zip_path = os.path.join(working_dir, "dist")
 
-    try:
+    with create_archive(working_dir) as arch_file:
         for root, _dirs, files in os.walk(os.path.join(working_dir, "dist", dir_name), topdown=False, followlinks=True):
             for file_name in files:
                 arch_file.write(
                     os.path.join(root, file_name), os.path.relpath(os.path.join(root, file_name), base_zip_path)
                 )
-    finally:
-        arch_file.close()
 
 
 def main():
