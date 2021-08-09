@@ -10,32 +10,38 @@ import pkg_resources
 import PartSegCore.plugins
 
 
+def register_napari_plugins():
+    import napari
+    import napari_plugin_engine
+    import napari_svg
+
+    from PartSeg.plugins.napari_widgets import measurement_widget
+    from PartSegCore.napari_plugins import (
+        load_image,
+        load_mask_project,
+        load_masked_image,
+        load_roi_project,
+        save_mask_roi,
+    )
+
+    for module in [
+        napari_svg,
+        napari_plugin_engine,
+        load_image,
+        load_mask_project,
+        load_masked_image,
+        load_roi_project,
+        save_mask_roi,
+        measurement_widget,
+    ]:
+        napari.plugins.plugin_manager.register(module)
+
+
 def get_plugins():
     if getattr(sys, "frozen", False):
         new_path = [os.path.join(os.path.dirname(os.path.dirname(__path__[0])), "plugins")]
         packages = pkgutil.iter_modules(new_path, "plugins" + ".")
-        import napari
-        import napari_plugin_engine
-        import napari_svg
-
-        from PartSeg.plugins.napari_widgets import measurement_widget
-        from PartSegCore.napari_plugins import (
-            load_image,
-            load_mask_project,
-            load_masked_image,
-            load_roi_project,
-            save_mask_roi,
-        )
-
-        napari.plugins.plugin_manager.register(napari_svg)
-        napari.plugins.plugin_manager.register(load_image)
-        napari.plugins.plugin_manager.register(load_mask_project)
-        napari.plugins.plugin_manager.register(load_masked_image)
-        napari.plugins.plugin_manager.register(load_roi_project)
-        napari.plugins.plugin_manager.register(napari_plugin_engine)
-        napari.plugins.plugin_manager.register(save_mask_roi)
-        napari.plugins.plugin_manager.register(measurement_widget)
-
+        register_napari_plugins()
     else:
         packages = pkgutil.iter_modules(__path__, __name__ + ".")
     packages2 = itertools.chain(
