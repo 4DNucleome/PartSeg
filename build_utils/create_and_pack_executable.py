@@ -13,24 +13,17 @@ import PartSeg
 logger = logging.getLogger("bundle build")
 logger.setLevel(logging.INFO)
 
+SYSTEM_NAME_DICT = {"Linux": "linux", "Windows": "windows", "Darwin": "macos"}
+
 
 def create_archive(working_dir):
-    name_dict = {"Linux": "linux", "Windows": "windows", "Darwin": "macos"}
-
-    system_name = name_dict[platform.system()]
     os.makedirs(os.path.join(working_dir, "dist2"), exist_ok=True)
-
+    file_name = f"PartSeg-{PartSeg.__version__}-{SYSTEM_NAME_DICT[platform.system()]}"
     if platform.system() == "Darwin":
-        arch_file = tarfile.open(
-            os.path.join(working_dir, "dist2", f"PartSeg-{PartSeg.__version__}-{system_name}.tgz"), "w:gz"
-        )
+        arch_file = tarfile.open(os.path.join(working_dir, "dist2", f"{file_name}.tgz"), "w:gz")
         arch_file.write = arch_file.add
     else:
-        arch_file = zipfile.ZipFile(
-            os.path.join(working_dir, "dist2", f"PartSeg-{PartSeg.__version__}-{system_name}.zip"),
-            "w",
-            zipfile.ZIP_DEFLATED,
-        )
+        arch_file = zipfile.ZipFile(os.path.join(working_dir, "dist2", f"{file_name}.zip"), "w", zipfile.ZIP_DEFLATED)
     return arch_file
 
 
@@ -42,6 +35,21 @@ def fix_qt_location(working_dir, dir_name):
         )
 
 
+def create_bundle(spec_path, working_dir):
+    pyinstaller_args = [
+        "-y",
+        "--debug=all",
+        spec_path,
+        "--distpath",
+        os.path.join(working_dir, "dist"),
+        "--workpath",
+        os.path.join(working_dir, "build"),
+    ]
+    logger.info("run PyInstaller" + " ".join(pyinstaller_args))
+
+    pyinstaller_run(pyinstaller_args)
+
+
 def main():
     parser = argparse.ArgumentParser("PartSeg build")
     parser.add_argument(
@@ -51,26 +59,15 @@ def main():
 
     args = parser.parse_args()
 
-    pyinstaller_args = [
-        "-y",
-        "--debug=all",
-        args.spec,
-        "--distpath",
-        os.path.join(args.working_dir, "dist"),
-        "--workpath",
-        os.path.join(args.working_dir, "build"),
-    ]
-    logger.info("run PyInstaller" + " ".join(pyinstaller_args))
-
-    pyinstaller_run(pyinstaller_args)
-
-    base_zip_path = os.path.join(args.working_dir, "dist")
+    create_bundle(args.spec, args.working_dir)
 
     dir_name = "PartSeg.app" if platform.system() == "Darwin2" else "PartSeg"
 
     fix_qt_location(args.working_dir, dir_name)
 
     arch_file = create_archive(args.working_dir)
+
+    base_zip_path = os.path.join(args.working_dir, "dist")
 
     try:
         for root, dirs, files in os.walk(
