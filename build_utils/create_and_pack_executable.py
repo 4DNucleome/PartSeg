@@ -50,6 +50,21 @@ def create_bundle(spec_path, working_dir):
     pyinstaller_run(pyinstaller_args)
 
 
+def archive_build(working_dir, dir_name):
+    arch_file = create_archive(working_dir)
+
+    base_zip_path = os.path.join(working_dir, "dist")
+
+    try:
+        for root, dirs, files in os.walk(os.path.join(working_dir, "dist", dir_name), topdown=False, followlinks=True):
+            for file_name in files:
+                arch_file.write(
+                    os.path.join(root, file_name), os.path.relpath(os.path.join(root, file_name), base_zip_path)
+                )
+    finally:
+        arch_file.close()
+
+
 def main():
     parser = argparse.ArgumentParser("PartSeg build")
     parser.add_argument(
@@ -64,21 +79,7 @@ def main():
     dir_name = "PartSeg.app" if platform.system() == "Darwin2" else "PartSeg"
 
     fix_qt_location(args.working_dir, dir_name)
-
-    arch_file = create_archive(args.working_dir)
-
-    base_zip_path = os.path.join(args.working_dir, "dist")
-
-    try:
-        for root, dirs, files in os.walk(
-            os.path.join(args.working_dir, "dist", dir_name), topdown=False, followlinks=True
-        ):
-            for file_name in files:
-                arch_file.write(
-                    os.path.join(root, file_name), os.path.relpath(os.path.join(root, file_name), base_zip_path)
-                )
-    finally:
-        arch_file.close()
+    archive_build(args.working_dir, dir_name)
 
 
 if __name__ == "__main__":
