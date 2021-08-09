@@ -56,7 +56,7 @@ def archive_build(working_dir, dir_name):
     base_zip_path = os.path.join(working_dir, "dist")
 
     try:
-        for root, dirs, files in os.walk(os.path.join(working_dir, "dist", dir_name), topdown=False, followlinks=True):
+        for root, _dirs, files in os.walk(os.path.join(working_dir, "dist", dir_name), topdown=False, followlinks=True):
             for file_name in files:
                 arch_file.write(
                     os.path.join(root, file_name), os.path.relpath(os.path.join(root, file_name), base_zip_path)
