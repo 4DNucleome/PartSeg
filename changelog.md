@@ -3,6 +3,7 @@
 ## 0.13.8
 
 -   napari deprecation fixes
+-   bundle plugins initial support
 
 ## 0.13.7
 
