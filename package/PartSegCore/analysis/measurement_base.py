@@ -86,29 +86,32 @@ class Leaf(BaseSerializableClass):
             raise AlgorithmDescribeNotFound(self.name)
         return resp
 
+    def _parameters_string(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:
+        if len(self.dict) == 0 and self.channel is None:
+            return ""
+        arr = []
+        if self.channel is not None and self.channel >= 0:
+            arr.append(f"channel={self.channel+1}")
+        if len(self.dict) > 0:
+            try:
+                measurement_method = measurement_dict[self.name]
+                fields_dict = measurement_method.get_fields_dict()
+                for k, v in self.dict.items():
+                    arr.append(f"{fields_dict[k].user_name}={v}")
+            except KeyError:
+                arr.append("class not found")
+        return "[" + ", ".join(arr) + "]"
+
     def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]):  # pragma: no cover
         resp = self.name
         if self.area is not None:
             resp = str(self.area) + " " + resp
-        if self.per_component is not None and self.per_component == PerComponent.Yes:
-            resp += " per component "
-        if self.per_component is not None and self.per_component == PerComponent.Mean:
-            resp += " mean component "
-        if len(self.dict) != 0 or self.channel is not None:
-            resp += "["
-            arr = []
-            if self.channel is not None and self.channel >= 0:
-                arr.append(f"channel={self.channel+1}")
-            if len(self.dict) > 0:
-                try:
-                    measurement_method = measurement_dict[self.name]
-                    fields_dict = measurement_method.get_fields_dict()
-                    for k, v in self.dict.items():
-                        arr.append(f"{fields_dict[k].user_name}={v}")
-                except KeyError:
-                    arr.append("class not found")
-            resp += ", ".join(arr)
-            resp += "]"
+        if self.per_component is not None:
+            if self.per_component == PerComponent.Yes:
+                resp += " per component "
+            elif self.per_component == PerComponent.Mean:
+                resp += " mean component "
+        resp += self._parameters_string(measurement_dict)
         if self.power != 1.0:
             resp += f" to the power {self.power}"
         return resp

@@ -193,21 +193,16 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
                 res.append(val)
         return res
 
-    def get_separated(self) -> List[List[MeasurementValueType]]:
-        """Get measurements separated for each component"""
-        has_mask_components, has_segmentation_components = self.get_component_info()
-        if not has_mask_components and not has_segmentation_components:
-            return [list(self._data_dict.values())]
-        if has_mask_components and has_segmentation_components:
-            translation = self.components_info.components_translation
-            component_info = [(x, y) for x in translation.keys() for y in translation[x]]
-        elif has_mask_components:
-            component_info = [(0, x) for x in self.components_info.mask_components]
-        else:
-            component_info = [(x, 0) for x in self.components_info.roi_components]
-        counts = len(component_info)
-        mask_to_pos = {val: i for i, val in enumerate(self.components_info.mask_components)}
-        segmentation_to_pos = {val: i for i, val in enumerate(self.components_info.roi_components)}
+    def _get_component_info(self, has_mask_components, has_segmentation_components):
+        if has_mask_components:
+            if has_segmentation_components:
+                translation = self.components_info.components_translation
+                return [(x, y) for x in translation.keys() for y in translation[x]]
+            else:
+                return [(0, x) for x in self.components_info.mask_components]
+        return [(x, 0) for x in self.components_info.roi_components]
+
+    def _prepare_res_iterator(self, counts):
         if FILE_NAME_STR in self._data_dict:
             name = self._data_dict[FILE_NAME_STR]
             res = [[name] for _ in range(counts)]
@@ -219,23 +214,34 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         else:
             res = [[] for _ in range(counts)]
             iterator = iter(self._data_dict.keys())
-        if has_segmentation_components:
-            for i, num in enumerate(component_info):
+        return res, iterator
+
+    def get_separated(self) -> List[List[MeasurementValueType]]:
+        """Get measurements separated for each component"""
+        has_mask_components, has_segmentation_components = self.get_component_info()
+        if not has_mask_components and not has_segmentation_components:
+            return [list(self._data_dict.values())]
+        component_info = self._get_component_info(has_mask_components, has_segmentation_components)
+        res, iterator = self._prepare_res_iterator(len(component_info))
+
+        for i, num in enumerate(component_info):
+            if has_segmentation_components:
                 res[i].append(num[0])
-        if has_mask_components:
-            for i, num in enumerate(component_info):
+            if has_mask_components:
                 res[i].append(num[1])
+
+        mask_to_pos = {val: i for i, val in enumerate(self.components_info.mask_components)}
+        segmentation_to_pos = {val: i for i, val in enumerate(self.components_info.roi_components)}
+
         for el in iterator:
             per_comp, area_type = self._type_dict[el]
             val = self._data_dict[el]
-            if per_comp != PerComponent.Yes:
-                for i in range(counts):
+            for i, (seg, mask) in enumerate(component_info):
+                if per_comp != PerComponent.Yes:
                     res[i].append(val)
-            elif area_type == AreaType.ROI:
-                for i, (seg, _mask) in enumerate(component_info):
+                elif area_type == AreaType.ROI:
                     res[i].append(val[segmentation_to_pos[seg]])
-            else:
-                for i, (_seg, mask) in enumerate(component_info):
+                else:
                     res[i].append(val[mask_to_pos[mask]])
         return res
 
@@ -323,11 +329,9 @@ class MeasurementProfile:
             return node.per_component == PerComponent.Yes
         return self._is_component_measurement(node.left) or self._is_component_measurement(node.right)
 
-    def _calculate_leaf_value(
-        self, node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
-    ) -> Union[float, np.ndarray]:
-        method: MeasurementMethodBase = MEASUREMENT_DICT[node.name]
-        area_type = method.area_type(node.area)
+    @staticmethod
+    def _prepare_leaf_kw(node, kwargs, method, area_type):
+
         area_type_dict = {
             AreaType.Mask: "mask",
             AreaType.Mask_without_ROI: "mask_without_segmentation",
@@ -341,42 +345,52 @@ class MeasurementProfile:
             kw["channel_num"] = node.channel
         else:
             kw["channel_num"] = -1
-        kw["help_dict"] = help_dict
+
         kw["_area"] = node.area
         kw["_per_component"] = node.per_component
         kw["_cache"] = True  # TODO remove cache argument
         kw["area_array"] = kw[area_type_dict[area_type]]
         kw["_component_num"] = NO_COMPONENT
+        return kw
+
+    def _clip_arrays(self, kw, bounds, component_index):
+        kw2 = kw.copy()
+        kw2["_component_num"] = component_index
+
+        kw2["area_array"] = kw["area_array"][bounds] == component_index
+        for name in ["channel", "segmentation", "roi", "mask"] + [f"channel_{num}" for num in self.get_channels_num()]:
+            if kw[name] is not None:
+                kw2[name] = kw[name][bounds]
+        kw2["roi_alternative"] = kw2["roi_alternative"].copy()
+        for name, array in kw2["roi_alternative"].items():
+            kw2["roi_alternative"][name] = array[bounds]
+        return kw2
+
+    def _calculate_leaf_value(
+        self, node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
+    ) -> Union[float, np.ndarray]:
+        method: MeasurementMethodBase = MEASUREMENT_DICT[node.name]
+        area_type = method.area_type(node.area)
+        kw = self._prepare_leaf_kw(node, kwargs, method, area_type)
+        kw["help_dict"] = help_dict
         if node.per_component == PerComponent.No:
-            val = method.calculate_property(**kw)
+            return method.calculate_property(**kw)
+        # TODO use cache for per component calculate
+        # kw["_cache"] = False
+        val = []
+        if area_type == AreaType.ROI:
+            components = segmentation_mask_map.roi_components
         else:
-            # TODO use cache for per component calculate
-            # kw["_cache"] = False
-            val = []
-            area_array = kw["area_array"]
-            if area_type == AreaType.ROI:
-                components = segmentation_mask_map.roi_components
-            else:
-                components = segmentation_mask_map.mask_components
-            for i in components:
-                bounds = tuple(kw["bounds_info"][i].get_slices(margin=1))
-                if node.area != AreaType.ROI:
-                    bounds = tuple(slice(None, None) for _ in bounds)
-                kw["_component_num"] = i
-                kw2 = kw.copy()
-                kw2["area_array"] = area_array[bounds] == i
-                for name in ["channel", "segmentation", "roi", "mask"] + [
-                    f"channel_{num}" for num in self.get_channels_num()
-                ]:
-                    if kw[name] is not None:
-                        kw2[name] = kw[name][bounds]
-                kw2["roi_alternative"] = kw2["roi_alternative"].copy()
-                for name, array in kw2["roi_alternative"].items():
-                    kw2["roi_alternative"][name] = array[bounds]
-                val.append(method.calculate_property(**kw2))
-            val = np.array(val)
-            if node.per_component == PerComponent.Mean:
-                val = np.mean(val) if val.size else 0
+            components = segmentation_mask_map.mask_components
+        for i in components:
+            bounds = tuple(kw["bounds_info"][i].get_slices(margin=1))
+            if node.area != AreaType.ROI:
+                bounds = tuple(slice(None, None) for _ in bounds)
+            kw2 = self._clip_arrays(kw, bounds, i)
+            val.append(method.calculate_property(**kw2))
+        val = np.array(val)
+        if node.per_component == PerComponent.Mean:
+            val = np.mean(val) if val.size else 0
         return val
 
     def _calculate_leaf(
