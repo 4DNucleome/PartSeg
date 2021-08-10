@@ -40,7 +40,7 @@ def _test_imports():
     from PartSeg.common_backend.base_argparser import _setup_sentry
 
     _setup_sentry()
-    freetype._init_freetype()
+    freetype.get_handle()
     plugins.register()
     w1 = AnalysisMain("test")
     w2 = MaskMain("test")
