@@ -4,6 +4,7 @@
 
 -   napari deprecation fixes
 -   speedup simple measurement
+-   bundle plugins initial support
 
 ## 0.13.7
 

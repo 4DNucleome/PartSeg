@@ -76,7 +76,7 @@ class BaseMainMenu(QWidget):
                 # noinspection PyProtectedMember
                 data = dataclasses.replace(data, image=image)
         if data is None:
-            QMessageBox().warning(self, "Data load fail", "Fail with loading data", QMessageBox.Ok)
+            QMessageBox().warning(self, "Data loading failure", "Error during data loading", QMessageBox.Ok)
             return
         self.settings.set_project_info(data)
         if data.file_path:
