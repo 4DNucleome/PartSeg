@@ -266,7 +266,7 @@ sphinxcontrib-serializinghtml==1.1.5
     # via sphinx
 sympy==1.8
     # via -r requirements_pyinstaller.in
-tifffile==2021.7.2
+tifffile==2021.8.8
     # via
     #   -r requirements_pyinstaller.in
     #   czifile
