@@ -372,7 +372,7 @@ class MeasurementProfile:
                         kw2[name] = kw[name][bounds]
                 kw2["roi_alternative"] = kw2["roi_alternative"].copy()
                 for name, array in kw2["roi_alternative"].items():
-                    kw2["roi_alternative"][name] = kw2["roi_alternative"][name][bounds]
+                    kw2["roi_alternative"][name] = array[bounds]
                 val.append(method.calculate_property(**kw2))
             val = np.array(val)
             if node.per_component == PerComponent.Mean:
@@ -977,7 +977,7 @@ class FirstPrincipalAxisLength(MeasurementMethodBase):
     text_info = "First principal axis length", "Length of first principal axis"
 
     @staticmethod
-    def calculate_property(**kwargs):
+    def calculate_property(**kwargs):  # pylint: disable=W0221
         return get_main_axis_length(0, **kwargs)
 
     @classmethod
@@ -993,7 +993,7 @@ class SecondPrincipalAxisLength(MeasurementMethodBase):
     text_info = "Second principal axis length", "Length of second principal axis"
 
     @staticmethod
-    def calculate_property(**kwargs):
+    def calculate_property(**kwargs):  # pylint: disable=W0221
         return get_main_axis_length(1, **kwargs)
 
     @classmethod
@@ -1009,7 +1009,7 @@ class ThirdPrincipalAxisLength(MeasurementMethodBase):
     text_info = "Third principal axis length", "Length of third principal axis"
 
     @staticmethod
-    def calculate_property(**kwargs):
+    def calculate_property(**kwargs):  # pylint: disable=W0221
         return get_main_axis_length(2, **kwargs)
 
     @classmethod
@@ -1025,7 +1025,7 @@ class Compactness(MeasurementMethodBase):
     text_info = "Compactness", "Calculate compactness off segmentation (Surface^1.5/volume)"
 
     @staticmethod
-    def calculate_property(**kwargs):
+    def calculate_property(**kwargs):  # pylint: disable=W0221
         cache = kwargs["_cache"] if "_cache" in kwargs else False
         cache = cache and "help_dict" in kwargs
         cache = cache and "_area" in kwargs
@@ -1064,7 +1064,7 @@ class Sphericity(MeasurementMethodBase):
     text_info = "Sphericity", "volume/(4/3 * π * radius **3) for 3d data and volume/(π * radius **2) for 2d data"
 
     @staticmethod
-    def calculate_property(**kwargs):
+    def calculate_property(**kwargs):  # pylint: disable=W0221
         if all(key in kwargs for key in ["help_dict", "_area", "_per_component"]) and (
             "_cache" not in kwargs or kwargs["_cache"]
         ):
