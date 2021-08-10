@@ -412,37 +412,35 @@ class MeasurementProfile:
     def _calculate_node(
         self, node: Node, segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
     ) -> Tuple[Union[float, np.ndarray], symbols, AreaType]:
-        left_res, left_unit, left_area = self.calculate_tree(node.left, segmentation_mask_map, help_dict, kwargs)
-        right_res, right_unit, right_area = self.calculate_tree(node.right, segmentation_mask_map, help_dict, kwargs)
         if node.op != "/":
             raise ValueError(f"Wrong measurement: {node}")
-        if isinstance(left_res, np.ndarray) and isinstance(right_res, np.ndarray) and left_area != right_area:
-            area_set = {left_area, right_area}
-            if area_set == {AreaType.ROI, AreaType.Mask_without_ROI}:  # pragma: no cover
-                raise ProhibitedDivision("This division is prohibited")
-            if area_set == {AreaType.ROI, AreaType.Mask}:
-                res = []
-                reverse = False
-                if left_area == AreaType.Mask:
-                    left_res, right_res = right_res, left_res
-                    reverse = True
-                for val, num in zip(left_res, segmentation_mask_map.roi_components):
-                    div_vals = segmentation_mask_map.components_translation[num]
-                    if len(div_vals) != 1:  # pragma: no cover
-                        raise ProhibitedDivision("Cannot calculate when object do not belongs to one mask area")
-                    if left_area == AreaType.ROI:
-                        res.append(val / right_res[div_vals[0] - 1])
-                    else:
-                        res.append(right_res[div_vals[0] - 1] / val)
-                res = np.array(res)
-                if reverse:
-                    res = 1 / res
-                    # TODO check this area type
-                return res, left_unit / right_unit, AreaType.ROI
-            # TODO check this
-            left_area = AreaType.Mask_without_ROI
+        left_res, left_unit, left_area = self.calculate_tree(node.left, segmentation_mask_map, help_dict, kwargs)
+        right_res, right_unit, right_area = self.calculate_tree(node.right, segmentation_mask_map, help_dict, kwargs)
+        if not (isinstance(left_res, np.ndarray) and isinstance(right_res, np.ndarray) and left_area != right_area):
+            return left_res / right_res, left_unit / right_unit, left_area
+        area_set = {left_area, right_area}
+        if area_set == {AreaType.ROI, AreaType.Mask_without_ROI}:  # pragma: no cover
+            raise ProhibitedDivision("This division is prohibited")
+        if area_set == {AreaType.Mask, AreaType.Mask_without_ROI}:
+            return left_res / right_res, left_unit / right_unit, AreaType.Mask_without_ROI
 
-        return left_res / right_res, left_unit / right_unit, left_area
+        # if area_set == {AreaType.ROI, AreaType.Mask}:
+        res = []
+        if left_area == AreaType.Mask:
+            roi_res, mask_res = right_res, left_res
+        else:
+            roi_res, mask_res = left_res, right_res
+        for val, num in zip(roi_res, segmentation_mask_map.roi_components):
+            mask_components = segmentation_mask_map.components_translation[num]
+            if len(mask_components) != 1:  # pragma: no cover
+                raise ProhibitedDivision("Cannot calculate when object do not belongs to one mask area")
+            if left_area == AreaType.ROI:
+                res.append(val / mask_res[mask_components[0] - 1])
+            else:
+                res.append(mask_res[mask_components[0] - 1] / val)
+        res = np.array(res)
+        return res, left_unit / right_unit, AreaType.ROI
+        # TODO check this
 
     def calculate_tree(
         self, node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict

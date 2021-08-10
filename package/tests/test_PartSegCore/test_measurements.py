@@ -1817,6 +1817,12 @@ class TestStatisticProfile:
         assert len(result["Mask Volume per component/ROI Volume per component"][0]) == 2
         assert len(result["Mask Volume per component/Mask without ROI Volume per component"][0]) == 1
         assert len(result["Density per component"][0]) == 2
+        assert np.all(
+            np.isclose(
+                result["Mask Volume per component/ROI Volume per component"][0],
+                1 / np.array(result["ROI Volume per component/Mask Volume per component"][0]),
+            )
+        )
 
 
 # noinspection DuplicatedCode
