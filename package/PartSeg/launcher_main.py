@@ -24,6 +24,7 @@ def _test_imports():
     from qtpy.QtWidgets import QApplication
 
     app = QApplication([])
+    import freetype
     import napari
     from packaging.version import parse
 
@@ -39,6 +40,7 @@ def _test_imports():
     from PartSeg.common_backend.base_argparser import _setup_sentry
 
     _setup_sentry()
+    freetype._init_freetype()
     plugins.register()
     w1 = AnalysisMain("test")
     w2 = MaskMain("test")
