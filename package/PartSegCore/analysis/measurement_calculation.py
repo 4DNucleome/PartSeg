@@ -198,8 +198,7 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
             if has_segmentation_components:
                 translation = self.components_info.components_translation
                 return [(x, y) for x in translation.keys() for y in translation[x]]
-            else:
-                return [(0, x) for x in self.components_info.mask_components]
+            return [(0, x) for x in self.components_info.mask_components]
         return [(x, 0) for x in self.components_info.roi_components]
 
     def _prepare_res_iterator(self, counts):
