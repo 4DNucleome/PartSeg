@@ -2003,12 +2003,12 @@ class TestHaralick:
 
 @pytest.mark.parametrize("method", MEASUREMENT_DICT.values())
 @pytest.mark.parametrize("dtype", [float, int, np.uint8, np.uint16, np.uint32, np.float16, np.float32])
-def ttest_all_methods(method, dtype):
+def test_all_methods(method, dtype):
     data = np.zeros((10, 20, 20), dtype=dtype)
     data[1:-1, 3:-3, 3:-3] = 2
     data[1:-1, 4:-4, 4:-4] = 3
-    roi = (data > 0).astype(np.uint8)
-    mask = (data > 2).astype(np.uint8)
+    roi = (data > 2).astype(np.uint8)
+    mask = (data > 0).astype(np.uint8)
 
     res = method.calculate_property(
         area_array=roi,
@@ -2022,3 +2022,42 @@ def ttest_all_methods(method, dtype):
         **method.get_default_values(),
     )
     float(res)
+
+
+@pytest.mark.parametrize(
+    "method", (x for x in MEASUREMENT_DICT.values() if x.get_starting_leaf().per_component != PerComponent.No)
+)
+@pytest.mark.parametrize("area", [AreaType.ROI, AreaType.Mask])
+def test_per_component(method, area):
+    data = np.zeros((10, 20, 20), dtype=np.uint8)
+    data[1:-1, 3:-3, 3:-3] = 2
+    data[1:-1, 4:-4, 4:-4] = 3
+    roi = (data > 2).astype(np.uint8)
+    mask = (data > 0).astype(np.uint8)
+    image = Image(data, image_spacing=(10 ** -8,) * 3, axes_order="ZYX")
+    image.set_mask(mask, axes="ZYX")
+
+    statistics = [
+        MeasurementEntry(
+            "Measurement",
+            method.get_starting_leaf().replace_(
+                per_component=PerComponent.No, area=area, dict=method.get_default_values()
+            ),
+        ),
+        MeasurementEntry(
+            "Measurement per component",
+            method.get_starting_leaf().replace_(
+                per_component=PerComponent.Yes, area=area, dict=method.get_default_values()
+            ),
+        ),
+    ]
+    profile = MeasurementProfile("statistic", statistics)
+    result = profile.calculate(
+        image,
+        0,
+        roi,
+        result_units=Units.nm,
+    )
+    assert len(result["Measurement per component"][0]) == 1
+    assert isinstance(result["Measurement"][0], (float, int))
+    assert result["Measurement per component"][0][0] == result["Measurement"][0]

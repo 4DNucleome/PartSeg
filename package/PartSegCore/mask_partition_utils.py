@@ -35,7 +35,7 @@ class BorderRim(AlgorithmDescribeBase):
     @classmethod
     def get_fields(cls):
         return [
-            AlgorithmProperty("distance", "Distance", 0.0, options_range=(0, 10000), value_type=float),
+            AlgorithmProperty("distance", "Distance", 500.0, options_range=(0, 10000), value_type=float),
             AlgorithmProperty("units", "Units", Units.nm, value_type=Units),
         ]
 

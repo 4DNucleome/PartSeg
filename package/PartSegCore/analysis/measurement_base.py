@@ -150,7 +150,7 @@ def replace(self, **kwargs):
             continue
         if not hasattr(self, key):
             raise ValueError(f"Unknown parameter {key}")
-        if getattr(self, key) is not None:
+        if getattr(self, key) is not None and (key != "dict" or self.dict):
             del kwargs[key]
 
     dkt = self.asdict()

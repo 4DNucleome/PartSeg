@@ -3,6 +3,7 @@
 ## 0.13.8
 
 -   napari deprecation fixes
+-   speedup simple measurement
 
 ## 0.13.7
 
