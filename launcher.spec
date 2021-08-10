@@ -75,6 +75,7 @@ hiddenimports = ["imagecodecs._" + x for x in imagecodecs._extensions()] +\
                     "vispy.app.backends._pyqt5",
                     "scipy.spatial.transform._rotation_groups",
                     "magicgui.backends._qtpy",
+                    "freetype",
                 ]
 
 try:
@@ -136,6 +137,7 @@ a = Analysis(
     + collect_data_files("dask")
     + collect_data_files("vispy")
     + collect_data_files("napari")
+    + collect_data_files("freetype")
     + pyzmq_data
     + plugins_data,
     hiddenimports=hiddenimports,
