@@ -1,8 +1,11 @@
 from abc import ABC
 from enum import Enum
-from typing import Dict, Optional, Set, Union
+from typing import Any, Dict, Optional, Set, Union
 
+import numpy as np
 from sympy import symbols
+
+from PartSegImage.image import Spacing
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmDescribeNotFound
 from ..channel_class import Channel
@@ -83,29 +86,32 @@ class Leaf(BaseSerializableClass):
             raise AlgorithmDescribeNotFound(self.name)
         return resp
 
+    def _parameters_string(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:
+        if len(self.dict) == 0 and self.channel is None:
+            return ""
+        arr = []
+        if self.channel is not None and self.channel >= 0:
+            arr.append(f"channel={self.channel+1}")
+        if len(self.dict) > 0:
+            try:
+                measurement_method = measurement_dict[self.name]
+                fields_dict = measurement_method.get_fields_dict()
+                for k, v in self.dict.items():
+                    arr.append(f"{fields_dict[k].user_name}={v}")
+            except KeyError:
+                arr.append("class not found")
+        return "[" + ", ".join(arr) + "]"
+
     def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]):  # pragma: no cover
         resp = self.name
         if self.area is not None:
             resp = str(self.area) + " " + resp
-        if self.per_component is not None and self.per_component == PerComponent.Yes:
-            resp += " per component "
-        if self.per_component is not None and self.per_component == PerComponent.Mean:
-            resp += " mean component "
-        if len(self.dict) != 0 or self.channel is not None:
-            resp += "["
-            arr = []
-            if self.channel is not None and self.channel >= 0:
-                arr.append(f"channel={self.channel+1}")
-            if len(self.dict) > 0:
-                try:
-                    measurement_method = measurement_dict[self.name]
-                    fields_dict = measurement_method.get_fields_dict()
-                    for k, v in self.dict.items():
-                        arr.append(f"{fields_dict[k].user_name}={v}")
-                except KeyError:
-                    arr.append("class not found")
-            resp += ", ".join(arr)
-            resp += "]"
+        if self.per_component is not None:
+            if self.per_component == PerComponent.Yes:
+                resp += " per component "
+            elif self.per_component == PerComponent.Mean:
+                resp += " mean component "
+        resp += self._parameters_string(measurement_dict)
         if self.power != 1.0:
             resp += f" to the power {self.power}"
         return resp
@@ -147,7 +153,7 @@ def replace(self, **kwargs):
             continue
         if not hasattr(self, key):
             raise ValueError(f"Unknown parameter {key}")
-        if getattr(self, key) is not None:
+        if getattr(self, key) is not None and (key != "dict" or self.dict):
             del kwargs[key]
 
     dkt = self.asdict()
@@ -255,8 +261,33 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
         return []
 
     @staticmethod
-    def calculate_property(**kwargs):
-        """Main function for calculating measurement"""
+    def calculate_property(
+        # image: Image,
+        channel: np.ndarray,
+        roi: np.ndarray,
+        mask: np.ndarray,
+        voxel_size: Spacing,
+        result_scalar: float,
+        roi_alternative: Dict[str, np.ndarray],
+        roi_annotation: Dict[int, Any],
+        **kwargs,
+    ):
+        """
+        Main function for calculating measurement
+
+        :param channel: main channel selected for measurement
+        :param channel_{i}: for channel requested using :py:meth:`get_fields`
+            ``AlgorithmProperty("channel", "Channel", 0, value_type=Channel)``
+        :param area_array: array representing current area returned by :py:meth:`area_type`
+        :param roi: array representing roi
+        :param mask: array representing mask (upper level roi)
+        :param voxel_size: size of single voxel in meters
+        :param result_scalar: scalar to get proper units in result
+        :param roi_alternative: dict with alternative roi representation (for plugin specific mapping)
+        :param roi_annotation: dict with roi annotations (for plugin specific mapping)
+
+        List incomplete.
+        """
         raise NotImplementedError()
 
     @classmethod
@@ -271,7 +302,7 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
 
     @classmethod
     def need_channel(cls):
-        """TBA"""
+        """if need image data"""
         return False
 
     @staticmethod

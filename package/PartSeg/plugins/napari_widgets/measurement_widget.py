@@ -3,8 +3,10 @@
 import warnings
 from typing import Optional
 
+import numpy as np
 from magicgui.widgets import CheckBox, Container, HBox, PushButton, Table, VBox, create_widget
 from napari import Viewer
+from napari._qt.qthreading import thread_worker
 from napari.layers import Image as NapariImage
 from napari.layers import Labels as NapariLabels
 from napari.qt import create_worker
@@ -74,10 +76,15 @@ class SimpleMeasurement(Container):
             return
         data_scale = data_layer.scale[-3:] / UNIT_SCALE[self.scale_units_select.get_value().value]
         image = Image(data_layer.data, data_scale, axes_order="TZYX"[-data_ndim:])
-        roi_info = ROIInfo(self.labels_choice.value.data).fit_to_image(image)
-        segmentation_mask_map = profile.get_segmentation_mask_map(image, roi_info, time=0)
-        self.measurement_result = MeasurementResult(segmentation_mask_map)
+        worker = _prepare_data(profile, image, self.labels_choice.value.data)
+        worker.returned.connect(self._calculate_next)
+        worker.errored.connect(self._finished)
+        worker.start()
+        self.calculate_btn.enabled = False
 
+    def _calculate_next(self, data):
+        profile, image, roi_info, segmentation_mask_map = data
+        self.measurement_result = MeasurementResult(segmentation_mask_map)
         create_worker(
             profile.calculate_yield,
             _start_thread=True,
@@ -89,7 +96,6 @@ class SimpleMeasurement(Container):
             result_units=self.units_select.get_value(),
             segmentation_mask_map=segmentation_mask_map,
         )
-        self.calculate_btn.enabled = False
 
     def _set_result(self, result):
         self.measurement_result[result[0]] = result[1]
@@ -131,6 +137,15 @@ class SimpleMeasurement(Container):
     def reset_choices(self, event=None):
         super().reset_choices(event)
         self._refresh_measurements()
+
+
+@thread_worker(progress=True)
+def _prepare_data(profile: MeasurementProfile, image: Image, labels: np.ndarray):
+    roi_info = ROIInfo(labels).fit_to_image(image)
+    yield 1
+    segmentation_mask_map = profile.get_segmentation_mask_map(image, roi_info, time=0)
+    yield 2
+    return profile, image, roi_info, segmentation_mask_map
 
 
 @napari_hook_implementation

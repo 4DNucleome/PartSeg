@@ -18,8 +18,11 @@ class BoundInfo(NamedTuple):
         """Size of bounding box"""
         return self.upper - self.lower + 1
 
-    def get_slices(self) -> List[slice]:
-        return [slice(x, y + 1) for x, y in zip(self.lower, self.upper)]
+    def get_slices(self, margin=0) -> List[slice]:
+        return [slice(max(x - margin, 0), y + 1 + margin) for x, y in zip(self.lower, self.upper)]
+
+    def del_dim(self, axis: int):
+        return BoundInfo(np.delete(self.lower, axis), np.delete(self.upper, axis))
 
 
 class ROIInfo:

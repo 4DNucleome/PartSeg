@@ -193,21 +193,15 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
                 res.append(val)
         return res
 
-    def get_separated(self) -> List[List[MeasurementValueType]]:
-        """Get measurements separated for each component"""
-        has_mask_components, has_segmentation_components = self.get_component_info()
-        if not has_mask_components and not has_segmentation_components:
-            return [list(self._data_dict.values())]
-        if has_mask_components and has_segmentation_components:
-            translation = self.components_info.components_translation
-            component_info = [(x, y) for x in translation.keys() for y in translation[x]]
-        elif has_mask_components:
-            component_info = [(0, x) for x in self.components_info.mask_components]
-        else:
-            component_info = [(x, 0) for x in self.components_info.roi_components]
-        counts = len(component_info)
-        mask_to_pos = {val: i for i, val in enumerate(self.components_info.mask_components)}
-        segmentation_to_pos = {val: i for i, val in enumerate(self.components_info.roi_components)}
+    def _get_component_info(self, has_mask_components, has_segmentation_components):
+        if has_mask_components:
+            if has_segmentation_components:
+                translation = self.components_info.components_translation
+                return [(x, y) for x in translation.keys() for y in translation[x]]
+            return [(0, x) for x in self.components_info.mask_components]
+        return [(x, 0) for x in self.components_info.roi_components]
+
+    def _prepare_res_iterator(self, counts):
         if FILE_NAME_STR in self._data_dict:
             name = self._data_dict[FILE_NAME_STR]
             res = [[name] for _ in range(counts)]
@@ -219,23 +213,34 @@ class MeasurementResult(MutableMapping[str, MeasurementResultType]):
         else:
             res = [[] for _ in range(counts)]
             iterator = iter(self._data_dict.keys())
-        if has_segmentation_components:
-            for i, num in enumerate(component_info):
+        return res, iterator
+
+    def get_separated(self) -> List[List[MeasurementValueType]]:
+        """Get measurements separated for each component"""
+        has_mask_components, has_segmentation_components = self.get_component_info()
+        if not has_mask_components and not has_segmentation_components:
+            return [list(self._data_dict.values())]
+        component_info = self._get_component_info(has_mask_components, has_segmentation_components)
+        res, iterator = self._prepare_res_iterator(len(component_info))
+
+        for i, num in enumerate(component_info):
+            if has_segmentation_components:
                 res[i].append(num[0])
-        if has_mask_components:
-            for i, num in enumerate(component_info):
+            if has_mask_components:
                 res[i].append(num[1])
+
+        mask_to_pos = {val: i for i, val in enumerate(self.components_info.mask_components)}
+        segmentation_to_pos = {val: i for i, val in enumerate(self.components_info.roi_components)}
+
         for el in iterator:
             per_comp, area_type = self._type_dict[el]
             val = self._data_dict[el]
-            if per_comp != PerComponent.Yes:
-                for i in range(counts):
+            for i, (seg, mask) in enumerate(component_info):
+                if per_comp != PerComponent.Yes:
                     res[i].append(val)
-            elif area_type == AreaType.ROI:
-                for i, (seg, _mask) in enumerate(component_info):
+                elif area_type == AreaType.ROI:
                     res[i].append(val[segmentation_to_pos[seg]])
-            else:
-                for i, (_seg, mask) in enumerate(component_info):
+                else:
                     res[i].append(val[mask_to_pos[mask]])
         return res
 
@@ -324,11 +329,8 @@ class MeasurementProfile:
         return self._is_component_measurement(node.left) or self._is_component_measurement(node.right)
 
     @staticmethod
-    def _calculate_leaf_value(
-        node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
-    ) -> Union[float, np.ndarray]:
-        method: MeasurementMethodBase = MEASUREMENT_DICT[node.name]
-        area_type = method.area_type(node.area)
+    def _prepare_leaf_kw(node, kwargs, method, area_type):
+
         area_type_dict = {
             AreaType.Mask: "mask",
             AreaType.Mask_without_ROI: "mask_without_segmentation",
@@ -342,30 +344,52 @@ class MeasurementProfile:
             kw["channel_num"] = node.channel
         else:
             kw["channel_num"] = -1
-        kw["help_dict"] = help_dict
+
         kw["_area"] = node.area
         kw["_per_component"] = node.per_component
         kw["_cache"] = True  # TODO remove cache argument
         kw["area_array"] = kw[area_type_dict[area_type]]
         kw["_component_num"] = NO_COMPONENT
+        return kw
+
+    def _clip_arrays(self, kw, bounds, component_index):
+        kw2 = kw.copy()
+        kw2["_component_num"] = component_index
+
+        kw2["area_array"] = kw["area_array"][bounds] == component_index
+        for name in ["channel", "segmentation", "roi", "mask"] + [f"channel_{num}" for num in self.get_channels_num()]:
+            if kw[name] is not None:
+                kw2[name] = kw[name][bounds]
+        kw2["roi_alternative"] = kw2["roi_alternative"].copy()
+        for name, array in kw2["roi_alternative"].items():
+            kw2["roi_alternative"][name] = array[bounds]
+        return kw2
+
+    def _calculate_leaf_value(
+        self, node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
+    ) -> Union[float, np.ndarray]:
+        method: MeasurementMethodBase = MEASUREMENT_DICT[node.name]
+        area_type = method.area_type(node.area)
+        kw = self._prepare_leaf_kw(node, kwargs, method, area_type)
+        kw["help_dict"] = help_dict
         if node.per_component == PerComponent.No:
-            val = method.calculate_property(**kw)
+            return method.calculate_property(**kw)
+        # TODO use cache for per component calculate
+        # kw["_cache"] = False
+        val = []
+        if area_type == AreaType.ROI:
+            components = segmentation_mask_map.roi_components
         else:
-            # TODO use cache for per component calculate
-            # kw["_cache"] = False
-            val = []
-            area_array = kw["area_array"]
-            if area_type == AreaType.ROI:
-                components = segmentation_mask_map.roi_components
-            else:
-                components = segmentation_mask_map.mask_components
-            for i in components:
-                kw["area_array"] = area_array == i
-                kw["_component_num"] = i
-                val.append(method.calculate_property(**kw))
-            val = np.array(val)
-            if node.per_component == PerComponent.Mean:
-                val = np.mean(val) if val.size else 0
+            components = segmentation_mask_map.mask_components
+        for i in components:
+            bounds = tuple(kw["bounds_info"][i].get_slices(margin=1))
+            if node.area != AreaType.ROI:
+                bounds = tuple(slice(None, None) for _ in bounds)
+            kw2 = self._clip_arrays(kw, bounds, i)
+            val.append(method.calculate_property(**kw2))
+        val = np.array(val)
+        if node.per_component == PerComponent.Mean:
+            val = np.mean(val) if val.size else 0
         return val
 
     def _calculate_leaf(
@@ -388,37 +412,35 @@ class MeasurementProfile:
     def _calculate_node(
         self, node: Node, segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
     ) -> Tuple[Union[float, np.ndarray], symbols, AreaType]:
-        left_res, left_unit, left_area = self.calculate_tree(node.left, segmentation_mask_map, help_dict, kwargs)
-        right_res, right_unit, right_area = self.calculate_tree(node.right, segmentation_mask_map, help_dict, kwargs)
         if node.op != "/":
             raise ValueError(f"Wrong measurement: {node}")
-        if isinstance(left_res, np.ndarray) and isinstance(right_res, np.ndarray) and left_area != right_area:
-            area_set = {left_area, right_area}
-            if area_set == {AreaType.ROI, AreaType.Mask_without_ROI}:  # pragma: no cover
-                raise ProhibitedDivision("This division is prohibited")
-            if area_set == {AreaType.ROI, AreaType.Mask}:
-                res = []
-                reverse = False
-                if left_area == AreaType.Mask:
-                    left_res, right_res = right_res, left_res
-                    reverse = True
-                for val, num in zip(left_res, segmentation_mask_map.roi_components):
-                    div_vals = segmentation_mask_map.components_translation[num]
-                    if len(div_vals) != 1:  # pragma: no cover
-                        raise ProhibitedDivision("Cannot calculate when object do not belongs to one mask area")
-                    if left_area == AreaType.ROI:
-                        res.append(val / right_res[div_vals[0] - 1])
-                    else:
-                        res.append(right_res[div_vals[0] - 1] / val)
-                res = np.array(res)
-                if reverse:
-                    res = 1 / res
-                    # TODO check this area type
-                return res, left_unit / right_unit, AreaType.ROI
-            # TODO check this
-            left_area = AreaType.Mask_without_ROI
+        left_res, left_unit, left_area = self.calculate_tree(node.left, segmentation_mask_map, help_dict, kwargs)
+        right_res, right_unit, right_area = self.calculate_tree(node.right, segmentation_mask_map, help_dict, kwargs)
+        if not (isinstance(left_res, np.ndarray) and isinstance(right_res, np.ndarray) and left_area != right_area):
+            return left_res / right_res, left_unit / right_unit, left_area
+        area_set = {left_area, right_area}
+        if area_set == {AreaType.ROI, AreaType.Mask_without_ROI}:  # pragma: no cover
+            raise ProhibitedDivision("This division is prohibited")
+        if area_set == {AreaType.Mask, AreaType.Mask_without_ROI}:
+            return left_res / right_res, left_unit / right_unit, AreaType.Mask_without_ROI
 
-        return left_res / right_res, left_unit / right_unit, left_area
+        # if area_set == {AreaType.ROI, AreaType.Mask}:
+        res = []
+        if left_area == AreaType.Mask:
+            roi_res, mask_res = right_res, left_res
+        else:
+            roi_res, mask_res = left_res, right_res
+        for val, num in zip(roi_res, segmentation_mask_map.roi_components):
+            mask_components = segmentation_mask_map.components_translation[num]
+            if len(mask_components) != 1:  # pragma: no cover
+                raise ProhibitedDivision("Cannot calculate when object do not belongs to one mask area")
+            if left_area == AreaType.ROI:
+                res.append(val / mask_res[mask_components[0] - 1])
+            else:
+                res.append(mask_res[mask_components[0] - 1] / val)
+        res = np.array(res)
+        return res, left_unit / right_unit, AreaType.ROI
+        # TODO check this
 
     def calculate_tree(
         self, node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
@@ -554,19 +576,22 @@ class MeasurementProfile:
         channel = image.get_channel(channel_num).astype(float)
         cache_dict = {}
         result_scalar = UNIT_SCALE[result_units.value]
+        if isinstance(roi, np.ndarray):
+            roi = ROIInfo(roi).fit_to_image(image)
         roi_alternative = {}
-        if isinstance(roi, ROIInfo):
-            for name, array in roi.alternative.items():
-                roi_alternative[name] = get_time(array)
+        for name, array in roi.alternative.items():
+            roi_alternative[name] = get_time(array)
         kw = {
             "image": image,
             "channel": get_time(channel),
-            "segmentation": get_time(roi if isinstance(roi, np.ndarray) else roi.roi),
+            "segmentation": get_time(roi.roi),
+            "roi": get_time(roi.roi),
+            "bounds_info": {k: v.del_dim(image.time_pos) for k, v in roi.bound_info.items()},
             "mask": get_time(image.mask),
             "voxel_size": image.spacing,
             "result_scalar": result_scalar,
             "roi_alternative": roi_alternative,
-            "roi_annotation": roi.annotations if isinstance(roi, ROIInfo) else {},
+            "roi_annotation": roi.annotations,
         }
         for num in self.get_channels_num():
             kw["channel_{num}"] = get_time(image.get_channel(num))
@@ -802,7 +827,7 @@ class PixelBrightnessSum(MeasurementMethodBase):
             if area_array.size == channel.size:
                 channel = channel.reshape(area_array.shape)
             else:  # pragma: no cover
-                raise ValueError("channel and mask do not fit each other")
+                raise ValueError(f"channel ({channel.shape}) and mask ({area_array.shape}) do not fit each other")
         if np.any(area_array):
             return np.sum(channel[area_array > 0])
         return 0
@@ -838,7 +863,7 @@ class MaximumPixelBrightness(MeasurementMethodBase):
     @staticmethod
     def calculate_property(area_array, channel, **_):
         if area_array.shape != channel.shape:  # pragma: no cover
-            raise ValueError("channel and mask do not fit each other")
+            raise ValueError(f"channel ({channel.shape}) and mask ({area_array.shape}) do not fit each other")
         if np.any(area_array):
             return np.max(channel[area_array > 0])
         return 0
@@ -963,7 +988,7 @@ class FirstPrincipalAxisLength(MeasurementMethodBase):
     text_info = "First principal axis length", "Length of first principal axis"
 
     @staticmethod
-    def calculate_property(**kwargs):
+    def calculate_property(**kwargs):  # pylint: disable=W0221
         return get_main_axis_length(0, **kwargs)
 
     @classmethod
@@ -979,7 +1004,7 @@ class SecondPrincipalAxisLength(MeasurementMethodBase):
     text_info = "Second principal axis length", "Length of second principal axis"
 
     @staticmethod
-    def calculate_property(**kwargs):
+    def calculate_property(**kwargs):  # pylint: disable=W0221
         return get_main_axis_length(1, **kwargs)
 
     @classmethod
@@ -995,7 +1020,7 @@ class ThirdPrincipalAxisLength(MeasurementMethodBase):
     text_info = "Third principal axis length", "Length of third principal axis"
 
     @staticmethod
-    def calculate_property(**kwargs):
+    def calculate_property(**kwargs):  # pylint: disable=W0221
         return get_main_axis_length(2, **kwargs)
 
     @classmethod
@@ -1011,7 +1036,7 @@ class Compactness(MeasurementMethodBase):
     text_info = "Compactness", "Calculate compactness off segmentation (Surface^1.5/volume)"
 
     @staticmethod
-    def calculate_property(**kwargs):
+    def calculate_property(**kwargs):  # pylint: disable=W0221
         cache = kwargs["_cache"] if "_cache" in kwargs else False
         cache = cache and "help_dict" in kwargs
         cache = cache and "_area" in kwargs
@@ -1050,7 +1075,7 @@ class Sphericity(MeasurementMethodBase):
     text_info = "Sphericity", "volume/(4/3 * π * radius **3) for 3d data and volume/(π * radius **2) for 2d data"
 
     @staticmethod
-    def calculate_property(**kwargs):
+    def calculate_property(**kwargs):  # pylint: disable=W0221
         if all(key in kwargs for key in ["help_dict", "_area", "_per_component"]) and (
             "_cache" not in kwargs or kwargs["_cache"]
         ):
