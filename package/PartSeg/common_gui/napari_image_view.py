@@ -747,7 +747,7 @@ class ImageView(QWidget):
         for el in self.components:
             data = image_info.roi_info.annotations.get(el, {})
             if data:
-                text_list.append(_print_dict(el))
+                text_list.append(_print_dict(data))
         return " ".join(text_list)
 
     def event(self, event: QEvent):

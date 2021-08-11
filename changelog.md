@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.9
+
+-   annotation show bugfix
+
 ## 0.13.8
 
 -   napari deprecation fixes
