@@ -36,6 +36,18 @@ class ImageWriter:
         metadata["Ranges"] = ranges
 
         resolution = [1 / x for x in spacing[-2:]]
+        metadata["Pixels"] = {
+            "PhysicalSizeZ": spacing[0],
+            "PhysicalSizeY": spacing[1],
+            "PhysicalSizeX": spacing[2],
+            "PhysicalSizeZUnit": "um",
+            "PhysicalSizeYUnit": "um",
+            "PhysicalSizeXUnit": "um",
+        }
+        metadata["Channel"] = {
+            "Name": image.channel_names,
+            "axes": "TZYXC",
+        }
         cls._save(data, save_path, resolution, metadata)
 
     @classmethod
@@ -56,6 +68,18 @@ class ImageWriter:
         if len(spacing) == 3:
             metadata.update({"spacing": spacing[0]})
         resolution = [1 / x for x in spacing[-2:]]
+        metadata["Pixels"] = {
+            "PhysicalSizeZ": spacing[0],
+            "PhysicalSizeY": spacing[1],
+            "PhysicalSizeX": spacing[2],
+            "PhysicalSizeZUnit": "um",
+            "PhysicalSizeYUnit": "um",
+            "PhysicalSizeXUnit": "um",
+        }
+        metadata["Channel"] = {
+            "Name": "Mask",
+            "axes": "TZYX",
+        }
         cls._save(mask, save_path, resolution, metadata)
 
     @staticmethod
@@ -65,7 +89,7 @@ class ImageWriter:
             imwrite(
                 save_path,
                 data,
-                imagej=True,
+                ome=True,
                 software="PartSeg",
                 metadata=metadata,
                 resolution=resolution,
