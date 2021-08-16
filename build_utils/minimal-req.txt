@@ -10,6 +10,7 @@ defusedxml==0.6.0
 h5py==2.8.0
 imagecodecs==2020.5.30
 imageio==2.5.0
+mahotas==1.4.9
 napari==0.4.3
 numpy==1.16.5
 oiffile==2019.1.1
@@ -21,7 +22,8 @@ scipy==1.2.0
 sentry_sdk==0.14.3
 six==1.11.0
 sympy==1.1.1
-tifffile==2020.2.16
+tifffile==2020.8.13
+vispy==0.6.4
 xlrd==1.1.0
 xlsxwriter
 typing-extensions==3.7.4.2 ;python_version < '3.8'
