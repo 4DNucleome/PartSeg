@@ -27,6 +27,8 @@ class ImageWriter:
             },
             "Plane": [],
         }
+        if image.name:
+            metadata["Name"] = image.name
         for t, z, c in product(range(image.times), range(image.layers), range(channels)):
             metadata["Plane"].append(
                 {

@@ -104,6 +104,7 @@ class Image:
         channel_names=None,
         axes_order: typing.Optional[str] = None,
         shift: typing.Optional[Spacing] = None,
+        name: str = "",
     ):
         # TODO add time distance to image spacing
         if axes_order is None:
@@ -120,6 +121,7 @@ class Image:
         self._image_spacing = tuple(el if el > 0 else 10 ** -6 for el in self._image_spacing)
 
         self._shift = tuple(shift) if shift is not None else (0,) * len(self._image_spacing)
+        self.name = name
 
         self.file_path = file_path
         self.default_coloring = default_coloring

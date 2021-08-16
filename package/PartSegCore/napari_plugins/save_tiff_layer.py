@@ -20,6 +20,8 @@ def napari_write_labels(path: str, data: Any, meta: dict) -> Optional[str]:
             numpy.divide(meta["scale"], DEFAULT_SCALE_FACTOR)[-scale_shift:],
             axes_order="TZXY"[-data.ndim :],
             channel_names=[meta["name"]],
+            shift=numpy.divide(meta["translate"], DEFAULT_SCALE_FACTOR)[-scale_shift:],
+            name="ROI",
         )
         ImageWriter.save(image, path)
         return path
@@ -43,6 +45,8 @@ def napari_write_image(path: str, data: Any, meta: dict) -> Optional[str]:
             numpy.divide(meta["scale"], DEFAULT_SCALE_FACTOR)[-scale_shift:],
             axes_order=axes[-data.ndim :],
             channel_names=channel_names,
+            shift=numpy.divide(meta["translate"], DEFAULT_SCALE_FACTOR)[-scale_shift:],
+            name="Image",
         )
         ImageWriter.save(image, path)
         return path

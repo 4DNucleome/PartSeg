@@ -11,19 +11,35 @@ def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]
     res_layers = []
     if project_info.image is not None and not isinstance(project_info.image, str):
         scale = project_info.image.normalized_scaling()
-        for i in range(project_info.image.channels):
+        translate = project_info.image.shift
+        translate = (0,) * (len(project_info.image.axis_order.replace("C", "")) - len(translate)) + translate
+        if project_info.image.name == "ROI" and project_info.image.channels == 1:
             res_layers.append(
                 (
-                    project_info.image.get_channel(i),
-                    {"scale": scale, "name": project_info.image.channel_names[i], "blending": "additive"},
-                    "image",
+                    project_info.image.get_channel(0),
+                    {"scale": scale, "name": project_info.image.channel_names[0], "translate": translate},
+                    "labels",
                 )
             )
+        else:
+            for i in range(project_info.image.channels):
+                res_layers.append(
+                    (
+                        project_info.image.get_channel(i),
+                        {
+                            "scale": scale,
+                            "name": project_info.image.channel_names[i],
+                            "blending": "additive",
+                            "translate": translate,
+                        },
+                        "image",
+                    )
+                )
         if project_info.roi_info.roi is not None:
             res_layers.append(
                 (
                     project_info.image.fit_array_to_image(project_info.roi_info.roi),
-                    {"scale": scale, "name": "ROI"},
+                    {"scale": scale, "name": "ROI", "translate": translate},
                     "labels",
                 )
             )
@@ -31,7 +47,7 @@ def project_to_layers(project_info: typing.Union[ProjectTuple, MaskProjectTuple]
             res_layers.append(
                 (
                     project_info.image.fit_array_to_image(project_info.mask),
-                    {"scale": scale, "name": "Mask"},
+                    {"scale": scale, "name": "Mask", "translate": translate},
                     "labels",
                 )
             )
