@@ -294,6 +294,7 @@ class TiffImageReader(BaseImageReader):
         self.colors = None
         self.channel_names = None
         self.ranges = None
+        self.shift = (0, 0, 0)
 
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
         """
@@ -353,6 +354,7 @@ class TiffImageReader(BaseImageReader):
             ranges=self.ranges,
             file_path=os.path.abspath(image_path),
             axes_order=self.return_order(),
+            shift=self.shift,
         )
 
     def verify_mask(self, mask_file, image_file):
@@ -442,6 +444,14 @@ class TiffImageReader(BaseImageReader):
                 pass
             try:
                 self.colors = [self.decode_int(ch["Color"])[:-1] for ch in meta_data["Channel"]]
+            except KeyError:
+                pass
+        if "Plane" in meta_data:
+            try:
+                self.shift = [
+                    meta_data["Plane"][0][f"Position{x}"] * name_to_scalar[meta_data["Plane"][0][f"Position{x}Unit"]]
+                    for x in ["Z", "Y", "X"]
+                ]
             except KeyError:
                 pass
 

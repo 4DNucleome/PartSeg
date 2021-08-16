@@ -103,6 +103,7 @@ class Image:
         ranges=None,
         channel_names=None,
         axes_order: typing.Optional[str] = None,
+        shift: typing.Optional[Spacing] = None,
     ):
         # TODO add time distance to image spacing
         if axes_order is None:
@@ -117,6 +118,8 @@ class Image:
         self._image_array = self.reorder_axes(data, axes_order)
         self._image_spacing = (1.0,) * (3 - len(image_spacing)) + image_spacing
         self._image_spacing = tuple(el if el > 0 else 10 ** -6 for el in self._image_spacing)
+
+        self._shift = tuple(shift) if shift is not None else (0,) * len(self._image_spacing)
 
         self.file_path = file_path
         self.default_coloring = default_coloring
@@ -499,6 +502,12 @@ class Image:
         return (1,) + tuple(np.multiply(self.spacing, factor))
 
     @property
+    def shift(self):
+        if self.is_2d:
+            return self._shift[1:]
+        return self._shift
+
+    @property
     def voxel_size(self) -> Spacing:
         """alias for spacing"""
         return self.spacing
@@ -629,6 +638,10 @@ class Image:
     def get_um_spacing(self) -> Spacing:
         """image spacing in micrometers"""
         return tuple(float(x * 10 ** 6) for x in self.spacing)
+
+    def get_um_shift(self) -> Spacing:
+        """image spacing in micrometers"""
+        return tuple(float(x * 10 ** 6) for x in self.shift)
 
     def get_ranges(self) -> typing.List[typing.Tuple[float, float]]:
         """image brightness ranges for each channel"""
