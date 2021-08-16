@@ -48,7 +48,6 @@ class BaseImageReader:
     def __init__(self, callback_function=None):
         self.default_spacing = 10 ** -6, 10 ** -6, 10 ** -6
         self.spacing = self.default_spacing
-        self.image_file = None
         if callback_function is None:
             self.callback_function = lambda x, y: 0
         else:
@@ -111,12 +110,9 @@ class BaseImageReader:
         """
         try:
             final_mapping_dict = {l: i for i, l in enumerate(cls.return_order())}
-            if "Z" in final_mapping_dict and "I" not in final_mapping_dict:
-                final_mapping_dict["I"] = final_mapping_dict["Z"]
-            if "Z" in final_mapping_dict and "Q" not in final_mapping_dict:
-                final_mapping_dict["Q"] = final_mapping_dict["Z"]
-            if "C" in final_mapping_dict and "S" not in final_mapping_dict:
-                final_mapping_dict["S"] = final_mapping_dict["C"]
+            for let1, let2 in [("Z", "I"), ("Z", "Q"), ("C", "S")]:
+                if let1 in final_mapping_dict and let2 not in final_mapping_dict:
+                    final_mapping_dict[let2] = final_mapping_dict[let1]
             axes = list(axes)
             # Fixme; workaround for old saved segmentation
             if axes[0] == "Q" and axes[1] == "Q":
@@ -295,8 +291,6 @@ class TiffImageReader(BaseImageReader):
 
     def __init__(self, callback_function=None):
         super().__init__(callback_function)
-        self.image_file = None
-        self.mask_file: typing.Optional[TiffFile] = None
         self.colors = None
         self.channel_names = None
         self.ranges = None
@@ -306,52 +300,48 @@ class TiffImageReader(BaseImageReader):
         Read tiff image from tiff_file
         """
         self.spacing, self.colors, self.channel_names, self.ranges = self.default_spacing, None, None, None
-        self.image_file = TiffFile(image_path)
-        total_pages_num = len(self.image_file.series[0])
-        if mask_path is not None:
-            self.mask_file = TiffFile(mask_path)
-            total_pages_num += len(self.mask_file.series[0])
-            self.verify_mask()
-        else:
-            self.mask_file = None
+        with TiffFile(image_path) as image_file:
+            total_pages_num = len(image_file.series[0])
 
-        # shape = self.image_file.series[0].shape
-        axes = self.image_file.series[0].axes
-        self.callback_function("max", total_pages_num)
+            # shape = self.image_file.series[0].shape
+            axes = image_file.series[0].axes
 
-        if self.image_file.is_lsm:
-            self.read_lsm_metadata()
-        elif self.image_file.is_imagej:
-            self.read_imagej_metadata()
-        elif self.image_file.is_ome:
-            self.read_ome_metadata()
-        else:
-            x_spac, y_spac = self.read_resolution_from_tags()
-            self.spacing = self.default_spacing[0], y_spac, x_spac
-        mutex = Lock()
-        count_pages = [0]
+            if image_file.is_lsm:
+                self.read_lsm_metadata(image_file)
+            elif image_file.is_imagej:
+                self.read_imagej_metadata(image_file)
+            elif image_file.is_ome:
+                self.read_ome_metadata(image_file)
+            else:
+                x_spac, y_spac = self.read_resolution_from_tags(image_file)
+                self.spacing = self.default_spacing[0], y_spac, x_spac
+            mutex = Lock()
+            count_pages = [0]
 
-        def report_func():
-            mutex.acquire()
-            count_pages[0] += 1
-            self.callback_function("step", count_pages[0])
-            mutex.release()
+            def report_func():
+                mutex.acquire()
+                count_pages[0] += 1
+                self.callback_function("step", count_pages[0])
+                mutex.release()
 
-        self.image_file.report_func = report_func
-        try:
-            image_data = self.image_file.asarray()
-        except ValueError as e:  # pragma: no cover
-            raise TiffFileException(*e.args)
-        image_data = self.update_array_shape(image_data, axes)
-        if self.mask_file is not None:
-            self.mask_file.report_func = report_func
-            mask_data = self.mask_file.asarray()
-            mask_data = self.update_array_shape(mask_data, self.mask_file.series[0].axes)[..., 0]
-        else:
-            mask_data = None
-        self.image_file.close()
-        if self.mask_file is not None:
-            self.mask_file.close()
+            if mask_path is not None:
+                with TiffFile(mask_path) as mask_file:
+                    self.callback_function("max", total_pages_num + len(mask_file.series[0]))
+                    self.verify_mask(mask_file, image_file)
+                    mask_file.report_func = report_func
+                    mask_data = mask_file.asarray()
+                    mask_data = self.update_array_shape(mask_data, mask_file.series[0].axes)[..., 0]
+            else:
+                mask_data = None
+                self.callback_function("max", total_pages_num)
+
+            image_file.report_func = report_func
+            try:
+                image_data = image_file.asarray()
+            except ValueError as e:  # pragma: no cover
+                raise TiffFileException(*e.args)
+            image_data = self.update_array_shape(image_data, axes)
+
         if not isinstance(image_path, (str, Path)):
             image_path = ""
         return self.image_class(
@@ -365,15 +355,15 @@ class TiffImageReader(BaseImageReader):
             axes_order=self.return_order(),
         )
 
-    def verify_mask(self):
+    def verify_mask(self, mask_file, image_file):
         """
         verify if mask fit to image. Raise ValueError exception on error
         :return:
         """
-        if self.mask_file is None:  # pragma: no cover
+        if mask_file is None:  # pragma: no cover
             return
-        image_series = self.image_file.pages[0]
-        mask_series = self.mask_file.pages[0]
+        image_series = image_file.pages[0]
+        mask_series = mask_file.pages[0]
         for i, pos in enumerate(mask_series.axes):
             if mask_series.shape[i] == 1:  # pragma: no cover
                 continue
@@ -396,12 +386,12 @@ class TiffImageReader(BaseImageReader):
         """
         return [(val >> x) & 255 for x in [24, 16, 8, 0]]
 
-    def read_resolution_from_tags(self):
-        tags = self.image_file.pages[0].tags
+    def read_resolution_from_tags(self, image_file):
+        tags = image_file.pages[0].tags
         try:
 
-            if self.image_file.is_imagej:
-                scalar = name_to_scalar[self.image_file.imagej_metadata["unit"]]
+            if image_file.is_imagej:
+                scalar = name_to_scalar[image_file.imagej_metadata["unit"]]
             else:
                 unit = tags["ResolutionUnit"].value
                 if unit == 3:
@@ -417,29 +407,27 @@ class TiffImageReader(BaseImageReader):
             x_spacing, y_spacing = self.default_spacing[2], self.default_spacing[1]
         return x_spacing, y_spacing
 
-    def read_imagej_metadata(self):
+    def read_imagej_metadata(self, image_file):
         try:
-            z_spacing = (
-                self.image_file.imagej_metadata["spacing"] * name_to_scalar[self.image_file.imagej_metadata["unit"]]
-            )
+            z_spacing = image_file.imagej_metadata["spacing"] * name_to_scalar[image_file.imagej_metadata["unit"]]
         except KeyError:
             z_spacing = self.default_spacing[0]
-        x_spacing, y_spacing = self.read_resolution_from_tags()
+        x_spacing, y_spacing = self.read_resolution_from_tags(image_file)
         self.spacing = z_spacing, y_spacing, x_spacing
-        self.colors = self.image_file.imagej_metadata.get("LUTs")
-        self.channel_names = self.image_file.imagej_metadata.get("Labels")
-        if "Ranges" in self.image_file.imagej_metadata:
-            ranges = self.image_file.imagej_metadata["Ranges"]
+        self.colors = image_file.imagej_metadata.get("LUTs")
+        self.channel_names = image_file.imagej_metadata.get("Labels")
+        if "Ranges" in image_file.imagej_metadata:
+            ranges = image_file.imagej_metadata["Ranges"]
             self.ranges = list(zip(ranges[::2], ranges[1::2]))
 
-    def read_ome_metadata(self):
-        if isinstance(self.image_file.ome_metadata, str):
+    def read_ome_metadata(self, image_file):
+        if isinstance(image_file.ome_metadata, str):
             if hasattr(tifffile, "xml2dict"):
-                meta_data = tifffile.xml2dict(self.image_file.ome_metadata)["OME"]["Image"]["Pixels"]
+                meta_data = tifffile.xml2dict(image_file.ome_metadata)["OME"]["Image"]["Pixels"]
             else:
                 return
         else:
-            meta_data = self.image_file.ome_metadata["Image"]["Pixels"]
+            meta_data = image_file.ome_metadata["Image"]["Pixels"]
         try:
             self.spacing = [
                 meta_data[f"PhysicalSize{x}"] * name_to_scalar[meta_data[f"PhysicalSize{x}Unit"]]
@@ -457,13 +445,13 @@ class TiffImageReader(BaseImageReader):
             except KeyError:
                 pass
 
-    def read_lsm_metadata(self):
-        self.spacing = [self.image_file.lsm_metadata[f"VoxelSize{x}"] for x in ["Z", "Y", "X"]]
-        if "ChannelColors" in self.image_file.lsm_metadata:
-            if "Colors" in self.image_file.lsm_metadata["ChannelColors"]:
-                self.colors = [x[:3] for x in self.image_file.lsm_metadata["ChannelColors"]["Colors"]]
-            if "ColorNames" in self.image_file.lsm_metadata["ChannelColors"]:
-                self.channel_names = self.image_file.lsm_metadata["ChannelColors"]["ColorNames"]
+    def read_lsm_metadata(self, image_file):
+        self.spacing = [image_file.lsm_metadata[f"VoxelSize{x}"] for x in ["Z", "Y", "X"]]
+        if "ChannelColors" in image_file.lsm_metadata:
+            if "Colors" in image_file.lsm_metadata["ChannelColors"]:
+                self.colors = [x[:3] for x in image_file.lsm_metadata["ChannelColors"]["Colors"]]
+            if "ColorNames" in image_file.lsm_metadata["ChannelColors"]:
+                self.channel_names = image_file.lsm_metadata["ChannelColors"]["ColorNames"]
 
 
 name_to_scalar = {
