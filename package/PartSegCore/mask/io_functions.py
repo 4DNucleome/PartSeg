@@ -109,7 +109,7 @@ def save_stack_segmentation(
             segmentation_info.roi_info.roi, spacing, axes_order=Image.axis_order.replace("C", "")
         )
         try:
-            ImageWriter.save(segmentation_image, segmentation_buff)
+            ImageWriter.save(segmentation_image, segmentation_buff, compression=None)
         except ValueError:
             segmentation_buff.seek(0)
             tifffile.imwrite(segmentation_buff, segmentation_info.roi_info.roi)
@@ -533,12 +533,9 @@ def save_components(
     os.makedirs(dir_path, exist_ok=True)
 
     file_name = os.path.splitext(os.path.basename(image.file_path))[0]
-    points_casted = None
     important_axis = "XY" if image.is_2d else "XYZ"
     index_to_frame_points = image.calc_index_to_frame(image.axis_order, important_axis)
-    if points is not None:
-        points_casted = points.astype(np.uint16)
-
+    points_casted = points.astype(np.uint16) if points is not None else None
     range_changed(0, 2 * len(components))
     for i in components:
         components_mark = np.array(roi_info.roi == i)

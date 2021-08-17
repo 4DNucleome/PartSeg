@@ -62,7 +62,7 @@ def save_project(
             segmentation_tar = get_tarinfo("mask.tif", segmentation_buff)
             tar.addfile(segmentation_tar, fileobj=segmentation_buff)
         image_buff = BytesIO()
-        ImageWriter.save(image, image_buff)
+        ImageWriter.save(image, image_buff, compression=None)
         tar_image = get_tarinfo("image.tif", image_buff)
         tar.addfile(tarinfo=tar_image, fileobj=image_buff)
         para_str = json.dumps(algorithm_parameters, cls=PartEncoder)
