@@ -162,23 +162,23 @@ class GenericImageReader(BaseImageReader):
 
 class OifImagReader(BaseImageReader):
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
-        self.image_file = OifFile(image_path)
-        tiffs = self.image_file.tiffs
-        tif_file = TiffFile(self.image_file.open_file(tiffs.files[0]), name=tiffs.files[0])
+        image_file = OifFile(image_path)
+        tiffs = image_file.tiffs
+        tif_file = TiffFile(image_file.open_file(tiffs.files[0]), name=tiffs.files[0])
         axes = tiffs.axes + tif_file.series[0].axes
-        image_data = self.image_file.asarray()
+        image_data = image_file.asarray()
         image_data = self.update_array_shape(image_data, axes)
         try:
-            flat_parm = self.image_file.mainfile["Reference Image Parameter"]
+            flat_parm = image_file.mainfile["Reference Image Parameter"]
             x_scale = flat_parm["HeightConvertValue"] * name_to_scalar[flat_parm["HeightUnit"]]
             y_scale = flat_parm["WidthConvertValue"] * name_to_scalar[flat_parm["WidthUnit"]]
             i = 0
             while True:
                 name = f"Axis {i} Parameters Common"
-                if name not in self.image_file.mainfile:
+                if name not in image_file.mainfile:
                     z_scale = 1
                     break
-                axis_info = self.image_file.mainfile[name]
+                axis_info = image_file.mainfile[name]
                 if axis_info["AxisCode"] == "Z":
                     z_scale = axis_info["Interval"] * name_to_scalar[axis_info["UnitName"]]
                     break
@@ -199,10 +199,10 @@ class CziImageReader(BaseImageReader):
     """
 
     def read(self, image_path: typing.Union[str, BytesIO, Path], mask_path=None, ext=None) -> Image:
-        self.image_file = CziFile(image_path)
-        image_data = self.image_file.asarray()
-        image_data = self.update_array_shape(image_data, self.image_file.axes)
-        metadata = self.image_file.metadata(False)
+        image_file = CziFile(image_path)
+        image_data = image_file.asarray()
+        image_data = self.update_array_shape(image_data, image_file.axes)
+        metadata = image_file.metadata(False)
         try:
             scaling = metadata["ImageDocument"]["Metadata"]["Scaling"]["Items"]["Distance"]
             scale_info = {el["Id"]: el["Value"] for el in scaling}
@@ -359,7 +359,8 @@ class TiffImageReader(BaseImageReader):
             name=self.name,
         )
 
-    def verify_mask(self, mask_file, image_file):
+    @staticmethod
+    def verify_mask(mask_file, image_file):
         """
         verify if mask fit to image. Raise ValueError exception on error
         :return:
