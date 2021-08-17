@@ -109,7 +109,7 @@ def save_stack_segmentation(
             segmentation_info.roi_info.roi, spacing, axes_order=Image.axis_order.replace("C", "")
         )
         try:
-            ImageWriter.save(segmentation_image, segmentation_buff)
+            ImageWriter.save(segmentation_image, segmentation_buff, compression=None)
         except ValueError:
             segmentation_buff.seek(0)
             tifffile.imwrite(segmentation_buff, segmentation_info.roi_info.roi)

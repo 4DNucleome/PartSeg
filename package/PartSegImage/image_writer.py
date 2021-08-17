@@ -26,6 +26,7 @@ class ImageWriter:
                 "PhysicalSizeXUnit": "µm",
             },
             "Plane": [],
+            "Creator": "PartSeg",
         }
         if image.name:
             metadata["Name"] = image.name
@@ -47,7 +48,7 @@ class ImageWriter:
         return metadata
 
     @classmethod
-    def save(cls, image: Image, save_path: typing.Union[str, BytesIO, Path]):
+    def save(cls, image: Image, save_path: typing.Union[str, BytesIO, Path], compression="ZSTD"):
         """
         Save image as tiff to path or buffer
 
@@ -63,10 +64,10 @@ class ImageWriter:
             "Name": image.channel_names,
             "axes": "TZYXC",
         }
-        cls._save(data, save_path, metadata)
+        cls._save(data, save_path, metadata, compression)
 
     @classmethod
-    def save_mask(cls, image: Image, save_path: typing.Union[str, Path]):
+    def save_mask(cls, image: Image, save_path: typing.Union[str, Path], compression="ZSTD"):
         """
         Save mask connected to image as tiff to path or buffer
 
@@ -83,19 +84,16 @@ class ImageWriter:
             "Name": "Mask",
             "axes": "TZYX",
         }
-        cls._save(mask, save_path, metadata)
+        cls._save(mask, save_path, metadata, compression)
 
     @staticmethod
-    def _save(data: np.ndarray, save_path, metadata=None):
+    def _save(data: np.ndarray, save_path, metadata=None, compression="ZSTD"):
         # TODO change to ome TIFF
-        if data.dtype in [np.uint8, np.uint16, np.float32]:
-            imwrite(
-                save_path,
-                data,
-                ome=True,
-                software="PartSeg",
-                metadata=metadata,
-            )  # , compress=6,
-        else:
-            raise ValueError(f"Data type {data.dtype} not supported by imagej tiff")
-            # imagej=True, software="PartSeg")
+        imwrite(
+            save_path,
+            data,
+            ome=True,
+            software="PartSeg",
+            metadata=metadata,
+            compression=compression,
+        )  # , compress=6,
