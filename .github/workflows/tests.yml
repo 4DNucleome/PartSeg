@@ -155,6 +155,8 @@ jobs:
         name: Install Python '3.7'
         with:
           python-version: '3.7'
+      - name: Install ubuntu libraries
+        run: sudo apt-get install -y libxkbcommon-x11-0
 
       - name: Download test data
         uses: actions/download-artifact@v1
