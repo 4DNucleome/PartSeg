@@ -1,13 +1,12 @@
 global-include *.pyx
 global-include *.pxd
+include package/tests/test_data/ome.xsd.xml
 include package/PartSegCore/sprawl_utils/*.h
 include package/PartSegCore/multiscale_opening/*.h
 include Readme.md
 include changelog.md
 include pyproject.toml
-include lgpl-3.0.txt
 include requirements/*
-include pytest.ini
 recursive-include package *.py
 include package/tests/test_data/*.json
 exclude .tox/**
