@@ -425,14 +425,26 @@ class TiffImageReader(BaseImageReader):
             ranges = image_file.imagej_metadata["Ranges"]
             self.ranges = list(zip(ranges[::2], ranges[1::2]))
 
+    def _read_ome_channel_information(self, meta_data):
+        if "Channel" not in meta_data["Pixels"]:
+            return
+        if isinstance(meta_data["Pixels"]["Channel"], (list, tuple)):
+            try:
+                self.channel_names = [ch["Name"] for ch in meta_data["Pixels"]["Channel"]]
+            except KeyError:
+                pass
+            try:
+                self.colors = [self.decode_int(ch["Color"])[:-1] for ch in meta_data["Pixels"]["Channel"]]
+            except KeyError:
+                pass
+            return
+        if "Name" in meta_data["Pixels"]["Channel"]:
+            self.channel_names = [meta_data["Pixels"]["Channel"]["Name"]]
+        if "Color" in meta_data["Pixels"]["Channel"]:
+            self.channel_names = [meta_data["Pixels"]["Channel"]["Color"]]
+
     def read_ome_metadata(self, image_file):
-        if isinstance(image_file.ome_metadata, str):
-            if hasattr(tifffile, "xml2dict"):
-                meta_data = tifffile.xml2dict(image_file.ome_metadata)["OME"]["Image"]
-            else:
-                return
-        else:
-            meta_data = image_file.ome_metadata["Image"]
+        meta_data = tifffile.xml2dict(image_file.ome_metadata)["OME"]["Image"]
         try:
             self.spacing = [
                 meta_data["Pixels"][f"PhysicalSize{x}"] * name_to_scalar[meta_data["Pixels"][f"PhysicalSize{x}Unit"]]
@@ -440,21 +452,6 @@ class TiffImageReader(BaseImageReader):
             ]
         except KeyError:  # pragma: no cover
             pass
-        if "Channel" in meta_data["Pixels"]:
-            if isinstance(meta_data["Pixels"]["Channel"], (list, tuple)):
-                try:
-                    self.channel_names = [ch["Name"] for ch in meta_data["Pixels"]["Channel"]]
-                except KeyError:
-                    pass
-                try:
-                    self.colors = [self.decode_int(ch["Color"])[:-1] for ch in meta_data["Pixels"]["Channel"]]
-                except KeyError:
-                    pass
-            else:
-                if "Name" in meta_data["Pixels"]["Channel"]:
-                    self.channel_names = [meta_data["Pixels"]["Channel"]["Name"]]
-                if "Color" in meta_data["Pixels"]["Channel"]:
-                    self.channel_names = [meta_data["Pixels"]["Channel"]["Color"]]
         try:
             self.shift = [
                 meta_data["Pixels"]["Plane"][0][f"Position{x}"]
@@ -463,11 +460,8 @@ class TiffImageReader(BaseImageReader):
             ]
         except KeyError:
             pass
-
-        try:
-            self.name = meta_data["Name"]
-        except KeyError:
-            pass
+        self.name = meta_data.get("Name", "")
+        self._read_ome_channel_information(meta_data)
 
     def read_lsm_metadata(self, image_file):
         self.spacing = [image_file.lsm_metadata[f"VoxelSize{x}"] for x in ["Z", "Y", "X"]]
