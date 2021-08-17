@@ -37,8 +37,6 @@ jobs:
       matrix:
         platform: [windows-2019, macos-10.15, ubuntu-20.04]
         python: [3.8]
-    env:
-      DISPLAY: ':99.0'
     steps:
       - uses: actions/checkout@v2
 
@@ -47,20 +45,17 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Install Linux libraries
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 \
-            libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
-            libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0
-          /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1920x1200x24 -ac +extension GLX
-
       - name: Install Windows OpenGL
         if: runner.os == 'Windows'
         run: |
           git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
           powershell gl-ci-helpers/appveyor/install_opengl.ps1
           if (Test-Path -Path "C:\Windows\system32\opengl32.dll" -PathType Leaf) {Exit 0} else {Exit 1}
+
+      - name: Install ubuntu libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
 
       - name: Download test data
         uses: actions/download-artifact@v1
@@ -74,7 +69,9 @@ jobs:
 
       - name: Test with tox
         # run tests using pip install --pre
-        run: tox -v --pre
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          run: tox -v --pre
         env:
           PLATFORM: ${{ matrix.platform }}
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
