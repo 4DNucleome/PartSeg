@@ -123,7 +123,7 @@ napari-plugin-engine==0.1.9
     #   napari-svg
 napari-svg==0.1.5
     # via napari
-numpy==1.21.1
+numpy==1.21.2
     # via
     #   -r requirements_pyinstaller.in
     #   czifile
