@@ -48,7 +48,7 @@ class ImageWriter:
         return metadata
 
     @classmethod
-    def save(cls, image: Image, save_path: typing.Union[str, BytesIO, Path], compression="ZSTD"):
+    def save(cls, image: Image, save_path: typing.Union[str, BytesIO, Path], compression="ADOBE_DEFLATE"):
         """
         Save image as tiff to path or buffer
 
@@ -67,7 +67,7 @@ class ImageWriter:
         cls._save(data, save_path, metadata, compression)
 
     @classmethod
-    def save_mask(cls, image: Image, save_path: typing.Union[str, Path], compression="ZSTD"):
+    def save_mask(cls, image: Image, save_path: typing.Union[str, Path], compression="ADOBE_DEFLATE"):
         """
         Save mask connected to image as tiff to path or buffer
 
@@ -87,7 +87,7 @@ class ImageWriter:
         cls._save(mask, save_path, metadata, compression)
 
     @staticmethod
-    def _save(data: np.ndarray, save_path, metadata=None, compression="ZSTD"):
+    def _save(data: np.ndarray, save_path, metadata=None, compression="ADOBE_DEFLATE"):
         # TODO change to ome TIFF
         imwrite(
             save_path,
