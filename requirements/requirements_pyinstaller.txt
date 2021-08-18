@@ -223,7 +223,7 @@ pyzmq==22.2.1
     #   qtconsole
 qtconsole==5.1.1
     # via napari-console
-qtpy==1.9.0
+qtpy==1.10.0
     # via
     #   -r requirements_pyinstaller.in
     #   magicgui
