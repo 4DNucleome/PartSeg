@@ -1208,8 +1208,8 @@ except NameError:
     enum_register.register_class(DistancePoint)
 
 
-class DistanceMaskSegmentation(MeasurementMethodBase):
-    text_info = "segmentation distance", "Calculate distance between segmentation and mask"
+class DistanceMaskROI(MeasurementMethodBase):
+    text_info = "ROI distance", "Calculate distance between segmentation and mask"
 
     @classmethod
     def get_fields(cls):
@@ -1464,7 +1464,7 @@ MEASUREMENT_DICT = Register(
     Surface,
     RimVolume,
     RimPixelBrightnessSum,
-    DistanceMaskSegmentation,
+    DistanceMaskROI,
     SplitOnPartVolume,
     SplitOnPartPixelBrightnessSum,
     Voxels,

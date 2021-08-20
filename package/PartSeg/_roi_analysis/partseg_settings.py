@@ -1,7 +1,6 @@
 import typing
 from copy import deepcopy
 
-import numpy as np
 from qtpy.QtCore import Signal
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
@@ -17,14 +16,6 @@ from PartSegCore.project_info import HistoryElement
 from PartSegCore.roi_info import ROIInfo
 
 from ..common_backend.base_settings import BaseSettings, SaveSettingsDescription
-
-MASK_COLORS = {
-    "white": np.array((255, 255, 255)),
-    "black": np.array((0, 0, 0)),
-    "red": np.array((255, 0, 0)),
-    "green": np.array((0, 255, 0)),
-    "blue": np.array((0, 0, 255)),
-}
 
 
 class PartSettings(BaseSettings):

@@ -18,7 +18,7 @@ from PartSegCore.analysis.measurement_calculation import (
     ComponentsInfo,
     ComponentsNumber,
     Diameter,
-    DistanceMaskSegmentation,
+    DistanceMaskROI,
     DistancePoint,
     FirstPrincipalAxisLength,
     Haralick,
@@ -786,10 +786,10 @@ def two_comp_img():
 
 class TestDistanceMaskSegmentation:
     def test_parameters(self):
-        assert DistanceMaskSegmentation.get_units(3) == symbols("{}")
-        assert DistanceMaskSegmentation.get_units(2) == symbols("{}")
-        assert DistanceMaskSegmentation.need_channel() is True
-        leaf = DistanceMaskSegmentation.get_starting_leaf()
+        assert DistanceMaskROI.get_units(3) == symbols("{}")
+        assert DistanceMaskROI.get_units(2) == symbols("{}")
+        assert DistanceMaskROI.need_channel() is True
+        leaf = DistanceMaskROI.get_starting_leaf()
         assert isinstance(leaf, Leaf)
         assert leaf.area is AreaType.Mask
         assert leaf.per_component is None
@@ -802,7 +802,7 @@ class TestDistanceMaskSegmentation:
         mask1 = cube_image.get_channel(0)[0] > 40
         mask2 = cube_image.get_channel(0)[0] > 60
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 channel=cube_image.get_channel(0),
                 area_array=mask2,
                 mask=mask1,
@@ -827,7 +827,7 @@ class TestDistanceMaskSegmentation:
         mask2 = cube_image.get_channel(0)[0] > 60
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 channel=cube_image.get_channel(0),
                 area_array=mask2,
                 mask=mask1,
@@ -859,7 +859,7 @@ class TestDistanceMaskSegmentation:
         else:
             area_mid = np.average(np.nonzero(area_array), axis=1, weights=channel[0][area_array])
         assert isclose(
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 channel=channel,
                 area_array=area_array,
                 mask=mask,
@@ -876,7 +876,7 @@ class TestDistanceMaskSegmentation:
         mask[2:-2, 2:-2, 2:-2] = 1
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 two_comp_img.get_channel(0),
                 two_comp_img.get_channel(0)[0],
                 mask,
@@ -889,7 +889,7 @@ class TestDistanceMaskSegmentation:
         )
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 two_comp_img.get_channel(0),
                 two_comp_img.get_channel(0)[0],
                 mask,
@@ -902,7 +902,7 @@ class TestDistanceMaskSegmentation:
         )
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 two_comp_img.get_channel(0),
                 two_comp_img.get_channel(0)[0],
                 mask,
@@ -915,7 +915,7 @@ class TestDistanceMaskSegmentation:
         )
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 two_comp_img.get_channel(0),
                 two_comp_img.get_channel(0)[0] == 50,
                 mask,
@@ -928,7 +928,7 @@ class TestDistanceMaskSegmentation:
         )
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 two_comp_img.get_channel(0),
                 two_comp_img.get_channel(0)[0] == 60,
                 mask,
@@ -945,7 +945,7 @@ class TestDistanceMaskSegmentation:
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 image.get_channel(0),
                 mask2,
                 mask1,
@@ -961,7 +961,7 @@ class TestDistanceMaskSegmentation:
         mask3[mask2 == 0] = 0
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 image.get_channel(0),
                 mask2,
                 mask1,
@@ -974,7 +974,7 @@ class TestDistanceMaskSegmentation:
         )
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 mask3,
                 mask3 == 1,
                 mask1,
@@ -987,7 +987,7 @@ class TestDistanceMaskSegmentation:
         )
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 mask3,
                 mask3 == 2,
                 mask1,
@@ -1000,7 +1000,7 @@ class TestDistanceMaskSegmentation:
         )
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 mask3,
                 mask3 == 1,
                 mask1,
@@ -1013,7 +1013,7 @@ class TestDistanceMaskSegmentation:
         )
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 mask3,
                 mask3 == 2,
                 mask1,
@@ -1026,7 +1026,7 @@ class TestDistanceMaskSegmentation:
         )
 
         assert isclose(
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 mask3, mask2, mask1, image.voxel_size, 1, DistancePoint.Geometrical_center, DistancePoint.Mass_center
             ),
             1000 * 2 / 3 - 500,
