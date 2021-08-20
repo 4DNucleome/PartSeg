@@ -1,4 +1,5 @@
 import typing
+import warnings
 from copy import deepcopy
 
 from qtpy.QtCore import Signal
@@ -126,10 +127,20 @@ class PartSettings(BaseSettings):
 
     @property
     def segmentation_pipelines(self) -> typing.Dict[str, SegmentationPipeline]:
+        warnings.warn("segmentation_pipelines is deprecated, use roi_pipelines", DeprecationWarning, stacklevel=2)
+        return self.roi_pipelines
+
+    @property
+    def roi_pipelines(self) -> typing.Dict[str, SegmentationPipeline]:
         return self.segmentation_pipelines_dict.get(self._current_roi_dict, {})
 
     @property
     def segmentation_profiles(self) -> typing.Dict[str, ROIExtractionProfile]:
+        warnings.warn("segmentation_profiles is deprecated, use roi_profiles", DeprecationWarning, stacklevel=2)
+        return self.roi_profiles
+
+    @property
+    def roi_profiles(self) -> typing.Dict[str, ROIExtractionProfile]:
         return self.segmentation_profiles_dict.get(self._current_roi_dict, {})
 
     @property

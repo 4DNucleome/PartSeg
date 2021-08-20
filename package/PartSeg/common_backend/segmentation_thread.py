@@ -3,7 +3,7 @@ import sys
 
 from qtpy.QtCore import QMutex, QThread, Signal
 
-from PartSegCore.segmentation.algorithm_base import ROIExtractionResult, SegmentationAlgorithm
+from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, ROIExtractionResult
 
 
 class SegmentationThread(QThread):
@@ -26,7 +26,7 @@ class SegmentationThread(QThread):
     exception_occurred = Signal(Exception)
     """Signal emitted when some exception occur during calculation. """
 
-    def __init__(self, algorithm: SegmentationAlgorithm):
+    def __init__(self, algorithm: ROIExtractionAlgorithm):
         super().__init__()
         self.finished.connect(self.finished_task)
         self.algorithm = algorithm

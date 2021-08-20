@@ -1,3 +1,4 @@
+import typing
 from collections import OrderedDict
 from enum import Enum
 from functools import reduce
@@ -24,15 +25,17 @@ from mahotas.features import haralick
 from scipy.spatial.distance import cdist
 from sympy import symbols
 
+from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
 from PartSegImage import Image
 
 from .. import autofit as af
-from ..algorithm_describe_base import AlgorithmProperty, Register
+from ..algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
 from ..channel_class import Channel
 from ..class_generator import enum_register
 from ..mask_partition_utils import BorderRim, MaskDistanceSplit
 from ..roi_info import ROIInfo
 from ..universal_const import UNIT_SCALE, Units
+from .calculate_pipeline import calculate_segmentation_step
 from .measurement_base import AreaType, Leaf, MeasurementEntry, MeasurementMethodBase, Node, PerComponent
 
 # TODO change image to channel in signature of measurement calculate_property
@@ -352,11 +355,17 @@ class MeasurementProfile:
         kw["_component_num"] = NO_COMPONENT
         return kw
 
-    def _clip_arrays(self, kw, bounds, component_index):
+    def _clip_arrays(self, kw, bounds: typing.Tuple[slice], component_index):
         kw2 = kw.copy()
         kw2["_component_num"] = component_index
 
         kw2["area_array"] = kw["area_array"][bounds] == component_index
+        im_bounds = list(bounds)
+        image: Image = kw["image"]
+        im_bounds.insert(image.time_pos if image.time_pos < image.channel_pos else image.time_pos - 1, slice(None))
+        im_mask = image.mask[im_bounds] if image.mask is not None else None
+        im_bounds.insert(image.channel_pos, slice(None))
+        kw2["image"] = kw["image"].substitute(data=image.get_data()[tuple(im_bounds)], mask=im_mask)
         for name in ["channel", "segmentation", "roi", "mask"] + [f"channel_{num}" for num in self.get_channels_num()]:
             if kw[name] is not None:
                 kw2[name] = kw[name][bounds]
@@ -1209,13 +1218,13 @@ except NameError:
 
 
 class DistanceMaskROI(MeasurementMethodBase):
-    text_info = "ROI distance", "Calculate distance between segmentation and mask"
+    text_info = "ROI distance", "Calculate distance between ROI and mask"
 
     @classmethod
     def get_fields(cls):
         return [
             AlgorithmProperty("distance_from_mask", "Distance from mask", DistancePoint.Border),
-            AlgorithmProperty("distance_to_segmentation", "Distance to segmentation", DistancePoint.Border),
+            AlgorithmProperty("distance_to_segmentation", "Distance to ROI", DistancePoint.Border),
         ]
 
     @staticmethod
@@ -1277,6 +1286,60 @@ class DistanceMaskROI(MeasurementMethodBase):
     @staticmethod
     def area_type(area: AreaType):
         return AreaType.ROI
+
+
+class DistanceROIROI(DistanceMaskROI):
+    text_info = "to ROI distance", "Calculate distance between ROI and neew ROI"
+
+    @classmethod
+    def get_starting_leaf(cls):
+        return Leaf(name=cls.text_info[0], area=AreaType.ROI)
+
+    @classmethod
+    def get_fields(cls):
+        return [
+            AlgorithmProperty(
+                "profile",
+                "ROI extraction profile",
+                ROIExtractionProfile(
+                    "default", LowerThresholdAlgorithm.get_name(), LowerThresholdAlgorithm.get_default_values()
+                ),
+                value_type=ROIExtractionProfile,
+            ),
+            AlgorithmProperty("distance_from_new_roi", "Distance new ROI", DistancePoint.Border),
+            AlgorithmProperty("distance_to_roi", "Distance to ROI", DistancePoint.Border),
+        ]
+
+    # noinspection PyMethodOverriding
+    @classmethod
+    def calculate_property(
+        cls,
+        channel,
+        image,
+        area_array,
+        profile,
+        mask,
+        voxel_size,
+        result_scalar,
+        distance_from_new_roi: DistancePoint,
+        distance_to_roi: DistancePoint,
+        *args,
+        **kwargs,
+    ):  # pylint: disable=W0221
+        if len(channel.shape) == 4:
+            if channel.shape[0] != 1:
+                raise ValueError("This measurements do not support time data")
+            channel = channel[0]
+        result, _ = calculate_segmentation_step(profile, image, mask)
+        return super().calculate_property(
+            channel,
+            area_array,
+            result.roi,
+            voxel_size,
+            result_scalar,
+            distance_from_mask=distance_from_new_roi,
+            distance_to_segmentation=distance_to_roi,
+        )
 
 
 class SplitOnPartVolume(MeasurementMethodBase):
@@ -1465,6 +1528,7 @@ MEASUREMENT_DICT = Register(
     RimVolume,
     RimPixelBrightnessSum,
     DistanceMaskROI,
+    DistanceROIROI,
     SplitOnPartVolume,
     SplitOnPartPixelBrightnessSum,
     Voxels,

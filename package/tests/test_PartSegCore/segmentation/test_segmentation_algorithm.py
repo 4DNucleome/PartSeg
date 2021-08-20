@@ -2,7 +2,7 @@ from typing import Type
 
 import pytest
 
-from PartSegCore.segmentation import SegmentationAlgorithm
+from PartSegCore.segmentation import ROIExtractionAlgorithm
 from PartSegCore.segmentation.algorithm_base import ROIExtractionResult, SegmentationLimitException
 from PartSegCore.segmentation.restartable_segmentation_algorithms import final_algorithm_list as restartable_list
 from PartSegCore.segmentation.segmentation_algorithm import ThresholdFlowAlgorithm
@@ -27,7 +27,7 @@ def fix_threshold_flow(monkeypatch):
 
 @pytest.mark.parametrize("algorithm", restartable_list + algorithm_list)
 @pytest.mark.parametrize("masking", [True, False])
-def test_segmentation_algorithm(image, algorithm: Type[SegmentationAlgorithm], masking):
+def test_segmentation_algorithm(image, algorithm: Type[ROIExtractionAlgorithm], masking):
     assert algorithm.support_z() is True
     assert algorithm.support_time() is False
     instance = algorithm()

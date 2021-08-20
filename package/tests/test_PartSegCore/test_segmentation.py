@@ -16,7 +16,7 @@ from PartSegCore.convex_fill import _convex_fill, convex_fill
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask_create import MaskProperty, calculate_mask
 from PartSegCore.roi_info import BoundInfo, ROIInfo
-from PartSegCore.segmentation import SegmentationAlgorithm, algorithm_base
+from PartSegCore.segmentation import ROIExtractionAlgorithm, algorithm_base
 from PartSegCore.segmentation import restartable_segmentation_algorithms as sa
 from PartSegCore.segmentation.noise_filtering import noise_filtering_dict
 from PartSegCore.segmentation.watershed import sprawl_dict
@@ -84,7 +84,7 @@ def empty(_s: str, _i: int):
 def test_base_parameters(algorithm_name):
     algorithm_class = analysis_algorithm_dict[algorithm_name]
     assert algorithm_class.get_name() == algorithm_name
-    algorithm_class: Type[SegmentationAlgorithm]
+    algorithm_class: Type[ROIExtractionAlgorithm]
     obj = algorithm_class()
     values = algorithm_class.get_default_values()
     obj.set_parameters(**values)
@@ -118,14 +118,14 @@ class BaseThreshold:
     def get_side_object():
         raise NotImplementedError
 
-    def get_algorithm_class(self) -> Type[SegmentationAlgorithm]:
+    def get_algorithm_class(self) -> Type[ROIExtractionAlgorithm]:
         raise NotImplementedError()
 
 
 class BaseOneThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
     def test_simple(self):
         image = self.get_base_object()
-        alg: SegmentationAlgorithm = self.get_algorithm_class()()
+        alg: ROIExtractionAlgorithm = self.get_algorithm_class()()
         parameters = self.get_parameters()
         alg.set_image(image)
         alg.set_parameters(**parameters)
@@ -139,7 +139,7 @@ class BaseOneThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
 
     def test_side_connection(self):
         image = self.get_side_object()
-        alg: SegmentationAlgorithm = self.get_algorithm_class()()
+        alg: ROIExtractionAlgorithm = self.get_algorithm_class()()
         parameters = self.get_parameters()
         parameters["side_connection"] = True
         alg.set_image(image)
@@ -171,7 +171,7 @@ class TestLowerThreshold(BaseOneThreshold):
     def get_side_object():
         return get_two_parts_side()
 
-    def get_algorithm_class(self) -> Type[SegmentationAlgorithm]:
+    def get_algorithm_class(self) -> Type[ROIExtractionAlgorithm]:
         return sa.LowerThresholdAlgorithm
 
 
@@ -193,7 +193,7 @@ class TestUpperThreshold(BaseOneThreshold):
     def get_side_object():
         return get_two_parts_side_reversed()
 
-    def get_algorithm_class(self) -> Type[SegmentationAlgorithm]:
+    def get_algorithm_class(self) -> Type[ROIExtractionAlgorithm]:
         return sa.UpperThresholdAlgorithm
 
 
@@ -312,7 +312,7 @@ class TestLowerThresholdFlow(BaseFlowThreshold):
     get_side_object = staticmethod(get_two_parts_side)
     get_multiple_part = staticmethod(get_multiple_part)
 
-    def get_algorithm_class(self) -> Type[SegmentationAlgorithm]:
+    def get_algorithm_class(self) -> Type[ROIExtractionAlgorithm]:
         return sa.LowerThresholdFlowAlgorithm
 
 
@@ -336,7 +336,7 @@ class TestUpperThresholdFlow(BaseFlowThreshold):
     get_side_object = staticmethod(get_two_parts_side_reversed)
     get_multiple_part = staticmethod(get_multiple_part_reversed)
 
-    def get_algorithm_class(self) -> Type[SegmentationAlgorithm]:
+    def get_algorithm_class(self) -> Type[ROIExtractionAlgorithm]:
         return sa.UpperThresholdFlowAlgorithm
 
 

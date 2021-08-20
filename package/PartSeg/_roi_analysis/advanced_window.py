@@ -220,10 +220,10 @@ class Properties(QWidget):
         text, dkt = "", {}
         if self.profile_list.selectedItems():
             text = self.profile_list.selectedItems()[0].text()
-            dkt = self._settings.segmentation_profiles
+            dkt = self._settings.roi_profiles
         elif self.pipeline_list.selectedItems():
             text = self.pipeline_list.selectedItems()[0].text()
-            dkt = self._settings.segmentation_pipelines
+            dkt = self._settings.roi_pipelines
         if text != "":
             self.delete_btn.setDisabled(True)
             del dkt[text]
@@ -615,8 +615,7 @@ class MeasurementSettings(QWidget):
             self.save_butt.setDisabled(True)
             self.save_butt_with_name.setDisabled(True)
 
-    @staticmethod
-    def get_parameters(node: Union[Node, Leaf], area: AreaType, component: PerComponent, power: float):
+    def get_parameters(self, node: Union[Node, Leaf], area: AreaType, component: PerComponent, power: float):
         if isinstance(node, Node):
             return node
         node = node.replace_(power=power)
@@ -627,7 +626,7 @@ class MeasurementSettings(QWidget):
         try:
             arguments = MEASUREMENT_DICT[str(node.name)].get_fields()
             if len(arguments) > 0 and len(node.dict) == 0:
-                dial = FormDialog(arguments)
+                dial = FormDialog(arguments, settings=self.settings)
                 if dial.exec():
                     node = node._replace(dict=dial.get_values())
                 else:

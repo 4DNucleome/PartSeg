@@ -2017,6 +2017,7 @@ def test_all_methods(method, dtype):
     mask = (data > 0).astype(np.uint8)
 
     res = method.calculate_property(
+        image=Image(data, image_spacing=(1, 1, 1), axes_order="ZYX"),
         area_array=roi,
         mask=mask,
         channel=data,
