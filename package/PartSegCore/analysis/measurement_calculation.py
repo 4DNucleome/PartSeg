@@ -595,7 +595,9 @@ class MeasurementProfile:
             "channel": get_time(channel),
             "segmentation": get_time(roi.roi),
             "roi": get_time(roi.roi),
-            "bounds_info": {k: v.del_dim(image.time_pos) for k, v in roi.bound_info.items()},
+            "bounds_info": {
+                k: v.del_dim(image.time_pos) if len(v.lower) == 4 else v for k, v in roi.bound_info.items()
+            },
             "mask": get_time(image.mask),
             "voxel_size": image.spacing,
             "result_scalar": result_scalar,
