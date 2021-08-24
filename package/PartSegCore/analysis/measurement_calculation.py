@@ -1,4 +1,3 @@
-import typing
 from collections import OrderedDict
 from enum import Enum
 from functools import reduce
@@ -355,7 +354,10 @@ class MeasurementProfile:
         kw["_component_num"] = NO_COMPONENT
         return kw
 
-    def _clip_arrays(self, kw, bounds: typing.Tuple[slice], component_index):
+    def _clip_arrays(self, kw, node: Leaf, component_index: int):
+        bounds = tuple(kw["bounds_info"][component_index].get_slices(margin=1))
+        if node.area != AreaType.ROI:
+            bounds = tuple(slice(None, None) for _ in bounds)
         kw2 = kw.copy()
         kw2["_component_num"] = component_index
 
@@ -375,26 +377,22 @@ class MeasurementProfile:
         return kw2
 
     def _calculate_leaf_value(
-        self, node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
+        self, node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, kwargs: dict
     ) -> Union[float, np.ndarray]:
         method: MeasurementMethodBase = MEASUREMENT_DICT[node.name]
-        area_type = method.area_type(node.area)
-        kw = self._prepare_leaf_kw(node, kwargs, method, area_type)
-        kw["help_dict"] = help_dict
+        kw = self._prepare_leaf_kw(node, kwargs, method, method.area_type(node.area))
+
         if node.per_component == PerComponent.No:
             return method.calculate_property(**kw)
         # TODO use cache for per component calculate
         # kw["_cache"] = False
         val = []
-        if area_type == AreaType.ROI:
+        if method.area_type(node.area) == AreaType.ROI:
             components = segmentation_mask_map.roi_components
         else:
             components = segmentation_mask_map.mask_components
         for i in components:
-            bounds = tuple(kw["bounds_info"][i].get_slices(margin=1))
-            if node.area != AreaType.ROI:
-                bounds = tuple(slice(None, None) for _ in bounds)
-            kw2 = self._clip_arrays(kw, bounds, i)
+            kw2 = self._clip_arrays(kw, node, i)
             val.append(method.calculate_property(**kw2))
         val = np.array(val)
         if node.per_component == PerComponent.Mean:
@@ -411,7 +409,8 @@ class MeasurementProfile:
         if hash_str in help_dict:
             val = help_dict[hash_str]
         else:
-            val = self._calculate_leaf_value(node, segmentation_mask_map, help_dict, kwargs)
+            kwargs["help_dict"] = help_dict
+            val = self._calculate_leaf_value(node, segmentation_mask_map, kwargs)
             help_dict[hash_str] = val
         unit: symbols = method.get_units(3) if kwargs["image"].is_stack else method.get_units(2)
         if node.power != 1:
