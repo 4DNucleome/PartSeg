@@ -309,3 +309,7 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     def area_type(area: AreaType):
         """Map chosen area type to proper area type. Allow to correct Area type."""
         return area
+
+    @staticmethod
+    def need_full_data():
+        return False

@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 from sympy import symbols
 
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import load_metadata
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
 from PartSegCore.analysis.measurement_calculation import (
@@ -20,6 +21,7 @@ from PartSegCore.analysis.measurement_calculation import (
     Diameter,
     DistanceMaskROI,
     DistancePoint,
+    DistanceROIROI,
     FirstPrincipalAxisLength,
     Haralick,
     MaximumPixelBrightness,
@@ -43,6 +45,7 @@ from PartSegCore.analysis.measurement_calculation import (
     Voxels,
 )
 from PartSegCore.autofit import density_mass_center
+from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
 from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegImage import Image
 
@@ -2005,6 +2008,59 @@ class TestHaralick:
         data[1:-1, 4:-4, 4:-4] = 3
         mask = data > 0
         Haralick.calculate_property(mask, data, distance=distance, feature=feature)
+
+
+@pytest.fixture
+def roi_to_roi_extract():
+    parameters = LowerThresholdAlgorithm.get_default_values()
+    parameters["threshold"]["values"]["threshold"] = 1
+    parameters["minimum_size"] = 1
+    parameters["channel"] = 1
+    return ROIExtractionProfile("default", LowerThresholdAlgorithm.get_name(), parameters)
+
+
+@pytest.mark.parametrize("roi_dist", DistancePoint.__members__.values())
+@pytest.mark.parametrize("new_roi_dist", DistancePoint.__members__.values())
+class TestDistanceROIROI:
+    def test_base(self, roi_dist, new_roi_dist, roi_to_roi_extract):
+        data = np.zeros((3, 10, 10, 20), dtype=np.uint8)
+        data[0, 2:-2, 2:-2, 2:-12] = 5
+        data[1, 2:-2, 2:-2, 12:-2] = 5
+        data[2, 2:-2, 2:-2, 2:-2] = 5
+        image = Image(data, image_spacing=(1, 1, 1), axes_order="CZYX")
+        roi = (data[0] > 1).astype(np.uint8)
+        res = DistanceROIROI.calculate_property(
+            channel=data[2],
+            image=image,
+            area_array=roi,
+            profile=roi_to_roi_extract,
+            mask=None,
+            voxel_size=image.voxel_size,
+            result_scalar=1,
+            distance_from_new_roi=new_roi_dist,
+            distance_to_roi=roi_dist,
+        )
+        assert res > 0
+
+    def test_base_2d(self, roi_dist, new_roi_dist, roi_to_roi_extract):
+        data = np.zeros((3, 10, 20), dtype=np.uint8)
+        data[0, 2:-2, 2:-12] = 5
+        data[1, 2:-2, 12:-2] = 5
+        data[2, 2:-2, 2:-2] = 5
+        image = Image(data, image_spacing=(1, 1, 1), axes_order="CYX")
+        roi = (data[0:1] > 1).astype(np.uint8)
+        res = DistanceROIROI.calculate_property(
+            channel=data[2:3],
+            image=image,
+            area_array=roi,
+            profile=roi_to_roi_extract,
+            mask=None,
+            voxel_size=image.voxel_size,
+            result_scalar=1,
+            distance_from_new_roi=new_roi_dist,
+            distance_to_roi=roi_dist,
+        )
+        assert res > 0
 
 
 @pytest.mark.parametrize("method", MEASUREMENT_DICT.values())

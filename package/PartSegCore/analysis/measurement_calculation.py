@@ -354,9 +354,9 @@ class MeasurementProfile:
         kw["_component_num"] = NO_COMPONENT
         return kw
 
-    def _clip_arrays(self, kw, node: Leaf, component_index: int):
+    def _clip_arrays(self, kw, node: Leaf, method: MeasurementMethodBase, component_index: int):
         bounds = tuple(kw["bounds_info"][component_index].get_slices(margin=1))
-        if node.area != AreaType.ROI:
+        if node.area != AreaType.ROI or method.need_full_data():
             bounds = tuple(slice(None, None) for _ in bounds)
         kw2 = kw.copy()
         kw2["_component_num"] = component_index
@@ -392,7 +392,7 @@ class MeasurementProfile:
         else:
             components = segmentation_mask_map.mask_components
         for i in components:
-            kw2 = self._clip_arrays(kw, node, i)
+            kw2 = self._clip_arrays(kw, node, method, i)
             val.append(method.calculate_property(**kw2))
         val = np.array(val)
         if node.per_component == PerComponent.Mean:
@@ -1341,6 +1341,10 @@ class DistanceROIROI(DistanceMaskROI):
             distance_from_mask=distance_from_new_roi,
             distance_to_segmentation=distance_to_roi,
         )
+
+    @staticmethod
+    def need_full_data():
+        return True
 
 
 class SplitOnPartVolume(MeasurementMethodBase):
