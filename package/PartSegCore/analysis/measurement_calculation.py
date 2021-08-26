@@ -1405,6 +1405,22 @@ class Haralick(MeasurementMethodBase):
         return haralick(data, distance=distance, ignore_zeros=True, return_mean=True)
 
 
+class ComponentBoundingBox(MeasurementMethodBase):
+    text_info = "Component Bounding Box", "bounding box as string"
+
+    @classmethod
+    def get_units(cls, ndim):
+        return "str"
+
+    @staticmethod
+    def calculate_property(bounds_info, _component_num, **kwargs):
+        return str(bounds_info[_component_num])
+
+    @classmethod
+    def get_starting_leaf(cls):
+        return Leaf(name=cls.text_info[0], area=AreaType.ROI, per_component=PerComponent.Yes)
+
+
 def pixel_volume(spacing, result_scalar):
     return reduce((lambda x, y: x * y), [x * result_scalar for x in spacing])
 
@@ -1449,6 +1465,7 @@ MEASUREMENT_DICT = Register(
     Volume,
     Diameter,
     PixelBrightnessSum,
+    ComponentBoundingBox,
     ComponentsNumber,
     MaximumPixelBrightness,
     MinimumPixelBrightness,
