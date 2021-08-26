@@ -672,6 +672,8 @@ class FileData:
             [SheetData(name, header_list[i]) if name is not None else None for i, name in enumerate(sheet_list)],
             component_information,
         )
+        self.sheet_set.add(calculation.sheet_name)
+        self.sheet_set.update(sheet_list)
         self.calculation_info[calculation.uuid] = calculation.calculation_plan
 
     def wrote_data(self, uuid_id: uuid.UUID, data: ResponseData, ind: Optional[int] = None):
