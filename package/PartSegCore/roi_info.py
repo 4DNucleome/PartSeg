@@ -24,6 +24,9 @@ class BoundInfo(NamedTuple):
     def del_dim(self, axis: int):
         return BoundInfo(np.delete(self.lower, axis), np.delete(self.upper, axis))
 
+    def __str__(self):
+        return f"{self.__class__.__name__}(lower={list(self.lower)}, upper={list(self.upper)})"
+
 
 class ROIInfo:
     """
