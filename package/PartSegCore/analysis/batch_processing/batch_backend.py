@@ -738,7 +738,7 @@ class FileData:
                     try:
                         self.write_to_excel(file_path, data)
                         break
-                    except (PermissionError, OSError):
+                    except OSError:
                         base, ext = path.splitext(self.file_path)
                         file_path = f"{base}({i}){ext}"
                 if i == 100:  # pragma: no cover
