@@ -607,6 +607,7 @@ class MainWindow(BaseMainWindow):
         view_menu.addAction("Napari viewer").triggered.connect(self.napari_viewer_show)
         view_menu.addAction("Toggle Multiple Files").triggered.connect(self.toggle_multiple_files)
         view_menu.addAction("Toggle left panel").triggered.connect(self.toggle_left_panel)
+        view_menu.addAction("Toggle console").triggered.connect(self._toggle_console)
         action = view_menu.addAction("Screenshot right panel")
         action.triggered.connect(self.screenshot(self.result_image))
         action.setShortcut(QKeySequence.Print)
