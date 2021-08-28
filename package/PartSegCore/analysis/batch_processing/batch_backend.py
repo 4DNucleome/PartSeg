@@ -31,7 +31,7 @@ from enum import Enum
 from os import path
 from queue import Queue
 from traceback import StackSummary
-from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -394,12 +394,7 @@ class BatchResultDescription(NamedTuple):
 
     errors: List[Tuple[str, ErrorInfo]]  #: list of errors occurred during calculation
     global_counter: int  #: total number of calculated steps
-    jobs_status: Iterable[Tuple[int, int]]  #: for each job information about progress
-
-
-class CalculationInfo(NamedTuple):
-    calculation: Calculation
-    measurement: List[MeasurementCalculate]
+    jobs_status: Dict[uuid.UUID, int]  #: for each job information about progress
 
 
 class CalculationManager:
@@ -411,7 +406,7 @@ class CalculationManager:
     def __init__(self):
         self.batch_manager = BatchManager()
         self.calculation_queue = Queue()
-        self.calculation_dict: Dict[uuid.UUID, CalculationInfo] = OrderedDict()
+        self.calculation_dict: Dict[uuid.UUID, Calculation] = OrderedDict()
         self.calculation_sizes = []
         self.calculation_size = 0
         self.calculation_done = 0
@@ -434,9 +429,7 @@ class CalculationManager:
         """
         :param calculation: Calculation
         """
-        self.calculation_dict[calculation.uuid] = CalculationInfo(
-            calculation, calculation.calculation_plan.get_measurements()
-        )
+        self.calculation_dict[calculation.uuid] = calculation
         self.counter_dict[calculation.uuid] = 0
         size = len(calculation.file_list)
         self.calculation_sizes.append(size)
@@ -477,7 +470,7 @@ class CalculationManager:
         for uuid_id, (ind, result_list) in responses:
             self.calculation_done += 1
             self.counter_dict[uuid_id] += 1
-            calculation = self.calculation_dict[uuid_id].calculation
+            calculation = self.calculation_dict[uuid_id]
             for el in result_list:
                 if isinstance(el, ResponseData):
                     errors = self.writer.add_result(el, calculation, ind=ind)
@@ -493,9 +486,7 @@ class CalculationManager:
                     errors = self.writer.calculation_finished(calculation)
                     for err in errors:
                         new_errors.append(("", err))
-        return BatchResultDescription(
-            new_errors, self.calculation_done, zip(self.counter_dict.values(), self.calculation_sizes)
-        )
+        return BatchResultDescription(new_errors, self.calculation_done, self.counter_dict.copy())
 
 
 class FileType(Enum):

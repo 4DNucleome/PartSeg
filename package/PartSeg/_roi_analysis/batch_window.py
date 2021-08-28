@@ -106,6 +106,7 @@ class ProgressView(QWidget):
         self.number_of_process.setValue(1)
         self.number_of_process.setToolTip("Number of process used in batch calculation")
         self.number_of_process.valueChanged.connect(self.process_num_timer_start)
+        self.progress_item_dict = {}
         layout = QGridLayout()
         layout.addWidget(self.whole_label, 0, 0, Qt.AlignRight)
         layout.addWidget(self.whole_progress, 0, 1, 1, 2)
@@ -147,16 +148,21 @@ class ProgressView(QWidget):
                     sentry_sdk.capture_event(el[1][1][0])
         self.whole_progress.setValue(res.global_counter)
         working_search = True
-        for i, (progress, total) in enumerate(res.jobs_status):
+        for uuid, progress in res.jobs_status.items():
+            calculation = self.calculation_manager.calculation_dict[uuid]
+            total = len(calculation.file_list)
+            if uuid in self.progress_item_dict:
+                item = self.progress_item_dict[uuid]
+                item.update_count(progress)
+            else:
+                item = CalculationProcessItem(calculation, progress)
+                self.task_que.addItem(item)
+                self.progress_item_dict[uuid] = item
+
             if working_search and progress != total:
                 self.part_progress.setMaximum(total)
                 self.part_progress.setValue(progress)
                 working_search = False
-            if i < self.task_que.count():
-                item = self.task_que.item(i)
-                item.setText(f"Task {i} ({progress}/{total})")
-            else:
-                self.task_que.addItem(f"Task {i} ({progress}/{total})")
         if not self.calculation_manager.has_work:
             self.part_progress.setValue(self.part_progress.maximum())
             self.preview_timer.stop()
@@ -540,3 +546,14 @@ class CalculationPrepare(QDialog):
                 widget.setIcon(0, warn_icon)
             else:
                 widget.setIcon(0, bad_icon)
+
+
+class CalculationProcessItem(QListWidgetItem):
+    def __init__(self, calculation: Calculation, num: int, *args, **kwargs):
+        text = f"Task {num} (0/{len(calculation.file_list)})"
+        super().__init__(text, *args, **kwargs)
+        self.calculation = calculation
+        self.num = num
+
+    def update_count(self, count):
+        self.setText(f"Task {self.num} ({count}/{len(self.calculation.file_list)})")

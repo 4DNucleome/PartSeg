@@ -411,6 +411,10 @@ class Calculation(BaseCalculation):
         base.uuid = self.uuid
         return base
 
+    @property
+    def measurement(self):
+        return self.calculation_plan.get_measurements()
+
 
 class FileCalculation:
     """
