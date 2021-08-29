@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 import sentry_sdk
 from qtpy.QtCore import QByteArray, Qt, QTimer
-from qtpy.QtGui import QIcon
+from qtpy.QtGui import QIcon, QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import (
     QDialog,
     QFileDialog,
@@ -16,7 +16,7 @@ from qtpy.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QListWidget,
+    QListView,
     QListWidgetItem,
     QMessageBox,
     QProgressBar,
@@ -96,7 +96,9 @@ class ProgressView(QWidget):
         self.part_label = QLabel("Single batch progress:", self)
         self.logs = ExceptionList(self)
         self.logs.setToolTip("Logs")
-        self.task_que = QListWidget()
+        self.task_view = QListView()
+        self.task_que = QStandardItemModel(self)
+        self.task_view.setModel(self.task_que)
         self.process_num_timer = QTimer()
         self.process_num_timer.setInterval(1000)
         self.process_num_timer.setSingleShot(True)
@@ -117,7 +119,7 @@ class ProgressView(QWidget):
         layout.addWidget(lab, 2, 0)
         layout.addWidget(self.number_of_process, 2, 1)
         layout.addWidget(self.logs, 3, 0, 1, 3)
-        layout.addWidget(self.task_que, 0, 4, 0, 1)
+        layout.addWidget(self.task_view, 0, 4, 0, 1)
         layout.setColumnMinimumWidth(2, 10)
         layout.setColumnStretch(2, 1)
         self.setLayout(layout)
@@ -155,8 +157,8 @@ class ProgressView(QWidget):
                 item = self.progress_item_dict[uuid]
                 item.update_count(progress)
             else:
-                item = CalculationProcessItem(calculation, progress)
-                self.task_que.addItem(item)
+                item = CalculationProcessItem(calculation, self.task_que.rowCount())
+                self.task_que.appendRow(item)
                 self.progress_item_dict[uuid] = item
 
             if working_search and progress != total:
@@ -548,7 +550,7 @@ class CalculationPrepare(QDialog):
                 widget.setIcon(0, bad_icon)
 
 
-class CalculationProcessItem(QListWidgetItem):
+class CalculationProcessItem(QStandardItem):
     def __init__(self, calculation: Calculation, num: int, *args, **kwargs):
         text = f"Task {num} (0/{len(calculation.file_list)})"
         super().__init__(text, *args, **kwargs)
