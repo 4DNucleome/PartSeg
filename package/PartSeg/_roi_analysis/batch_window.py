@@ -82,6 +82,7 @@ class ProgressView(QWidget):
 
     def __init__(self, parent, batch_manager):
         QWidget.__init__(self, parent)
+        self.task_count = 0
         self.calculation_manager = batch_manager
         self.whole_progress = QProgressBar(self)
         self.whole_progress.setMinimum(0)
@@ -94,6 +95,8 @@ class ProgressView(QWidget):
         self.part_progress.setFormat("%v of %m")
         self.whole_label = QLabel("All batch progress:", self)
         self.part_label = QLabel("Single batch progress:", self)
+        self.cancel_remove_btn = QPushButton("Remove task")
+        self.cancel_remove_btn.setDisabled(True)
         self.logs = ExceptionList(self)
         self.logs.setToolTip("Logs")
         self.task_view = QListView()
@@ -118,14 +121,37 @@ class ProgressView(QWidget):
         lab.setToolTip("Number of process used in batch calculation")
         layout.addWidget(lab, 2, 0)
         layout.addWidget(self.number_of_process, 2, 1)
-        layout.addWidget(self.logs, 3, 0, 1, 3)
-        layout.addWidget(self.task_view, 0, 4, 0, 1)
+        layout.addWidget(self.logs, 3, 0, 2, 3)
+        layout.addWidget(self.task_view, 0, 4, 4, 1)
+        layout.addWidget(self.cancel_remove_btn, 4, 4, 1, 1)
         layout.setColumnMinimumWidth(2, 10)
         layout.setColumnStretch(2, 1)
         self.setLayout(layout)
         self.preview_timer = QTimer()
         self.preview_timer.setInterval(1000)
         self.preview_timer.timeout.connect(self.update_info)
+        self.task_view.selectionModel().currentChanged.connect(self.task_selection_change)
+        self.cancel_remove_btn.clicked.connect(self.task_cancel_remove)
+
+    def task_selection_change(self, new, old):
+        task: CalculationProcessItem = self.task_que.item(new.row(), new.column())
+        if task is None:
+            self.cancel_remove_btn.setDisabled(True)
+            return
+        # self.cancel_remove_btn.setEnabled(True)
+        if task.is_finished():
+            self.cancel_remove_btn.setText(f"Remove task {task.num}")
+        else:
+            self.cancel_remove_btn.setText(f"Cancel task {task.num}")
+
+    def task_cancel_remove(self):
+        index = self.task_view.selectionModel().currentIndex()
+        task: CalculationProcessItem = self.task_que.item(index.row(), index.column())
+        if task.is_finished():
+            self.calculation_manager.remove_calculation(task.calculation)
+        else:
+            self.calculation_manager.cancel_calculation(task.calculation)
+        print(task)
 
     def new_task(self):
         self.whole_progress.setMaximum(self.calculation_manager.calculation_size)
@@ -157,7 +183,8 @@ class ProgressView(QWidget):
                 item = self.progress_item_dict[uuid]
                 item.update_count(progress)
             else:
-                item = CalculationProcessItem(calculation, self.task_que.rowCount())
+                item = CalculationProcessItem(calculation, self.task_count, progress)
+                self.task_count += 1
                 self.task_que.appendRow(item)
                 self.progress_item_dict[uuid] = item
 
@@ -551,11 +578,18 @@ class CalculationPrepare(QDialog):
 
 
 class CalculationProcessItem(QStandardItem):
-    def __init__(self, calculation: Calculation, num: int, *args, **kwargs):
-        text = f"Task {num} (0/{len(calculation.file_list)})"
+    def __init__(self, calculation: Calculation, num: int, count, *args, **kwargs):
+        text = f"Task {num} ({count}/{len(calculation.file_list)})"
         super().__init__(text, *args, **kwargs)
         self.calculation = calculation
         self.num = num
+        self.count = count
+        self.setToolTip(str(calculation.calculation_plan))
+        self.setEditable(False)
 
     def update_count(self, count):
+        self.count = count
         self.setText(f"Task {self.num} ({count}/{len(self.calculation.file_list)})")
+
+    def is_finished(self) -> bool:
+        return self.count == len(self.calculation.file_list)

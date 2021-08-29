@@ -425,6 +425,12 @@ class CalculationManager:
         """
         return self.writer.is_empty_sheet(excel_path, sheet_name)
 
+    def remove_calculation(self, calculation: Calculation):
+        pass
+
+    def cancel_calculation(self, calculation: Calculation):
+        pass
+
     def add_calculation(self, calculation: Calculation):
         """
         :param calculation: Calculation
