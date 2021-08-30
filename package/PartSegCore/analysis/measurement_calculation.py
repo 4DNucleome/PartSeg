@@ -19,6 +19,7 @@ from typing import (
 
 import numpy as np
 import pandas as pd
+import sentry_sdk
 import SimpleITK
 from mahotas.features import haralick
 from scipy.spatial.distance import cdist
@@ -627,7 +628,10 @@ class MeasurementProfile:
             if e.args[0].startswith("unsupported operand type(s) for /:"):
                 return "None div", "", component_and_area
             raise e
-        except AttributeError:  # pragma: no cover
+        except AttributeError as e:  # pragma: no cover
+            with sentry_sdk.push_scope() as scope:
+                scope.set_tag("auto_report", "true")
+                sentry_sdk.capture_exception(e)
             return "No attribute", "", component_and_area
         except ProhibitedDivision as e:  # pragma: no cover
             return e.args[0], "", component_and_area
