@@ -248,9 +248,7 @@ class BatchWorker:
                 except Empty:
                     time.sleep(0.1)
                     continue
-                except MemoryError:  # pragma: no cover
-                    pass
-                except OSError:  # pragma: no cover
+                except (MemoryError, OSError):  # pragma: no cover
                     pass
                 except Exception as ex:  # pragma: no cover
                     logging.warning(f"Unsupported exception {ex}")
