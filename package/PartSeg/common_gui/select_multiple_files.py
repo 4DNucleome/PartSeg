@@ -151,12 +151,14 @@ class AddFiles(QWidget):
     def parse_drop_file_list(self, files_list):
         res_list = []
         base_path = self.paths_input.text()
-        if "*" in base_path or not os.path.isdir(base_path):
-            QMessageBox.information(self, "Not proper path", f"Current path {base_path} is not a proper directory.")
-            return
+        is_broken_path = "*" in base_path or not os.path.isdir(base_path)
+
         for file_path in files_list:
             if os.path.isabs(file_path):
                 res_list.append(file_path)
+            elif is_broken_path:
+                QMessageBox.warning(self, "Not proper path", f"Current path {base_path} is not a proper directory.")
+                return
             else:
                 res_list.append(os.path.join(base_path, file_path.strip()))
         missed_files = [x for x in res_list if not os.path.exists(x)]
