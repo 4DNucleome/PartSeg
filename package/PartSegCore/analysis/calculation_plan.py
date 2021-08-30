@@ -745,11 +745,7 @@ class CalculationPlan:
             if el.directory:
                 return f"Save {base} in directory with name " + el.suffix
             else:
-                return (
-                    "Save " + base + " with suffix " + el.suffix
-                    if el.suffix != ""
-                    else "Save " + base
-                )
+                return "Save " + base + " with suffix " + el.suffix if el.suffix != "" else "Save " + base
 
         if isinstance(el, MaskIntersection):
             if el.name == "":
