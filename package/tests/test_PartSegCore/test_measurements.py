@@ -2036,7 +2036,7 @@ def test_all_methods(method, dtype):
 
 
 @pytest.mark.parametrize(
-    "method", (x for x in MEASUREMENT_DICT.values() if x.get_starting_leaf().per_component != PerComponent.No)
+    "method", (x for x in MEASUREMENT_DICT.values() if x.get_starting_leaf().per_component is None)
 )
 @pytest.mark.parametrize("area", [AreaType.ROI, AreaType.Mask])
 def test_per_component(method, area):
