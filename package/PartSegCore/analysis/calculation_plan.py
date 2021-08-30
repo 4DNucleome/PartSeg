@@ -259,9 +259,7 @@ class MaskFile(MaskMapper, BaseSerializableClass):
             self.parse_map()
         try:
             return self.name_dict[os.path.normpath(file_path)]
-        except KeyError:
-            return ""
-        except AttributeError:
+        except (KeyError, AttributeError):
             return ""
 
     def get_parameters(self):
@@ -745,13 +743,10 @@ class CalculationPlan:
         if isinstance(el, Save):
             base = el.short_name
             if el.directory:
-                text = f"Save {base} in directory with name " + el.suffix
+                return f"Save {base} in directory with name " + el.suffix
             else:
-                if el.suffix != "":
-                    text = "Save " + base + " with suffix " + el.suffix
-                else:
-                    text = "Save " + base
-            return text
+                return "Save " + base + " with suffix " + el.suffix if el.suffix != "" else "Save " + base
+
         if isinstance(el, MaskIntersection):
             if el.name == "":
                 return f"Mask intersection of mask {el.mask1} and {el.mask2}"
