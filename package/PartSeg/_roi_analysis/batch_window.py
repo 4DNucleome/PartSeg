@@ -4,6 +4,7 @@ import os
 import typing
 from io import BytesIO
 from pathlib import Path
+from pickle import PicklingError
 
 import numpy as np
 import sentry_sdk
@@ -260,8 +261,14 @@ class FileChoose(QWidget):
             self.files_widget.get_paths(), plan, str(self.result_file.text()), self.settings, self.batch_manager
         )
         if dial.exec_():
-            self.batch_manager.add_calculation(dial.get_data())
-            self.progress.new_task()
+            try:
+                self.batch_manager.add_calculation(dial.get_data())
+                self.progress.new_task()
+            except PicklingError as e:
+                if state_store.develop:
+                    QMessageBox.warning(self, "Pickle error", "Please restart PartSeg.")
+                else:
+                    raise e
 
     def showEvent(self, _):
         current_calc = str(self.calculation_choose.currentText())
