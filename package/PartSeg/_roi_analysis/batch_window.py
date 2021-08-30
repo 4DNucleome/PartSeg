@@ -4,7 +4,7 @@ import os
 import typing
 from io import BytesIO
 from pathlib import Path
-from pickle import PicklingError
+from pickle import PicklingError  # nosec
 
 import numpy as np
 import sentry_sdk

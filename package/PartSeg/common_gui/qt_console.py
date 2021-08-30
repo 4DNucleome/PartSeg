@@ -39,7 +39,7 @@ if sys.platform.startswith("win") and sys.version_info >= (3, 8):
     if (
         hasattr(asyncio, "WindowsProactorEventLoopPolicy")
         and hasattr(asyncio, "WindowsSelectorEventLoopPolicy")
-        and type(asyncio.get_event_loop_policy()) is asyncio.WindowsProactorEventLoopPolicy
+        and type(asyncio.get_event_loop_policy()) is asyncio.WindowsProactorEventLoopPolicy  # pylint: disable=C0123
     ):
         # WindowsProactorEventLoopPolicy is not compatible with tornado 6
         # fallback to the pre-3.8 default of Selector
@@ -89,7 +89,7 @@ class QtConsole(RichJupyterWidget):
             self.kernel_client = kernel_client
             self.shell = kernel_manager.kernel.shell
             self.push = self.shell.push
-        elif type(shell) is InProcessInteractiveShell:
+        elif type(shell) is InProcessInteractiveShell:  # pylint: disable=C0123
             # If there is an existing running InProcessInteractiveShell
             # it is likely because multiple viewers have been launched from
             # the same process. In that case create a new kernel.
