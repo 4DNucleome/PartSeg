@@ -1415,11 +1415,11 @@ class ComponentBoundingBox(MeasurementMethodBase):
         return "str"
 
     @staticmethod
-    def calculate_property(bounds_info, _component_num, **kwargs):
+    def calculate_property(bounds_info, _component_num, **kwargs):  # pylint: disable=W0221
         return str(bounds_info[_component_num])
 
     @classmethod
-    def get_starting_leaf(cls):  # pylint: disable=W0221
+    def get_starting_leaf(cls):
         return Leaf(name=cls.text_info[0], area=AreaType.ROI, per_component=PerComponent.Yes)
 
 
