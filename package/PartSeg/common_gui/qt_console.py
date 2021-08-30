@@ -24,16 +24,15 @@ def str_to_rgb(arg):
     return list(map(int, re.match(r"rgb\((\d+),\s*(\d+),\s*(\d+)\)", arg).groups()))
 
 
-"""
-set default asyncio policy to be compatible with tornado
-Tornado 6 (at least) is not compatible with the default
-asyncio implementation on Windows
-Pick the older SelectorEventLoopPolicy on Windows
-if the known-incompatible default policy is in use.
-FIXME: if/when tornado supports the defaults in asyncio,
-remove and bump tornado requirement for py38
-borrowed from ipykernel:  https://github.com/ipython/ipykernel/pull/456
-"""
+# set default asyncio policy to be compatible with tornado
+# Tornado 6 (at least) is not compatible with the default
+# asyncio implementation on Windows
+# Pick the older SelectorEventLoopPolicy on Windows
+# if the known-incompatible default policy is in use.
+# FIXME: if/when tornado supports the defaults in asyncio,
+# remove and bump tornado requirement for py38
+# borrowed from ipykernel:  https://github.com/ipython/ipykernel/pull/456
+
 if sys.platform.startswith("win") and sys.version_info >= (3, 8):
     import asyncio
 
@@ -69,6 +68,8 @@ class QtConsole(RichJupyterWidget):
         super().__init__()
 
         self.main_window = main_window
+        self.syntax_style = ""
+        self.style_sheet = ""
 
         # Connect theme update
         user_variables = {"window": self.main_window, "settings": self.main_window.settings}
@@ -90,7 +91,7 @@ class QtConsole(RichJupyterWidget):
             self.kernel_client = kernel_client
             self.shell = kernel_manager.kernel.shell
             self.push = self.shell.push
-        elif type(shell) == InProcessInteractiveShell:
+        elif type(shell) is InProcessInteractiveShell:
             # If there is an existing running InProcessInteractiveShell
             # it is likely because multiple viewers have been launched from
             # the same process. In that case create a new kernel.
