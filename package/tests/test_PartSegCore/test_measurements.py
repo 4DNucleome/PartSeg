@@ -43,6 +43,7 @@ from PartSegCore.analysis.measurement_calculation import (
     Voxels,
 )
 from PartSegCore.autofit import density_mass_center
+from PartSegCore.roi_info import ROIInfo
 from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegImage import Image
 
@@ -2015,6 +2016,7 @@ def test_all_methods(method, dtype):
     data[1:-1, 4:-4, 4:-4] = 3
     roi = (data > 2).astype(np.uint8)
     mask = (data > 0).astype(np.uint8)
+    roi_info = ROIInfo(roi)
 
     res = method.calculate_property(
         area_array=roi,
@@ -2025,13 +2027,16 @@ def test_all_methods(method, dtype):
         result_scalar=1,
         roi_alternative={},
         roi_annotation={},
+        bounds_info=roi_info.bound_info,
+        _component_num=1,
         **method.get_default_values(),
     )
-    float(res)
+    if method.get_units(3) != "str":
+        float(res)
 
 
 @pytest.mark.parametrize(
-    "method", (x for x in MEASUREMENT_DICT.values() if x.get_starting_leaf().per_component != PerComponent.No)
+    "method", (x for x in MEASUREMENT_DICT.values() if x.get_starting_leaf().per_component is None)
 )
 @pytest.mark.parametrize("area", [AreaType.ROI, AreaType.Mask])
 def test_per_component(method, area):

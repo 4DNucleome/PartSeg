@@ -3,9 +3,9 @@ import os
 from pathlib import Path
 from typing import List, Optional, Type
 
-from qtpy.QtCore import Signal
+from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QCloseEvent, QDragEnterEvent, QDropEvent, QShowEvent
-from qtpy.QtWidgets import QAction, QApplication, QFileDialog, QMainWindow, QMenu, QMessageBox, QWidget
+from qtpy.QtWidgets import QAction, QApplication, QDockWidget, QFileDialog, QMainWindow, QMenu, QMessageBox, QWidget
 from vispy.color import colormap
 
 from PartSegCore.algorithm_describe_base import Register
@@ -20,6 +20,7 @@ from .custom_save_dialog import SaveDialog
 from .image_adjustment import ImageAdjustmentDialog
 from .napari_image_view import ImageView
 from .napari_viewer_wrap import Viewer
+from .qt_console import QtConsole
 from .show_directory_dialog import DirectoryDialog
 from .waiting_dialog import ExecuteFunctionDialog
 
@@ -155,6 +156,15 @@ class BaseMainWindow(QMainWindow):
         self._refresh_recent(FILE_HISTORY, self.settings.get_last_files())
         self.settings.data_changed.connect(self._refresh_recent)
         self.settings.set_parent(self)
+        self.console = QtConsole(self)
+        self.console_dock = QDockWidget("console", self)
+        self.console_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.BottomDockWidgetArea)
+        self.console_dock.setWidget(self.console)
+        self.console_dock.hide()
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.console_dock)
+
+    def _toggle_console(self):
+        self.console_dock.setVisible(not self.console_dock.isVisible())
 
     def _refresh_recent(self, name, value):
         if name != FILE_HISTORY or self._load_dict is None:

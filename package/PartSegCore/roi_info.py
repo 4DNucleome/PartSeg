@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import Any, Dict, List, NamedTuple, Optional
 
 import numpy as np
@@ -23,6 +24,9 @@ class BoundInfo(NamedTuple):
 
     def del_dim(self, axis: int):
         return BoundInfo(np.delete(self.lower, axis), np.delete(self.upper, axis))
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(lower={list(self.lower)}, upper={list(self.upper)})"
 
 
 class ROIInfo:
@@ -66,13 +70,10 @@ class ROIInfo:
         return ROIInfo(roi, self.annotations, alternatives)
 
     def __str__(self):
-        return f"SegmentationInfo; components: {len(self.bound_info)}, sizes: {self.sizes}"
+        return f"ROIInfo; components: {len(self.bound_info)}, sizes: {self.sizes}"
 
     def __repr__(self):
-        return (
-            f"SegmentationInfo(segmentation={numpy_repr(self.roi)},"
-            f" bound_info={self.bound_info}, sizes={repr(self.sizes)})"
-        )
+        return f"ROIInfo(roi={numpy_repr(self.roi)}," f" bound_info={self.bound_info}, sizes={repr(self.sizes)})"
 
     @staticmethod
     def calc_bounds(roi: np.ndarray) -> Dict[int, BoundInfo]:
@@ -84,12 +85,13 @@ class ROIInfo:
         :rtype: Dict[int, BoundInfo]
         """
         bound_info = {}
-        count = np.max(roi)
-        for i in range(1, count + 1):
-            component = np.array(roi == i)
-            if np.any(component):
-                points = np.nonzero(component)
-                lower = np.min(points, 1)
-                upper = np.max(points, 1)
-                bound_info[i] = BoundInfo(lower=lower, upper=upper)
+        points = np.nonzero(roi)
+        comp_num = roi[points]
+        point_dict = defaultdict(list)
+        for num, point in zip(comp_num, np.transpose(points)):
+            point_dict[num].append(point)
+        for num, points_for_num in point_dict.items():
+            lower = np.min(points_for_num, 0)
+            upper = np.max(points_for_num, 0)
+            bound_info[num] = BoundInfo(lower=lower, upper=upper)
         return bound_info

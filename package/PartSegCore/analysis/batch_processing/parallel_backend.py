@@ -36,6 +36,7 @@ class SubprocessOrder(Enum):
 
     kill = 1
     wait = 2
+    cancel_job = 3
 
 
 class BatchManager:
@@ -150,6 +151,9 @@ class BatchManager:
                 self.number_off_process += process_diff
             self.join_all()
 
+    def cancel_work(self, global_parameters):
+        del self.calculation_dict[global_parameters.uuid]
+
     def join_all(self):
         logging.debug(f"Join begin {len(self.process_list)} {self.number_off_process}")
         with self.locker:
@@ -202,6 +206,7 @@ class BatchWorker:
         self.order_queue = order_queue
         self.result_queue = result_queue
         self.calculation_dict = calculation_dict
+        self.canceled_tasks = set()
 
     def calculate_task(self, val: Tuple[Any, uuid.UUID]):
         """
@@ -210,7 +215,10 @@ class BatchWorker:
         function and global parameters are obtained from :py:attr:`.calculation_dict`
         """
         data, task_uuid = val
-        global_data, fun = self.calculation_dict[task_uuid]
+        calc = self.calculation_dict.get(task_uuid)
+        if calc is None:
+            self.result_queue.put((task_uuid, (-1, [SubprocessOrder.cancel_job])))
+        global_data, fun = calc
         try:
             res = fun(data, global_data)
             self.result_queue.put((task_uuid, res))
@@ -240,9 +248,7 @@ class BatchWorker:
                 except Empty:
                     time.sleep(0.1)
                     continue
-                except MemoryError:  # pragma: no cover
-                    pass
-                except OSError:  # pragma: no cover
+                except (MemoryError, OSError):  # pragma: no cover
                     pass
                 except Exception as ex:  # pragma: no cover
                     logging.warning(f"Unsupported exception {ex}")
