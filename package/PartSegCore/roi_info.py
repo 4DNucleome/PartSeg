@@ -69,13 +69,10 @@ class ROIInfo:
         return ROIInfo(roi, self.annotations, alternatives)
 
     def __str__(self):
-        return f"SegmentationInfo; components: {len(self.bound_info)}, sizes: {self.sizes}"
+        return f"ROIInfo; components: {len(self.bound_info)}, sizes: {self.sizes}"
 
     def __repr__(self):
-        return (
-            f"SegmentationInfo(segmentation={numpy_repr(self.roi)},"
-            f" bound_info={self.bound_info}, sizes={repr(self.sizes)})"
-        )
+        return f"ROIInfo(roi={numpy_repr(self.roi)}," f" bound_info={self.bound_info}, sizes={repr(self.sizes)})"
 
     @staticmethod
     def calc_bounds(roi: np.ndarray) -> Dict[int, BoundInfo]:
