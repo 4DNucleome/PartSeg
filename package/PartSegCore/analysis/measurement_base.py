@@ -106,6 +106,12 @@ class Leaf(BaseSerializableClass):
         resp = self.name
         if self.area is not None:
             resp = str(self.area) + " " + resp
+        measurement_method = measurement_dict[self.name]
+        if (
+            hasattr(measurement_method, "__module__")
+            and measurement_method.__module__.split(".", 1)[0] != "PartSegCore"
+        ):
+            resp = f"[{measurement_method.__module__.split('.', 1)[0]}] " + resp
         if self.per_component is not None:
             if self.per_component == PerComponent.Yes:
                 resp += " per component "
