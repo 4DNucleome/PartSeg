@@ -72,7 +72,7 @@ from ...project_info import AdditionalLayerDescription, HistoryElement
 from ...roi_info import ROIInfo
 from ...segmentation import RestartableAlgorithm
 from .. import PartEncoder
-from .parallel_backend import BatchManager
+from .parallel_backend import BatchManager, SubprocessOrder
 
 
 class ResponseData(NamedTuple):
@@ -426,10 +426,12 @@ class CalculationManager:
         return self.writer.is_empty_sheet(excel_path, sheet_name)
 
     def remove_calculation(self, calculation: Calculation):
-        pass
+        size = len(calculation.file_list)
+        self.calculation_size -= size
+        self.writer.remove_data_part(calculation)
 
     def cancel_calculation(self, calculation: Calculation):
-        pass
+        self.batch_manager.cancel_work(calculation)
 
     def add_calculation(self, calculation: Calculation):
         """
@@ -482,7 +484,7 @@ class CalculationManager:
                     errors = self.writer.add_result(el, calculation, ind=ind)
                     for err in errors:
                         new_errors.append((el.path_to_file, err))
-                else:
+                elif el != SubprocessOrder.cancel_job:
                     file_info = calculation.file_list[ind] if ind != -1 else "unknown file"
                     self.writer.add_calculation_error(calculation, file_info, el[0])
                     self.errors_list.append((file_info, el))
@@ -614,6 +616,17 @@ class FileData:
         if name in self.sheet_set:
             return False, f"Sheet name {name} already in use"
         return True, ""
+
+    def remove_data_part(self, calculation: BaseCalculation):
+        sheet_list = self.sheet_dict[calculation.uuid][1]
+        for sheet in sheet_list:
+            if sheet is None:
+                continue
+            self.sheet_set.remove(sheet.name)
+
+        del self.sheet_dict[calculation.uuid]
+        del self.calculation_info[calculation.uuid]
+        self.sheet_set.remove(calculation.sheet_name)
 
     def add_data_part(self, calculation: BaseCalculation):
         """
@@ -845,6 +858,10 @@ class DataWriter:
             self.file_dict[calculation.measurement_file_path].add_data_part(calculation)
         else:
             self.file_dict[calculation.measurement_file_path] = FileData(calculation)
+
+    def remove_data_part(self, calculation: BaseCalculation):
+        if calculation.measurement_file_path in self.file_dict:
+            self.file_dict[calculation.measurement_file_path].remove_data_part(calculation)
 
     def add_result(
         self, data: ResponseData, calculation: BaseCalculation, ind: Optional[int] = None

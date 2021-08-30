@@ -138,7 +138,7 @@ class ProgressView(QWidget):
         if task is None:
             self.cancel_remove_btn.setDisabled(True)
             return
-        # self.cancel_remove_btn.setEnabled(True)
+        self.cancel_remove_btn.setEnabled(True)
         if task.is_finished():
             self.cancel_remove_btn.setText(f"Remove task {task.num}")
         else:
@@ -149,6 +149,7 @@ class ProgressView(QWidget):
         task: CalculationProcessItem = self.task_que.item(index.row(), index.column())
         if task.is_finished():
             self.calculation_manager.remove_calculation(task.calculation)
+            self.task_que.takeRow(index.row())
         else:
             self.calculation_manager.cancel_calculation(task.calculation)
         print(task)
