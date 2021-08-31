@@ -254,6 +254,8 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def get_description(cls):
         """Measurement long description"""
+        if isinstance(cls.text_info, str):
+            return ""
         return cls.text_info[1]
 
     @classmethod
@@ -299,7 +301,13 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def get_starting_leaf(cls) -> Leaf:
         """This leaf is putted on default list"""
-        return Leaf(cls.text_info[0])
+        return Leaf(cls._display_name())
+
+    @classmethod
+    def _display_name(cls):
+        if isinstance(cls.text_info, str):
+            return cls.text_info
+        return cls.text_info[0]
 
     @classmethod
     def get_units(cls, ndim) -> symbols:
