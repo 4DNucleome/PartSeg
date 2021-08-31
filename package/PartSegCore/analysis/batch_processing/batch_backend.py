@@ -618,15 +618,17 @@ class FileData:
         return True, ""
 
     def remove_data_part(self, calculation: BaseCalculation):
-        sheet_list = self.sheet_dict[calculation.uuid][1]
-        for sheet in sheet_list:
-            if sheet is None:
-                continue
-            self.sheet_set.remove(sheet.name)
+        if calculation.uuid in self.sheet_dict:
+            sheet_list = self.sheet_dict[calculation.uuid][1]
+            for sheet in sheet_list:
+                if sheet is None:
+                    continue
+                self.sheet_set.remove(sheet.name)
+            self.sheet_set.remove(calculation.sheet_name)
+            del self.sheet_dict[calculation.uuid]
 
-        del self.sheet_dict[calculation.uuid]
-        del self.calculation_info[calculation.uuid]
-        self.sheet_set.remove(calculation.sheet_name)
+        if calculation.uuid in self.calculation_info:
+            del self.calculation_info[calculation.uuid]
 
     def add_data_part(self, calculation: BaseCalculation):
         """
