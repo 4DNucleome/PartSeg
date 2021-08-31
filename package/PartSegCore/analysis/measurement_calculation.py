@@ -1290,7 +1290,7 @@ class DistanceMaskROI(MeasurementMethodBase):
 
 
 class DistanceROIROI(DistanceMaskROI):
-    text_info = "to ROI distance", "Calculate distance between ROI and neew ROI"
+    text_info = "to new ROI distance", "Calculate distance between ROI and new ROI"
 
     @classmethod
     def get_starting_leaf(cls):
@@ -1356,6 +1356,79 @@ class DistanceROIROI(DistanceMaskROI):
             distance_from_mask=distance_from_new_roi,
             distance_to_segmentation=distance_to_roi,
         )
+
+    @staticmethod
+    def need_full_data():
+        return True
+
+
+class ROINeighbourhodROI(DistanceMaskROI):
+    text_info = "Neighbourhood new ROI presence", "Count how many of new roi are present in neighbourhood of new ROI"
+
+    @classmethod
+    def get_starting_leaf(cls):
+        return Leaf(name=cls.text_info[0], area=AreaType.ROI)
+
+    @classmethod
+    def get_fields(cls):
+        return [
+            AlgorithmProperty(
+                "profile",
+                "ROI extraction profile",
+                ROIExtractionProfile(
+                    "default", LowerThresholdAlgorithm.get_name(), LowerThresholdAlgorithm.get_default_values()
+                ),
+                value_type=ROIExtractionProfile,
+            ),
+            AlgorithmProperty("distance", "Distance", 500.0, options_range=(0, 10000), value_type=float),
+            AlgorithmProperty("units", "Units", Units.nm, value_type=Units),
+        ]
+
+    # noinspection PyMethodOverriding
+    @classmethod
+    def calculate_property(
+        cls,
+        image,
+        area_array,
+        profile,
+        mask,
+        voxel_size,
+        distance,
+        units,
+        **kwargs,
+    ):  # pylint: disable=W0221
+        try:
+            hash_name = hash_fun_call_name(
+                calculate_segmentation_step,
+                profile,
+                kwargs["_area"],
+                kwargs["_per_component"],
+                Channel(-1),
+                kwargs["_component_num"],
+            )
+            if hash_name in kwargs["help_dict"]:
+                result = kwargs["help_dict"][hash_name]
+            else:
+                result, _ = calculate_segmentation_step(profile, image, mask)
+                kwargs["help_dict"][hash_name] = result
+        except KeyError:
+            result, _ = calculate_segmentation_step(profile, image, mask)
+
+        units_scalar = UNIT_SCALE[units.value]
+        final_radius = [int((distance / units_scalar) / x) for x in reversed(voxel_size)]
+
+        dilated = SimpleITK.GetArrayFromImage(
+            SimpleITK.BinaryDilate(
+                SimpleITK.GetImageFromArray((area_array > 0).astype(np.uint8).squeeze()), final_radius
+            )
+        )
+        dilated.reshape(area_array.shape)
+
+        components = set(np.unique(result.roi[dilated]))
+        if 0 in components:
+            components.remove(0)
+
+        return len(components)
 
     @staticmethod
     def need_full_data():
@@ -1547,6 +1620,7 @@ MEASUREMENT_DICT = Register(
     Surface,
     RimVolume,
     RimPixelBrightnessSum,
+    ROINeighbourhodROI,
     DistanceMaskROI,
     DistanceROIROI,
     SplitOnPartVolume,
