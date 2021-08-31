@@ -852,7 +852,7 @@ class ComponentsNumber(MeasurementMethodBase):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(cls.text_info[0], per_component=PerComponent.No)
+        return super().get_starting_leaf().replace_(per_component=PerComponent.No)
 
     @classmethod
     def get_units(cls, ndim):
@@ -1133,7 +1133,7 @@ class RimVolume(MeasurementMethodBase):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(name=cls.text_info[0], area=AreaType.Mask)
+        return super().get_starting_leaf().replace_(area=AreaType.Mask)
 
     @staticmethod
     def calculate_property(area_array, voxel_size, result_scalar, **kwargs):  # pylint: disable=W0221
@@ -1164,7 +1164,7 @@ class RimPixelBrightnessSum(MeasurementMethodBase):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(name=cls.text_info[0], area=AreaType.Mask)
+        return super().get_starting_leaf().replace_(area=AreaType.Mask)
 
     @staticmethod
     def calculate_property(channel, area_array, **kwargs):  # pylint: disable=W0221
@@ -1266,7 +1266,7 @@ class DistanceMaskSegmentation(MeasurementMethodBase):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(name=cls.text_info[0], area=AreaType.Mask)
+        return super().get_starting_leaf().replace_(area=AreaType.Mask)
 
     @classmethod
     def get_units(cls, ndim):
@@ -1305,7 +1305,7 @@ class SplitOnPartVolume(MeasurementMethodBase):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(name=cls.text_info[0], area=AreaType.Mask)
+        return super().get_starting_leaf().replace_(area=AreaType.Mask)
 
     @staticmethod
     def area_type(area: AreaType):
@@ -1338,7 +1338,7 @@ class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(name=cls.text_info[0], area=AreaType.Mask)
+        return super().get_starting_leaf().replace_(area=AreaType.Mask)
 
     @staticmethod
     def area_type(area: AreaType):
@@ -1420,7 +1420,7 @@ class ComponentBoundingBox(MeasurementMethodBase):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(name=cls.text_info[0], area=AreaType.ROI, per_component=PerComponent.Yes)
+        return super().get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes)
 
 
 def pixel_volume(spacing, result_scalar):
