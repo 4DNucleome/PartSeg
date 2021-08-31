@@ -254,6 +254,8 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def get_description(cls):
         """Measurement long description"""
+        if isinstance(cls.text_info, str):
+            return ""
         return cls.text_info[1]
 
     @classmethod
