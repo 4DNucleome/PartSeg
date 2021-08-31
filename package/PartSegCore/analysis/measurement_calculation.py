@@ -1324,14 +1324,29 @@ class DistanceROIROI(DistanceMaskROI):
         result_scalar,
         distance_from_new_roi: DistancePoint,
         distance_to_roi: DistancePoint,
-        *args,
         **kwargs,
     ):  # pylint: disable=W0221
         if len(channel.shape) == 4:
             if channel.shape[0] != 1:
                 raise ValueError("This measurements do not support time data")
             channel = channel[0]
-        result, _ = calculate_segmentation_step(profile, image, mask)
+        try:
+            hash_name = hash_fun_call_name(
+                calculate_segmentation_step,
+                profile,
+                kwargs["_area"],
+                kwargs["_per_component"],
+                Channel(-1),
+                kwargs["_component_num"],
+            )
+            if hash_name in kwargs["help_dict"]:
+                result = kwargs["help_dict"][hash_name]
+            else:
+                result, _ = calculate_segmentation_step(profile, image, mask)
+                kwargs["help_dict"][hash_name] = result
+        except KeyError:
+            result, _ = calculate_segmentation_step(profile, image, mask)
+
         return super().calculate_property(
             channel,
             area_array,
