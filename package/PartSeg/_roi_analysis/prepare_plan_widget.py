@@ -234,7 +234,7 @@ class FileMask(QWidget):
         if self.select_type.currentIndex() == 0:
             return self.first_text.text().strip() != ""
         if self.select_type.currentIndex() == 1:
-            return self.first_text.text().strip() != "" and self.second_text.text().strip() != ""
+            return "" not in {self.first_text.text().strip(), self.second_text.text().strip()}
 
         text = self.first_text.text().strip()
         return text != "" and os.path.exists(text) and os.path.isfile(text)
@@ -737,16 +737,15 @@ class CreatePlan(QWidget):
         name = str(self.mask_name.text()).strip()
         self.generate_mask_btn.setDisabled(True)
         # load mask from file
-        if not self.update_element_chk.isChecked():
-            # generate mask from segmentation
-            if self.mask_allow and (name == "" or name not in self.mask_set):
-                self.generate_mask_btn.setEnabled(True)
-        else:
+        if self.update_element_chk.isChecked():
             if self.node_type not in [NodeType.file_mask, NodeType.mask]:
                 return
             # generate mask from segmentation
             if self.node_type == NodeType.mask and (name == "" or name == self.node_name or name not in self.mask_set):
                 self.generate_mask_btn.setEnabled(True)
+
+        elif self.mask_allow and (name == "" or name not in self.mask_set):
+            self.generate_mask_btn.setEnabled(True)
 
     def add_calculation_plan(self, text=None):
         if text is None or isinstance(text, bool):
@@ -829,11 +828,10 @@ class CreatePlan(QWidget):
                 self.add_calculation_btn.setEnabled(True)
             else:
                 self.add_calculation_btn.setDisabled(True)
+        elif self.measurements_list.currentItem() is not None:
+            self.add_calculation_btn.setEnabled(self.mask_allow)
         else:
-            if self.measurements_list.currentItem() is not None:
-                self.add_calculation_btn.setEnabled(self.mask_allow)
-            else:
-                self.add_calculation_btn.setDisabled(True)
+            self.add_calculation_btn.setDisabled(True)
 
     def show_segment_info(self, text=None):
         if self.protect:
@@ -1073,9 +1071,6 @@ class CalculateInfo(QWidget):
         self.calculate_plans.addItems(new_plan_list)
         if index != -1:
             self.calculate_plans.setCurrentRow(index)
-        else:
-            pass
-            # self.plan_view.setText("")
         self.protect = False
 
     def export_plans(self):

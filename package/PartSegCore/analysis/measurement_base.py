@@ -61,7 +61,7 @@ class Leaf(BaseSerializableClass):
         ...
 
     name: str
-    dict: Dict = dict()
+    dict: Dict = {}
     power: float = 1.0
     area: Optional[AreaType] = None
     per_component: Optional[PerComponent] = None
@@ -106,6 +106,12 @@ class Leaf(BaseSerializableClass):
         resp = self.name
         if self.area is not None:
             resp = str(self.area) + " " + resp
+        measurement_method = measurement_dict[self.name]
+        if (
+            hasattr(measurement_method, "__module__")
+            and measurement_method.__module__.split(".", 1)[0] != "PartSegCore"
+        ):
+            resp = f"[{measurement_method.__module__.split('.', 1)[0]}] " + resp
         if self.per_component is not None:
             if self.per_component == PerComponent.Yes:
                 resp += " per component "
@@ -248,6 +254,8 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def get_description(cls):
         """Measurement long description"""
+        if isinstance(cls.text_info, str):
+            return ""
         return cls.text_info[1]
 
     @classmethod
@@ -293,7 +301,13 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     @classmethod
     def get_starting_leaf(cls) -> Leaf:
         """This leaf is putted on default list"""
-        return Leaf(cls.text_info[0])
+        return Leaf(cls._display_name())
+
+    @classmethod
+    def _display_name(cls):
+        if isinstance(cls.text_info, str):
+            return cls.text_info
+        return cls.text_info[0]
 
     @classmethod
     def get_units(cls, ndim) -> symbols:

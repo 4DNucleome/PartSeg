@@ -31,7 +31,7 @@ from enum import Enum
 from os import path
 from queue import Queue
 from traceback import StackSummary
-from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -72,7 +72,7 @@ from ...project_info import AdditionalLayerDescription, HistoryElement
 from ...roi_info import ROIInfo
 from ...segmentation import RestartableAlgorithm
 from .. import PartEncoder
-from .parallel_backend import BatchManager
+from .parallel_backend import BatchManager, SubprocessOrder
 
 
 class ResponseData(NamedTuple):
@@ -111,7 +111,7 @@ def do_calculation(file_info: Tuple[int, str], calculation: BaseCalculation) -> 
     index, file_path = file_info
     try:
         return index, calc.do_calculation(FileCalculation(file_path, calculation))
-    except Exception as e:
+    except Exception as e:  # pylint: disable=W0703
         return index, [prepare_error_data(e)]
 
 
@@ -394,12 +394,7 @@ class BatchResultDescription(NamedTuple):
 
     errors: List[Tuple[str, ErrorInfo]]  #: list of errors occurred during calculation
     global_counter: int  #: total number of calculated steps
-    jobs_status: Iterable[Tuple[int, int]]  #: for each job information about progress
-
-
-class CalculationInfo(NamedTuple):
-    calculation: Calculation
-    measurement: List[MeasurementCalculate]
+    jobs_status: Dict[uuid.UUID, int]  #: for each job information about progress
 
 
 class CalculationManager:
@@ -411,7 +406,7 @@ class CalculationManager:
     def __init__(self):
         self.batch_manager = BatchManager()
         self.calculation_queue = Queue()
-        self.calculation_dict: Dict[uuid.UUID, CalculationInfo] = OrderedDict()
+        self.calculation_dict: Dict[uuid.UUID, Calculation] = OrderedDict()
         self.calculation_sizes = []
         self.calculation_size = 0
         self.calculation_done = 0
@@ -430,13 +425,19 @@ class CalculationManager:
         """
         return self.writer.is_empty_sheet(excel_path, sheet_name)
 
+    def remove_calculation(self, calculation: Calculation):
+        size = len(calculation.file_list)
+        self.calculation_size -= size
+        self.writer.remove_data_part(calculation)
+
+    def cancel_calculation(self, calculation: Calculation):
+        self.batch_manager.cancel_work(calculation)
+
     def add_calculation(self, calculation: Calculation):
         """
         :param calculation: Calculation
         """
-        self.calculation_dict[calculation.uuid] = CalculationInfo(
-            calculation, calculation.calculation_plan.get_measurements()
-        )
+        self.calculation_dict[calculation.uuid] = calculation
         self.counter_dict[calculation.uuid] = 0
         size = len(calculation.file_list)
         self.calculation_sizes.append(size)
@@ -477,13 +478,13 @@ class CalculationManager:
         for uuid_id, (ind, result_list) in responses:
             self.calculation_done += 1
             self.counter_dict[uuid_id] += 1
-            calculation = self.calculation_dict[uuid_id].calculation
+            calculation = self.calculation_dict[uuid_id]
             for el in result_list:
                 if isinstance(el, ResponseData):
                     errors = self.writer.add_result(el, calculation, ind=ind)
                     for err in errors:
                         new_errors.append((el.path_to_file, err))
-                else:
+                elif el != SubprocessOrder.cancel_job:
                     file_info = calculation.file_list[ind] if ind != -1 else "unknown file"
                     self.writer.add_calculation_error(calculation, file_info, el[0])
                     self.errors_list.append((file_info, el))
@@ -493,9 +494,7 @@ class CalculationManager:
                     errors = self.writer.calculation_finished(calculation)
                     for err in errors:
                         new_errors.append(("", err))
-        return BatchResultDescription(
-            new_errors, self.calculation_done, zip(self.counter_dict.values(), self.calculation_sizes)
-        )
+        return BatchResultDescription(new_errors, self.calculation_done, self.counter_dict.copy())
 
 
 class FileType(Enum):
@@ -618,6 +617,19 @@ class FileData:
             return False, f"Sheet name {name} already in use"
         return True, ""
 
+    def remove_data_part(self, calculation: BaseCalculation):
+        if calculation.uuid in self.sheet_dict:
+            sheet_list = self.sheet_dict[calculation.uuid][1]
+            for sheet in sheet_list:
+                if sheet is None:
+                    continue
+                self.sheet_set.remove(sheet.name)
+            self.sheet_set.remove(calculation.sheet_name)
+            del self.sheet_dict[calculation.uuid]
+
+        if calculation.uuid in self.calculation_info:
+            del self.calculation_info[calculation.uuid]
+
     def add_data_part(self, calculation: BaseCalculation):
         """
         Add new calculation which result will be stored in handled file.
@@ -672,6 +684,8 @@ class FileData:
             [SheetData(name, header_list[i]) if name is not None else None for i, name in enumerate(sheet_list)],
             component_information,
         )
+        self.sheet_set.add(calculation.sheet_name)
+        self.sheet_set.update(sheet_list)
         self.calculation_info[calculation.uuid] = calculation.calculation_plan
 
     def wrote_data(self, uuid_id: uuid.UUID, data: ResponseData, ind: Optional[int] = None):
@@ -710,8 +724,7 @@ class FileData:
             for sheet in component_sheets:
                 if sheet is not None:
                     data.append(sheet.get_data_to_write())
-        segmentation_info = [x for x in self.calculation_info.values()]
-        self.wrote_queue.put((data, segmentation_info, self._error_info[:]))
+        self.wrote_queue.put((data, list(self.calculation_info.values()), self._error_info[:]))
 
     def wrote_data_to_file(self):
         """
@@ -736,12 +749,12 @@ class FileData:
                     try:
                         self.write_to_excel(file_path, data)
                         break
-                    except (PermissionError, OSError):
+                    except OSError:
                         base, ext = path.splitext(self.file_path)
                         file_path = f"{base}({i}){ext}"
                 if i == 100:  # pragma: no cover
                     raise PermissionError(f"Fail to write result excel {self.file_path}")
-            except Exception as e:  # pragma: no cover
+            except Exception as e:  # pragma: no cover   # pylint: disable=W0703
                 logging.error(f"[batch_backend] {e}")
                 self.error_queue.put(prepare_error_data(e))
             finally:
@@ -821,7 +834,7 @@ class DataWriter:
     """
 
     def __init__(self):
-        self.file_dict: Dict[str, FileData] = dict()
+        self.file_dict: Dict[str, FileData] = {}
 
     def is_empty_sheet(self, file_path: str, sheet_name: str) -> bool:
         """
@@ -846,6 +859,10 @@ class DataWriter:
             self.file_dict[calculation.measurement_file_path].add_data_part(calculation)
         else:
             self.file_dict[calculation.measurement_file_path] = FileData(calculation)
+
+    def remove_data_part(self, calculation: BaseCalculation):
+        if calculation.measurement_file_path in self.file_dict:
+            self.file_dict[calculation.measurement_file_path].remove_data_part(calculation)
 
     def add_result(
         self, data: ResponseData, calculation: BaseCalculation, ind: Optional[int] = None

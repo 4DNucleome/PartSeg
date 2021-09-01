@@ -43,5 +43,5 @@ class ExecuteFunctionThread(ProgressTread):
             else:
                 self.result = self.function(*self.args, **self.kwargs)
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=W0703
             self.error_signal.emit(e)

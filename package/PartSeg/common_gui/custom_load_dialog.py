@@ -32,14 +32,14 @@ class CustomLoadDialog(QFileDialog):
             self.setHistory(history)
 
     def accept(self):
-        selected_files = self.selectedFiles()
-        if len(selected_files) == 0:
+        selected_files = [x for x in self.selectedFiles() if self.fileMode == QFileDialog.Directory or isfile(x)]
+        if not selected_files:
             return
         if len(selected_files) == 1 and self.fileMode != QFileDialog.Directory and isdir(selected_files[0]):
             super().accept()
             return
 
-        self.files_list.extend([x for x in self.selectedFiles() if self.fileMode == QFileDialog.Directory or isfile(x)])
+        self.files_list.extend(selected_files)
         chosen_class: LoadBase = self.load_register[self.selectedNameFilter()]
         if len(self.files_list) < chosen_class.number_of_files():
             self.setNameFilters([chosen_class.get_name()])

@@ -860,7 +860,7 @@ class ComponentsNumber(MeasurementMethodBase):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(cls.text_info[0], per_component=PerComponent.No)
+        return super().get_starting_leaf().replace_(per_component=PerComponent.No)
 
     @classmethod
     def get_units(cls, ndim):
@@ -871,7 +871,7 @@ class MaximumPixelBrightness(MeasurementMethodBase):
     text_info = "Maximum pixel brightness", "Calculate maximum pixel brightness for current area"
 
     @staticmethod
-    def calculate_property(area_array, channel, **_):
+    def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
         if area_array.shape != channel.shape:  # pragma: no cover
             raise ValueError(f"channel ({channel.shape}) and mask ({area_array.shape}) do not fit each other")
         if np.any(area_array):
@@ -891,7 +891,7 @@ class MinimumPixelBrightness(MeasurementMethodBase):
     text_info = "Minimum pixel brightness", "Calculate minimum pixel brightness for current area"
 
     @staticmethod
-    def calculate_property(area_array, channel, **_):
+    def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
         if area_array.shape != channel.shape:  # pragma: no cover
             raise ValueError("channel and mask do not fit each other")
         if np.any(area_array):
@@ -1141,7 +1141,7 @@ class RimVolume(MeasurementMethodBase):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(name=cls.text_info[0], area=AreaType.Mask)
+        return super().get_starting_leaf().replace_(area=AreaType.Mask)
 
     @staticmethod
     def calculate_property(area_array, voxel_size, result_scalar, **kwargs):  # pylint: disable=W0221
@@ -1172,7 +1172,7 @@ class RimPixelBrightnessSum(MeasurementMethodBase):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(name=cls.text_info[0], area=AreaType.Mask)
+        return super().get_starting_leaf().replace_(area=AreaType.Mask)
 
     @staticmethod
     def calculate_property(channel, area_array, **kwargs):  # pylint: disable=W0221
@@ -1274,7 +1274,7 @@ class DistanceMaskROI(MeasurementMethodBase):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(name=cls.text_info[0], area=AreaType.Mask)
+        return super().get_starting_leaf().replace_(area=AreaType.Mask)
 
     @classmethod
     def get_units(cls, ndim):
@@ -1459,7 +1459,7 @@ class SplitOnPartVolume(MeasurementMethodBase):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(name=cls.text_info[0], area=AreaType.Mask)
+        return super().get_starting_leaf().replace_(area=AreaType.Mask)
 
     @staticmethod
     def area_type(area: AreaType):
@@ -1492,7 +1492,7 @@ class SplitOnPartPixelBrightnessSum(MeasurementMethodBase):
 
     @classmethod
     def get_starting_leaf(cls):
-        return Leaf(name=cls.text_info[0], area=AreaType.Mask)
+        return super().get_starting_leaf().replace_(area=AreaType.Mask)
 
     @staticmethod
     def area_type(area: AreaType):
@@ -1561,6 +1561,22 @@ class Haralick(MeasurementMethodBase):
         return haralick(data, distance=distance, ignore_zeros=True, return_mean=True)
 
 
+class ComponentBoundingBox(MeasurementMethodBase):
+    text_info = "Component Bounding Box", "bounding box as string"
+
+    @classmethod
+    def get_units(cls, ndim):
+        return "str"
+
+    @staticmethod
+    def calculate_property(bounds_info, _component_num, **kwargs):  # pylint: disable=W0221
+        return str(bounds_info[_component_num])
+
+    @classmethod
+    def get_starting_leaf(cls):
+        return super().get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes)
+
+
 def pixel_volume(spacing, result_scalar):
     return reduce((lambda x, y: x * y), [x * result_scalar for x in spacing])
 
@@ -1605,6 +1621,7 @@ MEASUREMENT_DICT = Register(
     Volume,
     Diameter,
     PixelBrightnessSum,
+    ComponentBoundingBox,
     ComponentsNumber,
     MaximumPixelBrightness,
     MinimumPixelBrightness,
