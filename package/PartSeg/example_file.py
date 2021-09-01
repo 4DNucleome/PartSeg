@@ -29,3 +29,11 @@ def show_in_merge(text):
     if 1 in data:
         return 2
     return 2
+
+
+def show_inline_if(text, x):
+    if len(text) < 10:
+        val = 2
+    else:
+        val = 4
+    return x + val
