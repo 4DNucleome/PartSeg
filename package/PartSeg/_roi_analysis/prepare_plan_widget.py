@@ -234,9 +234,7 @@ class FileMask(QWidget):
         if self.select_type.currentIndex() == 0:
             return self.first_text.text().strip() != ""
         if self.select_type.currentIndex() == 1:
-            return (
-                self.first_text.text().strip() != "" and self.second_text.text().strip() != ""
-            )  # pylint: disable=R1714
+            return "" not in {self.first_text.text().strip(), self.second_text.text().strip()}
 
         text = self.first_text.text().strip()
         return text != "" and os.path.exists(text) and os.path.isfile(text)
