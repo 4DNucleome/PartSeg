@@ -263,7 +263,7 @@ class FormWidget(QWidget):
         super().__init__()
         if start_values is None:
             start_values = {}
-        self.widgets_dict: typing.Dict[str, QtAlgorithmProperty] = dict()
+        self.widgets_dict: typing.Dict[str, QtAlgorithmProperty] = {}
         self.channels_chose: typing.List[typing.Union[ChannelComboBox, SubAlgorithmWidget]] = []
         layout = QFormLayout()
         layout.setContentsMargins(10, 0, 10, 0)

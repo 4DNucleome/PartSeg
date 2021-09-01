@@ -111,7 +111,7 @@ def do_calculation(file_info: Tuple[int, str], calculation: BaseCalculation) -> 
     index, file_path = file_info
     try:
         return index, calc.do_calculation(FileCalculation(file_path, calculation))
-    except Exception as e:
+    except Exception as e:  # pylint: disable=W0703
         return index, [prepare_error_data(e)]
 
 
@@ -724,8 +724,7 @@ class FileData:
             for sheet in component_sheets:
                 if sheet is not None:
                     data.append(sheet.get_data_to_write())
-        segmentation_info = [x for x in self.calculation_info.values()]
-        self.wrote_queue.put((data, segmentation_info, self._error_info[:]))
+        self.wrote_queue.put((data, list(self.calculation_info.values()), self._error_info[:]))
 
     def wrote_data_to_file(self):
         """
@@ -755,7 +754,7 @@ class FileData:
                         file_path = f"{base}({i}){ext}"
                 if i == 100:  # pragma: no cover
                     raise PermissionError(f"Fail to write result excel {self.file_path}")
-            except Exception as e:  # pragma: no cover
+            except Exception as e:  # pragma: no cover   # pylint: disable=W0703
                 logging.error(f"[batch_backend] {e}")
                 self.error_queue.put(prepare_error_data(e))
             finally:
@@ -835,7 +834,7 @@ class DataWriter:
     """
 
     def __init__(self):
-        self.file_dict: Dict[str, FileData] = dict()
+        self.file_dict: Dict[str, FileData] = {}
 
     def is_empty_sheet(self, file_path: str, sheet_name: str) -> bool:
         """

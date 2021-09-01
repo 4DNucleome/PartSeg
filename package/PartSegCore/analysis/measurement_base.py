@@ -61,7 +61,7 @@ class Leaf(BaseSerializableClass):
         ...
 
     name: str
-    dict: Dict = dict()
+    dict: Dict = {}
     power: float = 1.0
     area: Optional[AreaType] = None
     per_component: Optional[PerComponent] = None
