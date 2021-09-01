@@ -14,17 +14,16 @@ def show_if_else(text):
     text = text
     if text == "aaa":
         return 1
+    elif text == "bbb":
+        return 2
     else:
-        if text == "bbb":
-            return 2
-        else:
-            return 3
+        return 3
 
 
 def show_in_merge(text):
     a = [1, 2, 3]
     data = {a}
-    if text == "aaa" or text == "bbb":
+    if text in ["aaa", "bbb"]:
         return 1
     if 1 in data:
         return 2
@@ -32,8 +31,5 @@ def show_in_merge(text):
 
 
 def show_inline_if(text, x):
-    if len(text) < 10:
-        val = 2
-    else:
-        val = 4
+    val = 2 if len(text) < 10 else 4
     return x + val
