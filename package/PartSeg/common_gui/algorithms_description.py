@@ -162,9 +162,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
             res = self.value_type.get_object()
         else:
             raise ValueError(f"Unknown class: {self.value_type}")
-        tool_tip_text = ""
-        if self.help_text:
-            tool_tip_text = self.help_text
+        tool_tip_text = self.help_text or ""
         tool_tip_text += f" default value: {_pretty_print(self.default_value)}"
         res.setToolTip(tool_tip_text)
         return res
