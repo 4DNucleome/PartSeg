@@ -863,7 +863,7 @@ class MaximumPixelBrightness(MeasurementMethodBase):
     text_info = "Maximum pixel brightness", "Calculate maximum pixel brightness for current area"
 
     @staticmethod
-    def calculate_property(area_array, channel, **_):
+    def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
         if area_array.shape != channel.shape:  # pragma: no cover
             raise ValueError(f"channel ({channel.shape}) and mask ({area_array.shape}) do not fit each other")
         if np.any(area_array):
@@ -883,7 +883,7 @@ class MinimumPixelBrightness(MeasurementMethodBase):
     text_info = "Minimum pixel brightness", "Calculate minimum pixel brightness for current area"
 
     @staticmethod
-    def calculate_property(area_array, channel, **_):
+    def calculate_property(area_array, channel, **_):  # pylint: disable=W0221
         if area_array.shape != channel.shape:  # pragma: no cover
             raise ValueError("channel and mask do not fit each other")
         if np.any(area_array):

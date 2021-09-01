@@ -29,5 +29,5 @@ class ImageReaderThread(ProgressTread):
         try:
             self.image = self.reader.read(self.file_path, self.mask_path)
             self.image_read_finish.emit(self.image)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=W0703
             self.error_signal.emit(e)

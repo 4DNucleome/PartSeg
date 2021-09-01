@@ -504,7 +504,7 @@ class ImageView(QWidget):
                 name="ROI",
                 blending="translucent",
             )
-        image_info.roi._interpolation[3] = Interpolation3D.NEAREST
+        image_info.roi._interpolation[3] = Interpolation3D.NEAREST  # pylint: disable=W0212
 
     def update_roi_representation(self):
         self.remove_all_roi()

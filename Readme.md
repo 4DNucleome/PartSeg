@@ -11,6 +11,7 @@
 [![Requirements Status](https://requires.io/github/4DNucleome/PartSeg/requirements.svg?branch=develop)](https://requires.io/github/4DNucleome/PartSeg/requirements/?branch=master)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![codecov](https://codecov.io/gh/4DNucleome/PartSeg/branch/master/graph/badge.svg?token=nbAbkOAe1C)](https://codecov.io/gh/4DNucleome/PartSeg)
+[![DeepSource](https://deepsource.io/gh/4DNucleome/PartSeg.svg/?label=active+issues&show_trend=true&token=RuuHPIzqyqGaU-bKtOKPFWTg)](https://deepsource.io/gh/4DNucleome/PartSeg/?ref=repository-badge)
 
 PartSeg is a GUI and a library for segmentation algorithms.
 

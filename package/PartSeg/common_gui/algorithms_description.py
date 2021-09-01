@@ -162,9 +162,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
             res = self.value_type.get_object()
         else:
             raise ValueError(f"Unknown class: {self.value_type}")
-        tool_tip_text = ""
-        if self.help_text:
-            tool_tip_text = self.help_text
+        tool_tip_text = self.help_text or ""
         tool_tip_text += f" default value: {_pretty_print(self.default_value)}"
         res.setToolTip(tool_tip_text)
         return res
@@ -263,7 +261,7 @@ class FormWidget(QWidget):
         super().__init__()
         if start_values is None:
             start_values = {}
-        self.widgets_dict: typing.Dict[str, QtAlgorithmProperty] = dict()
+        self.widgets_dict: typing.Dict[str, QtAlgorithmProperty] = {}
         self.channels_chose: typing.List[typing.Union[ChannelComboBox, SubAlgorithmWidget]] = []
         layout = QFormLayout()
         layout.setContentsMargins(10, 0, 10, 0)

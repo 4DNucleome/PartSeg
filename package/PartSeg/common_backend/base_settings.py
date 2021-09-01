@@ -629,7 +629,7 @@ class BaseSettings(ViewSettings):
                 dump_string = json.dumps(el.values, cls=self.json_encoder_class, indent=2)
                 with open(os.path.join(folder_path, el.file_name), "w") as ff:
                     ff.write(dump_string)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=W0703
                 errors_list.append((e, os.path.join(folder_path, el.file_name)))
         if errors_list:
             print(errors_list, file=sys.stderr)
@@ -656,7 +656,7 @@ class BaseSettings(ViewSettings):
                     errors_list.append((file_path, data.filter_data()))
                     error = True
                 el.values.update(data)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=W0703
                 error = True
                 errors_list.append((file_path, e))
             finally:

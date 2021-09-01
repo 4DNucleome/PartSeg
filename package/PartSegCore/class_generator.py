@@ -9,13 +9,6 @@ import sys
 import typing
 from enum import Enum, EnumMeta
 
-_PY36 = sys.version_info[:2] >= (3, 6)
-
-if sys.version_info[:2] == (3, 6):
-    ForwardRef = typing._ForwardRef
-else:
-    ForwardRef = typing.ForwardRef
-
 # TODO read about dataclsss and maybe apply
 
 _class_template = """\
@@ -203,15 +196,15 @@ def add_classes(types_list, translate_dict, global_state):
                             translate_dict[type_] = type_str
                             continue
                     else:  # for python 3.7
-                        if type_._name is None:
+                        if type_._name is None:  # pylint: disable=W0212
                             type_str = str(type_.__origin__)
                         else:
-                            type_str = "typing." + str(type_._name)
+                            type_str = "typing." + str(type_._name)  # pylint: disable=W0212
                         type_str += "[" + ", ".join(translate_dict[x] for x in sub_types) + "]"
                         translate_dict[type_] = type_str
                         continue
 
-            if isinstance(type_, ForwardRef):
+            if isinstance(type_, typing.ForwardRef):
                 translate_dict[type_] = f"'{type_.__forward_arg__}'"
                 continue
             translate_dict[type_] = str(type_)
@@ -294,13 +287,13 @@ def _make_class(typename, types, defaults_dict, base_classes, readonly):
 
     result = global_state[typename]
     result._source = class_definition
-    result._field_defaults = defaults_dict
+    result._field_defaults = defaults_dict  # pylint: disable=W0212
     result.__annotations__ = types
     try:
         result.__signature__ = inspect.signature(result)
     except AttributeError:
         pass
-    result._field_types = collections.OrderedDict(types)
+    result._field_types = collections.OrderedDict(types)  # pylint: disable=W0212
     return result
 
 
@@ -339,7 +332,7 @@ class BaseMeta(type):
         else:
             old_names = ()
 
-        result = _make_class(name, types, defaults_dict, [x for x in bases], readonly)
+        result = _make_class(name, types, defaults_dict, list(bases), readonly)
         # nm_tpl.__new__.__annotations__ = collections.OrderedDict(types)
         # nm_tpl.__new__.__defaults__ = tuple(defaults)
         # nm_tpl._field_defaults = defaults_dict

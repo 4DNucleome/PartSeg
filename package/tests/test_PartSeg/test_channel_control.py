@@ -36,9 +36,8 @@ def test_color_combo_box(qtbot):
     box = ColorComboBox(0, starting_colors, dkt)
     box.show()
     qtbot.add_widget(box)
-    with qtbot.waitSignal(box.channel_visible_changed):
-        with qtbot.assertNotEmitted(box.clicked):
-            qtbot.mouseClick(box.check_box, Qt.LeftButton)
+    with qtbot.waitSignal(box.channel_visible_changed), qtbot.assertNotEmitted(box.clicked):
+        qtbot.mouseClick(box.check_box, Qt.LeftButton)
     with qtbot.waitSignal(box.clicked, timeout=1000):
         qtbot.mouseClick(box, Qt.LeftButton, pos=QPoint(5, 5))
     with qtbot.waitSignal(box.clicked):
