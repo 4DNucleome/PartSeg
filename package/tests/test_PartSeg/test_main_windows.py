@@ -3,7 +3,6 @@ import sys
 
 import napari
 import pytest
-import qtpy
 from qtpy.QtCore import QCoreApplication
 
 from PartSeg._launcher.main_window import MainWindow as LauncherMainWindow
@@ -19,7 +18,7 @@ def empty(*_):
     """To silent some functions"""
 
 
-pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
+pyside_skip = pytest.mark.skip  # if(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
 
 
 class TestAnalysisMainWindow:
