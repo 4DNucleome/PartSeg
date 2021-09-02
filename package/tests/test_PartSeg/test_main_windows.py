@@ -3,6 +3,7 @@ import sys
 
 import napari
 import pytest
+import qtpy
 from qtpy.QtCore import QCoreApplication
 
 from PartSeg._launcher.main_window import MainWindow as LauncherMainWindow
@@ -12,15 +13,20 @@ from PartSeg._roi_mask import main_window as mask_main_window
 from .utils import CI_BUILD, GITHUB_ACTIONS, TRAVIS
 
 napari_warnings = napari.__version__ == "0.3.4" and platform.system() == "Linux" and sys.version_info.minor == 8
+napari_error = napari.__version__.startswith("0.4.11")
 
 
 def empty(*_):
     """To silent some functions"""
 
 
-pyside_skip = pytest.mark.skip  # if(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
+if napari_error:
+    pyside_skip = pytest.mark.skip(reason="PySide2 problem")
+else:
+    pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
 
 
+@pytest.mark.forked
 class TestAnalysisMainWindow:
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="debug test fail")
     @pytest.mark.skipif(
@@ -37,6 +43,7 @@ class TestAnalysisMainWindow:
         main_window.advanced_window.close()
 
 
+@pytest.mark.forked
 class TestMaskMainWindow:
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
     @pyside_skip
@@ -46,6 +53,7 @@ class TestMaskMainWindow:
         qtbot.addWidget(main_window)
 
 
+@pytest.mark.forked
 class TestLauncherMainWindow:
     def test_opening(self, qtbot):
         main_window = LauncherMainWindow("Launcher")
