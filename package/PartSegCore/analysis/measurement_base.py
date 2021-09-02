@@ -1,13 +1,13 @@
 from abc import ABC
 from enum import Enum
-from typing import Any, Dict, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Set, Union
 
 import numpy as np
-from sympy import symbols
+from sympy import Symbol, symbols
 
 from PartSegImage.image import Spacing
 
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmDescribeNotFound
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmDescribeNotFound, AlgorithmProperty
 from ..channel_class import Channel
 from ..class_generator import BaseSerializableClass, enum_register
 from ..universal_const import Units
@@ -102,7 +102,7 @@ class Leaf(BaseSerializableClass):
                 arr.append("class not found")
         return "[" + ", ".join(arr) + "]"
 
-    def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]):  # pragma: no cover
+    def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:  # pragma: no cover
         resp = self.name
         if self.area is not None:
             resp = str(self.area) + " " + resp
@@ -141,7 +141,7 @@ class Leaf(BaseSerializableClass):
             resp += f" to the power {self.power}"
         return resp
 
-    def get_unit(self, ndim):
+    def get_unit(self, ndim) -> Symbol:
         from PartSegCore.analysis import MEASUREMENT_DICT
 
         method = MEASUREMENT_DICT[self.name]
@@ -149,11 +149,11 @@ class Leaf(BaseSerializableClass):
             return method.get_units(ndim) ** self.power
         return method.get_units(ndim)
 
-    def is_per_component(self):
+    def is_per_component(self) -> bool:
         return self.per_component == PerComponent.Yes
 
 
-def replace(self, **kwargs):
+def replace(self, **kwargs) -> Leaf:
     for key in list(kwargs.keys()):
         if key == "power":
             continue
@@ -188,7 +188,7 @@ class Node(BaseSerializableClass):
         right_text = "(" + str(self.right) + ")" if isinstance(self.right, Node) else str(self.right)
         return left_text + self.op + right_text
 
-    def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]):  # pragma: no cover
+    def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:  # pragma: no cover
         left_text = (
             "(" + self.left.pretty_print(measurement_dict) + ")"
             if isinstance(self.left, Node)
@@ -201,12 +201,12 @@ class Node(BaseSerializableClass):
         )
         return left_text + self.op + right_text
 
-    def get_unit(self, ndim):
+    def get_unit(self, ndim) -> Symbol:
         if self.op == "/":
             return self.left.get_unit(ndim) / self.right.get_unit(ndim)
         raise ValueError(f"Unknown operator '{self.op}'")
 
-    def is_per_component(self):
+    def is_per_component(self) -> bool:
         return self.left.is_per_component() or self.right.is_per_component()
 
 
@@ -223,7 +223,7 @@ class MeasurementEntry(BaseSerializableClass):
     name: str
     calculation_tree: Union[Node, Leaf]
 
-    def get_unit(self, unit: Units, ndim):
+    def get_unit(self, unit: Units, ndim) -> str:
         return str(self.calculation_tree.get_unit(ndim)).format(str(unit))
 
     def get_channel_num(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> Set[Channel]:
@@ -248,23 +248,23 @@ class MeasurementMethodBase(AlgorithmDescribeBase, ABC):
     ]
 
     @classmethod
-    def get_name(cls):
+    def get_name(cls) -> str:
         return str(cls.get_starting_leaf().name)
 
     @classmethod
-    def get_description(cls):
+    def get_description(cls) -> str:
         """Measurement long description"""
         if isinstance(cls.text_info, str):
             return ""
         return cls.text_info[1]
 
     @classmethod
-    def is_component(cls):
+    def is_component(cls) -> bool:
         """Return information if Need information about components"""
         return False
 
     @classmethod
-    def get_fields(cls):
+    def get_fields(cls) -> List[Union[str, AlgorithmProperty]]:
         """Additional fields needed by algorithm. like radius of dilation"""
         return []
 
