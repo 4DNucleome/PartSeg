@@ -100,15 +100,21 @@ class RegisterClass(typing.Generic[T]):
     def register_class(self, cls: T, old_name=None):
         path = extract_type_info(cls)[0]
         name = cls.__name__
+        old_cls = None
         if path in self.exact_class_register:
-            raise ValueError("class already registered")
+            old_cls = self.exact_class_register[path]
+            self.predict_class_register[name].remove(old_cls)
         self.exact_class_register[path] = cls
         self.predict_class_register[name].append(cls)
         if old_name is not None:
             if isinstance(old_name, str):
+                if old_cls is not None:
+                    self.predict_class_register[old_name].remove(old_cls)
                 self.predict_class_register[old_name].append(cls)
             elif isinstance(old_name, typing.Iterable):
                 for ol in old_name:
+                    if old_cls is not None:
+                        self.predict_class_register[ol].remove(old_cls)
                     self.predict_class_register[ol].append(cls)
 
     def get_class(self, path: str) -> T:
