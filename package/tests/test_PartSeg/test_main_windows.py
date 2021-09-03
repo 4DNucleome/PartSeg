@@ -26,7 +26,6 @@ else:
     pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2", reason="PySide2 problem")
 
 
-@pytest.mark.forked
 class TestAnalysisMainWindow:
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="debug test fail")
     @pytest.mark.skipif(
@@ -43,7 +42,6 @@ class TestAnalysisMainWindow:
         main_window.advanced_window.close()
 
 
-@pytest.mark.forked
 class TestMaskMainWindow:
     # @pytest.mark.skipif((platform.system() == "Linux") and CI_BUILD, reason="vispy problem")
     @pyside_skip
@@ -53,7 +51,6 @@ class TestMaskMainWindow:
         qtbot.addWidget(main_window)
 
 
-@pytest.mark.forked
 class TestLauncherMainWindow:
     def test_opening(self, qtbot):
         main_window = LauncherMainWindow("Launcher")
