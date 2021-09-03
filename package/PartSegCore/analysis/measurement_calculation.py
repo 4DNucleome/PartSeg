@@ -1424,7 +1424,7 @@ class ROINeighbourhodROI(DistanceMaskROI):
         )
         dilated.reshape(area_array.shape)
 
-        components = set(np.unique(result.roi[dilated]))
+        components = set(np.unique(result.roi[dilated > 0]))
         if 0 in components:
             components.remove(0)
 
