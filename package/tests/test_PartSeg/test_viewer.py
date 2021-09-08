@@ -67,10 +67,10 @@ class TestResultImageView:
 @pyside_skip
 @pytest.mark.skipif((platform.system() == "Windows") and CI_BUILD, reason="glBindFramebuffer with no OpenGL")
 class TestNapariViewer:
-    def test_base(self, image, analysis_segmentation2, tmp_path):
+    def test_base(self, image, analysis_segmentation2, tmp_path, qtbot, make_napari_viewer):
         settings = BaseSettings(tmp_path)
         settings.image = image
-        viewer = Viewer(settings, "")
+        viewer = make_napari_viewer(settings, "", ViewerClass=Viewer)
         viewer.create_initial_layers(True, True, True, True)
         assert len(viewer.layers) == 2
         viewer.create_initial_layers(True, True, True, True)
@@ -84,12 +84,15 @@ class TestNapariViewer:
         settings.mask = analysis_segmentation2.mask
         viewer.create_initial_layers(True, True, True, True)
         assert len(viewer.layers) == 3
-        viewer.close()
+        # viewer.close()
+        # # viewer.deleteLater()
+        # qtbot.wait(100)
 
     def test_points(self, image, tmp_path, qtbot):
         settings = BaseSettings(tmp_path)
         settings.image = image
         viewer = Viewer(settings, "")
+        viewer.show()
         viewer.create_initial_layers(True, True, True, True)
         assert len(viewer.layers) == 2
         points = np.array([[0, 1, 1, 1], [0, 7, 10, 10]])

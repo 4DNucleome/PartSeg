@@ -905,6 +905,8 @@ class MainWindow(BaseMainWindow):
         help_menu = menu_bar.addMenu("Help")
         help_menu.addAction("State directory").triggered.connect(self.show_settings_directory)
         help_menu.addAction("About").triggered.connect(self.show_about_dialog)
+        self.setObjectName("ROI Mask Main Window")
+        self.image_view.setObjectName("Mask image viewer")
 
         layout = QVBoxLayout()
         layout.addWidget(self.main_menu)
@@ -950,6 +952,7 @@ class MainWindow(BaseMainWindow):
             del self.main_menu.measurements_window
         del self.main_menu.segmentation_dialog
         del self.options_panel.algorithm_options.show_parameters_widget
+        self.image_view.close()
         self.settings.dump()
         super().closeEvent(event)
 

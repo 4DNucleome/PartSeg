@@ -201,6 +201,7 @@ class ImageView(QWidget):
         self.roll_dim_button.customContextMenuRequested.connect(self._dim_order_menu)
         self.mask_chk = QCheckBox()
         self.mask_label = QLabel("Mask:")
+        self.viewer_widget.setObjectName("Viewer widget")
 
         self.btn_layout = QHBoxLayout()
         self.btn_layout.addWidget(self.reset_view_button)
@@ -733,6 +734,11 @@ class ImageView(QWidget):
     def set_theme(self, theme: str):
         self.viewer.theme = theme
 
+    def close(self) -> bool:
+        self.viewer.layers.clear()
+        self.viewer_widget.close()
+        return super().close()
+
     def closeEvent(self, event):
         for worker in self.worker_list:
             worker.quit()
@@ -758,18 +764,36 @@ class ImageView(QWidget):
         return super().event(event)
 
 
+viewer_weakref_list = []
+
+
 class NapariQtViewer(QtViewer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        import weakref
+
+        viewer_weakref_list.append(weakref.ref(self))
+
     def dragEnterEvent(self, event):  # pylint: disable=R0201
         """
         ignore napari reading mechanism
         """
         event.ignore()
 
+    def deleteLater(self) -> None:
+        self.dockConsole.deleteLater()
+        self.dockLayerList.deleteLater()
+        self.dockLayerControls.deleteLater()
+        if hasattr(self, "activityDock"):
+            self.activityDock.deleteLater()
+        super().deleteLater()
+
     def close(self):
         self.dockConsole.deleteLater()
         self.dockLayerList.deleteLater()
         self.dockLayerControls.deleteLater()
-        self.activityDock.deleteLater()
+        if hasattr(self, "activityDock"):
+            self.activityDock.deleteLater()
         return super().close()
 
     def closeEvent(self, event):

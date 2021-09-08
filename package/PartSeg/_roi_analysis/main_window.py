@@ -583,6 +583,11 @@ class MainWindow(BaseMainWindow):
         self.multiple_files = MultipleFileWidget(self.settings, load_functions.load_dict, True)
         self.multiple_files.setVisible(self.settings.get("multiple_files_widget", False))
 
+        self.setObjectName("ROI Analysis Main Window")
+        self.raw_image.setObjectName("Raw image viewer")
+        self.result_image.setObjectName("Result image viewer")
+        self.left_stack.setObjectName("Stack image")
+
         if initial_image is None:
             reader = TiffImageReader()
             im = reader.read(self.initial_image_path)
@@ -675,6 +680,8 @@ class MainWindow(BaseMainWindow):
                     return
             self.batch_window.close()
         self.advanced_window.close()
+        self.raw_image.close()
+        self.result_image.close()
         self.settings.dump()
         del self.batch_window
         del self.advanced_window

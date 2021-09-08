@@ -1,3 +1,5 @@
+import gc
+
 import pytest
 from qtpy.QtWidgets import QApplication
 
@@ -108,6 +110,12 @@ try:
                 pass
         except ImportError:
             yield
+
+    @pytest.fixture(autouse=True)
+    def explicit_memory_clean():
+        yield
+        gc.collect()
+        assert gc.collect() == 0
 
     @pytest.fixture
     def leaked_widgets():

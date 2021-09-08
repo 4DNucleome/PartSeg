@@ -248,3 +248,11 @@ class Viewer(NViewer):
             self._sync_widget.sync_additional()
         if points:
             self._sync_widget.sync_points()
+
+    def close(self):
+        self.window._qt_window.hide()
+        super().close()
+
+    def deleteLater(self):
+        # self.window._qt_window.deleteLater()
+        self.window.qt_viewer.deleteLater()
