@@ -12,6 +12,7 @@ from typing import (
     MutableMapping,
     NamedTuple,
     Optional,
+    Sequence,
     Set,
     Tuple,
     Union,
@@ -1315,13 +1316,13 @@ class DistanceROIROI(DistanceMaskROI):
     @classmethod
     def calculate_property(
         cls,
-        channel,
-        image,
-        area_array,
-        profile,
-        mask,
-        voxel_size,
-        result_scalar,
+        channel: np.ndarray,
+        image: Image,
+        area_array: np.ndarray,
+        profile: ROIExtractionProfile,
+        mask: Optional[np.ndarray],
+        voxel_size: Sequence[float],
+        result_scalar: float,
         distance_from_new_roi: DistancePoint,
         distance_to_roi: DistancePoint,
         **kwargs,
@@ -1347,11 +1348,14 @@ class DistanceROIROI(DistanceMaskROI):
         except KeyError:
             result, _ = calculate_segmentation_step(profile, image, mask)
 
+        if np.any(result.roi[area_array > 0]):
+            return 0
+
         return super().calculate_property(
             channel,
             area_array,
             result.roi,
-            voxel_size,
+            tuple(voxel_size),
             result_scalar,
             distance_from_mask=distance_from_new_roi,
             distance_to_segmentation=distance_to_roi,
@@ -1362,7 +1366,7 @@ class DistanceROIROI(DistanceMaskROI):
         return True
 
 
-class ROINeighbourhodROI(DistanceMaskROI):
+class ROINeighbourhoodROI(DistanceMaskROI):
     text_info = "Neighbourhood new ROI presence", "Count how many of new roi are present in neighbourhood of new ROI"
 
     @classmethod
@@ -1388,13 +1392,13 @@ class ROINeighbourhodROI(DistanceMaskROI):
     @classmethod
     def calculate_property(
         cls,
-        image,
-        area_array,
-        profile,
-        mask,
+        image: Image,
+        area_array: np.ndarray,
+        profile: ROIExtractionProfile,
+        mask: Optional[np.ndarray],
         voxel_size,
-        distance,
-        units,
+        distance: float,
+        units: Units,
         **kwargs,
     ):  # pylint: disable=W0221
         try:
@@ -1413,7 +1417,7 @@ class ROINeighbourhodROI(DistanceMaskROI):
                 kwargs["help_dict"][hash_name] = result
         except KeyError:
             result, _ = calculate_segmentation_step(profile, image, mask)
-
+        area_array = image.fit_array_to_image(area_array)
         units_scalar = UNIT_SCALE[units.value]
         final_radius = [int((distance / units_scalar) / x) for x in reversed(voxel_size)]
 
@@ -1422,9 +1426,10 @@ class ROINeighbourhodROI(DistanceMaskROI):
                 SimpleITK.GetImageFromArray((area_array > 0).astype(np.uint8).squeeze()), final_radius
             )
         )
-        dilated.reshape(area_array.shape)
+        dilated = dilated.reshape(area_array.shape)
+        roi = image.fit_array_to_image(result.roi)
 
-        components = set(np.unique(result.roi[dilated > 0]))
+        components = set(np.unique(roi[dilated > 0]))
         if 0 in components:
             components.remove(0)
 
@@ -1637,7 +1642,7 @@ MEASUREMENT_DICT = Register(
     Surface,
     RimVolume,
     RimPixelBrightnessSum,
-    ROINeighbourhodROI,
+    ROINeighbourhoodROI,
     DistanceMaskROI,
     DistanceROIROI,
     SplitOnPartVolume,

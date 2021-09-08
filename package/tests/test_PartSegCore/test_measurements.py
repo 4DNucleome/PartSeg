@@ -34,6 +34,7 @@ from PartSegCore.analysis.measurement_calculation import (
     PixelBrightnessSum,
     RimPixelBrightnessSum,
     RimVolume,
+    ROINeighbourhoodROI,
     SecondPrincipalAxisLength,
     Sphericity,
     SplitOnPartPixelBrightnessSum,
@@ -2042,6 +2043,21 @@ class TestDistanceROIROI:
             distance_to_roi=roi_dist,
         )
         assert res > 0
+        data[1, 3:-3, 3:-3, 3:-13] = 5
+        image = Image(data, image_spacing=(1, 1, 1), axes_order="CZYX")
+        roi = (data[0] > 1).astype(np.uint8)
+        res = DistanceROIROI.calculate_property(
+            channel=data[2],
+            image=image,
+            area_array=roi,
+            profile=roi_to_roi_extract,
+            mask=None,
+            voxel_size=image.voxel_size,
+            result_scalar=1,
+            distance_from_new_roi=new_roi_dist,
+            distance_to_roi=roi_dist,
+        )
+        assert res == 0
 
     def test_base_2d(self, roi_dist, new_roi_dist, roi_to_roi_extract):
         data = np.zeros((3, 10, 20), dtype=np.uint8)
@@ -2062,6 +2078,60 @@ class TestDistanceROIROI:
             distance_to_roi=roi_dist,
         )
         assert res > 0
+
+
+class TestROINeighbourhoodROI:
+    def test_base(self, roi_to_roi_extract):
+        data = np.zeros((3, 10, 10, 20), dtype=np.uint8)
+        data[0, 2:-2, 2:-2, 2:-12] = 5
+        data[1, 2:-2, 2:-2, 12:-2] = 5
+        data[2, 2:-2, 2:-2, 2:-2] = 5
+        image = Image(data, image_spacing=(100 * (10 ** -9),) * 3, axes_order="CZYX")
+        roi = (data[0] > 1).astype(np.uint8)
+        kwargs = {
+            "image": image,
+            "area_array": roi,
+            "profile": roi_to_roi_extract,
+            "mask": None,
+            "voxel_size": image.voxel_size,
+            "distance": 100,
+            "units": Units.nm,
+        }
+        assert ROINeighbourhoodROI.calculate_property(**kwargs) == 0
+        kwargs["distance"] = 1000
+        assert ROINeighbourhoodROI.calculate_property(**kwargs) == 1
+        data[1, 3:-3, 3:-3, 3:10] = 5
+        image = Image(data, image_spacing=(100 * (10 ** -9),) * 3, axes_order="CZYX")
+        kwargs["image"] = image
+        assert ROINeighbourhoodROI.calculate_property(**kwargs) == 2
+        kwargs["distance"] = 100
+        assert ROINeighbourhoodROI.calculate_property(**kwargs) == 1
+
+    def test_base2d(self, roi_to_roi_extract):
+        data = np.zeros((3, 10, 20), dtype=np.uint8)
+        data[0, 2:-2, 2:-12] = 5
+        data[1, 2:-2, 12:-2] = 5
+        data[2, 2:-2, 2:-2] = 5
+        image = Image(data, image_spacing=(100 * (10 ** -9),) * 2, axes_order="CYX")
+        roi = (data[0:1] > 1).astype(np.uint8)
+        kwargs = {
+            "image": image,
+            "area_array": roi,
+            "profile": roi_to_roi_extract,
+            "mask": None,
+            "voxel_size": image.voxel_size,
+            "distance": 100,
+            "units": Units.nm,
+        }
+        assert ROINeighbourhoodROI.calculate_property(**kwargs) == 0
+        kwargs["distance"] = 1000
+        assert ROINeighbourhoodROI.calculate_property(**kwargs) == 1
+        data[1, 3:-3, 3:10] = 5
+        image = Image(data, image_spacing=(100 * (10 ** -9),) * 2, axes_order="CYX")
+        kwargs["image"] = image
+        assert ROINeighbourhoodROI.calculate_property(**kwargs) == 2
+        kwargs["distance"] = 100
+        assert ROINeighbourhoodROI.calculate_property(**kwargs) == 1
 
 
 @pytest.mark.parametrize("method", MEASUREMENT_DICT.values())
