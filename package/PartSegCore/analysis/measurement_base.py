@@ -92,26 +92,32 @@ class Leaf(BaseSerializableClass):
         arr = []
         if self.channel is not None and self.channel >= 0:
             arr.append(f"channel={self.channel+1}")
-        if len(self.dict) > 0:
-            try:
-                measurement_method = measurement_dict[self.name]
-                fields_dict = measurement_method.get_fields_dict()
-                for k, v in self.dict.items():
-                    arr.append(f"{fields_dict[k].user_name}={v}")
-            except KeyError:
-                arr.append("class not found")
+        if self.name in measurement_dict:
+            measurement_method = measurement_dict[self.name]
+            fields_dict = measurement_method.get_fields_dict()
+            for k, v in self.dict.items():
+                arr.append(f"{fields_dict[k].user_name}={v}")
+        else:
+            for k, v in self.dict.items():
+                arr.append(f"{k.replace('_', ' ')}={v}")
         return "[" + ", ".join(arr) + "]"
 
-    def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:  # pragma: no cover
-        resp = self.name
-        if self.area is not None:
-            resp = str(self.area) + " " + resp
+    def _plugin_info(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:
+        if self.name not in measurement_dict:
+            return ""
         measurement_method = measurement_dict[self.name]
         if (
             hasattr(measurement_method, "__module__")
             and measurement_method.__module__.split(".", 1)[0] != "PartSegCore"
         ):
-            resp = f"[{measurement_method.__module__.split('.', 1)[0]}] " + resp
+            return f"[{measurement_method.__module__.split('.', 1)[0]}] "
+        return ""
+
+    def pretty_print(self, measurement_dict: Dict[str, "MeasurementMethodBase"]) -> str:  # pragma: no cover
+        resp = self.name
+        if self.area is not None:
+            resp = str(self.area) + " " + resp
+        resp = self._plugin_info(measurement_dict) + resp
         if self.per_component is not None:
             if self.per_component == PerComponent.Yes:
                 resp += " per component "
@@ -123,23 +129,7 @@ class Leaf(BaseSerializableClass):
         return resp
 
     def __str__(self):  # pragma: no cover
-        resp = self.name
-        if self.area is not None:
-            resp = str(self.area) + " " + resp
-        if self.per_component is not None and self.per_component == PerComponent.Yes:
-            resp += " per component "
-        if len(self.dict) != 0 or self.channel is not None:
-            resp += "["
-            arr = []
-            if self.channel is not None and self.channel >= 0:
-                arr.append(f"channel={self.channel}")
-            for k, v in self.dict.items():
-                arr.append(f"{k.replace('_', ' ')}={v}")
-            resp += ", ".join(arr)
-            resp += "]"
-        if self.power != 1.0:
-            resp += f" to the power {self.power}"
-        return resp
+        return self.pretty_print({})
 
     def get_unit(self, ndim) -> Symbol:
         from PartSegCore.analysis import MEASUREMENT_DICT
