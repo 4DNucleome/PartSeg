@@ -1,4 +1,5 @@
 import os
+import sre_constants
 from functools import partial
 from glob import glob
 from pathlib import Path
@@ -145,17 +146,22 @@ class AddFiles(QWidget):
             event.acceptProposedAction()
 
     def dropEvent(self, event: QDropEvent):
-        files_list = event.mimeData().text().split()
+        files_list = event.mimeData().text().split("\n")
         self.parse_drop_file_list(files_list)
 
     def parse_drop_file_list(self, files_list):
         res_list = []
         base_path = self.paths_input.text()
+        is_broken_path = "*" in base_path or not os.path.isdir(base_path)
+
         for file_path in files_list:
             if os.path.isabs(file_path):
                 res_list.append(file_path)
+            elif is_broken_path:
+                QMessageBox.warning(self, "Not proper path", f"Current path {base_path} is not a proper directory.")
+                return
             else:
-                res_list.append(os.path.join(base_path, file_path))
+                res_list.append(os.path.join(base_path, file_path.strip()))
         missed_files = [x for x in res_list if not os.path.exists(x)]
         if missed_files:
             if len(missed_files) > 6:
@@ -170,7 +176,12 @@ class AddFiles(QWidget):
             self.update_files_list(res_list)
 
     def find_all(self):
-        paths = glob(str(self.paths_input.text()))
+        try:
+            paths = glob(str(self.paths_input.text()))
+        except sre_constants.error as e:
+            QMessageBox().warning(self, "Bad path", f"During search of files an error '{e.msg}` occurred")
+            return
+
         paths = sorted(x for x in (set(paths) - self.files_to_proceed) if not os.path.isdir(x))
         if len(paths) > 0:
             self.update_files_list(paths)

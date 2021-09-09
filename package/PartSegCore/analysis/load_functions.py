@@ -377,6 +377,7 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
                 "split on part pixel brightness sum": "distance splitting pixel brightness sum",
                 "Rim Volume": "rim volume",
                 "Rim Pixel Brightness Sum": "rim pixel brightness sum",
+                "segmentation distance": "ROI distance",
             }
 
             if data.name in replace_name_dict:

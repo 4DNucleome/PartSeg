@@ -103,7 +103,7 @@ def report_empty_fun(_x, _y):  # pragma: no cover
     pass
 
 
-class SegmentationAlgorithm(AlgorithmDescribeBase, ABC):
+class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
     """
     Base class for all segmentation algorithm.
 
@@ -254,3 +254,6 @@ class SegmentationLimitException(Exception):
 
 class SegmentationException(Exception):
     pass
+
+
+SegmentationAlgorithm = ROIExtractionAlgorithm  # rename backward compatibility

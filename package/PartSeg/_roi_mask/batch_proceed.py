@@ -13,7 +13,7 @@ from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 from PartSegCore.mask.io_functions import LoadROIImage, LoadStackImage, MaskProjectTuple, SaveROI
 from PartSegCore.segmentation import StackAlgorithm
-from PartSegCore.segmentation.algorithm_base import SegmentationAlgorithm
+from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm
 
 if sys.version_info.minor == 6:
     SegmentationTupleWrapper = object
@@ -33,7 +33,7 @@ class BatchProceed(QThread):
     range_signal = Signal(int, int)
     execution_done = Signal()
     multiple_result = Signal(SegmentationTupleWrapper)
-    algorithm: SegmentationAlgorithm
+    algorithm: ROIExtractionAlgorithm
 
     def __init__(self):
         super().__init__()

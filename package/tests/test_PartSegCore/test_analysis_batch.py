@@ -587,6 +587,28 @@ class TestCalculationProcess:
         assert isinstance(res[0], ResponseData)
 
     @pytest.mark.filterwarnings("ignore:This method will be removed")
+    def test_full_pipeline_component_split_no_process(self, tmpdir, data_test_dir, monkeypatch):
+        monkeypatch.setattr(batch_backend, "CalculationProcess", MockCalculationProcess)
+        plan = self.create_calculation_plan3()
+        file_pattern = os.path.join(data_test_dir, "stack1_components", "stack1_component*[0-9].tif")
+        file_paths = sorted(glob(file_pattern))
+        assert os.path.basename(file_paths[0]) == "stack1_component1.tif"
+        calc = Calculation(
+            file_paths,
+            base_prefix=data_test_dir,
+            result_prefix=data_test_dir,
+            measurement_file_path=os.path.join(tmpdir, "test.xlsx"),
+            sheet_name="Sheet1",
+            calculation_plan=plan,
+            voxel_size=(1, 1, 1),
+        )
+        calc_process = CalculationProcess()
+        for file_path in file_paths:
+            res = calc_process.do_calculation(FileCalculation(file_path, calc))
+            assert isinstance(res, list)
+            assert isinstance(res[0], ResponseData)
+
+    @pytest.mark.filterwarnings("ignore:This method will be removed")
     def test_full_pipeline_component_split(self, tmpdir, data_test_dir):
         plan = self.create_calculation_plan3()
         file_pattern = os.path.join(data_test_dir, "stack1_components", "stack1_component*[0-9].tif")

@@ -15,9 +15,9 @@ class SaveProperty(typing.NamedTuple):
 
 
 class FormDialog(QDialog):
-    def __init__(self, fields, values=None, image=None):
+    def __init__(self, fields, values=None, image=None, settings=None):
         super().__init__()
-        self.widget = FormWidget(fields)
+        self.widget = FormWidget(fields, settings=settings)
         if values is not None:
             self.widget.set_values(values)
         if image is not None:

@@ -117,6 +117,7 @@ class CustomParser(argparse.ArgumentParser):
 def _setup_sentry():
     sentry_sdk.utils.MAX_STRING_LENGTH = 10 ** 4
     sentry_sdk.serializer.safe_repr = safe_repr
+    sentry_sdk.serializer.MAX_DATABAG_BREADTH = 100
     sentry_sdk.init(
         "https://d4118280b73d4ee3a0222d0b17637687@sentry.io/1309302",
         release=f"PartSeg@{PartSeg.__version__}",

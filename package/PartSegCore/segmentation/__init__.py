@@ -4,7 +4,7 @@ This module contains roi_extraction algorithms
 import os
 import sys
 
-from .algorithm_base import ROIExtractionResult, SegmentationAlgorithm
+from .algorithm_base import ROIExtractionAlgorithm, ROIExtractionResult
 from .noise_filtering import NoiseFilteringBase
 from .restartable_segmentation_algorithms import RestartableAlgorithm
 from .segmentation_algorithm import StackAlgorithm
@@ -12,7 +12,7 @@ from .threshold import BaseThreshold
 from .watershed import BaseWatershed
 
 __all__ = [
-    "SegmentationAlgorithm",
+    "ROIExtractionAlgorithm",
     "BaseWatershed",
     "NoiseFilteringBase",
     "BaseThreshold",

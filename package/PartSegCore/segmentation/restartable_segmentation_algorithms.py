@@ -17,7 +17,7 @@ from ..mask_partition_utils import MaskDistanceSplit as MaskDistanceSplitBase
 from ..project_info import AdditionalLayerDescription
 from ..universal_const import Units
 from ..utils import bisect
-from .algorithm_base import ROIExtractionResult, SegmentationAlgorithm, SegmentationLimitException
+from .algorithm_base import ROIExtractionAlgorithm, ROIExtractionResult, SegmentationLimitException
 from .mu_mid_point import BaseMuMid, mu_mid_dict
 from .noise_filtering import noise_filtering_dict
 from .threshold import BaseThreshold, double_threshold_dict, threshold_dict
@@ -28,7 +28,7 @@ def blank_operator(_x, _y):
     raise NotImplementedError()
 
 
-class RestartableAlgorithm(SegmentationAlgorithm, ABC):
+class RestartableAlgorithm(ROIExtractionAlgorithm, ABC):
     """
     Base class for restartable segmentation algorithm. The idea is to store two copies
     of algorithm parameters and base on difference check from which point restart the calculation.
