@@ -670,17 +670,17 @@ class CreatePlan(QWidget):
     def add_segmentation(self):
         if self.segment_stack.currentIndex() == 0:
             text = str(self.segment_profile.currentItem().text())
-            if text not in self.settings.segmentation_profiles:
+            if text not in self.settings.roi_profiles:
                 self.refresh_all_profiles()
                 return
-            profile = self.settings.segmentation_profiles[text]
+            profile = self.settings.roi_profiles[text]
             if self.update_element_chk.isChecked():
                 self.calculation_plan.replace_step(profile)
             else:
                 self.calculation_plan.add_step(profile)
         else:  # self.segment_stack.currentIndex() == 1
             text = self.pipeline_profile.currentItem().text()
-            segmentation_pipeline = self.settings.segmentation_pipelines[text]
+            segmentation_pipeline = self.settings.roi_pipelines[text]
             pos = self.calculation_plan.current_pos[:]
             old_pos = self.calculation_plan.current_pos[:]
             for el in segmentation_pipeline.mask_history:
@@ -800,8 +800,8 @@ class CreatePlan(QWidget):
 
     def refresh_all_profiles(self):
         new_measurements = list(sorted(self.settings.measurement_profiles.keys()))
-        new_segment = list(sorted(self.settings.segmentation_profiles.keys()))
-        new_pipelines = list(sorted(self.settings.segmentation_pipelines.keys()))
+        new_segment = list(sorted(self.settings.roi_profiles.keys()))
+        new_pipelines = list(sorted(self.settings.roi_pipelines.keys()))
         measurement_index = self.get_index(self.measurements_list.currentItem(), new_measurements)
         segment_index = self.get_index(self.segment_profile.currentItem(), new_segment)
         pipeline_index = self.get_index(self.pipeline_profile.currentItem(), new_pipelines)
@@ -844,14 +844,14 @@ class CreatePlan(QWidget):
                     text = str(self.segment_profile.currentItem().text())
                 else:
                     return
-            profile = self.settings.segmentation_profiles[text]
+            profile = self.settings.roi_profiles[text]
         else:
             if text is None:
                 if self.pipeline_profile.currentItem() is not None:
                     text = str(self.pipeline_profile.currentItem().text())
                 else:
                     return
-            profile = self.settings.segmentation_pipelines[text]
+            profile = self.settings.roi_pipelines[text]
         self.information.setText(profile.pretty_print(analysis_algorithm_dict))
 
     def show_segment(self):

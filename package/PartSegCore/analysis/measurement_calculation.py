@@ -12,6 +12,7 @@ from typing import (
     MutableMapping,
     NamedTuple,
     Optional,
+    Sequence,
     Set,
     Tuple,
     Union,
@@ -24,15 +25,17 @@ from mahotas.features import haralick
 from scipy.spatial.distance import cdist
 from sympy import symbols
 
+from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
 from PartSegImage import Image
 
 from .. import autofit as af
-from ..algorithm_describe_base import AlgorithmProperty, Register
+from ..algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
 from ..channel_class import Channel
 from ..class_generator import enum_register
 from ..mask_partition_utils import BorderRim, MaskDistanceSplit
 from ..roi_info import ROIInfo
 from ..universal_const import UNIT_SCALE, Units
+from .calculate_pipeline import calculate_segmentation_step
 from .measurement_base import AreaType, Leaf, MeasurementEntry, MeasurementMethodBase, Node, PerComponent
 
 # TODO change image to channel in signature of measurement calculate_property
@@ -352,11 +355,20 @@ class MeasurementProfile:
         kw["_component_num"] = NO_COMPONENT
         return kw
 
-    def _clip_arrays(self, kw, bounds, component_index):
+    def _clip_arrays(self, kw, node: Leaf, method: MeasurementMethodBase, component_index: int):
+        bounds = tuple(kw["bounds_info"][component_index].get_slices(margin=1))
+        if node.area != AreaType.ROI or method.need_full_data():
+            bounds = tuple(slice(None, None) for _ in bounds)
         kw2 = kw.copy()
         kw2["_component_num"] = component_index
 
         kw2["area_array"] = kw["area_array"][bounds] == component_index
+        im_bounds = list(bounds)
+        image: Image = kw["image"]
+        im_bounds.insert(image.time_pos if image.time_pos < image.channel_pos else image.time_pos - 1, slice(None))
+        im_mask = image.mask[tuple(im_bounds)] if image.mask is not None else None
+        im_bounds.insert(image.channel_pos, slice(None))
+        kw2["image"] = kw["image"].substitute(data=image.get_data()[tuple(im_bounds)], mask=im_mask)
         for name in ["channel", "segmentation", "roi", "mask"] + [f"channel_{num}" for num in self.get_channels_num()]:
             if kw[name] is not None:
                 kw2[name] = kw[name][bounds]
@@ -366,26 +378,22 @@ class MeasurementProfile:
         return kw2
 
     def _calculate_leaf_value(
-        self, node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, help_dict: dict, kwargs: dict
+        self, node: Union[Node, Leaf], segmentation_mask_map: ComponentsInfo, kwargs: dict
     ) -> Union[float, np.ndarray]:
         method: MeasurementMethodBase = MEASUREMENT_DICT[node.name]
-        area_type = method.area_type(node.area)
-        kw = self._prepare_leaf_kw(node, kwargs, method, area_type)
-        kw["help_dict"] = help_dict
+        kw = self._prepare_leaf_kw(node, kwargs, method, method.area_type(node.area))
+
         if node.per_component == PerComponent.No:
             return method.calculate_property(**kw)
         # TODO use cache for per component calculate
         # kw["_cache"] = False
         val = []
-        if area_type == AreaType.ROI:
+        if method.area_type(node.area) == AreaType.ROI:
             components = segmentation_mask_map.roi_components
         else:
             components = segmentation_mask_map.mask_components
         for i in components:
-            bounds = tuple(kw["bounds_info"][i].get_slices(margin=1))
-            if node.area != AreaType.ROI:
-                bounds = tuple(slice(None, None) for _ in bounds)
-            kw2 = self._clip_arrays(kw, bounds, i)
+            kw2 = self._clip_arrays(kw, node, method, i)
             val.append(method.calculate_property(**kw2))
         val = np.array(val)
         if node.per_component == PerComponent.Mean:
@@ -402,7 +410,8 @@ class MeasurementProfile:
         if hash_str in help_dict:
             val = help_dict[hash_str]
         else:
-            val = self._calculate_leaf_value(node, segmentation_mask_map, help_dict, kwargs)
+            kwargs["help_dict"] = help_dict
+            val = self._calculate_leaf_value(node, segmentation_mask_map, kwargs)
             help_dict[hash_str] = val
         unit: symbols = method.get_units(3) if kwargs["image"].is_stack else method.get_units(2)
         if node.power != 1:
@@ -1210,14 +1219,14 @@ except NameError:
     enum_register.register_class(DistancePoint)
 
 
-class DistanceMaskSegmentation(MeasurementMethodBase):
-    text_info = "segmentation distance", "Calculate distance between segmentation and mask"
+class DistanceMaskROI(MeasurementMethodBase):
+    text_info = "ROI distance", "Calculate distance between ROI and mask"
 
     @classmethod
     def get_fields(cls):
         return [
             AlgorithmProperty("distance_from_mask", "Distance from mask", DistancePoint.Border),
-            AlgorithmProperty("distance_to_segmentation", "Distance to segmentation", DistancePoint.Border),
+            AlgorithmProperty("distance_to_segmentation", "Distance to ROI", DistancePoint.Border),
         ]
 
     @staticmethod
@@ -1279,6 +1288,156 @@ class DistanceMaskSegmentation(MeasurementMethodBase):
     @staticmethod
     def area_type(area: AreaType):
         return AreaType.ROI
+
+
+class DistanceROIROI(DistanceMaskROI):
+    text_info = "to new ROI distance", "Calculate distance between ROI and new ROI"
+
+    @classmethod
+    def get_starting_leaf(cls):
+        return Leaf(name=cls.text_info[0], area=AreaType.ROI)
+
+    @classmethod
+    def get_fields(cls):
+        return [
+            AlgorithmProperty(
+                "profile",
+                "ROI extraction profile",
+                ROIExtractionProfile(
+                    "default", LowerThresholdAlgorithm.get_name(), LowerThresholdAlgorithm.get_default_values()
+                ),
+                value_type=ROIExtractionProfile,
+            ),
+            AlgorithmProperty("distance_from_new_roi", "Distance new ROI", DistancePoint.Border),
+            AlgorithmProperty("distance_to_roi", "Distance to ROI", DistancePoint.Border),
+        ]
+
+    # noinspection PyMethodOverriding
+    @classmethod
+    def calculate_property(
+        cls,
+        channel: np.ndarray,
+        image: Image,
+        area_array: np.ndarray,
+        profile: ROIExtractionProfile,
+        mask: Optional[np.ndarray],
+        voxel_size: Sequence[float],
+        result_scalar: float,
+        distance_from_new_roi: DistancePoint,
+        distance_to_roi: DistancePoint,
+        **kwargs,
+    ):  # pylint: disable=W0221
+        if len(channel.shape) == 4:
+            if channel.shape[0] != 1:
+                raise ValueError("This measurements do not support time data")
+            channel = channel[0]
+        try:
+            hash_name = hash_fun_call_name(
+                calculate_segmentation_step,
+                profile,
+                kwargs["_area"],
+                kwargs["_per_component"],
+                Channel(-1),
+                kwargs["_component_num"],
+            )
+            if hash_name in kwargs["help_dict"]:
+                result = kwargs["help_dict"][hash_name]
+            else:
+                result, _ = calculate_segmentation_step(profile, image, mask)
+                kwargs["help_dict"][hash_name] = result
+        except KeyError:
+            result, _ = calculate_segmentation_step(profile, image, mask)
+
+        if np.any(result.roi[area_array > 0]):
+            return 0
+
+        return super().calculate_property(
+            channel,
+            area_array,
+            result.roi,
+            tuple(voxel_size),
+            result_scalar,
+            distance_from_mask=distance_from_new_roi,
+            distance_to_segmentation=distance_to_roi,
+        )
+
+    @staticmethod
+    def need_full_data():
+        return True
+
+
+class ROINeighbourhoodROI(DistanceMaskROI):
+    text_info = "Neighbourhood new ROI presence", "Count how many of new roi are present in neighbourhood of new ROI"
+
+    @classmethod
+    def get_starting_leaf(cls):
+        return Leaf(name=cls.text_info[0], area=AreaType.ROI)
+
+    @classmethod
+    def get_fields(cls):
+        return [
+            AlgorithmProperty(
+                "profile",
+                "ROI extraction profile",
+                ROIExtractionProfile(
+                    "default", LowerThresholdAlgorithm.get_name(), LowerThresholdAlgorithm.get_default_values()
+                ),
+                value_type=ROIExtractionProfile,
+            ),
+            AlgorithmProperty("distance", "Distance", 500.0, options_range=(0, 10000), value_type=float),
+            AlgorithmProperty("units", "Units", Units.nm, value_type=Units),
+        ]
+
+    # noinspection PyMethodOverriding
+    @classmethod
+    def calculate_property(
+        cls,
+        image: Image,
+        area_array: np.ndarray,
+        profile: ROIExtractionProfile,
+        mask: Optional[np.ndarray],
+        voxel_size,
+        distance: float,
+        units: Units,
+        **kwargs,
+    ):  # pylint: disable=W0221
+        try:
+            hash_name = hash_fun_call_name(
+                calculate_segmentation_step,
+                profile,
+                kwargs["_area"],
+                kwargs["_per_component"],
+                Channel(-1),
+                kwargs["_component_num"],
+            )
+            if hash_name in kwargs["help_dict"]:
+                result = kwargs["help_dict"][hash_name]
+            else:
+                result, _ = calculate_segmentation_step(profile, image, mask)
+                kwargs["help_dict"][hash_name] = result
+        except KeyError:
+            result, _ = calculate_segmentation_step(profile, image, mask)
+        area_array = image.fit_array_to_image(area_array)
+        units_scalar = UNIT_SCALE[units.value]
+        final_radius = [int((distance / units_scalar) / x) for x in reversed(voxel_size)]
+
+        dilated = SimpleITK.GetArrayFromImage(
+            SimpleITK.BinaryDilate(
+                SimpleITK.GetImageFromArray((area_array > 0).astype(np.uint8).squeeze()), final_radius
+            )
+        )
+        dilated = dilated.reshape(area_array.shape)
+        roi = image.fit_array_to_image(result.roi)
+
+        components = set(np.unique(roi[dilated > 0]))
+        if 0 in components:
+            components.remove(0)
+
+        return len(components)
+
+    @staticmethod
+    def need_full_data():
+        return True
 
 
 class SplitOnPartVolume(MeasurementMethodBase):
@@ -1483,7 +1642,9 @@ MEASUREMENT_DICT = Register(
     Surface,
     RimVolume,
     RimPixelBrightnessSum,
-    DistanceMaskSegmentation,
+    ROINeighbourhoodROI,
+    DistanceMaskROI,
+    DistanceROIROI,
     SplitOnPartVolume,
     SplitOnPartPixelBrightnessSum,
     Voxels,

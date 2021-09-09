@@ -12,13 +12,13 @@ from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, 
 from ..channel_class import Channel
 from ..convex_fill import convex_fill
 from ..project_info import AdditionalLayerDescription
-from ..segmentation.algorithm_base import ROIExtractionResult, SegmentationAlgorithm
+from ..segmentation.algorithm_base import ROIExtractionAlgorithm, ROIExtractionResult
 from ..utils import bisect
 from .noise_filtering import noise_filtering_dict
 from .threshold import BaseThreshold, double_threshold_dict, threshold_dict
 
 
-class StackAlgorithm(SegmentationAlgorithm, ABC):
+class StackAlgorithm(ROIExtractionAlgorithm, ABC):
     def __init__(self):
         super().__init__()
         self.channel_num = 0

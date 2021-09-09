@@ -83,7 +83,7 @@ base_class_dict = {
     RegisterEnum.threshold: threshold.BaseThreshold,
     RegisterEnum.noise_filtering: noise_filtering.NoiseFilteringBase,
     RegisterEnum.analysis_algorithm: restartable_segmentation_algorithms.RestartableAlgorithm,
-    RegisterEnum.mask_algorithm: segmentation_algorithm.SegmentationAlgorithm,
+    RegisterEnum.mask_algorithm: segmentation_algorithm.ROIExtractionAlgorithm,
     RegisterEnum.analysis_save: io_utils.SaveBase,
     RegisterEnum.analysis_load: io_utils.LoadBase,
     RegisterEnum.mask_load: io_utils.LoadBase,

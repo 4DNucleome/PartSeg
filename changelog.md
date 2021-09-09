@@ -3,6 +3,7 @@
 ## 0.13.10
 
 -   change tiff save backend to ome-tiff
+-   add `DistanceROIROI` and `ROINeighbourhoodROI` measurements
 
 ## 0.13.9
 

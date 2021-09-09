@@ -1,7 +1,7 @@
 import typing
+import warnings
 from copy import deepcopy
 
-import numpy as np
 from qtpy.QtCore import Signal
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
@@ -17,14 +17,6 @@ from PartSegCore.project_info import HistoryElement
 from PartSegCore.roi_info import ROIInfo
 
 from ..common_backend.base_settings import BaseSettings, SaveSettingsDescription
-
-MASK_COLORS = {
-    "white": np.array((255, 255, 255)),
-    "black": np.array((0, 0, 0)),
-    "red": np.array((255, 0, 0)),
-    "green": np.array((0, 255, 0)),
-    "blue": np.array((0, 0, 255)),
-}
 
 
 class PartSettings(BaseSettings):
@@ -135,10 +127,20 @@ class PartSettings(BaseSettings):
 
     @property
     def segmentation_pipelines(self) -> typing.Dict[str, SegmentationPipeline]:
+        warnings.warn("segmentation_pipelines is deprecated, use roi_pipelines", DeprecationWarning, stacklevel=2)
+        return self.roi_pipelines
+
+    @property
+    def roi_pipelines(self) -> typing.Dict[str, SegmentationPipeline]:
         return self.segmentation_pipelines_dict.get(self._current_roi_dict, {})
 
     @property
     def segmentation_profiles(self) -> typing.Dict[str, ROIExtractionProfile]:
+        warnings.warn("segmentation_profiles is deprecated, use roi_profiles", DeprecationWarning, stacklevel=2)
+        return self.roi_profiles
+
+    @property
+    def roi_profiles(self) -> typing.Dict[str, ROIExtractionProfile]:
         return self.segmentation_profiles_dict.get(self._current_roi_dict, {})
 
     @property

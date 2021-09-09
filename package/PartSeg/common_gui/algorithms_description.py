@@ -24,8 +24,8 @@ from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, Algorithm
 from PartSegCore.channel_class import Channel
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.segmentation.algorithm_base import (
+    ROIExtractionAlgorithm,
     ROIExtractionResult,
-    SegmentationAlgorithm,
     SegmentationLimitException,
 )
 from PartSegImage import Image
@@ -51,6 +51,30 @@ def _pretty_print(data, indent=2) -> str:
             res += f"{' ' * indent}{k}: {_pretty_print(v, indent+2)}\n"
         return res[:-1]
     return str(data)
+
+
+class ProfileSelect(QComboBox):
+    def __init__(self):
+        super().__init__()
+        self._settings = None
+
+    def add_settings(self, settings: BaseSettings):
+        self._settings = settings
+        if hasattr(settings, "roi_profiles"):
+            self.addItems(settings.roi_profiles.keys())
+
+    def get_value(self):
+        if self._settings is not None and hasattr(self._settings, "roi_profiles"):
+            return self._settings.roi_profiles[self.currentText()]
+        return None
+
+    def set_value(self, value):
+        if (
+            self._settings is not None
+            and hasattr(self._settings, "roi_profiles")
+            and value.name in self._settings.roi_profiles
+        ):
+            self.setCurrentText(value.name)
 
 
 class QtAlgorithmProperty(AlgorithmProperty):
@@ -155,6 +179,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
         elif issubclass(self.value_type, Enum):
             res = EnumComboBox(self.value_type)
             # noinspection PyUnresolvedReferences
+        elif issubclass(self.value_type, ROIExtractionProfile):
+            res = ProfileSelect()
         elif issubclass(self.value_type, list):
             res = QComboBox()
             res.addItems(list(map(str, self.possible_values)))
@@ -202,6 +228,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
 
         :return: (getter, setter)
         """
+        if isinstance(widget, ProfileSelect):
+            return widget.__class__.get_value, widget.__class__.set_value
         if isinstance(widget, ChannelComboBox):
             return widget.__class__.get_value, widget.__class__.set_value
         if isinstance(widget, EnumComboBox):
@@ -257,7 +285,13 @@ def any_arguments(fun):
 class FormWidget(QWidget):
     value_changed = Signal()
 
-    def __init__(self, fields: typing.List[AlgorithmProperty], start_values=None, dimension_num=1):
+    def __init__(
+        self,
+        fields: typing.List[AlgorithmProperty],
+        start_values=None,
+        dimension_num=1,
+        settings: typing.Optional[BaseSettings] = None,
+    ):
         super().__init__()
         if start_values is None:
             start_values = {}
@@ -290,6 +324,9 @@ class FormWidget(QWidget):
                 if issubclass(el.value_type, Channel):
                     # noinspection PyTypeChecker
                     self.channels_chose.append(el.get_field())
+                if issubclass(el.value_type, ROIExtractionProfile):
+                    # noinspection PyTypeChecker
+                    el.get_field().add_settings(settings)
                 if el.name in start_values:
                     try:
                         el.set_value(start_values[el.name])
@@ -436,7 +473,7 @@ class BaseAlgorithmSettingsWidget(QScrollArea):
     values_changed = Signal()
     algorithm_thread: SegmentationThread
 
-    def __init__(self, settings: BaseSettings, name, algorithm: typing.Type[SegmentationAlgorithm]):
+    def __init__(self, settings: BaseSettings, name, algorithm: typing.Type[ROIExtractionAlgorithm]):
         """
         For algorithm which works on one channel
         """
@@ -531,7 +568,7 @@ class AlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
 class InteractiveAlgorithmSettingsWidget(BaseAlgorithmSettingsWidget):
     algorithm_thread: SegmentationThread
 
-    def __init__(self, settings, name, algorithm: typing.Type[SegmentationAlgorithm], selector: typing.List[QWidget]):
+    def __init__(self, settings, name, algorithm: typing.Type[ROIExtractionAlgorithm], selector: typing.List[QWidget]):
         super().__init__(settings, name, algorithm)
         self.selector = selector
         self.algorithm_thread.finished.connect(self.enable_selector)
@@ -571,7 +608,7 @@ class AlgorithmChoose(QWidget):
     algorithm_changed = Signal(str)
 
     def __init__(
-        self, settings: BaseSettings, algorithms: typing.Dict[str, typing.Type[SegmentationAlgorithm]], parent=None
+        self, settings: BaseSettings, algorithms: typing.Dict[str, typing.Type[ROIExtractionAlgorithm]], parent=None
     ):
         super().__init__(parent)
         self.settings = settings

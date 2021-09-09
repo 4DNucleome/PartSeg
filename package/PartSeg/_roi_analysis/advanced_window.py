@@ -143,12 +143,12 @@ class Properties(QWidget):
             return
         try:
             if self.sender() == self.profile_list.list_widget:
-                profile = self._settings.segmentation_profiles[text]
+                profile = self._settings.roi_profiles[text]
                 self.pipeline_list.selectionModel().clear()
                 self.delete_btn.setText("Delete profile")
                 self.rename_btn.setText("Rename profile")
             elif self.sender() == self.pipeline_list.list_widget:
-                profile = self._settings.segmentation_pipelines[text]
+                profile = self._settings.roi_pipelines[text]
                 self.profile_list.selectionModel().clear()
                 self.delete_btn.setText("Delete pipeline")
                 self.rename_btn.setText("Rename pipeline")
@@ -196,11 +196,11 @@ class Properties(QWidget):
         )
 
     def update_profile_list(self):
-        current_names = set(self._settings.segmentation_profiles.keys())
+        current_names = set(self._settings.roi_profiles.keys())
         self.profile_list.clear()
         self.profile_list.addItems(sorted(current_names))
         self.pipeline_list.clear()
-        self.pipeline_list.addItems(sorted(set(self._settings.segmentation_pipelines.keys())))
+        self.pipeline_list.addItems(sorted(set(self._settings.roi_pipelines.keys())))
         self.delete_btn.setDisabled(True)
         self.rename_btn.setDisabled(True)
         self.info_label.setPlainText("")
@@ -220,17 +220,17 @@ class Properties(QWidget):
         text, dkt = "", {}
         if self.profile_list.selectedItems():
             text = self.profile_list.selectedItems()[0].text()
-            dkt = self._settings.segmentation_profiles
+            dkt = self._settings.roi_profiles
         elif self.pipeline_list.selectedItems():
             text = self.pipeline_list.selectedItems()[0].text()
-            dkt = self._settings.segmentation_pipelines
+            dkt = self._settings.roi_pipelines
         if text != "":
             self.delete_btn.setDisabled(True)
             del dkt[text]
             self.update_profile_list()
 
     def export_profile(self):
-        exp = ExportDialog(self._settings.segmentation_profiles, ProfileDictViewer)
+        exp = ExportDialog(self._settings.roi_profiles, ProfileDictViewer)
         if not exp.exec_():
             return
         dial = QFileDialog(self, "Export profile segment")
@@ -245,7 +245,7 @@ class Properties(QWidget):
             file_path = dial.selectedFiles()[0]
             self._settings.set("io.save_directory", os.path.dirname(file_path))
             self._settings.add_path_history(os.path.dirname(file_path))
-            data = {x: self._settings.segmentation_profiles[x] for x in exp.get_export_list()}
+            data = {x: self._settings.roi_profiles[x] for x in exp.get_export_list()}
             with open(file_path, "w") as ff:
                 json.dump(data, ff, cls=self._settings.json_encoder_class, indent=2)
 
@@ -264,7 +264,7 @@ class Properties(QWidget):
             profs, err = self._settings.load_part(file_path)
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
-            profiles_dict = self._settings.segmentation_profiles
+            profiles_dict = self._settings.roi_profiles
             imp = ImportDialog(profs, profiles_dict, ProfileDictViewer)
             if not imp.exec_():
                 return
@@ -274,7 +274,7 @@ class Properties(QWidget):
             self.update_profile_list()
 
     def export_pipeline(self):
-        exp = ExportDialog(self._settings.segmentation_pipelines, ProfileDictViewer)
+        exp = ExportDialog(self._settings.roi_pipelines, ProfileDictViewer)
         if not exp.exec_():
             return
         dial = QFileDialog(self, "Export pipeline segment")
@@ -287,7 +287,7 @@ class Properties(QWidget):
         dial.setHistory(dial.history() + self._settings.get_path_history())
         if dial.exec_():
             file_path = dial.selectedFiles()[0]
-            data = {x: self._settings.segmentation_pipelines[x] for x in exp.get_export_list()}
+            data = {x: self._settings.roi_pipelines[x] for x in exp.get_export_list()}
             with open(file_path, "w") as ff:
                 json.dump(data, ff, cls=self._settings.json_encoder_class, indent=2)
             self._settings.set("io.save_directory", os.path.dirname(file_path))
@@ -307,7 +307,7 @@ class Properties(QWidget):
             profs, err = self._settings.load_part(file_path)
             if err:
                 QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
-            profiles_dict = self._settings.segmentation_pipelines
+            profiles_dict = self._settings.roi_pipelines
             imp = ImportDialog(profs, profiles_dict, ProfileDictViewer)
             if not imp.exec_():
                 return
@@ -320,10 +320,10 @@ class Properties(QWidget):
         profile_name, profiles_dict = "", {}
         if self.profile_list.selectedItems():
             profile_name = self.profile_list.selectedItems()[0].text()
-            profiles_dict = self._settings.segmentation_profiles
+            profiles_dict = self._settings.roi_profiles
         elif self.pipeline_list.selectedItems():
             profile_name = self.pipeline_list.selectedItems()[0].text()
-            profiles_dict = self._settings.segmentation_pipelines
+            profiles_dict = self._settings.roi_pipelines
         if profile_name == "":
             return
         text, ok = QInputDialog.getText(self, "New profile name", f"New name for {profile_name}", text=profile_name)
@@ -615,8 +615,7 @@ class MeasurementSettings(QWidget):
             self.save_butt.setDisabled(True)
             self.save_butt_with_name.setDisabled(True)
 
-    @staticmethod
-    def get_parameters(node: Union[Node, Leaf], area: AreaType, component: PerComponent, power: float):
+    def get_parameters(self, node: Union[Node, Leaf], area: AreaType, component: PerComponent, power: float):
         if isinstance(node, Node):
             return node
         node = node.replace_(power=power)
@@ -627,7 +626,7 @@ class MeasurementSettings(QWidget):
         try:
             arguments = MEASUREMENT_DICT[str(node.name)].get_fields()
             if len(arguments) > 0 and len(node.dict) == 0:
-                dial = FormDialog(arguments)
+                dial = FormDialog(arguments, settings=self.settings)
                 if dial.exec():
                     node = node._replace(dict=dial.get_values())
                 else:

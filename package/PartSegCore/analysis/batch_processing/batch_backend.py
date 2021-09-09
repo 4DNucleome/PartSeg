@@ -64,7 +64,7 @@ from PartSegCore.analysis.measurement_base import AreaType, PerComponent
 from PartSegCore.analysis.measurement_calculation import MeasurementResult
 from PartSegCore.analysis.save_functions import save_dict
 from PartSegCore.mask_create import calculate_mask
-from PartSegCore.segmentation.algorithm_base import SegmentationAlgorithm, report_empty_fun
+from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm, report_empty_fun
 from PartSegImage import Image, TiffImageReader
 
 from ...io_utils import WrongFileTypeException
@@ -341,7 +341,7 @@ class CalculationProcess:
         """
         channel = operation.channel
         if channel == -1:
-            segmentation_class: Type[SegmentationAlgorithm] = analysis_algorithm_dict.get(
+            segmentation_class: Type[ROIExtractionAlgorithm] = analysis_algorithm_dict.get(
                 self.algorithm_parameters["algorithm_name"], None
             )
             if segmentation_class is None:  # pragma: no cover

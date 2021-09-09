@@ -81,7 +81,7 @@ class Options(QWidget):
         self.save_pipe_btn.setToolTip("Save current pipeline. Last element is last executed algorithm")
         self.choose_pipe = SearchCombBox()
         self.choose_pipe.addItem("<none>")
-        self.choose_pipe.addItems(list(self._settings.segmentation_pipelines.keys()))
+        self.choose_pipe.addItems(list(self._settings.roi_pipelines.keys()))
         self.choose_pipe.textActivated.connect(self.choose_pipeline)
         self.choose_pipe.setToolTip("Execute chosen pipeline")
         self.save_profile_btn = QPushButton("Save profile")
@@ -89,7 +89,7 @@ class Options(QWidget):
         self.save_profile_btn.clicked.connect(self.save_profile)
         self.choose_profile = SearchCombBox()
         self.choose_profile.addItem("<none>")
-        self.choose_profile.addItems(list(self._settings.segmentation_profiles.keys()))
+        self.choose_profile.addItems(list(self._settings.roi_profiles.keys()))
         self.choose_profile.setToolTip("Select profile to restore its settings. Execute if interactive is checked")
         # image state
         self.compare_btn = QPushButton("Compare")
@@ -181,7 +181,7 @@ class Options(QWidget):
             text, ok = QInputDialog.getText(self, "Pipeline name", "Input pipeline name here")
             if not ok:
                 return
-            if text in self._settings.segmentation_pipelines and QMessageBox.No == QMessageBox.warning(
+            if text in self._settings.roi_pipelines and QMessageBox.No == QMessageBox.warning(
                 self,
                 "Already exists",
                 "Profile with this name already exist. Overwrite?",
@@ -190,7 +190,7 @@ class Options(QWidget):
             ):
                 continue
             profile = SegmentationPipeline(name=text, segmentation=current_segmentation, mask_history=mask_history)
-            self._settings.segmentation_pipelines[text] = profile
+            self._settings.roi_pipelines[text] = profile
             self._settings.dump()
             self.choose_pipe.addItem(text)
             break
@@ -198,7 +198,7 @@ class Options(QWidget):
     def choose_pipeline(self, text):
         if text == "<none>":
             return
-        pipeline = self._settings.segmentation_pipelines[text]
+        pipeline = self._settings.roi_pipelines[text]
         process_thread = CalculatePipelineThread(self._settings.image, self._settings.mask, pipeline)
         dial = WaitingDialog(process_thread)
 
@@ -216,14 +216,14 @@ class Options(QWidget):
             if self.choose_profile.itemData(i, Qt.ToolTipRole) is not None:
                 continue
             text = self.choose_profile.itemText(i)
-            profile: ROIExtractionProfile = self._settings.segmentation_profiles[text]
+            profile: ROIExtractionProfile = self._settings.roi_profiles[text]
             tool_tip_text = str(profile)
             self.choose_profile.setItemData(i, tool_tip_text, Qt.ToolTipRole)
         for i in range(1, self.choose_pipe.count()):
             if self.choose_pipe.itemData(i, Qt.ToolTipRole) is not None:
                 continue
             text = self.choose_pipe.itemText(i)
-            profile: SegmentationPipeline = self._settings.segmentation_pipelines[text]
+            profile: SegmentationPipeline = self._settings.roi_pipelines[text]
             tool_tip_text = str(profile)
             self.choose_pipe.setItemData(i, tool_tip_text, Qt.ToolTipRole)
 
@@ -246,9 +246,9 @@ class Options(QWidget):
     def event(self, event: QEvent):
         if event.type() == QEvent.WindowActivate:
             # update combobox for segmentation
-            self.update_combo_box(self.choose_profile, self._settings.segmentation_profiles)
+            self.update_combo_box(self.choose_profile, self._settings.roi_profiles)
             # update combobox for pipeline
-            self.update_combo_box(self.choose_pipe, self._settings.segmentation_pipelines)
+            self.update_combo_box(self.choose_pipe, self._settings.roi_pipelines)
             self.update_tooltips()
         return super().event(event)
 
@@ -262,7 +262,7 @@ class Options(QWidget):
             text, ok = QInputDialog.getText(self, "Profile Name", "Input profile name here")
             if not ok:
                 return
-            if text in self._settings.segmentation_profiles and QMessageBox.No == QMessageBox.warning(
+            if text in self._settings.roi_profiles and QMessageBox.No == QMessageBox.warning(
                 self,
                 "Already exists",
                 "Profile with this name already exist. Overwrite?",
@@ -271,7 +271,7 @@ class Options(QWidget):
             ):
                 continue
             resp = ROIExtractionProfile(text, widget.name, widget.get_values())
-            self._settings.segmentation_profiles[text] = resp
+            self._settings.roi_profiles[text] = resp
             self._settings.dump()
             self.choose_profile.addItem(text)
             self.update_tooltips()
@@ -283,7 +283,7 @@ class Options(QWidget):
             return
         interactive = self.interactive_use.isChecked()
         self.interactive_use.setChecked(False)
-        profile = self._settings.segmentation_profiles[val]
+        profile = self._settings.roi_profiles[val]
         self.algorithm_choose_widget.change_algorithm(profile.algorithm, profile.values)
         self.choose_profile.blockSignals(True)
         self.choose_profile.setCurrentIndex(0)

@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 from sympy import symbols
 
+from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import load_metadata
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
 from PartSegCore.analysis.measurement_calculation import (
@@ -18,8 +19,9 @@ from PartSegCore.analysis.measurement_calculation import (
     ComponentsInfo,
     ComponentsNumber,
     Diameter,
-    DistanceMaskSegmentation,
+    DistanceMaskROI,
     DistancePoint,
+    DistanceROIROI,
     FirstPrincipalAxisLength,
     Haralick,
     MaximumPixelBrightness,
@@ -32,6 +34,7 @@ from PartSegCore.analysis.measurement_calculation import (
     PixelBrightnessSum,
     RimPixelBrightnessSum,
     RimVolume,
+    ROINeighbourhoodROI,
     SecondPrincipalAxisLength,
     Sphericity,
     SplitOnPartPixelBrightnessSum,
@@ -44,6 +47,7 @@ from PartSegCore.analysis.measurement_calculation import (
 )
 from PartSegCore.autofit import density_mass_center
 from PartSegCore.roi_info import ROIInfo
+from PartSegCore.segmentation.restartable_segmentation_algorithms import LowerThresholdAlgorithm
 from PartSegCore.universal_const import UNIT_SCALE, Units
 from PartSegImage import Image
 
@@ -787,10 +791,10 @@ def two_comp_img():
 
 class TestDistanceMaskSegmentation:
     def test_parameters(self):
-        assert DistanceMaskSegmentation.get_units(3) == symbols("{}")
-        assert DistanceMaskSegmentation.get_units(2) == symbols("{}")
-        assert DistanceMaskSegmentation.need_channel() is True
-        leaf = DistanceMaskSegmentation.get_starting_leaf()
+        assert DistanceMaskROI.get_units(3) == symbols("{}")
+        assert DistanceMaskROI.get_units(2) == symbols("{}")
+        assert DistanceMaskROI.need_channel() is True
+        leaf = DistanceMaskROI.get_starting_leaf()
         assert isinstance(leaf, Leaf)
         assert leaf.area is AreaType.Mask
         assert leaf.per_component is None
@@ -803,7 +807,7 @@ class TestDistanceMaskSegmentation:
         mask1 = cube_image.get_channel(0)[0] > 40
         mask2 = cube_image.get_channel(0)[0] > 60
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 channel=cube_image.get_channel(0),
                 area_array=mask2,
                 mask=mask1,
@@ -828,7 +832,7 @@ class TestDistanceMaskSegmentation:
         mask2 = cube_image.get_channel(0)[0] > 60
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 channel=cube_image.get_channel(0),
                 area_array=mask2,
                 mask=mask1,
@@ -860,7 +864,7 @@ class TestDistanceMaskSegmentation:
         else:
             area_mid = np.average(np.nonzero(area_array), axis=1, weights=channel[0][area_array])
         assert isclose(
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 channel=channel,
                 area_array=area_array,
                 mask=mask,
@@ -877,7 +881,7 @@ class TestDistanceMaskSegmentation:
         mask[2:-2, 2:-2, 2:-2] = 1
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 two_comp_img.get_channel(0),
                 two_comp_img.get_channel(0)[0],
                 mask,
@@ -890,7 +894,7 @@ class TestDistanceMaskSegmentation:
         )
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 two_comp_img.get_channel(0),
                 two_comp_img.get_channel(0)[0],
                 mask,
@@ -903,7 +907,7 @@ class TestDistanceMaskSegmentation:
         )
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 two_comp_img.get_channel(0),
                 two_comp_img.get_channel(0)[0],
                 mask,
@@ -916,7 +920,7 @@ class TestDistanceMaskSegmentation:
         )
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 two_comp_img.get_channel(0),
                 two_comp_img.get_channel(0)[0] == 50,
                 mask,
@@ -929,7 +933,7 @@ class TestDistanceMaskSegmentation:
         )
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 two_comp_img.get_channel(0),
                 two_comp_img.get_channel(0)[0] == 60,
                 mask,
@@ -946,7 +950,7 @@ class TestDistanceMaskSegmentation:
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 image.get_channel(0),
                 mask2,
                 mask1,
@@ -962,7 +966,7 @@ class TestDistanceMaskSegmentation:
         mask3[mask2 == 0] = 0
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 image.get_channel(0),
                 mask2,
                 mask1,
@@ -975,7 +979,7 @@ class TestDistanceMaskSegmentation:
         )
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 mask3,
                 mask3 == 1,
                 mask1,
@@ -988,7 +992,7 @@ class TestDistanceMaskSegmentation:
         )
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 mask3,
                 mask3 == 2,
                 mask1,
@@ -1001,7 +1005,7 @@ class TestDistanceMaskSegmentation:
         )
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 mask3,
                 mask3 == 1,
                 mask1,
@@ -1014,7 +1018,7 @@ class TestDistanceMaskSegmentation:
         )
 
         assert (
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 mask3,
                 mask3 == 2,
                 mask1,
@@ -1027,7 +1031,7 @@ class TestDistanceMaskSegmentation:
         )
 
         assert isclose(
-            DistanceMaskSegmentation.calculate_property(
+            DistanceMaskROI.calculate_property(
                 mask3, mask2, mask1, image.voxel_size, 1, DistancePoint.Geometrical_center, DistancePoint.Mass_center
             ),
             1000 * 2 / 3 - 500,
@@ -2008,6 +2012,128 @@ class TestHaralick:
         Haralick.calculate_property(mask, data, distance=distance, feature=feature)
 
 
+@pytest.fixture
+def roi_to_roi_extract():
+    parameters = LowerThresholdAlgorithm.get_default_values()
+    parameters["threshold"]["values"]["threshold"] = 1
+    parameters["minimum_size"] = 1
+    parameters["channel"] = 1
+    return ROIExtractionProfile("default", LowerThresholdAlgorithm.get_name(), parameters)
+
+
+@pytest.mark.parametrize("roi_dist", DistancePoint.__members__.values())
+@pytest.mark.parametrize("new_roi_dist", DistancePoint.__members__.values())
+class TestDistanceROIROI:
+    def test_base(self, roi_dist, new_roi_dist, roi_to_roi_extract):
+        data = np.zeros((3, 10, 10, 20), dtype=np.uint8)
+        data[0, 2:-2, 2:-2, 2:-12] = 5
+        data[1, 2:-2, 2:-2, 12:-2] = 5
+        data[2, 2:-2, 2:-2, 2:-2] = 5
+        image = Image(data, image_spacing=(1, 1, 1), axes_order="CZYX")
+        roi = (data[0] > 1).astype(np.uint8)
+        res = DistanceROIROI.calculate_property(
+            channel=data[2],
+            image=image,
+            area_array=roi,
+            profile=roi_to_roi_extract,
+            mask=None,
+            voxel_size=image.voxel_size,
+            result_scalar=1,
+            distance_from_new_roi=new_roi_dist,
+            distance_to_roi=roi_dist,
+        )
+        assert res > 0
+        data[1, 3:-3, 3:-3, 3:-13] = 5
+        image = Image(data, image_spacing=(1, 1, 1), axes_order="CZYX")
+        roi = (data[0] > 1).astype(np.uint8)
+        res = DistanceROIROI.calculate_property(
+            channel=data[2],
+            image=image,
+            area_array=roi,
+            profile=roi_to_roi_extract,
+            mask=None,
+            voxel_size=image.voxel_size,
+            result_scalar=1,
+            distance_from_new_roi=new_roi_dist,
+            distance_to_roi=roi_dist,
+        )
+        assert res == 0
+
+    def test_base_2d(self, roi_dist, new_roi_dist, roi_to_roi_extract):
+        data = np.zeros((3, 10, 20), dtype=np.uint8)
+        data[0, 2:-2, 2:-12] = 5
+        data[1, 2:-2, 12:-2] = 5
+        data[2, 2:-2, 2:-2] = 5
+        image = Image(data, image_spacing=(1, 1, 1), axes_order="CYX")
+        roi = (data[0:1] > 1).astype(np.uint8)
+        res = DistanceROIROI.calculate_property(
+            channel=data[2:3],
+            image=image,
+            area_array=roi,
+            profile=roi_to_roi_extract,
+            mask=None,
+            voxel_size=image.voxel_size,
+            result_scalar=1,
+            distance_from_new_roi=new_roi_dist,
+            distance_to_roi=roi_dist,
+        )
+        assert res > 0
+
+
+class TestROINeighbourhoodROI:
+    def test_base(self, roi_to_roi_extract):
+        data = np.zeros((3, 10, 10, 20), dtype=np.uint8)
+        data[0, 2:-2, 2:-2, 2:-12] = 5
+        data[1, 2:-2, 2:-2, 12:-2] = 5
+        data[2, 2:-2, 2:-2, 2:-2] = 5
+        image = Image(data, image_spacing=(100 * (10 ** -9),) * 3, axes_order="CZYX")
+        roi = (data[0] > 1).astype(np.uint8)
+        kwargs = {
+            "image": image,
+            "area_array": roi,
+            "profile": roi_to_roi_extract,
+            "mask": None,
+            "voxel_size": image.voxel_size,
+            "distance": 100,
+            "units": Units.nm,
+        }
+        assert ROINeighbourhoodROI.calculate_property(**kwargs) == 0
+        kwargs["distance"] = 1000
+        assert ROINeighbourhoodROI.calculate_property(**kwargs) == 1
+        data[1, 3:-3, 3:-3, 3:10] = 5
+        image = Image(data, image_spacing=(100 * (10 ** -9),) * 3, axes_order="CZYX")
+        kwargs["image"] = image
+        assert ROINeighbourhoodROI.calculate_property(**kwargs) == 2
+        kwargs["distance"] = 100
+        assert ROINeighbourhoodROI.calculate_property(**kwargs) == 1
+
+    def test_base2d(self, roi_to_roi_extract):
+        data = np.zeros((3, 10, 20), dtype=np.uint8)
+        data[0, 2:-2, 2:-12] = 5
+        data[1, 2:-2, 12:-2] = 5
+        data[2, 2:-2, 2:-2] = 5
+        image = Image(data, image_spacing=(100 * (10 ** -9),) * 2, axes_order="CYX")
+        roi = (data[0:1] > 1).astype(np.uint8)
+        kwargs = {
+            "image": image,
+            "area_array": roi,
+            "profile": roi_to_roi_extract,
+            "mask": None,
+            "voxel_size": image.voxel_size,
+            "distance": 100,
+            "units": Units.nm,
+        }
+        assert ROINeighbourhoodROI.calculate_property(**kwargs) == 0
+        kwargs["distance"] = 1000
+        assert ROINeighbourhoodROI.calculate_property(**kwargs) == 1
+        data[1, 3:-3, 3:10] = 5
+        image = Image(data, image_spacing=(100 * (10 ** -9),) * 2, axes_order="CYX")
+        kwargs["image"] = image
+        assert ROINeighbourhoodROI.calculate_property(**kwargs) == 2
+        kwargs["distance"] = 100
+        assert ROINeighbourhoodROI.calculate_property(**kwargs) == 1
+
+
 @pytest.mark.parametrize("method", MEASUREMENT_DICT.values())
 @pytest.mark.parametrize("dtype", [float, int, np.uint8, np.uint16, np.uint32, np.float16, np.float32])
 def test_all_methods(method, dtype):
@@ -2019,6 +2145,7 @@ def test_all_methods(method, dtype):
     roi_info = ROIInfo(roi)
 
     res = method.calculate_property(
+        image=Image(data, image_spacing=(1, 1, 1), axes_order="ZYX"),
         area_array=roi,
         mask=mask,
         channel=data,
