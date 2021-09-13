@@ -17,6 +17,7 @@ from ..common_backend.base_settings import FILE_HISTORY, BaseSettings, SwapTimeS
 from ..common_backend.load_backup import import_config
 from .about_dialog import AboutDialog
 from .custom_save_dialog import SaveDialog
+from .exception_hooks import load_data_exception_hook
 from .image_adjustment import ImageAdjustmentDialog
 from .napari_image_view import ImageView
 from .napari_viewer_wrap import Viewer
@@ -180,8 +181,9 @@ class BaseMainWindow(QMainWindow):
         data = sender.data()
         try:
             method: LoadBase = self._load_dict[data[1]]
-            dial = ExecuteFunctionDialog(method.load, [data[0]])
+            dial = ExecuteFunctionDialog(method.load, [data[0]], exception_hook=load_data_exception_hook)
             if dial.exec():
+                print("Aaa")
                 result = dial.get_result()
                 self.main_menu.set_data(result)
                 self.settings.add_load_files_history(data[0], method.get_name())

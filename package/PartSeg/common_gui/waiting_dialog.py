@@ -20,7 +20,7 @@ class WaitingDialog(QDialog):
         layout.addWidget(self.progress)
         layout.addWidget(self.cancel_btn)
         self.cancel_btn.clicked.connect(self.close)
-        thread.finished.connect(self.accept)
+        thread.finished.connect(self.accept_if_no_reject)
         self.thread_to_wait = thread
         self.setLayout(layout)
         if isinstance(thread, ProgressTread):
@@ -30,11 +30,15 @@ class WaitingDialog(QDialog):
 
     def error_catch(self, error):
         # print(self.thread() == QApplication.instance().thread(), error, isinstance(error, Exception))
-        self.close()
+        self.reject()
         if self.exception_hook:
             self.exception_hook(error)
         else:
             raise error
+
+    def accept_if_no_reject(self):
+        if self.result() != QDialog.Rejected:
+            self.accept()
 
     def exec(self):
         self.thread_to_wait.start()
