@@ -1,6 +1,7 @@
 import dataclasses
 import json
 import os
+import sys
 import tarfile
 import typing
 from collections import defaultdict
@@ -35,6 +36,9 @@ from ..io_utils import (
 from ..json_hooks import ProfileEncoder
 from ..project_info import AdditionalLayerDescription, HistoryElement, ProjectInfoBase
 from ..roi_info import ROIInfo
+
+if sys.version_info[:3] == (3, 9, 7):
+    ProjectInfoBase = object  # noqa: F811
 
 
 @dataclasses.dataclass(frozen=True)
