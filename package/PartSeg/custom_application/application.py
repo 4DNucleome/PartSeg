@@ -64,27 +64,29 @@ class CustomApplication(QApplication):
         self.setApplicationName(name)
 
     @Slot()
-    def show_error(self):
+    def show_error(self, error=None):
         """This class create error dialog and show it"""
-        if self.error is None:
+        if error is None:
+            error = self.error
+        if error is None:
             return
         from PartSeg.common_gui.error_report import ErrorDialog
 
-        if isinstance(self.error, TiffFileException):
+        if isinstance(error, TiffFileException):
             mess = QMessageBox()
             mess.setIcon(QMessageBox.Critical)
             mess.setText("During read file there is an error: " + self.error.args[0])
             mess.setWindowTitle("Tiff error")
             mess.exec()
             return
-        if isinstance(self.error, SegmentationLimitException):
+        if isinstance(error, SegmentationLimitException):
             mess = QMessageBox()
             mess.setIcon(QMessageBox.Critical)
             mess.setText("During segmentation process algorithm meet limitations:\n" + "\n".join(self.error.args))
             mess.setWindowTitle("Segmentation limitations")
             mess.exec()
             return
-        dial = ErrorDialog(self.error, "Exception during program run")
+        dial = ErrorDialog(error, "Exception during program run")
         # TODO check
         # dial.moveToThread(QApplication.instance().thread())
         dial.exec()

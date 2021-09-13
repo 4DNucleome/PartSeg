@@ -23,13 +23,7 @@ def my_excepthook(type_, value, trace_back):
             from qtpy.QtWidgets import QApplication
 
             if QApplication.instance():
-                from qtpy.QtCore import QMetaObject, Qt, QThread
-
-                QApplication.instance().error = value
-                if QThread.currentThread() != QApplication.instance().thread():
-                    QMetaObject.invokeMethod(QApplication.instance(), "show_error", Qt.QueuedConnection)
-                else:
-                    QApplication.instance().show_error()
+                QApplication.instance().show_error(value)
         except ImportError:
             sys.__excepthook__(type_, value, trace_back)
     elif isinstance(value, KeyboardInterrupt):
