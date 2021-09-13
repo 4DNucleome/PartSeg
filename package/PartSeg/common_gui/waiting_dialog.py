@@ -32,7 +32,7 @@ class WaitingDialog(QDialog):
 
     def error_catch(self, error):
         # print(self.thread() == QApplication.instance().thread(), error, isinstance(error, Exception))
-        self.error_catch = True
+        self._error_caught = True
         self.reject()
         if self.exception_hook:
             self.exception_hook(error)
