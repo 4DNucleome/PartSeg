@@ -1,5 +1,4 @@
 import os
-import sys
 from collections import Counter, defaultdict
 from functools import partial
 from pathlib import Path
@@ -27,6 +26,7 @@ from PartSegCore.io_utils import LoadBase
 from PartSegCore.project_info import ProjectInfoBase
 
 from .custom_load_dialog import CustomLoadDialog, LoadProperty
+from .exception_hooks import load_data_exception_hook
 from .waiting_dialog import ExecuteFunctionDialog
 
 
@@ -129,23 +129,6 @@ class MultipleFileWidget(QWidget):
             step_changed(i)
 
     def load_files(self):
-        def exception_hook(exception):
-            from qtpy.QtCore import QMetaObject
-
-            instance = QApplication.instance()
-            if isinstance(exception, MemoryError):
-                instance.warning = "Open error", f"Not enough memory to read this image: {exception}"
-                QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
-            elif isinstance(exception, IOError):
-                instance.warning = "Open error", f"Some problem with reading from disc: {exception}"
-                QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
-            elif isinstance(exception, KeyError):
-                instance.warning = "Open error", f"Some problem project file: {exception}"
-                QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
-                print(exception, file=sys.stderr)
-            else:
-                raise exception
-
         dial = MultipleLoadDialog(self.load_register, self.settings.get_path_history())
         dial.setDirectory(self.settings.get("io.multiple_open_directory", str(Path.home())))
         dial.selectNameFilter(self.settings.get("io.multiple_open_filter", next(iter(self.load_register.keys()))))
@@ -157,7 +140,7 @@ class MultipleFileWidget(QWidget):
             self.settings.add_path_history(load_dir)
             self.settings.set("io.multiple_open_filter", result.selected_filter)
 
-            dial_fun = ExecuteFunctionDialog(self.execute_load_files, [result], exception_hook=exception_hook)
+            dial_fun = ExecuteFunctionDialog(self.execute_load_files, [result], exception_hook=load_data_exception_hook)
             dial_fun.exec()
             if self.error_list:
                 errors_message = QMessageBox()
