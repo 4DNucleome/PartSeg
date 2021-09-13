@@ -1,5 +1,4 @@
 import os
-import sys
 from pathlib import Path
 from typing import Type
 
@@ -30,7 +29,6 @@ from PartSegCore.analysis import ProjectTuple, algorithm_description, load_funct
 from PartSegCore.analysis.analysis_utils import SegmentationPipeline, SegmentationPipelineElement
 from PartSegCore.analysis.io_utils import create_history_element_from_project
 from PartSegCore.analysis.save_functions import save_dict
-from PartSegCore.io_utils import WrongFileTypeException
 from PartSegCore.project_info import HistoryElement, calculate_mask_from_project
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
@@ -40,6 +38,7 @@ from ..common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgo
 from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.custom_save_dialog import SaveDialog
 from ..common_gui.equal_column_layout import EqualColumnLayout
+from ..common_gui.exception_hooks import load_data_exception_hook
 from ..common_gui.mask_widget import MaskDialogBase
 from ..common_gui.multiple_file_widget import MultipleFileWidget
 from ..common_gui.searchable_combo_box import SearchCombBox
@@ -433,36 +432,6 @@ class MainMenu(BaseMainMenu):
         dial.exec_()
 
     def load_data(self):
-        def exception_hook(exception):
-            from qtpy.QtCore import QMetaObject
-            from qtpy.QtWidgets import QApplication
-
-            instance = QApplication.instance()
-            if isinstance(exception, ValueError) and exception.args[0] == "Incompatible shape of mask and image":
-                instance.warning = (
-                    "Open error",
-                    "Most probably you try to load mask from other image. Check selected files",
-                )
-                QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
-            elif isinstance(exception, MemoryError):
-                instance.warning = "Open error", f"Not enough memory to read this image: {exception}"
-                QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
-            elif isinstance(exception, IOError):
-                instance.warning = "Open error", f"Some problem with reading from disc: {exception}"
-                QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
-            elif isinstance(exception, KeyError):
-                instance.warning = "Open error", f"Some problem project file: {exception}"
-                QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
-                print(exception, file=sys.stderr)
-            elif isinstance(exception, WrongFileTypeException):
-                instance.warning = (
-                    "Open error",
-                    "No needed files inside archive. Most probably you choose file from segmentation mask",
-                )
-                QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
-            else:
-                raise exception
-
         try:
             dial = CustomLoadDialog(load_functions.load_dict, history=self.settings.get_path_history())
             dial.setDirectory(self.settings.get("io.open_directory", str(Path.home())))
@@ -481,7 +450,7 @@ class MainMenu(BaseMainMenu):
                     result.load_class.load,
                     [result.load_location],
                     {"metadata": {"default_spacing": self.settings.image_spacing}},
-                    exception_hook=exception_hook,
+                    exception_hook=load_data_exception_hook,
                 )
                 if dial2.exec():
                     result = dial2.get_result()

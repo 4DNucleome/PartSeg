@@ -15,14 +15,16 @@ class WaitingDialog(QDialog):
         self.progress.setRange(0, 0)
         self.cancel_btn = QPushButton("Cancel")
         self.cancel_btn.setDisabled(True)
+        self._error_caught = False
         layout = QHBoxLayout()
         layout.addWidget(label)
         layout.addWidget(self.progress)
         layout.addWidget(self.cancel_btn)
         self.cancel_btn.clicked.connect(self.close)
-        thread.finished.connect(self.accept)
+        thread.finished.connect(self.accept_if_no_reject)
         self.thread_to_wait = thread
         self.setLayout(layout)
+        self.setResult(QDialog.Accepted)
         if isinstance(thread, ProgressTread):
             thread.range_changed.connect(self.progress.setRange)
             thread.step_changed.connect(self.progress.setValue)
@@ -30,11 +32,18 @@ class WaitingDialog(QDialog):
 
     def error_catch(self, error):
         # print(self.thread() == QApplication.instance().thread(), error, isinstance(error, Exception))
-        self.close()
+        self._error_caught = True
+        self.reject()
         if self.exception_hook:
             self.exception_hook(error)
         else:
             raise error
+
+    def accept_if_no_reject(self):
+        if self._error_caught:
+            self.reject()
+        else:
+            self.accept()
 
     def exec(self):
         self.thread_to_wait.start()

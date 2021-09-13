@@ -42,6 +42,7 @@ from ..common_gui.algorithms_description import AlgorithmChoose, AlgorithmSettin
 from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.custom_load_dialog import CustomLoadDialog
 from ..common_gui.custom_save_dialog import SaveDialog
+from ..common_gui.exception_hooks import load_data_exception_hook
 from ..common_gui.flow_layout import FlowLayout
 from ..common_gui.main_window import BaseMainMenu, BaseMainWindow
 from ..common_gui.mask_widget import MaskDialogBase
@@ -182,28 +183,12 @@ class MainMenu(BaseMainMenu):
         self.settings.set("io.load_data_filter", load_property.selected_filter)
         self.settings.add_load_files_history(load_property.load_location, load_property.load_class.get_name())
 
-        def exception_hook(exception):
-            if isinstance(exception, ValueError) and exception.args[0] == "not a TIFF file":
-                QMessageBox.warning(self, "Open error", "Image is not proper tiff/lsm image")
-            elif isinstance(exception, MemoryError):
-                QMessageBox.warning(self, "Open error", "Not enough memory to read this image")
-            elif isinstance(exception, IOError):
-                QMessageBox.warning(self, "Open error", f"Some problem with reading from disc: {exception}")
-            elif isinstance(exception, WrongFileTypeException):
-                QMessageBox.warning(
-                    self,
-                    "Open error",
-                    "No needed files inside archive. Most probably you choose file from segmentation analysis",
-                )
-            else:
-                raise exception
-
         execute_dialog = ExecuteFunctionDialog(
             load_property.load_class.load,
             [load_property.load_location],
             {"metadata": {"default_spacing": self.settings.image.spacing}},
             text="Load data",
-            exception_hook=exception_hook,
+            exception_hook=load_data_exception_hook,
         )
         if execute_dialog.exec():
             result = execute_dialog.get_result()

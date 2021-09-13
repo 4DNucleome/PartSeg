@@ -20,13 +20,12 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from PartSeg.common_backend.progress_thread import ExecuteFunctionThread
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile, MeasurementResult
 from PartSegCore.universal_const import Units
 
 from ..common_gui.searchable_combo_box import SearchCombBox
 from ..common_gui.universal_gui_part import ChannelComboBox, EnumComboBox
-from ..common_gui.waiting_dialog import WaitingDialog
+from ..common_gui.waiting_dialog import ExecuteFunctionDialog
 from .partseg_settings import PartSettings
 
 
@@ -332,13 +331,13 @@ class MeasurementWidget(QWidget):
                 )
                 return
 
-        thread = ExecuteFunctionThread(
+        dial = ExecuteFunctionDialog(
             compute_class.calculate,
             [self.settings.image, self.channels_chose.currentIndex(), self.settings.roi_info, units],
-        )
-        dial = WaitingDialog(thread, "Measurement calculation")  # , exception_hook=exception_hook)
+            text="Measurement calculation",
+        )  # , exception_hook=exception_hook)
         dial.exec()
-        stat: MeasurementResult = thread.result
+        stat: MeasurementResult = dial.get_result()
         if stat is None:
             return
         stat.set_filename(self.settings.image_path)

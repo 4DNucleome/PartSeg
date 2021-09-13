@@ -1,3 +1,4 @@
+import sys
 import typing
 from dataclasses import dataclass, field, replace
 
@@ -11,6 +12,9 @@ from PartSegCore.utils import numpy_repr
 from PartSegImage import Image
 
 project_version_info = packaging.version.Version("1.1")
+
+if sys.version_info[:3] == (3, 9, 7):
+    ProjectInfoBase = object  # noqa: F811
 
 
 @dataclass(frozen=True)
