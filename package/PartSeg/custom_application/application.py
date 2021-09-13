@@ -7,6 +7,7 @@ import sentry_sdk
 from qtpy.QtCore import QThread, Slot
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QMessageBox
+from superqt import ensure_main_thread
 
 from PartSegCore import state_store
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
@@ -88,12 +89,14 @@ class CustomApplication(QApplication):
         # dial.moveToThread(QApplication.instance().thread())
         dial.exec()
 
-    @Slot()
-    def show_warning(self):
+    @ensure_main_thread
+    def show_warning(self, header=None, text=None):
         """show warning :py:class:`PyQt5.QtWidgets.QMessageBox`"""
-        if not isinstance(self.warning, (list, tuple)) or self.warning[0] is None:
-            return
-        message = QMessageBox(QMessageBox.Warning, self.warning[0], self.warning[1], QMessageBox.Ok)
+        if text is None:
+            if isinstance(self.warning, (list, tuple)) and len(self.warning) == 2:
+                return
+            header, text = self.warning
+        message = QMessageBox(QMessageBox.Warning, header, text, QMessageBox.Ok)
         message.exec()
 
     def check_release(self):

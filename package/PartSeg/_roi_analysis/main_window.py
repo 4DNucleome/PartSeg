@@ -6,6 +6,7 @@ import numpy as np
 from qtpy.QtCore import QByteArray, QEvent, Qt
 from qtpy.QtGui import QIcon, QKeyEvent, QKeySequence, QResizeEvent
 from qtpy.QtWidgets import (
+    QApplication,
     QCheckBox,
     QComboBox,
     QGridLayout,
@@ -29,6 +30,7 @@ from PartSegCore.analysis import ProjectTuple, algorithm_description, load_funct
 from PartSegCore.analysis.analysis_utils import SegmentationPipeline, SegmentationPipelineElement
 from PartSegCore.analysis.io_utils import create_history_element_from_project
 from PartSegCore.analysis.save_functions import save_dict
+from PartSegCore.io_utils import WrongFileTypeException
 from PartSegCore.project_info import HistoryElement, calculate_mask_from_project
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
@@ -38,7 +40,7 @@ from ..common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgo
 from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.custom_save_dialog import SaveDialog
 from ..common_gui.equal_column_layout import EqualColumnLayout
-from ..common_gui.exception_hooks import load_data_exception_hook
+from ..common_gui.exception_hooks import OPEN_ERROR, load_data_exception_hook
 from ..common_gui.mask_widget import MaskDialogBase
 from ..common_gui.multiple_file_widget import MultipleFileWidget
 from ..common_gui.searchable_combo_box import SearchCombBox
@@ -409,13 +411,11 @@ class MainMenu(BaseMainMenu):
             base_values[selected_filter] = values
 
             def exception_hook(exception):
-                from qtpy.QtCore import QMetaObject
                 from qtpy.QtWidgets import QApplication
 
                 instance = QApplication.instance()
                 if isinstance(exception, ValueError):
-                    instance.warning = "Save error", f"Error during saving\n{exception}"
-                    QMetaObject.invokeMethod(instance, "show_warning", Qt.QueuedConnection)
+                    instance.show_warning("Save error", f"Error during saving\n{exception}")
                 else:
                     raise exception
 
@@ -432,6 +432,16 @@ class MainMenu(BaseMainMenu):
         dial.exec_()
 
     def load_data(self):
+        def exception_hook(exception):
+            instance = QApplication.instance()
+            if isinstance(exception, WrongFileTypeException):
+                instance.show_warning(
+                    OPEN_ERROR,
+                    "No needed files inside archive. Most probably you choose file from segmentation mask",
+                )
+            else:
+                load_data_exception_hook(exception)
+
         try:
             dial = CustomLoadDialog(load_functions.load_dict, history=self.settings.get_path_history())
             dial.setDirectory(self.settings.get("io.open_directory", str(Path.home())))
@@ -450,7 +460,7 @@ class MainMenu(BaseMainMenu):
                     result.load_class.load,
                     [result.load_location],
                     {"metadata": {"default_spacing": self.settings.image_spacing}},
-                    exception_hook=load_data_exception_hook,
+                    exception_hook=exception_hook,
                 )
                 if dial2.exec():
                     result = dial2.get_result()
