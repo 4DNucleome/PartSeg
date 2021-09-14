@@ -7,7 +7,7 @@ h5py
 imagecodecs
 lxml
 mahotas
-napari
+napari!=0.4.11
 numpy
 oiffile
 openpyxl
