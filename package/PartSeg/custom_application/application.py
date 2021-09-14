@@ -1,10 +1,11 @@
 import json
 import sys
-from urllib import error, request
+import urllib.error
+import urllib.request
 
 import packaging.version
 import sentry_sdk
-from qtpy.QtCore import QThread, Slot
+from qtpy.QtCore import QThread
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QMessageBox
 from superqt import ensure_main_thread
@@ -32,11 +33,11 @@ class CheckVersionThread(QThread):
 
         # noinspection PyBroadException
         try:
-            r = request.urlopen("https://pypi.org/pypi/PartSeg/json")  # nosec
+            r = urllib.request.urlopen("https://pypi.org/pypi/PartSeg/json")  # nosec
             data = json.load(r)
             self.release = data["info"]["version"]
             self.url = data["info"]["home_page"]
-        except (KeyError, error.URLError):
+        except (KeyError, urllib.error.URLError):
             pass
         except Exception as e:  # pylint: disable=W0703
             with sentry_sdk.push_scope() as scope:
@@ -63,7 +64,7 @@ class CustomApplication(QApplication):
         self.setWindowIcon(QIcon(icon))
         self.setApplicationName(name)
 
-    @Slot()
+    @ensure_main_thread
     def show_error(self, error=None):
         """This class create error dialog and show it"""
         if error is None:

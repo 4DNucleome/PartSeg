@@ -411,8 +411,6 @@ class MainMenu(BaseMainMenu):
             base_values[selected_filter] = values
 
             def exception_hook(exception):
-                from qtpy.QtWidgets import QApplication
-
                 instance = QApplication.instance()
                 if isinstance(exception, ValueError):
                     instance.show_warning("Save error", f"Error during saving\n{exception}")
