@@ -265,6 +265,8 @@ sphinxcontrib-qthelp==1.0.3
     # via sphinx
 sphinxcontrib-serializinghtml==1.1.5
     # via sphinx
+superqt==0.2.4
+    # via -r requirements_pyinstaller.in
 sympy==1.8
     # via -r requirements_pyinstaller.in
 tifffile==2021.8.8
@@ -301,7 +303,7 @@ urllib3==1.26.6
     # via
     #   requests
     #   sentry-sdk
-vispy==0.7.3
+vispy==0.8.1
     # via
     #   -r requirements_pyinstaller.in
     #   napari
