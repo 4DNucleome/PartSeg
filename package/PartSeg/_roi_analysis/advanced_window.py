@@ -29,6 +29,7 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from superqt import QEnumComboBox
 
 from PartSeg.common_gui.advanced_tabs import AdvancedWindow
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
@@ -40,7 +41,6 @@ from PartSegData import icons_dir
 from ..common_gui.custom_save_dialog import FormDialog
 from ..common_gui.lock_checkbox import LockCheckBox
 from ..common_gui.searchable_list_widget import SearchableListWidget
-from ..common_gui.universal_gui_part import EnumComboBox
 from .measurement_widget import MeasurementWidget
 from .partseg_settings import PartSettings
 from .profile_export import ExportDialog, ImportDialog, ProfileDictViewer, StringViewer
@@ -94,8 +94,8 @@ class Properties(QWidget):
             el.setRange(0, 1000000)
             # noinspection PyUnresolvedReferences
             el.valueChanged.connect(self.image_spacing_change)
-        self.units = EnumComboBox(Units)
-        self.units.set_value(units_value)
+        self.units = QEnumComboBox(enum_class=Units)
+        self.units.setCurrentEnum(units_value)
         # noinspection PyUnresolvedReferences
         self.units.currentIndexChanged.connect(self.update_spacing)
 
@@ -176,12 +176,12 @@ class Properties(QWidget):
         for el in self._settings.image_spacing:
             voxel_size *= el * UNIT_SCALE[self.units.currentIndex()]
         self.voxel_size_label.setText(
-            f"Voxel_size: {voxel_size} {self.units.get_value().name}" f"<sup>{len(self._settings.image_spacing)}</sup>"
+            f"Voxel_size: {voxel_size} {self.units.currentEnum().name} <sup>{len(self._settings.image_spacing)}</sup>"
         )
 
     def update_spacing(self, index=None):
         voxel_size = 1
-        value = self.units.get_value()
+        value = self.units.currentEnum()
         if index is not None:
             self._settings.set("units_value", value)
         for el, sp in zip(self.spacing[::-1], self._settings.image_spacing[::-1]):
@@ -192,7 +192,7 @@ class Properties(QWidget):
             el.blockSignals(False)
         self.spacing[0].setDisabled(len(self._settings.image_spacing) == 2)
         self.voxel_size_label.setText(
-            f"Voxel_size: {voxel_size} {value.name}" f"<sup>{len(self._settings.image_spacing)}</sup>"
+            f"Voxel_size: {voxel_size} {value.name} <sup>{len(self._settings.image_spacing)}</sup>"
         )
 
     def update_profile_list(self):
@@ -366,8 +366,8 @@ class MeasurementSettings(QWidget):
         self.profile_description.setReadOnly(True)
         self.profile_options = QListWidget()
         self.profile_options_chosen = QListWidget()
-        self.measurement_area_choose = EnumComboBox(AreaType)
-        self.per_component = EnumComboBox(PerComponent)
+        self.measurement_area_choose = QEnumComboBox(enum_class=AreaType)
+        self.per_component = QEnumComboBox(enum_class=PerComponent)
         self.power_num = QDoubleSpinBox()
         self.power_num.setDecimals(3)
         self.power_num.setRange(-100, 100)
@@ -529,8 +529,8 @@ class MeasurementSettings(QWidget):
             item = self.profile_options.currentItem()
             self.chosen_element_area = self.get_parameters(
                 deepcopy(item.stat),
-                self.measurement_area_choose.get_value(),
-                self.per_component.get_value(),
+                self.measurement_area_choose.currentEnum(),
+                self.per_component.currentEnum(),
                 self.power_num.value(),
             )
             if self.chosen_element_area is None:
@@ -539,8 +539,8 @@ class MeasurementSettings(QWidget):
             item.setIcon(QIcon(os.path.join(icons_dir, "task-accepted.png")))
         elif (
             self.profile_options.currentItem() == self.chosen_element
-            and self.measurement_area_choose.get_value() == self.chosen_element_area.area
-            and self.per_component.get_value() == self.chosen_element_area.per_component
+            and self.measurement_area_choose.currentEnum() == self.chosen_element_area.area
+            and self.per_component.currentEnum() == self.chosen_element_area.per_component
         ):
             self.chosen_element.setIcon(QIcon())
             self.chosen_element = None
@@ -548,8 +548,8 @@ class MeasurementSettings(QWidget):
             item: MeasurementListWidgetItem = self.profile_options.currentItem()
             leaf = self.get_parameters(
                 deepcopy(item.stat),
-                self.measurement_area_choose.get_value(),
-                self.per_component.get_value(),
+                self.measurement_area_choose.currentEnum(),
+                self.per_component.currentEnum(),
                 self.power_num.value(),
             )
             if leaf is None:
@@ -643,7 +643,7 @@ class MeasurementSettings(QWidget):
         node = deepcopy(selected_item.stat)
         # noinspection PyTypeChecker
         node = self.get_parameters(
-            node, self.measurement_area_choose.get_value(), self.per_component.get_value(), self.power_num.value()
+            node, self.measurement_area_choose.currentEnum(), self.per_component.currentEnum(), self.power_num.value()
         )
         if node is None:
             return

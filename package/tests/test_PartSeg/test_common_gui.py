@@ -30,6 +30,7 @@ class Enum2(Enum):
         return self.name
 
 
+@pytest.mark.filterwarnings("ignore:EnumComboBox is deprecated")
 class TestEnumComboBox:
     def test_enum1(self, qtbot):
         widget = EnumComboBox(Enum1)

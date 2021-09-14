@@ -24,6 +24,7 @@ scipy
 sentry-sdk
 SimpleITK!=2.0.0
 six
+superqt
 sympy
 tifffile
 xlrd

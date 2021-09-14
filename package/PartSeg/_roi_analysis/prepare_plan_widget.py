@@ -31,8 +31,8 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from superqt import QEnumComboBox
 
-from PartSeg.common_gui.universal_gui_part import EnumComboBox
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.analysis.calculation_plan import (
@@ -275,7 +275,7 @@ class CreatePlan(QWidget):
         self.clean_plan_btn = QPushButton("Remove all")
         self.remove_btn = QPushButton("Remove")
         self.update_element_chk = QCheckBox("Update element")
-        self.change_root = EnumComboBox(RootType)
+        self.change_root = QEnumComboBox(enum_class=RootType)
         self.save_choose = QComboBox()
         self.save_choose.addItem("<none>")
         self.save_choose.addItems(list(self.save_translate_dict.keys()))
@@ -288,15 +288,15 @@ class CreatePlan(QWidget):
         self.generate_mask_btn = QPushButton("Add mask")
         self.generate_mask_btn.setToolTip("Mask need to have unique name")
         self.mask_name = QLineEdit()
-        self.mask_operation = EnumComboBox(MaskOperation)
+        self.mask_operation = QEnumComboBox(enum_class=MaskOperation)
 
         self.chanel_num = QSpinBox()
         self.choose_channel_for_measurements = QComboBox()
         self.choose_channel_for_measurements.addItems(
             ["Same as segmentation"] + [str(x + 1) for x in range(MAX_CHANNEL_NUM)]
         )
-        self.units_choose = EnumComboBox(Units)
-        self.units_choose.set_value(self.settings.get("units_value", Units.nm))
+        self.units_choose = QEnumComboBox(enum_class=Units)
+        self.units_choose.setCurrentEnum(self.settings.get("units_value", Units.nm))
         self.chanel_num.setRange(0, 10)
         self.expected_node_type = None
         self.save_constructor = None
@@ -456,7 +456,7 @@ class CreatePlan(QWidget):
         self.node_type_changed()
 
     def change_root_type(self):
-        value: RootType = self.change_root.get_value()
+        value: RootType = self.change_root.currentEnum()
         self.calculation_plan.set_root_type(value)
         self.plan.update_view()
 
@@ -580,9 +580,9 @@ class CreatePlan(QWidget):
         if text != "" and text in self.mask_set:
             QMessageBox.warning(self, "Already exists", "Mask with this name already exists", QMessageBox.Ok)
             return
-        if _check_widget(self.mask_stack, EnumComboBox):  # existing mask
+        if _check_widget(self.mask_stack, QEnumComboBox):  # existing mask
             mask_dialog = TwoMaskDialog
-            if self.mask_operation.get_value() == MaskOperation.mask_intersection:  # Mask intersection
+            if self.mask_operation.currentEnum() == MaskOperation.mask_intersection:  # Mask intersection
                 MaskConstruct = MaskIntersection
             else:
                 MaskConstruct = MaskSum
@@ -634,7 +634,7 @@ class CreatePlan(QWidget):
         ):
             self.generate_mask_btn.setDisabled(True)
             return
-        if _check_widget(self.mask_stack, EnumComboBox):  # reuse mask
+        if _check_widget(self.mask_stack, QEnumComboBox):  # reuse mask
             if len(self.mask_set) > 1 and (
                 (not update and node_type == NodeType.root) or (update and node_type == NodeType.file_mask)
             ):
@@ -709,7 +709,7 @@ class CreatePlan(QWidget):
             channel=channel,
             measurement_profile=measurement_copy,
             name_prefix=prefix,
-            units=self.units_choose.get_value(),
+            units=self.units_choose.currentEnum(),
         )
         if self.update_element_chk.isChecked():
             self.calculation_plan.replace_step(measurement_calculate)

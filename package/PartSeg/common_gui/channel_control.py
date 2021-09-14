@@ -18,13 +18,14 @@ from qtpy.QtWidgets import (
     QStyleOptionViewItem,
     QWidget,
 )
+from superqt import QEnumComboBox
 
 from PartSeg.common_gui.numpy_qimage import create_colormap_image
 from PartSegCore.image_operations import NoiseFilterType
 
 from ..common_backend.base_settings import ViewSettings
 from .collapse_checkbox import CollapseCheckbox
-from .universal_gui_part import CustomSpinBox, EnumComboBox
+from .universal_gui_part import CustomSpinBox
 
 image_dict = {}  # dict to store QImages generated from colormap
 
@@ -293,7 +294,7 @@ class ChannelProperty(QWidget):
         self.maximum_value.valueChanged.connect(self.range_changed)
         self.fixed = QCheckBox("Fix range")
         self.fixed.stateChanged.connect(self.lock_channel)
-        self.use_filter = EnumComboBox(NoiseFilterType)
+        self.use_filter = QEnumComboBox(enum_class=NoiseFilterType)
         self.use_filter.setToolTip("Only current channel")
         self.filter_radius = QDoubleSpinBox()
         self.filter_radius.setSingleStep(0.1)
@@ -361,7 +362,7 @@ class ChannelProperty(QWidget):
         self.maximum_value.setValue(
             self._settings.get_from_profile(f"{self.current_name}.range_{self.current_channel}", (0, 65000))[1]
         )
-        self.use_filter.set_value(
+        self.use_filter.setCurrentEnum(
             self._settings.get_from_profile(
                 f"{self.current_name}.use_filter_{self.current_channel}", NoiseFilterType.No
             )
@@ -387,14 +388,14 @@ class ChannelProperty(QWidget):
         self._settings.set_in_profile(
             f"{self.current_name}.filter_radius_{self.current_channel}", self.filter_radius.value()
         )
-        if self.use_filter.get_value() != NoiseFilterType.No:
+        if self.use_filter.currentEnum() != NoiseFilterType.No:
             self.send_info()
 
     def gauss_use_changed(self):
         self._settings.set_in_profile(
-            f"{self.current_name}.use_filter_{self.current_channel}", self.use_filter.get_value()
+            f"{self.current_name}.use_filter_{self.current_channel}", self.use_filter.currentEnum()
         )
-        if self.use_filter.get_value() == NoiseFilterType.Median:
+        if self.use_filter.currentEnum() == NoiseFilterType.Median:
             self.filter_radius.setDecimals(0)
             self.filter_radius.setSingleStep(1)
         else:

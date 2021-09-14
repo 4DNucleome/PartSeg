@@ -25,6 +25,7 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from superqt import QEnumComboBox
 
 import PartSegData
 from PartSegCore import UNIT_SCALE, Units, state_store
@@ -38,7 +39,7 @@ from PartSegImage import Image, TiffImageReader
 
 from .._roi_mask.segmentation_info_dialog import SegmentationInfoDialog
 from ..common_gui.advanced_tabs import AdvancedWindow
-from ..common_gui.algorithms_description import AlgorithmChoose, AlgorithmSettingsWidget, EnumComboBox
+from ..common_gui.algorithms_description import AlgorithmChoose, AlgorithmSettingsWidget
 from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.custom_load_dialog import CustomLoadDialog
 from ..common_gui.custom_save_dialog import SaveDialog
@@ -476,8 +477,8 @@ class AlgorithmOptions(QWidget):
         control_view = image_view.get_control_view()
         super().__init__()
         self.settings = settings
-        self.show_result = EnumComboBox(LabelEnum)  # QCheckBox("Show result")
-        self.show_result.set_value(control_view.show_label)
+        self.show_result = QEnumComboBox(enum_class=LabelEnum)  # QCheckBox("Show result")
+        self.show_result.setCurrentEnum(control_view.show_label)
         self.opacity = QDoubleSpinBox()
         self.opacity.setRange(0, 1)
         self.opacity.setSingleStep(0.1)
@@ -586,7 +587,7 @@ class AlgorithmOptions(QWidget):
         # noinspection PyUnresolvedReferences
         self.opacity.valueChanged.connect(control_view.set_opacity)
         # noinspection PyUnresolvedReferences
-        self.show_result.current_choose.connect(control_view.set_show_label)
+        self.show_result.currentEnumChanged.connect(control_view.set_show_label)
         self.only_borders.stateChanged.connect(control_view.set_borders)
         # noinspection PyUnresolvedReferences
         self.borders_thick.valueChanged.connect(control_view.set_borders_thick)
@@ -757,8 +758,8 @@ class ImageInformation(QWidget):
             el.setRange(0, 100000)
             # noinspection PyUnresolvedReferences
             el.valueChanged.connect(self.image_spacing_change)
-        self.units = EnumComboBox(Units)
-        self.units.set_value(units_value)
+        self.units = QEnumComboBox(enum_class=Units)
+        self.units.setCurrentEnum(units_value)
         # noinspection PyUnresolvedReferences
         self.units.currentIndexChanged.connect(self.update_spacing)
 
@@ -785,7 +786,7 @@ class ImageInformation(QWidget):
         self._settings.set("multiple_files_widget", val)
 
     def update_spacing(self, index=None):
-        units_value = self.units.get_value()
+        units_value = self.units.currentEnum()
         if index is not None:
             self._settings.set("units_value", units_value)
         for el, val in zip(self.spacing, self._settings.image_spacing[::-1]):

@@ -1,12 +1,14 @@
 import json
 import sys
-from urllib import error, request
+import urllib.error
+import urllib.request
 
 import packaging.version
 import sentry_sdk
-from qtpy.QtCore import QThread, Slot
+from qtpy.QtCore import QThread
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QMessageBox
+from superqt import ensure_main_thread
 
 from PartSegCore import state_store
 from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
@@ -31,11 +33,11 @@ class CheckVersionThread(QThread):
 
         # noinspection PyBroadException
         try:
-            r = request.urlopen("https://pypi.org/pypi/PartSeg/json")  # nosec
+            r = urllib.request.urlopen("https://pypi.org/pypi/PartSeg/json")  # nosec
             data = json.load(r)
             self.release = data["info"]["version"]
             self.url = data["info"]["home_page"]
-        except (KeyError, error.URLError):
+        except (KeyError, urllib.error.URLError):
             pass
         except Exception as e:  # pylint: disable=W0703
             with sentry_sdk.push_scope() as scope:
@@ -62,38 +64,42 @@ class CustomApplication(QApplication):
         self.setWindowIcon(QIcon(icon))
         self.setApplicationName(name)
 
-    @Slot()
-    def show_error(self):
+    @ensure_main_thread
+    def show_error(self, error=None):
         """This class create error dialog and show it"""
-        if self.error is None:
+        if error is None:
+            error = self.error
+        if error is None:
             return
         from PartSeg.common_gui.error_report import ErrorDialog
 
-        if isinstance(self.error, TiffFileException):
+        if isinstance(error, TiffFileException):
             mess = QMessageBox()
             mess.setIcon(QMessageBox.Critical)
             mess.setText("During read file there is an error: " + self.error.args[0])
             mess.setWindowTitle("Tiff error")
             mess.exec()
             return
-        if isinstance(self.error, SegmentationLimitException):
+        if isinstance(error, SegmentationLimitException):
             mess = QMessageBox()
             mess.setIcon(QMessageBox.Critical)
             mess.setText("During segmentation process algorithm meet limitations:\n" + "\n".join(self.error.args))
             mess.setWindowTitle("Segmentation limitations")
             mess.exec()
             return
-        dial = ErrorDialog(self.error, "Exception during program run")
+        dial = ErrorDialog(error, "Exception during program run")
         # TODO check
         # dial.moveToThread(QApplication.instance().thread())
         dial.exec()
 
-    @Slot()
-    def show_warning(self):
+    @ensure_main_thread
+    def show_warning(self, header=None, text=None):
         """show warning :py:class:`PyQt5.QtWidgets.QMessageBox`"""
-        if not isinstance(self.warning, (list, tuple)) or self.warning[0] is None:
-            return
-        message = QMessageBox(QMessageBox.Warning, self.warning[0], self.warning[1], QMessageBox.Ok)
+        if text is None:
+            if isinstance(self.warning, (list, tuple)) and len(self.warning) == 2:
+                return
+            header, text = self.warning
+        message = QMessageBox(QMessageBox.Warning, header, text, QMessageBox.Ok)
         message.exec()
 
     def check_release(self):

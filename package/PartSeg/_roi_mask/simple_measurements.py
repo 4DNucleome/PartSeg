@@ -12,9 +12,10 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from superqt import QEnumComboBox
 
 from PartSeg._roi_mask.stack_settings import StackSettings
-from PartSeg.common_gui.universal_gui_part import ChannelComboBox, EnumComboBox
+from PartSeg.common_gui.universal_gui_part import ChannelComboBox
 from PartSeg.common_gui.waiting_dialog import ExecuteFunctionDialog
 from PartSegCore import Units
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, PerComponent
@@ -29,8 +30,8 @@ class SimpleMeasurements(QWidget):
         self.calculate_btn.clicked.connect(self.calculate)
         self.result_view = QTableWidget()
         self.channel_select = ChannelComboBox()
-        self.units_select = EnumComboBox(Units)
-        self.units_select.set_value(self.settings.get("simple_measurements.units", Units.nm))
+        self.units_select = QEnumComboBox(enum_class=Units)
+        self.units_select.setCurrentEnum(self.settings.get("simple_measurements.units", Units.nm))
         self.units_select.currentIndexChanged.connect(self.change_units)
         self._shift = 2
 
@@ -91,7 +92,7 @@ class SimpleMeasurements(QWidget):
                 "image": self.settings.image,
                 "channel_num": self.channel_select.get_value(),
                 "roi": self.settings.roi_info,
-                "result_units": self.units_select.get_value(),
+                "result_units": self.units_select.currentEnum(),
             },
         )
         dial.exec()
@@ -160,4 +161,4 @@ class SimpleMeasurements(QWidget):
         return super().event(event)
 
     def change_units(self):
-        self.settings.set("simple_measurements.units", self.units_select.get_value())
+        self.settings.set("simple_measurements.units", self.units_select.currentEnum())
