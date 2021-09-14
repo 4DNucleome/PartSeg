@@ -10,6 +10,7 @@ import platform
 import zmq
 import itertools
 import pkg_resources
+import debugpy._vendored
 
 sys.setrecursionlimit(5000)
 sys.path.append(os.path.abspath("__file__"))
@@ -139,7 +140,8 @@ a = Analysis(
     + collect_data_files("napari")
     + collect_data_files("freetype")
     + pyzmq_data
-    + plugins_data,
+    + plugins_data
+    + [(os.path.dirname(debugpy._vendored.__file__), "debugpy/_vendored")],
     hiddenimports=hiddenimports,
     # + ["plugins." + x.name for x in plugins.get_plugins()],
     hookspath=[],
