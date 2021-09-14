@@ -5,6 +5,7 @@ This module contains simple, useful widgets which implementation is to short to 
 
 import math
 import typing
+import warnings
 from enum import Enum
 from sys import platform
 
@@ -23,6 +24,7 @@ from qtpy.QtWidgets import (
     QTextEdit,
     QWidget,
 )
+from superqt import QEnumComboBox
 
 from PartSegCore.universal_const import UNIT_SCALE, Units
 
@@ -68,6 +70,9 @@ class EnumComboBox(QComboBox):
     Argument is selected value"""
 
     def __init__(self, enum: type(EnumType), parent=None):
+        warnings.warn(
+            "EnumComboBox is deprecated, use superqt.QEnumComboBox instead", category=DeprecationWarning, stacklevel=2
+        )
         super().__init__(parent=parent)
         self.enum = enum
         self.addItems(list(map(str, enum.__members__.values())))
@@ -139,15 +144,15 @@ class Spacing(QWidget):
             val.setFixedWidth(val_len)
             layout.addWidget(val)
             self.elements.append(val)
-        self.units = EnumComboBox(Units)
-        self.units.set_value(unit)
+        self.units = QEnumComboBox(enum_class=Units)
+        self.units.setCurrentEnum(unit)
         layout.addWidget(self.units)
         self.has_units = True
         layout.addStretch(1)
         self.setLayout(layout)
 
     def get_values(self):
-        return [x.value() / UNIT_SCALE[self.units.get_value().value] for x in self.elements]
+        return [x.value() / UNIT_SCALE[self.units.currentEnum().value] for x in self.elements]
 
     def set_values(self, value_list):
         for val, wid in zip(value_list, self.elements):

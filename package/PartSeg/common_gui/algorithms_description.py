@@ -18,6 +18,7 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from superqt import QEnumComboBox
 
 from PartSeg.common_gui.error_report import ErrorDialog
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
@@ -33,7 +34,7 @@ from PartSegImage import Image
 from ..common_backend.base_settings import BaseSettings
 from ..common_backend.segmentation_thread import SegmentationThread
 from .dim_combobox import DimComboBox
-from .universal_gui_part import ChannelComboBox, CustomDoubleSpinBox, CustomSpinBox, EnumComboBox
+from .universal_gui_part import ChannelComboBox, CustomDoubleSpinBox, CustomSpinBox
 
 
 def update(d, u):
@@ -177,7 +178,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
         elif issubclass(self.value_type, str):
             res = QLineEdit()
         elif issubclass(self.value_type, Enum):
-            res = EnumComboBox(self.value_type)
+            res = QEnumComboBox(enum_class=self.value_type)
             # noinspection PyUnresolvedReferences
         elif issubclass(self.value_type, ROIExtractionProfile):
             res = ProfileSelect()
@@ -232,8 +233,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
             return widget.__class__.get_value, widget.__class__.set_value
         if isinstance(widget, ChannelComboBox):
             return widget.__class__.get_value, widget.__class__.set_value
-        if isinstance(widget, EnumComboBox):
-            return widget.__class__.get_value, widget.__class__.set_value
+        if isinstance(widget, QEnumComboBox):
+            return widget.__class__.currentEnum, widget.__class__.setCurrentEnum
         if isinstance(widget, QComboBox):
             return widget.__class__.currentText, widget.__class__.setCurrentText
         if isinstance(widget, QCheckBox):

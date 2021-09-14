@@ -137,12 +137,12 @@ class TestColorComboBoxGroup:
         with qtbot.waitSignal(box.coloring_update), qtbot.waitSignal(
             box.change_channel, check_params_cb=check_parameters
         ):
-            ch_property.use_filter.set_value(NoiseFilterType.Gauss)
+            ch_property.use_filter.setCurrentEnum(NoiseFilterType.Gauss)
 
         with qtbot.waitSignal(box.coloring_update), qtbot.waitSignal(
             box.change_channel, check_params_cb=check_parameters
         ):
-            ch_property.use_filter.set_value(NoiseFilterType.Median)
+            ch_property.use_filter.setCurrentEnum(NoiseFilterType.Median)
 
         ch_property.filter_radius.setValue(0.5)
         with qtbot.waitSignal(box.coloring_update), qtbot.waitSignal(
@@ -153,7 +153,7 @@ class TestColorComboBoxGroup:
         with qtbot.waitSignal(box.coloring_update), qtbot.waitSignal(
             box.change_channel, check_params_cb=check_parameters
         ):
-            ch_property.use_filter.set_value(NoiseFilterType.No)
+            ch_property.use_filter.setCurrentEnum(NoiseFilterType.No)
 
         with qtbot.assert_not_emitted(box.coloring_update), qtbot.assert_not_emitted(box.change_channel):
             ch_property.filter_radius.setValue(0.5)
@@ -225,7 +225,7 @@ class TestColorComboBoxGroup:
         with qtbot.waitSignal(image_view.channel_control.coloring_update), qtbot.waitSignal(
             image_view.channel_control.change_channel, check_params_cb=check_parameters
         ):
-            ch_property.use_filter.set_value(NoiseFilterType.Gauss)
+            ch_property.use_filter.setCurrentEnum(NoiseFilterType.Gauss)
         image4 = image_view.viewer_widget.screenshot()
         assert np.any(image4 != 255)
         assert np.any(image1 != image4)

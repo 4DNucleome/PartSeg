@@ -19,12 +19,13 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from superqt import QEnumComboBox
 
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile, MeasurementResult
 from PartSegCore.universal_const import Units
 
 from ..common_gui.searchable_combo_box import SearchCombBox
-from ..common_gui.universal_gui_part import ChannelComboBox, EnumComboBox
+from ..common_gui.universal_gui_part import ChannelComboBox
 from ..common_gui.waiting_dialog import ExecuteFunctionDialog
 from .partseg_settings import PartSettings
 
@@ -150,7 +151,7 @@ class MeasurementWidget(QWidget):
         self.no_units.clicked.connect(self.refresh_view)
         self.expand_mode = QCheckBox("Expand", self)
         self.expand_mode.setToolTip("Shows results for each component in separate entry")
-        self.file_names = EnumComboBox(FileNamesEnum)
+        self.file_names = QEnumComboBox(enum_class=FileNamesEnum)
         self.file_names_label = QLabel("Add file name:")
         self.file_names.currentIndexChanged.connect(self.refresh_view)
         self.horizontal_measurement_present.stateChanged.connect(self.refresh_view)
@@ -165,8 +166,8 @@ class MeasurementWidget(QWidget):
             'You can create new measurement profile in advanced window, in tab "Measurement settings"'
         )
         self.channels_chose = ChannelComboBox()
-        self.units_choose = EnumComboBox(Units)
-        self.units_choose.set_value(self.settings.get("units_value", Units.nm))
+        self.units_choose = QEnumComboBox(enum_class=Units)
+        self.units_choose.setCurrentEnum(self.settings.get("units_value", Units.nm))
         self.info_field = QTableWidget(self)
         self.info_field.setColumnCount(3)
         self.info_field.setHorizontalHeaderLabels(["Name", "Value", "Units"])
@@ -286,12 +287,12 @@ class MeasurementWidget(QWidget):
                 self.info_field.setItem(
                     x, y, QTableWidgetItem(self.measurements_storage.get_val_as_str(x, y, save_orientation))
                 )
-        if self.file_names.get_value() == FileNamesEnum.No:
+        if self.file_names.currentEnum() == FileNamesEnum.No:
             if save_orientation:
                 self.info_field.removeColumn(0)
             else:
                 self.info_field.removeRow(0)
-        elif self.file_names.get_value() == FileNamesEnum.Short:
+        elif self.file_names.currentEnum() == FileNamesEnum.Short:
             if save_orientation:
                 columns = 1
             else:
@@ -316,7 +317,7 @@ class MeasurementWidget(QWidget):
 
         if self.settings.roi is None:
             return
-        units = self.units_choose.get_value()
+        units = self.units_choose.currentEnum()
 
         # FIXME find which errors should be displayed as warning
         # def exception_hook(exception):
