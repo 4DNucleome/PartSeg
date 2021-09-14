@@ -183,7 +183,6 @@ class BaseMainWindow(QMainWindow):
             method: LoadBase = self._load_dict[data[1]]
             dial = ExecuteFunctionDialog(method.load, [data[0]], exception_hook=load_data_exception_hook)
             if dial.exec():
-                print("Aaa")
                 result = dial.get_result()
                 self.main_menu.set_data(result)
                 self.settings.add_load_files_history(data[0], method.get_name())
