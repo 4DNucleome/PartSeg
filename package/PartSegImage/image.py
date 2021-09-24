@@ -263,7 +263,7 @@ class Image:
         default_coloring=None,
         ranges=None,
         channel_names=None,
-    ):
+    ) -> "Image":
         """Create copy of image with substitution of not None elements"""
         data = self._image_array if data is None else data
         image_spacing = self._image_spacing if image_spacing is None else image_spacing
@@ -445,6 +445,12 @@ class Image:
         return self._image_array[tuple(slices)]
 
     def clip_array(self, array, **kwargs):
+        """
+        #TODO add docs
+        :param array:
+        :param kwargs:
+        :return:
+        """
         array = self.fit_array_to_image(array)
         slices: typing.List[typing.Union[int, slice]] = [slice(None) for _ in range(len(self.array_axis_order))]
         axis_pos = self.get_array_axis_positions()
@@ -562,7 +568,7 @@ class Image:
         """
         new_mask = None
         if isinstance(cut_area, (list, tuple)):
-            cut_area2 = cut_area[:]
+            cut_area2 = list(cut_area)
             cut_area2.insert(self.channel_pos, slice(None))
             new_image = self._image_array[tuple(cut_area2)]
             if self._mask_array is not None:
