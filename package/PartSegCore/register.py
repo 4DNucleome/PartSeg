@@ -40,7 +40,7 @@ class RegisterEnum(Enum):
     Given types of operation are supported as plugins
     """
 
-    sprawl = 0  #: algorithm for calculation sprawl from core object to borders. For spiting touching objects
+    flow = 0  #: algorithm for calculation flow from core object to borders. For spiting touching objects, deprecated
     threshold = 1  #: threshold algorithms. From greyscale array to binary array
     noise_filtering = 2  #: filter noise from image
     analysis_algorithm = 3  #: algorithm for creating segmentation in analysis PartSeg part
@@ -56,11 +56,13 @@ class RegisterEnum(Enum):
     roi_analysis_segmentation_algorithm = 13  #: algorithm for creating segmentation in analysis PartSeg part
     roi_mask_segmentation_algorithm = 14  #: algorithm for creating segmentation in mask PartSeg part
     _qss_register = 15  #: new qss styles
+    sprawl = 16  #: algorithm for calculation flow from core object to borders. For spiting touching objects, deprecated
 
 
 # noinspection DuplicatedCode
 register_dict = {
-    RegisterEnum.sprawl: watershed.sprawl_dict,
+    RegisterEnum.flow: watershed.flow_dict,
+    RegisterEnum.sprawl: watershed.flow_dict,
     RegisterEnum.threshold: threshold.threshold_dict,
     RegisterEnum.noise_filtering: noise_filtering.noise_filtering_dict,
     RegisterEnum.analysis_algorithm: analysis_algorithm_description.analysis_algorithm_dict,
@@ -80,6 +82,7 @@ register_dict = {
 # noinspection DuplicatedCode
 base_class_dict = {
     RegisterEnum.sprawl: watershed.BaseWatershed,
+    RegisterEnum.flow: watershed.BaseWatershed,
     RegisterEnum.threshold: threshold.BaseThreshold,
     RegisterEnum.noise_filtering: noise_filtering.NoiseFilteringBase,
     RegisterEnum.analysis_algorithm: restartable_segmentation_algorithms.RestartableAlgorithm,

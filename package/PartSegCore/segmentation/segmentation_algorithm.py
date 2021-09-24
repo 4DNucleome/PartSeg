@@ -6,7 +6,7 @@ import numpy as np
 import SimpleITK as sitk
 
 from PartSegCore.segmentation.border_smoothing import smooth_dict
-from PartSegCore.segmentation.watershed import BaseWatershed, sprawl_dict
+from PartSegCore.segmentation.watershed import BaseWatershed, flow_dict
 
 from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
 from ..channel_class import Channel
@@ -299,8 +299,8 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
             AlgorithmProperty(
                 "sprawl_type",
                 "Flow type",
-                sprawl_dict.get_default(),
-                possible_values=sprawl_dict,
+                flow_dict.get_default(),
+                possible_values=flow_dict,
                 value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty("use_convex", "Use convex hull", False, (True, False)),
@@ -340,7 +340,7 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
         )
 
         report_fun("Sprawl calculation", 5)
-        sprawl_algorithm: BaseWatershed = sprawl_dict[self.parameters["sprawl_type"]["name"]]
+        sprawl_algorithm: BaseWatershed = flow_dict[self.parameters["sprawl_type"]["name"]]
         segmentation = sprawl_algorithm.sprawl(
             mask,
             core_objects,
