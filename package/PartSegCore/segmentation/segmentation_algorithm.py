@@ -272,7 +272,7 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
             mask, self.new_parameters["smooth_border"]["values"]
         )
 
-        report_fun("Sprawl calculation", 5)
+        report_fun("Flow calculation", 5)
         sprawl_algorithm: BaseWatershed = flow_dict[self.new_parameters["sprawl_type"]["name"]]
         segmentation = sprawl_algorithm.sprawl(
             mask,
@@ -343,7 +343,141 @@ class AutoThresholdAlgorithm(BaseSingleThresholdAlgorithm):
         return ""
 
 
-final_algorithm_list = [ThresholdAlgorithm, ThresholdFlowAlgorithm, ThresholdPreview, AutoThresholdAlgorithm]
+class CellFromNucleusFlow(StackAlgorithm):
+    def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:
+        report_fun("Nucleus noise removal", 0)
+        nucleus_channel = self.get_noise_filtered_channel(
+            self.new_parameters["nucleus_channel"], self.new_parameters["nucleus_noise_filtering"]
+        )
+        report_fun("Nucleus threshold apply", 1)
+        nucleus_mask, nucleus_thr = threshold_dict[self.new_parameters["nucleus_threshold"]["name"]].calculate_mask(
+            nucleus_channel, self.mask, self.new_parameters["nucleus_threshold"]["values"], operator.ge
+        )
+        report_fun("Nucleus calculate", 2)
+        nucleus_objects = sitk.GetArrayFromImage(
+            sitk.RelabelComponent(
+                sitk.ConnectedComponent(
+                    sitk.GetImageFromArray(nucleus_mask), not self.new_parameters["side_connection"]
+                ),
+                20,
+            )
+        )
+        self.sizes = np.bincount(nucleus_objects.flat)
+        ind = bisect(self.sizes[1:], self.new_parameters["minimum_size"], lambda x, y: x > y)
+        nucleus_objects[nucleus_objects > ind] = 0
+        report_fun("Cell noise removal", 3)
+        cell_channel = self.get_noise_filtered_channel(
+            self.new_parameters["cell_channel"], self.new_parameters["cell_noise_filtering"]
+        )
+        report_fun("Cell threshold apply", 4)
+        cell_mask, cell_thr = threshold_dict[self.new_parameters["cell_threshold"]["name"]].calculate_mask(
+            cell_channel, self.mask, self.new_parameters["cell_threshold"]["values"], operator.ge
+        )
+        report_fun("Smooth border", 5)
+        mask = smooth_dict[self.new_parameters["smooth_border"]["name"]].smooth(
+            cell_mask, self.new_parameters["smooth_border"]["values"]
+        )
+        report_fun("Flow calculation", 6)
+        sprawl_algorithm: BaseWatershed = flow_dict[self.new_parameters["flow_type"]["name"]]
+        segmentation = sprawl_algorithm.sprawl(
+            mask,
+            nucleus_objects,
+            cell_channel,
+            ind,
+            self.image.spacing,
+            self.new_parameters["side_connection"],
+            operator.gt,
+            self.new_parameters["flow_type"]["values"],
+            cell_thr,
+            cell_thr + 10,
+        )
+        if self.new_parameters["use_convex"]:
+            report_fun("convex hull", 6)
+            segmentation = convex_fill(segmentation)
+        report_fun("Calculation done", 7)
+        return ROIExtractionResult(
+            roi=segmentation,
+            parameters=self.get_segmentation_profile(),
+            additional_layers={
+                "no size filtering": AdditionalLayerDescription(data=mask, layer_type="labels"),
+            },
+        )
+
+    def get_info_text(self):
+        return ""
+
+    @classmethod
+    def get_fields(cls):
+        return [
+            AlgorithmProperty("nucleus_channel", "Nucleus Channel", 0, value_type=Channel),
+            AlgorithmProperty(
+                "nucleus_noise_filtering",
+                "Filter",
+                noise_filtering_dict.get_default(),
+                possible_values=noise_filtering_dict,
+                value_type=AlgorithmDescribeBase,
+            ),
+            AlgorithmProperty(
+                "nucleus_threshold",
+                "Threshold",
+                threshold_dict.get_default(),
+                possible_values=threshold_dict,
+                value_type=AlgorithmDescribeBase,
+            ),
+            AlgorithmProperty("cell_channel", "Cell Channel", 0, value_type=Channel),
+            AlgorithmProperty(
+                "cell_noise_filtering",
+                "Filter",
+                noise_filtering_dict.get_default(),
+                possible_values=noise_filtering_dict,
+                value_type=AlgorithmDescribeBase,
+            ),
+            AlgorithmProperty(
+                "cell_threshold",
+                "Threshold",
+                threshold_dict.get_default(),
+                possible_values=threshold_dict,
+                value_type=AlgorithmDescribeBase,
+            ),
+            AlgorithmProperty(
+                "flow_type",
+                "Flow type",
+                flow_dict.get_default(),
+                possible_values=flow_dict,
+                value_type=AlgorithmDescribeBase,
+            ),
+            AlgorithmProperty("close_holes", "Fill holes", True, (True, False)),
+            AlgorithmProperty("close_holes_size", "Maximum holes size (px)", 200, (0, 10 ** 5), 10),
+            AlgorithmProperty(
+                "smooth_border",
+                "Smooth borders",
+                smooth_dict.get_default(),
+                possible_values=smooth_dict,
+                value_type=AlgorithmDescribeBase,
+            ),
+            AlgorithmProperty(
+                "side_connection",
+                "Side by Side connections",
+                False,
+                (True, False),
+                help_text="During calculation of connected components includes only side by side connected pixels",
+            ),
+            AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10 ** 6), 1000),
+            AlgorithmProperty("use_convex", "Use convex hull", False, (True, False)),
+        ]
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Cell from nucleus flow"
+
+
+final_algorithm_list = [
+    ThresholdAlgorithm,
+    ThresholdFlowAlgorithm,
+    ThresholdPreview,
+    AutoThresholdAlgorithm,
+    CellFromNucleusFlow,
+]
 
 
 def close_small_holes(image, max_hole_size):

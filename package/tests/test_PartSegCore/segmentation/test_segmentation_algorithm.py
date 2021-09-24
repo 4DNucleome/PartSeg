@@ -5,7 +5,7 @@ import pytest
 from PartSegCore.segmentation import ROIExtractionAlgorithm
 from PartSegCore.segmentation.algorithm_base import ROIExtractionResult, SegmentationLimitException
 from PartSegCore.segmentation.restartable_segmentation_algorithms import final_algorithm_list as restartable_list
-from PartSegCore.segmentation.segmentation_algorithm import ThresholdFlowAlgorithm
+from PartSegCore.segmentation.segmentation_algorithm import CellFromNucleusFlow, ThresholdFlowAlgorithm
 from PartSegCore.segmentation.segmentation_algorithm import final_algorithm_list as algorithm_list
 
 
@@ -23,6 +23,15 @@ def fix_threshold_flow(monkeypatch):
         return values
 
     monkeypatch.setattr(ThresholdFlowAlgorithm, "get_default_values", _param)
+
+    values2 = CellFromNucleusFlow.get_default_values()
+    values2["nucleus_threshold"]["values"]["threshold"] = 10
+    values2["cell_threshold"]["values"]["threshold"] = 5
+
+    def _param2(self):
+        return values2
+
+    monkeypatch.setattr(CellFromNucleusFlow, "get_default_values", _param2)
 
 
 @pytest.mark.parametrize("algorithm", restartable_list + algorithm_list)
