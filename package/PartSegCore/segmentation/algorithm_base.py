@@ -230,10 +230,8 @@ class ROIExtractionAlgorithm(AlgorithmDescribeBase, ABC):
             raise ValueError(f"Missed arguments {missed_arguments}; Additional arguments: {additional_arguments}")
         self.new_parameters = deepcopy(kwargs)
 
-    @abstractmethod
     def get_segmentation_profile(self) -> ROIExtractionProfile:
-        """Get parameters seated by :py:meth:`set_parameters` method."""
-        raise NotImplementedError()
+        return ROIExtractionProfile("", self.get_name(), deepcopy(self.new_parameters))
 
     @staticmethod
     def get_steps_num():
