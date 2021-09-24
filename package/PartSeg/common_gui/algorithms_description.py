@@ -165,6 +165,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
                 raise ValueError(
                     f"Incompatible types. default_value should be type of int. Is {type(self.default_value)}"
                 )
+            if self.default_value < res.minimum():
+                res.setMinimum(self.default_value)
             if self.range is not None:
                 res.setRange(*self.range)
         elif issubclass(self.value_type, float):
@@ -173,6 +175,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
                 raise ValueError(
                     f"Incompatible types. default_value should be type of float. Is {type(self.default_value)}"
                 )
+            if self.default_value < res.minimum():
+                res.setMinimum(self.default_value)
             if self.range is not None:
                 res.setRange(*self.range)
         elif issubclass(self.value_type, str):
