@@ -376,7 +376,7 @@ class CellFromNucleusFlow(StackAlgorithm):
 
         report_fun("Flow calculation", 5)
         sprawl_algorithm: BaseWatershed = flow_dict[self.new_parameters["flow_type"]["name"]]
-        mean_brightness = np.mean(cell_channel[cell_mask])
+        mean_brightness = np.mean(cell_channel[cell_mask > 0])
         if mean_brightness < cell_thr:
             mean_brightness = cell_thr + 10
         segmentation = sprawl_algorithm.sprawl(
