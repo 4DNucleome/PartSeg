@@ -406,6 +406,10 @@ class CellFromNucleusFlow(StackAlgorithm):
     def get_info_text(self):
         return ""
 
+    @staticmethod
+    def get_steps_num():
+        return 8
+
     @classmethod
     def get_fields(cls):
         return [
