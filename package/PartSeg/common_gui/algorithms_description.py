@@ -663,6 +663,7 @@ class AlgorithmChoose(QWidget):
             widget.algorithm_thread.started.disconnect()
             widget.algorithm_thread.progress_signal.disconnect()
             widget.values_changed.disconnect()
+            widget.deleteLater()
         self.algorithm_dict = {}
         self.add_widgets_to_algorithm()
 
