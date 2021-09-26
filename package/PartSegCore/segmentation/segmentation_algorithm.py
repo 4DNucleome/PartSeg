@@ -145,8 +145,8 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
             )
         )
 
-        self.sizes = np.bincount(self.segmentation.flat)
-        ind = bisect(self.sizes[1:], self.new_parameters["minimum_size"], lambda x, y: x > y)
+        sizes = np.bincount(self.segmentation.flat)
+        ind = bisect(sizes[1:], self.new_parameters["minimum_size"], lambda x, y: x > y)
         resp = np.copy(self.segmentation)
         resp[resp > ind] = 0
         if self.new_parameters["use_convex"]:
@@ -350,7 +350,7 @@ class CellFromNucleusFlow(StackAlgorithm):
             self.new_parameters["nucleus_channel"], self.new_parameters["nucleus_noise_filtering"]
         )
         report_fun("Nucleus threshold apply", 1)
-        nucleus_mask, nucleus_thr = threshold_dict[self.new_parameters["nucleus_threshold"]["name"]].calculate_mask(
+        nucleus_mask, _nucleus_thr = threshold_dict[self.new_parameters["nucleus_threshold"]["name"]].calculate_mask(
             nucleus_channel, self.mask, self.new_parameters["nucleus_threshold"]["values"], operator.ge
         )
         report_fun("Nucleus calculate", 2)
@@ -362,8 +362,8 @@ class CellFromNucleusFlow(StackAlgorithm):
                 20,
             )
         )
-        self.sizes = np.bincount(nucleus_objects.flat)
-        ind = bisect(self.sizes[1:], self.new_parameters["minimum_size"], lambda x, y: x > y)
+        sizes = np.bincount(nucleus_objects.flat)
+        ind = bisect(sizes[1:], self.new_parameters["minimum_size"], lambda x, y: x > y)
         nucleus_objects[nucleus_objects > ind] = 0
         report_fun("Cell noise removal", 3)
         cell_channel = self.get_noise_filtered_channel(
