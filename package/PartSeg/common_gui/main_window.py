@@ -157,14 +157,17 @@ class BaseMainWindow(QMainWindow):
         self._refresh_recent(FILE_HISTORY, self.settings.get_last_files())
         self.settings.data_changed.connect(self._refresh_recent)
         self.settings.set_parent(self)
-        self.console = QtConsole(self)
+        self.console = None
         self.console_dock = QDockWidget("console", self)
         self.console_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.BottomDockWidgetArea)
-        self.console_dock.setWidget(self.console)
+        # self.console_dock.setWidget(self.console)
         self.console_dock.hide()
         self.addDockWidget(Qt.BottomDockWidgetArea, self.console_dock)
 
     def _toggle_console(self):
+        if self.console is None:
+            self.console = QtConsole(self)
+            self.console_dock.setWidget(self.console)
         self.console_dock.setVisible(not self.console_dock.isVisible())
 
     def _refresh_recent(self, name, value):
