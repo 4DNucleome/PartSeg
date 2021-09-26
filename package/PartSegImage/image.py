@@ -415,19 +415,21 @@ class Image:
         image_array = np.swapaxes(self._image_array, self.time_pos, self.stack_pos)
         return self.substitute(data=image_array)
 
-    def get_axis_positions(self) -> typing.Dict[str, int]:
+    @classmethod
+    def get_axis_positions(cls) -> typing.Dict[str, int]:
         """
         :return: dict with mapping axis to its position
         :rtype: dict
         """
-        return {l: i for i, l in enumerate(self.axis_order)}
+        return {l: i for i, l in enumerate(cls.axis_order)}
 
-    def get_array_axis_positions(self) -> typing.Dict[str, int]:
+    @classmethod
+    def get_array_axis_positions(cls) -> typing.Dict[str, int]:
         """
         :return: dict with mapping axis to its position for array fitted to image
         :rtype: dict
         """
-        return {l: i for i, l in enumerate(self.axis_order.replace("C", ""))}
+        return {l: i for i, l in enumerate(cls.axis_order.replace("C", ""))}
 
     def get_data_by_axis(self, **kwargs) -> np.ndarray:
         """
