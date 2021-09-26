@@ -148,7 +148,7 @@ numpydoc==1.1.0
     # via napari
 oiffile==2021.6.6
     # via -r requirements_pyinstaller.in
-openpyxl==3.0.8
+openpyxl==3.0.9
     # via -r requirements_pyinstaller.in
 packaging==21.0
     # via
