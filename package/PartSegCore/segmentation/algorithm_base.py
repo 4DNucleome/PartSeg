@@ -65,10 +65,7 @@ class ROIExtractionResult:
     roi_annotation: Dict = field(default_factory=dict)
     alternative_representation: Dict[str, np.ndarray] = field(default_factory=dict)
     file_path: Optional[str] = None
-
-    @property
-    def roi_info(self) -> ROIInfo:
-        return ROIInfo(roi=self.roi, annotations=self.roi_annotation, alternative=self.alternative_representation)
+    roi_info: Optional[ROIInfo] = None
 
     def __post_init__(self):
         if "ROI" in self.alternative_representation:
@@ -76,6 +73,12 @@ class ROIExtractionResult:
         for key, value in self.additional_layers.items():
             if value.name == "":
                 value.name = key
+        if self.roi_info is None:
+            object.__setattr__(
+                self,
+                "roi_info",
+                ROIInfo(roi=self.roi, annotations=self.roi_annotation, alternative=self.alternative_representation),
+            )
 
     def __str__(self):  # pragma: no cover
         return (
