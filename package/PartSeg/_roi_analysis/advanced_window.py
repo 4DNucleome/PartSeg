@@ -802,9 +802,9 @@ class SegAdvancedWindow(AdvancedWindow):
     """
 
     def __init__(self, settings, parent=None, reload_list=None):
-        super().__init__(settings, ["result_image", "raw_image"], parent)
+        super().__init__(settings, ["result_image", "raw_image"], reload_list, parent)
         self.settings = settings
-        self.reload_list = reload_list if reload_list is not None else []
+
         self.setWindowTitle("Settings and Measurement")
         self.advanced_settings = Properties(settings)
         # self.colormap_settings = ColorSelector(settings, ["result_control"])

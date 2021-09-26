@@ -162,10 +162,11 @@ class MainMenu(BaseMainMenu):
 
     def show_advanced_window(self):
         if self.advanced_window is None:
-            self.advanced_window = AdvancedWindow(self.settings, ["channelcontrol"])
-            # FIXME temporary workaround
-            self.advanced_window.reload_list = []
+            self.advanced_window = AdvancedWindow(self.settings, ["channelcontrol"], reload_list=[self.reload])
         self.advanced_window.show()
+
+    def reload(self):
+        self.parent().parent().options_panel.algorithm_options.algorithm_choose_widget.reload(mask_algorithm_dict)
 
     def load_image(self):
         # TODO move segmentation with image load to load_segmentaion
