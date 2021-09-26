@@ -373,14 +373,14 @@ class CellFromNucleusFlow(StackAlgorithm):
         cell_mask, cell_thr = threshold_dict[self.new_parameters["cell_threshold"]["name"]].calculate_mask(
             cell_channel, self.mask, self.new_parameters["cell_threshold"]["values"], operator.ge
         )
-        report_fun("Smooth border", 5)
-        mask = smooth_dict[self.new_parameters["smooth_border"]["name"]].smooth(
-            cell_mask, self.new_parameters["smooth_border"]["values"]
-        )
-        report_fun("Flow calculation", 6)
+
+        report_fun("Flow calculation", 5)
         sprawl_algorithm: BaseWatershed = flow_dict[self.new_parameters["flow_type"]["name"]]
+        mean_brightness = np.mean(cell_channel[cell_mask])
+        if mean_brightness < cell_thr:
+            mean_brightness = cell_thr + 10
         segmentation = sprawl_algorithm.sprawl(
-            mask,
+            cell_mask,
             nucleus_objects,
             cell_channel,
             ind,
@@ -389,17 +389,21 @@ class CellFromNucleusFlow(StackAlgorithm):
             operator.gt,
             self.new_parameters["flow_type"]["values"],
             cell_thr,
-            cell_thr + 10,
+            mean_brightness,
+        )
+        report_fun("Smooth border", 6)
+        segmentation = smooth_dict[self.new_parameters["smooth_border"]["name"]].smooth(
+            segmentation, self.new_parameters["smooth_border"]["values"]
         )
         if self.new_parameters["use_convex"]:
-            report_fun("convex hull", 6)
+            report_fun("convex hull", 7)
             segmentation = convex_fill(segmentation)
-        report_fun("Calculation done", 7)
+        report_fun("Calculation done", 8)
         return ROIExtractionResult(
             roi=segmentation,
             parameters=self.get_segmentation_profile(),
             additional_layers={
-                "no size filtering": AdditionalLayerDescription(data=mask, layer_type="labels"),
+                "no size filtering": AdditionalLayerDescription(data=cell_mask, layer_type="labels"),
             },
         )
 
@@ -408,7 +412,7 @@ class CellFromNucleusFlow(StackAlgorithm):
 
     @staticmethod
     def get_steps_num():
-        return 8
+        return 9
 
     @classmethod
     def get_fields(cls):
