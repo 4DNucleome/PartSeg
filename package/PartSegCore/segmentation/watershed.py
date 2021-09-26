@@ -238,10 +238,12 @@ class MSOWatershed(BaseWatershed):
         return result
 
 
-sprawl_dict = Register(
+flow_dict = Register(
     MSOWatershed, PathWatershed, DistanceWatershed, PathDistanceWatershed, FDTWatershed, class_methods=["sprawl"]
 )
 """This register contains algorithms for sprawl area from core object."""
+
+sprawl_dict = flow_dict
 
 
 def get_neigh(sides):

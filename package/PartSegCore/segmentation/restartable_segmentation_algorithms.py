@@ -21,7 +21,7 @@ from .algorithm_base import ROIExtractionAlgorithm, ROIExtractionResult, Segment
 from .mu_mid_point import BaseMuMid, mu_mid_dict
 from .noise_filtering import noise_filtering_dict
 from .threshold import BaseThreshold, double_threshold_dict, threshold_dict
-from .watershed import BaseWatershed, calculate_distances_array, get_neigh, sprawl_dict
+from .watershed import BaseWatershed, calculate_distances_array, flow_dict, get_neigh
 
 
 def blank_operator(_x, _y):
@@ -400,8 +400,8 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
             AlgorithmProperty(
                 "sprawl_type",
                 "Flow type",
-                next(iter(sprawl_dict.keys())),
-                possible_values=sprawl_dict,
+                next(iter(flow_dict.keys())),
+                possible_values=flow_dict,
                 value_type=AlgorithmDescribeBase,
             ),
         )
@@ -460,7 +460,7 @@ class BaseThresholdFlowAlgorithm(TwoLevelThresholdBaseAlgorithm, ABC):
             if self.threshold_operator(self.threshold_info[1], self.threshold_info[0]):
                 self.final_sizes = np.bincount(finally_segment.flat)
                 return self.prepare_result(self.finally_segment)
-            path_sprawl: BaseWatershed = sprawl_dict[self.new_parameters["sprawl_type"]["name"]]
+            path_sprawl: BaseWatershed = flow_dict[self.new_parameters["sprawl_type"]["name"]]
             self.parameters["sprawl_type"] = self.new_parameters["sprawl_type"]
             new_segment = path_sprawl.sprawl(
                 self.sprawl_area,

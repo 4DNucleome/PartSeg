@@ -6,9 +6,9 @@ import numpy as np
 import SimpleITK as sitk
 
 from PartSegCore.segmentation.border_smoothing import smooth_dict
-from PartSegCore.segmentation.watershed import BaseWatershed, sprawl_dict
+from PartSegCore.segmentation.watershed import BaseWatershed, flow_dict
 
-from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
+from ..algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty
 from ..channel_class import Channel
 from ..convex_fill import convex_fill
 from ..project_info import AdditionalLayerDescription
@@ -31,6 +31,12 @@ class StackAlgorithm(ROIExtractionAlgorithm, ABC):
     def support_z(cls):
         return True
 
+    def get_noise_filtered_channel(self, channel_idx, noise_removal):
+        channel = self.get_channel(channel_idx)
+        return noise_filtering_dict[noise_removal["name"]].noise_filter(
+            channel, self.image.spacing, noise_removal["values"]
+        )
+
 
 class ThresholdPreview(StackAlgorithm):
     @classmethod
@@ -51,41 +57,19 @@ class ThresholdPreview(StackAlgorithm):
     def get_name(cls):
         return "Only Threshold"
 
-    def __init__(self):
-        super().__init__()
-        self.noise_filtering = None
-        self.threshold = 0
-
     def calculation_run(self, report_fun) -> ROIExtractionResult:
-        self.channel = self.get_channel(self.channel_num)
-        image = noise_filtering_dict[self.noise_filtering["name"]].noise_filter(
-            self.channel, self.image.spacing, self.noise_filtering["values"]
-        )
-        res = (image > self.threshold).astype(np.uint8)
+        image = self.get_noise_filtered_channel(self.new_parameters["channel"], self.new_parameters["noise_filtering"])
+        res = (image > self.new_parameters["threshold"]).astype(np.uint8)
         if self.mask is not None:
             res[self.mask == 0] = 0
-        self.image = None
-        self.channel = None
         return ROIExtractionResult(
             roi=res,
             parameters=self.get_segmentation_profile(),
             additional_layers={"denoised image": AdditionalLayerDescription(layer_type="image", data=image)},
         )
 
-    def set_parameters(self, channel, threshold, noise_filtering):  # pylint: disable=W0221
-        self.channel_num = channel
-        self.threshold = threshold
-        self.noise_filtering = noise_filtering
-
     def get_info_text(self):
         return ""
-
-    def get_segmentation_profile(self) -> ROIExtractionProfile:
-        return ROIExtractionProfile(
-            "",
-            self.get_name(),
-            {"channel": self.channel_num, "threshold": self.threshold, "noise_filtering": self.noise_filtering},
-        )
 
 
 class BaseThresholdAlgorithm(StackAlgorithm, ABC):
@@ -129,19 +113,6 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
 
 
 class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
-    def __init__(self):
-        super().__init__()
-        self.threshold = None
-        self.minimum_size = None
-        self.sizes = None
-        self.noise_filtering = None
-        self.close_holes = False
-        self.close_holes_size = 0
-        self.smooth_border = {}
-        self.gauss_2d = False
-        self.edge_connection = True
-        self.use_convex = False
-
     @staticmethod
     def get_steps_num():
         return 7
@@ -154,29 +125,31 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
 
     def calculation_run(self, report_fun):
         report_fun("Noise removal", 0)
-        self.channel = self.get_channel(self.channel_num)
-        image = noise_filtering_dict[self.noise_filtering["name"]].noise_filter(
-            self.channel, self.image.spacing, self.noise_filtering["values"]
-        )
+        image = self.get_noise_filtered_channel(self.new_parameters["channel"], self.new_parameters["noise_filtering"])
         mask = self._threshold_and_exclude(image, report_fun)
-        if self.close_holes:
+        if self.new_parameters["close_holes"]:
             report_fun("Filing holes", 3)
-            mask = close_small_holes(mask, self.close_holes_size)
+            mask = close_small_holes(mask, self.new_parameters["close_holes_size"])
         report_fun("Smooth border", 4)
-        self.segmentation = smooth_dict[self.smooth_border["name"]].smooth(mask, self.smooth_border["values"])
+        self.segmentation = smooth_dict[self.new_parameters["smooth_border"]["name"]].smooth(
+            mask, self.new_parameters["smooth_border"]["values"]
+        )
 
         report_fun("Components calculating", 5)
         self.segmentation = sitk.GetArrayFromImage(
             sitk.RelabelComponent(
-                sitk.ConnectedComponent(sitk.GetImageFromArray(self.segmentation), self.edge_connection), 20
+                sitk.ConnectedComponent(
+                    sitk.GetImageFromArray(self.segmentation), not self.new_parameters["side_connection"]
+                ),
+                20,
             )
         )
 
-        self.sizes = np.bincount(self.segmentation.flat)
-        ind = bisect(self.sizes[1:], self.minimum_size, lambda x, y: x > y)
+        sizes = np.bincount(self.segmentation.flat)
+        ind = bisect(sizes[1:], self.new_parameters["minimum_size"], lambda x, y: x > y)
         resp = np.copy(self.segmentation)
         resp[resp > ind] = 0
-        if self.use_convex:
+        if self.new_parameters["use_convex"]:
             report_fun("convex hull", 6)
             resp = convex_fill(resp)
         report_fun("Calculation done", 7)
@@ -186,45 +159,6 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
             additional_layers={
                 "denoised image": AdditionalLayerDescription(data=image, layer_type="image"),
                 "no size filtering": AdditionalLayerDescription(data=self.segmentation, layer_type="labels"),
-            },
-        )
-
-    def _set_parameters(
-        self,
-        channel,
-        threshold,
-        minimum_size,
-        close_holes,
-        smooth_border,
-        noise_filtering,
-        close_holes_size,
-        side_connection,
-        use_convex,
-    ):
-        self.channel_num = channel
-        self.threshold = threshold
-        self.minimum_size = minimum_size
-        self.close_holes = close_holes
-        self.smooth_border = smooth_border
-        self.noise_filtering = noise_filtering
-        self.close_holes_size = close_holes_size
-        self.edge_connection = not side_connection
-        self.use_convex = use_convex
-
-    def get_segmentation_profile(self) -> ROIExtractionProfile:
-        return ROIExtractionProfile(
-            "",
-            self.get_name(),
-            {
-                "channel": self.channel_num,
-                "threshold": self.threshold,
-                "minimum_size": self.minimum_size,
-                "close_holes": self.close_holes,
-                "smooth_border": self.smooth_border,
-                "noise_filtering": self.noise_filtering,
-                "close_holes_size": self.close_holes_size,
-                "side_connection": not self.edge_connection,
-                "use_convex": self.use_convex,
             },
         )
 
@@ -239,13 +173,12 @@ class ThresholdAlgorithm(BaseSingleThresholdAlgorithm):
 
     def _threshold_and_exclude(self, image, report_fun):
         report_fun("Threshold calculation", 1)
-        threshold_algorithm: BaseThreshold = threshold_dict[self.threshold["name"]]
-        mask, _thr_val = threshold_algorithm.calculate_mask(image, self.mask, self.threshold["values"], operator.ge)
+        threshold_algorithm: BaseThreshold = threshold_dict[self.new_parameters["threshold"]["name"]]
+        mask, _thr_val = threshold_algorithm.calculate_mask(
+            image, self.mask, self.new_parameters["threshold"]["values"], operator.ge
+        )
         report_fun("Threshold calculated", 2)
         return mask
-
-    def set_parameters(self, **kwargs):
-        super()._set_parameters(**kwargs)
 
     def get_info_text(self):
         return ""
@@ -254,7 +187,6 @@ class ThresholdAlgorithm(BaseSingleThresholdAlgorithm):
 class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
     def __init__(self):
         super().__init__()
-        self.parameters = {}
         self.sizes = [0]
 
     @classmethod
@@ -293,14 +225,14 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
                 "Side by Side connections",
                 False,
                 (True, False),
-                help_text="During calculation of connected components includes" " only side by side connected pixels",
+                help_text="During calculation of connected components includes only side by side connected pixels",
             ),
             AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10 ** 6), 1000),
             AlgorithmProperty(
                 "sprawl_type",
                 "Flow type",
-                sprawl_dict.get_default(),
-                possible_values=sprawl_dict,
+                flow_dict.get_default(),
+                possible_values=flow_dict,
                 value_type=AlgorithmDescribeBase,
             ),
             AlgorithmProperty("use_convex", "Use convex hull", False, (True, False)),
@@ -308,52 +240,53 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
 
     def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:
         report_fun("Noise removal", 0)
-        self.channel = self.get_channel(self.channel_num)
-        noise_filtered = noise_filtering_dict[self.parameters["noise_filtering"]["name"]].noise_filter(
-            self.channel, self.image.spacing, self.parameters["noise_filtering"]["values"]
+        noise_filtered = self.get_noise_filtered_channel(
+            self.new_parameters["channel"], self.new_parameters["noise_filtering"]
         )
 
         report_fun("Threshold apply", 1)
-        mask, thr = double_threshold_dict[self.parameters["threshold"]["name"]].calculate_mask(
-            noise_filtered, self.mask, self.parameters["threshold"]["values"], operator.ge
+        mask, thr = double_threshold_dict[self.new_parameters["threshold"]["name"]].calculate_mask(
+            noise_filtered, self.mask, self.new_parameters["threshold"]["values"], operator.ge
         )
         core_objects = np.array(mask == 2).astype(np.uint8)
 
         report_fun("Core components calculating", 2)
         core_objects = sitk.GetArrayFromImage(
             sitk.RelabelComponent(
-                sitk.ConnectedComponent(sitk.GetImageFromArray(core_objects), not self.parameters["side_connection"]),
+                sitk.ConnectedComponent(
+                    sitk.GetImageFromArray(core_objects), not self.new_parameters["side_connection"]
+                ),
                 20,
             )
         )
         self.sizes = np.bincount(core_objects.flat)
-        ind = bisect(self.sizes[1:], self.parameters["minimum_size"], lambda x, y: x > y)
+        ind = bisect(self.sizes[1:], self.new_parameters["minimum_size"], lambda x, y: x > y)
         core_objects[core_objects > ind] = 0
 
-        if self.parameters["close_holes"]:
+        if self.new_parameters["close_holes"]:
             report_fun("Filing holes", 3)
-            mask = close_small_holes(mask, self.parameters["close_holes_size"])
+            mask = close_small_holes(mask, self.new_parameters["close_holes_size"])
 
         report_fun("Smooth border", 4)
-        mask = smooth_dict[self.parameters["smooth_border"]["name"]].smooth(
-            mask, self.parameters["smooth_border"]["values"]
+        mask = smooth_dict[self.new_parameters["smooth_border"]["name"]].smooth(
+            mask, self.new_parameters["smooth_border"]["values"]
         )
 
-        report_fun("Sprawl calculation", 5)
-        sprawl_algorithm: BaseWatershed = sprawl_dict[self.parameters["sprawl_type"]["name"]]
+        report_fun("Flow calculation", 5)
+        sprawl_algorithm: BaseWatershed = flow_dict[self.new_parameters["sprawl_type"]["name"]]
         segmentation = sprawl_algorithm.sprawl(
             mask,
             core_objects,
             noise_filtered,
             ind,
             self.image.spacing,
-            self.parameters["side_connection"],
+            self.new_parameters["side_connection"],
             operator.gt,
-            self.parameters["sprawl_type"]["values"],
+            self.new_parameters["sprawl_type"]["values"],
             thr[1],
             thr[0],
         )
-        if self.parameters["use_convex"]:
+        if self.new_parameters["use_convex"]:
             report_fun("convex hull", 6)
             segmentation = convex_fill(segmentation)
         report_fun("Calculation done", 7)
@@ -373,17 +306,6 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
     def get_info_text(self):
         return ""
 
-    def set_parameters(self, **kwargs):
-        fields = [x.name for x in self.get_fields() if not isinstance(x, str)]
-        # TODO Maybe check inclusion
-        if set(fields) != set(kwargs.keys()):
-            raise ValueError("Not all fields has provided values")
-        for name in fields:
-            self.parameters[name] = kwargs[name]
-
-    def get_segmentation_profile(self) -> ROIExtractionProfile:
-        return ROIExtractionProfile("", self.get_name(), dict(self.parameters))
-
 
 class AutoThresholdAlgorithm(BaseSingleThresholdAlgorithm):
     @classmethod
@@ -396,18 +318,16 @@ class AutoThresholdAlgorithm(BaseSingleThresholdAlgorithm):
     def get_name(cls):
         return "Auto Threshold"
 
-    def __init__(self):
-        super().__init__()
-        self.suggested_size = 0
-
     def _threshold_image(self, image: np.ndarray) -> np.ndarray:
         sitk_image = sitk.GetImageFromArray(image)
-        sitk_mask = sitk.ThresholdMaximumConnectedComponents(sitk_image, self.suggested_size)
+        sitk_mask = sitk.ThresholdMaximumConnectedComponents(sitk_image, self.new_parameters["suggested_size"])
         # TODO what exactly it returns. Maybe it is already segmented.
         mask = sitk.GetArrayFromImage(sitk_mask)
         min_val = np.min(image[mask > 0])
-        threshold_algorithm: BaseThreshold = threshold_dict[self.threshold["name"]]
-        mask2, thr_val = threshold_algorithm.calculate_mask(image, None, self.threshold["values"], operator.le)
+        threshold_algorithm: BaseThreshold = threshold_dict[self.new_parameters["threshold"]["name"]]
+        mask2, thr_val = threshold_algorithm.calculate_mask(
+            image, None, self.new_parameters["threshold"]["values"], operator.le
+        )
         if thr_val < min_val:
             return mask
         return mask2
@@ -419,20 +339,153 @@ class AutoThresholdAlgorithm(BaseSingleThresholdAlgorithm):
         report_fun("Threshold calculation", 2)
         return self._threshold_image(image)
 
-    def set_parameters(self, suggested_size, *args, **kwargs):  # pylint: disable=W0221
-        self._set_parameters(*args, **kwargs)
-        self.suggested_size = suggested_size
+    def get_info_text(self):
+        return ""
+
+
+class CellFromNucleusFlow(StackAlgorithm):
+    def calculation_run(self, report_fun: Callable[[str, int], None]) -> ROIExtractionResult:
+        report_fun("Nucleus noise removal", 0)
+        nucleus_channel = self.get_noise_filtered_channel(
+            self.new_parameters["nucleus_channel"], self.new_parameters["nucleus_noise_filtering"]
+        )
+        report_fun("Nucleus threshold apply", 1)
+        nucleus_mask, _nucleus_thr = threshold_dict[self.new_parameters["nucleus_threshold"]["name"]].calculate_mask(
+            nucleus_channel, self.mask, self.new_parameters["nucleus_threshold"]["values"], operator.ge
+        )
+        report_fun("Nucleus calculate", 2)
+        nucleus_objects = sitk.GetArrayFromImage(
+            sitk.RelabelComponent(
+                sitk.ConnectedComponent(
+                    sitk.GetImageFromArray(nucleus_mask), not self.new_parameters["side_connection"]
+                ),
+                20,
+            )
+        )
+        sizes = np.bincount(nucleus_objects.flat)
+        ind = bisect(sizes[1:], self.new_parameters["minimum_size"], lambda x, y: x > y)
+        nucleus_objects[nucleus_objects > ind] = 0
+        report_fun("Cell noise removal", 3)
+        cell_channel = self.get_noise_filtered_channel(
+            self.new_parameters["cell_channel"], self.new_parameters["cell_noise_filtering"]
+        )
+        report_fun("Cell threshold apply", 4)
+        cell_mask, cell_thr = threshold_dict[self.new_parameters["cell_threshold"]["name"]].calculate_mask(
+            cell_channel, self.mask, self.new_parameters["cell_threshold"]["values"], operator.ge
+        )
+
+        report_fun("Flow calculation", 5)
+        sprawl_algorithm: BaseWatershed = flow_dict[self.new_parameters["flow_type"]["name"]]
+        mean_brightness = np.mean(cell_channel[cell_mask])
+        if mean_brightness < cell_thr:
+            mean_brightness = cell_thr + 10
+        segmentation = sprawl_algorithm.sprawl(
+            cell_mask,
+            nucleus_objects,
+            cell_channel,
+            ind,
+            self.image.spacing,
+            self.new_parameters["side_connection"],
+            operator.gt,
+            self.new_parameters["flow_type"]["values"],
+            cell_thr,
+            mean_brightness,
+        )
+        report_fun("Smooth border", 6)
+        segmentation = smooth_dict[self.new_parameters["smooth_border"]["name"]].smooth(
+            segmentation, self.new_parameters["smooth_border"]["values"]
+        )
+        if self.new_parameters["use_convex"]:
+            report_fun("convex hull", 7)
+            segmentation = convex_fill(segmentation)
+        report_fun("Calculation done", 8)
+        return ROIExtractionResult(
+            roi=segmentation,
+            parameters=self.get_segmentation_profile(),
+            additional_layers={
+                "no size filtering": AdditionalLayerDescription(data=cell_mask, layer_type="labels"),
+            },
+        )
 
     def get_info_text(self):
         return ""
 
-    def get_segmentation_profile(self):
-        resp = super().get_segmentation_profile()
-        resp.values["suggested_size"] = self.suggested_size
-        return resp
+    @staticmethod
+    def get_steps_num():
+        return 9
+
+    @classmethod
+    def get_fields(cls):
+        return [
+            AlgorithmProperty("nucleus_channel", "Nucleus Channel", 0, value_type=Channel),
+            AlgorithmProperty(
+                "nucleus_noise_filtering",
+                "Filter",
+                noise_filtering_dict.get_default(),
+                possible_values=noise_filtering_dict,
+                value_type=AlgorithmDescribeBase,
+            ),
+            AlgorithmProperty(
+                "nucleus_threshold",
+                "Threshold",
+                threshold_dict.get_default(),
+                possible_values=threshold_dict,
+                value_type=AlgorithmDescribeBase,
+            ),
+            AlgorithmProperty("cell_channel", "Cell Channel", 0, value_type=Channel),
+            AlgorithmProperty(
+                "cell_noise_filtering",
+                "Filter",
+                noise_filtering_dict.get_default(),
+                possible_values=noise_filtering_dict,
+                value_type=AlgorithmDescribeBase,
+            ),
+            AlgorithmProperty(
+                "cell_threshold",
+                "Threshold",
+                threshold_dict.get_default(),
+                possible_values=threshold_dict,
+                value_type=AlgorithmDescribeBase,
+            ),
+            AlgorithmProperty(
+                "flow_type",
+                "Flow type",
+                flow_dict.get_default(),
+                possible_values=flow_dict,
+                value_type=AlgorithmDescribeBase,
+            ),
+            AlgorithmProperty("close_holes", "Fill holes", True, (True, False)),
+            AlgorithmProperty("close_holes_size", "Maximum holes size (px)", 200, (0, 10 ** 5), 10),
+            AlgorithmProperty(
+                "smooth_border",
+                "Smooth borders",
+                smooth_dict.get_default(),
+                possible_values=smooth_dict,
+                value_type=AlgorithmDescribeBase,
+            ),
+            AlgorithmProperty(
+                "side_connection",
+                "Side by Side connections",
+                False,
+                (True, False),
+                help_text="During calculation of connected components includes only side by side connected pixels",
+            ),
+            AlgorithmProperty("minimum_size", "Minimum size", 8000, (20, 10 ** 6), 1000),
+            AlgorithmProperty("use_convex", "Use convex hull", False, (True, False)),
+        ]
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Cell from nucleus flow"
 
 
-final_algorithm_list = [ThresholdAlgorithm, ThresholdFlowAlgorithm, ThresholdPreview, AutoThresholdAlgorithm]
+final_algorithm_list = [
+    ThresholdAlgorithm,
+    ThresholdFlowAlgorithm,
+    ThresholdPreview,
+    AutoThresholdAlgorithm,
+    CellFromNucleusFlow,
+]
 
 
 def close_small_holes(image, max_hole_size):

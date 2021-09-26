@@ -263,7 +263,7 @@ class Image:
         default_coloring=None,
         ranges=None,
         channel_names=None,
-    ):
+    ) -> "Image":
         """Create copy of image with substitution of not None elements"""
         data = self._image_array if data is None else data
         image_spacing = self._image_spacing if image_spacing is None else image_spacing
@@ -445,6 +445,12 @@ class Image:
         return self._image_array[tuple(slices)]
 
     def clip_array(self, array, **kwargs):
+        """
+        #TODO add docs
+        :param array:
+        :param kwargs:
+        :return:
+        """
         array = self.fit_array_to_image(array)
         slices: typing.List[typing.Union[int, slice]] = [slice(None) for _ in range(len(self.array_axis_order))]
         axis_pos = self.get_array_axis_positions()
@@ -525,15 +531,15 @@ class Image:
         self._image_spacing = tuple(value)
 
     @staticmethod
-    def _frame_array(array: typing.Optional[np.ndarray], index_to_add: typing.List[int]):
+    def _frame_array(array: typing.Optional[np.ndarray], index_to_add: typing.List[int], frame=FRAME_THICKNESS):
         if array is None:  # pragma: no cover
             return array
         result_shape = list(array.shape)
         image_pos = [slice(None) for _ in range(array.ndim)]
 
         for index in index_to_add:
-            result_shape[index] += FRAME_THICKNESS * 2
-            image_pos[index] = slice(FRAME_THICKNESS, result_shape[index] - FRAME_THICKNESS)
+            result_shape[index] += frame * 2
+            image_pos[index] = slice(frame, result_shape[index] - frame)
 
         data = np.zeros(shape=result_shape, dtype=array.dtype)
         data[tuple(image_pos)] = array
@@ -551,7 +557,10 @@ class Image:
         return [array_axis.index(letter) for letter in important_axis]
 
     def cut_image(
-        self, cut_area: typing.Union[np.ndarray, typing.List[slice], typing.Tuple[slice]], replace_mask=False
+        self,
+        cut_area: typing.Union[np.ndarray, typing.List[slice], typing.Tuple[slice]],
+        replace_mask=False,
+        frame: int = FRAME_THICKNESS,
     ) -> "Image":
         """
         Create new image base on mask or list of slices
@@ -562,7 +571,7 @@ class Image:
         """
         new_mask = None
         if isinstance(cut_area, (list, tuple)):
-            cut_area2 = cut_area[:]
+            cut_area2 = list(cut_area)
             cut_area2.insert(self.channel_pos, slice(None))
             new_image = self._image_array[tuple(cut_area2)]
             if self._mask_array is not None:
@@ -590,10 +599,10 @@ class Image:
         important_axis = "XY" if self.is_2d else "XYZ"
 
         return self.__class__(
-            self._frame_array(new_image, self.calc_index_to_frame(self.axis_order, important_axis)),
+            self._frame_array(new_image, self.calc_index_to_frame(self.axis_order, important_axis), frame),
             self._image_spacing,
             None,
-            self._frame_array(new_mask, self.calc_index_to_frame(self.array_axis_order, important_axis)),
+            self._frame_array(new_mask, self.calc_index_to_frame(self.array_axis_order, important_axis), frame),
             self.default_coloring,
             self.ranges,
             self.channel_names,

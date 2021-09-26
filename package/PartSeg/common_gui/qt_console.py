@@ -66,7 +66,7 @@ class QtConsole(RichJupyterWidget):
         super().__init__()
 
         self.main_window = main_window
-        self.syntax_style = ""
+        self.syntax_style = "default"
         self.style_sheet = ""
 
         # Connect theme update

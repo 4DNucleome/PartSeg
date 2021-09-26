@@ -25,6 +25,7 @@ from PartSeg import plugins
 from PartSeg.common_backend.base_settings import ViewSettings
 from PartSeg.common_gui.colormap_creator import PColormapCreator, PColormapList
 from PartSeg.common_gui.label_create import ColorShow, LabelChoose, LabelEditor
+from PartSegCore import plugins as core_plugins
 from PartSegCore import register, state_store
 
 
@@ -46,9 +47,9 @@ class DevelopTab(QWidget):
         super().__init__()
 
         # noinspection PyArgumentList
-        self.reload_btm = QPushButton("Reload algorithms", clicked=self.reload_algorithm_action)
+        self.reload_btn = QPushButton("Reload algorithms", clicked=self.reload_algorithm_action)
         layout = QGridLayout()
-        layout.addWidget(self.reload_btm, 0, 0)
+        layout.addWidget(self.reload_btn, 0, 0)
         layout.setColumnStretch(1, 1)
         layout.setRowStretch(1, 1)
         self.setLayout(layout)
@@ -59,10 +60,16 @@ class DevelopTab(QWidget):
             print(val, file=sys.stderr)
             importlib.reload(val)
         for el in plugins.get_plugins():
+            print(el, file=sys.stderr)
+            importlib.reload(el)
+        for el in core_plugins.get_plugins():
+            print(el, file=sys.stderr)
             importlib.reload(el)
         importlib.reload(register)
         importlib.reload(plugins)
+        importlib.reload(core_plugins)
         plugins.register()
+        core_plugins.register()
         for el in self.parent().parent().reload_list:
             el()
 
@@ -147,10 +154,11 @@ class AdvancedWindow(QTabWidget):
     :param image_view_names: passed as second argument to :py:class:`~.PColormapList`
     """
 
-    def __init__(self, settings: ViewSettings, image_view_names: List[str], parent=None):
+    def __init__(self, settings: ViewSettings, image_view_names: List[str], reload_list=None, parent=None):
         super().__init__(parent)
         self.color_control = ColorControl(settings, image_view_names)
         self.settings = settings
+        self.reload_list = reload_list if reload_list is not None else []
 
         self.develop = DevelopTab()
         self.addTab(self.color_control, "Color control")

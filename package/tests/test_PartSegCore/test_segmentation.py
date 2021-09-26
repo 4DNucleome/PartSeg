@@ -19,7 +19,7 @@ from PartSegCore.roi_info import BoundInfo, ROIInfo
 from PartSegCore.segmentation import ROIExtractionAlgorithm, algorithm_base
 from PartSegCore.segmentation import restartable_segmentation_algorithms as sa
 from PartSegCore.segmentation.noise_filtering import noise_filtering_dict
-from PartSegCore.segmentation.watershed import sprawl_dict
+from PartSegCore.segmentation.watershed import flow_dict
 from PartSegImage import Image
 
 
@@ -259,7 +259,7 @@ class TestRangeThresholdAlgorithm:
 
 
 class BaseFlowThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
-    @pytest.mark.parametrize("sprawl_algorithm_name", sprawl_dict.keys())
+    @pytest.mark.parametrize("sprawl_algorithm_name", flow_dict.keys())
     @pytest.mark.parametrize("compare_op", [operator.eq, operator.ge])
     @pytest.mark.parametrize("components", [2] + list(range(3, 15, 2)))
     def test_multiple(self, sprawl_algorithm_name, compare_op, components):
@@ -267,7 +267,7 @@ class BaseFlowThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
         parameters = self.get_parameters()
         image = self.get_multiple_part(components)
         alg.set_image(image)
-        sprawl_algorithm = sprawl_dict[sprawl_algorithm_name]
+        sprawl_algorithm = flow_dict[sprawl_algorithm_name]
         parameters["sprawl_type"] = {"name": sprawl_algorithm_name, "values": sprawl_algorithm.get_default_values()}
         if compare_op(1, 0):
             parameters["threshold"]["values"]["base_threshold"]["values"]["threshold"] += self.get_shift()
@@ -275,14 +275,14 @@ class BaseFlowThreshold(BaseThreshold, ABC):  # pylint: disable=W0223
         result = alg.calculation_run(empty)
         self.check_result(result, [4000] * components, compare_op, parameters)
 
-    @pytest.mark.parametrize("algorithm_name", sprawl_dict.keys())
+    @pytest.mark.parametrize("algorithm_name", flow_dict.keys())
     def test_side_connection(self, algorithm_name):
         image = self.get_side_object()
         alg = self.get_algorithm_class()()
         parameters = self.get_parameters()
         parameters["side_connection"] = True
         alg.set_image(image)
-        val = sprawl_dict[algorithm_name]
+        val = flow_dict[algorithm_name]
         parameters["sprawl_type"] = {"name": algorithm_name, "values": val.get_default_values()}
         alg.set_parameters(**parameters)
         result = alg.calculation_run(empty)
