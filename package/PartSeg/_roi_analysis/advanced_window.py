@@ -846,7 +846,7 @@ class MultipleInput(QDialog):
             return res
 
         field_dict = {str: QLineEdit, float: create_input_float, int: create_input_int}
-        QDialog.__init__(self)
+        super().__init__()
         ok_butt = QPushButton("Ok", self)
         cancel_butt = QPushButton("Cancel", self)
         self.object_dict = {}

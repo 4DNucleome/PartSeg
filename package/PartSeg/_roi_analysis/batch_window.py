@@ -82,7 +82,7 @@ class ProgressView(QWidget):
     """
 
     def __init__(self, parent, batch_manager):
-        QWidget.__init__(self, parent)
+        super().__init__(parent)
         self.task_count = 0
         self.calculation_manager = batch_manager
         self.whole_progress = QProgressBar(self)
@@ -222,7 +222,7 @@ class FileChoose(QWidget):
     """
 
     def __init__(self, settings: PartSettings, batch_manager, parent=None):
-        QWidget.__init__(self, parent)
+        super().__init__(parent)
         self.files_to_proceed = set()
         self.settings = settings
         self.batch_manager = batch_manager

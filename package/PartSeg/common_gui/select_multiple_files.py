@@ -86,7 +86,7 @@ class AddFiles(QWidget):
 
     def __init__(self, settings: BaseSettings, parent=None, btn_layout=QHBoxLayout):
         """TODO: to be defined1."""
-        QWidget.__init__(self, parent)
+        super().__init__(parent)
         self.mask_list: List[MaskMapper] = []
         self.settings = settings
         self.files_to_proceed = set()
