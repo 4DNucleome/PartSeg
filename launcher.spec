@@ -112,6 +112,8 @@ plugins_data = []
 
 for package in packages:
     module = package.load()
+    if hasattr(module, "_hiddentimports"):
+        hiddenimports += module._hiddentimports
     path_to_module = os.path.dirname(module.__file__)
     plugins_data.append((os.path.join(path_to_module, "*.py"), os.path.join("plugins", os.path.basename(path_to_module))))
 
