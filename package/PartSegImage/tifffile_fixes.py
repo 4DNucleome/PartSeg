@@ -1,39 +1,25 @@
 import collections
-import re
 
 import packaging.version
 import tifffile.tifffile
 from tifffile import TiffFile, TiffPage
 
 if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":  # noqa C901
+    original_asarray = TiffPage.asarray
 
-    class MyTiffPage(TiffPage):
-        """Modification of :py:class:`TiffPage` from `tifffile` package to provide progress information"""
-
-        def asarray(self, *args, **kwargs):
-            """
-            Modified for progress info. call original implementation and send info that page is read by
-            call parameter less function `report_func` of parent.
-            sample of usage in :py:meth:`ImageRead.read`
-            """
-            # Because of TiffFrame usage
-            res = super().asarray(*args, **kwargs)
-            self.parent.report_func()
-            return res
-
-        @property
-        def is_ome(self):
-            """Page contains OME-XML in ImageDescription tag."""
-            if self.index > 1 or not self.description:
-                return False
-            d = self.description
-            return (
-                re.match(r"<\?xml version *=", d[:20]) is not None
-                and re.match(r".*</(OME:)?OME>[ \n]*$", d[-20:], re.DOTALL) is not None
-            )
+    def asarray(self, *args, **kwargs):
+        """
+        Modified for progress info. call original implementation and send info that page is read by
+        call parameter less function `report_func` of parent.
+        sample of usage in :py:meth:`ImageRead.read`
+        """
+        # Because of TiffFrame usage
+        res = original_asarray(self, *args, **kwargs)
+        self.parent.report_func()
+        return res
 
     TiffFile.report_func = lambda x: 0
-    tifffile.tifffile.TiffPage = MyTiffPage
+    tifffile.tifffile.TiffPage.asarray = asarray
 
     if packaging.version.parse(tifffile.__version__) <= packaging.version.parse("2019.7.26"):  # pragma: no cover
         asbool = tifffile.tifffile.asbool
