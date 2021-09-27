@@ -35,6 +35,7 @@ from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import LoadROI, LoadROIFromTIFF, LoadROIParameters, MaskProjectTuple, SaveROI
 from PartSegCore.project_info import HistoryElement, HistoryProblem, calculate_mask_from_project
+from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image, TiffImageReader
 
 from .._roi_mask.segmentation_info_dialog import SegmentationInfoDialog
@@ -88,9 +89,10 @@ class MaskDialog(MaskDialogBase):
         history.arrays.seek(0)
         seg = np.load(history.arrays)
         history.arrays.seek(0)
-        self.settings.roi = seg["segmentation"]
-        self.settings.set_segmentation(
-            seg["segmentation"],
+        # TODO Check me
+        # self.settings.roi = seg["segmentation"]
+        self.settings._set_roi_info(
+            ROIInfo(seg["segmentation"]),
             False,
             history.roi_extraction_parameters["selected"],
             history.roi_extraction_parameters["parameters"],

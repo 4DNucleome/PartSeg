@@ -49,7 +49,7 @@ class StackSettings(BaseSettings):
                     self._parent, "Result file bug", "It looks like one try to set ROI form another file."
                 )
             return
-        if self._parent and np.max(result.roi) == 0:  # pragma: no cover
+        if self._parent and len(result.roi_info.bound_info) == 0:  # pragma: no cover
             QMessageBox.information(
                 self._parent,
                 "No result",
@@ -62,7 +62,7 @@ class StackSettings(BaseSettings):
         self.additional_layers_changed.emit()
         self.last_executed_algorithm = result.parameters.algorithm
         self.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
-        self.set_segmentation(result.roi, True, [], parameters_dict)
+        self._set_roi_info(result.roi_info, True, [], parameters_dict)
 
     @Slot(int)
     def set_keep_chosen_components(self, val: bool):
@@ -284,36 +284,30 @@ class StackSettings(BaseSettings):
             for el1, el2 in zip(self.history, history)
         )
 
-    def set_segmentation(
-        self, new_segmentation_data: np.ndarray, save_chosen=True, list_of_components=None, segmentation_parameters=None
+    def _set_roi_info(
+        self, new_roi_info: ROIInfo, save_chosen=True, list_of_components=None, segmentation_parameters=None
     ):
-        new_segmentation_data = self.image.fit_array_to_image(new_segmentation_data)
         if list_of_components is None:
             list_of_components = []
         if segmentation_parameters is None:
             segmentation_parameters = defaultdict(lambda: None)
         state = self.get_project_info()
         try:
-            self.image.fit_array_to_image(new_segmentation_data)
+            new_roi_info = new_roi_info.fit_to_image(self.image)
         except ValueError:
-            raise ValueError("Segmentation do not fit to image")
+            raise ValueError("ROI do not fit to image")
         if save_chosen:
-            state2 = self.transform_state(
-                state, ROIInfo(new_segmentation_data), segmentation_parameters, list_of_components, save_chosen
-            )
+            state2 = self.transform_state(state, new_roi_info, segmentation_parameters, list_of_components, save_chosen)
             self.chosen_components_widget.set_chose(
                 list(sorted(state2.roi_extraction_parameters.keys())), state2.selected_components
             )
             self.roi = state2.roi_info
             self.components_parameters_dict = state2.roi_extraction_parameters
         else:
-            unique = np.unique(new_segmentation_data.flat)
-            if unique[0] == 0:
-                unique = unique[1:]
-            selected_parameters = {i: segmentation_parameters[i] for i in unique}
+            selected_parameters = {i: segmentation_parameters[i] for i in new_roi_info.bound_info}
 
             self.chosen_components_widget.set_chose(list(sorted(selected_parameters.keys())), list_of_components)
-            self.roi = new_segmentation_data
+            self.roi = new_roi_info
             self.components_parameters_dict = segmentation_parameters
 
 

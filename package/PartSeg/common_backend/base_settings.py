@@ -464,13 +464,10 @@ class BaseSettings(ViewSettings):
         self.last_executed_algorithm = result.parameters.algorithm
         self.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
         try:
-            roi = self.image.fit_array_to_image(result.roi)
-            alternative_list = {
-                k: self.image.fit_array_to_image(v) for k, v in result.alternative_representation.items()
-            }
+            roi_info = result.roi_info.fit_to_image(self.image)
         except ValueError:  # pragma: no cover
             raise ValueError("roi do not fit to image")
-        self._roi_info = ROIInfo(roi, result.roi_annotation, alternative_list)
+        self._roi_info = roi_info
         self.roi_changed.emit(self._roi_info)
 
     def _load_files_call(self, files_list: List[str]):
