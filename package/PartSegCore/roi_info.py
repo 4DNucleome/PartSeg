@@ -1,9 +1,9 @@
-from collections import defaultdict
 from typing import Any, Dict, List, NamedTuple, Optional
 
 import numpy as np
 
 from PartSegCore.utils import numpy_repr
+from PartSegCore_compiled_backend.utils import calc_bounds
 from PartSegImage.image import Image, minimal_dtype
 
 
@@ -84,14 +84,9 @@ class ROIInfo:
         :return: mapping component number to bounding box
         :rtype: Dict[int, BoundInfo]
         """
-        bound_info = {}
-        points = np.nonzero(roi)
-        comp_num = roi[points]
-        point_dict = defaultdict(list)
-        for num, point in zip(comp_num, np.transpose(points)):
-            point_dict[num].append(point)
-        for num, points_for_num in point_dict.items():
-            lower = np.min(points_for_num, 0)
-            upper = np.max(points_for_num, 0)
-            bound_info[num] = BoundInfo(lower=lower, upper=upper)
-        return bound_info
+        min_bounds, max_bounds = calc_bounds(roi)
+        return {
+            num: BoundInfo(lower=lower, upper=upper)
+            for num, (lower, upper) in enumerate(zip(min_bounds, max_bounds))
+            if num != 0 and upper[0] != -1
+        }

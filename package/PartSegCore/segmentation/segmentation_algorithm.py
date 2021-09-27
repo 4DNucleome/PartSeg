@@ -59,17 +59,26 @@ class ThresholdPreview(StackAlgorithm):
 
     def calculation_run(self, report_fun) -> ROIExtractionResult:
         image = self.get_noise_filtered_channel(self.new_parameters["channel"], self.new_parameters["noise_filtering"])
+        report_fun("threshold", 0)
         res = (image > self.new_parameters["threshold"]).astype(np.uint8)
+        report_fun("mask", 1)
         if self.mask is not None:
             res[self.mask == 0] = 0
-        return ROIExtractionResult(
+        report_fun("result", 2)
+        val = ROIExtractionResult(
             roi=res,
             parameters=self.get_segmentation_profile(),
             additional_layers={"denoised image": AdditionalLayerDescription(layer_type="image", data=image)},
         )
+        report_fun("return", 4)
+        return val
 
     def get_info_text(self):
         return ""
+
+    @staticmethod
+    def get_steps_num():
+        return 3
 
 
 class BaseThresholdAlgorithm(StackAlgorithm, ABC):
