@@ -467,6 +467,8 @@ class BaseSettings(ViewSettings):
             roi_info = result.roi_info.fit_to_image(self.image)
         except ValueError:  # pragma: no cover
             raise ValueError("roi do not fit to image")
+        if result.points is not None:
+            self.points = result.points
         self._roi_info = roi_info
         self.roi_changed.emit(self._roi_info)
 

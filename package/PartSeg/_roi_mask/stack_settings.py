@@ -63,6 +63,8 @@ class StackSettings(BaseSettings):
         self.last_executed_algorithm = result.parameters.algorithm
         self.set(f"algorithms.{result.parameters.algorithm}", result.parameters.values)
         self._set_roi_info(result.roi_info, True, [], parameters_dict)
+        if result.points is not None:
+            self.points = result.points
 
     @Slot(int)
     def set_keep_chosen_components(self, val: bool):
