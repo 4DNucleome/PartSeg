@@ -17,7 +17,7 @@ if tifffile.tifffile.TiffPage.__module__ != "PartSegImage.tifffile_fixes":  # no
             sample of usage in :py:meth:`ImageRead.read`
             """
             # Because of TiffFrame usage
-            res = TiffPage.asarray(self, *args, **kwargs)
+            res = super().asarray(*args, **kwargs)
             self.parent.report_func()
             return res
 
