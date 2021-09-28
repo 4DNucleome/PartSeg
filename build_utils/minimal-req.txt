@@ -1,5 +1,5 @@
 
-PartSegCore_compiled_backend==0.12.0a0
+PartSegCore_compiled_backend==0.13.11
 PartSegData==0.10.0
 PyOpenGL-accelerate==3.1.5
 QtPy==1.7.0
@@ -21,6 +21,7 @@ requests==2.18.0
 scipy==1.2.0
 sentry_sdk==0.14.3
 six==1.11.0
+superqt==0.2.4
 sympy==1.1.1
 tifffile==2020.9.30
 vispy==0.6.4

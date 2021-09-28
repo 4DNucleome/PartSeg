@@ -228,6 +228,7 @@ class Viewer(NViewer):
         self._settings = settings
         self._sync_widget = SynchronizeWidget(settings, self, partseg_viewer_name)
         self.window.add_dock_widget(self._sync_widget, area="left")
+        self.window.qt_viewer.canvas.background_color_override = "black"
 
     def create_initial_layers(
         self, image: bool = True, roi: bool = True, additional_layers: bool = False, points: bool = True

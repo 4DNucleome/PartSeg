@@ -26,18 +26,23 @@ from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
 from PartSegImage import Image
 
 try:
-    from napari.qt import get_stylesheet
-except ImportError:  # pragma: no cover
-    from napari.resources import get_stylesheet
+    from napari.settings import get_settings as napari_get_settings
+except ImportError:
+    try:
+        from napari.utils.settings import get_settings as napari_get_settings
+    except ImportError:
+
+        class MockSettings:
+            def save(self):
+                pass
+
+        def napari_get_settings():
+            return MockSettings()
+
 
 if hasattr(napari.utils.theme, "get_theme"):
 
-    def get_theme(name: str) -> dict:
-        theme = napari.utils.theme.get_theme(name)
-        if "canvas" in theme and theme["canvas"] != "black":
-            theme["canvas"] = "black"
-            napari.utils.theme.register_theme(name, theme)
-        return theme
+    get_theme = napari.utils.theme.get_theme
 
 
 else:  # pragma: no cover
@@ -46,6 +51,12 @@ else:  # pragma: no cover
         theme = napari.utils.theme.palettes[name]
         theme["canvas"] = "black"
         return theme
+
+
+try:
+    from napari.qt import get_stylesheet
+except ImportError:  # pragma: no cover
+    from napari.resources import get_stylesheet
 
 
 DIR_HISTORY = "io.dir_location_history"
@@ -281,13 +292,15 @@ class ViewSettings(ImageSettings):
 
     @property
     def style_sheet(self):
-        theme = get_theme(self.theme_name)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", FutureWarning)
+            theme = get_theme(self.theme_name)
         # TODO understand qss overwrite mechanism
         return napari_template("\n".join(register.qss_list) + get_stylesheet() + "\n".join(register.qss_list), **theme)
 
     @theme_name.setter
     def theme_name(self, value: str):
-        if value not in napari.utils.theme.palettes:
+        if value not in napari.utils.theme.available_themes():
             raise ValueError(f"Unsupported theme {value}. Supported one: {self.theme_list()}")
         if value == self.theme_name:
             return
@@ -425,6 +438,11 @@ class BaseSettings(ViewSettings):
 
     def __init__(self, json_path):
         super().__init__()
+        napari_path = os.path.dirname(json_path) if os.path.basename(json_path) in ["analysis", "mask"] else json_path
+        try:
+            self.napari_settings = napari_get_settings(napari_path)
+        except:  # noqa
+            self.napari_settings = napari_get_settings()
         self._current_roi_dict = "default"
         self._roi_dict = ProfileDict()
         self.json_folder_path = json_path
@@ -619,6 +637,7 @@ class BaseSettings(ViewSettings):
         :param folder_path: path to directory in which data should be saved.
             If is None then use :py:attr:`.json_folder_path`
         """
+        self.napari_settings.save()
         if folder_path is None:
             folder_path = self.json_folder_path
         if not os.path.exists(folder_path):
