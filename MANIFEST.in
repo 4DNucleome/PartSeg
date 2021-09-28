@@ -31,3 +31,8 @@ exclude **/.coverage
 exclude .azure-pipelines/**
 exclude dist/*
 exclude .mdlrc
+exclude examples/**
+recursive-include package *.pyi
+exclude dist/**
+exclude dist/**.swp
+exclude cliff.toml
