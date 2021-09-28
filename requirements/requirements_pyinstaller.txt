@@ -162,7 +162,7 @@ parso==0.8.2
     # via jedi
 partd==1.2.0
     # via dask
-partsegcore-compiled-backend==0.12.0a5
+partsegcore-compiled-backend==0.13.11
     # via -r requirements_pyinstaller.in
 partsegdata==0.10.0
     # via -r requirements_pyinstaller.in
