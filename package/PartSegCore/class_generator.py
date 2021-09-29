@@ -179,9 +179,7 @@ omit_list = (typing.TypeVar,)
 def add_classes(types_list, translate_dict, global_state):
     ll = list(types_list)
     for type_ in ll:
-        if type_ in translate_dict:
-            continue
-        if isinstance(type_, omit_list):
+        if type_ in translate_dict or isinstance(type_, omit_list):
             continue
         if hasattr(type_, "__module__") and type_.__module__ == "typing":
             if hasattr(type_, "__args__") and isinstance(type_.__args__, collections.abc.Iterable):
