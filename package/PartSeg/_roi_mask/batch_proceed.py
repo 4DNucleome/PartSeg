@@ -1,5 +1,4 @@
 import re
-import sys
 from collections import defaultdict
 from functools import partial
 from os import path
@@ -15,11 +14,6 @@ from PartSegCore.mask.io_functions import LoadROIImage, LoadStackImage, MaskProj
 from PartSegCore.segmentation import StackAlgorithm
 from PartSegCore.segmentation.algorithm_base import ROIExtractionAlgorithm
 
-if sys.version_info.minor == 6:
-    SegmentationTupleWrapper = object
-else:
-    SegmentationTupleWrapper = MaskProjectTuple
-
 
 class BatchTask(NamedTuple):
     data: Union[str, MaskProjectTuple]
@@ -32,7 +26,7 @@ class BatchProceed(QThread):
     progress_signal = Signal(str, int, str, int)
     range_signal = Signal(int, int)
     execution_done = Signal()
-    multiple_result = Signal(SegmentationTupleWrapper)
+    multiple_result = Signal(MaskProjectTuple)
     algorithm: ROIExtractionAlgorithm
 
     def __init__(self):

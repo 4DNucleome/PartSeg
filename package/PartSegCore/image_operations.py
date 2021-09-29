@@ -17,7 +17,7 @@ class RadiusType(Enum):
     R3D = 2  #: operation on whole stack
 
     def __str__(self):
-        return self.name
+        return ["No", "2d", "3d"][self.value]
 
 
 class NoiseFilterType(Enum):

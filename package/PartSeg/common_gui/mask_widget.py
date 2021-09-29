@@ -2,17 +2,17 @@ from functools import partial
 
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import QCheckBox, QDialog, QHBoxLayout, QLabel, QPushButton, QSpinBox, QVBoxLayout, QWidget
+from superqt import QEnumComboBox
 
 from PartSegCore.image_operations import RadiusType
 from PartSegCore.mask_create import MaskProperty
 from PartSegCore.segmentation.algorithm_base import calculate_operation_radius
 
 from ..common_backend.base_settings import BaseSettings, ImageSettings
-from .dim_combobox import DimComboBox
 
 
-def off_widget(widget: QWidget, combo_box: DimComboBox):
-    widget.setDisabled(combo_box.value() == RadiusType.NO)
+def off_widget(widget: QWidget, combo_box: QEnumComboBox):
+    widget.setDisabled(combo_box.currentEnum() == RadiusType.NO)
 
 
 class MaskWidget(QWidget):
@@ -27,7 +27,7 @@ class MaskWidget(QWidget):
         # self.dilate_radius.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.dilate_radius.setSingleStep(1)
         self.dilate_radius.setDisabled(True)
-        self.dilate_dim = DimComboBox()
+        self.dilate_dim = QEnumComboBox(enum_class=RadiusType)
         self.dilate_dim.setToolTip("With minus radius mask will be eroded")
         # noinspection PyUnresolvedReferences
         self.dilate_dim.currentIndexChanged.connect(partial(off_widget, self.dilate_radius, self.dilate_dim))
@@ -39,7 +39,7 @@ class MaskWidget(QWidget):
         # noinspection PyUnresolvedReferences
         self.dilate_dim.currentIndexChanged.connect(self.dilate_change)
 
-        self.fill_holes = DimComboBox(self)
+        self.fill_holes = QEnumComboBox(enum_class=RadiusType)
         self.max_hole_size = QSpinBox()
         self.max_hole_size.setRange(-1, 10000)
         self.max_hole_size.setValue(-1)
@@ -102,14 +102,14 @@ class MaskWidget(QWidget):
 
     def get_dilate_radius(self):
         radius = calculate_operation_radius(
-            self.dilate_radius.value(), self.settings.image_spacing, self.dilate_dim.value()
+            self.dilate_radius.value(), self.settings.image_spacing, self.dilate_dim.currentEnum()
         )
         if isinstance(radius, (list, tuple)):
             return [int(x + 0.5) for x in radius]
         return int(radius)
 
     def dilate_change(self):
-        if self.dilate_radius.value() == 0 or self.dilate_dim.value() == RadiusType.NO:
+        if self.dilate_radius.value() == 0 or self.dilate_dim.currentEnum() == RadiusType.NO:
             self.radius_information.setText("Dilation radius: 0")
         else:
             dilate_radius = self.get_dilate_radius()
@@ -120,19 +120,19 @@ class MaskWidget(QWidget):
 
     def get_mask_property(self):
         return MaskProperty(
-            dilate=self.dilate_dim.value() if self.dilate_radius.value() != 0 else RadiusType.NO,
-            dilate_radius=self.dilate_radius.value() if self.dilate_dim.value() != RadiusType.NO else 0,
-            fill_holes=self.fill_holes.value() if self.max_hole_size.value() != 0 else RadiusType.NO,
-            max_holes_size=self.max_hole_size.value() if self.fill_holes.value() != RadiusType.NO else 0,
+            dilate=self.dilate_dim.currentEnum() if self.dilate_radius.value() != 0 else RadiusType.NO,
+            dilate_radius=self.dilate_radius.value() if self.dilate_dim.currentEnum() != RadiusType.NO else 0,
+            fill_holes=self.fill_holes.currentEnum() if self.max_hole_size.value() != 0 else RadiusType.NO,
+            max_holes_size=self.max_hole_size.value() if self.fill_holes.currentEnum() != RadiusType.NO else 0,
             save_components=self.save_components.isChecked(),
             clip_to_mask=self.clip_to_mask.isChecked(),
             reversed_mask=self.reversed_check.isChecked(),
         )
 
     def set_mask_property(self, prop: MaskProperty):
-        self.dilate_dim.setValue(prop.dilate)
+        self.dilate_dim.setCurrentEnum(prop.dilate)
         self.dilate_radius.setValue(prop.dilate_radius)
-        self.fill_holes.setValue(prop.fill_holes)
+        self.fill_holes.setCurrentEnum(prop.fill_holes)
         self.max_hole_size.setValue(prop.max_holes_size)
         self.save_components.setChecked(prop.save_components)
         self.clip_to_mask.setChecked(prop.clip_to_mask)

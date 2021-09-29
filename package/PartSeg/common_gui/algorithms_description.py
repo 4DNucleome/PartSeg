@@ -23,7 +23,6 @@ from superqt import QEnumComboBox
 from PartSeg.common_gui.error_report import ErrorDialog
 from PartSegCore.algorithm_describe_base import AlgorithmDescribeBase, AlgorithmProperty, ROIExtractionProfile
 from PartSegCore.channel_class import Channel
-from PartSegCore.image_operations import RadiusType
 from PartSegCore.segmentation.algorithm_base import (
     ROIExtractionAlgorithm,
     ROIExtractionResult,
@@ -33,7 +32,6 @@ from PartSegImage import Image
 
 from ..common_backend.base_settings import BaseSettings
 from ..common_backend.segmentation_thread import SegmentationThread
-from .dim_combobox import DimComboBox
 from .universal_gui_part import ChannelComboBox, CustomDoubleSpinBox, CustomSpinBox
 
 
@@ -79,14 +77,6 @@ class ProfileSelect(QComboBox):
 
 
 class QtAlgorithmProperty(AlgorithmProperty):
-    qt_class_dict = {
-        int: CustomSpinBox,
-        float: CustomDoubleSpinBox,
-        list: QComboBox,
-        bool: QCheckBox,
-        RadiusType: DimComboBox,
-    }
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._widget = self._get_field()
