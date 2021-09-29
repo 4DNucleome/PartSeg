@@ -13,7 +13,7 @@
 [![codecov](https://codecov.io/gh/4DNucleome/PartSeg/branch/master/graph/badge.svg?token=nbAbkOAe1C)](https://codecov.io/gh/4DNucleome/PartSeg)
 [![DeepSource](https://deepsource.io/gh/4DNucleome/PartSeg.svg/?label=active+issues&show_trend=true&token=RuuHPIzqyqGaU-bKtOKPFWTg)](https://deepsource.io/gh/4DNucleome/PartSeg/?ref=repository-badge)
 
-PartSeg is a GUI and a library for segmentation algorithms.
+PartSeg is a GUI and a library for segmentation algorithms. PartSeg also provide napari plugins for IO and labels measurement.
 
 This application is designed to help biologist with segmentation based on threshold and connected components.
 
