@@ -1,5 +1,4 @@
 import itertools
-import sys
 from collections.abc import MutableMapping
 from typing import Generic, Iterator, Tuple, TypeVar, Union
 
@@ -10,19 +9,8 @@ from PartSeg.common_backend.abstract_class import QtMeta
 T = TypeVar("T")
 RemovableInfo = Tuple[T, bool]
 
-if sys.version_info.major == 3 and sys.version_info.minor == 6:
 
-    class CustomGeneric:
-        def __getitem__(self, item):
-            return self
-
-
-else:
-    CustomGeneric = Generic[T]
-
-
-# TODO when drop python 3.6 then use Generic[T]
-class PartiallyConstDict(QObject, MutableMapping, CustomGeneric, metaclass=QtMeta):
+class PartiallyConstDict(QObject, MutableMapping, Generic[T], metaclass=QtMeta):
     """
     Base class for creating dict to mixin predefined and user defined variables.
     """

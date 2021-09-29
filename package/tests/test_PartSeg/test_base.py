@@ -1,7 +1,5 @@
-import sys
 import typing
 
-import pytest
 from qtpy.QtCore import QObject
 from qtpy.QtWidgets import QWidget
 
@@ -31,7 +29,6 @@ def test_widget_inheritance():
     assert issubclass(B, QWidget)
 
 
-@pytest.mark.skipif(sys.version_info.minor == 6, reason="Generic cannot be used with QObject in python 3.6")
 def test_object_generic_inheritance():
     T = typing.TypeVar("T")
 
