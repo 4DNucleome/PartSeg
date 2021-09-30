@@ -37,6 +37,7 @@ from PartSegCore.mask.io_functions import (
     LoadStackImage,
     LoadStackImageWithMask,
     MaskProjectTuple,
+    SaveComponents,
     SaveParametersJSON,
     SaveROI,
     save_components,
@@ -362,7 +363,13 @@ class TestSegmentationMask:
         SaveROI.save(os.path.join(tmpdir, "segmentation.seg"), seg, {"relative_path": False})
         assert os.path.exists(os.path.join(tmpdir, "segmentation.seg"))
         os.makedirs(os.path.join(tmpdir, "seg_save"))
-        save_components(seg.image, seg.selected_components, os.path.join(tmpdir, "seg_save"), seg.roi_info)
+        save_components(
+            seg.image,
+            seg.selected_components,
+            os.path.join(tmpdir, "seg_save"),
+            seg.roi_info,
+            SaveComponents.get_default_values(),
+        )
         assert os.path.isdir(os.path.join(tmpdir, "seg_save"))
         assert len(glob(os.path.join(tmpdir, "seg_save", "*"))) == 4
         seg2 = LoadROI.load([os.path.join(tmpdir, "segmentation.seg")])

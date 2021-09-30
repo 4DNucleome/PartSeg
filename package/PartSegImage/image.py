@@ -548,66 +548,102 @@ class Image:
         return data
 
     @staticmethod
-    def calc_index_to_frame(array_axis, important_axis):
+    def calc_index_to_frame(array_axis: str, important_axis: str) -> typing.List[int]:
         """
         calculate in which axis frame should be added
 
         :param str array_axis: list of image axis
         :param str important_axis: list of framed axis
-        :return:
+        :return: list of indices to add frame.
         """
         return [array_axis.index(letter) for letter in important_axis]
 
+    def _cut_image_slices(self, cut_area: typing.Iterable[slice], frame: int):
+        new_mask = None
+        important_axis = "XY" if self.is_2d else "XYZ"
+        cut_area = list(cut_area)
+        for ind in self.calc_index_to_frame(self.array_axis_order, important_axis):
+            sl = cut_area[ind]
+            cut_area[ind] = slice(
+                max(sl.start - frame, 0) if sl.start is not None else None,
+                sl.stop + frame if sl.stop is not None else None,
+                sl.step,
+            )
+        cut_area2 = cut_area[:]
+        cut_area2.insert(self.channel_pos, slice(None))
+        new_image = self._image_array[tuple(cut_area2)]
+        if self._mask_array is not None:
+            new_mask = self._mask_array[tuple(cut_area)]
+        return new_image, new_mask
+
+    def _roi_to_slices(self, roi: np.ndarray) -> typing.List[slice]:
+        cut_area = self.fit_array_to_image(roi)
+        points = np.nonzero(cut_area)
+        lower_bound = np.min(points, axis=1)
+        upper_bound = np.max(points, axis=1)
+        return [slice(x, y + 1) for x, y in zip(lower_bound, upper_bound)]
+
+    def _cut_with_roi(self, cut_area: np.ndarray, replace_mask: bool, frame: int):
+        new_mask = None
+        cut_area = self.fit_array_to_image(cut_area)
+        new_cut = self._roi_to_slices(cut_area)
+        catted_cut_area = cut_area[tuple(new_cut)]
+        image_cut = new_cut[:]
+        image_cut.insert(self.channel_pos, slice(None))
+        new_image = np.copy(self._image_array[tuple(image_cut)])
+        if self.channel_pos == len(self.axis_order) - 1:
+            new_image[catted_cut_area == 0] = 0
+        else:
+            for i in range(self.channels):
+                np.take(new_image, i, self.channel_pos)[catted_cut_area == 0] = 0
+        if replace_mask:
+            new_mask = catted_cut_area
+        elif self._mask_array is not None:
+            new_mask = self._mask_array[tuple(new_cut)]
+            new_mask[catted_cut_area == 0] = 0
+        important_axis = "XY" if self.is_2d else "XYZ"
+        new_image = self._frame_array(new_image, self.calc_index_to_frame(self.axis_order, important_axis), frame)
+        new_mask = self._frame_array(new_mask, self.calc_index_to_frame(self.array_axis_order, important_axis), frame)
+        return new_image, new_mask
+
     def cut_image(
         self,
-        cut_area: typing.Union[np.ndarray, typing.List[slice], typing.Tuple[slice]],
+        cut_area: typing.Union[np.ndarray, typing.Iterable[slice]],
         replace_mask=False,
         frame: int = FRAME_THICKNESS,
+        zero_out_cut_area: bool = True,
     ) -> "Image":
         """
         Create new image base on mask or list of slices
-        :param replace_mask: if cut area is represented by mask array,
-        then in result image the mask is set base on cut_area
-        :param cut_area: area to cut. Defined with slices or mask
+        :param bool replace_mask: if cut area is represented by mask array,
+        then in result image the mask is set base on cut_area if cur_area is np.ndarray
+        :param typing.Union[np.ndarray, typing.Iterable[slice]] cut_area: area to cut. Defined with slices or mask
+        :param int frame: additional frame around cut_area
+        :param bool zero_out_cut_area:
         :return: Image
         """
-        new_mask = None
-        if isinstance(cut_area, (list, tuple)):
-            cut_area2 = list(cut_area)
-            cut_area2.insert(self.channel_pos, slice(None))
-            new_image = self._image_array[tuple(cut_area2)]
-            if self._mask_array is not None:
-                new_mask = self._mask_array[tuple(cut_area)]
-        else:
-            cut_area = self.fit_array_to_image(cut_area)
-            points = np.nonzero(cut_area)
-            lower_bound = np.min(points, axis=1)
-            upper_bound = np.max(points, axis=1)
-            new_cut = [slice(x, y + 1) for x, y in zip(lower_bound, upper_bound)]
-            catted_cut_area = cut_area[tuple(new_cut)]
-            image_cut = new_cut[:]
-            image_cut.insert(self.channel_pos, slice(None))
-            new_image = np.copy(self._image_array[tuple(image_cut)])
-            if self.channel_pos == len(self.axis_order) - 1:
-                new_image[catted_cut_area == 0] = 0
+        if isinstance(cut_area, np.ndarray):
+            if zero_out_cut_area:
+                new_image, new_mask = self._cut_with_roi(cut_area, replace_mask, frame)
             else:
-                for i in range(self.channels):
-                    np.take(new_image, i, self.channel_pos)[catted_cut_area == 0] = 0
-            if replace_mask:
-                new_mask = catted_cut_area
-            elif self._mask_array is not None:
-                new_mask = self._mask_array[tuple(new_cut)]
-                new_mask[catted_cut_area == 0] = 0
-        important_axis = "XY" if self.is_2d else "XYZ"
+                new_cut = self._roi_to_slices(cut_area)
+                new_image, new_mask = self._cut_image_slices(new_cut, frame)
+                if replace_mask:
+                    important_axis = "XY" if self.is_2d else "XYZ"
+                    new_mask = self._frame_array(
+                        cut_area, self.calc_index_to_frame(self.array_axis_order, important_axis), frame
+                    )
+        else:
+            new_image, new_mask = self._cut_image_slices(cut_area, frame)
 
         return self.__class__(
-            self._frame_array(new_image, self.calc_index_to_frame(self.axis_order, important_axis), frame),
-            self._image_spacing,
-            None,
-            self._frame_array(new_mask, self.calc_index_to_frame(self.array_axis_order, important_axis), frame),
-            self.default_coloring,
-            self.ranges,
-            self.channel_names,
+            data=new_image,
+            image_spacing=self._image_spacing,
+            file_path=None,
+            mask=new_mask,
+            default_coloring=self.default_coloring,
+            ranges=self.ranges,
+            channel_names=self.channel_names,
         )
 
     def get_imagej_colors(self):

@@ -524,6 +524,7 @@ def save_components(
     components: list,
     dir_path: str,
     roi_info: ROIInfo,
+    parameters=None,
     points: typing.Optional[np.ndarray] = None,
     range_changed=None,
     step_changed=None,
@@ -532,6 +533,9 @@ def save_components(
         range_changed = empty_fun
     if step_changed is None:
         step_changed = empty_fun
+
+    if parameters is None:
+        parameters = SaveComponents.get_default_values()
 
     roi_info = roi_info.fit_to_image(image)
     os.makedirs(dir_path, exist_ok=True)
@@ -543,7 +547,9 @@ def save_components(
     range_changed(0, 2 * len(components))
     for i in components:
         components_mark = np.array(roi_info.roi == i)
-        im = image.cut_image(components_mark, replace_mask=True)
+        im = image.cut_image(
+            components_mark, replace_mask=True, frame=parameters["frame"], zero_out_cut_area=parameters["mask_data"]
+        )
         if points is not None and points_casted is not None:
             points_mask = components_mark[tuple(points_casted.T)]
             filtered_points = points[points_mask]
@@ -585,6 +591,7 @@ class SaveComponents(SaveBase):
             project_info.selected_components,
             save_location,
             project_info.roi_info,
+            parameters,
             project_info.points,
             range_changed,
             step_changed,
@@ -596,7 +603,7 @@ class SaveComponents(SaveBase):
 
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
-        return []
+        return [AlgorithmProperty("frame", "Frame", 2), AlgorithmProperty("mask_data", "Mask data", True)]
 
 
 class SaveParametersJSON(SaveBase):
