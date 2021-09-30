@@ -585,6 +585,7 @@ class Image:
 
     def _cut_with_roi(self, cut_area: np.ndarray, replace_mask: bool, frame: int):
         new_mask = None
+        cut_area = self.fit_array_to_image(cut_area)
         new_cut = self._roi_to_slices(cut_area)
         catted_cut_area = cut_area[tuple(new_cut)]
         image_cut = new_cut[:]
