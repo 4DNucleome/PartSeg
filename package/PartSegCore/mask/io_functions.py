@@ -524,7 +524,7 @@ def save_components(
     components: list,
     dir_path: str,
     roi_info: ROIInfo,
-    parameters,
+    parameters=None,
     points: typing.Optional[np.ndarray] = None,
     range_changed=None,
     step_changed=None,
@@ -533,6 +533,9 @@ def save_components(
         range_changed = empty_fun
     if step_changed is None:
         step_changed = empty_fun
+
+    if parameters is None:
+        parameters = SaveComponents.get_default_values()
 
     roi_info = roi_info.fit_to_image(image)
     os.makedirs(dir_path, exist_ok=True)
