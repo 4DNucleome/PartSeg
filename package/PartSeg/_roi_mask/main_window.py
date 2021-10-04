@@ -947,6 +947,8 @@ class MainWindow(BaseMainWindow):
     def set_data(self, data):
         self.main_menu.set_data(data)
 
-    def change_theme(self):
+    # @ensure_main_thread
+    def change_theme(self, event):
+        print("xxx", self.settings.theme_name)
         self.image_view.set_theme(self.settings.theme_name)
-        super().change_theme()
+        super().change_theme(event)

@@ -156,6 +156,7 @@ class BaseMainWindow(QMainWindow):
         self.recent_file_menu = QMenu("Open recent")
         self._refresh_recent(FILE_HISTORY, self.settings.get_last_files())
         self.settings.data_changed.connect(self._refresh_recent)
+        self.settings.napari_settings.appearance.events.theme.connect(self.change_theme)
         self.settings.set_parent(self)
         self.console = None
         self.console_dock = QDockWidget("console", self)
@@ -225,10 +226,13 @@ class BaseMainWindow(QMainWindow):
                 self.viewer_list.pop(i)
                 break
 
-    def change_theme(self):
+    # @ensure_main_thread
+    def change_theme(self, event):
+        style_sheet = self.settings.style_sheet
         app = QApplication.instance()
         if app is not None:
-            app.setStyleSheet(self.settings.style_sheet)
+            app.setStyleSheet(style_sheet)
+        self.setStyleSheet(style_sheet)
 
     def showEvent(self, a0: QShowEvent):
         self.show_signal.emit()

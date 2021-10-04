@@ -5,7 +5,7 @@ import sys
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import napari.utils.theme
 import numpy as np
@@ -57,6 +57,9 @@ try:
     from napari.qt import get_stylesheet
 except ImportError:  # pragma: no cover
     from napari.resources import get_stylesheet
+
+if TYPE_CHECKING:
+    from napari.settings import NapariSettings
 
 
 DIR_HISTORY = "io.dir_location_history"
@@ -309,7 +312,7 @@ class ViewSettings(ImageSettings):
 
     @staticmethod
     def theme_list():
-        return list(napari.utils.theme.palettes.keys())
+        return napari.utils.theme.available_themes()
 
     @property
     def chosen_colormap(self):
@@ -440,9 +443,9 @@ class BaseSettings(ViewSettings):
         super().__init__()
         napari_path = os.path.dirname(json_path) if os.path.basename(json_path) in ["analysis", "mask"] else json_path
         try:
-            self.napari_settings = napari_get_settings(napari_path)
+            self.napari_settings: "NapariSettings" = napari_get_settings(napari_path)
         except:  # noqa
-            self.napari_settings = napari_get_settings()
+            self.napari_settings: "NapariSettings" = napari_get_settings()
         self._current_roi_dict = "default"
         self._roi_dict = ProfileDict()
         self.json_folder_path = json_path
@@ -464,6 +467,14 @@ class BaseSettings(ViewSettings):
     def points(self, value):
         self._points = value if value is not None else None
         self.points_changed.emit()
+
+    @property
+    def theme_name(self) -> str:
+        return self.napari_settings.appearance.theme
+
+    @theme_name.setter
+    def theme_name(self, value: str):
+        self.napari_settings.appearance.theme = value
 
     def set_segmentation_result(self, result: ROIExtractionResult):
         if (

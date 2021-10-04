@@ -11,6 +11,7 @@ from qtpy.QtCore import QByteArray, Qt
 from qtpy.QtGui import QCloseEvent
 from qtpy.QtWidgets import (
     QColorDialog,
+    QComboBox,
     QDoubleSpinBox,
     QGridLayout,
     QHBoxLayout,
@@ -121,6 +122,27 @@ class MaskControl(QWidget):
         self.settings.mask_representation_changed_emit()
 
 
+class Apperance(QWidget):
+    def __init__(self, settings: ViewSettings):
+        super().__init__()
+        self.settings = settings
+
+        self.layout_list = QComboBox()
+        self.layout_list.addItems(self.settings.theme_list())
+        self.layout_list.setCurrentText(self.settings.theme_name)
+
+        self.layout_list.currentIndexChanged.connect(self.change_theme)
+
+        layout = QGridLayout()
+        layout.addWidget(self.layout_list, 0, 0)
+        layout.setColumnStretch(1, 1)
+        layout.setRowStretch(1, 1)
+        self.setLayout(layout)
+
+    def change_theme(self):
+        self.settings.theme_name = self.layout_list.currentText()
+
+
 class ColorControl(QTabWidget):
     """
     Class for storage all settings for labels and colormaps.
@@ -128,6 +150,7 @@ class ColorControl(QTabWidget):
 
     def __init__(self, settings: ViewSettings, image_view_names: List[str]):
         super().__init__()
+        self.appearance = Apperance(settings)
         self.colormap_selector = PColormapCreator(settings)
         self.color_preview = PColormapList(settings, image_view_names)
         self.color_preview.edit_signal.connect(self.colormap_selector.set_colormap)
@@ -137,6 +160,7 @@ class ColorControl(QTabWidget):
         self.label_view.edit_signal.connect(partial(self.setCurrentWidget, self.label_editor))
         self.label_view.edit_signal[list].connect(self.label_editor.set_colors)
         self.mask_control = MaskControl(settings)
+        self.addTab(self.appearance, "Appearance")
         self.addTab(self.color_preview, "Color maps")
         self.addTab(self.colormap_selector, "Color Map creator")
         self.addTab(self.label_view, "Select labels")
