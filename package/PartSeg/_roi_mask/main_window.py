@@ -91,7 +91,7 @@ class MaskDialog(MaskDialogBase):
         history.arrays.seek(0)
         # TODO Check me
         # self.settings.roi = seg["segmentation"]
-        self.settings._set_roi_info(
+        self.settings._set_roi_info(  # pylint: disable=W0212
             ROIInfo(seg["segmentation"]),
             False,
             history.roi_extraction_parameters["selected"],
