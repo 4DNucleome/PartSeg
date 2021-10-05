@@ -310,6 +310,7 @@ class BaseMainWindow(QMainWindow):
         for el in self.viewer_list:
             el.close()
             del el
+        self.settings.napari_settings.appearance.events.theme.disconnect(self.change_theme)
         self.settings.dump()
         super().closeEvent(event)
 
@@ -336,3 +337,7 @@ class BaseMainWindow(QMainWindow):
     def image_read(self):
         self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
         self.statusBar().showMessage(self.settings.image_path)
+
+    def deleteLater(self) -> None:
+        self.settings.napari_settings.appearance.events.theme.disconnect(self.change_theme)
+        super().deleteLater()
