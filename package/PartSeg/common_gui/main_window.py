@@ -310,6 +310,7 @@ class BaseMainWindow(QMainWindow):
         for el in self.viewer_list:
             el.close()
             del el
+        self.settings.dump()
         super().closeEvent(event)
 
     def screenshot(self, viewer: ImageView):

@@ -652,7 +652,6 @@ class MainWindow(BaseMainWindow):
                     return
             self.batch_window.close()
         self.advanced_window.close()
-        self.settings.dump()
         del self.batch_window
         del self.advanced_window
         super().closeEvent(event)

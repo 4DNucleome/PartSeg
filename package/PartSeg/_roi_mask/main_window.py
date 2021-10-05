@@ -937,7 +937,6 @@ class MainWindow(BaseMainWindow):
             del self.main_menu.measurements_window
         del self.main_menu.segmentation_dialog
         del self.options_panel.algorithm_options.show_parameters_widget
-        self.settings.dump()
         super().closeEvent(event)
 
     @staticmethod
@@ -949,6 +948,5 @@ class MainWindow(BaseMainWindow):
 
     # @ensure_main_thread
     def change_theme(self, event):
-        print("xxx", self.settings.theme_name)
         self.image_view.set_theme(self.settings.theme_name)
         super().change_theme(event)
