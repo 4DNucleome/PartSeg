@@ -311,7 +311,7 @@ class ViewSettings(ImageSettings):
     def theme_list():
         try:
             return napari.utils.theme.available_themes()
-        except:  # noqa: E722
+        except:  # noqa: E722  # pylint: disable=Wo702
             return ["light"]
 
     @property
@@ -444,7 +444,7 @@ class BaseSettings(ViewSettings):
         napari_path = os.path.dirname(json_path) if os.path.basename(json_path) in ["analysis", "mask"] else json_path
         try:
             self.napari_settings: "NapariSettings" = napari_get_settings(napari_path)
-        except:  # noqa
+        except:  # noqa  # pylint: disable=Wo702
             self.napari_settings: "NapariSettings" = napari_get_settings()
         self._current_roi_dict = "default"
         self._roi_dict = ProfileDict()
