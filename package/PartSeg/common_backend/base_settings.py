@@ -3,7 +3,6 @@ import os
 import os.path
 import sys
 import warnings
-from argparse import Namespace
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, NamedTuple, Optional, Tuple, Union
@@ -32,17 +31,10 @@ except ImportError:
     try:
         from napari.utils.settings import get_settings as napari_get_settings
     except ImportError:
-
-        class MockSettings:
-            def save(self):
-                pass
-
-            @property
-            def apperance(self):
-                return Namespace(theme="light")
+        from napari.utils.settings import SETTINGS
 
         def napari_get_settings():
-            return MockSettings()
+            return SETTINGS
 
 
 if hasattr(napari.utils.theme, "get_theme"):
