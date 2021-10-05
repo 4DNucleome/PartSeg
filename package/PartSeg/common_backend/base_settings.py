@@ -471,7 +471,12 @@ class BaseSettings(ViewSettings):
     @property
     def theme_name(self) -> str:
         try:
-            return self.napari_settings.appearance.theme
+            theme = self.napari_settings.appearance.theme
+            if self.get_from_profile("first_start", True):
+                theme = "light"
+                self.napari_settings.appearance.theme = theme
+                self.set_in_profile("first_start", False)
+            return theme
         except AttributeError:
             return "light"
 
