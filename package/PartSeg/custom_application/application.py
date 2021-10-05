@@ -63,6 +63,7 @@ class CustomApplication(QApplication):
         self.release_check.finished.connect(self._check_release)
         self.setWindowIcon(QIcon(icon))
         self.setApplicationName(name)
+        patch_napari_settings()
 
     @ensure_main_thread
     def show_error(self, error=None):
@@ -130,3 +131,21 @@ class CustomApplication(QApplication):
                 )
 
             message.exec()
+
+
+def patch_napari_settings():
+    try:
+        from napari.settings._appearance import AppearanceSettings
+
+        AppearanceSettings.__fields__["theme"].default = "light"
+        return
+    except ImportError:
+        pass
+
+    try:
+        from napari.utils.settings._defaults import AppearanceSettings
+
+        AppearanceSettings.__fields__["theme"].default = "light"
+        return
+    except ImportError:
+        pass

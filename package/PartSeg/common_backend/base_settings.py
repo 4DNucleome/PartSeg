@@ -3,6 +3,7 @@ import os
 import os.path
 import sys
 import warnings
+from argparse import Namespace
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, NamedTuple, Optional, Tuple, Union
@@ -35,6 +36,10 @@ except ImportError:
         class MockSettings:
             def save(self):
                 pass
+
+            @property
+            def apperance(self):
+                return Namespace(theme="light")
 
         def napari_get_settings():
             return MockSettings()
@@ -312,7 +317,10 @@ class ViewSettings(ImageSettings):
 
     @staticmethod
     def theme_list():
-        return napari.utils.theme.available_themes()
+        try:
+            return napari.utils.theme.available_themes()
+        except:  # noqa: E722
+            return ["light"]
 
     @property
     def chosen_colormap(self):
@@ -470,7 +478,10 @@ class BaseSettings(ViewSettings):
 
     @property
     def theme_name(self) -> str:
-        return self.napari_settings.appearance.theme
+        try:
+            return self.napari_settings.appearance.theme
+        except AttributeError:
+            return "light"
 
     @theme_name.setter
     def theme_name(self, value: str):
@@ -648,7 +659,10 @@ class BaseSettings(ViewSettings):
         :param folder_path: path to directory in which data should be saved.
             If is None then use :py:attr:`.json_folder_path`
         """
-        self.napari_settings.save()
+        if self.napari_settings.save is not None:
+            self.napari_settings.save()
+        else:
+            self.napari_settings._save()
         if folder_path is None:
             folder_path = self.json_folder_path
         if not os.path.exists(folder_path):
