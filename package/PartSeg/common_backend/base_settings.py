@@ -33,7 +33,7 @@ except ImportError:
     except ImportError:
         from napari.utils.settings import SETTINGS
 
-        def napari_get_settings():
+        def napari_get_settings(path):
             return SETTINGS
 
 
