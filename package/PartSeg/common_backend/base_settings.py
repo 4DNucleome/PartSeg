@@ -659,7 +659,7 @@ class BaseSettings(ViewSettings):
         if self.napari_settings.save is not None:
             self.napari_settings.save()
         else:
-            self.napari_settings._save()
+            self.napari_settings._save()  # pylint: disable=W0212
         if folder_path is None:
             folder_path = self.json_folder_path
         if not os.path.exists(folder_path):
