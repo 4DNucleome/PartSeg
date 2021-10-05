@@ -5,7 +5,7 @@ import sys
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import napari.utils.theme
 import numpy as np
@@ -26,18 +26,20 @@ from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
 from PartSegImage import Image
 
 try:
-    from napari.qt import get_stylesheet
-except ImportError:  # pragma: no cover
-    from napari.resources import get_stylesheet
+    from napari.settings import get_settings as napari_get_settings
+except ImportError:
+    try:
+        from napari.utils.settings import get_settings as napari_get_settings
+    except ImportError:
+        from napari.utils.settings import SETTINGS
+
+        def napari_get_settings(path=None):
+            return SETTINGS
+
 
 if hasattr(napari.utils.theme, "get_theme"):
 
-    def get_theme(name: str) -> dict:
-        theme = napari.utils.theme.get_theme(name)
-        if "canvas" in theme and theme["canvas"] != "black":
-            theme["canvas"] = "black"
-            napari.utils.theme.register_theme(name, theme)
-        return theme
+    get_theme = napari.utils.theme.get_theme
 
 
 else:  # pragma: no cover
@@ -46,6 +48,15 @@ else:  # pragma: no cover
         theme = napari.utils.theme.palettes[name]
         theme["canvas"] = "black"
         return theme
+
+
+try:
+    from napari.qt import get_stylesheet
+except ImportError:  # pragma: no cover
+    from napari.resources import get_stylesheet
+
+if TYPE_CHECKING:
+    from napari.settings import NapariSettings
 
 
 DIR_HISTORY = "io.dir_location_history"
@@ -281,13 +292,15 @@ class ViewSettings(ImageSettings):
 
     @property
     def style_sheet(self):
-        theme = get_theme(self.theme_name)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", FutureWarning)
+            theme = get_theme(self.theme_name)
         # TODO understand qss overwrite mechanism
         return napari_template("\n".join(register.qss_list) + get_stylesheet() + "\n".join(register.qss_list), **theme)
 
     @theme_name.setter
     def theme_name(self, value: str):
-        if value not in napari.utils.theme.palettes:
+        if value not in napari.utils.theme.available_themes():
             raise ValueError(f"Unsupported theme {value}. Supported one: {self.theme_list()}")
         if value == self.theme_name:
             return
@@ -296,7 +309,10 @@ class ViewSettings(ImageSettings):
 
     @staticmethod
     def theme_list():
-        return list(napari.utils.theme.palettes.keys())
+        try:
+            return napari.utils.theme.available_themes()
+        except:  # noqa: E722  # pylint: disable=W0702
+            return ["light"]
 
     @property
     def chosen_colormap(self):
@@ -425,6 +441,11 @@ class BaseSettings(ViewSettings):
 
     def __init__(self, json_path):
         super().__init__()
+        napari_path = os.path.dirname(json_path) if os.path.basename(json_path) in ["analysis", "mask"] else json_path
+        try:
+            self.napari_settings: "NapariSettings" = napari_get_settings(napari_path)
+        except:  # noqa  # pylint: disable=W0702
+            self.napari_settings: "NapariSettings" = napari_get_settings()
         self._current_roi_dict = "default"
         self._roi_dict = ProfileDict()
         self.json_folder_path = json_path
@@ -446,6 +467,22 @@ class BaseSettings(ViewSettings):
     def points(self, value):
         self._points = value if value is not None else None
         self.points_changed.emit()
+
+    @property
+    def theme_name(self) -> str:
+        try:
+            theme = self.napari_settings.appearance.theme
+            if self.get_from_profile("first_start", True):
+                theme = "light"
+                self.napari_settings.appearance.theme = theme
+                self.set_in_profile("first_start", False)
+            return theme
+        except AttributeError:
+            return "light"
+
+    @theme_name.setter
+    def theme_name(self, value: str):
+        self.napari_settings.appearance.theme = value
 
     def set_segmentation_result(self, result: ROIExtractionResult):
         if (
@@ -619,6 +656,10 @@ class BaseSettings(ViewSettings):
         :param folder_path: path to directory in which data should be saved.
             If is None then use :py:attr:`.json_folder_path`
         """
+        if self.napari_settings.save is not None:
+            self.napari_settings.save()
+        else:
+            self.napari_settings._save()  # pylint: disable=W0212
         if folder_path is None:
             folder_path = self.json_folder_path
         if not os.path.exists(folder_path):

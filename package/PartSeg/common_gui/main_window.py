@@ -156,6 +156,7 @@ class BaseMainWindow(QMainWindow):
         self.recent_file_menu = QMenu("Open recent")
         self._refresh_recent(FILE_HISTORY, self.settings.get_last_files())
         self.settings.data_changed.connect(self._refresh_recent)
+        self.settings.napari_settings.appearance.events.theme.connect(self.change_theme)
         self.settings.set_parent(self)
         self.console = None
         self.console_dock = QDockWidget("console", self)
@@ -225,10 +226,13 @@ class BaseMainWindow(QMainWindow):
                 self.viewer_list.pop(i)
                 break
 
-    def change_theme(self):
+    # @ensure_main_thread
+    def change_theme(self, event):
+        style_sheet = self.settings.style_sheet
         app = QApplication.instance()
         if app is not None:
-            app.setStyleSheet(self.settings.style_sheet)
+            app.setStyleSheet(style_sheet)
+        self.setStyleSheet(style_sheet)
 
     def showEvent(self, a0: QShowEvent):
         self.show_signal.emit()
@@ -306,6 +310,8 @@ class BaseMainWindow(QMainWindow):
         for el in self.viewer_list:
             el.close()
             del el
+        self.settings.napari_settings.appearance.events.theme.disconnect(self.change_theme)
+        self.settings.dump()
         super().closeEvent(event)
 
     def screenshot(self, viewer: ImageView):
@@ -331,3 +337,7 @@ class BaseMainWindow(QMainWindow):
     def image_read(self):
         self.setWindowTitle(f"{self.title_base}: {os.path.basename(self.settings.image_path)}")
         self.statusBar().showMessage(self.settings.image_path)
+
+    def deleteLater(self) -> None:
+        self.settings.napari_settings.appearance.events.theme.disconnect(self.change_theme)
+        super().deleteLater()
