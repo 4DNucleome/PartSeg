@@ -320,11 +320,15 @@ class ROIExtractionProfile:
 
     def __str__(self):
         return (
-            "Segmentation profile name: " + self.name + "\nAlgorithm: " + self.algorithm + self.print_dict(self.values)
+            "ROI extraction profile name: "
+            + self.name
+            + "\nAlgorithm: "
+            + self.algorithm
+            + self.print_dict(self.values)
         )
 
     def __repr__(self):
-        return f"SegmentationProfile(name={self.name}, algorithm={repr(self.algorithm)}, values={self.values})"
+        return f"ROIExtractionProfile(name={self.name}, algorithm={repr(self.algorithm)}, values={self.values})"
 
     def __eq__(self, other):
         return (
