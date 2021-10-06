@@ -86,6 +86,8 @@ class ExportDialog(QDialog):
         return res
 
     def preview(self):
+        if self.list_view.currentItem() is None:
+            return  # TODO check this
         name = str(self.list_view.currentItem().text())
         self.viewer.preview_object(self.export_dict[name])
 

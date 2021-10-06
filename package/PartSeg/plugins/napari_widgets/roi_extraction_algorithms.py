@@ -1,29 +1,48 @@
 import inspect
 import itertools
+import json
+import os
 import typing
+from pathlib import Path
 
 import numpy as np
 from magicgui.widgets import Widget, create_widget
 from napari import Viewer
 from napari.layers import Image as NapariImage
 from napari.layers import Labels, Layer
+from PyQt5.QtWidgets import QFileDialog
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QComboBox, QHBoxLayout, QInputDialog, QMessageBox, QPushButton, QVBoxLayout, QWidget
+from qtpy.QtWidgets import (
+    QComboBox,
+    QDialog,
+    QGridLayout,
+    QHBoxLayout,
+    QInputDialog,
+    QMessageBox,
+    QPlainTextEdit,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from PartSegCore import UNIT_SCALE, Units
-from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
+from PartSegCore.algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
+from PartSegCore.analysis import PartEncoder
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.channel_class import Channel
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 from PartSegCore.segmentation import ROIExtractionResult
 from PartSegImage import Image
 
+from ..._roi_analysis.profile_export import ExportDialog, ProfileDictViewer
+from ...common_backend.base_settings import BaseSettings
 from ...common_gui.algorithms_description import (
     AlgorithmChooseBase,
     FormWidget,
     InteractiveAlgorithmSettingsWidget,
     QtAlgorithmProperty,
 )
+from ...common_gui.searchable_list_widget import SearchableListWidget
 from ._settings import get_settings
 
 if typing.TYPE_CHECKING:
@@ -132,12 +151,18 @@ class ROIExtractionAlgorithms(QWidget):
         self.algorithm_chose.result.connect(self.set_result)
         self.algorithm_chose.algorithm_changed.connect(self.algorithm_changed)
         self.save_btn.clicked.connect(self.save_action)
+        self.manage_btn.clicked.connect(self.manage_action)
         self.profile_combo_box.currentTextChanged.connect(self.select_profile)
 
         self.update_tooltips()
 
+    def manage_action(self):
+        dialog = ProfilePreviewDialog(self.profile_dict, self.get_method_dict(), self.settings)
+        dialog.exec_()
+        self.refresh_profiles()
+
     def select_profile(self, text):
-        if text == SELECT_TEXT:
+        if text in [SELECT_TEXT, ""]:
             return
         profile = self.profile_dict[text]
         self.algorithm_chose.change_algorithm(profile.algorithm, profile.values)
@@ -246,6 +271,11 @@ class ROIExtractionAlgorithms(QWidget):
                 result.roi, scale=self._scale[-result.roi.ndim :] * UNIT_SCALE[Units.nm.value], name="ROI"
             )
 
+    def refresh_profiles(self):
+        self.profile_combo_box.clear()
+        self.profile_combo_box.addItem(SELECT_TEXT)
+        self.profile_combo_box.addItems(self.profile_dict.keys())
+
 
 class ROIAnalysisExtraction(ROIExtractionAlgorithms):
     @staticmethod
@@ -265,3 +295,62 @@ class ROIMaskExtraction(ROIExtractionAlgorithms):
     @staticmethod
     def prefix() -> str:
         return "roi_mask_extraction"
+
+
+class ProfilePreviewDialog(QDialog):
+    def __init__(
+        self, profile_dict: typing.Dict[str, ROIExtractionProfile], algorithm_dict: Register, settings: BaseSettings
+    ):
+        super().__init__()
+        self.profile_dict = profile_dict
+        self.algorithm_dict = algorithm_dict
+        self.settings = settings
+
+        self.profile_list = SearchableListWidget()
+        self.profile_list.addItems(self.profile_dict.keys())
+        self.profile_list.currentTextChanged.connect(self.profile_selected)
+        self.profile_view = QPlainTextEdit()
+        self.profile_view.setReadOnly(True)
+
+        self.delete_btn = QPushButton("Delete")
+        self.export_btn = QPushButton("Export")
+        self.export_btn.clicked.connect(self.export_action)
+        self.import_btn = QPushButton("Import")
+        layout = QGridLayout()
+        layout.addWidget(self.profile_list, 0, 0)
+        layout.addWidget(self.profile_view, 0, 1)
+        layout.addWidget(self.delete_btn, 1, 0, 1, 2)
+        layout.addWidget(self.export_btn, 2, 0)
+        layout.addWidget(self.import_btn, 2, 1)
+
+        self.setLayout(layout)
+
+    def profile_selected(self, text):
+        profile = self.profile_dict[text]
+        self.profile_view.setPlainText(str(profile))
+
+    def delete_action(self):
+        if self.profile_list.text() in self.profile_dict:
+            del self.profile_dict[self.profile_list.text()]
+        self.profile_list.clear()
+        self.profile_list.addItems(self.profile_dict.keys())
+
+    def export_action(self):
+        exp = ExportDialog(self.profile_dict, ProfileDictViewer)
+        if not exp.exec_():
+            return
+        dial = QFileDialog(self, "Export profile segment")
+        dial.setFileMode(QFileDialog.AnyFile)
+        dial.setAcceptMode(QFileDialog.AcceptSave)
+        dial.setDirectory(self.settings.get("io.save_directory", str(Path.home())))
+        dial.setNameFilter("Segment profile (*.json)")
+        dial.setDefaultSuffix("json")
+        dial.selectFile("segment_profile.json")
+        dial.setHistory(dial.history() + self.settings.get_path_history())
+        if dial.exec_():
+            file_path = dial.selectedFiles()[0]
+            self.settings.set("io.save_directory", os.path.dirname(file_path))
+            self.settings.add_path_history(os.path.dirname(file_path))
+            data = {x: self.profile_dict[x] for x in exp.get_export_list()}
+            with open(file_path, "w") as ff:
+                json.dump(data, ff, cls=PartEncoder, indent=2)
