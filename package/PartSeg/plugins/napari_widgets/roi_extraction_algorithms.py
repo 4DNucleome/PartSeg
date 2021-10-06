@@ -136,9 +136,12 @@ class ROIExtractionAlgorithms(QWidget):
         self.algorithm_chose.reset_choices(event)
 
     def set_result(self, result: ROIExtractionResult):
-        self.viewer.add_labels(
-            result.roi, scale=self._scale[-result.roi.ndim :] * UNIT_SCALE[Units.nm.value], name="ROI"
-        )
+        if "ROI" in self.viewer.layers:
+            self.viewer.layers["ROI"].data = result.roi
+        else:
+            self.viewer.add_labels(
+                result.roi, scale=self._scale[-result.roi.ndim :] * UNIT_SCALE[Units.nm.value], name="ROI"
+            )
 
 
 class ROIAnalysisExtraction(ROIExtractionAlgorithms):
