@@ -1,3 +1,5 @@
+import inspect
+import itertools
 import typing
 
 import numpy as np
@@ -8,6 +10,7 @@ from napari.layers import Labels, Layer
 from qtpy.QtWidgets import QPushButton, QVBoxLayout, QWidget
 
 from PartSegCore import UNIT_SCALE, Units
+from PartSegCore.algorithm_describe_base import AlgorithmProperty
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.channel_class import Channel
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
@@ -28,7 +31,7 @@ if typing.TYPE_CHECKING:
 
 class QtNapariAlgorithmProperty(QtAlgorithmProperty):
     def _get_field(self) -> typing.Union[QWidget, Widget]:
-        if issubclass(self.value_type, Channel):
+        if inspect.isclass(self.value_type) and issubclass(self.value_type, Channel):
             return create_widget(annotation=NapariImage, label="Image", options={})
         return super()._get_field()
 
@@ -36,7 +39,8 @@ class QtNapariAlgorithmProperty(QtAlgorithmProperty):
 class NapariFormWidget(FormWidget):
     @staticmethod
     def _element_list(fields) -> typing.Iterable[QtAlgorithmProperty]:
-        return map(QtNapariAlgorithmProperty.from_algorithm_property, fields)
+        mask = AlgorithmProperty("mask", "Mask", None, value_type=typing.Optional[Labels])
+        return map(QtNapariAlgorithmProperty.from_algorithm_property, itertools.chain([mask], fields))
 
     def reset_choices(self, event=None):
         for widget in self.widgets_dict.values():
@@ -66,7 +70,7 @@ class NapariInteractiveAlgorithmSettingsWidget(InteractiveAlgorithmSettingsWidge
         return {
             k: layer_order_dict.get(v) if isinstance(v, NapariImage) else v
             for k, v in self.form_widget.get_values().items()
-            if not isinstance(v, Labels)
+            if not isinstance(v, Labels) and k != "mask"
         }
 
     def get_layers(self):
@@ -91,6 +95,8 @@ class ROIExtractionAlgorithms(QWidget):
     def __init__(self, napari_viewer: Viewer):
         super().__init__()
         self._scale = 1, 1, 1
+        self.channel_names = []
+        self.mask_name = ""
 
         self.viewer = napari_viewer
         self.settings = get_settings()
@@ -105,22 +111,56 @@ class ROIExtractionAlgorithms(QWidget):
         self.setLayout(layout)
 
         self.algorithm_chose.result.connect(self.set_result)
+        self.algorithm_chose.algorithm_changed.connect(self.algorithm_changed)
 
-    def _run_calculation(self):
+    def algorithm_changed(self):
+        self._scale = 1, 1, 1
+        self.channel_names = []
+        self.mask_name = ""
+
+    def update_mask(self):
+        widget: NapariInteractiveAlgorithmSettingsWidget = self.algorithm_chose.current_widget()
+        mask = widget.get_layers().get("mask", None)
+        if getattr(mask, "name", "") != self.mask_name:
+            widget.set_mask(getattr(mask, "data", None))
+            self.mask_name = getattr(mask, "name", "")
+
+    def update_image(self):
         widget: NapariInteractiveAlgorithmSettingsWidget = self.algorithm_chose.current_widget()
         self.settings.last_executed_algorithm = widget.name
         layers = widget.get_order_mapping()
         axis_order = Image.axis_order.replace("C", "")
+        channel_names = []
+        for image_layer in layers:
+            if image_layer.name not in channel_names:
+                channel_names.append(image_layer.name)
+        if self.channel_names == channel_names:
+            return
+
         image_list = []
         for image_layer in layers:
             data_scale = image_layer.scale[-3:] / UNIT_SCALE[Units.nm.value]
-            image_list.append(Image(image_layer.data, data_scale, axes_order=axis_order[-image_layer.data.ndim :]))
+            image_list.append(
+                Image(
+                    image_layer.data,
+                    data_scale,
+                    axes_order=axis_order[-image_layer.data.ndim :],
+                    channel_names=[image_layer.name],
+                )
+            )
         res_image = image_list[0]
         for image in image_list[1:]:
             res_image = res_image.merge(image, "C")
 
         self._scale = np.array(res_image.spacing)
+        self.channel_names = res_image.channel_names
         widget.image_changed(res_image)
+
+    def _run_calculation(self):
+        widget: NapariInteractiveAlgorithmSettingsWidget = self.algorithm_chose.current_widget()
+        self.settings.last_executed_algorithm = widget.name
+        self.update_image()
+        self.update_mask()
         widget.execute()
 
     def showEvent(self, event: "QShowEvent") -> None:

@@ -1,9 +1,10 @@
 import collections
+import inspect
 import typing
 from copy import deepcopy
 from enum import Enum
 
-from magicgui.widgets import Widget
+from magicgui.widgets import Widget, create_widget
 from qtpy.QtCore import Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent, QResizeEvent
 from qtpy.QtWidgets import (
@@ -136,7 +137,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
             return QLabel(ob)
         raise ValueError(f"unknown parameter type {type(ob)} of {ob}")
 
-    def _get_field(self) -> QWidget:
+    def _get_field(self) -> typing.Union[QWidget, Widget]:
         """
         Get proper widget for given field type. Overwrite if would like to support new data types.
         """
@@ -145,6 +146,8 @@ class QtAlgorithmProperty(AlgorithmProperty):
             prop = self.from_algorithm_property(self)
             self.per_dimension = True
             res = ListInput(prop, 3)
+        elif not inspect.isclass(self.value_type):
+            res = create_widget(annotation=self.value_type, options={})
         elif issubclass(self.value_type, Channel):
             res = ChannelComboBox()
             res.change_channels_num(10)
@@ -186,10 +189,13 @@ class QtAlgorithmProperty(AlgorithmProperty):
         elif hasattr(self.value_type, "get_object"):
             res = self.value_type.get_object()
         else:
-            raise ValueError(f"Unknown class: {self.value_type}")
+            res = create_widget(annotation=self.value_type, options={})
         tool_tip_text = self.help_text or ""
         tool_tip_text += f" default value: {_pretty_print(self.default_value)}"
-        res.setToolTip(tool_tip_text)
+        if isinstance(res, QWidget):
+            res.setToolTip(tool_tip_text)
+        if isinstance(res, Widget):
+            res.tooltip = tool_tip_text
         return res
 
     @staticmethod

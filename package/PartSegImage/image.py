@@ -128,6 +128,8 @@ class Image:
         if self.default_coloring is not None:
             self.default_coloring = [np.array(x) for x in default_coloring]
         default_channel_names = [f"channel {i+1}" for i in range(self.channels)]
+        if isinstance(channel_names, str):
+            channel_names = [channel_names]
         if isinstance(channel_names, Iterable):
             self._channel_names = [
                 x if x is not None else y for x, y in zip_longest(channel_names, default_channel_names, fillvalue=None)
