@@ -7,10 +7,12 @@ from magicgui.widgets import Widget, create_widget
 from napari import Viewer
 from napari.layers import Image as NapariImage
 from napari.layers import Labels, Layer
-from qtpy.QtWidgets import QPushButton, QVBoxLayout, QWidget
+from qtpy.QtCore import Qt
+from qtpy.QtWidgets import QComboBox, QHBoxLayout, QInputDialog, QMessageBox, QPushButton, QVBoxLayout, QWidget
 
 from PartSegCore import UNIT_SCALE, Units
-from PartSegCore.algorithm_describe_base import AlgorithmProperty
+from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
+from PartSegCore.analysis import SegmentationPipeline
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.channel_class import Channel
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
@@ -27,6 +29,9 @@ from ._settings import get_settings
 
 if typing.TYPE_CHECKING:
     from qtpy.QtGui import QHideEvent, QShowEvent
+
+
+SELECT_TEXT = "<select>"
 
 
 class QtNapariAlgorithmProperty(QtAlgorithmProperty):
@@ -92,6 +97,10 @@ class ROIExtractionAlgorithms(QWidget):
     def get_method_dict():
         raise NotImplementedError
 
+    @staticmethod
+    def prefix() -> str:
+        raise NotImplementedError
+
     def __init__(self, napari_viewer: Viewer):
         super().__init__()
         self._scale = 1, 1, 1
@@ -104,7 +113,18 @@ class ROIExtractionAlgorithms(QWidget):
         self.calculate_btn = QPushButton("Run")
         self.calculate_btn.clicked.connect(self._run_calculation)
 
+        self.profile_combo_box = QComboBox()
+        self.profile_combo_box.addItem(SELECT_TEXT)
+        self.profile_combo_box.addItems(self.profile_dict.keys())
+        self.save_btn = QPushButton("Save parameters")
+        self.manage_btn = QPushButton("Manage parameters")
+
         layout = QVBoxLayout()
+        btn_layout = QHBoxLayout()
+        btn_layout.addWidget(self.save_btn)
+        btn_layout.addWidget(self.manage_btn)
+        layout.addLayout(btn_layout)
+        layout.addWidget(self.profile_combo_box)
         layout.addWidget(self.calculate_btn)
         layout.addWidget(self.algorithm_chose)
 
@@ -112,6 +132,49 @@ class ROIExtractionAlgorithms(QWidget):
 
         self.algorithm_chose.result.connect(self.set_result)
         self.algorithm_chose.algorithm_changed.connect(self.algorithm_changed)
+        self.save_btn.clicked.connect(self.save_action)
+        self.profile_combo_box.currentTextChanged.connect(self.select_profile)
+
+    def select_profile(self, text):
+        if text == SELECT_TEXT:
+            return
+        profile = self.profile_dict[text]
+        self.algorithm_chose.change_algorithm(profile.algorithm, profile.values)
+        self.profile_combo_box.setCurrentIndex(0)
+
+    @property
+    def profile_dict(self) -> typing.Dict[str, ROIExtractionProfile]:
+        return self.settings.get_from_profile(f"{self.prefix()}.profiles", {})
+
+    def save_action(self):
+        widget: NapariInteractiveAlgorithmSettingsWidget = self.algorithm_chose.current_widget()
+        profiles = self.profile_dict
+        while True:
+            text, ok = QInputDialog.getText(self, "Profile Name", "Input profile name here")
+            if not ok:
+                return
+            if text not in profiles or QMessageBox.Yes == QMessageBox.warning(
+                self,
+                "Already exists",
+                "Profile with this name already exist. Overwrite?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            ):
+                break
+        resp = ROIExtractionProfile(text, widget.name, widget.get_values())
+        profiles[text] = resp
+        self.settings.dump()
+        self.profile_combo_box.addItem(text)
+        self.update_tooltips()
+
+    def update_tooltips(self):
+        for i in range(1, self.profile_combo_box.count()):
+            if self.profile_combo_box.itemData(i, Qt.ToolTipRole) is not None:
+                continue
+            text = self.profile_combo_box.itemText(i)
+            profile: SegmentationPipeline = self.profile_dict[text]
+            tool_tip_text = str(profile)
+            self.choose_pipe.setItemData(i, tool_tip_text, Qt.ToolTipRole)
 
     def algorithm_changed(self):
         self._scale = 1, 1, 1
@@ -188,8 +251,16 @@ class ROIAnalysisExtraction(ROIExtractionAlgorithms):
     def get_method_dict():
         return analysis_algorithm_dict
 
+    @staticmethod
+    def prefix() -> str:
+        return "roi_analysis_extraction"
+
 
 class ROIMaskExtraction(ROIExtractionAlgorithms):
     @staticmethod
     def get_method_dict():
         return mask_algorithm_dict
+
+    @staticmethod
+    def prefix() -> str:
+        return "roi_mask_extraction"
