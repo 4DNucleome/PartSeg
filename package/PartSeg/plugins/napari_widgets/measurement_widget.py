@@ -10,7 +10,6 @@ from napari._qt.qthreading import thread_worker
 from napari.layers import Image as NapariImage
 from napari.layers import Labels as NapariLabels
 from napari.qt import create_worker
-from napari_plugin_engine import napari_hook_implementation
 
 from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, PerComponent
@@ -146,8 +145,3 @@ def _prepare_data(profile: MeasurementProfile, image: Image, labels: np.ndarray)
     segmentation_mask_map = profile.get_segmentation_mask_map(image, roi_info, time=0)
     yield 2
     return profile, image, roi_info, segmentation_mask_map
-
-
-@napari_hook_implementation
-def napari_experimental_provide_dock_widget():
-    return SimpleMeasurement

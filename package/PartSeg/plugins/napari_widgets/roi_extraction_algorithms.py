@@ -5,7 +5,6 @@ from magicgui.widgets import Widget, create_widget
 from napari import Viewer
 from napari.layers import Image as NapariImage
 from napari.layers import Labels, Layer
-from napari_plugin_engine import napari_hook_implementation
 from qtpy.QtWidgets import QPushButton, QVBoxLayout, QWidget
 
 from PartSegCore import UNIT_SCALE, Units
@@ -154,13 +153,3 @@ class ROIMaskExtraction(ROIExtractionAlgorithms):
     @staticmethod
     def get_method_dict():
         return mask_algorithm_dict
-
-
-@napari_hook_implementation(specname="napari_experimental_provide_dock_widget")
-def napari_experimental_provide_dock_widget():
-    return ROIAnalysisExtraction
-
-
-@napari_hook_implementation(specname="napari_experimental_provide_dock_widget")
-def napari_experimental_provide_dock_widget2():
-    return ROIMaskExtraction
