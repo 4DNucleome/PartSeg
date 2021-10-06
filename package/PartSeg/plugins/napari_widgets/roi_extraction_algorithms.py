@@ -12,7 +12,6 @@ from qtpy.QtWidgets import QComboBox, QHBoxLayout, QInputDialog, QMessageBox, QP
 
 from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, ROIExtractionProfile
-from PartSegCore.analysis import SegmentationPipeline
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.channel_class import Channel
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
@@ -135,6 +134,8 @@ class ROIExtractionAlgorithms(QWidget):
         self.save_btn.clicked.connect(self.save_action)
         self.profile_combo_box.currentTextChanged.connect(self.select_profile)
 
+        self.update_tooltips()
+
     def select_profile(self, text):
         if text == SELECT_TEXT:
             return
@@ -172,9 +173,9 @@ class ROIExtractionAlgorithms(QWidget):
             if self.profile_combo_box.itemData(i, Qt.ToolTipRole) is not None:
                 continue
             text = self.profile_combo_box.itemText(i)
-            profile: SegmentationPipeline = self.profile_dict[text]
+            profile: ROIExtractionProfile = self.profile_dict[text]
             tool_tip_text = str(profile)
-            self.choose_pipe.setItemData(i, tool_tip_text, Qt.ToolTipRole)
+            self.profile_combo_box.setItemData(i, tool_tip_text, Qt.ToolTipRole)
 
     def algorithm_changed(self):
         self._scale = 1, 1, 1
