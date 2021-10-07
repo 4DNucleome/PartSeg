@@ -1,6 +1,7 @@
 import collections
 import inspect
 import typing
+from contextlib import suppress
 from copy import deepcopy
 from enum import Enum
 
@@ -321,43 +322,38 @@ class FormWidget(QWidget):
         for el in element_list:
             if isinstance(el, QLabel):
                 layout.addRow(el)
-            elif isinstance(el.get_field(), SubAlgorithmWidget):
-                label = QLabel(el.user_name)
-                if el.help_text:
-                    label.setToolTip(el.help_text)
-                layout.addRow(label, el.get_field().choose)
-                layout.addRow(el.get_field())
-                self.widgets_dict[el.name] = el
-                if el.name in start_values:
-                    el.get_field().set_starting(start_values[el.name])
-                el.change_fun.connect(any_arguments(self.value_changed.emit))
-            elif isinstance(el.get_field(), Widget):
-                self.widgets_dict[el.name] = el
-                label = QLabel(el.user_name)
-                if el.help_text:
-                    label.setToolTip(el.help_text)
-                layout.addRow(label, el.get_field().native)
-            else:
-                self.widgets_dict[el.name] = el
-                label = QLabel(el.user_name)
-                if el.help_text:
-                    label.setToolTip(el.help_text)
-                layout.addRow(label, el.get_field())
-                # noinspection PyUnresolvedReferences
-                if issubclass(el.value_type, Channel):
-                    # noinspection PyTypeChecker
-                    self.channels_chose.append(el.get_field())
-                if issubclass(el.value_type, ROIExtractionProfile):
-                    # noinspection PyTypeChecker
-                    el.get_field().add_settings(settings)
-                if el.name in start_values:
-                    try:
-                        el.set_value(start_values[el.name])
-                    except (KeyError, ValueError, TypeError):
-                        pass
-                el.change_fun.connect(any_arguments(self.value_changed.emit))
+                continue
+            self._add_to_layout(layout, el, start_values, settings)
         self.setLayout(layout)
         self.value_changed.connect(self.update_size)
+
+    def _add_to_layout(self, layout, ap: QtAlgorithmProperty, start_values, settings):
+        label = QLabel(ap.user_name)
+        if ap.help_text:
+            label.setToolTip(ap.help_text)
+        self.widgets_dict[ap.name] = ap
+        ap.change_fun.connect(any_arguments(self.value_changed.emit))
+        if isinstance(ap.get_field(), SubAlgorithmWidget):
+            layout.addRow(label, ap.get_field().choose)
+            layout.addRow(ap.get_field())
+            if ap.name in start_values:
+                ap.get_field().set_starting(start_values[ap.name])
+            ap.change_fun.connect(any_arguments(self.value_changed.emit))
+            return
+        if isinstance(ap.get_field(), Widget):
+            layout.addRow(label, ap.get_field().native)
+            return
+        layout.addRow(label, ap.get_field())
+        # noinspection PyUnresolvedReferences
+        if issubclass(ap.value_type, Channel):
+            # noinspection PyTypeChecker
+            self.channels_chose.append(ap.get_field())
+        if issubclass(ap.value_type, ROIExtractionProfile):
+            # noinspection PyTypeChecker
+            ap.get_field().add_settings(settings)
+        if ap.name in start_values:
+            with suppress(KeyError, ValueError, TypeError):
+                ap.set_value(start_values[ap.name])
 
     @staticmethod
     def _element_list(fields) -> typing.Iterable[QtAlgorithmProperty]:
