@@ -1582,6 +1582,26 @@ class ComponentBoundingBox(MeasurementMethodBase):
         return super().get_starting_leaf().replace_(area=AreaType.ROI, per_component=PerComponent.Yes)
 
 
+class GetROIAnnotationType(MeasurementMethodBase):
+    text_info = "annotation by name", "Get roi annotation by name"
+
+    @classmethod
+    def get_fields(cls):
+        return [AlgorithmProperty("name", "Name", "")]
+
+    @classmethod
+    def get_starting_leaf(cls):
+        return Leaf(name=cls.text_info[0], area=AreaType.ROI, per_component=PerComponent.Yes)
+
+    @staticmethod
+    def calculate_property(roi_annotation, name, _component_num, **kwargs):  # pylint: disable=W0221
+        return str(roi_annotation.get(_component_num, {}).get(name, ""))
+
+    @classmethod
+    def get_units(cls, ndim):
+        return "str"
+
+
 def pixel_volume(spacing, result_scalar):
     return reduce((lambda x, y: x * y), [x * result_scalar for x in spacing])
 
@@ -1627,6 +1647,7 @@ MEASUREMENT_DICT = Register(
     Diameter,
     PixelBrightnessSum,
     ComponentBoundingBox,
+    GetROIAnnotationType,
     ComponentsNumber,
     MaximumPixelBrightness,
     MinimumPixelBrightness,
