@@ -580,7 +580,11 @@ class CreatePlan(QWidget):
         if text != "" and text in self.mask_set:
             QMessageBox.warning(self, "Already exists", "Mask with this name already exists", QMessageBox.Ok)
             return
-        if _check_widget(self.mask_stack, QEnumComboBox):  # existing mask
+        if _check_widget(self.mask_stack, MaskWidget):
+            mask_ob = MaskCreate(text, self.segmentation_mask.get_mask_property())
+        elif _check_widget(self.mask_stack, FileMask):
+            mask_ob = self.file_mask.get_value(text)
+        elif _check_widget(self.mask_stack, QEnumComboBox):  # existing mask
             mask_dialog = TwoMaskDialog
             if self.mask_operation.currentEnum() == MaskOperation.mask_intersection:  # Mask intersection
                 MaskConstruct = MaskIntersection
@@ -592,10 +596,6 @@ class CreatePlan(QWidget):
             names = dial.get_result()
 
             mask_ob = MaskConstruct(text, *names)
-        elif _check_widget(self.mask_stack, MaskWidget):
-            mask_ob = MaskCreate(text, self.segmentation_mask.get_mask_property())
-        elif _check_widget(self.mask_stack, FileMask):
-            mask_ob = self.file_mask.get_value(text)
         else:
             raise ValueError("Unknowsn widget")
 
@@ -634,7 +634,19 @@ class CreatePlan(QWidget):
         ):
             self.generate_mask_btn.setDisabled(True)
             return
-        if _check_widget(self.mask_stack, QEnumComboBox):  # reuse mask
+        if _check_widget(self.mask_stack, MaskWidget):  # mask from segmentation
+            if (not update and node_type == NodeType.segment) or (update and node_type == NodeType.mask):
+                self.generate_mask_btn.setEnabled(True)
+            else:
+                self.generate_mask_btn.setEnabled(False)
+            self.generate_mask_btn.setToolTip("Select segmentation")
+        elif _check_widget(self.mask_stack, FileMask):
+            if (not update and node_type == NodeType.root) or (update and node_type == NodeType.file_mask):
+                self.generate_mask_btn.setEnabled(self.file_mask.is_valid())
+            else:
+                self.generate_mask_btn.setEnabled(False)
+            self.generate_mask_btn.setToolTip("Need root selected")
+        else:  # reuse mask
             if len(self.mask_set) > 1 and (
                 (not update and node_type == NodeType.root) or (update and node_type == NodeType.file_mask)
             ):
@@ -642,18 +654,6 @@ class CreatePlan(QWidget):
             else:
                 self.generate_mask_btn.setEnabled(False)
             self.generate_mask_btn.setToolTip("Need at least two named mask and root selected")
-        elif _check_widget(self.mask_stack, MaskWidget):  # mask from segmentation
-            if (not update and node_type == NodeType.segment) or (update and node_type == NodeType.mask):
-                self.generate_mask_btn.setEnabled(True)
-            else:
-                self.generate_mask_btn.setEnabled(False)
-            self.generate_mask_btn.setToolTip("Select segmentation")
-        else:
-            if (not update and node_type == NodeType.root) or (update and node_type == NodeType.file_mask):
-                self.generate_mask_btn.setEnabled(self.file_mask.is_valid())
-            else:
-                self.generate_mask_btn.setEnabled(False)
-            self.generate_mask_btn.setToolTip("Need root selected")
 
     def mask_name_changed(self, text):
         if str(text) in self.mask_set:
