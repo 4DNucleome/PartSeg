@@ -120,9 +120,7 @@ class AlgorithmDescribeBase(ABC):
         return {
             el.name: {
                 "name": el.default_value,
-                "values": el.possible_values[
-                    el.default_value
-                ].get_default_values(),
+                "values": el.possible_values[el.default_value].get_default_values(),
             }
             if issubclass(el.value_type, AlgorithmDescribeBase)
             else el.default_value
