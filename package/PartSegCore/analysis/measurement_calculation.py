@@ -1595,11 +1595,11 @@ class GetROIAnnotationType(MeasurementMethodBase):
 
     @staticmethod
     def calculate_property(roi_annotation, name, _component_num, **kwargs):  # pylint: disable=W0221
-        return roi_annotation.get(_component_num, {}).get(name, "")
+        return str(roi_annotation.get(_component_num, {}).get(name, ""))
 
     @classmethod
     def get_units(cls, ndim):
-        return 1
+        return "str"
 
 
 def pixel_volume(spacing, result_scalar):
