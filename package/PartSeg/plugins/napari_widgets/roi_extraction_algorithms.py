@@ -315,7 +315,9 @@ class ProfilePreviewDialog(QDialog):
         self.profile_view.setReadOnly(True)
 
         self.delete_btn = QPushButton("Delete")
+        self.delete_btn.clicked.connect(self.delete_action)
         self.rename_btn = QPushButton("Rename")
+        self.rename_btn.clicked.connect(self.rename_action)
         self.export_btn = QPushButton("Export")
         self.export_btn.clicked.connect(self.export_action)
         self.import_btn = QPushButton("Import")
@@ -339,6 +341,30 @@ class ProfilePreviewDialog(QDialog):
             del self.profile_dict[self.profile_list.text()]
         self.profile_list.clear()
         self.profile_list.addItems(self.profile_dict.keys())
+
+    def rename_action(self):
+        old_name = self.profile_list.text()
+        if old_name not in self.profile_dict:
+            return
+
+        text, ok = QInputDialog.getText(self, "Profile Name", "Input profile name here")
+        if not ok:
+            return
+
+        if text in self.profile_dict:
+            QMessageBox.warning(
+                self,
+                "Already exists",
+                "Profile with this name already exist.",
+                QMessageBox.Ok,
+                QMessageBox.Ok,
+            )
+            self.rename_action()
+            return
+        profile = self.profile_dict[old_name]
+        del self.profile_dict[old_name]
+        profile.name = text
+        self.profile_dict[text] = profile
 
     def export_action(self):
         exp = ExportDialog(self.profile_dict, ProfileDictViewer)
