@@ -117,17 +117,18 @@ class AlgorithmDescribeBase(ABC):
 
     @classmethod
     def get_default_values(cls):
-        result = {}
-        for el in cls.get_fields():
-            if isinstance(el, AlgorithmProperty):
-                if issubclass(el.value_type, AlgorithmDescribeBase):
-                    result[el.name] = {
-                        "name": el.default_value,
-                        "values": el.possible_values[el.default_value].get_default_values(),
-                    }
-                else:
-                    result[el.name] = el.default_value
-        return result
+        return {
+            el.name: {
+                "name": el.default_value,
+                "values": el.possible_values[
+                    el.default_value
+                ].get_default_values(),
+            }
+            if issubclass(el.value_type, AlgorithmDescribeBase)
+            else el.default_value
+            for el in cls.get_fields()
+            if isinstance(el, AlgorithmProperty)
+        }
 
 
 def is_static(fun):
