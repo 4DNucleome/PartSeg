@@ -24,7 +24,7 @@ from superqt import QEnumComboBox
 from PartSegCore.analysis.measurement_calculation import MeasurementProfile, MeasurementResult
 from PartSegCore.universal_const import Units
 
-from ..common_gui.searchable_combo_box import SearchCombBox
+from ..common_gui.searchable_combo_box import SearchComboBox
 from ..common_gui.universal_gui_part import ChannelComboBox
 from ..common_gui.waiting_dialog import ExecuteFunctionDialog
 from .partseg_settings import PartSettings
@@ -157,7 +157,7 @@ class MeasurementWidget(QWidget):
         self.horizontal_measurement_present.stateChanged.connect(self.refresh_view)
         self.expand_mode.stateChanged.connect(self.refresh_view)
         self.copy_button.clicked.connect(self.copy_to_clipboard)
-        self.measurement_type = SearchCombBox(self)
+        self.measurement_type = SearchComboBox(self)
         # noinspection PyUnresolvedReferences
         self.measurement_type.currentIndexChanged.connect(self.measurement_profile_selection_changed)
         self.measurement_type.addItem("<none>")

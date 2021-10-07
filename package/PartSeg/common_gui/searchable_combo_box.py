@@ -4,7 +4,7 @@ from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QComboBox, QCompleter
 
 
-class SearchCombBox(QComboBox):
+class SearchComboBox(QComboBox):
     """
     ComboCox with completer for fast search in multiple options
     """
@@ -17,8 +17,10 @@ class SearchCombBox(QComboBox):
         self.setEditable(True)
         self.completer_object = QCompleter()
         self.completer_object.setCaseSensitivity(Qt.CaseInsensitive)
+        self.completer_object.setCompletionMode(QCompleter.PopupCompletion)
+        self.completer_object.setFilterMode(Qt.MatchContains)
         self.setCompleter(self.completer_object)
-        # FIXME
+        self.setInsertPolicy(QComboBox.NoInsert)
         if parse(QT_VERSION) < parse("5.14.0"):  # pragma: no cover
             self.currentIndexChanged.connect(self._text_activated)
 
