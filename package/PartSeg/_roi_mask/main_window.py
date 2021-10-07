@@ -39,6 +39,7 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image, TiffImageReader
 
 from .._roi_mask.segmentation_info_dialog import SegmentationInfoDialog
+from ..common_backend.base_settings import ROI_NOT_FIT
 from ..common_gui.advanced_tabs import AdvancedWindow
 from ..common_gui.algorithms_description import AlgorithmChoose, AlgorithmSettingsWidget
 from ..common_gui.channel_control import ChannelProperty
@@ -272,7 +273,7 @@ class MainMenu(BaseMainMenu):
                     self.settings.set_project_info(dial.get_result())
                     return
                 except ValueError as e:
-                    if e.args != ("Segmentation do not fit to image",):
+                    if e.args != (ROI_NOT_FIT,):
                         raise
                     self.segmentation_dialog.set_additional_text(
                         "Segmentation do not fit to image, maybe you would lie to load parameters only."

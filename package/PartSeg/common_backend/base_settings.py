@@ -61,6 +61,7 @@ if TYPE_CHECKING:
 
 DIR_HISTORY = "io.dir_location_history"
 FILE_HISTORY = "io.files_open_history"
+ROI_NOT_FIT = "roi do not fit to image"
 
 
 class ImageSettings(QObject):
@@ -168,7 +169,7 @@ class ImageSettings(QObject):
             else:
                 self._roi_info = val.fit_to_image(self.image)
         except ValueError:  # pragma: no cover
-            raise ValueError("roi do not fit to image")
+            raise ValueError(ROI_NOT_FIT)
         self._additional_layers = {}
         self.roi_changed.emit(self._roi_info)
 
@@ -503,7 +504,7 @@ class BaseSettings(ViewSettings):
         try:
             roi_info = result.roi_info.fit_to_image(self.image)
         except ValueError:  # pragma: no cover
-            raise ValueError("roi do not fit to image")
+            raise ValueError(ROI_NOT_FIT)
         if result.points is not None:
             self.points = result.points
         self._roi_info = roi_info
