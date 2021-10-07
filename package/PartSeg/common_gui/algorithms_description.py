@@ -8,6 +8,7 @@ from magicgui.widgets import Widget, create_widget
 from qtpy.QtCore import Signal
 from qtpy.QtGui import QHideEvent, QPainter, QPaintEvent, QResizeEvent
 from qtpy.QtWidgets import (
+    QAbstractSpinBox,
     QApplication,
     QCheckBox,
     QComboBox,
@@ -137,6 +138,52 @@ class QtAlgorithmProperty(AlgorithmProperty):
             return QLabel(ob)
         raise ValueError(f"unknown parameter type {type(ob)} of {ob}")
 
+    @staticmethod
+    def _get_numeric_field(ap: AlgorithmProperty):
+        if issubclass(ap.value_type, int):
+            res = CustomSpinBox()
+            if not isinstance(ap.default_value, int):
+                raise ValueError(
+                    f"Incompatible types. default_value should be type of int. Is {type(ap.default_value)}"
+                )
+        else:  # issubclass(ap.value_type, float):
+            res = CustomDoubleSpinBox()
+            if not isinstance(ap.default_value, float):
+                raise ValueError(
+                    f"Incompatible types. default_value should be type of float. Is {type(ap.default_value)}"
+                )
+        if ap.default_value < res.minimum():
+            res.setMinimum(ap.default_value)
+        if ap.range is not None:
+            res.setRange(*ap.range)
+        return res
+
+    @classmethod
+    def _get_field_from_value_type(cls, ap: AlgorithmProperty):
+        if issubclass(ap.value_type, Channel):
+            res = ChannelComboBox()
+            res.change_channels_num(10)
+            return res
+        elif issubclass(ap.value_type, AlgorithmDescribeBase):
+            res = SubAlgorithmWidget(ap)
+        elif issubclass(ap.value_type, bool):
+            res = QCheckBox()
+        elif issubclass(ap.value_type, (float, int)):
+            res = cls._get_numeric_field(ap)
+        elif issubclass(ap.value_type, str):
+            res = QLineEdit()
+        elif issubclass(ap.value_type, Enum):
+            res = QEnumComboBox(enum_class=ap.value_type)
+            # noinspection PyUnresolvedReferences
+        elif issubclass(ap.value_type, ROIExtractionProfile):
+            res = ProfileSelect()
+        elif issubclass(ap.value_type, list):
+            res = QComboBox()
+            res.addItems(list(map(str, ap.possible_values)))
+        else:
+            res = create_widget(annotation=ap.value_type, options={})
+        return res
+
     def _get_field(self) -> typing.Union[QWidget, Widget]:
         """
         Get proper widget for given field type. Overwrite if would like to support new data types.
@@ -148,48 +195,10 @@ class QtAlgorithmProperty(AlgorithmProperty):
             res = ListInput(prop, 3)
         elif not inspect.isclass(self.value_type):
             res = create_widget(annotation=self.value_type, options={})
-        elif issubclass(self.value_type, Channel):
-            res = ChannelComboBox()
-            res.change_channels_num(10)
-            return res
-        elif issubclass(self.value_type, AlgorithmDescribeBase):
-            res = SubAlgorithmWidget(self)
-        elif issubclass(self.value_type, bool):
-            res = QCheckBox()
-        elif issubclass(self.value_type, int):
-            res = CustomSpinBox()
-            if not isinstance(self.default_value, int):
-                raise ValueError(
-                    f"Incompatible types. default_value should be type of int. Is {type(self.default_value)}"
-                )
-            if self.default_value < res.minimum():
-                res.setMinimum(self.default_value)
-            if self.range is not None:
-                res.setRange(*self.range)
-        elif issubclass(self.value_type, float):
-            res = CustomDoubleSpinBox()
-            if not isinstance(self.default_value, float):
-                raise ValueError(
-                    f"Incompatible types. default_value should be type of float. Is {type(self.default_value)}"
-                )
-            if self.default_value < res.minimum():
-                res.setMinimum(self.default_value)
-            if self.range is not None:
-                res.setRange(*self.range)
-        elif issubclass(self.value_type, str):
-            res = QLineEdit()
-        elif issubclass(self.value_type, Enum):
-            res = QEnumComboBox(enum_class=self.value_type)
-            # noinspection PyUnresolvedReferences
-        elif issubclass(self.value_type, ROIExtractionProfile):
-            res = ProfileSelect()
-        elif issubclass(self.value_type, list):
-            res = QComboBox()
-            res.addItems(list(map(str, self.possible_values)))
         elif hasattr(self.value_type, "get_object"):
             res = self.value_type.get_object()
         else:
-            res = create_widget(annotation=self.value_type, options={})
+            res = self._get_field_from_value_type(self)
         tool_tip_text = self.help_text or ""
         tool_tip_text += f" default value: {_pretty_print(self.default_value)}"
         if isinstance(res, QWidget):
@@ -206,7 +215,7 @@ class QtAlgorithmProperty(AlgorithmProperty):
             return widget.currentIndexChanged
         if isinstance(widget, QCheckBox):
             return widget.stateChanged
-        if isinstance(widget, (CustomDoubleSpinBox, CustomSpinBox)):
+        if isinstance(widget, QAbstractSpinBox):
             return widget.valueChanged
         if isinstance(widget, QLineEdit):
             return widget.textChanged

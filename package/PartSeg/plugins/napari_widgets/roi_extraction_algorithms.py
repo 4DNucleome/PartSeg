@@ -58,10 +58,11 @@ IO_SAVE_DIRECTORY = "io.save_directory"
 
 
 class QtNapariAlgorithmProperty(QtAlgorithmProperty):
-    def _get_field(self) -> typing.Union[QWidget, Widget]:
-        if inspect.isclass(self.value_type) and issubclass(self.value_type, Channel):
+    @classmethod
+    def _get_field_from_value_type(cls, ap: AlgorithmProperty) -> typing.Union[QWidget, Widget]:
+        if inspect.isclass(ap.value_type) and issubclass(ap.value_type, Channel):
             return create_widget(annotation=NapariImage, label="Image", options={})
-        return super()._get_field()
+        return super()._get_field_from_value_type(ap)
 
 
 class NapariFormWidget(FormWidget):
