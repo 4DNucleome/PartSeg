@@ -443,6 +443,10 @@ class Image:
         """
         slices: typing.List[typing.Union[int, slice]] = [slice(None) for _ in range(len(self.axis_order))]
         axis_pos = self.get_axis_positions()
+        if "c" in kwargs and isinstance(kwargs["c"], str):
+            kwargs["c"] = self.channel_names.index(kwargs["c"])
+        if "C" in kwargs and isinstance(kwargs["C"], str):
+            kwargs["C"] = self.channel_names.index(kwargs["C"])
         for name in kwargs:
             if name.upper() in axis_pos:
                 slices[axis_pos[name.upper()]] = kwargs[name]
@@ -471,8 +475,6 @@ class Image:
         :return: given channel array
         :rtype: numpy.ndarray
         """
-        if isinstance(num, str):
-            num = self.channel_names.index(num)
         return self.get_data_by_axis(c=num)
 
     def get_layer(self, time: int, stack: int) -> np.ndarray:

@@ -93,9 +93,8 @@ class NapariInteractiveAlgorithmSettingsWidget(InteractiveAlgorithmSettingsWidge
         return layer_order_dict
 
     def get_values(self):
-        layer_order_dict = self.get_order_mapping()
         return {
-            k: layer_order_dict.get(v) if isinstance(v, NapariImage) else v
+            k: v.name if isinstance(v, NapariImage) else v
             for k, v in self.form_widget.get_values().items()
             if not isinstance(v, Labels) and k != "mask"
         }
