@@ -24,6 +24,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from PartSeg import plugins
 from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
@@ -123,6 +124,7 @@ class ROIExtractionAlgorithms(QWidget):
         raise NotImplementedError
 
     def __init__(self, napari_viewer: Viewer):
+        plugins.register_if_need()
         super().__init__()
         self._scale = 1, 1, 1
         self.channel_names = []

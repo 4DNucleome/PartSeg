@@ -61,3 +61,8 @@ def register():
             assert isinstance(el.register, typing.Callable)  # nosec
             el.register()
             plugins_loaded.add(el.__name__)
+
+
+def register_if_need():
+    if len(plugins_loaded) == 0:
+        register()
