@@ -1,6 +1,5 @@
 import inspect
 import itertools
-import json
 import os
 import typing
 from pathlib import Path
@@ -10,7 +9,6 @@ from magicgui.widgets import Widget, create_widget
 from napari import Viewer
 from napari.layers import Image as NapariImage
 from napari.layers import Labels, Layer
-from PyQt5.QtWidgets import QFileDialog
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QComboBox,
@@ -27,14 +25,15 @@ from qtpy.QtWidgets import (
 
 from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
-from PartSegCore.analysis import PartEncoder
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.load_functions import LoadProfileFromJSON
+from PartSegCore.analysis.save_functions import SaveProfilesToJSON
 from PartSegCore.channel_class import Channel
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 from PartSegCore.segmentation import ROIExtractionResult
 from PartSegImage import Image
 
-from ..._roi_analysis.profile_export import ExportDialog, ProfileDictViewer
+from ..._roi_analysis.profile_export import ExportDialog, ImportDialog, ProfileDictViewer
 from ...common_backend.base_settings import BaseSettings
 from ...common_gui.algorithms_description import (
     AlgorithmChooseBase,
@@ -42,6 +41,8 @@ from ...common_gui.algorithms_description import (
     InteractiveAlgorithmSettingsWidget,
     QtAlgorithmProperty,
 )
+from ...common_gui.custom_load_dialog import CustomLoadDialog
+from ...common_gui.custom_save_dialog import SaveDialog
 from ...common_gui.searchable_list_widget import SearchableListWidget
 from ._settings import get_settings
 
@@ -50,6 +51,7 @@ if typing.TYPE_CHECKING:
 
 
 SELECT_TEXT = "<select>"
+IO_SAVE_DIRECTORY = "io.save_directory"
 
 
 class QtNapariAlgorithmProperty(QtAlgorithmProperty):
@@ -313,13 +315,16 @@ class ProfilePreviewDialog(QDialog):
         self.profile_view.setReadOnly(True)
 
         self.delete_btn = QPushButton("Delete")
+        self.rename_btn = QPushButton("Rename")
         self.export_btn = QPushButton("Export")
         self.export_btn.clicked.connect(self.export_action)
         self.import_btn = QPushButton("Import")
+        self.import_btn.clicked.connect(self.import_action)
         layout = QGridLayout()
         layout.addWidget(self.profile_list, 0, 0)
         layout.addWidget(self.profile_view, 0, 1)
-        layout.addWidget(self.delete_btn, 1, 0, 1, 2)
+        layout.addWidget(self.delete_btn, 1, 0)
+        layout.addWidget(self.rename_btn, 1, 1)
         layout.addWidget(self.export_btn, 2, 0)
         layout.addWidget(self.import_btn, 2, 1)
 
@@ -339,18 +344,32 @@ class ProfilePreviewDialog(QDialog):
         exp = ExportDialog(self.profile_dict, ProfileDictViewer)
         if not exp.exec_():
             return
-        dial = QFileDialog(self, "Export profile segment")
-        dial.setFileMode(QFileDialog.AnyFile)
-        dial.setAcceptMode(QFileDialog.AcceptSave)
-        dial.setDirectory(self.settings.get("io.save_directory", str(Path.home())))
-        dial.setNameFilter("Segment profile (*.json)")
-        dial.setDefaultSuffix("json")
-        dial.selectFile("segment_profile.json")
-        dial.setHistory(dial.history() + self.settings.get_path_history())
+        dial = SaveDialog(SaveProfilesToJSON, history=self.settings.get_path_history())
+        dial.setDirectory(self.settings.get(IO_SAVE_DIRECTORY, str(Path.home())))
         if dial.exec_():
-            file_path = dial.selectedFiles()[0]
-            self.settings.set("io.save_directory", os.path.dirname(file_path))
-            self.settings.add_path_history(os.path.dirname(file_path))
+            save_location, selected_filter, save_class, values = dial.get_result()
+            save_dir = os.path.dirname(save_location)
+            self.settings.set(IO_SAVE_DIRECTORY, save_dir)
+            self.settings.add_path_history(save_dir)
             data = {x: self.profile_dict[x] for x in exp.get_export_list()}
-            with open(file_path, "w") as ff:
-                json.dump(data, ff, cls=PartEncoder, indent=2)
+            save_class.save(save_location, data, values)
+
+    def import_action(self):
+        dial = CustomLoadDialog(LoadProfileFromJSON, history=self.settings.get_path_history())
+        dial.setDirectory(self.settings.get(IO_SAVE_DIRECTORY, str(Path.home())))
+        if not dial.exec_():
+            return
+        file_path = dial.selectedFiles()[0]
+        save_dir = os.path.dirname(file_path)
+        self.settings.set("io.save_directory", save_dir)
+        self.settings.add_path_history(save_dir)
+        file_list, _, load_class = dial.get_result()
+        profs, err = load_class.load(file_list)
+        if err:
+            QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
+        imp = ImportDialog(profs, self.profile_dict, ProfileDictViewer)
+        if not imp.exec_():
+            return
+        for original_name, final_name in imp.get_import_list():
+            self.profile_dict[final_name] = profs[original_name]
+        self.settings.dump()

@@ -298,9 +298,7 @@ class FileChoose(QWidget):
             self.files_widget.mask_list = []
 
     def chose_result_file(self):
-        dial = SaveDialog(
-            {SaveExcel.get_short_name(): SaveExcel}, system_widget=False, history=self.settings.get_path_history()
-        )
+        dial = SaveDialog(SaveExcel, system_widget=False, history=self.settings.get_path_history())
         dial.setDirectory(
             self.settings.get("io.save_directory", self.settings.get("io.open_directory", str(Path.home())))
         )
