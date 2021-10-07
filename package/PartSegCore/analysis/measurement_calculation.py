@@ -1595,7 +1595,7 @@ class GetROIAnnotationType(MeasurementMethodBase):
 
     @staticmethod
     def calculate_property(roi_annotation, name, _component_num, **kwargs):
-        return roi_annotation[_component_num].get(name, "")
+        return roi_annotation.get(_component_num, {}).get(name, "")
 
     @classmethod
     def get_units(cls, ndim):
