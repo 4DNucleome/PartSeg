@@ -1594,7 +1594,7 @@ class GetROIAnnotationType(MeasurementMethodBase):
         return Leaf(name=cls.text_info[0], area=AreaType.ROI, per_component=PerComponent.Yes)
 
     @staticmethod
-    def calculate_property(roi_annotation, name, _component_num, **kwargs):
+    def calculate_property(roi_annotation, name, _component_num, **kwargs):  # pylint: disable=W0221
         return roi_annotation.get(_component_num, {}).get(name, "")
 
     @classmethod
