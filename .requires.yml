@@ -2,7 +2,7 @@ version: 1.0
 requirements:
   - requirements/requirements_ci.txt
   - requirements/requirements_dev.txt
-  - requirements/requirements_pyinstaller.txt
+  - requirements/requirements_pyinstaller.in
   - docs/requirements.txt
   - setup.py
   - tox.ini

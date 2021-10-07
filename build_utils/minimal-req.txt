@@ -1,5 +1,5 @@
 
-PartSegCore_compiled_backend==0.12.0a0
+PartSegCore_compiled_backend==0.13.11
 PartSegData==0.10.0
 PyOpenGL-accelerate==3.1.5
 QtPy==1.7.0
@@ -11,20 +11,21 @@ h5py==2.8.0
 imagecodecs==2020.5.30
 imageio==2.5.0
 mahotas==1.4.9
-napari==0.4.3
-numpy==1.16.5
+napari==0.4.8
+numpy==1.18.0
 oiffile==2019.1.1
 openpyxl==2.4.9
-packaging==17.1
+packaging==20.0
 pandas==0.24.0
 requests==2.18.0
 scipy==1.2.0
 sentry_sdk==0.14.3
 six==1.11.0
+superqt==0.2.4
 sympy==1.1.1
 tifffile==2020.9.30
 vispy==0.6.4
 xlrd==1.1.0
 xlsxwriter
-typing-extensions==3.7.4.2 ;python_version < '3.8'
+typing-extensions==3.7.4.3 ;python_version < '3.8'
 PyQt5!=5.15.0,==5.12.3

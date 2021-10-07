@@ -35,9 +35,11 @@ from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 from PartSegCore.mask.history_utils import create_history_element_from_segmentation_tuple
 from PartSegCore.mask.io_functions import LoadROI, LoadROIFromTIFF, LoadROIParameters, MaskProjectTuple, SaveROI
 from PartSegCore.project_info import HistoryElement, HistoryProblem, calculate_mask_from_project
+from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image, TiffImageReader
 
 from .._roi_mask.segmentation_info_dialog import SegmentationInfoDialog
+from ..common_backend.base_settings import ROI_NOT_FIT
 from ..common_gui.advanced_tabs import AdvancedWindow
 from ..common_gui.algorithms_description import AlgorithmChoose, AlgorithmSettingsWidget
 from ..common_gui.channel_control import ChannelProperty
@@ -88,9 +90,10 @@ class MaskDialog(MaskDialogBase):
         history.arrays.seek(0)
         seg = np.load(history.arrays)
         history.arrays.seek(0)
-        self.settings.roi = seg["segmentation"]
-        self.settings.set_segmentation(
-            seg["segmentation"],
+        # TODO Check me
+        # self.settings.roi = seg["segmentation"]
+        self.settings._set_roi_info(  # pylint: disable=W0212
+            ROIInfo(seg["segmentation"]),
             False,
             history.roi_extraction_parameters["selected"],
             history.roi_extraction_parameters["parameters"],
@@ -270,7 +273,7 @@ class MainMenu(BaseMainMenu):
                     self.settings.set_project_info(dial.get_result())
                     return
                 except ValueError as e:
-                    if e.args != ("Segmentation do not fit to image",):
+                    if e.args != (ROI_NOT_FIT,):
                         raise
                     self.segmentation_dialog.set_additional_text(
                         "Segmentation do not fit to image, maybe you would lie to load parameters only."
@@ -937,7 +940,6 @@ class MainWindow(BaseMainWindow):
             del self.main_menu.measurements_window
         del self.main_menu.segmentation_dialog
         del self.options_panel.algorithm_options.show_parameters_widget
-        self.settings.dump()
         super().closeEvent(event)
 
     @staticmethod
@@ -947,6 +949,7 @@ class MainWindow(BaseMainWindow):
     def set_data(self, data):
         self.main_menu.set_data(data)
 
-    def change_theme(self):
+    # @ensure_main_thread
+    def change_theme(self, event):
         self.image_view.set_theme(self.settings.theme_name)
-        super().change_theme()
+        super().change_theme(event)

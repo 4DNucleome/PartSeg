@@ -55,6 +55,8 @@ class ROIExtractionResult:
     :ivar dict roi_annotation: Annotation for ROI. Currently displayed as tooltip
     :ivar Dict[str,np.ndarray] alternative_representation: Arrays with alternative representations of ROI.
     :ivar Optional[str] ~.file_path: information on which file roi extraction was performed.
+    :ivar ROIInfo ~.roi_info: ROIInfo for current roi.
+    :ivar Optional[np.ndarray] ~.points: array of points.
     """
 
     # TODO add alternative representation using dict mapping.
@@ -66,6 +68,7 @@ class ROIExtractionResult:
     alternative_representation: Dict[str, np.ndarray] = field(default_factory=dict)
     file_path: Optional[str] = None
     roi_info: Optional[ROIInfo] = None
+    points: Optional[np.ndarray] = None
 
     def __post_init__(self):
         if "ROI" in self.alternative_representation:

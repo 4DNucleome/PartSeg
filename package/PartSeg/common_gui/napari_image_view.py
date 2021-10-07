@@ -189,6 +189,8 @@ class ImageView(QWidget):
         self.viewer = Viewer(ndisplay=ndisplay)
         self.viewer.theme = self.settings.theme_name
         self.viewer_widget = NapariQtViewer(self.viewer)
+        if hasattr(self.viewer_widget.canvas, "background_color_override"):
+            self.viewer_widget.canvas.background_color_override = "black"
         self.image_state = ImageShowState(settings, name)
         self.channel_control = ColorComboBoxGroup(settings, name, channel_property, height=30)
         self.ndim_btn = QtNDisplayButton(self.viewer)
