@@ -43,7 +43,7 @@ from ..common_gui.equal_column_layout import EqualColumnLayout
 from ..common_gui.exception_hooks import OPEN_ERROR, load_data_exception_hook
 from ..common_gui.mask_widget import MaskDialogBase
 from ..common_gui.multiple_file_widget import MultipleFileWidget
-from ..common_gui.searchable_combo_box import SearchCombBox
+from ..common_gui.searchable_combo_box import SearchComboBox
 from ..common_gui.stack_image_view import ColorBar
 from ..common_gui.universal_gui_part import TextShow
 from ..common_gui.waiting_dialog import ExecuteFunctionDialog, WaitingDialog
@@ -80,7 +80,7 @@ class Options(QWidget):
         self.save_pipe_btn = QPushButton("Save pipeline")
         self.save_pipe_btn.clicked.connect(self.save_pipeline)
         self.save_pipe_btn.setToolTip("Save current pipeline. Last element is last executed algorithm")
-        self.choose_pipe = SearchCombBox()
+        self.choose_pipe = SearchComboBox()
         self.choose_pipe.addItem("<none>")
         self.choose_pipe.addItems(list(self._settings.roi_pipelines.keys()))
         self.choose_pipe.textActivated.connect(self.choose_pipeline)
@@ -88,7 +88,7 @@ class Options(QWidget):
         self.save_profile_btn = QPushButton("Save profile")
         self.save_profile_btn.setToolTip("Save values from current view")
         self.save_profile_btn.clicked.connect(self.save_profile)
-        self.choose_profile = SearchCombBox()
+        self.choose_profile = SearchComboBox()
         self.choose_profile.addItem("<none>")
         self.choose_profile.addItems(list(self._settings.roi_profiles.keys()))
         self.choose_profile.setToolTip("Select profile to restore its settings. Execute if interactive is checked")
