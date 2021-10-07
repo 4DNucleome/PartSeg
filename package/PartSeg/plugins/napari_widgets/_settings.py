@@ -1,12 +1,6 @@
 import os
 
-from PartSeg.common_backend.base_settings import BaseSettings
-
-try:
-    from napari.settings import get_settings as napari_get_settings
-except ImportError:
-    from napari.utils.settings import get_settings as napari_get_settings
-
+from PartSeg.common_backend.base_settings import BaseSettings, napari_get_settings
 
 _settings = None
 
