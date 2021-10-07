@@ -163,7 +163,6 @@ class QtAlgorithmProperty(AlgorithmProperty):
         if issubclass(ap.value_type, Channel):
             res = ChannelComboBox()
             res.change_channels_num(10)
-            return res
         elif issubclass(ap.value_type, AlgorithmDescribeBase):
             res = SubAlgorithmWidget(ap)
         elif issubclass(ap.value_type, bool):
