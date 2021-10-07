@@ -11,7 +11,6 @@ from napari.layers import Image as NapariImage
 from napari.layers import Labels, Layer
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
-    QComboBox,
     QDialog,
     QGridLayout,
     QHBoxLayout,
@@ -43,6 +42,7 @@ from ...common_gui.algorithms_description import (
 )
 from ...common_gui.custom_load_dialog import CustomLoadDialog
 from ...common_gui.custom_save_dialog import SaveDialog
+from ...common_gui.searchable_combo_box import SearchCombBox
 from ...common_gui.searchable_list_widget import SearchableListWidget
 from ._settings import get_settings
 
@@ -133,7 +133,7 @@ class ROIExtractionAlgorithms(QWidget):
         self.calculate_btn = QPushButton("Run")
         self.calculate_btn.clicked.connect(self._run_calculation)
 
-        self.profile_combo_box = QComboBox()
+        self.profile_combo_box = SearchCombBox()
         self.profile_combo_box.addItem(SELECT_TEXT)
         self.profile_combo_box.addItems(self.profile_dict.keys())
         self.save_btn = QPushButton("Save parameters")
@@ -154,7 +154,7 @@ class ROIExtractionAlgorithms(QWidget):
         self.algorithm_chose.algorithm_changed.connect(self.algorithm_changed)
         self.save_btn.clicked.connect(self.save_action)
         self.manage_btn.clicked.connect(self.manage_action)
-        self.profile_combo_box.currentTextChanged.connect(self.select_profile)
+        self.profile_combo_box.textActivated.connect(self.select_profile)
 
         self.update_tooltips()
 
