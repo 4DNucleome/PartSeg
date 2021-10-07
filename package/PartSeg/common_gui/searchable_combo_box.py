@@ -4,7 +4,7 @@ from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QComboBox, QCompleter
 
 
-class SearchCombBox(QComboBox):
+class SearchComboBox(QComboBox):
     """
     ComboCox with completer for fast search in multiple options
     """
