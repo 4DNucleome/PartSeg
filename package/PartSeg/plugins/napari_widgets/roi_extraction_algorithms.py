@@ -15,6 +15,8 @@ from qtpy.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QInputDialog,
+    QLabel,
+    QLineEdit,
     QMessageBox,
     QPlainTextEdit,
     QPushButton,
@@ -42,7 +44,7 @@ from ...common_gui.algorithms_description import (
 )
 from ...common_gui.custom_load_dialog import CustomLoadDialog
 from ...common_gui.custom_save_dialog import SaveDialog
-from ...common_gui.searchable_combo_box import SearchCombBox
+from ...common_gui.searchable_combo_box import SearchComboBox
 from ...common_gui.searchable_list_widget import SearchableListWidget
 from ._settings import get_settings
 
@@ -133,17 +135,23 @@ class ROIExtractionAlgorithms(QWidget):
         self.calculate_btn = QPushButton("Run")
         self.calculate_btn.clicked.connect(self._run_calculation)
 
-        self.profile_combo_box = SearchCombBox()
+        self.profile_combo_box = SearchComboBox()
         self.profile_combo_box.addItem(SELECT_TEXT)
         self.profile_combo_box.addItems(self.profile_dict.keys())
         self.save_btn = QPushButton("Save parameters")
         self.manage_btn = QPushButton("Manage parameters")
+        self.target_layer_name = QLineEdit()
+        self.target_layer_name.setText(self.settings.get(f"{self.prefix()}.target_layer_name", "ROI"))
 
         layout = QVBoxLayout()
         btn_layout = QHBoxLayout()
         btn_layout.addWidget(self.save_btn)
         btn_layout.addWidget(self.manage_btn)
         layout.addLayout(btn_layout)
+        target_layer_layout = QHBoxLayout()
+        target_layer_layout.addWidget(QLabel("Target layer name:"))
+        target_layer_layout.addWidget(self.target_layer_name)
+        layout.addLayout(target_layer_layout)
         layout.addWidget(self.profile_combo_box)
         layout.addWidget(self.calculate_btn)
         layout.addWidget(self.algorithm_chose)
@@ -266,11 +274,13 @@ class ROIExtractionAlgorithms(QWidget):
         self.algorithm_chose.reset_choices(event)
 
     def set_result(self, result: ROIExtractionResult):
-        if "ROI" in self.viewer.layers:
-            self.viewer.layers["ROI"].data = result.roi
+        layer_name = self.target_layer_name.text()
+        self.settings.set(f"{self.prefix()}.target_layer_name", layer_name)
+        if layer_name in self.viewer.layers:
+            self.viewer.layers[layer_name].data = result.roi
         else:
             self.viewer.add_labels(
-                result.roi, scale=self._scale[-result.roi.ndim :] * UNIT_SCALE[Units.nm.value], name="ROI"
+                result.roi, scale=self._scale[-result.roi.ndim :] * UNIT_SCALE[Units.nm.value], name=layer_name
             )
 
     def refresh_profiles(self):
