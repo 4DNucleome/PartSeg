@@ -102,7 +102,7 @@ class ROIExtractionResult:
 SegmentationResult = ROIExtractionResult
 
 
-def report_empty_fun(_x, _y):  # pragma: no cover
+def report_empty_fun(_x, _y):  # pragma: no cover # skipcq: PTC-W0049
     pass
 
 

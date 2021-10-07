@@ -88,7 +88,7 @@ class NapariInteractiveAlgorithmSettingsWidget(InteractiveAlgorithmSettingsWidge
     def get_order_mapping(self):
         layers = self.get_layers()
         layer_order_dict = {}
-        for name, layer in layers.items():
+        for layer in layers.values():
             if isinstance(layer, NapariImage) and layer not in layer_order_dict:
                 layer_order_dict[layer] = len(layer_order_dict)
         return layer_order_dict
@@ -384,7 +384,7 @@ class ProfilePreviewDialog(QDialog):
         dial = SaveDialog(SaveProfilesToJSON, history=self.settings.get_path_history())
         dial.setDirectory(self.settings.get(IO_SAVE_DIRECTORY, str(Path.home())))
         if dial.exec_():
-            save_location, selected_filter, save_class, values = dial.get_result()
+            save_location, _selected_filter, save_class, values = dial.get_result()
             save_dir = os.path.dirname(save_location)
             self.settings.set(IO_SAVE_DIRECTORY, save_dir)
             self.settings.add_path_history(save_dir)
