@@ -467,10 +467,12 @@ class Image:
         """
         Alias for :py:func:`get_sub_data` with argument ``c=num``
 
-        :param int num: channel num to be extracted
+        :param int | str num: channel num to be extracted
         :return: given channel array
         :rtype: numpy.ndarray
         """
+        if isinstance(num, str):
+            num = self.channel_names.index(num)
         return self.get_data_by_axis(c=num)
 
     def get_layer(self, time: int, stack: int) -> np.ndarray:
