@@ -352,12 +352,16 @@ class ProfilePreviewDialog(QDialog):
         self.profile_view.setPlainText(str(profile))
 
     def delete_action(self):
+        if self.profile_list.currentItem() is None:
+            return
         if self.profile_list.currentItem().text() in self.profile_dict:
             del self.profile_dict[self.profile_list.currentItem().text()]
         self.profile_list.clear()
         self.profile_list.addItems(self.profile_dict.keys())
 
     def rename_action(self):
+        if self.profile_list.currentItem() is None:
+            return
         old_name = self.profile_list.currentItem().text()
         if old_name not in self.profile_dict:
             return
