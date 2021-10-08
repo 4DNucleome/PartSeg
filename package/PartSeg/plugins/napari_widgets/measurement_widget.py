@@ -61,7 +61,7 @@ class SimpleMeasurement(Container):
             if chk.value:
                 leaf: Leaf = MEASUREMENT_DICT[chk.text].get_starting_leaf()
                 to_calculate.append(leaf.replace_(per_component=PerComponent.Yes, area=AreaType.ROI))
-        if not to_calculate:
+        if not to_calculate:  # pragma: no cover
             warnings.warn("No measurement. Select at least one measurement")
             return
 
@@ -70,7 +70,7 @@ class SimpleMeasurement(Container):
         data_layer = self.image_choice.value or self.labels_choice.value
 
         data_ndim = data_layer.data.ndim
-        if data_ndim > 4:
+        if data_ndim > 4:  # pragma: no cover
             warnings.warn("Not Supported. Currently measurement engine does not support data over 4 dim (TZYX)")
             return
         data_scale = data_layer.scale[-3:] / UNIT_SCALE[self.scale_units_select.get_value().value]

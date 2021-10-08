@@ -12,6 +12,7 @@ from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ProfilePrev
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 from PartSegCore.analysis.load_functions import LoadProfileFromJSON
+from PartSegCore.analysis.measurement_calculation import Volume, Voxels
 from PartSegCore.analysis.save_functions import SaveProfilesToJSON
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 from PartSegCore.segmentation import ROIExtractionResult
@@ -128,9 +129,26 @@ def test_profile_preview_dialog(part_settings, register, qtbot, monkeypatch, tmp
 
 
 @napari_skip
-def test_measurement_create(make_napari_viewer):
+def test_measurement_create(make_napari_viewer, qtbot):
     from PartSeg.plugins.napari_widgets.measurement_widget import SimpleMeasurement
 
+    data = np.zeros((10, 10), dtype=np.uint8)
+
     viewer = make_napari_viewer()
+    viewer.add_labels(data, name="label")
     measurement = SimpleMeasurement(viewer)
+    viewer.window.add_dock_widget(measurement)
     measurement.reset_choices()
+    measurement.labels_choice.reset_choices()
+    measurement.labels_choice.value = viewer.layers["label"]
+    for el in measurement.measurement_layout:
+        if el.text in [Volume.get_name(), Voxels.get_name()]:
+            el.value = True
+
+    measurement._calculate()
+    for _ in range(10):
+        qtbot.wait(200)
+        if measurement.calculate_btn.enabled:
+            break
+
+    assert measurement.calculate_btn.enabled
