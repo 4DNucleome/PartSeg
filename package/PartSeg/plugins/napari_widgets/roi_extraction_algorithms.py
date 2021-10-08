@@ -73,7 +73,6 @@ class NapariFormWidget(FormWidget):
 
     def reset_choices(self, event=None):
         for widget in self.widgets_dict.values():
-            # print("eeee", widget)
             if hasattr(widget.get_field(), "reset_choices"):
                 widget.get_field().reset_choices(event)
 
@@ -127,7 +126,7 @@ class ROIExtractionAlgorithms(QWidget):
     def __init__(self, napari_viewer: Viewer):
         plugins.register_if_need()
         super().__init__()
-        self._scale = 1, 1, 1
+        self._scale = np.array((1, 1, 1))
         self.channel_names = []
         self.mask_name = ""
 
@@ -215,7 +214,7 @@ class ROIExtractionAlgorithms(QWidget):
             self.profile_combo_box.setItemData(i, tool_tip_text, Qt.ToolTipRole)
 
     def algorithm_changed(self):
-        self._scale = 1, 1, 1
+        self._scale = np.array((1, 1, 1))
         self.channel_names = []
         self.mask_name = ""
 
@@ -282,7 +281,9 @@ class ROIExtractionAlgorithms(QWidget):
             self.viewer.layers[layer_name].data = result.roi
         else:
             self.viewer.add_labels(
-                result.roi, scale=self._scale[-result.roi.ndim :] * UNIT_SCALE[Units.nm.value], name=layer_name
+                result.roi,
+                scale=np.array(self._scale)[-result.roi.ndim :] * UNIT_SCALE[Units.nm.value],
+                name=layer_name,
             )
 
     def refresh_profiles(self):
@@ -345,17 +346,19 @@ class ProfilePreviewDialog(QDialog):
         self.setLayout(layout)
 
     def profile_selected(self, text):
+        if text not in self.profile_dict:
+            return
         profile = self.profile_dict[text]
         self.profile_view.setPlainText(str(profile))
 
     def delete_action(self):
-        if self.profile_list.text() in self.profile_dict:
-            del self.profile_dict[self.profile_list.text()]
+        if self.profile_list.currentItem().text() in self.profile_dict:
+            del self.profile_dict[self.profile_list.currentItem().text()]
         self.profile_list.clear()
         self.profile_list.addItems(self.profile_dict.keys())
 
     def rename_action(self):
-        old_name = self.profile_list.text()
+        old_name = self.profile_list.currentItem().text()
         if old_name not in self.profile_dict:
             return
 
@@ -377,6 +380,8 @@ class ProfilePreviewDialog(QDialog):
         del self.profile_dict[old_name]
         profile.name = text
         self.profile_dict[text] = profile
+        self.profile_list.clear()
+        self.profile_list.addItems(self.profile_dict.keys())
 
     def export_action(self):
         exp = ExportDialog(self.profile_dict, ProfileDictViewer)
