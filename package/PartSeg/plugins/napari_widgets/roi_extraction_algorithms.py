@@ -50,7 +50,7 @@ from ...common_gui.searchable_list_widget import SearchableListWidget
 from ._settings import get_settings
 
 if typing.TYPE_CHECKING:
-    from qtpy.QtGui import QHideEvent, QShowEvent
+    from qtpy.QtGui import QHideEvent, QShowEvent  # pragma: no cover
 
 
 SELECT_TEXT = "<select>"
@@ -116,11 +116,11 @@ class NapariAlgorithmChoose(AlgorithmChooseBase):
 
 class ROIExtractionAlgorithms(QWidget):
     @staticmethod
-    def get_method_dict():
+    def get_method_dict():  # pragma: no cover
         raise NotImplementedError
 
     @staticmethod
-    def prefix() -> str:
+    def prefix() -> str:  # pragma: no cover
         raise NotImplementedError
 
     def __init__(self, napari_viewer: Viewer):
@@ -168,13 +168,13 @@ class ROIExtractionAlgorithms(QWidget):
         self.update_tooltips()
 
     def manage_action(self):
-        dialog = ProfilePreviewDialog(self.profile_dict, self.get_method_dict(), self.settings)
+        dialog = ProfilePreviewDialog(self.profile_dict, self.get_method_dict(), self.settings, parent=self)
         dialog.exec_()
         self.refresh_profiles()
 
     def select_profile(self, text):
         if text in [SELECT_TEXT, ""]:
-            return
+            return  # pragma: no cover
         profile = self.profile_dict[text]
         self.algorithm_chose.change_algorithm(profile.algorithm, profile.values)
         self.profile_combo_box.setCurrentIndex(0)
@@ -189,7 +189,7 @@ class ROIExtractionAlgorithms(QWidget):
         while True:
             text, ok = QInputDialog.getText(self, "Profile Name", "Input profile name here")
             if not ok:
-                return
+                return  # pragma: no cover
             if text not in profiles or QMessageBox.Yes == QMessageBox.warning(
                 self,
                 "Already exists",
@@ -197,7 +197,7 @@ class ROIExtractionAlgorithms(QWidget):
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No,
             ):
-                break
+                break  # pragma: no cover
         resp = ROIExtractionProfile(text, widget.name, widget.get_values())
         profiles[text] = resp
         self.settings.dump()
@@ -314,9 +314,13 @@ class ROIMaskExtraction(ROIExtractionAlgorithms):
 
 class ProfilePreviewDialog(QDialog):
     def __init__(
-        self, profile_dict: typing.Dict[str, ROIExtractionProfile], algorithm_dict: Register, settings: BaseSettings
+        self,
+        profile_dict: typing.Dict[str, ROIExtractionProfile],
+        algorithm_dict: Register,
+        settings: BaseSettings,
+        parent=None,
     ):
-        super().__init__()
+        super().__init__(parent=parent)
         self.profile_dict = profile_dict
         self.algorithm_dict = algorithm_dict
         self.settings = settings
@@ -353,7 +357,7 @@ class ProfilePreviewDialog(QDialog):
 
     def delete_action(self):
         if self.profile_list.currentItem() is None:
-            return
+            return  # pragma: no cover
         if self.profile_list.currentItem().text() in self.profile_dict:
             del self.profile_dict[self.profile_list.currentItem().text()]
         self.profile_list.clear()
@@ -361,16 +365,16 @@ class ProfilePreviewDialog(QDialog):
 
     def rename_action(self):
         if self.profile_list.currentItem() is None:
-            return
+            return  # pragma: no cover
         old_name = self.profile_list.currentItem().text()
         if old_name not in self.profile_dict:
-            return
+            return  # pragma: no cover
 
         text, ok = QInputDialog.getText(self, "Profile Name", "Input profile name here")
         if not ok:
-            return
+            return  # pragma: no cover
 
-        if text in self.profile_dict:
+        if text in self.profile_dict:  # pragma: no cover
             QMessageBox.warning(
                 self,
                 "Already exists",
@@ -388,10 +392,10 @@ class ProfilePreviewDialog(QDialog):
         self.profile_list.addItems(self.profile_dict.keys())
 
     def export_action(self):
-        exp = ExportDialog(self.profile_dict, ProfileDictViewer)
+        exp = ExportDialog(self.profile_dict, ProfileDictViewer, parent=self)
         if not exp.exec_():
-            return
-        dial = SaveDialog(SaveProfilesToJSON, history=self.settings.get_path_history())
+            return  # pragma: no cover
+        dial = SaveDialog(SaveProfilesToJSON, history=self.settings.get_path_history(), parent=self)
         dial.setDirectory(self.settings.get(IO_SAVE_DIRECTORY, str(Path.home())))
         if dial.exec_():
             save_location, _selected_filter, save_class, values = dial.get_result()
@@ -402,21 +406,24 @@ class ProfilePreviewDialog(QDialog):
             save_class.save(save_location, data, values)
 
     def import_action(self):
-        dial = CustomLoadDialog(LoadProfileFromJSON, history=self.settings.get_path_history())
+        dial = CustomLoadDialog(LoadProfileFromJSON, history=self.settings.get_path_history(), parent=self)
         dial.setDirectory(self.settings.get(IO_SAVE_DIRECTORY, str(Path.home())))
         if not dial.exec_():
-            return
-        file_path = dial.selectedFiles()[0]
-        save_dir = os.path.dirname(file_path)
+            return  # pragma: no cover
+        file_list, _, load_class = dial.get_result()
+        save_dir = os.path.dirname(file_list[0])
         self.settings.set("io.save_directory", save_dir)
         self.settings.add_path_history(save_dir)
-        file_list, _, load_class = dial.get_result()
         profs, err = load_class.load(file_list)
         if err:
-            QMessageBox.warning(self, "Import error", "error during importing, part of data were filtered.")
-        imp = ImportDialog(profs, self.profile_dict, ProfileDictViewer)
+            QMessageBox.warning(
+                self, "Import error", "error during importing, part of data were filtered."
+            )  # pragma: no cover
+        imp = ImportDialog(profs, self.profile_dict, ProfileDictViewer, parent=self)
         if not imp.exec_():
-            return
+            return  # pragma: no cover
         for original_name, final_name in imp.get_import_list():
             self.profile_dict[final_name] = profs[original_name]
         self.settings.dump()
+        self.profile_list.clear()
+        self.profile_list.addItems(self.profile_dict.keys())
