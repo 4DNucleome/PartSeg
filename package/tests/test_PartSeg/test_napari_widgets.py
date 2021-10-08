@@ -3,11 +3,16 @@ import numpy as np
 import packaging.version
 import pytest
 
+from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
 from PartSeg.common_backend.base_settings import BaseSettings
+from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
+from PartSeg.common_gui.custom_save_dialog import SaveDialog
 from PartSeg.plugins.napari_widgets import ROIAnalysisExtraction, ROIMaskExtraction, _settings
 from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ProfilePreviewDialog, QInputDialog
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
+from PartSegCore.analysis.load_functions import LoadProfileFromJSON
+from PartSegCore.analysis.save_functions import SaveProfilesToJSON
 from PartSegCore.mask.algorithm_description import mask_algorithm_dict
 from PartSegCore.segmentation import ROIExtractionResult
 
@@ -74,7 +79,7 @@ def get_text_mock(text):
 
 
 @pytest.mark.parametrize("register", [analysis_algorithm_dict, mask_algorithm_dict])
-def test_profile_preview_dialog(part_settings, register, qtbot, monkeypatch):
+def test_profile_preview_dialog(part_settings, register, qtbot, monkeypatch, tmp_path):
     elem_name = next(iter(register))
     profiles = {
         "prof1": ROIExtractionProfile("prof1", elem_name, register[elem_name].get_default_values()),
@@ -89,6 +94,15 @@ def test_profile_preview_dialog(part_settings, register, qtbot, monkeypatch):
     assert dialog.profile_list.currentItem().text() == "prof1"
     assert dialog.profile_view.toPlainText() != ""
     monkeypatch.setattr(QInputDialog, "getText", get_text_mock("prof3"))
+    monkeypatch.setattr(SaveDialog, "exec_", lambda x: True)
+    monkeypatch.setattr(
+        SaveDialog,
+        "get_result",
+        lambda x: (tmp_path / "profile.json", None, SaveProfilesToJSON, SaveProfilesToJSON.get_default_values()),
+    )
+    monkeypatch.setattr(ExportDialog, "exec_", lambda x: True)
+    monkeypatch.setattr(ExportDialog, "get_export_list", lambda x: ["prof1"])
+    dialog.export_action()
     dialog.rename_action()
     assert "prof3" in profiles
     assert len(profiles) == 2
@@ -100,6 +114,17 @@ def test_profile_preview_dialog(part_settings, register, qtbot, monkeypatch):
     assert len(profiles) == 1
     with qtbot.waitSignal(dialog.profile_list.currentTextChanged):
         dialog.profile_list.setCurrentRow(0)
+
+    monkeypatch.setattr(ImportDialog, "exec_", lambda x: True)
+    monkeypatch.setattr(ImportDialog, "get_import_list", lambda x: [("prof1", "prof1")])
+    monkeypatch.setattr(CustomLoadDialog, "exec_", lambda x: True)
+    monkeypatch.setattr(
+        CustomLoadDialog, "get_result", lambda x: ([tmp_path / "profile.json"], None, LoadProfileFromJSON)
+    )
+
+    dialog.import_action()
+    assert len(profiles) == 2
+    assert dialog.profile_list.count() == 2
 
 
 @napari_skip
