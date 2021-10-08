@@ -24,7 +24,7 @@ def clean_settings(tmp_path):
     _settings._settings = old_settings
 
 
-def no_action(*_):
+def no_action(*_):  # skipcq: PTC-W0049
     pass
 
 
