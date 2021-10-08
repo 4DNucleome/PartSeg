@@ -23,8 +23,8 @@ from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
 
 
 class ExportDialog(QDialog):
-    def __init__(self, export_dict, viewer):
-        super().__init__()
+    def __init__(self, export_dict, viewer, parent=None):
+        super().__init__(parent=parent)
         self.setWindowTitle("Export")
         self.export_dict = export_dict
         self.viewer = viewer()
@@ -86,6 +86,8 @@ class ExportDialog(QDialog):
         return res
 
     def preview(self):
+        if self.list_view.currentItem() is None:
+            return  # TODO check this
         name = str(self.list_view.currentItem().text())
         self.viewer.preview_object(self.export_dict[name])
 
@@ -122,7 +124,7 @@ class ExportDialog(QDialog):
 
 
 class ImportDialog(QDialog):
-    def __init__(self, import_dict, local_dict, viewer):
+    def __init__(self, import_dict, local_dict, viewer, parent=None):
         """
         :type import_dict: dict[str, object]
         :type local_dict: dict[str, object]
@@ -130,7 +132,7 @@ class ImportDialog(QDialog):
         :param local_dict:
         :param viewer:
         """
-        super().__init__()
+        super().__init__(parent=parent)
         self.setWindowTitle("Import")
         self.viewer = viewer()
         self.local_viewer = viewer()

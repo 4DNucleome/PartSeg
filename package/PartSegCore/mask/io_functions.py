@@ -607,6 +607,10 @@ class SaveComponents(SaveBase):
 
 
 class SaveParametersJSON(SaveBase):
+    """
+    Save parameters of roi mask segmentation
+    """
+
     @classmethod
     def save(
         cls,

@@ -42,13 +42,15 @@ class FormDialog(QDialog):
 class SaveDialog(QFileDialog):
     def __init__(
         self,
-        save_register: typing.Dict[str, type(SaveBase)],
+        save_register: typing.Union[typing.Dict[str, type(SaveBase)], type(SaveBase)],
         system_widget=True,
         base_values: typing.Optional[dict] = None,
         parent=None,
         history: typing.Optional[typing.List[str]] = None,
         file_mode=QFileDialog.AnyFile,
     ):
+        if issubclass(save_register, SaveBase):
+            save_register = {save_register.get_name(): save_register}
         super().__init__(parent)
         self.setFileMode(file_mode)
         self.save_register = {x.get_name_with_suffix(): x for x in save_register.values()}

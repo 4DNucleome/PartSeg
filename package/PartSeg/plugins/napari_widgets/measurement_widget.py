@@ -10,7 +10,6 @@ from napari._qt.qthreading import thread_worker
 from napari.layers import Image as NapariImage
 from napari.layers import Labels as NapariLabels
 from napari.qt import create_worker
-from napari_plugin_engine import napari_hook_implementation
 
 from PartSegCore import UNIT_SCALE, Units
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, PerComponent
@@ -62,7 +61,7 @@ class SimpleMeasurement(Container):
             if chk.value:
                 leaf: Leaf = MEASUREMENT_DICT[chk.text].get_starting_leaf()
                 to_calculate.append(leaf.replace_(per_component=PerComponent.Yes, area=AreaType.ROI))
-        if not to_calculate:
+        if not to_calculate:  # pragma: no cover
             warnings.warn("No measurement. Select at least one measurement")
             return
 
@@ -71,7 +70,7 @@ class SimpleMeasurement(Container):
         data_layer = self.image_choice.value or self.labels_choice.value
 
         data_ndim = data_layer.data.ndim
-        if data_ndim > 4:
+        if data_ndim > 4:  # pragma: no cover
             warnings.warn("Not Supported. Currently measurement engine does not support data over 4 dim (TZYX)")
             return
         data_scale = data_layer.scale[-3:] / UNIT_SCALE[self.scale_units_select.get_value().value]
@@ -146,8 +145,3 @@ def _prepare_data(profile: MeasurementProfile, image: Image, labels: np.ndarray)
     segmentation_mask_map = profile.get_segmentation_mask_map(image, roi_info, time=0)
     yield 2
     return profile, image, roi_info, segmentation_mask_map
-
-
-@napari_hook_implementation
-def napari_experimental_provide_dock_widget():
-    return SimpleMeasurement

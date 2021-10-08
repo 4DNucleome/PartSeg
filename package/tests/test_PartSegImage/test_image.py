@@ -249,8 +249,12 @@ class TestImageBase:
         assert image2.layers == 1
 
     def test_get_channel(self):
-        image = self.image_class(np.zeros((1, 10, 20, 30, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC")
+        image = self.image_class(
+            np.zeros((1, 10, 20, 30, 3), np.uint8), (1, 1, 1), "", axes_order="TZYXC", channel_names=["a", "b", "c"]
+        )
         channel = image.get_channel(1)
+        assert channel.shape == self.mask_shape((1, 10, 20, 30), "TZYX")
+        channel = image.get_channel("b")
         assert channel.shape == self.mask_shape((1, 10, 20, 30), "TZYX")
         with pytest.raises(IndexError):
             image.get_channel(4)

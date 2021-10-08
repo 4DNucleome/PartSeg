@@ -363,6 +363,38 @@ class SaveAsNumpy(SaveBase):
         np.save(save_location, data)
 
 
+class SaveProfilesToJSON(SaveBase):
+    @classmethod
+    def get_short_name(cls):
+        return "json"
+
+    @classmethod
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info,
+        parameters: dict,
+        range_changed=None,
+        step_changed=None,
+    ):
+        with open(save_location, "w") as ff:
+            json.dump(project_info, ff, cls=PartEncoder, indent=2)
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Segment profile (*.json)"
+
+    @classmethod
+    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+        return []
+
+
+class SavePipelineToJSON(SaveProject):
+    @classmethod
+    def get_name(cls) -> str:
+        return "Segment pipeline (*.json)"
+
+
 save_dict = Register(
     SaveProject,
     SaveCmap,

@@ -29,6 +29,7 @@ from ..io_utils import (
     proxy_callback,
     tar_to_buff,
 )
+from ..json_hooks import ProfileDict, check_loaded_dict
 from ..mask.io_functions import LoadROIImage
 from ..project_info import HistoryElement
 from ..roi_info import ROIInfo
@@ -408,6 +409,36 @@ class UpdateLoadedMetadataAnalysis(UpdateLoadedMetadataBase):
             return cls.update_measurement_calculate(data)
 
         return super().recursive_update(data)
+
+
+class LoadProfileFromJSON(LoadBase):
+    @classmethod
+    def get_short_name(cls):
+        return "json"
+
+    @classmethod
+    def load(
+        cls,
+        load_locations: typing.List[typing.Union[str, BytesIO, Path]],
+        range_changed: typing.Callable[[int, int], typing.Any] = None,
+        step_changed: typing.Callable[[int], typing.Any] = None,
+        metadata: typing.Optional[dict] = None,
+    ) -> typing.Tuple[dict, list]:
+        data = load_metadata(load_locations[0])
+        bad_key = []
+        if isinstance(data, dict) and not check_loaded_dict(data):
+            for k, v in data.items():
+                if not check_loaded_dict(v):
+                    bad_key.append(k)
+            for el in bad_key:
+                del data[el]
+        elif isinstance(data, ProfileDict) and not data.verify_data():
+            bad_key = data.filter_data()
+        return data, bad_key
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Segment profile (*.json)"
 
 
 def load_metadata(data: typing.Union[str, Path]):

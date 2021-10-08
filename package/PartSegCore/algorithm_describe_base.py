@@ -117,17 +117,16 @@ class AlgorithmDescribeBase(ABC):
 
     @classmethod
     def get_default_values(cls):
-        result = {}
-        for el in cls.get_fields():
-            if isinstance(el, AlgorithmProperty):
-                if issubclass(el.value_type, AlgorithmDescribeBase):
-                    result[el.name] = {
-                        "name": el.default_value,
-                        "values": el.possible_values[el.default_value].get_default_values(),
-                    }
-                else:
-                    result[el.name] = el.default_value
-        return result
+        return {
+            el.name: {
+                "name": el.default_value,
+                "values": el.possible_values[el.default_value].get_default_values(),
+            }
+            if issubclass(el.value_type, AlgorithmDescribeBase)
+            else el.default_value
+            for el in cls.get_fields()
+            if isinstance(el, AlgorithmProperty)
+        }
 
 
 def is_static(fun):
@@ -320,11 +319,15 @@ class ROIExtractionProfile:
 
     def __str__(self):
         return (
-            "Segmentation profile name: " + self.name + "\nAlgorithm: " + self.algorithm + self.print_dict(self.values)
+            "ROI extraction profile name: "
+            + self.name
+            + "\nAlgorithm: "
+            + self.algorithm
+            + self.print_dict(self.values)
         )
 
     def __repr__(self):
-        return f"SegmentationProfile(name={self.name}, algorithm={repr(self.algorithm)}, values={self.values})"
+        return f"ROIExtractionProfile(name={self.name}, algorithm={repr(self.algorithm)}, values={self.values})"
 
     def __eq__(self, other):
         return (

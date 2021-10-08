@@ -128,6 +128,8 @@ class Image:
         if self.default_coloring is not None:
             self.default_coloring = [np.array(x) for x in default_coloring]
         default_channel_names = [f"channel {i+1}" for i in range(self.channels)]
+        if isinstance(channel_names, str):
+            channel_names = [channel_names]
         if isinstance(channel_names, Iterable):
             self._channel_names = [
                 x if x is not None else y for x, y in zip_longest(channel_names, default_channel_names, fillvalue=None)
@@ -441,6 +443,10 @@ class Image:
         """
         slices: typing.List[typing.Union[int, slice]] = [slice(None) for _ in range(len(self.axis_order))]
         axis_pos = self.get_axis_positions()
+        if "c" in kwargs and isinstance(kwargs["c"], str):
+            kwargs["c"] = self.channel_names.index(kwargs["c"])
+        if "C" in kwargs and isinstance(kwargs["C"], str):
+            kwargs["C"] = self.channel_names.index(kwargs["C"])
         for name in kwargs:
             if name.upper() in axis_pos:
                 slices[axis_pos[name.upper()]] = kwargs[name]
@@ -465,7 +471,7 @@ class Image:
         """
         Alias for :py:func:`get_sub_data` with argument ``c=num``
 
-        :param int num: channel num to be extracted
+        :param int | str num: channel num to be extracted
         :return: given channel array
         :rtype: numpy.ndarray
         """
