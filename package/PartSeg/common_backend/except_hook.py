@@ -1,9 +1,13 @@
 import sys
 
 import sentry_sdk
+from qtpy.QtWidgets import QMessageBox
+from superqt import ensure_main_thread
 
 from PartSeg import parsed_version
 from PartSegCore import state_store
+from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
+from PartSegImage import TiffFileException
 
 
 def my_excepthook(type_, value, trace_back):
@@ -19,11 +23,7 @@ def my_excepthook(type_, value, trace_back):
                 scope.set_tag("auto_report", "true")
                 sentry_sdk.capture_exception(value)
         try:
-            # noinspection PyUnresolvedReferences
-            from qtpy.QtWidgets import QApplication
-
-            if QApplication.instance():
-                QApplication.instance().show_error(value)
+            show_error(value)
         except ImportError:
             sys.__excepthook__(type_, value, trace_back)
     elif isinstance(value, KeyboardInterrupt):
@@ -32,3 +32,37 @@ def my_excepthook(type_, value, trace_back):
     else:
         # then call the default handler
         sys.__excepthook__(type_, value, trace_back)
+
+
+@ensure_main_thread
+def show_error(error=None):
+    """This class create error dialog and show it"""
+    if error is None:
+        return
+    from PartSeg.common_gui.error_report import ErrorDialog
+
+    if isinstance(error, TiffFileException):
+        mess = QMessageBox()
+        mess.setIcon(QMessageBox.Critical)
+        mess.setText("During read file there is an error: " + error.args[0])
+        mess.setWindowTitle("Tiff error")
+        mess.exec()
+        return
+    if isinstance(error, SegmentationLimitException):
+        mess = QMessageBox()
+        mess.setIcon(QMessageBox.Critical)
+        mess.setText("During segmentation process algorithm meet limitations:\n" + "\n".join(error.args))
+        mess.setWindowTitle("Segmentation limitations")
+        mess.exec()
+        return
+    dial = ErrorDialog(error, "Exception during program run")
+    # TODO check
+    # dial.moveToThread(QApplication.instance().thread())
+    dial.exec()
+
+
+@ensure_main_thread
+def show_warning(header=None, text=None):
+    """show warning :py:class:`PyQt5.QtWidgets.QMessageBox`"""
+    message = QMessageBox(QMessageBox.Warning, header, text, QMessageBox.Ok)
+    message.exec()

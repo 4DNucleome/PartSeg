@@ -8,11 +8,8 @@ import sentry_sdk
 from qtpy.QtCore import QThread
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QMessageBox
-from superqt import ensure_main_thread
 
 from PartSegCore import state_store
-from PartSegCore.segmentation.algorithm_base import SegmentationLimitException
-from PartSegImage import TiffFileException
 
 from .. import __version__
 
@@ -63,44 +60,6 @@ class CustomApplication(QApplication):
         self.release_check.finished.connect(self._check_release)
         self.setWindowIcon(QIcon(icon))
         self.setApplicationName(name)
-
-    @ensure_main_thread
-    def show_error(self, error=None):
-        """This class create error dialog and show it"""
-        if error is None:
-            error = self.error
-        if error is None:
-            return
-        from PartSeg.common_gui.error_report import ErrorDialog
-
-        if isinstance(error, TiffFileException):
-            mess = QMessageBox()
-            mess.setIcon(QMessageBox.Critical)
-            mess.setText("During read file there is an error: " + self.error.args[0])
-            mess.setWindowTitle("Tiff error")
-            mess.exec()
-            return
-        if isinstance(error, SegmentationLimitException):
-            mess = QMessageBox()
-            mess.setIcon(QMessageBox.Critical)
-            mess.setText("During segmentation process algorithm meet limitations:\n" + "\n".join(self.error.args))
-            mess.setWindowTitle("Segmentation limitations")
-            mess.exec()
-            return
-        dial = ErrorDialog(error, "Exception during program run")
-        # TODO check
-        # dial.moveToThread(QApplication.instance().thread())
-        dial.exec()
-
-    @ensure_main_thread
-    def show_warning(self, header=None, text=None):
-        """show warning :py:class:`PyQt5.QtWidgets.QMessageBox`"""
-        if text is None:
-            if isinstance(self.warning, (list, tuple)) and len(self.warning) == 2:
-                return
-            header, text = self.warning
-        message = QMessageBox(QMessageBox.Warning, header, text, QMessageBox.Ok)
-        message.exec()
 
     def check_release(self):
         if state_store.check_for_updates:
