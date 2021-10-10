@@ -22,7 +22,6 @@ multiprocessing.freeze_support()
 # noinspection PyUnresolvedReferences,PyUnusedLocal
 def _test_imports():
     print("start_test_import")
-    from qtpy.QtWidgets import QApplication
 
     app = QApplication([])
     import freetype

@@ -52,7 +52,6 @@ class MainWindow(QMainWindow):
         self.final_title = ""
         analysis_icon = QIcon(os.path.join(icons_dir, "icon.png"))
         stack_icon = QIcon(os.path.join(icons_dir, "icon_stack.png"))
-        napari_get_settings().appearance.theme
         self.analysis_button = QToolButton(self)
         self.analysis_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.analysis_button.setIcon(analysis_icon)
