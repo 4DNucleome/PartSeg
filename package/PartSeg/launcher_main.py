@@ -7,11 +7,12 @@ import sys
 from functools import partial
 
 from qtpy.QtCore import Qt
-from qtpy.QtGui import QFontDatabase
+from qtpy.QtGui import QFontDatabase, QIcon
+from qtpy.QtWidgets import QApplication
 
 from PartSeg import ANALYSIS_NAME, APP_NAME, MASK_NAME
+from PartSeg._launcher.check_version import CheckVersionThread
 from PartSeg.common_backend.base_argparser import CustomParser
-from PartSeg.custom_application import CustomApplication
 from PartSegData import font_dir, icons_dir
 from PartSegImage import TiffImageReader
 
@@ -85,9 +86,10 @@ def main():
     if platform.system() == "Darwin":
         multiprocessing.set_start_method("spawn")
 
-    CustomApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
-    my_app = CustomApplication(sys.argv, name="PartSeg", icon=os.path.join(icons_dir, "icon.png"))
-    my_app.check_release()
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+    my_app = QApplication(sys.argv)
+    my_app.setApplicationName("PartSeg")
+    my_app.setWindowIcon(QIcon(os.path.join(icons_dir, "icon.png")))
     try:
         from napari.qt import get_app
 
@@ -130,6 +132,8 @@ def main():
     except ImportError:
         from napari._qt.threading import wait_for_workers_to_quit
     my_app.aboutToQuit.connect(wait_for_workers_to_quit)
+    check_version = CheckVersionThread()
+    check_version.start()
     wind.show()
     rc = my_app.exec_()
     del wind

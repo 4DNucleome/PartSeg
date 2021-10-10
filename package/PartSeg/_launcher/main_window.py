@@ -1,5 +1,6 @@
 import importlib
 import os
+import warnings
 from functools import partial
 
 from qtpy.QtCore import QSize, Qt, QThread
@@ -7,9 +8,16 @@ from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QGridLayout, QMainWindow, QMessageBox, QProgressBar, QToolButton, QWidget
 
 from PartSeg import ANALYSIS_NAME, APP_NAME, MASK_NAME
-from PartSeg.common_backend.base_settings import BaseSettings
+from PartSeg.common_backend.base_settings import (
+    BaseSettings,
+    get_stylesheet,
+    get_theme,
+    napari_get_settings,
+    napari_template,
+)
 from PartSeg.common_backend.load_backup import import_config
 from PartSeg.common_gui.main_window import BaseMainWindow
+from PartSegCore import state_store
 from PartSegData import icons_dir
 from PartSegImage import TiffImageReader
 
@@ -44,6 +52,7 @@ class MainWindow(QMainWindow):
         self.final_title = ""
         analysis_icon = QIcon(os.path.join(icons_dir, "icon.png"))
         stack_icon = QIcon(os.path.join(icons_dir, "icon_stack.png"))
+        napari_get_settings().appearance.theme
         self.analysis_button = QToolButton(self)
         self.analysis_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.analysis_button.setIcon(analysis_icon)
@@ -69,6 +78,18 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(analysis_icon)
         self.prepare = None
         self.wind = None
+        self._update_theme()
+
+    def _update_theme(self):
+        try:
+            napari_settings = napari_get_settings(state_store.save_folder)
+        except:  # noqa  # pylint: disable=W0702
+            napari_settings = napari_get_settings()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", FutureWarning)
+            theme = get_theme(napari_settings.appearance.theme)
+        # TODO understand qss overwrite mechanism
+        self.setStyleSheet(napari_template(get_stylesheet(), **theme))
 
     def _launch_begin(self):
         self.progress.setVisible(True)
