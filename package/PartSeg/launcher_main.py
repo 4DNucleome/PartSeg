@@ -108,8 +108,8 @@ def main():
     check_version.start()
     wind.show()
     rc = my_app.exec_()
-    del wind
-    del my_app
+    del wind  # skipcq: PTC-W0043`
+    del my_app  # skipcq: PTC-W0043`
     sys.exit(rc)
 
 
