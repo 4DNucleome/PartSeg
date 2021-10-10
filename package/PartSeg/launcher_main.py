@@ -96,6 +96,24 @@ def main():
     except ImportError:
         pass
     QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf"))
+
+    wind = select_window(args)
+
+    try:
+        from napari._qt.qthreading import wait_for_workers_to_quit
+    except ImportError:
+        from napari._qt.threading import wait_for_workers_to_quit
+    my_app.aboutToQuit.connect(wait_for_workers_to_quit)
+    check_version = CheckVersionThread()
+    check_version.start()
+    wind.show()
+    rc = my_app.exec_()
+    del wind
+    del my_app
+    sys.exit(rc)
+
+
+def select_window(args):
     if args.gui == "roi_analysis" or args.mf:
         from PartSeg import plugins
 
@@ -126,18 +144,7 @@ def main():
         title = f"{APP_NAME} Launcher"
         wind = MainWindow(title=title)
 
-    try:
-        from napari._qt.qthreading import wait_for_workers_to_quit
-    except ImportError:
-        from napari._qt.threading import wait_for_workers_to_quit
-    my_app.aboutToQuit.connect(wait_for_workers_to_quit)
-    check_version = CheckVersionThread()
-    check_version.start()
-    wind.show()
-    rc = my_app.exec_()
-    del wind
-    del my_app
-    sys.exit(rc)
+    return wind
 
 
 if __name__ == "__main__":
