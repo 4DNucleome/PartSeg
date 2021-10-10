@@ -7,11 +7,12 @@ import sys
 from functools import partial
 
 from qtpy.QtCore import Qt
-from qtpy.QtGui import QFontDatabase
+from qtpy.QtGui import QFontDatabase, QIcon
+from qtpy.QtWidgets import QApplication
 
 from PartSeg import ANALYSIS_NAME, APP_NAME, MASK_NAME
+from PartSeg._launcher.check_version import CheckVersionThread
 from PartSeg.common_backend.base_argparser import CustomParser
-from PartSeg.custom_application import CustomApplication
 from PartSegData import font_dir, icons_dir
 from PartSegImage import TiffImageReader
 
@@ -21,7 +22,6 @@ multiprocessing.freeze_support()
 # noinspection PyUnresolvedReferences,PyUnusedLocal
 def _test_imports():
     print("start_test_import")
-    from qtpy.QtWidgets import QApplication
 
     app = QApplication([])
     import freetype
@@ -85,9 +85,10 @@ def main():
     if platform.system() == "Darwin":
         multiprocessing.set_start_method("spawn")
 
-    CustomApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
-    my_app = CustomApplication(sys.argv, name="PartSeg", icon=os.path.join(icons_dir, "icon.png"))
-    my_app.check_release()
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+    my_app = QApplication(sys.argv)
+    my_app.setApplicationName("PartSeg")
+    my_app.setWindowIcon(QIcon(os.path.join(icons_dir, "icon.png")))
     try:
         from napari.qt import get_app
 
@@ -95,6 +96,24 @@ def main():
     except ImportError:
         pass
     QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf"))
+
+    wind = select_window(args)
+
+    try:
+        from napari._qt.qthreading import wait_for_workers_to_quit
+    except ImportError:
+        from napari._qt.threading import wait_for_workers_to_quit
+    my_app.aboutToQuit.connect(wait_for_workers_to_quit)
+    check_version = CheckVersionThread()
+    check_version.start()
+    wind.show()
+    rc = my_app.exec_()
+    del wind  # skipcq: PTC-W0043`
+    del my_app  # skipcq: PTC-W0043`
+    sys.exit(rc)
+
+
+def select_window(args):
     if args.gui == "roi_analysis" or args.mf:
         from PartSeg import plugins
 
@@ -125,16 +144,7 @@ def main():
         title = f"{APP_NAME} Launcher"
         wind = MainWindow(title=title)
 
-    try:
-        from napari._qt.qthreading import wait_for_workers_to_quit
-    except ImportError:
-        from napari._qt.threading import wait_for_workers_to_quit
-    my_app.aboutToQuit.connect(wait_for_workers_to_quit)
-    wind.show()
-    rc = my_app.exec_()
-    del wind
-    del my_app
-    sys.exit(rc)
+    return wind
 
 
 if __name__ == "__main__":
