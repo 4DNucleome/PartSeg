@@ -42,7 +42,8 @@ def test_show_window_dialog(monkeypatch, frozen, qtbot):
             values[0] = title
             values[1] = message
 
-        def exec(self):
+        @staticmethod
+        def exec():
             return True
 
     chk_thr = check_version.CheckVersionThread(base_version="0.11.0")
