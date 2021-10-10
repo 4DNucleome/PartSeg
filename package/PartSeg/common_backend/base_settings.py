@@ -26,14 +26,14 @@ from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
 from PartSegImage import Image
 
 try:
-    from napari.settings import get_settings as napari_get_settings
+    from napari.settings import get_settings as _napari_get_settings
 except ImportError:
     try:
-        from napari.utils.settings import get_settings as napari_get_settings
+        from napari.utils.settings import get_settings as _napari_get_settings
     except ImportError:
         from napari.utils.settings import SETTINGS
 
-        def napari_get_settings(path=None):
+        def _napari_get_settings(path=None):
             return SETTINGS
 
 
@@ -62,6 +62,13 @@ if TYPE_CHECKING:
 DIR_HISTORY = "io.dir_location_history"
 FILE_HISTORY = "io.files_open_history"
 ROI_NOT_FIT = "roi do not fit to image"
+
+
+def napari_get_settings(path=None) -> "NapariSettings":
+    try:
+        return _napari_get_settings(path)
+    except:  # noqa  # pylint: disable=W0702
+        return _napari_get_settings()
 
 
 class ImageSettings(QObject):
@@ -443,10 +450,7 @@ class BaseSettings(ViewSettings):
     def __init__(self, json_path):
         super().__init__()
         napari_path = os.path.dirname(json_path) if os.path.basename(json_path) in ["analysis", "mask"] else json_path
-        try:
-            self.napari_settings: "NapariSettings" = napari_get_settings(napari_path)
-        except:  # noqa  # pylint: disable=W0702
-            self.napari_settings: "NapariSettings" = napari_get_settings()
+        self.napari_settings: "NapariSettings" = napari_get_settings(napari_path)
         self._current_roi_dict = "default"
         self._roi_dict = ProfileDict()
         self.json_folder_path = json_path

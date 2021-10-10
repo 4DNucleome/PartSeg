@@ -80,10 +80,7 @@ class MainWindow(QMainWindow):
         self._update_theme()
 
     def _update_theme(self):
-        try:
-            napari_settings = napari_get_settings(state_store.save_folder)
-        except:  # noqa  # pylint: disable=W0702
-            napari_settings = napari_get_settings()
+        napari_settings = napari_get_settings(state_store.save_folder)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", FutureWarning)
             theme = get_theme(napari_settings.appearance.theme)
