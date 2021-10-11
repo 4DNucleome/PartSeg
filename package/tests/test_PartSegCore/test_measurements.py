@@ -16,6 +16,7 @@ from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEnt
 from PartSegCore.analysis.measurement_calculation import (
     HARALIC_FEATURES,
     INTENSITY_CORRELATION,
+    MANDERS_COEFIICIENT,
     MEASUREMENT_DICT,
     ColocalizationMeasurement,
     ComponentsInfo,
@@ -2218,6 +2219,22 @@ def test_colocalization(method):
         colocalization=method,
     )
     assert value == factor
+    value = ColocalizationMeasurement.calculate_property(
+        area_array=area_array,
+        channel_0=data,
+        channel_1=data * 100,
+        colocalization=method,
+    )
+    assert isclose(value, factor)
+
+    value = ColocalizationMeasurement.calculate_property(
+        area_array=area_array,
+        channel_0=data,
+        channel_1=data + 100,
+        colocalization=method,
+    )
+
+    assert isclose(value, factor) or (method == MANDERS_COEFIICIENT and value < 1)
 
     value = ColocalizationMeasurement.calculate_property(
         area_array=area_array,

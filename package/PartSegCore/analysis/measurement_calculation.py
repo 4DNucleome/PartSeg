@@ -1626,11 +1626,14 @@ class ColocalizationMeasurement(MeasurementMethodBase):
     @staticmethod
     def calculate_property(area_array, colocalization, channel_fst=0, channel_scd=1, **kwargs):  # pylint: disable=W0221
         mask_binary = area_array > 0
-        data_1 = kwargs[f"channel_{channel_fst}"][mask_binary]
-        data_2 = kwargs[f"channel_{channel_scd}"][mask_binary]
+        data_1 = kwargs[f"channel_{channel_fst}"][mask_binary].astype(float)
+        data_2 = kwargs[f"channel_{channel_scd}"][mask_binary].astype(float)
+        # data_max = max(data_1.max(), data_2.max())
+        # data_1 = data_1 / data_max
+        # data_2 = data_2 / data_max
         if colocalization == SPEARMAN_CORRELATION:
-            data_1 = data_1.argsort().argsort()
-            data_2 = data_2.argsort().argsort()
+            data_1 = data_1.argsort().argsort().astype(float)
+            data_2 = data_2.argsort().argsort().astype(float)
             colocalization = PEARSON_CORRELATION
         if colocalization == PEARSON_CORRELATION:
             data_1_mean = np.mean(data_1)
