@@ -273,7 +273,7 @@ superqt==0.2.4
     # via -r requirements_pyinstaller.in
 sympy==1.8
     # via -r requirements_pyinstaller.in
-tifffile==2021.8.30
+tifffile==2021.10.10
     # via
     #   -r requirements_pyinstaller.in
     #   czifile
