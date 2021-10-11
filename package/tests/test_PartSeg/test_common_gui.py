@@ -6,10 +6,14 @@ import qtpy
 from qtpy.QtWidgets import QWidget
 
 from PartSeg.common_gui import select_multiple_files
+from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
+from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog
 from PartSeg.common_gui.equal_column_layout import EqualColumnLayout
 from PartSeg.common_gui.searchable_combo_box import SearchComboBox
 from PartSeg.common_gui.universal_gui_part import EnumComboBox
 from PartSegCore.analysis.calculation_plan import MaskSuffix
+from PartSegCore.analysis.load_functions import LoadProject, load_dict
+from PartSegCore.analysis.save_functions import SaveProject, save_dict
 
 pyside_skip = pytest.mark.skipif(qtpy.API_NAME == "PySide2" and platform.system() == "Linux", reason="PySide2 problem")
 
@@ -241,3 +245,17 @@ class TestSearchCombBox:
         assert widget.count() == 3
         assert widget.itemText(0) == "test1"
         assert widget.itemText(2) == "test3"
+
+
+def test_create_load_dialog(qtbot):
+    dialog = CustomLoadDialog(load_dict, history=["/aaa/"])
+    assert dialog.acceptMode() == CustomLoadDialog.AcceptOpen
+    dialog = CustomLoadDialog(LoadProject, history=["/aaa/"])
+    assert dialog.acceptMode() == CustomLoadDialog.AcceptOpen
+
+
+def test_create_save_dialog(qtbot):
+    dialog = CustomSaveDialog(save_dict, history=["/aaa/"])
+    assert dialog.acceptMode() == CustomSaveDialog.AcceptSave
+    dialog = CustomSaveDialog(SaveProject, history=["/aaa/"])
+    assert dialog.acceptMode() == CustomSaveDialog.AcceptSave

@@ -19,7 +19,7 @@ class CustomLoadDialog(QFileDialog):
         parent=None,
         history: typing.Optional[typing.List[str]] = None,
     ):
-        if issubclass(load_register, LoadBase):
+        if not isinstance(load_register, dict):
             load_register = {load_register.get_name(): load_register}
         super().__init__(parent)
         self.load_register = {x.get_name_with_suffix(): x for x in load_register.values()}

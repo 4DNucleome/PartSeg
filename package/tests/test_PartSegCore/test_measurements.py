@@ -15,7 +15,9 @@ from PartSegCore.analysis import load_metadata
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
 from PartSegCore.analysis.measurement_calculation import (
     HARALIC_FEATURES,
+    INTENSITY_CORRELATION,
     MEASUREMENT_DICT,
+    ColocalizationMeasurement,
     ComponentsInfo,
     ComponentsNumber,
     Diameter,
@@ -2143,13 +2145,15 @@ def test_all_methods(method, dtype):
     roi = (data > 2).astype(np.uint8)
     mask = (data > 0).astype(np.uint8)
     roi_info = ROIInfo(roi)
+    image = Image(data, image_spacing=(1, 1, 1), axes_order="ZYX")
 
     res = method.calculate_property(
-        image=Image(data, image_spacing=(1, 1, 1), axes_order="ZYX"),
+        image=image,
         area_array=roi,
         mask=mask,
         channel=data,
         channel_num=0,
+        channel_0=data,
         voxel_size=(1, 1, 1),
         result_scalar=1,
         roi_alternative={},
@@ -2170,6 +2174,7 @@ def test_per_component(method, area):
     data = np.zeros((10, 20, 20), dtype=np.uint8)
     data[1:-1, 3:-3, 3:-3] = 2
     data[1:-1, 4:-4, 4:-4] = 3
+    data[1:-1, 6, 6] = 5
     roi = (data > 2).astype(np.uint8)
     mask = (data > 0).astype(np.uint8)
     image = Image(data, image_spacing=(10 ** -8,) * 3, axes_order="ZYX")
@@ -2199,3 +2204,25 @@ def test_per_component(method, area):
     assert len(result["Measurement per component"][0]) == 1
     assert isinstance(result["Measurement"][0], (float, int))
     assert result["Measurement per component"][0][0] == result["Measurement"][0]
+
+
+@pytest.mark.parametrize("method", ColocalizationMeasurement.get_fields()[-1].possible_values)
+def test_colocalization(method):
+    area_array = np.ones((10, 10))
+    data = np.random.rand(10, 10)
+    factor = 0.5 if method == INTENSITY_CORRELATION else 1
+    value = ColocalizationMeasurement.calculate_property(
+        area_array=area_array,
+        channel_0=data,
+        channel_1=data,
+        colocalization=method,
+    )
+    assert value == factor
+
+    value = ColocalizationMeasurement.calculate_property(
+        area_array=area_array,
+        channel_0=data,
+        channel_1=-data,
+        colocalization=method,
+    )
+    assert value == -factor

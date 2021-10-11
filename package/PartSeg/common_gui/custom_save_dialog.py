@@ -39,7 +39,7 @@ class FormDialog(QDialog):
         return self.widget.set_values(values)
 
 
-class SaveDialog(QFileDialog):
+class CustomSaveDialog(QFileDialog):
     def __init__(
         self,
         save_register: typing.Union[typing.Dict[str, type(SaveBase)], type(SaveBase)],
@@ -49,7 +49,7 @@ class SaveDialog(QFileDialog):
         history: typing.Optional[typing.List[str]] = None,
         file_mode=QFileDialog.AnyFile,
     ):
-        if issubclass(save_register, SaveBase):
+        if not isinstance(save_register, dict):
             save_register = {save_register.get_name(): save_register}
         super().__init__(parent)
         self.setFileMode(file_mode)
@@ -145,3 +145,6 @@ class SaveDialog(QFileDialog):
             self.save_register[self.selectedNameFilter()],
             self.values,
         )
+
+
+SaveDialog = CustomSaveDialog

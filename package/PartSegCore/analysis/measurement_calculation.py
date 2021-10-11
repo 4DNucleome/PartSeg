@@ -42,6 +42,11 @@ from .measurement_base import AreaType, Leaf, MeasurementEntry, MeasurementMetho
 
 NO_COMPONENT = -1
 
+PEARSON_CORRELATION = "Pearson correlation coefficient"
+MANDERS_COEFIICIENT = "Mander's overlap coefficient"
+INTENSITY_CORRELATION = "Intensity correlation quotient"
+SPEARMAN_CORRELATION = "Spearman rank correlation"
+
 
 class ProhibitedDivision(Exception):
     pass
@@ -605,7 +610,7 @@ class MeasurementProfile:
             "roi_annotation": roi.annotations,
         }
         for num in self.get_channels_num():
-            kw["channel_{num}"] = get_time(image.get_channel(num))
+            kw[f"channel_{num}"] = get_time(image.get_channel(num))
         if any(self._need_mask_without_segmentation(el.calculation_tree) for el in self.chosen_fields):
             mm = kw["mask"].copy()
             mm[kw["segmentation"] > 0] = 0
@@ -1602,6 +1607,53 @@ class GetROIAnnotationType(MeasurementMethodBase):
         return "str"
 
 
+class ColocalizationMeasurement(MeasurementMethodBase):
+    text_info = "Colocalization", "Measurement of colocalization of two channels."
+
+    @classmethod
+    def get_fields(cls):
+        return [
+            AlgorithmProperty("channel_fst", "Channel 1", 0, value_type=Channel),
+            AlgorithmProperty("channel_scd", "Channel 2", 0, value_type=Channel),
+            AlgorithmProperty(
+                "colocalization",
+                "Colocalization",
+                PEARSON_CORRELATION,
+                possible_values=[PEARSON_CORRELATION, MANDERS_COEFIICIENT, INTENSITY_CORRELATION, SPEARMAN_CORRELATION],
+            ),
+        ]
+
+    @staticmethod
+    def calculate_property(area_array, colocalization, channel_fst=0, channel_scd=1, **kwargs):  # pylint: disable=W0221
+        mask_binary = area_array > 0
+        data_1 = kwargs[f"channel_{channel_fst}"][mask_binary]
+        data_2 = kwargs[f"channel_{channel_scd}"][mask_binary]
+        if colocalization == SPEARMAN_CORRELATION:
+            data_1 = data_1.argsort().argsort()
+            data_2 = data_2.argsort().argsort()
+            colocalization = PEARSON_CORRELATION
+        if colocalization == PEARSON_CORRELATION:
+            data_1_mean = np.mean(data_1)
+            data_2_mean = np.mean(data_2)
+            nominator = np.sum((data_1 - data_1_mean) * (data_2 - data_2_mean))
+            numerator = np.sqrt(np.sum((data_1 - data_1_mean) ** 2) * np.sum((data_2 - data_2_mean) ** 2))
+            return nominator / numerator
+        if colocalization == MANDERS_COEFIICIENT:
+            nominator = np.sum(data_1 * data_2)
+            numerator = np.sqrt(np.sum(data_1 ** 2) * np.sum(data_2 ** 2))
+            return nominator / numerator
+        if colocalization == INTENSITY_CORRELATION:
+            data_1_mean = np.mean(data_1)
+            data_2_mean = np.mean(data_2)
+            return np.sum((data_1 > data_1_mean) == (data_2 > data_2_mean)) / data_1.size - 0.5
+
+        raise RuntimeError("Not supported colocalization method")  # pragma: no cover
+
+    @classmethod
+    def get_units(cls, ndim) -> symbols:
+        return 1
+
+
 def pixel_volume(spacing, result_scalar):
     return reduce((lambda x, y: x * y), [x * result_scalar for x in spacing])
 
@@ -1654,6 +1706,7 @@ MEASUREMENT_DICT = Register(
     MeanPixelBrightness,
     MedianPixelBrightness,
     StandardDeviationOfPixelBrightness,
+    ColocalizationMeasurement,
     Moment,
     FirstPrincipalAxisLength,
     SecondPrincipalAxisLength,

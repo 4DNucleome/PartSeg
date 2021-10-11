@@ -44,7 +44,7 @@ from ..common_gui.advanced_tabs import AdvancedWindow
 from ..common_gui.algorithms_description import AlgorithmChoose, AlgorithmSettingsWidget
 from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.custom_load_dialog import CustomLoadDialog
-from ..common_gui.custom_save_dialog import SaveDialog
+from ..common_gui.custom_save_dialog import CustomSaveDialog
 from ..common_gui.exception_hooks import load_data_exception_hook
 from ..common_gui.flow_layout import FlowLayout
 from ..common_gui.main_window import BaseMainMenu, BaseMainWindow
@@ -295,7 +295,7 @@ class MainMenu(BaseMainMenu):
         if self.settings.roi is None:
             QMessageBox.warning(self, "No segmentation", "No segmentation to save")
             return
-        dial = SaveDialog(io_functions.save_segmentation_dict, False, history=self.settings.get_path_history())
+        dial = CustomSaveDialog(io_functions.save_segmentation_dict, False, history=self.settings.get_path_history())
         dial.setDirectory(self.settings.get("io.save_segmentation_directory", str(Path.home())))
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0] + ".seg")
         if not dial.exec_():
@@ -327,7 +327,7 @@ class MainMenu(BaseMainMenu):
         if self.settings.roi is None or len(self.settings.sizes) == 1:
             QMessageBox.warning(self, "No components", "No components to save")
             return
-        dial = SaveDialog(
+        dial = CustomSaveDialog(
             io_functions.save_components_dict,
             False,
             history=self.settings.get_path_history(),
@@ -605,7 +605,7 @@ class AlgorithmOptions(QWidget):
         self.settings.set_keep_chosen_components(val)
 
     def save_parameters(self):
-        dial = SaveDialog(io_functions.save_parameters_dict, False, history=self.settings.get_path_history())
+        dial = CustomSaveDialog(io_functions.save_parameters_dict, False, history=self.settings.get_path_history())
         if not dial.exec_():
             return
         res = dial.get_result()
@@ -659,7 +659,7 @@ class AlgorithmOptions(QWidget):
         self._execute_in_background_init()
 
     def execute_all_action(self):
-        dial = SaveDialog(
+        dial = CustomSaveDialog(
             {SaveROI.get_name(): SaveROI},
             history=self.settings.get_path_history(),
             system_widget=False,

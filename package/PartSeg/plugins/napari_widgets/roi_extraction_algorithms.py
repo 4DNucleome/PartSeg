@@ -44,7 +44,7 @@ from ...common_gui.algorithms_description import (
     QtAlgorithmProperty,
 )
 from ...common_gui.custom_load_dialog import CustomLoadDialog
-from ...common_gui.custom_save_dialog import SaveDialog
+from ...common_gui.custom_save_dialog import CustomSaveDialog
 from ...common_gui.searchable_combo_box import SearchComboBox
 from ...common_gui.searchable_list_widget import SearchableListWidget
 from ._settings import get_settings
@@ -395,7 +395,7 @@ class ProfilePreviewDialog(QDialog):
         exp = ExportDialog(self.profile_dict, ProfileDictViewer, parent=self)
         if not exp.exec_():
             return  # pragma: no cover
-        dial = SaveDialog(SaveProfilesToJSON, history=self.settings.get_path_history(), parent=self)
+        dial = CustomSaveDialog(SaveProfilesToJSON, history=self.settings.get_path_history(), parent=self)
         dial.setDirectory(self.settings.get(IO_SAVE_DIRECTORY, str(Path.home())))
         if dial.exec_():
             save_location, _selected_filter, save_class, values = dial.get_result()
