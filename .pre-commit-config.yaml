@@ -31,6 +31,7 @@ repos:
     rev: v1.18.0
     hooks:
     - id: setup-cfg-fmt
+      args: ["--max-py-version=3.9"]
 -   repo: https://github.com/asottile/pyupgrade
     rev: v2.29.0
     hooks:
