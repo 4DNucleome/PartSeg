@@ -161,3 +161,8 @@ def test_mask_create(make_napari_viewer, qtbot):
     viewer.add_labels(data, name="label")
     mask_create = MaskCreateNapari(viewer)
     viewer.window.add_dock_widget(mask_create)
+    mask_create.reset_choices()
+    mask_create.create_mask()
+    assert mask_create.mask_widget.get_dilate_radius() == 0
+
+    assert "Mask" in viewer.layers
