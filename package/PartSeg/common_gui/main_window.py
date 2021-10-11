@@ -16,7 +16,7 @@ from PartSegImage import Image
 from ..common_backend.base_settings import FILE_HISTORY, BaseSettings, SwapTimeStackException, TimeAndStackException
 from ..common_backend.load_backup import import_config
 from .about_dialog import AboutDialog
-from .custom_save_dialog import SaveDialog
+from .custom_save_dialog import CustomSaveDialog
 from .exception_hooks import load_data_exception_hook
 from .image_adjustment import ImageAdjustmentDialog
 from .napari_image_view import ImageView
@@ -317,7 +317,7 @@ class BaseMainWindow(QMainWindow):
     def screenshot(self, viewer: ImageView):
         def _screenshot():
             data = viewer.viewer_widget.screenshot()
-            dial = SaveDialog(
+            dial = CustomSaveDialog(
                 {SaveScreenshot.get_name(): SaveScreenshot},
                 history=self.settings.get_path_history(),
                 system_widget=False,

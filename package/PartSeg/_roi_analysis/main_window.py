@@ -38,7 +38,7 @@ from PartSegImage import TiffImageReader
 
 from ..common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgorithmSettingsWidget
 from ..common_gui.channel_control import ChannelProperty
-from ..common_gui.custom_save_dialog import SaveDialog
+from ..common_gui.custom_save_dialog import CustomSaveDialog
 from ..common_gui.equal_column_layout import EqualColumnLayout
 from ..common_gui.exception_hooks import OPEN_ERROR, load_data_exception_hook
 from ..common_gui.mask_widget import MaskDialogBase
@@ -393,7 +393,7 @@ class MainMenu(BaseMainMenu):
 
     def save_file(self):
         base_values = self.settings.get("save_parameters", {})
-        dial = SaveDialog(
+        dial = CustomSaveDialog(
             save_dict, system_widget=False, base_values=base_values, history=self.settings.get_path_history()
         )
         dial.selectFile(os.path.splitext(os.path.basename(self.settings.image_path))[0])

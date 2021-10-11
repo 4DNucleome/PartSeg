@@ -6,7 +6,7 @@ import pytest
 from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
 from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
-from PartSeg.common_gui.custom_save_dialog import SaveDialog
+from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog
 from PartSeg.plugins.napari_widgets import ROIAnalysisExtraction, ROIMaskExtraction, _settings
 from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ProfilePreviewDialog, QInputDialog
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
@@ -95,9 +95,9 @@ def test_profile_preview_dialog(part_settings, register, qtbot, monkeypatch, tmp
     assert dialog.profile_list.currentItem().text() == "prof1"
     assert dialog.profile_view.toPlainText() != ""
     monkeypatch.setattr(QInputDialog, "getText", get_text_mock("prof3"))
-    monkeypatch.setattr(SaveDialog, "exec_", lambda x: True)
+    monkeypatch.setattr(CustomSaveDialog, "exec_", lambda x: True)
     monkeypatch.setattr(
-        SaveDialog,
+        CustomSaveDialog,
         "get_result",
         lambda x: (tmp_path / "profile.json", None, SaveProfilesToJSON, SaveProfilesToJSON.get_default_values()),
     )
