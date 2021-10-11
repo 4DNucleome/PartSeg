@@ -78,13 +78,14 @@ class MaskCreateNapari(QWidget):
             warnings.warn("Select base mask", RuntimeWarning)
             return
         base_mask = None if self.mask_select.value is None else self.mask_select.value.data
-        mask = calculate_mask(mask_property, self.roi_select.value.data, base_mask, self.roi_select.value.scale[-3:])
+        scale = np.array(self.roi_select.value.scale)
+        mask = np.array(calculate_mask(mask_property, self.roi_select.value.data, base_mask, scale[-3:]))
         if layer_name in self.viewer.layers:
             self.viewer.layers[layer_name].data = mask
         else:
             self.viewer.add_labels(
                 mask,
-                scale=np.array(self.roi_select.value.scale)[-mask.ndim :],
+                scale=scale[-int(mask.ndim) :],
                 name=layer_name,
             )
 
