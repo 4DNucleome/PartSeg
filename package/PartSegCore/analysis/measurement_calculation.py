@@ -610,7 +610,7 @@ class MeasurementProfile:
             "roi_annotation": roi.annotations,
         }
         for num in self.get_channels_num():
-            kw["channel_{num}"] = get_time(image.get_channel(num))
+            kw[f"channel_{num}"] = get_time(image.get_channel(num))
         if any(self._need_mask_without_segmentation(el.calculation_tree) for el in self.chosen_fields):
             mm = kw["mask"].copy()
             mm[kw["segmentation"] > 0] = 0
@@ -1613,8 +1613,8 @@ class ColocalizationMeasurement(MeasurementMethodBase):
     @classmethod
     def get_fields(cls):
         return [
-            AlgorithmProperty("channel_1", "Channel 1", 0, value_type=Channel),
-            AlgorithmProperty("channel_2", "Channel 2", 0, value_type=Channel),
+            AlgorithmProperty("channel_fst", "Channel 1", 0, value_type=Channel),
+            AlgorithmProperty("channel_scd", "Channel 2", 0, value_type=Channel),
             AlgorithmProperty(
                 "colocalization",
                 "Colocalization",
@@ -1624,10 +1624,10 @@ class ColocalizationMeasurement(MeasurementMethodBase):
         ]
 
     @staticmethod
-    def calculate_property(area_array, channel_1, channel_2, colocalization, **kwargs):  # pylint: disable=W0221
+    def calculate_property(area_array, colocalization, channel_fst=0, channel_scd=1, **kwargs):  # pylint: disable=W0221
         mask_binary = area_array > 0
-        data_1 = channel_1[mask_binary]
-        data_2 = channel_2[mask_binary]
+        data_1 = kwargs[f"channel_{channel_fst}"][mask_binary]
+        data_2 = kwargs[f"channel_{channel_scd}"][mask_binary]
         if colocalization == SPEARMAN_CORRELATION:
             data_1 = data_1.argsort().argsort()
             data_2 = data_2.argsort().argsort()

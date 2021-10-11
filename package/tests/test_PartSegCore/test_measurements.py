@@ -2145,13 +2145,15 @@ def test_all_methods(method, dtype):
     roi = (data > 2).astype(np.uint8)
     mask = (data > 0).astype(np.uint8)
     roi_info = ROIInfo(roi)
+    image = Image(data, image_spacing=(1, 1, 1), axes_order="ZYX")
 
     res = method.calculate_property(
-        image=Image(data, image_spacing=(1, 1, 1), axes_order="ZYX"),
+        image=image,
         area_array=roi,
         mask=mask,
         channel=data,
         channel_num=0,
+        channel_0=data,
         voxel_size=(1, 1, 1),
         result_scalar=1,
         roi_alternative={},
@@ -2172,6 +2174,7 @@ def test_per_component(method, area):
     data = np.zeros((10, 20, 20), dtype=np.uint8)
     data[1:-1, 3:-3, 3:-3] = 2
     data[1:-1, 4:-4, 4:-4] = 3
+    data[1:-1, 6, 6] = 5
     roi = (data > 2).astype(np.uint8)
     mask = (data > 0).astype(np.uint8)
     image = Image(data, image_spacing=(10 ** -8,) * 3, axes_order="ZYX")
@@ -2210,16 +2213,16 @@ def test_colocalization(method):
     factor = 0.5 if method == INTENSITY_CORRELATION else 1
     value = ColocalizationMeasurement.calculate_property(
         area_array=area_array,
+        channel_0=data,
         channel_1=data,
-        channel_2=data,
         colocalization=method,
     )
     assert value == factor
 
     value = ColocalizationMeasurement.calculate_property(
         area_array=area_array,
-        channel_1=data,
-        channel_2=-data,
+        channel_0=data,
+        channel_1=-data,
         colocalization=method,
     )
     assert value == -factor
