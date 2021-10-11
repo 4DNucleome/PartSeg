@@ -49,7 +49,7 @@ class SaveDialog(QFileDialog):
         history: typing.Optional[typing.List[str]] = None,
         file_mode=QFileDialog.AnyFile,
     ):
-        if issubclass(save_register, SaveBase):
+        if not isinstance(save_register, dict):
             save_register = {save_register.get_name(): save_register}
         super().__init__(parent)
         self.setFileMode(file_mode)
