@@ -7,7 +7,7 @@ from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
 from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog
-from PartSeg.plugins.napari_widgets import ROIAnalysisExtraction, ROIMaskExtraction, _settings
+from PartSeg.plugins.napari_widgets import MaskCreateNapari, ROIAnalysisExtraction, ROIMaskExtraction, _settings
 from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ProfilePreviewDialog, QInputDialog
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis.algorithm_description import analysis_algorithm_dict
@@ -152,3 +152,12 @@ def test_measurement_create(make_napari_viewer, qtbot):
             break
 
     assert measurement.calculate_btn.enabled
+
+
+def test_mask_create(make_napari_viewer, qtbot):
+    data = np.zeros((10, 10), dtype=np.uint8)
+
+    viewer = make_napari_viewer()
+    viewer.add_labels(data, name="label")
+    mask_create = MaskCreateNapari(viewer)
+    viewer.window.add_dock_widget(mask_create)

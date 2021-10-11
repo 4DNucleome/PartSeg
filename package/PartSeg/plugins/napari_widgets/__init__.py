@@ -1,5 +1,6 @@
 from napari_plugin_engine import napari_hook_implementation
 
+from PartSeg.plugins.napari_widgets.mask_create_widget import MaskCreateNapari
 from PartSeg.plugins.napari_widgets.roi_extraction_algorithms import ROIAnalysisExtraction, ROIMaskExtraction
 
 
@@ -18,3 +19,8 @@ def napari_experimental_provide_dock_widget1():
 @napari_hook_implementation(specname="napari_experimental_provide_dock_widget")
 def napari_experimental_provide_dock_widget2():
     return ROIMaskExtraction
+
+
+@napari_hook_implementation(specname="napari_experimental_provide_dock_widget")
+def napari_experimental_provide_dock_widget3():
+    return MaskCreateNapari
