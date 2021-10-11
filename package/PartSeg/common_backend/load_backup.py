@@ -49,4 +49,4 @@ def import_config():
             if hasattr(napari_settings, "load"):
                 napari_settings.load()
             else:
-                napari_settings._load()
+                napari_settings._load()  # pylint: disable=W0212
