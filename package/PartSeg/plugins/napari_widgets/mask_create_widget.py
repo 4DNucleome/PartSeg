@@ -69,6 +69,8 @@ class MaskCreateNapari(QWidget):
         self.roi_select.reset_choices(event)
 
     def create_mask(self):
+        if self.roi_select.value is None:
+            return
         layer_name = self.name.text()
         self.settings.set("mask_create_name", layer_name)
         mask_property = self.mask_widget.get_mask_property()
@@ -82,7 +84,7 @@ class MaskCreateNapari(QWidget):
         else:
             self.viewer.add_labels(
                 mask,
-                scale=np.array(self.roi_select.value.scale[-mask.ndim :]),
+                scale=np.array(self.roi_select.value.scale)[-mask.ndim :],
                 name=layer_name,
             )
 
