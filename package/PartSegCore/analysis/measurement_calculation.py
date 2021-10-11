@@ -1638,17 +1638,18 @@ class ColocalizationMeasurement(MeasurementMethodBase):
             nominator = np.sum((data_1 - data_1_mean) * (data_2 - data_2_mean))
             numerator = np.sqrt(np.sum((data_1 - data_1_mean) ** 2) * np.sum((data_2 - data_2_mean) ** 2))
             return nominator / numerator
-        elif colocalization == MANDERS_COEFIICIENT:
+        if colocalization == MANDERS_COEFIICIENT:
             nominator = np.sum(data_1 * data_2)
             numerator = np.sqrt(np.sum(data_1 ** 2) * np.sum(data_2 ** 2))
             return nominator / numerator
-        elif colocalization == INTENSITY_CORRELATION:
+        if colocalization == INTENSITY_CORRELATION:
             data_1_mean = np.mean(data_1)
             data_2_mean = np.mean(data_2)
             return np.sum((data_1 > data_1_mean) == (data_2 > data_2_mean)) / data_1.size - 0.5
 
         raise RuntimeError("Not supported colocalization method")  # pragma: no cover
 
+    @classmethod
     def get_units(cls, ndim) -> symbols:
         return 1
 
