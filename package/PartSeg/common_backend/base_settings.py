@@ -14,6 +14,7 @@ from napari.utils.theme import template as napari_template
 from qtpy.QtCore import QObject, Signal
 from qtpy.QtWidgets import QMessageBox, QWidget
 
+from PartSeg.common_backend import napari_get_settings
 from PartSeg.common_backend.partially_const_dict import PartiallyConstDict
 from PartSegCore import register
 from PartSegCore.color_image import default_colormap_dict, default_label_dict
@@ -24,18 +25,6 @@ from PartSegCore.project_info import AdditionalLayerDescription, HistoryElement,
 from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
 from PartSegImage import Image
-
-try:
-    from napari.settings import get_settings as _napari_get_settings
-except ImportError:
-    try:
-        from napari.utils.settings import get_settings as _napari_get_settings
-    except ImportError:
-        from napari.utils.settings import SETTINGS
-
-        def _napari_get_settings(path=None):
-            return SETTINGS
-
 
 if hasattr(napari.utils.theme, "get_theme"):
 
@@ -62,13 +51,6 @@ if TYPE_CHECKING:
 DIR_HISTORY = "io.dir_location_history"
 FILE_HISTORY = "io.files_open_history"
 ROI_NOT_FIT = "roi do not fit to image"
-
-
-def napari_get_settings(path=None) -> "NapariSettings":
-    try:
-        return _napari_get_settings(path)
-    except:  # noqa  # pylint: disable=W0702
-        return _napari_get_settings()
 
 
 class ImageSettings(QObject):
