@@ -5,7 +5,6 @@ import os
 import signal
 from copy import deepcopy
 from pathlib import Path
-from queue import Empty
 
 import numpy as np
 import pytest
@@ -36,8 +35,18 @@ def bundle_test_dir():
 def wait_sigint(q: mp.Queue, pid):
     try:
         q.get(timeout=10 * 60)
-    except Empty:
+    except Exception:
+        print("Timeout")
         os.kill(pid, signal.SIGINT)
+        import time
+
+        time.sleep(30)
+        try:
+            os.kill(pid, 0)
+        except OSError:
+            pass
+        else:
+            os.kill(pid, signal.SIGKILL)
 
 
 @pytest.fixture(scope="module", autouse=True)
