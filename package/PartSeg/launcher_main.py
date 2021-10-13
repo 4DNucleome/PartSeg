@@ -12,7 +12,9 @@ from qtpy.QtWidgets import QApplication
 
 from PartSeg import ANALYSIS_NAME, APP_NAME, MASK_NAME
 from PartSeg._launcher.check_version import CheckVersionThread
+from PartSeg.common_backend import napari_get_settings
 from PartSeg.common_backend.base_argparser import CustomParser
+from PartSegCore import state_store
 from PartSegData import font_dir, icons_dir
 from PartSegImage import TiffImageReader
 
@@ -89,6 +91,8 @@ def main():
     my_app = QApplication(sys.argv)
     my_app.setApplicationName("PartSeg")
     my_app.setWindowIcon(QIcon(os.path.join(icons_dir, "icon.png")))
+
+    napari_get_settings(state_store.save_folder)
     try:
         from napari.qt import get_app
 

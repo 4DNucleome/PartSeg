@@ -119,9 +119,9 @@ class BaseMainWindow(QMainWindow):
         if settings is None:
             if config_folder is None:
                 raise ValueError("wrong config folder")
-            settings: BaseSettings = self.get_setting_class()(config_folder)
             if not os.path.exists(config_folder):
                 import_config()
+            settings: BaseSettings = self.get_setting_class()(config_folder)
             errors = settings.load()
             if errors:
                 errors_message = QMessageBox()

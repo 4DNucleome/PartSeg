@@ -1,6 +1,7 @@
 import os
 
-from PartSeg.common_backend.base_settings import BaseSettings, napari_get_settings
+from PartSeg.common_backend import napari_get_settings
+from PartSeg.common_backend.base_settings import BaseSettings
 
 _settings = None
 

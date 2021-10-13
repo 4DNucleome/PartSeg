@@ -8,6 +8,7 @@ from qtpy.QtWidgets import QMessageBox, QWidget
 from PartSegCore import state_store
 
 from .. import __version__
+from . import napari_get_settings
 
 
 def import_config():
@@ -44,3 +45,8 @@ def import_config():
         )
         if resp == QMessageBox.Yes:
             shutil.copytree(os.path.join(base_folder, before_name), state_store.save_folder)
+            napari_settings = napari_get_settings(state_store.save_folder)
+            if hasattr(napari_settings, "load"):
+                napari_settings.load()
+            else:
+                napari_settings._load()  # pylint: disable=W0212
