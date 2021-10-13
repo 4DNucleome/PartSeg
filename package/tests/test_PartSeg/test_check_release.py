@@ -8,8 +8,8 @@ from PartSeg._launcher import check_version
 
 
 @pytest.mark.enablethread
+@pytest.mark.parametrize("thread", [False, True])
 @pytest.mark.parametrize("package_name", ["PartSeg", "sample_name"])
-@pytest.mark.parametrize("thread", [True, False])
 def test_fetching(package_name, monkeypatch, qtbot, thread):
     def urlopen_mock(url):
         assert f"https://pypi.org/pypi/{package_name}/json" == url
