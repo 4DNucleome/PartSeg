@@ -28,6 +28,7 @@ def test_fetching(package_name, monkeypatch, qtbot, thread):
         chk_thr.run()
     assert chk_thr.release == "0.10.0"
     assert chk_thr.url == f"https://4dnucleome.cent.uw.edu.pl/{package_name}/"
+    chk_thr.deleteLater()
 
 
 @pytest.mark.parametrize("frozen", [True, False])
