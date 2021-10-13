@@ -1,8 +1,11 @@
 import dataclasses
 import itertools
+import multiprocessing as mp
 import os
+import signal
 from copy import deepcopy
 from pathlib import Path
+from queue import Empty
 
 import numpy as np
 import pytest
@@ -28,6 +31,24 @@ def data_test_dir():
 def bundle_test_dir():
     """Return path to directory with test data"""
     return Path(os.path.join(os.path.dirname(__file__), "test_data"))
+
+
+def wait_sigint(q: mp.Queue, pid):
+    try:
+        q.get(timeout=10 * 60)
+    except Empty:
+        os.kill(pid, signal.SIGINT)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def sigint_after_time():
+    manager = mp.Manager()
+    q = manager.Queue()
+    p = mp.Process(target=wait_sigint, args=(q, os.getpid()))
+    p.start()
+    yield
+    q.put(1)
+    p.join()
 
 
 @pytest.fixture
