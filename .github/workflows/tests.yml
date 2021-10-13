@@ -74,6 +74,7 @@ jobs:
     - name: Test with tox
       # run tests using pip install --pre
       uses: GabrielBB/xvfb-action@v1
+      timeout-minutes: 60
       with:
         run: tox
 
@@ -121,6 +122,7 @@ jobs:
         uses: GabrielBB/xvfb-action@v1
         with:
           run: tox -e py38-PyQt5
+        timeout-minutes: 60
 
   test_coverage:
     name: Test PartSeg coverage
@@ -152,6 +154,7 @@ jobs:
         uses: GabrielBB/xvfb-action@v1
         with:
           run: tox -e py38-PyQt5-coverage
+        timeout-minutes: 60
 
       - uses: codecov/codecov-action@v1
         with:
@@ -184,3 +187,4 @@ jobs:
         uses: GabrielBB/xvfb-action@v1
         with:
           run: tox -e py37-PyQt5-minimal
+        timeout-minutes: 60
