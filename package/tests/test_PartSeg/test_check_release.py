@@ -2,6 +2,7 @@ import json
 import urllib.request
 from io import StringIO
 
+import packaging.version
 import pytest
 
 from PartSeg._launcher import check_version
@@ -19,11 +20,12 @@ def test_fetching(thread, package_name, monkeypatch, qtbot):
             )
         )
 
-    def message_box_block(*args):
-        raise RuntimeError("call of message box")
+    def message_box_block(self, *args):
+        raise RuntimeError(f"call of message box {self.text()}")
 
     monkeypatch.setattr(urllib.request, "urlopen", urlopen_mock)
-    monkeypatch.setattr(check_version, "QMessageBox", message_box_block)
+    monkeypatch.setattr(check_version.QMessageBox, "exec", message_box_block)
+    assert packaging.version.parse("0.10.0") < packaging.version.parse("0.11.0")
     chk_thr = check_version.CheckVersionThread(package_name, base_version="0.11.0")
     if thread:
         with qtbot.wait_signal(chk_thr.finished):
