@@ -9,6 +9,7 @@ on:
       - 'bugfix/**'
       - update_requirements
       - pre-commit-ci-update-config
+      - bugfix/debug_future_hang
   pull_request:
     branches:
       - '**'
