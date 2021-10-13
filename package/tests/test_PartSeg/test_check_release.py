@@ -22,6 +22,7 @@ def test_fetching(thread, package_name, monkeypatch, qtbot):
     monkeypatch.setattr(urllib.request, "urlopen", urlopen_mock)
     chk_thr = check_version.CheckVersionThread(package_name, base_version="0.11.0")
     if thread:
+        return
         with qtbot.wait_signal(chk_thr.finished):
             chk_thr.start()
     else:
