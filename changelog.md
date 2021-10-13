@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.13.11
+
+### Bug Fixes
+
+-   Adding mask in Prepare Plan for batch (#383)
+-   Set proper completion mode in SearchComboBox (#384)
+-   Showing warnings on error with ROI load (#385)
+
+### Features
+
+-   Add CellFromNucleusFlow "Cell from nucleus flow" cell segmentation method  (#367)
+-   When cutting components in PartSeg roi mask allow not masking outer data (#379)
+-   Theme selection in GUI (#381)
+-   Allow return points from ROI extraction algorithm (#382)
+-   Add measurement to get ROI annotation by name. (#386)
+-   PartSeg ROI extraction algoritms as napari plugins (#387)
+-   Add  Pearson, Mander's, Intensity, Spearman colocalizatiom measurements (#392)
+-   Separate standalone napari settings from PartSeg embeded napari settings (#397)
+
+### Performance
+
+-   Use faster calc bound function (#375)
+
+### Refactor
+
+-   Remove CustomApplication (#389)
+
 ## 0.13.10
 
 -   change tiff save backend to ome-tiff
