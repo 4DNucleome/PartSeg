@@ -17,7 +17,6 @@ concurrency:
   group: test-${{ github.ref }}
   cancel-in-progress: true
 
-
 jobs:
   download_data:
     name: Download test data
