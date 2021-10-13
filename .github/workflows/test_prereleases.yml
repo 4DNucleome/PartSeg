@@ -33,7 +33,7 @@ jobs:
     runs-on: ${{ matrix.platform }}
     needs: download_data
     strategy:
-      fail-fast: True
+      fail-fast: false
       matrix:
         platform: [windows-2019, macos-10.15, ubuntu-20.04]
         python: [3.8]
@@ -72,7 +72,7 @@ jobs:
         uses: GabrielBB/xvfb-action@v1
         timeout-minutes: 60
         with:
-          run: tox -v --pre -e py38-PyQt5
+          run: tox -v --pre
         env:
           PLATFORM: ${{ matrix.platform }}
           PYVISTA_OFF_SCREEN: True  # required for opengl on windows
