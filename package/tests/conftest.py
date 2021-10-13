@@ -34,7 +34,7 @@ def bundle_test_dir():
 
 def wait_sigint(q: mp.Queue, pid):
     try:
-        q.get(timeout=10 * 60)
+        q.get(timeout=12 * 60)
     except Exception:
         print("Timeout")
         os.kill(pid, signal.SIGINT)
@@ -49,7 +49,7 @@ def wait_sigint(q: mp.Queue, pid):
             os.kill(pid, signal.SIGKILL)
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def sigint_after_time():
     manager = mp.Manager()
     q = manager.Queue()
