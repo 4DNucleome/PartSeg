@@ -159,7 +159,9 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
         resp = np.copy(self.segmentation)
         resp[resp > ind] = 0
 
-        if ind == 0:
+        if len(sizes) == 1:
+            info_text = "Please check the threshold parameter. There is no object bigger than 20 voxels."
+        elif ind == 0:
             info_text = f"Please check the minimum size parameter. The biggest element has size {sizes[1]}"
         else:
             info_text = ""
