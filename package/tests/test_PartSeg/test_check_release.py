@@ -27,6 +27,7 @@ def test_fetching(thread, package_name, monkeypatch, qtbot):
     monkeypatch.setattr(check_version.QMessageBox, "exec", message_box_block)
     assert packaging.version.parse("0.10.0") < packaging.version.parse("0.11.0")
     chk_thr = check_version.CheckVersionThread(package_name, base_version="0.11.0")
+    chk_thr.release = "0.10.0"
     if thread:
         with qtbot.wait_signal(chk_thr.finished):
             chk_thr.start()
