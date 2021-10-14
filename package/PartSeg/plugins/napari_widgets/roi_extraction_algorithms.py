@@ -283,7 +283,8 @@ class ROIExtractionAlgorithms(QWidget):
             show_info(result.info_text)
         if len(result.roi_info.bound_info) == 0:
             return
-        self.info_text.setPlainText(self.sender().get_info_text())
+        if self.sender() is not None:
+            self.info_text.setPlainText(self.sender().get_info_text())
         layer_name = self.target_layer_name.text()
         self.settings.set(f"{self.prefix()}.target_layer_name", layer_name)
         if layer_name in self.viewer.layers:
