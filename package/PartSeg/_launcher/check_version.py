@@ -73,4 +73,4 @@ class CheckVersionThread(QThread):
                     QMessageBox.Ok,
                 )
 
-            message.exec()
+            message.exec_()
