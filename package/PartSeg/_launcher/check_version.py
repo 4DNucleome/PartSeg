@@ -25,6 +25,7 @@ class CheckVersionThread(QThread):
     ):
         super().__init__()
         self.release = base_version
+        self.base_release = base_version
         self.package_name = package_name
         self.url = default_url
         self.finished.connect(self.show_version_info)
@@ -50,7 +51,7 @@ class CheckVersionThread(QThread):
 
     @ensure_main_thread
     def show_version_info(self):
-        my_version = packaging.version.parse(__version__)
+        my_version = packaging.version.parse(self.base_release)
         remote_version = packaging.version.parse(self.release)
         if remote_version > my_version:
             if getattr(sys, "frozen", False):
