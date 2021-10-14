@@ -10,6 +10,10 @@ def get_settings() -> BaseSettings:
     global _settings  # pylint: disable=W0603
     if _settings is None:
         napari_settings = napari_get_settings()
-        _settings = BaseSettings(os.path.join(napari_settings.path, "PartSeg_napari_plugins"))
+        if hasattr(napari_settings, "path"):
+            save_path = napari_settings.path
+        else:
+            save_path = os.path.dirname(napari_settings.config_path)
+        _settings = BaseSettings(os.path.join(save_path, "PartSeg_napari_plugins"))
         _settings.load()
     return _settings
