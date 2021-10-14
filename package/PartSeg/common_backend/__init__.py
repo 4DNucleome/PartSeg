@@ -23,7 +23,7 @@ except ImportError:
 
 
 def napari_get_settings(path=None) -> "NapariSettings":
-    if packaging.version.parse(napari.__version__) >= packaging.version.parse("0.4.11"):
+    if path is not None and packaging.version.parse(napari.__version__) >= packaging.version.parse("0.4.11"):
         path = os.path.join(path, "settings.yaml")
 
     try:
