@@ -92,7 +92,7 @@ def main():
     my_app.setApplicationName("PartSeg")
     my_app.setWindowIcon(QIcon(os.path.join(icons_dir, "icon.png")))
 
-    napari_get_settings(state_store.save_folder)
+    napari_get_settings(os.path.join(os.path.dirname(state_store.save_folder), "napari"))
     try:
         from napari.qt import get_app
 
