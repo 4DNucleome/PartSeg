@@ -126,7 +126,7 @@ try:
         napari_version = packaging.version.parse(napari.__version__)
 
         def _mock_save(self, path=None, **dict_kwargs):
-            return
+            return  # skipcq: PTC-W0049
 
         if napari_version < packaging.version.parse("0.4.10"):
             from napari.utils.settings import _manager
