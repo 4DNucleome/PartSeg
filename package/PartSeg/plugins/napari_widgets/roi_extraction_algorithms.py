@@ -9,6 +9,7 @@ from magicgui.widgets import Widget, create_widget
 from napari import Viewer
 from napari.layers import Image as NapariImage
 from napari.layers import Labels, Layer
+from napari.utils.notifications import show_info
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QDialog,
@@ -47,6 +48,7 @@ from ...common_gui.custom_load_dialog import CustomLoadDialog
 from ...common_gui.custom_save_dialog import CustomSaveDialog
 from ...common_gui.searchable_combo_box import SearchComboBox
 from ...common_gui.searchable_list_widget import SearchableListWidget
+from ...common_gui.universal_gui_part import TextShow
 from ._settings import get_settings
 
 if typing.TYPE_CHECKING:
@@ -135,6 +137,7 @@ class ROIExtractionAlgorithms(QWidget):
         self.algorithm_chose = NapariAlgorithmChoose(self.settings, self.get_method_dict())
         self.calculate_btn = QPushButton("Run")
         self.calculate_btn.clicked.connect(self._run_calculation)
+        self.info_text = TextShow()
 
         self.profile_combo_box = SearchComboBox()
         self.profile_combo_box.addItem(SELECT_TEXT)
@@ -156,6 +159,7 @@ class ROIExtractionAlgorithms(QWidget):
         layout.addWidget(self.profile_combo_box)
         layout.addWidget(self.calculate_btn)
         layout.addWidget(self.algorithm_chose)
+        layout.addWidget(self.info_text)
 
         self.setLayout(layout)
 
@@ -275,6 +279,12 @@ class ROIExtractionAlgorithms(QWidget):
         self.algorithm_chose.reset_choices(event)
 
     def set_result(self, result: ROIExtractionResult):
+        if result.info_text:
+            show_info(result.info_text)
+        if len(result.roi_info.bound_info) == 0:
+            return
+        if self.sender() is not None:
+            self.info_text.setPlainText(self.sender().get_info_text())
         layer_name = self.target_layer_name.text()
         self.settings.set(f"{self.prefix()}.target_layer_name", layer_name)
         if layer_name in self.viewer.layers:
