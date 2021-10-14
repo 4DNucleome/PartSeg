@@ -5,7 +5,7 @@ from lxml import etree  # nosec
 
 from PartSegImage.image import Image
 from PartSegImage.image_reader import TiffImageReader
-from PartSegImage.image_writer import ImageWriter
+from PartSegImage.image_writer import IMAGEJImageWriter, ImageWriter
 
 
 @pytest.fixture(scope="module")
@@ -66,3 +66,24 @@ def test_ome_save(tmp_path, bundle_test_dir, ome_xml, z_size):
     assert np.allclose(read_image.shift, image.shift)
     assert read_image.channel_names == ["a", "b"]
     assert read_image.name == "Test"
+
+
+def test_scaling_imagej(tmp_path):
+    image = Image(np.zeros((10, 50, 50), dtype=np.uint8), (30, 0.1, 0.1), axes_order="ZYX")
+    IMAGEJImageWriter.save(image, tmp_path / "image.tif")
+    read_image = TiffImageReader.read_image(tmp_path / "image.tif")
+    assert np.all(np.isclose(image.spacing, read_image.spacing))
+
+
+def test_save_mask_imagej(tmp_path):
+    data = np.zeros((10, 40, 40), dtype=np.uint8)
+    data[1:-1, 1:-1, 1:-1] = 1
+    data[2:-3, 4:-4, 4:-4] = 2
+
+    mask = np.array(data > 0).astype(np.uint8)
+
+    image = Image(data, (0.4, 0.1, 0.1), mask=mask, axes_order="ZYX")
+    IMAGEJImageWriter.save_mask(image, tmp_path / "mask.tif")
+
+    read_mask = TiffImageReader.read_image(tmp_path / "mask.tif")
+    assert np.all(np.isclose(read_mask.spacing, image.spacing))
