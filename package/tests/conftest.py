@@ -34,7 +34,7 @@ def bundle_test_dir():
 
 def wait_sigint(q: mp.Queue, pid):
     try:
-        q.get(timeout=3 * 60)
+        q.get(timeout=20 * 60)
     except Exception:
         print("Timeout")
         os.kill(pid, signal.SIGINT)
