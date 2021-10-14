@@ -53,8 +53,8 @@ def test_show_window_dialog(monkeypatch, frozen, qtbot):
         def exec():
             return True
 
-    chk_thr = check_version.CheckVersionThread(base_version="0.11.0")
-    monkeypatch.setattr(check_version, "__version__", "0.10.0")
+    chk_thr = check_version.CheckVersionThread(base_version="0.10.0")
+    chk_thr.release = "0.11.0"
     monkeypatch.setattr(check_version.sys, "frozen", frozen, raising=False)
     monkeypatch.setattr(check_version, "QMessageBox", MockMessageBox)
     chk_thr.show_version_info()
