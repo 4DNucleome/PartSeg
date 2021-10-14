@@ -5,6 +5,7 @@ import os
 import signal
 from copy import deepcopy
 from pathlib import Path
+from queue import Empty
 
 import numpy as np
 import pytest
@@ -35,7 +36,7 @@ def bundle_test_dir():
 def wait_sigint(q: mp.Queue, pid):
     try:
         q.get(timeout=20 * 60)
-    except Exception:
+    except Empty:
         print("Timeout")
         os.kill(pid, signal.SIGINT)
         import time
