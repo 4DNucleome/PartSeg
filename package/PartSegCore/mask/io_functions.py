@@ -13,7 +13,7 @@ import numpy as np
 import tifffile
 from napari.plugins._builtins import napari_write_points
 
-from PartSegImage import GenericImageReader, Image, ImageWriter, TiffImageReader
+from PartSegImage import BaseImageWriter, GenericImageReader, Image, IMAGEJImageWriter, ImageWriter, TiffImageReader
 from PartSegImage.image import FRAME_THICKNESS, reduce_array
 
 from ..algorithm_describe_base import AlgorithmProperty, Register, ROIExtractionProfile
@@ -79,7 +79,7 @@ class MaskProjectTuple(ProjectInfoBase):
         return MaskProjectTuple(self.file_path, self.image.substitute(mask=None))
 
     def is_raw(self):
-        return self.roi is None
+        return self.roi_info.roi is None
 
     def is_masked(self):
         return self.mask is not None
@@ -528,6 +528,7 @@ def save_components(
     points: typing.Optional[np.ndarray] = None,
     range_changed=None,
     step_changed=None,
+    writer_class: typing.Type[BaseImageWriter] = ImageWriter,
 ):
     if range_changed is None:
         range_changed = empty_fun
@@ -562,9 +563,9 @@ def save_components(
             )
 
         # print(f"[run] {im}")
-        ImageWriter.save(im, os.path.join(dir_path, f"{file_name}_component{i}.tif"))
+        writer_class.save(im, os.path.join(dir_path, f"{file_name}_component{i}.tif"))
         step_changed(2 * i + 1)
-        ImageWriter.save_mask(im, os.path.join(dir_path, f"{file_name}_component{i}_mask.tif"))
+        writer_class.save_mask(im, os.path.join(dir_path, f"{file_name}_component{i}_mask.tif"))
         step_changed(2 * i + 2)
 
 
@@ -600,6 +601,41 @@ class SaveComponents(SaveBase):
     @classmethod
     def get_name(cls) -> str:
         return "Components"
+
+    @classmethod
+    def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
+        return [AlgorithmProperty("frame", "Frame", 2), AlgorithmProperty("mask_data", "Mask data", True)]
+
+
+class SaveComponentsImagej(SaveBase):
+    @classmethod
+    def get_short_name(cls):
+        return "comp_imagej"
+
+    @classmethod
+    def save(
+        cls,
+        save_location: typing.Union[str, BytesIO, Path],
+        project_info: MaskProjectTuple,
+        parameters: dict,
+        range_changed=None,
+        step_changed=None,
+    ):
+        save_components(
+            project_info.image,
+            project_info.selected_components,
+            save_location,
+            project_info.roi_info,
+            parameters,
+            project_info.points,
+            range_changed,
+            step_changed,
+            writer_class=IMAGEJImageWriter,
+        )
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "Components Imagej Tiff"
 
     @classmethod
     def get_fields(cls) -> typing.List[typing.Union[AlgorithmProperty, str]]:
@@ -705,7 +741,7 @@ load_dict = Register(
     LoadStackImage, LoadROIImage, LoadStackImageWithMask, LoadPoints, class_methods=LoadBase.need_functions
 )
 save_parameters_dict = Register(SaveParametersJSON, class_methods=SaveBase.need_functions)
-save_components_dict = Register(SaveComponents, class_methods=SaveBase.need_functions)
+save_components_dict = Register(SaveComponents, SaveComponentsImagej, class_methods=SaveBase.need_functions)
 save_segmentation_dict = Register(
     SaveROI, SaveMaskAsTiff, SaveROIAsTIFF, SaveROIAsNumpy, class_methods=SaveBase.need_functions
 )

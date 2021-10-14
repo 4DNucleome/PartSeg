@@ -11,11 +11,13 @@ from .image_reader import (
     TiffFileException,
     TiffImageReader,
 )
-from .image_writer import ImageWriter
+from .image_writer import BaseImageWriter, IMAGEJImageWriter, ImageWriter
 
 __all__ = (
+    "BaseImageWriter",
     "Image",
     "TiffImageReader",
+    "IMAGEJImageWriter",
     "ImageWriter",
     "TiffFileException",
     "CziImageReader",
