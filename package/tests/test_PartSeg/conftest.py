@@ -1,5 +1,5 @@
+import packaging.version
 import pytest
-from qtpy.QtWidgets import QApplication
 
 from PartSegCore.algorithm_describe_base import ROIExtractionProfile
 from PartSegCore.analysis import SegmentationPipeline, SegmentationPipelineElement
@@ -7,6 +7,9 @@ from PartSegCore.segmentation.restartable_segmentation_algorithms import BorderR
 
 try:
     # to ignore problem with test in docker container
+
+    import napari
+    from qtpy.QtWidgets import QApplication
 
     from PartSeg._roi_analysis.partseg_settings import PartSettings
     from PartSeg._roi_mask.main_window import ChosenComponents
@@ -117,6 +120,38 @@ try:
         leak = set(QApplication.topLevelWidgets()).difference(initial)
         if any(n.__class__.__name__ != "CanvasBackendDesktop" for n in leak):
             raise AssertionError(f"Widgets ({len(leak)}) leaked!: {leak}")
+
+    @pytest.fixture(autouse=True)
+    def reset_napari_settings(monkeypatch, tmp_path):
+        napari_version = packaging.version.parse(napari.__version__)
+
+        def _mock_save(self, path=None, **dict_kwargs):
+            return  # skipcq: PTC-W0049
+
+        if napari_version < packaging.version.parse("0.4.10"):
+            from napari.utils.settings import _manager
+
+            monkeypatch.setattr(_manager.SettingsManager, "_save", _mock_save)
+
+            _manager.SETTINGS = _manager.SettingsManager(tmp_path)
+
+        elif napari_version == packaging.version.parse("0.4.10"):
+            from napari.utils.settings import _manager
+
+            monkeypatch.setattr(_manager, "user_config_dir", lambda *x: tmp_path)
+            monkeypatch.setattr(_manager.SettingsManager, "_save", _mock_save)
+
+            _manager.SETTINGS = _manager._SettingsProxy()
+
+        else:
+            from napari import settings
+
+            cp = settings.NapariSettings.__private_attributes__["_config_path"]
+            monkeypatch.setattr(cp, "default", tmp_path / "save.yaml")
+            monkeypatch.setattr(settings.NapariSettings, "save", _mock_save)
+            settings._SETTINGS = None
+
+        yield
 
 
 except (RuntimeError, ImportError):

@@ -4,7 +4,6 @@ import packaging.version
 import pytest
 
 from PartSeg._roi_analysis.profile_export import ExportDialog, ImportDialog
-from PartSeg.common_backend.base_settings import BaseSettings
 from PartSeg.common_gui.custom_load_dialog import CustomLoadDialog
 from PartSeg.common_gui.custom_save_dialog import CustomSaveDialog
 from PartSeg.plugins.napari_widgets import MaskCreateNapari, ROIAnalysisExtraction, ROIMaskExtraction, _settings
@@ -25,7 +24,8 @@ napari_skip = pytest.mark.skipif(
 @pytest.fixture(autouse=True)
 def clean_settings(tmp_path):
     old_settings = _settings._settings
-    _settings._settings = BaseSettings(tmp_path)
+    _settings._settings = None
+    # _settings._settings = BaseSettings(tmp_path)
     yield
     _settings._settings = old_settings
 

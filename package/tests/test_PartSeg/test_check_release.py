@@ -2,15 +2,16 @@ import json
 import urllib.request
 from io import StringIO
 
+import packaging.version
 import pytest
 
 from PartSeg._launcher import check_version
 
 
 @pytest.mark.enablethread
+@pytest.mark.parametrize("thread", [False, True])
 @pytest.mark.parametrize("package_name", ["PartSeg", "sample_name"])
-@pytest.mark.parametrize("thread", [True, False])
-def test_fetching(package_name, monkeypatch, qtbot, thread):
+def test_fetching(thread, package_name, monkeypatch, qtbot):
     def urlopen_mock(url):
         assert f"https://pypi.org/pypi/{package_name}/json" == url
         return StringIO(
@@ -19,8 +20,14 @@ def test_fetching(package_name, monkeypatch, qtbot, thread):
             )
         )
 
+    def message_box_block(self, *args):
+        raise RuntimeError(f"call of message box {self.text()}")
+
     monkeypatch.setattr(urllib.request, "urlopen", urlopen_mock)
+    monkeypatch.setattr(check_version.QMessageBox, "exec_", message_box_block)
+    assert packaging.version.parse("0.10.0") < packaging.version.parse("0.11.0")
     chk_thr = check_version.CheckVersionThread(package_name, base_version="0.11.0")
+    chk_thr.release = "0.10.0"
     if thread:
         with qtbot.wait_signal(chk_thr.finished):
             chk_thr.start()
@@ -28,6 +35,7 @@ def test_fetching(package_name, monkeypatch, qtbot, thread):
         chk_thr.run()
     assert chk_thr.release == "0.10.0"
     assert chk_thr.url == f"https://4dnucleome.cent.uw.edu.pl/{package_name}/"
+    chk_thr.deleteLater()
 
 
 @pytest.mark.parametrize("frozen", [True, False])
@@ -43,11 +51,11 @@ def test_show_window_dialog(monkeypatch, frozen, qtbot):
             values[1] = message
 
         @staticmethod
-        def exec():
+        def exec_():
             return True
 
-    chk_thr = check_version.CheckVersionThread(base_version="0.11.0")
-    monkeypatch.setattr(check_version, "__version__", "0.10.0")
+    chk_thr = check_version.CheckVersionThread(base_version="0.10.0")
+    chk_thr.release = "0.11.0"
     monkeypatch.setattr(check_version.sys, "frozen", frozen, raising=False)
     monkeypatch.setattr(check_version, "QMessageBox", MockMessageBox)
     chk_thr.show_version_info()
