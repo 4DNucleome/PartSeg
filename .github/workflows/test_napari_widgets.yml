@@ -17,7 +17,6 @@ jobs:
   test_napar:
     name: ${{ matrix.platform }} py${{ matrix.python }}
     runs-on: ${{ matrix.platform }}
-    needs: download_data
     strategy:
       fail-fast: false
       matrix:
