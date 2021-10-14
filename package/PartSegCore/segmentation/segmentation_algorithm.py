@@ -158,6 +158,11 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
         ind = bisect(sizes[1:], self.new_parameters["minimum_size"], lambda x, y: x > y)
         resp = np.copy(self.segmentation)
         resp[resp > ind] = 0
+
+        if ind == 0:
+            info_text = f"Please check the minimum size parameter. The biggest element has size {sizes[1]}"
+        else:
+            info_text = ""
         if self.new_parameters["use_convex"]:
             report_fun("convex hull", 6)
             resp = convex_fill(resp)
@@ -169,6 +174,7 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
                 "denoised image": AdditionalLayerDescription(data=image, layer_type="image"),
                 "no size filtering": AdditionalLayerDescription(data=self.segmentation, layer_type="labels"),
             },
+            info_text=info_text,
         )
 
 
