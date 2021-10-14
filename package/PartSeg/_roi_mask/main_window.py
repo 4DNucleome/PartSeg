@@ -366,7 +366,7 @@ class MainMenu(BaseMainMenu):
             res.save_class.save,
             [res.save_destination, self.settings.get_project_info(), res.parameters],
             text="Save components",
-            exception_hook=exception_hook,
+            # exception_hook=exception_hook,
         )
         dial.exec()
 

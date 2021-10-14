@@ -564,10 +564,9 @@ class Image:
         """
         return [array_axis.index(letter) for letter in important_axis]
 
-    def _cut_image_slices(self, cut_area: typing.Iterable[slice], frame: int):
-        new_mask = None
-        important_axis = "XY" if self.is_2d else "XYZ"
+    def _frame_cut_area(self, cut_area: typing.Iterable[slice], frame: int):
         cut_area = list(cut_area)
+        important_axis = "XY" if self.is_2d else "XYZ"
         for ind in self.calc_index_to_frame(self.array_axis_order, important_axis):
             sl = cut_area[ind]
             cut_area[ind] = slice(
@@ -575,6 +574,11 @@ class Image:
                 sl.stop + frame if sl.stop is not None else None,
                 sl.step,
             )
+        return cut_area
+
+    def _cut_image_slices(self, cut_area: typing.Iterable[slice], frame: int):
+        new_mask = None
+        cut_area = self._frame_cut_area(cut_area, frame)
         cut_area2 = cut_area[:]
         cut_area2.insert(self.channel_pos, slice(None))
         new_image = self._image_array[tuple(cut_area2)]
@@ -635,10 +639,7 @@ class Image:
                 new_cut = self._roi_to_slices(cut_area)
                 new_image, new_mask = self._cut_image_slices(new_cut, frame)
                 if replace_mask:
-                    important_axis = "XY" if self.is_2d else "XYZ"
-                    new_mask = self._frame_array(
-                        cut_area, self.calc_index_to_frame(self.array_axis_order, important_axis), frame
-                    )
+                    new_mask = cut_area[tuple(self._frame_cut_area(new_cut, frame))]
         else:
             new_image, new_mask = self._cut_image_slices(cut_area, frame)
 
