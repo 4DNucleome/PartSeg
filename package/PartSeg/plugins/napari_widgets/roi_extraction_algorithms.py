@@ -9,6 +9,7 @@ from magicgui.widgets import Widget, create_widget
 from napari import Viewer
 from napari.layers import Image as NapariImage
 from napari.layers import Labels, Layer
+from napari.utils.notifications import show_info
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QDialog,
@@ -275,6 +276,8 @@ class ROIExtractionAlgorithms(QWidget):
         self.algorithm_chose.reset_choices(event)
 
     def set_result(self, result: ROIExtractionResult):
+        if result.info_text:
+            show_info(result.info_text)
         layer_name = self.target_layer_name.text()
         self.settings.set(f"{self.prefix()}.target_layer_name", layer_name)
         if layer_name in self.viewer.layers:
