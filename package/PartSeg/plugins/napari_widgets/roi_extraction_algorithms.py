@@ -282,6 +282,8 @@ class ROIExtractionAlgorithms(QWidget):
         if result.info_text:
             show_info(result.info_text)
         if len(result.roi_info.bound_info) == 0:
+            if not result.info_text:
+                show_info("There is no ROI in result. Pleas check algorithm parameters.")
             return
         if self.sender() is not None:
             self.info_text.setPlainText(self.sender().get_info_text())
