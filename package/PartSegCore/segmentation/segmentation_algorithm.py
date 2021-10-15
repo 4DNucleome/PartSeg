@@ -175,7 +175,7 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
         if len(self.base_sizes) == 1:
             info_text = "Please check the threshold parameter. There is no object bigger than 20 voxels."
         elif ind == 0:
-            info_text = f"Please check the minimum size parameter. The biggest element has size {self.sizes[1]}"
+            info_text = f"Please check the minimum size parameter. The biggest element has size {self.base_sizes[1]}"
         else:
             info_text = ""
         self.sizes = self.base_sizes[: ind + 1]
