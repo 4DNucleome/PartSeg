@@ -104,7 +104,7 @@ lxml==4.6.3
     # via -r requirements_pyinstaller.in
 magicgui==0.3.0
     # via napari
-mahotas==1.4.11
+mahotas==1.4.12
     # via -r requirements_pyinstaller.in
 markupsafe==2.0.1
     # via jinja2
