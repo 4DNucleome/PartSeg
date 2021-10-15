@@ -77,6 +77,8 @@ jobs:
       timeout-minutes: 60
       with:
         run: tox
+      env:
+        NAPARI: None
 
 
   test_feature:
@@ -121,7 +123,7 @@ jobs:
         # run tests using pip install --pre
         uses: GabrielBB/xvfb-action@v1
         with:
-          run: tox -e py38-PyQt5
+          run: tox -e py38-PyQt5-all
         timeout-minutes: 60
 
   test_coverage:
