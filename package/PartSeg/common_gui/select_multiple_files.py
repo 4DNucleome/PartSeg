@@ -91,6 +91,8 @@ class AddFiles(QWidget):
         self.settings = settings
         self.files_to_proceed = set()
         self.paths_input = QLineEdit(self)
+        self.add_suffix_btn = QPushButton("*[0-9].tif", self)
+        self.add_suffix_btn.clicked.connect(self.add_suffix_action)
         self.selected_files = FileListWidget(self)
         self.selected_files.itemSelectionChanged.connect(self.file_chosen)
         self.found_button = QPushButton("Find all", self)
@@ -105,7 +107,10 @@ class AddFiles(QWidget):
         self.clean_button = QPushButton("Remove all", self)
         self.clean_button.clicked.connect(self.clean)
         layout = QVBoxLayout()
-        layout.addWidget(self.paths_input)
+        input_layout = QHBoxLayout()
+        input_layout.addWidget(self.paths_input)
+        input_layout.addWidget(self.add_suffix_btn)
+        layout.addLayout(input_layout)
         select_layout = btn_layout()
         select_layout.addWidget(self.select_files_button)
         select_layout.addWidget(self.select_dir_button)
@@ -118,6 +123,10 @@ class AddFiles(QWidget):
         self.setLayout(layout)
         self.setAcceptDrops(True)
         self.selected_files.customContextMenuRequested.connect(self.files_context_menu)
+
+    def add_suffix_action(self):
+        if self.paths_input.text() and not self.paths_input.text().endswith(self.add_suffix_btn.text()):
+            self.paths_input.setText(os.path.join(self.paths_input.text(), self.add_suffix_btn.text()))
 
     def files_context_menu(self, point: QPoint):
         element = self.selected_files.itemAt(point)
