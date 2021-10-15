@@ -77,6 +77,8 @@ jobs:
       timeout-minutes: 60
       with:
         run: tox -vv
+      env:
+        NAPARI: None
 
 
   test_feature:
