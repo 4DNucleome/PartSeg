@@ -158,7 +158,9 @@ def get_save_path(op: Save, calculation: "FileCalculation") -> str:
     rel_path = os.path.relpath(calculation.file_path, calculation.base_prefix)
     rel_path = os.path.splitext(rel_path)[0]
     if op.directory:
-        return os.path.join(calculation.result_prefix, rel_path, op.suffix + extension)
+        file_name = os.path.basename(rel_path)
+        base_rel_path = os.path.dirname(rel_path)
+        return os.path.join(calculation.result_prefix, base_rel_path, op.directory, file_name + op.suffix + extension)
     return os.path.join(calculation.result_prefix, rel_path + op.suffix + extension)
 
 
