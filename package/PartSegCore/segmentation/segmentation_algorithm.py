@@ -82,6 +82,15 @@ class ThresholdPreview(StackAlgorithm):
 
 
 class BaseThresholdAlgorithm(StackAlgorithm, ABC):
+    def __init__(self):
+        super().__init__()
+        self.sizes = [0]
+
+    def get_info_text(self):
+        if len(self.sizes) > 1:
+            return f"ROI sizes: {', '.join(map(str, self.sizes[1:]))}"
+        return ""
+
     @classmethod
     def get_fields(cls):
         return [
@@ -122,6 +131,10 @@ class BaseThresholdAlgorithm(StackAlgorithm, ABC):
 
 
 class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
+    def __init__(self):
+        super().__init__()
+        self.base_sizes = [0]
+
     @staticmethod
     def get_steps_num():
         return 7
@@ -154,20 +167,23 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
             )
         )
 
-        sizes = np.bincount(self.segmentation.flat)
-        ind = bisect(sizes[1:], self.new_parameters["minimum_size"], lambda x, y: x > y)
+        self.base_sizes = np.bincount(self.segmentation.flat)
+        ind = bisect(self.base_sizes[1:], self.new_parameters["minimum_size"], lambda x, y: x > y)
         resp = np.copy(self.segmentation)
         resp[resp > ind] = 0
 
-        if len(sizes) == 1:
+        if len(self.base_sizes) == 1:
             info_text = "Please check the threshold parameter. There is no object bigger than 20 voxels."
         elif ind == 0:
-            info_text = f"Please check the minimum size parameter. The biggest element has size {sizes[1]}"
+            info_text = f"Please check the minimum size parameter. The biggest element has size {self.sizes[1]}"
         else:
             info_text = ""
+        self.sizes = self.base_sizes[: ind + 1]
         if self.new_parameters["use_convex"]:
             report_fun("convex hull", 6)
             resp = convex_fill(resp)
+            self.sizes = np.bincount(resp.flat)
+
         report_fun("Calculation done", 7)
         return ROIExtractionResult(
             roi=self.image.fit_array_to_image(resp),
@@ -178,6 +194,13 @@ class BaseSingleThresholdAlgorithm(BaseThresholdAlgorithm, ABC):
             },
             info_text=info_text,
         )
+
+    def get_info_text(self):
+        base_text = super().get_info_text()
+        base_sizes = self.base_sizes[: self.sizes.size]
+        if np.any(base_sizes != self.sizes):
+            base_text += "\nBase ROI sizes " + ", ".join(map(str, base_sizes))
+        return base_text
 
 
 class ThresholdAlgorithm(BaseSingleThresholdAlgorithm):
@@ -197,15 +220,8 @@ class ThresholdAlgorithm(BaseSingleThresholdAlgorithm):
         report_fun("Threshold calculated", 2)
         return mask
 
-    def get_info_text(self):
-        return ""
-
 
 class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
-    def __init__(self):
-        super().__init__()
-        self.sizes = [0]
-
     @classmethod
     def get_name(cls) -> str:
         return "Threshold Flow"
@@ -276,8 +292,8 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
                 20,
             )
         )
-        self.sizes = np.bincount(core_objects.flat)
-        ind = bisect(self.sizes[1:], self.new_parameters["minimum_size"], lambda x, y: x > y)
+        self.base_sizes = np.bincount(core_objects.flat)
+        ind = bisect(self.base_sizes[1:], self.new_parameters["minimum_size"], lambda x, y: x > y)
         core_objects[core_objects > ind] = 0
 
         if self.new_parameters["close_holes"]:
@@ -320,9 +336,6 @@ class ThresholdFlowAlgorithm(BaseThresholdAlgorithm):
     def get_steps_num():
         return 7
 
-    def get_info_text(self):
-        return ""
-
 
 class AutoThresholdAlgorithm(BaseSingleThresholdAlgorithm):
     @classmethod
@@ -355,9 +368,6 @@ class AutoThresholdAlgorithm(BaseSingleThresholdAlgorithm):
             image[self.mask == 0] = 0
         report_fun("Threshold calculation", 2)
         return self._threshold_image(image)
-
-    def get_info_text(self):
-        return ""
 
 
 class CellFromNucleusFlow(StackAlgorithm):
