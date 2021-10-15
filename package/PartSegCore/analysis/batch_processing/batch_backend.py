@@ -303,6 +303,8 @@ class CalculationProcess:
             algorithm_parameters=self.algorithm_parameters,
         )
         save_path = get_save_path(operation, self.calculation)
+        save_dir = os.path.dirname(save_path)
+        os.makedirs(save_dir, exist_ok=True)
         save_class.save(save_path, project_tuple, operation.values)
 
     def step_mask_create(self, operation: MaskCreate, children: List[CalculationTree]):
