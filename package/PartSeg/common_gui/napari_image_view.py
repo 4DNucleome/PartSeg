@@ -17,7 +17,6 @@ except ImportError:
 from napari.components import ViewerModel as Viewer
 from napari.layers import Layer, Points
 from napari.layers.image import Image as NapariImage
-from napari.layers.image._image_constants import Interpolation3D
 from napari.layers.labels import Labels
 from napari.qt import QtStateButton, QtViewer
 from napari.qt.threading import thread_worker
@@ -472,10 +471,6 @@ class ImageView(QWidget):
     def add_roi_layer(self, image_info: ImageInfo):
         if image_info.roi_info.roi is None:
             return
-        try:
-            max_num = max(1, image_info.roi_count)
-        except ValueError:
-            max_num = 1
         roi = image_info.roi_info.alternative.get(self.image_state.roi_presented, image_info.roi_info.roi)
         if self.image_state.only_borders:
 
@@ -484,20 +479,17 @@ class ImageView(QWidget):
                 self.image_state.borders_thick // 2,
                 self.viewer.dims.ndisplay == 2,
             ).transpose(np.argsort(ORDER_DICT[self._current_order]))
-            image_info.roi = self.viewer.add_image(
+            image_info.roi = self.viewer.add_labels(
                 data,
                 scale=image_info.image.normalized_scaling(),
-                contrast_limits=[0, max_num],
             )
         else:
-            image_info.roi = self.viewer.add_image(
+            image_info.roi = self.viewer.add_labels(
                 roi,
                 scale=image_info.image.normalized_scaling(),
-                contrast_limits=[0, max_num],
                 name="ROI",
                 blending="translucent",
             )
-        image_info.roi._interpolation[3] = Interpolation3D.NEAREST  # pylint: disable=W0212
 
     def update_roi_representation(self):
         self.remove_all_roi()
