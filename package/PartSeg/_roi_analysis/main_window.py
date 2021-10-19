@@ -6,7 +6,6 @@ import numpy as np
 from qtpy.QtCore import QByteArray, QEvent, Qt
 from qtpy.QtGui import QIcon, QKeyEvent, QKeySequence, QResizeEvent
 from qtpy.QtWidgets import (
-    QApplication,
     QCheckBox,
     QComboBox,
     QGridLayout,
@@ -36,6 +35,7 @@ from PartSegCore.roi_info import ROIInfo
 from PartSegCore.segmentation.algorithm_base import ROIExtractionResult
 from PartSegImage import TiffImageReader
 
+from ..common_backend.except_hook import show_warning
 from ..common_gui.algorithms_description import AlgorithmChoose, InteractiveAlgorithmSettingsWidget
 from ..common_gui.channel_control import ChannelProperty
 from ..common_gui.custom_save_dialog import CustomSaveDialog
@@ -411,9 +411,8 @@ class MainMenu(BaseMainMenu):
             base_values[selected_filter] = values
 
             def exception_hook(exception):
-                instance = QApplication.instance()
                 if isinstance(exception, ValueError):
-                    instance.show_warning("Save error", f"Error during saving\n{exception}")
+                    show_warning("Save error", f"Error during saving\n{exception}")
                 else:
                     raise exception
 
@@ -431,9 +430,8 @@ class MainMenu(BaseMainMenu):
 
     def load_data(self):
         def exception_hook(exception):
-            instance = QApplication.instance()
             if isinstance(exception, WrongFileTypeException):
-                instance.show_warning(
+                show_warning(
                     OPEN_ERROR,
                     "No needed files inside archive. Most probably you choose file from segmentation mask",
                 )
