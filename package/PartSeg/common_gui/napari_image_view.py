@@ -14,13 +14,12 @@ try:
 except ImportError:
     from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton
 
-
 from napari.components import ViewerModel as Viewer
 from napari.layers import Layer, Points
 from napari.layers.image import Image as NapariImage
 from napari.layers.image._image_constants import Interpolation3D
 from napari.layers.labels import Labels
-from napari.qt import QtViewer
+from napari.qt import QtStateButton, QtViewer
 from napari.qt.threading import thread_worker
 from qtpy.QtCore import QEvent, QObject, QPoint, Qt, Signal
 from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QToolTip, QVBoxLayout, QWidget
@@ -35,25 +34,17 @@ from PartSegImage import Image
 from ..common_backend.base_settings import BaseSettings, ViewSettings
 from .channel_control import ChannelProperty, ColorComboBoxGroup
 
-try:
-    from napari.qt import QtStateButton
 
-    class QtNDisplayButton(QtStateButton):
-        def __init__(self, viewer):
-            super().__init__(
-                "ndisplay_button",
-                viewer.dims,
-                "ndisplay",
-                viewer.dims.events.ndisplay,
-                2,
-                3,
-            )
-
-
-except ImportError:
-    from napari.qt import QtNDisplayButton
-
-    # FIXME when bump minimal version of napari to 0.4.7
+class QtNDisplayButton(QtStateButton):
+    def __init__(self, viewer):
+        super().__init__(
+            "ndisplay_button",
+            viewer.dims,
+            "ndisplay",
+            viewer.dims.events.ndisplay,
+            2,
+            3,
+        )
 
 
 ORDER_DICT = {"xy": [0, 1, 2, 3], "zy": [0, 2, 1, 3], "zx": [0, 3, 1, 2]}
