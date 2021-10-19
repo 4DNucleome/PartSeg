@@ -14,17 +14,15 @@ try:
 except ImportError:
     from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton
 
-
 from napari.components import ViewerModel as Viewer
 from napari.layers import Layer, Points
 from napari.layers.image import Image as NapariImage
-from napari.layers.image._image_constants import Interpolation3D
 from napari.layers.labels import Labels
-from napari.qt import QtViewer
+from napari.qt import QtStateButton, QtViewer
 from napari.qt.threading import thread_worker
 from qtpy.QtCore import QEvent, QObject, QPoint, Qt, Signal
 from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QToolTip, QVBoxLayout, QWidget
-from vispy.color import Color, ColorArray, Colormap
+from vispy.color import Color, Colormap
 from vispy.scene import BaseCamera
 
 from PartSegCore.color_image import calculate_borders
@@ -35,29 +33,23 @@ from PartSegImage import Image
 from ..common_backend.base_settings import BaseSettings, ViewSettings
 from .channel_control import ChannelProperty, ColorComboBoxGroup
 
-try:
-    from napari.qt import QtStateButton
 
-    class QtNDisplayButton(QtStateButton):
-        def __init__(self, viewer):
-            super().__init__(
-                "ndisplay_button",
-                viewer.dims,
-                "ndisplay",
-                viewer.dims.events.ndisplay,
-                2,
-                3,
-            )
-
-
-except ImportError:
-    from napari.qt import QtNDisplayButton
-
-    # FIXME when bump minimal version of napari to 0.4.7
+class QtNDisplayButton(QtStateButton):
+    def __init__(self, viewer):
+        super().__init__(
+            "ndisplay_button",
+            viewer.dims,
+            "ndisplay",
+            viewer.dims.events.ndisplay,
+            2,
+            3,
+        )
 
 
 ORDER_DICT = {"xy": [0, 1, 2, 3], "zy": [0, 2, 1, 3], "zx": [0, 3, 1, 2]}
 NEXT_ORDER = {"xy": "zy", "zy": "zx", "zx": "xy"}
+
+ColorInfo = Dict[int, Union[str, List[float]]]
 
 
 @dataclass
@@ -389,10 +381,10 @@ class ImageView(QWidget):
         """Get mask opacity"""
         return self.settings.get_from_profile("mask_presentation_opacity", 1)
 
-    def mask_color(self) -> Colormap:
+    def mask_color(self) -> ColorInfo:
         """Get mask marking color"""
         color = Color(np.divide(self.settings.get_from_profile("mask_presentation_color", [255, 255, 255]), 255))
-        return Colormap(ColorArray(["black", color.rgba]))
+        return {0: "black", 1: color.rgba}
 
     def get_image(self, image: Optional[Image]) -> Image:
         if image is not None:
@@ -435,31 +427,23 @@ class ImageView(QWidget):
         image_info.roi_info = roi_info
         image_info.roi_count = max(roi_info.bound_info) if roi_info.bound_info else 0
         self.add_roi_layer(image_info)
-        image_info.roi.colormap = self.get_roi_view_parameters(image_info)
+        image_info.roi.color = self.get_roi_view_parameters(image_info)
         image_info.roi.opacity = self.image_state.opacity
 
-    def get_roi_view_parameters(self, image_info: ImageInfo) -> Colormap:
+    def get_roi_view_parameters(self, image_info: ImageInfo) -> ColorInfo:
         colors = self.settings.label_colors / 255
         if self.image_state.show_label == LabelEnum.Not_show or image_info.roi_count == 0 or colors.size == 0:
-            colors = np.array([[0, 0, 0, 0], [0, 0, 0, 0]])
-        else:
-            repeat = int(np.ceil(image_info.roi_count / colors.shape[0]))
-            colors = np.concatenate([colors] * repeat)
-            colors = np.concatenate([colors, np.ones(colors.shape[0]).reshape(colors.shape[0], 1)], axis=1)
-            colors = np.concatenate([[[0, 0, 0, 0]], colors[: image_info.roi_count]])
-            if self.image_state.show_label == LabelEnum.Show_selected:
-                try:
-                    colors *= self.settings.components_mask().reshape((colors.shape[0], 1))
-                except ValueError:
-                    pass
-        control_points = [0] + list(np.linspace(1 / (2 * colors.shape[0]), 1, endpoint=True, num=colors.shape[0]))
-        return Colormap(colors, controls=control_points, interpolation="zero")
+            return {x: [0, 0, 0, 0] for x in range(image_info.roi_count + 1)}
+
+        res = {x: colors[(x - 1) % colors.shape[0]] for x in range(image_info.roi_count + 1)}
+        res[0] = [0, 0, 0, 0]
+        return res
 
     def update_roi_coloring(self):
         for image_info in self.image_info.values():
             if image_info.roi is None:
                 continue
-            image_info.roi.colormap = self.get_roi_view_parameters(image_info)
+            image_info.roi.color = self.get_roi_view_parameters(image_info)
             image_info.roi.opacity = self.image_state.opacity
 
     def remove_all_roi(self):
@@ -481,10 +465,6 @@ class ImageView(QWidget):
     def add_roi_layer(self, image_info: ImageInfo):
         if image_info.roi_info.roi is None:
             return
-        try:
-            max_num = max(1, image_info.roi_count)
-        except ValueError:
-            max_num = 1
         roi = image_info.roi_info.alternative.get(self.image_state.roi_presented, image_info.roi_info.roi)
         if self.image_state.only_borders:
 
@@ -493,20 +473,19 @@ class ImageView(QWidget):
                 self.image_state.borders_thick // 2,
                 self.viewer.dims.ndisplay == 2,
             ).transpose(np.argsort(ORDER_DICT[self._current_order]))
-            image_info.roi = self.viewer.add_image(
+            image_info.roi = self.viewer.add_labels(
                 data,
                 scale=image_info.image.normalized_scaling(),
-                contrast_limits=[0, max_num],
-            )
-        else:
-            image_info.roi = self.viewer.add_image(
-                roi,
-                scale=image_info.image.normalized_scaling(),
-                contrast_limits=[0, max_num],
                 name="ROI",
                 blending="translucent",
             )
-        image_info.roi._interpolation[3] = Interpolation3D.NEAREST  # pylint: disable=W0212
+        else:
+            image_info.roi = self.viewer.add_labels(
+                roi,
+                scale=image_info.image.normalized_scaling(),
+                name="ROI",
+                blending="translucent",
+            )
 
     def update_roi_representation(self):
         self.remove_all_roi()
@@ -539,8 +518,8 @@ class ImageView(QWidget):
 
         mask_marker = mask == 0
 
-        layer = self.viewer.add_image(mask_marker, scale=image.normalized_scaling(), blending="additive")
-        layer.colormap = self.mask_color()
+        layer = self.viewer.add_labels(mask_marker, scale=image.normalized_scaling(), blending="additive", name="Mask")
+        layer.color = self.mask_color()
         layer.opacity = self.mask_opacity()
         layer.visible = self.mask_chk.isChecked()
         image_info.mask = layer
