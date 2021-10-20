@@ -1,10 +1,10 @@
-import math
 import typing
 from functools import partial
 
+import qtawesome as qta
 from napari.utils import Colormap
-from qtpy.QtCore import QEvent, QModelIndex, QPoint, QPointF, QRect, QRectF, QSize, Qt, Signal
-from qtpy.QtGui import QColor, QMouseEvent, QPainter, QPainterPath, QPaintEvent, QPen, QPolygonF, QShowEvent
+from qtpy.QtCore import QEvent, QMargins, QModelIndex, QPoint, QRect, QRectF, QSize, Qt, Signal
+from qtpy.QtGui import QColor, QIcon, QMouseEvent, QPainter, QPainterPath, QPaintEvent, QPen, QPolygonF, QShowEvent
 from qtpy.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -596,9 +596,9 @@ class LockedInfoWidget(QWidget):
     Widget used to present info about lock selection in class :py:class:`~.ColorComboBox`.
     """
 
-    def __init__(self, size=25, margin=2):
+    def __init__(self, size=25, margin=1):
         super().__init__()
-        self.margin = margin
+        self.margin = QMargins(margin, margin, margin, margin)
         self.setFixedWidth(size)
         self.setFixedHeight(size)
 
@@ -606,26 +606,11 @@ class LockedInfoWidget(QWidget):
         super().paintEvent(a0)
         painter = QPainter(self)
         painter.save()
-        painter.setRenderHint(QPainter.Antialiasing)
-        pen2 = QPen()
-
-        rect = QRectF(self.margin, self.height() / 2, self.width() - self.margin * 2, self.height() / 2 - self.margin)
-        rect2 = QRectF(3 * self.margin, 2 * self.margin, self.width() - self.margin * 6, self.height())
-
-        pen2.setWidth(6)
-        painter.setPen(pen2)
-        painter.drawArc(rect2, 0, 180 * 16)
-        pen2.setWidth(3)
-        pen2.setColor(Qt.white)
-        painter.setPen(pen2)
-        painter.drawArc(rect2, 0, 180 * 16)
-
-        painter.fillRect(rect, Qt.white)
-        pen2.setWidth(2)
-        pen2.setColor(Qt.black)
-        painter.setPen(pen2)
-        painter.drawRect(rect)
-
+        painter.setPen(QColor("white"))
+        painter.setBrush(QColor("white"))
+        painter.drawRect(self.rect() - self.margin)
+        icon: QIcon = qta.icon("fa5s.lock")
+        icon.paint(painter, self.rect() - self.margin * 2)
         painter.restore()
 
 
@@ -634,9 +619,9 @@ class BlurInfoWidget(QWidget):
     Widget used to present info about blur selection in class :py:class:`~.ColorComboBox`.
     """
 
-    def __init__(self, size=25, margin=2):
+    def __init__(self, size=25, margin=1):
         super().__init__()
-        self.margin = margin
+        self.margin = QMargins(margin, margin, margin, margin)
         self.setFixedWidth(size)
         self.setFixedHeight(size)
 
@@ -644,26 +629,11 @@ class BlurInfoWidget(QWidget):
         super().paintEvent(a0)
         painter = QPainter(self)
         painter.save()
-        painter.setRenderHint(QPainter.Antialiasing)
-        rect = QRectF(self.margin, self.margin, self.width() - self.margin * 2, self.height() - 2 * self.margin)
-        painter.setBrush(Qt.white)
-        painter.setPen(Qt.white)
-        painter.drawEllipse(rect)
-
-        painter.restore()
-        painter.save()
-        painter.setRenderHint(QPainter.Antialiasing)
-        pen = QPen()
-        pen.setWidth(2)
-        painter.setPen(pen)
-        mid_point = QPointF(a0.rect().width() / 2, a0.rect().height() / 2)
-        radius = min(a0.rect().height(), a0.rect().width()) / 3
-        rays_num = 10
-        for i in range(rays_num):
-            point = QPointF(
-                math.sin(math.pi / (rays_num / 2) * i) * radius, math.cos(math.pi / (rays_num / 2) * i) * radius
-            )
-            painter.drawLine(mid_point + (point * 0.4), mid_point + point)
+        painter.setPen(QColor("white"))
+        painter.setBrush(QColor("white"))
+        painter.drawRect(self.rect() - self.margin)
+        icon: QIcon = qta.icon("mdi.blur")
+        icon.paint(painter, self.rect())
         painter.restore()
 
 
