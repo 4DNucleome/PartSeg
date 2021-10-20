@@ -2206,8 +2206,9 @@ def test_per_component(method, area):
     assert result["Measurement per component"][0][0] == result["Measurement"][0]
 
 
-@pytest.mark.parametrize("method", ColocalizationMeasurement.get_fields()[-1].possible_values)
-def test_colocalization(method):
+@pytest.mark.parametrize("method", CorrelationEnum.__members__.values())
+@pytest.mark.parametrize("randomize", [True, False])
+def test_colocalization(method, randomize):
     area_array = np.ones((10, 10))
     data = np.random.rand(10, 10)
     factor = 0.5 if method == CorrelationEnum.intensity else 1
@@ -2216,29 +2217,33 @@ def test_colocalization(method):
         channel_0=data,
         channel_1=data,
         colocalization=method,
+        randomize=randomize,
     )
-    assert value == factor
+    assert value == factor or randomize
     value = ColocalizationMeasurement.calculate_property(
         area_array=area_array,
         channel_0=data,
         channel_1=data * 100,
         colocalization=method,
+        randomize=randomize,
     )
-    assert isclose(value, factor)
+    assert isclose(value, factor) or randomize
 
     value = ColocalizationMeasurement.calculate_property(
         area_array=area_array,
         channel_0=data,
         channel_1=data + 100,
         colocalization=method,
+        randomize=randomize,
     )
 
-    assert isclose(value, factor) or (method == CorrelationEnum.manders and value < 1)
+    assert isclose(value, factor) or (method == CorrelationEnum.manders and value < 1) or randomize
 
     value = ColocalizationMeasurement.calculate_property(
         area_array=area_array,
         channel_0=data,
         channel_1=-data,
         colocalization=method,
+        randomize=randomize,
     )
-    assert value == -factor
+    assert value == -factor or randomize
