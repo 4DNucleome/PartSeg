@@ -2154,6 +2154,7 @@ def test_all_methods(method, dtype):
         channel=data,
         channel_num=0,
         channel_0=data,
+        channel_1=data,
         voxel_size=(1, 1, 1),
         result_scalar=1,
         roi_alternative={},
@@ -2171,13 +2172,13 @@ def test_all_methods(method, dtype):
 )
 @pytest.mark.parametrize("area", [AreaType.ROI, AreaType.Mask])
 def test_per_component(method, area):
-    data = np.zeros((10, 20, 20), dtype=np.uint8)
+    data = np.zeros((10, 20, 20, 2), dtype=np.uint8)
     data[1:-1, 3:-3, 3:-3] = 2
     data[1:-1, 4:-4, 4:-4] = 3
     data[1:-1, 6, 6] = 5
-    roi = (data > 2).astype(np.uint8)
-    mask = (data > 0).astype(np.uint8)
-    image = Image(data, image_spacing=(10 ** -8,) * 3, axes_order="ZYX")
+    roi = (data[..., 0] > 2).astype(np.uint8)
+    mask = (data[..., 0] > 0).astype(np.uint8)
+    image = Image(data, image_spacing=(10 ** -8,) * 3, axes_order="ZYXC")
     image.set_mask(mask, axes="ZYX")
 
     statistics = [
