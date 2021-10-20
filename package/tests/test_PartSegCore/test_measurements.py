@@ -182,20 +182,11 @@ class TestPixelBrightnessSum:
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
-        assert (
-            PixelBrightnessSum.calculate_property(mask1, image.get_channel(0))
-            == 60 ** 2 * 50 + 40 * 40 * 20
-        )
+        assert PixelBrightnessSum.calculate_property(mask1, image.get_channel(0)) == 60 ** 2 * 50 + 40 * 40 * 20
 
-        assert (
-            PixelBrightnessSum.calculate_property(mask2, image.get_channel(0))
-            == 40 ** 2 * 70
-        )
+        assert PixelBrightnessSum.calculate_property(mask2, image.get_channel(0)) == 40 ** 2 * 70
 
-        assert (
-            PixelBrightnessSum.calculate_property(mask3, image.get_channel(0))
-            == (60 ** 2 - 40 ** 2) * 50
-        )
+        assert PixelBrightnessSum.calculate_property(mask3, image.get_channel(0)) == (60 ** 2 - 40 ** 2) * 50
 
     def test_empty(self):
         image = get_cube_image()
@@ -276,7 +267,7 @@ class TestVoxels:
         mask3 = mask1 * ~mask2
         assert Voxels.calculate_property(mask1) == 60 * 60
         assert Voxels.calculate_property(mask2) == 40 * 40
-        assert Voxels.calculate_property(mask3) == 60**2 - 40**2
+        assert Voxels.calculate_property(mask3) == 60 ** 2 - 40 ** 2
 
     def test_empty(self):
         image = get_cube_image()
@@ -1236,7 +1227,8 @@ class TestSplitOnPartVolume:
 
         result_scale = reduce(lambda x, y: x * y, image.voxel_size)
 
-        assert SplitOnPartVolume.calculate_property(
+        assert (
+            SplitOnPartVolume.calculate_property(
                 part_selection=1,
                 num_of_parts=3,
                 equal_volume=False,
@@ -1244,9 +1236,12 @@ class TestSplitOnPartVolume:
                 mask=mask1,
                 voxel_size=image.voxel_size,
                 result_scalar=1,
-            ) == (60**2 - 40**2) * result_scale
+            )
+            == (60 ** 2 - 40 ** 2) * result_scale
+        )
 
-        assert SplitOnPartVolume.calculate_property(
+        assert (
+            SplitOnPartVolume.calculate_property(
                 part_selection=1,
                 num_of_parts=2,
                 equal_volume=False,
@@ -1254,7 +1249,9 @@ class TestSplitOnPartVolume:
                 mask=mask1,
                 voxel_size=image.voxel_size,
                 result_scalar=1,
-            ) == (60 * 60 - 30**2) * result_scale
+            )
+            == (60 * 60 - 30 ** 2) * result_scale
+        )
 
         assert (
             SplitOnPartVolume.calculate_property(
@@ -1303,7 +1300,8 @@ class TestSplitOnPartVolume:
             == (60 * 60 - 50 * 50) * result_scale
         )
 
-        assert SplitOnPartVolume.calculate_property(
+        assert (
+            SplitOnPartVolume.calculate_property(
                 part_selection=1,
                 num_of_parts=2,
                 equal_volume=True,
@@ -1311,7 +1309,9 @@ class TestSplitOnPartVolume:
                 mask=mask1,
                 voxel_size=image.voxel_size,
                 result_scalar=1,
-            ) == (60**2 - 44 * 44) * result_scale
+            )
+            == (60 ** 2 - 44 * 44) * result_scale
+        )
 
         assert (
             SplitOnPartVolume.calculate_property(
@@ -1431,7 +1431,19 @@ class TestSplitOnPartPixelBrightnessSum:
             == sum_val
         )
 
-    @pytest.mark.parametrize("nr, sum_val, diff_array, equal_volume", [(3, (60 * 60 - 40 * 40) * 50, False, False), (2, (60**2 - 40 * 40) * 50 + (40 * 40 - 30 * 30) * 70, False, False), (3, 0, True, False), (2, (40**2 - 30**2) * 70, True, False), (3, (60 * 60 - 50**2) * 50, False, True), (2, (60 * 60 - 44 * 44) * 50, False, True), (3, 0, True, True), (2, 0, True, True)])
+    @pytest.mark.parametrize(
+        "nr, sum_val, diff_array, equal_volume",
+        [
+            (3, (60 * 60 - 40 * 40) * 50, False, False),
+            (2, (60 ** 2 - 40 * 40) * 50 + (40 * 40 - 30 * 30) * 70, False, False),
+            (3, 0, True, False),
+            (2, (40 ** 2 - 30 ** 2) * 70, True, False),
+            (3, (60 * 60 - 50 ** 2) * 50, False, True),
+            (2, (60 * 60 - 44 * 44) * 50, False, True),
+            (3, 0, True, True),
+            (2, 0, True, True),
+        ],
+    )
     def test_square(self, nr, sum_val, diff_array, equal_volume):
         image = get_square_image()
         image.set_spacing(tuple(x / UNIT_SCALE[Units.nm.value] for x in image.spacing))
