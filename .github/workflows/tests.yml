@@ -7,6 +7,7 @@ on:
       - 'dependabot/**'
       - 'hotfix/**'
       - 'bugfix/**'
+      - 'sourcery/**'
       - update_requirements
       - pre-commit-ci-update-config
   pull_request:
