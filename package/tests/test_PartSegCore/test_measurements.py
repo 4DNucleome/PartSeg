@@ -182,9 +182,11 @@ class TestPixelBrightnessSum:
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
-        assert PixelBrightnessSum.calculate_property(mask1, image.get_channel(0)) == 60 * 60 * 50 + 40 * 40 * 20
-        assert PixelBrightnessSum.calculate_property(mask2, image.get_channel(0)) == 40 * 40 * 70
-        assert PixelBrightnessSum.calculate_property(mask3, image.get_channel(0)) == (60 * 60 - 40 * 40) * 50
+        assert PixelBrightnessSum.calculate_property(mask1, image.get_channel(0)) == 60 ** 2 * 50 + 40 * 40 * 20
+
+        assert PixelBrightnessSum.calculate_property(mask2, image.get_channel(0)) == 40 ** 2 * 70
+
+        assert PixelBrightnessSum.calculate_property(mask3, image.get_channel(0)) == (60 ** 2 - 40 ** 2) * 50
 
     def test_empty(self):
         image = get_cube_image()
@@ -265,7 +267,7 @@ class TestVoxels:
         mask3 = mask1 * ~mask2
         assert Voxels.calculate_property(mask1) == 60 * 60
         assert Voxels.calculate_property(mask2) == 40 * 40
-        assert Voxels.calculate_property(mask3) == 60 * 60 - 40 * 40
+        assert Voxels.calculate_property(mask3) == 60 ** 2 - 40 ** 2
 
     def test_empty(self):
         image = get_cube_image()
@@ -1235,7 +1237,7 @@ class TestSplitOnPartVolume:
                 voxel_size=image.voxel_size,
                 result_scalar=1,
             )
-            == (60 * 60 - 40 * 40) * result_scale
+            == (60 ** 2 - 40 ** 2) * result_scale
         )
 
         assert (
@@ -1248,7 +1250,7 @@ class TestSplitOnPartVolume:
                 voxel_size=image.voxel_size,
                 result_scalar=1,
             )
-            == (60 * 60 - 30 * 30) * result_scale
+            == (60 * 60 - 30 ** 2) * result_scale
         )
 
         assert (
@@ -1308,7 +1310,7 @@ class TestSplitOnPartVolume:
                 voxel_size=image.voxel_size,
                 result_scalar=1,
             )
-            == (60 * 60 - 44 * 44) * result_scale
+            == (60 ** 2 - 44 * 44) * result_scale
         )
 
         assert (
@@ -1433,10 +1435,10 @@ class TestSplitOnPartPixelBrightnessSum:
         "nr, sum_val, diff_array, equal_volume",
         [
             (3, (60 * 60 - 40 * 40) * 50, False, False),
-            (2, (60 * 60 - 40 * 40) * 50 + (40 * 40 - 30 * 30) * 70, False, False),
+            (2, (60 ** 2 - 40 * 40) * 50 + (40 * 40 - 30 * 30) * 70, False, False),
             (3, 0, True, False),
-            (2, (40 * 40 - 30 * 30) * 70, True, False),
-            (3, (60 * 60 - 50 * 50) * 50, False, True),
+            (2, (40 ** 2 - 30 ** 2) * 70, True, False),
+            (3, (60 * 60 - 50 ** 2) * 50, False, True),
             (2, (60 * 60 - 44 * 44) * 50, False, True),
             (3, 0, True, True),
             (2, 0, True, True),
