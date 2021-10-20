@@ -15,12 +15,11 @@ from PartSegCore.analysis import load_metadata
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
 from PartSegCore.analysis.measurement_calculation import (
     HARALIC_FEATURES,
-    INTENSITY_CORRELATION,
-    MANDERS_COEFIICIENT,
     MEASUREMENT_DICT,
     ColocalizationMeasurement,
     ComponentsInfo,
     ComponentsNumber,
+    CorrelationEnum,
     Diameter,
     DistanceMaskROI,
     DistancePoint,
@@ -2211,7 +2210,7 @@ def test_per_component(method, area):
 def test_colocalization(method):
     area_array = np.ones((10, 10))
     data = np.random.rand(10, 10)
-    factor = 0.5 if method == INTENSITY_CORRELATION else 1
+    factor = 0.5 if method == CorrelationEnum.intensity else 1
     value = ColocalizationMeasurement.calculate_property(
         area_array=area_array,
         channel_0=data,
@@ -2234,7 +2233,7 @@ def test_colocalization(method):
         colocalization=method,
     )
 
-    assert isclose(value, factor) or (method == MANDERS_COEFIICIENT and value < 1)
+    assert isclose(value, factor) or (method == CorrelationEnum.manders and value < 1)
 
     value = ColocalizationMeasurement.calculate_property(
         area_array=area_array,
