@@ -15,12 +15,11 @@ from PartSegCore.analysis import load_metadata
 from PartSegCore.analysis.measurement_base import AreaType, Leaf, MeasurementEntry, Node, PerComponent
 from PartSegCore.analysis.measurement_calculation import (
     HARALIC_FEATURES,
-    INTENSITY_CORRELATION,
-    MANDERS_COEFIICIENT,
     MEASUREMENT_DICT,
     ColocalizationMeasurement,
     ComponentsInfo,
     ComponentsNumber,
+    CorrelationEnum,
     Diameter,
     DistanceMaskROI,
     DistancePoint,
@@ -183,9 +182,11 @@ class TestPixelBrightnessSum:
         mask1 = image.get_channel(0)[0] > 40
         mask2 = image.get_channel(0)[0] > 60
         mask3 = mask1 * ~mask2
-        assert PixelBrightnessSum.calculate_property(mask1, image.get_channel(0)) == 60 * 60 * 50 + 40 * 40 * 20
-        assert PixelBrightnessSum.calculate_property(mask2, image.get_channel(0)) == 40 * 40 * 70
-        assert PixelBrightnessSum.calculate_property(mask3, image.get_channel(0)) == (60 * 60 - 40 * 40) * 50
+        assert PixelBrightnessSum.calculate_property(mask1, image.get_channel(0)) == 60 ** 2 * 50 + 40 * 40 * 20
+
+        assert PixelBrightnessSum.calculate_property(mask2, image.get_channel(0)) == 40 ** 2 * 70
+
+        assert PixelBrightnessSum.calculate_property(mask3, image.get_channel(0)) == (60 ** 2 - 40 ** 2) * 50
 
     def test_empty(self):
         image = get_cube_image()
@@ -266,7 +267,7 @@ class TestVoxels:
         mask3 = mask1 * ~mask2
         assert Voxels.calculate_property(mask1) == 60 * 60
         assert Voxels.calculate_property(mask2) == 40 * 40
-        assert Voxels.calculate_property(mask3) == 60 * 60 - 40 * 40
+        assert Voxels.calculate_property(mask3) == 60 ** 2 - 40 ** 2
 
     def test_empty(self):
         image = get_cube_image()
@@ -1236,7 +1237,7 @@ class TestSplitOnPartVolume:
                 voxel_size=image.voxel_size,
                 result_scalar=1,
             )
-            == (60 * 60 - 40 * 40) * result_scale
+            == (60 ** 2 - 40 ** 2) * result_scale
         )
 
         assert (
@@ -1249,7 +1250,7 @@ class TestSplitOnPartVolume:
                 voxel_size=image.voxel_size,
                 result_scalar=1,
             )
-            == (60 * 60 - 30 * 30) * result_scale
+            == (60 * 60 - 30 ** 2) * result_scale
         )
 
         assert (
@@ -1309,7 +1310,7 @@ class TestSplitOnPartVolume:
                 voxel_size=image.voxel_size,
                 result_scalar=1,
             )
-            == (60 * 60 - 44 * 44) * result_scale
+            == (60 ** 2 - 44 * 44) * result_scale
         )
 
         assert (
@@ -1434,10 +1435,10 @@ class TestSplitOnPartPixelBrightnessSum:
         "nr, sum_val, diff_array, equal_volume",
         [
             (3, (60 * 60 - 40 * 40) * 50, False, False),
-            (2, (60 * 60 - 40 * 40) * 50 + (40 * 40 - 30 * 30) * 70, False, False),
+            (2, (60 ** 2 - 40 * 40) * 50 + (40 * 40 - 30 * 30) * 70, False, False),
             (3, 0, True, False),
-            (2, (40 * 40 - 30 * 30) * 70, True, False),
-            (3, (60 * 60 - 50 * 50) * 50, False, True),
+            (2, (40 ** 2 - 30 ** 2) * 70, True, False),
+            (3, (60 * 60 - 50 ** 2) * 50, False, True),
             (2, (60 * 60 - 44 * 44) * 50, False, True),
             (3, 0, True, True),
             (2, 0, True, True),
@@ -2155,6 +2156,7 @@ def test_all_methods(method, dtype):
         channel=data,
         channel_num=0,
         channel_0=data,
+        channel_1=data,
         voxel_size=(1, 1, 1),
         result_scalar=1,
         roi_alternative={},
@@ -2172,13 +2174,13 @@ def test_all_methods(method, dtype):
 )
 @pytest.mark.parametrize("area", [AreaType.ROI, AreaType.Mask])
 def test_per_component(method, area):
-    data = np.zeros((10, 20, 20), dtype=np.uint8)
+    data = np.zeros((10, 20, 20, 2), dtype=np.uint8)
     data[1:-1, 3:-3, 3:-3] = 2
     data[1:-1, 4:-4, 4:-4] = 3
     data[1:-1, 6, 6] = 5
-    roi = (data > 2).astype(np.uint8)
-    mask = (data > 0).astype(np.uint8)
-    image = Image(data, image_spacing=(10 ** -8,) * 3, axes_order="ZYX")
+    roi = (data[..., 0] > 2).astype(np.uint8)
+    mask = (data[..., 0] > 0).astype(np.uint8)
+    image = Image(data, image_spacing=(10 ** -8,) * 3, axes_order="ZYXC")
     image.set_mask(mask, axes="ZYX")
 
     statistics = [
@@ -2207,39 +2209,44 @@ def test_per_component(method, area):
     assert result["Measurement per component"][0][0] == result["Measurement"][0]
 
 
-@pytest.mark.parametrize("method", ColocalizationMeasurement.get_fields()[-1].possible_values)
-def test_colocalization(method):
+@pytest.mark.parametrize("method", CorrelationEnum.__members__.values())
+@pytest.mark.parametrize("randomize", [True, False])
+def test_colocalization(method, randomize):
     area_array = np.ones((10, 10))
     data = np.random.rand(10, 10)
-    factor = 0.5 if method == INTENSITY_CORRELATION else 1
+    factor = 0.5 if method == CorrelationEnum.intensity else 1
     value = ColocalizationMeasurement.calculate_property(
         area_array=area_array,
         channel_0=data,
         channel_1=data,
         colocalization=method,
+        randomize=randomize,
     )
-    assert value == factor
+    assert value == factor or randomize
     value = ColocalizationMeasurement.calculate_property(
         area_array=area_array,
         channel_0=data,
         channel_1=data * 100,
         colocalization=method,
+        randomize=randomize,
     )
-    assert isclose(value, factor)
+    assert isclose(value, factor) or randomize
 
     value = ColocalizationMeasurement.calculate_property(
         area_array=area_array,
         channel_0=data,
         channel_1=data + 100,
         colocalization=method,
+        randomize=randomize,
     )
 
-    assert isclose(value, factor) or (method == MANDERS_COEFIICIENT and value < 1)
+    assert isclose(value, factor) or (method == CorrelationEnum.manders and value < 1) or randomize
 
     value = ColocalizationMeasurement.calculate_property(
         area_array=area_array,
         channel_0=data,
         channel_1=-data,
         colocalization=method,
+        randomize=randomize,
     )
-    assert value == -factor
+    assert value == -factor or randomize
