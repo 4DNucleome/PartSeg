@@ -1,5 +1,5 @@
-from qtpy.QtCore import QPoint
-from qtpy.QtGui import QFont, QPainter, QPaintEvent
+import qtawesome as qta
+from qtpy.QtGui import QIcon, QPainter, QPaintEvent
 from qtpy.QtWidgets import QCheckBox
 
 lock_close = "\U0001F512"
@@ -10,8 +10,6 @@ class LockCheckBox(QCheckBox):
     def paintEvent(self, event: QPaintEvent):
         rect = event.rect()
         painter = QPainter(self)
-        painter.save()
-        lock = lock_close if self.isChecked() else lock_open
-        painter.setFont(QFont("Symbola"))
-        painter.drawText(rect.bottomLeft() + QPoint(0, -2), lock)
-        painter.restore()
+        lock: QIcon = qta.icon("fa5s.lock") if self.isChecked() else qta.icon("fa5s.lock-open")
+        lock_pixmap = lock.pixmap(rect.size())
+        painter.drawPixmap(0, 0, lock_pixmap)

@@ -7,7 +7,7 @@ import sys
 from functools import partial
 
 from qtpy.QtCore import Qt
-from qtpy.QtGui import QFontDatabase, QIcon
+from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication
 
 from PartSeg import ANALYSIS_NAME, APP_NAME, MASK_NAME
@@ -15,7 +15,7 @@ from PartSeg._launcher.check_version import CheckVersionThread
 from PartSeg.common_backend import napari_get_settings
 from PartSeg.common_backend.base_argparser import CustomParser
 from PartSegCore import state_store
-from PartSegData import font_dir, icons_dir
+from PartSegData import icons_dir
 from PartSegImage import TiffImageReader
 
 multiprocessing.freeze_support()
@@ -47,12 +47,7 @@ def _test_imports():
     w1 = AnalysisMain("test")
     w2 = MaskMain("test")
     w3 = MainWindow("test")
-    if parse(napari.__version__) < parse("0.4.5"):
-        console = QtConsole()
-    else:
-        console = QtConsole(napari.Viewer())
-    if QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf")) == -1:
-        raise ValueError("Error with loading Symbola font")
+    console = QtConsole(napari.Viewer())
     del w1
     del w2
     del w3
@@ -99,7 +94,6 @@ def main():
         get_app()
     except ImportError:
         pass
-    QFontDatabase.addApplicationFont(os.path.join(font_dir, "Symbola.ttf"))
 
     wind = select_window(args)
 
