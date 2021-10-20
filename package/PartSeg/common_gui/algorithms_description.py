@@ -170,11 +170,11 @@ class QtAlgorithmProperty(AlgorithmProperty):
             res = QCheckBox()
         elif issubclass(ap.value_type, (float, int)):
             res = cls._get_numeric_field(ap)
+        elif issubclass(ap.value_type, Enum):
+            # noinspection PyTypeChecker
+            res = QEnumComboBox(enum_class=ap.value_type)
         elif issubclass(ap.value_type, str):
             res = QLineEdit()
-        elif issubclass(ap.value_type, Enum):
-            res = QEnumComboBox(enum_class=ap.value_type)
-            # noinspection PyUnresolvedReferences
         elif issubclass(ap.value_type, ROIExtractionProfile):
             res = ProfileSelect()
         elif issubclass(ap.value_type, list):

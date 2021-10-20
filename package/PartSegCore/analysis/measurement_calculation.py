@@ -42,10 +42,15 @@ from .measurement_base import AreaType, Leaf, MeasurementEntry, MeasurementMetho
 
 NO_COMPONENT = -1
 
-PEARSON_CORRELATION = "Pearson correlation coefficient"
-MANDERS_COEFIICIENT = "Mander's overlap coefficient"
-INTENSITY_CORRELATION = "Intensity correlation quotient"
-SPEARMAN_CORRELATION = "Spearman rank correlation"
+
+class CorrelationEnum(str, Enum):
+    pearson = "Pearson correlation coefficient"
+    manders = "Mander's overlap coefficient"
+    intensity = "Intensity correlation quotient"
+    spearman = "Spearman rank correlation"
+
+    def __str__(self):
+        return self.value
 
 
 class ProhibitedDivision(Exception):
@@ -1614,43 +1619,57 @@ class ColocalizationMeasurement(MeasurementMethodBase):
     def get_fields(cls):
         return [
             AlgorithmProperty("channel_fst", "Channel 1", 0, value_type=Channel),
-            AlgorithmProperty("channel_scd", "Channel 2", 0, value_type=Channel),
+            AlgorithmProperty("channel_scd", "Channel 2", 1, value_type=Channel),
             AlgorithmProperty(
                 "colocalization",
                 "Colocalization",
-                PEARSON_CORRELATION,
-                possible_values=[PEARSON_CORRELATION, MANDERS_COEFIICIENT, INTENSITY_CORRELATION, SPEARMAN_CORRELATION],
+                CorrelationEnum.pearson,
+            ),
+            AlgorithmProperty(
+                "randomize", "Randomize channel", False, help_text="If randomize orders of pixels in one channel"
+            ),
+            AlgorithmProperty(
+                "randomize_repeat", "Randomize num", 10, help_text="Number of repetitions for mean_calculate"
             ),
         ]
 
     @staticmethod
-    def calculate_property(area_array, colocalization, channel_fst=0, channel_scd=1, **kwargs):  # pylint: disable=W0221
-        mask_binary = area_array > 0
-        data_1 = kwargs[f"channel_{channel_fst}"][mask_binary].astype(float)
-        data_2 = kwargs[f"channel_{channel_scd}"][mask_binary].astype(float)
-        # data_max = max(data_1.max(), data_2.max())
-        # data_1 = data_1 / data_max
-        # data_2 = data_2 / data_max
-        if colocalization == SPEARMAN_CORRELATION:
+    def _calculate_masked(data_1, data_2, colocalization):
+        if colocalization == CorrelationEnum.spearman:
             data_1 = data_1.argsort().argsort().astype(float)
             data_2 = data_2.argsort().argsort().astype(float)
-            colocalization = PEARSON_CORRELATION
-        if colocalization == PEARSON_CORRELATION:
+            colocalization = CorrelationEnum.pearson
+        if colocalization == CorrelationEnum.pearson:
             data_1_mean = np.mean(data_1)
             data_2_mean = np.mean(data_2)
             nominator = np.sum((data_1 - data_1_mean) * (data_2 - data_2_mean))
             numerator = np.sqrt(np.sum((data_1 - data_1_mean) ** 2) * np.sum((data_2 - data_2_mean) ** 2))
             return nominator / numerator
-        if colocalization == MANDERS_COEFIICIENT:
+        if colocalization == CorrelationEnum.manders:
             nominator = np.sum(data_1 * data_2)
             numerator = np.sqrt(np.sum(data_1 ** 2) * np.sum(data_2 ** 2))
             return nominator / numerator
-        if colocalization == INTENSITY_CORRELATION:
+        if colocalization == CorrelationEnum.intensity:
             data_1_mean = np.mean(data_1)
             data_2_mean = np.mean(data_2)
             return np.sum((data_1 > data_1_mean) == (data_2 > data_2_mean)) / data_1.size - 0.5
 
-        raise RuntimeError("Not supported colocalization method")  # pragma: no cover
+        raise RuntimeError(f"Not supported colocalization method {colocalization}")  # pragma: no cover
+
+    @classmethod
+    def calculate_property(
+        cls, area_array, colocalization, randomize=False, randomize_repeat=10, channel_fst=0, channel_scd=1, **kwargs
+    ):  # pylint: disable=W0221
+        mask_binary = area_array > 0
+        data_1 = kwargs[f"channel_{channel_fst}"][mask_binary].astype(float)
+        data_2 = kwargs[f"channel_{channel_scd}"][mask_binary].astype(float)
+        if not randomize:
+            return cls._calculate_masked(data_1, data_2, colocalization)
+        res_list = []
+        for _ in range(randomize_repeat):
+            rand_data2 = np.random.permutation(data_2)
+            res_list.append(cls._calculate_masked(data_1, rand_data2, colocalization))
+        return np.mean(res_list)
 
     @classmethod
     def get_units(cls, ndim) -> symbols:
