@@ -28,6 +28,8 @@ from typing import Any, Callable, Dict, List, Tuple
 
 __author__ = "Grzegorz Bokota"
 
+from PartSegCore.plugins import register_if_need
+
 
 class SubprocessOrder(Enum):
     """
@@ -266,5 +268,12 @@ def spawn_worker(task_queue: Queue, order_queue: Queue, result_queue: Queue, cal
     :param result_queue: Queue for calculation result
     :param calculation_dict: dict with global parameters
     """
+    register_if_need()
+    try:
+        from PartSeg.plugins import register_if_need as register
+
+        register()
+    except ImportError:
+        pass
     worker = BatchWorker(task_queue, order_queue, result_queue, calculation_dict)
     worker.run()
