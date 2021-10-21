@@ -48,13 +48,14 @@ class CollapseCheckbox(QCheckBox):
 
     def paintEvent(self, event: QtGui.QPaintEvent):
         painter = QPainter(self)
+        color = painter.pen().color()
         painter.save()
         rect = self.rect()
         top = int(rect.height() - (self.text_size.height() / 2))
         painter.drawText(rect.height() + 5, top, self.info_text)
         if self.isChecked():
-            icon = qta.icon("fa5s.caret-right")
+            icon = qta.icon("fa5s.caret-right", color=color)
         else:
-            icon = qta.icon("fa5s.caret-down")
+            icon = qta.icon("fa5s.caret-down", color=color)
         icon.paint(painter, QRect(0, -self.height() / 4, self.height(), self.height()))
         painter.restore()

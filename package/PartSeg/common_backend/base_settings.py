@@ -1,8 +1,10 @@
 import json
 import os
 import os.path
+import re
 import sys
 import warnings
+from argparse import Namespace
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, NamedTuple, Optional, Tuple, Union
@@ -33,10 +35,12 @@ if hasattr(napari.utils.theme, "get_theme"):
 
 else:  # pragma: no cover
 
-    def get_theme(name: str) -> dict:
+    def get_theme(name: str, as_dict=True) -> Union[dict, Namespace]:
         theme = napari.utils.theme.palettes[name]
         theme["canvas"] = "black"
-        return theme
+        if as_dict:
+            return theme
+        return Namespace(**{k: Color(v) if isinstance(v, str) and v.startswith("rgb") else v for k, v in theme.items()})
 
 
 try:
@@ -279,6 +283,16 @@ class ViewSettings(ImageSettings):
     @property
     def theme_name(self) -> str:
         return self.get_from_profile("theme", "light")
+
+    @property
+    def theme(self):
+        try:
+            return get_theme(self.theme_name, as_dict=False)
+        except TypeError:
+            theme = get_theme(self.theme_name)
+            return Namespace(
+                **{k: Color(v) if isinstance(v, str) and v.startswith("rgb") else v for k, v in theme.items()}
+            )
 
     @property
     def style_sheet(self):
@@ -727,3 +741,12 @@ class TimeAndStackException(Exception):
     Exception which inform that current image has both time
     and stack dat which is not supported
     """
+
+
+class Color:  # pragma: no cover
+    def __init__(self, text):
+        color_re = re.compile(r"rgb\((\d+), (\d+), (\d+)\)")
+        self.colors = tuple(map(int, color_re.match(text).groups()))
+
+    def as_rgb_tuple(self):
+        return self.colors
