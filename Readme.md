@@ -25,7 +25,7 @@ This application is designed to help biologist with segmentation based on thresh
 -   Data for chromosome 1 tutorial [link](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg_samples.zip)
 -   Tutorial: **Different neuron types (as library)** [link](https://github.com/4DNucleome/PartSeg/blob/master/tutorials/tutorial_neuron_types/Neuron_types_example.ipynb)
 
-## Installing
+## Installation
 
 -   From binaries:
     -   [Windows](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-windows.zip) (build on Windows 10)
@@ -35,6 +35,9 @@ This application is designed to help biologist with segmentation based on thresh
 -   With pip:
     -   From pypi: `pip install PartSeg[pyqt]`
     -   From repository: `pip install git+https://github.com/4DNucleome/PartSeg.git`
+
+Installation troubleshooting information could be found in wiki: [wiki](https://github.com/4DNucleome/PartSeg/wiki/Instalation-troubleshoot).
+If this information does not solve problem you can open [issue](https://github.com/4DNucleome/PartSeg/issues).
 
 ## Running
 
