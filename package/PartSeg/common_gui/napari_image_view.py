@@ -782,7 +782,7 @@ class SearchROIButton(QPushButton):
 
     def _theme_changed(self):
         color = self.image_view.settings.theme.text
-        self.setIcon(qta.icon("fa5s.search", color=QColor(color.as_rgb_tuple())))
+        self.setIcon(qta.icon("fa5s.search", color=QColor(*color.as_rgb_tuple())))
 
 
 def _prepare_layers(image: Image, param: ImageParameters, replace: bool) -> Tuple[ImageInfo, bool]:
