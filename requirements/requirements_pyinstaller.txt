@@ -203,7 +203,7 @@ pyopengl-accelerate==3.1.5
     # via -r requirements_pyinstaller.in
 pyparsing==2.4.7
     # via packaging
-pyqt5==5.15.4
+pyqt5==5.15.5
     # via -r requirements_pyinstaller.in
 pyqt5-qt5==5.15.2
     # via pyqt5
@@ -227,6 +227,8 @@ pyzmq==22.3.0
     # via
     #   jupyter-client
     #   qtconsole
+qtawesome==1.0.3
+    # via -r requirements_pyinstaller.in
 qtconsole==5.1.1
     # via napari-console
 qtpy==1.11.2
@@ -235,6 +237,7 @@ qtpy==1.11.2
     #   magicgui
     #   napari
     #   napari-console
+    #   qtawesome
     #   qtconsole
 requests==2.26.0
     # via
