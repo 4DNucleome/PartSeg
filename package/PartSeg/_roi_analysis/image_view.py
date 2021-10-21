@@ -1,8 +1,9 @@
 from typing import Optional
 
+import qtawesome as qta
 from qtpy.QtCore import QObject, QSignalBlocker, Slot
 from qtpy.QtGui import QResizeEvent
-from qtpy.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QLabel
+from qtpy.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QLabel, QPushButton
 
 from PartSegCore.roi_info import ROIInfo
 from PartSegImage import Image
@@ -35,12 +36,17 @@ class ResultImageView(ImageView):
         self.label2 = QLabel("Opacity:")
         self.roi_alternative_select = QComboBox()
         self.roi_alternative_select.currentTextChanged.connect(self.image_state.set_roi_presented)
+        self.search_btn = QPushButton(qta.icon("fa5s.search"), "")
+        self.stretch = None
 
+        self.btn_layout.insertWidget(self.channel_control_index, self.search_btn)
         self.btn_layout.insertWidget(self.channel_control_index + 1, self.label1)
         self.btn_layout.insertWidget(self.channel_control_index + 2, self.only_border)
         self.btn_layout.insertWidget(self.channel_control_index + 3, self.label2)
         self.btn_layout.insertWidget(self.channel_control_index + 4, self.opacity)
         self.btn_layout.insertWidget(self.channel_control_index + 1, self.roi_alternative_select)
+        self.channel_control_index = self.btn_layout.indexOf(self.channel_control)
+
         self.label1.setVisible(False)
         self.label2.setVisible(False)
         self.opacity.setVisible(False)
@@ -82,15 +88,17 @@ class ResultImageView(ImageView):
     def resizeEvent(self, event: QResizeEvent):
         if event.size().width() > 700 and not self._channel_control_top:
             w = self.btn_layout2.takeAt(0).widget()
-            self.btn_layout.takeAt(self.channel_control_index)
+            channel_control_index = self.btn_layout.indexOf(self.search_btn) + 1
+            self.btn_layout.takeAt(channel_control_index)
             # noinspection PyArgumentList
-            self.btn_layout.insertWidget(self.channel_control_index, w)
+            self.btn_layout.insertWidget(channel_control_index, w)
             select = self.btn_layout2.takeAt(self.btn_layout2.indexOf(self.roi_alternative_select)).widget()
-            self.btn_layout.insertWidget(self.channel_control_index + 1, select)
+            self.btn_layout.insertWidget(channel_control_index + 1, select)
             self._channel_control_top = True
         elif event.size().width() <= 700 and self._channel_control_top:
-            w = self.btn_layout.takeAt(self.channel_control_index).widget()
-            self.btn_layout.insertStretch(self.channel_control_index, 1)
+            channel_control_index = self.btn_layout.indexOf(self.channel_control)
+            w = self.btn_layout.takeAt(channel_control_index).widget()
+            self.btn_layout.insertStretch(channel_control_index, 1)
             # noinspection PyArgumentList
             self.btn_layout2.insertWidget(0, w)
             select = self.btn_layout.takeAt(self.btn_layout.indexOf(self.roi_alternative_select)).widget()
