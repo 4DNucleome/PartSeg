@@ -3,8 +3,8 @@ from functools import partial
 
 import qtawesome as qta
 from napari.utils import Colormap
-from qtpy.QtCore import QEvent, QMargins, QModelIndex, QPoint, QRect, QRectF, QSize, Qt, Signal
-from qtpy.QtGui import QColor, QIcon, QMouseEvent, QPainter, QPainterPath, QPaintEvent, QPen, QPolygonF, QShowEvent
+from qtpy.QtCore import QEvent, QMargins, QModelIndex, QPoint, QRect, QSize, Qt, Signal
+from qtpy.QtGui import QColor, QIcon, QMouseEvent, QPainter, QPaintEvent, QPen, QPolygonF, QShowEvent
 from qtpy.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -601,6 +601,7 @@ class LockedInfoWidget(QWidget):
         self.margin = QMargins(margin, margin, margin, margin)
         self.setFixedWidth(size)
         self.setFixedHeight(size)
+        self.setToolTip("Fixed range")
 
     def paintEvent(self, a0: QPaintEvent) -> None:
         super().paintEvent(a0)
@@ -624,6 +625,7 @@ class BlurInfoWidget(QWidget):
         self.margin = QMargins(margin, margin, margin, margin)
         self.setFixedWidth(size)
         self.setFixedHeight(size)
+        self.setToolTip("Filtered")
 
     def paintEvent(self, a0: QPaintEvent) -> None:
         super().paintEvent(a0)
@@ -640,29 +642,18 @@ class BlurInfoWidget(QWidget):
 class GammaInfoWidget(QWidget):
     def __init__(self, size=25, margin=2):
         super().__init__()
-        self.margin = margin
+        self.margin = QMargins(margin, margin, margin, margin)
         self.setFixedWidth(size)
         self.setFixedHeight(size)
+        self.setToolTip("Gamma translated")
 
     def paintEvent(self, a0: QPaintEvent) -> None:
-
         super().paintEvent(a0)
         painter = QPainter(self)
         painter.save()
-        painter.setRenderHint(QPainter.Antialiasing)
-        rect = QRectF(self.margin, self.margin, self.width() - self.margin * 2, self.height() - 2 * self.margin)
-        painter.setBrush(Qt.white)
-        painter.setPen(Qt.white)
-        painter.drawRect(rect)
-        painter.restore()
-        painter.save()
-        painter.setRenderHint(QPainter.Antialiasing)
-        pen = QPen()
-        pen.setWidth(3)
-        painter.setPen(pen)
-        path = QPainterPath()
-        height, width = rect.height() + self.margin, rect.width() + self.margin
-        path.moveTo(self.margin, height)
-        path.cubicTo(height * 0.5, width * 0.9, height * 0.9, width * 0.5, height, self.margin)
-        painter.drawPath(path)
+        painter.setPen(QColor("white"))
+        painter.setBrush(QColor("white"))
+        painter.drawRect(self.rect() - self.margin)
+        icon: QIcon = qta.icon("mdi.chart-bell-curve-cumulative")
+        icon.paint(painter, self.rect())
         painter.restore()
