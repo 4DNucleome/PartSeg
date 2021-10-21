@@ -1,8 +1,10 @@
 import json
 import os
 import os.path
+import re
 import sys
 import warnings
+from argparse import Namespace
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, NamedTuple, Optional, Tuple, Union
@@ -282,13 +284,19 @@ class ViewSettings(ImageSettings):
 
     @property
     def theme(self):
-        return get_theme(self.theme_name, as_dict=False)
+        try:
+            return get_theme(self.theme_name, as_dict=False)
+        except TypeError:
+            theme = get_theme(self.theme_name)
+            return Namespace(
+                **{k: Color(v) if isinstance(v, str) and v.startswith("rgb") else v for k, v in theme.items()}
+            )
 
     @property
     def style_sheet(self):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", FutureWarning)
-            theme = get_theme(self.theme_name, as_dict=True)
+            theme = get_theme(self.theme_name)
         # TODO understand qss overwrite mechanism
         return napari_template("\n".join(register.qss_list) + get_stylesheet() + "\n".join(register.qss_list), **theme)
 
@@ -731,3 +739,12 @@ class TimeAndStackException(Exception):
     Exception which inform that current image has both time
     and stack dat which is not supported
     """
+
+
+class Color:  # pragma: no cover
+    def __init__(self, text):
+        color_re = re.compile(r"rgb\((\d+), (\d+), (\d+)\)")
+        self.colors = tuple(map(int, color_re.match(text).groups()))
+
+    def as_rgb_tuple(self):
+        return self.colors
