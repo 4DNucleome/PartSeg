@@ -14,6 +14,7 @@ try:
 except ImportError:
     from napari._qt.widgets.qt_viewer_buttons import QtViewerPushButton
 
+import qtawesome as qta
 from napari.components import ViewerModel as Viewer
 from napari.layers import Layer, Points
 from napari.layers.image import Image as NapariImage
@@ -21,7 +22,8 @@ from napari.layers.labels import Labels
 from napari.qt import QtStateButton, QtViewer
 from napari.qt.threading import thread_worker
 from qtpy.QtCore import QEvent, QObject, QPoint, Qt, Signal
-from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QToolTip, QVBoxLayout, QWidget
+from qtpy.QtGui import QColor
+from qtpy.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QMenu, QPushButton, QToolTip, QVBoxLayout, QWidget
 from vispy.color import Color, Colormap
 from vispy.scene import BaseCamera
 
@@ -190,6 +192,8 @@ class ImageView(QWidget):
         self.points_view_button = QtViewerPushButton(
             self.viewer, "new_points", "Show points", self.toggle_points_visibility
         )
+        self.search_roi_btn = SearchROIButton(self)
+        self.search_roi_btn.setHidden(True)
         self.roll_dim_button = QtViewerPushButton(self.viewer, "roll", "Roll dimension", self._rotate_dim)
         self.roll_dim_button.setContextMenuPolicy(Qt.CustomContextMenu)
         self.roll_dim_button.customContextMenuRequested.connect(self._dim_order_menu)
@@ -201,6 +205,7 @@ class ImageView(QWidget):
         self.btn_layout.addWidget(self.ndim_btn)
         self.btn_layout.addWidget(self.roll_dim_button)
         self.btn_layout.addWidget(self.points_view_button)
+        self.btn_layout.addWidget(self.search_roi_btn)
         self.btn_layout.addWidget(self.channel_control, 1)
         self.btn_layout.addWidget(self.mask_label)
         self.btn_layout.addWidget(self.mask_chk)
@@ -766,6 +771,18 @@ class ImageParameters:
     colormaps: List[Colormap]
     scaling: Tuple[Union[float, int]]
     layers: int = 0
+
+
+class SearchROIButton(QPushButton):
+    def __init__(self, image_view: ImageView):
+        super().__init__(qta.icon("fa5s.search"), "")
+        self.image_view = image_view
+        image_view.settings.theme_changed.connect(self._theme_changed)
+        self._theme_changed()
+
+    def _theme_changed(self):
+        color = self.image_view.settings.theme.text
+        self.setIcon(qta.icon("fa5s.search", color=QColor(color.as_rgb_tuple())))
 
 
 def _prepare_layers(image: Image, param: ImageParameters, replace: bool) -> Tuple[ImageInfo, bool]:

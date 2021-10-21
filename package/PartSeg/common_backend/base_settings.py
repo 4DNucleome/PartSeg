@@ -281,10 +281,14 @@ class ViewSettings(ImageSettings):
         return self.get_from_profile("theme", "light")
 
     @property
+    def theme(self):
+        return get_theme(self.theme_name, as_dict=False)
+
+    @property
     def style_sheet(self):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", FutureWarning)
-            theme = get_theme(self.theme_name)
+            theme = get_theme(self.theme_name, as_dict=True)
         # TODO understand qss overwrite mechanism
         return napari_template("\n".join(register.qss_list) + get_stylesheet() + "\n".join(register.qss_list), **theme)
 
