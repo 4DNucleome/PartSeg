@@ -18,6 +18,7 @@ PartSegCore-compiled-backend
 PyInstaller!=4.4
 PyOpenGL-accelerate
 PyQt5
+QtAwesome
 QtPy
 requests
 scipy
