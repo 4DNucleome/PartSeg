@@ -35,10 +35,12 @@ if hasattr(napari.utils.theme, "get_theme"):
 
 else:  # pragma: no cover
 
-    def get_theme(name: str) -> dict:
+    def get_theme(name: str, as_dict=True) -> Union[dict, Namespace]:
         theme = napari.utils.theme.palettes[name]
         theme["canvas"] = "black"
-        return theme
+        if as_dict:
+            return theme
+        return Namespace(**{k: Color(v) if isinstance(v, str) and v.startswith("rgb") else v for k, v in theme.items()})
 
 
 try:
