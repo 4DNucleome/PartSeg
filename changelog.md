@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.13.12
+
+### Bug Fixes
+
+-   Importing previous version of settings (#406)
+-   Cutting without masking data (#407)
+-   Save in subdirecory in batch plan (#414)
+-   Loading plugins for batch processing (#423)
+
+### Features
+
+-   Add randomization option for correlation calculation (#421)
+-   Add Imagej TIFF writter for image. (#405)
+-   Mask create widget for napari (#395)
+-   In napari roi extraction method show information from roi extraction method (#408)
+-   Add `*[0-9].tif` button in batch processing window (#412)
+-   Better lebel representation in 3d view (#418)
+
+### Refactor
+
+-   Use Font Awesome instead of custom symbols (#424)
+
 ## 0.13.11
 
 ### Bug Fixes
