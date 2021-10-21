@@ -177,7 +177,7 @@ pillow==8.4.0
     #   napari
 pint==0.17
     # via napari
-prompt-toolkit==3.0.20
+prompt-toolkit==3.0.21
     # via ipython
 psutil==5.8.0
     # via napari
@@ -228,6 +228,8 @@ pyzmq==22.3.0
     # via
     #   jupyter-client
     #   qtconsole
+qtawesome==1.0.3
+    # via -r requirements_pyinstaller.in
 qtconsole==5.1.1
     # via napari-console
 qtpy==1.11.2
@@ -236,6 +238,7 @@ qtpy==1.11.2
     #   magicgui
     #   napari
     #   napari-console
+    #   qtawesome
     #   qtconsole
 requests==2.26.0
     # via
