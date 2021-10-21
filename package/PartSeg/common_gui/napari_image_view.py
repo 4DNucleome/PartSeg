@@ -755,7 +755,8 @@ class NapariQtViewer(QtViewer):
         self.dockConsole.deleteLater()
         self.dockLayerList.deleteLater()
         self.dockLayerControls.deleteLater()
-        self.activityDock.deleteLater()
+        if hasattr(self, "activityDock"):
+            self.activityDock.deleteLater()
         return super().close()
 
     def closeEvent(self, event):
