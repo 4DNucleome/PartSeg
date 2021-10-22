@@ -7,7 +7,7 @@ def cut_changelog(changelog_path):
     first_found = False
     with open(changelog_path) as change:
         for line in change:
-            if line.startswith("##"):
+            if line.startswith("## "):
                 if first_found:
                     break
                 first_found = True

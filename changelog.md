@@ -4,9 +4,9 @@
 
 ### Bug Fixes
 
--   Importing previous version of settings (#406)
+-   Importing the previous version of settings (#406)
 -   Cutting without masking data (#407)
--   Save in subdirecory in batch plan (#414)
+-   Save in subdirectory in batch plan (#414)
 -   Loading plugins for batch processing (#423)
 
 ### Features
@@ -16,7 +16,7 @@
 -   Mask create widget for napari (#395)
 -   In napari roi extraction method show information from roi extraction method (#408)
 -   Add `*[0-9].tif` button in batch processing window (#412)
--   Better lebel representation in 3d view (#418)
+-   Better label representation in 3d view (#418)
 
 ### Refactor
 
@@ -28,18 +28,18 @@
 
 -   Adding mask in Prepare Plan for batch (#383)
 -   Set proper completion mode in SearchComboBox (#384)
--   Showing warnings on error with ROI load (#385)
+-   Showing warnings on the error with ROI load (#385)
 
 ### Features
 
 -   Add CellFromNucleusFlow "Cell from nucleus flow" cell segmentation method  (#367)
--   When cutting components in PartSeg roi mask allow not masking outer data (#379)
+-   When cutting components in PartSeg ROI mask allow not masking outer data (#379)
 -   Theme selection in GUI (#381)
 -   Allow return points from ROI extraction algorithm (#382)
 -   Add measurement to get ROI annotation by name. (#386)
--   PartSeg ROI extraction algoritms as napari plugins (#387)
--   Add  Pearson, Mander's, Intensity, Spearman colocalizatiom measurements (#392)
--   Separate standalone napari settings from PartSeg embeded napari settings (#397)
+-   PartSeg ROI extraction algorithms as napari plugins (#387)
+-   Add  Pearson, Mander's, Intensity, Spearman colocalization measurements (#392)
+-   Separate standalone napari settings from PartSeg embedded napari settings (#397)
 
 ### Performance
 

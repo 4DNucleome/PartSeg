@@ -33,7 +33,7 @@ This application is designed to help biologist with segmentation based on thresh
     -   [MacOS](https://4dnucleome.cent.uw.edu.pl/PartSeg/Downloads/PartSeg-lastest-macos.zip) (build on MacOS Mojave)
 
 -   With pip:
-    -   From pypi: `pip install PartSeg[pyqt]`
+    -   From pypi: `pip install PartSeg[all]`
     -   From repository: `pip install git+https://github.com/4DNucleome/PartSeg.git`
 
 Installation troubleshooting information could be found in wiki: [wiki](https://github.com/4DNucleome/PartSeg/wiki/Instalation-troubleshoot).
